@@ -10,29 +10,34 @@ class TS:
   def __gt__( self, other ):
     return (other.func, self.func)
 
-class Updates( object ):
+class UpdateComponent( object ):
 
   def __new__( cls, *args, **kwargs ):
     inst = object.__new__( cls, *args, **kwargs )
     inst._blkid_upblk = {}
-    inst._constraints = []
+    inst._name_upblk = {}
     inst._upblks = []
+
+    inst._constraints = []
     inst._schedule_list = []
     return inst
 
   def update( s, blk ):
     s._blkid_upblk[ id(blk) ] = blk
+    s._name_upblk[ blk.__name__ ] = blk
     s._upblks.append( blk )
-    s.__dict__[ blk.__name__ ] = blk
-    return blk
+    return TS(blk)
 
-  def set_constraints( s, *args ):
+  def get_update_block( s, name ):
+    return TS(s._name_upblk[ name ])
+
+  def add_constraints( s, *args ):
     s._constraints.extend( [ x for x in args ] )
 
   def _elaborate( s, model ):
 
     for name, obj in model.__dict__.iteritems():
-      if   isinstance( obj, Updates ):
+      if   isinstance( obj, UpdateComponent ):
         s._elaborate( obj )
 
         model._blkid_upblk.update( obj._blkid_upblk )
@@ -73,6 +78,9 @@ class Updates( object ):
         InDeg[v] -= 1
         if InDeg[v] == 0:
           Q.append( v )
+
+    if len(s._schedule_list) < len(s._upblks):
+      raise Exception("Update blocks have cyclic dependencies.")
 
   def elaborate( s ):
     s._elaborate( s )

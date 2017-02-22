@@ -1,14 +1,14 @@
-from pymtl_v3 import *
+from pymtl import *
 
-from TestSource import TestSource
-from TestSink   import TestSink
+from pclib import TestSource
+from pclib import TestSink
 
-class Top(Updates):
+class Top(UpdateComponent):
 
   def __init__( s ):
 
     s.src  = TestSource( [4,3,2,1] )
-    s.sink = TestSink  ( ["?","?","?",7,6,5,4] )
+    s.sink = TestSink  ( ["?","?",7,6,5,4] )
 
     @s.update
     def up_from_src():
@@ -37,33 +37,40 @@ class Top(Updates):
     def up_to_sink():
       s.sink.in_ = s.reg2
 
-    s.set_constraints(
-      TS(upA) < TS(upB),
-      TS(upC) < TS(upB),
+    s.add_constraints(
+      upA < upB,
+      upC < upB,
     )
 
-    s.set_constraints(
-      TS(up_from_src) < TS(upB),
-      TS(upC) < TS(up_to_sink),
+    s.add_constraints(
+      up_from_src < upB,
+      upC < up_to_sink,
     )
 
-    s.set_constraints(
-      TS(up_to_sink) < TS(s.sink.up_sink),
+    up_sink = s.sink.get_update_block("up_sink")
+
+    s.add_constraints(
+      up_to_sink < up_sink,
     )
 
-    s.set_constraints(
-      TS(up_from_src) > TS(s.src.up_src),
+    up_src = s.src.get_update_block("up_src")
+
+    s.add_constraints(
+      up_from_src > up_src,
     )
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
 
   def line_trace( s ):
     return s.src.line_trace() + " >>> " + \
           "r0=%s > w0=%s > r1=%s > r2=%s" % (s.reg0,s.wire0,s.reg1,s.reg2) + \
-           ">>>" + s.sink.line_trace()
+           " >>> " + s.sink.line_trace()
 
 A = Top()
 A.elaborate()
 A.print_schedule()
 
-for x in xrange(10):
+while not A.done():
   A.cycle()
   print A.line_trace()

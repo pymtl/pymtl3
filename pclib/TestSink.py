@@ -1,7 +1,7 @@
-from pymtl_v3 import *
+from pymtl import *
 from collections import deque
 
-class TestSink( Updates ):
+class TestSink( UpdateComponent ):
 
   def __init__( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -18,6 +18,9 @@ class TestSink( Updates ):
         ans = s.in_
 
         assert ref == ans or ref == "?", "Expect %s, get %s instead" % (ref, ans)
+
+  def done( s ):
+    return not s.answer
 
   def line_trace( s ):
     return "%s" % s.in_
