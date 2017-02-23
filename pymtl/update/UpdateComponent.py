@@ -9,6 +9,8 @@ class TS:
     return (self.func, other.func)
   def __gt__( self, other ):
     return (other.func, self.func)
+  def __call__( self ):
+    self.func()
 
 class UpdateComponent( object ):
 
@@ -42,7 +44,6 @@ class UpdateComponent( object ):
 
         model._blkid_upblk.update( obj._blkid_upblk )
         model._upblks.extend( obj._upblks )
-        print obj._blkid_upblk
 
   def _schedule( s ):
 
@@ -72,6 +73,9 @@ class UpdateComponent( object ):
         Q.append( i )
 
     while Q:
+      import random
+      random.shuffle(Q)
+
       u = Q.popleft()
       s._schedule_list.append( s._upblks[u] )
       for v in edges[u]:
@@ -85,6 +89,7 @@ class UpdateComponent( object ):
   def elaborate( s ):
     s._elaborate( s )
     s._schedule()
+    print
 
   def cycle( s ):
     for blk in s._schedule_list:
