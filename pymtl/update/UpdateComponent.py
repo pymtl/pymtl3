@@ -1,14 +1,12 @@
-import re, inspect, ast
-p = re.compile('( *(@|def))')
 from collections import defaultdict, deque
 
-class TS:
+class U(object): # update block wrapper
   def __init__( self, func ):
     self.func = func
   def __lt__( self, other ):
-    return (self.func, other.func)
+    return (self, other)
   def __gt__( self, other ):
-    return (other.func, self.func)
+    return (other, self)
   def __call__( self ):
     self.func()
 
@@ -25,32 +23,33 @@ class UpdateComponent( object ):
     return inst
 
   def update( s, blk ):
+    if blk.__name__ in s._name_upblk:
+      raise Exception("Cannot declare two update blocks using the same name!")
+
     s._blkid_upblk[ id(blk) ] = blk
     s._name_upblk[ blk.__name__ ] = blk
     s._upblks.append( blk )
-    return TS(blk)
+    return U(blk)
 
   def get_update_block( s, name ):
-    return TS(s._name_upblk[ name ])
+    return U(s._name_upblk[ name ])
 
   def add_constraints( s, *args ):
     s._constraints.extend( [ x for x in args ] )
 
-  def _elaborate( s, model ):
+  def _recursive_collect( s, model ):
 
     for name, obj in model.__dict__.iteritems():
       if   isinstance( obj, UpdateComponent ):
-        s._elaborate( obj )
+        s._recursive_collect( obj )
 
         model._blkid_upblk.update( obj._blkid_upblk )
         model._upblks.extend( obj._upblks )
 
-  def _schedule( s ):
+  def _construct_graph( s ):
 
     N = len( s._upblks )
-    edges = [ [] for _ in xrange(N) ] 
-    InDeg = [ 0  for _ in xrange(N) ]
-    Q     = deque()
+    edges = [ [] for _ in xrange(N) ]
 
     # Discretize in O(NlogN), to avoid later O(logN) lookup
 
@@ -61,20 +60,31 @@ class UpdateComponent( object ):
     # Prepare the graph
 
     for (x, y) in s._constraints:
-      vtx_x = id_vtx[ id(x) ]
-      vtx_y = id_vtx[ id(y) ]
+      vtx_x = id_vtx[ id(x.func) ]
+      vtx_y = id_vtx[ id(y.func) ]
       edges[ vtx_x ].append( vtx_y )
-      InDeg[ vtx_y ] += 1
+
+    return edges
+
+  def _schedule( s, edges ):
 
     # Perform topological sort in O(N+M)
 
+    N = len( edges )
+
+    InDeg = [0] * N
+    for x in edges:
+      for y in x:
+        InDeg[y] += 1
+
+    Q = deque()
     for i in xrange(N):
       if InDeg[i] == 0:
         Q.append( i )
 
     while Q:
       import random
-      random.shuffle(Q)
+      random.shuffle(Q) # to catch corner cases; will be removed later 
 
       u = Q.popleft()
       s._schedule_list.append( s._upblks[u] )
@@ -87,8 +97,9 @@ class UpdateComponent( object ):
       raise Exception("Update blocks have cyclic dependencies.")
 
   def elaborate( s ):
-    s._elaborate( s )
-    s._schedule()
+    s._recursive_collect( s )
+    graph = s._construct_graph()
+    s._schedule( graph )
     print
 
   def cycle( s ):

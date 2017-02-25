@@ -49,6 +49,25 @@ def test_cyclic_dependency():
     return
   raise Exception("Should've thrown cyclic dependency exception.")
 
+def test_upblock_same_name():
+
+  class Top(UpdateComponent):
+
+    def __init__( s ):
+
+      @s.update
+      def upA():
+        pass
+
+      @s.update
+      def upA():
+        pass
+
+  try:
+    A = Top()
+  except Exception:
+    return
+  raise Exception("Should've thrown name conflict exception.")
 
 def test_add_loopback():
 
@@ -107,7 +126,7 @@ def test_add_loopback():
 
   A = Top()
   A.elaborate()
-  # A.print_schedule()
+  A.print_schedule()
 
   while not A.done():
     A.cycle()
