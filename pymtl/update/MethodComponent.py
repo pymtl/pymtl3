@@ -81,19 +81,29 @@ class MethodComponent( UpdateComponent ):
     # Otherwise, we need to synthesize partial constraints between upblks
     # and methods later.
 
-    for x in args:
-      x0, x1 = x[0], x[1]
+    for (x0, x1) in args:
 
       if isinstance( x0, U ) and isinstance( x1, U ): # Two upblks!
         s._total_constraints.append( (id(x0.func), id(x1.func)) )
       else:
-        # Add the method descriptor to instance dictionary for unique id
-        if isinstance( x0, M ): setattr( s, x0.func.__name__, x0.func )
-        if isinstance( x1, M ): setattr( s, x1.func.__name__, x1.func )
+        x0_func = x0.func
+        x1_func = x1.func
+
+        # Store the method descriptor to instance dictionary for unique id
+
+        if isinstance( x0, M ):
+          if not x0.func.__name__  in s.__dict__:
+            s.__dict__[ x0.func.__name__ ] = x0.func
+          x0_func = s.__dict__[ x0.func.__name__ ]
+
+        if isinstance( x1, M ):
+          if not x1.func.__name__  in s.__dict__:
+            s.__dict__[ x1.func.__name__ ] = x1.func
+          x1_func = s.__dict__[ x1.func.__name__ ]
 
         # Partial constraints, x0 < x1
-        s._predecessor[ id(x1.func) ].add( id(x0.func) )
-        s._successor  [ id(x0.func) ].add( id(x1.func) )
+        s._predecessor[ id(x1_func) ].add( id(x0_func) )
+        s._successor  [ id(x0_func) ].add( id(x1_func) )
 
   # Override
   def _recursive_collect( s, model ):
@@ -106,7 +116,7 @@ class MethodComponent( UpdateComponent ):
 
         model._blkid_upblk.update( obj._blkid_upblk )
         model._upblks.extend( obj._upblks )
-        model._total_constraints.extend( obj._total_constraints )
+        model._total_constraints.update( obj._total_constraints )
 
         model._predecessor.update( obj._predecessor )
         model._successor.update( obj._successor )
@@ -116,58 +126,71 @@ class MethodComponent( UpdateComponent ):
     pred = model._predecessor
     succ = model._successor
 
-    # First check if the methods exist, then add to the set of method ids
-    # to avoid duplicate traversal.
+    methodid_blks = defaultdict(set)
+
+    # First check if the methods exist, then
+    # bind the method to the update blocks that calls the method
 
     for blk_id, method_calls in model._blkid_methods.iteritems():
-
-      invocations_in_blk = set()
 
       for (object_name, method_name) in method_calls:
         obj = model
         for field in object_name:
           assert hasattr( obj, field ), "\"%s\" is not a field of class %s"%(field, type(obj).__name__)
           obj = getattr( obj, field )
+
         assert hasattr( obj, method_name ), "\"%s\" is not a method of class %s"%(method_name, type(obj).__name__)
         method = getattr( obj, method_name )
 
-        invocations_in_blk.add( method )
+        methodid_blks[ id(method) ].add( blk_id )
 
-      # Do bfs to find out all potential total constraints associated with
-      # blk_id, direction conflicts, and incomplete constraints
+    # Do bfs to find out all potential total constraints associated with
+    # each method, direction conflicts, and incomplete constraints
+    #
+    # upX=methodA < methodB=upY ---> upX < upY
+    # upX=methodA < upY         ---> upX < upY
 
-      for method in invocations_in_blk:
-        Q = deque()
-        vis = set()
+    for i in methodid_blks:
+      methodid_blks[i] = list( methodid_blks[i] )
 
-        # -1: look for pred, 0: don't know, 1: look for succ
-        Q.append( (id(method), 0) )
-        vis.add( id(method) )
+    for method_id in methodid_blks:
+      assoc_blks = methodid_blks[ method_id ]
 
-        while Q:
-          (u, w) = Q.popleft()
-          success = False
-          if w <= 0:
-            for v in pred[u]:
-              if v in model._blkid_upblk: # find some total constraint!
-                assert v != blk_id, "Self loop at %s" % model._blkid_upblk[blk_id].__name__
-                s._total_constraints.append( (v, blk_id) )
-              else:
-                # v < u < ... < method < blk_id
-                Q.append( (v, -1) )
 
-          if w >= 0:
-            for v in succ[u]:
-              if v in model._blkid_upblk:
-                assert v != blk_id, "Self loop at %s" % model._blkid_upblk[blk_id].__name__
-                s._total_constraints.append( (blk_id, v) )
-              else:
-                # blk_id > method > ... > u > v
-                Q.append( (v, 1) )
+      Q = deque( [ (method_id, 0) ] ) # -1: pred, 0: don't know, 1: succ
+      while Q:
+        (u, w) = Q.popleft()
 
-          # if not success:
-            # this is an incomplete constraint, assert
-            # !!!Note that register will lead to incomplete constraint
+        if w <= 0:
+          for v in pred[u]:
+            if v in model._blkid_upblk:
+              assert v != blk_id, "Self loop at %s" % model._blkid_upblk[blk_id].__name__
 
-            # assert False, "Incomplete constraint: ??? < %s < %s" % \
-                  # (method.__name__, model._blkid_upblk[blk_id].__name__) # TODO full method name
+              # find total constraint (upY < upX) by upY < methodA=upX
+              for blk in assoc_blks:
+                model._total_constraints.add( (v, blk) )
+            else:
+              # find total constraint (upY < upX) by upY=methodB < methodA=upX
+              v_blks = methodid_blks[ v ]
+              for y in v_blks:
+                for x in assoc_blks:
+                  model._total_constraints.add( (y, x) )
+
+              Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
+
+        if w >= 0:
+          for v in succ[u]:
+            if v in model._blkid_upblk:
+              assert v != blk_id, "Self loop at %s" % model._blkid_upblk[blk_id].__name__
+
+              # find total constraint (upX < upY) by upX=methodA < upY
+              for blk in assoc_blks:
+                model._total_constraints.add( (v, blk) )
+            else:
+              # find total constraint (upX < upY) by upX=methodA < methodB=upY
+              v_blks = methodid_blks[ v ]
+              for x in assoc_blks:
+                for y in v_blks:
+                  model._total_constraints.add( (x, y) )
+
+              Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?

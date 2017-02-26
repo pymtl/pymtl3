@@ -27,7 +27,7 @@ class UpdateComponent( object ):
     inst._name_upblk = {}
     inst._upblks = []
 
-    inst._total_constraints = [] # contains ( id(func), id(func) )s
+    inst._total_constraints = set() # contains ( id(func), id(func) )s
     inst._schedule_list = []
     return inst
 
@@ -44,7 +44,8 @@ class UpdateComponent( object ):
     return U(s._name_upblk[ name ])
 
   def add_constraints( s, *args ):
-    s._total_constraints.extend( [ (id(x[0].func), id(x[1].func)) for x in args ] )
+    for x in args:
+      s._total_constraints.add( (id(x[0].func), id(x[1].func)) )
 
   def _recursive_collect( s, model ):
 
@@ -55,7 +56,9 @@ class UpdateComponent( object ):
         model._blkid_upblk.update( obj._blkid_upblk )
         model._upblks.extend( obj._upblks )
 
-  def _construct_graph( s ):
+  def _schedule( s ):
+
+    s._total_constraints = list(s._total_constraints)
 
     N = len( s._upblks )
     edges = [ [] for _ in xrange(N) ]
@@ -73,13 +76,7 @@ class UpdateComponent( object ):
       vtx_y = id_vtx[ y ]
       edges[ vtx_x ].append( vtx_y )
 
-    return edges
-
-  def _schedule( s, edges ):
-
     # Perform topological sort in O(N+M)
-
-    N = len( edges )
 
     InDeg = [0] * N
     for x in edges:
@@ -93,7 +90,7 @@ class UpdateComponent( object ):
 
     while Q:
       import random
-      random.shuffle(Q) # to catch corner cases; will be removed later 
+      random.shuffle(Q) # to catch corner cases; will be removed later
 
       u = Q.popleft()
       s._schedule_list.append( s._upblks[u] )
@@ -107,13 +104,15 @@ class UpdateComponent( object ):
 
   def elaborate( s ):
     s._recursive_collect( s )
-    graph = s._construct_graph()
-    s._schedule( graph )
+    s._schedule()
 
   def cycle( s ):
     for blk in s._schedule_list:
       blk()
 
   def print_schedule( s ):
+    print
+    for (x, y) in s._total_constraints:
+      print s._blkid_upblk[x].__name__," < ", s._blkid_upblk[y].__name__
     for blk in s._schedule_list:
       print blk.__name__

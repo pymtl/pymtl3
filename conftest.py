@@ -4,7 +4,8 @@ def pytest_addoption(parser):
   parser.addoption( "--test-verilog", action="store", default='', nargs='?', const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
                     help="run verilog translation, " )
 
-def pytest_funcarg__test_verilog(request):
+@pytest.fixture
+def test_verilog(request):
   """Test Verilog translation rather than python."""
   return request.config.option.test_verilog
 

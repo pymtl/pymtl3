@@ -60,7 +60,6 @@ class RegWire(MethodComponent):
   def line_trace( s ):
     return "%d" % s.v
 
-
 class Top(MethodComponent):
 
   def __init__( s ):
@@ -79,10 +78,6 @@ class Top(MethodComponent):
     def up_plus_one_to_reg0():
       s.reg0.wr( s.in_.rd() + 1 )
 
-    s.add_constraints(
-      up_src < up_plus_one_to_reg0,
-    )
-
     s.reg1 = Reg()
 
     @s.update
@@ -91,7 +86,7 @@ class Top(MethodComponent):
 
     s.out = 0
     @s.update
-    def up_to_sink():
+    def up_sink():
       s.out = s.reg1.rd()
 
   def line_trace( s ):
@@ -104,6 +99,6 @@ def test_2regs():
   A.elaborate()
   A.print_schedule()
 
-  for x in xrange(10):
+  for x in xrange(1000000):
     A.cycle()
-    print A.line_trace()
+    # print A.line_trace()
