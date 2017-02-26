@@ -36,7 +36,7 @@ class MethodComponent( UpdateComponent ):
 
   # Override
   def update( s, blk ):
-    a = super( MethodComponent, s ).update( blk )
+    super( MethodComponent, s ).update( blk )
 
     blk_id = id(blk)
 
@@ -72,7 +72,7 @@ class MethodComponent( UpdateComponent ):
         method_name = node.func.attr
         s._blkid_methods[ blk_id ].append( (obj_name, method_name) )
 
-    return U(blk)
+    return blk
 
   # Override
   def add_constraints( s, *args ):

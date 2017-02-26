@@ -29,8 +29,8 @@ class Reg(MethodComponent):
       s.v2 = s.v1
 
     s.add_constraints(
-      up_reg  < M(s.wr),
-      M(s.rd) > up_reg,
+      U(up_reg) < M(s.wr),
+      M(s.rd)   > U(up_reg),
     )
 
   def wr( s, v ):
@@ -72,7 +72,7 @@ class Top(MethodComponent):
       s.inc += 1
       s.in_.wr( s.inc )
 
-    s.reg0 = Reg()
+    s.reg0 = RegWire()
 
     @s.update
     def up_plus_one_to_reg0():

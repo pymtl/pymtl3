@@ -15,7 +15,7 @@ def test_simple():
         pass
 
       s.add_constraints(
-        upA < upB,
+        U(upA) < U(upB),
       )
 
   A = Top()
@@ -38,8 +38,8 @@ def test_cyclic_dependency():
         pass
 
       s.add_constraints(
-        upA < upB,
-        upB < upA,
+        U(upA) < U(upB),
+        U(upB) < U(upA),
       )
 
   A = Top()
@@ -91,7 +91,7 @@ def test_add_loopback():
       up_src = s.src.get_update_block("up_src")
 
       s.add_constraints(
-        up_src < up_from_src,
+        U(up_src) < U(up_from_src),
       )
 
       s.reg0 = 0
@@ -106,14 +106,14 @@ def test_add_loopback():
         s.wire1 = s.reg0
 
       s.add_constraints(
-        upA < up_to_sink_and_loop_back,
-        upA < up_from_src,
+        U(upA) < U(up_to_sink_and_loop_back),
+        U(upA) < U(up_from_src),
       )
 
       up_sink = s.sink.get_update_block("up_sink")
 
       s.add_constraints(
-        up_to_sink_and_loop_back < up_sink,
+        U(up_to_sink_and_loop_back) < U(up_sink),
       )
 
     def done( s ):

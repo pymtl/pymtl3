@@ -38,10 +38,10 @@ class UpdateComponent( object ):
     s._blkid_upblk[ id(blk) ] = blk
     s._name_upblk[ blk.__name__ ] = blk
     s._upblks.append( blk )
-    return U(blk)
+    return blk
 
   def get_update_block( s, name ):
-    return U(s._name_upblk[ name ])
+    return s._name_upblk[ name ]
 
   def add_constraints( s, *args ):
     for x in args:
