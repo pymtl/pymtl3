@@ -1,3 +1,12 @@
+#=========================================================================
+# UpdateComponent.py
+#=========================================================================
+# At the bottom level, we only have update blocks and "total constraint"s.
+# Each update block is called exactly once every cycle. PyMTL will
+# schedule all update blocks based on the constraints. A total constraint
+# between two update blocks specifies the order of the two blocks, i.e.
+# who is called before whom.
+
 from collections import defaultdict, deque
 
 class U(object): # update block wrapper
@@ -18,7 +27,7 @@ class UpdateComponent( object ):
     inst._name_upblk = {}
     inst._upblks = []
 
-    inst._constraints = []
+    inst._total_constraints = [] # contains ( id(func), id(func) )s
     inst._schedule_list = []
     return inst
 
@@ -35,7 +44,7 @@ class UpdateComponent( object ):
     return U(s._name_upblk[ name ])
 
   def add_constraints( s, *args ):
-    s._constraints.extend( [ x for x in args ] )
+    s._total_constraints.extend( [ (id(x[0].func), id(x[1].func)) for x in args ] )
 
   def _recursive_collect( s, model ):
 
@@ -59,9 +68,9 @@ class UpdateComponent( object ):
 
     # Prepare the graph
 
-    for (x, y) in s._constraints:
-      vtx_x = id_vtx[ id(x.func) ]
-      vtx_y = id_vtx[ id(y.func) ]
+    for (x, y) in s._total_constraints:
+      vtx_x = id_vtx[ x ]
+      vtx_y = id_vtx[ y ]
       edges[ vtx_x ].append( vtx_y )
 
     return edges
@@ -100,7 +109,6 @@ class UpdateComponent( object ):
     s._recursive_collect( s )
     graph = s._construct_graph()
     s._schedule( graph )
-    print
 
   def cycle( s ):
     for blk in s._schedule_list:
