@@ -7,7 +7,12 @@
 # between two update blocks specifies the order of the two blocks, i.e.
 # who is called before whom.
 
+import re, inspect, ast
+p = re.compile('( *(@|def))')
 from collections import defaultdict, deque
+
+
+class _int(int): pass # subclass int for different ids
 
 class U(object): # update block wrapper
   def __init__( self, func ):
@@ -19,44 +24,211 @@ class U(object): # update block wrapper
   def __call__( self ):
     self.func()
 
+class DetectLoadsAndStores( ast.NodeVisitor ):
+
+  def __init__( self ):
+    self.load = []
+    self.store = []
+
+  def enter( self, node, load, store ):
+    self.visit( node )
+    load.extend ( self.load )
+    store.extend( self.store )
+
+  def get_full_name( self, node ):
+    obj_name = []
+    t = node
+    while hasattr( t, "value" ): # don't record the last "s."
+      if isinstance( t, ast.Attribute ):
+        obj_name.append( t.attr )
+      else:
+        assert isinstance( t, ast.Subscript )
+      t = t.value
+
+    obj_name.reverse()
+    return obj_name
+
+  def visit_Attribute( self, node ): # s.a.b
+    obj_name = self.get_full_name( node )
+
+    if   isinstance( node.ctx, ast.Load ):
+      self.load  += [ obj_name ]
+    elif isinstance( node.ctx, ast.Store ):
+      self.store += [ obj_name ]
+    else:
+      assert False, type( node.ctx )
+
+  def visit_Subscript( self, node ): # s.a.b[0:3] ld/st is in subscript
+    obj_name = self.get_full_name( node )
+
+    if   isinstance( node.ctx, ast.Load ):
+      self.load  += [ obj_name ]
+    elif isinstance( node.ctx, ast.Store ):
+      self.store += [ obj_name ]
+    else:
+      assert False, type( node.ctx )
+
 class UpdateComponent( object ):
 
   def __new__( cls, *args, **kwargs ):
     inst = object.__new__( cls, *args, **kwargs )
-    inst._blkid_upblk = {}
-    inst._name_upblk = {}
     inst._upblks = []
+    inst._name_upblk = {}
+    inst._blkid_upblk = {}
 
-    inst._total_constraints = set() # contains ( id(func), id(func) )s
+    inst._blkid_loads = defaultdict(list)
+    inst._blkid_stores = defaultdict(list)
+    inst._load_blks = defaultdict(list)
+    inst._store_blks = defaultdict(list)
+
+    inst._impl_constraints = set() # contains ( id(func), id(func) )s
+    inst._expl_constraints = set() # contains ( id(func), id(func) )s
     inst._schedule_list = []
     return inst
+
+  def __setattr__( s, k, v ):
+    if isinstance( v, int ): v = _int(v)
+    super(UpdateComponent, s).__setattr__( k, v )
 
   def update( s, blk ):
     if blk.__name__ in s._name_upblk:
       raise Exception("Cannot declare two update blocks using the same name!")
 
-    s._blkid_upblk[ id(blk) ] = blk
-    s._name_upblk[ blk.__name__ ] = blk
+    blk_id = id(blk)
     s._upblks.append( blk )
+    s._name_upblk[ blk.__name__ ] = blk
+    s._blkid_upblk[ blk_id ] = blk
+
+    # I store the ast of each update block to parse method calls. To also
+    # cache them across different instances of the same class, I attach
+    # the information to the class object.
+
+    if not "_blkid_ast" in type(s).__dict__:
+      type(s)._blkid_ast = dict()
+
+    if blk_id not in type(s)._blkid_ast:
+      src = p.sub( r'\2', inspect.getsource( blk ) )
+      type(s)._blkid_ast[ blk_id ] = ast.parse( src )
+
+    # Parse the ast to extract variable writes and reads
+    # First check if it's a valid AST and remove the @s.update and empty
+    # arguments
+
+    tree = type(s)._blkid_ast[ blk_id ]
+    assert isinstance(tree, ast.Module)
+    tree = tree.body[0]
+
+    assert isinstance(tree, ast.FunctionDef)
+    for stmt in tree.body:
+      DetectLoadsAndStores().enter(
+        stmt, s._blkid_loads[ blk_id ], s._blkid_stores[ blk_id ] )
+
     return blk
 
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
+  def _add_constraints( model, x, y, explicit=False ):
+
+    if explicit:  model._expl_constraints.add( (x, y) )
+    else:         model._impl_constraints.add( (x, y) )
+
+    # print model._blkid_upblk[x].__name__,"  <  " if explicit else " (<) ", model._blkid_upblk[y].__name__
+
   def add_constraints( s, *args ):
     for x in args:
-      s._total_constraints.add( (id(x[0].func), id(x[1].func)) )
+      # print "hard constraint",
+      s._add_constraints( id(x[0].func), id(x[1].func), explicit=True )
 
-  def _recursive_collect( s, model ):
+  def synthesize_impl_constraints( s, model ):
+    load_blks  = defaultdict(set)
+    store_blks = defaultdict(set)
+
+    # First check if each load/store variable exists, then bind update
+    # blocks that reads/writes the variable to the variable
+
+    for blk_id, loads in model._blkid_loads.iteritems():
+      for load_name in loads:
+        obj = model
+        for field in load_name:
+          assert hasattr( obj, field ), "\"%s\" is not a field of class %s"%(field, type(obj).__name__)
+          obj = getattr( obj, field )
+
+        if not callable(obj): # exclude function calls
+          # print " -",load_name, type(obj), id(obj)
+          load_blks[ id(obj) ].add( blk_id )
+
+    for blk_id, stores in model._blkid_stores.iteritems():
+      for store_name in stores:
+        obj = model
+        for field in store_name:
+          assert hasattr( obj, field ), "\"%s\" is not a field of class %s"%(field, type(obj).__name__)
+          obj = getattr( obj, field )
+
+        if not callable(obj): # exclude function calls
+          # print " -",store_name, type(obj), id(obj)
+          store_blks[ id(obj) ].add( blk_id )
+
+    # Turn associated sets into lists, as blk_id are now unique.
+    # O(logn) -> O(1)
+    # Then append variables called at the current level to the big dict
+
+    for i in load_blks:
+      m = load_blks[i] = list( load_blks[i] )
+      model._load_blks[i].extend( m )
+
+    for i in store_blks:
+      m = store_blks[i] = list( store_blks[i] )
+      model._store_blks[i].extend( m )
+
+    # Synthesize total constraints between two upblks that read/write to
+    # the same variable. Note that one side of the new constraint comes
+    # only from variables called at the current level to avoid redundant
+    # scans, but the other side is from all recursively collected vars
+    # plus those called the current level
+
+    for load, ld_blks in load_blks.iteritems():# called at current level
+      st_blks = model._store_blks[ load ] # matching stores
+      for st in st_blks:
+        for ld in ld_blks:
+          if st != ld:
+            # print "local ld < all st",
+            model._add_constraints( st, ld ) # wr < rd by default
+
+    for store, st_blks in store_blks.iteritems():# called at current level
+      ld_blks = model._load_blks[ store ]
+      for st in st_blks:
+        for ld in ld_blks:
+          if st != ld:
+            # print "local st < all ld",
+            model._add_constraints( st, ld ) # wr < rd by default
+
+  def _recursive_elaborate( s, model ):
 
     for name, obj in model.__dict__.iteritems():
       if   isinstance( obj, UpdateComponent ):
-        s._recursive_collect( obj )
+        s._recursive_elaborate( obj )
 
-        model._blkid_upblk.update( obj._blkid_upblk )
         model._upblks.extend( obj._upblks )
+        model._name_upblk.update( obj._name_upblk )
+        model._blkid_upblk.update( obj._blkid_upblk )
+
+        model._load_blks.update( obj._load_blks )
+        model._store_blks.update( obj._store_blks )
+
+    s.synthesize_impl_constraints( model )
 
   def _schedule( s ):
+
+    s._total_constraints = s._expl_constraints.copy()
+
+    for (x, y) in s._impl_constraints:
+      if (y, x) not in s._expl_constraints: # no conflicting expl
+        s._total_constraints.add( (x, y) )
+
+      if (x, y) in s._expl_constraints or (y, x) in s._expl_constraints:
+        print "implicit constraint is overriden -- ",s._blkid_upblk[x].__name__, " (<) ", \
+               s._blkid_upblk[y].__name__
 
     s._total_constraints = list(s._total_constraints)
 
@@ -103,7 +275,7 @@ class UpdateComponent( object ):
       raise Exception("Update blocks have cyclic dependencies.")
 
   def elaborate( s ):
-    s._recursive_collect( s )
+    s._recursive_elaborate( s )
     s._schedule()
 
   def cycle( s ):
