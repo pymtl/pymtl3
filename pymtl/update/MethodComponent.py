@@ -202,7 +202,7 @@ class MethodComponent( UpdateComponent ):
           for k in obj._successor:
             model._successor[k].update( obj._successor[k] )
           for k in obj._method_blks:
-            model._method_blks[k].update( obj._method_blks[k] )
+            model._method_blks[k].extend( obj._method_blks[k] )
 
     s._synthesize_impl_constraints( model )
     s._synthesize_partial_constraints( model )

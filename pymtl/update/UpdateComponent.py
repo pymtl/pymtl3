@@ -145,7 +145,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          print " - load",load_name, type(obj), id(obj)
+          # print " - load",load_name, type(obj), id(obj)
           load_blks[ id(obj) ].add( blk_id )
 
     for blk_id, stores in model._blkid_stores.iteritems():
@@ -156,7 +156,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          print " - store",store_name, type(obj), id(obj)
+          # print " - store",store_name, type(obj), id(obj)
           store_blks[ id(obj) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
@@ -220,10 +220,10 @@ class UpdateComponent( object ):
     s._total_constraints = s._expl_constraints.copy()
 
     for (x, y) in s._impl_constraints:
-      print s._blkid_upblk[x].__name__," (<) ", s._blkid_upblk[y].__name__
+      print s._blkid_upblk[x].__name__.center(25)," (<) ", s._blkid_upblk[y].__name__.center(25)
 
     for (x, y) in s._expl_constraints:
-      print s._blkid_upblk[x].__name__,"  <  ", s._blkid_upblk[y].__name__
+      print s._blkid_upblk[x].__name__.center(25),"  <  ", s._blkid_upblk[y].__name__.center(25)
 
     for (x, y) in s._impl_constraints:
       if (y, x) not in s._expl_constraints: # no conflicting expl
@@ -234,6 +234,15 @@ class UpdateComponent( object ):
                s._blkid_upblk[y].__name__
 
     s._total_constraints = list(s._total_constraints)
+
+    # from graphviz import Digraph
+    # dot = Digraph(comment = s.__class__)
+    # dot.graph_attr["rank"] = "source"
+    # dot.graph_attr["ratio"] = "fill"
+    # dot.graph_attr["margin"] = "0.1"
+    # for (x, y) in s._total_constraints:
+      # dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
+      # dot.render("/tmp/pymtl.gv", view=True)
 
     N = len( s._upblks )
     edges = [ [] for _ in xrange(N) ]
@@ -287,7 +296,5 @@ class UpdateComponent( object ):
 
   def print_schedule( s ):
     print
-    for (x, y) in s._total_constraints:
-      print s._blkid_upblk[x].__name__," < ", s._blkid_upblk[y].__name__
     for blk in s._schedule_list:
       print blk.__name__
