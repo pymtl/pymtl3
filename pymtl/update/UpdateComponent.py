@@ -86,10 +86,6 @@ class UpdateComponent( object ):
     inst._schedule_list = []
     return inst
 
-  def __setattr__( s, k, v ):
-    if isinstance( v, int ): v = _int(v)
-    super(UpdateComponent, s).__setattr__( k, v )
-
   def update( s, blk ):
     if blk.__name__ in s._name_upblk:
       raise Exception("Cannot declare two update blocks using the same name!")
@@ -149,7 +145,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          # print " - load",load_name, type(obj), id(obj)
+          print " - load",load_name, type(obj), id(obj)
           load_blks[ id(obj) ].add( blk_id )
 
     for blk_id, stores in model._blkid_stores.iteritems():
@@ -160,12 +156,12 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          # print " - store",store_name, type(obj), id(obj)
+          print " - store",store_name, type(obj), id(obj)
           store_blks[ id(obj) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
     # O(logn) -> O(1)
-    
+
     # Synthesize total constraints between two upblks that read/write to
     # the same variable. Note that one side of the new constraint comes
     # only from variables called at the current level to avoid redundant
@@ -199,7 +195,10 @@ class UpdateComponent( object ):
   def _recursive_elaborate( s, model ):
 
     for name, obj in model.__dict__.iteritems():
-      if   isinstance( obj, UpdateComponent ):
+      if   isinstance( obj, int ): # to create unique id for int
+        model.__dict__[ name ] = _int(obj)
+
+      elif isinstance( obj, UpdateComponent ):
         s._recursive_elaborate( obj )
 
         model._upblks.extend( obj._upblks )

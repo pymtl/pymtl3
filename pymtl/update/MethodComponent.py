@@ -12,7 +12,7 @@ import re, inspect, ast
 p = re.compile('( *(@|def))')
 from collections import defaultdict, deque
 
-from UpdateComponent import UpdateComponent, U
+from UpdateComponent import UpdateComponent, U, _int
 
 class M(object): # method wrapper
   def __init__( self, func ):
@@ -178,7 +178,10 @@ class MethodComponent( UpdateComponent ):
   def _recursive_elaborate( s, model ):
 
     for name, obj in model.__dict__.iteritems():
-      if   isinstance( obj, UpdateComponent ):
+      if   isinstance( obj, int ): # to create unique id for int
+        model.__dict__[ name ] = _int(obj)
+
+      elif isinstance( obj, UpdateComponent ):
         s._recursive_elaborate( obj )
 
         model._upblks.extend( obj._upblks )
