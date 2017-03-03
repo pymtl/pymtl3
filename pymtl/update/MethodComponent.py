@@ -28,31 +28,20 @@ class MethodComponent( UpdateComponent ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super( MethodComponent, cls ).__new__( cls, *args, **kwargs )
+
     inst._blkid_methods = defaultdict(list)
+    inst._method_blks   = defaultdict(list)
     inst._predecessor   = defaultdict(set)
     inst._successor     = defaultdict(set)
-
     return inst
 
   # Override
   def update( s, blk ):
     super( MethodComponent, s ).update( blk )
 
+    # Parse the ast to extract method calls
+
     blk_id = id(blk)
-
-    # I store the ast of each update block to parse method calls. To also
-    # cache them across different instances of the same class, I attach
-    # the information to the class object.
-
-    if not "_blkid_ast" in type(s).__dict__:
-      type(s)._blkid_ast = dict()
-
-    if blk_id not in type(s)._blkid_ast:
-      src = p.sub( r'\2', inspect.getsource( blk ) )
-      type(s)._blkid_ast[ blk_id ] = ast.parse( src )
-
-    # Parse the ast
-
     tree = type(s)._blkid_ast[ blk_id ]
 
     for node in ast.walk(tree):
@@ -84,7 +73,7 @@ class MethodComponent( UpdateComponent ):
     for (x0, x1) in args:
 
       if isinstance( x0, U ) and isinstance( x1, U ): # Two upblks!
-        s._total_constraints.append( (id(x0.func), id(x1.func)) )
+        s._add_expl_constraints( id(x[0].func), id(x[1].func) )
       else:
         x0_func = x0.func
         x1_func = x1.func
@@ -105,34 +94,15 @@ class MethodComponent( UpdateComponent ):
         s._predecessor[ id(x1_func) ].add( id(x0_func) )
         s._successor  [ id(x0_func) ].add( id(x1_func) )
 
-  # Override
-  def _recursive_collect( s, model ):
+  def _synthesize_partial_constraints( s, model ):
+    if not isinstance( model, MethodComponent ):  return
 
-    # First collect all constraints in the submodules
+    # First check if the methods exist, then bind update blocks that calls
+    # the method to the method
 
-    for name, obj in model.__dict__.iteritems():
-      if   isinstance( obj, UpdateComponent ):
-        s._recursive_collect( obj )
-
-        model._blkid_upblk.update( obj._blkid_upblk )
-        model._upblks.extend( obj._upblks )
-        model._total_constraints.update( obj._total_constraints )
-
-        model._predecessor.update( obj._predecessor )
-        model._successor.update( obj._successor )
-
-    # Then synthesize partial constraints
-
-    pred = model._predecessor
-    succ = model._successor
-
-    methodid_blks = defaultdict(set)
-
-    # First check if the methods exist, then
-    # bind the method to the update blocks that calls the method
+    method_blks = defaultdict(set)
 
     for blk_id, method_calls in model._blkid_methods.iteritems():
-
       for (object_name, method_name) in method_calls:
         obj = model
         for field in object_name:
@@ -141,8 +111,9 @@ class MethodComponent( UpdateComponent ):
 
         assert hasattr( obj, method_name ), "\"%s\" is not a method of class %s"%(method_name, type(obj).__name__)
         method = getattr( obj, method_name )
+        assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
 
-        methodid_blks[ id(method) ].add( blk_id )
+        method_blks[ id(method) ].add( blk_id )
 
     # Do bfs to find out all potential total constraints associated with
     # each method, direction conflicts, and incomplete constraints
@@ -150,47 +121,85 @@ class MethodComponent( UpdateComponent ):
     # upX=methodA < methodB=upY ---> upX < upY
     # upX=methodA < upY         ---> upX < upY
 
-    for i in methodid_blks:
-      methodid_blks[i] = list( methodid_blks[i] )
+    # Turn associated sets into lists, as blk_id are now unique.
+    # O(logn) -> O(1)
+    # Then append variables called at the current level to the big dict
 
-    for method_id in methodid_blks:
-      assoc_blks = methodid_blks[ method_id ]
+    # We only find constraints for upblks at the current level. However,
+    # there might be some constraints in grandchild or deeper submodels.
+    # So, we append these to  all previous method_blks
 
+    for i in method_blks:
+      method_blks[i] = list( method_blks[i] )
+      model._method_blks[i].extend( method_blks[i] )
+
+    for method_id in method_blks:
+      assoc_blks = method_blks[ method_id ]
 
       Q = deque( [ (method_id, 0) ] ) # -1: pred, 0: don't know, 1: succ
       while Q:
         (u, w) = Q.popleft()
 
         if w <= 0:
-          for v in pred[u]:
+          for v in model._predecessor[u]:
             if v in model._blkid_upblk:
               assert v != blk_id, "Self loop at %s" % model._blkid_upblk[blk_id].__name__
 
               # find total constraint (upY < upX) by upY < methodA=upX
               for blk in assoc_blks:
-                model._total_constraints.add( (v, blk) )
+                model._expl_constraints.add( (v, blk) )
             else:
               # find total constraint (upY < upX) by upY=methodB < methodA=upX
-              v_blks = methodid_blks[ v ]
+              v_blks = model._method_blks[ v ]
               for y in v_blks:
-                for x in assoc_blks:
-                  model._total_constraints.add( (y, x) )
+                for blk in assoc_blks:
+                  model._expl_constraints.add( (y, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
         if w >= 0:
-          for v in succ[u]:
+          for v in model._successor[u]:
             if v in model._blkid_upblk:
               assert v != blk_id, "Self loop at %s" % model._blkid_upblk[blk_id].__name__
 
               # find total constraint (upX < upY) by upX=methodA < upY
               for blk in assoc_blks:
-                model._total_constraints.add( (v, blk) )
+                model._expl_constraints.add( (blk, v) )
             else:
               # find total constraint (upX < upY) by upX=methodA < methodB=upY
-              v_blks = methodid_blks[ v ]
-              for x in assoc_blks:
-                for y in v_blks:
-                  model._total_constraints.add( (x, y) )
+              v_blks = model._method_blks[ v ]
+              for y in v_blks:
+                for blk in assoc_blks:
+                  model._expl_constraints.add( (blk, y) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
+
+  # Override
+  def _recursive_elaborate( s, model ):
+
+    for name, obj in model.__dict__.iteritems():
+      if   isinstance( obj, UpdateComponent ):
+        s._recursive_elaborate( obj )
+
+        model._upblks.extend( obj._upblks )
+        model._name_upblk.update( obj._name_upblk )
+        model._blkid_upblk.update( obj._blkid_upblk )
+
+        model._impl_constraints.update( obj._impl_constraints )
+        model._expl_constraints.update( obj._expl_constraints )
+
+        for k in obj._load_blks:
+          model._load_blks[k].extend( obj._load_blks[k] )
+        for k in obj._store_blks:
+          model._store_blks[k].extend( obj._store_blks[k] )
+
+        if isinstance( obj, MethodComponent ):
+          for k in obj._predecessor:
+            model._predecessor[k].update( obj._predecessor[k] )
+          for k in obj._successor:
+            model._successor[k].update( obj._successor[k] )
+          for k in obj._method_blks:
+            model._method_blks[k].update( obj._method_blks[k] )
+
+    s._synthesize_impl_constraints( model )
+    s._synthesize_partial_constraints( model )

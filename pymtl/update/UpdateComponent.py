@@ -128,24 +128,18 @@ class UpdateComponent( object ):
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
-  def _add_constraints( model, x, y, explicit=False ):
-
-    if explicit:  model._expl_constraints.add( (x, y) )
-    else:         model._impl_constraints.add( (x, y) )
-
-    # print model._blkid_upblk[x].__name__,"  <  " if explicit else " (<) ", model._blkid_upblk[y].__name__
-
   def add_constraints( s, *args ):
     for x in args:
       # print "hard constraint",
-      s._add_constraints( id(x[0].func), id(x[1].func), explicit=True )
+      s._expl_constraints.add( (id(x[0].func), id(x[1].func)) )
 
-  def synthesize_impl_constraints( s, model ):
-    load_blks  = defaultdict(set)
-    store_blks = defaultdict(set)
+  def _synthesize_impl_constraints( s, model ):
 
     # First check if each load/store variable exists, then bind update
     # blocks that reads/writes the variable to the variable
+
+    load_blks  = defaultdict(set)
+    store_blks = defaultdict(set)
 
     for blk_id, loads in model._blkid_loads.iteritems():
       for load_name in loads:
@@ -155,7 +149,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          # print " -",load_name, type(obj), id(obj)
+          # print " - load",load_name, type(obj), id(obj)
           load_blks[ id(obj) ].add( blk_id )
 
     for blk_id, stores in model._blkid_stores.iteritems():
@@ -166,12 +160,17 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          # print " -",store_name, type(obj), id(obj)
+          # print " - store",store_name, type(obj), id(obj)
           store_blks[ id(obj) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
     # O(logn) -> O(1)
-    # Then append variables called at the current level to the big dict
+    
+    # Synthesize total constraints between two upblks that read/write to
+    # the same variable. Note that one side of the new constraint comes
+    # only from variables called at the current level to avoid redundant
+    # scans, but the other side is from all recursively collected vars
+    # plus those called the current level.
 
     for i in load_blks:
       m = load_blks[i] = list( load_blks[i] )
@@ -181,19 +180,13 @@ class UpdateComponent( object ):
       m = store_blks[i] = list( store_blks[i] )
       model._store_blks[i].extend( m )
 
-    # Synthesize total constraints between two upblks that read/write to
-    # the same variable. Note that one side of the new constraint comes
-    # only from variables called at the current level to avoid redundant
-    # scans, but the other side is from all recursively collected vars
-    # plus those called the current level
-
     for load, ld_blks in load_blks.iteritems():# called at current level
       st_blks = model._store_blks[ load ] # matching stores
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
             # print "local ld < all st",
-            model._add_constraints( st, ld ) # wr < rd by default
+            model._impl_constraints.add( (st, ld) ) # wr < rd by default
 
     for store, st_blks in store_blks.iteritems():# called at current level
       ld_blks = model._load_blks[ store ]
@@ -201,7 +194,7 @@ class UpdateComponent( object ):
         for ld in ld_blks:
           if st != ld:
             # print "local st < all ld",
-            model._add_constraints( st, ld ) # wr < rd by default
+            model._impl_constraints.add( (st, ld) ) # wr < rd by default
 
   def _recursive_elaborate( s, model ):
 
@@ -213,14 +206,25 @@ class UpdateComponent( object ):
         model._name_upblk.update( obj._name_upblk )
         model._blkid_upblk.update( obj._blkid_upblk )
 
-        model._load_blks.update( obj._load_blks )
-        model._store_blks.update( obj._store_blks )
+        model._impl_constraints.update( obj._impl_constraints )
+        model._expl_constraints.update( obj._expl_constraints )
 
-    s.synthesize_impl_constraints( model )
+        for k in obj._load_blks:
+          model._load_blks[k].extend( obj._load_blks[k] )
+        for k in obj._store_blks:
+          model._store_blks[k].extend( obj._store_blks[k] )
+
+    s._synthesize_impl_constraints( model )
 
   def _schedule( s ):
 
     s._total_constraints = s._expl_constraints.copy()
+
+    for (x, y) in s._impl_constraints:
+      print s._blkid_upblk[x].__name__," (<) ", s._blkid_upblk[y].__name__
+
+    for (x, y) in s._expl_constraints:
+      print s._blkid_upblk[x].__name__,"  <  ", s._blkid_upblk[y].__name__
 
     for (x, y) in s._impl_constraints:
       if (y, x) not in s._expl_constraints: # no conflicting expl
