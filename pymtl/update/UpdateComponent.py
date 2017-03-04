@@ -8,10 +8,8 @@
 # who is called before whom.
 
 import re, inspect, ast, random, copy
-from multiprocessing import Process
 p = re.compile('( *(@|def))')
 from collections import defaultdict, deque
-
 
 class _int(int): pass # subclass int for different ids
 
@@ -38,16 +36,13 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
 
   def get_full_name( self, node ):
     obj_name = []
-    t = node
-    while hasattr( t, "value" ): # don't record the last "s."
-      if isinstance( t, ast.Attribute ):
-        obj_name.append( t.attr )
+    while hasattr( node, "value" ): # don't record the last "s."
+      if isinstance( node, ast.Attribute ):
+        obj_name.append( node.attr )
       else:
-        assert isinstance( t, ast.Subscript )
-      t = t.value
-
-    obj_name.reverse()
-    return obj_name
+        assert isinstance( node, ast.Subscript )
+      node = node.value
+    return obj_name[::-1]
 
   def visit_Attribute( self, node ): # s.a.b
     obj_name = self.get_full_name( node )
@@ -73,7 +68,6 @@ class UpdateComponent( object ):
 
   def __new__( cls, *args, **kwargs ):
     inst = object.__new__( cls, *args, **kwargs )
-    inst._upblks = []
     inst._name_upblk = {}
     inst._blkid_upblk = {}
 
@@ -92,7 +86,6 @@ class UpdateComponent( object ):
       raise Exception("Cannot declare two update blocks using the same name!")
 
     blk_id = id(blk)
-    s._upblks.append( blk )
     s._name_upblk[ blk.__name__ ] = blk
     s._blkid_upblk[ blk_id ] = blk
 
@@ -127,7 +120,6 @@ class UpdateComponent( object ):
 
   def add_constraints( s, *args ):
     for x in args:
-      # print "hard constraint",
       s._expl_constraints.add( (id(x[0].func), id(x[1].func)) )
 
   def _synthesize_impl_constraints( s, model ):
@@ -182,7 +174,6 @@ class UpdateComponent( object ):
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
-            # print "local ld < all st",
             model._impl_constraints.add( (st, ld) ) # wr < rd by default
 
     for store, st_blks in store_blks.iteritems():# called at current level
@@ -190,7 +181,6 @@ class UpdateComponent( object ):
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
-            # print "local st < all ld",
             model._impl_constraints.add( (st, ld) ) # wr < rd by default
 
   def _recursive_elaborate( s, model ):
@@ -202,10 +192,7 @@ class UpdateComponent( object ):
       elif isinstance( obj, UpdateComponent ):
         s._recursive_elaborate( obj )
 
-        model._upblks.extend( obj._upblks )
-        model._name_upblk.update( obj._name_upblk )
         model._blkid_upblk.update( obj._blkid_upblk )
-
         model._impl_constraints.update( obj._impl_constraints )
         model._expl_constraints.update( obj._expl_constraints )
 
@@ -245,14 +232,15 @@ class UpdateComponent( object ):
       # dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
       # dot.render("/tmp/pymtl.gv", view=True)
 
-    N = len( s._upblks )
+    N = len( s._blkid_upblk )
     edges = [ [] for _ in xrange(N) ]
+    upblks = s._blkid_upblk.keys()
 
     # Discretize in O(NlogN), to avoid later O(logN) lookup
 
     id_vtx = dict()
     for i in xrange(N):
-      id_vtx[ id(s._upblks[i]) ] = i
+      id_vtx[ upblks[i] ] = i
 
     # Prepare the graph
 
@@ -278,13 +266,13 @@ class UpdateComponent( object ):
       random.shuffle(Q) # to catch corner cases; will be removed later
 
       u = Q.popleft()
-      s._schedule_list.append( s._upblks[u] )
+      s._schedule_list.append( s._blkid_upblk[ upblks[u] ] )
       for v in edges[u]:
         InDeg[v] -= 1
         if InDeg[v] == 0:
           Q.append( v )
 
-    if len(s._schedule_list) < len(s._upblks):
+    if len(s._schedule_list) < N:
       raise Exception("Update blocks have cyclic dependencies.")
 
     # Perform work partitioning to basically extract batches of frontiers
@@ -304,7 +292,7 @@ class UpdateComponent( object ):
 
     while Q:
       Q2 = deque()
-      s._batch_schedule.append( [ s._upblks[y] for y in Q ] )
+      s._batch_schedule.append( [ s._blkid_upblk[ upblks[y] ] for y in Q ] )
       for u in Q:
         for v in edges[u]:
           InDeg[v] -= 1

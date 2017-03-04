@@ -184,10 +184,7 @@ class MethodComponent( UpdateComponent ):
       elif isinstance( obj, UpdateComponent ):
         s._recursive_elaborate( obj )
 
-        model._upblks.extend( obj._upblks )
-        model._name_upblk.update( obj._name_upblk )
         model._blkid_upblk.update( obj._blkid_upblk )
-
         model._impl_constraints.update( obj._impl_constraints )
         model._expl_constraints.update( obj._expl_constraints )
 
