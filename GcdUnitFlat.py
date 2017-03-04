@@ -56,10 +56,10 @@ class GcdUnitDpath( MethodComponent ):
     @s.update
     def up_subtract():
       s.sub_out = s.resp_msg = s.a_reg.rd() - s.b_reg.rd()
-      
+
 
 class GcdUnitCtrl( MethodComponent ):
-  
+
   def __init__( s ):
 
     s.req_val  = s.req_rdy = 0
@@ -183,8 +183,9 @@ A.print_schedule()
 A.req_val = 1
 A.resp_rdy = 1
 
-for cycle in xrange(10000000):
+for cycle in xrange(10):
   A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
+  # A.req_msg_a, A.req_msg_b = 60,35
   A.cycle()
   # print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
         # A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
