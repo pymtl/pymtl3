@@ -14,4 +14,4 @@ class Mux(MethodComponent):
       s.out = s.in_[ s.sel ]
 
   def line_trace( s ):
-    return "[%4d > %4d]" % (s.v1, s.v2)
+    pass

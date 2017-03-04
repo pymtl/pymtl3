@@ -7,7 +7,8 @@
 # between two update blocks specifies the order of the two blocks, i.e.
 # who is called before whom.
 
-import re, inspect, ast
+import re, inspect, ast, random, copy
+from multiprocessing import Process
 p = re.compile('( *(@|def))')
 from collections import defaultdict, deque
 
@@ -260,7 +261,8 @@ class UpdateComponent( object ):
       vtx_y = id_vtx[ y ]
       edges[ vtx_x ].append( vtx_y )
 
-    # Perform topological sort in O(N+M)
+    # Perform topological sort in O(N+M). Note that this gives us a linear
+    # schedule.
 
     InDeg = [0] * N
     for x in edges:
@@ -273,7 +275,6 @@ class UpdateComponent( object ):
         Q.append( i )
 
     while Q:
-      import random
       random.shuffle(Q) # to catch corner cases; will be removed later
 
       u = Q.popleft()
@@ -285,6 +286,31 @@ class UpdateComponent( object ):
 
     if len(s._schedule_list) < len(s._upblks):
       raise Exception("Update blocks have cyclic dependencies.")
+
+    # Perform work partitioning to basically extract batches of frontiers
+    # for parallelism
+
+    InDeg = [0] * N
+    for x in edges:
+      for y in x:
+        InDeg[y] += 1
+
+    Q = deque()
+    for i in xrange(N):
+      if InDeg[i] == 0:
+        Q.append( i )
+
+    s._batch_schedule = []
+
+    while Q:
+      Q2 = deque()
+      s._batch_schedule.append( [ s._upblks[y] for y in Q ] )
+      for u in Q:
+        for v in edges[u]:
+          InDeg[v] -= 1
+          if InDeg[v] == 0:
+            Q2.append( v )
+      Q = Q2
 
   def elaborate( s ):
     s._recursive_elaborate( s )
@@ -298,3 +324,5 @@ class UpdateComponent( object ):
     print
     for blk in s._schedule_list:
       print blk.__name__
+    for x in s._batch_schedule:
+      print [ y.__name__ for y in x ]
