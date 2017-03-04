@@ -5,8 +5,8 @@ Roadmap:
 - [x] Add method for hierarchy and explicit partial constraints
 - [x] Add implicit constraints via variables at update block level
 - [x] Make sure explicit total/partial constraints override implicit ones
-- [ ] Try out a Gcd module. Need a val/rdy source/sink though (ongoing)
-- [ ] Add "interface" to allow connections between components
+- [x] Try out a Gcd module. Need a val/rdy source/sink though 
+- [ ] Add "interface" to allow connections between components (ongoing)
 - [ ] Make sure interface works with methods
 
 ...
