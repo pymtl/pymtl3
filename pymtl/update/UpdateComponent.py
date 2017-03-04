@@ -134,7 +134,8 @@ class UpdateComponent( object ):
       for load_name in loads:
         obj = model
         for field in load_name:
-          assert hasattr( obj, field ), "\"%s\" is not a field of class %s"%(field, type(obj).__name__)
+          assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
+                 %(field, model._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
@@ -145,7 +146,8 @@ class UpdateComponent( object ):
       for store_name in stores:
         obj = model
         for field in store_name:
-          assert hasattr( obj, field ), "\"%s\" is not a field of class %s"%(field, type(obj).__name__)
+          assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
+                 %(field, model._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls

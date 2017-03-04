@@ -106,10 +106,12 @@ class MethodComponent( UpdateComponent ):
       for (object_name, method_name) in method_calls:
         obj = model
         for field in object_name:
-          assert hasattr( obj, field ), "\"%s\" is not a field of class %s"%(field, type(obj).__name__)
+          assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
+                 %(field, model._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
-        assert hasattr( obj, method_name ), "\"%s\" is not a method of class %s"%(method_name, type(obj).__name__)
+        assert hasattr( obj, method_name ), "\"%s\", in %s, is not a method of class %s" \
+               %(method_name, model._blkid_upblk[blk_id].__name__, type(obj).__name__)
         method = getattr( obj, method_name )
         assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
 
