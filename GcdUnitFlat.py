@@ -22,12 +22,12 @@ class GcdUnitDpath( MethodComponent ):
     s.a_reg = RegEn()
     s.b_reg = RegEn()
 
-    s.sub_out = 0
-
     @s.update
     def up_regs_enable():
       s.a_reg.enable( s.a_reg_en )
       s.b_reg.enable( s.b_reg_en )
+
+    s.sub_out = 0
 
     @s.update
     def up_a_mux():
@@ -57,7 +57,6 @@ class GcdUnitDpath( MethodComponent ):
     def up_subtract():
       s.sub_out = s.resp_msg = s.a_reg.rd() - s.b_reg.rd()
 
-
 class GcdUnitCtrl( MethodComponent ):
 
   def __init__( s ):
@@ -80,26 +79,19 @@ class GcdUnitCtrl( MethodComponent ):
 
       curr_state = s.state.rd()
 
-      # Transistions out of IDLE state
-
-      if curr_state == s.STATE_IDLE:
+      if   curr_state == s.STATE_IDLE:
         if s.req_val and s.req_rdy:
           s.state.wr( s.STATE_CALC )
 
-      # Transistions out of CALC state
-
-      if curr_state == s.STATE_CALC:
+      elif curr_state == s.STATE_CALC:
         if not s.is_a_lt_b and s.is_b_zero:
           s.state.wr( s.STATE_DONE )
 
-      # Transistions out of DONE state
-
-      if curr_state == s.STATE_DONE:
+      elif curr_state == s.STATE_DONE:
         if s.resp_val and s.resp_rdy:
           s.state.wr( s.STATE_IDLE )
 
-    s.do_swap = 0
-    s.do_sub  = 0
+    s.do_swap = s.do_sub  = 0
 
     @s.update
     def state_outputs():

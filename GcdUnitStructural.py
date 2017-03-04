@@ -22,10 +22,15 @@ class GcdUnitDpath( MethodComponent ):
     s.a_reg = RegEn()
     s.b_reg = RegEn()
 
-    s.a_mux = Mux(3)
-    s.b_mux = Mux(2)
+    @s.update
+    def up_regs_enable():
+      s.a_reg.enable( s.a_reg_en )
+      s.b_reg.enable( s.b_reg_en )
 
     s.sub_out = 0
+
+    s.a_mux = Mux(3)
+    s.b_mux = Mux(2)
 
     @s.update
     def up_connect_to_a_mux():
@@ -47,11 +52,6 @@ class GcdUnitDpath( MethodComponent ):
     @s.update
     def up_connect_from_b_mux():
       s.b_reg.wr( s.b_mux.out )
-
-    @s.update
-    def up_regs_enable():
-      s.a_reg.enable( s.a_reg_en )
-      s.b_reg.enable( s.b_reg_en )
 
     s.is_b_zero = s.is_a_lt_b = 0
 
