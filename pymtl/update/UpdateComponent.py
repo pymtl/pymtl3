@@ -67,7 +67,7 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
 class UpdateComponent( object ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = object.__new__( cls, *args, **kwargs )
+    inst = super(UpdateComponent, cls).__new__( cls, *args, **kwargs )
     inst._name_upblk = {}
     inst._blkid_upblk = {}
 
@@ -106,8 +106,8 @@ class UpdateComponent( object ):
 
     tree = type(s)._blkid_ast[ blk_id ]
     assert isinstance(tree, ast.Module)
-    tree = tree.body[0]
 
+    tree = tree.body[0]
     assert isinstance(tree, ast.FunctionDef)
     for stmt in tree.body:
       DetectLoadsAndStores().enter(
@@ -119,10 +119,9 @@ class UpdateComponent( object ):
     return s._name_upblk[ name ]
 
   def add_constraints( s, *args ):
-    for x in args:
-      s._expl_constraints.add( (id(x[0].func), id(x[1].func)) )
+    s._expl_constraints.update([ (id(x[0].func), id(x[1].func)) for x in args ])
 
-  def _synthesize_impl_constraints( s, model ):
+  def _synthesize_impl_constraints( s ):
 
     # First check if each load/store variable exists, then bind update
     # blocks that reads/writes the variable to the variable
@@ -130,24 +129,24 @@ class UpdateComponent( object ):
     load_blks  = defaultdict(set)
     store_blks = defaultdict(set)
 
-    for blk_id, loads in model._blkid_loads.iteritems():
+    for blk_id, loads in s._blkid_loads.iteritems():
       for load_name in loads:
-        obj = model
+        obj = s
         for field in load_name:
           assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
-                 %(field, model._blkid_upblk[blk_id].__name__, type(obj).__name__)
+                 %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
           # print " - load",load_name, type(obj), id(obj)
           load_blks[ id(obj) ].add( blk_id )
 
-    for blk_id, stores in model._blkid_stores.iteritems():
+    for blk_id, stores in s._blkid_stores.iteritems():
       for store_name in stores:
-        obj = model
+        obj = s
         for field in store_name:
           assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
-                 %(field, model._blkid_upblk[blk_id].__name__, type(obj).__name__)
+                 %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
@@ -165,45 +164,50 @@ class UpdateComponent( object ):
 
     for i in load_blks:
       m = load_blks[i] = list( load_blks[i] )
-      model._load_blks[i].extend( m )
+      s._load_blks[i].extend( m )
 
     for i in store_blks:
       m = store_blks[i] = list( store_blks[i] )
-      model._store_blks[i].extend( m )
+      s._store_blks[i].extend( m )
 
     for load, ld_blks in load_blks.iteritems():# called at current level
-      st_blks = model._store_blks[ load ] # matching stores
+      st_blks = s._store_blks[ load ] # matching stores
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
-            model._impl_constraints.add( (st, ld) ) # wr < rd by default
+            s._impl_constraints.add( (st, ld) ) # wr < rd by default
 
     for store, st_blks in store_blks.iteritems():# called at current level
-      ld_blks = model._load_blks[ store ]
+      ld_blks = s._load_blks[ store ]
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
-            model._impl_constraints.add( (st, ld) ) # wr < rd by default
+            s._impl_constraints.add( (st, ld) ) # wr < rd by default
 
-  def _recursive_elaborate( s, model ):
+  def _collect_child_vars( s, child ):
+    s._blkid_upblk.update( child._blkid_upblk )
+    s._impl_constraints.update( child._impl_constraints )
+    s._expl_constraints.update( child._expl_constraints )
 
-    for name, obj in model.__dict__.iteritems():
+    for k in child._load_blks:
+      s._load_blks[k].extend( child._load_blks[k] )
+    for k in child._store_blks:
+      s._store_blks[k].extend( child._store_blks[k] )
+
+  def _synthesize_constraints( s ):
+    s._synthesize_impl_constraints()
+
+  def _recursive_elaborate( s ):
+
+    for name, obj in s.__dict__.iteritems():
       if   isinstance( obj, int ): # to create unique id for int
-        model.__dict__[ name ] = _int(obj)
+        s.__dict__[ name ] = _int(obj)
 
       elif isinstance( obj, UpdateComponent ):
-        s._recursive_elaborate( obj )
+        obj._recursive_elaborate()
+        s._collect_child_vars( obj )
 
-        model._blkid_upblk.update( obj._blkid_upblk )
-        model._impl_constraints.update( obj._impl_constraints )
-        model._expl_constraints.update( obj._expl_constraints )
-
-        for k in obj._load_blks:
-          model._load_blks[k].extend( obj._load_blks[k] )
-        for k in obj._store_blks:
-          model._store_blks[k].extend( obj._store_blks[k] )
-
-    s._synthesize_impl_constraints( model )
+    s._synthesize_constraints()
 
   def _schedule( s ):
 
@@ -237,6 +241,7 @@ class UpdateComponent( object ):
     N = len( s._blkid_upblk )
     edges = [ [] for _ in xrange(N) ]
     upblks = s._blkid_upblk.keys()
+    InDeg = [0] * N
 
     # Discretize in O(NlogN), to avoid later O(logN) lookup
 
@@ -250,14 +255,10 @@ class UpdateComponent( object ):
       vtx_x = id_vtx[ x ]
       vtx_y = id_vtx[ y ]
       edges[ vtx_x ].append( vtx_y )
+      InDeg[ vtx_y ] += 1
 
     # Perform topological sort in O(N+M). Note that this gives us a linear
     # schedule.
-
-    InDeg = [0] * N
-    for x in edges:
-      for y in x:
-        InDeg[y] += 1
 
     Q = deque()
     for i in xrange(N):
@@ -277,6 +278,7 @@ class UpdateComponent( object ):
     if len(s._schedule_list) < N:
       raise Exception("Update blocks have cyclic dependencies.")
 
+    # TODO find some lightweight multi-threading library
     # Perform work partitioning to basically extract batches of frontiers
     # for parallelism
 
@@ -303,7 +305,7 @@ class UpdateComponent( object ):
       Q = Q2
 
   def elaborate( s ):
-    s._recursive_elaborate( s )
+    s._recursive_elaborate()
     s._schedule()
 
   def cycle( s ):
