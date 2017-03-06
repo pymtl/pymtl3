@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib import RegEn, Reg
+from pclib.method import RegEn, Reg
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1

@@ -1,4 +1,5 @@
 from pymtl import *
+from pclib.method import Reg
 
 class Wire(MethodComponent):
 
@@ -17,30 +18,6 @@ class Wire(MethodComponent):
 
   def line_trace( s ):
     return "%d" % s.v
-
-class Reg(MethodComponent):
-
-  def __init__( s ):
-    s.v1 = 0
-    s.v2 = 0
-
-    @s.update
-    def up_reg():
-      s.v2 = s.v1
-
-    s.add_constraints(
-      U(up_reg) < M(s.wr),
-      M(s.rd)   > U(up_reg),
-    )
-
-  def wr( s, v ):
-    s.v1 = v
-
-  def rd( s ):
-    return s.v2
-
-  def line_trace( s ):
-    return "[%d > %d]" % (s.v1, s.v2)
 
 class RegWire(MethodComponent):
 
@@ -144,8 +121,8 @@ def test_2regs_mix():
 
 def test_add_loopback_implicit():
 
-  from pclib import TestSource
-  from pclib import TestSink
+  from pclib.update import TestSource
+  from pclib.update import TestSink
 
   class Top(MethodComponent):
 

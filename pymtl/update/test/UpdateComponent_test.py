@@ -1,5 +1,8 @@
 from pymtl import *
 
+from pclib.update import TestSource
+from pclib.update import TestSink
+
 def test_simple():
 
   class Top(UpdateComponent):
@@ -69,9 +72,6 @@ def test_upblock_same_name():
 
 def test_add_loopback():
 
-  from pclib import TestSource
-  from pclib import TestSink
-
   class Top(UpdateComponent):
 
     def __init__( s ):
@@ -132,9 +132,6 @@ def test_add_loopback():
 
 def test_add_loopback_implicit():
 
-  from pclib import TestSource
-  from pclib import TestSink
-
   class Top(UpdateComponent):
 
     def __init__( s ):
@@ -182,9 +179,6 @@ def test_add_loopback_implicit():
     print A.line_trace()
 
 def test_lots_of_fan():
-
-  from pclib import TestSource
-  from pclib import TestSink
 
   class Top(UpdateComponent):
 
