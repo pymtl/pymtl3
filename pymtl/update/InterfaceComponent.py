@@ -43,8 +43,12 @@ class InterfaceComponent( MethodComponent ):
   def _elaborate_vars( s ):
     super( MethodComponent, s )._elaborate_vars()
 
-    s._root = s.find_root()
-    if s._root != s:
+    if s.find_root() != s:
+
+      # copy all functions over
       for x in dir( s ):
-        if callable( getattr(s, x) ):
+        if callable( getattr( s._root, x) ):
           setattr( s, x, getattr( s._root, x) )
+
+      # copy all variables over
+      s.__dict__.update( s._root.__dict__ )

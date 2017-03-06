@@ -113,7 +113,7 @@ class MethodComponent( UpdateComponent ):
         method = getattr( obj, method_name )
         assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
 
-        # print " - method", method_name, type(obj), id(obj)
+        # print " - ", object_name,method_name,"()", hex(id(method)), "in", s._blkid_upblk[blk_id].__name__
         method_blks[ id(method) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
@@ -155,8 +155,10 @@ class MethodComponent( UpdateComponent ):
                 assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
                 s._expl_constraints.add( (v, blk) )
 
-            else:
-              assert v in method_blks, "Incomplete elaboration, something is wrong!"
+            elif v in method_blks:
+              # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
+              # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
+              # E.g. I do port.wr() somewhere in __main__ to write to a port.
 
               # find total constraint (upY < upX) by upY=methodB < methodA=upX
               v_blks = method_blks[ v ]
@@ -174,8 +176,10 @@ class MethodComponent( UpdateComponent ):
               for blk in assoc_blks:
                 assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
                 s._expl_constraints.add( (blk, v) )
-            else:
-              assert v in method_blks, "Incomplete elaboration, something is wrong!"
+            elif v in method_blks:
+              # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
+              # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
+              # E.g. I do port.wr() somewhere in __main__ to write to a port.
 
               # find total constraint (upX < upY) by upX=methodA < methodB=upY
               v_blks = method_blks[ v ]
