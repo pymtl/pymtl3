@@ -1,5 +1,7 @@
 from pymtl import *
-from pclib import *
+from pclib.method import Reg
+from pclib.update import TestSource
+from pclib.update import TestSink
 
 class Port(InterfaceComponent):
 
