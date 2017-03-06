@@ -1,59 +1,45 @@
 from pymtl import *
+from ports import Port
 
 # Register
 
-class Reg(MethodComponent):
+class Reg(InterfaceComponent):
 
   def __init__( s ):
-    s.v1 = 0
-    s.v2 = 0
+    s.in_ = Port(int)
+    s.out = Port(int)
 
     @s.update
     def up_reg():
-      s.v2 = s.v1
+      s.out.wr( s.in_.rd() )
 
     s.add_constraints(
-      U(up_reg) < M(s.wr),
-      M(s.rd)   > U(up_reg),
+      U(up_reg) < M(s.in_.wr),
+      # U(up_reg) < M(s.out.rd), don't need this as s.out has (wr < rd)
     )
 
-  def wr( s, v ):
-    s.v1 = v
-
-  def rd( s ):
-    return s.v2
-
   def line_trace( s ):
-    return "[%4d > %4d]" % (s.v1, s.v2)
+    return "[%4s > %4s]" % (s.in_.line_trace(), s.out.line_trace())
 
 # Register with enable signal
 
-class RegEn(MethodComponent):
+class RegEn(InterfaceComponent):
 
   def __init__( s ):
-    s.v1 = 0
-    s.v2 = 0
-    s.en = 0
+    s.in_ = Port(int)
+    s.out = Port(int)
+    s.en  = Port(bool)
 
     @s.update
     def up_reg():
-      if s.en:
-        s.v2 = s.v1
+      if s.en.rd():
+        s.out.wr( s.in_.rd() )
 
     s.add_constraints(
-      U(up_reg) < M(s.wr),
-      U(up_reg) < M(s.rd),
-      U(up_reg) < M(s.enable),
+      U(up_reg) < M(s.en.wr),
+      U(up_reg) < M(s.in_.wr),
+      # U(up_reg) < M(s.out.rd),
     )
 
-  def wr( s, v ):
-    s.v1 = v
-
-  def rd( s ):
-    return s.v2
-
-  def enable( s, en ):
-    s.en = en
-
   def line_trace( s ):
-    return "[en:%4d|%4d > %4d]" % (s.en, s.v1, s.v2)
+    return "[en:%5s|%4s > %4s]" % (s.en.line_trace(), s.in_.line_trace(), s.out.line_trace())

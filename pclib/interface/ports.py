@@ -16,4 +16,4 @@ class Port(InterfaceComponent):
     return s.value
 
   def line_trace( s ):
-    return "%s" % s.value
+    return "%d" % s.value
