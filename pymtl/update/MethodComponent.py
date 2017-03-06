@@ -92,10 +92,11 @@ class MethodComponent( UpdateComponent ):
         s._predecessors[ id(x1_func) ].add( id(x0_func) )
         s._successors  [ id(x0_func) ].add( id(x1_func) )
 
-  def _synthesize_partial_constraints( s ):
+  # Override
+  def _elaborate_vars( s ):
+    super( MethodComponent, s )._elaborate_vars()
 
-    # First check if the methods exist, then bind update blocks that calls
-    # the method to the method
+    # First check and bind update blocks that calls the method to it
 
     method_blks = defaultdict(set)
 
@@ -112,7 +113,16 @@ class MethodComponent( UpdateComponent ):
         method = getattr( obj, method_name )
         assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
 
+        # print " - method", method_name, type(obj), id(obj)
         method_blks[ id(method) ].add( blk_id )
+
+    # Turn associated sets into lists, as blk_id are now unique.
+    # O(logn) -> O(1)
+
+    for i in method_blks:
+      s._method_blks[i].extend( list( method_blks[i] ) )
+
+  def _synthesize_partial_constraints( s ):
 
     # Do bfs to find out all potential total constraints associated with
     # each method, direction conflicts, and incomplete constraints
@@ -128,9 +138,7 @@ class MethodComponent( UpdateComponent ):
     # there might be some constraints in grandchild or deeper submodels.
     # So, we append these to  all previous method_blks
 
-    for i in method_blks:
-      method_blks[i] = list( method_blks[i] )
-      s._method_blks[i].extend( method_blks[i] )
+    method_blks = s._method_blks
 
     for method_id in method_blks:
       assoc_blks = method_blks[ method_id ]
@@ -142,41 +150,46 @@ class MethodComponent( UpdateComponent ):
         if w <= 0:
           for v in s._predecessors[u]:
             if v in s._blkid_upblk:
-              assert v != blk_id, "Self loop at %s" % s._blkid_upblk[blk_id].__name__
-
               # find total constraint (upY < upX) by upY < methodA=upX
               for blk in assoc_blks:
+                assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
                 s._expl_constraints.add( (v, blk) )
+
             else:
+              assert v in method_blks, "Incomplete elaboration, something is wrong!"
+
               # find total constraint (upY < upX) by upY=methodB < methodA=upX
-              v_blks = s._method_blks[ v ]
-              for y in v_blks:
+              v_blks = method_blks[ v ]
+              for vb in v_blks:
                 for blk in assoc_blks:
-                  s._expl_constraints.add( (y, blk) )
+                  assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                  s._expl_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
         if w >= 0:
           for v in s._successors[u]:
             if v in s._blkid_upblk:
-              assert v != blk_id, "Self loop at %s" % s._blkid_upblk[blk_id].__name__
-
               # find total constraint (upX < upY) by upX=methodA < upY
               for blk in assoc_blks:
+                assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
                 s._expl_constraints.add( (blk, v) )
             else:
+              assert v in method_blks, "Incomplete elaboration, something is wrong!"
+
               # find total constraint (upX < upY) by upX=methodA < methodB=upY
-              v_blks = s._method_blks[ v ]
-              for y in v_blks:
+              v_blks = method_blks[ v ]
+              for vb in v_blks:
                 for blk in assoc_blks:
-                  s._expl_constraints.add( (blk, y) )
+                  assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                  s._expl_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
   # Override
   def _collect_child_vars( s, child ):
     super( MethodComponent, s )._collect_child_vars( child )
-    
+
     if isinstance( child, MethodComponent ):
       for k in child._predecessors:
         s._predecessors[k].update( child._predecessors[k] )

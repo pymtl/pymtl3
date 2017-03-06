@@ -68,11 +68,12 @@ class UpdateComponent( object ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super(UpdateComponent, cls).__new__( cls, *args, **kwargs )
+
     inst._name_upblk = {}
     inst._blkid_upblk = {}
-
     inst._blkid_loads = defaultdict(list)
     inst._blkid_stores = defaultdict(list)
+
     inst._load_blks = defaultdict(list)
     inst._store_blks = defaultdict(list)
 
@@ -86,8 +87,7 @@ class UpdateComponent( object ):
       raise Exception("Cannot declare two update blocks using the same name!")
 
     blk_id = id(blk)
-    s._name_upblk[ blk.__name__ ] = blk
-    s._blkid_upblk[ blk_id ] = blk
+    s._name_upblk[ blk.__name__ ] = s._blkid_upblk[ blk_id ] = blk
 
     # I store the ast of each update block to parse method calls. To also
     # cache them across different instances of the same class, I attach
@@ -100,19 +100,17 @@ class UpdateComponent( object ):
       src = p.sub( r'\2', inspect.getsource( blk ) )
       type(s)._blkid_ast[ blk_id ] = ast.parse( src )
 
-    # Parse the ast to extract variable writes and reads
-    # First check if it's a valid AST and remove the @s.update and empty
-    # arguments
+    # Traverse the ast to extract variable writes and reads
+    # First check and remove @s.update and empty arguments
 
     tree = type(s)._blkid_ast[ blk_id ]
     assert isinstance(tree, ast.Module)
-
     tree = tree.body[0]
     assert isinstance(tree, ast.FunctionDef)
+
     for stmt in tree.body:
       DetectLoadsAndStores().enter(
         stmt, s._blkid_loads[ blk_id ], s._blkid_stores[ blk_id ] )
-
     return blk
 
   def get_update_block( s, name ):
@@ -121,10 +119,10 @@ class UpdateComponent( object ):
   def add_constraints( s, *args ):
     s._expl_constraints.update([ (id(x[0].func), id(x[1].func)) for x in args ])
 
-  def _synthesize_impl_constraints( s ):
+  def _elaborate_vars( s ):
 
-    # First check if each load/store variable exists, then bind update
-    # blocks that reads/writes the variable to the variable
+    # First check if each load/store variable exists, then bind the actual
+    # variable id (not name anymore) to upblks that reads/writes it.
 
     load_blks  = defaultdict(set)
     store_blks = defaultdict(set)
@@ -156,29 +154,29 @@ class UpdateComponent( object ):
     # Turn associated sets into lists, as blk_id are now unique.
     # O(logn) -> O(1)
 
-    # Synthesize total constraints between two upblks that read/write to
-    # the same variable. Note that one side of the new constraint comes
-    # only from variables called at the current level to avoid redundant
-    # scans, but the other side is from all recursively collected vars
-    # plus those called the current level.
-
     for i in load_blks:
-      m = load_blks[i] = list( load_blks[i] )
-      s._load_blks[i].extend( m )
+      s._load_blks[i].extend( list( load_blks[i] ) )
 
     for i in store_blks:
-      m = store_blks[i] = list( store_blks[i] )
-      s._store_blks[i].extend( m )
+      s._store_blks[i].extend( list( store_blks[i] ) )
 
-    for load, ld_blks in load_blks.iteritems():# called at current level
-      st_blks = s._store_blks[ load ] # matching stores
+  def _synthesize_impl_constraints( s ):
+
+    # Synthesize total constraints between two upblks that read/write to
+    # the same variable. This is done after the recursive elaboration
+
+    load_blks  = s._load_blks
+    store_blks = s._store_blks
+
+    for load, ld_blks in load_blks.iteritems():
+      st_blks = store_blks[ load ] # stores to the same variable
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
             s._impl_constraints.add( (st, ld) ) # wr < rd by default
 
-    for store, st_blks in store_blks.iteritems():# called at current level
-      ld_blks = s._load_blks[ store ]
+    for store, st_blks in store_blks.iteritems():
+      ld_blks = load_blks[ store ]
       for st in st_blks:
         for ld in ld_blks:
           if st != ld:
@@ -200,14 +198,16 @@ class UpdateComponent( object ):
   def _recursive_elaborate( s ):
 
     for name, obj in s.__dict__.iteritems():
-      if   isinstance( obj, int ): # to create unique id for int
-        s.__dict__[ name ] = _int(obj)
+      if not name.startswith("_"): # filter private variables
 
-      elif isinstance( obj, UpdateComponent ):
-        obj._recursive_elaborate()
-        s._collect_child_vars( obj )
+        if   isinstance( obj, int ): # to create unique id for int
+          s.__dict__[ name ] = _int(obj)
 
-    s._synthesize_constraints()
+        elif isinstance( obj, UpdateComponent ):
+          obj._recursive_elaborate()
+          s._collect_child_vars( obj )
+
+    s._elaborate_vars()
 
   def _schedule( s ):
 
@@ -306,6 +306,7 @@ class UpdateComponent( object ):
 
   def elaborate( s ):
     s._recursive_elaborate()
+    s._synthesize_constraints()
     s._schedule()
 
   def cycle( s ):
