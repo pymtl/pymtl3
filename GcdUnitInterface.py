@@ -1,5 +1,6 @@
 from pymtl import *
 from pclib.method import RegEn, Reg, Mux
+from pclib.interface import Port
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -9,24 +10,6 @@ A_MUX_SEL_X     = 0
 B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
-
-class Port(InterfaceComponent):
-
-  def __init__( s, type_ ):
-    s.value = type_()
-
-    s.add_constraints(
-      M(s.wr) < M(s.rd)
-    )
-
-  def wr( s, v ):
-    s.value = v
-
-  def rd( s ):
-    return s.value
-
-  def line_trace( s ):
-    return "%s" % s.value
 
 class GcdUnitDpath( MethodComponent ):
 
