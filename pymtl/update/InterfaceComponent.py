@@ -41,7 +41,7 @@ class InterfaceComponent( MethodComponent ):
 
   # Override
   def _elaborate_vars( s ):
-    super( MethodComponent, s )._elaborate_vars()
+    super( InterfaceComponent, s )._elaborate_vars()
 
     if s.find_root() != s:
 
