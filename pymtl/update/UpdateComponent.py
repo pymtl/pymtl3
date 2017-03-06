@@ -5,7 +5,14 @@
 # Each update block is called exactly once every cycle. PyMTL will
 # schedule all update blocks based on the constraints. A total constraint
 # between two update blocks specifies the order of the two blocks, i.e.
-# who is called before whom.
+# call A before B.
+# We collect two types of constraints at this level:
+# * Implicit constraint: upA reads s.x while upB writes s.x ==> upB < upA
+# * Explicit constraint: s.add_constraints( upA < upB )
+# Explicit constraints will override implicit constraints.
+
+verbose = False
+# verbose = True
 
 import re, inspect, ast, random, copy
 p = re.compile('( *(@|def))')
@@ -136,7 +143,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          # print " - load",load_name, type(obj), id(obj)
+          if verbose: print " - load",load_name, hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
           load_blks[ id(obj) ].add( blk_id )
 
     for blk_id, stores in s._blkid_stores.iteritems():
@@ -148,7 +155,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          # print " - store",store_name, type(obj), id(obj)
+          if verbose: print " - store",store_name, hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
           store_blks[ id(obj) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
@@ -213,11 +220,12 @@ class UpdateComponent( object ):
 
     s._total_constraints = s._expl_constraints.copy()
 
-    for (x, y) in s._impl_constraints:
-      print s._blkid_upblk[x].__name__.center(25)," (<) ", s._blkid_upblk[y].__name__.center(25)
+    if verbose:
+      for (x, y) in s._impl_constraints:
+        print s._blkid_upblk[x].__name__.center(25)," (<) ", s._blkid_upblk[y].__name__.center(25)
 
-    for (x, y) in s._expl_constraints:
-      print s._blkid_upblk[x].__name__.center(25),"  <  ", s._blkid_upblk[y].__name__.center(25)
+      for (x, y) in s._expl_constraints:
+        print s._blkid_upblk[x].__name__.center(25),"  <  ", s._blkid_upblk[y].__name__.center(25)
 
     for (x, y) in s._impl_constraints:
       if (y, x) not in s._expl_constraints: # no conflicting expl
@@ -229,14 +237,15 @@ class UpdateComponent( object ):
 
     s._total_constraints = list(s._total_constraints)
 
-    # from graphviz import Digraph
-    # dot = Digraph(comment = s.__class__)
-    # dot.graph_attr["rank"] = "source"
-    # dot.graph_attr["ratio"] = "fill"
-    # dot.graph_attr["margin"] = "0.1"
-    # for (x, y) in s._total_constraints:
-      # dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
-      # dot.render("/tmp/pymtl.gv", view=True)
+    if verbose:
+      from graphviz import Digraph
+      dot = Digraph(comment = s.__class__)
+      dot.graph_attr["rank"] = "source"
+      dot.graph_attr["ratio"] = "fill"
+      dot.graph_attr["margin"] = "0.1"
+      for (x, y) in s._total_constraints:
+        dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
+        dot.render("/tmp/pymtl.gv", view=True)
 
     N = len( s._blkid_upblk )
     edges = [ [] for _ in xrange(N) ]
