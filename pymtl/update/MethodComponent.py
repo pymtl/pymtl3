@@ -7,6 +7,14 @@
 # A partial constraint is specified between one update block and one
 # method, or two methods. PyMTL will try to chain partial constraints to
 # produce total constraints.
+# We collect two types of constraints at this level as well:
+# * Implicit binding: upA calls s.a.AA() upA = methodAA
+# * Explicit constraint: 3 types, see below
+#   - s.add_constraints( upA < upB, methodAA < upA, methodBB < methodAA )
+# Explicit constraints will override implicit bindings.
+
+verbose = False
+# verbose = True
 
 import re, inspect, ast
 p = re.compile('( *(@|def))')
@@ -67,36 +75,38 @@ class MethodComponent( UpdateComponent ):
 
     for (x0, x1) in args:
 
-      # Forward total constraints to the final graph
-      if isinstance( x0, U ) and isinstance( x1, U ): # Two upblks!
+      # Two upblks! Forward total constraints to the final graph
+      if isinstance( x0, U ) and isinstance( x1, U ):
         s._add_expl_constraints( id(x0.func), id(x1.func) )
 
-      # keep partial constraints for later synthesis
+      # Keep partial constraints for later synthesis
+      # Store the method descriptor to host instance dictionary for unique id
       else:
-        x0_func = x0.func
-        x1_func = x1.func
-
-        # Store the method descriptor to instance dictionary for unique id
+        x = x0.func
+        y = x1.func
 
         if isinstance( x0, M ):
-          if not x0.func.__name__  in s.__dict__:
-            s.__dict__[ x0.func.__name__ ] = x0.func
-          x0_func = s.__dict__[ x0.func.__name__ ]
+          obj = x.__self__
+          if not x.__name__  in obj.__dict__:
+            obj.__dict__[ x.__name__ ] = x
+          x = obj.__dict__[ x.__name__ ]
 
         if isinstance( x1, M ):
-          if not x1.func.__name__  in s.__dict__:
-            s.__dict__[ x1.func.__name__ ] = x1.func
-          x1_func = s.__dict__[ x1.func.__name__ ]
+          obj = y.__self__
+          if not y.__name__  in obj.__dict__:
+            obj.__dict__[ y.__name__ ] = y
+          y = obj.__dict__[ y.__name__ ]
 
         # Partial constraints, x0 < x1
-        s._predecessors[ id(x1_func) ].add( id(x0_func) )
-        s._successors  [ id(x0_func) ].add( id(x1_func) )
+        s._predecessors[ id(y) ].add( id(x) )
+        s._successors  [ id(x) ].add( id(y) )
 
   # Override
   def _elaborate_vars( s ):
     super( MethodComponent, s )._elaborate_vars()
 
     # First check and bind update blocks that calls the method to it
+    # This method elaborates the variables for implicit binding
 
     method_blks = defaultdict(set)
 
@@ -113,7 +123,8 @@ class MethodComponent( UpdateComponent ):
         method = getattr( obj, method_name )
         assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
 
-        # print " - ", object_name,method_name,"()", hex(id(method)), "in", s._blkid_upblk[blk_id].__name__
+        if verbose: print " - ", object_name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+
         method_blks[ id(method) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
@@ -132,61 +143,72 @@ class MethodComponent( UpdateComponent ):
 
     # Turn associated sets into lists, as blk_id are now unique.
     # O(logn) -> O(1)
-    # Then append variables called at the current level to the big dict
-
-    # We only find constraints for upblks at the current level. However,
-    # there might be some constraints in grandchild or deeper submodels.
-    # So, we append these to  all previous method_blks
 
     method_blks = s._method_blks
 
     for method_id in method_blks:
       assoc_blks = method_blks[ method_id ]
-
       Q = deque( [ (method_id, 0) ] ) # -1: pred, 0: don't know, 1: succ
       while Q:
         (u, w) = Q.popleft()
 
         if w <= 0:
           for v in s._predecessors[u]:
+
             if v in s._blkid_upblk:
-              # find total constraint (upY < upX) by upY < methodA=upX
+              # Find total constraint (v < blk) by v < method_u < method_u'=blk
+              # INVALID if we have explicit constraint (blk < method_u)
+
               for blk in assoc_blks:
-                assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
-                s._expl_constraints.add( (v, blk) )
+                if blk not in s._predecessors[u]:
+                  assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
+                  s._expl_constraints.add( (v, blk) )
 
             elif v in method_blks:
               # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
               # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
               # E.g. I do port.wr() somewhere in __main__ to write to a port.
 
-              # find total constraint (upY < upX) by upY=methodB < methodA=upX
+              # Find total constraint (vb < blk) by vb=method_v < method_u=blk
+              # INVALID if we have explicit constraint (blk < method_v) or (method_u < vb)
+
               v_blks = method_blks[ v ]
               for vb in v_blks:
-                for blk in assoc_blks:
-                  assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
-                  s._expl_constraints.add( (vb, blk) )
+                if vb not in s._successors[u]:
+                  for blk in assoc_blks:
+                    if blk not in s._predecessors[v]:
+                      assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                      s._expl_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
         if w >= 0:
           for v in s._successors[u]:
+
             if v in s._blkid_upblk:
-              # find total constraint (upX < upY) by upX=methodA < upY
+              # Find total constraint (blk < v) by blk=method_u' < method_u < v
+              # INVALID if we have explicit constraint (method_u < blk)
+
               for blk in assoc_blks:
-                assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
-                s._expl_constraints.add( (blk, v) )
+                if blk not in s._successors[u]:
+                  assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
+                  s._expl_constraints.add( (blk, v) )
+
             elif v in method_blks:
               # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
               # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
               # E.g. I do port.wr() somewhere in __main__ to write to a port.
 
-              # find total constraint (upX < upY) by upX=methodA < methodB=upY
+              # Find total constraint (blk < vb) by blk=method_u < method_v=vb
+              # INVALID if we have explicit constraint (vb < method_u) or (method_v < blk)
+
               v_blks = method_blks[ v ]
               for vb in v_blks:
-                for blk in assoc_blks:
-                  assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
-                  s._expl_constraints.add( (blk, vb) )
+                if not vb in s._predecessors[u]:
+                  for blk in assoc_blks:
+                    if not blk in s._successors[v]:
+                      assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                      s._expl_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 

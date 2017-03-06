@@ -1,6 +1,6 @@
 from pymtl import *
-from pclib.method import RegEn, Reg, Mux
-from pclib.interface import Port, Subtractor
+from pclib.method import Mux
+from pclib.interface import RegEn, Reg, Port, Subtractor
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -25,20 +25,15 @@ class GcdUnitDpath( MethodComponent ):
     s.b_reg_en  = Port(int)
 
     s.a_reg = RegEn()
-    s.b_reg = RegEn()
+    s.a_reg.en |= s.a_reg_en
 
-    @s.update
-    def up_regs_enable():
-      s.a_reg.enable( s.a_reg_en.rd() )
-      s.b_reg.enable( s.b_reg_en.rd() )
+    s.b_reg = RegEn()
+    s.b_reg.en |= s.b_reg_en
 
     s.sub = Subtractor()
+    s.sub.in0 |= s.a_reg.out
+    s.sub.in1 |= s.b_reg.out
     s.sub.out |= s.resp_msg
-
-    @s.update
-    def up_to_subtractor():
-      s.sub.in0.wr( s.a_reg.rd() )
-      s.sub.in1.wr( s.b_reg.rd() )
 
     s.a_mux = Mux(3)
     s.b_mux = Mux(2)
@@ -47,22 +42,22 @@ class GcdUnitDpath( MethodComponent ):
     def up_connect_to_a_mux():
       s.a_mux.in_[A_MUX_SEL_IN]  = s.req_msg_a.rd()
       s.a_mux.in_[A_MUX_SEL_SUB] = s.sub.out.rd()
-      s.a_mux.in_[A_MUX_SEL_B]   = s.b_reg.rd()
+      s.a_mux.in_[A_MUX_SEL_B]   = s.b_reg.out.rd()
       s.a_mux.sel                = s.a_mux_sel.rd()
 
     @s.update
     def up_connect_from_a_mux():
-      s.a_reg.wr( s.a_mux.out )
+      s.a_reg.in_.wr( s.a_mux.out )
 
     @s.update
     def up_connect_to_b_mux():
-      s.b_mux.in_[B_MUX_SEL_A]  = s.a_reg.rd()
+      s.b_mux.in_[B_MUX_SEL_A]  = s.a_reg.out.rd()
       s.b_mux.in_[B_MUX_SEL_IN] = s.req_msg_b.rd()
       s.b_mux.sel               = s.b_mux_sel.rd()
 
     @s.update
     def up_connect_from_b_mux():
-      s.b_reg.wr( s.b_mux.out )
+      s.b_reg.in_.wr( s.b_mux.out )
 
     # s.a_mux = Mux(3)
     # s.a_mux.sel               |= s.a_mux_sel
@@ -94,8 +89,8 @@ class GcdUnitDpath( MethodComponent ):
 
     @s.update
     def up_comparisons():
-      s.is_b_zero.wr( s.b_reg.rd() == 0 )
-      s.is_a_lt_b.wr( s.a_reg.rd() < s.b_reg.rd() )
+      s.is_b_zero.wr( s.b_reg.out.rd() == 0 )
+      s.is_a_lt_b.wr( s.a_reg.out.rd() < s.b_reg.out.rd() )
 
 
 class GcdUnitCtrl( MethodComponent ):
@@ -123,26 +118,26 @@ class GcdUnitCtrl( MethodComponent ):
     @s.update
     def state_transitions():
 
-      curr_state = s.state.rd()
+      curr_state = s.state.out.rd()
 
       if   curr_state == s.STATE_IDLE:
         if s.req_val.rd() and s.req_rdy.rd():
-          s.state.wr( s.STATE_CALC )
+          s.state.in_.wr( s.STATE_CALC )
 
       elif curr_state == s.STATE_CALC:
         if not s.is_a_lt_b.rd() and s.is_b_zero.rd():
-          s.state.wr( s.STATE_DONE )
+          s.state.in_.wr( s.STATE_DONE )
 
       elif curr_state == s.STATE_DONE:
         if s.resp_val.rd() and s.resp_rdy.rd():
-          s.state.wr( s.STATE_IDLE )
+          s.state.in_.wr( s.STATE_IDLE )
 
     s.do_swap = s.do_sub  = 0
 
     @s.update
     def state_outputs():
 
-      curr_state = s.state.rd()
+      curr_state = s.state.out.rd()
 
       s.do_swap = s.do_sub = 0
       s.req_rdy  .wr( 0 )
@@ -220,6 +215,11 @@ class GcdUnit( MethodComponent ):
     s.ctrl.is_b_zero  |= s.dpath.is_b_zero
     s.ctrl.is_a_lt_b  |= s.dpath.is_a_lt_b
 
+  # def line_trace( s ):
+    # return "{} {} {}".format( A.dpath.a_reg.line_trace(), \
+                              # A.dpath.b_reg.line_trace(), \
+                              # A.dpath.sub.line_trace() )
+
 A = GcdUnit()
 A.elaborate()
 A.print_schedule()
@@ -227,12 +227,12 @@ A.print_schedule()
 A.req_val .wr( 1 )
 A.resp_rdy.wr( 1 )
 
-for cycle in xrange(10):
-  # A.req_msg_a.wr( cycle+95827*(cycle&1) )
-  # A.req_msg_b.wr( cycle+(19182)*(cycle&1) )
-  A.req_msg_a.wr(60)
-  A.req_msg_b.wr(35)
+for cycle in xrange(10000000):
+  A.req_msg_a.wr( cycle+95827*(cycle&1) )
+  A.req_msg_b.wr( cycle+(19182)*(cycle&1) )
+  # A.req_msg_a.wr(60)
+  # A.req_msg_b.wr(35)
   A.cycle()
-  print "req val:%s rdy:%s a:%s b:%s" % (A.req_val.line_trace(), A.req_rdy.line_trace(), A.req_msg_a.line_trace(), A.req_msg_b.line_trace()), \
-        A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
-        "resp val:%s rdy:%s gcd:%s" % (A.resp_val.line_trace(), A.resp_rdy.line_trace(), A.resp_msg.line_trace() )
+  # print "req val:%s rdy:%s a:%s b:%s" % (A.req_val.line_trace(), A.req_rdy.line_trace(), A.req_msg_a.line_trace(), A.req_msg_b.line_trace()), \
+        # A.line_trace(), \
+        # "resp val:%s rdy:%s gcd:%s" % (A.resp_val.line_trace(), A.resp_rdy.line_trace(), A.resp_msg.line_trace() )
