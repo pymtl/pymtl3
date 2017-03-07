@@ -161,8 +161,9 @@ class MethodComponent( UpdateComponent ):
 
               for blk in assoc_blks:
                 if blk not in s._predecessors[u]:
-                  assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
-                  s._expl_constraints.add( (v, blk) )
+                  if v != blk:
+                  # assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
+                    s._expl_constraints.add( (v, blk) )
 
             elif v in method_blks:
               # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
@@ -177,8 +178,9 @@ class MethodComponent( UpdateComponent ):
                 if vb not in s._successors[u]:
                   for blk in assoc_blks:
                     if blk not in s._predecessors[v]:
-                      assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
-                      s._expl_constraints.add( (vb, blk) )
+                      if vb != blk:
+                      # assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                        s._expl_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
@@ -191,8 +193,9 @@ class MethodComponent( UpdateComponent ):
 
               for blk in assoc_blks:
                 if blk not in s._successors[u]:
-                  assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
-                  s._expl_constraints.add( (blk, v) )
+                  if v != blk:
+                  # assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
+                    s._expl_constraints.add( (blk, v) )
 
             elif v in method_blks:
               # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
@@ -207,8 +210,9 @@ class MethodComponent( UpdateComponent ):
                 if not vb in s._predecessors[u]:
                   for blk in assoc_blks:
                     if not blk in s._successors[v]:
-                      assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
-                      s._expl_constraints.add( (blk, vb) )
+                      if vb != blk:
+                      # assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                        s._expl_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
