@@ -15,7 +15,7 @@ class Reg(InterfaceComponent):
 
     s.add_constraints(
       U(up_reg) < M(s.in_.wr),
-      # U(up_reg) < M(s.out.rd), don't need this as s.out has (wr < rd)
+      U(up_reg) < M(s.out.rd),
     )
 
   def line_trace( s ):
@@ -31,14 +31,14 @@ class RegEn(InterfaceComponent):
     s.en  = Port(bool)
 
     @s.update
-    def up_reg():
+    def up_regen():
       if s.en.rd():
         s.out.wr( s.in_.rd() )
 
     s.add_constraints(
-      U(up_reg) < M(s.en.wr),
-      U(up_reg) < M(s.in_.wr),
-      # U(up_reg) < M(s.out.rd),
+      U(up_regen) < M(s.en.wr),
+      U(up_regen) < M(s.in_.wr),
+      U(up_regen) < M(s.out.rd),
     )
 
   def line_trace( s ):
