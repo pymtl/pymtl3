@@ -143,7 +143,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          if verbose: print " - load",load_name, hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+          if verbose: print " - load",load_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
           load_blks[ id(obj) ].add( blk_id )
 
     for blk_id, stores in s._blkid_stores.iteritems():
@@ -155,7 +155,7 @@ class UpdateComponent( object ):
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          if verbose: print " - store",store_name, hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+          if verbose: print " - store",store_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
           store_blks[ id(obj) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.

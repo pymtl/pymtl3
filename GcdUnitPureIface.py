@@ -215,10 +215,10 @@ class GcdUnit( MethodComponent ):
     s.ctrl.is_b_zero  |= s.dpath.is_b_zero
     s.ctrl.is_a_lt_b  |= s.dpath.is_a_lt_b
 
-  # def line_trace( s ):
-    # return "{} {} {}".format( A.dpath.a_reg.line_trace(), \
-                              # A.dpath.b_reg.line_trace(), \
-                              # A.dpath.sub.line_trace() )
+  def line_trace( s ):
+    return "{} {} {}".format( A.dpath.a_reg.line_trace(), \
+                              A.dpath.b_reg.line_trace(), \
+                              A.dpath.sub.line_trace() )
 
 A = GcdUnit()
 A.elaborate()
@@ -227,7 +227,7 @@ A.print_schedule()
 A.req_val .wr( 1 )
 A.resp_rdy.wr( 1 )
 
-for cycle in xrange(10000000):
+for cycle in xrange(10):
   A.req_msg_a.wr( cycle+95827*(cycle&1) )
   A.req_msg_b.wr( cycle+(19182)*(cycle&1) )
   # A.req_msg_a.wr(60)
