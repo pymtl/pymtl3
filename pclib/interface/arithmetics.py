@@ -6,13 +6,13 @@ from ports import Port
 class Mux(InterfaceComponent):
 
   def __init__( s, num_inputs = 2 ):
-    s.in_ = [ Port(int) for _ in xrange(num_inputs) ]
+    s.in_ = [ 0 ] * num_inputs
     s.sel = Port(int)
     s.out = Port(int)
 
     @s.update
     def up_mux():
-      s.out = s.in_[ s.sel.rd() ].rd()
+      s.out.wr( s.in_[ s.sel.rd() ] )
 
   def line_trace( s ):
     return "[in%1d]" % (s.sel.rd() )

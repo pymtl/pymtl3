@@ -41,14 +41,47 @@ class InterfaceComponent( MethodComponent ):
 
   # Override
   def _elaborate_vars( s ):
-    super( InterfaceComponent, s )._elaborate_vars()
+    if s.find_root() == s:
+      super( InterfaceComponent, s )._elaborate_vars()
 
-    if s.find_root() != s:
+    else:
+      new_partial = list( s._partial_constraints )
+      root = s._root
 
       # copy all functions over
       for x in dir( s ):
-        if callable( getattr( s._root, x) ):
-          setattr( s, x, getattr( s._root, x) )
+        origin = getattr( s, x )
 
-      # copy all variables over
-      s.__dict__.update( s._root.__dict__ )
+        if hasattr( root, x ):
+          inroot = getattr( root, x )
+        else:
+          setattr( s._root, x, origin )
+          inroot = origin
+        assert callable(origin) == callable(inroot)
+
+        if callable( origin ):
+          setattr( s, x, inroot )
+
+          # replace involved ids with root's corresponding method's id
+          for i in xrange( len(new_partial) ):
+            x, y = new_partial[i]
+            if x == id(origin): x = id(inroot)
+            if y == id(origin): y = id(inroot)
+            new_partial[i] = (x, y)
+
+      # replace involved ids with root's corresponding upblk's id
+      for name in s._name_upblk:
+        assert name in root._name_upblk, "Connecting two different classes %s and %s" % \
+                (s.__class__.__name__, root.__class__.__name__)
+
+        origin = id( s._name_upblk[name] )
+        inroot = id( root._name_upblk[name] )
+
+        for i in xrange( len(new_partial) ):
+          x, y = new_partial[i]
+          if x == id(origin): x = id(inroot)
+          if y == id(origin): y = id(inroot)
+          new_partial[i] = (x, y)
+
+      root._partial_constraints.update( new_partial )
+      s._partial_constraints = set( new_partial ) # TODO Understand why it is correct

@@ -13,8 +13,7 @@
 #   - s.add_constraints( upA < upB, methodAA < upA, methodBB < methodAA )
 # Explicit constraints will override implicit bindings.
 
-verbose = False
-# verbose = True
+from UpdateComponent import verbose
 
 import re, inspect, ast
 p = re.compile('( *(@|def))')
@@ -39,8 +38,8 @@ class MethodComponent( UpdateComponent ):
 
     inst._blkid_methods = defaultdict(list)
     inst._method_blks   = defaultdict(list)
-    inst._predecessors  = defaultdict(set)
-    inst._successors    = defaultdict(set)
+
+    inst._partial_constraints = set() # contains ( id(func), id(func) )s
     return inst
 
   # Override
@@ -84,22 +83,25 @@ class MethodComponent( UpdateComponent ):
       else:
         x = x0.func
         y = x1.func
+        xobj = yobj = s
 
         if isinstance( x0, M ):
-          obj = x.__self__
-          if not x.__name__  in obj.__dict__:
-            obj.__dict__[ x.__name__ ] = x
-          x = obj.__dict__[ x.__name__ ]
+          xobj = x.__self__
+          if not x.__name__  in xobj.__dict__:
+            xobj.__dict__[ x.__name__ ] = x
+          x = xobj.__dict__[ x.__name__ ]
 
         if isinstance( x1, M ):
-          obj = y.__self__
-          if not y.__name__  in obj.__dict__:
-            obj.__dict__[ y.__name__ ] = y
-          y = obj.__dict__[ y.__name__ ]
+          yobj = y.__self__
+          if not y.__name__  in yobj.__dict__:
+            yobj.__dict__[ y.__name__ ] = y
+          y = yobj.__dict__[ y.__name__ ]
 
         # Partial constraints, x0 < x1
-        s._predecessors[ id(y) ].add( id(x) )
-        s._successors  [ id(x) ].add( id(y) )
+        xobj._partial_constraints.add( (id(x), id(y)) )
+        yobj._partial_constraints.add( (id(x), id(y)) )
+
+        if verbose: print hex(id(x)), "p<",hex(id(y))
 
   # Override
   def _elaborate_vars( s ):
@@ -141,28 +143,35 @@ class MethodComponent( UpdateComponent ):
     # upX=methodA < methodB=upY ---> upX < upY
     # upX=methodA < upY         ---> upX < upY
 
-    # Turn associated sets into lists, as blk_id are now unique.
-    # O(logn) -> O(1)
+    pred = defaultdict(set)
+    succ = defaultdict(set)
+    for (x, y) in s._partial_constraints:
+      pred[y].add( x )
+      succ[x].add( y )
 
     method_blks = s._method_blks
 
     for method_id in method_blks:
       assoc_blks = method_blks[ method_id ]
       Q = deque( [ (method_id, 0) ] ) # -1: pred, 0: don't know, 1: succ
+      if verbose: print
       while Q:
         (u, w) = Q.popleft()
+        if verbose: print (hex(u), w)
 
         if w <= 0:
-          for v in s._predecessors[u]:
+          for v in pred[u]:
 
             if v in s._blkid_upblk:
               # Find total constraint (v < blk) by v < method_u < method_u'=blk
               # INVALID if we have explicit constraint (blk < method_u)
 
               for blk in assoc_blks:
-                if blk not in s._predecessors[u]:
+                if blk not in pred[u]:
                   if v != blk:
-                  # assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
+                    if verbose: print "w<=0, v is blk".center(10),hex(v), hex(blk)
+                    if verbose: print s._blkid_upblk[v].__name__.center(25)," < ", \
+                                s._blkid_upblk[blk].__name__.center(25)
                     s._expl_constraints.add( (v, blk) )
 
             elif v in method_blks:
@@ -175,26 +184,30 @@ class MethodComponent( UpdateComponent ):
 
               v_blks = method_blks[ v ]
               for vb in v_blks:
-                if vb not in s._successors[u]:
+                if vb not in succ[u]:
                   for blk in assoc_blks:
-                    if blk not in s._predecessors[v]:
+                    if blk not in pred[v]:
                       if vb != blk:
-                      # assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                        if verbose: print "w<=0, v is method".center(10),hex(v), hex(blk) 
+                        if verbose: print s._blkid_upblk[vb].__name__.center(25)," < ", \
+                                    s._blkid_upblk[blk].__name__.center(25)
                         s._expl_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
         if w >= 0:
-          for v in s._successors[u]:
+          for v in succ[u]:
 
             if v in s._blkid_upblk:
               # Find total constraint (blk < v) by blk=method_u' < method_u < v
               # INVALID if we have explicit constraint (method_u < blk)
 
               for blk in assoc_blks:
-                if blk not in s._successors[u]:
+                if blk not in succ[u]:
                   if v != blk:
-                  # assert v != blk, "Self loop at %s" % s._blkid_upblk[v].__name__
+                    if verbose: print "w>=0, v is blk".center(10),hex(blk), hex(v)
+                    if verbose: print s._blkid_upblk[blk].__name__.center(25)," < ", \
+                                s._blkid_upblk[v].__name__.center(25)
                     s._expl_constraints.add( (blk, v) )
 
             elif v in method_blks:
@@ -207,11 +220,13 @@ class MethodComponent( UpdateComponent ):
 
               v_blks = method_blks[ v ]
               for vb in v_blks:
-                if not vb in s._predecessors[u]:
+                if not vb in pred[u]:
                   for blk in assoc_blks:
-                    if not blk in s._successors[v]:
+                    if not blk in succ[v]:
                       if vb != blk:
-                      # assert vb != blk, "Self loop at %s" % s._blkid_upblk[vb].__name__
+                        if verbose: print "w>=0, v is method".center(10),hex(blk), hex(v)
+                        if verbose: print s._blkid_upblk[blk].__name__.center(25)," < ", \
+                                    s._blkid_upblk[vb].__name__.center(25)
                         s._expl_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
@@ -221,12 +236,9 @@ class MethodComponent( UpdateComponent ):
     super( MethodComponent, s )._collect_child_vars( child )
 
     if isinstance( child, MethodComponent ):
-      for k in child._predecessors:
-        s._predecessors[k].update( child._predecessors[k] )
-      for k in child._successors:
-        s._successors[k].update( child._successors[k] )
       for k in child._method_blks:
         s._method_blks[k].extend( child._method_blks[k] )
+      s._partial_constraints |= child._partial_constraints
 
   # Override
   def _synthesize_constraints( s ):

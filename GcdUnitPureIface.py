@@ -1,6 +1,5 @@
 from pymtl import *
-from pclib.method import Mux
-from pclib.interface import RegEn, Reg, Port, Subtractor
+from pclib.interface import RegEn, Reg, Port, Subtractor, Mux
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -36,53 +35,23 @@ class GcdUnitDpath( MethodComponent ):
     s.sub.out |= s.resp_msg
 
     s.a_mux = Mux(3)
+    s.a_mux.sel |= s.a_mux_sel
+    s.a_mux.out |= s.a_reg.in_
+
     s.b_mux = Mux(2)
+    s.b_mux.sel |= s.b_mux_sel
+    s.b_mux.out |= s.b_reg.in_
 
     @s.update
     def up_connect_to_a_mux():
       s.a_mux.in_[A_MUX_SEL_IN]  = s.req_msg_a.rd()
       s.a_mux.in_[A_MUX_SEL_SUB] = s.sub.out.rd()
       s.a_mux.in_[A_MUX_SEL_B]   = s.b_reg.out.rd()
-      s.a_mux.sel                = s.a_mux_sel.rd()
-
-    @s.update
-    def up_connect_from_a_mux():
-      s.a_reg.in_.wr( s.a_mux.out )
 
     @s.update
     def up_connect_to_b_mux():
       s.b_mux.in_[B_MUX_SEL_A]  = s.a_reg.out.rd()
       s.b_mux.in_[B_MUX_SEL_IN] = s.req_msg_b.rd()
-      s.b_mux.sel               = s.b_mux_sel.rd()
-
-    @s.update
-    def up_connect_from_b_mux():
-      s.b_reg.in_.wr( s.b_mux.out )
-
-    # s.a_mux = Mux(3)
-    # s.a_mux.sel               |= s.a_mux_sel
-    # s.a_mux.in_[A_MUX_SEL_IN] |= s.req_msg_a
-    # s.a_mux.in_[A_MUX_SEL_SUB]|= s.sub.out
-
-    # s.b_mux = Mux(2)
-    # s.b_mux.sel               |= s.b_mux_sel
-    # s.b_mux.in_[B_MUX_SEL_IN] |= s.req_msg_b
-
-    # @s.update
-    # def up_connect_to_a_mux():
-      # s.a_mux.in_[A_MUX_SEL_B] = s.b_reg.rd()
-
-    # @s.update
-    # def up_connect_from_a_mux():
-      # s.a_reg.wr( s.a_mux.out )
-
-    # @s.update
-    # def up_connect_to_b_mux():
-      # s.b_mux.in_[B_MUX_SEL_A] = s.a_reg.rd()
-
-    # @s.update
-    # def up_connect_from_b_mux():
-      # s.b_reg.wr( s.b_mux.out )
 
     s.is_b_zero = Port(int)
     s.is_a_lt_b = Port(int)
@@ -91,7 +60,6 @@ class GcdUnitDpath( MethodComponent ):
     def up_comparisons():
       s.is_b_zero.wr( s.b_reg.out.rd() == 0 )
       s.is_a_lt_b.wr( s.a_reg.out.rd() < s.b_reg.out.rd() )
-
 
 class GcdUnitCtrl( MethodComponent ):
 
