@@ -190,14 +190,16 @@ class UpdateComponent( object ):
             s._impl_constraints.add( (st, ld) ) # wr < rd by default
 
   def _collect_child_vars( s, child ):
-    s._blkid_upblk.update( child._blkid_upblk )
-    s._impl_constraints.update( child._impl_constraints )
-    s._expl_constraints.update( child._expl_constraints )
 
-    for k in child._load_blks:
-      s._load_blks[k].extend( child._load_blks[k] )
-    for k in child._store_blks:
-      s._store_blks[k].extend( child._store_blks[k] )
+    if isinstance( child, UpdateComponent ):
+      s._blkid_upblk.update( child._blkid_upblk )
+      s._impl_constraints.update( child._impl_constraints )
+      s._expl_constraints.update( child._expl_constraints )
+
+      for k in child._load_blks:
+        s._load_blks[k].extend( child._load_blks[k] )
+      for k in child._store_blks:
+        s._store_blks[k].extend( child._store_blks[k] )
 
   def _synthesize_constraints( s ):
     s._synthesize_impl_constraints()
@@ -209,10 +211,10 @@ class UpdateComponent( object ):
 
         if   isinstance( obj, int ): # to create unique id for int
           s.__dict__[ name ] = _int(obj)
-
         elif isinstance( obj, UpdateComponent ):
           obj._recursive_elaborate()
-          s._collect_child_vars( obj )
+
+        s._collect_child_vars( obj )
 
     s._elaborate_vars()
 

@@ -15,11 +15,11 @@
 
 from UpdateComponent import verbose
 
-import re, inspect, ast
-p = re.compile('( *(@|def))')
+import ast
 from collections import defaultdict, deque
 
-from UpdateComponent import UpdateComponent, U, _int
+from UpdateComponent import UpdateComponent, U, _int, p
+from Interface import Interface
 
 class M(object): # method wrapper
   def __init__( self, func ):
@@ -46,11 +46,10 @@ class MethodComponent( UpdateComponent ):
   def update( s, blk ):
     super( MethodComponent, s ).update( blk )
 
-    # Parse the ast to extract method calls
-
     blk_id = id(blk)
     tree = type(s)._blkid_ast[ blk_id ]
 
+    # Walk the ast to extract method calls
     for node in ast.walk(tree):
       # Check if the node is a function call and the function name is not
       # not min,max,etc; it should be a component method call s.x.y.z()
@@ -129,8 +128,7 @@ class MethodComponent( UpdateComponent ):
 
         method_blks[ id(method) ].add( blk_id )
 
-    # Turn associated sets into lists, as blk_id are now unique.
-    # O(logn) -> O(1)
+    # Turn associated sets into lists. O(logn) -> O(1)
 
     for i in method_blks:
       s._method_blks[i].extend( list( method_blks[i] ) )
@@ -139,9 +137,6 @@ class MethodComponent( UpdateComponent ):
 
     # Do bfs to find out all potential total constraints associated with
     # each method, direction conflicts, and incomplete constraints
-    #
-    # upX=methodA < methodB=upY ---> upX < upY
-    # upX=methodA < upY         ---> upX < upY
 
     pred = defaultdict(set)
     succ = defaultdict(set)
@@ -235,10 +230,13 @@ class MethodComponent( UpdateComponent ):
   def _collect_child_vars( s, child ):
     super( MethodComponent, s )._collect_child_vars( child )
 
-    if isinstance( child, MethodComponent ):
+    if   isinstance( child, MethodComponent ):
       for k in child._method_blks:
         s._method_blks[k].extend( child._method_blks[k] )
       s._partial_constraints |= child._partial_constraints
+
+    elif isinstance( child, Interface ):
+      child._connect_to_root()
 
   # Override
   def _synthesize_constraints( s ):
