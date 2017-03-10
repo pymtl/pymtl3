@@ -30,6 +30,12 @@ class UpdatesImpl( UpdatesExpl ):
     return blk
 
   # Override
+  def _collect_child_vars( s, child ):
+    super( UpdatesImpl, s )._collect_child_vars( child )
+    if isinstance( child, UpdatesImpl ):
+      s._update_on_edge.update( child._update_on_edge )
+
+  # Override
   def _synthesize_constraints( s ):
 
     #---------------------------------------------------------------------
@@ -60,6 +66,7 @@ class UpdatesImpl( UpdatesExpl ):
           if wr != rd:
             if rd in s._update_on_edge:
               impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
+              print "X",s._blkid_upblk[rd].__name__.center(25)," (<) ", s._blkid_upblk[wr].__name__.center(25)
             else:
               impl_c.add( (wr, rd) ) # wr < rd by default
 
