@@ -5,7 +5,7 @@ def get_ast( func ):
   src = p.sub( r'\2', inspect.getsource( func ) )
   return ast.parse( src )
 
-def get_load_store( tree, load, store ):
+def get_read_write( tree, read, write ):
   
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
@@ -14,18 +14,18 @@ def get_load_store( tree, load, store ):
   assert isinstance(tree, ast.FunctionDef)
 
   for stmt in tree.body:
-    DetectLoadsAndStores().enter( stmt, load, store )
+    DetectReadsAndWrites().enter( stmt, read, write )
 
-class DetectLoadsAndStores( ast.NodeVisitor ):
+class DetectReadsAndWrites( ast.NodeVisitor ):
 
   def __init__( self ):
-    self.load = []
-    self.store = []
+    self.read = []
+    self.write = []
 
-  def enter( self, node, load, store ):
+  def enter( self, node, read, write ):
     self.visit( node )
-    load.extend ( self.load )
-    store.extend( self.store )
+    read.extend ( self.read )
+    write.extend( self.write )
 
   def get_full_name( self, node ):
     obj_name = []
@@ -41,9 +41,9 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
     obj_name = self.get_full_name( node )
 
     if   isinstance( node.ctx, ast.Load ):
-      self.load  += [ obj_name ]
+      self.read  += [ obj_name ]
     elif isinstance( node.ctx, ast.Store ):
-      self.store += [ obj_name ]
+      self.write += [ obj_name ]
     else:
       assert False, type( node.ctx )
 
@@ -51,8 +51,8 @@ class DetectLoadsAndStores( ast.NodeVisitor ):
     obj_name = self.get_full_name( node )
 
     if   isinstance( node.ctx, ast.Load ):
-      self.load  += [ obj_name ]
+      self.read  += [ obj_name ]
     elif isinstance( node.ctx, ast.Store ):
-      self.store += [ obj_name ]
+      self.write += [ obj_name ]
     else:
       assert False, type( node.ctx )
