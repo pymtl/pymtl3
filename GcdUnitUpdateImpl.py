@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib.method import RegEn, Reg
+from pclib.update import RegEn, Reg, Mux
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -10,7 +10,7 @@ B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
 
-class GcdUnitDpath( MethodComponent ):
+class GcdUnitDpath( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -22,42 +22,51 @@ class GcdUnitDpath( MethodComponent ):
     s.a_reg = RegEn()
     s.b_reg = RegEn()
 
+    s.a_mux = Mux(3)
+    s.b_mux = Mux(2)
+
     @s.update
     def up_regs_enable():
-      s.a_reg.enable( s.a_reg_en )
-      s.b_reg.enable( s.b_reg_en )
+      s.a_reg.en = s.a_reg_en
+      s.b_reg.en = s.b_reg_en
 
     s.sub_out = 0
 
     @s.update
-    def up_a_mux():
-      assert 0 <= s.a_mux_sel <= A_MUX_SEL_B
+    def up_connect_to_a_mux():
+      s.a_mux.in_[A_MUX_SEL_IN]  = s.req_msg_a
+      s.a_mux.in_[A_MUX_SEL_SUB] = s.sub_out
+      s.a_mux.in_[A_MUX_SEL_B]   = s.b_reg.out
+      s.a_mux.sel = s.a_mux_sel
 
-      if   s.a_mux_sel == A_MUX_SEL_IN:    s.a_reg.wr( s.req_msg_a )
-      elif s.a_mux_sel == A_MUX_SEL_SUB:   s.a_reg.wr( s.sub_out )
-      elif s.a_mux_sel == A_MUX_SEL_B:     s.a_reg.wr( s.b_reg.rd() )
+    @s.update
+    def up_connect_from_a_mux():
+      s.a_reg.in_ = s.a_mux.out
 
     @s.update
     def up_b_mux():
-      assert 0 <= s.b_mux_sel <= B_MUX_SEL_IN
+      s.b_mux.in_[B_MUX_SEL_A]  = s.a_reg.out
+      s.b_mux.in_[B_MUX_SEL_IN] = s.req_msg_b
+      s.b_mux.sel = s.b_mux_sel
 
-      if   s.b_mux_sel == B_MUX_SEL_A:     s.b_reg.wr( s.a_reg.rd() )
-      elif s.b_mux_sel == B_MUX_SEL_IN:    s.b_reg.wr( s.req_msg_b )
+    @s.update
+    def up_connect_from_b_mux():
+      s.b_reg.in_ = s.b_mux.out
 
     s.is_b_zero = s.is_a_lt_b = 0
 
     @s.update
     def up_comparisons():
-      s.is_b_zero = ( s.b_reg.rd() == 0 )
-      s.is_a_lt_b = ( s.a_reg.rd() < s.b_reg.rd() )
+      s.is_b_zero = ( s.b_reg.out == 0 )
+      s.is_a_lt_b = ( s.a_reg.out < s.b_reg.out )
 
     s.resp_msg  = 0
 
     @s.update
     def up_subtract():
-      s.sub_out = s.resp_msg = s.a_reg.rd() - s.b_reg.rd()
+      s.sub_out = s.resp_msg = s.a_reg.out - s.b_reg.out
 
-class GcdUnitCtrl( MethodComponent ):
+class GcdUnitCtrl( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -77,26 +86,26 @@ class GcdUnitCtrl( MethodComponent ):
     @s.update
     def state_transitions():
 
-      curr_state = s.state.rd()
+      curr_state = s.state.out
 
       if   curr_state == s.STATE_IDLE:
         if s.req_val and s.req_rdy:
-          s.state.wr( s.STATE_CALC )
+          s.state.in_ = s.STATE_CALC
 
       elif curr_state == s.STATE_CALC:
         if not s.is_a_lt_b and s.is_b_zero:
-          s.state.wr( s.STATE_DONE )
+          s.state.in_ = s.STATE_DONE
 
       elif curr_state == s.STATE_DONE:
         if s.resp_val and s.resp_rdy:
-          s.state.wr( s.STATE_IDLE )
+          s.state.in_ = s.STATE_IDLE
 
     s.do_swap = s.do_sub  = 0
 
     @s.update
     def state_outputs():
 
-      curr_state = s.state.rd()
+      curr_state = s.state.out
 
       s.do_swap   = s.do_sub = 0
       s.req_rdy   = s.resp_val = 0
@@ -134,7 +143,7 @@ class GcdUnitCtrl( MethodComponent ):
         s.a_mux_sel = s.b_mux_sel = A_MUX_SEL_X
         s.a_reg_en  = s.b_reg_en = 0
 
-class GcdUnit( MethodComponent ):
+class GcdUnit( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -176,9 +185,9 @@ A.req_val = 1
 A.resp_rdy = 1
 
 for cycle in xrange(10):
-  A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
-  # A.req_msg_a, A.req_msg_b = 60,35
+  # A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
+  A.req_msg_a, A.req_msg_b = 60,35
   A.cycle()
-  # print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
-        # A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
-        # "resp val:%d rdy:%d gcd:%d" % (A.resp_val, A.resp_rdy, A.resp_msg )
+  print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
+        A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
+        "resp val:%d rdy:%d gcd:%d" % (A.resp_val, A.resp_rdy, A.resp_msg )
