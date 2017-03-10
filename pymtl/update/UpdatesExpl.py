@@ -17,7 +17,7 @@ verbose = False
 
 import random
 from collections     import defaultdict, deque
-from ASTHelper       import get_ast, get_load_store, DetectLoadsAndStores
+from ASTHelper       import get_ast, get_read_write, DetectReadsAndWrites
 from ConstraintTypes import _int, U, RD, WR
 
 class UpdatesExpl( object ):
@@ -25,18 +25,17 @@ class UpdatesExpl( object ):
   def __new__( cls, *args, **kwargs ):
     inst = super(UpdatesExpl, cls).__new__( cls, *args, **kwargs )
 
-    inst._name_upblk   = {}
-    inst._blkid_upblk  = {}
-    inst._blkid_loads  = defaultdict(list)
-    inst._blkid_stores = defaultdict(list)
-
-    inst._load_blks  = defaultdict(list)
-    inst._store_blks = defaultdict(list)
-
+    # These will be collected recursively
+    inst._name_upblk       = {}
+    inst._blkid_upblk      = {}
+    inst._read_blks        = defaultdict(list)
+    inst._write_blks       = defaultdict(list)
     inst._expl_constraints = set() # contains ( id(func), id(func) )s
-    inst._impl_constraints = set() # contains ( id(func), id(func) )s
     inst._var_constraints  = set()
-    inst._schedule_list = []
+
+    # These are only processed at the current level
+    inst._blkid_reads  = defaultdict(list)
+    inst._blkid_writes = defaultdict(list)
     return inst
 
   def update( s, blk ):
@@ -45,15 +44,16 @@ class UpdatesExpl( object ):
     blk_id = id(blk)
     s._name_upblk[ blk.__name__ ] = s._blkid_upblk[ blk_id ] = blk
 
-    # I store the asts of upblks. To also cache them across different
+    # I write the asts of upblks. To also cache them across different
     # instances of the same class, I attach them to the class object.
+
     if not "_blkid_ast" in type(s).__dict__:
       type(s)._blkid_ast = dict()
     if blk_id not in type(s)._blkid_ast:
       type(s)._blkid_ast[ blk_id ] = get_ast( blk )
 
-    get_load_store( type(s)._blkid_ast[ blk_id ], \
-                    s._blkid_loads[ blk_id ], s._blkid_stores[ blk_id ] )
+    get_read_write( type(s)._blkid_ast[ blk_id ], \
+                    s._blkid_reads[ blk_id ], s._blkid_writes[ blk_id ] )
     return blk
 
   def get_update_block( s, name ):
@@ -69,66 +69,63 @@ class UpdatesExpl( object ):
 
   def _elaborate_vars( s ):
 
-    # First check if each load/store variable exists, then bind the actual
+    # First check if each read/write variable exists, then bind the actual
     # variable id (not name anymore) to upblks that reads/writes it.
 
-    load_blks  = defaultdict(set)
-    store_blks = defaultdict(set)
+    read_blks  = defaultdict(set)
+    write_blks = defaultdict(set)
 
-    for blk_id, loads in s._blkid_loads.iteritems():
-      for load_name in loads:
+    for blk_id, reads in s._blkid_reads.iteritems():
+      for read_name in reads:
         obj = s
-        for field in load_name:
+        for field in read_name:
           assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
                  %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          if verbose: print " - load",load_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          load_blks[ id(obj) ].add( blk_id )
+          if verbose: print " - read",read_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+          read_blks[ id(obj) ].add( blk_id )
 
-    for blk_id, stores in s._blkid_stores.iteritems():
-      for store_name in stores:
+    for blk_id, writes in s._blkid_writes.iteritems():
+      for write_name in writes:
         obj = s
-        for field in store_name:
+        for field in write_name:
           assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
                  %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
           obj = getattr( obj, field )
 
         if not callable(obj): # exclude function calls
-          if verbose: print " - store",store_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          store_blks[ id(obj) ].add( blk_id )
+          if verbose: print " - write",write_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+          write_blks[ id(obj) ].add( blk_id )
 
     # Turn associated sets into lists, as blk_id are now unique.
     # O(logn) -> O(1)
 
-    for i in load_blks:
-      s._load_blks[i].extend( list( load_blks[i] ) )
+    for i in read_blks:
+      s._read_blks[i].extend( list( read_blks[i] ) )
 
-    for i in store_blks:
-      s._store_blks[i].extend( list( store_blks[i] ) )
+    for i in write_blks:
+      s._write_blks[i].extend( list( write_blks[i] ) )
 
   def _collect_child_vars( s, child ):
 
     if isinstance( child, UpdatesExpl ):
       s._blkid_upblk.update( child._blkid_upblk )
-      s._impl_constraints.update( child._impl_constraints )
       s._expl_constraints.update( child._expl_constraints )
 
-      for k in child._load_blks:
-        s._load_blks[k].extend( child._load_blks[k] )
-      for k in child._store_blks:
-        s._store_blks[k].extend( child._store_blks[k] )
+      for k in child._read_blks:
+        s._read_blks[k].extend( child._read_blks[k] )
+      for k in child._write_blks:
+        s._write_blks[k].extend( child._write_blks[k] )
 
   def _synthesize_constraints( s ):
 
-    s._total_constraints = s._expl_constraints.copy()
+    s._total_constraints = list( s._expl_constraints.copy() )
 
     if verbose:
       for (x, y) in s._expl_constraints:
         print s._blkid_upblk[x].__name__.center(25),"  <  ", s._blkid_upblk[y].__name__.center(25)
-
-    s._total_constraints = list(s._total_constraints)
 
   def _recursive_elaborate( s ):
 
@@ -186,6 +183,7 @@ class UpdatesExpl( object ):
         Q.append( i )
       assert InDeg[i]>0 or OutDeg[i]>0, "Update block \"%s\" has no constraint" % s._blkid_upblk[ upblks[i] ].__name__
 
+    s._schedule_list = []
     while Q:
       random.shuffle(Q) # to catch corner cases; will be removed later
 
@@ -230,10 +228,12 @@ class UpdatesExpl( object ):
     s._schedule()
 
   def cycle( s ):
+    assert hasattr( s, "_schedule_list"), "Please elaborate before you tick cycle()!"
     for blk in s._schedule_list:
       blk()
 
   def print_schedule( s ):
+    assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"
     print
     for blk in s._schedule_list:
       print blk.__name__
