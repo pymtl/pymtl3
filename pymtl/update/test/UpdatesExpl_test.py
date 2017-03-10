@@ -1,11 +1,11 @@
 from pymtl import *
 
-from pclib.update import TestSource
-from pclib.update import TestSink
+from pclib.update import TestSourceExpl as TestSource
+from pclib.update import TestSinkExpl as TestSink
 
-def test_simple():
+def test_bb():
 
-  class Top(UpdateComponent):
+  class Top(UpdatesExpl):
 
     def __init__( s ):
 
@@ -24,9 +24,9 @@ def test_simple():
   A = Top()
   A.elaborate()
 
-def test_cyclic_dependency():
+def test_bb_cyclic_dependency():
 
-  class Top(UpdateComponent):
+  class Top(UpdatesExpl):
 
     def __init__( s ):
 
@@ -52,7 +52,7 @@ def test_cyclic_dependency():
 
 def test_upblock_same_name():
 
-  class Top(UpdateComponent):
+  class Top(UpdatesExpl):
 
     def __init__( s ):
 
@@ -72,7 +72,7 @@ def test_upblock_same_name():
 
 def test_add_loopback():
 
-  class Top(UpdateComponent):
+  class Top(UpdatesExpl):
 
     def __init__( s ):
 
@@ -130,57 +130,9 @@ def test_add_loopback():
     A.cycle()
     print A.line_trace()
 
-def test_add_loopback_implicit():
-
-  class Top(UpdateComponent):
-
-    def __init__( s ):
-
-      s.src  = TestSource( [4,3,2,1] )
-      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
-
-      s.wire0 = 0
-      s.wire1 = 0
-
-      @s.update
-      def up_from_src():
-        s.wire0 = s.src.out + 1
-
-      s.reg0 = 0
-
-      @s.update
-      def upA():
-        s.reg0 = s.wire0 + s.wire1
-
-      @s.update
-      def up_to_sink_and_loop_back():
-        s.sink.in_ = s.reg0
-        s.wire1 = s.reg0
-
-      s.add_constraints(
-        U(upA) < U(up_to_sink_and_loop_back),
-        U(upA) < U(up_from_src),
-      )
-
-    def done( s ):
-      return s.src.done() and s.sink.done()
-
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
-             " >>> " + s.sink.line_trace()
-
-  A = Top()
-  A.elaborate()
-  A.print_schedule()
-
-  while not A.done():
-    A.cycle()
-    print A.line_trace()
-
 def test_lots_of_fan():
 
-  class Top(UpdateComponent):
+  class Top(UpdatesExpl):
 
     def __init__( s ):
 
@@ -193,6 +145,12 @@ def test_lots_of_fan():
       @s.update
       def up_from_src():
         s.wire0 = s.src.out + 1
+
+      up_src = s.src.get_update_block("up_src")
+
+      s.add_constraints(
+        U(up_src) < U(up_from_src),
+      )
 
       s.reg = 0
 
@@ -226,6 +184,10 @@ def test_lots_of_fan():
         s.wire5 = s.wire2
         s.wire6 = s.wire2 + 1
 
+      s.add_constraints(
+        U(upA) < U(upB),
+        U(upA) < U(upC),
+      )
       s.wire7 = s.wire8 = 0
 
       @s.update
@@ -233,9 +195,21 @@ def test_lots_of_fan():
         s.wire7 = s.wire3 + s.wire6
         s.wire8 = s.wire4 + s.wire5
 
+      s.add_constraints(
+        U(upB) < U(upD),
+        U(upC) < U(upD),
+      )
+
       @s.update
       def up_to_sink():
         s.sink.in_ = s.wire7 + s.wire8
+
+      up_sink = s.sink.get_update_block("up_sink")
+
+      s.add_constraints(
+        U(upD) < U(up_to_sink),
+        U(up_to_sink) < U(up_sink),
+      )
 
     def done( s ):
       return s.src.done() and s.sink.done()
