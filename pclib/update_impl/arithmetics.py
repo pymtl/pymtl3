@@ -2,7 +2,7 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux(Updates):
+class Mux(UpdatesImpl):
 
   def __init__( s, nbits = 1 ):
     s.in_ = [0] * (1 << nbits)
@@ -17,7 +17,7 @@ class Mux(Updates):
 
 # Rshifter
 
-class RShifter(Updates):
+class RShifter(UpdatesImpl):
 
   def __init__( s, nbits = 1, shamt_nbits = 1 ):
     s.in_ = s.shamt = s.out = 0
@@ -30,7 +30,7 @@ class RShifter(Updates):
 
 # Lshifter
 
-class LShifter(Updates):
+class LShifter(UpdatesImpl):
 
   def __init__( s, nbits = 1, shamt_nbits = 1 ):
     s.in_ = s.shamt = s.out = 0
@@ -43,7 +43,7 @@ class LShifter(Updates):
 
 # Adder 
 
-class Adder(Updates):
+class Adder(UpdatesImpl):
 
   def __init__( s, nbits = 1, ninputs = 2 ):
     s.in_ = [ 0 ] * ninputs
@@ -59,7 +59,7 @@ class Adder(Updates):
 
 # Subtractor
 
-class Subtractor(Updates):
+class Subtractor(UpdatesImpl):
 
   def __init__( s, nbits = 1 ):
     s.in0 = s.in1 = 0
@@ -70,9 +70,10 @@ class Subtractor(Updates):
       s.out = s.in0 - s.in1
 
   def line_trace( s ):  pass
+
 # ZeroComparator 
 
-class ZeroComp(Updates):
+class ZeroComp(UpdatesImpl):
 
   def __init__( s, nbits = 1 ):
     s.in_ = 0
@@ -86,7 +87,7 @@ class ZeroComp(Updates):
 
 # LeftThanComparator
 
-class LTComp(Updates):
+class LTComp(UpdatesImpl):
 
   def __init__( s, nbits = 1 ):
     s.in0 = s.in1 = 0
@@ -100,7 +101,7 @@ class LTComp(Updates):
 
 # LeftThanOrEqualToComparator
 
-class LEComp(Updates):
+class LEComp(UpdatesImpl):
 
   def __init__( s, nbits = 1 ):
     s.in0 = s.in1 = 0

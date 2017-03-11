@@ -1,7 +1,7 @@
 from pymtl import *
 
-from pclib.update import TestSourceExpl as TestSource
-from pclib.update import TestSinkExpl as TestSink
+from pclib.update_impl import TestSourceExpl as TestSource
+from pclib.update_impl import TestSinkExpl as TestSink
 
 def test_bb():
 
