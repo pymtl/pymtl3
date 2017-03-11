@@ -2,4 +2,4 @@
 from TestSink    import TestSinkExpl, TestSinkImpl
 from TestSource  import TestSourceExpl, TestSourceImpl
 from registers   import Reg, RegEn
-from arithmetics import Mux
+from arithmetics import Mux, LShifter, RShifter, Adder, ZeroComp

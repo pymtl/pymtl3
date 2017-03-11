@@ -18,7 +18,8 @@ verbose = False
 import random
 from collections     import defaultdict, deque
 from ASTHelper       import get_ast, get_read_write, DetectReadsAndWrites
-from ConstraintTypes import _int, U, RD, WR
+from ConstraintTypes import U, RD, WR
+from Connectable     import Value
 
 class UpdatesExpl( object ):
 
@@ -37,6 +38,17 @@ class UpdatesExpl( object ):
     inst._blkid_reads  = defaultdict(list)
     inst._blkid_writes = defaultdict(list)
     return inst
+
+  # If this is a built-in type variable and not a private variable,
+  # it is going to the simulation and not used by elaboration
+
+  def __setattr__( s, x, v ):
+    if (isinstance( v, int )  or isinstance( v, float ) or \
+        isinstance( v, bool ) or isinstance( v, list )) \
+        and not x.startswith("_"):
+      v = Value(v)
+
+    super(UpdatesExpl, s).__setattr__( x, v )
 
   def update( s, blk ):
     assert blk.__name__ not in s._name_upblk, ("Cannot declare two update blocks using the same name!")
@@ -129,12 +141,11 @@ class UpdatesExpl( object ):
 
   def _recursive_elaborate( s ):
 
+    setattr( type(s), "__setattr__", getattr( object, "__setattr__" ) )
+
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
-
-        if   isinstance( obj, int ): # to create unique id for int
-          s.__dict__[ name ] = _int(obj)
-        elif isinstance( obj, UpdatesExpl ):
+        if isinstance( obj, UpdatesExpl ):
           obj._recursive_elaborate()
 
         s._collect_child_vars( obj )
@@ -222,10 +233,19 @@ class UpdatesExpl( object ):
             Q2.append( v )
       Q = Q2
 
+  def _cleanup_connectables( s ):
+    for name, obj in s.__dict__.iteritems():
+      if not name.startswith("_"): # filter private variables
+        if   isinstance( obj, UpdatesExpl ):
+          obj._cleanup_connectables()
+        elif isinstance( obj, Value ):
+          setattr( s, name, obj.v )
+
   def elaborate( s ):
     s._recursive_elaborate()
     s._synthesize_constraints()
     s._schedule()
+    s._cleanup_connectables()
 
   def cycle( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you tick cycle()!"
