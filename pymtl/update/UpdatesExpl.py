@@ -74,10 +74,13 @@ class UpdatesExpl( object ):
   def add_constraints( s, *args ):
 
     for (x0, x1) in args:
-      if isinstance( x0, U ) and isinstance( x1, U ):
+      if   isinstance( x0, U ) and isinstance( x1, U ):
         s._expl_constraints.add( (id(x0.func), id(x1.func)) )
-      # TODO, add U(up) < RD(s.x)
+      elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
+        assert False, "Constraints between two variables are not allowed!"
 
+      # TODO, add U(up) < RD(s.x)
+      # elif isinstance( x0, U ) and isinstance( x1, ValueConstraint ):
 
   def _elaborate_vars( s ):
 
