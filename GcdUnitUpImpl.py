@@ -100,14 +100,12 @@ class GcdUnitCtrl( UpdatesImpl ):
         if s.resp_val and s.resp_rdy:
           s.state.in_ = s.STATE_IDLE
 
-    s.do_swap = s.do_sub  = 0
-
     @s.update
     def state_outputs():
 
       curr_state = s.state.out
 
-      s.do_swap   = s.do_sub = 0
+      do_swap = do_sub = 0
       s.req_rdy   = s.resp_val = 0
       s.a_mux_sel = s.a_reg_en = 0
       s.b_mux_sel = s.b_reg_en  = 0
@@ -126,14 +124,14 @@ class GcdUnitCtrl( UpdatesImpl ):
 
       elif curr_state == s.STATE_CALC:
 
-        s.do_swap = s.is_a_lt_b
-        s.do_sub  = ~s.is_b_zero
+        do_swap = s.is_a_lt_b
+        do_sub  = ~s.is_b_zero
 
         s.req_rdy   = s.resp_val  = 0
-        s.a_mux_sel = A_MUX_SEL_B if s.do_swap else A_MUX_SEL_SUB
+        s.a_mux_sel = A_MUX_SEL_B if do_swap else A_MUX_SEL_SUB
         s.a_reg_en  = 1
         s.b_mux_sel = B_MUX_SEL_A
-        s.b_reg_en  = s.do_swap
+        s.b_reg_en  = do_swap
 
       # In DONE state we simply wait for output transaction to occur
 
@@ -184,10 +182,10 @@ A.print_schedule()
 A.req_val = 1
 A.resp_rdy = 1
 
-for cycle in xrange(10):
-  # A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
-  A.req_msg_a, A.req_msg_b = 60,35
+for cycle in xrange(10000000):
+  A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
+  # A.req_msg_a, A.req_msg_b = 60,35
   A.cycle()
-  print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
-        A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
-        "resp val:%d rdy:%d gcd:%d" % (A.resp_val, A.resp_rdy, A.resp_msg )
+  # print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
+        # A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
+        # "resp val:%d rdy:%d gcd:%d" % (A.resp_val, A.resp_rdy, A.resp_msg )
