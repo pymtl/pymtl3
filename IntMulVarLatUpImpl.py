@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib.update import RegEn, Reg, Mux, RShifter, LShifter, Adder, ZeroComp
+from pclib.update_impl import RegEn, Reg, Mux, RShifter, LShifter, Adder, ZeroComp
 
 A_MUX_SEL_NBITS      = 1
 A_MUX_SEL_LSH        = 0

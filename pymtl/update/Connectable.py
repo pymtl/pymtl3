@@ -3,9 +3,6 @@ class Value(object):
   def __init__( self, v ):
     self.v = v
 
-  def __str__( self ):
-    return v.__str__
-
 class Connectable(object):
 
   def __new__( cls, *args ):
@@ -17,20 +14,21 @@ class Connectable(object):
 
     return inst
 
-  def find_root( s ): # Disjoint set path compression
+  def _find_root( s ): # Disjoint set path compression
     if s._root == s:  return s
-    s._root = s._root.find_root()
+    s._root = s._root._find_root()
     return s._root
 
   def connect( s, other ):
-    s._root = s.find_root()
-    other._root = other.find_root()
+    assert isinstance( other, Connectable ), "Unconnectable object!"
 
+    s._root = s._find_root()
+    other._root = other._find_root()
     assert s._root != other._root, "Two nets are already unionized."
 
-    other._root = s._root
     s._root._connected.extend( other._root._connected )
     delattr(other._root, "_connected" ) # Purge merged signal
+    other._root = s._root
 
   def __ior__( s, other ):
     s.connect( other )
