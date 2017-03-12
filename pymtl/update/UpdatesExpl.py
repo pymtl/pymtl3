@@ -12,8 +12,8 @@
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 # * Value constraint: s.add_constraints( U(upA) < RD(s.x) )
 
-# verbose = False
-verbose = True
+verbose = False
+# verbose = True
 
 import random
 from collections     import defaultdict, deque
@@ -85,17 +85,16 @@ class UpdatesExpl( object ):
 
   def _elaborate_vars( s ):
 
-    # First check if each read/write variable exists, then bind the actual
-    # variable id (not name anymore) to upblks that reads/writes it.
-
-    read_blks  = defaultdict(set)
-    write_blks = defaultdict(set)
-
     def add_all( typ, depth, obj, name, id_blks, blk_id ): # We need this to deal with s.a[*].b[*]
       if depth >= len(name):
         if not callable(obj): # exclude function calls
           if verbose: print " -", name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          id_blks[ id(obj) ].add( blk_id )
+
+          if isinstance( obj, list ):
+            for x in obj:
+              id_blks[ id(x) ].add( blk_id )
+          else:  
+            id_blks[ id(obj) ].add( blk_id )
         return
 
       (field, idx) = name[ depth ]
@@ -106,13 +105,19 @@ class UpdatesExpl( object ):
       if   idx == "x":
         add_all( typ, depth+1, obj, name, id_blks, blk_id )
       elif isinstance( idx, int ):
-        assert isinstance( obj, list ),"%s is not a list" % field
+        assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
         add_all( typ, depth+1, obj[idx], name, id_blks, blk_id )
       else:
         assert idx == "*", "idk"
         assert isinstance( obj, list ), "%s is not a list" % field
         for x in obj:
           add_all( typ, depth+1, x, name, id_blks, blk_id )
+
+    # First check if each read/write variable exists, then bind the actual
+    # variable id (not name anymore) to upblks that reads/writes it.
+
+    read_blks  = defaultdict(set)
+    write_blks = defaultdict(set)
 
     for blk_id, reads in s._blkid_reads.iteritems():
       for read_name in reads:

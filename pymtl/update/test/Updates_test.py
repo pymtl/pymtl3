@@ -50,8 +50,6 @@ def test_connect_list_int_idx():
       from pclib.update import Mux
       s.mux = Mux(2)
 
-      print 123
-      print s.src_in0.__dict__
       s.src_in0.out |= s.mux.in_[0]
       s.src_in1.out |= s.mux.in_[1]
       s.src_sel.out |= s.mux.sel
