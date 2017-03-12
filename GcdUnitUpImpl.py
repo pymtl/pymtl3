@@ -178,10 +178,10 @@ A.print_schedule()
 A.req_val = 1
 A.resp_rdy = 1
 
-for cycle in xrange(100):
+for cycle in xrange(10000000):
   A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
   # A.req_msg_a, A.req_msg_b = 60,35
   A.cycle()
-  print "req val:%d rdy:%d a:%6d b:%6d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
-        A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
-        "resp val:%d rdy:%d gcd:%6d" % (A.resp_val, A.resp_rdy, A.resp_msg )
+  # print "req val:%d rdy:%d a:%6d b:%6d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
+        # A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
+        # "resp val:%d rdy:%d gcd:%6d" % (A.resp_val, A.resp_rdy, A.resp_msg )
