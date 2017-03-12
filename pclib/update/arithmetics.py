@@ -66,7 +66,7 @@ class Subtractor(Updates):
     s.out = 0
 
     @s.update
-    def up_adder():
+    def up_subtractor():
       s.out = s.in0 - s.in1
 
   def line_trace( s ):  pass
