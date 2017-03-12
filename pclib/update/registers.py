@@ -13,7 +13,7 @@ class Reg(Updates):
       s.out = s.in_
 
   def line_trace( s ):
-    return "[%4d > %4d]" % (s.in_, s.out)
+    return "[%6d > %6d]" % (s.in_, s.out)
 
 # Register with enable signal
 
@@ -30,4 +30,4 @@ class RegEn(Updates):
         s.out = s.in_
 
   def line_trace( s ):
-    return "[en:%4d|%4d > %4d]" % (s.en, s.in_, s.out)
+    return "[en:%1d|%6d > %6d]" % (s.en, s.in_, s.out)
