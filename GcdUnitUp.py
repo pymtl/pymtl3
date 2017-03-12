@@ -1,5 +1,7 @@
 from pymtl import *
 from pclib.update import RegEn, Reg, Mux, ZeroComp, LTComp, Subtractor
+from pclib.update import TestSourceValRdy, TestSinkValRdy
+from pclib.valrdy import valrdy_to_str
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -155,17 +157,37 @@ class GcdUnit( Updates ):
     s.ctrl.is_b_zero  |= s.dpath.is_b_zero
     s.ctrl.is_a_lt_b  |= s.dpath.is_a_lt_b
 
-A = GcdUnit()
-A.elaborate()
-A.print_schedule()
+  def line_trace( s ):
+    return s.dpath.a_reg.line_trace() + s.dpath.b_reg.line_trace()
 
-A.req_val = 1
-A.resp_rdy = 1
+class TestHarness( Updates ):
 
-for cycle in xrange(10000000):
-  A.req_msg_a, A.req_msg_b = cycle+95827*(cycle&1), cycle+(19182)*(cycle&1)
-  # A.req_msg_a, A.req_msg_b = 60,35
-  A.cycle()
-  # print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
-        # A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
-        # "resp val:%d rdy:%d gcd:%d" % (A.resp_val, A.resp_rdy, A.resp_msg )
+  def __init__( s ):
+
+    s.src  = TestSourceValRdy( 2, [ (60,35), (18,24), (195,43) ])
+    s.gcd  = GcdUnit()
+    s.sink = TestSinkValRdy( [ 5, 6, 1 ] )
+
+    s.src.val    |= s.gcd.req_val
+    s.src.rdy    |= s.gcd.req_rdy
+    s.src.msg[0] |= s.gcd.req_msg_a
+    s.src.msg[1] |= s.gcd.req_msg_b
+
+    s.sink.val   |= s.gcd.resp_val
+    s.sink.rdy   |= s.gcd.resp_rdy
+    s.sink.msg   |= s.gcd.resp_msg
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return s.src.line_trace()+" >>> "+s.gcd.line_trace()+" >>> "+s.sink.line_trace()
+
+if __name__ == "__main__":
+  A = TestHarness()
+  A.elaborate()
+  A.print_schedule()
+
+  while not A.done():
+    A.cycle()
+    print A.line_trace()
