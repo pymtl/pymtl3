@@ -39,7 +39,7 @@ int top_ctrl_is_b_zero = 0, top_ctrl_is_a_lt_b = 0;
 int top_ctrl_a_mux_sel = 0, top_ctrl_a_reg_en  = 0;
 int top_ctrl_b_mux_sel = 0, top_ctrl_b_reg_en  = 0;
 
-void tick()
+void tick_batch_schedule()
 {
   // Batch 1
   // up_reg_en
@@ -189,18 +189,18 @@ int main()
   int cycle;
   top_req_val = 1;
   top_resp_rdy = 1;
-  for (cycle=0; cycle<100; ++cycle)
+  for (cycle=0; cycle<100000000; ++cycle)
   {
     top_req_msg_a = cycle+95827*(cycle&1);
     top_req_msg_b = cycle+(19182)*(cycle&1);
 
-    tick();
+    tick_batch_schedule();
 
-    printf("req val:%d rdy:%d a:%6d b:%6d ", top_req_val, top_req_rdy, top_req_msg_a, top_req_msg_b);
-    printf("[en:%1d|%6d > %6d]", top_dpath_a_reg_en, top_dpath_a_reg_in_, top_dpath_a_reg_out);
-    printf("[en:%1d|%6d > %6d] ", top_dpath_b_reg_en, top_dpath_b_reg_in_, top_dpath_b_reg_out);
-    printf("resp val:%d rdy:%d gcd:%6d", top_resp_val, top_resp_rdy, top_resp_msg);
-    puts("");
+    // printf("req val:%d rdy:%d a:%6d b:%6d ", top_req_val, top_req_rdy, top_req_msg_a, top_req_msg_b);
+    // printf("[en:%1d|%6d > %6d] ", top_dpath_a_reg_en, top_dpath_a_reg_in_, top_dpath_a_reg_out);
+    // printf("[en:%1d|%6d > %6d] ", top_dpath_b_reg_en, top_dpath_b_reg_in_, top_dpath_b_reg_out);
+    // printf("resp val:%d rdy:%d gcd:%6d", top_resp_val, top_resp_rdy, top_resp_msg);
+    // puts("");
   }
   return 0;
 }
