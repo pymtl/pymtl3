@@ -12,8 +12,8 @@
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 # * Value constraint: s.add_constraints( U(upA) < RD(s.x) )
 
-verbose = False
-# verbose = True
+# verbose = False
+verbose = True
 
 import random
 from collections     import defaultdict, deque
@@ -67,7 +67,7 @@ class UpdatesExpl( object ):
     if blk_id not in type(s)._blkid_ast:
       type(s)._blkid_ast[ blk_id ] = get_ast( blk )
 
-    get_read_write( type(s)._blkid_ast[ blk_id ], \
+    get_read_write( type(s)._blkid_ast[ blk_id ], blk, \
                     s._blkid_reads[ blk_id ], s._blkid_writes[ blk_id ] )
     return blk
 
@@ -91,36 +91,38 @@ class UpdatesExpl( object ):
     read_blks  = defaultdict(set)
     write_blks = defaultdict(set)
 
+    def add_all( typ, depth, obj, name, id_blks, blk_id ): # We need this to deal with s.a[*].b[*]
+      if depth >= len(name):
+        if not callable(obj): # exclude function calls
+          if verbose: print " -", name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+          id_blks[ id(obj) ].add( blk_id )
+        return
+
+      (field, idx) = name[ depth ]
+      assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
+             %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+
+      obj = getattr( obj, field )
+      if   idx == "x":
+        add_all( typ, depth+1, obj, name, id_blks, blk_id )
+      elif isinstance( idx, int ):
+        assert isinstance( obj, list ),"%s is not a list" % field
+        add_all( typ, depth+1, obj[idx], name, id_blks, blk_id )
+      else:
+        assert idx == "*", "idk"
+        assert isinstance( obj, list ), "%s is not a list" % field
+        for x in obj:
+          add_all( typ, depth+1, x, name, id_blks, blk_id )
+
     for blk_id, reads in s._blkid_reads.iteritems():
       for read_name in reads:
-        obj = s
-        for field in read_name:
-          assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
-                 %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
-          obj = getattr( obj, field )
-
-        if not callable(obj): # exclude function calls
-          if verbose: print " - read",read_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          read_blks[ id(obj) ].add( blk_id )
-
-    for blk_id, writes in s._blkid_writes.iteritems():
-      for write_name in writes:
-        obj = s
-        for field in write_name:
-          assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
-                 %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
-          obj = getattr( obj, field )
-
-        if not callable(obj): # exclude function calls
-          if verbose: print " - write",write_name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          write_blks[ id(obj) ].add( blk_id )
-
-    # Turn associated sets into lists, as blk_id are now unique.
-    # O(logn) -> O(1)
-
+        add_all( "read", 0, s, read_name, read_blks, blk_id )
     for i in read_blks:
       s._read_blks[i].extend( list( read_blks[i] ) )
 
+    for blk_id, writes in s._blkid_writes.iteritems():
+      for write_name in writes:
+        add_all( "write",0, s, write_name, write_blks, blk_id )
     for i in write_blks:
       s._write_blks[i].extend( list( write_blks[i] ) )
 
@@ -244,9 +246,8 @@ class UpdatesExpl( object ):
           setattr( s, name, obj.v )
         elif isinstance( obj, list ):
           for i in xrange(len(obj)):
-            if isinstance( obj[i], value ):
+            if isinstance( obj[i], Value ):
               obj[i] = obj[i].v
-              
 
   def elaborate( s ):
     s._recursive_elaborate()
