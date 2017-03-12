@@ -29,6 +29,6 @@ A = TestHarness()
 A.elaborate()
 A.print_schedule()
 
-for x in xrange(100):
+for x in xrange(10000000):
   A.cycle()
-  print A.line_trace()
+  # print A.line_trace()
