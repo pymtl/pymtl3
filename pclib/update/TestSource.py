@@ -59,9 +59,9 @@ class StreamSource( Updates ):
     @s.update_on_edge
     def up_src():
       s.msg = ( s.ts+95827*(s.ts&1), s.ts+(19182)*(s.ts&1) )
+      # s.msg = ( 60, 35 )
       s.val = 1
-      if s.rdy:
-        s.ts += 1
+      s.ts += 1
 
   def done( s ):
     return not s.input_
