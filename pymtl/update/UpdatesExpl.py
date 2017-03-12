@@ -207,7 +207,7 @@ class UpdatesExpl( object ):
     while Q:
       random.shuffle(Q) # to catch corner cases; will be removed later
 
-      u = Q.popleft()
+      u = Q.pop()
       s._schedule_list.append( s._blkid_upblk[ upblks[u] ] )
       for v in edges[u]:
         InDeg[v] -= 1
