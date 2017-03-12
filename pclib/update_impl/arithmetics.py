@@ -4,8 +4,8 @@ from pymtl import *
 
 class Mux(UpdatesImpl):
 
-  def __init__( s, nbits = 1 ):
-    s.in_ = [0] * (1 << nbits)
+  def __init__( s, ninputs ):
+    s.in_ = [0] * ninputs
     s.sel = 0
     s.out = 0
 

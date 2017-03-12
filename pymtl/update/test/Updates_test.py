@@ -36,6 +36,77 @@ def test_connect():
     A.cycle()
     print A.line_trace()
 
+def test_connect_list_int_idx():
+
+  class Top(Updates):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( [4,3,2,1] )
+      s.src_in1 = TestSource( [8,7,6,5] )
+      s.src_sel = TestSource( [1,0,1,0] )
+      s.sink    = TestSink  ( [8,3,6,1] )
+
+      from pclib.update import Mux
+      s.mux = Mux(2)
+
+      print 123
+      print s.src_in0.__dict__
+      s.src_in0.out |= s.mux.in_[0]
+      s.src_in1.out |= s.mux.in_[1]
+      s.src_sel.out |= s.mux.sel
+      s.sink.in_    |= s.mux.out
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  A = Top()
+  A.elaborate()
+  A.print_schedule()
+
+  while not A.done():
+    A.cycle()
+    print A.line_trace
+
+MUX_SEL_0 = 0
+MUX_SEL_1 = 1
+
+def test_connect_list_const_idx():
+
+  class Top(Updates):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( [4,3,2,1] )
+      s.src_in1 = TestSource( [8,7,6,5] )
+      s.src_sel = TestSource( [1,0,1,0] )
+      s.sink    = TestSink  ( [8,3,6,1] )
+
+      from pclib.update import Mux
+      s.mux = Mux(2)
+
+      s.src_in0.out |= s.mux.in_[MUX_SEL_0]
+      s.src_in1.out |= s.mux.in_[MUX_SEL_1]
+      s.src_sel.out |= s.mux.sel
+      s.sink.in_    |= s.mux.out
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  A = Top()
+  A.elaborate()
+  A.print_schedule()
+
+  while not A.done():
+    A.cycle()
+    print A.line_trace()
+
 def test_lots_of_fan_on_edge_connect():
 
   class Top(Updates):
