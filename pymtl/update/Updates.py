@@ -60,6 +60,7 @@ class Updates( UpdatesImpl ):
       # In these connection blocks, the writer's value is read, v = writer
 
       has_writer, writer = False, None
+
       for v in net:
         if id(v) in s._write_blks:
           assert not has_writer, "We don't allow %s and %s to write to the same net." %(writer._name, v._name)

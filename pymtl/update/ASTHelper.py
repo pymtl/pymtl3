@@ -42,11 +42,14 @@ class DetectReadsAndWrites( ast.NodeVisitor ):
           v   = node.slice.value
           num = "*"
 
-          if isinstance( v, ast.Name ): # Only support global const indexing for now
+          if   isinstance( v, ast.Num ):
+            num = v.n
+
+          elif isinstance( v, ast.Name ): # Only support global const indexing for now
             assert v.id in self.upblk.func_globals, "Global variable %s is undefined!" % v.id
             num = self.upblk.func_globals[ v.id ]
           else:
-            assert isinstance( v, ast.Attribute )
+            assert isinstance( v, ast.Attribute ), v.__dict__
             self.visit( v )
 
           assert isinstance( node.value, ast.Attribute )
