@@ -1,7 +1,10 @@
 class Value(object):
 
-  def __init__( self, v ):
-    self.v = v
+  def __init__( self, v, obj, name, idx ):
+    self.v     = v
+    self._obj  = obj   # Host object that has self as member
+    self._name = name  # The member name in the host object
+    self._idx  = idx   # >=0: this is nested in list. <0 otherwise
 
 class Connectable(object):
 
@@ -19,16 +22,16 @@ class Connectable(object):
     s._root = s._root._find_root()
     return s._root
 
-  def connect( s, other ):
-    assert isinstance( other, Connectable ), "Unconnectable object!"
+  def connect( s, o ):
+    assert isinstance( o, Connectable ), "Unconnectable object!"
 
-    s._root = s._find_root()
-    other._root = other._find_root()
-    assert s._root != other._root, "Two nets are already unionized."
+    x = s._root = s._find_root()
+    y = o._root = o._find_root()
+    assert x != y, "Two nets are already unionized."
 
-    s._root._connected.extend( other._root._connected )
-    delattr(other._root, "_connected" ) # Purge merged signal
-    other._root = s._root
+    x._connected.extend( y._connected )
+    delattr(y, "_connected" ) # Purge merged signal
+    y._root = x
 
   def __ior__( s, other ):
     s.connect( other )

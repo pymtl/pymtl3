@@ -3,6 +3,39 @@ from pymtl import *
 from pclib.update import TestSource as TestSource
 from pclib.update import TestSink as TestSink
 
+def test_connect():
+
+  class Top(Updates):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
+      s.sink = TestSink  ( [5,4,3,2,5,4,3,2] )
+
+      s.wire0 = 0
+
+      @s.update
+      def up_from_src():
+        s.wire0 = s.src.out + 1
+
+      s.wire0 |= s.sink.in_
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+            "w0=%s" % (s.wire0) + \
+             " >>> " + s.sink.line_trace()
+
+  A = Top()
+  A.elaborate()
+  A.print_schedule()
+
+  while not A.done():
+    A.cycle()
+    print A.line_trace()
+
 def test_lots_of_fan_on_edge_connect():
 
   class Top(Updates):
@@ -34,17 +67,13 @@ def test_lots_of_fan_on_edge_connect():
 
       s.wire3 = s.wire4 = 0
 
-      @s.update
-      def upB():
-        s.wire3 = s.wire1
-        s.wire4 = s.wire1
+      s.wire3 |= s.wire1
+      s.wire4 |= s.wire1
 
       s.wire5 = s.wire6 = 0
 
-      @s.update
-      def upC():
-        s.wire5 = s.wire2
-        s.wire6 = s.wire2
+      s.wire5 |= s.wire2
+      s.wire6 |= s.wire2
 
       s.wire7 = s.wire8 = 0
 

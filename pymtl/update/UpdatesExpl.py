@@ -46,10 +46,10 @@ class UpdatesExpl( object ):
     if not x.startswith("_"):
       if isinstance( v, int ) or isinstance( v, float ) or \
          isinstance( v, bool ) :
-        v = Value(v)
+        v = Value( v, s, x, -1 )
       elif isinstance( v, list ):
         if isinstance( v[0], int ):
-          v = [ Value(y) for y in v ]
+          v = [ Value( v[i], s, x, i ) for i in xrange(len(v)) ]
 
     super(UpdatesExpl, s).__setattr__( x, v )
 
@@ -81,9 +81,7 @@ class UpdatesExpl( object ):
         s._expl_constraints.add( (id(x0.func), id(x1.func)) )
       elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
         assert False, "Constraints between two variables are not allowed!"
-
       # TODO, add U(up) < RD(s.x)
-      # elif isinstance( x0, U ) and isinstance( x1, ValueConstraint ):
 
   def _elaborate_vars( s ):
 
@@ -244,6 +242,11 @@ class UpdatesExpl( object ):
           obj._cleanup_values()
         elif isinstance( obj, Value ):
           setattr( s, name, obj.v )
+        elif isinstance( obj, list ):
+          for i in xrange(len(obj)):
+            if isinstance( obj[i], value ):
+              obj[i] = obj[i].v
+              
 
   def elaborate( s ):
     s._recursive_elaborate()
