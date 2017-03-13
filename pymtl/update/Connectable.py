@@ -39,3 +39,11 @@ class Connectable(object):
 
 class ConnectableValue(Connectable,Value):
   pass
+
+class Method(object):
+  def __init__( self, func ):
+    self.func  = func
+    self._name = func.__name__
+
+  def __call__( self ):
+    self.func()

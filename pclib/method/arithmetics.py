@@ -2,7 +2,7 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux(MethodComponent):
+class Mux(MethodsExpl):
 
   def __init__( s, num_inputs = 2 ):
     s.in_ = [0] * num_inputs

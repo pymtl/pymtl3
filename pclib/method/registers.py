@@ -2,7 +2,7 @@ from pymtl import *
 
 # Register
 
-class Reg(MethodComponent):
+class Reg(MethodsExpl):
 
   def __init__( s ):
     s.v1 = 0
@@ -28,7 +28,7 @@ class Reg(MethodComponent):
 
 # Register with enable signal
 
-class RegEn(MethodComponent):
+class RegEn(MethodsExpl):
 
   def __init__( s ):
     s.v1 = 0

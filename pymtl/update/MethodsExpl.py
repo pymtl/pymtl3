@@ -30,11 +30,12 @@ class MethodsExpl( Updates ):
     inst._method_blks   = defaultdict(list)
 
     inst._partial_constraints = set() # contains ( id(func), id(func) )s
+
     return inst
 
   # Override
   def update( s, blk ):
-    super( MethodComponent, s ).update( blk )
+    super( MethodsExpl, s ).update( blk )
 
     blk_id = id(blk)
     tree = type(s)._blkid_ast[ blk_id ]
@@ -94,7 +95,7 @@ class MethodsExpl( Updates ):
 
   # Override
   def _elaborate_vars( s ):
-    super( MethodComponent, s )._elaborate_vars()
+    super( MethodsExpl, s )._elaborate_vars()
 
     # First check and bind update blocks that calls the method to it
     # This method elaborates the variables for implicit binding
@@ -218,9 +219,9 @@ class MethodsExpl( Updates ):
 
   # Override
   def _collect_child_vars( s, child ):
-    super( MethodComponent, s )._collect_child_vars( child )
+    super( MethodsExpl, s )._collect_child_vars( child )
 
-    if   isinstance( child, MethodComponent ):
+    if   isinstance( child, MethodsExpl ):
       for k in child._method_blks:
         s._method_blks[k].extend( child._method_blks[k] )
       s._partial_constraints |= child._partial_constraints
@@ -230,5 +231,5 @@ class MethodsExpl( Updates ):
 
   # Override
   def _synthesize_constraints( s ):
-    super( MethodComponent, s )._synthesize_constraints()
+    super( MethodsExpl, s )._synthesize_constraints()
     s._synthesize_partial_constraints()
