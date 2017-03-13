@@ -24,7 +24,10 @@ from Connectable     import Value
 class UpdatesExpl( object ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = super(UpdatesExpl, cls).__new__( cls, *args, **kwargs )
+    # We assume the previous simulation has ended when a new instance is created,
+    UpdatesExpl.__setattr__ = UpdatesExpl.___setattr__
+
+    inst = object.__new__( cls, *args, **kwargs )
 
     # These will be collected recursively
     inst._name_upblk       = {}
@@ -42,7 +45,7 @@ class UpdatesExpl( object ):
   # If this is a built-in type variable and not a private variable,
   # it is going to the simulation and not used by elaboration
 
-  def __setattr__( s, x, v ):
+  def ___setattr__( s, x, v ):
     if not x.startswith("_"):
       if isinstance( v, int ) or isinstance( v, float ) or \
          isinstance( v, bool ) :
@@ -93,7 +96,7 @@ class UpdatesExpl( object ):
           if isinstance( obj, list ):
             for x in obj:
               id_blks[ id(x) ].add( blk_id )
-          else:  
+          else:
             id_blks[ id(obj) ].add( blk_id )
         return
 
@@ -149,17 +152,15 @@ class UpdatesExpl( object ):
     s._total_constraints = list( s._expl_constraints.copy() )
 
   def _recursive_elaborate( s ):
-
-    setattr( type(s), "__setattr__", getattr( object, "__setattr__" ) )
-
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
         if isinstance( obj, UpdatesExpl ):
           obj._recursive_elaborate()
-
         s._collect_child_vars( obj )
-
     s._elaborate_vars()
+
+  def _elaborate( s ):
+    s._recursive_elaborate()
 
   def _schedule( s ):
 
@@ -243,6 +244,7 @@ class UpdatesExpl( object ):
       Q = Q2
 
   def _cleanup_values( s ):
+
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
         if   isinstance( obj, UpdatesExpl ):
@@ -255,7 +257,10 @@ class UpdatesExpl( object ):
               obj[i] = obj[i].v
 
   def elaborate( s ):
-    s._recursive_elaborate()
+    assert "__setattr__" in UpdatesExpl.__dict__, "Please don't elaborate twice!"
+    delattr( UpdatesExpl, "__setattr__" ) # delete it for simulation
+
+    s._elaborate()
     s._synthesize_constraints()
     s._schedule()
     s._cleanup_values()

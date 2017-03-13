@@ -1,7 +1,7 @@
 from pymtl import *
 
-from pclib.update import TestSource as TestSource
-from pclib.update import TestSink as TestSink
+from pclib.update import TestSource
+from pclib.update import TestSink
 
 def test_connect():
 
