@@ -67,10 +67,10 @@ class UpdatesExpl( object ):
 
     if not "_blkid_ast" in type(s).__dict__:
       type(s)._blkid_ast = dict()
-    if blk_id not in type(s)._blkid_ast:
-      type(s)._blkid_ast[ blk_id ] = get_ast( blk )
+    if blk.__name__ not in type(s)._blkid_ast:
+      type(s)._blkid_ast[ blk.__name__ ] = get_ast( blk )
 
-    get_read_write( type(s)._blkid_ast[ blk_id ], blk, \
+    get_read_write( type(s)._blkid_ast[ blk.__name__ ], blk, \
                     s._blkid_reads[ blk_id ], s._blkid_writes[ blk_id ] )
     return blk
 
