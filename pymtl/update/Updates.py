@@ -9,10 +9,18 @@ from Connectable import ConnectableValue
 
 class Updates( UpdatesImpl ):
 
+  def __new__( cls, *args, **kwargs ):
+    # We assume the previous simulation has ended when a new instance is created
+
+    inst = super(Updates, cls).__new__( cls, *args, **kwargs )
+    Updates.__setattr__ = Updates.___setattr__
+    return inst
+
   # If this is a built-in type variable and not a private variable,
   # it is going to the simulation and not used by elaboration
 
-  def __setattr__( s, x, v ):
+  # Override
+  def ___setattr__( s, x, v ):
     if not x.startswith("_"):
       if isinstance( v, int ) or isinstance( v, float ) or isinstance( v, bool ):
         v = ConnectableValue( v, s, x, -1 )
@@ -91,9 +99,12 @@ class Updates( UpdatesImpl ):
           s._read_blks  [ id(writer) ].append(blk_id)
 
   # Override
+  def _elaborate( s ):
+    super( Updates, s )._elaborate()
+    s._resolve_connections()
+
+  # Override
   def elaborate( s ):
-    s._recursive_elaborate()
-    s._resolve_connections() # This is done after recursive collections
-    s._synthesize_constraints()
-    s._schedule()
-    s._cleanup_values()
+    assert "__setattr__" in Updates.__dict__, "Please don't elaborate twice!"
+    delattr( Updates, "__setattr__" )
+    super( Updates, s ).elaborate()

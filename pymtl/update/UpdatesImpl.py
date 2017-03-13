@@ -1,19 +1,10 @@
 #=========================================================================
 # UpdatesImpl.py
 #=========================================================================
-# At the bottom level, we only have update blocks and explicit constraints
-# between two update blocks/one update block and the read/write of a
-# python variable.
-# Each update block is called exactly once every cycle. PyMTL will
-# schedule all update blocks based on the constraints. A total constraint
-# between two update blocks specifies the order of the two blocks, i.e.
-# call A before B.
-# We collect two types of constraints at this level:
-# * Implicit constraint: upA reads s.x while upB writes s.x ==> upB < upA
-# * Explicit constraint: s.add_constraints( upA < upB )
-# Explicit constraints will override implicit constraints.
+# We collect two types of implicit constraints at this level:
+# * upA reads s.x while upB writes s.x ==> upB < upA
+# * upA is marked as update_on_edge ==> first batch of upblks called
 
-from collections import defaultdict, deque
 
 from UpdatesExpl import UpdatesExpl, verbose
 

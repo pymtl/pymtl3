@@ -1,8 +1,8 @@
 #=========================================================================
-# MethodComponent.py
+# MethodsExpl.py
 #=========================================================================
 # At this level, we add methods, and partial constraints on top of update
-# blocks and total constraints, to improve productivity.
+# blocks, to improve productivity.
 # Two update blocks communicate via methods of the same component.
 # A partial constraint is specified between one update block and one
 # method, or two methods. PyMTL will try to chain partial constraints to
@@ -13,28 +13,18 @@
 #   - s.add_constraints( upA < upB, methodAA < upA, methodBB < methodAA )
 # Explicit constraints will override implicit bindings.
 
-from UpdateComponent import verbose
+from UpdatesExpl import verbose
 
-import ast
-from collections import defaultdict, deque
+from collections     import defaultdict
+from Updates         import Updates
+from ASTHelper       import get_ast
+from ConstraintTypes import U, M
+from Connectable     import Method
 
-from UpdateComponent import UpdateComponent, U, _int, p
-from Interface import Interface
-
-class M(object): # method wrapper
-  def __init__( self, func ):
-    self.func = func
-  def __lt__( self, other ):
-    return (self, other)
-  def __gt__( self, other ):
-    return (other, self)
-  def __call__( self ):
-    self.func()
-
-class MethodComponent( UpdateComponent ):
+class MethodsExpl( Updates ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = super( MethodComponent, cls ).__new__( cls, *args, **kwargs )
+    inst = super( MethodsExpl, cls ).__new__( cls, *args, **kwargs )
 
     inst._blkid_methods = defaultdict(list)
     inst._method_blks   = defaultdict(list)
