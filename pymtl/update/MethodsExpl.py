@@ -19,10 +19,10 @@ from collections     import defaultdict, deque
 from Updates         import Updates
 from ASTHelper       import get_method_calls
 from ConstraintTypes import U, M
-from Connectable     import Method
 
 class MethodsExpl( Updates ):
 
+  # Override
   def __new__( cls, *args, **kwargs ):
     inst = super( MethodsExpl, cls ).__new__( cls, *args, **kwargs )
 
@@ -34,7 +34,7 @@ class MethodsExpl( Updates ):
 
     # These will be collected recursively
     inst._method_blks = defaultdict(list)
-    inst._partial_constraints = set() # contains ( id(func), id(func) )s
+    inst._partial_constraints = set() # contains ( func, func )s
 
     # These are only processed at the current level
     inst._blkid_methods = defaultdict(list)
@@ -62,7 +62,7 @@ class MethodsExpl( Updates ):
       # Keep partial constraints x0 < x1 for later synthesis
       if isinstance( x0, M ) or isinstance( x1, M ):
         f0, f1 = x0.func, x1.func
-        s._partial_constraints.add( (id(f0), id(f1)) )
+        s._partial_constraints.add( (f0, f1) )
 
         if verbose: print hex(id(f0)), "p<",hex(id(f1))
 
@@ -121,8 +121,8 @@ class MethodsExpl( Updates ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._partial_constraints:
-      pred[y].add( x )
-      succ[x].add( y )
+      pred[id(y)].add( id(x) )
+      succ[id(x)].add( id(y) )
 
     method_blks = s._method_blks
 

@@ -40,13 +40,25 @@ class Connectable(object):
 class ConnectableValue(Connectable,Value):
   pass
 
-class Method(object):
-  def __init__( self, func ):
-    self.func  = func
+class MethodProxy(Connectable):
+
+  def __init__( self, *args ):
+    self._has_method = False
+
+    assert len(args) <= 1
+    if args:
+      other = args[0]
+      assert isinstance( other, MethodProxy ), "Cannot connect to %s, which is not a MethodProxy!"
+      self.connect( other )
+
+  def attach_method( self, func ):
+    self._func = func
     self._name = func.__name__
+    self._has_method = True
+
+  def has_method( self ):
+    return self._has_method
 
   def __call__( self, *args, **kwargs ):
-    self.func( *args, **kwargs )
-
-class MethodProxy(Connectable, Method):
-  pass
+    assert self._has_method, "what the hell are you doing here?" 
+    self._func( *args, **kwargs )

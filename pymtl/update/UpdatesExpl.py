@@ -264,10 +264,10 @@ class UpdatesExpl( object ):
         # handle s.x[i]
         elif isinstance( obj, list ):
           for i in xrange(len(obj)):
-            if   isinstance( obj[i], Value ):
-              obj[i] = obj[i].v
-            elif isinstance( obj[i], UpdatesExpl ):
+            if   isinstance( obj[i], UpdatesExpl ):
               obj[i]._cleanup_values()
+            elif isinstance( obj[i], Value ):
+              obj[i] = obj[i].v
 
   def elaborate( s ):
     assert "__setattr__" in UpdatesExpl.__dict__, "Please don't elaborate twice!"
