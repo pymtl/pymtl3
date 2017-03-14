@@ -37,58 +37,18 @@ class RegWire(MethodsExpl):
   def line_trace( s ):
     return "%d" % s.v
 
-def test_2regs_pure_method():
+def test_2regs():
 
   class Top(MethodsExpl):
 
     def __init__( s ):
-      s.inc = 0
-      s.in_ = Wire()
+      s.inc = s.in_ = 0
+
+      s.in_ |= s.inc
 
       @s.update
       def up_src():
         s.inc += 1
-        s.in_.wr( s.inc )
-
-      s.reg0 = RegWire()
-
-      @s.update
-      def up_plus_one_to_reg0():
-        s.reg0.wr( s.in_.rd() + 1 )
-
-      s.reg1 = Reg()
-
-      @s.update
-      def up_reg0_to_reg1():
-        s.reg1.wr( s.reg0.rd() )
-
-      s.out = 0
-      @s.update
-      def up_sink():
-        s.out = s.reg1.rd()
-
-    def line_trace( s ):
-      return  s.in_.line_trace() + " >>> " + s.reg0.line_trace() + \
-              " > " + s.reg1.line_trace() +\
-              " >>> " + "out=%d" % s.out
-
-  A = Top()
-  A.elaborate()
-  A.print_schedule()
-
-  for x in xrange(1000000):
-    A.cycle()
-
-def test_2regs_mix():
-
-  class Top(MethodsExpl):
-
-    def __init__( s ):
-      s.in_ = 0
-
-      @s.update
-      def up_src():
-        s.in_ += 1
 
       s.reg0 = RegWire()
 
@@ -100,7 +60,7 @@ def test_2regs_mix():
 
       @s.update
       def up_reg0_to_reg1():
-        s.reg1.wr( s.reg0.rd() )
+        s.reg1.wr( min( 1000000, s.reg0.rd() ) ) 
 
       s.out = 0
       @s.update
@@ -108,7 +68,7 @@ def test_2regs_mix():
         s.out = s.reg1.rd()
 
     def line_trace( s ):
-      return  s.in_.line_trace() + " >>> " + s.reg0.line_trace() + \
+      return  "in=%d" % s.in_ + " >>> " + s.reg0.line_trace() + \
               " > " + s.reg1.line_trace() +\
               " >>> " + "out=%d" % s.out
 
@@ -116,8 +76,50 @@ def test_2regs_mix():
   A.elaborate()
   A.print_schedule()
 
-  for x in xrange(1000000):
+  for x in xrange(100):
     A.cycle()
+    print A.line_trace()
+
+def test_arr_of_2regs():
+
+  class Top(MethodsExpl):
+
+    def __init__( s ):
+      s.inc = s.in_ = 0
+
+      s.in_ |= s.inc
+
+      @s.update
+      def up_src():
+        s.inc += 1
+
+      s.reg = [ Reg() for _ in xrange(2) ]
+
+      @s.update
+      def up_plus_one_to_reg0():
+        s.reg[0].wr( s.in_ + 1 )
+
+      @s.update
+      def up_reg0_to_reg1():
+        s.reg[1].wr( s.reg[0].rd() )
+
+      s.out = 0
+      @s.update
+      def up_sink():
+        s.out = s.reg[1].rd()
+
+    def line_trace( s ):
+      return  "in=%d" % s.in_ + " >>> " + s.reg[0].line_trace() + \
+              " > " + s.reg[1].line_trace() +\
+              " >>> " + "out=%d" % s.out
+
+  A = Top()
+  A.elaborate()
+  A.print_schedule()
+
+  for x in xrange(100):
+    A.cycle()
+    print A.line_trace()
 
 def test_add_loopback_implicit():
 
@@ -133,6 +135,7 @@ def test_add_loopback_implicit():
 
       s.reg0 = Reg()
       s.wire_back = 0
+      s.sink.in_ |= s.wire_back
 
       @s.update
       def upA():
@@ -141,7 +144,7 @@ def test_add_loopback_implicit():
 
       @s.update
       def up_to_sink_and_loop_back():
-        s.sink.in_  = s.wire_back = s.reg0.rd()
+        s.wire_back = s.reg0.rd()
 
     def done( s ):
       return s.src.done() and s.sink.done()

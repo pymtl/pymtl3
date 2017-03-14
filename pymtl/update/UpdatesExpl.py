@@ -42,17 +42,14 @@ class UpdatesExpl( object ):
     inst._blkid_writes = defaultdict(list)
     return inst
 
-  # If this is a built-in type variable and not a private variable,
-  # it is going to the simulation and not used by elaboration
+  # HACKY? We wrap each signal with a Value for the ease of elaboration
 
   def ___setattr__( s, x, v ):
     if not x.startswith("_"):
-      if isinstance( v, int ) or isinstance( v, float ) or \
-         isinstance( v, bool ) :
+      if isinstance( v, int ) or isinstance( v, float ) or isinstance( v, bool ) :
         v = Value( v, s, x, -1 )
-      elif isinstance( v, list ):
-        if isinstance( v[0], int ):
-          v = [ Value( v[i], s, x, i ) for i in xrange(len(v)) ]
+      elif isinstance( v, list ) and isinstance( v[0], int ):
+        v = [ Value( v[i], s, x, i ) for i in xrange(len(v)) ]
 
     super(UpdatesExpl, s).__setattr__( x, v )
 
@@ -154,9 +151,19 @@ class UpdatesExpl( object ):
   def _recursive_elaborate( s ):
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
+
+        # handle s.x
         if isinstance( obj, UpdatesExpl ):
           obj._recursive_elaborate()
-        s._collect_child_vars( obj )
+          s._collect_child_vars( obj )
+
+        # handle s.x[i]
+        elif isinstance( obj, list ): # a list of objs
+          for x in obj:
+            if isinstance( x, UpdatesExpl ):
+              x._recursive_elaborate()
+              s._collect_child_vars( x )
+
     s._elaborate_vars()
 
   def _elaborate( s ):
@@ -247,14 +254,20 @@ class UpdatesExpl( object ):
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
+
+        # handle s.x
         if   isinstance( obj, UpdatesExpl ):
           obj._cleanup_values()
         elif isinstance( obj, Value ):
           setattr( s, name, obj.v )
+
+        # handle s.x[i]
         elif isinstance( obj, list ):
           for i in xrange(len(obj)):
-            if isinstance( obj[i], Value ):
+            if   isinstance( obj[i], Value ):
               obj[i] = obj[i].v
+            elif isinstance( obj[i], UpdatesExpl ):
+              obj[i]._cleanup_values()
 
   def elaborate( s ):
     assert "__setattr__" in UpdatesExpl.__dict__, "Please don't elaborate twice!"

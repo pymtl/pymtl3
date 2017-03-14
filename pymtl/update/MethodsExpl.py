@@ -15,9 +15,9 @@
 
 from UpdatesExpl import verbose
 
-from collections     import defaultdict
+from collections     import defaultdict, deque
 from Updates         import Updates
-from ASTHelper       import get_ast
+from ASTHelper       import get_method_calls
 from ConstraintTypes import U, M
 from Connectable     import Method
 
@@ -26,76 +26,78 @@ class MethodsExpl( Updates ):
   def __new__( cls, *args, **kwargs ):
     inst = super( MethodsExpl, cls ).__new__( cls, *args, **kwargs )
 
-    inst._blkid_methods = defaultdict(list)
-    inst._method_blks   = defaultdict(list)
+    for x in dir(cls):
+      if x not in dir(MethodsExpl):
+        y = getattr(inst, x)
+        if callable(y):
+          setattr( inst, x, y )
 
+    # These will be collected recursively
+    inst._method_blks = defaultdict(list)
     inst._partial_constraints = set() # contains ( id(func), id(func) )s
 
+    # These are only processed at the current level
+    inst._blkid_methods = defaultdict(list)
     return inst
 
   # Override
   def update( s, blk ):
     super( MethodsExpl, s ).update( blk )
+    get_method_calls( type(s)._blkid_ast[ blk.__name__ ], blk, \
+                      s._blkid_methods[ id(blk) ] )
+    return blk
 
-    blk_id = id(blk)
-    tree = type(s)._blkid_ast[ blk_id ]
-
-    # Walk the ast to extract method calls
-    for node in ast.walk(tree):
-      # Check if the node is a function call and the function name is not
-      # not min,max,etc; it should be a component method call s.x.y.z()
-
-      if isinstance( node, ast.Call ) and not isinstance( node.func, ast.Name ):
-
-        t = node.func.value
-        obj_name = []
-        while hasattr( t, "value" ): # don't record the last "s."
-          obj_name.append( t.attr )
-          t = t.value
-
-        obj_name.reverse()
-        method_name = node.func.attr
-        s._blkid_methods[ blk_id ].append( (obj_name, method_name) )
-
+  # Override
+  def update_on_edge( s, blk ):
+    super( MethodsExpl, s ).update_on_edge( blk )
+    get_method_calls( type(s)._blkid_ast[ blk.__name__ ], blk, \
+                      s._blkid_methods[ id(blk) ] )
     return blk
 
   # Override
   def add_constraints( s, *args ):
+    super( MethodsExpl, s ).add_constraints( *args ) # handle U-U, U-V, V-V
 
     for (x0, x1) in args:
+      # Keep partial constraints x0 < x1 for later synthesis
+      if isinstance( x0, M ) or isinstance( x1, M ):
+        f0, f1 = x0.func, x1.func
+        s._partial_constraints.add( (id(f0), id(f1)) )
 
-      # Two upblks! Forward total constraints to the final graph
-      if isinstance( x0, U ) and isinstance( x1, U ):
-        s._add_expl_constraints( id(x0.func), id(x1.func) )
-
-      # Keep partial constraints for later synthesis
-      # Store the method descriptor to host instance dictionary for unique id
-      else:
-        x = x0.func
-        y = x1.func
-        xobj = yobj = s
-
-        if isinstance( x0, M ):
-          xobj = x.__self__
-          if not x.__name__  in xobj.__dict__:
-            xobj.__dict__[ x.__name__ ] = x
-          x = xobj.__dict__[ x.__name__ ]
-
-        if isinstance( x1, M ):
-          yobj = y.__self__
-          if not y.__name__  in yobj.__dict__:
-            yobj.__dict__[ y.__name__ ] = y
-          y = yobj.__dict__[ y.__name__ ]
-
-        # Partial constraints, x0 < x1
-        xobj._partial_constraints.add( (id(x), id(y)) )
-        yobj._partial_constraints.add( (id(x), id(y)) )
-
-        if verbose: print hex(id(x)), "p<",hex(id(y))
+        if verbose: print hex(id(f0)), "p<",hex(id(f1))
 
   # Override
   def _elaborate_vars( s ):
     super( MethodsExpl, s )._elaborate_vars()
+
+    def add_all( typ, depth, obj, name, method_name, method_blks, blk_id ): # We need this to deal with s.a[*].b[*]
+      if depth >= len(name):
+
+        assert hasattr( obj, method_name ), "\"%s\", in %s, is not a method of class %s" \
+               %(method_name, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+        method = getattr( obj, method_name )
+        assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
+
+        if verbose: print " - ", name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+
+        method_blks[ id(method) ].add( blk_id )
+        return
+
+      (field, idx) = name[ depth ]
+      assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
+             %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+
+      obj = getattr( obj, field )
+      if   idx == "x":
+        add_all( typ, depth+1, obj, name, method_name, method_blks, blk_id )
+      elif isinstance( idx, int ):
+        assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
+        add_all( typ, depth+1, obj[idx], name, method_name, method_blks, blk_id )
+      else:
+        assert idx == "*", "idk"
+        assert isinstance( obj, list ), "%s is not a list" % field
+        for x in obj:
+          add_all( typ, depth+1, x, name, method_name, method_blks, blk_id )
 
     # First check and bind update blocks that calls the method to it
     # This method elaborates the variables for implicit binding
@@ -103,21 +105,8 @@ class MethodsExpl( Updates ):
     method_blks = defaultdict(set)
 
     for blk_id, method_calls in s._blkid_methods.iteritems():
-      for (object_name, method_name) in method_calls:
-        obj = s
-        for field in object_name:
-          assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
-                 %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
-          obj = getattr( obj, field )
-
-        assert hasattr( obj, method_name ), "\"%s\", in %s, is not a method of class %s" \
-               %(method_name, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
-        method = getattr( obj, method_name )
-        assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
-
-        if verbose: print " - ", object_name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-
-        method_blks[ id(method) ].add( blk_id )
+      for method in method_calls:
+        add_all( "method", 0, s, method[0], method[1], method_blks, blk_id )
 
     # Turn associated sets into lists. O(logn) -> O(1)
 
@@ -226,10 +215,7 @@ class MethodsExpl( Updates ):
         s._method_blks[k].extend( child._method_blks[k] )
       s._partial_constraints |= child._partial_constraints
 
-    elif isinstance( child, Interface ):
-      child._connect_to_root()
-
   # Override
   def _synthesize_constraints( s ):
-    super( MethodsExpl, s )._synthesize_constraints()
     s._synthesize_partial_constraints()
+    super( MethodsExpl, s )._synthesize_constraints()

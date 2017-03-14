@@ -16,9 +16,7 @@ class Updates( UpdatesImpl ):
     Updates.__setattr__ = Updates.___setattr__
     return inst
 
-  # If this is a built-in type variable and not a private variable,
-  # it is going to the simulation and not used by elaboration
-
+  # HACKY? We wrap each signal with a ConnectableValue for the ease of elaboration
   # Override
   def ___setattr__( s, x, v ):
     if not x.startswith("_"):
@@ -26,13 +24,16 @@ class Updates( UpdatesImpl ):
         v = ConnectableValue( v, s, x, -1 )
       elif isinstance( v, list ) and isinstance( v[0], int ):
         v = [ ConnectableValue( v[i], s, x, i ) for i in xrange(len(v)) ]
+
     super(UpdatesExpl, s).__setattr__( x, v )
 
-  def _collect_connections( s, varid_vars ):
+  def _recursive_collect_connections( s, varid_vars ):
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
+
+        # handle s.x
         if   isinstance( obj, Updates ):
-          obj._collect_connections( varid_vars )
+          obj._recursive_collect_connections( varid_vars )
         elif isinstance( obj, ConnectableValue ):
           root = obj._find_root()
 
@@ -41,6 +42,20 @@ class Updates( UpdatesImpl ):
               varid_vars[ id(root) ] = (root, root._connected)
           else:
             assert root == obj, "It doesn't make sense ..."
+
+        # handle s.x[i]
+        elif isinstance( obj, list ):
+          for x in obj:
+            if   isinstance( x, Updates ):
+              x._recursive_collect_connections( varid_vars )
+            elif isinstance( x, ConnectableValue ):
+              root = x._find_root()
+
+              if len( root._connected ) > 1: # has actual connection
+                if id(root) not in varid_vars:
+                  varid_vars[ id(root) ] = (root, root._connected)
+              else:
+                assert root == obj, "It doesn't make sense ..."
 
   def _resolve_connections( s ):
 
@@ -61,7 +76,7 @@ class Updates( UpdatesImpl ):
       return f
 
     varid_net = dict()
-    s._collect_connections( varid_net )
+    s._recursive_collect_connections( varid_net )
 
     for (var, net) in varid_net.values():
       # Writer means it is written somewhere else.

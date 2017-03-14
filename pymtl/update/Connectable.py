@@ -12,7 +12,7 @@ class Connectable(object):
     inst = object.__new__( cls )
 
     # Use disjoint set to resolve connections
-    inst._root      = inst 
+    inst._root      = inst
     inst._connected = [ inst ]
 
     return inst
@@ -45,5 +45,8 @@ class Method(object):
     self.func  = func
     self._name = func.__name__
 
-  def __call__( self ):
-    self.func()
+  def __call__( self, *args, **kwargs ):
+    self.func( *args, **kwargs )
+
+class MethodProxy(Connectable, Method):
+  pass
