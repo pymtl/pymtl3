@@ -67,7 +67,7 @@ def test_connect_list_int_idx():
 
   while not A.done():
     A.cycle()
-    print A.line_trace
+    print A.line_trace()
 
 MUX_SEL_0 = 0
 MUX_SEL_1 = 1

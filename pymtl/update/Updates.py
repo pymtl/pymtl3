@@ -14,6 +14,8 @@ class Updates( UpdatesImpl ):
 
     inst = super(Updates, cls).__new__( cls, *args, **kwargs )
     Updates.__setattr__ = Updates.___setattr__
+
+    inst._varid_net = dict()
     return inst
 
   # HACKY? We wrap each signal with a ConnectableValue for the ease of elaboration
@@ -27,19 +29,21 @@ class Updates( UpdatesImpl ):
 
     super(UpdatesExpl, s).__setattr__( x, v )
 
-  def _recursive_collect_connections( s, varid_vars ):
+  def _recursive_collect_var_connections( s, varid_nets ):
+
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
 
         # handle s.x
         if   isinstance( obj, Updates ):
-          obj._recursive_collect_connections( varid_vars )
+          obj._recursive_collect_var_connections( varid_nets )
+
         elif isinstance( obj, ConnectableValue ):
           root = obj._find_root()
 
           if len( root._connected ) > 1: # has actual connection
-            if id(root) not in varid_vars:
-              varid_vars[ id(root) ] = (root, root._connected)
+            if id(root) not in varid_nets:
+              varid_nets[ id(root) ] = (root, root._connected)
           else:
             assert root == obj, "It doesn't make sense ..."
 
@@ -47,17 +51,18 @@ class Updates( UpdatesImpl ):
         elif isinstance( obj, list ):
           for x in obj:
             if   isinstance( x, Updates ):
-              x._recursive_collect_connections( varid_vars )
+              x._recursive_collect_var_connections( varid_nets )
+
             elif isinstance( x, ConnectableValue ):
               root = x._find_root()
 
               if len( root._connected ) > 1: # has actual connection
-                if id(root) not in varid_vars:
-                  varid_vars[ id(root) ] = (root, root._connected)
+                if id(root) not in varid_nets:
+                  varid_nets[ id(root) ] = (root, root._connected)
               else:
                 assert root == obj, "It doesn't make sense ..."
 
-  def _resolve_connections( s ):
+  def _resolve_var_connections( s ):
 
     def mk_v_v( o1, f1, o2, f2 ):
       def f(): o1.__setattr__( f1, o2.__getattribute__( f2 ) )
@@ -75,10 +80,9 @@ class Updates( UpdatesImpl ):
       def f(): o1.__getattribute__( f1 )[i1] = o2.__getattribute__( f2 )[i2]
       return f
 
-    varid_net = dict()
-    s._recursive_collect_connections( varid_net )
+    s._recursive_collect_var_connections( s._varid_net )
 
-    for (var, net) in varid_net.values():
+    for (var, net) in s._varid_net.values():
       # Writer means it is written somewhere else.
       # In these connection blocks, the writer's value is read, v = writer
 
@@ -116,7 +120,7 @@ class Updates( UpdatesImpl ):
   # Override
   def _elaborate( s ):
     super( Updates, s )._elaborate()
-    s._resolve_connections()
+    s._resolve_var_connections()
 
   # Override
   def elaborate( s ):
