@@ -54,21 +54,22 @@ class UpdatesExpl( object ):
   def _elaborate_vars( s ):
     pass
 
-  def _recursive_elaborate( s ):
+  def _enumerate_types( s, obj, name, idx ):
+    if isinstance( obj, list ):
+      for i in xrange(len(obj)):
+        s._enumerate_types( obj[i], name, idx + [i] )
 
-    def _try_recursive_indexing( obj, name, idx ):
-      if isinstance( obj, list ):
-        for i in xrange(len(obj)):
-          _try_recursive_indexing( obj[i], name, idx + [i] )
-      elif isinstance( obj, UpdatesExpl ):
-        obj._name = list(name)
-        obj._idx  = list(idx)
-        obj._recursive_elaborate()
-        s._collect_child_vars( obj )
+    if isinstance( obj, UpdatesExpl ):
+      obj._name = list(name)
+      obj._idx  = list(idx)
+      obj._recursive_elaborate()
+      s._collect_child_vars( obj )
+
+  def _recursive_elaborate( s ):
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
-        _try_recursive_indexing( obj, s._name + [name] , [] )
+        s._enumerate_types( obj, s._name + [name] , [] )
 
     s._elaborate_vars()
 
