@@ -35,6 +35,10 @@ class Wire(Connectable):
 
   def __init__( s, type_, default = None ):
     s.type_ = type_
+    s.default = default
+
+  def default_value( s ):
+    return s.default if s.default != None else s.type_()
 
 class ValuePort(Wire):
   pass

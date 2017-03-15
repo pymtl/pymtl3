@@ -1,7 +1,7 @@
 from pymtl import *
 
-from pclib.update_impl import TestSourceExpl as TestSource
-from pclib.update_impl import TestSinkExpl as TestSink
+from pclib.update_expl import TestSource
+from pclib.update_expl import TestSink
 
 def test_bb():
 
@@ -277,7 +277,6 @@ def test_2d_array_vars():
       )
 
     def done( s ):
-      print s.src.done()
       return s.src.done() and s.sink.done()
 
     def line_trace( s ):
