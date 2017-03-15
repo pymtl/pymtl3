@@ -26,6 +26,7 @@ class UpdatesExpl( object ):
     inst._name_upblk       = {}
     inst._blkid_upblk      = {}
     inst._expl_constraints = set() # contains ( id(func), id(func) )s
+    inst._name = [ "top" ] # assume top at the beginning
     return inst
 
   def update( s, blk ):
@@ -55,21 +56,19 @@ class UpdatesExpl( object ):
 
   def _recursive_elaborate( s ):
 
+    def _try_recursive_indexing( obj, name, idx ):
+      if isinstance( obj, list ):
+        for i in xrange(len(obj)):
+          _try_recursive_indexing( obj[i], name, idx + [i] )
+      elif isinstance( obj, UpdatesExpl ):
+        obj._name = list(name)
+        obj._idx  = list(idx)
+        obj._recursive_elaborate()
+        s._collect_child_vars( obj )
+
     for name, obj in s.__dict__.iteritems():
-
       if not name.startswith("_"): # filter private variables
-
-        # handle s.x
-        if isinstance( obj, UpdatesExpl ):
-          obj._recursive_elaborate()
-          s._collect_child_vars( obj )
-
-        # handle s.x[i]
-        elif isinstance( obj, list ): # a list of objs
-          for x in obj:
-            if isinstance( x, UpdatesExpl ):
-              x._recursive_elaborate()
-              s._collect_child_vars( x )
+        _try_recursive_indexing( obj, s._name + [name] , [] )
 
     s._elaborate_vars()
 
