@@ -27,6 +27,7 @@ class UpdatesExpl( object ):
     inst._blkid_upblk      = {}
     inst._expl_constraints = set() # contains ( id(func), id(func) )s
     inst._name = [ "top" ] # assume top at the beginning
+    inst._idx  = []
     return inst
 
   def update( s, blk ):
@@ -54,13 +55,14 @@ class UpdatesExpl( object ):
   def _elaborate_vars( s ):
     pass
 
-  def _enumerate_types( s, obj, name, idx ):
+  def _enumerate_types( s, name, obj, idx ):
     if isinstance( obj, list ):
       for i in xrange(len(obj)):
-        s._enumerate_types( obj[i], name, idx + [i] )
+        s._enumerate_types( name, obj[i], idx + [i] )
 
     if isinstance( obj, UpdatesExpl ):
-      obj._name = list(name)
+      obj._father = s
+      obj._name = s._name + [name]
       obj._idx  = list(idx)
       obj._recursive_elaborate()
       s._collect_child_vars( obj )
@@ -69,7 +71,7 @@ class UpdatesExpl( object ):
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
-        s._enumerate_types( obj, s._name + [name] , [] )
+        s._enumerate_types( name, obj, [] )
 
     s._elaborate_vars()
 

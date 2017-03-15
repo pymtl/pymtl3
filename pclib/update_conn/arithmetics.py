@@ -9,6 +9,10 @@ class Mux(UpdatesConnection):
     s.sel = ValuePort(int)
     s.out = ValuePort(int)
 
+    @s.update
+    def up_mux():
+      s.out = s.in_[ s.sel ]
+
     for x in s.in_:
       s.add_constraints(
         WR(x) < U(up_mux),
@@ -16,15 +20,8 @@ class Mux(UpdatesConnection):
 
     s.add_constraints(
       WR(s.sel) < U(up_mux),
+      U(up_mux) < RD(s.out),
     )
-
-    s.add_constraints(
-      U(up_mux) < RD(s.out)
-    )
-
-    @s.update
-    def up_mux():
-      s.out = s.in_[ s.sel ]
 
   def line_trace( s ):  pass
 
