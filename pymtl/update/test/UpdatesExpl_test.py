@@ -226,3 +226,69 @@ def test_lots_of_fan():
   while not A.done():
     A.cycle()
     print A.line_trace()
+
+def test_2d_array_vars():
+
+  class Top(UpdatesExpl):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [2,1,0,2,1,0] )
+      s.sink = TestSink  ( ["?",(5+6),(3+4),(1+2),
+                                (5+6),(3+4),(1+2)] )
+
+      s.wire = [ [0 for _ in xrange(2)] for _ in xrange(2) ]
+
+      @s.update
+      def up_from_src():
+        s.wire[0][0] = s.src.out
+        s.wire[0][1] = s.src.out + 1
+
+      up_src = s.src.get_update_block("up_src")
+
+      s.add_constraints(
+        U(up_src) < U(up_from_src),
+      )
+
+      s.reg = 0
+
+      @s.update
+      def up_reg():
+        s.reg = s.wire[0][0] + s.wire[0][1]
+
+      @s.update
+      def upA():
+        s.wire[1][0] = s.reg
+        s.wire[1][1] = s.reg + 1
+
+      s.add_constraints(
+        U(up_reg) < U(upA),
+        U(up_reg) < U(up_from_src),
+      )
+      @s.update
+      def up_to_sink():
+        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+
+      up_sink = s.sink.get_update_block("up_sink")
+
+      s.add_constraints(
+        U(upA)        < U(up_to_sink),
+        U(up_to_sink) < U(up_sink),
+      )
+
+    def done( s ):
+      print s.src.done()
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+             str(s.wire)+"r0=%s" % s.reg + \
+             " >>> " + s.sink.line_trace()
+
+  A = Top()
+  A.elaborate()
+  A.print_schedule()
+
+  while not A.done():
+    A.cycle()
+    print A.line_trace()
