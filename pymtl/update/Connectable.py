@@ -1,11 +1,3 @@
-class Value(object):
-
-  def __init__( self, v, obj, name, idx ):
-    self.v     = v
-    self._obj  = obj   # Host object that has self as member
-    self._name = name  # The member name in the host object
-    self._idx  = idx   # >=0: this is nested in list. <0 otherwise
-
 class Connectable(object):
 
   def __new__( cls, *args ):
@@ -22,25 +14,32 @@ class Connectable(object):
     s._root = s._root._find_root()
     return s._root
 
-  def connect( s, o ):
-    assert isinstance( o, Connectable ), "Unconnectable object!"
+  def connect( s, writer ):
+    assert isinstance( writer, Connectable ), "Unconnectable object!"
 
-    x = s._root = s._find_root()
-    y = o._root = o._find_root()
-    assert x != y, "Two nets are already unionized."
+    x = s._find_root()
+    y = writer._find_root()
+    assert x != y, "Two nets are already unionized!"
+    assert x == s, "One net signal cannot have two drivers!"
 
-    x._connected.extend( y._connected )
-    delattr(y, "_connected" ) # Purge merged signal
-    y._root = x
+    # merge myself to the writer
+    y._connected.extend( x._connected )
+    x._connected = []
+    x._root = y
 
-  def __ior__( s, other ):
-    s.connect( other )
+  def __ior__( s, writer ):
+    s.connect( writer )
     return s
 
-class ConnectableValue(Connectable,Value):
+class Wire(Connectable):
+
+  def __init__( s, type_, default = None ):
+    s.type_ = type_
+
+class ValuePort(Wire):
   pass
 
-class MethodProxy(Connectable):
+class MethodPort(Connectable):
 
   def __init__( self, *args ):
     self._has_method = False
@@ -48,7 +47,7 @@ class MethodProxy(Connectable):
     assert len(args) <= 1
     if args:
       other = args[0]
-      assert isinstance( other, MethodProxy ), "Cannot connect to %s, which is not a MethodProxy!"
+      assert isinstance( other, MethodPort ), "Cannot connect to %s, which is not a MethodPort!"
       self.connect( other )
 
   def attach_method( self, func ):

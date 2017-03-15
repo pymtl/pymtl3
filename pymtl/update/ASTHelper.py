@@ -10,32 +10,37 @@ class DetectVarNames( ast.NodeVisitor ):
     obj_name = []
 
     while hasattr( node, "value" ): # don't record the last "s."
-      if   isinstance( node, ast.Attribute ):
-        obj_name.append( (node.attr, "x") )
-      else:
-        assert isinstance( node, ast.Subscript )
+      # s.x[1][2].y[i][3]
 
-        if isinstance( node.slice, ast.Index ):
-          v   = node.slice.value
-          num = "*"
+      # First strip off all slices [0:32]
+      while isinstance( node, ast.Subscript ) and \
+            isinstance( node.slice, ast.Slice ):
+        # TODO handle slices. Squash them into one, or keep them?
+        node = node.value
 
-          if   isinstance( v, ast.Num ):
-            num = v.n
+      # Then strip off all array indices
+      num = []
+      while isinstance( node, ast.Subscript ) and \
+            isinstance( node.slice, ast.Index ):
+        v = node.slice.value
+        n = "*"
 
-          elif isinstance( v, ast.Name ): # Only support global const indexing for now
-            assert v.id in self.upblk.func_globals, "Global variable %s is undefined!" % v.id
-            num = self.upblk.func_globals[ v.id ]
-          else:
-            assert isinstance( v, ast.Attribute ), v.__dict__
-            self.visit( v )
-
-          assert isinstance( node.value, ast.Attribute )
-          node = node.value
-          obj_name.append( (node.attr, num) )
-
+        if   isinstance( v, ast.Num ):
+          n = v.n
+        elif isinstance( v, ast.Name ): 
+          if v.id in self.upblk.func_globals: # Only support global const indexing for now
+            n = self.upblk.func_globals[ v.id ]
         else:
-          assert isinstance( node.slice, ast.Slice )
+          assert isinstance( v, ast.Attribute ), type(v)
+          self.visit( v )
+
+        num.append(n)
+        node = node.value
+
+      assert isinstance( node, ast.Attribute ), "what the hell?"    
+      obj_name.append( (node.attr, num[::-1]) )
       node = node.value
+
     return obj_name[::-1]
 
 class DetectReadsAndWrites( DetectVarNames ):
