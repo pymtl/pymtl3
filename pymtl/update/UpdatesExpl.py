@@ -122,9 +122,9 @@ class UpdatesExpl( object ):
 
     s._schedule_list = []
     while Q:
-      random.shuffle(Q) # to catch corner cases; will be removed later
+      # random.shuffle(Q) # to catch corner cases; will be removed later
 
-      u = Q.pop()
+      u = Q.popleft() # bfs order is faster than dfs order
       s._schedule_list.append( s._blkid_upblk[ upblks[u] ] )
       for v in edges[u]:
         InDeg[v] -= 1
