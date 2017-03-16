@@ -1,23 +1,81 @@
 from pymtl import *
 
-from pclib.update_conn import TestSource
-from pclib.update_conn import TestSink
+from pclib.update import TestSource
+from pclib.update import TestSink
 
-def test_wire_up_constraint():
+def test_bb():
 
-  class Top(UpdatesConnection):
+  class Top(Updates):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a = s.b + 1
+
+      @s.update
+      def upB():
+        s.b = s.b + 1
+
+  A = Top()
+  A.elaborate()
+
+def test_bb_cyclic_dependency():
+
+  class Top(Updates):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a = s.b
+
+      @s.update
+      def upB():
+        s.b = s.a
+
+  A = Top()
+  try:
+    A.elaborate()
+  except Exception:
+    return
+  raise Exception("Should've thrown cyclic dependency exception.")
+
+def test_add_loopback():
+
+  class Top(Updates):
 
     def __init__( s ):
 
-      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( [5,4,3,2,5,4,3,2] )
+      s.src  = TestSource( [4,3,2,1] )
+      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+
+      s.wire0 = Wire(int)
+      s.wire1 = Wire(int)
 
       @s.update
       def up_from_src():
-        s.sink.in_ = s.src.out + 1
+        s.wire0 = s.src.out + 1
+
+      s.reg0 = Wire(int)
+
+      @s.update
+      def upA():
+        s.reg0 = s.wire0 + s.wire1
+
+      @s.update
+      def up_to_sink_and_loop_back():
+        s.sink.in_ = s.reg0
+        s.wire1 = s.reg0
 
       s.add_constraints(
-        U(up_from_src) < RD(s.sink.in_),
+        U(upA) < WR(s.wire1),
+        U(upA) < WR(s.wire0),
+        U(upA) < RD(s.reg0), # also implicit
       )
 
     def done( s ):
@@ -25,6 +83,7 @@ def test_wire_up_constraint():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
+            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
   A = Top()
@@ -35,33 +94,40 @@ def test_wire_up_constraint():
     A.cycle()
     print A.line_trace()
 
-def test_connect_plain():
+def test_add_loopback_on_edge():
 
-  class Top(UpdatesConnection):
+  class Top(Updates):
 
     def __init__( s ):
 
-      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( [5,4,3,2,5,4,3,2] )
+      s.src  = TestSource( [4,3,2,1] )
+      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
 
       s.wire0 = Wire(int)
+      s.wire1 = Wire(int)
 
       @s.update
       def up_from_src():
         s.wire0 = s.src.out + 1
 
-      s.add_constraints(
-        U(up_from_src) < RD(s.wire0),
-      )
+      s.reg0 = Wire(int)
 
-      s.wire0 |= s.sink.in_
+      # UPDATE ON EDGE!
+      @s.update_on_edge
+      def upA():
+        s.reg0 = s.wire0 + s.wire1
+
+      @s.update
+      def up_to_sink_and_loop_back():
+        s.sink.in_ = s.reg0
+        s.wire1 = s.reg0
 
     def done( s ):
       return s.src.done() and s.sink.done()
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s" % (s.wire0) + \
+            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
   A = Top()
@@ -74,7 +140,7 @@ def test_connect_plain():
 
 def test_connect_list_int_idx():
 
-  class Top(UpdatesConnection):
+  class Top(Updates):
 
     def __init__( s ):
 
@@ -83,7 +149,7 @@ def test_connect_list_int_idx():
       s.src_sel = TestSource( [1,0,1,0] )
       s.sink    = TestSink  ( [8,3,6,1] )
 
-      from pclib.update_conn import Mux
+      from pclib.update import Mux
       s.mux = Mux(2)
 
       # All constraints are within TestSource, TestSink, and Mux
@@ -107,45 +173,9 @@ def test_connect_list_int_idx():
     A.cycle()
     print A.line_trace()
 
-MUX_SEL_0 = 0
-MUX_SEL_1 = 1
+def test_2d_array_vars_impl():
 
-def test_connect_list_const_idx():
-
-  class Top(UpdatesConnection):
-
-    def __init__( s ):
-
-      s.src_in0 = TestSource( [4,3,2,1] )
-      s.src_in1 = TestSource( [8,7,6,5] )
-      s.src_sel = TestSource( [1,0,1,0] )
-      s.sink    = TestSink  ( [8,3,6,1] )
-
-      from pclib.update_conn import Mux
-      s.mux = Mux(2)
-
-      s.src_in0.out |= s.mux.in_[MUX_SEL_0]
-      s.src_in1.out |= s.mux.in_[MUX_SEL_1]
-      s.src_sel.out |= s.mux.sel
-      s.sink.in_    |= s.mux.out
-
-    def done( s ):
-      return s.src_in0.done() and s.sink.done()
-
-    def line_trace( s ):
-      return " >>> " + s.sink.line_trace()
-
-  A = Top()
-  A.elaborate()
-  A.print_schedule()
-
-  while not A.done():
-    A.cycle()
-    print A.line_trace()
-
-def test_2d_array_vars():
-
-  class Top(UpdatesConnection):
+  class Top(Updates):
 
     def __init__( s ):
 
@@ -162,34 +192,18 @@ def test_2d_array_vars():
 
       s.reg = Wire(int)
 
-      @s.update
+      @s.update_on_edge
       def up_reg():
         s.reg = s.wire[0][0] + s.wire[0][1]
-
-      s.add_constraints(
-        U(up_reg) < RD(s.reg), # up_reg writes s.reg
-      )
 
       @s.update
       def upA():
         for i in xrange(2):
           s.wire[1][i] = s.reg + i
 
-      for i in xrange(2):
-        s.add_constraints(
-          U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
-        )
-
       @s.update
       def up_to_sink():
         s.sink.in_ = s.wire[1][0] + s.wire[1][1]
-
-      up_sink = s.sink.get_update_block("up_sink")
-
-      s.add_constraints(
-        U(upA)        < U(up_to_sink),
-        U(up_to_sink) < U(up_sink),
-      )
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -207,9 +221,9 @@ def test_2d_array_vars():
     A.cycle()
     print A.line_trace()
 
-def test_2d_array_vars_connect():
+def test_2d_array_vars_connect_impl():
 
-  class Top(UpdatesConnection):
+  class Top(Updates):
 
     def __init__( s ):
 
@@ -227,17 +241,9 @@ def test_2d_array_vars_connect():
       s.reg = Wire(int)
       s.wire[1][0] |= s.reg
 
-      @s.update
+      @s.update_on_edge
       def up_reg():
         s.reg = s.wire[0][0] + s.wire[0][1]
-
-      s.add_constraints(
-        U(up_reg) < RD(s.reg), # up_reg writes s.reg
-      )
-      for i in xrange(2):
-        s.add_constraints(
-          U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
-        )
 
       @s.update
       def upA():
@@ -246,11 +252,6 @@ def test_2d_array_vars_connect():
       @s.update
       def up_to_sink():
         s.sink.in_ = s.wire[1][0] + s.wire[1][1]
-
-      for i in xrange(2):
-        s.add_constraints(
-          WR(s.wire[1][i]) < U(up_to_sink),
-        )
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -270,7 +271,7 @@ def test_2d_array_vars_connect():
 
 def test_lots_of_fan_connect():
 
-  class Top(UpdatesConnection):
+  class Top(Updates):
 
     def __init__( s ):
 
@@ -286,14 +287,9 @@ def test_lots_of_fan_connect():
 
       s.reg = Wire(int)
 
-      @s.update
+      @s.update_on_edge
       def up_reg():
         s.reg = s.wire0
-
-      s.add_constraints(
-        U(up_reg) < WR(s.wire0),
-        U(up_reg) < RD(s.reg),
-      )
 
       s.wire1 = Wire(int)
       s.wire2 = Wire(int)
@@ -303,10 +299,6 @@ def test_lots_of_fan_connect():
       @s.update
       def upA():
         s.wire2 = s.reg + 1
-
-      s.add_constraints(
-        U(upA) < RD(s.wire2),
-      )
 
       s.wire3 = Wire(int)
       s.wire4 = Wire(int)
@@ -327,15 +319,6 @@ def test_lots_of_fan_connect():
       def upD():
         s.wire7 = s.wire3 + s.wire6
         s.wire8 = s.wire4 + s.wire5
-
-      s.add_constraints(
-        WR(s.wire3) < U(upD),
-        WR(s.wire4) < U(upD),
-        WR(s.wire5) < U(upD),
-        WR(s.wire6) < U(upD),
-        U(upD) < RD(s.wire7),
-        U(upD) < RD(s.wire8),
-      )
 
       @s.update
       def up_to_sink():

@@ -1,17 +1,19 @@
 #=========================================================================
-# UpdatesImpl.py
+# Updates.py
 #=========================================================================
-# We collect two types of implicit constraints at this level:
-# * upA reads s.x while upB writes s.x ==> upB < upA
-# * upA is marked as update_on_edge ==> first batch of upblks called
+# We add implicit constraints at this level to have full-blown
+# UpdatesComponent. We collect two types of implicit constraints:
+# * upA reads Wire s.x while upB writes Wire s.x ==> upB < upA
+# * upA is marked as update_on_edge ==> for all upblks upX that write/read
+#   variables in upA, upA < upX
 
+from UpdatesExpl import verbose
+from UpdatesConnection import UpdatesConnection
 
-from UpdatesExpl import UpdatesExpl, verbose
-
-class UpdatesImpl( UpdatesExpl ):
+class Updates( UpdatesConnection ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = super(UpdatesImpl, cls).__new__( cls, *args, **kwargs )
+    inst = super(Updates, cls).__new__( cls, *args, **kwargs )
     inst._update_on_edge = set()
     return inst
 
@@ -22,12 +24,16 @@ class UpdatesImpl( UpdatesExpl ):
 
   # Override
   def _collect_child_vars( s, child ):
-    super( UpdatesImpl, s )._collect_child_vars( child )
-    if isinstance( child, UpdatesImpl ):
+    super( Updates, s )._collect_child_vars( child )
+    if isinstance( child, Updates ):
       s._update_on_edge.update( child._update_on_edge )
 
   # Override
   def _synthesize_constraints( s ):
+
+    # Explicit constraints are collected in super classes
+
+    super( Updates, s )._synthesize_constraints()
 
     #---------------------------------------------------------------------
     # Implicit constraint
@@ -59,8 +65,6 @@ class UpdatesImpl( UpdatesExpl ):
               impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
             else:
               impl_c.add( (wr, rd) ) # wr < rd by default
-
-    s._total_constraints = s._expl_constraints.copy()
 
     if verbose:
       for (x, y) in impl_c:

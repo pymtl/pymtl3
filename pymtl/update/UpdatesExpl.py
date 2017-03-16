@@ -11,8 +11,8 @@
 # We collect one type of explicit constraints at this level:
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 
-verbose = False
-# verbose = True
+# verbose = False
+verbose = True
 
 import random
 from collections     import defaultdict, deque
@@ -44,7 +44,7 @@ class UpdatesExpl( object ):
         s._expl_constraints.add( (id(x0.func), id(x1.func)) )
 
   def _synthesize_constraints( s ):
-    s._total_constraints = list( s._expl_constraints.copy() )
+    s._total_constraints = s._expl_constraints.copy()
 
   def _collect_child_vars( s, child ):
     if isinstance( child, UpdatesExpl ):
@@ -104,7 +104,7 @@ class UpdatesExpl( object ):
 
     # Prepare the graph
 
-    for (x, y) in s._total_constraints:
+    for (x, y) in list(s._total_constraints):
       vtx_x = id_vtx[ x ]
       vtx_y = id_vtx[ y ]
       edges [ vtx_x ].append( vtx_y )
