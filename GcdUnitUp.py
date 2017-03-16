@@ -16,12 +16,16 @@ class GcdUnitDpath( Updates ):
 
   def __init__( s ):
 
-    s.req_msg_a = s.req_msg_b = 0
-    s.a_mux_sel = s.a_reg_en  = 0
-    s.b_mux_sel = s.b_reg_en  = 0
-    s.sub_out   = 0
-    s.is_b_zero = 0
-    s.is_a_lt_b = 0
+    s.req_msg_a = ValuePort(int)
+    s.req_msg_b = ValuePort(int)
+    s.resp_msg  = ValuePort(int)
+    s.a_mux_sel = ValuePort(int)
+    s.a_reg_en  = ValuePort(int)
+    s.b_mux_sel = ValuePort(int)
+    s.b_reg_en  = ValuePort(int)
+    s.is_b_zero = ValuePort(int)
+    s.is_a_lt_b = ValuePort(int)
+    s.sub_out   = Wire(int)
 
     s.a_reg = RegEn()
     s.a_reg.en |= s.a_reg_en
@@ -52,19 +56,20 @@ class GcdUnitDpath( Updates ):
     s.b_ltc.in1 |= s.b_reg.out
     s.is_a_lt_b |= s.b_ltc.out
 
-    s.resp_msg  = 0
     s.b_sub = Subtractor()
     s.b_sub.in0 |= s.a_reg.out
     s.b_sub.in1 |= s.b_reg.out
-    s.b_sub.out |= s.resp_msg
-    s.b_sub.out |= s.sub_out
+    s.resp_msg  |= s.b_sub.out
+    s.sub_out   |= s.b_sub.out
 
 class GcdUnitCtrl( Updates ):
 
   def __init__( s ):
 
-    s.req_val  = s.req_rdy = 0
-    s.resp_val = s.resp_rdy = 0
+    s.req_val  = ValuePort(int)
+    s.req_rdy  = ValuePort(int)
+    s.resp_val = ValuePort(int)
+    s.resp_rdy = ValuePort(int)
 
     s.state = Reg()
 
@@ -72,9 +77,12 @@ class GcdUnitCtrl( Updates ):
     s.STATE_CALC = 1
     s.STATE_DONE = 2
 
-    s.is_b_zero = s.is_a_lt_b = 0
-    s.a_mux_sel = s.a_reg_en  = 0
-    s.b_mux_sel = s.b_reg_en  = 0
+    s.is_b_zero = ValuePort(int)
+    s.is_a_lt_b = ValuePort(int)
+    s.a_mux_sel = ValuePort(int)
+    s.a_reg_en  = ValuePort(int)
+    s.b_mux_sel = ValuePort(int)
+    s.b_reg_en  = ValuePort(int)
 
     @s.update
     def state_transitions():
@@ -134,8 +142,13 @@ class GcdUnit( Updates ):
 
   def __init__( s ):
 
-    s.req_rdy = s.req_val = s.req_msg_a = s.req_msg_b = 0
-    s.resp_rdy = s.resp_val = s.resp_msg = 0
+    s.req_rdy   = ValuePort(int)
+    s.req_val   = ValuePort(int)
+    s.req_msg_a = ValuePort(int)
+    s.req_msg_b = ValuePort(int)
+    s.resp_rdy  = ValuePort(int)
+    s.resp_val  = ValuePort(int)
+    s.resp_msg  = ValuePort(int)
 
     s.dpath = GcdUnitDpath()
     s.ctrl  = GcdUnitCtrl()

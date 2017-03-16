@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib.update_impl import RegEn, Reg, Mux
+from pclib.update import RegEn, Reg, Mux
 
 A_MUX_SEL_IN    = 0
 A_MUX_SEL_SUB   = 1
@@ -10,14 +10,16 @@ B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
 
-class GcdUnitDpath( UpdatesImpl ):
+class GcdUnitDpath( Updates ):
 
   def __init__( s ):
 
-    s.req_msg_a = s.req_msg_b = 0
-
-    s.a_mux_sel = s.a_reg_en  = 0
-    s.b_mux_sel = s.b_reg_en  = 0
+    s.req_msg_a = ValuePort(int)
+    s.req_msg_b = ValuePort(int)
+    s.a_mux_sel = ValuePort(int)
+    s.a_reg_en  = ValuePort(int)
+    s.b_mux_sel = ValuePort(int)
+    s.b_reg_en  = ValuePort(int)
 
     s.a_reg = RegEn()
     s.b_reg = RegEn()
@@ -30,7 +32,7 @@ class GcdUnitDpath( UpdatesImpl ):
       s.a_reg.en = s.a_reg_en
       s.b_reg.en = s.b_reg_en
 
-    s.sub_out = 0
+    s.sub_out = Wire(int)
 
     @s.update
     def up_connect_to_a_mux():
@@ -53,25 +55,28 @@ class GcdUnitDpath( UpdatesImpl ):
     def up_connect_from_b_mux():
       s.b_reg.in_ = s.b_mux.out
 
-    s.is_b_zero = s.is_a_lt_b = 0
+    s.is_b_zero = ValuePort(int)
+    s.is_a_lt_b = ValuePort(int)
 
     @s.update
     def up_comparisons():
       s.is_b_zero = ( s.b_reg.out == 0 )
       s.is_a_lt_b = ( s.a_reg.out < s.b_reg.out )
 
-    s.resp_msg  = 0
+    s.resp_msg = ValuePort(int)
 
     @s.update
     def up_subtract():
       s.sub_out = s.resp_msg = s.a_reg.out - s.b_reg.out
 
-class GcdUnitCtrl( UpdatesImpl ):
+class GcdUnitCtrl( Updates ):
 
   def __init__( s ):
 
-    s.req_val  = s.req_rdy = 0
-    s.resp_val = s.resp_rdy = 0
+    s.req_val  = ValuePort(int)
+    s.req_rdy  = ValuePort(int)
+    s.resp_val = ValuePort(int)
+    s.resp_rdy = ValuePort(int)
 
     s.state = Reg()
 
@@ -79,9 +84,12 @@ class GcdUnitCtrl( UpdatesImpl ):
     s.STATE_CALC = 1
     s.STATE_DONE = 2
 
-    s.is_b_zero = s.is_a_lt_b = 0
-    s.a_mux_sel = s.a_reg_en  = 0
-    s.b_mux_sel = s.b_reg_en  = 0
+    s.is_b_zero = ValuePort(int)
+    s.is_a_lt_b = ValuePort(int)
+    s.a_mux_sel = ValuePort(int)
+    s.a_reg_en  = ValuePort(int)
+    s.b_mux_sel = ValuePort(int)
+    s.b_reg_en  = ValuePort(int)
 
     @s.update
     def state_transitions():
@@ -137,12 +145,17 @@ class GcdUnitCtrl( UpdatesImpl ):
         s.a_mux_sel = s.b_mux_sel = A_MUX_SEL_X
         s.a_reg_en  = s.b_reg_en = 0
 
-class GcdUnit( UpdatesImpl ):
+class GcdUnit( Updates ):
 
   def __init__( s ):
 
-    s.req_rdy = s.req_val = s.req_msg_a = s.req_msg_b = 0
-    s.resp_rdy = s.resp_val = s.resp_msg = 0
+    s.req_rdy   = ValuePort(int)
+    s.req_val   = ValuePort(int)
+    s.req_msg_a = ValuePort(int)
+    s.req_msg_b = ValuePort(int)
+    s.resp_rdy  = ValuePort(int)
+    s.resp_val  = ValuePort(int)
+    s.resp_msg  = ValuePort(int)
 
     s.dpath = GcdUnitDpath()
     s.ctrl  = GcdUnitCtrl()
