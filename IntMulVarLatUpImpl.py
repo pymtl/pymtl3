@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib.update_impl import RegEn, Reg, Mux, RShifter, LShifter, Adder, ZeroComp
+from pclib.update import RegEn, Reg, Mux, RShifter, LShifter, Adder, ZeroComp
 
 A_MUX_SEL_NBITS      = 1
 A_MUX_SEL_LSH        = 0
@@ -21,10 +21,11 @@ ADD_MUX_SEL_ADD      = 0
 ADD_MUX_SEL_RESULT   = 1
 ADD_MUX_SEL_X        = 0
 
-class CalcShamt( UpdatesImpl ):
+class CalcShamt( Updates ):
 
   def __init__( s ):
-    s.in_ = s.out = 0
+    s.in_ = ValuePort(int)
+    s.out = ValuePort(int)
     @s.update
     def up_calc_shamt():
       if   s.in_ == 0: s.out = 8
@@ -37,17 +38,22 @@ class CalcShamt( UpdatesImpl ):
       elif s.in_ & 0b01000000 : s.out = 6
       elif s.in_ & 0b10000000 : s.out = 7
 
-class IntMulVarLatDpath( UpdatesImpl ):
+class IntMulVarLatDpath( Updates ):
 
   def __init__( s ):
 
-    s.req_msg_a = s.req_msg_b = s.resp_msg = 0
-    s.a_mux_sel = s.b_mux_sel = s.res_mux_sel = s.res_reg_en = 0
-    s.add_mux_sel = 0
+    s.req_msg_a   = ValuePort(int)
+    s.req_msg_b   = ValuePort(int)
+    s.resp_msg    = ValuePort(int)
+    s.a_mux_sel   = ValuePort(int)
+    s.b_mux_sel   = ValuePort(int)
+    s.res_mux_sel = ValuePort(int)
+    s.res_reg_en  = ValuePort(int)
+    s.add_mux_sel = ValuePort(int)
 
     # Variables and upblks associated with B
 
-    s.b_mux = Mux( B_MUX_SEL_NBITS )
+    s.b_mux = Mux( 2**ADD_MUX_SEL_NBITS )
     @s.update
     def up_to_bmux():
       s.b_mux.in_[B_MUX_SEL_RSH] = s.b_rsh.out
@@ -67,8 +73,8 @@ class IntMulVarLatDpath( UpdatesImpl ):
       s.calc_shamt.in_ = s.b_reg.out & 0xff
       s.b_zcp.in_      = s.b_reg.out
 
-    s.is_b_zero  = 0
-    s.b_lsb      = 0
+    s.is_b_zero  = ValuePort(int)
+    s.b_lsb      = ValuePort(int)
     @s.update
     def up_from_zcp():
       s.is_b_zero = s.b_zcp.out
@@ -82,7 +88,7 @@ class IntMulVarLatDpath( UpdatesImpl ):
 
     # Variables and upblks associated with A
 
-    s.a_mux = Mux( A_MUX_SEL_NBITS )
+    s.a_mux = Mux( 2**ADD_MUX_SEL_NBITS )
     @s.update
     def up_to_amux():
       s.a_mux.in_[A_MUX_SEL_LSH] = s.a_lsh.out
@@ -102,7 +108,7 @@ class IntMulVarLatDpath( UpdatesImpl ):
 
     # Variables and upblks associated with Result
 
-    s.res_mux = Mux( RESULT_MUX_SEL_NBITS )
+    s.res_mux = Mux( 2**ADD_MUX_SEL_NBITS )
     @s.update
     def up_to_resmux():
       s.res_mux.in_[RESULT_MUX_SEL_ADD] = s.add_mux.out
@@ -121,19 +127,21 @@ class IntMulVarLatDpath( UpdatesImpl ):
       s.res_add.in_[0] = s.a_reg.out
       s.res_add.in_[1] = s.res_reg.out
 
-    s.add_mux = Mux( ADD_MUX_SEL_NBITS )
+    s.add_mux = Mux( 2**ADD_MUX_SEL_NBITS )
     @s.update
     def up_to_addmux_resp():
       s.add_mux.in_[ADD_MUX_SEL_ADD   ] = s.res_add.out
       s.add_mux.in_[ADD_MUX_SEL_RESULT] = s.resp_msg = s.res_reg.out
       s.add_mux.sel = s.add_mux_sel
 
-class IntMulVarLatCtrl( UpdatesImpl ):
+class IntMulVarLatCtrl( Updates ):
 
   def __init__( s ):
 
-    s.req_val  = s.req_rdy = 0
-    s.resp_val = s.resp_rdy = 0
+    s.req_val  = ValuePort(int)
+    s.req_rdy  = ValuePort(int)
+    s.resp_val = ValuePort(int)
+    s.resp_rdy = ValuePort(int)
 
     s.state = Reg()
 
@@ -141,9 +149,13 @@ class IntMulVarLatCtrl( UpdatesImpl ):
     s.STATE_CALC = 1
     s.STATE_DONE = 2
 
-    s.is_b_zero = s.b_lsb = 0
-    s.a_mux_sel = s.b_mux_sel = s.add_mux_sel = 0
-    s.res_mux_sel = s.res_reg_en = 0
+    s.is_b_zero   = ValuePort(int)
+    s.b_lsb       = ValuePort(int)
+    s.a_mux_sel   = ValuePort(int)
+    s.b_mux_sel   = ValuePort(int)
+    s.add_mux_sel = ValuePort(int)
+    s.res_mux_sel = ValuePort(int)
+    s.res_reg_en  = ValuePort(int)
 
     @s.update
     def state_transitions():
@@ -200,12 +212,17 @@ class IntMulVarLatCtrl( UpdatesImpl ):
         s.a_mux_sel = s.b_mux_sel = s.res_mux_sel = s.add_mux_sel = A_MUX_SEL_X
         s.res_reg_en = 0
 
-class IntMulVarLat( UpdatesImpl ):
+class IntMulVarLat( Updates ):
 
   def __init__( s ):
 
-    s.req_rdy = s.req_val = s.req_msg_a = s.req_msg_b = 0
-    s.resp_rdy = s.resp_val = s.resp_msg = 0
+    s.req_rdy   = ValuePort(int)
+    s.req_val   = ValuePort(int)
+    s.req_msg_a = ValuePort(int)
+    s.req_msg_b = ValuePort(int)
+    s.resp_rdy  = ValuePort(int)
+    s.resp_val  = ValuePort(int)
+    s.resp_msg  = ValuePort(int)
 
     s.dpath = IntMulVarLatDpath()
     s.ctrl  = IntMulVarLatCtrl()

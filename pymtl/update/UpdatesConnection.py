@@ -78,6 +78,7 @@ class UpdatesConnection( UpdatesExpl ):
       assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
 
       if isinstance( idx[idx_depth], int ): # handle x[2]'s case
+        assert idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
         expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, blk_id )
       else: # handle x[*]'s case
         assert idx[idx_depth] == "*", "idk"
