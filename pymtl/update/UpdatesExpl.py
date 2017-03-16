@@ -11,8 +11,8 @@
 # We collect one type of explicit constraints at this level:
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 
-# verbose = False
-verbose = True
+verbose = False
+# verbose = True
 
 import random
 from collections     import defaultdict, deque
@@ -171,7 +171,7 @@ class UpdatesExpl( object ):
   def print_schedule( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"
     print
-    for blk in s._schedule_list:
-      print blk.__name__
+    for (i, blk) in enumerate( s._schedule_list ):
+      print i, blk.__name__
     for x in s._batch_schedule:
       print [ y.__name__ for y in x ]
