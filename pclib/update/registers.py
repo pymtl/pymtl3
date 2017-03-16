@@ -5,8 +5,8 @@ from pymtl import *
 class Reg(Updates):
 
   def __init__( s ):
-    s.in_ = 0
-    s.out = 0
+    s.in_ = ValuePort(int)
+    s.out = ValuePort(int)
 
     @s.update_on_edge
     def up_reg():
@@ -20,9 +20,9 @@ class Reg(Updates):
 class RegEn(Updates):
 
   def __init__( s ):
-    s.in_ = 0
-    s.out = 0
-    s.en  = 0
+    s.in_ = ValuePort(int)
+    s.out = ValuePort(int)
+    s.en  = ValuePort(int)
 
     @s.update_on_edge
     def up_regen():

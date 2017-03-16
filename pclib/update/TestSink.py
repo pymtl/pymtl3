@@ -8,7 +8,7 @@ class TestSink( Updates ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
-    s.in_ = 0
+    s.in_ = ValuePort(int)
 
     @s.update
     def up_sink():
@@ -32,8 +32,9 @@ class TestSinkValRdy( Updates ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
-    s.msg = 0
-    s.val = s.rdy = 0
+    s.msg = ValuePort(int)
+    s.val = ValuePort(int)
+    s.rdy = ValuePort(int)
 
     @s.update_on_edge
     def up_sink():
@@ -57,8 +58,9 @@ class StreamSink( Updates ):
 
   def __init__( s ):
 
-    s.msg = 0
-    s.val = s.rdy = 0
+    s.msg = ValuePort(int)
+    s.val = ValuePort(int)
+    s.rdy = ValuePort(int)
 
     @s.update_on_edge
     def up_sink():
