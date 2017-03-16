@@ -8,7 +8,7 @@ class TestSource( Updates ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = 0
+    s.out = ValuePort(int)
 
     @s.update
     def up_src():
@@ -29,8 +29,9 @@ class TestSourceValRdy( Updates ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.msg = [0] * nmsgs
-    s.val = s.rdy = 0
+    s.msg = [ ValuePort(int) for _ in xrange(nmsgs) ]
+    s.val = ValuePort(int)
+    s.rdy = ValuePort(int)
 
     @s.update_on_edge
     def up_src():
@@ -52,8 +53,9 @@ class TestSourceValRdy( Updates ):
 class StreamSource( Updates ):
 
   def __init__( s, nmsgs = 1 ):
-    s.msg = [0] * nmsgs
-    s.val = s.rdy = 0
+    s.msg = [ ValuePort(int) for _ in xrange(nmsgs) ]
+    s.val = ValuePort(int)
+    s.rdy = ValuePort(int)
     s.ts  = 0
 
     @s.update_on_edge
