@@ -158,7 +158,7 @@ class UpdatesConnection( UpdatesExpl ):
             else: # sign=-1 --> blk<wr_blk
               s._expl_constraints.add( (blk, wr_blk) )
 
-    s._total_constraints = list( s._expl_constraints.copy() )
+    s._total_constraints = s._expl_constraints.copy()
 
   # Override
   def _collect_child_vars( s, child ):
@@ -263,6 +263,8 @@ class UpdatesConnection( UpdatesExpl ):
       upblk          = make_func( writer, readers )
       blk_id         = id(upblk)
       upblk.__name__ = "%s -- fanout" % ".".join(writer._name)
+      if verbose:
+        print "+ Net", ("[%s]" % ".".join(writer._name)).center(12), " Readers", [ ".".join(x._name) for x in readers ]
 
       s._name_upblk [ blk_id ] = upblk.__name__
       s._blkid_upblk[ blk_id ] = upblk
