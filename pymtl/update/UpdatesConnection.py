@@ -270,7 +270,6 @@ class UpdatesConnection( UpdatesExpl ):
       upblk.__name__ = "%s [FANOUT BLK]" % ".".join(writer._name)
       if verbose:
         print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
-
       s._name_upblk [ blk_id ] = upblk.__name__
       s._blkid_upblk[ blk_id ] = upblk
       s._read_blks  [ id(writer) ].append(blk_id)
