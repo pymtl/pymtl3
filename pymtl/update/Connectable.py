@@ -40,6 +40,9 @@ class Wire(Connectable):
   def default_value( s ):
     return s.default if s.default != None else s.type_()
 
+  def full_name( s ):
+    return ".".join(s._name) + "".join(["[%s]" % x for x in s._idx ])
+
 class ValuePort(Wire):
   pass
 

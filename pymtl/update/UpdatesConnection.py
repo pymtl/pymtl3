@@ -240,7 +240,11 @@ class UpdatesConnection( UpdatesExpl ):
 
       func_src = py.code.Source( """
         def f():
-          {readers_str}""".format(**vars()) )
+          {readers_str}
+        """.format(**vars()) )
+
+      if verbose:
+        print func_src
 
       exec func_src.compile() in locals()
       return f
@@ -254,7 +258,7 @@ class UpdatesConnection( UpdatesExpl ):
 
       for v in net:
         if id(v) in s._write_blks:
-          assert not has_writer, "We don't allow %s and %s to write to the same net." %(writer._name, v._name)
+          assert not has_writer, "We don't allow %s and %s to write to the same net." %(writer.full_name(), v.full_name())
           has_writer, writer = True, v
         else:
           readers.append( v )
@@ -262,12 +266,26 @@ class UpdatesConnection( UpdatesExpl ):
 
       upblk          = make_func( writer, readers )
       blk_id         = id(upblk)
-      upblk.__name__ = "%s -- fanout" % ".".join(writer._name)
+      upblk.__name__ = "%s [FANOUT BLK]" % ".".join(writer._name)
       if verbose:
-        print "+ Net", ("[%s]" % ".".join(writer._name)).center(12), " Readers", [ ".".join(x._name) for x in readers ]
+        print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
 
       s._name_upblk [ blk_id ] = upblk.__name__
       s._blkid_upblk[ blk_id ] = upblk
       s._read_blks  [ id(writer) ].append(blk_id)
       for v in readers:
         s._write_blks[ id(v) ].append(blk_id)
+
+      # Create one block for each pair of writer/reader
+
+      # for v in readers:
+        # upblk          = make_func( writer, [v] )
+        # blk_id         = id(upblk)
+        # upblk.__name__ = "%s-%s" % (writer.full_name(), v.full_name())
+        # if verbose:
+          # print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", v.full_name()
+
+        # s._name_upblk [ blk_id ] = upblk.__name__
+        # s._blkid_upblk[ blk_id ] = upblk
+        # s._read_blks  [ id(writer) ].append(blk_id)
+        # s._write_blks [ id(v) ].append(blk_id)
