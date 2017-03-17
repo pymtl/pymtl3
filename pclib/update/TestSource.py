@@ -35,14 +35,24 @@ class TestSourceValRdy( Updates ):
 
     @s.update_on_edge
     def up_src():
-      if not s.input_:
-        s.msg = [0] * nmsgs
-        s.val = 0
-      else:
-        s.msg = s.input_[0]
-        s.val = 1
-        if s.rdy:
-          s.input_.popleft()
+      if s.rdy and s.input_:  s.input_.popleft()
+      s.val = len(s.input_) > 0
+      s.msg = [0] * nmsgs if not s.input_ else s.input_[0]
+
+    # The following is equivalent
+    # @s.update
+    # def up_src_val():
+      # if not s.input_:
+        # s.msg = [0] * nmsgs
+        # s.val = 0
+      # else:
+        # s.msg = s.input_[0]
+        # s.val = 1
+
+    # @s.update
+    # def up_src_rdy():
+      # if s.rdy and s.input_:
+        # s.input_.popleft()
 
   def done( s ):
     return not s.input_
