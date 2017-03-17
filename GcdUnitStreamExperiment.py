@@ -10,14 +10,14 @@ class TestHarness( Updates ):
     s.gcd  = GcdUnit()
     s.sink = StreamSink()
 
-    s.src.val    |= s.gcd.req_val
-    s.src.rdy    |= s.gcd.req_rdy
-    s.src.msg[0] |= s.gcd.req_msg_a
-    s.src.msg[1] |= s.gcd.req_msg_b
+    s.gcd.req_val   |= s.src.val
+    s.gcd.req_msg_a |= s.src.msg[0]
+    s.gcd.req_msg_b |= s.src.msg[1]
+    s.src.rdy       |= s.gcd.req_rdy
 
-    s.sink.val   |= s.gcd.resp_val
-    s.sink.rdy   |= s.gcd.resp_rdy
-    s.sink.msg   |= s.gcd.resp_msg
+    s.sink.val      |= s.gcd.resp_val
+    s.gcd.resp_rdy  |= s.sink.rdy
+    s.sink.msg      |= s.gcd.resp_msg
 
   def done( s ):
     return s.src.done() and s.sink.done()
