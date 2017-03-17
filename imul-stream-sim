@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+#=========================================================================
+# lab1-sim [options]
+#=========================================================================
+#
+#  -h --help           Display this message
+#
+#  --impl              {varlat,nstage}
+#  --cycle             number of million cycles, default=10 -- 10M
+#
+# Author : Christopher Batten
+# Date   : February 5, 2015
+
+#-------------------------------------------------------------------------
+# Command line processing
+#-------------------------------------------------------------------------
+import argparse, os, sys, timeit
+
+class ArgumentParserWithCustomError(argparse.ArgumentParser):
+  def error( self, msg = "" ):
+    if ( msg ): print("\n ERROR: %s" % msg)
+    print("")
+    file = open( sys.argv[0] )
+    for ( lineno, line ) in enumerate( file ):
+      if ( line[0] != '#' ): sys.exit(msg != "")
+      if ( (lineno == 2) or (lineno >= 4) ): print( line[1:].rstrip("\n") )
+
+def parse_cmdline():
+  p = ArgumentParserWithCustomError( add_help=False )
+
+  # Standard command line arguments
+
+  p.add_argument( "-h", "--help",    action="store_true" )
+
+  # Additional commane line arguments for the simulator
+
+  p.add_argument( "--impl",   default="varlat", choices=["varlat","nstage"] )
+  p.add_argument( "--cycle",  default=10, type=int )
+
+  opts = p.parse_args()
+  if opts.help: p.error()
+  return opts
+
+from pymtl import *
+from IntMulVarLatUp import IntMulVarLat
+from IntMulNstageUp import IntMulNstageInelastic
+from pclib.update import StreamSource, StreamSink
+
+class TestHarness( Updates ):
+
+  def __init__( s, model ):
+
+    s.src  = StreamSource( 2 )
+    s.imul = model()
+    s.sink = StreamSink()
+
+    s.src.val    |= s.imul.req_val
+    s.src.rdy    |= s.imul.req_rdy
+    s.src.msg[0] |= s.imul.req_msg_a
+    s.src.msg[1] |= s.imul.req_msg_b
+
+    s.sink.val   |= s.imul.resp_val
+    s.sink.rdy   |= s.imul.resp_rdy
+    s.sink.msg   |= s.imul.resp_msg
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return s.src.line_trace()+" >>> "+s.imul.line_trace()+" >>> "+s.sink.line_trace()
+
+def main():
+  opts = parse_cmdline()
+
+  model_impl_dict = {
+    "varlat" : IntMulVarLat,
+    "nstage" : IntMulNstageInelastic,
+  }
+
+  th = TestHarness( model_impl_dict[ opts.impl] )
+  th.elaborate()
+  th.print_schedule()
+
+  ncycles = opts.cycle * 1000000
+
+  start_time = timeit.default_timer()
+  for x in xrange(ncycles):
+    th.cycle()
+  end_time = timeit.default_timer()
+  print "- Total cycles   : %d cycles" % ncycles
+  print "- Execution time : %.5f seconds" % (end_time - start_time)
+  print "- Cycle/second   : %.2f cps" % (ncycles/(end_time - start_time))
+
+main()
