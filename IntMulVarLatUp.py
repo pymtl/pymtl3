@@ -239,14 +239,14 @@ class TestHarness( Updates ):
     s.imul = IntMulVarLat()
     s.sink = TestSinkValRdy( [ 2100, 432, 8385 ] )
 
-    s.src.val    |= s.imul.req_val
-    s.src.rdy    |= s.imul.req_rdy
-    s.src.msg[0] |= s.imul.req_msg_a
-    s.src.msg[1] |= s.imul.req_msg_b
+    s.imul.req_val   |= s.src.val
+    s.imul.req_msg_a |= s.src.msg[0]
+    s.imul.req_msg_b |= s.src.msg[1]
+    s.src.rdy        |= s.imul.req_rdy
 
-    s.sink.val   |= s.imul.resp_val
-    s.sink.rdy   |= s.imul.resp_rdy
-    s.sink.msg   |= s.imul.resp_msg
+    s.sink.val       |= s.imul.resp_val
+    s.imul.resp_rdy  |= s.sink.rdy
+    s.sink.msg       |= s.imul.resp_msg
 
   def done( s ):
     return s.src.done() and s.sink.done()

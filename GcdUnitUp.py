@@ -158,7 +158,7 @@ class GcdUnit( Updates ):
     s.dpath.req_msg_b |= s.req_msg_b
 
     s.resp_val        |= s.ctrl.resp_val
-    s.resp_rdy        |= s.ctrl.resp_rdy
+    s.ctrl.resp_rdy   |= s.resp_rdy
     s.resp_msg        |= s.dpath.resp_msg
 
     s.dpath.a_mux_sel |= s.ctrl.a_mux_sel
@@ -180,14 +180,14 @@ class TestHarness( Updates ):
     s.gcd  = GcdUnit()
     s.sink = TestSinkValRdy( [ 5, 6, 1 ] )
 
-    s.src.val    |= s.gcd.req_val
-    s.src.rdy    |= s.gcd.req_rdy
-    s.src.msg[0] |= s.gcd.req_msg_a
-    s.src.msg[1] |= s.gcd.req_msg_b
+    s.gcd.req_val   |= s.src.val
+    s.gcd.req_msg_a |= s.src.msg[0]
+    s.gcd.req_msg_b |= s.src.msg[1]
+    s.src.rdy       |= s.gcd.req_rdy
 
-    s.sink.val   |= s.gcd.resp_val
-    s.sink.rdy   |= s.gcd.resp_rdy
-    s.sink.msg   |= s.gcd.resp_msg
+    s.sink.val      |= s.gcd.resp_val
+    s.gcd.resp_rdy  |= s.sink.rdy
+    s.sink.msg      |= s.gcd.resp_msg
 
   def done( s ):
     return s.src.done() and s.sink.done()
