@@ -26,8 +26,11 @@ class UpdatesExpl( object ):
     inst._name_upblk       = {}
     inst._blkid_upblk      = {}
     inst._expl_constraints = set() # contains ( id(func), id(func) )s
-    inst._name = [ "top" ] # assume top at the beginning
-    inst._idx  = []
+
+    # Bookkeep name hierarchy here for error message and other purposes
+    # For example, s.x[0][3].y[2].z turns into
+    # ( ["top","x","y","z"], [ [], [0,3], [2], [] ] )
+    inst._name_idx = ( ["top"], [ [] ] )
     return inst
 
   def update( s, blk ):
@@ -61,9 +64,8 @@ class UpdatesExpl( object ):
         s._enumerate_types( name, obj[i], idx + [i] )
 
     if isinstance( obj, UpdatesExpl ):
-      obj._father = s
-      obj._name = s._name + [name]
-      obj._idx  = list(idx)
+      obj._father   = s
+      obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
       obj._recursive_elaborate()
       s._collect_child_vars( obj )
 

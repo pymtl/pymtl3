@@ -41,7 +41,9 @@ class Wire(Connectable):
     return s.default if s.default != None else s.type_()
 
   def full_name( s ):
-    return ".".join(s._name) + "".join(["[%s]" % x for x in s._idx ])
+    name, idx = s._name_idx
+    return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
+                        for i in xrange(len(name)) ] )
 
 class ValuePort(Wire):
   pass
