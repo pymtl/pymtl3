@@ -20,7 +20,8 @@ class Connectable(object):
     x = s._find_root()
     y = writer._find_root()
     assert x != y, "Two nets are already unionized!"
-    assert x == s, "One net signal cannot have two drivers!"
+    assert x == s, "One net signal cannot have two drivers! \n%s" % \
+                   "Please check if the left side signal is at left side in another connection."
 
     # merge myself to the writer
     y._connected.extend( x._connected )

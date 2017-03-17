@@ -20,12 +20,12 @@ class IntMulNstageStep( Updates ):
 
     s.a_lsh = LShifter( 32 )
     s.a_lsh.in_  |= s.in_a
-    s.a_lsh.out  |= s.out_a
+    s.out_a      |= s.a_lsh.out
     s.a_lsh.shamt = 1
 
     s.b_rsh = RShifter( 32 )
     s.b_rsh.in_  |= s.in_b
-    s.b_rsh.out  |= s.out_b
+    s.out_b      |= s.b_rsh.out
     s.b_rsh.shamt = 1
 
     s.adder = Adder( 32 )
@@ -33,7 +33,7 @@ class IntMulNstageStep( Updates ):
     s.adder.in_[1] |= s.in_res
 
     s.mux   = Mux( 2 )
-    s.mux.out    |= s.out_res
+    s.out_res    |= s.mux.out
     s.mux.in_[0] |= s.in_res
     s.mux.in_[1] |= s.adder.out
 
@@ -118,7 +118,7 @@ class IntMulNstageInelastic( Updates ):
 
     # Wire resp rdy to req rdy
 
-    s.resp_rdy |= s.req_rdy
+    s.req_rdy  |= s.resp_rdy
 
   def line_trace( s ):
     return "{}".format(
