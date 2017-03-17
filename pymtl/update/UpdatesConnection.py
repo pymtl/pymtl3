@@ -184,9 +184,8 @@ class UpdatesConnection( UpdatesExpl ):
 
     if isinstance( obj, Wire ):
       # Tag this connectable
-      obj._father = s
-      obj._name   = s._name + [name]
-      obj._idx    = list(idx)
+      obj._father   = s
+      obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
 
       # Collect nets
       root = obj._find_root()
@@ -222,19 +221,21 @@ class UpdatesConnection( UpdatesExpl ):
   def _resolve_var_connections( s ):
 
     def make_func( writer, readers ):
-      wobj  = writer._father
-      wname = writer._name[-1]
-      widx  = "".join(["[%s]" % x for x in writer._idx ])
+      wobj        = writer._father
+      wname, widx = writer._name_idx
+      wname       = wname[-1]
+      widx        = "".join(["[%s]" % x for x in widx[-1] ])
 
       robjs = []
       rstrs = []
       rstr_template = "robjs[ {i} ].{rname}{ridx} = wobj.{wname}{widx}"
       for i in xrange(len(readers)):
-        robj  = readers[i]
-        rname = robj._name[-1]
-        ridx  = "".join(["[%s]" % x for x in robj._idx ])
+        robj        = readers[i]._father
+        rname, ridx = readers[i]._name_idx
+        rname       = rname[-1]
+        ridx        = "".join(["[%s]" % x for x in ridx[-1] ])
 
-        robjs.append( robj._father )
+        robjs.append( robj )
         rstrs.append( rstr_template.format( **vars() ) )
 
       readers_str = "\n          ".join( rstrs )
@@ -263,11 +264,11 @@ class UpdatesConnection( UpdatesExpl ):
           has_writer, writer = True, v
         else:
           readers.append( v )
-      assert has_writer, "This net needs a driver!"
+      assert has_writer, "This net %s needs a driver!" % [ x.full_name() for x in net ]
 
       upblk          = make_func( writer, readers )
       blk_id         = id(upblk)
-      upblk.__name__ = "%s [FANOUT BLK]" % ".".join(writer._name)
+      upblk.__name__ = "%s [FANOUT BLK]" % writer.full_name()
       if verbose:
         print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
       s._name_upblk [ blk_id ] = upblk.__name__

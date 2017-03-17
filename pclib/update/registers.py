@@ -4,7 +4,7 @@ from pymtl import *
 
 class Reg(Updates):
 
-  def __init__( s ):
+  def __init__( s, nbits = 32 ):
     s.in_ = ValuePort(int)
     s.out = ValuePort(int)
 
@@ -19,7 +19,7 @@ class Reg(Updates):
 
 class RegEn(Updates):
 
-  def __init__( s ):
+  def __init__( s, nbits = 32 ):
     s.in_ = ValuePort(int)
     s.out = ValuePort(int)
     s.en  = ValuePort(int)

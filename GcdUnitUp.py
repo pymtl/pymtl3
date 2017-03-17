@@ -40,7 +40,6 @@ class GcdUnitDpath( Updates ):
     s.a_mux.in_[A_MUX_SEL_B]   |= s.b_reg.out
     s.a_mux.sel                |= s.a_mux_sel
 
-
     s.b_mux = Mux(2)
     s.b_reg.in_               |= s.b_mux.out
     s.b_mux.in_[B_MUX_SEL_A]  |= s.a_reg.out
