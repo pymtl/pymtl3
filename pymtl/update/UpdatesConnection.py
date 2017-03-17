@@ -265,8 +265,8 @@ class UpdatesConnection( UpdatesExpl ):
         else:
           readers.append( v )
       assert has_writer, "This net %s needs a driver!" % [ x.full_name() for x in net ]
-      assert writer._root == writer, "%s is a net driver! Please put it at the right hand side of |= connection!\n\nNet: %s" % \
-            ( writer.full_name(), [ x.full_name() for x in net ] )
+      assert writer._root == writer, "%s is a driver of the following net. It should be on right hand side, \"* |= %s\": \n - %s" % \
+            ( writer.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ] ))
 
       upblk          = make_func( writer, readers )
       blk_id         = id(upblk)
