@@ -36,17 +36,15 @@ class TestSinkValRdy( Updates ):
     s.val = ValuePort(int)
     s.rdy = ValuePort(int)
 
-    @s.update_on_edge
+    @s.update
     def up_sink():
-      if not s.answer:
-        s.rdy = 0
-      else:
-        s.rdy = 1
-        if s.val:
-          ref = s.answer.popleft()
-          ans = s.msg
+      s.rdy = len(s.answer) > 0
 
-          assert ref == ans or ref == "?", "Expect %s, get %s instead" % (ref, ans)
+      if s.val:
+        ref = s.answer.popleft()
+        ans = s.msg
+
+        assert ref == ans or ref == "?", "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
     return not s.answer
