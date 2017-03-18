@@ -11,10 +11,10 @@
 # We collect one type of explicit constraints at this level:
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 
-verbose = False
-# verbose = True
+# verbose = False
+verbose = True
 
-import random
+import random, py.code
 from collections     import defaultdict, deque
 from ConstraintTypes import U
 
@@ -135,6 +135,30 @@ class UpdatesExpl( object ):
 
     assert len(s._schedule_list) == N, "Update blocks have cyclic dependencies."
 
+    strs = map( "  update_blk{}()".format, xrange( len( s._schedule_list ) ) )
+    # n = 20
+    # for x in xrange(n+1):
+      # strs.insert( (x)*len(s._schedule_list)/(n+1), "if 5!=3:" )
+
+    gen_schedule_src = py.code.Source("""
+        def gen_schedule( s ):
+          # To eliminate array lookup, generate local variables for the
+          # update blocks below.
+          {}
+          def schedule():
+            # The code below does the actual calling of update blocks.
+            {}
+
+          return schedule
+        """.format( "; ".join( map(
+                    "update_blk{0} = s._schedule_list[{0}]".format,
+                        xrange( len( s._schedule_list ) ) ) ),
+                    "\n            ".join( strs ) ) )
+
+    print "Generate schedule source: ", gen_schedule_src
+    exec gen_schedule_src.compile() in locals()
+    s._schedule_fun = gen_schedule(s)
+
     # Maybe we can find some lightweight multi-threading library
     # Perform work partitioning to basically extract batches of frontiers
     # for parallelism
@@ -167,8 +191,7 @@ class UpdatesExpl( object ):
     s._schedule()
 
   def cycle( s ):
-    for blk in s._schedule_list:
-      blk()
+    s._schedule_fun()
 
   def print_schedule( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"

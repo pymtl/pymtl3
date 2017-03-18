@@ -70,34 +70,45 @@ class MethodsExpl( Updates ):
   def _elaborate_vars( s ):
     super( MethodsExpl, s )._elaborate_vars()
 
-    def add_all( typ, depth, obj, name, method_name, method_blks, blk_id ): # We need this to deal with s.a[*].b[*]
-      if depth >= len(name):
+    # Find s.x[0][*][2]
+    def expand_array_index( obj, name_depth, name, method_name, idx_depth, idx, id_blks, blk_id ):
+      if idx_depth >= len(idx):
+        lookup_method( obj, name_depth+1, name, method_name, id_blks, blk_id )
+        return
 
-        assert hasattr( obj, method_name ), "\"%s\", in %s, is not a method of class %s" \
-               %(method_name, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+      assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
+
+      if isinstance( idx[idx_depth], int ): # handle x[2]'s case
+        assert idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
+        expand_array_index( obj[ idx[idx_depth] ], name_depth, name, method_name, idx_depth+1, idx, id_blks, blk_id )
+      else: # handle x[*]'s case
+        assert idx[idx_depth] == "*", "idk"
+        for i in xrange(len(obj)):
+          expand_array_index( obj[i], name_depth, name, method_name, idx_depth+1, idx, id_blks, blk_id )
+
+    # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
+    def lookup_method( obj, depth, name, method_name, id_blks, blk_id ):
+      print obj,depth,name,method_name
+      if depth >= len(name):
+        print obj, name, method_name
+        assert hasattr( obj, method_name ), "\"%s\", in %s, is not a method of %s" %(method_name, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+
         method = getattr( obj, method_name )
         assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
 
-        if verbose: print " - ", name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-
+        if verbose: print " - method", name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
         method_blks[ id(method) ].add( blk_id )
         return
 
       (field, idx) = name[ depth ]
-      assert hasattr( obj, field ), "\"%s\", in %s, is not a field of class %s" \
-             %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
-
+      assert hasattr(obj, field), "\"%s\", in %s, is not a field of Class %s" %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
       obj = getattr( obj, field )
-      if   idx == "x":
-        add_all( typ, depth+1, obj, name, method_name, method_blks, blk_id )
-      elif isinstance( idx, int ):
+
+      if not idx: # just a variable
+        lookup_method( obj, depth+1, name, method_name, id_blks, blk_id )
+      else: # let another function handle   s.x[4].y[*]
         assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
-        add_all( typ, depth+1, obj[idx], name, method_name, method_blks, blk_id )
-      else:
-        assert idx == "*", "idk"
-        assert isinstance( obj, list ), "%s is not a list" % field
-        for x in obj:
-          add_all( typ, depth+1, x, name, method_name, method_blks, blk_id )
+        expand_array_index( obj, depth, name, method_name, 0, idx, id_blks, blk_id )
 
     # First check and bind update blocks that calls the method to it
     # This method elaborates the variables for implicit binding
@@ -106,7 +117,7 @@ class MethodsExpl( Updates ):
 
     for blk_id, method_calls in s._blkid_methods.iteritems():
       for method in method_calls:
-        add_all( "method", 0, s, method[0], method[1], method_blks, blk_id )
+        lookup_method( s, 0, method[0], method[1], method_blks, blk_id )
 
     # Turn associated sets into lists. O(logn) -> O(1)
 
@@ -163,7 +174,7 @@ class MethodsExpl( Updates ):
                   for blk in assoc_blks:
                     if blk not in pred[v]:
                       if vb != blk:
-                        if verbose: print "w<=0, v is method".center(10),hex(v), hex(blk) 
+                        if verbose: print "w<=0, v is method".center(10),hex(v), hex(blk)
                         if verbose: print s._blkid_upblk[vb].__name__.center(25)," < ", \
                                     s._blkid_upblk[blk].__name__.center(25)
                         s._expl_constraints.add( (vb, blk) )

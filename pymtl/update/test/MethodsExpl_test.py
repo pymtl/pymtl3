@@ -1,24 +1,6 @@
 from pymtl import *
 from pclib.method import Reg
 
-class Wire(MethodsExpl):
-
-  def __init__( s ):
-    s.v = 0
-
-    s.add_constraints(
-      M(s.wr) < M(s.rd),
-    )
-
-  def wr( s, v ):
-    s.v = v
-
-  def rd( s ):
-    return s.v
-
-  def line_trace( s ):
-    return "%d" % s.v
-
 class RegWire(MethodsExpl):
 
   def __init__( s ):
@@ -42,13 +24,11 @@ def test_2regs():
   class Top(MethodsExpl):
 
     def __init__( s ):
-      s.inc = s.in_ = 0
-
-      s.in_ |= s.inc
+      s.in_ = Wire(int)
 
       @s.update
       def up_src():
-        s.inc += 1
+        s.in_ += 1
 
       s.reg0 = RegWire()
 
@@ -85,13 +65,11 @@ def test_arr_of_2regs():
   class Top(MethodsExpl):
 
     def __init__( s ):
-      s.inc = s.in_ = 0
-
-      s.in_ |= s.inc
+      s.in_ = Wire(int)
 
       @s.update
       def up_src():
-        s.inc += 1
+        s.in_ += 1
 
       s.reg = [ Reg() for _ in xrange(2) ]
 
@@ -103,7 +81,7 @@ def test_arr_of_2regs():
       def up_reg0_to_reg1():
         s.reg[1].wr( s.reg[0].rd() )
 
-      s.out = 0
+      s.out = Wire(int)
       @s.update
       def up_sink():
         s.out = s.reg[1].rd()
@@ -134,7 +112,9 @@ def test_add_loopback_implicit():
       s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
 
       s.reg0 = Reg()
-      s.wire_back = 0
+
+      s.wire_back = Wire(int)
+
       s.sink.in_ |= s.wire_back
 
       @s.update

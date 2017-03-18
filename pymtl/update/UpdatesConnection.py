@@ -52,7 +52,7 @@ class UpdatesConnection( UpdatesExpl ):
         s._expl_constraints.add( (id(x0.func), id(x1.func)) )
       elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
         assert False, "Constraints between two variables are not allowed!"
-      else:
+      elif isinstance( x0, ValueConstraint ) or isinstance( x1, ValueConstraint ):
         sign = 1 # RD(x) < U(x) is 1, RD(x) > U(x) is -1
         if isinstance( x1, ValueConstraint ):
           sign = -1
