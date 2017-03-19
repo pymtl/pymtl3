@@ -88,13 +88,11 @@ class MethodsExpl( Updates ):
 
     # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
     def lookup_method( obj, depth, name, method_name, id_blks, blk_id ):
-      print obj,depth,name,method_name
       if depth >= len(name):
-        print obj, name, method_name
         assert hasattr( obj, method_name ), "\"%s\", in %s, is not a method of %s" %(method_name, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
 
         method = getattr( obj, method_name )
-        assert callable( method ), "\"%s\" is not callable %s"%(method_name, type(obj).__name__)
+        assert callable( method ), "\"%s\" of %s is not callable"%(method_name, type(obj).__name__)
 
         if verbose: print " - method", name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
         method_blks[ id(method) ].add( blk_id )

@@ -53,11 +53,10 @@ class MethodPort(Connectable):
 
   def __init__( self, *args ):
     self._has_method = False
-
     assert len(args) <= 1
     if args:
       other = args[0]
-      assert isinstance( other, MethodPort ), "Cannot connect to %s, which is not a MethodPort!"
+      assert isinstance( other, MethodPort ), "Cannot connect to %s, which is not a MethodPort."
       self.connect( other )
 
   def attach_method( self, func ):
@@ -68,6 +67,13 @@ class MethodPort(Connectable):
   def has_method( self ):
     return self._has_method
 
-  def __call__( self, *args, **kwargs ):
-    assert self._has_method, "what the hell are you doing here?" 
-    self._func( *args, **kwargs )
+  # Override
+  def connect( self, other ):
+    if self.has_method():
+      super( MethodPort, other ).connect( self )
+    else:
+      super( MethodPort, self ).connect( other )
+
+  # def __call__( self, *args, **kwargs ):
+    # assert self._has_method, "what the hell are you doing here?" 
+    # self._func( *args, **kwargs )
