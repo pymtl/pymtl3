@@ -193,8 +193,8 @@ class UpdatesExpl( object ):
     s._schedule_fun()
     # - Berkin's recipe
 
-    for blk in s._schedule_list:
-      blk()
+    # for blk in s._schedule_list:
+      # blk()
 
   def print_schedule( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"
