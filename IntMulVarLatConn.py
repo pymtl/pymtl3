@@ -195,7 +195,7 @@ class IntMulVarLatCtrl( Updates ):
         s.a_mux_sel = s.b_mux_sel = s.res_mux_sel = s.add_mux_sel = A_MUX_SEL_X
         s.res_reg_en = 0
 
-class IntMulVarLat( Updates ):
+class IntMulVarLatConn( Updates ):
 
   def __init__( s ):
 
@@ -230,35 +230,3 @@ class IntMulVarLat( Updates ):
 
   def line_trace( s ):
     return s.dpath.a_reg.line_trace() + s.dpath.b_reg.line_trace()
-
-class TestHarness( Updates ):
-
-  def __init__( s ):
-
-    s.src  = TestSourceValRdy( 2, [ (60,35), (18,24), (195,43) ])
-    s.imul = IntMulVarLat()
-    s.sink = TestSinkValRdy( [ 2100, 432, 8385 ] )
-
-    s.imul.req_val   |= s.src.val
-    s.imul.req_msg_a |= s.src.msg[0]
-    s.imul.req_msg_b |= s.src.msg[1]
-    s.src.rdy        |= s.imul.req_rdy
-
-    s.sink.val       |= s.imul.resp_val
-    s.imul.resp_rdy  |= s.sink.rdy
-    s.sink.msg       |= s.imul.resp_msg
-
-  def done( s ):
-    return s.src.done() and s.sink.done()
-
-  def line_trace( s ):
-    return s.src.line_trace()+" >>> "+s.imul.line_trace()+" >>> "+s.sink.line_trace()
-
-if __name__ == "__main__":
-  A = TestHarness()
-  A.elaborate()
-  A.print_schedule()
-
-  while not A.done():
-    A.cycle()
-    print A.line_trace()

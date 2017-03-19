@@ -212,7 +212,7 @@ class IntMulVarLatCtrl( Updates ):
         s.a_mux_sel = s.b_mux_sel = s.res_mux_sel = s.add_mux_sel = A_MUX_SEL_X
         s.res_reg_en = 0
 
-class IntMulVarLat( Updates ):
+class IntMulVarLatFlat( Updates ):
 
   def __init__( s ):
 
@@ -228,15 +228,19 @@ class IntMulVarLat( Updates ):
     s.ctrl  = IntMulVarLatCtrl()
 
     @s.update
-    def up_connect_valrdy():
+    def up_connect_inbound():
       s.ctrl.req_val    = s.req_val
-      s.req_rdy         = s.ctrl.req_rdy
       s.dpath.req_msg_a = s.req_msg_a
       s.dpath.req_msg_b = s.req_msg_b
 
-      s.resp_val        = s.ctrl.resp_val
       s.ctrl.resp_rdy   = s.resp_rdy
-      s.resp_msg        = s.dpath.resp_msg
+
+    @s.update
+    def up_connect_outbound():
+      s.req_rdy  = s.ctrl.req_rdy
+
+      s.resp_val = s.ctrl.resp_val
+      s.resp_msg = s.dpath.resp_msg
 
     @s.update
     def up_connect_dpath(): # ctrl signals
@@ -251,18 +255,5 @@ class IntMulVarLat( Updates ):
       s.ctrl.is_b_zero = s.dpath.is_b_zero
       s.ctrl.b_lsb     = s.dpath.b_lsb
 
-A = IntMulVarLat()
-A.elaborate()
-A.print_schedule()
-
-A.req_val = 1
-A.resp_rdy = 1
-
-for cycle in xrange(10000000):
-  A.req_msg_a, A.req_msg_b = (cycle+2) & 0xffff, (cycle+19182) & 0xffff
-  # A.req_msg_a, A.req_msg_b = 60,35
-  A.cycle()
-  # print "req val:%d rdy:%d a:%d b:%d" % (A.req_val, A.req_rdy, A.req_msg_a, A.req_msg_b), \
-        # A.dpath.a_reg.line_trace(), A.dpath.b_reg.line_trace(), \
-        # A.dpath.res_reg.line_trace(),\
-        # "resp val:%d rdy:%d product:%d" % (A.resp_val, A.resp_rdy, A.resp_msg )
+  def line_trace( s ):
+    return s.dpath.a_reg.line_trace() + s.dpath.b_reg.line_trace()
