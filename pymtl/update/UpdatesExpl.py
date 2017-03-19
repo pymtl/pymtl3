@@ -11,8 +11,8 @@
 # We collect one type of explicit constraints at this level:
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 
-# verbose = False
-verbose = True
+verbose = False
+# verbose = True
 
 import random, py.code
 from collections     import defaultdict, deque
@@ -135,11 +135,8 @@ class UpdatesExpl( object ):
 
     assert len(s._schedule_list) == N, "Update blocks have cyclic dependencies."
 
+    # + Berkin's recipe
     strs = map( "  update_blk{}()".format, xrange( len( s._schedule_list ) ) )
-    # n = 20
-    # for x in xrange(n+1):
-      # strs.insert( (x)*len(s._schedule_list)/(n+1), "if 5!=3:" )
-
     gen_schedule_src = py.code.Source("""
         def gen_schedule( s ):
           # To eliminate array lookup, generate local variables for the
@@ -155,9 +152,10 @@ class UpdatesExpl( object ):
                         xrange( len( s._schedule_list ) ) ) ),
                     "\n            ".join( strs ) ) )
 
-    print "Generate schedule source: ", gen_schedule_src
+    if verbose: print "Generate schedule source: ", gen_schedule_src
     exec gen_schedule_src.compile() in locals()
     s._schedule_fun = gen_schedule(s)
+    # - Berkin's recipe
 
     # Maybe we can find some lightweight multi-threading library
     # Perform work partitioning to basically extract batches of frontiers
@@ -191,7 +189,12 @@ class UpdatesExpl( object ):
     s._schedule()
 
   def cycle( s ):
+    # + Berkin's recipe
     s._schedule_fun()
+    # - Berkin's recipe
+
+    for blk in s._schedule_list:
+      blk()
 
   def print_schedule( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"
