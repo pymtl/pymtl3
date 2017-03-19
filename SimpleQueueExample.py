@@ -6,8 +6,8 @@ class Queue( Methods ):
   def __init__( s ):
     s.queue = deque(maxlen=1)
     s.add_constraints(
-      # M(s.deq) < M(s.enq), # pipe behavior
-      M(s.enq) < M(s.deq), # bypass behavior
+      M(s.deq) < M(s.enq), # pipe behavior
+      # M(s.enq) < M(s.deq), # bypass behavior
     )
 
   def enq_rdy( s ):    return len(s.queue) < s.queue.maxlen
@@ -22,12 +22,12 @@ class QueuePlusOne( Methods ):
 
   def __init__( s ):
     s.q         = Queue()
-    s.recv      = MethodProxy( s.q.enq )
-    s.recv_rdy  = MethodProxy()
+    s.recv      = MethodPort( s.q.enq )
+    s.recv_rdy  = MethodPort()
     s.recv_rdy |= s.q.enq_rdy
 
-    s.send      = MethodProxy()
-    s.send_rdy  = MethodProxy()
+    s.send      = MethodPort()
+    s.send_rdy  = MethodPort()
 
     @s.update
     def up_qp1():
