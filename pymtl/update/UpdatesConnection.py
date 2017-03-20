@@ -183,10 +183,6 @@ class UpdatesConnection( UpdatesExpl ):
     super( UpdatesConnection, s )._enumerate_types( name, obj, idx )
 
     if isinstance( obj, Wire ):
-      # Tag this connectable
-      obj._father   = s
-      obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
-
       # Collect nets
       root = obj._find_root()
       if len( root._connected ) > 1: # has actual connection
