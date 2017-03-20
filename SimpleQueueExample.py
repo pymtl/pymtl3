@@ -4,19 +4,18 @@ from collections import deque
 
 class Queue( Methods ):
   def __init__( s ):
-    s.queue = deque(maxlen=1)
+    s.queue = deque(maxlen=2)
     s.add_constraints(
       M(s.deq) < M(s.enq), # pipe behavior
       # M(s.enq) < M(s.deq), # bypass behavior
     )
 
   def enq_rdy( s ):    return len(s.queue) < s.queue.maxlen
-  def enq( s, v ):     s.queue.append(v)
+  def enq( s, v ):     s.queue.appendleft(v)
   def deq_rdy( s ):    return len(s.queue) > 0
   def deq( s ):        return s.queue.pop()
   def line_trace( s ):
-    if len(s.queue) == 0: return "Q[   ]"
-    return "Q[%3d]" % s.queue[0]
+    return "Q{:10}".format("".join( [ "[%d]"%x for x in s.queue ]) )
 
 class QueuePlusOne( Methods ):
 
@@ -63,7 +62,7 @@ class Top( Methods ):
 
     @s.update
     def up_sink():
-      s.time = (s.time + 1) % 1
+      s.time = (s.time + 1) % 4
       if s.time == 0: # emulate some back pressure
         if s.q.deq_rdy():
           s.sink = s.q.deq()
@@ -78,6 +77,6 @@ class Top( Methods ):
 A=Top()
 A.elaborate()
 
-for cycle in xrange(10):
+for cycle in xrange(20):
   A.cycle()
   print A.line_trace()
