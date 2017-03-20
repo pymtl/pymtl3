@@ -221,6 +221,7 @@ class UpdatesConnection( UpdatesExpl ):
   def _resolve_var_connections( s ):
 
     def make_func( writer, readers ):
+
       wobj        = writer._father
       wname, widx = writer._name_idx
       wname       = wname[-1]
@@ -228,7 +229,7 @@ class UpdatesConnection( UpdatesExpl ):
 
       robjs = []
       rstrs = []
-      rstr_template = "robjs[ {i} ].{rname}{ridx} = wobj.{wname}{widx}"
+      rstr_template = "robjs{i}.{rname}{ridx} = wobj.{wname}{widx}"
       for i in xrange(len(readers)):
         robj        = readers[i]._father
         rname, ridx = readers[i]._name_idx
@@ -238,18 +239,35 @@ class UpdatesConnection( UpdatesExpl ):
         robjs.append( robj )
         rstrs.append( rstr_template.format( **vars() ) )
 
-      readers_str = "\n          ".join( rstrs )
+      readers_str = "; ".join( rstrs )
 
-      func_src = py.code.Source( """
-        def f():
-          {readers_str}
-        """.format(**vars()) )
+      upblk_name  = "%s FANOUT=%d" % (writer.full_name(), len(readers))
+      upblk_name_ = upblk_name.replace( ".", "_" ) \
+                              .replace( " ", "_" ) \
+                              .replace( "=", "_" ) \
+                              .replace( "[", "_" ) \
+                              .replace( "]", "_" ) \
+
+      gen_connection_src = py.code.Source("""
+        def gen_connection( s ):
+          {}
+          def {}():
+            # The code below does the actual calling of update blocks.
+            {}
+
+          return {}
+        """.format( "; ".join( map( "robjs{0} = robjs[{0}]".format,
+                                    xrange( len( readers ) ) ) ),
+                    upblk_name_, readers_str, upblk_name_
+                  )
+      )
 
       if verbose:
-        print func_src
-
-      exec func_src.compile() in locals()
-      return f
+        print "Generate connection source: ", gen_connection_src
+      exec gen_connection_src.compile() in locals()
+      upblk = gen_connection(s)
+      upblk.__name__ = upblk_name
+      return upblk
 
     for (var, net) in s._varid_net.values():
       has_writer, writer = False, None
@@ -270,7 +288,6 @@ class UpdatesConnection( UpdatesExpl ):
 
       upblk          = make_func( writer, readers )
       blk_id         = id(upblk)
-      upblk.__name__ = "%s [FANOUT BLK]" % writer.full_name()
       if verbose:
         print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
       s._name_upblk [ blk_id ] = upblk.__name__
