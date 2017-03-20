@@ -20,6 +20,7 @@ __all__ = [
   'MethodPort',
   'ValuePort',
   'Wire',
+  'PortBundle',
 
   "Bv2", "Bv3",
 ]
