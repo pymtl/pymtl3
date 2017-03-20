@@ -54,7 +54,7 @@ def test_connect_plain():
         U(up_from_src) < RD(s.wire0),
       )
 
-      s.wire0 |= s.sink.in_
+      s.sink.in_ |= s.wire0
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -88,9 +88,9 @@ def test_connect_list_int_idx():
 
       # All constraints are within TestSource, TestSink, and Mux
 
-      s.src_in0.out |= s.mux.in_[0]
-      s.src_in1.out |= s.mux.in_[1]
-      s.src_sel.out |= s.mux.sel
+      s.mux.in_[0]  |= s.src_in0.out
+      s.mux.in_[1]  |= s.src_in1.out
+      s.mux.sel     |= s.src_sel.out
       s.sink.in_    |= s.mux.out
 
     def done( s ):
@@ -124,10 +124,10 @@ def test_connect_list_const_idx():
       from pclib.update_conn import Mux
       s.mux = Mux(2)
 
-      s.src_in0.out |= s.mux.in_[MUX_SEL_0]
-      s.src_in1.out |= s.mux.in_[MUX_SEL_1]
-      s.src_sel.out |= s.mux.sel
-      s.sink.in_    |= s.mux.out
+      s.mux.in_[MUX_SEL_0] |= s.src_in0.out
+      s.mux.in_[MUX_SEL_1] |= s.src_in1.out
+      s.mux.sel            |= s.src_sel.out
+      s.sink.in_           |= s.mux.out
 
     def done( s ):
       return s.src_in0.done() and s.sink.done()
