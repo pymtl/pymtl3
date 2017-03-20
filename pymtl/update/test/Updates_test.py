@@ -154,9 +154,9 @@ def test_connect_list_int_idx():
 
       # All constraints are within TestSource, TestSink, and Mux
 
-      s.src_in0.out |= s.mux.in_[0]
-      s.src_in1.out |= s.mux.in_[1]
-      s.src_sel.out |= s.mux.sel
+      s.mux.in_[0]  |= s.src_in0.out
+      s.mux.in_[1]  |= s.src_in1.out
+      s.mux.sel     |= s.src_sel.out
       s.sink.in_    |= s.mux.out
 
     def done( s ):
