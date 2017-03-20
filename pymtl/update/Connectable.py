@@ -1,7 +1,9 @@
-class Connectable(object):
+from PyMTLObject     import PyMTLObject
+
+class Connectable(PyMTLObject):
 
   def __new__( cls, *args ):
-    inst = object.__new__( cls )
+    inst = PyMTLObject.__new__( cls )
 
     # Use disjoint set to resolve connections
     inst._root      = inst
@@ -14,14 +16,14 @@ class Connectable(object):
     s._root = s._root._find_root()
     return s._root
 
-  def connect( s, writer ):
+  def connect( s, writer, check_direction=True ):
     assert isinstance( writer, Connectable ), "Unconnectable object!"
 
     x = s._find_root()
     y = writer._find_root()
     assert x != y, "Two nets are already unionized!"
-    assert x == s, "One net signal cannot have two drivers! \n%s" % \
-                   "Please check if the left side signal is at left side in another connection."
+    assert check_direction and x == s, "One net signal cannot have two drivers. \n%s" % \
+                   "Please check if the left side signal is already at left side in another connection."
 
     # merge myself to the writer
     y._connected.extend( x._connected )
@@ -68,12 +70,27 @@ class MethodPort(Connectable):
     return self._has_method
 
   # Override
-  def connect( self, other ):
+  def connect( self, other, check_direction=True ):
     if self.has_method():
-      super( MethodPort, other ).connect( self )
+      super( MethodPort, other ).connect( self, check_direction )
     else:
-      super( MethodPort, self ).connect( other )
+      super( MethodPort, self ).connect( other, check_direction )
 
   # def __call__( self, *args, **kwargs ):
     # assert self._has_method, "what the hell are you doing here?" 
     # self._func( *args, **kwargs )
+
+class PortBundle(PyMTLObject):
+
+  def connect( s, other ):
+    assert isinstance( other, PortBundle ), "Not a PortBundle."
+
+    for name, port in s.__dict__.iteritems():
+      # Only connect connectables
+      if isinstance( Port, Connectable ):
+        assert name in other.__dict__
+        port.connect( getattr(other, name), check=False )
+
+  def __ior__( s, other ):
+    s.connect( other )
+    return s

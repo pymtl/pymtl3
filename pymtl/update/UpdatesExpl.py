@@ -15,13 +15,14 @@ verbose = False
 # verbose = True
 
 import random, py.code
+from PyMTLObject     import PyMTLObject
 from collections     import defaultdict, deque
 from ConstraintTypes import U
 
-class UpdatesExpl( object ):
+class UpdatesExpl( PyMTLObject ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = object.__new__( cls, *args, **kwargs )
+    inst = PyMTLObject.__new__( cls, *args, **kwargs )
     # These will be collected recursively
     inst._name_upblk       = {}
     inst._blkid_upblk      = {}
@@ -59,14 +60,16 @@ class UpdatesExpl( object ):
     pass
 
   def _enumerate_types( s, name, obj, idx ):
-    if isinstance( obj, list ):
+    if   isinstance( obj, list ):
       for i in xrange(len(obj)):
         s._enumerate_types( name, obj[i], idx + [i] )
 
-    if isinstance( obj, UpdatesExpl ):
+    if isinstance( obj, PyMTLObject ):
       obj._father   = s
       obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
-      obj._recursive_elaborate()
+      if isinstance( obj, UpdatesExpl ):
+        obj._recursive_elaborate()
+
       s._collect_child_vars( obj )
 
   def _recursive_elaborate( s ):

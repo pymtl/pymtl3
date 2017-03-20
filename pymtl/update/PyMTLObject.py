@@ -1,0 +1,1 @@
+class PyMTLObject(object):  pass
