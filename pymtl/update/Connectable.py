@@ -22,8 +22,8 @@ class Connectable(PyMTLObject):
     x = s._find_root()
     y = writer._find_root()
     assert x != y, "Two nets are already unionized!"
-    assert check_direction and x == s, "One net signal cannot have two drivers. \n%s" % \
-                   "Please check if the left side signal is already at left side in another connection."
+    # assert not check_direction or x == s, "One net signal cannot have two drivers. \n%s" % \
+                   # "Please check if the left side signal is already at left side in another connection."
 
     # merge myself to the writer
     y._connected.extend( x._connected )
@@ -87,9 +87,9 @@ class PortBundle(PyMTLObject):
 
     for name, port in s.__dict__.iteritems():
       # Only connect connectables
-      if isinstance( Port, Connectable ):
+      if isinstance( port, Connectable ):
         assert name in other.__dict__
-        port.connect( getattr(other, name), check=False )
+        port.connect( getattr(other, name), check_direction=False )
 
   def __ior__( s, other ):
     s.connect( other )

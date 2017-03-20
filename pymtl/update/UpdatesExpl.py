@@ -50,38 +50,12 @@ class UpdatesExpl( PyMTLObject ):
   def _synthesize_constraints( s ):
     s._total_constraints = s._expl_constraints.copy()
 
+  # Override
   def _collect_child_vars( s, child ):
     if isinstance( child, UpdatesExpl ):
       s._name_upblk.update( child._name_upblk )
       s._blkid_upblk.update( child._blkid_upblk )
       s._expl_constraints.update( child._expl_constraints )
-
-  def _elaborate_vars( s ):
-    pass
-
-  def _enumerate_types( s, name, obj, idx ):
-    if   isinstance( obj, list ):
-      for i in xrange(len(obj)):
-        s._enumerate_types( name, obj[i], idx + [i] )
-
-    if isinstance( obj, PyMTLObject ):
-      obj._father   = s
-      obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
-      if isinstance( obj, UpdatesExpl ):
-        obj._recursive_elaborate()
-
-      s._collect_child_vars( obj )
-
-  def _recursive_elaborate( s ):
-
-    for name, obj in s.__dict__.iteritems():
-      if not name.startswith("_"): # filter private variables
-        s._enumerate_types( name, obj, [] )
-
-    s._elaborate_vars()
-
-  def _elaborate( s ):
-    s._recursive_elaborate()
 
   def _schedule( s ):
 
