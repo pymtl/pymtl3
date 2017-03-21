@@ -1,6 +1,7 @@
 from pymtl import *
 from pclib.update import RegEn, Reg, Mux, ZeroComp, LTComp, Subtractor
-from pclib.update import TestSourceValRdy, TestSinkValRdy
+
+from pclib.bundle import TestSource, TestSink, ValRdyBundle
 from pclib.valrdy import valrdy_to_str
 
 A_MUX_SEL_IN    = 0
@@ -11,13 +12,6 @@ A_MUX_SEL_X     = 0
 B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
-
-class ValRdyBundle( PortBundle ):
-
-  def __init__( s, nmsgs = 1 ):
-    s.msg = [ ValuePort(int) for _ in nmsgs ]
-    s.val = ValuePort(int)
-    s.rdy = ValuePort(int)
 
 class GcdUnitCS( PortBundle ):
 
@@ -154,25 +148,20 @@ class GcdUnit( Updates ):
 
   def __init__( s ):
 
-    s.req_rdy   = ValuePort(int)
-    s.req_val   = ValuePort(int)
-    s.req_msg_a = ValuePort(int)
-    s.req_msg_b = ValuePort(int)
-    s.resp_rdy  = ValuePort(int)
-    s.resp_val  = ValuePort(int)
-    s.resp_msg  = ValuePort(int)
+    s.req  = ValRdyBundle( nmsgs=2 )
+    s.resp = ValRdyBundle( nmsgs=1 )
 
     s.dpath = GcdUnitDpath()
     s.ctrl  = GcdUnitCtrl()
 
-    s.ctrl.req_val    |= s.req_val
-    s.req_rdy         |= s.ctrl.req_rdy
-    s.dpath.req_msg_a |= s.req_msg_a
-    s.dpath.req_msg_b |= s.req_msg_b
+    s.ctrl.req_val    |= s.req.val
+    s.req.rdy         |= s.ctrl.req_rdy
+    s.dpath.req_msg_a |= s.req.msg[0]
+    s.dpath.req_msg_b |= s.req.msg[1]
 
-    s.resp_val        |= s.ctrl.resp_val
-    s.ctrl.resp_rdy   |= s.resp_rdy
-    s.resp_msg        |= s.dpath.resp_msg
+    s.resp.val        |= s.ctrl.resp_val
+    s.ctrl.resp_rdy   |= s.resp.rdy
+    s.resp.msg[0]     |= s.dpath.resp_msg
 
     s.dpath.cs |= s.ctrl.cs
 
@@ -183,18 +172,12 @@ class TestHarness( Updates ):
 
   def __init__( s ):
 
-    s.src  = TestSourceValRdy( 2, [ (60,35), (18,24), (195,43) ])
+    s.src  = TestSource( 2, [ (60,35), (18,24), (195,43) ])
     s.gcd  = GcdUnit()
-    s.sink = TestSinkValRdy( [ 5, 6, 1 ] )
+    s.sink = TestSink( [ 5, 6, 1 ] )
 
-    s.gcd.req_val   |= s.src.val
-    s.gcd.req_msg_a |= s.src.msg[0]
-    s.gcd.req_msg_b |= s.src.msg[1]
-    s.src.rdy       |= s.gcd.req_rdy
-
-    s.sink.val      |= s.gcd.resp_val
-    s.gcd.resp_rdy  |= s.sink.rdy
-    s.sink.msg      |= s.gcd.resp_msg
+    s.gcd.req  |= s.src.out
+    s.sink.in_ |= s.gcd.resp
 
   def done( s ):
     return s.src.done() and s.sink.done()

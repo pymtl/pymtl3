@@ -16,13 +16,13 @@ class Connectable(PyMTLObject):
     s._root = s._root._find_root()
     return s._root
 
-  def connect( s, writer, check_direction=True ):
+  def connect( s, writer ):
     assert isinstance( writer, Connectable ), "Unconnectable object!"
 
     x = s._find_root()
     y = writer._find_root()
     assert x != y, "Two nets are already unionized!"
-    # assert not check_direction or x == s, "One net signal cannot have two drivers. \n%s" % \
+    # assert x == s, "One net signal cannot have two drivers. \n%s" % \
                    # "Please check if the left side signal is already at left side in another connection."
 
     # merge myself to the writer
@@ -70,26 +70,35 @@ class MethodPort(Connectable):
     return self._has_method
 
   # Override
-  def connect( self, other, check_direction=True ):
+  def connect( self, other ):
     if self.has_method():
-      super( MethodPort, other ).connect( self, check_direction )
+      super( MethodPort, other ).connect( self )
     else:
-      super( MethodPort, self ).connect( other, check_direction )
-
-  # def __call__( self, *args, **kwargs ):
-    # assert self._has_method, "what the hell are you doing here?" 
-    # self._func( *args, **kwargs )
+      super( MethodPort, self ).connect( other )
 
 class PortBundle(PyMTLObject):
 
   def connect( s, other ):
-    assert isinstance( other, PortBundle ), "Not a PortBundle."
 
-    for name, port in s.__dict__.iteritems():
-      # Only connect connectables
-      if isinstance( port, Connectable ):
-        assert name in other.__dict__
-        port.connect( getattr(other, name), check_direction=False )
+    def recursive_connect( s_obj, other_obj ):
+
+      # Expand all members of the portbundle
+      if isinstance( s_obj, PortBundle ):
+        for name, obj in s_obj.__dict__.iteritems():
+          assert name in other.__dict__
+          recursive_connect( obj, getattr(other, name) )
+
+      # Expand the list
+      if isinstance( s_obj, list ):
+        for i in xrange(len(s_obj)):
+          recursive_connect( s_obj[i], other_obj[i] )
+
+      # Only connect connectables and return
+      if isinstance( s_obj, Connectable ):
+        s_obj.connect( other_obj )
+
+    assert type(s) is type(other), "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+    recursive_connect( s, other )
 
   def __ior__( s, other ):
     s.connect( other )
