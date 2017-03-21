@@ -186,14 +186,14 @@ class UpdatesConnection( UpdatesExpl ):
   def _elaborate( s ):
 
     def cleanup_connectables( father ):
-      if isinstance( father, list ):
+      if   isinstance( father, list ):
         for i in xrange(len(father)):
           if isinstance( father[i], Wire ):
             father[i] = father[i].default_value()
           else:
             cleanup_connectables( father[i] )
 
-      if isinstance( father, PyMTLObject ):
+      elif isinstance( father, PyMTLObject ):
         for name, obj in father.__dict__.iteritems():
           if not name.startswith("_"): # filter private variables
             if isinstance( obj, Wire ):

@@ -5,10 +5,11 @@
 
 from UpdatesExpl import verbose
 
-from collections     import defaultdict, deque
-from MethodsExpl     import MethodsExpl
-from ASTHelper       import get_method_calls
-from Connectable     import MethodPort
+from collections import defaultdict, deque
+from PyMTLObject import PyMTLObject
+from MethodsExpl import MethodsExpl
+from ASTHelper   import get_method_calls
+from Connectable import MethodPort
 
 class Methods( MethodsExpl ):
 
@@ -30,16 +31,13 @@ class Methods( MethodsExpl ):
 
     def recursive_collect_connections( father, methodid_nets ):
       if   isinstance( father, list ):
-        # You cannot have a list of method ports!
         for i in xrange(len(father)):
           recursive_collect_connections( father[i], methodid_nets )
-      elif isinstance( father, Methods ):
-        for name, obj in father.__dict__.iteritems():
-          if not name.startswith("_"): # filter private variables
-            if   isinstance( obj, Methods ):
-              recursive_collect_connections( obj, methodid_nets )
 
-            elif isinstance( obj, MethodPort ):
+      elif isinstance( father, PyMTLObject ):
+        for name, obj in father.__dict__.iteritems():
+          if not name.startswith("_"):
+            if   isinstance( obj, MethodPort ):
               root = obj._find_root()
 
               # Because we basically clean up MethodPort before the formal
