@@ -46,3 +46,8 @@ class PyMTLObject(object):
 
   def _elaborate( s ):
     s._recursive_elaborate()
+
+  def full_name( s ):
+    name, idx = s._name_idx
+    return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
+                        for i in xrange(len(name)) ] )

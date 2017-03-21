@@ -37,16 +37,11 @@ class Connectable(PyMTLObject):
 class Wire(Connectable):
 
   def __init__( s, type_, default = None ):
-    s.type_ = type_
-    s.default = default
+    s._type = type_
+    s._default = default
 
   def default_value( s ):
-    return s.default if s.default != None else s.type_()
-
-  def full_name( s ):
-    name, idx = s._name_idx
-    return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
-                        for i in xrange(len(name)) ] )
+    return s._default if s._default != None else s._type()
 
 class ValuePort(Wire):
   pass
