@@ -7,6 +7,7 @@
 
 import py.code
 from collections     import defaultdict, deque
+from PyMTLObject     import PyMTLObject
 from UpdatesExpl     import UpdatesExpl, verbose
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from Connectable     import Wire, ValuePort
@@ -202,7 +203,7 @@ class UpdatesConnection( UpdatesExpl ):
           else:
             cleanup_connectables( father[i] )
 
-      if isinstance( father, UpdatesConnection ):
+      if isinstance( father, PyMTLObject ):
         for name, obj in father.__dict__.iteritems():
           if not name.startswith("_"): # filter private variables
             if isinstance( obj, Wire ):
@@ -248,7 +249,7 @@ class UpdatesConnection( UpdatesExpl ):
         def gen_connection( s ):
           {}
           def {}():
-            # The code below does the actual calling of update blocks.
+            # The code below does the actual copy of variables.
             {}
 
           return {}
