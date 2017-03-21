@@ -142,7 +142,8 @@ class GcdUnitCtrl( Updates ):
         s.resp_val  = 1
         s.cs.a_mux_sel = A_MUX_SEL_X
         s.cs.b_mux_sel = B_MUX_SEL_X
-        s.cs.a_reg_en  = s.cs.b_reg_en = 0
+        s.cs.a_reg_en  = 0
+        s.cs.b_reg_en  = 0
 
 class GcdUnit( Updates ):
 
