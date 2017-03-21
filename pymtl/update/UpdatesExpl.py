@@ -27,11 +27,6 @@ class UpdatesExpl( PyMTLObject ):
     inst._name_upblk       = {}
     inst._blkid_upblk      = {}
     inst._expl_constraints = set() # contains ( id(func), id(func) )s
-
-    # Bookkeep name hierarchy here for error message and other purposes
-    # For example, s.x[0][3].y[2].z turns into
-    # ( ["top","x","y","z"], [ [], [0,3], [2], [] ] )
-    inst._name_idx = ( ["top"], [ [] ] )
     return inst
 
   def update( s, blk ):

@@ -10,7 +10,7 @@ from collections     import defaultdict, deque
 from PyMTLObject     import PyMTLObject
 from UpdatesExpl     import UpdatesExpl, verbose
 from ConstraintTypes import U, RD, WR, ValueConstraint
-from Connectable     import Wire, ValuePort
+from Connectable     import Connectable, Wire
 from ASTHelper       import get_ast, get_read_write, DetectReadsAndWrites
 
 class UpdatesConnection( UpdatesExpl ):
@@ -88,7 +88,7 @@ class UpdatesConnection( UpdatesExpl ):
 
     # Add an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
     def add_all( obj, id_blks, blk_id ):
-      if isinstance( obj, Wire ):
+      if isinstance( obj, Connectable ):
         id_blks[ id(obj) ].add( blk_id )
         return
       if isinstance( obj, list ) or isinstance( obj, deque ):
@@ -179,18 +179,8 @@ class UpdatesConnection( UpdatesExpl ):
 
       s._varid_net.update( child._varid_net )
 
-  # Override
-  def _enumerate_types( s, name, obj, idx ):
-    super( UpdatesConnection, s )._enumerate_types( name, obj, idx )
-
-    if isinstance( obj, Wire ):
-      # Collect nets
-      root = obj._find_root()
-      if len( root._connected ) > 1: # has actual connection
-        if id(root) not in s._varid_net:
-          s._varid_net[ id(root) ] = (root, root._connected)
-      else:
-        assert root == obj, "It doesn't make sense ..."
+    if isinstance( child, Connectable ):
+      child.collect_nets( s._varid_net )
 
   # Override
   def _elaborate( s ):
@@ -199,6 +189,7 @@ class UpdatesConnection( UpdatesExpl ):
       if isinstance( father, list ):
         for i in xrange(len(father)):
           if isinstance( father[i], Wire ):
+            print father[i].full_name()
             father[i] = father[i].default_value()
           else:
             cleanup_connectables( father[i] )
@@ -207,6 +198,7 @@ class UpdatesConnection( UpdatesExpl ):
         for name, obj in father.__dict__.iteritems():
           if not name.startswith("_"): # filter private variables
             if isinstance( obj, Wire ):
+              print obj.full_name()
               setattr( father, name, obj.default_value() )
             else:
               cleanup_connectables( obj )
