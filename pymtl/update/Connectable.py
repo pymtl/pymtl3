@@ -2,7 +2,7 @@ from PyMTLObject     import PyMTLObject
 
 class Connectable(PyMTLObject):
 
-  def __new__( cls, *args ):
+  def __new__( cls, *args, **kwargs ):
     inst = PyMTLObject.__new__( cls )
 
     # Use disjoint set to resolve connections
@@ -34,14 +34,21 @@ class Connectable(PyMTLObject):
     s.connect( writer )
     return s
 
+  def collect_nets( s, varid_net ):
+    root = s._find_root()
+    if len( root._connected ) > 1: # has actual connection
+      if id(root) not in varid_net:
+        varid_net[ id(root) ] = (root, root._connected)
+    else:
+      assert root == s, "It doesn't make sense ..."
+
 class Wire(Connectable):
 
-  def __init__( s, type_, default = None ):
+  def __init__( s, type_ ):
     s._type = type_
-    s._default = default
 
   def default_value( s ):
-    return s._default if s._default != None else s._type()
+    return s._type()
 
 class ValuePort(Wire):
   pass
@@ -71,30 +78,38 @@ class MethodPort(Connectable):
     else:
       super( MethodPort, self ).connect( other )
 
-class PortBundle(PyMTLObject):
+class PortBundle(Connectable):
 
+  # Override
   def connect( s, other ):
 
+    # Expand the list when needed. Only connect connectables and return,
+    # inheritance will figure out what to do with Port/PortBundle
+
     def recursive_connect( s_obj, other_obj ):
-
-      # Expand all members of the portbundle
-      if isinstance( s_obj, PortBundle ):
-        for name, obj in s_obj.__dict__.iteritems():
-          assert name in other.__dict__
-          recursive_connect( obj, getattr(other, name) )
-
-      # Expand the list
-      if isinstance( s_obj, list ):
+      if   isinstance( s_obj, list ):
         for i in xrange(len(s_obj)):
           recursive_connect( s_obj[i], other_obj[i] )
-
-      # Only connect connectables and return
-      if isinstance( s_obj, Connectable ):
+      elif isinstance( s_obj, Connectable ):
         s_obj.connect( other_obj )
 
     assert type(s) is type(other), "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
-    recursive_connect( s, other )
 
-  def __ior__( s, other ):
-    s.connect( other )
-    return s
+    for name, obj in s.__dict__.iteritems():
+      if not name.startswith("_"):
+        recursive_connect( obj, getattr(other, name) )
+
+  # Override
+  def collect_nets( s, varid_net ):
+
+    # Expand the list when needed. Only collect connectables and return
+    def recursive_collect( obj, varid_net ):
+      if   isinstance( obj, list ):
+        for i in xrange(len(obj)):
+          recursive_collect( obj[i], varid_net )
+      elif isinstance( obj, Connectable ):
+        obj.collect_nets( varid_net )
+
+    for name, obj in s.__dict__.iteritems():
+      if not name.startswith("_"):
+        recursive_collect( obj, varid_net )
