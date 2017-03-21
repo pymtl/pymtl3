@@ -189,7 +189,6 @@ class UpdatesConnection( UpdatesExpl ):
       if isinstance( father, list ):
         for i in xrange(len(father)):
           if isinstance( father[i], Wire ):
-            print father[i].full_name()
             father[i] = father[i].default_value()
           else:
             cleanup_connectables( father[i] )
@@ -198,7 +197,6 @@ class UpdatesConnection( UpdatesExpl ):
         for name, obj in father.__dict__.iteritems():
           if not name.startswith("_"): # filter private variables
             if isinstance( obj, Wire ):
-              print obj.full_name()
               setattr( father, name, obj.default_value() )
             else:
               cleanup_connectables( obj )
