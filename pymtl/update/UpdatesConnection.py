@@ -213,19 +213,36 @@ class UpdatesConnection( UpdatesExpl ):
       upblk_name  = upblk_name_.replace( ".", "_" ) \
                                .replace( "[", "_" ).replace( "]", "_" ) \
 
-      gen_connection_src = py.code.Source("""
-        @s.update
-        def {}():
-          # The code below does the actual copy of variables.
-          {}
+      if len(readers) == 1:
+        gen_connection_src = py.code.Source("""
+          @s.update
+          def {}():
+            # The code below does the actual copy of variables.
+            {}
 
-        """.format( upblk_name,
-                    "; ".join(  [ "{} = {}".format( x.full_name(), writer.full_name() )
-                                  for x in readers ]) )
-      )
+          """.format( upblk_name,
+                      "; ".join([ "{} = {}".format( x.full_name(), writer.full_name() )
+                                  for x in readers ] ) )
+        )
+      else:
+        # Optimization to reduce trace size:
+        # "x = s.x.y; s.a.b = x; s.b.c = x;" instead of 
+        # "s.a.b = s.x.y; s.b.c = s.x.y"
 
-      if verbose:
-        print "Generate connection source: ", gen_connection_src
+        gen_connection_src = py.code.Source("""
+          @s.update
+          def {}():
+            # The code below does the actual copy of variables.
+            x = {}; {}
+
+          """.format( upblk_name,
+                      writer.full_name(),
+                      "; ".join([ "{} = x".format( x.full_name() )
+                                  for x in readers ] ) )
+        )
+
+      # if verbose:
+      # print "Generate connection source: ", gen_connection_src
       exec gen_connection_src.compile() in locals()
 
       return s._name_upblk[ upblk_name ]
