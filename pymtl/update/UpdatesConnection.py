@@ -72,7 +72,7 @@ class UpdatesConnection( UpdatesExpl ):
 
     # Find s.x[0][*][2]
     def expand_array_index( print_typ, obj, name_depth, name, idx_depth, idx, id_blks, blk_id ):
-      if idx_depth >= len(idx): 
+      if idx_depth >= len(idx):
         lookup_var( print_typ, obj, name_depth+1, name, id_blks, blk_id )
         return
 
@@ -207,54 +207,28 @@ class UpdatesConnection( UpdatesExpl ):
 
   def _resolve_var_connections( s ):
 
-    def make_func( writer, readers ):
+    def make_func( s, writer, readers ):
 
-      wobj        = writer._father
-      wname, widx = writer._name_idx
-      wname       = wname[-1]
-      widx        = "".join(["[%s]" % x for x in widx[-1] ])
-
-      robjs = []
-      rstrs = []
-      rstr_template = "robjs{i}.{rname}{ridx} = wobj.{wname}{widx}"
-      for i in xrange(len(readers)):
-        robj        = readers[i]._father
-        rname, ridx = readers[i]._name_idx
-        rname       = rname[-1]
-        ridx        = "".join(["[%s]" % x for x in ridx[-1] ])
-
-        robjs.append( robj )
-        rstrs.append( rstr_template.format( **vars() ) )
-
-      readers_str = "; ".join( rstrs )
-
-      upblk_name  = "%s FANOUT=%d" % (writer.full_name(), len(readers))
-      upblk_name_ = upblk_name.replace( ".", "_" ) \
-                              .replace( " ", "_" ) \
-                              .replace( "=", "_" ) \
-                              .replace( "[", "_" ) \
-                              .replace( "]", "_" ) \
+      upblk_name_ = "%s_FANOUT_%d" % (writer.full_name(), len(readers))
+      upblk_name  = upblk_name_.replace( ".", "_" ) \
+                               .replace( "[", "_" ).replace( "]", "_" ) \
 
       gen_connection_src = py.code.Source("""
-        def gen_connection( s ):
+        @s.update
+        def {}():
+          # The code below does the actual copy of variables.
           {}
-          def {}():
-            # The code below does the actual copy of variables.
-            {}
 
-          return {}
-        """.format( "; ".join( map( "robjs{0} = robjs[{0}]".format,
-                                    xrange( len( readers ) ) ) ),
-                    upblk_name_, readers_str, upblk_name_
-                  )
+        """.format( upblk_name,
+                    "; ".join(  [ "{} = {}".format( x.full_name(), writer.full_name() )
+                                  for x in readers ]) )
       )
 
       if verbose:
         print "Generate connection source: ", gen_connection_src
       exec gen_connection_src.compile() in locals()
-      upblk = gen_connection(s)
-      upblk.__name__ = upblk_name
-      return upblk
+
+      return s._name_upblk[ upblk_name ]
 
     for (var, net) in s._varid_net.values():
       has_writer, writer = False, None
@@ -269,30 +243,15 @@ class UpdatesConnection( UpdatesExpl ):
           has_writer, writer = True, v
         else:
           readers.append( v )
-      assert has_writer, "This net %s needs a driver!" % [ x.full_name() for x in net ]
+      assert has_writer, "This net %s needs a driver!" % "\n - ".join([ x.full_name() for x in net ])
       # assert writer._root == writer, "%s is a driver of the following net. It should be on right hand side, \"* |= %s\": \n - %s" % \
             # ( writer.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ] ))
 
-      upblk          = make_func( writer, readers )
-      blk_id         = id(upblk)
-      if verbose:
-        print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
-      s._name_upblk [ blk_id ] = upblk.__name__
-      s._blkid_upblk[ blk_id ] = upblk
-      s._read_blks  [ id(writer) ].append(blk_id)
+      upblk  = make_func( s, writer, readers )
+      blk_id = id(upblk)
+      s._read_blks[ id(writer) ].append(blk_id)
       for v in readers:
         s._write_blks[ id(v) ].append(blk_id)
 
-      # Create one block for each pair of writer/reader
-
-      # for v in readers:
-        # upblk          = make_func( writer, [v] )
-        # blk_id         = id(upblk)
-        # upblk.__name__ = "%s-%s" % (writer.full_name(), v.full_name())
-        # if verbose:
-          # print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", v.full_name()
-
-        # s._name_upblk [ blk_id ] = upblk.__name__
-        # s._blkid_upblk[ blk_id ] = upblk
-        # s._read_blks  [ id(writer) ].append(blk_id)
-        # s._write_blks [ id(v) ].append(blk_id)
+      if verbose:
+        print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
