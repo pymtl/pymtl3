@@ -209,40 +209,101 @@ class UpdatesConnection( UpdatesExpl ):
 
     def make_func( s, writer, readers ):
 
+      # Optimization to reduce trace size:
+      #
+      # - Common writer: "x = s.x.y; s.a.b = x; s.b.c = x;" instead of
+      #   "s.a.b = s.x.y; s.b.c = s.x.y"
+      #
+      # - Common prefix: grep the longest common prefix for readers
+      #   "s.a.b = x; s.a.c = x" --> "y = s.a; y.b = x; y.c = x"
+
       upblk_name_ = "%s_FANOUT_%d" % (writer.full_name(), len(readers))
       upblk_name  = upblk_name_.replace( ".", "_" ) \
                                .replace( "[", "_" ).replace( "]", "_" ) \
 
       if len(readers) == 1:
-        gen_connection_src = py.code.Source("""
-          @s.update
-          def {}():
-            # The code below does the actual copy of variables.
-            {}
 
-          """.format( upblk_name,
-                      "; ".join([ "{} = {}".format( x.full_name(), writer.full_name() )
-                                  for x in readers ] ) )
-        )
+        rstr = readers[0].full_name()
+        wstr = writer.full_name()
+        minlen = min( len(rstr), len(wstr) )
+
+        LCP = 0
+        while LCP <= minlen:
+          if rstr[LCP] != wstr[LCP]:
+            break
+          LCP += 1
+
+        while rstr[LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
+          LCP -= 1
+
+        if rstr[:LCP] == "s.":
+          # Vanilla
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              {} = {}
+
+            """.format( upblk_name, rstr, wstr ) )
+        else:
+          # Apply common prefix
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              y = {}; y.{} = y.{}
+
+          """.format( upblk_name, rstr[:LCP-1], rstr[LCP:], wstr[LCP:]))
+
       else:
-        # Optimization to reduce trace size:
-        # "x = s.x.y; s.a.b = x; s.b.c = x;" instead of 
-        # "s.a.b = s.x.y; s.b.c = s.x.y"
 
-        gen_connection_src = py.code.Source("""
-          @s.update
-          def {}():
-            # The code below does the actual copy of variables.
-            x = {}; {}
+        strs   = []
+        minlen = 1 << 31
+        for x in readers:
+          st = x.full_name()
+          minlen = min( minlen, len(st) )
+          strs.append( st )
 
-          """.format( upblk_name,
-                      writer.full_name(),
-                      "; ".join([ "{} = x".format( x.full_name() )
-                                  for x in readers ] ) )
-        )
+        LCP = 0
+        while LCP <= minlen:
+          ch = strs[0][LCP]
+          flag = True
+          for j in xrange( 1, len(strs) ):
+            if strs[j][LCP] != ch:
+              flag = False
+              break
 
-      # if verbose:
-      # print "Generate connection source: ", gen_connection_src
+          if not flag: break
+          LCP += 1
+
+        while strs[0][LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
+          LCP -= 1
+
+        if strs[0][:LCP] == "s.":
+          # Only able to apply common writer optimization
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              x = {}
+              {}
+
+          """.format( upblk_name, writer.full_name(),
+                        "; ".join([ "{} = x".format(st) for st in strs ] ) ) )
+        else:
+          # Apply both common writer and common prefix
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              x = {}; y = {}
+              {}
+
+          """.format( upblk_name, writer.full_name(), strs[0][:LCP-1],
+                        "; ".join([ "y.{} = x".format( st[LCP:]) for st in strs ] ) ) )
+
+      if verbose:
+        print "Generate connection source: ", gen_connection_src
       exec gen_connection_src.compile() in locals()
 
       return s._name_upblk[ upblk_name ]
