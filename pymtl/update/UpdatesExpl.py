@@ -94,40 +94,37 @@ class UpdatesExpl( PyMTLObject ):
         Q.append( i )
       assert InDeg[i]>0 or OutDeg[i]>0, "Update block \"%s\" has no constraint" % s._blkid_upblk[ upblks[i] ].__name__
 
-    s._schedule_list = []
+    _schedule_list = []
     while Q:
       # random.shuffle(Q) # to catch corner cases; will be removed later
 
       u = Q.popleft() # bfs order is faster than dfs order
-      s._schedule_list.append( s._blkid_upblk[ upblks[u] ] )
+      _schedule_list.append( s._blkid_upblk[ upblks[u] ] )
       for v in edges[u]:
         InDeg[v] -= 1
         if InDeg[v] == 0:
           Q.append( v )
 
+    s._schedule_list = _schedule_list
     assert len(s._schedule_list) == N, "Update blocks have cyclic dependencies."
 
     # + Berkin's recipe
-    strs = map( "  update_blk{}()".format, xrange( len( s._schedule_list ) ) )
+    strs = map( "  update_blk{}()".format, xrange( len( _schedule_list ) ) )
     gen_schedule_src = py.code.Source("""
-        def gen_schedule( s ):
-          # To eliminate array lookup, generate local variables for the
-          # update blocks below.
-          {}
-          def schedule():
-            # The code below does the actual calling of update blocks.
-            {}
+      {}
+      def cycle():
+        # The code below does the actual calling of update blocks.
+        {}
 
-          return schedule
-        """.format( "; ".join( map(
-                    "update_blk{0} = s._schedule_list[{0}]".format,
-                        xrange( len( s._schedule_list ) ) ) ),
-                    "\n            ".join( strs ) ) )
+      """.format( "; ".join( map(
+                  "update_blk{0} = _schedule_list[{0}]".format,
+                      xrange( len( _schedule_list ) ) ) ),
+                  "\n        ".join( strs ) ) )
 
     if verbose: print "Generate schedule source: ", gen_schedule_src
     exec gen_schedule_src.compile() in locals()
-    s._schedule_fun = gen_schedule(s)
-    # - Berkin's recipe
+
+    s.cycle = cycle
 
     # Maybe we can find some lightweight multi-threading library
     # Perform work partitioning to basically extract batches of frontiers
@@ -161,12 +158,7 @@ class UpdatesExpl( PyMTLObject ):
     s._schedule()
 
   def cycle( s ):
-    # + Berkin's recipe
-    s._schedule_fun()
-    # - Berkin's recipe
-
-    # for blk in s._schedule_list:
-      # blk()
+    print "Please elaborate before the simulation!"
 
   def print_schedule( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"
