@@ -14,7 +14,7 @@ class PyMTLObject(object):
     # For example, s.x[0][3].y[2].z turns into
     # ( ["top","x","y","z"], [ [], [0,3], [2], [] ] )
 
-    inst._name_idx = ( ["top"], [ [] ] )
+    inst._name_idx = ( ["s"], [ [] ] )
     return inst
 
   # Elaboration is performed after collecting data from all child modules.
