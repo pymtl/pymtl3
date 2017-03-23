@@ -108,8 +108,8 @@ class IntMulVarLatDpath( Updates ):
     s.resp_msg    |= s.res_reg.out
 
     s.res_add = Adder( 32 )
-    s.res_add.in_[0] |= s.a_reg.out
-    s.res_add.in_[1] |= s.res_reg.out
+    s.res_add.in0 |= s.a_reg.out
+    s.res_add.in1 |= s.res_reg.out
 
     s.add_mux = Mux( 2**ADD_MUX_SEL_NBITS )
     s.add_mux.in_[ADD_MUX_SEL_ADD   ] |= s.res_add.out

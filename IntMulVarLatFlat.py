@@ -124,8 +124,8 @@ class IntMulVarLatDpath( Updates ):
     s.res_add = Adder( 32 )
     @s.update
     def up_to_adder():
-      s.res_add.in_[0] = s.a_reg.out
-      s.res_add.in_[1] = s.res_reg.out
+      s.res_add.in0 = s.a_reg.out
+      s.res_add.in1 = s.res_reg.out
 
     s.add_mux = Mux( 2**ADD_MUX_SEL_NBITS )
     @s.update

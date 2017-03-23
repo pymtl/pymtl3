@@ -49,15 +49,14 @@ class LShifter(Updates):
 
 class Adder(Updates):
 
-  def __init__( s, nbits = 1, ninputs = 2 ):
-    s.in_ = [ ValuePort(int) for _ in xrange(ninputs) ]
+  def __init__( s, nbits = 1 ):
+    s.in0 = ValuePort(int)
+    s.in1 = ValuePort(int)
     s.out = ValuePort(int)
 
     @s.update
     def up_adder():
-      s.out = 0
-      for i in xrange(ninputs):
-        s.out += s.in_[i]
+      s.out = s.in0 + s.in1
 
   def line_trace( s ):  pass
 

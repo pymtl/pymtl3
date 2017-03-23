@@ -29,8 +29,8 @@ class IntMulNstageStep( Updates ):
     s.b_rsh.shamt = 1
 
     s.adder = Adder( 32 )
-    s.adder.in_[0] |= s.in_a
-    s.adder.in_[1] |= s.in_res
+    s.adder.in0 |= s.in_a
+    s.adder.in1 |= s.in_res
 
     s.mux   = Mux( 2 )
     s.out_res    |= s.mux.out
