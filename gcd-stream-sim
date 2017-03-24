@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #=========================================================================
-# imul-stream-sim [options]
+# gcd-stream-sim [options]
 #=========================================================================
 #
 #  -h --help           Display this message
 #
-#  --impl              {varlat-flat, varlat, nstage}
+#  --impl              {flat, conn, bundle}
 #  --cycle             number of million cycles, default=10 -- 10M
 #
 # Author : Christopher Batten
@@ -34,7 +34,7 @@ def parse_cmdline():
 
   # Additional commane line arguments for the simulator
 
-  p.add_argument( "--impl",   default="varlat", choices=["varlat-flat","varlat","nstage"] )
+  p.add_argument( "--impl",   default="flat", choices=["flat","conn","bundle"] )
   p.add_argument( "--cycle",  default=10, type=int )
 
   opts = p.parse_args()
@@ -42,44 +42,66 @@ def parse_cmdline():
   return opts
 
 from pymtl import *
-from IntMulVarLatConn import IntMulVarLatConn
-from IntMulVarLatFlat import IntMulVarLatFlat
-from IntMulNstage     import IntMulNstageInelastic
-from pclib.update import StreamSource, StreamSink
+from GcdUnitUpImpl import GcdUnit as GcdUnitFlat
+from GcdUnitUp     import GcdUnit as GcdUnitConn
+from GcdUnitBundle import GcdUnit as GcdUnitBundle
+from pclib.update  import StreamSource as Source, StreamSink as Sink
+from pclib.bundle  import StreamSource as BSource, StreamSink as BSink
 
 class SimHarness( Updates ):
 
   def __init__( s, model ):
 
-    s.src  = StreamSource( 2 )
-    s.imul = model()
-    s.sink = StreamSink()
+    s.src  = Source( 2 )
+    s.gcd  = model()
+    s.sink = Sink()
 
-    s.imul.req_val   |= s.src.val
-    s.imul.req_msg_a |= s.src.msg[0]
-    s.imul.req_msg_b |= s.src.msg[1]
-    s.src.rdy        |= s.imul.req_rdy
+    s.gcd.req_val   |= s.src.val
+    s.gcd.req_msg_a |= s.src.msg[0]
+    s.gcd.req_msg_b |= s.src.msg[1]
+    s.src.rdy       |= s.gcd.req_rdy
 
-    s.sink.val       |= s.imul.resp_val
-    s.imul.resp_rdy  |= s.sink.rdy
-    s.sink.msg       |= s.imul.resp_msg
+    s.sink.val      |= s.gcd.resp_val
+    s.gcd.resp_rdy  |= s.sink.rdy
+    s.sink.msg      |= s.gcd.resp_msg
 
   def done( s ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return s.src.line_trace()+" >>> "+s.imul.line_trace()+" >>> "+s.sink.line_trace()
+    return s.src.line_trace()+" >>> "+s.gcd.line_trace()+" >>> "+s.sink.line_trace()
+
+class SimHarnessBundle( Updates ):
+
+  def __init__( s, model ):
+
+    s.src  = BSource( 2 )
+    s.gcd  = model()
+    s.sink = BSink()
+
+    s.gcd.req  |= s.src.out
+    s.gcd.resp |= s.sink.in_
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return s.src.line_trace()+" >>> "+s.gcd.line_trace()+" >>> "+s.sink.line_trace()
 
 def main():
   opts = parse_cmdline()
 
   model_impl_dict = {
-    "varlat-flat" : IntMulVarLatFlat,
-    "varlat" : IntMulVarLatConn,
-    "nstage" : IntMulNstageInelastic,
+    "flat"   : GcdUnitFlat,
+    "conn"   : GcdUnitConn,
+    "bundle" : GcdUnitBundle,
   }
 
-  th = SimHarness( model_impl_dict[ opts.impl ] )
+  if "bundle" in opts.impl:
+    th = SimHarnessBundle( model_impl_dict[ opts.impl ] )
+  else:
+    th = SimHarness( model_impl_dict[ opts.impl ] )
+
   th.elaborate()
   th.print_schedule()
 
