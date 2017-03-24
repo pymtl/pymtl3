@@ -106,6 +106,7 @@ class UpdatesExpl( PyMTLObject ):
           Q.append( v )
 
     s._schedule_list = _schedule_list
+
     assert len(s._schedule_list) == N, "Update blocks have cyclic dependencies."
 
     # + Berkin's recipe
@@ -125,6 +126,31 @@ class UpdatesExpl( PyMTLObject ):
     exec gen_schedule_src.compile() in locals()
 
     s.cycle = cycle
+
+    if True:
+
+      all_src = ""
+      func_globals = dict()
+      for x in _schedule_list:
+        # Get the func source and object closure
+        obj = x.func_closure[0].cell_contents if x.func_closure else s
+        func_globals.update( x.func_globals )
+        src = type(obj)._blkid_ast[ x.__name__ ][1]
+
+        all_src += src[src.find(":")+1:].replace("\n    ","\n").replace("s.", obj.full_name()+".")
+
+      gen_schedule_src = py.code.Source("""
+      def cycle():
+        # The code below does the actual calling of update blocks.
+        {}
+
+      """.format( all_src ) )
+      exec gen_schedule_src.compile() in locals()
+
+      cycle.func_globals.update( func_globals )
+      print gen_schedule_src
+
+      s.cycle = cycle
 
     # Maybe we can find some lightweight multi-threading library
     # Perform work partitioning to basically extract batches of frontiers

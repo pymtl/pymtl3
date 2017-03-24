@@ -43,14 +43,14 @@ class MethodsExpl( Updates ):
   # Override
   def update( s, blk ):
     super( MethodsExpl, s ).update( blk )
-    get_method_calls( type(s)._blkid_ast[ blk.__name__ ], blk, \
+    get_method_calls( type(s)._blkid_ast[ blk.__name__ ][0], blk, \
                       s._blkid_methods[ id(blk) ] )
     return blk
 
   # Override
   def update_on_edge( s, blk ):
     super( MethodsExpl, s ).update_on_edge( blk )
-    get_method_calls( type(s)._blkid_ast[ blk.__name__ ], blk, \
+    get_method_calls( type(s)._blkid_ast[ blk.__name__ ][0], blk, \
                       s._blkid_methods[ id(blk) ] )
     return blk
 

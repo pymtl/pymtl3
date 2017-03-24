@@ -94,9 +94,9 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-def get_ast( func ):
+def get_ast_src( func ):
   src = p.sub( r'\2', inspect.getsource( func ) )
-  return ast.parse( src )
+  return ast.parse( src ), src
 
 def get_read_write( tree, upblk, read, write ):
 

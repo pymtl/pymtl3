@@ -11,7 +11,7 @@ from PyMTLObject     import PyMTLObject
 from UpdatesExpl     import UpdatesExpl, verbose
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from Connectable     import Connectable, Wire
-from ASTHelper       import get_ast, get_read_write, DetectReadsAndWrites
+from ASTHelper       import get_ast_src, get_read_write, DetectReadsAndWrites
 
 class UpdatesConnection( UpdatesExpl ):
 
@@ -40,9 +40,9 @@ class UpdatesConnection( UpdatesExpl ):
     if not "_blkid_ast" in type(s).__dict__:
       type(s)._blkid_ast = dict()
     if blk.__name__ not in type(s)._blkid_ast:
-      type(s)._blkid_ast[ blk.__name__ ] = get_ast( blk )
+      type(s)._blkid_ast[ blk.__name__ ] = get_ast_src( blk )
 
-    get_read_write( type(s)._blkid_ast[ blk.__name__ ], blk, \
+    get_read_write( type(s)._blkid_ast[ blk.__name__ ][0], blk, \
                     s._blkid_reads[ id(blk) ], s._blkid_writes[ id(blk) ] )
     return blk
 
