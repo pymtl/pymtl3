@@ -286,7 +286,7 @@ class Bits( object ):
         )
 
       # Clear the bits we want to set
-      mask = ~(1 << addr)
+      mask = ~(1 << int(addr))
       cleared_val = self._uint & mask
 
       # Set the bits
@@ -433,3 +433,20 @@ class Bits( object ):
 
   def _sext( self, new_width ):
     return Bits( new_width, self.int() )
+
+class BitSlice( Bits ):
+
+  #---------------------------------------------------------------------
+  # __init__
+  #---------------------------------------------------------------------
+  def __init__( self, nbits, value, target_bits, offset ):
+
+    # Create the BitSlice object using the Bits constructor.
+    super( BitSlice, self ).__init__( nbits, value )
+
+    # Extra fields specific to BitSlices: _target_bits points to the
+    # Bits object we are slicing, _offset provides the position of the
+    # specific bits we are slicing.
+    self._target_bits = target_bits
+    self._offset      = offset
+    self.slice        = slice( offset, offset + nbits )
