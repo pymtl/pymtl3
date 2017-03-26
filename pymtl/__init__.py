@@ -6,8 +6,7 @@ from update.MethodsExpl       import MethodsExpl
 from update.Methods           import Methods
 from update.ConstraintTypes   import U, RD, WR, M
 from update.Connectable       import ValuePort, Wire, MethodPort, PortBundle
-from datatypes.Bits_v2        import Bits as Bv2
-from datatypes.Bits_v3        import Bits as Bv3
+from datatypes.Bits_v3        import Bits
 
 __all__ = [
   'UpdatesExpl',
@@ -22,5 +21,5 @@ __all__ = [
   'Wire',
   'PortBundle',
 
-  "Bv2", "Bv3",
+  'Bits',
 ]

@@ -27,29 +27,29 @@ class PyMTLObject(object):
   def _collect_child_vars( s, child ):
     pass
 
+  # This function expands objects in the list and calls
+  # _recursive_elaborate back when it finds another PyMTLObject, it is
+  # easier to support arbitrary list index and high dimensional array.
+
+  def recursive_expand( s, name, obj, idx ):
+    if   isinstance( obj, list ):
+      for i in xrange(len(obj)):
+        s.recursive_expand( name, obj[i], idx + [i] )
+    elif isinstance( obj, PyMTLObject ):
+      obj._father   = s
+      obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
+      obj._recursive_elaborate()
+      s._collect_child_vars( obj )
+
   # Enumerate all child objects and call recursive_expand to figure out
   # what to do with the child object, and collect variables from child.
   # Then elaborate all variables at the current level.
 
   def _recursive_elaborate( s ):
 
-    # With this nested function that expand objects in the list and calls
-    # _recursive_elaborate back when it finds another PyMTLObject, it is
-    # easier to support arbitrary list index and high dimensional array.
-    
-    def recursive_expand( s, name, obj, idx ):
-      if   isinstance( obj, list ):
-        for i in xrange(len(obj)):
-          recursive_expand( s, name, obj[i], idx + [i] )
-      elif isinstance( obj, PyMTLObject ):
-        obj._father   = s
-        obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
-        obj._recursive_elaborate()
-        s._collect_child_vars( obj )
-
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
-        recursive_expand( s, name, obj, [] )
+        s.recursive_expand( name, obj, [] )
 
     s._elaborate_vars()
 
