@@ -1,5 +1,5 @@
 class Bits(object):
-  def __init__( self, nbits, value=0 ):
+  def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
     self.value = value & ((1 << nbits) - 1)
 

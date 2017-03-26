@@ -33,21 +33,10 @@ class Bits( object ):
 
     # Set the nbits and bitmask (_mask) attributes
     self.nbits = nbits
-    self._max  = (2**nbits)- 1
-    self._min  = -2**(nbits- 1) if nbits > 1 else 0
-    self._mask = ( 1 << self.nbits ) - 1
-    self.slice = slice( None )
-
-    if not trunc and not (self._min <= value <= self._max):
-      raise ValueError(
-        'Value is too big to be represented with Bits({})!\n'
-        '({} bits are needed to represent value = {} in two\'s complement.)'
-        .format( self.nbits, _get_nbits(value), value )
-      )
 
     # Convert negative values into unsigned ints and store them
     value_uint = value if ( value >= 0 ) else ( ~(-value) + 1 )
-    self._uint = value_uint & self._mask
+    self._uint = value_uint & (( 1 << self.nbits ) - 1)
 
     self._target_bits = self
 
