@@ -55,11 +55,11 @@ def ubmark_lshift_v3():
 
   return g
 
-print "[lshift_arith] v3 avg time:",sum(timeit.repeat( ubmark_lshift-v3, repeat=5, number=10 ))/5
-print "[lshift_arith] v3", ubmark_lshift_v3()
+print "[lshift] v3 avg time:",sum(timeit.repeat( ubmark_lshift_v3, repeat=5, number=10 ))/5
+print "[lshift] v3", ubmark_lshift_v3()
 
-print "[lshift_arith] v2 avg time:",sum(timeit.repeat( ubmark_lshift_v2, repeat=5, number=10 ))/5
-print "[lshift_arith] v2", ubmark_lshift_v2()
+print "[lshift] v2 avg time:",sum(timeit.repeat( ubmark_lshift_v2, repeat=5, number=10 ))/5
+print "[lshift] v2", ubmark_lshift_v2()
 print
 
 def ubmark_idx_v2():
