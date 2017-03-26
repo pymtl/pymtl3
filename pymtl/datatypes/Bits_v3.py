@@ -9,8 +9,9 @@ class Bits(object):
   # Arithmetics
   def __getitem__( self, idx ):
     if isinstance( idx, slice ):
-      start, stop = idx.start, idx.stop
-      assert not idx.step and start != None and stop != None, "We only support [x:y]."
+      start, stop = int(idx.start), int(idx.stop)
+      assert not idx.step
+
       return Bits( self.nbits, (self.value & ((1 << stop) - 1)) >> start )
 
     i = int(idx)
@@ -19,13 +20,16 @@ class Bits(object):
 
   def __setitem__( self, idx, v ):
     if isinstance( idx, slice ):
-      start, stop = idx.start, idx.stop
-      assert not idx.step and start != None and stop != None, "We only support [x:y]."
-      return Bits( self.nbits, (self.value & ((1 << stop) - 1)) >> start )
+      start, stop = int(idx.start), int(idx.stop)
+      assert not idx.step
+
+      self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | \
+                                    ((int(v) & ((1 << stop) - 1)) << start) 
+      return
 
     i = int(idx)
     assert 0 <= i < self.nbits
-    self.value = (self.value & ~(1 << i)) | (int(v) << i)
+    self.value = (int(self.value) & ~(1 << i)) | ((int(v) & 1) << i)
 
   def __add__( self, other ):
     return Bits( self.nbits, self.value + int(other) )
