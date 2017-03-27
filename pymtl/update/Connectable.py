@@ -46,6 +46,35 @@ class Wire(Connectable):
 
   def __init__( s, type_ ):
     s._type = type_
+    s._var  = type_()
+    s._father = [] # None means it's the top level Wire(msgtype)
+    s._attrs  = dict()
+    s._slices = []
+    print s._father
+
+  def __getattr__( s, name ):
+    if name not in s._attrs:
+      x = Wire( type( getattr(s._var, name) ) )
+      x._father        = s._father + [ s ]
+      s._attrs[ name ] = x
+    return s._attrs[ name ]
+
+  def __getitem__( s, idx ):
+    pass
+
+  # Override
+  def _recursive_elaborate( s ):
+    for name, obj in s._attrs.iteritems():
+      s.recursive_expand( name, obj, [] )
+
+  # Override
+  def collect_nets( s, varid_net ):
+    super( Wire, s ).collect_nets( varid_net )
+    if not s._attrs and not s._slices:
+      return
+
+    for name, obj in s._attrs.iteritems():
+      obj.collect_nets( varid_net )
 
   def default_value( s ):
     return s._type()

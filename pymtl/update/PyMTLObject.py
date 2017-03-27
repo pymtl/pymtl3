@@ -36,7 +36,6 @@ class PyMTLObject(object):
       for i in xrange(len(obj)):
         s.recursive_expand( name, obj[i], idx + [i] )
     elif isinstance( obj, PyMTLObject ):
-      obj._father   = s
       obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
       obj._recursive_elaborate()
       s._collect_child_vars( obj )
