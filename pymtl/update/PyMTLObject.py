@@ -27,16 +27,15 @@ class PyMTLObject(object):
   def _collect_child_vars( s, child ):
     pass
 
-  # This function expands objects in the list and calls
+  # This function expands objects in the list within "s" and calls "obj"'s
   # _recursive_elaborate back when it finds another PyMTLObject, it is
   # easier to support arbitrary list index and high dimensional array.
 
-  def recursive_expand( s, name, obj, idx ):
+  def _recursive_expand( s, obj ):
     if   isinstance( obj, list ):
       for i in xrange(len(obj)):
-        s.recursive_expand( name, obj[i], idx + [i] )
+        s._recursive_expand( obj[i] )
     elif isinstance( obj, PyMTLObject ):
-      obj._name_idx = ( s._name_idx[0] + [name], s._name_idx[1] + [list(idx)] )
       obj._recursive_elaborate()
       s._collect_child_vars( obj )
 
@@ -45,15 +44,30 @@ class PyMTLObject(object):
   # Then elaborate all variables at the current level.
 
   def _recursive_elaborate( s ):
-
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables
-        s.recursive_expand( name, obj, [] )
-
+        s._recursive_expand( obj )
     s._elaborate_vars()
+
+  # Tag each child obj with full instance name. This has to be put after
+  # elaboration because getattr during elaboration may create new objects
+
+  def _recursive_tag_expand( s, name, obj, idx ):
+    if   isinstance( obj, list ):
+      for i in xrange(len(obj)):
+        s._recursive_tag_expand( name, obj[i], idx+[i] )
+    elif isinstance( obj, PyMTLObject ):
+      obj._name_idx = ( s._name_idx[0]+[name], s._name_idx[1]+[list(idx)] )
+      obj._recursive_tag_name()
+
+  def _recursive_tag_name( s ):
+    for name, obj in s.__dict__.iteritems():
+      if not name.startswith("_"): # filter private variables
+        s._recursive_tag_expand( name, obj, [] )
 
   def _elaborate( s ):
     s._recursive_elaborate()
+    s._recursive_tag_name()
 
   def full_name( s ):
     name, idx = s._name_idx
