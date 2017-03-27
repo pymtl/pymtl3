@@ -16,7 +16,6 @@ from ASTHelper       import get_ast, get_read_write, DetectReadsAndWrites
 class UpdatesConnection( UpdatesExpl ):
 
   def __new__( cls, *args, **kwargs ):
-
     inst = super( UpdatesConnection, cls ).__new__( cls, *args, **kwargs )
 
     # These will be collected recursively
@@ -24,6 +23,7 @@ class UpdatesConnection( UpdatesExpl ):
     inst._read_expls  = defaultdict(list)
     inst._write_blks  = defaultdict(list)
     inst._write_expls = defaultdict(list)
+    inst._id_obj      = dict()
     inst._varid_net   = dict()
 
     # These are only processed at the current level
@@ -71,65 +71,69 @@ class UpdatesConnection( UpdatesExpl ):
   def _elaborate_vars( s ):
 
     # Find s.x[0][*][2]
-    def expand_array_index( print_typ, obj, name_depth, name, idx_depth, idx, id_blks, blk_id ):
+    def expand_array_index( print_typ, obj, name_depth, name, idx_depth, idx, id_blks, id_obj, blk_id ):
       if idx_depth >= len(idx):
-        lookup_var( print_typ, obj, name_depth+1, name, id_blks, blk_id )
+        lookup_var( print_typ, obj, name_depth+1, name, id_blks, id_obj, blk_id )
         return
 
       assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
 
       if isinstance( idx[idx_depth], int ): # handle x[2]'s case
         assert idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
-        expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, blk_id )
+        expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
       else: # handle x[*]'s case
         assert idx[idx_depth] == "*", "idk"
         for i in xrange(len(obj)):
-          expand_array_index( print_typ, obj[i], name_depth, name, idx_depth+1, idx, id_blks, blk_id )
+          expand_array_index( print_typ, obj[i], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
 
     # Add an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
-    def add_all( obj, id_blks, blk_id ):
+    def add_all( obj, id_blks, id_obj, blk_id ):
       if isinstance( obj, Connectable ):
-        id_blks[ id(obj) ].add( blk_id )
+        obj_id = id(obj)
+        id_blks[ obj_id ].add( blk_id )
+        id_obj [ obj_id ] = obj
         return
       if isinstance( obj, list ) or isinstance( obj, deque ):
         for i in xrange(len(obj)):
-          add_all( obj[i], id_blks, blk_id )
+          add_all( obj[i], id_blks, id_obj, blk_id )
 
     # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
-    def lookup_var( print_typ, obj, depth, name, id_blks, blk_id ):
+    def lookup_var( print_typ, obj, depth, name, id_blks, id_obj, blk_id ):
       if depth >= len(name):
         if not callable(obj): # exclude function calls
           if verbose: print " -", print_typ, name, type(obj), hex(id(obj)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          add_all( obj, id_blks, blk_id ) # if this object is a list/array again...
+          add_all( obj, id_blks, id_obj, blk_id ) # if this object is a list/array again...
         return
 
       (field, idx) = name[ depth ]
-
       obj = getattr( obj, field )
 
       if not idx: # just a variable
-        lookup_var( print_typ, obj, depth+1, name, id_blks, blk_id )
+        lookup_var( print_typ, obj, depth+1, name, id_blks, id_obj, blk_id )
       else: # let another function handle   s.x[4].y[*]
         assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
-        expand_array_index( print_typ, obj, depth, name, 0, idx, id_blks, blk_id )
+        expand_array_index( print_typ, obj, depth, name, 0, idx, id_blks, id_obj, blk_id )
 
     # First check if each read/write variable exists, then bind the actual
     # variable id (not name anymore) to upblks that reads/writes it.
 
     read_blks  = defaultdict(set)
     write_blks = defaultdict(set)
+    id_obj     = dict()
 
     for blk_id, reads in s._blkid_reads.iteritems():
       for read_name in reads:
-        lookup_var( "read", s, 0, read_name, read_blks, blk_id )
+        lookup_var( "read", s, 0, read_name, read_blks, id_obj, blk_id )
     for i in read_blks:
       s._read_blks[i].extend( list( read_blks[i] ) )
 
     for blk_id, writes in s._blkid_writes.iteritems():
       for write_name in writes:
-        lookup_var( "write", s, 0, write_name, write_blks, blk_id )
+        lookup_var( "write", s, 0, write_name, write_blks, id_obj, blk_id )
     for i in write_blks:
       s._write_blks[i].extend( list( write_blks[i] ) )
+
+    s._id_obj.update( id_obj )
 
   # Override
   def _synthesize_constraints( s ):
@@ -177,6 +181,7 @@ class UpdatesConnection( UpdatesExpl ):
       for k in child._write_expls:
         s._write_expls[k].extend( child._write_expls[k] )
 
+      s._id_obj.update( child._id_obj )
       s._varid_net.update( child._varid_net )
 
     if isinstance( child, Connectable ):
@@ -317,19 +322,21 @@ class UpdatesConnection( UpdatesExpl ):
 
       for v in net:
         if id(v) in s._write_blks:
-          assert not has_writer, "We don't allow %s and %s to write to the same net." %(writer.full_name(), v.full_name())
+          assert not has_writer, "Two-writer conflict.\n - %s %s and %s to write to the same net." %(writer.full_name(), v.full_name())
           has_writer, writer = True, v
         else:
           readers.append( v )
-      assert has_writer, "This net %s needs a driver!" % "\n - ".join([ x.full_name() for x in net ])
+      assert has_writer, "The following net needs a driver.\n - %s" % "\n - ".join([ x.full_name() for x in net ])
       # assert writer._root == writer, "%s is a driver of the following net. It should be on right hand side, \"* |= %s\": \n - %s" % \
             # ( writer.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ] ))
 
       upblk  = make_func( s, writer, readers )
       blk_id = id(upblk)
       s._read_blks[ id(writer) ].append(blk_id)
+      s._id_obj[ id(writer) ] = writer
       for v in readers:
         s._write_blks[ id(v) ].append(blk_id)
+        s._id_obj[ id(v) ] = v
 
       if verbose:
         print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]

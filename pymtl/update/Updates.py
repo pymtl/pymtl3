@@ -43,28 +43,52 @@ class Updates( UpdatesConnection ):
 
     read_blks  = s._read_blks
     write_blks = s._write_blks
+    id_obj     = s._id_obj
 
     impl_c = set()
 
+    # We also handle the read/write of a recursively nested field
+
     for read, rd_blks in read_blks.iteritems():
-      wr_blks = write_blks[ read ] # writes to the same variable
-      for wr in wr_blks:
-        for rd in rd_blks:
-          if wr != rd:
-            if rd in s._update_on_edge:
-              impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
-            else:
-              impl_c.add( (wr, rd) ) # wr < rd by default
+      obj = id_obj[ read ]
+
+      # RD A.b.b.b:
+      #  - WR A.b.b, A.b, A (recognize implicit constraint)
+
+      while obj:
+        # Be careful! defaultdict will create a KV pair during []
+        wr_blks = write_blks[ id(obj) ] if id(obj) in write_blks else []
+
+        for wr in wr_blks:
+          for rd in rd_blks:
+            if wr != rd:
+              if rd in s._update_on_edge:
+                impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
+              else:
+                impl_c.add( (wr, rd) ) # wr < rd by default
+        obj = obj._father
 
     for write, wr_blks in write_blks.iteritems():
-      rd_blks = read_blks[ write ]
-      for wr in wr_blks:
-        for rd in rd_blks:
-          if wr != rd:
-            if rd in s._update_on_edge:
-              impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
-            else:
-              impl_c.add( (wr, rd) ) # wr < rd by default
+      obj = id_obj[ write ]
+
+      # WR A.b.b.b:
+      # - RD A.b.b, A.b, A (recognize implicit constraint)
+      # - WR A.b.b, A.b, A (detect 2-writer conflict)
+
+      while obj:
+        if id(obj) != write:
+          assert id(obj) not in write_blks, "Two-writer conflict in nested data struct! \n - %s\n - %s" % \
+                                            ( id_obj[ write ].full_name(), obj.full_name() )
+        rd_blks = read_blks[ id(obj) ] if id(obj) in read_blks else []
+
+        for wr in wr_blks:
+          for rd in rd_blks:
+            if wr != rd:
+              if rd in s._update_on_edge:
+                impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
+              else:
+                impl_c.add( (wr, rd) ) # wr < rd by default
+        obj = obj._father
 
     if verbose:
       for (x, y) in impl_c:
