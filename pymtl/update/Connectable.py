@@ -1,9 +1,9 @@
 from PyMTLObject     import PyMTLObject
 
-class Connectable(PyMTLObject):
+class Connectable(object):
 
   def __new__( cls, *args, **kwargs ):
-    inst = PyMTLObject.__new__( cls )
+    inst = object.__new__( cls )
 
     # Use disjoint set to resolve connections
     inst._root      = inst
@@ -42,7 +42,7 @@ class Connectable(PyMTLObject):
     else:
       assert root == s, "It doesn't make sense ..."
 
-class Wire(Connectable):
+class Wire(Connectable, PyMTLObject):
 
   def __init__( s, type_ ):
     s._type = type_
@@ -86,7 +86,7 @@ class Wire(Connectable):
 class ValuePort(Wire):
   pass
 
-class MethodPort(Connectable):
+class MethodPort(Connectable, PyMTLObject):
 
   def __init__( self, *args ):
     self._has_method = False
@@ -111,7 +111,7 @@ class MethodPort(Connectable):
     else:
       super( MethodPort, self ).connect( other )
 
-class PortBundle(Connectable):
+class PortBundle(Connectable, PyMTLObject):
 
   # Override
   def connect( s, other ):
