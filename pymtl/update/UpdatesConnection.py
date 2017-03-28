@@ -76,11 +76,11 @@ class UpdatesConnection( UpdatesExpl ):
         lookup_var( print_typ, obj, name_depth+1, name, id_blks, id_obj, blk_id )
         return
 
-      assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
-
       if isinstance( idx[idx_depth], int ): # handle x[2]'s case
-        assert idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
+        # if it's wire, we don't check len
+        assert isinstance(obj, Wire) or idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
         expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
+
       else: # handle x[*]'s case
         assert idx[idx_depth] == "*", "idk"
         for i in xrange(len(obj)):
@@ -106,12 +106,17 @@ class UpdatesConnection( UpdatesExpl ):
         return
 
       (field, idx) = name[ depth ]
-      obj = getattr( obj, field )
+      if not field: # must be a slice, treat it as normal object
+        obj = obj[ idx ]
+        idx = []
+      else:
+        obj = getattr( obj, field )
 
       if not idx: # just a variable
         lookup_var( print_typ, obj, depth+1, name, id_blks, id_obj, blk_id )
       else: # let another function handle   s.x[4].y[*]
-        assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
+        # As long as the thing implements __getitem__, we don't check it.
+        # assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
         expand_array_index( print_typ, obj, depth, name, 0, idx, id_blks, id_obj, blk_id )
 
     # First check if each read/write variable exists, then bind the actual
@@ -325,17 +330,29 @@ class UpdatesConnection( UpdatesExpl ):
     # s.z. Net 3's writer is s.z.a but we only know it after we figure out
     # Net 2's writer, and so forth.
 
-    # The original state is all the writers from all update blocks.
-
     obj_writer = dict()
+
+    # s.x will be propagated by WR s.x.a or WR s.x.b, but the propagated
+    # s.x cannot propagate back to s.x.a or s.x.b
+
+    propagatable = dict()
+
+    # The original state is all the writers from all update blocks.
 
     for wid in s._write_blks:
       assert len( s._write_blks[ wid ] ) == 1
 
       obj = s._id_obj[ wid ]
+      obj_writer  [ id(obj) ] = obj
+      propagatable[ id(obj) ] = True
+
+      obj = obj._parent
       while obj:
-        obj_writer[ id(obj) ] = obj
+        obj_writer  [ id(obj) ] = obj
+        propagatable[ id(obj) ] = False
         obj = obj._parent
+
+    # The original state is all the writers from all update blocks.
 
     headless = s._varid_net.values()
     frozen   = set()
@@ -348,18 +365,22 @@ class UpdatesConnection( UpdatesExpl ):
       # another net, this signal should be the writer of this net.
       #
       # If there is a writer, propagate writer information to all readers
-      # and readers' unfrozen ancestors.
+      # and readers' unfrozen ancestors. The propagation is tricky.
+      # Assume s.x.a is in net, and s.x.b is written in upblk, s.x.b will
+      # mark s.x as unpropagatable writer, 
 
       fcount = len(frozen)
+
       for net in headless:
         has_writer, writer = False, None
 
         for v in net:
           obj = v
           while obj:
-            if id(obj) in obj_writer:
-              owriter = obj_writer[ id(obj) ]
-              if owriter is not None:
+            oid = id(obj)
+            if oid in obj_writer:
+              owriter = obj_writer[ oid ]
+              if obj == v or propagatable[ oid ]:
                 assert not has_writer or id(v) == id(writer), \
                       "Two-writer conflict [%s] [%s] in the following net:\n - %s" % \
                       (v.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
@@ -368,19 +389,32 @@ class UpdatesConnection( UpdatesExpl ):
             obj = obj._parent
 
         if has_writer:
+          if id(writer) not in obj_writer: # child of some propagatable s.x
+            wid = id(writer)
+            obj_writer  [ wid ] = writer
+            propagatable[ wid ] = True
+            frozen.add  ( wid )
+
           for v in net:
-            obj_writer[ id(v) ] = writer # My writer is the writer in the net
-            frozen.add( id(v) )
-            obj = v._parent
-            while obj:
-              if id(obj) not in frozen:
-                obj_writer[ id(obj) ] = obj # Promote unfrozen ancestors to be a writer
-                frozen.add( id(obj) )
-              obj = obj._parent
+            if v != writer:
+              vid = id(v)
+              obj_writer  [ vid ] = writer # My writer is the writer in the net
+              propagatable[ vid ] = True
+              frozen.add  ( vid )
+
+              obj = v._parent
+              while obj:
+                oid = id(obj)
+                if oid not in frozen:
+                  obj_writer  [ oid ] = obj # Promote unfrozen ancestors to be a writer
+                  propagatable[ oid ] = False # This writer information is not propagatable
+                  frozen.add  ( oid )
+                obj = obj._parent
+
         else:
           new_headless.append( net )
 
-      assert fcount < len(frozen), "The following nets needs drivers.\nNet:\n - %s " % ("\nNet:\n - ".join([ "\n - ".join([ x.full_name() for x in y ]) for y in headless ]))
+      assert fcount < len(frozen), "The following nets need drivers.\nNet:\n - %s " % ("\nNet:\n - ".join([ "\n - ".join([ x.full_name() for x in y ]) for y in headless ]))
       headless = new_headless
 
     for net in s._varid_net.values():

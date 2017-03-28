@@ -435,7 +435,7 @@ def test_iterative_find_nets():
 
   _test_model( Top )
 
-def test_deep_connections(): #FIXME
+def test_deep_connections():
 
   class Msg1( object ):
     def __init__( s, a=0, b=0 ):
@@ -479,4 +479,8 @@ def test_deep_connections(): #FIXME
       def up_wr_y():
         s.w = Msg2( 12, 123 )
 
-  _test_model( Top )
+  try:
+    _test_model( Top )
+  except Exception:
+    return
+  raise Exception("Should've thrown no driver exception.")
