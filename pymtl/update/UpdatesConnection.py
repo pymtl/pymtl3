@@ -313,22 +313,89 @@ class UpdatesConnection( UpdatesExpl ):
 
       return s._name_upblk[ upblk_name ]
 
-    for (var, net) in s._varid_net.values():
+    # A writer of a net is one of the three.
+    # 1) Some signal itself
+    # 2) Ancestor of some signal
+    # 3) Descendant of some signal
+    #
+    # We need to use an iterative algorithm to figure out the writer of
+    # each net. The example is the following. Net 1's writer is s.x
+    # and one of the reader is s.y. Net 2's writer is s.y.a but we know it
+    # only after we figure out Net 1's writer, and one of the reader is
+    # s.z. Net 3's writer is s.z.a but we only know it after we figure out
+    # Net 2's writer, and so forth.
+
+    # The original state is all the writers from all update blocks.
+
+    headless   = s._varid_net.values()
+    obj_writer = dict()
+    frozen     = set()
+
+    for wid in s._write_blks:
+      assert len( s._write_blks[ wid ] ) == 1
+
+      v = obj = s._id_obj[ wid ]
+      while obj:
+        obj_writer[ id(obj) ] = obj
+        obj = obj._father
+
+    while headless:
+      new_headless = []
+
+      # In a net, check if there is a writer among all readers and their
+      # ancestors and propagate writer information to all readers and their
+      # ancestors
+
+      for net in headless:
+        has_writer, writer = False, None
+
+        for v in net:
+          obj = v
+          while obj:
+            if id(obj) in obj_writer:
+              owriter = obj_writer[ id(obj) ]
+              if owriter is not None and id(owriter) != id(writer):
+                assert not has_writer, "Two-writer conflict [%s] [%s] in the following net:\n - %s" % \
+                                    (writer.full_name(), obj.full_name(), "\n - ".join([ x.full_name() for x in net ]))
+                has_writer, writer = True, v
+            obj = obj._father
+
+        if has_writer:
+
+          # My writer is the writer in the net, but ancestors' writer
+          # are their own if they are not frozen.
+
+          for v in net:
+            obj_writer[ id(v) ] = writer
+            frozen.add( id(v) )
+            obj = v._father
+            while obj:
+              if id(obj) not in frozen:
+                obj_writer[ id(obj) ] = obj
+                frozen.add( id(obj) )
+              obj = obj._father
+        else:
+          new_headless.append( net )
+
+      headless = new_headless
+
+    for net in s._varid_net.values():
       has_writer, writer = False, None
       readers = []
 
+      for v in net:
+        v_writer = obj_writer[ id(v) ]
+        if v_writer is not None and id(v_writer) != id(writer):
+          assert not has_writer, "Two-writer conflict.\n - %s\n - %s" %(writer.full_name(), v.full_name())
+          has_writer, writer = True, v_writer
+
+        if id(v_writer) != id(v):
+          readers.append( v )
+
+      assert has_writer, "The following net needs a driver.\n - %s" % "\n - ".join([ x.full_name() for x in net ])
+
       # Writer means it is written somewhere else, so it will feed all other readers.
       # In these connection blocks, the writer's value is read by someone, i.e. v = writer
-
-      for v in net:
-        if id(v) in s._write_blks:
-          assert not has_writer, "Two-writer conflict.\n - %s %s and %s to write to the same net." %(writer.full_name(), v.full_name())
-          has_writer, writer = True, v
-        else:
-          readers.append( v )
-      assert has_writer, "The following net needs a driver.\n - %s" % "\n - ".join([ x.full_name() for x in net ])
-      # assert writer._root == writer, "%s is a driver of the following net. It should be on right hand side, \"* |= %s\": \n - %s" % \
-            # ( writer.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ] ))
 
       upblk  = make_func( s, writer, readers )
       blk_id = id(upblk)

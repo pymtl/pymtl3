@@ -89,7 +89,7 @@ class Bits(object):
     return Bits( 1, self.value >= int(other) )
 
   def __nonzero__( self ):
-    return Bits( 1, self.value != 0 )
+    return int(self.value) != 0
 
   # Print
 

@@ -226,6 +226,28 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
   _test_model( Top )
 
+# FIXME
+# WR A.b - A|=x, WR x.b
+# def test_connect_wr_A_b_wr_x_b_conn_A_conflict():
+
+  # class Top(Updates):
+    # def __init__( s ):
+
+      # s.x  = Wire( SomeMsg )
+      # s.A  = Wire( SomeMsg )
+
+      # s.x |= s.A
+
+      # @s.update
+      # def up_wr_A_b():
+        # s.A.b = Bits( 32, 123 )
+
+      # @s.update
+      # def up_wr_x_b():
+        # s.x.a = 12
+
+  # _test_model( Top )
+
 # WR A.b - A|=x, WR x 
 def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
@@ -243,7 +265,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg( 123, 12 )
+        s.x = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -251,7 +273,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
     return
   raise Exception("Should've thrown two writer conflict exception.")
 
-# A.b|=x, WR(x) - RD A
+# A.b|=x, WR x - RD A
 def test_connect_wr_x_conn_A_b_rd_A_impl():
 
   class Top(Updates):
@@ -264,7 +286,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg( 123, 12 )
+        s.x = Bits( 32, 123 )
 
       @s.update
       def up_rd_A():
@@ -272,7 +294,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 
   _test_model( Top )
 
-# A.b|=x, WR(x) - WR A
+# A.b|=x, WR x - WR A
 def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
   class Top(Updates):
@@ -285,11 +307,11 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg( 123, 12 )
+        s.x = Bits( 32, 123 )
 
       @s.update
-      def up_rd_A():
-        s.A = SomeMsg( 123, 12 )
+      def up_wr_A():
+        s.A = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -297,7 +319,28 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
     return
   raise Exception("Should've thrown two writer conflict exception.")
 
-# A.b|=x, WR(x) - A|=y, WR y
+# A.b|=x, RD x - WR A
+def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits )
+      s.A  = Wire( SomeMsg )
+
+      s.A.b |= s.x
+
+      @s.update
+      def up_wr_A():
+        s.A = SomeMsg( 12, 123 )
+
+      @s.update
+      def up_rd_x():
+        z = s.x
+
+  _test_model( Top )
+
+# A.b|=x, WR x - A|=y, WR y
 def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
   class Top(Updates):
@@ -312,11 +355,11 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg( 123, 12 )
+        s.x = Bits( 32, 123 )
 
       @s.update
-      def up_wr_A():
-        s.A = SomeMsg( 123, 12 )
+      def up_wr_y():
+        s.y = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -324,27 +367,70 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
     return
   raise Exception("Should've thrown two writer conflict exception.")
 
-def __test_wr_member_connect_member():
+# A.b|=x, WR x - A|=y, RD y
+def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
   class Top(Updates):
     def __init__( s ):
-      s.wire  = Wire( SomeMsg )
-      s.wire2 = Wire( SomeMsg )
 
-      s.wire.a |= s.wire2.a
-      s.wire.b |= s.wire2.b
+      s.x  = Wire( Bits )
+      s.A  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
 
-      @s.update
-      def up_copy():
-        s.wire.a = Bits( 32, 123 )
-        s.wire.b = 12
+      s.A.b |= s.x
+      s.A   |= s.y
 
       @s.update
-      def up_out():
-        assert s.wire2.a == 123 and s.wire2.b == 12
+      def up_wr_x():
+        s.x = Bits( 32, 123 )
 
-  A = Top()
-  A.elaborate()
-  A.print_schedule()
-  for x in xrange(10):
-    A.cycle()
+      @s.update
+      def up_rd_y():
+        z = s.y
+
+  _test_model( Top )
+
+# A.b|=x, RD x - A|=y, WR y
+def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits )
+      s.A  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
+
+      s.A.b |= s.x
+      s.A   |= s.y
+
+      @s.update
+      def up_rd_x():
+        z = s.x
+
+      @s.update
+      def up_wr_y():
+        s.y = SomeMsg( 12, 123 )
+
+  _test_model( Top )
+
+def test_iterative_find_nets():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.w  = Wire( SomeMsg )
+      s.x  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
+      s.z  = Wire( SomeMsg )
+
+      s.w |= s.x # net1
+
+      s.x.a |= s.y.a # net2
+
+      s.y |= s.z # net3
+
+      @s.update
+      def up_wr_s_w():
+        s.w = SomeMsg( 12, 123 )
+
+  _test_model( Top )
