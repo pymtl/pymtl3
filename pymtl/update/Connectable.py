@@ -58,18 +58,28 @@ class Wire(Connectable, PyMTLObject):
       s._attrs[ name ] = x
     return s._attrs[ name ]
 
-  # The getattr is overriden, so we need to rewrite these reflection loop
-  # Override
+  def __getitem__( s, addr ):
+    if not isinstance( addr, slice ):
+      addr = slice( int(addr), int(addr)+1 )
+    x = Wire( s._type )
+    x._parent = s
+    x._slice  = addr
+    s._slices.append( x )
+    return x
+
+  # The getattr and getitem are overriden, so we need to rewrite these
+  # reflection loop
   def _recursive_elaborate( s ):
     for name, obj in s._attrs.iteritems():
       s._recursive_expand( obj )
-  # Override
+    for obj in s._slices:
+      s._recursive_expand( obj )
+
   def _recursive_tag_name( s ):
     for name, obj in s._attrs.iteritems():
       s._recursive_tag_expand( name, obj, [] )
-
-  def __getitem__( s, idx ):
-    pass
+    for obj in s._slices:
+      s._recursive_tag_expand( "", obj, [obj._slice] )
 
   # Override
   def collect_nets( s, varid_net ):
