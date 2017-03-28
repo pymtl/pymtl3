@@ -190,19 +190,19 @@ class UpdatesConnection( UpdatesExpl ):
   # Override
   def _elaborate( s ):
 
-    def cleanup_connectables( father ):
-      if   isinstance( father, list ):
-        for i in xrange(len(father)):
-          if isinstance( father[i], Wire ):
-            father[i] = father[i].default_value()
+    def cleanup_connectables( parent ):
+      if   isinstance( parent, list ): # check if iteratable
+        for i in xrange(len(parent)):
+          if isinstance( parent[i], Wire ):
+            parent[i] = parent[i].default_value()
           else:
-            cleanup_connectables( father[i] )
+            cleanup_connectables( parent[i] )
 
-      elif isinstance( father, PyMTLObject ):
-        for name, obj in father.__dict__.iteritems():
+      elif isinstance( parent, PyMTLObject ):
+        for name, obj in parent.__dict__.iteritems():
           if not name.startswith("_"): # filter private variables
             if isinstance( obj, Wire ):
-              setattr( father, name, obj.default_value() )
+              setattr( parent, name, obj.default_value() )
             else:
               cleanup_connectables( obj )
 
@@ -335,7 +335,7 @@ class UpdatesConnection( UpdatesExpl ):
       obj = s._id_obj[ wid ]
       while obj:
         obj_writer[ id(obj) ] = obj
-        obj = obj._father
+        obj = obj._parent
 
     headless = s._varid_net.values()
     frozen   = set()
@@ -349,7 +349,8 @@ class UpdatesConnection( UpdatesExpl ):
       #
       # If there is a writer, propagate writer information to all readers
       # and readers' unfrozen ancestors.
-      
+
+      fcount = len(frozen)
       for net in headless:
         has_writer, writer = False, None
 
@@ -364,21 +365,22 @@ class UpdatesConnection( UpdatesExpl ):
                       (v.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
                 has_writer, writer = True, v
                 break
-            obj = obj._father
+            obj = obj._parent
 
         if has_writer:
           for v in net:
             obj_writer[ id(v) ] = writer # My writer is the writer in the net
             frozen.add( id(v) )
-            obj = v._father
+            obj = v._parent
             while obj:
               if id(obj) not in frozen:
                 obj_writer[ id(obj) ] = obj # Promote unfrozen ancestors to be a writer
                 frozen.add( id(obj) )
-              obj = obj._father
+              obj = obj._parent
         else:
           new_headless.append( net )
 
+      assert fcount < len(frozen), "The following nets needs drivers.\nNet:\n - %s " % ("\nNet:\n - ".join([ "\n - ".join([ x.full_name() for x in y ]) for y in headless ]))
       headless = new_headless
 
     for net in s._varid_net.values():
@@ -403,7 +405,6 @@ class UpdatesConnection( UpdatesExpl ):
       blk_id = id(upblk)
       s._read_blks[ id(writer) ].append(blk_id)
       s._id_obj[ id(writer) ] = writer
-      print "---",writer.full_name()
       for v in readers:
         s._write_blks[ id(v) ].append(blk_id)
         s._id_obj[ id(v) ] = v

@@ -66,7 +66,7 @@ class Updates( UpdatesConnection ):
                 impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
               else:
                 impl_c.add( (wr, rd) ) # wr < rd by default
-        obj = obj._father
+        obj = obj._parent
 
     for write, wr_blks in write_blks.iteritems():
       obj = id_obj[ write ]
@@ -88,7 +88,7 @@ class Updates( UpdatesConnection ):
                 impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
               else:
                 impl_c.add( (wr, rd) ) # wr < rd by default
-        obj = obj._father
+        obj = obj._parent
 
     if verbose:
       for (x, y) in impl_c:

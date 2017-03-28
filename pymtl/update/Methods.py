@@ -29,13 +29,13 @@ class Methods( MethodsExpl ):
 
   def _resolve_method_connections( s ):
 
-    def recursive_collect_connections( father, methodid_nets ):
-      if   isinstance( father, list ):
-        for i in xrange(len(father)):
-          recursive_collect_connections( father[i], methodid_nets )
+    def recursive_collect_connections( parent, methodid_nets ):
+      if   isinstance( parent, list ):
+        for i in xrange(len(parent)):
+          recursive_collect_connections( parent[i], methodid_nets )
 
-      elif isinstance( father, PyMTLObject ):
-        for name, obj in father.__dict__.iteritems():
+      elif isinstance( parent, PyMTLObject ):
+        for name, obj in parent.__dict__.iteritems():
           if not name.startswith("_"):
             if   isinstance( obj, MethodPort ):
               root = obj._find_root()
@@ -46,7 +46,7 @@ class Methods( MethodsExpl ):
 
               if id(root) not in methodid_nets:
                 methodid_nets[ id(root) ] = (root, root._connected)
-              setattr( father, name, root._func )
+              setattr( parent, name, root._func )
 
             else:
               recursive_collect_connections( obj, methodid_nets )
