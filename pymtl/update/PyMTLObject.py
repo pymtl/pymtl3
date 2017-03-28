@@ -60,6 +60,7 @@ class PyMTLObject(object):
       obj._name_idx = ( s._name_idx[0]+[name], s._name_idx[1]+[list(idx)] )
       obj._recursive_tag_name()
 
+  # TODO two different names point to the same object
   def _recursive_tag_name( s ):
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"): # filter private variables

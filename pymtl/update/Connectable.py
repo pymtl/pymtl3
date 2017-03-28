@@ -47,14 +47,14 @@ class Wire(Connectable):
   def __init__( s, type_ ):
     s._type = type_
     s._var  = type_()
-    s._father = None # None means it's the top level Wire(msgtype)
+    s._parent = None # None means it's the top level Wire(msgtype)
     s._attrs  = dict()
     s._slices = []
 
   def __getattr__( s, name ):
     if name not in s._attrs:
       x = Wire( type( getattr(s._var, name) ) )
-      x._father        = s
+      x._parent        = s
       s._attrs[ name ] = x
     return s._attrs[ name ]
 

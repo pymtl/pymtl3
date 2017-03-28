@@ -435,7 +435,7 @@ def test_iterative_find_nets():
 
   _test_model( Top )
 
-def test_deep_connections():
+def test_deep_connections(): #FIXME
 
   class Msg1( object ):
     def __init__( s, a=0, b=0 ):
@@ -461,8 +461,10 @@ def test_deep_connections():
       s.y  = Wire( Msg2 )
       s.z  = Wire( Msg3 )
 
+      s.w  = Wire(int)
+
       s.A.y.p |= s.x
-      s.A.y   |= s.y
+      s.A.z   |= s.w
       s.A     |= s.z
 
       @s.update
@@ -471,10 +473,10 @@ def test_deep_connections():
 
       @s.update
       def up_rd_x():
-        z = s.x
+        zz = s.x
 
       @s.update
       def up_wr_y():
-        s.y = Msg2( 12, 123 )
+        s.w = Msg2( 12, 123 )
 
   _test_model( Top )
