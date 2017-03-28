@@ -77,7 +77,7 @@ class Updates( UpdatesConnection ):
 
       while obj:
         if id(obj) != write:
-          assert id(obj) not in write_blks, "Two-writer conflict in nested data struct! \n - %s\n - %s" % \
+          assert id(obj) not in write_blks, "Two-writer conflict in nested data struct. \n - %s\n - %s" % \
                                             ( id_obj[ write ].full_name(), obj.full_name() )
         rd_blks = read_blks[ id(obj) ] if id(obj) in read_blks else []
 

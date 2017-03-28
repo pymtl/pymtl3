@@ -38,7 +38,7 @@ class Connectable(PyMTLObject):
     root = s._find_root()
     if len( root._connected ) > 1: # has actual connection
       if id(root) not in varid_net:
-        varid_net[ id(root) ] = (root, root._connected)
+        varid_net[ id(root) ] = root._connected
     else:
       assert root == s, "It doesn't make sense ..."
 
