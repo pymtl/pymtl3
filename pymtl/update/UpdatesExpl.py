@@ -52,17 +52,17 @@ class UpdatesExpl( PyMTLObject ):
       s._blkid_upblk.update( child._blkid_upblk )
       s._expl_constraints.update( child._expl_constraints )
 
-  def _schedule( s ):
+  def print_upblk_dag( s ):    
+    from graphviz import Digraph
+    dot = Digraph(comment = s.__class__)
+    dot.graph_attr["rank"] = "source"
+    dot.graph_attr["ratio"] = "fill"
+    dot.graph_attr["margin"] = "0.1"
+    for (x, y) in s._total_constraints:
+      dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
+    dot.render("/tmp/pymtl.gv", view=True)
 
-    if verbose:
-      from graphviz import Digraph
-      dot = Digraph(comment = s.__class__)
-      dot.graph_attr["rank"] = "source"
-      dot.graph_attr["ratio"] = "fill"
-      dot.graph_attr["margin"] = "0.1"
-      for (x, y) in s._total_constraints:
-        dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
-      dot.render("/tmp/pymtl.gv", view=True)
+  def _schedule( s ):
 
     N = len( s._blkid_upblk )
     edges  = [ [] for _ in xrange(N) ]
@@ -71,12 +71,11 @@ class UpdatesExpl( PyMTLObject ):
     OutDeg = [0] * N
 
     # Discretize in O(NlogN), to avoid later O(logN) lookup
+    # Then prepare the graph
 
     id_vtx = dict()
     for i in xrange(N):
       id_vtx[ upblks[i] ] = i
-
-    # Prepare the graph
 
     for (x, y) in list(s._total_constraints):
       vtx_x = id_vtx[ x ]
@@ -126,9 +125,7 @@ class UpdatesExpl( PyMTLObject ):
 
     s.cycle = cycle
 
-    # Maybe we can find some lightweight multi-threading library
-    # Perform work partitioning to basically extract batches of frontiers
-    # for parallelism
+    # Extract batches of frontiers which gives better idea for dataflow
 
     InDeg = [0] * N
     for x in edges:
