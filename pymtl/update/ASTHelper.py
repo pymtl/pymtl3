@@ -9,16 +9,15 @@ class DetectVarNames( ast.NodeVisitor ):
   def get_full_name( self, node ): # only allow one layer array reference
     obj_name = []
 
+    # First strip off all slices
+    slices = []
+    while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Slice ):
+      slices.append( (node.slice.lower.n, node.slice.upper.n) )
+      node = node.value
+
     while hasattr( node, "value" ): # don't record the last "s."
       # s.x[1][2].y[i][3]
-
-      # First strip off all slices [0:32]
-      while isinstance( node, ast.Subscript ) and \
-            isinstance( node.slice, ast.Slice ):
-        # TODO handle slices. Squash them into one, or keep them?
-        node = node.value
-
-      # Then strip off all array indices
+      # strip off all array indices
       num = []
       while isinstance( node, ast.Subscript ) and \
             isinstance( node.slice, ast.Index ):
@@ -27,7 +26,7 @@ class DetectVarNames( ast.NodeVisitor ):
 
         if   isinstance( v, ast.Num ):
           n = v.n
-        elif isinstance( v, ast.Name ): 
+        elif isinstance( v, ast.Name ):
           if v.id in self.upblk.func_globals: # Only support global const indexing for now
             n = self.upblk.func_globals[ v.id ]
         else:
@@ -37,11 +36,21 @@ class DetectVarNames( ast.NodeVisitor ):
         num.append(n)
         node = node.value
 
-      assert isinstance( node, ast.Attribute ), "what the hell?"    
+      assert isinstance( node, ast.Attribute ), "what the hell?"
       obj_name.append( (node.attr, num[::-1]) )
       node = node.value
 
-    return obj_name[::-1]
+    obj_name = obj_name[::-1]
+
+    if slices:
+      slices = slices[::-1]
+      lower, upper = slices.pop(0)
+      for (l, r) in slices:
+        upper = min(lower + r, upper)
+        lower = lower + l
+      obj_name += [ (None, slice(lower,upper)) ]
+
+    return obj_name
 
 class DetectReadsAndWrites( DetectVarNames ):
 
