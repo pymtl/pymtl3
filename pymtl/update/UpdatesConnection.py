@@ -327,25 +327,29 @@ class UpdatesConnection( UpdatesExpl ):
 
     # The original state is all the writers from all update blocks.
 
-    headless   = s._varid_net.values()
     obj_writer = dict()
-    frozen     = set()
 
     for wid in s._write_blks:
       assert len( s._write_blks[ wid ] ) == 1
 
-      v = obj = s._id_obj[ wid ]
+      obj = s._id_obj[ wid ]
       while obj:
         obj_writer[ id(obj) ] = obj
         obj = obj._father
+
+    headless = s._varid_net.values()
+    frozen   = set()
 
     while headless:
       new_headless = []
 
       # In a net, check if there is a writer among all readers and their
-      # ancestors and propagate writer information to all readers and their
-      # ancestors
-
+      # ancestors. Moreover, if a signal's ancestor has a writer in
+      # another net, this signal should be the writer of this net.
+      #
+      # If there is a writer, propagate writer information to all readers
+      # and readers' unfrozen ancestors.
+      
       for net in headless:
         has_writer, writer = False, None
 
@@ -354,24 +358,22 @@ class UpdatesConnection( UpdatesExpl ):
           while obj:
             if id(obj) in obj_writer:
               owriter = obj_writer[ id(obj) ]
-              if owriter is not None and id(owriter) != id(writer):
-                assert not has_writer, "Two-writer conflict [%s] [%s] in the following net:\n - %s" % \
-                                    (writer.full_name(), obj.full_name(), "\n - ".join([ x.full_name() for x in net ]))
+              if owriter is not None:
+                assert not has_writer or id(v) == id(writer), \
+                      "Two-writer conflict [%s] [%s] in the following net:\n - %s" % \
+                      (v.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
                 has_writer, writer = True, v
+                break
             obj = obj._father
 
         if has_writer:
-
-          # My writer is the writer in the net, but ancestors' writer
-          # are their own if they are not frozen.
-
           for v in net:
-            obj_writer[ id(v) ] = writer
+            obj_writer[ id(v) ] = writer # My writer is the writer in the net
             frozen.add( id(v) )
             obj = v._father
             while obj:
               if id(obj) not in frozen:
-                obj_writer[ id(obj) ] = obj
+                obj_writer[ id(obj) ] = obj # Promote unfrozen ancestors to be a writer
                 frozen.add( id(obj) )
               obj = obj._father
         else:
@@ -401,6 +403,7 @@ class UpdatesConnection( UpdatesExpl ):
       blk_id = id(upblk)
       s._read_blks[ id(writer) ].append(blk_id)
       s._id_obj[ id(writer) ] = writer
+      print "---",writer.full_name()
       for v in readers:
         s._write_blks[ id(v) ].append(blk_id)
         s._id_obj[ id(v) ] = v

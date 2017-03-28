@@ -434,3 +434,47 @@ def test_iterative_find_nets():
         s.w = SomeMsg( 12, 123 )
 
   _test_model( Top )
+
+def test_deep_connections():
+
+  class Msg1( object ):
+    def __init__( s, a=0, b=0 ):
+      s.a = a
+      s.b = Bits( 32, b )
+
+  class Msg2( object ):
+    def __init__( s, a=Msg1(), b=Msg1() ):
+      s.p = a
+      s.q = b
+
+  class Msg3( object ):
+    def __init__( s, x=Msg1(), y=Msg2(), z=0 ):
+      s.x = x
+      s.y = y
+      s.z = z
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.A  = Wire( Msg3 )
+      s.x  = Wire( Msg1 )
+      s.y  = Wire( Msg2 )
+      s.z  = Wire( Msg3 )
+
+      s.A.y.p |= s.x
+      s.A.y   |= s.y
+      s.A     |= s.z
+
+      @s.update
+      def up_z():
+        yy = s.z
+
+      @s.update
+      def up_rd_x():
+        z = s.x
+
+      @s.update
+      def up_wr_y():
+        s.y = Msg2( 12, 123 )
+
+  _test_model( Top )
