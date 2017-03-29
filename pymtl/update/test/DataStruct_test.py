@@ -100,9 +100,10 @@ def test_wr_A_b_wr_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception:
+  except Exception as e:
+    print "\nAssertion Error:", e
     return
-  raise Exception("Should've thrown two writer conflict exception.")
+  raise Exception("Should've thrown two-writer conflict exception.")
 
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
@@ -184,7 +185,8 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
   try:
     _test_model( Top )
-  except Exception:
+  except Exception as e:
+    print "\nAssertion Error:", e
     return
   raise Exception("Should've thrown no constraint exception.")
 
@@ -269,9 +271,10 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception:
+  except Exception as e:
+    print "\nAssertion Error:", e
     return
-  raise Exception("Should've thrown two writer conflict exception.")
+  raise Exception("Should've thrown two-writer conflict exception.")
 
 # A.b|=x, WR x - RD A
 def test_connect_wr_x_conn_A_b_rd_A_impl():
@@ -315,9 +318,10 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception:
+  except Exception as e:
+    print "\nAssertion Error:", e
     return
-  raise Exception("Should've thrown two writer conflict exception.")
+  raise Exception("Should've thrown two-writer conflict exception.")
 
 # A.b|=x, RD x - WR A
 def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
@@ -363,9 +367,10 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception:
+  except Exception as e:
+    print "\nAssertion Error:", e
     return
-  raise Exception("Should've thrown two writer conflict exception.")
+  raise Exception("Should've thrown two-writer conflict exception.")
 
 # A.b|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
@@ -481,6 +486,7 @@ def test_deep_connections():
 
   try:
     _test_model( Top )
-  except Exception:
+  except Exception as e:
+    print "\nAssertion Error:", e
     return
   raise Exception("Should've thrown no driver exception.")
