@@ -108,8 +108,8 @@ class Updates( UpdatesConnection ):
       while x:
         xid = id(x)
         if xid != write:
-          assert xid not in write_blks, "Two-writer conflict in nested data struct/slice. \n - %s\n - %s" % \
-                                        ( x.full_name(), obj.full_name() )
+          assert xid not in write_blks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
+                                        ( x.full_name(), s._blkid_upblk[write_blks[xid][0]].__name__, obj.full_name(), s._blkid_upblk[write_blks[id(obj)][0]].__name__ )
         if xid in read_blks:
           readers.append( xid )
         x = x._parent
@@ -119,9 +119,9 @@ class Updates( UpdatesConnection ):
         for x in obj._parent._slices.values():
           # Recognize overlapped slices
           if id(x) != id(obj) and overlap( x._slice, obj._slice ):
-            assert id(x) not in write_blks, "Two-writer conflict between sibling slices. \n - %s\n - %s" % \
-                                          ( x.full_name(), obj.full_name() )
-
+            assert id(x) not in write_blks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
+                                        ( x.full_name(), s._blkid_upblk[write_blks[xid][0]].__name__, obj.full_name(), s._blkid_upblk[write_blks[id(obj)][0]].__name__ )
+        
       # Add all constraints
       for wr in wr_blks:
         for reader in readers:

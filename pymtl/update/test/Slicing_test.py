@@ -140,3 +140,31 @@ def test_write_slices_and_bit_overlapped():
     print "\nAssertion Error:", e
     return
   raise Exception("Should've thrown two-writer conflict exception.")
+
+# write a slice and there are two reader
+def test_multiple_readers():
+
+  class Top(Updates):
+    def __init__( s ):
+      s.A  = Wire( Bits(32) )
+
+      @s.update
+      def up_wr_8_24():
+        s.A[8:24] = Bits( 16, 0x1234 )
+
+      @s.update
+      def up_rd_0_12():
+        assert s.A[0:12] == 0x400
+
+      @s.update
+      def up_rd_bunch():
+        assert s.A[23] == 0
+        assert s.A[22] == 0
+        assert s.A[21] == 0
+        assert s.A[20] == 1
+        assert s.A[19] == 0
+        assert s.A[18] == 0
+        assert s.A[17] == 1
+        assert s.A[16] == 0
+
+  _test_model( Top )
