@@ -12,7 +12,14 @@ class DetectVarNames( ast.NodeVisitor ):
     # First strip off all slices
     slices = []
     while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Slice ):
-      slices.append( (node.slice.lower.n, node.slice.upper.n) )
+      lower = node.slice.lower
+      upper = node.slice.upper
+      # If the slice looks like a[i:i+1] where i is variable, I assume it
+      # would access the whole variable a
+      if isinstance( lower, ast.Num ) and isinstance( upper, ast.Num ):
+        slices.append( slice(node.slice.lower.n, node.slice.upper.n) )
+      # FIXME
+      # else:
       node = node.value
 
     while hasattr( node, "value" ): # don't record the last "s."
@@ -43,12 +50,11 @@ class DetectVarNames( ast.NodeVisitor ):
     obj_name = obj_name[::-1]
 
     if slices:
-      slices = slices[::-1]
-      lower, upper = slices.pop(0)
-      for (l, r) in slices:
-        upper = min(lower + r, upper)
-        lower = lower + l
-      obj_name += [ (None, slice(lower,upper)) ]
+      assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
+        ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in xrange(len(obj_name)) ] ) \
+        +  "[%d:%d]" % (x[0], x[1]), self.upblk.__name__ )
+
+      obj_name[-1][1].append( slices[0] )
 
     return obj_name
 
