@@ -80,7 +80,6 @@ class UpdatesConnection( UpdatesExpl ):
         # if it's wire, we don't check len
         assert isinstance(obj, Wire) or idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
         expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
-
       elif idx[idx_depth] == "*":
         for i in xrange(len(obj)):
           expand_array_index( print_typ, obj[i], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
@@ -91,9 +90,8 @@ class UpdatesConnection( UpdatesExpl ):
     # Add an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
     def add_all( obj, id_blks, id_obj, blk_id ):
       if isinstance( obj, Connectable ):
-        obj_id = id(obj)
-        id_blks[ obj_id ].add( blk_id )
-        id_obj [ obj_id ] = obj
+        id_blks[ id(obj) ].add( blk_id )
+        id_obj [ id(obj) ] = obj
         return
       if isinstance( obj, list ) or isinstance( obj, deque ):
         for i in xrange(len(obj)):
@@ -139,7 +137,7 @@ class UpdatesConnection( UpdatesExpl ):
     s._id_obj.update( id_obj )
 
   # Override
-  def _synthesize_constraints( s ):
+  def _synthesize_constraints( s ): # FIXME
     read_blks   = s._read_blks
     write_blks  = s._write_blks
     read_expls  = s._read_expls
@@ -215,111 +213,8 @@ class UpdatesConnection( UpdatesExpl ):
 
   def _resolve_var_connections( s ):
 
-    def make_func( s, writer, readers ):
-
-      # Optimization to reduce trace size:
-      #
-      # - Common writer: "x = s.x.y; s.a.b = x; s.b.c = x;" instead of
-      #   "s.a.b = s.x.y; s.b.c = s.x.y"
-      #
-      # - Common prefix: grep the longest common prefix for readers
-      #   "s.a.b = x; s.a.c = x" --> "y = s.a; y.b = x; y.c = x"
-
-      upblk_name_ = "%s_FANOUT_%d" % (writer.full_name(), len(readers))
-      upblk_name  = upblk_name_.replace( ".", "_" ) \
-                               .replace( "[", "_" ).replace( "]", "_" ) \
-
-      if len(readers) == 1:
-
-        rstr = readers[0].full_name()
-        wstr = writer.full_name()
-        minlen = min( len(rstr), len(wstr) )
-
-        LCP = 0
-        while LCP <= minlen:
-          if rstr[LCP] != wstr[LCP]:
-            break
-          LCP += 1
-
-        while rstr[LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
-          LCP -= 1
-
-        if rstr[:LCP] == "s.":
-          # Vanilla
-          gen_connection_src = py.code.Source("""
-            @s.update
-            def {}():
-              # The code below does the actual copy of variables.
-              {} = {}
-
-            """.format( upblk_name, rstr, wstr ) )
-        else:
-          # Apply common prefix
-          gen_connection_src = py.code.Source("""
-            @s.update
-            def {}():
-              # The code below does the actual copy of variables.
-              y = {}; y.{} = y.{}
-
-          """.format( upblk_name, rstr[:LCP-1], rstr[LCP:], wstr[LCP:]))
-
-      else:
-
-        strs   = []
-        minlen = 1 << 31
-        for x in readers:
-          st = x.full_name()
-          minlen = min( minlen, len(st) )
-          strs.append( st )
-
-        LCP = 0
-        while LCP <= minlen:
-          ch = strs[0][LCP]
-          flag = True
-          for j in xrange( 1, len(strs) ):
-            if strs[j][LCP] != ch:
-              flag = False
-              break
-
-          if not flag: break
-          LCP += 1
-
-        while strs[0][LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
-          LCP -= 1
-
-        if strs[0][:LCP] == "s.":
-          # Only able to apply common writer optimization
-          gen_connection_src = py.code.Source("""
-            @s.update
-            def {}():
-              # The code below does the actual copy of variables.
-              x = {}
-              {}
-
-          """.format( upblk_name, writer.full_name(),
-                        "; ".join([ "{} = x".format(st) for st in strs ] ) ) )
-        else:
-          # Apply both common writer and common prefix
-          gen_connection_src = py.code.Source("""
-            @s.update
-            def {}():
-              # The code below does the actual copy of variables.
-              x = {}; y = {}
-              {}
-
-          """.format( upblk_name, writer.full_name(), strs[0][:LCP-1],
-                        "; ".join([ "y.{} = x".format( st[LCP:]) for st in strs ] ) ) )
-
-      if verbose:
-        print "Generate connection source: ", gen_connection_src
-      exec gen_connection_src.compile() in locals()
-
-      return s._name_upblk[ upblk_name ]
-
-    # A writer of a net is one of the three.
-    # 1) Some signal itself
-    # 2) Ancestor of some signal
-    # 3) Descendant of some signal
+    # A writer of a net is one of the three: some signal itself, ancestor
+    # of some signal, or descendant of some signal.
     #
     # We need to use an iterative algorithm to figure out the writer of
     # each net. The example is the following. Net 1's writer is s.x
@@ -328,21 +223,20 @@ class UpdatesConnection( UpdatesExpl ):
     # s.z. Net 3's writer is s.z.a but we only know it after we figure out
     # Net 2's writer, and so forth.
 
-    obj_writer = dict()
-
     # s.x will be propagated by WR s.x.a or WR s.x.b, but the propagated
     # s.x cannot propagate back to s.x.a or s.x.b
-
-    propagatable = dict()
-
     # The original state is all the writers from all update blocks.
 
-    for wid in s._write_blks:
-      assert len( s._write_blks[ wid ] ) == 1
+    obj_writer  = dict()
+    propagatable = dict()
 
+    for wid in s._write_blks:
       obj = s._id_obj[ wid ]
       obj_writer  [ id(obj) ] = obj
       propagatable[ id(obj) ] = True
+
+      assert len( s._write_blks[ wid ] ) == 1, "%s is written in multiple update blocks.\n - %s" % \
+            ( obj.full_name(), "\n - ".join([ s._blkid_upblk[x].__name__ for x in s._write_blks[ wid ] ]) )
 
       obj = obj._parent
       while obj:
@@ -350,24 +244,21 @@ class UpdatesConnection( UpdatesExpl ):
         propagatable[ id(obj) ] = False
         obj = obj._parent
 
-    # The original state is all the writers from all update blocks.
-
     headless = s._varid_net.values()
     frozen   = set()
 
     while headless:
       new_headless = []
+      fcount = len(frozen)
 
-      # In a net, check if there is a writer among all readers and their
-      # ancestors. Moreover, if a signal's ancestor has a writer in
-      # another net, this signal should be the writer of this net.
+      # For each net, figure out the writer among all vars and their
+      # ancestors. Moreover, if x's ancestor has a writer in another net,
+      # x should be the writer of this net.
       #
       # If there is a writer, propagate writer information to all readers
       # and readers' unfrozen ancestors. The propagation is tricky.
       # Assume s.x.a is in net, and s.x.b is written in upblk, s.x.b will
-      # mark s.x as unpropagatable writer, 
-
-      fcount = len(frozen)
+      # mark s.x as an unpropagatable writer, 
 
       for net in headless:
         has_writer, writer = False, None
@@ -433,7 +324,100 @@ class UpdatesConnection( UpdatesExpl ):
       # Writer means it is written somewhere else, so it will feed all other readers.
       # In these connection blocks, the writer's value is read by someone, i.e. v = writer
 
-      upblk  = make_func( s, writer, readers )
+      # Optimization to reduce trace size:
+      #
+      # - Common writer: "x = s.x.y; s.a.b = x; s.b.c = x;" instead of
+      #   "s.a.b = s.x.y; s.b.c = s.x.y"
+      #
+      # - Common prefix: grep the longest common prefix for readers
+      #   "s.a.b = x; s.a.c = x" --> "y = s.a; y.b = x; y.c = x"
+
+      upblk_name_ = "%s_FANOUT_%d" % (writer.full_name(), len(readers))
+      upblk_name  = upblk_name_.replace( ".", "_" ) \
+                               .replace( "[", "_" ).replace( "]", "_" ) \
+
+      if len(readers) == 1:
+
+        rstr = readers[0].full_name()
+        wstr = writer.full_name()
+        minlen = min( len(rstr), len(wstr) )
+
+        LCP = 0
+        while LCP <= minlen:
+          if rstr[LCP] != wstr[LCP]:
+            break
+          LCP += 1
+
+        while rstr[LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
+          LCP -= 1
+
+        if rstr[:LCP] == "s.":
+          # Vanilla
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              {} = {}
+
+            """.format( upblk_name, rstr, wstr ) )
+        else:
+          # Apply common prefix
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              y = {}; y.{} = y.{}
+
+          """.format( upblk_name, rstr[:LCP-1], rstr[LCP:], wstr[LCP:]))
+
+      else:
+        strs   = []
+        minlen = 1 << 31
+        for x in readers:
+          st = x.full_name()
+          minlen = min( minlen, len(st) )
+          strs.append( st )
+
+        LCP = 0
+        while LCP <= minlen:
+          ch = strs[0][LCP]
+          flag = True
+          for j in xrange( 1, len(strs) ):
+            if strs[j][LCP] != ch:
+              flag = False
+              break
+          if not flag: break
+          LCP += 1
+
+        while strs[0][LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
+          LCP -= 1
+
+        if strs[0][:LCP] == "s.":
+          # Only able to apply common writer optimization
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              x = {}
+              {}
+
+          """.format( upblk_name, writer.full_name(),
+                        "; ".join([ "{} = x".format(st) for st in strs ] ) ) )
+        else:
+          # Apply both common writer and common prefix
+          gen_connection_src = py.code.Source("""
+            @s.update
+            def {}():
+              # The code below does the actual copy of variables.
+              x = {}; y = {}
+              {}
+
+          """.format( upblk_name, writer.full_name(), strs[0][:LCP-1],
+                        "; ".join([ "y.{} = x".format( st[LCP:]) for st in strs ] ) ) )
+
+      exec gen_connection_src.compile() in locals()
+
+      upblk  = s._name_upblk[ upblk_name ]
       blk_id = id(upblk)
       s._read_blks[ id(writer) ].append(blk_id)
       s._id_obj[ id(writer) ] = writer
@@ -442,4 +426,5 @@ class UpdatesConnection( UpdatesExpl ):
         s._id_obj[ id(v) ] = v
 
       if verbose:
+        print "Generate connection source: ", gen_connection_src
         print "+ Net", ("[%s]" % writer.full_name()).center(12), " Readers", [ x.full_name() for x in readers ]
