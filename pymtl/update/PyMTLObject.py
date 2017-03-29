@@ -70,7 +70,12 @@ class PyMTLObject(object):
     s._recursive_elaborate()
     s._recursive_tag_name()
 
-  def full_name( s ):
+  def full_name( s ): # The only place we allow slicing is the end
     name, idx = s._name_idx
+    if not name[-1]:
+      assert len(idx[-1]) == 1
+      return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
+                        for i in xrange(len(name)-1) ] ) + \
+                        "[%d:%d]" % ( idx[-1][0].start, idx[-1][0].stop )
     return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
                         for i in xrange(len(name)) ] )

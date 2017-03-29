@@ -48,37 +48,50 @@ class Wire(Connectable, PyMTLObject):
     s._type = type_
     s._var  = type_()
     s._parent = None # None means it's the top level Wire(msgtype)
+    s._slice  = None # None means it's not a slice of some wire
     s._attrs  = dict()
-    s._slices = []
+    s._slices = dict()
 
   def __getattr__( s, name ):
+    if name.startswith("_"): # private variable
+      return s.__dict__[ name ]
+
     if name not in s._attrs:
       x = Wire( type( getattr(s._var, name) ) )
       x._parent        = s
       s._attrs[ name ] = x
+
     return s._attrs[ name ]
 
   def __getitem__( s, addr ):
-    if not isinstance( addr, slice ):
-      addr = slice( int(addr), int(addr)+1 )
-    x = Wire( s._type )
-    x._parent = s
-    x._slice  = addr
-    s._slices.append( x )
-    return x
+    # Turn index into a slice
+    if isinstance( addr, int ):
+      sl = slice( addr, addr+1 )
+    elif isinstance( addr, slice ):
+      sl = addr
+    else: assert False, "What the hell?"
+
+    sl_tuple = (sl.start, sl.stop)
+
+    if sl_tuple not in s._slices:
+      x = Wire( s._type )
+      x._parent = s
+      x._slice  = sl
+      s._slices[ sl_tuple ] = x
+    return s._slices[ sl_tuple ]
 
   # The getattr and getitem are overriden, so we need to rewrite these
   # reflection loop
   def _recursive_elaborate( s ):
     for name, obj in s._attrs.iteritems():
       s._recursive_expand( obj )
-    for obj in s._slices:
+    for name, obj in s._slices.iteritems():
       s._recursive_expand( obj )
 
   def _recursive_tag_name( s ):
     for name, obj in s._attrs.iteritems():
       s._recursive_tag_expand( name, obj, [] )
-    for obj in s._slices:
+    for name, obj in s._slices.iteritems():
       s._recursive_tag_expand( "", obj, [obj._slice] )
 
   # Override
@@ -88,6 +101,8 @@ class Wire(Connectable, PyMTLObject):
       return
 
     for name, obj in s._attrs.iteritems():
+      obj.collect_nets( varid_net )
+    for name, obj in s._slices.iteritems():
       obj.collect_nets( varid_net )
 
   def default_value( s ):
