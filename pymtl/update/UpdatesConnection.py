@@ -81,10 +81,12 @@ class UpdatesConnection( UpdatesExpl ):
         assert isinstance(obj, Wire) or idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
         expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
 
-      else: # handle x[*]'s case
-        assert idx[idx_depth] == "*", "idk"
+      elif idx[idx_depth] == "*":
         for i in xrange(len(obj)):
           expand_array_index( print_typ, obj[i], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
+      else:
+        assert isinstance( idx[idx_depth], slice )
+        expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
 
     # Add an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
     def add_all( obj, id_blks, id_obj, blk_id ):
@@ -106,11 +108,7 @@ class UpdatesConnection( UpdatesExpl ):
         return
 
       (field, idx) = name[ depth ]
-      if not field: # must be a slice, treat it as normal object
-        obj = obj[ idx ]
-        idx = []
-      else:
-        obj = getattr( obj, field )
+      obj = getattr( obj, field )
 
       if not idx: # just a variable
         lookup_var( print_typ, obj, depth+1, name, id_blks, id_obj, blk_id )

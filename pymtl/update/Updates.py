@@ -35,11 +35,23 @@ class Updates( UpdatesConnection ):
 
     super( Updates, s )._synthesize_constraints()
 
+    def overlap( x, y ):
+      if isinstance( x, int ):
+        if isinstance( y, int ):  return x == y
+        else:                     return y.start <= x < y.stop
+      else: # x is slice
+        if isinstance( y, int ):  return x.start <= y < x.stop
+        else:
+          if x.start <= y.start:  return y.start < x.stop
+          else:                   return x.start < y.stop
+      assert False, "What the hell?"
+
     #---------------------------------------------------------------------
     # Implicit constraint
     #---------------------------------------------------------------------
     # Synthesize total constraints between two upblks that read/write to
-    # the same variable.
+    # the "same variable" (we also handle the read/write of a recursively
+    # nested field/slice)
 
     read_blks  = s._read_blks
     write_blks = s._write_blks
@@ -47,48 +59,79 @@ class Updates( UpdatesConnection ):
 
     impl_c = set()
 
-    # We also handle the read/write of a recursively nested field
+    # Collect all objs that write the variable whose id is "read"
+    # 1) RD A.b.b     - WR A.b.b, A.b, A
+    # 2) RD A.b[1:10] - WR A.b[1:10], A,b, A
+    # 3) RD A.b[1:10] - WR A.b[0:5], A.b[6], A.b[8:11]
 
     for read, rd_blks in read_blks.iteritems():
-      obj = id_obj[ read ]
+      obj     = id_obj[ read ]
+      writers = []
 
-      # RD A.b.b.b:
-      #  - WR A.b.b, A.b, A (recognize implicit constraint)
+      # Check parents. Cover 1) and 2)
+      x = obj
+      while x:
+        xid = id(x)
+        if xid in write_blks:
+          writers.append( xid )
+        x = x._parent
 
-      while obj:
-        # Be careful! defaultdict will create a KV pair during []
-        wr_blks = write_blks[ id(obj) ] if id(obj) in write_blks else []
+      # Check the sibling slices. Cover 3)
+      if obj._slice:
+        for x in obj._parent._slices.values():
+          if overlap( x._slice, obj._slice ) and id(x) in write_blks:
+            writers.append( id(x) )
 
-        for wr in wr_blks:
+      # Add all constraints
+      for writer in writers:
+        for wr in write_blks[ writer ]:
           for rd in rd_blks:
             if wr != rd:
               if rd in s._update_on_edge:
                 impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
               else:
                 impl_c.add( (wr, rd) ) # wr < rd by default
-        obj = obj._parent
+
+    # Collect all objs that read the variable whose id is "write"
+    # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
+    # 2) WR A.b.b.b   - RD A.b.b, A.b, A
+    # 3) WR A.b[1:10] - RD A.b[1:10], A,b, A
+    # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
+    # "WR A.b[1:10] - RD A.b[0:5], A.b[6], A.b[8:11]" has been discovered
 
     for write, wr_blks in write_blks.iteritems():
-      obj = id_obj[ write ]
+      obj     = id_obj[ write ]
+      readers = []
 
-      # WR A.b.b.b:
-      # - RD A.b.b, A.b, A (recognize implicit constraint)
-      # - WR A.b.b, A.b, A (detect 2-writer conflict)
+      # Check parents. Cover 1), 2) and 3)
+      x = obj
+      while x:
+        xid = id(x)
+        if xid != write:
+          assert xid not in write_blks, "Two-writer conflict in nested data struct/slice. \n - %s\n - %s" % \
+                                        ( x.full_name(), obj.full_name() )
+        if xid in read_blks:
+          readers.append( xid )
+        x = x._parent
 
-      while obj:
-        if id(obj) != write:
-          assert id(obj) not in write_blks, "Two-writer conflict in nested data struct. \n - %s\n - %s" % \
-                                            ( id_obj[ write ].full_name(), obj.full_name() )
-        rd_blks = read_blks[ id(obj) ] if id(obj) in read_blks else []
+      # Check the sibling slices. Cover 4)
+      if obj._slice:
+        for x in obj._parent._slices.values():
+          # Recognize overlapped slices
+          if id(x) != id(obj) and overlap( x._slice, obj._slice ):
+            assert id(x) not in write_blks, "Two-writer conflict between sibling slices. \n - %s\n - %s" % \
+                                          ( x.full_name(), obj.full_name() )
 
-        for wr in wr_blks:
+      # Add all constraints
+      for wr in wr_blks:
+        for reader in readers:
+          rd_blks = read_blks[ reader ] 
           for rd in rd_blks:
             if wr != rd:
               if rd in s._update_on_edge:
                 impl_c.add( (rd, wr) ) # rd < wr if blk rd is on edge
               else:
                 impl_c.add( (wr, rd) ) # wr < rd by default
-        obj = obj._parent
 
     if verbose:
       for (x, y) in impl_c:
