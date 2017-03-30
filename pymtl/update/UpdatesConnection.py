@@ -232,6 +232,7 @@ class UpdatesConnection( UpdatesExpl ):
 
     for wid in s._write_blks:
       obj = s._id_obj[ wid ]
+      print obj.full_name(), "'s writer is", obj.full_name()
       obj_writer  [ id(obj) ] = obj
       propagatable[ id(obj) ] = True
 
@@ -240,6 +241,7 @@ class UpdatesConnection( UpdatesExpl ):
 
       obj = obj._parent
       while obj:
+        print "[prop]", obj.full_name(), "'s writer is", obj.full_name()
         obj_writer  [ id(obj) ] = obj
         propagatable[ id(obj) ] = False
         obj = obj._parent
@@ -287,6 +289,7 @@ class UpdatesConnection( UpdatesExpl ):
           for v in net:
             if v != writer:
               vid = id(v)
+              print v.full_name(), "'s writer is", writer.full_name()
               obj_writer  [ vid ] = writer # My writer is the writer in the net
               propagatable[ vid ] = True
               frozen.add  ( vid )
@@ -295,6 +298,7 @@ class UpdatesConnection( UpdatesExpl ):
               while obj:
                 oid = id(obj)
                 if oid not in frozen:
+                  print "[prop]",obj.full_name(), "'s writer is", obj.full_name()
                   obj_writer  [ oid ] = obj # Promote unfrozen ancestors to be a writer
                   propagatable[ oid ] = False # This writer information is not propagatable
                   frozen.add  ( oid )
@@ -333,7 +337,7 @@ class UpdatesConnection( UpdatesExpl ):
       #   "s.a.b = x; s.a.c = x" --> "y = s.a; y.b = x; y.c = x"
 
       upblk_name_ = "%s_FANOUT_%d" % (writer.full_name(), len(readers))
-      upblk_name  = upblk_name_.replace( ".", "_" ) \
+      upblk_name  = upblk_name_.replace( ".", "_" ).replace( ":", "_" ) \
                                .replace( "[", "_" ).replace( "]", "_" ) \
 
       if len(readers) == 1:

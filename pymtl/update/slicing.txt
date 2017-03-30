@@ -1,0 +1,56 @@
+
+1. WR A[s], RD A    (A[s] (=) A, SAME AS data struct)
+   WR A[s], WR A    (detect 2-writer conflict, SAME AS data struct)
+   WR A[s], RD A[t] (A[s] (=) A[t] if s intersects t)
+   WR A[s], WR A[t] (detect 2-writer conflict if s intersects t)
+
+2. WR A   , RD A[s] (A[s] (=) A, SAME AS data struct)
+
+3. WR A[s], A   |=y, RD y (mark A as writer in net {A,y}, SAME AS data struct)
+   WR A[s], A   |=y, WR y (detect 2-writer conflict, SAME AS data struct)
+   WR A[s], A[t]|=y, RD y (mark A[t] as writer in net {A[t],y} if s intersects t)
+   WR A[s], A[t]|=y, WR y (detect 2-writer conflict if s intersects t)
+
+4. WR A   , A[s]|=y, RD y (mark A[s] as writer in net {A[s],y}, SAME AS data struct)
+   WR A   , A[s]|=y, WR y (detect 2-writer conflict, SAME AS data struct)
+
+5. WR x, x|=A[s], RD A    (A[s] (=) A, SAME AS data struct)
+   WR x, x|=A[s], RD A[t] (A[s] (=) A[t] if s intersects t)
+
+6. WR x, x|=A   , RD A[s] (A[s] (=) A, SAME AS data struct)
+
+7. WR x, x|=A[s], A   |=y, RD y (mark A as writer and implicit constraint)
+   WR x, x|=A[s], A   |=y, WR y (detect 2-writer conflict)
+   WR x, x|=A[s], A[t]|=y, RD y (mark A[t] as writer and implicit constraint if s intersects t)
+   WR x, x|=A[s], A[t]|=y, WR y (detect 2-writer conflict if s intersects t)
+
+8. WR x, x|=A   , A[s]|=y, RD y (mark A[s] as writer in net {A[s],y}, SAME AS data struct)
+
+--------------------------------------------------------------------------
+
+RD A[s]
+[x] WR A          (A[s] (=) A,                          SAME AS data struct)
+[x] WR A[t]       (A[s] (=) A[t]                          if s intersects t)
+[x] A   |=x, WR x (A[s] (=) A,                          SAME AS data struct)
+[x] A[t]|=x, WR x (A[s] (=) A[t]                          if s intersects t)
+
+WR A[s]
+[x] RD A          (A[s] (=) A,                          SAME AS data struct)
+[x] WR A          (detect 2-writer conflict,            SAME AS data struct)
+[x] WR A[t]       (detect 2-writer conflict               if s intersects t)
+[x] A   |=x       (mark A as writer in net {A,x},       SAME AS data struct)
+[x] A   |=x, WR x (detect 2-writer conflict,            SAME AS data struct)
+[ ] A[t]|=x       (mark A[t] as writer in net {A[t],x}    if s intersects t) *
+[ ] A[t]|=x, WR x (detect 2-writer conflict               if s intersects t) *
+
+A[s]|=x
+[x] WR A          (mark A[s] as writer in net {A[s],x}, SAME AS data struct)
+[x] A|=y, WR y    (mark A[s] as writer in net {A[s],x}, SAME AS data struct)
+[ ] A[t]|=y, WR y (mark A[s] as writer in net {A[s],x},   if s intersects t) *
+
+A[s]|=x, WR x
+[x] RD A          (A[s] (=) A,                          SAME AS data struct)
+[x] WR A          (detect 2-writer conflict,            SAME AS data struct)
+[x] A   |=y       (mark A as writer in net {A,y}        SAME AS data struct)
+[x] A   |=y, WR y (detect 2-writer conflict,            SAME AS data struct)
+[ ] A[t]|=y, WR y (detect 2-writer conflict               if s intersects t) *

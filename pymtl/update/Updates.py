@@ -120,12 +120,12 @@ class Updates( UpdatesConnection ):
           # Recognize overlapped slices
           if id(x) != id(obj) and overlap( x._slice, obj._slice ):
             assert id(x) not in write_blks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
-                                        ( x.full_name(), s._blkid_upblk[write_blks[xid][0]].__name__, obj.full_name(), s._blkid_upblk[write_blks[id(obj)][0]].__name__ )
-        
+                                        ( x.full_name(), s._blkid_upblk[write_blks[id(x)][0]].__name__, obj.full_name(), s._blkid_upblk[write_blks[id(obj)][0]].__name__ )
+
       # Add all constraints
       for wr in wr_blks:
         for reader in readers:
-          rd_blks = read_blks[ reader ] 
+          rd_blks = read_blks[ reader ]
           for rd in rd_blks:
             if wr != rd:
               if rd in s._update_on_edge:
