@@ -10,7 +10,7 @@ from collections     import defaultdict, deque
 from PyMTLObject     import PyMTLObject
 from UpdatesExpl     import UpdatesExpl, verbose
 from ConstraintTypes import U, RD, WR, ValueConstraint
-from Connectable     import Connectable, Wire
+from Connectable     import Connectable, Wire, overlap
 from ASTHelper       import get_ast, get_read_write, DetectReadsAndWrites
 
 class UpdatesConnection( UpdatesExpl ):
@@ -227,12 +227,18 @@ class UpdatesConnection( UpdatesExpl ):
     # s.x cannot propagate back to s.x.a or s.x.b
     # The original state is all the writers from all update blocks.
 
+    # The case of slicing is slightly different from data struct. Slices
+    # of the same wire are one level deeper than the original wire, so
+    # all of those parent/child relationship will work in a simpler way.
+    # However, unlike different fields of a data struct, different slices
+    # may intersect, so they need to check sibling slices' write/read
+    # status as well.
+
     obj_writer  = dict()
     propagatable = dict()
 
     for wid in s._write_blks:
       obj = s._id_obj[ wid ]
-      print obj.full_name(), "'s writer is", obj.full_name()
       obj_writer  [ id(obj) ] = obj
       propagatable[ id(obj) ] = True
 
@@ -241,7 +247,6 @@ class UpdatesConnection( UpdatesExpl ):
 
       obj = obj._parent
       while obj:
-        print "[prop]", obj.full_name(), "'s writer is", obj.full_name()
         obj_writer  [ id(obj) ] = obj
         propagatable[ id(obj) ] = False
         obj = obj._parent
@@ -267,17 +272,28 @@ class UpdatesConnection( UpdatesExpl ):
 
         for v in net:
           obj = v
+
+          # Check propagatable parents and if obj itself is propagated
           while obj:
             oid = id(obj)
             if oid in obj_writer:
-              owriter = obj_writer[ oid ]
-              if obj == v or propagatable[ oid ]:
+              if oid == id(v) or propagatable[ oid ]:
                 assert not has_writer or id(v) == id(writer), \
-                      "Two-writer conflict [%s] [%s] in the following net:\n - %s" % \
-                      (v.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
+                      "Two-writer conflict \"%s\" (overlap \"%s\"), \"%s\" in the following net:\n - %s" % \
+                      (v.full_name(), obj.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
                 has_writer, writer = True, v
                 break
             obj = obj._parent
+
+          # Check sibling slices
+          if v._slice:
+            for obj in v._parent._slices.values():
+              oid = id(obj)
+              if oid in obj_writer and oid != id(v) and overlap( obj._slice, v._slice ):
+                assert not has_writer or id(v) == id(writer), \
+                      "Two-writer conflict \"%s\" (overlap \"%s\"), \"%s\" in the following net:\n - %s" % \
+                      (v.full_name(), obj.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
+                has_writer, writer = True, v
 
         if has_writer:
           if id(writer) not in obj_writer: # child of some propagatable s.x
@@ -289,7 +305,6 @@ class UpdatesConnection( UpdatesExpl ):
           for v in net:
             if v != writer:
               vid = id(v)
-              print v.full_name(), "'s writer is", writer.full_name()
               obj_writer  [ vid ] = writer # My writer is the writer in the net
               propagatable[ vid ] = True
               frozen.add  ( vid )
@@ -298,7 +313,6 @@ class UpdatesConnection( UpdatesExpl ):
               while obj:
                 oid = id(obj)
                 if oid not in frozen:
-                  print "[prop]",obj.full_name(), "'s writer is", obj.full_name()
                   obj_writer  [ oid ] = obj # Promote unfrozen ancestors to be a writer
                   propagatable[ oid ] = False # This writer information is not propagatable
                   frozen.add  ( oid )

@@ -541,11 +541,11 @@ def test_connect_wr_As_rd_x_conn_A_mark_writer():
 
       @s.update
       def up_wr_As():
-        s.A[0:24] = Bits( 24, 0x123456 ) 
+        s.A[0:24] = Bits( 24, 0x123456 )
 
   _test_model( Top )
 
-# WR A[s] - A|=x, WR x 
+# WR A[s] - A|=x, WR x
 def test_connect_wr_As_wr_x_conn_A_conflict():
 
   class Top(Updates):
@@ -558,11 +558,11 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
 
       @s.update
       def up_wr_As():
-        s.A[0:24] = Bits( 24, 0x123456 ) 
+        s.A[0:24] = Bits( 24, 0x123456 )
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x654321 ) 
+        s.x = Bits( 24, 0x654321 )
 
   try:
     _test_model( Top )
@@ -570,6 +570,96 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
     print "\nAssertion Error:", e
     return
   raise Exception("Should've thrown two-writer conflict exception.")
+
+# WR A[s] - A[t]|=x, intersect
+def test_connect_wr_As_rd_x_conn_At_mark_writer():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+
+      s.x |= s.A[8:32]
+
+      @s.update
+      def up_wr_As():
+        s.A[0:24] = Bits( 24, 0x123456 )
+
+  _test_model( Top )
+
+# WR A[s] - A[t]|=x, not intersect
+def test_connect_wr_As_rd_x_conn_At_no_driver():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+
+      s.x |= s.A[8:32]
+
+      @s.update
+      def up_wr_As():
+        s.A[0:4] = Bits( 4, 0xf )
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown no driver exception.")
+
+# WR A[s] - A[t]|=x, WR x, intersect
+def test_connect_wr_As_wr_x_conn_At_conflict():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+
+      s.x |= s.A[8:32]
+
+      @s.update
+      def up_wr_As():
+        s.A[0:24] = Bits( 24, 0x123456 )
+
+      @s.update
+      def up_wr_x():
+        s.x = Bits( 24, 0x654321 )
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown two-writer conflict exception.")
+
+# WR A[s] - A[t]|=x, WR x, not intersect
+def test_connect_wr_As_wr_x_conn_At_disjoint():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+
+      s.x |= s.A[8:32]
+
+      @s.update
+      def up_wr_As():
+        s.A[0:4] = Bits( 4, 0xf )
+
+      @s.update
+      def up_wr_x():
+        s.x = Bits( 24, 0x654321 )
+
+      @s.update
+      def up_rd_A():
+        assert s.A == 0x6543210f
+
+  _test_model( Top )
 
 # A[s]|=x, WR x - RD A
 def test_connect_wr_x_conn_As_rd_A_impl():
@@ -669,6 +759,61 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
     return
   raise Exception("Should've thrown two-writer conflict exception.")
 
+# A[s]|=x, WR x - A[t]|=y, WR y, intersect
+def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+      s.y  = Wire( Bits(16) )
+
+      s.A[8:32] |= s.x
+      s.A[0:16] |= s.y
+
+      @s.update
+      def up_wr_x():
+        s.x = Bits( 24, 0x123456 )
+
+      @s.update
+      def up_wr_y():
+        s.y = Bits( 16, 0x1234 )
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown two-writer conflict exception.")
+
+# A[s]|=x, WR x - A[t]|=y, WR y, not intersect
+def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+      s.y  = Wire( Bits(4) )
+
+      s.A[8:32] |= s.x
+      s.A[0:4]  |= s.y
+
+      @s.update
+      def up_wr_x():
+        s.x = Bits( 24, 0x123456 )
+
+      @s.update
+      def up_wr_y():
+        s.y = Bits( 4, 0xf )
+
+      @s.update
+      def up_rd_A():
+        assert s.A == 0x1234560f
+
+  _test_model( Top )
+
 # A[s]|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
 
@@ -707,7 +852,6 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 
       @s.update
       def up_rd_x():
-        print s.x
         assert s.x == 0x123456
 
       @s.update
@@ -716,24 +860,75 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 
   _test_model( Top )
 
+# A[s]|=x - A[t]|=y, WR y, intersect
+def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+      s.y  = Wire( Bits(16) )
+
+      s.A[8:32] |= s.x
+      s.A[0:16] |= s.y
+
+      @s.update
+      def up_rd_x():
+        assert s.x == 0x12
+
+      @s.update
+      def up_wr_y():
+        s.y = Bits( 16, 0x1234 )
+
+  _test_model( Top )
+
+# A[s]|=x - A[t]|=y, WR y, not intersect
+def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.x  = Wire( Bits(24) )
+      s.A  = Wire( Bits(32) )
+      s.y  = Wire( Bits(4) )
+
+      s.A[8:32] |= s.x
+      s.A[0:4 ] |= s.y
+
+      @s.update
+      def up_rd_x():
+        assert s.x == 0
+
+      @s.update
+      def up_wr_y():
+        s.y = Bits( 4, 0xf )
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown no driver exception.")
+
 def test_iterative_find_nets():
 
   class Top(Updates):
     def __init__( s ):
 
-      s.w  = Wire( SomeMsg )
-      s.x  = Wire( SomeMsg )
-      s.y  = Wire( SomeMsg )
-      s.z  = Wire( SomeMsg )
+      s.w  = Wire( Bits(32) )
+      s.x  = Wire( Bits(32) )
+      s.y  = Wire( Bits(32) )
+      s.z  = Wire( Bits(32) )
 
-      s.w |= s.x # net1
+      s.w[0:16]  |= s.x[8:24] # net1
 
-      s.x.a |= s.y.a # net2
+      s.x[16:32] |= s.y[0:16] # net2
 
-      s.y |= s.z # net3
+      s.y[8:24]  |= s.z[0:16] # net3
 
       @s.update
       def up_wr_s_w():
-        s.w = SomeMsg( 12, 123 )
+        s.w = Bits( 32, 0x12345678 )
 
   _test_model( Top )

@@ -42,6 +42,18 @@ class Connectable(object):
     else:
       assert root == s, "It doesn't make sense ..."
 
+# Checking if two slices/indices overlap
+def overlap( x, y ):
+  if isinstance( x, int ):
+    if isinstance( y, int ):  return x == y
+    else:                     return y.start <= x < y.stop
+  else: # x is slice
+    if isinstance( y, int ):  return x.start <= y < x.stop
+    else:
+      if x.start <= y.start:  return y.start < x.stop
+      else:                   return x.start < y.stop
+  assert False, "What the hell?"
+
 class Wire(Connectable, PyMTLObject):
 
   def __init__( s, type_ ):
