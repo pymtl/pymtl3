@@ -9,6 +9,7 @@
 
 from UpdatesExpl import verbose
 from UpdatesConnection import UpdatesConnection
+from Connectable import overlap
 
 class Updates( UpdatesConnection ):
 
@@ -34,17 +35,6 @@ class Updates( UpdatesConnection ):
     # Explicit constraints are collected in super classes
 
     super( Updates, s )._synthesize_constraints()
-
-    def overlap( x, y ):
-      if isinstance( x, int ):
-        if isinstance( y, int ):  return x == y
-        else:                     return y.start <= x < y.stop
-      else: # x is slice
-        if isinstance( y, int ):  return x.start <= y < x.stop
-        else:
-          if x.start <= y.start:  return y.start < x.stop
-          else:                   return x.start < y.stop
-      assert False, "What the hell?"
 
     #---------------------------------------------------------------------
     # Implicit constraint
