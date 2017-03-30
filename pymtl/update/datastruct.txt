@@ -27,7 +27,7 @@
 
 RD A.b
 [x] WR A       (A (=) A.b)
-[x] WR x, x|=A (A (=) A.b, THE SAME AS the first case thanks to the generated upblk)
+[x] A|=x, WR x (A (=) A.b, THE SAME AS the first case thanks to the generated upblk)
 
 WR A.b
 [x] RD A       (A (=) A.b)
@@ -37,10 +37,10 @@ WR A.b
 
 A.b|=x
 [x] WR A       (mark A.b as writer in net {A.b,y})
-[ ] A|=y, WR y (mark A.b as writer and recognize the implicit constraint)
+[x] A|=y, WR y (mark A.b as writer and recognize the implicit constraint)
 
 A.b|=x, WR x
 [x] RD A       (A (=) A.b)
 [x] WR A       (detect 2-writer conflict)
-[ ] A|=y       (mark A as writer and recognize the implicit constraint)
+[x] A|=y       (mark A as writer and recognize the implicit constraint)
 [x] A|=y, WR y (detect 2-writer conflict)

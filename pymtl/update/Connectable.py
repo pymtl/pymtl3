@@ -63,6 +63,9 @@ class Wire(Connectable, PyMTLObject):
 
     return s._attrs[ name ]
 
+  def __setitem__( s, addr, v ):
+    pass # I have to override this to support a[0:1] |= b
+
   def __getitem__( s, addr ):
     # Turn index into a slice
     if isinstance( addr, int ):
