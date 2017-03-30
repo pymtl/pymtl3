@@ -932,3 +932,30 @@ def test_iterative_find_nets():
         s.w = Bits( 32, 0x12345678 )
 
   _test_model( Top )
+
+def test_multiple_sibling_slices():
+
+  class Top(Updates):
+    def __init__( s ):
+
+      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits(16) )
+      s.y  = Wire( Bits(16) )
+      s.z  = Wire( Bits(16) )
+
+      s.A[0:16]  |= s.x # net1
+
+      s.A[8:24]  |= s.y # net2
+
+      s.A[16:32] |= s.z # net3
+
+      @s.update
+      def up_wr_s_w():
+        s.x = Bits( 16, 0x1234 )
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown no driver exception.")

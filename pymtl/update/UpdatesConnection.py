@@ -234,13 +234,15 @@ class UpdatesConnection( UpdatesExpl ):
     # may intersect, so they need to check sibling slices' write/read
     # status as well.
 
-    obj_writer  = dict()
+    obj_writer   = dict()
     propagatable = dict()
+    frozen       = set()
 
     for wid in s._write_blks:
       obj = s._id_obj[ wid ]
       obj_writer  [ id(obj) ] = obj
       propagatable[ id(obj) ] = True
+      frozen.add  ( id(obj) )
 
       assert len( s._write_blks[ wid ] ) == 1, "%s is written in multiple update blocks.\n - %s" % \
             ( obj.full_name(), "\n - ".join([ s._blkid_upblk[x].__name__ for x in s._write_blks[ wid ] ]) )
@@ -249,10 +251,10 @@ class UpdatesConnection( UpdatesExpl ):
       while obj:
         obj_writer  [ id(obj) ] = obj
         propagatable[ id(obj) ] = False
+        frozen.add  ( id(obj) )
         obj = obj._parent
 
     headless = s._varid_net.values()
-    frozen   = set()
 
     while headless:
       new_headless = []
@@ -269,6 +271,7 @@ class UpdatesConnection( UpdatesExpl ):
 
       for net in headless:
         has_writer, writer = False, None
+        from_sibling = False
 
         for v in net:
           obj = v
@@ -289,17 +292,18 @@ class UpdatesConnection( UpdatesExpl ):
           if v._slice:
             for obj in v._parent._slices.values():
               oid = id(obj)
-              if oid in obj_writer and oid != id(v) and overlap( obj._slice, v._slice ):
+              if oid in obj_writer and oid != id(v) and overlap( obj._slice, v._slice ) and propagatable[oid]:
                 assert not has_writer or id(v) == id(writer), \
                       "Two-writer conflict \"%s\" (overlap \"%s\"), \"%s\" in the following net:\n - %s" % \
                       (v.full_name(), obj.full_name(), writer.full_name(), "\n - ".join([ x.full_name() for x in net ]))
                 has_writer, writer = True, v
+                from_sibling = True
 
         if has_writer:
-          if id(writer) not in obj_writer: # child of some propagatable s.x
+          if id(writer) not in obj_writer: # child of some propagatable s.x, or sibling of some propagatable s[a:b]
             wid = id(writer)
             obj_writer  [ wid ] = writer
-            propagatable[ wid ] = True
+            propagatable[ wid ] = not from_sibling # from sibling means cannot propagate
             frozen.add  ( wid )
 
           for v in net:
