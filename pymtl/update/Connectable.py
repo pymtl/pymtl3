@@ -1,4 +1,5 @@
 from PyMTLObject     import PyMTLObject
+from pymtl.datatypes.Bits import mk_bits
 
 class Connectable(object):
 
@@ -16,7 +17,7 @@ class Connectable(object):
     s._root = s._root._find_root()
     return s._root
 
-  def connect( s, writer ):
+  def _connect( s, writer ):
     assert isinstance( writer, Connectable ), "Unconnectable object!"
 
     x = s._find_root()
@@ -31,7 +32,7 @@ class Connectable(object):
     x._root = y
 
   def __ior__( s, writer ):
-    s.connect( writer )
+    s._connect( writer )
     return s
 
   def collect_nets( s, varid_net ):
@@ -53,7 +54,7 @@ def overlap( x, y ):
       if x.start <= y.start:  return y.start < x.stop
       else:                   return x.start < y.stop
   assert False, "What the hell?"
-
+  
 class Wire(Connectable, PyMTLObject):
 
   def __init__( s, type_ ):
@@ -89,7 +90,8 @@ class Wire(Connectable, PyMTLObject):
     sl_tuple = (sl.start, sl.stop)
 
     if sl_tuple not in s._slices:
-      x = Wire( s._type )
+      x = Wire( mk_bits( sl.stop - sl.start) )
+      print x._var.nbits
       x._parent = s
       x._slice  = sl
       s._slices[ sl_tuple ] = x
@@ -123,6 +125,14 @@ class Wire(Connectable, PyMTLObject):
   def default_value( s ):
     return s._type()
 
+  # Override
+  def __ior__( s, writer ):
+    if isinstance( writer, Wire ):
+      s._connect( writer )
+    else:
+      assert False, writer
+    return s
+
 class ValuePort(Wire):
   pass
 
@@ -134,7 +144,7 @@ class MethodPort(Connectable, PyMTLObject):
     if args:
       other = args[0]
       assert isinstance( other, MethodPort ), "Cannot connect to %s, which is not a MethodPort."
-      self.connect( other )
+      self._connect( other )
 
   def attach_method( self, func ):
     self._func = func
@@ -145,16 +155,16 @@ class MethodPort(Connectable, PyMTLObject):
     return self._has_method
 
   # Override
-  def connect( self, other ):
+  def _connect( self, other ):
     if self.has_method():
-      super( MethodPort, other ).connect( self )
+      super( MethodPort, other )._connect( self )
     else:
-      super( MethodPort, self ).connect( other )
+      super( MethodPort, self )._connect( other )
 
 class PortBundle(Connectable, PyMTLObject):
 
   # Override
-  def connect( s, other ):
+  def _connect( s, other ):
 
     # Expand the list when needed. Only connect connectables and return,
     # inheritance will figure out what to do with Port/PortBundle
@@ -164,7 +174,7 @@ class PortBundle(Connectable, PyMTLObject):
         for i in xrange(len(s_obj)):
           recursive_connect( s_obj[i], other_obj[i] )
       elif isinstance( s_obj, Connectable ):
-        s_obj.connect( other_obj )
+        s_obj._connect( other_obj )
 
     assert type(s) is type(other), "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
 
