@@ -1,26 +1,24 @@
 import random
 from pymtl import *
-from pclib.update import TestSourceValRdy, TestSinkValRdy
-from IntMulNstage     import IntMulNstageInelastic
-from IntMulVarLatFlat import IntMulVarLatFlat
-from IntMulVarLatConn import IntMulVarLatConn
+from pclib.bundle import TestSource, TestSink, ValRdyBundle
+from IntMulNstage import IntMulNstageInelastic
+from IntMulVarLat import IntMulVarLat
 
 class TestHarness( Updates ):
 
   def __init__( s, model, src_msgs, sink_msgs ):
 
-    s.src  = TestSourceValRdy( 2, src_msgs )
+    s.src  = TestSource( Bits64, src_msgs )
     s.imul = model
-    s.sink = TestSinkValRdy( sink_msgs )
+    s.sink = TestSink( Bits32, sink_msgs )
 
-    s.imul.req_val   |= s.src.val
-    s.imul.req_msg_a |= s.src.msg[0]
-    s.imul.req_msg_b |= s.src.msg[1]
-    s.src.rdy        |= s.imul.req_rdy
+    s.imul.req.val  |= s.src.out.val
+    s.imul.req.msg  |= s.src.out.msg
+    s.src.out.rdy   |= s.imul.req.rdy
 
-    s.sink.val       |= s.imul.resp_val
-    s.imul.resp_rdy  |= s.sink.rdy
-    s.sink.msg       |= s.imul.resp_msg
+    s.sink.in_.val  |= s.imul.resp.val
+    s.imul.resp.rdy |= s.sink.in_.rdy
+    s.sink.in_.msg  |= s.imul.resp.msg
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -33,11 +31,13 @@ src_msgs  = []
 sink_msgs = []
 
 for i in xrange(20):
-  x = random.randint(0,100)
-  y = random.randint(0,100)
-  z = x*y
-  src_msgs.append( (x,y) )
-  sink_msgs.append(z)
+  x = random.randint(0, 100)
+  y = random.randint(0, 100)
+  z = Bits64(0)
+  z[0:32]  = x
+  z[32:64] = y
+  src_msgs.append( z )
+  sink_msgs.append( Bits32( x * y ) )
 
 def run_test( model ):
   th = TestHarness( model, src_msgs, sink_msgs )
@@ -50,7 +50,4 @@ def test_nstage_inelastic():
   run_test( IntMulNstageInelastic(4) )
 
 def test_varlat_connection():
-  run_test( IntMulVarLatConn() )
-
-def test_varlat_flat():
-  run_test( IntMulVarLatFlat() )
+  run_test( IntMulVarLat() )
