@@ -91,7 +91,6 @@ class Wire(Connectable, PyMTLObject):
 
     if sl_tuple not in s._slices:
       x = Wire( mk_bits( sl.stop - sl.start) )
-      print x._var.nbits
       x._parent = s
       x._slice  = sl
       s._slices[ sl_tuple ] = x
