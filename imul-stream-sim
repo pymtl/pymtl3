@@ -5,7 +5,7 @@
 #
 #  -h --help           Display this message
 #
-#  --impl              {varlat-flat, varlat, nstage}
+#  --impl              {varlat, nstage}
 #  --cycle             number of million cycles, default=10 -- 10M
 #
 # Author : Christopher Batten
@@ -34,7 +34,7 @@ def parse_cmdline():
 
   # Additional commane line arguments for the simulator
 
-  p.add_argument( "--impl",   default="varlat", choices=["varlat-flat","varlat","nstage"] )
+  p.add_argument( "--impl",   default="varlat", choices=["varlat","nstage"] )
   p.add_argument( "--cycle",  default=10, type=int )
 
   opts = p.parse_args()
@@ -42,27 +42,20 @@ def parse_cmdline():
   return opts
 
 from pymtl import *
-from IntMulVarLatConn import IntMulVarLatConn
-from IntMulVarLatFlat import IntMulVarLatFlat
-from IntMulNstage     import IntMulNstageInelastic
-from pclib.update import StreamSource, StreamSink
+from IntMulVarLat import IntMulVarLat
+from IntMulNstage import IntMulNstageInelastic
+from pclib.bundle import StreamSource, StreamSink
 
 class SimHarness( Updates ):
 
   def __init__( s, model ):
 
-    s.src  = StreamSource( 2 )
+    s.src  = StreamSource( Bits64 )
     s.imul = model()
-    s.sink = StreamSink()
+    s.sink = StreamSink( Bits32 )
 
-    s.imul.req_val   |= s.src.val
-    s.imul.req_msg_a |= s.src.msg[0]
-    s.imul.req_msg_b |= s.src.msg[1]
-    s.src.rdy        |= s.imul.req_rdy
-
-    s.sink.val       |= s.imul.resp_val
-    s.imul.resp_rdy  |= s.sink.rdy
-    s.sink.msg       |= s.imul.resp_msg
+    s.imul.req  |= s.src.out
+    s.imul.resp |= s.sink.in_
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -74,8 +67,7 @@ def main():
   opts = parse_cmdline()
 
   model_impl_dict = {
-    "varlat-flat" : IntMulVarLatFlat,
-    "varlat" : IntMulVarLatConn,
+    "varlat" : IntMulVarLat,
     "nstage" : IntMulNstageInelastic,
   }
 

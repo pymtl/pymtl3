@@ -27,13 +27,12 @@ class TestSource( Updates ):
 class StreamSource( Updates ):
 
   def __init__( s, type_ ):
-    s.out = ValRdyBundle( nmsgs )
+    s.out = ValRdyBundle( type_ )
     s.ts  = 0
 
     @s.update_on_edge
     def up_src():
-      s.out.msg = ( s.ts+95827*(s.ts&1), s.ts+(19182)*(s.ts&1) )
-      # s.msg = ( 60, 35 )
+      s.out.msg = Bits64( ((s.ts+95827*(s.ts&1))<<32) + s.ts+(19182)*(s.ts&1) )
       s.out.val = 1
       s.ts += 1
 

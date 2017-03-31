@@ -42,6 +42,7 @@ for i in xrange(20):
 def run_test( model ):
   th = TestHarness( model, src_msgs, sink_msgs )
   th.elaborate()
+  print
   while not th.done():
     th.cycle()
     print th.line_trace()
