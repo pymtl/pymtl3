@@ -10,9 +10,8 @@ class Bits(object):
   def __getitem__( self, idx ):
     if isinstance( idx, slice ):
       start, stop = int(idx.start), int(idx.stop)
-      assert not idx.step
-
-      return Bits( self.nbits, (self.value & ((1 << stop) - 1)) >> start )
+      assert not idx.step and start < stop
+      return Bits( stop-start, (self.value & ((1 << stop) - 1)) >> start )
 
     i = int(idx)
     assert 0 <= i < self.nbits
@@ -21,7 +20,7 @@ class Bits(object):
   def __setitem__( self, idx, v ):
     if isinstance( idx, slice ):
       start, stop = int(idx.start), int(idx.stop)
-      assert not idx.step
+      assert not idx.step and start < stop
 
       self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | \
                                     ((int(v) & ((1 << stop) - 1)) << start) 
@@ -64,11 +63,11 @@ class Bits(object):
   def __lshift__( self, other ):
     # TODO this doesn't work perfectly. We need a really smart
     # optimization that avoids the guard totally
-    if int(other) >= self.nbits: return Bits( self.nbits, 0 )
+    if int(other) >= self.nbits: return Bits( self.nbits )
     return Bits( self.nbits, self.value << int(other) )
 
   def __rshift__( self, other ):
-    return Bits( self.nbits, (self.value >> int(other)) )
+    return Bits( self.nbits, self.value >> int(other) )
 
   def __eq__( self, other ):
     return Bits( 1, self.value == int(other) )
@@ -91,6 +90,12 @@ class Bits(object):
   def __nonzero__( self ):
     return int(self.value) != 0
 
+  def __int__( self ):
+    return self.value
+
+  def __index__( self ):
+    return self.value
+
   # Print
 
   def __repr__(self):
@@ -100,9 +105,6 @@ class Bits(object):
     num_chars = (((self.nbits-1)/4)+1)
     str = "{:x}".format(self.value).zfill(num_chars)
     return str
-
-  def __int__( self ):
-    return self.value
 
   def __oct__( self ):
     print "DEPRECATED: Please use .oct()!"
