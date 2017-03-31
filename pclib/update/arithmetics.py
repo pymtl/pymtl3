@@ -4,10 +4,10 @@ from pymtl import *
 
 class Mux(Updates):
 
-  def __init__( s, ninputs ):
-    s.in_ = [ ValuePort(int) for _ in xrange(ninputs) ]
-    s.sel = ValuePort(int)
-    s.out = ValuePort(int)
+  def __init__( s, type_, sel_nbits ):
+    s.in_ = [ ValuePort( type_ ) for _ in xrange(1<<sel_nbits) ]
+    s.sel = ValuePort( mk_bits( sel_nbits ) )
+    s.out = ValuePort( type_ )
 
     @s.update
     def up_mux():
@@ -19,10 +19,10 @@ class Mux(Updates):
 
 class RShifter(Updates):
 
-  def __init__( s, nbits = 1, shamt_nbits = 1 ):
-    s.in_   = ValuePort(int)
-    s.shamt = ValuePort(int)
-    s.out   = ValuePort(int)
+  def __init__( s, type_, shamt_nbits = 1 ):
+    s.in_   = ValuePort( type_ )
+    s.shamt = ValuePort( mk_bits( shamt_nbits ) )
+    s.out   = ValuePort( type_ )
 
     @s.update
     def up_rshifter():
@@ -34,10 +34,10 @@ class RShifter(Updates):
 
 class LShifter(Updates):
 
-  def __init__( s, nbits = 1, shamt_nbits = 1 ):
-    s.in_   = ValuePort(int)
-    s.shamt = ValuePort(int)
-    s.out   = ValuePort(int) 
+  def __init__( s, type_, shamt_nbits = 1 ):
+    s.in_   = ValuePort( type_ )
+    s.shamt = ValuePort( mk_bits( shamt_nbits ) )
+    s.out   = ValuePort( type_ ) 
 
     @s.update
     def up_lshifter():
@@ -49,10 +49,10 @@ class LShifter(Updates):
 
 class Adder(Updates):
 
-  def __init__( s, nbits = 1 ):
-    s.in0 = ValuePort(int)
-    s.in1 = ValuePort(int)
-    s.out = ValuePort(int)
+  def __init__( s, type_ ):
+    s.in0 = ValuePort( type_ )
+    s.in1 = ValuePort( type_ )
+    s.out = ValuePort( type_ )
 
     @s.update
     def up_adder():
@@ -64,10 +64,10 @@ class Adder(Updates):
 
 class Subtractor(Updates):
 
-  def __init__( s, nbits = 1 ):
-    s.in0 = ValuePort(int)
-    s.in1 = ValuePort(int)
-    s.out = ValuePort(int)
+  def __init__( s, type_ ):
+    s.in0 = ValuePort( type_ )
+    s.in1 = ValuePort( type_ )
+    s.out = ValuePort( type_ )
 
     @s.update
     def up_subtractor():
@@ -79,13 +79,13 @@ class Subtractor(Updates):
 
 class ZeroComp(Updates):
 
-  def __init__( s, nbits = 1 ):
-    s.in_ = ValuePort(int)
-    s.out = ValuePort(int)
+  def __init__( s, type_ ):
+    s.in_ = ValuePort( type_ )
+    s.out = ValuePort( Bits1 )
 
     @s.update
     def up_zerocomp():
-      s.out = (s.in_ == 0)
+      s.out = Bits1( s.in_ == 0 )
 
   def line_trace( s ):  pass
 
@@ -93,14 +93,14 @@ class ZeroComp(Updates):
 
 class LTComp(Updates):
 
-  def __init__( s, nbits = 1 ):
-    s.in0 = ValuePort(int)
-    s.in1 = ValuePort(int)
-    s.out = ValuePort(int)
+  def __init__( s, type_ ):
+    s.in0 = ValuePort( type_ )
+    s.in1 = ValuePort( type_ )
+    s.out = ValuePort( Bits1 )
 
     @s.update
     def up_ltcomp():
-      s.out = (s.in0 < s.in1)
+      s.out = Bits1(s.in0 < s.in1)
 
   def line_trace( s ):  pass
 
@@ -108,13 +108,13 @@ class LTComp(Updates):
 
 class LEComp(Updates):
 
-  def __init__( s, nbits = 1 ):
-    s.in0 = ValuePort(int)
-    s.in1 = ValuePort(int)
-    s.out = ValuePort(int)
+  def __init__( s, type_ ):
+    s.in0 = ValuePort( type_ )
+    s.in1 = ValuePort( type_ )
+    s.out = ValuePort( Bits1 )
 
     @s.update
     def up_lecomp():
-      s.out = (s.in0 <= s.in1)
+      s.out = Bits1(s.in0 <= s.in1)
 
   def line_trace( s ):  pass

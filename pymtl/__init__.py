@@ -6,7 +6,8 @@ from update.MethodsExpl       import MethodsExpl
 from update.Methods           import Methods
 from update.ConstraintTypes   import U, RD, WR, M
 from update.Connectable       import ValuePort, Wire, MethodPort, PortBundle
-from datatypes.Bits_v3        import Bits
+from datatypes.Bits           import *
+from datatypes.Bits           import _bitwidths
 
 __all__ = [
   'UpdatesExpl',
@@ -20,6 +21,6 @@ __all__ = [
   'ValuePort',
   'Wire',
   'PortBundle',
-
-  'Bits',
-]
+  
+  'mk_bits',
+] + [ "Bits{}".format(x) for x in _bitwidths ]

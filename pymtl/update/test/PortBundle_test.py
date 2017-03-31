@@ -11,7 +11,7 @@ def test_simple():
     def __init__( s ):
 
       s.src  = TestSource( input_=[ [0], [1], [2] ] )
-      s.sink = TestSink  ( [ 0, 1, 2] )
+      s.sink = TestSink  ( [ 0, 1, 2 ] )
 
       s.sink.in_ |= s.src.out
 
