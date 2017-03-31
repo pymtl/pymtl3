@@ -17,15 +17,15 @@ def test_write_two_disjoint_slices():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_0_16():
-        s.A[0:16] = Bits( 16, 0xff )
+        s.A[0:16] = Bits16( 0xff )
 
       @s.update
       def up_wr_16_30():
-        s.A[16:30] = Bits( 14, 0xff )
+        s.A[16:30] = Bits16( 0xff )
 
       @s.update
       def up_rd_12_30():
@@ -38,15 +38,15 @@ def test_write_two_disjoint_slices_no_reader():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_0_16():
-        s.A[0:16] = Bits( 16, 0xff )
+        s.A[0:16] = Bits16( 0xff )
 
       @s.update
       def up_wr_16_30():
-        s.A[16:30] = Bits( 14, 0xff )
+        s.A[16:30] = Bits14( 0xff )
 
       @s.update
       def up_rd_17_30():
@@ -64,15 +64,15 @@ def test_write_two_overlapping_slices():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_0_24():
-        s.A[0:24] = Bits( 16, 0xff )
+        s.A[0:24] = Bits24( 0xff )
 
       @s.update
       def up_wr_8_32():
-        s.A[8:32] = Bits( 16, 0xff )
+        s.A[8:32] = Bits24( 0xff )
 
       @s.update
       def up_rd_A():
@@ -90,19 +90,19 @@ def test_write_two_slices_and_bit():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_0_16():
-        s.A[0:16] = Bits( 16, 0xff )
+        s.A[0:16] = Bits16( 0xff )
 
       @s.update
       def up_wr_16_30():
-        s.A[16:30] = Bits( 14, 0xff )
+        s.A[16:30] = Bits14( 0xff )
 
       @s.update
       def up_wr_30_31():
-        s.A[30] = Bits( 0, 1 )
+        s.A[30] = Bits1( 1 )
 
       @s.update
       def up_rd_A():
@@ -120,15 +120,15 @@ def test_write_slices_and_bit_overlapped():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_0_16():
-        s.A[0:16] = Bits( 16, 0xff )
+        s.A[0:16] = Bits16( 0xff )
 
       @s.update
       def up_wr_15():
-        s.A[15] = Bits( 0, 1 )
+        s.A[15] = Bits1( 1 )
 
       @s.update
       def up_rd_A():
@@ -146,11 +146,11 @@ def test_multiple_readers():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_8_24():
-        s.A[8:24] = Bits( 16, 0x1234 )
+        s.A[8:24] = Bits16( 0x1234 )
 
       @s.update
       def up_rd_0_12():
@@ -230,11 +230,11 @@ def test_rd_As_wr_A_impl():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_A():
-        s.A = Bits( 32, 123 )
+        s.A = Bits32( 123 )
 
       @s.update
       def up_rd_As():
@@ -247,11 +247,11 @@ def test_rd_As_wr_At_impl_intersect():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_At():
-        s.A[8:24] = Bits( 16, 0xff )
+        s.A[8:24] = Bits16( 0xff )
 
       @s.update
       def up_rd_As():
@@ -264,11 +264,11 @@ def test_rd_As_wr_At_impl_disjoint():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_At():
-        s.A[16:32] = Bits( 16, 0xff )
+        s.A[16:32] = Bits16( 0xff )
 
       @s.update
       def up_rd_As():
@@ -286,15 +286,15 @@ def test_wr_As_wr_A_conflict():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[1:3] = Bits( 2, 2 )
+        s.A[1:3] = Bits2( 2 )
 
       @s.update
       def up_wr_A():
-        s.A = Bits( 32, 123 )
+        s.A = Bits32( 123 )
 
   try:
     _test_model( Top )
@@ -308,15 +308,15 @@ def test_wr_As_wr_At_intersect():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[1:3] = Bits( 2, 2 )
+        s.A[1:3] = Bits2( 2 )
 
       @s.update
       def up_wr_At():
-        s.A[2:4] = Bits( 2, 2 )
+        s.A[2:4] = Bits2( 2 )
 
       @s.update
       def up_rd_A():
@@ -334,15 +334,15 @@ def test_wr_As_wr_At_disjoint():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[1:3] = Bits( 2, 2 )
+        s.A[1:3] = Bits2( 2 )
 
       @s.update
       def up_wr_At():
-        s.A[5:7] = Bits( 2, 2 )
+        s.A[5:7] = Bits2( 2 )
 
       @s.update
       def up_rd_A():
@@ -355,11 +355,11 @@ def test_wr_As_rd_A_impl():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[1:3] = Bits( 2, 2 )
+        s.A[1:3] = Bits2( 2 )
 
       @s.update
       def up_rd_A():
@@ -372,11 +372,11 @@ def test_wr_As_rd_A_rd_At_can_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[1:3] = Bits( 2, 2 )
+        s.A[1:3] = Bits2( 2 )
 
       @s.update
       def up_rd_A():
@@ -393,11 +393,11 @@ def test_wr_As_rd_A_rd_At_cannot_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[1:3] = Bits( 2, 2 )
+        s.A[1:3] = Bits2( 2 )
 
       @s.update
       def up_rd_A():
@@ -418,11 +418,11 @@ def test_wr_A_rd_slices_can_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_A():
-        s.A = Bits( 32, 0x12345678 )
+        s.A = Bits32( 0x12345678 )
 
       @s.update
       def up_rd_As():
@@ -439,11 +439,11 @@ def test_wr_As_rd_A_rd_At_cannot_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( Bits(32) )
+      s.A  = Wire( Bits32 )
 
       @s.update
       def up_wr_As():
-        s.A[0:16] = Bits( 32, 0x1234 )
+        s.A[0:16] = Bits16( 0x1234 )
 
       @s.update
       def up_rd_A():
@@ -466,14 +466,14 @@ def test_connect_rd_As_wr_x_conn_A_impl():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(32) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits32 )
+      s.A  = Wire( Bits32 )
 
       s.A |= s.x
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 32, 123 )
+        s.x = Bits32( 123 )
 
       @s.update
       def up_rd_As():
@@ -487,14 +487,14 @@ def test_connect_rd_As_wr_x_conn_At_impl():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.A[0:24] |= s.x
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_rd_As():
@@ -508,14 +508,14 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.A[0:24] |= s.x
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_rd_As():
@@ -534,14 +534,14 @@ def test_connect_wr_As_rd_x_conn_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.x |= s.A
 
       @s.update
       def up_wr_As():
-        s.A[0:24] = Bits( 24, 0x123456 )
+        s.A[0:24] = Bits24( 0x123456 )
 
   _test_model( Top )
 
@@ -551,18 +551,18 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.x |= s.A
 
       @s.update
       def up_wr_As():
-        s.A[0:24] = Bits( 24, 0x123456 )
+        s.A[0:24] = Bits24( 0x123456 )
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x654321 )
+        s.x = Bits24( 0x654321 )
 
   try:
     _test_model( Top )
@@ -577,14 +577,14 @@ def test_connect_wr_As_rd_x_conn_At_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.x |= s.A[8:32]
 
       @s.update
       def up_wr_As():
-        s.A[0:24] = Bits( 24, 0x123456 )
+        s.A[0:24] = Bits24( 0x123456 )
 
   _test_model( Top )
 
@@ -594,14 +594,14 @@ def test_connect_wr_As_rd_x_conn_At_no_driver():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.x |= s.A[8:32]
 
       @s.update
       def up_wr_As():
-        s.A[0:4] = Bits( 4, 0xf )
+        s.A[0:4] = Bits4( 0xf )
 
   try:
     _test_model( Top )
@@ -616,18 +616,18 @@ def test_connect_wr_As_wr_x_conn_At_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.x |= s.A[8:32]
 
       @s.update
       def up_wr_As():
-        s.A[0:24] = Bits( 24, 0x123456 )
+        s.A[0:24] = Bits24( 0x123456 )
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x654321 )
+        s.x = Bits24( 0x654321 )
 
   try:
     _test_model( Top )
@@ -642,18 +642,18 @@ def test_connect_wr_As_wr_x_conn_At_disjoint():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.x |= s.A[8:32]
 
       @s.update
       def up_wr_As():
-        s.A[0:4] = Bits( 4, 0xf )
+        s.A[0:4] = Bits4( 0xf )
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x654321 )
+        s.x = Bits24( 0x654321 )
 
       @s.update
       def up_rd_A():
@@ -667,14 +667,14 @@ def test_connect_wr_x_conn_As_rd_A_impl():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.A[8:32] |= s.x
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_rd_A():
@@ -688,20 +688,20 @@ def test_connect_wr_x_conn_As_wr_A_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.y  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.y  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.A[8:32] |= s.x
       s.x |= s.y
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_wr_A():
-        s.A = Bits( 32, 0x12345678 )
+        s.A = Bits32( 0x12345678 )
 
   try:
     _test_model( Top )
@@ -716,14 +716,14 @@ def test_connect_rd_x_conn_As_wr_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
 
       s.A[8:32] |= s.x
 
       @s.update
       def up_wr_A():
-        s.A = Bits( 32, 0x12345678 )
+        s.A = Bits32( 0x12345678 )
 
       @s.update
       def up_rd_x():
@@ -737,20 +737,20 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits32 )
 
       s.A[8:32] |= s.x
       s.A       |= s.y
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_wr_y():
-        s.y = Bits( 32, 0x12345678 )
+        s.y = Bits32( 0x12345678 )
 
   try:
     _test_model( Top )
@@ -765,20 +765,20 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(16) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits16 )
 
       s.A[8:32] |= s.x
       s.A[0:16] |= s.y
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_wr_y():
-        s.y = Bits( 16, 0x1234 )
+        s.y = Bits16( 0x1234 )
 
   try:
     _test_model( Top )
@@ -793,20 +793,20 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(4) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits4 )
 
       s.A[8:32] |= s.x
       s.A[0:4]  |= s.y
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_wr_y():
-        s.y = Bits( 4, 0xf )
+        s.y = Bits4( 0xf )
 
       @s.update
       def up_rd_A():
@@ -820,16 +820,16 @@ def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits32 )
 
       s.A[8:32] |= s.x
       s.A       |= s.y
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 24, 0x123456 )
+        s.x = Bits24( 0x123456 )
 
       @s.update
       def up_rd_y():
@@ -843,9 +843,9 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(32) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits32 )
 
       s.A[8:32] |= s.x
       s.A       |= s.y
@@ -856,7 +856,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 
       @s.update
       def up_wr_y():
-        s.y = Bits( 32, 0x12345678 )
+        s.y = Bits32( 0x12345678 )
 
   _test_model( Top )
 
@@ -866,9 +866,9 @@ def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(16) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits16 )
 
       s.A[8:32] |= s.x
       s.A[0:16] |= s.y
@@ -879,7 +879,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
 
       @s.update
       def up_wr_y():
-        s.y = Bits( 16, 0x1234 )
+        s.y = Bits16( 0x1234 )
 
   _test_model( Top )
 
@@ -889,9 +889,9 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits(24) )
-      s.A  = Wire( Bits(32) )
-      s.y  = Wire( Bits(4) )
+      s.x  = Wire( Bits24 )
+      s.A  = Wire( Bits32 )
+      s.y  = Wire( Bits4 )
 
       s.A[8:32] |= s.x
       s.A[0:4 ] |= s.y
@@ -902,7 +902,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
 
       @s.update
       def up_wr_y():
-        s.y = Bits( 4, 0xf )
+        s.y = Bits4( 0xf )
 
   try:
     _test_model( Top )
@@ -916,10 +916,10 @@ def test_iterative_find_nets():
   class Top(Updates):
     def __init__( s ):
 
-      s.w  = Wire( Bits(32) )
-      s.x  = Wire( Bits(32) )
-      s.y  = Wire( Bits(32) )
-      s.z  = Wire( Bits(32) )
+      s.w  = Wire( Bits32 )
+      s.x  = Wire( Bits32 )
+      s.y  = Wire( Bits32 )
+      s.z  = Wire( Bits32 )
 
       s.w[0:16]  |= s.x[8:24] # net1
 
@@ -929,7 +929,7 @@ def test_iterative_find_nets():
 
       @s.update
       def up_wr_s_w():
-        s.w = Bits( 32, 0x12345678 )
+        s.w = Bits32( 0x12345678 )
 
   _test_model( Top )
 
@@ -938,10 +938,10 @@ def test_multiple_sibling_slices():
   class Top(Updates):
     def __init__( s ):
 
-      s.A  = Wire( Bits(32) )
-      s.x  = Wire( Bits(16) )
-      s.y  = Wire( Bits(16) )
-      s.z  = Wire( Bits(16) )
+      s.A  = Wire( Bits32 )
+      s.x  = Wire( Bits16 )
+      s.y  = Wire( Bits16 )
+      s.z  = Wire( Bits16 )
 
       s.A[0:16]  |= s.x # net1
 
@@ -951,7 +951,7 @@ def test_multiple_sibling_slices():
 
       @s.update
       def up_wr_s_w():
-        s.x = Bits( 16, 0x1234 )
+        s.x = Bits16( 0x1234 )
 
   try:
     _test_model( Top )

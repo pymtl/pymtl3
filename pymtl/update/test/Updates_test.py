@@ -150,7 +150,7 @@ def test_connect_list_int_idx():
       s.sink    = TestSink  ( [8,3,6,1] )
 
       from pclib.update import Mux
-      s.mux = Mux(2)
+      s.mux = Mux(int,1)
 
       # All constraints are within TestSource, TestSink, and Mux
 
