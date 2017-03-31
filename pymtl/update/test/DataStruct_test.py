@@ -8,7 +8,7 @@ class SomeMsg( object ):
 
   def __init__( s, a=0, b=0 ):
     s.a = a
-    s.b = Bits( 32, b )
+    s.b = Bits32( b )
 
 def _test_model( model ):
   m = model()
@@ -92,7 +92,7 @@ def test_wr_A_b_wr_A_conflict():
 
       @s.update
       def up_wr_A_b():
-        s.A.b = Bits( 32, 123 )
+        s.A.b = Bits32( 123 )
 
       @s.update
       def up_wr_A():
@@ -131,7 +131,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
       @s.update
       def up_wr_A_b():
-        s.A.b = Bits( 32, 123 )
+        s.A.b = Bits32( 123 )
 
       @s.update
       def up_rd_A():
@@ -173,7 +173,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
       @s.update
       def up_wr_A_b():
-        s.A.b = Bits( 32, 123 )
+        s.A.b = Bits32( 123 )
 
       @s.update
       def up_rd_A():
@@ -224,7 +224,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
       @s.update
       def up_wr_A_b():
-        s.A.b = Bits( 32, 123 )
+        s.A.b = Bits32( 123 )
 
   _test_model( Top )
 
@@ -242,7 +242,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
       # @s.update
       # def up_wr_A_b():
-        # s.A.b = Bits( 32, 123 )
+        # s.A.b = Bits32( 123 )
 
       # @s.update
       # def up_wr_x_b():
@@ -263,7 +263,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
       @s.update
       def up_wr_A_b():
-        s.A.b = Bits( 32, 123 )
+        s.A.b = Bits32( 123 )
 
       @s.update
       def up_wr_x():
@@ -282,14 +282,14 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits )
+      s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
 
       s.A.b |= s.x
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 32, 123 )
+        s.x = Bits32( 123 )
 
       @s.update
       def up_rd_A():
@@ -303,14 +303,14 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits )
+      s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
 
       s.A.b |= s.x
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 32, 123 )
+        s.x = Bits32( 123 )
 
       @s.update
       def up_wr_A():
@@ -329,7 +329,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits )
+      s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
 
       s.A.b |= s.x
@@ -350,7 +350,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits )
+      s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
       s.y  = Wire( SomeMsg )
 
@@ -359,7 +359,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 32, 123 )
+        s.x = Bits32( 123 )
 
       @s.update
       def up_wr_y():
@@ -378,7 +378,7 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits )
+      s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
       s.y  = Wire( SomeMsg )
 
@@ -387,7 +387,7 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
       @s.update
       def up_wr_x():
-        s.x = Bits( 32, 123 )
+        s.x = Bits32( 123 )
 
       @s.update
       def up_rd_y():
@@ -401,7 +401,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( Bits )
+      s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
       s.y  = Wire( SomeMsg )
 
@@ -445,7 +445,7 @@ def test_deep_connections():
   class Msg1( object ):
     def __init__( s, a=0, b=0 ):
       s.a = a
-      s.b = Bits( 32, b )
+      s.b = Bits32( b )
 
   class Msg2( object ):
     def __init__( s, a=Msg1(), b=Msg1() ):

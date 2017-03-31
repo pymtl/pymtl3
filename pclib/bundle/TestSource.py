@@ -5,7 +5,7 @@ from ValRdyBundle import ValRdyBundle
 
 class TestSource( Updates ):
 
-  def __init__( s, type_, input_ = [] ):
+  def __init__( s, type_, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_  = deque( input_ ) # deque.popleft() is faster
@@ -17,21 +17,6 @@ class TestSource( Updates ):
       if s.out.rdy and s.input_:  s.input_.popleft()
       s.out.val = len(s.input_) > 0
       s.out.msg = s.default if not s.input_ else s.input_[0]
-
-    # The following is equivalent
-    # @s.update
-    # def up_src_val():
-      # if not s.input_:
-        # s.msg = [0] * nmsgs
-        # s.val = 0
-      # else:
-        # s.msg = s.input_[0]
-        # s.val = 1
-
-    # @s.update
-    # def up_src_rdy():
-      # if s.rdy and s.input_:
-        # s.input_.popleft()
 
   def done( s ):
     return not s.input_

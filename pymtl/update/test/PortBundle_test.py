@@ -10,8 +10,8 @@ def test_simple():
 
     def __init__( s ):
 
-      s.src  = TestSource( input_=[ [0], [1], [2] ] )
-      s.sink = TestSink  ( [ 0, 1, 2 ] )
+      s.src  = TestSource( int, input_ = [ 0, 1, 2 ] )
+      s.sink = TestSink  ( int, [ 0, 1, 2 ] )
 
       s.sink.in_ |= s.src.out
 
@@ -41,18 +41,18 @@ def test_nested_port_bundle():
 
     def __init__( s ):
 
-      s.src  = [ TestSource( 1, [ [i],[i+1],[i+2],[i],[i+1],[i+2] ] ) for i in xrange(4) ]
+      s.src  = [ TestSource( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in xrange(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
-      s.sink = TestSink  ( [ 24, 40, 56, 24, 40, 56] )
+      s.sink = TestSink  ( int, [ 24, 40, 56, 24, 40, 56] )
 
       s.sb = SuperBundle()
       s.wire = [ [ Wire(int) for i in xrange(4) ] for j in xrange(4) ]
 
       for i in xrange(4):
-        s.src[i].out.rdy      |= s.sink.in_.rdy
+        s.src[i].out.rdy     |= s.sink.in_.rdy
         for j in xrange(4):
-          s.sb.req[i][j].msg[0] |= s.src[i].out.msg[0]
-          s.wire[i][j]          |= s.sb.req[i][j].msg[0]
+          s.sb.req[i][j].msg |= s.src[i].out.msg
+          s.wire[i][j]       |= s.sb.req[i][j].msg
 
       s.out = ValRdyBundle()
       s.out |= s.sink.in_
@@ -60,10 +60,10 @@ def test_nested_port_bundle():
       @s.update
       def up_from_req():
         s.out.val = 1
-        s.out.msg[0] = 0
+        s.out.msg = 0
         for i in xrange(4):
           for j in xrange(4):
-            s.out.msg[0] += s.wire[i][j]
+            s.out.msg += s.wire[i][j]
 
     def done( s ):
       return reduce( lambda x,y: x or y.done(), s.src ) and s.sink.done()
