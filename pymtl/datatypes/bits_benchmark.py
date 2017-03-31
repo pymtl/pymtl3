@@ -3,7 +3,11 @@ import timeit
 
 from Bits_v2 import Bits as Bv2
 from Bits_v3 import Bits as Bv3
-from Bits    import *
+from Bits_gen    import *
+
+#=========================================================================
+# ARITH
+#=========================================================================
 
 def ubmark_arith_v2():
   g = Bv2(32, 0)
@@ -57,18 +61,9 @@ def ubmark_arith_int():
 
   return g
 
-print "[arith] int  ", hex(ubmark_arith_int())
-print "[arith] int   avg time:",sum(timeit.repeat( ubmark_arith_int, repeat=5, number=10 ))/5
-print
-print "[arith] Bits*", ubmark_arith_fix()
-print "[arith] Bits* avg time:",sum(timeit.repeat( ubmark_arith_fix, repeat=5, number=10 ))/5
-print
-print "[arith] v3   ", ubmark_arith_v3()
-print "[arith] v3    avg time:",sum(timeit.repeat( ubmark_arith_v3, repeat=5, number=10 ))/5
-print
-print "[arith] v2   ", ubmark_arith_v2()
-print "[arith] v2    avg time:",sum(timeit.repeat( ubmark_arith_v2, repeat=5, number=10 ))/5
-print
+#=========================================================================
+# LSHIFT
+#=========================================================================
 
 def ubmark_lshift_v2():
   g = Bv2(32, 0)
@@ -109,18 +104,9 @@ def ubmark_lshift_int():
 
   return g
 
-print "[lshift] int  ", hex(ubmark_lshift_int())
-print "[lshift] int   avg time:",sum(timeit.repeat( ubmark_lshift_int, repeat=5, number=10 ))/5
-print
-print "[lshift] Bits*", ubmark_lshift_fix()
-print "[lshift] Bits* avg time:",sum(timeit.repeat( ubmark_lshift_fix, repeat=5, number=10 ))/5
-print
-print "[lshift] v3   ", ubmark_lshift_v3()
-print "[lshift] v3    avg time:",sum(timeit.repeat( ubmark_lshift_v3, repeat=5, number=10 ))/5
-print
-print "[lshift] v2   ", ubmark_lshift_v2()
-print "[lshift] v2    avg time:",sum(timeit.repeat( ubmark_lshift_v2, repeat=5, number=10 ))/5
-print
+#=========================================================================
+# IDX
+#=========================================================================
 
 def ubmark_idx_fix():
   g = Bits32(0)
@@ -152,15 +138,9 @@ def ubmark_idx_v3():
 
   return g
 
-print "[idx] Bits*", ubmark_idx_fix()
-print "[idx] Bits* avg time:",sum(timeit.repeat( ubmark_idx_fix, repeat=5, number=10 ))/5
-print
-print "[idx] v3   ", ubmark_idx_v3()
-print "[idx] v3    avg time:",sum(timeit.repeat( ubmark_idx_v3, repeat=5, number=10 ))/5
-print
-print "[idx] v2   ", ubmark_idx_v2()
-print "[idx] v2    avg time:",sum(timeit.repeat( ubmark_idx_v2, repeat=5, number=10 ))/5
-print
+#=========================================================================
+# SLICE
+#=========================================================================
 
 def ubmark_slice_fix():
   g = Bits32(0)
@@ -195,6 +175,39 @@ def ubmark_slice_v3():
 
   return g
 
+print "[arith] int  ", hex(ubmark_arith_int())
+print "[arith] int   avg time:",sum(timeit.repeat( ubmark_arith_int, repeat=5, number=10 ))/5
+print
+print "[arith] Bits*", ubmark_arith_fix()
+print "[arith] Bits* avg time:",sum(timeit.repeat( ubmark_arith_fix, repeat=5, number=10 ))/5
+print
+print "[arith] v3   ", ubmark_arith_v3()
+print "[arith] v3    avg time:",sum(timeit.repeat( ubmark_arith_v3, repeat=5, number=10 ))/5
+print
+print "[arith] v2   ", ubmark_arith_v2()
+print "[arith] v2    avg time:",sum(timeit.repeat( ubmark_arith_v2, repeat=5, number=10 ))/5
+print
+print "[lshift] int  ", hex(ubmark_lshift_int())
+print "[lshift] int   avg time:",sum(timeit.repeat( ubmark_lshift_int, repeat=5, number=10 ))/5
+print
+print "[lshift] Bits*", ubmark_lshift_fix()
+print "[lshift] Bits* avg time:",sum(timeit.repeat( ubmark_lshift_fix, repeat=5, number=10 ))/5
+print
+print "[lshift] v3   ", ubmark_lshift_v3()
+print "[lshift] v3    avg time:",sum(timeit.repeat( ubmark_lshift_v3, repeat=5, number=10 ))/5
+print
+print "[lshift] v2   ", ubmark_lshift_v2()
+print "[lshift] v2    avg time:",sum(timeit.repeat( ubmark_lshift_v2, repeat=5, number=10 ))/5
+print
+print "[idx] Bits*", ubmark_idx_fix()
+print "[idx] Bits* avg time:",sum(timeit.repeat( ubmark_idx_fix, repeat=5, number=10 ))/5
+print
+print "[idx] v3   ", ubmark_idx_v3()
+print "[idx] v3    avg time:",sum(timeit.repeat( ubmark_idx_v3, repeat=5, number=10 ))/5
+print
+print "[idx] v2   ", ubmark_idx_v2()
+print "[idx] v2    avg time:",sum(timeit.repeat( ubmark_idx_v2, repeat=5, number=10 ))/5
+print
 print "[slice] Bits*", ubmark_slice_fix()
 print "[slice] Bits* avg time:",sum(timeit.repeat( ubmark_slice_fix, repeat=5, number=10 ))/5
 print
