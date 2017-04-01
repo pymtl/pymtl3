@@ -59,7 +59,6 @@ class Wire(Connectable, PyMTLObject):
 
   def __init__( s, type_ ):
     s._type = type_
-    s._var  = type_()
     s._parent = None # None means it's the top level Wire(msgtype)
     s._slice  = None # None means it's not a slice of some wire
     s._attrs  = dict()
@@ -70,7 +69,7 @@ class Wire(Connectable, PyMTLObject):
       return s.__dict__[ name ]
 
     if name not in s._attrs:
-      x = Wire( type( getattr(s._var, name) ) )
+      x = Wire( getattr(s._type, name) )
       x._parent        = s
       s._attrs[ name ] = x
 
