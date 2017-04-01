@@ -1,7 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.valrdy import valrdy_to_str
-from ValRdyBundle import ValRdyBundle
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle
 
 class TestSource( Updates ):
 
