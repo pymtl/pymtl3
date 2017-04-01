@@ -129,6 +129,7 @@ class Bits( object ):
 
 bits_template = """
 class Bits{nbits}(object):
+  nbits = {nbits}
   def __new__( cls, value = 0 ):
     return Bits( {nbits}, value )
 
