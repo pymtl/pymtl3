@@ -5,9 +5,15 @@ from pclib.ifcs import ValRdyBundle
 
 class SomeMsg( object ):
 
-  def __init__( s, a=0, b=0 ):
-    s.a = a
-    s.b = Bits32( b )
+  def __init__( s ):
+    s.a = int
+    s.b = Bits32
+
+  def __call__( s, a = 0, b = Bits1() ):
+    x = SomeMsg()
+    x.a = x.a(a)
+    x.b = x.b(b)
+    return x
 
 def _test_model( model ):
   m = model()
@@ -70,11 +76,11 @@ def test_rd_A_b_wr_A_impl():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A = SomeMsg()( 12, 123 )
 
       @s.update
       def up_rd_A_b():
@@ -87,7 +93,7 @@ def test_wr_A_b_wr_A_conflict():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       @s.update
       def up_wr_A_b():
@@ -95,7 +101,7 @@ def test_wr_A_b_wr_A_conflict():
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A = SomeMsg()( 12, 123 )
 
   try:
     _test_model( Top )
@@ -109,7 +115,7 @@ def test_wr_A_b_rd_A_impl():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       @s.update
       def up_wr_A_b():
@@ -126,7 +132,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       @s.update
       def up_wr_A_b():
@@ -147,11 +153,11 @@ def test_wr_A_rd_fields_can_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A = SomeMsg()( 12, 123 )
 
       @s.update
       def up_rd_A_a():
@@ -168,7 +174,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
   class Top(Updates):
     def __init__( s ):
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       @s.update
       def up_wr_A_b():
@@ -195,14 +201,14 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( SomeMsg )
-      s.A  = Wire( SomeMsg )
+      s.x  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg() )
 
       s.x |= s.A
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg( 12, 123 )
+        s.x = SomeMsg()( 12, 123 )
 
       @s.update
       def up_rd_A_b():
@@ -216,8 +222,8 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( SomeMsg )
-      s.A  = Wire( SomeMsg )
+      s.x  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg() )
 
       s.x |= s.A
 
@@ -234,8 +240,8 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
   # class Top(Updates):
     # def __init__( s ):
 
-      # s.x  = Wire( SomeMsg )
-      # s.A  = Wire( SomeMsg )
+      # s.x  = Wire( SomeMsg() )
+      # s.A  = Wire( SomeMsg() )
 
       # s.x |= s.A
 
@@ -255,8 +261,8 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
   class Top(Updates):
     def __init__( s ):
 
-      s.x  = Wire( SomeMsg )
-      s.A  = Wire( SomeMsg )
+      s.x  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg() )
 
       s.x |= s.A
 
@@ -266,7 +272,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg( 12, 123 )
+        s.x = SomeMsg()( 12, 123 )
 
   try:
     _test_model( Top )
@@ -282,7 +288,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       s.A.b |= s.x
 
@@ -303,7 +309,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       s.A.b |= s.x
 
@@ -313,7 +319,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A = SomeMsg()( 12, 123 )
 
   try:
     _test_model( Top )
@@ -329,13 +335,13 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
 
       s.A.b |= s.x
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A = SomeMsg()( 12, 123 )
 
       @s.update
       def up_rd_x():
@@ -350,8 +356,8 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg )
-      s.y  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
+      s.y  = Wire( SomeMsg() )
 
       s.A.b |= s.x
       s.A   |= s.y
@@ -362,7 +368,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
       @s.update
       def up_wr_y():
-        s.y = SomeMsg( 12, 123 )
+        s.y = SomeMsg()( 12, 123 )
 
   try:
     _test_model( Top )
@@ -378,8 +384,8 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg )
-      s.y  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
+      s.y  = Wire( SomeMsg() )
 
       s.A.b |= s.x
       s.A   |= s.y
@@ -401,8 +407,8 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg )
-      s.y  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg() )
+      s.y  = Wire( SomeMsg() )
 
       s.A.b |= s.x
       s.A   |= s.y
@@ -413,7 +419,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
       @s.update
       def up_wr_y():
-        s.y = SomeMsg( 12, 123 )
+        s.y = SomeMsg()( 12, 123 )
 
   _test_model( Top )
 
@@ -422,10 +428,10 @@ def test_iterative_find_nets():
   class Top(Updates):
     def __init__( s ):
 
-      s.w  = Wire( SomeMsg )
-      s.x  = Wire( SomeMsg )
-      s.y  = Wire( SomeMsg )
-      s.z  = Wire( SomeMsg )
+      s.w  = Wire( SomeMsg() )
+      s.x  = Wire( SomeMsg() )
+      s.y  = Wire( SomeMsg() )
+      s.z  = Wire( SomeMsg() )
 
       s.w |= s.x # net1
 
@@ -435,35 +441,54 @@ def test_iterative_find_nets():
 
       @s.update
       def up_wr_s_w():
-        s.w = SomeMsg( 12, 123 )
+        s.w = SomeMsg()( 12, 123 )
 
   _test_model( Top )
 
 def test_deep_connections():
 
   class Msg1( object ):
-    def __init__( s, a=0, b=0 ):
-      s.a = a
-      s.b = Bits32( b )
+    def __init__( s ):
+      s.a = int
+      s.b = Bits32
+
+    def __call__( s, a = 0, b = Bits32(0) ):
+      x = Msg1()
+      x.a = x.a(a)
+      x.b = x.b(b)
+      return x
 
   class Msg2( object ):
-    def __init__( s, a=Msg1(), b=Msg1() ):
-      s.p = a
-      s.q = b
+    def __init__( s ):
+      s.p = Msg1()
+      s.q = Msg1()
+
+    def __call__( s, p = Msg1()(), q = Msg1()() ):
+      x = Msg2()
+      x.p = p
+      x.q = q
+      return x
 
   class Msg3( object ):
-    def __init__( s, x=Msg1(), y=Msg2(), z=0 ):
-      s.x = x
-      s.y = y
-      s.z = z
+    def __init__( s ):
+      s.x = Msg1()
+      s.y = Msg2()
+      s.z = int
+
+    def __call__( s, x = Msg1()(), y = Msg2()(), z=0 ):
+      x = Msg3()
+      x.x = x
+      x.y = y
+      x.z = x.z(z)
+      return x
 
   class Top(Updates):
     def __init__( s ):
 
-      s.A  = Wire( Msg3 )
-      s.x  = Wire( Msg1 )
-      s.y  = Wire( Msg2 )
-      s.z  = Wire( Msg3 )
+      s.A  = Wire( Msg3() )
+      s.x  = Wire( Msg1() )
+      s.y  = Wire( Msg2() )
+      s.z  = Wire( Msg3() )
 
       s.w  = Wire(int)
 

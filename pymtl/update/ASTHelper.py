@@ -8,7 +8,6 @@ class DetectVarNames( ast.NodeVisitor ):
 
   def get_full_name( self, node ): # only allow one layer array reference
     obj_name = []
-
     # First strip off all slices
     slices = []
     while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Slice ):
@@ -22,7 +21,7 @@ class DetectVarNames( ast.NodeVisitor ):
       # else:
       node = node.value
 
-    while hasattr( node, "value" ): # don't record the last "s."
+    while True:
       # s.x[1][2].y[i][3]
       # strip off all array indices
       num = []
@@ -43,10 +42,19 @@ class DetectVarNames( ast.NodeVisitor ):
         num.append(n)
         node = node.value
 
-      assert isinstance( node, ast.Attribute ), "what the hell?"
-      obj_name.append( (node.attr, num[::-1]) )
+      if isinstance( node, ast.Attribute ):
+        obj_name.append( (node.attr, num[::-1]) )
+      else:
+        assert isinstance( node, ast.Name )
+        obj_name.append( (node.id, num[::-1]) )
+
+      if not hasattr( node, "value" ):
+        break
       node = node.value
 
+    if obj_name[-1][0] != "s": # We only record s.*
+      return
+    obj_name.pop()
     obj_name = obj_name[::-1]
 
     if slices:
@@ -69,6 +77,7 @@ class DetectReadsAndWrites( DetectVarNames ):
 
   def visit_Attribute( self, node ): # s.a.b
     obj_name = self.get_full_name( node )
+    if not obj_name:  return
 
     if   isinstance( node.ctx, ast.Load ):
       self.read  += [ obj_name ]
@@ -79,6 +88,7 @@ class DetectReadsAndWrites( DetectVarNames ):
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
     obj_name = self.get_full_name( node )
+    if not obj_name:  return
 
     if   isinstance( node.ctx, ast.Load ):
       self.read  += [ obj_name ]
