@@ -46,7 +46,7 @@ from GcdUnitUpImpl import GcdUnit as GcdUnitFlat
 from GcdUnitUp     import GcdUnit as GcdUnitConn
 from GcdUnitBundle import GcdUnit as GcdUnitBundle
 from pclib.update  import StreamSource as Source, StreamSink as Sink
-from pclib.bundle  import StreamSource as BSource, StreamSink as BSink
+from pclib.test    import StreamSource as BSource, StreamSink as BSink
 
 class SimHarness( Updates ):
 

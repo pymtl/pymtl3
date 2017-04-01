@@ -1,7 +1,7 @@
 from pymtl import *
 from pclib.update import RegEn, Reg, Mux, RShifter, LShifter, Adder, ZeroComp
 from pclib.valrdy import valrdy_to_str
-from pclib.bundle import ValRdyBundle
+from pclib.ifcs   import ValRdyBundle
 
 A_MUX_SEL_NBITS      = 1
 A_MUX_SEL_LSH        = 0
@@ -220,7 +220,7 @@ class IntMulVarLat( Updates ):
 
 if __name__ == "__main__":
 
-  from pclib.bundle import TestSource, TestSink
+  from pclib.test import TestSource, TestSink
   import random
 
   class TestHarness( Updates ):

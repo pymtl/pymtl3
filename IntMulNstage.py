@@ -1,6 +1,6 @@
 from pymtl import *
 from pclib.update import RegEn, Reg, Mux, RShifter, LShifter, Adder, ZeroComp
-from pclib.bundle import ValRdyBundle
+from pclib.ifcs   import ValRdyBundle
 
 class StepIfc( PortBundle ):
   def __init__( s ):

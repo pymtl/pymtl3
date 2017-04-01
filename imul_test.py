@@ -1,6 +1,7 @@
 import random
 from pymtl import *
-from pclib.bundle import TestSource, TestSink, ValRdyBundle
+from pclib.test import TestSource, TestSink
+from pclib.ifcs import ValRdyBundle
 from IntMulNstage import IntMulNstageInelastic
 from IntMulVarLat import IntMulVarLat
 

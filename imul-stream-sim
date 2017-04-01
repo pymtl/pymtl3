@@ -44,7 +44,7 @@ def parse_cmdline():
 from pymtl import *
 from IntMulVarLat import IntMulVarLat
 from IntMulNstage import IntMulNstageInelastic
-from pclib.bundle import StreamSource, StreamSink
+from pclib.test   import StreamSource, StreamSink
 
 class SimHarness( Updates ):
 

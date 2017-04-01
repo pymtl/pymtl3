@@ -1,7 +1,8 @@
 from pymtl import *
 from pclib.update import RegEn, Reg, Mux, ZeroComp, LTComp, Subtractor
 
-from pclib.bundle import TestSource, TestSink, ValRdyBundle
+from pclib.test   import TestSource, TestSink
+from pclib.ifcs   import ValRdyBundle
 from pclib.valrdy import valrdy_to_str
 
 A_MUX_SEL_IN    = 0

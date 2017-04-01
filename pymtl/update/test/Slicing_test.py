@@ -1,8 +1,7 @@
 from pymtl import *
 
-from pclib.bundle import TestSource
-from pclib.bundle import TestSink
-from pclib.bundle import ValRdyBundle
+from pclib.test import TestSource, TestSink
+from pclib.ifcs import ValRdyBundle
 
 def _test_model( model ):
   m = model()
