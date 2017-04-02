@@ -22,5 +22,5 @@ __all__ = [
   'Wire',
   'PortBundle',
   
-  'mk_bits',
+  'mk_bits', 'Bits'
 ] + [ "Bits{}".format(x) for x in _bitwidths ]

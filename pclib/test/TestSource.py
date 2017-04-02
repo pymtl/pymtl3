@@ -8,7 +8,7 @@ class TestSource( Updates ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_  = deque( input_ ) # deque.popleft() is faster
-    s.default = type_( 0 )
+    s.default = type_()
     s.out     = ValRdyBundle( type_ )
 
     @s.update_on_edge
