@@ -13,18 +13,29 @@ class MemReqMsg( object ):
   TYPE_AMO_XCHG   = 6
   TYPE_AMO_MIN    = 7
 
-  def __init__( s, opaque_nbits, addr_nbits, data_nbits ):
+  def __init__( s, opaque_nbits=8, addr_nbits=32, data_nbits=32 ):
     s.type_  = mk_bits( 3 )
     s.opaque = mk_bits( opaque_nbits )
     s.addr   = mk_bits( addr_nbits   )
     s.len    = mk_bits( int( math.ceil( math.log( data_nbits>>3, 2) ) ) )
     s.data   = mk_bits( data_nbits   )
 
+  def __eq__( s, other ):
+    return s.type_  == other.type_ and s.opaque == other.opaque and \
+           s.addr   == other.addr  and s.len == other.len and \
+           s.data   == other.data
+
   def __call__( s ):
-    return MemReqMsg( s.opaque.nbits, s.addr.nbits, s.data.nbits )
+    msg        = MemReqMsg( s.opaque.nbits, s.addr.nbits, s.data.nbits )
+    msg.type_  = msg.type_ ( 0 )
+    msg.opaque = msg.opaque( 0 )
+    msg.addr   = msg.addr  ( 0 )
+    msg.len    = msg.len   ( 0 )
+    msg.data   = msg.data  ( 0 )
+    return msg
 
   def mk_rd( s, opaque, addr, len_ ):
-    msg        = s()
+    msg        = MemReqMsg( s.opaque.nbits, s.addr.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( MemReqMsg.TYPE_READ )
     msg.opaque = msg.opaque( opaque )
     msg.addr   = msg.addr  ( addr )
@@ -33,7 +44,7 @@ class MemReqMsg( object ):
     return msg
 
   def mk_wr( s, opaque, addr, len_, data ):
-    msg        = s()
+    msg        = MemReqMsg( s.opaque.nbits, s.addr.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( MemReqMsg.TYPE_WRITE )
     msg.opaque = msg.opaque( opaque )
     msg.addr   = msg.addr  ( addr )
@@ -42,7 +53,7 @@ class MemReqMsg( object ):
     return msg
 
   def mk_msg( s, type_, opaque, addr, len_, data ):
-    msg        = s()
+    msg        = MemReqMsg( s.opaque.nbits, s.addr.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( type_ )
     msg.opaque = msg.opaque( opaque )
     msg.addr   = msg.addr  ( addr )
@@ -82,7 +93,7 @@ class MemRespMsg( object ):
   TYPE_AMO_XCHG   = 6
   TYPE_AMO_MIN    = 7
 
-  def __init__( s, opaque_nbits, data_nbits ):
+  def __init__( s, opaque_nbits=8, data_nbits=32 ):
     s.type_  = mk_bits( 3 )
     s.opaque = mk_bits( opaque_nbits )
     s.test   = mk_bits( 2 )
@@ -90,10 +101,21 @@ class MemRespMsg( object ):
     s.data   = mk_bits( data_nbits   )
 
   def __call__( s ):
-    return MemRespMsg( s.opaque.nbits, s.data.nbits )
+    msg        = MemRespMsg( s.opaque.nbits, s.data.nbits )
+    msg.type_  = msg.type_ ( 0 )
+    msg.opaque = msg.opaque( 0 )
+    msg.test   = msg.test  ( 0 )
+    msg.len    = msg.len   ( 0 )
+    msg.data   = msg.data  ( 0 )
+    return msg
+
+  def __eq__( s, other ):
+    return s.type_  == other.type_ and s.opaque == other.opaque and \
+           s.test   == other.test  and s.len == other.len and \
+           s.data   == other.data
 
   def mk_rd( s, opaque, len_, data ):
-    msg        = s()
+    msg        = MemRespMsg( s.opaque.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( MemReqMsg.TYPE_READ )
     msg.opaque = msg.opaque( opaque )
     msg.test   = msg.test  ( 0 )
@@ -102,7 +124,7 @@ class MemRespMsg( object ):
     return msg
 
   def mk_wr( s, opaque, len_ ):
-    msg        = s()
+    msg        = MemRespMsg( s.opaque.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( MemReqMsg.TYPE_WRITE )
     msg.opaque = msg.opaque( opaque )
     msg.test   = msg.test  ( 0 )
@@ -111,7 +133,7 @@ class MemRespMsg( object ):
     return msg
 
   def mk_msg( s, type_, opaque, test, len_, data ):
-    msg        = s()
+    msg        = MemRespMsg( s.opaque.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( type_ )
     msg.opaque = msg.opaque( opaque )
     msg.test   = msg.test  ( test )
