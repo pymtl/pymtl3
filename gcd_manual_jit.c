@@ -189,7 +189,7 @@ int main()
   int cycle;
   top_req_val = 1;
   top_resp_rdy = 1;
-  for (cycle=0; cycle<100000000; ++cycle)
+  for (cycle=0; cycle<1000000000; ++cycle)
   {
     top_req_msg_a = cycle+95827*(cycle&1);
     top_req_msg_b = cycle+(19182)*(cycle&1);
