@@ -356,7 +356,9 @@ class UpdatesConnection( UpdatesExpl ):
 
       upblk_name_ = "%s_FANOUT_%d" % (writer.full_name(), len(readers))
       upblk_name  = upblk_name_.replace( ".", "_" ).replace( ":", "_" ) \
-                               .replace( "[", "_" ).replace( "]", "_" ) \
+                               .replace( "[", "_" ).replace( "]", "_" )
+
+      s._cpp_connection_src += "  void {}()\n".format( "top_"+upblk_name[2:] ) + "  {\n"
 
       if len(readers) == 1:
 
@@ -372,6 +374,8 @@ class UpdatesConnection( UpdatesExpl ):
 
         while rstr[LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
           LCP -= 1
+
+        s._cpp_connection_src += "     {} = {};\n".format(rstr[2:], wstr[2:])
 
         if rstr[:LCP] == "s.":
           # Vanilla
@@ -414,6 +418,9 @@ class UpdatesConnection( UpdatesExpl ):
         while strs[0][LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
           LCP -= 1
 
+        for st in strs:
+          s._cpp_connection_src += "     {} = {};\n".format(st[2:], writer.full_name()[2:])
+
         if strs[0][:LCP] == "s.":
           # Only able to apply common writer optimization
           gen_connection_src = py.code.Source("""
@@ -436,6 +443,7 @@ class UpdatesConnection( UpdatesExpl ):
 
           """.format( upblk_name, writer.full_name(), strs[0][:LCP-1],
                         "; ".join([ "y.{} = x".format( st[LCP:]) for st in strs ] ) ) )
+      s._cpp_connection_src += "  }\n"
 
       exec gen_connection_src.compile() in locals()
 

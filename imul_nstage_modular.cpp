@@ -182,7 +182,7 @@ class ValRdyBundle
 public:
   int val;
   int rdy;
-  int msg[M];
+  unsigned long long msg;
 };
 
 class StreamSource
@@ -193,8 +193,7 @@ public:
   StreamSource(): ts(0) {}
   void up_src()
   {
-    out.msg[0] = ts+95827*(ts&1);
-    out.msg[1] = ts+(19182)*(ts&1);
+    out.msg = ts+95827*(ts&1) | ((ts+(19182)*(ts&1))<<32);
     out.val = 1;
     ts += 1;
   }
@@ -255,74 +254,10 @@ public:
   StreamSource src;
   IntMulNstage imul;
   StreamSink   sink;
-  void top_imul_res_preg_1__out_FANOUT_3()
+  void top_imul_steps_1__mux_out_FANOUT_2()
   {
-     imul.steps[2].in_.res = imul.res_preg[1].out;
-     imul.steps[2].adder.in1 = imul.res_preg[1].out;
-     imul.steps[2].mux.in_[0] = imul.res_preg[1].out;
-  }
-  void top_imul_steps_11__adder_out_FANOUT_1()
-  {
-     imul.steps[11].mux.in_[1] = imul.steps[11].adder.out;
-  }
-  void top_imul_steps_23__mux_out_FANOUT_2()
-  {
-     imul.steps[23].out.res = imul.steps[23].mux.out;
-     imul.res_preg[12].in_ = imul.steps[23].mux.out;
-  }
-  void top_imul_a_preg_12__out_FANOUT_3()
-  {
-     imul.steps[24].in_.a = imul.a_preg[12].out;
-     imul.steps[24].a_lsh.in_ = imul.a_preg[12].out;
-     imul.steps[24].adder.in0 = imul.a_preg[12].out;
-  }
-  void top_imul_steps_0__mux_out_FANOUT_4()
-  {
-     imul.steps[0].out.res = imul.steps[0].mux.out;
-     imul.steps[1].in_.res = imul.steps[0].mux.out;
-     imul.steps[1].adder.in1 = imul.steps[0].mux.out;
-     imul.steps[1].mux.in_[0] = imul.steps[0].mux.out;
-  }
-  void top_src_msg_1__FANOUT_2()
-  {
-     imul.req.msg[1] = src.out.msg[1];
-     imul.b_preg[0].in_ = src.out.msg[1];
-  }
-  void top_imul_steps_4__a_lsh_out_FANOUT_4()
-  {
-     imul.steps[4].out.a = imul.steps[4].a_lsh.out;
-     imul.steps[5].in_.a = imul.steps[4].a_lsh.out;
-     imul.steps[5].a_lsh.in_ = imul.steps[4].a_lsh.out;
-     imul.steps[5].adder.in0 = imul.steps[4].a_lsh.out;
-  }
-  void top_imul_steps_18__a_lsh_out_FANOUT_4()
-  {
-     imul.steps[18].out.a = imul.steps[18].a_lsh.out;
-     imul.steps[19].in_.a = imul.steps[18].a_lsh.out;
-     imul.steps[19].a_lsh.in_ = imul.steps[18].a_lsh.out;
-     imul.steps[19].adder.in0 = imul.steps[18].a_lsh.out;
-  }
-  void top_imul_steps_17__a_lsh_out_FANOUT_2()
-  {
-     imul.steps[17].out.a = imul.steps[17].a_lsh.out;
-     imul.a_preg[9].in_ = imul.steps[17].a_lsh.out;
-  }
-  void top_imul_res_preg_0__out_FANOUT_3()
-  {
-     imul.steps[0].in_.res = imul.res_preg[0].out;
-     imul.steps[0].adder.in1 = imul.res_preg[0].out;
-     imul.steps[0].mux.in_[0] = imul.res_preg[0].out;
-  }
-  void top_imul_steps_21__mux_out_FANOUT_2()
-  {
-     imul.steps[21].out.res = imul.steps[21].mux.out;
-     imul.res_preg[11].in_ = imul.steps[21].mux.out;
-  }
-  void top_imul_steps_2__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[2].out.b = imul.steps[2].b_rsh.out;
-     imul.steps[3].in_.b = imul.steps[2].b_rsh.out;
-     imul.steps[3].b_rsh.in_ = imul.steps[2].b_rsh.out;
+     imul.steps[1].out.res = imul.steps[1].mux.out;
+     imul.res_preg[1].in_ = imul.steps[1].mux.out;
   }
   void top_imul_val_preg_4__out_FANOUT_5()
   {
@@ -332,23 +267,12 @@ public:
      imul.steps[9].out.val = imul.val_preg[4].out;
      imul.val_preg[5].in_ = imul.val_preg[4].out;
   }
-  void top_imul_res_preg_5__out_FANOUT_3()
+  void top_imul_steps_24__a_lsh_out_FANOUT_4()
   {
-     imul.steps[10].in_.res = imul.res_preg[5].out;
-     imul.steps[10].adder.in1 = imul.res_preg[5].out;
-     imul.steps[10].mux.in_[0] = imul.res_preg[5].out;
-  }
-  void top_imul_steps_0__a_lsh_out_FANOUT_4()
-  {
-     imul.steps[0].out.a = imul.steps[0].a_lsh.out;
-     imul.steps[1].in_.a = imul.steps[0].a_lsh.out;
-     imul.steps[1].a_lsh.in_ = imul.steps[0].a_lsh.out;
-     imul.steps[1].adder.in0 = imul.steps[0].a_lsh.out;
-  }
-  void top_imul_b_preg_0__out_FANOUT_2()
-  {
-     imul.steps[0].in_.b = imul.b_preg[0].out;
-     imul.steps[0].b_rsh.in_ = imul.b_preg[0].out;
+     imul.steps[24].out.a = imul.steps[24].a_lsh.out;
+     imul.steps[25].in_.a = imul.steps[24].a_lsh.out;
+     imul.steps[25].a_lsh.in_ = imul.steps[24].a_lsh.out;
+     imul.steps[25].adder.in0 = imul.steps[24].a_lsh.out;
   }
   void top_imul_a_preg_4__out_FANOUT_3()
   {
@@ -356,395 +280,60 @@ public:
      imul.steps[8].a_lsh.in_ = imul.a_preg[4].out;
      imul.steps[8].adder.in0 = imul.a_preg[4].out;
   }
-  void top_imul_a_preg_0__out_FANOUT_3()
+  void top_imul_steps_10__in__b_0_1__FANOUT_1()
   {
-     imul.steps[0].in_.a = imul.a_preg[0].out;
-     imul.steps[0].a_lsh.in_ = imul.a_preg[0].out;
-     imul.steps[0].adder.in0 = imul.a_preg[0].out;
+     imul.steps[10].mux.sel = imul.steps[10].in_.b & 1;
   }
-  void top_imul_b_preg_14__out_FANOUT_2()
+  void top_imul_steps_20__mux_out_FANOUT_4()
   {
-     imul.steps[28].in_.b = imul.b_preg[14].out;
-     imul.steps[28].b_rsh.in_ = imul.b_preg[14].out;
+     imul.steps[20].out.res = imul.steps[20].mux.out;
+     imul.steps[21].in_.res = imul.steps[20].mux.out;
+     imul.steps[21].adder.in1 = imul.steps[20].mux.out;
+     imul.steps[21].mux.in_[0] = imul.steps[20].mux.out;
   }
-  void top_imul_steps_10__a_lsh_out_FANOUT_4()
+  void top_imul_req_msg_0_32__FANOUT_1()
   {
-     imul.steps[10].out.a = imul.steps[10].a_lsh.out;
-     imul.steps[11].in_.a = imul.steps[10].a_lsh.out;
-     imul.steps[11].a_lsh.in_ = imul.steps[10].a_lsh.out;
-     imul.steps[11].adder.in0 = imul.steps[10].a_lsh.out;
-  }
-  void top_imul_steps_7__a_lsh_out_FANOUT_2()
-  {
-     imul.steps[7].out.a = imul.steps[7].a_lsh.out;
-     imul.a_preg[4].in_ = imul.steps[7].a_lsh.out;
-  }
-  void top_imul_steps_27__b_rsh_out_FANOUT_2()
-  {
-     imul.steps[27].out.b = imul.steps[27].b_rsh.out;
-     imul.b_preg[14].in_ = imul.steps[27].b_rsh.out;
-  }
-  void top_imul_b_preg_7__out_FANOUT_2()
-  {
-     imul.steps[14].in_.b = imul.b_preg[7].out;
-     imul.steps[14].b_rsh.in_ = imul.b_preg[7].out;
-  }
-  void top_imul_steps_26__mux_out_FANOUT_4()
-  {
-     imul.steps[26].out.res = imul.steps[26].mux.out;
-     imul.steps[27].in_.res = imul.steps[26].mux.out;
-     imul.steps[27].adder.in1 = imul.steps[26].mux.out;
-     imul.steps[27].mux.in_[0] = imul.steps[26].mux.out;
-  }
-  void top_imul_val_preg_12__out_FANOUT_5()
-  {
-     imul.steps[24].in_.val = imul.val_preg[12].out;
-     imul.steps[24].out.val = imul.val_preg[12].out;
-     imul.steps[25].in_.val = imul.val_preg[12].out;
-     imul.steps[25].out.val = imul.val_preg[12].out;
-     imul.val_preg[13].in_ = imul.val_preg[12].out;
-  }
-  void top_src_val_FANOUT_2()
-  {
-     imul.req.val = src.out.val;
-     imul.val_preg[0].in_ = src.out.val;
-  }
-  void top_imul_res_preg_9__out_FANOUT_3()
-  {
-     imul.steps[18].in_.res = imul.res_preg[9].out;
-     imul.steps[18].adder.in1 = imul.res_preg[9].out;
-     imul.steps[18].mux.in_[0] = imul.res_preg[9].out;
-  }
-  void top_imul_steps_9__mux_out_FANOUT_2()
-  {
-     imul.steps[9].out.res = imul.steps[9].mux.out;
-     imul.res_preg[5].in_ = imul.steps[9].mux.out;
-  }
-  void top_imul_b_preg_4__out_FANOUT_2()
-  {
-     imul.steps[8].in_.b = imul.b_preg[4].out;
-     imul.steps[8].b_rsh.in_ = imul.b_preg[4].out;
-  }
-  void top_imul_a_preg_8__out_FANOUT_3()
-  {
-     imul.steps[16].in_.a = imul.a_preg[8].out;
-     imul.steps[16].a_lsh.in_ = imul.a_preg[8].out;
-     imul.steps[16].adder.in0 = imul.a_preg[8].out;
-  }
-  void top_imul_a_preg_10__out_FANOUT_3()
-  {
-     imul.steps[20].in_.a = imul.a_preg[10].out;
-     imul.steps[20].a_lsh.in_ = imul.a_preg[10].out;
-     imul.steps[20].adder.in0 = imul.a_preg[10].out;
-  }
-  void top_imul_steps_14__a_lsh_out_FANOUT_4()
-  {
-     imul.steps[14].out.a = imul.steps[14].a_lsh.out;
-     imul.steps[15].in_.a = imul.steps[14].a_lsh.out;
-     imul.steps[15].a_lsh.in_ = imul.steps[14].a_lsh.out;
-     imul.steps[15].adder.in0 = imul.steps[14].a_lsh.out;
-  }
-  void top_imul_steps_7__mux_out_FANOUT_2()
-  {
-     imul.steps[7].out.res = imul.steps[7].mux.out;
-     imul.res_preg[4].in_ = imul.steps[7].mux.out;
-  }
-  void top_imul_steps_25__mux_out_FANOUT_2()
-  {
-     imul.steps[25].out.res = imul.steps[25].mux.out;
-     imul.res_preg[13].in_ = imul.steps[25].mux.out;
-  }
-  void top_imul_steps_6__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[6].out.b = imul.steps[6].b_rsh.out;
-     imul.steps[7].in_.b = imul.steps[6].b_rsh.out;
-     imul.steps[7].b_rsh.in_ = imul.steps[6].b_rsh.out;
-  }
-  void top_imul_steps_3__adder_out_FANOUT_1()
-  {
-     imul.steps[3].mux.in_[1] = imul.steps[3].adder.out;
-  }
-  void top_imul_steps_4__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[4].out.b = imul.steps[4].b_rsh.out;
-     imul.steps[5].in_.b = imul.steps[4].b_rsh.out;
-     imul.steps[5].b_rsh.in_ = imul.steps[4].b_rsh.out;
-  }
-  void top_imul_steps_15__mux_out_FANOUT_2()
-  {
-     imul.steps[15].out.res = imul.steps[15].mux.out;
-     imul.res_preg[8].in_ = imul.steps[15].mux.out;
-  }
-  void top_imul_steps_18__mux_out_FANOUT_4()
-  {
-     imul.steps[18].out.res = imul.steps[18].mux.out;
-     imul.steps[19].in_.res = imul.steps[18].mux.out;
-     imul.steps[19].adder.in1 = imul.steps[18].mux.out;
-     imul.steps[19].mux.in_[0] = imul.steps[18].mux.out;
-  }
-  void top_imul_steps_12__a_lsh_out_FANOUT_4()
-  {
-     imul.steps[12].out.a = imul.steps[12].a_lsh.out;
-     imul.steps[13].in_.a = imul.steps[12].a_lsh.out;
-     imul.steps[13].a_lsh.in_ = imul.steps[12].a_lsh.out;
-     imul.steps[13].adder.in0 = imul.steps[12].a_lsh.out;
-  }
-  void top_imul_val_preg_3__out_FANOUT_5()
-  {
-     imul.steps[6].in_.val = imul.val_preg[3].out;
-     imul.steps[6].out.val = imul.val_preg[3].out;
-     imul.steps[7].in_.val = imul.val_preg[3].out;
-     imul.steps[7].out.val = imul.val_preg[3].out;
-     imul.val_preg[4].in_ = imul.val_preg[3].out;
-  }
-  void top_imul_steps_12__mux_out_FANOUT_4()
-  {
-     imul.steps[12].out.res = imul.steps[12].mux.out;
-     imul.steps[13].in_.res = imul.steps[12].mux.out;
-     imul.steps[13].adder.in1 = imul.steps[12].mux.out;
-     imul.steps[13].mux.in_[0] = imul.steps[12].mux.out;
-  }
-  void top_imul_a_preg_13__out_FANOUT_3()
-  {
-     imul.steps[26].in_.a = imul.a_preg[13].out;
-     imul.steps[26].a_lsh.in_ = imul.a_preg[13].out;
-     imul.steps[26].adder.in0 = imul.a_preg[13].out;
-  }
-  void top_imul_steps_25__adder_out_FANOUT_1()
-  {
-     imul.steps[25].mux.in_[1] = imul.steps[25].adder.out;
-  }
-  void top_imul_steps_23__b_rsh_out_FANOUT_2()
-  {
-     imul.steps[23].out.b = imul.steps[23].b_rsh.out;
-     imul.b_preg[12].in_ = imul.steps[23].b_rsh.out;
-  }
-  void top_imul_res_preg_14__out_FANOUT_3()
-  {
-     imul.steps[28].in_.res = imul.res_preg[14].out;
-     imul.steps[28].adder.in1 = imul.res_preg[14].out;
-     imul.steps[28].mux.in_[0] = imul.res_preg[14].out;
-  }
-  void top_imul_steps_5__adder_out_FANOUT_1()
-  {
-     imul.steps[5].mux.in_[1] = imul.steps[5].adder.out;
-  }
-  void top_imul_steps_12__adder_out_FANOUT_1()
-  {
-     imul.steps[12].mux.in_[1] = imul.steps[12].adder.out;
-  }
-  void top_imul_b_preg_9__out_FANOUT_2()
-  {
-     imul.steps[18].in_.b = imul.b_preg[9].out;
-     imul.steps[18].b_rsh.in_ = imul.b_preg[9].out;
-  }
-  void top_imul_steps_15__a_lsh_out_FANOUT_2()
-  {
-     imul.steps[15].out.a = imul.steps[15].a_lsh.out;
-     imul.a_preg[8].in_ = imul.steps[15].a_lsh.out;
-  }
-  void top_imul_steps_10__mux_out_FANOUT_4()
-  {
-     imul.steps[10].out.res = imul.steps[10].mux.out;
-     imul.steps[11].in_.res = imul.steps[10].mux.out;
-     imul.steps[11].adder.in1 = imul.steps[10].mux.out;
-     imul.steps[11].mux.in_[0] = imul.steps[10].mux.out;
-  }
-  void top_imul_a_preg_14__out_FANOUT_3()
-  {
-     imul.steps[28].in_.a = imul.a_preg[14].out;
-     imul.steps[28].a_lsh.in_ = imul.a_preg[14].out;
-     imul.steps[28].adder.in0 = imul.a_preg[14].out;
-  }
-  void top_imul_steps_17__adder_out_FANOUT_1()
-  {
-     imul.steps[17].mux.in_[1] = imul.steps[17].adder.out;
-  }
-  void top_imul_steps_6__adder_out_FANOUT_1()
-  {
-     imul.steps[6].mux.in_[1] = imul.steps[6].adder.out;
-  }
-  void top_imul_steps_2__a_lsh_out_FANOUT_4()
-  {
-     imul.steps[2].out.a = imul.steps[2].a_lsh.out;
-     imul.steps[3].in_.a = imul.steps[2].a_lsh.out;
-     imul.steps[3].a_lsh.in_ = imul.steps[2].a_lsh.out;
-     imul.steps[3].adder.in0 = imul.steps[2].a_lsh.out;
-  }
-  void top_imul_res_preg_6__out_FANOUT_3()
-  {
-     imul.steps[12].in_.res = imul.res_preg[6].out;
-     imul.steps[12].adder.in1 = imul.res_preg[6].out;
-     imul.steps[12].mux.in_[0] = imul.res_preg[6].out;
-  }
-  void top_imul_res_preg_4__out_FANOUT_3()
-  {
-     imul.steps[8].in_.res = imul.res_preg[4].out;
-     imul.steps[8].adder.in1 = imul.res_preg[4].out;
-     imul.steps[8].mux.in_[0] = imul.res_preg[4].out;
-  }
-  void top_imul_steps_30__adder_out_FANOUT_1()
-  {
-     imul.steps[30].mux.in_[1] = imul.steps[30].adder.out;
-  }
-  void top_imul_b_preg_3__out_FANOUT_2()
-  {
-     imul.steps[6].in_.b = imul.b_preg[3].out;
-     imul.steps[6].b_rsh.in_ = imul.b_preg[3].out;
+     imul.a_preg[0].in_ = imul.req.msg & 4294967295;
   }
   void top_imul_steps_17__mux_out_FANOUT_2()
   {
      imul.steps[17].out.res = imul.steps[17].mux.out;
      imul.res_preg[9].in_ = imul.steps[17].mux.out;
   }
-  void top_imul_steps_20__a_lsh_out_FANOUT_4()
+  void top_imul_b_preg_9__out_FANOUT_2()
   {
-     imul.steps[20].out.a = imul.steps[20].a_lsh.out;
-     imul.steps[21].in_.a = imul.steps[20].a_lsh.out;
-     imul.steps[21].a_lsh.in_ = imul.steps[20].a_lsh.out;
-     imul.steps[21].adder.in0 = imul.steps[20].a_lsh.out;
+     imul.steps[18].in_.b = imul.b_preg[9].out;
+     imul.steps[18].b_rsh.in_ = imul.b_preg[9].out;
   }
-  void top_imul_b_preg_10__out_FANOUT_2()
+  void top_imul_res_preg_15__out_FANOUT_3()
   {
-     imul.steps[20].in_.b = imul.b_preg[10].out;
-     imul.steps[20].b_rsh.in_ = imul.b_preg[10].out;
+     imul.steps[30].in_.res = imul.res_preg[15].out;
+     imul.steps[30].adder.in1 = imul.res_preg[15].out;
+     imul.steps[30].mux.in_[0] = imul.res_preg[15].out;
   }
-  void top_imul_steps_4__mux_out_FANOUT_4()
+  void top_imul_steps_6__adder_out_FANOUT_1()
   {
-     imul.steps[4].out.res = imul.steps[4].mux.out;
-     imul.steps[5].in_.res = imul.steps[4].mux.out;
-     imul.steps[5].adder.in1 = imul.steps[4].mux.out;
-     imul.steps[5].mux.in_[0] = imul.steps[4].mux.out;
+     imul.steps[6].mux.in_[1] = imul.steps[6].adder.out;
   }
-  void top_imul_b_preg_13__out_FANOUT_2()
+  void top_imul_a_preg_12__out_FANOUT_3()
   {
-     imul.steps[26].in_.b = imul.b_preg[13].out;
-     imul.steps[26].b_rsh.in_ = imul.b_preg[13].out;
+     imul.steps[24].in_.a = imul.a_preg[12].out;
+     imul.steps[24].a_lsh.in_ = imul.a_preg[12].out;
+     imul.steps[24].adder.in0 = imul.a_preg[12].out;
   }
-  void top_imul_steps_13__adder_out_FANOUT_1()
+  void top_imul_steps_9__b_rsh_out_FANOUT_2()
   {
-     imul.steps[13].mux.in_[1] = imul.steps[13].adder.out;
+     imul.steps[9].out.b = imul.steps[9].b_rsh.out;
+     imul.b_preg[5].in_ = imul.steps[9].b_rsh.out;
   }
-  void top_imul_steps_11__b_rsh_out_FANOUT_2()
+  void top_imul_steps_18__in__b_0_1__FANOUT_1()
   {
-     imul.steps[11].out.b = imul.steps[11].b_rsh.out;
-     imul.b_preg[6].in_ = imul.steps[11].b_rsh.out;
+     imul.steps[18].mux.sel = imul.steps[18].in_.b & 1;
   }
-  void top_imul_steps_2__mux_out_FANOUT_4()
+  void top_imul_steps_13__mux_out_FANOUT_2()
   {
-     imul.steps[2].out.res = imul.steps[2].mux.out;
-     imul.steps[3].in_.res = imul.steps[2].mux.out;
-     imul.steps[3].adder.in1 = imul.steps[2].mux.out;
-     imul.steps[3].mux.in_[0] = imul.steps[2].mux.out;
-  }
-  void top_imul_steps_0__adder_out_FANOUT_1()
-  {
-     imul.steps[0].mux.in_[1] = imul.steps[0].adder.out;
-  }
-  void top_imul_steps_28__mux_out_FANOUT_4()
-  {
-     imul.steps[28].out.res = imul.steps[28].mux.out;
-     imul.steps[29].in_.res = imul.steps[28].mux.out;
-     imul.steps[29].adder.in1 = imul.steps[28].mux.out;
-     imul.steps[29].mux.in_[0] = imul.steps[28].mux.out;
-  }
-  void top_imul_res_preg_7__out_FANOUT_3()
-  {
-     imul.steps[14].in_.res = imul.res_preg[7].out;
-     imul.steps[14].adder.in1 = imul.res_preg[7].out;
-     imul.steps[14].mux.in_[0] = imul.res_preg[7].out;
-  }
-  void top_imul_val_preg_11__out_FANOUT_5()
-  {
-     imul.steps[22].in_.val = imul.val_preg[11].out;
-     imul.steps[22].out.val = imul.val_preg[11].out;
-     imul.steps[23].in_.val = imul.val_preg[11].out;
-     imul.steps[23].out.val = imul.val_preg[11].out;
-     imul.val_preg[12].in_ = imul.val_preg[11].out;
-  }
-  void top_imul_res_preg_8__out_FANOUT_3()
-  {
-     imul.steps[16].in_.res = imul.res_preg[8].out;
-     imul.steps[16].adder.in1 = imul.res_preg[8].out;
-     imul.steps[16].mux.in_[0] = imul.res_preg[8].out;
-  }
-  void top_imul_steps_24__adder_out_FANOUT_1()
-  {
-     imul.steps[24].mux.in_[1] = imul.steps[24].adder.out;
-  }
-  void top_imul_res_preg_10__out_FANOUT_3()
-  {
-     imul.steps[20].in_.res = imul.res_preg[10].out;
-     imul.steps[20].adder.in1 = imul.res_preg[10].out;
-     imul.steps[20].mux.in_[0] = imul.res_preg[10].out;
-  }
-  void top_imul_steps_23__adder_out_FANOUT_1()
-  {
-     imul.steps[23].mux.in_[1] = imul.steps[23].adder.out;
-  }
-  void top_imul_steps_19__b_rsh_out_FANOUT_2()
-  {
-     imul.steps[19].out.b = imul.steps[19].b_rsh.out;
-     imul.b_preg[10].in_ = imul.steps[19].b_rsh.out;
-  }
-  void top_imul_steps_20__adder_out_FANOUT_1()
-  {
-     imul.steps[20].mux.in_[1] = imul.steps[20].adder.out;
-  }
-  void top_imul_steps_22__mux_out_FANOUT_4()
-  {
-     imul.steps[22].out.res = imul.steps[22].mux.out;
-     imul.steps[23].in_.res = imul.steps[22].mux.out;
-     imul.steps[23].adder.in1 = imul.steps[22].mux.out;
-     imul.steps[23].mux.in_[0] = imul.steps[22].mux.out;
-  }
-  void top_imul_steps_3__b_rsh_out_FANOUT_2()
-  {
-     imul.steps[3].out.b = imul.steps[3].b_rsh.out;
-     imul.b_preg[2].in_ = imul.steps[3].b_rsh.out;
-  }
-  void top_imul_val_preg_1__out_FANOUT_5()
-  {
-     imul.steps[2].in_.val = imul.val_preg[1].out;
-     imul.steps[2].out.val = imul.val_preg[1].out;
-     imul.steps[3].in_.val = imul.val_preg[1].out;
-     imul.steps[3].out.val = imul.val_preg[1].out;
-     imul.val_preg[2].in_ = imul.val_preg[1].out;
-  }
-  void top_imul_steps_27__a_lsh_out_FANOUT_2()
-  {
-     imul.steps[27].out.a = imul.steps[27].a_lsh.out;
-     imul.a_preg[14].in_ = imul.steps[27].a_lsh.out;
-  }
-  void top_imul_steps_31__mux_out_FANOUT_3()
-  {
-     imul.steps[31].out.res = imul.steps[31].mux.out;
-     imul.resp.msg[0] = imul.steps[31].mux.out;
-     sink.in_.msg[0] = imul.steps[31].mux.out;
-  }
-  void top_imul_steps_5__mux_out_FANOUT_2()
-  {
-     imul.steps[5].out.res = imul.steps[5].mux.out;
-     imul.res_preg[3].in_ = imul.steps[5].mux.out;
-  }
-  void top_imul_val_preg_2__out_FANOUT_5()
-  {
-     imul.steps[4].in_.val = imul.val_preg[2].out;
-     imul.steps[4].out.val = imul.val_preg[2].out;
-     imul.steps[5].in_.val = imul.val_preg[2].out;
-     imul.steps[5].out.val = imul.val_preg[2].out;
-     imul.val_preg[3].in_ = imul.val_preg[2].out;
-  }
-  void top_imul_steps_14__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[14].out.b = imul.steps[14].b_rsh.out;
-     imul.steps[15].in_.b = imul.steps[14].b_rsh.out;
-     imul.steps[15].b_rsh.in_ = imul.steps[14].b_rsh.out;
-  }
-  void top_imul_steps_5__a_lsh_out_FANOUT_2()
-  {
-     imul.steps[5].out.a = imul.steps[5].a_lsh.out;
-     imul.a_preg[3].in_ = imul.steps[5].a_lsh.out;
+     imul.steps[13].out.res = imul.steps[13].mux.out;
+     imul.res_preg[7].in_ = imul.steps[13].mux.out;
   }
   void top_imul_val_preg_8__out_FANOUT_5()
   {
@@ -754,140 +343,135 @@ public:
      imul.steps[17].out.val = imul.val_preg[8].out;
      imul.val_preg[9].in_ = imul.val_preg[8].out;
   }
-  void top_imul_steps_1__adder_out_FANOUT_1()
+  void top_imul_steps_24__adder_out_FANOUT_1()
   {
-     imul.steps[1].mux.in_[1] = imul.steps[1].adder.out;
+     imul.steps[24].mux.in_[1] = imul.steps[24].adder.out;
   }
-  void top_imul_steps_29__mux_out_FANOUT_2()
+  void top_imul_steps_1__in__b_0_1__FANOUT_1()
   {
-     imul.steps[29].out.res = imul.steps[29].mux.out;
-     imul.res_preg[15].in_ = imul.steps[29].mux.out;
+     imul.steps[1].mux.sel = imul.steps[1].in_.b & 1;
   }
-  void top_imul_steps_23__a_lsh_out_FANOUT_2()
+  void top_imul_steps_3__adder_out_FANOUT_1()
   {
-     imul.steps[23].out.a = imul.steps[23].a_lsh.out;
-     imul.a_preg[12].in_ = imul.steps[23].a_lsh.out;
+     imul.steps[3].mux.in_[1] = imul.steps[3].adder.out;
   }
-  void top_imul_res_preg_13__out_FANOUT_3()
+  void top_imul_steps_15__a_lsh_out_FANOUT_2()
   {
-     imul.steps[26].in_.res = imul.res_preg[13].out;
-     imul.steps[26].adder.in1 = imul.res_preg[13].out;
-     imul.steps[26].mux.in_[0] = imul.res_preg[13].out;
+     imul.steps[15].out.a = imul.steps[15].a_lsh.out;
+     imul.a_preg[8].in_ = imul.steps[15].a_lsh.out;
   }
-  void top_imul_b_preg_8__out_FANOUT_2()
+  void top_imul_steps_29__b_rsh_out_FANOUT_2()
   {
-     imul.steps[16].in_.b = imul.b_preg[8].out;
-     imul.steps[16].b_rsh.in_ = imul.b_preg[8].out;
+     imul.steps[29].out.b = imul.steps[29].b_rsh.out;
+     imul.b_preg[15].in_ = imul.steps[29].b_rsh.out;
   }
-  void top_imul_steps_8__b_rsh_out_FANOUT_3()
+  void top_imul_steps_20__in__b_0_1__FANOUT_1()
   {
-     imul.steps[8].out.b = imul.steps[8].b_rsh.out;
-     imul.steps[9].in_.b = imul.steps[8].b_rsh.out;
-     imul.steps[9].b_rsh.in_ = imul.steps[8].b_rsh.out;
+     imul.steps[20].mux.sel = imul.steps[20].in_.b & 1;
   }
-  void top_imul_steps_19__a_lsh_out_FANOUT_2()
+  void top_imul_steps_17__a_lsh_out_FANOUT_2()
   {
-     imul.steps[19].out.a = imul.steps[19].a_lsh.out;
-     imul.a_preg[10].in_ = imul.steps[19].a_lsh.out;
+     imul.steps[17].out.a = imul.steps[17].a_lsh.out;
+     imul.a_preg[9].in_ = imul.steps[17].a_lsh.out;
   }
-  void top_imul_steps_16__a_lsh_out_FANOUT_4()
+  void top_imul_res_preg_6__out_FANOUT_3()
   {
-     imul.steps[16].out.a = imul.steps[16].a_lsh.out;
-     imul.steps[17].in_.a = imul.steps[16].a_lsh.out;
-     imul.steps[17].a_lsh.in_ = imul.steps[16].a_lsh.out;
-     imul.steps[17].adder.in0 = imul.steps[16].a_lsh.out;
+     imul.steps[12].in_.res = imul.res_preg[6].out;
+     imul.steps[12].adder.in1 = imul.res_preg[6].out;
+     imul.steps[12].mux.in_[0] = imul.res_preg[6].out;
   }
-  void top_imul_val_preg_15__out_FANOUT_6()
+  void top_imul_req_msg_32_64__FANOUT_1()
   {
-     imul.steps[30].in_.val = imul.val_preg[15].out;
-     imul.steps[30].out.val = imul.val_preg[15].out;
-     imul.steps[31].in_.val = imul.val_preg[15].out;
-     imul.steps[31].out.val = imul.val_preg[15].out;
-     imul.resp.val = imul.val_preg[15].out;
-     sink.in_.val = imul.val_preg[15].out;
+     imul.b_preg[0].in_ = imul.req.msg >> 32;
   }
-  void top_imul_steps_26__adder_out_FANOUT_1()
+  void top_imul_b_preg_13__out_FANOUT_2()
   {
-     imul.steps[26].mux.in_[1] = imul.steps[26].adder.out;
+     imul.steps[26].in_.b = imul.b_preg[13].out;
+     imul.steps[26].b_rsh.in_ = imul.b_preg[13].out;
   }
-  void top_imul_val_preg_6__out_FANOUT_5()
+  void top_imul_steps_14__b_rsh_out_FANOUT_3()
   {
-     imul.steps[12].in_.val = imul.val_preg[6].out;
-     imul.steps[12].out.val = imul.val_preg[6].out;
-     imul.steps[13].in_.val = imul.val_preg[6].out;
-     imul.steps[13].out.val = imul.val_preg[6].out;
-     imul.val_preg[7].in_ = imul.val_preg[6].out;
+     imul.steps[14].out.b = imul.steps[14].b_rsh.out;
+     imul.steps[15].in_.b = imul.steps[14].b_rsh.out;
+     imul.steps[15].b_rsh.in_ = imul.steps[14].b_rsh.out;
   }
-  void top_imul_steps_31__a_lsh_out_FANOUT_1()
+  void top_imul_steps_21__b_rsh_out_FANOUT_2()
   {
-     imul.steps[31].out.a = imul.steps[31].a_lsh.out;
+     imul.steps[21].out.b = imul.steps[21].b_rsh.out;
+     imul.b_preg[11].in_ = imul.steps[21].b_rsh.out;
   }
-  void top_imul_a_preg_7__out_FANOUT_3()
+  void top_imul_steps_7__in__b_0_1__FANOUT_1()
   {
-     imul.steps[14].in_.a = imul.a_preg[7].out;
-     imul.steps[14].a_lsh.in_ = imul.a_preg[7].out;
-     imul.steps[14].adder.in0 = imul.a_preg[7].out;
+     imul.steps[7].mux.sel = imul.steps[7].in_.b & 1;
   }
-  void top_imul_a_preg_11__out_FANOUT_3()
+  void top_imul_steps_25__mux_out_FANOUT_2()
   {
-     imul.steps[22].in_.a = imul.a_preg[11].out;
-     imul.steps[22].a_lsh.in_ = imul.a_preg[11].out;
-     imul.steps[22].adder.in0 = imul.a_preg[11].out;
+     imul.steps[25].out.res = imul.steps[25].mux.out;
+     imul.res_preg[13].in_ = imul.steps[25].mux.out;
   }
-  void top_imul_steps_11__mux_out_FANOUT_2()
+  void top_imul_steps_22__mux_out_FANOUT_4()
   {
-     imul.steps[11].out.res = imul.steps[11].mux.out;
-     imul.res_preg[6].in_ = imul.steps[11].mux.out;
+     imul.steps[22].out.res = imul.steps[22].mux.out;
+     imul.steps[23].in_.res = imul.steps[22].mux.out;
+     imul.steps[23].adder.in1 = imul.steps[22].mux.out;
+     imul.steps[23].mux.in_[0] = imul.steps[22].mux.out;
   }
-  void top_imul_steps_30__b_rsh_out_FANOUT_3()
+  void top_imul_a_preg_9__out_FANOUT_3()
   {
-     imul.steps[30].out.b = imul.steps[30].b_rsh.out;
-     imul.steps[31].in_.b = imul.steps[30].b_rsh.out;
-     imul.steps[31].b_rsh.in_ = imul.steps[30].b_rsh.out;
+     imul.steps[18].in_.a = imul.a_preg[9].out;
+     imul.steps[18].a_lsh.in_ = imul.a_preg[9].out;
+     imul.steps[18].adder.in0 = imul.a_preg[9].out;
   }
-  void top_imul_a_preg_2__out_FANOUT_3()
+  void top_imul_steps_30__in__b_0_1__FANOUT_1()
   {
-     imul.steps[4].in_.a = imul.a_preg[2].out;
-     imul.steps[4].a_lsh.in_ = imul.a_preg[2].out;
-     imul.steps[4].adder.in0 = imul.a_preg[2].out;
+     imul.steps[30].mux.sel = imul.steps[30].in_.b & 1;
   }
-  void top_imul_steps_4__adder_out_FANOUT_1()
+  void top_imul_steps_27__a_lsh_out_FANOUT_2()
   {
-     imul.steps[4].mux.in_[1] = imul.steps[4].adder.out;
+     imul.steps[27].out.a = imul.steps[27].a_lsh.out;
+     imul.a_preg[14].in_ = imul.steps[27].a_lsh.out;
   }
-  void top_imul_steps_8__adder_out_FANOUT_1()
+  void top_imul_a_preg_1__out_FANOUT_3()
   {
-     imul.steps[8].mux.in_[1] = imul.steps[8].adder.out;
+     imul.steps[2].in_.a = imul.a_preg[1].out;
+     imul.steps[2].a_lsh.in_ = imul.a_preg[1].out;
+     imul.steps[2].adder.in0 = imul.a_preg[1].out;
   }
-  void top_imul_b_preg_12__out_FANOUT_2()
+  void top_imul_steps_25__b_rsh_out_FANOUT_2()
   {
-     imul.steps[24].in_.b = imul.b_preg[12].out;
-     imul.steps[24].b_rsh.in_ = imul.b_preg[12].out;
+     imul.steps[25].out.b = imul.steps[25].b_rsh.out;
+     imul.b_preg[13].in_ = imul.steps[25].b_rsh.out;
   }
-  void top_imul_steps_13__b_rsh_out_FANOUT_2()
+  void top_imul_steps_30__mux_out_FANOUT_4()
   {
-     imul.steps[13].out.b = imul.steps[13].b_rsh.out;
-     imul.b_preg[7].in_ = imul.steps[13].b_rsh.out;
+     imul.steps[30].out.res = imul.steps[30].mux.out;
+     imul.steps[31].in_.res = imul.steps[30].mux.out;
+     imul.steps[31].adder.in1 = imul.steps[30].mux.out;
+     imul.steps[31].mux.in_[0] = imul.steps[30].mux.out;
   }
-  void top_imul_steps_11__a_lsh_out_FANOUT_2()
+  void top_imul_steps_6__a_lsh_out_FANOUT_4()
   {
-     imul.steps[11].out.a = imul.steps[11].a_lsh.out;
-     imul.a_preg[6].in_ = imul.steps[11].a_lsh.out;
+     imul.steps[6].out.a = imul.steps[6].a_lsh.out;
+     imul.steps[7].in_.a = imul.steps[6].a_lsh.out;
+     imul.steps[7].a_lsh.in_ = imul.steps[6].a_lsh.out;
+     imul.steps[7].adder.in0 = imul.steps[6].a_lsh.out;
   }
-  void top_imul_steps_15__adder_out_FANOUT_1()
+  void top_imul_val_preg_12__out_FANOUT_5()
   {
-     imul.steps[15].mux.in_[1] = imul.steps[15].adder.out;
+     imul.steps[24].in_.val = imul.val_preg[12].out;
+     imul.steps[24].out.val = imul.val_preg[12].out;
+     imul.steps[25].in_.val = imul.val_preg[12].out;
+     imul.steps[25].out.val = imul.val_preg[12].out;
+     imul.val_preg[13].in_ = imul.val_preg[12].out;
   }
-  void top_imul_steps_27__mux_out_FANOUT_2()
+  void top_imul_steps_13__in__b_0_1__FANOUT_1()
   {
-     imul.steps[27].out.res = imul.steps[27].mux.out;
-     imul.res_preg[14].in_ = imul.steps[27].mux.out;
+     imul.steps[13].mux.sel = imul.steps[13].in_.b & 1;
   }
-  void top_imul_res_preg_15__out_FANOUT_3()
+  void top_imul_steps_23__b_rsh_out_FANOUT_2()
   {
-     imul.steps[30].in_.res = imul.res_preg[15].out;
-     imul.steps[30].adder.in1 = imul.res_preg[15].out;
-     imul.steps[30].mux.in_[0] = imul.res_preg[15].out;
+     imul.steps[23].out.b = imul.steps[23].b_rsh.out;
+     imul.b_preg[12].in_ = imul.steps[23].b_rsh.out;
   }
   void top_imul_val_preg_10__out_FANOUT_5()
   {
@@ -897,6 +481,157 @@ public:
      imul.steps[21].out.val = imul.val_preg[10].out;
      imul.val_preg[11].in_ = imul.val_preg[10].out;
   }
+  void top_imul_steps_17__adder_out_FANOUT_1()
+  {
+     imul.steps[17].mux.in_[1] = imul.steps[17].adder.out;
+  }
+  void top_imul_val_preg_15__out_FANOUT_6()
+  {
+     sink.in_.val = imul.val_preg[15].out;
+     imul.steps[30].in_.val = imul.val_preg[15].out;
+     imul.steps[30].out.val = imul.val_preg[15].out;
+     imul.steps[31].in_.val = imul.val_preg[15].out;
+     imul.steps[31].out.val = imul.val_preg[15].out;
+     imul.resp.val = imul.val_preg[15].out;
+  }
+  void top_imul_res_preg_10__out_FANOUT_3()
+  {
+     imul.steps[20].in_.res = imul.res_preg[10].out;
+     imul.steps[20].adder.in1 = imul.res_preg[10].out;
+     imul.steps[20].mux.in_[0] = imul.res_preg[10].out;
+  }
+  void top_imul_val_preg_1__out_FANOUT_5()
+  {
+     imul.steps[2].in_.val = imul.val_preg[1].out;
+     imul.steps[2].out.val = imul.val_preg[1].out;
+     imul.steps[3].in_.val = imul.val_preg[1].out;
+     imul.steps[3].out.val = imul.val_preg[1].out;
+     imul.val_preg[2].in_ = imul.val_preg[1].out;
+  }
+  void top_imul_steps_12__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[12].out.a = imul.steps[12].a_lsh.out;
+     imul.steps[13].in_.a = imul.steps[12].a_lsh.out;
+     imul.steps[13].a_lsh.in_ = imul.steps[12].a_lsh.out;
+     imul.steps[13].adder.in0 = imul.steps[12].a_lsh.out;
+  }
+  void top_imul_steps_17__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[17].mux.sel = imul.steps[17].in_.b & 1;
+  }
+  void top_imul_a_preg_11__out_FANOUT_3()
+  {
+     imul.steps[22].in_.a = imul.a_preg[11].out;
+     imul.steps[22].a_lsh.in_ = imul.a_preg[11].out;
+     imul.steps[22].adder.in0 = imul.a_preg[11].out;
+  }
+  void top_imul_steps_14__mux_out_FANOUT_4()
+  {
+     imul.steps[14].out.res = imul.steps[14].mux.out;
+     imul.steps[15].in_.res = imul.steps[14].mux.out;
+     imul.steps[15].adder.in1 = imul.steps[14].mux.out;
+     imul.steps[15].mux.in_[0] = imul.steps[14].mux.out;
+  }
+  void top_imul_steps_23__adder_out_FANOUT_1()
+  {
+     imul.steps[23].mux.in_[1] = imul.steps[23].adder.out;
+  }
+  void top_imul_steps_16__mux_out_FANOUT_4()
+  {
+     imul.steps[16].out.res = imul.steps[16].mux.out;
+     imul.steps[17].in_.res = imul.steps[16].mux.out;
+     imul.steps[17].adder.in1 = imul.steps[16].mux.out;
+     imul.steps[17].mux.in_[0] = imul.steps[16].mux.out;
+  }
+  void top_imul_steps_2__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[2].mux.sel = imul.steps[2].in_.b & 1;
+  }
+  void top_imul_val_preg_3__out_FANOUT_5()
+  {
+     imul.steps[6].in_.val = imul.val_preg[3].out;
+     imul.steps[6].out.val = imul.val_preg[3].out;
+     imul.steps[7].in_.val = imul.val_preg[3].out;
+     imul.steps[7].out.val = imul.val_preg[3].out;
+     imul.val_preg[4].in_ = imul.val_preg[3].out;
+  }
+  void top_imul_b_preg_2__out_FANOUT_2()
+  {
+     imul.steps[4].in_.b = imul.b_preg[2].out;
+     imul.steps[4].b_rsh.in_ = imul.b_preg[2].out;
+  }
+  void top_imul_steps_27__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[27].mux.sel = imul.steps[27].in_.b & 1;
+  }
+  void top_imul_steps_0__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[0].mux.sel = imul.steps[0].in_.b & 1;
+  }
+  void top_imul_steps_20__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[20].out.b = imul.steps[20].b_rsh.out;
+     imul.steps[21].in_.b = imul.steps[20].b_rsh.out;
+     imul.steps[21].b_rsh.in_ = imul.steps[20].b_rsh.out;
+  }
+  void top_imul_steps_12__adder_out_FANOUT_1()
+  {
+     imul.steps[12].mux.in_[1] = imul.steps[12].adder.out;
+  }
+  void top_imul_b_preg_8__out_FANOUT_2()
+  {
+     imul.steps[16].in_.b = imul.b_preg[8].out;
+     imul.steps[16].b_rsh.in_ = imul.b_preg[8].out;
+  }
+  void top_imul_res_preg_14__out_FANOUT_3()
+  {
+     imul.steps[28].in_.res = imul.res_preg[14].out;
+     imul.steps[28].adder.in1 = imul.res_preg[14].out;
+     imul.steps[28].mux.in_[0] = imul.res_preg[14].out;
+  }
+  void top_src_out_msg_FANOUT_1()
+  {
+     imul.req.msg = src.out.msg;
+  }
+  void top_imul_steps_7__mux_out_FANOUT_2()
+  {
+     imul.steps[7].out.res = imul.steps[7].mux.out;
+     imul.res_preg[4].in_ = imul.steps[7].mux.out;
+  }
+  void top_imul_steps_30__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[30].out.b = imul.steps[30].b_rsh.out;
+     imul.steps[31].in_.b = imul.steps[30].b_rsh.out;
+     imul.steps[31].b_rsh.in_ = imul.steps[30].b_rsh.out;
+  }
+  void top_imul_a_preg_13__out_FANOUT_3()
+  {
+     imul.steps[26].in_.a = imul.a_preg[13].out;
+     imul.steps[26].a_lsh.in_ = imul.a_preg[13].out;
+     imul.steps[26].adder.in0 = imul.a_preg[13].out;
+  }
+  void top_imul_res_preg_1__out_FANOUT_3()
+  {
+     imul.steps[2].in_.res = imul.res_preg[1].out;
+     imul.steps[2].adder.in1 = imul.res_preg[1].out;
+     imul.steps[2].mux.in_[0] = imul.res_preg[1].out;
+  }
+  void top_imul_steps_6__mux_out_FANOUT_4()
+  {
+     imul.steps[6].out.res = imul.steps[6].mux.out;
+     imul.steps[7].in_.res = imul.steps[6].mux.out;
+     imul.steps[7].adder.in1 = imul.steps[6].mux.out;
+     imul.steps[7].mux.in_[0] = imul.steps[6].mux.out;
+  }
+  void top_imul_steps_9__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[9].out.a = imul.steps[9].a_lsh.out;
+     imul.a_preg[5].in_ = imul.steps[9].a_lsh.out;
+  }
+  void top_imul_steps_29__adder_out_FANOUT_1()
+  {
+     imul.steps[29].mux.in_[1] = imul.steps[29].adder.out;
+  }
   void top_imul_val_preg_7__out_FANOUT_5()
   {
      imul.steps[14].in_.val = imul.val_preg[7].out;
@@ -905,64 +640,163 @@ public:
      imul.steps[15].out.val = imul.val_preg[7].out;
      imul.val_preg[8].in_ = imul.val_preg[7].out;
   }
-  void top_imul_steps_24__b_rsh_out_FANOUT_3()
+  void top_imul_steps_11__mux_out_FANOUT_2()
   {
-     imul.steps[24].out.b = imul.steps[24].b_rsh.out;
-     imul.steps[25].in_.b = imul.steps[24].b_rsh.out;
-     imul.steps[25].b_rsh.in_ = imul.steps[24].b_rsh.out;
+     imul.steps[11].out.res = imul.steps[11].mux.out;
+     imul.res_preg[6].in_ = imul.steps[11].mux.out;
   }
-  void top_imul_b_preg_2__out_FANOUT_2()
+  void top_imul_steps_16__in__b_0_1__FANOUT_1()
   {
-     imul.steps[4].in_.b = imul.b_preg[2].out;
-     imul.steps[4].b_rsh.in_ = imul.b_preg[2].out;
+     imul.steps[16].mux.sel = imul.steps[16].in_.b & 1;
   }
-  void top_imul_a_preg_6__out_FANOUT_3()
+  void top_imul_steps_26__mux_out_FANOUT_4()
   {
-     imul.steps[12].in_.a = imul.a_preg[6].out;
-     imul.steps[12].a_lsh.in_ = imul.a_preg[6].out;
-     imul.steps[12].adder.in0 = imul.a_preg[6].out;
+     imul.steps[26].out.res = imul.steps[26].mux.out;
+     imul.steps[27].in_.res = imul.steps[26].mux.out;
+     imul.steps[27].adder.in1 = imul.steps[26].mux.out;
+     imul.steps[27].mux.in_[0] = imul.steps[26].mux.out;
   }
-  void top_imul_steps_9__adder_out_FANOUT_1()
+  void top_imul_steps_13__b_rsh_out_FANOUT_2()
   {
-     imul.steps[9].mux.in_[1] = imul.steps[9].adder.out;
+     imul.steps[13].out.b = imul.steps[13].b_rsh.out;
+     imul.b_preg[7].in_ = imul.steps[13].b_rsh.out;
   }
-  void top_imul_steps_28__a_lsh_out_FANOUT_4()
+  void top_imul_steps_0__adder_out_FANOUT_1()
   {
-     imul.steps[28].out.a = imul.steps[28].a_lsh.out;
-     imul.steps[29].in_.a = imul.steps[28].a_lsh.out;
-     imul.steps[29].a_lsh.in_ = imul.steps[28].a_lsh.out;
-     imul.steps[29].adder.in0 = imul.steps[28].a_lsh.out;
+     imul.steps[0].mux.in_[1] = imul.steps[0].adder.out;
   }
-  void top_imul_steps_3__a_lsh_out_FANOUT_2()
+  void top_imul_steps_0__b_rsh_out_FANOUT_3()
   {
-     imul.steps[3].out.a = imul.steps[3].a_lsh.out;
-     imul.a_preg[2].in_ = imul.steps[3].a_lsh.out;
+     imul.steps[0].out.b = imul.steps[0].b_rsh.out;
+     imul.steps[1].in_.b = imul.steps[0].b_rsh.out;
+     imul.steps[1].b_rsh.in_ = imul.steps[0].b_rsh.out;
   }
-  void top_imul_steps_31__b_rsh_out_FANOUT_1()
+  void top_imul_val_preg_9__out_FANOUT_5()
   {
-     imul.steps[31].out.b = imul.steps[31].b_rsh.out;
+     imul.steps[18].in_.val = imul.val_preg[9].out;
+     imul.steps[18].out.val = imul.val_preg[9].out;
+     imul.steps[19].in_.val = imul.val_preg[9].out;
+     imul.steps[19].out.val = imul.val_preg[9].out;
+     imul.val_preg[10].in_ = imul.val_preg[9].out;
   }
-  void top_imul_steps_7__adder_out_FANOUT_1()
+  void top_imul_res_preg_5__out_FANOUT_3()
   {
-     imul.steps[7].mux.in_[1] = imul.steps[7].adder.out;
+     imul.steps[10].in_.res = imul.res_preg[5].out;
+     imul.steps[10].adder.in1 = imul.res_preg[5].out;
+     imul.steps[10].mux.in_[0] = imul.res_preg[5].out;
   }
-  void top_imul_steps_29__a_lsh_out_FANOUT_2()
+  void top_imul_b_preg_12__out_FANOUT_2()
   {
-     imul.steps[29].out.a = imul.steps[29].a_lsh.out;
-     imul.a_preg[15].in_ = imul.steps[29].a_lsh.out;
+     imul.steps[24].in_.b = imul.b_preg[12].out;
+     imul.steps[24].b_rsh.in_ = imul.b_preg[12].out;
+  }
+  void top_imul_steps_14__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[14].out.a = imul.steps[14].a_lsh.out;
+     imul.steps[15].in_.a = imul.steps[14].a_lsh.out;
+     imul.steps[15].a_lsh.in_ = imul.steps[14].a_lsh.out;
+     imul.steps[15].adder.in0 = imul.steps[14].a_lsh.out;
+  }
+  void top_imul_res_preg_9__out_FANOUT_3()
+  {
+     imul.steps[18].in_.res = imul.res_preg[9].out;
+     imul.steps[18].adder.in1 = imul.res_preg[9].out;
+     imul.steps[18].mux.in_[0] = imul.res_preg[9].out;
+  }
+  void top_imul_steps_0__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[0].out.a = imul.steps[0].a_lsh.out;
+     imul.steps[1].in_.a = imul.steps[0].a_lsh.out;
+     imul.steps[1].a_lsh.in_ = imul.steps[0].a_lsh.out;
+     imul.steps[1].adder.in0 = imul.steps[0].a_lsh.out;
+  }
+  void top_imul_steps_14__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[14].mux.sel = imul.steps[14].in_.b & 1;
+  }
+  void top_imul_steps_5__mux_out_FANOUT_2()
+  {
+     imul.steps[5].out.res = imul.steps[5].mux.out;
+     imul.res_preg[3].in_ = imul.steps[5].mux.out;
   }
   void top_imul_steps_21__a_lsh_out_FANOUT_2()
   {
      imul.steps[21].out.a = imul.steps[21].a_lsh.out;
      imul.a_preg[11].in_ = imul.steps[21].a_lsh.out;
   }
-  void top_imul_val_preg_14__out_FANOUT_5()
+  void top_imul_steps_19__mux_out_FANOUT_2()
   {
-     imul.steps[28].in_.val = imul.val_preg[14].out;
-     imul.steps[28].out.val = imul.val_preg[14].out;
-     imul.steps[29].in_.val = imul.val_preg[14].out;
-     imul.steps[29].out.val = imul.val_preg[14].out;
-     imul.val_preg[15].in_ = imul.val_preg[14].out;
+     imul.steps[19].out.res = imul.steps[19].mux.out;
+     imul.res_preg[10].in_ = imul.steps[19].mux.out;
+  }
+  void top_imul_a_preg_15__out_FANOUT_3()
+  {
+     imul.steps[30].in_.a = imul.a_preg[15].out;
+     imul.steps[30].a_lsh.in_ = imul.a_preg[15].out;
+     imul.steps[30].adder.in0 = imul.a_preg[15].out;
+  }
+  void top_imul_steps_2__mux_out_FANOUT_4()
+  {
+     imul.steps[2].out.res = imul.steps[2].mux.out;
+     imul.steps[3].in_.res = imul.steps[2].mux.out;
+     imul.steps[3].adder.in1 = imul.steps[2].mux.out;
+     imul.steps[3].mux.in_[0] = imul.steps[2].mux.out;
+  }
+  void top_imul_steps_4__mux_out_FANOUT_4()
+  {
+     imul.steps[4].out.res = imul.steps[4].mux.out;
+     imul.steps[5].in_.res = imul.steps[4].mux.out;
+     imul.steps[5].adder.in1 = imul.steps[4].mux.out;
+     imul.steps[5].mux.in_[0] = imul.steps[4].mux.out;
+  }
+  void top_imul_val_preg_11__out_FANOUT_5()
+  {
+     imul.steps[22].in_.val = imul.val_preg[11].out;
+     imul.steps[22].out.val = imul.val_preg[11].out;
+     imul.steps[23].in_.val = imul.val_preg[11].out;
+     imul.steps[23].out.val = imul.val_preg[11].out;
+     imul.val_preg[12].in_ = imul.val_preg[11].out;
+  }
+  void top_imul_steps_12__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[12].out.b = imul.steps[12].b_rsh.out;
+     imul.steps[13].in_.b = imul.steps[12].b_rsh.out;
+     imul.steps[13].b_rsh.in_ = imul.steps[12].b_rsh.out;
+  }
+  void top_imul_steps_25__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[25].out.a = imul.steps[25].a_lsh.out;
+     imul.a_preg[13].in_ = imul.steps[25].a_lsh.out;
+  }
+  void top_imul_b_preg_6__out_FANOUT_2()
+  {
+     imul.steps[12].in_.b = imul.b_preg[6].out;
+     imul.steps[12].b_rsh.in_ = imul.b_preg[6].out;
+  }
+  void top_imul_steps_31__mux_out_FANOUT_3()
+  {
+     sink.in_.msg = imul.steps[31].mux.out;
+     imul.steps[31].out.res = imul.steps[31].mux.out;
+     imul.resp.msg = imul.steps[31].mux.out;
+  }
+  void top_imul_steps_23__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[23].out.a = imul.steps[23].a_lsh.out;
+     imul.a_preg[12].in_ = imul.steps[23].a_lsh.out;
+  }
+  void top_imul_steps_23__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[23].mux.sel = imul.steps[23].in_.b & 1;
+  }
+  void top_imul_steps_29__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[29].out.a = imul.steps[29].a_lsh.out;
+     imul.a_preg[15].in_ = imul.steps[29].a_lsh.out;
+  }
+  void top_imul_steps_19__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[19].out.a = imul.steps[19].a_lsh.out;
+     imul.a_preg[10].in_ = imul.steps[19].a_lsh.out;
   }
   void top_imul_val_preg_0__out_FANOUT_5()
   {
@@ -972,43 +806,132 @@ public:
      imul.steps[1].out.val = imul.val_preg[0].out;
      imul.val_preg[1].in_ = imul.val_preg[0].out;
   }
-  void top_imul_steps_1__b_rsh_out_FANOUT_2()
+  void top_imul_steps_10__mux_out_FANOUT_4()
   {
-     imul.steps[1].out.b = imul.steps[1].b_rsh.out;
-     imul.b_preg[1].in_ = imul.steps[1].b_rsh.out;
-  }
-  void top_imul_a_preg_9__out_FANOUT_3()
-  {
-     imul.steps[18].in_.a = imul.a_preg[9].out;
-     imul.steps[18].a_lsh.in_ = imul.a_preg[9].out;
-     imul.steps[18].adder.in0 = imul.a_preg[9].out;
-  }
-  void top_imul_steps_13__a_lsh_out_FANOUT_2()
-  {
-     imul.steps[13].out.a = imul.steps[13].a_lsh.out;
-     imul.a_preg[7].in_ = imul.steps[13].a_lsh.out;
-  }
-  void top_imul_res_preg_12__out_FANOUT_3()
-  {
-     imul.steps[24].in_.res = imul.res_preg[12].out;
-     imul.steps[24].adder.in1 = imul.res_preg[12].out;
-     imul.steps[24].mux.in_[0] = imul.res_preg[12].out;
+     imul.steps[10].out.res = imul.steps[10].mux.out;
+     imul.steps[11].in_.res = imul.steps[10].mux.out;
+     imul.steps[11].adder.in1 = imul.steps[10].mux.out;
+     imul.steps[11].mux.in_[0] = imul.steps[10].mux.out;
   }
   void top_imul_steps_3__mux_out_FANOUT_2()
   {
      imul.steps[3].out.res = imul.steps[3].mux.out;
      imul.res_preg[2].in_ = imul.steps[3].mux.out;
   }
-  void top_imul_steps_18__adder_out_FANOUT_1()
+  void top_imul_steps_30__adder_out_FANOUT_1()
   {
-     imul.steps[18].mux.in_[1] = imul.steps[18].adder.out;
+     imul.steps[30].mux.in_[1] = imul.steps[30].adder.out;
   }
-  void top_imul_steps_16__mux_out_FANOUT_4()
+  void top_imul_steps_18__mux_out_FANOUT_4()
   {
-     imul.steps[16].out.res = imul.steps[16].mux.out;
-     imul.steps[17].in_.res = imul.steps[16].mux.out;
-     imul.steps[17].adder.in1 = imul.steps[16].mux.out;
-     imul.steps[17].mux.in_[0] = imul.steps[16].mux.out;
+     imul.steps[18].out.res = imul.steps[18].mux.out;
+     imul.steps[19].in_.res = imul.steps[18].mux.out;
+     imul.steps[19].adder.in1 = imul.steps[18].mux.out;
+     imul.steps[19].mux.in_[0] = imul.steps[18].mux.out;
+  }
+  void top_imul_steps_21__adder_out_FANOUT_1()
+  {
+     imul.steps[21].mux.in_[1] = imul.steps[21].adder.out;
+  }
+  void top_imul_steps_15__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[15].mux.sel = imul.steps[15].in_.b & 1;
+  }
+  void top_imul_steps_8__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[8].out.b = imul.steps[8].b_rsh.out;
+     imul.steps[9].in_.b = imul.steps[8].b_rsh.out;
+     imul.steps[9].b_rsh.in_ = imul.steps[8].b_rsh.out;
+  }
+  void top_imul_steps_4__adder_out_FANOUT_1()
+  {
+     imul.steps[4].mux.in_[1] = imul.steps[4].adder.out;
+  }
+  void top_imul_val_preg_2__out_FANOUT_5()
+  {
+     imul.steps[4].in_.val = imul.val_preg[2].out;
+     imul.steps[4].out.val = imul.val_preg[2].out;
+     imul.steps[5].in_.val = imul.val_preg[2].out;
+     imul.steps[5].out.val = imul.val_preg[2].out;
+     imul.val_preg[3].in_ = imul.val_preg[2].out;
+  }
+  void top_imul_steps_16__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[16].out.b = imul.steps[16].b_rsh.out;
+     imul.steps[17].in_.b = imul.steps[16].b_rsh.out;
+     imul.steps[17].b_rsh.in_ = imul.steps[16].b_rsh.out;
+  }
+  void top_imul_steps_25__adder_out_FANOUT_1()
+  {
+     imul.steps[25].mux.in_[1] = imul.steps[25].adder.out;
+  }
+  void top_imul_a_preg_5__out_FANOUT_3()
+  {
+     imul.steps[10].in_.a = imul.a_preg[5].out;
+     imul.steps[10].a_lsh.in_ = imul.a_preg[5].out;
+     imul.steps[10].adder.in0 = imul.a_preg[5].out;
+  }
+  void top_imul_steps_13__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[13].out.a = imul.steps[13].a_lsh.out;
+     imul.a_preg[7].in_ = imul.steps[13].a_lsh.out;
+  }
+  void top_imul_res_preg_2__out_FANOUT_3()
+  {
+     imul.steps[4].in_.res = imul.res_preg[2].out;
+     imul.steps[4].adder.in1 = imul.res_preg[2].out;
+     imul.steps[4].mux.in_[0] = imul.res_preg[2].out;
+  }
+  void top_imul_steps_1__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[1].out.a = imul.steps[1].a_lsh.out;
+     imul.a_preg[1].in_ = imul.steps[1].a_lsh.out;
+  }
+  void top_imul_steps_28__adder_out_FANOUT_1()
+  {
+     imul.steps[28].mux.in_[1] = imul.steps[28].adder.out;
+  }
+  void top_imul_res_preg_0__out_FANOUT_3()
+  {
+     imul.steps[0].in_.res = imul.res_preg[0].out;
+     imul.steps[0].adder.in1 = imul.res_preg[0].out;
+     imul.steps[0].mux.in_[0] = imul.res_preg[0].out;
+  }
+  void top_imul_b_preg_7__out_FANOUT_2()
+  {
+     imul.steps[14].in_.b = imul.b_preg[7].out;
+     imul.steps[14].b_rsh.in_ = imul.b_preg[7].out;
+  }
+  void top_imul_res_preg_8__out_FANOUT_3()
+  {
+     imul.steps[16].in_.res = imul.res_preg[8].out;
+     imul.steps[16].adder.in1 = imul.res_preg[8].out;
+     imul.steps[16].mux.in_[0] = imul.res_preg[8].out;
+  }
+  void top_imul_steps_11__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[11].mux.sel = imul.steps[11].in_.b & 1;
+  }
+  void top_imul_steps_8__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[8].mux.sel = imul.steps[8].in_.b & 1;
+  }
+  void top_imul_steps_18__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[18].out.a = imul.steps[18].a_lsh.out;
+     imul.steps[19].in_.a = imul.steps[18].a_lsh.out;
+     imul.steps[19].a_lsh.in_ = imul.steps[18].a_lsh.out;
+     imul.steps[19].adder.in0 = imul.steps[18].a_lsh.out;
+  }
+  void top_imul_steps_5__b_rsh_out_FANOUT_2()
+  {
+     imul.steps[5].out.b = imul.steps[5].b_rsh.out;
+     imul.b_preg[3].in_ = imul.steps[5].b_rsh.out;
+  }
+  void top_src_out_val_FANOUT_2()
+  {
+     imul.req.val = src.out.val;
+     imul.val_preg[0].in_ = src.out.val;
   }
   void top_imul_steps_8__a_lsh_out_FANOUT_4()
   {
@@ -1017,61 +940,155 @@ public:
      imul.steps[9].a_lsh.in_ = imul.steps[8].a_lsh.out;
      imul.steps[9].adder.in0 = imul.steps[8].a_lsh.out;
   }
-  void top_imul_steps_9__a_lsh_out_FANOUT_2()
+  void top_imul_steps_30__a_lsh_out_FANOUT_4()
   {
-     imul.steps[9].out.a = imul.steps[9].a_lsh.out;
-     imul.a_preg[5].in_ = imul.steps[9].a_lsh.out;
+     imul.steps[30].out.a = imul.steps[30].a_lsh.out;
+     imul.steps[31].in_.a = imul.steps[30].a_lsh.out;
+     imul.steps[31].a_lsh.in_ = imul.steps[30].a_lsh.out;
+     imul.steps[31].adder.in0 = imul.steps[30].a_lsh.out;
   }
-  void top_imul_steps_5__b_rsh_out_FANOUT_2()
+  void top_imul_steps_26__b_rsh_out_FANOUT_3()
   {
-     imul.steps[5].out.b = imul.steps[5].b_rsh.out;
-     imul.b_preg[3].in_ = imul.steps[5].b_rsh.out;
+     imul.steps[26].out.b = imul.steps[26].b_rsh.out;
+     imul.steps[27].in_.b = imul.steps[26].b_rsh.out;
+     imul.steps[27].b_rsh.in_ = imul.steps[26].b_rsh.out;
   }
-  void top_imul_steps_20__b_rsh_out_FANOUT_3()
+  void top_imul_steps_21__in__b_0_1__FANOUT_1()
   {
-     imul.steps[20].out.b = imul.steps[20].b_rsh.out;
-     imul.steps[21].in_.b = imul.steps[20].b_rsh.out;
-     imul.steps[21].b_rsh.in_ = imul.steps[20].b_rsh.out;
+     imul.steps[21].mux.sel = imul.steps[21].in_.b & 1;
   }
-  void top_imul_steps_14__mux_out_FANOUT_4()
+  void top_imul_val_preg_6__out_FANOUT_5()
   {
-     imul.steps[14].out.res = imul.steps[14].mux.out;
-     imul.steps[15].in_.res = imul.steps[14].mux.out;
-     imul.steps[15].adder.in1 = imul.steps[14].mux.out;
-     imul.steps[15].mux.in_[0] = imul.steps[14].mux.out;
+     imul.steps[12].in_.val = imul.val_preg[6].out;
+     imul.steps[12].out.val = imul.val_preg[6].out;
+     imul.steps[13].in_.val = imul.val_preg[6].out;
+     imul.steps[13].out.val = imul.val_preg[6].out;
+     imul.val_preg[7].in_ = imul.val_preg[6].out;
   }
-  void top_imul_steps_22__b_rsh_out_FANOUT_3()
+  void top_imul_steps_18__adder_out_FANOUT_1()
   {
-     imul.steps[22].out.b = imul.steps[22].b_rsh.out;
-     imul.steps[23].in_.b = imul.steps[22].b_rsh.out;
-     imul.steps[23].b_rsh.in_ = imul.steps[22].b_rsh.out;
+     imul.steps[18].mux.in_[1] = imul.steps[18].adder.out;
   }
-  void top_imul_steps_10__adder_out_FANOUT_1()
+  void top_imul_a_preg_8__out_FANOUT_3()
   {
-     imul.steps[10].mux.in_[1] = imul.steps[10].adder.out;
+     imul.steps[16].in_.a = imul.a_preg[8].out;
+     imul.steps[16].a_lsh.in_ = imul.a_preg[8].out;
+     imul.steps[16].adder.in0 = imul.a_preg[8].out;
   }
-  void top_imul_val_preg_5__out_FANOUT_5()
+  void top_imul_steps_11__b_rsh_out_FANOUT_2()
   {
-     imul.steps[10].in_.val = imul.val_preg[5].out;
-     imul.steps[10].out.val = imul.val_preg[5].out;
-     imul.steps[11].in_.val = imul.val_preg[5].out;
-     imul.steps[11].out.val = imul.val_preg[5].out;
-     imul.val_preg[6].in_ = imul.val_preg[5].out;
+     imul.steps[11].out.b = imul.steps[11].b_rsh.out;
+     imul.b_preg[6].in_ = imul.steps[11].b_rsh.out;
   }
-  void top_imul_steps_16__b_rsh_out_FANOUT_3()
+  void top_imul_steps_28__a_lsh_out_FANOUT_4()
   {
-     imul.steps[16].out.b = imul.steps[16].b_rsh.out;
-     imul.steps[17].in_.b = imul.steps[16].b_rsh.out;
-     imul.steps[17].b_rsh.in_ = imul.steps[16].b_rsh.out;
+     imul.steps[28].out.a = imul.steps[28].a_lsh.out;
+     imul.steps[29].in_.a = imul.steps[28].a_lsh.out;
+     imul.steps[29].a_lsh.in_ = imul.steps[28].a_lsh.out;
+     imul.steps[29].adder.in0 = imul.steps[28].a_lsh.out;
   }
-  void top_imul_res_preg_2__out_FANOUT_3()
+  void top_imul_steps_1__adder_out_FANOUT_1()
   {
-     imul.steps[4].in_.res = imul.res_preg[2].out;
-     imul.steps[4].adder.in1 = imul.res_preg[2].out;
-     imul.steps[4].mux.in_[0] = imul.res_preg[2].out;
+     imul.steps[1].mux.in_[1] = imul.steps[1].adder.out;
   }
-  void top_sink_rdy_FANOUT_67()
+  void top_imul_res_preg_4__out_FANOUT_3()
   {
+     imul.steps[8].in_.res = imul.res_preg[4].out;
+     imul.steps[8].adder.in1 = imul.res_preg[4].out;
+     imul.steps[8].mux.in_[0] = imul.res_preg[4].out;
+  }
+  void top_imul_b_preg_11__out_FANOUT_2()
+  {
+     imul.steps[22].in_.b = imul.b_preg[11].out;
+     imul.steps[22].b_rsh.in_ = imul.b_preg[11].out;
+  }
+  void top_imul_steps_20__adder_out_FANOUT_1()
+  {
+     imul.steps[20].mux.in_[1] = imul.steps[20].adder.out;
+  }
+  void top_imul_b_preg_14__out_FANOUT_2()
+  {
+     imul.steps[28].in_.b = imul.b_preg[14].out;
+     imul.steps[28].b_rsh.in_ = imul.b_preg[14].out;
+  }
+  void top_imul_a_preg_6__out_FANOUT_3()
+  {
+     imul.steps[12].in_.a = imul.a_preg[6].out;
+     imul.steps[12].a_lsh.in_ = imul.a_preg[6].out;
+     imul.steps[12].adder.in0 = imul.a_preg[6].out;
+  }
+  void top_imul_steps_7__adder_out_FANOUT_1()
+  {
+     imul.steps[7].mux.in_[1] = imul.steps[7].adder.out;
+  }
+  void top_imul_steps_24__mux_out_FANOUT_4()
+  {
+     imul.steps[24].out.res = imul.steps[24].mux.out;
+     imul.steps[25].in_.res = imul.steps[24].mux.out;
+     imul.steps[25].adder.in1 = imul.steps[24].mux.out;
+     imul.steps[25].mux.in_[0] = imul.steps[24].mux.out;
+  }
+  void top_imul_steps_22__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[22].mux.sel = imul.steps[22].in_.b & 1;
+  }
+  void top_imul_steps_9__adder_out_FANOUT_1()
+  {
+     imul.steps[9].mux.in_[1] = imul.steps[9].adder.out;
+  }
+  void top_imul_steps_19__b_rsh_out_FANOUT_2()
+  {
+     imul.steps[19].out.b = imul.steps[19].b_rsh.out;
+     imul.b_preg[10].in_ = imul.steps[19].b_rsh.out;
+  }
+  void top_imul_steps_26__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[26].mux.sel = imul.steps[26].in_.b & 1;
+  }
+  void top_imul_steps_8__mux_out_FANOUT_4()
+  {
+     imul.steps[8].out.res = imul.steps[8].mux.out;
+     imul.steps[9].in_.res = imul.steps[8].mux.out;
+     imul.steps[9].adder.in1 = imul.steps[8].mux.out;
+     imul.steps[9].mux.in_[0] = imul.steps[8].mux.out;
+  }
+  void top_imul_steps_2__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[2].out.b = imul.steps[2].b_rsh.out;
+     imul.steps[3].in_.b = imul.steps[2].b_rsh.out;
+     imul.steps[3].b_rsh.in_ = imul.steps[2].b_rsh.out;
+  }
+  void top_imul_steps_28__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[28].mux.sel = imul.steps[28].in_.b & 1;
+  }
+  void top_imul_steps_28__mux_out_FANOUT_4()
+  {
+     imul.steps[28].out.res = imul.steps[28].mux.out;
+     imul.steps[29].in_.res = imul.steps[28].mux.out;
+     imul.steps[29].adder.in1 = imul.steps[28].mux.out;
+     imul.steps[29].mux.in_[0] = imul.steps[28].mux.out;
+  }
+  void top_imul_a_preg_10__out_FANOUT_3()
+  {
+     imul.steps[20].in_.a = imul.a_preg[10].out;
+     imul.steps[20].a_lsh.in_ = imul.a_preg[10].out;
+     imul.steps[20].adder.in0 = imul.a_preg[10].out;
+  }
+  void top_imul_steps_27__mux_out_FANOUT_2()
+  {
+     imul.steps[27].out.res = imul.steps[27].mux.out;
+     imul.res_preg[14].in_ = imul.steps[27].mux.out;
+  }
+  void top_imul_res_preg_7__out_FANOUT_3()
+  {
+     imul.steps[14].in_.res = imul.res_preg[7].out;
+     imul.steps[14].adder.in1 = imul.res_preg[7].out;
+     imul.steps[14].mux.in_[0] = imul.res_preg[7].out;
+  }
+  void top_sink_in__rdy_FANOUT_67()
+  {
+     src.out.rdy = sink.in_.rdy;
      imul.resp.rdy = sink.in_.rdy;
      imul.a_preg[0].en = sink.in_.rdy;
      imul.b_preg[0].en = sink.in_.rdy;
@@ -1138,63 +1155,57 @@ public:
      imul.val_preg[15].en = sink.in_.rdy;
      imul.res_preg[15].en = sink.in_.rdy;
      imul.req.rdy = sink.in_.rdy;
-     src.out.rdy = sink.in_.rdy;
   }
-  void top_imul_steps_30__a_lsh_out_FANOUT_4()
+  void top_imul_steps_24__in__b_0_1__FANOUT_1()
   {
-     imul.steps[30].out.a = imul.steps[30].a_lsh.out;
-     imul.steps[31].in_.a = imul.steps[30].a_lsh.out;
-     imul.steps[31].a_lsh.in_ = imul.steps[30].a_lsh.out;
-     imul.steps[31].adder.in0 = imul.steps[30].a_lsh.out;
+     imul.steps[24].mux.sel = imul.steps[24].in_.b & 1;
   }
-  void top_imul_steps_0__b_rsh_out_FANOUT_3()
+  void top_imul_steps_10__b_rsh_out_FANOUT_3()
   {
-     imul.steps[0].out.b = imul.steps[0].b_rsh.out;
-     imul.steps[1].in_.b = imul.steps[0].b_rsh.out;
-     imul.steps[1].b_rsh.in_ = imul.steps[0].b_rsh.out;
+     imul.steps[10].out.b = imul.steps[10].b_rsh.out;
+     imul.steps[11].in_.b = imul.steps[10].b_rsh.out;
+     imul.steps[11].b_rsh.in_ = imul.steps[10].b_rsh.out;
   }
-  void top_imul_steps_8__mux_out_FANOUT_4()
+  void top_imul_b_preg_5__out_FANOUT_2()
   {
-     imul.steps[8].out.res = imul.steps[8].mux.out;
-     imul.steps[9].in_.res = imul.steps[8].mux.out;
-     imul.steps[9].adder.in1 = imul.steps[8].mux.out;
-     imul.steps[9].mux.in_[0] = imul.steps[8].mux.out;
+     imul.steps[10].in_.b = imul.b_preg[5].out;
+     imul.steps[10].b_rsh.in_ = imul.b_preg[5].out;
   }
-  void top_imul_steps_14__adder_out_FANOUT_1()
+  void top_imul_steps_31__in__b_0_1__FANOUT_1()
   {
-     imul.steps[14].mux.in_[1] = imul.steps[14].adder.out;
+     imul.steps[31].mux.sel = imul.steps[31].in_.b & 1;
   }
-  void top_imul_b_preg_11__out_FANOUT_2()
+  void top_imul_steps_31__b_rsh_out_FANOUT_1()
   {
-     imul.steps[22].in_.b = imul.b_preg[11].out;
-     imul.steps[22].b_rsh.in_ = imul.b_preg[11].out;
+     imul.steps[31].out.b = imul.steps[31].b_rsh.out;
   }
-  void top_imul_steps_15__b_rsh_out_FANOUT_2()
+  void top_imul_a_preg_2__out_FANOUT_3()
   {
-     imul.steps[15].out.b = imul.steps[15].b_rsh.out;
-     imul.b_preg[8].in_ = imul.steps[15].b_rsh.out;
+     imul.steps[4].in_.a = imul.a_preg[2].out;
+     imul.steps[4].a_lsh.in_ = imul.a_preg[2].out;
+     imul.steps[4].adder.in0 = imul.a_preg[2].out;
   }
-  void top_imul_steps_6__mux_out_FANOUT_4()
+  void top_imul_steps_3__a_lsh_out_FANOUT_2()
   {
-     imul.steps[6].out.res = imul.steps[6].mux.out;
-     imul.steps[7].in_.res = imul.steps[6].mux.out;
-     imul.steps[7].adder.in1 = imul.steps[6].mux.out;
-     imul.steps[7].mux.in_[0] = imul.steps[6].mux.out;
+     imul.steps[3].out.a = imul.steps[3].a_lsh.out;
+     imul.a_preg[2].in_ = imul.steps[3].a_lsh.out;
   }
-  void top_imul_steps_25__b_rsh_out_FANOUT_2()
+  void top_imul_steps_7__b_rsh_out_FANOUT_2()
   {
-     imul.steps[25].out.b = imul.steps[25].b_rsh.out;
-     imul.b_preg[13].in_ = imul.steps[25].b_rsh.out;
+     imul.steps[7].out.b = imul.steps[7].b_rsh.out;
+     imul.b_preg[4].in_ = imul.steps[7].b_rsh.out;
   }
-  void top_imul_steps_21__adder_out_FANOUT_1()
+  void top_imul_b_preg_1__out_FANOUT_2()
   {
-     imul.steps[21].mux.in_[1] = imul.steps[21].adder.out;
+     imul.steps[2].in_.b = imul.b_preg[1].out;
+     imul.steps[2].b_rsh.in_ = imul.b_preg[1].out;
   }
-  void top_imul_a_preg_1__out_FANOUT_3()
+  void top_imul_steps_12__mux_out_FANOUT_4()
   {
-     imul.steps[2].in_.a = imul.a_preg[1].out;
-     imul.steps[2].a_lsh.in_ = imul.a_preg[1].out;
-     imul.steps[2].adder.in0 = imul.a_preg[1].out;
+     imul.steps[12].out.res = imul.steps[12].mux.out;
+     imul.steps[13].in_.res = imul.steps[12].mux.out;
+     imul.steps[13].adder.in1 = imul.steps[12].mux.out;
+     imul.steps[13].mux.in_[0] = imul.steps[12].mux.out;
   }
   void top_imul_steps_26__a_lsh_out_FANOUT_4()
   {
@@ -1203,77 +1214,237 @@ public:
      imul.steps[27].a_lsh.in_ = imul.steps[26].a_lsh.out;
      imul.steps[27].adder.in0 = imul.steps[26].a_lsh.out;
   }
-  void top_imul_steps_28__adder_out_FANOUT_1()
+  void top_imul_steps_19__in__b_0_1__FANOUT_1()
   {
-     imul.steps[28].mux.in_[1] = imul.steps[28].adder.out;
+     imul.steps[19].mux.sel = imul.steps[19].in_.b & 1;
   }
-  void top_imul_val_preg_9__out_FANOUT_5()
+  void top_imul_steps_16__a_lsh_out_FANOUT_4()
   {
-     imul.steps[18].in_.val = imul.val_preg[9].out;
-     imul.steps[18].out.val = imul.val_preg[9].out;
-     imul.steps[19].in_.val = imul.val_preg[9].out;
-     imul.steps[19].out.val = imul.val_preg[9].out;
-     imul.val_preg[10].in_ = imul.val_preg[9].out;
+     imul.steps[16].out.a = imul.steps[16].a_lsh.out;
+     imul.steps[17].in_.a = imul.steps[16].a_lsh.out;
+     imul.steps[17].a_lsh.in_ = imul.steps[16].a_lsh.out;
+     imul.steps[17].adder.in0 = imul.steps[16].a_lsh.out;
   }
-  void top_imul_steps_29__adder_out_FANOUT_1()
+  void top_imul_steps_27__adder_out_FANOUT_1()
   {
-     imul.steps[29].mux.in_[1] = imul.steps[29].adder.out;
+     imul.steps[27].mux.in_[1] = imul.steps[27].adder.out;
   }
-  void top_imul_steps_26__b_rsh_out_FANOUT_3()
+  void top_imul_res_preg_12__out_FANOUT_3()
   {
-     imul.steps[26].out.b = imul.steps[26].b_rsh.out;
-     imul.steps[27].in_.b = imul.steps[26].b_rsh.out;
-     imul.steps[27].b_rsh.in_ = imul.steps[26].b_rsh.out;
+     imul.steps[24].in_.res = imul.res_preg[12].out;
+     imul.steps[24].adder.in1 = imul.res_preg[12].out;
+     imul.steps[24].mux.in_[0] = imul.res_preg[12].out;
   }
-  void top_imul_steps_24__a_lsh_out_FANOUT_4()
+  void top_imul_a_preg_7__out_FANOUT_3()
   {
-     imul.steps[24].out.a = imul.steps[24].a_lsh.out;
-     imul.steps[25].in_.a = imul.steps[24].a_lsh.out;
-     imul.steps[25].a_lsh.in_ = imul.steps[24].a_lsh.out;
-     imul.steps[25].adder.in0 = imul.steps[24].a_lsh.out;
+     imul.steps[14].in_.a = imul.a_preg[7].out;
+     imul.steps[14].a_lsh.in_ = imul.a_preg[7].out;
+     imul.steps[14].adder.in0 = imul.a_preg[7].out;
+  }
+  void top_imul_steps_6__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[6].mux.sel = imul.steps[6].in_.b & 1;
+  }
+  void top_imul_steps_7__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[7].out.a = imul.steps[7].a_lsh.out;
+     imul.a_preg[4].in_ = imul.steps[7].a_lsh.out;
+  }
+  void top_imul_steps_29__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[29].mux.sel = imul.steps[29].in_.b & 1;
+  }
+  void top_imul_steps_31__adder_out_FANOUT_1()
+  {
+     imul.steps[31].mux.in_[1] = imul.steps[31].adder.out;
+  }
+  void top_imul_steps_22__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[22].out.b = imul.steps[22].b_rsh.out;
+     imul.steps[23].in_.b = imul.steps[22].b_rsh.out;
+     imul.steps[23].b_rsh.in_ = imul.steps[22].b_rsh.out;
+  }
+  void top_imul_steps_24__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[24].out.b = imul.steps[24].b_rsh.out;
+     imul.steps[25].in_.b = imul.steps[24].b_rsh.out;
+     imul.steps[25].b_rsh.in_ = imul.steps[24].b_rsh.out;
+  }
+  void top_imul_steps_3__b_rsh_out_FANOUT_2()
+  {
+     imul.steps[3].out.b = imul.steps[3].b_rsh.out;
+     imul.b_preg[2].in_ = imul.steps[3].b_rsh.out;
+  }
+  void top_imul_val_preg_5__out_FANOUT_5()
+  {
+     imul.steps[10].in_.val = imul.val_preg[5].out;
+     imul.steps[10].out.val = imul.val_preg[5].out;
+     imul.steps[11].in_.val = imul.val_preg[5].out;
+     imul.steps[11].out.val = imul.val_preg[5].out;
+     imul.val_preg[6].in_ = imul.val_preg[5].out;
+  }
+  void top_imul_steps_25__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[25].mux.sel = imul.steps[25].in_.b & 1;
+  }
+  void top_imul_b_preg_3__out_FANOUT_2()
+  {
+     imul.steps[6].in_.b = imul.b_preg[3].out;
+     imul.steps[6].b_rsh.in_ = imul.b_preg[3].out;
+  }
+  void top_imul_steps_12__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[12].mux.sel = imul.steps[12].in_.b & 1;
+  }
+  void top_imul_steps_14__adder_out_FANOUT_1()
+  {
+     imul.steps[14].mux.in_[1] = imul.steps[14].adder.out;
   }
   void top_imul_steps_16__adder_out_FANOUT_1()
   {
      imul.steps[16].mux.in_[1] = imul.steps[16].adder.out;
   }
-  void top_imul_b_preg_1__out_FANOUT_2()
+  void top_imul_steps_20__a_lsh_out_FANOUT_4()
   {
-     imul.steps[2].in_.b = imul.b_preg[1].out;
-     imul.steps[2].b_rsh.in_ = imul.b_preg[1].out;
+     imul.steps[20].out.a = imul.steps[20].a_lsh.out;
+     imul.steps[21].in_.a = imul.steps[20].a_lsh.out;
+     imul.steps[21].a_lsh.in_ = imul.steps[20].a_lsh.out;
+     imul.steps[21].adder.in0 = imul.steps[20].a_lsh.out;
   }
-  void top_imul_steps_24__mux_out_FANOUT_4()
+  void top_imul_res_preg_3__out_FANOUT_3()
   {
-     imul.steps[24].out.res = imul.steps[24].mux.out;
-     imul.steps[25].in_.res = imul.steps[24].mux.out;
-     imul.steps[25].adder.in1 = imul.steps[24].mux.out;
-     imul.steps[25].mux.in_[0] = imul.steps[24].mux.out;
+     imul.steps[6].in_.res = imul.res_preg[3].out;
+     imul.steps[6].adder.in1 = imul.res_preg[3].out;
+     imul.steps[6].mux.in_[0] = imul.res_preg[3].out;
+  }
+  void top_imul_b_preg_10__out_FANOUT_2()
+  {
+     imul.steps[20].in_.b = imul.b_preg[10].out;
+     imul.steps[20].b_rsh.in_ = imul.b_preg[10].out;
+  }
+  void top_imul_steps_11__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[11].out.a = imul.steps[11].a_lsh.out;
+     imul.a_preg[6].in_ = imul.steps[11].a_lsh.out;
+  }
+  void top_imul_steps_5__a_lsh_out_FANOUT_2()
+  {
+     imul.steps[5].out.a = imul.steps[5].a_lsh.out;
+     imul.a_preg[3].in_ = imul.steps[5].a_lsh.out;
+  }
+  void top_imul_steps_15__mux_out_FANOUT_2()
+  {
+     imul.steps[15].out.res = imul.steps[15].mux.out;
+     imul.res_preg[8].in_ = imul.steps[15].mux.out;
+  }
+  void top_imul_steps_3__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[3].mux.sel = imul.steps[3].in_.b & 1;
+  }
+  void top_imul_steps_15__adder_out_FANOUT_1()
+  {
+     imul.steps[15].mux.in_[1] = imul.steps[15].adder.out;
+  }
+  void top_imul_steps_5__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[5].mux.sel = imul.steps[5].in_.b & 1;
+  }
+  void top_imul_a_preg_14__out_FANOUT_3()
+  {
+     imul.steps[28].in_.a = imul.a_preg[14].out;
+     imul.steps[28].a_lsh.in_ = imul.a_preg[14].out;
+     imul.steps[28].adder.in0 = imul.a_preg[14].out;
+  }
+  void top_imul_steps_9__mux_out_FANOUT_2()
+  {
+     imul.steps[9].out.res = imul.steps[9].mux.out;
+     imul.res_preg[5].in_ = imul.steps[9].mux.out;
+  }
+  void top_imul_b_preg_0__out_FANOUT_2()
+  {
+     imul.steps[0].in_.b = imul.b_preg[0].out;
+     imul.steps[0].b_rsh.in_ = imul.b_preg[0].out;
+  }
+  void top_imul_steps_5__adder_out_FANOUT_1()
+  {
+     imul.steps[5].mux.in_[1] = imul.steps[5].adder.out;
+  }
+  void top_imul_steps_15__b_rsh_out_FANOUT_2()
+  {
+     imul.steps[15].out.b = imul.steps[15].b_rsh.out;
+     imul.b_preg[8].in_ = imul.steps[15].b_rsh.out;
   }
   void top_imul_steps_17__b_rsh_out_FANOUT_2()
   {
      imul.steps[17].out.b = imul.steps[17].b_rsh.out;
      imul.b_preg[9].in_ = imul.steps[17].b_rsh.out;
   }
-  void top_imul_a_preg_5__out_FANOUT_3()
+  void top_imul_steps_1__b_rsh_out_FANOUT_2()
   {
-     imul.steps[10].in_.a = imul.a_preg[5].out;
-     imul.steps[10].a_lsh.in_ = imul.a_preg[5].out;
-     imul.steps[10].adder.in0 = imul.a_preg[5].out;
+     imul.steps[1].out.b = imul.steps[1].b_rsh.out;
+     imul.b_preg[1].in_ = imul.steps[1].b_rsh.out;
   }
-  void top_imul_steps_19__mux_out_FANOUT_2()
+  void top_imul_steps_26__adder_out_FANOUT_1()
   {
-     imul.steps[19].out.res = imul.steps[19].mux.out;
-     imul.res_preg[10].in_ = imul.steps[19].mux.out;
+     imul.steps[26].mux.in_[1] = imul.steps[26].adder.out;
   }
-  void top_imul_steps_9__b_rsh_out_FANOUT_2()
+  void top_imul_steps_28__b_rsh_out_FANOUT_3()
   {
-     imul.steps[9].out.b = imul.steps[9].b_rsh.out;
-     imul.b_preg[5].in_ = imul.steps[9].b_rsh.out;
+     imul.steps[28].out.b = imul.steps[28].b_rsh.out;
+     imul.steps[29].in_.b = imul.steps[28].b_rsh.out;
+     imul.steps[29].b_rsh.in_ = imul.steps[28].b_rsh.out;
   }
-  void top_imul_steps_18__b_rsh_out_FANOUT_3()
+  void top_imul_steps_21__mux_out_FANOUT_2()
   {
-     imul.steps[18].out.b = imul.steps[18].b_rsh.out;
-     imul.steps[19].in_.b = imul.steps[18].b_rsh.out;
-     imul.steps[19].b_rsh.in_ = imul.steps[18].b_rsh.out;
+     imul.steps[21].out.res = imul.steps[21].mux.out;
+     imul.res_preg[11].in_ = imul.steps[21].mux.out;
+  }
+  void top_imul_steps_2__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[2].out.a = imul.steps[2].a_lsh.out;
+     imul.steps[3].in_.a = imul.steps[2].a_lsh.out;
+     imul.steps[3].a_lsh.in_ = imul.steps[2].a_lsh.out;
+     imul.steps[3].adder.in0 = imul.steps[2].a_lsh.out;
+  }
+  void top_imul_steps_4__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[4].out.a = imul.steps[4].a_lsh.out;
+     imul.steps[5].in_.a = imul.steps[4].a_lsh.out;
+     imul.steps[5].a_lsh.in_ = imul.steps[4].a_lsh.out;
+     imul.steps[5].adder.in0 = imul.steps[4].a_lsh.out;
+  }
+  void top_imul_steps_2__adder_out_FANOUT_1()
+  {
+     imul.steps[2].mux.in_[1] = imul.steps[2].adder.out;
+  }
+  void top_imul_steps_11__adder_out_FANOUT_1()
+  {
+     imul.steps[11].mux.in_[1] = imul.steps[11].adder.out;
+  }
+  void top_imul_steps_0__mux_out_FANOUT_4()
+  {
+     imul.steps[0].out.res = imul.steps[0].mux.out;
+     imul.steps[1].in_.res = imul.steps[0].mux.out;
+     imul.steps[1].adder.in1 = imul.steps[0].mux.out;
+     imul.steps[1].mux.in_[0] = imul.steps[0].mux.out;
+  }
+  void top_imul_steps_4__in__b_0_1__FANOUT_1()
+  {
+     imul.steps[4].mux.sel = imul.steps[4].in_.b & 1;
+  }
+  void top_imul_steps_27__b_rsh_out_FANOUT_2()
+  {
+     imul.steps[27].out.b = imul.steps[27].b_rsh.out;
+     imul.b_preg[14].in_ = imul.steps[27].b_rsh.out;
+  }
+  void top_imul_steps_23__mux_out_FANOUT_2()
+  {
+     imul.steps[23].out.res = imul.steps[23].mux.out;
+     imul.res_preg[12].in_ = imul.steps[23].mux.out;
+  }
+  void top_imul_steps_10__adder_out_FANOUT_1()
+  {
+     imul.steps[10].mux.in_[1] = imul.steps[10].adder.out;
   }
   void top_imul_steps_22__a_lsh_out_FANOUT_4()
   {
@@ -1282,38 +1453,31 @@ public:
      imul.steps[23].a_lsh.in_ = imul.steps[22].a_lsh.out;
      imul.steps[23].adder.in0 = imul.steps[22].a_lsh.out;
   }
+  void top_imul_steps_6__b_rsh_out_FANOUT_3()
+  {
+     imul.steps[6].out.b = imul.steps[6].b_rsh.out;
+     imul.steps[7].in_.b = imul.steps[6].b_rsh.out;
+     imul.steps[7].b_rsh.in_ = imul.steps[6].b_rsh.out;
+  }
+  void top_imul_steps_10__a_lsh_out_FANOUT_4()
+  {
+     imul.steps[10].out.a = imul.steps[10].a_lsh.out;
+     imul.steps[11].in_.a = imul.steps[10].a_lsh.out;
+     imul.steps[11].a_lsh.in_ = imul.steps[10].a_lsh.out;
+     imul.steps[11].adder.in0 = imul.steps[10].a_lsh.out;
+  }
+  void top_imul_steps_31__a_lsh_out_FANOUT_1()
+  {
+     imul.steps[31].out.a = imul.steps[31].a_lsh.out;
+  }
   void top_imul_steps_22__adder_out_FANOUT_1()
   {
      imul.steps[22].mux.in_[1] = imul.steps[22].adder.out;
   }
-  void top_imul_a_preg_3__out_FANOUT_3()
+  void top_imul_steps_29__mux_out_FANOUT_2()
   {
-     imul.steps[6].in_.a = imul.a_preg[3].out;
-     imul.steps[6].a_lsh.in_ = imul.a_preg[3].out;
-     imul.steps[6].adder.in0 = imul.a_preg[3].out;
-  }
-  void top_imul_steps_7__b_rsh_out_FANOUT_2()
-  {
-     imul.steps[7].out.b = imul.steps[7].b_rsh.out;
-     imul.b_preg[4].in_ = imul.steps[7].b_rsh.out;
-  }
-  void top_imul_steps_13__mux_out_FANOUT_2()
-  {
-     imul.steps[13].out.res = imul.steps[13].mux.out;
-     imul.res_preg[7].in_ = imul.steps[13].mux.out;
-  }
-  void top_src_msg_0__FANOUT_2()
-  {
-     imul.req.msg[0] = src.out.msg[0];
-     imul.a_preg[0].in_ = src.out.msg[0];
-  }
-  void top_imul_steps_31__adder_out_FANOUT_1()
-  {
-     imul.steps[31].mux.in_[1] = imul.steps[31].adder.out;
-  }
-  void top_imul_steps_2__adder_out_FANOUT_1()
-  {
-     imul.steps[2].mux.in_[1] = imul.steps[2].adder.out;
+     imul.steps[29].out.res = imul.steps[29].mux.out;
+     imul.res_preg[15].in_ = imul.steps[29].mux.out;
   }
   void top_imul_val_preg_13__out_FANOUT_5()
   {
@@ -1323,37 +1487,44 @@ public:
      imul.steps[27].out.val = imul.val_preg[13].out;
      imul.val_preg[14].in_ = imul.val_preg[13].out;
   }
+  void top_imul_res_preg_13__out_FANOUT_3()
+  {
+     imul.steps[26].in_.res = imul.res_preg[13].out;
+     imul.steps[26].adder.in1 = imul.res_preg[13].out;
+     imul.steps[26].mux.in_[0] = imul.res_preg[13].out;
+  }
   void top_imul_b_preg_15__out_FANOUT_2()
   {
      imul.steps[30].in_.b = imul.b_preg[15].out;
      imul.steps[30].b_rsh.in_ = imul.b_preg[15].out;
   }
-  void top_imul_steps_1__a_lsh_out_FANOUT_2()
+  void top_imul_steps_18__b_rsh_out_FANOUT_3()
   {
-     imul.steps[1].out.a = imul.steps[1].a_lsh.out;
-     imul.a_preg[1].in_ = imul.steps[1].a_lsh.out;
+     imul.steps[18].out.b = imul.steps[18].b_rsh.out;
+     imul.steps[19].in_.b = imul.steps[18].b_rsh.out;
+     imul.steps[19].b_rsh.in_ = imul.steps[18].b_rsh.out;
   }
   void top_imul_steps_19__adder_out_FANOUT_1()
   {
      imul.steps[19].mux.in_[1] = imul.steps[19].adder.out;
   }
-  void top_imul_steps_20__mux_out_FANOUT_4()
+  void top_imul_steps_13__adder_out_FANOUT_1()
   {
-     imul.steps[20].out.res = imul.steps[20].mux.out;
-     imul.steps[21].in_.res = imul.steps[20].mux.out;
-     imul.steps[21].adder.in1 = imul.steps[20].mux.out;
-     imul.steps[21].mux.in_[0] = imul.steps[20].mux.out;
+     imul.steps[13].mux.in_[1] = imul.steps[13].adder.out;
   }
-  void top_imul_a_preg_15__out_FANOUT_3()
+  void top_imul_val_preg_14__out_FANOUT_5()
   {
-     imul.steps[30].in_.a = imul.a_preg[15].out;
-     imul.steps[30].a_lsh.in_ = imul.a_preg[15].out;
-     imul.steps[30].adder.in0 = imul.a_preg[15].out;
+     imul.steps[28].in_.val = imul.val_preg[14].out;
+     imul.steps[28].out.val = imul.val_preg[14].out;
+     imul.steps[29].in_.val = imul.val_preg[14].out;
+     imul.steps[29].out.val = imul.val_preg[14].out;
+     imul.val_preg[15].in_ = imul.val_preg[14].out;
   }
-  void top_imul_b_preg_5__out_FANOUT_2()
+  void top_imul_a_preg_0__out_FANOUT_3()
   {
-     imul.steps[10].in_.b = imul.b_preg[5].out;
-     imul.steps[10].b_rsh.in_ = imul.b_preg[5].out;
+     imul.steps[0].in_.a = imul.a_preg[0].out;
+     imul.steps[0].a_lsh.in_ = imul.a_preg[0].out;
+     imul.steps[0].adder.in0 = imul.a_preg[0].out;
   }
   void top_imul_res_preg_11__out_FANOUT_3()
   {
@@ -1361,514 +1532,473 @@ public:
      imul.steps[22].adder.in1 = imul.res_preg[11].out;
      imul.steps[22].mux.in_[0] = imul.res_preg[11].out;
   }
-  void top_imul_steps_29__b_rsh_out_FANOUT_2()
+  void top_imul_steps_9__in__b_0_1__FANOUT_1()
   {
-     imul.steps[29].out.b = imul.steps[29].b_rsh.out;
-     imul.b_preg[15].in_ = imul.steps[29].b_rsh.out;
+     imul.steps[9].mux.sel = imul.steps[9].in_.b & 1;
   }
-  void top_imul_steps_6__a_lsh_out_FANOUT_4()
+  void top_imul_b_preg_4__out_FANOUT_2()
   {
-     imul.steps[6].out.a = imul.steps[6].a_lsh.out;
-     imul.steps[7].in_.a = imul.steps[6].a_lsh.out;
-     imul.steps[7].a_lsh.in_ = imul.steps[6].a_lsh.out;
-     imul.steps[7].adder.in0 = imul.steps[6].a_lsh.out;
+     imul.steps[8].in_.b = imul.b_preg[4].out;
+     imul.steps[8].b_rsh.in_ = imul.b_preg[4].out;
   }
-  void top_imul_b_preg_6__out_FANOUT_2()
+  void top_imul_a_preg_3__out_FANOUT_3()
   {
-     imul.steps[12].in_.b = imul.b_preg[6].out;
-     imul.steps[12].b_rsh.in_ = imul.b_preg[6].out;
+     imul.steps[6].in_.a = imul.a_preg[3].out;
+     imul.steps[6].a_lsh.in_ = imul.a_preg[3].out;
+     imul.steps[6].adder.in0 = imul.a_preg[3].out;
   }
-  void top_imul_steps_25__a_lsh_out_FANOUT_2()
+  void top_imul_steps_4__b_rsh_out_FANOUT_3()
   {
-     imul.steps[25].out.a = imul.steps[25].a_lsh.out;
-     imul.a_preg[13].in_ = imul.steps[25].a_lsh.out;
+     imul.steps[4].out.b = imul.steps[4].b_rsh.out;
+     imul.steps[5].in_.b = imul.steps[4].b_rsh.out;
+     imul.steps[5].b_rsh.in_ = imul.steps[4].b_rsh.out;
   }
-  void top_imul_steps_21__b_rsh_out_FANOUT_2()
+  void top_imul_steps_8__adder_out_FANOUT_1()
   {
-     imul.steps[21].out.b = imul.steps[21].b_rsh.out;
-     imul.b_preg[11].in_ = imul.steps[21].b_rsh.out;
-  }
-  void top_imul_steps_27__adder_out_FANOUT_1()
-  {
-     imul.steps[27].mux.in_[1] = imul.steps[27].adder.out;
-  }
-  void top_imul_res_preg_3__out_FANOUT_3()
-  {
-     imul.steps[6].in_.res = imul.res_preg[3].out;
-     imul.steps[6].adder.in1 = imul.res_preg[3].out;
-     imul.steps[6].mux.in_[0] = imul.res_preg[3].out;
-  }
-  void top_imul_steps_12__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[12].out.b = imul.steps[12].b_rsh.out;
-     imul.steps[13].in_.b = imul.steps[12].b_rsh.out;
-     imul.steps[13].b_rsh.in_ = imul.steps[12].b_rsh.out;
-  }
-  void top_imul_steps_10__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[10].out.b = imul.steps[10].b_rsh.out;
-     imul.steps[11].in_.b = imul.steps[10].b_rsh.out;
-     imul.steps[11].b_rsh.in_ = imul.steps[10].b_rsh.out;
-  }
-  void top_imul_steps_28__b_rsh_out_FANOUT_3()
-  {
-     imul.steps[28].out.b = imul.steps[28].b_rsh.out;
-     imul.steps[29].in_.b = imul.steps[28].b_rsh.out;
-     imul.steps[29].b_rsh.in_ = imul.steps[28].b_rsh.out;
-  }
-  void top_imul_steps_1__mux_out_FANOUT_2()
-  {
-     imul.steps[1].out.res = imul.steps[1].mux.out;
-     imul.res_preg[1].in_ = imul.steps[1].mux.out;
-  }
-  void top_imul_steps_30__mux_out_FANOUT_4()
-  {
-     imul.steps[30].out.res = imul.steps[30].mux.out;
-     imul.steps[31].in_.res = imul.steps[30].mux.out;
-     imul.steps[31].adder.in1 = imul.steps[30].mux.out;
-     imul.steps[31].mux.in_[0] = imul.steps[30].mux.out;
+     imul.steps[8].mux.in_[1] = imul.steps[8].adder.out;
   }
   void tick_schedule()
   {
-    imul.b_preg[9].up_regen();
-    imul.val_preg[15].up_regen();
-    imul.b_preg[13].up_regen();
-    imul.a_preg[1].up_regen();
+    imul.a_preg[13].up_regen();
     imul.res_preg[3].up_regen();
+    imul.b_preg[14].up_regen();
+    imul.res_preg[1].up_regen();
+    imul.val_preg[7].up_regen();
+    imul.a_preg[9].up_regen();
+    imul.res_preg[14].up_regen();
+    imul.val_preg[10].up_regen();
+    imul.b_preg[1].up_regen();
+    imul.a_preg[1].up_regen();
+    imul.a_preg[4].up_regen();
+    imul.val_preg[14].up_regen();
+    imul.res_preg[6].up_regen();
+    imul.b_preg[5].up_regen();
+    imul.res_preg[13].up_regen();
+    imul.res_preg[8].up_regen();
+    imul.res_preg[2].up_regen();
+    imul.b_preg[9].up_regen();
+    imul.b_preg[8].up_regen();
+    imul.b_preg[13].up_regen();
+    imul.a_preg[3].up_regen();
+    imul.b_preg[10].up_regen();
     imul.val_preg[1].up_regen();
     imul.a_preg[8].up_regen();
-    imul.val_preg[5].up_regen();
-    imul.a_preg[2].up_regen();
-    imul.a_preg[12].up_regen();
-    imul.res_preg[11].up_regen();
-    imul.b_preg[0].up_regen();
-    imul.res_preg[15].up_regen();
     imul.res_preg[9].up_regen();
-    imul.val_preg[11].up_regen();
-    imul.a_preg[6].up_regen();
-    imul.b_preg[4].up_regen();
-    imul.val_preg[10].up_regen();
-    imul.b_preg[11].up_regen();
-    imul.a_preg[11].up_regen();
-    imul.b_preg[8].up_regen();
-    imul.val_preg[14].up_regen();
-    imul.b_preg[12].up_regen();
-    imul.res_preg[2].up_regen();
-    imul.val_preg[0].up_regen();
-    imul.a_preg[7].up_regen();
-    imul.res_preg[6].up_regen();
-    imul.b_preg[14].up_regen();
-    imul.val_preg[4].up_regen();
-    imul.res_preg[10].up_regen();
-    imul.a_preg[15].up_regen();
-    imul.res_preg[14].up_regen();
-    imul.b_preg[3].up_regen();
-    imul.b_preg[7].up_regen();
-    imul.val_preg[13].up_regen();
-    imul.a_preg[5].up_regen();
-    imul.res_preg[4].up_regen();
-    imul.res_preg[1].up_regen();
-    imul.b_preg[15].up_regen();
-    imul.res_preg[5].up_regen();
-    imul.res_preg[13].up_regen();
-    imul.val_preg[3].up_regen();
-    imul.a_preg[4].up_regen();
-    imul.a_preg[10].up_regen();
-    imul.val_preg[7].up_regen();
-    imul.a_preg[14].up_regen();
-    imul.b_preg[2].up_regen();
-    imul.a_preg[3].up_regen();
-    src.up_src();
-    imul.b_preg[6].up_regen();
-    sink.up_sink();
-    imul.val_preg[12].up_regen();
+    imul.val_preg[5].up_regen();
+    imul.a_preg[12].up_regen();
     imul.val_preg[9].up_regen();
-    imul.b_preg[10].up_regen();
-    imul.res_preg[0].up_regen();
-    imul.b_preg[5].up_regen();
-    imul.val_preg[2].up_regen();
-    imul.a_preg[9].up_regen();
-    imul.res_preg[8].up_regen();
-    imul.val_preg[6].up_regen();
-    imul.a_preg[13].up_regen();
-    imul.res_preg[12].up_regen();
-    imul.b_preg[1].up_regen();
-    imul.res_preg[7].up_regen();
-    imul.a_preg[0].up_regen();
+    imul.b_preg[0].up_regen();
+    imul.val_preg[13].up_regen();
+    imul.b_preg[4].up_regen();
+    sink.up_sink();
+    src.up_src();
+    imul.res_preg[5].up_regen();
+    imul.b_preg[12].up_regen();
+    imul.a_preg[2].up_regen();
     imul.val_preg[8].up_regen();
-    top_imul_b_preg_9__out_FANOUT_2();
-    top_imul_val_preg_15__out_FANOUT_6();
-    top_imul_b_preg_13__out_FANOUT_2();
-    top_imul_a_preg_1__out_FANOUT_3();
-    top_imul_res_preg_3__out_FANOUT_3();
-    top_imul_a_preg_8__out_FANOUT_3();
-    top_imul_a_preg_2__out_FANOUT_3();
-    top_imul_a_preg_12__out_FANOUT_3();
-    top_imul_res_preg_11__out_FANOUT_3();
-    top_imul_b_preg_0__out_FANOUT_2();
-    top_imul_res_preg_15__out_FANOUT_3();
-    top_imul_res_preg_9__out_FANOUT_3();
-    top_imul_a_preg_6__out_FANOUT_3();
-    top_imul_b_preg_4__out_FANOUT_2();
-    top_imul_val_preg_10__out_FANOUT_5();
-    top_imul_b_preg_11__out_FANOUT_2();
-    top_imul_a_preg_11__out_FANOUT_3();
-    top_imul_b_preg_8__out_FANOUT_2();
-    top_imul_val_preg_14__out_FANOUT_5();
-    top_imul_b_preg_12__out_FANOUT_2();
-    top_imul_res_preg_2__out_FANOUT_3();
-    top_imul_val_preg_0__out_FANOUT_5();
-    top_imul_a_preg_7__out_FANOUT_3();
-    top_imul_res_preg_6__out_FANOUT_3();
-    top_imul_b_preg_14__out_FANOUT_2();
-    top_imul_val_preg_4__out_FANOUT_5();
-    top_imul_res_preg_10__out_FANOUT_3();
-    top_imul_a_preg_15__out_FANOUT_3();
-    top_imul_res_preg_14__out_FANOUT_3();
-    top_imul_b_preg_3__out_FANOUT_2();
-    top_imul_b_preg_7__out_FANOUT_2();
-    top_imul_val_preg_13__out_FANOUT_5();
-    top_imul_a_preg_5__out_FANOUT_3();
-    top_imul_res_preg_4__out_FANOUT_3();
-    top_imul_res_preg_1__out_FANOUT_3();
-    top_imul_b_preg_15__out_FANOUT_2();
-    top_imul_res_preg_5__out_FANOUT_3();
-    top_imul_res_preg_13__out_FANOUT_3();
-    top_imul_val_preg_3__out_FANOUT_5();
-    top_imul_a_preg_4__out_FANOUT_3();
-    top_imul_a_preg_10__out_FANOUT_3();
-    top_imul_a_preg_14__out_FANOUT_3();
-    top_imul_b_preg_2__out_FANOUT_2();
-    top_imul_a_preg_3__out_FANOUT_3();
-    top_src_msg_1__FANOUT_2();
-    top_src_val_FANOUT_2();
-    top_imul_b_preg_6__out_FANOUT_2();
-    top_imul_val_preg_11__out_FANOUT_5();
-    top_imul_val_preg_12__out_FANOUT_5();
-    top_imul_val_preg_9__out_FANOUT_5();
-    top_imul_b_preg_10__out_FANOUT_2();
-    top_imul_res_preg_0__out_FANOUT_3();
-    top_imul_b_preg_5__out_FANOUT_2();
-    top_imul_val_preg_1__out_FANOUT_5();
-    top_imul_val_preg_2__out_FANOUT_5();
-    top_imul_a_preg_9__out_FANOUT_3();
-    top_imul_res_preg_8__out_FANOUT_3();
-    top_imul_val_preg_5__out_FANOUT_5();
-    top_imul_val_preg_6__out_FANOUT_5();
+    imul.val_preg[0].up_regen();
+    imul.a_preg[6].up_regen();
+    imul.res_preg[0].up_regen();
+    imul.a_preg[15].up_regen();
+    imul.a_preg[7].up_regen();
+    imul.val_preg[4].up_regen();
+    imul.a_preg[11].up_regen();
+    imul.res_preg[12].up_regen();
+    imul.b_preg[3].up_regen();
+    imul.a_preg[0].up_regen();
+    imul.val_preg[12].up_regen();
+    imul.b_preg[11].up_regen();
+    imul.val_preg[2].up_regen();
+    imul.b_preg[15].up_regen();
+    imul.a_preg[5].up_regen();
+    imul.res_preg[10].up_regen();
+    imul.res_preg[4].up_regen();
+    imul.res_preg[7].up_regen();
+    imul.val_preg[3].up_regen();
+    imul.a_preg[10].up_regen();
+    imul.res_preg[11].up_regen();
+    imul.a_preg[14].up_regen();
+    imul.b_preg[7].up_regen();
+    imul.res_preg[15].up_regen();
+    imul.val_preg[11].up_regen();
+    imul.b_preg[2].up_regen();
+    imul.val_preg[6].up_regen();
+    imul.val_preg[15].up_regen();
+    imul.b_preg[6].up_regen();
     top_imul_a_preg_13__out_FANOUT_3();
-    top_imul_res_preg_12__out_FANOUT_3();
+    top_imul_res_preg_3__out_FANOUT_3();
+    top_imul_b_preg_14__out_FANOUT_2();
+    top_imul_res_preg_1__out_FANOUT_3();
+    top_imul_a_preg_9__out_FANOUT_3();
+    top_imul_res_preg_14__out_FANOUT_3();
     top_imul_b_preg_1__out_FANOUT_2();
-    top_imul_res_preg_7__out_FANOUT_3();
-    top_src_msg_0__FANOUT_2();
-    top_imul_a_preg_0__out_FANOUT_3();
+    top_imul_a_preg_1__out_FANOUT_3();
+    top_imul_a_preg_4__out_FANOUT_3();
+    top_imul_res_preg_6__out_FANOUT_3();
+    top_imul_b_preg_5__out_FANOUT_2();
+    top_imul_res_preg_13__out_FANOUT_3();
+    top_imul_res_preg_8__out_FANOUT_3();
+    top_imul_res_preg_2__out_FANOUT_3();
+    top_imul_b_preg_9__out_FANOUT_2();
+    top_imul_b_preg_8__out_FANOUT_2();
+    top_imul_b_preg_13__out_FANOUT_2();
+    top_imul_a_preg_3__out_FANOUT_3();
+    top_imul_b_preg_10__out_FANOUT_2();
+    top_imul_a_preg_8__out_FANOUT_3();
+    top_imul_res_preg_9__out_FANOUT_3();
+    top_imul_a_preg_12__out_FANOUT_3();
+    top_imul_val_preg_9__out_FANOUT_5();
+    top_imul_b_preg_0__out_FANOUT_2();
+    top_imul_val_preg_13__out_FANOUT_5();
+    top_imul_b_preg_4__out_FANOUT_2();
+    top_src_out_msg_FANOUT_1();
+    top_imul_res_preg_5__out_FANOUT_3();
+    top_imul_b_preg_12__out_FANOUT_2();
+    top_imul_a_preg_2__out_FANOUT_3();
     top_imul_val_preg_7__out_FANOUT_5();
     top_imul_val_preg_8__out_FANOUT_5();
-    top_sink_rdy_FANOUT_67();
-    imul.steps[18].up_muxsel();
-    imul.steps[18].b_rsh.up_rshifter();
-    imul.steps[26].up_muxsel();
-    imul.steps[26].b_rsh.up_rshifter();
+    top_imul_val_preg_0__out_FANOUT_5();
+    top_src_out_val_FANOUT_2();
+    top_imul_a_preg_6__out_FANOUT_3();
+    top_imul_res_preg_0__out_FANOUT_3();
+    top_imul_a_preg_15__out_FANOUT_3();
+    top_imul_a_preg_7__out_FANOUT_3();
+    top_imul_val_preg_4__out_FANOUT_5();
+    top_imul_a_preg_11__out_FANOUT_3();
+    top_imul_res_preg_12__out_FANOUT_3();
+    top_imul_b_preg_3__out_FANOUT_2();
+    top_imul_a_preg_0__out_FANOUT_3();
+    top_imul_val_preg_12__out_FANOUT_5();
+    top_imul_b_preg_11__out_FANOUT_2();
+    top_imul_val_preg_1__out_FANOUT_5();
+    top_imul_b_preg_15__out_FANOUT_2();
+    top_imul_a_preg_5__out_FANOUT_3();
+    top_imul_res_preg_10__out_FANOUT_3();
+    top_imul_res_preg_4__out_FANOUT_3();
+    top_imul_res_preg_7__out_FANOUT_3();
+    top_imul_val_preg_3__out_FANOUT_5();
+    top_imul_val_preg_2__out_FANOUT_5();
+    top_imul_a_preg_10__out_FANOUT_3();
+    top_imul_res_preg_11__out_FANOUT_3();
+    top_imul_a_preg_14__out_FANOUT_3();
+    top_imul_b_preg_7__out_FANOUT_2();
+    top_imul_res_preg_15__out_FANOUT_3();
+    top_imul_val_preg_10__out_FANOUT_5();
+    top_imul_val_preg_11__out_FANOUT_5();
+    top_imul_b_preg_2__out_FANOUT_2();
+    top_imul_val_preg_6__out_FANOUT_5();
+    top_imul_val_preg_5__out_FANOUT_5();
+    top_imul_val_preg_14__out_FANOUT_5();
+    top_imul_val_preg_15__out_FANOUT_6();
+    top_imul_b_preg_6__out_FANOUT_2();
+    top_sink_in__rdy_FANOUT_67();
+    imul.steps[26].a_lsh.up_lshifter();
+    imul.steps[28].b_rsh.up_rshifter();
+    top_imul_steps_28__in__b_0_1__FANOUT_1();
+    imul.steps[18].a_lsh.up_lshifter();
+    top_imul_steps_2__in__b_0_1__FANOUT_1();
+    imul.steps[2].b_rsh.up_rshifter();
     imul.steps[2].a_lsh.up_lshifter();
+    imul.steps[2].adder.up_adder();
+    imul.steps[8].a_lsh.up_lshifter();
+    imul.steps[10].b_rsh.up_rshifter();
+    top_imul_steps_10__in__b_0_1__FANOUT_1();
+    imul.steps[26].adder.up_adder();
+    imul.steps[18].b_rsh.up_rshifter();
+    top_imul_steps_18__in__b_0_1__FANOUT_1();
+    imul.steps[16].b_rsh.up_rshifter();
+    top_imul_steps_16__in__b_0_1__FANOUT_1();
+    imul.steps[26].b_rsh.up_rshifter();
+    top_imul_steps_26__in__b_0_1__FANOUT_1();
+    imul.steps[6].a_lsh.up_lshifter();
+    imul.steps[6].adder.up_adder();
+    top_imul_steps_20__in__b_0_1__FANOUT_1();
+    imul.steps[20].b_rsh.up_rshifter();
+    imul.steps[16].adder.up_adder();
     imul.steps[16].a_lsh.up_lshifter();
-    imul.steps[4].a_lsh.up_lshifter();
+    imul.steps[18].adder.up_adder();
     imul.steps[24].a_lsh.up_lshifter();
     imul.steps[0].b_rsh.up_rshifter();
-    imul.steps[0].up_muxsel();
-    imul.steps[12].a_lsh.up_lshifter();
+    top_imul_steps_0__in__b_0_1__FANOUT_1();
+    top_imul_steps_8__in__b_0_1__FANOUT_1();
     imul.steps[8].b_rsh.up_rshifter();
-    imul.steps[8].up_muxsel();
-    imul.steps[22].b_rsh.up_rshifter();
-    imul.steps[22].up_muxsel();
-    imul.steps[22].adder.up_adder();
-    imul.steps[22].a_lsh.up_lshifter();
-    imul.steps[16].b_rsh.up_rshifter();
-    imul.steps[16].up_muxsel();
-    imul.steps[24].up_muxsel();
+    top_imul_req_msg_32_64__FANOUT_1();
+    top_imul_req_msg_0_32__FANOUT_1();
+    top_imul_steps_24__in__b_0_1__FANOUT_1();
     imul.steps[24].b_rsh.up_rshifter();
+    imul.steps[4].a_lsh.up_lshifter();
     imul.steps[4].adder.up_adder();
-    imul.steps[14].a_lsh.up_lshifter();
     imul.steps[12].adder.up_adder();
-    imul.steps[28].up_muxsel();
-    imul.steps[28].b_rsh.up_rshifter();
-    imul.steps[30].adder.up_adder();
+    imul.steps[12].a_lsh.up_lshifter();
     imul.steps[30].a_lsh.up_lshifter();
-    imul.steps[6].b_rsh.up_rshifter();
-    imul.steps[6].up_muxsel();
-    imul.steps[14].up_muxsel();
-    imul.steps[14].b_rsh.up_rshifter();
-    imul.steps[10].a_lsh.up_lshifter();
-    imul.steps[2].adder.up_adder();
-    imul.steps[30].up_muxsel();
-    imul.steps[30].b_rsh.up_rshifter();
-    imul.steps[10].adder.up_adder();
-    imul.steps[8].a_lsh.up_lshifter();
-    imul.steps[8].adder.up_adder();
-    imul.steps[20].adder.up_adder();
-    imul.steps[20].a_lsh.up_lshifter();
-    imul.steps[28].a_lsh.up_lshifter();
-    imul.steps[28].adder.up_adder();
-    imul.steps[4].b_rsh.up_rshifter();
-    imul.steps[4].up_muxsel();
-    imul.steps[6].adder.up_adder();
-    imul.steps[6].a_lsh.up_lshifter();
-    imul.steps[12].b_rsh.up_rshifter();
-    imul.steps[12].up_muxsel();
-    imul.steps[20].up_muxsel();
-    imul.steps[20].b_rsh.up_rshifter();
-    imul.steps[10].b_rsh.up_rshifter();
-    imul.steps[10].up_muxsel();
-    imul.steps[18].adder.up_adder();
-    imul.steps[18].a_lsh.up_lshifter();
-    imul.steps[16].adder.up_adder();
-    imul.steps[26].adder.up_adder();
-    imul.steps[26].a_lsh.up_lshifter();
+    imul.steps[14].a_lsh.up_lshifter();
+    imul.steps[22].a_lsh.up_lshifter();
     imul.steps[24].adder.up_adder();
-    imul.steps[2].b_rsh.up_rshifter();
-    imul.steps[2].up_muxsel();
-    imul.steps[14].adder.up_adder();
+    top_imul_steps_6__in__b_0_1__FANOUT_1();
+    imul.steps[6].b_rsh.up_rshifter();
     imul.steps[0].adder.up_adder();
     imul.steps[0].a_lsh.up_lshifter();
-    top_imul_steps_18__b_rsh_out_FANOUT_3();
-    top_imul_steps_26__b_rsh_out_FANOUT_3();
+    imul.steps[22].b_rsh.up_rshifter();
+    top_imul_steps_22__in__b_0_1__FANOUT_1();
+    top_imul_steps_30__in__b_0_1__FANOUT_1();
+    imul.steps[30].b_rsh.up_rshifter();
+    imul.steps[10].adder.up_adder();
+    imul.steps[10].a_lsh.up_lshifter();
+    imul.steps[8].adder.up_adder();
+    imul.steps[14].adder.up_adder();
+    imul.steps[20].adder.up_adder();
+    imul.steps[20].a_lsh.up_lshifter();
+    imul.steps[22].adder.up_adder();
+    imul.steps[28].adder.up_adder();
+    imul.steps[28].a_lsh.up_lshifter();
+    imul.steps[14].b_rsh.up_rshifter();
+    top_imul_steps_14__in__b_0_1__FANOUT_1();
+    imul.steps[30].adder.up_adder();
+    imul.steps[4].b_rsh.up_rshifter();
+    top_imul_steps_4__in__b_0_1__FANOUT_1();
+    imul.steps[12].b_rsh.up_rshifter();
+    top_imul_steps_12__in__b_0_1__FANOUT_1();
+    top_imul_steps_26__a_lsh_out_FANOUT_4();
+    top_imul_steps_28__b_rsh_out_FANOUT_3();
+    top_imul_steps_18__a_lsh_out_FANOUT_4();
+    top_imul_steps_2__b_rsh_out_FANOUT_3();
     top_imul_steps_2__a_lsh_out_FANOUT_4();
+    top_imul_steps_2__adder_out_FANOUT_1();
+    top_imul_steps_8__a_lsh_out_FANOUT_4();
+    top_imul_steps_10__b_rsh_out_FANOUT_3();
+    top_imul_steps_26__adder_out_FANOUT_1();
+    top_imul_steps_18__b_rsh_out_FANOUT_3();
+    top_imul_steps_16__b_rsh_out_FANOUT_3();
+    top_imul_steps_26__b_rsh_out_FANOUT_3();
+    top_imul_steps_6__a_lsh_out_FANOUT_4();
+    top_imul_steps_6__adder_out_FANOUT_1();
+    top_imul_steps_20__b_rsh_out_FANOUT_3();
+    top_imul_steps_16__adder_out_FANOUT_1();
     top_imul_steps_16__a_lsh_out_FANOUT_4();
-    top_imul_steps_4__a_lsh_out_FANOUT_4();
+    top_imul_steps_18__adder_out_FANOUT_1();
     top_imul_steps_24__a_lsh_out_FANOUT_4();
     top_imul_steps_0__b_rsh_out_FANOUT_3();
-    top_imul_steps_12__a_lsh_out_FANOUT_4();
     top_imul_steps_8__b_rsh_out_FANOUT_3();
-    top_imul_steps_22__b_rsh_out_FANOUT_3();
-    top_imul_steps_22__adder_out_FANOUT_1();
-    top_imul_steps_22__a_lsh_out_FANOUT_4();
-    top_imul_steps_16__b_rsh_out_FANOUT_3();
     top_imul_steps_24__b_rsh_out_FANOUT_3();
+    top_imul_steps_4__a_lsh_out_FANOUT_4();
     top_imul_steps_4__adder_out_FANOUT_1();
-    top_imul_steps_14__a_lsh_out_FANOUT_4();
     top_imul_steps_12__adder_out_FANOUT_1();
-    top_imul_steps_28__b_rsh_out_FANOUT_3();
-    top_imul_steps_30__adder_out_FANOUT_1();
+    top_imul_steps_12__a_lsh_out_FANOUT_4();
     top_imul_steps_30__a_lsh_out_FANOUT_4();
-    top_imul_steps_6__b_rsh_out_FANOUT_3();
-    top_imul_steps_14__b_rsh_out_FANOUT_3();
-    top_imul_steps_10__a_lsh_out_FANOUT_4();
-    top_imul_steps_2__adder_out_FANOUT_1();
-    top_imul_steps_30__b_rsh_out_FANOUT_3();
-    top_imul_steps_10__adder_out_FANOUT_1();
-    top_imul_steps_8__a_lsh_out_FANOUT_4();
-    top_imul_steps_8__adder_out_FANOUT_1();
-    top_imul_steps_20__adder_out_FANOUT_1();
-    top_imul_steps_20__a_lsh_out_FANOUT_4();
-    top_imul_steps_28__a_lsh_out_FANOUT_4();
-    top_imul_steps_28__adder_out_FANOUT_1();
-    top_imul_steps_4__b_rsh_out_FANOUT_3();
-    top_imul_steps_6__adder_out_FANOUT_1();
-    top_imul_steps_6__a_lsh_out_FANOUT_4();
-    top_imul_steps_12__b_rsh_out_FANOUT_3();
-    top_imul_steps_20__b_rsh_out_FANOUT_3();
-    top_imul_steps_10__b_rsh_out_FANOUT_3();
-    top_imul_steps_18__adder_out_FANOUT_1();
-    top_imul_steps_18__a_lsh_out_FANOUT_4();
-    top_imul_steps_16__adder_out_FANOUT_1();
-    top_imul_steps_26__adder_out_FANOUT_1();
-    top_imul_steps_26__a_lsh_out_FANOUT_4();
+    top_imul_steps_14__a_lsh_out_FANOUT_4();
+    top_imul_steps_22__a_lsh_out_FANOUT_4();
     top_imul_steps_24__adder_out_FANOUT_1();
-    top_imul_steps_2__b_rsh_out_FANOUT_3();
-    top_imul_steps_14__adder_out_FANOUT_1();
+    top_imul_steps_6__b_rsh_out_FANOUT_3();
     top_imul_steps_0__adder_out_FANOUT_1();
     top_imul_steps_0__a_lsh_out_FANOUT_4();
-    imul.steps[19].b_rsh.up_rshifter();
-    imul.steps[19].up_muxsel();
-    imul.steps[27].b_rsh.up_rshifter();
-    imul.steps[27].up_muxsel();
-    imul.steps[3].a_lsh.up_lshifter();
-    imul.steps[17].a_lsh.up_lshifter();
-    imul.steps[5].a_lsh.up_lshifter();
-    imul.steps[25].a_lsh.up_lshifter();
-    imul.steps[1].b_rsh.up_rshifter();
-    imul.steps[1].up_muxsel();
-    imul.steps[13].a_lsh.up_lshifter();
-    imul.steps[9].up_muxsel();
-    imul.steps[9].b_rsh.up_rshifter();
-    imul.steps[23].b_rsh.up_rshifter();
-    imul.steps[23].up_muxsel();
-    imul.steps[22].mux.up_mux();
-    imul.steps[23].a_lsh.up_lshifter();
-    imul.steps[17].up_muxsel();
-    imul.steps[17].b_rsh.up_rshifter();
-    imul.steps[25].b_rsh.up_rshifter();
-    imul.steps[25].up_muxsel();
-    imul.steps[4].mux.up_mux();
-    imul.steps[15].a_lsh.up_lshifter();
-    imul.steps[12].mux.up_mux();
-    imul.steps[29].up_muxsel();
-    imul.steps[29].b_rsh.up_rshifter();
-    imul.steps[30].mux.up_mux();
-    imul.steps[31].a_lsh.up_lshifter();
-    imul.steps[7].up_muxsel();
-    imul.steps[7].b_rsh.up_rshifter();
-    imul.steps[15].b_rsh.up_rshifter();
-    imul.steps[15].up_muxsel();
-    imul.steps[11].a_lsh.up_lshifter();
-    imul.steps[2].mux.up_mux();
-    imul.steps[31].b_rsh.up_rshifter();
-    imul.steps[31].up_muxsel();
-    imul.steps[10].mux.up_mux();
-    imul.steps[9].a_lsh.up_lshifter();
-    imul.steps[8].mux.up_mux();
-    imul.steps[20].mux.up_mux();
-    imul.steps[21].a_lsh.up_lshifter();
-    imul.steps[29].a_lsh.up_lshifter();
-    imul.steps[28].mux.up_mux();
-    imul.steps[5].up_muxsel();
-    imul.steps[5].b_rsh.up_rshifter();
-    imul.steps[6].mux.up_mux();
-    imul.steps[7].a_lsh.up_lshifter();
-    imul.steps[13].b_rsh.up_rshifter();
-    imul.steps[13].up_muxsel();
-    imul.steps[21].b_rsh.up_rshifter();
-    imul.steps[21].up_muxsel();
-    imul.steps[11].b_rsh.up_rshifter();
-    imul.steps[11].up_muxsel();
-    imul.steps[18].mux.up_mux();
-    imul.steps[19].a_lsh.up_lshifter();
-    imul.steps[16].mux.up_mux();
-    imul.steps[26].mux.up_mux();
+    top_imul_steps_22__b_rsh_out_FANOUT_3();
+    top_imul_steps_30__b_rsh_out_FANOUT_3();
+    top_imul_steps_10__adder_out_FANOUT_1();
+    top_imul_steps_10__a_lsh_out_FANOUT_4();
+    top_imul_steps_8__adder_out_FANOUT_1();
+    top_imul_steps_14__adder_out_FANOUT_1();
+    top_imul_steps_20__adder_out_FANOUT_1();
+    top_imul_steps_20__a_lsh_out_FANOUT_4();
+    top_imul_steps_22__adder_out_FANOUT_1();
+    top_imul_steps_28__adder_out_FANOUT_1();
+    top_imul_steps_28__a_lsh_out_FANOUT_4();
+    top_imul_steps_14__b_rsh_out_FANOUT_3();
+    top_imul_steps_30__adder_out_FANOUT_1();
+    top_imul_steps_4__b_rsh_out_FANOUT_3();
+    top_imul_steps_12__b_rsh_out_FANOUT_3();
     imul.steps[27].a_lsh.up_lshifter();
-    imul.steps[24].mux.up_mux();
+    imul.steps[29].b_rsh.up_rshifter();
+    top_imul_steps_29__in__b_0_1__FANOUT_1();
+    imul.steps[19].a_lsh.up_lshifter();
     imul.steps[3].b_rsh.up_rshifter();
-    imul.steps[3].up_muxsel();
-    imul.steps[14].mux.up_mux();
+    top_imul_steps_3__in__b_0_1__FANOUT_1();
+    imul.steps[3].a_lsh.up_lshifter();
+    imul.steps[2].mux.up_mux();
+    imul.steps[9].a_lsh.up_lshifter();
+    imul.steps[11].b_rsh.up_rshifter();
+    top_imul_steps_11__in__b_0_1__FANOUT_1();
+    imul.steps[26].mux.up_mux();
+    imul.steps[19].b_rsh.up_rshifter();
+    top_imul_steps_19__in__b_0_1__FANOUT_1();
+    imul.steps[17].b_rsh.up_rshifter();
+    top_imul_steps_17__in__b_0_1__FANOUT_1();
+    top_imul_steps_27__in__b_0_1__FANOUT_1();
+    imul.steps[27].b_rsh.up_rshifter();
+    imul.steps[7].a_lsh.up_lshifter();
+    imul.steps[6].mux.up_mux();
+    top_imul_steps_21__in__b_0_1__FANOUT_1();
+    imul.steps[21].b_rsh.up_rshifter();
+    imul.steps[16].mux.up_mux();
+    imul.steps[17].a_lsh.up_lshifter();
+    imul.steps[18].mux.up_mux();
+    imul.steps[25].a_lsh.up_lshifter();
+    top_imul_steps_1__in__b_0_1__FANOUT_1();
+    imul.steps[1].b_rsh.up_rshifter();
+    top_imul_steps_9__in__b_0_1__FANOUT_1();
+    imul.steps[9].b_rsh.up_rshifter();
+    top_imul_steps_25__in__b_0_1__FANOUT_1();
+    imul.steps[25].b_rsh.up_rshifter();
+    imul.steps[5].a_lsh.up_lshifter();
+    imul.steps[4].mux.up_mux();
+    imul.steps[12].mux.up_mux();
+    imul.steps[13].a_lsh.up_lshifter();
+    imul.steps[31].a_lsh.up_lshifter();
+    imul.steps[15].a_lsh.up_lshifter();
+    imul.steps[23].a_lsh.up_lshifter();
+    imul.steps[24].mux.up_mux();
+    imul.steps[7].b_rsh.up_rshifter();
+    top_imul_steps_7__in__b_0_1__FANOUT_1();
     imul.steps[0].mux.up_mux();
     imul.steps[1].a_lsh.up_lshifter();
-    top_imul_steps_19__b_rsh_out_FANOUT_2();
-    top_imul_steps_27__b_rsh_out_FANOUT_2();
+    imul.steps[23].b_rsh.up_rshifter();
+    top_imul_steps_23__in__b_0_1__FANOUT_1();
+    imul.steps[31].b_rsh.up_rshifter();
+    top_imul_steps_31__in__b_0_1__FANOUT_1();
+    imul.steps[10].mux.up_mux();
+    imul.steps[11].a_lsh.up_lshifter();
+    imul.steps[8].mux.up_mux();
+    imul.steps[14].mux.up_mux();
+    imul.steps[20].mux.up_mux();
+    imul.steps[21].a_lsh.up_lshifter();
+    imul.steps[22].mux.up_mux();
+    imul.steps[28].mux.up_mux();
+    imul.steps[29].a_lsh.up_lshifter();
+    top_imul_steps_15__in__b_0_1__FANOUT_1();
+    imul.steps[15].b_rsh.up_rshifter();
+    imul.steps[30].mux.up_mux();
+    top_imul_steps_5__in__b_0_1__FANOUT_1();
+    imul.steps[5].b_rsh.up_rshifter();
+    top_imul_steps_13__in__b_0_1__FANOUT_1();
+    imul.steps[13].b_rsh.up_rshifter();
+    top_imul_steps_27__a_lsh_out_FANOUT_2();
+    top_imul_steps_29__b_rsh_out_FANOUT_2();
+    top_imul_steps_19__a_lsh_out_FANOUT_2();
+    top_imul_steps_3__b_rsh_out_FANOUT_2();
     top_imul_steps_3__a_lsh_out_FANOUT_2();
+    top_imul_steps_2__mux_out_FANOUT_4();
+    top_imul_steps_9__a_lsh_out_FANOUT_2();
+    top_imul_steps_11__b_rsh_out_FANOUT_2();
+    top_imul_steps_26__mux_out_FANOUT_4();
+    top_imul_steps_19__b_rsh_out_FANOUT_2();
+    top_imul_steps_17__b_rsh_out_FANOUT_2();
+    top_imul_steps_27__b_rsh_out_FANOUT_2();
+    top_imul_steps_7__a_lsh_out_FANOUT_2();
+    top_imul_steps_6__mux_out_FANOUT_4();
+    top_imul_steps_21__b_rsh_out_FANOUT_2();
+    top_imul_steps_16__mux_out_FANOUT_4();
     top_imul_steps_17__a_lsh_out_FANOUT_2();
-    top_imul_steps_5__a_lsh_out_FANOUT_2();
+    top_imul_steps_18__mux_out_FANOUT_4();
     top_imul_steps_25__a_lsh_out_FANOUT_2();
     top_imul_steps_1__b_rsh_out_FANOUT_2();
-    top_imul_steps_13__a_lsh_out_FANOUT_2();
     top_imul_steps_9__b_rsh_out_FANOUT_2();
-    top_imul_steps_23__b_rsh_out_FANOUT_2();
-    top_imul_steps_22__mux_out_FANOUT_4();
-    top_imul_steps_23__a_lsh_out_FANOUT_2();
-    top_imul_steps_17__b_rsh_out_FANOUT_2();
     top_imul_steps_25__b_rsh_out_FANOUT_2();
+    top_imul_steps_5__a_lsh_out_FANOUT_2();
     top_imul_steps_4__mux_out_FANOUT_4();
-    top_imul_steps_15__a_lsh_out_FANOUT_2();
     top_imul_steps_12__mux_out_FANOUT_4();
-    top_imul_steps_29__b_rsh_out_FANOUT_2();
-    top_imul_steps_30__mux_out_FANOUT_4();
+    top_imul_steps_13__a_lsh_out_FANOUT_2();
     top_imul_steps_31__a_lsh_out_FANOUT_1();
-    top_imul_steps_7__b_rsh_out_FANOUT_2();
-    top_imul_steps_15__b_rsh_out_FANOUT_2();
-    top_imul_steps_11__a_lsh_out_FANOUT_2();
-    top_imul_steps_2__mux_out_FANOUT_4();
-    top_imul_steps_31__b_rsh_out_FANOUT_1();
-    top_imul_steps_10__mux_out_FANOUT_4();
-    top_imul_steps_9__a_lsh_out_FANOUT_2();
-    top_imul_steps_8__mux_out_FANOUT_4();
-    top_imul_steps_20__mux_out_FANOUT_4();
-    top_imul_steps_21__a_lsh_out_FANOUT_2();
-    top_imul_steps_29__a_lsh_out_FANOUT_2();
-    top_imul_steps_28__mux_out_FANOUT_4();
-    top_imul_steps_5__b_rsh_out_FANOUT_2();
-    top_imul_steps_6__mux_out_FANOUT_4();
-    top_imul_steps_7__a_lsh_out_FANOUT_2();
-    top_imul_steps_13__b_rsh_out_FANOUT_2();
-    top_imul_steps_21__b_rsh_out_FANOUT_2();
-    top_imul_steps_11__b_rsh_out_FANOUT_2();
-    top_imul_steps_18__mux_out_FANOUT_4();
-    top_imul_steps_19__a_lsh_out_FANOUT_2();
-    top_imul_steps_16__mux_out_FANOUT_4();
-    top_imul_steps_26__mux_out_FANOUT_4();
-    top_imul_steps_27__a_lsh_out_FANOUT_2();
+    top_imul_steps_15__a_lsh_out_FANOUT_2();
+    top_imul_steps_23__a_lsh_out_FANOUT_2();
     top_imul_steps_24__mux_out_FANOUT_4();
-    top_imul_steps_3__b_rsh_out_FANOUT_2();
-    top_imul_steps_14__mux_out_FANOUT_4();
+    top_imul_steps_7__b_rsh_out_FANOUT_2();
     top_imul_steps_0__mux_out_FANOUT_4();
     top_imul_steps_1__a_lsh_out_FANOUT_2();
-    imul.steps[23].adder.up_adder();
+    top_imul_steps_23__b_rsh_out_FANOUT_2();
+    top_imul_steps_31__b_rsh_out_FANOUT_1();
+    top_imul_steps_10__mux_out_FANOUT_4();
+    top_imul_steps_11__a_lsh_out_FANOUT_2();
+    top_imul_steps_8__mux_out_FANOUT_4();
+    top_imul_steps_14__mux_out_FANOUT_4();
+    top_imul_steps_20__mux_out_FANOUT_4();
+    top_imul_steps_21__a_lsh_out_FANOUT_2();
+    top_imul_steps_22__mux_out_FANOUT_4();
+    top_imul_steps_28__mux_out_FANOUT_4();
+    top_imul_steps_29__a_lsh_out_FANOUT_2();
+    top_imul_steps_15__b_rsh_out_FANOUT_2();
+    top_imul_steps_30__mux_out_FANOUT_4();
+    top_imul_steps_5__b_rsh_out_FANOUT_2();
+    top_imul_steps_13__b_rsh_out_FANOUT_2();
+    imul.steps[3].adder.up_adder();
+    imul.steps[27].adder.up_adder();
+    imul.steps[7].adder.up_adder();
+    imul.steps[17].adder.up_adder();
+    imul.steps[19].adder.up_adder();
     imul.steps[5].adder.up_adder();
     imul.steps[13].adder.up_adder();
-    imul.steps[31].adder.up_adder();
-    imul.steps[3].adder.up_adder();
+    imul.steps[25].adder.up_adder();
+    imul.steps[1].adder.up_adder();
     imul.steps[11].adder.up_adder();
     imul.steps[9].adder.up_adder();
-    imul.steps[21].adder.up_adder();
-    imul.steps[29].adder.up_adder();
-    imul.steps[7].adder.up_adder();
-    imul.steps[19].adder.up_adder();
-    imul.steps[17].adder.up_adder();
-    imul.steps[27].adder.up_adder();
-    imul.steps[25].adder.up_adder();
     imul.steps[15].adder.up_adder();
-    imul.steps[1].adder.up_adder();
-    top_imul_steps_23__adder_out_FANOUT_1();
+    imul.steps[21].adder.up_adder();
+    imul.steps[23].adder.up_adder();
+    imul.steps[29].adder.up_adder();
+    imul.steps[31].adder.up_adder();
+    top_imul_steps_3__adder_out_FANOUT_1();
+    top_imul_steps_27__adder_out_FANOUT_1();
+    top_imul_steps_7__adder_out_FANOUT_1();
+    top_imul_steps_17__adder_out_FANOUT_1();
+    top_imul_steps_19__adder_out_FANOUT_1();
     top_imul_steps_5__adder_out_FANOUT_1();
     top_imul_steps_13__adder_out_FANOUT_1();
-    top_imul_steps_31__adder_out_FANOUT_1();
-    top_imul_steps_3__adder_out_FANOUT_1();
+    top_imul_steps_25__adder_out_FANOUT_1();
+    top_imul_steps_1__adder_out_FANOUT_1();
     top_imul_steps_11__adder_out_FANOUT_1();
     top_imul_steps_9__adder_out_FANOUT_1();
-    top_imul_steps_21__adder_out_FANOUT_1();
-    top_imul_steps_29__adder_out_FANOUT_1();
-    top_imul_steps_7__adder_out_FANOUT_1();
-    top_imul_steps_19__adder_out_FANOUT_1();
-    top_imul_steps_17__adder_out_FANOUT_1();
-    top_imul_steps_27__adder_out_FANOUT_1();
-    top_imul_steps_25__adder_out_FANOUT_1();
     top_imul_steps_15__adder_out_FANOUT_1();
-    top_imul_steps_1__adder_out_FANOUT_1();
-    imul.steps[23].mux.up_mux();
+    top_imul_steps_21__adder_out_FANOUT_1();
+    top_imul_steps_23__adder_out_FANOUT_1();
+    top_imul_steps_29__adder_out_FANOUT_1();
+    top_imul_steps_31__adder_out_FANOUT_1();
+    imul.steps[3].mux.up_mux();
+    imul.steps[27].mux.up_mux();
+    imul.steps[7].mux.up_mux();
+    imul.steps[17].mux.up_mux();
+    imul.steps[19].mux.up_mux();
     imul.steps[5].mux.up_mux();
     imul.steps[13].mux.up_mux();
-    imul.steps[31].mux.up_mux();
-    imul.steps[3].mux.up_mux();
+    imul.steps[25].mux.up_mux();
+    imul.steps[1].mux.up_mux();
     imul.steps[11].mux.up_mux();
     imul.steps[9].mux.up_mux();
-    imul.steps[21].mux.up_mux();
-    imul.steps[29].mux.up_mux();
-    imul.steps[7].mux.up_mux();
-    imul.steps[19].mux.up_mux();
-    imul.steps[17].mux.up_mux();
-    imul.steps[27].mux.up_mux();
-    imul.steps[25].mux.up_mux();
     imul.steps[15].mux.up_mux();
-    imul.steps[1].mux.up_mux();
-    top_imul_steps_23__mux_out_FANOUT_2();
+    imul.steps[21].mux.up_mux();
+    imul.steps[23].mux.up_mux();
+    imul.steps[29].mux.up_mux();
+    imul.steps[31].mux.up_mux();
+    top_imul_steps_3__mux_out_FANOUT_2();
+    top_imul_steps_27__mux_out_FANOUT_2();
+    top_imul_steps_7__mux_out_FANOUT_2();
+    top_imul_steps_17__mux_out_FANOUT_2();
+    top_imul_steps_19__mux_out_FANOUT_2();
     top_imul_steps_5__mux_out_FANOUT_2();
     top_imul_steps_13__mux_out_FANOUT_2();
-    top_imul_steps_31__mux_out_FANOUT_3();
-    top_imul_steps_3__mux_out_FANOUT_2();
+    top_imul_steps_25__mux_out_FANOUT_2();
+    top_imul_steps_1__mux_out_FANOUT_2();
     top_imul_steps_11__mux_out_FANOUT_2();
     top_imul_steps_9__mux_out_FANOUT_2();
-    top_imul_steps_21__mux_out_FANOUT_2();
-    top_imul_steps_29__mux_out_FANOUT_2();
-    top_imul_steps_7__mux_out_FANOUT_2();
-    top_imul_steps_19__mux_out_FANOUT_2();
-    top_imul_steps_17__mux_out_FANOUT_2();
-    top_imul_steps_27__mux_out_FANOUT_2();
-    top_imul_steps_25__mux_out_FANOUT_2();
     top_imul_steps_15__mux_out_FANOUT_2();
-    top_imul_steps_1__mux_out_FANOUT_2();
+    top_imul_steps_21__mux_out_FANOUT_2();
+    top_imul_steps_23__mux_out_FANOUT_2();
+    top_imul_steps_29__mux_out_FANOUT_2();
+    top_imul_steps_31__mux_out_FANOUT_3();
   }
-
 };
 
 
 int main()
 {
   TestHarness *top = new TestHarness();
-  unsigned long long total_cycle = 100000000;
+  printf("%d %d %d\n",sizeof(TestHarness),sizeof(IntMulNstage), sizeof(IntMulNstageStep));
+  unsigned long long total_cycle = 20000000;
   time_t start = clock();
   for (unsigned long long cycle=0; cycle<total_cycle; ++cycle)
   {
     top->tick_schedule();
   }
   time_t end = clock();
-  printf("req val:%d rdy:%d a:%6d b:%6d ", top->imul.req.val, top->imul.req.rdy, top->imul.req.msg[0], top->imul.req.msg[1]);
-  printf("resp val:%d rdy:%d imul:%12d", top->imul.resp.val, top->imul.resp.rdy, top->imul.resp.msg[0]);
+  printf("req val:%d rdy:%d a:%6d b:%6d ", top->imul.req.val, top->imul.req.rdy, top->imul.req.msg & 4294967295, top->imul.req.msg >> 32);
+  printf("resp val:%d rdy:%d imul:%12x", top->imul.resp.val, top->imul.resp.rdy, top->imul.resp.msg);
   puts("");
 
   printf("Total cycles   : %lld million cycles\n", total_cycle/1000000LL);

@@ -42,7 +42,7 @@ class IntMulNstageStep( Updates ):
 
 class IntMulNstageInelastic( Updates ):
 
-  def __init__( s, nstages = 4 ):
+  def __init__( s, nstages = 16 ):
 
     s.req  = ValRdyBundle( Bits64 )
     s.resp = ValRdyBundle( Bits32 )

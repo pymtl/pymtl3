@@ -73,7 +73,7 @@ def main():
 
   th = SimHarness( model_impl_dict[ opts.impl ] )
   th.elaborate()
-  th.print_schedule()
+  th.print_c_schedule()
 
   ncycles = opts.cycle * 1000000
 
