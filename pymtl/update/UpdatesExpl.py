@@ -150,12 +150,26 @@ class UpdatesExpl( PyMTLObject ):
       Q = Q2
 
   def elaborate( s ):
+    s._cpp_connection_src = ""
     s._elaborate()
     s._synthesize_constraints()
     s._schedule()
 
   def cycle( s ):
     print "Please elaborate before the simulation!"
+
+  def print_c_schedule( s ):
+    with open("tmp_c_src.txt","w") as f:
+      f.write( s._cpp_connection_src )
+      f.write( "  void tick_schedule()\n" )
+      f.write( "  {\n" )
+      for (i, blk) in enumerate( s._schedule_list ):
+        if blk.func_closure:
+          obj = blk.func_closure[0].cell_contents
+          f.write( "    "+obj.full_name()[2:] +"."+ blk.__name__ + "();\n" )
+        else:
+          f.write( "    top_" + blk.__name__[2:] + "();\n" )
+      f.write( "  }\n" )
 
   def print_schedule( s ):
     assert hasattr( s, "_schedule_list"), "Please elaborate before you print schedule!"
