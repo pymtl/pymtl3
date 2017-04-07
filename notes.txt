@@ -1,0 +1,108 @@
+1. Bits32 doesn't work efficiently in one way, and Bits in another way
+2. Data struct as a type? "pass by reference" instead of value is wrong.
+3. RTL means more observable points? With the same amount of observable points, CL should be as fast as RTL.
+4. "Total size" of an RTL design and its implication to simulation. The size is defined as the observable points
+5. gprof show that branches are expensive operations in hardware simulation?
+
+Question: Hardware simulation is a class of workload, but what is the best
+simulation performance you can get out of commercial hardware, i.e. Intel CPU?
+
+Good news: our v3 RTL syntax is more restricted than verilog, and is able to extract
+essential performance.
+
+Experiment setup
+----------------
+linux-4.9.19/tools/perf$ ./perf stat -e instructions,cycles,L1-dcache-loads,L1-dcache-stores,branches ~/workspace/pymtl-v3/nstage_redundant
+i5-6200u @ 2.8 GHz, gcc 5.4.0, -O1 -march=native -mtune=native
+
+-O1 generates more intuitive code. Under -O3, g++ will try to generate branches (predication?) to reduce the amount of stores.
+
+imul-16stage
+------------
+64 RegEn branch
+32 Mux array selection
+96 Arith
+~420 copies due to connections.
+Simulation speed: 5.8M cycle/s @ 2.8GHz, but why?
+
+* Statistics collected from native perf, 10M target cycles
+    11,50 1,937,364      instructions:u            #    2.54  insn per native cycle
+     4,53 6,223,128      cycles:u **
+     4,76 0,457,989      L1-dcache-loads:u
+     4,53 0,172,759      L1-dcache-stores:u **
+       65 0,306,604      branches:u
+       < ~0.0001% percent branch misprediction >
+
++ 1150 native instruction / target cycle
+  - I objdumped and verified that the loop has 1150 instructions. See nstage_redundant.insn.
+  - Since all registers are enabled all the time, all "je" branches are not taken.
+  - 929 instructions have memory accesses. 929 = 453 + 476
+
++ 453  native cycle / target cycle
+
++ 476  native load  / target cycle
+
++ 453  native store / target cycle
+  - The store bandwidth is the bottleneck of simulating this design.
+  - 1-write port L1D allows 1 store per cycle so 453 store turns into 453 cycles.
+    ("Haswell can now sustain 2 loads and 1 store per cycle" so probably does Skylake)
+
++ 65   branches     / target cycle
+  - 64 branches come from 64 RegEns, and the other one is the 10M cycle outer loop.
+  - The branch misprediction has little effect here, but will 
+
+imul-varlat
+-----------
+1 CalcShamt (9 branches, ~4.5 on average are executed)
+1 RegEn branch
+4 Mux array selection
+7 Arith
+* State machine has 6+5 branches in total, but ~(3+2.5) on average are executed
+Simulation speed: 66M cycle/s
+
+* Statistics collected from native perf, 100M target cycles
+     9,6 79,172,405      instructions:u            #    2.32  insn per cycle         
+     4,1 75,241,434      cycles:u
+     2,2 91,416,485      L1-dcache-loads:u
+     3,2 66,575,808      L1-dcache-stores:u
+         35,820,417      branch-misses:u
+
+     1,0 68,545,415      branches:u   #  3.34% misprediction rate of all branches
+
++ 97 native instruction / target cycle
+  - I objdumped. The loop has 155 instructions but the state_output generates multiple paths.
+
++ 42  native cycle / target cycle
+
++ 23  native load  / target cycle
+
++ 33  native store / target cycle
+  - #store > #load? This is because the state output takes one input and produce a ton of outputs.
+
++ 11   branches     / target cycle
+  - ~4.5(CalcShamt)+ ~5.5(state_output+state_transition) + 1(RegEn) = 11
+  - 0.36 branch misprediction / target cycle
+
+OK then I looked up Haswell/Broadwell/Skylake branch misprediction penalty. It is 15-20 cycles.
+
+Let's calculate the expected cycle just by #store and #branch
+
+E[cycle] = 33 + 0.36*20 = 40.2, almost the same as 42 native cycle/target cycle.
+
+gcd
+---
+2 RegEn
+2 Mux array selection
+5 Arith
+* State machine has 11 branches, 6 executed on average
+
+* Statistics collected from native perf, 1B target cycles
+    74,000,831,798      instructions:u            #    3.17  insn per cycle         
+    23,378,050,223      cycles:u                                                    
+    23,006,440,467      L1-dcache-stores:u                                          
+         5,026,437      branch-misses:u           #    0.06% of all branches        
+     7,994,609,175      branches:u
+
++ 23.3 native cycle/target cycle
++ 23 native store/target cycle
++ 0.06% branch misprediction rate, lead to 0.2 native cycle penalty
