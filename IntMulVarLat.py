@@ -255,6 +255,7 @@ if __name__ == "__main__":
 
   th = TestHarness( IntMulVarLat(), src_msgs, sink_msgs )
   th.elaborate()
+  th.print_c_schedule()
   while not th.done():
     th.cycle()
     print th.line_trace()

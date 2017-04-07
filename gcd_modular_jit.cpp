@@ -437,24 +437,25 @@ public:
 
 int main()
 {
-  TestHarness top;
+  TestHarness *__restrict__ top = new TestHarness();
+  printf("%d\n",sizeof(TestHarness));
   unsigned long long total_cycle = 1000000000;
   time_t start = clock();
   for (unsigned long long cycle=0; cycle<total_cycle; ++cycle)
   {
-    top.tick_schedule();
+    top->tick_schedule();
 
   }
   time_t end = clock();
-  printf("req val:%d rdy:%d a:%6d b:%6d ", top.gcd.req.val, top.gcd.req.rdy, top.gcd.req.msg[0], top.gcd.req.msg[1]);
-  printf("[en:%1d|%6d > %6d] ", top.gcd.dpath.a_reg.en, top.gcd.dpath.a_reg.in_, top.gcd.dpath.a_reg.out);
-  printf("[en:%1d|%6d > %6d] ", top.gcd.dpath.b_reg.en, top.gcd.dpath.b_reg.in_, top.gcd.dpath.b_reg.out);
-  printf("resp val:%d rdy:%d gcd:%6d", top.gcd.resp.val, top.gcd.resp.rdy, top.gcd.resp.msg[0]);
+  printf("req val:%d rdy:%d a:%6d b:%6d ", top->gcd.req.val, top->gcd.req.rdy, top->gcd.req.msg[0], top->gcd.req.msg[1]);
+  printf("[en:%1d|%6d > %6d] ", top->gcd.dpath.a_reg.en, top->gcd.dpath.a_reg.in_, top->gcd.dpath.a_reg.out);
+  printf("[en:%1d|%6d > %6d] ", top->gcd.dpath.b_reg.en, top->gcd.dpath.b_reg.in_, top->gcd.dpath.b_reg.out);
+  printf("resp val:%d rdy:%d gcd:%6d", top->gcd.resp.val, top->gcd.resp.rdy, top->gcd.resp.msg[0]);
   puts("");
 
   printf("Total cycles   : %lld million cycles\n", total_cycle/1000000LL);
   printf("Execution time : %.3lf seconds\n",(end-start)/(double)CLOCKS_PER_SEC);
   printf("Cycle/second   : %.3lf million cps\n",total_cycle/1000000LL/((end-start)/(double)CLOCKS_PER_SEC));
-  // delete top;
+  delete top;
   return 0;
 }
