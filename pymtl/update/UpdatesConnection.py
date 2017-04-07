@@ -375,7 +375,7 @@ class UpdatesConnection( UpdatesExpl ):
         while rstr[LCP-1] != ".": # s.mux and s.mustang's LCP can't be s.mu ..
           LCP -= 1
 
-        s._cpp_connection_src += "     {} = {};\n".format(rstr[2:], wstr[2:])
+        s._cpp_connection_src += "    {} = {};\n".format(rstr[2:], wstr[2:])
 
         if rstr[:LCP] == "s.":
           # Vanilla
@@ -419,7 +419,7 @@ class UpdatesConnection( UpdatesExpl ):
           LCP -= 1
 
         for st in strs:
-          s._cpp_connection_src += "     {} = {};\n".format(st[2:], writer.full_name()[2:])
+          s._cpp_connection_src += "    {} = {};\n".format(st[2:], writer.full_name()[2:])
 
         if strs[0][:LCP] == "s.":
           # Only able to apply common writer optimization
