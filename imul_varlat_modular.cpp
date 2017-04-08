@@ -561,21 +561,21 @@ public:
 int main()
 {
   TestHarness *__restrict__ top = new TestHarness();
-  printf("%d %d\n",sizeof(TestHarness),sizeof(IntMulVarLat));
-  unsigned long long total_cycle = 200000000;
-  time_t start = clock();
+  // printf("%d %d\n",sizeof(TestHarness),sizeof(IntMulVarLat));
+  unsigned long long total_cycle = 100000000;
+  // time_t start = clock();
   for (unsigned long long cycle=0; cycle<total_cycle; ++cycle)
   {
     top->tick_schedule();
   }
-  time_t end = clock();
-  printf("req val:%d rdy:%d a:%6d b:%6d ", top->imul.req.val, top->imul.req.rdy, top->imul.req.msg & 4294967295, top->imul.req.msg >> 32);
-  printf("resp val:%d rdy:%d imul:%12x", top->imul.resp.val, top->imul.resp.rdy, top->imul.resp.msg);
-  puts("");
+  // time_t end = clock();
+  // printf("req val:%d rdy:%d a:%6d b:%6d ", top->imul.req.val, top->imul.req.rdy, top->imul.req.msg & 4294967295, top->imul.req.msg >> 32);
+  // printf("resp val:%d rdy:%d imul:%12x", top->imul.resp.val, top->imul.resp.rdy, top->imul.resp.msg);
+  // puts("");
 
-  printf("Total cycles   : %lld million cycles\n", total_cycle/1000000LL);
-  printf("Execution time : %.3lf seconds\n",(end-start)/(double)CLOCKS_PER_SEC);
-  printf("Cycle/second   : %.3lf million cps\n",total_cycle/1000000LL/((end-start)/(double)CLOCKS_PER_SEC));
+  // printf("Total cycles   : %lld million cycles\n", total_cycle/1000000LL);
+  // printf("Execution time : %.3lf seconds\n",(end-start)/(double)CLOCKS_PER_SEC);
+  // printf("Cycle/second   : %.3lf million cps\n",total_cycle/1000000LL/((end-start)/(double)CLOCKS_PER_SEC));
   delete top;
   return 0;
 }

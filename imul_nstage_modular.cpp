@@ -1990,7 +1990,7 @@ int main()
 {
   TestHarness *top = new TestHarness();
   printf("%d %d %d\n",sizeof(TestHarness),sizeof(IntMulNstage), sizeof(IntMulNstageStep));
-  unsigned long long total_cycle = 20000000;
+  unsigned long long total_cycle = 10000000;
   time_t start = clock();
   for (unsigned long long cycle=0; cycle<total_cycle; ++cycle)
   {
