@@ -1,31 +1,6 @@
 #include <cstdio>
 #include <ctime>
 
-int A_MUX_SEL_IN  = 0;
-int A_MUX_SEL_SUB = 1;
-int A_MUX_SEL_B   = 2;
-int A_MUX_SEL_X   = 0;
-int B_MUX_SEL_A   = 0;
-int B_MUX_SEL_IN  = 1;
-int B_MUX_SEL_X   = 0;
-
-template<int BW>
-class Reg
-{
-public:
-  int in_;
-  int out;
-  Reg()
-  {
-    in_ = 0;
-    out = 0;
-  }
-  void up_reg()
-  {
-    out = in_;
-  }
-};
-
 template<int BW>
 class RegEn
 {
@@ -33,12 +8,6 @@ public:
   int en;
   int in_;
   int out;
-  RegEn()
-  {
-    en  = 0;
-    in_ = 0;
-    out = 0;
-  }
   void up_regen()
   {
     if (en) out = in_;
@@ -52,70 +21,9 @@ public:
   int in_[1<<NB];
   int out;
   int sel;
-  Mux()
-  {
-    for (int i=0;i<1<<NB;++i) in_[i] = 0;
-    out = 0;
-    sel = 0;
-  }
   void up_mux()
   {
     out = in_[sel];
-  }
-};
-
-template<int BW>
-class ZeroComp
-{
-public:
-  int in_;
-  int out;
-  ZeroComp()
-  {
-    in_ = 0;
-    out = 0;
-  }
-  void up_zerocomp()
-  {
-    out = (in_ == 0);
-  }
-};
-
-template<int BW>
-class LTComp
-{
-public:
-  int in0;
-  int in1;
-  int out;
-  LTComp()
-  {
-    in0 = 0;
-    in1 = 0;
-    out = 0;
-  }
-  void up_ltcomp()
-  {
-    out = (in0 < in1);
-  }
-};
-
-template<int BW>
-class Subtractor
-{
-public:
-  int in0;
-  int in1;
-  int out;
-  Subtractor()
-  {
-    in0 = 0;
-    in1 = 0;
-    out = 0;
-  }
-  void up_subtractor()
-  {
-    out = in0 - in1;
   }
 };
 
@@ -126,12 +34,6 @@ public:
   int in0;
   int in1;
   int out;
-  Adder()
-  {
-    in0 = 0;
-    in1 = 0;
-    out = 0;
-  }
   void up_adder()
   {
     out = in0 + in1;
@@ -147,9 +49,7 @@ public:
   int out;
   LShifter()
   {
-    in_ = 0;
     shamt = 1;
-    out = 0;
   }
   void up_lshifter()
   {
@@ -190,11 +90,10 @@ class StreamSource
 public:
   ValRdyBundle<2> out;
   unsigned long long ts;
-  StreamSource(): ts(0) {}
+  StreamSource(): ts(0) {out.val = 1;}
   void up_src()
   {
     out.msg = ts+95827*(ts&1) | ((ts+(19182)*(ts&1))<<32);
-    out.val = 1;
     ts += 1;
   }
 };
@@ -228,11 +127,6 @@ public:
   RShifter<32> b_rsh;
   Adder<32> adder;
   Mux<32, 1> mux;
-
-  void up_muxsel()
-  {
-    mux.sel = in_.b & 1;
-  }
 };
 
 class IntMulNstage
@@ -274,7 +168,7 @@ public:
   }
   void top_imul_steps_10__in__b_0_1__FANOUT_1()
   {
-     imul.steps[10].mux.sel = imul.steps[10].in_.b & 1;
+     imul.steps[10].mux.sel = imul.b_preg[5].out & 1;
   }
   void top_imul_steps_20__mux_out_FANOUT_4()
   {
@@ -291,7 +185,6 @@ public:
   }
   void top_imul_b_preg_9__out_FANOUT_2()
   {
-     imul.steps[18].in_.b = imul.b_preg[9].out;
      imul.steps[18].b_rsh.in_ = imul.b_preg[9].out;
   }
   void top_imul_res_preg_15__out_FANOUT_3()
@@ -314,7 +207,7 @@ public:
   }
   void top_imul_steps_18__in__b_0_1__FANOUT_1()
   {
-     imul.steps[18].mux.sel = imul.steps[18].in_.b & 1;
+     imul.steps[18].mux.sel = imul.b_preg[9].out & 1;
   }
   void top_imul_steps_13__mux_out_FANOUT_2()
   {
@@ -330,7 +223,7 @@ public:
   }
   void top_imul_steps_1__in__b_0_1__FANOUT_1()
   {
-     imul.steps[1].mux.sel = imul.steps[1].in_.b & 1;
+     imul.steps[1].mux.sel = imul.steps[0].b_rsh.out & 1;
   }
   void top_imul_steps_3__adder_out_FANOUT_1()
   {
@@ -346,7 +239,7 @@ public:
   }
   void top_imul_steps_20__in__b_0_1__FANOUT_1()
   {
-     imul.steps[20].mux.sel = imul.steps[20].in_.b & 1;
+     imul.steps[20].mux.sel = imul.b_preg[10].out & 1;
   }
   void top_imul_steps_17__a_lsh_out_FANOUT_2()
   {
@@ -363,12 +256,10 @@ public:
   }
   void top_imul_b_preg_13__out_FANOUT_2()
   {
-     imul.steps[26].in_.b = imul.b_preg[13].out;
      imul.steps[26].b_rsh.in_ = imul.b_preg[13].out;
   }
   void top_imul_steps_14__b_rsh_out_FANOUT_3()
   {
-     imul.steps[15].in_.b = imul.steps[14].b_rsh.out;
      imul.steps[15].b_rsh.in_ = imul.steps[14].b_rsh.out;
   }
   void top_imul_steps_21__b_rsh_out_FANOUT_2()
@@ -377,7 +268,7 @@ public:
   }
   void top_imul_steps_7__in__b_0_1__FANOUT_1()
   {
-     imul.steps[7].mux.sel = imul.steps[7].in_.b & 1;
+     imul.steps[7].mux.sel = imul.steps[6].b_rsh.out & 1;
   }
   void top_imul_steps_25__mux_out_FANOUT_2()
   {
@@ -395,7 +286,7 @@ public:
   }
   void top_imul_steps_30__in__b_0_1__FANOUT_1()
   {
-     imul.steps[30].mux.sel = imul.steps[30].in_.b & 1;
+     imul.steps[30].mux.sel = imul.b_preg[15].out & 1;
   }
   void top_imul_steps_27__a_lsh_out_FANOUT_2()
   {
@@ -426,7 +317,7 @@ public:
   }
   void top_imul_steps_13__in__b_0_1__FANOUT_1()
   {
-     imul.steps[13].mux.sel = imul.steps[13].in_.b & 1;
+     imul.steps[13].mux.sel = imul.steps[12].b_rsh.out & 1;
   }
   void top_imul_steps_23__b_rsh_out_FANOUT_2()
   {
@@ -442,7 +333,6 @@ public:
   }
   void top_imul_val_preg_15__out_FANOUT_6()
   {
-     sink.in_.val = imul.val_preg[15].out;
      imul.resp.val = imul.val_preg[15].out;
   }
   void top_imul_res_preg_10__out_FANOUT_3()
@@ -461,7 +351,7 @@ public:
   }
   void top_imul_steps_17__in__b_0_1__FANOUT_1()
   {
-     imul.steps[17].mux.sel = imul.steps[17].in_.b & 1;
+     imul.steps[17].mux.sel = imul.steps[16].b_rsh.out & 1;
   }
   void top_imul_a_preg_11__out_FANOUT_3()
   {
@@ -484,7 +374,7 @@ public:
   }
   void top_imul_steps_2__in__b_0_1__FANOUT_1()
   {
-     imul.steps[2].mux.sel = imul.steps[2].in_.b & 1;
+     imul.steps[2].mux.sel = imul.b_preg[1].out & 1;
   }
   void top_imul_val_preg_3__out_FANOUT_5()
   {
@@ -492,20 +382,18 @@ public:
   }
   void top_imul_b_preg_2__out_FANOUT_2()
   {
-     imul.steps[4].in_.b = imul.b_preg[2].out;
      imul.steps[4].b_rsh.in_ = imul.b_preg[2].out;
   }
   void top_imul_steps_27__in__b_0_1__FANOUT_1()
   {
-     imul.steps[27].mux.sel = imul.steps[27].in_.b & 1;
+     imul.steps[27].mux.sel = imul.steps[26].b_rsh.out & 1;
   }
   void top_imul_steps_0__in__b_0_1__FANOUT_1()
   {
-     imul.steps[0].mux.sel = imul.steps[0].in_.b & 1;
+     imul.steps[0].mux.sel = imul.b_preg[0].out & 1;
   }
   void top_imul_steps_20__b_rsh_out_FANOUT_3()
   {
-     imul.steps[21].in_.b = imul.steps[20].b_rsh.out;
      imul.steps[21].b_rsh.in_ = imul.steps[20].b_rsh.out;
   }
   void top_imul_steps_12__adder_out_FANOUT_1()
@@ -514,7 +402,6 @@ public:
   }
   void top_imul_b_preg_8__out_FANOUT_2()
   {
-     imul.steps[16].in_.b = imul.b_preg[8].out;
      imul.steps[16].b_rsh.in_ = imul.b_preg[8].out;
   }
   void top_imul_res_preg_14__out_FANOUT_3()
@@ -532,7 +419,6 @@ public:
   }
   void top_imul_steps_30__b_rsh_out_FANOUT_3()
   {
-     imul.steps[31].in_.b = imul.steps[30].b_rsh.out;
      imul.steps[31].b_rsh.in_ = imul.steps[30].b_rsh.out;
   }
   void top_imul_a_preg_13__out_FANOUT_3()
@@ -568,7 +454,7 @@ public:
   }
   void top_imul_steps_16__in__b_0_1__FANOUT_1()
   {
-     imul.steps[16].mux.sel = imul.steps[16].in_.b & 1;
+     imul.steps[16].mux.sel = imul.b_preg[8].out & 1;
   }
   void top_imul_steps_26__mux_out_FANOUT_4()
   {
@@ -585,7 +471,6 @@ public:
   }
   void top_imul_steps_0__b_rsh_out_FANOUT_3()
   {
-     imul.steps[1].in_.b = imul.steps[0].b_rsh.out;
      imul.steps[1].b_rsh.in_ = imul.steps[0].b_rsh.out;
   }
   void top_imul_val_preg_9__out_FANOUT_5()
@@ -599,7 +484,6 @@ public:
   }
   void top_imul_b_preg_12__out_FANOUT_2()
   {
-     imul.steps[24].in_.b = imul.b_preg[12].out;
      imul.steps[24].b_rsh.in_ = imul.b_preg[12].out;
   }
   void top_imul_steps_14__a_lsh_out_FANOUT_4()
@@ -619,7 +503,7 @@ public:
   }
   void top_imul_steps_14__in__b_0_1__FANOUT_1()
   {
-     imul.steps[14].mux.sel = imul.steps[14].in_.b & 1;
+     imul.steps[14].mux.sel = imul.b_preg[7].out & 1;
   }
   void top_imul_steps_5__mux_out_FANOUT_2()
   {
@@ -654,7 +538,6 @@ public:
   }
   void top_imul_steps_12__b_rsh_out_FANOUT_3()
   {
-     imul.steps[13].in_.b = imul.steps[12].b_rsh.out;
      imul.steps[13].b_rsh.in_ = imul.steps[12].b_rsh.out;
   }
   void top_imul_steps_25__a_lsh_out_FANOUT_2()
@@ -663,12 +546,10 @@ public:
   }
   void top_imul_b_preg_6__out_FANOUT_2()
   {
-     imul.steps[12].in_.b = imul.b_preg[6].out;
      imul.steps[12].b_rsh.in_ = imul.b_preg[6].out;
   }
   void top_imul_steps_31__mux_out_FANOUT_3()
   {
-     sink.in_.msg = imul.steps[31].mux.out;
      imul.resp.msg = imul.steps[31].mux.out;
   }
   void top_imul_steps_23__a_lsh_out_FANOUT_2()
@@ -677,7 +558,7 @@ public:
   }
   void top_imul_steps_23__in__b_0_1__FANOUT_1()
   {
-     imul.steps[23].mux.sel = imul.steps[23].in_.b & 1;
+     imul.steps[23].mux.sel = imul.steps[22].b_rsh.out & 1;
   }
   void top_imul_steps_29__a_lsh_out_FANOUT_2()
   {
@@ -715,11 +596,10 @@ public:
   }
   void top_imul_steps_15__in__b_0_1__FANOUT_1()
   {
-     imul.steps[15].mux.sel = imul.steps[15].in_.b & 1;
+     imul.steps[15].mux.sel = imul.steps[14].b_rsh.out & 1;
   }
   void top_imul_steps_8__b_rsh_out_FANOUT_3()
   {
-     imul.steps[9].in_.b = imul.steps[8].b_rsh.out;
      imul.steps[9].b_rsh.in_ = imul.steps[8].b_rsh.out;
   }
   void top_imul_steps_4__adder_out_FANOUT_1()
@@ -732,7 +612,6 @@ public:
   }
   void top_imul_steps_16__b_rsh_out_FANOUT_3()
   {
-     imul.steps[17].in_.b = imul.steps[16].b_rsh.out;
      imul.steps[17].b_rsh.in_ = imul.steps[16].b_rsh.out;
   }
   void top_imul_steps_25__adder_out_FANOUT_1()
@@ -768,7 +647,6 @@ public:
   }
   void top_imul_b_preg_7__out_FANOUT_2()
   {
-     imul.steps[14].in_.b = imul.b_preg[7].out;
      imul.steps[14].b_rsh.in_ = imul.b_preg[7].out;
   }
   void top_imul_res_preg_8__out_FANOUT_3()
@@ -778,11 +656,11 @@ public:
   }
   void top_imul_steps_11__in__b_0_1__FANOUT_1()
   {
-     imul.steps[11].mux.sel = imul.steps[11].in_.b & 1;
+     imul.steps[11].mux.sel = imul.steps[10].b_rsh.out & 1;
   }
   void top_imul_steps_8__in__b_0_1__FANOUT_1()
   {
-     imul.steps[8].mux.sel = imul.steps[8].in_.b & 1;
+     imul.steps[8].mux.sel = imul.b_preg[4].out & 1;
   }
   void top_imul_steps_18__a_lsh_out_FANOUT_4()
   {
@@ -810,12 +688,11 @@ public:
   }
   void top_imul_steps_26__b_rsh_out_FANOUT_3()
   {
-     imul.steps[27].in_.b = imul.steps[26].b_rsh.out;
      imul.steps[27].b_rsh.in_ = imul.steps[26].b_rsh.out;
   }
   void top_imul_steps_21__in__b_0_1__FANOUT_1()
   {
-     imul.steps[21].mux.sel = imul.steps[21].in_.b & 1;
+     imul.steps[21].mux.sel = imul.steps[20].b_rsh.out & 1;
   }
   void top_imul_val_preg_6__out_FANOUT_5()
   {
@@ -850,7 +727,6 @@ public:
   }
   void top_imul_b_preg_11__out_FANOUT_2()
   {
-     imul.steps[22].in_.b = imul.b_preg[11].out;
      imul.steps[22].b_rsh.in_ = imul.b_preg[11].out;
   }
   void top_imul_steps_20__adder_out_FANOUT_1()
@@ -859,7 +735,6 @@ public:
   }
   void top_imul_b_preg_14__out_FANOUT_2()
   {
-     imul.steps[28].in_.b = imul.b_preg[14].out;
      imul.steps[28].b_rsh.in_ = imul.b_preg[14].out;
   }
   void top_imul_a_preg_6__out_FANOUT_3()
@@ -878,7 +753,7 @@ public:
   }
   void top_imul_steps_22__in__b_0_1__FANOUT_1()
   {
-     imul.steps[22].mux.sel = imul.steps[22].in_.b & 1;
+     imul.steps[22].mux.sel = imul.b_preg[11].out & 1;
   }
   void top_imul_steps_9__adder_out_FANOUT_1()
   {
@@ -890,7 +765,7 @@ public:
   }
   void top_imul_steps_26__in__b_0_1__FANOUT_1()
   {
-     imul.steps[26].mux.sel = imul.steps[26].in_.b & 1;
+     imul.steps[26].mux.sel = imul.b_preg[13].out & 1;
   }
   void top_imul_steps_8__mux_out_FANOUT_4()
   {
@@ -899,12 +774,11 @@ public:
   }
   void top_imul_steps_2__b_rsh_out_FANOUT_3()
   {
-     imul.steps[3].in_.b = imul.steps[2].b_rsh.out;
      imul.steps[3].b_rsh.in_ = imul.steps[2].b_rsh.out;
   }
   void top_imul_steps_28__in__b_0_1__FANOUT_1()
   {
-     imul.steps[28].mux.sel = imul.steps[28].in_.b & 1;
+     imul.steps[28].mux.sel = imul.b_preg[14].out & 1;
   }
   void top_imul_steps_28__mux_out_FANOUT_4()
   {
@@ -927,8 +801,6 @@ public:
   }
   void top_sink_in__rdy_FANOUT_67()
   {
-     src.out.rdy = sink.in_.rdy;
-     imul.resp.rdy = sink.in_.rdy;
      imul.a_preg[0].en = sink.in_.rdy;
      imul.b_preg[0].en = sink.in_.rdy;
      imul.val_preg[0].en = sink.in_.rdy;
@@ -993,25 +865,22 @@ public:
      imul.b_preg[15].en = sink.in_.rdy;
      imul.val_preg[15].en = sink.in_.rdy;
      imul.res_preg[15].en = sink.in_.rdy;
-     imul.req.rdy = sink.in_.rdy;
   }
   void top_imul_steps_24__in__b_0_1__FANOUT_1()
   {
-     imul.steps[24].mux.sel = imul.steps[24].in_.b & 1;
+     imul.steps[24].mux.sel = imul.b_preg[12].out & 1;
   }
   void top_imul_steps_10__b_rsh_out_FANOUT_3()
   {
-     imul.steps[11].in_.b = imul.steps[10].b_rsh.out;
      imul.steps[11].b_rsh.in_ = imul.steps[10].b_rsh.out;
   }
   void top_imul_b_preg_5__out_FANOUT_2()
   {
-     imul.steps[10].in_.b = imul.b_preg[5].out;
      imul.steps[10].b_rsh.in_ = imul.b_preg[5].out;
   }
   void top_imul_steps_31__in__b_0_1__FANOUT_1()
   {
-     imul.steps[31].mux.sel = imul.steps[31].in_.b & 1;
+     imul.steps[31].mux.sel = imul.steps[30].b_rsh.out & 1;
   }
   void top_imul_a_preg_2__out_FANOUT_3()
   {
@@ -1028,7 +897,6 @@ public:
   }
   void top_imul_b_preg_1__out_FANOUT_2()
   {
-     imul.steps[2].in_.b = imul.b_preg[1].out;
      imul.steps[2].b_rsh.in_ = imul.b_preg[1].out;
   }
   void top_imul_steps_12__mux_out_FANOUT_4()
@@ -1043,7 +911,7 @@ public:
   }
   void top_imul_steps_19__in__b_0_1__FANOUT_1()
   {
-     imul.steps[19].mux.sel = imul.steps[19].in_.b & 1;
+     imul.steps[19].mux.sel = imul.steps[18].b_rsh.out & 1;
   }
   void top_imul_steps_16__a_lsh_out_FANOUT_4()
   {
@@ -1066,7 +934,7 @@ public:
   }
   void top_imul_steps_6__in__b_0_1__FANOUT_1()
   {
-     imul.steps[6].mux.sel = imul.steps[6].in_.b & 1;
+     imul.steps[6].mux.sel = imul.b_preg[3].out & 1;
   }
   void top_imul_steps_7__a_lsh_out_FANOUT_2()
   {
@@ -1074,7 +942,7 @@ public:
   }
   void top_imul_steps_29__in__b_0_1__FANOUT_1()
   {
-     imul.steps[29].mux.sel = imul.steps[29].in_.b & 1;
+     imul.steps[29].mux.sel = imul.steps[28].b_rsh.out & 1;
   }
   void top_imul_steps_31__adder_out_FANOUT_1()
   {
@@ -1082,12 +950,10 @@ public:
   }
   void top_imul_steps_22__b_rsh_out_FANOUT_3()
   {
-     imul.steps[23].in_.b = imul.steps[22].b_rsh.out;
      imul.steps[23].b_rsh.in_ = imul.steps[22].b_rsh.out;
   }
   void top_imul_steps_24__b_rsh_out_FANOUT_3()
   {
-     imul.steps[25].in_.b = imul.steps[24].b_rsh.out;
      imul.steps[25].b_rsh.in_ = imul.steps[24].b_rsh.out;
   }
   void top_imul_steps_3__b_rsh_out_FANOUT_2()
@@ -1100,16 +966,15 @@ public:
   }
   void top_imul_steps_25__in__b_0_1__FANOUT_1()
   {
-     imul.steps[25].mux.sel = imul.steps[25].in_.b & 1;
+     imul.steps[25].mux.sel = imul.steps[24].b_rsh.out & 1;
   }
   void top_imul_b_preg_3__out_FANOUT_2()
   {
-     imul.steps[6].in_.b = imul.b_preg[3].out;
      imul.steps[6].b_rsh.in_ = imul.b_preg[3].out;
   }
   void top_imul_steps_12__in__b_0_1__FANOUT_1()
   {
-     imul.steps[12].mux.sel = imul.steps[12].in_.b & 1;
+     imul.steps[12].mux.sel = imul.b_preg[6].out & 1;
   }
   void top_imul_steps_14__adder_out_FANOUT_1()
   {
@@ -1131,7 +996,6 @@ public:
   }
   void top_imul_b_preg_10__out_FANOUT_2()
   {
-     imul.steps[20].in_.b = imul.b_preg[10].out;
      imul.steps[20].b_rsh.in_ = imul.b_preg[10].out;
   }
   void top_imul_steps_11__a_lsh_out_FANOUT_2()
@@ -1148,7 +1012,7 @@ public:
   }
   void top_imul_steps_3__in__b_0_1__FANOUT_1()
   {
-     imul.steps[3].mux.sel = imul.steps[3].in_.b & 1;
+     imul.steps[3].mux.sel = imul.steps[2].b_rsh.out & 1;
   }
   void top_imul_steps_15__adder_out_FANOUT_1()
   {
@@ -1156,7 +1020,7 @@ public:
   }
   void top_imul_steps_5__in__b_0_1__FANOUT_1()
   {
-     imul.steps[5].mux.sel = imul.steps[5].in_.b & 1;
+     imul.steps[5].mux.sel = imul.steps[4].b_rsh.out & 1;
   }
   void top_imul_a_preg_14__out_FANOUT_3()
   {
@@ -1169,7 +1033,6 @@ public:
   }
   void top_imul_b_preg_0__out_FANOUT_2()
   {
-     imul.steps[0].in_.b = imul.b_preg[0].out;
      imul.steps[0].b_rsh.in_ = imul.b_preg[0].out;
   }
   void top_imul_steps_5__adder_out_FANOUT_1()
@@ -1194,7 +1057,6 @@ public:
   }
   void top_imul_steps_28__b_rsh_out_FANOUT_3()
   {
-     imul.steps[29].in_.b = imul.steps[28].b_rsh.out;
      imul.steps[29].b_rsh.in_ = imul.steps[28].b_rsh.out;
   }
   void top_imul_steps_21__mux_out_FANOUT_2()
@@ -1226,7 +1088,7 @@ public:
   }
   void top_imul_steps_4__in__b_0_1__FANOUT_1()
   {
-     imul.steps[4].mux.sel = imul.steps[4].in_.b & 1;
+     imul.steps[4].mux.sel = imul.b_preg[2].out & 1;
   }
   void top_imul_steps_27__b_rsh_out_FANOUT_2()
   {
@@ -1247,7 +1109,6 @@ public:
   }
   void top_imul_steps_6__b_rsh_out_FANOUT_3()
   {
-     imul.steps[7].in_.b = imul.steps[6].b_rsh.out;
      imul.steps[7].b_rsh.in_ = imul.steps[6].b_rsh.out;
   }
   void top_imul_steps_10__a_lsh_out_FANOUT_4()
@@ -1277,12 +1138,10 @@ public:
   }
   void top_imul_b_preg_15__out_FANOUT_2()
   {
-     imul.steps[30].in_.b = imul.b_preg[15].out;
      imul.steps[30].b_rsh.in_ = imul.b_preg[15].out;
   }
   void top_imul_steps_18__b_rsh_out_FANOUT_3()
   {
-     imul.steps[19].in_.b = imul.steps[18].b_rsh.out;
      imul.steps[19].b_rsh.in_ = imul.steps[18].b_rsh.out;
   }
   void top_imul_steps_19__adder_out_FANOUT_1()
@@ -1309,11 +1168,10 @@ public:
   }
   void top_imul_steps_9__in__b_0_1__FANOUT_1()
   {
-     imul.steps[9].mux.sel = imul.steps[9].in_.b & 1;
+     imul.steps[9].mux.sel = imul.steps[8].b_rsh.out & 1;
   }
   void top_imul_b_preg_4__out_FANOUT_2()
   {
-     imul.steps[8].in_.b = imul.b_preg[4].out;
      imul.steps[8].b_rsh.in_ = imul.b_preg[4].out;
   }
   void top_imul_a_preg_3__out_FANOUT_3()
@@ -1323,7 +1181,6 @@ public:
   }
   void top_imul_steps_4__b_rsh_out_FANOUT_3()
   {
-     imul.steps[5].in_.b = imul.steps[4].b_rsh.out;
      imul.steps[5].b_rsh.in_ = imul.steps[4].b_rsh.out;
   }
   void top_imul_steps_8__adder_out_FANOUT_1()
@@ -1762,7 +1619,7 @@ int main()
 {
   TestHarness *top = new TestHarness();
   printf("%d %d %d\n",sizeof(TestHarness),sizeof(IntMulNstage), sizeof(IntMulNstageStep));
-  unsigned long long total_cycle = 20000000;
+  unsigned long long total_cycle = 10000000;
   time_t start = clock();
   for (unsigned long long cycle=0; cycle<total_cycle; ++cycle)
   {

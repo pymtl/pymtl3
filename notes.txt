@@ -22,7 +22,7 @@ imul-16stage
 64 RegEn branch
 32 Mux array selection
 96 Arith
-~420 copies due to connections.
+~400 copies due to connections?
 Simulation speed: 5.8M cycle/s @ 2.8GHz, but why?
 
 * Statistics collected from native perf, 10M target cycles
@@ -38,18 +38,18 @@ Simulation speed: 5.8M cycle/s @ 2.8GHz, but why?
   - Since all registers are enabled all the time, all "je" branches are not taken.
   - 929 instructions have memory accesses. 929 = 453 + 476
 
-+ 453  native cycle / target cycle
++ 454  native cycle / target cycle
 
 + 476  native load  / target cycle
 
 + 453  native store / target cycle
   - The store bandwidth is the bottleneck of simulating this design.
-  - 1-write port L1D allows 1 store per cycle so 453 store turns into 453 cycles.
+  - 1-write port L1D allows 1 store per cycle so 453 stores turn into ~453 cycles.
     ("Haswell can now sustain 2 loads and 1 store per cycle" so probably does Skylake)
 
 + 65   branches     / target cycle
   - 64 branches come from 64 RegEns, and the other one is the 10M cycle outer loop.
-  - The branch misprediction has little effect here, but will 
+  - The branch misprediction has little effect here, but will show up later
 
 imul-varlat
 -----------
