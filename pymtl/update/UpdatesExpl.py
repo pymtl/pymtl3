@@ -97,7 +97,7 @@ class UpdatesExpl( PyMTLObject ):
     while Q:
       # random.shuffle(Q) # to catch corner cases; will be removed later
 
-      u = Q.popleft() # bfs order is faster than dfs order
+      u = Q.pop() # bfs order is faster than dfs order
       _schedule_list.append( s._blkid_upblk[ upblks[u] ] )
       for v in edges[u]:
         InDeg[v] -= 1
