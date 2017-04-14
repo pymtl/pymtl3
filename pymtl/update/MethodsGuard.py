@@ -3,14 +3,15 @@
 #=========================================================================
 # At this level, we add the ability to add a rdy guard to method port
 
-from UpdatesExpl import verbose
-
-from collections import defaultdict, deque
-from PyMTLObject import PyMTLObject
-from MethodsExpl import MethodsExpl
 from MethodsConnection import MethodsConnection
-from ASTHelper   import get_method_calls
 from Connectable import MethodPort
+
+def guard_rdy( cond ):
+  def real_guard( method ):
+    setattr( method, "guard", "rdy" ) # method.guard "points to" method.rdy
+    setattr( method, "rdy", cond )
+    return method
+  return real_guard
 
 class MethodsGuard( MethodsConnection ):
 
@@ -24,15 +25,13 @@ class MethodsGuard( MethodsConnection ):
       return _f
 
     for x in dir(cls):
-      if x not in dir(MethodsGuard):
-        y = getattr(inst, x)
-        if isinstance( y, MethodPort ):
-          func = y._func
-          if hasattr( func, "guard" ):
-            gname = getattr( func, "guard" )
-            guard = getattr( func, gname )
+      y = getattr(inst, x)
+      # look for all guarded method
+      if isinstance( y, MethodPort ) and hasattr( y._func, "guard" ):
+        gname = getattr( y._func, "guard" )
+        guard = getattr( y._func, gname )
 
-            assert not hasattr( y, gname ), "what the hell?"
-            setattr( y, gname, wrap_lambda( guard ) )
+        assert not hasattr( y, gname ), "what the hell?"
+        setattr( y, gname, wrap_lambda( guard ) )
 
     return inst
