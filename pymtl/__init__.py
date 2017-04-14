@@ -4,8 +4,10 @@ from update.UpdatesConnection import UpdatesConnection
 from update.Updates           import Updates
 from update.MethodsExpl       import MethodsExpl
 from update.MethodsConnection import MethodsConnection
+from update.MethodsGuard      import MethodsGuard
 from update.ConstraintTypes   import U, RD, WR, M
 from update.Connectable       import ValuePort, Wire, MethodPort, PortBundle
+from update.Guards            import guard_rdy
 from datatypes.Bits           import *
 from datatypes.Bits           import _bitwidths
 
@@ -17,7 +19,8 @@ __all__ = [
   'MethodsExpl',
   'M',
   'MethodsConnection',
-  # 'MethodsGuard',
+  'MethodsGuard',
+  'guard_rdy',
   'MethodPort',
   'ValuePort',
   'Wire',
