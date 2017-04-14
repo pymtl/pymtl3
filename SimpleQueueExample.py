@@ -1,7 +1,7 @@
 from pymtl import *
 from pclib.cl import PipeQueue, BypassQueue, EnqIfc
 
-class QueuePlusOne( Methods ):
+class QueuePlusOne( MethodsConnection ):
 
   def __init__( s ):
     s.recv = EnqIfc()
@@ -18,7 +18,7 @@ class QueuePlusOne( Methods ):
   def line_trace( s ):
     return s.q.line_trace() + " +1 "
 
-class Top( Methods ):
+class Top( MethodsConnection ):
 
   def __init__( s ):
 

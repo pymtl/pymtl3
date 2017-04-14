@@ -1,5 +1,5 @@
 #=========================================================================
-# Methods.py
+# MethodsConnection.py
 #=========================================================================
 # At this level, we add the ability to connect methods
 
@@ -11,14 +11,14 @@ from MethodsExpl import MethodsExpl
 from ASTHelper   import get_method_calls
 from Connectable import MethodPort
 
-class Methods( MethodsExpl ):
+class MethodsConnection( MethodsExpl ):
 
   # Override
   def __new__( cls, *args, **kwargs ):
-    inst = super( Methods, cls ).__new__( cls, *args, **kwargs )
+    inst = super( MethodsConnection, cls ).__new__( cls, *args, **kwargs )
 
     for x in dir(cls):
-      if x not in dir(Methods):
+      if x not in dir(MethodsConnection):
         y = getattr(inst, x)
         if callable(y):
           z = MethodPort()
@@ -40,13 +40,9 @@ class Methods( MethodsExpl ):
             if   isinstance( obj, MethodPort ):
               root = obj._find_root()
 
-              # Because we basically clean up MethodPort before the formal
-              # elaboration, we need to record method nets with only one
-              # element to update the partial dependency.
-
               if id(root) not in methodid_nets:
                 methodid_nets[ id(root) ] = (root, root._connected)
-              setattr( parent, name, root._func )
+              setattr( parent, name, root )
 
             else:
               recursive_collect_connections( obj, methodid_nets )
@@ -62,12 +58,11 @@ class Methods( MethodsExpl ):
     for (method, net) in s._methodid_net.values():
 
       # Find the actual method
-      actual_func = method._func
       assert method.has_method(), "Cannot have a bunch connected MethodPorts without an actual method."
 
       for m in net:
         assert (m == method) or (not m.has_method()), "We don't allow connecting two actual methods, %s and %s" %(method._name, m._name)
-        s._methodid_head[ id(m) ] = actual_func
+        s._methodid_head[ id(m) ] = method
 
   def _update_partial_constraints( s ):
 
@@ -95,6 +90,6 @@ class Methods( MethodsExpl ):
   # Override
   def _elaborate( s ):
     s._resolve_method_connections()
-    super( Methods, s )._elaborate()
+    super( MethodsConnection, s )._elaborate()
     s._update_partial_constraints()
 

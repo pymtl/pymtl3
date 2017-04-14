@@ -152,12 +152,12 @@ class MethodPort(Connectable, PyMTLObject):
   def has_method( self ):
     return self._has_method
 
+  def __call__( self, *args, **kwargs ):
+    return self._func( *args, **kwargs )
+
   # Override
-  def _connect( self, other ):
-    if self.has_method():
-      super( MethodPort, other )._connect( self )
-    else:
-      super( MethodPort, self )._connect( other )
+  def collect_nets( s, varid_net ):
+    pass
 
 class PortBundle(Connectable, PyMTLObject):
 

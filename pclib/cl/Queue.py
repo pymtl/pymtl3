@@ -2,7 +2,7 @@ from collections import deque
 from pymtl import *
 from QueueIfcs import EnqIfc, DeqIfc
 
-class PipeQueue( Methods ):
+class PipeQueue( MethodsConnection ):
   def __init__( s, size=1 ):
     s.queue = deque(maxlen=size)
     s.add_constraints(
@@ -18,7 +18,7 @@ class PipeQueue( Methods ):
   def line_trace( s ):
     return "Q{:10}".format("".join( [ "[%d]"%x for x in s.queue ]) )
 
-class BypassQueue( Methods ):
+class BypassQueue( MethodsConnection ):
   def __init__( s, size=1 ):
     s.queue = deque(maxlen=size)
     s.add_constraints(
