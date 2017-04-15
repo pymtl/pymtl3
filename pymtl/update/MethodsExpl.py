@@ -158,24 +158,24 @@ class MethodsExpl( Updates ):
                                 s._blkid_upblk[blk].__name__.center(25)
                     s._expl_constraints.add( (v, blk) )
 
-            elif v in method_blks:
-              # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
-              # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
-              # E.g. I do port.wr() somewhere in __main__ to write to a port.
+            else:
+              if v in method_blks:
+                # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
+                # E.g. I do port.wr() somewhere in __main__ to write to a port.
 
-              # Find total constraint (vb < blk) by vb=method_v < method_u=blk
-              # INVALID if we have explicit constraint (blk < method_v) or (method_u < vb)
+                # Find total constraint (vb < blk) by vb=method_v < method_u=blk
+                # INVALID if we have explicit constraint (blk < method_v) or (method_u < vb)
 
-              v_blks = method_blks[ v ]
-              for vb in v_blks:
-                if vb not in succ[u]:
-                  for blk in assoc_blks:
-                    if blk not in pred[v]:
-                      if vb != blk:
-                        if verbose: print "w<=0, v is method".center(10),hex(v), hex(blk)
-                        if verbose: print s._blkid_upblk[vb].__name__.center(25)," < ", \
-                                    s._blkid_upblk[blk].__name__.center(25)
-                        s._expl_constraints.add( (vb, blk) )
+                v_blks = method_blks[ v ]
+                for vb in v_blks:
+                  if vb not in succ[u]:
+                    for blk in assoc_blks:
+                      if blk not in pred[v]:
+                        if vb != blk:
+                          if verbose: print "w<=0, v is method".center(10),hex(v), hex(blk)
+                          if verbose: print s._blkid_upblk[vb].__name__.center(25)," < ", \
+                                      s._blkid_upblk[blk].__name__.center(25)
+                          s._expl_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
@@ -194,24 +194,25 @@ class MethodsExpl( Updates ):
                                 s._blkid_upblk[v].__name__.center(25)
                     s._expl_constraints.add( (blk, v) )
 
-            elif v in method_blks:
-              # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
-              # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
-              # E.g. I do port.wr() somewhere in __main__ to write to a port.
+            else:
+              if v in method_blks:
+                # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
+                # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
+                # E.g. I do port.wr() somewhere in __main__ to write to a port.
 
-              # Find total constraint (blk < vb) by blk=method_u < method_v=vb
-              # INVALID if we have explicit constraint (vb < method_u) or (method_v < blk)
+                # Find total constraint (blk < vb) by blk=method_u < method_v=vb
+                # INVALID if we have explicit constraint (vb < method_u) or (method_v < blk)
 
-              v_blks = method_blks[ v ]
-              for vb in v_blks:
-                if not vb in pred[u]:
-                  for blk in assoc_blks:
-                    if not blk in succ[v]:
-                      if vb != blk:
-                        if verbose: print "w>=0, v is method".center(10),hex(blk), hex(v)
-                        if verbose: print s._blkid_upblk[blk].__name__.center(25)," < ", \
-                                    s._blkid_upblk[vb].__name__.center(25)
-                        s._expl_constraints.add( (blk, vb) )
+                v_blks = method_blks[ v ]
+                for vb in v_blks:
+                  if not vb in pred[u]:
+                    for blk in assoc_blks:
+                      if not blk in succ[v]:
+                        if vb != blk:
+                          if verbose: print "w>=0, v is method".center(10),hex(blk), hex(v)
+                          if verbose: print s._blkid_upblk[blk].__name__.center(25)," < ", \
+                                      s._blkid_upblk[vb].__name__.center(25)
+                          s._expl_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
