@@ -32,7 +32,13 @@ class MethodsConnection( MethodsExpl ):
     def recursive_collect_connections( parent, methodid_nets ):
       if   isinstance( parent, list ):
         for i in xrange(len(parent)):
-          recursive_collect_connections( parent[i], methodid_nets )
+          if isinstance( parent[i], MethodPort ):
+            root = parent[i]._find_root()
+            if id(root) not in methodid_nets:
+              methodid_nets[ id(root) ] = (root, root._connected)
+            parent[i] = root
+          else:
+            recursive_collect_connections( parent[i], methodid_nets )
 
       elif isinstance( parent, PyMTLObject ):
         for name, obj in parent.__dict__.iteritems():
@@ -58,7 +64,7 @@ class MethodsConnection( MethodsExpl ):
     for (method, net) in s._methodid_net.values():
 
       # Find the actual method
-      assert method.has_method(), "Cannot have a bunch connected MethodPorts without an actual method."
+      assert method.has_method(), "Cannot have a bunch connected MethodPorts without an actual method: %s." % method.__dict__
 
       for m in net:
         assert (m == method) or (not m.has_method()), "We don't allow connecting two actual methods, %s and %s" %(method._name, m._name)

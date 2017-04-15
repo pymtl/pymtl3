@@ -58,6 +58,8 @@ class UpdatesExpl( PyMTLObject ):
     dot.graph_attr["rank"] = "source"
     dot.graph_attr["ratio"] = "fill"
     dot.graph_attr["margin"] = "0.1"
+    for x in s._blkid_upblk.values():
+      dot.node( x.__name__+"@"+hex(id(x)) )
     for (x, y) in s._total_constraints:
       dot.edge( s._blkid_upblk[x].__name__+"@"+hex(x), s._blkid_upblk[y].__name__+"@"+hex(y) )
     dot.render("/tmp/pymtl.gv", view=True)
@@ -91,7 +93,8 @@ class UpdatesExpl( PyMTLObject ):
     for i in xrange(N):
       if InDeg[i] == 0:
         Q.append( i )
-      assert InDeg[i]>0 or OutDeg[i]>0, "Update block \"%s\" has no constraint" % s._blkid_upblk[ upblks[i] ].__name__
+      if InDeg[i]==0 and OutDeg[i]==0:
+        print "Warning: update block \"%s\" has no constraint" % s._blkid_upblk[ upblks[i] ].__name__
 
     _schedule_list = []
     while Q:
