@@ -13,6 +13,8 @@ def guard_rdy( cond ):
     return method
   return real_guard
 
+guard = guard_rdy
+
 class MethodsGuard( MethodsConnection ):
 
   # Override

@@ -8,11 +8,11 @@ class PipeQueue( MethodsGuard ):
       M(s.deq) < M(s.enq), # pipe behavior
     )
 
-  @guard_rdy(lambda s: len(s.queue) < s.queue.maxlen)
+  @guard(lambda s: len(s.queue) < s.queue.maxlen)
   def enq( s, v ):
     s.queue.appendleft(v)
 
-  @guard_rdy(lambda s: len(s.queue) > 0)
+  @guard(lambda s: len(s.queue) > 0)
   def deq( s ):
     return s.queue.pop()
 
@@ -26,11 +26,11 @@ class BypassQueue( MethodsGuard ):
       M(s.enq) < M(s.deq), # bypass behavior
     )
 
-  @guard_rdy(lambda s: len(s.queue) < s.queue.maxlen)
+  @guard(lambda s: len(s.queue) < s.queue.maxlen)
   def enq( s, v ):
     s.queue.appendleft(v)
 
-  @guard_rdy(lambda s: len(s.queue) > 0)
+  @guard(lambda s: len(s.queue) > 0)
   def deq( s ):
     return s.queue.pop()
 
