@@ -1,4 +1,4 @@
-import re, inspect, ast
+import re, inspect2, ast
 p = re.compile('( *(@|def))')
 
 class DetectVarNames( ast.NodeVisitor ):
@@ -42,11 +42,13 @@ class DetectVarNames( ast.NodeVisitor ):
         num.append(n)
         node = node.value
 
-      if isinstance( node, ast.Attribute ):
+      if   isinstance( node, ast.Attribute ):
         obj_name.append( (node.attr, num[::-1]) )
-      else:
-        assert isinstance( node, ast.Name )
+      elif isinstance( node, ast.Name ):
         obj_name.append( (node.id, num[::-1]) )
+      else:
+        assert isinstance(node, ast.Str) # filter out line_trace
+        return
 
       if not hasattr( node, "value" ):
         break
@@ -105,14 +107,10 @@ class DetectMethodCalls( DetectVarNames ):
     methods.extend( self.methods )
 
   def visit_Call( self, node ):
+    obj_name = self.get_full_name( node.func )
 
-    if not isinstance( node.func, ast.Name ): # filter min,max. Only accept s.x....y()
-      obj_name    = self.get_full_name( node.func.value )
-      method_name = node.func.attr
-
-      self.methods.append( (obj_name, method_name) )
-
-      # print obj_name,method_name
+    if obj_name:
+      self.methods.append( obj_name )
     # else:
       # print node.func.id
 
@@ -120,7 +118,7 @@ class DetectMethodCalls( DetectVarNames ):
       self.visit( x )
 
 def get_ast( func ):
-  src = p.sub( r'\2', inspect.getsource( func ) )
+  src = p.sub( r'\2', inspect2.getsource( func ) )
   return ast.parse( src )
 
 def get_read_write( tree, upblk, read, write ):
