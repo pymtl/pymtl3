@@ -23,8 +23,8 @@ class UpdatesConnection( UpdatesExpl ):
     inst._read_expls  = defaultdict(list)
     inst._write_blks  = defaultdict(list)
     inst._write_expls = defaultdict(list)
-    inst._id_obj      = dict()
-    inst._varid_net   = dict()
+    inst._id_obj      = {}
+    inst._varid_net   = {}
 
     # These are only processed at the current level
     inst._blkid_reads  = defaultdict(list)
@@ -38,7 +38,7 @@ class UpdatesConnection( UpdatesExpl ):
     # I parse the asts of upblks. To also cache them across different
     # instances of the same class, I attach them to the class object.
     if not "_blkid_ast" in type(s).__dict__:
-      type(s)._blkid_ast = dict()
+      type(s)._blkid_ast = {}
     if blk.__name__ not in type(s)._blkid_ast:
       type(s)._blkid_ast[ blk.__name__ ] = get_ast( blk )
 
@@ -120,7 +120,7 @@ class UpdatesConnection( UpdatesExpl ):
 
     read_blks  = defaultdict(set)
     write_blks = defaultdict(set)
-    id_obj     = dict()
+    id_obj     = {}
 
     for blk_id, reads in s._blkid_reads.iteritems():
       for read_name in reads:
@@ -234,8 +234,8 @@ class UpdatesConnection( UpdatesExpl ):
     # may intersect, so they need to check sibling slices' write/read
     # status as well.
 
-    obj_writer   = dict()
-    propagatable = dict()
+    obj_writer   = {}
+    propagatable = {}
     frozen       = set()
 
     for wid in s._write_blks:

@@ -75,7 +75,7 @@ class UpdatesExpl( PyMTLObject ):
     # Discretize in O(NlogN), to avoid later O(logN) lookup
     # Then prepare the graph
 
-    id_vtx = dict()
+    id_vtx = {}
     for i in xrange(N):
       id_vtx[ upblks[i] ] = i
 
