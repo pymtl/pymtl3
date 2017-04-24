@@ -53,8 +53,8 @@ class MethodsConnection( MethodsExpl ):
             else:
               recursive_collect_connections( obj, methodid_nets )
 
-    s._methodid_net = dict()
-    s._methodid_head = dict()
+    s._methodid_net = {}
+    s._methodid_head = {}
 
     recursive_collect_connections( s, s._methodid_net )
 

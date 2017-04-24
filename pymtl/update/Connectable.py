@@ -61,8 +61,8 @@ class Wire(Connectable, PyMTLObject):
     s._type = type_
     s._parent = None # None means it's the top level Wire(msgtype)
     s._slice  = None # None means it's not a slice of some wire
-    s._attrs  = dict()
-    s._slices = dict()
+    s._attrs  = {}
+    s._slices = {}
 
   def __getattr__( s, name ):
     if name.startswith("_"): # private variable
