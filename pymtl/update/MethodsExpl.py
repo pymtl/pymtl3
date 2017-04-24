@@ -82,36 +82,38 @@ class MethodsExpl( Updates ):
     super( MethodsExpl, s )._elaborate_vars()
 
     # Find s.x[0][*][2]
-    def expand_array_index( obj, name_depth, name, idx_depth, idx, id_blks, blk_id ):
+    def expand_array_index( obj, name_depth, name, idx_depth, idx, id_blks, id_obj, blk_id ):
       if idx_depth >= len(idx):
-        lookup_method( obj, name_depth+1, name, id_blks, blk_id )
+        lookup_method( obj, name_depth+1, name, id_blks, id_obj, blk_id )
         return
 
       assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
 
       if isinstance( idx[idx_depth], int ): # handle x[2]'s case
         assert idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
-        expand_array_index( obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, blk_id )
-      else: # handle x[*]'s case
-        assert idx[idx_depth] == "*", "idk"
+        expand_array_index( obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
+      elif idx[idx_depth] == "*":
         for i in xrange(len(obj)):
-          expand_array_index( obj[i], name_depth, name, idx_depth+1, idx, id_blks, blk_id )
+          expand_array_index( obj[i], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
+      else:
+        return False
 
     # Add an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
-    def add_all( obj, id_blks, blk_id ):
+    def add_all( obj, id_blks, id_obj, blk_id ):
       if callable( obj ):
         id_blks[ id(obj) ].add( blk_id )
+        id_obj [ id(obj) ] = obj
         return
       if isinstance( obj, list ) or isinstance( obj, deque ):
         for i in xrange(len(obj)):
-          add_all( obj[i], id_blks, blk_id )
+          add_all( obj[i], id_blks, id_obj, blk_id )
 
     # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
-    def lookup_method( obj, depth, name, id_blks, blk_id ):
+    def lookup_method( obj, depth, name, id_blks, id_obj, blk_id ):
       if depth >= len(name):
         if callable( obj ):
           if verbose: print " - method", name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          add_all( obj, id_blks, blk_id ) # if this object is a list/array again...
+          add_all( obj, id_blks, id_obj, blk_id ) # if this object is a list/array again...
         return
 
       (field, idx) = name[ depth ]
@@ -119,24 +121,25 @@ class MethodsExpl( Updates ):
       obj = getattr( obj, field )
 
       if not idx: # just a variable
-        lookup_method( obj, depth+1, name, id_blks, blk_id )
+        lookup_method( obj, depth+1, name, id_blks, id_obj, blk_id )
       else: # let another function handle   s.x[4].y[*]
         assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
-        expand_array_index( obj, depth, name, 0, idx, id_blks, blk_id )
+        expand_array_index( obj, depth, name, 0, idx, id_blks, id_obj, blk_id )
 
     # First check and bind update blocks that calls the method to it
     # This method elaborates the variables for implicit binding
 
     method_blks = defaultdict(set)
+    id_obj      = dict()
 
     for blk_id, method_calls in s._blkid_methods.iteritems():
       for method in method_calls:
-        lookup_method( s, 0, method, method_blks, blk_id )
-
-    # Turn associated sets into lists. O(logn) -> O(1)
+        lookup_method( s, 0, method, method_blks, id_obj, blk_id )
 
     for i in method_blks:
       s._method_blks[i].extend( list( method_blks[i] ) )
+
+    s._id_obj.update( id_obj )
 
   def _synthesize_partial_constraints( s ):
 
