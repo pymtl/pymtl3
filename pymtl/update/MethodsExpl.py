@@ -27,7 +27,8 @@ class MethodsExpl( Updates ):
     inst = super( MethodsExpl, cls ).__new__( cls, *args, **kwargs )
 
     # These will be collected recursively
-    inst._method_blks = defaultdict(list)
+    inst._method_blks    = defaultdict(list)
+    inst._method_callers = {}
     inst._partial_constraints = set() # contains ( func, func )s
 
     # These are only processed at the current level
@@ -35,7 +36,7 @@ class MethodsExpl( Updates ):
     inst._method_methods = defaultdict(list)
 
     if not "_method_ast" in cls.__dict__:
-      cls._method_ast = dict()
+      cls._method_ast = {}
 
     for name in dir(cls):
       if name not in dir(MethodsExpl) and not name.startswith("_"):
@@ -99,10 +100,17 @@ class MethodsExpl( Updates ):
         return False
 
     # Add an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
-    def add_all( obj, id_blks, id_obj, blk_id ):
+    def add_all( obj, name, id_blks, id_obj, blk_id ):
       if callable( obj ):
         id_blks[ id(obj) ].add( blk_id )
         id_obj [ id(obj) ] = obj
+
+        if verbose:
+          print " - method", name, "()", hex(id(obj)),
+          if blk_id in s._blkid_upblk:
+            print "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
+          else:
+            print "in method:", hex(id(obj))
         return
       if isinstance( obj, list ) or isinstance( obj, deque ):
         for i in xrange(len(obj)):
@@ -112,8 +120,7 @@ class MethodsExpl( Updates ):
     def lookup_method( obj, depth, name, id_blks, id_obj, blk_id ):
       if depth >= len(name):
         if callable( obj ):
-          if verbose: print " - method", name, method_name,"()", hex(id(method)), "in blk:", hex(blk_id), s._blkid_upblk[blk_id].__name__
-          add_all( obj, id_blks, id_obj, blk_id ) # if this object is a list/array again...
+          add_all( obj, name, id_blks, id_obj, blk_id ) # if this object is a list/array again...
         return
 
       (field, idx) = name[ depth ]
@@ -127,17 +134,26 @@ class MethodsExpl( Updates ):
         expand_array_index( obj, depth, name, 0, idx, id_blks, id_obj, blk_id )
 
     # First check and bind update blocks that calls the method to it
-    # This method elaborates the variables for implicit binding
 
-    method_blks = defaultdict(set)
-    id_obj      = dict()
+    method_blks   = defaultdict(set)
+    method_caller = defaultdict(set)
+    id_obj        = {}
 
     for blk_id, method_calls in s._blkid_methods.iteritems():
       for method in method_calls:
         lookup_method( s, 0, method, method_blks, id_obj, blk_id )
-
     for i in method_blks:
       s._method_blks[i].extend( list( method_blks[i] ) )
+
+    # Then check which method calls what other methods
+
+    for method_id, method_calls in s._method_methods.iteritems():
+      for method in method_calls:
+        lookup_method( s, 0, method, method_caller, id_obj, method_id )
+
+    for method_id, caller in method_caller.iteritems():
+      assert len(caller) == 1
+      s._method_callers[method_id] = list(caller)[0]
 
     s._id_obj.update( id_obj )
 
@@ -151,6 +167,12 @@ class MethodsExpl( Updates ):
     for (x, y) in s._partial_constraints:
       pred[id(y)].add( id(x) )
       succ[id(x)].add( id(y) )
+
+    for x, y in s._method_callers.iteritems():
+      if x in s._id_obj and y in s._id_obj:
+        print s._id_obj[y], "calls", s._id_obj[x]
+      else:
+        print hex(x), hex(y)
 
     method_blks = s._method_blks
 
@@ -242,6 +264,10 @@ class MethodsExpl( Updates ):
     if   isinstance( child, MethodsExpl ):
       for k in child._method_blks:
         s._method_blks[k].extend( child._method_blks[k] )
+      for k in child._method_callers:
+        assert k not in s._method_callers
+        s._method_callers[k] = child._method_callers[k]
+
       s._partial_constraints |= child._partial_constraints
 
   # Override
