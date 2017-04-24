@@ -271,7 +271,7 @@ def test_rd_As_wr_At_impl_disjoint():
 
       @s.update
       def up_rd_As():
-        assert s.A[0:16] == 0xff00
+        assert s.A[0:16] == 0
 
   try:
     _test_model( Top )
@@ -434,7 +434,7 @@ def test_wr_A_rd_slices_can_schedule():
   _test_model( Top )
 
 # WR A[s] - RD A, RD A[t], not intersect
-def test_wr_As_rd_A_rd_At_cannot_schedule():
+def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
 
   class Top(Updates):
     def __init__( s ):
