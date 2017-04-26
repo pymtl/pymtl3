@@ -28,7 +28,7 @@ class MethodsExpl( Updates ):
 
     # These will be collected recursively
     inst._method_blks    = defaultdict(list)
-    inst._method_callers = {}
+    inst._method_caller = {}
     inst._partial_constraints = set() # contains ( func, func )s
 
     # These are only processed at the current level
@@ -48,7 +48,7 @@ class MethodsExpl( Updates ):
             cls._method_ast[ name ] = get_ast( method )
 
           get_method_calls( cls._method_ast[ name ], method, \
-                            inst._method_methods[ id(method) ] )
+                            inst._method_methods[ name ] )
 
     return inst
 
@@ -147,17 +147,42 @@ class MethodsExpl( Updates ):
 
     # Then check which method calls what other methods
 
-    for method_id, method_calls in s._method_methods.iteritems():
+    for method_name, method_calls in s._method_methods.iteritems():
+      method_id = id( getattr( s, method_name ) )
       for method in method_calls:
         lookup_method( s, 0, method, method_caller, id_obj, method_id )
 
     for method_id, caller in method_caller.iteritems():
       assert len(caller) == 1
-      s._method_callers[method_id] = list(caller)[0]
+      s._method_caller[method_id] = list(caller)[0]
 
     s._id_obj.update( id_obj )
 
   def _synthesize_partial_constraints( s ):
+
+    # If a method calls another method, they share the same constraint.
+
+    temp_dependency = set()
+
+    for (x,y) in s._partial_constraints:
+
+      if id(x) not in s._blkid_upblk: # x is a method, find all methods that call x
+        u = id(x)
+        while True:
+          temp_dependency.add( (s._id_obj[u], y) )
+          if u not in s._method_caller:
+            break
+          u = s._method_caller[u]
+
+      if id(y) not in s._blkid_upblk: # y is a method, find all methods that call y
+        u = id(y)
+        while True:
+          temp_dependency.add( (x, s._id_obj[u]) )
+          if u not in s._method_caller:
+            break
+          u = s._method_caller[u]
+
+    s._partial_constraints = temp_dependency
 
     # Do bfs to find out all potential total constraints associated with
     # each method, direction conflicts, and incomplete constraints
@@ -167,12 +192,6 @@ class MethodsExpl( Updates ):
     for (x, y) in s._partial_constraints:
       pred[id(y)].add( id(x) )
       succ[id(x)].add( id(y) )
-
-    for x, y in s._method_callers.iteritems():
-      if x in s._id_obj and y in s._id_obj:
-        print s._id_obj[y], "calls", s._id_obj[x]
-      else:
-        print hex(x), hex(y)
 
     method_blks = s._method_blks
 
@@ -264,9 +283,9 @@ class MethodsExpl( Updates ):
     if   isinstance( child, MethodsExpl ):
       for k in child._method_blks:
         s._method_blks[k].extend( child._method_blks[k] )
-      for k in child._method_callers:
-        assert k not in s._method_callers
-        s._method_callers[k] = child._method_callers[k]
+      for k in child._method_caller:
+        assert k not in s._method_caller, "Each method should only be called in one place"
+        s._method_caller[k] = child._method_caller[k]
 
       s._partial_constraints |= child._partial_constraints
 

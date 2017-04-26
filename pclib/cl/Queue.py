@@ -1,6 +1,6 @@
 from collections import deque
 from pymtl import *
-from QueueIfcs import EnqIfc, DeqIfc
+# from QueueIfcs import EnqIfc, DeqIfc
 
 class PipeQueue( MethodsConnection ):
   def __init__( s, size=1 ):
@@ -8,8 +8,8 @@ class PipeQueue( MethodsConnection ):
     s.add_constraints(
       M(s.deq) < M(s.enq), # pipe behavior
     )
-    s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
-    s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
+    # s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
+    # s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
 
   def enq_rdy( s ):    return len(s.queue) < s.queue.maxlen
   def enq( s, v ):     s.queue.appendleft(v)
@@ -24,8 +24,8 @@ class BypassQueue( MethodsConnection ):
     s.add_constraints(
       M(s.enq) < M(s.deq), # bypass behavior
     )
-    s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
-    s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
+    # s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
+    # s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
 
   def enq_rdy( s ):    return len(s.queue) < s.queue.maxlen
   def enq( s, v ):     s.queue.appendleft(v)
