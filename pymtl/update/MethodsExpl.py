@@ -168,6 +168,7 @@ class MethodsExpl( Updates ):
 
       if id(x) not in s._blkid_upblk: # x is a method, find all methods that call x
         u = id(x)
+        assert u in s._id_obj, "%s has method-method constraint, but the method is not called anywhere." % (x.full_name())
         while True:
           temp_dependency.add( (s._id_obj[u], y) )
           if u not in s._method_caller:
@@ -176,6 +177,7 @@ class MethodsExpl( Updates ):
 
       if id(y) not in s._blkid_upblk: # y is a method, find all methods that call y
         u = id(y)
+        assert u in s._id_obj, "%s has method-method constraint, but the method is not called anywhere." % (y.full_name())
         while True:
           temp_dependency.add( (x, s._id_obj[u]) )
           if u not in s._method_caller:
