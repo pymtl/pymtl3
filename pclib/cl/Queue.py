@@ -6,7 +6,8 @@ class PipeQueue( MethodsConnection ):
   def __init__( s, size=1 ):
     s.queue = deque(maxlen=size)
     s.add_constraints(
-      M(s.deq) < M(s.enq), # pipe behavior
+      M(s.deq    ) < M(s.enq    ), # pipe behavior
+      M(s.deq_rdy) < M(s.enq_rdy),
     )
     # s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
     # s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
@@ -22,7 +23,8 @@ class BypassQueue( MethodsConnection ):
   def __init__( s, size=1 ):
     s.queue = deque(maxlen=size)
     s.add_constraints(
-      M(s.enq) < M(s.deq), # bypass behavior
+      M(s.enq    ) < M(s.deq    ), # bypass behavior
+      M(s.enq_rdy) < M(s.deq_rdy),
     )
     # s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
     # s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
