@@ -2,8 +2,6 @@ from pymtl import *
 from pclib.update import Reg, RegEn, Mux
 from pclib.ifcs   import EnRdyBundle
 
-# Register
-
 # The reason why we have 3 update blocks for pipe queue:
 # start: deq.rdy = full.out (queue, up1)
 # --> deq.en (receiver AND deq.rdy with valid expression)
@@ -18,18 +16,10 @@ class PipeQueue1RTL(Updates):
     s.deq = EnRdyBundle( Type )
 
     s.buf  = RegEn( Type )
-
-    # Normally it's buf.en = enq_en & enq_rdy, but according to
-    # EnRdy protocol, the module at the other end *is responsible for*
-    # ANDing enq_rdy with its own "valid signal"
-
     s.buf.in_ |= s.enq.msg
     s.buf.out |= s.deq.msg
 
     s.full = Reg( Bits1 )
-
-    # We need to calculate enq.rdy and deq.rdy in different upblocks.
-    # BECAUSE enq.rdy depends on deq.en, and deq.en depends on deq.rdy
 
     @s.update
     def up_pipeq_set_deq_rdy():
