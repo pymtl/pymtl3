@@ -50,8 +50,10 @@ class TestSinkEnRdy( Updates ):
     @s.update
     def up_sink():
       s.ts = (s.ts + 1) % accept_interval
-
       s.in_.en = (s.ts == 0) & s.in_.rdy & (len(s.answer) > 0)
+
+    @s.update
+    def up_sink_faq():
       if s.in_.en:
         ref = s.answer.popleft()
         ans = s.in_.msg
