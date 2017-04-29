@@ -124,7 +124,10 @@ class MethodsExpl( Updates ):
         return
 
       (field, idx) = name[ depth ]
-      assert hasattr(obj, field), "\"%s\", in %s, is not a field of Class %s" %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+      if blk_id in s._blkid_upblk:
+        assert hasattr(obj, field), "\"%s\", in %s, is not a field of Class %s" %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
+      else:
+        assert hasattr(obj, field), "\"%s\", is not a field of Class %s" %(field, type(obj).__name__)
       obj = getattr( obj, field )
 
       if not idx: # just a variable
