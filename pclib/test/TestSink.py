@@ -44,23 +44,48 @@ class TestSinkEnRdy( Updates ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
     s.answer = deque( answer )
 
-    s.in_ = EnRdyBundle( Type )
+    s.recv = EnRdyBundle( Type )
 
     s.ts = 0
     @s.update
-    def up_sink():
+    def up_sink_rdy():
       s.ts = (s.ts + 1) % accept_interval
-      s.in_.en = (s.ts == 0) & s.in_.rdy & (len(s.answer) > 0)
+      s.recv.rdy = (s.ts == 0) & (len(s.answer) > 0)
 
     @s.update
-    def up_sink_faq():
-      if s.in_.en:
+    def up_sink_en():
+      if s.recv.en:
         ref = s.answer.popleft()
-        ans = s.in_.msg
+        ans = s.recv.msg
         assert ref == ans or ref == "?", "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
     return not s.answer
 
   def line_trace( s ):
-    return s.in_.line_trace()
+    return s.recv.line_trace()
+
+class TestSinkCL( MethodsConnection ):
+
+  def __init__( s, Type, answer, accept_interval=1 ):
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
+    s.answer = deque( answer )
+    s.accept_interval = accept_interval
+
+    s.ts  = 0
+    s.msg = Type()
+
+  def recv( s, msg ):
+    s.msg = msg
+    ref = s.answer.popleft()
+    assert ref == msg or ref == "?", "Expect %s, get %s instead" % (ref, msg)
+
+  def recv_rdy( s ):
+    s.ts = (s.ts + 1) % s.accept_interval
+    return s.ts == 0 & (len(s.answer) > 0)
+    
+  def done( s ):
+    return not s.answer
+
+  def line_trace( s ):
+    return str(s.msg)

@@ -48,18 +48,43 @@ class TestSourceEnRdy( Updates ):
     s.input_ = deque( input_ ) # deque.popleft() is faster
 
     s.default = Type()
-    s.out = EnRdyBundle( Type )
+    s.send = EnRdyBundle( Type )
 
     @s.update
     def up_src():
-      s.out.en  = Bits1( len(s.input_) > 0 ) & s.out.rdy
-      s.out.msg = s.default if not s.input_ else s.input_[0]
+      s.send.en  = Bits1( len(s.input_) > 0 ) & s.send.rdy
+      s.send.msg = s.default if not s.input_ else s.input_[0]
 
-      if s.out.en and s.input_:
+      if s.send.en and s.input_:
         s.input_.popleft()
 
   def done( s ):
     return not s.input_
 
   def line_trace( s ):
-    return s.out.line_trace()
+    return s.send.line_trace()
+
+class TestSourceCL( MethodsConnection ):
+
+  def __init__( s, Type, input_ = [] ):
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
+    s.input_ = deque( input_ ) # deque.popleft() is faster
+
+    s.default  = Type()
+    s.send     = MethodPort()
+    s.send_rdy = MethodPort()
+
+    s.sended   = None
+
+    @s.update
+    def up_src():
+      if s.send_rdy() and len(s.input_) > 0:
+        s.send( s.input_[0] )
+        s.sended = s.input_[0]
+        s.input_.popleft()
+
+  def done( s ):
+    return not s.input_
+
+  def line_trace( s ):
+    return str(s.sended)
