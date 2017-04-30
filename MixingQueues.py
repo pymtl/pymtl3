@@ -3,6 +3,39 @@ from collections import deque
 from pclib.test   import TestSourceEnRdy, TestSourceCL, TestSinkEnRdy, TestSinkCL
 from pclib.update import PipeQueue1RTL, BypassQueue1RTL, NormalQueue1RTL
 from pclib.cl     import PipeQueue, BypassQueue
+from pclib.ifcs   import EnRdyBundle
+
+class CLRTLEnqAdapter( MethodsConnection ):
+
+  def __init__( s, Type ):
+
+    s.in_ = EnRdyBundle( Type )
+    s.out = EnRdyBundle( Type )
+
+    @s.update
+    def up_rdy():
+      s.in_.rdy = s.out.rdy
+
+    @s.update
+    def up_en():
+      s.out.en  = Bits1( False )
+      s.out.msg = Type()
+
+      if s.in_.en:
+        s.out.en  = s.in_.en
+        s.out.msg = s.in_.msg
+
+    s.add_constraints(
+      U(up_rdy) < M(s.send_rdy),
+      M(s.send) < U(up_en),
+    )
+
+  def send( s, msg ):
+    s.in_.msg = msg
+    s.in_.en  = Bits1( True )
+
+  def send_rdy( s ):
+    return s.in_.rdy
 
 class TestHarness( MethodsConnection ):
 
@@ -43,8 +76,10 @@ class TestHarness( MethodsConnection ):
           s.q1.enq( s.src.send.msg )
 
     if src == 'cl'  and q1 == 'rtl':
-      # ?????????????????????
-      pass
+      s.src_q1 = CLRTLEnqAdapter( Type )
+      s.src.send     |= s.src_q1.send
+      s.src.send_rdy |= s.src_q1.send_rdy
+      s.src_q1.out   |= s.q1.enq
 
     if src == 'cl'  and q1 == 'cl':
       s.src.send     |= s.q1.enq
@@ -148,27 +183,28 @@ from pclib.test import mk_test_case_table
 test_case_table = mk_test_case_table([
   (         "src    q1     q2     sink" ),
   [ "0000", 'rtl', 'rtl', 'rtl', 'rtl' ], # 0000
-  [ "0001", 'rtl', 'rtl', 'rtl', 'cl'  ], # 0001
-  [ "0010", 'rtl', 'rtl', 'cl' , 'rtl' ], # 0010
-  [ "0011", 'rtl', 'rtl', 'cl' , 'cl'  ], # 0011
-  [ "0100", 'rtl', 'cl' , 'rtl', 'rtl' ], # 0100
-  [ "0101", 'rtl', 'cl' , 'rtl', 'cl'  ], # 0101
-  [ "0110", 'rtl', 'cl' , 'cl' , 'rtl' ], # 0110
-  [ "0111", 'rtl', 'cl' , 'cl' , 'cl'  ], # 0111
-  # [ "1000", 'cl' , 'rtl', 'rtl', 'rtl' ], # 1000
+  # [ "0001", 'rtl', 'rtl', 'rtl', 'cl'  ], # 0001
+  # [ "0010", 'rtl', 'rtl', 'cl' , 'rtl' ], # 0010
+  # [ "0011", 'rtl', 'rtl', 'cl' , 'cl'  ], # 0011
+  # [ "0100", 'rtl', 'cl' , 'rtl', 'rtl' ], # 0100
+  # [ "0101", 'rtl', 'cl' , 'rtl', 'cl'  ], # 0101
+  # [ "0110", 'rtl', 'cl' , 'cl' , 'rtl' ], # 0110
+  # [ "0111", 'rtl', 'cl' , 'cl' , 'cl'  ], # 0111
+  [ "1000", 'cl' , 'rtl', 'rtl', 'rtl' ], # 1000
   # [ "1001", 'cl' , 'rtl', 'rtl', 'cl'  ], # 1001
   # [ "1010", 'cl' , 'rtl', 'cl' , 'rtl' ], # 1010
   # [ "1011", 'cl' , 'rtl', 'cl' , 'cl'  ], # 1011
-  [ "1100", 'cl' , 'cl' , 'rtl', 'rtl' ], # 1100
-  [ "1101", 'cl' , 'cl' , 'rtl', 'cl'  ], # 1101
-  [ "1110", 'cl' , 'cl' , 'cl' , 'rtl' ], # 1110
-  [ "1111", 'cl' , 'cl' , 'cl' , 'cl'  ], # 1111
+  # [ "1100", 'cl' , 'cl' , 'rtl', 'rtl' ], # 1100
+  # [ "1101", 'cl' , 'cl' , 'rtl', 'cl'  ], # 1101
+  # [ "1110", 'cl' , 'cl' , 'cl' , 'rtl' ], # 1110
+  # [ "1111", 'cl' , 'cl' , 'cl' , 'cl'  ], # 1111
 ])
 
 @pytest.mark.parametrize( **test_case_table )
 def test_mixing( test_params ):
   A = TestHarness( test_params.src, test_params.q1, test_params.q2, test_params.sink)
   A.elaborate()
+  A.print_schedule()
   print 
 
   T = 0
