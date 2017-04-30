@@ -74,7 +74,7 @@ class TestSourceCL( MethodsConnection ):
     s.send     = MethodPort()
     s.send_rdy = MethodPort()
 
-    s.sended   = None
+    s.sended =  "#".center(4)
 
     @s.update
     def up_src():
@@ -87,4 +87,6 @@ class TestSourceCL( MethodsConnection ):
     return not s.input_
 
   def line_trace( s ):
-    return str(s.sended)
+    trace = str(s.sended)
+    s.sended = "#".center(4) if len(s.input_) > 0 else " ".center(4)
+    return "{:>4s}".format( trace )

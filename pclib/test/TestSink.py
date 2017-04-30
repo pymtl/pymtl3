@@ -73,7 +73,7 @@ class TestSinkCL( MethodsConnection ):
     s.accept_interval = accept_interval
 
     s.ts  = 0
-    s.msg = Type()
+    s.msg = ".".center(4)
 
   def recv( s, msg ):
     s.msg = msg
@@ -87,5 +87,7 @@ class TestSinkCL( MethodsConnection ):
   def done( s ):
     return not s.answer
 
-  def line_trace( s ):
-    return str(s.msg)
+  def line_trace( s ): # called once per cycle
+    trace = str(s.msg)
+    s.msg = ".".center(4) if len(s.answer) > 0 else " ".center(4)
+    return "{:>4s}".format( trace )
