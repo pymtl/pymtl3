@@ -9,21 +9,20 @@ class CLRTLEnqAdapter( MethodsConnection ):
 
   def __init__( s, Type ):
 
-    s.in_ = EnRdyBundle( Type )
+    s.msg = Wire( Type )
+    s.en  = Wire( Bits1 )
+    s.rdy = Wire( Bits1 )
+
     s.out = EnRdyBundle( Type )
 
     @s.update
     def up_rdy():
-      s.in_.rdy = s.out.rdy
+      s.rdy = s.out.rdy
 
     @s.update
     def up_en():
-      s.out.en  = Bits1( False )
-      s.out.msg = Type()
-
-      if s.in_.en:
-        s.out.en  = s.in_.en
-        s.out.msg = s.in_.msg
+      s.out.en  = s.en
+      s.out.msg = s.msg if s.en else Type()
 
     s.add_constraints(
       U(up_rdy) < M(s.send_rdy),
@@ -31,11 +30,11 @@ class CLRTLEnqAdapter( MethodsConnection ):
     )
 
   def send( s, msg ):
-    s.in_.msg = msg
-    s.in_.en  = Bits1( True )
+    s.msg = msg
+    s.en  = Bits1( True )
 
   def send_rdy( s ):
-    return s.in_.rdy
+    return s.rdy
 
 class TestHarness( MethodsConnection ):
 
@@ -182,22 +181,22 @@ from pclib.test import mk_test_case_table
 
 test_case_table = mk_test_case_table([
   (         "src    q1     q2     sink" ),
-  [ "r-r-r-r", 'rtl', 'rtl', 'rtl', 'rtl' ],
-  [ "r-r-r-c", 'rtl', 'rtl', 'rtl', 'cl'  ],
-  [ "r-r-c-r", 'rtl', 'rtl', 'cl' , 'rtl' ],
-  [ "r-r-c-c", 'rtl', 'rtl', 'cl' , 'cl'  ],
-  [ "r-c-r-r", 'rtl', 'cl' , 'rtl', 'rtl' ],
-  [ "r-c-r-c", 'rtl', 'cl' , 'rtl', 'cl'  ],
-  [ "r-c-c-r", 'rtl', 'cl' , 'cl' , 'rtl' ],
-  [ "r-c-c-c", 'rtl', 'cl' , 'cl' , 'cl'  ],
+  # [ "r-r-r-r", 'rtl', 'rtl', 'rtl', 'rtl' ],
+  # [ "r-r-r-c", 'rtl', 'rtl', 'rtl', 'cl'  ],
+  # [ "r-r-c-r", 'rtl', 'rtl', 'cl' , 'rtl' ],
+  # [ "r-r-c-c", 'rtl', 'rtl', 'cl' , 'cl'  ],
+  # [ "r-c-r-r", 'rtl', 'cl' , 'rtl', 'rtl' ],
+  # [ "r-c-r-c", 'rtl', 'cl' , 'rtl', 'cl'  ],
+  # [ "r-c-c-r", 'rtl', 'cl' , 'cl' , 'rtl' ],
+  # [ "r-c-c-c", 'rtl', 'cl' , 'cl' , 'cl'  ],
   [ "c-r-r-r", 'cl' , 'rtl', 'rtl', 'rtl' ],
-  [ "c-r-r-c", 'cl' , 'rtl', 'rtl', 'cl'  ],
-  [ "c-r-c-r", 'cl' , 'rtl', 'cl' , 'rtl' ],
-  [ "c-r-c-c", 'cl' , 'rtl', 'cl' , 'cl'  ],
-  [ "c-c-r-r", 'cl' , 'cl' , 'rtl', 'rtl' ],
-  [ "c-c-r-c", 'cl' , 'cl' , 'rtl', 'cl'  ],
-  [ "c-c-c-r", 'cl' , 'cl' , 'cl' , 'rtl' ],
-  [ "c-c-c-c", 'cl' , 'cl' , 'cl' , 'cl'  ],
+  # [ "c-r-r-c", 'cl' , 'rtl', 'rtl', 'cl'  ],
+  # [ "c-r-c-r", 'cl' , 'rtl', 'cl' , 'rtl' ],
+  # [ "c-r-c-c", 'cl' , 'rtl', 'cl' , 'cl'  ],
+  # [ "c-c-r-r", 'cl' , 'cl' , 'rtl', 'rtl' ],
+  # [ "c-c-r-c", 'cl' , 'cl' , 'rtl', 'cl'  ],
+  # [ "c-c-c-r", 'cl' , 'cl' , 'cl' , 'rtl' ],
+  # [ "c-c-c-c", 'cl' , 'cl' , 'cl' , 'cl'  ],
 ])
 
 @pytest.mark.parametrize( **test_case_table )
