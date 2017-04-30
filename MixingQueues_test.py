@@ -1,5 +1,4 @@
 from pymtl import *
-from collections import deque
 from pclib.test   import TestSourceEnRdy, TestSourceCL, TestSinkEnRdy, TestSinkCL
 from pclib.update import PipeQueue1RTL, BypassQueue1RTL, NormalQueue1RTL
 from pclib.cl     import PipeQueue, BypassQueue
@@ -131,7 +130,7 @@ class TestHarness( MethodsConnection ):
     #---------------------------------------------------------------------
     # q2.deq --> sink.enq(recv)
     #---------------------------------------------------------------------
-    
+
     if q2 == 'rtl' and sink == 'rtl':
       @s.update
       def up_q2_RTL_deq_sink_RTL_enq_adapter():
@@ -204,7 +203,7 @@ def test_mixing( test_params ):
   A = TestHarness( test_params.src, test_params.q1, test_params.q2, test_params.sink)
   A.elaborate()
   A.print_schedule()
-  print 
+  print
 
   T = 0
   while not A.done():
