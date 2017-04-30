@@ -182,22 +182,22 @@ from pclib.test import mk_test_case_table
 
 test_case_table = mk_test_case_table([
   (         "src    q1     q2     sink" ),
-  [ "0000", 'rtl', 'rtl', 'rtl', 'rtl' ], # 0000
-  # [ "0001", 'rtl', 'rtl', 'rtl', 'cl'  ], # 0001
-  # [ "0010", 'rtl', 'rtl', 'cl' , 'rtl' ], # 0010
-  # [ "0011", 'rtl', 'rtl', 'cl' , 'cl'  ], # 0011
-  # [ "0100", 'rtl', 'cl' , 'rtl', 'rtl' ], # 0100
-  # [ "0101", 'rtl', 'cl' , 'rtl', 'cl'  ], # 0101
-  # [ "0110", 'rtl', 'cl' , 'cl' , 'rtl' ], # 0110
-  # [ "0111", 'rtl', 'cl' , 'cl' , 'cl'  ], # 0111
-  [ "1000", 'cl' , 'rtl', 'rtl', 'rtl' ], # 1000
-  # [ "1001", 'cl' , 'rtl', 'rtl', 'cl'  ], # 1001
-  # [ "1010", 'cl' , 'rtl', 'cl' , 'rtl' ], # 1010
-  # [ "1011", 'cl' , 'rtl', 'cl' , 'cl'  ], # 1011
-  # [ "1100", 'cl' , 'cl' , 'rtl', 'rtl' ], # 1100
-  # [ "1101", 'cl' , 'cl' , 'rtl', 'cl'  ], # 1101
-  # [ "1110", 'cl' , 'cl' , 'cl' , 'rtl' ], # 1110
-  # [ "1111", 'cl' , 'cl' , 'cl' , 'cl'  ], # 1111
+  [ "r-r-r-r", 'rtl', 'rtl', 'rtl', 'rtl' ],
+  [ "r-r-r-c", 'rtl', 'rtl', 'rtl', 'cl'  ],
+  [ "r-r-c-r", 'rtl', 'rtl', 'cl' , 'rtl' ],
+  [ "r-r-c-c", 'rtl', 'rtl', 'cl' , 'cl'  ],
+  [ "r-c-r-r", 'rtl', 'cl' , 'rtl', 'rtl' ],
+  [ "r-c-r-c", 'rtl', 'cl' , 'rtl', 'cl'  ],
+  [ "r-c-c-r", 'rtl', 'cl' , 'cl' , 'rtl' ],
+  [ "r-c-c-c", 'rtl', 'cl' , 'cl' , 'cl'  ],
+  [ "c-r-r-r", 'cl' , 'rtl', 'rtl', 'rtl' ],
+  [ "c-r-r-c", 'cl' , 'rtl', 'rtl', 'cl'  ],
+  [ "c-r-c-r", 'cl' , 'rtl', 'cl' , 'rtl' ],
+  [ "c-r-c-c", 'cl' , 'rtl', 'cl' , 'cl'  ],
+  [ "c-c-r-r", 'cl' , 'cl' , 'rtl', 'rtl' ],
+  [ "c-c-r-c", 'cl' , 'cl' , 'rtl', 'cl'  ],
+  [ "c-c-c-r", 'cl' , 'cl' , 'cl' , 'rtl' ],
+  [ "c-c-c-c", 'cl' , 'cl' , 'cl' , 'cl'  ],
 ])
 
 @pytest.mark.parametrize( **test_case_table )
