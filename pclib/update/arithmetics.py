@@ -4,10 +4,10 @@ from pymtl import *
 
 class Mux(Updates):
 
-  def __init__( s, type_, sel_nbits ):
-    s.in_ = [ ValuePort( type_ ) for _ in xrange(1<<sel_nbits) ]
+  def __init__( s, Type, sel_nbits ):
+    s.in_ = [ ValuePort( Type ) for _ in xrange(1<<sel_nbits) ]
     s.sel = ValuePort( mk_bits( sel_nbits ) )
-    s.out = ValuePort( type_ )
+    s.out = ValuePort( Type )
 
     @s.update
     def up_mux():
@@ -19,10 +19,10 @@ class Mux(Updates):
 
 class RShifter(Updates):
 
-  def __init__( s, type_, shamt_nbits = 1 ):
-    s.in_   = ValuePort( type_ )
+  def __init__( s, Type, shamt_nbits = 1 ):
+    s.in_   = ValuePort( Type )
     s.shamt = ValuePort( mk_bits( shamt_nbits ) )
-    s.out   = ValuePort( type_ )
+    s.out   = ValuePort( Type )
 
     @s.update
     def up_rshifter():
@@ -34,10 +34,10 @@ class RShifter(Updates):
 
 class LShifter(Updates):
 
-  def __init__( s, type_, shamt_nbits = 1 ):
-    s.in_   = ValuePort( type_ )
+  def __init__( s, Type, shamt_nbits = 1 ):
+    s.in_   = ValuePort( Type )
     s.shamt = ValuePort( mk_bits( shamt_nbits ) )
-    s.out   = ValuePort( type_ ) 
+    s.out   = ValuePort( Type ) 
 
     @s.update
     def up_lshifter():
@@ -49,10 +49,10 @@ class LShifter(Updates):
 
 class Adder(Updates):
 
-  def __init__( s, type_ ):
-    s.in0 = ValuePort( type_ )
-    s.in1 = ValuePort( type_ )
-    s.out = ValuePort( type_ )
+  def __init__( s, Type ):
+    s.in0 = ValuePort( Type )
+    s.in1 = ValuePort( Type )
+    s.out = ValuePort( Type )
 
     @s.update
     def up_adder():
@@ -64,10 +64,10 @@ class Adder(Updates):
 
 class Subtractor(Updates):
 
-  def __init__( s, type_ ):
-    s.in0 = ValuePort( type_ )
-    s.in1 = ValuePort( type_ )
-    s.out = ValuePort( type_ )
+  def __init__( s, Type ):
+    s.in0 = ValuePort( Type )
+    s.in1 = ValuePort( Type )
+    s.out = ValuePort( Type )
 
     @s.update
     def up_subtractor():
@@ -79,8 +79,8 @@ class Subtractor(Updates):
 
 class ZeroComp(Updates):
 
-  def __init__( s, type_ ):
-    s.in_ = ValuePort( type_ )
+  def __init__( s, Type ):
+    s.in_ = ValuePort( Type )
     s.out = ValuePort( Bits1 )
 
     @s.update
@@ -93,9 +93,9 @@ class ZeroComp(Updates):
 
 class LTComp(Updates):
 
-  def __init__( s, type_ ):
-    s.in0 = ValuePort( type_ )
-    s.in1 = ValuePort( type_ )
+  def __init__( s, Type ):
+    s.in0 = ValuePort( Type )
+    s.in1 = ValuePort( Type )
     s.out = ValuePort( Bits1 )
 
     @s.update
@@ -108,9 +108,9 @@ class LTComp(Updates):
 
 class LEComp(Updates):
 
-  def __init__( s, type_ ):
-    s.in0 = ValuePort( type_ )
-    s.in1 = ValuePort( type_ )
+  def __init__( s, Type ):
+    s.in0 = ValuePort( Type )
+    s.in1 = ValuePort( Type )
     s.out = ValuePort( Bits1 )
 
     @s.update

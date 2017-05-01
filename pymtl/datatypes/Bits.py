@@ -3,7 +3,7 @@ import py.code
 class Bits( object ):
   def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
-    self.value = value & ((1 << nbits) - 1)
+    self.value = int(value) & ((1 << nbits) - 1)
 
   def __call__( self ):
     return Bits( self.nbits )

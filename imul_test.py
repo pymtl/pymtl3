@@ -1,6 +1,6 @@
 import random
 from pymtl import *
-from pclib.test import TestSource, TestSink
+from pclib.test import TestSourceValRdy, TestSinkValRdy
 from pclib.ifcs import ValRdyBundle
 from IntMulNstage import IntMulNstageInelastic
 from IntMulVarLat import IntMulVarLat
@@ -9,9 +9,9 @@ class TestHarness( Updates ):
 
   def __init__( s, model, src_msgs, sink_msgs ):
 
-    s.src  = TestSource( Bits64, src_msgs )
+    s.src  = TestSourceValRdy( Bits64, src_msgs )
     s.imul = model
-    s.sink = TestSink( Bits32, sink_msgs )
+    s.sink = TestSinkValRdy( Bits32, sink_msgs )
 
     s.imul.req.val  |= s.src.out.val
     s.imul.req.msg  |= s.src.out.msg

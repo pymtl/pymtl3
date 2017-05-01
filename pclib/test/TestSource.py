@@ -2,7 +2,7 @@ from pymtl import *
 from collections import deque
 from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
 
-class TestSource( Updates ):
+class TestSourceValRdy( Updates ):
 
   def __init__( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -23,7 +23,7 @@ class TestSource( Updates ):
   def line_trace( s ):
     return s.out.line_trace()
 
-class StreamSource( Updates ):
+class StreamSourceValRdy( Updates ):
 
   def __init__( s, Type ):
     s.out = ValRdyBundle( Type )

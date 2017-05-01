@@ -44,15 +44,15 @@ def parse_cmdline():
 from pymtl import *
 from IntMulVarLat import IntMulVarLat
 from IntMulNstage import IntMulNstageInelastic
-from pclib.test   import StreamSource, StreamSink
+from pclib.test   import StreamSourceValRdy, StreamSinkValRdy
 
 class SimHarness( Updates ):
 
   def __init__( s, model ):
 
-    s.src  = StreamSource( Bits64 )
+    s.src  = StreamSourceValRdy( Bits64 )
     s.imul = model()
-    s.sink = StreamSink( Bits32 )
+    s.sink = StreamSinkValRdy( Bits32 )
 
     s.imul.req  |= s.src.out
     s.imul.resp |= s.sink.in_

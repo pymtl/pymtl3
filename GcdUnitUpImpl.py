@@ -21,11 +21,11 @@ class GcdUnitDpath( Updates ):
     s.b_mux_sel = ValuePort(int)
     s.b_reg_en  = ValuePort(int)
 
-    s.a_reg = RegEn()
-    s.b_reg = RegEn()
+    s.a_reg = RegEn(int)
+    s.b_reg = RegEn(int)
 
-    s.a_mux = Mux(3)
-    s.b_mux = Mux(2)
+    s.a_mux = Mux(int, 3)
+    s.b_mux = Mux(int, 2)
 
     @s.update
     def up_regs_enable():
@@ -78,7 +78,7 @@ class GcdUnitCtrl( Updates ):
     s.resp_val = ValuePort(int)
     s.resp_rdy = ValuePort(int)
 
-    s.state = Reg()
+    s.state = Reg(int)
 
     s.STATE_IDLE = 0
     s.STATE_CALC = 1
