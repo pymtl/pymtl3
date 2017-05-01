@@ -1,4 +1,5 @@
 from pymtl import *
+from collections import deque
 from random import Random
 
 class RandomStall( MethodsConnection ):
@@ -7,36 +8,53 @@ class RandomStall( MethodsConnection ):
     s.send     = MethodPort()
     s.send_rdy = MethodPort()
 
-    # We keep our own internal random number generator to keep the state
-    # of this generator completely separate from other generators. This
-    # ensure that any delays are reproducable.
-
-    s.rgen = Random()
-    s.rgen.seed(seed)
+    s.rgen       = Random( seed ) # Separate randgen for each injector
+    s.randnum    = 0
     s.stall_prob = stall_prob
 
   def recv( s, msg ):
     s.send( msg )
 
   def recv_rdy( s ):
-    return s.send_rdy() and ( s.rgen.random() > s.stall_prob )
+    s.stall = s.rgen.random() > s.stall_prob
+    return s.send_rdy() and s.stall
 
-class FixDelay( MethodsConnection ):
+  def line_trace( s ):
+    return "[ ]" if s.stall else "[#]"
 
-  def __init__( s, delay=5 ):
+class FixedDelay( MethodsConnection ):
+
+  def __init__( s, delay=5, seed=0x3 ):
     s.send     = MethodPort()
-    s.recv_rdy = MethodPort()
+    s.send_rdy = MethodPort()
 
-    s.delay = deque( [None] * delay )
-    s.rgen = Random()
-    s.rgen.seed(seed)
-    s.stall_prob = stall_prob
+    s.delay = deque( [ (False, None) ] * max(delay,1), maxlen=max(delay,1) )
 
-    # @s.update
-    # def up_delay():
-      
+    @s.update
+    def up_delay():
+      if s.send_rdy():
+        frontier = s.delay[-1]
+        if frontier[0]:
+          s.send( frontier[1] )
+          s.delay[-1] = (False, None)
+        s.delay.rotate()
 
-  # def recv( s, msg ):
+    if delay > 0:
+      s.add_constraints(
+        U(up_delay) < M(s.recv), # pipe behavior, send < recv
+        U(up_delay) < M(s.recv_rdy),
+      )
+    else:
+      s.add_constraints(
+        M(s.recv)     < U(up_delay), # bypass behavior, recv < send
+        M(s.recv_rdy) < U(up_delay),
+      )
 
-  # def send_rdy( s ):
-    # return s.
+  def recv( s, msg ):
+    s.delay[0] = (True, msg)
+
+  def recv_rdy( s ):
+    return not s.delay[0][0]
+
+  def line_trace( s ):
+    return ''.join( [ '*' if x[0] else ' ' for x in s.delay ] )
