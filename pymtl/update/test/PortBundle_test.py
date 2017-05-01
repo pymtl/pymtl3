@@ -1,6 +1,6 @@
 from pymtl import *
 
-from pclib.test import TestSource, TestSink
+from pclib.test import TestSourceValRdy, TestSinkValRdy
 from pclib.ifcs import ValRdyBundle
 
 def test_simple():
@@ -9,8 +9,8 @@ def test_simple():
 
     def __init__( s ):
 
-      s.src  = TestSource( int, input_ = [ 0, 1, 2 ] )
-      s.sink = TestSink  ( int, [ 0, 1, 2 ] )
+      s.src  = TestSourceValRdy( int, input_ = [ 0, 1, 2 ] )
+      s.sink = TestSinkValRdy  ( int, [ 0, 1, 2 ] )
 
       s.sink.in_ |= s.src.out
 
@@ -40,9 +40,9 @@ def test_nested_port_bundle():
 
     def __init__( s ):
 
-      s.src  = [ TestSource( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in xrange(4) ]
+      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in xrange(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
-      s.sink = TestSink  ( int, [ 24, 40, 56, 24, 40, 56] )
+      s.sink = TestSinkValRdy  ( int, [ 24, 40, 56, 24, 40, 56] )
 
       s.sb = SuperBundle()
       s.wire = [ [ Wire(int) for i in xrange(4) ] for j in xrange(4) ]
