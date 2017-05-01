@@ -5,26 +5,25 @@ from MixingQueues_test import CLRTLEnqAdapter
 
 class TestHarness( MethodsConnection ):
 
-  def __init__( s, stall1=0.5, delay1=3, stall2=0.5, delay2=3 ):
+  def __init__( s, src_max_delay=3, sink_stall=0.5, sink_delay=3 ):
     Type = int
 
-    s.src    = TestSourceCL( Type, [ Bits8(1),Bits8(2),Bits8(3),Bits8(4) ] )
-    s.stall1 = RandomStall( 0, 0x2 )
-    s.delay1 = RandomDelay( delay1 )
+    s.src    = TestSourceCL( Type, [ Bits8(x) for x in [1,2,3,4,5,6,7,8] ] )
+    s.rdelay = RandomDelay( src_max_delay )
     s.q1     = PipeQueue(1)
     s.q2     = PipeQueue(1)
-    s.sink   = TestSinkCL( Type, [ Bits8(1),Bits8(2),Bits8(3),Bits8(4) ] )
+    s.pipe   = PipelinedDelay( sink_delay )
+    s.stall  = RandomStall( sink_stall, 0x3 )
+    s.sink   = TestSinkCL( Type, [ Bits8(x) for x in [1,2,3,4,5,6,7,8] ] )
 
     #---------------------------------------------------------------------
-    # src.enq(out) --> q1.enq
+    # src.enq(out) --> randomdelay --> q1.enq
     #---------------------------------------------------------------------
 
-    s.src.send        |= s.delay1.recv
-    s.src.send_rdy    |= s.delay1.recv_rdy
-    s.delay1.send     |= s.stall1.recv
-    s.delay1.send_rdy |= s.stall1.recv_rdy
-    s.stall1.send     |= s.q1.enq
-    s.stall1.send_rdy |= s.q1.enq_rdy
+    s.src.send        |= s.rdelay.recv
+    s.src.send_rdy    |= s.rdelay.recv_rdy
+    s.rdelay.send     |= s.q1.enq
+    s.rdelay.send_rdy |= s.q1.enq_rdy
 
     #---------------------------------------------------------------------
     # q1.deq --> q2.enq
@@ -36,29 +35,31 @@ class TestHarness( MethodsConnection ):
         s.q2.enq( s.q1.deq() )
 
     #---------------------------------------------------------------------
-    # q2.deq --> stall --> sink.enq(recv)
+    # q2.deq --> pipe -> stall --> sink.enq(recv)
     #---------------------------------------------------------------------
-
-    s.stall2 = RandomStall( stall2, 0x3 )
 
     @s.update
     def up_q2_CL_deq_stall_CL_enq_adapter():
-      if s.stall2.recv_rdy() & s.q2.deq_rdy():
-        s.stall2.recv( s.q2.deq() )
+      if s.pipe.recv_rdy() & s.q2.deq_rdy():
+        s.pipe.recv( s.q2.deq() )
 
-    s.stall2.send     |= s.sink.recv
-    s.stall2.send_rdy |= s.sink.recv_rdy
+    s.pipe.send      |= s.stall.recv
+    s.pipe.send_rdy  |= s.stall.recv_rdy
+
+    s.stall.send     |= s.sink.recv
+    s.stall.send_rdy |= s.sink.recv_rdy
 
   def done( s ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return s.src.line_trace() +" ("+ s.delay1.line_trace()+ ") >>> " + \
-           s.q1.line_trace()+" > "+s.q2.line_trace() + " > " +\
-           s.stall2.line_trace() + " >>> "+s.sink.line_trace()
+    return s.src.line_trace() +" ("+ s.rdelay.line_trace()+ ") >>> " + \
+           s.q1.line_trace()+" > "+s.q2.line_trace() + " > " + \
+           " ("+s.pipe.line_trace()+")"+s.stall.line_trace() + \
+           " >>> "+s.sink.line_trace()
 
 def test_src_point5delay3_sink_point5delay2():
-  A = TestHarness( stall1=0.5, delay1=3, stall2=0.5, delay2=2 )
+  A = TestHarness( src_max_delay=3, sink_stall=0.5, sink_delay=2 )
   A.elaborate()
   A.print_schedule()
   print
