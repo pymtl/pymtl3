@@ -1,4 +1,4 @@
 
 from Queue     import PipeQueue, BypassQueue
 from QueueIfcs import EnqIfc, DeqIfc
-from StallDelay import RandomStall, FixedDelay
+from StallDelay import RandomStall, RandomDelay, PipelinedDelay

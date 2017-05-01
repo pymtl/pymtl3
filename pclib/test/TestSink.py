@@ -57,7 +57,7 @@ class TestSinkEnRdy( Updates ):
       if s.recv.en:
         ref = s.answer.popleft()
         ans = s.recv.msg
-        assert ref == ans or ref == "?", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
     return not s.answer
@@ -78,7 +78,7 @@ class TestSinkCL( MethodsConnection ):
   def recv( s, msg ):
     s.msg = msg
     ref = s.answer.popleft()
-    assert ref == msg or ref == "?", "Expect %s, get %s instead" % (ref, msg)
+    assert ref == msg, "Expect %s, get %s instead" % (ref, msg)
 
   def recv_rdy( s ):
     s.ts = (s.ts + 1) % s.accept_interval
