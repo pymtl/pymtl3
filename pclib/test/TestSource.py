@@ -5,7 +5,7 @@ from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
 class TestSourceValRdy( Updates ):
 
   def __init__( s, Type, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
     s.input_  = deque( input_ ) # deque.popleft() is faster
 
     s.default = Type()
@@ -90,3 +90,34 @@ class TestSourceCL( MethodsConnection ):
     trace = str(s.sended)
     s.sended = "#".center(4) if len(s.input_) > 0 else " ".center(4)
     return "{:>4s}".format( trace )
+
+from pclib.cl import RandomDelay
+
+class TestSource( MethodsConnection ):
+
+  def __init__( s, Type, input_=[], max_delay=0 ):
+    s.send     = MethodPort()
+    s.send_rdy = MethodPort()
+
+    s.src    = TestSourceCL( Type, input_ )
+
+    if not max_delay:
+      s.has_delay = False
+      s.src.send     |= s.send
+      s.src.send_rdy |= s.send_rdy
+    else:
+      s.has_delay = True
+      s.rdelay    = RandomDelay( max_delay )
+
+      s.src.send     |= s.rdelay.recv
+      s.src.send_rdy |= s.rdelay.recv_rdy
+
+      s.rdelay.send     |= s.send
+      s.rdelay.send_rdy |= s.send_rdy
+
+  def done( s ):
+    return s.src.done()
+
+  def line_trace( s ):
+    return "{} {}".format( s.src.line_trace(),
+                          s.rdelay.line_trace() if s.has_delay else "" )
