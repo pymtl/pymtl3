@@ -119,5 +119,5 @@ class TestSource( MethodsConnection ):
     return s.src.done()
 
   def line_trace( s ):
-    return "{} {}".format( s.src.line_trace(),
-                          s.rdelay.line_trace() if s.has_delay else "" )
+    return "{}{}".format( s.src.line_trace(),
+                          " {}".format( s.rdelay.line_trace() ) if s.has_delay else "" )

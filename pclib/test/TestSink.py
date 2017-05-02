@@ -144,5 +144,5 @@ class TestSink( MethodsConnection ):
     return s.sink.done()
 
   def line_trace( s ):
-    return "{} {}".format( s.rdelay.line_trace() if s.has_delay else "",
+    return "{}{}".format( "{} ".format( s.rdelay.line_trace() ) if s.has_delay else "",
                           s.sink.line_trace() )
