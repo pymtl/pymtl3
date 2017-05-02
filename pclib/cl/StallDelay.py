@@ -38,9 +38,8 @@ class RandomDelay( MethodsConnection ):
     def up_delay():
       if s.send_rdy():
         if s.counter == 0:
-          frontier = s.buf
-          if frontier[0]:
-            s.send( frontier[1] )
+          if s.buf[0]:
+            s.send( s.buf[1] )
             s.buf = (False, None)
         else:
           s.counter -= 1
@@ -58,7 +57,7 @@ class RandomDelay( MethodsConnection ):
     return not s.buf[0]
 
   def line_trace( s ):
-    return str(s.counter) if s.buf[0] else ' '
+    return "({})".format( str(s.counter+1) if s.buf[0] else ' ' )
 
 class PipelinedDelay( MethodsConnection ):
 
@@ -95,4 +94,4 @@ class PipelinedDelay( MethodsConnection ):
     return not s.delay[0][0]
 
   def line_trace( s ):
-    return ''.join( [ '*' if x[0] else ' ' for x in s.delay ] )
+    return "({})".format( ''.join( [ '*' if x[0] else ' ' for x in s.delay ] ) )

@@ -17,7 +17,7 @@ class PipeQueue( MethodsConnection ):
   def deq_rdy( s ):    return len(s.queue) > 0
   def deq( s ):        return s.queue.pop()
   def line_trace( s ):
-    return "Q{:10}".format("".join( [ "[%d]"%x for x in s.queue ]) )
+    return "[P] {:5}".format(",".join( [ str(x) for x in s.queue ]) )
 
 class BypassQueue( MethodsConnection ):
   def __init__( s, size=1 ):
@@ -34,4 +34,4 @@ class BypassQueue( MethodsConnection ):
   def deq_rdy( s ):    return len(s.queue) > 0
   def deq( s ):        return s.queue.pop()
   def line_trace( s ):
-    return "Q{:10}".format("".join( [ "[%d]"%x for x in s.queue ]) )
+    return "[B] {:5}".format(",".join( [ str(x) for x in s.queue ]) )

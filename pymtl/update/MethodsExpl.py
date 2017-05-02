@@ -124,10 +124,11 @@ class MethodsExpl( Updates ):
         return
 
       (field, idx) = name[ depth ]
-      if blk_id in s._blkid_upblk:
-        assert hasattr(obj, field), "\"%s\", in %s, is not a field of Class %s" %(field, s._blkid_upblk[blk_id].__name__, type(obj).__name__)
-      else:
-        assert hasattr(obj, field), "\"%s\", is not a field of Class %s" %(field, type(obj).__name__)
+
+      # We don't throw assertion when nonexistent methods are called
+      # -- instantiate different components based on parameter
+
+      if not hasattr( obj, field ): return
       obj = getattr( obj, field )
 
       if not idx: # just a variable

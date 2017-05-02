@@ -5,7 +5,7 @@ from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
 class TestSinkValRdy( Updates ):
 
   def __init__( s, Type, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!" 
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
     s.answer = deque( answer )
 
     s.in_    = ValRdyBundle( Type )
@@ -83,7 +83,7 @@ class TestSinkCL( MethodsConnection ):
   def recv_rdy( s ):
     s.ts = (s.ts + 1) % s.accept_interval
     return s.ts == 0 & (len(s.answer) > 0)
-    
+
   def done( s ):
     return not s.answer
 
@@ -91,3 +91,58 @@ class TestSinkCL( MethodsConnection ):
     trace = str(s.msg)
     s.msg = ".".center(4) if len(s.answer) > 0 else " ".center(4)
     return "{:>4s}".format( trace )
+
+class TestSinkCL( MethodsConnection ):
+
+  def __init__( s, Type, answer=[] ):
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
+    s.answer = deque( answer )
+
+    s.msg = ".".center(4)
+
+  def recv( s, msg ):
+    s.msg = msg
+    ref = s.answer.popleft()
+    assert ref == msg, "Expect %s, get %s instead" % (ref, msg)
+
+  def recv_rdy( s ):
+    return len(s.answer) > 0
+
+  def done( s ):
+    return not s.answer
+
+  def line_trace( s ): # called once per cycle
+    trace = str(s.msg)
+    s.msg = ".".center(4) if len(s.answer) > 0 else " ".center(4)
+    return "{:>4s}".format( trace )
+
+from pclib.cl import RandomDelay
+
+class TestSink( MethodsConnection ):
+
+  def __init__( s, Type, answer=[], max_delay=0 ):
+    s.recv     = MethodPort()
+    s.recv_rdy = MethodPort()
+
+    s.sink = TestSinkCL( Type, answer )
+
+    if not max_delay:
+      s.has_delay = False
+      s.sink.recv     |= s.recv
+      s.sink.recv_rdy |= s.recv_rdy
+    else:
+      s.has_delay = True
+      s.rdelay    = RandomDelay( max_delay )
+
+      s.recv     |= s.rdelay.recv
+      s.recv_rdy |= s.rdelay.recv_rdy
+
+      s.rdelay.send     |= s.sink.recv
+      s.rdelay.send_rdy |= s.sink.recv_rdy
+
+  def done( s ):
+    return s.sink.done()
+
+  def line_trace( s ):
+    return "{} {}".format( s.rdelay.line_trace() if s.has_delay else "",
+                          s.sink.line_trace() )
