@@ -29,46 +29,45 @@ class MethodsConnection( MethodsExpl ):
 
   def _resolve_method_connections( s ):
 
-    def recursive_collect_connections( parent, methodid_nets ):
+    def find_net_head( obj, methodid_head ):
+      root = obj._find_root()
+
+      if id(root) in methodid_head:
+        return methodid_head[ id(root) ]
+
+      # Find the actual method
+      net = root._connected
+      head = None
+
+      for m in net:
+        assert head == None or not m.has_method(), "We don't allow connecting two actual methods, %s and %s" %(method._name, m._name)
+        if m.has_method():
+          head = m
+
+      assert head, "Cannot have a bunch connected MethodPorts without an actual method: %s." % method.__dict__
+      for m in net:
+        s._methodid_head[ id(m) ] = head
+
+      return head
+
+    def recursive_collect_connections( parent, methodid_head ):
       if   isinstance( parent, list ):
         for i in xrange(len(parent)):
           if isinstance( parent[i], MethodPort ):
-            root = parent[i]._find_root()
-            if id(root) not in methodid_nets:
-              methodid_nets[ id(root) ] = (root, root._connected)
-            parent[i] = root
+            parent[i] = find_net_head( parent[i], methodid_head )
           else:
-            recursive_collect_connections( parent[i], methodid_nets )
+            recursive_collect_connections( parent[i], methodid_head )
 
       elif isinstance( parent, PyMTLObject ):
         for name, obj in parent.__dict__.iteritems():
           if not name.startswith("_"):
             if   isinstance( obj, MethodPort ):
-              root = obj._find_root()
-
-              if id(root) not in methodid_nets:
-                methodid_nets[ id(root) ] = (root, root._connected)
-              setattr( parent, name, root )
-
+              setattr( parent, name, find_net_head( obj, methodid_head ) )
             else:
-              recursive_collect_connections( obj, methodid_nets )
+              recursive_collect_connections( obj, methodid_head )
 
-    s._methodid_net = {}
     s._methodid_head = {}
-
-    recursive_collect_connections( s, s._methodid_net )
-
-    # Check if all nets are valid
-    # Then inverse nets into a dictionary with {x : head of x's net}
-
-    for (method, net) in s._methodid_net.values():
-
-      # Find the actual method
-      assert method.has_method(), "Cannot have a bunch connected MethodPorts without an actual method: %s." % method.__dict__
-
-      for m in net:
-        assert (m == method) or (not m.has_method()), "We don't allow connecting two actual methods, %s and %s" %(method._name, m._name)
-        s._methodid_head[ id(m) ] = method
+    recursive_collect_connections( s, s._methodid_head )
 
   def _update_partial_constraints( s ):
 
