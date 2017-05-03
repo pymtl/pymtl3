@@ -70,11 +70,11 @@ class TestSourceCL( MethodsConnection ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!"
     s.input_ = deque( input_ ) # deque.popleft() is faster
 
-    s.default  = Type()
     s.send     = MethodPort()
     s.send_rdy = MethodPort()
 
-    s.sended =  "#".center(4)
+    s.sended   = "#"
+    s.tracelen = len( str( Type() ) )
 
     @s.update
     def up_src():
@@ -88,8 +88,8 @@ class TestSourceCL( MethodsConnection ):
 
   def line_trace( s ):
     trace = str(s.sended)
-    s.sended = "#".center(4) if len(s.input_) > 0 else " ".center(4)
-    return "{:>4s}".format( trace )
+    s.sended = "#" if s.input_ else " "
+    return "{:>4s}".format( trace ).center( s.tracelen )
 
 from pclib.cl import RandomDelay
 
