@@ -123,12 +123,12 @@ class MemRespMsg( object ):
     msg.data   = msg.data  ( data )
     return msg
 
-  def mk_wr( s, opaque, len_ ):
+  def mk_wr( s, opaque ):
     msg        = MemRespMsg( s.opaque.nbits, s.data.nbits )
     msg.type_  = msg.type_ ( MemReqMsg.TYPE_WRITE )
     msg.opaque = msg.opaque( opaque )
     msg.test   = msg.test  ( 0 )
-    msg.len    = msg.len   ( len_ )
+    msg.len    = msg.len   ( 0 )
     msg.data   = msg.data  ( 0 )
     return msg
 

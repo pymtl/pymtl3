@@ -10,18 +10,19 @@ from pymtl      import *
 from pclib.test import mk_test_case_table
 from pclib.test import TestSource, TestSink
 from pclib.ifcs import MemReqMsg, MemRespMsg
-from TestMemory import TestMemory
+from TestMemory import TestMemoryCL as TestMemory
 
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness( Updates ):
+class TestHarness( MethodsConnection ):
 
   def __init__( s, nports, src_msgs, sink_msgs, stall_prob, latency,
                 src_delay, sink_delay ):
 
-    # Messge type
+    assert nports <=2 # only support 1
+    # Message type
 
     req  = MemReqMsg(8, 32, 32)
     resp = MemRespMsg(8, 32)
@@ -35,14 +36,16 @@ class TestHarness( Updates ):
     s.mem  = TestMemory( nports, [req]*nports, [resp]*nports  )
 
     s.sinks = []
-    for i in range(nports):
+    for i in xrange(nports):
       s.sinks.append( TestSink( resp, sink_msgs[i] ) )
 
     # Connect
 
-    for i in range( nports ):
-      s.srcs[i].out  |= s.mem.reqs[i]
-      s.sinks[i].in_ |= s.mem.resps[i]
+    for i in xrange( nports ):
+      s.srcs[i].send      |= s.mem.recv[i]
+      s.srcs[i].send_rdy  |= s.mem.recv_rdy[i]
+      s.sinks[i].recv     |= s.mem.send[i]
+      s.sinks[i].recv_rdy |= s.mem.send_rdy[i]
 
   def done( s ):
 
@@ -238,7 +241,7 @@ test_case_table = mk_test_case_table([
   [ "stream",                    stream_msgs,      0.0,  0,  0,  0    ],
   [ "subword_rd",                subword_rd_msgs,  0.0,  0,  0,  0    ],
   [ "subword_wr",                subword_wr_msgs,  0.0,  0,  0,  0    ],
-  # [ "amo",                       amo_msgs,         0.0,  0,  0,  0    ],
+  [ "amo",                       amo_msgs,         0.0,  0,  0,  0    ],
   [ "random",                    random_msgs,      0.0,  0,  0,  0    ],
   [ "random_3x14",               random_msgs,      0.0,  0,  3,  14   ],
   [ "stream_stall0.5_lat0",      stream_msgs,      0.5,  0,  0,  0    ],
