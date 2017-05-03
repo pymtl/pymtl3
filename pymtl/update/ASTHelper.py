@@ -8,7 +8,9 @@ class DetectVarNames( ast.NodeVisitor ):
 
   def get_full_name( self, node ): # only allow one layer array reference
     obj_name = []
+
     # First strip off all slices
+    # s.x[1][2].y[i][3]
     slices = []
     while isinstance( node, ast.Subscript ) and isinstance( node.slice, ast.Slice ):
       lower = node.slice.lower
@@ -21,9 +23,8 @@ class DetectVarNames( ast.NodeVisitor ):
       # else:
       node = node.value
 
+    # s.x[1][2].y[i]
     while True:
-      # s.x[1][2].y[i][3]
-      # strip off all array indices
       num = []
       while isinstance( node, ast.Subscript ) and \
             isinstance( node.slice, ast.Index ):
@@ -35,9 +36,11 @@ class DetectVarNames( ast.NodeVisitor ):
         elif isinstance( v, ast.Name ):
           if v.id in self.upblk.func_globals: # Only support global const indexing for now
             n = self.upblk.func_globals[ v.id ]
-        else:
-          assert isinstance( v, ast.Attribute ), type(v)
+        elif isinstance( v, ast.Attribute ): # s.sel, may be constant
           self.visit( v )
+        elif isinstance( v, ast.Call ): # int(x)
+          for x in v.args:
+            self.visit(x)
 
         num.append(n)
         node = node.value
@@ -46,8 +49,10 @@ class DetectVarNames( ast.NodeVisitor ):
         obj_name.append( (node.attr, num[::-1]) )
       elif isinstance( node, ast.Name ):
         obj_name.append( (node.id, num[::-1]) )
+      elif isinstance( node, ast.Call ): # a.b().c()
+        return
       else:
-        assert isinstance(node, ast.Str) # filter out line_trace
+        assert isinstance( node, ast.Str ) # filter out line_trace
         return
 
       if not hasattr( node, "value" ):
