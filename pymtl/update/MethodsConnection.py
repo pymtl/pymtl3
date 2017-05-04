@@ -40,11 +40,11 @@ class MethodsConnection( MethodsExpl ):
       head = None
 
       for m in net:
-        assert head == None or not m.has_method(), "We don't allow connecting two actual methods, %s and %s" %(method._name, m._name)
+        assert head == None or not m.has_method(), "We don't allow connecting two actual methods, %s and %s" %(head._name, m._name)
         if m.has_method():
           head = m
 
-      assert head, "Cannot have a bunch connected MethodPorts without an actual method: %s." % method.__dict__
+      assert head, "Cannot have a bunch connected MethodPorts without an actual method. %s" % root.__dict__
       for m in net:
         s._methodid_head[ id(m) ] = head
 
