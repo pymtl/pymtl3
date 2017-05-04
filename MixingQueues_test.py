@@ -2,13 +2,13 @@ from pymtl import *
 from pclib.test   import TestSourceEnRdy, TestSource, TestSinkEnRdy, TestSink
 from pclib.update import PipeQueue1RTL, BypassQueue1RTL, NormalQueue1RTL
 from pclib.cl     import PipeQueue, BypassQueue
-from pclib.ifcs   import EnRdyBundle, EnqIfcCL, EnqIfcCL
+from pclib.ifcs   import EnqIfcRTL, DeqIfcRTL, EnqIfcCL, DeqIfcCL
 
-class EnqRTL_EnqCL( MethodsConnection ):
+class EnqIfcRTL_EnqIfcCL( MethodsConnection ):
 
   def __init__( s, Type ):
 
-    s.recv = EnRdyBundle( Type )
+    s.recv = EnqIfcRTL( Type )
     s.send = EnqIfcCL( Type )
 
     @s.update
@@ -20,7 +20,7 @@ class EnqRTL_EnqCL( MethodsConnection ):
       if s.recv.en:
         s.send.enq( s.recv.msg )
 
-class EnqCL_EnqRTL( MethodsConnection ):
+class EnqIfcCL_EnqIfcRTL( MethodsConnection ):
 
   def __init__( s, Type ):
 
@@ -28,8 +28,9 @@ class EnqCL_EnqRTL( MethodsConnection ):
     s.en  = Wire( Bits1 )
     s.rdy = Wire( Bits1 )
 
-    s.send = EnRdyBundle( Type )
-    s.recv = EnqIfcCL( Type )
+    s.recv = EnqIfcCL ( Type )
+    s.send = EnqIfcRTL( Type )
+
     s.recv.enq |= s.recv_
     s.recv.rdy |= s.recv_rdy_
 
@@ -57,6 +58,67 @@ class EnqCL_EnqRTL( MethodsConnection ):
   def recv_rdy_( s ):
     return s.rdy
 
+class DeqIfcRTL_EnqIfcRTL( MethodsConnection ):
+
+  def __init__( s, Type ):
+
+    s.recv = DeqIfcRTL( Type )
+    s.send = EnqIfcRTL( Type )
+
+    @s.update
+    def up_DeqIfcRTL_EnqIfcRTL():
+      s.recv.en  = Bits1( False )
+      s.send.en  = Bits1( False )
+      s.send.msg = Type()
+
+      if s.send.rdy & s.recv.rdy:
+        s.recv.en = Bits1( True )
+        s.send.en = Bits1( True )
+        s.send.msg = s.recv.msg
+
+class DeqIfcRTL_EnqIfcCL( MethodsConnection ):
+
+  def __init__( s, Type ):
+
+    s.recv = DeqIfcRTL( Type )
+    s.send = EnqIfcCL ( Type )
+
+    @s.update
+    def up_DeqIfcRTL_EnqIfcCL():
+      s.recv.en  = Bits1( False )
+
+      if s.send.rdy() & s.recv.rdy:
+        s.recv.en = Bits1( True )
+        s.send.enq( s.recv.msg )
+
+
+class DeqIfcCL_EnqIfcRTL( MethodsConnection ):
+
+  def __init__( s, Type ):
+
+    s.recv = DeqIfcCL ( Type )
+    s.send = EnqIfcRTL( Type )
+
+    @s.update
+    def up_DeqIfcCL_EnqIfcRTL():
+      s.send.en = Bits1( False )
+
+      if s.send.rdy & s.recv.rdy():
+        s.send.en  = Bits1( True )
+        s.send.msg = s.recv.deq()
+
+class DeqIfcCL_EnqIfcCL( MethodsConnection ):
+
+  def __init__( s, Type ):
+
+    s.recv = DeqIfcCL( Type )
+    s.send = EnqIfcCL( Type )
+
+    @s.update
+    def up_DeqIfcCL_EnqIfcCL():
+      if s.send.rdy() & s.recv.rdy():
+        s.send.enq( s.recv.deq() )
+
 class TestHarness( MethodsConnection ):
 
   def __init__( s, src = 'rtl', q1 = 'rtl', q2 = 'rtl', sink = 'rtl' ):
@@ -83,107 +145,55 @@ class TestHarness( MethodsConnection ):
     # src.enq(out) --> q1.enq
     #---------------------------------------------------------------------
 
-    if src == 'rtl' and q1 == 'rtl':
+    if src == q1:
       s.q1.enq |= s.src.send
 
-    if src == 'rtl' and q1 == 'cl':
-      s.src_q1 = EnqRTL_EnqCL( Type )
+    else:
+      if   src == 'rtl' and q1 == 'cl':
+        s.src_q1 = EnqIfcRTL_EnqIfcCL( Type )
+      elif src == 'cl'  and q1 == 'rtl':
+        s.src_q1 = EnqIfcCL_EnqIfcRTL( Type )
+
       s.src.send    |= s.src_q1.recv
       s.src_q1.send |= s.q1.enq
-
-    if src == 'cl'  and q1 == 'rtl':
-      s.src_q1 = EnqCL_EnqRTL( Type )
-      s.src.send    |= s.src_q1.recv
-      s.src_q1.send |= s.q1.enq
-
-    if src == 'cl'  and q1 == 'cl':
-      s.src.send     |= s.q1.enq
 
     #---------------------------------------------------------------------
     # q1.deq --> q2.enq
     #---------------------------------------------------------------------
 
     if q1 == 'rtl' and q2 == 'rtl':
-      @s.update
-      def up_q1_RTL_deq_q2_RTL_enq_adapter():
-        s.q1.deq.en  = Bits1( False )
-
-        s.q2.enq.en  = Bits1( False )
-        s.q2.enq.msg = Type()
-
-        if s.q2.enq.rdy & s.q1.deq.rdy:
-          s.q1.deq.en = Bits1( True )
-
-          s.q2.enq.en = Bits1( True )
-          s.q2.enq.msg = s.q1.deq.msg
+      s.q1_q2 = DeqIfcRTL_EnqIfcRTL( Type )
 
     if q1 == 'rtl' and q2 == 'cl':
-      @s.update
-      def up_q1_RTL_deq_q2_CL_enq_adapter():
-
-        s.q1.deq.en = Bits1( False )
-
-        if s.q2.enq.rdy() & s.q1.deq.rdy:
-          s.q1.deq.en = Bits1( True )
-          s.q2.enq.enq( s.q1.deq.msg )
+      s.q1_q2 = DeqIfcRTL_EnqIfcCL( Type )
 
     if q1 == 'cl' and q2 == 'rtl':
-      @s.update
-      def up_q1_CL_deq_q2_RTL_enq_adapter():
-
-        s.q2.enq.en = Bits1( False )
-
-        if s.q2.enq.rdy & s.q1.deq.rdy():
-          s.q2.enq.en  = Bits1( True )
-          s.q2.enq.msg = s.q1.deq.deq()
+      s.q1_q2 = DeqIfcCL_EnqIfcRTL( Type )
 
     if q1 == 'cl' and q2 == 'cl':
-      @s.update
-      def up_q1_CL_deq_q2_CL_enq_adapter():
-        if s.q2.enq.rdy() & s.q1.deq.rdy():
-          s.q2.enq.enq( s.q1.deq.deq() )
+      s.q1_q2 = DeqIfcCL_EnqIfcCL( Type )
+
+    s.q1.deq     |= s.q1_q2.recv
+    s.q1_q2.send |= s.q2.enq
 
     #---------------------------------------------------------------------
     # q2.deq --> sink.enq(recv)
     #---------------------------------------------------------------------
 
     if q2 == 'rtl' and sink == 'rtl':
-      @s.update
-      def up_q2_RTL_deq_sink_RTL_enq_adapter():
-        s.q2.deq.en  = Bits1( False )
-
-        s.sink.recv.en  = Bits1( False )
-        s.sink.recv.msg = Type()
-
-        if s.sink.recv.rdy & s.q2.deq.rdy:
-          s.q2.deq.en = Bits1( True )
-
-          s.sink.recv.en = Bits1( True )
-          s.sink.recv.msg = s.q2.deq.msg
+      s.q2_sink = DeqIfcRTL_EnqIfcRTL( Type )
 
     if q2 == 'rtl' and sink == 'cl':
-      @s.update
-      def up_q2_RTL_deq_sink_CL_enq_adapter():
-        s.q2.deq.en = Bits1( False )
-
-        if s.sink.recv.rdy() & s.q2.deq.rdy:
-          s.q2.deq.en = Bits1( True )
-          s.sink.recv.enq( s.q2.deq.msg )
+      s.q2_sink = DeqIfcRTL_EnqIfcCL( Type )
 
     if q2 == 'cl'  and sink == 'rtl':
-      @s.update
-      def up_q2_CL_deq_sink_RTL_enq_adapter_rdyblk():
-        s.sink.recv.en = Bits1( False )
-
-        if s.sink.recv.rdy & s.q2.deq.rdy():
-          s.sink.recv.en  = Bits1( True )
-          s.sink.recv.msg = s.q2.deq.deq()
+      s.q2_sink = DeqIfcCL_EnqIfcRTL( Type )
 
     if q2 == 'cl' and sink == 'cl':
-      @s.update
-      def up_q2_CL_deq_sink_CL_enq_adapter():
-        if s.sink.recv.rdy() & s.q2.deq.rdy():
-          s.sink.recv.enq( s.q2.deq.deq() )
+      s.q2_sink = DeqIfcCL_EnqIfcCL( Type )
+
+    s.q2.deq       |= s.q2_sink.recv
+    s.q2_sink.send |= s.sink.recv
 
   def done( s ):
     return s.src.done() and s.sink.done()

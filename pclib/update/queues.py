@@ -1,6 +1,6 @@
 from pymtl import *
 from pclib.update import Reg, RegEn, Mux
-from pclib.ifcs   import EnRdyBundle
+from pclib.ifcs   import EnqIfcRTL, DeqIfcRTL
 
 # The reason why we have 3 update blocks for pipe queue:
 # start: deq.rdy = full.out (queue, up1)
@@ -12,8 +12,8 @@ from pclib.ifcs   import EnRdyBundle
 class PipeQueue1RTL(Updates):
 
   def __init__( s, Type ):
-    s.enq = EnRdyBundle( Type )
-    s.deq = EnRdyBundle( Type )
+    s.enq = EnqIfcRTL( Type )
+    s.deq = DeqIfcRTL( Type )
 
     s.buf  = RegEn( Type )
     s.buf.in_ |= s.enq.msg
@@ -47,8 +47,8 @@ class PipeQueue1RTL(Updates):
 class BypassQueue1RTL(Updates):
 
   def __init__( s, Type ):
-    s.enq = EnRdyBundle( Type )
-    s.deq = EnRdyBundle( Type )
+    s.enq = EnqIfcRTL( Type )
+    s.deq = DeqIfcRTL( Type )
 
     s.buf  = RegEn( Type )
     s.buf.in_ |= s.enq.msg
@@ -86,8 +86,8 @@ class BypassQueue1RTL(Updates):
 class NormalQueue1RTL(Updates):
 
   def __init__( s, type_ ):
-    s.enq = EnRdyBundle( type_ )
-    s.deq = EnRdyBundle( type_ )
+    s.enq = EnqIfcRTL( type_ )
+    s.deq = DeqIfcRTL( type_ )
 
     s.buf  = RegEn( type_ )
     s.buf.in_ |= s.enq.msg
