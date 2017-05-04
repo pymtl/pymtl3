@@ -2,10 +2,12 @@ from pymtl import *
 from EnRdyBundle import EnRdyBundle
 
 class DeqIfcRTL( EnRdyBundle ):
-  level = 'rtl'
+  ifc_name  = 'Enq'
+  ifc_level = 'rtl'
 
 class DeqIfcCL( PortBundle ):
-  level = 'cl'
+  ifc_name  = 'Enq'
+  ifc_level = 'cl'
 
   def __init__( s, Type ):
     s.Type = Type
