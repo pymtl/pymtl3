@@ -1,37 +1,44 @@
 from collections import deque
 from pymtl import *
-# from QueueIfcs import EnqIfc, DeqIfc
+from pclib.ifcs import EnqIfcCL, DeqIfcCL
 
-class PipeQueue( MethodsConnection ):
-  def __init__( s, size=1 ):
-    s.queue = deque(maxlen=size)
+class BaseQueue( MethodsConnection ):
+  def __init__( s, Type, size ):
+    s.queue = deque( maxlen=size )
+
+    s.enq = EnqIfcCL( Type )
+    s.enq.enq |= s.enq_
+    s.enq.rdy |= s.enq_rdy_
+
+    s.deq = DeqIfcCL( Type )
+    s.deq.deq |= s.deq_
+    s.deq.rdy |= s.deq_rdy_
+
+  def enq_rdy_( s ): return len(s.queue) < s.queue.maxlen
+  def enq_( s, v ):  s.queue.appendleft(v)
+  def deq_rdy_( s ): return len(s.queue) > 0
+  def deq_( s ):     return s.queue.pop()
+
+class PipeQueue( BaseQueue ):
+
+  def __init__( s, Type, size ):
+    super( PipeQueue, s ).__init__( Type, size )
     s.add_constraints(
-      M(s.deq    ) < M(s.enq    ), # pipe behavior
-      M(s.deq_rdy) < M(s.enq_rdy),
+      M(s.deq_    ) < M(s.enq_    ), # pipe behavior
+      M(s.deq_rdy_) < M(s.enq_rdy_),
     )
-    # s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
-    # s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
 
-  def enq_rdy( s ):    return len(s.queue) < s.queue.maxlen
-  def enq( s, v ):     s.queue.appendleft(v)
-  def deq_rdy( s ):    return len(s.queue) > 0
-  def deq( s ):        return s.queue.pop()
   def line_trace( s ):
     return "[P] {:5}".format(",".join( [ str(x) for x in s.queue ]) )
 
-class BypassQueue( MethodsConnection ):
-  def __init__( s, size=1 ):
-    s.queue = deque(maxlen=size)
+class BypassQueue( BaseQueue ):
+
+  def __init__( s, Type, size):
+    super( BypassQueue, s ).__init__( Type, size )
     s.add_constraints(
       M(s.enq    ) < M(s.deq    ), # bypass behavior
       M(s.enq_rdy) < M(s.deq_rdy),
     )
-    # s.enq_ifc = EnqIfc( enq = s.enq, rdy = s.enq_rdy )
-    # s.deq_ifc = DeqIfc( deq = s.deq, rdy = s.deq_rdy )
 
-  def enq_rdy( s ):    return len(s.queue) < s.queue.maxlen
-  def enq( s, v ):     s.queue.appendleft(v)
-  def deq_rdy( s ):    return len(s.queue) > 0
-  def deq( s ):        return s.queue.pop()
   def line_trace( s ):
     return "[B] {:5}".format(",".join( [ str(x) for x in s.queue ]) )

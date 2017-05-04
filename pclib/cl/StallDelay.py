@@ -1,23 +1,27 @@
 from pymtl import *
 from collections import deque, namedtuple
 from random import Random
+from pclib.ifcs import EnqIfcCL
 
 class RandomStall( MethodsConnection ):
 
   def __init__( s, stall_prob=0.5, seed=0x3 ):
-    s.send     = MethodPort()
-    s.send_rdy = MethodPort()
+    s.send = EnqIfcCL( None )
+    s.recv = EnqIfcCL( None )
+
+    s.recv.enq |= s.recv_
+    s.recv.rdy |= s.recv_rdy_
 
     s.rgen       = Random( seed ) # Separate randgen for each injector
     s.randnum    = 0
     s.stall_prob = stall_prob
 
-  def recv( s, msg ):
-    s.send( msg )
+  def recv_( s, msg ):
+    s.send.enq( msg )
 
-  def recv_rdy( s ):
+  def recv_rdy_( s ):
     s.stall = s.rgen.random() > s.stall_prob
-    return s.send_rdy() and s.stall
+    return s.send.rdy() and s.stall
 
   def line_trace( s ):
     return " " if s.stall else "#"
@@ -27,8 +31,11 @@ DelayEntry = namedtuple('DelayEntry', 'val msg')
 class RandomDelay( MethodsConnection ):
 
   def __init__( s, max_delay=5, seed=0x3 ):
-    s.send     = MethodPort()
-    s.send_rdy = MethodPort()
+    s.send = EnqIfcCL( None )
+    s.recv = EnqIfcCL( None )
+
+    s.recv.enq |= s.recv_
+    s.recv.rdy |= s.recv_rdy_
 
     s.rgen      = Random( seed ) # Separate randgen for each injector
     s.randnum   = 0
@@ -38,22 +45,22 @@ class RandomDelay( MethodsConnection ):
 
     @s.update
     def up_delay():
-      if s.send_rdy():
+      if s.send.rdy():
         if s.counter <= 0 and s.buf.val:
-          s.send( s.buf.msg )
+          s.send.enq( s.buf.msg )
           s.buf = DelayEntry( val=False, msg=None )
       s.counter -= 1
 
     s.add_constraints(
-      M(s.recv)     < U(up_delay), # bypass behavior, recv < send
-      M(s.recv_rdy) < U(up_delay), # since randint=0 ==> combinational
+      M(s.recv_)     < U(up_delay), # bypass behavior, recv < send
+      M(s.recv_rdy_) < U(up_delay), # since randint=0 ==> combinational
     )
 
-  def recv( s, msg ):
+  def recv_( s, msg ):
     s.buf = DelayEntry( val=True, msg=msg )
     s.counter = s.rgen.randint(0, s.max_delay)
 
-  def recv_rdy( s ):
+  def recv_rdy_( s ):
     return not s.buf.val
 
   def line_trace( s ):
@@ -62,8 +69,11 @@ class RandomDelay( MethodsConnection ):
 class PipelinedDelay( MethodsConnection ):
 
   def __init__( s, delay=5, seed=0x3, elastic=False ):
-    s.send     = MethodPort()
-    s.send_rdy = MethodPort()
+    s.send = EnqIfcCL( None )
+    s.recv = EnqIfcCL( None )
+
+    s.recv.enq |= s.recv_
+    s.recv.rdy |= s.recv_rdy_
 
     assert delay > 0, "Please conditionally remove this PipelinedDelay if you want delay=0."
 
@@ -83,22 +93,22 @@ class PipelinedDelay( MethodsConnection ):
     else:
       @s.update
       def up_delay():
-        if s.send_rdy():
+        if s.send.rdy():
           frontier = s.delay[-1]
           if frontier.val:
-            s.send( frontier.msg )
+            s.send.enq( frontier.msg )
             s.delay[-1] = DelayEntry( val=False, msg=None )
           s.delay.rotate()
 
     s.add_constraints(
-      U(up_delay) < M(s.recv), # pipe behavior, send < recv
-      U(up_delay) < M(s.recv_rdy),
+      U(up_delay) < M(s.recv_), # pipe behavior, send < recv
+      U(up_delay) < M(s.recv_rdy_),
     )
 
-  def recv( s, msg ):
+  def recv_( s, msg ):
     s.delay[0] = DelayEntry( val=True, msg=msg )
 
-  def recv_rdy( s ):
+  def recv_rdy_( s ):
     return not s.delay[0].val
 
   def line_trace( s ):
