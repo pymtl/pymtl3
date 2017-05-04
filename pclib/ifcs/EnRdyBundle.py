@@ -3,10 +3,10 @@ from pclib.valrdy import valrdy_to_str
 
 class EnRdyBundle( PortBundle ):
 
-  def __init__( s, type_=int ):
-    s.msg_type = type_
+  def __init__( s, Type=int ):
+    s.Type = Type
 
-    s.msg = ValuePort( type_ )
+    s.msg = ValuePort( Type )
     s.en  = ValuePort( Bits1 )
     s.rdy = ValuePort( Bits1 )
 
