@@ -17,22 +17,22 @@ class Connectable(object):
     s._root = s._root._find_root()
     return s._root
 
-  def _connect( s, writer ):
-    assert isinstance( writer, Connectable ), "Unconnectable object!"
+  def _connect( s, other ):
+    assert isinstance( other, Connectable ), "Unconnectable object!"
 
     x = s._find_root()
-    y = writer._find_root()
+    y = other._find_root()
     assert x != y, "Two nets are already unionized!"
     # assert x == s, "One net signal cannot have two drivers. \n%s" % \
                    # "Please check if the left side signal is already at left side in another connection."
 
-    # merge myself to the writer
+    # merge myself to the other
     y._connected.extend( x._connected )
     x._connected = []
     x._root = y
 
-  def __ior__( s, writer ):
-    s._connect( writer )
+  def __ior__( s, other ):
+    s._connect( other )
     return s
 
   def collect_nets( s, varid_net ):
@@ -124,11 +124,11 @@ class Wire(Connectable, PyMTLObject):
     return s._type()
 
   # Override
-  def __ior__( s, writer ):
-    if isinstance( writer, Wire ):
-      s._connect( writer )
+  def __ior__( s, other ):
+    if isinstance( other, Wire ):
+      s._connect( other )
     else:
-      assert False, writer
+      assert False, other
     return s
 
 class ValuePort(Wire):
@@ -157,10 +157,8 @@ class MethodPort(Connectable, PyMTLObject):
 
   # Override
   def _connect( self, other ):
-    if self.has_method():
-      super( MethodPort, other )._connect( self )
-    else:
-      super( MethodPort, self )._connect( other )
+    assert isinstance( other, MethodPort ), "Cannot connect MethodPort to %s" % type(other).__name__
+    super( MethodPort, self )._connect( other )
 
   # Override
   def collect_nets( s, varid_net ):
@@ -181,7 +179,11 @@ class PortBundle(Connectable, PyMTLObject):
       elif isinstance( s_obj, Connectable ):
         s_obj._connect( other_obj )
 
-    assert type(s) is type(other), "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+    assert isinstance( other, PortBundle ),  "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+
+    if not (type(s) is type(other)):
+      assert  s.Type == other.Type, "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+      print "warning: need to generate adapters for this connection between %s and %s." % (type(s).__name__, type(other).__name__)
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"):
