@@ -1,6 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL
 
 class TestSourceValRdy( Updates ):
 
@@ -70,16 +70,15 @@ class TestSourceCL( MethodsConnection ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!"
     s.input_ = deque( input_ ) # deque.popleft() is faster
 
-    s.send     = MethodPort()
-    s.send_rdy = MethodPort()
+    s.send = EnqIfcCL( Type )
 
     s.sended   = "#"
     s.tracelen = len( str( Type() ) )
 
     @s.update
     def up_src():
-      if s.send_rdy() and len(s.input_) > 0:
-        s.send( s.input_[0] )
+      if s.send.rdy() and len(s.input_) > 0:
+        s.send.enq( s.input_[0] )
         s.sended = s.input_[0]
         s.input_.popleft()
 
@@ -96,24 +95,19 @@ from pclib.cl import RandomDelay
 class TestSource( MethodsConnection ):
 
   def __init__( s, Type, input_=[], max_delay=0 ):
-    s.send     = MethodPort()
-    s.send_rdy = MethodPort()
+    s.send = EnqIfcCL( Type )
 
-    s.src    = TestSourceCL( Type, input_ )
+    s.src = TestSourceCL( Type, input_ )
 
     if not max_delay:
       s.has_delay = False
-      s.src.send     |= s.send
-      s.src.send_rdy |= s.send_rdy
+      s.src.send |= s.send
     else:
       s.has_delay = True
       s.rdelay    = RandomDelay( max_delay )
 
-      s.src.send     |= s.rdelay.recv
-      s.src.send_rdy |= s.rdelay.recv_rdy
-
-      s.rdelay.send     |= s.send
-      s.rdelay.send_rdy |= s.send_rdy
+      s.src.send    |= s.rdelay.recv
+      s.rdelay.send |= s.send
 
   def done( s ):
     return s.src.done()

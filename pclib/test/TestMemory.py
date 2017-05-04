@@ -1,6 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs import valrdy_to_str, ValRdyBundle, MemReqMsg, MemRespMsg
+from pclib.ifcs import MemReqMsg, MemRespMsg, EnqIfcCL
 
 AMO_FUNS = { MemReqMsg.TYPE_AMO_ADD  : lambda m,a : m+a,
              MemReqMsg.TYPE_AMO_AND  : lambda m,a : m&a,
@@ -48,21 +48,19 @@ class TestMemoryCL( TestMemoryFL, MethodsConnection ):
                                mem_nbytes=1<<20, word_nbytes=4 ):
     TestMemoryFL.__init__( s, mem_nbytes, word_nbytes )
 
-    s.send     = [ MethodPort() for _ in xrange(nports) ]
-    s.send_rdy = [ MethodPort() for _ in xrange(nports) ]
-    s.recv     = [ MethodPort() for _ in xrange(nports) ]
-    s.recv_rdy = [ MethodPort() for _ in xrange(nports) ]
+    s.send = [ EnqIfcCL( reqs[i]  ) for i in xrange(nports) ]
+    s.recv = [ EnqIfcCL( resps[i] ) for i in xrange(nports) ]
 
     s.req   = [ None ] * nports
 
     # Currently, only <=2 ports
     if nports >= 1:
-      s.recv[0]     |= s.recv0
-      s.recv_rdy[0] |= s.recv_rdy0
+      s.recv[0].enq |= s.recv0
+      s.recv[0].rdy |= s.recv_rdy0
 
     if nports >= 2:
-      s.recv[1]     |= s.recv1
-      s.recv_rdy[1] |= s.recv_rdy1
+      s.recv[1].enq |= s.recv1
+      s.recv[1].rdy |= s.recv_rdy1
 
     @s.update
     def up_testmem():
@@ -70,7 +68,7 @@ class TestMemoryCL( TestMemoryFL, MethodsConnection ):
       for i in xrange(nports):
         req = s.req[i]
 
-        if s.send_rdy[i]() and req:
+        if s.send[i].rdy() and req:
           len = req.len if req.len else ( reqs[i].data.nbits >> 3 )
 
           if   req.type_ == MemReqMsg.TYPE_READ:
@@ -82,13 +80,13 @@ class TestMemoryCL( TestMemoryFL, MethodsConnection ):
             ret  = s.amo( req.type_, req.addr, len, req.data )
             resp = resps[i].mk_msg( req.type_, req.opaque, 0, len, ret )
 
-          s.send[i]( resp )
+          s.send[i].enq( resp )
           s.req[i] = None
 
     for i in xrange(nports):
       s.add_constraints(
-        U(up_testmem) < M(s.recv[i])    , # pipe behavior, send < recv
-        U(up_testmem) < M(s.recv_rdy[i]),
+        U(up_testmem) < M(s.recv[i].enq), # pipe behavior, send < recv
+        U(up_testmem) < M(s.recv[i].rdy),
       )
 
   def recv0( s, msg ): # recv req

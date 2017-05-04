@@ -1,6 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL
 
 class TestSinkValRdy( Updates ):
 
@@ -67,45 +67,23 @@ class TestSinkEnRdy( Updates ):
 
 class TestSinkCL( MethodsConnection ):
 
-  def __init__( s, Type, answer, accept_interval=1 ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!"
-    s.answer = deque( answer )
-    s.accept_interval = accept_interval
-
-    s.ts  = 0
-    s.msg = ".".center(4)
-
-  def recv( s, msg ):
-    s.msg = msg
-    ref = s.answer.popleft()
-    assert ref == msg, "Expect %s, get %s instead" % (ref, msg)
-
-  def recv_rdy( s ):
-    s.ts = (s.ts + 1) % s.accept_interval
-    return s.ts == 0 & (len(s.answer) > 0)
-
-  def done( s ):
-    return not s.answer
-
-  def line_trace( s ): # called once per cycle
-    trace = str(s.msg)
-    s.msg = ".".center(4) if len(s.answer) > 0 else " ".center(4)
-    return "{:>4s}".format( trace )
-
-class TestSinkCL( MethodsConnection ):
-
   def __init__( s, Type, answer=[] ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
     s.answer = deque( answer )
 
-    s.msg = ".".center(4)
+    s.recv = EnqIfcCL( Type )
+    s.recv.enq |= s.recv_
+    s.recv.rdy |= s.recv_rdy_
 
-  def recv( s, msg ):
+    s.msg = "."
+    s.tracelen = len( str( Type() ) )
+
+  def recv_( s, msg ):
     s.msg = msg
     ref = s.answer.popleft()
     assert ref == msg, "Expect %s, get %s instead" % (ref, msg)
 
-  def recv_rdy( s ):
+  def recv_rdy_( s ):
     return len(s.answer) > 0
 
   def done( s ):
@@ -113,32 +91,27 @@ class TestSinkCL( MethodsConnection ):
 
   def line_trace( s ): # called once per cycle
     trace = str(s.msg)
-    s.msg = ".".center(4) if len(s.answer) > 0 else " ".center(4)
-    return "{:>4s}".format( trace )
+    s.msg = "." if s.answer else " "
+    return "{:>4s}".format( trace ).center( s.tracelen )
 
 from pclib.cl import RandomDelay
 
 class TestSink( MethodsConnection ):
 
   def __init__( s, Type, answer=[], max_delay=0 ):
-    s.recv     = MethodPort()
-    s.recv_rdy = MethodPort()
+    s.recv = EnqIfcCL( Type )
 
     s.sink = TestSinkCL( Type, answer )
 
     if not max_delay:
       s.has_delay = False
-      s.sink.recv     |= s.recv
-      s.sink.recv_rdy |= s.recv_rdy
+      s.sink.recv |= s.recv
     else:
       s.has_delay = True
       s.rdelay    = RandomDelay( max_delay )
 
-      s.recv     |= s.rdelay.recv
-      s.recv_rdy |= s.rdelay.recv_rdy
-
-      s.rdelay.send     |= s.sink.recv
-      s.rdelay.send_rdy |= s.sink.recv_rdy
+      s.recv        |= s.rdelay.recv
+      s.rdelay.send |= s.sink.recv
 
   def done( s ):
     return s.sink.done()

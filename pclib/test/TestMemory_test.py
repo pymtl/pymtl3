@@ -42,10 +42,8 @@ class TestHarness( MethodsConnection ):
     # Connect
 
     for i in xrange( nports ):
-      s.srcs[i].send      |= s.mem.recv[i]
-      s.srcs[i].send_rdy  |= s.mem.recv_rdy[i]
-      s.sinks[i].recv     |= s.mem.send[i]
-      s.sinks[i].recv_rdy |= s.mem.send_rdy[i]
+      s.srcs[i].send  |= s.mem.recv[i]
+      s.sinks[i].recv |= s.mem.send[i]
 
   def done( s ):
 
