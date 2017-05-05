@@ -2,6 +2,7 @@
 from update.UpdatesExpl       import UpdatesExpl
 from update.UpdatesConnection import UpdatesConnection
 from update.UpdatesImpl       import UpdatesImpl
+from update.UpdatesCall       import UpdatesCall
 from update.MethodsExpl       import MethodsExpl
 from update.MethodsConnection import MethodsConnection
 from update.MethodsGuard      import MethodsGuard, guard
@@ -15,6 +16,7 @@ __all__ = [
   'UpdatesExpl',
   'UpdatesConnection',
   'UpdatesImpl',
+  'UpdatesCall',
   'U', 'RD', 'WR',
   'MethodsExpl',
   'M',
