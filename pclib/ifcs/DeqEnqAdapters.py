@@ -42,7 +42,6 @@ class DeqIfcRTL_EnqIfcCL( BaseDeqEnqAdapter ):
         s.recv.en = Bits1( True )
         s.send.enq( s.recv.msg )
 
-
 class DeqIfcCL_EnqIfcRTL( BaseDeqEnqAdapter ):
 
   def __init__( s, Type1, level1, Type2, level2 ):

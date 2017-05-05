@@ -16,8 +16,8 @@ class TestHarnessAllKinds( MethodsAdapt ):
     s.sink   = TestSinkCL( Type, [ Bits8(x) for x in [1,2,3,4,5,6,7,8] ] )
 
     # src.send --> randomdelay --> q1.enq
-    # q1.deq <-> q2.enq
-    # q2.deq <-> pipe -> stall --> sink.enq(recv)
+    # q1.deq   <-> q2.enq
+    # q2.deq   <-> pipe -> stall --> sink.enq(recv)
 
     s.src.send    |= s.rdelay.recv
     s.rdelay.send |= s.q1.enq
