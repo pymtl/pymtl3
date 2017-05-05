@@ -1,6 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqIfcRTL
 
 class TestSinkValRdy( Updates ):
 
@@ -44,7 +44,7 @@ class TestSinkEnRdy( Updates ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
     s.answer = deque( answer )
 
-    s.recv = EnRdyBundle( Type )
+    s.recv = EnqIfcRTL( Type )
 
     s.ts = 0
     @s.update
