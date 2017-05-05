@@ -26,31 +26,15 @@ class TestHarness( MethodsAdapt ):
     if sink == 'rtl': s.sink = TestSinkEnRdy( Type, [ 1,2,3,4 ], accept_interval=2 )
     else:             s.sink = TestSink( Type, [ 1,2,3,4 ], max_delay=2 )
 
-    #---------------------------------------------------------------------
     # src.enq(out) --> q1.enq
-    #---------------------------------------------------------------------
 
-    if src == q1:
-      s.q1.enq |= s.src.send
+    s.connect_ifcs( s.src.send, s.q1.enq )
 
-    else:
-      if   src == 'rtl' and q1 == 'cl':
-        s.src_q1 = EnqIfcRTL_EnqIfcCL( Type )
-      elif src == 'cl'  and q1 == 'rtl':
-        s.src_q1 = EnqIfcCL_EnqIfcRTL( Type )
-
-      s.src.send    |= s.src_q1.recv
-      s.src_q1.send |= s.q1.enq
-
-    #---------------------------------------------------------------------
     # q1.deq --> q2.enq
-    #---------------------------------------------------------------------
 
     s.connect_ifcs( s.q1.deq, s.q2.enq )
 
-    #---------------------------------------------------------------------
     # q2.deq --> sink.enq(recv)
-    #---------------------------------------------------------------------
 
     s.connect_ifcs( s.q2.deq, s.sink.recv )
 

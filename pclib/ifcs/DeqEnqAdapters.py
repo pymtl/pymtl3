@@ -9,7 +9,8 @@ class BaseDeqEnqAdapter( MethodsConnection ):
 
 class DeqIfcRTL_EnqIfcRTL( BaseDeqEnqAdapter ):
 
-  def __init__( s, Type1, Type2 ):
+  def __init__( s, Type1, level1, Type2, level2 ):
+    assert level1 == 'rtl' and level2 == 'rtl'
 
     s.recv = DeqIfcRTL( Type1 )
     s.send = EnqIfcRTL( Type2 )
@@ -27,7 +28,8 @@ class DeqIfcRTL_EnqIfcRTL( BaseDeqEnqAdapter ):
 
 class DeqIfcRTL_EnqIfcCL( BaseDeqEnqAdapter ):
 
-  def __init__( s, Type1, Type2 ):
+  def __init__( s, Type1, level1, Type2, level2 ):
+    assert level1 == 'rtl' and level2 == 'cl'
 
     s.recv = DeqIfcRTL( Type1 )
     s.send = EnqIfcCL ( Type2 )
@@ -43,7 +45,8 @@ class DeqIfcRTL_EnqIfcCL( BaseDeqEnqAdapter ):
 
 class DeqIfcCL_EnqIfcRTL( BaseDeqEnqAdapter ):
 
-  def __init__( s, Type1, Type2 ):
+  def __init__( s, Type1, level1, Type2, level2 ):
+    assert level1 == 'cl' and level2 == 'rtl'
 
     s.recv = DeqIfcCL ( Type1 )
     s.send = EnqIfcRTL( Type2 )
@@ -59,7 +62,8 @@ class DeqIfcCL_EnqIfcRTL( BaseDeqEnqAdapter ):
 
 class DeqIfcCL_EnqIfcCL( BaseDeqEnqAdapter ):
 
-  def __init__( s, Type1, Type2 ):
+  def __init__( s, Type1, level1, Type2, level2 ):
+    assert level1 == 'cl' and level2 == 'cl'
 
     s.recv = DeqIfcCL( Type1 )
     s.send = EnqIfcCL( Type2 )

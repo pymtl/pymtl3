@@ -64,14 +64,17 @@ class MethodsAdapt( MethodsConnection ):
     assert ylevel in ifc_registry[ytype], "Level '%s' of interface type %s is not registered." % (ylevel, type(y).__name__)
     assert isinstance( y, ifc_registry[ytype][ylevel] ), "The right hand side is called '%s' but is of type '%s', not the registered type '%s'" % (yname, type(y).__name__ , yclass.__name__)
 
-    # Generating a name with id
+    # Check if they are the same interface
+
+    if xlevel == ylevel and xtype == ytype and type(x) == type(y) and x.Type == y.Type:
+      x |= y
+      return
+
+    # Generating a unique name. Lookup the type registry to construct adapter.
 
     if not hasattr( s, "_num_adapters" ): s._num_adapters = 0
     else: s._num_adapters += 1
-
-    # Generate this adapter by looking up the adapter type
-
-    adapter      = adapter_registry[ (xtype, ytype) ][ (xlevel, ylevel) ](x.Type, y.Type)
+    adapter      = adapter_registry[ (xtype, ytype) ][ (xlevel, ylevel) ](x.Type, xlevel, y.Type, ylevel)
     adapter_name = "{}_{}_{}_{}_{}".format( xtype, xlevel, ytype, ylevel, s._num_adapters )
 
     assert not hasattr( s, adapter_name )

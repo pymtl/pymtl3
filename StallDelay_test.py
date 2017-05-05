@@ -2,7 +2,7 @@ from pymtl import *
 from pclib.test   import TestSourceCL, TestSinkCL
 from pclib.cl     import PipeQueue, BypassQueue, RandomStall, RandomDelay, PipelinedDelay
 
-class TestHarnessAllKinds( MethodsConnection ):
+class TestHarnessAllKinds( MethodsAdapt ):
 
   def __init__( s, src_max_delay=3, sink_stall=0.5, sink_delay=3 ):
     Type = int
@@ -15,27 +15,18 @@ class TestHarnessAllKinds( MethodsConnection ):
     s.stall  = RandomStall( sink_stall, 0x3 )
     s.sink   = TestSinkCL( Type, [ Bits8(x) for x in [1,2,3,4,5,6,7,8] ] )
 
-    # src.enq(out) --> randomdelay --> q1.enq
+    # src.send --> randomdelay --> q1.enq
+    # q1.deq <-> q2.enq
+    # q2.deq <-> pipe -> stall --> sink.enq(recv)
 
     s.src.send    |= s.rdelay.recv
     s.rdelay.send |= s.q1.enq
 
-    # q1.deq --> q2.enq
+    s.connect_ifcs( s.q1.deq, s.q2.enq )
+    s.connect_ifcs( s.q2.deq, s.pipe.recv )
 
-    @s.update
-    def up_q1_CL_deq_q2_CL_enq_adapter():
-      if s.q2.enq.rdy() & s.q1.deq.rdy():
-        s.q2.enq.enq( s.q1.deq.deq() )
-
-    # q2.deq --> pipe -> stall --> sink.enq(recv)
-
-    @s.update
-    def up_q2_CL_deq_stall_CL_enq_adapter():
-      if s.pipe.recv.rdy() & s.q2.deq.rdy():
-        s.pipe.recv.enq( s.q2.deq.deq() )
-
-    s.pipe.send  |= s.stall.recv
-    s.stall.send |= s.sink.recv
+    s.pipe.send   |= s.stall.recv
+    s.stall.send  |= s.sink.recv
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -48,7 +39,7 @@ class TestHarnessAllKinds( MethodsConnection ):
 
 from pclib.test   import TestSource, TestSink
 
-class TestHarness( MethodsConnection ):
+class TestHarness( MethodsAdapt ):
 
   def __init__( s, src_max_delay=3, sink_max_delay=3 ):
     Type = int
@@ -58,23 +49,14 @@ class TestHarness( MethodsConnection ):
     s.q2     = PipeQueue(Type, 1)
     s.sink   = TestSink  ( Type, [ Bits8(x) for x in [1,2,3,4,5,6,7,8] ], sink_max_delay )
 
-    # src.enq(out) --> q1.enq
+    # src.send --> q1.enq
+    # q1.deq <-> q2.enq
+    # q2.deq <-> sink.recv
 
     s.src.send |= s.q1.enq
 
-    # q1.deq --> q2.enq
-
-    @s.update
-    def up_q1_CL_deq_q2_CL_enq_adapter():
-      if s.q2.enq.rdy() & s.q1.deq.rdy():
-        s.q2.enq.enq( s.q1.deq.deq() )
-
-    # q2.deq --> sink.enq(recv)
-
-    @s.update
-    def up_q2_CL_deq_stall_CL_enq_adapter():
-      if s.sink.recv.rdy() & s.q2.deq.rdy():
-        s.sink.recv.enq( s.q2.deq.deq() )
+    s.connect_ifcs( s.q1.deq, s.q2.enq )
+    s.connect_ifcs( s.q2.deq, s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()
