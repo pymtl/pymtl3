@@ -7,4 +7,4 @@ from EnqIfcs      import EnqIfcRTL, EnqIfcCL
 from DeqIfcs      import DeqIfcRTL, DeqIfcCL
 from DeqEnqAdapters import DeqIfcRTL_EnqIfcRTL, DeqIfcRTL_EnqIfcCL, \
                            DeqIfcCL_EnqIfcRTL,  DeqIfcCL_EnqIfcCL
-from EnqEnqAdapters import EnqIfcRTL_EnqIfcCL,  EnqIfcCL_EnqIfcRTL
+from EnqEnqAdapters import EnqIfc_EnqIfc_Adapter
