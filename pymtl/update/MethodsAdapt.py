@@ -13,24 +13,23 @@ ifc_registry     = defaultdict(dict)
 adapter_registry = defaultdict(dict)
 
 # used to make sure one name corresponds to one base type
-def register_ifc( ifc ):
+def register_ifc( ifc, level ):
   assert hasattr( ifc, "ifc" ), "Interface %s should define class variable 'ifc = name, level'" % ifc.__name__
 
-  type_, level = ifc.ifc
-  ifc_levels  = ifc_registry[ type_ ]
+  type_     = ifc.ifc
+  ifc._level = level
+
+  ifc_levels = ifc_registry[ type_ ]
   assert level not in ifc_levels, "Cannot register two types with the same level '%s' for interface '%s': %s(previous), %s(new)" \
                                     % (level, type_, ifc_levels[level].__name__, ifc.__name__)
   ifc_levels[ level ] = ifc
 
-def register_adapter( adapter ):
+def register_adapter( adapter, xlevel, ylevel ):
   assert hasattr( adapter, "ifcs" ), "Adapter %s should define class variable 'ifcs = name1, name2'" % adapter.__name__
   xname,  yname = adapter.ifcs
 
   assert hasattr( adapter, "types" ), "Adapter %s should define class variable 'types = type1, type1'" % adapter.__name__
   xtype,  ytype = adapter.types
-
-  assert hasattr( adapter, "levels" ), "Adapter %s should define class variable 'levels = level1, level2'" % adapter.__name__
-  xlevel, ylevel = adapter.levels
 
   adapter_levels = adapter_registry[ (xtype, ytype) ]
 
@@ -50,19 +49,19 @@ class MethodsAdapt( MethodsConnection ):
 
     # The interface(portbundle) will provide its type and level
 
-    xtype, xlevel = x.ifc
-    ytype, ylevel = y.ifc
+    xtype  = x.ifc
+    ytype  = y.ifc
 
-    # Check if x's and y's type are registered
+    # Check if x's and y's type are registered, and if x's and y's type matches the registered type
 
-    assert xtype in ifc_registry, "Interface type %s is not registered at all." % type(x).__name__
-    assert xlevel in ifc_registry[ytype], "Level '%s' of interface type %s is not registered." % (xlevel, type(x).__name__)
-    assert ytype in ifc_registry, "Interface type %s is not registered at all." % type(y).__name__
-    assert ylevel in ifc_registry[ytype], "Level '%s' of interface type %s is not registered." % (ylevel, type(y).__name__)
-
-    # Check if x's and y's type matches the registered type
-
+    assert xtype in ifc_registry and hasattr( x, "_level" ), "Interface type %s is not registered at all." % type(x).__name__
+    xlevel = x._level
+    assert xlevel in ifc_registry[xtype], "Level '%s' of interface type %s is not registered." % (xlevel, type(x).__name__)
     assert isinstance( x, ifc_registry[xtype][xlevel] ), "The left hand side is called '%s' but is of type '%s', not the registered type '%s'" % (xname, type(x).__name__, xclass.__name__,)
+
+    assert ytype in ifc_registry and hasattr( y, "_level" ), "Interface type %s is not registered at all." % type(y).__name__
+    ylevel = y._level
+    assert ylevel in ifc_registry[ytype], "Level '%s' of interface type %s is not registered." % (ylevel, type(y).__name__)
     assert isinstance( y, ifc_registry[ytype][ylevel] ), "The right hand side is called '%s' but is of type '%s', not the registered type '%s'" % (yname, type(y).__name__ , yclass.__name__)
 
     # Generating a name with id
