@@ -4,7 +4,7 @@ from pclib.update import PipeQueue1RTL, BypassQueue1RTL, NormalQueue1RTL
 from pclib.cl     import PipeQueue, BypassQueue
 from pclib.ifcs   import *
 
-class TestHarness( MethodsConnection ):
+class TestHarness( MethodsAdapt ):
 
   def __init__( s, src = 'rtl', q1 = 'rtl', q2 = 'rtl', sink = 'rtl' ):
     Type = int
@@ -46,39 +46,13 @@ class TestHarness( MethodsConnection ):
     # q1.deq --> q2.enq
     #---------------------------------------------------------------------
 
-    if q1 == 'rtl' and q2 == 'rtl':
-      s.q1_q2 = DeqIfcRTL_EnqIfcRTL( Type )
-
-    if q1 == 'rtl' and q2 == 'cl':
-      s.q1_q2 = DeqIfcRTL_EnqIfcCL( Type )
-
-    if q1 == 'cl' and q2 == 'rtl':
-      s.q1_q2 = DeqIfcCL_EnqIfcRTL( Type )
-
-    if q1 == 'cl' and q2 == 'cl':
-      s.q1_q2 = DeqIfcCL_EnqIfcCL( Type )
-
-    s.q1.deq     |= s.q1_q2.recv
-    s.q1_q2.send |= s.q2.enq
+    s.connect_ifcs( s.q1.deq, s.q2.enq )
 
     #---------------------------------------------------------------------
     # q2.deq --> sink.enq(recv)
     #---------------------------------------------------------------------
 
-    if q2 == 'rtl' and sink == 'rtl':
-      s.q2_sink = DeqIfcRTL_EnqIfcRTL( Type )
-
-    if q2 == 'rtl' and sink == 'cl':
-      s.q2_sink = DeqIfcRTL_EnqIfcCL( Type )
-
-    if q2 == 'cl'  and sink == 'rtl':
-      s.q2_sink = DeqIfcCL_EnqIfcRTL( Type )
-
-    if q2 == 'cl' and sink == 'cl':
-      s.q2_sink = DeqIfcCL_EnqIfcCL( Type )
-
-    s.q2.deq       |= s.q2_sink.recv
-    s.q2_sink.send |= s.sink.recv
+    s.connect_ifcs( s.q2.deq, s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()

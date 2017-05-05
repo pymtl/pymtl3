@@ -1,6 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqIfcRTL
 
 class TestSourceValRdy( Updates ):
 
@@ -48,7 +48,7 @@ class TestSourceEnRdy( Updates ):
     s.input_ = deque( input_ ) # deque.popleft() is faster
 
     s.default = Type()
-    s.send = EnRdyBundle( Type )
+    s.send = EnqIfcRTL( Type )
 
     @s.update
     def up_src():

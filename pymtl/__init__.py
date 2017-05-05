@@ -5,6 +5,7 @@ from update.Updates           import Updates
 from update.MethodsExpl       import MethodsExpl
 from update.MethodsConnection import MethodsConnection
 from update.MethodsGuard      import MethodsGuard, guard
+from update.MethodsAdapt      import MethodsAdapt, register_ifc, register_adapter
 from update.ConstraintTypes   import U, RD, WR, M
 from update.Connectable       import ValuePort, Wire, MethodPort, PortBundle
 from datatypes.Bits           import *
@@ -19,6 +20,9 @@ __all__ = [
   'M',
   'MethodsConnection',
   'MethodsGuard',
+  'MethodsAdapt',
+  'register_ifc',
+  'register_adapter',
   'guard',
   'MethodPort',
   'ValuePort',
