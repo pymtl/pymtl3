@@ -2,10 +2,10 @@ from pymtl import *
 from EnRdyBundle import EnRdyBundle
 
 class EnqIfcRTL( EnRdyBundle ):
-  ifc = 'Enq', 'rtl'
+  ifc = 'Enq'
 
 class EnqIfcCL( PortBundle ):
-  ifc = 'Enq', 'cl'
+  ifc = 'Enq'
 
   def __init__( s, Type ):
     s.Type = Type
@@ -16,5 +16,5 @@ class EnqIfcCL( PortBundle ):
   def __call__( s, *args, **kwargs ):
     return s.enq( args, kwargs )
 
-register_ifc( EnqIfcRTL )
-register_ifc( EnqIfcCL )
+register_ifc( EnqIfcRTL, 'rtl' )
+register_ifc( EnqIfcCL,  'cl'  )

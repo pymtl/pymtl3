@@ -8,7 +8,6 @@ class BaseDeqEnqAdapter( MethodsConnection ):
   types  = 'Deq' , 'Enq'
 
 class DeqIfcRTL_EnqIfcRTL( BaseDeqEnqAdapter ):
-  levels = 'rtl', 'rtl'
 
   def __init__( s, Type1, Type2 ):
 
@@ -27,7 +26,6 @@ class DeqIfcRTL_EnqIfcRTL( BaseDeqEnqAdapter ):
         s.send.msg = s.recv.msg
 
 class DeqIfcRTL_EnqIfcCL( BaseDeqEnqAdapter ):
-  levels = 'rtl', 'cl'
 
   def __init__( s, Type1, Type2 ):
 
@@ -44,7 +42,6 @@ class DeqIfcRTL_EnqIfcCL( BaseDeqEnqAdapter ):
 
 
 class DeqIfcCL_EnqIfcRTL( BaseDeqEnqAdapter ):
-  levels = 'cl', 'rtl'
 
   def __init__( s, Type1, Type2 ):
 
@@ -61,7 +58,6 @@ class DeqIfcCL_EnqIfcRTL( BaseDeqEnqAdapter ):
         s.send.msg = s.recv.deq()
 
 class DeqIfcCL_EnqIfcCL( BaseDeqEnqAdapter ):
-  levels = 'cl', 'cl'
 
   def __init__( s, Type1, Type2 ):
 
@@ -73,7 +69,7 @@ class DeqIfcCL_EnqIfcCL( BaseDeqEnqAdapter ):
       if s.send.rdy() & s.recv.rdy():
         s.send.enq( s.recv.deq() )
 
-register_adapter( DeqIfcRTL_EnqIfcRTL )
-register_adapter( DeqIfcRTL_EnqIfcCL  )
-register_adapter( DeqIfcCL_EnqIfcRTL  )
-register_adapter( DeqIfcCL_EnqIfcCL   )
+register_adapter( DeqIfcRTL_EnqIfcRTL, 'rtl', 'rtl' )
+register_adapter( DeqIfcRTL_EnqIfcCL , 'rtl', 'cl'  )
+register_adapter( DeqIfcCL_EnqIfcRTL , 'cl',  'rtl' )
+register_adapter( DeqIfcCL_EnqIfcCL  , 'cl',  'cl'  )
