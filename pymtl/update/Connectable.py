@@ -1,5 +1,6 @@
 from PyMTLObject     import PyMTLObject
 from pymtl.datatypes.Bits import mk_bits
+import inspect2
 
 class Connectable(object):
 
@@ -168,6 +169,7 @@ class PortBundle(Connectable, PyMTLObject):
 
   # Override
   def _connect( s, other ):
+    # print inspect2.stack()[2][0].f_locals['s'].__dict__
 
     # Expand the list when needed. Only connect connectables and return,
     # inheritance will figure out what to do with Port/PortBundle

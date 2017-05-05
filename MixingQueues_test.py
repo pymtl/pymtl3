@@ -28,15 +28,15 @@ class TestHarness( MethodsAdapt ):
 
     # src.enq(out) --> q1.enq
 
-    s.connect_ifcs( s.src.send, s.q1.enq )
+    s.connect( s.src.send, s.q1.enq )
 
     # q1.deq --> q2.enq
 
-    s.connect_ifcs( s.q1.deq, s.q2.enq )
+    s.connect( s.q1.deq, s.q2.enq )
 
     # q2.deq --> sink.enq(recv)
 
-    s.connect_ifcs( s.q2.deq, s.sink.recv )
+    s.connect( s.q2.deq, s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()

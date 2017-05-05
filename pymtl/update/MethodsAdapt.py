@@ -35,7 +35,6 @@ def register_adapter( adapter, xlevel, ylevel ):
 
   assert (xlevel, ylevel) not in adapter_levels, "Cannot register two adapters for the same pair of interfaces <%s_%s - %s_%s>: %s(previous), %s(new)" \
                                     % (xtype, xlevel, ytype, ylevel, adapter_levels[ (xlevel, ylevel) ].__name__, adapter.__name__)
-  print xtype, ytype, xlevel, ylevel
   adapter_levels[ (xlevel, ylevel) ] = adapter
 
 class MethodsAdapt( MethodsConnection ):
@@ -45,7 +44,7 @@ class MethodsAdapt( MethodsConnection ):
     inst = super( MethodsAdapt, cls ).__new__( cls, *args, **kwargs )
     return inst
 
-  def connect_ifcs( s, x, y ):
+  def connect( s, x, y ):
 
     # The interface(portbundle) will provide its type and level
 

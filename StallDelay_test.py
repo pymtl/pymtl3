@@ -22,8 +22,8 @@ class TestHarnessAllKinds( MethodsAdapt ):
     s.src.send    |= s.rdelay.recv
     s.rdelay.send |= s.q1.enq
 
-    s.connect_ifcs( s.q1.deq, s.q2.enq )
-    s.connect_ifcs( s.q2.deq, s.pipe.recv )
+    s.connect( s.q1.deq, s.q2.enq )
+    s.connect( s.q2.deq, s.pipe.recv )
 
     s.pipe.send   |= s.stall.recv
     s.stall.send  |= s.sink.recv
@@ -55,8 +55,8 @@ class TestHarness( MethodsAdapt ):
 
     s.src.send |= s.q1.enq
 
-    s.connect_ifcs( s.q1.deq, s.q2.enq )
-    s.connect_ifcs( s.q2.deq, s.sink.recv )
+    s.connect( s.q1.deq, s.q2.enq )
+    s.connect( s.q2.deq, s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()
