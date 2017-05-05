@@ -4,7 +4,6 @@
 # At this level, we add the ability to automatically inject adapter
 
 from MethodsConnection import MethodsConnection
-from Connectable import MethodPort
 from collections import defaultdict
 
 #{ ifc1:{ level1:type1, level2:type2, ... }, ifc2:{..}, .. }
