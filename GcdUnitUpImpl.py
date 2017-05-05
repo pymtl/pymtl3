@@ -10,7 +10,7 @@ B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
 
-class GcdUnitDpath( Updates ):
+class GcdUnitDpath( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -69,7 +69,7 @@ class GcdUnitDpath( Updates ):
     def up_subtract():
       s.sub_out = s.resp_msg = s.a_reg.out - s.b_reg.out
 
-class GcdUnitCtrl( Updates ):
+class GcdUnitCtrl( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -145,7 +145,7 @@ class GcdUnitCtrl( Updates ):
         s.a_mux_sel = s.b_mux_sel = A_MUX_SEL_X
         s.a_reg_en  = s.b_reg_en = 0
 
-class GcdUnit( Updates ):
+class GcdUnit( UpdatesImpl ):
 
   def __init__( s ):
 

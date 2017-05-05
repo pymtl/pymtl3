@@ -65,6 +65,7 @@ class UpdatesExpl( PyMTLObject ):
     dot.render("/tmp/pymtl.gv", view=True)
 
   def _schedule( s ):
+    # s.print_upblk_dag()
 
     N = len( s._blkid_upblk )
     edges  = [ [] for _ in xrange(N) ]

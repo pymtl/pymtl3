@@ -21,7 +21,7 @@ ADD_MUX_SEL_ADD      = 0
 ADD_MUX_SEL_RESULT   = 1
 ADD_MUX_SEL_X        = 0
 
-class CalcShamt( Updates ):
+class CalcShamt( UpdatesImpl ):
 
   def __init__( s ):
     s.in_ = ValuePort(int)
@@ -38,7 +38,7 @@ class CalcShamt( Updates ):
       elif s.in_ & 0b01000000 : s.out = 6
       elif s.in_ & 0b10000000 : s.out = 7
 
-class IntMulVarLatDpath( Updates ):
+class IntMulVarLatDpath( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -134,7 +134,7 @@ class IntMulVarLatDpath( Updates ):
       s.add_mux.in_[ADD_MUX_SEL_RESULT] = s.resp_msg = s.res_reg.out
       s.add_mux.sel = s.add_mux_sel
 
-class IntMulVarLatCtrl( Updates ):
+class IntMulVarLatCtrl( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -212,7 +212,7 @@ class IntMulVarLatCtrl( Updates ):
         s.a_mux_sel = s.b_mux_sel = s.res_mux_sel = s.add_mux_sel = A_MUX_SEL_X
         s.res_reg_en = 0
 
-class IntMulVarLatFlat( Updates ):
+class IntMulVarLatFlat( UpdatesImpl ):
 
   def __init__( s ):
 

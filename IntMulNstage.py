@@ -9,7 +9,7 @@ class StepIfc( PortBundle ):
     s.b    = ValuePort( Bits32 )
     s.res  = ValuePort( Bits32 )
 
-class IntMulNstageStep( Updates ):
+class IntMulNstageStep( UpdatesImpl ):
 
   def __init__( s ):
     s.in_ = StepIfc()
@@ -40,7 +40,7 @@ class IntMulNstageStep( Updates ):
   def line_trace( s ):
     return str(s.out.res)
 
-class IntMulNstageInelastic( Updates ):
+class IntMulNstageInelastic( UpdatesImpl ):
 
   def __init__( s, nstages = 16 ):
 

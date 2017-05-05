@@ -48,7 +48,7 @@ from GcdUnitBundle import GcdUnit as GcdUnitBundle
 from pclib.update  import StreamSource as Source, StreamSink as Sink
 from pclib.test    import StreamSource as BSource, StreamSink as BSink
 
-class SimHarness( Updates ):
+class SimHarness( UpdatesImpl ):
 
   def __init__( s, model ):
 
@@ -71,7 +71,7 @@ class SimHarness( Updates ):
   def line_trace( s ):
     return s.src.line_trace()+" >>> "+s.gcd.line_trace()+" >>> "+s.sink.line_trace()
 
-class SimHarnessBundle( Updates ):
+class SimHarnessBundle( UpdatesImpl ):
 
   def __init__( s, model ):
 

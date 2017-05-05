@@ -2,7 +2,7 @@ from pymtl import *
 from collections import deque
 from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqIfcRTL
 
-class TestSinkValRdy( Updates ):
+class TestSinkValRdy( UpdatesImpl ):
 
   def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
@@ -26,7 +26,7 @@ class TestSinkValRdy( Updates ):
   def line_trace( s ):
     return s.in_.line_trace()
 
-class StreamSinkValRdy( Updates ):
+class StreamSinkValRdy( UpdatesImpl ):
 
   def __init__( s, Type ):
     s.in_ = ValRdyBundle( Type )
@@ -38,7 +38,7 @@ class StreamSinkValRdy( Updates ):
   def line_trace( s ):
     return s.in_.line_trace()
 
-class TestSinkEnRdy( Updates ):
+class TestSinkEnRdy( UpdatesImpl ):
 
   def __init__( s, Type, answer, accept_interval=1 ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"

@@ -1,7 +1,7 @@
 
 from update.UpdatesExpl       import UpdatesExpl
 from update.UpdatesConnection import UpdatesConnection
-from update.Updates           import Updates
+from update.UpdatesImpl       import UpdatesImpl
 from update.MethodsExpl       import MethodsExpl
 from update.MethodsConnection import MethodsConnection
 from update.MethodsGuard      import MethodsGuard, guard
@@ -14,7 +14,7 @@ from datatypes.Bits           import _bitwidths
 __all__ = [
   'UpdatesExpl',
   'UpdatesConnection',
-  'Updates',
+  'UpdatesImpl',
   'U', 'RD', 'WR',
   'MethodsExpl',
   'M',

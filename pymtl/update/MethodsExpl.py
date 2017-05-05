@@ -16,11 +16,11 @@
 from UpdatesExpl import verbose
 
 from collections     import defaultdict, deque
-from Updates         import Updates
+from UpdatesImpl     import UpdatesImpl
 from ASTHelper       import get_method_calls, get_ast
 from ConstraintTypes import U, M
 
-class MethodsExpl( Updates ):
+class MethodsExpl( UpdatesImpl ):
 
   # Override
   def __new__( cls, *args, **kwargs ):

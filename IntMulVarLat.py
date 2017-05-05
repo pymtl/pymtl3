@@ -23,7 +23,7 @@ ADD_MUX_SEL_ADD      = 0
 ADD_MUX_SEL_RESULT   = 1
 ADD_MUX_SEL_X        = 0
 
-class CalcShamt( Updates ):
+class CalcShamt( UpdatesImpl ):
 
   def __init__( s ):
     s.in_ = ValuePort( Bits8 )
@@ -51,7 +51,7 @@ class IntMulCS( PortBundle ):
     s.b_lsb       = ValuePort( Bits1 )
     s.is_b_zero   = ValuePort( Bits1 )
 
-class IntMulVarLatDpath( Updates ):
+class IntMulVarLatDpath( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -116,7 +116,7 @@ class IntMulVarLatDpath( Updates ):
     s.add_mux.sel                     |= s.cs.add_mux_sel
     s.add_mux.out                     |= s.res_mux.in_[RESULT_MUX_SEL_ADD]
 
-class IntMulVarLatCtrl( Updates ):
+class IntMulVarLatCtrl( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -196,7 +196,7 @@ class IntMulVarLatCtrl( Updates ):
         s.cs.add_mux_sel = Bits1( A_MUX_SEL_X )
         s.cs.res_reg_en  = Bits1( 0 )
 
-class IntMulVarLat( Updates ):
+class IntMulVarLat( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -223,7 +223,7 @@ if __name__ == "__main__":
   from pclib.test import TestSourceValRdy, TestSinkValRdy
   import random
 
-  class TestHarness( Updates ):
+  class TestHarness( UpdatesImpl ):
 
     def __init__( s, model, src_msgs, sink_msgs ):
 

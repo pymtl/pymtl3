@@ -12,7 +12,7 @@ B_MUX_SEL_A     = 0
 B_MUX_SEL_IN    = 1
 B_MUX_SEL_X     = 0
 
-class GcdUnitDpath( Updates ):
+class GcdUnitDpath( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -61,7 +61,7 @@ class GcdUnitDpath( Updates ):
     s.resp_msg  |= s.b_sub.out
     s.sub_out   |= s.b_sub.out
 
-class GcdUnitCtrl( Updates ):
+class GcdUnitCtrl( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -144,7 +144,7 @@ class GcdUnitCtrl( Updates ):
         s.a_reg_en  = Bits1( 0 )
         s.b_reg_en  = Bits1( 0 )
 
-class GcdUnit( Updates ):
+class GcdUnit( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -179,7 +179,7 @@ class GcdUnit( Updates ):
   def line_trace( s ):
     return s.dpath.a_reg.line_trace() + s.dpath.b_reg.line_trace()
 
-class TestHarness( Updates ):
+class TestHarness( UpdatesImpl ):
 
   def __init__( s ):
 

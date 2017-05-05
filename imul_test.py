@@ -5,7 +5,7 @@ from pclib.ifcs import ValRdyBundle
 from IntMulNstage import IntMulNstageInelastic
 from IntMulVarLat import IntMulVarLat
 
-class TestHarness( Updates ):
+class TestHarness( UpdatesImpl ):
 
   def __init__( s, model, src_msgs, sink_msgs ):
 

@@ -24,7 +24,7 @@ class GcdUnitCS( PortBundle ):
     s.is_b_zero = ValuePort(Bits1)
     s.is_a_lt_b = ValuePort(Bits1)
 
-class GcdUnitDpath( Updates ):
+class GcdUnitDpath( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -69,7 +69,7 @@ class GcdUnitDpath( Updates ):
     s.resp_msg  |= s.b_sub.out
     s.sub_out   |= s.b_sub.out
 
-class GcdUnitCtrl( Updates ):
+class GcdUnitCtrl( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -147,7 +147,7 @@ class GcdUnitCtrl( Updates ):
         s.cs.a_reg_en  = Bits1( 0 )
         s.cs.b_reg_en  = Bits1( 0 )
 
-class GcdUnit( Updates ):
+class GcdUnit( UpdatesImpl ):
 
   def __init__( s ):
 
@@ -171,7 +171,7 @@ class GcdUnit( Updates ):
   def line_trace( s ):
     return s.dpath.a_reg.line_trace() + s.dpath.b_reg.line_trace()
 
-class TestHarness( Updates ):
+class TestHarness( UpdatesImpl ):
 
   def __init__( s ):
 

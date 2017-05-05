@@ -46,7 +46,7 @@ from IntMulVarLat import IntMulVarLat
 from IntMulNstage import IntMulNstageInelastic
 from pclib.test   import StreamSourceValRdy, StreamSinkValRdy
 
-class SimHarness( Updates ):
+class SimHarness( UpdatesImpl ):
 
   def __init__( s, model ):
 

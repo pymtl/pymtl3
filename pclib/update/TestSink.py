@@ -2,7 +2,7 @@ from pymtl import *
 from collections import deque
 from pclib.valrdy import valrdy_to_str
 
-class TestSink( Updates ):
+class TestSink( UpdatesImpl ):
 
   def __init__( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -26,7 +26,7 @@ class TestSink( Updates ):
   def line_trace( s ):
     return "%s" % s.in_
 
-class TestSinkValRdy( Updates ):
+class TestSinkValRdy( UpdatesImpl ):
 
   def __init__( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -52,7 +52,7 @@ class TestSinkValRdy( Updates ):
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
 
-class StreamSink( Updates ):
+class StreamSink( UpdatesImpl ):
 
   def __init__( s ):
 

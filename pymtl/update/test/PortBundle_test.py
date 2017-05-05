@@ -5,7 +5,7 @@ from pclib.ifcs import ValRdyBundle
 
 def test_simple():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
@@ -36,7 +36,7 @@ def test_nested_port_bundle():
     def __init__( s ):
       s.req  = [ [ ValRdyBundle() for i in xrange(4) ] for j in xrange(4) ]
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 

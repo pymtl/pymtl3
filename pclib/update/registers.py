@@ -2,7 +2,7 @@ from pymtl import *
 
 # Register
 
-class Reg(Updates):
+class Reg( UpdatesImpl ):
 
   def __init__( s, Type ):
     s.in_ = ValuePort( Type )
@@ -17,7 +17,7 @@ class Reg(Updates):
 
 # Register with enable signal
 
-class RegEn(Updates):
+class RegEn( UpdatesImpl ):
 
   def __init__( s, Type ):
     s.in_ = ValuePort( Type )

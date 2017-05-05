@@ -5,7 +5,7 @@ from pclib.update import TestSink
 
 def test_bb():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -24,7 +24,7 @@ def test_bb():
 
 def test_bb_cyclic_dependency():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -47,7 +47,7 @@ def test_bb_cyclic_dependency():
 
 def test_add_loopback():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
@@ -96,7 +96,7 @@ def test_add_loopback():
 
 def test_add_loopback_on_edge():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
@@ -140,7 +140,7 @@ def test_add_loopback_on_edge():
 
 def test_connect_list_int_idx():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
@@ -175,7 +175,7 @@ def test_connect_list_int_idx():
 
 def test_2d_array_vars_impl():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
@@ -223,7 +223,7 @@ def test_2d_array_vars_impl():
 
 def test_2d_array_vars_connect_impl():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
@@ -271,7 +271,7 @@ def test_2d_array_vars_connect_impl():
 
 def test_lots_of_fan_connect():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
