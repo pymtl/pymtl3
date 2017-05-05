@@ -11,10 +11,10 @@ from UpdatesExpl import verbose
 from UpdatesConnection import UpdatesConnection
 from Connectable import overlap
 
-class Updates( UpdatesConnection ):
+class UpdatesImpl( UpdatesConnection ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = super(Updates, cls).__new__( cls, *args, **kwargs )
+    inst = super(UpdatesImpl, cls).__new__( cls, *args, **kwargs )
     inst._update_on_edge = set()
     return inst
 
@@ -25,8 +25,8 @@ class Updates( UpdatesConnection ):
 
   # Override
   def _collect_child_vars( s, child ):
-    super( Updates, s )._collect_child_vars( child )
-    if isinstance( child, Updates ):
+    super( UpdatesImpl, s )._collect_child_vars( child )
+    if isinstance( child, UpdatesImpl ):
       s._update_on_edge.update( child._update_on_edge )
 
   # Override
@@ -34,7 +34,7 @@ class Updates( UpdatesConnection ):
 
     # Explicit constraints are collected in super classes
 
-    super( Updates, s )._synthesize_constraints()
+    super( UpdatesImpl, s )._synthesize_constraints()
 
     #---------------------------------------------------------------------
     # Implicit constraint

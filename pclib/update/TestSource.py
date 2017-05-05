@@ -2,7 +2,7 @@ from pymtl import *
 from collections import deque
 from pclib.valrdy import valrdy_to_str
 
-class TestSource( Updates ):
+class TestSource( UpdatesImpl ):
 
   def __init__( s, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -23,7 +23,7 @@ class TestSource( Updates ):
   def line_trace( s ):
     return "%s" % s.out
 
-class TestSourceValRdy( Updates ):
+class TestSourceValRdy( UpdatesImpl ):
 
   def __init__( s, nmsgs = 1, input_ = [] ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -60,7 +60,7 @@ class TestSourceValRdy( Updates ):
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
 
-class StreamSource( Updates ):
+class StreamSource( UpdatesImpl ):
 
   def __init__( s, nmsgs = 1 ):
     s.msg = [ ValuePort(int) for _ in xrange(nmsgs) ]

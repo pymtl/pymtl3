@@ -74,7 +74,7 @@ def _test_model( model ):
 # RD A.b - WR A
 def test_rd_A_b_wr_A_impl():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -91,7 +91,7 @@ def test_rd_A_b_wr_A_impl():
 # WR A.b - WR A
 def test_wr_A_b_wr_A_conflict():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -113,7 +113,7 @@ def test_wr_A_b_wr_A_conflict():
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -130,7 +130,7 @@ def test_wr_A_b_rd_A_impl():
 # WR A.b - RD A, RD A.b
 def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -151,7 +151,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 # WR A - RD A.a, RD A.b
 def test_wr_A_rd_fields_can_schedule():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -172,7 +172,7 @@ def test_wr_A_rd_fields_can_schedule():
 # WR A.b - RD A, RD A.a
 def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -198,7 +198,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 # RD A.b - WR x, x|=A
 def test_connect_rd_A_b_wr_x_conn_A_impl():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -219,7 +219,7 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
 # WR A.b - A|=x
 def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -237,7 +237,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # WR A.b - A|=x, WR x.b
 # def test_connect_wr_A_b_wr_x_b_conn_A_conflict():
 
-  # class Top(Updates):
+  # class Top(UpdatesImpl):
     # def __init__( s ):
 
       # s.x  = Wire( SomeMsg() )
@@ -258,7 +258,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # WR A.b - A|=x, WR x 
 def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -284,7 +284,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 # A.b|=x, WR x - RD A
 def test_connect_wr_x_conn_A_b_rd_A_impl():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -305,7 +305,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 # A.b|=x, WR x - WR A
 def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -331,7 +331,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 # A.b|=x, RD x - WR A
 def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -352,7 +352,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 # A.b|=x, WR x - A|=y, WR y
 def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -380,7 +380,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 # A.b|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -403,7 +403,7 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 # A.b|=x, RD x - A|=y, WR y
 def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -425,7 +425,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
 def test_iterative_find_nets():
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.w  = Wire( SomeMsg() )
@@ -482,7 +482,7 @@ def test_deep_connections():
       x.z = x.z(z)
       return x
 
-  class Top(Updates):
+  class Top(UpdatesImpl):
     def __init__( s ):
 
       s.A  = Wire( Msg3() )
