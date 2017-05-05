@@ -1,8 +1,7 @@
 #=========================================================================
-# Updates.py
+# UpdatesImpl.py
 #=========================================================================
-# We add implicit constraints at this level to have full-blown
-# UpdatesComponent. We collect two types of implicit constraints:
+# We collect two types of implicit constraints at this level:
 # * upA reads Wire s.x while upB writes Wire s.x ==> upB < upA
 # * upA is marked as update_on_edge ==> for all upblks upX that write/read
 #   variables in upA, upA < upX
