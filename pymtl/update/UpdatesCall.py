@@ -21,6 +21,10 @@ class UpdatesCall( UpdatesImpl ):
           obj[idx] |= item[idx]
 
       else:
-        obj |= item
+        if isinstance( item, tuple ):
+          for x in item:
+            obj |= x
+        else:
+          obj |= item
     
     return s

@@ -17,7 +17,7 @@ def test_connect_list_int_idx():
 
   ZERO = 0
 
-  class Top(UpdatesCall):
+  class Top(UpdatesImpl):
 
     def __init__( s ):
 
