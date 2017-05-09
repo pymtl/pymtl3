@@ -4,24 +4,24 @@ from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqI
 
 class TestSinkValRdy( UpdatesImpl ):
 
-  def __init__( s, Type, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!"
-    s.answer = deque( answer )
+  def __init__( s, Type, msgs ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+    s.msgs = deque( msgs )
 
     s.in_    = ValRdyBundle( Type )
 
     @s.update
     def up_sink():
-      s.in_.rdy = len(s.answer) > 0
+      s.in_.rdy = len(s.msgs) > 0
 
       if s.in_.val and s.in_.rdy:
-        ref = s.answer.popleft()
+        ref = s.msgs.popleft()
         ans = s.in_.msg
 
         assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
-    return not s.answer
+    return not s.msgs
 
   def line_trace( s ):
     return s.in_.line_trace()
@@ -40,9 +40,9 @@ class StreamSinkValRdy( UpdatesImpl ):
 
 class TestSinkEnRdy( UpdatesImpl ):
 
-  def __init__( s, Type, answer, accept_interval=1 ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!"
-    s.answer = deque( answer )
+  def __init__( s, Type, msgs, accept_interval=1 ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+    s.msgs = deque( msgs )
 
     s.recv = EnqIfcRTL( Type )
 
@@ -50,26 +50,26 @@ class TestSinkEnRdy( UpdatesImpl ):
     @s.update
     def up_sink_rdy():
       s.ts = (s.ts + 1) % accept_interval
-      s.recv.rdy = (s.ts == 0) & (len(s.answer) > 0)
+      s.recv.rdy = (s.ts == 0) & (len(s.msgs) > 0)
 
     @s.update
     def up_sink_en():
       if s.recv.en:
-        ref = s.answer.popleft()
+        ref = s.msgs.popleft()
         ans = s.recv.msg
         assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
-    return not s.answer
+    return not s.msgs
 
   def line_trace( s ):
     return s.recv.line_trace()
 
 class TestSinkCL( MethodsConnection ):
 
-  def __init__( s, Type, answer=[] ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!"
-    s.answer = deque( answer )
+  def __init__( s, Type, msgs=[] ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+    s.msgs = deque( msgs )
 
     s.recv = EnqIfcCL( Type )
     s.recv.enq |= s.recv_
@@ -80,28 +80,28 @@ class TestSinkCL( MethodsConnection ):
 
   def recv_( s, msg ):
     s.msg = msg
-    ref = s.answer.popleft()
+    ref = s.msgs.popleft()
     assert ref == msg, "Expect %s, get %s instead" % (ref, msg)
 
   def recv_rdy_( s ):
-    return len(s.answer) > 0
+    return len(s.msgs) > 0
 
   def done( s ):
-    return not s.answer
+    return not s.msgs
 
   def line_trace( s ): # called once per cycle
     trace = str(s.msg)
-    s.msg = "." if s.answer else " "
+    s.msg = "." if s.msgs else " "
     return "{:>4s}".format( trace ).center( s.tracelen )
 
 from pclib.cl import RandomDelay
 
 class TestSink( MethodsConnection ):
 
-  def __init__( s, Type, answer=[], max_delay=0 ):
+  def __init__( s, Type, msgs=[], max_delay=0 ):
     s.recv = EnqIfcCL( Type )
 
-    s.sink = TestSinkCL( Type, answer )
+    s.sink = TestSinkCL( Type, msgs )
 
     if not max_delay:
       s.has_delay = False

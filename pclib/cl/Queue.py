@@ -33,11 +33,11 @@ class PipeQueue( BaseQueue ):
 
 class BypassQueue( BaseQueue ):
 
-  def __init__( s, Type, size):
+  def __init__( s, Type, size ):
     super( BypassQueue, s ).__init__( Type, size )
     s.add_constraints(
-      M(s.enq    ) < M(s.deq    ), # bypass behavior
-      M(s.enq_rdy) < M(s.deq_rdy),
+      M(s.enq_    ) < M(s.deq_    ), # bypass behavior
+      M(s.enq_rdy_) < M(s.deq_rdy_),
     )
 
   def line_trace( s ):

@@ -10,7 +10,7 @@ from pymtl      import *
 from pclib.test import mk_test_case_table
 from pclib.test import TestSource, TestSink
 from pclib.ifcs import MemReqMsg, MemRespMsg
-from TestMemory import TestMemoryCL as TestMemory
+from TestMemory import TestMemoryCL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -33,7 +33,7 @@ class TestHarness( MethodsConnection ):
     for i in xrange(nports):
       s.srcs.append( TestSource( req, src_msgs[i] ) )
 
-    s.mem  = TestMemory( nports, [req]*nports, [resp]*nports  )
+    s.mem  = TestMemoryCL( nports, [req]*nports, [resp]*nports  )
 
     s.sinks = []
     for i in xrange(nports):
@@ -42,8 +42,8 @@ class TestHarness( MethodsConnection ):
     # Connect
 
     for i in xrange( nports ):
-      s.srcs[i].send  |= s.mem.recv[i]
-      s.sinks[i].recv |= s.mem.send[i]
+      s.srcs[i].send  |= s.mem.ifcs[i].req
+      s.sinks[i].recv |= s.mem.ifcs[i].resp
 
   def done( s ):
 

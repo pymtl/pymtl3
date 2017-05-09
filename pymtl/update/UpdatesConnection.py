@@ -78,7 +78,7 @@ class UpdatesConnection( UpdatesExpl ):
 
       if isinstance( idx[idx_depth], int ): # handle x[2]'s case
         # if it's wire, we don't check len
-        assert isinstance(obj, Wire) or idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
+        assert isinstance(obj, Wire) or idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s in %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]), s._blkid_upblk[blk_id].__name__)
         expand_array_index( print_typ, obj[ idx[idx_depth] ], name_depth, name, idx_depth+1, idx, id_blks, id_obj, blk_id )
       elif idx[idx_depth] == "*":
         for i in xrange(len(obj)):
