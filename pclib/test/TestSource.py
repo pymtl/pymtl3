@@ -4,21 +4,21 @@ from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqI
 
 class TestSourceValRdy( UpdatesImpl ):
 
-  def __init__( s, Type, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
-    s.input_  = deque( input_ ) # deque.popleft() is faster
+  def __init__( s, Type, msgs ):
+    assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
+    s.msgs  = deque( msgs ) # deque.popleft() is faster
 
     s.default = Type()
     s.out     = ValRdyBundle( Type )
 
     @s.update_on_edge
     def up_src():
-      if s.out.rdy and s.input_:  s.input_.popleft()
-      s.out.val = len(s.input_) > 0
-      s.out.msg = s.default if not s.input_ else s.input_[0]
+      if s.out.rdy and s.msgs:  s.msgs.popleft()
+      s.out.val = len(s.msgs) > 0
+      s.out.msg = s.default if not s.msgs else s.msgs[0]
 
   def done( s ):
-    return not s.input_
+    return not s.msgs
 
   def line_trace( s ):
     return s.out.line_trace()
@@ -36,39 +36,39 @@ class StreamSourceValRdy( UpdatesImpl ):
       s.ts += 1
 
   def done( s ):
-    return not s.input_
+    return not s.msgs
 
   def line_trace( s ):
     return s.out.line_trace()
 
 class TestSourceEnRdy( UpdatesImpl ):
 
-  def __init__( s, Type, input_ = [] ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
-    s.input_ = deque( input_ ) # deque.popleft() is faster
+  def __init__( s, Type, msgs = [] ):
+    assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
+    s.msgs = deque( msgs ) # deque.popleft() is faster
 
     s.default = Type()
     s.send = EnqIfcRTL( Type )
 
     @s.update
     def up_src():
-      s.send.en  = Bits1( len(s.input_) > 0 ) & s.send.rdy
-      s.send.msg = s.default if not s.input_ else s.input_[0]
+      s.send.en  = Bits1( len(s.msgs) > 0 ) & s.send.rdy
+      s.send.msg = s.default if not s.msgs else s.msgs[0]
 
-      if s.send.en and s.input_:
-        s.input_.popleft()
+      if s.send.en and s.msgs:
+        s.msgs.popleft()
 
   def done( s ):
-    return not s.input_
+    return not s.msgs
 
   def line_trace( s ):
     return s.send.line_trace()
 
 class TestSourceCL( MethodsConnection ):
 
-  def __init__( s, Type, input_ = [] ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
-    s.input_ = deque( input_ ) # deque.popleft() is faster
+  def __init__( s, Type, msgs = [] ):
+    assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
+    s.msgs = deque( msgs ) # deque.popleft() is faster
 
     s.send = EnqIfcCL( Type )
 
@@ -77,27 +77,27 @@ class TestSourceCL( MethodsConnection ):
 
     @s.update
     def up_src():
-      if s.send.rdy() and len(s.input_) > 0:
-        s.send.enq( s.input_[0] )
-        s.sended = s.input_[0]
-        s.input_.popleft()
+      if s.send.rdy() and len(s.msgs) > 0:
+        s.send.enq( s.msgs[0] )
+        s.sended = s.msgs[0]
+        s.msgs.popleft()
 
   def done( s ):
-    return not s.input_
+    return not s.msgs
 
   def line_trace( s ):
     trace = str(s.sended)
-    s.sended = "#" if s.input_ else " "
+    s.sended = "#" if s.msgs else " "
     return "{:>4s}".format( trace ).center( s.tracelen )
 
 from pclib.cl import RandomDelay
 
 class TestSource( MethodsConnection ):
 
-  def __init__( s, Type, input_=[], max_delay=0 ):
+  def __init__( s, Type, msgs=[], max_delay=0 ):
     s.send = EnqIfcCL( Type )
 
-    s.src = TestSourceCL( Type, input_ )
+    s.src = TestSourceCL( Type, msgs )
 
     if not max_delay:
       s.has_delay = False

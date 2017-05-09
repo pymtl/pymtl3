@@ -88,7 +88,7 @@ class MethodsExpl( UpdatesCall ):
         lookup_method( obj, name_depth+1, name, id_blks, id_obj, blk_id )
         return
 
-      assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
+      # assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
 
       if isinstance( idx[idx_depth], int ): # handle x[2]'s case
         assert idx[idx_depth] < len(obj), "Index out of bound. Check the declaration of %s" % (".".join([ x[0]+"".join(["[%s]"%str(y) for y in x[1]]) for x in name]))
@@ -134,7 +134,7 @@ class MethodsExpl( UpdatesCall ):
       if not idx: # just a variable
         lookup_method( obj, depth+1, name, id_blks, id_obj, blk_id )
       else: # let another function handle   s.x[4].y[*]
-        assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
+        # assert isinstance( obj, list ) or isinstance( obj, deque ), "%s is %s, not a list" % (field, type(obj))
         expand_array_index( obj, depth, name, 0, idx, id_blks, id_obj, blk_id )
 
     # First check and bind update blocks that calls the method to it
