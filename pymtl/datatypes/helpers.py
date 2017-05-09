@@ -12,7 +12,7 @@ def concat( *args ):
 
   return concat_bits
 
-def zext( new_width, value ):
+def zext( value, new_width ):
   assert new_width > value.nbits
   return Bits( new_width, int(value) )
 
@@ -20,6 +20,6 @@ def clog2( N ):
   assert N > 0
   return int( math.ceil( math.log( N, 2 ) ) )
 
-def sext( new_width, value ):
+def sext( value, new_width ):
   assert new_width > value.nbits
   return Bits( new_width, value.int() )

@@ -78,9 +78,8 @@ class TestSourceCL( MethodsConnection ):
     @s.update
     def up_src():
       if s.send.rdy() and len(s.msgs) > 0:
-        s.send.enq( s.msgs[0] )
-        s.sended = s.msgs[0]
-        s.msgs.popleft()
+        s.sended = s.msgs.popleft()
+        s.send.enq( s.sended )
 
   def done( s ):
     return not s.msgs
