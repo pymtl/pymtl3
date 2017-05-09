@@ -1,5 +1,17 @@
 import py.code
 
+def concat( *args ):
+
+  nbits = sum( [ x.nbits for x in args ] )
+  concat_bits = Bits( nbits, 0 )
+
+  begin = 0
+  for bits in reversed( args ):
+    concat_bits[ begin : begin+bits.nbits ] = bits
+    begin += bits.nbits
+
+  return concat_bits
+
 class Bits( object ):
   def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
@@ -25,7 +37,7 @@ class Bits( object ):
       assert not idx.step and start < stop
 
       self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | \
-                                    ((int(v) & ((1 << stop) - 1)) << start)
+                                      ((int(v) & ((1 << (stop -start)) - 1)) << start)
       return
 
     i = int(idx)
@@ -93,6 +105,15 @@ class Bits( object ):
     return int(self.value) != 0
 
   def __int__( self ):
+    return self.value
+
+  def int( self ):
+    if self >> (self.nbits - 1):
+      return ~self + 1
+    return self.value
+
+  def uint( self ):
+    assert self.value > 0
     return self.value
 
   def __index__( self ):
