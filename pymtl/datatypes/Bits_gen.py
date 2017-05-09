@@ -26,7 +26,8 @@ class Bits1( object ):
       start, stop = int(idx.start), int(idx.stop)
       assert not idx.step and start < stop
 
-      self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | ((int(v) & ((1 << stop) - 1)) << start) 
+      self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | \
+                                      ((int(v) & ((1 << (stop -start)) - 1)) << start)
       return
 
     i = int(idx)
@@ -94,6 +95,15 @@ class Bits1( object ):
     return int(self.value) != 0
 
   def __int__( self ):
+    return self.value
+
+  def int( self ):
+    if self >> (self.nbits - 1):
+      return ~self + 1
+    return self.value
+
+  def uint( self ):
+    assert self.value > 0
     return self.value
 
   def __index__( self ):
