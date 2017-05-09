@@ -10,6 +10,7 @@ from update.MethodsAdapt      import MethodsAdapt, register_ifc, register_adapte
 from update.ConstraintTypes   import U, RD, WR, M
 from update.Connectable       import ValuePort, Wire, MethodPort, PortBundle
 from datatypes.Bits           import *
+from datatypes.helpers        import sext, zext, clog2, concat
 from datatypes.Bits           import _bitwidths
 
 __all__ = [
@@ -30,6 +31,8 @@ __all__ = [
   'ValuePort',
   'Wire',
   'PortBundle',
+
+  'sext', 'zext', 'clog2', 'concat',
   
   'mk_bits', 'Bits'
 ] + [ "Bits{}".format(x) for x in _bitwidths ]

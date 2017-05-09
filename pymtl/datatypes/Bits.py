@@ -1,17 +1,5 @@
 import py.code
 
-def concat( *args ):
-
-  nbits = sum( [ x.nbits for x in args ] )
-  concat_bits = Bits( nbits, 0 )
-
-  begin = 0
-  for bits in reversed( args ):
-    concat_bits[ begin : begin+bits.nbits ] = bits
-    begin += bits.nbits
-
-  return concat_bits
-
 class Bits( object ):
   def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
@@ -52,6 +40,9 @@ class Bits( object ):
 
   def __sub__( self, other ):
     return Bits( self.nbits, self.value - int(other) )
+
+  def __mul__( self, other ):
+    return Bits( self.nbits, self.value * int(other) )
 
   def __and__( self, other ):
     return Bits( self.nbits, self.value & int(other) )
@@ -108,13 +99,13 @@ class Bits( object ):
     return self.value
 
   def int( self ):
-    if self >> (self.nbits - 1):
-      return ~self + 1
-    return self.value
+    if self.value >> (self.nbits - 1):
+      return -int(~self + 1)
+    return int(self.value)
 
   def uint( self ):
-    assert self.value > 0
-    return self.value
+    assert self.value >= 0
+    return int(self.value)
 
   def __index__( self ):
     return self.value
