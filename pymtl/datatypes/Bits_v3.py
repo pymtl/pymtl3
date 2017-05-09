@@ -39,6 +39,9 @@ class Bits(object):
   def __sub__( self, other ):
     return Bits( self.nbits, self.value - int(other) )
 
+  def __mul__( self, other ):
+    return Bits( self.nbits, self.value * int(other) )
+
   def __and__( self, other ):
     return Bits( self.nbits, self.value & int(other) )
 
@@ -99,7 +102,7 @@ class Bits(object):
     return self.value
 
   def uint( self ):
-    assert self.value > 0
+    assert self.value >= 0
     return self.value
 
   def __index__( self ):
