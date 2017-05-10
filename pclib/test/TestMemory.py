@@ -52,7 +52,7 @@ class TestMemoryCL( MethodsAdapt ):
                                mem_nbytes=1<<20, word_nbytes=4 ):
     s.mem = TestMemoryFL( mem_nbytes, word_nbytes )
 
-    s.ifcs = [ MemIfcCL( reqs[i], resps[i] ) for i in xrange(nports) ]
+    s.ifcs = [ MemIfcCL( (reqs[i], resps[i]) ) for i in xrange(nports) ]
 
     s.req   = [ None ] * nports
 
