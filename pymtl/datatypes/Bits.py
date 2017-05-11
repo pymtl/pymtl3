@@ -25,7 +25,7 @@ class Bits( object ):
       assert not idx.step and start < stop
 
       self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | \
-                                      ((int(v) & ((1 << (stop -start)) - 1)) << start)
+                                      ((int(v) & ((1 << (stop - start)) - 1)) << start)
       return
 
     i = int(idx)
