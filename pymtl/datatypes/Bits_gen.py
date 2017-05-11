@@ -4,7 +4,7 @@ class Bits1( object ):
   nbits = 1
 
   def __init__( self, value = 0 ):
-    self.value = value & 1
+    self.value = int(value) & 1
 
   def __call__( self ):
     return self.__class__( 0 )
@@ -27,7 +27,7 @@ class Bits1( object ):
       assert not idx.step and start < stop
 
       self.value = (int(self.value) & (~((1 << stop) - (1 << start)))) | \
-                                      ((int(v) & ((1 << (stop -start)) - 1)) << start)
+                                      ((int(v) & ((1 << (stop - start)) - 1)) << start)
       return
 
     i = int(idx)
@@ -146,7 +146,7 @@ class Bits{nbits}(Bits1):
   nbits = {nbits}
 
   def __init__( self, value = 0 ):
-    self.value = value & {mask}
+    self.value = int(value) & {mask}
 
 _bits_types[{nbits}] = Bits{nbits}
 """
