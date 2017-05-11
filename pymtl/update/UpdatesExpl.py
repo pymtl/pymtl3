@@ -111,24 +111,6 @@ class UpdatesExpl( PyMTLObject ):
     s._schedule_list = _schedule_list
     assert len(s._schedule_list) == N, "Update blocks have cyclic dependencies."
 
-    # + Berkin's recipe
-    strs = map( "  update_blk{}()".format, xrange( len( _schedule_list ) ) )
-    gen_schedule_src = py.code.Source("""
-      {}
-      def cycle():
-        # The code below does the actual calling of update blocks.
-        {}
-
-      """.format( "; ".join( map(
-                  "update_blk{0} = _schedule_list[{0}]".format,
-                      xrange( len( _schedule_list ) ) ) ),
-                  "\n        ".join( strs ) ) )
-
-    if verbose: print "Generate schedule source: ", gen_schedule_src
-    exec gen_schedule_src.compile() in locals()
-
-    s.cycle = cycle
-
     # Extract batches of frontiers which gives better idea for dataflow
 
     InDeg = [0] * N
@@ -153,11 +135,33 @@ class UpdatesExpl( PyMTLObject ):
             Q2.append( v )
       Q = Q2
 
+  def _generate_tick_func( s ):
+    _schedule_list = s._schedule_list
+
+    # + Berkin's recipe
+    strs = map( "  update_blk{}()".format, xrange( len( _schedule_list ) ) )
+    gen_schedule_src = py.code.Source("""
+      {}
+      def cycle():
+        # The code below does the actual calling of update blocks.
+        {}
+
+      """.format( "; ".join( map(
+                  "update_blk{0} = _schedule_list[{0}]".format,
+                      xrange( len( _schedule_list ) ) ) ),
+                  "\n        ".join( strs ) ) )
+
+    if verbose: print "Generate schedule source: ", gen_schedule_src
+    exec gen_schedule_src.compile() in locals()
+
+    s.cycle = cycle
+
   def elaborate( s ):
     s._cpp_connection_src = ""
     s._elaborate()
     s._synthesize_constraints()
     s._schedule()
+    s._generate_tick_func()
 
   def cycle( s ):
     print "Please elaborate before the simulation!"
