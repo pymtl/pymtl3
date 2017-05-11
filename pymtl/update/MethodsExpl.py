@@ -157,8 +157,8 @@ class MethodsExpl( UpdatesCall ):
         lookup_method( s, 0, method, method_caller, id_obj, method_id )
 
     for method_id, caller in method_caller.iteritems():
-      assert len(caller) == 1
-      s._method_caller[method_id] = list(caller)[0]
+      # assert len(caller) == 1
+      s._method_caller[method_id] = list(caller)
 
     s._id_obj.update( id_obj )
 
@@ -169,24 +169,31 @@ class MethodsExpl( UpdatesCall ):
     temp_dependency = set()
 
     for (x,y) in s._partial_constraints:
+      Q = deque()
 
       if id(x) not in s._blkid_upblk: # x is a method, find all methods that call x
         u = id(x)
         assert u in s._id_obj, "%s has method-method constraint, but the method is not called anywhere." % (x.full_name())
-        while True:
-          temp_dependency.add( (s._id_obj[u], y) )
-          if u not in s._method_caller:
-            break
-          u = s._method_caller[u]
+        Q.append(u)
+        while Q:
+          u = Q.pop()
+
+          if u in s._id_obj: # not in -- not called anywhere
+            temp_dependency.add( (s._id_obj[u], y) )
+          if u in s._method_caller:
+            Q.extend( s._method_caller[u] )
 
       if id(y) not in s._blkid_upblk: # y is a method, find all methods that call y
         u = id(y)
         assert u in s._id_obj, "%s has method-method constraint, but the method is not called anywhere." % (y.full_name())
-        while True:
-          temp_dependency.add( (x, s._id_obj[u]) )
-          if u not in s._method_caller:
-            break
-          u = s._method_caller[u]
+        Q.append(u)
+        while Q:
+          u = Q.pop()
+
+          if u in s._id_obj: # not in -- not called anywhere
+            temp_dependency.add( (x, s._id_obj[u]) )
+          if u in s._method_caller:
+            Q.extend( s._method_caller[u] )
 
     s._partial_constraints = temp_dependency
 
