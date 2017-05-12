@@ -46,6 +46,9 @@ class TestMemoryFL( MethodsAdapt ):
     assert len(s.mem) > (addr + len(data))
     s.mem[ addr : addr + len(data) ] = data
 
+  def line_trace( s ):
+    return ""
+
 class TestMemoryCL( MethodsAdapt ):
   def __init__( s, nports = 1, reqs  = [ MemReqMsg(8,32,32) ], \
                                resps = [ MemRespMsg(8,32)   ],

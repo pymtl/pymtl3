@@ -31,7 +31,9 @@ class EnqIfc_EnqIfc_Adapter( MethodsConnection ):
       @s.update
       def up_rdyblk_cl_rtl(): # different names
         s.rdy = s.send.rdy
-        # I put it here because up_rdy < s.send
+
+      @s.update
+      def up_clear_en():
         s.en  = Bits1( False )
         s.msg = Type1()
 
@@ -41,6 +43,8 @@ class EnqIfc_EnqIfc_Adapter( MethodsConnection ):
         s.send.msg = s.msg
 
       s.add_constraints(
+        U(up_clear_en) < M(s.recv_),
+
         U(up_rdyblk_cl_rtl) < M(s.recv_rdy_),
         M(s.recv_  ) < U(up_enblk_cl_rtl),
       )
@@ -63,6 +67,5 @@ class EnqIfc_EnqIfc_Adapter( MethodsConnection ):
     return s.rdy
 
 
-for l1 in [ 'rtl', 'cl' ]:
-  for l2 in [ 'rtl', 'cl' ]:
-    register_adapter( EnqIfc_EnqIfc_Adapter, l1, l2 )
+register_adapter( EnqIfc_EnqIfc_Adapter, 'rtl', 'cl' )
+register_adapter( EnqIfc_EnqIfc_Adapter, 'cl', 'rtl' )
