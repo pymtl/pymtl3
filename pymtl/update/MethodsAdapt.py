@@ -43,6 +43,11 @@ class MethodsAdapt( MethodsConnection ):
     inst = super( MethodsAdapt, cls ).__new__( cls, *args, **kwargs )
     return inst
 
+  def pausable_update( s, blk ):
+    blk._pausable = True
+    s.update( blk )
+    return blk
+
   def connect( s, x, y ):
 
     # The interface(portbundle) will provide its type and level
@@ -84,3 +89,39 @@ class MethodsAdapt( MethodsConnection ):
     y |= getattr( adapter, adapter.ifcs[1] )
 
     print "Generating an adapter {}({}) <--> {}({}) using {}".format( xtype, xlevel, ytype, ylevel, type(adapter).__name__ )
+
+  # Override
+  def _generate_tick_func( s ):
+    import greenlet
+    import py.code
+
+    schedule = s._schedule_list
+    tmp_list = []
+    nblks = len(schedule)
+
+    for i in xrange(nblks):
+      if hasattr( schedule[i], "_pausable" ):
+        greenlet_wrap_src = py.code.Source("""
+          blk{0} = schedule[{0}]
+
+          def loop_wrap{0}():
+            while True:
+              blk{0}()
+              greenlet.greenlet.getcurrent().parent.switch()
+
+          greenlet{0} = greenlet.greenlet( loop_wrap{0} )
+
+          def {1}_GREENLET():
+            greenlet{0}.switch()
+
+          tmp_list.append( {1}_GREENLET )
+        """.format(i, schedule[i].__name__) )
+
+        exec greenlet_wrap_src.compile() in locals()
+
+      else:
+        tmp_list.append( schedule[i] )
+
+    s._schedule_list = tmp_list
+
+    super( MethodsAdapt, s )._generate_tick_func()
