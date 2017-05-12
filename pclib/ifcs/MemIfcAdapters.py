@@ -1,7 +1,8 @@
 from pymtl import *
 from MemIfcs import MemIfcRTL, MemIfcCL, MemIfcFL
+from greenlet import greenlet
 
-class MemIfcAdapter( MethodsConnection ):
+class MemIfcAdapter( MethodsAdapt ):
   ifcs  = 'left', 'right'
   types = 'Mem', 'Mem'
 
@@ -19,13 +20,13 @@ class MemIfcAdapter( MethodsConnection ):
 
       s.right = MemIfcFL()
 
-      s.req = None
-      
+      s.msg = None
+
       @s.update
       def up_memifc_fl_cl_adapter():
 
-        if s.left.resp.rdy() and s.req:
-          req = s.req
+        if s.left.resp.rdy() and s.msg:
+          req = s.msg
 
           len = req.len if req.len else ( s.req_type1.data.nbits >> 3 )
 
@@ -41,12 +42,25 @@ class MemIfcAdapter( MethodsConnection ):
                                  s.right.amo( req.type_, req.addr, len, req.data ) )
 
           s.left.resp.enq( resp )
-          s.req = None
+          s.msg = None
 
       s.add_constraints(
         U(up_memifc_fl_cl_adapter) < M(s.left.req.enq), # bypass behavior, send < recv
         U(up_memifc_fl_cl_adapter) < M(s.left.req.rdy),
       )
+
+    elif level1 == 'fl' and level2 == 'cl':
+
+      s.msg = None
+
+      s.left  = MemIfcFL()
+      s.left.read  |= s.read_
+      s.left.write |= s.write_
+      s.left.amo   |= s.amo_
+
+      s.right = MemIfcCL( Type2 )
+      s.right.resp.enq |= s.recv_
+      s.right.resp.rdy |= s.recv_rdy_
 
     else:
       if   level1 == 'fl':  s.left  = MemIfcFL ()
@@ -59,11 +73,54 @@ class MemIfcAdapter( MethodsConnection ):
 
       s.connect( s.left, s.right )
 
-  def recv_( s, msg ):
-    s.req = msg
+  def recv_( s, msg ): # Recv can be used for left's req, or right's resp
+    s.msg = msg
 
   def recv_rdy_( s ):
-    return not s.req
+    return not s.msg
+
+  # @pausable
+  def read_( s, addr, nbytes ):
+
+    while not s.right.req.rdy():
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req.enq( s.req_type2.mk_rd( 0, addr, nbytes ) )
+
+    while not s.msg:
+      greenlet.getcurrent().parent.switch(0)
+
+    ret = s.msg.data
+    s.msg = None
+    return ret
+
+  # @pausable
+  def write_( s, addr, nbytes, data ):
+    
+    while not s.right.req.rdy():
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req.enq( s.req_type2.mk_wr( 0, addr, nbytes, data ) )
+
+    while not s.msg:
+      greenlet.getcurrent().parent.switch(0)
+
+    s.msg = None
+
+  # @pausable
+  def amo_( s, amo, addr, nbytes, data ):
+
+    while not s.right.req.rdy():
+      greenlet.getcurrent().parent.switch(0)
+
+    while not s.msg:
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req.enq( s.req_type2.mk_msg( amo, 0, addr, nbytes ) )
+
+    ret = s.msg.data
+    s.msg = None
+    return ret
 
 for l1 in [ 'rtl', 'cl', 'fl' ]:
   for l2 in [ 'rtl', 'cl', 'fl' ]:
