@@ -9,7 +9,7 @@ def test_simple():
 
     def __init__( s ):
 
-      s.src  = TestSourceValRdy( int, input_ = [ 0, 1, 2 ] )
+      s.src  = TestSourceValRdy( int, [ 0, 1, 2 ] )
       s.sink = TestSinkValRdy  ( int, [ 0, 1, 2 ] )
 
       s.sink.in_ |= s.src.out
