@@ -44,7 +44,7 @@ class MethodsConnection( MethodsExpl ):
         if m.has_method():
           head = m
 
-      assert head, "Cannot have a bunch connected MethodPorts without an actual method. %s" % root.__dict__
+      assert head, "Cannot have a bunch connected MethodPorts without an actual method. %s" % [x.full_name() for x in root._connected ]
       for m in net:
         s._methodid_head[ id(m) ] = head
 
@@ -94,6 +94,7 @@ class MethodsConnection( MethodsExpl ):
 
   # Override
   def _elaborate( s ):
+    PyMTLObject._recursive_tag_name(s) # for debugging
     s._resolve_method_connections()
     super( MethodsConnection, s )._elaborate()
     s._update_partial_constraints()
