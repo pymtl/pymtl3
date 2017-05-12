@@ -54,7 +54,8 @@ class TestMemoryCL( MethodsAdapt ):
 
     s.ifcs = [ MemIfcCL( (reqs[i], resps[i]) ) for i in xrange(nports) ]
 
-    s.req   = [ None ] * nports
+    s.req  = [ None ] * nports
+    s.resp = [ None ] * nports
 
     # Currently, only <=2 ports
     if nports >= 1:
@@ -70,6 +71,7 @@ class TestMemoryCL( MethodsAdapt ):
 
       for i in xrange(nports):
         req = s.req[i]
+        s.resp[i] = None
 
         if s.ifcs[i].resp.rdy() and req:
           len = req.len if req.len else ( reqs[i].data.nbits >> 3 )
@@ -84,7 +86,8 @@ class TestMemoryCL( MethodsAdapt ):
             resp = resps[i].mk_msg( req.type_, req.opaque, 0, len, ret )
 
           s.ifcs[i].resp.enq( resp )
-          s.req[i] = None
+          s.req[i]  = None
+          s.resp[i] = resp
 
     for i in xrange(nports):
       s.add_constraints(
@@ -111,4 +114,4 @@ class TestMemoryCL( MethodsAdapt ):
     return s.mem.write_mem( addr, data )
 
   def line_trace( s ):
-    return " > "
+    return "{} > {}".format( s.req[0], s.resp[0] )

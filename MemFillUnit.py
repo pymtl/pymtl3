@@ -1,6 +1,6 @@
 from pymtl import *
 from pclib.ifcs import MemIfcCL, MemIfcFL, MemReqMsg, MemRespMsg
-from pclib.test import TestMemoryFL
+from pclib.test import TestMemoryFL, TestMemoryCL
 
 class MemFillFL( MethodsAdapt ):
   def __init__( s, base_addr=0x1000, size=100 ):
@@ -8,7 +8,7 @@ class MemFillFL( MethodsAdapt ):
 
     s.finished = False
 
-    @s.update
+    @s.pausable_update
     def up_fill():
 
       # Stream the writes
@@ -64,34 +64,46 @@ class MemFillCL( MethodsAdapt ):
     return "Last req send: #%d | Last resp recv: #%d" % (s.i, s.last_recv)
 
 class Harness( MethodsAdapt ):
-  def __init__( s, level='fl', base_addr=0x1000, size=100 ):
+  def __init__( s, level='fl', base_addr=0x1000, size=100, mem_level='fl' ):
 
-    s.mem = TestMemoryFL()
+    if mem_level == 'fl':
+      s.mem = TestMemoryFL()
 
-    if   level == 'fl' :
-      s.fill = MemFillFL( base_addr, size )( memifc = s.mem.ifc )
-    else:
-      if level == 'cl' :  s.fill = MemFillCL ( base_addr, size )
-      else:               s.fill = MemFillRTL( base_addr, size )
+      if   level == 'fl' :
+        s.fill = MemFillFL( base_addr, size )( memifc = s.mem.ifc )
+      else:
+        if level == 'cl' :  s.fill = MemFillCL ( base_addr, size )
+        else:               s.fill = MemFillRTL( base_addr, size )
 
-      s.connect( s.fill.memifc, s.mem.ifc )
+        s.connect( s.fill.memifc, s.mem.ifc )
+
+    if mem_level == 'cl':
+      s.mem = TestMemoryCL( 1, [ MemReqMsg(32,32,32) ], [ MemRespMsg(32,32) ] )
+
+      if   level == 'cl' :
+        s.fill = MemFillCL( base_addr, size )( memifc = s.mem.ifcs[0] )
+      else:
+        if level == 'fl' :  s.fill = MemFillFL ( base_addr, size )
+        else:               s.fill = MemFillRTL( base_addr, size )
+
+        s.connect( s.fill.memifc, s.mem.ifcs[0] )
 
   def done( s ):
     return s.fill.done()
 
   def line_trace( s ):
-    return s.fill.line_trace()
+    return s.fill.line_trace() + " >>> " + s.mem.line_trace()
 
 if __name__ == "__main__":
 
-  # for level in [ "fl", "cl", "rtl"]:
-  for level in [ "cl" ]:
-    A = Harness( level, base_addr = 0x100, size = 100000 )
-    A.elaborate()
-    A.print_schedule()
+  for mem_level in [ "cl" ]: 
+    for fill_level in [ "fl" ]: # [ "fl", "cl", "rtl"]:
+      A = Harness( fill_level, 0x100, 10, mem_level )
+      A.elaborate()
+      A.print_schedule()
 
-    T = 0
-    while not A.done():
-      A.cycle()
-      # print T,":", A.line_trace()
-      T += 1
+      T = 0
+      while not A.done():
+        A.cycle()
+        print T,":", A.line_trace()
+        T += 1
