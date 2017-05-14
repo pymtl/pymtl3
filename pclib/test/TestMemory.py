@@ -57,8 +57,10 @@ class TestMemoryCL( MethodsAdapt ):
 
     s.ifcs = [ MemIfcCL( (reqs[i], resps[i]) ) for i in xrange(nports) ]
 
-    s.req  = [ None ] * nports
-    s.resp = [ None ] * nports
+    s.reqs  = reqs
+    s.resps = resps
+    s.req   = [ None ] * nports
+    s.resp  = [ None ] * nports
 
     # Currently, only <=2 ports
     if nports >= 1:
@@ -117,4 +119,5 @@ class TestMemoryCL( MethodsAdapt ):
     return s.mem.write_mem( addr, data )
 
   def line_trace( s ):
-    return "{} > {}".format( s.req[0], s.resp[0] )
+    return "{} > {}".format( s.req[0]  if s.req[0] else "".ljust(len(str(s.reqs[0]()))),
+                             s.resp[0] if s.resp[0] else "".ljust(len(str(s.resps[0]()))) )
