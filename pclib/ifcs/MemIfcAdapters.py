@@ -10,9 +10,23 @@ class MemIfcAdapter( MethodsAdapt ):
     if Type1: s.req_type1, s.resp_type1 = Type1[0], Type1[1]
     if Type2: s.req_type2, s.resp_type2 = Type2[0], Type2[1]
 
+    assert level1 != level2, "This is when we need adapters"
     # only support these right now
 
-    if   level1 == 'cl' and level2 == 'fl': # needs adapter
+    if   level1 == 'fl' and level2 == 'cl':
+
+      s.msg = None
+
+      s.left  = MemIfcFL()
+      s.left.read  |= s.read_
+      s.left.write |= s.write_
+      s.left.amo   |= s.amo_
+
+      s.right = MemIfcCL( Type2 )
+      s.right.resp.enq |= s.recv_
+      s.right.resp.rdy |= s.recv_rdy_
+
+    elif level1 == 'cl' and level2 == 'fl': # needs adapter
 
       s.left  = MemIfcCL( Type1 )
       s.left.req.enq |= s.recv_
@@ -20,10 +34,11 @@ class MemIfcAdapter( MethodsAdapt ):
 
       s.right = MemIfcFL()
 
-      s.msg = None
+      s.msg  = None
+      s.resp = None
 
       @s.update
-      def up_memifc_fl_cl_adapter():
+      def up_memifc_cl_fl_blk():
 
         if s.left.resp.rdy() and s.msg:
           req = s.msg
@@ -45,33 +60,56 @@ class MemIfcAdapter( MethodsAdapt ):
           s.msg = None
 
       s.add_constraints(
-        U(up_memifc_fl_cl_adapter) < M(s.left.req.enq), # bypass behavior, send < recv
-        U(up_memifc_fl_cl_adapter) < M(s.left.req.rdy),
+        U(up_memifc_cl_fl_blk) < M(s.left.req.enq), # pipe behavior, send < recv
+        U(up_memifc_cl_fl_blk) < M(s.left.req.rdy),
       )
 
-    elif level1 == 'fl' and level2 == 'cl':
+    elif level1 == 'fl' and level2 == 'rtl':
+      pass
 
-      s.msg = None
+    elif level1 == 'rtl' and level2 == 'fl':
 
-      s.left  = MemIfcFL()
-      s.left.read  |= s.read_
-      s.left.write |= s.write_
-      s.left.amo   |= s.amo_
+      s.left  = MemIfcRTL( Type1 )
+      s.right = MemIfcFL()
 
-      s.right = MemIfcCL( Type2 )
-      s.right.resp.enq |= s.recv_
-      s.right.resp.rdy |= s.recv_rdy_
+      @s.update
+      def up_memifc_req_rdy_rtl_fl():
+        s.left.req.rdy = Bits1( 1 )
 
-    else:
-      if   level1 == 'fl':  s.left  = MemIfcFL ()
-      elif level1 == 'cl':  s.left  = MemIfcCL ( Type1 )
-      else:                 s.left  = MemIfcRTL( Type1 )
+      @s.update
+      def up_memifc_req_en_rtl_fl():
+        if s.left.req.en & s.left.resp.rdy:
+          req = s.left.req.msg
 
-      if   level1 == 'fl':  s.right = MemIfcFL ()
-      elif level1 == 'cl':  s.right = MemIfcCL ( Type2 )
-      else:                 s.right = MemIfcRTL( Type2 )
+          len = req.len if req.len else ( s.req_type1.data.nbits >> 3 )
 
-      s.connect( s.left, s.right )
+          if   req.type_ == s.req_type1.TYPE_READ:
+            resp = s.resp_type1.mk_rd( req.opaque, len, s.right.read( req.addr, len ) )
+
+          elif req.type_ == s.req_type1.TYPE_WRITE:
+            s.right.write( req.addr, len, req.data )
+            resp = s.resp_type1.mk_wr( req.opaque )
+
+          else: # AMOS
+            resp = s.resp_type1.mk_msg( req.type_, req.opaque, 0, len, \
+                                 s.right.amo( req.type_, req.addr, len, req.data ) )
+
+          s.left.resp.en  = Bits1( 1 )
+          s.left.resp.msg = resp
+
+    elif level1 == 'cl' and level2 == 'rtl':
+      s.left  = MemIfcCL ( Type1 )
+      s.right = MemIfcRTL( Type2 )
+
+      s.connect( s.left.req, s.right.req )
+      s.connect( s.right.resp, s.left.resp )
+
+    elif level1 == 'rtl' and level2 == 'cl':
+      s.left  = MemIfcRTL( Type1 )
+      s.right = MemIfcCL ( Type2 )
+
+      s.connect( s.left.req, s.right.req )
+      s.connect( s.right.resp, s.left.resp )
 
   def recv_( s, msg ): # Recv can be used for left's req, or right's resp
     s.msg = msg
@@ -113,15 +151,16 @@ class MemIfcAdapter( MethodsAdapt ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
+    s.right.req.enq( s.req_type2.mk_msg( amo, 0, addr, nbytes ) )
+
     while not s.msg:
       greenlet.getcurrent().parent.switch(0)
-
-    s.right.req.enq( s.req_type2.mk_msg( amo, 0, addr, nbytes ) )
 
     ret = s.msg.data
     s.msg = None
     return ret
 
-for l1 in [ 'rtl', 'cl', 'fl' ]:
-  for l2 in [ 'rtl', 'cl', 'fl' ]:
-    register_adapter( MemIfcAdapter, l1, l2 )
+for l1 in [ 'fl','cl','rtl' ]:
+  for l2 in [ 'fl','cl','rtl' ]:
+    if l1 != l2:
+      register_adapter( MemIfcAdapter, l1, l2 )
