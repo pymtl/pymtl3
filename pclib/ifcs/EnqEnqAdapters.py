@@ -1,63 +1,44 @@
 from pymtl import *
 from EnqIfcs import EnqIfcRTL, EnqIfcCL
 
-class EnqIfc_EnqIfc_Adapter( MethodsConnection ):
+class EnqIfc_CLtoRTL_Adapter( MethodsConnection ):
   ifcs  = 'recv', 'send'
   types = 'Enq', 'Enq'
 
   def __init__( s, Type1, level1, Type2, level2 ):
 
-    if level1 == 'rtl':
-      s.recv = EnqIfcRTL( Type1 )
-    else:
-      s.recv = EnqIfcCL ( Type1 )
-      s.recv.enq |= s.recv_
-      s.recv.rdy |= s.recv_rdy_
+    assert level1 =='cl' and level2 == 'rtl'
 
-    if level2 == 'rtl':
-      s.send = EnqIfcRTL( Type2 )
-    else:
-      s.send = EnqIfcCL( Type2 )
+    s.recv = EnqIfcCL( Type1 )
+    s.recv.enq |= s.recv_
+    s.recv.rdy |= s.recv_rdy_
 
-    if   level1 == level2:
-      assert Type1 == Type2 # this adapter cannot convert types
-      s.recv |= s.send
+    s.send = EnqIfcRTL( Type2 )
 
-    elif level1 == 'cl' and level2 == 'rtl':
-      s.msg = Wire( Type1 )
-      s.en  = Wire( Bits1 )
-      s.rdy = Wire( Bits1 )
+    s.msg = Wire( Type1 )
+    s.en  = Wire( Bits1 )
+    s.rdy = Wire( Bits1 )
 
-      @s.update
-      def up_rdyblk_cl_rtl(): # different names
-        s.rdy = s.send.rdy
+    @s.update
+    def up_rdyblk_cl_rtl(): # different names
+      s.rdy = s.send.rdy
 
-      @s.update
-      def up_clear_en():
-        s.en  = Bits1( False )
-        s.msg = Type1()
+    @s.update
+    def up_clear_en():
+      s.en  = Bits1( False )
+      s.msg = Type1()
 
-      @s.update
-      def up_enblk_cl_rtl():
-        s.send.en  = s.en
-        s.send.msg = s.msg
+    @s.update
+    def up_enblk_cl_rtl():
+      s.send.en  = s.en
+      s.send.msg = s.msg
 
-      s.add_constraints(
-        U(up_clear_en) < M(s.recv_),
+    s.add_constraints(
+      U(up_clear_en) < M(s.recv_), # clear en/msg before recv_
 
-        U(up_rdyblk_cl_rtl) < M(s.recv_rdy_),
-        M(s.recv_  ) < U(up_enblk_cl_rtl),
-      )
-    elif level1 == 'rtl' and level2 == 'cl':
-
-      @s.update
-      def up_rdyblk_rtl_cl():
-        s.recv.rdy = s.send.rdy()
-
-      @s.update
-      def up_enblk_rtl_cl():
-        if s.recv.en:
-          s.send.enq( s.recv.msg )
+      M(s.recv_rdy_) < U(up_rdyblk_cl_rtl), # comb behavior
+      M(s.recv_    ) < U(up_enblk_cl_rtl),
+    )
 
   def recv_( s, msg ):
    s.msg = msg
@@ -66,6 +47,47 @@ class EnqIfc_EnqIfc_Adapter( MethodsConnection ):
   def recv_rdy_( s ):
     return s.rdy
 
+class EnqIfc_RTLtoCL_Adapter( MethodsConnection ):
+  ifcs  = 'recv', 'send'
+  types = 'Enq', 'Enq'
 
-register_adapter( EnqIfc_EnqIfc_Adapter, 'rtl', 'cl' )
-register_adapter( EnqIfc_EnqIfc_Adapter, 'cl', 'rtl' )
+  def __init__( s, Type1, level1, Type2, level2 ):
+
+    assert level1 == 'rtl' and level2 == 'cl'
+
+    s.recv = EnqIfcRTL( Type1 )
+    s.send = EnqIfcCL( Type2 )
+
+    @s.update
+    def up_rdyblk_rtl_cl():
+      s.recv.rdy = s.send.rdy()
+
+    @s.update
+    def up_enblk_rtl_cl():
+      if s.recv.en:
+        s.send.enq( s.recv.msg )
+
+class EnqIfc_CLtoFL_Adapter( MethodsConnection ):
+  pass
+
+class EnqIfc_FLtoCL_Adapter( MethodsConnection ):
+  ifcs  = 'recv', 'send'
+  types = 'Enq', 'Enq'
+
+  def __init__( s, Type1, level1, Type2, level2 ):
+
+    assert level1 == 'fl' and level2 == 'cl'
+
+    s.recv = EnqIfcFL()
+    s.send = EnqIfcCL( Type2 )
+
+  # @pausable
+  def enq( s, msg ):
+    while not s.send.rdy():
+      greenlet.getcurrent().parent.switch(0)
+    s.send.enq( msg )
+
+register_adapter( EnqIfc_CLtoRTL_Adapter, 'cl', 'rtl' )
+register_adapter( EnqIfc_RTLtoCL_Adapter, 'rtl', 'cl' )
+register_adapter( EnqIfc_FLtoCL_Adapter,  'fl', 'cl' )
+# register_adapter( EnqIfc_CLtoFL_Adapter,  'cl', 'fl' )

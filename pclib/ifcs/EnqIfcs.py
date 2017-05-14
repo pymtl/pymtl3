@@ -16,5 +16,15 @@ class EnqIfcCL( PortBundle ):
   def __call__( s, *args, **kwargs ):
     return s.enq( args, kwargs )
 
+class EnqIfcFL( PortBundle ):
+  ifc = 'Enq'
+
+  def __init__( s ):
+    s.Type = None
+
+    s.enq = MethodPort()
+
+
 register_ifc( EnqIfcRTL, 'rtl' )
 register_ifc( EnqIfcCL,  'cl'  )
+register_ifc( EnqIfcFL,  'fl'  )
