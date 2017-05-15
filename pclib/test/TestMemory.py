@@ -1,6 +1,7 @@
 from pymtl import *
 from collections import deque
 from pclib.ifcs import MemReqMsg, MemRespMsg, EnqIfcCL, MemIfcFL, MemIfcCL
+from pclib.cl   import ValidEntry
 
 AMO_FUNS = { MemReqMsg.TYPE_AMO_ADD  : lambda m,a : m+a,
              MemReqMsg.TYPE_AMO_AND  : lambda m,a : m&a,
@@ -59,8 +60,8 @@ class TestMemoryCL( MethodsAdapt ):
 
     s.reqs  = reqs
     s.resps = resps
-    s.req   = [ None ] * nports
-    s.resp  = [ None ] * nports
+    s.req   = [ ValidEntry( False, None ) ] * nports
+    s.resp  = [ ValidEntry( False, None ) ] * nports # for line trace
 
     # Currently, only <=2 ports
     if nports >= 1:
@@ -76,9 +77,10 @@ class TestMemoryCL( MethodsAdapt ):
 
       for i in xrange(nports):
         req = s.req[i]
-        s.resp[i] = None
+        s.resp[i] = ValidEntry( False, None )
 
-        if s.ifcs[i].resp.rdy() and req:
+        if s.ifcs[i].resp.rdy() and req.val:
+          req = req.msg
           len = req.len if req.len else ( reqs[i].data.nbits >> 3 )
 
           if   req.type_ == MemReqMsg.TYPE_READ:
@@ -93,8 +95,8 @@ class TestMemoryCL( MethodsAdapt ):
                               s.mem.amo( req.type_, req.addr, len, req.data ))
 
           s.ifcs[i].resp.enq( resp )
-          s.req[i]  = None
-          s.resp[i] = resp # for line trace
+          s.req[i]  = ValidEntry( False, None ) # clear pending req
+          s.resp[i] = ValidEntry( True, resp ) # for line trace
 
     for i in xrange(nports):
       s.add_constraints(
@@ -103,16 +105,16 @@ class TestMemoryCL( MethodsAdapt ):
       )
 
   def recv0( s, msg ): # recv req
-    s.req[0]  = msg
+    s.req[0] = ValidEntry( val=True, msg=msg )
 
   def recv_rdy0( s ): # recv req
-    return not s.req[0]
+    return not s.req[0].val
 
   def recv1( s, msg ): # recv req
-    s.req[1]  = msg
+    s.req[1] = ValidEntry( val=True, msg=msg )
 
   def recv_rdy1( s ): # recv req
-    return not s.req[1]
+    return not s.req[1].val
 
   def read_mem( s, addr, size ):
     return s.mem.read_mem( addr, size )
@@ -121,5 +123,5 @@ class TestMemoryCL( MethodsAdapt ):
     return s.mem.write_mem( addr, data )
 
   def line_trace( s ):
-    return "{} > {}".format( s.req[0]  if s.req[0] else "".ljust(len(str(s.reqs[0]()))),
-                             s.resp[0] if s.resp[0] else "".ljust(len(str(s.resps[0]()))) )
+    return "{} > {}".format( s.req[0].msg  if s.req[0].val  else "".ljust(len(str(s.reqs[0]()))),
+                             s.resp[0].msg if s.resp[0].val else "".ljust(len(str(s.resps[0]()))) )

@@ -16,5 +16,14 @@ class DeqIfcCL( PortBundle ):
   def __call__( s, *args, **kwargs ):
     return s.deq( args, kwargs )
 
+class DeqIfcFL( PortBundle ):
+  ifc = 'Deq'
+
+  def __init__( s, Type ):
+    s.Type = None
+
+    s.deq = MethodPort()
+
 register_ifc( DeqIfcRTL, 'rtl' )
 register_ifc( DeqIfcCL,  'cl'  )
+register_ifc( DeqIfcFL,  'fl'  )

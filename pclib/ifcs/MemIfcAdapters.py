@@ -1,4 +1,5 @@
 from pymtl import *
+from pclib.cl import ValidEntry
 from MemIfcs import MemIfcRTL, MemIfcCL, MemIfcFL
 from greenlet import greenlet
 
@@ -15,7 +16,7 @@ class MemIfcAdapter( MethodsAdapt ):
 
     if   level1 == 'fl' and level2 == 'cl':
 
-      s.msg = None
+      s.buf  = ValidEntry( val=False, msg = None )
 
       s.left  = MemIfcFL()
       s.left.read  |= s.read_
@@ -34,15 +35,13 @@ class MemIfcAdapter( MethodsAdapt ):
 
       s.right = MemIfcFL()
 
-      s.msg  = None
-      s.resp = None
+      s.buf  = ValidEntry( val=False, msg = None )
 
       @s.update
       def up_memifc_cl_fl_blk():
 
-        if s.left.resp.rdy() and s.msg:
-          req = s.msg
-
+        if s.left.resp.rdy() and s.buf.valid:
+          req = s.buf.msg
           len = req.len if req.len else ( s.req_type1.data.nbits >> 3 )
 
           if   req.type_ == s.req_type1.TYPE_READ:
@@ -57,7 +56,7 @@ class MemIfcAdapter( MethodsAdapt ):
                                  s.right.amo( req.type_, req.addr, len, req.data ) )
 
           s.left.resp.enq( resp )
-          s.msg = None
+          s.buf = ValidEntry( val=False, msg = None )
 
       s.add_constraints(
         U(up_memifc_cl_fl_blk) < M(s.left.req.enq), # pipe behavior, send < recv
@@ -112,10 +111,10 @@ class MemIfcAdapter( MethodsAdapt ):
       s.connect( s.right.resp, s.left.resp )
 
   def recv_( s, msg ): # Recv can be used for left's req, or right's resp
-    s.msg = msg
+    s.buf = ValidEntry( val=True, msg=msg )
 
   def recv_rdy_( s ):
-    return not s.msg
+    return not s.buf.val
 
   # @pausable
   def read_( s, addr, nbytes ):
@@ -125,11 +124,11 @@ class MemIfcAdapter( MethodsAdapt ):
 
     s.right.req.enq( s.req_type2.mk_rd( 0, addr, nbytes ) )
 
-    while not s.msg:
+    while not s.buf.val:
       greenlet.getcurrent().parent.switch(0)
 
-    ret = s.msg.data
-    s.msg = None
+    ret = s.buf.msg.data
+    s.buf = ValidEntry( False, None )
     return ret
 
   # @pausable
@@ -140,10 +139,10 @@ class MemIfcAdapter( MethodsAdapt ):
 
     s.right.req.enq( s.req_type2.mk_wr( 0, addr, nbytes, data ) )
 
-    while not s.msg:
+    while not s.buf.val:
       greenlet.getcurrent().parent.switch(0)
 
-    s.msg = None
+    s.buf = ValidEntry( False, None )
 
   # @pausable
   def amo_( s, amo, addr, nbytes, data ):
@@ -153,11 +152,11 @@ class MemIfcAdapter( MethodsAdapt ):
 
     s.right.req.enq( s.req_type2.mk_msg( amo, 0, addr, nbytes ) )
 
-    while not s.msg:
+    while not s.buf.val:
       greenlet.getcurrent().parent.switch(0)
 
-    ret = s.msg.data
-    s.msg = None
+    ret = s.buf.msg.data
+    s.buf = ValidEntry( False, None )
     return ret
 
 for l1 in [ 'fl','cl','rtl' ]:

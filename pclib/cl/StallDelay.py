@@ -1,7 +1,8 @@
 from pymtl import *
-from collections import deque, namedtuple
 from random import Random
+from collections import deque
 from pclib.ifcs import EnqIfcCL
+from Entry   import ValidEntry
 
 class RandomStall( MethodsConnection ):
 
@@ -26,8 +27,6 @@ class RandomStall( MethodsConnection ):
   def line_trace( s ):
     return " " if s.stall else "#"
 
-DelayEntry = namedtuple('DelayEntry', 'val msg')
-
 class RandomDelay( MethodsConnection ):
 
   def __init__( s, max_delay=5, seed=0x3 ):
@@ -41,14 +40,14 @@ class RandomDelay( MethodsConnection ):
     s.randnum   = 0
     s.max_delay = max_delay
     s.counter   = 0
-    s.buf       = DelayEntry( val=False, msg=None )
+    s.buf       = ValidEntry( val=False, msg=None )
 
     @s.update
     def up_delay():
       if s.send.rdy():
         if s.counter <= 0 and s.buf.val:
           s.send.enq( s.buf.msg )
-          s.buf = DelayEntry( val=False, msg=None )
+          s.buf = ValidEntry( val=False, msg=None )
       s.counter -= 1
 
     s.add_constraints(
@@ -57,7 +56,7 @@ class RandomDelay( MethodsConnection ):
     )
 
   def recv_( s, msg ):
-    s.buf = DelayEntry( val=True, msg=msg )
+    s.buf = ValidEntry( val=True, msg=msg )
     s.counter = s.rgen.randint(0, s.max_delay)
 
   def recv_rdy_( s ):
@@ -77,7 +76,7 @@ class PipelinedDelay( MethodsConnection ):
 
     assert delay > 0, "Please conditionally remove this PipelinedDelay if you want delay=0."
 
-    s.delay = deque( [ DelayEntry( val=False, msg=None ) for _ in xrange(delay) ], maxlen=delay )
+    s.delay = deque( [ ValidEntry( val=False, msg=None ) for _ in xrange(delay) ], maxlen=delay )
 
     if elastic:
       pass
@@ -97,7 +96,7 @@ class PipelinedDelay( MethodsConnection ):
           frontier = s.delay[-1]
           if frontier.val:
             s.send.enq( frontier.msg )
-            s.delay[-1] = DelayEntry( val=False, msg=None )
+            s.delay[-1] = ValidEntry( val=False, msg=None )
           s.delay.rotate()
 
     s.add_constraints(
@@ -106,7 +105,7 @@ class PipelinedDelay( MethodsConnection ):
     )
 
   def recv_( s, msg ):
-    s.delay[0] = DelayEntry( val=True, msg=msg )
+    s.delay[0] = ValidEntry( val=True, msg=msg )
 
   def recv_rdy_( s ):
     return not s.delay[0].val

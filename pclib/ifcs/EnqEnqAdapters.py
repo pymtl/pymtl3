@@ -1,5 +1,6 @@
 from pymtl import *
-from EnqIfcs import EnqIfcRTL, EnqIfcCL
+from EnqIfcs import EnqIfcRTL, EnqIfcCL, EnqIfcFL
+from pclib.cl import ValidEntry
 
 class EnqIfc_CLtoRTL_Adapter( MethodsConnection ):
   ifcs  = 'recv', 'send'
@@ -36,8 +37,8 @@ class EnqIfc_CLtoRTL_Adapter( MethodsConnection ):
     s.add_constraints(
       U(up_clear_en) < M(s.recv_), # clear en/msg before recv_
 
-      M(s.recv_rdy_) < U(up_rdyblk_cl_rtl), # comb behavior, RAW s.rdy
-      M(s.recv_    ) < U(up_enblk_cl_rtl),  # comb behavior, RAW s.msg
+      M(s.recv_rdy_) < U(up_rdyblk_cl_rtl), # byoass behavior, RAW s.rdy
+      M(s.recv_    ) < U(up_enblk_cl_rtl),  # bypass behavior, RAW s.msg
     )
 
   def recv_( s, msg ): # write msg
@@ -67,8 +68,39 @@ class EnqIfc_RTLtoCL_Adapter( MethodsConnection ):
       if s.recv.en:
         s.send.enq( s.recv.msg )
 
-class EnqIfc_CLtoFL_Adapter( MethodsConnection ):
-  pass
+class EnqIfc_CLtoFL_Adapter( MethodsAdapt ): # has a buffer inside
+  ifcs  = 'recv', 'send'
+  types = 'Enq', 'Enq'
+
+  def __init__( s, Type1, level1, Type2, level2 ):
+
+    assert level1 == 'cl' and level2 == 'fl'
+
+    s.recv = EnqIfcCL( Type1 )
+
+    s.recv = EnqIfcCL( Type1 )
+    s.recv.enq |= s.recv_
+    s.recv.rdy |= s.recv_rdy_
+
+    s.send = EnqIfcFL()
+
+    s.buf = ValidEntry( False, None )
+
+    @s.pausable_update
+    def up_enq_cl_to_fl():
+      s.send.enq( s.buf.msg ) # send should contain greenlet switch!
+      s.buf = ValidEntry( False, None )
+
+    s.add_constraints(
+      M(s.recv_)     < U(up_enq_cl_to_fl), # bypass behavior
+      M(s.recv_rdy_) < U(up_enq_cl_to_fl),
+    )
+
+  def recv_( s, msg ):
+    s.buf = ValidEntry( True, msg )
+
+  def recv_rdy_( s ): # read s.rdy
+    return not s.buf.val
 
 class EnqIfc_FLtoCL_Adapter( MethodsConnection ):
   ifcs  = 'recv', 'send'
@@ -79,10 +111,11 @@ class EnqIfc_FLtoCL_Adapter( MethodsConnection ):
     assert level1 == 'fl' and level2 == 'cl'
 
     s.recv = EnqIfcFL()
+    s.recv.enq |= s.recv_
     s.send = EnqIfcCL( Type2 )
 
   # @pausable
-  def enq( s, msg ):
+  def recv_( s, msg ):
     while not s.send.rdy():
       greenlet.getcurrent().parent.switch(0)
     s.send.enq( msg )
@@ -90,4 +123,4 @@ class EnqIfc_FLtoCL_Adapter( MethodsConnection ):
 register_adapter( EnqIfc_CLtoRTL_Adapter, 'cl', 'rtl' )
 register_adapter( EnqIfc_RTLtoCL_Adapter, 'rtl', 'cl' )
 register_adapter( EnqIfc_FLtoCL_Adapter,  'fl', 'cl' )
-# register_adapter( EnqIfc_CLtoFL_Adapter,  'cl', 'fl' )
+register_adapter( EnqIfc_CLtoFL_Adapter,  'cl', 'fl' )

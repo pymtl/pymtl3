@@ -24,7 +24,6 @@ class EnqIfcFL( PortBundle ):
 
     s.enq = MethodPort()
 
-
 register_ifc( EnqIfcRTL, 'rtl' )
 register_ifc( EnqIfcCL,  'cl'  )
 register_ifc( EnqIfcFL,  'fl'  )
