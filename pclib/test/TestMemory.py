@@ -83,16 +83,18 @@ class TestMemoryCL( MethodsAdapt ):
 
           if   req.type_ == MemReqMsg.TYPE_READ:
             resp = resps[i].mk_rd( req.opaque, len, s.mem.read( req.addr, len ) )
+
           elif req.type_ == MemReqMsg.TYPE_WRITE:
             s.mem.write( req.addr, len, req.data )
             resp = resps[i].mk_wr( req.opaque )
+
           else: # AMOS
-            ret  = s.mem.amo( req.type_, req.addr, len, req.data )
-            resp = resps[i].mk_msg( req.type_, req.opaque, 0, len, ret )
+            resp = resps[i].mk_msg( req.type_, req.opaque, 0, len, \
+                              s.mem.amo( req.type_, req.addr, len, req.data ))
 
           s.ifcs[i].resp.enq( resp )
           s.req[i]  = None
-          s.resp[i] = resp
+          s.resp[i] = resp # for line trace
 
     for i in xrange(nports):
       s.add_constraints(
