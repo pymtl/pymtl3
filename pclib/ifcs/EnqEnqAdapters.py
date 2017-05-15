@@ -20,7 +20,7 @@ class EnqIfc_CLtoRTL_Adapter( MethodsConnection ):
     s.rdy = Wire( Bits1 )
 
     @s.update
-    def up_rdyblk_cl_rtl(): # different names
+    def up_rdyblk_cl_rtl(): # from RTL side to CL side, write s.rdy
       s.rdy = s.send.rdy
 
     @s.update
@@ -29,22 +29,22 @@ class EnqIfc_CLtoRTL_Adapter( MethodsConnection ):
       s.msg = Type1()
 
     @s.update
-    def up_enblk_cl_rtl():
+    def up_enblk_cl_rtl(): # copy the CL msg to RTL side, read s.msg
       s.send.en  = s.en
       s.send.msg = s.msg
 
     s.add_constraints(
       U(up_clear_en) < M(s.recv_), # clear en/msg before recv_
 
-      M(s.recv_rdy_) < U(up_rdyblk_cl_rtl), # comb behavior
-      M(s.recv_    ) < U(up_enblk_cl_rtl),
+      M(s.recv_rdy_) < U(up_rdyblk_cl_rtl), # comb behavior, RAW s.rdy
+      M(s.recv_    ) < U(up_enblk_cl_rtl),  # comb behavior, RAW s.msg
     )
 
-  def recv_( s, msg ):
+  def recv_( s, msg ): # write msg
    s.msg = msg
    s.en  = Bits1( True )
 
-  def recv_rdy_( s ):
+  def recv_rdy_( s ): # read s.rdy
     return s.rdy
 
 class EnqIfc_RTLtoCL_Adapter( MethodsConnection ):
