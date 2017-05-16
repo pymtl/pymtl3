@@ -27,6 +27,7 @@ class UpdatesExpl( PyMTLObject ):
     inst._name_upblk       = {}
     inst._blkid_upblk      = {}
     inst._expl_constraints = set() # contains ( id(func), id(func) )s
+    inst._elaborated = False
     return inst
 
   def update( s, blk ):
@@ -157,11 +158,13 @@ class UpdatesExpl( PyMTLObject ):
     s.cycle = cycle
 
   def elaborate( s ):
+    assert not s._elaborated, "Do not elaborate the model twice!"
     s._cpp_connection_src = ""
     s._elaborate()
     s._synthesize_constraints()
     s._schedule()
     s._generate_tick_func()
+    s._elaborated = True
 
   def cycle( s ):
     print "Please elaborate before the simulation!"

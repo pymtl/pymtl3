@@ -47,6 +47,12 @@ class TestMemoryFL( MethodsAdapt ):
     assert len(s.mem) > (addr + len(data))
     s.mem[ addr : addr + len(data) ] = data
 
+  def __getitem__( s, idx ):
+    return s.mem[ idx ]
+
+  def __setitem__( s, idx, data ):
+    s.mem[ idx ] = data
+
   def line_trace( s ):
     return ""
 
@@ -62,6 +68,8 @@ class TestMemoryCL( MethodsAdapt ):
     s.resps = resps
     s.req   = [ ValidEntry( False, None ) ] * nports
     s.resp  = [ ValidEntry( False, None ) ] * nports # for line trace
+
+    s.nports = nports
 
     # Currently, only <=2 ports
     if nports >= 1:
@@ -123,5 +131,6 @@ class TestMemoryCL( MethodsAdapt ):
     return s.mem.write_mem( addr, data )
 
   def line_trace( s ):
-    return "{} > {}".format( s.req[0].msg  if s.req[0].val  else "".ljust(len(str(s.reqs[0]()))),
-                             s.resp[0].msg if s.resp[0].val else "".ljust(len(str(s.resps[0]()))) )
+    return "|".join( [ "{}>{}".format( s.req[i].msg  if s.req[i].val  else "".ljust(len(str(s.reqs[i]()))),
+                                   s.resp[i].msg if s.resp[i].val else "".ljust(len(str(s.resps[i]()))) ) \
+                                for i in xrange(s.nports) ] )
