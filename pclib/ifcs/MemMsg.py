@@ -1,6 +1,9 @@
 from pymtl import *
 import math
 
+def mk_mem_msg_type( o, a, d ):
+  return MemReqMsg( o, a, d ), MemRespMsg( o, d )
+
 class MemReqMsg( object ):
 
   TYPE_READ       = 0
@@ -12,6 +15,17 @@ class MemReqMsg( object ):
   TYPE_AMO_OR     = 5
   TYPE_AMO_XCHG   = 6
   TYPE_AMO_MIN    = 7
+
+  type_dict = {
+    'rd' : TYPE_READ,
+    'wr' : TYPE_WRITE,
+    'in' : TYPE_WRITE_INIT,
+    'ad' : TYPE_AMO_ADD,
+    'an' : TYPE_AMO_AND,
+    'or' : TYPE_AMO_OR,
+    'xg' : TYPE_AMO_XCHG,
+    'mn' : TYPE_AMO_MIN,
+  }
 
   def __init__( s, opaque_nbits=8, addr_nbits=32, data_nbits=32 ):
     s.type_  = mk_bits( 3 )
@@ -25,13 +39,13 @@ class MemReqMsg( object ):
            s.addr   == other.addr  and s.len == other.len and \
            s.data   == other.data
 
-  def __call__( s ):
+  def __call__( s, type_='rd', opaque=0, addr=0, len=0, data=0 ):
     msg        = MemReqMsg( s.opaque.nbits, s.addr.nbits, s.data.nbits )
-    msg.type_  = msg.type_ ( 0 )
-    msg.opaque = msg.opaque( 0 )
-    msg.addr   = msg.addr  ( 0 )
-    msg.len    = msg.len   ( 0 )
-    msg.data   = msg.data  ( 0 )
+    msg.type_  = msg.type_ ( s.type_dict[type_] )
+    msg.opaque = msg.opaque( opaque )
+    msg.addr   = msg.addr  ( addr )
+    msg.len    = msg.len   ( len )
+    msg.data   = msg.data  ( data )
     return msg
 
   def mk_rd( s, opaque, addr, len_ ):
@@ -93,6 +107,17 @@ class MemRespMsg( object ):
   TYPE_AMO_XCHG   = 6
   TYPE_AMO_MIN    = 7
 
+  type_dict = {
+    'rd' : TYPE_READ,
+    'wr' : TYPE_WRITE,
+    'in' : TYPE_WRITE_INIT,
+    'ad' : TYPE_AMO_ADD,
+    'an' : TYPE_AMO_AND,
+    'or' : TYPE_AMO_OR,
+    'xg' : TYPE_AMO_XCHG,
+    'mn' : TYPE_AMO_MIN,
+  }
+
   def __init__( s, opaque_nbits=8, data_nbits=32 ):
     s.type_  = mk_bits( 3 )
     s.opaque = mk_bits( opaque_nbits )
@@ -100,13 +125,13 @@ class MemRespMsg( object ):
     s.len    = mk_bits( int( math.ceil( math.log( data_nbits>>3, 2) ) ) )
     s.data   = mk_bits( data_nbits   )
 
-  def __call__( s ):
+  def __call__( s, type_='rd', opaque=0, test=0, len=0, data=0 ):
     msg        = MemRespMsg( s.opaque.nbits, s.data.nbits )
-    msg.type_  = msg.type_ ( 0 )
-    msg.opaque = msg.opaque( 0 )
-    msg.test   = msg.test  ( 0 )
-    msg.len    = msg.len   ( 0 )
-    msg.data   = msg.data  ( 0 )
+    msg.type_  = msg.type_ ( s.type_dict[type_] )
+    msg.opaque = msg.opaque( opaque )
+    msg.test   = msg.test  ( test )
+    msg.len    = msg.len   ( len )
+    msg.data   = msg.data  ( data )
     return msg
 
   def __eq__( s, other ):

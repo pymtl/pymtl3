@@ -15,6 +15,9 @@ class Reg( UpdatesImpl ):
   def line_trace( s ):
     return "[{} > {}]".format(s.in_, s.out)
 
+  def __int__( s ):
+    return int(s.out)
+
 # Register with enable signal
 
 class RegEn( UpdatesImpl ):

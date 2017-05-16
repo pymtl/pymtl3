@@ -40,7 +40,7 @@ class MemIfcAdapter( MethodsAdapt ):
       @s.update
       def up_memifc_cl_fl_blk():
 
-        if s.left.resp.rdy() and s.buf.valid:
+        if s.left.resp.rdy() and s.buf.val:
           req = s.buf.msg
           len = req.len if req.len else ( s.req_type1.data.nbits >> 3 )
 
