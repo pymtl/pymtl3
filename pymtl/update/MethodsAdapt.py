@@ -5,6 +5,7 @@
 
 from MethodsConnection import MethodsConnection
 from collections import defaultdict
+from Connectable import PortBundle
 
 #{ ifc1:{ level1:type1, level2:type2, ... }, ifc2:{..}, .. }
 
@@ -49,6 +50,9 @@ class MethodsAdapt( MethodsConnection ):
     return blk
 
   def connect( s, x, y ):
+    if not isinstance( x, PortBundle ) or not isinstance( x, PortBundle ):
+      x |= y
+      return
 
     # The interface(portbundle) will provide its type and level
 

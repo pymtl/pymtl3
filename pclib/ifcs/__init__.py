@@ -2,7 +2,7 @@
 from ValRdyBundle import ValRdyBundle
 from EnRdyBundle  import EnRdyBundle
 from valrdy       import valrdy_to_str
-from MemMsg       import MemReqMsg, MemRespMsg
+from MemMsg       import MemReqMsg, MemRespMsg, mk_mem_msg_type
 from EnqIfcs      import EnqIfcRTL, EnqIfcCL, EnqIfcFL
 from DeqIfcs      import DeqIfcRTL, DeqIfcCL
 from MemIfcs      import MemIfcRTL, MemIfcCL, MemIfcFL
