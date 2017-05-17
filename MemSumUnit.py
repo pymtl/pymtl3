@@ -36,30 +36,29 @@ class MemSumCL( MethodsAdapt ):
     s.connect( s.mem.resp.enq, s.recv )
     s.connect( s.mem.resp.rdy, s.recv_rdy )
 
-    s.i      = 0
-    s.size   = size
-    s.result = 0
+    s.i        = 0
+    s.size     = size
+    s.result   = 0
+    s.num_recv = 0
 
     @s.update
     def up_sum():
-      if s.mem.req.rdy() and s.i < s.size:
+      if s.mem.req.rdy() and s.i < size:
         s.mem.req.enq( s.ReqType( 'rd', s.i, base_addr+s.i*4, 4 ) )
         s.i += 1
 
-    s.last_recv = -1
-
   def recv( s, msg ):
-    s.last_recv = msg.opaque
+    s.num_recv += 1
     s.result   += msg.data
 
   def recv_rdy( s ):
     return True
 
   def done( s ):
-    return s.last_recv == s.size - 1
+    return s.num_recv == s.size
 
   def line_trace( s ):
-    return "Last req send: #%d | Last resp recv: #%d" % (s.i, s.last_recv)
+    return "Last req send: #%d | num of resp received: #%d" % (s.i, s.num_recv)
 
 class MemSumRTL( MethodsAdapt ):
 
@@ -79,11 +78,12 @@ class MemSumRTL( MethodsAdapt ):
 
       s.mem.req.en   = Bits1( 0 )
       s.mem.req.msg  = s.ReqType()
+      s.i.in_        = s.i.out
 
-      if (s.i.in_ < s.size) & s.mem.req.rdy:
+      if (s.i.in_ < size) & s.mem.req.rdy:
         s.mem.req.en  = Bits1( 1 )
         s.mem.req.msg = s.ReqType( 'rd', s.i.out, base_addr+s.i.out*4, 4 )
-        s.i.in_ = s.i.out + 1
+        s.i.in_       = s.i.out + 1
 
     @s.update
     def up_recv_rdy():
@@ -96,8 +96,8 @@ class MemSumRTL( MethodsAdapt ):
       s.result.in_   = s.result.out
 
       if s.mem.resp.en:
-        s.result.in_ = s.result.out + s.mem.resp.msg.data
         s.num_recv.in_ = s.num_recv.out + 1
+        s.result.in_   = s.result.out + s.mem.resp.msg.data
 
   def done( s ):
     return s.num_recv.out == s.size
