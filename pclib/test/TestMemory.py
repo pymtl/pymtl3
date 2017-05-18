@@ -11,9 +11,8 @@ AMO_FUNS = { MemReqMsg.TYPE_AMO_ADD  : lambda m,a : m+a,
            }
 
 class TestMemoryFL( MethodsAdapt ):
-  def __init__( s, mem_nbytes=1<<20, word_nbytes=4 ):
+  def __init__( s, mem_nbytes=1<<20 ):
     s.mem       = bytearray( mem_nbytes )
-    s.word_type = mk_bits( word_nbytes<<3 )
     s.ifc       = MemIfcFL()
     s.ifc.read  |= s.read
     s.ifc.write |= s.write
@@ -21,15 +20,17 @@ class TestMemoryFL( MethodsAdapt ):
 
   def read( s, addr, nbytes ):
     ret, shamt = 0, 0
-    end = addr + nbytes
+    addr = int(addr)
+    end  = addr + int(nbytes)
     for j in xrange( addr, end ):
       ret += s.mem[j] << shamt
       shamt += 8
-    return s.word_type( ret )
+    return ret
 
   def write( s, addr, nbytes, data ):
-    tmp = int(data)
-    end = addr + nbytes
+    tmp  = int(data)
+    addr = int(addr)
+    end  = addr + int(nbytes)
     for j in xrange( addr, end ):
       s.mem[j] = tmp & 255
       tmp >>= 8
@@ -59,8 +60,8 @@ class TestMemoryFL( MethodsAdapt ):
 class TestMemoryCL( MethodsAdapt ):
   def __init__( s, nports = 1, reqs  = [ MemReqMsg(8,32,32) ], \
                                resps = [ MemRespMsg(8,32)   ],
-                               mem_nbytes=1<<20, word_nbytes=4 ):
-    s.mem = TestMemoryFL( mem_nbytes, word_nbytes )
+                               mem_nbytes=1<<20 ):
+    s.mem = TestMemoryFL( mem_nbytes )
 
     s.ifcs = [ MemIfcCL( (reqs[i], resps[i]) ) for i in xrange(nports) ]
 

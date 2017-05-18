@@ -73,9 +73,12 @@ class MethodsAdapt( MethodsConnection ):
 
     # Check if they are the same interface
 
-    if xlevel == ylevel and xtype == ytype and type(x) == type(y) and x.Type == y.Type:
-      x |= y
-      return
+    if xlevel == ylevel and xtype == ytype and type(x) == type(y):
+      if x.Type == y.Type:
+        x |= y
+        return
+      else:
+        print "Warning: ",x.Type.__dict__,y.Type.__dict__
 
     # Generating a unique name. Lookup the type registry to construct adapter.
 

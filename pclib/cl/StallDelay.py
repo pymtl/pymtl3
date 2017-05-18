@@ -48,7 +48,7 @@ class RandomDelay( MethodsConnection ):
         if s.counter <= 0 and s.buf.val:
           s.send.enq( s.buf.msg )
           s.buf = ValidEntry( val=False, msg=None )
-      s.counter -= 1
+      s.counter = max( 0, s.counter-1 )
 
     s.add_constraints(
       M(s.recv_)     < U(up_delay), # bypass behavior, recv < send
@@ -63,7 +63,7 @@ class RandomDelay( MethodsConnection ):
     return not s.buf.val
 
   def line_trace( s ):
-    return "({})".format( str(s.counter+1) if s.buf.val else ' ' )
+    return "({:2})".format( str(s.counter+1) if s.buf.val else ' ' )
 
 class PipelinedDelay( MethodsConnection ):
 
