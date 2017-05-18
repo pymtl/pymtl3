@@ -20,7 +20,7 @@ class DeqIfcFL( PortBundle ):
   ifc = 'Deq'
 
   def __init__( s, Type ):
-    s.Type = None
+    s.Type = Type
 
     s.deq = MethodPort()
 

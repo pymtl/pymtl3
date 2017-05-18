@@ -1,6 +1,7 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqIfcRTL
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
+from pclib.ifcs  import EnqIfcFL, EnqIfcCL, EnqIfcRTL
 
 class TestSinkValRdy( UpdatesImpl ):
 
@@ -64,6 +65,32 @@ class TestSinkEnRdy( UpdatesImpl ):
 
   def line_trace( s ):
     return s.recv.line_trace()
+
+class TestSinkFL( MethodsConnection ):
+
+  def __init__( s, Type, msgs=[] ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+    s.msgs = deque( msgs )
+
+    s.recv = EnqIfcFL( Type )
+    s.recv.enq |= s.enq_
+
+    s.msg = "."
+    s.tracelen = len( str( Type() ) )
+
+  def enq_( s, msg ):
+    assert s.msgs
+    s.msg = msg
+    ref = s.msgs.popleft()
+    assert ref == msg, "Expect %s, get %s instead" % (ref, msg)
+
+  def done( s ):
+    return not s.msgs
+
+  def line_trace( s ): # called once per cycle
+    trace = str(s.msg)
+    s.msg = "." if s.msgs else " "
+    return "{:>4s}".format( trace ).center( s.tracelen )
 
 class TestSinkCL( MethodsConnection ):
 
