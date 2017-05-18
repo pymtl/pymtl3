@@ -1,6 +1,8 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle, EnqIfcCL, EnqIfcRTL
+from pclib.ifcs  import valrdy_to_str, ValRdyBundle, EnRdyBundle
+from pclib.ifcs  import EnqIfcCL, EnqIfcRTL, DeqIfcFL
+
 
 class TestSourceValRdy( UpdatesImpl ):
 
@@ -63,6 +65,31 @@ class TestSourceEnRdy( UpdatesImpl ):
 
   def line_trace( s ):
     return s.send.line_trace()
+
+class TestSourceFL( MethodsAdapt ):
+
+  def __init__( s, Type, msgs = [] ):
+    assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
+    s.msgs = deque( msgs ) # deque.popleft() is faster
+
+    s.send      = DeqIfcFL( Type )
+    s.send.deq |= s.deq_
+
+    s.sended   = "#"
+    s.tracelen = len( str( Type() ) )
+
+  def deq_( s ):
+    assert s.msgs
+    s.sended = x = s.msgs.popleft()
+    return x
+
+  def done( s ):
+    return not s.msgs
+
+  def line_trace( s ):
+    trace = str(s.sended)
+    s.sended = "#" if s.msgs else " "
+    return "{:>4s}".format( trace ).center( s.tracelen )
 
 class TestSourceCL( MethodsConnection ):
 

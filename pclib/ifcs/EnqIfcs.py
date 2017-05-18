@@ -19,8 +19,8 @@ class EnqIfcCL( PortBundle ):
 class EnqIfcFL( PortBundle ):
   ifc = 'Enq'
 
-  def __init__( s ):
-    s.Type = None
+  def __init__( s, Type ):
+    s.Type = Type
 
     s.enq = MethodPort()
 
