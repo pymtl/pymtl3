@@ -94,8 +94,26 @@ class MethodsConnection( MethodsExpl ):
 
   # Override
   def _elaborate( s ):
+
+    def cleanup_methodports( parent ):
+      if   isinstance( parent, list ): # check if iteratable
+        for i in xrange(len(parent)):
+          if isinstance( parent[i], MethodPort ):
+            parent[i] = parent[i]._func
+          else:
+            cleanup_methodports( parent[i] )
+
+      elif isinstance( parent, PyMTLObject ):
+        for name, obj in parent.__dict__.iteritems():
+          if not name.startswith("_"): # filter private variables
+            if isinstance( obj, MethodPort ):
+              setattr( parent, name, obj._func )
+            else:
+              cleanup_methodports( obj )
+
     PyMTLObject._recursive_tag_name(s) # for debugging
     s._resolve_method_connections()
     super( MethodsConnection, s )._elaborate()
     s._update_partial_constraints()
 
+    cleanup_methodports( s )

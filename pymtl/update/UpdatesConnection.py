@@ -191,13 +191,13 @@ class UpdatesConnection( UpdatesExpl ):
   # Override
   def _elaborate( s ):
 
-    def cleanup_connectables( parent ):
+    def cleanup_wires( parent ):
       if   isinstance( parent, list ): # check if iteratable
         for i in xrange(len(parent)):
           if isinstance( parent[i], Wire ):
             parent[i] = parent[i].default_value()
           else:
-            cleanup_connectables( parent[i] )
+            cleanup_wires( parent[i] )
 
       elif isinstance( parent, PyMTLObject ):
         for name, obj in parent.__dict__.iteritems():
@@ -205,11 +205,11 @@ class UpdatesConnection( UpdatesExpl ):
             if isinstance( obj, Wire ):
               setattr( parent, name, obj.default_value() )
             else:
-              cleanup_connectables( obj )
+              cleanup_wires( obj )
 
     super( UpdatesConnection, s )._elaborate()
     s._resolve_var_connections()
-    cleanup_connectables( s )
+    cleanup_wires( s )
 
   def _resolve_var_connections( s ):
 
