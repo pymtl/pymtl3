@@ -1,5 +1,5 @@
-from NamedObject import NamedObject
-from pymtl.tools import recursive_tag_name
+from pymtl.components import NamedObject
+from pymtl.tools import SimBase
 from collections import deque
 
 class Chicken(NamedObject):
@@ -26,7 +26,7 @@ class Human(NamedObject):
 def test_NamedObject_normal():
 
   x = Human( nlunch=1, ndinner=1 )
-  recursive_tag_name( x )
+  sim = SimBase( x )
 
   assert x.full_name() == "top"
 
@@ -42,7 +42,7 @@ def test_NamedObject_normal():
 def test_NamedObject_deque():
 
   x = Human( nlunch=1, ndinner=5 )
-  recursive_tag_name( x )
+  sim = SimBase( x )
 
   assert x.full_name() == "top"
 
@@ -58,7 +58,7 @@ def test_NamedObject_deque():
 def test_NamedObject_list():
 
   x = Human( nlunch=4, ndinner=1 )
-  recursive_tag_name( x )
+  sim = SimBase( x )
 
   assert x.full_name() == "top"
 
