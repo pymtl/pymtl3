@@ -32,7 +32,8 @@ class SimBase(object):
 
       # Still the same name. Add another idx. Keep peeling the onion.
       for i, o in enumerate( child ):
-        _recursive_tag_expand( o, name, idx, cur_idx + [i] )
+        if o != child:
+          _recursive_tag_expand( o, name, idx, cur_idx + [i] )
 
     def _recursive_tag_name( m ):
 

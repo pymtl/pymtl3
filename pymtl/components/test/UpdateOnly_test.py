@@ -39,7 +39,7 @@ class TestSink( UpdateOnly ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
     return not s.answer
@@ -157,6 +157,9 @@ def test_register_behavior():
         U(up_to_sink) < U(up_sink),
       )
 
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
             "w0={} > w1={}".format(s.wire0,s.wire1) + \
@@ -164,6 +167,225 @@ def test_register_behavior():
 
   A = Top()
   sim = SimLevel1( A )
-  for i in xrange(5):
+  while not A.done():
+    sim.tick()
+    print sim.line_trace()
+
+def test_add_loopback():
+
+  class Top(UpdateOnly):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [4,3,2,1] )
+      s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+
+      s.wire0 = 0
+      s.wire1 = 0
+
+      @s.update
+      def up_from_src():
+        s.wire0 = s.src.out + 1
+
+      up_src = s.src.get_update_block("up_src")
+
+      s.add_constraints(
+        U(up_src) < U(up_from_src),
+      )
+
+      s.reg0 = 0
+
+      @s.update
+      def upA():
+        s.reg0 = s.wire0 + s.wire1
+
+      @s.update
+      def up_to_sink_and_loop_back():
+        s.sink.in_ = s.reg0
+        s.wire1 = s.reg0
+
+      s.add_constraints(
+        U(upA) < U(up_to_sink_and_loop_back),
+        U(upA) < U(up_from_src),
+      )
+
+      up_sink = s.sink.get_update_block("up_sink")
+
+      s.add_constraints(
+        U(up_to_sink_and_loop_back) < U(up_sink),
+      )
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+             " >>> " + s.sink.line_trace()
+
+  A = Top()
+  sim = SimLevel1( A )
+
+  while not A.done():
+    sim.tick()
+    print sim.line_trace()
+
+def test_lots_of_fan():
+
+  class Top(UpdateOnly):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
+      s.sink = TestSink  ( ["*",(5+6+6+7),(4+5+5+6),(3+4+4+5),(2+3+3+4),
+                                (5+6+6+7),(4+5+5+6),(3+4+4+5),(2+3+3+4)] )
+
+      s.wire0 = 0
+
+      @s.update
+      def up_from_src():
+        s.wire0 = s.src.out + 1
+
+      up_src = s.src.get_update_block("up_src")
+
+      s.add_constraints(
+        U(up_src) < U(up_from_src),
+      )
+
+      s.reg = 0
+
+      @s.update
+      def up_reg():
+        s.reg = s.wire0
+
+      s.wire1 = s.wire2 = 0
+
+      @s.update
+      def upA():
+        s.wire1 = s.reg
+        s.wire2 = s.reg + 1
+
+      s.add_constraints(
+        U(up_reg) < U(upA),
+        U(up_reg) < U(up_from_src),
+      )
+
+      s.wire3 = s.wire4 = 0
+
+      @s.update
+      def upB():
+        s.wire3 = s.wire1
+        s.wire4 = s.wire1 + 1
+
+      s.wire5 = s.wire6 = 0
+
+      @s.update
+      def upC():
+        s.wire5 = s.wire2
+        s.wire6 = s.wire2 + 1
+
+      s.add_constraints(
+        U(upA) < U(upB),
+        U(upA) < U(upC),
+      )
+      s.wire7 = s.wire8 = 0
+
+      @s.update
+      def upD():
+        s.wire7 = s.wire3 + s.wire6
+        s.wire8 = s.wire4 + s.wire5
+
+      s.add_constraints(
+        U(upB) < U(upD),
+        U(upC) < U(upD),
+      )
+
+      @s.update
+      def up_to_sink():
+        s.sink.in_ = s.wire7 + s.wire8
+
+      up_sink = s.sink.get_update_block("up_sink")
+
+      s.add_constraints(
+        U(upD) < U(up_to_sink),
+        U(up_to_sink) < U(up_sink),
+      )
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+            "w0=%s > r0=%s" % (s.wire0,s.reg) + \
+             " >>> " + s.sink.line_trace()
+
+  A = Top()
+  sim = SimLevel1( A )
+
+  while not A.done():
+    sim.tick()
+    print sim.line_trace()
+
+def test_2d_array_vars():
+
+  class Top(UpdateOnly):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [2,1,0,2,1,0] )
+      s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
+                                (5+6),(3+4),(1+2)] )
+
+      s.wire = [ [0 for _ in xrange(2)] for _ in xrange(2) ]
+
+      @s.update
+      def up_from_src():
+        s.wire[0][0] = s.src.out
+        s.wire[0][1] = s.src.out + 1
+
+      up_src = s.src.get_update_block("up_src")
+
+      s.add_constraints(
+        U(up_src) < U(up_from_src),
+      )
+
+      s.reg = 0
+
+      @s.update
+      def up_reg():
+        s.reg = s.wire[0][0] + s.wire[0][1]
+
+      @s.update
+      def upA():
+        s.wire[1][0] = s.reg
+        s.wire[1][1] = s.reg + 1
+
+      s.add_constraints(
+        U(up_reg) < U(upA),
+        U(up_reg) < U(up_from_src),
+      )
+      @s.update
+      def up_to_sink():
+        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+
+      up_sink = s.sink.get_update_block("up_sink")
+
+      s.add_constraints(
+        U(upA)        < U(up_to_sink),
+        U(up_to_sink) < U(up_sink),
+      )
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+             str(s.wire)+"r0=%s" % s.reg + \
+             " >>> " + s.sink.line_trace()
+
+  A = Top()
+  sim = SimLevel1( A )
+
+  while not A.done():
     sim.tick()
     print sim.line_trace()

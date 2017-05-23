@@ -45,7 +45,8 @@ class SimLevel1( SimBase ):
         return
 
       for i, o in enumerate( child ):
-        _recursive_expand( o )
+        if o != child:
+          _recursive_expand( o )
 
     for name, obj in m.__dict__.iteritems():
       if not name.startswith("_"):
