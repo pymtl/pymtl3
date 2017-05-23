@@ -1,5 +1,5 @@
 #=========================================================================
-# UpdatesExpl.py
+# UpdateOnly.py
 #=========================================================================
 # At the bottom level, we only have update blocks and explicit constraints
 # between two update blocks/one update block. Basically this layer defines
@@ -14,6 +14,9 @@
 from NamedObject     import NamedObject
 from ConstraintTypes import U
 
+import inspect2, re, ast
+p = re.compile('( *(@|def))')
+
 class UpdateOnly( NamedObject ):
 
   def __new__( cls, *args, **kwargs ):
@@ -27,11 +30,25 @@ class UpdateOnly( NamedObject ):
 
   def update( s, blk ):
     blk_name = blk.__name__
-    assert blk_name not in s._name_upblk, """
-      Cannot declare two update blocks with the same name {}
-    """.format( blk_name )
+    assert blk_name not in s._name_upblk, "Cannot declare two update blocks with the same name {}".format( blk_name )
+
+    # To cache the source and ast of update blocks in the type objects
+
+    cls = type(s)
+
+    if not hasattr( cls, "_blkname_src" ):
+      assert not hasattr( cls, "_blkname_ast" )
+      cls._blkname_src = {}
+      cls._blkname_ast = {}
+
+    if blk_name not in cls._blkname_src:
+      src = p.sub( r'\2', inspect2.getsource(blk) )
+      cls._blkname_src[ blk_name ] = src
+      cls._blkname_ast[ blk_name ] = ast.parse( src )
 
     s._name_upblk[ blk_name ] = s._blkid_upblk[ id(blk) ] = blk
+    blk.hostobj = s
+    blk.ast     = cls._blkname_ast[ blk_name ]
     return blk
 
   def add_update_block( s, src ):

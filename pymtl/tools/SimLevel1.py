@@ -1,7 +1,7 @@
 from SimBase import SimBase
 from pymtl.components import UpdateOnly, NamedObject
 from collections import defaultdict, deque
-import py
+import py, ast
 
 class SimLevel1( SimBase ):
 
@@ -17,7 +17,9 @@ class SimLevel1( SimBase ):
     print_schedule( serial, batch )
 
     self.tick = self.generate_tick_func( serial )
-    self.line_trace = model.line_trace
+
+    if hasattr( model, "line_trace" ):
+      self.line_trace = model.line_trace
 
   def _elaborate_vars( self, m ):
     pass
@@ -144,25 +146,72 @@ class SimLevel1( SimBase ):
   # After we come up with a schedule, we generate a tick function that calls
   # all update blocks. We can do "JIT" here.
 
-  @staticmethod
-  def generate_tick_func( schedule ):
+  def generate_tick_func( self, schedule, mode='unroll' ):
 
-    # + Berkin's recipe
-    strs = map( "  update_blk{}()".format, xrange( len( schedule ) ) )
-    gen_schedule_src = py.code.Source("""
-      {}
-      def tick():
-        # The code below does the actual calling of update blocks.
+    if mode == 'normal':
+      def tick_normal():
+        for blk in schedule:
+          blk()
+
+      return tick
+
+    if mode == 'unroll': # Berkin's recipe
+      strs = map( "  update_blk{}()".format, xrange( len( schedule ) ) )
+      gen_schedule_src = py.code.Source("""
         {}
+        def tick_unroll():
+          # The code below does the actual calling of update blocks.
+          {}
 
-      """.format( "; ".join( map(
-                  "update_blk{0} = schedule[{0}]".format,
-                      xrange( len( schedule ) ) ) ),
-                  "\n        ".join( strs ) ) )
+        """.format( "; ".join( map(
+                    "update_blk{0} = schedule[{0}]".format,
+                        xrange( len( schedule ) ) ) ),
+                    "\n          ".join( strs ) ) )
 
-    exec gen_schedule_src.compile() in locals()
+      exec gen_schedule_src.compile() in locals()
+      return tick_unroll
 
-    return tick
+    if mode == 'hacky':
+      top      = self.model
+      rewriter = RewriteSelf()
+
+      # Construct a new FunctionDef AST node and the Module wrapper
+
+      newfunc = ast.FunctionDef()
+      newfunc.col_offset = 0
+      newfunc.lineno     = 0
+      newfunc.name = "tick_hacky"
+      newfunc.decorator_list = []
+      newfunc.body = []
+      newfunc.args = ast.arguments()
+      newfunc.args.args = []
+      newfunc.args.kwarg = None
+      newfunc.args.defaults = []
+      newfunc.args.vararg = None
+
+      newroot = ast.Module()
+      newroot.body = [ newfunc ]
+
+      # Concatenate update block statements
+
+      for blk in schedule:
+        hostobj = blk.hostobj.full_name()
+        root    = blk.ast
+
+        # in the form of:
+        # >>> hostobj = top.reg # this is hostobj_stmt
+        # >>> hostobj.out = hostobj.in_ # stmt
+
+        if hostobj != "s":
+          hostobj_stmt = ast.parse( "hostobj = " + hostobj ).body[0]
+          newfunc.body.append( ast.fix_missing_locations( hostobj_stmt ) )
+
+        for stmt in root.body[0].body:
+          if hostobj != "s": rewriter.visit( stmt )
+          newfunc.body.append( stmt )
+
+      exec compile( newroot, "<string>", "exec") in locals()
+      return tick_hacky
 
 def print_upblk_dag( upblk_dict, constraints ):
   from graphviz import Digraph
@@ -183,3 +232,11 @@ def print_schedule( schedule, batch_schedule ):
     print i, blk.__name__
   for x in batch_schedule:
     print [ y.__name__ for y in x ]
+
+class RewriteSelf(ast.NodeVisitor):
+  def visit_Attribute( self, node ):
+    if isinstance( node.value, ast.Name ): # s.x
+      if node.value.id == "s": # this is not optimized by "common writer"
+        node.value.id = "hostobj"
+    else:
+      self.visit( node.value )
