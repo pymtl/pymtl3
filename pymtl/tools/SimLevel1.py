@@ -3,6 +3,7 @@ from pymtl.components import UpdateOnly, NamedObject
 from collections import defaultdict, deque
 import py, ast
 
+
 class SimLevel1( SimBase ):
 
   def __init__( self, model ):
@@ -13,13 +14,18 @@ class SimLevel1( SimBase ):
 
     # print_upblk_dag( self._blkid_upblk, self._constraints )
 
-    serial, batch = self.schedule( self._blkid_upblk, self._constraints )
+    serial, batch = self.schedule( self._blkid_upblk, self._U_U_constraints )
     print_schedule( serial, batch )
 
     self.tick = self.generate_tick_func( serial )
 
     if hasattr( model, "line_trace" ):
       self.line_trace = model.line_trace
+
+  def _declare_vars( self ):
+    self._name_upblk  = {}
+    self._blkid_upblk = {}
+    self._U_U_constraints = set()
 
   def _elaborate_vars( self, m ):
     pass
@@ -28,7 +34,7 @@ class SimLevel1( SimBase ):
     if isinstance( m, UpdateOnly ):
       self._name_upblk.update ( m._name_upblk )
       self._blkid_upblk.update( m._blkid_upblk )
-      self._constraints.update( m._U_U_constraints )
+      self._U_U_constraints.update( m._U_U_constraints )
 
   def _recursive_elaborate( self, m ):
 
@@ -49,8 +55,9 @@ class SimLevel1( SimBase ):
           _recursive_expand( o )
 
     for name, obj in m.__dict__.iteritems():
-      if not name.startswith("_"):
-        _recursive_expand( obj )
+      if ( isinstance( name, basestring ) and not name.startswith("_") ) \
+        or isinstance( name, tuple):
+          _recursive_expand( obj )
 
     self._elaborate_vars( m )
     self._collect_vars( m )
@@ -60,10 +67,7 @@ class SimLevel1( SimBase ):
   # Then elaborate all variables at the current level.
 
   def recursive_elaborate( self, m ):
-    self._name_upblk  = {}
-    self._blkid_upblk = {}
-    self._constraints = set()
-
+    self._declare_vars()
     self._recursive_elaborate( m )
 
   #-------------------------------------------------------------------------

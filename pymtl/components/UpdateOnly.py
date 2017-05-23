@@ -22,10 +22,10 @@ class UpdateOnly( NamedObject ):
   def __new__( cls, *args, **kwargs ):
     inst = NamedObject.__new__( cls, *args, **kwargs )
 
-    # These will be collected recursively
     inst._name_upblk      = {}
     inst._blkid_upblk     = {}
     inst._U_U_constraints = set() # contains ( id(func), id(func) )s
+
     return inst
 
   def update( s, blk ):
@@ -46,9 +46,9 @@ class UpdateOnly( NamedObject ):
       cls._blkname_src[ blk_name ] = src
       cls._blkname_ast[ blk_name ] = ast.parse( src )
 
-    s._name_upblk[ blk_name ] = s._blkid_upblk[ id(blk) ] = blk
     blk.hostobj = s
     blk.ast     = cls._blkname_ast[ blk_name ]
+    s._name_upblk[ blk_name ] = s._blkid_upblk[ id(blk) ] = blk
     return blk
 
   def add_update_block( s, src ):
