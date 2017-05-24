@@ -32,7 +32,7 @@ class UpdateOnly( NamedObject ):
     blk_name = blk.__name__
     assert blk_name not in s._name_upblk, "Cannot declare two update blocks with the same name {}".format( blk_name )
 
-    # To cache the source and ast of update blocks in the type objects
+    # Cache the source and ast of update blocks in the type object
 
     cls = type(s)
 
