@@ -1,5 +1,4 @@
-from pymtl.components import UpdateOnly, U
-from pymtl.tools import SimLevel1
+from pymtl import *
 from collections import deque
 
 class TestSource( UpdateOnly ):

@@ -1,4 +1,5 @@
 from pymtl.components import NamedObject
+from collections import deque
 
 class SimBase(object):
 
@@ -26,15 +27,13 @@ class SimBase(object):
         child._name_idx = ( pname + cur_name, pidx + [ cur_idx ] )
         _recursive_tag_name( child )
 
-      # If child is neither iterable or NamedObject, ignore it
-      try:
-        iterator = iter(child)
-      except TypeError:
-        return
+      # ONLY LIST/DEQUE IS SUPPORTED, SORRY.
+      # I don't want to support any iterable object because later "Wire"
+      # can be infinitely iterated and cause infinite loop. Special casing
+      # Wire will be a mess around everywhere.
 
-      # Still the same name. Add another idx. Keep peeling the onion.
-      for i, o in enumerate( child ):
-        if o != child:
+      if isinstance( child, list ) or isinstance( child, deque ):
+        for i, o in enumerate( child ):
           _recursive_tag_expand( o, parent, cur_name, cur_idx + [i] )
 
     # If the id is string, it is a normal children field. Otherwise it

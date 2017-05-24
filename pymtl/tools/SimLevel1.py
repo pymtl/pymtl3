@@ -3,7 +3,6 @@ from pymtl.components import UpdateOnly, NamedObject
 from collections import defaultdict, deque
 import py, ast
 
-
 class SimLevel1( SimBase ):
 
   def __init__( self, model ):
@@ -44,14 +43,9 @@ class SimLevel1( SimBase ):
       if isinstance( child, NamedObject ):
         self._recursive_elaborate( child )
 
-      # If child is neither iterable or NamedObject, ignore it
-      try:
-        iterator = iter(child)
-      except TypeError:
-        return
-
-      for i, o in enumerate( child ):
-        if o != child:
+      # SORRY
+      if isinstance( child, list ) or isinstance( child, deque ):
+        for i, o in enumerate( child ):
           _recursive_expand( o )
 
     for name, obj in m.__dict__.iteritems():
