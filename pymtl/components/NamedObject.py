@@ -19,10 +19,14 @@ class NamedObject(object):
 
   def full_name( s ):
     name, idx = s._name_idx
-    if not name[-1]: # The only place we allow slicing is the end
-      assert len(idx[-1]) == 1
-      return ".".join( [ "{}{}".format( name[i], "".join(["[{}]".format(x) for x in idx[i]]) ) \
-                         for i in xrange(len(name)-1) ]
-                     ) + "[{}:{}]".format( idx[-1][0].start, idx[-1][0].stop )
-    return ".".join( [ "{}{}".format( name[i], "".join( ["[{}]".format(x) for x in idx[i]] ) ) \
+
+    if len(name) == len(idx): # normal
+      return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
                         for i in xrange(len(name)) ] )
+
+    # The only place we allow slicing is the end
+    assert len(name) == len(idx) - 1 and len(idx[-1]) == 1
+
+    return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
+                      for i in xrange(len(name)-1) ] ) + \
+                      "[%d:%d]" % ( idx[-1][0].start, idx[-1][0].stop )

@@ -44,7 +44,7 @@ class SimLevel1( SimBase ):
         self._recursive_elaborate( child )
 
       # SORRY
-      if isinstance( child, list ) or isinstance( child, deque ):
+      elif isinstance( child, list ) or isinstance( child, deque ):
         for i, o in enumerate( child ):
           _recursive_expand( o )
 

@@ -21,7 +21,7 @@ class SimBase(object):
     def _recursive_tag_expand( child, parent, cur_name, cur_idx ):
 
       # Jump back to main function when it's another named object
-      if isinstance( child, NamedObject ):
+      if   isinstance( child, NamedObject ):
         child._parent   = parent
         pname, pidx     = parent._name_idx
         child._name_idx = ( pname + cur_name, pidx + [ cur_idx ] )
@@ -32,7 +32,7 @@ class SimBase(object):
       # can be infinitely iterated and cause infinite loop. Special casing
       # Wire will be a mess around everywhere.
 
-      if isinstance( child, list ) or isinstance( child, deque ):
+      elif isinstance( child, list ) or isinstance( child, deque ):
         for i, o in enumerate( child ):
           _recursive_tag_expand( o, parent, cur_name, cur_idx + [i] )
 
@@ -50,5 +50,5 @@ class SimBase(object):
           assert isinstance( name, tuple ) # name = [1:3]
           _recursive_tag_expand( obj, m, [], [ slice(name[0], name[1]) ] )
 
-    m._name_idx = ( ["top"], [ [] ] )
+    m._name_idx = ( ["s"], [ [] ] )
     _recursive_tag_name( m )
