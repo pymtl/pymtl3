@@ -3,7 +3,8 @@
 #=========================================================================
 
 from UpdateOnly      import UpdateOnly
-from ConstraintTypes import U, RD, WR
+from ConstraintTypes import U, RD, WR, ValueConstraint
+from collections     import defaultdict
 import AstHelper
 
 class UpdateWithVar( UpdateOnly ):
@@ -50,7 +51,7 @@ class UpdateWithVar( UpdateOnly ):
 
     for (x0, x1) in args:
       if   isinstance( x0, U ) and isinstance( x1, U ): # U & U, same
-        s._expl_constraints.add( (id(x0.func), id(x1.func)) )
+        s._U_U_constraints.add( (id(x0.func), id(x1.func)) )
 
       elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
         assert False, "Constraints between two variables are not allowed!"

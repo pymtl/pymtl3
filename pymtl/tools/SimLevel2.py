@@ -1,5 +1,5 @@
 from SimLevel1 import *
-from pymtl.components import UpdateWithVar
+from pymtl.components import UpdateWithVar, Connectable
 from collections import defaultdict, deque
 
 class SimLevel2( SimLevel1 ):
@@ -8,9 +8,10 @@ class SimLevel2( SimLevel1 ):
     self.model = model
 
     self.recursive_tag_name( model )
-
     self.recursive_elaborate( model )
+    self.recursive_tag_name( model )
 
+    assert False
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
     print_schedule( serial, batch )
 
@@ -33,24 +34,20 @@ class SimLevel2( SimLevel1 ):
 
   # Override
   def _elaborate_vars( self, m ):
-    self._elaborate_read_write( m )
+    if isinstance( m, UpdateWithVar ):
+      self._elaborate_read_write( m )
 
   # Override
   def _collect_vars( self, m ):
-    super( SimLevel1, self )._collect_vars( self, m )
+    super( SimLevel2, self )._collect_vars( m )
 
     if isinstance( m, UpdateWithVar ):
-      s._update_on_edge.update( child._update_on_edge )
+      self._update_on_edge.update( m._update_on_edge )
 
       for k in m._RD_U_constraints:
-        s._RD_U_constraints[k].extend( m._RD_U_constraints[k] )
+        self._RD_U_constraints[k].extend( m._RD_U_constraints[k] )
       for k in m._WR_U_constraints:
-        s._WR_U_constraints[k].extend( m._WR_U_constraints[k] )
-
-      for k in m._RD_upblks:
-        s._RD_upblks[k].extend( child._RD_upblks[k] )
-      for k in m._WR_upblks:
-        s._WR_upblks[k].extend( child._WR_upblks[k] )
+        self._WR_U_constraints[k].extend( m._WR_U_constraints[k] )
 
   def _elaborate_read_write( self, m ):
 
@@ -83,15 +80,10 @@ class SimLevel2( SimLevel1 ):
         obj_list.append( obj )
         return
 
-      # If obj is neither iterable or Connectable, ignore it
-      try:
-        iterator = iter(child)
-      except TypeError:
-        return
-
-      # As long as the thing is iterable.
-      for i, o in enumerate( obj ):
-        add_all( o, obj_list )
+      # SORRY
+      if isinstance( obj, list ) or isinstance( obj, deque ):
+        for i, o in enumerate( obj ):
+          add_all( o, obj_list )
 
     # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
 
@@ -117,6 +109,8 @@ class SimLevel2( SimLevel1 ):
 
     for blkid, blk in m._blkid_upblk.iteritems():
 
+      print "\nblk {}".format( blk.__name__ )
+
       for typ in [ 'rd', 'wr' ]: # deduplicate code
         if typ == 'rd':  names, id_upblk = blk.rd, self._RD_upblks
         else:            names, id_upblk = blk.wr, self._WR_upblks
@@ -124,21 +118,18 @@ class SimLevel2( SimLevel1 ):
         objs = []
         for name in names:
           try:
-            lookup_var( s, 0, name, objs )
-          except TypeError as e:
-            print rd, blk.__name__, lineno # TODO
-            raise
-          except IndexError as e:
-            print rd, blk.__name__, lineno # TODO
-            raise
-          except ValueError as e:
-            print rd, blk.__name__, lineno # TODO
-            raise
+            lookup_var( m, 0, name, objs )
           except Exception as e:
-            print rd, blk.__name__, lineno # TODO
+            print name, blk.__name__ #, lineno TODO
             raise
 
         for o in objs:
           oid = id(o)
           id_upblk[ oid ].append( blkid )
           self._id_obj[ oid ] = o
+
+        if objs:
+          SimLevel1.recursive_tag_name( m )
+          dedup = { id(o): o for o in objs }
+          print "  {}: {}".format( typ,
+                "  ".join([ "\n   - {}".format( o.full_name() ) for o in dedup.values()] ))
