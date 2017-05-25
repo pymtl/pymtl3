@@ -158,6 +158,9 @@ def test_write_two_disjoint_slices():
       def up_rd_12_30():
         assert s.A[12:30] == 0xff0
 
+    def done( s ):
+      return True
+
   simulate( Top )
 
 # WR A.b - RD A
@@ -239,7 +242,7 @@ def test_add_loopback():
     def __init__( s ):
 
       s.src  = TestSource( [4,3,2,1] )
-      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+      s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
 
       s.wire0 = Wire(int)
       s.wire1 = Wire(int)
@@ -281,7 +284,7 @@ def test_add_loopback_on_edge():
     def __init__( s ):
 
       s.src  = TestSource( [4,3,2,1] )
-      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+      s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
 
       s.wire0 = Wire(int)
       s.wire1 = Wire(int)
@@ -319,7 +322,7 @@ def test_2d_array_vars_impl():
     def __init__( s ):
 
       s.src  = TestSource( [2,1,0,2,1,0] )
-      s.sink = TestSink  ( ["?",(5+6),(3+4),(1+2),
+      s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
       s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
@@ -353,3 +356,28 @@ def test_2d_array_vars_impl():
              " >>> " + s.sink.line_trace()
 
   simulate( Top )
+
+# N-input Mux
+
+class Mux(UpdateWithVar):
+
+  def __init__( s, ninputs ):
+    s.in_ = [ ValuePort(int) for _ in xrange(ninputs) ]
+    s.sel = ValuePort(int)
+    s.out = ValuePort(int)
+
+    @s.update
+    def up_mux():
+      s.out = s.in_[ s.sel ]
+
+    for x in s.in_:
+      s.add_constraints(
+        WR(x) < U(up_mux),
+      )
+
+    s.add_constraints(
+      WR(s.sel) < U(up_mux),
+      U(up_mux) < RD(s.out),
+    )
+
+  def line_trace( s ):  pass

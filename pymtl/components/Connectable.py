@@ -38,7 +38,7 @@ class Connectable(object):
       assert root == s, "It doesn't make sense ..."
 
 # Checking if two slices/indices overlap
-def overlap( x, y ):
+def _overlap( x, y ):
   if isinstance( x, int ):
     if isinstance( y, int ):  return x == y
     else:                     return y.start <= x < y.stop

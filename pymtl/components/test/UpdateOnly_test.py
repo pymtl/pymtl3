@@ -168,7 +168,7 @@ def test_register_behavior():
   sim = SimLevel1( A )
   while not A.done():
     sim.tick()
-    print sim.line_trace()
+    print A.line_trace()
 
 def test_add_loopback():
 
@@ -227,7 +227,7 @@ def test_add_loopback():
 
   while not A.done():
     sim.tick()
-    print sim.line_trace()
+    print A.line_trace()
 
 def test_lots_of_fan():
 
@@ -323,7 +323,7 @@ def test_lots_of_fan():
 
   while not A.done():
     sim.tick()
-    print sim.line_trace()
+    print A.line_trace()
 
 def test_2d_array_vars():
 
@@ -387,4 +387,4 @@ def test_2d_array_vars():
 
   while not A.done():
     sim.tick()
-    print sim.line_trace()
+    print A.line_trace()

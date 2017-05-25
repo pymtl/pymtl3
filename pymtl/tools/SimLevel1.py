@@ -21,6 +21,8 @@ class SimLevel1( SimBase ):
     if hasattr( model, "line_trace" ):
       self.line_trace = model.line_trace
 
+    self.cleanup_wires( model )
+
   def _declare_vars( self ):
     self._name_upblk  = {}
     self._blkid_upblk = {}
