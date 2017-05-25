@@ -1,5 +1,5 @@
 from SimBase import SimBase
-from pymtl.components import UpdateOnly, NamedObject
+from pymtl.components import UpdateOnly, NamedObject, Wire
 from collections import defaultdict, deque
 import py, ast
 
@@ -22,6 +22,25 @@ class SimLevel1( SimBase ):
       self.line_trace = model.line_trace
 
     self.cleanup_wires( model )
+
+  def cleanup_wires( self, m ):
+
+    # SORRY
+    if isinstance( m, list ) or isinstance( m, deque ):
+      for i, o in enumerate( m ):
+        if isinstance( o, Wire ):
+          m[i] = o.default_value()
+        else:
+          self.cleanup_wires( o )
+
+    elif isinstance( m, NamedObject ):
+      for name, obj in m.__dict__.iteritems():
+        if ( isinstance( name, basestring ) and not name.startswith("_") ) \
+          or isinstance( name, tuple):
+            if isinstance( obj, Wire ):
+              setattr( m, name, obj.default_value() )
+            else:
+              self.cleanup_wires( obj )
 
   def _declare_vars( self ):
     self._name_upblk  = {}
@@ -154,7 +173,7 @@ class SimLevel1( SimBase ):
         for blk in schedule:
           blk()
 
-      return tick
+      return tick_normal
 
     if mode == 'unroll': # Berkin's recipe
       strs = map( "  update_blk{}()".format, xrange( len( schedule ) ) )
@@ -173,7 +192,7 @@ class SimLevel1( SimBase ):
       return tick_unroll
 
     if mode == 'hacky':
-      top      = self.model
+      s        = self.model
       rewriter = RewriteSelf()
 
       # Construct a new FunctionDef AST node and the Module wrapper
@@ -195,12 +214,15 @@ class SimLevel1( SimBase ):
 
       # Concatenate update block statements
 
+      func_globals = dict()
       for blk in schedule:
+        func_globals.update( blk.func_globals )
+
         hostobj = blk.hostobj.full_name()
         root    = blk.ast
 
         # in the form of:
-        # >>> hostobj = top.reg # this is hostobj_stmt
+        # >>> hostobj = s.reg # this is hostobj_stmt
         # >>> hostobj.out = hostobj.in_ # stmt
 
         if hostobj != "s":
@@ -212,6 +234,7 @@ class SimLevel1( SimBase ):
           newfunc.body.append( stmt )
 
       exec compile( newroot, "<string>", "exec") in locals()
+      tick_hacky.func_globals.update( func_globals )
       return tick_hacky
 
 def print_upblk_dag( upblk_dict, constraints ):

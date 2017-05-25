@@ -362,9 +362,9 @@ def test_2d_array_vars_impl():
 class Mux(UpdateWithVar):
 
   def __init__( s, ninputs ):
-    s.in_ = [ ValuePort(int) for _ in xrange(ninputs) ]
-    s.sel = ValuePort(int)
-    s.out = ValuePort(int)
+    s.in_ = [ Wire(int) for _ in xrange(ninputs) ]
+    s.sel = Wire(int)
+    s.out = Wire(int)
 
     @s.update
     def up_mux():

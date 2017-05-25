@@ -5,7 +5,7 @@ from collections import defaultdict, deque
 
 class SimLevel2( SimLevel1 ):
 
-  def __init__( self, model ):
+  def __init__( self, model, tick_mode='unroll' ):
     self.model = model
 
     self.recursive_tag_name( model )
@@ -16,27 +16,9 @@ class SimLevel2( SimLevel1 ):
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
 
     print_schedule( serial, batch )
-    self.tick = self.generate_tick_func( serial )
+    self.tick = self.generate_tick_func( serial, tick_mode )
+
     self.cleanup_wires( self.model )
-
-  def cleanup_wires( self, m ):
-
-    # SORRY
-    if isinstance( m, list ) or isinstance( m, deque ):
-      for i, o in enumerate( m ):
-        if isinstance( o, Wire ):
-          m[i] = o.default_value()
-        else:
-          self.cleanup_wires( o )
-
-    elif isinstance( m, NamedObject ):
-      for name, obj in m.__dict__.iteritems():
-        if ( isinstance( name, basestring ) and not name.startswith("_") ) \
-          or isinstance( name, tuple):
-            if isinstance( obj, Wire ):
-              setattr( m, name, obj.default_value() )
-            else:
-              self.cleanup_wires( obj )
 
   # Override
   def _declare_vars( self ):
@@ -287,7 +269,7 @@ class SimLevel2( SimLevel1 ):
     for (x, y) in expl_constraints:
       print self._blkid_upblk[x].__name__.center(25),"  <  ", self._blkid_upblk[y].__name__.center(25)
 
-    self._constraints = set()
+    self._constraints = expl_constraints.copy()
 
     for (x, y) in impl_constraints:
       if (y, x) not in expl_constraints: # no conflicting expl
