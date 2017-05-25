@@ -57,7 +57,7 @@ class UpdateWithVar( UpdateOnly ):
         assert False, "Constraints between two variables are not allowed!"
 
       elif isinstance( x0, ValueConstraint ) or isinstance( x1, ValueConstraint ):
-        sign = 1 # RD(x) < U(x) is 1, RD(x) > U(x) is -1
+        sign = 1 # RD(x) < U is 1, RD(x) > U is -1
         if isinstance( x1, ValueConstraint ):
           sign = -1
           x0, x1 = x1, x0 # Make sure x0 is RD/WR(...) and x1 is U(...)

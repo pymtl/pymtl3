@@ -6,7 +6,7 @@ def simulate( cls ):
   sim = SimLevel2( A )
 
   while not A.done():
-    sim.cycle()
+    sim.tick()
     print A.line_trace()
 
 class TestSource( UpdateWithVar ):
@@ -186,5 +186,170 @@ def test_wr_A_b_rd_A_impl():
       @s.update
       def up_rd_A():
         z = s.A
+
+  A = Top()
+  sim = SimLevel2( A )
+
+def test_bb():
+
+  class Top(UpdateWithVar):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a = s.b + 1
+
+      @s.update
+      def upB():
+        s.b = s.b + 1
+
+  A = Top()
+  sim = SimLevel2( A )
+
+def test_bb_cyclic_dependency():
+
+  class Top(UpdateWithVar):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a = s.b
+
+      @s.update
+      def upB():
+        s.b = s.a
+
+  A = Top()
+  try:
+    sim = SimLevel2( A )
+  except Exception:
+    return
+  raise Exception("Should've thrown cyclic dependency exception.")
+
+def test_add_loopback():
+
+  class Top(UpdateWithVar):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [4,3,2,1] )
+      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+
+      s.wire0 = Wire(int)
+      s.wire1 = Wire(int)
+
+      @s.update
+      def up_from_src():
+        s.wire0 = s.src.out + 1
+
+      s.reg0 = Wire(int)
+
+      @s.update
+      def upA():
+        s.reg0 = s.wire0 + s.wire1
+
+      @s.update
+      def up_to_sink_and_loop_back():
+        s.sink.in_ = s.reg0
+        s.wire1 = s.reg0
+
+      s.add_constraints(
+        U(upA) < WR(s.wire1),
+        U(upA) < WR(s.wire0),
+        U(upA) < RD(s.reg0), # also implicit
+      )
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+             " >>> " + s.sink.line_trace()
+  simulate( Top )
+
+def test_add_loopback_on_edge():
+
+  class Top(UpdateWithVar):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [4,3,2,1] )
+      s.sink = TestSink  ( ["?",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+
+      s.wire0 = Wire(int)
+      s.wire1 = Wire(int)
+
+      @s.update
+      def up_from_src():
+        s.wire0 = s.src.out + 1
+
+      s.reg0 = Wire(int)
+
+      # UPDATE ON EDGE!
+      @s.update_on_edge
+      def upA():
+        s.reg0 = s.wire0 + s.wire1
+
+      @s.update
+      def up_to_sink_and_loop_back():
+        s.sink.in_ = s.reg0
+        s.wire1 = s.reg0
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+             " >>> " + s.sink.line_trace()
+
+  simulate( Top )
+
+def test_2d_array_vars_impl():
+
+  class Top(UpdateWithVar):
+
+    def __init__( s ):
+
+      s.src  = TestSource( [2,1,0,2,1,0] )
+      s.sink = TestSink  ( ["?",(5+6),(3+4),(1+2),
+                                (5+6),(3+4),(1+2)] )
+
+      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+
+      @s.update
+      def up_from_src():
+        s.wire[0][0] = s.src.out
+        s.wire[0][1] = s.src.out + 1
+
+      s.reg = Wire(int)
+
+      @s.update_on_edge
+      def up_reg():
+        s.reg = s.wire[0][0] + s.wire[0][1]
+
+      @s.update
+      def upA():
+        for i in xrange(2):
+          s.wire[1][i] = s.reg + i
+
+      @s.update
+      def up_to_sink():
+        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return s.src.line_trace() + " >>> " + \
+             str(s.wire)+"r0=%s" % s.reg + \
+             " >>> " + s.sink.line_trace()
 
   simulate( Top )

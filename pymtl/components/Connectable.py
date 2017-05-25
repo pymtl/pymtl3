@@ -55,6 +55,8 @@ class Wire( Connectable, NamedObject ):
     s.Type    = Type
     s._nested = None # None means it's the top level Wire(Type)
     s._slice  = None # None means it's not a slice of some wire
+    s._attrs  = {}
+    s._slices = {}
 
   def __getattr__( s, name ):
     if name.startswith("_"): # private variable
@@ -63,7 +65,7 @@ class Wire( Connectable, NamedObject ):
     if name not in s.__dict__:
       x = Wire( getattr(s.Type, name) )
       x._nested          = s
-      s.__dict__[ name ] = x
+      s.__dict__[ name ] = s._attrs[ name ] = x
 
     return s.__dict__[ name ]
 
@@ -84,7 +86,7 @@ class Wire( Connectable, NamedObject ):
       x = Wire( mk_bits( sl.stop - sl.start) )
       x._nested = s
       x._slice  = sl
-      s.__dict__[ sl_tuple ] = x
+      s.__dict__[ sl_tuple ] = s._slices[ sl_tuple ] = x
 
     return s.__dict__[ sl_tuple ]
 
