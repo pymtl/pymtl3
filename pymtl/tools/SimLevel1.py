@@ -1,5 +1,5 @@
 from SimBase import SimBase
-from pymtl.components import UpdateOnly, NamedObject, Wire
+from pymtl.components import UpdateOnly, NamedObject
 from collections import defaultdict, deque
 import py, ast
 
@@ -20,27 +20,6 @@ class SimLevel1( SimBase ):
 
     if hasattr( model, "line_trace" ):
       self.line_trace = model.line_trace
-
-    self.cleanup_wires( model )
-
-  def cleanup_wires( self, m ):
-
-    # SORRY
-    if isinstance( m, list ) or isinstance( m, deque ):
-      for i, o in enumerate( m ):
-        if isinstance( o, Wire ):
-          m[i] = o.default_value()
-        else:
-          self.cleanup_wires( o )
-
-    elif isinstance( m, NamedObject ):
-      for name, obj in m.__dict__.iteritems():
-        if ( isinstance( name, basestring ) and not name.startswith("_") ) \
-          or isinstance( name, tuple):
-            if isinstance( obj, Wire ):
-              setattr( m, name, obj.default_value() )
-            else:
-              self.cleanup_wires( obj )
 
   def _declare_vars( self ):
     self._name_upblk  = {}

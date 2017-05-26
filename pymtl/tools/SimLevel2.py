@@ -20,6 +20,25 @@ class SimLevel2( SimLevel1 ):
 
     self.cleanup_wires( self.model )
 
+  def cleanup_wires( self, m ):
+
+    # SORRY
+    if isinstance( m, list ) or isinstance( m, deque ):
+      for i, o in enumerate( m ):
+        if isinstance( o, Wire ):
+          m[i] = o.default_value()
+        else:
+          self.cleanup_wires( o )
+
+    elif isinstance( m, NamedObject ):
+      for name, obj in m.__dict__.iteritems():
+        if ( isinstance( name, basestring ) and not name.startswith("_") ) \
+          or isinstance( name, tuple):
+            if isinstance( obj, Wire ):
+              setattr( m, name, obj.default_value() )
+            else:
+              self.cleanup_wires( obj )
+
   # Override
   def _declare_vars( self ):
     super( SimLevel2, self )._declare_vars()
@@ -107,7 +126,7 @@ class SimLevel2( SimLevel1 ):
 
     for blkid, blk in m._blkid_upblk.iteritems():
 
-      print "\nblk {}".format( blk.__name__ )
+      # print "\nblk {}".format( blk.__name__ )
 
       for typ in [ 'rd', 'wr' ]: # deduplicate code
         if typ == 'rd':
@@ -129,12 +148,11 @@ class SimLevel2( SimLevel1 ):
           id_upblk[ id(o) ].append( blkid )
           self._id_obj[ id(o) ] = o
 
-        if objs:
-          SimLevel1.recursive_tag_name( m )
-          dedup = { id(o): o for o in objs }
-          print "  {}: {}".format( typ,
-                "  ".join([ "\n   - {}".format( o.full_name() ) for o in dedup.values()] ))
-
+        # if objs:
+          # SimLevel1.recursive_tag_name( m )
+          # dedup = { id(o): o for o in objs }
+          # print "  {}: {}".format( typ,
+                # "  ".join([ "\n   - {}".format( o.full_name() ) for o in dedup.values()] ))
 
   def synthesize_var_constraints( self ):
 
@@ -150,6 +168,7 @@ class SimLevel2( SimLevel1 ):
     # constraint RD(x) > U1 & U2 reads  x --> U1 <  RD(x) == U2 # impl
     # constraint WR(x) < U1 & U2 writes x --> U2 == WR(x) <  U1 # impl
     # constraint WR(x) > U1 & U2 writes x --> U1 <  WR(x) == U2
+    # Doesn't for nested data struct and slice:
 
     expl_constraints = set()
 
@@ -263,11 +282,11 @@ class SimLevel2( SimLevel1 ):
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    for (x, y) in impl_constraints:
-      print self._blkid_upblk[x].__name__.center(25)," (<) ", self._blkid_upblk[y].__name__.center(25)
+    # for (x, y) in impl_constraints:
+      # print self._blkid_upblk[x].__name__.center(25)," (<) ", self._blkid_upblk[y].__name__.center(25)
 
-    for (x, y) in expl_constraints:
-      print self._blkid_upblk[x].__name__.center(25),"  <  ", self._blkid_upblk[y].__name__.center(25)
+    # for (x, y) in expl_constraints:
+      # print self._blkid_upblk[x].__name__.center(25),"  <  ", self._blkid_upblk[y].__name__.center(25)
 
     self._constraints = expl_constraints.copy()
 
@@ -275,8 +294,8 @@ class SimLevel2( SimLevel1 ):
       if (y, x) not in expl_constraints: # no conflicting expl
         self._constraints.add( (x, y) )
 
-      if (x, y) in expl_constraints or (y, x) in expl_constraints:
-        print "implicit constraint is overriden -- ",self._blkid_upblk[x].__name__, " (<) ", \
-               self._blkid_upblk[y].__name__
+      # if (x, y) in expl_constraints or (y, x) in expl_constraints:
+        # print "implicit constraint is overriden -- ",self._blkid_upblk[x].__name__, " (<) ", \
+               # self._blkid_upblk[y].__name__
 
     self._constraints = list(self._constraints)
