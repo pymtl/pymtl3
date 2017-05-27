@@ -11,10 +11,10 @@ class SimLevel1( SimBase ):
     self.recursive_tag_name( model )
     self.recursive_elaborate( model )
 
-    # print_upblk_dag( self._blkid_upblk, self._constraints )
+    # self.print_upblk_dag( self._blkid_upblk, self._constraints )
 
     serial, batch = self.schedule( self._blkid_upblk, self._U_U_constraints )
-    print_schedule( serial, batch )
+    self.print_schedule( serial, batch )
 
     self.tick = self.generate_tick_func( serial )
 
@@ -216,25 +216,27 @@ class SimLevel1( SimBase ):
       tick_hacky.func_globals.update( func_globals )
       return tick_hacky
 
-def print_upblk_dag( upblk_dict, constraints ):
-  from graphviz import Digraph
-  dot = Digraph()
-  dot.graph_attr["rank"] = "source"
-  dot.graph_attr["ratio"] = "fill"
-  dot.graph_attr["margin"] = "0.1"
-  for x in upblk_dict.values():
-    # dot.node( x.__name__+"@"+hex(id(x)) )
-    dot.node( x.__name__ )
-  for (x, y) in constraints:
-    dot.edge( upblk_dict[x].__name__, upblk_dict[y].__name__ )
-  dot.render("/tmp/upblk_dag.gv", view=True)
+  @staticmethod
+  def print_upblk_dag( upblk_dict, constraints ):
+    from graphviz import Digraph
+    dot = Digraph()
+    dot.graph_attr["rank"] = "source"
+    dot.graph_attr["ratio"] = "fill"
+    dot.graph_attr["margin"] = "0.1"
+    for x in upblk_dict.values():
+      # dot.node( x.__name__+"@"+hex(id(x)) )
+      dot.node( x.__name__ )
+    for (x, y) in constraints:
+      dot.edge( upblk_dict[x].__name__, upblk_dict[y].__name__ )
+    dot.render("/tmp/upblk_dag.gv", view=True)
 
-def print_schedule( schedule, batch_schedule ):
-  print
-  for (i, blk) in enumerate( schedule ):
-    print i, blk.__name__
-  for x in batch_schedule:
-    print [ y.__name__ for y in x ]
+  @staticmethod
+  def print_schedule( schedule, batch_schedule ):
+    print
+    for (i, blk) in enumerate( schedule ):
+      print i, blk.__name__
+    for x in batch_schedule:
+      print [ y.__name__ for y in x ]
 
 class RewriteSelf(ast.NodeVisitor):
   def visit_Attribute( self, node ):

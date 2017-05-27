@@ -51,7 +51,7 @@ class UpdateOnly( NamedObject ):
     s._name_upblk[ blk_name ] = s._blkid_upblk[ id(blk) ] = blk
     return blk
 
-  def add_update_block( s, src ):
+  def add_update_block( s, src ): # FIXME
     exec py.code.Source( src ).compile() in locals()
 
   def get_update_block( s, name ):

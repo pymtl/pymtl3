@@ -1,4 +1,4 @@
-from SimLevel1 import *
+from SimLevel1 import SimLevel1
 from pymtl.components import UpdateWithVar, NamedObject
 from pymtl.components import Connectable, Wire, _overlap
 from collections import defaultdict, deque
@@ -12,12 +12,15 @@ class SimLevel2( SimLevel1 ):
     self.recursive_elaborate( model )
     self.recursive_tag_name( model ) # slicing will spawn extra objects
 
-    self.synthesize_var_constraints()
+    expl, impl    = self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
 
-    print_schedule( serial, batch )
-    self.tick = self.generate_tick_func( serial, tick_mode )
+    # self.print_read_writes()
+    # self.print_constraints( expl, impl )
+    # self.print_schedule( serial, batch )
+    # self.print_upblk_dag( self._blkid_upblk, self._constraints )
 
+    self.tick = self.generate_tick_func( serial, tick_mode )
     self.cleanup_wires( self.model )
 
   def cleanup_wires( self, m ):
@@ -33,7 +36,7 @@ class SimLevel2( SimLevel1 ):
     elif isinstance( m, NamedObject ):
       for name, obj in m.__dict__.iteritems():
         if ( isinstance( name, basestring ) and not name.startswith("_") ) \
-          or isinstance( name, tuple):
+          or isinstance( name, tuple ):
             if isinstance( obj, Wire ):
               setattr( m, name, obj.default_value() )
             else:
@@ -50,6 +53,7 @@ class SimLevel2( SimLevel1 ):
     self._id_obj = {}
     self._read_upblks  = defaultdict(list)
     self._write_upblks = defaultdict(list)
+    self._blkid_rdwr   = {}
 
   # Override
   def _elaborate_vars( self, m ):
@@ -126,8 +130,6 @@ class SimLevel2( SimLevel1 ):
 
     for blkid, blk in m._blkid_upblk.iteritems():
 
-      # print "\nblk {}".format( blk.__name__ )
-
       for typ in [ 'rd', 'wr' ]: # deduplicate code
         if typ == 'rd':
           varnames = blk.rd
@@ -144,15 +146,12 @@ class SimLevel2( SimLevel1 ):
             print name, blk.__name__ #, lineno TODO
             raise
 
-        for o in objs:
+        dedup = { id(o): o for o in objs }
+        for o in dedup.values():
           id_upblk[ id(o) ].append( blkid )
           self._id_obj[ id(o) ] = o
 
-        # if objs:
-          # SimLevel1.recursive_tag_name( m )
-          # dedup = { id(o): o for o in objs }
-          # print "  {}: {}".format( typ,
-                # "  ".join([ "\n   - {}".format( o.full_name() ) for o in dedup.values()] ))
+        self._blkid_rdwr[ blkid ] = [ (typ, o) for o in dedup.values() ]
 
   def synthesize_var_constraints( self ):
 
@@ -282,20 +281,23 @@ class SimLevel2( SimLevel1 ):
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    # for (x, y) in impl_constraints:
-      # print self._blkid_upblk[x].__name__.center(25)," (<) ", self._blkid_upblk[y].__name__.center(25)
-
-    # for (x, y) in expl_constraints:
-      # print self._blkid_upblk[x].__name__.center(25),"  <  ", self._blkid_upblk[y].__name__.center(25)
-
     self._constraints = expl_constraints.copy()
 
     for (x, y) in impl_constraints:
       if (y, x) not in expl_constraints: # no conflicting expl
         self._constraints.add( (x, y) )
 
-      # if (x, y) in expl_constraints or (y, x) in expl_constraints:
-        # print "implicit constraint is overriden -- ",self._blkid_upblk[x].__name__, " (<) ", \
-               # self._blkid_upblk[y].__name__
-
     self._constraints = list(self._constraints)
+
+    return expl_constraints, impl_constraints
+
+  def print_constraints( self, explicit, implicit ):
+
+    print
+    for (x, y) in explicit:
+      print self._blkid_upblk[x].__name__.center(25),"  <  ", self._blkid_upblk[y].__name__.center(25)
+
+    for (x, y) in implicit:
+       # no conflicting expl
+      print self._blkid_upblk[x].__name__.center(25)," (<) ", self._blkid_upblk[y].__name__.center(25), \
+            "(overridden)" if (y, x) in explicit else ""
