@@ -2,12 +2,12 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux( UpdatesImpl ):
+class Mux( UpdateConnect ):
 
   def __init__( s, Type, sel_nbits ):
-    s.in_ = [ ValuePort( Type ) for _ in xrange(1<<sel_nbits) ]
-    s.sel = ValuePort( mk_bits( sel_nbits ) )
-    s.out = ValuePort( Type )
+    s.in_ = [ InVPort( Type ) for _ in xrange(1<<sel_nbits) ]
+    s.sel = InVPort( int if Type == int else mk_bits( sel_nbits ) )
+    s.out = OutVPort( Type )
 
     @s.update
     def up_mux():
@@ -17,12 +17,12 @@ class Mux( UpdatesImpl ):
 
 # Rshifter
 
-class RShifter( UpdatesImpl ):
+class RShifter( UpdateConnect ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
-    s.in_   = ValuePort( Type )
-    s.shamt = ValuePort( mk_bits( shamt_nbits ) )
-    s.out   = ValuePort( Type )
+    s.in_   = InVPort( Type )
+    s.shamt = InVPort( int if Type == int else mk_bits( shamt_nbits ) )
+    s.out   = OutVPort( Type )
 
     @s.update
     def up_rshifter():
@@ -32,12 +32,12 @@ class RShifter( UpdatesImpl ):
 
 # Lshifter
 
-class LShifter( UpdatesImpl ):
+class LShifter( UpdateConnect ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
-    s.in_   = ValuePort( Type )
-    s.shamt = ValuePort( mk_bits( shamt_nbits ) )
-    s.out   = ValuePort( Type ) 
+    s.in_   = InVPort( Type )
+    s.shamt = InVPort( int if Type == int else mk_bits( shamt_nbits ) )
+    s.out   = OutVPort( Type ) 
 
     @s.update
     def up_lshifter():
@@ -47,12 +47,12 @@ class LShifter( UpdatesImpl ):
 
 # Adder 
 
-class Adder( UpdatesImpl ):
+class Adder( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in0 = ValuePort( Type )
-    s.in1 = ValuePort( Type )
-    s.out = ValuePort( Type )
+    s.in0 = InVPort( Type )
+    s.in1 = InVPort( Type )
+    s.out = OutVPort( Type )
 
     @s.update
     def up_adder():
@@ -62,12 +62,12 @@ class Adder( UpdatesImpl ):
 
 # Subtractor
 
-class Subtractor( UpdatesImpl ):
+class Subtractor( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in0 = ValuePort( Type )
-    s.in1 = ValuePort( Type )
-    s.out = ValuePort( Type )
+    s.in0 = InVPort( Type )
+    s.in1 = InVPort( Type )
+    s.out = OutVPort( Type )
 
     @s.update
     def up_subtractor():
@@ -77,11 +77,11 @@ class Subtractor( UpdatesImpl ):
 
 # ZeroComparator 
 
-class ZeroComp( UpdatesImpl ):
+class ZeroComp( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in_ = ValuePort( Type )
-    s.out = ValuePort( Bits1 )
+    s.in_ = InVPort( Type )
+    s.out = OutVPort( bool if Type == int else Bits1 )
 
     @s.update
     def up_zerocomp():
@@ -91,12 +91,12 @@ class ZeroComp( UpdatesImpl ):
 
 # LeftThanComparator
 
-class LTComp( UpdatesImpl ):
+class LTComp( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in0 = ValuePort( Type )
-    s.in1 = ValuePort( Type )
-    s.out = ValuePort( Bits1 )
+    s.in0 = InVPort( Type )
+    s.in1 = InVPort( Type )
+    s.out = OutVPort( bool if Type == int else Bits1 )
 
     @s.update
     def up_ltcomp():
@@ -106,12 +106,12 @@ class LTComp( UpdatesImpl ):
 
 # LeftThanOrEqualToComparator
 
-class LEComp( UpdatesImpl ):
+class LEComp( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in0 = ValuePort( Type )
-    s.in1 = ValuePort( Type )
-    s.out = ValuePort( Bits1 )
+    s.in0 = InVPort( Type )
+    s.in1 = InVPort( Type )
+    s.out = OutVPort( bool if Type == int else Bits1 )
 
     @s.update
     def up_lecomp():

@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib.update import Reg, RegEn, Mux
+from pclib.rtl import Reg, RegEn, Mux
 from pclib.ifcs   import EnqIfcRTL, DeqIfcRTL
 
 # The reason why we have 3 update blocks for pipe queue:
@@ -9,16 +9,13 @@ from pclib.ifcs   import EnqIfcRTL, DeqIfcRTL
 # --> enq.en (sender AND enq.rdy with valid expression)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up3)
 
-class PipeQueue1RTL( UpdatesImpl ):
+class PipeQueue1RTL( UpdateConnect ):
 
   def __init__( s, Type ):
     s.enq = EnqIfcRTL( Type )
     s.deq = DeqIfcRTL( Type )
 
-    s.buf  = RegEn( Type )
-    s.buf.in_ |= s.enq.msg
-    s.buf.out |= s.deq.msg
-
+    s.buf  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
     s.full = Reg( Bits1 )
 
     @s.update
@@ -44,22 +41,24 @@ class PipeQueue1RTL( UpdatesImpl ):
 # --> deq.en  (receiver AND deq.rdy with valid expression)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up3)
 
-class BypassQueue1RTL( UpdatesImpl ):
+class BypassQueue1RTL( UpdateConnect ):
 
   def __init__( s, Type ):
     s.enq = EnqIfcRTL( Type )
     s.deq = DeqIfcRTL( Type )
 
-    s.buf  = RegEn( Type )
-    s.buf.in_ |= s.enq.msg
+    s.buf  = RegEn( Type )( in_ = s.enq.msg )
 
     s.full = Reg( Bits1 )
 
-    s.byp_mux = Mux( Type, 2 )
-    s.byp_mux.in_[0] |= s.enq.msg
-    s.byp_mux.in_[1] |= s.buf.out
-    s.byp_mux.sel    |= s.full.out    # full -- buf.out, empty -- bypass
-    s.byp_mux.out    |= s.deq.msg
+    s.byp_mux = Mux( Type, 2 )(
+      out = s.deq.msg,
+      in_ = {
+        0: s.enq.msg,
+        1: s.buf.out,
+      },
+      sel = s.full.out, # full -- buf.out, empty -- bypass
+    )
 
     @s.update
     def up_bypq_set_enq_rdy():
@@ -83,16 +82,13 @@ class BypassQueue1RTL( UpdatesImpl ):
 # --> enq.en and deq.en (sender and receiver do stuff)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up2)
 
-class NormalQueue1RTL( UpdatesImpl ):
+class NormalQueue1RTL( UpdateConnect ):
 
   def __init__( s, type_ ):
     s.enq = EnqIfcRTL( type_ )
     s.deq = DeqIfcRTL( type_ )
 
-    s.buf  = RegEn( type_ )
-    s.buf.in_ |= s.enq.msg
-    s.buf.out |= s.deq.msg
-
+    s.buf  = RegEn( type_ )( out = s.deq.msg, in_ = enq.msg )
     s.full = Reg( Bits1 )
 
     @s.update

@@ -6,7 +6,7 @@ from MemMsg       import MemReqMsg, MemRespMsg, mk_mem_msg_type
 from EnqIfcs      import EnqIfcRTL, EnqIfcCL, EnqIfcFL
 from DeqIfcs      import DeqIfcRTL, DeqIfcCL, DeqIfcFL
 from MemIfcs      import MemIfcRTL, MemIfcCL, MemIfcFL
-from DeqEnqAdapters import DeqIfcRTL_EnqIfcRTL, DeqIfcRTL_EnqIfcCL, \
-                           DeqIfcCL_EnqIfcRTL,  DeqIfcCL_EnqIfcCL
-from EnqEnqAdapters import *
-from MemIfcAdapters import MemIfcAdapter
+# from DeqEnqAdapters import DeqIfcRTL_EnqIfcRTL, DeqIfcRTL_EnqIfcCL, \
+                           # DeqIfcCL_EnqIfcRTL,  DeqIfcCL_EnqIfcCL
+# from EnqEnqAdapters import *
+# from MemIfcAdapters import MemIfcAdapter

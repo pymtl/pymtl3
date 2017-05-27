@@ -24,6 +24,6 @@ class DeqIfcFL( PortBundle ):
 
     s.deq = MethodPort()
 
-register_ifc( DeqIfcRTL, 'rtl' )
-register_ifc( DeqIfcCL,  'cl'  )
-register_ifc( DeqIfcFL,  'fl'  )
+# register_ifc( DeqIfcRTL, 'rtl' )
+# register_ifc( DeqIfcCL,  'cl'  )
+# register_ifc( DeqIfcFL,  'fl'  )

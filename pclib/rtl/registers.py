@@ -2,11 +2,11 @@ from pymtl import *
 
 # Register
 
-class Reg( UpdatesImpl ):
+class Reg( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in_ = ValuePort( Type )
-    s.out = ValuePort( Type )
+    s.out = OutVPort( Type )
+    s.in_ = InVPort( Type )
 
     @s.update_on_edge
     def up_reg():
@@ -20,12 +20,12 @@ class Reg( UpdatesImpl ):
 
 # Register with enable signal
 
-class RegEn( UpdatesImpl ):
+class RegEn( UpdateConnect ):
 
   def __init__( s, Type ):
-    s.in_ = ValuePort( Type )
-    s.out = ValuePort( Type )
-    s.en  = ValuePort( Type )
+    s.out = OutVPort( Type )
+    s.in_ = InVPort( Type )
+    s.en  = InVPort( Type )
 
     @s.update_on_edge
     def up_regen():

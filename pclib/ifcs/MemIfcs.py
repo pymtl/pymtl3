@@ -33,6 +33,6 @@ class MemIfcRTL( PortBundle ):
     s.req  = EnqIfcRTL( Type[0] )
     s.resp = EnqIfcRTL( Type[1] )
 
-register_ifc( MemIfcFL,  'fl'  )
-register_ifc( MemIfcCL,  'cl'  )
-register_ifc( MemIfcRTL, 'rtl' )
+# register_ifc( MemIfcFL,  'fl'  )
+# register_ifc( MemIfcCL,  'cl'  )
+# register_ifc( MemIfcRTL, 'rtl' )
