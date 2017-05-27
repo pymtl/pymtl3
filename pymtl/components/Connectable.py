@@ -29,14 +29,6 @@ class Connectable(object):
     y._connected.extend( x._connected )
     x._connected = []
 
-  def collect_nets( s, varid_net ):
-    root = s._find_root()
-    if len( root._connected ) > 1: # has actual connection
-      if id(root) not in varid_net:
-        varid_net[ id(root) ] = root._connected
-    else:
-      assert root == s, "It doesn't make sense ..."
-
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
   if isinstance( x, int ):
@@ -93,7 +85,10 @@ class Wire( Connectable, NamedObject ):
   def default_value( s ):
     return s.Type()
 
-class WireBundle( Connectable, NamedObject ):
+class InVPort( Wire ): pass
+class OutVPort( Wire ): pass
+
+class PortBundle( Connectable, NamedObject ):
 
   # Override
   def _connect( s, other ):
