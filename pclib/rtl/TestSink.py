@@ -4,11 +4,11 @@ from pclib.valrdy import valrdy_to_str
 
 class TestBasicSink( UpdateConnect ):
 
-  def __init__( s, answer ):
+  def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
-    s.in_ = InVPort(int)
+    s.in_ = InVPort( Type )
 
     @s.update
     def up_sink():
@@ -28,7 +28,7 @@ class TestBasicSink( UpdateConnect ):
 
 class TestSink( UpdateConnect ):
 
-  def __init__( s, answer ):
+  def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )

@@ -4,16 +4,16 @@ from pclib.valrdy import valrdy_to_str
 
 class TestBasicSource( UpdateConnect ):
 
-  def __init__( s, input_ ):
+  def __init__( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = OutVPort(int)
+    s.out = OutVPort( Type )
 
     @s.update
     def up_src():
       if not s.input_:
-        s.out = 0
+        s.out = Type()
       else:
         s.out = s.input_.popleft()
 
@@ -25,18 +25,18 @@ class TestBasicSource( UpdateConnect ):
 
 class TestSource( UpdateConnect ):
 
-  def __init__( s, input_ = [] ):
+  def __init__( s, Type, input_ = [] ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.msg = OutVPort(int)
-    s.en  = OutVPort(int)
-    s.rdy = InVPort(int)
+    s.msg = OutVPort( Type )
+    s.en  = OutVPort( Type )
+    s.rdy = InVPort( Type )
 
     @s.update
     def up_src():
       s.en  = len(s.input_) > 0 & s.rdy
-      s.msg = 0 if not s.input_ else s.input_[0]
+      s.msg = Type() if not s.input_ else s.input_[0]
       
       if s.en and s.input_:
         s.input_.popleft()
