@@ -171,6 +171,15 @@ class SimLevel1( SimBase ):
       return tick_unroll
 
     if mode == 'hacky':
+
+      class RewriteSelf(ast.NodeVisitor):
+        def visit_Attribute( self, node ):
+          if isinstance( node.value, ast.Name ): # s.x
+            if node.value.id == "s": # this is not optimized by "common writer"
+              node.value.id = "hostobj"
+          else:
+            self.visit( node.value )
+
       s        = self.model
       rewriter = RewriteSelf()
 
@@ -237,11 +246,3 @@ class SimLevel1( SimBase ):
       print i, blk.__name__
     for x in batch_schedule:
       print [ y.__name__ for y in x ]
-
-class RewriteSelf(ast.NodeVisitor):
-  def visit_Attribute( self, node ):
-    if isinstance( node.value, ast.Name ): # s.x
-      if node.value.id == "s": # this is not optimized by "common writer"
-        node.value.id = "hostobj"
-    else:
-      self.visit( node.value )

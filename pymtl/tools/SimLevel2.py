@@ -15,7 +15,7 @@ class SimLevel2( SimLevel1 ):
     expl, impl    = self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
 
-    # self.print_read_writes()
+    # self.print_read_write()
     # self.print_constraints( expl, impl )
     # self.print_schedule( serial, batch )
     # self.print_upblk_dag( self._blkid_upblk, self._constraints )
@@ -53,7 +53,7 @@ class SimLevel2( SimLevel1 ):
     self._id_obj = {}
     self._read_upblks  = defaultdict(list)
     self._write_upblks = defaultdict(list)
-    self._blkid_rdwr   = {}
+    self._blkid_rdwr   = defaultdict(list)
 
   # Override
   def _elaborate_vars( self, m ):
@@ -151,7 +151,7 @@ class SimLevel2( SimLevel1 ):
           id_upblk[ id(o) ].append( blkid )
           self._id_obj[ id(o) ] = o
 
-        self._blkid_rdwr[ blkid ] = [ (typ, o) for o in dedup.values() ]
+        self._blkid_rdwr[ blkid ] += [ (typ, o) for o in dedup.values() ]
 
   def synthesize_var_constraints( self ):
 
@@ -290,6 +290,21 @@ class SimLevel2( SimLevel1 ):
     self._constraints = list(self._constraints)
 
     return expl_constraints, impl_constraints
+
+  def print_read_write( self ):
+    print
+    for blkid, entries in self._blkid_rdwr.iteritems():
+      print "In <{}>".format( self._blkid_upblk[ blkid ].__name__ )
+      print " * write:"
+      for e in entries:
+        if e[0] == 'wr':
+          print "   + {}".format( e[1].full_name() )
+
+      print " * read:"
+      for e in entries:
+        if e[0] == 'rd':
+          print "   - {}".format( e[1].full_name() )
+      print
 
   def print_constraints( self, explicit, implicit ):
 

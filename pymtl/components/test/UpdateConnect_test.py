@@ -11,25 +11,51 @@ def simulate( cls ):
     sim.tick()
     print A.line_trace()
 
-def test_connect_list_int_idx():
+MUX_SEL_0 = 0
+MUX_SEL_1 = 1
+
+def test_connect_list_const_idx():
 
   class Top(UpdateConnect):
 
     def __init__( s ):
 
-      s.src_in0 = TestSource( [4,3,2,1] )
-      s.src_in1 = TestSource( [8,7,6,5] )
-      s.src_sel = TestSource( [1,0,1,0] )
-      s.sink    = TestSink  ( [8,3,6,1] )
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_in1 = TestSource( int, [8,7,6,5] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [8,3,6,1] )
 
       s.mux = Mux(int, 2)
 
-      # All constraints are within TestSource, TestSink, and Mux
+      s.connect( s.mux.in_[MUX_SEL_0], s.src_in0.out )
+      s.connect( s.mux.in_[MUX_SEL_1], s.src_in1.out )
+      s.connect( s.mux.sel           , s.src_sel.out )
+      s.connect( s.sink.in_          , s.mux.out     )
 
-      s.connect( s.mux.in_[0], s.src_in0.out )
-      s.connect( s.mux.in_[1], s.src_in1.out )
-      s.connect( s.mux.sel,    s.src_sel.out )
-      s.connect( s.sink.in_,   s.mux.out )
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  simulate( Top )
+
+def test_connect_list_idx_call():
+
+  class Top(UpdateConnect):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_in1 = TestSource( int, [8,7,6,5] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [8,3,6,1] )
+
+      s.mux = Mux(int, 1)(
+        out = s.sink.in_,
+        in_ = { MUX_SEL_0: s.src_in0.out, MUX_SEL_1: s.src_in1.out },
+        sel = s.src_sel.out,
+      )
 
     def done( s ):
       return s.src_in0.done() and s.sink.done()
@@ -45,9 +71,9 @@ def test_2d_array_vars_connect_impl():
 
     def __init__( s ):
 
-      s.src  = TestSource( [2,1,0,2,1,0] )
-      s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
-                                (5+6),(3+4),(1+2)] )
+      s.src  = TestSource( int, [2,1,0,2,1,0] )
+      s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
+                                 (5+6),(3+4),(1+2)] )
 
       s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
       s.connect( s.wire[0][0], s.src.out )
@@ -87,9 +113,9 @@ def test_lots_of_fan_connect():
 
     def __init__( s ):
 
-      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( ["?",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
-                                (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
+      s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
+      s.sink = TestSink  ( int, ["?",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
+                                     (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
 
       s.wire0 = Wire(int)
 
@@ -152,8 +178,8 @@ def test_connect_plain():
 
     def __init__( s ):
 
-      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( [5,4,3,2,5,4,3,2] )
+      s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
+      s.sink = TestSink  ( int, [5,4,3,2,5,4,3,2] )
 
       s.wire0 = Wire(int)
 
@@ -173,72 +199,15 @@ def test_connect_plain():
 
   simulate( Top )
 
-def test_connect_list_int_idx():
-
-  class Top(UpdateConnect):
-
-    def __init__( s ):
-
-      s.src_in0 = TestSource( [4,3,2,1] )
-      s.src_in1 = TestSource( [8,7,6,5] )
-      s.src_sel = TestSource( [1,0,1,0] )
-      s.sink    = TestSink  ( [8,3,6,1] )
-
-      s.mux = Mux(int, 2)
-
-      # All constraints are within TestSource, TestSink, and Mux
-
-      s.connect( s.mux.in_[0] , s.src_in0.out )
-      s.connect( s.mux.in_[1] , s.src_in1.out )
-      s.connect( s.mux.sel    , s.src_sel.out )
-      s.connect( s.sink.in_   , s.mux.out     )
-
-    def done( s ):
-      return s.src_in0.done() and s.sink.done()
-
-    def line_trace( s ):
-      return " >>> " + s.sink.line_trace()
-
-  simulate( Top )
-
-MUX_SEL_0 = 0
-MUX_SEL_1 = 1
-
-def test_connect_list_const_idx():
-
-  class Top(UpdateConnect):
-
-    def __init__( s ):
-
-      s.src_in0 = TestSource( [4,3,2,1] )
-      s.src_in1 = TestSource( [8,7,6,5] )
-      s.src_sel = TestSource( [1,0,1,0] )
-      s.sink    = TestSink  ( [8,3,6,1] )
-
-      s.mux = Mux(int,2)
-
-      s.connect( s.mux.in_[MUX_SEL_0], s.src_in0.out )
-      s.connect( s.mux.in_[MUX_SEL_1], s.src_in1.out )
-      s.connect( s.mux.sel           , s.src_sel.out )
-      s.connect( s.sink.in_          , s.mux.out     )
-
-    def done( s ):
-      return s.src_in0.done() and s.sink.done()
-
-    def line_trace( s ):
-      return " >>> " + s.sink.line_trace()
-
-  simulate( Top )
-
 def test_2d_array_vars_connect():
 
   class Top(UpdateConnect):
 
     def __init__( s ):
 
-      s.src  = TestSource( [2,1,0,2,1,0] )
-      s.sink = TestSink  ( ["?",(5+6),(3+4),(1+2),
-                                (5+6),(3+4),(1+2)] )
+      s.src  = TestSource( int, [2,1,0,2,1,0] )
+      s.sink = TestSink  ( int, ["?",(5+6),(3+4),(1+2),
+                                     (5+6),(3+4),(1+2)] )
 
       s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
       s.connect( s.wire[0][0], s.src.out )
@@ -283,9 +252,9 @@ def test_lots_of_fan_connect():
 
     def __init__( s ):
 
-      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( ["?",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
-                                (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
+      s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
+      s.sink = TestSink  ( int, ["?",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
+                                     (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
 
       s.wire0 = Wire(int)
 
