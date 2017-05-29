@@ -14,12 +14,12 @@ class SimLevel3( SimLevel2 ):
 
     nets = self.resolve_var_connections()
 
-    self.print_read_write()
-    self.print_nets( nets )
+    # self.print_read_write()
+    # self.print_nets( nets )
+    # self.check_port_direction( nets ) # port type check
 
-    # self.check_port_direction_check( nets )
-
-    # self.mark_readers( nets )
+    self.compact_readers( nets ) # this is just for simulation
+    # self.print_nets( nets )
 
     self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
@@ -163,6 +163,70 @@ class SimLevel3( SimLevel2 ):
       headless = new_headless
 
     return headed
+
+  def generate_net_block( self, nets ):
+
+    for net in nets:
+
+      # find common ancestor
+
+      ancestor.add_update_block( )
+
+  def check_port_direction( self, nets ):
+    pass
+
+  def compact_readers( self, nets ):
+
+    # Each net is an update block. Readers are actually "written" here.
+    # def up_net_writer_to_readers():
+    #   s.net_reader1 = s.net_writer
+    #   s.net_reader2 = s.net_writer
+    # Collect readers in normal update blocks plus the writers in nets.
+    # s.x = s.y reads s.y and writes s.x
+
+    all_reads = set()
+
+    # First add normal update block reads
+    for read in self._read_upblks:
+      obj = self._id_obj[ read ]
+      while obj:
+        all_reads.add( id(obj) )
+        obj = obj._nested
+
+    # Then add net writers
+    for writer, readers in nets:
+      obj = writer
+      while obj:
+        all_reads.add( id(obj) )
+        obj = obj._nested
+
+    # Now figure out if a reader can be safely removed from the net
+    # Check if the reader itself, its ancestors, or sibling slices are
+    # read somewhere else. If not, the reader can be moved from the net.
+
+    for i in xrange(len(nets)):
+      writer, readers = nets[i]
+      new_readers = []
+
+      for x in readers:
+        flag = False
+        obj = x
+        while obj:
+          if id(obj) in all_reads:
+            flag = True
+            break
+          obj = obj._nested
+
+        if x._slice:
+          for obj in x._nested._slices.values(): # Check sibling slices
+            if x != obj and overlap(obj._slice, x._slice) and \
+                id(obj) in all_reads:
+              flag = True
+              break
+
+        if flag: new_readers.append( x )
+
+      nets[i] = (writer, new_readers)
 
   @staticmethod
   def print_nets( nets ):

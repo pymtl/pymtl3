@@ -11,6 +11,22 @@ def simulate( cls ):
     sim.tick()
     print A.line_trace()
 
+# def test_port_check():
+
+  # class A(UpdateConnect):
+    # def __init__( s ):
+      # s.out = OutVPort(int)
+      # @s.update
+      # def up_readwrite():
+        # s.out = 1
+
+  # class B(UpdateConnect):
+    # def __init__( s ):
+      # s.in_ = InVPort(int)
+      # @s.update
+      # def up_readwrite():
+        # print s.x
+
 MUX_SEL_0 = 0
 MUX_SEL_1 = 1
 
@@ -54,6 +70,44 @@ def test_connect_list_idx_call():
       s.mux = Mux(int, 1)(
         out = s.sink.in_,
         in_ = { MUX_SEL_0: s.src_in0.out, MUX_SEL_1: s.src_in1.out },
+        sel = s.src_sel.out,
+      )
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  simulate( Top )
+
+def test_connect_deep():
+
+  class MuxWrap(UpdateConnect):
+
+    def __init__( s ):
+      s.in_ = [ InVPort(int) for _ in xrange(2) ]
+      s.sel = InVPort(int)
+      s.out = OutVPort(int)
+
+      s.mux = Mux(int, 2)(
+        out = s.out,
+        in_ = { 0: s.in_[0], 1: s.in_[1] },
+        sel = s.sel,
+      )
+
+  class Top(UpdateConnect):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_in1 = TestSource( int, [8,7,6,5] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [8,3,6,1] )
+
+      s.mux_wrap = MuxWrap()(
+        out = s.sink.in_,
+        in_ = { 0: s.src_in0.out, 1: s.src_in1.out },
         sel = s.src_sel.out,
       )
 
