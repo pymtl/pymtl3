@@ -14,7 +14,7 @@
 from NamedObject     import NamedObject
 from ConstraintTypes import U
 
-import inspect2, re, ast
+import inspect2, re, ast, py
 p = re.compile('( *(@|def))')
 
 class UpdateOnly( NamedObject ):
@@ -51,8 +51,9 @@ class UpdateOnly( NamedObject ):
     s._name_upblk[ blk_name ] = s._blkid_upblk[ id(blk) ] = blk
     return blk
 
-  def add_update_block( s, src ): # FIXME
+  def _compile_update_block( s, src ): # FIXME
     exec py.code.Source( src ).compile() in locals()
+    return blk
 
   def get_update_block( s, name ):
     return s._name_upblk[ name ]

@@ -258,7 +258,7 @@ class SimLevel2( SimLevel1 ):
       while x:
         if id(x) != wr_id:
           assert id(x) not in write_upblks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
-                                        ( x.full_name(), self._blkid_upblk[write_upblks[id(x)][0]].__name__, obj.full_name(), s._blkid_upblk[write_blks[wr_id][0]].__name__ )
+                                        ( x.full_name(), self._blkid_upblk[write_upblks[id(x)][0]].__name__, obj.full_name(), self._blkid_upblk[write_upblks[wr_id][0]].__name__ )
         if id(x) in read_upblks:
           readers.append( id(x) )
         x = x._nested
@@ -269,7 +269,7 @@ class SimLevel2( SimLevel1 ):
           # Recognize overlapped slices
           if id(x) != wr_id and _overlap( x._slice, obj._slice ):
             assert id(x) not in write_upblks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
-                                        ( x.full_name(), s._blkid_upblk[write_upblks[id(x)][0]].__name__, obj.full_name(), s._blkid_upblk[write_blks[wr_id][0]].__name__ )
+                                        ( x.full_name(), self._blkid_upblk[write_upblks[id(x)][0]].__name__, obj.full_name(), self._blkid_upblk[write_upblks[wr_id][0]].__name__ )
 
       # Add all constraints
       for wr_blk in wr_blks:

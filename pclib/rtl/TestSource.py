@@ -7,13 +7,14 @@ class TestBasicSource( UpdateConnect ):
   def __init__( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
+    s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
     s.out = OutVPort( Type )
 
     @s.update
     def up_src():
       if not s.input_:
-        s.out = Type()
+        s.out = s.Type()
       else:
         s.out = s.input_.popleft()
 
@@ -28,7 +29,9 @@ class TestSource( UpdateConnect ):
   def __init__( s, Type, input_ = [] ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
+    s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
+
     s.msg = OutVPort( Type )
     s.en  = OutVPort( Type )
     s.rdy = InVPort( Type )
@@ -36,7 +39,7 @@ class TestSource( UpdateConnect ):
     @s.update
     def up_src():
       s.en  = len(s.input_) > 0 & s.rdy
-      s.msg = Type() if not s.input_ else s.input_[0]
+      s.msg = s.Type() if not s.input_ else s.input_[0]
       
       if s.en and s.input_:
         s.input_.popleft()

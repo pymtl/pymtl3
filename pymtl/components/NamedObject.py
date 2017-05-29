@@ -28,5 +28,5 @@ class NamedObject(object):
     assert len(name) == len(idx) - 1 and len(idx[-1]) == 1
 
     return ".".join( [ name[i] + "".join(["[%s]" % x for x in idx[i]]) \
-                      for i in xrange(len(name)-1) ] ) + \
+                      for i in xrange(len(name)) ] ) + \
                       "[%d:%d]" % ( idx[-1][0].start, idx[-1][0].stop )
