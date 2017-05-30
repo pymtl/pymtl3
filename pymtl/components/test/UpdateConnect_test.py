@@ -5,7 +5,7 @@ from collections import deque
 
 def simulate( cls ):
   A = cls()
-  sim = SimLevel3( A )
+  sim = SimLevel3( A, 'unroll' )
 
   while not A.done():
     sim.tick()
@@ -119,6 +119,52 @@ def test_connect_deep():
 
   simulate( Top )
 
+def test_deep_connect():
+
+  class MuxWrap3(UpdateConnect):
+
+    def __init__( s ):
+      s.in_ = [ InVPort(int) for _ in xrange(2) ]
+      s.sel = InVPort(int)
+      s.out = OutVPort(int)
+
+      s.mux1 = Mux(int, 2)(
+        in_ = { 0: s.in_[0], 1: s.in_[1] },
+        sel = s.sel,
+      )
+      s.mux2 = Mux(int, 2)(
+        in_ = { 0: s.in_[0], 1: s.in_[1] },
+        sel = s.sel,
+      )
+      s.mux3 = Mux(int, 2)(
+        out = s.out,
+        in_ = { 0: s.mux1.out, 1: s.mux2.out },
+        sel = s.sel,
+      )
+
+  class Top(UpdateConnect):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_in1 = TestSource( int, [8,7,6,5] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [8,3,6,1] )
+
+      s.mux_wrap = MuxWrap3()(
+        out = s.sink.in_,
+        in_ = { 0: s.src_in0.out, 1: s.src_in1.out },
+        sel = s.src_sel.out,
+      )
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  simulate( Top )
+
 def test_2d_array_vars_connect_impl():
 
   class Top(UpdateConnect):
@@ -168,7 +214,7 @@ def test_lots_of_fan_connect():
     def __init__( s ):
 
       s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( int, ["?",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
+      s.sink = TestSink  ( int, ["*",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
                                      (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
 
       s.wire0 = Wire(int)
@@ -260,7 +306,7 @@ def test_2d_array_vars_connect():
     def __init__( s ):
 
       s.src  = TestSource( int, [2,1,0,2,1,0] )
-      s.sink = TestSink  ( int, ["?",(5+6),(3+4),(1+2),
+      s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
                                      (5+6),(3+4),(1+2)] )
 
       s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
@@ -299,87 +345,3 @@ def test_2d_array_vars_connect():
              " >>> " + s.sink.line_trace()
 
   simulate( Top )
-
-def test_lots_of_fan_connect():
-
-  class Top(UpdateConnect):
-
-    def __init__( s ):
-
-      s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( int, ["?",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
-                                     (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
-
-      s.wire0 = Wire(int)
-
-      @s.update
-      def up_from_src():
-        s.wire0 = s.src.out + 1
-
-      s.reg = Wire(int)
-
-      @s.update
-      def up_reg():
-        s.reg = s.wire0
-
-      s.add_constraints(
-        U(up_reg) < WR(s.wire0),
-        U(up_reg) < RD(s.reg),
-      )
-
-      s.wire1 = Wire(int)
-      s.wire2 = Wire(int)
-
-      s.connect( s.wire1, s.reg )
-
-      @s.update
-      def upA():
-        s.wire2 = s.reg + 1
-
-      s.add_constraints(
-        U(upA) < RD(s.wire2),
-      )
-
-      s.wire3 = Wire(int)
-      s.wire4 = Wire(int)
-
-      s.connect( s.wire3, s.wire1 )
-      s.connect( s.wire4, s.wire1 )
-
-      s.wire5 = Wire(int)
-      s.wire6 = Wire(int)
-
-      s.connect( s.wire5, s.wire2 )
-      s.connect( s.wire6, s.wire2 )
-
-      s.wire7 = Wire(int)
-      s.wire8 = Wire(int)
-
-      @s.update
-      def upD():
-        s.wire7 = s.wire3 + s.wire6
-        s.wire8 = s.wire4 + s.wire5
-
-      s.add_constraints(
-        WR(s.wire3) < U(upD),
-        WR(s.wire4) < U(upD),
-        WR(s.wire5) < U(upD),
-        WR(s.wire6) < U(upD),
-        U(upD) < RD(s.wire7),
-        U(upD) < RD(s.wire8),
-      )
-
-      @s.update
-      def up_to_sink():
-        s.sink.in_ = s.wire7 + s.wire8
-
-    def done( s ):
-      return s.src.done() and s.sink.done()
-
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s" % (s.wire0,s.reg) + \
-             " >>> " + s.sink.line_trace()
-
-  simulate( Top )
-

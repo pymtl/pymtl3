@@ -1,7 +1,9 @@
 from SimLevel2 import SimLevel2
 from pymtl.components import UpdateConnect
-from pymtl.components import Connectable, Wire
+from pymtl.components import Connectable, Wire, _overlap
 from collections import defaultdict, deque
+import re, ast, textwrap
+p = re.compile('( *(@|def))')
 
 class SimLevel3( SimLevel2 ):
 
@@ -20,6 +22,8 @@ class SimLevel3( SimLevel2 ):
 
     self.compact_readers( nets ) # this is just for simulation
     # self.print_nets( nets )
+
+    self.generate_net_block( nets )
 
     self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
@@ -98,41 +102,44 @@ class SimLevel3( SimLevel2 ):
       # is in net, and s.x.b is written in upblk, s.x.b will mark s.x as
       # an unpropagatable writer because later s.x.a shouldn't be marked
       # as writer by s.x.
+      #
+      # Similarly, if x[0:10] is written in update block, x[5:15] can
+      # be a unpropagatable writer because we don't want x[5:15] to
+      # propagate to x[12:17] later.
 
       for net in headless:
         has_writer = False
 
         for v in net:
-          if id(v) in writer_prop: # Check if itself is a writer
-            has_writer, writer, from_sibling = True, v, False
-
-          while obj: # Check if the parent is a propagatable writer
-            oid = id(obj)
-            if oid in writer_prop and writer_prop[ oid ]:
-              assert not has_writer, \
-                    "Two-writer conflict \"%s\" (overlap \"%s\"), \"%s\" in the following net:\n - %s" % \
-                    (v.full_name(), obj.full_name(), writer.full_name(),"\n - ".join([x.full_name() for x in net]))
+          obj = None
+          try:
+            if id(v) in writer_prop: # Check if itself is a writer
+              assert not has_writer
               has_writer, writer, from_sibling = True, v, False
-              break
-            obj = obj._nested
 
-          if not v._slice:  continue
+            obj = v._nested
+            while obj: # Check if the parent is a propagatable writer
+              oid = id(obj)
+              if oid in writer_prop and writer_prop[ oid ]:
+                assert not has_writer
+                has_writer, writer, from_sibling = True, v, False
+                break
+              obj = obj._nested
 
-          # Similarly, if x[0:10] is written in update block, x[5:15] can
-          # be a unpropagatable writer because we don't want x[5:15] to
-          # propagate to x[12:17] later.
+            if v._slice: # Check sibling slices
+              for obj in v._nested._slices.values(): # Check sibling slices
+                if v == obj or not _overlap(obj._slice, v._slice):
+                  continue # Skip the same slice or not overlapped
 
-          for obj in v._nested._slices.values(): # Check sibling slices
-            if v == obj or not overlap(obj._slice, v._slice):
-              continue # Skip the same slice or not overlapped
-
-            oid = id(obj)
-            if oid in writer_prop and writer_prop[ oid ]:
-              assert not has_writer, \
-                    "Two-writer conflict \"%s\" (overlap \"%s\"), \"%s\" in the following net:\n - %s" % \
-                    (v.full_name(), obj.full_name(), writer.full_name(),
-                    "\n - ".join([ x.full_name() for x in net ]))
-              has_writer, writer, from_sibling = True, v, True
+                oid = id(obj)
+                if oid in writer_prop and writer_prop[ oid ]:
+                  assert not has_writer
+                  has_writer, writer, from_sibling = True, v, True
+          except:
+            assert False, "Two-writer conflict \"%s\"%s, \"%s\" in the following net:\n - %s" % \
+                          (v.full_name(),
+                          "" if not obj else "(overlap \"%s\")" % obj.full_name(),
+                          writer.full_name(),"\n - ".join([x.full_name() for x in net]))
 
         if not has_writer:
           new_headless.append( net )
@@ -166,11 +173,90 @@ class SimLevel3( SimLevel2 ):
 
   def generate_net_block( self, nets ):
 
-    for net in nets:
+    for writer, readers in nets:
+      if not readers:
+        continue # Aha, the net is dummy
+      wr_lca  = writer
+      rd_lcas = readers[::]
 
-      # find common ancestor
+      # Find common ancestor: iteratively go to parent level and check if
+      # at the same level all objects' ancestor are the same
 
-      ancestor.add_update_block( )
+      mindep  = min( len( writer._name_idx[1] ),
+                     min( [ len(x._name_idx[1]) for x in rd_lcas ] ) )
+
+      # First navigate all objects to the same level deep
+
+      for i in xrange( mindep, len(wr_lca._name_idx[1]) ):
+        wr_lca = wr_lca._parent
+
+      for i, x in enumerate( rd_lcas ):
+        for j in xrange( mindep, len( x._name_idx[1] ) ):
+          x = x._parent
+        rd_lcas[i] = x
+
+      # Then iteratively check if their ancestor is the same
+
+      while wr_lca != self.model:
+        succeed = True
+        for x in rd_lcas:
+          if x != wr_lca:
+            succeed = False
+            break
+        if succeed: break
+
+        wr_lca = wr_lca._parent
+        for i in xrange( len(rd_lcas) ):
+          rd_lcas[i] = rd_lcas[i]._parent
+
+      lca     = wr_lca # this is the object we want to insert the block to
+      lca_len = len( lca.full_name() )
+      fanout  = len( readers )
+      wstr    = "s." + writer.full_name()[lca_len+1:]
+      rstrs   = [ "s." + x.full_name()[lca_len+1:] for x in readers]
+
+      upblk_name = "{}_FANOUT_{}".format(writer.full_name(), fanout)\
+                    .replace( ".", "_" ).replace( ":", "_" ) \
+                    .replace( "[", "_" ).replace( "]", "_" )
+
+      # TODO port common prefix optimization, currently only multi-writer
+
+      # NO @s.update because I don't want to impair the original model
+      if fanout == 1: # simple mode!
+        gen_connection_src = """
+
+def {0}():
+  {1}
+blk = {0}
+
+        """.format( upblk_name,"{} = {}".format( rstrs[0], wstr ) )
+      else:
+        gen_connection_src = """
+
+def {0}():
+  common_writer = {1}
+  {2}
+blk = {0}
+        """.format( upblk_name, wstr, "\n  ".join(
+                    [ "{} = common_writer".format( x ) for x in rstrs] ) )
+
+      # Collect block metadata
+
+      blk         = lca._compile_update_block( gen_connection_src )
+      blk.hostobj = lca
+      blk.ast     = ast.parse( gen_connection_src )
+
+      blk_id = id(blk)
+      self._name_upblk[ upblk_name ] = blk
+      self._blkid_upblk[ blk_id ] = blk
+
+      # Collect read/writer metadata
+
+      self._read_upblks[ id(writer) ].append( blk_id )
+      self._id_obj[ id(writer) ] = writer
+      for x in readers:
+        self._write_upblks[ id(x) ].append( blk_id )
+        self._id_obj[ id(x) ] = x
 
   def check_port_direction( self, nets ):
     pass
@@ -219,12 +305,12 @@ class SimLevel3( SimLevel2 ):
 
         if x._slice:
           for obj in x._nested._slices.values(): # Check sibling slices
-            if x != obj and overlap(obj._slice, x._slice) and \
+            if x != obj and _overlap(obj._slice, x._slice) and \
                 id(obj) in all_reads:
               flag = True
               break
 
-        if flag: new_readers.append( x )
+        if flag: new_readers.append( x ) # is read somewhere else
 
       nets[i] = (writer, new_readers)
 
