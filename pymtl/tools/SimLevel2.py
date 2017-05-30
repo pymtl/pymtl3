@@ -8,9 +8,9 @@ class SimLevel2( SimLevel1 ):
   def __init__( self, model, tick_mode='unroll' ):
     self.model = model
 
-    self.recursive_tag_name( model )
-    self.recursive_elaborate( model )
-    self.recursive_tag_name( model ) # slicing will spawn extra objects
+    self.recursive_tag_name( model )  # tag name first for error message
+    self.recursive_elaborate( model ) # turn "string" into objects
+    self.recursive_tag_name( model )  # slicing will spawn extra objects
 
     expl, impl    = self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
@@ -295,16 +295,21 @@ class SimLevel2( SimLevel1 ):
     print
     for blkid, entries in self._blkid_rdwr.iteritems():
       print "In <{}>".format( self._blkid_upblk[ blkid ].__name__ )
-      print " * write:"
+      strblock = ""
       for e in entries:
         if e[0] == 'wr':
-          print "   + {}".format( e[1].full_name() )
+          strblock += "   + {}\n".format( e[1].full_name() )
 
-      print " * read:"
+      if strblock != "":
+        print " * Write:\n{}".format( strblock )
+
+      strblock = ""
       for e in entries:
         if e[0] == 'rd':
-          print "   - {}".format( e[1].full_name() )
-      print
+          strblock += "   - {}\n".format( e[1].full_name() )
+
+      if strblock != "":
+        print " * Read:\n{}".format( strblock )
 
   def print_constraints( self, explicit, implicit ):
 

@@ -53,7 +53,7 @@ class Wire( Connectable, NamedObject ):
       return s.__dict__[ name ]
 
     if name not in s.__dict__:
-      x = Wire( getattr(s.Type, name) )
+      x = s.__class__( getattr(s.Type, name) )
       x._nested          = s
       s.__dict__[ name ] = s._attrs[ name ] = x
 
@@ -73,7 +73,7 @@ class Wire( Connectable, NamedObject ):
     sl_tuple = (sl.start, sl.stop)
 
     if sl_tuple not in s.__dict__:
-      x = Wire( mk_bits( sl.stop - sl.start) )
+      x = s.__class__( mk_bits( sl.stop - sl.start) )
       x._nested = s
       x._slice  = sl
       s.__dict__[ sl_tuple ] = s._slices[ sl_tuple ] = x

@@ -5,27 +5,11 @@ from collections import deque
 
 def simulate( cls ):
   A = cls()
-  sim = SimLevel3( A, 'unroll' )
+  sim = SimLevel3( A )
 
   while not A.done():
     sim.tick()
     print A.line_trace()
-
-# def test_port_check():
-
-  # class A(UpdateConnect):
-    # def __init__( s ):
-      # s.out = OutVPort(int)
-      # @s.update
-      # def up_readwrite():
-        # s.out = 1
-
-  # class B(UpdateConnect):
-    # def __init__( s ):
-      # s.in_ = InVPort(int)
-      # @s.update
-      # def up_readwrite():
-        # print s.x
 
 MUX_SEL_0 = 0
 MUX_SEL_1 = 1

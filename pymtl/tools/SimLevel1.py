@@ -14,7 +14,7 @@ class SimLevel1( SimBase ):
     # self.print_upblk_dag( self._blkid_upblk, self._constraints )
 
     serial, batch = self.schedule( self._blkid_upblk, self._U_U_constraints )
-    self.print_schedule( serial, batch )
+    # self.print_schedule( serial, batch )
 
     self.tick = self.generate_tick_func( serial )
 
@@ -217,6 +217,9 @@ class SimLevel1( SimBase ):
         for stmt in root.body[0].body:
           if hostobj != "s": rewriter.visit( stmt )
           newfunc.body.append( stmt )
+
+      # import astor
+      # print astor.to_source(newroot)
 
       exec compile( newroot, "<string>", "exec") in locals()
       tick_hacky.func_globals.update( func_globals )
