@@ -1,6 +1,6 @@
 from SimLevel2 import SimLevel2
 from pymtl.components import UpdateConnect
-from pymtl.components import Connectable, Wire, _overlap
+from pymtl.components import Connectable, Wire, InVPort, OutVPort, _overlap
 from collections import defaultdict, deque
 import re, ast, textwrap
 p = re.compile('( *(@|def))')
@@ -10,25 +10,26 @@ class SimLevel3( SimLevel2 ):
   def __init__( self, model, tick_mode='unroll' ):
     self.model = model
 
-    self.recursive_tag_name( model )
-    self.recursive_elaborate( model )
-    self.recursive_tag_name( model ) # slicing will spawn extra objects
-
-    nets = self.resolve_var_connections()
-
+    self.recursive_tag_name( model )  # tag name first for error message
+    self.recursive_elaborate( model ) # turn "string" into objects
+    self.recursive_tag_name( model )  # slicing will spawn extra objects
+    self.check_port_write_upblk()     # in/out port check in all upblks
     # self.print_read_write()
-    # self.print_nets( nets )
-    # self.check_port_direction( nets ) # port type check
 
-    self.compact_readers( nets ) # this is just for simulation
-    # self.print_nets( nets )
+    self.resolve_var_connections()    # resolve connected nets
+    # self.check_port_write_connect()   # in/out port check in all nets
 
-    self.generate_net_block( nets )
+    self.compact_net_readers() # remove unread objs, just for simulation
 
-    self.synthesize_var_constraints()
+    # self.print_nets( self._nets )
+
+    self.generate_net_block()
+
+    expl, impl    = self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
+    # self.print_constraints( expl, impl )
+    # self.print_schedule( serial, batch )
 
-    self.print_schedule( serial, batch )
     self.tick = self.generate_tick_func( serial, tick_mode )
 
     self.cleanup_wires( self.model )
@@ -169,9 +170,10 @@ class SimLevel3( SimLevel2 ):
             ("\nNet:\n - ".join([ "\n - ".join([ x.full_name() for x in y ]) for y in headless ]))
       headless = new_headless
 
-    return headed
+    self._nets = headed
 
-  def generate_net_block( self, nets ):
+  def generate_net_block( self ):
+    nets = self._nets
 
     for writer, readers in nets:
       if not readers:
@@ -258,10 +260,50 @@ blk = {0}
         self._write_upblks[ id(x) ].append( blk_id )
         self._id_obj[ id(x) ] = x
 
-  def check_port_direction( self, nets ):
+  def check_port_write_upblk( self ):
+
+    for wr, blks in self._write_upblks.iteritems():
+      obj = host = self._id_obj[ wr ]
+      assert isinstance( obj, Wire )
+
+      while not isinstance( host, UpdateConnect ):
+        host = host._parent # go to the component
+
+      # A continuous assignment is implied when a variable is connected to
+      # an input port declaration. This makes assignments to a variable
+      # declared as an input port illegal.
+
+      if isinstance( obj, InVPort ):
+
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert host != blk.hostobj, \
+            "Invalid write to input port of {}:\n- Input port {} is written in {}.".format(
+              host.full_name(), obj.full_name(), blk.__name__ )
+
+          print blk.hostobj.full_name(), host._parent.full_name()
+          assert blk.hostobj == host._parent, \
+            "Invalid write to input port of {} from {}:\n- Input port {} is written in {}.".format(
+              host.full_name(), blk.hostobj.full_name(), obj.full_name(), blk.__name__ )
+
+      # A continuous assignment is implied when a variable is connected to
+      # the output port of an instance. This makes procedural or
+      # continuous assignments to a variable connected to the output port
+      # of an instance illegal.
+
+      if isinstance( obj, OutVPort ):
+        print "OutVPort {}'s parent is {}".format( obj.full_name(), obj._parent.full_name() )
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+          print "In {}, upblk {} writes {}".format( blk.hostobj.full_name(), blk.__name__, obj.full_name() )
+          print 
+
+  def check_port_write_connect( self ):
     pass
 
-  def compact_readers( self, nets ):
+  def compact_net_readers( self ):
+    nets = self._nets
 
     # Each net is an update block. Readers are actually "written" here.
     # def up_net_writer_to_readers():
