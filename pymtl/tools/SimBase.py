@@ -12,7 +12,7 @@ class SimBase(object):
   # recursive_tag_name
   #-------------------------------------------------------------------------
   # Tag each child obj with full instance name. This has to executed again
-  # after elaboration during which new objects may be created.
+  # after elaboration during which new objects may be created. Stateless.
   # TODO two different names point to the same object
 
   @staticmethod
@@ -21,6 +21,7 @@ class SimBase(object):
     def _recursive_tag_expand( child, parent, cur_name, cur_idx ):
 
       # Jump back to main function when it's another named object
+
       if   isinstance( child, NamedObject ):
         child._parent   = parent
         pname, pidx     = parent._name_idx

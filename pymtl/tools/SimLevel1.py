@@ -18,9 +18,6 @@ class SimLevel1( SimBase ):
 
     self.tick = self.generate_tick_func( serial )
 
-    if hasattr( model, "line_trace" ):
-      self.line_trace = model.line_trace
-
   def _declare_vars( self ):
     self._name_upblk  = {}
     self._blkid_upblk = {}
@@ -50,7 +47,7 @@ class SimLevel1( SimBase ):
 
     for name, obj in m.__dict__.iteritems():
       if ( isinstance( name, basestring ) and not name.startswith("_") ) \
-        or isinstance( name, tuple):
+        or isinstance( name, tuple ):
           _recursive_expand( obj )
 
     self._elaborate_vars( m )

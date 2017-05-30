@@ -22,8 +22,6 @@ class Connectable(object):
     x = s._find_root()
     y = other._find_root()
     assert x != y, "Two nets are already unionized!"
-    # assert x == s, "One net signal cannot have two drivers. \n%s" % \
-                   # "Please check if the left side signal is already at left side in another connection."
 
     x._root = y # Merge myself to the other
     y._connected.extend( x._connected )

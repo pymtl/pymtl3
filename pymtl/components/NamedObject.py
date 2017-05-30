@@ -10,6 +10,7 @@ class NamedObject(object):
 
   def __new__( cls, *args, **kwargs ):
     inst = object.__new__( cls, *args, **kwargs )
+
     # Bookkeep name hierarchy here for error message and other purposes
     # For example, s.x[0][3].y[2].z turns into
     # ( ["top","x","y","z"], [ [], [0,3], [2], [] ] )
