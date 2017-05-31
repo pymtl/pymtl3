@@ -7,6 +7,7 @@ class Connectable(object):
     inst = object.__new__( cls )
 
     inst._root      = inst # Use disjoint set to resolve connections
+    inst._adjs      = []   # still preserve tree structure in parallel
     inst._connected = [ inst ]
 
     return inst
@@ -27,6 +28,9 @@ class Connectable(object):
     y._connected.extend( x._connected )
     x._connected = []
 
+    s._adjs.append( other )
+    other._adjs.append( s ) # bidirectional
+
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
   if isinstance( x, int ):
@@ -39,7 +43,7 @@ def _overlap( x, y ):
       else:                   return x.start < y.stop
   assert False, "What the hell?"
 
-class Wire( Connectable, NamedObject ):
+class Signal( Connectable, NamedObject ):
 
   def __init__( s, Type ):
     s.Type    = Type
@@ -83,8 +87,10 @@ class Wire( Connectable, NamedObject ):
   def default_value( s ):
     return s.Type()
 
-class InVPort( Wire ): pass
-class OutVPort( Wire ): pass
+# These three subtypes are for type checking purpose
+class Wire    ( Signal ): pass
+class InVPort ( Signal ): pass
+class OutVPort( Signal ): pass
 
 class PortBundle( Connectable, NamedObject ):
 

@@ -1,6 +1,6 @@
 from SimLevel1 import SimLevel1
 from pymtl.components import UpdateWithVar, NamedObject
-from pymtl.components import Connectable, Wire, _overlap
+from pymtl.components import Connectable, Signal, _overlap
 from collections import defaultdict, deque
 
 class SimLevel2( SimLevel1 ):
@@ -11,6 +11,7 @@ class SimLevel2( SimLevel1 ):
     self.recursive_tag_name( model )  # tag name first for error message
     self.recursive_elaborate( model ) # turn "string" into objects
     self.recursive_tag_name( model )  # slicing will spawn extra objects
+    self.check_port_in_upblk()        # in/out port check in all upblks
 
     expl, impl    = self.synthesize_var_constraints()
     serial, batch = self.schedule( self._blkid_upblk, self._constraints )
@@ -28,7 +29,7 @@ class SimLevel2( SimLevel1 ):
     # SORRY
     if isinstance( m, list ) or isinstance( m, deque ):
       for i, o in enumerate( m ):
-        if isinstance( o, Wire ):
+        if isinstance( o, Signal ):
           m[i] = o.default_value()
         else:
           self.cleanup_wires( o )
@@ -37,7 +38,7 @@ class SimLevel2( SimLevel1 ):
       for name, obj in m.__dict__.iteritems():
         if ( isinstance( name, basestring ) and not name.startswith("_") ) \
           or isinstance( name, tuple ):
-            if isinstance( obj, Wire ):
+            if isinstance( obj, Signal ):
               setattr( m, name, obj.default_value() )
             else:
               self.cleanup_wires( obj )
@@ -310,6 +311,95 @@ class SimLevel2( SimLevel1 ):
 
       if strblock != "":
         print " * Read:\n{}".format( strblock )
+
+  def check_port_in_upblk( self ):
+
+    # Check read first
+    for rd, blks in self._read_upblks.iteritems():
+      obj = self._id_obj[ rd ]
+
+      host = obj
+      while not isinstance( host, UpdateConnect ):
+        host = host._parent # go to the component
+
+      if   isinstance( obj, InVPort ):  pass
+      elif isinstance( obj, OutVPort ): pass
+      elif isinstance( obj, Wire ):
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert blk.hostobj == host, \
+"""Invalid read to Wire:
+
+- Wire \"{}\" of {} (class {}) is read in update block
+       \"{}\" of {} (class {}).
+
+  Note: Please only read Wire \"x.wire\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
+
+    # Then check write
+
+    for wr, blks in self._write_upblks.iteritems():
+      obj = self._id_obj[ wr ]
+
+      host = obj
+      while not isinstance( host, UpdateConnect ):
+        host = host._parent # go to the component
+
+      # A continuous assignment is implied when a variable is connected to
+      # an input port declaration. This makes assignments to a variable
+      # declared as an input port illegal. -- IEEE
+
+      if   isinstance( obj, InVPort ):
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert host._parent == blk.hostobj, \
+"""Invalid write to input port:
+
+- InVPort \"{}\" of {} (class {}) is written in update block
+          \"{}\" of {} (class {}).
+
+  Note: Please only write to InVPort \"x.y.in\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, host.full_name(), type(host).__name__ )
+
+      # A continuous assignment is implied when a variable is connected to
+      # the output port of an instance. This makes procedural or
+      # continuous assignments to a variable connected to the output port
+      # of an instance illegal. -- IEEE
+
+      elif isinstance( obj, OutVPort ):
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert blk.hostobj == host, \
+"""Invalid write to output port:
+
+- OutVPort \"{}\" of {} (class {}) is written in update block
+           \"{}\" of {} (class {}).
+
+  Note: Please only write to OutVPort \"x.out\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__, )
+
+      # The case of wire is special. We only allow Wire to be written in
+      # the same object. One cannot write this from outside
+
+      elif isinstance( obj, Wire ):
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert blk.hostobj == host, \
+"""Invalid write to Wire:
+
+- Wire \"{}\" of {} (class {}) is written in update block
+       \"{}\" of {} (class {}).
+
+  Note: Please only write to Wire \"x.wire\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
 
   def print_constraints( self, explicit, implicit ):
 
