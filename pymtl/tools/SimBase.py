@@ -51,5 +51,6 @@ class SimBase(object):
           assert isinstance( name, tuple ) # name = [1:3]
           _recursive_tag_expand( obj, m, [], [ slice(name[0], name[1]) ] )
 
+    m._parent = None
     m._name_idx = ( ["s"], [ [] ] )
     _recursive_tag_name( m )

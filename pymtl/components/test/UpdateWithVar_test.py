@@ -15,7 +15,7 @@ class TestSource( UpdateWithVar ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = Wire(int)
+    s.out = OutVPort(int)
 
     @s.update
     def up_src():
@@ -36,7 +36,7 @@ class TestSink( UpdateWithVar ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
-    s.in_ = Wire(int)
+    s.in_ = InVPort(int)
 
     @s.update
     def up_sink():
@@ -356,28 +356,3 @@ def test_2d_array_vars_impl():
              " >>> " + s.sink.line_trace()
 
   simulate( Top )
-
-# N-input Mux
-
-class Mux(UpdateWithVar):
-
-  def __init__( s, ninputs ):
-    s.in_ = [ Wire(int) for _ in xrange(ninputs) ]
-    s.sel = Wire(int)
-    s.out = Wire(int)
-
-    @s.update
-    def up_mux():
-      s.out = s.in_[ s.sel ]
-
-    for x in s.in_:
-      s.add_constraints(
-        WR(x) < U(up_mux),
-      )
-
-    s.add_constraints(
-      WR(s.sel) < U(up_mux),
-      U(up_mux) < RD(s.out),
-    )
-
-  def line_trace( s ):  pass

@@ -1,6 +1,6 @@
 from SimLevel1 import SimLevel1
 from pymtl.components import UpdateWithVar, NamedObject
-from pymtl.components import Connectable, Signal, _overlap
+from pymtl.components import Connectable, Signal, Wire, InVPort, OutVPort, _overlap
 from collections import defaultdict, deque
 
 class SimLevel2( SimLevel1 ):
@@ -319,7 +319,7 @@ class SimLevel2( SimLevel1 ):
       obj = self._id_obj[ rd ]
 
       host = obj
-      while not isinstance( host, UpdateConnect ):
+      while not isinstance( host, UpdateWithVar ):
         host = host._parent # go to the component
 
       if   isinstance( obj, InVPort ):  pass
@@ -344,7 +344,7 @@ class SimLevel2( SimLevel1 ):
       obj = self._id_obj[ wr ]
 
       host = obj
-      while not isinstance( host, UpdateConnect ):
+      while not isinstance( host, UpdateWithVar ):
         host = host._parent # go to the component
 
       # A continuous assignment is implied when a variable is connected to

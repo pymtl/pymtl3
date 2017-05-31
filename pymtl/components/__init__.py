@@ -3,4 +3,4 @@ from UpdateOnly  import UpdateOnly
 from UpdateWithVar import UpdateWithVar
 from UpdateConnect import UpdateConnect
 from ConstraintTypes    import U, RD, WR, M
-from Connectable import Connectable, Wire, _overlap, InVPort, OutVPort, PortBundle
+from Connectable import Connectable, Signal, _overlap, Wire, InVPort, OutVPort, PortBundle
