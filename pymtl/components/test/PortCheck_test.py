@@ -151,3 +151,94 @@ def test_legal_outport_write():
         print s.a.out
 
   _test_model( Top )
+
+def test_illegal_wire_write():
+
+  class A( UpdateConnect ):
+    def __init__( s ):
+      s.wire = Wire( Bits32 )
+
+  class Top( UpdateConnect ):
+    def __init__( s ):
+      s.a = A()
+
+      @s.update
+      def up_write_a_out():
+        s.a.wire[1:10] = 10
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown invalid wire write exception.")
+
+def test_illegal_wire_read():
+
+  class A( UpdateConnect ):
+    def __init__( s ):
+      s.wire = Wire( Bits32 )
+      @s.update
+      def up_write_wire():
+        s.wire[1:10] = 10
+
+  class Top( UpdateConnect ):
+    def __init__( s ):
+      s.a = A()
+
+      @s.update
+      def up_read_a_out():
+        print s.a.wire[1:10]
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown invalid wire write exception.")
+
+def test_connected_port():
+
+  class A( UpdateConnect ):
+    def __init__( s ):
+      s.out = OutVPort(int)
+
+      @s.update
+      def up_A_write():
+        s.out = 123
+
+  class B( UpdateConnect ):
+    def __init__( s ):
+      s.in_ = InVPort(int)
+
+      @s.update
+      def up_B_read():
+        print s.in_
+
+  class OutWrap(UpdateConnect):
+    def __init__( s ):
+      s.out = OutVPort(int)
+
+      s.a = A()( out = s.out )
+
+      @s.update
+      def up_out_read():
+        print s.out
+
+  class InWrap(UpdateConnect):
+    def __init__( s ):
+      s.in_ = InVPort(int)
+
+      s.b = B()( in_ = s.in_ )
+
+      @s.update
+      def up_in_read():
+        print s.in_
+
+  class Top( UpdateConnect ):
+    def __init__( s ):
+      s.i = InWrap()
+      s.o = OutWrap()
+      s.connect( s.o.out, s.i.in_ )
+
+  _test_model( Top )

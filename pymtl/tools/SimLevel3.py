@@ -13,11 +13,11 @@ class SimLevel3( SimLevel2 ):
     self.recursive_tag_name( model )  # tag name first for error message
     self.recursive_elaborate( model ) # turn "string" into objects
     self.recursive_tag_name( model )  # slicing will spawn extra objects
-    self.check_port_write_upblk()     # in/out port check in all upblks
+    self.check_port_in_upblk()     # in/out port check in all upblks
     # self.print_read_write()
 
     self.resolve_var_connections()    # resolve connected nets
-    # self.check_port_write_connect()   # in/out port check in all nets
+    self.check_port_in_net()   # in/out port check in all nets
 
     self.compact_net_readers() # remove unread objs, just for simulation
 
@@ -260,7 +260,33 @@ blk = {0}
         self._write_upblks[ id(x) ].append( blk_id )
         self._id_obj[ id(x) ] = x
 
-  def check_port_write_upblk( self ):
+  def check_port_in_upblk( self ):
+
+    # Check read first
+    for rd, blks in self._read_upblks.iteritems():
+      obj = self._id_obj[ rd ]
+
+      host = obj
+      while not isinstance( host, UpdateConnect ):
+        host = host._parent # go to the component
+
+      if   isinstance( obj, InVPort ):  pass
+      elif isinstance( obj, OutVPort ): pass
+      elif isinstance( obj, Wire ):
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert blk.hostobj == host, \
+"""Invalid read to Wire:
+
+- Wire \"{}\" of {} (class {}) is read in update block
+       \"{}\" of {} (class {}).
+
+  Note: Please only read Wire \"x.wire\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
+
+    # Then check write
 
     for wr, blks in self._write_upblks.iteritems():
       obj = self._id_obj[ wr ]
@@ -271,9 +297,9 @@ blk = {0}
 
       # A continuous assignment is implied when a variable is connected to
       # an input port declaration. This makes assignments to a variable
-      # declared as an input port illegal.
+      # declared as an input port illegal. -- IEEE
 
-      if isinstance( obj, InVPort ):
+      if   isinstance( obj, InVPort ):
         for blkid in blks:
           blk = self._blkid_upblk[ blkid ]
 
@@ -290,9 +316,9 @@ blk = {0}
       # A continuous assignment is implied when a variable is connected to
       # the output port of an instance. This makes procedural or
       # continuous assignments to a variable connected to the output port
-      # of an instance illegal.
+      # of an instance illegal. -- IEEE
 
-      if isinstance( obj, OutVPort ):
+      elif isinstance( obj, OutVPort ):
         for blkid in blks:
           blk = self._blkid_upblk[ blkid ]
 
@@ -306,13 +332,30 @@ blk = {0}
           .format(  obj.full_name(), host.full_name(), type(host).__name__,
                     blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__, )
 
-  def check_port_write_connect( self ):
+      # The case of wire is special. We only allow Wire to be written in
+      # the same object. One cannot write this from outside
+
+      elif isinstance( obj, Wire ):
+        for blkid in blks:
+          blk = self._blkid_upblk[ blkid ]
+
+          assert blk.hostobj == host, \
+"""Invalid write to Wire:
+
+- Wire \"{}\" of {} (class {}) is written in update block
+       \"{}\" of {} (class {}).
+
+  Note: Please only write to Wire \"x.wire\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
+
+  def check_port_in_net( self ):
+    nets = self._nets
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is
     # inverted. So we need to deal with it here ...
 
-    pass
 
   def compact_net_readers( self ):
     nets = self._nets
