@@ -1,6 +1,6 @@
 from SimLevel2 import SimLevel2
 from pymtl.components import UpdateConnect
-from pymtl.components import Connectable, Wire, InVPort, OutVPort, _overlap
+from pymtl.components import Connectable, Signal, Wire, InVPort, OutVPort, _overlap
 from collections import defaultdict, deque
 import re, ast, textwrap
 p = re.compile('( *(@|def))')
@@ -13,14 +13,12 @@ class SimLevel3( SimLevel2 ):
     self.recursive_tag_name( model )  # tag name first for error message
     self.recursive_elaborate( model ) # turn "string" into objects
     self.recursive_tag_name( model )  # slicing will spawn extra objects
-    self.check_port_in_upblk()     # in/out port check in all upblks
+    self.check_port_in_upblk()        # in/out port check in all upblks
     # self.print_read_write()
 
-    self.resolve_var_connections()    # resolve connected nets
-    self.check_port_in_net()   # in/out port check in all nets
-
-    self.compact_net_readers() # remove unread objs, just for simulation
-
+    self.resolve_var_connections() # resolve connected nets
+    self.check_port_in_net()       # in/out port check in all nets
+    self.compact_net_readers()     # remove unread objs, for simulation
     # self.print_nets( self._nets )
 
     self.generate_net_block()
@@ -32,7 +30,7 @@ class SimLevel3( SimLevel2 ):
 
     self.tick = self.generate_tick_func( serial, tick_mode )
 
-    self.cleanup_wires( self.model )
+    self.cleanup_wires( self.model ) # getting ready for simulation
 
   # Override
   def _declare_vars( self ):
@@ -260,102 +258,108 @@ blk = {0}
         self._write_upblks[ id(x) ].append( blk_id )
         self._id_obj[ id(x) ] = x
 
-  def check_port_in_upblk( self ):
-
-    # Check read first
-    for rd, blks in self._read_upblks.iteritems():
-      obj = self._id_obj[ rd ]
-
-      host = obj
-      while not isinstance( host, UpdateConnect ):
-        host = host._parent # go to the component
-
-      if   isinstance( obj, InVPort ):  pass
-      elif isinstance( obj, OutVPort ): pass
-      elif isinstance( obj, Wire ):
-        for blkid in blks:
-          blk = self._blkid_upblk[ blkid ]
-
-          assert blk.hostobj == host, \
-"""Invalid read to Wire:
-
-- Wire \"{}\" of {} (class {}) is read in update block
-       \"{}\" of {} (class {}).
-
-  Note: Please only read Wire \"x.wire\" in x's update block.""" \
-          .format(  obj.full_name(), host.full_name(), type(host).__name__,
-                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
-
-    # Then check write
-
-    for wr, blks in self._write_upblks.iteritems():
-      obj = self._id_obj[ wr ]
-
-      host = obj
-      while not isinstance( host, UpdateConnect ):
-        host = host._parent # go to the component
-
-      # A continuous assignment is implied when a variable is connected to
-      # an input port declaration. This makes assignments to a variable
-      # declared as an input port illegal. -- IEEE
-
-      if   isinstance( obj, InVPort ):
-        for blkid in blks:
-          blk = self._blkid_upblk[ blkid ]
-
-          assert host._parent == blk.hostobj, \
-"""Invalid write to input port:
-
-- InVPort \"{}\" of {} (class {}) is written in update block
-          \"{}\" of {} (class {}).
-
-  Note: Please only write to InVPort \"x.y.in\" in x's update block.""" \
-          .format(  obj.full_name(), host.full_name(), type(host).__name__,
-                    blk.__name__, host.full_name(), type(host).__name__ )
-
-      # A continuous assignment is implied when a variable is connected to
-      # the output port of an instance. This makes procedural or
-      # continuous assignments to a variable connected to the output port
-      # of an instance illegal. -- IEEE
-
-      elif isinstance( obj, OutVPort ):
-        for blkid in blks:
-          blk = self._blkid_upblk[ blkid ]
-
-          assert blk.hostobj == host, \
-"""Invalid write to output port:
-
-- OutVPort \"{}\" of {} (class {}) is written in update block
-           \"{}\" of {} (class {}).
-
-  Note: Please only write to OutVPort \"x.out\" in x's update block.""" \
-          .format(  obj.full_name(), host.full_name(), type(host).__name__,
-                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__, )
-
-      # The case of wire is special. We only allow Wire to be written in
-      # the same object. One cannot write this from outside
-
-      elif isinstance( obj, Wire ):
-        for blkid in blks:
-          blk = self._blkid_upblk[ blkid ]
-
-          assert blk.hostobj == host, \
-"""Invalid write to Wire:
-
-- Wire \"{}\" of {} (class {}) is written in update block
-       \"{}\" of {} (class {}).
-
-  Note: Please only write to Wire \"x.wire\" in x's update block.""" \
-          .format(  obj.full_name(), host.full_name(), type(host).__name__,
-                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
-
   def check_port_in_net( self ):
     nets = self._nets
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is
     # inverted. So we need to deal with it here ...
+    #
+    # The gist is that the data flows from deeper level writer to upper
+    # level readers via output port, to the same level via wire, and from
+    # upper level to deeper level via input port
 
+    for writer, readers in nets:
+
+      # First find the host object of each object
+
+      obj = writer
+      while not isinstance( obj, UpdateConnect ):
+        obj = obj._parent # go to the component
+      writer._host = obj
+
+      for reader in readers:
+        obj = reader
+        while not isinstance( obj, UpdateConnect ):
+          obj = obj._parent # go to the component
+        reader._host = obj
+
+      # We need to do DFS to check all connected port types
+      # Each node is a writer when we expand it to other nodes
+
+      S = deque( [ writer ] )
+      visited = set( [ id(writer) ] )
+
+      while S:
+        u = S.pop() # u is the writer
+        whost = u._host
+
+        for v in u._adjs: # v is the reader
+          if id(v) not in visited:
+            visited.add( id(v) )
+            S.append( v )
+            rhost = v._host
+
+            # 1. have the same host: writer_host(x)/reader_host(x):
+            # Hence, writer is anything, reader is wire or outport
+            if   whost == rhost:
+              assert    isinstance( u, Signal ) and \
+                      ( isinstance( v, OutVPort) or isinstance( v, Wire ) ), \
+"""[Type 1] Invalid port type detected at the same host component \"{}\" (class {})
+
+- {} \"{}\" cannot be driven by {} \"{}\".
+
+  Note: InVPort x.y cannot be driven by x.z""" \
+          .format(  rhost.full_name(), type(rhost).__name__,
+                    type(v).__name__, v.full_name(), type(u).__name__, u.full_name() )
+
+            # 2. reader_host(x) is writer_host(x.y)'s parent:
+            # Hence, writer is outport, reader is wire or outport
+            elif rhost == whost._parent:
+              assert  isinstance( u, OutVPort) and \
+                    ( isinstance( v, OutVPort ) or isinstance( v, Wire ) ), \
+"""[Type 2] Invalid port type detected when the driver lies deeper than drivee:
+
+- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+
+  Note: InVPort x.y cannot be driven by x.z.a""" \
+          .format(  type(v).__name__, v.full_name(), rhost.full_name(), type(rhost).__name__,
+                    type(u).__name__, u.full_name(), whost.full_name(), type(whost).__name__ )
+
+            # 3. writer_host(x) is reader_host(x.y)'s parent:
+            # Hence, writer is inport or wire, reader is inport
+            elif whost == rhost._parent:
+              assert  ( isinstance( u, InVPort ) or isinstance( u, Wire ) ) and \
+                        isinstance( v, InVPort ), \
+"""[Type 3] Invalid port type detected when the driver lies shallower than drivee:
+
+- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+
+  Note: OutVPort/Wire x.y.z cannot be driven by x.a""" \
+          .format(  type(v).__name__, v.full_name(), rhost.full_name(), type(rhost).__name__,
+                    type(u).__name__, u.full_name(), whost.full_name(), type(whost).__name__ )
+
+            # 4. hosts have the same parent: writer_host(x.y)/reader_host(x.z)
+            # This means that the connection is fulfilled in x
+            # Hence, writer is outport and reader is inport
+            elif whost._parent == rhost._parent:
+              assert isinstance( u, OutVPort ) and isinstance( v, InVPort ), \
+"""[Type 4] Invalid port type detected when the drivers is the sibling of drivee:
+
+- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+
+  Note: Looks like the connection is fulfilled in \"{}\".
+        OutVPort/Wire x.y.z cannot be driven by x.a.b""" \
+          .format(  type(v).__name__, v.full_name(), rhost.full_name(), type(rhost).__name__,
+                    type(u).__name__, u.full_name(), whost.full_name(), type(whost).__name__,
+                    whost._parent.full_name() )
+            # 5. neither host is the other's parent nor the same.
+            else:
+              assert False, \
+"""[Type 5] \"{}\" and \"{}\" cannot be connected:
+
+- host objects \"{}\" and \"{}\" are too far in the hierarchy.""" \
+          .format( u.full_name(), v.full_name(), whost.full_name(), rhost.full_name() )
 
   def compact_net_readers( self ):
     nets = self._nets
