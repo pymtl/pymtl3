@@ -334,7 +334,8 @@ class SimLevel2( SimLevel1 ):
 - Wire \"{}\" of {} (class {}) is read in update block
        \"{}\" of {} (class {}).
 
-  Note: Please only read Wire \"x.wire\" in x's update block.""" \
+  Note: Please only read Wire \"x.wire\" in x's update block.
+        (Or did you intend to declare it as an OutVPort?)""" \
           .format(  obj.full_name(), host.full_name(), type(host).__name__,
                     blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
 
@@ -397,7 +398,8 @@ class SimLevel2( SimLevel1 ):
 - Wire \"{}\" of {} (class {}) is written in update block
        \"{}\" of {} (class {}).
 
-  Note: Please only write to Wire \"x.wire\" in x's update block.""" \
+  Note: Please only write to Wire \"x.wire\" in x's update block.
+        (Or did you intend to declare it as an InVPort?)""" \
           .format(  obj.full_name(), host.full_name(), type(host).__name__,
                     blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__ )
 
