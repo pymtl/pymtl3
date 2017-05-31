@@ -51,7 +51,12 @@ def test_illegal_inport_deep_write():
       def up_write_b_in():
         s.b.b.in_[1:10] = 10
 
-  _test_model( Top )
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown invalid input port write exception.")
 
 def test_legal_inport_write():
 
@@ -73,48 +78,76 @@ def test_legal_inport_write():
 
   _test_model( Top )
 
-def test_connected_port():
+def test_illegal_outport_write():
 
   class A( UpdateConnect ):
     def __init__( s ):
-      s.out = OutVPort(int)
+      s.out = OutVPort( Bits32 )
 
       @s.update
-      def up_A_write():
-        s.out = 1
-
-  class B( UpdateConnect ):
-    def __init__( s ):
-      s.in_ = InVPort(int)
-
-      @s.update
-      def up_B_read():
-        print s.in_
-
-  class OutWrap(UpdateConnect):
-    def __init__( s ):
-      s.out = OutVPort(int)
-
-      s.a = A()( out = s.out )
-
-      @s.update
-      def up_out_read():
+      def up_A_read():
         print s.out
-
-  class InWrap(UpdateConnect):
-    def __init__( s ):
-      s.in_ = InVPort(int)
-
-      s.b = B()( in_ = s.in_ )
-
-      @s.update
-      def up_in_read():
-        print s.in_
 
   class Top( UpdateConnect ):
     def __init__( s ):
-      s.i = InWrap()
-      s.o = OutWrap()
-      s.connect( s.o.out, s.i.in_ )
+      s.a = A()
+
+      @s.update
+      def up_write_a_out():
+        s.a.out[1:10] = 10
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown invalid output port write exception.")
+
+def test_illegal_outport_deep_write():
+
+  class A( UpdateConnect ):
+    def __init__( s ):
+      s.out = OutVPort( Bits32 )
+
+      @s.update
+      def up_A_read():
+        print s.out
+
+  class AWrap( UpdateConnect ):
+    def __init__( s ):
+      s.a = A()
+
+  class Top( UpdateConnect ):
+    def __init__( s ):
+      s.a = AWrap()
+
+      @s.update
+      def up_write_a_out():
+        s.a.a.out[1:10] = 10
+
+  try:
+    _test_model( Top )
+  except Exception as e:
+    print "\nAssertion Error:", e
+    return
+  raise Exception("Should've thrown invalid output port write exception.")
+
+def test_legal_outport_write():
+
+  class A( UpdateConnect ):
+    def __init__( s ):
+      s.out = OutVPort( Bits32 )
+
+      @s.update
+      def up_A_write():
+        s.out[0:2] = 2
+
+  class Top( UpdateConnect ):
+    def __init__( s ):
+      s.a = A()
+
+      @s.update
+      def up_read_a_out():
+        print s.a.out
 
   _test_model( Top )

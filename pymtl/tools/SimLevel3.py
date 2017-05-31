@@ -263,9 +263,9 @@ blk = {0}
   def check_port_write_upblk( self ):
 
     for wr, blks in self._write_upblks.iteritems():
-      obj = host = self._id_obj[ wr ]
-      assert isinstance( obj, Wire )
+      obj = self._id_obj[ wr ]
 
+      host = obj
       while not isinstance( host, UpdateConnect ):
         host = host._parent # go to the component
 
@@ -274,18 +274,18 @@ blk = {0}
       # declared as an input port illegal.
 
       if isinstance( obj, InVPort ):
-
         for blkid in blks:
           blk = self._blkid_upblk[ blkid ]
 
-          assert host != blk.hostobj, \
-            "Invalid write to input port of {}:\n- Input port {} is written in {}.".format(
-              host.full_name(), obj.full_name(), blk.__name__ )
+          assert host._parent == blk.hostobj, \
+"""Invalid write to input port:
 
-          print blk.hostobj.full_name(), host._parent.full_name()
-          assert blk.hostobj == host._parent, \
-            "Invalid write to input port of {} from {}:\n- Input port {} is written in {}.".format(
-              host.full_name(), blk.hostobj.full_name(), obj.full_name(), blk.__name__ )
+- InVPort \"{}\" of {} (class {}) is written in update block
+          \"{}\" of {} (class {}).
+
+  Note: Please only write to InVPort \"x.y.in\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, host.full_name(), type(host).__name__ )
 
       # A continuous assignment is implied when a variable is connected to
       # the output port of an instance. This makes procedural or
@@ -293,13 +293,25 @@ blk = {0}
       # of an instance illegal.
 
       if isinstance( obj, OutVPort ):
-        print "OutVPort {}'s parent is {}".format( obj.full_name(), obj._parent.full_name() )
         for blkid in blks:
           blk = self._blkid_upblk[ blkid ]
-          print "In {}, upblk {} writes {}".format( blk.hostobj.full_name(), blk.__name__, obj.full_name() )
-          print 
+
+          assert blk.hostobj == host, \
+"""Invalid write to output port:
+
+- OutVPort \"{}\" of {} (class {}) is written in update block
+           \"{}\" of {} (class {}).
+
+  Note: Please only write to OutVPort \"x.out\" in x's update block.""" \
+          .format(  obj.full_name(), host.full_name(), type(host).__name__,
+                    blk.__name__, blk.hostobj.full_name(), type(blk.hostobj).__name__, )
 
   def check_port_write_connect( self ):
+
+    # The case of connection is very tricky because we put a single upblk
+    # in the lowest common ancestor node and the "output port" chain is
+    # inverted. So we need to deal with it here ...
+
     pass
 
   def compact_net_readers( self ):
