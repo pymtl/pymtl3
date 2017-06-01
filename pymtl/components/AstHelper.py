@@ -86,10 +86,12 @@ class DetectReadsAndWrites( DetectVarNames ):
     obj_name = self.get_full_name( node )
     if not obj_name:  return
 
+    pair = (obj_name, node)
+
     if   isinstance( node.ctx, ast.Load ):
-      self.read.append( obj_name )
+      self.read.append( pair )
     elif isinstance( node.ctx, ast.Store ):
-      self.write.append( obj_name )
+      self.write.append( pair )
     else:
       assert False, type( node.ctx )
 
@@ -97,10 +99,12 @@ class DetectReadsAndWrites( DetectVarNames ):
     obj_name = self.get_full_name( node )
     if not obj_name:  return
 
+    pair = (obj_name, node)
+
     if   isinstance( node.ctx, ast.Load ):
-      self.read.append( obj_name )
+      self.read.append( pair )
     elif isinstance( node.ctx, ast.Store ):
-      self.write.append( obj_name )
+      self.write.append( pair )
     else:
       assert False, type( node.ctx )
 
@@ -113,11 +117,11 @@ class DetectMethodCalls( DetectVarNames ):
 
   def visit_Call( self, node ):
     obj_name = self.get_full_name( node.func )
+    if not obj_name: return # to check node.func.id
 
-    if obj_name:
-      self.methods.append( obj_name )
-    # else:
-      # print node.func.id
+    pair = (obj_name, node)
+
+    self.methods.append( pair )
 
     for x in node.args:
       self.visit( x )

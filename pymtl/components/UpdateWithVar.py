@@ -38,6 +38,7 @@ class UpdateWithVar( UpdateOnly ):
       cls._blkname_wr[ blk_name ] = wr = []
       AstHelper.extract_read_write( blk.ast, blk, rd, wr )
 
+    # blk.rd/wr = [ (name, astnode) ]
     blk.rd = cls._blkname_rd[ blk_name ]
     blk.wr = cls._blkname_wr[ blk_name ]
     return blk

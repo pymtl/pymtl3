@@ -139,15 +139,19 @@ class SimLevel2( SimLevel1 ):
           varnames = blk.wr
           id_upblk = self._write_upblks
 
-        objs = []
-        for name in varnames:
+        all_objs = []
+        for name, astnode in varnames:
           try:
+            objs = []
             lookup_var( m, 0, name, objs )
+            all_objs.extend( objs )
+            astnode._obj = objs
+
           except Exception as e:
             print name, blk.__name__ #, lineno TODO
             raise
 
-        dedup = { id(o): o for o in objs }
+        dedup = { id(o): o for o in all_objs }
         for o in dedup.values():
           id_upblk[ id(o) ].append( blkid )
           self._id_obj[ id(o) ] = o
