@@ -147,8 +147,13 @@ class SimLevel2( SimLevel1 ):
             all_objs.extend( objs )
             astnode._obj = objs
 
+            for o in objs:
+              if not hasattr( o, "_astnodes" ):
+                o._astnodes = []
+              o._astnodes.append( astnode )
+
           except Exception as e:
-            print name, blk.__name__ #, lineno TODO
+            print name, blk.__name__, "line", astnode.lineno #, lineno TODO
             raise
 
         dedup = { id(o): o for o in all_objs }
