@@ -2,7 +2,7 @@ from SimLevel2 import SimLevel2
 from pymtl.components import UpdateConnect
 from pymtl.components import Connectable, Signal, Wire, InVPort, OutVPort, _overlap
 from collections import defaultdict, deque
-import re, ast, textwrap
+import re, ast
 p = re.compile('( *(@|def))')
 
 class SimLevel3( SimLevel2 ):
@@ -168,6 +168,20 @@ class SimLevel3( SimLevel2 ):
             ("\nNet:\n - ".join([ "\n - ".join([ x.full_name() for x in y ]) for y in headless ]))
       headless = new_headless
 
+    # Find the host object of every object in nets
+
+    for writer, readers in headed:
+      obj = writer
+      while not isinstance( obj, UpdateConnect ):
+        obj = obj._parent # go to the component
+      writer._host = obj
+
+      for reader in readers:
+        obj = reader
+        while not isinstance( obj, UpdateConnect ):
+          obj = obj._parent # go to the component
+        reader._host = obj
+
     self._nets = headed
 
   def generate_net_block( self ):
@@ -270,19 +284,6 @@ blk = {0}
     # upper level to deeper level via input port
 
     for writer, readers in nets:
-
-      # First find the host object of each object
-
-      obj = writer
-      while not isinstance( obj, UpdateConnect ):
-        obj = obj._parent # go to the component
-      writer._host = obj
-
-      for reader in readers:
-        obj = reader
-        while not isinstance( obj, UpdateConnect ):
-          obj = obj._parent # go to the component
-        reader._host = obj
 
       # We need to do DFS to check all connected port types
       # Each node is a writer when we expand it to other nodes
