@@ -19,7 +19,6 @@ class SimLevel1( SimBase ):
     self.tick = self.generate_tick_func( serial )
 
   def _declare_vars( self ):
-    self._name_upblk  = {}
     self._blkid_upblk = {}
     self._U_U_constraints = set()
 
@@ -28,7 +27,6 @@ class SimLevel1( SimBase ):
 
   def _collect_vars( self, m ):
     if isinstance( m, UpdateOnly ):
-      self._name_upblk.update ( m._name_upblk )
       self._blkid_upblk.update( m._blkid_upblk )
       self._U_U_constraints.update( m._U_U_constraints )
 

@@ -261,7 +261,6 @@ blk = {0}
       blk.ast     = ast.parse( gen_connection_src )
 
       blk_id = id(blk)
-      self._name_upblk[ upblk_name ] = blk
       self._blkid_upblk[ blk_id ] = blk
 
       # Collect read/writer metadata
