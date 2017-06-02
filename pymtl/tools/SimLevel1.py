@@ -231,10 +231,11 @@ class SimLevel1( SimBase ):
     dot.graph_attr["ratio"] = "fill"
     dot.graph_attr["margin"] = "0.1"
     for x in upblk_dict.values():
-      # dot.node( x.__name__+"@"+hex(id(x)) )
-      dot.node( x.__name__ )
+      dot.node( x.__name__+"@"+x.hostobj.full_name() )
     for (x, y) in constraints:
-      dot.edge( upblk_dict[x].__name__, upblk_dict[y].__name__ )
+      upx, upy = upblk_dict[x], upblk_dict[y]
+      dot.edge( upx.__name__+"@"+upx.hostobj.full_name(),
+                upy.__name__+"@"+upy.hostobj.full_name() )
     dot.render("/tmp/upblk_dag.gv", view=True)
 
   @staticmethod
