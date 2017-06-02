@@ -145,7 +145,19 @@ class SimLevel2( SimLevel1 ):
             objs = []
             lookup_var( m, 0, name, objs )
             all_objs.extend( objs )
-            astnode._obj = objs
+
+            # Here I annotate astnode with actual objects. However, since
+            # I only parse AST of an upblk once to avoid duplicated
+            # parsing, I have to fold information across difference
+            # instances of the same class into the unique AST. As a
+            # result, I keep {blkid:objs} dictionary in each AST node to
+            # differentiate between different upblks.
+
+            if not hasattr( astnode, "_objs" ):
+              astnode._objs = defaultdict(set)
+            astnode._objs[ blkid ].update( [ id(o) for o in objs ] )
+
+            # Attach astnode to object for error message lineno/coloff
 
             for o in objs:
               if not hasattr( o, "_astnodes" ):
