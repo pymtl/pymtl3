@@ -1,11 +1,13 @@
 # Pymtl-v3 working directory
 
-TODO or Problems (Updated May 29):
+TODO or Problems (Updated June 2):
 
-- [ ] enforce port direction checking
-- [?] create various exception type for better error catching
-- [?] verilator debug information for combinational changes (hopeless)
-- [?] master/slave PortBundle with in/out port?
-- [?] connectable Const?
-- [?] combinational/sequential variables of verilog import?
-- [?] "cs" function variable constraint
+- [x] enforce port direction checking
+- [x] dataflow graph visualizer which lays the foundation of Vtranslation
+- [ ] NAMES of CLASSES
+- [ ] combinational/sequential variables of arbitrary verilog import
+- [ ] create various exception type for better error catching
+- [ ] verilator debug information for combinational changes (nope)
+- [ ] master/slave PortBundle with in/out port? SV interface?
+- [ ] connectable Const?
+- [ ] "cs" function variable constraint
