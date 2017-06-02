@@ -29,29 +29,100 @@ class DFGVisualizer( SimLevel3 ):
     # I also need the batch schedule to find the first batch of nets that
     # contains sequential logic.
 
-    # self.print_upblk_dag( self._blkid_upblk, self._constraints )
-    self.visualize()
+    self.print_upblk_dag( self._blkid_upblk, self._constraints )
+    self.visualize( batch )
 
-  def visualize( self ):
+  def visualize( self, batch ):
     deps = defaultdict(set)
     visitor = DetectDataDependency( deps, self._id_obj )
 
     for blk in self._blkid_upblk.values():
-      print 
+      print
       print "+++++++++++++++++++++++++++++++++++++++++++++++++++"
       print "+ {} at {} ".format( blk.__name__ , blk.hostobj.full_name() )
       print "+++++++++++++++++++++++++++++++++++++++++++++++++++"
-      print 
+      print
       visitor.enter( blk )
+
+    # Extract dependency graph information
+
+    all_ids = set()
+    for (x, y) in deps:
+      all_ids.add( x )
+      all_ids.add( y )
+
+    all_objs   = { x: self._id_obj[x] for x in all_ids }
+    in_degree  = { x: 0 for x in all_ids }
+    out_degree = { x: 0 for x in all_ids }
+
+    for (x, y) in deps:
+      in_degree [ y ] += 1
+      out_degree[ x ] += 1
+
+    upblk_rank = {}
+    for i, x in enumerate( batch ):
+      for y in x:
+        upblk_rank[ id(y) ] = i
 
     from graphviz import Digraph
 
     dot = Digraph()
     dot.graph_attr["rank"] = "source"
-    dot.graph_attr["ratio"] = "fill"
+    dot.graph_attr["ratio"] = "compress"
     dot.graph_attr["margin"] = "0.1"
+
+    # We first figure out all external signals which is easy: look at deg
+
+    for i, o in all_objs.iteritems():
+      assert in_degree[i] > 0 or out_degree[i] > 0
+
+      if   in_degree[i] == 0: # this is an input port
+        dot.node( o.full_name(), shape='triangle', style='filled', color='gray68',fontsize='20' )
+      elif out_degree[i] == 0: # this is an output port
+        dot.node( o.full_name(), shape='invtriangle', style='filled', color='gray80',fontsize='20' )
+      else: # normal object
+        dot.node( o.full_name(), shape='ellipse' )
+
+    # Here we figure out all sequential elements. The gist is as follows.
+    # Each (x, y) dependency pair flows data from x to y. It can be the
+    # case where:
+    #   - y = x in some upblk
+    #   - if x == 0: y = 1 in some upblk
+    #   - ...
+    # OK, note that we also have the batch schedule where the 0-th batch
+    # is scheduled at the beginning of tick. As a result if
+    # - blk A is in the first batch and blk B is not,
+    # - blk A reads x in z = x and blk B writes x in x = y
+    # Then the dependency is inverted: rd < wr instead of wr < rd which
+    # means that x is sequential. As a result, we need to remove z = x
+    # from the graph.
+
     for (x, y) in deps:
-      dot.edge( self._id_obj[x].full_name(), self._id_obj[y].full_name() )
+
+      comb_edge = True
+
+      # Only check internal signals to remove sequential elements
+
+      if len( self._write_upblks[x] ) == 1:
+
+        # wrblk (B) writes variable x
+
+        wrblk_rank = upblk_rank[ self._write_upblks[x][0] ]
+
+        for (lineno, rdblk) in deps[ (x,y) ]: # all occured dependencies
+
+          # rdblk (A) reads variable x
+
+          if upblk_rank[ rdblk ] < wrblk_rank: # rd < wr, inverted!
+            dot.node( all_objs[x].full_name(), shape='msquare', style='filled', color='lightsalmon', fontsize='20' )
+            dot.node( all_objs[y].full_name(), shape='msquare', style='filled', color='salmon', fontsize='20' )
+            comb_edge = False
+
+      if comb_edge:
+        dot.edge( all_objs[x].full_name(), all_objs[y].full_name() )
+      else:
+        dot.edge( all_objs[x].full_name(), all_objs[y].full_name(), constraint='false', style='dashed' )
+
     dot.render("/tmp/dataflow.gv", view=True)
 
 import astor # DEBUG
@@ -183,7 +254,7 @@ class DetectDataDependency( ast.NodeVisitor ):
   def visit_FunctionDef( self, node ):
     if _DEBUG: print "FunctionDef", astor.to_source( node ); print
 
-    assert node.decorator_list and not node.args.args 
+    assert node.decorator_list and not node.args.args
 
     for stmt in node.body:
       self.visit( stmt )
@@ -216,7 +287,7 @@ class DetectDataDependency( ast.NodeVisitor ):
       for wr_id in value_writes:
         print "{} -> {}".format( self.id_obj[rd_id].full_name(), self.id_obj[wr_id].full_name() )
 
-        self.dependencies[ (rd_id, wr_id) ].add( node.lineno )
+        self.dependencies[ (rd_id, wr_id) ].add( (node.lineno, id(self.blk)) )
 
   def visit_AugAssign( self, node ):
     if _DEBUG: print "AugAssign", astor.to_source( node ); print
@@ -224,9 +295,15 @@ class DetectDataDependency( ast.NodeVisitor ):
     value_reads = self.visit( node.value ) | self.context_reads
     value_writes = self.visit( target )
 
-    for rd in value_reads:
-      for wr in value_writes:
-        self.dependencies[ (id(rd), id(wr)) ].add( node.lineno )
+    print
+    print "--- source ---:", astor.to_source( node )
+    print "context_reads:", [ self.id_obj[x].full_name() for x in self.context_reads ]
+
+    for rd_id in value_reads:
+      for wr_id in value_writes:
+        print "{} -> {}".format( self.id_obj[rd_id].full_name(), self.id_obj[wr_id].full_name() )
+
+        self.dependencies[ (rd_id, wr_id) ].add( (node.lineno, self.blk) )
 
   # invalid
   def visit_Print( self, node ):
