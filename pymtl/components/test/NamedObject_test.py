@@ -26,7 +26,7 @@ class Human(NamedObject):
 def test_NamedObject_normal():
 
   x = Human( nlunch=1, ndinner=1 )
-  sim = TagNamePass( x )
+  sim = TagNamePass().execute( x )
 
   assert repr(x) == "s"
 
@@ -42,7 +42,7 @@ def test_NamedObject_normal():
 def test_NamedObject_deque():
 
   x = Human( nlunch=1, ndinner=5 )
-  sim = TagNamePass( x )
+  sim = TagNamePass().execute( x )
 
   assert repr(x) == "s"
 
@@ -58,7 +58,7 @@ def test_NamedObject_deque():
 def test_NamedObject_list():
 
   x = Human( nlunch=4, ndinner=1 )
-  sim = TagNamePass( x )
+  sim = TagNamePass().execute( x )
 
   assert repr(x) == "s"
 

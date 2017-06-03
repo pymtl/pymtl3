@@ -42,6 +42,7 @@ class TagNamePass( BasePass ):
     def _recursive_tag_name( m ):
 
       # Jump to the expand function to analyze the type of child object
+
       for name, obj in m.object_list:
         if isinstance( name, basestring ): # python2 specific
           if not name.startswith("_"): # filter private variables
