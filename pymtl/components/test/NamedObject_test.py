@@ -1,5 +1,5 @@
-from pymtl.components import NamedObject
-from pymtl.tools import SimBase
+from pymtl import NamedObject
+from pymtl.passes import TagNamePass
 from collections import deque
 
 class Chicken(NamedObject):
@@ -26,48 +26,48 @@ class Human(NamedObject):
 def test_NamedObject_normal():
 
   x = Human( nlunch=1, ndinner=1 )
-  sim = SimBase( x )
+  sim = TagNamePass( x )
 
-  assert x.full_name() == "s"
+  assert repr(x) == "s"
 
-  assert x.lunch.full_name() == "s.lunch"
-  assert x.dinner.full_name() == "s.dinner"
+  assert repr(x.lunch) == "s.lunch"
+  assert repr(x.dinner) == "s.dinner"
 
-  assert x.lunch.rooster.full_name() == "s.lunch.rooster"
-  assert x.dinner.chicken.full_name()== "s.dinner.chicken"
+  assert repr(x.lunch.rooster) == "s.lunch.rooster"
+  assert repr(x.dinner.chicken)== "s.dinner.chicken"
 
-  assert x.lunch.rooster.protein.full_name() == "s.lunch.rooster.protein"
-  assert x.dinner.chicken.protein.full_name()== "s.dinner.chicken.protein"
+  assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
+  assert repr(x.dinner.chicken.protein)== "s.dinner.chicken.protein"
 
 def test_NamedObject_deque():
 
   x = Human( nlunch=1, ndinner=5 )
-  sim = SimBase( x )
+  sim = TagNamePass( x )
 
-  assert x.full_name() == "s"
+  assert repr(x) == "s"
 
-  assert x.lunch.full_name() == "s.lunch"
-  assert x.dinner[2].full_name() == "s.dinner[2]"
+  assert repr(x.lunch) == "s.lunch"
+  assert repr(x.dinner[2]) == "s.dinner[2]"
 
-  assert x.lunch.rooster.full_name() == "s.lunch.rooster"
-  assert x.dinner[2].chicken.full_name()== "s.dinner[2].chicken"
+  assert repr(x.lunch.rooster) == "s.lunch.rooster"
+  assert repr(x.dinner[2].chicken)== "s.dinner[2].chicken"
 
-  assert x.lunch.rooster.protein.full_name() == "s.lunch.rooster.protein"
-  assert x.dinner[1].chicken.protein.full_name()== "s.dinner[1].chicken.protein"
+  assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
+  assert repr(x.dinner[1].chicken.protein)== "s.dinner[1].chicken.protein"
 
 def test_NamedObject_list():
 
   x = Human( nlunch=4, ndinner=1 )
-  sim = SimBase( x )
+  sim = TagNamePass( x )
 
-  assert x.full_name() == "s"
+  assert repr(x) == "s"
 
-  assert x.lunch[3].full_name() == "s.lunch[3]"
-  assert x.dinner.full_name() == "s.dinner"
+  assert repr(x.lunch[3]) == "s.lunch[3]"
+  assert repr(x.dinner) == "s.dinner"
 
-  assert x.lunch[3].rooster.full_name() == "s.lunch[3].rooster"
-  assert x.dinner.chicken.full_name()== "s.dinner.chicken"
+  assert repr(x.lunch[3].rooster) == "s.lunch[3].rooster"
+  assert repr(x.dinner.chicken) == "s.dinner.chicken"
 
-  assert x.lunch[3].rooster.protein.full_name() == "s.lunch[3].rooster.protein"
-  assert x.dinner.chicken.protein.full_name()== "s.dinner.chicken.protein"
+  assert repr(x.lunch[3].rooster.protein) == "s.lunch[3].rooster.protein"
+  assert repr(x.dinner.chicken.protein) == "s.dinner.chicken.protein"
 

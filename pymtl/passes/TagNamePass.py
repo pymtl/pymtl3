@@ -1,19 +1,18 @@
-from pymtl.components import NamedObject
+#-------------------------------------------------------------------------
+# TagNamePass
+#-------------------------------------------------------------------------
+# Tag each child obj with full instance name. This has to executed again
+# after elaboration during which new objects may be created. Stateless.
+# TODO two different names point to the same object
+
+from pymtl.passes import BasePass
+from pymtl.components.NamedObject import NamedObject
 from collections import deque
 
-class SimBase(object):
+class TagNamePass( BasePass ):
 
-  def __init__( self, model ):
-    self.model = model
-
-    self.recursive_tag_name( model )
-
-  #-------------------------------------------------------------------------
-  # recursive_tag_name
-  #-------------------------------------------------------------------------
-  # Tag each child obj with full instance name. This has to executed again
-  # after elaboration during which new objects may be created. Stateless.
-  # TODO two different names point to the same object
+  def execute( self, m ):
+    self.recursive_tag_name( m )
 
   @staticmethod
   def recursive_tag_name( m ):
@@ -43,7 +42,7 @@ class SimBase(object):
     def _recursive_tag_name( m ):
 
       # Jump to the expand function to analyze the type of child object
-      for name, obj in m.__dict__.iteritems():
+      for name, obj in m.object_list:
         if isinstance( name, basestring ): # python2 specific
           if not name.startswith("_"): # filter private variables
             _recursive_tag_expand( obj, m, [name], [] )
