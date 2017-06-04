@@ -1,16 +1,16 @@
 from pymtl import *
 
-def _test_model( model ):
-  m = model()
-  sim = SimLevel3( m )
+def _test_model( cls ):
+  A = cls()
+  A = SimUpdateVarNetPass(dump=True).execute( A )
 
-  for x in xrange(10):
-    sim.tick()
+  for i in xrange(10):
+    A.tick()
 
 # write two disjoint slices
 def test_write_two_disjoint_slices():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -31,7 +31,7 @@ def test_write_two_disjoint_slices():
 # write two disjoint slices, but one slice is not read at all
 def test_write_two_disjoint_slices_no_reader():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -47,20 +47,19 @@ def test_write_two_disjoint_slices_no_reader():
       def up_rd_17_30():
         assert s.A[16:30] == 0xff
 
-  m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( Top() )
 
-  assert len(sim._constraints) == 1
-  x, y = sim._constraints[0]
+  assert len(m._constraints) == 1
+  x, y = list(m._constraints)[0]
 
-  assert  sim._blkid_upblk[x].__name__ == "up_wr_16_30" and \
-          sim._blkid_upblk[y].__name__ == "up_rd_17_30" # only one constraint
+  assert  m._blkid_upblk[x].__name__ == "up_wr_16_30" and \
+          m._blkid_upblk[y].__name__ == "up_rd_17_30" # only one constraint
 
 
 # write two overlapping slices
 def test_write_two_overlapping_slices():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -86,7 +85,7 @@ def test_write_two_overlapping_slices():
 # write two slices and a single bit
 def test_write_two_slices_and_bit():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -106,21 +105,20 @@ def test_write_two_slices_and_bit():
       def up_rd_A():
         print s.A[0:17]
 
-  m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( Top() )
 
-  assert len(sim._constraints) == 2
-  _, x = sim._constraints[0]
-  _, y = sim._constraints[1]
+  assert len(m._constraints) == 2
+  _, x = list(m._constraints)[0]
+  _, y = list(m._constraints)[1]
 
   # two constraints are: up_wr_0_16 < up_rd_A and up_wr_16_30 < up_rd_A
-  assert  sim._blkid_upblk[x].__name__ == "up_rd_A" and \
-          sim._blkid_upblk[y].__name__ == "up_rd_A"
+  assert  m._blkid_upblk[x].__name__ == "up_rd_A" and \
+          m._blkid_upblk[y].__name__ == "up_rd_A"
 
 # write a slice and a single bit, but they are overlapped
 def test_write_slices_and_bit_overlapped():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -146,7 +144,7 @@ def test_write_slices_and_bit_overlapped():
 # write a slice and there are two reader
 def test_multiple_readers():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -230,7 +228,7 @@ def test_multiple_readers():
 # RD A[s] - WR A
 def test_rd_As_wr_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -247,7 +245,7 @@ def test_rd_As_wr_A_impl():
 # RD A[s] - WR A[t], intersect
 def test_rd_As_wr_At_impl_intersect():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -264,7 +262,7 @@ def test_rd_As_wr_At_impl_intersect():
 # RD A[s] - WR A[t], not intersect
 def test_rd_As_wr_At_impl_disjoint():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -276,15 +274,14 @@ def test_rd_As_wr_At_impl_disjoint():
       def up_rd_As():
         assert s.A[0:16] == 0
 
-  m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( Top() )
 
-  assert len(sim._constraints) == 0 # no constraint at all!
+  assert len(m._constraints) == 0 # no constraint at all!
 
 # WR A[s] - WR A
 def test_wr_As_wr_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -306,7 +303,7 @@ def test_wr_As_wr_A_conflict():
 # WR A[s] - WR A[t], intersect
 def test_wr_As_wr_At_intersect():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -332,7 +329,7 @@ def test_wr_As_wr_At_intersect():
 # WR A[s] - WR A[t], not intersect
 def test_wr_As_wr_At_disjoint():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -353,7 +350,7 @@ def test_wr_As_wr_At_disjoint():
 # WR A[s] - RD A
 def test_wr_As_rd_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -370,7 +367,7 @@ def test_wr_As_rd_A_impl():
 # WR A[s] - RD A, RD A[t], intersect
 def test_wr_As_rd_A_rd_At_can_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -391,7 +388,7 @@ def test_wr_As_rd_A_rd_At_can_schedule():
 # WR A[s] - RD A, RD A[t], not intersect
 def test_wr_As_rd_A_rd_At_cannot_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -407,19 +404,18 @@ def test_wr_As_rd_A_rd_At_cannot_schedule():
       def up_rd_At():
         assert s.A[3:5] == 0
 
-  m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( Top() )
 
-  assert len(sim._constraints) == 1
-  x, y = sim._constraints[0]
+  assert len(m._constraints) == 1
+  x, y = list(m._constraints)[0]
 
-  assert  sim._blkid_upblk[x].__name__ == "up_wr_As" and \
-          sim._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
+  assert  m._blkid_upblk[x].__name__ == "up_wr_As" and \
+          m._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
 
 # WR A - RD A[s], RD A[t]
 def test_wr_A_rd_slices_can_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -440,7 +436,7 @@ def test_wr_A_rd_slices_can_schedule():
 # WR A[s] - RD A, RD A[t], not intersect
 def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -456,19 +452,18 @@ def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
       def up_rd_At():
         assert s.A[16] == 0
 
-  m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( Top() )
 
-  assert len(sim._constraints) == 1
-  x, y = sim._constraints[0]
+  assert len(m._constraints) == 1
+  x, y = list(m._constraints)[0]
 
-  assert  sim._blkid_upblk[x].__name__ == "up_wr_As" and \
-          sim._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
+  assert  m._blkid_upblk[x].__name__ == "up_wr_As" and \
+          m._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
 
 # RD A[s] - A|=x, WR x
 def test_connect_rd_As_wr_x_conn_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -489,7 +484,7 @@ def test_connect_rd_As_wr_x_conn_A_impl():
 # RD A[s] - A[t]|=x, WR x, intersect
 def test_connect_rd_As_wr_x_conn_At_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -510,7 +505,7 @@ def test_connect_rd_As_wr_x_conn_At_impl():
 # RD A[s] - A[t]|=x, WR x, not intersect
 def test_connect_rd_As_wr_x_conn_At_disjoint():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -526,19 +521,18 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
       def up_rd_As():
         assert s.A[24:32] == 0
 
-  m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( Top() )
 
-  assert len(sim._constraints) == 1
-  x, y = sim._constraints[0]
+  assert len(m._constraints) == 1
+  x, y = list(m._constraints)[0]
 
-  assert  sim._blkid_upblk[x].__name__ == "up_wr_x" and \
-          sim._blkid_upblk[y].__name__ == "s_x_FANOUT_1" # connection block
+  assert  m._blkid_upblk[x].__name__ == "up_wr_x" and \
+          m._blkid_upblk[y].__name__ == "s_x_FANOUT_1" # connection block
 
 # WR A[s] - A|=x
 def test_connect_wr_As_rd_x_conn_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -550,13 +544,12 @@ def test_connect_wr_As_rd_x_conn_A_mark_writer():
       def up_wr_As():
         s.A[0:24] = Bits24( 0x123456 )
 
-  m = Top()
-  sim = SimLevel3( m )
+  _test_model( Top )
 
 # WR A[s] - A|=x, WR x
 def test_connect_wr_As_wr_x_conn_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -582,7 +575,7 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
 # WR A[s] - A[t]|=x, intersect
 def test_connect_wr_As_rd_x_conn_At_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -599,7 +592,7 @@ def test_connect_wr_As_rd_x_conn_At_mark_writer():
 # WR A[s] - A[t]|=x, not intersect
 def test_connect_wr_As_rd_x_conn_At_no_driver():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -621,7 +614,7 @@ def test_connect_wr_As_rd_x_conn_At_no_driver():
 # WR A[s] - A[t]|=x, WR x, intersect
 def test_connect_wr_As_wr_x_conn_At_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -647,7 +640,7 @@ def test_connect_wr_As_wr_x_conn_At_conflict():
 # WR A[s] - A[t]|=x, WR x, not intersect
 def test_connect_wr_As_wr_x_conn_At_disjoint():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -672,7 +665,7 @@ def test_connect_wr_As_wr_x_conn_At_disjoint():
 # A[s]|=x, WR x - RD A
 def test_connect_wr_x_conn_As_rd_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -693,7 +686,7 @@ def test_connect_wr_x_conn_As_rd_A_impl():
 # A[s]|=x, WR x - WR A
 def test_connect_wr_x_conn_As_wr_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -721,7 +714,7 @@ def test_connect_wr_x_conn_As_wr_A_conflict():
 # A[s]|=x - WR A
 def test_connect_rd_x_conn_As_wr_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -742,7 +735,7 @@ def test_connect_rd_x_conn_As_wr_A_mark_writer():
 # A[s]|=x, WR x - A|=y, WR y
 def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -770,7 +763,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
 # A[s]|=x, WR x - A[t]|=y, WR y, intersect
 def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -798,7 +791,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
 # A[s]|=x, WR x - A[t]|=y, WR y, not intersect
 def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -825,7 +818,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
 # A[s]|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -848,7 +841,7 @@ def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
 # A[s]|=x - A|=y, WR y
 def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -871,7 +864,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 # A[s]|=x - A[t]|=y, WR y, intersect
 def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -894,7 +887,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
 # A[s]|=x - A[t]|=y, WR y, not intersect
 def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits24 )
@@ -921,7 +914,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
 
 def test_iterative_find_nets():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.w  = Wire( Bits32 )
@@ -941,7 +934,7 @@ def test_iterative_find_nets():
 
 def test_multiple_sibling_slices():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.A  = Wire( Bits32 )

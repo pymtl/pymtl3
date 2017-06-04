@@ -15,12 +15,12 @@ class SomeMsg( object ):
   def __eq__( s, other ):
     return s.a == other.a and s.b == other.b
 
-def _test_model( model ):
-  m = model()
-  sim = SimLevel3( m )
+def _test_model( cls ):
+  A = cls()
+  A = SimUpdateVarNetPass(dump=True).execute( A )
 
-  for x in xrange(10):
-    sim.tick()
+  for i in xrange(10):
+    A.tick()
 
 # All situations when we allow nested data struct:
 #
@@ -73,7 +73,7 @@ def _test_model( model ):
 # RD A.b - WR A
 def test_rd_A_b_wr_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -90,7 +90,7 @@ def test_rd_A_b_wr_A_impl():
 # WR A.b - WR A
 def test_wr_A_b_wr_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -112,7 +112,7 @@ def test_wr_A_b_wr_A_conflict():
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -129,7 +129,7 @@ def test_wr_A_b_rd_A_impl():
 # WR A.b - RD A, RD A.b
 def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -150,7 +150,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 # WR A - RD A.a, RD A.b
 def test_wr_A_rd_fields_can_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -171,7 +171,7 @@ def test_wr_A_rd_fields_can_schedule():
 # WR A.b - RD A, RD A.a
 def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -188,18 +188,18 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
         assert s.A.a == 12
 
   m = Top()
-  sim = SimLevel3( m )
+  m = SimUpdateVarNetPass(dump=True).execute( m )
 
-  assert len(sim._constraints) == 1
-  x, y = sim._constraints[0]
+  assert len(m._constraints) == 1
+  x, y = list(m._constraints)[0]
 
-  assert  sim._blkid_upblk[x].__name__ == "up_wr_A_b" and \
-          sim._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
+  assert  m._blkid_upblk[x].__name__ == "up_wr_A_b" and \
+          m._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
 
 # RD A.b - WR x, x|=A
 def test_connect_rd_A_b_wr_x_conn_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -220,7 +220,7 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
 # WR A.b - A|=x
 def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -238,7 +238,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # WR A.b - A|=x, WR x.b
 # def test_connect_wr_A_b_wr_x_b_conn_A_conflict():
 
-  # class Top( UpdateConnect ):
+  # class Top( UpdateVarNet ):
     # def __init__( s ):
 
       # s.x  = Wire( SomeMsg() )
@@ -259,7 +259,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # WR A.b - A|=x, WR x 
 def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -285,7 +285,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 # A.b|=x, WR x - RD A
 def test_connect_wr_x_conn_A_b_rd_A_impl():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -306,7 +306,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 # A.b|=x, WR x - WR A
 def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -332,7 +332,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 # A.b|=x, RD x - WR A
 def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -353,7 +353,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 # A.b|=x, WR x - A|=y, WR y
 def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -381,7 +381,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 # A.b|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -404,7 +404,7 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 # A.b|=x, RD x - A|=y, WR y
 def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -426,7 +426,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
 def test_iterative_find_nets():
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       s.w  = Wire( SomeMsg() )
@@ -485,7 +485,7 @@ def test_deep_connections():
       x.z = x.z(z)
       return x
 
-  class Top( UpdateConnect ):
+  class Top( UpdateVarNet ):
     def __init__( s ):
 
       msg3 = Msg3() # TODO find a good way to handle type equivalence

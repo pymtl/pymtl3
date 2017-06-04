@@ -5,10 +5,10 @@ from collections import deque
 
 def _test_model( cls ):
   A = cls()
-  sim = SimUpdateOnlyPass(dump=True).execute( A )
+  A = SimUpdateOnlyPass(dump=True).execute( A )
 
   while not A.done():
-    sim.tick()
+    A.tick()
     print A.line_trace()
 
 class TestSource( UpdateOnly ):

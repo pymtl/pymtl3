@@ -3,12 +3,12 @@ from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pclib.rtl import Mux
 from collections import deque
 
-def simulate( cls ):
+def _test_model( cls ):
   A = cls()
-  sim = SimLevel3( A )
+  A = SimUpdateVarNetPass(dump=True).execute( A )
 
   while not A.done():
-    sim.tick()
+    A.tick()
     print A.line_trace()
 
 MUX_SEL_0 = 0
@@ -16,7 +16,7 @@ MUX_SEL_1 = 1
 
 def test_connect_list_const_idx():
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -38,11 +38,11 @@ def test_connect_list_const_idx():
     def line_trace( s ):
       return " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_connect_list_idx_call():
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -63,11 +63,11 @@ def test_connect_list_idx_call():
     def line_trace( s ):
       return " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_connect_deep():
 
-  class MuxWrap(UpdateConnect):
+  class MuxWrap(UpdateVarNet):
 
     def __init__( s ):
       s.in_ = [ InVPort(int) for _ in xrange(2) ]
@@ -80,7 +80,7 @@ def test_connect_deep():
         sel = s.sel,
       )
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -101,11 +101,11 @@ def test_connect_deep():
     def line_trace( s ):
       return " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_deep_connect():
 
-  class MuxWrap3(UpdateConnect):
+  class MuxWrap3(UpdateVarNet):
 
     def __init__( s ):
       s.in_ = [ InVPort(int) for _ in xrange(2) ]
@@ -126,7 +126,7 @@ def test_deep_connect():
         sel = s.sel,
       )
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -147,11 +147,11 @@ def test_deep_connect():
     def line_trace( s ):
       return " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_2d_array_vars_connect_impl():
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -189,11 +189,11 @@ def test_2d_array_vars_connect_impl():
              str(s.wire)+" r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_lots_of_fan_connect():
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -254,11 +254,11 @@ def test_lots_of_fan_connect():
             "w0=%s > r0=%s" % (s.wire0,s.reg) + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_connect_plain():
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -281,11 +281,11 @@ def test_connect_plain():
             "w0=%s" % (s.wire0) + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_2d_array_vars_connect():
 
-  class Top(UpdateConnect):
+  class Top(UpdateVarNet):
 
     def __init__( s ):
 
@@ -328,4 +328,4 @@ def test_2d_array_vars_connect():
              str(s.wire)+" r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
