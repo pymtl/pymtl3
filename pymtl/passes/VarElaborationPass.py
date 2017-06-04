@@ -170,18 +170,15 @@ class VarElaborationPass( BasicElaborationPass ):
     print "+ Read/write in each update block"
     print "+-------------------------------------------------------------"
     for blkid, entries in self._blkid_rdwr.iteritems():
-      print "In < {} >".format( self._blkid_upblk[ blkid ].__name__ )
+      print "\nIn < {} >:".format( self._blkid_upblk[ blkid ].__name__ )
 
-      wr_str = ""
-      rd_str = ""
+      wr_str = []
+      rd_str = []
       for e in entries:
-        if e[0] == 'wr':
-          wr_str += "   + {}\n".format( repr(e[1]) )
-      for e in entries:
-        if e[0] == 'rd':
-          rd_str += "   - {}\n".format( repr(e[1]) )
+        if   e[0] == 'wr':
+          wr_str.append( repr( e[1] ) )
+        elif e[0] == 'rd':
+          rd_str.append( repr( e[1] ) )
 
-      if wr_str != "":
-        print " * Write:\n{}".format( wr_str )
-      if rd_str != "":
-        print " * Read:\n{}".format( rd_str )
+      if wr_str: print "  * Write:\n    + {}".format( "\n    + ".join( wr_str ) )
+      if rd_str: print "  * Read: \n    - {}".format( "\n    - ".join( rd_str ) )

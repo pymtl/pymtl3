@@ -10,6 +10,13 @@ class VarConstraintPass( BasicConstraintPass ):
     self.dump = dump
 
   def execute( self, m ): # execute pass on model m
+    assert hasattr( m, "_WR_U_constraints" ), \
+    """Please apply other passes to generate model.* :
+  - _WR_U_constraints
+  - _RD_U_constraints
+  - _read_upblks
+  - _write_upblks"""
+
     self.synthesize_var_constraints( m )
 
     if self.dump:
@@ -122,7 +129,7 @@ class VarConstraintPass( BasicConstraintPass ):
       while x:
         if id(x) != wr_id:
           assert id(x) not in write_upblks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
-                                        ( x.full_name(), m._blkid_upblk[write_upblks[id(x)][0]].__name__, obj.full_name(), m._blkid_upblk[write_upblks[wr_id][0]].__name__ )
+                                        ( repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__, repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ )
         if id(x) in read_upblks:
           readers.append( id(x) )
         x = x._nested
@@ -133,7 +140,7 @@ class VarConstraintPass( BasicConstraintPass ):
           # Recognize overlapped slices
           if id(x) != wr_id and _overlap( x._slice, obj._slice ):
             assert id(x) not in write_upblks, "Two-writer conflict in nested data struct/slice. \n - %s (in %s)\n - %s (in %s)" % \
-                                        ( x.full_name(), m._blkid_upblk[write_upblks[id(x)][0]].__name__, obj.full_name(), m._blkid_upblk[write_upblks[wr_id][0]].__name__ )
+                                        ( repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__, repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ )
 
       # Add all constraints
       for wr_blk in wr_blks:

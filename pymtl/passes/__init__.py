@@ -13,3 +13,7 @@ from VarConstraintPass   import VarConstraintPass
 from SignalTypeCheckPass import SignalTypeCheckPass
 from SignalCleanupPass   import SignalCleanupPass
 from SimUpdateVarPass    import SimUpdateVarPass
+
+from VarNetElaborationPass import VarNetElaborationPass
+from GenerateNetUpblkPass  import GenerateNetUpblkPass
+from SimUpdateVarNetPass   import SimUpdateVarNetPass

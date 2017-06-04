@@ -12,7 +12,8 @@ class SignalCleanupPass( BasePass ):
     self.cleanup_wires( m )
     return m
 
-  def cleanup_wires( self, m ):
+  @staticmethod
+  def cleanup_wires( m ):
 
     # SORRY
     if isinstance( m, list ) or isinstance( m, deque ):
@@ -20,7 +21,7 @@ class SignalCleanupPass( BasePass ):
         if isinstance( o, Signal ):
           m[i] = o.default_value()
         else:
-          self.cleanup_wires( o )
+          SignalCleanupPass.cleanup_wires( o )
 
     elif isinstance( m, NamedObject ):
       for name, obj in m.object_list:
@@ -29,4 +30,4 @@ class SignalCleanupPass( BasePass ):
             if isinstance( obj, Signal ):
               setattr( m, name, obj.default_value() )
             else:
-              self.cleanup_wires( obj )
+              SignalCleanupPass.cleanup_wires( obj )

@@ -3,13 +3,20 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.components import UpdateVar
+from pymtl.components import UpdateVar, UpdateVarNet, Signal
 from pymtl.passes import BasePass
+from collections import deque
 
 class SignalTypeCheckPass( BasePass ):
 
   def execute( self, m ):
-    self.check_port_in_upblk( m )
+
+    if isinstance( m, UpdateVar ):
+      self.check_port_in_upblk( m )
+
+    if isinstance( m, UpdateVarNet ):
+      self.check_port_in_nets( m )
+
     return m
 
   @staticmethod
@@ -103,3 +110,94 @@ class SignalTypeCheckPass( BasePass ):
         (Or did you intend to declare it as an InVPort?)""" \
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__ )
+
+  @staticmethod
+  def check_port_in_nets( m ):
+    nets = m._nets
+
+    # The case of connection is very tricky because we put a single upblk
+    # in the lowest common ancestor node and the "output port" chain is
+    # inverted. So we need to deal with it here ...
+    #
+    # The gist is that the data flows from deeper level writer to upper
+    # level readers via output port, to the same level via wire, and from
+    # upper level to deeper level via input port
+
+    for writer, readers in nets:
+
+      # We need to do DFS to check all connected port types
+      # Each node is a writer when we expand it to other nodes
+
+      S = deque( [ writer ] )
+      visited = set( [ id(writer) ] )
+
+      while S:
+        u = S.pop() # u is the writer
+        whost = u._host
+
+        for v in u._adjs: # v is the reader
+          if id(v) not in visited:
+            visited.add( id(v) )
+            S.append( v )
+            rhost = v._host
+
+            # 1. have the same host: writer_host(x)/reader_host(x):
+            # Hence, writer is anything, reader is wire or outport
+            if   whost == rhost:
+              assert    isinstance( u, Signal ) and \
+                      ( isinstance( v, OutVPort) or isinstance( v, Wire ) ), \
+"""[Type 1] Invalid port type detected at the same host component \"{}\" (class {})
+
+- {} \"{}\" cannot be driven by {} \"{}\".
+
+  Note: InVPort x.y cannot be driven by x.z""" \
+          .format(  repr(rhost), type(rhost).__name__,
+                    type(v).__name__, repr(v), type(u).__name__, repr(u) )
+
+            # 2. reader_host(x) is writer_host(x.y)'s parent:
+            # Hence, writer is outport, reader is wire or outport
+            elif rhost == whost._parent:
+              assert  isinstance( u, OutVPort) and \
+                    ( isinstance( v, OutVPort ) or isinstance( v, Wire ) ), \
+"""[Type 2] Invalid port type detected when the driver lies deeper than drivee:
+
+- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+
+  Note: InVPort x.y cannot be driven by x.z.a""" \
+          .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
+                    type(u).__name__, repr(u), repr(whost), type(whost).__name__ )
+
+            # 3. writer_host(x) is reader_host(x.y)'s parent:
+            # Hence, writer is inport or wire, reader is inport
+            elif whost == rhost._parent:
+              assert  ( isinstance( u, InVPort ) or isinstance( u, Wire ) ) and \
+                        isinstance( v, InVPort ), \
+"""[Type 3] Invalid port type detected when the driver lies shallower than drivee:
+
+- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+
+  Note: OutVPort/Wire x.y.z cannot be driven by x.a""" \
+          .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
+                    type(u).__name__, repr(u), repr(whost), type(whost).__name__ )
+
+            # 4. hosts have the same parent: writer_host(x.y)/reader_host(x.z)
+            # This means that the connection is fulfilled in x
+            # Hence, writer is outport and reader is inport
+            elif whost._parent == rhost._parent:
+              assert isinstance( u, OutVPort ) and isinstance( v, InVPort ), \
+"""[Type 4] Invalid port type detected when the drivers is the sibling of drivee:
+
+- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+
+  Note: Looks like the connection is fulfilled in \"{}\".
+        OutVPort/Wire x.y.z cannot be driven by x.a.b""" \
+          .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
+                    type(u).__name__, repr(u), repr(whost), type(whost).__name__,
+                    repr(whost._parent) )
+            # 5. neither host is the other's parent nor the same.
+            else:
+              assert False, \
+"""[Type 5] \"{}\" and \"{}\" cannot be connected:
+
+- host objects \"{}\" and \"{}\" are too far in the hierarchy.""" \
+          .format( repr(u), repr(v), repr(whost), repr(rhost) )
