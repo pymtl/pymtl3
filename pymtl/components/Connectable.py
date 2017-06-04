@@ -1,4 +1,4 @@
-from pymtl.components import NamedObject
+from NamedObject import NamedObject
 from pymtl.datatypes.Bits import mk_bits
 
 class Connectable(object):

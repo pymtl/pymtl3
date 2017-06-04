@@ -4,7 +4,7 @@
 from pymtl.passes import BasePass, BasicElaborationPass, BasicConstraintPass, \
                          ScheduleUpblkPass, GenerateTickPass
 
-from pymtl import UpdateOnly
+from pymtl.components import UpdateOnly
 
 class SimUpdateOnlyPass( BasePass ):
 
