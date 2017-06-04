@@ -1,5 +1,6 @@
-from pymtl import NamedObject
-from pymtl.passes import TagNamePass
+from pymtl import *
+from pymtl.components import NamedObject
+from pymtl.passes     import TagNamePass
 from collections import deque
 
 class Chicken(NamedObject):

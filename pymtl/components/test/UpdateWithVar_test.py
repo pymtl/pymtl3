@@ -1,9 +1,11 @@
 from pymtl import *
+from pymtl.components import UpdateWithVar
+from pymtl.passes     import SimUpdateWithVarPass
 from collections import deque
 
-def simulate( cls ):
+def _test_model( cls ):
   A = cls()
-  sim = SimLevel2( A )
+  sim = SimUpdateWithVarPass(dump=True).execute( A )
 
   while not A.done():
     sim.tick()
@@ -53,7 +55,6 @@ class TestSink( UpdateWithVar ):
 
   def line_trace( s ):
     return "%s" % s.in_
-
 
 def test_2d_array_vars():
 
@@ -111,7 +112,7 @@ def test_2d_array_vars():
              str(s.wire)+"r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_wire_up_constraint():
 
@@ -137,7 +138,7 @@ def test_wire_up_constraint():
       return s.src.line_trace() + " >>> " + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 # write two disjoint slices
 def test_write_two_disjoint_slices():
@@ -161,7 +162,7 @@ def test_write_two_disjoint_slices():
     def done( s ):
       return True
 
-  simulate( Top )
+  _test_model( Top )
 
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
@@ -190,8 +191,10 @@ def test_wr_A_b_rd_A_impl():
       def up_rd_A():
         z = s.A
 
-  A = Top()
-  sim = SimLevel2( A )
+    def done( s ):
+      return True
+
+  _test_model( Top )
 
 def test_bb():
 
@@ -209,8 +212,10 @@ def test_bb():
       def upB():
         s.b = s.b + 1
 
-  A = Top()
-  sim = SimLevel2( A )
+    def done( s ):
+      return True
+
+  _test_model( Top )
 
 def test_bb_cyclic_dependency():
 
@@ -228,9 +233,8 @@ def test_bb_cyclic_dependency():
       def upB():
         s.b = s.a
 
-  A = Top()
   try:
-    sim = SimLevel2( A )
+    _test_model( Top )
   except Exception:
     return
   raise Exception("Should've thrown cyclic dependency exception.")
@@ -275,7 +279,7 @@ def test_add_loopback():
       return s.src.line_trace() + " >>> " + \
             "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
-  simulate( Top )
+  _test_model( Top )
 
 def test_add_loopback_on_edge():
 
@@ -313,7 +317,7 @@ def test_add_loopback_on_edge():
             "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )
 
 def test_2d_array_vars_impl():
 
@@ -355,4 +359,4 @@ def test_2d_array_vars_impl():
              str(s.wire)+"r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
 
-  simulate( Top )
+  _test_model( Top )

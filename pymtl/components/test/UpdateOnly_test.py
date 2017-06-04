@@ -1,6 +1,6 @@
 from pymtl import *
 from pymtl.components import UpdateOnly
-from pymtl.passes import SimUpdateOnlyPass
+from pymtl.passes     import SimUpdateOnlyPass
 from collections import deque
 
 def _test_model( cls ):
