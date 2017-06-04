@@ -19,7 +19,7 @@ class ScheduleUpblkPass( BasePass ):
     m._batch_schedule  = batch
 
     if self.dump:
-      self.print_upblk_dag( m._blkid_upblk, m._constraints )
+      # self.print_upblk_dag( m._blkid_upblk, m._constraints )
       self.print_schedule( serial, batch )
 
     return m
@@ -118,7 +118,14 @@ class ScheduleUpblkPass( BasePass ):
   @staticmethod
   def print_schedule( serial, batch ):
     print
+    print "+-------------------------------------------------------------"
+    print "+ Update block schedule"
+    print "+-------------------------------------------------------------"
+    print
+    print "* Serial:"
     for (i, blk) in enumerate( serial ):
-      print i, blk.__name__
+      print " ", i, blk.__name__
+    print
+    print "* Batch:"
     for x in batch:
-      print [ y.__name__ for y in x ]
+      print " ", [ y.__name__ for y in x ]

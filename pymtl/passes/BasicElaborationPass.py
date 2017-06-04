@@ -9,11 +9,8 @@ from collections import deque
 class BasicElaborationPass( BasePass ):
 
   def execute( self, m ):
-    m = TagNamePass().execute( m )
+    m = TagNamePass().execute( m ) # tag name first for error message
     self.recursive_elaborate( m )
-
-    m._blkid_upblk = self._blkid_upblk
-    m._constraints = self._constraints
 
     return m
 
@@ -24,10 +21,15 @@ class BasicElaborationPass( BasePass ):
   def recursive_elaborate( self, m ):
     self._declare_vars()
     self._recursive_elaborate( m )
+    self._store_vars( m )
 
   def _declare_vars( self ):
     self._blkid_upblk = {}
-    self._constraints = set()
+    self._U_U_constraints = set()
+
+  def _store_vars( self, m ):
+    m._blkid_upblk = self._blkid_upblk
+    m._expl_constraints = self._U_U_constraints
 
   def _elaborate_vars( self, m ):
     pass
@@ -35,7 +37,7 @@ class BasicElaborationPass( BasePass ):
   def _collect_vars( self, m ):
     if isinstance( m, UpdateOnly ):
       self._blkid_upblk.update( m._id_upblk )
-      self._constraints.update( m._U_U_constraints )
+      self._U_U_constraints.update( m._U_U_constraints )
 
   def _recursive_elaborate( self, m ):
 

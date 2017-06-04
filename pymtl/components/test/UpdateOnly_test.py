@@ -2,6 +2,14 @@ from pymtl import *
 from pymtl import SimUpdateOnlyPass
 from collections import deque
 
+def _test_model( cls ):
+  A = cls()
+  sim = SimUpdateOnlyPass(dump=True).execute( A )
+
+  while not A.done():
+    sim.tick()
+    print A.line_trace()
+
 class TestSource( UpdateOnly ):
 
   def __init__( s, input_ ):
@@ -66,7 +74,6 @@ def test_bb():
       )
 
   A = Top()
-  sim = SimUpdateOnlyPass( dump=False ).execute( A )
 
 def test_cyclic_dependency():
 
@@ -87,9 +94,8 @@ def test_cyclic_dependency():
         U(upB) < U(upA),
       )
 
-  A = Top()
   try:
-    A = SimUpdateOnlyPass( dump=False ).execute( A )
+    _test_model( Top )
   except Exception as e:
     print e
     return
@@ -110,7 +116,7 @@ def test_upblock_same_name():
         pass
 
   try:
-    A = Top()
+    _test_model( Top )
   except Exception as e:
     print e
     return
@@ -165,11 +171,7 @@ def test_register_behavior():
             "w0={} > w1={}".format(s.wire0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
-  A = Top()
-  sim = SimUpdateOnlyPass( dump=False ).execute( A )
-  while not A.done():
-    A.tick()
-    print A.line_trace()
+  _test_model( Top )
 
 def test_add_loopback():
 
@@ -223,12 +225,7 @@ def test_add_loopback():
             "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
-  A = Top()
-  A = SimUpdateOnlyPass( dump=False ).execute( A )
-
-  while not A.done():
-    A.tick()
-    print A.line_trace()
+  _test_model( Top )
 
 def test_lots_of_fan():
 
@@ -319,12 +316,7 @@ def test_lots_of_fan():
             "w0=%s > r0=%s" % (s.wire0,s.reg) + \
              " >>> " + s.sink.line_trace()
 
-  A = Top()
-  A = SimUpdateOnlyPass( dump=False ).execute( A )
-
-  while not A.done():
-    A.tick()
-    print A.line_trace()
+  _test_model( Top )
 
 def test_2d_array_vars():
 
@@ -383,9 +375,7 @@ def test_2d_array_vars():
              str(s.wire)+"r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
 
-  A = Top()
-  A = SimUpdateOnlyPass( dump=False ).execute( A )
+  _test_model( Top )
 
-  while not A.done():
-    A.tick()
-    print A.line_trace()
+
+

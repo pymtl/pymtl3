@@ -11,7 +11,7 @@ class GenerateTickPass( BasePass ):
 
   def execute( self, m ):
     assert hasattr( m, "_serial_schedule" ), "Please apply other passes to generate model._serial_schedule"
-    m.tick = self.generate_tick_func( m._serial_schedule, self.mode, self.dump )
+    m.tick = self.generate_tick_func( m, self.mode, self.dump )
     return m
 
   #-------------------------------------------------------------------------
@@ -21,19 +21,27 @@ class GenerateTickPass( BasePass ):
   # all update blocks. We can do "JIT" here.
 
   @staticmethod
-  def generate_tick_func( schedule, mode, dump ):
+  def generate_tick_func( m, mode, dump ):
     assert mode in [ 'normal', 'unroll', 'hacky' ]
 
+    schedule = m._serial_schedule
+
     if mode == 'normal':
+      gen_tick_src = """
+      def tick_normal():
+        for blk in schedule:
+          blk()
+      """
       def tick_normal():
         for blk in schedule:
           blk()
 
-      return tick_normal
+      ret = tick_normal
 
     if mode == 'unroll': # Berkin's recipe
-      strs = map( "  update_blk{}()".format, xrange( len( schedule ) ) )
-      gen_schedule_src = """
+      strs = map( "  update_blk{}() # {}".format, xrange( len(schedule) ), \
+                                                [ x.__name__ for x in schedule ] )
+      gen_tick_src = """
         {}
         def tick_unroll():
           # The code below does the actual calling of update blocks.
@@ -44,11 +52,8 @@ class GenerateTickPass( BasePass ):
                         xrange( len( schedule ) ) ) ),
                     "\n          ".join( strs ) )
 
-      if dump:
-        print gen_schedule_src
-
-      exec py.code.Source( gen_schedule_src ).compile() in locals()
-      return tick_unroll
+      exec py.code.Source( gen_tick_src ).compile() in locals()
+      ret = tick_unroll
 
     if mode == 'hacky':
 
@@ -60,7 +65,7 @@ class GenerateTickPass( BasePass ):
           else:
             self.visit( node.value )
 
-      s        = self.model
+      s        = m
       rewriter = RewriteSelf()
 
       # Construct a new FunctionDef AST node and the Module wrapper
@@ -86,7 +91,7 @@ class GenerateTickPass( BasePass ):
       for blk in schedule:
         func_globals.update( blk.func_globals )
 
-        hostobj = blk.hostobj.full_name()
+        hostobj = repr( blk.hostobj )
         root    = blk.ast
 
         # in the form of:
@@ -103,8 +108,20 @@ class GenerateTickPass( BasePass ):
 
       if dump:
         import astor
-        print astor.to_source(newroot)
+        gen_tick_src = astor.to_source(newroot)
 
       exec compile( newroot, "<string>", "exec") in locals()
       tick_hacky.func_globals.update( func_globals )
-      return tick_hacky
+      ret = tick_hacky
+
+    if dump:
+      import textwrap
+      print
+      print "+-------------------------------------------------------------"
+      print "+ Tick funtion source"
+      print "+-------------------------------------------------------------"
+      print
+      print textwrap.dedent(gen_tick_src)
+      print
+
+    return ret
