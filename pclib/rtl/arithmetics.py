@@ -2,7 +2,7 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux( UpdateConnect ):
+class Mux( UpdateVarNet ):
 
   def __init__( s, Type, sel_nbits ):
     s.in_ = [ InVPort( Type ) for _ in xrange(1<<sel_nbits) ]
@@ -17,7 +17,7 @@ class Mux( UpdateConnect ):
 
 # Rshifter
 
-class RShifter( UpdateConnect ):
+class RShifter( UpdateVarNet ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
     s.in_   = InVPort( Type )
@@ -32,7 +32,7 @@ class RShifter( UpdateConnect ):
 
 # Lshifter
 
-class LShifter( UpdateConnect ):
+class LShifter( UpdateVarNet ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
     s.in_   = InVPort( Type )
@@ -47,7 +47,7 @@ class LShifter( UpdateConnect ):
 
 # Adder 
 
-class Adder( UpdateConnect ):
+class Adder( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -62,7 +62,7 @@ class Adder( UpdateConnect ):
 
 # Subtractor
 
-class Subtractor( UpdateConnect ):
+class Subtractor( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -77,7 +77,7 @@ class Subtractor( UpdateConnect ):
 
 # ZeroComparator 
 
-class ZeroComp( UpdateConnect ):
+class ZeroComp( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.in_ = InVPort( Type )
@@ -91,7 +91,7 @@ class ZeroComp( UpdateConnect ):
 
 # LeftThanComparator
 
-class LTComp( UpdateConnect ):
+class LTComp( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -106,7 +106,7 @@ class LTComp( UpdateConnect ):
 
 # LeftThanOrEqualToComparator
 
-class LEComp( UpdateConnect ):
+class LEComp( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )

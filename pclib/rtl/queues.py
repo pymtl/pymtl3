@@ -9,7 +9,7 @@ from pclib.ifcs   import EnqIfcRTL, DeqIfcRTL
 # --> enq.en (sender AND enq.rdy with valid expression)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up3)
 
-class PipeQueue1RTL( UpdateConnect ):
+class PipeQueue1RTL( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.enq = EnqIfcRTL( Type )
@@ -41,7 +41,7 @@ class PipeQueue1RTL( UpdateConnect ):
 # --> deq.en  (receiver AND deq.rdy with valid expression)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up3)
 
-class BypassQueue1RTL( UpdateConnect ):
+class BypassQueue1RTL( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.enq = EnqIfcRTL( Type )
@@ -82,7 +82,7 @@ class BypassQueue1RTL( UpdateConnect ):
 # --> enq.en and deq.en (sender and receiver do stuff)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up2)
 
-class NormalQueue1RTL( UpdateConnect ):
+class NormalQueue1RTL( UpdateVarNet ):
 
   def __init__( s, type_ ):
     s.enq = EnqIfcRTL( type_ )

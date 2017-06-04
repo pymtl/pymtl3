@@ -2,7 +2,7 @@ from pymtl import *
 from collections import deque
 from pclib.valrdy import valrdy_to_str
 
-class TestBasicSource( UpdateConnect ):
+class TestBasicSource( UpdateVarNet ):
 
   def __init__( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -24,7 +24,7 @@ class TestBasicSource( UpdateConnect ):
   def line_trace( s ):
     return "%s" % s.out
 
-class TestSource( UpdateConnect ):
+class TestSource( UpdateVarNet ):
 
   def __init__( s, Type, input_ = [] ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 

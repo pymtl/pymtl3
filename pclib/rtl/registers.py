@@ -2,7 +2,7 @@ from pymtl import *
 
 # Register
 
-class Reg( UpdateConnect ):
+class Reg( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.out = OutVPort( Type )
@@ -20,7 +20,7 @@ class Reg( UpdateConnect ):
 
 # Register with enable signal
 
-class RegEn( UpdateConnect ):
+class RegEn( UpdateVarNet ):
 
   def __init__( s, Type ):
     s.out = OutVPort( Type )
