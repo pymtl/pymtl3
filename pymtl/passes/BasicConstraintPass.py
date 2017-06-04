@@ -1,3 +1,7 @@
+#-------------------------------------------------------------------------
+# BasicConstraintPass
+#-------------------------------------------------------------------------
+
 from pymtl.passes import BasePass
 
 class BasicConstraintPass( BasePass ):

@@ -10,9 +10,7 @@ class SimUpdateOnlyPass( BasePass ):
     self.dump = dump
 
   def execute( self, m ):
-    m = TagNamePass().execute( m )
     m = BasicElaborationPass().execute( m )
-    m = TagNamePass().execute( m )
 
     m = BasicConstraintPass().execute( m )
     m = ScheduleUpblkPass( dump=self.dump ).execute( m )
