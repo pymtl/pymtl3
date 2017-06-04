@@ -22,8 +22,8 @@ class UpdateOnly( NamedObject ):
   def __new__( cls, *args, **kwargs ):
     inst = NamedObject.__new__( cls, *args, **kwargs )
 
-    inst._name_upblk      = {}
-    inst._blkid_upblk     = {}
+    inst._name_upblk = {}
+    inst._id_upblk   = {}
     inst._U_U_constraints = set() # contains ( id(func), id(func) )s
 
     return inst
@@ -48,10 +48,10 @@ class UpdateOnly( NamedObject ):
 
     blk.hostobj = s
     blk.ast     = cls._blkname_ast[ blk_name ]
-    s._name_upblk[ blk_name ] = s._blkid_upblk[ id(blk) ] = blk
+    s._name_upblk[ blk_name ] = s._id_upblk[ id(blk) ] = blk
     return blk
 
-  def _compile_update_block( s, src ): # FIXME
+  def compile_update_block( s, src ): # FIXME
     exec py.code.Source( src ).compile() in locals()
     return blk
 

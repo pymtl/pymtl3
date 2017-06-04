@@ -13,6 +13,7 @@ class TagNamePass( BasePass ):
 
   def execute( self, m ):
     self.recursive_tag_name( m )
+    return m
 
   @staticmethod
   def recursive_tag_name( m ):

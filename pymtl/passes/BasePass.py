@@ -4,4 +4,4 @@ class BasePass(object):
     pass
 
   def execute( self, m ): # execute pass on model m
-    pass
+    return m

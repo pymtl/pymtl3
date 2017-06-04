@@ -1,4 +1,5 @@
 from pymtl import *
+from pymtl import SimUpdateOnlyPass
 from collections import deque
 
 class TestSource( UpdateOnly ):
@@ -65,7 +66,7 @@ def test_bb():
       )
 
   A = Top()
-  sim = SimLevel1( A )
+  sim = SimUpdateOnlyPass( dump=False ).execute( A )
 
 def test_cyclic_dependency():
 
@@ -88,7 +89,7 @@ def test_cyclic_dependency():
 
   A = Top()
   try:
-    sim = SimLevel1( A )
+    A = SimUpdateOnlyPass( dump=False ).execute( A )
   except Exception as e:
     print e
     return
@@ -165,9 +166,9 @@ def test_register_behavior():
              " >>> " + s.sink.line_trace()
 
   A = Top()
-  sim = SimLevel1( A )
+  sim = SimUpdateOnlyPass( dump=False ).execute( A )
   while not A.done():
-    sim.tick()
+    A.tick()
     print A.line_trace()
 
 def test_add_loopback():
@@ -223,10 +224,10 @@ def test_add_loopback():
              " >>> " + s.sink.line_trace()
 
   A = Top()
-  sim = SimLevel1( A )
+  A = SimUpdateOnlyPass( dump=False ).execute( A )
 
   while not A.done():
-    sim.tick()
+    A.tick()
     print A.line_trace()
 
 def test_lots_of_fan():
@@ -319,10 +320,10 @@ def test_lots_of_fan():
              " >>> " + s.sink.line_trace()
 
   A = Top()
-  sim = SimLevel1( A )
+  A = SimUpdateOnlyPass( dump=False ).execute( A )
 
   while not A.done():
-    sim.tick()
+    A.tick()
     print A.line_trace()
 
 def test_2d_array_vars():
@@ -383,8 +384,8 @@ def test_2d_array_vars():
              " >>> " + s.sink.line_trace()
 
   A = Top()
-  sim = SimLevel1( A )
+  A = SimUpdateOnlyPass( dump=False ).execute( A )
 
   while not A.done():
-    sim.tick()
+    A.tick()
     print A.line_trace()
