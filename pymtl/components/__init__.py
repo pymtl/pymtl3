@@ -4,4 +4,4 @@
 from Connectable   import Signal, _overlap
 from NamedObject   import NamedObject
 from UpdateOnly    import UpdateOnly
-from UpdateWithVar import UpdateWithVar
+from UpdateVar import UpdateVar

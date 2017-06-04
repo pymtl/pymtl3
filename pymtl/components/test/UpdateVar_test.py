@@ -1,17 +1,17 @@
 from pymtl import *
-from pymtl.components import UpdateWithVar
-from pymtl.passes     import SimUpdateWithVarPass
+from pymtl.components import UpdateVar
+from pymtl.passes     import SimUpdateVarPass
 from collections import deque
 
 def _test_model( cls ):
   A = cls()
-  sim = SimUpdateWithVarPass(dump=True).execute( A )
+  sim = SimUpdateVarPass(dump=True).execute( A )
 
   while not A.done():
     sim.tick()
     print A.line_trace()
 
-class TestSource( UpdateWithVar ):
+class TestSource( UpdateVar ):
 
   def __init__( s, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -32,7 +32,7 @@ class TestSource( UpdateWithVar ):
   def line_trace( s ):
     return "%s" % s.out
 
-class TestSink( UpdateWithVar ):
+class TestSink( UpdateVar ):
 
   def __init__( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -58,7 +58,7 @@ class TestSink( UpdateWithVar ):
 
 def test_2d_array_vars():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
 
@@ -116,7 +116,7 @@ def test_2d_array_vars():
 
 def test_wire_up_constraint():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
 
@@ -143,7 +143,7 @@ def test_wire_up_constraint():
 # write two disjoint slices
 def test_write_two_disjoint_slices():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -179,7 +179,7 @@ def test_wr_A_b_rd_A_impl():
       x.b = x.b(b)
       return x
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -198,7 +198,7 @@ def test_wr_A_b_rd_A_impl():
 
 def test_bb():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -219,7 +219,7 @@ def test_bb():
 
 def test_bb_cyclic_dependency():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -241,7 +241,7 @@ def test_bb_cyclic_dependency():
 
 def test_add_loopback():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
 
@@ -283,7 +283,7 @@ def test_add_loopback():
 
 def test_add_loopback_on_edge():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
 
@@ -321,7 +321,7 @@ def test_add_loopback_on_edge():
 
 def test_2d_array_vars_impl():
 
-  class Top(UpdateWithVar):
+  class Top(UpdateVar):
 
     def __init__( s ):
 

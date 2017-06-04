@@ -1,16 +1,19 @@
 #-------------------------------------------------------------------------
-# SimUpdateWithVarPass
+# SimUpdateVarPass
 #-------------------------------------------------------------------------
 from pymtl.passes import SimUpdateOnlyPass, VarElaborationPass, VarConstraintPass, \
-                         ScheduleUpblkPass, GenerateTickPass, SignalCleanupPass
+                         SignalTypeCheckPass, ScheduleUpblkPass, GenerateTickPass, \
+                         SignalCleanupPass
 
-from pymtl.components import UpdateWithVar
+from pymtl.components import UpdateVar
 
-class SimUpdateWithVarPass( SimUpdateOnlyPass ):
+class SimUpdateVarPass( SimUpdateOnlyPass ):
 
   def execute( self, m ):
-    assert isinstance( m, UpdateWithVar )
+    assert isinstance( m, UpdateVar )
     m = VarElaborationPass( dump=self.dump ).execute( m )
+
+    m = SignalTypeCheckPass().execute( m )
 
     m = VarConstraintPass( dump=self.dump ).execute( m )
     m = ScheduleUpblkPass( dump=self.dump ).execute( m )

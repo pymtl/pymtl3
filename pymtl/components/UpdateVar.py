@@ -1,5 +1,5 @@
 #=========================================================================
-# UpdateWithVar.py
+# UpdateVar.py
 #=========================================================================
 
 from UpdateOnly      import UpdateOnly
@@ -7,10 +7,10 @@ from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 import AstHelper
 
-class UpdateWithVar( UpdateOnly ):
+class UpdateVar( UpdateOnly ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = super(UpdateWithVar, cls).__new__( cls, *args, **kwargs )
+    inst = super(UpdateVar, cls).__new__( cls, *args, **kwargs )
 
     inst._update_on_edge   = set()
     # constraint[id(var)] = (sign, id(func))
@@ -22,7 +22,7 @@ class UpdateWithVar( UpdateOnly ):
   # Override
   def update( s, blk ):
     blk_name = blk.__name__
-    super( UpdateWithVar, s ).update( blk )
+    super( UpdateVar, s ).update( blk )
 
     # Cache reads/write NAMEs within update blocks in the type object
 

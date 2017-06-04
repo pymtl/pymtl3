@@ -1,12 +1,12 @@
 #=========================================================================
-# UpdateConnect.py
+# UpdateVarNet.py
 #=========================================================================
 
-from UpdateWithVar import UpdateWithVar
-from Connectable   import Connectable
-from collections   import defaultdict
+from UpdateVar   import UpdateVar
+from Connectable import Connectable
+from collections import defaultdict
 
-class UpdateConnect( UpdateWithVar ):
+class UpdateVarNet( UpdateVar ):
 
   def connect( s, o1, o2 ):
     assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )

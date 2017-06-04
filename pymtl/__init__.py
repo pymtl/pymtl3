@@ -2,8 +2,6 @@
 from components.ConstraintTypes import U, M, RD, WR
 from components.Connectable     import Wire, InVPort, OutVPort
 
-from passes import SimUpdateOnlyPass
-
 from datatypes.Bits           import *
 from datatypes.helpers        import sext, zext, clog2, concat
 from datatypes.Bits           import _bitwidths

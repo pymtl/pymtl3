@@ -3,12 +3,14 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
+from pymtl.components import UpdateVar
 from pymtl.passes import BasePass
 
 class SignalTypeCheckPass( BasePass ):
 
   def execute( self, m ):
     self.check_port_in_upblk( m )
+    return m
 
   @staticmethod
   def check_port_in_upblk( m ):
@@ -18,7 +20,7 @@ class SignalTypeCheckPass( BasePass ):
       obj = m._id_obj[ rd ]
 
       host = obj
-      while not isinstance( host, UpdateWithVar ):
+      while not isinstance( host, UpdateVar ):
         host = host._parent # go to the component
 
       if   isinstance( obj, InVPort ):  pass
@@ -44,7 +46,7 @@ class SignalTypeCheckPass( BasePass ):
       obj = m._id_obj[ wr ]
 
       host = obj
-      while not isinstance( host, UpdateWithVar ):
+      while not isinstance( host, UpdateVar ):
         host = host._parent # go to the component
 
       # A continuous assignment is implied when a variable is connected to

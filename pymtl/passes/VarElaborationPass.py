@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl.passes import TagNamePass, BasicElaborationPass
-from pymtl.components import Signal, UpdateWithVar
+from pymtl.components import Signal, UpdateVar
 from collections import deque, defaultdict
 
 class VarElaborationPass( BasicElaborationPass ):
@@ -49,7 +49,7 @@ class VarElaborationPass( BasicElaborationPass ):
   def _collect_vars( self, m ):
     super( VarElaborationPass, self )._collect_vars( m )
 
-    if isinstance( m, UpdateWithVar ):
+    if isinstance( m, UpdateVar ):
       self._update_on_edge.update( m._update_on_edge )
 
       for k in m._RD_U_constraints:
@@ -59,7 +59,7 @@ class VarElaborationPass( BasicElaborationPass ):
 
   # Override
   def _elaborate_vars( self, m ):
-    if isinstance( m, UpdateWithVar ):
+    if isinstance( m, UpdateVar ):
       self._elaborate_read_write( m )
 
   def _elaborate_read_write( self, m ):

@@ -8,8 +8,8 @@ from ScheduleUpblkPass    import ScheduleUpblkPass
 from GenerateTickPass     import GenerateTickPass
 from SimUpdateOnlyPass    import SimUpdateOnlyPass
 
-from VarElaborationPass   import VarElaborationPass
-from VarConstraintPass    import VarConstraintPass
-from SignalTypeCheckPass  import SignalTypeCheckPass
-from SignalCleanupPass    import SignalCleanupPass
-from SimUpdateWithVarPass import SimUpdateWithVarPass
+from VarElaborationPass  import VarElaborationPass
+from VarConstraintPass   import VarConstraintPass
+from SignalTypeCheckPass import SignalTypeCheckPass
+from SignalCleanupPass   import SignalCleanupPass
+from SimUpdateVarPass    import SimUpdateVarPass
