@@ -10,19 +10,77 @@ class GenerateNetUpblkPass( BasePass ):
 
   def __init__( self, dump=False, opt=True ):
     self.dump = dump
+    self.opt = opt
 
   def execute( self, m ):
-    self.compact_net_readers( m ) # remove unread objs, for simulation
+
+    if self.opt:
+      self.compact_net_readers( m ) # remove unread objs, for simulation
+
     self.generate_net_block( m )
+
     return m
 
   @staticmethod
-  def generate_net_block( m ):
+  def compact_net_readers( m ):
     nets = m._nets
 
+    # Each net is an update block. Readers are actually "written" here.
+    #   s.net_reader1 = s.net_writer
+    #   s.net_reader2 = s.net_writer
+    # Collect readers in normal update blocks plus the writers in nets.
+
+    all_reads = set()
+
+    # First add normal update block reads
+    for read in m._read_upblks:
+      obj = m._id_obj[ read ]
+      while obj:
+        all_reads.add( id(obj) )
+        obj = obj._nested
+
+    # Then add net writers
     for writer, readers in nets:
+      obj = writer
+      while obj:
+        all_reads.add( id(obj) )
+        obj = obj._nested
+
+    # Now figure out if a reader can be safely removed from the net
+    # Check if the reader itself, its ancestors, or sibling slices are
+    # read somewhere else. If not, the reader can be moved from the net.
+
+    for i in xrange(len(nets)):
+      writer, readers = nets[i]
+      new_readers = []
+
+      for x in readers:
+        flag = False
+        obj = x
+        while obj:
+          if id(obj) in all_reads:
+            flag = True
+            break
+          obj = obj._nested
+
+        if x._slice:
+          for obj in x._nested._slices.values(): # Check sibling slices
+            if x != obj and _overlap(obj._slice, x._slice) and \
+                id(obj) in all_reads:
+              flag = True
+              break
+
+        if flag: new_readers.append( x ) # is read somewhere else
+
+      nets[i] = (writer, new_readers)
+
+  @staticmethod
+  def generate_net_block( m ):
+
+    for writer, readers in m._nets:
       if not readers:
         continue # Aha, the net is dummy
+
       wr_lca  = writer
       rd_lcas = readers[::]
 
@@ -103,58 +161,3 @@ blk = {0}
       for x in readers:
         m._write_upblks[ id(x) ].append( blk_id )
         m._id_obj[ id(x) ] = x
-
-  @staticmethod
-  def compact_net_readers( m ):
-    nets = m._nets
-
-    # Each net is an update block. Readers are actually "written" here.
-    # def up_net_writer_to_readers():
-    #   s.net_reader1 = s.net_writer
-    #   s.net_reader2 = s.net_writer
-    # Collect readers in normal update blocks plus the writers in nets.
-    # s.x = s.y reads s.y and writes s.x
-
-    all_reads = set()
-
-    # First add normal update block reads
-    for read in m._read_upblks:
-      obj = m._id_obj[ read ]
-      while obj:
-        all_reads.add( id(obj) )
-        obj = obj._nested
-
-    # Then add net writers
-    for writer, readers in nets:
-      obj = writer
-      while obj:
-        all_reads.add( id(obj) )
-        obj = obj._nested
-
-    # Now figure out if a reader can be safely removed from the net
-    # Check if the reader itself, its ancestors, or sibling slices are
-    # read somewhere else. If not, the reader can be moved from the net.
-
-    for i in xrange(len(nets)):
-      writer, readers = nets[i]
-      new_readers = []
-
-      for x in readers:
-        flag = False
-        obj = x
-        while obj:
-          if id(obj) in all_reads:
-            flag = True
-            break
-          obj = obj._nested
-
-        if x._slice:
-          for obj in x._nested._slices.values(): # Check sibling slices
-            if x != obj and _overlap(obj._slice, x._slice) and \
-                id(obj) in all_reads:
-              flag = True
-              break
-
-        if flag: new_readers.append( x ) # is read somewhere else
-
-      nets[i] = (writer, new_readers)
