@@ -6,15 +6,20 @@ from pymtl import *
 from pymtl.components import UpdateVar, UpdateVarNet, Signal
 from pymtl.passes import BasePass
 from collections import deque
+from errors import SignalTypeError, PassOrderError
 
 class SignalTypeCheckPass( BasePass ):
 
   def execute( self, m ):
 
     if isinstance( m, UpdateVar ):
+      if not hasattr( m, "_write_upblks" ):
+        raise PassOrderError( "_write_upblk" )
       self.check_port_in_upblk( m )
 
     if isinstance( m, UpdateVarNet ):
+      if not hasattr( m, "_nets" ):
+        raise PassOrderError( "_nets" )
       self.check_port_in_nets( m )
 
     return m

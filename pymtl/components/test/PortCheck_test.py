@@ -1,5 +1,6 @@
 from pymtl import *
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
+from pymtl.passes.errors import SignalTypeError
 
 def _test_model( cls ):
   A = cls()
