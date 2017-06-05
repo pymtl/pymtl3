@@ -45,12 +45,12 @@ class TagNamePass( BasePass ):
       # Jump to the expand function to analyze the type of child object
 
       for name, obj in m.object_list:
-        if isinstance( name, basestring ): # python2 specific
+        if   isinstance( name, basestring ): # python2 specific
           if not name.startswith("_"): # filter private variables
             _recursive_tag_expand( obj, m, [name], [] )
         else:
-          assert isinstance( name, tuple ) # name = [1:3]
-          _recursive_tag_expand( obj, m, [], [ slice(name[0], name[1]) ] )
+          if isinstance( name, tuple ) # name = [1:3]
+            _recursive_tag_expand( obj, m, [], [ slice(name[0], name[1]) ] )
 
     m._parent = None
     m._name_idx = ( ["s"], [ [] ] )

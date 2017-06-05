@@ -9,7 +9,8 @@ class BasicConstraintPass( BasePass ):
     self.dump = dump
 
   def execute( self, m ): # execute pass on model m
-    assert hasattr( m, "_blkid_upblk" ), "Please apply other passes to generate model._expl_constraints"
+    if not hasattr( m, "_blkid_upblk" ):
+      raise PassOrderError( "_blkid_upblk" )
 
     m._constraints = m._expl_constraints.copy()
 

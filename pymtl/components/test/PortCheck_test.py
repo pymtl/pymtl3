@@ -57,7 +57,7 @@ def test_illegal_inport_deep_write():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid input port write exception.")
+  raise Exception("Should've thrown invalid input port write SignalTypeError.")
 
 def test_legal_inport_write():
 
@@ -102,7 +102,7 @@ def test_illegal_outport_write():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid output port write exception.")
+  raise Exception("Should've thrown invalid output port write SignalTypeError.")
 
 def test_illegal_outport_deep_write():
 
@@ -131,7 +131,7 @@ def test_illegal_outport_deep_write():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid output port write exception.")
+  raise Exception("Should've thrown invalid output port write SignalTypeError.")
 
 def test_legal_outport_write():
 
@@ -172,7 +172,7 @@ def test_illegal_wire_write():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid wire write exception.")
+  raise Exception("Should've thrown invalid wire write SignalTypeError.")
 
 def test_illegal_wire_read():
 
@@ -196,7 +196,7 @@ def test_illegal_wire_read():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid wire write exception.")
+  raise Exception("Should've thrown invalid wire write SignalTypeError.")
 
 def test_legal_port_connect():
 
@@ -265,7 +265,7 @@ def test_illegal_same_host():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid port type exception.")
+  raise Exception("Should've thrown invalid port type SignalTypeError.")
 
 def test_illegal_rdhost_is_wrhost_parent():
 
@@ -286,7 +286,7 @@ def test_illegal_rdhost_is_wrhost_parent():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid wire type exception.")
+  raise Exception("Should've thrown invalid wire type SignalTypeError.")
 
 def test_illegal_wrhost_is_rdhost_parent():
 
@@ -320,7 +320,7 @@ def test_illegal_wrhost_is_rdhost_parent():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid wire type exception.")
+  raise Exception("Should've thrown invalid wire type SignalTypeError.")
 
 def test_illegal_hosts_same_parent():
 
@@ -354,7 +354,7 @@ def test_illegal_hosts_same_parent():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown invalid wire type exception.")
+  raise Exception("Should've thrown invalid wire type SignalTypeError.")
 
 def test_illegal_hosts_too_far():
 
@@ -382,4 +382,4 @@ def test_illegal_hosts_too_far():
   except SignalTypeError as e:
     print e
     return
-  raise Exception("Should've thrown hosts too far exception.")
+  raise Exception("Should've thrown hosts too far SignalTypeError.")

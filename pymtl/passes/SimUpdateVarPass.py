@@ -6,11 +6,13 @@ from pymtl.passes import SimUpdateOnlyPass, VarElaborationPass, VarConstraintPas
                          SignalCleanupPass
 
 from pymtl.components import UpdateVar
+from errors import ModelTypeError
 
 class SimUpdateVarPass( SimUpdateOnlyPass ):
 
   def execute( self, m ):
-    assert isinstance( m, UpdateVar )
+    if not isinstance( m, UpdateVar ):
+      raise ModelTypeError( "UpdateVar" )
 
     m = VarElaborationPass( dump=self.dump ).execute( m )
 

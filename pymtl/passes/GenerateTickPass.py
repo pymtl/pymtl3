@@ -10,7 +10,9 @@ class GenerateTickPass( BasePass ):
     self.dump = dump
 
   def execute( self, m ):
-    assert hasattr( m, "_serial_schedule" ), "Please apply other passes to generate model._serial_schedule"
+    if not hasattr( m, "_serial_schedule" ):
+      raise PassOrderError( "_serial_schedule" )
+
     m.tick = self.generate_tick_func( m, self.mode, self.dump )
     return m
 

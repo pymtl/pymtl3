@@ -5,6 +5,7 @@
 from pymtl.passes import TagNamePass, BasicElaborationPass
 from pymtl.components import Signal, UpdateVar
 from collections import deque, defaultdict
+from errors import MultiWriterError, InvalidVarError
 
 class VarElaborationPass( BasicElaborationPass ):
   def __init__( self, dump=True ):
@@ -36,6 +37,8 @@ class VarElaborationPass( BasicElaborationPass ):
   # Override
   def _store_vars( self, m ):
     super( VarElaborationPass, self )._store_vars( m )
+    
+    self.check_invalid_writers( m ) # make sure stored stuff makes sense
 
     m._update_on_edge = self._update_on_edge
     m._RD_U_constraints = self._RD_U_constraints
@@ -79,9 +82,9 @@ class VarElaborationPass( BasicElaborationPass ):
         try:
           index = int( _index ) # handle x[2]'s case
           expand_array_index( obj[index], name_depth, name, idx_depth+1, idx, obj_list )
-
         except TypeError: # cannot convert to integer
-          assert isinstance( _index, slice )
+          if not isinstance( _index, slice ):
+            raise VarNotDeclaredError( obj, _index )
           expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
 
     # Have already found the variable, but it is an array of objects,
@@ -106,7 +109,10 @@ class VarElaborationPass( BasicElaborationPass ):
 
       # <obj>.<field> should be an object
       (field, idx) = name[ depth ]
-      obj = getattr( obj, field )
+      try:
+        obj = getattr( obj, field )
+      except AttributeError:
+        raise VarNotDeclaredError( obj, field )
 
       if not idx:
         # just a variable, go recursively
@@ -130,32 +136,32 @@ class VarElaborationPass( BasicElaborationPass ):
 
         all_objs = []
         for name, astnode in varnames:
+          objs = []
+
           try:
-            objs = []
             lookup_var( m, 0, name, objs )
-            all_objs.extend( objs )
+          except VarNotDeclaredError as e:
+            raise VarNotDeclaredError( e.obj, e.field, blk, astnode, lineno )
 
-            # Here I annotate astnode with actual objects. However, since
-            # I only parse AST of an upblk once to avoid duplicated
-            # parsing, I have to fold information across difference
-            # instances of the same class into the unique AST. As a
-            # result, I keep {blkid:objs} dictionary in each AST node to
-            # differentiate between different upblks.
+          all_objs.extend( objs )
 
-            if not hasattr( astnode, "_objs" ):
-              astnode._objs = defaultdict(set)
-            astnode._objs[ blkid ].update( [ id(o) for o in objs ] )
+          # Here I annotate astnode with actual objects. However, since
+          # I only parse AST of an upblk once to avoid duplicated
+          # parsing, I have to fold information across difference
+          # instances of the same class into the unique AST. As a
+          # result, I keep {blkid:objs} dictionary in each AST node to
+          # differentiate between different upblks.
 
-            # Attach astnode to object for error message lineno/coloff
+          if not hasattr( astnode, "_objs" ):
+            astnode._objs = defaultdict(set)
+          astnode._objs[ blkid ].update( [ id(o) for o in objs ] )
 
-            for o in objs:
-              if not hasattr( o, "_astnodes" ):
-                o._astnodes = []
-              o._astnodes.append( astnode )
+          # Attach astnode to object for error message lineno/coloff
 
-          except Exception as e:
-            print name, blk.__name__, "line", astnode.lineno #, lineno TODO
-            raise
+          for o in objs:
+            if not hasattr( o, "_astnodes" ):
+              o._astnodes = []
+            o._astnodes.append( astnode )
 
         dedup = { id(o): o for o in all_objs }
         for o in dedup.values():
@@ -163,6 +169,41 @@ class VarElaborationPass( BasicElaborationPass ):
           self._id_obj[ id(o) ] = o
 
         self._blkid_rdwr[ blkid ] += [ (typ, o) for o in dedup.values() ]
+
+  def check_invalid_writers( self ):
+
+    for wr_id, wr_blks in self._write_upblks.iteritems():
+      obj = self._id_obj[ wr_id ]
+
+      if len(wr_blks) > 1:
+        raise MultiWriterError( \
+        "Multiple update blocks write {}.\n - {}".format( repr(obj),
+            "\n - ".join([ self._blkid_upblk[x].__name__+"@"+repr(self._blkid_upblk[x].hostobj), \
+                           for x in self._write_upblks[wid] ]) ) )
+
+      # See VarConstraintPass.py for full information
+      # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
+
+      x = obj
+      while x:
+        if id(x) != wr_id and id(x) in write_upblks:
+          raise MultiWriterError( \
+          "Two-writer conflict in nested struct/slice. \n - {} (in {})\n - {} (in {})".format(
+            repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__,
+            repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ ) )
+        x = x._nested
+
+      # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
+
+      if obj._slice:
+        for x in obj._nested._slices.values():
+          # Recognize overlapped slices
+          if id(x) != wr_id and _overlap( x._slice, obj._slice ) and id(x) in write_upblks:
+            raise MultiWriterError( \
+              "Two-writer conflict between sibling slices. \n - {} (in {})\n - {} (in {})".format(
+                repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__,
+                repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ ) )
+
 
   def print_read_write( self ):
     print

@@ -5,14 +5,18 @@
 from pymtl.passes import BasePass
 from collections  import deque, defaultdict
 from graphviz     import Digraph
+from errors import PassOrderError
+from pymtl.components.errors import UpblkCyclicError
 
 class ScheduleUpblkPass( BasePass ):
   def __init__( self, dump = False ):
     self.dump = dump
 
   def execute( self, m ):
-    assert hasattr( m, "_blkid_upblk" ), "Please apply other passes to generate model._blkid_upblk"
-    assert hasattr( m, "_constraints" ), "Please apply other passes to generate model._constraints"
+    if not hasattr( m, "_blkid_upblk" ):
+      raise PassOrderError( "_blkid_upblk" )
+    if not hasattr( m, "_constraints" ):
+      raise PassOrderError( "_constraints" )
 
     serial, batch = self.schedule( m._blkid_upblk, m._constraints )
     m._serial_schedule = serial
@@ -67,10 +71,10 @@ class ScheduleUpblkPass( BasePass ):
           Q.append( v )
 
     if len(serial_schedule) != len(vs):
-      assert False, """
+      raise UpblkCyclicError( """
   Update blocks have cyclic dependencies.
   * Please consult update dependency graph for details."
-      """
+      """)
 
     # Extract batches of frontiers which gives better idea for dataflow
 

@@ -9,6 +9,9 @@ from collections import deque
 
 class SignalCleanupPass( BasePass ):
   def execute( self, m ):
+    if not hasattr( m, "tick" ):
+      raise PassOrderError( "tick" )
+
     self.cleanup_wires( m )
     return m
 

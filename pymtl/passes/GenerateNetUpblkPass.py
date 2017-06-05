@@ -5,6 +5,7 @@ from pymtl.passes import BasePass
 from pymtl.components import _overlap
 from collections import deque
 import ast
+from errors import ModelTypeError, PassOrderError
 
 class GenerateNetUpblkPass( BasePass ):
 
@@ -13,6 +14,10 @@ class GenerateNetUpblkPass( BasePass ):
     self.opt = opt
 
   def execute( self, m ):
+    if not isinstance( UpdateVarNet ):
+      raise ModelTypeError( "UpdateVarNet" )
+    if not hasattr( m, "_nets" ):
+      raise PassOrderError( "_nets" )
 
     if self.opt:
       self.compact_net_readers( m ) # remove unread objs, for simulation

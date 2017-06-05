@@ -66,13 +66,9 @@ class VarNetElaborationPass( VarElaborationPass ):
     writer_prop = {}
 
     for wid in self._write_upblks:
-      obj = self._id_obj[ wid ]
       writer_prop[ wid ] = True # propagatable
 
-      assert len(self._write_upblks[wid]) == 1, "Multiple update blocks write %s.\n - %s" % \
-            ( repr(obj), "\n - ".join([ self._blkid_upblk[x].__name__ for x in self._write_upblks[wid] ]) )
-
-      obj = obj._nested
+      obj = self._id_obj[ wid ]._nested
       while obj:
         writer_prop[ id(obj) ] = False
         obj = obj._nested
@@ -126,11 +122,12 @@ class VarNetElaborationPass( VarElaborationPass ):
                 if oid in writer_prop and writer_prop[ oid ]:
                   assert not has_writer
                   has_writer, writer, from_sibling = True, v, True
-          except:
-            print "Two-writer conflict \"%s\"%s, \"%s\" in the following net:\n - %s" % \
-                    ( repr(v), "" if not obj else "(overlap \"%s\")" % repr(obj),
-                      repr(writer),"\n - ".join([repr(x) for x in net]))
-            raise
+
+          except AssertionError:
+            raise MultiWriterError( \
+            "Two-writer conflict \"{}\"{}, \"{}\" in the following net:\n - {}".format(
+              ( repr(v), "" if not obj else "(as \"{}\" is written somewhere else)".format( repr(obj) ),
+                repr(writer), "\n - ".join([repr(x) for x in net])) ) )
 
         if not has_writer:
           new_headless.append( net )
@@ -156,8 +153,8 @@ class VarNetElaborationPass( VarElaborationPass ):
 
         headed.append( (writer, readers) )
 
-      assert wcount < len(writer_prop), "The following nets need drivers.\nNet:\n - %s " % \
-            ("\nNet:\n - ".join([ "\n - ".join([ repr(x) for x in y ]) for y in headless ]))
+      if wcount == len(writer_prop): # no more new writers
+        raise NoWriterError( headless )
       headless = new_headless
 
     # Find the host object of every object in nets

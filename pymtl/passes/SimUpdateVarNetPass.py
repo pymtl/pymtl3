@@ -6,11 +6,13 @@ from pymtl.passes import SimUpdateOnlyPass, VarNetElaborationPass, VarConstraint
                          GenerateTickPass, SignalCleanupPass
 
 from pymtl.components import UpdateVarNet
+from errors import ModelTypeError
 
 class SimUpdateVarNetPass( SimUpdateOnlyPass ):
 
   def execute( self, m ):
-    assert isinstance( m, UpdateVarNet )
+    if not isinstance( m, UpdateVarNet ):
+      raise ModelTypeError( "UpdateVarNet" )
 
     m = VarNetElaborationPass( dump=self.dump ).execute( m )
     m = SignalTypeCheckPass().execute( m )
