@@ -1,6 +1,6 @@
 from pymtl import *
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
-from pymtl.passes.errors import SignalTypeError
+from pymtl.components.errors import SignalTypeError
 
 def _test_model( cls ):
   A = cls()
@@ -25,10 +25,10 @@ def test_illegal_inport_write():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
-  raise Exception("Should've thrown invalid input port write exception.")
+  raise Exception("Should've thrown invalid input port write SignalTypeError.")
 
 def test_illegal_inport_deep_write():
 
@@ -54,8 +54,8 @@ def test_illegal_inport_deep_write():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid input port write exception.")
 
@@ -99,8 +99,8 @@ def test_illegal_outport_write():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid output port write exception.")
 
@@ -128,8 +128,8 @@ def test_illegal_outport_deep_write():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid output port write exception.")
 
@@ -169,8 +169,8 @@ def test_illegal_wire_write():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid wire write exception.")
 
@@ -193,8 +193,8 @@ def test_illegal_wire_read():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid wire write exception.")
 
@@ -262,8 +262,8 @@ def test_illegal_same_host():
 
   try:
     _test_model( AWrap )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid port type exception.")
 
@@ -283,8 +283,8 @@ def test_illegal_rdhost_is_wrhost_parent():
 
   try:
     _test_model( AWrap )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid wire type exception.")
 
@@ -317,8 +317,8 @@ def test_illegal_wrhost_is_rdhost_parent():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid wire type exception.")
 
@@ -351,8 +351,8 @@ def test_illegal_hosts_same_parent():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown invalid wire type exception.")
 
@@ -379,7 +379,7 @@ def test_illegal_hosts_too_far():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except SignalTypeError as e:
+    print e
     return
   raise Exception("Should've thrown hosts too far exception.")

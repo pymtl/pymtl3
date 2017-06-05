@@ -6,7 +6,7 @@ from pymtl import *
 from pymtl.components import UpdateVar, UpdateVarNet, Signal
 from pymtl.passes import BasePass
 from collections import deque
-from errors import SignalTypeError, PassOrderError
+from pymtl.components.errors import SignalTypeError, PassOrderError
 
 class SignalTypeCheckPass( BasePass ):
 
@@ -41,16 +41,16 @@ class SignalTypeCheckPass( BasePass ):
         for blkid in blks:
           blk = m._blkid_upblk[ blkid ]
 
-          assert blk.hostobj == host, \
-"""Invalid read to Wire:
+          if blk.hostobj != host:
+            raise SignalTypeError("""[Type 1] Invalid read to Wire:
 
-- Wire \"{}\" of {} (class {}) is read in update block
-       \"{}\" of {} (class {}).
+- Wire "{}" of {} (class {}) is read in update block
+       "{}" of {} (class {}).
 
-  Note: Please only read Wire \"x.wire\" in x's update block.
+  Note: Please only read Wire "x.wire" in x's update block.
         (Or did you intend to declare it as an OutVPort?)""" \
           .format(  repr(obj), repr(host), type(host).__name__,
-                    blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__ )
+                    blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__ ) )
 
     # Then check write
 
@@ -69,15 +69,15 @@ class SignalTypeCheckPass( BasePass ):
         for blkid in blks:
           blk = m._blkid_upblk[ blkid ]
 
-          assert host._parent == blk.hostobj, \
-"""Invalid write to input port:
+          if host._parent != blk.hostobj:
+            raise SignalTypeError("""[Type 2] Invalid write to an input port:
 
-- InVPort \"{}\" of {} (class {}) is written in update block
-          \"{}\" of {} (class {}).
+- InVPort "{}" of {} (class {}) is written in update block
+          "{}" of {} (class {}).
 
-  Note: Please only write to InVPort \"x.y.in\" in x's update block.""" \
+  Note: Please only write to children's InVPort "x.y.in", not "x.in", in x's update block.""" \
           .format(  repr(obj), repr(host), type(host).__name__,
-                    blk.__name__, repr(host), type(host).__name__ )
+                    blk.__name__, repr(host), type(host).__name__ ) )
 
       # A continuous assignment is implied when a variable is connected to
       # the output port of an instance. This makes procedural or
@@ -88,15 +88,15 @@ class SignalTypeCheckPass( BasePass ):
         for blkid in blks:
           blk = m._blkid_upblk[ blkid ]
 
-          assert blk.hostobj == host, \
-"""Invalid write to output port:
+          if blk.hostobj != host:
+            raise SignalTypeError("""[Type 3] Invalid write to output port:
 
 - OutVPort \"{}\" of {} (class {}) is written in update block
            \"{}\" of {} (class {}).
 
-  Note: Please only write to OutVPort \"x.out\" in x's update block.""" \
+  Note: Please only write to OutVPort "x.out", not "x.y.out", in x's update block.""" \
           .format(  repr(obj), repr(host), type(host).__name__,
-                    blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__, )
+                    blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__, ) )
 
       # The case of wire is special. We only allow Wire to be written in
       # the same object. One cannot write this from outside
@@ -105,16 +105,16 @@ class SignalTypeCheckPass( BasePass ):
         for blkid in blks:
           blk = m._blkid_upblk[ blkid ]
 
-          assert blk.hostobj == host, \
-"""Invalid write to Wire:
+          if blk.hostobj != host:
+            raise SignalTypeError("""[Type 4] Invalid write to Wire:
 
-- Wire \"{}\" of {} (class {}) is written in update block
-       \"{}\" of {} (class {}).
+- Wire "{}" of {} (class {}) is written in update block
+       "{}" of {} (class {}).
 
-  Note: Please only write to Wire \"x.wire\" in x's update block.
+  Note: Please only write to Wire "x.wire" in x's update block.
         (Or did you intend to declare it as an InVPort?)""" \
           .format(  repr(obj), repr(host), type(host).__name__,
-                    blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__ )
+                    blk.__name__, repr(blk.hostobj), type(blk.hostobj).__name__ ) )
 
   @staticmethod
   def check_port_in_nets( m ):
@@ -149,60 +149,70 @@ class SignalTypeCheckPass( BasePass ):
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport
             if   whost == rhost:
-              assert    isinstance( u, Signal ) and \
-                      ( isinstance( v, OutVPort) or isinstance( v, Wire ) ), \
-"""[Type 1] Invalid port type detected at the same host component \"{}\" (class {})
+              valid =   isinstance( u, Signal ) and \
+                      ( isinstance( v, OutVPort) or isinstance( v, Wire ) )
+              if not valid:
+                raise SignalTypeError( \
+"""[Type 5] Invalid port type detected at the same host component "{}" (class {})
 
-- {} \"{}\" cannot be driven by {} \"{}\".
+- {} "{}" cannot be driven by {} "{}".
 
   Note: InVPort x.y cannot be driven by x.z""" \
           .format(  repr(rhost), type(rhost).__name__,
-                    type(v).__name__, repr(v), type(u).__name__, repr(u) )
+                    type(v).__name__, repr(v), type(u).__name__, repr(u) ) )
 
             # 2. reader_host(x) is writer_host(x.y)'s parent:
             # Hence, writer is outport, reader is wire or outport
             elif rhost == whost._parent:
-              assert  isinstance( u, OutVPort) and \
-                    ( isinstance( v, OutVPort ) or isinstance( v, Wire ) ), \
-"""[Type 2] Invalid port type detected when the driver lies deeper than drivee:
+              valid = isinstance( u, OutVPort) and \
+                    ( isinstance( v, OutVPort ) or isinstance( v, Wire ) )
 
-- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+              if not valid:
+                raise SignalTypeError( \
+"""[Type 6] Invalid port type detected when the driver lies deeper than drivee:
+
+- {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
 
   Note: InVPort x.y cannot be driven by x.z.a""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
-                    type(u).__name__, repr(u), repr(whost), type(whost).__name__ )
+                    type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
 
             # 3. writer_host(x) is reader_host(x.y)'s parent:
             # Hence, writer is inport or wire, reader is inport
             elif whost == rhost._parent:
-              assert  ( isinstance( u, InVPort ) or isinstance( u, Wire ) ) and \
-                        isinstance( v, InVPort ), \
-"""[Type 3] Invalid port type detected when the driver lies shallower than drivee:
+              valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) ) and \
+                        isinstance( v, InVPort )
 
-- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+              if not valid:
+                raise SignalTypeError( \
+"""[Type 7] Invalid port type detected when the driver lies shallower than drivee:
+
+- {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
 
   Note: OutVPort/Wire x.y.z cannot be driven by x.a""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
-                    type(u).__name__, repr(u), repr(whost), type(whost).__name__ )
+                    type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
 
             # 4. hosts have the same parent: writer_host(x.y)/reader_host(x.z)
             # This means that the connection is fulfilled in x
             # Hence, writer is outport and reader is inport
             elif whost._parent == rhost._parent:
-              assert isinstance( u, OutVPort ) and isinstance( v, InVPort ), \
-"""[Type 4] Invalid port type detected when the drivers is the sibling of drivee:
+              valid = isinstance( u, OutVPort ) and isinstance( v, InVPort )
 
-- {} \"{}\" of {} (class {}) cannot be driven by {} \"{}\" of {} (class {}).
+              if not valid:
+                raise SignalTypeError( \
+"""[Type 8] Invalid port type detected when the drivers is the sibling of drivee:
 
-  Note: Looks like the connection is fulfilled in \"{}\".
+- {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
+
+  Note: Looks like the connection is fulfilled in "{}".
         OutVPort/Wire x.y.z cannot be driven by x.a.b""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     type(u).__name__, repr(u), repr(whost), type(whost).__name__,
-                    repr(whost._parent) )
+                    repr(whost._parent) ) )
             # 5. neither host is the other's parent nor the same.
             else:
-              assert False, \
-"""[Type 5] \"{}\" and \"{}\" cannot be connected:
+              raise SignalTypeError("""[Type 9] "{}" and "{}" cannot be connected:
 
-- host objects \"{}\" and \"{}\" are too far in the hierarchy.""" \
-          .format( repr(u), repr(v), repr(whost), repr(rhost) )
+- host objects "{}" and "{}" are too far in the hierarchy.""" \
+              .format( repr(u), repr(v), repr(whost), repr(rhost) ) )
