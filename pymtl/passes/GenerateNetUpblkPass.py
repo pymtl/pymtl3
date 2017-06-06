@@ -2,7 +2,7 @@
 # GenerateNetUpblkPass
 #-------------------------------------------------------------------------
 from pymtl.passes import BasePass
-from pymtl.components import UpdateVarNet, _overlap
+from pymtl.components import UpdateVarNet, _overlap, Const
 from errors import ModelTypeError, PassOrderError
 from collections import deque
 import ast
@@ -86,13 +86,14 @@ class GenerateNetUpblkPass( BasePass ):
       if not readers:
         continue # Aha, the net is dummy
 
-      wr_lca  = writer
+      # special case for const
+      wr_lca  = writer._parent if isinstance( writer, Const ) else writer
       rd_lcas = readers[::]
 
       # Find common ancestor: iteratively go to parent level and check if
       # at the same level all objects' ancestor are the same
 
-      mindep  = min( len( writer._name_idx[1] ),
+      mindep  = min( len( wr_lca._name_idx[1] ),
                      min( [ len(x._name_idx[1]) for x in rd_lcas ] ) )
 
       # First navigate all objects to the same level deep
@@ -122,12 +123,14 @@ class GenerateNetUpblkPass( BasePass ):
       lca     = wr_lca # this is the object we want to insert the block to
       lca_len = len( repr(lca) )
       fanout  = len( readers )
-      wstr    = "s." + repr(writer)[lca_len+1:]
+      wstr    = repr(writer) if isinstance( writer, Const) \
+                else ( "s." + repr(writer)[lca_len+1:] )
       rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
 
       upblk_name = "{}_FANOUT_{}".format(repr(writer), fanout)\
                     .replace( ".", "_" ).replace( ":", "_" ) \
-                    .replace( "[", "_" ).replace( "]", "_" )
+                    .replace( "[", "_" ).replace( "]", "_" ) \
+                    .replace( "(", "_" ).replace( ")", "_" )
 
       # TODO port common prefix optimization, currently only multi-writer
 

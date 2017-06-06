@@ -42,3 +42,5 @@ class InvalidConstraintError( Exception ):
     return super( InvalidConstraintError, self ).__init__( \
       "Constraints between two variables are not allowed!" )
 
+class InvalidConnectionError( Exception ):
+  """ Raise upon an inappropriate attempt to connect two variables """

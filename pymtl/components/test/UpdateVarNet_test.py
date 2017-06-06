@@ -1,4 +1,5 @@
 from pymtl import *
+from pymtl.components.errors import MultiWriterError, InvalidConnectionError
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pclib.rtl import Mux
 from collections import deque
@@ -53,7 +54,7 @@ def test_connect_list_idx_call():
       s.src_sel = TestSource( int, [1,0,1,0] )
       s.sink    = TestSink  ( int, [8,3,6,1] )
 
-      s.mux = Mux(int, 1)(
+      s.mux = Mux(int, 2)(
         out = s.sink.in_,
         in_ = { MUX_SEL_0: s.src_in0.out, MUX_SEL_1: s.src_in1.out },
         sel = s.src_sel.out,
@@ -332,7 +333,7 @@ def test_2d_array_vars_connect():
 
   _test_model( Top )
 
-def test_connect_const():
+def test_connect_const_same_level():
 
   class Top(UpdateVarNet):
 
@@ -352,3 +353,87 @@ def test_connect_const():
       return ""
 
   _test_model( Top )
+
+def test_connect_const_two_writer():
+
+  class Top(UpdateVarNet):
+
+    def __init__( s ):
+
+      s.a = Wire(int)
+      s.connect( s.a, 0 )
+
+      @s.update
+      def up_printa():
+        print s.a
+
+      @s.update
+      def up_writea():
+        s.a = 123
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return ""
+
+  try:
+    _test_model( Top )
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+  raise Exception("Should've thrown MultiWriterError.")
+
+def test_connect_list_idx_call():
+
+  class Top(UpdateVarNet):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [12,3,12,1] )
+
+      s.mux = Mux(int, 2)(
+        out = s.sink.in_,
+        in_ = { MUX_SEL_0: s.src_in0.out },
+        sel = s.src_sel.out,
+      )
+      s.connect( s.mux.in_[MUX_SEL_1], 12 )
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  _test_model( Top )
+
+def test_connect_list_idx_invalid_call():
+
+  class Top(UpdateVarNet):
+
+    def __init__( s ):
+
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [12,3,12,1] )
+
+      s.mux = Mux(int, 2)(
+        out = s.sink.in_,
+        in_ = { MUX_SEL_0: s.src_in0.out, MUX_SEL_1: 12 },
+        sel = s.src_sel.out,
+      )
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  try:
+    _test_model( Top )
+  except InvalidConnectionError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+  raise Exception("Should've thrown MultiWriterError.")

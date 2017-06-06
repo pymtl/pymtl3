@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.components import UpdateVar, UpdateVarNet, Signal
+from pymtl.components import UpdateVar, UpdateVarNet, Signal, Const
 from pymtl.passes import BasePass
 from collections import deque
 from pymtl.components.errors import SignalTypeError
@@ -154,7 +154,7 @@ class SignalTypeCheckPass( BasePass ):
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport
             if   whost == rhost:
-              valid =   isinstance( u, Signal ) and \
+              valid = ( isinstance( u, Signal )  or isinstance( u, Const) ) and \
                       ( isinstance( v, OutVPort) or isinstance( v, Wire ) )
               if not valid:
                 raise SignalTypeError( \
@@ -168,6 +168,7 @@ class SignalTypeCheckPass( BasePass ):
 
             # 2. reader_host(x) is writer_host(x.y)'s parent:
             # Hence, writer is outport, reader is wire or outport
+            # writer cannot be constant
             elif rhost == whost._parent:
               valid = isinstance( u, OutVPort) and \
                     ( isinstance( v, OutVPort ) or isinstance( v, Wire ) )
@@ -184,8 +185,10 @@ class SignalTypeCheckPass( BasePass ):
 
             # 3. writer_host(x) is reader_host(x.y)'s parent:
             # Hence, writer is inport or wire, reader is inport
+            # writer can be constant
             elif whost == rhost._parent:
-              valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) ) and \
+              valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) \
+                                                 or isinstance( u, Const)) and \
                         isinstance( v, InVPort )
 
               if not valid:
@@ -201,6 +204,7 @@ class SignalTypeCheckPass( BasePass ):
             # 4. hosts have the same parent: writer_host(x.y)/reader_host(x.z)
             # This means that the connection is fulfilled in x
             # Hence, writer is outport and reader is inport
+            # writer cannot be constant
             elif whost._parent == rhost._parent:
               valid = isinstance( u, OutVPort ) and isinstance( v, InVPort )
 

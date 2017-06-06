@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl.passes import TagNamePass, VarElaborationPass
-from pymtl.components import Signal, UpdateVarNet, _overlap
+from pymtl.components import Signal, Const, UpdateVarNet, _overlap
 from collections import deque, defaultdict
 from pymtl.components.errors import NoWriterError, MultiWriterError
 
@@ -102,12 +102,14 @@ class VarNetElaborationPass( VarElaborationPass ):
         for v in net:
           obj = None
           try:
-            if id(v) in writer_prop: # Check if itself is a writer
+            # Check if itself is a writer or a constant
+            if id(v) in writer_prop or isinstance( v, Const ): 
               assert not has_writer
               has_writer, writer, from_sibling = True, v, False
 
+            # Check if an ancestor is a propagatable writer
             obj = v._nested
-            while obj: # Check if the parent is a propagatable writer
+            while obj:
               oid = id(obj)
               if oid in writer_prop and writer_prop[ oid ]:
                 assert not has_writer
@@ -115,8 +117,9 @@ class VarNetElaborationPass( VarElaborationPass ):
                 break
               obj = obj._nested
 
-            if v._slice: # Check sibling slices
-              for obj in v._nested._slices.values(): # Check sibling slices
+            # Check sibling slices
+            if v._slice:
+              for obj in v._nested._slices.values():
                 if v == obj or not _overlap(obj._slice, v._slice):
                   continue # Skip the same slice or not overlapped
 
