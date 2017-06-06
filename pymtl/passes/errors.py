@@ -9,5 +9,5 @@ class PassOrderError( Exception ):
 class ModelTypeError( Exception ):
   """ Raise when a pass cannot be applied to some component type """
   def __init__( self, typename ):
-    return super( PassOrderError, self ).__init__( \
+    return super( ModelTypeError, self ).__init__( \
     "This pass can only be applied to {}".format( typename ) )

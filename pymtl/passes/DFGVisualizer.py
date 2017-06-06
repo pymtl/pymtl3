@@ -1,45 +1,22 @@
-from SimLevel3 import SimLevel3
+from SimUpdateVarNetPass import SimUpdateVarNetPass
 from collections import defaultdict, deque
 import ast
 
-class DFGVisualizer( SimLevel3 ):
+class DFGVisualizer( SimUpdateVarNetPass ):
 
-  def __init__( self, model, tick_mode='unroll' ):
-    self.model = model
+  def execute( self, model ):
+    super( DFGVisualizer, self ).execute( model )
+    self.visualize( model )
 
-    self.recursive_tag_name( model )  # tag name first for error message
-    self.recursive_elaborate( model ) # turn "string" into objects
-    self.recursive_tag_name( model )  # slicing will spawn extra objects
-    self.check_port_in_upblk()        # in/out port check in all upblks
-    # self.print_read_write()
-
-    self.resolve_var_connections() # resolve connected nets
-    self.check_port_in_net()       # in/out port check in all nets
-    self.compact_net_readers()     # remove unread objs, for simulation
-    # self.print_nets( self._nets )
-    self.generate_net_block()
-
-    expl, impl    = self.synthesize_var_constraints()
-    serial, batch = self.schedule( self._blkid_upblk, self._constraints )
-
-    # I need to traverse the ast to figure out the variable data flow
-    # dependencies. During elaboration, the objects appeared in update
-    # blocks have been attached to the corresponding AST nodes. For net
-    # blocks I can just look at collected nets.
-    # I also need the batch schedule to find the first batch of nets that
-    # contains sequential logic.
-
-    self.print_upblk_dag( self._blkid_upblk, self._constraints )
-    self.visualize( batch )
-
-  def visualize( self, batch ):
+  @staticmethod
+  def visualize( model ):
     deps = defaultdict(set)
-    visitor = DetectDataDependency( deps, self._id_obj )
+    visitor = DetectDataDependency( deps, model._id_obj )
 
-    for blk in self._blkid_upblk.values():
+    for blk in model._blkid_upblk.values():
       print
       print "+++++++++++++++++++++++++++++++++++++++++++++++++++"
-      print "+ {} at {} ".format( blk.__name__ , blk.hostobj.full_name() )
+      print "+ {} at {} ".format( blk.__name__ , repr(blk.hostobj) )
       print "+++++++++++++++++++++++++++++++++++++++++++++++++++"
       print
       visitor.enter( blk )
@@ -51,7 +28,7 @@ class DFGVisualizer( SimLevel3 ):
       all_ids.add( x )
       all_ids.add( y )
 
-    all_objs   = { x: self._id_obj[x] for x in all_ids }
+    all_objs   = { x: model._id_obj[x] for x in all_ids }
     in_degree  = { x: 0 for x in all_ids }
     out_degree = { x: 0 for x in all_ids }
 
@@ -60,7 +37,7 @@ class DFGVisualizer( SimLevel3 ):
       out_degree[ x ] += 1
 
     upblk_rank = {}
-    for i, x in enumerate( batch ):
+    for i, x in enumerate( model._batch_schedule ):
       for y in x:
         upblk_rank[ id(y) ] = i
 
@@ -68,7 +45,7 @@ class DFGVisualizer( SimLevel3 ):
 
     dot = Digraph()
     dot.graph_attr["rank"] = "source"
-    dot.graph_attr["ratio"] = "compress"
+    dot.graph_attr["ratio"] = "0.5"
     dot.graph_attr["margin"] = "0.1"
 
     # We first figure out all external signals which is easy: look at deg
@@ -77,11 +54,11 @@ class DFGVisualizer( SimLevel3 ):
       assert in_degree[i] > 0 or out_degree[i] > 0
 
       if   in_degree[i] == 0: # this is an input port
-        dot.node( o.full_name(), shape='triangle', style='filled', color='gray68',fontsize='20' )
+        dot.node( repr(o), shape='triangle', style='filled', color='gray68',fontsize='20' )
       elif out_degree[i] == 0: # this is an output port
-        dot.node( o.full_name(), shape='invtriangle', style='filled', color='gray80',fontsize='20' )
+        dot.node( repr(o), shape='invtriangle', style='filled', color='gray80',fontsize='20' )
       else: # normal object
-        dot.node( o.full_name(), shape='ellipse' )
+        dot.node( repr(o), shape='ellipse' )
 
     # Here we figure out all sequential elements. The gist is as follows.
     # Each (x, y) dependency pair flows data from x to y. It can be the
@@ -103,25 +80,25 @@ class DFGVisualizer( SimLevel3 ):
 
       # Only check internal signals to remove sequential elements
 
-      if len( self._write_upblks[x] ) == 1:
+      if len( model._write_upblks[x] ) == 1:
 
         # wrblk (B) writes variable x
 
-        wrblk_rank = upblk_rank[ self._write_upblks[x][0] ]
+        wrblk_rank = upblk_rank[ model._write_upblks[x][0] ]
 
         for (lineno, rdblk) in deps[ (x,y) ]: # all occured dependencies
 
           # rdblk (A) reads variable x
 
           if upblk_rank[ rdblk ] < wrblk_rank: # rd < wr, inverted!
-            dot.node( all_objs[x].full_name(), shape='msquare', style='filled', color='lightsalmon', fontsize='20' )
-            dot.node( all_objs[y].full_name(), shape='msquare', style='filled', color='salmon', fontsize='20' )
+            dot.node( repr(all_objs[x]), shape='msquare', style='filled', color='lightsalmon', fontsize='20' )
+            dot.node( repr(all_objs[y]), shape='msquare', style='filled', color='salmon', fontsize='20' )
             comb_edge = False
 
       if comb_edge:
-        dot.edge( all_objs[x].full_name(), all_objs[y].full_name() )
+        dot.edge( repr(all_objs[x]), repr(all_objs[y]) )
       else:
-        dot.edge( all_objs[x].full_name(), all_objs[y].full_name(), constraint='false', style='dashed' )
+        dot.edge( repr(all_objs[x]), repr(all_objs[y]), constraint='false', style='dashed' )
 
     dot.render("/tmp/dataflow.gv", view=True)
 
@@ -281,11 +258,11 @@ class DetectDataDependency( ast.NodeVisitor ):
 
     print
     print "--- source ---:", astor.to_source( node )
-    print "context_reads:", [ self.id_obj[x].full_name() for x in self.context_reads ]
+    print "context_reads:", [ repr(self.id_obj[x]) for x in self.context_reads ]
 
     for rd_id in value_reads:
       for wr_id in value_writes:
-        print "{} -> {}".format( self.id_obj[rd_id].full_name(), self.id_obj[wr_id].full_name() )
+        print "{} -> {}".format( repr(self.id_obj[rd_id]), repr(self.id_obj[wr_id]) )
 
         self.dependencies[ (rd_id, wr_id) ].add( (node.lineno, id(self.blk)) )
 
@@ -297,11 +274,11 @@ class DetectDataDependency( ast.NodeVisitor ):
 
     print
     print "--- source ---:", astor.to_source( node )
-    print "context_reads:", [ self.id_obj[x].full_name() for x in self.context_reads ]
+    print "context_reads:", [ repr(self.id_obj[x]) for x in self.context_reads ]
 
     for rd_id in value_reads:
       for wr_id in value_writes:
-        print "{} -> {}".format( self.id_obj[rd_id].full_name(), self.id_obj[wr_id].full_name() )
+        print "{} -> {}".format( repr(self.id_obj[rd_id]), repr(self.id_obj[wr_id]) )
 
         self.dependencies[ (rd_id, wr_id) ].add( (node.lineno, self.blk) )
 
