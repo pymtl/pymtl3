@@ -7,9 +7,11 @@ def _test_model( cls ):
   A = cls()
   A = SimUpdateVarNetPass(dump=True).execute( A )
 
-  while not A.done():
+  T, time = 0, 20
+  while not A.done() and T < time:
     A.tick()
     print A.line_trace()
+    T += 1
 
 MUX_SEL_0 = 0
 MUX_SEL_1 = 1
@@ -327,5 +329,26 @@ def test_2d_array_vars_connect():
       return s.src.line_trace() + " >>> " + \
              str(s.wire)+" r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
+
+  _test_model( Top )
+
+def test_connect_const():
+
+  class Top(UpdateVarNet):
+
+    def __init__( s ):
+
+      s.a = Wire(int)
+      s.connect( s.a, 0 )
+
+      @s.update
+      def up_printa():
+        print s.a
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return ""
 
   _test_model( Top )

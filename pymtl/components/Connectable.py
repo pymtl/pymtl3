@@ -43,6 +43,17 @@ def _overlap( x, y ):
       else:                   return x.start < y.stop
   assert False, "What the hell?"
 
+# internal class for connecting signals and constants, not named object
+class Const( Connectable ):
+  def __init__( s, Type, v ):
+    s.Type = Type
+    s.const = v
+    s._nested = None # no member
+    s._slice  = None # not slicable
+
+  def __repr__( s ):
+    return "{}({})".format( str(s.Type.__name__), s.const )
+
 class Signal( Connectable, NamedObject ):
 
   def __init__( s, Type ):

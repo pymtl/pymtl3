@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.components import NamedObject, Signal
+from pymtl.components import NamedObject, Signal, Const
 from pymtl.passes import BasePass
 from collections import deque
 
@@ -21,8 +21,10 @@ class SignalCleanupPass( BasePass ):
     # SORRY
     if isinstance( m, list ) or isinstance( m, deque ):
       for i, o in enumerate( m ):
-        if isinstance( o, Signal ):
+        if   isinstance( o, Signal ):
           m[i] = o.default_value()
+        elif isinstance( o, Const ):
+          m[i] = o.const
         else:
           SignalCleanupPass.cleanup_wires( o )
 
@@ -30,7 +32,9 @@ class SignalCleanupPass( BasePass ):
       for name, obj in m.object_list:
         if ( isinstance( name, basestring ) and not name.startswith("_") ) \
           or isinstance( name, tuple ):
-            if isinstance( obj, Signal ):
+            if   isinstance( obj, Signal ):
               setattr( m, name, obj.default_value() )
+            elif isinstance( obj, Const ):
+              setattr( m, name, obj.const )
             else:
               SignalCleanupPass.cleanup_wires( obj )
