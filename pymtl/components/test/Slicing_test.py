@@ -1,5 +1,5 @@
 from pymtl import *
-
+from pymtl.components.errors import MultiWriterError, NoWriterError
 def _test_model( cls ):
   A = cls()
   A = SimUpdateVarNetPass(dump=True).execute( A )
@@ -77,10 +77,10 @@ def test_write_two_overlapping_slices():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # write two slices and a single bit
 def test_write_two_slices_and_bit():
@@ -136,10 +136,10 @@ def test_write_slices_and_bit_overlapped():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # write a slice and there are two reader
 def test_multiple_readers():
@@ -295,10 +295,10 @@ def test_wr_As_wr_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # WR A[s] - WR A[t], intersect
 def test_wr_As_wr_At_intersect():
@@ -321,10 +321,10 @@ def test_wr_As_wr_At_intersect():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # WR A[s] - WR A[t], not intersect
 def test_wr_As_wr_At_disjoint():
@@ -567,10 +567,10 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # WR A[s] - A[t]|=x, intersect
 def test_connect_wr_As_rd_x_conn_At_mark_writer():
@@ -606,10 +606,10 @@ def test_connect_wr_As_rd_x_conn_At_no_driver():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except NoWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown no driver exception.")
+  raise Exception("Should've thrown NoWriterError.")
 
 # WR A[s] - A[t]|=x, WR x, intersect
 def test_connect_wr_As_wr_x_conn_At_conflict():
@@ -632,10 +632,10 @@ def test_connect_wr_As_wr_x_conn_At_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # WR A[s] - A[t]|=x, WR x, not intersect
 def test_connect_wr_As_wr_x_conn_At_disjoint():
@@ -706,10 +706,10 @@ def test_connect_wr_x_conn_As_wr_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # A[s]|=x - WR A
 def test_connect_rd_x_conn_As_wr_A_mark_writer():
@@ -755,10 +755,10 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # A[s]|=x, WR x - A[t]|=y, WR y, intersect
 def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
@@ -783,10 +783,10 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # A[s]|=x, WR x - A[t]|=y, WR y, not intersect
 def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
@@ -907,10 +907,10 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except NoWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown no driver exception.")
+  raise Exception("Should've thrown NoWriterError.")
 
 def test_iterative_find_nets():
 
@@ -954,7 +954,7 @@ def test_multiple_sibling_slices():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except NoWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown no driver exception.")
+  raise Exception("Should've thrown NoWriterError.")

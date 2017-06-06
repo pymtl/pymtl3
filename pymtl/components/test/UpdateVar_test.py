@@ -1,5 +1,6 @@
 from pymtl import *
 from pymtl.components import UpdateVar
+from pymtl.components.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError
 from pymtl.passes     import SimUpdateVarPass
 from collections import deque
 
@@ -55,6 +56,117 @@ class TestSink( UpdateVar ):
 
   def line_trace( s ):
     return "%s" % s.in_
+
+def test_simple():
+
+  class Top(UpdateVar):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a = s.b + 1
+
+      @s.update
+      def upB():
+        s.b = s.b + 1
+
+    def done( s ):
+      return True
+
+  _test_model( Top )
+
+def test_cyclic_impl_dependency():
+
+  class Top(UpdateVar):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a = s.b
+
+      @s.update
+      def upB():
+        s.b = s.a
+
+  try:
+    _test_model( Top )
+  except UpblkCyclicError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+  raise Exception("Should've thrown UpblkCyclicError.")
+
+def test_invalid_dependency():
+
+  class Top(UpdateVar):
+
+    def __init__( s ):
+
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      s.add_constraints(
+        WR(s.a) < RD(s.b),
+      )
+
+  try:
+    _test_model( Top )
+  except InvalidConstraintError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+
+  raise Exception("Should've thrown InvalidConstraintError.")
+
+def test_variable_not_declared():
+
+  class SomeMsg( object ):
+
+    def __init__( s ):
+      s.a = int
+      s.b = Bits32
+
+    def __call__( s, a = 0, b = Bits1() ):
+      x = s.__class__()
+      x.a = x.a(a)
+      x.b = x.b(b)
+      return x
+
+    def __eq__( s, other ):
+      return s.a == other.a and s.b == other.b
+
+  class A(UpdateVar):
+    def __init__( s ):
+      s.a = Wire(SomeMsg())
+      s.b = Wire(int)
+
+      @s.update
+      def upA():
+        s.a.a.zzz = s.b + 1
+
+      @s.update
+      def upB():
+        s.b = s.b + 1
+
+  class Top(UpdateVar):
+
+    def __init__( s ):
+      s.x = A()
+
+    def done( s ):
+      return True
+
+
+  try:
+    _test_model( Top )
+  except VarNotDeclaredError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+  raise Exception("Should've thrown VarNotDeclaredError.")
 
 def test_2d_array_vars():
 
@@ -195,49 +307,6 @@ def test_wr_A_b_rd_A_impl():
       return True
 
   _test_model( Top )
-
-def test_bb():
-
-  class Top(UpdateVar):
-
-    def __init__( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
-
-      @s.update
-      def upA():
-        s.a = s.b + 1
-
-      @s.update
-      def upB():
-        s.b = s.b + 1
-
-    def done( s ):
-      return True
-
-  _test_model( Top )
-
-def test_bb_cyclic_dependency():
-
-  class Top(UpdateVar):
-
-    def __init__( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
-
-      @s.update
-      def upA():
-        s.a = s.b
-
-      @s.update
-      def upB():
-        s.b = s.a
-
-  try:
-    _test_model( Top )
-  except Exception:
-    return
-  raise Exception("Should've thrown cyclic dependency exception.")
 
 def test_add_loopback():
 

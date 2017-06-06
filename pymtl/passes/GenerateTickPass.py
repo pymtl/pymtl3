@@ -27,6 +27,7 @@ class GenerateTickPass( BasePass ):
     assert mode in [ 'normal', 'unroll', 'hacky' ]
 
     schedule = m._serial_schedule
+    assert schedule, "No update block found in the model"
 
     if mode == 'normal':
       gen_tick_src = """
@@ -47,9 +48,7 @@ class GenerateTickPass( BasePass ):
         {}
         def tick_unroll():
           # The code below does the actual calling of update blocks.
-          {}
-
-        """.format( "; ".join( map(
+          {}""".format( "; ".join( map(
                     "update_blk{0} = schedule[{0}]".format,
                         xrange( len( schedule ) ) ) ),
                     "\n          ".join( strs ) )

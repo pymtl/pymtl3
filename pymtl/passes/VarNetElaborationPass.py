@@ -5,6 +5,7 @@
 from pymtl.passes import TagNamePass, VarElaborationPass
 from pymtl.components import Signal, UpdateVarNet, _overlap
 from collections import deque, defaultdict
+from pymtl.components.errors import NoWriterError, MultiWriterError
 
 class VarNetElaborationPass( VarElaborationPass ):
   def __init__( self, dump=True ):
@@ -14,6 +15,7 @@ class VarNetElaborationPass( VarElaborationPass ):
     m = TagNamePass().execute( m ) # tag name first for error message
     self.recursive_elaborate( m )
     m = TagNamePass().execute( m ) # slicing will spawn extra objects
+    self.check_upblk_writes( m )
 
     if self.dump:
       self.print_read_write()
@@ -126,8 +128,8 @@ class VarNetElaborationPass( VarElaborationPass ):
           except AssertionError:
             raise MultiWriterError( \
             "Two-writer conflict \"{}\"{}, \"{}\" in the following net:\n - {}".format(
-              ( repr(v), "" if not obj else "(as \"{}\" is written somewhere else)".format( repr(obj) ),
-                repr(writer), "\n - ".join([repr(x) for x in net])) ) )
+              repr(v), "" if not obj else "(as \"{}\" is written somewhere else)".format( repr(obj) ),
+              repr(writer), "\n - ".join([repr(x) for x in net])) )
 
         if not has_writer:
           new_headless.append( net )

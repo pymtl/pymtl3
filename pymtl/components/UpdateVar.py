@@ -5,6 +5,7 @@
 from UpdateOnly      import UpdateOnly
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
+from errors import InvalidConstraintError
 import AstHelper
 
 class UpdateVar( UpdateOnly ):
@@ -55,7 +56,7 @@ class UpdateVar( UpdateOnly ):
         s._U_U_constraints.add( (id(x0.func), id(x1.func)) )
 
       elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
-        assert False, "Constraints between two variables are not allowed!"
+        raise InvalidConstraintError
 
       elif isinstance( x0, ValueConstraint ) or isinstance( x1, ValueConstraint ):
         sign = 1 # RD(x) < U is 1, RD(x) > U is -1

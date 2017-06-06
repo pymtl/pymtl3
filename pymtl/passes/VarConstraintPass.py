@@ -36,8 +36,6 @@ class VarConstraintPass( BasicConstraintPass ):
     # constraint WR(x) > U1 & U2 writes x --> U1 <  WR(x) == U2
     # Doesn't work for nested data struct and slice:
 
-    expl_constraints = set()
-
     read_upblks  = m._read_upblks
     write_upblks = m._write_upblks
 
@@ -60,10 +58,10 @@ class VarConstraintPass( BasicConstraintPass ):
             if co_blk != eq_blk:
               if sign == 1: # RD/WR(x) < U is 1, RD/WR(x) > U is -1
                 # eq_blk == RD/WR(x) < co_blk
-                expl_constraints.add( (eq_blk, co_blk) )
+                m._expl_constraints.add( (eq_blk, co_blk) )
               else:
                 # co_blk < RD/WR(x) == eq_blk
-                expl_constraints.add( (co_blk, eq_blk) )
+                m._expl_constraints.add( (co_blk, eq_blk) )
 
     #---------------------------------------------------------------------
     # Implicit constraint
@@ -75,7 +73,7 @@ class VarConstraintPass( BasicConstraintPass ):
     # Implicitly, WR(x) < RD(x), so when U1 writes X and U2 reads x
     # - U1 == WR(x) & U2 == RD(x) --> U1 == WR(x) < RD(x) == U2
 
-    impl_constraints = set()
+    m._impl_constraints = set()
 
     # Collect all objs that write the variable whose id is "read"
     # 1) RD A.b.b     - WR A.b.b, A.b, A
@@ -105,9 +103,9 @@ class VarConstraintPass( BasicConstraintPass ):
           for rd_blk in rd_blks:
             if wr_blk != rd_blk:
               if rd_blk in m._update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                m._impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                m._impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -133,15 +131,14 @@ class VarConstraintPass( BasicConstraintPass ):
           for rd_blk in read_upblks[ reader ]:
             if wr_blk != rd_blk:
               if rd_blk in m._update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                m._impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                m._impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    m._impl_constraints = impl_constraints
     m._constraints = m._expl_constraints.copy()
 
-    for (x, y) in impl_constraints:
-      if (y, x) not in expl_constraints: # no conflicting expl
+    for (x, y) in m._impl_constraints:
+      if (y, x) not in m._expl_constraints: # no conflicting expl
         m._constraints.add( (x, y) )
 
   @staticmethod

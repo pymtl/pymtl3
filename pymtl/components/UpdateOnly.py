@@ -13,6 +13,7 @@
 
 from NamedObject     import NamedObject
 from ConstraintTypes import U
+from errors          import UpblkSameNameError
 
 import inspect2, re, ast, py
 p = re.compile('( *(@|def))')
@@ -30,7 +31,8 @@ class UpdateOnly( NamedObject ):
 
   def update( s, blk ):
     blk_name = blk.__name__
-    assert blk_name not in s._name_upblk, "Cannot declare two update blocks with the same name {}".format( blk_name )
+    if blk_name in s._name_upblk:
+      raise UpblkSameNameError( blk.__name__ )
 
     # Cache the source and ast of update blocks in the type object
 

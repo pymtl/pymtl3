@@ -1,4 +1,5 @@
 from pymtl import *
+from pymtl.components.errors import MultiWriterError, NoWriterError
 
 class SomeMsg( object ):
 
@@ -104,10 +105,10 @@ def test_wr_A_b_wr_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
@@ -277,10 +278,10 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # A.b|=x, WR x - RD A
 def test_connect_wr_x_conn_A_b_rd_A_impl():
@@ -324,10 +325,10 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # A.b|=x, RD x - WR A
 def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
@@ -373,10 +374,10 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except MultiWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown two-writer conflict exception.")
+  raise Exception("Should've thrown MultiWriterError.")
 
 # A.b|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
@@ -515,7 +516,7 @@ def test_deep_connections():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print "\nAssertion Error:", e
+  except NoWriterError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown no driver exception.")
+  raise Exception("Should've thrown NoWriterError.")

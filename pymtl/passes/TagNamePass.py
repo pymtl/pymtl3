@@ -48,9 +48,8 @@ class TagNamePass( BasePass ):
         if   isinstance( name, basestring ): # python2 specific
           if not name.startswith("_"): # filter private variables
             _recursive_tag_expand( obj, m, [name], [] )
-        else:
-          if isinstance( name, tuple ) # name = [1:3]
-            _recursive_tag_expand( obj, m, [], [ slice(name[0], name[1]) ] )
+        elif isinstance( name, tuple ): # name = [1:3]
+          _recursive_tag_expand( obj, m, [], [ slice(name[0], name[1]) ] )
 
     m._parent = None
     m._name_idx = ( ["s"], [ [] ] )

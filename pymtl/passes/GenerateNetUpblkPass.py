@@ -2,10 +2,10 @@
 # GenerateNetUpblkPass
 #-------------------------------------------------------------------------
 from pymtl.passes import BasePass
-from pymtl.components import _overlap
+from pymtl.components import UpdateVarNet, _overlap
+from errors import ModelTypeError, PassOrderError
 from collections import deque
 import ast
-from errors import ModelTypeError, PassOrderError
 
 class GenerateNetUpblkPass( BasePass ):
 
@@ -14,7 +14,7 @@ class GenerateNetUpblkPass( BasePass ):
     self.opt = opt
 
   def execute( self, m ):
-    if not isinstance( UpdateVarNet ):
+    if not isinstance( m, UpdateVarNet ):
       raise ModelTypeError( "UpdateVarNet" )
     if not hasattr( m, "_nets" ):
       raise PassOrderError( "_nets" )

@@ -4,11 +4,6 @@ class SignalTypeError( Exception ):
 
 class MultiWriterError( Exception ):
   """ Raise when a variable is written by multiple update blocks/nets """
-  def __init__( self, nets ):
-    return super( NoWriterError, self ).__init__( \
-    "The following nets need drivers.\nNet:\n - {} ".format(
-      "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
-                            for y in net ]) ) )
 
 class NoWriterError( Exception ):
   """ Raise when a net has no writer (driver) """
@@ -16,7 +11,7 @@ class NoWriterError( Exception ):
     return super( NoWriterError, self ).__init__( \
     "The following nets need drivers.\nNet:\n - {} ".format(
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
-                            for y in net ]) ) )
+                            for y in nets ]) ) )
 
 class VarNotDeclaredError( Exception ):
   """ Raise when a variable in an update block is not declared """
@@ -25,13 +20,25 @@ class VarNotDeclaredError( Exception ):
     self.field  = field
     self.blk    = blk
     # TODO add inspect file path
+    if not self.blk:
+      return super( VarNotDeclaredError, self ).__init__() # this is just temporary message
     return super( VarNotDeclaredError, self ).__init__( \
-      "Object {} of class {} does not have field <{}> ({}.{})\n - Occurred at Line {} of {}".format( \
-      repr(obj), obj.__class__.__name__, field, repr(obj), lineno, blk.__name__ ) )
+      "Object {} of class {} does not have field <{}> ({}.{})\n - Occurred at Line {} of {} at {} (class {})".format( \
+      repr(obj), obj.__class__.__name__, field, repr(obj), field, lineno, blk.__name__,
+      repr(blk.hostobj), blk.hostobj.__class__.__name__ ) )
 
-class InvalidVarError( Exception ):
-  """ Raise when a variable in an update block is not declared or the
-      declaration is not consistent with references """
+class UpblkSameNameError( Exception ):
+  """ Raise when two update blocks are declared with the same name """
+  def __init__( self, name ):
+    return super( UpblkSameNameError, self ).__init__( \
+      " Cannot declare two update blocks with the same name {}".format( name ) )
 
 class UpblkCyclicError( Exception ):
   """ Raise when update blocks have cyclic dependencies """
+
+class InvalidConstraintError( Exception ):
+  """ Raise when a defined constraint is of wrong format """
+  def __init__( self ):
+    return super( InvalidConstraintError, self ).__init__( \
+      "Constraints between two variables are not allowed!" )
+

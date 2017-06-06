@@ -1,6 +1,7 @@
 from pymtl import *
 from pymtl.components import UpdateOnly
 from pymtl.passes     import SimUpdateOnlyPass
+from pymtl.components.errors import UpblkCyclicError, UpblkSameNameError
 from collections import deque
 
 def _test_model( cls ):
@@ -97,10 +98,10 @@ def test_cyclic_dependency():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print e
+  except UpblkCyclicError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown cyclic dependency exception.")
+  raise Exception("Should've thrown cyclic dependency UpblkCyclicError.")
 
 def test_upblock_same_name():
 
@@ -118,10 +119,10 @@ def test_upblock_same_name():
 
   try:
     _test_model( Top )
-  except Exception as e:
-    print e
+  except UpblkSameNameError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown name conflict exception.")
+  raise Exception("Should've thrown name conflict UpblkSameNameError.")
 
 def test_register_behavior():
 
@@ -377,6 +378,3 @@ def test_2d_array_vars():
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
-
-
-

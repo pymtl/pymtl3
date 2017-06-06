@@ -3,18 +3,21 @@
 #-------------------------------------------------------------------------
 
 from pymtl.passes import TagNamePass, BasicElaborationPass
-from pymtl.components import Signal, UpdateVar
+from pymtl.components import Signal, UpdateVar, _overlap
 from collections import deque, defaultdict
-from errors import MultiWriterError, InvalidVarError
+from pymtl.components.errors import MultiWriterError, VarNotDeclaredError
 
 class VarElaborationPass( BasicElaborationPass ):
   def __init__( self, dump=True ):
     self.dump = dump
 
   def execute( self, m ):
+    self.m = m
     m = TagNamePass().execute( m ) # tag name first for error message
     self.recursive_elaborate( m )
     m = TagNamePass().execute( m ) # slicing will spawn extra objects
+
+    self.check_upblk_writes( m )
 
     if self.dump:
       self.print_read_write()
@@ -37,8 +40,6 @@ class VarElaborationPass( BasicElaborationPass ):
   # Override
   def _store_vars( self, m ):
     super( VarElaborationPass, self )._store_vars( m )
-    
-    self.check_invalid_writers( m ) # make sure stored stuff makes sense
 
     m._update_on_edge = self._update_on_edge
     m._RD_U_constraints = self._RD_U_constraints
@@ -141,7 +142,9 @@ class VarElaborationPass( BasicElaborationPass ):
           try:
             lookup_var( m, 0, name, objs )
           except VarNotDeclaredError as e:
-            raise VarNotDeclaredError( e.obj, e.field, blk, astnode, lineno )
+            # need one more pass to give full name of spawned object
+            self.m = TagNamePass().execute( self.m )
+            raise VarNotDeclaredError( e.obj, e.field, blk, astnode.lineno )
 
           all_objs.extend( objs )
 
@@ -170,16 +173,19 @@ class VarElaborationPass( BasicElaborationPass ):
 
         self._blkid_rdwr[ blkid ] += [ (typ, o) for o in dedup.values() ]
 
-  def check_invalid_writers( self ):
+  # TODO add filename
+  @staticmethod
+  def check_upblk_writes( m ):
+    write_upblks = m._write_upblks
 
-    for wr_id, wr_blks in self._write_upblks.iteritems():
-      obj = self._id_obj[ wr_id ]
+    for wr_id, wr_blks in write_upblks.iteritems():
+      obj = m._id_obj[ wr_id ]
 
       if len(wr_blks) > 1:
         raise MultiWriterError( \
         "Multiple update blocks write {}.\n - {}".format( repr(obj),
-            "\n - ".join([ self._blkid_upblk[x].__name__+"@"+repr(self._blkid_upblk[x].hostobj), \
-                           for x in self._write_upblks[wid] ]) ) )
+            "\n - ".join([ m._blkid_upblk[x].__name__+" at "+repr(m._blkid_upblk[x].hostobj) \
+                           for x in write_upblks[wid] ]) ) )
 
       # See VarConstraintPass.py for full information
       # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
