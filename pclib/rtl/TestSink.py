@@ -1,5 +1,6 @@
 from pymtl import *
 from collections import deque
+from pclib.ifcs   import InValRdyIfc
 from pclib.valrdy import valrdy_to_str
 
 class TestBasicSink( UpdateVarNet ):
@@ -25,6 +26,30 @@ class TestBasicSink( UpdateVarNet ):
 
   def line_trace( s ):
     return "%s" % s.in_
+
+class TestSinkValRdy( UpdateVarNet ):
+
+  def __init__( s, Type, answer ):
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
+    s.answer = deque( answer )
+
+    s.in_    = InValRdyIfc( Type )
+
+    @s.update
+    def up_sink():
+      s.in_.rdy = len(s.answer) > 0
+
+      if s.in_.val and s.in_.rdy:
+        ref = s.answer.popleft()
+        ans = s.in_.msg
+
+        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
+
+  def done( s ):
+    return not s.answer
+
+  def line_trace( s ):
+    return s.in_.line_trace()
 
 class TestSink( UpdateVarNet ):
 

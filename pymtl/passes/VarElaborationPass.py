@@ -12,7 +12,6 @@ class VarElaborationPass( BasicElaborationPass ):
     self.dump = dump
 
   def execute( self, m ):
-    self.m = m
     m = TagNamePass().execute( m ) # tag name first for error message
     self.recursive_elaborate( m )
     m = TagNamePass().execute( m ) # slicing will spawn extra objects
@@ -143,7 +142,7 @@ class VarElaborationPass( BasicElaborationPass ):
             lookup_var( m, 0, name, objs )
           except VarNotDeclaredError as e:
             # need one more pass to give full name of spawned object
-            self.m = TagNamePass().execute( self.m )
+            m = TagNamePass().execute( m )
             raise VarNotDeclaredError( e.obj, e.field, blk, astnode.lineno )
 
           all_objs.extend( objs )

@@ -4,7 +4,7 @@ from EnRdyBundle import EnRdyBundle
 class DeqIfcRTL( EnRdyBundle ):
   ifc = 'Deq'
 
-class DeqIfcCL( PortBundle ):
+class DeqIfcCL( Interface ):
   ifc = 'Deq'
 
   def __init__( s, Type ):
@@ -16,7 +16,7 @@ class DeqIfcCL( PortBundle ):
   def __call__( s, *args, **kwargs ):
     return s.deq( args, kwargs )
 
-class DeqIfcFL( PortBundle ):
+class DeqIfcFL( Interface ):
   ifc = 'Deq'
 
   def __init__( s, Type ):

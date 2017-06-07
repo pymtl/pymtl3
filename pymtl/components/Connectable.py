@@ -63,6 +63,9 @@ class Signal( Connectable, NamedObject ):
     s._attrs  = {}
     s._slices = {}
 
+  def inverse( s ):
+    pass
+
   def __getattr__( s, name ):
     if name.startswith("_"): # private variable
       return s.__dict__[ name ]
@@ -99,11 +102,26 @@ class Signal( Connectable, NamedObject ):
     return s.Type()
 
 # These three subtypes are for type checking purpose
-class Wire    ( Signal ): pass
-class InVPort ( Signal ): pass
-class OutVPort( Signal ): pass
+class Wire( Signal ):
+  def inverse( s ):
+    return Wire( s.Type )
 
-class PortBundle( Connectable, NamedObject ):
+class InVPort( Signal ):
+  def inverse( s ):
+    return OutVPort( s.Type )
+
+class OutVPort( Signal ):
+  def inverse( s ):
+    return InVPort( s.Type )
+
+class Interface( Connectable, NamedObject ):
+
+  def inverse( s ):
+    inv = copy.deepcopy( s )
+    for name, obj in inv.__dict__.iteritems():
+      if isinstance( Signal ):
+        setattr( s, name, obj.inverse() )
+    return inv
 
   # Override
   def _connect( s, other ):
@@ -117,7 +135,7 @@ class PortBundle( Connectable, NamedObject ):
         for i in xrange(len(s_obj)):
           recursive_connect( s_obj[i], other_obj[i] )
 
-    assert isinstance( other, WireBundle ),  "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+    assert isinstance( other, Interface ),  "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
 
     if not (type(s) is type(other)):
       assert  s.Type == other.Type, "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)

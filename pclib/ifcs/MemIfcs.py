@@ -1,7 +1,7 @@
 from pymtl import *
 from EnqIfcs import EnqIfcCL, EnqIfcRTL
 
-class MemIfcFL( PortBundle ):
+class MemIfcFL( Interface ):
   ifc = 'Mem'
 
   def __init__( s ):
@@ -10,7 +10,7 @@ class MemIfcFL( PortBundle ):
     s.write = MethodPort()
     s.amo   = MethodPort()
 
-class MemIfcCL( PortBundle ):
+class MemIfcCL( Interface ):
   ifc = 'Mem'
 
   def __init__( s, Type ):
@@ -23,7 +23,7 @@ class MemIfcCL( PortBundle ):
   def __call__( s, *args, **kwargs ):
     return s.enq( args, kwargs )
 
-class MemIfcRTL( PortBundle ):
+class MemIfcRTL( Interface ):
   ifc = 'Mem'
 
   def __init__( s, Type ):

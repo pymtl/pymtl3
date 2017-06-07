@@ -4,7 +4,7 @@ from EnRdyBundle import EnRdyBundle
 class EnqIfcRTL( EnRdyBundle ):
   ifc = 'Enq'
 
-class EnqIfcCL( PortBundle ):
+class EnqIfcCL( Interface ):
   ifc = 'Enq'
 
   def __init__( s, Type ):
@@ -16,7 +16,7 @@ class EnqIfcCL( PortBundle ):
   def __call__( s, *args, **kwargs ):
     return s.enq( args, kwargs )
 
-class EnqIfcFL( PortBundle ):
+class EnqIfcFL( Interface ):
   ifc = 'Enq'
 
   def __init__( s, Type ):

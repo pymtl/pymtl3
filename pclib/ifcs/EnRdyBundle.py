@@ -1,7 +1,7 @@
 from pymtl import *
 from pclib.valrdy import valrdy_to_str
 
-class EnRdyBundle( PortBundle ):
+class EnRdyBundle( Interface ):
 
   def __init__( s, Type=int ):
     s.Type = Type
