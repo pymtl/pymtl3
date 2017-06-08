@@ -8,7 +8,7 @@
 class NamedObject(object):
 
   def __new__( cls, *args, **kwargs ):
-    inst = object.__new__( cls, *args, **kwargs )
+    inst = super( NamedObject, cls ).__new__( cls, *args, **kwargs )
 
     # Bookkeep name hierarchy here for error message and other purposes
     # For example, s.x[0][3].y[2].z[1:3] turns into
@@ -22,7 +22,7 @@ class NamedObject(object):
   def object_list( s ):
     return s.__dict__.items()
 
-  # Now I override repr and developers should use repr(x) everywhere
+  # Developers should use x.repr() everywhere
   def __repr__( s ):
     name, idx = s._name_idx
 

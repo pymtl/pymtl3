@@ -4,7 +4,7 @@ from pymtl.datatypes.Bits import mk_bits
 class Connectable(object):
 
   def __new__( cls, *args, **kwargs ):
-    inst = object.__new__( cls )
+    inst = super( Connectable, cls ).__new__( cls )
 
     inst._root      = inst # Use disjoint set to resolve connections
     inst._adjs      = []   # still preserve tree structure in parallel
@@ -117,10 +117,10 @@ class OutVPort( Signal ):
 class Interface( Connectable, NamedObject ):
 
   def inverse( s ):
-    inv = copy.deepcopy( s )
+    inv = s.__class__()
     for name, obj in inv.__dict__.iteritems():
-      if isinstance( Signal ):
-        setattr( s, name, obj.inverse() )
+      if isinstance( obj, Signal ):
+        setattr( inv, name, obj.inverse() )
     return inv
 
   # Override
@@ -137,10 +137,11 @@ class Interface( Connectable, NamedObject ):
 
     assert isinstance( other, Interface ),  "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
 
-    if not (type(s) is type(other)):
-      assert  s.Type == other.Type, "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
-      print "warning: need to generate adapters for this connection between %s and %s." % (type(s).__name__, type(other).__name__)
+    # if not (type(s) is type(other)):
+      # assert  s.Type == other.Type, "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+      # print "warning: need to generate adapters for this connection between %s and %s." % (type(s).__name__, type(other).__name__)
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"):
-        recursive_connect( obj, getattr(other, name) )
+        assert hasattr( other, name )
+        recursive_connect( obj, getattr( other, name ) )

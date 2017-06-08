@@ -64,10 +64,6 @@ class TestSink( UpdateVarNet ):
     @s.update
     def up_sink_rdy():
       s.rdy = len(s.answer) > 0
-
-    @s.update
-    def up_sink_rdy():
-      s.rdy = len(s.answer) > 0
       if s.en:
         ref = s.answer.popleft()
         ans = s.msg
