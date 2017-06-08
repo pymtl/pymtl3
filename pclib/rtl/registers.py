@@ -25,7 +25,7 @@ class RegEn( UpdateVarNet ):
   def __init__( s, Type ):
     s.out = OutVPort( Type )
     s.in_ = InVPort( Type )
-    s.en  = InVPort( Type )
+    s.en  = InVPort( int if Type == int else Bits1 )
 
     @s.update_on_edge
     def up_regen():

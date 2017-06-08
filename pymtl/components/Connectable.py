@@ -98,6 +98,10 @@ class Signal( Connectable, NamedObject ):
 
     return s.__dict__[ sl_tuple ]
 
+  def _connect( s, other ):
+    assert s.Type == other.Type, "Type mismatch {} != {}".format( s.Type, other.Type )
+    super( Signal, s )._connect( other )
+
   def default_value( s ):
     return s.Type()
 

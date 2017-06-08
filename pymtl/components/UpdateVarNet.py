@@ -24,8 +24,8 @@ class UpdateVarNet( UpdateVar ):
         assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
         assert o1.Type == o2.Type
         o1._connect( o2 )
-    except AssertionError:
-      raise InvalidConnectionError( "Invalid connection" )
+    except AssertionError as e:
+      raise InvalidConnectionError( "Invalid connection " + e )
 
   def connect_pairs( s, *args ):
     if len(args) & 1 != 0:
@@ -66,16 +66,19 @@ class UpdateVarNet( UpdateVar ):
 
     # Then do the connection
 
-    for (kw, item) in kwargs.iteritems():
-      obj = getattr( s, kw )
+    try:
+      for (kw, item) in kwargs.iteritems():
+        obj = getattr( s, kw )
 
-      if   isinstance( obj, list ):
-        for idx in item:
-          obj[idx]._connect( item[idx] )
-      elif isinstance( item, tuple ):
-        for x in item:
-          obj._connect( x )
-      else:
-        obj._connect( item )
+        if   isinstance( obj, list ):
+          for idx in item:
+            obj[idx]._connect( item[idx] )
+        elif isinstance( item, tuple ):
+          for x in item:
+            obj._connect( x )
+        else:
+          obj._connect( item )
+    except AssertionError as e:
+      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
 
     return s

@@ -4,9 +4,9 @@ from pymtl import *
 
 class Mux( UpdateVarNet ):
 
-  def __init__( s, Type, sel_nbits ):
-    s.in_ = [ InVPort( Type ) for _ in xrange(1<<sel_nbits) ]
-    s.sel = InVPort( int if Type == int else mk_bits( sel_nbits ) )
+  def __init__( s, Type, ninputs ):
+    s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
+    s.sel = InVPort( int if Type == int else mk_bits( clog2(ninputs) ) )
     s.out = OutVPort( Type )
 
     @s.update
