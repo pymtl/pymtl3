@@ -7,6 +7,8 @@ from Connectable import Connectable, Const
 from errors      import InvalidConnectionError
 from collections import defaultdict
 
+import inspect # for error message
+
 class UpdateVarNet( UpdateVar ):
 
   def connect( s, o1, o2 ):
@@ -25,13 +27,18 @@ class UpdateVarNet( UpdateVar ):
         assert o1.Type == o2.Type
         o1._connect( o2 )
     except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection \n{}".format(e) )
+      raise InvalidConnectionError( "\n{}".format(e) )
 
   def connect_pairs( s, *args ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
+
     for i in xrange(len(args)>>1):
-      s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
+      try:
+        s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
+      except InvalidConnectionError as e:
+        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
+              .format( (i<<1)+1, (i<<1)+2 , e ) )
 
   def __call__( s, *args, **kwargs ):
     assert args == ()

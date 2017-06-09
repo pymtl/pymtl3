@@ -15,15 +15,18 @@ class NamedObject(object):
     # ( ["top","x","y","z"], [ [], [0,3], [2], [slice(1,3,0)] ] )
     # len(name) == len(idx) - 1 only when the variable ends with slice
 
-    inst._name_idx = ( ["s"], [ [] ] )
+    inst._name_idx = []
     return inst
 
   @property
   def object_list( s ):
     return s.__dict__.items()
 
-  # Developers should use x.repr() everywhere
+  # Developers should use repr(x) everywhere
   def __repr__( s ):
+    if not s._name_idx:
+      return super( NamedObject, s ).__repr__()
+
     name, idx = s._name_idx
 
     if len(name) == len(idx): # normal
