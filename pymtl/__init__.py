@@ -3,11 +3,10 @@ from components.ConstraintTypes import U, M, RD, WR
 from components.Connectable     import Wire, InVPort, OutVPort, Interface
 from components.UpdateVarNet    import UpdateVarNet
 
-from passes import SimUpdateVarNetPass
+from datatypes import *
+from datatypes import _bitwidths
 
-from datatypes.Bits           import *
-from datatypes.helpers        import sext, zext, clog2, concat
-from datatypes.Bits           import _bitwidths
+from passes import SimUpdateVarNetPass
 
 __all__ = [
   'U','M','RD','WR',
