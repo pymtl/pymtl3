@@ -2,6 +2,7 @@
 # BasicElaborationPass
 #-------------------------------------------------------------------------
 
+from pymtl import *
 from pymtl.passes     import BasePass, TagNamePass
 from pymtl.components import NamedObject, UpdateOnly
 from collections import deque

@@ -2,6 +2,7 @@
 # ScheduleUpblkPass
 #-------------------------------------------------------------------------
 
+from pymtl import *
 from pymtl.passes import BasePass
 from collections  import deque, defaultdict
 from graphviz     import Digraph

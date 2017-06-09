@@ -5,6 +5,7 @@
 # after elaboration during which new objects may be created. Stateless.
 # TODO two different names point to the same object
 
+from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.components.NamedObject import NamedObject
 from collections import deque

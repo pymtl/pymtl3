@@ -1,6 +1,8 @@
 #-------------------------------------------------------------------------
 # SimUpdateOnlyPass
 #-------------------------------------------------------------------------
+
+from pymtl import *
 from pymtl.passes import BasePass, BasicElaborationPass, BasicConstraintPass, \
                          ScheduleUpblkPass, GenerateTickPass
 

@@ -2,6 +2,7 @@
 # VarConstraintPass
 #-------------------------------------------------------------------------
 
+from pymtl import *
 from pymtl.passes import BasePass, BasicConstraintPass
 from pymtl.components import _overlap
 

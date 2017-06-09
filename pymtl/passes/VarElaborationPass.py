@@ -2,6 +2,7 @@
 # VarElaborationPass
 #-------------------------------------------------------------------------
 
+from pymtl import *
 from pymtl.passes import TagNamePass, BasicElaborationPass
 from pymtl.components import Signal, UpdateVar, _overlap
 from collections import deque, defaultdict

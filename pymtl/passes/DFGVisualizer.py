@@ -1,3 +1,4 @@
+from pymtl import *
 from SimUpdateVarNetPass import SimUpdateVarNetPass
 from collections import defaultdict, deque
 import ast

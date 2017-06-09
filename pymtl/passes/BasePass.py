@@ -2,6 +2,8 @@
 # BasePass
 #-------------------------------------------------------------------------
 
+from pymtl import *
+
 class BasePass(object):
 
   def __init__( self ): # initialize parameters

@@ -1,6 +1,8 @@
 #-------------------------------------------------------------------------
 # SimUpdateVarPass
 #-------------------------------------------------------------------------
+
+from pymtl import *
 from pymtl.passes import SimUpdateOnlyPass, VarElaborationPass, VarConstraintPass, \
                          SignalTypeCheckPass, ScheduleUpblkPass, GenerateTickPass, \
                          SignalCleanupPass
