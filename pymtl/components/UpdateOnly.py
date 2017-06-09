@@ -14,6 +14,7 @@
 from NamedObject     import NamedObject
 from ConstraintTypes import U
 from errors          import UpblkSameNameError
+from pymtl.datatypes import *
 
 import inspect2, re, ast, py
 p = re.compile('( *(@|def))')
@@ -54,7 +55,9 @@ class UpdateOnly( NamedObject ):
     return blk
 
   def compile_update_block( s, src ): # FIXME
-    exec py.code.Source( src ).compile() in locals()
+    var = locals()
+    var.update( globals() ) # the src may have Bits
+    exec py.code.Source( src ).compile() in var
     return blk
 
   def get_update_block( s, name ):
