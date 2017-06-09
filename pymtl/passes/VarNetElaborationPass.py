@@ -129,7 +129,7 @@ class VarNetElaborationPass( VarElaborationPass ):
             # Check if itself is a writer or a constant
             if id(v) in writer_prop or isinstance( v, Const ):
               assert not has_writer
-              has_writer, writer, from_sibling = True, v, False
+              has_writer, writer = True, v
 
             # Check if an ancestor is a propagatable writer
             obj = v._nested
@@ -137,7 +137,7 @@ class VarNetElaborationPass( VarElaborationPass ):
               oid = id(obj)
               if oid in writer_prop and writer_prop[ oid ]:
                 assert not has_writer
-                has_writer, writer, from_sibling = True, v, False
+                has_writer, writer = True, v
                 break
               obj = obj._nested
 
@@ -150,7 +150,7 @@ class VarNetElaborationPass( VarElaborationPass ):
                 oid = id(obj)
                 if oid in writer_prop and writer_prop[ oid ]:
                   assert not has_writer
-                  has_writer, writer, from_sibling = True, v, True
+                  has_writer, writer = True, v
 
           except AssertionError:
             raise MultiWriterError( \
@@ -164,9 +164,12 @@ class VarNetElaborationPass( VarElaborationPass ):
 
         readers = []
 
-        # Child of some propagatable s.x, or sibling of some propagatable s[a:b]
+        # Child s.x.y of some propagatable s.x, or sibling of some
+        # propagatable s[a:b].
+        # This means that at least other variables are able to see s.x/s[a:b]
+        # so it doesn't matter if s.x.y is not in writer_prop
         if id(writer) not in writer_prop:
-          writer_prop[ id(writer) ] = not from_sibling # from sibling means cannot propagate
+          pass
 
         for v in net:
           if v != writer:
