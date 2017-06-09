@@ -37,7 +37,7 @@ class TestSourceValRdy( UpdateVarNet ):
     @s.update_on_edge
     def up_src():
       if s.out.rdy and s.input_:  s.input_.popleft()
-      s.out.val = len(s.input_) > 0
+      s.out.val = Bits1( len(s.input_) > 0 )
       s.out.msg = s.default if not s.input_ else s.input_[0]
 
     # The following is equivalent

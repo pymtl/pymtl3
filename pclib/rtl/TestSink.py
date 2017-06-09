@@ -37,7 +37,7 @@ class TestSinkValRdy( UpdateVarNet ):
 
     @s.update
     def up_sink():
-      s.in_.rdy = len(s.answer) > 0
+      s.in_.rdy = Bits1( len(s.answer) > 0 )
 
       if s.in_.val and s.in_.rdy:
         ref = s.answer.popleft()
