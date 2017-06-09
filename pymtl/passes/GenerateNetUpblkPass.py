@@ -23,6 +23,8 @@ class GenerateNetUpblkPass( BasePass ):
 
     if self.opt:
       self.compact_net_readers( m ) # remove unread objs, for simulation
+      if self.dump:
+        print "Net readers have got compacted for simulation."
 
     self.generate_net_block( m )
 
