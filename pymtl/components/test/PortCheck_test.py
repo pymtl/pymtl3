@@ -260,8 +260,12 @@ def test_illegal_same_host():
 
       s.connect( s.out, s.in_ )
 
+  class Top( UpdateVarNet ):
+    def __init__( s ):
+      s.awrap = AWrap()
+
   try:
-    _test_model( AWrap )
+    _test_model( Top )
   except SignalTypeError as e:
     print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
@@ -281,8 +285,12 @@ def test_illegal_rdhost_is_wrhost_parent():
       s.out = InVPort(int) # Should be OutVPort
       s.a   = A()( out = s.out )
 
+  class Top( UpdateVarNet ):
+    def __init__( s ):
+      s.awrap = AWrap()
+
   try:
-    _test_model( AWrap )
+    _test_model( Top )
   except SignalTypeError as e:
     print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
