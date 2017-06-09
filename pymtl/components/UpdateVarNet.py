@@ -25,7 +25,7 @@ class UpdateVarNet( UpdateVar ):
         assert o1.Type == o2.Type
         o1._connect( o2 )
     except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection " + e )
+      raise InvalidConnectionError( "Invalid connection \n{}".format(e) )
 
   def connect_pairs( s, *args ):
     if len(args) & 1 != 0:

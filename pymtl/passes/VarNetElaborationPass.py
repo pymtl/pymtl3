@@ -2,6 +2,7 @@
 # VarNetElaborationPass
 #-------------------------------------------------------------------------
 
+from pymtl import *
 from pymtl.passes import TagNamePass, VarElaborationPass
 from pymtl.components import Signal, Const, UpdateVarNet, _overlap
 from collections import deque, defaultdict
@@ -31,6 +32,19 @@ class VarNetElaborationPass( VarElaborationPass ):
   def _declare_vars( self ):
     super( VarNetElaborationPass, self )._declare_vars()
     self._varid_net = {}
+
+  # Override
+  def _store_vars( self, m ):
+    super( VarNetElaborationPass, self )._store_vars( m )
+    m._nets = self._varid_net.values()
+
+    # Find the host object of every signal in nets
+    for net in m._nets:
+      for member in net:
+        obj = member
+        while not isinstance( obj, UpdateVarNet ):
+          obj = obj._parent # go to the component
+        member._host = obj
 
   # Override
   def _collect_vars( self, m ):
@@ -67,13 +81,23 @@ class VarNetElaborationPass( VarElaborationPass ):
 
     writer_prop = {}
 
-    for wid in self._write_upblks:
+    # All writes in update blocks
+
+    for wid in m._write_upblks:
       writer_prop[ wid ] = True # propagatable
 
-      obj = self._id_obj[ wid ]._nested
+      obj = m._id_obj[ wid ]._nested
       while obj:
         writer_prop[ id(obj) ] = False
         obj = obj._nested
+
+    # Top level input ports!
+
+    for net in m._nets:
+      for member in net:
+        if isinstance( member, InVPort ) and member._host == m:
+          writer_prop[ id(member) ] = True
+          # cannot be a nested port, so no need to check _nested
 
     headless = self._varid_net.values()
     headed   = [] # [ ( writer, [readers] ) ]
@@ -103,7 +127,7 @@ class VarNetElaborationPass( VarElaborationPass ):
           obj = None
           try:
             # Check if itself is a writer or a constant
-            if id(v) in writer_prop or isinstance( v, Const ): 
+            if id(v) in writer_prop or isinstance( v, Const ):
               assert not has_writer
               has_writer, writer, from_sibling = True, v, False
 
@@ -161,20 +185,6 @@ class VarNetElaborationPass( VarElaborationPass ):
       if wcount == len(writer_prop): # no more new writers
         raise NoWriterError( headless )
       headless = new_headless
-
-    # Find the host object of every object in nets
-
-    for writer, readers in headed:
-      obj = writer
-      while not isinstance( obj, UpdateVarNet ):
-        obj = obj._parent # go to the component
-      writer._host = obj
-
-      for reader in readers:
-        obj = reader
-        while not isinstance( obj, UpdateVarNet ):
-          obj = obj._parent # go to the component
-        reader._host = obj
 
     m._nets = self._nets = headed
 

@@ -436,4 +436,53 @@ def test_connect_list_idx_invalid_call():
   except InvalidConnectionError as e:
     print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown MultiWriterError.")
+  raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_top_level_inport():
+
+  class Top( UpdateVarNet ):
+
+    def __init__( s ):
+
+      s.a = InVPort(Bits10)
+      s.b = Wire(Bits32)
+      s.connect( s.a, s.b[0:10] )
+
+      @s.update
+      def up():
+        print s.b[10:32]
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return ""
+
+  _test_model( Top )
+
+def test_top_level_outport():
+
+  class Top( UpdateVarNet ):
+
+    def __init__( s ):
+
+      s.a = OutVPort(Bits10)
+      s.b = Wire(Bits32)
+      s.connect( s.a, s.b[9:19] )
+
+      @s.update
+      def up():
+        s.b[0:10] = 1023
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return str(s.a)
+
+  A = SimUpdateVarNetPass(dump=True).execute( Top() )
+
+  A.tick()
+  trace = A.line_trace()
+  print " >>>", trace
+  assert trace == "001"

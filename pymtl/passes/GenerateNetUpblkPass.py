@@ -1,6 +1,8 @@
 #-------------------------------------------------------------------------
 # GenerateNetUpblkPass
 #-------------------------------------------------------------------------
+
+from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.components import UpdateVarNet, _overlap, Const
 from errors import ModelTypeError, PassOrderError
@@ -44,12 +46,19 @@ class GenerateNetUpblkPass( BasePass ):
         all_reads.add( id(obj) )
         obj = obj._nested
 
-    # Then add net writers
+    # Then add net writers and top level output ports in the net!
     for writer, readers in nets:
       obj = writer
       while obj:
         all_reads.add( id(obj) )
         obj = obj._nested
+
+      for reader in readers:
+        if isinstance( reader, OutVPort ) and reader._host == m:
+          obj = reader
+          while obj:
+            all_reads.add( id(obj) )
+            obj = obj._nested
 
     # Now figure out if a reader can be safely removed from the net
     # Check if the reader itself, its ancestors, or sibling slices are
