@@ -126,6 +126,7 @@ class DetectFuncCalls( DetectVarNames ):
 
   def visit_Call( self, node ):
     obj_name = self._get_full_name( node.func )
+    if not obj_name:  return
 
     if len(obj_name) != 1: return # only support simple name
     assert not obj_name[0][1] # function cannot have slices, right?

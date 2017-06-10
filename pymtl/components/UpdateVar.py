@@ -63,6 +63,9 @@ class UpdateVar( UpdateOnly ):
       AstHelper.extract_read_write( func, rd, wr )
       AstHelper.extract_func_calls( func, fc )
 
+    func.rd = cls._funcname_rd[ func_name ]
+    func.wr = cls._funcname_wr[ func_name ]
+    func.fc = cls._funcname_fc[ func_name ]
     return func
 
   # Override
