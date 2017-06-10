@@ -8,9 +8,11 @@ def _test_model( cls ):
   A = cls()
   A = SimUpdateVarPass(dump=True).execute( A )
 
-  while not A.done():
+  T, time = 0, 20
+  while not A.done() and T < time:
     A.tick()
     print A.line_trace()
+    T += 1
 
 class TestSource( UpdateVar ):
 
@@ -427,5 +429,51 @@ def test_2d_array_vars_impl():
       return s.src.line_trace() + " >>> " + \
              str(s.wire)+"r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
+
+  _test_model( Top )
+
+def test_simple_func_impl():
+
+  class Top(UpdateVar):
+
+    def __init__( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+
+      s.counter_assign = Wire(int)
+      s.counter_read   = Wire(int)
+
+      @s.func
+      def assignb( b ):
+        s.b = b
+
+      @s.update
+      def up_write():
+        if s.counter_assign & 1:
+          assign( 1, 2 )
+        else:
+          assign( 10, 20 )
+        s.counter_assign += 1
+
+      @s.update
+      def up_read():
+        if s.counter_read & 1:
+          assert s.a == 1 and s.b == min(100,2)
+        else:
+          assert s.a == 10 and s.b == 20
+        s.counter_read += 1
+
+      # The order doesn't matter. As a result, funcs should be processed
+      # after construction time
+      @s.func
+      def assign( a, b ):
+        s.a = a
+        assignb( b )
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return "{} {}".format( s.a, s.b )
 
   _test_model( Top )

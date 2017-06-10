@@ -8,6 +8,9 @@ from collections     import defaultdict
 from errors import InvalidConstraintError
 import AstHelper
 
+import inspect2, re, ast
+p = re.compile('( *(@|def))')
+
 class UpdateVar( UpdateOnly ):
 
   def __new__( cls, *args, **kwargs ):
@@ -17,8 +20,50 @@ class UpdateVar( UpdateOnly ):
     # constraint[id(var)] = (sign, id(func))
     inst._RD_U_constraints = defaultdict(list)
     inst._WR_U_constraints = defaultdict(list)
+    inst._name_func = {}
+    inst._id_func   = {}
 
     return inst
+
+  # @s.func is for those functions
+
+  def func( s, func ):
+    func_name = func.__name__
+
+    if func_name in s._name_func:
+      raise FuncSameNameError( func.__name__ )
+
+    # Cache the source and ast of functions in the type object
+
+    cls = type(s)
+
+    if not hasattr( cls, "_funcname_src" ):
+      assert not hasattr( cls, "_funcname_ast" )
+      assert not hasattr( cls, "_funcname_rd" )
+      assert not hasattr( cls, "_funcname_wr" )
+      cls._funcname_src = {}
+      cls._funcname_ast = {}
+      cls._funcname_rd = {}
+      cls._funcname_wr = {}
+      cls._funcname_fc = {}
+
+    if func_name not in cls._funcname_src:
+      src = p.sub( r'\2', inspect2.getsource(func) )
+      cls._funcname_src[ func_name ] = src
+      cls._funcname_ast[ func_name ] = ast.parse( src )
+
+    func.ast = cls._funcname_ast[ func_name ]
+    func.hostobj = s
+    s._name_func[ func_name ] = s._id_func[ id(func) ] = func
+
+    if func_name not in cls._funcname_rd:
+      cls._funcname_rd[ func_name ] = rd = []
+      cls._funcname_wr[ func_name ] = wr = []
+      cls._funcname_fc[ func_name ] = fc = []
+      AstHelper.extract_read_write( func, rd, wr )
+      AstHelper.extract_func_calls( func, fc )
+
+    return func
 
   # Override
   def update( s, blk ):
@@ -33,15 +78,19 @@ class UpdateVar( UpdateOnly ):
       assert not hasattr( cls, "_blkname_wr" )
       cls._blkname_rd = {}
       cls._blkname_wr = {}
+      cls._blkname_fc = {}
 
     if blk_name not in cls._blkname_rd:
       cls._blkname_rd[ blk_name ] = rd = []
       cls._blkname_wr[ blk_name ] = wr = []
-      AstHelper.extract_read_write( blk.ast, blk, rd, wr )
+      cls._blkname_fc[ blk_name ] = fc = []
+      AstHelper.extract_read_write( blk, rd, wr )
+      AstHelper.extract_func_calls( blk, fc )
 
     # blk.rd/wr = [ (name, astnode) ]
     blk.rd = cls._blkname_rd[ blk_name ]
     blk.wr = cls._blkname_wr[ blk_name ]
+    blk.fc = cls._blkname_fc[ blk_name ]
     return blk
 
   def update_on_edge( s, blk ):

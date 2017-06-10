@@ -6,7 +6,9 @@ class DetectVarNames( ast.NodeVisitor ):
   def __init__( self, upblk ):
     self.upblk = upblk
 
-  def get_full_name( self, node ): # only allow one layer array reference
+  # Helper function to get the full name containing "s"
+
+  def _get_full_name( self, node ):
     obj_name = []
 
     # First strip off all slices
@@ -59,21 +61,28 @@ class DetectVarNames( ast.NodeVisitor ):
         break
       node = node.value
 
-    if obj_name[-1][0] != "s": # We only record s.*
-      return
-    obj_name.pop()
-    obj_name = obj_name[::-1]
 
     if slices:
       assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
         ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in xrange(len(obj_name)) ] ) \
         +  "[%d:%d]" % (x[0], x[1]), self.upblk.__name__ )
 
-      obj_name[-1][1].append( slices[0] )
+      obj_name[0][1].append( slices[0] )
 
+    obj_name = obj_name[::-1]
     return obj_name
 
 class DetectReadsAndWrites( DetectVarNames ):
+
+  # This function is to extract variables
+  def get_obj_name( self, node ):
+    obj_name = self._get_full_name( node )
+
+    # We only record s.*
+    if obj_name[0][0] != "s":
+      return None
+
+    return obj_name[1:] # Unfortunately it's O(n), but I already [::-1] so not that bad
 
   def enter( self, node, read, write ):
     self.read = []
@@ -83,7 +92,7 @@ class DetectReadsAndWrites( DetectVarNames ):
     write.extend( self.write )
 
   def visit_Attribute( self, node ): # s.a.b
-    obj_name = self.get_full_name( node )
+    obj_name = self.get_obj_name( node )
     if not obj_name:  return
 
     pair = (obj_name, node)
@@ -96,7 +105,7 @@ class DetectReadsAndWrites( DetectVarNames ):
       assert False, type( node.ctx )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
-    obj_name = self.get_full_name( node )
+    obj_name = self.get_obj_name( node )
     if not obj_name:  return
 
     pair = (obj_name, node)
@@ -107,6 +116,21 @@ class DetectReadsAndWrites( DetectVarNames ):
       self.write.append( pair )
     else:
       assert False, type( node.ctx )
+
+class DetectFuncCalls( DetectVarNames ):
+
+  def enter( self, node, calls ):
+    self.calls = []
+    self.visit( node )
+    calls.extend( self.calls )
+
+  def visit_Call( self, node ):
+    obj_name = self._get_full_name( node.func )
+
+    if len(obj_name) != 1: return # only support simple name
+    assert not obj_name[0][1] # function cannot have slices, right?
+
+    self.calls.append( (obj_name, node.func) )
 
 class DetectMethodCalls( DetectVarNames ):
 
@@ -126,16 +150,29 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-def extract_read_write( tree, upblk, read, write ):
+def extract_read_write( f, read, write ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
+  tree = f.ast
   assert isinstance(tree, ast.Module)
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
   for stmt in tree.body:
-    DetectReadsAndWrites( upblk ).enter( stmt, read, write )
+    DetectReadsAndWrites( f ).enter( stmt, read, write )
+
+def extract_func_calls( f, calls ):
+
+  # Traverse the ast to extract variable writes and reads
+  # First check and remove @s.update and empty arguments
+  tree = f.ast
+  assert isinstance(tree, ast.Module)
+  tree = tree.body[0]
+  assert isinstance(tree, ast.FunctionDef)
+
+  for stmt in tree.body:
+    DetectFuncCalls( f ).enter( stmt, calls )
 
 def get_method_calls( tree, upblk, methods ):
   DetectMethodCalls( upblk ).enter( tree, methods )
