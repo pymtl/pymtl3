@@ -20,7 +20,7 @@ class VarElaborationPass( BasicElaborationPass ):
     self.check_upblk_writes( m )
 
     if self.dump:
-      self.print_read_write()
+      self.print_read_write_func()
 
     return m
 
@@ -35,7 +35,15 @@ class VarElaborationPass( BasicElaborationPass ):
     self._id_obj = {}
     self._read_upblks  = defaultdict(list)
     self._write_upblks = defaultdict(list)
-    self._blkid_rdwr   = defaultdict(list)
+
+    self._blkid_reads  = {}
+    self._blkid_writes = {}
+    self._blkid_calls  = {}
+
+    self._funcid_func   = {}
+    self._funcid_reads  = {}
+    self._funcid_writes = {}
+    self._funcid_calls  = {}
 
   # Override
   def _store_vars( self, m ):
@@ -61,12 +69,14 @@ class VarElaborationPass( BasicElaborationPass ):
       for k in m._WR_U_constraints:
         self._WR_U_constraints[k].extend( m._WR_U_constraints[k] )
 
+      self._funcid_func.update( m._id_func )
+
   # Override
   def _elaborate_vars( self, m ):
     if isinstance( m, UpdateVar ):
-      self._elaborate_read_write( m )
+      self._elaborate_read_write_func( m )
 
-  def _elaborate_read_write( self, m ):
+  def _elaborate_read_write_func( self, m ):
 
     # Find s.x[0][*][2], if index is exhausted, jump back to lookup_var
 
@@ -122,56 +132,118 @@ class VarElaborationPass( BasicElaborationPass ):
         # expand_array_index will handle s.x[4].y[*]
         expand_array_index( obj, depth, name, 0, idx, obj_list )
 
-    # We have parsed AST to extract every read/write variable name. Then,
-    # upblk by upblk, name strings "materialize".
+    # We have parsed AST to extract every read/write variable name.
+    # I refactor the process of materializing objects in this function
+
+    def extract_obj_from_names( func, names ):
+      all_objs = []
+
+      for name, astnode in names:
+        objs = []
+        try:
+          lookup_var( m, 0, name, objs )
+        except VarNotDeclaredError as e:
+          TagNamePass().execute( m ) # give full name to spawned object
+          raise VarNotDeclaredError( e.obj, e.field, func, astnode.lineno )
+
+        all_objs.extend( objs )
+
+        # Annotate astnode with actual objects. However, since I only
+        # parse AST of an upblk once to avoid duplicated parsing, I have
+        # to fold information across difference instances of the same
+        # class into the unique AST. Thus I keep {blk/funcid:objs} dict
+        # in each AST node to differentiate between different upblks.
+
+        if not hasattr( astnode, "_objs" ):
+          astnode._objs = defaultdict(set)
+        astnode._objs[ id(func) ].update( [ id(o) for o in objs ] )
+
+        # TODO Attach astnode to object for error message lineno/coloff
+
+      return all_objs
+
+    # First resolve all funcs' read/write and calling other functions
+    # This is because function won't call update blocks.
+
+    for funcid, func in m._id_func.iteritems():
+
+      # Check read
+
+      all_objs = extract_obj_from_names( func, func.rd )
+      dedup    = { id(o): o for o in all_objs }.values()
+
+      for obj in dedup:
+        self._id_obj[ id(obj) ] = obj
+      self._funcid_reads[ funcid ] = dedup
+
+      # Check write
+
+      all_objs = extract_obj_from_names( func, func.wr )
+      dedup    = { id(o): o for o in all_objs }.values()
+
+      for obj in dedup:
+        self._id_obj[ id(obj) ] = obj
+      self._funcid_writes[ funcid ] = dedup
+
+      # Check function calls
+
+      all_calls = []
+      for name, astnode in func.fc:
+        if name[0][0] not in m._name_func: # Bits1(1)?
+          continue
+        call = m._name_func[ name[0][0] ]
+
+        if not hasattr( astnode, "_funcs" ):
+          astnode._funcs = defaultdict(set)
+        astnode._funcs[ funcid ].add( id(call) )
+
+        all_calls.append( call )
+
+      self._funcid_calls[ funcid ] = { id(o): o for o in all_calls }.values()
+
+    # Then, upblk by upblk, name strings "materialize".
 
     for blkid, blk in m._id_upblk.iteritems():
 
-      for typ in [ 'rd', 'wr' ]: # deduplicate code
-        if typ == 'rd':
-          varnames = blk.rd
-          id_upblk = self._read_upblks
-        else:
-          varnames = blk.wr
-          id_upblk = self._write_upblks
+      # Check read
 
-        all_objs = []
-        for name, astnode in varnames:
-          objs = []
+      all_objs = extract_obj_from_names( blk, blk.rd )
+      dedup    = { id(o): o for o in all_objs }.values()
 
-          try:
-            lookup_var( m, 0, name, objs )
-          except VarNotDeclaredError as e:
-            # need one more pass to give full name of spawned object
-            m = TagNamePass().execute( m )
-            raise VarNotDeclaredError( e.obj, e.field, blk, astnode.lineno )
+      for obj in dedup:
+        self._read_upblks[ id(obj) ].append( blkid )
+        self._id_obj[ id(obj) ] = obj
 
-          all_objs.extend( objs )
+      self._blkid_reads[ blkid ] = list(dedup)
 
-          # Here I annotate astnode with actual objects. However, since
-          # I only parse AST of an upblk once to avoid duplicated
-          # parsing, I have to fold information across difference
-          # instances of the same class into the unique AST. As a
-          # result, I keep {blkid:objs} dictionary in each AST node to
-          # differentiate between different upblks.
+      # Check write
 
-          if not hasattr( astnode, "_objs" ):
-            astnode._objs = defaultdict(set)
-          astnode._objs[ blkid ].update( [ id(o) for o in objs ] )
+      all_objs = extract_obj_from_names( blk, blk.wr )
+      dedup    = { id(o): o for o in all_objs }.values()
 
-          # Attach astnode to object for error message lineno/coloff
+      for obj in dedup:
+        self._write_upblks[ id(obj) ].append( blkid )
+        self._id_obj[ id(obj) ] = obj
 
-          for o in objs:
-            if not hasattr( o, "_astnodes" ):
-              o._astnodes = []
-            o._astnodes.append( astnode )
+      self._blkid_writes[ blkid ] = list(dedup)
 
-        dedup = { id(o): o for o in all_objs }
-        for o in dedup.values():
-          id_upblk[ id(o) ].append( blkid )
-          self._id_obj[ id(o) ] = o
+      # Check function calls
+      # Need to expand function calls and find read/write inside them
 
-        self._blkid_rdwr[ blkid ] += [ (typ, o) for o in dedup.values() ]
+      all_calls = []
+      for name, astnode in blk.fc:
+        if name[0][0] not in m._name_func: # Bits1(1)?
+          continue
+        call = m._name_func[ name[0][0] ]
+
+        if not hasattr( astnode, "_funcs" ):
+          astnode._funcs = defaultdict(set)
+        astnode._funcs[ blkid ].add( id(call) )
+
+        all_calls.append( call )
+
+      self._blkid_calls[ blkid ] = { id(o): o for o in all_calls }.values()
+
 
   # TODO add filename
   @staticmethod
@@ -185,7 +257,7 @@ class VarElaborationPass( BasicElaborationPass ):
         raise MultiWriterError( \
         "Multiple update blocks write {}.\n - {}".format( repr(obj),
             "\n - ".join([ m._blkid_upblk[x].__name__+" at "+repr(m._blkid_upblk[x].hostobj) \
-                           for x in write_upblks[wid] ]) ) )
+                           for x in write_upblks[wr_id] ]) ) )
 
       # See VarConstraintPass.py for full information
       # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -210,22 +282,46 @@ class VarElaborationPass( BasicElaborationPass ):
                 repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__,
                 repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ ) )
 
-
-  def print_read_write( self ):
+  def print_read_write_func( self ):
     print
     print "+-------------------------------------------------------------"
-    print "+ Read/write in each update block"
+    print "+ Read/write/func in each @s.func function"
     print "+-------------------------------------------------------------"
-    for blkid, entries in self._blkid_rdwr.iteritems():
-      print "\nIn < {} >:".format( self._blkid_upblk[ blkid ].__name__ )
+    for funcid, func in self._funcid_func.iteritems():
+      print "\nIn {} (func) of {}:".format( func.__name__, func.hostobj )
 
-      wr_str = []
-      rd_str = []
-      for e in entries:
-        if   e[0] == 'wr':
-          wr_str.append( repr( e[1] ) )
-        elif e[0] == 'rd':
-          rd_str.append( repr( e[1] ) )
+      if self._funcid_writes[ funcid ]:
+        print   "  * Write:"
+        for o in self._funcid_writes[ funcid ]:
+          print "    + {}".format( repr(o) )
 
-      if wr_str: print "  * Write:\n    + {}".format( "\n    + ".join( wr_str ) )
-      if rd_str: print "  * Read: \n    - {}".format( "\n    - ".join( rd_str ) )
+      if self._funcid_reads[ funcid ]:
+        print   "  * Read:"
+        for o in self._funcid_reads[ funcid ]:
+          print "    - {}".format( repr(o) )
+
+      if self._funcid_calls[ funcid ]:
+        print   "  * Call:"
+        for o in self._funcid_calls[ funcid ]:
+          print "    > {}".format( o.__name__ )
+    print
+    print "+-------------------------------------------------------------"
+    print "+ Read/write/func in each @s.update update block"
+    print "+-------------------------------------------------------------"
+    for blkid, blk in self._blkid_upblk.iteritems():
+      print "\nIn {} (update block) of {}:".format( blk.__name__, blk.hostobj )
+
+      if self._blkid_writes[ blkid ]:
+        print   "  * Write:"
+        for o in self._blkid_writes[ blkid ]:
+          print "    + {}".format( repr(o) )
+
+      if self._blkid_reads[ blkid ]:
+        print   "  * Read:"
+        for o in self._blkid_reads[ blkid ]:
+          print "    - {}".format( repr(o) )
+
+      if self._blkid_calls[ blkid ]:
+        print   "  * Call:"
+        for o in self._blkid_calls[ blkid ]:
+          print "    > {}".format( o.__name__ )

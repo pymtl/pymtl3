@@ -19,7 +19,7 @@ class VarNetElaborationPass( VarElaborationPass ):
     self.check_upblk_writes( m )
 
     if self.dump:
-      self.print_read_write()
+      self.print_read_write_func()
 
     self.resolve_var_connections( m ) # after spawned objects get tagged
 
