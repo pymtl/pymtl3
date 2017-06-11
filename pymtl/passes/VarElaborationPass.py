@@ -33,8 +33,8 @@ class VarElaborationPass( BasicElaborationPass ):
     self._WR_U_constraints = defaultdict(list)
 
     self._id_obj = {}
-    self._read_upblks  = defaultdict(list)
-    self._write_upblks = defaultdict(list)
+    self._read_upblks  = defaultdict(set)
+    self._write_upblks = defaultdict(set)
 
     self._blkid_reads  = {}
     self._blkid_writes = {}
@@ -54,6 +54,7 @@ class VarElaborationPass( BasicElaborationPass ):
     m._WR_U_constraints = self._WR_U_constraints
 
     m._id_obj = self._id_obj
+
     m._read_upblks  = self._read_upblks
     m._write_upblks = self._write_upblks
 
@@ -170,27 +171,24 @@ class VarElaborationPass( BasicElaborationPass ):
       # Check read
 
       all_objs = extract_obj_from_names( func, func.rd )
-      dedup    = { id(o): o for o in all_objs }.values()
+      self._funcid_reads[ funcid ] = { id(o): o for o in all_objs }.values()
 
-      for obj in dedup:
+      for obj in self._funcid_reads[ funcid ]:
         self._id_obj[ id(obj) ] = obj
-      self._funcid_reads[ funcid ] = dedup
 
       # Check write
 
       all_objs = extract_obj_from_names( func, func.wr )
-      dedup    = { id(o): o for o in all_objs }.values()
+      self._funcid_writes[ funcid ] = { id(o): o for o in all_objs }.values()
 
-      for obj in dedup:
+      for obj in self._funcid_writes[ funcid ]:
         self._id_obj[ id(obj) ] = obj
-      self._funcid_writes[ funcid ] = dedup
 
       # Check function calls
 
       all_calls = []
       for name, astnode in func.fc:
-        if name[0][0] not in m._name_func: # Bits1(1)?
-          continue
+        if name[0][0] not in m._name_func:  continue # Bits1(1)?
         call = m._name_func[ name[0][0] ]
 
         if not hasattr( astnode, "_funcs" ):
@@ -208,32 +206,27 @@ class VarElaborationPass( BasicElaborationPass ):
       # Check read
 
       all_objs = extract_obj_from_names( blk, blk.rd )
-      dedup    = { id(o): o for o in all_objs }.values()
+      self._blkid_reads[ blkid ] = { id(o): o for o in all_objs }.values()
 
-      for obj in dedup:
-        self._read_upblks[ id(obj) ].append( blkid )
+      for obj in self._blkid_reads[ blkid ]:
+        self._read_upblks[ id(obj) ].add( blkid )
         self._id_obj[ id(obj) ] = obj
-
-      self._blkid_reads[ blkid ] = list(dedup)
 
       # Check write
 
       all_objs = extract_obj_from_names( blk, blk.wr )
-      dedup    = { id(o): o for o in all_objs }.values()
+      self._blkid_writes[ blkid ] = { id(o): o for o in all_objs }.values()
 
-      for obj in dedup:
-        self._write_upblks[ id(obj) ].append( blkid )
+      for obj in self._blkid_writes[ blkid ]:
+        self._write_upblks[ id(obj) ].add( blkid )
         self._id_obj[ id(obj) ] = obj
-
-      self._blkid_writes[ blkid ] = list(dedup)
 
       # Check function calls
       # Need to expand function calls and find read/write inside them
 
       all_calls = []
       for name, astnode in blk.fc:
-        if name[0][0] not in m._name_func: # Bits1(1)?
-          continue
+        if name[0][0] not in m._name_func:  continue  # Bits1(1)?
         call = m._name_func[ name[0][0] ]
 
         if not hasattr( astnode, "_funcs" ):
@@ -244,10 +237,9 @@ class VarElaborationPass( BasicElaborationPass ):
 
       # If x() call y() multiple times, still count as one, deduplicate!
 
-      dedup = { id(o): o for o in all_calls }.values()
-      self._blkid_calls[ blkid ] = list(dedup)
+      self._blkid_calls[ blkid ] = { id(o): o for o in all_calls }.values()
 
-      for call in dedup:
+      for call in self._blkid_calls[ blkid ]:
 
         # Expand function calls. E.g. upA calls fx, fx calls fy and fz
         # This is invalid: fx calls fy but fy also calls fx
@@ -256,13 +248,11 @@ class VarElaborationPass( BasicElaborationPass ):
 
         def dfs( u, stk ):
 
-          # Add all read/write of this func to the outermost upblk
-
+          # Add all read/write of funcs to the outermost upblk
           for obj in self._funcid_reads[ id(u) ]:
-            self._read_upblks[ id(obj) ].append( blkid )
-
+            self._read_upblks[ id(obj) ].add( blkid )
           for obj in self._funcid_writes[ id(u) ]:
-            self._write_upblks[ id(obj) ].append( blkid )
+            self._write_upblks[ id(obj) ].add( blkid )
 
           for v in self._funcid_calls[ id(u) ]:
 
@@ -276,7 +266,7 @@ class VarElaborationPass( BasicElaborationPass ):
             stk.pop()
 
         caller = { id(call): 0 } # callee's id: the caller's idx in stk
-        stk = [ call ] # for error message
+        stk    = [ call ]        # for error message
         dfs( call, stk )
 
   # TODO add filename
@@ -285,13 +275,14 @@ class VarElaborationPass( BasicElaborationPass ):
     write_upblks = m._write_upblks
 
     for wr_id, wr_blks in write_upblks.iteritems():
+      wr_blks = list(wr_blks)
       obj = m._id_obj[ wr_id ]
 
       if len(wr_blks) > 1:
         raise MultiWriterError( \
         "Multiple update blocks write {}.\n - {}".format( repr(obj),
             "\n - ".join([ m._blkid_upblk[x].__name__+" at "+repr(m._blkid_upblk[x].hostobj) \
-                           for x in write_upblks[wr_id] ]) ) )
+                           for x in wr_blks ]) ) )
 
       # See VarConstraintPass.py for full information
       # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -299,10 +290,11 @@ class VarElaborationPass( BasicElaborationPass ):
       x = obj
       while x:
         if id(x) != wr_id and id(x) in write_upblks:
+          wrx_blks = list(write_upblks[id(x)])
           raise MultiWriterError( \
           "Two-writer conflict in nested struct/slice. \n - {} (in {})\n - {} (in {})".format(
-            repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__,
-            repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ ) )
+            repr(x), m._blkid_upblk[wrx_blks[0]].__name__,
+            repr(obj), m._blkid_upblk[wr_blks[0]].__name__ ) )
         x = x._nested
 
       # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
@@ -311,10 +303,11 @@ class VarElaborationPass( BasicElaborationPass ):
         for x in obj._nested._slices.values():
           # Recognize overlapped slices
           if id(x) != wr_id and _overlap( x._slice, obj._slice ) and id(x) in write_upblks:
+            wrx_blks = list(write_upblks[id(x)])
             raise MultiWriterError( \
               "Two-writer conflict between sibling slices. \n - {} (in {})\n - {} (in {})".format(
-                repr(x), m._blkid_upblk[write_upblks[id(x)][0]].__name__,
-                repr(obj), m._blkid_upblk[write_upblks[wr_id][0]].__name__ ) )
+                repr(x), m._blkid_upblk[wrx_blks[0]].__name__,
+                repr(obj), m._blkid_upblk[wr_blks[0]].__name__ ) )
 
   def print_read_write_func( self ):
     print

@@ -175,8 +175,8 @@ blk = {0}
 
       # Collect read/writer metadata
 
-      m._read_upblks[ id(writer) ].append( blk_id )
+      m._read_upblks[ id(writer) ].add( blk_id )
       m._id_obj[ id(writer) ] = writer
       for x in readers:
-        m._write_upblks[ id(x) ].append( blk_id )
+        m._write_upblks[ id(x) ].add( blk_id )
         m._id_obj[ id(x) ] = x
