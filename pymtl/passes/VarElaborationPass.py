@@ -54,9 +54,9 @@ class VarElaborationPass( BasicElaborationPass ):
     m._WR_U_constraints = self._WR_U_constraints
 
     m._id_obj = self._id_obj
-
     m._read_upblks  = self._read_upblks
     m._write_upblks = self._write_upblks
+    m._funcid_func  = self._funcid_func
 
   # Override
   def _collect_vars( self, m ):
@@ -79,64 +79,58 @@ class VarElaborationPass( BasicElaborationPass ):
 
   def _elaborate_read_write_func( self, m ):
 
-    # Find s.x[0][*][2], if index is exhausted, jump back to lookup_var
-
-    def expand_array_index( obj, name_depth, name, idx_depth, idx, obj_list ):
-      if idx_depth >= len(idx):
-        lookup_var( obj, name_depth+1, name, obj_list )
-        return
-
-      if idx[ idx_depth ] == "*": # special case, materialize all objects
-        for i, o in enumerate( obj ):
-          expand_array_index( o, name_depth, name, idx_depth+1, idx, obj_list )
-      else:
-        _index = idx[ idx_depth ]
-        try:
-          index = int( _index ) # handle x[2]'s case
-          expand_array_index( obj[index], name_depth, name, idx_depth+1, idx, obj_list )
-        except TypeError: # cannot convert to integer
-          if not isinstance( _index, slice ):
-            raise VarNotDeclaredError( obj, _index )
-          expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
-
-    # Have already found the variable, but it is an array of objects,
-    # s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
-
-    def add_all( obj, obj_list ):
-
-      if   isinstance( obj, Signal ):
-        obj_list.append( obj )
-
-      elif isinstance( obj, list ) or isinstance( obj, deque ): # SORRY
-        for i, o in enumerate( obj ):
-          add_all( o, obj_list )
-
-    # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
-
-    def lookup_var( obj, depth, name, obj_list ):
-      if depth >= len(name):
-        if not callable(obj): # exclude function calls
-          add_all( obj, obj_list ) # if this object is a list/array again...
-        return
-
-      # <obj>.<field> should be an object
-      (field, idx) = name[ depth ]
-      try:
-        obj = getattr( obj, field )
-      except AttributeError:
-        raise VarNotDeclaredError( obj, field )
-
-      if not idx:
-        # just a variable, go recursively
-        lookup_var( obj, depth+1, name, obj_list )
-      else:
-        # expand_array_index will handle s.x[4].y[*]
-        expand_array_index( obj, depth, name, 0, idx, obj_list )
-
     # We have parsed AST to extract every read/write variable name.
     # I refactor the process of materializing objects in this function
 
     def extract_obj_from_names( func, names ):
+      
+    # Find s.x[0][*][2], if index is exhausted, jump back to lookup_var
+      def expand_array_index( obj, name_depth, name, idx_depth, idx, obj_list ):
+        if idx_depth >= len(idx):
+          lookup_var( obj, name_depth+1, name, obj_list )
+          return
+
+        if idx[ idx_depth ] == "*": # special case, materialize all objects
+          for i, o in enumerate( obj ):
+            expand_array_index( o, name_depth, name, idx_depth+1, idx, obj_list )
+        else:
+          _index = idx[ idx_depth ]
+          try:
+            index = int( _index ) # handle x[2]'s case
+            expand_array_index( obj[index], name_depth, name, idx_depth+1, idx, obj_list )
+          except TypeError: # cannot convert to integer
+            if not isinstance( _index, slice ):
+              raise VarNotDeclaredError( obj, _index )
+            expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
+
+      # Have already found the variable, but it is an array of objects,
+      # s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
+      def add_all( obj, obj_list ):
+        if   isinstance( obj, Signal ):
+          obj_list.append( obj )
+        elif isinstance( obj, list ) or isinstance( obj, deque ): # SORRY
+          for i, o in enumerate( obj ):
+            add_all( o, obj_list )
+
+      # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
+      def lookup_var( obj, depth, name, obj_list ):
+        if depth >= len(name):
+          if not callable(obj): # exclude function calls
+            add_all( obj, obj_list ) # if this object is a list/array again...
+          return
+
+        # <obj>.<field> should be an object
+        (field, idx) = name[ depth ]
+        try:
+          obj = getattr( obj, field )
+        except AttributeError:
+          raise VarNotDeclaredError( obj, field )
+
+        if not idx: # just a variable, go recursively
+          lookup_var( obj, depth+1, name, obj_list )
+        else:       # expand_array_index will handle s.x[4].y[*]
+          expand_array_index( obj, depth, name, 0, idx, obj_list )
+
       all_objs = []
 
       for name, astnode in names:
@@ -255,9 +249,7 @@ class VarElaborationPass( BasicElaborationPass ):
             self._write_upblks[ id(obj) ].add( blkid )
 
           for v in self._funcid_calls[ id(u) ]:
-
             if id(v) in caller: # v calls someone else there is a cycle
-              caller_index = caller[ id(v) ][1]
               raise InvalidFuncCallError( \
                 "In class {}\nThe full call hierarchy:\n - {}{}\nThese function calls form a cycle:\n {}\n{}".format(
                   type(v.hostobj).__name__,
@@ -265,7 +257,7 @@ class VarElaborationPass( BasicElaborationPass ):
                                   for x in stk ] ),
                   "\n - {} calls {}".format( u.__name__, v.__name__ ),
                   "\n ".join( [ ">>> {} calls {}".format( caller[id(x)][0].__name__, x.__name__)
-                                  for x in stk[caller_index+1: ] ] ),
+                                  for x in stk[caller[id(v)][1]+1: ] ] ),
                   " >>> {} calls {}".format( u.__name__, v.__name__ ) ) )
 
             caller[ id(v) ] = ( u, len(stk) )
@@ -274,8 +266,8 @@ class VarElaborationPass( BasicElaborationPass ):
             del caller[ id(v) ]
             stk.pop()
 
-        caller = { id(call): ( blk, 0 ) } # callee's id: the caller's idx in stk
-        stk    = [ call ]        # for error message
+        caller = { id(call): ( blk, 0 ) } # callee's id: (func, the caller's idx in stk)
+        stk    = [ call ] # for error message
         dfs( call, stk )
 
   # TODO add filename
