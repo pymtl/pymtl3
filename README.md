@@ -9,6 +9,7 @@ TODO or Problems (Updated June 8):
 - [x] use extensive exception types for different kinds of errors
 - [x] support open-ended top level ports
 - [x] variable constraint through func
+- [ ] how to implement data struct TYPE?
 - [ ] combinational/sequential variables of arbitrary verilog import
 - [ ] verilator debug information for combinational changes (nope)
 - [ ] master/slave PortBundle with in/out port? SV interface?
