@@ -44,3 +44,6 @@ class InvalidConstraintError( Exception ):
 
 class InvalidConnectionError( Exception ):
   """ Raise upon an inappropriate attempt to connect two variables """
+
+class InvalidFuncCallError( Exception ):
+  """ Raise upon an inappropriate @s.func function call """

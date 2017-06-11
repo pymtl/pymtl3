@@ -6,7 +6,7 @@ from pymtl import *
 from pymtl.passes import TagNamePass, BasicElaborationPass
 from pymtl.components import Signal, UpdateVar, _overlap
 from collections import deque, defaultdict
-from pymtl.components.errors import MultiWriterError, VarNotDeclaredError
+from pymtl.components.errors import MultiWriterError, VarNotDeclaredError, InvalidFuncCallError
 
 class VarElaborationPass( BasicElaborationPass ):
   def __init__( self, dump=True ):
@@ -242,8 +242,42 @@ class VarElaborationPass( BasicElaborationPass ):
 
         all_calls.append( call )
 
-      self._blkid_calls[ blkid ] = { id(o): o for o in all_calls }.values()
+      # If x() call y() multiple times, still count as one, deduplicate!
 
+      dedup = { id(o): o for o in all_calls }.values()
+      self._blkid_calls[ blkid ] = list(dedup)
+
+      for call in dedup:
+
+        # Expand function calls. E.g. upA calls fx, fx calls fy and fz
+        # This is invalid: fx calls fy but fy also calls fx
+        # To detect this, we need to use dfs and see if the current node
+        # has an edge to a previously marked ancestor
+
+        def dfs( u, stk ):
+
+          # Add all read/write of this func to the outermost upblk
+
+          for obj in self._funcid_reads[ id(u) ]:
+            self._read_upblks[ id(obj) ].append( blkid )
+
+          for obj in self._funcid_writes[ id(u) ]:
+            self._write_upblks[ id(obj) ].append( blkid )
+
+          for v in self._funcid_calls[ id(u) ]:
+
+            if id(v) in caller: # v calls someone else there is a cycle
+              raise InvalidFuncCallError("These function calls form a cycle") # TODO
+
+            caller[ id(v) ] = ( u, len(stk) )
+            stk.append( v )
+            dfs( v, stk )
+            del caller[ id(v) ]
+            stk.pop()
+
+        caller = { id(call): 0 } # callee's id: the caller's idx in stk
+        stk = [ call ] # for error message
+        dfs( call, stk )
 
   # TODO add filename
   @staticmethod
@@ -303,7 +337,7 @@ class VarElaborationPass( BasicElaborationPass ):
       if self._funcid_calls[ funcid ]:
         print   "  * Call:"
         for o in self._funcid_calls[ funcid ]:
-          print "    > {}".format( o.__name__ )
+          print "    > {} (func)".format( o.__name__ )
     print
     print "+-------------------------------------------------------------"
     print "+ Read/write/func in each @s.update update block"
@@ -322,6 +356,25 @@ class VarElaborationPass( BasicElaborationPass ):
           print "    - {}".format( repr(o) )
 
       if self._blkid_calls[ blkid ]:
-        print   "  * Call:"
         for o in self._blkid_calls[ blkid ]:
-          print "    > {}".format( o.__name__ )
+          Q = deque( [ (o, 0) ] )
+          while Q:
+            u, width = Q.pop()
+            prefix = " " * width
+
+            print prefix + "  * Call:"
+            print prefix + "    > {} (func)".format( u.__name__ )
+
+            if self._funcid_writes[ id(u) ]:
+              print prefix + "      * Write:"
+              for obj in self._funcid_writes[ id(u) ]:
+                print prefix + "        + {}".format( repr(obj) )
+
+            if self._funcid_reads[ id(u) ]:
+              print prefix + "      * Read:"
+              for obj in self._funcid_reads[ id(u) ]:
+                print prefix + "        - {}".format( repr(obj) )
+
+            if self._funcid_calls[ id(u) ]:
+              for v in self._funcid_calls[ id(u) ]:
+                Q.append( (v, width + 4) )
