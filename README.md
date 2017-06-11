@@ -8,8 +8,7 @@ TODO or Problems (Updated June 8):
 - [x] connectable Const
 - [x] use extensive exception types for different kinds of errors
 - [x] support open-ended top level ports
-- [ ] variable constraint through func: HOW MUCH do we want to support?
-- [ ] rtl port bundle
+- [x] variable constraint through func
 - [ ] combinational/sequential variables of arbitrary verilog import
 - [ ] verilator debug information for combinational changes (nope)
 - [ ] master/slave PortBundle with in/out port? SV interface?
