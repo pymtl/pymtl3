@@ -257,7 +257,16 @@ class VarElaborationPass( BasicElaborationPass ):
           for v in self._funcid_calls[ id(u) ]:
 
             if id(v) in caller: # v calls someone else there is a cycle
-              raise InvalidFuncCallError("These function calls form a cycle") # TODO
+              caller_index = caller[ id(v) ][1]
+              raise InvalidFuncCallError( \
+                "In class {}\nThe full call hierarchy:\n - {}{}\nThese function calls form a cycle:\n {}\n{}".format(
+                  type(v.hostobj).__name__,
+                  "\n - ".join( [ "{} calls {}".format( caller[id(x)][0].__name__, x.__name__ )
+                                  for x in stk ] ),
+                  "\n - {} calls {}".format( u.__name__, v.__name__ ),
+                  "\n ".join( [ ">>> {} calls {}".format( caller[id(x)][0].__name__, x.__name__)
+                                  for x in stk[caller_index+1: ] ] ),
+                  " >>> {} calls {}".format( u.__name__, v.__name__ ) ) )
 
             caller[ id(v) ] = ( u, len(stk) )
             stk.append( v )
@@ -265,7 +274,7 @@ class VarElaborationPass( BasicElaborationPass ):
             del caller[ id(v) ]
             stk.pop()
 
-        caller = { id(call): 0 } # callee's id: the caller's idx in stk
+        caller = { id(call): ( blk, 0 ) } # callee's id: the caller's idx in stk
         stk    = [ call ]        # for error message
         dfs( call, stk )
 

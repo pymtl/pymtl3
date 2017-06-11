@@ -1,6 +1,6 @@
 from pymtl import *
 from pymtl.components import UpdateVar
-from pymtl.components.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError
+from pymtl.components.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
 from pymtl.passes     import SimUpdateVarPass
 from collections import deque
 
@@ -478,44 +478,33 @@ def test_simple_func_impl():
 
   _test_model( Top )
 
-def test_simple_func_invalid():
+def test_func_cyclic_invalid():
 
   class Top(UpdateVar):
 
     def __init__( s ):
       s.a = Wire(int)
       s.b = Wire(int)
-
-      s.counter_assign = Wire(int)
-      s.counter_read   = Wire(int)
+      s.c = Wire(int)
 
       @s.func
-      def assignb( b ):
+      def assignc( a, b ):
+        s.c = a
+        assign( a, b )
+
+      @s.func
+      def assignb( a, b ):
         s.b = b
-        assign( b, b )
+        assignc( a, b )
+
+      @s.func
+      def assign( a, b ):
+        s.a = b
+        assignb( b, a )
 
       @s.update
       def up_write():
-        if s.counter_assign & 1:
-          assign( 1, 2 )
-        else:
-          assign( 10, 20 )
-        s.counter_assign += 1
-
-      @s.update
-      def up_read():
-        if s.counter_read & 1:
-          assert s.a == 1 and s.b == min(100,2)
-        else:
-          assert s.a == 10 and s.b == 20
-        s.counter_read += 1
-
-      # The order doesn't matter. As a result, funcs should be processed
-      # after construction time
-      @s.func
-      def assign( a, b ):
-        s.a = a
-        assignb( b )
+        assign( 1, 2 )
 
     def done( s ):
       return False
@@ -523,4 +512,10 @@ def test_simple_func_invalid():
     def line_trace( s ):
       return "{} {}".format( s.a, s.b )
 
-  _test_model( Top )
+  try:
+    _test_model( Top )
+  except InvalidFuncCallError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+  raise Exception("Should've thrown InvalidFuncCallError.")
+
