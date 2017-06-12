@@ -1,6 +1,6 @@
 # Pymtl-v3 working directory
 
-TODO or Problems (Updated June 8):
+TODO or Problems (Updated June 12):
 
 - [x] enforce port direction checking and net datatype checking
 - [x] dataflow graph visualizer which lays the foundation of Vtranslation
@@ -8,7 +8,8 @@ TODO or Problems (Updated June 8):
 - [x] connectable Const
 - [x] use extensive exception types for different kinds of errors
 - [x] support open-ended top level ports
-- [x] variable constraint through func
+- [x] variable constraint through @s.func func
+- [x] performance regression, port designs
 - [ ] HOW TO IMPLEMENT DATA STRUCT TYPE? TYPE OR __CALL__?
 - [ ] PORTBUNDLE (INTERFACE) INVERSE? WHAT IF THERE ARE PARAMETERS? SV INTERFACE WIRE ONLY?
 - [ ] combinational/sequential variables of arbitrary verilog import (difficult)
