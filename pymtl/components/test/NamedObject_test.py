@@ -22,12 +22,12 @@ class Human(NamedObject):
     else:           s.lunch = [ Tiger() for _ in xrange(nlunch) ]
 
     if ndinner == 1: s.dinner = Dog()
-    else:            s.dinner = deque( [ Dog() for _ in xrange(ndinner) ] )
+    else:            s.dinner = [ Dog() for _ in xrange(ndinner) ]
 
 def test_NamedObject_normal():
 
   x = Human( nlunch=1, ndinner=1 )
-  sim = TagNamePass().execute( x )
+  x._tag_name_collect()
 
   assert repr(x) == "s"
 
@@ -43,7 +43,7 @@ def test_NamedObject_normal():
 def test_NamedObject_deque():
 
   x = Human( nlunch=1, ndinner=5 )
-  sim = TagNamePass().execute( x )
+  x._tag_name_collect()
 
   assert repr(x) == "s"
 
@@ -59,7 +59,8 @@ def test_NamedObject_deque():
 def test_NamedObject_list():
 
   x = Human( nlunch=4, ndinner=1 )
-  sim = TagNamePass().execute( x )
+  x._tag_name_collect()
+  print x._all_objects
 
   assert repr(x) == "s"
 
