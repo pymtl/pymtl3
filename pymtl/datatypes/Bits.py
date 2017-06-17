@@ -1,6 +1,8 @@
 import py.code
 
 class Bits( object ):
+  __slots__ = ( "nbits", "value" )
+
   def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
     self.value = int(value) & ((1 << nbits) - 1)
