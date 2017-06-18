@@ -11,27 +11,22 @@ class GenerateTickPass( BasePass ):
     self.mode = mode
     self.dump = dump
 
-  def execute( self, m ):
+  def apply( self, m ):
     if not hasattr( m, "_serial_schedule" ):
       raise PassOrderError( "_serial_schedule" )
 
-    m.tick = self.generate_tick_func( m, self.mode, self.dump )
-    return m
+    self.generate_tick_func( m )
 
-  #-------------------------------------------------------------------------
-  # generate_tick_func
-  #-------------------------------------------------------------------------
   # After we come up with a schedule, we generate a tick function that calls
   # all update blocks. We can do "JIT" here.
 
-  @staticmethod
-  def generate_tick_func( m, mode, dump ):
-    assert mode in [ 'normal', 'unroll', 'hacky' ]
+  def generate_tick_func( self, m ):
+    assert self.mode in [ 'normal', 'unroll', 'hacky' ]
 
     schedule = m._serial_schedule
     assert schedule, "No update block found in the model"
 
-    if mode == 'normal':
+    if self.mode == 'normal':
       gen_tick_src = """
       def tick_normal():
         for blk in schedule:
@@ -43,7 +38,7 @@ class GenerateTickPass( BasePass ):
 
       ret = tick_normal
 
-    if mode == 'unroll': # Berkin's recipe
+    if self.mode == 'unroll': # Berkin's recipe
       strs = map( "  update_blk{}() # {}".format, xrange( len(schedule) ), \
                                                 [ x.__name__ for x in schedule ] )
       gen_tick_src = """
@@ -58,7 +53,7 @@ class GenerateTickPass( BasePass ):
       exec py.code.Source( gen_tick_src ).compile() in locals()
       ret = tick_unroll
 
-    if mode == 'hacky':
+    if self.mode == 'hacky':
 
       class RewriteSelf(ast.NodeVisitor):
         def visit_Attribute( self, node ):
@@ -117,14 +112,5 @@ class GenerateTickPass( BasePass ):
       tick_hacky.func_globals.update( func_globals )
       ret = tick_hacky
 
-    if dump:
-      import textwrap
-      print
-      print "+-------------------------------------------------------------"
-      print "+ Tick funtion source"
-      print "+-------------------------------------------------------------"
-      print
-      print textwrap.dedent(gen_tick_src)
-      print
-
-    return ret
+    m._tick_src = gen_tick_src
+    m.tick = ret

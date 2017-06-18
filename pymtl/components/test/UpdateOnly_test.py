@@ -6,7 +6,7 @@ from collections import deque
 
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateOnlyPass(dump=True).execute( A )
+  SimUpdateOnlyPass(dump=True).apply( A )
 
   while not A.done():
     A.tick()

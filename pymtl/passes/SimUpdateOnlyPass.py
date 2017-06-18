@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.passes import BasePass, BasicElaborationPass, BasicConstraintPass, \
+from pymtl.passes import BasePass, BasicElaborationPass, \
                          ScheduleUpblkPass, GenerateTickPass
 
 from pymtl.components import UpdateOnly
@@ -15,13 +15,10 @@ class SimUpdateOnlyPass( BasePass ):
     self.dump = dump
     self.tick_mode = tick_mode
 
-  def execute( self, m ):
+  def apply( self, m ):
     if not isinstance( m, UpdateOnly ):
       raise ModelTypeError( "UpdateOnly" )
 
-    m = BasicElaborationPass().execute( m )
-
-    m = BasicConstraintPass( dump=self.dump ).execute( m )
-    m = ScheduleUpblkPass  ( dump=self.dump ).execute( m )
-    m = GenerateTickPass   ( dump=self.dump, mode=self.tick_mode ).execute( m )
-    return m
+    m.elaborate()
+    ScheduleUpblkPass().apply( m )
+    GenerateTickPass ( mode=self.tick_mode ).apply( m )

@@ -30,6 +30,11 @@ class UpdateOnly( NamedObject ):
 
     return inst
 
+  def add_constraints( s, *args ):
+    for (x0, x1) in args:
+      assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
+      s._U_U_constraints.add( (id(x0.func), id(x1.func)) )
+
   def update( s, blk ):
     blk_name = blk.__name__
     if blk_name in s._name_upblk:
@@ -38,7 +43,6 @@ class UpdateOnly( NamedObject ):
     # Cache the source and ast of update blocks in the type object
 
     cls = type(s)
-
     if not hasattr( cls, "_blkname_src" ):
       assert not hasattr( cls, "_blkname_ast" )
       cls._blkname_src = {}
@@ -63,7 +67,35 @@ class UpdateOnly( NamedObject ):
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
-  def add_constraints( s, *args ):
-    for (x0, x1) in args:
-      assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
-      s._U_U_constraints.add( (id(x0.func), id(x1.func)) )
+  # Elaboration steps. Child classes should override it.
+
+  def elaborate( s ):
+    s._tag_name_collect()
+    s._declare_vars()
+    s._elaborate()
+    s._process_constraints()
+
+  # Elaboration template. Child classes shouldn't override this.
+
+  def _elaborate( s ):
+    for obj in s._all_objects:
+      s._elaborate_vars( obj )
+      s._collect_vars( obj )
+
+  # These functions should be overriden, but remember to call super method
+  # whenever necessary
+
+  def _process_constraints( s ):
+    s._constraints = s._expl_constraints.copy()
+
+  def _declare_vars( s ):
+    s._blkid_upblk = {}
+    s._expl_constraints = set()
+
+  def _elaborate_vars( s, m ):
+    pass
+
+  def _collect_vars( s, m ):
+    if isinstance( m, UpdateOnly ):
+      s._blkid_upblk.update( m._id_upblk )
+      s._expl_constraints.update( m._U_U_constraints )
