@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.passes import BasePass, BasicElaborationPass, \
+from pymtl.passes import BasePass, \
                          ScheduleUpblkPass, GenerateTickPass
 
 from pymtl.components import UpdateOnly

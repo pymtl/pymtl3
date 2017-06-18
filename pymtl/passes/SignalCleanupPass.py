@@ -5,31 +5,29 @@
 from pymtl import *
 from pymtl.components import NamedObject, Signal, Const
 from pymtl.passes import BasePass
-from collections import deque
 
 class SignalCleanupPass( BasePass ):
-  def execute( self, m ):
+
+  def apply( self, m ):
     if not hasattr( m, "tick" ):
       raise PassOrderError( "tick" )
 
     self.cleanup_wires( m )
-    return m
 
-  @staticmethod
-  def cleanup_wires( m ):
+  def cleanup_wires( self, m ):
 
     # SORRY
-    if isinstance( m, list ) or isinstance( m, deque ):
+    if isinstance( m, list ):
       for i, o in enumerate( m ):
         if   isinstance( o, Signal ):
           m[i] = o.default_value()
         elif isinstance( o, Const ):
           m[i] = o.const
         else:
-          SignalCleanupPass.cleanup_wires( o )
+          self.cleanup_wires( o )
 
     elif isinstance( m, NamedObject ):
-      for name, obj in m.object_list:
+      for name, obj in m.__dict__.iteritems():
         if ( isinstance( name, basestring ) and not name.startswith("_") ) \
           or isinstance( name, tuple ):
             if   isinstance( obj, Signal ):
@@ -37,4 +35,4 @@ class SignalCleanupPass( BasePass ):
             elif isinstance( obj, Const ):
               setattr( m, name, obj.const )
             else:
-              SignalCleanupPass.cleanup_wires( obj )
+              self.cleanup_wires( obj )

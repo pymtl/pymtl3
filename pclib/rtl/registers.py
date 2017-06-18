@@ -56,3 +56,18 @@ class Reg( UpdateVarNet ):
 
   def line_trace_enrst( s ):
     return "[en:{}|rst:{}|{} > {}]".format(s.en, s.rst, s.in_, s.out)
+
+class RegEn( UpdateVarNet ):
+
+  def __init__( s, Type ):
+    s.out = OutVPort( Type )
+    s.in_ = InVPort( Type )
+    s.en  = InVPort( int if Type == int else Bits1 )
+
+    @s.update_on_edge
+    def up_regen():
+      if s.en:
+        s.out = s.in_
+
+  def line_trace( s ):
+    return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)

@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.passes import SimUpdateOnlyPass, VarElaborationPass, VarConstraintPass, \
+from pymtl.passes import SimUpdateOnlyPass, \
                          SignalTypeCheckPass, ScheduleUpblkPass, GenerateTickPass, \
                          SignalCleanupPass
 
@@ -12,18 +12,12 @@ from errors import ModelTypeError
 
 class SimUpdateVarPass( SimUpdateOnlyPass ):
 
-  def execute( self, m ):
+  def apply( self, m ):
     if not isinstance( m, UpdateVar ):
       raise ModelTypeError( "UpdateVar" )
 
-    m = VarElaborationPass( dump=self.dump ).execute( m )
+    m.elaborate()
 
-    m = SignalTypeCheckPass().execute( m )
-
-    m = VarConstraintPass( dump=self.dump ).execute( m )
-    m = ScheduleUpblkPass( dump=self.dump ).execute( m )
-    m = GenerateTickPass ( dump=self.dump, mode=self.tick_mode ).execute( m )
-
-    m = SignalCleanupPass().execute( m )
-    
-    return m
+    ScheduleUpblkPass().apply( m )
+    GenerateTickPass ( mode=self.tick_mode ).apply( m )
+    SignalCleanupPass().apply( m )

@@ -67,35 +67,34 @@ class UpdateOnly( NamedObject ):
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
-  # Elaboration steps. Child classes should override it.
+  # Elaboration steps. Child classes should override and rewrite it
 
   def elaborate( s ):
-    s._tag_name_collect()
     s._declare_vars()
-    s._elaborate()
-    s._process_constraints()
 
-  # Elaboration template. Child classes shouldn't override this.
+    s._tag_name_collect()
 
-  def _elaborate( s ):
-    for obj in s._all_objects:
-      s._elaborate_vars( obj )
+    for obj in s._id_obj.values():
+      assert isinstance( obj, UpdateOnly ) # just component
       s._collect_vars( obj )
 
-  # These functions should be overriden, but remember to call super method
-  # whenever necessary
+    s._process_constraints()
 
-  def _process_constraints( s ):
-    s._constraints = s._expl_constraints.copy()
+  # These functions are called during elaboration and should be overriden,
+  # but remember to call super method whenever necessary. 
+
+  # The component shouldn't have these variables before elaboration.
 
   def _declare_vars( s ):
     s._blkid_upblk = {}
     s._expl_constraints = set()
 
-  def _elaborate_vars( s, m ):
-    pass
+  # This is called on individual objects
 
   def _collect_vars( s, m ):
     if isinstance( m, UpdateOnly ):
       s._blkid_upblk.update( m._id_upblk )
       s._expl_constraints.update( m._U_U_constraints )
+
+  def _process_constraints( s ):
+    s._constraints = s._expl_constraints.copy()

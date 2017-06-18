@@ -64,7 +64,7 @@ class NamedObject(object):
 
       # Collect m
 
-      s._all_objects.add( m )
+      s._id_obj[ id(m) ] = m
 
       # Jump to the expand function to check the type of child object
 
@@ -82,5 +82,5 @@ class NamedObject(object):
     s._parent = None
     s._name_idx = ( ["s"], [ [] ] )
 
-    s._all_objects = set()
+    s._id_obj = {}
     _recursive_tag_collect( s )

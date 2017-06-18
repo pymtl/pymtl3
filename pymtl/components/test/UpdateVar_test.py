@@ -6,7 +6,7 @@ from collections import deque
 
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateVarPass(dump=True).execute( A )
+  SimUpdateVarPass().apply( A )
 
   T, time = 0, 20
   while not A.done() and T < time:
