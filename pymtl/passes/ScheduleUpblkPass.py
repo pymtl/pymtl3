@@ -14,10 +14,8 @@ class ScheduleUpblkPass( BasePass ):
     self.dump = dump
 
   def apply( self, m ):
-    if not hasattr( m, "_blkid_upblk" ):
-      raise PassOrderError( "_blkid_upblk" )
-    if not hasattr( m, "_constraints" ):
-      raise PassOrderError( "_constraints" )
+    if not hasattr( m, "_all_constraints" ):
+      raise PassOrderError( "_all_constraints" )
 
     self.schedule( m )
 
@@ -33,36 +31,29 @@ class ScheduleUpblkPass( BasePass ):
 
     # Construct the graph
 
-    vs  = m._blkid_upblk.keys()
+    vs  = m._all_id_upblk.keys()
     es  = defaultdict(list)
     InD = { v:0 for v in vs }
     OuD = { v:0 for v in vs }
 
-    for (u, v) in list(m._constraints): # u -> v, always
+    for (u, v) in list(m._all_constraints): # u -> v, always
       InD[v] += 1
-      OuD[u] += 1
       es [u].append( v )
 
     # Perform topological sort for a serial schedule.
 
-    Q = deque()
-    for v in vs:
-      if not InD[v]:
-        Q.append( v )
-      # if not InD[v] and not OuD[v]:
-        # print "Warning: update block \"{}\" has no constraint".format( m._blkid_upblk[v].__name__ )
-
-    serial_schedule = []
+    Q      = deque( [ v for v in vs if not InD[v] ] )
+    serial = []
     while Q:
       # random.shuffle(Q) # to catch corner cases; will be removed later
       u = Q.pop()
-      serial_schedule.append( m._blkid_upblk[u] )
+      serial.append( m._all_id_upblk[u] )
       for v in es[u]:
         InD[v] -= 1
         if not InD[v]:
           Q.append( v )
 
-    if len(serial_schedule) != len(vs):
+    if len(serial) != len(vs):
       raise UpblkCyclicError( """
   Update blocks have cyclic dependencies.
   * Please consult update dependency graph for details."
@@ -76,16 +67,12 @@ class ScheduleUpblkPass( BasePass ):
       for v in u:
         InD[v] += 1
 
-    Q = deque()
-    for v in vs:
-      if not InD[v]:
-        Q.append( v )
-
-    batch_schedule = []
+    Q     = deque( [ v for v in vs if not InD[v] ] )
+    batch = []
 
     while Q:
       Q2 = deque()
-      batch_schedule.append( [ m._blkid_upblk[v] for v in Q ] )
+      batch.append( [ m._all_id_upblk[v] for v in Q ] )
       for u in Q:
         for v in es[u]:
           InD[v] -= 1
@@ -93,5 +80,5 @@ class ScheduleUpblkPass( BasePass ):
             Q2.append( v )
       Q = Q2
 
-    m._serial_schedule = serial_schedule
-    m._batch_schedule  = batch_schedule
+    m._serial_schedule = serial
+    m._batch_schedule  = batch

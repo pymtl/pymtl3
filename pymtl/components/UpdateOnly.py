@@ -13,7 +13,7 @@
 
 from NamedObject     import NamedObject
 from ConstraintTypes import U
-from errors          import UpblkSameNameError
+from errors          import UpblkFuncSameNameError
 from pymtl.datatypes import *
 
 import inspect2, re, ast, py
@@ -22,6 +22,8 @@ p = re.compile('( *(@|def))')
 class UpdateOnly( NamedObject ):
 
   def __new__( cls, *args, **kwargs ):
+    """ Convention: variables local to the object is created in __new__ """
+
     inst = NamedObject.__new__( cls, *args, **kwargs )
 
     inst._name_upblk = {}
@@ -35,27 +37,35 @@ class UpdateOnly( NamedObject ):
       assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
       s._U_U_constraints.add( (id(x0.func), id(x1.func)) )
 
+  def _cache_func_meta( s, func ):
+    """ Convention: the source of a function/update block across different
+    instances should be the same. You can construct different functions
+    based on the condition, but please use different names. This not only
+    keeps the caching valid, but also make the code more readable.
+
+    According to the convention, we can cache the information of a
+    function in the *class object* to avoid redundant parsing. """
+
+    cls  = type(s)
+    if not hasattr( cls, "_name_src" ):
+      cls._name_src = {}
+      cls._name_ast = {}
+
+    name = func.__name__
+    if name not in cls._name_src:
+      cls._name_src[ name ] = src = p.sub( r'\2', inspect2.getsource(func) )
+      cls._name_ast[ name ] = ast.parse( src )
+
   def update( s, blk ):
-    blk_name = blk.__name__
-    if blk_name in s._name_upblk:
-      raise UpblkSameNameError( blk.__name__ )
+    name = blk.__name__
+    if name in s._name_upblk:
+      raise UpblkFuncSameNameError( blk.__name__ )
 
-    # Cache the source and ast of update blocks in the type object
+    s._cache_func_meta( blk )
 
-    cls = type(s)
-    if not hasattr( cls, "_blkname_src" ):
-      assert not hasattr( cls, "_blkname_ast" )
-      cls._blkname_src = {}
-      cls._blkname_ast = {}
-
-    if blk_name not in cls._blkname_src:
-      src = p.sub( r'\2', inspect2.getsource(blk) )
-      cls._blkname_src[ blk_name ] = src
-      cls._blkname_ast[ blk_name ] = ast.parse( src )
-
+    blk.ast     = type(s)._name_ast[ name ] # retrieve cached ast
     blk.hostobj = s
-    blk.ast     = cls._blkname_ast[ blk_name ]
-    s._name_upblk[ blk_name ] = s._id_upblk[ id(blk) ] = blk
+    s._name_upblk[ name ] = s._id_upblk[ id(blk) ] = blk
     return blk
 
   def compile_update_block( s, src ): # FIXME
@@ -67,11 +77,13 @@ class UpdateOnly( NamedObject ):
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
-  # Elaboration steps. Child classes should override and rewrite it
+  # These functions are called during elaboration and should be overriden,
+  # but remember to call super method whenever necessary.
 
   def elaborate( s ):
-    s._declare_vars()
+    """ Elaboration steps. Child classes should override and rewrite it. """
 
+    s._declare_vars()
     s._tag_name_collect()
 
     for obj in s._id_obj.values():
@@ -80,21 +92,23 @@ class UpdateOnly( NamedObject ):
 
     s._process_constraints()
 
-  # These functions are called during elaboration and should be overriden,
-  # but remember to call super method whenever necessary. 
-
-  # The component shouldn't have these variables before elaboration.
-
   def _declare_vars( s ):
-    s._blkid_upblk = {}
-    s._expl_constraints = set()
+    """ Convention: the component on which we call elaborate declare
+    variables in _declare_vars; it shouldn't have them before elaboration.
 
-  # This is called on individual objects
+    Convention: the variables that hold all metadata of descendants
+    should have _all prefix."""
+
+    s._all_id_upblk = {}
+    s._all_expl_constraints = set()
 
   def _collect_vars( s, m ):
+    """ Called on individual objects during elaboration.
+    The general format resembles "s._all_X.update/append( s._X ). """
+
     if isinstance( m, UpdateOnly ):
-      s._blkid_upblk.update( m._id_upblk )
-      s._expl_constraints.update( m._U_U_constraints )
+      s._all_id_upblk.update( m._id_upblk )
+      s._all_expl_constraints.update( m._U_U_constraints )
 
   def _process_constraints( s ):
-    s._constraints = s._expl_constraints.copy()
+    s._all_constraints = s._all_expl_constraints.copy()

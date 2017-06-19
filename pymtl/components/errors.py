@@ -27,11 +27,11 @@ class VarNotDeclaredError( Exception ):
       repr(obj), obj.__class__.__name__, field, repr(obj), field, lineno, blk.__name__,
       repr(blk.hostobj), blk.hostobj.__class__.__name__ ) )
 
-class UpblkSameNameError( Exception ):
-  """ Raise when two update blocks are declared with the same name """
+class UpblkFuncSameNameError( Exception ):
+  """ Raise when two update block/function are declared with the same name """
   def __init__( self, name ):
-    return super( UpblkSameNameError, self ).__init__( \
-      " Cannot declare two update blocks with the same name {}".format( name ) )
+    return super( UpblkFuncSameNameError, self ).__init__( \
+      " Cannot declare two update blocks/functions with the same name {}".format( name ) )
 
 class UpblkCyclicError( Exception ):
   """ Raise when update blocks have cyclic dependencies """

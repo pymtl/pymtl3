@@ -1,7 +1,7 @@
 from pymtl import *
 from pymtl.components import UpdateOnly
 from pymtl.passes     import SimUpdateOnlyPass
-from pymtl.components.errors import UpblkCyclicError, UpblkSameNameError
+from pymtl.components.errors import UpblkCyclicError, UpblkFuncSameNameError
 from collections import deque
 
 def _test_model( cls ):
@@ -119,10 +119,10 @@ def test_upblock_same_name():
 
   try:
     _test_model( Top )
-  except UpblkSameNameError as e:
+  except UpblkFuncSameNameError as e:
     print "{} is thrown\n{}".format( e.__class__.__name__, e )
     return
-  raise Exception("Should've thrown name conflict UpblkSameNameError.")
+  raise Exception("Should've thrown name conflict UpblkFuncSameNameError.")
 
 def test_register_behavior():
 
