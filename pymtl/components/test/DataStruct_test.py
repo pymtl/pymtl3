@@ -18,7 +18,7 @@ class SomeMsg( object ):
 
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateVarNetPass(dump=True).execute( A )
+  SimUpdateVarNetPass().apply( A )
 
   for i in xrange(10):
     A.tick()
@@ -189,7 +189,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
         assert s.A.a == 12
 
   m = Top()
-  m = SimUpdateVarNetPass(dump=True).execute( m )
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 1
   x, y = list(m._constraints)[0]

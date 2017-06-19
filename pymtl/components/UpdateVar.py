@@ -6,7 +6,8 @@ from UpdateOnly      import UpdateOnly
 from Connectable     import Signal, InVPort, OutVPort, Wire, _overlap
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
-from errors import InvalidConstraintError, MultiWriterError, VarNotDeclaredError, InvalidFuncCallError
+from errors import InvalidConstraintError, SignalTypeError, \
+                   MultiWriterError, VarNotDeclaredError, InvalidFuncCallError
 import AstHelper
 
 import inspect2, re, ast
@@ -153,14 +154,24 @@ class UpdateVar( UpdateOnly ):
 
     s._funcid_func = {}
 
+    s._all_meta  = {
+      "reads" : defaultdict(list),
+      "writes": defaultdict(list),
+      "calls" : defaultdict(list),
+    }
+
+
   # Override
   def _elaborate_vars( s ):
     s._elaborate_read_write_func()
 
   def _elaborate_read_write_func( s ):
 
-    s._blkid_meta  = { "reads":{}, "writes":{}, "calls":{} }
-    s._funcid_meta = { "reads":{}, "writes":{}, "calls":{} }
+    s._id_meta  = {
+      "reads" : defaultdict(list),
+      "writes": defaultdict(list),
+      "calls" : defaultdict(list),
+    }
 
     # We have parsed AST to extract every read/write variable name.
     # I refactor the process of materializing objects in this function
@@ -244,10 +255,10 @@ class UpdateVar( UpdateOnly ):
 
     for funcid, func in s._id_func.iteritems():
 
-      s._funcid_meta['reads'][ funcid ] = { id(o): o \
+      s._id_meta['reads'][ funcid ] = { id(o): o \
         for o in extract_obj_from_names( func, func.rd ) }.values()
 
-      s._funcid_meta['writes'][ funcid ] = { id(o): o \
+      s._id_meta['writes'][ funcid ] = { id(o): o \
         for o in extract_obj_from_names( func, func.wr ) }.values()
 
       all_calls = []
@@ -261,17 +272,17 @@ class UpdateVar( UpdateOnly ):
 
         all_calls.append( call )
 
-      s._funcid_meta['calls'][ funcid ] = { id(o): o \
+      s._id_meta['calls'][ funcid ] = { id(o): o \
         for o in all_calls }.values()
 
     # Then, resolve update blocks
 
     for blkid, blk in s._id_upblk.iteritems():
 
-      s._blkid_meta['reads'][ blkid ] = { id(o): o \
+      s._id_meta['reads'][ blkid ] = { id(o): o \
         for o in extract_obj_from_names( blk, blk.rd ) }.values()
 
-      s._blkid_meta['writes'][ blkid ] = { id(o): o \
+      s._id_meta['writes'][ blkid ] = { id(o): o \
         for o in extract_obj_from_names( blk, blk.wr ) }.values()
 
       # Check function calls
@@ -290,7 +301,7 @@ class UpdateVar( UpdateOnly ):
 
       # If x() call y() multiple times, still count as one, deduplicate!
 
-      s._blkid_meta['calls'][ blkid ] = { id(o): o \
+      s._id_meta['calls'][ blkid ] = { id(o): o \
         for o in all_calls }.values()
 
   # Override
@@ -307,15 +318,24 @@ class UpdateVar( UpdateOnly ):
 
       s._funcid_func.update( m._id_func )
 
-      for blkid, reads in m._blkid_meta['reads'].iteritems():
+      for id_, reads in m._id_meta['reads'].iteritems():
+        s._all_meta['reads'][ id_ ].extend( reads )
+
         for read in reads:
-          s._read_upblks[ id(read) ].add( blkid )
+          if id_ in m._id_upblk:
+            s._read_upblks[ id(read) ].add( id_ )
 
-      for blkid, writes in m._blkid_meta['writes'].iteritems():
+      for id_, writes in m._id_meta['writes'].iteritems():
+        s._all_meta['writes'][ id_ ].extend( writes )
+
         for write in writes:
-          s._write_upblks[ id(write) ].add( blkid )  
+          if id_ in m._id_upblk:
+            s._write_upblks[ id(write) ].add( id_ )
 
-      for blkid, calls in m._blkid_meta['calls'].iteritems():
+      for id_, calls in m._id_meta['calls'].iteritems():
+        s._all_meta['calls'][ id_ ].extend( calls )
+
+        if id_ not in m._id_upblk:  continue
         for call in calls:
 
           # Expand function calls. E.g. upA calls fx, fx calls fy and fz
@@ -326,12 +346,15 @@ class UpdateVar( UpdateOnly ):
           def dfs( u, stk ):
 
             # Add all read/write of funcs to the outermost upblk
-            for read in s._funcid_meta['reads'][ id(u) ]:
-              s._read_upblks[ id(read) ].add( blkid )
-            for write in s._funcid_meta['writes'][ id(u) ]:
-              s._write_upblks[ id(write) ].add( blkid )
+            for read in m._id_meta['reads'][ id(u) ]:
+              s._read_upblks[ id(read) ].add( id_ )
+              s._all_meta['reads'][ id_ ].append( read )
 
-            for v in s._funcid_meta['calls'][ id(u) ]:
+            for write in m._id_meta['writes'][ id(u) ]:
+              s._write_upblks[ id(write) ].add( id_ )
+              s._all_meta['writes'][ id_ ].append( write )
+
+            for v in m._id_meta['calls'][ id(u) ]:
               if id(v) in caller: # v calls someone else there is a cycle
                 raise InvalidFuncCallError( \
                   "In class {}\nThe full call hierarchy:\n - {}{}\nThese function calls form a cycle:\n {}\n{}".format(
@@ -350,7 +373,7 @@ class UpdateVar( UpdateOnly ):
               stk.pop()
 
           # callee's id: (func, the caller's idx in stk)
-          caller = { id(call): ( s._blkid_upblk[ blkid ], 0 ) } 
+          caller = { id(call): ( m._id_upblk[ id_ ], 0 ) } 
           stk    = [ call ] # for error message
           dfs( call, stk )
 
@@ -375,10 +398,10 @@ class UpdateVar( UpdateOnly ):
 
     for typ in [ 'rd', 'wr' ]: # deduplicate code
       if typ == 'rd':
-        constraints = s._RD_U_constraints
+        constraints = s._all_RD_U_constraints
         equal_blks  = read_upblks
       else:
-        constraints = s._WR_U_constraints
+        constraints = s._all_WR_U_constraints
         equal_blks  = write_upblks
 
       # enumerate variable objects
@@ -436,7 +459,7 @@ class UpdateVar( UpdateOnly ):
         for wr_blk in write_upblks[ writer ]:
           for rd_blk in rd_blks:
             if wr_blk != rd_blk:
-              if rd_blk in s._update_on_edge:
+              if rd_blk in s._all_update_on_edge:
                 s._impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
                 s._impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
@@ -464,7 +487,7 @@ class UpdateVar( UpdateOnly ):
         for reader in readers:
           for rd_blk in read_upblks[ reader ]:
             if wr_blk != rd_blk:
-              if rd_blk in s._update_on_edge:
+              if rd_blk in s._all_update_on_edge:
                 s._impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
                 s._impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default

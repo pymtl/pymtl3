@@ -1,6 +1,5 @@
 from pymtl import *
 from pymtl.components import NamedObject
-from pymtl.passes     import TagNamePass
 from collections import deque
 
 class Chicken(NamedObject):
@@ -60,7 +59,7 @@ def test_NamedObject_list():
 
   x = Human( nlunch=4, ndinner=1 )
   x._tag_name_collect()
-  print x._all_objects
+  print x._id_obj
 
   assert repr(x) == "s"
 

@@ -2,7 +2,7 @@ from pymtl import *
 from pymtl.components.errors import MultiWriterError, NoWriterError
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateVarNetPass(dump=True).execute( A )
+  SimUpdateVarNetPass().apply( A )
 
   for i in xrange(10):
     A.tick()
@@ -47,7 +47,8 @@ def test_write_two_disjoint_slices_no_reader():
       def up_rd_17_30():
         assert s.A[16:30] == 0xff
 
-  m = SimUpdateVarNetPass(dump=True).execute( Top() )
+  m = Top()
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 1
   x, y = list(m._constraints)[0]
@@ -105,7 +106,8 @@ def test_write_two_slices_and_bit():
       def up_rd_A():
         print s.A[0:17]
 
-  m = SimUpdateVarNetPass(dump=True).execute( Top() )
+  m = Top()
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 2
   _, x = list(m._constraints)[0]
@@ -274,7 +276,8 @@ def test_rd_As_wr_At_impl_disjoint():
       def up_rd_As():
         assert s.A[0:16] == 0
 
-  m = SimUpdateVarNetPass(dump=True).execute( Top() )
+  m = Top()
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 0 # no constraint at all!
 
@@ -404,7 +407,8 @@ def test_wr_As_rd_A_rd_At_cannot_schedule():
       def up_rd_At():
         assert s.A[3:5] == 0
 
-  m = SimUpdateVarNetPass(dump=True).execute( Top() )
+  m = Top()
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 1
   x, y = list(m._constraints)[0]
@@ -452,7 +456,8 @@ def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
       def up_rd_At():
         assert s.A[16] == 0
 
-  m = SimUpdateVarNetPass(dump=True).execute( Top() )
+  m = Top()
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 1
   x, y = list(m._constraints)[0]
@@ -521,7 +526,8 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
       def up_rd_As():
         assert s.A[24:32] == 0
 
-  m = SimUpdateVarNetPass(dump=True).execute( Top() )
+  m = Top()
+  SimUpdateVarNetPass().apply( m )
 
   assert len(m._constraints) == 1
   x, y = list(m._constraints)[0]

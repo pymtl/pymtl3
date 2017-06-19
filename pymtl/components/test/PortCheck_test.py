@@ -4,7 +4,7 @@ from pymtl.components.errors import SignalTypeError
 
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateVarNetPass(dump=True).execute( A )
+  SimUpdateVarNetPass().apply( A )
 
   for i in xrange(10):
     A.tick()

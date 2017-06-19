@@ -4,7 +4,7 @@ from pclib.rtl import TestSourceValRdy, TestSinkValRdy
 
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateVarNetPass(dump=True).execute( A )
+  SimUpdateVarNetPass().apply( A )
 
   T, time = 0, 20
   while not A.done() and T < time:

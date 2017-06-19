@@ -6,7 +6,7 @@ from collections import deque
 
 def _test_model( cls ):
   A = cls()
-  A = SimUpdateVarNetPass(dump=True).execute( A )
+  SimUpdateVarNetPass().apply( A )
 
   T, time = 0, 20
   while not A.done() and T < time:
@@ -480,7 +480,8 @@ def test_top_level_outport():
     def line_trace( s ):
       return str(s.a)
 
-  A = SimUpdateVarNetPass(dump=True).execute( Top() )
+  A = Top()
+  SimUpdateVarNetPass().apply( A )
 
   A.tick()
   trace = A.line_trace()
