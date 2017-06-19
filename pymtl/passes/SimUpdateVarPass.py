@@ -4,7 +4,7 @@
 
 from pymtl import *
 from pymtl.passes import SimUpdateOnlyPass, \
-                         SignalTypeCheckPass, ScheduleUpblkPass, GenerateTickPass, \
+                         ScheduleUpblkPass, GenerateTickPass, \
                          SignalCleanupPass
 
 from pymtl.components import UpdateVar
