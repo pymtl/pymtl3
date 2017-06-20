@@ -383,10 +383,10 @@ class UpdateVarNet( UpdateVar ):
                 else ( "s." + repr(writer)[lca_len+1:] )
       rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
 
-      upblk_name = "{}_FANOUT_{}".format(repr(writer), fanout)\
+      upblk_name = "{}__{}".format(repr(writer), fanout)\
                     .replace( ".", "_" ).replace( ":", "_" ) \
-                    .replace( "[", "_" ).replace( "]", "_" ) \
-                    .replace( "(", "_" ).replace( ")", "_" )
+                    .replace( "[", "_" ).replace( "]", "" ) \
+                    .replace( "(", "_" ).replace( ")", "" )
 
       # TODO port common prefix optimization, currently only multi-writer
 

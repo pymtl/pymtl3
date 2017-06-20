@@ -1,20 +1,29 @@
 from pymtl import *
+from pymtl.components import UpdateVar
+from BasePass import BasePass
 from SimUpdateVarNetPass import SimUpdateVarNetPass
+from SimUpdateVarPass import SimUpdateVarPass
 from collections import defaultdict, deque
 import ast
 
-class DFGVisualizer( SimUpdateVarNetPass ):
+class DFGVisualizer( BasePass ):
 
-  def execute( self, model ):
-    super( DFGVisualizer, self ).execute( model )
+  def apply( self, model ):
+
+    if not hasattr( model, "tick" ):
+      if isinstance( model, UpdateVarNet ):
+        SimUpdateVarNetPass().apply( model )
+
+      if isinstance( model, UpdateVar ):
+        SimUpdateVarPass().apply( model )
+
     self.visualize( model )
 
-  @staticmethod
-  def visualize( model ):
+  def visualize( self, model ):
     deps = defaultdict(set)
     visitor = DetectDataDependency( deps, model._id_obj )
 
-    for blk in model._blkid_upblk.values():
+    for blk in model._all_id_upblk.values():
       print
       print "+++++++++++++++++++++++++++++++++++++++++++++++++++"
       print "+ {} at {} ".format( blk.__name__ , repr(blk.hostobj) )
@@ -81,11 +90,11 @@ class DFGVisualizer( SimUpdateVarNetPass ):
 
       # Only check internal signals to remove sequential elements
 
-      if len( model._write_upblks[x] ) == 1:
+      if len( model._all_write_upblks[x] ) == 1:
 
         # wrblk (B) writes variable x
 
-        wrblk_rank = upblk_rank[ model._write_upblks[x][0] ]
+        wrblk_rank = upblk_rank[ list(model._all_write_upblks[x])[0] ]
 
         for (lineno, rdblk) in deps[ (x,y) ]: # all occured dependencies
 
@@ -97,14 +106,17 @@ class DFGVisualizer( SimUpdateVarNetPass ):
             comb_edge = False
 
       if comb_edge:
-        dot.edge( repr(all_objs[x]), repr(all_objs[y]) )
+        print repr(all_objs[x]), "->", repr(all_objs[y])
+        # dot.edge( repr(all_objs[x]), repr(all_objs[y]) )
       else:
-        dot.edge( repr(all_objs[x]), repr(all_objs[y]), constraint='false', style='dashed' )
+        print repr(all_objs[x]), "->", repr(all_objs[y])
+        # dot.edge( repr(all_objs[x]), repr(all_objs[y]), constraint='false', style='dashed' )
 
-    dot.render("/tmp/dataflow.gv", view=True)
+    # TODO add net
+    # dot.render("/tmp/dataflow.gv", view=True)
 
 import astor # DEBUG
-_DEBUG = False
+_DEBUG = True
 
 class DetectDataDependency( ast.NodeVisitor ):
   def __init__( self, dependencies, id_obj ):
@@ -186,6 +198,7 @@ class DetectDataDependency( ast.NodeVisitor ):
   # call cs
   def visit_Call( self, node ):
     if _DEBUG: print "Call", astor.to_source( node ); print
+    return set()
 
   # invalid
   def visit_Repr( self, node ):
@@ -232,7 +245,7 @@ class DetectDataDependency( ast.NodeVisitor ):
   def visit_FunctionDef( self, node ):
     if _DEBUG: print "FunctionDef", astor.to_source( node ); print
 
-    assert node.decorator_list and not node.args.args
+    assert not node.args.args
 
     for stmt in node.body:
       self.visit( stmt )
@@ -374,6 +387,7 @@ class DetectDataDependency( ast.NodeVisitor ):
 
   def visit_Slice( self, node ):
     if _DEBUG: print "Slice", astor.to_source( node ); print
+    return set()
 
   def visit_Extslice( self, node ):
     if _DEBUG: print "ExtSlice", astor.to_source( node ); print
