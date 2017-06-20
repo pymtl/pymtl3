@@ -191,11 +191,11 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 1
-  x, y = list(m._constraints)[0]
+  assert len(m._all_constraints) == 1
+  x, y = list(m._all_constraints)[0]
 
-  assert  m._blkid_upblk[x].__name__ == "up_wr_A_b" and \
-          m._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
+  assert  m._all_id_upblk[x].__name__ == "up_wr_A_b" and \
+          m._all_id_upblk[y].__name__ == "up_rd_A" # only one constraint
 
 # RD A.b - WR x, x|=A
 def test_connect_rd_A_b_wr_x_conn_A_impl():

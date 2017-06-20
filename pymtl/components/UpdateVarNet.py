@@ -12,6 +12,9 @@ import inspect, ast # for error message
 class UpdateVarNet( UpdateVar ):
 
   def connect( s, o1, o2 ):
+    """ Connect two objects. If one of them is integer, create a new Const
+    that wraps around it in 's'. This is why connecting a constant should be
+    done via this function in the component """
     try:
       if isinstance( o1, int ) or isinstance( o2, int ): # special case
         if isinstance( o1, int ):
@@ -21,7 +24,6 @@ class UpdateVarNet( UpdateVar ):
         const = Const( o1.Type, o2 )
         const._parent = s
         o1._connect( const )
-
       else: # normal
         assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
         assert o1.Type == o2.Type
@@ -99,9 +101,9 @@ class UpdateVarNet( UpdateVar ):
 
     for obj in s._id_obj.values():
       if isinstance( obj, UpdateVar ):
-        obj._elaborate_vars() # this function is local to the object
+        obj._elaborate_read_write_func() # this function is local to the object
       s._collect_vars( obj )
-    
+
     s._tag_name_collect() # slicing will spawn extra objects
 
     s._check_upblk_writes()
@@ -109,7 +111,7 @@ class UpdateVarNet( UpdateVar ):
 
     s._resolve_var_connections()
     s._check_port_in_nets()
-    
+
     s._generate_net_blocks()
 
     s._process_constraints()
@@ -117,7 +119,7 @@ class UpdateVarNet( UpdateVar ):
   # Override
   def _declare_vars( self ):
     super( UpdateVarNet, self )._declare_vars()
-    self._nets = {} # first store varid:net
+    self._nets = {} # first store { varid: net }, later become [ nets ]
 
   # Override
   def _collect_vars( self, m ):
@@ -130,35 +132,34 @@ class UpdateVarNet( UpdateVar ):
           self._nets[ id(root) ] = root._connected
 
   def _resolve_var_connections( s ):
+    """ The case of nested data struct: the writer of a net can be one of
+    the three: signal itself (s.x.a), ancestor (s.x), descendant (s.x.b)
 
-    # The case of nested data struct: the writer of a net can be one of
-    # the three: signal itself (s.x.a), ancestor (s.x), descendant (s.x.b)
-    #
-    # An iterative algorithm is required to mark the writers. The example
-    # is the following. Net 1's writer is s.x and one reader is s.y.
-    # Net 2's writer is s.y.a (known ONLY after Net 1's writer is clear),
-    # one reader is s.z. Net 3's writer is s.z.a (known ...), and so forth
-    #
-    # Note that s.x becomes writer when WR s.x.a or WR s.x.b, but s.x then
-    # cannot propagate back to s.x.b or s.x.a.
-    #
-    # The original state is all the writers from all update blocks.
-    # writer_prop is a dict {x:y} that stores potential writers and
-    # whether the writer can propagate to other nets. After a net is
-    # resolved from headless condition, its readers become writers.
+    An iterative algorithm is required to mark the writers. The example
+    is the following. Net 1's writer is s.x and one reader is s.y.
+    Net 2's writer is s.y.a (known ONLY after Net 1's writer is clear),
+    one reader is s.z. Net 3's writer is s.z.a (known ...), and so forth
 
-    # The case of slicing: slices of the same wire are only one level
-    # deeper, so all of those parent/child relationship work easily.
-    # However, unlike different fields of a data struct, different slices
-    # may _intersect_, so they need to check sibling slices' write/read
-    # status as well.
+    Note that s.x becomes writer when WR s.x.a or WR s.x.b, but s.x then
+    cannot propagate back to s.x.b or s.x.a.
+
+    The original state is all the writers from all update blocks.
+    writer_prop is a dict {x:y} that stores potential writers and
+    whether the writer can propagate to other nets. After a net is
+    resolved from headless condition, its readers become writers.
+
+    The case of slicing: slices of the same wire are only one level
+    deeper, so all of those parent/child relationship work easily.
+    However, unlike different fields of a data struct, different slices
+    may _intersect_, so they need to check sibling slices' write/read
+    status as well. """
 
     nets        = s._nets.values() # { varid: net } --> [ nets ]
     writer_prop = {}
 
     # All writes in update blocks and their nest objects
 
-    for wid in s._write_upblks:
+    for wid in s._all_write_upblks:
       writer_prop[ wid ] = True # propagatable
       obj = s._id_obj[ wid ]._nested
       while obj:
@@ -166,7 +167,7 @@ class UpdateVarNet( UpdateVar ):
         obj = obj._nested
 
     # Find the host object of every net signal
-    # and then leverage the information to find out top level input port 
+    # and then leverage the information to find out top level input port
 
     for net in nets:
       for member in net:
@@ -271,13 +272,7 @@ class UpdateVarNet( UpdateVar ):
 
     s._nets = headed
 
-  # generate update blocks for this net
-
   def _generate_net_blocks( s ):
-
-    # Each net is an update block. Readers are actually "written" here.
-    #   s.net_reader1 = s.net_writer
-    #   s.net_reader2 = s.net_writer
 
     def compact_net_readers( nets ):
 
@@ -285,7 +280,7 @@ class UpdateVarNet( UpdateVar ):
       all_reads = set()
 
       # First add normal update block reads
-      for read in s._read_upblks:
+      for read in s._all_read_upblks:
         obj = s._id_obj[ read ]
         while obj:
           all_reads.add( id(obj) )
@@ -334,7 +329,12 @@ class UpdateVarNet( UpdateVar ):
 
       return ret
 
-    # First remove dummy readers in the net
+    """ _generate_net_blocks:
+    Each net is an update block. Readers are actually "written" here.
+      >>> s.net_reader1 = s.net_writer
+      >>> s.net_reader2 = s.net_writer """
+
+    # First remove dummy readers (no one reads them elsewhere) in the net
 
     nets = compact_net_readers( s._nets )
 
@@ -409,21 +409,21 @@ blk = {0}
         """.format( upblk_name, wstr, "\n  ".join(
                     [ "{} = common_writer".format( x ) for x in rstrs] ) )
 
-      # Collect block metadata
+      # Borrow the closure of lca to compile the block
 
       blk         = lca.compile_update_block( gen_connection_src )
       blk.hostobj = lca
       blk.ast     = ast.parse( gen_connection_src )
 
       blk_id = id(blk)
-      s._blkid_upblk[ blk_id ] = blk
+      s._all_id_upblk[ blk_id ] = blk
 
-      # Collect read/writer metadata
+      # Collect read/writer metadata, directly insert them into _all_X
 
-      s._read_upblks[ id(writer) ].add( blk_id )
+      s._all_read_upblks[ id(writer) ].add( blk_id )
       s._id_obj[ id(writer) ] = writer
       for x in readers:
-        s._write_upblks[ id(x) ].add( blk_id )
+        s._all_write_upblks[ id(x) ].add( blk_id )
         s._id_obj[ id(x) ] = x
 
   def _check_port_in_nets( s ):

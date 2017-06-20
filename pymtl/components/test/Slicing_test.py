@@ -50,11 +50,11 @@ def test_write_two_disjoint_slices_no_reader():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 1
-  x, y = list(m._constraints)[0]
+  assert len(m._all_constraints) == 1
+  x, y = list(m._all_constraints)[0]
 
-  assert  m._blkid_upblk[x].__name__ == "up_wr_16_30" and \
-          m._blkid_upblk[y].__name__ == "up_rd_17_30" # only one constraint
+  assert  m._all_id_upblk[x].__name__ == "up_wr_16_30" and \
+          m._all_id_upblk[y].__name__ == "up_rd_17_30" # only one constraint
 
 
 # write two overlapping slices
@@ -109,13 +109,13 @@ def test_write_two_slices_and_bit():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 2
-  _, x = list(m._constraints)[0]
-  _, y = list(m._constraints)[1]
+  assert len(m._all_constraints) == 2
+  _, x = list(m._all_constraints)[0]
+  _, y = list(m._all_constraints)[1]
 
   # two constraints are: up_wr_0_16 < up_rd_A and up_wr_16_30 < up_rd_A
-  assert  m._blkid_upblk[x].__name__ == "up_rd_A" and \
-          m._blkid_upblk[y].__name__ == "up_rd_A"
+  assert  m._all_id_upblk[x].__name__ == "up_rd_A" and \
+          m._all_id_upblk[y].__name__ == "up_rd_A"
 
 # write a slice and a single bit, but they are overlapped
 def test_write_slices_and_bit_overlapped():
@@ -279,7 +279,7 @@ def test_rd_As_wr_At_impl_disjoint():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 0 # no constraint at all!
+  assert len(m._all_constraints) == 0 # no constraint at all!
 
 # WR A[s] - WR A
 def test_wr_As_wr_A_conflict():
@@ -410,11 +410,11 @@ def test_wr_As_rd_A_rd_At_cannot_schedule():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 1
-  x, y = list(m._constraints)[0]
+  assert len(m._all_constraints) == 1
+  x, y = list(m._all_constraints)[0]
 
-  assert  m._blkid_upblk[x].__name__ == "up_wr_As" and \
-          m._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
+  assert  m._all_id_upblk[x].__name__ == "up_wr_As" and \
+          m._all_id_upblk[y].__name__ == "up_rd_A" # only one constraint
 
 # WR A - RD A[s], RD A[t]
 def test_wr_A_rd_slices_can_schedule():
@@ -459,11 +459,11 @@ def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 1
-  x, y = list(m._constraints)[0]
+  assert len(m._all_constraints) == 1
+  x, y = list(m._all_constraints)[0]
 
-  assert  m._blkid_upblk[x].__name__ == "up_wr_As" and \
-          m._blkid_upblk[y].__name__ == "up_rd_A" # only one constraint
+  assert  m._all_id_upblk[x].__name__ == "up_wr_As" and \
+          m._all_id_upblk[y].__name__ == "up_rd_A" # only one constraint
 
 # RD A[s] - A|=x, WR x
 def test_connect_rd_As_wr_x_conn_A_impl():
@@ -529,11 +529,11 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
   m = Top()
   SimUpdateVarNetPass().apply( m )
 
-  assert len(m._constraints) == 1
-  x, y = list(m._constraints)[0]
+  assert len(m._all_constraints) == 1
+  x, y = list(m._all_constraints)[0]
 
-  assert  m._blkid_upblk[x].__name__ == "up_wr_x" and \
-          m._blkid_upblk[y].__name__ == "s_x_FANOUT_1" # connection block
+  assert  m._all_id_upblk[x].__name__ == "up_wr_x" and \
+          m._all_id_upblk[y].__name__ == "s_x_FANOUT_1" # connection block
 
 # WR A[s] - A|=x
 def test_connect_wr_As_rd_x_conn_A_mark_writer():
