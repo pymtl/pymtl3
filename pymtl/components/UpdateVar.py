@@ -7,7 +7,7 @@ from Connectable     import Signal, InVPort, OutVPort, Wire, _overlap
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 from errors import InvalidConstraintError, SignalTypeError, \
-                   MultiWriterError, VarNotDeclaredError, InvalidFuncCallError
+                   MultiWriterError, VarNotDeclaredError, InvalidFuncCallError, UpblkFuncSameNameError
 import AstHelper
 
 import inspect2, re, ast
@@ -27,7 +27,7 @@ class UpdateVar( UpdateOnly ):
 
     return inst
 
-  # Override
+  # Override, add RD/WR constraints
   def add_constraints( s, *args ):
 
     for (x0, x1) in args:
@@ -48,75 +48,47 @@ class UpdateVar( UpdateOnly ):
         else:
           s._WR_U_constraints[ id(x0.var) ].append( (sign, id(x1.func) ) )
 
-  # @s.func is for those functions
+  # Override, add caching for rd/wr/call
+  def _cache_func_meta( s, func ):
+    super( UpdateVar, s )._cache_func_meta( func ) # func.ast, func.src
 
-  def func( s, func ):
-    func_name = func.__name__
+    cls  = type(s)
+    if not hasattr( cls, "_name_rd" ):
+      cls._name_rd = {}
+      cls._name_wr = {}
+      cls._name_fc = {}
 
-    if func_name in s._name_func:
-      raise FuncSameNameError( func.__name__ )
-
-    # Cache the source and ast of functions in the type object
-
-    cls = type(s)
-
-    if not hasattr( cls, "_funcname_src" ):
-      assert not hasattr( cls, "_funcname_ast" )
-      assert not hasattr( cls, "_funcname_rd" )
-      assert not hasattr( cls, "_funcname_wr" )
-      cls._funcname_src = {}
-      cls._funcname_ast = {}
-      cls._funcname_rd = {}
-      cls._funcname_wr = {}
-      cls._funcname_fc = {}
-
-    if func_name not in cls._funcname_src:
-      src = p.sub( r'\2', inspect2.getsource(func) )
-      cls._funcname_src[ func_name ] = src
-      cls._funcname_ast[ func_name ] = ast.parse( src )
-
-    func.ast = cls._funcname_ast[ func_name ]
-    func.hostobj = s
-    s._name_func[ func_name ] = s._id_func[ id(func) ] = func
-
-    if func_name not in cls._funcname_rd:
-      cls._funcname_rd[ func_name ] = rd = []
-      cls._funcname_wr[ func_name ] = wr = []
-      cls._funcname_fc[ func_name ] = fc = []
+    name = func.__name__
+    if name not in cls._name_rd:
+      cls._name_rd[ name ] = rd = []
+      cls._name_wr[ name ] = wr = []
+      cls._name_fc[ name ] = fc = []
       AstHelper.extract_read_write( func, rd, wr )
       AstHelper.extract_func_calls( func, fc )
 
-    func.rd = cls._funcname_rd[ func_name ]
-    func.wr = cls._funcname_wr[ func_name ]
-    func.fc = cls._funcname_fc[ func_name ]
+    func.rd  = cls._name_rd[ name ]
+    func.wr  = cls._name_wr[ name ]
+    func.fc  = cls._name_fc[ name ]
+
+  # @s.func is for those functions
+  def func( s, func ):
+    name = func.__name__
+    if name in s._name_func or name in s._name_upblk:
+      raise UpblkFuncSameNameError( name )
+
+    s._cache_func_meta( func )
+
+    func.hostobj = s
+    s._name_func[ name ] = s._id_func[ id(func) ] = func
     return func
 
   # Override
   def update( s, blk ):
-    blk_name = blk.__name__
+    name = blk.__name__
+    if name in s._name_func:
+      raise UpblkFuncSameNameError( blk.__name__ )
+
     super( UpdateVar, s ).update( blk )
-
-    # Cache reads/write NAMEs within update blocks in the type object
-
-    cls = type(s)
-
-    if not hasattr( cls, "_blkname_rd" ):
-      assert not hasattr( cls, "_blkname_wr" )
-      cls._blkname_rd = {}
-      cls._blkname_wr = {}
-      cls._blkname_fc = {}
-
-    if blk_name not in cls._blkname_rd:
-      cls._blkname_rd[ blk_name ] = rd = []
-      cls._blkname_wr[ blk_name ] = wr = []
-      cls._blkname_fc[ blk_name ] = fc = []
-      AstHelper.extract_read_write( blk, rd, wr )
-      AstHelper.extract_func_calls( blk, fc )
-
-    # blk.rd/wr = [ (name, astnode) ]
-    blk.rd = cls._blkname_rd[ blk_name ]
-    blk.wr = cls._blkname_wr[ blk_name ]
-    blk.fc = cls._blkname_fc[ blk_name ]
     return blk
 
   def update_on_edge( s, blk ):
@@ -128,12 +100,10 @@ class UpdateVar( UpdateOnly ):
     s._declare_vars()
 
     s._tag_name_collect() # tag and collect first
-
     for obj in s._id_obj.values():
       if isinstance( obj, UpdateVar ):
-        obj._elaborate_vars() # this function is local to the object
+        obj._elaborate_read_write_func()
       s._collect_vars( obj )
-    
     s._tag_name_collect() # slicing will spawn extra objects
 
     s._check_upblk_writes()
@@ -145,25 +115,20 @@ class UpdateVar( UpdateOnly ):
   def _declare_vars( s ):
     super( UpdateVar, s )._declare_vars()
 
+    s._all_id_func = {}
     s._all_update_on_edge   = set()
+
     s._all_RD_U_constraints = defaultdict(list)
     s._all_WR_U_constraints = defaultdict(list)
 
-    s._read_upblks  = defaultdict(set)
-    s._write_upblks = defaultdict(set)
-
-    s._funcid_func = {}
+    s._all_read_upblks  = defaultdict(set)
+    s._all_write_upblks = defaultdict(set)
 
     s._all_meta  = {
       "reads" : defaultdict(list),
       "writes": defaultdict(list),
       "calls" : defaultdict(list),
     }
-
-
-  # Override
-  def _elaborate_vars( s ):
-    s._elaborate_read_write_func()
 
   def _elaborate_read_write_func( s ):
 
@@ -178,8 +143,9 @@ class UpdateVar( UpdateOnly ):
 
     def extract_obj_from_names( func, names ):
       
-      # Find s.x[0][*][2], if index is exhausted, jump back to lookup_var
       def expand_array_index( obj, name_depth, name, idx_depth, idx, obj_list ):
+        """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_var """
+
         if idx_depth >= len(idx):
           lookup_var( obj, name_depth+1, name, obj_list )
           return
@@ -197,32 +163,34 @@ class UpdateVar( UpdateOnly ):
               raise VarNotDeclaredError( obj, _index )
             expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
 
-      # Have already found the variable, but it is an array of objects,
-      # s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ]
       def add_all( obj, obj_list ):
+        """ Already found, but it is an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ],
+        so recursively uncover all signals. """
         if   isinstance( obj, Signal ):
           obj_list.append( obj )
         elif isinstance( obj, list ): # SORRY
           for i, o in enumerate( obj ):
             add_all( o, obj_list )
 
-      # Find the object s.a.b.c, if c is c[] then jump to expand_array_index
       def lookup_var( obj, depth, name, obj_list ):
+        """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
         if depth >= len(name):
           if not callable(obj): # exclude function calls
             add_all( obj, obj_list ) # if this object is a list/array again...
           return
 
-        (field, idx) = name[ depth ]
+        field, idx = name[ depth ]
         try:
           obj = getattr( obj, field )
         except AttributeError:
           raise VarNotDeclaredError( obj, field )
 
-        if not idx: # just a variable, go recursively
-          lookup_var( obj, depth+1, name, obj_list )
-        else:       # expand_array_index will handle s.x[4].y[*]
-          expand_array_index( obj, depth, name, 0, idx, obj_list )
+        if not idx: lookup_var( obj, depth+1, name, obj_list )
+        else:       expand_array_index( obj, depth, name, 0, idx, obj_list )
+
+      """ extract_obj_from_names:
+      Here we enumerate names and use the above functions to turn names
+      into objects """
 
       all_objs = []
 
@@ -237,10 +205,10 @@ class UpdateVar( UpdateOnly ):
         all_objs.extend( objs )
 
         # Annotate astnode with actual objects. However, since I only
-        # parse AST of an upblk once to avoid duplicated parsing, I have
-        # to fold information across difference instances of the same
-        # class into the unique AST. Thus I keep {blk/funcid:objs} dict
-        # in each AST node to differentiate between different upblks.
+        # parse AST of an upblk/function once to avoid duplicated parsing,
+        # I have to fold information across difference instances of the
+        # same class into the unique AST. Thus I keep {blk/funcid:objs}
+        # dict in each AST node to differentiate between different upblks.
 
         if not hasattr( astnode, "_objs" ):
           astnode._objs = defaultdict(set)
@@ -250,59 +218,37 @@ class UpdateVar( UpdateOnly ):
 
       return all_objs
 
+    """ elaborate_read_write_func """
+
     # First resolve all funcs' read/write and calling other functions
     # This is because function won't call update blocks.
+    # Since func/upblk metadata is differentiated by id in the same array
+    # we put them together
 
-    for funcid, func in s._id_func.iteritems():
+    func_upblks = s._id_func.copy()
 
-      s._id_meta['reads'][ funcid ] = { id(o): o \
-        for o in extract_obj_from_names( func, func.rd ) }.values()
+    for x in [ s._id_func, s._id_upblk ]:
+      for id_, func in x.iteritems():
 
-      s._id_meta['writes'][ funcid ] = { id(o): o \
-        for o in extract_obj_from_names( func, func.wr ) }.values()
+        s._id_meta['reads'][ id_ ] = { id(o): o \
+          for o in extract_obj_from_names( func, func.rd ) }.values()
 
-      all_calls = []
-      for name, astnode in func.fc:
-        if name[0][0] not in s._name_func:  continue # Bits1(1)?
-        call = s._name_func[ name[0][0] ]
+        s._id_meta['writes'][ id_ ] = { id(o): o \
+          for o in extract_obj_from_names( func, func.wr ) }.values()
 
-        if not hasattr( astnode, "_funcs" ):
-          astnode._funcs = defaultdict(set)
-        astnode._funcs[ funcid ].add( id(call) )
+        all_calls = []
+        for name, astnode in func.fc:
+          if name[0][0] not in s._name_func:  continue # Bits1(1)?
+          call = s._name_func[ name[0][0] ]
 
-        all_calls.append( call )
+          if not hasattr( astnode, "_funcs" ):
+            astnode._funcs = defaultdict(set)
+          astnode._funcs[ id_ ].add( id(call) )
 
-      s._id_meta['calls'][ funcid ] = { id(o): o \
-        for o in all_calls }.values()
+          all_calls.append( call )
 
-    # Then, resolve update blocks
-
-    for blkid, blk in s._id_upblk.iteritems():
-
-      s._id_meta['reads'][ blkid ] = { id(o): o \
-        for o in extract_obj_from_names( blk, blk.rd ) }.values()
-
-      s._id_meta['writes'][ blkid ] = { id(o): o \
-        for o in extract_obj_from_names( blk, blk.wr ) }.values()
-
-      # Check function calls
-      # Need to expand function calls and find read/write inside them
-
-      all_calls = []
-      for name, astnode in blk.fc:
-        if name[0][0] not in s._name_func:  continue  # Bits1(1)?
-        call = s._name_func[ name[0][0] ]
-
-        if not hasattr( astnode, "_funcs" ):
-          astnode._funcs = defaultdict(set)
-        astnode._funcs[ blkid ].add( id(call) )
-
-        all_calls.append( call )
-
-      # If x() call y() multiple times, still count as one, deduplicate!
-
-      s._id_meta['calls'][ blkid ] = { id(o): o \
-        for o in all_calls }.values()
+        s._id_meta['calls'][ id_ ] = { id(o): o 
+          for o in all_calls }.values()
 
   # Override
   def _collect_vars( s, m ):
@@ -316,21 +262,21 @@ class UpdateVar( UpdateOnly ):
       for k in m._WR_U_constraints:
         s._all_WR_U_constraints[k].extend( m._WR_U_constraints[k] )
 
-      s._funcid_func.update( m._id_func )
+      s._all_id_func.update( m._id_func )
 
       for id_, reads in m._id_meta['reads'].iteritems():
         s._all_meta['reads'][ id_ ].extend( reads )
 
+        if id_ not in m._id_upblk: continue
         for read in reads:
-          if id_ in m._id_upblk:
-            s._read_upblks[ id(read) ].add( id_ )
+          s._all_read_upblks[ id(read) ].add( id_ )
 
       for id_, writes in m._id_meta['writes'].iteritems():
         s._all_meta['writes'][ id_ ].extend( writes )
 
+        if id_ not in m._id_upblk: continue
         for write in writes:
-          if id_ in m._id_upblk:
-            s._write_upblks[ id(write) ].add( id_ )
+          s._all_write_upblks[ id(write) ].add( id_ )
 
       for id_, calls in m._id_meta['calls'].iteritems():
         s._all_meta['calls'][ id_ ].extend( calls )
@@ -347,12 +293,12 @@ class UpdateVar( UpdateOnly ):
 
             # Add all read/write of funcs to the outermost upblk
             for read in m._id_meta['reads'][ id(u) ]:
-              s._read_upblks[ id(read) ].add( id_ )
               s._all_meta['reads'][ id_ ].append( read )
+              s._all_read_upblks[ id(read) ].add( id_ )
 
             for write in m._id_meta['writes'][ id(u) ]:
-              s._write_upblks[ id(write) ].add( id_ )
               s._all_meta['writes'][ id_ ].append( write )
+              s._all_write_upblks[ id(write) ].add( id_ )
 
             for v in m._id_meta['calls'][ id(u) ]:
               if id(v) in caller: # v calls someone else there is a cycle
@@ -393,8 +339,8 @@ class UpdateVar( UpdateOnly ):
     # constraint WR(x) > U1 & U2 writes x --> U1 <  WR(x) == U2
     # Doesn't work for nested data struct and slice:
 
-    read_upblks  = s._read_upblks
-    write_upblks = s._write_upblks
+    read_upblks  = s._all_read_upblks
+    write_upblks = s._all_write_upblks
 
     for typ in [ 'rd', 'wr' ]: # deduplicate code
       if typ == 'rd':
@@ -415,10 +361,10 @@ class UpdateVar( UpdateOnly ):
             if co_blk != eq_blk:
               if sign == 1: # RD/WR(x) < U is 1, RD/WR(x) > U is -1
                 # eq_blk == RD/WR(x) < co_blk
-                s._expl_constraints.add( (eq_blk, co_blk) )
+                s._all_expl_constraints.add( (eq_blk, co_blk) )
               else:
                 # co_blk < RD/WR(x) == eq_blk
-                s._expl_constraints.add( (co_blk, eq_blk) )
+                s._all_expl_constraints.add( (co_blk, eq_blk) )
 
     #---------------------------------------------------------------------
     # Implicit constraint
@@ -430,7 +376,7 @@ class UpdateVar( UpdateOnly ):
     # Implicitly, WR(x) < RD(x), so when U1 writes X and U2 reads x
     # - U1 == WR(x) & U2 == RD(x) --> U1 == WR(x) < RD(x) == U2
 
-    s._impl_constraints = set()
+    s._all_impl_constraints = set()
 
     # Collect all objs that write the variable whose id is "read"
     # 1) RD A.b.b     - WR A.b.b, A.b, A
@@ -460,9 +406,9 @@ class UpdateVar( UpdateOnly ):
           for rd_blk in rd_blks:
             if wr_blk != rd_blk:
               if rd_blk in s._all_update_on_edge:
-                s._impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                s._all_impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
-                s._impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                s._all_impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -488,18 +434,18 @@ class UpdateVar( UpdateOnly ):
           for rd_blk in read_upblks[ reader ]:
             if wr_blk != rd_blk:
               if rd_blk in s._all_update_on_edge:
-                s._impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                s._all_impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
-                s._impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                s._all_impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    s._constraints = s._expl_constraints.copy()
+    s._all_constraints = s._all_expl_constraints.copy()
 
-    for (x, y) in s._impl_constraints:
-      if (y, x) not in s._expl_constraints: # no conflicting expl
-        s._constraints.add( (x, y) )
+    for (x, y) in s._all_impl_constraints:
+      if (y, x) not in s._all_expl_constraints: # no conflicting expl
+        s._all_constraints.add( (x, y) )
 
   def _check_upblk_writes( s ):
-    write_upblks = s._write_upblks
+    write_upblks = s._all_write_upblks
 
     for wr_id, wr_blks in write_upblks.iteritems():
       wr_blks = list(wr_blks)
@@ -508,7 +454,7 @@ class UpdateVar( UpdateOnly ):
       if len(wr_blks) > 1:
         raise MultiWriterError( \
         "Multiple update blocks write {}.\n - {}".format( repr(obj),
-            "\n - ".join([ s._blkid_upblk[x].__name__+" at "+repr(s._blkid_upblk[x].hostobj) \
+            "\n - ".join([ s._all_id_upblk[x].__name__+" at "+repr(s._all_id_upblk[x].hostobj) \
                            for x in wr_blks ]) ) )
 
       # See VarConstraintPass.py for full information
@@ -520,8 +466,8 @@ class UpdateVar( UpdateOnly ):
           wrx_blks = list(write_upblks[id(x)])
           raise MultiWriterError( \
           "Two-writer conflict in nested struct/slice. \n - {} (in {})\n - {} (in {})".format(
-            repr(x), s._blkid_upblk[wrx_blks[0]].__name__,
-            repr(obj), s._blkid_upblk[wr_blks[0]].__name__ ) )
+            repr(x), s._all_id_upblk[wrx_blks[0]].__name__,
+            repr(obj), s._all_id_upblk[wr_blks[0]].__name__ ) )
         x = x._nested
 
       # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
@@ -533,13 +479,13 @@ class UpdateVar( UpdateOnly ):
             wrx_blks = list(write_upblks[id(x)])
             raise MultiWriterError( \
               "Two-writer conflict between sibling slices. \n - {} (in {})\n - {} (in {})".format(
-                repr(x), s._blkid_upblk[wrx_blks[0]].__name__,
-                repr(obj), s._blkid_upblk[wr_blks[0]].__name__ ) )
+                repr(x), s._all_id_upblk[wrx_blks[0]].__name__,
+                repr(obj), s._all_id_upblk[wr_blks[0]].__name__ ) )
 
   def _check_port_in_upblk( s ):
 
     # Check read first
-    for rd, blks in s._read_upblks.iteritems():
+    for rd, blks in s._all_read_upblks.iteritems():
       obj = s._id_obj[ rd ]
 
       host = obj
@@ -550,7 +496,7 @@ class UpdateVar( UpdateOnly ):
       elif isinstance( obj, OutVPort ): pass
       elif isinstance( obj, Wire ):
         for blkid in blks:
-          blk = s._blkid_upblk[ blkid ]
+          blk = s._all_id_upblk[ blkid ]
 
           if blk.hostobj != host:
             raise SignalTypeError("""[Type 1] Invalid read to Wire:
@@ -565,7 +511,7 @@ class UpdateVar( UpdateOnly ):
 
     # Then check write
 
-    for wr, blks in s._write_upblks.iteritems():
+    for wr, blks in s._all_write_upblks.iteritems():
       obj = s._id_obj[ wr ]
 
       host = obj
@@ -578,7 +524,7 @@ class UpdateVar( UpdateOnly ):
 
       if   isinstance( obj, InVPort ):
         for blkid in blks:
-          blk = s._blkid_upblk[ blkid ]
+          blk = s._all_id_upblk[ blkid ]
 
           if host._parent != blk.hostobj:
             raise SignalTypeError("""[Type 2] Invalid write to an input port:
@@ -597,7 +543,7 @@ class UpdateVar( UpdateOnly ):
 
       elif isinstance( obj, OutVPort ):
         for blkid in blks:
-          blk = s._blkid_upblk[ blkid ]
+          blk = s._all_id_upblk[ blkid ]
 
           if blk.hostobj != host:
             raise SignalTypeError("""[Type 3] Invalid write to output port:
@@ -614,7 +560,7 @@ class UpdateVar( UpdateOnly ):
 
       elif isinstance( obj, Wire ):
         for blkid in blks:
-          blk = s._blkid_upblk[ blkid ]
+          blk = s._all_id_upblk[ blkid ]
 
           if blk.hostobj != host:
             raise SignalTypeError("""[Type 4] Invalid write to Wire:

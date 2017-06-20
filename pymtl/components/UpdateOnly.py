@@ -56,14 +56,15 @@ class UpdateOnly( NamedObject ):
       cls._name_src[ name ] = src = p.sub( r'\2', inspect2.getsource(func) )
       cls._name_ast[ name ] = ast.parse( src )
 
+    func.ast = cls._name_ast[ name ]
+
   def update( s, blk ):
     name = blk.__name__
     if name in s._name_upblk:
-      raise UpblkFuncSameNameError( blk.__name__ )
+      raise UpblkFuncSameNameError( name )
 
     s._cache_func_meta( blk )
 
-    blk.ast     = type(s)._name_ast[ name ] # retrieve cached ast
     blk.hostobj = s
     s._name_upblk[ name ] = s._id_upblk[ id(blk) ] = blk
     return blk
