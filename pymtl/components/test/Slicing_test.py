@@ -533,7 +533,7 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
   x, y = list(m._all_constraints)[0]
 
   assert  m._all_id_upblk[x].__name__ == "up_wr_x" and \
-          m._all_id_upblk[y].__name__ == "s_x_FANOUT_1" # connection block
+          m._all_id_upblk[y].__name__ == "s_x__1" # connection block
 
 # WR A[s] - A|=x
 def test_connect_wr_As_rd_x_conn_A_mark_writer():

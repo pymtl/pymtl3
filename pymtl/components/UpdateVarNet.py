@@ -119,7 +119,7 @@ class UpdateVarNet( UpdateVar ):
   # Override
   def _declare_vars( self ):
     super( UpdateVarNet, self )._declare_vars()
-    self._nets = {} # first store { varid: net }, later become [ nets ]
+    self._all_nets = {} # first store { varid: net }, later become [ nets ]
 
   # Override
   def _collect_vars( self, m ):
@@ -128,8 +128,8 @@ class UpdateVarNet( UpdateVar ):
     if isinstance( m, Signal ):
       root = m._find_root()
       if len( root._connected ) > 1: # has actual connection
-        if id(root) not in self._nets:
-          self._nets[ id(root) ] = root._connected
+        if id(root) not in self._all_nets:
+          self._all_nets[ id(root) ] = root._connected
 
   def _resolve_var_connections( s ):
     """ The case of nested data struct: the writer of a net can be one of
@@ -154,7 +154,7 @@ class UpdateVarNet( UpdateVar ):
     may _intersect_, so they need to check sibling slices' write/read
     status as well. """
 
-    nets        = s._nets.values() # { varid: net } --> [ nets ]
+    nets        = s._all_nets.values() # { varid: net } --> [ nets ]
     writer_prop = {}
 
     # All writes in update blocks and their nest objects
@@ -270,7 +270,7 @@ class UpdateVarNet( UpdateVar ):
         raise NoWriterError( headless )
       headless = new_headless
 
-    s._nets = headed
+    s._all_nets = headed
 
   def _generate_net_blocks( s ):
 
@@ -334,9 +334,7 @@ class UpdateVarNet( UpdateVar ):
       >>> s.net_reader1 = s.net_writer
       >>> s.net_reader2 = s.net_writer """
 
-    # First remove dummy readers (no one reads them elsewhere) in the net
-
-    nets = compact_net_readers( s._nets )
+    nets = s._all_nets # compact_net_readers( s._all_nets )
 
     for writer, readers in nets:
       if not readers:
@@ -427,7 +425,7 @@ blk = {0}
         s._id_obj[ id(x) ] = x
 
   def _check_port_in_nets( s ):
-    nets = s._nets
+    nets = s._all_nets
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is

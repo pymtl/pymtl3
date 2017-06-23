@@ -14,7 +14,7 @@ class DFGVisualizer( BasePass ):
       if isinstance( model, UpdateVarNet ):
         SimUpdateVarNetPass().apply( model )
 
-      if isinstance( model, UpdateVar ):
+      elif isinstance( model, UpdateVar ):
         SimUpdateVarPass().apply( model )
 
     self.visualize( model )
