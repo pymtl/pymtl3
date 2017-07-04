@@ -53,10 +53,8 @@ class BypassQueue1RTL( UpdateVarNet ):
 
     s.byp_mux = Mux( Type, 2 )(
       out = s.deq.msg,
-      in_ = {
-        0: s.enq.msg,
-        1: s.buf.out,
-      },
+      in_ = { 0: s.enq.msg,
+              1: s.buf.out, },
       sel = s.full.out, # full -- buf.out, empty -- bypass
     )
 

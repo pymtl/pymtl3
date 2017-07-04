@@ -56,6 +56,7 @@ class UpdateOnly( NamedObject ):
       cls._name_src[ name ] = src = p.sub( r'\2', inspect2.getsource(func) )
       cls._name_ast[ name ] = ast.parse( src )
 
+    func.src = cls._name_src[ name ]
     func.ast = cls._name_ast[ name ]
 
   def update( s, blk ):

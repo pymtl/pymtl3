@@ -125,6 +125,8 @@ class Interface( Connectable, NamedObject ):
     for name, obj in inv.__dict__.iteritems():
       if isinstance( obj, Signal ):
         setattr( inv, name, obj.inverse() )
+      else:
+        setattr( inv, name, obj )
     return inv
 
   # Override
