@@ -61,7 +61,6 @@ class DetectVarNames( ast.NodeVisitor ):
         break
       node = node.value
 
-
     if slices:
       assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
         ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in xrange(len(obj_name)) ] ) \
@@ -128,10 +127,16 @@ class DetectFuncCalls( DetectVarNames ):
     obj_name = self._get_full_name( node.func )
     if not obj_name:  return
 
-    if len(obj_name) != 1: return # only support simple name
-    assert not obj_name[0][1] # function cannot have slices, right?
+    isself = False # function call
 
-    self.calls.append( (obj_name, node.func) )
+    if obj_name[0][0] == "s":
+      obj_name = obj_name[1:]
+      isself = True
+
+    self.calls.append( (obj_name, node, isself) )
+
+    for x in node.args:
+      self.visit( x )
 
 class DetectMethodCalls( DetectVarNames ):
 

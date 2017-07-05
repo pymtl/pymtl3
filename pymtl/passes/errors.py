@@ -11,3 +11,9 @@ class ModelTypeError( Exception ):
   def __init__( self, typename ):
     return super( ModelTypeError, self ).__init__( \
     "This pass can only be applied to {}".format( typename ) )
+
+class TranslationError( Exception ):
+  """ Raise translation goes wrong """
+  def __init__( self, blk, x ):
+    return super( TranslationError, self ).__init__( \
+    "{} {}".format( blk.__name__, x ) )

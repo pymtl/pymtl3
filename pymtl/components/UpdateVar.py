@@ -142,7 +142,7 @@ class UpdateVar( UpdateOnly ):
     # I refactor the process of materializing objects in this function
 
     def extract_obj_from_names( func, names ):
-      
+
       def expand_array_index( obj, name_depth, name, idx_depth, idx, obj_list ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_var """
 
@@ -212,7 +212,7 @@ class UpdateVar( UpdateOnly ):
 
         if not hasattr( astnode, "_objs" ):
           astnode._objs = defaultdict(set)
-        astnode._objs[ id(func) ].update( [ id(o) for o in objs ] )
+        astnode._objs[ id(func) ].update( objs )
 
         # TODO Attach astnode to object for error message lineno/coloff
 
@@ -237,17 +237,32 @@ class UpdateVar( UpdateOnly ):
           for o in extract_obj_from_names( func, func.wr ) }.values()
 
         all_calls = []
-        for name, astnode in func.fc:
-          if name[0][0] not in s._name_func:  continue # Bits1(1)?
-          call = s._name_func[ name[0][0] ]
+        for name, astnode, isself in func.fc:
 
-          if not hasattr( astnode, "_funcs" ):
-            astnode._funcs = defaultdict(set)
-          astnode._funcs[ id_ ].add( id(call) )
+          if isself: # This is some instantiation I guess
+            # TODO now only support one layer
+            try:
+              call = getattr( s, name[0][0] )
+            except AttributeError as e:
+              s._tag_name_collect() # give full name to spawned object
+              raise VarNotDeclaredError( call, name[0][0], func, astnode.lineno )
 
-          all_calls.append( call )
+            if not hasattr( astnode, "_funcs" ):
+              astnode._funcs = defaultdict(set)
+            astnode._funcs[ id_ ].add( call )
 
-        s._id_meta['calls'][ id_ ] = { id(o): o 
+          else: # This is a function call without "s." prefix
+            if not name[0][0] in s._name_func: continue
+
+            call = s._name_func[ name[0][0] ]
+
+            if not hasattr( astnode, "_funcs" ):
+              astnode._funcs = defaultdict(set)
+            astnode._funcs[ id_ ].add( call )
+
+            all_calls.append( call )
+
+        s._id_meta['calls'][ id_ ] = { id(o): o
           for o in all_calls }.values()
 
   # Override
@@ -319,7 +334,7 @@ class UpdateVar( UpdateOnly ):
               stk.pop()
 
           # callee's id: (func, the caller's idx in stk)
-          caller = { id(call): ( m._id_upblk[ id_ ], 0 ) } 
+          caller = { id(call): ( m._id_upblk[ id_ ], 0 ) }
           stk    = [ call ] # for error message
           dfs( call, stk )
 
