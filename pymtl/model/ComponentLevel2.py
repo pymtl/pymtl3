@@ -253,9 +253,9 @@ class ComponentLevel2( ComponentLevel1 ):
               astnode._funcs = defaultdict(set)
             astnode._funcs[ id_ ].add( call )
 
-          else: # This is a function call without "s." prefix
-            if not name[0][0] in s._name_func: continue
+          # This is a function call without "s." prefix, check func list
 
+          elif name[0][0] in s._name_func:
             call = s._name_func[ name[0][0] ]
 
             if not hasattr( astnode, "_funcs" ):
@@ -264,8 +264,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
             all_calls.append( call )
 
-        s._id_meta['calls'][ id_ ] = { id(o): o
-          for o in all_calls }.values()
+        s._id_meta['calls'][ id_ ] = { id(o): o for o in all_calls }.values()
 
   # Override
   def _collect_vars( s, m ):
