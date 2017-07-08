@@ -1,8 +1,11 @@
 from pymtl import *
 from pymtl.components.errors import MultiWriterError, NoWriterError
+from sim_utils import simple_sim_pass
+
 def _test_model( cls ):
   A = cls()
-  SimUpdateVarNetPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   for i in xrange(10):
     A.tick()

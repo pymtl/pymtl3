@@ -1,19 +1,18 @@
 #-------------------------------------------------------------------------
-# SimUpdateVarNetPass
+# SimLevel3Pass
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.passes import SimUpdateVarPass, ScheduleUpblkPass, \
-                         GenerateTickPass, SignalCleanupPass
+from pymtl.passes import BasePass, ScheduleUpblkPass, GenerateTickPass, SignalCleanupPass
 
-from pymtl.components import UpdateVarNet
+from pymtl.model import ComponentLevel3
 from errors import ModelTypeError
 
-class SimUpdateVarNetPass( SimUpdateVarPass ):
+class SimLevel3Pass( BasePass ):
 
   def apply( self, m ):
-    if not isinstance( m, UpdateVarNet ):
-      raise ModelTypeError( "UpdateVarNet" )
+    if not isinstance( m, ComponentLevel3 ):
+      raise ModelTypeError( "ComponentLevel3" )
 
     m.elaborate()
 

@@ -1,12 +1,13 @@
 from pymtl import *
-from pymtl.components import UpdateVar
-from pymtl.components.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
-from pymtl.passes     import SimUpdateVarPass
+from pymtl.model import ComponentLevel2
+from pymtl.model.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
 from collections import deque
+from sim_utils import simple_sim_pass
 
 def _test_model( cls ):
   A = cls()
-  SimUpdateVarPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   T, time = 0, 20
   while not A.done() and T < time:
@@ -14,7 +15,7 @@ def _test_model( cls ):
     print A.line_trace()
     T += 1
 
-class TestSource( UpdateVar ):
+class TestSource( ComponentLevel2 ):
 
   def __init__( s, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -35,7 +36,7 @@ class TestSource( UpdateVar ):
   def line_trace( s ):
     return "%s" % s.out
 
-class TestSink( UpdateVar ):
+class TestSink( ComponentLevel2 ):
 
   def __init__( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -61,7 +62,7 @@ class TestSink( UpdateVar ):
 
 def test_simple():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -82,7 +83,7 @@ def test_simple():
 
 def test_cyclic_impl_dependency():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -105,7 +106,7 @@ def test_cyclic_impl_dependency():
 
 def test_invalid_dependency():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
 
@@ -141,7 +142,7 @@ def test_variable_not_declared():
     def __eq__( s, other ):
       return s.a == other.a and s.b == other.b
 
-  class A(UpdateVar):
+  class A(ComponentLevel2):
     def __init__( s ):
       s.a = Wire(SomeMsg())
       s.b = Wire(int)
@@ -154,7 +155,7 @@ def test_variable_not_declared():
       def upB():
         s.b = s.b + 1
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
       s.x = A()
@@ -172,7 +173,7 @@ def test_variable_not_declared():
 
 def test_2d_array_vars():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
 
@@ -230,7 +231,7 @@ def test_2d_array_vars():
 
 def test_wire_up_constraint():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
 
@@ -257,7 +258,7 @@ def test_wire_up_constraint():
 # write two disjoint slices
 def test_write_two_disjoint_slices():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
     def __init__( s ):
       s.A  = Wire( Bits32 )
 
@@ -293,7 +294,7 @@ def test_wr_A_b_rd_A_impl():
       x.b = x.b(b)
       return x
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -312,7 +313,7 @@ def test_wr_A_b_rd_A_impl():
 
 def test_add_loopback():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
 
@@ -354,7 +355,7 @@ def test_add_loopback():
 
 def test_add_loopback_on_edge():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
 
@@ -392,7 +393,7 @@ def test_add_loopback_on_edge():
 
 def test_2d_array_vars_impl():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
 
@@ -434,7 +435,7 @@ def test_2d_array_vars_impl():
 
 def test_simple_func_impl():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
       s.a = Wire(int)
@@ -480,7 +481,7 @@ def test_simple_func_impl():
 
 def test_func_cyclic_invalid():
 
-  class Top(UpdateVar):
+  class Top(ComponentLevel2):
 
     def __init__( s ):
       s.a = Wire(int)

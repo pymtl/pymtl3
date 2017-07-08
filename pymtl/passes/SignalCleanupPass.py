@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.components import NamedObject, Signal, Const
+from pymtl.model import NamedObject, Signal, Const
 from pymtl.passes import BasePass
 
 class SignalCleanupPass( BasePass ):

@@ -1,5 +1,5 @@
 #=========================================================================
-# UpdateOnly.py
+# ComponentLevel1.py
 #=========================================================================
 # At the bottom level, we only have update blocks and explicit constraints
 # between two update blocks/one update block. Basically this layer defines
@@ -19,7 +19,7 @@ from pymtl.datatypes import *
 import inspect2, re, ast, py
 p = re.compile('( *(@|def))')
 
-class UpdateOnly( NamedObject ):
+class ComponentLevel1( NamedObject ):
 
   def __new__( cls, *args, **kwargs ):
     """ Convention: variables local to the object is created in __new__ """
@@ -89,7 +89,7 @@ class UpdateOnly( NamedObject ):
     s._tag_name_collect()
 
     for obj in s._id_obj.values():
-      assert isinstance( obj, UpdateOnly ) # just component
+      assert isinstance( obj, ComponentLevel1 ) # just component
       s._collect_vars( obj )
 
     s._process_constraints()
@@ -108,7 +108,7 @@ class UpdateOnly( NamedObject ):
     """ Called on individual objects during elaboration.
     The general format resembles "s._all_X.update/append( s._X ). """
 
-    if isinstance( m, UpdateOnly ):
+    if isinstance( m, ComponentLevel1 ):
       s._all_id_upblk.update( m._id_upblk )
       s._all_expl_constraints.update( m._U_U_constraints )
 

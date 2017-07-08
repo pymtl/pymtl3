@@ -1,15 +1,15 @@
 #=========================================================================
-# UpdateVarNet.py
+# ComponentLevel3.py
 #=========================================================================
 
-from UpdateVar   import UpdateVar
+from ComponentLevel2 import ComponentLevel2
 from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, _overlap
 from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
 from collections import defaultdict, deque
 
 import inspect, ast # for error message
 
-class UpdateVarNet( UpdateVar ):
+class ComponentLevel3( ComponentLevel2 ):
 
   def connect( s, o1, o2 ):
     """ Connect two objects. If one of them is integer, create a new Const
@@ -100,7 +100,7 @@ class UpdateVarNet( UpdateVar ):
     s._tag_name_collect() # tag and collect first
 
     for obj in s._id_obj.values():
-      if isinstance( obj, UpdateVar ):
+      if isinstance( obj, ComponentLevel2 ):
         obj._elaborate_read_write_func() # this function is local to the object
       s._collect_vars( obj )
 
@@ -118,12 +118,12 @@ class UpdateVarNet( UpdateVar ):
 
   # Override
   def _declare_vars( self ):
-    super( UpdateVarNet, self )._declare_vars()
+    super( ComponentLevel3, self )._declare_vars()
     self._all_nets = {} # first store { varid: net }, later become [ nets ]
 
   # Override
   def _collect_vars( self, m ):
-    super( UpdateVarNet, self )._collect_vars( m )
+    super( ComponentLevel3, self )._collect_vars( m )
 
     if isinstance( m, Signal ):
       root = m._find_root()
@@ -172,7 +172,7 @@ class UpdateVarNet( UpdateVar ):
     for net in nets:
       for member in net:
         host = member
-        while not isinstance( host, UpdateVarNet ):
+        while not isinstance( host, ComponentLevel3 ):
           host = host._parent # go to the component
         member._host = host
 

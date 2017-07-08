@@ -13,6 +13,12 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
+class NotElaboratedError( Exception ):
+  """ Raise when processing a model that hasn't been elaborated yet """
+  def __init__( self ):
+    return super( NotElaboratedError, self ).__init__( \
+    "Please elaborate the model first." )
+
 class VarNotDeclaredError( Exception ):
   """ Raise when a variable in an update block is not declared """
   def __init__( self, obj, field, blk=None, lineno=0 ):

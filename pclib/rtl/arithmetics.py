@@ -2,7 +2,7 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux( UpdateVarNet ):
+class Mux( ComponentLevel3 ):
 
   def __init__( s, Type, ninputs ):
     s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
@@ -17,7 +17,7 @@ class Mux( UpdateVarNet ):
 
 # Rshifter
 
-class RShifter( UpdateVarNet ):
+class RShifter( ComponentLevel3 ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
     s.in_   = InVPort( Type )
@@ -32,7 +32,7 @@ class RShifter( UpdateVarNet ):
 
 # Lshifter
 
-class LShifter( UpdateVarNet ):
+class LShifter( ComponentLevel3 ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
     s.in_   = InVPort( Type )
@@ -47,7 +47,7 @@ class LShifter( UpdateVarNet ):
 
 # Adder 
 
-class Adder( UpdateVarNet ):
+class Adder( ComponentLevel3 ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -62,7 +62,7 @@ class Adder( UpdateVarNet ):
 
 # Subtractor
 
-class Subtractor( UpdateVarNet ):
+class Subtractor( ComponentLevel3 ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -77,7 +77,7 @@ class Subtractor( UpdateVarNet ):
 
 # ZeroComparator 
 
-class ZeroComp( UpdateVarNet ):
+class ZeroComp( ComponentLevel3 ):
 
   def __init__( s, Type ):
     s.in_ = InVPort( Type )
@@ -91,7 +91,7 @@ class ZeroComp( UpdateVarNet ):
 
 # LeftThanComparator
 
-class LTComp( UpdateVarNet ):
+class LTComp( ComponentLevel3 ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -106,7 +106,7 @@ class LTComp( UpdateVarNet ):
 
 # LeftThanOrEqualToComparator
 
-class LEComp( UpdateVarNet ):
+class LEComp( ComponentLevel3 ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )

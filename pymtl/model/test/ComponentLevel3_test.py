@@ -1,12 +1,13 @@
 from pymtl import *
-from pymtl.components.errors import MultiWriterError, InvalidConnectionError
+from pymtl.model.errors import MultiWriterError, InvalidConnectionError
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pclib.rtl import Mux
-from collections import deque
+from sim_utils import simple_sim_pass
 
 def _test_model( cls ):
   A = cls()
-  SimUpdateVarNetPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   T, time = 0, 20
   while not A.done() and T < time:
@@ -19,7 +20,7 @@ MUX_SEL_1 = 1
 
 def test_connect_list_const_idx():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -45,7 +46,7 @@ def test_connect_list_const_idx():
 
 def test_connect_list_idx_call():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -70,7 +71,7 @@ def test_connect_list_idx_call():
 
 def test_connect_deep():
 
-  class MuxWrap(UpdateVarNet):
+  class MuxWrap(ComponentLevel3):
 
     def __init__( s ):
       s.in_ = [ InVPort(int) for _ in xrange(2) ]
@@ -83,7 +84,7 @@ def test_connect_deep():
         sel = s.sel,
       )
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -108,7 +109,7 @@ def test_connect_deep():
 
 def test_deep_connect():
 
-  class MuxWrap3(UpdateVarNet):
+  class MuxWrap3(ComponentLevel3):
 
     def __init__( s ):
       s.in_ = [ InVPort(int) for _ in xrange(2) ]
@@ -129,7 +130,7 @@ def test_deep_connect():
         sel = s.sel,
       )
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -154,7 +155,7 @@ def test_deep_connect():
 
 def test_2d_array_vars_connect_impl():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -196,7 +197,7 @@ def test_2d_array_vars_connect_impl():
 
 def test_lots_of_fan_connect():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -261,7 +262,7 @@ def test_lots_of_fan_connect():
 
 def test_connect_plain():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -288,7 +289,7 @@ def test_connect_plain():
 
 def test_2d_array_vars_connect():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -335,7 +336,7 @@ def test_2d_array_vars_connect():
 
 def test_connect_const_same_level():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -356,7 +357,7 @@ def test_connect_const_same_level():
 
 def test_connect_const_two_writer():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -386,7 +387,7 @@ def test_connect_const_two_writer():
 
 def test_connect_list_idx_call():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -411,7 +412,7 @@ def test_connect_list_idx_call():
 
 def test_connect_list_idx_invalid_call():
 
-  class Top(UpdateVarNet):
+  class Top(ComponentLevel3):
 
     def __init__( s ):
 
@@ -440,7 +441,7 @@ def test_connect_list_idx_invalid_call():
 
 def test_top_level_inport():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
 
     def __init__( s ):
 
@@ -462,7 +463,7 @@ def test_top_level_inport():
 
 def test_top_level_outport():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
 
     def __init__( s ):
 
@@ -481,7 +482,8 @@ def test_top_level_outport():
       return str(s.a)
 
   A = Top()
-  SimUpdateVarNetPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A )
 
   A.tick()
   trace = A.line_trace()

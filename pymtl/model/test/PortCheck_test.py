@@ -1,17 +1,19 @@
 from pymtl import *
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
-from pymtl.components.errors import SignalTypeError
+from pymtl.model.errors import SignalTypeError
+from sim_utils import simple_sim_pass
 
 def _test_model( cls ):
   A = cls()
-  SimUpdateVarNetPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   for i in xrange(10):
     A.tick()
 
 def test_illegal_inport_write():
 
-  class B( UpdateVarNet ):
+  class B( ComponentLevel3 ):
     def __init__( s ):
       s.in_ = InVPort( Bits32 )
 
@@ -19,7 +21,7 @@ def test_illegal_inport_write():
       def up_B_write():
         s.in_[1:10] = 10
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.b = B()
 
@@ -32,7 +34,7 @@ def test_illegal_inport_write():
 
 def test_illegal_inport_deep_write():
 
-  class B( UpdateVarNet ):
+  class B( ComponentLevel3 ):
     def __init__( s ):
       s.in_ = InVPort( Bits32 )
 
@@ -40,11 +42,11 @@ def test_illegal_inport_deep_write():
       def up_B_print():
         print s.in_
 
-  class BWrap( UpdateVarNet ):
+  class BWrap( ComponentLevel3 ):
     def __init__( s ):
       s.b = B()
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.b = BWrap()
 
@@ -61,7 +63,7 @@ def test_illegal_inport_deep_write():
 
 def test_legal_inport_write():
 
-  class B( UpdateVarNet ):
+  class B( ComponentLevel3 ):
     def __init__( s ):
       s.in_ = InVPort( Bits32 )
 
@@ -69,7 +71,7 @@ def test_legal_inport_write():
       def up_B_print():
         print s.in_
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.b = B()
 
@@ -81,7 +83,7 @@ def test_legal_inport_write():
 
 def test_illegal_outport_write():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort( Bits32 )
 
@@ -89,7 +91,7 @@ def test_illegal_outport_write():
       def up_A_read():
         print s.out
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
 
@@ -106,7 +108,7 @@ def test_illegal_outport_write():
 
 def test_illegal_outport_deep_write():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort( Bits32 )
 
@@ -114,11 +116,11 @@ def test_illegal_outport_deep_write():
       def up_A_read():
         print s.out
 
-  class AWrap( UpdateVarNet ):
+  class AWrap( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = AWrap()
 
@@ -135,7 +137,7 @@ def test_illegal_outport_deep_write():
 
 def test_legal_outport_write():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort( Bits32 )
 
@@ -143,7 +145,7 @@ def test_legal_outport_write():
       def up_A_write():
         s.out[0:2] = 2
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
 
@@ -155,11 +157,11 @@ def test_legal_outport_write():
 
 def test_illegal_wire_write():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.wire = Wire( Bits32 )
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
 
@@ -176,14 +178,14 @@ def test_illegal_wire_write():
 
 def test_illegal_wire_read():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.wire = Wire( Bits32 )
       @s.update
       def up_write_wire():
         s.wire[1:10] = 10
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
 
@@ -200,7 +202,7 @@ def test_illegal_wire_read():
 
 def test_legal_port_connect():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
 
@@ -208,7 +210,7 @@ def test_legal_port_connect():
       def up_A_write():
         s.out = 123
 
-  class B( UpdateVarNet ):
+  class B( ComponentLevel3 ):
     def __init__( s ):
       s.in_ = InVPort(int)
 
@@ -216,7 +218,7 @@ def test_legal_port_connect():
       def up_B_read():
         print s.in_
 
-  class OutWrap(UpdateVarNet):
+  class OutWrap(ComponentLevel3):
     def __init__( s ):
       s.out = OutVPort(int)
       s.a = A()( out = s.out )
@@ -225,7 +227,7 @@ def test_legal_port_connect():
       def up_out_read():
         print s.out
 
-  class InWrap(UpdateVarNet):
+  class InWrap(ComponentLevel3):
     def __init__( s ):
       s.in_ = InVPort(int)
       s.b = B()( in_ = s.in_ )
@@ -234,7 +236,7 @@ def test_legal_port_connect():
       def up_in_read():
         print s.in_
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.i = InWrap()
       s.o = OutWrap()
@@ -244,14 +246,14 @@ def test_legal_port_connect():
 
 def test_illegal_same_host():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
-  class AWrap(UpdateVarNet):
+  class AWrap(ComponentLevel3):
     def __init__( s ):
       s.out = OutVPort(int) # Wire is the same
       s.a = A()( out = s.out )
@@ -260,7 +262,7 @@ def test_illegal_same_host():
 
       s.connect( s.out, s.in_ )
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.awrap = AWrap()
 
@@ -273,19 +275,19 @@ def test_illegal_same_host():
 
 def test_illegal_rdhost_is_wrhost_parent():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
-  class AWrap(UpdateVarNet):
+  class AWrap(ComponentLevel3):
     def __init__( s ):
       s.out = InVPort(int) # Should be OutVPort
       s.a   = A()( out = s.out )
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.awrap = AWrap()
 
@@ -298,26 +300,26 @@ def test_illegal_rdhost_is_wrhost_parent():
 
 def test_illegal_wrhost_is_rdhost_parent():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
-  class B( UpdateVarNet ):
+  class B( ComponentLevel3 ):
     def __init__( s ):
       s.in_ = OutVPort(int) # Should be InVPort
       @s.update
       def up_B_read():
         print s.in_
 
-  class BWrap(UpdateVarNet):
+  class BWrap(ComponentLevel3):
     def __init__( s ):
       s.in_ = InVPort(int)
       s.b   = B()( in_ = s.in_ )
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
       s.b = BWrap()
@@ -332,26 +334,26 @@ def test_illegal_wrhost_is_rdhost_parent():
 
 def test_illegal_hosts_same_parent():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
-  class B( UpdateVarNet ):
+  class B( ComponentLevel3 ):
     def __init__( s ):
       s.in_ = InVPort(int)
       @s.update
       def up_B_read():
         print s.in_
 
-  class BWrap(UpdateVarNet):
+  class BWrap(ComponentLevel3):
     def __init__( s ):
       s.in_ = OutVPort(int) # Should be InVPort
       s.b   = B()( in_ = s.in_ )
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.a = A()
       s.b = BWrap()
@@ -366,19 +368,19 @@ def test_illegal_hosts_same_parent():
 
 def test_illegal_hosts_too_far():
 
-  class A( UpdateVarNet ):
+  class A( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
-  class AWrap( UpdateVarNet ):
+  class AWrap( ComponentLevel3 ):
     def __init__( s ):
       s.out = OutVPort(int)
       s.A = A()( out = s.out )
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.wire = Wire(int)
       s.A = AWrap()

@@ -3,6 +3,6 @@
 
 from Connectable  import Signal, Wire, InVPort, _overlap, Const
 from NamedObject  import NamedObject
-from UpdateOnly   import UpdateOnly
-from UpdateVar    import UpdateVar
-from UpdateVarNet import UpdateVarNet
+from ComponentLevel1 import ComponentLevel1
+from ComponentLevel2 import ComponentLevel2
+from ComponentLevel3 import ComponentLevel3

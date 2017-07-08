@@ -1,18 +1,25 @@
 from pymtl import *
-from pymtl.components import UpdateOnly
-from pymtl.passes     import SimUpdateOnlyPass
-from pymtl.components.errors import UpblkCyclicError, UpblkFuncSameNameError
+from pymtl.model import ComponentLevel1
+from pymtl.model.errors import UpblkCyclicError, UpblkFuncSameNameError
 from collections import deque
+from sim_utils import simple_sim_pass
 
 def _test_model( cls ):
   A = cls()
-  SimUpdateOnlyPass(dump=True).apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   while not A.done():
     A.tick()
     print A.line_trace()
 
-class TestSource( UpdateOnly ):
+  simple_sim_pass( A, 0x1234 )
+
+  while not A.done():
+    A.tick()
+    print A.line_trace()
+
+class TestSource( ComponentLevel1 ):
 
   def __init__( s, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
@@ -33,7 +40,7 @@ class TestSource( UpdateOnly ):
   def line_trace( s ):
     return "%s" % s.out
 
-class TestSink( UpdateOnly ):
+class TestSink( ComponentLevel1 ):
 
   def __init__( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -57,29 +64,9 @@ class TestSink( UpdateOnly ):
   def line_trace( s ):
     return "%s" % s.in_
 
-def test_bb():
-
-  class Top(UpdateOnly):
-
-    def __init__( s ):
-
-      @s.update
-      def upA():
-        pass
-
-      @s.update
-      def upB():
-        pass
-
-      s.add_constraints(
-        U(upA) < U(upB),
-      )
-
-  A = Top()
-
 def test_cyclic_dependency():
 
-  class Top(UpdateOnly):
+  class Top(ComponentLevel1):
 
     def __init__( s ):
 
@@ -105,7 +92,7 @@ def test_cyclic_dependency():
 
 def test_upblock_same_name():
 
-  class Top(UpdateOnly):
+  class Top(ComponentLevel1):
 
     def __init__( s ):
 
@@ -126,7 +113,7 @@ def test_upblock_same_name():
 
 def test_register_behavior():
 
-  class Top(UpdateOnly):
+  class Top(ComponentLevel1):
 
     def __init__( s ):
 
@@ -177,7 +164,7 @@ def test_register_behavior():
 
 def test_add_loopback():
 
-  class Top(UpdateOnly):
+  class Top(ComponentLevel1):
 
     def __init__( s ):
 
@@ -231,7 +218,7 @@ def test_add_loopback():
 
 def test_lots_of_fan():
 
-  class Top(UpdateOnly):
+  class Top(ComponentLevel1):
 
     def __init__( s ):
 
@@ -322,7 +309,7 @@ def test_lots_of_fan():
 
 def test_2d_array_vars():
 
-  class Top(UpdateOnly):
+  class Top(ComponentLevel1):
 
     def __init__( s ):
 

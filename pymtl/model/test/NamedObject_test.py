@@ -1,5 +1,5 @@
 from pymtl import *
-from pymtl.components import NamedObject
+from pymtl.model import NamedObject
 from collections import deque
 
 class Chicken(NamedObject):

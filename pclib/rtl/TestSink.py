@@ -3,7 +3,7 @@ from collections import deque
 from pclib.ifcs   import InValRdyIfc
 from pclib.valrdy import valrdy_to_str
 
-class TestBasicSink( UpdateVarNet ):
+class TestBasicSink( ComponentLevel3 ):
 
   def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -27,7 +27,7 @@ class TestBasicSink( UpdateVarNet ):
   def line_trace( s ):
     return "%s" % s.in_
 
-class TestSinkValRdy( UpdateVarNet ):
+class TestSinkValRdy( ComponentLevel3 ):
 
   def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
@@ -51,7 +51,7 @@ class TestSinkValRdy( UpdateVarNet ):
   def line_trace( s ):
     return s.in_.line_trace()
 
-class TestSink( UpdateVarNet ):
+class TestSink( ComponentLevel3 ):
 
   def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 

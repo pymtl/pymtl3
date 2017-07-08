@@ -41,7 +41,6 @@ def _overlap( x, y ):
     else:
       if x.start <= y.start:  return y.start < x.stop
       else:                   return x.start < y.stop
-  assert False, "What the hell?"
 
 # internal class for connecting signals and constants, not named object
 class Const( Connectable ):

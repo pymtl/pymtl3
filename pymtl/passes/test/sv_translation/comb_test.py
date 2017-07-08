@@ -8,7 +8,7 @@ def test_adder():
   
 def test_multiple_if():
 
-  class Foo( UpdateVarNet ):
+  class Foo( ComponentLevel3 ):
     def __init__( s ):
       s.in_  = InVPort( Bits2 )
       s.out  = OutVPort( Bits2 )
@@ -28,7 +28,7 @@ def test_multiple_if():
 
 def test_bits_type():
 
-  class Foo( UpdateVarNet ):
+  class Foo( ComponentLevel3 ):
     def __init__( s ):
       s.in_  = InVPort( Bits2 )
       s.out  = OutVPort( Bits4 )
@@ -47,7 +47,7 @@ def test_bits_type():
 
 def test_bits_type_in_self():
 
-  class Foo( UpdateVarNet ):
+  class Foo( ComponentLevel3 ):
     def __init__( s ):
       nbits = 2
 
@@ -69,7 +69,7 @@ def test_bits_type_in_self():
 
 def test_bits_val_and_call():
 
-  class Foo( UpdateVarNet ):
+  class Foo( ComponentLevel3 ):
     def __init__( s ):
       nbits = 2
 

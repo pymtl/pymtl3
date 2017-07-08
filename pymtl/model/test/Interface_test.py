@@ -1,10 +1,11 @@
 from pymtl import *
-
 from pclib.rtl import TestSourceValRdy, TestSinkValRdy
+from sim_utils import simple_sim_pass
 
 def _test_model( cls ):
   A = cls()
-  SimUpdateVarNetPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   T, time = 0, 20
   while not A.done() and T < time:
@@ -14,7 +15,7 @@ def _test_model( cls ):
 
 def test_simple():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
 
     def __init__( s ):
 
@@ -49,7 +50,7 @@ def test_nested_port_bundle():
     def __init__( s ):
       s.req  = [ [ ValRdyBundle() for i in xrange(4) ] for j in xrange(4) ]
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
 
     def __init__( s ):
 

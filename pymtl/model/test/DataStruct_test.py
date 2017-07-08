@@ -1,5 +1,6 @@
 from pymtl import *
-from pymtl.components.errors import MultiWriterError, NoWriterError
+from pymtl.model.errors import MultiWriterError, NoWriterError
+from sim_utils import simple_sim_pass
 
 class SomeMsg( object ):
 
@@ -18,7 +19,8 @@ class SomeMsg( object ):
 
 def _test_model( cls ):
   A = cls()
-  SimUpdateVarNetPass().apply( A )
+  A.elaborate()
+  simple_sim_pass( A, 0x123 )
 
   for i in xrange(10):
     A.tick()
@@ -74,7 +76,7 @@ def _test_model( cls ):
 # RD A.b - WR A
 def test_rd_A_b_wr_A_impl():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -91,7 +93,7 @@ def test_rd_A_b_wr_A_impl():
 # WR A.b - WR A
 def test_wr_A_b_wr_A_conflict():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -113,7 +115,7 @@ def test_wr_A_b_wr_A_conflict():
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -130,7 +132,7 @@ def test_wr_A_b_rd_A_impl():
 # WR A.b - RD A, RD A.b
 def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -151,7 +153,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 # WR A - RD A.a, RD A.b
 def test_wr_A_rd_fields_can_schedule():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -172,7 +174,7 @@ def test_wr_A_rd_fields_can_schedule():
 # WR A.b - RD A, RD A.a
 def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
       s.A  = Wire( SomeMsg() )
 
@@ -189,7 +191,8 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
         assert s.A.a == 12
 
   m = Top()
-  SimUpdateVarNetPass().apply( m )
+  m.elaborate()
+  simple_sim_pass( m, 0x123 )
 
   assert len(m._all_constraints) == 1
   x, y = list(m._all_constraints)[0]
@@ -200,7 +203,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 # RD A.b - WR x, x|=A
 def test_connect_rd_A_b_wr_x_conn_A_impl():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -221,7 +224,7 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
 # WR A.b - A|=x
 def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -239,7 +242,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # WR A.b - A|=x, WR x.b
 # def test_connect_wr_A_b_wr_x_b_conn_A_conflict():
 
-  # class Top( UpdateVarNet ):
+  # class Top( ComponentLevel3 ):
     # def __init__( s ):
 
       # s.x  = Wire( SomeMsg() )
@@ -260,7 +263,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # WR A.b - A|=x, WR x 
 def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( SomeMsg() )
@@ -286,7 +289,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 # A.b|=x, WR x - RD A
 def test_connect_wr_x_conn_A_b_rd_A_impl():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -307,7 +310,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 # A.b|=x, WR x - WR A
 def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -333,7 +336,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 # A.b|=x, RD x - WR A
 def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -354,7 +357,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 # A.b|=x, WR x - A|=y, WR y
 def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -382,7 +385,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 # A.b|=x, WR x - A|=y, RD y
 def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -405,7 +408,7 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 # A.b|=x, RD x - A|=y, WR y
 def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.x  = Wire( Bits32 )
@@ -427,7 +430,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
 def test_iterative_find_nets():
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       s.w  = Wire( SomeMsg() )
@@ -486,7 +489,7 @@ def test_deep_connections():
       x.z = x.z(z)
       return x
 
-  class Top( UpdateVarNet ):
+  class Top( ComponentLevel3 ):
     def __init__( s ):
 
       msg3 = Msg3() # TODO find a good way to handle type equivalence

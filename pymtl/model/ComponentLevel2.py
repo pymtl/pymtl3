@@ -1,8 +1,8 @@
 #=========================================================================
-# UpdateVar.py
+# ComponentLevel2.py
 #=========================================================================
 
-from UpdateOnly      import UpdateOnly
+from ComponentLevel1 import ComponentLevel1
 from Connectable     import Signal, InVPort, OutVPort, Wire, _overlap
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
@@ -13,10 +13,10 @@ import AstHelper
 import inspect2, re, ast
 p = re.compile('( *(@|def))')
 
-class UpdateVar( UpdateOnly ):
+class ComponentLevel2( ComponentLevel1 ):
 
   def __new__( cls, *args, **kwargs ):
-    inst = super(UpdateVar, cls).__new__( cls, *args, **kwargs )
+    inst = super(ComponentLevel2, cls).__new__( cls, *args, **kwargs )
 
     inst._update_on_edge   = set()
     # constraint[id(var)] = (sign, id(func))
@@ -50,7 +50,7 @@ class UpdateVar( UpdateOnly ):
 
   # Override, add caching for rd/wr/call
   def _cache_func_meta( s, func ):
-    super( UpdateVar, s )._cache_func_meta( func ) # func.ast, func.src
+    super( ComponentLevel2, s )._cache_func_meta( func ) # func.ast, func.src
 
     cls  = type(s)
     if not hasattr( cls, "_name_rd" ):
@@ -88,7 +88,7 @@ class UpdateVar( UpdateOnly ):
     if name in s._name_func:
       raise UpblkFuncSameNameError( blk.__name__ )
 
-    super( UpdateVar, s ).update( blk )
+    super( ComponentLevel2, s ).update( blk )
     return blk
 
   def update_on_edge( s, blk ):
@@ -101,7 +101,7 @@ class UpdateVar( UpdateOnly ):
 
     s._tag_name_collect() # tag and collect first
     for obj in s._id_obj.values():
-      if isinstance( obj, UpdateVar ):
+      if isinstance( obj, ComponentLevel2 ):
         obj._elaborate_read_write_func()
       s._collect_vars( obj )
     s._tag_name_collect() # slicing will spawn extra objects
@@ -113,7 +113,7 @@ class UpdateVar( UpdateOnly ):
 
   # Override
   def _declare_vars( s ):
-    super( UpdateVar, s )._declare_vars()
+    super( ComponentLevel2, s )._declare_vars()
 
     s._all_id_func = {}
     s._all_update_on_edge   = set()
@@ -239,8 +239,10 @@ class UpdateVar( UpdateOnly ):
         all_calls = []
         for name, astnode, isself in func.fc:
 
-          if isself: # This is some instantiation I guess
-            # TODO now only support one layer
+          # This is some instantiation I guess
+          # TODO now only support one layer
+
+          if isself and len(name) == 1:
             try:
               call = getattr( s, name[0][0] )
             except AttributeError as e:
@@ -267,9 +269,9 @@ class UpdateVar( UpdateOnly ):
 
   # Override
   def _collect_vars( s, m ):
-    super( UpdateVar, s )._collect_vars( m )
+    super( ComponentLevel2, s )._collect_vars( m )
 
-    if isinstance( m, UpdateVar ):
+    if isinstance( m, ComponentLevel2 ):
       s._all_update_on_edge.update( m._update_on_edge )
 
       for k in m._RD_U_constraints:
@@ -504,7 +506,7 @@ class UpdateVar( UpdateOnly ):
       obj = s._id_obj[ rd ]
 
       host = obj
-      while not isinstance( host, UpdateVar ):
+      while not isinstance( host, ComponentLevel2 ):
         host = host._parent # go to the component
 
       if   isinstance( obj, InVPort ):  pass
@@ -530,7 +532,7 @@ class UpdateVar( UpdateOnly ):
       obj = s._id_obj[ wr ]
 
       host = obj
-      while not isinstance( host, UpdateVar ):
+      while not isinstance( host, ComponentLevel2 ):
         host = host._parent # go to the component
 
       # A continuous assignment is implied when a variable is connected to

@@ -7,7 +7,7 @@ from pymtl.passes import BasePass
 from collections  import deque, defaultdict
 from graphviz     import Digraph
 from errors import PassOrderError
-from pymtl.components.errors import UpblkCyclicError
+from pymtl.model.errors import UpblkCyclicError
 
 class ScheduleUpblkPass( BasePass ):
   def __init__( self, dump = False ):
