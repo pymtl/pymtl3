@@ -38,7 +38,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    for i in xrange(len(args)>>1):
+    for i in xrange(len(args)>>1) :
       try:
         s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError as e:
@@ -52,12 +52,12 @@ class ComponentLevel3( ComponentLevel2 ):
     # TODO check if all list/tuple of objects are connected to output ports
 
     for (kw, item) in kwargs.iteritems():
-      if not hasattr( s, kw ):
-        raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
       item_valid = True
 
-      obj = getattr( s, kw )
+      try:
+        obj = getattr( s, kw )
+      except AttributeError:
+        raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
 
       if   isinstance( obj, list ): # out = {0:x, 1:y}
         if not isinstance( item, dict ):
@@ -172,9 +172,9 @@ class ComponentLevel3( ComponentLevel2 ):
           Q.extend( [ v for v in u._adjs if v not in visited ] )
         nets.append( net )
 
-    writer_prop = {}
+    # Then figure out writers: all writes in upblks and their nest objects
 
-    # All writes in update blocks and their nest objects
+    writer_prop = {}
 
     for wid in s._all_write_upblks:
       writer_prop[ wid ] = True # propagatable
@@ -195,7 +195,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
         if isinstance( member, InVPort ) and member._host == s:
           writer_prop[ id(member) ] = True
-          # cannot be a nested port, so no need to check _nested
 
     headless = nets
     headed   = [] # [ ( writer, [readers] ) ]
@@ -290,68 +289,12 @@ class ComponentLevel3( ComponentLevel2 ):
     s._all_nets = headed
 
   def _generate_net_blocks( s ):
-
-    def compact_net_readers( nets ):
-
-      ret = []
-      all_reads = set()
-
-      # First add normal update block reads
-      for read in s._all_read_upblks:
-        obj = s._id_obj[ read ]
-        while obj:
-          all_reads.add( id(obj) )
-          obj = obj._nested
-
-      # Then add net writers and top level output ports in the net!
-      for writer, readers in nets:
-        obj = writer
-        while obj:
-          all_reads.add( id(obj) )
-          obj = obj._nested
-
-        for reader in readers:
-          if isinstance( reader, OutVPort ) and reader._host == s:
-            obj = reader
-            while obj:
-              all_reads.add( id(obj) )
-              obj = obj._nested
-
-      # Now figure out if a reader can be safely removed from the net
-      # Check if the reader itself, its ancestors, or sibling slices are
-      # read somewhere else. If not, the reader can be moved from the net.
-
-      for writer, readers in nets:
-        new_readers = []
-
-        for x in readers:
-          flag = False
-          obj = x
-          while obj:
-            if id(obj) in all_reads:
-              flag = True
-              break
-            obj = obj._nested
-
-          if x._slice:
-            for obj in x._nested._slices.values(): # Check sibling slices
-              if x != obj and _overlap(obj._slice, x._slice) and \
-                  id(obj) in all_reads:
-                flag = True
-                break
-
-          if flag: new_readers.append( x ) # is read somewhere else
-
-        ret.append( (writer, new_readers) )
-
-      return ret
-
     """ _generate_net_blocks:
     Each net is an update block. Readers are actually "written" here.
       >>> s.net_reader1 = s.net_writer
       >>> s.net_reader2 = s.net_writer """
 
-    nets = s._all_nets # compact_net_readers( s._all_nets )
+    nets = s._all_nets
 
     for writer, readers in nets:
       if not readers:
