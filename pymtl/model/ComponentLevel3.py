@@ -15,6 +15,7 @@ class ComponentLevel3( ComponentLevel2 ):
     """ Connect two objects. If one of them is integer, create a new Const
     that wraps around it in 's'. This is why connecting a constant should be
     done via this function in the component """
+
     try:
       if isinstance( o1, int ) or isinstance( o2, int ): # special case
         if isinstance( o1, int ):
@@ -24,10 +25,12 @@ class ComponentLevel3( ComponentLevel2 ):
         const = Const( o1.Type, o2 )
         const._parent = s
         o1._connect( const )
+
       else: # normal
         assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
         assert o1.Type == o2.Type
         o1._connect( o2 )
+
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
@@ -88,6 +91,7 @@ class ComponentLevel3( ComponentLevel2 ):
             obj._connect( x )
         else:
           obj._connect( item )
+
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
 
@@ -117,19 +121,17 @@ class ComponentLevel3( ComponentLevel2 ):
     s._process_constraints()
 
   # Override
-  def _declare_vars( self ):
-    super( ComponentLevel3, self )._declare_vars()
-    self._all_nets = {} # first store { varid: net }, later become [ nets ]
+  def _declare_vars( s ):
+    super( ComponentLevel3, s )._declare_vars()
+    s._signals = set() # store all signals that have connection
 
   # Override
-  def _collect_vars( self, m ):
-    super( ComponentLevel3, self )._collect_vars( m )
+  def _collect_vars( s, m ):
+    super( ComponentLevel3, s )._collect_vars( m )
 
     if isinstance( m, Signal ):
-      root = m._find_root()
-      if len( root._connected ) > 1: # has actual connection
-        if id(root) not in self._all_nets:
-          self._all_nets[ id(root) ] = root._connected
+      if m._adjs: # has connection
+        s._signals.add( m )
 
   def _resolve_var_connections( s ):
     """ The case of nested data struct: the writer of a net can be one of
@@ -154,7 +156,22 @@ class ComponentLevel3( ComponentLevel2 ):
     may _intersect_, so they need to check sibling slices' write/read
     status as well. """
 
-    nets        = s._all_nets.values() # { varid: net } --> [ nets ]
+    # First of all, bfs the "forest" to find out all nets
+
+    nets = s._all_nets = []
+
+    visited = set()
+    for i in s._signals:
+      if not i in visited:
+        net = []
+        Q   = deque( [ i ] )
+        while Q:
+          u = Q.popleft()
+          visited.add( u )
+          net.append( u )
+          Q.extend( [ v for v in u._adjs if v not in visited ] )
+        nets.append( net )
+
     writer_prop = {}
 
     # All writes in update blocks and their nest objects

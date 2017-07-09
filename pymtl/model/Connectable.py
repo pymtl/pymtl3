@@ -6,27 +6,14 @@ class Connectable(object):
   def __new__( cls, *args, **kwargs ):
     inst = super( Connectable, cls ).__new__( cls )
 
-    inst._root      = inst # Use disjoint set to resolve connections
-    inst._adjs      = []   # still preserve tree structure in parallel
-    inst._connected = [ inst ]
-
+    inst._adjs = []
     return inst
 
-  def _find_root( s ): # Disjoint set path compression
-    if s._root == s:  return s
-    s._root = s._root._find_root()
-    return s._root
+  # As disjoint set is good for unionize nodes but not detaching subtrees,
+  # I have to give up.
 
   def _connect( s, other ):
     assert isinstance( other, Connectable ), "Unconnectable object!"
-
-    x = s._find_root()
-    y = other._find_root()
-    assert x != y, "Two nets are already unionized!"
-
-    x._root = y # Merge myself to the other
-    y._connected.extend( x._connected )
-    x._connected = []
 
     s._adjs.append( other )
     other._adjs.append( s ) # bidirectional
@@ -67,7 +54,7 @@ class Signal( Connectable, NamedObject ):
 
   def __getattr__( s, name ):
     if name.startswith("_"): # private variable
-      return s.__dict__[ name ]
+      return super( Signal, s ).__getattribute__( name )
 
     if name not in s.__dict__:
       x = s.__class__( getattr(s.Type, name) )
