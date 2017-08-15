@@ -39,31 +39,31 @@ class Bits( object ):
     self.value = (sv & ~(1 << i)) | ((int(v) & 1) << i)
 
   def __add__( self, other ):
-    return Bits( self.nbits, int(self.value) + int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) + int(other) )
 
   def __radd__( self, other ):
     return self.__add__( other )
 
   def __sub__( self, other ):
-    return Bits( self.nbits, int(self.value) - int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) - int(other) )
 
   def __mul__( self, other ):
-    return Bits( self.nbits, int(self.value) * int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) * int(other) )
 
   def __and__( self, other ):
-    return Bits( self.nbits, int(self.value) & int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) & int(other) )
 
   def __rand__( self, other ):
     return self.__and__( other )
 
   def __or__( self, other ):
-    return Bits( self.nbits, int(self.value) | int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) | int(other) )
 
   def __ror__( self, other ):
     return self.__or__( other )
 
   def __xor__( self, other ):
-    return Bits( self.nbits, int(self.value) ^ int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) ^ int(other) )
 
   def __rxor__( self, other ):
     return self.__xor__( other )
@@ -79,7 +79,7 @@ class Bits( object ):
     return Bits( nb, int(self.value) << int(other) )
 
   def __rshift__( self, other ):
-    return Bits( self.nbits, int(self.value) >> int(other) )
+    return Bits( max(self.nbits, other.nbits), int(self.value) >> int(other) )
 
   def __eq__( self, other ):
     return Bits( 1, int(self.value) == int(other) )
