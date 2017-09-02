@@ -14,5 +14,5 @@ __all__ = [
   'ComponentLevel3', 'SimLevel3Pass',
 
   'sext', 'zext', 'clog2', 'concat',
-  'mk_bits', 'Bits'
+  'mk_bits',
 ] + [ "Bits{}".format(x) for x in _bitwidths ]

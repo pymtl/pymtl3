@@ -1,5 +1,5 @@
 from pymtl import *
-from pymtl.components import UpdateOnly
+from pymtl.model import ComponentLevel1
 from BasePass import BasePass
 from ScheduleUpblkPass import ScheduleUpblkPass
 from collections import defaultdict, deque
@@ -39,7 +39,7 @@ class SVTranslationPass( BasePass ):
     components = []
 
     for obj in sorted( top._id_obj.values(), key=repr ): # make sure s.x appears before s.x.y
-      if isinstance( obj, UpdateOnly ):
+      if isinstance( obj, ComponentLevel1 ):
         components.append( obj )
 
       tree = self._trie_root[1]
@@ -69,7 +69,7 @@ class SVTranslationPass( BasePass ):
     wires    = []
 
     for name, (obj, _) in self._id_trie[ id(m) ].iteritems():
-      if   isinstance( obj, UpdateOnly ): children.append( (name, obj) )
+      if   isinstance( obj, ComponentLevel1 ): children.append( (name, obj) )
       elif isinstance( obj, InVPort ):    inputs.append( (name, obj) )
       elif isinstance( obj, OutVPort ):   outputs.append( (name, obj) )
       elif isinstance( obj, Wire ):       wires.append( (name, obj) )

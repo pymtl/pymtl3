@@ -1,5 +1,5 @@
 from NamedObject import NamedObject
-from pymtl.datatypes.Bits import mk_bits
+from pymtl.datatypes import mk_bits
 
 class Connectable(object):
 

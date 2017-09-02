@@ -10,12 +10,12 @@ from errors import ModelTypeError
 
 class SimLevel3Pass( BasePass ):
 
-  def apply( self, m ):
+  def apply( self, m, mode='unroll' ):
     if not isinstance( m, ComponentLevel3 ):
       raise ModelTypeError( "ComponentLevel3" )
 
     m.elaborate()
 
     ScheduleUpblkPass().apply( m )
-    GenerateTickPass ( mode=self.tick_mode ).apply( m )
+    GenerateTickPass ( mode ).apply( m )
     SignalCleanupPass().apply( m )
