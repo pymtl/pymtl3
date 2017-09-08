@@ -85,7 +85,7 @@ class ZeroComp( ComponentLevel3 ):
 
     @s.update
     def up_zerocomp():
-      s.out = Bits1( s.in_ == 0 )
+      s.out = Bits1( s.in_ == Type(0) )
 
   def line_trace( s ):  pass
 
