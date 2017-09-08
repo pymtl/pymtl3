@@ -1,9 +1,9 @@
-import py.code
+import py.code, os
 
 # _always_pymtl_bits_ = True
 _always_pymtl_bits_ = False
 
-if _always_pymtl_bits_:
+if _always_pymtl_bits_ or os.getenv("PYMTL_BITS") == "1":
   from Bits import Bits
   print "Use python Bits"
 else:
