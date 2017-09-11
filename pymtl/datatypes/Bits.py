@@ -80,10 +80,18 @@ class Bits( object ):
     return Bits( max(self.nbits, other.nbits), int(self.value) >> int(other) )
 
   def __eq__( self, other ):
-    return Bits( 1, int(self.value) == int(other) )
+    try:
+      other = int(other)
+    except ValueError:
+      return False
+    return Bits( 1, int(self.value) == other )
 
   def __ne__( self, other ):
-    return Bits( 1, int(self.value) != int(other) )
+    try:
+      other = int(other)
+    except ValueError:
+      return True
+    return Bits( 1, int(self.value) != other )
 
   def __lt__( self, other ):
     return Bits( 1, int(self.value) < int(other) )
