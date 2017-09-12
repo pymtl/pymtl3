@@ -39,7 +39,6 @@ class PipeQueue1RTL( ComponentLevel3 ):
         s.next_full = s.enq.val | (s.full & ~s.deq.val)
 
   def line_trace( s ):
-    print s.full, s.next_full
     return s.enq.line_trace() + " > " + \
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()

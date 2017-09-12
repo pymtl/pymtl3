@@ -31,7 +31,7 @@ class TestSourceValRdy( ComponentLevel3 ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_  = deque( input_ ) # deque.popleft() is faster
-    s.default = Type( 0 )
+    s.default = Type()
     s.out     = OutValRdyIfc( Type )
 
     @s.update_on_edge

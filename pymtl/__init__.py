@@ -14,5 +14,8 @@ __all__ = [
   'ComponentLevel3', 'SimLevel3Pass',
 
   'sext', 'zext', 'clog2', 'concat',
-  'mk_bits',
+  'mk_bits', 
 ] + [ "Bits{}".format(x) for x in _bitwidths ]
+
+if 'Bits' not in dir(__builtins__):
+  __all__ += [ 'Bits' ]
