@@ -1,6 +1,6 @@
 from pymtl import *
 
-class RegisterFile( ComponentLevel3 ):
+class RegisterFile( RTLComponent ):
 
   def __init__( s, Type, nregs=32, rd_ports=1, wr_ports=1,
                 const_zero=False ):

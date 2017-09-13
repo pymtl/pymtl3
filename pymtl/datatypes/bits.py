@@ -1,18 +1,13 @@
 import py.code, os
 
-# _always_pymtl_bits_ = True
-_always_pymtl_bits_ = False
+_use_pymtl_bits = ( os.getenv("PYMTL_BITS") == "1" ) or \
+                 ( 'Bits' not in dir(__builtins__) )
 
-if _always_pymtl_bits_ or os.getenv("PYMTL_BITS") == "1":
+if _use_pymtl_bits:
   from Bits import Bits
   print "Use python Bits"
 else:
-  try:
-    x = Bits(1,0)
-    print "Use RPython Bits"
-  except NameError:
-    from Bits import Bits
-    print "Use python Bits"
+  print "Use builtin Bits"
 
 bits_template = """
 class Bits{nbits}(object):

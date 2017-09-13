@@ -2,7 +2,7 @@ from pymtl import *
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
 from pclib.rtl  import Mux, Reg, RegEn
 
-class PipeQueue1RTL( ComponentLevel3 ):
+class PipeQueue1RTL( RTLComponent ):
 
   def __init__( s, Type ):
     s.enq = InValRdyIfc ( Type )
@@ -26,7 +26,7 @@ class PipeQueue1RTL( ComponentLevel3 ):
       @s.update
       def up_pipeq_full():
         s.buf.en    = s.enq.val & s.enq.rdy
-        s.next_full = s.enq.val | (s.full & (not s.deq.val))
+        s.next_full = s.enq.val | (s.full & (not s.deq.rdy))
 
     else:
       @s.update
@@ -36,14 +36,14 @@ class PipeQueue1RTL( ComponentLevel3 ):
       @s.update
       def up_pipeq_full():
         s.buf.en    = s.enq.val & s.enq.rdy
-        s.next_full = s.enq.val | (s.full & ~s.deq.val)
+        s.next_full = s.enq.val | (s.full & ~s.deq.rdy)
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
 
-class BypassQueue1RTL( ComponentLevel3 ):
+class BypassQueue1RTL( RTLComponent ):
 
   def __init__( s, Type ):
     s.enq = InValRdyIfc ( Type )
@@ -94,7 +94,7 @@ class BypassQueue1RTL( ComponentLevel3 ):
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
 
-class NormalQueue1RTL( ComponentLevel3 ):
+class NormalQueue1RTL( RTLComponent ):
 
   def __init__( s, Type ):
     s.enq = InValRdyIfc( Type )

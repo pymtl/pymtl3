@@ -1,4 +1,5 @@
 from pymtl import *
+from pymtl.model import ComponentLevel3
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pymtl.model.errors import SignalTypeError
 from sim_utils import simple_sim_pass

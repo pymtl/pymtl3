@@ -52,7 +52,7 @@ class TestMemory( object ):
   def __setitem__( s, idx, data ):
     s.mem[ idx ] = data
 
-class TestMemoryRTL( ComponentLevel3 ):
+class TestMemoryRTL( RTLComponent ):
   def __init__( s, nports = 1, req_types = [ MemReqMsg(8,32,32) ], \
                                resp_types = [ MemRespMsg(8,32)   ],
                                mem_nbytes=1<<20 ):
@@ -106,6 +106,5 @@ class TestMemoryRTL( ComponentLevel3 ):
     return s.mem.write_mem( addr, data )
 
   def line_trace( s ):
-    return "|".join( [ "{}>{}".format( s.reqs[i].msg  if s.reqs[i].val  else "".ljust(len(str(s.req_types[i]()))),
-                                       s.resps[i].msg if s.resps[i].val else "".ljust(len(str(s.resp_types[i]()))) ) \
+    return "|".join( [ "{}>{}".format( s.reqs[i].line_trace(), s.resps[i].line_trace() ) \
                                 for i in xrange(s.nports) ] )

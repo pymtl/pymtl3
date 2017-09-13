@@ -162,6 +162,8 @@ class ComponentLevel2( ComponentLevel1 ):
             if not isinstance( _index, slice ):
               raise VarNotDeclaredError( obj, _index )
             expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
+          except IndexError:
+            return
 
       def add_all( obj, obj_list ):
         """ Already found, but it is an array of objects, s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ],

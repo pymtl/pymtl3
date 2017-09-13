@@ -3,7 +3,7 @@ from collections import deque
 from pclib.ifcs   import InValRdyIfc
 from pclib.valrdy import valrdy_to_str
 
-class TestBasicSink( ComponentLevel3 ):
+class TestBasicSink( RTLComponent ):
 
   def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
@@ -27,31 +27,37 @@ class TestBasicSink( ComponentLevel3 ):
   def line_trace( s ):
     return "%s" % s.in_
 
-class TestSinkValRdy( ComponentLevel3 ):
+class TestSinkValRdy( RTLComponent ):
 
   def __init__( s, Type, msgs ):
     assert type(msgs) == list, "TestSink only accepts a list of outputs!"
-    s.msgs = deque( msgs )
 
-    s.in_    = InValRdyIfc( Type )
+    s.msgs = msgs
+    s.sink_msgs = deque( s.msgs )
+
+    s.in_ = InValRdyIfc( Type )
 
     @s.update
     def up_sink():
-      s.in_.rdy = Bits1( len(s.msgs) > 0 )
+      if s.reset:
+        s.in_.rdy = Bits1( 0 )
+        s.sink_msgs = deque( s.msgs )
+      else:
+        s.in_.rdy = Bits1( len(s.sink_msgs) > 0 )
 
-      if s.in_.val and s.in_.rdy:
-        ref = s.msgs.popleft()
-        ans = s.in_.msg
+        if s.in_.val and s.in_.rdy:
+          ref = s.sink_msgs.popleft()
+          ans = s.in_.msg
 
-        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
+          assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
-    return not s.msgs
+    return not s.sink_msgs
 
   def line_trace( s ):
     return s.in_.line_trace()
 
-class TestSink( ComponentLevel3 ):
+class TestSink( RTLComponent ):
 
   def __init__( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 

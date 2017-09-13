@@ -2,7 +2,7 @@ from pymtl import *
 
 # Register with parametrizable types
 
-class Reg( ComponentLevel3 ):
+class Reg( RTLComponent ):
 
   def __init__( s, Type, en=False, rst=False, reset_value=None ):
     s.out = OutVPort( Type )
@@ -57,7 +57,7 @@ class Reg( ComponentLevel3 ):
   def line_trace_enrst( s ):
     return "[en:{}|rst:{}|{} > {}]".format(s.en, s.rst, s.in_, s.out)
 
-class RegEn( ComponentLevel3 ):
+class RegEn( RTLComponent ):
 
   def __init__( s, Type ):
     s.out = OutVPort( Type )
@@ -73,7 +73,7 @@ class RegEn( ComponentLevel3 ):
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
 
-class RegRst( ComponentLevel3 ):
+class RegRst( RTLComponent ):
 
   def __init__( s, Type, reset_value=0 ):
     s.out = OutVPort( Type )
@@ -89,7 +89,7 @@ class RegRst( ComponentLevel3 ):
   def line_trace( s ):
     return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
 
-class RegEnRst( ComponentLevel3 ):
+class RegEnRst( RTLComponent ):
 
   def __init__( s, Type, reset_value=0 ):
     s.out = OutVPort( Type )

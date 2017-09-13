@@ -1,4 +1,5 @@
 from pymtl import *
+from pymtl.model import ComponentLevel3
 from pclib.rtl import TestSourceValRdy, TestSinkValRdy
 from sim_utils import simple_sim_pass
 

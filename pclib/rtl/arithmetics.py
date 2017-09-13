@@ -2,7 +2,7 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux( ComponentLevel3 ):
+class Mux( RTLComponent ):
 
   def __init__( s, Type, ninputs ):
     s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
@@ -17,7 +17,7 @@ class Mux( ComponentLevel3 ):
 
 # Rshifter
 
-class RShifter( ComponentLevel3 ):
+class RShifter( RTLComponent ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
     s.in_   = InVPort( Type )
@@ -32,7 +32,7 @@ class RShifter( ComponentLevel3 ):
 
 # Lshifter
 
-class LShifter( ComponentLevel3 ):
+class LShifter( RTLComponent ):
 
   def __init__( s, Type, shamt_nbits = 1 ):
     s.in_   = InVPort( Type )
@@ -47,7 +47,7 @@ class LShifter( ComponentLevel3 ):
 
 # Incrementer 
 
-class Incrementer( ComponentLevel3 ):
+class Incrementer( RTLComponent ):
 
   def __init__( s, Type, amount=1 ):
     s.in_ = InVPort( Type )
@@ -61,7 +61,7 @@ class Incrementer( ComponentLevel3 ):
 
 # Adder 
 
-class Adder( ComponentLevel3 ):
+class Adder( RTLComponent ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -76,7 +76,7 @@ class Adder( ComponentLevel3 ):
 
 # Subtractor
 
-class Subtractor( ComponentLevel3 ):
+class Subtractor( RTLComponent ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -91,7 +91,7 @@ class Subtractor( ComponentLevel3 ):
 
 # ZeroComparator 
 
-class ZeroComp( ComponentLevel3 ):
+class ZeroComp( RTLComponent ):
 
   def __init__( s, Type ):
     s.in_ = InVPort( Type )
@@ -99,13 +99,13 @@ class ZeroComp( ComponentLevel3 ):
 
     @s.update
     def up_zerocomp():
-      s.out = Bits1( s.in_ is Type(0) )
+      s.out = Bits1( s.in_ == Type(0) )
 
   def line_trace( s ):  pass
 
 # LeftThanComparator
 
-class LTComp( ComponentLevel3 ):
+class LTComp( RTLComponent ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )
@@ -120,7 +120,7 @@ class LTComp( ComponentLevel3 ):
 
 # LeftThanOrEqualToComparator
 
-class LEComp( ComponentLevel3 ):
+class LEComp( RTLComponent ):
 
   def __init__( s, Type ):
     s.in0 = InVPort( Type )

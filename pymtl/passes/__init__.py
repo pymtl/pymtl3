@@ -1,5 +1,5 @@
 
 from BasePass import BasePass
 
-from SimLevel3Pass import SimLevel3Pass
+from SimRTLPass import SimRTLPass
 from PrintMetadataPass import PrintMetadataPass

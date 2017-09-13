@@ -1,4 +1,5 @@
 from pymtl import *
+from pymtl.model import ComponentLevel3
 from pymtl.model.errors import MultiWriterError, InvalidConnectionError
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pclib.rtl import Mux

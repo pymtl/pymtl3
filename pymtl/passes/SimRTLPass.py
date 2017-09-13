@@ -1,9 +1,9 @@
 #-------------------------------------------------------------------------
-# SimLevel3Pass
+# RTLComponent
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.model import ComponentLevel3
+from pymtl.model import RTLComponent
 from errors import ModelTypeError
 
 from BasePass import BasePass
@@ -12,11 +12,11 @@ from GenerateTickPass import GenerateTickPass
 from SignalCleanupPass import SignalCleanupPass
 from PrintMetadataPass import PrintMetadataPass
 
-class SimLevel3Pass( BasePass ):
+class SimRTLPass( BasePass ):
 
   def apply( self, m, mode='unroll' ):
-    if not isinstance( m, ComponentLevel3 ):
-      raise ModelTypeError( "ComponentLevel3" )
+    if not isinstance( m, RTLComponent ):
+      raise ModelTypeError( "RTLComponent" )
 
     m.elaborate()
 
