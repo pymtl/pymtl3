@@ -31,7 +31,12 @@ class SignalCleanupPass( BasePass ):
         if ( isinstance( name, basestring ) and not name.startswith("_") ) \
           or isinstance( name, tuple ):
             if   isinstance( obj, Signal ):
-              setattr( m, name, obj.default_value() )
+              try:
+                setattr( m, name, obj.default_value() )
+              except Exception as err:
+                err.message = repr(obj) + " -- " + err.message
+                err.args = (err.message,)
+                raise err
             elif isinstance( obj, Const ):
               setattr( m, name, obj.const )
             else:

@@ -54,6 +54,23 @@ class ScheduleUpblkPass( BasePass ):
           Q.append( v )
 
     if len(serial) != len(vs):
+      from graphviz import Digraph
+      dot = Digraph()
+      dot.graph_attr["rank"] = "same"
+      dot.graph_attr["ratio"] = "compress"
+      dot.graph_attr["margin"] = "0.1"
+
+      leftovers = [ m._all_id_upblk[v] for v in vs if InD[v] ]
+      for x in leftovers:
+        dot.node( x.__name__+"\\n@"+repr(x.hostobj), shape="box")
+
+      for (x, y) in m._all_constraints:
+        upx, upy = m._all_id_upblk[x], m._all_id_upblk[y]
+        if upx in leftovers and upy in leftovers:
+          dot.edge( upx.__name__+"\\n@"+repr(upx.hostobj),
+                    upy.__name__+"\\n@"+repr(upy.hostobj) )
+      dot.render( "/tmp/upblk-dag.gv", view=True )
+
       raise UpblkCyclicError( """
   Update blocks have cyclic dependencies.
   * Please consult update dependency graph for details."

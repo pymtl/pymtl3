@@ -4,6 +4,7 @@
 
 from pymtl.passes import BasePass
 from graphviz import Digraph
+from collections import deque
 
 class PrintMetadataPass( BasePass ):
 
@@ -131,6 +132,7 @@ class PrintMetadataPass( BasePass ):
 
     for x in m._all_id_upblk.values():
       dot.node( x.__name__+"\\n@"+repr(x.hostobj), shape="box")
+    print len(m._all_id_upblk), "update blocks in total"
 
     for (x, y) in m._all_constraints:
       upx, upy = m._all_id_upblk[x], m._all_id_upblk[y]

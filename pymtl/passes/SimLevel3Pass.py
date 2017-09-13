@@ -3,10 +3,14 @@
 #-------------------------------------------------------------------------
 
 from pymtl import *
-from pymtl.passes import BasePass, ScheduleUpblkPass, GenerateTickPass, SignalCleanupPass
-
 from pymtl.model import ComponentLevel3
 from errors import ModelTypeError
+
+from BasePass import BasePass
+from ScheduleUpblkPass import ScheduleUpblkPass
+from GenerateTickPass import GenerateTickPass
+from SignalCleanupPass import SignalCleanupPass
+from PrintMetadataPass import PrintMetadataPass
 
 class SimLevel3Pass( BasePass ):
 
