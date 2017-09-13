@@ -116,6 +116,8 @@ class DetectReadsAndWrites( DetectVarNames ):
     else:
       assert False, type( node.ctx )
 
+    self.visit( node.slice )
+
 class DetectFuncCalls( DetectVarNames ):
 
   def enter( self, node, calls ):

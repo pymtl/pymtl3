@@ -449,8 +449,22 @@ blk = {0}
             # Hence, writer is inport or wire, reader is inport
             # writer can be constant
             elif whost == rhost._parent:
-              valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) \
-                                                 or isinstance( u, Const)) and \
+              # valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) \
+                                                 # or isinstance( u, Const)) and \
+                        # isinstance( v, InVPort )
+
+              # if not valid:
+                # raise SignalTypeError( \
+# """[Type 7] Invalid port type detected when the driver lies shallower than drivee:
+
+# - {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
+
+  # Note: OutVPort/Wire x.y.z cannot be driven by x.a""" \
+          # .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
+                    # type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
+
+            # Shunning 9/12/2017: Actually in this case writer can be outport
+              valid = ( isinstance( u, Signal ) or isinstance( u, Const )) and \
                         isinstance( v, InVPort )
 
               if not valid:
