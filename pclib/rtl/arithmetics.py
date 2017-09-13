@@ -45,6 +45,20 @@ class LShifter( ComponentLevel3 ):
 
   def line_trace( s ):  pass
 
+# Incrementer 
+
+class Incrementer( ComponentLevel3 ):
+
+  def __init__( s, Type, amount=1 ):
+    s.in_ = InVPort( Type )
+    s.out = OutVPort( Type )
+
+    @s.update
+    def up_incrementer():
+      s.out = s.in_ + Type(amount)
+
+  def line_trace( s ):  pass
+
 # Adder 
 
 class Adder( ComponentLevel3 ):

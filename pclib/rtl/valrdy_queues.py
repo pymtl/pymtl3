@@ -1,6 +1,6 @@
 from pymtl import *
-from pclib.rtl import Reg, RegEn, Mux
-from pclib.ifcs   import InValRdyIfc, OutValRdyIfc
+from pclib.ifcs import InValRdyIfc, OutValRdyIfc
+from pclib.rtl  import Mux, Reg, RegEn
 
 class PipeQueue1RTL( ComponentLevel3 ):
 

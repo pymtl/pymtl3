@@ -29,24 +29,24 @@ class TestBasicSink( ComponentLevel3 ):
 
 class TestSinkValRdy( ComponentLevel3 ):
 
-  def __init__( s, Type, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!"
-    s.answer = deque( answer )
+  def __init__( s, Type, msgs ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+    s.msgs = deque( msgs )
 
     s.in_    = InValRdyIfc( Type )
 
     @s.update
     def up_sink():
-      s.in_.rdy = Bits1( len(s.answer) > 0 )
+      s.in_.rdy = Bits1( len(s.msgs) > 0 )
 
       if s.in_.val and s.in_.rdy:
-        ref = s.answer.popleft()
+        ref = s.msgs.popleft()
         ans = s.in_.msg
 
         assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
 
   def done( s ):
-    return not s.answer
+    return not s.msgs
 
   def line_trace( s ):
     return s.in_.line_trace()

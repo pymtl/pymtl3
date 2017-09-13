@@ -2,7 +2,7 @@ from pymtl import *
 from collections import deque
 from pclib.ifcs import MemReqMsg, MemRespMsg
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
-from valrdy_queues import BypassQueue1RTL
+from valrdy_queues import PipeQueue1RTL
 
 AMO_FUNS = { MemReqMsg.TYPE_AMO_ADD  : lambda m,a : m+a,
              MemReqMsg.TYPE_AMO_AND  : lambda m,a : m&a,
@@ -60,7 +60,7 @@ class TestMemoryRTL( ComponentLevel3 ):
 
     s.reqs  = [ InValRdyIfc( req_types[i] ) for i in xrange(nports) ]
     s.resps = [ OutValRdyIfc( resp_types[i] ) for i in xrange(nports) ]
-    s.resp_qs = [ BypassQueue1RTL( resp_types[i] ) for i in xrange(nports) ]
+    s.resp_qs = [ PipeQueue1RTL( resp_types[i] ) for i in xrange(nports) ]
 
     for i in xrange(nports):
       s.connect( s.resps[i], s.resp_qs[i].deq )
@@ -86,7 +86,6 @@ class TestMemoryRTL( ComponentLevel3 ):
           len = req.len if req.len else ( s.reqs[i].msg.data.nbits >> 3 )
 
           if   req.type_ == MemReqMsg.TYPE_READ:
-            print req.addr, len, s.mem.read(req.addr,len)
             resp = s.resp_types[i].mk_rd( req.opaque, len, s.mem.read( req.addr, len ) )
 
           elif req.type_ == MemReqMsg.TYPE_WRITE:

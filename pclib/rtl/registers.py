@@ -75,16 +75,33 @@ class RegEn( ComponentLevel3 ):
 
 class RegRst( ComponentLevel3 ):
 
-  def __init__( s, Type, reset_value ):
+  def __init__( s, Type, reset_value=0 ):
     s.out = OutVPort( Type )
     s.in_ = InVPort( Type )
 
-    s.reset  = InVPort( int if Type is int else Bits1 )
+    s.reset = InVPort( int if Type is int else Bits1 )
+
+    @s.update_on_edge
+    def up_regrst():
+      if s.reset: s.out = Type( reset_value )
+      else:       s.out = s.in_
+
+  def line_trace( s ):
+    return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
+
+class RegEnRst( ComponentLevel3 ):
+
+  def __init__( s, Type, reset_value=0 ):
+    s.out = OutVPort( Type )
+    s.in_ = InVPort( Type )
+
+    s.reset = InVPort( int if Type is int else Bits1 )
+    s.en    = InVPort( int if Type is int else Bits1 )
 
     @s.update_on_edge
     def up_regen():
       if s.reset: s.out = Type( reset_value )
-      else:       s.out = s.in_
+      elif s.en:  s.out = s.in_
 
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
