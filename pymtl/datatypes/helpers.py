@@ -14,7 +14,7 @@ def concat( *args ):
 
 def zext( value, new_width ):
   assert new_width > value.nbits
-  return Bits( new_width, int(value) )
+  return Bits( new_width, value )
 
 def clog2( N ):
   assert N > 0

@@ -5,6 +5,7 @@
 from pymtl import *
 from pymtl.passes import BasePass
 from collections  import deque, defaultdict
+from Queue        import PriorityQueue
 from graphviz     import Digraph
 from errors import PassOrderError
 from pymtl.model.errors import UpblkCyclicError
@@ -41,17 +42,22 @@ class ScheduleUpblkPass( BasePass ):
       es [u].append( v )
 
     # Perform topological sort for a serial schedule.
+    # Shunning: now we try to schedule branchy upblks as late as possible
 
-    Q      = deque( [ v for v in vs if not InD[v] ] )
     serial = []
-    while Q:
-      # random.shuffle(Q) # to catch corner cases; will be removed later
-      u = Q.pop()
+
+    Q = PriorityQueue(0)
+    for v in vs:
+      if not InD[v]:
+        Q.put( (m._all_meta['br'][ v ], v) )
+    while not Q.empty():
+      br, u = Q.get()
+      print m._all_id_upblk[u].__name__, br
       serial.append( m._all_id_upblk[u] )
       for v in es[u]:
         InD[v] -= 1
         if not InD[v]:
-          Q.append( v )
+          Q.put( (m._all_meta['br'][ v ], v) )
 
     if len(serial) != len(vs):
       from graphviz import Digraph

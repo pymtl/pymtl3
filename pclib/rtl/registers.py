@@ -99,7 +99,7 @@ class RegEnRst( RTLComponent ):
     s.en    = InVPort( int if Type is int else Bits1 )
 
     @s.update_on_edge
-    def up_regen():
+    def up_regenrst():
       if s.reset: s.out = Type( reset_value )
       elif s.en:  s.out = s.in_
 

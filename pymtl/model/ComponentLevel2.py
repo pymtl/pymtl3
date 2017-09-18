@@ -57,6 +57,7 @@ class ComponentLevel2( ComponentLevel1 ):
       cls._name_rd = {}
       cls._name_wr = {}
       cls._name_fc = {}
+      cls._name_br = {}
 
     name = func.__name__
     if name not in cls._name_rd:
@@ -66,9 +67,12 @@ class ComponentLevel2( ComponentLevel1 ):
       AstHelper.extract_read_write( func, rd, wr )
       AstHelper.extract_func_calls( func, fc )
 
-    func.rd  = cls._name_rd[ name ]
-    func.wr  = cls._name_wr[ name ]
-    func.fc  = cls._name_fc[ name ]
+      cls._name_br[ name ] = AstHelper.count_branches( func )
+
+    func.rd = cls._name_rd[ name ]
+    func.wr = cls._name_wr[ name ]
+    func.fc = cls._name_fc[ name ]
+    func.br = cls._name_br[ name ]
 
   # @s.func is for those functions
   def func( s, func ):
@@ -128,6 +132,7 @@ class ComponentLevel2( ComponentLevel1 ):
       "reads" : defaultdict(list),
       "writes": defaultdict(list),
       "calls" : defaultdict(list),
+      "br"    : defaultdict(int),
     }
 
   def _elaborate_read_write_func( s ):
@@ -296,6 +301,10 @@ class ComponentLevel2( ComponentLevel1 ):
         for write in writes:
           s._all_write_upblks[ id(write) ].add( id_ )
 
+      # Summarize the branchiness as well
+      for id_, upblk in m._id_upblk.iteritems():
+        s._all_meta['br'][ id_ ] = upblk.br
+
       for id_, calls in m._id_meta['calls'].iteritems():
         s._all_meta['calls'][ id_ ].extend( calls )
 
@@ -317,6 +326,9 @@ class ComponentLevel2( ComponentLevel1 ):
             for write in m._id_meta['writes'][ id(u) ]:
               s._all_meta['writes'][ id_ ].append( write )
               s._all_write_upblks[ id(write) ].add( id_ )
+
+            # add the branch count in the function to the upblk
+            s._all_meta['br'][ id_ ] += m._id_func[ id(u) ].br
 
             for v in m._id_meta['calls'][ id(u) ]:
               if id(v) in caller: # v calls someone else there is a cycle
