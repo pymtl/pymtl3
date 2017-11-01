@@ -14,7 +14,7 @@ class Bits( object ):
 
     if isinstance( idx, slice ):
       start, stop = int(idx.start), int(idx.stop)
-      assert not idx.step and start < stop
+      assert not idx.step and start < stop and start >= 0 and stop <= self.nbits
       return Bits( stop-start, (sv & ((1 << stop) - 1)) >> start )
 
     i = int(idx)
@@ -26,7 +26,7 @@ class Bits( object ):
 
     if isinstance( idx, slice ):
       start, stop = int(idx.start), int(idx.stop)
-      assert not idx.step and start < stop
+      assert not idx.step and start < stop and start >= 0 and stop <= self.nbits
 
       self.value = (sv & (~((1 << stop) - (1 << start)))) | \
                    ((int(v) & ((1 << (stop - start)) - 1)) << start)

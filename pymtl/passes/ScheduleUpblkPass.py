@@ -52,7 +52,6 @@ class ScheduleUpblkPass( BasePass ):
         Q.put( (m._all_meta['br'][ v ], v) )
     while not Q.empty():
       br, u = Q.get()
-      print m._all_id_upblk[u].__name__, br
       serial.append( m._all_id_upblk[u] )
       for v in es[u]:
         InD[v] -= 1
