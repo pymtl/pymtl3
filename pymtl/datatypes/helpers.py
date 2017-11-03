@@ -1,4 +1,4 @@
-from bits import *
+from bits_import import *
 import math
 
 def concat( *args ):

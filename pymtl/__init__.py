@@ -17,6 +17,6 @@ __all__ = [
   'mk_bits', 
 ] + [ "Bits{}".format(x) for x in _bitwidths ]
 
-from datatypes.bits import _use_pymtl_bits
+from datatypes.bits_import import _use_pymtl_bits
 if _use_pymtl_bits:
   __all__ += [ 'Bits' ]
