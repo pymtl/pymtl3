@@ -8,16 +8,17 @@ from collections import deque
 
 class PrintMetadataPass( BasePass ):
 
-  def apply( self, m ): # apply pass to model m
+  def apply( self, m, view_dag=False ): # apply pass to model m
     if hasattr( m, "_all_meta" ):
       self.print_read_write_func( m )
 
-    if hasattr( m, "_nets" ):
+    if hasattr( m, "_all_nets" ):
       self.print_nets( m )
 
     if hasattr( m, "_all_constraints" ):
       self.print_constraints( m )
-      self.print_upblk_dag( m )
+      if view_dag:
+        self.print_upblk_dag( m )
 
     if hasattr( m, "_serial_schedule" ):
       self.print_schedule( m )
@@ -104,7 +105,7 @@ class PrintMetadataPass( BasePass ):
     print "+-------------------------------------------------------------"
     print
 
-    for n in m._nets:
+    for n in m._all_nets:
       writer, readers = n
       print "  * Writer:\n    + {}\n  * Reader(s):\n    - {}" \
             .format( repr(writer), "\n    - ".join([ repr(v) for v in readers ]) )
