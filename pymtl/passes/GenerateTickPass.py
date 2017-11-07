@@ -61,15 +61,20 @@ class GenerateTickPass( BasePass ):
       # breaking the update block.
       branchiness_factor = 1
 
+      # The "comment" that will be used for update calls.
       schedule_names = [ "{} br: {}".format( x.__name__, m._all_meta['br'][id(x)] )
                          for x in schedule ]
       schedule_branchiness = [ m._all_meta['br'][id(x)] for x in schedule ]
       schedule_level = 1
 
+      # We will use pypyjit.dont_trace_here to disable tracing across
+      # intermediate update blocks.
       gen_tick_src =  "try:\n"
       gen_tick_src += "  from pypyjit import dont_trace_here\n"
       gen_tick_src += "except ImportError:\n"
       gen_tick_src += "  pass\n"
+      # Copy the scheduled functions to update_blkX__Y. Y is the
+      # scheduling level, X is the index within the scheduling level.
       gen_tick_src += "; ".join( map(
                     "update_blk{0}__0 = schedule[{0}]".format,
                     xrange( len( schedule ) ) ) )
@@ -91,17 +96,20 @@ class GenerateTickPass( BasePass ):
             i += 1
             num_calls_in_this_block += 1
 
+            # If either we reach the hierarchy factor or if the
+            # branchiness is equal to or above the branchiness factor,
+            # create a new intermediate level update block.
             if num_calls_in_this_block >= hierarchy_factor or \
                   branchiness >= branchiness_factor:
               break
 
-          if schedule_level >= 1:
-            gen_tick_src += "\ntry:\n"
-            gen_tick_src += \
-                "  dont_trace_here(0, False, update_blk{}__{}.__code__)\n" \
-                .format( j, schedule_level )
-            gen_tick_src += "except NameError:\n"
-            gen_tick_src += "  pass\n"
+          # Don't trace across the intermediate level update blocks.
+          gen_tick_src += "\ntry:\n"
+          gen_tick_src += \
+              "  dont_trace_here(0, False, update_blk{}__{}.__code__)\n" \
+              .format( j, schedule_level )
+          gen_tick_src += "except NameError:\n"
+          gen_tick_src += "  pass\n"
 
           j += 1
 
