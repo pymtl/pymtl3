@@ -21,7 +21,7 @@ class GenerateTickPass( BasePass ):
   # all update blocks. We can do "JIT" here.
 
   def generate_tick_func( self, m ):
-    assert self.mode in [ 'normal', 'unroll', 'hacky' ]
+    assert self.mode in [ 'normal', 'unroll', 'unroll_hierarchical', 'hacky' ]
 
     schedule = m._serial_schedule
     assert schedule, "No update block found in the model"
@@ -52,6 +52,69 @@ class GenerateTickPass( BasePass ):
 
       exec py.code.Source( gen_tick_src ).compile() in locals()
       ret = tick_unroll
+
+    if self.mode == 'unroll_hierarchical':
+      # Hierarchy factor is the maximum number of update blocks per upper
+      # level of update block.
+      hierarchy_factor = 100
+      # Branchiness factor is the maximum factor of branchiness before
+      # breaking the update block.
+      branchiness_factor = 1
+
+      schedule_names = [ "{} br: {}".format( x.__name__, m._all_meta['br'][id(x)] )
+                         for x in schedule ]
+      schedule_branchiness = [ m._all_meta['br'][id(x)] for x in schedule ]
+      schedule_level = 1
+
+      gen_tick_src =  "try:\n"
+      gen_tick_src += "  from pypyjit import dont_trace_here\n"
+      gen_tick_src += "except ImportError:\n"
+      gen_tick_src += "  pass\n"
+      gen_tick_src += "; ".join( map(
+                    "update_blk{0}__0 = schedule[{0}]".format,
+                    xrange( len( schedule ) ) ) )
+
+      while len( schedule_names ) > 1:
+
+        i = 0
+        j = 0
+        while i < len( schedule_names ):
+          gen_tick_src += "\n\ndef update_blk{}__{}():\n".format(
+                  j, schedule_level )
+          num_calls_in_this_block = 0
+
+          while i < len( schedule_names ):
+            gen_tick_src += "  update_blk{}__{}() # {}\n".format(
+                    i, schedule_level - 1, schedule_names[i] )
+
+            branchiness = schedule_branchiness[ i ]
+            i += 1
+            num_calls_in_this_block += 1
+
+            if num_calls_in_this_block >= hierarchy_factor or \
+                  branchiness >= branchiness_factor:
+              break
+
+          if schedule_level >= 1:
+            gen_tick_src += "\ntry:\n"
+            gen_tick_src += \
+                "  dont_trace_here(0, False, update_blk{}__{}.__code__)\n" \
+                .format( j, schedule_level )
+            gen_tick_src += "except NameError:\n"
+            gen_tick_src += "  pass\n"
+
+          j += 1
+
+        schedule_level += 1
+        schedule_names = [ "" for i in xrange( j ) ]
+        schedule_branchiness = [ 0 for i in xrange( j ) ]
+
+      # Rename the top-level update block to tick_top.
+      assert len( schedule_names ) == 1
+      gen_tick_src += "\ntick_top = update_blk0__{}".format( schedule_level - 1 )
+
+      exec py.code.Source( gen_tick_src ).compile() in locals()
+      ret = tick_top
 
     if self.mode == 'hacky':
 
