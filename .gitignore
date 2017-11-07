@@ -14,4 +14,4 @@ pymtl.egg-info
 *.pyo
 */.DS_Store
 .cache/
-
+*.sw*
