@@ -59,7 +59,7 @@ class GenerateTickPass( BasePass ):
       hierarchy_factor = 100
       # Branchiness factor is the maximum factor of branchiness before
       # breaking the update block.
-      branchiness_factor = 1
+      branchiness_factor = 8
 
       # The "comment" that will be used for update calls.
       schedule_names = [ "{} br: {}".format( x.__name__, m._all_meta['br'][id(x)] )
@@ -87,29 +87,30 @@ class GenerateTickPass( BasePass ):
           gen_tick_src += "\n\ndef update_blk{}__{}():\n".format(
                   j, schedule_level )
           num_calls_in_this_block = 0
+          branchiness = 0
 
           while i < len( schedule_names ):
             gen_tick_src += "  update_blk{}__{}() # {}\n".format(
                     i, schedule_level - 1, schedule_names[i] )
 
-            branchiness = schedule_branchiness[ i ]
+            # Add up branchiness before we reach the branchiness factor.
+            branchiness += schedule_branchiness[ i ]
             i += 1
             num_calls_in_this_block += 1
 
-            # If either we reach the hierarchy factor or if the
-            # branchiness is equal to or above the branchiness factor,
-            # create a new intermediate level update block.
-            if num_calls_in_this_block >= hierarchy_factor or \
-                  branchiness >= branchiness_factor:
+            if num_calls_in_this_block >= hierarchy_factor:
               break
 
-          # Don't trace across the intermediate level update blocks.
-          gen_tick_src += "\ntry:\n"
-          gen_tick_src += \
-              "  dont_trace_here(0, False, update_blk{}__{}.__code__)\n" \
-              .format( j, schedule_level )
-          gen_tick_src += "except NameError:\n"
-          gen_tick_src += "  pass\n"
+            if branchiness >= branchiness_factor:
+              # Don't trace across the intermediate level update blocks if
+              # the update blocks were killed due to the branchiness.
+              gen_tick_src += "\ntry:\n"
+              gen_tick_src += \
+                  "  dont_trace_here(0, False, update_blk{}__{}.__code__)\n" \
+                  .format( j, schedule_level )
+              gen_tick_src += "except NameError:\n"
+              gen_tick_src += "  pass\n"
+              break
 
           j += 1
 
