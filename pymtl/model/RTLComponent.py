@@ -61,4 +61,3 @@ class RTLComponent( ComponentLevel3 ):
     s._generate_net_blocks()
 
     s._process_constraints()
-

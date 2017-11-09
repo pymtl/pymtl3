@@ -19,7 +19,6 @@ class EventDrivenPass( BasePass ):
     m.elaborate()
     ScheduleUpblkPass().apply( m )
     self.wrap_change_detect( m )
-    
     SignalCleanupPass().apply( m )
 
   @staticmethod
@@ -128,18 +127,15 @@ class EventDrivenPass( BasePass ):
 
     m._sensitivity  = [ [] for i in signals ]
     m._event_set    = set()
-    m._blk_executed = 0
 
     # Generate tick
 
     def tick():
       for x in m._default_blks:
         x()
-        m._blk_executed += 1
       while m._event_set:
         blk = m._event_set.pop()
         blk()
-        m._blk_executed += 1
 
     m.tick = tick
 
@@ -152,7 +148,7 @@ class EventDrivenPass( BasePass ):
       for sig, blks in sense.iteritems():
         tot += len(blks)
 
-      if tot == 0:
+      if tot == 0: # Nothing to trigger
         w_all_blks.append( blk )
       else:
         # will trigger other blks
@@ -165,24 +161,21 @@ class EventDrivenPass( BasePass ):
             check_srcs.append( "if {} != ___t_m_p_{}:".format( sig, idx ) )
             check_srcs.append( "  event_set.update( m._sensitivity[ {} ] )"
                                     .format( signal_id[ sig ] ) )
-            idx += 1
+            idx += 1 
 
-        copy_src  = "\n            ".join( copy_srcs )
-        check_src = "\n            ".join( check_srcs )
-
-        blk_name = blk.__name__
         src = """
         def gen_wrapped_blk( s, blk ):
           sensitivity = s._sensitivity
           event_set = s._event_set
 
-          def w_{blk_name}():
-            {copy_src}
+          def w_{0}():
+            {1}
             blk()
-            {check_src}
+            {2}
 
-          return w_{blk_name}
-        """.format(**locals())
+          return w_{0}
+        """.format( blk.__name__, "\n            ".join( copy_srcs ),
+                    "\n            ".join( check_srcs ) )
         exec py.code.Source( src ).compile() in locals()
         w_blk = gen_wrapped_blk( m, blk )
         w_all_blks.append( w_blk )

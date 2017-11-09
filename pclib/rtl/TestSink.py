@@ -37,7 +37,7 @@ class TestSinkValRdy( RTLComponent ):
 
     s.in_ = InValRdyIfc( Type )
 
-    @s.update
+    @s.update_on_edge
     def up_sink():
       if s.reset:
         s.in_.rdy = Bits1( 0 )
