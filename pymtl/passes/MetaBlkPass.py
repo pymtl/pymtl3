@@ -190,8 +190,8 @@ class MetaBlkPass( BasePass ):
 
       gen_tick_src += "\n\ndef meta_blk{}():\n  ".format(i)
 
-      gen_tick_src += "\n  ".join( [ "update_blk{}() # {}" \
-                                    .format( j, schedule_names[(i, j)] )
+      gen_tick_src += "\n  ".join( [ "update_blk{}__{}() # {}" \
+                                    .format( i, j, schedule_names[(i, j)] )
                                     for j in xrange( len(meta_blk) )] )
 
       gen_tick_src += "\ntry:\n"
@@ -200,7 +200,7 @@ class MetaBlkPass( BasePass ):
       gen_tick_src += "  pass\n"
 
     gen_tick_src += "\ndef tick_top():\n  "
-    gen_tick_src += "; ".join( [ "meta_blk{}".format(i) for i in xrange(len(metas)) ] )
+    gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in xrange(len(metas)) ] )
 
     exec py.code.Source( gen_tick_src ).compile() in locals()
 
