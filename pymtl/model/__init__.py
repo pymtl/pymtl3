@@ -7,3 +7,4 @@ from ComponentLevel1 import ComponentLevel1
 from ComponentLevel2 import ComponentLevel2
 from ComponentLevel3 import ComponentLevel3
 from RTLComponent import RTLComponent
+from PredicationTransformer import PredicationTransformer
