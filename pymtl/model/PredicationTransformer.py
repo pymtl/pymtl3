@@ -5,8 +5,6 @@ class TransformationAbort( Exception ):
 
 class PredicationTransformer( ast.NodeTransformer ):
 
-  #def __init__( self ):
-
   def get_and_verify_target_from_assign( self, node ):
     """Given an assign node, verifies the format is s.XXX = YYY, returns
     the target (lvalue), or None if it doesn't fit that format."""
@@ -17,17 +15,6 @@ class PredicationTransformer( ast.NodeTransformer ):
 
     target = node.targets[0]
     return target
-
-    #if not isinstance( target, ast.Attribute )
-
-  #def visit_FunctionDef( self, node ):
-  #  for stmt in node.body:
-  #    if isinstance( stmt, ast.Assign ):
-  #      target = self.get_and_verify_target_from_assign( stmt )
-
-  #      if target is None:
-  #        self.abort = True
-  #        return node
 
   def visit_If( self, node ):
     # On an if statement, go through statements
