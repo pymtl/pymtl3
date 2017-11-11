@@ -14,12 +14,12 @@ class MetaBlkPass( BasePass ):
   def __init__( self, dump = False ):
     self.dump = dump
 
-  def apply( self, m ):
+  def apply( self, m, mode ):
     if not hasattr( m, "_all_constraints" ):
       raise PassOrderError( "_all_constraints" )
 
     self.schedule( m )
-    self.generate_tick( m )
+    self.generate_tick( m, mode )
 
   #-------------------------------------------------------------------------
   # schedule
@@ -73,7 +73,7 @@ class MetaBlkPass( BasePass ):
 
     # Countdown factor is the number of branchy block we allow at the end
     # of a meta block
-    countdown_factor = 2
+    countdown_factor = 5
 
     metas = []
     current_meta = []
@@ -162,47 +162,90 @@ class MetaBlkPass( BasePass ):
   # generate_tick
   #-------------------------------------------------------------------------
 
-  def generate_tick( self, m ):
+  def generate_tick( self, m, mode ):
     metas = m._meta_schedule
+    print "meta_mode:", mode
 
-    # We will use pypyjit.dont_trace_here to disable tracing across
-    # intermediate update blocks.
-    gen_tick_src =  "try:\n"
-    gen_tick_src += "  from pypyjit import dont_trace_here\n"
-    gen_tick_src += "except ImportError:\n"
-    gen_tick_src += "  pass\n"
+    if mode == 'meta_break':
+      # unroll
 
-    # The "comment" that will be used for update calls.
-    schedule_names = {}
-
-    for i in xrange( len(metas) ):
-      meta = metas[i]
-      for j in xrange( len(meta) ):
-        blk = meta[j]
-        schedule_names[ (i, j) ] = "[br: {}] {}" \
-          .format( m._all_meta['br'][id(blk)], blk.__name__ )
-
-        # Copy the scheduled functions to update_blkX__Y
-        gen_tick_src += "update_blk{0}__{1} = metas[{0}][{1}];".format( i, j )
-
-    for i in xrange( len(metas) ):
-      meta_blk = m._meta_schedule[i]
-
-      gen_tick_src += "\n\ndef meta_blk{}():\n  ".format(i)
-
-      gen_tick_src += "\n  ".join( [ "update_blk{}__{}() # {}" \
-                                    .format( i, j, schedule_names[(i, j)] )
-                                    for j in xrange( len(meta_blk) )] )
-
-      gen_tick_src += "\ntry:\n"
-      gen_tick_src += "  dont_trace_here(0, False, meta_blk{}.__code__)\n".format( i )
-      gen_tick_src += "except NameError:\n"
+      # We will use pypyjit.dont_trace_here to disable tracing across
+      # intermediate update blocks.
+      gen_tick_src =  "try:\n"
+      gen_tick_src += "  from pypyjit import dont_trace_here\n"
+      gen_tick_src += "except ImportError:\n"
       gen_tick_src += "  pass\n"
 
-    gen_tick_src += "\ndef tick_top():\n  "
-    gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in xrange(len(metas)) ] )
+      # The "comment" that will be used for update calls.
+      schedule_names = {}
 
-    exec py.code.Source( gen_tick_src ).compile() in locals()
+      for i in xrange( len(metas) ):
+        meta = metas[i]
+        for j in xrange( len(meta) ):
+          blk = meta[j]
+          schedule_names[ (i, j) ] = "[br: {}] {}" \
+            .format( m._all_meta['br'][id(blk)], blk.__name__ )
+
+          # Copy the scheduled functions to update_blkX__Y
+          gen_tick_src += "update_blk{0}__{1} = metas[{0}][{1}];".format( i, j )
+
+      for i in xrange( len(metas) ):
+        meta_blk = m._meta_schedule[i]
+
+        gen_tick_src += "\n\ndef meta_blk{}():\n  ".format(i)
+
+        gen_tick_src += "\n  ".join( [ "update_blk{}__{}() # {}" \
+                                      .format( i, j, schedule_names[(i, j)] )
+                                      for j in xrange( len(meta_blk) )] )
+
+        gen_tick_src += "\ntry:\n"
+        gen_tick_src += "  dont_trace_here(0, False, meta_blk{}.__code__)\n".format( i )
+        gen_tick_src += "except NameError:\n"
+        gen_tick_src += "  pass\n"
+
+      gen_tick_src += "\ndef tick_top():\n  "
+      gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in xrange(len(metas)) ] )
+
+      exec py.code.Source( gen_tick_src ).compile() in locals()
+
+    elif mode == 'meta_loop':
+
+      gen_tick_src = ""
+
+      # The "comment" that will be used for update calls.
+      schedule_names = {}
+
+      for i in xrange( len(metas) ):
+        meta = metas[i]
+        for j in xrange( len(meta) ):
+          blk = meta[j]
+          schedule_names[ (i, j) ] = "[br: {}] {}" \
+            .format( m._all_meta['br'][id(blk)], blk.__name__ )
+
+          # Copy the scheduled functions to update_blkX__Y
+          gen_tick_src += "update_blk{0}__{1} = metas[{0}][{1}];".format( i, j )
+
+      self._meta_blks = []
+
+      for i in xrange( len(metas) ):
+        meta_blk = m._meta_schedule[i]
+
+        gen_tick_src += "\n\ndef meta_blk_call{}():\n  ".format(i)
+
+        gen_tick_src += "\n  ".join( [ "update_blk{}__{}() # {}" \
+                                      .format( i, j, schedule_names[(i, j)] )
+                                      for j in xrange( len(meta_blk) )] )
+        gen_tick_src += "\n\nself._meta_blks.append(meta_blk_call{})".format(i)
+
+
+      gen_tick_src += "\ndef tick_top():"
+      gen_tick_src += "\n  for x in self._meta_blks:"
+      gen_tick_src += "\n    x()\n"
+
+      exec py.code.Source( gen_tick_src ).compile() in locals()
+
+    else:
+      assert False, mode
 
     print gen_tick_src
     m._tick_src = gen_tick_src

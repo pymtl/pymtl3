@@ -21,8 +21,8 @@ class SimRTLPass( BasePass ):
 
     m.elaborate()
 
-    if mode == 'meta':
-      MetaBlkPass().apply( m )
+    if mode.startswith('meta'):
+      MetaBlkPass().apply( m, mode )
     else:
       ScheduleUpblkPass().apply( m )
       GenerateTickPass ( mode ).apply( m )
