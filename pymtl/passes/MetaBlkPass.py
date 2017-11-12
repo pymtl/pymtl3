@@ -69,11 +69,11 @@ class MetaBlkPass( BasePass ):
         insert_sortedlist( Q, br, v )
 
     # Branchiness factor is the bound of branchiness in a meta block.
-    branchiness_factor = 16
+    branchiness_factor = 8
 
     # Countdown factor is the number of branchy block we allow at the end
     # of a meta block
-    countdown_factor = 5
+    countdown_factor = 10000
 
     metas = []
     current_meta = []
@@ -164,7 +164,7 @@ class MetaBlkPass( BasePass ):
 
   def generate_tick( self, m, mode ):
     metas = m._meta_schedule
-    print "meta_mode:", mode
+    print "meta_mode:", mode, "num_metablks:", len(metas)
 
     if mode == 'meta_break':
       # unroll
@@ -247,6 +247,6 @@ class MetaBlkPass( BasePass ):
     else:
       assert False, mode
 
-    print gen_tick_src
+    # print gen_tick_src
     m._tick_src = gen_tick_src
     m.tick = tick_top

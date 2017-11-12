@@ -187,12 +187,12 @@ class CountBranches( DetectVarNames ):
 
   # A single for is estimated to be 10x of a branch
   def visit_For( self, node ):
-    self.num_br += 10
+    self.num_br += 0
     for stmt in node.body:
       self.visit( stmt )
 
   def visit_While( self, node ):
-    self.num_br += 10
+    self.num_br += 0
     for stmt in node.body:
       self.visit( stmt )
 
