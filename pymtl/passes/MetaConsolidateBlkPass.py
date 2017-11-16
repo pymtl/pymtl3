@@ -50,7 +50,7 @@ class MetaConsolidateBlkPass( BasePass ):
     self.i = 0
     self.hostobjs = None
 
-    def schedule_blks( blks, hostobjs=None ):
+    def schedule_blks( blks ):
 
       # Make sure wr already generated a version of the block without a
       # closure.
@@ -58,12 +58,8 @@ class MetaConsolidateBlkPass( BasePass ):
         if other_blk.blk_without_closure is None:
           other_blk.hostobj.strip_closure( other_blk )
 
-      # Use the self.hostobjs reference to signal this can be
-      # consolidated with the next for loop.
-      if hostobjs is None:
-        hostobjs = [ b.hostobj for b in blks ]
+      hostobjs = [ b.hostobj for b in blks ]
 
-      assert len( hostobjs ) == len( blks )
       assert blk.blk_without_closure
       current_meta.append( ( blk.blk_without_closure,
                              hostobjs,
@@ -111,7 +107,6 @@ class MetaConsolidateBlkPass( BasePass ):
           # Check if all of the blocks can be scheduled.
           if all( ( id( b ) in Q for b in similar_blks ) ):
 
-            #schedule_blks( similar_blks, hostobjs=self.hostobjs )
             schedule_blks( similar_blks )
             continue
 
@@ -121,7 +116,7 @@ class MetaConsolidateBlkPass( BasePass ):
         if self.i == len( Q ):
           # Reached the end of the queue, and couldn't find
           # opportunities to merge for blocks. Reset i, remove
-          # prev_hostobjs and try again.
+          # self.hostobjs and try again.
           self.i = 0
           self.hostobjs = None
           continue
