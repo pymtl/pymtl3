@@ -341,11 +341,20 @@ class ComponentLevel3( ComponentLevel2 ):
                 else ( "s." + repr(writer)[lca_len+1:] )
       rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
 
-      upblk_name = "{}__{}".format(repr(writer), fanout)\
-                    .replace( ".", "_" ).replace( ":", "_" ) \
-                    .replace( "[", "_" ).replace( "]", "" ) \
-                    .replace( "(", "_" ).replace( ")", "" )
-
+      # Instead of a globally unique name for the update block, use a
+      # unique enough name from the perspective of the common ancestor.
+      # This allows us to discover more similar blocks that can be
+      # scheduled more efficiently.
+      if repr(writer).startswith( repr(lca) ):
+        upblk_name = repr(writer)[ len( repr(lca) ) : ] \
+                      .replace( ".", "_" ).replace( ":", "_" ) \
+                      .replace( "[", "_" ).replace( "]", "" ) \
+                      .replace( "(", "_" ).replace( ")", "" )
+      else:
+        upblk_name = repr(writer) \
+                      .replace( ".", "_" ).replace( ":", "_" ) \
+                      .replace( "[", "_" ).replace( "]", "" ) \
+                      .replace( "(", "_" ).replace( ")", "" )
       # TODO port common prefix optimization, currently only multi-writer
 
       # NO @s.update because I don't want to impair the original model

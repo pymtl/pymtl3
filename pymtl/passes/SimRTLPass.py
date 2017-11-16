@@ -9,6 +9,7 @@ from errors import ModelTypeError
 from BasePass import BasePass
 from ScheduleUpblkPass import ScheduleUpblkPass
 from MetaBlkPass import MetaBlkPass
+from MetaConsolidateBlkPass import MetaConsolidateBlkPass
 from GenerateTickPass import GenerateTickPass
 from SignalCleanupPass import SignalCleanupPass
 from PrintMetadataPass import PrintMetadataPass
@@ -21,7 +22,9 @@ class SimRTLPass( BasePass ):
 
     m.elaborate()
 
-    if mode.startswith('meta'):
+    if mode.startswith( "meta_consolidate" ):
+      MetaConsolidateBlkPass().apply( m, mode )
+    elif mode.startswith('meta'):
       MetaBlkPass().apply( m, mode )
     else:
       ScheduleUpblkPass().apply( m )
