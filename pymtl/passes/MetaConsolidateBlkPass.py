@@ -39,10 +39,12 @@ class MetaConsolidateBlkPass( BasePass ):
       es [u].append( v )
 
     # TODO: use an ordered set here instead for O( logn ) searches.
-    Q = []
+    #Q = []
+    Q = set()
     for v in vs:
       if not InD[v]:
-        Q.append(v)
+        #Q.append(v)
+        Q.add(v)
 
     metas = []
     current_meta = []
@@ -50,7 +52,12 @@ class MetaConsolidateBlkPass( BasePass ):
     self.i = 0
     self.hostobjs = None
 
-    def schedule_blks( blks ):
+    def schedule_blks():
+      blks = self.scheduled_blks
+
+      print "{} {} {}".format( self.best_priority, blks[0].__name__,
+          [ id( b ) in Q for b in blks ] )
+
 
       # Make sure wr already generated a version of the block without a
       # closure.
@@ -60,8 +67,7 @@ class MetaConsolidateBlkPass( BasePass ):
 
       hostobjs = [ b.hostobj for b in blks ]
 
-      assert blk.blk_without_closure
-      current_meta.append( ( blk.blk_without_closure,
+      current_meta.append( ( blks[0].blk_without_closure,
                              hostobjs,
                              blks ) )
 
@@ -74,19 +80,40 @@ class MetaConsolidateBlkPass( BasePass ):
         for v in es[ id(other_blk) ]:
           InD[v] -= 1
           if not InD[v]:
-            Q.insert( 0, v )
+            #Q.insert( 0, v )
+            Q.add( v )
 
       # Reset the queue position.
-      self.i = 0
+      #self.i = 0
 
       # Store the hostobjs so that we can try combining more into the same
       # for loop.
-      self.hostobjs = hostobjs
+      if len( hostobjs ) > 1:
+        self.hostobjs = hostobjs
+      else:
+        self.hostobjs = None
+      #self.hostobjs = None
+      self.best_priority = -1
+      self.scheduled_blks = None
 
 
-    while Q:
-      # Peek the current position in the queue.
-      u = Q[ self.i ]
+    self.best_priority = -1
+    self.scheduled_blks = None
+
+    def set_schedule_priority( priority, blks ):
+      #print "{} {} {}".format( priority, blks[0].__name__,
+      #    [ id( b ) in Q for b in blks ] )
+      if self.best_priority == -1 or priority < self.best_priority:
+        self.scheduled_blks = blks
+        self.best_priority = priority
+
+    # No idea if these are good.
+    nonschedule_penalty = 0.1
+    nonschedulable_penalty = 0.1
+    similarity_penalty = 1.0
+
+    def consider( u ):
+
       blk = m._all_id_upblk[u]
 
       # Find blocks that are similar (same update block of the same
@@ -94,8 +121,12 @@ class MetaConsolidateBlkPass( BasePass ):
       # recoreded by ComponentLevel1.
       similar_blks = blk.hostobj.__class__._blks[ blk.__name__ ]
 
-      # If we have previous hostobjs recorded, greedily try to find
-      # another set of blocks that uses the same hostobjs.
+      schedulable_blks = [ b for b in similar_blks if id( b ) in Q ]
+      num_schedulable = len( schedulable_blks )
+      num_nonschedulable = len( similar_blks ) - num_schedulable
+
+      # Number 1 priority is if we find the same exact hostobjs as the
+      # curent running one.
       if self.hostobjs is not None:
         if blk.hostobj in self.hostobjs:
           hostobjs = [ b.hostobj for b in similar_blks ]
@@ -106,43 +137,102 @@ class MetaConsolidateBlkPass( BasePass ):
 
           # Check if all of the blocks can be scheduled.
           if all( ( id( b ) in Q for b in similar_blks ) ):
+            set_schedule_priority( 1.0, similar_blks )
+            return
 
-            schedule_blks( similar_blks )
-            continue
+        # The second priority is if we have at least as many schedulable
+        # blocks.
+        if num_schedulable >= len( self.hostobjs ):
+          # If we're giving up some of the schedulable ones, we should
+          # penalize ourselves a bit.
 
-        # Loop around.
-        self.i += 1
 
-        if self.i == len( Q ):
-          # Reached the end of the queue, and couldn't find
-          # opportunities to merge for blocks. Reset i, remove
-          # self.hostobjs and try again.
-          self.i = 0
-          self.hostobjs = None
-          continue
+          # Number that we won't be scheduling.
+          num_nonscheduled = num_schedulable - len( self.hostobjs )
 
-      # Check if all blocks of the type are schedulable.
-      for other_blk in similar_blks:
+          #import pdb; pdb.set_trace()
+          # Pick the first len( self.hostobjs ) many to schedule.
+          scheduled_blks = schedulable_blks[ : len( self.hostobjs ) ]
+          set_schedule_priority( 2.0 + ( nonschedule_penalty *
+                                          num_nonscheduled )
+                                     + ( nonschedulable_penalty *
+                                         num_nonschedulable ),
+                                 scheduled_blks )
+          return
 
-        if id( other_blk ) not in Q:
-          self.i += 1
+      # The third priority is we find blocks that can all be scheduled.
+      set_schedule_priority( 3.0 +
+                             nonschedulable_penalty * num_nonschedulable +
+                             similarity_penalty * len( similar_blks ),
+                             schedulable_blks )
 
-          # Couldn't schedule all blocks of the same type, schedule as
-          # many as possible for head of the queue.
-          if self.i == len( Q ):
-            u = Q[0]
+    while Q:
+      for u in Q:
+        consider( u )
 
-            blk = m._all_id_upblk[u]
-            similar_blks = [ b for b in blk.hostobj.__class__._blks[ blk.__name__ ]
-                             if id( b ) in Q ]
-            schedule_blks( similar_blks )
+      schedule_blks()
 
-          break
 
-      else:
 
-        # Can schedule all similar blocks, so do that.
-        schedule_blks( similar_blks )
+    # while Q:
+    #   # Peek the current position in the queue.
+    #   u = Q[ self.i ]
+    #   blk = m._all_id_upblk[u]
+
+    #   # Find blocks that are similar (same update block of the same
+    #   # component, but a different instant). This should have already been
+    #   # recoreded by ComponentLevel1.
+    #   similar_blks = blk.hostobj.__class__._blks[ blk.__name__ ]
+
+    #   # If we have previous hostobjs recorded, greedily try to find
+    #   # another set of blocks that uses the same hostobjs.
+    #   if self.hostobjs is not None:
+    #     if blk.hostobj in self.hostobjs:
+    #       hostobjs = [ b.hostobj for b in similar_blks ]
+
+    #       similar_blks = \
+    #           [ similar_blks[i] for i, ho in enumerate(hostobjs)
+    #             if ho in self.hostobjs ]
+
+    #       # Check if all of the blocks can be scheduled.
+    #       if all( ( id( b ) in Q for b in similar_blks ) ):
+
+    #         schedule_blks( similar_blks )
+    #         continue
+
+    #     # Loop around.
+    #     self.i += 1
+
+    #     if self.i == len( Q ):
+    #       # Reached the end of the queue, and couldn't find
+    #       # opportunities to merge for blocks. Reset i, remove
+    #       # self.hostobjs and try again.
+    #       self.i = 0
+    #       self.hostobjs = None
+    #       continue
+
+    #   # Check if all blocks of the type are schedulable.
+    #   for other_blk in similar_blks:
+
+    #     if id( other_blk ) not in Q:
+    #       self.i += 1
+
+    #       # Couldn't schedule all blocks of the same type, schedule as
+    #       # many as possible for head of the queue.
+    #       if self.i == len( Q ):
+    #         u = Q[0]
+
+    #         blk = m._all_id_upblk[u]
+    #         similar_blks = [ b for b in blk.hostobj.__class__._blks[ blk.__name__ ]
+    #                          if id( b ) in Q ]
+    #         schedule_blks( similar_blks )
+
+    #       break
+
+    #   else:
+
+    #     # Can schedule all similar blocks, so do that.
+    #     schedule_blks( similar_blks )
 
 
     # Append the last meta block
