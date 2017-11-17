@@ -16,7 +16,7 @@ class TestVectorSimulator( object ):
 
   def run_test( self ):
 
-    SimLevel3Pass().apply( self.model )
+    SimRTLPass().apply( self.model )
 
     print()
     for test_vector in self.test_vectors:

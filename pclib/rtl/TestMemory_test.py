@@ -323,7 +323,7 @@ def test_read_write_mem( dump_vcd ):
   assert result == data
 
 def run_sim( model,dump_vcd ):
-  SimLevel3Pass().apply( model )
+  SimRTLPass().apply( model )
   print()
   while not model.done():
     model.tick()
