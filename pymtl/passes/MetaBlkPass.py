@@ -198,10 +198,11 @@ class MetaBlkPass( BasePass ):
                                       .format( i, j, schedule_names[(i, j)] )
                                       for j in xrange( len(meta_blk) )] )
 
-        gen_tick_src += "\ntry:\n"
-        gen_tick_src += "  dont_trace_here(0, False, meta_blk{}.__code__)\n".format( i )
-        gen_tick_src += "except NameError:\n"
-        gen_tick_src += "  pass\n"
+        if i < len(metas)-1:
+          gen_tick_src += "\ntry:\n"
+          gen_tick_src += "  dont_trace_here(0, False, meta_blk{}.__code__)\n".format( i )
+          gen_tick_src += "except NameError:\n"
+          gen_tick_src += "  pass\n"
 
       gen_tick_src += "\ndef tick_top():\n  "
       gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in xrange(len(metas)) ] )
