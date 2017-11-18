@@ -42,8 +42,9 @@ class TestVectorSimulator( object ):
 def run_test( model, test_vectors ):
 
   # Instantiate and elaborate the model
+  # Shunning: you have applied SimRTLPass in run_test
 
-  model.elaborate()
+  # model.elaborate()
 
   # Define functions mapping the test vector to ports in model
 

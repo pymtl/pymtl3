@@ -24,7 +24,7 @@ class RoundRobinArbiter( RTLComponent ):
 
     # priority register
 
-    s.priority_reg = m = RegEnRst( nreqs, reset_value = 1 )
+    s.priority_reg = m = RegEnRst( mk_bits( nreqs ), reset_value = 1 )
 
     s.connect( m.en,           s.priority_en )
     s.connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
@@ -97,7 +97,7 @@ class RoundRobinArbiterEn( RTLComponent ):
 
     # priority register
 
-    s.priority_reg = m = RegEnRst( nreqs, reset_value = 1 )
+    s.priority_reg = m = RegEnRst( mk_bits( nreqs ), reset_value = 1 )
 
     s.connect( m.en,           s.priority_en )
     s.connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
