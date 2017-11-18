@@ -18,9 +18,36 @@ class DetectVarNames( ast.NodeVisitor ):
       lower = node.slice.lower
       upper = node.slice.upper
       # If the slice looks like a[i:i+1] where i is variable, I assume it
-      # would access the whole variable a
-      if isinstance( lower, ast.Num ) and isinstance( upper, ast.Num ):
-        slices.append( slice(node.slice.lower.n, node.slice.upper.n) )
+      # would access the whole variable
+
+      low = up = None
+
+      if isinstance( lower, ast.Num ):
+        low = node.slice.lower.n
+      elif isinstance( lower, ast.Name ):
+        st = lower.id
+        if st in self.upblk.func_globals:
+          low = self.upblk.func_globals[ v.id ] # TODO check low is int
+        else:
+          for i, var in enumerate( self.upblk.__code__.co_freevars ):
+            if var == lower.id:
+              low = self.upblk.__closure__[i].cell_contents
+              break
+
+      if isinstance( upper, ast.Num ):
+        up = node.slice.upper.n
+      elif isinstance( upper, ast.Name ):
+        st = upper.id
+        if st in self.upblk.func_globals:
+          up = self.upblk.func_globals[ v.id ] # TODO check low is int
+        else:
+          for i, var in enumerate( self.upblk.__code__.co_freevars ):
+            if var == upper.id:
+              up = self.upblk.__closure__[i].cell_contents
+              break
+
+      if low and up:
+        slices.append( slice(low, up) )
       # FIXME
       # else:
       node = node.value
@@ -38,6 +65,11 @@ class DetectVarNames( ast.NodeVisitor ):
         elif isinstance( v, ast.Name ):
           if v.id in self.upblk.func_globals: # Only support global const indexing for now
             n = self.upblk.func_globals[ v.id ]
+          else:
+            for i, var in enumerate( self.upblk.__code__.co_freevars ):
+              if var == v.id:
+                up = self.upblk.__closure__[i].cell_contents
+                break
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant
           self.visit( v )
         elif isinstance( v, ast.Call ): # int(x)

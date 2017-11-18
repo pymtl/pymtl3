@@ -156,6 +156,10 @@ class ComponentLevel2( ComponentLevel1 ):
           return
 
         if idx[ idx_depth ] == "*": # special case, materialize all objects
+          if isinstance( obj, Signal ): # Signal[*] is the signal itself
+            add_all( obj, obj_list )
+            return
+
           for i, o in enumerate( obj ):
             expand_array_index( o, name_depth, name, idx_depth+1, idx, obj_list )
         else:
@@ -494,10 +498,12 @@ class ComponentLevel2( ComponentLevel1 ):
       while x:
         if id(x) != wr_id and id(x) in write_upblks:
           wrx_blks = list(write_upblks[id(x)])
-          raise MultiWriterError( \
-          "Two-writer conflict in nested struct/slice. \n - {} (in {})\n - {} (in {})".format(
-            repr(x), s._all_id_upblk[wrx_blks[0]].__name__,
-            repr(obj), s._all_id_upblk[wr_blks[0]].__name__ ) )
+
+          if wrx_blks[0] != wr_blks[0]:
+            raise MultiWriterError( \
+            "Two-writer conflict in nested struct/slice. \n - {} (in {})\n - {} (in {})".format(
+              repr(x), s._all_id_upblk[wrx_blks[0]].__name__,
+              repr(obj), s._all_id_upblk[wr_blks[0]].__name__ ) )
         x = x._nested
 
       # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
