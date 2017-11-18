@@ -22,6 +22,8 @@ class TestVectorSimulator( object ):
 
     SimRTLPass().apply( self.model )
 
+    self.model.sim_reset()
+
     print()
     for test_vector in self.test_vectors:
 
@@ -49,7 +51,7 @@ def run_test( model, test_vectors ):
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
-    model.reqs.value = test_vector[0]
+    model.reqs = test_vector[0]
 
   def tv_out( model, test_vector ):
     assert model.grants == test_vector[1]
@@ -57,6 +59,7 @@ def run_test( model, test_vectors ):
   # Run the test
 
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
+
   sim.run_test()
 
 #------------------------------------------------------------------------------
@@ -107,13 +110,13 @@ def run_en_test( model, test_vectors ):
 
   # Instantiate and elaborate the model
 
-  model.elaborate()
+  # model.elaborate()
 
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
-    model.en.value   = test_vector[0]
-    model.reqs.value = test_vector[1]
+    model.en   = test_vector[0]
+    model.reqs = test_vector[1]
 
   def tv_out( model, test_vector ):
     assert model.grants == test_vector[2]

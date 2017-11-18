@@ -20,7 +20,7 @@ class Reg( RTLComponent ):
 
       @s.update_on_edge
       def up_reg():
-        s.out = s.in_
+        s.out = Type( s.in_ )
 
     if not en and rst: # RegRst
       s.line_trace = s.line_trace_rst
@@ -68,7 +68,7 @@ class RegEn( RTLComponent ):
     @s.update_on_edge
     def up_regen():
       if s.en:
-        s.out = s.in_
+        s.out = Type( s.in_ )
 
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
@@ -84,7 +84,7 @@ class RegRst( RTLComponent ):
     @s.update_on_edge
     def up_regrst():
       if s.reset: s.out = Type( reset_value )
-      else:       s.out = s.in_
+      else:       s.out = Type( s.in_ )
 
   def line_trace( s ):
     return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
@@ -101,7 +101,7 @@ class RegEnRst( RTLComponent ):
     @s.update_on_edge
     def up_regenrst():
       if s.reset: s.out = Type( reset_value )
-      elif s.en:  s.out = s.in_
+      elif s.en:  s.out = Type( s.in_ )
 
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
