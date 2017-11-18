@@ -46,7 +46,6 @@ class DetectVarNames( ast.NodeVisitor ):
               up = self.upblk.__closure__[i].cell_contents
               break
 
-      print low, up
       if low is not None and up is not None:
         slices.append( slice(low, up) )
       # FIXME
