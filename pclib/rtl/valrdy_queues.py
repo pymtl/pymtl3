@@ -1,6 +1,6 @@
 from pymtl import *
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
-from pclib.rtl  import Mux, Reg, RegEn
+from pclib.rtl  import Mux, Reg, RegEn, RegisterFile
 
 class PipeQueue1RTL( RTLComponent ):
 
@@ -133,3 +133,180 @@ class NormalQueue1RTL( RTLComponent ):
     return s.enq.line_trace() + " > " + \
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
+
+
+#-----------------------------------------------------------------------
+# NormalQueueRTL
+#-----------------------------------------------------------------------
+class NormalQueueRTL( RTLComponent ):
+
+  def __init__( s, num_entries, Type ):
+
+    s.enq              = InValRdyIfc( Type )
+    s.deq              = OutValRdyIfc( Type )
+    s.num_free_entries = OutVPort( mk_bits( clog2(num_entries) ) )
+
+    # Ctrl and Dpath unit instantiation
+
+    s.ctrl  = NormalQueueRTLCtrl ( num_entries       )
+    s.dpath = NormalQueueRTLDpath( num_entries, Type )
+
+    # Ctrl unit connections
+
+    s.connect( s.ctrl.enq_val,          s.enq.val          )
+    s.connect( s.ctrl.enq_rdy,          s.enq.rdy          )
+    s.connect( s.ctrl.deq_val,          s.deq.val          )
+    s.connect( s.ctrl.deq_rdy,          s.deq.rdy          )
+    s.connect( s.ctrl.num_free_entries, s.num_free_entries )
+
+    # Dpath unit connections
+
+    s.connect( s.dpath.enq_bits, s.enq.msg    )
+    s.connect( s.dpath.deq_bits, s.deq.msg    )
+
+    # Control Signal connections (ctrl -> dpath)
+
+    s.connect( s.dpath.wen,      s.ctrl.wen   )
+    s.connect( s.dpath.waddr,    s.ctrl.waddr )
+    s.connect( s.dpath.raddr,    s.ctrl.raddr )
+
+  def line_trace( s ):
+    return "{} () {}".format( s.enq, s.deq )
+
+#-----------------------------------------------------------------------
+# NormalQueueRTLDpath
+#-----------------------------------------------------------------------
+class NormalQueueRTLDpath( RTLComponent ):
+
+  def __init__( s, num_entries, Type ):
+
+    s.enq_bits  = InVPort  ( Type )
+    s.deq_bits  = OutVPort ( Type )
+
+    # Control signal (ctrl -> dpath)
+    addr_nbits  = clog2( num_entries )
+    s.wen       = InVPort  ( Bits1 )
+    s.waddr     = InVPort  ( mk_bits( addr_nbits ) )
+    s.raddr     = InVPort  ( mk_bits( addr_nbits ) )
+
+    # Queue storage
+
+    s.queue = RegisterFile( Type, num_entries )
+
+    # Connect queue storage
+
+    s.connect( s.queue.raddr[0], s.raddr    )
+    s.connect( s.queue.rdata[0], s.deq_bits )
+    s.connect( s.queue.wen[0],   s.wen      )
+    s.connect( s.queue.waddr[0], s.waddr    )
+    s.connect( s.queue.wdata[0], s.enq_bits )
+
+#-----------------------------------------------------------------------
+# NormalQueueRTLCtrl
+#-----------------------------------------------------------------------
+class NormalQueueRTLCtrl( RTLComponent ):
+
+  def __init__( s, num_entries ):
+
+    s.num_entries = num_entries
+    addr_nbits    = clog2( num_entries )
+
+    # Interface Ports
+
+    s.enq_val          = InVPort  ( Bits1 )
+    s.enq_rdy          = OutVPort ( Bits1 )
+    s.deq_val          = OutVPort ( Bits1 )
+    s.deq_rdy          = InVPort  ( Bits1 )
+    s.num_free_entries = OutVPort ( mk_bits( clog2( num_entries ) ) )
+
+    # Control signal (ctrl -> dpath)
+    s.wen              = OutVPort ( Bits1 )
+    s.waddr            = OutVPort ( mk_bits( addr_nbits ) )
+    s.raddr            = OutVPort ( mk_bits( addr_nbits ) )
+
+    # Wires
+
+    s.full             = Wire ( Bits1 )
+    s.empty            = Wire ( Bits1 )
+    s.do_enq           = Wire ( Bits1 )
+    s.do_deq           = Wire ( Bits1 )
+    s.enq_ptr          = Wire ( mk_bits( addr_nbits ) )
+    s.deq_ptr          = Wire ( mk_bits( addr_nbits ) )
+    s.enq_ptr_next     = Wire ( mk_bits( addr_nbits ) )
+    s.deq_ptr_next     = Wire ( mk_bits( addr_nbits ) )
+    # TODO: can't infer these temporaries due to if statement, fix
+    s.enq_ptr_inc      = Wire ( mk_bits( addr_nbits ) )
+    s.deq_ptr_inc      = Wire ( mk_bits( addr_nbits ) )
+    s.full_next_cycle  = Wire ( Bits1 )
+
+    s.last_idx         = num_entries - 1
+
+    @s.update
+    def comb():
+
+      # set output signals
+
+      s.empty   = not s.full and (s.enq_ptr == s.deq_ptr)
+
+      s.enq_rdy = not s.full
+      s.deq_val = not s.empty
+
+      # only enqueue/dequeue if valid and ready
+
+      s.do_enq = s.enq_rdy and s.enq_val
+      s.do_deq = s.deq_rdy and s.deq_val
+
+      # set control signals
+
+      s.wen     = s.do_enq
+      s.waddr   = s.enq_ptr
+      s.raddr   = s.deq_ptr
+
+      # enq ptr incrementer
+
+      if s.enq_ptr == s.last_idx: s.enq_ptr_inc = 0
+      else:                       s.enq_ptr_inc = s.enq_ptr + 1
+
+      # deq ptr incrementer
+
+      if s.deq_ptr == s.last_idx: s.deq_ptr_inc = 0
+      else:                       s.deq_ptr_inc = s.deq_ptr + 1
+
+      # set the next ptr value
+
+      if s.do_enq: s.enq_ptr_next = s.enq_ptr_inc
+      else:        s.enq_ptr_next = s.enq_ptr
+
+      if s.do_deq: s.deq_ptr_next = s.deq_ptr_inc
+      else:        s.deq_ptr_next = s.deq_ptr
+
+      # number of free entries calculation
+
+      if   s.reset:
+        s.num_free_entries = s.num_entries
+      elif s.full:
+        s.num_free_entries = 0
+      elif s.empty:
+        s.num_free_entries = s.num_entries
+      elif s.enq_ptr > s.deq_ptr:
+        s.num_free_entries = s.num_entries - ( s.enq_ptr - s.deq_ptr )
+      elif s.deq_ptr > s.enq_ptr:
+        s.num_free_entries = s.deq_ptr - s.enq_ptr
+
+      s.full_next_cycle = (s.do_enq and not s.do_deq and
+                                (s.enq_ptr_next == s.deq_ptr))
+
+    @s.update_on_edge
+    def seq():
+
+      if s.reset: s.deq_ptr = 0
+      else:       s.deq_ptr = s.deq_ptr_next
+
+      if s.reset: s.enq_ptr = 0
+      else:       s.enq_ptr = s.enq_ptr_next
+
+      if   s.reset:               s.full = 0
+      elif s.full_next_cycle:     s.full = 1
+      elif (s.do_deq and s.full): s.full = 0
+      else:                       s.full = s.full
+

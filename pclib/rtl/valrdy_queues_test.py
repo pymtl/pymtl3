@@ -134,3 +134,57 @@ def test_normal_Bits():
     [  B1(0) , B1(0) ,B32(0  ), B1(1) , B1(1) ,B32(567) ],
     [  B1(0) , B1(1) ,B32(0  ), B1(0) , B1(0) ,  '?'    ],
   ] )
+
+def test_2entry_normal_Bits():
+  """Two Element Normal Queue."""
+  B1  = mk_bits(1)
+  B32 = mk_bits(32)
+  run_test_queue( NormalQueueRTL( 2, Bits32 ), [
+    # Enqueue one element and then dequeue it
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ B1(1), B1(1), B32(0x0001), B1(0), B1(1),      '?'    ],
+    [ B1(0), B1(1), B32(0x0000), B1(1), B1(1), B32(0x0001) ],
+    [ B1(0), B1(1), B32(0x0000), B1(0), B1(0),      '?'    ],
+
+    # Fill in the queue and enq/deq at the same time
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ B1(1), B1(1), B32(0x0002), B1(0), B1(0),      '?'    ],
+    [ B1(1), B1(1), B32(0x0003), B1(1), B1(0), B32(0x0002) ],
+    [ B1(0), B1(0), B32(0x0003), B1(1), B1(0), B32(0x0002) ],
+    [ B1(1), B1(0), B32(0x0003), B1(1), B1(0), B32(0x0002) ],
+    [ B1(1), B1(0), B32(0x0003), B1(1), B1(1), B32(0x0002) ],
+    [ B1(1), B1(1), B32(0x0004), B1(1), B1(0),      '?'    ],
+    [ B1(1), B1(0), B32(0x0004), B1(1), B1(1), B32(0x0003) ],
+    [ B1(1), B1(1), B32(0x0005), B1(1), B1(0),      '?'    ],
+    [ B1(0), B1(0), B32(0x0005), B1(1), B1(1), B32(0x0004) ],
+    [ B1(0), B1(1), B32(0x0005), B1(1), B1(1), B32(0x0005) ],
+    [ B1(0), B1(1), B32(0x0005), B1(0), B1(1),      '?'    ],
+  ])
+
+def test_3entry_normal_Bits():
+  """Three Element Queue."""
+  B1  = mk_bits(1)
+  B32 = mk_bits(32)
+  run_test_queue( NormalQueueRTL( 3, Bits32 ), [
+    # Enqueue one element and then dequeue it
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ B1(1), B1(1), B32(0x0001), B1(0), B1(1),      '?'    ],
+    [ B1(0), B1(1), B32(0x0000), B1(1), B1(1), B32(0x0001) ],
+    [ B1(0), B1(1), B32(0x0000), B1(0), B1(0),      '?'    ],
+
+    # Fill in the queue and enq/deq at the same time
+    # enq_val enq_rdy enq_bits deq_val deq_rdy deq_bits
+    [ B1(1), B1(1), B32(0x0002), B1(0), B1(0),      '?'    ],
+    [ B1(1), B1(1), B32(0x0003), B1(1), B1(0), B32(0x0002) ],
+    [ B1(1), B1(1), B32(0x0004), B1(1), B1(0), B32(0x0002) ],
+    [ B1(1), B1(0), B32(0x0005), B1(1), B1(0), B32(0x0002) ],
+    [ B1(0), B1(0), B32(0x0005), B1(1), B1(0), B32(0x0002) ],
+    [ B1(1), B1(0), B32(0x0005), B1(1), B1(1), B32(0x0002) ],
+    [ B1(1), B1(1), B32(0x0005), B1(1), B1(1), B32(0x0003) ],
+    [ B1(1), B1(1), B32(0x0006), B1(1), B1(1), B32(0x0004) ],
+    [ B1(1), B1(1), B32(0x0007), B1(1), B1(1), B32(0x0005) ],
+    [ B1(0), B1(1), B32(0x0000), B1(1), B1(1), B32(0x0006) ],
+    [ B1(0), B1(1), B32(0x0000), B1(1), B1(1), B32(0x0007) ],
+    [ B1(0), B1(1), B32(0x0000), B1(0), B1(1),      '?'    ],
+  ])
+
