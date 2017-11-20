@@ -43,7 +43,7 @@ class TestSourceValRdy( RTLComponent ):
       else:
         if (s.out.rdy & s.out.val) and s.src_msgs:
           s.src_msgs.popleft()
-        s.out.val = Bits1( len(s.msgs) > 0 )
+        s.out.val = Bits1( len(s.src_msgs) > 0 )
         s.out.msg = s.default if not s.src_msgs else s.src_msgs[0]
 
   def done( s ):
