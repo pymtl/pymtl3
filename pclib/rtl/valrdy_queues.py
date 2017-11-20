@@ -244,23 +244,14 @@ class NormalQueueRTLCtrl( RTLComponent ):
     @s.update
     def comb():
 
-      # set output signals
-
-      s.empty   = not s.full and (s.enq_ptr == s.deq_ptr)
-
-      s.enq_rdy = not s.full
-      s.deq_val = not s.empty
-
       # only enqueue/dequeue if valid and ready
 
       s.do_enq = s.enq_rdy and s.enq_val
       s.do_deq = s.deq_rdy and s.deq_val
 
-      # set control signals
+      # write enable
 
       s.wen     = s.do_enq
-      s.waddr   = s.enq_ptr
-      s.raddr   = s.deq_ptr
 
       # enq ptr incrementer
 
@@ -295,6 +286,21 @@ class NormalQueueRTLCtrl( RTLComponent ):
 
       s.full_next_cycle = (s.do_enq and not s.do_deq and
                                 (s.enq_ptr_next == s.deq_ptr))
+
+    @s.update
+    def up_ctrl_signals():
+
+      # set output signals
+
+      s.empty   = not s.full and (s.enq_ptr == s.deq_ptr)
+
+      s.enq_rdy = not s.full
+      s.deq_val = not s.empty
+
+      # set control signals
+
+      s.waddr   = s.enq_ptr
+      s.raddr   = s.deq_ptr
 
     @s.update_on_edge
     def seq():
