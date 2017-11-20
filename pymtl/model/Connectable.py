@@ -107,7 +107,11 @@ class OutVPort( Signal ):
 class Interface( Connectable, NamedObject ):
 
   def inverse( s ):
-    inv = s.__class__()
+    inv = s
+    # Berkin: is it necessary to create a new object here? This creates
+    # problems when the interface has parameters, and it would be clunky
+    # to carry those parameters to the new object.
+    #inv = s.__class__()
     for name, obj in inv.__dict__.iteritems():
       if isinstance( obj, Signal ):
         setattr( inv, name, obj.inverse() )
