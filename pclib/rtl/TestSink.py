@@ -57,6 +57,40 @@ class TestSinkValRdy( RTLComponent ):
   def line_trace( s ):
     return s.in_.line_trace()
 
+class TestSinkUnorderedValRdy( RTLComponent ):
+
+  def __init__( s, Type, msgs ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+    s.msgs = deque( msgs )
+    s.recv = deque()
+
+    s.in_    = InValRdyIfc( Type )
+
+    @s.update_on_edge
+    def up_sink():
+      s.in_.rdy = len(s.msgs) > 0
+
+      if s.in_.val and s.in_.rdy:
+        ans = s.in_.msg
+
+        if ans not in s.msgs:
+          if ans in s.recv:
+            raise AssertionError( "Message %s arrived twice!"
+                                  % ans  )
+          else:
+            raise AssertionError( "Message %s not found in Test Sink!"
+                                  % ans  )
+
+        s.msgs.remove( ans )
+        s.recv.append( ans )
+
+  def done( s ):
+    return not s.msgs
+
+  def line_trace( s ):
+    return s.in_.line_trace()
+
+
 class TestSink( RTLComponent ):
 
   def __init__( s, Type, answer ):
@@ -81,3 +115,5 @@ class TestSink( RTLComponent ):
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
+
+
