@@ -42,26 +42,27 @@ class ComponentLevel1( NamedObject ):
       s._U_U_constraints.add( (id(x0.func), id(x1.func)) )
 
   def _cache_func_meta( s, func ):
-    """ Convention: the source of a function/update block across different
-    instances should be the same. You can construct different functions
-    based on the condition, but please use different names. This not only
-    keeps the caching valid, but also make the code more readable.
-
-    According to the convention, we can cache the information of a
-    function in the *class object* to avoid redundant parsing. """
+    """ Note: removed the previous requirement of a unique name for each
+    update block. This is no longer necessary. This was creating problems
+    for some of the generated update blocks where the function body would
+    be different but the function name is the same. Now we're using a hash
+    of the function body, and we don't have to re-parse the AST if the
+    hashes match. """
 
     cls  = type(s)
-    if not hasattr( cls, "_name_src" ):
-      cls._name_src = {}
-      cls._name_ast = {}
+    if not hasattr( cls, "_srchash_ast" ):
+      cls._srchash_ast = {}
 
-    name = func.__name__
-    if name not in cls._name_src:
-      cls._name_src[ name ] = src = p.sub( r'\2', inspect2.getsource(func) )
-      cls._name_ast[ name ] = ast.parse( src )
+    func.src = p.sub( r'\2', inspect2.getsource(func) )
 
-    func.src = cls._name_src[ name ]
-    func.ast = cls._name_ast[ name ]
+    # Generate the hash from just the source body.
+    fun_body = p.sub( "", func.src )
+    func.srchash = hash( fun_body )
+
+    if func.srchash not in cls._srchash_ast:
+      cls._srchash_ast[ func.srchash ] = ast.parse( func.src )
+
+    func.ast = cls._srchash_ast[ func.srchash ]
 
   def strip_closure( s, blk ):
     """ Given an update block function, create a new function with s
@@ -111,6 +112,7 @@ new_blk = get_blk_without_closure()""".format(
     var = locals()
     # Grab the function's view of globals.
     var.update( blk.__globals__ )
+
     exec py.code.Source( src ).compile() in var
 
     blk.blk_without_closure = new_blk
@@ -130,10 +132,10 @@ new_blk = get_blk_without_closure()""".format(
       cls._blks = {}
       cls._blks_without_closure = {}
 
-    name = blk.__name__
+    srchash = blk.srchash
 
-    if name not in cls._blks:
-      cls._blks[ name ] = []
+    if srchash not in cls._blks:
+      cls._blks[ srchash ] = []
 
     assert blk not in cls._blks
 
@@ -143,7 +145,7 @@ new_blk = get_blk_without_closure()""".format(
     # to initialize it.
     blk.blk_without_closure = None
 
-    cls._blks[ name ].append( blk )
+    cls._blks[ srchash ].append( blk )
     blk.hostobj = s
 
 

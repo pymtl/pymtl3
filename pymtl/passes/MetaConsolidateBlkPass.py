@@ -60,7 +60,9 @@ class MetaConsolidateBlkPass( BasePass ):
 
       hostobjs = [ b.hostobj for b in blks ]
 
+      blk = blks[0]
       assert blk.blk_without_closure
+
       current_meta.append( ( blk.blk_without_closure,
                              hostobjs,
                              blks ) )
@@ -92,7 +94,7 @@ class MetaConsolidateBlkPass( BasePass ):
       # Find blocks that are similar (same update block of the same
       # component, but a different instant). This should have already been
       # recoreded by ComponentLevel1.
-      similar_blks = blk.hostobj.__class__._blks[ blk.__name__ ]
+      similar_blks = blk.hostobj.__class__._blks[ blk.srchash ]
 
       # If we have previous hostobjs recorded, greedily try to find
       # another set of blocks that uses the same hostobjs.
@@ -133,7 +135,7 @@ class MetaConsolidateBlkPass( BasePass ):
             u = Q[0]
 
             blk = m._all_id_upblk[u]
-            similar_blks = [ b for b in blk.hostobj.__class__._blks[ blk.__name__ ]
+            similar_blks = [ b for b in blk.hostobj.__class__._blks[ blk.srchash ]
                              if id( b ) in Q ]
             schedule_blks( similar_blks )
 
@@ -293,6 +295,6 @@ class MetaConsolidateBlkPass( BasePass ):
 
     exec py.code.Source( gen_tick_src ).compile() in locals()
 
-    print gen_tick_src
+    #print gen_tick_src
     m._tick_src = gen_tick_src
     m.tick = tick_top
