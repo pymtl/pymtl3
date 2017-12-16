@@ -134,5 +134,3 @@ class PredicationTransformer( ast.NodeTransformer ):
     else:
       return stmts
 
-
-

@@ -24,17 +24,24 @@ class NamedObject(object):
       return super( NamedObject, s ).__repr__()
 
     name, idx = s._name_idx
+    name_len = len(name)
+    idx_len  = len(idx)
+
     ret = ".".join( [ "{}{}".format( name[i],
                                      "".join([ "[{}]".format(x)
                                                 for x in idx[i] ]) )
-                      for i in xrange(len(name)) ] )
+                      for i in xrange(name_len) ] )
 
-    if len(name) == len(idx): return ret
+    if name_len == idx_len: return ret
 
-    # The only place we allow slicing is the end, and only one slice allowed
+    # The only place we allow slicing is the end
+    assert name_len == idx_len-1
 
-    assert len(name) == len(idx)-1 and len(idx[-1]) == 1
-    return ret + "[{}:{}]".format( idx[-1][0].start, idx[-1][0].stop )
+    # Only one slice allowed
+    last_idx = idx[-1]
+    assert len(last_idx) == 1
+
+    return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
 
   def _tag_name_collect( s ):
 
@@ -43,9 +50,10 @@ class NamedObject(object):
       # Jump back to main function when it's another named object
 
       if   isinstance( child, NamedObject ):
-        child._parent   = parent
-        pname, pidx     = parent._name_idx
-        child._name_idx = ( pname + cur_name, pidx + [ cur_idx ] )
+        child._parent_obj  = parent
+        parent._child_objs = child
+        pname, pidx        = parent._name_idx
+        child._name_idx    = ( pname + cur_name, pidx + [ cur_idx ] )
         _recursive_tag_collect( child )
 
       # ONLY LIST IS SUPPORTED, SORRY.
@@ -64,9 +72,11 @@ class NamedObject(object):
 
       # Collect m
 
-      s._id_obj[ id(m) ] = m
+      s._pymtl_objs.add( m )
 
       # Jump to the expand function to check the type of child object
+
+      m._child_objs = []
 
       for name, obj in m.__dict__.iteritems():
 
@@ -79,8 +89,8 @@ class NamedObject(object):
 
     # Initialize the top level
 
-    s._parent = None
+    s._parent_obj = None
     s._name_idx = ( ["s"], [ [] ] )
 
-    s._id_obj = {}
+    s._pymtl_objs = set()
     _recursive_tag_collect( s )

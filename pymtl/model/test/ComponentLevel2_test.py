@@ -163,7 +163,6 @@ def test_variable_not_declared():
     def done( s ):
       return True
 
-
   try:
     _test_model( Top )
   except VarNotDeclaredError as e:

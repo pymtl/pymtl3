@@ -228,11 +228,10 @@ class CountBranches( DetectVarNames ):
     for stmt in node.body:
       self.visit( stmt )
 
-def extract_read_write( f, read, write ):
+def extract_read_write( f, tree, read, write ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
-  tree = f.ast
   assert isinstance(tree, ast.Module)
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
@@ -240,11 +239,10 @@ def extract_read_write( f, read, write ):
   for stmt in tree.body:
     DetectReadsAndWrites( f ).enter( stmt, read, write )
 
-def extract_func_calls( f, calls ):
+def extract_func_calls( f, tree, calls ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
-  tree = f.ast
   assert isinstance(tree, ast.Module)
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)

@@ -23,7 +23,7 @@ class ComponentLevel3( ComponentLevel2 ):
           assert isinstance( o1, Connectable )
 
         const = Const( o1.Type, o2 )
-        const._parent = s
+        const._parent_obj = s
         o1._connect( const )
 
       else: # normal
@@ -103,7 +103,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._tag_name_collect() # tag and collect first
 
-    for obj in s._id_obj.values():
+    for obj in s._pymtl_objs:
       if isinstance( obj, ComponentLevel2 ):
         obj._elaborate_read_write_func() # this function is local to the object
       s._collect_vars( obj )
@@ -115,10 +115,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._resolve_var_connections()
     s._check_port_in_nets()
-
-    s._generate_net_blocks()
-
-    s._process_constraints()
 
   # Override
   def _declare_vars( s ):
@@ -176,12 +172,14 @@ class ComponentLevel3( ComponentLevel2 ):
 
     writer_prop = {}
 
-    for wid in s._all_write_upblks:
-      writer_prop[ wid ] = True # propagatable
-      obj = s._id_obj[ wid ]._nested
-      while obj:
-        writer_prop[ id(obj) ] = False
+    for blk, writes in s._all_upblk_writes.iteritems():
+      for obj in writes:
+        writer_prop[ obj ] = True # propagatable
+
         obj = obj._nested
+        while obj:
+          writer_prop[ obj ] = False
+          obj = obj._nested
 
     # Find the host object of every net signal
     # and then leverage the information to find out top level input port
@@ -190,11 +188,11 @@ class ComponentLevel3( ComponentLevel2 ):
       for member in net:
         host = member
         while not isinstance( host, ComponentLevel3 ):
-          host = host._parent # go to the component
+          host = host._parent_obj # go to the component
         member._host = host
 
         if isinstance( member, InVPort ) and member._host == s:
-          writer_prop[ id(member) ] = True
+          writer_prop[ member ] = True
 
     headless = nets
     headed   = [] # [ ( writer, [readers] ) ]
@@ -224,15 +222,14 @@ class ComponentLevel3( ComponentLevel2 ):
           obj = None
           try:
             # Check if itself is a writer or a constant
-            if id(v) in writer_prop or isinstance( v, Const ):
+            if v in writer_prop or isinstance( v, Const ):
               assert not has_writer
               has_writer, writer = True, v
 
             # Check if an ancestor is a propagatable writer
             obj = v._nested
             while obj:
-              oid = id(obj)
-              if oid in writer_prop and writer_prop[ oid ]:
+              if obj in writer_prop and writer_prop[ obj ]:
                 assert not has_writer
                 has_writer, writer = True, v
                 break
@@ -241,11 +238,10 @@ class ComponentLevel3( ComponentLevel2 ):
             # Check sibling slices
             if v._slice:
               for obj in v._nested._slices.values():
-                if v == obj or not _overlap(obj._slice, v._slice):
+                if v is obj or not _overlap(obj._slice, v._slice):
                   continue # Skip the same slice or not overlapped
 
-                oid = id(obj)
-                if oid in writer_prop and writer_prop[ oid ]:
+                if obj in writer_prop and writer_prop[ obj ]:
                   assert not has_writer
                   has_writer, writer = True, v
 
@@ -265,19 +261,18 @@ class ComponentLevel3( ComponentLevel2 ):
         # propagatable s[a:b].
         # This means that at least other variables are able to see s.x/s[a:b]
         # so it doesn't matter if s.x.y is not in writer_prop
-        if id(writer) not in writer_prop:
+        if writer not in writer_prop:
           pass
 
         for v in net:
           if v != writer:
             readers.append( v )
-            writer_prop[ id(v) ] = True # The reader becomes new writer
+            writer_prop[ v ] = True # The reader becomes new writer
 
             obj = v._nested
             while obj:
-              oid = id(obj)
-              if oid not in writer_prop:
-                writer_prop[ oid ] = False
+              if obj not in writer_prop:
+                writer_prop[ obj ] = False
               obj = obj._nested
 
         headed.append( (writer, readers) )
@@ -287,111 +282,6 @@ class ComponentLevel3( ComponentLevel2 ):
       headless = new_headless
 
     s._all_nets = headed
-
-  def _generate_net_blocks( s ):
-    """ _generate_net_blocks:
-    Each net is an update block. Readers are actually "written" here.
-      >>> s.net_reader1 = s.net_writer
-      >>> s.net_reader2 = s.net_writer """
-
-    nets = s._all_nets
-
-    for writer, readers in nets:
-      if not readers:
-        continue # Aha, the net is dummy
-
-      # special case for const
-      wr_lca  = writer._parent if isinstance( writer, Const ) else writer
-      rd_lcas = readers[::]
-
-      # Find common ancestor: iteratively go to parent level and check if
-      # at the same level all objects' ancestor are the same
-
-      mindep  = min( len( wr_lca._name_idx[1] ),
-                     min( [ len(x._name_idx[1]) for x in rd_lcas ] ) )
-
-      # First navigate all objects to the same level deep
-
-      for i in xrange( mindep, len(wr_lca._name_idx[1]) ):
-        wr_lca = wr_lca._parent
-
-      for i, x in enumerate( rd_lcas ):
-        for j in xrange( mindep, len( x._name_idx[1] ) ):
-          x = x._parent
-        rd_lcas[i] = x
-
-      # Then iteratively check if their ancestor is the same
-
-      while wr_lca != s:
-        succeed = True
-        for x in rd_lcas:
-          if x != wr_lca:
-            succeed = False
-            break
-        if succeed: break
-
-        wr_lca = wr_lca._parent
-        for i in xrange( len(rd_lcas) ):
-          rd_lcas[i] = rd_lcas[i]._parent
-
-      lca     = wr_lca # this is the object we want to insert the block to
-      lca_len = len( repr(lca) )
-      fanout  = len( readers )
-      wstr    = repr(writer) if isinstance( writer, Const) \
-                else ( "s." + repr(writer)[lca_len+1:] )
-      rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
-
-      # Instead of a globally unique name for the update block, use a
-      # unique enough name from the perspective of the common ancestor.
-      # This allows us to discover more similar blocks that can be
-      # scheduled more efficiently.
-      if repr(writer).startswith( repr(lca) ):
-        upblk_name = repr(writer)[ len( repr(lca) ) : ] \
-                      .replace( ".", "_" ).replace( ":", "_" ) \
-                      .replace( "[", "_" ).replace( "]", "" ) \
-                      .replace( "(", "_" ).replace( ")", "" )
-      else:
-        upblk_name = repr(writer) \
-                      .replace( ".", "_" ).replace( ":", "_" ) \
-                      .replace( "[", "_" ).replace( "]", "" ) \
-                      .replace( "(", "_" ).replace( ")", "" )
-      # TODO port common prefix optimization, currently only multi-writer
-
-      # NO @s.update because I don't want to impair the original model
-      if fanout == 1: # simple mode!
-        gen_connection_src = """
-
-def {0}():
-  {1}
-blk = {0}
-
-        """.format( upblk_name,"{} = {}".format( rstrs[0], wstr ) )
-      else:
-        gen_connection_src = """
-
-def {0}():
-  common_writer = {1}
-  {2}
-blk = {0}
-        """.format( upblk_name, wstr, "\n  ".join(
-                    [ "{} = common_writer".format( x ) for x in rstrs] ) )
-
-      # Borrow the closure of lca to compile the block
-
-      blk         = lca.compile_update_block( gen_connection_src )
-      blk.hostobj = lca
-      blk.ast     = ast.parse( gen_connection_src )
-
-      blk_id = id(blk)
-      s._all_id_upblk[ blk_id ] = blk
-
-      # Collect read/writer metadata, directly insert them into _all_X
-
-      s._all_read_upblks[ id(writer) ].add( blk_id )
-      s._id_obj[ id(writer) ] = writer
-      for x in readers:
-        s._all_write_upblks[ id(x) ].add( blk_id )
-        s._id_obj[ id(x) ] = x
 
   def _check_port_in_nets( s ):
     nets = s._all_nets
@@ -410,15 +300,15 @@ blk = {0}
       # Each node is a writer when we expand it to other nodes
 
       S = deque( [ writer ] )
-      visited = set( [ id(writer) ] )
+      visited = set( [ writer ] )
 
       while S:
         u = S.pop() # u is the writer
         whost = u._host
 
         for v in u._adjs: # v is the reader
-          if id(v) not in visited:
-            visited.add( id(v) )
+          if v not in visited:
+            visited.add( v )
             S.append( v )
             rhost = v._host
 
@@ -440,7 +330,7 @@ blk = {0}
             # 2. reader_host(x) is writer_host(x.y)'s parent:
             # Hence, writer is outport, reader is wire or outport
             # writer cannot be constant
-            elif rhost == whost._parent:
+            elif rhost == whost._parent_obj:
               valid = isinstance( u, OutVPort) and \
                     ( isinstance( v, OutVPort ) or isinstance( v, Wire ) )
 
@@ -457,7 +347,7 @@ blk = {0}
             # 3. writer_host(x) is reader_host(x.y)'s parent:
             # Hence, writer is inport or wire, reader is inport
             # writer can be constant
-            elif whost == rhost._parent:
+            elif whost == rhost._parent_obj:
               # valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) \
                                                  # or isinstance( u, Const)) and \
                         # isinstance( v, InVPort )
@@ -490,7 +380,7 @@ blk = {0}
             # This means that the connection is fulfilled in x
             # Hence, writer is outport and reader is inport
             # writer cannot be constant
-            elif whost._parent == rhost._parent:
+            elif whost._parent_obj == rhost._parent_obj:
               valid = isinstance( u, OutVPort ) and isinstance( v, InVPort )
 
               if not valid:
@@ -503,7 +393,7 @@ blk = {0}
         OutVPort/Wire x.y.z cannot be driven by x.a.b""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     type(u).__name__, repr(u), repr(whost), type(whost).__name__,
-                    repr(whost._parent) ) )
+                    repr(whost._parent_obj) ) )
             # 5. neither host is the other's parent nor the same.
             else:
               raise SignalTypeError("""[Type 9] "{}" and "{}" cannot be connected:

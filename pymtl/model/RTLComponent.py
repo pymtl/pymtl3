@@ -21,6 +21,8 @@ class RTLComponent( ComponentLevel3 ):
     return inst
 
   def sim_reset( s ):
+    # TODO assert this is the top level
+
     s.reset = Bits1( 1 )
     s.tick() # This tick propagates the reset signal
     s.tick()
