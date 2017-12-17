@@ -11,123 +11,9 @@ import inspect, ast # for error message
 
 class ComponentLevel3( ComponentLevel2 ):
 
-  def connect( s, o1, o2 ):
-    """ Connect two objects. If one of them is integer, create a new Const
-    that wraps around it in 's'. This is why connecting a constant should be
-    done via this function in the component """
-
-    try:
-      if isinstance( o1, int ) or isinstance( o2, int ): # special case
-        if isinstance( o1, int ):
-          o1, o2 = o2, o1 # o1 is signal, o2 is int
-          assert isinstance( o1, Connectable )
-
-        const = Const( o1.Type, o2 )
-        const._parent_obj = s
-        o1._connect( const )
-
-      else: # normal
-        assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
-        assert o1.Type == o2.Type
-        o1._connect( o2 )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "\n{}".format(e) )
-
-  def connect_pairs( s, *args ):
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    for i in xrange(len(args)>>1) :
-      try:
-        s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
-      except InvalidConnectionError as e:
-        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
-              .format( (i<<1)+1, (i<<1)+2 , e ) )
-
-  def __call__( s, *args, **kwargs ):
-    assert args == ()
-
-    # The first loop checks if there is any invalid connection
-    # TODO check if all list/tuple of objects are connected to output ports
-
-    for (kw, item) in kwargs.iteritems():
-      item_valid = True
-
-      try:
-        obj = getattr( s, kw )
-      except AttributeError:
-        raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
-      if   isinstance( obj, list ): # out = {0:x, 1:y}
-        if not isinstance( item, dict ):
-          raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-        for idx in item:
-          if isinstance( item[idx], int ):
-            item_valid, error_idx = False, item[idx]
-            break
-      elif isinstance( item, tuple ) or isinstance( item, list ):
-        for x in item:
-          if isinstance( item, int ):
-            item_valid, error_idx = False, x
-            break
-      elif isinstance( item, int ):
-        item_valid, error_idx = False, item
-
-      if not item_valid:
-        raise InvalidConnectionError( "Connecting port {} to constant {} can only be done through \"s.connect\".".format( kw, error_idx ) )
-
-    # Then do the connection
-
-    try:
-      for (kw, item) in kwargs.iteritems():
-        obj = getattr( s, kw )
-
-        if   isinstance( obj, list ):
-          for idx in item:
-            obj[idx]._connect( item[idx] )
-        elif isinstance( item, tuple ) or isinstance( item, list ):
-          for x in item:
-            obj._connect( x )
-        else:
-          obj._connect( item )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
-    return s
-
-  # Override
-  def elaborate( s ):
-    s._declare_vars()
-
-    s._tag_name_collect() # tag and collect first
-
-    for obj in s._pymtl_objs:
-      if isinstance( obj, ComponentLevel2 ):
-        obj._elaborate_read_write_func() # this function is local to the object
-      s._collect_vars( obj )
-
-    s._tag_name_collect() # slicing will spawn extra objects
-
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
-
-    s._resolve_var_connections()
-    s._check_port_in_nets()
-
-  # Override
-  def _declare_vars( s ):
-    super( ComponentLevel3, s )._declare_vars()
-    s._signals = set() # store all signals that have connection
-
-  # Override
-  def _collect_vars( s, m ):
-    super( ComponentLevel3, s )._collect_vars( m )
-
-    if isinstance( m, Signal ):
-      if m._adjs: # has connection
-        s._signals.add( m )
+  #-----------------------------------------------------------------------
+  # Private methods
+  #-----------------------------------------------------------------------
 
   def _resolve_var_connections( s ):
     """ The case of nested data struct: the writer of a net can be one of
@@ -157,10 +43,10 @@ class ComponentLevel3( ComponentLevel2 ):
     nets = s._all_nets = []
 
     visited = set()
-    for i in s._signals:
-      if not i in visited:
+    for obj in s._pymtl_objs:
+      if isinstance( obj, Signal ) and obj._adjs and obj not in visited:
         net = []
-        Q   = deque( [ i ] )
+        Q   = deque( [ obj ] )
         while Q:
           u = Q.popleft()
           visited.add( u )
@@ -400,3 +286,115 @@ class ComponentLevel3( ComponentLevel2 ):
 
 - host objects "{}" and "{}" are too far in the hierarchy.""" \
               .format( repr(u), repr(v), repr(whost), repr(rhost) ) )
+
+  #-----------------------------------------------------------------------
+  # Construction-time APIs
+  #-----------------------------------------------------------------------
+
+  def connect( s, o1, o2 ):
+    """ Connect two objects. If one of them is integer, create a new Const
+    that wraps around it in 's'. This is why connecting a constant should be
+    done via this function in the component """
+
+    try:
+      if isinstance( o1, int ) or isinstance( o2, int ): # special case
+        if isinstance( o1, int ):
+          o1, o2 = o2, o1 # o1 is signal, o2 is int
+          assert isinstance( o1, Connectable )
+
+        const = Const( o1.Type, o2 )
+        const._parent_obj = s
+        o1._connect( const )
+
+      else: # normal
+        assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
+        assert o1.Type == o2.Type
+        o1._connect( o2 )
+
+    except AssertionError as e:
+      raise InvalidConnectionError( "\n{}".format(e) )
+
+  def connect_pairs( s, *args ):
+    if len(args) & 1 != 0:
+       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
+
+    for i in xrange(len(args)>>1) :
+      try:
+        s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
+      except InvalidConnectionError as e:
+        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
+              .format( (i<<1)+1, (i<<1)+2 , e ) )
+
+  def __call__( s, *args, **kwargs ):
+    assert args == ()
+
+    # The first loop checks if there is any invalid connection
+    # TODO check if all list/tuple of objects are connected to output ports
+
+    for (kw, item) in kwargs.iteritems():
+      item_valid = True
+
+      try:
+        obj = getattr( s, kw )
+      except AttributeError:
+        raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
+
+      if   isinstance( obj, list ): # out = {0:x, 1:y}
+        if not isinstance( item, dict ):
+          raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
+        for idx in item:
+          if isinstance( item[idx], int ):
+            item_valid, error_idx = False, item[idx]
+            break
+      elif isinstance( item, tuple ) or isinstance( item, list ):
+        for x in item:
+          if isinstance( item, int ):
+            item_valid, error_idx = False, x
+            break
+      elif isinstance( item, int ):
+        item_valid, error_idx = False, item
+
+      if not item_valid:
+        raise InvalidConnectionError( "Connecting port {} to constant {} can only be done through \"s.connect\".".format( kw, error_idx ) )
+
+    # Then do the connection
+
+    try:
+      for (kw, item) in kwargs.iteritems():
+        obj = getattr( s, kw )
+
+        if   isinstance( obj, list ):
+          for idx in item:
+            obj[idx]._connect( item[idx] )
+        elif isinstance( item, tuple ) or isinstance( item, list ):
+          for x in item:
+            obj._connect( x )
+        else:
+          obj._connect( item )
+
+    except AssertionError as e:
+      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
+
+    return s
+
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+
+  # Override
+  def elaborate( s ):
+    s._declare_vars()
+
+    s._tag_name_collect() # tag and collect first
+
+    for obj in s._pymtl_objs:
+      if isinstance( obj, ComponentLevel2 ):
+        obj._elaborate_read_write_func() # this function is local to the object
+      s._collect_vars( obj )
+    s._tag_name_collect() # slicing will spawn extra objects
+
+    s._resolve_var_connections()
+
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+    s._check_port_in_nets()

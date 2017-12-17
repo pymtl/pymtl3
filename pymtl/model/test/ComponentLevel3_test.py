@@ -1,9 +1,8 @@
 from pymtl import *
 from pymtl.model import ComponentLevel3
 from pymtl.model.errors import MultiWriterError, InvalidConnectionError
-from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
-from pclib.rtl import Mux
 from sim_utils import simple_sim_pass
+from collections import deque
 
 def _test_model( cls ):
   A = cls()
@@ -18,6 +17,65 @@ def _test_model( cls ):
 
 MUX_SEL_0 = 0
 MUX_SEL_1 = 1
+
+class TestSource( ComponentLevel3 ):
+
+  def __init__( s, Type, input_ ):
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+
+    s.Type = Type
+    s.input_ = deque( input_ ) # deque.popleft() is faster
+    s.out = OutVPort( Type )
+
+    @s.update
+    def up_src():
+      if not s.input_:
+        s.out = s.Type()
+      else:
+        s.out = s.input_.popleft()
+
+  def done( s ):
+    return not s.input_
+
+  def line_trace( s ):
+    return "%s" % s.out
+
+class TestSink( ComponentLevel3 ):
+
+  def __init__( s, Type, answer ):
+    assert type(answer) == list, "TestSink only accepts a list of outputs!" 
+
+    s.answer = deque( answer )
+    s.in_ = InVPort( Type )
+
+    @s.update
+    def up_sink():
+      if not s.answer:
+        assert False, "Simulation has ended"
+      else:
+        ref = s.answer.popleft()
+        ans = s.in_
+
+        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+
+  def done( s ):
+    return not s.answer
+
+  def line_trace( s ):
+    return "%s" % s.in_
+
+class Mux( ComponentLevel3 ):
+
+  def __init__( s, Type, ninputs ):
+    s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
+    s.sel = InVPort( int if Type is int else mk_bits( clog2(ninputs) ) )
+    s.out = OutVPort( Type )
+
+    @s.update
+    def up_mux():
+      s.out = s.in_[ s.sel ]
+
+  def line_trace( s ):  pass
 
 def test_connect_list_const_idx():
 

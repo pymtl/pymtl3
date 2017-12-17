@@ -15,6 +15,10 @@ p = re.compile('( *(@|def))')
 
 class ComponentLevel2( ComponentLevel1 ):
 
+  #-----------------------------------------------------------------------
+  # Private methods
+  #-----------------------------------------------------------------------
+
   def __new__( cls, *args, **kwargs ):
     inst = super( ComponentLevel2, cls ).__new__( cls, *args, **kwargs )
 
@@ -26,27 +30,6 @@ class ComponentLevel2( ComponentLevel1 ):
     inst._name_func = {}
 
     return inst
-
-  # Override, add RD/WR constraints
-  def add_constraints( s, *args ):
-
-    for (x0, x1) in args:
-      if   isinstance( x0, U ) and isinstance( x1, U ): # U & U, same
-        s._U_U_constraints.add( (x0.func, x1.func) )
-
-      elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
-        raise InvalidConstraintError
-
-      elif isinstance( x0, ValueConstraint ) or isinstance( x1, ValueConstraint ):
-        sign = 1 # RD(x) < U is 1, RD(x) > U is -1
-        if isinstance( x1, ValueConstraint ):
-          sign = -1
-          x0, x1 = x1, x0 # Make sure x0 is RD/WR(...) and x1 is U(...)
-
-        if isinstance( x0, RD ):
-          s._RD_U_constraints[ x0.var ].append( (sign, x1.func ) )
-        else:
-          s._WR_U_constraints[ x0.var ].append( (sign, x1.func ) )
 
   def _cache_func_meta( s, func ):
     """ Convention: the source of a function/update block across different
@@ -79,42 +62,6 @@ class ComponentLevel2( ComponentLevel1 ):
       name_fc[ name ]  = fc   = []
       AstHelper.extract_read_write( func, tree, rd, wr )
       AstHelper.extract_func_calls( func, tree, fc )
-
-  # @s.func is for those functions
-  def func( s, func ):
-    name = func.__name__
-    if name in s._name_func or name in s._name_upblk:
-      raise UpblkFuncSameNameError( name )
-
-    s._name_func[ name ] = func
-    func.hostobj = s
-
-    s._cache_func_meta( func )
-    return func
-
-  # Override
-  def update( s, blk ):
-    super( ComponentLevel2, s ).update( blk )
-    s._cache_func_meta( blk )
-    return blk
-
-  def update_on_edge( s, blk ):
-    s._update_on_edge.add( blk )
-    return s.update( blk )
-
-  # Override
-  def elaborate( s ):
-    s._declare_vars()
-
-    s._tag_name_collect() # tag and collect first
-    for obj in s._pymtl_objs:
-      if isinstance( obj, ComponentLevel2 ):
-        obj._elaborate_read_write_func()
-      s._collect_vars( obj )
-    s._tag_name_collect() # slicing will spawn extra objects
-
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
 
   # Override
   def _declare_vars( s ):
@@ -461,3 +408,67 @@ class ComponentLevel2( ComponentLevel1 ):
         (Or did you intend to declare it as an InVPort?)""" \
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
+
+  #-----------------------------------------------------------------------
+  # Construction-time APIs
+  #-----------------------------------------------------------------------
+
+  def func( s, func ): # @s.func is for those functions
+    name = func.__name__
+    if name in s._name_func or name in s._name_upblk:
+      raise UpblkFuncSameNameError( name )
+
+    s._name_func[ name ] = func
+    func.hostobj = s
+
+    s._cache_func_meta( func )
+    return func
+
+  # Override
+  def update( s, blk ):
+    super( ComponentLevel2, s ).update( blk )
+    s._cache_func_meta( blk ) # add caching of src/ast
+    return blk
+
+  def update_on_edge( s, blk ):
+    s._update_on_edge.add( blk )
+    return s.update( blk )
+
+  # Override
+  def add_constraints( s, *args ): # add RD-U/WR-U constraints
+
+    for (x0, x1) in args:
+      if   isinstance( x0, U ) and isinstance( x1, U ): # U & U, same
+        s._U_U_constraints.add( (x0.func, x1.func) )
+
+      elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
+        raise InvalidConstraintError
+
+      elif isinstance( x0, ValueConstraint ) or isinstance( x1, ValueConstraint ):
+        sign = 1 # RD(x) < U is 1, RD(x) > U is -1
+        if isinstance( x1, ValueConstraint ):
+          sign = -1
+          x0, x1 = x1, x0 # Make sure x0 is RD/WR(...) and x1 is U(...)
+
+        if isinstance( x0, RD ):
+          s._RD_U_constraints[ x0.var ].append( (sign, x1.func ) )
+        else:
+          s._WR_U_constraints[ x0.var ].append( (sign, x1.func ) )
+
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+
+  # Override
+  def elaborate( s ):
+    s._declare_vars()
+
+    s._tag_name_collect() # tag and collect first
+    for obj in s._pymtl_objs:
+      if isinstance( obj, ComponentLevel2 ):
+        obj._elaborate_read_write_func()
+      s._collect_vars( obj )
+    s._tag_name_collect() # slicing will spawn extra objects
+
+    s._check_upblk_writes()
+    s._check_port_in_upblk()

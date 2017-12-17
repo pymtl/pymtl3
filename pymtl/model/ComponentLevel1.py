@@ -21,6 +21,10 @@ p = re.compile('( *((@|def).*))')
 
 class ComponentLevel1( NamedObject ):
 
+  #-----------------------------------------------------------------------
+  # Private methods
+  #-----------------------------------------------------------------------
+
   def __new__( cls, *args, **kwargs ):
     """ Convention: variables local to the object is created in __new__ """
 
@@ -30,40 +34,6 @@ class ComponentLevel1( NamedObject ):
     inst._U_U_constraints = set() # contains ( id(func), id(func) )s
 
     return inst
-
-  def add_constraints( s, *args ):
-    for (x0, x1) in args:
-      assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
-      s._U_U_constraints.add( (x0.func, x1.func) )
-
-  def update( s, blk ):
-    name = blk.__name__
-    if name in s._name_upblk:
-      raise UpblkFuncSameNameError( name )
-
-    s._name_upblk[ name ] = blk
-    blk.hostobj = s
-    return blk
-
-  def compile_update_block( s, src ): # FIXME
-    var = locals()
-    var.update( globals() ) # the src may have Bits
-    exec py.code.Source( src ).compile() in var
-    s.record_update_block( blk )
-    return blk
-
-  # These functions are called during elaboration and should be overriden,
-  # but remember to call super method whenever necessary.
-
-  def elaborate( s ):
-    """ Elaboration steps. Child classes should override and rewrite it. """
-
-    s._declare_vars()
-    s._tag_name_collect()
-
-    for obj in s._pymtl_objs:
-      assert isinstance( obj, ComponentLevel1 ) # just component
-      s._collect_vars( obj )
 
   def _declare_vars( s ):
     """ Convention: the component on which we call elaborate declare
@@ -82,6 +52,42 @@ class ComponentLevel1( NamedObject ):
     if isinstance( m, ComponentLevel1 ):
       s._all_upblks.update( m._name_upblk.values() )
       s._all_U_U_constraints.update( m._U_U_constraints )
+
+  #-----------------------------------------------------------------------
+  # Construction-time APIs
+  #-----------------------------------------------------------------------
+
+  def update( s, blk ):
+    name = blk.__name__
+    if name in s._name_upblk:
+      raise UpblkFuncSameNameError( name )
+
+    s._name_upblk[ name ] = blk
+    blk.hostobj = s
+    return blk
+
+  def add_constraints( s, *args ):
+    for (x0, x1) in args:
+      assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
+      s._U_U_constraints.add( (x0.func, x1.func) )
+
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+
+  def elaborate( s ):
+    """ Elaboration steps. Child classes should override and rewrite it. """
+
+    s._declare_vars()
+    s._tag_name_collect()
+
+    for obj in s._pymtl_objs:
+      assert isinstance( obj, ComponentLevel1 ) # just component
+      s._collect_vars( obj )
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------
 
   def get_update_block( s, name ):
     return s._name_upblk[ name ]

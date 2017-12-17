@@ -12,36 +12,14 @@
 
 class NamedObject(object):
 
+  #-----------------------------------------------------------------------
+  # Private methods
+  #-----------------------------------------------------------------------
+
   def __new__( cls, *args, **kwargs ):
     inst = super( NamedObject, cls ).__new__( cls, *args, **kwargs )
     inst._name_idx = []
     return inst
-
-  # Developers should use repr(x) everywhere to get the name
-
-  def __repr__( s ):
-    if not s._name_idx: # if not tagged, go with class & address ...
-      return super( NamedObject, s ).__repr__()
-
-    name, idx = s._name_idx
-    name_len = len(name)
-    idx_len  = len(idx)
-
-    ret = ".".join( [ "{}{}".format( name[i],
-                                     "".join([ "[{}]".format(x)
-                                                for x in idx[i] ]) )
-                      for i in xrange(name_len) ] )
-
-    if name_len == idx_len: return ret
-
-    # The only place we allow slicing is the end
-    assert name_len == idx_len-1
-
-    # Only one slice allowed
-    last_idx = idx[-1]
-    assert len(last_idx) == 1
-
-    return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
 
   def _tag_name_collect( s ):
 
@@ -94,3 +72,29 @@ class NamedObject(object):
 
     s._pymtl_objs = set()
     _recursive_tag_collect( s )
+
+  # Developers should use repr(x) everywhere to get the name
+
+  def __repr__( s ):
+    if not s._name_idx: # if not tagged, go with class & address ...
+      return super( NamedObject, s ).__repr__()
+
+    name, idx = s._name_idx
+    name_len = len(name)
+    idx_len  = len(idx)
+
+    ret = ".".join( [ "{}{}".format( name[i],
+                                     "".join([ "[{}]".format(x)
+                                                for x in idx[i] ]) )
+                      for i in xrange(name_len) ] )
+
+    if name_len == idx_len: return ret
+
+    # The only place we allow slicing is the end
+    assert name_len == idx_len-1
+
+    # Only one slice allowed
+    last_idx = idx[-1]
+    assert len(last_idx) == 1
+
+    return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
