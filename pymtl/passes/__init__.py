@@ -1,6 +1,5 @@
 
 from BasePass import BasePass
 
+from GenDAGPass import GenDAGPass
 from SimRTLPass import SimRTLPass
-from PrintMetadataPass import PrintMetadataPass
-from EventDrivenPass import EventDrivenPass
