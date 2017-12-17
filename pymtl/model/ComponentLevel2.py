@@ -472,3 +472,13 @@ class ComponentLevel2( ComponentLevel1 ):
 
     s._check_upblk_writes()
     s._check_port_in_upblk()
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------
+
+  def get_all_nets( s ):
+    try:
+      return s._all_nets
+    except AttributeError:
+      raise NotElaboratedError()

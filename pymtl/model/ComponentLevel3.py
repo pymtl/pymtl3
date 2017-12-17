@@ -386,7 +386,6 @@ class ComponentLevel3( ComponentLevel2 ):
     s._declare_vars()
 
     s._tag_name_collect() # tag and collect first
-
     for obj in s._pymtl_objs:
       if isinstance( obj, ComponentLevel2 ):
         obj._elaborate_read_write_func() # this function is local to the object
@@ -398,3 +397,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._check_upblk_writes()
     s._check_port_in_upblk()
     s._check_port_in_nets()
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------

@@ -13,6 +13,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     raise NotElaboratedError()
 
   all_upblks = set( s._all_upblks )
+  all_update_on_edge = set( s._all_update_on_edge )
   expl_constraints = set( s._all_U_U_constraints )
 
   gen_upblk_reads  = {}
@@ -34,14 +35,14 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                         .replace( "[", "_" ).replace( "]", "" ) \
                         .replace( "(", "_" ).replace( ")", "" )
 
-        exec py.code.Source( """
-def {0}():
-  common_writer = {1}
-  {2}
-_recent_blk = {0}
-          """.format( upblk_name, wstr, "\n  ".join(
-                      [ "{} = common_writer".format( x ) for x in rstrs ] ) )
-        ).compile() in locals(), globals()
+        src = """
+        def {0}():
+          common_writer = {1}
+          {2}
+        _recent_blk = {0}
+        """.format( upblk_name, wstr, "; ".join(
+                    [ "{} = common_writer".format( x ) for x in rstrs ] ) )
+        exec py.code.Source( src ).compile() in locals(), globals()
 
         all_upblks.add( _recent_blk )
 
@@ -140,7 +141,7 @@ _recent_blk = {0}
         for wr_blk in write_upblks[ writer ]:
           for rd_blk in rd_blks:
             if wr_blk != rd_blk:
-              if rd_blk in s._all_update_on_edge:
+              if rd_blk in all_update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
@@ -167,7 +168,7 @@ _recent_blk = {0}
         for reader in readers:
           for rd_blk in read_upblks[ reader ]:
             if wr_blk != rd_blk:
-              if rd_blk in s._all_update_on_edge:
+              if rd_blk in all_update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default

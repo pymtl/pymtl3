@@ -41,25 +41,25 @@ class RTLComponent( ComponentLevel3 ):
           obj = parent
 
   # Override
-  def elaborate( s ):
-    s._declare_vars()
+  # def elaborate( s ):
+    # s._declare_vars()
 
-    s._tag_name_collect() # tag and collect first
-    s._bringup_reset_clk() # connect all reset/clk signals
+    # s._tag_name_collect() # tag and collect first
+    # s._bringup_reset_clk() # connect all reset/clk signals
 
-    for obj in s._id_obj.values():
-      if isinstance( obj, RTLComponent ):
-        obj._elaborate_read_write_func() # this function is local to the object
-      s._collect_vars( obj )
+    # for obj in s._id_obj.values():
+      # if isinstance( obj, RTLComponent ):
+        # obj._elaborate_read_write_func() # this function is local to the object
+      # s._collect_vars( obj )
 
-    s._tag_name_collect() # slicing will spawn extra objects
+    # s._tag_name_collect() # slicing will spawn extra objects
 
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
+    # s._check_upblk_writes()
+    # s._check_port_in_upblk()
 
-    s._resolve_var_connections()
-    s._check_port_in_nets()
+    # s._resolve_var_connections()
+    # s._check_port_in_nets()
 
-    s._generate_net_blocks()
+    # s._generate_net_blocks()
 
-    s._process_constraints()
+    # s._process_constraints()
