@@ -2,8 +2,9 @@
 # ComponentLevel2.py
 #=========================================================================
 
+from NamedObject     import NamedObject
 from ComponentLevel1 import ComponentLevel1
-from Connectable     import Signal, InVPort, OutVPort, Wire, _overlap
+from Connectable     import Signal, InVPort, OutVPort, Wire, Const, _overlap
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 from errors import InvalidConstraintError, SignalTypeError, \
@@ -501,4 +502,32 @@ class ComponentLevel2( ComponentLevel1 ):
            s._WR_U_constraints
 
   def lock_in_simulation( s ):
-    pass
+
+    def cleanup_connectables( m ):
+      if isinstance( m, list ):
+        for i, o in enumerate( m ):
+          if   isinstance( o, Signal ):
+            m[i] = o.default_value()
+          elif isinstance( o, Const ):
+            m[i] = o.const
+          else:
+            cleanup_connectables( o )
+
+      elif isinstance( m, NamedObject ):
+        for name, obj in m.__dict__.iteritems():
+          if ( isinstance( name, basestring ) and not name.startswith("_") ) \
+            or isinstance( name, tuple ):
+              if   isinstance( obj, Signal ):
+                try:
+                  setattr( m, name, obj.default_value() )
+                except Exception as err:
+                  err.message = repr(obj) + " -- " + err.message
+                  err.args = (err.message,)
+                  raise err
+              elif isinstance( obj, Const ):
+                setattr( m, name, obj.const )
+              else:
+                cleanup_connectables( obj )
+
+    cleanup_connectables( s )
+

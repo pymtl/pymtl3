@@ -2,10 +2,8 @@
 # SimpleSchedTickPass
 #-------------------------------------------------------------------------
 
-from pymtl import *
 from pymtl.passes import BasePass
-from collections  import deque, defaultdict
-from Queue        import PriorityQueue
+from collections  import deque
 from graphviz     import Digraph
 from errors import PassOrderError
 from pymtl.model.errors import UpblkCyclicError
@@ -27,10 +25,10 @@ class SimpleSchedTickPass( BasePass ):
 
     # Construct the graph
 
-    V   = top.get_all_update_blocks()
+    V   = top.get_all_update_blocks() | top.genblks
     E   = top.all_constraints
-    Es  = defaultdict(list)
-    InD = { v:0 for v in vs }
+    Es  = { v: [] for v in V }
+    InD = { v: 0  for v in V }
 
     for (u, v) in E: # u -> v
       InD[v] += 1
@@ -42,7 +40,7 @@ class SimpleSchedTickPass( BasePass ):
 
     Q = deque( [ v for v in V if not InD[v] ] )
 
-    while not Q.empty():
+    while Q:
       u = Q.pop()
       schedule.append( u )
       for v in Es[u]:

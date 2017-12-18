@@ -1,4 +1,9 @@
+
+from pymtl import *
 from BasePass import BasePass
+from pymtl.model import Const
+import py, ast
+from collections import defaultdict
 
 class GenDAGPass( BasePass ):
 
@@ -15,13 +20,18 @@ class GenDAGPass( BasePass ):
 
     nets = top.get_all_nets()
 
+    top.genblks = set()
+    top.genblk_reads  = {}
+    top.genblk_writes = {}
+    top.genblk_src    = {}
+
     for writer, readers in nets:
       if not readers:
         continue # Aha, the net is dummy
 
-      # special case for const
-      wr_lca  = writer.get_parent_object() if isinstance( writer, Const ) else writer
-      rd_lcas = readers[::]
+      wr_lca  = writer.get_host_component()
+      rd_lcas = [ x.get_host_component() for x in readers ]
+      print wr_lca, rd_lcas
 
       # Find common ancestor: iteratively go to parent level and check if
       # at the same level all objects' ancestors are the same
@@ -62,20 +72,10 @@ class GenDAGPass( BasePass ):
                 else ( "s." + repr(writer)[lca_len+1:] )
       rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
 
-      # Instead of a globally unique name for the update block, use a
-      # unique enough name from the perspective of the common ancestor.
-      # This allows us to discover more similar blocks that can be
-      # scheduled more efficiently.
-      if repr(writer).startswith( repr(lca) ):
-        upblk_name = repr(writer)[ len( repr(lca) ) : ] \
-                      .replace( ".", "_" ).replace( ":", "_" ) \
-                      .replace( "[", "_" ).replace( "]", "" ) \
-                      .replace( "(", "_" ).replace( ")", "" )
-      else:
-        upblk_name = repr(writer) \
-                      .replace( ".", "_" ).replace( ":", "_" ) \
-                      .replace( "[", "_" ).replace( "]", "" ) \
-                      .replace( "(", "_" ).replace( ")", "" )
+      upblk_name = "{}__{}".format(repr(writer), fanout) \
+                    .replace( ".", "_" ).replace( ":", "_" ) \
+                    .replace( "[", "_" ).replace( "]", "" ) \
+                    .replace( "(", "_" ).replace( ")", "" )
 
       # NO @s.update because I don't want to impair the original model
 
@@ -95,33 +95,33 @@ class GenDAGPass( BasePass ):
         # """.format( upblk_name, wstr, "; ".join(
                     # [ "{} = common_writer".format( x ) for x in rstrs] ) )
       gen_src = """
-        def {0}():
-          {1} = {2}
-        blk = {0}
+def {0}():
+  {1} = {2}
+_ret_blk = {0}
       """.format( upblk_name, " = ".join( rstrs ), wstr )
 
       # Borrow the closure of lca to compile the block
       def compile_upblk( s, src ):
-        exec py.code.Source( src ).compile() in locals(), globals()
-        return blk
+        var = locals()
+        var.update( globals() )
+        exec py.code.Source( src ).compile() in var
+        return _ret_blk
 
-      blk         = compile_upblk( lca, gen_connection_src )
+      blk         = compile_upblk( lca, gen_src )
       blk.hostobj = lca
 
-      s.genblks.add( blk )
-
-      # Collect read/writer metadata, directly insert them into _all_X
-
-      s.genblk_reads [ blk ] = [ writer ]
-      s.genblk_writes[ blk ] = readers.copy()
-      s.genblk_src   [ blk ] = ( gen_src, ast.parse( gen_src ) )
+      top.genblks.add( blk )
+      top.genblk_reads [ blk ] = [ writer ]
+      top.genblk_writes[ blk ] = readers[::]
+      top.genblk_src   [ blk ] = ( gen_src, ast.parse( gen_src ) )
 
   def _process_constraints( self, top ):
 
     # Query update block metadata from top
 
-    upblk_reads, upblk_writes, _ = top.get_all_native_upblk_metadata()
-    genblk_reads, genblk_writes  = s.genblk_reads, s.genblk_writes
+    update_on_edge                   = top.get_all_upblk_on_edge()
+    upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
+    genblk_reads, genblk_writes  = top.genblk_reads, top.genblk_writes
     U_U, RD_U, WR_U              = top.get_all_explicit_constraints()
 
     #---------------------------------------------------------------------
@@ -191,6 +191,17 @@ class GenDAGPass( BasePass ):
     # 2) RD A.b[1:10] - WR A.b[1:10], A.b, A
     # 3) RD A.b[1:10] - WR A.b[0:5], A.b[6], A.b[8:11]
 
+    # Checking if two slices/indices overlap
+    def indices_overlap( x, y ):
+      if isinstance( x, int ):
+        if isinstance( y, int ):  return x == y
+        else:                     return y.start <= x < y.stop
+      else: # x is slice
+        if isinstance( y, int ):  return x.start <= y < x.stop
+        else:
+          if x.start <= y.start:  return y.start < x.stop
+          else:                   return x.start < y.stop
+
     for obj, rd_blks in read_upblks.iteritems():
       writers = []
 
@@ -204,7 +215,7 @@ class GenDAGPass( BasePass ):
       # Check the sibling slices. Cover 3)
       if obj._slice:
         for x in obj._nested._slices.values():
-          if _overlap( x._slice, obj._slice ) and x in write_upblks:
+          if indices_overlap( x._slice, obj._slice ) and x in write_upblks:
             writers.append( x )
 
       # Add all constraints
@@ -212,7 +223,7 @@ class GenDAGPass( BasePass ):
         for wr_blk in write_upblks[ writer ]:
           for rd_blk in rd_blks:
             if wr_blk != rd_blk:
-              if rd_blk in s._all_update_on_edge:
+              if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
@@ -239,12 +250,12 @@ class GenDAGPass( BasePass ):
         for reader in readers:
           for rd_blk in read_upblks[ reader ]:
             if wr_blk != rd_blk:
-              if rd_blk in s._all_update_on_edge:
+              if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    top.all_constraints = expl_constraints.copy()
+    top.all_constraints = U_U.copy()
     for (x, y) in impl_constraints:
-      if (y, x) not in expl_constraints: # no conflicting expl
+      if (y, x) not in U_U: # no conflicting expl
         top.all_constraints.add( (x, y) )

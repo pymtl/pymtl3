@@ -1,6 +1,7 @@
 from pymtl.model import RTLComponent
 from BasePass import BasePass
 from GenDAGPass import GenDAGPass
+from SimpleSchedTickPass import SimpleSchedTickPass
 
 class SimRTLPass( BasePass ):
 
@@ -10,6 +11,7 @@ class SimRTLPass( BasePass ):
 
     top.elaborate()
 
-    GenDAGPass()( top )
-    SimpleScheduleTickPass()( top )
-    SignalCleanupPass()( top )
+    GenDAGPass()( top ) # generate update block constraint graph
+    SimpleSchedTickPass()( top ) # generate tick using simple scheduling
+
+    top.lock_in_simulation()

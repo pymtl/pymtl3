@@ -1,12 +1,14 @@
 
+from datatypes import *
+from datatypes import _bitwidths
+
 from model.ConstraintTypes import U, M, RD, WR
 from model.Connectable     import Wire, InVPort, OutVPort, Interface
 from model.RTLComponent    import RTLComponent
+
 from passes import SimRTLPass
 # , PrintMetadataPass, EventDrivenPass
 
-from datatypes import *
-from datatypes import _bitwidths
 
 __all__ = [
   'U','M','RD','WR',
