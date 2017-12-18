@@ -401,3 +401,15 @@ class ComponentLevel3( ComponentLevel2 ):
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
+
+  # Override
+  def check( s ):
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+    s._check_port_in_nets()
+
+  def get_all_nets( s ):
+    try:
+      return s._all_nets
+    except AttributeError:
+      raise NotElaboratedError()

@@ -13,7 +13,7 @@
 
 from NamedObject     import NamedObject
 from ConstraintTypes import U
-from errors          import UpblkFuncSameNameError
+from errors          import UpblkFuncSameNameError, NotElaboratedError
 from pymtl.datatypes import *
 
 import inspect2, re, ast, py
@@ -91,3 +91,18 @@ class ComponentLevel1( NamedObject ):
 
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
+
+  def get_component_level( s ):
+    try:
+      return len( s._name_idx[0] )
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_all_explicit_constraints( s ):
+    return s._all_U_U_constraints
+
+  def get_all_update_blocks( s ):
+    try:
+      return s._all_upblks
+    except AttributeError:
+      raise NotElaboratedError()

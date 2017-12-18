@@ -10,6 +10,8 @@
 # ( ["top","x","y","z"], [ [], [0,3], [2], [slice(1,3,0)] ] )
 # Note that len(name) == len(idx)-1 only when the variable ends with slice
 
+from errors import NotElaboratedError
+
 class NamedObject(object):
 
   #-----------------------------------------------------------------------
@@ -98,3 +100,13 @@ class NamedObject(object):
     assert len(last_idx) == 1
 
     return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------
+
+  def get_parent_object( s ):
+    try:
+      return s._parent_obj
+    except AttributeError:
+      raise NotElaboratedError()

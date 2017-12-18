@@ -477,8 +477,28 @@ class ComponentLevel2( ComponentLevel1 ):
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
 
-  def get_all_nets( s ):
+  # TODO rename
+  def check( s ):
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+
+  def get_all_upblk_on_edge( s ):
     try:
-      return s._all_nets
+      return s._all_update_on_edge
     except AttributeError:
-      raise NotElaboratedError()
+      return NotElaboratedError()
+
+  def get_all_upblk_metadata( s ):
+    try:
+      return s._all_upblk_reads, s._all_upblk_writes, s._all_upblk_calls
+    except AttributeError:
+      return NotElaboratedError()
+
+  # Override
+  def get_all_explicit_constraints( s ):
+    return s._all_U_U_constraints, \
+           s._RD_U_constraints, \
+           s._WR_U_constraints
+
+  def lock_in_simulation( s ):
+    pass

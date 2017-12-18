@@ -1,4 +1,5 @@
 from NamedObject import NamedObject
+from ComponentLevel1 import ComponentLevel1
 from pymtl.datatypes import mk_bits
 
 class Connectable(object):
@@ -17,6 +18,22 @@ class Connectable(object):
 
     s._adjs.append( other )
     other._adjs.append( s ) # bidirectional
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------
+
+  def get_host_component( s ):
+    try:
+      return s._host
+    except AttributeError:
+      try:
+        host = s
+        while not isinstance( host, ComponentLevel3 ):
+          host = host._parent_obj # go to the component
+        s._host = host
+      except AttributeError:
+        raise NotElaboratedError()
 
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
