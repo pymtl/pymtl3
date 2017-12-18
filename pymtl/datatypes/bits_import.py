@@ -5,9 +5,9 @@ _use_pymtl_bits = ( os.getenv("PYMTL_BITS") == "1" ) or \
 
 if _use_pymtl_bits:
   from Bits import Bits
-  print "Use python Bits"
+  print "Use Python Bits"
 else:
-  print "Use builtin Bits"
+  print "Use Mamba Bits"
 
 bits_template = """
 class Bits{nbits}(object):
