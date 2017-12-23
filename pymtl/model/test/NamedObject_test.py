@@ -3,19 +3,23 @@ from pymtl.model import NamedObject
 from collections import deque
 
 class Chicken(NamedObject):
-  def __init__( s ):
+
+  def construct( s ):
     s.protein = NamedObject()
 
 class Dog(NamedObject):
-  def __init__( s ):
+
+  def construct( s ):
     s.chicken = Chicken()
 
 class Tiger(NamedObject):
-  def __init__( s ):
+
+  def construct( s ):
     s.rooster = Chicken()
 
 class Human(NamedObject):
-  def __init__( s, nlunch=1, ndinner=1 ):
+
+  def construct( s, nlunch=1, ndinner=1 ):
 
     if nlunch == 1: s.lunch = Tiger()
     else:           s.lunch = [ Tiger() for _ in xrange(nlunch) ]
@@ -26,7 +30,7 @@ class Human(NamedObject):
 def test_NamedObject_normal():
 
   x = Human( nlunch=1, ndinner=1 )
-  x._tag_name_collect()
+  x.elaborate()
 
   assert repr(x) == "s"
 
@@ -39,10 +43,10 @@ def test_NamedObject_normal():
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner.chicken.protein)== "s.dinner.chicken.protein"
 
-def test_NamedObject_deque():
+def test_NamedObject_list1():
 
   x = Human( nlunch=1, ndinner=5 )
-  x._tag_name_collect()
+  x.elaborate()
 
   assert repr(x) == "s"
 
@@ -55,10 +59,10 @@ def test_NamedObject_deque():
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner[1].chicken.protein)== "s.dinner[1].chicken.protein"
 
-def test_NamedObject_list():
+def test_NamedObject_list2():
 
   x = Human( nlunch=4, ndinner=1 )
-  x._tag_name_collect()
+  x.elaborate()
 
   assert repr(x) == "s"
 

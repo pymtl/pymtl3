@@ -18,23 +18,18 @@ class NamedObject(object):
   # Private methods
   #-----------------------------------------------------------------------
 
-  def __new__( cls, *args, **kwargs ):
-    inst = super( NamedObject, cls ).__new__( cls, *args, **kwargs )
-    inst._name_idx = []
-    return inst
+  def __setattr_for_elaborate__( s, name, obj ):
 
-  def _tag_name_collect( s ):
-
-    def _recursive_expand( child, parent, cur_name, cur_idx ):
-
-      # Jump back to main function when it's another named object
+    def recursive_expand( child, indices ):
 
       if   isinstance( child, NamedObject ):
-        child._parent_obj  = parent
-        parent._child_objs = child
-        pname, pidx        = parent._name_idx
-        child._name_idx    = ( pname + cur_name, pidx + [ cur_idx ] )
-        _recursive_tag_collect( child )
+        child._parent_obj  = (s, )
+        child._my_name_idx = ( name, indices )
+
+        sname, sidx          = s._full_name_idx
+        child._full_name_idx = ( sname + [name], sidx + [indices] )
+
+        child.construct( *child._args, **child._kwargs )
 
       # ONLY LIST IS SUPPORTED, SORRY.
       # I don't want to support any iterable object because later "Wire"
@@ -42,46 +37,29 @@ class NamedObject(object):
       # Wire will be a mess around everywhere.
 
       elif isinstance( child, list ):
-        for i, o in enumerate( child ):
-          _recursive_expand( o, parent, cur_name, cur_idx + [i] )
+        for i, obj in enumerate( child ):
+          recursive_expand( obj, indices + [i] )
 
-    # If the id is string, it is a normal children field. Otherwise it
-    # should be an tuple that represents a slice
+    recursive_expand( obj, [] )
+    super( NamedObject, s ).__setattr__( name, obj )
 
-    def _recursive_tag_collect( m ):
+  def __new__( cls, *args, **kwargs ):
+    inst = super( NamedObject, cls ).__new__( cls )
 
-      # Collect m
+    # save parameters
 
-      s._pymtl_objs.add( m )
+    inst._args   = args
+    inst._kwargs = kwargs
 
-      # Jump to the expand function to check the type of child object
-
-      m._child_objs = []
-
-      for name, obj in m.__dict__.iteritems():
-
-        if   isinstance( name, basestring ): # python2 specific
-          if not name.startswith("_"): # filter private variables
-            _recursive_expand( obj, m, [name], [] )
-
-        elif isinstance( name, tuple ): # name = [1:3]
-          _recursive_expand( obj, m, [], [ slice(name[0], name[1]) ] )
-
-    # Initialize the top level
-
-    s._parent_obj = None
-    s._name_idx = ( ["s"], [ [] ] )
-
-    s._pymtl_objs = set()
-    _recursive_tag_collect( s )
+    return inst
 
   # Developers should use repr(x) everywhere to get the name
 
   def __repr__( s ):
-    if not s._name_idx: # if not tagged, go with class & address ...
+    if not s._full_name_idx: # if not tagged, go with class & address ...
       return super( NamedObject, s ).__repr__()
 
-    name, idx = s._name_idx
+    name, idx = s._full_name_idx
     name_len = len(name)
     idx_len  = len(idx)
 
@@ -100,6 +78,24 @@ class NamedObject(object):
     assert len(last_idx) == 1
 
     return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
+
+  def elaborate( s ):
+
+    # Initialize the top level
+
+    s._parent_obj = None
+    s._full_name_idx = ( ["s"], [ [] ] )
+    s._my_name_idx   = ( "s", [] )
+
+    # Override setattr for elaboration, and then remove it
+    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+
+    s.construct( *s._args, **s._kwargs )
+
+    del NamedObject.__setattr__
+
+  def construct( s ):
+    pass
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
