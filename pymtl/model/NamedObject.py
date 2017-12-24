@@ -14,6 +14,16 @@ from errors import NotElaboratedError
 
 class NamedObject(object):
 
+  def __new__( cls, *args, **kwargs ):
+    inst = super( NamedObject, cls ).__new__( cls )
+
+    # save parameters
+
+    inst._args   = args
+    inst._kwargs = kwargs
+
+    return inst
+
   #-----------------------------------------------------------------------
   # Private methods
   #-----------------------------------------------------------------------
@@ -40,18 +50,47 @@ class NamedObject(object):
         for i, obj in enumerate( child ):
           recursive_expand( obj, indices + [i] )
 
-    recursive_expand( obj, [] )
+    if not name.startswith("_"):
+      recursive_expand( obj, [] )
+
     super( NamedObject, s ).__setattr__( name, obj )
 
-  def __new__( cls, *args, **kwargs ):
-    inst = super( NamedObject, cls ).__new__( cls )
+  # Filter objects
 
-    # save parameters
+  def _recursive_collect( s, filt=lambda x: isinstance( NamedObject, x ) ):
 
-    inst._args   = args
-    inst._kwargs = kwargs
+    def _expand( child ):
 
-    return inst
+      # Jump back to main function when it's another named object
+      if   isinstance( child, NamedObject ):
+        _collect( child )
+
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( child, list ):
+        for i, o in enumerate( child ):
+          _expand( o )
+
+    # If the id is string, it is a normal children field. Otherwise it
+    # should be an tuple that represents a slice
+
+    def _collect( m ):
+
+      if filt( m ):
+        ret.add( m )
+
+      # Jump to the expand function to check the type of child object
+      for name, obj in m.__dict__.iteritems():
+
+        if   isinstance( name, basestring ): # python2 specific
+          if not name.startswith("_"): # filter private variables
+            _expand( obj )
+
+        elif isinstance( name, tuple ): # name = [1:3]
+          _expand( obj )
+
+    ret = set()
+    _collect( s )
+    return ret
 
   # Developers should use repr(x) everywhere to get the name
 
@@ -88,10 +127,9 @@ class NamedObject(object):
     s._my_name_idx   = ( "s", [] )
 
     # Override setattr for elaboration, and then remove it
+
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-
     s.construct( *s._args, **s._kwargs )
-
     del NamedObject.__setattr__
 
   def construct( s ):

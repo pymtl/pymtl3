@@ -76,14 +76,15 @@ class ComponentLevel1( NamedObject ):
   #-----------------------------------------------------------------------
 
   def elaborate( s ):
-    """ Elaboration steps. Child classes should override and rewrite it. """
+    super( ComponentLevel1, s ).elaborate()
 
     s._declare_vars()
-    s._tag_name_collect()
+    s._components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
+    for c in s._components:
+      s._collect_vars( c )
 
-    for obj in s._pymtl_objs:
-      assert isinstance( obj, ComponentLevel1 ) # just component
-      s._collect_vars( obj )
+  def construct( s ):
+    pass
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
