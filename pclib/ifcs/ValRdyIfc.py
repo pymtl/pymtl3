@@ -3,7 +3,7 @@ from pclib.valrdy import valrdy_to_str
 
 class InValRdyIfc( Interface ):
 
-  def __init__( s, Type=int ):
+  def construct( s, Type=int ):
     s.Type = Type
 
     s.msg = InVPort( Type )
@@ -15,7 +15,7 @@ class InValRdyIfc( Interface ):
 
 class OutValRdyIfc( Interface ):
 
-  def __init__( s, Type=int ):
+  def construct( s, Type=int ):
     s.Type = Type
 
     s.msg = OutVPort( Type )

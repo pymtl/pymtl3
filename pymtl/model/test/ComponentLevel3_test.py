@@ -20,7 +20,7 @@ MUX_SEL_1 = 1
 
 class TestSource( ComponentLevel3 ):
 
-  def __init__( s, Type, input_ ):
+  def construct( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.Type = Type
@@ -42,7 +42,7 @@ class TestSource( ComponentLevel3 ):
 
 class TestSink( ComponentLevel3 ):
 
-  def __init__( s, Type, answer ):
+  def construct( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
@@ -66,7 +66,7 @@ class TestSink( ComponentLevel3 ):
 
 class Mux( ComponentLevel3 ):
 
-  def __init__( s, Type, ninputs ):
+  def construct( s, Type, ninputs ):
     s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
     s.sel = InVPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutVPort( Type )
@@ -81,7 +81,7 @@ def test_connect_list_const_idx():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src_in0 = TestSource( int, [4,3,2,1] )
       s.src_in1 = TestSource( int, [8,7,6,5] )
@@ -107,7 +107,7 @@ def test_connect_list_idx_call():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src_in0 = TestSource( int, [4,3,2,1] )
       s.src_in1 = TestSource( int, [8,7,6,5] )
@@ -132,7 +132,7 @@ def test_connect_deep():
 
   class MuxWrap(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
       s.in_ = [ InVPort(int) for _ in xrange(2) ]
       s.sel = InVPort(int)
       s.out = OutVPort(int)
@@ -145,7 +145,7 @@ def test_connect_deep():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src_in0 = TestSource( int, [4,3,2,1] )
       s.src_in1 = TestSource( int, [8,7,6,5] )
@@ -170,7 +170,7 @@ def test_deep_connect():
 
   class MuxWrap3(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
       s.in_ = [ InVPort(int) for _ in xrange(2) ]
       s.sel = InVPort(int)
       s.out = OutVPort(int)
@@ -191,7 +191,7 @@ def test_deep_connect():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src_in0 = TestSource( int, [4,3,2,1] )
       s.src_in1 = TestSource( int, [8,7,6,5] )
@@ -216,7 +216,7 @@ def test_2d_array_vars_connect_impl():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( int, [2,1,0,2,1,0] )
       s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
@@ -258,7 +258,7 @@ def test_lots_of_fan_connect():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
       s.sink = TestSink  ( int, ["*",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
@@ -323,7 +323,7 @@ def test_connect_plain():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
       s.sink = TestSink  ( int, [5,4,3,2,5,4,3,2] )
@@ -350,7 +350,7 @@ def test_2d_array_vars_connect():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( int, [2,1,0,2,1,0] )
       s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
@@ -397,7 +397,7 @@ def test_connect_const_same_level():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.a = Wire(int)
       s.connect( s.a, 0 )
@@ -418,7 +418,7 @@ def test_connect_const_two_writer():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.a = Wire(int)
       s.connect( s.a, 0 )
@@ -448,7 +448,7 @@ def test_connect_list_idx_call():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src_in0 = TestSource( int, [4,3,2,1] )
       s.src_sel = TestSource( int, [1,0,1,0] )
@@ -469,11 +469,11 @@ def test_connect_list_idx_call():
 
   _test_model( Top )
 
-def test_connect_list_idx_invalid_call():
+def test_connect_list_idx_const_in_call():
 
   class Top(ComponentLevel3):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src_in0 = TestSource( int, [4,3,2,1] )
       s.src_sel = TestSource( int, [1,0,1,0] )
@@ -491,18 +491,13 @@ def test_connect_list_idx_invalid_call():
     def line_trace( s ):
       return " >>> " + s.sink.line_trace()
 
-  try:
-    _test_model( Top )
-  except InvalidConnectionError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
-    return
-  raise Exception("Should've thrown InvalidConnectionError.")
+  _test_model( Top )
 
 def test_top_level_inport():
 
   class Top( ComponentLevel3 ):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.a = InVPort(Bits10)
       s.b = Wire(Bits32)
@@ -524,7 +519,7 @@ def test_top_level_outport():
 
   class Top( ComponentLevel3 ):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.a = OutVPort(Bits10)
       s.b = Wire(Bits32)

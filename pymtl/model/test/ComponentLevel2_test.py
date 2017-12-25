@@ -17,7 +17,7 @@ def _test_model( cls ):
 
 class TestSource( ComponentLevel2 ):
 
-  def __init__( s, input_ ):
+  def construct( s, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
@@ -38,7 +38,7 @@ class TestSource( ComponentLevel2 ):
 
 class TestSink( ComponentLevel2 ):
 
-  def __init__( s, answer ):
+  def construct( s, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
@@ -64,7 +64,7 @@ def test_simple():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
       s.a = Wire(int)
       s.b = Wire(int)
 
@@ -85,7 +85,7 @@ def test_cyclic_impl_dependency():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
       s.a = Wire(int)
       s.b = Wire(int)
 
@@ -108,7 +108,7 @@ def test_invalid_dependency():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.a = Wire(int)
       s.b = Wire(int)
@@ -129,7 +129,7 @@ def test_variable_not_declared():
 
   class SomeMsg( object ):
 
-    def __init__( s ):
+    def construct( s ):
       s.a = int
       s.b = Bits32
 
@@ -143,7 +143,7 @@ def test_variable_not_declared():
       return s.a == other.a and s.b == other.b
 
   class A(ComponentLevel2):
-    def __init__( s ):
+    def construct( s ):
       s.a = Wire(SomeMsg())
       s.b = Wire(int)
 
@@ -157,7 +157,7 @@ def test_variable_not_declared():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
       s.x = A()
 
     def done( s ):
@@ -174,7 +174,7 @@ def test_2d_array_vars():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( [2,1,0,2,1,0] )
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
@@ -232,7 +232,7 @@ def test_wire_up_constraint():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( [4,3,2,1,4,3,2,1] )
       s.sink = TestSink  ( [5,4,3,2,5,4,3,2] )
@@ -258,7 +258,7 @@ def test_wire_up_constraint():
 def test_write_two_disjoint_slices():
 
   class Top(ComponentLevel2):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -294,7 +294,7 @@ def test_wr_A_b_rd_A_impl():
       return x
 
   class Top(ComponentLevel2):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -314,7 +314,7 @@ def test_add_loopback():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( [4,3,2,1] )
       s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
@@ -356,7 +356,7 @@ def test_add_loopback_on_edge():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( [4,3,2,1] )
       s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
@@ -394,7 +394,7 @@ def test_2d_array_vars_impl():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSource( [2,1,0,2,1,0] )
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
@@ -436,7 +436,7 @@ def test_simple_func_impl():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
       s.a = Wire(int)
       s.b = Wire(int)
 
@@ -482,7 +482,7 @@ def test_func_cyclic_invalid():
 
   class Top(ComponentLevel2):
 
-    def __init__( s ):
+    def construct( s ):
       s.a = Wire(int)
       s.b = Wire(int)
       s.c = Wire(int)

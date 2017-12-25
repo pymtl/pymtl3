@@ -15,7 +15,7 @@ def _test_model( cls ):
 def test_write_two_disjoint_slices():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -36,7 +36,7 @@ def test_write_two_disjoint_slices():
 def test_write_two_disjoint_slices_no_reader():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -66,7 +66,7 @@ def test_write_two_disjoint_slices_no_reader():
 def test_write_two_overlapping_slices():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -92,7 +92,7 @@ def test_write_two_overlapping_slices():
 def test_write_two_slices_and_bit():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -127,7 +127,7 @@ def test_write_two_slices_and_bit():
 def test_write_slices_and_bit_overlapped():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -153,7 +153,7 @@ def test_write_slices_and_bit_overlapped():
 def test_multiple_readers():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -237,7 +237,7 @@ def test_multiple_readers():
 def test_rd_As_wr_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -254,7 +254,7 @@ def test_rd_As_wr_A_impl():
 def test_rd_As_wr_At_impl_intersect():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -271,7 +271,7 @@ def test_rd_As_wr_At_impl_intersect():
 def test_rd_As_wr_At_impl_disjoint():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -292,7 +292,7 @@ def test_rd_As_wr_At_impl_disjoint():
 def test_wr_As_wr_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -314,7 +314,7 @@ def test_wr_As_wr_A_conflict():
 def test_wr_As_wr_At_intersect():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -340,7 +340,7 @@ def test_wr_As_wr_At_intersect():
 def test_wr_As_wr_At_disjoint():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -361,7 +361,7 @@ def test_wr_As_wr_At_disjoint():
 def test_wr_As_rd_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -378,7 +378,7 @@ def test_wr_As_rd_A_impl():
 def test_wr_As_rd_A_rd_At_can_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -399,7 +399,7 @@ def test_wr_As_rd_A_rd_At_can_schedule():
 def test_wr_As_rd_A_rd_At_cannot_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -428,7 +428,7 @@ def test_wr_As_rd_A_rd_At_cannot_schedule():
 def test_wr_A_rd_slices_can_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -449,7 +449,7 @@ def test_wr_A_rd_slices_can_schedule():
 def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( Bits32 )
 
       @s.update
@@ -478,7 +478,7 @@ def test_wr_As_rd_A_rd_At_bit_cannot_schedule():
 def test_connect_rd_As_wr_x_conn_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( Bits32 )
@@ -499,7 +499,7 @@ def test_connect_rd_As_wr_x_conn_A_impl():
 def test_connect_rd_As_wr_x_conn_At_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -520,7 +520,7 @@ def test_connect_rd_As_wr_x_conn_At_impl():
 def test_connect_rd_As_wr_x_conn_At_disjoint():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -549,7 +549,7 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
 def test_connect_wr_As_rd_x_conn_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( Bits32 )
@@ -566,7 +566,7 @@ def test_connect_wr_As_rd_x_conn_A_mark_writer():
 def test_connect_wr_As_wr_x_conn_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( Bits32 )
@@ -592,7 +592,7 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
 def test_connect_wr_As_rd_x_conn_At_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -609,7 +609,7 @@ def test_connect_wr_As_rd_x_conn_At_mark_writer():
 def test_connect_wr_As_rd_x_conn_At_no_driver():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -631,7 +631,7 @@ def test_connect_wr_As_rd_x_conn_At_no_driver():
 def test_connect_wr_As_wr_x_conn_At_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -657,7 +657,7 @@ def test_connect_wr_As_wr_x_conn_At_conflict():
 def test_connect_wr_As_wr_x_conn_At_disjoint():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -682,7 +682,7 @@ def test_connect_wr_As_wr_x_conn_At_disjoint():
 def test_connect_wr_x_conn_As_rd_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -703,7 +703,7 @@ def test_connect_wr_x_conn_As_rd_A_impl():
 def test_connect_wr_x_conn_As_wr_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.y  = Wire( Bits24 )
@@ -731,7 +731,7 @@ def test_connect_wr_x_conn_As_wr_A_conflict():
 def test_connect_rd_x_conn_As_wr_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -752,7 +752,7 @@ def test_connect_rd_x_conn_As_wr_A_mark_writer():
 def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -780,7 +780,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
 def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -808,7 +808,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
 def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -835,7 +835,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
 def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -858,7 +858,7 @@ def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
 def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -881,7 +881,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
 def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -904,7 +904,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
 def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
@@ -931,7 +931,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
 def test_iterative_find_nets():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.w  = Wire( Bits32 )
       s.x  = Wire( Bits32 )
@@ -951,7 +951,7 @@ def test_iterative_find_nets():
 def test_multiple_sibling_slices():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.A  = Wire( Bits32 )
       s.x  = Wire( Bits16 )

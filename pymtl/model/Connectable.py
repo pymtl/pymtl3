@@ -76,6 +76,11 @@ class Signal( Connectable, NamedObject ):
     if name not in s.__dict__:
       x = s.__class__( getattr(s.Type, name) )
       x._nested          = s
+      x._parent_obj      = s
+
+      sname, sidx        = s._full_name_idx
+      x._full_name_idx   = ( sname + [name], sidx + [ [] ] )
+
       s.__dict__[ name ] = s._attrs[ name ] = x
 
     return s.__dict__[ name ]
@@ -95,8 +100,11 @@ class Signal( Connectable, NamedObject ):
 
     if sl_tuple not in s.__dict__:
       x = s.__class__( mk_bits( sl.stop - sl.start) )
-      x._nested = s
-      x._slice  = sl
+      x._nested              = s
+      x._parent_obj          = s
+      sname, sidx            = s._full_name_idx
+      x._full_name_idx       = ( sname + [], sidx + [ [sl] ] )
+      x._slice               = sl
       s.__dict__[ sl_tuple ] = s._slices[ sl_tuple ] = x
 
     return s.__dict__[ sl_tuple ]
@@ -122,6 +130,20 @@ class OutVPort( Signal ):
     return InVPort( s.Type )
 
 class Interface( Connectable, NamedObject ):
+
+  def __new__( cls, *args, **kwargs ):
+
+    # Check to see if the interface class implements __init__
+    if cls.__init__ is not object.__init__:
+      import inspect
+      raise TypeError("{} shouldn't implement/override __init__ method.\n\n"
+                      "Interface class \"{}\" is implemented at line {} in file {}."
+                      .format( repr(cls), cls.__name__,
+                               inspect.findsource(cls)[1] + 1,
+                               inspect.getfile(cls) ) )
+
+    inst = super( Interface, cls ).__new__( cls, *args, **kwargs )
+    return inst
 
   def inverse( s ):
     inv = s

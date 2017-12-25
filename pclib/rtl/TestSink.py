@@ -5,7 +5,7 @@ from pclib.valrdy import valrdy_to_str
 
 class TestBasicSink( RTLComponent ):
 
-  def __init__( s, Type, answer ):
+  def construct( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )
@@ -29,7 +29,7 @@ class TestBasicSink( RTLComponent ):
 
 class TestSinkValRdy( RTLComponent ):
 
-  def __init__( s, Type, msgs ):
+  def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSink only accepts a list of outputs!"
 
     s.msgs = msgs
@@ -59,7 +59,7 @@ class TestSinkValRdy( RTLComponent ):
 
 class TestSinkUnorderedValRdy( RTLComponent ):
 
-  def __init__( s, Type, msgs ):
+  def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSink only accepts a list of outputs!"
     s.msgs = deque( msgs )
     s.recv = deque()

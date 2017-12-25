@@ -5,7 +5,7 @@ from pclib.ifcs   import OutValRdyIfc
 
 class TestBasicSource( RTLComponent ):
 
-  def __init__( s, Type, input_ ):
+  def construct( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.Type = Type
@@ -27,7 +27,7 @@ class TestBasicSource( RTLComponent ):
 
 class TestSourceValRdy( RTLComponent ):
 
-  def __init__( s, Type, msgs ):
+  def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSrc only accepts a list of inputs!" 
 
     s.msgs    = msgs
@@ -54,7 +54,7 @@ class TestSourceValRdy( RTLComponent ):
 
 class TestSource( RTLComponent ):
 
-  def __init__( s, Type, input_ = [] ):
+  def construct( s, Type, input_ = [] ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
 
     s.Type = Type

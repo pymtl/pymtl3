@@ -17,10 +17,11 @@ class NamedObject(object):
   def __new__( cls, *args, **kwargs ):
     inst = super( NamedObject, cls ).__new__( cls )
 
-    # save parameters
+    # Save parameters for elaborate
 
-    inst._args   = args
-    inst._kwargs = kwargs
+    inst._args        = args
+    inst._kwargs      = kwargs
+    inst._constructed = False
 
     return inst
 
@@ -28,18 +29,25 @@ class NamedObject(object):
   # Private methods
   #-----------------------------------------------------------------------
 
+  def _construct( s ):
+    if not s._constructed:
+      s.construct( *s._args, **s._kwargs )
+      s._constructed = True
+
   def __setattr_for_elaborate__( s, name, obj ):
 
-    def recursive_expand( child, indices ):
+    # TODO use stack to emulate recursion to reduce error message depth
+
+    def _recursive_expand( child, indices ):
 
       if   isinstance( child, NamedObject ):
-        child._parent_obj  = (s, )
+        child._parent_obj  = s
         child._my_name_idx = ( name, indices )
 
         sname, sidx          = s._full_name_idx
         child._full_name_idx = ( sname + [name], sidx + [indices] )
 
-        child.construct( *child._args, **child._kwargs )
+        child._construct()
 
       # ONLY LIST IS SUPPORTED, SORRY.
       # I don't want to support any iterable object because later "Wire"
@@ -48,10 +56,10 @@ class NamedObject(object):
 
       elif isinstance( child, list ):
         for i, obj in enumerate( child ):
-          recursive_expand( obj, indices + [i] )
+          _recursive_expand( obj, indices + [i] )
 
     if not name.startswith("_"):
-      recursive_expand( obj, [] )
+      _recursive_expand( obj, [] )
 
     super( NamedObject, s ).__setattr__( name, obj )
 
@@ -99,6 +107,7 @@ class NamedObject(object):
       return super( NamedObject, s ).__repr__()
 
     name, idx = s._full_name_idx
+    print name, idx
     name_len = len(name)
     idx_len  = len(idx)
 
@@ -129,7 +138,9 @@ class NamedObject(object):
     # Override setattr for elaboration, and then remove it
 
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    s.construct( *s._args, **s._kwargs )
+
+    s._construct()
+
     del NamedObject.__setattr__
 
   def construct( s ):

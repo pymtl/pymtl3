@@ -10,7 +10,7 @@ MUX_SEL_1 = 1
 def test_reset():
 
   class B(RTLComponent):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort( Bits32 )
       @s.update_on_edge
       def up_out():
@@ -20,7 +20,7 @@ def test_reset():
           s.out = Bits32( 0 )
 
   class Top(RTLComponent):
-    def __init__( s ):
+    def construct( s ):
       s.b = B()
 
       @s.update

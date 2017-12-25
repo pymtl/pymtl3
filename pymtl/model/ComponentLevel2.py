@@ -4,7 +4,7 @@
 
 from NamedObject     import NamedObject
 from ComponentLevel1 import ComponentLevel1
-from Connectable     import Signal, InVPort, OutVPort, Wire, Const, _overlap
+from Connectable     import Signal, InVPort, OutVPort, Wire, Const, _overlap, Interface
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 from errors import InvalidConstraintError, SignalTypeError, \
@@ -150,7 +150,6 @@ class ComponentLevel2( ComponentLevel1 ):
         try:
           lookup_var( s, 0, name, objs )
         except VarNotDeclaredError as e:
-          s._tag_name_collect() # give full name to spawned object
           raise VarNotDeclaredError( e.obj, e.field, func, astnode.lineno )
 
         all_objs.update( objs )
@@ -212,21 +211,21 @@ class ComponentLevel2( ComponentLevel1 ):
     except AttributeError: # This component doesn't have update block
       pass
 
-    s._func_reads  = func_reads  = {}
-    s._func_writes = func_writes = {}
-    s._func_calls  = func_calls  = {}
+    s._func_reads  = {}
+    s._func_writes = {}
+    s._func_calls  = {}
     for name, func in s._name_func.iteritems():
-      func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
-      func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
-      func_calls [ func ] = extract_call_from_names( func, name_fc[ name ], s._name_func )
+      s._func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
+      s._func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
+      s._func_calls [ func ] = extract_call_from_names( func, name_fc[ name ], s._name_func )
 
-    s._upblk_reads  = upblk_reads  = {}
-    s._upblk_writes = upblk_writes = {}
-    s._upblk_calls  = upblk_calls  = {}
+    s._upblk_reads  = {}
+    s._upblk_writes = {}
+    s._upblk_calls  = {}
     for name, blk in s._name_upblk.iteritems():
-      upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
-      upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
-      upblk_calls [ blk ] = extract_call_from_names( blk, name_fc[ name ], s._name_func )
+      s._upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
+      s._upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
+      s._upblk_calls [ blk ] = extract_call_from_names( blk, name_fc[ name ], s._name_func )
 
   # Override
   def _collect_vars( s, m ):
@@ -462,14 +461,16 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def elaborate( s ):
+    NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._tag_name_collect() # tag and collect first
-    for obj in s._pymtl_objs:
-      if isinstance( obj, ComponentLevel2 ):
-        obj._elaborate_read_write_func()
-      s._collect_vars( obj )
-    s._tag_name_collect() # slicing will spawn extra objects
+    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel2 ) )
+    for c in s._all_components:
+      c._elaborate_top = s
+      c._elaborate_read_write_func()
+      s._collect_vars( c )
+
+    s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
 
     s._check_upblk_writes()
     s._check_port_in_upblk()
@@ -502,32 +503,61 @@ class ComponentLevel2( ComponentLevel1 ):
            s._WR_U_constraints
 
   def lock_in_simulation( s ):
+    for x in s._pymtl_objs:
+      assert x._parent_obj == x._inspect_parent, type(x)
+    s._swapped_signals = defaultdict(list)
 
-    def cleanup_connectables( m ):
-      if isinstance( m, list ):
-        for i, o in enumerate( m ):
-          if   isinstance( o, Signal ):
-            m[i] = o.default_value()
-          elif isinstance( o, Const ):
-            m[i] = o.const
-          else:
-            cleanup_connectables( o )
+    def cleanup_connectables( current_obj, host_component ):
 
-      elif isinstance( m, NamedObject ):
-        for name, obj in m.__dict__.iteritems():
+      if isinstance( current_obj, list ):
+        for i, obj in enumerate( current_obj ):
+
+          if   isinstance( obj, ComponentLevel1 ):
+            cleanup_connectables( obj, obj )
+
+          elif isinstance( obj, Signal ):
+            try:
+              current_obj[i] = obj.default_value()
+            except Exception as err:
+              err.message = repr(obj) + " -- " + err.message
+              err.args = (err.message,)
+              raise err
+            s._swapped_signals[ host_component ].append( (current_obj, i, obj) )
+
+          elif isinstance( obj, Const ):
+            current_obj[i] = obj.const
+            s._swapped_signals[ host_component ].append( (current_obj, i, obj) )
+
+          elif isinstance( obj, Interface ):
+            cleanup_connectables( obj, host_component )
+
+      elif isinstance( current_obj, NamedObject ):
+        for name, obj in current_obj.__dict__.iteritems():
+
           if ( isinstance( name, basestring ) and not name.startswith("_") ) \
             or isinstance( name, tuple ):
-              if   isinstance( obj, Signal ):
-                try:
-                  setattr( m, name, obj.default_value() )
-                except Exception as err:
-                  err.message = repr(obj) + " -- " + err.message
-                  err.args = (err.message,)
-                  raise err
-              elif isinstance( obj, Const ):
-                setattr( m, name, obj.const )
-              else:
-                cleanup_connectables( obj )
 
-    cleanup_connectables( s )
+            if isinstance( obj, ComponentLevel1 ):
+              cleanup_connectables( obj, obj )
+
+            elif   isinstance( obj, Signal ):
+              try:
+                setattr( current_obj, name, obj.default_value() )
+              except Exception as err:
+                err.message = repr(obj) + " -- " + err.message
+                err.args = (err.message,)
+                raise err
+              s._swapped_signals[ host_component ].append( (current_obj, name, obj) )
+
+            elif isinstance( obj, Const ):
+              setattr( current_obj, name, obj.const )
+              s._swapped_signals[ host_component ].append( (current_obj, name, obj) )
+
+            else:
+              cleanup_connectables( obj, host_component )
+
+    cleanup_connectables( s, s )
+    # for x in s._swapped_signals:
+      # print s._swapped_signals[x]
+    # assert False
 

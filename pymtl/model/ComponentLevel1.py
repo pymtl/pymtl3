@@ -28,6 +28,15 @@ class ComponentLevel1( NamedObject ):
   def __new__( cls, *args, **kwargs ):
     """ Convention: variables local to the object is created in __new__ """
 
+    # Check to see if the component class implements __init__
+    if cls.__init__ is not object.__init__:
+      import inspect
+      raise TypeError("{} shouldn't implement/override __init__ method.\n\n"
+                      "Component class \"{}\" is implemented at line {} in file {}."
+                      .format( repr(cls), cls.__name__,
+                               inspect.findsource(cls)[1] + 1,
+                               inspect.getfile(cls) ) )
+
     inst = super( ComponentLevel1, cls ).__new__( cls, *args, **kwargs )
 
     inst._name_upblk = {}
@@ -76,11 +85,12 @@ class ComponentLevel1( NamedObject ):
   #-----------------------------------------------------------------------
 
   def elaborate( s ):
-    super( ComponentLevel1, s ).elaborate()
+    NamedObject.elaborate( s )
 
     s._declare_vars()
-    s._components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
-    for c in s._components:
+    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
+    for c in s._all_components:
+      c._elaborate_top = s
       s._collect_vars( c )
 
   def construct( s ):

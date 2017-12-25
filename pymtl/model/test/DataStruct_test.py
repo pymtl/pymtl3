@@ -78,7 +78,7 @@ def _test_model( cls ):
 def test_rd_A_b_wr_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -95,7 +95,7 @@ def test_rd_A_b_wr_A_impl():
 def test_wr_A_b_wr_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -117,7 +117,7 @@ def test_wr_A_b_wr_A_conflict():
 def test_wr_A_b_rd_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -134,7 +134,7 @@ def test_wr_A_b_rd_A_impl():
 def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -155,7 +155,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 def test_wr_A_rd_fields_can_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -176,7 +176,7 @@ def test_wr_A_rd_fields_can_schedule():
 def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.A  = Wire( SomeMsg() )
 
       @s.update
@@ -205,7 +205,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 def test_connect_rd_A_b_wr_x_conn_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( SomeMsg() )
       s.A  = Wire( SomeMsg() )
@@ -226,7 +226,7 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
 def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( SomeMsg() )
       s.A  = Wire( SomeMsg() )
@@ -244,7 +244,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 # def test_connect_wr_A_b_wr_x_b_conn_A_conflict():
 
   # class Top( ComponentLevel3 ):
-    # def __init__( s ):
+    # def construct( s ):
 
       # s.x  = Wire( SomeMsg() )
       # s.A  = Wire( SomeMsg() )
@@ -265,7 +265,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( SomeMsg() )
       s.A  = Wire( SomeMsg() )
@@ -291,7 +291,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 def test_connect_wr_x_conn_A_b_rd_A_impl():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg() )
@@ -312,7 +312,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg() )
@@ -338,7 +338,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg() )
@@ -359,7 +359,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg() )
@@ -387,7 +387,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg() )
@@ -410,7 +410,7 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg() )
@@ -432,7 +432,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 def test_iterative_find_nets():
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       s.w  = Wire( SomeMsg() )
       s.x  = Wire( SomeMsg() )
@@ -491,7 +491,7 @@ def test_deep_connections():
       return x
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
 
       msg3 = Msg3() # TODO find a good way to handle type equivalence
 

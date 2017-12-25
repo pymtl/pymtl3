@@ -15,7 +15,7 @@ def _test_model( cls ):
 def test_illegal_inport_write():
 
   class B( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort( Bits32 )
 
       @s.update
@@ -23,7 +23,7 @@ def test_illegal_inport_write():
         s.in_[1:10] = 10
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.b = B()
 
   try:
@@ -36,7 +36,7 @@ def test_illegal_inport_write():
 def test_illegal_inport_deep_write():
 
   class B( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort( Bits32 )
 
       @s.update
@@ -44,11 +44,11 @@ def test_illegal_inport_deep_write():
         print s.in_
 
   class BWrap( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.b = B()
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.b = BWrap()
 
       @s.update
@@ -65,7 +65,7 @@ def test_illegal_inport_deep_write():
 def test_legal_inport_write():
 
   class B( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort( Bits32 )
 
       @s.update
@@ -73,7 +73,7 @@ def test_legal_inport_write():
         print s.in_
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.b = B()
 
       @s.update
@@ -85,7 +85,7 @@ def test_legal_inport_write():
 def test_illegal_outport_write():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort( Bits32 )
 
       @s.update
@@ -93,7 +93,7 @@ def test_illegal_outport_write():
         print s.out
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
 
       @s.update
@@ -110,7 +110,7 @@ def test_illegal_outport_write():
 def test_illegal_outport_deep_write():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort( Bits32 )
 
       @s.update
@@ -118,11 +118,11 @@ def test_illegal_outport_deep_write():
         print s.out
 
   class AWrap( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = AWrap()
 
       @s.update
@@ -139,7 +139,7 @@ def test_illegal_outport_deep_write():
 def test_legal_outport_write():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort( Bits32 )
 
       @s.update
@@ -147,7 +147,7 @@ def test_legal_outport_write():
         s.out[0:2] = 2
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
 
       @s.update
@@ -159,11 +159,11 @@ def test_legal_outport_write():
 def test_illegal_wire_write():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.wire = Wire( Bits32 )
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
 
       @s.update
@@ -180,14 +180,14 @@ def test_illegal_wire_write():
 def test_illegal_wire_read():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.wire = Wire( Bits32 )
       @s.update
       def up_write_wire():
         s.wire[1:10] = 10
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
 
       @s.update
@@ -204,7 +204,7 @@ def test_illegal_wire_read():
 def test_legal_port_connect():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
 
       @s.update
@@ -212,7 +212,7 @@ def test_legal_port_connect():
         s.out = 123
 
   class B( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort(int)
 
       @s.update
@@ -220,7 +220,7 @@ def test_legal_port_connect():
         print s.in_
 
   class OutWrap(ComponentLevel3):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       s.a = A()( out = s.out )
 
@@ -229,7 +229,7 @@ def test_legal_port_connect():
         print s.out
 
   class InWrap(ComponentLevel3):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort(int)
       s.b = B()( in_ = s.in_ )
 
@@ -238,7 +238,7 @@ def test_legal_port_connect():
         print s.in_
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.i = InWrap()
       s.o = OutWrap()
       s.connect( s.o.out, s.i.in_ )
@@ -248,14 +248,14 @@ def test_legal_port_connect():
 def test_illegal_same_host():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
   class AWrap(ComponentLevel3):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int) # Wire is the same
       s.a = A()( out = s.out )
 
@@ -264,7 +264,7 @@ def test_illegal_same_host():
       s.connect( s.out, s.in_ )
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.awrap = AWrap()
 
   try:
@@ -277,19 +277,19 @@ def test_illegal_same_host():
 def test_illegal_rdhost_is_wrhost_parent():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
   class AWrap(ComponentLevel3):
-    def __init__( s ):
+    def construct( s ):
       s.out = InVPort(int) # Should be OutVPort
       s.a   = A()( out = s.out )
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.awrap = AWrap()
 
   try:
@@ -302,26 +302,26 @@ def test_illegal_rdhost_is_wrhost_parent():
 def test_illegal_wrhost_is_rdhost_parent():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
   class B( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = OutVPort(int) # Should be InVPort
       @s.update
       def up_B_read():
         print s.in_
 
   class BWrap(ComponentLevel3):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort(int)
       s.b   = B()( in_ = s.in_ )
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
       s.b = BWrap()
       s.connect( s.a.out, s.b.in_ )
@@ -336,26 +336,26 @@ def test_illegal_wrhost_is_rdhost_parent():
 def test_illegal_hosts_same_parent():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
   class B( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = InVPort(int)
       @s.update
       def up_B_read():
         print s.in_
 
   class BWrap(ComponentLevel3):
-    def __init__( s ):
+    def construct( s ):
       s.in_ = OutVPort(int) # Should be InVPort
       s.b   = B()( in_ = s.in_ )
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.a = A()
       s.b = BWrap()
       s.connect( s.a.out, s.b.in_ )
@@ -370,19 +370,19 @@ def test_illegal_hosts_same_parent():
 def test_illegal_hosts_too_far():
 
   class A( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       @s.update
       def up_A_write():
         s.out = 123
 
   class AWrap( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.out = OutVPort(int)
       s.A = A()( out = s.out )
 
   class Top( ComponentLevel3 ):
-    def __init__( s ):
+    def construct( s ):
       s.wire = Wire(int)
       s.A = AWrap()
 

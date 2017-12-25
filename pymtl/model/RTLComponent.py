@@ -12,13 +12,15 @@ import inspect, ast # for error message
 
 class RTLComponent( ComponentLevel3 ):
 
-  def __new__( cls, *args, **kwargs ):
-    inst = super(RTLComponent, cls).__new__( cls, *args, **kwargs )
+  def _construct( s ):
+    if not s._constructed:
+      s.clk   = InVPort( Bits1 )
+      s.reset = InVPort( Bits1 )
 
-    inst.clk   = InVPort( Bits1 )
-    inst.reset = InVPort( Bits1 )
-
-    return inst
+      s.construct( *s._args, **s._kwargs )
+      if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
+        s._continue_call_connect()
+      s._constructed = True
 
   def sim_reset( s ):
     # TODO assert this is the top level
@@ -39,27 +41,3 @@ class RTLComponent( ComponentLevel3 ):
           s.connect( obj._parent.reset, obj.reset )
           s.connect( obj._parent.clk, obj.clk )
           obj = parent
-
-  # Override
-  # def elaborate( s ):
-    # s._declare_vars()
-
-    # s._tag_name_collect() # tag and collect first
-    # s._bringup_reset_clk() # connect all reset/clk signals
-
-    # for obj in s._id_obj.values():
-      # if isinstance( obj, RTLComponent ):
-        # obj._elaborate_read_write_func() # this function is local to the object
-      # s._collect_vars( obj )
-
-    # s._tag_name_collect() # slicing will spawn extra objects
-
-    # s._check_upblk_writes()
-    # s._check_port_in_upblk()
-
-    # s._resolve_var_connections()
-    # s._check_port_in_nets()
-
-    # s._generate_net_blocks()
-
-    # s._process_constraints()

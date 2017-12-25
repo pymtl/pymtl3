@@ -13,13 +13,13 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     raise NotElaboratedError()
 
   all_upblks = set( s._all_upblks )
-  all_update_on_edge = set( s._all_update_on_edge )
   expl_constraints = set( s._all_U_U_constraints )
 
   gen_upblk_reads  = {}
   gen_upblk_writes = {}
 
   if isinstance( s, ComponentLevel2 ):
+    all_update_on_edge = set( s._all_update_on_edge )
     if isinstance( s, ComponentLevel3 ):
       nets = s._all_nets
 

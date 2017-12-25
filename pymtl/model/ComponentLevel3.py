@@ -2,6 +2,7 @@
 # ComponentLevel3.py
 #=========================================================================
 
+from NamedObject import NamedObject
 from ComponentLevel2 import ComponentLevel2
 from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, _overlap
 from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
@@ -14,6 +15,57 @@ class ComponentLevel3( ComponentLevel2 ):
   #-----------------------------------------------------------------------
   # Private methods
   #-----------------------------------------------------------------------
+
+  # Override
+  def _construct( s ):
+    if not s._constructed:
+      s.construct( *s._args, **s._kwargs )
+      if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
+        s._continue_call_connect()
+      s._constructed = True
+
+  def _continue_call_connect( s ):
+
+    try: # Catch AssertionError from _connect
+
+      # Process saved __call__ kwargs
+      for (kw, target) in s._call_kwargs.iteritems():
+
+        try:
+          obj = getattr( s, kw )
+        except AttributeError:
+          raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
+
+        # Obj is a list of signals
+        if   isinstance( obj, list ):
+
+          # Make sure the connection target is a dictionary {idx: obj}
+          if not isinstance( target, dict ):
+            raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
+
+          for idx, item in target.iteritems():
+            if isinstance( item, int ):
+              item = Const( obj[idx].Type, item )
+              item._parent_obj = s._parent_obj
+            obj[idx]._connect( item )
+
+        # Obj is a single signal
+
+        # If the target is a list, it's fanout connection
+        elif isinstance( target, tuple ) or isinstance( target, list ):
+          for item in target:
+            obj._connect( item )
+
+        # Target is a single object
+        else:
+          if isinstance( target, int ):
+            target = Const( obj.Type, target )
+            target._parent_obj = s._parent_obj
+          obj._connect( target )
+
+    except AssertionError as e:
+      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
+
 
   def _resolve_var_connections( s ):
     """ The case of nested data struct: the writer of a net can be one of
@@ -43,8 +95,8 @@ class ComponentLevel3( ComponentLevel2 ):
     nets = s._all_nets = []
 
     visited = set()
-    for obj in s._pymtl_objs:
-      if isinstance( obj, Signal ) and obj._adjs and obj not in visited:
+    for obj in s._all_signals:
+      if obj._adjs and obj not in visited:
         net = []
         Q   = deque( [ obj ] )
         while Q:
@@ -327,54 +379,11 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __call__( s, *args, **kwargs ):
     assert args == ()
-
-    # The first loop checks if there is any invalid connection
-    # TODO check if all list/tuple of objects are connected to output ports
-
-    for (kw, item) in kwargs.iteritems():
-      item_valid = True
-
-      try:
-        obj = getattr( s, kw )
-      except AttributeError:
-        raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
-      if   isinstance( obj, list ): # out = {0:x, 1:y}
-        if not isinstance( item, dict ):
-          raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-        for idx in item:
-          if isinstance( item[idx], int ):
-            item_valid, error_idx = False, item[idx]
-            break
-      elif isinstance( item, tuple ) or isinstance( item, list ):
-        for x in item:
-          if isinstance( item, int ):
-            item_valid, error_idx = False, x
-            break
-      elif isinstance( item, int ):
-        item_valid, error_idx = False, item
-
-      if not item_valid:
-        raise InvalidConnectionError( "Connecting port {} to constant {} can only be done through \"s.connect\".".format( kw, error_idx ) )
-
-    # Then do the connection
-
-    try:
-      for (kw, item) in kwargs.iteritems():
-        obj = getattr( s, kw )
-
-        if   isinstance( obj, list ):
-          for idx in item:
-            obj[idx]._connect( item[idx] )
-        elif isinstance( item, tuple ) or isinstance( item, list ):
-          for x in item:
-            obj._connect( x )
-        else:
-          obj._connect( item )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
+    if s._constructed:
+      raise InvalidConnectionError("Connection using __call__, "
+                                   "i.e. s.x( a = s.a ) is illegal "
+                                   "after constructing s.x")
+    s._call_kwargs = kwargs
     return s
 
   #-----------------------------------------------------------------------
@@ -383,15 +392,16 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def elaborate( s ):
+    NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._tag_name_collect() # tag and collect first
-    for obj in s._pymtl_objs:
-      if isinstance( obj, ComponentLevel2 ):
-        obj._elaborate_read_write_func() # this function is local to the object
-      s._collect_vars( obj )
-    s._tag_name_collect() # slicing will spawn extra objects
+    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel2 ) )
+    for c in s._all_components:
+      c._elaborate_top = s
+      c._elaborate_read_write_func()
+      s._collect_vars( c )
 
+    s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
     s._resolve_var_connections()
 
     s._check_upblk_writes()

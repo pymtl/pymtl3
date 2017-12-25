@@ -18,7 +18,7 @@ def test_simple():
 
   class Top( ComponentLevel3 ):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = TestSourceValRdy( int, [ 0, 1, 2 ] )
       s.sink = TestSinkValRdy  ( int, [ 0, 1, 2 ] )( in_ = s.src.out )
@@ -36,7 +36,7 @@ def test_nested_port_bundle():
 
   class ValRdyBundle( Interface ):
 
-    def __init__( s, Type=int ):
+    def construct( s, Type=int ):
       s.Type = Type
 
       s.msg = Wire( Type )
@@ -48,12 +48,12 @@ def test_nested_port_bundle():
 
   class SuperBundle( Interface ):
 
-    def __init__( s ):
+    def construct( s ):
       s.req  = [ [ ValRdyBundle() for i in xrange(4) ] for j in xrange(4) ]
 
   class Top( ComponentLevel3 ):
 
-    def __init__( s ):
+    def construct( s ):
 
       s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in xrange(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
