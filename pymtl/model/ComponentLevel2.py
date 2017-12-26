@@ -502,8 +502,6 @@ class ComponentLevel2( ComponentLevel1 ):
            s._WR_U_constraints
 
   def lock_in_simulation( s ):
-    for x in s._pymtl_objs:
-      assert x._parent_obj == x._inspect_parent, type(x)
     s._swapped_signals = defaultdict(list)
 
     def cleanup_connectables( current_obj, host_component ):

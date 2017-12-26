@@ -26,9 +26,13 @@ class ComponentLevel3( ComponentLevel2 ):
     tagging, so this is valid. (see NamedObject.py). """
 
     if not s._constructed:
-      s.construct( *s._args, **s._kwargs )
+
+      if not s._kwargs: s.construct( *s._args )
+      else:             s.construct( *s._args, **s._kwargs )
+
       if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
         s._continue_call_connect()
+
       s._constructed = True
 
   def _continue_call_connect( s ):

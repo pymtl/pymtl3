@@ -129,28 +129,37 @@ class OutVPort( Signal ):
   def inverse( s ):
     return InVPort( s.Type )
 
-class Interface( Connectable, NamedObject ):
+class Interface( NamedObject ):
 
   def inverse( s ):
-    inv = s
-    # Berkin: is it necessary to create a new object here? This creates
-    # problems when the interface has parameters, and it would be clunky
-    # to carry those parameters to the new object.
-    #inv = s.__class__()
-    for name, obj in inv.__dict__.iteritems():
-      if isinstance( obj, Signal ):
-        setattr( inv, name, obj.inverse() )
-      else:
-        setattr( inv, name, obj )
-    return inv
+    s._inversed = True
+    return s
 
   # Override
+  # The same reason as __call__ connection. For s.x = A().inverse(),
+  # inverse is executed before setattr, so we need to delay it ...
+
+  def _construct( s ):
+    if not s._constructed:
+      if not s._kwargs: s.construct( *s._args )
+      else:             s.construct( *s._args, **s._kwargs )
+
+      if hasattr( s, "_inversed" ):
+        for name, obj in s.__dict__.iteritems():
+          if not name.startswith("_"):
+            if isinstance( obj, Signal ):
+              setattr( s, name, obj.inverse() )
+            else:
+              setattr( s, name, obj )
+
+      s._constructed = True
+
   def _connect( s, other ):
     # Expand the list when needed. Only connect connectables and return,
     # inheritance will figure out what to do with Wire/WireBundle
 
     def recursive_connect( s_obj, other_obj ):
-      if isinstance( s_obj, Connectable ):
+      if hasattr( s_obj, "_connect" ):
         s_obj._connect( other_obj )
       if   isinstance( s_obj, list ):
         for i in xrange(len(s_obj)):

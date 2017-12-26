@@ -84,8 +84,9 @@ class ComponentLevel1( NamedObject ):
       c._elaborate_top = s
       s._collect_vars( c )
 
-  def construct( s ):
-    pass
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("construct method, where the design is built,"
+                              " is not implemented in {}".format( s.__class__.__name__ ) )
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
@@ -96,7 +97,7 @@ class ComponentLevel1( NamedObject ):
 
   def get_component_level( s ):
     try:
-      return len( s._name_idx[0] )
+      return len( s._full_name_idx[0] )
     except AttributeError:
       raise NotElaboratedError()
 

@@ -31,7 +31,8 @@ class NamedObject(object):
 
   def _construct( s ):
     if not s._constructed:
-      s.construct( *s._args, **s._kwargs )
+      if not s._kwargs: s.construct( *s._args )
+      else:             s.construct( *s._args, **s._kwargs )
       s._constructed = True
 
   def __setattr_for_elaborate__( s, name, obj ):

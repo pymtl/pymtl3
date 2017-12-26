@@ -22,7 +22,8 @@ class RTLComponent( ComponentLevel3 ):
       s.clk   = InVPort( Bits1 )
       s.reset = InVPort( Bits1 )
 
-      s.construct( *s._args, **s._kwargs )
+      if not s._kwargs: s.construct( *s._args )
+      else:             s.construct( *s._args, **s._kwargs )
 
       try:
         s.connect( s.clk, s._parent_obj.clk )
