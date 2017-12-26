@@ -107,7 +107,6 @@ class NamedObject(object):
       return super( NamedObject, s ).__repr__()
 
     name, idx = s._full_name_idx
-    print name, idx
     name_len = len(name)
     idx_len  = len(idx)
 

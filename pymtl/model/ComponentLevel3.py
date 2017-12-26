@@ -18,6 +18,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def _construct( s ):
+    """ We override _construct here to finish the saved __call__
+    connections right after constructing the model. The reason why we
+    take this detour instead of connecting in __call__ directly, is that
+    __call__ is done before setattr, and hence the child components don't
+    know their name yet. _constructed is called in setattr after name
+    tagging, so this is valid. (see NamedObject.py). """
+
     if not s._constructed:
       s.construct( *s._args, **s._kwargs )
       if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
@@ -25,6 +32,11 @@ class ComponentLevel3( ComponentLevel2 ):
       s._constructed = True
 
   def _continue_call_connect( s ):
+    """ Here we continue to establish the connections from signals of the
+    parent object, to signals in the current object. Since it is the
+    parent that connects a constant integer to a signal, we should point
+    the Const object back to the parent object by setting _parent_obj to
+    s._parent_obj."""
 
     try: # Catch AssertionError from _connect
 
@@ -343,6 +355,19 @@ class ComponentLevel3( ComponentLevel2 ):
   # Construction-time APIs
   #-----------------------------------------------------------------------
 
+  def __call__( s, *args, **kwargs ):
+    """ This syntactic sugar supports the following one-liner:
+      >>> s.x = SomeReg(Bits1)( in_ = s.in_ )
+    It connects s.in_ to s.x.in_ in the same line as model construction.
+    """
+    assert args == ()
+    if s._constructed:
+      raise InvalidConnectionError("Connection using __call__, "
+                                   "i.e. s.x( a = s.a ), is illegal "
+                                   "after constructing s.x")
+    s._call_kwargs = kwargs
+    return s
+
   def connect( s, o1, o2 ):
     """ Connect two objects. If one of them is integer, create a new Const
     that wraps around it in 's'. This is why connecting a constant should be
@@ -377,15 +402,6 @@ class ComponentLevel3( ComponentLevel2 ):
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
-  def __call__( s, *args, **kwargs ):
-    assert args == ()
-    if s._constructed:
-      raise InvalidConnectionError("Connection using __call__, "
-                                   "i.e. s.x( a = s.a ) is illegal "
-                                   "after constructing s.x")
-    s._call_kwargs = kwargs
-    return s
-
   #-----------------------------------------------------------------------
   # elaborate
   #-----------------------------------------------------------------------
@@ -404,9 +420,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
     s._resolve_var_connections()
 
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
-    s._check_port_in_nets()
+    s.check()
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)

@@ -472,8 +472,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
 
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
+    s.check()
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)

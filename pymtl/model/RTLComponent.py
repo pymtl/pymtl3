@@ -18,26 +18,23 @@ class RTLComponent( ComponentLevel3 ):
       s.reset = InVPort( Bits1 )
 
       s.construct( *s._args, **s._kwargs )
+
       if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
         s._continue_call_connect()
+
+      try:
+        s.connect( s.clk, s._parent_obj.clk )
+        s.connect( s.reset, s._parent_obj.reset )
+      except AttributeError:
+        pass
+
       s._constructed = True
 
   def sim_reset( s ):
-    # TODO assert this is the top level
+    assert s._elaborate_top is s # assert sim_reset is top
 
     s.reset = Bits1( 1 )
     s.tick() # This tick propagates the reset signal
     s.tick()
     s.reset = Bits1( 0 )
 
-  def _bringup_reset_clk( s ):
-    visited = set( [ id(s) ] )
-    for obj in s._id_obj.values():
-      if isinstance( obj, RTLComponent ):
-        while id(obj) not in visited:
-          visited.add( id(obj) )
-          assert hasattr( obj, "_parent" )
-          parent = obj._parent
-          s.connect( obj._parent.reset, obj.reset )
-          s.connect( obj._parent.clk, obj.clk )
-          obj = parent
