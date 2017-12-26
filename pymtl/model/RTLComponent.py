@@ -12,21 +12,26 @@ import inspect, ast # for error message
 
 class RTLComponent( ComponentLevel3 ):
 
+  # Override
   def _construct( s ):
+    """ We override _construct here to add clk/reset signals. I add signal
+    declarations before constructing child components and bring up them
+    to parent after construction of all children. """
+
     if not s._constructed:
       s.clk   = InVPort( Bits1 )
       s.reset = InVPort( Bits1 )
 
       s.construct( *s._args, **s._kwargs )
 
-      if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
       try:
         s.connect( s.clk, s._parent_obj.clk )
         s.connect( s.reset, s._parent_obj.reset )
       except AttributeError:
         pass
+
+      if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
+        s._continue_call_connect()
 
       s._constructed = True
 

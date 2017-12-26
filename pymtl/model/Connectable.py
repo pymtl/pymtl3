@@ -131,20 +131,6 @@ class OutVPort( Signal ):
 
 class Interface( Connectable, NamedObject ):
 
-  def __new__( cls, *args, **kwargs ):
-
-    # Check to see if the interface class implements __init__
-    if cls.__init__ is not object.__init__:
-      import inspect
-      raise TypeError("{} shouldn't implement/override __init__ method.\n\n"
-                      "Interface class \"{}\" is implemented at line {} in file {}."
-                      .format( repr(cls), cls.__name__,
-                               inspect.findsource(cls)[1] + 1,
-                               inspect.getfile(cls) ) )
-
-    inst = super( Interface, cls ).__new__( cls, *args, **kwargs )
-    return inst
-
   def inverse( s ):
     inv = s
     # Berkin: is it necessary to create a new object here? This creates
