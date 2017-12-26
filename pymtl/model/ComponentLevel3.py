@@ -4,7 +4,7 @@
 
 from NamedObject import NamedObject
 from ComponentLevel2 import ComponentLevel2
-from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, _overlap
+from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const
 from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
 from collections import defaultdict, deque
 
@@ -130,10 +130,10 @@ class ComponentLevel3( ComponentLevel2 ):
       for obj in writes:
         writer_prop[ obj ] = True # propagatable
 
-        obj = obj._nested
-        while obj:
+        obj = obj._parent_obj
+        while obj.is_signal():
           writer_prop[ obj ] = False
-          obj = obj._nested
+          obj = obj._parent_obj
 
     # Find the host object of every net signal
     # and then leverage the information to find out top level input port
@@ -181,20 +181,17 @@ class ComponentLevel3( ComponentLevel2 ):
               has_writer, writer = True, v
 
             # Check if an ancestor is a propagatable writer
-            obj = v._nested
-            while obj:
+            obj = v.get_parent_object()
+            while obj.is_signal():
               if obj in writer_prop and writer_prop[ obj ]:
                 assert not has_writer
                 has_writer, writer = True, v
                 break
-              obj = obj._nested
+              obj = obj.get_parent_object()
 
             # Check sibling slices
-            if v._slice:
-              for obj in v._nested._slices.values():
-                if v is obj or not _overlap(obj._slice, v._slice):
-                  continue # Skip the same slice or not overlapped
-
+            for obj in v.get_sibling_slices():
+              if obj.slice_overlap( v ):
                 if obj in writer_prop and writer_prop[ obj ]:
                   assert not has_writer
                   has_writer, writer = True, v
@@ -223,11 +220,11 @@ class ComponentLevel3( ComponentLevel2 ):
             readers.append( v )
             writer_prop[ v ] = True # The reader becomes new writer
 
-            obj = v._nested
-            while obj:
+            obj = v.get_parent_object()
+            while obj.is_signal():
               if obj not in writer_prop:
                 writer_prop[ obj ] = False
-              obj = obj._nested
+              obj = obj.get_parent_object()
 
         headed.append( (writer, readers) )
 

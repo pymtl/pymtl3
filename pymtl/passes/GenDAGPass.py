@@ -111,7 +111,8 @@ _ret_blk = {0}
       blk.hostobj = lca
 
       top.genblks.add( blk )
-      top.genblk_reads [ blk ] = [ writer ]
+      if writer.is_signal():
+        top.genblk_reads [ blk ] = [ writer ]
       top.genblk_writes[ blk ] = readers[::]
       top.genblk_src   [ blk ] = ( gen_src, ast.parse( gen_src ) )
 
@@ -191,32 +192,20 @@ _ret_blk = {0}
     # 2) RD A.b[1:10] - WR A.b[1:10], A.b, A
     # 3) RD A.b[1:10] - WR A.b[0:5], A.b[6], A.b[8:11]
 
-    # Checking if two slices/indices overlap
-    def indices_overlap( x, y ):
-      if isinstance( x, int ):
-        if isinstance( y, int ):  return x == y
-        else:                     return y.start <= x < y.stop
-      else: # x is slice
-        if isinstance( y, int ):  return x.start <= y < x.stop
-        else:
-          if x.start <= y.start:  return y.start < x.stop
-          else:                   return x.start < y.stop
-
     for obj, rd_blks in read_upblks.iteritems():
       writers = []
 
       # Check parents. Cover 1) and 2)
       x = obj
-      while x:
+      while x.is_signal():
         if x in write_upblks:
           writers.append( x )
-        x = x._nested
+        x = x.get_parent_object()
 
       # Check the sibling slices. Cover 3)
-      if obj._slice:
-        for x in obj._nested._slices.values():
-          if indices_overlap( x._slice, obj._slice ) and x in write_upblks:
-            writers.append( x )
+      for x in obj.get_sibling_slices():
+        if x.slice_overlap( obj ) and x in write_upblks:
+          writers.append( x )
 
       # Add all constraints
       for writer in writers:
@@ -240,10 +229,10 @@ _ret_blk = {0}
 
       # Check parents. Cover 2) and 3). 1) and 4) should be detected in elaboration
       x = obj
-      while x:
+      while x.is_signal():
         if x in read_upblks:
           readers.append( x )
-        x = x._nested
+        x = x.get_parent_object()
 
       # Add all constraints
       for wr_blk in wr_blks:

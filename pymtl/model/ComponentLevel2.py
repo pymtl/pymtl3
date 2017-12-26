@@ -4,7 +4,7 @@
 
 from NamedObject     import NamedObject
 from ComponentLevel1 import ComponentLevel1
-from Connectable     import Signal, InVPort, OutVPort, Wire, Const, _overlap, Interface
+from Connectable     import Signal, InVPort, OutVPort, Wire, Const, Interface
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 from errors import InvalidConstraintError, SignalTypeError, \
@@ -304,7 +304,7 @@ class ComponentLevel2( ComponentLevel1 ):
       # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
 
       x = obj
-      while x:
+      while x.is_signal():
         if x is not obj and x in write_upblks:
           wrx_blks = list(write_upblks[x])
 
@@ -313,19 +313,18 @@ class ComponentLevel2( ComponentLevel1 ):
             "Two-writer conflict in nested struct/slice. \n - {} (in {})\n - {} (in {})".format(
               repr(x), wrx_blks[0].__name__,
               repr(obj), wr_blks[0].__name__ ) )
-        x = x._nested
+        x = x.get_parent_object()
 
       # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
 
-      if obj._slice:
-        for x in obj._nested._slices.values():
-          # Recognize overlapped slices
-          if x is not obj and _overlap( x._slice, obj._slice ) and x in write_upblks:
-            wrx_blks = list(write_upblks[x])
-            raise MultiWriterError( \
-              "Two-writer conflict between sibling slices. \n - {} (in {})\n - {} (in {})".format(
-                repr(x), wrx_blks[0].__name__,
-                repr(obj), wr_blks[0].__name__ ) )
+      for x in obj.get_sibling_slices():
+        # Recognize overlapped slices
+        if x.slice_overlap( obj ) and x in write_upblks:
+          wrx_blks = list(write_upblks[x])
+          raise MultiWriterError( \
+            "Two-writer conflict between sibling slices. \n - {} (in {})\n - {} (in {})".format(
+              repr(x), wrx_blks[0].__name__,
+              repr(obj), wr_blks[0].__name__ ) )
 
   def _check_port_in_upblk( s ):
 
@@ -554,7 +553,3 @@ class ComponentLevel2( ComponentLevel1 ):
               cleanup_connectables( obj, host_component )
 
     cleanup_connectables( s, s )
-    # for x in s._swapped_signals:
-      # print s._swapped_signals[x]
-    # assert False
-

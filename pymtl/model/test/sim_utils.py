@@ -1,7 +1,7 @@
 from pymtl import *
 from collections  import deque, defaultdict
 from pymtl.model.errors import UpblkCyclicError, NotElaboratedError
-from pymtl.model import Signal, Const, NamedObject, _overlap
+from pymtl.model import Signal, Const, NamedObject
 from pymtl.model import ComponentLevel1, ComponentLevel2, ComponentLevel3
 import random, py.code
 
@@ -125,16 +125,15 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
       # Check parents. Cover 1) and 2)
       x = obj
-      while x:
+      while x.is_signal():
         if x in write_upblks:
           writers.append( x )
-        x = x._nested
+        x = x.get_parent_object()
 
       # Check the sibling slices. Cover 3)
-      if obj._slice:
-        for x in obj._nested._slices.values():
-          if _overlap( x._slice, obj._slice ) and x in write_upblks:
-            writers.append( x )
+      for x in obj.get_sibling_slices():
+        if x.slice_overlap( obj ) and x in write_upblks:
+          writers.append( x )
 
       # Add all constraints
       for writer in writers:
@@ -158,10 +157,10 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
       # Check parents. Cover 2) and 3). 1) and 4) should be detected in elaboration
       x = obj
-      while x:
+      while x.is_signal():
         if x in read_upblks:
           readers.append( x )
-        x = x._nested
+        x = x.get_parent_object()
 
       # Add all constraints
       for wr_blk in wr_blks:

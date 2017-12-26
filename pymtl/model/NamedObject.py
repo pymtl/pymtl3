@@ -68,37 +68,32 @@ class NamedObject(object):
 
   def _recursive_collect( s, filt=lambda x: isinstance( NamedObject, x ) ):
 
-    def _expand( child ):
+    def _expand( m ):
 
-      # Jump back to main function when it's another named object
-      if   isinstance( child, NamedObject ):
-        _collect( child )
+      if   isinstance( m, NamedObject ):
 
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( child, list ):
-        for i, o in enumerate( child ):
-          _expand( o )
+        if filt( m ): # Check if m satisfies the filter
+          ret.add( m )
 
-    # If the id is string, it is a normal children field. Otherwise it
-    # should be an tuple that represents a slice
+        for name, obj in m.__dict__.iteritems():
 
-    def _collect( m ):
+          # If the id is string, it is a normal children field. Otherwise it
+          # should be an tuple that represents a slice
 
-      if filt( m ):
-        ret.add( m )
+          if   isinstance( name, basestring ): # python2 specific
+            if not name.startswith("_"): # filter private variables
+              _expand( obj )
 
-      # Jump to the expand function to check the type of child object
-      for name, obj in m.__dict__.iteritems():
-
-        if   isinstance( name, basestring ): # python2 specific
-          if not name.startswith("_"): # filter private variables
+          elif isinstance( name, tuple ): # name = [1:3]
             _expand( obj )
 
-        elif isinstance( name, tuple ): # name = [1:3]
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( m, list ):
+        for i, obj in enumerate( m ):
           _expand( obj )
 
     ret = set()
-    _collect( s )
+    _expand( s )
     return ret
 
   # Developers should use repr(x) everywhere to get the name
@@ -150,8 +145,21 @@ class NamedObject(object):
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
 
+  def is_component( s ):
+    raise NotImplemented
+
+  def is_signal( s ):
+    raise NotImplemented
+
+  def is_interface( s ):
+    raise NotImplemented
+
   def get_parent_object( s ):
     try:
       return s._parent_obj
     except AttributeError:
       raise NotElaboratedError()
+
+  def get_all_object_filter( s, filt ):
+    assert callable( filt )
+    s._recursive_collect( filt )

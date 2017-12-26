@@ -4,9 +4,7 @@
 
 from pymtl.datatypes import Bits1
 from ComponentLevel3 import ComponentLevel3
-from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, _overlap
-from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
-from collections import defaultdict, deque
+from Connectable import Connectable, Signal, InVPort
 
 import inspect, ast # for error message
 

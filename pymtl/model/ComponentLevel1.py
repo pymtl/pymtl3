@@ -92,6 +92,15 @@ class ComponentLevel1( NamedObject ):
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
 
+  def is_component( s ):
+    return True
+
+  def is_signal( s ):
+    return False
+
+  def is_interface( s ):
+    return False
+
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 

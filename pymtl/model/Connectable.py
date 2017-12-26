@@ -35,6 +35,12 @@ class Connectable(object):
       except AttributeError:
         raise NotElaboratedError()
 
+  def get_parent_object( s ):
+    try:
+      return s._parent_obj
+    except AttributeError:
+      raise NotElaboratedError()
+
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
   if isinstance( x, int ):
@@ -51,17 +57,26 @@ class Const( Connectable ):
   def __init__( s, Type, v ):
     s.Type = Type
     s.const = v
-    s._nested = None # no member
-    s._slice  = None # not slicable
 
   def __repr__( s ):
     return "{}({})".format( str(s.Type.__name__), s.const )
+
+  def get_sibling_slices( s ):
+    return []
+
+  def is_component( s ):
+    return False
+
+  def is_signal( s ):
+    return False
+
+  def is_interface( s ):
+    return False
 
 class Signal( Connectable, NamedObject ):
 
   def __init__( s, Type ):
     s.Type    = Type
-    s._nested = None # None means it's the top level Wire(Type)
     s._slice  = None # None means it's not a slice of some wire
     s._attrs  = {}
     s._slices = {}
@@ -75,7 +90,6 @@ class Signal( Connectable, NamedObject ):
 
     if name not in s.__dict__:
       x = s.__class__( getattr(s.Type, name) )
-      x._nested          = s
       x._parent_obj      = s
 
       sname, sidx        = s._full_name_idx
@@ -100,7 +114,6 @@ class Signal( Connectable, NamedObject ):
 
     if sl_tuple not in s.__dict__:
       x = s.__class__( mk_bits( sl.stop - sl.start) )
-      x._nested              = s
       x._parent_obj          = s
       sname, sidx            = s._full_name_idx
       x._full_name_idx       = ( sname + [], sidx + [ [sl] ] )
@@ -115,6 +128,31 @@ class Signal( Connectable, NamedObject ):
 
   def default_value( s ):
     return s.Type()
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------
+
+  def is_component( s ):
+    return False
+
+  def is_signal( s ):
+    return True
+
+  def is_interface( s ):
+    return False
+
+  def get_sibling_slices( s ):
+    if s._slice:
+      ret = s._parent_obj._slices.values()
+      ret.remove( s )
+      return ret
+    return []
+
+  def slice_overlap( s, other ):
+    assert other._parent_obj is s._parent_obj, "You are only allowed to \
+                                                pass in a sibling signal."
+    return _overlap( s._slice, other._slice )
 
 # These three subtypes are for type checking purpose
 class Wire( Signal ):
@@ -175,3 +213,16 @@ class Interface( NamedObject ):
       if not name.startswith("_"):
         assert hasattr( other, name )
         recursive_connect( obj, getattr( other, name ) )
+
+  #-----------------------------------------------------------------------
+  # Public APIs (only can be called after elaboration)
+  #-----------------------------------------------------------------------
+
+  def is_component( s ):
+    return False
+
+  def is_signal( s ):
+    return False
+
+  def is_interface( s ):
+    return True
