@@ -94,6 +94,7 @@ class Signal( Connectable, NamedObject ):
 
       sname, sidx        = s._full_name_idx
       x._full_name_idx   = ( sname + [name], sidx + [ [] ] )
+      x._my_name_idx     = ( name, [] )
 
       s.__dict__[ name ] = s._attrs[ name ] = x
 
@@ -115,8 +116,11 @@ class Signal( Connectable, NamedObject ):
     if sl_tuple not in s.__dict__:
       x = s.__class__( mk_bits( sl.stop - sl.start) )
       x._parent_obj          = s
+
       sname, sidx            = s._full_name_idx
       x._full_name_idx       = ( sname + [], sidx + [ [sl] ] )
+      x._my_name_idx         = ( sname[-1], sidx[-1:] + [ [sl] ] )
+
       x._slice               = sl
       s.__dict__[ sl_tuple ] = s._slices[ sl_tuple ] = x
 

@@ -64,7 +64,7 @@ class NamedObject(object):
 
     super( NamedObject, s ).__setattr__( name, obj )
 
-  # Filter objects
+  # recursively and exhaustively
 
   def _recursive_collect( s, filt=lambda x: isinstance( NamedObject, x ) ):
 
@@ -153,6 +153,25 @@ class NamedObject(object):
 
   def is_interface( s ):
     raise NotImplemented
+
+  def get_field_name( s ):
+    name, idx = s._my_name_idx # name must be a string, idx is a list
+    idx_len  = len(idx)
+
+    if idx_len == 0:  return name
+
+    ret = name + "".join([ "[{}]".format(x) for x in idx[0] ])
+
+    if idx_len == 1: return ret
+
+    # The only place we allow slicing is the end
+    assert idx_len == 2
+
+    # Only one slice allowed
+    last_idx = idx[1]
+    assert len(last_idx) == 1
+
+    return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
 
   def get_parent_object( s ):
     try:

@@ -108,7 +108,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # First of all, bfs the "forest" to find out all nets
 
-    nets = s._all_nets = []
+    nets = []
 
     visited = set()
     for obj in s._all_signals:

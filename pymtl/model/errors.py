@@ -21,7 +21,7 @@ class NotElaboratedError( Exception ):
 
 class VarNotDeclaredError( Exception ):
   """ Raise when a variable in an update block is not declared """
-  def __init__( self, obj, field, blk=None, lineno=0 ):
+  def __init__( self, obj, field, blk=None, blk_hostobj=None, lineno=0 ):
     self.obj    = obj
     self.field  = field
     self.blk    = blk
@@ -31,7 +31,7 @@ class VarNotDeclaredError( Exception ):
     return super( VarNotDeclaredError, self ).__init__( \
       "Object {} of class {} does not have field <{}> ({}.{})\n - Occurred at Line {} of {} at {} (class {})".format( \
       repr(obj), obj.__class__.__name__, field, repr(obj), field, lineno, blk.__name__,
-      repr(blk.hostobj), blk.hostobj.__class__.__name__ ) )
+      repr(blk_hostobj), blk_hostobj.__class__.__name__ ) )
 
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """

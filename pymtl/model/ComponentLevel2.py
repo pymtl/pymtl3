@@ -26,8 +26,8 @@ class ComponentLevel2( ComponentLevel1 ):
     inst._update_on_edge   = set()
 
     # constraint[var] = (sign, func)
-    inst._RD_U_constraints = defaultdict(list)
-    inst._WR_U_constraints = defaultdict(list)
+    inst._RD_U_constraints = defaultdict(set)
+    inst._WR_U_constraints = defaultdict(set)
     inst._name_func = {}
 
     return inst
@@ -68,7 +68,6 @@ class ComponentLevel2( ComponentLevel1 ):
   def _declare_vars( s ):
     super( ComponentLevel2, s )._declare_vars()
 
-    s._all_funcs = set()
     s._all_update_on_edge = set()
 
     s._all_RD_U_constraints = defaultdict(list)
@@ -107,7 +106,7 @@ class ComponentLevel2( ComponentLevel1 ):
             expand_array_index( obj[index], name_depth, name, idx_depth+1, idx, obj_list )
           except TypeError: # cannot convert to integer
             if not isinstance( _index, slice ):
-              raise VarNotDeclaredError( obj, _index )
+              raise VarNotDeclaredError( obj, _index, func, s, astnode.lineno )
             expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
           except IndexError:
             pass
@@ -134,7 +133,7 @@ class ComponentLevel2( ComponentLevel1 ):
           try:
             obj = getattr( obj, field )
           except AttributeError:
-            raise VarNotDeclaredError( obj, field )
+            raise VarNotDeclaredError( obj, field, func, s, astnode.lineno )
 
           if not idx: lookup_var( obj, depth+1, name, obj_list )
           else:       expand_array_index( obj, depth, name, 0, idx, obj_list )
@@ -147,10 +146,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
       for name, astnode in names:
         objs = []
-        try:
-          lookup_var( s, 0, name, objs )
-        except VarNotDeclaredError as e:
-          raise VarNotDeclaredError( e.obj, e.field, func, astnode.lineno )
+        lookup_var( s, 0, name, objs )
 
         all_objs.update( objs )
 
@@ -184,8 +180,7 @@ class ComponentLevel2( ComponentLevel1 ):
           try:
             call = getattr( s, name[0][0] )
           except AttributeError as e:
-            s._tag_name_collect() # give full name to spawned object
-            raise VarNotDeclaredError( call, name[0][0], func, astnode.lineno )
+            raise VarNotDeclaredError( call, name[0][0], func, s, astnode.lineno )
 
         # This is a function call without "s." prefix, check func list
         elif name[0][0] in name_func:
@@ -239,8 +234,6 @@ class ComponentLevel2( ComponentLevel1 ):
       for k in m._WR_U_constraints:
         s._all_WR_U_constraints[k].extend( m._WR_U_constraints[k] )
 
-      s._all_funcs.update( m._name_func.values() )
-
       # I assume different update blocks will always have different ids
       s._all_upblk_reads.update( m._upblk_reads )
       s._all_upblk_writes.update( m._upblk_writes )
@@ -265,7 +258,7 @@ class ComponentLevel2( ComponentLevel1 ):
               if v in caller: # v calls someone else there is a cycle
                 raise InvalidFuncCallError( \
                   "In class {}\nThe full call hierarchy:\n - {}{}\nThese function calls form a cycle:\n {}\n{}".format(
-                    type(v.hostobj).__name__,
+                    type(m).__name__, # function's hostobj must be m
                     "\n - ".join( [ "{} calls {}".format( caller[x][0].__name__, x.__name__ )
                                     for x in stk ] ),
                     "\n - {} calls {}".format( u.__name__, v.__name__ ),
@@ -284,6 +277,25 @@ class ComponentLevel2( ComponentLevel1 ):
           stk    = [ call ] # for error message
           dfs( call, stk )
 
+  def _uncollect_vars( s, m ):
+    super( ComponentLevel2, s )._uncollect_vars( m )
+
+    if isinstance( m, ComponentLevel2 ):
+      s._all_update_on_edge -= m._update_on_edge
+      s._all_U_U_constraints -= m._U_U_constraints
+
+      for k in m._RD_U_constraints:
+        s._all_RD_U_constraints[k] -= m._RD_U_constraints[k]
+      for k in m._WR_U_constraints:
+        s._all_WR_U_constraints[k] -= m._RD_U_constraints[k]
+
+      s._all_upblk_reads  = { k:v for k,v in s._all_upblk_reads.iteritems()
+                              if k not in m._upblks }
+      s._all_upblk_writes = { k:v for k,v in s._all_upblk_writes.iteritems()
+                              if k not in m._upblks }
+      s._all_upblk_calls  = { k:v for k,v in s._all_upblk_calls.iteritems()
+                              if k not in m._upblks }
+
   def _check_upblk_writes( s ):
 
     write_upblks = defaultdict(set)
@@ -297,7 +309,7 @@ class ComponentLevel2( ComponentLevel1 ):
       if len(wr_blks) > 1:
         raise MultiWriterError( \
         "Multiple update blocks write {}.\n - {}".format( repr(obj),
-            "\n - ".join([ x.__name__+" at "+repr(x.hostobj) \
+            "\n - ".join([ x.__name__+" at "+repr(s._all_upblk_hostobj[x]) \
                            for x in wr_blks ]) ) )
 
       # See VarConstraintPass.py for full information
@@ -331,7 +343,7 @@ class ComponentLevel2( ComponentLevel1 ):
     # Check read first
     for blk, reads in s._all_upblk_reads.iteritems():
 
-      blk_hostobj = blk.hostobj
+      blk_hostobj = s._all_upblk_hostobj[ blk ]
 
       for obj in reads:
         host = obj
@@ -355,7 +367,7 @@ class ComponentLevel2( ComponentLevel1 ):
     # Then check write
     for blk, writes in s._all_upblk_writes.iteritems():
 
-      blk_hostobj = blk.hostobj
+      blk_hostobj = s._all_upblk_hostobj[ blk ]
 
       for obj in writes:
         host = obj
@@ -418,8 +430,6 @@ class ComponentLevel2( ComponentLevel1 ):
       raise UpblkFuncSameNameError( name )
 
     s._name_func[ name ] = func
-    func.hostobj = s
-
     s._cache_func_meta( func )
     return func
 
@@ -438,6 +448,8 @@ class ComponentLevel2( ComponentLevel1 ):
 
     for (x0, x1) in args:
       if   isinstance( x0, U ) and isinstance( x1, U ): # U & U, same
+        assert (x0.func, x1.func) not in s._U_U_constraints, \
+          "Duplicated constraint"
         s._U_U_constraints.add( (x0.func, x1.func) )
 
       elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
@@ -450,9 +462,13 @@ class ComponentLevel2( ComponentLevel1 ):
           x0, x1 = x1, x0 # Make sure x0 is RD/WR(...) and x1 is U(...)
 
         if isinstance( x0, RD ):
-          s._RD_U_constraints[ x0.var ].append( (sign, x1.func ) )
+          assert (sign, x1.func) not in s._RD_U_constraints[ x0.var ], \
+            "Duplicated constraint"
+          s._RD_U_constraints[ x0.var ].add( (sign, x1.func) )
         else:
-          s._WR_U_constraints[ x0.var ].append( (sign, x1.func ) )
+          assert (sign, x1.func ) not in s._WR_U_constraints[ x0.var ], \
+            "Duplicated constraint"
+          s._WR_U_constraints[ x0.var ].add( (sign, x1.func) )
 
   #-----------------------------------------------------------------------
   # elaborate
