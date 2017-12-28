@@ -433,6 +433,10 @@ class ComponentLevel3( ComponentLevel2 ):
     s._check_port_in_upblk()
     s._check_port_in_nets()
 
+  # Override
+  def get_all_components( s ):
+    return s._recursive_collect( lambda x: isinstance( x, ComponentLevel3 ) )
+
   def get_all_nets( s ):
     try:
       return s._all_nets

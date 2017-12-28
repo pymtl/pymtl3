@@ -135,10 +135,25 @@ class ComponentLevel1( NamedObject ):
     return s._all_U_U_constraints
 
   def get_all_components( s ):
-    s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
-
+    return s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
 
   def delete_object_by_name( s, name ):
     obj = getattr( s, name )
-    s._elaborate_top._uncollect_vars( obj )
+
+    top = s._elaborate_top
+    for x in obj.get_all_components():
+      assert x._elaborate_top is top
+      top._uncollect_vars( x )
+
     delattr( s, name )
+
+  def add_component_by_name( s, name, obj ):
+    assert not hasattr( s, name )
+    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+    setattr( s, name, obj )
+    del NamedObject.__setattr__
+
+    top = s._elaborate_top
+    for c in obj.get_all_components():
+      c._elaborate_top = top
+      top._collect_vars( c )

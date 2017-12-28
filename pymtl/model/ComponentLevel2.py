@@ -282,7 +282,6 @@ class ComponentLevel2( ComponentLevel1 ):
 
     if isinstance( m, ComponentLevel2 ):
       s._all_update_on_edge -= m._update_on_edge
-      s._all_U_U_constraints -= m._U_U_constraints
 
       for k in m._RD_U_constraints:
         s._all_RD_U_constraints[k] -= m._RD_U_constraints[k]
@@ -516,6 +515,10 @@ class ComponentLevel2( ComponentLevel1 ):
            s._RD_U_constraints, \
            s._WR_U_constraints
 
+  # Override
+  def get_all_components( s ):
+    return s._recursive_collect( lambda x: isinstance( x, ComponentLevel2 ) )
+
   def lock_in_simulation( s ):
     s._swapped_signals = defaultdict(list)
 
@@ -569,3 +572,20 @@ class ComponentLevel2( ComponentLevel1 ):
               cleanup_connectables( obj, host_component )
 
     cleanup_connectables( s, s )
+
+  def add_component_by_name( s, name, obj ):
+    assert not hasattr( s, name )
+    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+    setattr( s, name, obj )
+    del NamedObject.__setattr__
+
+    added_components = obj.get_all_components()
+    top = s._elaborate_top
+
+    for c in added_components:
+      c._elaborate_top = top
+      c._elaborate_read_write_func()
+      top._collect_vars( c )
+
+    s._all_signals.update( m._recursive_collect(
+                            lambda x: isinstance( x, Signal ) ) )
