@@ -66,7 +66,7 @@ class NamedObject(object):
 
   # recursively and exhaustively
 
-  def _recursive_collect( s, filt=lambda x: isinstance( NamedObject, x ) ):
+  def _recursive_collect( s, filt=lambda x: isinstance( x, NamedObject ) ):
 
     def _expand( m ):
 

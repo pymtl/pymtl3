@@ -53,9 +53,9 @@ class ComponentLevel1( NamedObject ):
     The general format resembles "s._all_X.update/append( s._X ). """
 
     if isinstance( m, ComponentLevel1 ):
-      s._all_upblks.update( m._upblks )
+      s._all_upblks |= m._upblks
       s._all_upblk_hostobj.update( { blk: m for blk in m._upblks } )
-      s._all_U_U_constraints.update( m._U_U_constraints )
+      s._all_U_U_constraints |= m._U_U_constraints
 
   def _uncollect_vars( s, m ):
 
@@ -64,7 +64,6 @@ class ComponentLevel1( NamedObject ):
       s._all_upblk_hostobj = { k:v for k,v in s._all_upblk_hostobj.iteritems()
                                if k not in m._upblks }
       s._all_U_U_constraints -= m._U_U_constraints
-
 
   #-----------------------------------------------------------------------
   # Construction-time APIs
@@ -137,15 +136,36 @@ class ComponentLevel1( NamedObject ):
   def get_all_components( s ):
     return s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
 
-  def delete_object_by_name( s, name ):
-    obj = getattr( s, name )
+  def delete_component_by_name( s, name ):
 
-    top = s._elaborate_top
-    for x in obj.get_all_components():
-      assert x._elaborate_top is top
-      top._uncollect_vars( x )
+    # This nested delete function is to create an extra layer to properly
+    # call garbage collector. If we can make sure it is collected
+    # automatically and fast enough, we might remove this extra layer
+    #
+    # EDIT: After experimented w/ and w/o gc.collect(), it seems like it
+    # is eventually collected, but sometimes the intermediate memory
+    # footprint might reach up to gigabytes, so let's keep the
+    # gc.collect() for now
 
-    delattr( s, name )
+    def _delete_component_by_name( parent, name ):
+      obj = getattr( parent, name )
+      top = s._elaborate_top
+
+      removed_components = obj.get_all_components()
+      for x in removed_components:
+        assert x._elaborate_top is top
+        top._uncollect_vars( x )
+
+      for x in obj._recursive_collect():
+        del x._parent_obj
+
+      top._all_components -= removed_components
+
+      delattr( s, name )
+
+    _delete_component_by_name( s, name )
+    import gc
+    gc.collect()
 
   def add_component_by_name( s, name, obj ):
     assert not hasattr( s, name )
@@ -153,7 +173,9 @@ class ComponentLevel1( NamedObject ):
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
+    added_components = obj.get_all_components()
     top = s._elaborate_top
-    for c in obj.get_all_components():
+
+    for c in added_components:
       c._elaborate_top = top
       top._collect_vars( c )

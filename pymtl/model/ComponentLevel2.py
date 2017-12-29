@@ -11,7 +11,7 @@ from errors import InvalidConstraintError, SignalTypeError, \
                    MultiWriterError, VarNotDeclaredError, InvalidFuncCallError, UpblkFuncSameNameError
 import AstHelper
 
-import inspect2, re, ast
+import inspect2, re, ast, gc
 p = re.compile('( *(@|def))')
 
 class ComponentLevel2( ComponentLevel1 ):
@@ -23,7 +23,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def __new__( cls, *args, **kwargs ):
     inst = super( ComponentLevel2, cls ).__new__( cls, *args, **kwargs )
 
-    inst._update_on_edge   = set()
+    inst._update_on_edge = set()
 
     # constraint[var] = (sign, func)
     inst._RD_U_constraints = defaultdict(set)
@@ -70,8 +70,8 @@ class ComponentLevel2( ComponentLevel1 ):
 
     s._all_update_on_edge = set()
 
-    s._all_RD_U_constraints = defaultdict(list)
-    s._all_WR_U_constraints = defaultdict(list)
+    s._all_RD_U_constraints = defaultdict(set)
+    s._all_WR_U_constraints = defaultdict(set)
 
     # We don't collect func's metadata
     # because every func is local to the component
@@ -116,7 +116,7 @@ class ComponentLevel2( ComponentLevel1 ):
             s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ].
             Recursively collect all signals. """
         if   isinstance( obj, Signal ):
-          obj_list.append( obj )
+          obj_list.add( obj )
         elif isinstance( obj, list ): # SORRY
           for i, o in enumerate( obj ):
             add_all( o, obj_list )
@@ -145,10 +145,10 @@ class ComponentLevel2( ComponentLevel1 ):
       all_objs = set()
 
       for name, astnode in names:
-        objs = []
+        objs = set()
         lookup_var( s, 0, name, objs )
 
-        all_objs.update( objs )
+        all_objs |= objs
 
         # Annotate astnode with actual objects. However, since I only
         # parse AST of an upblk/function once to avoid duplicated parsing,
@@ -156,11 +156,13 @@ class ComponentLevel2( ComponentLevel1 ):
         # same class into the unique AST. Thus I keep {blk/funcid:objs}
         # dict in each AST node to differentiate between different upblks.
 
-        try:
-          astnode._objs[ func ].update( objs )
-        except AttributeError:
-          astnode._objs = defaultdict(set)
-          astnode._objs[ func ].update( objs )
+        # FIXME
+
+        # try:
+          # astnode._objs[ func ] |= objs
+        # except AttributeError:
+          # astnode._objs = defaultdict(set)
+          # astnode._objs[ func ] |= objs
 
         # TODO Attach astnode to object for error message lineno/coloff
 
@@ -227,12 +229,12 @@ class ComponentLevel2( ComponentLevel1 ):
     super( ComponentLevel2, s )._collect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._all_update_on_edge.update( m._update_on_edge )
+      s._all_update_on_edge |= m._update_on_edge
 
       for k in m._RD_U_constraints:
-        s._all_RD_U_constraints[k].extend( m._RD_U_constraints[k] )
+        s._all_RD_U_constraints[k] |= m._RD_U_constraints[k]
       for k in m._WR_U_constraints:
-        s._all_WR_U_constraints[k].extend( m._WR_U_constraints[k] )
+        s._all_WR_U_constraints[k] |= m._WR_U_constraints[k]
 
       # I assume different update blocks will always have different ids
       s._all_upblk_reads.update( m._upblk_reads )
@@ -251,8 +253,8 @@ class ComponentLevel2( ComponentLevel1 ):
           def dfs( u, stk ):
 
             # Add all read/write of funcs to the outermost upblk
-            s._all_upblk_reads [ blk ].update( m._func_reads[u] )
-            s._all_upblk_writes[ blk ].update( m._func_writes[u] )
+            s._all_upblk_reads [ blk ] |= m._func_reads[u]
+            s._all_upblk_writes[ blk ] |= m._func_writes[u]
 
             for v in m._func_calls[ u ]:
               if v in caller: # v calls someone else there is a cycle
@@ -573,6 +575,34 @@ class ComponentLevel2( ComponentLevel1 ):
 
     cleanup_connectables( s, s )
 
+  # Override
+  def delete_component_by_name( s, name ):
+
+    # This nested delete function is to create an extra layer to properly
+    # call garbage collector
+
+    def _delete_component_by_name( parent, name ):
+      obj = getattr( parent, name )
+      top = s._elaborate_top
+
+      removed_components = obj.get_all_components()
+      for x in removed_components:
+        assert x._elaborate_top is top
+        top._uncollect_vars( x )
+
+      for x in obj._recursive_collect():
+        del x._parent_obj
+
+      top._all_components -= removed_components
+      top._all_signals -= obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+
+      delattr( s, name )
+
+    _delete_component_by_name( s, name )
+    import gc
+    gc.collect()
+
+  # Override
   def add_component_by_name( s, name, obj ):
     assert not hasattr( s, name )
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
@@ -587,5 +617,4 @@ class ComponentLevel2( ComponentLevel1 ):
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    s._all_signals.update( m._recursive_collect(
-                            lambda x: isinstance( x, Signal ) ) )
+    top._all_signals |= obj._recursive_collect( lambda x: isinstance( x, Signal ) )

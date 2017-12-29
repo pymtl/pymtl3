@@ -16,6 +16,11 @@ class ComponentLevel3( ComponentLevel2 ):
   # Private methods
   #-----------------------------------------------------------------------
 
+  def __new__( cls, *args, **kwargs ):
+    inst = super( ComponentLevel3, cls ).__new__( cls, *args, **kwargs )
+    inst._call_kwargs = None
+    return inst
+
   # Override
   def _construct( s ):
     """ We override _construct here to finish the saved __call__
@@ -30,7 +35,7 @@ class ComponentLevel3( ComponentLevel2 ):
       if not s._kwargs: s.construct( *s._args )
       else:             s.construct( *s._args, **s._kwargs )
 
-      if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
+      if s._call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
 
       s._constructed = True

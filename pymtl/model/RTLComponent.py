@@ -29,7 +29,7 @@ class RTLComponent( ComponentLevel3 ):
       except AttributeError:
         pass
 
-      if hasattr( s, "_call_kwargs" ): # s.a = A()( b = s.b )
+      if s._call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
 
       s._constructed = True
