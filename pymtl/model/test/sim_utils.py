@@ -23,8 +23,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     if isinstance( s, ComponentLevel3 ):
       nets = s._all_nets
 
-      for writer, readers in nets:
-        if not readers: continue
+      for net in nets:
+        if len(net) == 1: continue
+        writer, readers = net[0], net[1:]
 
         fanout  = len( readers )
         wstr    = repr(writer)

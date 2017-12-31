@@ -7,7 +7,7 @@ class Connectable(object):
   def __new__( cls, *args, **kwargs ):
     inst = super( Connectable, cls ).__new__( cls )
 
-    inst._adjs = []
+    inst._adjs = set()
     return inst
 
   # As disjoint set is good for unionize nodes but not detaching subtrees,
@@ -16,8 +16,8 @@ class Connectable(object):
   def _connect( s, other ):
     assert isinstance( other, Connectable ), "Unconnectable object!"
 
-    s._adjs.append( other )
-    other._adjs.append( s ) # bidirectional
+    s._adjs.add( other )
+    other._adjs.add( s ) # bidirectional
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)

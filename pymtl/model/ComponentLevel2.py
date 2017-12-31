@@ -585,7 +585,11 @@ class ComponentLevel2( ComponentLevel1 ):
       obj = getattr( parent, name )
       top = s._elaborate_top
 
+      # Remove all components and uncollect metadata
+
       removed_components = obj.get_all_components()
+      top._all_components -= removed_components
+
       for x in removed_components:
         assert x._elaborate_top is top
         top._uncollect_vars( x )
@@ -593,7 +597,6 @@ class ComponentLevel2( ComponentLevel1 ):
       for x in obj._recursive_collect():
         del x._parent_obj
 
-      top._all_components -= removed_components
       top._all_signals -= obj._recursive_collect( lambda x: isinstance( x, Signal ) )
 
       delattr( s, name )
@@ -609,12 +612,15 @@ class ComponentLevel2( ComponentLevel1 ):
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
-    added_components = obj.get_all_components()
     top = s._elaborate_top
+
+    added_components = obj.get_all_components()
+    top._all_components |= added_components
 
     for c in added_components:
       c._elaborate_top = top
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    top._all_signals |= obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+    added_signals = obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+    top._all_signals |= added_signals

@@ -88,7 +88,7 @@ class ComponentLevel3( ComponentLevel2 ):
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
 
 
-  def _resolve_var_connections( s ):
+  def _resolve_var_connections( s, signal_list ):
     """ The case of nested data struct: the writer of a net can be one of
     the three: signal itself (s.x.a), ancestor (s.x), descendant (s.x.b)
 
@@ -116,7 +116,8 @@ class ComponentLevel3( ComponentLevel2 ):
     nets = []
 
     visited = set()
-    for obj in s._all_signals:
+    pred    = {} # detect cycle that has >=3 nodes
+    for obj in signal_list:
       if obj._adjs and obj not in visited:
         net = []
         Q   = deque( [ obj ] )
@@ -124,7 +125,12 @@ class ComponentLevel3( ComponentLevel2 ):
           u = Q.popleft()
           visited.add( u )
           net.append( u )
-          Q.extend( [ v for v in u._adjs if v not in visited ] )
+          for v in u._adjs:
+            if v not in visited:
+              pred[ v ] = u
+              Q.append(v)
+            elif v is not pred[u]:
+              raise InvalidConnectionError(repr(v)+" is in a connection loop.")
         nets.append( net )
 
     # Then figure out writers: all writes in upblks and their nest objects
@@ -154,7 +160,11 @@ class ComponentLevel3( ComponentLevel2 ):
           writer_prop[ member ] = True
 
     headless = nets
-    headed   = [] # [ ( writer, [readers] ) ]
+    headed   = []
+
+    # Convention: we store a net in a list: [writer,reader1,reader2 ... ]
+    # The first element is writer; it should be None if there is no
+    # writer. The rest of the elements are readers.
 
     while headless:
       new_headless = []
@@ -231,13 +241,13 @@ class ComponentLevel3( ComponentLevel2 ):
                 writer_prop[ obj ] = False
               obj = obj.get_parent_object()
 
-        headed.append( (writer, readers) )
+        headed.append( [writer] + readers )
 
       if wcount == len(writer_prop): # no more new writers
-        raise NoWriterError( headless )
+        break
       headless = new_headless
 
-    s._all_nets = headed
+    return headed + [ [None]+x for x in headless ]
 
   def _check_port_in_nets( s ):
     nets = s._all_nets
@@ -250,7 +260,12 @@ class ComponentLevel3( ComponentLevel2 ):
     # level readers via output port, to the same level via wire, and from
     # upper level to deeper level via input port
 
-    for writer, readers in nets:
+    headless = [ x[1:] for x in nets if x[0] is None ] # remove None
+    if headless:
+      raise NoWriterError( headless )
+
+    for net in nets:
+      writer, readers = net[0], net[1:]
 
       # We need to do DFS to check all connected port types
       # Each node is a writer when we expand it to other nodes
@@ -424,7 +439,7 @@ class ComponentLevel3( ComponentLevel2 ):
       s._collect_vars( c )
 
     s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
-    s._resolve_var_connections()
+    s._all_nets    = s._resolve_var_connections( s._all_signals )
 
     s.check()
 
@@ -447,3 +462,76 @@ class ComponentLevel3( ComponentLevel2 ):
       return s._all_nets
     except AttributeError:
       raise NotElaboratedError()
+
+  # Override
+  def delete_component_by_name( s, name ):
+
+    # This nested delete function is to create an extra layer to properly
+    # call garbage collector
+
+    def _delete_component_by_name( parent, name ):
+      obj = getattr( parent, name )
+      top = s._elaborate_top
+
+      # Remove all components and uncollect metadata
+
+      removed_components = obj.get_all_components()
+      top._all_components -= removed_components
+
+      for x in removed_components:
+        assert x._elaborate_top is top
+        top._uncollect_vars( x )
+
+      for x in obj._recursive_collect():
+        del x._parent_obj
+
+      removed_signals = obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+      top._all_signals -= removed_signals
+
+      # TODO somehow save the adjs for reconnection
+      for x in removed_signals:
+        for other in x._adjs:
+          other._adjs.remove( x )
+        del x._adjs
+
+      new_nets = []
+      for i, net in enumerate( top._all_nets ):
+        # We just need to delete all signals from nets
+        writer, readers = net[0], net[1:]
+        new_writer  = writer if writer not in removed_signals else None
+        new_readers = [ x for x in readers if x not in removed_signals ]
+
+        if new_writer or new_readers:
+          new_nets.append( [ new_writer ] + new_readers )
+      top._nets = new_nets
+
+      delattr( s, name )
+
+    _delete_component_by_name( s, name )
+    import gc
+    gc.collect()
+
+  # Override
+  def add_component_by_name( s, name, obj ):
+    assert not hasattr( s, name )
+    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+    setattr( s, name, obj )
+    del NamedObject.__setattr__
+
+    top = s._elaborate_top
+
+    added_components = obj.get_all_components()
+    top._all_components |= added_components
+
+    for c in added_components:
+      c._elaborate_top = top
+      c._elaborate_read_write_func()
+      top._collect_vars( c )
+
+    added_signals = obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+    top._all_signals |= added_signals
+
+    top._all_nets += top._resolve_var_connections( added_signals )
+
+  def add_connection( s ):
+    return
