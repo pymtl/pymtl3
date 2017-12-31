@@ -4,20 +4,14 @@ from pymtl.datatypes import mk_bits
 
 class Connectable(object):
 
-  def __new__( cls, *args, **kwargs ):
-    inst = super( Connectable, cls ).__new__( cls )
+  # I've given up maintaining adjacency list or disjoint set locally since
+  # we need to easily disconnect things 
 
-    inst._adjs = set()
-    return inst
-
-  # As disjoint set is good for unionize nodes but not detaching subtrees,
-  # I have to give up.
-
-  def _connect( s, other ):
+  def _connect( s, other, adjacency ):
     assert isinstance( other, Connectable ), "Unconnectable object!"
 
-    s._adjs.add( other )
-    other._adjs.add( s ) # bidirectional
+    adjacency[s].add( other )
+    adjacency[other].add( s )
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
@@ -73,7 +67,7 @@ class Const( Connectable ):
   def is_interface( s ):
     return False
 
-class Signal( Connectable, NamedObject ):
+class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type ):
     s.Type    = Type
@@ -126,9 +120,10 @@ class Signal( Connectable, NamedObject ):
 
     return s.__dict__[ sl_tuple ]
 
-  def _connect( s, other ):
+  def _connect( s, other, edges ):
+    # FIXME
     assert s.Type == other.Type, "Type mismatch {} != {}".format( s.Type, other.Type )
-    super( Signal, s )._connect( other )
+    super( Signal, s )._connect( other, edges )
 
   def default_value( s ):
     return s.Type()
@@ -196,14 +191,15 @@ class Interface( NamedObject ):
 
       s._constructed = True
 
-  def _connect( s, other ):
+  def _connect( s, other, edges ):
     # Expand the list when needed. Only connect connectables and return,
     # inheritance will figure out what to do with Wire/WireBundle
 
     def recursive_connect( s_obj, other_obj ):
       if hasattr( s_obj, "_connect" ):
-        s_obj._connect( other_obj )
-      if   isinstance( s_obj, list ):
+        s_obj._connect( other_obj, edges )
+
+      elif isinstance( s_obj, list ):
         for i in xrange(len(s_obj)):
           recursive_connect( s_obj[i], other_obj[i] )
 

@@ -138,7 +138,7 @@ class NamedObject(object):
 
     del NamedObject.__setattr__
 
-  def construct( s ):
+  def construct( s, *args, **kwargs ):
     pass
 
   #-----------------------------------------------------------------------

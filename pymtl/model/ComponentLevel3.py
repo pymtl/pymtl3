@@ -19,7 +19,23 @@ class ComponentLevel3( ComponentLevel2 ):
   def __new__( cls, *args, **kwargs ):
     inst = super( ComponentLevel3, cls ).__new__( cls, *args, **kwargs )
     inst._call_kwargs = None
+    inst._adjacency   = defaultdict(set)
+    # inst._consts      = set()
     return inst
+
+  # Override
+  def _declare_vars( s ):
+    super( ComponentLevel3, s )._declare_vars()
+
+    s._all_adjacency = defaultdict(set)
+
+  # Override
+  def _collect_vars( s, m ):
+    super( ComponentLevel3, s )._collect_vars( m )
+
+    if isinstance( m, ComponentLevel3 ):
+      for k in m._adjacency:
+        s._all_adjacency[k] |= m._adjacency[k]
 
   # Override
   def _construct( s ):
@@ -68,21 +84,22 @@ class ComponentLevel3( ComponentLevel2 ):
             if isinstance( item, int ):
               item = Const( obj[idx].Type, item )
               item._parent_obj = s._parent_obj
-            obj[idx]._connect( item )
+              # s._parent_obj._consts.add( item )
+            obj[idx]._connect( item, s._adjacency )
 
         # Obj is a single signal
 
         # If the target is a list, it's fanout connection
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
-            obj._connect( item )
+            obj._connect( item, s._adjacency )
 
         # Target is a single object
         else:
           if isinstance( target, int ):
             target = Const( obj.Type, target )
             target._parent_obj = s._parent_obj
-          obj._connect( target )
+          obj._connect( target, s._adjacency )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
@@ -118,14 +135,14 @@ class ComponentLevel3( ComponentLevel2 ):
     visited = set()
     pred    = {} # detect cycle that has >=3 nodes
     for obj in signal_list:
-      if obj._adjs and obj not in visited:
+      if obj in s._all_adjacency and obj not in visited:
         net = []
         Q   = deque( [ obj ] )
         while Q:
           u = Q.popleft()
           visited.add( u )
           net.append( u )
-          for v in u._adjs:
+          for v in s._all_adjacency[u]:
             if v not in visited:
               pred[ v ] = u
               Q.append(v)
@@ -277,7 +294,7 @@ class ComponentLevel3( ComponentLevel2 ):
         u = S.pop() # u is the writer
         whost = u._host
 
-        for v in u._adjs: # v is the reader
+        for v in s._all_adjacency[u]: # v is the reader
           if v not in visited:
             visited.add( v )
             S.append( v )
@@ -402,12 +419,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
         const = Const( o1.Type, o2 )
         const._parent_obj = s
-        o1._connect( const )
+        # s._consts.add( const )
+        o1._connect( const, s._adjacency )
 
       else: # normal
         assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
         assert o1.Type == o2.Type
-        o1._connect( o2 )
+        o1._connect( o2, s._adjacency )
 
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
@@ -490,9 +508,9 @@ class ComponentLevel3( ComponentLevel2 ):
 
       # TODO somehow save the adjs for reconnection
       for x in removed_signals:
-        for other in x._adjs:
-          other._adjs.remove( x )
-        del x._adjs
+        for other in top._all_adjacency[x]:
+          top._all_adjacency[other].remove(x)
+        del top._all_adjacency[x]
 
       new_nets = []
       for i, net in enumerate( top._all_nets ):
@@ -533,5 +551,5 @@ class ComponentLevel3( ComponentLevel2 ):
 
     top._all_nets += top._resolve_var_connections( added_signals )
 
-  def add_connection( s ):
-    return
+  def add_connection( s, obj1, obj2 ):
+    print obj1, obj2
