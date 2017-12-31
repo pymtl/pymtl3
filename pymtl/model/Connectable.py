@@ -1,7 +1,7 @@
 from NamedObject import NamedObject
 from ComponentLevel1 import ComponentLevel1
 from pymtl.datatypes import mk_bits
-
+from errors import InvalidConnectionError
 class Connectable(object):
 
   # I've given up maintaining adjacency list or disjoint set locally since
@@ -9,6 +9,10 @@ class Connectable(object):
 
   def _connect( s, other, adjacency ):
     assert isinstance( other, Connectable ), "Unconnectable object!"
+
+    if other in adjacency[s]:
+      raise InvalidConnectionError( "This pair of signals are already connected."\
+                                    "\n - {} \n - {}".format( s, other ) )
 
     adjacency[s].add( other )
     adjacency[other].add( s )
@@ -23,9 +27,10 @@ class Connectable(object):
     except AttributeError:
       try:
         host = s
-        while not isinstance( host, ComponentLevel3 ):
+        while not isinstance( host, ComponentLevel1 ):
           host = host._parent_obj # go to the component
         s._host = host
+        return s._host
       except AttributeError:
         raise NotElaboratedError()
 
@@ -166,7 +171,11 @@ class OutVPort( Signal ):
   def inverse( s ):
     return InVPort( s.Type )
 
-class Interface( NamedObject ):
+class Interface( NamedObject, Connectable ):
+
+  @property
+  def Type( s ):
+    return s._args
 
   def inverse( s ):
     s._inversed = True

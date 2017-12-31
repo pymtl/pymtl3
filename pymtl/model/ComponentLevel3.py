@@ -56,6 +56,30 @@ class ComponentLevel3( ComponentLevel2 ):
 
       s._constructed = True
 
+  @staticmethod
+  def _connect_objects( o1, o2, adjacency_dict ):
+    """ Connect two objects. If one of them is integer, create a new Const
+    that wraps around it in 's'. This method refactors will be called by other
+    public APIs. """
+
+    if isinstance( o1, int ) or isinstance( o2, int ): # special case
+      if isinstance( o1, int ):
+        o1, o2 = o2, o1 # o1 is signal, o2 is int
+      assert isinstance( o1, Signal )
+
+      o2   = Const( o1.Type, o2 )
+      host = o1.get_host_component()
+
+      if isinstance( o1, InVPort ):
+        # connecting constant to inport should be at the parent level
+        host = host.get_parent_object()
+
+      o2._parent_obj = host
+      # host._consts.add( const )
+
+    assert o1.Type == o2.Type
+    o1._connect( o2, adjacency_dict )
+
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
     parent object, to signals in the current object. Since it is the
@@ -75,35 +99,24 @@ class ComponentLevel3( ComponentLevel2 ):
 
         # Obj is a list of signals
         if   isinstance( obj, list ):
-
           # Make sure the connection target is a dictionary {idx: obj}
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-
           for idx, item in target.iteritems():
-            if isinstance( item, int ):
-              item = Const( obj[idx].Type, item )
-              item._parent_obj = s._parent_obj
-              # s._parent_obj._consts.add( item )
-            obj[idx]._connect( item, s._adjacency )
+            s._connect_objects( obj[idx], item, s._adjacency )
 
         # Obj is a single signal
-
         # If the target is a list, it's fanout connection
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
-            obj._connect( item, s._adjacency )
+            s._connect_objects( obj, item, s._adjacency )
 
         # Target is a single object
         else:
-          if isinstance( target, int ):
-            target = Const( obj.Type, target )
-            target._parent_obj = s._parent_obj
-          obj._connect( target, s._adjacency )
+          s._connect_objects( obj, target, s._adjacency )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
 
   def _resolve_var_connections( s, signal_list ):
     """ The case of nested data struct: the writer of a net can be one of
@@ -407,26 +420,8 @@ class ComponentLevel3( ComponentLevel2 ):
     return s
 
   def connect( s, o1, o2 ):
-    """ Connect two objects. If one of them is integer, create a new Const
-    that wraps around it in 's'. This is why connecting a constant should be
-    done via this function in the component """
-
     try:
-      if isinstance( o1, int ) or isinstance( o2, int ): # special case
-        if isinstance( o1, int ):
-          o1, o2 = o2, o1 # o1 is signal, o2 is int
-          assert isinstance( o1, Connectable )
-
-        const = Const( o1.Type, o2 )
-        const._parent_obj = s
-        # s._consts.add( const )
-        o1._connect( const, s._adjacency )
-
-      else: # normal
-        assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
-        assert o1.Type == o2.Type
-        o1._connect( o2, s._adjacency )
-
+      s._connect_objects( o1, o2, s._adjacency )
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
@@ -551,5 +546,15 @@ class ComponentLevel3( ComponentLevel2 ):
 
     top._all_nets += top._resolve_var_connections( added_signals )
 
-  def add_connection( s, obj1, obj2 ):
-    print obj1, obj2
+  def add_connection( s, o1, o2 ):
+    # TODO support string arguments and non-top s
+    assert s._elaborate_top is s, "Adding connection by passing objects " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
+    try:
+      s._connect_objects( o1, o2, s._all_adjacency )
+    except AssertionError as e:
+      raise InvalidConnectionError( "\n{}".format(e) )
+
+    print o1, o2
