@@ -37,8 +37,6 @@ def test_nested_port_bundle():
   class ValRdyBundle( Interface ):
 
     def construct( s, Type=int ):
-      s.Type = Type
-
       s.msg = Wire( Type )
       s.val = Wire( Bits1 )
       s.rdy = Wire( Bits1 )

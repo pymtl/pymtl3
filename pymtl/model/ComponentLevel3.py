@@ -120,19 +120,19 @@ class ComponentLevel3( ComponentLevel2 ):
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
-    """ Floodfill to find out connected nets. Return a list of nets. """
+    """ Floodfill to find out connected nets. Return a list of sets. """
 
     nets = []
     visited = set()
     pred    = {} # detect cycle that has >=3 nodes
     for obj in signal_list:
       if obj in adjacency and obj not in visited:
-        net = []
+        net = set()
         Q   = deque( [ obj ] )
         while Q:
           u = Q.popleft()
           visited.add( u )
-          net.append( u )
+          net.add( u )
           for v in adjacency[u]:
             if v not in visited:
               pred[v] = u
@@ -198,9 +198,9 @@ class ComponentLevel3( ComponentLevel2 ):
     headless = nets
     headed   = []
 
-    # Convention: we store a net in a list: [writer,reader1,reader2 ... ]
+    # Convention: we store a net in a tuple ( writer, set([readers]) )
     # The first element is writer; it should be None if there is no
-    # writer. The rest of the elements are readers.
+    # writer. The second element is a set of signals including the writer.
 
     while headless:
       new_headless = []
@@ -257,8 +257,6 @@ class ComponentLevel3( ComponentLevel2 ):
           new_headless.append( net )
           continue
 
-        readers = []
-
         # Child s.x.y of some propagatable s.x, or sibling of some
         # propagatable s[a:b].
         # This means that at least other variables are able to see s.x/s[a:b]
@@ -268,7 +266,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
         for v in net:
           if v != writer:
-            readers.append( v )
             writer_prop[ v ] = True # The reader becomes new writer
 
             obj = v.get_parent_object()
@@ -277,13 +274,13 @@ class ComponentLevel3( ComponentLevel2 ):
                 writer_prop[ obj ] = False
               obj = obj.get_parent_object()
 
-        headed.append( [writer] + readers )
+        headed.append( (writer, net) )
 
       if wcount == len(writer_prop): # no more new writers
         break
       headless = new_headless
 
-    return headed + [ [None]+x for x in headless ]
+    return headed + [ (None, x) for x in headless ]
 
   def _check_port_in_nets( s ):
     nets = s._all_nets
@@ -296,12 +293,11 @@ class ComponentLevel3( ComponentLevel2 ):
     # level readers via output port, to the same level via wire, and from
     # upper level to deeper level via input port
 
-    headless = [ x[1:] for x in nets if x[0] is None ] # remove None
+    headless = [ signals for writer, signals in nets if writer is None ] # remove None
     if headless:
       raise NoWriterError( headless )
 
-    for net in nets:
-      writer, readers = net[0], net[1:]
+    for writer, _ in nets:
 
       # We need to do DFS to check all connected port types
       # Each node is a writer when we expand it to other nodes
@@ -448,6 +444,8 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def elaborate( s ):
+    if s._constructed:
+      return
     NamedObject.elaborate( s )
     s._declare_vars()
 
@@ -508,24 +506,34 @@ class ComponentLevel3( ComponentLevel2 ):
       top._all_signals -= removed_signals
 
       # TODO somehow save the adjs for reconnection
+
       for x in removed_signals:
         for other in top._all_adjacency[x]:
-          top._all_adjacency[other].remove(x)
+          # If other will be removed, we don't need to remove it here ..
+          # Check if this is a broken connection
+          if   other not in removed_signals:
+            top._all_adjacency[other].remove( x )
+
         del top._all_adjacency[x]
+      # top._all_nets = top._resolve_var_connections( top._all_signals )
 
       new_nets = []
-      for i, net in enumerate( top._all_nets ):
-        # We just need to delete all signals from nets
-        # FIXME this is wrong because a net can be separated into multiple
-        # parts
-        writer, readers = net[0], net[1:]
-        changed_net = 
-        new_writer  = writer if writer not in removed_signals else None
-        new_readers = [ x for x in readers if x not in removed_signals ]
+      for writer, signals in top._all_nets:
+        broken_nets = s._floodfill_nets( signals, top._all_adjacency )
+        
+        if len(broken_nets) == 1: # the net is not broken
+          new_nets.append( (writer, signals) )
+          continue
+        else:
+          for net_signals in broken_nets:
+            if len(net) == 1: continue
 
-        if new_writer or new_readers:
-          new_nets.append( [ new_writer ] + new_readers )
-      top._nets = new_nets
+            if writer in net_signals:
+              new_nets.append( (writer, signals) )
+            else:
+              new_nets.append( (None, signals) )
+
+      top._all_nets = new_nets
 
       delattr( s, name )
 

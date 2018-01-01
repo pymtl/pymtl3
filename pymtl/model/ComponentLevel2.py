@@ -477,6 +477,9 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def elaborate( s ):
+    if s._constructed:
+      return
+
     NamedObject.elaborate( s )
     s._declare_vars()
 

@@ -25,13 +25,14 @@ class GenDAGPass( BasePass ):
     top.genblk_writes = {}
     top.genblk_src    = {}
 
-    for writer, readers in nets:
-      if not readers:
-        continue # Aha, the net is dummy
+    for writer, signals in nets:
+      if len(signals) == 1:
+        continue
+
+      readers = [ x for x in signals if x is not writer ]
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]
-      print wr_lca, rd_lcas
 
       # Find common ancestor: iteratively go to parent level and check if
       # at the same level all objects' ancestors are the same

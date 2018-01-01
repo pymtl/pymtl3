@@ -3,8 +3,7 @@ from pclib.valrdy import valrdy_to_str
 
 class InValRdyIfc( Interface ):
 
-  def construct( s, Type=int ):
-    s.Type = Type
+  def construct( s, Type ):
 
     s.msg = InVPort( Type )
     s.val = InVPort( int if Type is int else Bits1 )
@@ -15,8 +14,7 @@ class InValRdyIfc( Interface ):
 
 class OutValRdyIfc( Interface ):
 
-  def construct( s, Type=int ):
-    s.Type = Type
+  def construct( s, Type ):
 
     s.msg = OutVPort( Type )
     s.val = OutVPort( int if Type is int else Bits1 )

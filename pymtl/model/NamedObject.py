@@ -45,7 +45,11 @@ class NamedObject(object):
         child._parent_obj  = s
         child._my_name_idx = ( name, indices )
 
-        sname, sidx          = s._full_name_idx
+        try:
+          sname, sidx          = s._full_name_idx
+        except AttributeError:
+          raise AttributeError("In {}:\n   Please put all logic in construct " \
+                               "instead of __init__.".format( s.__class__) )
         child._full_name_idx = ( sname + [name], sidx + [indices] )
 
         child._construct()
@@ -123,6 +127,8 @@ class NamedObject(object):
     return ret + "[{}:{}]".format( last_idx[0].start, last_idx[0].stop )
 
   def elaborate( s ):
+    if s._constructed:
+      return
 
     # Initialize the top level
 

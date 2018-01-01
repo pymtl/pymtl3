@@ -90,6 +90,8 @@ class ComponentLevel1( NamedObject ):
   #-----------------------------------------------------------------------
 
   def elaborate( s ):
+    if s._constructed:
+      return
     NamedObject.elaborate( s )
 
     s._declare_vars()
