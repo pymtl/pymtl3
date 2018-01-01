@@ -1,21 +1,21 @@
 from NamedObject import NamedObject
-from ComponentLevel1 import ComponentLevel1
 from pymtl.datatypes import mk_bits
 from errors import InvalidConnectionError
+
 class Connectable(object):
 
   # I've given up maintaining adjacency list or disjoint set locally since
   # we need to easily disconnect things 
 
-  def _connect( s, other, adjacency ):
+  def _connect( s, other, adjacency_dict ):
     assert isinstance( other, Connectable ), "Unconnectable object!"
 
-    if other in adjacency[s]:
+    if other in adjacency_dict[s]:
       raise InvalidConnectionError( "This pair of signals are already connected."\
                                     "\n - {} \n - {}".format( s, other ) )
 
-    adjacency[s].add( other )
-    adjacency[other].add( s )
+    adjacency_dict[s].add( other )
+    adjacency_dict[other].add( s )
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
@@ -27,7 +27,7 @@ class Connectable(object):
     except AttributeError:
       try:
         host = s
-        while not isinstance( host, ComponentLevel1 ):
+        while not host.is_component():
           host = host._parent_obj # go to the component
         s._host = host
         return s._host
@@ -124,11 +124,6 @@ class Signal( NamedObject, Connectable ):
       s.__dict__[ sl_tuple ] = s._slices[ sl_tuple ] = x
 
     return s.__dict__[ sl_tuple ]
-
-  def _connect( s, other, edges ):
-    # FIXME
-    assert s.Type == other.Type, "Type mismatch {} != {}".format( s.Type, other.Type )
-    super( Signal, s )._connect( other, edges )
 
   def default_value( s ):
     return s.Type()

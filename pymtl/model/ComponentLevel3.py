@@ -77,7 +77,7 @@ class ComponentLevel3( ComponentLevel2 ):
       o2._parent_obj = host
       # host._consts.add( const )
 
-    assert o1.Type == o2.Type
+    assert o1.Type == o2.Type, "Type mismatch {} != {}".format( o1.Type, o2.Type )
     o1._connect( o2, adjacency_dict )
 
   def _continue_call_connect( s ):
@@ -118,6 +118,30 @@ class ComponentLevel3( ComponentLevel2 ):
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
 
+  @staticmethod
+  def _floodfill_nets( signal_list, adjacency ):
+    """ Floodfill to find out connected nets. Return a list of nets. """
+
+    nets = []
+    visited = set()
+    pred    = {} # detect cycle that has >=3 nodes
+    for obj in signal_list:
+      if obj in adjacency and obj not in visited:
+        net = []
+        Q   = deque( [ obj ] )
+        while Q:
+          u = Q.popleft()
+          visited.add( u )
+          net.append( u )
+          for v in adjacency[u]:
+            if v not in visited:
+              pred[v] = u
+              Q.append( v )
+            elif v is not pred[u]:
+              raise InvalidConnectionError(repr(v)+" is in a connection loop.")
+        nets.append( net )
+    return nets
+
   def _resolve_var_connections( s, signal_list ):
     """ The case of nested data struct: the writer of a net can be one of
     the three: signal itself (s.x.a), ancestor (s.x), descendant (s.x.b)
@@ -143,25 +167,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # First of all, bfs the "forest" to find out all nets
 
-    nets = []
-
-    visited = set()
-    pred    = {} # detect cycle that has >=3 nodes
-    for obj in signal_list:
-      if obj in s._all_adjacency and obj not in visited:
-        net = []
-        Q   = deque( [ obj ] )
-        while Q:
-          u = Q.popleft()
-          visited.add( u )
-          net.append( u )
-          for v in s._all_adjacency[u]:
-            if v not in visited:
-              pred[ v ] = u
-              Q.append(v)
-            elif v is not pred[u]:
-              raise InvalidConnectionError(repr(v)+" is in a connection loop.")
-        nets.append( net )
+    nets = s._floodfill_nets( s._all_signals, s._all_adjacency )
 
     # Then figure out writers: all writes in upblks and their nest objects
 
@@ -510,7 +516,10 @@ class ComponentLevel3( ComponentLevel2 ):
       new_nets = []
       for i, net in enumerate( top._all_nets ):
         # We just need to delete all signals from nets
+        # FIXME this is wrong because a net can be separated into multiple
+        # parts
         writer, readers = net[0], net[1:]
+        changed_net = 
         new_writer  = writer if writer not in removed_signals else None
         new_readers = [ x for x in readers if x not in removed_signals ]
 
@@ -552,9 +561,14 @@ class ComponentLevel3( ComponentLevel2 ):
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
 
+    added_adjacency = defaultdict(set)
     try:
-      s._connect_objects( o1, o2, s._all_adjacency )
+      s._connect_objects( o1, o2, added_adjacency )
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
-    print o1, o2
+    for x, adjs in added_adjacency.iteritems():
+      s._all_adjacency[x].update( adjs )
+
+    # This works, but might be too slow
+    s._all_nets = s._resolve_var_connections( s._all_signals )
