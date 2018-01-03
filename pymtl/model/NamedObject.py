@@ -37,34 +37,34 @@ class NamedObject(object):
 
   def __setattr_for_elaborate__( s, name, obj ):
 
-    # TODO use stack to emulate recursion to reduce error message depth
-
-    def _recursive_expand( child, indices ):
-
-      if   isinstance( child, NamedObject ):
-        child._parent_obj  = s
-        child._my_name_idx = ( name, indices )
-
-        try:
-          sname, sidx = s._full_name_idx
-        except AttributeError:
-          raise AttributeError("In {}:\n   Please put all logic in construct " \
-                               "instead of __init__.".format( s.__class__) )
-        child._full_name_idx = ( sname + [name], sidx + [indices] )
-
-        child._construct()
-
-      # ONLY LIST IS SUPPORTED, SORRY.
-      # I don't want to support any iterable object because later "Wire"
-      # can be infinitely iterated and cause infinite loop. Special casing
-      # Wire will be a mess around everywhere.
-
-      elif isinstance( child, list ):
-        for i, obj in enumerate( child ):
-          _recursive_expand( obj, indices + [i] )
+    # I use non-recursive traversal to reduce error message depth
+    # TODO _purely_ emulate recursion
 
     if not name.startswith("_"):
-      _recursive_expand( obj, [] )
+      stack = [ (obj, []) ]
+      while stack:
+        u, indices = stack.pop()
+
+        if   isinstance( u, NamedObject ):
+          u._parent_obj  = s
+          u._my_name_idx = ( name, indices )
+
+          try:
+            sname, sidx = s._full_name_idx
+          except AttributeError:
+            raise AttributeError("In {}:\n   Please put all logic in construct " \
+                                 "instead of __init__.".format( s.__class__) )
+          u._full_name_idx = ( sname + [name], sidx + [indices] )
+          u._construct()
+
+        # ONLY LIST IS SUPPORTED, SORRY.
+        # I don't want to support any iterable object because later "Wire"
+        # can be infinitely iterated and cause infinite loop. Special casing
+        # Wire will be a mess around everywhere.
+
+        elif isinstance( u, list ):
+          for i, v in enumerate( u ):
+            stack.append( (v, indices+[i]) )
 
     super( NamedObject, s ).__setattr__( name, obj )
 
@@ -103,10 +103,11 @@ class NamedObject(object):
   # Developers should use repr(x) everywhere to get the name
 
   def __repr__( s ):
-    if not s._full_name_idx: # if not tagged, go with class & address ...
+    try:
+      name, idx = s._full_name_idx
+    except AttributeError:
       return super( NamedObject, s ).__repr__()
 
-    name, idx = s._full_name_idx
     name_len = len(name)
     idx_len  = len(idx)
 
