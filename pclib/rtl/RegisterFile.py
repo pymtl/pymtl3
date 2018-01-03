@@ -2,7 +2,7 @@ from pymtl import *
 
 class RegisterFile( RTLComponent ):
 
-  def __init__( s, Type, nregs=32, rd_ports=1, wr_ports=1,
+  def construct( s, Type, nregs=32, rd_ports=1, wr_ports=1,
                 const_zero=False ):
 
     addr_type = mk_bits( clog2( nregs ) )

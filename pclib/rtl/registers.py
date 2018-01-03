@@ -31,7 +31,7 @@ class RegEn( RTLComponent ):
 
 class RegRst( RTLComponent ):
 
-  def __init__( s, Type, reset_value=0 ):
+  def construct( s, Type, reset_value=0 ):
     s.out = OutVPort( Type )
     s.in_ = InVPort( Type )
 
@@ -47,7 +47,7 @@ class RegRst( RTLComponent ):
 
 class RegEnRst( RTLComponent ):
 
-  def __init__( s, Type, reset_value=0 ):
+  def construct( s, Type, reset_value=0 ):
     s.out = OutVPort( Type )
     s.in_ = InVPort( Type )
 

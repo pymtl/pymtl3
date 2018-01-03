@@ -4,7 +4,7 @@ from pclib.rtl  import Mux, Reg, RegEn, RegisterFile
 
 class PipeQueue1RTL( RTLComponent ):
 
-  def __init__( s, Type ):
+  def construct( s, Type ):
     s.enq = InValRdyIfc ( Type )
     s.deq = OutValRdyIfc( Type )
 
@@ -45,7 +45,7 @@ class PipeQueue1RTL( RTLComponent ):
 
 class BypassQueue1RTL( RTLComponent ):
 
-  def __init__( s, Type ):
+  def construct( s, Type ):
     s.enq = InValRdyIfc ( Type )
     s.deq = OutValRdyIfc( Type )
 
@@ -96,7 +96,7 @@ class BypassQueue1RTL( RTLComponent ):
 
 class NormalQueue1RTL( RTLComponent ):
 
-  def __init__( s, Type ):
+  def construct( s, Type ):
     s.enq = InValRdyIfc( Type )
     s.deq = OutValRdyIfc( Type )
 
@@ -140,7 +140,7 @@ class NormalQueue1RTL( RTLComponent ):
 #-----------------------------------------------------------------------
 class NormalQueueRTL( RTLComponent ):
 
-  def __init__( s, num_entries, Type ):
+  def construct( s, num_entries, Type ):
 
     s.enq              = InValRdyIfc( Type )
     s.deq              = OutValRdyIfc( Type )
@@ -178,7 +178,7 @@ class NormalQueueRTL( RTLComponent ):
 #-----------------------------------------------------------------------
 class NormalQueueRTLDpath( RTLComponent ):
 
-  def __init__( s, num_entries, Type ):
+  def construct( s, num_entries, Type ):
 
     s.enq_bits  = InVPort  ( Type )
     s.deq_bits  = OutVPort ( Type )
@@ -206,7 +206,7 @@ class NormalQueueRTLDpath( RTLComponent ):
 #-----------------------------------------------------------------------
 class NormalQueueRTLCtrl( RTLComponent ):
 
-  def __init__( s, num_entries ):
+  def construct( s, num_entries ):
 
     s.num_entries = num_entries
     addr_nbits    = clog2( num_entries )

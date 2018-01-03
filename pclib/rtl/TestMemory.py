@@ -53,7 +53,7 @@ class TestMemory( object ):
     s.mem[ idx ] = data
 
 class TestMemoryRTL( RTLComponent ):
-  def __init__( s, nports = 1, req_types = [ MemReqMsg(8,32,32) ], \
+  def construct( s, nports = 1, req_types = [ MemReqMsg(8,32,32) ], \
                                resp_types = [ MemRespMsg(8,32)   ],
                                mem_nbytes=1<<20 ):
     s.mem = TestMemory( mem_nbytes )

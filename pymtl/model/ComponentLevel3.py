@@ -446,6 +446,7 @@ class ComponentLevel3( ComponentLevel2 ):
   def elaborate( s ):
     if s._constructed:
       return
+
     NamedObject.elaborate( s )
     s._declare_vars()
 
