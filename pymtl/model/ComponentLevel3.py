@@ -450,7 +450,7 @@ class ComponentLevel3( ComponentLevel2 ):
     NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel2 ) )
+    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel3 ) )
     for c in s._all_components:
       c._elaborate_top = s
       c._elaborate_read_write_func()

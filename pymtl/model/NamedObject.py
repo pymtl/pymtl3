@@ -46,7 +46,7 @@ class NamedObject(object):
         child._my_name_idx = ( name, indices )
 
         try:
-          sname, sidx          = s._full_name_idx
+          sname, sidx = s._full_name_idx
         except AttributeError:
           raise AttributeError("In {}:\n   Please put all logic in construct " \
                                "instead of __init__.".format( s.__class__) )
@@ -69,35 +69,35 @@ class NamedObject(object):
     super( NamedObject, s ).__setattr__( name, obj )
 
   # recursively and exhaustively
+  # I changed dfs to bfs with stack
 
   def _recursive_collect( s, filt=lambda x: isinstance( x, NamedObject ) ):
 
-    def _expand( m ):
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+      if   isinstance( u, NamedObject ):
 
-      if   isinstance( m, NamedObject ):
+        if filt( u ): # Check if m satisfies the filter
+          ret.add( u )
 
-        if filt( m ): # Check if m satisfies the filter
-          ret.add( m )
-
-        for name, obj in m.__dict__.iteritems():
+        for name, obj in u.__dict__.iteritems():
 
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice
 
           if   isinstance( name, basestring ): # python2 specific
             if not name.startswith("_"): # filter private variables
-              _expand( obj )
+              stack.append( obj )
 
           elif isinstance( name, tuple ): # name = [1:3]
-            _expand( obj )
+            stack.append( obj )
 
       # ONLY LIST IS SUPPORTED
-      elif isinstance( m, list ):
-        for i, obj in enumerate( m ):
-          _expand( obj )
+      elif isinstance( u, list ):
+        stack.extend( u )
 
-    ret = set()
-    _expand( s )
     return ret
 
   # Developers should use repr(x) everywhere to get the name
