@@ -21,15 +21,23 @@ class GenDAGPass( BasePass ):
     nets = top.get_all_nets()
 
     top.genblks = set()
-    top.genblk_reads  = {}
-    top.genblk_writes = {}
-    top.genblk_src    = {}
+    top.genblk_hostobj = {}
+    top.genblk_reads   = {}
+    top.genblk_writes  = {}
+    top.genblk_src     = {}
 
-    for writer, signals in nets:
+    # To reduce the time to compile update blocks, I first group the list
+    # of update blocks that have the same host object together and fire
+    # them in a single compile command.
+
+    hostobj_allsrc = defaultdict(str)
+    blkname_meta   = {}
+
+    for i, (writer, signals) in enumerate( nets ):
       if len(signals) == 1:
         continue
 
-      readers = [ x for x in signals if x is not writer ]
+      readers = sorted( [ x for x in signals if x is not writer ], key=repr )
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]
@@ -65,63 +73,49 @@ class GenDAGPass( BasePass ):
         for i in xrange( len(rd_lcas) ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
-      # 
       lca     = wr_lca # this is the object we want to insert the block to
       lca_len = len( repr(lca) )
       fanout  = len( readers )
       wstr    = repr(writer) if isinstance( writer, Const ) \
                 else ( "s." + repr(writer)[lca_len+1:] )
       rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
-
       upblk_name = "{}__{}".format(repr(writer), fanout) \
                     .replace( ".", "_" ).replace( ":", "_" ) \
                     .replace( "[", "_" ).replace( "]", "" ) \
                     .replace( "(", "_" ).replace( ")", "" )
-
-      # NO @s.update because I don't want to impair the original model
-
-      # if fanout == 1: # simple mode!
-        # gen_src = """
-          # def {0}():
-            # {1}
-          # blk = {0}
-
-        # """.format( upblk_name,"{} = {}".format( rstrs[0], wstr ) )
-      # else:
-        # gen_src = """
-          # def {0}():
-            # common_writer = {1}
-            # {2}
-          # blk = {0}
-        # """.format( upblk_name, wstr, "; ".join(
-                    # [ "{} = common_writer".format( x ) for x in rstrs] ) )
       gen_src = """
+@update
 def {0}():
-  {1} = {2}
-_ret_blk = {0}
-      """.format( upblk_name, " = ".join( rstrs ), wstr )
+  {1} = {2}""".format( upblk_name, " = ".join( rstrs ), wstr )
 
-      # Borrow the closure of lca to compile the block
-      def compile_upblk( s, src ):
-        var = locals()
-        var.update( globals() )
-        exec py.code.Source( src ).compile() in var
-        return _ret_blk
+      hostobj_allsrc[ lca ] += gen_src
+      blkname_meta[ upblk_name ] = (gen_src, writer, readers)
 
-      blk         = compile_upblk( lca, gen_src )
-      blk.hostobj = lca
+    # Borrow the closure of hostobj to compile the block
+    # To reduce the code needed, use a fake @update to collect metadata
+    def compile_upblks( s, src ):
 
-      top.genblks.add( blk )
-      if writer.is_signal():
-        top.genblk_reads [ blk ] = [ writer ]
-      top.genblk_writes[ blk ] = readers[::]
-      top.genblk_src   [ blk ] = ( gen_src, ast.parse( gen_src ) )
+      def update( blk ):
+        top.genblks.add( blk )
+        gen_src, writer, readers = blkname_meta[ blk.__name__ ]
+        if writer.is_signal():
+          top.genblk_reads[ blk ] = [ writer ]
+        top.genblk_writes[ blk ] = readers
+        top.genblk_src   [ blk ] = ( gen_src, None )
+        # TODO None -- I remove the ast parsing since it is slow
+
+      var = locals()
+      var.update( globals() )
+      exec( compile( src, filename=repr(s), mode="exec") ) in var
+
+    for hostobj, allsrc in hostobj_allsrc.iteritems():
+      compile_upblks( hostobj, allsrc )
 
   def _process_constraints( self, top ):
 
     # Query update block metadata from top
 
-    update_on_edge                   = top.get_all_upblk_on_edge()
+    update_on_edge               = top.get_all_upblk_on_edge()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
     genblk_reads, genblk_writes  = top.genblk_reads, top.genblk_writes
     U_U, RD_U, WR_U              = top.get_all_explicit_constraints()
@@ -139,7 +133,7 @@ _ret_blk = {0}
     # constraint WR(x) < U1 & U2 writes x --> U2 == WR(x) <  U1 # impl
     # constraint WR(x) > U1 & U2 writes x --> U1 <  WR(x) == U2
     # Doesn't work for nested data struct and slice:
-    
+
     read_upblks = defaultdict(set)
     write_upblks = defaultdict(set)
 
