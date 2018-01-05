@@ -71,7 +71,7 @@ class NamedObject(object):
   # recursively and exhaustively
   # I changed dfs to bfs with stack
 
-  def _recursive_collect( s, filt=lambda x: isinstance( x, NamedObject ) ):
+  def _collect( s, filt=lambda x: isinstance( x, NamedObject ) ):
 
     ret = set()
     stack = [s]
@@ -167,7 +167,7 @@ class NamedObject(object):
 
     if idx_len == 0:  return name
 
-    ret = name + "".join([ "[{}]".format(x) for x in idx[0] ])
+    ret = name + "".join([ "[{}]".format(x) for x in idx ])
 
     if idx_len == 1: return ret
 
@@ -188,4 +188,4 @@ class NamedObject(object):
 
   def get_all_object_filter( s, filt ):
     assert callable( filt )
-    s._recursive_collect( filt )
+    s._collect( filt )

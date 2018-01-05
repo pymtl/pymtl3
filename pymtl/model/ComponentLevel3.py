@@ -20,7 +20,7 @@ class ComponentLevel3( ComponentLevel2 ):
     inst = super( ComponentLevel3, cls ).__new__( cls, *args, **kwargs )
     inst._call_kwargs = None
     inst._adjacency   = defaultdict(set)
-    # inst._consts      = set()
+    inst._consts      = set()
     return inst
 
   # Override
@@ -75,7 +75,7 @@ class ComponentLevel3( ComponentLevel2 ):
         host = host.get_parent_object()
 
       o2._parent_obj = host
-      # host._consts.add( const )
+      host._consts.add( o2 )
 
     assert o1.Type == o2.Type, "Type mismatch {} != {}".format( o1.Type, o2.Type )
     o1._connect( o2, adjacency_dict )
@@ -126,7 +126,8 @@ class ComponentLevel3( ComponentLevel2 ):
     visited = set()
     pred    = {} # detect cycle that has >=3 nodes
     for obj in signal_list:
-      if obj in adjacency and obj not in visited:
+      # If obj has adjacent signals
+      if adjacency[obj] and obj not in visited:
         net = set()
         Q   = deque( [ obj ] )
         while Q:
@@ -139,6 +140,7 @@ class ComponentLevel3( ComponentLevel2 ):
               Q.append( v )
             elif v is not pred[u]:
               raise InvalidConnectionError(repr(v)+" is in a connection loop.")
+
         nets.append( net )
     return nets
 
@@ -450,13 +452,13 @@ class ComponentLevel3( ComponentLevel2 ):
     NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel3 ) )
+    s._all_components = s._collect( lambda x: isinstance( x, ComponentLevel3 ) )
     for c in s._all_components:
       c._elaborate_top = s
       c._elaborate_read_write_func()
       s._collect_vars( c )
 
-    s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
+    s._all_signals = s._collect( lambda x: isinstance( x, Signal ) )
     s._all_nets    = s._resolve_var_connections( s._all_signals )
 
     s.check()
@@ -471,11 +473,10 @@ class ComponentLevel3( ComponentLevel2 ):
     s._check_port_in_upblk()
     s._check_port_in_nets()
 
-  # Override
-  def get_all_components( s ):
-    return s._recursive_collect( lambda x: isinstance( x, ComponentLevel3 ) )
-
   def get_all_nets( s ):
+    assert s._elaborate_top is s, "Getting all nets " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
     try:
       return s._all_nets
     except AttributeError:
@@ -490,67 +491,73 @@ class ComponentLevel3( ComponentLevel2 ):
     def _delete_component_by_name( parent, name ):
       obj = getattr( parent, name )
       top = s._elaborate_top
+      import timeit
 
       # Remove all components and uncollect metadata
 
       removed_components = obj.get_all_components()
       top._all_components -= removed_components
 
+      removed_signals = obj._collect( lambda x: isinstance( x, Signal ) )
+      top._all_signals -= removed_signals
+
       for x in removed_components:
         assert x._elaborate_top is top
         top._uncollect_vars( x )
+        for y in x._consts:
+          del y._parent_obj
 
-      for x in obj._recursive_collect():
+      for x in obj._collect():
         del x._parent_obj
-
-      removed_signals = obj._recursive_collect( lambda x: isinstance( x, Signal ) )
-      top._all_signals -= removed_signals
 
       # TODO somehow save the adjs for reconnection
 
       for x in removed_signals:
         for other in top._all_adjacency[x]:
           # If other will be removed, we don't need to remove it here ..
-          # Check if this is a broken connection
           if   other not in removed_signals:
             top._all_adjacency[other].remove( x )
 
         del top._all_adjacency[x]
+
       # top._all_nets = top._resolve_var_connections( top._all_signals )
 
+      # The following implementation of breaking nets is faster than a
+      # full connection resolution.
       new_nets = []
       for writer, signals in top._all_nets:
         broken_nets = s._floodfill_nets( signals, top._all_adjacency )
-        
-        if len(broken_nets) == 1: # the net is not broken
-          new_nets.append( (writer, signals) )
-          continue
-        else:
-          for net_signals in broken_nets:
-            if len(net) == 1: continue
 
+        for net_signals in broken_nets:
+          if len(net_signals) > 1:
             if writer in net_signals:
-              new_nets.append( (writer, signals) )
+              new_nets.append( (writer, net_signals) )
             else:
-              new_nets.append( (None, signals) )
+              new_nets.append( (None, net_signals) )
+      t1 = timeit.default_timer()
 
       top._all_nets = new_nets
 
       delattr( s, name )
 
     _delete_component_by_name( s, name )
-    import gc
-    gc.collect()
+    # import gc
+    # gc.collect() # this takes 0.1 seconds
 
   # Override
   def add_component_by_name( s, name, obj ):
+    import timeit
+    t0 = timeit.default_timer()
     assert not hasattr( s, name )
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
+    t1 = timeit.default_timer()
+    print "part 1", t1-t0
     top = s._elaborate_top
 
+    t0 = timeit.default_timer()
     added_components = obj.get_all_components()
     top._all_components |= added_components
 
@@ -559,10 +566,16 @@ class ComponentLevel3( ComponentLevel2 ):
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    added_signals = obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+    t1 = timeit.default_timer()
+    print "part 2", t1-t0
+
+    added_signals = obj._collect( lambda x: isinstance( x, Signal ) )
     top._all_signals |= added_signals
 
+    t0 = timeit.default_timer()
     top._all_nets += top._resolve_var_connections( added_signals )
+    t1 = timeit.default_timer()
+    print "resolve", t1-t0
 
   def add_connection( s, o1, o2 ):
     # TODO support string arguments and non-top s
@@ -580,4 +593,28 @@ class ComponentLevel3( ComponentLevel2 ):
       s._all_adjacency[x].update( adjs )
 
     # This works, but might be too slow
+    s._all_nets = s._resolve_var_connections( s._all_signals )
+
+  def add_connections( s, *args ):
+    # TODO support string arguments and non-top s
+    assert s._elaborate_top is s, "Adding connection by passing objects " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
+    if len(args) & 1 != 0:
+       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
+
+    added_adjacency = defaultdict(set)
+
+    for i in xrange(len(args)>>1) :
+      try:
+        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ], added_adjacency )
+      except InvalidConnectionError as e:
+        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
+              .format( (i<<1)+1, (i<<1)+2 , e ) )
+
+    for x, adjs in added_adjacency.iteritems():
+      s._all_adjacency[x].update( adjs )
+
+    # This works, but might be slow
     s._all_nets = s._resolve_var_connections( s._all_signals )

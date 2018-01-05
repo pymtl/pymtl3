@@ -290,12 +290,10 @@ class ComponentLevel2( ComponentLevel1 ):
       for k in m._WR_U_constraints:
         s._all_WR_U_constraints[k] -= m._RD_U_constraints[k]
 
-      s._all_upblk_reads  = { k:v for k,v in s._all_upblk_reads.iteritems()
-                              if k not in m._upblks }
-      s._all_upblk_writes = { k:v for k,v in s._all_upblk_writes.iteritems()
-                              if k not in m._upblks }
-      s._all_upblk_calls  = { k:v for k,v in s._all_upblk_calls.iteritems()
-                              if k not in m._upblks }
+      for k in m._upblks:
+        del s._all_upblk_reads[k]
+        del s._all_upblk_writes[k]
+        del s._all_upblk_calls[k]
 
   def _check_upblk_writes( s ):
 
@@ -483,13 +481,13 @@ class ComponentLevel2( ComponentLevel1 ):
     NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel2 ) )
+    s._all_components = s._collect( lambda x: isinstance( x, ComponentLevel2 ) )
     for c in s._all_components:
       c._elaborate_top = s
       c._elaborate_read_write_func()
       s._collect_vars( c )
 
-    s._all_signals = s._recursive_collect( lambda x: isinstance( x, Signal ) )
+    s._all_signals = s._collect( lambda x: isinstance( x, Signal ) )
 
     s.check()
 
@@ -503,12 +501,19 @@ class ComponentLevel2( ComponentLevel1 ):
     s._check_port_in_upblk()
 
   def get_all_upblk_on_edge( s ):
+    assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
     try:
       return s._all_update_on_edge
     except AttributeError:
       return NotElaboratedError()
 
   def get_all_upblk_metadata( s ):
+    assert s._elaborate_top is s, "Getting all update block metadata  " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
     try:
       return s._all_upblk_reads, s._all_upblk_writes, s._all_upblk_calls
     except AttributeError:
@@ -516,15 +521,25 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def get_all_explicit_constraints( s ):
+    assert s._elaborate_top is s, "Getting all explicit constraints " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
     return s._all_U_U_constraints, \
            s._RD_U_constraints, \
            s._WR_U_constraints
 
-  # Override
-  def get_all_components( s ):
-    return s._recursive_collect( lambda x: isinstance( x, ComponentLevel2 ) )
+  def get_all_object_filter( s, filt ):
+    assert callable( filt )
+    try:
+      return [ x for x in s._all_components | s._all_signals if filt(x) ]
+    except AttributeError:
+      return s._collect( filt )
 
   def lock_in_simulation( s ):
+    assert s._elaborate_top is s, "Locking in simulation " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
     s._swapped_signals = defaultdict(list)
 
     def cleanup_connectables( current_obj, host_component ):
@@ -597,10 +612,10 @@ class ComponentLevel2( ComponentLevel1 ):
         assert x._elaborate_top is top
         top._uncollect_vars( x )
 
-      for x in obj._recursive_collect():
+      for x in obj._collect():
         del x._parent_obj
 
-      top._all_signals -= obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+      top._all_signals -= obj._collect( lambda x: isinstance( x, Signal ) )
 
       delattr( s, name )
 
@@ -625,5 +640,5 @@ class ComponentLevel2( ComponentLevel1 ):
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    added_signals = obj._recursive_collect( lambda x: isinstance( x, Signal ) )
+    added_signals = obj._collect( lambda x: isinstance( x, Signal ) )
     top._all_signals |= added_signals

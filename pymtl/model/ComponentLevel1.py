@@ -54,15 +54,16 @@ class ComponentLevel1( NamedObject ):
 
     if isinstance( m, ComponentLevel1 ):
       s._all_upblks |= m._upblks
-      s._all_upblk_hostobj.update( { blk: m for blk in m._upblks } )
+      for blk in m._upblks:
+        s._all_upblk_hostobj[blk] = m
       s._all_U_U_constraints |= m._U_U_constraints
 
   def _uncollect_vars( s, m ):
 
     if isinstance( m, ComponentLevel1 ):
       s._all_upblks -= m._upblks
-      s._all_upblk_hostobj = { k:v for k,v in s._all_upblk_hostobj.iteritems()
-                               if k not in m._upblks }
+      for k in m._upblks:
+        del s._all_upblk_hostobj[k]
       s._all_U_U_constraints -= m._U_U_constraints
 
   #-----------------------------------------------------------------------
@@ -95,7 +96,7 @@ class ComponentLevel1( NamedObject ):
     NamedObject.elaborate( s )
 
     s._declare_vars()
-    s._all_components = s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
+    s._all_components = s._collect( lambda x: isinstance( x, ComponentLevel1 ) )
     for c in s._all_components:
       c._elaborate_top = s
       s._collect_vars( c )
@@ -121,6 +122,9 @@ class ComponentLevel1( NamedObject ):
     return s._name_upblk[ name ]
 
   def get_all_update_blocks( s ):
+    assert s._elaborate_top is s, "Getting all update blocks " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
     try:
       return s._all_upblks
     except AttributeError:
@@ -133,10 +137,24 @@ class ComponentLevel1( NamedObject ):
       raise NotElaboratedError()
 
   def get_all_explicit_constraints( s ):
+    assert s._elaborate_top is s, "Getting all explicit constraints " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
     return s._all_U_U_constraints
 
   def get_all_components( s ):
-    return s._recursive_collect( lambda x: isinstance( x, ComponentLevel1 ) )
+    try:
+      return s._all_components
+    except AttributeError:
+      return s._collect( lambda x: isinstance( x, ComponentLevel1 ) )
+
+  def get_all_object_filter( s, filt ):
+    assert callable( filt )
+    try:
+      return [ x for x in s._all_components if filt(x) ]
+    except AttributeError:
+      return s._collect( filt )
 
   def delete_component_by_name( s, name ):
 
@@ -162,7 +180,7 @@ class ComponentLevel1( NamedObject ):
         assert x._elaborate_top is top
         top._uncollect_vars( x )
 
-      for x in obj._recursive_collect():
+      for x in obj._collect():
         del x._parent_obj
 
       delattr( s, name )
@@ -185,3 +203,4 @@ class ComponentLevel1( NamedObject ):
     for c in added_components:
       c._elaborate_top = top
       top._collect_vars( c )
+
