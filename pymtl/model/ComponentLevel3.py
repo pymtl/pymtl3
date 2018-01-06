@@ -4,7 +4,7 @@
 
 from NamedObject import NamedObject
 from ComponentLevel2 import ComponentLevel2
-from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const
+from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
 from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
 from collections import defaultdict, deque
 
@@ -141,6 +141,7 @@ class ComponentLevel3( ComponentLevel2 ):
             elif v is not pred[u]:
               raise InvalidConnectionError(repr(v)+" is in a connection loop.")
 
+        assert len(net) > 1, "what the hell?"
         nets.append( net )
     return nets
 
@@ -406,6 +407,87 @@ class ComponentLevel3( ComponentLevel2 ):
 - host objects "{}" and "{}" are too far in the hierarchy.""" \
               .format( repr(u), repr(v), repr(whost), repr(rhost) ) )
 
+  def _disconnect_signal_int( s, o1, o2 ):
+
+    for i, net in enumerate( s._all_nets ):
+      writer, signals = net
+
+      if o1 in signals: # Find the net that contains o1
+        # If we're disconnecting a constant from a port, the constant
+        # should be the only writer in this net and is equal to o2
+        assert isinstance( writer, Const ), "what the hell?"
+        assert writer.const == o2, "Disconnecting the wrong const {} " \
+                                     "-- should be {}.".format( o2, writer.const )
+        o2 = writer
+
+        # I don't remove it from m._adjacency since they are not used later
+        assert o1 in s._all_adjacency[o2] and o2 in s._all_adjacency[o1]
+        s._all_adjacency[o2].remove( o1 )
+        s._all_adjacency[o1].remove( o2 )
+
+        # Disconnect a const from a signal just removes the writer in the net
+        signals.remove( writer )
+        s._all_nets[i] = ( None, signals )
+        return
+
+  def _disconnect_signal_signal( s, o1, o2 ):
+
+    assert o1 in s._all_adjacency[o2] and o2 in s._all_adjacency[o1]
+    # I don't remove it from m._adjacency since they are not used later
+    s._all_adjacency[o2].remove( o1 )
+    s._all_adjacency[o1].remove( o2 )
+
+    for i, net in enumerate( s._all_nets ):
+      writer, signals = net
+
+      if o1 in signals: # Find the net that contains o1
+        assert o2 in signals
+
+        broken_nets = s._floodfill_nets( signals, s._all_adjacency )
+
+        # disconnect the only two vertices in the net
+        if len(broken_nets) == 0:
+          s._all_nets[i] = s._all_nets.pop() # squeeze in the last net
+
+        # the removed edge results in an isolated vertex and a connected component
+        elif len(broken_nets) == 1:
+          net0 = broken_nets[0]
+          if writer in net0:
+            s._all_nets[i] = ( writer, net0 )
+          else:
+            assert writer is o1 or writer is o2
+            s._all_nets[i] = ( None, net0 )
+
+        elif len(broken_nets) == 2:
+          net0, net1 = broken_nets[0], broken_nets[1]
+          if writer in net0:
+            s._all_nets[i] = ( writer, net0 ) # replace in-place
+            s._all_nets.append( (None, net1) )
+          else:
+            assert writer in net1
+            s._all_nets[i] = ( None, net0 ) # replace in-place
+            s._all_nets.append( (writer, net1) )
+
+        else:
+          assert False, "what the hell?"
+
+        return
+
+  def _disconnect_interface_interface( s, o1, o2 ):
+
+    # Here we call connect to get the mock adjacency dictionary because
+    # o1 and o2 might be signal bundles and we need signal connections
+    mock_adjacency = defaultdict(set)
+    s._connect_objects( o1, o2, mock_adjacency )
+
+    visited = set()
+    for u, vs in mock_adjacency.iteritems():
+      for v in vs:
+        if (u, v) not in visited:
+          s._disconnect_signal_signal( u, v )
+          visited.add( (u, v) )
+          visited.add( (v, u) )
+
   #-----------------------------------------------------------------------
   # Construction-time APIs
   #-----------------------------------------------------------------------
@@ -546,18 +628,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def add_component_by_name( s, name, obj ):
-    import timeit
-    t0 = timeit.default_timer()
     assert not hasattr( s, name )
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
-    t1 = timeit.default_timer()
-    print "part 1", t1-t0
     top = s._elaborate_top
 
-    t0 = timeit.default_timer()
     added_components = obj.get_all_components()
     top._all_components |= added_components
 
@@ -566,16 +643,10 @@ class ComponentLevel3( ComponentLevel2 ):
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    t1 = timeit.default_timer()
-    print "part 2", t1-t0
-
     added_signals = obj._collect( lambda x: isinstance( x, Signal ) )
     top._all_signals |= added_signals
 
-    t0 = timeit.default_timer()
     top._all_nets += top._resolve_var_connections( added_signals )
-    t1 = timeit.default_timer()
-    print "resolve", t1-t0
 
   def add_connection( s, o1, o2 ):
     # TODO support string arguments and non-top s
@@ -618,3 +689,42 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # This works, but might be slow
     s._all_nets = s._resolve_var_connections( s._all_signals )
+
+  def disconnect( s, o1, o2 ):
+    # TODO support string arguments and non-top s
+    assert s._elaborate_top is s, "Disconnecting signals by passing objects " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
+
+    if isinstance( o1, int ): # o1 is signal, o2 is int
+      o1, o2 = o2, o1
+
+    # First handle the case where a const is disconnected from the signal
+    if isinstance( o2, int ):
+      assert isinstance( o1, Signal ), "You can only disconnect a const from a signal."
+      s._disconnect_signal_int( o1, o2 )
+
+    # Disconnect two signals
+    elif isinstance( o1, Signal ):
+      assert isinstance( o2, Signal )
+      s._disconnect_signal_signal( o1, o2 )
+
+    elif isinstance( o1, Interface ):
+      assert isinstance( o2, Interface )
+      s._disconnect_interface_interface( o1, o2 )
+
+    else:
+      assert False, "what the hell?"
+
+  def disconnect_pair( s, *args ):
+    # TODO support string arguments and non-top s
+    assert s._elaborate_top is s, "Disconnecting signals by passing objects " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+
+    if len(args) & 1 != 0:
+       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
+
+    for i in xrange(len(args)>>1):
+      s.disconnect( args[ i<<1 ], args[ (i<<1)+1 ] )
