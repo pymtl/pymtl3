@@ -189,12 +189,12 @@ class ComponentLevel2( ComponentLevel1 ):
           call = name_func[ name[0][0] ]
           all_calls.add( call )
 
-        if call is not None:
-          try:
-            astnode._funcs[ func ].add( call )
-          except AttributeError:
-            astnode._funcs = defaultdict(set)
-            astnode._funcs[ func ].add( call )
+        # if call is not None:
+          # try:
+            # astnode._funcs[ func ].add( call )
+          # except AttributeError:
+            # astnode._funcs = defaultdict(set)
+            # astnode._funcs[ func ].add( call )
 
       return all_calls
 
@@ -532,7 +532,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
-      return [ x for x in s._all_components | s._all_signals if filt(x) ]
+      return set( [ x for x in s._all_components | s._all_signals if filt(x) ] )
     except AttributeError:
       return s._collect( filt )
 

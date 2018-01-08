@@ -48,8 +48,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
     if not s._constructed:
 
-      if not s._kwargs: s.construct( *s._args )
-      else:             s.construct( *s._args, **s._kwargs )
+      kwargs = s._kwargs.copy()
+      if "elaborate" in s._param_dict:
+        kwargs.update( { x: y for x, y in s._param_dict[ "elaborate" ].iteritems()
+                              if x } )
+
+      if not kwargs: s.construct( *s._args )
+      else:          s.construct( *s._args, **kwargs )
 
       if s._call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()

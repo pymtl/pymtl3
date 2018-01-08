@@ -132,7 +132,7 @@ class ComponentLevel1( NamedObject ):
 
   def get_component_level( s ):
     try:
-      return len( s._full_name_idx[0] )
+      return s._level
     except AttributeError:
       raise NotElaboratedError()
 
@@ -143,6 +143,18 @@ class ComponentLevel1( NamedObject ):
 
     return s._all_U_U_constraints
 
+  def get_child_components( s ):
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+      if   isinstance( u, ComponentLevel1 ):
+        ret.add( u )
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
+
   def get_all_components( s ):
     try:
       return s._all_components
@@ -152,7 +164,7 @@ class ComponentLevel1( NamedObject ):
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
-      return [ x for x in s._all_components if filt(x) ]
+      return set( [ x for x in s._all_components if filt(x) ] )
     except AttributeError:
       return s._collect( filt )
 
@@ -203,4 +215,3 @@ class ComponentLevel1( NamedObject ):
     for c in added_components:
       c._elaborate_top = top
       top._collect_vars( c )
-

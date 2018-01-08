@@ -20,8 +20,13 @@ class RTLComponent( ComponentLevel3 ):
       s.clk   = InVPort( Bits1 )
       s.reset = InVPort( Bits1 )
 
-      if not s._kwargs: s.construct( *s._args )
-      else:             s.construct( *s._args, **s._kwargs )
+      kwargs = s._kwargs.copy()
+      if "elaborate" in s._param_dict:
+        kwargs.update( { x: y for x, y in s._param_dict[ "elaborate" ].iteritems()
+                              if x } )
+
+      if not kwargs: s.construct( *s._args )
+      else:          s.construct( *s._args, **kwargs )
 
       try:
         s.connect( s.clk, s._parent_obj.clk )
