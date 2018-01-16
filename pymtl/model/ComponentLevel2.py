@@ -495,6 +495,69 @@ class ComponentLevel2( ComponentLevel1 ):
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
 
+  def lock_in_simulation( s ):
+    assert s._elaborate_top is s, "Locking in simulation " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+    s._swapped_signals = defaultdict(list)
+    s._swapped_values  = defaultdict(list)
+
+    def cleanup_connectables( current_obj, host_component ):
+
+      # Deduplicate code. Choose operation based on type of current_obj
+      if isinstance( current_obj, list ):
+        iterable = enumerate( current_obj )
+        is_list = True
+      elif isinstance( current_obj, NamedObject ):
+        iterable = current_obj.__dict__.iteritems()
+        is_list = False
+      else:
+        return
+
+      for i, obj in iterable:
+        if not is_list and i.startswith("_"): # impossible to have tuple
+          continue
+
+        if   isinstance( obj, ComponentLevel1 ):
+          cleanup_connectables( obj, obj )
+        elif isinstance( obj, Interface ):
+          cleanup_connectables( obj, host_component )
+        elif isinstance( obj, list ):
+          cleanup_connectables( obj, host_component )
+
+        elif isinstance( obj, Signal ):
+          try:
+            if is_list: current_obj[i] = obj.default_value()
+            else:       setattr( current_obj, i, obj.default_value() )
+          except Exception as err:
+            err.message = repr(obj) + " -- " + err.message
+            err.args = (err.message,)
+            raise err
+          s._swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
+
+    cleanup_connectables( s, s )
+    s._locked_simulation = True
+
+  def unlock_simulation( s ):
+    assert s._elaborate_top is s, "Unlocking simulation " \
+                                  "is only allowed at top, but this API call " \
+                                  "is on {}.".format( "top."+repr(s)[2:] )
+    try:
+      assert s._locked_simulation
+    except:
+      raise AttributeError("Cannot unlock an unlocked/never locked model.")
+
+    for component, records in s._swapped_signals.iteritems():
+      for current_obj, i, obj, is_list in records:
+        if is_list:
+          s._swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          current_obj[i] = obj
+        else:
+          s._swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          setattr( current_obj, i, obj )
+
+    s._locked_simulation = False
+
   # TODO rename
   def check( s ):
     s._check_upblk_writes()
@@ -535,63 +598,6 @@ class ComponentLevel2( ComponentLevel1 ):
       return set( [ x for x in s._all_components | s._all_signals if filt(x) ] )
     except AttributeError:
       return s._collect( filt )
-
-  def lock_in_simulation( s ):
-    assert s._elaborate_top is s, "Locking in simulation " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-    s._swapped_signals = defaultdict(list)
-
-    def cleanup_connectables( current_obj, host_component ):
-
-      if isinstance( current_obj, list ):
-        for i, obj in enumerate( current_obj ):
-
-          if   isinstance( obj, ComponentLevel1 ):
-            cleanup_connectables( obj, obj )
-
-          elif isinstance( obj, Signal ):
-            try:
-              current_obj[i] = obj.default_value()
-            except Exception as err:
-              err.message = repr(obj) + " -- " + err.message
-              err.args = (err.message,)
-              raise err
-            s._swapped_signals[ host_component ].append( (current_obj, i, obj) )
-
-          elif isinstance( obj, Const ):
-            current_obj[i] = obj.const
-            s._swapped_signals[ host_component ].append( (current_obj, i, obj) )
-
-          elif isinstance( obj, Interface ):
-            cleanup_connectables( obj, host_component )
-
-      elif isinstance( current_obj, NamedObject ):
-        for name, obj in current_obj.__dict__.iteritems():
-
-          if ( isinstance( name, basestring ) and not name.startswith("_") ) \
-            or isinstance( name, tuple ):
-
-            if isinstance( obj, ComponentLevel1 ):
-              cleanup_connectables( obj, obj )
-
-            elif   isinstance( obj, Signal ):
-              try:
-                setattr( current_obj, name, obj.default_value() )
-              except Exception as err:
-                err.message = repr(obj) + " -- " + err.message
-                err.args = (err.message,)
-                raise err
-              s._swapped_signals[ host_component ].append( (current_obj, name, obj) )
-
-            elif isinstance( obj, Const ):
-              setattr( current_obj, name, obj.const )
-              s._swapped_signals[ host_component ].append( (current_obj, name, obj) )
-
-            else:
-              cleanup_connectables( obj, host_component )
-
-    cleanup_connectables( s, s )
 
   # Override
   def delete_component_by_name( s, name ):
