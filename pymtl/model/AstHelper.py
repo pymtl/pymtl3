@@ -4,12 +4,20 @@ p = re.compile('( *(@|def))')
 class DetectVarNames( ast.NodeVisitor ):
 
   def __init__( self, upblk ):
-    self.upblk = upblk
+    self.upblk   = upblk
+    self.closure = {}
+    for i, var in enumerate( upblk.func_code.co_freevars ):
+      try:  self.closure[ var ] = upblk.func_closure[i].cell_contents
+      except ValueError: pass
 
   # Helper function to get the full name containing "s"
 
   def _get_full_name( self, node ):
+
+    # We store the name/index linearly, and store the corresponding ast
+    # nodes linearly for annotation purpose
     obj_name = []
+    nodelist = []
 
     # First strip off all slices
     # s.x[1][2].y[i][3]
@@ -25,31 +33,27 @@ class DetectVarNames( ast.NodeVisitor ):
       if isinstance( lower, ast.Num ):
         low = node.slice.lower.n
       elif isinstance( lower, ast.Name ):
-        st = lower.id
-        if st in self.upblk.func_globals:
-          low = self.upblk.func_globals[ v.id ] # TODO check low is int
-        else:
-          for i, var in enumerate( self.upblk.__code__.co_freevars ):
-            if var == lower.id:
-              low = self.upblk.__closure__[i].cell_contents
-              break
+        x = lower.id
+        if   x in self.upblk.func_globals:
+          low = self.upblk.func_globals[ x ] # TODO check low is int
+        elif x in self.closure:
+          low = self.closure[ x ]
 
       if isinstance( upper, ast.Num ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
-        st = upper.id
-        if st in self.upblk.func_globals:
-          up = self.upblk.func_globals[ v.id ] # TODO check low is int
-        else:
-          for i, var in enumerate( self.upblk.__code__.co_freevars ):
-            if var == upper.id:
-              up = self.upblk.__closure__[i].cell_contents
-              break
+        x = upper.id
+        if   x in self.upblk.func_globals:
+          up = self.upblk.func_globals[ x ] # TODO check low is int
+        elif x in self.closure:
+          up = self.closure[ x ]
 
       if low is not None and up is not None:
         slices.append( slice(low, up) )
       # FIXME
       # else:
+
+      nodelist.append( node )
       node = node.value
 
     # s.x[1][2].y[i]
@@ -63,13 +67,11 @@ class DetectVarNames( ast.NodeVisitor ):
         if   isinstance( v, ast.Num ):
           n = v.n
         elif isinstance( v, ast.Name ):
-          if v.id in self.upblk.func_globals: # Only support global const indexing for now
-            n = self.upblk.func_globals[ v.id ]
-          else:
-            for i, var in enumerate( self.upblk.__code__.co_freevars ):
-              if var == v.id:
-                up = self.upblk.__closure__[i].cell_contents
-                break
+          x = v.id
+          if   x in self.upblk.func_globals: # Only support global const indexing for now
+            n = self.upblk.func_globals[ x ]
+          elif x in self.closure:
+            n = self.closure[ x ]
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant
           self.visit( v )
         elif isinstance( v, ast.Call ): # int(x)
@@ -77,6 +79,8 @@ class DetectVarNames( ast.NodeVisitor ):
             self.visit(x)
 
         num.append(n)
+
+        nodelist.append( node )
         node = node.value
 
       if   isinstance( node, ast.Attribute ):
@@ -84,10 +88,13 @@ class DetectVarNames( ast.NodeVisitor ):
       elif isinstance( node, ast.Name ):
         obj_name.append( (node.id, num[::-1]) )
       elif isinstance( node, ast.Call ): # a.b().c()
-        return
+        # FIXME?
+        return None, None 
       else:
         assert isinstance( node, ast.Str ) # filter out line_trace
-        return
+        return None, None
+
+      nodelist.append( node )
 
       if not hasattr( node, "value" ):
         break
@@ -101,32 +108,25 @@ class DetectVarNames( ast.NodeVisitor ):
       obj_name[0][1].append( slices[0] )
 
     obj_name = obj_name[::-1]
-    return obj_name
+    nodelist = nodelist[::-1]
+    return obj_name, nodelist
 
-class DetectReadsAndWrites( DetectVarNames ):
+class DetectReadsWritesCalls( DetectVarNames ):
 
-  # This function is to extract variables
-  def get_obj_name( self, node ):
-    obj_name = self._get_full_name( node )
-
-    # We only record s.*
-    if obj_name[0][0] != "s":
-      return None
-
-    return obj_name[1:] # Unfortunately it's O(n), but I already [::-1] so not that bad
-
-  def enter( self, node, read, write ):
+  def enter( self, node, read, write, calls ):
     self.read = []
     self.write = []
+    self.calls = []
     self.visit( node )
     read.extend ( self.read )
     write.extend( self.write )
+    calls.extend( self.calls )
 
   def visit_Attribute( self, node ): # s.a.b
-    obj_name = self.get_obj_name( node )
+    obj_name, nodelist = self._get_full_name( node )
     if not obj_name:  return
 
-    pair = (obj_name, node)
+    pair = (obj_name, nodelist)
 
     if   isinstance( node.ctx, ast.Load ):
       self.read.append( pair )
@@ -136,10 +136,10 @@ class DetectReadsAndWrites( DetectVarNames ):
       assert False, type( node.ctx )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
-    obj_name = self.get_obj_name( node )
+    obj_name, nodelist = self._get_full_name( node )
     if not obj_name:  return
 
-    pair = (obj_name, node)
+    pair = (obj_name, nodelist)
 
     if   isinstance( node.ctx, ast.Load ):
       self.read.append( pair )
@@ -150,24 +150,11 @@ class DetectReadsAndWrites( DetectVarNames ):
 
     self.visit( node.slice )
 
-class DetectFuncCalls( DetectVarNames ):
-
-  def enter( self, node, calls ):
-    self.calls = []
-    self.visit( node )
-    calls.extend( self.calls )
-
   def visit_Call( self, node ):
-    obj_name = self._get_full_name( node.func )
+    obj_name, nodelist = self._get_full_name( node.func )
     if not obj_name:  return
 
-    isself = False # function call
-
-    if obj_name[0][0] == "s":
-      obj_name = obj_name[1:]
-      isself = True
-
-    self.calls.append( (obj_name, node, isself) )
+    self.calls.append( (obj_name, nodelist) )
 
     for x in node.args:
       self.visit( x )
@@ -228,7 +215,7 @@ class CountBranches( DetectVarNames ):
     for stmt in node.body:
       self.visit( stmt )
 
-def extract_read_write( f, tree, read, write ):
+def extract_reads_writes_calls( f, tree, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
@@ -237,18 +224,7 @@ def extract_read_write( f, tree, read, write ):
   assert isinstance(tree, ast.FunctionDef)
 
   for stmt in tree.body:
-    DetectReadsAndWrites( f ).enter( stmt, read, write )
-
-def extract_func_calls( f, tree, calls ):
-
-  # Traverse the ast to extract variable writes and reads
-  # First check and remove @s.update and empty arguments
-  assert isinstance(tree, ast.Module)
-  tree = tree.body[0]
-  assert isinstance(tree, ast.FunctionDef)
-
-  for stmt in tree.body:
-    DetectFuncCalls( f ).enter( stmt, calls )
+    DetectReadsWritesCalls( f ).enter( stmt, read, write, calls )
 
 def count_branches( f ):
 

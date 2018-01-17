@@ -97,6 +97,9 @@ def test_cyclic_impl_dependency():
       def upB():
         s.b = s.a
 
+    def done( s ):
+      return True
+
   try:
     _test_model( Top )
   except UpblkCyclicError as e:

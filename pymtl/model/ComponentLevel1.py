@@ -121,11 +121,14 @@ class ComponentLevel1( NamedObject ):
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
+  def get_update_blocks( s ):
+    return s._upblks
+
   def get_all_update_blocks( s ):
-    assert s._elaborate_top is s, "Getting all update blocks " \
+    try:
+      assert s._elaborate_top is s, "Getting all update blocks " \
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
-    try:
       return s._all_upblks
     except AttributeError:
       raise NotElaboratedError()
@@ -137,13 +140,16 @@ class ComponentLevel1( NamedObject ):
       raise NotElaboratedError()
 
   def get_all_explicit_constraints( s ):
-    assert s._elaborate_top is s, "Getting all explicit constraints " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    return s._all_U_U_constraints
+    try:
+      assert s._elaborate_top is s, "Getting all explicit constraints " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
+      return s._all_U_U_constraints
+    except AttributeError:
+      raise NotElaboratedError()
 
   def get_child_components( s ):
+    assert s._constructed
     ret = set()
     stack = [s]
     while stack:

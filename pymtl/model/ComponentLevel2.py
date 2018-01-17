@@ -61,8 +61,7 @@ class ComponentLevel2( ComponentLevel1 ):
       name_rd[ name ]  = rd   = []
       name_wr[ name ]  = wr   = []
       name_fc[ name ]  = fc   = []
-      AstHelper.extract_read_write( func, tree, rd, wr )
-      AstHelper.extract_func_calls( func, tree, fc )
+      AstHelper.extract_reads_writes_calls( func, tree, rd, wr, fc )
 
   # Override
   def _declare_vars( s ):
@@ -87,31 +86,31 @@ class ComponentLevel2( ComponentLevel1 ):
 
     def extract_obj_from_names( func, names ):
 
-      def expand_array_index( obj, name_depth, name, idx_depth, idx, obj_list ):
+      def expand_array_index( obj, name_depth, node_depth, idx_depth, idx, obj_list ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_var """
 
         if idx_depth >= len(idx): # exhausted, go to next level of name
-          lookup_var( obj, name_depth+1, name, obj_list )
+          lookup_var( obj, name_depth+1, node_depth+1, obj_list )
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
           if isinstance( obj, Signal ): # Signal[*] is the signal itself
-            add_all( obj, obj_list )
+            add_all( obj, obj_list, node_depth )
           else:
             for i, o in enumerate( obj ):
-              expand_array_index( o, name_depth, name, idx_depth+1, idx, obj_list )
+              expand_array_index( o, name_depth, node_depth, idx_depth+1, idx, obj_list )
         else:
           _index = idx[ idx_depth ]
           try:
             index = int( _index ) # handle x[2]'s case
-            expand_array_index( obj[index], name_depth, name, idx_depth+1, idx, obj_list )
+            expand_array_index( obj[index], name_depth, node_depth, idx_depth+1, idx, obj_list )
           except TypeError: # cannot convert to integer
             if not isinstance( _index, slice ):
-              raise VarNotDeclaredError( obj, _index, func, s, astnode.lineno )
-            expand_array_index( obj[_index], name_depth, name, idx_depth+1, idx, obj_list )
+              raise VarNotDeclaredError( obj, _index, func, s, nodelist[node_depth].lineno )
+            expand_array_index( obj[_index], name_depth, node_depth, idx_depth+1, idx, obj_list )
           except IndexError:
             pass
 
-      def add_all( obj, obj_list ):
+      def add_all( obj, obj_list, node_depth ):
         """ Already found, but it is an array of objects,
             s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ].
             Recursively collect all signals. """
@@ -119,24 +118,24 @@ class ComponentLevel2( ComponentLevel1 ):
           obj_list.add( obj )
         elif isinstance( obj, list ): # SORRY
           for i, o in enumerate( obj ):
-            add_all( o, obj_list )
+            add_all( o, obj_list, node_depth )
 
-      def lookup_var( obj, depth, name, obj_list ):
+      def lookup_var( obj, name_depth, node_depth, obj_list ):
         """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
 
-        if depth >= len(name): # exhausted
+        if name_depth >= len(obj_name): # exhausted
           if not callable(obj): # exclude function calls
-            add_all( obj, obj_list ) # if this object is a list/array again...
+            add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
           return
         else:
-          field, idx = name[ depth ]
+          field, idx = obj_name[ name_depth ]
           try:
             obj = getattr( obj, field )
           except AttributeError:
-            raise VarNotDeclaredError( obj, field, func, s, astnode.lineno )
+            raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-          if not idx: lookup_var( obj, depth+1, name, obj_list )
-          else:       expand_array_index( obj, depth, name, 0, idx, obj_list )
+          if not idx: lookup_var( obj, name_depth+1, node_depth+1, obj_list )
+          else:       expand_array_index( obj, name_depth, node_depth+1, 0, idx, obj_list )
 
       """ extract_obj_from_names:
       Here we enumerate names and use the above functions to turn names
@@ -144,27 +143,13 @@ class ComponentLevel2( ComponentLevel1 ):
 
       all_objs = set()
 
-      for name, astnode in names:
+      for obj_name, nodelist in names:
+        print obj_name, nodelist
         objs = set()
-        lookup_var( s, 0, name, objs )
 
-        all_objs |= objs
-
-        # Annotate astnode with actual objects. However, since I only
-        # parse AST of an upblk/function once to avoid duplicated parsing,
-        # I have to fold information across difference instances of the
-        # same class into the unique AST. Thus I keep {blk/funcid:objs}
-        # dict in each AST node to differentiate between different upblks.
-
-        # FIXME
-
-        # try:
-          # astnode._objs[ func ] |= objs
-        # except AttributeError:
-          # astnode._objs = defaultdict(set)
-          # astnode._objs[ func ] |= objs
-
-        # TODO Attach astnode to object for error message lineno/coloff
+        if obj_name[0][0] == "s":
+          lookup_var( s, 1, 1, objs )
+          all_objs |= objs
 
       return all_objs
 
@@ -174,27 +159,21 @@ class ComponentLevel2( ComponentLevel1 ):
 
       all_calls = set()
 
-      for name, astnode, isself in names:
+      for obj_name, nodelist in names:
         call = None
 
         # This is some instantiation I guess. TODO only support one layer
-        if isself and len(name) == 1:
+
+        if obj_name[0][0] == "s" and len(obj_name) == 2:
           try:
-            call = getattr( s, name[0][0] )
+            call = getattr( s, obj_name[1][0] )
           except AttributeError as e:
-            raise VarNotDeclaredError( call, name[0][0], func, s, astnode.lineno )
+            raise VarNotDeclaredError( call, obj_name[1][0], func, s, nodelist[-1].lineno )
 
         # This is a function call without "s." prefix, check func list
-        elif name[0][0] in name_func:
-          call = name_func[ name[0][0] ]
+        elif obj_name[0][0] in name_func:
+          call = name_func[ obj_name[0][0] ]
           all_calls.add( call )
-
-        # if call is not None:
-          # try:
-            # astnode._funcs[ func ].add( call )
-          # except AttributeError:
-            # astnode._funcs = defaultdict(set)
-            # astnode._funcs[ func ].add( call )
 
       return all_calls
 
@@ -208,6 +187,9 @@ class ComponentLevel2( ComponentLevel1 ):
     except AttributeError: # This component doesn't have update block
       pass
 
+    # what object each astnode corresponds to. You can't have two update
+    # blocks in one component that have the same ast.
+    s._astnode_objs = defaultdict(list) 
     s._func_reads  = {}
     s._func_writes = {}
     s._func_calls  = {}
@@ -563,34 +545,43 @@ class ComponentLevel2( ComponentLevel1 ):
     s._check_upblk_writes()
     s._check_port_in_upblk()
 
-  def get_all_upblk_on_edge( s ):
-    assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
+  def get_update_block_ast_pairs( s ):
     try:
+      name_ast = s.__class__._name_ast
+    except AttributeError: # This component doesn't have update block
+      return set()
+
+    return set([ (upblk, name_ast[name]) for name, upblk in s._name_upblk.iteritems() ] )
+
+  def get_all_upblk_on_edge( s ):
+    try:
+      assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
       return s._all_update_on_edge
     except AttributeError:
       return NotElaboratedError()
 
   def get_all_upblk_metadata( s ):
-    assert s._elaborate_top is s, "Getting all update block metadata  " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
     try:
+      assert s._elaborate_top is s, "Getting all update block metadata  " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
       return s._all_upblk_reads, s._all_upblk_writes, s._all_upblk_calls
     except AttributeError:
       return NotElaboratedError()
 
   # Override
   def get_all_explicit_constraints( s ):
-    assert s._elaborate_top is s, "Getting all explicit constraints " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    return s._all_U_U_constraints, \
-           s._RD_U_constraints, \
-           s._WR_U_constraints
+    try:
+      assert s._elaborate_top is s, "Getting all explicit constraints " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
+      return s._all_U_U_constraints, \
+             s._RD_U_constraints, \
+             s._WR_U_constraints
+    except AttributeError:
+      raise NotElaboratedError()
 
   def get_all_object_filter( s, filt ):
     assert callable( filt )
