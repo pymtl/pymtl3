@@ -56,32 +56,32 @@ class NamedObject(object):
         u, indices = stack.pop()
 
         if   isinstance( u, NamedObject ):
-          u._parent_obj  = s
-          u._level   = s._level + 1
-          u._my_name = u_name = name + "".join([ "[{}]".format(x) for x in indices ])
-
-          u._param_dict = { None:{} }
-
-          # print s, s._param_dict[ None ]
-
-          if u_name in s._param_dict:
-            u._param_dict.update( s._param_dict[ u_name ] )
-
-          for pattern, (compiled_re, subdict) in s._param_dict[ None ].iteritems():
-            if compiled_re.match( u_name ):
-              for x, y in subdict.iteritems(): # to merge two None subdicts
-                if x is None:
-                  u._param_dict[ None ].update( subdict )
-                else:
-                  u._param_dict[ x ] = y
-
           try:
+            u._parent_obj  = s
+            u._level   = s._level + 1
+            u._my_name = u_name = name + "".join([ "[{}]".format(x) for x in indices ])
+
+            u._param_dict = { None:{} }
+
+            # print s, s._param_dict[ None ]
+
+            if u_name in s._param_dict:
+              u._param_dict.update( s._param_dict[ u_name ] )
+
+            for pattern, (compiled_re, subdict) in s._param_dict[ None ].iteritems():
+              if compiled_re.match( u_name ):
+                for x, y in subdict.iteritems(): # to merge two None subdicts
+                  if x is None:
+                    u._param_dict[ None ].update( subdict )
+                  else:
+                    u._param_dict[ x ] = y
+
             s_name = s._full_name
+            u._full_name = ( s_name + "." + u_name )
+            u._construct()
           except AttributeError:
             raise AttributeError("In {}:\n   Please put all logic in construct " \
                                  "instead of __init__.".format( s.__class__) )
-          u._full_name = ( s_name + "." + u_name )
-          u._construct()
 
         # ONLY LIST IS SUPPORTED, SORRY.
         # I don't want to support any iterable object because later "Wire"
@@ -149,7 +149,12 @@ class NamedObject(object):
 
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
 
-    s._construct()
+    try:
+      s._construct()
+    except Exception:
+      # re-raise here after deleting __setattr__
+      del NamedObject.__setattr__ # not harming the rest of execution
+      raise
 
     del NamedObject.__setattr__
 

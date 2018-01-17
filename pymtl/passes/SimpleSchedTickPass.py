@@ -13,7 +13,7 @@ class SimpleSchedTickPass( BasePass ):
     if not hasattr( top, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
-    schedule = self.schedule( top )
+    top.schedule = schedule = self.schedule( top )
 
     def tick_normal():
       for blk in schedule:

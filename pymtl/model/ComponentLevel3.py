@@ -561,10 +561,10 @@ class ComponentLevel3( ComponentLevel2 ):
     s._check_port_in_nets()
 
   def get_all_nets( s ):
-    assert s._elaborate_top is s, "Getting all nets " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
     try:
+      assert s._elaborate_top is s, "Getting all nets " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
       return s._all_nets
     except AttributeError:
       raise NotElaboratedError()
