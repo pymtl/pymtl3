@@ -121,6 +121,15 @@ class ComponentLevel1( NamedObject ):
   def get_update_block( s, name ):
     return s._name_upblk[ name ]
 
+  def get_update_block_host_component( s, blk ):
+    try:
+      assert s._elaborate_top is s, "Getting update block host component " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
+      return s._all_upblk_hostobj[ blk ]
+    except AttributeError:
+      raise NotElaboratedError()
+
   def get_update_blocks( s ):
     return s._upblks
 

@@ -7,7 +7,7 @@ from ComponentLevel1 import ComponentLevel1
 from Connectable     import Signal, InVPort, OutVPort, Wire, Const, Interface
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
-from errors import InvalidConstraintError, SignalTypeError, \
+from errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, \
                    MultiWriterError, VarNotDeclaredError, InvalidFuncCallError, UpblkFuncSameNameError
 import AstHelper
 
@@ -87,28 +87,27 @@ class ComponentLevel2( ComponentLevel1 ):
     def extract_obj_from_names( func, names ):
 
       def expand_array_index( obj, name_depth, node_depth, idx_depth, idx, obj_list ):
-        """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_var """
+        """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
 
         if idx_depth >= len(idx): # exhausted, go to next level of name
-          lookup_var( obj, name_depth+1, node_depth+1, obj_list )
+          lookup_variable( obj, name_depth+1, node_depth+1, obj_list )
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
           if isinstance( obj, Signal ): # Signal[*] is the signal itself
             add_all( obj, obj_list, node_depth )
           else:
-            for i, o in enumerate( obj ):
-              expand_array_index( o, name_depth, node_depth, idx_depth+1, idx, obj_list )
+            for i, child in enumerate( obj ):
+              expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
         else:
-          _index = idx[ idx_depth ]
           try:
-            index = int( _index ) # handle x[2]'s case
-            expand_array_index( obj[index], name_depth, node_depth, idx_depth+1, idx, obj_list )
+            child = obj[ idx[ idx_depth ] ]
           except TypeError: # cannot convert to integer
-            if not isinstance( _index, slice ):
-              raise VarNotDeclaredError( obj, _index, func, s, nodelist[node_depth].lineno )
-            expand_array_index( obj[_index], name_depth, node_depth, idx_depth+1, idx, obj_list )
+            raise VarNotDeclaredError( obj, idx[idx_depth], func, s, nodelist[node_depth].lineno )
           except IndexError:
-            pass
+            return
+
+          s._astnode_objs[ nodelist[node_depth] ].append( child )
+          expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
 
       def add_all( obj, obj_list, node_depth ):
         """ Already found, but it is an array of objects,
@@ -117,25 +116,28 @@ class ComponentLevel2( ComponentLevel1 ):
         if   isinstance( obj, Signal ):
           obj_list.add( obj )
         elif isinstance( obj, list ): # SORRY
-          for i, o in enumerate( obj ):
-            add_all( o, obj_list, node_depth )
+          for i, child in enumerate( obj ):
+            add_all( child, obj_list, node_depth+1 )
 
-      def lookup_var( obj, name_depth, node_depth, obj_list ):
+      def lookup_variable( obj, name_depth, node_depth, obj_list ):
         """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
 
         if name_depth >= len(obj_name): # exhausted
           if not callable(obj): # exclude function calls
             add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
           return
-        else:
-          field, idx = obj_name[ name_depth ]
-          try:
-            obj = getattr( obj, field )
-          except AttributeError:
-            raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-          if not idx: lookup_var( obj, name_depth+1, node_depth+1, obj_list )
-          else:       expand_array_index( obj, name_depth, node_depth+1, 0, idx, obj_list )
+        # still have names
+        field, idx = obj_name[ name_depth ]
+        try:
+          child = getattr( obj, field )
+        except AttributeError:
+          raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
+
+        s._astnode_objs[ nodelist[node_depth] ].append( child )
+
+        if not idx: lookup_variable   ( child, name_depth+1, node_depth+1, obj_list )
+        else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx, obj_list )
 
       """ extract_obj_from_names:
       Here we enumerate names and use the above functions to turn names
@@ -144,11 +146,11 @@ class ComponentLevel2( ComponentLevel1 ):
       all_objs = set()
 
       for obj_name, nodelist in names:
-        print obj_name, nodelist
         objs = set()
 
         if obj_name[0][0] == "s":
-          lookup_var( s, 1, 1, objs )
+          s._astnode_objs[ nodelist[0] ].append( s )
+          lookup_variable( s, 1, 1, objs )
           all_objs |= objs
 
       return all_objs
@@ -170,10 +172,13 @@ class ComponentLevel2( ComponentLevel1 ):
           except AttributeError as e:
             raise VarNotDeclaredError( call, obj_name[1][0], func, s, nodelist[-1].lineno )
 
+          s._astnode_objs[ nodelist[1] ].append( call )
+
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in name_func:
           call = name_func[ obj_name[0][0] ]
           all_calls.add( call )
+          s._astnode_objs[ nodelist[0] ].append( call )
 
       return all_calls
 
@@ -553,6 +558,12 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return set([ (upblk, name_ast[name]) for name, upblk in s._name_upblk.iteritems() ] )
 
+  def get_astnode_obj_mapping( s ):
+    try:
+      return s._astnode_objs
+    except AttributeError:
+      raise NotElaboratedError()
+
   def get_all_upblk_on_edge( s ):
     try:
       assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
@@ -560,7 +571,7 @@ class ComponentLevel2( ComponentLevel1 ):
                                     "is on {}.".format( "top."+repr(s)[2:] )
       return s._all_update_on_edge
     except AttributeError:
-      return NotElaboratedError()
+      raise NotElaboratedError()
 
   def get_all_upblk_metadata( s ):
     try:
@@ -569,7 +580,7 @@ class ComponentLevel2( ComponentLevel1 ):
                                     "is on {}.".format( "top."+repr(s)[2:] )
       return s._all_upblk_reads, s._all_upblk_writes, s._all_upblk_calls
     except AttributeError:
-      return NotElaboratedError()
+      raise NotElaboratedError()
 
   # Override
   def get_all_explicit_constraints( s ):
