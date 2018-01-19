@@ -115,7 +115,7 @@ def {0}():
 
     # Query update block metadata from top
 
-    update_on_edge               = top.get_all_upblk_on_edge()
+    update_on_edge               = top.get_all_update_on_edge()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
     genblk_reads, genblk_writes  = top.genblk_reads, top.genblk_writes
     U_U, RD_U, WR_U              = top.get_all_explicit_constraints()

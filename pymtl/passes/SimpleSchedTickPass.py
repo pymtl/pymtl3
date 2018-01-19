@@ -57,12 +57,12 @@ class SimpleSchedTickPass( BasePass ):
 
       leftovers = set( [ v for v in V if InD[v] ] )
       for x in leftovers:
-        dot.node( x.__name__+"\\n@"+repr(x.hostobj), shape="box")
+        dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
 
       for (x, y) in E:
         if x in leftovers and y in leftovers:
-          dot.edge( x.__name__+"\\n@"+repr(x.hostobj),
-                    y.__name__+"\\n@"+repr(y.hostobj) )
+          dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
+                    y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
       dot.render( "/tmp/upblk-dag.gv", view=True )
 
       raise UpblkCyclicError( """
