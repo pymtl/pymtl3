@@ -96,7 +96,7 @@ class ComponentLevel1( NamedObject ):
     NamedObject.elaborate( s )
 
     s._declare_vars()
-    s._all_components = s._collect( lambda x: isinstance( x, ComponentLevel1 ) )
+    s._all_components = s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
     for c in s._all_components:
       c._elaborate_top = s
       s._collect_vars( c )
@@ -160,7 +160,11 @@ class ComponentLevel1( NamedObject ):
   def get_child_components( s ):
     assert s._constructed
     ret = set()
-    stack = [s]
+    stack = []
+    for (name, obj) in s.__dict__.iteritems():
+      if   isinstance( name, basestring ): # python2 specific
+        if not name.startswith("_"): # filter private variables
+          stack.append( obj )
     while stack:
       u = stack.pop()
       if   isinstance( u, ComponentLevel1 ):
@@ -174,14 +178,14 @@ class ComponentLevel1( NamedObject ):
     try:
       return s._all_components
     except AttributeError:
-      return s._collect( lambda x: isinstance( x, ComponentLevel1 ) )
+      return s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
 
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
       return set( [ x for x in s._all_components if filt(x) ] )
     except AttributeError:
-      return s._collect( filt )
+      return s._collect_all( filt )
 
   def delete_component_by_name( s, name ):
 
@@ -207,7 +211,7 @@ class ComponentLevel1( NamedObject ):
         assert x._elaborate_top is top
         top._uncollect_vars( x )
 
-      for x in obj._collect():
+      for x in obj._collect_all():
         del x._parent_obj
 
       delattr( s, name )

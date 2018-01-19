@@ -97,7 +97,7 @@ class NamedObject(object):
   # recursively and exhaustively
   # I changed dfs to bfs with stack
 
-  def _collect( s, filt=lambda x: isinstance( x, NamedObject ) ):
+  def _collect_all( s, filt=lambda x: isinstance( x, NamedObject ) ):
 
     ret = set()
     stack = [s]

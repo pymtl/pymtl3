@@ -539,13 +539,13 @@ class ComponentLevel3( ComponentLevel2 ):
     NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._all_components = s._collect( lambda x: isinstance( x, ComponentLevel3 ) )
+    s._all_components = s._collect_all( lambda x: isinstance( x, ComponentLevel3 ) )
     for c in s._all_components:
       c._elaborate_top = s
       c._elaborate_read_write_func()
       s._collect_vars( c )
 
-    s._all_signals = s._collect( lambda x: isinstance( x, Signal ) )
+    s._all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
     s._all_nets    = s._resolve_var_connections( s._all_signals )
 
     s.check()
@@ -585,7 +585,7 @@ class ComponentLevel3( ComponentLevel2 ):
       removed_components = obj.get_all_components()
       top._all_components -= removed_components
 
-      removed_signals = obj._collect( lambda x: isinstance( x, Signal ) )
+      removed_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
       top._all_signals -= removed_signals
 
       for x in removed_components:
@@ -594,7 +594,7 @@ class ComponentLevel3( ComponentLevel2 ):
         for y in x._consts:
           del y._parent_obj
 
-      for x in obj._collect():
+      for x in obj._collect_all():
         del x._parent_obj
 
       # TODO somehow save the adjs for reconnection
@@ -648,7 +648,7 @@ class ComponentLevel3( ComponentLevel2 ):
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    added_signals = obj._collect( lambda x: isinstance( x, Signal ) )
+    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
     top._all_signals |= added_signals
 
     top._all_nets += top._resolve_var_connections( added_signals )

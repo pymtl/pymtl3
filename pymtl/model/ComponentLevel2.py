@@ -468,13 +468,13 @@ class ComponentLevel2( ComponentLevel1 ):
     NamedObject.elaborate( s )
     s._declare_vars()
 
-    s._all_components = s._collect( lambda x: isinstance( x, ComponentLevel2 ) )
+    s._all_components = s._collect_all( lambda x: isinstance( x, ComponentLevel2 ) )
     for c in s._all_components:
       c._elaborate_top = s
       c._elaborate_read_write_func()
       s._collect_vars( c )
 
-    s._all_signals = s._collect( lambda x: isinstance( x, Signal ) )
+    s._all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
 
     s.check()
 
@@ -564,7 +564,7 @@ class ComponentLevel2( ComponentLevel1 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_upblk_on_edge( s ):
+  def get_all_update_on_edge( s ):
     try:
       assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
                                     "is only allowed at top, but this API call " \
@@ -572,6 +572,10 @@ class ComponentLevel2( ComponentLevel1 ):
       return s._all_update_on_edge
     except AttributeError:
       raise NotElaboratedError()
+
+  def get_update_on_edge( s ):
+    assert s._constructed
+    return s._update_on_edge
 
   def get_all_upblk_metadata( s ):
     try:
@@ -599,7 +603,52 @@ class ComponentLevel2( ComponentLevel1 ):
     try:
       return set( [ x for x in s._all_components | s._all_signals if filt(x) ] )
     except AttributeError:
-      return s._collect( filt )
+      return s._collect_all( filt )
+
+  def get_input_value_ports( s ):
+    assert s._constructed
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+      if   isinstance( u, InVPort ):
+        ret.add( u )
+      elif isinstance( u, Interface ):
+        stack.add( u )
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
+
+  def get_output_value_ports( s ):
+    assert s._constructed
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+      if   isinstance( u, OutVPort ):
+        ret.add( u )
+      elif isinstance( u, Interface ):
+        stack.add( u )
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
+
+  def get_wires( s ):
+    assert s._constructed
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+      if   isinstance( u, Wire ):
+        ret.add( u )
+      elif isinstance( u, Interface ):
+        stack.add( u )
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
 
   # Override
   def delete_component_by_name( s, name ):
@@ -620,10 +669,10 @@ class ComponentLevel2( ComponentLevel1 ):
         assert x._elaborate_top is top
         top._uncollect_vars( x )
 
-      for x in obj._collect():
+      for x in obj._collect_all():
         del x._parent_obj
 
-      top._all_signals -= obj._collect( lambda x: isinstance( x, Signal ) )
+      top._all_signals -= obj._collect_all( lambda x: isinstance( x, Signal ) )
 
       delattr( s, name )
 
@@ -648,5 +697,5 @@ class ComponentLevel2( ComponentLevel1 ):
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
-    added_signals = obj._collect( lambda x: isinstance( x, Signal ) )
+    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
     top._all_signals |= added_signals
