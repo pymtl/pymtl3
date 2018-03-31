@@ -28,7 +28,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
       else: # normal
         assert isinstance( o1, Connectable ) and isinstance( o2, Connectable )
-        assert o1.Type == o2.Type
+        try:
+          assert o1.Type == o2.Type
+        except AttributeError:
+          pass
         o1._connect( o2 )
 
     except AssertionError as e:
