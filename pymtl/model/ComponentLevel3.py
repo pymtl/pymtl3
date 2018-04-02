@@ -26,13 +26,11 @@ class ComponentLevel3( ComponentLevel2 ):
   # Override
   def _declare_vars( s ):
     super( ComponentLevel3, s )._declare_vars()
-
     s._all_adjacency = defaultdict(set)
 
   # Override
   def _collect_vars( s, m ):
     super( ComponentLevel3, s )._collect_vars( m )
-
     if isinstance( m, ComponentLevel3 ):
       for k in m._adjacency:
         s._all_adjacency[k] |= m._adjacency[k]
@@ -47,7 +45,6 @@ class ComponentLevel3( ComponentLevel2 ):
     tagging, so this is valid. (see NamedObject.py). """
 
     if not s._constructed:
-
       kwargs = s._kwargs.copy()
       if "elaborate" in s._param_dict:
         kwargs.update( { x: y for x, y in s._param_dict[ "elaborate" ].iteritems()
@@ -81,8 +78,11 @@ class ComponentLevel3( ComponentLevel2 ):
 
       o2._parent_obj = host
       host._consts.add( o2 )
+    try:
+      assert o1.Type == o2.Type, "Type mismatch {} != {}".format( o1.Type, o2.Type )
+    except AttributeError:
+      pass
 
-    assert o1.Type == o2.Type, "Type mismatch {} != {}".format( o1.Type, o2.Type )
     o1._connect( o2, adjacency_dict )
 
   def _continue_call_connect( s ):
@@ -96,7 +96,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
       # Process saved __call__ kwargs
       for (kw, target) in s._call_kwargs.iteritems():
-
         try:
           obj = getattr( s, kw )
         except AttributeError:
@@ -115,7 +114,6 @@ class ComponentLevel3( ComponentLevel2 ):
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
             s._connect_objects( obj, item, s._adjacency )
-
         # Target is a single object
         else:
           s._connect_objects( obj, target, s._adjacency )
@@ -145,7 +143,6 @@ class ComponentLevel3( ComponentLevel2 ):
               Q.append( v )
             elif v is not pred[u]:
               raise InvalidConnectionError(repr(v)+" is in a connection loop.")
-
         assert len(net) > 1, "what the hell?"
         nets.append( net )
     return nets
@@ -291,7 +288,7 @@ class ComponentLevel3( ComponentLevel2 ):
     return headed + [ (None, x) for x in headless ]
 
   def _check_port_in_nets( s ):
-    nets = s._all_nets
+    nets = s.get_all_nets()
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is
@@ -414,7 +411,9 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def _disconnect_signal_int( s, o1, o2 ):
 
-    for i, net in enumerate( s._all_nets ):
+    nets = s.get_all_nets()
+
+    for i, net in enumerate( nets ):
       writer, signals = net
 
       if o1 in signals: # Find the net that contains o1
@@ -432,46 +431,48 @@ class ComponentLevel3( ComponentLevel2 ):
 
         # Disconnect a const from a signal just removes the writer in the net
         signals.remove( writer )
-        s._all_nets[i] = ( None, signals )
+        nets[i] = ( None, signals )
         return
 
   def _disconnect_signal_signal( s, o1, o2 ):
+
+    nets = s.get_all_nets()
 
     assert o1 in s._all_adjacency[o2] and o2 in s._all_adjacency[o1]
     # I don't remove it from m._adjacency since they are not used later
     s._all_adjacency[o2].remove( o1 )
     s._all_adjacency[o1].remove( o2 )
 
-    for i, net in enumerate( s._all_nets ):
+    for i, net in enumerate( nets ):
       writer, signals = net
 
       if o1 in signals: # Find the net that contains o1
-        assert o2 in signals
+        assert o2 in signals, signals
 
         broken_nets = s._floodfill_nets( signals, s._all_adjacency )
 
         # disconnect the only two vertices in the net
         if len(broken_nets) == 0:
-          s._all_nets[i] = s._all_nets.pop() # squeeze in the last net
+          nets[i] = nets.pop() # squeeze in the last net
 
         # the removed edge results in an isolated vertex and a connected component
         elif len(broken_nets) == 1:
           net0 = broken_nets[0]
           if writer in net0:
-            s._all_nets[i] = ( writer, net0 )
+            nets[i] = ( writer, net0 )
           else:
             assert writer is o1 or writer is o2
-            s._all_nets[i] = ( None, net0 )
+            nets[i] = ( None, net0 )
 
         elif len(broken_nets) == 2:
           net0, net1 = broken_nets[0], broken_nets[1]
           if writer in net0:
-            s._all_nets[i] = ( writer, net0 ) # replace in-place
-            s._all_nets.append( (None, net1) )
+            nets[i] = ( writer, net0 ) # replace in-place
+            nets.append( (None, net1) )
           else:
             assert writer in net1
-            s._all_nets[i] = ( None, net0 ) # replace in-place
-            s._all_nets.append( (writer, net1) )
+            nets[i] = ( None, net0 ) # replace in-place
+            nets.append( (writer, net1) )
 
         else:
           assert False, "what the hell?"
@@ -547,6 +548,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
     s._all_nets    = s._resolve_var_connections( s._all_signals )
+    s._has_pending_connections = False
 
     s.check()
 
@@ -565,9 +567,14 @@ class ComponentLevel3( ComponentLevel2 ):
       assert s._elaborate_top is s, "Getting all nets " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
-      return s._all_nets
     except AttributeError:
       raise NotElaboratedError()
+
+    if s._has_pending_connections:
+      s._all_nets = s._resolve_var_connections( s._all_signals )
+      s._has_pending_connections = False
+
+    return s._all_nets
 
   # Override
   def delete_component_by_name( s, name ):
@@ -579,6 +586,9 @@ class ComponentLevel3( ComponentLevel2 ):
       obj = getattr( parent, name )
       top = s._elaborate_top
       import timeit
+
+      # First make sure we flush pending connections
+      nets = top.get_all_nets()
 
       # Remove all components and uncollect metadata
 
@@ -607,12 +617,11 @@ class ComponentLevel3( ComponentLevel2 ):
 
         del top._all_adjacency[x]
 
-      # top._all_nets = top._resolve_var_connections( top._all_signals )
-
       # The following implementation of breaking nets is faster than a
       # full connection resolution.
+
       new_nets = []
-      for writer, signals in top._all_nets:
+      for writer, signals in nets:
         broken_nets = s._floodfill_nets( signals, top._all_adjacency )
 
         for net_signals in broken_nets:
@@ -651,7 +660,11 @@ class ComponentLevel3( ComponentLevel2 ):
     added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
     top._all_signals |= added_signals
 
-    top._all_nets += top._resolve_var_connections( added_signals )
+    # Lazy -- to avoid resolve_connection call which takes non-trivial
+    # time upon adding any connect, I just mark it here. Please make sure
+    # to call s.get_all_nets() to flush all pending connections whenever
+    # you want to get the nets
+    s._has_pending_connections = True
 
   def add_connection( s, o1, o2 ):
     # TODO support string arguments and non-top s
@@ -668,8 +681,7 @@ class ComponentLevel3( ComponentLevel2 ):
     for x, adjs in added_adjacency.iteritems():
       s._all_adjacency[x].update( adjs )
 
-    # This works, but might be too slow
-    s._all_nets = s._resolve_var_connections( s._all_signals )
+    s._has_pending_connections = True # Lazy
 
   def add_connections( s, *args ):
     # TODO support string arguments and non-top s
@@ -692,8 +704,7 @@ class ComponentLevel3( ComponentLevel2 ):
     for x, adjs in added_adjacency.iteritems():
       s._all_adjacency[x].update( adjs )
 
-    # This works, but might be slow
-    s._all_nets = s._resolve_var_connections( s._all_signals )
+    s._has_pending_connections = True # Lazy
 
   def disconnect( s, o1, o2 ):
     # TODO support string arguments and non-top s
