@@ -7,6 +7,31 @@ from collections import defaultdict, deque
 from errors import TranslationError
 import ast
 
+vmodule_template = """
+module {module_name}
+(
+  // Input declarations
+  {input_decls}
+
+  // Output declarations
+  {output_decls}
+);
+
+  // Local wire declarations
+  {wire_decls}
+
+  // Submodule declarations
+  {children_decls}
+
+  // Assignments due to net connection and submodule interfaces
+
+  // Logic blocks
+  {blk_srcs}
+
+endmodule
+"""
+
+# TODO Now just assume signals written in update_on_edge are registers
 class VerilogTranslationPass( BasePass ):
 
   def __call__( self, top ):
@@ -29,42 +54,102 @@ class VerilogTranslationPass( BasePass ):
 
     # Build a "trie"
 
+    ret = ""
+
     with open( temp_file, 'w+' ) as fd:
-      for obj in sorted( top.get_all_components() ):
-        self.translate_component( obj )
+      # for obj in sorted( top.get_all_object_filter(lambda x: isinstance( x, Interface ) ) ):
+        # ret += self.translate_component( obj )
+
+      # net_connections( top.get_all_nets() )
+
+      for obj in sorted( top.get_all_components(), key=repr ):
+        ret += self.translate_component( obj )
+    print ret
+
 
   def translate_component( self, m ):
     """ translate_component translates a component to verilog source """
 
-    # Classify objects
+    module_name = m.__class__.__name__
 
-    children = m.get_child_components()
+    #---------------------------------------------------------------------
+    # Input declarations
+    #---------------------------------------------------------------------
+
     inputs   = m.get_input_value_ports()
+    ifc_decls = "// Input declarations\n"
+
+    input_strs  = []
+    for x in sorted(inputs, key=repr):
+      try:
+        nbits     = x.Type.nbits
+        width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
+
+        input_strs.append("input logic{} {}".format( width_str, x.get_field_name() ) )
+
+      except AttributeError: # it is not a Bits type
+        assert False, "TODO Implement data struct translation"
+
+    #---------------------------------------------------------------------
+    # Output declarations
+    #---------------------------------------------------------------------
+
     outputs  = m.get_output_value_ports()
+
+    output_strs = []
+    for x in sorted(outputs, key=repr):
+      try:
+        nbits     = x.Type.nbits
+        width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
+
+        output_strs.append("output logic{} {}".format( width_str, x.get_field_name() ) )
+
+      except AttributeError: # it is not a Bits type
+        assert False, "TODO Implement data struct translation"
+
+    input_decls = ",\n  ".join( input_strs )
+    if output_strs:
+      input_decls += "," # the last comma
+
+    output_decls = ",\n  ".join( output_strs )
+
+    children_decls = ""
+
+    #---------------------------------------------------------------------
+    # Local wire declarations
+    #---------------------------------------------------------------------
+
+    wire_decls = ""
     wires    = m.get_wires()
 
-    print inputs, outputs, wires
+    #---------------------------------------------------------------------
+    # Instantiate child components
+    #---------------------------------------------------------------------
 
-    # TODO
-    # Now just assume signals written in update_on_edge are registers
+    children = m.get_child_components()
 
-    for x in m.get_update_on_edge():
-      print x
-      
-
-    # reg_id = self.check_register( m )
-
-    # Collect local parameters
+    #---------------------------------------------------------------------
+    # Update blocks
+    #---------------------------------------------------------------------
 
     blk_src = []
 
     translator = FuncUpblkTranslator( m )
 
     for (blk, ast) in m.get_update_block_ast_pairs():
-      blk_src.append( translator.enter( blk, ast ) )
+      x = translator.enter( blk, ast )
+      blk_src.append( x )
 
     # for name, func in m._name_func.iteritems():
       # func_src.append( translate_func( func ) )
+
+    blk_srcs = "\n".join( blk_src )
+
+    return vmodule_template.format( **vars() )
+
+#-------------------------------------------------------------------------
+# Visitor for update block translation
+#-------------------------------------------------------------------------
 
 class FuncUpblkTranslator( ast.NodeVisitor ):
   def __init__( self, component ):
@@ -82,7 +167,6 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
       except ValueError: pass
 
     ret = self.visit( ast )
-    print ret
     return ret
 
   def newline( self, string ):
@@ -250,31 +334,37 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
         raise TranslationError( self.blk, node, node.func.id )
 
     try:
-      # This is for BitsX
       nb = call.nbits
-      assert len( node.args ) == 1
-      arg = node.args[0]
-
-      if arg in self.mapping: # it is a signal
-        obj_nb = self.mapping[ arg ][0].Type.nbits
-
-        if obj_nb < nb:
-          return "{{{}'d0, {}}}".format( nb-obj_nb, self.visit(arg) )
-        elif obj_nb == nb:
-          return self.visit(arg)
-        else:
-          raise TranslationError( self.blk, node,  )
-
-      else: # TODO check case "a = Bits32( SEL_A )" where SEL_A is 0
-        if isinstance( arg, ast.Num ):
-          return "{}'d{}".format( nb, self.visit( arg ) )
-
-    except AttributeError:
+    except AttributeError as e:
       # This is an actual function call.
-      # TODO max, min, 
+      # TODO max, min,
       return "{}( {} )".format( call.__name__,
                                 ", ".join( [ self.visit( arg )
                                               for arg in node.args ] ) )
+
+    # This is for BitsX
+    assert len( node.args ) == 1
+    arg = node.args[0]
+
+    if arg in self.mapping:
+      try:
+        obj_nb = self.mapping[ arg ][0].Type.nbits
+      except AttributeError:
+        # This is not a signal. Use the value instead.
+        return "{}'d{}".format( nb, self.mapping[ arg ][0] )
+
+      if obj_nb < nb:
+        return "{{{}'d0, {}}}".format( nb-obj_nb, self.visit(arg) )
+      elif obj_nb == nb:
+        return self.visit(arg)
+      else:
+        raise TranslationError( self.blk, node,  )
+
+    else: # TODO check case "a = Bits32( SEL_A )" where SEL_A is 0
+      if   isinstance( arg, ast.Num ):
+        return "{}'d{}".format( nb, self.visit( arg ) )
+      elif isinstance( arg, ast.Name ):
+        return "{}'d{}".format( nb, self.visit( arg ) )
 
   def visit_Attribute( self, node ):
     pred     = node.value
@@ -296,9 +386,15 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
     pred = node.value
     return "{}[{}]".format( self.visit( pred ), self.visit( node.slice ) )
 
-  # temporary variable?
+  # temporary variable or other constants
   def visit_Name( self, node ):
-    return node.id
+    if   node.id in self.globals:
+      return self.globals[ node.id ]
+    elif node.id in self.closure:
+      return self.closure[ node.id ]
+    else:
+      # This is a temporary variable
+      assert False
 
   def visit_Num( self, node ):
     return node.n

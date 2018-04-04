@@ -15,3 +15,4 @@ pymtl.egg-info
 */.DS_Store
 .cache/
 *.sw*
+*.tmp

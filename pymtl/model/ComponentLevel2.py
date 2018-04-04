@@ -608,13 +608,15 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_input_value_ports( s ):
     assert s._constructed
     ret = set()
-    stack = [s]
+    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
+                  if isinstance( name, basestring ) # python2 specific
+                  if not name.startswith("_") ] # filter private variables
     while stack:
       u = stack.pop()
       if   isinstance( u, InVPort ):
         ret.add( u )
       elif isinstance( u, Interface ):
-        stack.add( u )
+        stack.append( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
@@ -623,13 +625,15 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_output_value_ports( s ):
     assert s._constructed
     ret = set()
-    stack = [s]
+    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
+                  if isinstance( name, basestring ) # python2 specific
+                  if not name.startswith("_") ] # filter private variables
     while stack:
       u = stack.pop()
       if   isinstance( u, OutVPort ):
         ret.add( u )
       elif isinstance( u, Interface ):
-        stack.add( u )
+        stack.append( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
@@ -638,7 +642,9 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_wires( s ):
     assert s._constructed
     ret = set()
-    stack = [s]
+    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
+                  if isinstance( name, basestring ) # python2 specific
+                  if not name.startswith("_") ] # filter private variables
     while stack:
       u = stack.pop()
       if   isinstance( u, Wire ):

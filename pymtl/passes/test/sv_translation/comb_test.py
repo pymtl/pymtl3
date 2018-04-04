@@ -7,15 +7,29 @@ def test_adder():
   m.elaborate()
   VerilogTranslationPass()( m )
 
-def test_mux():
-  m = Mux( Bits32, 3 )
+def test_wrapped_adder():
+
+  class Adder_wrap( RTLComponent ):
+
+    def construct( s ):
+      s.in_  = InVPort( Bits32 )
+      s.out  = OutVPort( Bits32 )
+
+      s.adder = Adder( Bits32 )( in0 = s.in_, in1 = s.in_, out = s.out )
+
+  m = Adder_wrap()
   m.elaborate()
   VerilogTranslationPass()( m )
 
-def test_bypass_queue():
-  m = BypassQueue1RTL( Bits32 )
-  m.elaborate()
-  VerilogTranslationPass()( m )
+# def test_mux():
+  # m = Mux( Bits32, 3 )
+  # m.elaborate()
+  # VerilogTranslationPass()( m )
+
+# def test_bypass_queue():
+  # m = BypassQueue1RTL( Bits32 )
+  # m.elaborate()
+  # VerilogTranslationPass()( m )
 
 def test_multiple_if():
 
@@ -150,12 +164,13 @@ def test_bits_value_closure():
       s.Tout = mk_bits( 1<<nbits )
       s.out  = OutVPort( s.Tout )
 
+      s.one = 1
       eight = 8
 
       @s.update
       def up_if():
         if   s.in_ == Bits123( 0 ):
-          s.out = s.Tout( 1 ) | s.Tout( 1 )
+          s.out = s.Tout( s.one ) | s.Tout( s.one )
           s.out = s.Tout( eight )
         else:
           s.out = s.Tout( 0 )
