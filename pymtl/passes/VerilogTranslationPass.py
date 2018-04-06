@@ -56,16 +56,21 @@ class VerilogTranslationPass( BasePass ):
 
     ret = ""
 
+    # We translate the module in the deepest hierarchy first
+    all_components = sorted( top.get_all_components(), key=repr )
+    all_components.reverse()
+
     with open( temp_file, 'w+' ) as fd:
       # for obj in sorted( top.get_all_object_filter(lambda x: isinstance( x, Interface ) ) ):
         # ret += self.translate_component( obj )
 
+      # print top.get_all_nets()
       # net_connections( top.get_all_nets() )
 
-      for obj in sorted( top.get_all_components(), key=repr ):
+      for obj in all_components:
         ret += self.translate_component( obj )
-    print ret
 
+    print ret
 
   def translate_component( self, m ):
     """ translate_component translates a component to verilog source """
@@ -77,7 +82,6 @@ class VerilogTranslationPass( BasePass ):
     #---------------------------------------------------------------------
 
     inputs   = m.get_input_value_ports()
-    ifc_decls = "// Input declarations\n"
 
     input_strs  = []
     for x in sorted(inputs, key=repr):
@@ -113,20 +117,80 @@ class VerilogTranslationPass( BasePass ):
 
     output_decls = ",\n  ".join( output_strs )
 
-    children_decls = ""
-
     #---------------------------------------------------------------------
     # Local wire declarations
     #---------------------------------------------------------------------
 
     wire_decls = ""
-    wires    = m.get_wires()
+    wires      = m.get_wires()
 
     #---------------------------------------------------------------------
     # Instantiate child components
     #---------------------------------------------------------------------
 
-    children = m.get_child_components()
+    children_strs = []
+    
+    # The information of all child ports that are read/written in this
+    # module's update blocks is critical here
+
+    upblk_reads, upblk_writes, _ = m.get_upblk_metadata()
+
+    for child in m.get_child_components():
+      child_name = child.get_field_name()
+
+      child_signals = set()
+      # Create temporary signals for child's ports that are read/written
+      # in this module's update blocks
+
+      for blk, reads in upblk_reads.iteritems():
+        for x in reads:
+          if x.get_host_component() is child:
+            child_signals.add( x.get_top_level_signal() )
+
+      for blk, writes in upblk_writes.iteritems():
+        for x in writes:
+          if x.get_host_component() is child:
+            child_signals.add( x.get_top_level_signal() )
+
+      child_inports  = sorted( [ x for x in child_signals if x.is_input_value_port() ], key=repr )
+      child_outports = sorted( [ x for x in child_signals if x.is_output_value_port() ], key=repr )
+
+      assert child_inports is not None or child_outports is not None
+
+      # Declare all the temporary signals
+
+      for ports in [ child_inports, child_outports ]:
+        for x in ports:
+          nbits     = x.Type.nbits
+          width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
+          children_strs.append("logic{} {}${};".format( width_str, child_name, x.get_field_name() ) )
+
+      children_strs.append( "" )
+
+      # Instantiate the child
+
+      children_strs.append( child.__class__.__name__ + " " + child_name ) # FIXME
+      children_strs.append( "(" )
+
+      # Pass the signals to child's input/output
+
+      children_strs.append( "  // Child's inputs" )
+      for x in child_inports:
+        children_strs.append("  .{0:6}( {1}${0} ),".format( x.get_field_name(), child_name ) )
+
+      children_strs.append( "  // Child's outputs" )
+      for x in child_outports:
+        children_strs.append("  .{0:6}( {1}${0} ),".format( x.get_field_name(), child_name ) )
+
+      # Remove the last comma
+      children_strs[-1].rstrip(",")
+
+      children_strs.append( ");" )
+
+      # children_decls += 
+      
+
+    children_decls = "\n  ".join( children_strs )
 
     #---------------------------------------------------------------------
     # Update blocks
@@ -232,17 +296,17 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
 
   # TODO remove outmost parentheses
   def visit_Assign( self, node ): # a = ...
-    if len(node.targets) != 1 or isinstance(node.targets[0], (ast.Tuple)):
-      raise TranslationError( self.blk, node,
-        'Assignments can only have one item on the left-hand side!\n'
-        'Please modify "x,y = ..." to be two separate lines.',
-      )
+    # if len(node.targets) != 1 or isinstance(node.targets[0], (ast.Tuple)):
+      # raise TranslationError( self.blk,
+        # 'Assignments can only have one item on the left-hand side!\n'
+        # 'Please modify "x,y = ..." to be two separate lines.',
+      # )
 
-    lhs    = self.visit( node.targets[0] )
     assign = '=' # if node._is_blocking else '<='
     rhs    = self.visit( node.value )
 
-    return self.newline( '{lhs} {assign} {rhs};'.format(**vars()) )
+    return "".join( [ self.newline( '{} {} {};'.format(self.visit(lhs), assign, rhs) )
+                      for lhs in node.targets ] )
 
   def visit_AugAssign( self, node ): # a += ...
 
@@ -402,7 +466,7 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
   # slices
 
   def visit_Slice( self, node ):
-    return set()
+    return "{} -1:{}".format( self.visit(node.upper), self.visit(node.lower) )
 
   def visit_Index( self, node ):
     return self.visit( node.value )

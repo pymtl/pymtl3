@@ -7,7 +7,52 @@ def test_adder():
   m.elaborate()
   VerilogTranslationPass()( m )
 
-def test_wrapped_adder():
+def test_wrapped_noconnect_adder():
+
+  class Adder_wrap( RTLComponent ):
+
+    def construct( s ):
+      s.in_  = InVPort( Bits32 )
+      s.out  = OutVPort( Bits32 )
+
+      s.adder = Adder( Bits32 )
+
+      @s.update
+      def up_in():
+        s.adder.in0 = s.adder.in1 = s.in_
+
+      @s.update
+      def up_out():
+        s.out = s.adder.out
+
+  m = Adder_wrap()
+  m.elaborate()
+  VerilogTranslationPass()( m )
+
+def test_wrapped_noconnect_slice_adder():
+
+  class Adder_wrap( RTLComponent ):
+
+    def construct( s ):
+      s.in_  = InVPort( Bits31 )
+      s.out  = OutVPort( Bits32 )
+
+      s.adder = Adder( Bits32 )
+
+      @s.update
+      def up_in():
+        s.adder.in0[0:31] = s.in_
+        s.adder.in1[0:31] = s.in_
+
+      @s.update
+      def up_out():
+        s.out = s.adder.out
+
+  m = Adder_wrap()
+  m.elaborate()
+  VerilogTranslationPass()( m )
+
+def test_wrapped_connect_adder():
 
   class Adder_wrap( RTLComponent ):
 

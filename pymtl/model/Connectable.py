@@ -5,7 +5,7 @@ from errors import InvalidConnectionError
 class Connectable(object):
 
   # I've given up maintaining adjacency list or disjoint set locally since
-  # we need to easily disconnect things 
+  # we need to easily disconnect things
 
   def _connect( s, other, adjacency_dict ):
     assert isinstance( other, Connectable ), "Unconnectable object!"
@@ -79,6 +79,7 @@ class Signal( NamedObject, Connectable ):
     s._slice  = None # None means it's not a slice of some wire
     s._attrs  = {}
     s._slices = {}
+    s._top_level_signal = None
 
   def inverse( s ):
     pass
@@ -89,7 +90,8 @@ class Signal( NamedObject, Connectable ):
 
     if name not in s.__dict__:
       x = s.__class__( getattr(s.Type, name) )
-      x._parent_obj      = s
+      x._parent_obj = s
+      x._top_level_signal = s.top_level_signal
 
       x._full_name = s._full_name + "." + name
       x._my_name   = name
@@ -114,6 +116,7 @@ class Signal( NamedObject, Connectable ):
     if sl_tuple not in s.__dict__:
       x = s.__class__( mk_bits( sl.stop - sl.start) )
       x._parent_obj = s
+      x._top_level_signal = s
 
       sl_str = "[{}:{}]".format( sl.start, sl.stop )
 
@@ -138,8 +141,20 @@ class Signal( NamedObject, Connectable ):
   def is_signal( s ):
     return True
 
+  def is_input_value_port( s ):
+    return False
+
+  def is_output_value_port( s ):
+    return False
+
+  def is_wire( s ):
+    return False
+
   def is_interface( s ):
     return False
+
+  def get_top_level_signal( s ):
+    return s if s._top_level_signal is None else s._top_level_signal
 
   def get_sibling_slices( s ):
     if s._slice:
@@ -158,13 +173,18 @@ class Wire( Signal ):
   def inverse( s ):
     return Wire( s.Type )
 
+
 class InVPort( Signal ):
   def inverse( s ):
     return OutVPort( s.Type )
+  def is_input_value_port( s ):
+    return True
 
 class OutVPort( Signal ):
   def inverse( s ):
     return InVPort( s.Type )
+  def is_output_value_port( s ):
+    return True
 
 class Interface( NamedObject, Connectable ):
 

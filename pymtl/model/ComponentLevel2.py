@@ -586,6 +586,10 @@ class ComponentLevel2( ComponentLevel1 ):
     except AttributeError:
       raise NotElaboratedError()
 
+  def get_upblk_metadata( s ):
+    assert s._constructed
+    return s._upblk_reads, s._upblk_writes, s._upblk_calls
+
   # Override
   def get_all_explicit_constraints( s ):
     try:
