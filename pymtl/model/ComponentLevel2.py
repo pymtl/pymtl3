@@ -619,8 +619,6 @@ class ComponentLevel2( ComponentLevel1 ):
       u = stack.pop()
       if   isinstance( u, InVPort ):
         ret.add( u )
-      elif isinstance( u, Interface ):
-        stack.append( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
@@ -637,8 +635,6 @@ class ComponentLevel2( ComponentLevel1 ):
       u = stack.pop()
       if   isinstance( u, OutVPort ):
         ret.add( u )
-      elif isinstance( u, Interface ):
-        stack.append( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
@@ -654,8 +650,6 @@ class ComponentLevel2( ComponentLevel1 ):
       u = stack.pop()
       if   isinstance( u, Wire ):
         ret.add( u )
-      elif isinstance( u, Interface ):
-        stack.add( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )

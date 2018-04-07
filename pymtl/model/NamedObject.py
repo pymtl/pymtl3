@@ -79,9 +79,9 @@ class NamedObject(object):
             s_name = s._full_name
             u._full_name = ( s_name + "." + u_name )
             u._construct()
-          except AttributeError:
-            raise AttributeError("In {}:\n   Please put all logic in construct " \
-                                 "instead of __init__.".format( s.__class__) )
+          except AttributeError as e:
+            raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
+                                 "instead of __init__.)".format( s.__class__ ) )
 
         # ONLY LIST IS SUPPORTED, SORRY.
         # I don't want to support any iterable object because later "Wire"
