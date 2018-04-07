@@ -24,6 +24,7 @@ module {module_name}
   {children_decls}
 
   // Assignments due to net connection and submodule interfaces
+  {assignments}
 
   // Logic blocks
   {blk_srcs}
@@ -50,70 +51,92 @@ class VerilogTranslationPass( BasePass ):
     # obj_dir         = 'obj_dir_' + model_name
     # blackbox_file   = model_name + '_blackbox.v'
 
-    # Copy metadata from the top level to self
-
-    # Build a "trie"
-
-    ret = ""
-
     # We translate the module in the deepest hierarchy first
+
     all_components = sorted( top.get_all_components(), key=repr )
     all_components.reverse()
 
+    # Distribute net connections into components' assignments
+
+    nets = top.get_all_nets()
+    adjs = top.get_signal_adjacency_dict()
+
+    connections_self_child  = defaultdict(set)
+    connections_self_self   = defaultdict(set)
+    connections_child_child = defaultdict(set)
+
+    for writer, net in nets:
+      S = deque( [ writer ] )
+      visited = set( [ writer ] )
+      while S:
+        u = S.pop() # u is the current writer
+        writer_host        = u.get_host_component()
+        writer_host_parent = writer_host.get_parent_object()
+
+        for v in adjs[u]: # v is the reader
+          if v not in visited:
+            visited.add( v )
+            S.append( v )
+            reader_host        = v.get_host_component()
+            reader_host_parent = reader_host.get_parent_object()
+
+            # 1. have the same host: writer_host(x)/reader_host(x)
+            if   writer_host is reader_host:
+              connections_self_self[ writer_host ].add( (u, v) )
+
+            # 2. reader_host(x) is writer_host(x.y)'s parent
+            elif writer_host_parent is reader_host:
+              connections_self_child[ reader_host ].add( (u, v) )
+
+            # 3. writer_host(x) is reader_host(x.y)'s parent
+            elif writer_host is reader_host_parent:
+              connections_self_child[ writer_host ].add( (u, v) )
+
+            # 4. hosts have the same parent: writer_host(x.y)/reader_host(x.z)
+            # This means that the connection is fulfilled in x
+            elif writer_host_parent == reader_host_parent:
+              connections_child_child[ writer_host_parent ].add( (u, v) )
+
+            # 5. neither host is the other's parent nor the same.
+            else: assert False
+
+    ret = ""
     with open( temp_file, 'w+' ) as fd:
-      # for obj in sorted( top.get_all_object_filter(lambda x: isinstance( x, Interface ) ) ):
-        # ret += self.translate_component( obj )
-
-      # print top.get_all_nets()
-      # net_connections( top.get_all_nets() )
-
       for obj in all_components:
-        ret += self.translate_component( obj )
-
+        ret += self.translate_component( obj, connections_self_self[ obj ],
+                                              connections_self_child[ obj ],
+                                              connections_child_child[ obj ] )
     print ret
 
-  def translate_component( self, m ):
+  def translate_component( self, m, connections_self_self,
+                                    connections_self_child,
+                                    connections_child_child ):
     """ translate_component translates a component to verilog source """
 
-    module_name = m.__class__.__name__
+    module_name = m.__class__.__name__ # FIXME
 
     #---------------------------------------------------------------------
-    # Input declarations
+    # Input/output declarations
     #---------------------------------------------------------------------
 
-    inputs   = m.get_input_value_ports()
-
-    input_strs  = []
-    for x in sorted(inputs, key=repr):
+    # deduplicate code across inport/outport/wire
+    def gen_signal_width_name( x ):
       try:
         nbits     = x.Type.nbits
         width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
-
-        input_strs.append("input logic{} {}".format( width_str, x.get_field_name() ) )
-
+        return "{} {}".format( width_str, x.get_field_name() )
       except AttributeError: # it is not a Bits type
         assert False, "TODO Implement data struct translation"
 
-    #---------------------------------------------------------------------
-    # Output declarations
-    #---------------------------------------------------------------------
+    input_strs = [ "input logic{}".format( gen_signal_width_name(x) )
+                    for x in sorted( m.get_input_value_ports(), key=repr ) ]
 
-    outputs  = m.get_output_value_ports()
-
-    output_strs = []
-    for x in sorted(outputs, key=repr):
-      try:
-        nbits     = x.Type.nbits
-        width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
-
-        output_strs.append("output logic{} {}".format( width_str, x.get_field_name() ) )
-
-      except AttributeError: # it is not a Bits type
-        assert False, "TODO Implement data struct translation"
+    output_strs = [ "output logic{}".format( gen_signal_width_name(x) )
+                    for x in sorted( m.get_output_value_ports(), key=repr ) ]
 
     input_decls = ",\n  ".join( input_strs )
-    if output_strs:
-      input_decls += "," # the last comma
+    if output_strs: # add comma if it isn't the last declaration
+      input_decls += ","
 
     output_decls = ",\n  ".join( output_strs )
 
@@ -121,76 +144,93 @@ class VerilogTranslationPass( BasePass ):
     # Local wire declarations
     #---------------------------------------------------------------------
 
-    wire_decls = ""
-    wires      = m.get_wires()
+    # TODO don't declare wires that are not used
+
+    wire_strs  = [ "logic{};".format( gen_signal_width_name(x) )
+                    for x in sorted( m.get_wires(), key=repr ) ]
+    wire_decls = "\n  ".join( wire_strs )
 
     #---------------------------------------------------------------------
     # Instantiate child components
     #---------------------------------------------------------------------
 
     children_strs = []
-    
-    # The information of all child ports that are read/written in this
-    # module's update blocks is critical here
-
-    upblk_reads, upblk_writes, _ = m.get_upblk_metadata()
+    # TODO only declare children signals used in the current component?
 
     for child in m.get_child_components():
       child_name = child.get_field_name()
 
-      child_signals = set()
-      # Create temporary signals for child's ports that are read/written
-      # in this module's update blocks
+      # Turn child's input ports into temporary signal declaration and
+      # wiring in instantiation.
 
-      for blk, reads in upblk_reads.iteritems():
-        for x in reads:
-          if x.get_host_component() is child:
-            child_signals.add( x.get_top_level_signal() )
+      sig_decls  = []
+      in_wiring  = []
+      out_wiring = []
 
-      for blk, writes in upblk_writes.iteritems():
-        for x in writes:
-          if x.get_host_component() is child:
-            child_signals.add( x.get_top_level_signal() )
+      # TODO align all declarations
+      for port in sorted( child.get_input_value_ports(), key=repr ):
+        fname = port.get_field_name()
+        nbits = port.Type.nbits
+        width = "" if nbits == 1 else " [{}:0]".format(nbits-1)
+        sig_decls.append("logic{} {}${};".format( width, child_name, fname ) )
+        in_wiring.append("  .{0:6}( {1}${0} ),".format( fname, child_name ) )
 
-      child_inports  = sorted( [ x for x in child_signals if x.is_input_value_port() ], key=repr )
-      child_outports = sorted( [ x for x in child_signals if x.is_output_value_port() ], key=repr )
+      for port in sorted( child.get_output_value_ports(), key=repr ):
+        fname = port.get_field_name()
+        nbits = port.Type.nbits
+        width = "" if nbits == 1 else " [{}:0]".format(nbits-1)
+        sig_decls .append("logic{} {}${};".format( width, child_name, fname ) )
+        out_wiring.append("  .{0:6}( {1}${0} ),".format( fname, child_name ) )
 
-      assert child_inports is not None or child_outports is not None
+      # Instantiate the child module
 
-      # Declare all the temporary signals
-
-      for ports in [ child_inports, child_outports ]:
-        for x in ports:
-          nbits     = x.Type.nbits
-          width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
-          children_strs.append("logic{} {}${};".format( width_str, child_name, x.get_field_name() ) )
-
+      children_strs.extend( sig_decls )
       children_strs.append( "" )
-
-      # Instantiate the child
-
       children_strs.append( child.__class__.__name__ + " " + child_name ) # FIXME
       children_strs.append( "(" )
-
-      # Pass the signals to child's input/output
-
       children_strs.append( "  // Child's inputs" )
-      for x in child_inports:
-        children_strs.append("  .{0:6}( {1}${0} ),".format( x.get_field_name(), child_name ) )
-
+      children_strs.extend( in_wiring )
       children_strs.append( "  // Child's outputs" )
-      for x in child_outports:
-        children_strs.append("  .{0:6}( {1}${0} ),".format( x.get_field_name(), child_name ) )
-
-      # Remove the last comma
-      children_strs[-1].rstrip(",")
+      children_strs.extend( out_wiring )
+      children_strs[-2 if not out_wiring else -1].rstrip(",") # Remove the last comma
 
       children_strs.append( ");" )
 
-      # children_decls += 
-      
-
     children_decls = "\n  ".join( children_strs )
+
+    #---------------------------------------------------------------------
+    # Assignments
+    #---------------------------------------------------------------------
+
+    assign_strs = []
+
+    for writer, reader in connections_self_self:
+      assign_strs.append( "assign {} = {};".format( reader.get_field_name(),
+                                                    writer.get_field_name() )
+                        )
+
+    for writer, reader in connections_child_child:
+      assign_strs.append( "assign {}${} = {}${};".format(
+                          reader.get_host_component().get_field_name(),
+                          reader.get_field_name(),
+                          writer.get_host_component().get_field_name(),
+                          writer.get_field_name() )
+                        )
+
+    for writer, reader in connections_self_child:
+      if writer.get_host_component() is m:
+        assign_strs.append( "assign {}${} = {};".format(
+                            reader.get_host_component().get_field_name(),
+                            reader.get_field_name(),
+                            writer.get_field_name() )
+                          )
+      else:
+        assign_strs.append( "assign {} = {}${};".format(
+                            reader.get_field_name(),
+                            writer.get_host_component().get_field_name(),
+                            writer.get_field_name() ) )
+
+    assignments = "\n  ".join( assign_strs )
 
     #---------------------------------------------------------------------
     # Update blocks

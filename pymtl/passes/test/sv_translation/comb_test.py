@@ -1,5 +1,5 @@
 from pymtl import *
-from pclib.rtl import Adder, Mux, BypassQueue1RTL
+from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL
 from pymtl.passes.VerilogTranslationPass import VerilogTranslationPass
 
 def test_adder():
@@ -20,6 +20,34 @@ def test_wrapped_noconnect_adder():
       @s.update
       def up_in():
         s.adder.in0 = s.adder.in1 = s.in_
+
+      @s.update
+      def up_out():
+        s.out = s.adder.out
+
+  m = Adder_wrap()
+  m.elaborate()
+  VerilogTranslationPass()( m )
+
+def test_wrapped_noconnect_wire_adder():
+
+  class Adder_wrap( RTLComponent ):
+
+    def construct( s ):
+      s.in_  = InVPort( Bits32 )
+      s.out  = OutVPort( Bits32 )
+
+      s.wire = Wire( Bits32 )
+
+      s.adder = Adder( Bits32 )
+
+      @s.update
+      def up_in():
+        s.wire = s.in_
+
+      @s.update
+      def up_wire():
+        s.adder.in0 = s.adder.in1 = s.wire
 
       @s.update
       def up_out():
@@ -61,6 +89,47 @@ def test_wrapped_connect_adder():
       s.out  = OutVPort( Bits32 )
 
       s.adder = Adder( Bits32 )( in0 = s.in_, in1 = s.in_, out = s.out )
+
+  m = Adder_wrap()
+  m.elaborate()
+  VerilogTranslationPass()( m )
+
+def test_wrapped_connect_wire_adder():
+
+  class Adder_wrap( RTLComponent ):
+
+    def construct( s ):
+      s.in_  = InVPort( Bits32 )
+      s.out  = OutVPort( Bits32 )
+
+      s.wire = Wire( Bits32 )
+
+      s.adder = Adder( Bits32 )( in0 = s.in_, in1 = s.in_, out = s.wire )
+
+      s.connect( s.wire, s.out )
+
+  m = Adder_wrap()
+  m.elaborate()
+  VerilogTranslationPass()( m )
+
+def test_wrapped_connect_two_child_modules_wire():
+
+  class Adder_wrap( RTLComponent ):
+
+    def construct( s ):
+      s.in0  = InVPort( Bits32 )
+      s.in1  = InVPort( Bits32 )
+      s.in2  = InVPort( Bits32 )
+      s.out  = OutVPort( Bits32 )
+
+      s.tmp_in0 = Wire( Bits32 )
+      s.tmp_out = Wire( Bits32 )
+
+      s.connect( s.tmp_in0, s.in0 )
+      s.connect( s.tmp_out, s.out )
+
+      s.add = Adder( Bits32 )( in0 = s.tmp_in0, in1 = s.in1 )
+      s.sub = Subtractor( Bits32 )( in0 = s.add.out, in1 = s.in2, out = s.tmp_out )
 
   m = Adder_wrap()
   m.elaborate()
@@ -252,7 +321,7 @@ def test_bits_value_closure():
         # elif s.in_ == s.Tin( 2 ):
           # s.out = s.Tout( 4 ) < s.Tout( 3 )
           # s.out = s.Tout( 4 ) if s.in_ == s.Tin( 2 ) else s.Tout( 5 )
-  
+
         # elif s.in_ == s.Tin( 3 ):
           # s.out = s.Tout( 8 )
 

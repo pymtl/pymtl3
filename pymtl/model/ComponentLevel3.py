@@ -576,6 +576,15 @@ class ComponentLevel3( ComponentLevel2 ):
 
     return s._all_nets
 
+  def get_signal_adjacency_dict( s ):
+    try:
+      assert s._elaborate_top is s, "Getting adjacency dictionary " \
+                                    "is only allowed at top, but this API call " \
+                                    "is on {}.".format( "top."+repr(s)[2:] )
+    except AttributeError:
+      raise NotElaboratedError()
+    return s._all_adjacency
+
   # Override
   def delete_component_by_name( s, name ):
 

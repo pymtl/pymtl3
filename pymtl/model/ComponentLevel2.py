@@ -194,7 +194,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     # what object each astnode corresponds to. You can't have two update
     # blocks in one component that have the same ast.
-    s._astnode_objs = defaultdict(list) 
+    s._astnode_objs = defaultdict(list)
     s._func_reads  = {}
     s._func_writes = {}
     s._func_calls  = {}
@@ -624,6 +624,7 @@ class ComponentLevel2( ComponentLevel1 ):
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
+
     return ret
 
   def get_output_value_ports( s ):
