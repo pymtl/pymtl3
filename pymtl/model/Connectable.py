@@ -75,8 +75,14 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type ):
-    s.Type    = Type
-    s._slice  = None # None means it's not a slice of some wire
+    s.Type = Type
+    s._type_instance = None
+
+    try:  Type.nbits
+    except AttributeError: # not Bits type
+      s._type_instance = Type()
+
+    s._slice  = None # None -- not a slice of some wire by default
     s._attrs  = {}
     s._slices = {}
     s._top_level_signal = None
@@ -89,9 +95,18 @@ class Signal( NamedObject, Connectable ):
       return super( Signal, s ).__getattribute__( name )
 
     if name not in s.__dict__:
-      x = s.__class__( getattr(s.Type, name) )
+      _obj = getattr( s._type_instance, name )
+
+      # if the object is Bits, we need to generate a Bits type
+      try:
+        x = s.__class__( mk_bits( _obj.nbits ) )
+      except AttributeError:
+        x = s.__class__( _obj.__class__ )
+
+      x._type_instance = _obj
+
       x._parent_obj = s
-      x._top_level_signal = s.top_level_signal
+      x._top_level_signal = s._top_level_signal
 
       x._full_name = s._full_name + "." + name
       x._my_name   = name

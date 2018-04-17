@@ -78,10 +78,33 @@ class ComponentLevel3( ComponentLevel2 ):
 
       o2._parent_obj = host
       host._consts.add( o2 )
+
+    o1_type = None
+    o2_type = None
+
+    try:  o1_type = o1.Type
+    except AttributeError:  pass
+    try:  o2_type = o2.Type
+    except AttributeError:  pass
+
+    if o1_type is None:
+      if o2_type is None:
+        o1._connect( o2, adjacency_dict )
+        return
+      else: # o2_type is not None
+        raise TypeError( "lhs has no Type, but rhs has Type {}".format( o2_type ) )
+    else: # o1_type is not None
+      if o2_type is None:
+        raise TypeError( "lhs has Type {}, but rhs has no Type".format( o1_type ) )
+
+    # Here o1/o2 both have Type
+
     try:
-      assert o1.Type == o2.Type, "Type mismatch {} != {}".format( o1.Type, o2.Type )
-    except AttributeError:
-      pass
+      o1_nbits = o1_type.nbits
+      o2_nbits = o2_type.nbits
+      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {}".format( o1_nbits, o2_nbits )
+    except AttributeError: # at least one of them is not Bits
+      assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
 
     o1._connect( o2, adjacency_dict )
 

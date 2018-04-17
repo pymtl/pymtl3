@@ -132,23 +132,17 @@ def test_variable_not_declared():
 
   class SomeMsg( object ):
 
-    def construct( s ):
-      s.a = int
-      s.b = Bits32
-
-    def __call__( s, a = 0, b = Bits1() ):
-      x = s.__class__()
-      x.a = x.a(a)
-      x.b = x.b(b)
-      return x
+    def __init__( s, a=0, b=0 ):
+      s.a = int( a )
+      s.b = Bits32( b )
 
     def __eq__( s, other ):
       return s.a == other.a and s.b == other.b
 
   class A(ComponentLevel2):
     def construct( s ):
-      s.a = Wire(SomeMsg())
-      s.b = Wire(int)
+      s.a = Wire( SomeMsg )
+      s.b = Wire( int )
 
       @s.update
       def upA():

@@ -5,15 +5,9 @@ from sim_utils import simple_sim_pass
 
 class SomeMsg( object ):
 
-  def __init__( s ):
-    s.a = int
-    s.b = Bits32
-
-  def __call__( s, a = 0, b = Bits1() ):
-    x = s.__class__()
-    x.a = x.a(a)
-    x.b = x.b(b)
-    return x
+  def __init__( s, a=0, b=0 ):
+    s.a = int(a)
+    s.b = Bits32(b)
 
   def __eq__( s, other ):
     return s.a == other.a and s.b == other.b
@@ -79,11 +73,11 @@ def test_rd_A_b_wr_A_impl():
 
   class Top( ComponentLevel3 ):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg()( 12, 123 )
+        s.A = SomeMsg( 12, 123 )
 
       @s.update
       def up_rd_A_b():
@@ -96,7 +90,7 @@ def test_wr_A_b_wr_A_conflict():
 
   class Top( ComponentLevel3 ):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A_b():
@@ -104,7 +98,7 @@ def test_wr_A_b_wr_A_conflict():
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg()( 12, 123 )
+        s.A = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -118,7 +112,7 @@ def test_wr_A_b_rd_A_impl():
 
   class Top( ComponentLevel3 ):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A_b():
@@ -135,7 +129,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
   class Top( ComponentLevel3 ):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A_b():
@@ -156,11 +150,11 @@ def test_wr_A_rd_fields_can_schedule():
 
   class Top( ComponentLevel3 ):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg()( 12, 123 )
+        s.A = SomeMsg( 12, 123 )
 
       @s.update
       def up_rd_A_a():
@@ -177,7 +171,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
   class Top( ComponentLevel3 ):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A_b():
@@ -207,14 +201,14 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
   class Top( ComponentLevel3 ):
     def construct( s ):
 
-      s.x  = Wire( SomeMsg() )
-      s.A  = Wire( SomeMsg() )
+      s.x  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg )
 
       s.connect( s.x, s.A )
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg()( 12, 123 )
+        s.x = SomeMsg( 12, 123 )
 
       @s.update
       def up_rd_A_b():
@@ -228,8 +222,8 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
   class Top( ComponentLevel3 ):
     def construct( s ):
 
-      s.x  = Wire( SomeMsg() )
-      s.A  = Wire( SomeMsg() )
+      s.x  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg )
 
       s.connect( s.x, s.A )
 
@@ -246,8 +240,8 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
   # class Top( ComponentLevel3 ):
     # def construct( s ):
 
-      # s.x  = Wire( SomeMsg() )
-      # s.A  = Wire( SomeMsg() )
+      # s.x  = Wire( SomeMsg )
+      # s.A  = Wire( SomeMsg )
 
       # s.x |= s.A
 
@@ -267,8 +261,8 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
   class Top( ComponentLevel3 ):
     def construct( s ):
 
-      s.x  = Wire( SomeMsg() )
-      s.A  = Wire( SomeMsg() )
+      s.x  = Wire( SomeMsg )
+      s.A  = Wire( SomeMsg )
 
       s.connect( s.x, s.A )
 
@@ -278,7 +272,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
       @s.update
       def up_wr_x():
-        s.x = SomeMsg()( 12, 123 )
+        s.x = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -294,7 +288,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
     def construct( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       s.connect( s.A.b, s.x )
 
@@ -315,7 +309,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
     def construct( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       s.connect( s.A.b, s.x )
 
@@ -325,7 +319,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg()( 12, 123 )
+        s.A = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -341,13 +335,13 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
     def construct( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       s.connect( s.A.b, s.x )
 
       @s.update
       def up_wr_A():
-        s.A = SomeMsg()( 12, 123 )
+        s.A = SomeMsg( 12, 123 )
 
       @s.update
       def up_rd_x():
@@ -362,8 +356,8 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
     def construct( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg() )
-      s.y  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
 
       s.connect( s.A.b, s.x )
       s.connect( s.A,   s.y )
@@ -374,7 +368,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
       @s.update
       def up_wr_y():
-        s.y = SomeMsg()( 12, 123 )
+        s.y = SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -390,8 +384,8 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
     def construct( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg() )
-      s.y  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
 
       s.connect( s.A.b, s.x )
       s.connect( s.A,   s.y )
@@ -413,8 +407,8 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
     def construct( s ):
 
       s.x  = Wire( Bits32 )
-      s.A  = Wire( SomeMsg() )
-      s.y  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
 
       s.connect( s.A.b, s.x )
       s.connect( s.A,   s.y )
@@ -425,7 +419,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
       @s.update
       def up_wr_y():
-        s.y = SomeMsg()( 12, 123 )
+        s.y = SomeMsg( 12, 123 )
 
   _test_model( Top )
 
@@ -434,10 +428,10 @@ def test_iterative_find_nets():
   class Top( ComponentLevel3 ):
     def construct( s ):
 
-      s.w  = Wire( SomeMsg() )
-      s.x  = Wire( SomeMsg() )
-      s.y  = Wire( SomeMsg() )
-      s.z  = Wire( SomeMsg() )
+      s.w  = Wire( SomeMsg )
+      s.x  = Wire( SomeMsg )
+      s.y  = Wire( SomeMsg )
+      s.z  = Wire( SomeMsg )
 
       s.connect( s.w, s.x ) # net1
       s.connect( s.x.a, s.y.a ) # net2
@@ -445,62 +439,37 @@ def test_iterative_find_nets():
 
       @s.update
       def up_wr_s_w():
-        s.w = SomeMsg()( 12, 123 )
+        s.w = SomeMsg( 12, 123 )
 
   _test_model( Top )
 
 def test_deep_connections():
 
   class Msg1( object ):
-    def __init__( s ):
-      s.a = int
-      s.b = Bits32
-
-    def __call__( s, a = 0, b = Bits32(0) ):
-      x = s.__class__()
-      x.a = x.a(a)
-      x.b = x.b(b)
-      return x
-
-  msg1 = Msg1()
+    def __init__( s, a=0, b=0 ):
+      s.a = int( a )
+      s.b = Bits32( b )
 
   class Msg2( object ):
-    def __init__( s ):
-      s.p = msg1
-      s.q = msg1
-
-    def __call__( s, p = msg1(), q = msg1() ):
-      x = s.__class__()
-      x.p = p
-      x.q = q
-      return x
-
-  msg2 = Msg2()
+    def __init__( s, a=Msg1(), b=Msg1() ):
+      s.p = a
+      s.q = b
 
   class Msg3( object ):
-    def __init__( s ):
-      s.x = msg1
-      s.y = msg2
-      s.z = int
-
-    def __call__( s, x = Msg1()(), y = Msg2()(), z=0 ):
-      x = s.__class__()
-      x.x = x
-      x.y = y
-      x.z = x.z(z)
-      return x
+    def __init__( s, a=Msg1(), b=Msg2(), c=0 ):
+      s.x = a
+      s.y = b
+      s.z = int( c )
 
   class Top( ComponentLevel3 ):
     def construct( s ):
 
-      msg3 = Msg3() # TODO find a good way to handle type equivalence
+      s.A  = Wire( Msg3 )
+      s.x  = Wire( Msg1 )
+      s.y  = Wire( Msg2 )
+      s.z  = Wire( Msg3 )
 
-      s.A  = Wire( msg3 )
-      s.x  = Wire( msg1 )
-      s.y  = Wire( msg2 )
-      s.z  = Wire( msg3 )
-
-      s.w  = Wire(int)
+      s.w  = Wire( int )
 
       s.connect( s.A.y.p, s.x )
       s.connect( s.A.z,   s.w )

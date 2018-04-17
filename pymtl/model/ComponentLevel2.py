@@ -131,7 +131,8 @@ class ComponentLevel2( ComponentLevel1 ):
         field, idx = obj_name[ name_depth ]
         try:
           child = getattr( obj, field )
-        except AttributeError:
+        except AttributeError as e:
+          print e
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
         s._astnode_objs[ nodelist[node_depth] ].append( child )
