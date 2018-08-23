@@ -1,3 +1,11 @@
+#=========================================================================
+# Bits.py
+#=========================================================================
+# Pure-Python implementation of fixed-bitwidth data type.
+#
+# Author : Shunning Jiang
+# Date   : Oct 31, 2017
+
 class Bits( object ):
   __slots__ = ( "nbits", "value" )
 

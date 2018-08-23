@@ -1,13 +1,27 @@
+#=========================================================================
+# bits_import.py
+#=========================================================================
+# Import RPython Bits from PyPy mamba module if the environment variable
+# that forces the use of Python Bits is set, and there is actually an
+# importable Bits in mamba module. Otherwise import the Pure-Python
+# implementation in Bits.py. Then generate a bunch of fixed-width BitsN
+# types for PyMTL use.
+#
+# Author : Shunning Jiang
+# Date   : Aug 23, 2018
+
 import py.code, os
 
-_use_pymtl_bits = ( os.getenv("PYMTL_BITS") == "1" ) or \
-                 ( 'Bits' not in dir(__builtins__) )
-
-if _use_pymtl_bits:
+if os.getenv("PYMTL_BITS") == "1":
   from Bits import Bits
-  print "Use Python Bits"
+  # print "[env: PYMTL_BITS=1] Use Python Bits"
 else:
-  print "Use Mamba Bits"
+  try:
+    from mamba import Bits
+    # print "[default w/  Mamba] Use Mamba Bits"
+  except ImportError:
+    from Bits import Bits
+    # print "[default w/o Mamba] Use Python Bits"
 
 bits_template = """
 class Bits{nbits}(object):

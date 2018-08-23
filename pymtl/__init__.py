@@ -7,8 +7,6 @@ from model.Connectable     import Wire, InVPort, OutVPort, Interface
 from model.RTLComponent    import RTLComponent
 
 from passes import SimRTLPass
-# , PrintMetadataPass, EventDrivenPass
-
 
 __all__ = [
   'U','M','RD','WR',
@@ -19,9 +17,5 @@ __all__ = [
   # 'PrintMetadataPass', 'EventDrivenPass',
 
   'sext', 'zext', 'clog2', 'concat',
-  'mk_bits', 
+  'mk_bits', 'Bits',
 ] + [ "Bits{}".format(x) for x in _bitwidths ]
-
-from datatypes.bits_import import _use_pymtl_bits
-if _use_pymtl_bits:
-  __all__ += [ 'Bits' ]

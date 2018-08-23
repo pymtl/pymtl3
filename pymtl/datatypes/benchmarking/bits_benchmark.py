@@ -1,3 +1,10 @@
+#=========================================================================
+# bits_benchmark.py
+#=========================================================================
+# Micro-benchmarking Python bits in PyMTL vs Python bits in Mamba
+#
+# Author : Shunning Jiang
+# Date   : Dec 18, 2017
 
 import timeit
 

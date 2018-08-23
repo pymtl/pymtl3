@@ -1,3 +1,12 @@
+#=========================================================================
+# helpers.py
+#=========================================================================
+# Useful helper functions of Bits operations. Ideally these functions
+# should be implemented in RPython.
+#
+# Author : Shunning Jiang
+# Date   : Nov 3, 2017
+
 from bits_import import *
 import math
 
