@@ -33,7 +33,7 @@ endmodule
 """
 
 # TODO Now just assume signals written in update_on_edge are registers
-class VerilogTranslationPass( BasePass ):
+class SystemVerilogTranslationPass( BasePass ):
 
   def __call__( self, top ):
 
