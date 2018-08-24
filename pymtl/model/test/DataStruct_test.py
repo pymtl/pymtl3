@@ -1,3 +1,10 @@
+#=========================================================================
+# DataStruct_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Apr 16, 2018
+
 from pymtl import *
 from pymtl.model import ComponentLevel3
 from pymtl.model.errors import MultiWriterError, NoWriterError
@@ -24,27 +31,27 @@ def _test_model( cls ):
 #
 # 1. WR A.b, RD A (need to recognize implicit constraint between A.b and A)
 #    WR A.b, WR A (detect 2-writer conflict)
-# 
+#
 # 2. WR A, RD A.b (need to recognize implicit constraint between A.b and A)
 #    WR A, WR A.b (detect 2-writer conflict)
-# 
+#
 # 3. WR A.b, A|=y, RD y (need to mark A as writer in net {A,y})
 #    WR A.b, A|=y, WR y (detect 2-writer conflict)
-# 
+#
 # 4. WR A, A.b|=y, RD y (need to mark A.b as writer in net {A.b,y})
 #    WR A, A.b|=y, WR y (detect 2-writer conflict)
-# 
+#
 # 5. WR x, x|=A.b, RD A (need to recognize implicit constraint between A.b and A because the generated connection block has A.b = x)
 #    WR x, x|=A.b, WR A (detect 2-writer conflict)
-# 
+#
 # 6. WR x, x|=A, RD A.b (need to recognize implicit constraint between A.b and A because the generated connection block has A = x)
 #    WR x, x|=A, WR A.b (detect 2-writer conflict)
-# 
+#
 # 7. WR x, x|=A.b, A|=y, RD y (need to mark A as writer and recognize the implicit constraint)
 #    WR x, x|=A.b, A|=y, WR y (detect 2-writer conflict)
-# 
+#
 # 8. WR x, x|=A, A.b|=y, RD y (need to mark A.b as writer and recognize the implicit constraint)
-#    WR x, x|=A, A.b|=y, WR y (detect 2-writer conflict) 
+#    WR x, x|=A, A.b|=y, WR y (detect 2-writer conflict)
 #
 # We fix A.b and see what can A.b's ancestors do:
 #
@@ -255,7 +262,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
   # _test_model( Top )
 
-# WR A.b - A|=x, WR x 
+# WR A.b - A|=x, WR x
 def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
   class Top( ComponentLevel3 ):

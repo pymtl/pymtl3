@@ -1,3 +1,10 @@
+#=========================================================================
+# PortCheck_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Dec 25, 2017
+
 from pymtl import *
 from pymtl.model import ComponentLevel3
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink

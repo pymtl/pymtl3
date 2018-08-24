@@ -1,3 +1,10 @@
+#=========================================================================
+# Slicing_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Aug 23, 2018
+
 from pymtl import *
 from pymtl.model import ComponentLevel3
 from pymtl.model.errors import MultiWriterError, NoWriterError
@@ -24,7 +31,7 @@ def test_write_two_disjoint_slices():
 
       @s.update
       def up_wr_16_30():
-        s.A[16:30] = Bits16( 0xff )
+        s.A[16:30] = Bits14( 0xff )
 
       @s.update
       def up_rd_12_30():

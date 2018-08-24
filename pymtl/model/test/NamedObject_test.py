@@ -1,3 +1,10 @@
+#=========================================================================
+# NamedObject_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Dec 23, 2017
+
 from pymtl import *
 from pymtl.model import NamedObject
 from collections import deque

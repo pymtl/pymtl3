@@ -1,3 +1,11 @@
+#=========================================================================
+# sim_utils.py
+#=========================================================================
+# Simple util functions to bootstrap simulation without simulation passes.
+#
+# Author : Shunning Jiang
+# Date   : Jan 1, 2018
+
 from pymtl import *
 from collections  import deque, defaultdict
 from pymtl.model.errors import UpblkCyclicError, NotElaboratedError
@@ -67,7 +75,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     # constraint WR(x) < U1 & U2 writes x --> U2 == WR(x) <  U1 # impl
     # constraint WR(x) > U1 & U2 writes x --> U1 <  WR(x) == U2
     # Doesn't work for nested data struct and slice:
-    
+
     read_upblks = defaultdict(set)
     write_upblks = defaultdict(set)
 

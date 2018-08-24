@@ -1,3 +1,10 @@
+#=========================================================================
+# ComponentLevel2_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Apr 16, 2018
+
 from pymtl import *
 from pymtl.model import ComponentLevel2
 from pymtl.model.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
@@ -18,7 +25,7 @@ def _test_model( cls ):
 class TestSource( ComponentLevel2 ):
 
   def construct( s, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
     s.out = OutVPort(int)
@@ -39,7 +46,7 @@ class TestSource( ComponentLevel2 ):
 class TestSink( ComponentLevel2 ):
 
   def construct( s, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!" 
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
     s.in_ = InVPort(int)

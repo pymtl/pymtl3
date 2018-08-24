@@ -1,3 +1,10 @@
+#=========================================================================
+# errors.py
+#=========================================================================
+# Errors thrown by other files in this folder.
+#
+# Author : Shunning Jiang
+# Date   : Dec 27, 2018
 
 class SignalTypeError( Exception ):
   """ Raise when a declared signal is of wrong type """

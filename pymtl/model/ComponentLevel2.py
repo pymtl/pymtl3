@@ -1,6 +1,15 @@
 #=========================================================================
 # ComponentLevel2.py
 #=========================================================================
+# At level two we introduce implicit variable constraints.
+# By default we assume combinational semantics:
+# - upA reads Wire x while upB writes Wire x ==> upB = WR(x) < RD(x) = upA
+# When upA is marked as update_on_edge ==> for all upblks upX that
+# write/read variables in upA, upA < upX:
+# - upA = RD(x) < WR(x) = upB and upA = WR(x) < RD(x) = upB
+#
+# Author : Shunning Jiang
+# Date   : Apr 16, 2018
 
 from NamedObject     import NamedObject
 from ComponentLevel1 import ComponentLevel1

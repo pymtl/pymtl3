@@ -1,3 +1,10 @@
+#=========================================================================
+# ComponentLevel3_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Dec 25, 2017
+
 from pymtl import *
 from pymtl.model import ComponentLevel3
 from pymtl.model.errors import MultiWriterError, InvalidConnectionError
@@ -21,7 +28,7 @@ MUX_SEL_1 = 1
 class TestSource( ComponentLevel3 ):
 
   def construct( s, Type, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
     s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
@@ -43,7 +50,7 @@ class TestSource( ComponentLevel3 ):
 class TestSink( ComponentLevel3 ):
 
   def construct( s, Type, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!" 
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
     s.in_ = InVPort( Type )
@@ -533,7 +540,7 @@ def test_top_level_outport():
       return False
 
     def line_trace( s ):
-      return str(s.a)
+      return str(int(s.a))
 
   A = Top()
   A.elaborate()
@@ -542,4 +549,4 @@ def test_top_level_outport():
   A.tick()
   trace = A.line_trace()
   print " >>>", trace
-  assert trace == "001"
+  assert trace == "1"

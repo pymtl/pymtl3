@@ -1,3 +1,11 @@
+#=========================================================================
+# Connectable.py
+#=========================================================================
+# Wires, ports, and interfaces, all inherited from Connectable.
+#
+# Author : Shunning Jiang
+# Date   : Apr 16, 2018
+
 from NamedObject import NamedObject
 from pymtl.datatypes import mk_bits
 from errors import InvalidConnectionError

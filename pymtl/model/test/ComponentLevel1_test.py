@@ -1,3 +1,10 @@
+#=========================================================================
+# ComponentLevel1_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Dec 23, 2017
+
 from pymtl import *
 from pymtl.model import ComponentLevel1
 from pymtl.model.errors import UpblkCyclicError, UpblkFuncSameNameError
@@ -16,7 +23,7 @@ def _test_model( cls ):
 class TestSource( ComponentLevel1 ):
 
   def construct( s, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
     s.out = 0
@@ -37,7 +44,7 @@ class TestSource( ComponentLevel1 ):
 class TestSink( ComponentLevel1 ):
 
   def construct( s, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!" 
+    assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
     s.in_ = 0

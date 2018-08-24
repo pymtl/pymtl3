@@ -1,3 +1,10 @@
+#=========================================================================
+# RTLComponent_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Dec 25, 2017
+
 from pymtl import *
 from pymtl.model.errors import MultiWriterError, InvalidConnectionError
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink

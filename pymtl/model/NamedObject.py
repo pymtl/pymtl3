@@ -9,6 +9,9 @@
 # For example, s.x[0][3].y[2].z[1:3] is stored as
 # ( ["top","x","y","z"], [ [], [0,3], [2], [slice(1,3,0)] ] )
 # Note that len(name) == len(idx)-1 only when the variable ends with slice
+#
+# Author : Shunning Jiang
+# Date   : Apr 6, 2018
 
 from errors import NotElaboratedError
 import re

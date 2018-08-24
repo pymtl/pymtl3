@@ -1,3 +1,11 @@
+#=========================================================================
+# ConstraintType.py
+#=========================================================================
+# Explicit constraint class types.
+#
+# Author : Shunning Jiang
+# Date   : July 7, 2017
+
 class FuncConstraint(object):
   def __init__( self, func ):  self.func = func
   def __lt__( self, other ):   return (self, other)

@@ -1,3 +1,10 @@
+#=========================================================================
+# PredicationTransformer_test.py
+#=========================================================================
+#
+# Author : Berkin Ilbeyi
+# Date   : Nov 10, 2018
+
 from pymtl import *
 from pymtl.model import PredicationTransformer
 import ast

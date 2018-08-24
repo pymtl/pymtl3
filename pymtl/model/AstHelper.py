@@ -1,3 +1,11 @@
+#=========================================================================
+# AstHelper.py
+#=========================================================================
+# This file collects PyMTL ast visitors.
+#
+# Author : Shunning Jiang
+# Date   : Jan 17, 2018
+
 import re, inspect2, ast
 p = re.compile('( *(@|def))')
 
@@ -89,7 +97,7 @@ class DetectVarNames( ast.NodeVisitor ):
         obj_name.append( (node.id, num[::-1]) )
       elif isinstance( node, ast.Call ): # a.b().c()
         # FIXME?
-        return None, None 
+        return None, None
       else:
         assert isinstance( node, ast.Str ) # filter out line_trace
         return None, None

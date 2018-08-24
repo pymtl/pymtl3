@@ -1,3 +1,10 @@
+#=========================================================================
+# Interface_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Jan 1, 2018
+
 from pymtl import *
 from pymtl.model import ComponentLevel3
 from pclib.rtl import TestSourceValRdy, TestSinkValRdy

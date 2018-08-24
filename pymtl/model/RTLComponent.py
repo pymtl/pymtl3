@@ -1,6 +1,11 @@
 #=========================================================================
 # RTLComponent.py
 #=========================================================================
+# Currently we add reset and clk signal on top of ComponentLevel3 in the
+# kernel. Later this might be handled by a PyMTL pass.
+#
+# Author : Shunning Jiang
+# Date   : Jan 7, 2018
 
 from pymtl.datatypes import Bits1
 from ComponentLevel3 import ComponentLevel3

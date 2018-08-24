@@ -11,6 +11,8 @@
 # We collect one type of explicit constraints at this level:
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 
+# Author : Shunning Jiang
+# Date   : Jan 18, 2018
 from NamedObject     import NamedObject
 from ConstraintTypes import U
 from errors          import UpblkFuncSameNameError, NotElaboratedError

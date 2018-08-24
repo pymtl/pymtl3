@@ -1,3 +1,12 @@
+#=========================================================================
+# PredicationTransformer.py
+#=========================================================================
+# An experimental Python ast transformer that turns if statements into
+# array-based predications in order to eliminate branches.
+#
+# Author : Berkin Ilbeyi
+# Date   : Dec 16, 2017
+
 import ast
 
 class TransformationAbort( Exception ):
