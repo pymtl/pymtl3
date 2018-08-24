@@ -1,3 +1,11 @@
+#=========================================================================
+# GenDAGPass.py
+#=========================================================================
+# Generate a DAG of update blocks (including net connection blocks) from
+# a model.
+#
+# Author : Shunning Jiang
+# Date   : Jan 18, 2018
 
 from pymtl import *
 from BasePass import BasePass

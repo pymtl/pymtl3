@@ -1,3 +1,10 @@
+#=========================================================================
+# SystemVerilogTranslationPass.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Aug 23, 2018
+
 from pymtl import *
 from pymtl.model import ComponentLevel1
 from BasePass import BasePass

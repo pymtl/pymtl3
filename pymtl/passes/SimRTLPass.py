@@ -1,3 +1,11 @@
+#=========================================================================
+# SimRTLPass.py
+#=========================================================================
+# The model can be simulated (ticked) after applying this pass.
+#
+# Author : Shunning Jiang
+# Date   : Dec 18, 2017
+
 from pymtl.model import RTLComponent
 from BasePass import BasePass
 from GenDAGPass import GenDAGPass

@@ -1,3 +1,9 @@
+#=========================================================================
+# errors.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Jul 4, 2017
 
 class PassOrderError( Exception ):
   """ Raise when applying a pass to a component and some required variable
