@@ -40,26 +40,26 @@ class {top_module}( RTLComponent ):
     # construction to the elaborate_logic function to allow the user to
     # set the vcd_file.
 
-    s._ffi = s.ffi.dlopen('./{lib_file}')
+    s._ffi_inst = s.ffi.dlopen('./{lib_file}')
 
     # dummy class to emulate PortBundles
     # class BundleProxy( PortBundle ):
       # flip = False
 
-    # define the port interface
-    {port_defs}
-
     # increment instance count
     {top_module}.id_ += 1
 
   def __del__( s ):
-    s._ffi.destroy_model( s._m )
+    s._ffi_inst.destroy_model( s._ffi_m )
 
   def construct( s ):
 
     # Construct the model.
 
-    s._m = s._ffi.create_model()
+    s._ffi_m = s._ffi_inst.create_model()
+
+    # define the port interface
+    {port_defs}
 
     @s.update
     def logic():
@@ -68,7 +68,7 @@ class {top_module}( RTLComponent ):
       {set_inputs}
 
       # execute combinational logic
-      s._ffi.eval( s._m )
+      s._ffi_inst.eval( s._ffi_m )
 
       # set outputs
       # FIXME: currently write all outputs, not just combinational outs
@@ -77,12 +77,17 @@ class {top_module}( RTLComponent ):
     @s.update_on_edge
     def tick():
 
-      s._m.clk[0] = 0
-      s._ffi.eval( s._m )
-      s._m.clk[0] = 1
-      s._ffi.eval( s._m )
+      s._ffi_m.clk[0] = 0
+      s._ffi_inst.eval( s._ffi_m )
+      s._ffi_m.clk[0] = 1
+      s._ffi_inst.eval( s._ffi_m )
 
       # double buffer register outputs
       # FIXME: currently write all outputs, not just registered outs
       {set_next}
 
+  def line_trace( s ):
+    return {line_trace}
+
+  def internal_line_trace( s ):
+    return {in_line_trace}

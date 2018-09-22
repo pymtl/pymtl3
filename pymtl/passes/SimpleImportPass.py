@@ -186,19 +186,28 @@ class SimpleImportPass( BasePass ):
 
     set_inputs    = []
 
-    # Set combinational update block
+    # Combinational update block
 
     set_comb      = []
 
-    # Set output
+    # Sequential update block
 
     set_next      = []
+
+    # Line trace 
+
+    line_trace = s.generate_py_line_trace( model )
+
+    # Internal line trace 
+
+    in_line_trace = s.generate_py_internal_line_trace( model )
 
     # Create verilated model port definitions
 
     port_externs = ''.join( [ s.port_to_decl( x ) + tab8 for x in \
           model.get_input_value_ports() | model.get_output_value_ports() 
         ] )
+
 
     # Create PyMTL port definitions, input setting, comb stmts
 
@@ -227,13 +236,15 @@ class SimpleImportPass( BasePass ):
 
       py_wrapper = template.read()
       py_wrapper = py_wrapper.format(
-             top_module    = top_module,
-             lib_file      = lib_file,
-             port_externs  = port_externs,
-             port_defs     = ''.join( [ x+tab4 for x in port_defs ] ),
-             set_inputs    = ''.join( [ x+tab6 for x in set_inputs ] ),
-             set_comb      = ''.join( [ x+tab6 for x in set_comb ] ),
-             set_next      = ''.join( [ x+tab6 for x in set_next ] ),
+             top_module     = top_module,
+             lib_file       = lib_file,
+             port_externs   = port_externs,
+             port_defs      = ''.join( [ x+tab4 for x in port_defs ] ),
+             set_inputs     = ''.join( [ x+tab6 for x in set_inputs ] ),
+             set_comb       = ''.join( [ x+tab6 for x in set_comb ] ),
+             set_next       = ''.join( [ x+tab6 for x in set_next ] ),
+             line_trace     = line_trace,
+             in_line_trace  = in_line_trace,
           )
       output.write( py_wrapper )
 
@@ -322,12 +333,47 @@ class SimpleImportPass( BasePass ):
         )
 
     s.try_cmd( 'Compiling shared lib', compile_cmd )
+
+  def generate_py_line_trace( s, m ):
+    ''' create a line trace string for all ports '''
+
+    ret = "'"   # eg: 'clk:{}, reset:{}, '.format( s.clk, s.reset, )
+
+    for port in m.get_input_value_ports() | m.get_output_value_ports():
+      ret += '{my_name}: {{}}, '.format( my_name = port._my_name )
+
+    ret += "\\n'.format("
+
+    for port in m.get_input_value_ports() | m.get_output_value_ports():
+      ret += '{}, '.format( port._full_name )
+
+    ret += ")"
+
+    return ret
+
+  def generate_py_internal_line_trace( s, m ):
+    ''' create a line trace string for all ports inside the verilated
+    model'''
+
+    ret = "'"   # eg: 'clk:{}, reset:{}, '.format( s.clk, s.reset, )
+
+    for port in m.get_input_value_ports() | m.get_output_value_ports():
+      ret += '{my_name}: {{}}, '.format( my_name = port._my_name )
+
+    ret += "\\n'.format("
+
+    for port in m.get_input_value_ports() | m.get_output_value_ports():
+      ret += '{}, '.format( 's._ffi_m.'+port._my_name+'[0]' )
+
+    ret += ")"
+
+    return ret
   
   def set_input_stmt( s, port ):
     ''' set up the interfaces between PyMTL and verilated model '''
     inputs = []
     for idx, offset in s.get_indices( port ):
-      inputs.append( 's._m.{v_name}[{idx}] = s.{py_name}{offset}' \
+      inputs.append( 's._ffi_m.{v_name}[{idx}] = s.{py_name}{offset}' \
           .format(
                 v_name    = port.verilator_name,
                 py_name   = port._my_name, 
@@ -340,7 +386,7 @@ class SimpleImportPass( BasePass ):
     ''' set up the interfaces between PyMTL and verilated model '''
     comb, next_ = [], []
     for idx, offset in s.get_indices( port ):
-      stmt = 's.{py_name}{offset} = s._m.{v_name}[{idx}]'\
+      stmt = 's.{py_name}{offset} = s._ffi_m.{v_name}[{idx}]'\
           .format(
                   v_name      = port.verilator_name, 
                   py_name     = port._my_name, 
@@ -348,7 +394,7 @@ class SimpleImportPass( BasePass ):
                   offset      = offset
               )
       comb.append( stmt )
-      next_.append( stmt )
+      # next_.append( stmt )
     return comb, next_
 
   def get_indices( s, port ):
@@ -368,4 +414,37 @@ if __name__ == '__main__':
   from test.trans_import.Adder_v import Adder as ImportedAdder
   import_m = ImportedAdder()
   import_m.elaborate()
+
+#  import_m.reset = 0
   SimRTLPass()( import_m )
+  print 'line trace: '+import_m.line_trace()
+  print 'Internal line trace: '+import_m.internal_line_trace()
+  import_m.unlock_simulation()
+  import_m.reset = 0
+  import_m.in0 = 0
+  import_m.in1 = 0
+  import_m.tick()
+  print 'line trace: '+import_m.line_trace()
+  print 'Internal line trace: '+import_m.internal_line_trace()
+
+  import_m.reset = 0
+  import_m.in0 = 1
+  import_m.in1 = 2
+  import_m.tick()
+  print 'line trace: '+import_m.line_trace()
+  print 'Internal line trace: '+import_m.internal_line_trace()
+
+  import_m.reset = 1
+  import_m.in0 = 23
+  import_m.in1 = 21
+  import_m.tick()
+  print 'line trace: '+import_m.line_trace()
+  print 'Internal line trace: '+import_m.internal_line_trace()
+
+  for i in xrange(10):
+    import_m.reset = 0
+    import_m.in0 = i
+    import_m.in1 = i+1 
+    import_m.tick()
+    print 'line trace: '+import_m.line_trace()
+    print 'Internal line trace: '+import_m.internal_line_trace()
