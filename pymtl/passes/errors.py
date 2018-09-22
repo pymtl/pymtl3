@@ -23,3 +23,9 @@ class TranslationError( Exception ):
   def __init__( self, blk, x ):
     return super( TranslationError, self ).__init__( \
     "{} {}".format( blk.__name__, x ) )
+
+class VerilatorCompileError( Exception ):
+	""" Compiling error for verilator """
+	def __init__( self, err ):
+		return super( VerilatorCompileError, self ).__init__( err )
+
