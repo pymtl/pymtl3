@@ -29,3 +29,8 @@ class VerilatorCompileError( Exception ):
 	def __init__( self, err ):
 		return super( VerilatorCompileError, self ).__init__( err )
 
+class PyMTLImportError( Exception ):
+  """ Raise error when import goes wrong """
+  def __init__( self, err ):
+    return super( PyMTLImportError, self ).__init__( err )
+

@@ -14,8 +14,9 @@ from collections          import defaultdict, deque
 from errors               import TranslationError
 from inspect              import getsource
 import ast
+import re
 
-vmodule_upblk_template = """
+vmodule_upblk_template = """\
 module {module_name}
 (
   // Input declarations
@@ -107,6 +108,8 @@ class SystemVerilogTranslationPass( BasePass ):
     with open( systemverilog_file, 'w' ) as sv_out_file:
       sv_out_file.write( ret )
 
+    top._translated = True
+
   def translate_component( s, m, connections_self_self, 
                                  connections_self_child, 
                                  connections_child_child ):
@@ -117,21 +120,53 @@ class SystemVerilogTranslationPass( BasePass ):
     # Input/output declarations
     #-------------------------------------------------------------------
 
-    def gen_signal_width_name( x ):
+    def gen_sv_signal_name( array_dict, direction, ports ):
+      """ generate in/out port declarations """
 
-      try:
-        nbits     = x._dsl.Type.nbits
-        width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
-        return "{} {}".format( width_str, x.get_field_name() )
-      except AttributeError: # it is not a Bits type
-        print x.Type.nbits
-        assert False, "TODO Implement data struct translation"
+      ret = []
 
-    input_strs = [ 'input logic{}'.format( gen_signal_width_name(x) ) 
-                    for x in sorted( m.get_input_value_ports(), key = repr ) ]
+      # Collect all array ports
 
-    output_strs = [ 'output logic{}'.format( gen_signal_width_name(x) ) 
-                    for x in sorted( m.get_output_value_ports(), key = repr ) ]
+      for port in ports:
+        if '[' in port._dsl.my_name:
+          # Speical treatment for lists
+          array_name    = get_array_name( port._dsl.my_name )
+          array_idx     = get_array_idx( port._dsl.my_name )
+          try: 
+            array_range = array_dict[ array_name ]
+          except KeyError:
+            array_range = 1
+
+          array_dict[ array_name ] = max( array_idx + 1, array_range )
+
+      # Generate signal declarations for all ports
+
+      for port in ports:
+        name = port._dsl.my_name
+        nbits = port._dsl.Type.nbits
+        width = '' if nbits == 0 else ' [{}:0]'.format( nbits - 1 )
+        if not '[' in name:
+          # Not a list
+          ret.append('{direction}logic{width} {name}'.format(**locals()))
+        else:
+          # Only generate 1 port declarartion for a series of ports
+          if get_array_idx( name ) == 0:    # in_[0]
+            name = get_array_name( name )
+            array_range = str( array_dict[ name ] )
+            ret.append('{direction}logic{width} {name}[{array_range}]'.\
+                format( **locals() ) )
+
+      return ret
+
+    # Keep track of array ports ( may be useful? )
+
+    array_port_dict = {}
+
+    input_strs  = gen_sv_signal_name( array_port_dict, 'input ', \
+        sorted(m.get_input_value_ports(), key = repr) )
+
+    output_strs  = gen_sv_signal_name( array_port_dict, 'output ', \
+        sorted(m.get_output_value_ports(), key = repr) )
 
     input_decls = ',\n  '.join( input_strs )
     if output_strs:
@@ -145,10 +180,14 @@ class SystemVerilogTranslationPass( BasePass ):
 
     # TODO: dont declare wires that are unused
 
-    wire_strs = [ 'logic{};'.format( gen_signal_width_name( x ) ) 
-                    for x in sorted( m.get_wires(), key = repr ) ]
+    array_wire_dict = {}
 
-    wire_decls = '\n  '.join( wire_strs )
+    wire_strs = gen_sv_signal_name( array_wire_dict, '', \
+          sorted( m.get_wires(), key = repr )
+        )
+
+    wire_decls = ';\n  '.join( wire_strs )
+    wire_decls += ';'
 
     #-------------------------------------------------------------------
     # Instantiate child components
@@ -250,7 +289,8 @@ class SystemVerilogTranslationPass( BasePass ):
       pymtl_srcs = '\n'.join( [ '  // ' + x[ s.get_indent( pymtl_src ) : ] 
         for x in pymtl_src ] )
 
-      blk_srcs += '\n  // Original PyMTL update block\n' + pymtl_srcs + blk_src + '\n'
+      blk_srcs += '\n  // Original PyMTL update block\n\n' + pymtl_srcs \
+                  + '\n' + blk_src 
 
     return vmodule_upblk_template.format( **vars() )
 
@@ -666,6 +706,20 @@ opmap = {
     ast.And      : '&&',
     ast.Or       : '||',
 }
+
+def to_sv_name( name ):
+  if '[' in name: 
+    # Special treatment for a list: in_[1] --> in_$1
+    return re.sub( r'\[(\d+)\]', r'$\1', name )
+  else:
+    return name
+
+def get_array_name( name ):
+  return re.sub( r'\[(\d+)\]', '', name )
+
+def get_array_idx( name ):
+  m = re.search( r'\[(\d+)\]', name )
+  return int( m.group( 1 ) )
 
 def get_closure_dict( funct ):
   closure_objects = [ c.cell_contents for c in funct.func_closure ]

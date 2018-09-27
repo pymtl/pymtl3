@@ -12,12 +12,14 @@
 #     through CFFI. 
 
 import os
+import re
+import sys
 import shutil
 
 from pymtl          import *
 from BasePass       import BasePass
-from subprocess			import check_output, STDOUT, CalledProcessError
-from errors         import VerilatorCompileError
+from subprocess     import check_output, STDOUT, CalledProcessError
+from errors         import VerilatorCompileError, PyMTLImportError
 from SimRTLPass     import SimRTLPass
 
 # Better indention
@@ -29,10 +31,29 @@ tab8 = '\n        '
 
 class SimpleImportPass( BasePass ):
 
-  def __call__( s, model, verilog_file, top_module ):
-    """ Import a Verilog/SystemVerilog file. top_module specifies
-        the name of the top module. model is the PyMTL source of
-        verilog_file. """
+  def __call__( s, model ):
+    """ Import a Verilog/SystemVerilog file. model is the PyMTL source of
+        the input verilog file. """
+
+    # model should have been translated
+
+    try:
+      assert model._translated, "SimpleImportPass() only works on\
+      translated components!"
+    except AttributeError:
+      raise PyMTLImportError( 'ImportPass: the model should be translated!' )
+
+    # Assume the input verilog file has the same name as the class of
+    # model
+    
+    verilog_file = model.__class__.__name__
+
+    # Assume the top module of the input file has the same name as the 
+    # class of model
+
+    top_module   = model.__class__.__name__
+
+    # Get all ports
 
     ports = model.get_input_value_ports() | model.get_output_value_ports()
     
@@ -41,14 +62,48 @@ class SimpleImportPass( BasePass ):
     for port in ports:
       port.verilog_name   = s.generate_verilog_name( port._my_name )
       port.verilator_name = s.generate_verilator_name( port.verilog_name )
+      if '[' in port._my_name:
+        port.verilog_name = get_array_name( port.verilog_name )
+        port.verilator_name = get_array_name( port.verilator_name )
 		
+    # Compile verilog_file with verilator
+
     s.create_verilator_model( verilog_file, top_module )
 
-    c_wrapper = s.create_verilator_c_wrapper( model, top_module ) 
+    # Create a cpp wrapper for the verilated model
+
+    model.array_dict, port_cdef, c_wrapper = s.create_verilator_c_wrapper( model,\
+        top_module ) 
+
+    # Compile the cpp wrapper and the verilated model into a shared lib
 
     lib_file = s.create_shared_lib( model, c_wrapper, top_module )
 
-    s.create_verilator_py_wrapper( model, top_module, lib_file )
+    # Create a python wrapper that can access the verilated model
+
+    py_wrapper_file = s.create_verilator_py_wrapper( model, top_module, 
+                                lib_file, port_cdef, model.array_dict )
+
+    py_wrapper = py_wrapper_file.split('.')[0]
+
+    if py_wrapper in sys.modules:
+      # We are in a repeatedly running test process
+      # Reloading is needed since user may have updated the source file
+      exec( "reload( sys.modules[ '{py_wrapper}' ] )".format( **locals() ) )
+      exec( "ImportedModel = sys.modules[ '{py_wrapper}' ].{top_module}".\
+            format( **locals() )
+          )
+    else:
+      # First time execution
+      import_cmd = \
+        'from {py_wrapper} import {top_module} as ImportedModel'.\
+            format( py_wrapper = py_wrapper, 
+                    top_module = top_module,
+                )
+
+      exec( import_cmd )
+
+    model.imported_model = ImportedModel()
 
   def create_verilator_model( s, verilog_file, top_module ):
     """ Create a verilator file correspoding to the verilog_file model """
@@ -60,10 +115,10 @@ class SimpleImportPass( BasePass ):
 
     obj_dir = 'obj_dir_' + top_module
     flags		= ' '.join( ['--unroll-count 1000000',
-												 '--unroll-stmts 1000000',
-												 '--assert',
-												 '-Wno-UNOPTFLAT', 
-											] )
+                         '--unroll-stmts 1000000',
+                         '--assert',
+                         '-Wno-UNOPTFLAT', 
+                      ] )
 
     verilator_cmd = verilator_cmd.format( **vars() )
 
@@ -89,15 +144,42 @@ class SimpleImportPass( BasePass ):
 
     verilator_c_wrapper_file = top_module + '_v.cpp'
 
-    ports = model.get_input_value_ports() | model.get_output_value_ports()
+    # Collect all array ports
+    
+    array_dict = {}
+
+    ports = sorted( model.get_input_value_ports() |\
+                    model.get_output_value_ports(), key = repr )
+
+    s.collect_array_ports( array_dict, ports )
 
     # Generate input and output ports for the verilated model
 
-    port_externs = ''.join([ s.port_to_decl( x )+tab4 for x in ports ])
+    port_externs = []
+    port_cdef = []
+
+    for port in ports:
+      # Only generate an array port decl if index is zero
+      if '[' in port._my_name and get_array_idx( port._my_name ) != 0:
+        continue
+      port_externs.append( s.port_to_decl( array_dict, port ) + tab4 )
+      port_cdef.append( s.port_to_decl( array_dict, port ) )
+
+    port_externs = ''.join( port_externs )
 
     # Generate initialization stmts for in/out ports
 
-    port_inits   = ''.join([ s.port_to_init( x )+tab2 for x in ports ])
+    port_inits = []
+
+    for port in ports:
+      # Generate n array port assignment if index is zero
+      if '[' in port._my_name and get_array_idx( port._my_name ) != 0:
+        continue
+      port_inits.extend(
+          map( lambda x: x + tab2, s.port_to_init( array_dict, port ) )
+          )
+
+    port_inits = ''.join( port_inits )
 
     with open( template_file, 'r' ) as template, \
          open( verilator_c_wrapper_file, 'w' ) as output:
@@ -109,7 +191,7 @@ class SimpleImportPass( BasePass ):
                                       )
           output.write( c_wrapper )
 
-    return verilator_c_wrapper_file
+    return array_dict, port_cdef, verilator_c_wrapper_file
 
   def create_shared_lib( s, model, c_wrapper, top_module ):
     ''' compile the Cpp wrapper and verilated model into a shared lib '''
@@ -165,7 +247,8 @@ class SimpleImportPass( BasePass ):
     
     return lib_file
 
-  def create_verilator_py_wrapper( s, model, top_module, lib_file ):
+  def create_verilator_py_wrapper( s, model, top_module, lib_file,\
+      port_cdef, array_dict ):
     ''' create a python wrapper that can manipulate the verilated model
     through the interfaces exposed by Cpp wrapper '''
 
@@ -176,7 +259,7 @@ class SimpleImportPass( BasePass ):
 
     # Port definitions for verilated model
 
-    port_externs  = []
+    port_externs  = ''.join( x+tab8 for x in port_cdef )
 
     # Port definition in PyMTL style
 
@@ -202,30 +285,55 @@ class SimpleImportPass( BasePass ):
 
     in_line_trace = s.generate_py_internal_line_trace( model )
 
-    # Create verilated model port definitions
-
-    port_externs = ''.join( [ s.port_to_decl( x ) + tab8 for x in \
-          model.get_input_value_ports() | model.get_output_value_ports() 
-        ] )
-
-
     # Create PyMTL port definitions, input setting, comb stmts
 
     for port in model.get_input_value_ports():
-      port_defs.append( '{name} = InVPort( Bits{nbits} )'.format(
-          name = port._full_name, 
-          nbits = port.Type.nbits,
-        ) )
+      name = port._my_name
+      if '[' in name:
+        if get_array_idx( name ) != 0:
+          continue
+        else:
+          # Only create definition for the element of index 0
+          nbits = port.Type.nbits
+          array_range = array_dict[ get_array_name( name ) ]
+          name = get_array_name( name )
+          port_defs.append( '''s.{name} = [ InVPort(Bits{nbits}) '''
+                            '''for _x in xrange({array_range}) ]'''\
+                            .format( **locals() ) 
+              )
+      else:
+        # This port is not a list
+        port_defs.append( '{name} = InVPort( Bits{nbits} )'.format(
+            name = port._full_name, 
+            nbits = port.Type.nbits,
+          ) )
       if port._my_name == 'clk':
         continue
-      set_inputs.extend( s.set_input_stmt( port ) )
+      # Generate assignments to setup the inputs of verilated model 
+      set_inputs.extend( s.set_input_stmt( port, array_dict ) )
 
     for port in model.get_output_value_ports():
-      port_defs.append( '{name} = OutVPort( Bits{nbits} )'.format(
-          name = port._full_name, 
-          nbits = port.Type.nbits,
-        ) )
-      comb, next_ = s.set_output_stmt( port )
+      name = port._my_name
+      if '[' in name:
+        if get_array_idx( name ) != 0:
+          continue
+        else:
+          # Only create definition for the element of index 0
+          nbits = port.Type.nbits
+          array_range = array_dict[ get_array_name( name ) ]
+          name = get_array_name( name )
+          port_defs.append( '''s.{name} = [ OutVPort(Bits{nbits})'''
+                            ''' for _x in xrange({array_range}) ]'''\
+                            .format( **locals() ) 
+              )
+      else:
+        # This port is not a list
+        port_defs.append( '{name} = OutVPort( Bits{nbits} )'.format(
+            name = port._full_name, 
+            nbits = port.Type.nbits,
+          ) )
+      # Generate assignments to read output from the verilated model
+      comb, next_ = s.set_output_stmt( port, array_dict )
       set_comb.extend( comb )
       set_next.extend( next_ )
 
@@ -278,16 +386,36 @@ class SimpleImportPass( BasePass ):
                   """
       raise exception( error_msg.format( 
         name    = name, 
-        cmd     = ' '.join( e.cmd ), 
+        cmd     = e.cmd, 
         error   = e.output
       ) )
 
-  def port_to_decl( s, port ):
-    """ generate port declarations for port """
-    ret = '{data_type} * {verilator_name};'
+  def collect_array_ports( s, array_dict, ports ):
+    """ fill array_dict with port names and ranges """
+    for port in ports:
+      if '[' in port._my_name:
+        array_name    = get_array_name( port._my_name )
+        array_idx     = get_array_idx( port._my_name )
+        try: 
+          array_range = array_dict[ array_name ]
+        except KeyError:
+          array_range = 1
+        array_dict[ array_name ] = max( array_idx + 1, array_range )
 
-    verilator_name = port.verilator_name
-    bitwidth       = port.Type.nbits
+  def port_to_decl( s, array_dict, port ):
+    """ generate port declarations for port """
+
+    if '[' in port._my_name:
+      # port belongs to a list of ports
+      ret         = '{data_type} * {name}[{array_range}];'
+      name        = get_array_name( port._my_name )
+      array_range = array_dict[ name ]
+    else:
+      # single port
+      ret         = '{data_type} * {name};'
+      name        = port._my_name
+
+    bitwidth = port.Type.nbits
 
     if    bitwidth <= 8:   
       data_type = 'unsigned char'
@@ -302,15 +430,27 @@ class SimpleImportPass( BasePass ):
 
     return ret.format( **locals() )
 
-  def port_to_init( s, port ):
+  def port_to_init( s, array_dict, port ):
     """ generate port initializations for port """
-    ret = 'm->{verilator_name} = {dereference}model->{verilator_name};'
 
-    verilator_name = port.verilator_name
+    ret = []
+    
     bitwidth       = port.Type.nbits
     dereference    = '&' if bitwidth <= 64 else ''
 
-    return ret.format( **locals() )
+    if '[' in port._my_name:
+      name = get_array_name( port._my_name )
+      ret.append( 'for( int i = 0; i < {array_range}; i++ )'.format(\
+            array_range = array_dict[ name ]
+          ))
+      ret.append( '  m->{name}[i] = {dereference}model->{name}[i];'.\
+          format( name = name, dereference = dereference ) )
+    else:
+      name = port._my_name
+      ret.append( 'm->{name} = {dereference}model->{name};'.\
+          format( name = name, dereference = dereference ) )
+
+    return ret
 
   def generate_verilog_name( s, name ):
     ''' generate a verilog-compliant name based on name '''
@@ -337,14 +477,19 @@ class SimpleImportPass( BasePass ):
   def generate_py_line_trace( s, m ):
     ''' create a line trace string for all ports '''
 
-    ret = "'"   # eg: 'clk:{}, reset:{}, '.format( s.clk, s.reset, )
+    ret = "'"   # eg: 'clk:{}, reset:{}, \n'.format( s.clk, s.reset, )
 
-    for port in m.get_input_value_ports() | m.get_output_value_ports():
+    ports = sorted(
+        m.get_input_value_ports() | m.get_output_value_ports(), 
+        key = repr
+        )
+
+    for port in ports:
       ret += '{my_name}: {{}}, '.format( my_name = port._my_name )
 
-    ret += "\\n'.format("
+    ret += "'.format("
 
-    for port in m.get_input_value_ports() | m.get_output_value_ports():
+    for port in ports:
       ret += '{}, '.format( port._full_name )
 
     ret += ")"
@@ -355,46 +500,87 @@ class SimpleImportPass( BasePass ):
     ''' create a line trace string for all ports inside the verilated
     model'''
 
-    ret = "'"   # eg: 'clk:{}, reset:{}, '.format( s.clk, s.reset, )
+    ret = "'"   # eg: 'clk:{}, reset:{}, \n'.format( s.clk, s.reset, )
 
-    for port in m.get_input_value_ports() | m.get_output_value_ports():
+    ports = sorted(
+        m.get_input_value_ports() | m.get_output_value_ports(), 
+        key = repr
+        )
+
+    for port in ports:
       ret += '{my_name}: {{}}, '.format( my_name = port._my_name )
 
     ret += "\\n'.format("
 
-    for port in m.get_input_value_ports() | m.get_output_value_ports():
+    for port in ports:
       ret += '{}, '.format( 's._ffi_m.'+port._my_name+'[0]' )
 
     ret += ")"
 
     return ret
   
-  def set_input_stmt( s, port ):
-    ''' set up the interfaces between PyMTL and verilated model '''
+  def set_input_stmt( s, port, array_dict ):
+    ''' generate initializations for interfaces '''
     inputs = []
-    for idx, offset in s.get_indices( port ):
-      inputs.append( 's._ffi_m.{v_name}[{idx}] = s.{py_name}{offset}' \
-          .format(
-                v_name    = port.verilator_name,
-                py_name   = port._my_name, 
-                idx       = idx, 
-                offset    = offset
-            ) )
+    name = port._my_name
+    if '[' in name:
+      # special treatment for list
+      name = get_array_name( name )
+      inputs.append( 'for _x in xrange({array_range}):'.format(
+            array_range = array_dict[ name ]
+        ) )
+      for idx, offset in s.get_indices( port ):
+        inputs.append('  s._ffi_m.{v_name}[_x][{idx}]=s.{py_name}[_x]{offset}'.\
+                format( v_name      = port.verilator_name, 
+                        py_name     = name, 
+                        idx         = idx, 
+                        offset      = offset
+                      ) )
+    else:
+      for idx, offset in s.get_indices( port ):
+        inputs.append( 's._ffi_m.{v_name}[{idx}] = s.{py_name}{offset}'.\
+                format(
+                        v_name    = port.verilator_name,
+                        py_name   = name, 
+                        idx       = idx, 
+                        offset    = offset
+                      ) )
     return inputs
 
-  def set_output_stmt( s, port ):
-    ''' set up the interfaces between PyMTL and verilated model '''
+  def set_output_stmt( s, port, array_dict ):
+    ''' generate the list of vars that should be called in update blocks or
+    update-on-edge blocks'''
     comb, next_ = [], []
-    for idx, offset in s.get_indices( port ):
-      stmt = 's.{py_name}{offset} = s._ffi_m.{v_name}[{idx}]'\
-          .format(
-                  v_name      = port.verilator_name, 
-                  py_name     = port._my_name, 
-                  idx         = idx, 
-                  offset      = offset
-              )
-      comb.append( stmt )
+    outputs = []
+    name = port._my_name
+    if '[' in name:
+      name = get_array_name( name )
+      outputs.append( 'for _x in xrange({array_range}):'.format(
+            array_range = array_dict[ name ]
+        ) )
+      for idx, offset in s.get_indices( port ):
+        outputs.append('  s.{py_name}[_x]{offset} = s._ffi_m.{v_name}[_x][{idx}]'\
+            .format(
+                    v_name      = port.verilator_name, 
+                    py_name     = name, 
+                    idx         = idx, 
+                    offset      = offset
+                  ) )
+    else:
+      for idx, offset in s.get_indices( port ):
+        stmt = 's.{py_name}{offset} = s._ffi_m.{v_name}[{idx}]'\
+            .format(
+                    v_name      = port.verilator_name, 
+                    py_name     = port._my_name, 
+                    idx         = idx, 
+                    offset      = offset
+                )
+      outputs.append( stmt )
       # next_.append( stmt )
+
+    comb = outputs
+    # FIXME: which type of update block does this variable come from?
+    # next_ = outputs
     return comb, next_
 
   def get_indices( s, port ):
@@ -405,46 +591,13 @@ class SimpleImportPass( BasePass ):
     return [( i, '[{}:{}]'.format( i*32, min( i*32+32, port.Type.nbits ) )
       ) for i in range(num_assigns)]
 
-from pclib.rtl.arithmetics	import Adder
+#-------------------------------------------------------------------------------
+# Global helper functions
+#-------------------------------------------------------------------------------
 
-if __name__ == '__main__':
-  m = Adder( Bits32 )
-  m.elaborate()
-  SimpleImportPass()( m, 'sum.v', 'Adder' )
-  from test.trans_import.Adder_v import Adder as ImportedAdder
-  import_m = ImportedAdder()
-  import_m.elaborate()
+def get_array_name( name ):
+  return re.sub( r'\[(\d+)\]', '', name )
 
-#  import_m.reset = 0
-  SimRTLPass()( import_m )
-  print 'line trace: '+import_m.line_trace()
-  print 'Internal line trace: '+import_m.internal_line_trace()
-  import_m.unlock_simulation()
-  import_m.reset = 0
-  import_m.in0 = 0
-  import_m.in1 = 0
-  import_m.tick()
-  print 'line trace: '+import_m.line_trace()
-  print 'Internal line trace: '+import_m.internal_line_trace()
-
-  import_m.reset = 0
-  import_m.in0 = 1
-  import_m.in1 = 2
-  import_m.tick()
-  print 'line trace: '+import_m.line_trace()
-  print 'Internal line trace: '+import_m.internal_line_trace()
-
-  import_m.reset = 1
-  import_m.in0 = 23
-  import_m.in1 = 21
-  import_m.tick()
-  print 'line trace: '+import_m.line_trace()
-  print 'Internal line trace: '+import_m.internal_line_trace()
-
-  for i in xrange(10):
-    import_m.reset = 0
-    import_m.in0 = i
-    import_m.in1 = i+1 
-    import_m.tick()
-    print 'line trace: '+import_m.line_trace()
-    print 'Internal line trace: '+import_m.internal_line_trace()
+def get_array_idx( name ):
+  m = re.search( r'\[(\d+)\]', name )
+  return int( m.group( 1 ) )
