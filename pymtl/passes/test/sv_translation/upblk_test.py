@@ -2,6 +2,29 @@ from pymtl import *
 from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL, ZeroComp
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
 
+def test_deep_connect():
+  class Deep( RTLComponent ):
+    def construct( s ):
+      s.out = OutVPort( Bits1 )
+      s.deep = Wire( Bits1 )
+
+      @s.update
+      def out_blk():
+        s.out = s.deep
+
+  class Bar( RTLComponent ):
+    def construct( s ):
+      s.deep = Deep()
+
+  class Foo( RTLComponent ):
+    def construct( s ):
+      s.bar = Bar()
+      s.foo = InVPort( Bits1 )
+      s.connect( s.foo, s.bar.deep.deep )
+
+  foo = Foo()
+  foo.elaborate() # Should fail because the connection is too deep
+
 def test_adder():
   m = Adder( Bits32 )
   m.elaborate()

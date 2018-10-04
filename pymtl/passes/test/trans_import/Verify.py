@@ -112,27 +112,6 @@ def verification_test_vector( ref_model, imported_model, test_vectors ):
 
   # Start the simulation
 
-  # # First initialize the reference model
-
-  # d_print( 'initiazlizing ref model...' )
-
-  # for port in ref_in_port:
-    # if '[' in port._my_name:
-      # # Special treatment for array port
-      # name = get_array_name( port._my_name )
-      # exec( 
-      # 'ref_model.{port_name} = [ 0 for _x in xrange({array_range})]'\
-          # .format(  port_name   = name, 
-                    # array_range = ref_model.array_dict[ name ] 
-            # ) )
-    # elif port._my_name == 'reset':
-      # ref_model.reset = Bits1( 1 )
-    # else:
-      # exec( 'ref_model.{port_name} = 0'.\
-            # format( port_name = port._my_name ) )
-
-  # ref_model.tick()
-
   row_num = 0
 
   for row in test_vectors:
@@ -229,9 +208,9 @@ def Verify( model_name, test_vector, verbosity = 'normal', *args, **kwargs ):
   v_print( 'Verify() working on {} with {}...\n'.format( model_name,
       test_vector ) )
 
-  model = verification_init( model_name, *args, **kwargs )
-
   try:
+    model = verification_init( model_name, *args, **kwargs )
+
     verification_test_vector( model, model.imported_model, test_vector )
   except Exception as e:
     n_print( 'Exception caught! {0} with the following message\n{1}'.format(

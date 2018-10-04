@@ -80,17 +80,17 @@ class {top_module}( RTLComponent ):
       # FIXME: currently write all outputs, not just combinational outs
       {set_comb}
 
-    @s.update_on_edge
-    def tick():
+    # @s.update_on_edge
+    # def tick():
 
-      s._ffi_m.clk[0] = 0
-      s._ffi_inst.eval( s._ffi_m )
-      s._ffi_m.clk[0] = 1
-      s._ffi_inst.eval( s._ffi_m )
+      # s._ffi_m.clk[0] = 0
+      # s._ffi_inst.eval( s._ffi_m )
+      # s._ffi_m.clk[0] = 1
+      # s._ffi_inst.eval( s._ffi_m )
 
-      # double buffer register outputs
-      # FIXME: currently write all outputs, not just registered outs
-      {set_next}
+      # # double buffer register outputs
+      # # FIXME: currently write all outputs, not just registered outs
+      # {set_next}
 
   def line_trace( s ):
     return {line_trace}

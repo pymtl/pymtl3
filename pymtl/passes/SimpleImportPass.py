@@ -118,6 +118,7 @@ class SimpleImportPass( BasePass ):
                          '--unroll-stmts 1000000',
                          '--assert',
                          '-Wno-UNOPTFLAT', 
+                         '-Wno-UNSIGNED',
                       ] )
 
     verilator_cmd = verilator_cmd.format( **vars() )
