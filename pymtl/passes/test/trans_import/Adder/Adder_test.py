@@ -1,3 +1,8 @@
+#========================================================================
+# Adder_test.py
+#========================================================================
+# Testing the translation and import pass with an adder implementation.
+
 from pymtl import *
 from pymtl.passes.test.trans_import.Verify import Verify
 

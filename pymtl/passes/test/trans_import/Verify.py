@@ -1,8 +1,11 @@
-#--------------------------------------------------------
+#========================================================================
 # Verify.py
-#--------------------------------------------------------
+#========================================================================
 # Verify the correctness of the translation pass and the
 # import pass.
+# 
+# Author : Peitian Pan
+# Date   : Oct 18, 2018
 
 import os
 import sys
@@ -243,5 +246,5 @@ def Verify( model_name, test_vector, verbosity = 'normal', *args, **kwargs ):
     model = None
 
     v_print( '==========================================' )
-    n_print( 'Verify() pass finished!' )
+    n_print( 'Verify() finished!' )
     v_print( '==========================================' )

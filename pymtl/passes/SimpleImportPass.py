@@ -1,10 +1,12 @@
-#-------------------------------------------------------------------------
+#========================================================================
 # SimpleImportPass.py
-#-------------------------------------------------------------------------
+#========================================================================
 # SimpleImportPass class imports a Verilog/SystemVerilog source file
 # back to a PyMTL RTLComponent. It is meant to be used on files generated
 # by SystemVerilogTranslationPass(). 
-#-------------------------------------------------------------------------
+# 
+# Author : Peitian Pan
+# Date   : Oct 18, 2018
 
 import os
 import re

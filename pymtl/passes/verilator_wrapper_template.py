@@ -1,6 +1,6 @@
-#=======================================================================
+#========================================================================
 # V{top_module}_v.py
-#=======================================================================
+#========================================================================
 # This wrapper makes a Verilator-generated C++ model appear as if it
 # were a normal PyMTL model.
 
@@ -89,7 +89,7 @@ class {top_module}( RTLComponent ):
       # s._ffi_inst.eval( s._ffi_m )
 
       # # double buffer register outputs
-      # # FIXME: currently write all outputs, not just registered outs
+      # # FIXME: currently treat all outputs as combinational outs
       # {set_next}
 
   def line_trace( s ):

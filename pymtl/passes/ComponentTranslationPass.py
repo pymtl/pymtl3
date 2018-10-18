@@ -1,9 +1,15 @@
-#--------------------------------------------------------------
+#========================================================================
 # ComponentTranslationPass.py
-#--------------------------------------------------------------
-# Translation pass for a single RTLComponent instance.
-# This pass will recursively translate all child components.
-#--------------------------------------------------------------
+#========================================================================
+# Translation pass for a single RTLComponent instance. This pass will 
+# recursively translate all child components. Please note that the current
+# version of translation pass might generate multiple definitions for the
+# same Verilog module. We plan to fix this by adding a uniqueness checking
+# pass so that modules of the same type (and parameters) are translated
+# only once.
+#
+# Author : Shunning Jiang, Peitian Pan
+# Date   : Oct 18, 2018
 
 import re
 from pymtl        import *

@@ -1,8 +1,11 @@
-#---------------------------------
+#========================================================================
 # TranslationPass_test.py
-#---------------------------------
+#========================================================================
 # This is the file that generates the test model and the test vector 
 # for verification purposes. 
+# 
+# Author : Peitian Pan
+# Date   : Oct 18, 2018
 
 from pymtl import *
 from pymtl.passes.test.trans_import.Verify import Verify
@@ -164,5 +167,5 @@ def test_comb_upblk_trans_st( comb_upblk ):
 
   Verify( 'CombUpblkTestModel', test_vector, verbosity = 'normal' )
 
-if __name__ == '__main__':
-  test_comb_upblk_trans_st()
+# if __name__ == '__main__':
+  # test_comb_upblk_trans_st()
