@@ -1,3 +1,9 @@
+#--------------------------------------------------------
+# Verify.py
+#--------------------------------------------------------
+# Verify the correctness of the translation pass and the
+# import pass.
+
 import os
 import sys
 
@@ -8,7 +14,11 @@ from pymtl.passes.SystemVerilogTranslationPass import\
 from pymtl.passes.SimpleImportPass import SimpleImportPass as ImportPass
 from pymtl.passes.SimpleImportPass import get_array_name, get_array_idx
 
+# Global variable for determing the verbosity of the output
+
 g_verbosity = ''
+
+# Print functions that conforms to the global verbosity setting
 
 def n_print( s ):
   if g_verbosity == 'normal':
@@ -24,7 +34,10 @@ def d_print( s ):
 
 def verification_init( model_name, *args, **kwargs ):
   """ translate model_name and import it back to get ready for
-  verification"""
+  the verification"""
+
+  # We work under a new directory in the current working directory
+  # to keep the pwd tidy.
 
   working_dir = os.path.dirname( os.path.realpath( __file__ ) ) \
                 + os.path.sep + model_name
@@ -199,7 +212,9 @@ def verification_test_vector( ref_model, imported_model, test_vectors ):
   d_print( 'verification_test_vector() exits successfully!' )
 
 def Verify( model_name, test_vector, verbosity = 'normal', *args, **kwargs ):
-  """ work on passes/test/<model_name> where all temp files are stored """
+  """ Verify the correctness of the translation and import pass by
+  comparing the output of the reference model and the imported model.
+  Work under passes/trans_import/<model_name> where all temp files are stored """
 
   global g_verbosity 
 

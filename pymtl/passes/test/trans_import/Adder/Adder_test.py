@@ -12,16 +12,8 @@ test_vector = [
 
 def test_Adder_32( ):
 
-  verify( 'Adder', test_vector, Bits32 ) 
+  Verify( 'Adder', test_vector, 'normal', Bits32 ) 
 
 def test_Adder_16( ):
 
-  verify( 'Adder', test_vector, Bits16 )
-
-def test_Adder_8( ):
-
-  verify( 'Adder', test_vector, Bits8 )
-
-if __name__ == '__main__':
-  test_Adder_32()
-  test_Adder_8()
+  Verify( 'Adder', test_vector, 'normal', Bits16 )

@@ -2,14 +2,9 @@
 # SimpleImportPass.py
 #-------------------------------------------------------------------------
 # SimpleImportPass class imports a Verilog/SystemVerilog source file
-# back to a PyMTL RTLComponent. It is meant to be used with
-# TranslationPass() as a PyMTL translation pass testing infrastructure. 
-# This pass does the following steps:
-# 1. Use verilator to compile the given Verilog source into C++.
-# 2. Create a C++ wrapper that can call the Verilated model.
-# 3. Compile the C++ wrapper and the Verilated model into a shared lib.
-# 4. Create a Python wrapper that can call the compiled shared lib
-#     through CFFI. 
+# back to a PyMTL RTLComponent. It is meant to be used on files generated
+# by SystemVerilogTranslationPass(). 
+#-------------------------------------------------------------------------
 
 import os
 import re
@@ -22,7 +17,7 @@ from subprocess     import check_output, STDOUT, CalledProcessError
 from errors         import VerilatorCompileError, PyMTLImportError
 from SimRTLPass     import SimRTLPass
 
-# Better indention
+# Indention const strings
 
 tab2 = '\n  '
 tab4 = '\n    '
@@ -34,6 +29,13 @@ class SimpleImportPass( BasePass ):
   def __call__( s, model ):
     """ Import a Verilog/SystemVerilog file. model is the PyMTL source of
         the input verilog file. """
+
+    # This pass includes the following steps:
+    # 1. Use verilator to compile the given Verilog source into C++.
+    # 2. Create a C++ wrapper that can call the Verilated model.
+    # 3. Compile the C++ wrapper and the Verilated model into a shared lib.
+    # 4. Create a Python wrapper that can call the compiled shared lib
+    #     through CFFI. 
 
     # model should have been translated
 
@@ -87,7 +89,7 @@ class SimpleImportPass( BasePass ):
     py_wrapper = py_wrapper_file.split('.')[0]
 
     if py_wrapper in sys.modules:
-      # We are in a repeatedly running test process
+      # We are (probably) in a repeatedly running test process
       # Reloading is needed since user may have updated the source file
       exec( "reload( sys.modules[ '{py_wrapper}' ] )".format( **locals() ) )
       exec( "ImportedModel = sys.modules[ '{py_wrapper}' ].{top_module}".\
@@ -138,7 +140,7 @@ class SimpleImportPass( BasePass ):
     """ create wrapper for verilated model so that later we can
         access it through cffi """
 
-    # the template should be in the same directory as this file
+    # The template should be in the same directory as this file
 
     template_file = os.path.dirname( os.path.abspath( __file__ ) ) + \
                     os.path.sep + 'verilator_wrapper_template.c'
@@ -294,7 +296,7 @@ class SimpleImportPass( BasePass ):
         if get_array_idx( name ) != 0:
           continue
         else:
-          # Only create definition for the element of index 0
+          # Only create definition for list element of index 0
           nbits = port.Type.nbits
           array_range = array_dict[ get_array_name( name ) ]
           name = get_array_name( name )
@@ -319,7 +321,7 @@ class SimpleImportPass( BasePass ):
         if get_array_idx( name ) != 0:
           continue
         else:
-          # Only create definition for the element of index 0
+          # Only create definition for the list element of index 0
           nbits = port.Type.nbits
           array_range = array_dict[ get_array_name( name ) ]
           name = get_array_name( name )
@@ -365,7 +367,7 @@ class SimpleImportPass( BasePass ):
 
   def try_cmd( s, name, cmd, exception = Exception, shell = False ):
     """ try to do name action with cmd command
-        if the command fails, exception is raised
+        if the command fails, CalledProcessError exception is raised
     """
 
     try:
@@ -392,7 +394,7 @@ class SimpleImportPass( BasePass ):
       ) )
 
   def collect_array_ports( s, array_dict, ports ):
-    """ fill array_dict with port names and ranges """
+    """ fill array_dict with port names and index ranges """
     for port in ports:
       if '[' in port._my_name:
         array_name    = get_array_name( port._my_name )
@@ -440,6 +442,7 @@ class SimpleImportPass( BasePass ):
     dereference    = '&' if bitwidth <= 64 else ''
 
     if '[' in port._my_name:
+      # This is a list of ports
       name = get_array_name( port._my_name )
       ret.append( 'for( int i = 0; i < {array_range}; i++ )'.format(\
             array_range = array_dict[ name ]
@@ -580,12 +583,13 @@ class SimpleImportPass( BasePass ):
       # next_.append( stmt )
 
     comb = outputs
-    # FIXME: which type of update block does this variable come from?
+    # TODO: currently only work on combinational upblks
     # next_ = outputs
     return comb, next_
 
   def get_indices( s, port ):
-    ''' help determining assignment of wide ports '''
+    ''' generate a list of idx-offset tuples to copy data from verilated
+    model to PyMTL model'''
     num_assigns = 1 if port.Type.nbits <= 64 else (port.Type.nbits-1)/32+1
     if num_assigns == 1:
       return [(0, '')]

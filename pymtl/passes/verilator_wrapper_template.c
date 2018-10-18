@@ -1,7 +1,8 @@
 //======================================================================
 // V{top_module}_v.cpp
 //======================================================================
-// This wrapper exposes a C interface to CFFI so that a
+// This file provides a template for the C wrapper used in the import
+// pass. The wrapper exposes a C interface to CFFI so that a
 // Verilator-generated C++ model can be driven from Python.
 //
 

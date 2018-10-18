@@ -1,8 +1,11 @@
 #--------------------------------------------------------------
-# Translation pass for a single RTLComponent instance
-# This pass will recursively translate all child components
+# ComponentTranslationPass.py
+#--------------------------------------------------------------
+# Translation pass for a single RTLComponent instance.
+# This pass will recursively translate all child components.
 #--------------------------------------------------------------
 
+import re
 from pymtl        import *
 from pymtl.model  import ComponentLevel1
 from BasePass     import BasePass
@@ -10,8 +13,6 @@ from collections  import defaultdict, deque
 from errors       import TranslationError
 
 from UpblkTranslationPass import UpblkTranslationPass
-
-import re
 
 svmodule_template = """\
 module {module_name}
@@ -50,6 +51,7 @@ class ComponentTranslationPass( BasePass ):
 
   def __call__( s, m ):
     """ translates a single RTLComponent instance and returns its source """
+
     module_name = m.__class__.__name__
 
     connections_self_self    = s._connections_self_self[ m ]
@@ -136,7 +138,7 @@ class ComponentTranslationPass( BasePass ):
     children_decls = '\n  '.join( children_strs )
 
     #-------------------------------------------------------------------
-    # Assignments
+    # Continuous Assignments
     #-------------------------------------------------------------------
 
     assign_strs = []
@@ -202,6 +204,7 @@ class ComponentTranslationPass( BasePass ):
 
 def gen_sv_signal_name( array_dict, direction, ports ):
   """ generate in/out port declarations """
+
   ret = []
 
   # Collect all array ports

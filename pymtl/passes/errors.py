@@ -34,3 +34,8 @@ class PyMTLImportError( Exception ):
   def __init__( self, err ):
     return super( PyMTLImportError, self ).__init__( err )
 
+class PyMTLSyntaxError( Exception ):
+  """ Raise error when linting pass finds error """
+  def __init__( self, err ):
+    return super( PyMTLSyntaxError, self ).__init__( err )
+

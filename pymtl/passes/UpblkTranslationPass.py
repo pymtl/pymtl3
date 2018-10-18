@@ -1,7 +1,10 @@
 #--------------------------------------------------------------
-# Translation pass for update blocks
+# UpblkTranslationPass.py
+#--------------------------------------------------------------
+# Translation pass for all update blocks within one component. 
 #--------------------------------------------------------------
 
+import ast
 from pymtl        import *
 from pymtl.model  import ComponentLevel1
 from BasePass     import BasePass
@@ -9,11 +12,11 @@ from collections  import defaultdict, deque
 from errors       import TranslationError
 from inspect      import getsource
 
-import ast
-
 class UpblkTranslationPass( BasePass ):
 
   def __call__( s, m ):
+    """ translate all upblks in component m and return the source code
+    string"""
 
     blk_srcs = ''
 
@@ -97,11 +100,15 @@ class UpblkTranslator( ast.NodeVisitor ):
   #---------------------------------------------------------------------
 
   def visit_Module( s, node ):
-    assert len( node.body ) == 1 and isinstance( node.body[0], ast.FunctionDef)
+    if len( node.body ) != 1 or not isinstance( node.body[0], \
+        ast.FunctionDef ):
+      raise TranslationError( s.blk, 'Upblk should contain exactly one FuncDef!' )
     return s.visit( node.body[0] )
 
   def visit_FunctionDef( s, node ):
-    assert len( node.decorator_list ) == 1
+    if len( node.decorator_list ) != 1:
+      raise TranslationError( s.blk, 'Upblk should have exactly one decorator!' )
+
     decorator_attr = node.decorator_list[0].attr
 
     if decorator_attr not in [ 'update', 'func', 'update_on_edge' ]:
@@ -215,6 +222,7 @@ class UpblkTranslator( ast.NodeVisitor ):
                               s.visit_expr_wrap( node.comparators[0] ) )
 
   def visit_Call( s, node ):
+    # Some data types are interpreted as function calls in the Python AST
     # Example: Bits4(2)
     actual_node = node.func
 
@@ -289,7 +297,7 @@ class UpblkTranslator( ast.NodeVisitor ):
     elif node.id in s.closure:
       return s.closure[ node.id ]
     else:
-      # Temporary variable encountered
+      # Temporary variable encountered, currently unsupported
       assert False
 
   def visit_Num( s, node ):
@@ -302,7 +310,7 @@ class UpblkTranslator( ast.NodeVisitor ):
     return s.visit( node.value )
 
   #---------------------------------------------------------------------
-  # TODO: Some other AST nodes
+  # TODO: Support some other AST nodes
   #---------------------------------------------------------------------
 
   # $display
