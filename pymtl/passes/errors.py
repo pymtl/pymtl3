@@ -19,23 +19,26 @@ class ModelTypeError( Exception ):
     "This pass can only be applied to {}".format( typename ) )
 
 class TranslationError( Exception ):
-  """ Raise translation goes wrong """
+  """ Raise when translation goes wrong """
   def __init__( self, blk, x ):
     return super( TranslationError, self ).__init__( \
-    "{} {}".format( blk.__name__, x ) )
+    "Error while translating {}. {}".format( blk.__name__, x ) )
 
 class VerilatorCompileError( Exception ):
 	""" Compiling error for verilator """
 	def __init__( self, err ):
-		return super( VerilatorCompileError, self ).__init__( err )
+		return super( VerilatorCompileError, self ).__init__( \
+        "Verilator compilation error: {}".format( err ) )
 
 class PyMTLImportError( Exception ):
   """ Raise error when import goes wrong """
-  def __init__( self, err ):
-    return super( PyMTLImportError, self ).__init__( err )
+  def __init__( self, model_name, err ):
+    return super( PyMTLImportError, self ).__init__( \
+        "Error while importing instance of {}: {}".format( model_name, err ) )
 
 class PyMTLSyntaxError( Exception ):
-  """ Raise error when linting pass finds error """
+  """ Raise error when the RAST transforming pass finds a syntax error """
   def __init__( self, err ):
-    return super( PyMTLSyntaxError, self ).__init__( err )
+    return super( PyMTLSyntaxError, self ).__init__( \
+        "RAST syntax error: {}".format( err ) )
 

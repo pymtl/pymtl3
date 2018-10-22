@@ -2,7 +2,8 @@
 # V{top_module}_v.py
 #========================================================================
 # This wrapper makes a Verilator-generated C++ model appear as if it
-# were a normal PyMTL model.
+# were a normal PyMTL model. This template is based on PyMTL v2 by 
+# Derek Lockhart.
 
 import os
 
@@ -80,6 +81,7 @@ class {top_module}( RTLComponent ):
       # FIXME: currently write all outputs, not just combinational outs
       {set_comb}
 
+    # The support for sequential logics will be added later.
     # @s.update_on_edge
     # def tick():
 

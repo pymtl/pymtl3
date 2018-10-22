@@ -8,16 +8,16 @@
 # pass so that modules of the same type (and parameters) are translated
 # only once.
 #
-# Author          : Shunning Jiang
-# Refactored by   : Peitian Pan
+# Author          : Shunning Jiang, Peitian Pan
 # Date            : Oct 18, 2018
 
 import re
-from pymtl        import *
-from pymtl.model  import ComponentLevel1
-from BasePass     import BasePass
-from collections  import defaultdict, deque
-from errors       import TranslationError
+
+from pymtl       import *
+from pymtl.model import ComponentLevel1
+from BasePass    import BasePass
+from collections import defaultdict, deque
+from errors      import TranslationError
 
 from UpblkTranslationPass import UpblkTranslationPass
 
@@ -52,18 +52,18 @@ class ComponentTranslationPass( BasePass ):
                    connections_child_child ):
     """ the connections are needed in recursive component translation """
 
-    s._connections_self_self    = connections_self_self
-    s._connections_self_child   = connections_self_child
-    s._connections_child_child  = connections_child_child
+    s._connections_self_self   = connections_self_self
+    s._connections_self_child  = connections_self_child
+    s._connections_child_child = connections_child_child
 
   def __call__( s, m ):
     """ translates a single RTLComponent instance and returns its source """
 
     module_name = m.__class__.__name__
 
-    connections_self_self    = s._connections_self_self[ m ]
-    connections_self_child   = s._connections_self_child[ m ]
-    connections_child_child  = s._connections_child_child[ m ]
+    connections_self_self   = s._connections_self_self[ m ]
+    connections_self_child  = s._connections_self_child[ m ]
+    connections_child_child = s._connections_child_child[ m ]
 
     #-------------------------------------------------------------------
     # Input/output declarations
@@ -72,15 +72,18 @@ class ComponentTranslationPass( BasePass ):
     # Keep track of array ports
     array_port_dict = {}
 
-    input_strs  = gen_sv_signal_name( array_port_dict, 'input ', \
-        sorted( m.get_input_value_ports(), key = repr ) )
+    input_strs = gen_sv_signal_name( array_port_dict, 'input ', \
+      sorted( m.get_input_value_ports(), key = repr ) 
+    )
 
-    output_strs  = gen_sv_signal_name( array_port_dict, 'output ', \
-        sorted( m.get_output_value_ports(), key = repr ) )
+    output_strs = gen_sv_signal_name( array_port_dict, 'output ', \
+      sorted( m.get_output_value_ports(), key = repr ) 
+    )
 
     input_decls = ',\n  '.join( input_strs )
 
-    if output_strs: input_decls += ','
+    if output_strs: 
+      input_decls += ','
 
     output_decls = ',\n  '.join( output_strs )
 
@@ -93,7 +96,8 @@ class ComponentTranslationPass( BasePass ):
     array_wire_dict = {}
 
     wire_strs = gen_sv_signal_name( array_wire_dict, '', \
-        sorted( m.get_wires(), key = repr ) )
+      sorted( m.get_wires(), key = repr ) 
+    )
 
     wire_decls = ';\n  '.join( wire_strs )
     wire_decls += ';'
@@ -112,9 +116,9 @@ class ComponentTranslationPass( BasePass ):
       # Turn a child's input ports into temporary signal declaration and
       # wiring in instantiation
 
-      sig_decls   = []
-      in_wiring   = []
-      out_wiring  = []
+      sig_decls  = []
+      in_wiring  = []
+      out_wiring = []
 
       # TODO: align all declarations
       for port in sorted( child.get_input_value_ports(), key=repr ):
@@ -151,32 +155,38 @@ class ComponentTranslationPass( BasePass ):
     assign_strs = []
 
     for writer, reader in connections_self_self:
-      assign_strs.append( 'assign {} = {};'.format( reader.get_field_name(), 
-                                                    writer.get_field_name() ) 
-                        )
+      assign_strs.append( 'assign {} = {};'.\
+        format( reader.get_field_name(), writer.get_field_name() ) 
+      )
 
     for writer, reader in connections_child_child:
-      assign_strs.append( 'assign {}${} = {}${};'.format(
-                          reader.get_host_component().get_field_name(),
-                          reader.get_field_name(), 
-                          writer.get_host_component().get_field_name(), 
-                          writer.get_field_name() )
-                        )
+      assign_strs.append( 'assign {}${} = {}${};'.\
+        format(
+          reader.get_host_component().get_field_name(),
+          reader.get_field_name(), 
+          writer.get_host_component().get_field_name(), 
+          writer.get_field_name() 
+        )
+      )
 
     for writer, reader in connections_self_child:
       if writer.get_host_component() is m:
-        assign_strs.append( 'assign {}${} = {};'.format(
-                            reader.get_host_component().get_field_name(), 
-                            reader.get_field_name(), 
-                            writer.get_field_name() )
-                          )
+        assign_strs.append( 'assign {}${} = {};'.\
+          format(
+            reader.get_host_component().get_field_name(), 
+            reader.get_field_name(), 
+            writer.get_field_name() 
+          )
+        )
 
       else:
-        assign_strs.append( 'assign {} = {}${};'.format(
-                            reader.get_field_name(), 
-                            writer.get_host_component().get_field_name(), 
-                            writer.get_field_name() )
-                          )
+        assign_strs.append( 'assign {} = {}${};'.\
+          format(
+            reader.get_field_name(), 
+            writer.get_host_component().get_field_name(), 
+            writer.get_field_name() 
+          )
+        )
 
     assignments = '\n  '.join( assign_strs )
 
@@ -190,7 +200,7 @@ class ComponentTranslationPass( BasePass ):
     # Assemble all translated parts
     #-------------------------------------------------------------------
 
-    ret =  svmodule_template.format( **vars() )
+    ret = svmodule_template.format( **vars() )
 
     #-------------------------------------------------------------------
     # Append the source code of child components at the end 
@@ -198,10 +208,10 @@ class ComponentTranslationPass( BasePass ):
 
     for obj in sorted( m.get_child_components(), key = repr ):
       ret += ComponentTranslationPass(
-            s._connections_self_self, 
-            s._connections_self_child, 
-            s._connections_child_child
-          )( obj )
+        s._connections_self_self, 
+        s._connections_self_child, 
+        s._connections_child_child
+      )( obj )
 
     return ret
 
@@ -228,7 +238,7 @@ def gen_sv_signal_name( array_dict, direction, ports ):
 
   # Generate signal declarations for all ports
   for port in ports:
-    name = port._my_name
+    name  = port._my_name
     nbits = port.Type.nbits
     width = '' if nbits == 0 else ' [{}:0]'.format( nbits - 1 )
     if not '[' in name:
@@ -239,8 +249,10 @@ def gen_sv_signal_name( array_dict, direction, ports ):
       if get_array_idx( name ) == 0:    # e.g. in_[0]
         name = get_array_name( name )
         array_range = str( array_dict[ name ] )
-        ret.append('{direction}logic{width} {name}[{array_range}]'.\
-            format( **locals() ) )
+        array_range = str( int(array_range) - 1 )
+        ret.append('{direction}logic{width} {name}[0:{array_range}]'.\
+            format( **locals() ) 
+        )
 
   return ret
 

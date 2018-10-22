@@ -7,12 +7,15 @@
 # Author : Peitian Pan
 # Date   : Oct 18, 2018
 
-from pymtl import *
-from pymtl.passes.test.trans_import.Verify import Verify
-from hypothesis import given, settings, HealthCheck, unlimited, seed
-from copy       import deepcopy
-import hypothesis.strategies as st
+from   pymtl      import *
+from   hypothesis import given, settings, HealthCheck, unlimited, seed
+from   copy       import deepcopy
+
 import random
+import hypothesis.strategies as st
+
+# Import the verification infrastructure
+from   pymtl.passes.test.trans_import.Verify import Verify
 
 @st.composite
 def CombinationalUpblkStrategy( draw ):
@@ -71,39 +74,39 @@ class CombUpblkTestModel( RTLComponent ):
 
   operators_st     = st.sampled_from( [ '+', '-', '<<', '>>' ] )
   
-  cmp_st          = st.sampled_from( [ '==', '!=', '<', '>' ] )
+  cmp_st           = st.sampled_from( [ '==', '!=', '<', '>' ] )
 
   # Strategy for a constant
 
-  literal_st      = st.builds( lambda n: 'Bits32({})'.format( n ),
-        st.integers( min_value = 1, max_value = 1024 ) 
-      )
+  literal_st       = st.builds( lambda n: 'Bits32({})'.format( n ),
+    st.integers( min_value = 1, max_value = 1024 ) 
+  )
 
   # Strategies for the lhs and rhs of an assignment
 
-  lhs_st          = st.one_of( out_port_st )
-  rhs_st          = st.one_of( literal_st, in_port_st )
+  lhs_st           = st.one_of( out_port_st )
+  rhs_st           = st.one_of( literal_st, in_port_st )
 
   # Strategy for an expression. 
   # An expression should be the op result of two expressions.
   # The base case for an expression is one example from rhs. 
 
-  expr_deferred_st= st.deferred( lambda: expr_st )
+  expr_deferred_st = st.deferred( lambda: expr_st )
 
-  expr_st         = st.one_of( rhs_st, st.builds(
+  expr_st          = st.one_of( rhs_st, st.builds(
     lambda exprl, op, exprr: '{exprl} {op} {exprr}'.format( **locals() ),
     expr_deferred_st, operators_st, expr_deferred_st
-    ) )
+  ) )
 
   # Strategy for comparison term. 
 
-  cmp_term_st     = st.builds( cmp_term, expr_st, cmp_st, expr_st )
+  cmp_term_st      = st.builds( cmp_term, expr_st, cmp_st, expr_st )
 
   # Strategy for if condition 
 
-  if_cond_st      = st.builds( if_cond, 
-      st.lists( cmp_term_st, min_size = 1, max_size = 3 )
-    )
+  if_cond_st       = st.builds( if_cond, 
+    st.lists( cmp_term_st, min_size = 1, max_size = 3 )
+  )
 
   # Strategy for defining recursive statement strategy
 
@@ -112,25 +115,26 @@ class CombUpblkTestModel( RTLComponent ):
   # Strategy for one assignment
 
   upblk_assign_st   = st.builds( lambda lhs, expr: 
-          '{lhs} = {expr}'.format( **locals() ), lhs_st, expr_st 
-      )
+    '{lhs} = {expr}'.format( **locals() ), lhs_st, expr_st 
+  )
 
   # Strategies for if and if-else statements 
 
   upblk_if_st       = st.builds( lambda cond, stmts:
-      '{}\n{}'.format( cond, stmts ), if_cond_st, stmts_deferred_st )
+    '{}\n{}'.format( cond, stmts ), if_cond_st, stmts_deferred_st 
+  )
 
   upblk_if_else_st  = st.builds( lambda cond, stmts, stmts_else:
-        '{}\n{}\nelse:\n{}'.format( cond, stmts, stmts_else ), 
-        if_cond_st, stmts_deferred_st, stmts_deferred_st
-      )
+    '{}\n{}\nelse:\n{}'.format( cond, stmts, stmts_else ), 
+    if_cond_st, stmts_deferred_st, stmts_deferred_st
+  )
 
   # upblk_stmts should be a list of stmts: assignment, if, if-else
 
   upblk_stmts_st    = st.builds( indent, st.lists( 
-          upblk_assign_st | upblk_if_st | upblk_if_else_st, 
-          min_size = 1, max_size = 4
-    ) )
+    upblk_assign_st | upblk_if_st | upblk_if_else_st, 
+    min_size = 1, max_size = 4
+  ) )
 
   upblk_body = indent( [ draw( upblk_stmts_st ) ], level = 2 )
 
@@ -146,16 +150,18 @@ class CombUpblkTestModel( RTLComponent ):
 
   # Generate line trace function for the test model
 
-  line_trace = "'in_:{}, out:{}'.format(s.in_, s.out)"
+  line_trace = "'in_={}, out={}'.format( s.in_, s.out )"
 
   return ( upblk_tmpl.format( **locals() ), deepcopy( test_vector ) ) 
 
-@given( CombinationalUpblkStrategy() )
+@given( comb_upblk = CombinationalUpblkStrategy() )
 @settings( timeout = unlimited, deadline = None,
   suppress_health_check = [ HealthCheck.too_slow ] ) 
-def test_comb_upblk_trans_st( comb_upblk ):
+def test_comb_upblk_trans_st( comb_upblk, pytestconfig ):
 
   py_src, test_vector = comb_upblk
+
+  verbosity = pytestconfig.getoption( 'verbose' )
 
   with open( 'CombUpblkTestModel.py', 'w' ) as output_file:
     output_file.write( py_src )
@@ -165,7 +171,7 @@ def test_comb_upblk_trans_st( comb_upblk ):
   print 'py_src: '
   print py_src
 
-  Verify( 'CombUpblkTestModel', test_vector, verbosity = 'normal' )
+  Verify( 'CombUpblkTestModel', test_vector, verbosity )
 
 # if __name__ == '__main__':
   # test_comb_upblk_trans_st()

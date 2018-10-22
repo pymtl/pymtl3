@@ -3,8 +3,7 @@
 #========================================================================
 # Translation pass for all update blocks within one component. 
 #
-# Author          : Shunning Jiang
-# Refactored by   : Peitian Pan
+# Author          : Shunning Jiang, Peitian Pan
 # Date            : Oct 18, 2018
 
 import ast
@@ -65,9 +64,11 @@ class UpblkTranslator( ast.NodeVisitor ):
     for i, var in enumerate( blk.func_code.co_freevars ):
 
       # Try to collect the cell contents passed by decorators
-      try: s.closure[ var ] = blk.func_closure[ i ].cell_contents
+      try: 
+        s.closure[ var ] = blk.func_closure[ i ].cell_contents
       # It's OK if the decorator doesn't pass any parameters
-      except ValueError: pass
+      except ValueError: 
+        pass
 
     ret = s.visit( ast )
 
@@ -103,8 +104,7 @@ class UpblkTranslator( ast.NodeVisitor ):
   #---------------------------------------------------------------------
 
   def visit_Module( s, node ):
-    if len( node.body ) != 1 or not isinstance( node.body[0], \
-        ast.FunctionDef ):
+    if len( node.body ) != 1 or not isinstance( node.body[0], ast.FunctionDef ):
       raise TranslationError( s.blk, 'Upblk should contain exactly one FuncDef!' )
     return s.visit( node.body[0] )
 
@@ -143,8 +143,11 @@ class UpblkTranslator( ast.NodeVisitor ):
     assign  = '<=' if s.inside_posedge_block else '='
     rhs     = s.visit( node.value )
 
-    return ''.join( [ s.newline( '{} {} {};'.\
-      format( s.visit( lhs ), assign, rhs ) ) for lhs in node.targets ] )
+    return ''.join( [ 
+      s.newline( '{} {} {};'.\
+        format( s.visit( lhs ), assign, rhs )\
+      ) for lhs in node.targets 
+    ] )
 
   def visit_AugAssign( s, node ): 
     lhs     = s.visit( node.target )
@@ -195,17 +198,26 @@ class UpblkTranslator( ast.NodeVisitor ):
     return s.newline( s.visit( node.value ) + ';' )
 
   def visit_BoolOp( s, node ):
-    return '{}'.format( ' {} '.format( opmap[ type(node.op) ] ) \
-               .join( [ s.visit_expr_wrap( expr ) for expr in node.values ] ) )
+    return '{}'.\
+      format( ' {} '.\
+        format( opmap[ type(node.op) ] ) \
+        .join( [ s.visit_expr_wrap( expr ) for expr in node.values ] )
+      )
 
   def visit_BinOp( s, node ):
-    return '{} {} {}'.format( s.visit_expr_wrap( node.left ), 
-                              opmap[ type(node.op) ], 
-                              s.visit_expr_wrap( node.right ) )
+    return '{} {} {}'.\
+      format(\
+        s.visit_expr_wrap( node.left ), 
+        opmap[ type(node.op) ], 
+        s.visit_expr_wrap( node.right )
+      )
 
   def visit_UnaryOp( s, node ):
-    return '{}{}'.format( opmap[ type(node.op) ], 
-                          s.visit_expr_wrap( node.operand ) )
+    return '{}{}'.\
+      format(\
+        opmap[ type(node.op) ], 
+        s.visit_expr_wrap( node.operand ) 
+      )
 
   def visit_IfExp( s, node ):
     return '{} ? {} : {}'.format( s.visit_expr_wrap( node.test ), 
@@ -217,12 +229,16 @@ class UpblkTranslator( ast.NodeVisitor ):
     try: 
       assert len( node.ops ) == 1
     except AssertionError:
-      raise TranslationError( s.blk, node, 'The number of comparators \
-                                            should be one' )
+      raise TranslationError( 
+        s.blk, node, 'The number of comparators should be one' 
+      )
 
-    return '{} {} {}'.format( s.visit_expr_wrap( node.left ), 
-                              opmap[ type(node.ops[0]) ], 
-                              s.visit_expr_wrap( node.comparators[0] ) )
+    return '{} {} {}'.\
+      format(\
+        s.visit_expr_wrap( node.left ), 
+        opmap[ type(node.ops[0]) ], 
+        s.visit_expr_wrap( node.comparators[0] ) 
+      )
 
   def visit_Call( s, node ):
     # Some data types are interpreted as function calls in the Python AST
@@ -247,9 +263,11 @@ class UpblkTranslator( ast.NodeVisitor ):
     try:
       nbits = call.nbits
     except AttributeError as e: 
-      return '{}( {} )'.format( call.__name__, 
-                                ', '.join( [ s.visit( arg ) 
-                                             for arg in node.args ] ) )
+      return '{}( {} )'.\
+        format(\
+          call.__name__, 
+          ', '.join( [ s.visit( arg ) for arg in node.args ] ) 
+        )
 
     assert len( node.args ) == 1
     arg = node.args[0]

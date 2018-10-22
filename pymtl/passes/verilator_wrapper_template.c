@@ -4,7 +4,7 @@
 // This file provides a template for the C wrapper used in the import
 // pass. The wrapper exposes a C interface to CFFI so that a
 // Verilator-generated C++ model can be driven from Python.
-//
+// This templated is based on PyMTL v2 by Derek Lockhart.
 
 #include "obj_dir_{top_module}/V{top_module}.h"
 #include "stdio.h"

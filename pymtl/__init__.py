@@ -15,6 +15,11 @@ __all__ = [
   'RTLComponent',
   'SimpleSim',
   'ComponentLevel6',
+  'SystemVerilogTranslationPass', 
+  # SimpleImportPass only works on tranlsation-pass-generated
+  # files. The user should use an import pass that works on
+  # arbitrary Verilog files, which is not implemented yet.
+  # 'ImportPass',  # Not implemented yet
   # 'PrintMetadataPass', 'EventDrivenPass',
 
   'sext', 'zext', 'clog2', 'concat',

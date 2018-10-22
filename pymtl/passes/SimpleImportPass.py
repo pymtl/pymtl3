@@ -3,7 +3,9 @@
 #========================================================================
 # SimpleImportPass class imports a Verilog/SystemVerilog source file
 # back to a PyMTL RTLComponent. It is meant to be used on files generated
-# by SystemVerilogTranslationPass(). 
+# by SystemVerilogTranslationPass(). Part of this file is based on PyMTL
+# v2 by Derek Lockhart. I added support for ports defined with list
+# comprehension style. 
 # 
 # Author : Peitian Pan
 # Date   : Oct 18, 2018
@@ -42,10 +44,12 @@ class SimpleImportPass( BasePass ):
     # model should have been translated
 
     try:
-      assert model._translated, "SimpleImportPass() only works on\
-      translated components!"
+      assert model._translated, \
+        "SimpleImportPass() only works on translated components!"
     except AttributeError:
-      raise PyMTLImportError( 'ImportPass: the model should be translated!' )
+      raise PyMTLImportError( model.__class__.__name__,\
+        'the target model instance should be translated first!' 
+      )
 
     # Assume the input verilog file has the same name as the class of
     # model
@@ -76,8 +80,8 @@ class SimpleImportPass( BasePass ):
 
     # Create a cpp wrapper for the verilated model
 
-    model.array_dict, port_cdef, c_wrapper = s.create_verilator_c_wrapper( model,\
-        top_module ) 
+    model.array_dict, port_cdef, c_wrapper = \
+      s.create_verilator_c_wrapper( model, top_module ) 
 
     # Compile the cpp wrapper and the verilated model into a shared lib
 
@@ -85,8 +89,9 @@ class SimpleImportPass( BasePass ):
 
     # Create a python wrapper that can access the verilated model
 
-    py_wrapper_file = s.create_verilator_py_wrapper( model, top_module, 
-                                lib_file, port_cdef, model.array_dict )
+    py_wrapper_file = s.create_verilator_py_wrapper( \
+      model, top_module, lib_file, port_cdef, model.array_dict 
+    )
 
     py_wrapper = py_wrapper_file.split('.')[0]
 
@@ -95,15 +100,15 @@ class SimpleImportPass( BasePass ):
       # Reloading is needed since user may have updated the source file
       exec( "reload( sys.modules[ '{py_wrapper}' ] )".format( **locals() ) )
       exec( "ImportedModel = sys.modules[ '{py_wrapper}' ].{top_module}".\
-            format( **locals() )
-          )
+        format( **locals() )
+      )
     else:
       # First time execution
       import_cmd = \
         'from {py_wrapper} import {top_module} as ImportedModel'.\
-            format( py_wrapper = py_wrapper, 
-                    top_module = top_module,
-                )
+        format( py_wrapper = py_wrapper, 
+                top_module = top_module,
+        )
 
       exec( import_cmd )
 
@@ -111,6 +116,7 @@ class SimpleImportPass( BasePass ):
 
   def create_verilator_model( s, verilog_file, top_module ):
     """ Create a verilator file correspoding to the verilog_file model """
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
 
     # Prepare the verilator commandline
 
@@ -118,12 +124,13 @@ class SimpleImportPass( BasePass ):
                     '''{top_module} --Mdir {obj_dir} -O3 {flags}'''
 
     obj_dir = 'obj_dir_' + top_module
-    flags		= ' '.join( ['--unroll-count 1000000',
-                         '--unroll-stmts 1000000',
-                         '--assert',
-                         '-Wno-UNOPTFLAT', 
-                         '-Wno-UNSIGNED',
-                      ] )
+    flags		= ' '.join( [
+      '--unroll-count 1000000',
+     '--unroll-stmts 1000000',
+     '--assert',
+     '-Wno-UNOPTFLAT', 
+     '-Wno-UNSIGNED',
+    ] )
 
     verilator_cmd = verilator_cmd.format( **vars() )
 
@@ -135,17 +142,25 @@ class SimpleImportPass( BasePass ):
 
     # Try to call verilator
 
-    s.try_cmd( 'Calling verilator', verilator_cmd, VerilatorCompileError,
-                shell = True )
+    s.try_cmd( 'Calling verilator', \
+      verilator_cmd, VerilatorCompileError, shell = True 
+    )
 
   def create_verilator_c_wrapper( s, model, top_module ):
     """ create wrapper for verilated model so that later we can
         access it through cffi """
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
+
+    # Peitian, Oct 22, 2018
+    # I added support for port defined using list comprehension so that
+    # definitions like
+    #   s.in_ = [ InVPort( Bits32 ) for x in xrange( 10 ) ]
+    # can be correctly recognized.
 
     # The template should be in the same directory as this file
 
-    template_file = os.path.dirname( os.path.abspath( __file__ ) ) + \
-                    os.path.sep + 'verilator_wrapper_template.c'
+    template_file = os.path.dirname( os.path.abspath( __file__ ) )\
+      + os.path.sep + 'verilator_wrapper_template.c'
 
     verilator_c_wrapper_file = top_module + '_v.cpp'
 
@@ -153,8 +168,10 @@ class SimpleImportPass( BasePass ):
     
     array_dict = {}
 
-    ports = sorted( model.get_input_value_ports() |\
-                    model.get_output_value_ports(), key = repr )
+    ports = sorted(\
+      model.get_input_value_ports() | model.get_output_value_ports(),\
+      key = repr 
+    )
 
     s.collect_array_ports( array_dict, ports )
 
@@ -181,25 +198,27 @@ class SimpleImportPass( BasePass ):
       if '[' in port._my_name and get_array_idx( port._my_name ) != 0:
         continue
       port_inits.extend(
-          map( lambda x: x + tab2, s.port_to_init( array_dict, port ) )
-          )
+        map( lambda x: x + tab2, s.port_to_init( array_dict, port ) )
+      )
 
     port_inits = ''.join( port_inits )
 
-    with open( template_file, 'r' ) as template, \
+    with open( template_file, 'r' )            as template,\
          open( verilator_c_wrapper_file, 'w' ) as output:
 
-          c_wrapper = template.read()
-          c_wrapper = c_wrapper.format( top_module    = top_module,
-                                        port_externs  = port_externs, 
-                                        port_inits    = port_inits,
-                                      )
-          output.write( c_wrapper )
+      c_wrapper = template.read()
+      c_wrapper = c_wrapper.format(\
+          top_module    = top_module,
+          port_externs  = port_externs,
+          port_inits    = port_inits,
+      )
+      output.write( c_wrapper )
 
     return array_dict, port_cdef, verilator_c_wrapper_file
 
   def create_shared_lib( s, model, c_wrapper, top_module ):
     ''' compile the Cpp wrapper and verilated model into a shared lib '''
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
 
     lib_file = 'lib{}_v.so'.format( top_module )
 
@@ -208,9 +227,9 @@ class SimpleImportPass( BasePass ):
     verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
 
     include_dirs = [
-          verilator_include_dir, 
-          verilator_include_dir + '/vltstd',
-        ]
+      verilator_include_dir, 
+      verilator_include_dir + '/vltstd',
+    ]
 
     obj_dir_prefix = 'obj_dir_{}/V{}'.format( top_module, top_module )
 
@@ -235,30 +254,33 @@ class SimpleImportPass( BasePass ):
     # Complete the cpp sources file list
 
     cpp_sources_list += [
-          obj_dir_prefix + '__Syms.cpp', 
-          verilator_include_dir + '/verilated.cpp', 
-          verilator_include_dir + '/verilated_dpi.cpp', 
-          c_wrapper,
-        ]
+      obj_dir_prefix + '__Syms.cpp', 
+      verilator_include_dir + '/verilated.cpp', 
+      verilator_include_dir + '/verilated_dpi.cpp', 
+      c_wrapper,
+    ]
 
     # Call compiler with generated flags & dirs
 
     s.compile(
-        flags           = '-O0 -fPIC -shared', 
-        include_dirs    = include_dirs, 
-        output_file     = lib_file, 
-        input_files     = cpp_sources_list,
-        )
+      flags        = '-O0 -fPIC -shared', 
+      include_dirs = include_dirs, 
+      output_file  = lib_file, 
+      input_files  = cpp_sources_list,
+    )
     
     return lib_file
 
-  def create_verilator_py_wrapper( s, model, top_module, lib_file,\
-      port_cdef, array_dict ):
+  def create_verilator_py_wrapper(\
+      s, model, top_module, lib_file, port_cdef, array_dict 
+  ):
     ''' create a python wrapper that can manipulate the verilated model
-    through the interfaces exposed by Cpp wrapper '''
+    through the interfaces exposed by the Cpp wrapper '''
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
 
-    template_file = os.path.dirname( os.path.abspath( __file__ ) ) + \
-                    os.path.sep + 'verilator_wrapper_template.py'
+    template_file = \
+      os.path.dirname( os.path.abspath( __file__ ) ) \
+      + os.path.sep + 'verilator_wrapper_template.py'
 
     verilator_py_wrapper_file = top_module + '_v.py'
 
@@ -302,16 +324,19 @@ class SimpleImportPass( BasePass ):
           nbits = port.Type.nbits
           array_range = array_dict[ get_array_name( name ) ]
           name = get_array_name( name )
-          port_defs.append( '''s.{name} = [ InVPort(Bits{nbits}) '''
-                            '''for _x in xrange({array_range}) ]'''\
-                            .format( **locals() ) 
-              )
+          port_defs.append(\
+            '''s.{name} = [ InVPort(Bits{nbits}) '''\
+            '''for _x in xrange({array_range}) ]'''.\
+            format( **locals() ) 
+          )
       else:
         # This port is not a list
-        port_defs.append( '{name} = InVPort( Bits{nbits} )'.format(
-            name = port._full_name, 
+        port_defs.append( '{name} = InVPort( Bits{nbits} )'.\
+          format(
+            name  = port._full_name, 
             nbits = port.Type.nbits,
-          ) )
+          ) 
+        )
       if port._my_name == 'clk':
         continue
       # Generate assignments to setup the inputs of verilated model 
@@ -327,16 +352,19 @@ class SimpleImportPass( BasePass ):
           nbits = port.Type.nbits
           array_range = array_dict[ get_array_name( name ) ]
           name = get_array_name( name )
-          port_defs.append( '''s.{name} = [ OutVPort(Bits{nbits})'''
-                            ''' for _x in xrange({array_range}) ]'''\
-                            .format( **locals() ) 
-              )
+          port_defs.append(\
+            '''s.{name} = [ OutVPort(Bits{nbits})'''\
+            ''' for _x in xrange({array_range}) ]'''.\
+            format( **locals() ) 
+          )
       else:
         # This port is not a list
-        port_defs.append( '{name} = OutVPort( Bits{nbits} )'.format(
-            name = port._full_name, 
+        port_defs.append( '{name} = OutVPort( Bits{nbits} )'.\
+          format(
+            name  = port._full_name, 
             nbits = port.Type.nbits,
-          ) )
+          ) 
+        )
       # Generate assignments to read output from the verilated model
       comb, next_ = s.set_output_stmt( port, array_dict )
       set_comb.extend( comb )
@@ -344,21 +372,21 @@ class SimpleImportPass( BasePass ):
 
     # Read from template and fill in contents 
 
-    with open( template_file, 'r' ) as template, \
+    with open( template_file, 'r' )             as template, \
          open( verilator_py_wrapper_file, 'w' ) as output:
 
       py_wrapper = template.read()
       py_wrapper = py_wrapper.format(
-             top_module     = top_module,
-             lib_file       = lib_file,
-             port_externs   = port_externs,
-             port_defs      = ''.join( [ x+tab4 for x in port_defs ] ),
-             set_inputs     = ''.join( [ x+tab6 for x in set_inputs ] ),
-             set_comb       = ''.join( [ x+tab6 for x in set_comb ] ),
-             set_next       = ''.join( [ x+tab6 for x in set_next ] ),
-             line_trace     = line_trace,
-             in_line_trace  = in_line_trace,
-          )
+        top_module    = top_module,
+        lib_file      = lib_file,
+        port_externs  = port_externs,
+        port_defs     = ''.join( [ x+tab4 for x in port_defs ] ),
+        set_inputs    = ''.join( [ x+tab6 for x in set_inputs ] ),
+        set_comb      = ''.join( [ x+tab6 for x in set_comb ] ),
+        set_next      = ''.join( [ x+tab6 for x in set_next ] ),
+        line_trace    = line_trace,
+        in_line_trace = in_line_trace,
+      )
       output.write( py_wrapper )
 
     return verilator_py_wrapper_file
@@ -409,6 +437,7 @@ class SimpleImportPass( BasePass ):
 
   def port_to_decl( s, array_dict, port ):
     """ generate port declarations for port """
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
 
     if '[' in port._my_name:
       # port belongs to a list of ports
@@ -437,6 +466,7 @@ class SimpleImportPass( BasePass ):
 
   def port_to_init( s, array_dict, port ):
     """ generate port initializations for port """
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
 
     ret = []
     
@@ -446,15 +476,17 @@ class SimpleImportPass( BasePass ):
     if '[' in port._my_name:
       # This is a list of ports
       name = get_array_name( port._my_name )
-      ret.append( 'for( int i = 0; i < {array_range}; i++ )'.format(\
-            array_range = array_dict[ name ]
-          ))
+      ret.append( 'for( int i = 0; i < {array_range}; i++ )'.\
+          format( array_range = array_dict[ name ] )
+      )
       ret.append( '  m->{name}[i] = {dereference}model->{name}[i];'.\
-          format( name = name, dereference = dereference ) )
+          format( name = name, dereference = dereference ) 
+      )
     else:
       name = port._my_name
       ret.append( 'm->{name} = {dereference}model->{name};'.\
-          format( name = name, dereference = dereference ) )
+          format( name = name, dereference = dereference ) 
+      )
 
     return ret
 
@@ -468,15 +500,16 @@ class SimpleImportPass( BasePass ):
 
   def compile( s, flags, include_dirs, output_file, input_files ):
     ''' compile the Cpp wrapper and the verilated model into shared lib '''
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
 
     compile_cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles}'
 
     compile_cmd = compile_cmd.format(
-          flags     = flags, 
-          idirs     = ' '.join( [ '-I'+d for d in include_dirs ] ), 
-          ofile     = output_file, 
-          ifiles    = ' '.join( input_files ), 
-        )
+      flags  = flags, 
+      idirs  = ' '.join( [ '-I'+d for d in include_dirs ] ), 
+      ofile  = output_file, 
+      ifiles = ' '.join( input_files ), 
+    )
 
     s.try_cmd( 'Compiling shared lib', compile_cmd )
 
@@ -486,9 +519,9 @@ class SimpleImportPass( BasePass ):
     ret = "'"   # eg: 'clk:{}, reset:{}, \n'.format( s.clk, s.reset, )
 
     ports = sorted(
-        m.get_input_value_ports() | m.get_output_value_ports(), 
-        key = repr
-        )
+      m.get_input_value_ports() | m.get_output_value_ports(), 
+      key = repr
+    )
 
     for port in ports:
       ret += '{my_name}: {{}}, '.format( my_name = port._my_name )
@@ -509,9 +542,9 @@ class SimpleImportPass( BasePass ):
     ret = "'"   # eg: 'clk:{}, reset:{}, \n'.format( s.clk, s.reset, )
 
     ports = sorted(
-        m.get_input_value_ports() | m.get_output_value_ports(), 
-        key = repr
-        )
+      m.get_input_value_ports() | m.get_output_value_ports(), 
+      key = repr
+    )
 
     for port in ports:
       ret += '{my_name}: {{}}, '.format( my_name = port._my_name )
@@ -527,60 +560,69 @@ class SimpleImportPass( BasePass ):
   
   def set_input_stmt( s, port, array_dict ):
     ''' generate initializations for interfaces '''
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
+
     inputs = []
     name = port._my_name
     if '[' in name:
       # special treatment for list
       name = get_array_name( name )
-      inputs.append( 'for _x in xrange({array_range}):'.format(
-            array_range = array_dict[ name ]
-        ) )
+      inputs.append( 'for _x in xrange({array_range}):'.\
+        format( array_range = array_dict[ name ] ) 
+      )
       for idx, offset in s.get_indices( port ):
         inputs.append('  s._ffi_m.{v_name}[_x][{idx}]=s.{py_name}[_x]{offset}'.\
-                format( v_name      = port.verilator_name, 
-                        py_name     = name, 
-                        idx         = idx, 
-                        offset      = offset
-                      ) )
+          format(\
+            v_name      = port.verilator_name, 
+            py_name     = name, 
+            idx         = idx, 
+            offset      = offset
+          ) 
+        )
     else:
       for idx, offset in s.get_indices( port ):
         inputs.append( 's._ffi_m.{v_name}[{idx}] = s.{py_name}{offset}'.\
-                format(
-                        v_name    = port.verilator_name,
-                        py_name   = name, 
-                        idx       = idx, 
-                        offset    = offset
-                      ) )
+          format(\
+            v_name    = port.verilator_name,
+            py_name   = name, 
+            idx       = idx, 
+            offset    = offset
+          ) 
+        )
     return inputs
 
   def set_output_stmt( s, port, array_dict ):
     ''' generate the list of vars that should be called in update blocks or
     update-on-edge blocks'''
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
+
     comb, next_ = [], []
     outputs = []
     name = port._my_name
     if '[' in name:
       name = get_array_name( name )
-      outputs.append( 'for _x in xrange({array_range}):'.format(
-            array_range = array_dict[ name ]
-        ) )
+      outputs.append( 'for _x in xrange({array_range}):'.\
+          format( array_range = array_dict[ name ] ) 
+      )
       for idx, offset in s.get_indices( port ):
-        outputs.append('  s.{py_name}[_x]{offset} = s._ffi_m.{v_name}[_x][{idx}]'\
-            .format(
-                    v_name      = port.verilator_name, 
-                    py_name     = name, 
-                    idx         = idx, 
-                    offset      = offset
-                  ) )
+        outputs.append(\
+          '  s.{py_name}[_x]{offset} = s._ffi_m.{v_name}[_x][{idx}]'.\
+          format(
+            v_name      = port.verilator_name, 
+            py_name     = name, 
+            idx         = idx, 
+            offset      = offset
+          ) 
+        )
     else:
       for idx, offset in s.get_indices( port ):
-        stmt = 's.{py_name}{offset} = s._ffi_m.{v_name}[{idx}]'\
-            .format(
-                    v_name      = port.verilator_name, 
-                    py_name     = port._my_name, 
-                    idx         = idx, 
-                    offset      = offset
-                )
+        stmt = 's.{py_name}{offset} = s._ffi_m.{v_name}[{idx}]'.\
+          format(
+            v_name      = port.verilator_name, 
+            py_name     = port._my_name, 
+            idx         = idx, 
+            offset      = offset
+          )
       outputs.append( stmt )
       # next_.append( stmt )
 
@@ -592,11 +634,15 @@ class SimpleImportPass( BasePass ):
   def get_indices( s, port ):
     ''' generate a list of idx-offset tuples to copy data from verilated
     model to PyMTL model'''
+    # This function is based on PyMTL v2 implementation by Derek Lockhart
+
     num_assigns = 1 if port.Type.nbits <= 64 else (port.Type.nbits-1)/32+1
     if num_assigns == 1:
       return [(0, '')]
-    return [( i, '[{}:{}]'.format( i*32, min( i*32+32, port.Type.nbits ) )
-      ) for i in range(num_assigns)]
+    return [
+        ( i, '[{}:{}]'.format( i*32, min( i*32+32, port.Type.nbits ) ) ) \
+        for i in range(num_assigns)
+    ]
 
 #-------------------------------------------------------------------------------
 # Global helper functions
