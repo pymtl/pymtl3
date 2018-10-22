@@ -124,7 +124,7 @@ class SimpleImportPass( BasePass ):
                     '''{top_module} --Mdir {obj_dir} -O3 {flags}'''
 
     obj_dir = 'obj_dir_' + top_module
-    flags		= ' '.join( [
+    flags   = ' '.join( [
       '--unroll-count 1000000',
      '--unroll-stmts 1000000',
      '--assert',
@@ -208,9 +208,9 @@ class SimpleImportPass( BasePass ):
 
       c_wrapper = template.read()
       c_wrapper = c_wrapper.format(\
-          top_module    = top_module,
-          port_externs  = port_externs,
-          port_inits    = port_inits,
+        top_module    = top_module,
+        port_externs  = port_externs,
+        port_inits    = port_inits,
       )
       output.write( c_wrapper )
 
@@ -573,20 +573,20 @@ class SimpleImportPass( BasePass ):
       for idx, offset in s.get_indices( port ):
         inputs.append('  s._ffi_m.{v_name}[_x][{idx}]=s.{py_name}[_x]{offset}'.\
           format(\
-            v_name      = port.verilator_name, 
-            py_name     = name, 
-            idx         = idx, 
-            offset      = offset
+            v_name  = port.verilator_name, 
+            py_name = name, 
+            idx     = idx, 
+            offset  = offset
           ) 
         )
     else:
       for idx, offset in s.get_indices( port ):
         inputs.append( 's._ffi_m.{v_name}[{idx}] = s.{py_name}{offset}'.\
           format(\
-            v_name    = port.verilator_name,
-            py_name   = name, 
-            idx       = idx, 
-            offset    = offset
+            v_name  = port.verilator_name,
+            py_name = name, 
+            idx     = idx, 
+            offset  = offset
           ) 
         )
     return inputs
@@ -608,20 +608,20 @@ class SimpleImportPass( BasePass ):
         outputs.append(\
           '  s.{py_name}[_x]{offset} = s._ffi_m.{v_name}[_x][{idx}]'.\
           format(
-            v_name      = port.verilator_name, 
-            py_name     = name, 
-            idx         = idx, 
-            offset      = offset
+            v_name  = port.verilator_name, 
+            py_name = name, 
+            idx     = idx, 
+            offset  = offset
           ) 
         )
     else:
       for idx, offset in s.get_indices( port ):
         stmt = 's.{py_name}{offset} = s._ffi_m.{v_name}[{idx}]'.\
           format(
-            v_name      = port.verilator_name, 
-            py_name     = port._my_name, 
-            idx         = idx, 
-            offset      = offset
+            v_name  = port.verilator_name, 
+            py_name = port._my_name, 
+            idx     = idx, 
+            offset  = offset
           )
       outputs.append( stmt )
       # next_.append( stmt )
@@ -640,8 +640,8 @@ class SimpleImportPass( BasePass ):
     if num_assigns == 1:
       return [(0, '')]
     return [
-        ( i, '[{}:{}]'.format( i*32, min( i*32+32, port.Type.nbits ) ) ) \
-        for i in range(num_assigns)
+      ( i, '[{}:{}]'.format( i*32, min( i*32+32, port.Type.nbits ) ) ) \
+      for i in range(num_assigns)
     ]
 
 #-------------------------------------------------------------------------------

@@ -47,11 +47,11 @@ class UpblkTranslationPass( BasePass ):
 class UpblkTranslator( ast.NodeVisitor ):
 
   def __init__( s, component ):
-    s.component         = component
-    s.mapping           = component.get_astnode_obj_mapping()
+    s.component = component
+    s.mapping   = component.get_astnode_obj_mapping()
 
-    s.immediate_else          = False
-    s.inside_posedge_block    = False
+    s.immediate_else       = False
+    s.inside_posedge_block = False
 
   def enter( s, blk, ast ):
     """ entry point for update block translation """
