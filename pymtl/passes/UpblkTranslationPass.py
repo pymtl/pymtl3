@@ -3,8 +3,8 @@
 #========================================================================
 # Translation pass for all update blocks within one component. 
 #
-# Author          : Shunning Jiang, Peitian Pan
-# Date            : Oct 18, 2018
+# Author : Shunning Jiang, Peitian Pan
+# Date   : Oct 18, 2018
 
 import ast
 from pymtl        import *

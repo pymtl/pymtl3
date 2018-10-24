@@ -8,8 +8,8 @@
 # pass so that modules of the same type (and parameters) are translated
 # only once.
 #
-# Author          : Shunning Jiang, Peitian Pan
-# Date            : Oct 18, 2018
+# Author : Shunning Jiang, Peitian Pan
+# Date   : Oct 18, 2018
 
 import re
 

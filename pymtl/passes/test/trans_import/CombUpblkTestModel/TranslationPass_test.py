@@ -59,8 +59,8 @@ class CombUpblkTestModel( RTLComponent ):
     return {line_trace}
   """
 
-  in_nports       = random.randint( 1, 10 )
-  out_nports      = random.randint( 1, 10 )
+  in_nports       = draw( st.integers( min_value = 1, max_value = 10 ) )
+  out_nports      = draw( st.integers( min_value = 1, max_value = 10 ) )
 
   in_idx_st       = st.integers( min_value = 0, max_value = in_nports - 1 )
   out_idx_st      = st.integers( min_value = 0, max_value = out_nports - 1 )

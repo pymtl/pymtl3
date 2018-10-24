@@ -4,8 +4,8 @@
 # This pass takes the top module of a PyMTL component
 # and translates it into SystemVerilog.
 #
-# Author : Shunning Jiang
-# Date   : Aug 23, 2018
+# Author : Shunning Jiang, Peitian Pan
+# Date   : Oct 18, 2018
 
 from pymtl                import *
 from pymtl.dsl            import ComponentLevel1

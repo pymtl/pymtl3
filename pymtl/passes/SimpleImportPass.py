@@ -3,9 +3,7 @@
 #========================================================================
 # SimpleImportPass class imports a Verilog/SystemVerilog source file
 # back to a PyMTL RTLComponent. It is meant to be used on files generated
-# by SystemVerilogTranslationPass(). Part of this file is based on PyMTL
-# v2 by Derek Lockhart. I added support for ports defined with list
-# comprehension style. 
+# by SystemVerilogTranslationPass(). 
 # 
 # Author : Peitian Pan
 # Date   : Oct 18, 2018
