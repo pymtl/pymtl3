@@ -8,6 +8,7 @@
 
 build*/
 autom4te.cache/
+.pytest_cache/
 pymtl.egg-info
 *__pycache__
 *.pyc
