@@ -3,13 +3,14 @@
 #=========================================================================
 #
 # Author : Shunning Jiang
-# Date   : Apr 16, 2018
+# Date   : Nov 3, 2018
 
 from pymtl import *
-from pymtl.model import ComponentLevel2
-from pymtl.model.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
-from collections import deque
+from pymtl.dsl import ComponentLevel2, Wire, InVPort, OutVPort
+from pymtl.dsl.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
 from sim_utils import simple_sim_pass
+
+from collections import deque
 
 def _test_model( cls ):
   A = cls()

@@ -6,7 +6,7 @@
 # Date   : Dec 25, 2017
 
 from pymtl import *
-from pymtl.model.errors import MultiWriterError, InvalidConnectionError
+from pymtl.dsl.errors import MultiWriterError, InvalidConnectionError
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pclib.rtl import Mux
 from sim_utils import simple_sim_pass

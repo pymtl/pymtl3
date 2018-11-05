@@ -6,8 +6,8 @@
 # Date   : Dec 25, 2017
 
 from pymtl import *
-from pymtl.model import ComponentLevel3
-from pymtl.model.errors import MultiWriterError, InvalidConnectionError
+from pymtl.dsl import ComponentLevel3
+from pymtl.dsl.errors import MultiWriterError, InvalidConnectionError
 from sim_utils import simple_sim_pass
 from collections import deque
 

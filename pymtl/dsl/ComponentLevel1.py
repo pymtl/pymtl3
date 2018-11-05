@@ -12,13 +12,14 @@
 # * Block constraint: s.add_constraints( U(upA) < U(upB) )
 
 # Author : Shunning Jiang
-# Date   : Jan 18, 2018
+# Date   : Nov 3, 2018
+
 from NamedObject     import NamedObject
 from ConstraintTypes import U
 from errors          import UpblkFuncSameNameError, NotElaboratedError
 from pymtl.datatypes import *
 
-import inspect2, re, ast, py
+import inspect, re, ast, py
 p = re.compile('( *((@|def).*))')
 
 class ComponentLevel1( NamedObject ):
@@ -32,9 +33,9 @@ class ComponentLevel1( NamedObject ):
 
     inst = super( ComponentLevel1, cls ).__new__( cls, *args, **kwargs )
 
-    inst._name_upblk = {}
-    inst._upblks     = set()
-    inst._U_U_constraints = set() # contains ( id(func), id(func) )s
+    inst._dsl.name_upblk = {}
+    inst._dsl.upblks     = set()
+    inst._dsl.U_U_constraints = set() # contains ( id(func), id(func) )s
 
     return inst
 
@@ -46,27 +47,27 @@ class ComponentLevel1( NamedObject ):
     Convention: the variables that hold all metadata of descendants
     should have _all prefix."""
 
-    s._all_upblks = set()
-    s._all_upblk_hostobj = {}
-    s._all_U_U_constraints = set()
+    s._dsl.all_upblks = set()
+    s._dsl.all_upblk_hostobj = {}
+    s._dsl.all_U_U_constraints = set()
 
   def _collect_vars( s, m ):
     """ Called on individual objects during elaboration.
     The general format resembles "s._all_X.update/append( s._X ). """
 
     if isinstance( m, ComponentLevel1 ):
-      s._all_upblks |= m._upblks
-      for blk in m._upblks:
-        s._all_upblk_hostobj[blk] = m
-      s._all_U_U_constraints |= m._U_U_constraints
+      s._dsl.all_upblks |= m._dsl.upblks
+      for blk in m._dsl.upblks:
+        s._dsl.all_upblk_hostobj[ blk ] = m
+      s._dsl.all_U_U_constraints |= m._dsl.U_U_constraints
 
   def _uncollect_vars( s, m ):
 
     if isinstance( m, ComponentLevel1 ):
-      s._all_upblks -= m._upblks
-      for k in m._upblks:
-        del s._all_upblk_hostobj[k]
-      s._all_U_U_constraints -= m._U_U_constraints
+      s._dsl.all_upblks -= m._dsl.upblks
+      for k in m._dsl.upblks:
+        del s._dsl.all_upblk_hostobj[ k ]
+      s._dsl.all_U_U_constraints -= m._dsl.U_U_constraints
 
   #-----------------------------------------------------------------------
   # Construction-time APIs
@@ -74,38 +75,36 @@ class ComponentLevel1( NamedObject ):
 
   def update( s, blk ):
     name = blk.__name__
-    if name in s._name_upblk:
+    if name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )
 
-    s._name_upblk[ name ] = blk
-    s._upblks.add( blk )
+    s._dsl.name_upblk[ name ] = blk
+    s._dsl.upblks.add( blk )
     return blk
 
   def add_constraints( s, *args ):
     for (x0, x1) in args:
       assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
-      assert (x0.func, x1.func) not in s._U_U_constraints, \
+      assert (x0.func, x1.func) not in s._dsl.U_U_constraints, \
         "Duplicated constraint"
-      s._U_U_constraints.add( (x0.func, x1.func) )
+      s._dsl.U_U_constraints.add( (x0.func, x1.func) )
+
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("construct method, where the design is built,"
+                              " is not implemented in {}".format( s.__class__.__name__ ) )
 
   #-----------------------------------------------------------------------
   # elaborate
   #-----------------------------------------------------------------------
 
   def elaborate( s ):
-    if s._constructed:
-      return
+    # Directly use the base class elaborate
     NamedObject.elaborate( s )
 
     s._declare_vars()
-    s._all_components = s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
-    for c in s._all_components:
-      c._elaborate_top = s
-      s._collect_vars( c )
-
-  def construct( s, *args, **kwargs ):
-    raise NotImplementedError("construct method, where the design is built,"
-                              " is not implemented in {}".format( s.__class__.__name__ ) )
+    for c in s._dsl.all_named_objects:
+      if isinstance( c, ComponentLevel1 ):
+        s._collect_vars( c )
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
@@ -121,11 +120,11 @@ class ComponentLevel1( NamedObject ):
     return False
 
   def get_update_block( s, name ):
-    return s._name_upblk[ name ]
+    return s._dsl.name_upblk[ name ]
 
   def get_update_block_host_component( s, blk ):
     try:
-      assert s._elaborate_top is s, "Getting update block host component " \
+      assert s._dsl.elaborate_top is s, "Getting update block host component " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
       return s._all_upblk_hostobj[ blk ]
@@ -160,7 +159,7 @@ class ComponentLevel1( NamedObject ):
       raise NotElaboratedError()
 
   def get_child_components( s ):
-    assert s._constructed
+    assert s._dsl.constructed
     ret = set()
     stack = []
     for (name, obj) in s.__dict__.iteritems():

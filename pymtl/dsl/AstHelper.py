@@ -6,8 +6,7 @@
 # Author : Shunning Jiang
 # Date   : Jan 17, 2018
 
-import re, inspect2, ast
-p = re.compile('( *(@|def))')
+import ast
 
 class DetectVarNames( ast.NodeVisitor ):
 

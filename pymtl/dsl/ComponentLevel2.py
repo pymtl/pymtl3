@@ -20,7 +20,7 @@ from errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, 
                    MultiWriterError, VarNotDeclaredError, InvalidFuncCallError, UpblkFuncSameNameError
 import AstHelper
 
-import inspect2, re, ast, gc
+import inspect, re, ast, gc
 p = re.compile('( *(@|def))')
 
 class ComponentLevel2( ComponentLevel1 ):
@@ -32,12 +32,12 @@ class ComponentLevel2( ComponentLevel1 ):
   def __new__( cls, *args, **kwargs ):
     inst = super( ComponentLevel2, cls ).__new__( cls, *args, **kwargs )
 
-    inst._update_on_edge = set()
+    inst._dsl.update_on_edge = set()
 
     # constraint[var] = (sign, func)
-    inst._RD_U_constraints = defaultdict(set)
-    inst._WR_U_constraints = defaultdict(set)
-    inst._name_func = {}
+    inst._dsl.RD_U_constraints = defaultdict(set)
+    inst._dsl.WR_U_constraints = defaultdict(set)
+    inst._dsl.name_func = {}
 
     return inst
 
@@ -65,7 +65,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     name = func.__name__
     if name not in name_src:
-      name_src[ name ] = src  = p.sub( r'\2', inspect2.getsource(func) )
+      name_src[ name ] = src  = p.sub( r'\2', inspect.getsource(func) )
       name_ast[ name ] = tree = ast.parse( src )
       name_rd[ name ]  = rd   = []
       name_wr[ name ]  = wr   = []
@@ -76,16 +76,18 @@ class ComponentLevel2( ComponentLevel1 ):
   def _declare_vars( s ):
     super( ComponentLevel2, s )._declare_vars()
 
-    s._all_update_on_edge = set()
+    s._dsl.all_update_on_edge = set()
 
-    s._all_RD_U_constraints = defaultdict(set)
-    s._all_WR_U_constraints = defaultdict(set)
+    s._dsl.all_RD_U_constraints = defaultdict(set)
+    s._dsl.all_WR_U_constraints = defaultdict(set)
 
     # We don't collect func's metadata
     # because every func is local to the component
-    s._all_upblk_reads  = {}
-    s._all_upblk_writes = {}
-    s._all_upblk_calls  = {}
+    s._dsl.all_upblk_reads  = {}
+    s._dsl.all_upblk_writes = {}
+    s._dsl.all_upblk_calls  = {}
+
+    s._dsl.all_signals = set()
 
   def _elaborate_read_write_func( s ):
 
@@ -115,7 +117,7 @@ class ComponentLevel2( ComponentLevel1 ):
           except IndexError:
             return
 
-          s._astnode_objs[ nodelist[node_depth] ].append( child )
+          s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
           expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
 
       def add_all( obj, obj_list, node_depth ):
@@ -144,7 +146,7 @@ class ComponentLevel2( ComponentLevel1 ):
           print e
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-        s._astnode_objs[ nodelist[node_depth] ].append( child )
+        s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
 
         if not idx: lookup_variable   ( child, name_depth+1, node_depth+1, obj_list )
         else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx, obj_list )
@@ -159,7 +161,7 @@ class ComponentLevel2( ComponentLevel1 ):
         objs = set()
 
         if obj_name[0][0] == "s":
-          s._astnode_objs[ nodelist[0] ].append( s )
+          s._dsl.astnode_objs[ nodelist[0] ].append( s )
           lookup_variable( s, 1, 1, objs )
           all_objs |= objs
 
@@ -182,13 +184,13 @@ class ComponentLevel2( ComponentLevel1 ):
           except AttributeError as e:
             raise VarNotDeclaredError( call, obj_name[1][0], func, s, nodelist[-1].lineno )
 
-          s._astnode_objs[ nodelist[1] ].append( call )
+          s._dsl.astnode_objs[ nodelist[1] ].append( call )
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in name_func:
           call = name_func[ obj_name[0][0] ]
           all_calls.add( call )
-          s._astnode_objs[ nodelist[0] ].append( call )
+          s._dsl.astnode_objs[ nodelist[0] ].append( call )
 
       return all_calls
 
@@ -204,41 +206,42 @@ class ComponentLevel2( ComponentLevel1 ):
 
     # what object each astnode corresponds to. You can't have two update
     # blocks in one component that have the same ast.
-    s._astnode_objs = defaultdict(list)
-    s._func_reads  = {}
-    s._func_writes = {}
-    s._func_calls  = {}
-    for name, func in s._name_func.iteritems():
-      s._func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
-      s._func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
-      s._func_calls [ func ] = extract_call_from_names( func, name_fc[ name ], s._name_func )
+    s._dsl.astnode_objs = defaultdict(list)
+    s._dsl.func_reads  = {}
+    s._dsl.func_writes = {}
+    s._dsl.func_calls  = {}
+    for name, func in s._dsl.name_func.iteritems():
+      s._dsl.func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
+      s._dsl.func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
+      s._dsl.func_calls [ func ] = extract_call_from_names( func, name_fc[ name ], s._dsl.name_func )
 
-    s._upblk_reads  = {}
-    s._upblk_writes = {}
-    s._upblk_calls  = {}
-    for name, blk in s._name_upblk.iteritems():
-      s._upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
-      s._upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
-      s._upblk_calls [ blk ] = extract_call_from_names( blk, name_fc[ name ], s._name_func )
+    s._dsl.upblk_reads  = {}
+    s._dsl.upblk_writes = {}
+    s._dsl.upblk_calls  = {}
+    for name, blk in s._dsl.name_upblk.iteritems():
+      s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
+      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
+      s._dsl.upblk_calls [ blk ] = extract_call_from_names( blk, name_fc[ name ], s._dsl.name_func )
 
   # Override
   def _collect_vars( s, m ):
     super( ComponentLevel2, s )._collect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._all_update_on_edge |= m._update_on_edge
+      s._dsl.all_update_on_edge |= m._dsl.update_on_edge
 
-      for k in m._RD_U_constraints:
-        s._all_RD_U_constraints[k] |= m._RD_U_constraints[k]
-      for k in m._WR_U_constraints:
-        s._all_WR_U_constraints[k] |= m._WR_U_constraints[k]
+      for k, k_cons in m._dsl.RD_U_constraints.iteritems():
+        s._dsl.all_RD_U_constraints[k] |= k_cons
+
+      for k, k_cons in m._dsl.WR_U_constraints.iteritems():
+        s._dsl.all_WR_U_constraints[k] |= k_cons
 
       # I assume different update blocks will always have different ids
-      s._all_upblk_reads.update( m._upblk_reads )
-      s._all_upblk_writes.update( m._upblk_writes )
+      s._dsl.all_upblk_reads.update( m._dsl.upblk_reads )
+      s._dsl.all_upblk_writes.update( m._dsl.upblk_writes )
 
-      for blk, calls in m._upblk_calls.iteritems():
-        s._all_upblk_calls[ blk ] = calls
+      for blk, calls in m._dsl.upblk_calls.iteritems():
+        s._dsl.all_upblk_calls[ blk ] = calls
 
         for call in calls:
 
@@ -250,10 +253,10 @@ class ComponentLevel2( ComponentLevel1 ):
           def dfs( u, stk ):
 
             # Add all read/write of funcs to the outermost upblk
-            s._all_upblk_reads [ blk ] |= m._func_reads[u]
-            s._all_upblk_writes[ blk ] |= m._func_writes[u]
+            s._dsl.all_upblk_reads [ blk ] |= m._dsl.func_reads[u]
+            s._dsl.all_upblk_writes[ blk ] |= m._dsl.func_writes[u]
 
-            for v in m._func_calls[ u ]:
+            for v in m._dsl.func_calls[ u ]:
               if v in caller: # v calls someone else there is a cycle
                 raise InvalidFuncCallError( \
                   "In class {}\nThe full call hierarchy:\n - {}{}\nThese function calls form a cycle:\n {}\n{}".format(
@@ -280,7 +283,7 @@ class ComponentLevel2( ComponentLevel1 ):
     super( ComponentLevel2, s )._uncollect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._all_update_on_edge -= m._update_on_edge
+      s._dsl.all_update_on_edge -= m._dsl.update_on_edge
 
       for k in m._RD_U_constraints:
         s._all_RD_U_constraints[k] -= m._RD_U_constraints[k]
@@ -295,7 +298,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_upblk_writes( s ):
 
     write_upblks = defaultdict(set)
-    for blk, writes in s._all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.iteritems():
       for wr in writes:
         write_upblks[ wr ].add( blk )
 
@@ -337,14 +340,14 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_port_in_upblk( s ):
 
     # Check read first
-    for blk, reads in s._all_upblk_reads.iteritems():
+    for blk, reads in s._dsl.all_upblk_reads.iteritems():
 
-      blk_hostobj = s._all_upblk_hostobj[ blk ]
+      blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
       for obj in reads:
         host = obj
         while not isinstance( host, ComponentLevel2 ):
-          host = host._parent_obj # go to the component
+          host = host.get_parent_object() # go to the component
 
         if   isinstance( obj, InVPort ):  pass
         elif isinstance( obj, OutVPort ): pass
@@ -361,21 +364,21 @@ class ComponentLevel2( ComponentLevel1 ):
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
     # Then check write
-    for blk, writes in s._all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.iteritems():
 
-      blk_hostobj = s._all_upblk_hostobj[ blk ]
+      blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
       for obj in writes:
         host = obj
         while not isinstance( host, ComponentLevel2 ):
-          host = host._parent_obj # go to the component
+          host = host.get_parent_object() # go to the component
 
       # A continuous assignment is implied when a variable is connected to
       # an input port declaration. This makes assignments to a variable
       # declared as an input port illegal. -- IEEE
 
         if   isinstance( obj, InVPort ):
-          if host._parent_obj != blk_hostobj:
+          if host.get_parent_object() != blk_hostobj:
             raise SignalTypeError("""[Type 2] Invalid write to an input port:
 
 - InVPort "{}" of {} (class {}) is written in update block
@@ -422,10 +425,10 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def func( s, func ): # @s.func is for those functions
     name = func.__name__
-    if name in s._name_func or name in s._name_upblk:
+    if name in s._dsl.name_func or name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )
 
-    s._name_func[ name ] = func
+    s._dsl.name_func[ name ] = func
     s._cache_func_meta( func )
     return func
 
@@ -436,7 +439,7 @@ class ComponentLevel2( ComponentLevel1 ):
     return blk
 
   def update_on_edge( s, blk ):
-    s._update_on_edge.add( blk )
+    s._dsl.update_on_edge.add( blk )
     return s.update( blk )
 
   # Override
@@ -444,9 +447,9 @@ class ComponentLevel2( ComponentLevel1 ):
 
     for (x0, x1) in args:
       if   isinstance( x0, U ) and isinstance( x1, U ): # U & U, same
-        assert (x0.func, x1.func) not in s._U_U_constraints, \
+        assert (x0.func, x1.func) not in s._dsl.U_U_constraints, \
           "Duplicated constraint"
-        s._U_U_constraints.add( (x0.func, x1.func) )
+        s._dsl.U_U_constraints.add( (x0.func, x1.func) )
 
       elif isinstance( x0, ValueConstraint ) and isinstance( x1, ValueConstraint ):
         raise InvalidConstraintError
@@ -458,13 +461,13 @@ class ComponentLevel2( ComponentLevel1 ):
           x0, x1 = x1, x0 # Make sure x0 is RD/WR(...) and x1 is U(...)
 
         if isinstance( x0, RD ):
-          assert (sign, x1.func) not in s._RD_U_constraints[ x0.var ], \
+          assert (sign, x1.func) not in s._dsl.RD_U_constraints[ x0.var ], \
             "Duplicated constraint"
-          s._RD_U_constraints[ x0.var ].add( (sign, x1.func) )
+          s._dsl.RD_U_constraints[ x0.var ].add( (sign, x1.func) )
         else:
-          assert (sign, x1.func ) not in s._WR_U_constraints[ x0.var ], \
+          assert (sign, x1.func ) not in s._dsl.WR_U_constraints[ x0.var ], \
             "Duplicated constraint"
-          s._WR_U_constraints[ x0.var ].add( (sign, x1.func) )
+          s._dsl.WR_U_constraints[ x0.var ].add( (sign, x1.func) )
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -472,19 +475,21 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def elaborate( s ):
-    if s._constructed:
-      return
-
+    # Directly use the base class elaborate
     NamedObject.elaborate( s )
+
     s._declare_vars()
 
-    s._all_components = s._collect_all( lambda x: isinstance( x, ComponentLevel2 ) )
-    for c in s._all_components:
-      c._elaborate_top = s
-      c._elaborate_read_write_func()
-      s._collect_vars( c )
+    for c in s._dsl.all_named_objects:
 
-    s._all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
+      if isinstance( c, Signal ):
+        s._dsl.all_signals.add( c )
+
+      if isinstance( c, ComponentLevel2 ):
+        c._elaborate_read_write_func()
+
+      if isinstance( c, ComponentLevel1 ):
+        s._collect_vars( c )
 
     s.check()
 
@@ -570,7 +575,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def get_astnode_obj_mapping( s ):
     try:
-      return s._astnode_objs
+      return s._dsl.astnode_objs
     except AttributeError:
       raise NotElaboratedError()
 
@@ -579,12 +584,12 @@ class ComponentLevel2( ComponentLevel1 ):
       assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
-      return s._all_update_on_edge
+      return s._dsl.all_update_on_edge
     except AttributeError:
       raise NotElaboratedError()
 
   def get_update_on_edge( s ):
-    assert s._constructed
+    assert s._dsl.constructed
     return s._update_on_edge
 
   def get_all_upblk_metadata( s ):
@@ -597,7 +602,7 @@ class ComponentLevel2( ComponentLevel1 ):
       raise NotElaboratedError()
 
   def get_upblk_metadata( s ):
-    assert s._constructed
+    assert s._dsl.constructed
     return s._upblk_reads, s._upblk_writes, s._upblk_calls
 
   # Override
@@ -620,7 +625,7 @@ class ComponentLevel2( ComponentLevel1 ):
       return s._collect_all( filt )
 
   def get_input_value_ports( s ):
-    assert s._constructed
+    assert s._dsl.constructed
     ret = set()
     stack = [ obj for (name, obj) in s.__dict__.iteritems() \
                   if isinstance( name, basestring ) # python2 specific
@@ -636,7 +641,7 @@ class ComponentLevel2( ComponentLevel1 ):
     return ret
 
   def get_output_value_ports( s ):
-    assert s._constructed
+    assert s._dsl.constructed
     ret = set()
     stack = [ obj for (name, obj) in s.__dict__.iteritems() \
                   if isinstance( name, basestring ) # python2 specific
@@ -651,7 +656,7 @@ class ComponentLevel2( ComponentLevel1 ):
     return ret
 
   def get_wires( s ):
-    assert s._constructed
+    assert s._dsl.constructed
     ret = set()
     stack = [ obj for (name, obj) in s.__dict__.iteritems() \
                   if isinstance( name, basestring ) # python2 specific
@@ -685,7 +690,7 @@ class ComponentLevel2( ComponentLevel1 ):
         top._uncollect_vars( x )
 
       for x in obj._collect_all():
-        del x._parent_obj
+        del x._dsl.parent_obj
 
       top._all_signals -= obj._collect_all( lambda x: isinstance( x, Signal ) )
 
@@ -702,10 +707,10 @@ class ComponentLevel2( ComponentLevel1 ):
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
-    top = s._elaborate_top
+    top = s._dsl.elaborate_top
 
     added_components = obj.get_all_components()
-    top._all_components |= added_components
+    top._dsl.all_components |= added_components
 
     for c in added_components:
       c._elaborate_top = top

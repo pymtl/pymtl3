@@ -6,8 +6,8 @@
 # Date   : Apr 16, 2018
 
 from pymtl import *
-from pymtl.model import ComponentLevel3
-from pymtl.model.errors import MultiWriterError, NoWriterError
+from pymtl.dsl import ComponentLevel3
+from pymtl.dsl.errors import MultiWriterError, NoWriterError
 from sim_utils import simple_sim_pass
 
 class SomeMsg( object ):

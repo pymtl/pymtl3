@@ -184,8 +184,8 @@ class NamedObject(object):
 
   def elaborate( s ):
     if s._dsl.constructed:
-      print "Don't elaborate the same model twice. "
-            "Use APIs to mutate the model."
+      print "Don't elaborate the same model twice. \
+             Use APIs to mutate the model."
       return
 
     # Initialize the top level
@@ -208,6 +208,10 @@ class NamedObject(object):
       raise
 
     del NamedObject.__setattr__
+
+    s._dsl.all_named_objects = s._collect_all()
+    for c in s._dsl.all_named_objects:
+      c._dsl.elaborate_top = s
 
   # The following APIs can only be called after elaboration
 

@@ -8,28 +8,31 @@
 
 from pymtl import *
 from collections  import deque, defaultdict
-from pymtl.model.errors import UpblkCyclicError, NotElaboratedError
-from pymtl.model import Signal, Const, NamedObject
-from pymtl.model import ComponentLevel1, ComponentLevel2, ComponentLevel3
+from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
+from pymtl.dsl import NamedObject
+from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3
+from pymtl.dsl import Signal, Const
+
 import random, py.code
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
   random.seed( seed )
   assert isinstance( s, ComponentLevel1 )
 
-  if not hasattr( s, "_all_U_U_constraints" ):
+  if not hasattr( s._dsl, "all_U_U_constraints" ):
     raise NotElaboratedError()
 
-  all_upblks = set( s._all_upblks )
-  expl_constraints = set( s._all_U_U_constraints )
+  all_upblks = set( s._dsl.all_upblks )
+  expl_constraints = set( s._dsl.all_U_U_constraints )
 
   gen_upblk_reads  = {}
   gen_upblk_writes = {}
 
   if isinstance( s, ComponentLevel2 ):
-    all_update_on_edge = set( s._all_update_on_edge )
+    all_update_on_edge = set( s._dsl.all_update_on_edge )
+
     if isinstance( s, ComponentLevel3 ):
-      nets = s._all_nets
+      nets = s._dsl.all_nets
 
       for writer, signals in nets:
         if len(signals) == 1: continue
@@ -79,22 +82,22 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     read_upblks = defaultdict(set)
     write_upblks = defaultdict(set)
 
-    for data in [ s._all_upblk_reads, gen_upblk_reads ]:
+    for data in [ s._dsl.all_upblk_reads, gen_upblk_reads ]:
       for blk, reads in data.iteritems():
         for rd in reads:
           read_upblks[ rd ].add( blk )
 
-    for data in [ s._all_upblk_writes, gen_upblk_writes ]:
+    for data in [ s._dsl.all_upblk_writes, gen_upblk_writes ]:
       for blk, writes in data.iteritems():
         for wr in writes:
           write_upblks[ wr ].add( blk )
 
     for typ in [ 'rd', 'wr' ]: # deduplicate code
       if typ == 'rd':
-        constraints = s._all_RD_U_constraints
+        constraints = s._dsl.all_RD_U_constraints
         equal_blks  = read_upblks
       else:
-        constraints = s._all_WR_U_constraints
+        constraints = s._dsl.all_WR_U_constraints
         equal_blks  = write_upblks
 
       # enumerate variable objects
