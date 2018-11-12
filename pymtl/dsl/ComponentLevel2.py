@@ -498,11 +498,11 @@ class ComponentLevel2( ComponentLevel1 ):
   #-----------------------------------------------------------------------
 
   def lock_in_simulation( s ):
-    assert s._elaborate_top is s, "Locking in simulation " \
+    assert s._dsl.elaborate_top is s, "Locking in simulation " \
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
-    s._swapped_signals = defaultdict(list)
-    s._swapped_values  = defaultdict(list)
+    s._dsl.swapped_signals = defaultdict(list)
+    s._dsl.swapped_values  = defaultdict(list)
 
     def cleanup_connectables( current_obj, host_component ):
 
@@ -535,30 +535,30 @@ class ComponentLevel2( ComponentLevel1 ):
             err.message = repr(obj) + " -- " + err.message
             err.args = (err.message,)
             raise err
-          s._swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
+          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
 
     cleanup_connectables( s, s )
-    s._locked_simulation = True
+    s._dsl.locked_simulation = True
 
   def unlock_simulation( s ):
-    assert s._elaborate_top is s, "Unlocking simulation " \
+    assert s._dsl.elaborate_top is s, "Unlocking simulation " \
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
     try:
-      assert s._locked_simulation
+      assert s._dsl.locked_simulation
     except:
       raise AttributeError("Cannot unlock an unlocked/never locked model.")
 
-    for component, records in s._swapped_signals.iteritems():
+    for component, records in s._dsl.swapped_signals.iteritems():
       for current_obj, i, obj, is_list in records:
         if is_list:
-          s._swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
           current_obj[i] = obj
         else:
-          s._swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
           setattr( current_obj, i, obj )
 
-    s._locked_simulation = False
+    s._dsl.locked_simulation = False
 
   # TODO rename
   def check( s ):
@@ -581,7 +581,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def get_all_update_on_edge( s ):
     try:
-      assert s._elaborate_top is s, "Getting all update_on_edge blocks  " \
+      assert s._dsl.elaborate_top is s, "Getting all update_on_edge blocks  " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
       return s._dsl.all_update_on_edge
@@ -590,14 +590,14 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def get_update_on_edge( s ):
     assert s._dsl.constructed
-    return s._update_on_edge
+    return s._dsl.update_on_edge
 
   def get_all_upblk_metadata( s ):
     try:
-      assert s._elaborate_top is s, "Getting all update block metadata  " \
+      assert s._dsl.elaborate_top is s, "Getting all update block metadata  " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
-      return s._all_upblk_reads, s._all_upblk_writes, s._all_upblk_calls
+      return s._dsl.all_upblk_reads, s._dsl.all_upblk_writes, s._dsl.all_upblk_calls
     except AttributeError:
       raise NotElaboratedError()
 
@@ -608,12 +608,12 @@ class ComponentLevel2( ComponentLevel1 ):
   # Override
   def get_all_explicit_constraints( s ):
     try:
-      assert s._elaborate_top is s, "Getting all explicit constraints " \
+      assert s._dsl.elaborate_top is s, "Getting all explicit constraints " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
-      return s._all_U_U_constraints, \
-             s._RD_U_constraints, \
-             s._WR_U_constraints
+      return s._dsl.all_U_U_constraints, \
+             s._dsl.RD_U_constraints, \
+             s._dsl.WR_U_constraints
     except AttributeError:
       raise NotElaboratedError()
 

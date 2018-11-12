@@ -53,6 +53,19 @@ class Const( Connectable ):
     except AttributeError:
       raise NotElaboratedError()
 
+  def get_host_component( s ):
+    try:
+      return s._dsl.host
+    except AttributeError:
+      try:
+        host = s
+        while not host.is_component():
+          host = host.get_parent_object() # go to the component
+        s._dsl.host = host
+        return s._dsl.host
+      except AttributeError:
+        raise NotElaboratedError()
+
   def get_sibling_slices( s ):
     return []
 
@@ -226,7 +239,11 @@ class Interface( NamedObject, Connectable ):
     if not s._dsl.constructed:
       s.construct( *s._dsl.args, **s._dsl.kwargs )
 
-      if hasattr( s, "_inversed" ):
+      inversed = False
+      try:  inversed = s._dsl.inversed
+      except AttributeError: pass
+
+      if inversed:
         for name, obj in s.__dict__.iteritems():
           if not name.startswith("_"):
             if isinstance( obj, Signal ):
