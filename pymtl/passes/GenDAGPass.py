@@ -8,8 +8,8 @@
 # Date   : Jan 18, 2018
 
 from pymtl import *
-from BasePass import BasePass
-from pymtl.model import Const
+from BasePass import BasePass, PassMetadata
+from pymtl.dsl import Const
 import py, ast
 from collections import defaultdict
 
@@ -17,6 +17,8 @@ class GenDAGPass( BasePass ):
 
   def __call__( self, top ):
     top.check()
+    top._dag = PassMetadata()
+
     self._generate_net_blocks( top )
     self._process_constraints( top )
 
@@ -28,11 +30,11 @@ class GenDAGPass( BasePass ):
 
     nets = top.get_all_nets()
 
-    top.genblks = set()
-    top.genblk_hostobj = {}
-    top.genblk_reads   = {}
-    top.genblk_writes  = {}
-    top.genblk_src     = {}
+    top._dag.genblks = set()
+    top._dag.genblk_hostobj = {}
+    top._dag.genblk_reads   = {}
+    top._dag.genblk_writes  = {}
+    top._dag.genblk_src     = {}
 
     # To reduce the time to compile update blocks, I first group the list
     # of update blocks that have the same host object together and fire
@@ -104,12 +106,12 @@ def {0}():
     def compile_upblks( s, src ):
 
       def update( blk ):
-        top.genblks.add( blk )
+        top._dag.genblks.add( blk )
         gen_src, writer, readers = blkname_meta[ blk.__name__ ]
         if writer.is_signal():
-          top.genblk_reads[ blk ] = [ writer ]
-        top.genblk_writes[ blk ] = readers
-        top.genblk_src   [ blk ] = ( gen_src, None )
+          top._dag.genblk_reads[ blk ] = [ writer ]
+        top._dag.genblk_writes[ blk ] = readers
+        top._dag.genblk_src   [ blk ] = ( gen_src, None )
         # TODO None -- I remove the ast parsing since it is slow
 
       var = locals()
@@ -125,7 +127,7 @@ def {0}():
 
     update_on_edge               = top.get_all_update_on_edge()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
-    genblk_reads, genblk_writes  = top.genblk_reads, top.genblk_writes
+    genblk_reads, genblk_writes  = top._dag.genblk_reads, top._dag.genblk_writes
     U_U, RD_U, WR_U              = top.get_all_explicit_constraints()
 
     #---------------------------------------------------------------------
@@ -247,7 +249,7 @@ def {0}():
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    top.all_constraints = U_U.copy()
+    top._dag.all_constraints = U_U.copy()
     for (x, y) in impl_constraints:
       if (y, x) not in U_U: # no conflicting expl
-        top.all_constraints.add( (x, y) )
+        top._dag.all_constraints.add( (x, y) )

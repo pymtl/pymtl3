@@ -11,11 +11,11 @@ from pymtl.passes import BasePass
 from collections  import deque
 from graphviz     import Digraph
 from errors import PassOrderError
-from pymtl.model.errors import UpblkCyclicError
+from pymtl.dsl.errors import UpblkCyclicError
 
 class SimpleSchedTickPass( BasePass ):
   def __call__( self, top ):
-    if not hasattr( top, "all_constraints" ):
+    if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     top.schedule = schedule = self.schedule( top )
@@ -30,8 +30,8 @@ class SimpleSchedTickPass( BasePass ):
 
     # Construct the graph
 
-    V   = top.get_all_update_blocks() | top.genblks
-    E   = top.all_constraints
+    V   = top.get_all_update_blocks() | top._dag.genblks
+    E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
 

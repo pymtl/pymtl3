@@ -6,7 +6,7 @@
 # Author : Shunning Jiang
 # Date   : Dec 18, 2017
 
-from pymtl.model import RTLComponent
+from pymtl.dsl.RTLComponent import RTLComponent
 from BasePass import BasePass
 from GenDAGPass import GenDAGPass
 from SimpleSchedTickPass import SimpleSchedTickPass

@@ -6,7 +6,7 @@
 # Date   : Dec 23, 2017
 
 from pymtl import *
-from pymtl.model import NamedObject
+from pymtl.dsl import NamedObject
 from collections import deque
 
 class Chicken(NamedObject):
@@ -49,6 +49,7 @@ def test_NamedObject_normal():
 
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner.chicken.protein)== "s.dinner.chicken.protein"
+  print x.dinner.chicken.protein
 
 def test_NamedObject_list1():
 
@@ -65,6 +66,7 @@ def test_NamedObject_list1():
 
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner[1].chicken.protein)== "s.dinner[1].chicken.protein"
+  print x.dinner[1].chicken.protein
 
 def test_NamedObject_list2():
 
@@ -81,4 +83,4 @@ def test_NamedObject_list2():
 
   assert repr(x.lunch[3].rooster.protein) == "s.lunch[3].rooster.protein"
   assert repr(x.dinner.chicken.protein) == "s.dinner.chicken.protein"
-
+  print repr(x.lunch[3].rooster.protein)

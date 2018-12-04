@@ -12,6 +12,7 @@
 # Date   : Apr 16, 2018
 
 from NamedObject import NamedObject
+from ComponentLevel1 import ComponentLevel1
 from ComponentLevel2 import ComponentLevel2
 from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
 from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
@@ -27,22 +28,22 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super( ComponentLevel3, cls ).__new__( cls, *args, **kwargs )
-    inst._call_kwargs = None
-    inst._adjacency   = defaultdict(set)
-    inst._consts      = set()
+    inst._dsl.call_kwargs = None
+    inst._dsl.adjacency   = defaultdict(set)
+    inst._dsl.consts      = set()
     return inst
 
   # Override
   def _declare_vars( s ):
     super( ComponentLevel3, s )._declare_vars()
-    s._all_adjacency = defaultdict(set)
+    s._dsl.all_adjacency = defaultdict(set)
 
   # Override
   def _collect_vars( s, m ):
     super( ComponentLevel3, s )._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
-      for k in m._adjacency:
-        s._all_adjacency[k] |= m._adjacency[k]
+      for k in m._dsl.adjacency:
+        s._dsl.all_adjacency[k] |= m._dsl.adjacency[k]
 
   # Override
   def _construct( s ):
@@ -50,25 +51,23 @@ class ComponentLevel3( ComponentLevel2 ):
     connections right after constructing the model. The reason why we
     take this detour instead of connecting in __call__ directly, is that
     __call__ is done before setattr, and hence the child components don't
-    know their name yet. _constructed is called in setattr after name
+    know their name yet. _dsl.constructed is called in setattr after name
     tagging, so this is valid. (see NamedObject.py). """
 
-    if not s._constructed:
-      kwargs = s._kwargs.copy()
-      if "elaborate" in s._param_dict:
-        kwargs.update( { x: y for x, y in s._param_dict[ "elaborate" ].iteritems()
+    if not s._dsl.constructed:
+      kwargs = s._dsl.kwargs.copy()
+      if "elaborate" in s._dsl.param_dict:
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
 
-      if not kwargs: s.construct( *s._args )
-      else:          s.construct( *s._args, **kwargs )
+      s.construct( *s._dsl.args, **kwargs )
 
-      if s._call_kwargs is not None: # s.a = A()( b = s.b )
+      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
 
-      s._constructed = True
+      s._dsl.constructed = True
 
-  @staticmethod
-  def _connect_objects( o1, o2, adjacency_dict ):
+  def _connect_objects( s, o1, o2, adjacency_dict ):
     """ Connect two objects. If one of them is integer, create a new Const
     that wraps around it in 's'. This method refactors will be called by other
     public APIs. """
@@ -78,22 +77,22 @@ class ComponentLevel3( ComponentLevel2 ):
         o1, o2 = o2, o1 # o1 is signal, o2 is int
       assert isinstance( o1, Signal )
 
-      o2   = Const( o1.Type, o2 )
+      o2   = Const( o1._dsl.Type, o2, s )
       host = o1.get_host_component()
 
       if isinstance( o1, InVPort ):
         # connecting constant to inport should be at the parent level
         host = host.get_parent_object()
 
-      o2._parent_obj = host
-      host._consts.add( o2 )
+      o2._dsl.parent_obj = host
+      host._dsl.consts.add( o2 )
 
     o1_type = None
     o2_type = None
 
-    try:  o1_type = o1.Type
+    try:  o1_type = o1._dsl.Type
     except AttributeError:  pass
-    try:  o2_type = o2.Type
+    try:  o2_type = o2._dsl.Type
     except AttributeError:  pass
 
     if o1_type is None:
@@ -127,7 +126,7 @@ class ComponentLevel3( ComponentLevel2 ):
     try: # Catch AssertionError from _connect
 
       # Process saved __call__ kwargs
-      for (kw, target) in s._call_kwargs.iteritems():
+      for (kw, target) in s._dsl.call_kwargs.iteritems():
         try:
           obj = getattr( s, kw )
         except AttributeError:
@@ -139,16 +138,16 @@ class ComponentLevel3( ComponentLevel2 ):
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
           for idx, item in target.iteritems():
-            s._connect_objects( obj[idx], item, s._adjacency )
+            s._connect_objects( obj[idx], item, s._dsl.adjacency )
 
         # Obj is a single signal
         # If the target is a list, it's fanout connection
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
-            s._connect_objects( obj, item, s._adjacency )
+            s._connect_objects( obj, item, s._dsl.adjacency )
         # Target is a single object
         else:
-          s._connect_objects( obj, target, s._adjacency )
+          s._connect_objects( obj, target, s._dsl.adjacency )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
@@ -204,20 +203,20 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # First of all, bfs the "forest" to find out all nets
 
-    nets = s._floodfill_nets( s._all_signals, s._all_adjacency )
+    nets = s._floodfill_nets( s._dsl.all_signals, s._dsl.all_adjacency )
 
     # Then figure out writers: all writes in upblks and their nest objects
 
     writer_prop = {}
 
-    for blk, writes in s._all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.iteritems():
       for obj in writes:
         writer_prop[ obj ] = True # propagatable
 
-        obj = obj._parent_obj
+        obj = obj.get_parent_object()
         while obj.is_signal():
           writer_prop[ obj ] = False
-          obj = obj._parent_obj
+          obj = obj.get_parent_object()
 
     # Find the host object of every net signal
     # and then leverage the information to find out top level input port
@@ -226,10 +225,10 @@ class ComponentLevel3( ComponentLevel2 ):
       for member in net:
         host = member
         while not isinstance( host, ComponentLevel3 ):
-          host = host._parent_obj # go to the component
-        member._host = host
+          host = host.get_parent_object() # go to the component
+        member._dsl.host = host
 
-        if isinstance( member, InVPort ) and member._host == s:
+        if isinstance( member, InVPort ) and member._dsl.host == s:
           writer_prop[ member ] = True
 
     headless = nets
@@ -344,13 +343,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
       while S:
         u = S.pop() # u is the writer
-        whost = u._host
+        whost = u._dsl.host
 
-        for v in s._all_adjacency[u]: # v is the reader
+        for v in s._dsl.all_adjacency[u]: # v is the reader
           if v not in visited:
             visited.add( v )
             S.append( v )
-            rhost = v._host
+            rhost = v._dsl.host
 
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport
@@ -370,7 +369,7 @@ class ComponentLevel3( ComponentLevel2 ):
             # 2. reader_host(x) is writer_host(x.y)'s parent:
             # Hence, writer is outport, reader is wire or outport
             # writer cannot be constant
-            elif rhost == whost._parent_obj:
+            elif rhost == whost.get_parent_object():
               valid = isinstance( u, OutVPort) and \
                     ( isinstance( v, OutVPort ) or isinstance( v, Wire ) )
 
@@ -387,10 +386,10 @@ class ComponentLevel3( ComponentLevel2 ):
             # 3. writer_host(x) is reader_host(x.y)'s parent:
             # Hence, writer is inport or wire, reader is inport
             # writer can be constant
-            elif whost == rhost._parent_obj:
+            elif whost == rhost.get_parent_object():
               # valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) \
                                                  # or isinstance( u, Const)) and \
-                        # isinstance( v, InVPort )
+                         # isinstance( v, InVPort )
 
               # if not valid:
                 # raise SignalTypeError( \
@@ -420,7 +419,7 @@ class ComponentLevel3( ComponentLevel2 ):
             # This means that the connection is fulfilled in x
             # Hence, writer is outport and reader is inport
             # writer cannot be constant
-            elif whost._parent_obj == rhost._parent_obj:
+            elif whost.get_parent_object() == rhost.get_parent_object():
               valid = isinstance( u, OutVPort ) and isinstance( v, InVPort )
 
               if not valid:
@@ -433,7 +432,7 @@ class ComponentLevel3( ComponentLevel2 ):
         OutVPort/Wire x.y.z cannot be driven by x.a.b""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     type(u).__name__, repr(u), repr(whost), type(whost).__name__,
-                    repr(whost._parent_obj) ) )
+                    repr(whost.get_parent_object()) ) )
             # 5. neither host is the other's parent nor the same.
             else:
               raise SignalTypeError("""[Type 9] "{}" and "{}" cannot be connected:
@@ -452,14 +451,14 @@ class ComponentLevel3( ComponentLevel2 ):
         # If we're disconnecting a constant from a port, the constant
         # should be the only writer in this net and is equal to o2
         assert isinstance( writer, Const ), "what the hell?"
-        assert writer.const == o2, "Disconnecting the wrong const {} " \
-                                     "-- should be {}.".format( o2, writer.const )
+        assert writer._dsl.const == o2, "Disconnecting the wrong const {} " \
+                                        "-- should be {}.".format( o2, writer.const )
         o2 = writer
 
         # I don't remove it from m._adjacency since they are not used later
-        assert o1 in s._all_adjacency[o2] and o2 in s._all_adjacency[o1]
-        s._all_adjacency[o2].remove( o1 )
-        s._all_adjacency[o1].remove( o2 )
+        assert o1 in s._dsl.all_adjacency[o2] and o2 in s._dsl.all_adjacency[o1]
+        s._dsl.all_adjacency[o2].remove( o1 )
+        s._dsl.all_adjacency[o1].remove( o2 )
 
         # Disconnect a const from a signal just removes the writer in the net
         signals.remove( writer )
@@ -470,10 +469,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
     nets = s.get_all_nets()
 
-    assert o1 in s._all_adjacency[o2] and o2 in s._all_adjacency[o1]
+    assert o1 in s._dsl.all_adjacency[o2] and o2 in s._dsl.all_adjacency[o1]
     # I don't remove it from m._adjacency since they are not used later
-    s._all_adjacency[o2].remove( o1 )
-    s._all_adjacency[o1].remove( o2 )
+    s._dsl.all_adjacency[o2].remove( o1 )
+    s._dsl.all_adjacency[o1].remove( o2 )
 
     for i, net in enumerate( nets ):
       writer, signals = net
@@ -481,7 +480,7 @@ class ComponentLevel3( ComponentLevel2 ):
       if o1 in signals: # Find the net that contains o1
         assert o2 in signals, signals
 
-        broken_nets = s._floodfill_nets( signals, s._all_adjacency )
+        broken_nets = s._floodfill_nets( signals, s._dsl.all_adjacency )
 
         # disconnect the only two vertices in the net
         if len(broken_nets) == 0:
@@ -536,16 +535,16 @@ class ComponentLevel3( ComponentLevel2 ):
     It connects s.in_ to s.x.in_ in the same line as model construction.
     """
     assert args == ()
-    if s._constructed:
+    if s._dsl.constructed:
       raise InvalidConnectionError("Connection using __call__, "
                                    "i.e. s.x( a = s.a ), is illegal "
                                    "after constructing s.x")
-    s._call_kwargs = kwargs
+    s._dsl.call_kwargs = kwargs
     return s
 
   def connect( s, o1, o2 ):
     try:
-      s._connect_objects( o1, o2, s._adjacency )
+      s._connect_objects( o1, o2, s._dsl.adjacency )
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
@@ -566,21 +565,25 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def elaborate( s ):
-    if s._constructed:
-      return
 
     NamedObject.elaborate( s )
+
     s._declare_vars()
 
-    s._all_components = s._collect_all( lambda x: isinstance( x, ComponentLevel3 ) )
-    for c in s._all_components:
-      c._elaborate_top = s
-      c._elaborate_read_write_func()
-      s._collect_vars( c )
+    for c in s._dsl.all_named_objects:
 
-    s._all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
-    s._all_nets    = s._resolve_var_connections( s._all_signals )
-    s._has_pending_connections = False
+      if isinstance( c, Signal ):
+        s._dsl.all_signals.add( c )
+
+      if isinstance( c, ComponentLevel2 ):
+        c._elaborate_read_write_func()
+
+      if isinstance( c, ComponentLevel1 ):
+        s._collect_vars( c )
+
+    s._dsl.all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
+    s._dsl.all_nets    = s._resolve_var_connections( s._dsl.all_signals )
+    s._dsl.has_pending_connections = False
 
     s.check()
 
@@ -596,17 +599,17 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def get_all_nets( s ):
     try:
-      assert s._elaborate_top is s, "Getting all nets " \
+      assert s._dsl.elaborate_top is s, "Getting all nets " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
     except AttributeError:
       raise NotElaboratedError()
 
-    if s._has_pending_connections:
-      s._all_nets = s._resolve_var_connections( s._all_signals )
-      s._has_pending_connections = False
+    if s._dsl.has_pending_connections:
+      s._dsl.all_nets = s._resolve_var_connections( s._dsl.all_signals )
+      s._dsl.has_pending_connections = False
 
-    return s._all_nets
+    return s._dsl.all_nets
 
   def get_signal_adjacency_dict( s ):
     try:
@@ -615,7 +618,7 @@ class ComponentLevel3( ComponentLevel2 ):
                                     "is on {}.".format( "top."+repr(s)[2:] )
     except AttributeError:
       raise NotElaboratedError()
-    return s._all_adjacency
+    return s._dsl.all_adjacency
 
   # Override
   def delete_component_by_name( s, name ):
@@ -642,28 +645,28 @@ class ComponentLevel3( ComponentLevel2 ):
       for x in removed_components:
         assert x._elaborate_top is top
         top._uncollect_vars( x )
-        for y in x._consts:
-          del y._parent_obj
+        for y in x._dsl.consts:
+          del y._dsl.parent_obj
 
       for x in obj._collect_all():
-        del x._parent_obj
+        del x._dsl.parent_obj
 
       # TODO somehow save the adjs for reconnection
 
       for x in removed_signals:
-        for other in top._all_adjacency[x]:
+        for other in top._dsl.all_adjacency[x]:
           # If other will be removed, we don't need to remove it here ..
           if   other not in removed_signals:
-            top._all_adjacency[other].remove( x )
+            top._dsl.all_adjacency[other].remove( x )
 
-        del top._all_adjacency[x]
+        del top._dsl.all_adjacency[x]
 
       # The following implementation of breaking nets is faster than a
       # full connection resolution.
 
       new_nets = []
       for writer, signals in nets:
-        broken_nets = s._floodfill_nets( signals, top._all_adjacency )
+        broken_nets = s._floodfill_nets( signals, top._dsl.all_adjacency )
 
         for net_signals in broken_nets:
           if len(net_signals) > 1:
@@ -682,16 +685,17 @@ class ComponentLevel3( ComponentLevel2 ):
     # gc.collect() # this takes 0.1 seconds
 
   # Override
+  # FIXME
   def add_component_by_name( s, name, obj ):
     assert not hasattr( s, name )
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
-    top = s._elaborate_top
+    top = s._dsl.elaborate_top
 
     added_components = obj.get_all_components()
-    top._all_components |= added_components
+    top._dsl.all_components |= added_components
 
     for c in added_components:
       c._elaborate_top = top
@@ -705,7 +709,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # time upon adding any connect, I just mark it here. Please make sure
     # to call s.get_all_nets() to flush all pending connections whenever
     # you want to get the nets
-    s._has_pending_connections = True
+    s._dsl.has_pending_connections = True
 
   def add_connection( s, o1, o2 ):
     # TODO support string arguments and non-top s
@@ -720,9 +724,9 @@ class ComponentLevel3( ComponentLevel2 ):
       raise InvalidConnectionError( "\n{}".format(e) )
 
     for x, adjs in added_adjacency.iteritems():
-      s._all_adjacency[x].update( adjs )
+      s._dsl.all_adjacency[x].update( adjs )
 
-    s._has_pending_connections = True # Lazy
+    s._dsl.has_pending_connections = True # Lazy
 
   def add_connections( s, *args ):
     # TODO support string arguments and non-top s
@@ -743,7 +747,7 @@ class ComponentLevel3( ComponentLevel2 ):
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
     for x, adjs in added_adjacency.iteritems():
-      s._all_adjacency[x].update( adjs )
+      s._dsl.all_adjacency[x].update( adjs )
 
     s._has_pending_connections = True # Lazy
 

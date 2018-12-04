@@ -6,7 +6,7 @@
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from NamedObject import NamedObject
+from NamedObject import NamedObject, DSLMetadata
 from pymtl.datatypes import mk_bits
 from errors import InvalidConnectionError
 
@@ -25,29 +25,6 @@ class Connectable(object):
     adjacency_dict[s].add( other )
     adjacency_dict[other].add( s )
 
-  #-----------------------------------------------------------------------
-  # Public APIs (only can be called after elaboration)
-  #-----------------------------------------------------------------------
-
-  def get_host_component( s ):
-    try:
-      return s._host
-    except AttributeError:
-      try:
-        host = s
-        while not host.is_component():
-          host = host._parent_obj # go to the component
-        s._host = host
-        return s._host
-      except AttributeError:
-        raise NotElaboratedError()
-
-  def get_parent_object( s ):
-    try:
-      return s._parent_obj
-    except AttributeError:
-      raise NotElaboratedError()
-
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
   if isinstance( x, int ):
@@ -61,12 +38,33 @@ def _overlap( x, y ):
 
 # internal class for connecting signals and constants, not named object
 class Const( Connectable ):
-  def __init__( s, Type, v ):
-    s.Type = Type
-    s.const = v
+  def __init__( s, Type, v, parent ):
+    s._dsl = DSLMetadata()
+    s._dsl.Type = Type
+    s._dsl.const = v
+    s._dsl.parent_obj = parent
 
   def __repr__( s ):
-    return "{}({})".format( str(s.Type.__name__), s.const )
+    return "{}({})".format( str(s._dsl.Type.__name__), s._dsl.const )
+
+  def get_parent_object( s ):
+    try:
+      return s._dsl.parent_obj
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_host_component( s ):
+    try:
+      return s._dsl.host
+    except AttributeError:
+      try:
+        host = s
+        while not host.is_component():
+          host = host.get_parent_object() # go to the component
+        s._dsl.host = host
+        return s._dsl.host
+      except AttributeError:
+        raise NotElaboratedError()
 
   def get_sibling_slices( s ):
     return []
@@ -83,17 +81,17 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type ):
-    s.Type = Type
-    s._type_instance = None
+    s._dsl.Type = Type
+    s._dsl.type_instance = None
 
     try:  Type.nbits
     except AttributeError: # not Bits type
-      s._type_instance = Type()
+      s._dsl.type_instance = Type()
 
-    s._slice  = None # None -- not a slice of some wire by default
-    s._attrs  = {}
-    s._slices = {}
-    s._top_level_signal = None
+    s._dsl.slice  = None # None -- not a slice of some wire by default
+    s._dsl.attrs  = {}
+    s._dsl.slices = {}
+    s._dsl.top_level_signal = None
 
   def inverse( s ):
     pass
@@ -103,7 +101,7 @@ class Signal( NamedObject, Connectable ):
       return super( Signal, s ).__getattribute__( name )
 
     if name not in s.__dict__:
-      _obj = getattr( s._type_instance, name )
+      _obj = getattr( s._dsl.type_instance, name )
 
       # if the object is Bits, we need to generate a Bits type
       try:
@@ -111,15 +109,15 @@ class Signal( NamedObject, Connectable ):
       except AttributeError:
         x = s.__class__( _obj.__class__ )
 
-      x._type_instance = _obj
+      x._dsl.type_instance = _obj
 
-      x._parent_obj = s
-      x._top_level_signal = s._top_level_signal
+      x._dsl.parent_obj = s
+      x._dsl.top_level_signal = s._dsl.top_level_signal
 
-      x._full_name = s._full_name + "." + name
-      x._my_name   = name
+      x._dsl.full_name = s._dsl.full_name + "." + name
+      x._dsl.my_name   = name
 
-      s.__dict__[ name ] = s._attrs[ name ] = x
+      s.__dict__[ name ] = s._dsl.attrs[ name ] = x
 
     return s.__dict__[ name ]
 
@@ -138,25 +136,38 @@ class Signal( NamedObject, Connectable ):
 
     if sl_tuple not in s.__dict__:
       x = s.__class__( mk_bits( sl.stop - sl.start) )
-      x._parent_obj = s
-      x._top_level_signal = s
+      x._dsl.parent_obj = s
+      x._dsl.top_level_signal = s
 
       sl_str = "[{}:{}]".format( sl.start, sl.stop )
 
-      x._my_name   = s._my_name + sl_str
-      x._full_name = s._full_name + sl_str
+      x._dsl.my_name   = s._dsl.my_name + sl_str
+      x._dsl.full_name = s._dsl.full_name + sl_str
 
-      x._slice       = sl
-      s.__dict__[ sl_tuple ] = s._slices[ sl_tuple ] = x
+      x._dsl.slice       = sl
+      s.__dict__[ sl_tuple ] = s._dsl.slices[ sl_tuple ] = x
 
     return s.__dict__[ sl_tuple ]
 
   def default_value( s ):
-    return s.Type()
+    return s._dsl.Type()
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
+
+  def get_host_component( s ):
+    try:
+      return s._dsl.host
+    except AttributeError:
+      try:
+        host = s
+        while not host.is_component():
+          host = host.get_parent_object() # go to the component
+        s._dsl.host = host
+        return s._dsl.host
+      except AttributeError:
+        raise NotElaboratedError()
 
   def is_component( s ):
     return False
@@ -177,35 +188,36 @@ class Signal( NamedObject, Connectable ):
     return False
 
   def get_top_level_signal( s ):
-    return s if s._top_level_signal is None else s._top_level_signal
+    top = s._dsl.top_level_signal
+    return s if top is None else top
 
   def get_sibling_slices( s ):
-    if s._slice:
-      ret = s._parent_obj._slices.values()
+    if s._dsl.slice:
+      parent = s.get_parent_object()
+      ret = parent._dsl.slices.values()
       ret.remove( s )
       return ret
     return []
 
   def slice_overlap( s, other ):
-    assert other._parent_obj is s._parent_obj, "You are only allowed to \
-                                                pass in a sibling signal."
-    return _overlap( s._slice, other._slice )
+    assert other.get_parent_object() is s.get_parent_object(), \
+      "You are only allowed to pass in a sibling signal."
+    return _overlap( s._dsl.slice, other._dsl.slice )
 
 # These three subtypes are for type checking purpose
 class Wire( Signal ):
   def inverse( s ):
-    return Wire( s.Type )
-
+    return Wire( s._dsl.Type )
 
 class InVPort( Signal ):
   def inverse( s ):
-    return OutVPort( s.Type )
+    return OutVPort( s._dsl.Type )
   def is_input_value_port( s ):
     return True
 
 class OutVPort( Signal ):
   def inverse( s ):
-    return InVPort( s.Type )
+    return InVPort( s._dsl.Type )
   def is_output_value_port( s ):
     return True
 
@@ -213,10 +225,10 @@ class Interface( NamedObject, Connectable ):
 
   @property
   def Type( s ):
-    return s._args
+    return s._dsl.args
 
   def inverse( s ):
-    s._inversed = True
+    s._dsl.inversed = True
     return s
 
   # Override
@@ -224,11 +236,14 @@ class Interface( NamedObject, Connectable ):
   # inverse is executed before setattr, so we need to delay it ...
 
   def _construct( s ):
-    if not s._constructed:
-      if not s._kwargs: s.construct( *s._args )
-      else:             s.construct( *s._args, **s._kwargs )
+    if not s._dsl.constructed:
+      s.construct( *s._dsl.args, **s._dsl.kwargs )
 
-      if hasattr( s, "_inversed" ):
+      inversed = False
+      try:  inversed = s._dsl.inversed
+      except AttributeError: pass
+
+      if inversed:
         for name, obj in s.__dict__.iteritems():
           if not name.startswith("_"):
             if isinstance( obj, Signal ):
@@ -236,7 +251,7 @@ class Interface( NamedObject, Connectable ):
             else:
               setattr( s, name, obj )
 
-      s._constructed = True
+      s._dsl.constructed = True
 
   def _connect( s, other, edges ):
     # Expand the list when needed. Only connect connectables and return,

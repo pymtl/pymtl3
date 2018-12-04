@@ -6,10 +6,12 @@
 # Date   : Dec 23, 2017
 
 from pymtl import *
-from pymtl.model import ComponentLevel1
-from pymtl.model.errors import UpblkCyclicError, UpblkFuncSameNameError
-from collections import deque
+from pymtl.dsl import ComponentLevel1
+from pymtl.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
 from sim_utils import simple_sim_pass
+
+from collections import deque
+
 
 def _test_model( cls ):
   A = cls()

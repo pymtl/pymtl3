@@ -21,31 +21,29 @@ class RTLComponent( ComponentLevel3 ):
     declarations before constructing child components and bring up them
     to parent after construction of all children. """
 
-    if not s._constructed:
+    if not s._dsl.constructed:
       s.clk   = InVPort( Bits1 )
       s.reset = InVPort( Bits1 )
 
-      kwargs = s._kwargs.copy()
-      if "elaborate" in s._param_dict:
-        kwargs.update( { x: y for x, y in s._param_dict[ "elaborate" ].iteritems()
+      kwargs = s._dsl.kwargs.copy()
+      if "elaborate" in s._dsl.param_dict:
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
-
-      if not kwargs: s.construct( *s._args )
-      else:          s.construct( *s._args, **kwargs )
+      s.construct( *s._dsl.args, **kwargs )
 
       try:
-        s.connect( s.clk, s._parent_obj.clk )
-        s.connect( s.reset, s._parent_obj.reset )
+        s.connect( s.clk, s.get_parent_object().clk )
+        s.connect( s.reset, s.get_parent_object().reset )
       except AttributeError:
         pass
 
-      if s._call_kwargs is not None: # s.a = A()( b = s.b )
+      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
 
-      s._constructed = True
+      s._dsl.constructed = True
 
   def sim_reset( s ):
-    assert s._elaborate_top is s # assert sim_reset is top
+    assert s._dsl.elaborate_top is s # assert sim_reset is top
 
     s.reset = Bits1( 1 )
     s.tick() # This tick propagates the reset signal
