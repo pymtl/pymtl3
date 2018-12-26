@@ -1,10 +1,37 @@
 from pymtl import *
 from GenDAGPass import GenDAGPass
-from SimpleSchedTickPass import SimpleSchedTickPass
+from SimpleSchedPass import SimpleSchedPass
+from SimpleTickPass import SimpleTickPass
+from mamba.UnrollTickPass import UnrollTickPass
 
 SimpleSim = [
   RTLComponent.elaborate,
   GenDAGPass(),
-  SimpleSchedTickPass(),
+  SimpleSchedPass(),
+  SimpleTickPass(),
   RTLComponent.lock_in_simulation
 ]
+
+UnrollSim = [
+  RTLComponent.elaborate,
+  GenDAGPass(),
+  SimpleSchedPass(),
+  UnrollTickPass(),
+  RTLComponent.lock_in_simulation
+]
+
+#  HeuTopoUnrollSim = [
+  #  RTLComponent.elaborate,
+  #  GenDAGPass(),
+  #  SimpleSchedPass(),
+  #  UnrollTickPass(),
+  #  RTLComponent.lock_in_simulation
+#  ]
+
+#  HeuTopoTraceBreakSim = [
+  #  RTLComponent.elaborate,
+  #  GenDAGPass(),
+  #  SimpleSchedPass(),
+  #  UnrollTickPass(),
+  #  RTLComponent.lock_in_simulation
+#  ]
