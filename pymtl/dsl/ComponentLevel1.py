@@ -235,3 +235,14 @@ class ComponentLevel1( NamedObject ):
     for c in added_components:
       c._elaborate_top = top
       top._collect_vars( c )
+
+  def apply( s, *args ):
+
+    if isinstance(args[0], list):
+      assert len(args) == 1
+      for step in args[0]:
+        step( s )
+
+    elif len(args) == 1:
+      assert callable( args[0] )
+      args[0]( s )
