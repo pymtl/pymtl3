@@ -184,44 +184,6 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-class CountBranches( DetectVarNames ):
-
-  def enter( self, node ):
-    self.num_br = 0
-    self.visit( node )
-    return self.num_br
-
-  #-----------------------------------------------------------------------
-  # Valid ast nodes
-  #-----------------------------------------------------------------------
-
-  def visit_If( self, node ):
-    self.num_br += 1
-    self.visit( node.test )
-
-    for stmt in node.body:
-      self.visit( stmt )
-
-    for stmt in node.orelse:
-      self.visit( stmt )
-
-  def visit_IfExp( self, node ):
-    self.num_br += 1
-    self.visit( node.test )
-    self.visit( node.body )
-    self.visit( node.orelse )
-
-  # A single for is estimated to be 10x of a branch
-  def visit_For( self, node ):
-    self.num_br += 0
-    for stmt in node.body:
-      self.visit( stmt )
-
-  def visit_While( self, node ):
-    self.num_br += 0
-    for stmt in node.body:
-      self.visit( stmt )
-
 def extract_reads_writes_calls( f, tree, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
@@ -232,15 +194,6 @@ def extract_reads_writes_calls( f, tree, read, write, calls ):
 
   for stmt in tree.body:
     DetectReadsWritesCalls( f ).enter( stmt, read, write, calls )
-
-def count_branches( f ):
-
-  # Traverse the ast to extract variable writes and reads
-  tree = f.ast
-  assert isinstance(tree, ast.Module)
-  assert isinstance(tree.body[0], ast.FunctionDef)
-
-  return CountBranches( f ).enter( tree )
 
 def get_method_calls( tree, upblk, methods ):
   DetectMethodCalls( upblk ).enter( tree, methods )

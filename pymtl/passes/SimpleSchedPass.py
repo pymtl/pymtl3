@@ -49,28 +49,33 @@ class SimpleSchedPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
-    if len(schedule) != len(V):
-      from graphviz import Digraph
-      dot = Digraph()
-      dot.graph_attr["rank"] = "same"
-      dot.graph_attr["ratio"] = "compress"
-      dot.graph_attr["margin"] = "0.1"
-
-      leftovers = set( [ v for v in V if InD[v] ] )
-      for x in leftovers:
-        dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
-
-      for (x, y) in E:
-        if x in leftovers and y in leftovers:
-          dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
-                    y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
-      dot.render( "/tmp/upblk-dag.gv", view=True )
-
-      raise UpblkCyclicError( """
-  Update blocks have cyclic dependencies.
-  * Please consult update dependency graph for details."
-      """)
-
-    assert schedule, "No update block found in the model"
+    check_schedule( top, schedule, V, E, in_degree )
 
     return schedule
+
+def check_schedule( top, schedule, V, E, in_degree ):
+
+  assert schedule
+
+  if len(schedule) != len(V):
+    from graphviz import Digraph
+    dot = Digraph()
+    dot.graph_attr["rank"] = "same"
+    dot.graph_attr["ratio"] = "compress"
+    dot.graph_attr["margin"] = "0.1"
+
+    leftovers = set( [ v for v in V if in_degree[v] ] )
+    for x in leftovers:
+      dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
+
+    for (x, y) in E:
+      if x in leftovers and y in leftovers:
+        dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
+                  y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
+    dot.render( "/tmp/upblk-dag.gv", view=True )
+
+    raise UpblkCyclicError( """
+Update blocks have cyclic dependencies.
+* Please consult update dependency graph for details."
+    """)
+

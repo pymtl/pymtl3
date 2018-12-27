@@ -127,7 +127,7 @@ class ComponentLevel1( NamedObject ):
       assert s._dsl.elaborate_top is s, "Getting update block host component " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
-      return s._all_upblk_hostobj[ blk ]
+      return s._dsl.all_upblk_hostobj[ blk ]
     except AttributeError:
       raise NotElaboratedError()
 

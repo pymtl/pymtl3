@@ -565,13 +565,13 @@ class ComponentLevel2( ComponentLevel1 ):
     s._check_upblk_writes()
     s._check_port_in_upblk()
 
-  def get_update_block_ast_pairs( s ):
+  def get_update_block_ast( s, blk ):
     try:
       name_ast = s.__class__._name_ast
     except AttributeError: # This component doesn't have update block
-      return set()
+      return None
 
-    return set([ (upblk, name_ast[name]) for name, upblk in s._name_upblk.iteritems() ] )
+    return name_ast[blk.__name__]
 
   def get_astnode_obj_mapping( s ):
     try:
