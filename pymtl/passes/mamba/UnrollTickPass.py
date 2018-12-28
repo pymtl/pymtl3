@@ -6,9 +6,11 @@
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
+import ast, py
+
 from pymtl import *
 from pymtl.passes import BasePass
-import ast, py
+from pymtl.passes.errors import PassOrderError
 
 class UnrollTickPass( BasePass ):
 
