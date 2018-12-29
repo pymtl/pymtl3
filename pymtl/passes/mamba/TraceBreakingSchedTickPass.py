@@ -80,8 +80,9 @@ class TraceBreakingSchedTickPass( BasePass ):
     # Branchiness factor is the bound of branchiness in a meta block.
     branchiness_factor = 8
 
-    # Branchiness factor is the bound of branchiness in a meta block.
-    branchy_block_factor = 3
+    # Block factor is the bound of the number of branchy blocks in a
+    # meta block.
+    branchy_block_factor = 4
 
     schedule = []
 
@@ -95,38 +96,44 @@ class TraceBreakingSchedTickPass( BasePass ):
         (br, u) = Q.pop(0)
 
         # Update the current
+        current_blk_count += 1
         current_branchiness += br
         current_meta.append( u )
 
-        if current_branchiness > branchiness_factor:
+        if current_branchiness >= branchiness_factor:
           metas.append( current_meta )
-          current_branchiness = 0
+          current_branchiness = current_blk_count = 0
           current_meta = []
 
       # We already append a branchy block
       else:
-        # Find most branchy block
+        # Find the most branchy block
         (br, u) = Q.pop()
 
         # If no branchy block available, directly start a new metablock
 
         if not br:
           metas.append( current_meta )
-          current_branchiness = 0
+          current_branchiness = current_blk_count = 0
           current_meta = [ u ]
 
-        # Otherwise limit the number of branchy blocks
+        # Limit the number of branchiness and number of branchy blocks
 
-        else:
+        elif current_branchiness + br <= branchiness_factor:
           current_meta.append( u )
-          current_blk_count += 1
           current_branchiness += br
+          current_blk_count += 1
 
-          if current_branchiness > branchiness_factor and \
-             current_blk_count > branchy_block_factor:
+          if current_blk_count >= branchy_block_factor:
             metas.append( current_meta )
             current_branchiness = current_blk_count = 0
             current_meta = []
+
+        else:
+          current_meta.append( u )
+          metas.append( current_meta )
+          current_branchiness = current_blk_count = 0
+          current_meta = []
 
       schedule.append( u )
       for v in Es[u]:
@@ -137,6 +144,8 @@ class TraceBreakingSchedTickPass( BasePass ):
     # Append the last meta block
     if current_meta:
       metas.append( current_meta )
+
+    print "num_metablks:", len(metas)
 
     for meta in metas:
       print "---------------"
@@ -150,8 +159,6 @@ class TraceBreakingSchedTickPass( BasePass ):
 
   def trace_breaking_tick( self, top ):
     metas = top._sched.meta_schedule
-
-    print "num_metablks:", len(metas)
 
     # We will use pypyjit.dont_trace_here to disable tracing across
     # intermediate update blocks.
@@ -193,6 +200,6 @@ class TraceBreakingSchedTickPass( BasePass ):
 
     exec py.code.Source( gen_tick_src ).compile() in locals()
 
-    print gen_tick_src
+    #  print gen_tick_src
     top.tick = tick_top
 
