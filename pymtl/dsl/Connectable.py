@@ -288,3 +288,31 @@ class Interface( NamedObject, Connectable ):
 
   def is_interface( s ):
     return True
+
+# CallerPort is connected an exterior method, called by the component's
+# update block
+# CalleePort exposes the method in the component to outside world
+
+class MethodPort( NamedObject, Connectable ):
+
+  def __init__( self ):
+    self.method = None
+
+  def __call__( self, *args, **kwargs ):
+    return self.method( *args, **kwargs )
+
+  def is_component( s ):
+    return False
+
+  def is_signal( s ):
+    return False
+
+  def is_interface( s ):
+    return False
+
+class CallerPort( MethodPort ):
+  pass
+
+class CalleePort( MethodPort ):
+  def __init__( self, method ):
+    self.method = method

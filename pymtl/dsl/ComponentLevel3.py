@@ -1,12 +1,12 @@
 #=========================================================================
 # ComponentLevel3.py
 #=========================================================================
-# We add wire/interface connections. Basically, a connected component in
-# the whole graph should have the same value in the cycle where the value
-# is from a unique "net writer" written in an update block. Then, the
-# update block for a net is basically one writer writes to those readers.
-# Interface connections are handled separately, and they should be
-# revamped when adding method-based interfaces.
+# We add value wire/interface connections. Basically, all connected
+# value signal in the whole graph should have the same value of the unique
+# "net writer" written in an update block.
+# Then, the update block for a net is basically one writer writes to those
+# readers. Interface connections are handled separately, and they should
+# be revamped when adding method-based interfaces.
 #
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018

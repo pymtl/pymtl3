@@ -10,13 +10,13 @@ from pymtl import *
 from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
-from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3
+from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4
 from pymtl.dsl import Signal, Const
 
 import random, py.code
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
-  random.seed( seed )
+  #  random.seed( seed )
   assert isinstance( s, ComponentLevel1 )
 
   if not hasattr( s._dsl, "all_U_U_constraints" ):
@@ -191,6 +191,111 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   else:
     all_constraints = expl_constraints.copy()
 
+  # Add method-base constraints
+
+  # I assume method don't call other methods here
+
+  # Do bfs to find out all potential total constraints associated with
+  # each method, direction conflicts, and incomplete constraints
+
+  if isinstance( s, ComponentLevel4 ):
+    method_blks = defaultdict(set)
+
+    for blk, calls in s._dsl.all_upblk_calls.iteritems():
+      for call in calls:
+        if isinstance( call, CalleePort ):
+          method_blks[ call.method ].add( blk )
+        else:
+          method_blks[ call ].add( blk )
+
+    pred = defaultdict(set)
+    succ = defaultdict(set)
+    for (x, y) in s._dsl.all_M_constraints:
+      pred[ y ].add( x )
+      succ[ x ].add( y )
+
+    verbose = True
+
+    for method, assoc_blks in method_blks.iteritems():
+      Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
+      if verbose: print
+      while Q:
+        (u, w) = Q.popleft()
+        if verbose: print (u, w)
+
+        if w <= 0:
+          for v in pred[u]:
+
+            if v in all_upblks:
+              # Find total constraint (v < blk) by v < method_u < method_u'=blk
+              # INVALID if we have explicit constraint (blk < method_u)
+
+              for blk in assoc_blks:
+                if blk not in pred[u]:
+                  if v != blk:
+                    if verbose: print "w<=0, v is blk".center(10),v, blk
+                    if verbose: print v.__name__.center(25)," < ", \
+                                blk.__name__.center(25)
+                    all_constraints.add( (v, blk) )
+
+            else:
+              if v in method_blks:
+                # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
+                # E.g. I do port.wr() somewhere in __main__ to write to a port.
+
+                # Find total constraint (vb < blk) by vb=method_v < method_u=blk
+                # INVALID if we have explicit constraint (blk < method_v) or (method_u < vb)
+
+                v_blks = method_blks[ v ]
+                for vb in v_blks:
+                  if vb not in succ[u]:
+                    for blk in assoc_blks:
+                      if blk not in pred[v]:
+                        if vb != blk:
+                          if verbose: print "w<=0, v is method".center(10),v, blk
+                          if verbose: print vb.__name__.center(25)," < ", \
+                                      blk.__name__.center(25)
+                          all_constraints.add( (vb, blk) )
+
+              Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
+
+        if w >= 0:
+          for v in succ[u]:
+
+            if v in all_upblks:
+              # Find total constraint (blk < v) by blk=method_u' < method_u < v
+              # INVALID if we have explicit constraint (method_u < blk)
+
+              for blk in assoc_blks:
+                if blk not in succ[u]:
+                  if v != blk:
+                    if verbose: print "w>=0, v is blk".center(10),blk, v
+                    if verbose: print blk.__name__.center(25)," < ", \
+                                      v.__name__.center(25)
+                    all_constraints.add( (blk, v) )
+
+            else:
+              if v in method_blks:
+                # assert v in method_blks, "Incomplete elaboration, something is wrong! %s" % hex(v)
+                # TODO Now I'm leaving incomplete dependency chain because I didn't close the circuit loop.
+                # E.g. I do port.wr() somewhere in __main__ to write to a port.
+
+                # Find total constraint (blk < vb) by blk=method_u < method_v=vb
+                # INVALID if we have explicit constraint (vb < method_u) or (method_v < blk)
+
+                v_blks = method_blks[ v ]
+                for vb in v_blks:
+                  if not vb in pred[u]:
+                    for blk in assoc_blks:
+                      if not blk in succ[v]:
+                        if vb != blk:
+                          if verbose: print "w>=0, v is method".center(10), blk, v
+                          if verbose: print blk.__name__.center(25)," < ", \
+                                            vb.__name__.center(25)
+                          all_constraints.add( (blk, vb) )
+
+              Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
+
   # Construct the graph
 
   vs  = all_upblks
@@ -207,6 +312,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   Q = deque( [ v for v in vs if not InD[v] ] )
   while Q:
     random.shuffle(Q)
+    #  print Q
     u = Q.pop()
     serial_schedule.append( u )
     for v in es[u]:
@@ -226,6 +332,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     for blk in serial_schedule:
       blk()
   s.tick = tick_normal
+  s._schedule = serial_schedule
 
   # Clean up Signals
 
