@@ -201,6 +201,8 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   if isinstance( s, ComponentLevel4 ):
     method_blks = defaultdict(set)
 
+    # Collect each CalleePort/method is called in which update block
+    # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
       for call in calls:
         if isinstance( call, CalleePort ):
@@ -208,6 +210,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         else:
           method_blks[ call ].add( blk )
 
+    # Put all M-related constraints into predecessor and successor dicts
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
