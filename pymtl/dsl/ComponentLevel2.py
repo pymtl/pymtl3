@@ -166,7 +166,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:
-          call = name_func[ obj_name[0][0] ]
+          call = s._dsl.name_func[ obj_name[0][0] ]
 
       return all_objs
 
