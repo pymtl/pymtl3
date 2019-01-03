@@ -167,6 +167,8 @@ class ComponentLevel2( ComponentLevel1 ):
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:
           call = s._dsl.name_func[ obj_name[0][0] ]
+          all_objs.add( call )
+          s._dsl.astnode_objs[ nodelist[0] ].append( call )
 
       return all_objs
 
