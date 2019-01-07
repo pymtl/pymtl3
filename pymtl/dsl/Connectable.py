@@ -307,12 +307,29 @@ class MethodPort( NamedObject, Connectable ):
   def is_signal( s ):
     return False
 
+  def is_method_port( s ):
+    return False
+
   def is_interface( s ):
     return False
 
 class CallerPort( MethodPort ):
-  pass
+  def __init__( self ):
+    self.method = None
+
+  def is_callee_port( s ):
+    return False
+
+  def is_caller_port( s ):
+    return True
+
 
 class CalleePort( MethodPort ):
   def __init__( self, method ):
     self.method = method
+
+  def is_callee_port( s ):
+    return True
+
+  def is_caller_port( s ):
+    return False

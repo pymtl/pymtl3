@@ -69,8 +69,8 @@ class ComponentLevel4( ComponentLevel3 ):
           s._dsl.M_constraints.add( (x0.func, x1.func) )
         else:
           assert False
-      elif isinstance( x0, M ):
-        if   isinstance( x1, U ):
+      elif isinstance( x1, M ):
+        if   isinstance( x0, U ):
           s._dsl.M_constraints.add( (x0.func, x1.func) )
         else:
           assert False
