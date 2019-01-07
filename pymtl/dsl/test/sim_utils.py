@@ -10,8 +10,8 @@ from pymtl import *
 from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
-from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4
-from pymtl.dsl import Signal, Const
+from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5
+from pymtl.dsl import Signal, Const, MethodPort
 
 import random, py.code
 
@@ -32,7 +32,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     all_update_on_edge = set( s._dsl.all_update_on_edge )
 
     if isinstance( s, ComponentLevel3 ):
-      nets = s._dsl.all_nets
+      nets = s._dsl.all_value_nets
 
       for writer, signals in nets:
         if len(signals) == 1: continue
@@ -201,11 +201,18 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   if isinstance( s, ComponentLevel4 ):
     method_blks = defaultdict(set)
 
+    if isinstance( s, ComponentLevel5 ):
+      for writer, net in s.get_all_method_nets():
+        for member in net:
+          if member is not writer:
+            assert member.method is None
+            member.method = writer.method
+
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
       for call in calls:
-        if isinstance( call, CalleePort ):
+        if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -217,7 +224,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       pred[ y ].add( x )
       succ[ x ].add( y )
 
-    verbose = True
+    verbose = False
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
