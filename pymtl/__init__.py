@@ -5,12 +5,14 @@ from datatypes import _bitwidths
 from dsl.ConstraintTypes import U, M, RD, WR
 from dsl.Connectable     import Wire, InVPort, OutVPort, Interface, CallerPort, CalleePort
 from dsl.RTLComponent    import RTLComponent
+from dsl.ComponentLevel4    import ComponentLevel4
 
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InVPort', 'OutVPort', 'Interface', 'CallerPort', 'CalleePort',
 
   'RTLComponent',
+  'ComponentLevel4',
   #  'SimRTLPass',
   # 'PrintMetadataPass', 'EventDrivenPass',
 

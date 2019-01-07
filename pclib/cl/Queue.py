@@ -1,18 +1,15 @@
 from collections import deque
 from pymtl import *
-from pclib.ifcs import EnqIfcCL, DeqIfcCL
 
-class BaseQueue( MethodsConnection ):
-  def __init__( s, Type, size ):
+class BaseQueue( ComponentLevel4 ):
+  def construct( s, size ):
     s.queue = deque( maxlen=size )
 
-    s.enq = EnqIfcCL( Type )
-    s.enq.enq |= s.enq_
-    s.enq.rdy |= s.enq_rdy_
+    s.enq     = CalleePort( s.enq_ )
+    s.enq_rdy = CalleePort( s.enq_rdy_ )
 
-    s.deq = DeqIfcCL( Type )
-    s.deq.deq |= s.deq_
-    s.deq.rdy |= s.deq_rdy_
+    s.deq     = CalleePort( s.deq_ )
+    s.deq_rdy = CalleePort( s.deq_rdy_ )
 
   def enq_rdy_( s ): return len(s.queue) < s.queue.maxlen
   def enq_( s, v ):  s.queue.appendleft(v)
@@ -21,8 +18,8 @@ class BaseQueue( MethodsConnection ):
 
 class PipeQueue( BaseQueue ):
 
-  def __init__( s, Type, size ):
-    super( PipeQueue, s ).__init__( Type, size )
+  def construct( s, size ):
+    super( PipeQueue, s ).construct( size )
     s.add_constraints(
       M(s.deq_    ) < M(s.enq_    ), # pipe behavior
       M(s.deq_rdy_) < M(s.enq_rdy_),
@@ -33,8 +30,8 @@ class PipeQueue( BaseQueue ):
 
 class BypassQueue( BaseQueue ):
 
-  def __init__( s, Type, size ):
-    super( BypassQueue, s ).__init__( Type, size )
+  def construct( s, size ):
+    super( BypassQueue, s ).construct( size )
     s.add_constraints(
       M(s.enq_    ) < M(s.deq_    ), # bypass behavior
       M(s.enq_rdy_) < M(s.deq_rdy_),
