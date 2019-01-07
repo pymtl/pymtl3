@@ -49,7 +49,7 @@ class SimpleSchedPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
-    check_schedule( top, schedule, V, E, in_degree )
+    check_schedule( top, schedule, V, E, InD )
 
     return schedule
 

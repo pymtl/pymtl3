@@ -178,7 +178,7 @@ class ComponentLevel3( ComponentLevel2 ):
         nets.append( net )
     return nets
 
-  def _resolve_var_connections( s, signal_list ):
+  def _resolve_value_connections( s ):
     """ The case of nested data struct: the writer of a net can be one of
     the three: signal itself (s.x.a), ancestor (s.x), descendant (s.x.b)
 
@@ -319,7 +319,7 @@ class ComponentLevel3( ComponentLevel2 ):
     return headed + [ (None, x) for x in headless ]
 
   def _check_port_in_nets( s ):
-    nets = s.get_all_nets()
+    nets = s.get_all_value_nets()
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is
@@ -442,7 +442,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def _disconnect_signal_int( s, o1, o2 ):
 
-    nets = s.get_all_nets()
+    nets = s.get_all_value_nets()
 
     for i, net in enumerate( nets ):
       writer, signals = net
@@ -467,7 +467,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def _disconnect_signal_signal( s, o1, o2 ):
 
-    nets = s.get_all_nets()
+    nets = s.get_all_value_nets()
 
     assert o1 in s._dsl.all_adjacency[o2] and o2 in s._dsl.all_adjacency[o1]
     # I don't remove it from m._adjacency since they are not used later
@@ -581,8 +581,7 @@ class ComponentLevel3( ComponentLevel2 ):
       if isinstance( c, ComponentLevel1 ):
         s._collect_vars( c )
 
-    s._dsl.all_signals = s._collect_all( lambda x: isinstance( x, Signal ) )
-    s._dsl.all_nets    = s._resolve_var_connections( s._dsl.all_signals )
+    s._dsl.all_value_nets = s._resolve_value_connections( s._dsl.all_signals )
     s._dsl.has_pending_connections = False
 
     s.check()
@@ -597,7 +596,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._check_port_in_upblk()
     s._check_port_in_nets()
 
-  def get_all_nets( s ):
+  def get_all_value_nets( s ):
     try:
       assert s._dsl.elaborate_top is s, "Getting all nets " \
                                     "is only allowed at top, but this API call " \
@@ -606,10 +605,10 @@ class ComponentLevel3( ComponentLevel2 ):
       raise NotElaboratedError()
 
     if s._dsl.has_pending_connections:
-      s._dsl.all_nets = s._resolve_var_connections( s._dsl.all_signals )
+      s._dsl.all_value_nets = s._resolve_value_connections()
       s._dsl.has_pending_connections = False
 
-    return s._dsl.all_nets
+    return s._dsl.all_value_nets
 
   def get_signal_adjacency_dict( s ):
     try:
@@ -632,7 +631,7 @@ class ComponentLevel3( ComponentLevel2 ):
       import timeit
 
       # First make sure we flush pending connections
-      nets = top.get_all_nets()
+      nets = top.get_all_value_nets()
 
       # Remove all components and uncollect metadata
 
@@ -676,7 +675,7 @@ class ComponentLevel3( ComponentLevel2 ):
               new_nets.append( (None, net_signals) )
       t1 = timeit.default_timer()
 
-      top._all_nets = new_nets
+      top._dsl.all_value_nets = new_nets
 
       delattr( s, name )
 
@@ -707,8 +706,8 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # Lazy -- to avoid resolve_connection call which takes non-trivial
     # time upon adding any connect, I just mark it here. Please make sure
-    # to call s.get_all_nets() to flush all pending connections whenever
-    # you want to get the nets
+    # to call s.get_all_value_nets() to flush all pending connections
+    # whenever you want to get the nets
     s._dsl.has_pending_connections = True
 
   def add_connection( s, o1, o2 ):
