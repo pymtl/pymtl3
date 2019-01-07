@@ -6,6 +6,7 @@ from dsl.ConstraintTypes import U, M, RD, WR
 from dsl.Connectable     import Wire, InVPort, OutVPort, Interface, CallerPort, CalleePort
 from dsl.RTLComponent    import RTLComponent
 from passes.PassGroups import SimpleSim
+from dsl.ComponentLevel4    import ComponentLevel4
 
 __all__ = [
   'U','M','RD','WR',
@@ -13,6 +14,7 @@ __all__ = [
 
   'RTLComponent',
   'SimpleSim',
+  'ComponentLevel4',
   # 'PrintMetadataPass', 'EventDrivenPass',
 
   'sext', 'zext', 'clog2', 'concat',
