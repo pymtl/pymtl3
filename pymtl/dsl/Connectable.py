@@ -325,7 +325,7 @@ class CallerPort( MethodPort ):
 
 
 class CalleePort( MethodPort ):
-  def __init__( self, method ):
+  def __init__( self, method=None ):
     self.method = method
 
   def is_callee_port( s ):
