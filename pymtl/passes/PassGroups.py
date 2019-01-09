@@ -11,6 +11,14 @@ SimpleSim = [
   RTLComponent.lock_in_simulation
 ]
 
+SimpleCLSim = [
+  ComponentLevel5.elaborate,
+  GenDAGPass(),
+  SimpleSchedPass(),
+  SimpleTickPass(),
+  ComponentLevel5.lock_in_simulation
+]
+
 from mamba.UnrollTickPass import UnrollTickPass
 UnrollSim = [
   RTLComponent.elaborate,

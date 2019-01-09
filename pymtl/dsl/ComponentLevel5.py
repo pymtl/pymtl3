@@ -16,6 +16,8 @@ from ComponentLevel4 import ComponentLevel4
 from ConstraintTypes import U, M
 from Connectable import Signal, MethodPort, CalleePort, CallerPort
 
+from errors import MultiWriterError
+
 import inspect, ast # for error message
 
 class ComponentLevel5( ComponentLevel4 ):
@@ -75,13 +77,17 @@ class ComponentLevel5( ComponentLevel4 ):
       writer = None
 
       for member in net:
+
         if isinstance( member, CalleePort ):
-          if writer is not None:
-            raise MultiWriterError( \
-            "Two-method conflict \"{}\"{}, \"{}\" in the following net:\n - {}".format(
-              repr(v), "" if not obj else "(as \"{}\" is written somewhere else)".format( repr(obj) ),
-              repr(writer), "\n - ".join([repr(x) for x in net])) )
-          writer = member
+          if member.method is not None:
+            if writer is None:
+              writer = member
+            else:
+              raise MultiWriterError( \
+                "Two-method conflict \"{}\", \"{}\" in the following net:\n - {}".format(
+                repr(member), repr(writer),
+                "\n - ".join([repr(x) for x in net])) )
+
         else:
           assert isinstance( member, CallerPort ), "We don't allow connecting method " \
                                                    "port to other ports of {} type".format( member.__class__ )
