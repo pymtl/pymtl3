@@ -9,6 +9,9 @@ def mk_mem_msg( o, a, d ):
   exec py.code.Source( template.format( o, a, d ) ).compile() in globals()
   return eval( "MemReqMsg_{0}_{1}_{2}, MemRespMsg_{0}_{2}".format( o, a, d ) )
 
+def msg_to_str( msg, width ):
+  return ("" if msg is None else str(msg)).ljust(width)
+
 template = """
 class MemReqMsg_{0}_{1}_{2}( object ):
   TYPE_READ       = 0
