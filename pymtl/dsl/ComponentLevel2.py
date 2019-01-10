@@ -132,6 +132,8 @@ class ComponentLevel2( ComponentLevel1 ):
 
       def lookup_variable( obj, name_depth, node_depth, obj_list ):
         """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
+        if obj is None:
+          return
 
         if name_depth >= len(obj_name): # exhausted
           add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
