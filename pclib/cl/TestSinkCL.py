@@ -65,3 +65,23 @@ class TestSimpleSink( ComponentLevel5 ):
 
   def line_trace( s ):
     return "{}".format( "" if s.v is None else str(s.v) ).ljust( s.trace_len )
+
+class TestSink( ComponentLevel5 ):
+
+  def construct( s, msgs, stall_prob=0, delay=1 ):
+
+    s.req     = CalleePort()
+    s.req_rdy = CalleePort()
+
+    s.sink = TestSimpleSink( msgs )
+
+    s.stall_delay = StallDelayCL( stall_prob, delay )(
+      send = s.req, send_rdy = s.req_rdy,
+      recv = s.src.req, recv_rdy = s.src.req_rdy,
+    )
+
+  def done( s ):
+    return s.src.done
+
+  def line_trace( s ):
+    return s.stall_delay.line_trace()

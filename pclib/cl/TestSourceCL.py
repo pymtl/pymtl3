@@ -1,7 +1,8 @@
 from pymtl import *
 from collections import deque
+from StallDelayCL import StallDelayCL
 
-# This simple source doesn't have
+# This simple source doesn't have any constraints or such
 
 class TestSimpleSource( ComponentLevel5 ):
 
@@ -27,64 +28,22 @@ class TestSimpleSource( ComponentLevel5 ):
   def line_trace( s ):
     return "{}".format( "" if s.v is None else str(s.v) ).ljust( s.trace_len )
 
-# This simple sink does have a buffer at input
+class TestSource( ComponentLevel5 ):
 
-class TestSimpleSink( ComponentLevel5 ):
+  def construct( s, msgs, stall_prob=0, delay=1 ):
 
-  def resp_rdy_( s ):
-    return s.idx < len(s.msgs)
+    s.req     = CallerPort()
+    s.req_rdy = CallerPort()
 
-  def resp_( s, v ):
-    s.queue.appendleft(v)
+    s.src         = TestSimpleSource( msgs )
 
-  def construct( s, msgs ):
-    s.msgs  = list( msgs )
-    s.queue = deque( maxlen=1 )
-    s.idx  = 0
-
-    s.resp     = CalleePort( s.resp_ )
-    s.resp_rdy = CalleePort( s.resp_rdy_ )
-
-    s.v = None
-    s.trace_len = len(str(msgs[0]))
-
-    @s.update
-    def up_sink():
-      s.v = None
-
-      if s.queue:
-        msg = s.queue.pop()
-        s.v = msg
-
-        if s.idx >= len(s.msgs):
-          raise TestSinkError( """
-  The test sink received a message that !
-  - sink name    : {}
-  - msg number   : {}
-  - actual msg   : {}
-  """.format( s, s.idx, msg )
-          )
-        else:
-          ref = s.msgs[ s.idx ]
-          s.idx += 1
-
-          if msg != ref:
-            raise TestSinkError( """
-  The test sink received an incorrect message!
-  - sink name    : {}
-  - msg number   : {}
-  - expected msg : {}
-  - actual msg   : {}
-  """.format( s, s.idx, ref, msg )
-          )
-
-    s.add_constraints(
-      U(up_sink) < M(s.resp_    ), # pipe behavior
-      U(up_sink) < M(s.resp_rdy_),
+    s.stall_delay = StallDelayCL( stall_prob, delay )(
+      send = s.req, send_rdy = s.req_rdy,
+      recv = s.src.req, recv_rdy = s.src.req_rdy,
     )
 
   def done( s ):
-    return s.idx >= len(s.msgs)
+    return s.src.done
 
   def line_trace( s ):
-    return "{}".format( "" if s.v is None else str(s.v) ).ljust( s.trace_len )
+    return s.stall_delay.line_trace()

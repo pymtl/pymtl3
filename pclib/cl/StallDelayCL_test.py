@@ -13,7 +13,7 @@ from pclib.cl.MemMsg import mk_mem_msg
 from pclib.cl.TestMemoryCL import TwoPortTestMemoryCL
 from pclib.cl.TestSourceCL import TestSimpleSource
 from pclib.cl.TestSinkCL   import TestSimpleSink
-from StallDelayCL import StallDelayCL
+from StallDelayCL import StallDelayCL, DelayPipeCL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -21,15 +21,20 @@ from StallDelayCL import StallDelayCL
 
 class TestHarness( ComponentLevel5 ):
 
-  def construct( s, src_msgs, sink_msgs, stall_prob, latency, src_lat, sink_lat ):
+  def construct( s, dut_class, src_msgs, sink_msgs, stall_prob=0, latency=0 ):
 
     # Messge type
 
     # Instantiate models
 
     s.src  = TestSimpleSource( src_msgs )
-    s.dut  = StallDelayCL( stall_prob, latency )
-    s.sink = TestSimpleSink  ( sink_msgs )
+
+    if dut_class is StallDelayCL:
+      s.dut = StallDelayCL( stall_prob, latency )
+    elif dut_class is DelayPipeCL:
+      s.dut = DelayPipeCL( latency )
+
+    s.sink = TestSimpleSink( sink_msgs )
 
     # Connect
 
@@ -43,6 +48,36 @@ class TestHarness( ComponentLevel5 ):
 
   def line_trace(s ):
     return s.src.line_trace() + " >>> " + s.dut.line_trace() + " >>> " + s.sink.line_trace()
+
+from pymtl.passes.PassGroups import SimpleCLSim
+
+def run_cl_sim( th, max_cycles=5000 ):
+
+  # Create a simulator
+
+  th.apply( SimpleCLSim )
+
+  # Reset model
+
+  #  sim.reset()
+  #  print()
+
+  # Run simulation
+
+  ncycles = 0
+  print "{:3}:{}".format( ncycles, th.line_trace() )
+  while not th.done() and ncycles < max_cycles:
+    th.tick()
+    ncycles += 1
+    print "{:3}:{}".format( ncycles, th.line_trace() )
+
+  # Force a test failure if we timed out
+
+  assert ncycles < max_cycles
+
+  th.tick()
+  th.tick()
+  th.tick()
 
 #-------------------------------------------------------------------------
 # Test Case Table
@@ -62,53 +97,32 @@ def basic_msgs():
     10, 10,
   ]
 
-test_case_table = mk_test_case_table([
-  (                       "msg_func        stall lat src sink"),
-  [ "basic",              basic_msgs,      0,    0,  0,  0    ],
-  [ "basic0.5_lat0",      basic_msgs,      0.5,  0,  0,  0    ],
-  [ "basic0.0_lat4",      basic_msgs,      0,    4,  0,  0    ],
-  [ "basic0.5_lat4",      basic_msgs,      0.5,  4,  0,  0    ],
-])
-
 #-------------------------------------------------------------------------
 # Test cases
 #-------------------------------------------------------------------------
-from pymtl.passes.PassGroups import SimpleCLSim
 
-def run_cl_sim( th, max_cycles=5000 ):
-
-  # Create a simulator
-
-  th.apply( SimpleCLSim )
-
-  # Reset model
-
-  #  sim.reset()
-  #  print()
-
-  # Run simulation
-
-  ncycles = 0
-  print "{}:{}".format( ncycles, th.line_trace() )
-  while not th.done() and ncycles < max_cycles:
-    th.tick()
-    ncycles += 1
-    print "{}:{}".format( ncycles, th.line_trace() )
-
-  # Force a test failure if we timed out
-
-  assert ncycles < max_cycles
-
-  # Extra ticks to make VCD easier to read
-
-  th.tick()
-  th.tick()
-  th.tick()
-
-@pytest.mark.parametrize( **test_case_table )
-def test_1port( test_params, dump_vcd ):
+@pytest.mark.parametrize( **mk_test_case_table([
+  (                       "msg_func        stall lat "),
+  [ "basic",              basic_msgs,      0,    0    ],
+  [ "basic0.5_lat0",      basic_msgs,      0.5,  0    ],
+  [ "basic0.0_lat4",      basic_msgs,      0,    4    ],
+  [ "basic0.5_lat4",      basic_msgs,      0.5,  4    ],
+]) )
+def test_stall_delay( test_params, dump_vcd ):
   msgs = test_params.msg_func()
-  run_cl_sim( TestHarness( msgs[::2], msgs[1::2],
-                        test_params.stall, test_params.lat,
-                        test_params.src, test_params.sink ) )
+  run_cl_sim( TestHarness( StallDelayCL, msgs[::2], msgs[1::2],
+                           stall_prob=test_params.stall,
+                           latency=test_params.lat ) )
 
+
+@pytest.mark.parametrize( **mk_test_case_table([
+  (                      "msg_func        lat "),
+  [ "basic",             basic_msgs,      0    ],
+  [ "basic_lat1",        basic_msgs,      1    ],
+  [ "basic_lat4",        basic_msgs,      4    ],
+  [ "basic_lat10",       basic_msgs,      10   ],
+]) )
+def test_delay_pipe( test_params, dump_vcd ):
+  msgs = test_params.msg_func()
+  run_cl_sim( TestHarness( DelayPipeCL, msgs[::2], msgs[1::2],
+                           latency=test_params.lat ) )
