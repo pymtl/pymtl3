@@ -28,6 +28,8 @@ class TestSimpleSource( ComponentLevel5 ):
   def line_trace( s ):
     return "{}".format( "" if s.v is None else str(s.v) ).ljust( s.trace_len )
 
+# This source includes a random stall delay
+
 class TestSource( ComponentLevel5 ):
 
   def construct( s, msgs, stall_prob=0, delay=1 ):
@@ -35,15 +37,17 @@ class TestSource( ComponentLevel5 ):
     s.req     = CallerPort()
     s.req_rdy = CallerPort()
 
-    s.src         = TestSimpleSource( msgs )
+    s.src = TestSimpleSource( msgs )
+
+    # Feed src's msg into stall_delay's recv port
 
     s.stall_delay = StallDelayCL( stall_prob, delay )(
-      send = s.req, send_rdy = s.req_rdy,
       recv = s.src.req, recv_rdy = s.src.req_rdy,
+      send = s.req, send_rdy = s.req_rdy,
     )
 
   def done( s ):
-    return s.src.done
+    return s.src.done()
 
   def line_trace( s ):
     return s.stall_delay.line_trace()

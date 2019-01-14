@@ -1,5 +1,6 @@
 from pymtl import *
 from collections import deque
+from StallDelayCL import StallDelayCL
 
 # This simple sink does have a buffer at input
 
@@ -70,18 +71,18 @@ class TestSink( ComponentLevel5 ):
 
   def construct( s, msgs, stall_prob=0, delay=1 ):
 
-    s.req     = CalleePort()
-    s.req_rdy = CalleePort()
+    s.resp     = CalleePort()
+    s.resp_rdy = CalleePort()
 
     s.sink = TestSimpleSink( msgs )
 
     s.stall_delay = StallDelayCL( stall_prob, delay )(
-      send = s.req, send_rdy = s.req_rdy,
-      recv = s.src.req, recv_rdy = s.src.req_rdy,
+      recv = s.resp,      recv_rdy = s.resp_rdy,
+      send = s.sink.resp, send_rdy = s.sink.resp_rdy,
     )
 
   def done( s ):
-    return s.src.done
+    return s.sink.done()
 
   def line_trace( s ):
     return s.stall_delay.line_trace()
