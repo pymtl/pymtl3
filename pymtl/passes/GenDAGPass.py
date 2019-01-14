@@ -293,8 +293,10 @@ def {0}():
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in all_M_constraints:
-      pred[ y ].add( x )
-      succ[ x ].add( y )
+      xx = x.method if isinstance( x, MethodPort ) else x
+      yy = y.method if isinstance( y, MethodPort ) else y
+      pred[ yy ].add( xx )
+      succ[ xx ].add( yy )
 
     verbose = False
 
