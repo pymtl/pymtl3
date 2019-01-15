@@ -10,11 +10,13 @@ class BaseQueue( ComponentLevel5 ):
 
     s.deq     = CalleePort( s.deq_ )
     s.deq_rdy = CalleePort( s.deq_rdy_ )
+    s.peek    = CalleePort( s.peek_ )
 
   def enq_rdy_( s ): return len(s.queue) < s.queue.maxlen
   def enq_( s, v ):  s.queue.appendleft(v)
   def deq_rdy_( s ): return len(s.queue) > 0
   def deq_( s ):     return s.queue.pop()
+  def peek_( s ):    return s.queue[-1]
 
 class PipeQueue( BaseQueue ):
 
