@@ -273,7 +273,6 @@ class Interface( NamedObject, Connectable ):
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"):
-        assert hasattr( other, name )
         recursive_connect( obj, getattr( other, name ) )
 
   #-----------------------------------------------------------------------

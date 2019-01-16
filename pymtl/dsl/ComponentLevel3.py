@@ -560,8 +560,8 @@ class ComponentLevel3( ComponentLevel2 ):
     for i in xrange(len(args)>>1) :
       try:
         s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
-      except InvalidConnectionError as e:
-        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
+      except Exception as e:
+        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
   #-----------------------------------------------------------------------
