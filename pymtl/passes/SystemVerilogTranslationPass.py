@@ -1,24 +1,26 @@
 #=========================================================================
 # SystemVerilogTranslationPass.py
 #=========================================================================
-# This pass takes the top module of a PyMTL component
-# and translates it into SystemVerilog.
+# This pass takes the top module of a PyMTL component and translates it 
+# into SystemVerilog.
 #
 # Author : Shunning Jiang, Peitian Pan
-# Date   : Oct 18, 2018
+# Date   : Jan 9, 2019
 
-from pymtl                import *
-from pymtl.dsl            import ComponentLevel1
-from BasePass             import BasePass
-from collections          import defaultdict, deque
-from errors               import TranslationError
+import inspect
+import RASTTypeSystem
 
+from pymtl       import *
+from pymtl.model import ComponentLevel1
+from BasePass    import BasePass
+from collections import defaultdict, deque
+from errors      import TranslationError
 from ComponentTranslationPass import ComponentTranslationPass
 
 class SystemVerilogTranslationPass( BasePass ):
 
   def __call__( s, top ):
-    """ recursively translate the top module with name top """
+    """Recursively translate the top module with name top."""
     model_name            = top.__class__.__name__
     systemverilog_file    = model_name + '.sv'
 
@@ -34,24 +36,24 @@ class SystemVerilogTranslationPass( BasePass ):
     nets = top.get_all_value_nets()
     adjs = top.get_signal_adjacency_dict()
 
-    connections_self_child    = defaultdict(set)
-    connections_self_self     = defaultdict(set)
-    connections_child_child   = defaultdict(set)
+    connections_self_child  = defaultdict(set)
+    connections_self_self   = defaultdict(set)
+    connections_child_child = defaultdict(set)
 
     for writer, net in nets:
       S = deque( [ writer ] )
       visited = set( [ writer ] )
       while S:
         u = S.pop()
-        writer_host         = u.get_host_component()
-        writer_host_parent  = writer_host.get_parent_object() 
+        writer_host        = u.get_host_component()
+        writer_host_parent = writer_host.get_parent_object() 
 
         for v in adjs[u]:
           if v not in visited:
             visited.add( v )
             S.append( v )
-            reader_host         = v.get_host_component()
-            reader_host_parent  = reader_host.get_parent_object()
+            reader_host        = v.get_host_component()
+            reader_host_parent = reader_host.get_parent_object()
 
             # Four possible cases for the reader and writer signals:
             # 1.   They have the same host component. Both need 
@@ -74,14 +76,22 @@ class SystemVerilogTranslationPass( BasePass ):
               connections_child_child[ writer_host_parent ].add( ( u, v ) )
 
             else: assert False
+    
+    # We need to construct the type environment of all components here to 
+    # perform RAST type checking.
+
+    type_env = {}
+
+    s.extract_type_env( type_env, top )
 
     # Recursively translate the top component
 
     ret = ComponentTranslationPass( 
-          connections_self_self, 
-          connections_self_self,
-          connections_child_child
-        )( top )
+      type_env,
+      connections_self_self, 
+      connections_self_self,
+      connections_child_child
+    )( top )
 
     # Write output directly to a file
 
@@ -90,3 +100,65 @@ class SystemVerilogTranslationPass( BasePass ):
 
     top._translated = True
 
+  # Assume signal only has nbits attribute
+  def extract_type_env( s, type_env, component ):
+    """Add the types of all attributes of the given component 
+    into the type environment."""
+
+    obj_lst = [ obj for (name, obj) in component.__dict__.iteritems() \
+      if isinstance( name, basestring ) if not name.startswith( '_' )
+    ]
+
+    while obj_lst:
+      top_obj = obj_lst.pop()
+      type_env[ freeze( top_obj ) ] = s.get_type( top_obj )
+
+    for child in component.get_child_components():
+      s.extract_type_env( type_env, child )
+
+  def get_type( s, obj ):
+    """return the RAST type of obj"""
+
+    # child component of the given module
+    if isinstance( obj, RTLComponent ):
+      return RASTTypeSystem.module( obj )
+
+    # signals refer to in/out ports and wires
+    elif isinstance( obj, ( InVPort, OutVPort, Wire ) ):
+      try:
+        nbits = obj.Type.nbits
+      except AttributeError:
+        assert False, 'signal instances must have Bits as their .Type field'
+
+      return RASTTypeSystem.signal( nbits )
+
+    # integers have unset bitwidth (0) 
+    elif isinstance( obj, int ):
+      return RASTTypeSystem.constant( 0 )
+
+    # Bits instances
+    elif isinstance( obj, Bits ):
+      return RASTTypeSystem.constant( obj.nbits )
+
+    # array type
+    elif isinstance( obj, list ):
+      assert len( obj ) > 0
+
+      type_list = map( lambda x: s.get_type( x ), obj )
+
+      assert reduce(lambda x, y: x and (y == type_list[0]), type_list, True),\
+        'Elements of list must have the same RAST type!'
+
+      return RASTTypeSystem.array( len( obj ), type_list[0] )
+
+    assert False,\
+      'Attributes of an RTLComponent must be signal, constant, list, or module!'
+
+#-----------------------------------------------------------------------
+# Helper functions
+#-----------------------------------------------------------------------
+
+def freeze( obj ):
+  if isinstance( obj, list ):
+    return tuple( freeze( o ) for o in obj )
+  return obj

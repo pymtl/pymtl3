@@ -293,42 +293,42 @@ def test_bits_value_closure():
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
-# def test_bits_val_and_call():
+def test_bits_val_and_call():
 
-  # class Foo( RTLComponent ):
-    # def construct( s ):
-      # nbits = 2
+  class Foo( RTLComponent ):
+    def construct( s ):
+      nbits = 2
 
-      # s.Tin  = mk_bits( nbits )
-      # s.in_  = InVPort( s.Tin )
-      # s.Tout = mk_bits( 1<<nbits )
-      # s.out  = OutVPort( s.Tout )
+      s.Tin  = mk_bits( nbits )
+      s.in_  = InVPort( s.Tin )
+      s.Tout = mk_bits( 1<<nbits )
+      s.out  = OutVPort( s.Tout )
 
-      # @s.func
-      # def qnm( x ):
-        # s.out = x
+      @s.func
+      def qnm( x ):
+        s.out = x
 
-      # @s.update
-      # def up_if():
+      @s.update
+      def up_if():
 
-        # if   s.in_ == s.Tin( 0 ):
-          # s.out = s.Tout( 1 ) | s.Tout( 1 )
+        if   s.in_ == s.Tin( 0 ):
+          s.out = s.Tout( 1 ) | s.Tout( 1 )
 
-        # elif s.in_ == s.Tin( 1 ):
-          # s.out = s.Tout( 2 ) & s.Tout( 2 )
-          # s.out = ~s.Tout( 2 )
+        elif s.in_ == s.Tin( 1 ):
+          s.out = s.Tout( 2 ) & s.Tout( 2 )
+          s.out = ~s.Tout( 2 )
 
-        # elif s.in_ == s.Tin( 2 ):
-          # s.out = s.Tout( 4 ) < s.Tout( 3 )
-          # s.out = s.Tout( 4 ) if s.in_ == s.Tin( 2 ) else s.Tout( 5 )
+        elif s.in_ == s.Tin( 2 ):
+          s.out = s.Tout( 4 ) < s.Tout( 3 )
+          s.out = s.Tout( 4 ) if s.in_ == s.Tin( 2 ) else s.Tout( 5 )
 
-        # elif s.in_ == s.Tin( 3 ):
-          # s.out = s.Tout( 8 )
+        elif s.in_ == s.Tin( 3 ):
+          s.out = s.Tout( 8 )
 
-        # else:
-          # s.out = s.Tout( 0 )
-          # qnm( s.Tout( 0 ) )
+        else:
+          s.out = s.Tout( 0 )
+          qnm( s.Tout( 0 ) )
 
-  # m = Foo()
-  # m.elaborate()
-  # SystemVerilogTranslationPass()( m )
+  m = Foo()
+  m.elaborate()
+  SystemVerilogTranslationPass()( m )

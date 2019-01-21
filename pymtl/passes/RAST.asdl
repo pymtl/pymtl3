@@ -1,0 +1,19 @@
+-- RAST description in Zephyr ASDL
+-- identifier, int, string, object, bool are the five built-in types of
+-- Zephyr ASDL
+
+module RAST
+{
+  mod  = CombUpblk( stmt* body )
+
+  stmt = Assign( expr* targets, expr value )
+
+  expr = Module( object module )
+       | Const( int nbits, int value )
+       | BinOp( expr left, operator op, expr right )
+       | Attribute( expr value, identifier attr )
+       | Index( expr value, expr idx )
+       | Slice( expr value, expr lower, expr upper )
+
+  operator = Add | Sub | ShiftLeft | ShiftRightLogic | BitAnd | BitOr | BitXor
+}

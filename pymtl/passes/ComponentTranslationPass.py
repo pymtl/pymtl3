@@ -48,10 +48,11 @@ endmodule
 
 class ComponentTranslationPass( BasePass ):
 
-  def __init__( s, connections_self_self, connections_self_child,
+  def __init__( s, type_env, connections_self_self, connections_self_child,
                    connections_child_child ):
     """ the connections are needed in recursive component translation """
 
+    s.type_env = type_env
     s._connections_self_self   = connections_self_self
     s._connections_self_child  = connections_self_child
     s._connections_child_child = connections_child_child
@@ -194,7 +195,7 @@ class ComponentTranslationPass( BasePass ):
     # Update blocks
     #-------------------------------------------------------------------
 
-    blk_srcs = UpblkTranslationPass()( m )
+    blk_srcs = UpblkTranslationPass( s.type_env )( m )
 
     #-------------------------------------------------------------------
     # Assemble all translated parts
@@ -208,6 +209,7 @@ class ComponentTranslationPass( BasePass ):
 
     for obj in sorted( m.get_child_components(), key = repr ):
       ret += ComponentTranslationPass(
+        s.type_env,
         s._connections_self_self, 
         s._connections_self_child, 
         s._connections_child_child
@@ -251,7 +253,7 @@ def gen_sv_signal_name( array_dict, direction, ports ):
         array_range = str( array_dict[ name ] )
         array_range = str( int(array_range) - 1 )
         ret.append('{direction}logic{width} {name}[0:{array_range}]'.\
-            format( **locals() ) 
+          format( **locals() ) 
         )
 
   return ret

@@ -2,8 +2,11 @@
 # errors.py
 #=========================================================================
 #
-# Author : Shunning Jiang
-# Date   : Jul 4, 2017
+# Author : Shunning Jiang, Peitian Pan
+# Date   : Jan 4, 2019
+
+import os
+import inspect
 
 class PassOrderError( Exception ):
   """ Raise when applying a pass to a component and some required variable
@@ -28,17 +31,57 @@ class VerilatorCompileError( Exception ):
 	""" Compiling error for verilator """
 	def __init__( self, err ):
 		return super( VerilatorCompileError, self ).__init__( \
-        "Verilator compilation error: {}".format( err ) )
+    "Verilator compilation error: {}".format( err ) )
 
 class PyMTLImportError( Exception ):
   """ Raise error when import goes wrong """
   def __init__( self, model_name, err ):
     return super( PyMTLImportError, self ).__init__( \
-        "Error while importing instance of {}: {}".format( model_name, err ) )
+    "Error while importing instance of {}: {}".format( model_name, err ) )
 
 class PyMTLSyntaxError( Exception ):
-  """ Raise error when the RAST transforming pass finds a syntax error """
-  def __init__( self, err ):
-    return super( PyMTLSyntaxError, self ).__init__( \
-        "RAST syntax error: {}".format( err ) )
+  """ Raise error when the RAST generation pass finds a syntax error """
+  def __init__( self, blk, ast, msg ):
+    fname = os.path.abspath( inspect.getsourcefile( blk ) )
+    line = inspect.getsourcelines( blk )[1]
+    col = 0
+    code = ""
+
+    try:
+      line += ast.lineno - 1
+      col = ast.col_offset
+      code_line = inspect.getsourcelines( blk )[0][ ast.lineno-1 ]
+      code = '\n  ' + code_line.strip() +\
+        '\n  '+ ' ' * (col-len(code_line)+len(code_line.lstrip())) + '^'
+    except AttributeError:
+      # The given AST node is not expr nor stmt
+      pass
+
+    return super( PyMTLSyntaxError, self ).__init__(
+      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}".\
+      format( **locals() ) 
+    )
+
+class PyMTLTypeError( Exception ):
+  """ Raise error when the RAST type check pass finds a error """
+  def __init__( self, blk, ast, msg ):
+    fname = os.path.abspath( inspect.getsourcefile( blk ) )
+    line = inspect.getsourcelines( blk )[1]
+    col = 0
+    code = ""
+
+    try:
+      line += ast.lineno - 1
+      col = ast.col_offset
+      code_line = inspect.getsourcelines( blk )[0][ ast.lineno-1 ]
+      code = '\n  ' + code_line.strip() +\
+        '\n  '+ ' ' * (col-len(code_line)+len(code_line.lstrip())) + '^'
+    except AttributeError:
+      # The given AST node is not expr nor stmt
+      pass
+
+    return super( PyMTLTypeError, self ).__init__(
+      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}".\
+      format( **locals() ) 
+    )
 
