@@ -22,7 +22,8 @@ class UpblkRASTTypeCheckPass( BasePass ):
 
     visitor = UpblkRASTTypeCheckVisitor( m, s.type_env )
 
-    for ( blk, ast ) in m.get_update_block_ast_pairs():
+    for blk in m.get_update_blocks():
+
       visitor.enter( blk, m._rast[ blk ] )
 
 #-----------------------------------------------------------------------

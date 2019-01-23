@@ -126,7 +126,7 @@ class SystemVerilogTranslationPass( BasePass ):
     # signals refer to in/out ports and wires
     elif isinstance( obj, ( InVPort, OutVPort, Wire ) ):
       try:
-        nbits = obj.Type.nbits
+        nbits = obj._dsl.Type.nbits
       except AttributeError:
         assert False, 'signal instances must have Bits as their .Type field'
 

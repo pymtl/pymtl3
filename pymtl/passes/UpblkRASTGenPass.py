@@ -25,9 +25,8 @@ class UpblkRASTGenPass( BasePass ):
 
     visitor = UpblkRASTGenVisitor( m )
 
-    for ( blk, ast ) in m.get_update_block_ast_pairs():
-
-      m._rast[ blk ] = visitor.enter( blk, ast )
+    for blk in m.get_update_blocks():
+      m._rast[ blk ] = visitor.enter( blk, m.get_update_block_ast( blk ) )
 
 #-----------------------------------------------------------------------
 # Visitor for generating RAST for an update block

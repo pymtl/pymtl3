@@ -35,19 +35,43 @@ class constructor( object ):
 class {constr_name}( BaseRAST ):
   def __init__( s{params_name} ):
     {params_assign}
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    {check_equal}return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 """
     if s.type_list is None:
       params_name = ''
       params_assign = 'pass'
+      check_equal = ''
+
     else: 
+      # Generate statements for checking sub fields
+      eq = []
+      for t, f in zip( s.type_list, s.field_list ):
+        if s.is_sequence( t ):
+          eq.append( 'for x, y in zip( s.{field}, other.{field} ):'.format( field = f ) )
+          eq.append( '  if x != y:' )
+          eq.append( '    return False' )
+        else:
+          eq.append( 'if s.{field} != other.{field}:'.format( field = f ) )
+          eq.append( '  return False' )
+
       params_name = ', ' + ', '.join( s.field_list )
       params_assign = '\n    '.join(
         map( lambda x: "s.{field} = {field}".format(field = x), s.field_list )
       )
+      check_equal = '\n    '.join( eq ) + '\n    '
+
     return impl_template.format(
       constr_name = s.name,
       params_name = params_name, 
-      params_assign = params_assign
+      params_assign = params_assign,
+      check_equal = check_equal
     )
 
   def viz_impl_str( s ):
@@ -306,7 +330,7 @@ class RASTVisualizationPass( BasePass ):
   def __call__( s, model ):
     visitor = RASTVisualizationVisitor()
 
-    for ( blk, ast ) in model.get_update_block_ast_pairs():
+    for blk in model.get_update_blocks():
       visitor.init( blk.__name__ )
       visitor.visit( model._rast[ blk ] )
       visitor.dump()

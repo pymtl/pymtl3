@@ -26,7 +26,9 @@ class UpblkSrcToSrcTranslationPass( BasePass ):
 
     translator = UpblkTranslator( m )
 
-    for ( blk, ast ) in m.get_update_block_ast_pairs():
+    for blk in m.get_update_blocks():
+      
+      ast = m.get_update_block_ast( blk )
 
       blk_src = translator.enter( blk, ast )
 

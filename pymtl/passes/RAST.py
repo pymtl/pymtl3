@@ -12,36 +12,118 @@ class BitOr( BaseRAST ):
   def __init__( s ):
     pass
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Assign( BaseRAST ):
   def __init__( s, targets, value ):
     s.targets = targets
     s.value = value
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    for x, y in zip( s.targets, other.targets ):
+      if x != y:
+        # print 'x = ' + str(x) + ', y = ' + str(y)
+        return False
+    if s.value != other.value:
+      # print 's.value = ' + str( s.value )
+      # print 'other.value = ' + str( other.value )
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Module( BaseRAST ):
   def __init__( s, module ):
     s.module = module
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.module != other.module:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 class ShiftLeft( BaseRAST ):
   def __init__( s ):
     pass
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class BitAnd( BaseRAST ):
   def __init__( s ):
     pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 class Const( BaseRAST ):
   def __init__( s, nbits, value ):
     s.nbits = nbits
     s.value = value
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.nbits != other.nbits:
+      return False
+    if s.value != other.value:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Attribute( BaseRAST ):
   def __init__( s, value, attr ):
     s.value = value
     s.attr = attr
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.value != other.value:
+      return False
+    if s.attr != other.attr:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Sub( BaseRAST ):
   def __init__( s ):
     pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 class Slice( BaseRAST ):
   def __init__( s, value, lower, upper ):
@@ -49,18 +131,60 @@ class Slice( BaseRAST ):
     s.lower = lower
     s.upper = upper
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.value != other.value:
+      return False
+    if s.lower != other.lower:
+      return False
+    if s.upper != other.upper:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Index( BaseRAST ):
   def __init__( s, value, idx ):
     s.value = value
     s.idx = idx
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.value != other.value:
+      return False
+    if s.idx != other.idx:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Add( BaseRAST ):
   def __init__( s ):
     pass
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class BitXor( BaseRAST ):
   def __init__( s ):
     pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 class BinOp( BaseRAST ):
   def __init__( s, left, op, right ):
@@ -68,13 +192,46 @@ class BinOp( BaseRAST ):
     s.op = op
     s.right = right
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.left != other.left:
+      return False
+    if s.op != other.op:
+      return False
+    if s.right != other.right:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class CombUpblk( BaseRAST ):
   def __init__( s, body ):
     s.body = body
 
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    for x, y in zip( s.body, other.body ):
+      if x != y:
+        return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class ShiftRightLogic( BaseRAST ):
   def __init__( s ):
     pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 #----------------------------------------
 # RAST visitor

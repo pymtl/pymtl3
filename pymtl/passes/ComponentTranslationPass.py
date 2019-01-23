@@ -124,14 +124,14 @@ class ComponentTranslationPass( BasePass ):
       # TODO: align all declarations
       for port in sorted( child.get_input_value_ports(), key=repr ):
         fname = port.get_field_name()
-        nbits = port.Type.nbits
+        nbits = port._dsl.Type.nbits
         width = '' if nbits == 1 else ' [{}:0]'.format(nbits-1)
         sig_decls.append('logic{} {}${};'.format( width, child_name, fname ))
         in_wiring.append('  .{0:6}( {1}${0} ),'.format( fname, child_name ))
 
       for port in sorted( child.get_output_value_ports(), key=repr ):
         fname = port.get_field_name()
-        nbits = port.Type.nbits
+        nbits = port._dsl.Type.nbits
         width = '' if nbits == 1 else ' [{}:0]'.format(nbits-1)
         sig_decls.append('logic{} {}${};'.format( width, child_name, fname ))
         out_wiring.append('  .{0:6}( {1}${0} ),'.format( fname, child_name ))
@@ -228,10 +228,10 @@ def gen_sv_signal_name( array_dict, direction, ports ):
 
   # Collect all array ports
   for port in ports:
-    if '[' in port._my_name:
+    if '[' in port._dsl.my_name:
       # Speical treatment for lists
-      array_name    = get_array_name( port._my_name )
-      array_idx     = get_array_idx( port._my_name )
+      array_name    = get_array_name( port._dsl.my_name )
+      array_idx     = get_array_idx( port._dsl.my_name )
       try: 
         array_range = array_dict[ array_name ]
       except KeyError:
@@ -240,8 +240,8 @@ def gen_sv_signal_name( array_dict, direction, ports ):
 
   # Generate signal declarations for all ports
   for port in ports:
-    name  = port._my_name
-    nbits = port.Type.nbits
+    name  = port._dsl.my_name
+    nbits = port._dsl.Type.nbits
     width = '' if nbits == 0 else ' [{}:0]'.format( nbits - 1 )
     if not '[' in name:
       # Not a list

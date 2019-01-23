@@ -18,7 +18,7 @@ class RASTVisualizationPass( BasePass ):
   def __call__( s, model ):
     visitor = RASTVisualizationVisitor()
 
-    for ( blk, ast ) in model.get_update_block_ast_pairs():
+    for blk in model.get_update_blocks():
       visitor.init( blk.__name__ )
       visitor.visit( model._rast[ blk ] )
       visitor.dump()
