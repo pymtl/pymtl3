@@ -2,6 +2,7 @@ import pytest
 
 from pymtl import *
 from pymtl.passes.RAST import *
+from pymtl.passes.errors import PyMTLTypeError
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
 
 def test_index_basic():
@@ -33,7 +34,8 @@ def test_index_basic():
   for blk in a.get_update_blocks():
     assert a._rast[ blk ] == ref_dict[ blk.__name__ ]
 
-@pytest.mark.xfail
+@pytest.mark.xfail( reason = "Assignment with ismatched width!",
+                    raises = PyMTLTypeError )
 def test_mismatch_width_assign():
   class A( RTLComponent ):
     def construct( s ):
