@@ -15,6 +15,7 @@ from errors      import TranslationError
 from inspect     import getsource
 
 from UpblkRASTGenPass import UpblkRASTGenPass
+from UpblkRASTToSVPass import UpblkRASTToSVPass
 from RASTVisualizationPass import RASTVisualizationPass
 from UpblkRASTTypeCheckPass import UpblkRASTTypeCheckPass
 
@@ -26,12 +27,14 @@ class UpblkTranslationPass( BasePass ):
     """ translate all upblks in component m and return the source code
     string"""
 
-    blk_srcs = ''
-
     # Generate and visualize RAST
     UpblkRASTGenPass()( m )
     UpblkRASTTypeCheckPass( s.type_env )( m )
     RASTVisualizationPass()( m )
+    UpblkRASTToSVPass()( m )
 
-    return blk_srcs
+    # Copy generated SystemVerilog source code into this pass's namespace
+    m._blk_srcs = {}
 
+    for blk in m.get_update_blocks():
+      m._blk_srcs[ blk ] = m._rast_to_sv[ blk ]

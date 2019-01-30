@@ -94,7 +94,21 @@ class Lt( BaseRAST ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
-class LoopVar( BaseRAST ):
+class Base( BaseRAST ):
+  def __init__( s, base ):
+    s.base = base
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.base != other.base:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class FreeVar( BaseRAST ):
   def __init__( s, name ):
     s.name = name
 
@@ -102,20 +116,6 @@ class LoopVar( BaseRAST ):
     if type( s ) != type( other ):
       return False
     if s.name != other.name:
-      return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class Module( BaseRAST ):
-  def __init__( s, module ):
-    s.module = module
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    if s.module != other.module:
       return False
     return True
 
@@ -134,7 +134,7 @@ class BitAnd( BaseRAST ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
-class FreeVar( BaseRAST ):
+class LoopVar( BaseRAST ):
   def __init__( s, name ):
     s.name = name
 
@@ -411,11 +411,14 @@ class AugAssign( BaseRAST ):
     return not s.__eq__( other )
 
 class CombUpblk( BaseRAST ):
-  def __init__( s, body ):
+  def __init__( s, name, body ):
+    s.name = name
     s.body = body
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
+      return False
+    if s.name != other.name:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:

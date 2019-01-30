@@ -4,7 +4,7 @@
 
 module RAST
 {
-  mod  = CombUpblk( stmt* body )
+  mod  = CombUpblk( string name, stmt* body )
 
   stmt = Assign( expr target, expr value )
        | AugAssign( expr target, operator op, expr value )
@@ -23,7 +23,7 @@ module RAST
        | Attribute( expr value, identifier attr )
        | Index( expr value, expr idx )
        | Slice( expr value, expr lower, expr upper )
-       | Module( object module )
+       | Base( object base )
        | LoopVar( string name )
        | FreeVar( string name )
 

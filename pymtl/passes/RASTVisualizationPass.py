@@ -149,12 +149,30 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
 
     s.g.node( str( s.cur ), label = label )
 
-  def visit_LoopVar( s, node ):
+  def visit_Base( s, node ):
     s.cur += 1
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">LoopVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">Base</TD></TR> <TR><TD>base</TD><TD>{base}</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, RASTType.BaseRASTType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in node.Type.__dict__.iteritems():
+        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail).format(base=node.base)
+
+    s.g.node( str( s.cur ), label = label )
+
+  def visit_FreeVar( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">FreeVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 
@@ -164,24 +182,6 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
         table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
-
-    s.g.node( str( s.cur ), label = label )
-
-  def visit_Module( s, node ):
-    s.cur += 1
-    local_cur = s.cur
-
-    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">Module</TD></TR> <TR><TD>module</TD><TD>{module}</TD></TR>'
-    table_opt = ''
-    table_trail = ' </TABLE>>'
-
-    if isinstance( node.Type, RASTType.BaseRASTType ):
-      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
-
-    label = (table_header + table_body + table_opt + table_trail).format(module=node.module)
 
     s.g.node( str( s.cur ), label = label )
 
@@ -203,12 +203,12 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
 
     s.g.node( str( s.cur ), label = label )
 
-  def visit_FreeVar( s, node ):
+  def visit_LoopVar( s, node ):
     s.cur += 1
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">FreeVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">LoopVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 
@@ -610,7 +610,7 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">CombUpblk</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">CombUpblk</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 
@@ -619,7 +619,7 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
       for name, obj in node.Type.__dict__.iteritems():
         table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
 
-    label = (table_header + table_body + table_opt + table_trail)
+    label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
 
     s.g.node( str( s.cur ), label = label )
     for i, f in enumerate(node.body):

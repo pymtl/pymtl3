@@ -195,7 +195,15 @@ class ComponentTranslationPass( BasePass ):
     # Update blocks
     #-------------------------------------------------------------------
 
-    blk_srcs = UpblkTranslationPass( s.type_env )( m )
+    blks = []
+
+    UpblkTranslationPass( s.type_env )( m )
+
+    for blk in m.get_update_blocks():
+      blks.append( '\n  '.join( m._blk_srcs[ blk ] ) )
+
+    blk_srcs = '\n\n'.join( blks )
+
 
     #-------------------------------------------------------------------
     # Assemble all translated parts
@@ -223,7 +231,6 @@ class ComponentTranslationPass( BasePass ):
 
 def gen_sv_signal_name( array_dict, direction, ports ):
   """ generate in/out port declarations """
-
   ret = []
 
   # Collect all array ports
@@ -232,8 +239,10 @@ def gen_sv_signal_name( array_dict, direction, ports ):
       # Speical treatment for lists
       array_name    = get_array_name( port._dsl.my_name )
       array_idx     = get_array_idx( port._dsl.my_name )
+
       try: 
         array_range = array_dict[ array_name ]
+
       except KeyError:
         array_range = 1
       array_dict[ array_name ] = max( array_idx + 1, array_range )
@@ -243,9 +252,11 @@ def gen_sv_signal_name( array_dict, direction, ports ):
     name  = port._dsl.my_name
     nbits = port._dsl.Type.nbits
     width = '' if nbits == 0 else ' [{}:0]'.format( nbits - 1 )
+
     if not '[' in name:
       # Not a list
       ret.append('{direction}logic{width} {name}'.format(**locals()))
+
     else:
       # Only generate 1 port declarartion for a series of array ports
       if get_array_idx( name ) == 0:    # e.g. in_[0]
@@ -262,6 +273,7 @@ def to_sv_name( name ):
   if '[' in name: 
     # Special treatment for a list: in_[1] --> in_$1
     return re.sub( r'\[(\d+)\]', r'$\1', name )
+
   else:
     return name
 

@@ -134,11 +134,11 @@ class SystemVerilogTranslationPass( BasePass ):
 
     # integers have unset bitwidth (0) 
     elif isinstance( obj, int ):
-      return Const( 0 )
+      return Const( True, 0, obj )
 
     # Bits instances
     elif isinstance( obj, Bits ):
-      return Const( obj.nbits )
+      return Const( True, obj.nbits, obj.value )
 
     # array type
     elif isinstance( obj, list ):

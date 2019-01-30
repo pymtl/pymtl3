@@ -184,9 +184,9 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     node.Type = None
 
-  def visit_Module( s, node ):
+  def visit_Base( s, node ):
     # Mark this node as having type module and find out its corresponding object
-    node.Type = Module( node.module )
+    node.Type = Module( node.base )
 
   def visit_Number( s, node ):
     node.Type = Const( True, node.nbits, node.value )
