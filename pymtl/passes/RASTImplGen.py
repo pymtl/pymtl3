@@ -269,7 +269,8 @@ def implement_module( module_str ):
   start = 0
   node_type = set()
   built_in_node_type = set( ['identifier', 'int', 'string', 'bool', 'object'] )
-  constr_list = set()
+  constr_list = []
+  # constr_list = set()
   header_str =\
 """#========================================================================
 # RAST.py
@@ -377,12 +378,25 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
       constr_str, l = get_constr(
         module_str, constructor_start, constructor_end 
       )
-      constr_list.add( parse_constructor( constr_str ) )
+
+      constr = parse_constructor( constr_str )
+
+      if not constr in constr_list:
+        constr_list.append( constr )
+      else:
+        raise Exception( 'duplicated constructor!' )
+      # constr_list.add( parse_constructor( constr_str ) )
+
       constructor_start = constructor_end + 1
 
     # one constructor remaining
     constr_str, l = get_constr( module_str, constructor_start, boundary )
-    constr_list.add( parse_constructor( constr_str ) )
+    constr = parse_constructor( constr_str )
+    if not constr in constr_list:
+      constr_list.append( constr )
+    else:
+      raise Exception( 'duplicated constructor!' )
+    # constr_list.add( parse_constructor( constr_str ) )
 
     start = l
   
