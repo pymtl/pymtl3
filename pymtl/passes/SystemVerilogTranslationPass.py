@@ -8,10 +8,10 @@
 # Date   : Jan 9, 2019
 
 import inspect
-import RASTTypeSystem
 
 from pymtl       import *
-from pymtl.model import ComponentLevel1
+from RASTType    import *
+from pymtl.dsl   import ComponentLevel1
 from BasePass    import BasePass
 from collections import defaultdict, deque
 from errors      import TranslationError
@@ -121,7 +121,7 @@ class SystemVerilogTranslationPass( BasePass ):
 
     # child component of the given module
     if isinstance( obj, RTLComponent ):
-      return RASTTypeSystem.module( obj )
+      return Module( obj )
 
     # signals refer to in/out ports and wires
     elif isinstance( obj, ( InVPort, OutVPort, Wire ) ):
@@ -130,15 +130,15 @@ class SystemVerilogTranslationPass( BasePass ):
       except AttributeError:
         assert False, 'signal instances must have Bits as their .Type field'
 
-      return RASTTypeSystem.signal( nbits )
+      return Signal( nbits )
 
     # integers have unset bitwidth (0) 
     elif isinstance( obj, int ):
-      return RASTTypeSystem.constant( 0 )
+      return Const( 0 )
 
     # Bits instances
     elif isinstance( obj, Bits ):
-      return RASTTypeSystem.constant( obj.nbits )
+      return Const( obj.nbits )
 
     # array type
     elif isinstance( obj, list ):
@@ -149,7 +149,7 @@ class SystemVerilogTranslationPass( BasePass ):
       assert reduce(lambda x, y: x and (y == type_list[0]), type_list, True),\
         'Elements of list must have the same RAST type!'
 
-      return RASTTypeSystem.array( len( obj ), type_list[0] )
+      return Array( len( obj ), type_list[0] )
 
     assert False,\
       'Attributes of an RTLComponent must be signal, constant, list, or module!'

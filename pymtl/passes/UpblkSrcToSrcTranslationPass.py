@@ -10,7 +10,7 @@
 import ast
 
 from pymtl       import *
-from pymtl.model import ComponentLevel1
+from pymtl.dsl   import ComponentLevel1
 from BasePass    import BasePass
 from collections import defaultdict, deque
 from errors      import TranslationError

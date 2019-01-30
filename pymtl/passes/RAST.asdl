@@ -6,14 +6,34 @@ module RAST
 {
   mod  = CombUpblk( stmt* body )
 
-  stmt = Assign( expr* targets, expr value )
+  stmt = Assign( expr target, expr value )
+       | AugAssign( expr target, operator op, expr value )
+       | If( expr cond, stmt* body, stmt* orelse )
+       | For( loopvar_decl var, expr start, expr end, expr step, stmt* body )
 
-  expr = Module( object module )
-       | Const( int nbits, int value )
+  expr = Number( int nbits, int value )
+       | IfExp( expr cond, expr body, expr orelse )
+       | UnaryOp( unaryop op, expr operand )
+       | BoolOp( boolop op, expr* values )
        | BinOp( expr left, operator op, expr right )
+       | Compare( expr left, cmpop op, expr right )
+
+       -- Only the following types of nodes can appear in the LHS of
+       -- an assignment
        | Attribute( expr value, identifier attr )
        | Index( expr value, expr idx )
        | Slice( expr value, expr lower, expr upper )
+       | Module( object module )
+       | LoopVar( string name )
+       | FreeVar( string name )
 
-  operator = Add | Sub | ShiftLeft | ShiftRightLogic | BitAnd | BitOr | BitXor
+  loopvar_decl = LoopVarDecl( string name )
+
+  unaryop = Invert | Not | UAdd | USub
+
+  boolop = And | Or
+
+  operator = Add | Sub | Mult | Div | Mod | Pow | ShiftLeft | ShiftRightLogic | BitAnd | BitOr | BitXor
+
+  cmpop = Eq | NotEq | Lt | LtE | Gt | GtE
 }

@@ -1,15 +1,14 @@
-#========================================================================
+#=======================================================================
 # UpblkRASTTypeCheckPass.py
-#========================================================================
-# Perform type checking on an existing RAST.
+#=======================================================================
+# Perform type checking on all blocks' RAST of a given component.
 #
 # Author : Peitian Pan
 # Date   : Jan 6, 2019
 
-import RAST
-import RASTTypeSystem
-
 from pymtl    import *
+from RAST     import *
+from RASTType import *
 from BasePass import BasePass
 from errors   import PyMTLTypeError
 
@@ -18,7 +17,7 @@ class UpblkRASTTypeCheckPass( BasePass ):
     s.type_env = type_env
 
   def __call__( s, m ):
-    """perform type checking on all RASTs in m._rast"""
+    """perform type checking on all RAST in m._rast"""
 
     visitor = UpblkRASTTypeCheckVisitor( m, s.type_env )
 
@@ -30,14 +29,50 @@ class UpblkRASTTypeCheckPass( BasePass ):
 # Visitor that performs type checking on RAST
 #-----------------------------------------------------------------------
 
-class UpblkRASTTypeCheckVisitor( RAST.RASTNodeVisitor ):
+class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
   def __init__( s, component, type_env ):
     s.component = component
     s.type_env = type_env
 
+    s.BinOp_same_type = ( 
+      Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor 
+    )
+
+    #-------------------------------------------------------------------
+    # The expected evaluation result types for each type of RAST node
+    #-------------------------------------------------------------------
+
+    s.type_expect = {}
+
+    lhs_types = ( Signal, Array )
+
+    s.type_expect[ 'Assign' ] = {
+      'target' : ( lhs_types, 'lhs of assignment must be signal/array!' )
+    }
+    s.type_expect[ 'AugAssign' ] = {
+      'target' : ( lhs_types, 'lhs of assignment must be signal/array!' )
+    }
+    s.type_expect[ 'For' ] = {
+      'start' : ( Const, 'the start of a for-loop must be a constant expression!' ),
+      'end':( Const, 'the end of a for-loop must be a constant expression!' ),
+      'step':( Const, 'the step of a for-loop must be a constant expression!' )
+    }
+    s.type_expect[ 'Attribute' ] = {
+      'value':( Module, 'the base of an attribute must be a module!' )
+    }
+    s.type_expect[ 'Index' ] = {
+      'value':( Array, 'the base of an index must be an array!' ),
+      'idx':( Const, 'index must be a constant expression!' )
+    }
+    s.type_expect[ 'Slice' ] = {
+      'value':( Signal, 'the base of a slice must be a signal!' ),
+      'lower':( Const, 'upper of slice must be a constant expression!' ),
+      'upper':( Const, 'lower of slice must be a constant expression!' )
+    }
+
   def enter( s, blk, rast ):
-    """ entry point for RAST generation """
+    """ entry point for RAST type checking """
     s.blk     = blk
 
     # s.globals contains a dict of the global namespace of the module where
@@ -54,93 +89,196 @@ class UpblkRASTTypeCheckVisitor( RAST.RASTNodeVisitor ):
       except ValueError: 
         pass
 
+    # import pdb
+    # pdb.set_trace()
+
     s.visit( rast )
+
+  # Override the default visit()
+  def visit( s, node ):
+    node_name = node.__class__.__name__
+    method = 'visit_' + node_name
+    func = getattr( s, method, s.generic_visit )
+
+    # First visit (type check) all child nodes
+    for field in node.__dict__.keys():
+      value = node.__dict__[ field ]
+      if isinstance( value, list ):
+        for item in value:
+          if isinstance( item, BaseRAST ):
+            s.visit( item )
+      elif isinstance( value, BaseRAST ):
+        s.visit( value )
+
+    # Then verify that all child nodes have desired types
+    try:
+      # Check the expected types of child nodes
+      for field, type_rule in s.type_expect[node_name].iteritems():
+        value = node.__dict__[ field ]
+        target_type = type_rule[ 0 ]
+        exception_msg = type_rule[ 1 ]
+
+        if eval( 'not isinstance( value.Type, target_type )' ):
+          raise PyMTLTypeError( s.blk, node, exception_msg )
+
+    except:
+      # This node does not require type checking on child nodes
+      pass
+
+    # Finally call the type check function
+    func( node )
+
+  # Override the default generic_visit()
+  def generic_visit( s, node ):
+    node.Type = None
 
   #---------------------------------------------------------------------
   # Valid RAST nodes
   #---------------------------------------------------------------------
-  def visit_CombUpblk( s, node ):
-    for stmt in node.body:
-      s.visit( stmt )
+
+  def visit_Assign( s, node ):
+    # RHS should have the same type as LHS
+    rhs_type = node.value.Type
+    lhs_type = node.target.Type
+
+    if not lhs_type( rhs_type ):
+      raise PyMTLTypeError(
+        s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
+      )
 
     node.Type = None
 
-  def visit_Assign( s, node ):
-    for target in node.targets:
-      s.visit( target )
-    s.visit( node.value )
+  def visit_AugAssign( s, node ):
+    target = node.target
+    op = node.op
+    value = node.value
     
-    # RHS should have the same type as LHS
-    rhs_type = node.value.Type
-    lhs_type_list = [ target.Type for target in node.targets ]
+    # perform type check as if this node corresponds to
+    # target = target op value
 
-    if node.value.Type.nbits != 0:
-      if not reduce( lambda x, y: x and ( y == rhs_type ), lhs_type_list, True ):
+    l_nbits = target.Type.nbits
+    r_nbits = value.Type.nbits
+
+    # +-&|^ require the same bit width
+    if isinstance( op, s.BinOp_same_type ):
+      if not lhs_type( rhs_type ):
         raise PyMTLTypeError(
-          s.blk, node.ast, 'rhs and lhs of assignment should have the same type!'
+          s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
         )
+
+    # << and >> do not require the same bit width
+    elif isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
+      if not isinstance( value.Type, const ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'rhs of shift opertions must be constant!'
+        )
+
+    node.Type = None
+
+  def visit_If( s, node ):
+    # Can the type of condition be cast into bool?
+    if not Bool()( node.cond.Type ):
+      raise PyMTLTypeError(
+        s.blk, node.ast, 'the condition of "if" cannot be converted to bool!'
+      )
 
     node.Type = None
 
   def visit_Module( s, node ):
     # Mark this node as having type module and find out its corresponding object
-    node.Type = RASTTypeSystem.module( node.module )
+    node.Type = Module( node.module )
 
-  def visit_Const( s, node ):
-    node.Type = RASTTypeSystem.constant( node.nbits )
+  def visit_Number( s, node ):
+    node.Type = Const( True, node.nbits, node.value )
 
-  def visit_BinOp( s, node ):
-    s.visit( node.left )
-    s.visit( node.right )
-    op = node.op
+  def visit_LoopVar( s, node ):
+    node.Type = Const( False, 0 )
 
-    # check whether both sides have agreeable types
-    if ( not isinstance( node.left.Type, \
-        ( RASTTypeSystem.signal, RASTTypeSystem.constant ) ) ) or \
-       ( not isinstance( node.right.Type, \
-        ( RASTTypeSystem.signal, RASTTypeSystem.constant ) ) ):
+  def visit_IfExp( s, node ):
+    # Can the type of condition be cast into bool?
+    if not Bool()( node.cond.Type ):
       raise PyMTLTypeError(
-        s.blk, node.ast, 'rhs and lhs of BinOp must be signal or constant!'
+        s.blk, node.ast, 'the condition of "if-exp" cannot be converted to bool!'
       )
 
+    # body and orelse must have the same type
+    if node.body.Type != node.orelse.Type:
+      raise PyMTLTypeError(
+        s.blk, node.ast, 'the body and orelse of "if-exp" must have the same type!'
+      )
+
+  def visit_UnaryOp( s, node ):
+    if isinstance( node.op, Not ):
+      if not Bool()( node.operand.Type ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'the operand of "unary-expr" cannot be cast to bool!'
+        )
+      node.Type = Bool()
+
+    else:
+      if not isinstance( node.operand.Type, ( Signal, Const ) ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'the operand of "unary-expr" is not signal or constant!'
+        )
+      node.Type = node.operand.Type
+
+  def visit_BoolOp( s, node ):
+    for value in node.values:
+      if not Bool()( value ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, value + ' of "unary-expr" cannot be cast into bool!'
+        )
+
+    node.Type = Bool()
+
+  def visit_BinOp( s, node ):
+    op = node.op
+
+    l_type = node.left.Type
+    r_type = node.right.Type
     l_nbits = node.left.Type.nbits
     r_nbits = node.right.Type.nbits
 
-    if isinstance(op, (RAST.Add,RAST.Sub,RAST.BitAnd,RAST.BitOr,RAST.BitXor)):
+    # +-&|^ require the same bit width
+    if isinstance( op, s.BinOp_same_type ):
       if l_nbits != 0 and r_nbits != 0 and l_nbits != r_nbits:
         raise PyMTLTypeError(
           s.blk, node.ast, 'rhs and lhs of BinOp must have the same nbits!'
         )
-      if isinstance( node.left.Type, RASTTypeSystem.constant ) and \
-          isinstance( node.right.Type, RASTTypeSystem.constant ):
-        node.Type = RASTTypeSystem.constant( l_nbits )
-      else:
-        node.Type = RASTTypeSystem.signal( l_nbits )
+      res_nbits = r_nbits if l_nbits == 0 else l_nbits
 
-    elif isinstance( op, ( RAST.ShiftLeft, RAST.ShiftRightLogic ) ):
-      if not isinstance( node.right.Type, RASTTypeSystem.constant ):
+    # << and >> require RHS to constant
+    if isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
+      if not isinstance( node.right.Type, Const ):
         raise PyMTLTypeError(
           s.blk, node.ast, 'rhs of shift opertions must be constant!'
         )
-      node.Type = node.left.Type
+      res_nbits = l_nbits
 
-    # Operators have None type
-    node.op.Type = None
+    # Both sides are constant expressions
+    if isinstance( l_type, Const ) and isinstance( r_type, Const ):
+      # Both sides are static -> result is static
+      if l_type.is_static and r_type.is_static:
+        node.Type = Const( True, res_nbits, eval_const_binop( l_val, op, r_val ) )
+      # Either side is dynamic -> result is dynamic
+      else:
+        node.Type = Const( False, res_nbits )
+
+    # Non-constant expressions
+    else:
+      node.Type = Signal( res_nbits )
+
+  def visit_Compare( s, node ):
+    node.Type = Bool()
 
   def visit_Attribute( s, node ):
-    s.visit( node.value )
-
-    if not isinstance( node.value.Type, RASTTypeSystem.module ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the base of an attribute must be a module!'
-      )
-
-    # Make sure node.value has an attribute of attr
+    # Make sure node.value has an attribute named attr
     if not node.attr in node.value.Type.module.__dict__:
       raise PyMTLTypeError(
         s.blk, node.ast, 'class {base} does not have attribute {attr}!'.\
-        format( base = node.value.Type.module.__class__.__name__,
-                attr = node.attr
+        format( 
+          base = node.value.Type.module.__class__.__name__,
+          attr = node.attr
         )
       )
 
@@ -149,45 +287,40 @@ class UpblkRASTTypeCheckVisitor( RAST.RASTNodeVisitor ):
     node.Type = s.type_env[ freeze( attr_obj ) ]
 
   def visit_Index( s, node ):
-    s.visit( node.value )
-    s.visit( node.idx )
-
-    # must perform indexing on an array
-    if not isinstance( node.value.Type, RASTTypeSystem.array ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the base of an index must be an array!'
-      )
-
-    # index must be a constant integer
-    if not isinstance( node.idx.Type, RASTTypeSystem.constant ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'index must be a constant integer!'
-      )
+    # Check whether the index is in the range of the array
+    if node.idx.Type.is_static:
+      if not ( 0 <= node.idx.Type.value <= node.value.Type.length ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'array index out of range!'
+        )
 
     # The result type should be array.Type
     node.Type = node.value.Type.Type
 
   def visit_Slice( s, node ):
-    s.visit( node.value )
-    s.visit( node.lower )
-    s.visit( node.upper )
+    # Check slice range only if lower and upper bounds are static
+    if node.lower.Type.is_static and node.upper.Type.is_static:
+      lower_val = node.lower.Type.value
+      upper_val = node.upper.Type.value
+      signal_nbits = node.value.Type.nbits
 
-    # Slicing should only be performed on signals
-    if not isinstance( node.value.Type, RASTTypeSystem.signal ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the base of a slice must be a signal!'
-      )
+      # upper bound must be strictly larger than the lower bound
+      if ( lower_val >= upper_val ):
+        raise PyMTLTypeError(
+          s.blk, node.ast,
+          'the upper bound of a slice must be larger than the lower bound!'
+        )
 
-    # both upper and lower bounds must be constants
-    if not isinstance( node.lower.Type, RASTTypeSystem.constant ) or\
-        not isinstance( node.upper.Type, RASTTypeSystem.constant ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'upper and lower of a slice must be a constatnt!'
-      )
+      # upper & lower bound should lie in the bit width of the signal
+      if not ( 0 <= lower_val < upper_val <= signal_nbits ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'upper/lower bound of slice out of width of signal!'
+        )
 
-    # 0 means an unset bitwidth because currently the value of the constant is
-    # not inferred
-    node.Type = RASTTypeSystem.signal( 0 )
+      node.Type = Signal( upper_val - lower_val )
+
+    else:
+      node.Type = Signal( 0 )
 
 #-----------------------------------------------------------------------
 # Helper functions
@@ -198,3 +331,23 @@ def freeze( obj ):
   if isinstance( obj, list ):
     return tuple( freeze( o ) for o in obj )
   return obj
+
+def eval_const_binop( l, op, r ):
+  """Evaluate ( l op r ) and return the result as an integer."""
+  assert type( l ) == int and type( r ) == int
+
+  op_dict = {
+    Add  : '+',
+    Sub  : '-',
+    Mult : '*',
+    Div  : '/',
+    Mod  : '%',
+    Pow  : '**',
+    ShiftLeft : '<<',
+    ShiftRightLogic : '>>',
+    BitAnd : '&',
+    BitOr  : '|',
+    BitXor : '^',
+  }
+
+  return eval( '{l}{op}{r}'.format( l = l, op = op_dict[ type(op) ], r = r ) )

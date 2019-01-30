@@ -8,88 +8,20 @@ class BaseRAST( object ):
   def __init__( s ):
     pass
 
-class BitOr( BaseRAST ):
-  def __init__( s ):
-    pass
+class Compare( BaseRAST ):
+  def __init__( s, left, op, right ):
+    s.left = left
+    s.op = op
+    s.right = right
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
       return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class Assign( BaseRAST ):
-  def __init__( s, targets, value ):
-    s.targets = targets
-    s.value = value
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
+    if s.left != other.left:
       return False
-    for x, y in zip( s.targets, other.targets ):
-      if x != y:
-        # print 'x = ' + str(x) + ', y = ' + str(y)
-        return False
-    if s.value != other.value:
-      # print 's.value = ' + str( s.value )
-      # print 'other.value = ' + str( other.value )
+    if s.op != other.op:
       return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class Module( BaseRAST ):
-  def __init__( s, module ):
-    s.module = module
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    if s.module != other.module:
-      return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class ShiftLeft( BaseRAST ):
-  def __init__( s ):
-    pass
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class BitAnd( BaseRAST ):
-  def __init__( s ):
-    pass
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class Const( BaseRAST ):
-  def __init__( s, nbits, value ):
-    s.nbits = nbits
-    s.value = value
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    if s.nbits != other.nbits:
-      return False
-    if s.value != other.value:
+    if s.right != other.right:
       return False
     return True
 
@@ -107,18 +39,6 @@ class Attribute( BaseRAST ):
     if s.value != other.value:
       return False
     if s.attr != other.attr:
-      return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class Sub( BaseRAST ):
-  def __init__( s ):
-    pass
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
       return False
     return True
 
@@ -162,7 +82,231 @@ class Index( BaseRAST ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
+class Lt( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class LoopVar( BaseRAST ):
+  def __init__( s, name ):
+    s.name = name
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.name != other.name:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Module( BaseRAST ):
+  def __init__( s, module ):
+    s.module = module
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.module != other.module:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class BitAnd( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class FreeVar( BaseRAST ):
+  def __init__( s, name ):
+    s.name = name
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.name != other.name:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class LoopVarDecl( BaseRAST ):
+  def __init__( s, name ):
+    s.name = name
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.name != other.name:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Invert( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Not( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class LtE( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class UAdd( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class USub( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class BitOr( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class And( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Or( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Add( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Sub( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Gt( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Mult( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Div( BaseRAST ):
   def __init__( s ):
     pass
 
@@ -180,6 +324,216 @@ class BitXor( BaseRAST ):
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Mod( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Pow( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class ShiftLeft( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class ShiftRightLogic( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class GtE( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class AugAssign( BaseRAST ):
+  def __init__( s, target, op, value ):
+    s.target = target
+    s.op = op
+    s.value = value
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.target != other.target:
+      return False
+    if s.op != other.op:
+      return False
+    if s.value != other.value:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class CombUpblk( BaseRAST ):
+  def __init__( s, body ):
+    s.body = body
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    for x, y in zip( s.body, other.body ):
+      if x != y:
+        return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Eq( BaseRAST ):
+  def __init__( s ):
+    pass
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Assign( BaseRAST ):
+  def __init__( s, target, value ):
+    s.target = target
+    s.value = value
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.target != other.target:
+      return False
+    if s.value != other.value:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class If( BaseRAST ):
+  def __init__( s, cond, body, orelse ):
+    s.cond = cond
+    s.body = body
+    s.orelse = orelse
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.cond != other.cond:
+      return False
+    for x, y in zip( s.body, other.body ):
+      if x != y:
+        return False
+    for x, y in zip( s.orelse, other.orelse ):
+      if x != y:
+        return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class For( BaseRAST ):
+  def __init__( s, var, start, end, step, body ):
+    s.var = var
+    s.start = start
+    s.end = end
+    s.step = step
+    s.body = body
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.var != other.var:
+      return False
+    if s.start != other.start:
+      return False
+    if s.end != other.end:
+      return False
+    if s.step != other.step:
+      return False
+    for x, y in zip( s.body, other.body ):
+      if x != y:
+        return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class IfExp( BaseRAST ):
+  def __init__( s, cond, body, orelse ):
+    s.cond = cond
+    s.body = body
+    s.orelse = orelse
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.cond != other.cond:
+      return False
+    if s.body != other.body:
+      return False
+    if s.orelse != other.orelse:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Number( BaseRAST ):
+  def __init__( s, nbits, value ):
+    s.nbits = nbits
+    s.value = value
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.nbits != other.nbits:
+      return False
+    if s.value != other.value:
       return False
     return True
 
@@ -206,28 +560,48 @@ class BinOp( BaseRAST ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
-class CombUpblk( BaseRAST ):
-  def __init__( s, body ):
-    s.body = body
-
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    for x, y in zip( s.body, other.body ):
-      if x != y:
-        return False
-    return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
-class ShiftRightLogic( BaseRAST ):
+class NotEq( BaseRAST ):
   def __init__( s ):
     pass
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
       return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class UnaryOp( BaseRAST ):
+  def __init__( s, op, operand ):
+    s.op = op
+    s.operand = operand
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.op != other.op:
+      return False
+    if s.operand != other.operand:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class BoolOp( BaseRAST ):
+  def __init__( s, op, values ):
+    s.op = op
+    s.values = values
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.op != other.op:
+      return False
+    for x, y in zip( s.values, other.values ):
+      if x != y:
+        return False
     return True
 
   def __ne__( s, other ):
@@ -240,15 +614,16 @@ class ShiftRightLogic( BaseRAST ):
 class RASTNodeVisitor( object ):
   # This visitor uses the same code as the Python AST node visitor
   def visit( self, node, *args ):
-      method = 'visit_' + node.__class__.__name__
-      visitor = getattr( self, method, self.generic_visit )
-      return visitor( node, *args )
+    method = 'visit_' + node.__class__.__name__
+    visitor = getattr( self, method, self.generic_visit )
+    return visitor( node, *args )
 
   def generic_visit( self, node, *args ):
-      for field, value in iter_fields( node ):
-          if isinstance( value, list ):
-              for item in value:
-                  if isinstance( item, AST ):
-                      self.visit( item, *args )
-          elif isinstance( value, AST ):
-              self.visit( value, *args )
+    for field in node.__dict__.keys():
+      value = node.__dict__[ field ]
+      if isinstance( value, list ):
+        for item in value:
+          if isinstance( item, BaseRAST ):
+            self.visit( item, *args )
+      elif isinstance( value, BaseRAST ):
+        self.visit( value, *args )
