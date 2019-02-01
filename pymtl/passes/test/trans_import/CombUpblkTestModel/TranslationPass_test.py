@@ -11,6 +11,7 @@ from   pymtl      import *
 from   hypothesis import given, settings, HealthCheck, unlimited, seed
 from   copy       import deepcopy
 
+import os
 import random
 import hypothesis.strategies as st
 
@@ -155,16 +156,21 @@ class CombUpblkTestModel( RTLComponent ):
   return ( upblk_tmpl.format( **locals() ), deepcopy( test_vector ) ) 
 
 @given( comb_upblk = CombinationalUpblkStrategy() )
-@settings( timeout = unlimited, deadline = None,
-  suppress_health_check = [ HealthCheck.too_slow ] ) 
+@settings( deadline = None, suppress_health_check = [ HealthCheck.too_slow ] ) 
 def test_comb_upblk_trans_st( comb_upblk, pytestconfig ):
 
   py_src, test_vector = comb_upblk
 
   verbosity = pytestconfig.getoption( 'verbose' )
 
-  with open( 'CombUpblkTestModel.py', 'w' ) as output_file:
-    output_file.write( py_src )
+  output_file = open( 'CombUpblkTestModel.py', 'w', 0 )
+  output_file.write( py_src )
+  output_file.flush()
+  os.fsync( output_file )
+  output_file.close()
+
+  # with open( 'CombUpblkTestModel.py', 'w' ) as output_file:
+    # output_file.write( py_src )
 
   print '================================================================'
   print 'Running Verify( CombUpblkTestModel, {} )'.format(test_vector)
@@ -173,5 +179,5 @@ def test_comb_upblk_trans_st( comb_upblk, pytestconfig ):
 
   Verify( 'CombUpblkTestModel', test_vector, verbosity )
 
-# if __name__ == '__main__':
-  # test_comb_upblk_trans_st()
+if __name__ == '__main__':
+  test_comb_upblk_trans_st( 0 )

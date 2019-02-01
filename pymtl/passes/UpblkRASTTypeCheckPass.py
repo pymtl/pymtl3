@@ -224,9 +224,9 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
   def visit_BoolOp( s, node ):
     for value in node.values:
-      if not Bool()( value ):
+      if not Bool()( value.Type ):
         raise PyMTLTypeError(
-          s.blk, node.ast, value + ' of "unary-expr" cannot be cast into bool!'
+          s.blk, node.ast, value + " of '' cannot be cast into bool!"
         )
 
     node.Type = Bool()
@@ -248,17 +248,22 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       res_nbits = r_nbits if l_nbits == 0 else l_nbits
 
     # << and >> require RHS to constant
-    if isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
+    elif isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
       if not isinstance( node.right.Type, Const ):
         raise PyMTLTypeError(
           s.blk, node.ast, 'rhs of shift opertions must be constant!'
         )
       res_nbits = l_nbits
 
+    else:
+      raise Exception( 'RASTTypeCheck internal error: unrecognized op!' )
+
     # Both sides are constant expressions
     if isinstance( l_type, Const ) and isinstance( r_type, Const ):
       # Both sides are static -> result is static
       if l_type.is_static and r_type.is_static:
+        l_val = l_type.value
+        r_val = r_type.value
         node.Type = Const( True, res_nbits, eval_const_binop( l_val, op, r_val ) )
       # Either side is dynamic -> result is dynamic
       else:

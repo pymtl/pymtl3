@@ -12,6 +12,7 @@
 # Date   : Oct 18, 2018
 
 import re
+import inspect
 
 from pymtl       import *
 from pymtl.dsl   import ComponentLevel1
@@ -41,7 +42,8 @@ module {module_name}
   {assignments}
 
   // Logic block of {module_name}
-  {blk_srcs}
+
+{blk_srcs}
 
 endmodule
 """
@@ -199,10 +201,25 @@ class ComponentTranslationPass( BasePass ):
 
     UpblkTranslationPass( s.type_env )( m )
 
+    # Add the source code and the translated code to blks
     for blk in m.get_update_blocks():
-      blks.append( '\n  '.join( m._blk_srcs[ blk ] ) )
+      py_srcs = [ '// PyMTL Upblk Source\n' ]
 
-    blk_srcs = '\n\n'.join( blks )
+      inspect_srcs, _ = inspect.getsourcelines( blk )
+      for idx, val in enumerate( inspect_srcs ):
+        inspect_srcs[ idx ] = '// ' + val
+
+      py_srcs.extend( inspect_srcs )
+
+      hdl_srcs = m._blk_srcs[ blk ]
+
+      make_indent( py_srcs, 1 )
+      make_indent( hdl_srcs, 1 )
+
+      blks.append( ''.join( py_srcs ) )
+      blks.append( '\n'.join( hdl_srcs ) + '\n' )
+
+    blk_srcs = '\n'.join( blks )
 
 
     #-------------------------------------------------------------------
@@ -284,3 +301,9 @@ def get_array_idx( name ):
   m = re.search( r'\[(\d+)\]', name )
   return int( m.group( 1 ) )
 
+def make_indent( src, nindent ):
+  """Add nindent indention to every line in src."""
+  indent = '  '
+
+  for idx, s in enumerate( src ):
+    src[ idx ] = nindent * indent + s

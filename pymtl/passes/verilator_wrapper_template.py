@@ -2,8 +2,7 @@
 # V{top_module}_v.py
 #========================================================================
 # This wrapper makes a Verilator-generated C++ model appear as if it
-# were a normal PyMTL model. This template is based on PyMTL v2 by 
-# Derek Lockhart.
+# were a normal PyMTL model. This template is based on PyMTL v2.
 
 import os
 
@@ -53,7 +52,7 @@ class {top_module}( RTLComponent ):
   def __del__( s ):
     s._ffi_inst.destroy_model( s._ffi_m )
     s.ffi.dlclose( s._ffi_inst )
-    # Derefer the cffi objects so that GC can work. We need this because 
+    # Deref the cffi objects so that GC can work. We need this because 
     # the linked shared library seems to be cached somewhere. Simply call 
     # dlclose() does not work. 
     s.ffi = None

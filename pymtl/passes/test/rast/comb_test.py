@@ -269,5 +269,27 @@ def test_for_basic():
 
   verify_manual( a, ref )
 
+#-----------------------------------------------------------------------
+# Test support for multiple upblks
+#-----------------------------------------------------------------------
+
+def test_multi_upblks():
+  class multi_upblks( RTLComponent ):
+    def construct( s ):
+      s.in_ = InVPort( Bits16 )
+      s.out = OutVPort( Bits8 )
+
+      @s.update
+      def multi_upblks_1():
+        s.out[ 0:4 ] = s.in_[ 4:8 ]
+
+      @s.update
+      def multi_upblks_2():
+        s.out[ 4:8 ] = s.in_[ 12:16 ]
+
+  a = multi_upblks()
+
+  verify_manual( a, {} )
+
 if __name__ == '__main__':
   test_for_basic()

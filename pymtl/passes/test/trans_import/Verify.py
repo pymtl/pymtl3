@@ -9,13 +9,14 @@
 import os
 import sys
 import pytest
+import linecache
 
 from pymtl import *
-from pymtl.passes.SimRTLPass import SimRTLPass
-from pymtl.passes.SystemVerilogTranslationPass import\
-  SystemVerilogTranslationPass as TranslationPass
+from pymtl.passes.PassGroups import SimpleSimNoElaboration
 from pymtl.passes.SimpleImportPass import SimpleImportPass as ImportPass
 from pymtl.passes.SimpleImportPass import get_array_name, get_array_idx
+from pymtl.passes.SystemVerilogTranslationPass import \
+                          SystemVerilogTranslationPass as TranslationPass
 
 # Print info according to the verbosity setting of pytest
 # if pytest is run with -v, s will be printed
@@ -24,8 +25,8 @@ def v_print( s, verbosity ):
     print s
 
 def verification_init( model_name, verbosity, *args, **kwargs ):
-  """ translate model_name and import it back to get ready for
-  the verification"""
+  """Translate model_name and import it back to get ready for
+  verification"""
 
   # We work under a new directory in the current working directory
   # to keep the pwd tidy.
@@ -47,23 +48,25 @@ def verification_init( model_name, verbosity, *args, **kwargs ):
   if model_name in sys.modules:
     # We are in a test that is repeatedly running
     # The user might have updated the source file so we need to reload it
-    exec( "reload( sys.modules[ '{model_name}' ] )".\
-      format( model_name = model_name ) )
-    exec( "PyMTLModel = sys.modules[ '{model_name}'].{model_name}".\
-      format( model_name = model_name ) 
-    )
+
+    linecache.clearcache()
+    generated_module = reload( sys.modules[ model_name ] )
+    PyMTLModel = generated_module.__dict__[ model_name ]
+
   else:
     # First time execution
-    import_cmd = 'from {py_source_file} import {model_name} as PyMTLModel'.\
-      format( **locals() )
-
-    exec( import_cmd )
+    exec( 'import ' + model_name )
+    PyMTLModel = eval( model_name + '.' + model_name )
 
   m = PyMTLModel( *args, **kwargs )
 
   v_print( '\tElaborating PyMTL model...', verbosity )
 
   m.elaborate()
+
+  # import inspect
+  # for blk in m.get_update_blocks():
+    # print inspect.getsource( blk )
 
   v_print( '\tCalling translation pass...', verbosity )
 
@@ -79,7 +82,7 @@ def verification_init( model_name, verbosity, *args, **kwargs ):
 
   return m
 
-def verification_test_vector( \
+def verification_test_vector(
     ref_model, imported_model, test_vectors, verbosity 
   ):
   """ verify the functionality of the imported model against the reference
@@ -109,11 +112,11 @@ def verification_test_vector( \
 
   v_print( 'Running SimRTLPass()...', verbosity )
 
-  SimRTLPass()( ref_model )
+  map( lambda f: f( ref_model ), SimpleSimNoElaboration )
 
   # ref_model.unlock_simulation()
 
-  SimRTLPass()( imported_model )
+  map( lambda f: f( imported_model ), SimpleSimNoElaboration )
 
   # imported_model.unlock_simulation()
 
@@ -122,7 +125,6 @@ def verification_test_vector( \
   row_num = 0
 
   for row in test_vectors:
-
     row_num += 1
 
     print( 'Row number:{}, vector:{}\n'.format( row_num,  row ) )
@@ -131,9 +133,7 @@ def verification_test_vector( \
 
     for port_name, in_value in zip( port_names, row ):
       # Processing input ports
-      exec( 'ref_model.{port_name} = in_value'.\
-        format( port_name = port_name ) 
-      )
+      ref_model.__dict__[ port_name ] = in_value
 
     ref_model.tick()
 
@@ -144,9 +144,7 @@ def verification_test_vector( \
 
     for port_name, in_value in zip( port_names, row ):
       # Processing input ports 
-      exec( 'imported_model.{port_name} = in_value'.\
-        format( port_name = port_name ) 
-      )
+      imported_model.__dict__[ port_name ] = in_value
 
     imported_model.tick()
 
@@ -160,7 +158,7 @@ def verification_test_vector( \
     v_print( 'Collecting reference model outputs...', verbosity )
 
     for port in ref_out_port:
-      name = port._my_name
+      name = port._dsl.my_name
 
       if '[' in name:
         # Get array name and use that name to generate
@@ -176,7 +174,7 @@ def verification_test_vector( \
     v_print( 'Comparing outputs of models...', verbosity )
 
     for port in imported_out_port:
-      name = port._my_name
+      name = port._dsl.my_name
 
       if '[' in name:
         # Get array name and use that name to generate
@@ -187,13 +185,14 @@ def verification_test_vector( \
 
       output_value = imported_model.__dict__[ name ]
 
-      if ( not '[' in port._my_name ) or ( get_array_idx( port._my_name ) == 0 ):
+      if ( not '[' in port._dsl.my_name ) or ( get_array_idx( port._dsl.my_name ) == 0 ):
         print( '\nModel ouptut comparison:' )
         print( "ref = {}\nout = {}".\
-          format(\
-            map( lambda x: x.uint(), ref_value ), 
-            output_value 
-          ) 
+          format(
+            ref_value if not isinstance( ref_value, list ) else\
+            map( lambda x: x.uint(), ref_value ),
+            output_value
+          )
         )
 
       # Compare two values
@@ -205,7 +204,7 @@ def verification_test_vector( \
   - actual value    : {actual_value}
         """.format(
           row_number      = row_num, 
-          port_name       = port._my_name, 
+          port_name       = port._dsl.my_name, 
           expected_value  = ref_value, 
           actual_value    = output_value, 
           )
@@ -227,25 +226,26 @@ def Verify( model_name, test_vector, verbosity, *args, **kwargs ):
     verification_test_vector( 
       model, model.imported_model, test_vector, verbosity 
     )
+
   except Exception as e:
     print( 'Exception caught! {0} with the following message\n{1}'.\
       format( type(e).__name__, e.args[0]) 
     )
-    raise AssertionError
-  finally:
-    # We need to manually destroy the imported shared library because
-    # the imported library seems to be cached somewhere.
+    raise
 
-    v_print( 'Destroying the linked share lib...', verbosity )
+  # We need to manually destroy the imported shared library because
+  # the imported library seems to be cached somewhere.
 
-    model.imported_model.ffi.dlclose( model.imported_model._ffi_inst )
-    model.imported_model.ffi = None
-    model.imported_model = None
-    model = None
+  v_print( 'Destroying the linked share lib...', verbosity )
 
-    v_print( '==========================================', verbosity )
-    print(\
-      """Test passed: no discrepancy found between output of imported """
-      """and reference models!""" 
-    )
-    v_print( '==========================================', verbosity )
+  model.imported_model.ffi.dlclose( model.imported_model._ffi_inst )
+  model.imported_model.ffi = None
+  model.imported_model = None
+  model = None
+
+  v_print( '==========================================', verbosity )
+  print(\
+    """Test passed: no discrepancy found between output of imported """
+    """and reference models!""" 
+  )
+  v_print( '==========================================', verbosity )

@@ -90,7 +90,6 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
   # All other functions return a string.
 
   def visit_CombUpblk( s, node ):
-    begin    = ' begin' if len( node.body ) > 1 else ''
     blk_name = node.name
     src      = []
     body     = []
@@ -98,8 +97,8 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
     s.upblk_type = s.COMBINATIONAL
 
     # Add name of the upblk to this always block
-    src.extend( [ 'always_comb{begin} : {blk_name}'.format(
-      begin = begin, blk_name = blk_name
+    src.extend( [ 'always_comb begin : {blk_name}'.format(
+      blk_name = blk_name
     ) ] )
     
     for stmt in node.body:
@@ -108,8 +107,7 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
     make_indent( body, 1 )
     src.extend( body )
 
-    if len( node.body ) > 1:
-      src.extend( [ 'end' ] )
+    src.extend( [ 'end' ] )
 
     s.upblk_type = s.NONE
 

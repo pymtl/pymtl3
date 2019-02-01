@@ -193,7 +193,7 @@ class {constr_name}( BaseRAST ):
     lst = [ 'identifier', 'int', 'object', 'bool', 'string' ]
 
     for t in lst:
-      if type_name.startswith( t ):
+      if type_name == t:
         return True
 
     return False

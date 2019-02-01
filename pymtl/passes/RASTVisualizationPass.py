@@ -232,7 +232,7 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">BoolOp</TD></TR> <TR><TD>op</TD><TD>{op}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">BoolOp</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 
@@ -241,9 +241,11 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
       for name, obj in node.Type.__dict__.iteritems():
         table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
 
-    label = (table_header + table_body + table_opt + table_trail).format(op=node.op)
+    label = (table_header + table_body + table_opt + table_trail)
 
     s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'op' )
+    s.visit( node.op )
     for i, f in enumerate(node.values):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
       s.visit( f )
