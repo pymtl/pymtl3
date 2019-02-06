@@ -50,7 +50,7 @@ class {top_module}( RTLComponent ):
     {top_module}.id_ += 1
 
   def __del__( s ):
-    s._ffi_inst.destroy_model( s._ffi_m )
+    # s._ffi_inst.destroy_model( s._ffi_m )
     s.ffi.dlclose( s._ffi_inst )
     # Deref the cffi objects so that GC can work. We need this because 
     # the linked shared library seems to be cached somewhere. Simply call 
@@ -67,18 +67,7 @@ class {top_module}( RTLComponent ):
     # define the port interface
     {port_defs}
 
-    @s.update
-    def logic():
-
-      # set inputs
-      {set_inputs}
-
-      # execute combinational logic
-      s._ffi_inst.eval( s._ffi_m )
-
-      # set outputs
-      # FIXME: currently write all outputs, not just combinational outs
-      {set_comb}
+{comb_upblks}
 
     # The support for sequential logics will be added later.
     # @s.update_on_edge

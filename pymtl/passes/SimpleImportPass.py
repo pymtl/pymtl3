@@ -20,10 +20,10 @@ from errors     import VerilatorCompileError, PyMTLImportError
 
 # Indention const strings
 
-tab2 = '\n  '
-tab4 = '\n    '
-tab6 = '\n      '
-tab8 = '\n        '
+space2 = '\n  '
+space4 = '\n    '
+space6 = '\n      '
+space8 = '\n        '
 
 class SimpleImportPass( BasePass ):
 
@@ -56,12 +56,33 @@ class SimpleImportPass( BasePass ):
     # as the class name of model
     
     verilog_file = model.__class__.__name__
+    ssg_name     = model.__class__.__name__ + '.ssg'
     top_module   = model.__class__.__name__
+
+    # Try to load the sensitive group from ssg file
+
+    try:
+      with open( ssg_name, 'r' ) as ssg_file:
+        sense_group = []
+        for line in ssg_file:
+          ssg_rule = line.strip().replace( '\n', '' )
+          pos = line.find( '=>' )
+
+          if pos == -1:
+            raise Exception( '.ssg file does not have the correct format!' )
+
+          in_ports  = ssg_rule[ : pos ].strip()
+          out_ports = ssg_rule[ pos+2 : ].strip()
+
+          sense_group.append( ( s.parse_css( out_ports ), s.parse_css( in_ports ) ) )
+
+    except IOError:
+      sense_group = None
 
     # Get all ports
 
     ports = model.get_input_value_ports() | model.get_output_value_ports()
-    
+
     # Generate Verilog and verilator names for all ports
 
     for port in ports:
@@ -87,7 +108,7 @@ class SimpleImportPass( BasePass ):
     # Create a python wrapper that can access the verilated model
 
     py_wrapper_file = s.create_verilator_py_wrapper(
-      model, top_module, lib_file, port_cdef, model.array_dict 
+      model, top_module, lib_file, port_cdef, model.array_dict, sense_group
     )
 
     py_wrapper = py_wrapper_file.split('.')[0]
@@ -186,7 +207,7 @@ class SimpleImportPass( BasePass ):
       # Only generate an array port decl if index is zero
       if '[' in port._dsl.my_name and get_array_idx( port._dsl.my_name ) != 0:
         continue
-      port_externs.append( s.port_to_decl( array_dict, port ) + tab4 )
+      port_externs.append( s.port_to_decl( array_dict, port ) + space4 )
       port_cdef.append( s.port_to_decl( array_dict, port ) )
 
     port_externs = ''.join( port_externs )
@@ -200,7 +221,7 @@ class SimpleImportPass( BasePass ):
       if '[' in port._dsl.my_name and get_array_idx( port._dsl.my_name ) != 0:
         continue
       port_inits.extend(
-        map( lambda x: x + tab2, s.port_to_init( array_dict, port ) )
+        map( lambda x: x + space2, s.port_to_init( array_dict, port ) )
       )
 
     port_inits = ''.join( port_inits )
@@ -273,13 +294,14 @@ class SimpleImportPass( BasePass ):
     
     return lib_file
 
-  def create_verilator_py_wrapper(\
-      s, model, top_module, lib_file, port_cdef, array_dict 
+  def create_verilator_py_wrapper(
+      s, model, top_module, lib_file, port_cdef, array_dict, sense_group
   ):
     ''' create a python wrapper that can manipulate the verilated model
     through the interfaces exposed by the Cpp wrapper '''
-    # This function is based on PyMTL v2
 
+    # This function is based on PyMTL v2
+    
     template_file = \
       os.path.dirname( os.path.abspath( __file__ ) ) \
       + os.path.sep + 'verilator_wrapper_template.py'
@@ -287,35 +309,43 @@ class SimpleImportPass( BasePass ):
     verilator_py_wrapper_file = top_module + '_v.py'
 
     # Port definitions for verilated model
-
-    port_externs  = ''.join( x+tab8 for x in port_cdef )
+    port_externs  = ''.join( x+space8 for x in port_cdef )
 
     # Port definition in PyMTL style
-
     port_defs     = []
 
     # Set verilated input ports to PyMTL input ports
-
     set_inputs    = []
 
-    # Combinational update block
-
+    # Output of combinational update block
     set_comb      = []
 
-    # Sequential update block
-
+    # Output of sequential update block
     set_next      = []
 
     # Line trace 
-
     line_trace = s.generate_py_line_trace( model )
 
     # Internal line trace 
-
     in_line_trace = s.generate_py_internal_line_trace( model )
 
-    # Create PyMTL port definitions, input setting, comb stmts
+    # Template for update blocks
+    comb_upblk = \
+"""
+    @s.update
+    def {upblk_name}():
+      # set inputs
+      {set_inputs}
+      # call evaluate function
+      s._ffi_inst.eval( s._ffi_m )
 
+      # get outputs
+      {set_comb}"""
+
+    # Combinational update blocks
+    comb_upblks = []
+
+    # Create PyMTL port definitions, input setting, comb stmts
     for port in model.get_input_value_ports():
       name = port._dsl.my_name
       if '[' in name:
@@ -327,7 +357,7 @@ class SimpleImportPass( BasePass ):
           array_range = array_dict[ get_array_name( name ) ]
           name = get_array_name( name )
           port_defs.append(\
-            '''s.{name} = [ InVPort(Bits{nbits}) '''\
+            '''s.{name} = [ InVPort(Bits{nbits}) '''
             '''for _x in xrange({array_range}) ]'''.\
             format( **locals() ) 
           )
@@ -339,10 +369,6 @@ class SimpleImportPass( BasePass ):
             nbits = port._dsl.Type.nbits,
           ) 
         )
-      if port._dsl.my_name == 'clk':
-        continue
-      # Generate assignments to setup the inputs of verilated model 
-      set_inputs.extend( s.set_input_stmt( port, array_dict ) )
 
     for port in model.get_output_value_ports():
       name = port._dsl.my_name
@@ -355,7 +381,7 @@ class SimpleImportPass( BasePass ):
           array_range = array_dict[ get_array_name( name ) ]
           name = get_array_name( name )
           port_defs.append(\
-            '''s.{name} = [ OutVPort(Bits{nbits})'''\
+            '''s.{name} = [ OutVPort(Bits{nbits})'''
             ''' for _x in xrange({array_range}) ]'''.\
             format( **locals() ) 
           )
@@ -367,10 +393,45 @@ class SimpleImportPass( BasePass ):
             nbits = port._dsl.Type.nbits,
           ) 
         )
-      # Generate assignments to read output from the verilated model
-      comb, next_ = s.set_output_stmt( port, array_dict )
-      set_comb.extend( comb )
-      set_next.extend( next_ )
+
+    # Generate comb_upblks according to sense_group
+    if sense_group is None:
+      for port in model.get_input_value_ports():
+        if port._dsl.my_name == 'clk':
+          continue
+        # Generate assignments to setup the inputs of verilated model 
+        set_inputs.extend( s.set_input_stmt( port, array_dict ) )
+
+      for port in model.get_output_value_ports():
+        # Generate assignments to read output from the verilated model
+        comb, next_ = s.set_output_stmt( port, array_dict )
+        set_comb.extend( comb )
+        set_next.extend( next_ )
+
+      comb_upblks.append( comb_upblk.format(
+        upblk_name = 'comb_eval',
+        set_inputs = ''.join( [ x+space6 for x in set_inputs ] ),
+        set_comb = ''.join( [ x+space6 for x in set_comb ] )
+      ) )
+
+    else:
+      # Generate one upblk for each sensitive group
+      for idx, ( out, in_ ) in enumerate( sense_group ):
+        set_inputs = []
+        set_comb = []
+        
+        for in_port in in_:
+          set_inputs.extend( s.set_input_stmt( model.__dict__[ in_port ], array_dict ) )
+        for out_port in out:
+          comb, next_ = s.set_output_stmt( model.__dict__[ out_port ], array_dict )
+          set_comb.extend( comb )
+          set_next.extend( next_ )
+
+        comb_upblks.append( comb_upblk.format(
+          upblk_name = 'comb_eval_' + str( idx ),
+          set_inputs = ''.join( [ x+space6 for x in set_inputs ] ),
+          set_comb = ''.join( [ x+space6 for x in set_comb ] )
+        ) )
 
     # Read from template and fill in contents 
 
@@ -382,10 +443,11 @@ class SimpleImportPass( BasePass ):
         top_module    = top_module,
         lib_file      = lib_file,
         port_externs  = port_externs,
-        port_defs     = ''.join( [ x+tab4 for x in port_defs ] ),
-        set_inputs    = ''.join( [ x+tab6 for x in set_inputs ] ),
-        set_comb      = ''.join( [ x+tab6 for x in set_comb ] ),
-        set_next      = ''.join( [ x+tab6 for x in set_next ] ),
+        port_defs     = ''.join( [ x+space4 for x in port_defs ] ),
+        comb_upblks   = '\n'.join( [ x for x in comb_upblks ] ),
+        # set_inputs    = ''.join( [ x+space6 for x in set_inputs ] ),
+        # set_comb      = ''.join( [ x+space6 for x in set_comb ] ),
+        set_next      = ''.join( [ x+space6 for x in set_next ] ),
         line_trace    = line_trace,
         in_line_trace = in_line_trace,
       )
@@ -645,6 +707,10 @@ class SimpleImportPass( BasePass ):
       ( i, '[{}:{}]'.format( i*32, min( i*32+32, port._dsl.Type.nbits ) ) ) \
       for i in range(num_assigns)
     ]
+
+  def parse_css( s, css ):
+    """Parse a comma-separated string and return a set of all fields"""
+    return map( lambda x: x.strip(), css.split( ',' ) )
 
 #-------------------------------------------------------------------------------
 # Global helper functions
