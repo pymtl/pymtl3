@@ -1,0 +1,7 @@
+pytest
+hypothesis
+pytest-xdist
+cffi
+greenlet
+pyparsing
+graphviz
