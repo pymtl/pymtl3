@@ -286,9 +286,9 @@ class BaseRAST( object ):
 """
   visitor_str =\
 """
-#----------------------------------------
+#-----------------------------------------------------------------------
 # RAST visitor
-#----------------------------------------
+#-----------------------------------------------------------------------
 
 class RASTNodeVisitor( object ):
   # This visitor uses the same code as the Python AST node visitor

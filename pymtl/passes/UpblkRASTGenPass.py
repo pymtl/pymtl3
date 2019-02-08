@@ -39,6 +39,7 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
     s.mapping   = component.get_astnode_obj_mapping()
 
     s.loop_var_env = set()
+    s.tmp_var_env = set()
 
   def enter( s, blk, ast ):
     """ entry point for RAST generation """
@@ -146,7 +147,7 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     orelse = []
     for orelse_stmt in node.orelse:
-      body.append( s.visit( orelse_stmt ) )
+      orelse.append( s.visit( orelse_stmt ) )
 
     ret = If( cond, body, orelse )
     ret.ast = node
@@ -262,7 +263,9 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
   def visit_Expr( s, node ):
     # Should only be useful as a call to SystemVerilog tasks
     # Not implemented yet!
-    raise
+    raise PyMTLSyntaxError(
+      s.blk, node, 'Task is not supported yet!'
+    )
 
   def visit_BinOp( s, node ):
     left  = s.visit( node.left )
@@ -340,47 +343,48 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
     # Example: Bits4(2)
     actual_node = node.func
 
-    # Find the corresponding class through the name
-    # Currently only BitsX class is supported
+    # Find the corresponding object of node.func field
     # TODO: Support Verilog task?
-    try:
-      if actual_node.id in s.globals:
-        call = s.globals[ actual_node.id ]
+    if actual_node in s.mapping:
+      # The node.func field corresponds to a member of this class
+      obj = s.mapping[ actual_node ][ 0 ]
 
-      else:
-        raise NameError
+    else:
+      try:
+        # An object in global namespace is used
+        if actual_node.id in s.globals:
+          obj = s.globals[ actual_node.id ]
 
-    except AttributeError:
-      raise PyMTLSyntaxError(
-        s.blk, node, node.func + ' function call is not supported!'
-      )
+        # An object in closure is used
+        elif actual_node.id in s.closure:
+          obj = s.closure[ actual_node.id ]
 
-    except NameError:
-      raise PyMTLSyntaxError(
-        s.blk, node, node.func.id + ' function is not found!'
-      )
+        else:
+          raise NameError
 
-    # Extract the number of bits
-    try:
-      nbits = call.nbits
-
-    except AttributeError: 
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Expecting BitsX class but found ' + call.__name__
-      )
-
-    if len( node.args ) != 1:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Call to ' + call.__name__ + \
-        ' should have exactly one arguement!'
-      )
-
-    arg = node.args[0]
-
-    if isinstance( arg, ast.Num ):
-      if arg.n < 0 or not isinstance( arg.n, int ):
+      except AttributeError:
         raise PyMTLSyntaxError(
-          s.blk, node, 'only non-negative integers are allowed!'
+          s.blk, node, node.func + ' function call is not supported!'
+        )
+
+      except NameError:
+        raise PyMTLSyntaxError(
+          s.blk, node, node.func.id + ' function is not found!'
+        )
+
+    # Now that we have the live Python object, there are a few cases that
+    # we need to treat separately:
+    # 1. Instantiation: Bits16( 10 ) where obj is an instance of Bits
+    # Bits16( 1+2 ), Bits16( s.STATE_A )?
+    # 2. Real function call: not supported yet
+
+    # Deal with Bits instantiation
+    if obj.__name__.startswith( 'Bits' ) and obj.__name__[4:].isdigit():
+      nbits = obj.nbits
+
+      if len( node.args ) != 1:
+        raise PyMTLSyntaxError(
+          s.blk, node, 'exactly 1 argument should be given to Bits!'
         )
 
       if nbits <= 0:
@@ -388,19 +392,17 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
           s.blk, node, 'bit width should be positive integers!'
         )
 
-      if arg.n >= 2**nbits:
-        raise PyMTLSyntaxError(
-          s.blk, node, 'constant integer overflow!'
-        )
+      value = s.visit( node.args[0] )
 
-      ret = Number( nbits, arg.n )
+      ret = Bitwidth( nbits, value )
       ret.ast = node
+
       return ret
 
     else:
+      # Only Bits class instantiation is supported
       raise PyMTLSyntaxError(
-        s.blk, node, 'Invalid function call argument type ' +\
-        arg.__class__.__name__ + '!'
+        s.blk, node, 'Expecting Bits object but found ' + obj.__name__
       )
 
   def visit_Attribute( s, node ):
@@ -444,33 +446,46 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
   def visit_Name( s, node ):
     if node.id in s.globals:
       # free var from global name space
-      return node.id
+      # return node.id
+      return FreeVar( node.id, s.globals[ node.id ] )
 
     elif node.id in s.closure:
       # free var from closure
-      ret = Base( s.closure[ node.id ] )
-      ret.ast = node
-      return ret
+      obj = s.closure[ node.id ]
+      if isinstance( obj, RTLComponent ):
+        ret = Base( obj )
+      else:
+        ret = FreeVar( node.id, obj )
 
     else:
       # Temporary variable
       # This can be a LoopVar or a true temporary variable
       if node.id in s.loop_var_env:
         ret = LoopVar( node.id )
-        ret.ast = node
-        return ret
 
       # Else this is a temporary variable but not a loop index
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Temporary variable ' + node.id + ' is not supported!'
-      )
+
+      elif node.id in s.tmp_var_env:
+        # This temporaray variable has been registered
+        ret = TmpVar( node.id )
+
+      elif isinstance( node.ctx, ast.Load ):
+        # Trying to load an unregistered temporaray variable
+        raise PyMTLSyntaxError(
+          s.blk, node, 'tmpvar ' + node.id + ' used before assignment!'
+        )
+
+      else:
+        # This is the first time we see this tmp var
+        s.tmp_var_env.add( node.id )
+
+    ret.ast = node
+    return ret
+
 
   def visit_Num( s, node ):
-    # nbits = 0 means this constant number is created without specifying 
-    # its bitwidth.
-    ret = Number( 0, node.n )
+    ret = Number( node.n )
     ret.ast = node
-
     return ret
 
   #---------------------------------------------------------------------

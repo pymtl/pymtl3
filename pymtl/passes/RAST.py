@@ -113,6 +113,20 @@ class For( BaseRAST ):
     return not s.__eq__( other )
 
 class Number( BaseRAST ):
+  def __init__( s, value ):
+    s.value = value
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.value != other.value:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class Bitwidth( BaseRAST ):
   def __init__( s, nbits, value ):
     s.nbits = nbits
     s.value = value
@@ -293,13 +307,16 @@ class Base( BaseRAST ):
     return not s.__eq__( other )
 
 class LoopVar( BaseRAST ):
-  def __init__( s, name ):
+  def __init__( s, name, obj ):
     s.name = name
+    s.obj = obj
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
       return False
     if s.name != other.name:
+      return False
+    if s.obj != other.obj:
       return False
     return True
 
@@ -307,6 +324,23 @@ class LoopVar( BaseRAST ):
     return not s.__eq__( other )
 
 class FreeVar( BaseRAST ):
+  def __init__( s, name, obj ):
+    s.name = name
+    s.obj = obj
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.name != other.name:
+      return False
+    if s.obj != other.obj:
+      return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+class TmpVar( BaseRAST ):
   def __init__( s, name ):
     s.name = name
 
@@ -610,9 +644,9 @@ class GtE( BaseRAST ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
-#----------------------------------------
+#-----------------------------------------------------------------------
 # RAST visitor
-#----------------------------------------
+#-----------------------------------------------------------------------
 
 class RASTNodeVisitor( object ):
   # This visitor uses the same code as the Python AST node visitor

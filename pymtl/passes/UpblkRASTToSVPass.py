@@ -231,15 +231,14 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
   #---------------------------------------------------------------------
 
   def visit_Number( s, node ):
-    if node.nbits == 0:
-      # Create a number without width specifier
-      return str( node.value )
+    # Create a number without width specifier
+    return str( node.value )
 
+  def visit_Bitwidth( s, node ):
+    if isinstance( node.value, Number ):
+      return "{}'d{}".format( node.nbits, node.value.value )
     else:
-      # Create a number with width specifier
-      return "{width}'d{value}".format(
-        width = node.nbits, value = node.value 
-      )
+      return s.visit( node.value )
 
   def visit_IfExp( s, node ):
     cond  = s.visit_expr_wrap( node.cond )
@@ -327,6 +326,9 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
     return node.name
 
   def visit_FreeVar( s, node ):
+    return node.name
+
+  def visit_TmpVar( s, node ):
     return node.name
 
   #---------------------------------------------------------------------

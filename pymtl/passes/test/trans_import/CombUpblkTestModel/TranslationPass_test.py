@@ -7,14 +7,13 @@
 # Author : Peitian Pan
 # Date   : Oct 18, 2018
 
-from   pymtl      import *
-from   hypothesis import given, settings, HealthCheck, unlimited, seed
-from   copy       import deepcopy
-
 import os
 import random
 import hypothesis.strategies as st
 
+from   pymtl      import *
+from   hypothesis import given, settings, HealthCheck, unlimited, seed
+from   copy       import deepcopy
 # Import the verification infrastructure
 from   pymtl.passes.test.trans_import.Verify import Verify
 
@@ -179,5 +178,5 @@ def test_comb_upblk_trans_st( comb_upblk, pytestconfig ):
 
   Verify( 'CombUpblkTestModel', test_vector, verbosity )
 
-if __name__ == '__main__':
-  test_comb_upblk_trans_st( 0 )
+# if __name__ == '__main__':
+  # test_comb_upblk_trans_st( 0 )

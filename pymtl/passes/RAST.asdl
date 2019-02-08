@@ -11,21 +11,23 @@ module RAST
        | If( expr cond, stmt* body, stmt* orelse )
        | For( loopvar_decl var, expr start, expr end, expr step, stmt* body )
 
-  expr = Number( int nbits, int value )
+  expr = Number( int value )
+       | Bitwidth( int nbits, expr value )
        | IfExp( expr cond, expr body, expr orelse )
        | UnaryOp( unaryop op, expr operand )
        | BoolOp( boolop op, expr* values )
        | BinOp( expr left, operator op, expr right )
        | Compare( expr left, cmpop op, expr right )
 
-       -- Only the following types of nodes can appear in the LHS of
+       -- Only the following types of nodes might appear in the LHS of
        -- an assignment
        | Attribute( expr value, identifier attr )
        | Index( expr value, expr idx )
        | Slice( expr value, expr lower, expr upper )
        | Base( object base )
-       | LoopVar( string name )
-       | FreeVar( string name )
+       | LoopVar( string name, object obj )
+       | FreeVar( string name, object obj )
+       | TmpVar( string name )
 
   loopvar_decl = LoopVarDecl( string name )
 

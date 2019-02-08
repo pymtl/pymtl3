@@ -19,10 +19,14 @@ from pymtl.dsl   import ComponentLevel1
 from BasePass    import BasePass
 from collections import defaultdict, deque
 from errors      import TranslationError
-
+from RASTType    import get_type
 from UpblkTranslationPass import UpblkTranslationPass
 
-svmodule_template = """\
+svmodule_template =\
+"""//----------------------------------------------------------------------
+// PyMTL translation result for component {module_name}
+//----------------------------------------------------------------------
+
 module {module_name}
 (
   // Input declarations
@@ -36,7 +40,7 @@ module {module_name}
   {wire_decls}
 
   // Submodule declarations
-  {children_decls}
+  {child_decls}
 
   // Assignments due to net connection and submodule interfaces
   {assignments}
@@ -46,14 +50,16 @@ module {module_name}
 {blk_srcs}
 
 endmodule
+
 """
 
 class ComponentTranslationPass( BasePass ):
 
-  def __init__( s, type_env, connections_self_self, connections_self_child,
-                   connections_child_child ):
+  def __init__( s, translated, type_env, connections_self_self,
+                connections_self_child, connections_child_child ):
     """ the connections are needed in recursive component translation """
 
+    s.translated = translated
     s.type_env = type_env
     s._connections_self_self   = connections_self_self
     s._connections_self_child  = connections_self_child
@@ -62,6 +68,9 @@ class ComponentTranslationPass( BasePass ):
   def __call__( s, m ):
     """ translates a single RTLComponent instance and returns its source """
 
+    # Check if this component has been translated
+    if m in s.translated: return s.translated[ m ]
+
     module_name = m.__class__.__name__
 
     connections_self_self   = s._connections_self_self[ m ]
@@ -69,87 +78,97 @@ class ComponentTranslationPass( BasePass ):
     connections_child_child = s._connections_child_child[ m ]
 
     #-------------------------------------------------------------------
-    # Input/output declarations
+    # Input, output, Wire declarations
     #-------------------------------------------------------------------
 
-    # Keep track of array ports
-    array_port_dict = {}
+    signals = {}
+    signal_decl_str = { 'input':[], 'output':[], 'wire':[] }
+    signal_prefix = { 'input' : 'input', 'output' : 'output', 'wire' : '' }
+    
+    # First collect all input/output ports
+    signals['input'] = collect_ports( m, InVPort )
+    signals['output'] = collect_ports( m, OutVPort )
+    signals['wire'] = collect_ports( m, Wire )
 
-    input_strs = gen_sv_signal_name( array_port_dict, 'input ', \
-      sorted( m.get_input_value_ports(), key = repr ) 
-    )
+    # For in/out ports, generate and append their declarations to the list
+    for prefix in [ 'input', 'output', 'wire' ]:
+      for name, port in signals[ prefix ]:
 
-    output_strs = gen_sv_signal_name( array_port_dict, 'output ', \
-      sorted( m.get_output_value_ports(), key = repr ) 
-    )
+        type_str = get_type( port ).type_str()
 
-    input_decls = ',\n  '.join( input_strs )
+        signal_decl_str[ prefix ].append(
+          '{prefix} {dtype} {vec_size} {name} {dim_size}'.format(
+            prefix = signal_prefix[ prefix ],
+            dtype = type_str[ 'dtype' ],
+            vec_size = type_str[ 'vec_size' ],
+            name = name,
+            dim_size = type_str[ 'dim_size' ]
+        ) )
 
-    if output_strs: 
+    input_decls = ',\n  '.join( signal_decl_str[ 'input' ] )
+
+    if signal_decl_str[ 'output' ]:
       input_decls += ','
 
-    output_decls = ',\n  '.join( output_strs )
+    output_decls = ',\n  '.join( signal_decl_str[ 'output' ] )
 
-    #-------------------------------------------------------------------
-    # Local wire declarations
-    #-------------------------------------------------------------------
+    wire_decls = ';\n  '.join( signal_decl_str[ 'wire' ] )
 
-    # TODO: dont declare wires that are unused
-
-    array_wire_dict = {}
-
-    wire_strs = gen_sv_signal_name( array_wire_dict, '', \
-      sorted( m.get_wires(), key = repr ) 
-    )
-
-    wire_decls = ';\n  '.join( wire_strs )
-    wire_decls += ';'
+    if wire_decls:
+      wire_decls += ';'
 
     #-------------------------------------------------------------------
     # Instantiate child components
     #-------------------------------------------------------------------
 
-    children_strs = []
+    child_strs = []
 
-    # TODO: only declare children signals used in the current component
+    # TODO: only declare child signals used in the current component
 
-    for child in m.get_child_components():
-      child_name = child.get_field_name()
+    for c in m.get_child_components():
+      child_name = c.get_field_name()
 
-      # Turn a child's input ports into temporary signal declaration and
-      # wiring in instantiation
+      ifcs = {}
+      ifcs_decl_str = { 'input':[], 'output':[] }
+      connection_wire = { 'input':[], 'output':[] }
+      
+      # First collect all input/output ports
+      ifcs['input'] = collect_ports( c, InVPort )
+      ifcs['output'] = collect_ports( c, OutVPort )
 
-      sig_decls  = []
-      in_wiring  = []
-      out_wiring = []
+      # For in/out ports, generate and append their declarations to the list
+      for prefix in [ 'input', 'output' ]:
+        for name, port in ifcs[ prefix ]:
 
-      # TODO: align all declarations
-      for port in sorted( child.get_input_value_ports(), key=repr ):
-        fname = port.get_field_name()
-        nbits = port._dsl.Type.nbits
-        width = '' if nbits == 1 else ' [{}:0]'.format(nbits-1)
-        sig_decls.append('logic{} {}${};'.format( width, child_name, fname ))
-        in_wiring.append('  .{0:6}( {1}${0} ),'.format( fname, child_name ))
+          fname = name
 
-      for port in sorted( child.get_output_value_ports(), key=repr ):
-        fname = port.get_field_name()
-        nbits = port._dsl.Type.nbits
-        width = '' if nbits == 1 else ' [{}:0]'.format(nbits-1)
-        sig_decls.append('logic{} {}${};'.format( width, child_name, fname ))
-        out_wiring.append('  .{0:6}( {1}${0} ),'.format( fname, child_name ))
+          type_str = get_type( port ).type_str()
 
-      children_strs.extend( sig_decls )
-      children_strs.append( '' )
-      children_strs.append( child.__class__.__name__+' '+child_name)
-      children_strs.append( '(' )
-      children_strs.append( "  // Child component's inputs" )
-      children_strs.extend( in_wiring )
-      children_strs.append( "  // Child component's outputs" )
-      children_strs.extend( out_wiring )
-      children_strs[-2 if not out_wiring else -1].rstrip(',')
-      children_strs.append( ');' )
+          ifcs_decl_str[ prefix ].append(
+            '{dtype} {vec_size} {fname}${name} {dim_size}'.format(
+              dtype = type_str[ 'dtype' ],
+              vec_size = type_str[ 'vec_size' ],
+              fname = child_name,
+              name = fname,
+              dim_size = type_str[ 'dim_size' ]
+          ) )
 
-    children_decls = '\n  '.join( children_strs )
+          connection_wire[ prefix ].append(
+            '  .{0:6}( {1}${0} ),'.format( fname, child_name )
+          )
+
+      child_strs.extend( ifcs_decl_str )
+      child_strs.append( '' )
+      child_strs.append( c.__class__.__name__+' '+child_name )
+      child_strs.append( '(' )
+      child_strs.append( "  // Child component's inputs" )
+      child_strs.extend( connection_wire[ 'input' ] )
+      child_strs.append( "  // Child component's outputs" )
+      child_strs.extend( connection_wire[ 'output' ] )
+      child_strs[-2 if not connection_wire['output'] else -1].rstrip(',')
+      child_strs.append( ');' )
+
+    child_decls = '\n  '.join( child_strs )
 
     #-------------------------------------------------------------------
     # Continuous Assignments
@@ -232,13 +251,21 @@ class ComponentTranslationPass( BasePass ):
     # Append the source code of child components at the end 
     #-------------------------------------------------------------------
 
+    # Mark this component as translated
+    s.translated[ m ] = ''
+
+    # Recursively translate all sub-components
     for obj in sorted( m.get_child_components(), key = repr ):
       ret += ComponentTranslationPass(
+        s.translated,
         s.type_env,
         s._connections_self_self, 
         s._connections_self_child, 
         s._connections_child_child
       )( obj )
+
+    # Update the full string for this component
+    s.translated[ m ] = ret
 
     return ret
 
@@ -246,60 +273,22 @@ class ComponentTranslationPass( BasePass ):
 # Helper functions
 #--------------------------------------------------------------
 
-def gen_sv_signal_name( array_dict, direction, ports ):
-  """ generate in/out port declarations """
+def is_of_type( obj, Type ):
+  """Is obj Type or contains Type?"""
+  if isinstance( obj, Type ):
+    return True
+  if isinstance( obj, list ):
+    return reduce( lambda x, y: x and is_of_type( y, Type ), obj, True )
+  return False
+
+def collect_ports( m, Type ):
+  """Return a list of members of m that are or include Type ports"""
   ret = []
-
-  # Collect all array ports
-  for port in ports:
-    if '[' in port._dsl.my_name:
-      # Speical treatment for lists
-      array_name    = get_array_name( port._dsl.my_name )
-      array_idx     = get_array_idx( port._dsl.my_name )
-
-      try: 
-        array_range = array_dict[ array_name ]
-
-      except KeyError:
-        array_range = 1
-      array_dict[ array_name ] = max( array_idx + 1, array_range )
-
-  # Generate signal declarations for all ports
-  for port in ports:
-    name  = port._dsl.my_name
-    nbits = port._dsl.Type.nbits
-    width = '' if nbits == 0 else ' [{}:0]'.format( nbits - 1 )
-
-    if not '[' in name:
-      # Not a list
-      ret.append('{direction}logic{width} {name}'.format(**locals()))
-
-    else:
-      # Only generate 1 port declarartion for a series of array ports
-      if get_array_idx( name ) == 0:    # e.g. in_[0]
-        name = get_array_name( name )
-        array_range = str( array_dict[ name ] )
-        array_range = str( int(array_range) - 1 )
-        ret.append('{direction}logic{width} {name}[0:{array_range}]'.\
-          format( **locals() ) 
-        )
-
+  for name, obj in m.__dict__.iteritems():
+    if isinstance( name, basestring ) and not name.startswith( '_' ):
+      if is_of_type( obj, Type ):
+        ret.append( ( name, obj ) )
   return ret
-
-def to_sv_name( name ):
-  if '[' in name: 
-    # Special treatment for a list: in_[1] --> in_$1
-    return re.sub( r'\[(\d+)\]', r'$\1', name )
-
-  else:
-    return name
-
-def get_array_name( name ):
-  return re.sub( r'\[(\d+)\]', '', name )
-
-def get_array_idx( name ):
-  m = re.search( r'\[(\d+)\]', name )
-  return int( m.group( 1 ) )
 
 def make_indent( src, nindent ):
   """Add nindent indention to every line in src."""

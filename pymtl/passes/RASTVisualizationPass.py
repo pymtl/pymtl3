@@ -168,7 +168,7 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">Number</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR> <TR><TD>value</TD><TD>{value}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">Number</TD></TR> <TR><TD>value</TD><TD>{value}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 
@@ -177,9 +177,29 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
       for name, obj in node.Type.__dict__.iteritems():
         table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
 
-    label = (table_header + table_body + table_opt + table_trail).format(nbits=node.nbits, value=node.value)
+    label = (table_header + table_body + table_opt + table_trail).format(value=node.value)
 
     s.g.node( str( s.cur ), label = label )
+
+  def visit_Bitwidth( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">Bitwidth</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, RASTType.BaseRASTType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in node.Type.__dict__.iteritems():
+        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail).format(nbits=node.nbits)
+
+    s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
+    s.visit( node.value )
 
   def visit_IfExp( s, node ):
     s.cur += 1
@@ -387,7 +407,7 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">LoopVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">LoopVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR> <TR><TD>obj</TD><TD>{obj}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 
@@ -396,7 +416,7 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
       for name, obj in node.Type.__dict__.iteritems():
         table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
 
-    label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
+    label = (table_header + table_body + table_opt + table_trail).format(name=node.name, obj=node.obj)
 
     s.g.node( str( s.cur ), label = label )
 
@@ -405,7 +425,25 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">FreeVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">FreeVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR> <TR><TD>obj</TD><TD>{obj}</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, RASTType.BaseRASTType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in node.Type.__dict__.iteritems():
+        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail).format(name=node.name, obj=node.obj)
+
+    s.g.node( str( s.cur ), label = label )
+
+  def visit_TmpVar( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">TmpVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 

@@ -15,6 +15,7 @@ from pymtl.dsl   import ComponentLevel1
 from BasePass    import BasePass
 from collections import defaultdict, deque
 from errors      import TranslationError
+from Helpers     import freeze
 from ComponentTranslationPass import ComponentTranslationPass
 
 class SystemVerilogTranslationPass( BasePass ):
@@ -82,11 +83,12 @@ class SystemVerilogTranslationPass( BasePass ):
 
     type_env = {}
 
-    s.extract_type_env( type_env, top )
+    extract_type_env( type_env, top )
 
     # Recursively translate the top component
 
     ret = ComponentTranslationPass( 
+      {},
       type_env,
       connections_self_self, 
       connections_self_self,
@@ -100,65 +102,21 @@ class SystemVerilogTranslationPass( BasePass ):
 
     top._translated = True
 
-  # Assume signal only has nbits attribute
-  def extract_type_env( s, type_env, component ):
-    """Add the types of all attributes of the given component 
-    into the type environment."""
-
-    obj_lst = [ obj for (name, obj) in component.__dict__.iteritems() \
-      if isinstance( name, basestring ) if not name.startswith( '_' )
-    ]
-
-    while obj_lst:
-      top_obj = obj_lst.pop()
-      type_env[ freeze( top_obj ) ] = s.get_type( top_obj )
-
-    for child in component.get_child_components():
-      s.extract_type_env( type_env, child )
-
-  def get_type( s, obj ):
-    """return the RAST type of obj"""
-
-    # child component of the given module
-    if isinstance( obj, RTLComponent ):
-      return Module( obj )
-
-    # signals refer to in/out ports and wires
-    elif isinstance( obj, ( InVPort, OutVPort, Wire ) ):
-      try:
-        nbits = obj._dsl.Type.nbits
-      except AttributeError:
-        assert False, 'signal instances must have Bits as their .Type field'
-
-      return Signal( nbits )
-
-    # integers have unset bitwidth (0) 
-    elif isinstance( obj, int ):
-      return Const( True, 0, obj )
-
-    # Bits instances
-    elif isinstance( obj, Bits ):
-      return Const( True, obj.nbits, obj.value )
-
-    # array type
-    elif isinstance( obj, list ):
-      assert len( obj ) > 0
-
-      type_list = map( lambda x: s.get_type( x ), obj )
-
-      assert reduce(lambda x, y: x and (y == type_list[0]), type_list, True),\
-        'Elements of list must have the same RAST type!'
-
-      return Array( len( obj ), type_list[0] )
-
-    assert False,\
-      'Attributes of an RTLComponent must be signal, constant, list, or module!'
-
 #-----------------------------------------------------------------------
 # Helper functions
 #-----------------------------------------------------------------------
 
-def freeze( obj ):
-  if isinstance( obj, list ):
-    return tuple( freeze( o ) for o in obj )
-  return obj
+def extract_type_env( type_env, component ):
+  """Add the types of all attributes of the given component 
+  into the type environment."""
+
+  obj_lst = [ obj for (name, obj) in component.__dict__.iteritems() \
+    if isinstance( name, basestring ) if not name.startswith( '_' )
+  ]
+
+  while obj_lst:
+    top_obj = obj_lst.pop()
+    type_env[ freeze( top_obj ) ] = get_type( top_obj )
+
+  for child in component.get_child_components():
+    extract_type_env( type_env, child )

@@ -33,7 +33,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
   def __init__( s, component, type_env ):
     s.component = component
+
     s.type_env = type_env
+
+    s.tmp_var_type_env = {}
 
     s.BinOp_same_type = ( 
       Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor 
@@ -141,6 +144,11 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     rhs_type = node.value.Type
     lhs_type = node.target.Type
 
+    if isinstance( node.target, TmpVar ):
+      # Creating a temporaray variable
+      node.target.Type = rhs_type
+      s.tmp_var_type_env[ node.target.id ] = rhs_type
+
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError(
         s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
@@ -189,10 +197,41 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     node.Type = Module( node.base )
 
   def visit_Number( s, node ):
-    node.Type = Const( True, node.nbits, node.value )
+    node.Type = Const( True, 0, node.value )
+
+  def visit_Bitwidth( s, node ):
+    nbits = node.nbits
+    Type = node.value.Type
+
+    # We do not check for bitwidth mismatch here because the user should
+    # be able to *explicitly* convert signals/constatns to different bitwidth.
+
+    if not isinstance( Type, ( Signal, Const ) ):
+      # Array, Bool, Module cannot have bitwidth
+      raise PyMTLTypeError(
+        s.blk, node.ast, 'bitwidth does not apply to' + str(Type) + '!'
+      )
+
+    if isinstance( Type, Signal ):
+      node.Type = Signal( nbits )
+
+    elif isinstance( Type, Const ):
+      node.Type = Const( Type.is_static, nbits, Type.value )
 
   def visit_LoopVar( s, node ):
     node.Type = Const( False, 0 )
+
+  def visit_FreeVar( s, node ):
+    node.Type = get_type( node.obj )
+
+  def visit_TmpVar( s, node ):
+    if not node.id in s.tmp_var_type_env:
+      # This tmpvar is being created. Later when it is used, its type can
+      # be read from tmp_var_type_env.
+      node.Type = None
+
+    else:
+      node.Type = s.tmp_var_type_env[ node.id ]
 
   def visit_IfExp( s, node ):
     # Can the type of condition be cast into bool?
