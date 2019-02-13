@@ -581,7 +581,7 @@ class ComponentLevel3( ComponentLevel2 ):
       if isinstance( c, ComponentLevel1 ):
         s._collect_vars( c )
 
-    s._dsl.all_value_nets = s._resolve_value_connections( s._dsl.all_signals )
+    s._dsl.all_value_nets = s._resolve_value_connections()
     s._dsl.has_pending_connections = False
 
     s.check()
