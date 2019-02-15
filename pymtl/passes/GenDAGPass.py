@@ -269,11 +269,13 @@ def {0}():
 
     try:
       all_method_nets = top.get_all_method_nets()
+
       for writer, net in top.get_all_method_nets():
-        for member in net:
-          if member is not writer:
-            assert member.method is None
-            member.method = writer.method
+        if writer is not None:
+          for member in net:
+            if member is not writer:
+              assert member.method is None
+              member.method = writer.method
 
     except AttributeError:
       pass
