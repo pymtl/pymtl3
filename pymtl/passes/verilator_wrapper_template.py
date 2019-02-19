@@ -1,6 +1,6 @@
-#========================================================================
+#=========================================================================
 # V{top_module}_v.py
-#========================================================================
+#=========================================================================
 # This wrapper makes a Verilator-generated C++ model appear as if it
 # were a normal PyMTL model. This template is based on PyMTL v2.
 
@@ -9,9 +9,9 @@ import os
 from pymtl import *
 from cffi  import FFI
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # {top_module}
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 class {top_module}( RTLComponent ):
   id_ = 0
 
@@ -80,7 +80,7 @@ class {top_module}( RTLComponent ):
 
       # # double buffer register outputs
       # # FIXME: currently treat all outputs as combinational outs
-      # {set_next}
+    {seq_upblk}
 
   def line_trace( s ):
     return {line_trace}

@@ -1,7 +1,7 @@
-#========================================================================
-# UpblkRASTGenPass.py
-#========================================================================
-# This pass generates the RAST of a given upblk.
+#=========================================================================
+# ComponentUpblkRASTGenPass.py
+#=========================================================================
+# This pass generates the RAST of a given component.
 #
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
@@ -9,28 +9,30 @@
 import ast
 
 from pymtl       import *
-from RAST        import *
 from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass
-from collections import defaultdict, deque
+from BasePass    import BasePass, PassMetadata
 from errors      import PyMTLSyntaxError
-from inspect     import getsourcefile, getsourcelines
+from RAST        import *
 
-class UpblkRASTGenPass( BasePass ):
+class ComponentUpblkRASTGenPass( BasePass ):
 
   def __call__( s, m ):
     """ generate RAST for all upblks of m and write them to m._rast """
 
-    m._rast = {}
+    m._pass_component_upblk_rast_gen = PassMetadata()
+
+    m._pass_component_upblk_rast_gen.rast = {}
 
     visitor = UpblkRASTGenVisitor( m )
 
     for blk in m.get_update_blocks():
-      m._rast[ blk ] = visitor.enter( blk, m.get_update_block_ast( blk ) )
+      m._pass_component_upblk_rast_gen.rast[ blk ] =\
+        visitor.enter( blk, m.get_update_block_ast( blk ) )
 
-#-----------------------------------------------------------------------
-# Visitor for generating RAST for an update block
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
+# UpblkRASTGenVisitor
+#-------------------------------------------------------------------------
+# Visitor class for generating RAST for an update block
 
 class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
@@ -40,6 +42,26 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     s.loop_var_env = set()
     s.tmp_var_env = set()
+
+    # opmap maps an ast operator to its RAST counterpart.
+    s.opmap = {
+      # Bool operators
+      ast.And    : And(),       ast.Or     : Or(),
+      # Unary operators
+      ast.Invert : Invert(),    ast.Not    : Not(),
+      ast.UAdd   : UAdd(),      ast.USub   : USub(),
+      # Binary operators
+      ast.Add    : Add(),       ast.Sub    : Sub(),
+      ast.Mult   : Mult(),      ast.Div    : Div(),
+      ast.Mod    : Mod(),       ast.Pow    : Pow(),
+      ast.LShift : ShiftLeft(), ast.RShift : ShiftRightLogic(),
+      ast.BitOr  : BitOr(),     ast.BitAnd : BitAnd(),
+      ast.BitXor : BitXor(),
+      # Compare operators
+      ast.Eq     : Eq(),        ast.NotEq  : NotEq(),
+      ast.Lt     : Lt(),        ast.LtE    : LtE(),
+      ast.Gt     : Gt(),        ast.GtE    : GtE()
+    }
 
   def enter( s, blk, ast ):
     """ entry point for RAST generation """
@@ -65,8 +87,10 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
     return ret 
 
   #---------------------------------------------------------------------
-  # Valid ast nodes
+  # visit_Module
   #---------------------------------------------------------------------
+  # The root of each upblk. RAST does not have a dedicated `module' node
+  # type.
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or\
@@ -80,11 +104,14 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
-  def visit_FunctionDef( s, node ):
-    # We do not need to check the decorator list -- the fact that we are
-    # visiting this node ensures this node was added to the upblk
-    # dictionary through s.update() (or other PyMTL decorators) earlier!
+  #-----------------------------------------------------------------------
+  # visit_FunctionDef
+  #-----------------------------------------------------------------------
+  # We do not need to check the decorator list -- the fact that we are
+  # visiting this node ensures this node was added to the upblk
+  # dictionary through s.update() (or other PyMTL decorators) earlier!
 
+  def visit_FunctionDef( s, node ):
     # Check the arguments of the function
     if node.args.args or node.args.vararg or node.args.kwarg:
       raise PyMTLSyntaxError(
@@ -103,8 +130,12 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_Assign
+  #-----------------------------------------------------------------------
+  # Only one assignement target is allowed!
+
   def visit_Assign( s, node ):
-    # Only one assignement target is allowed!
     if len( node.targets ) != 1:
       raise PyMTLSyntaxError(
         s.blk, node, 'Assigning to multiple targets is not allowed!' 
@@ -118,14 +149,18 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_AugAssign
+  #-----------------------------------------------------------------------
+  # Preserve the form of augmented assignment instead of transforming it 
+  # into a normal assignment.
+
   def visit_AugAssign( s, node ): 
-    # Preserve the form of augmented assignment instead of 
-    # transforming it into a normal assignment.
     value = s.visit( node.value )
     target = s.visit( node.target )
 
     try:
-      op  = opmap[ type( node.op ) ]
+      op  = s.opmap[ type( node.op ) ]
       op.ast = node.op
 
     except KeyError:
@@ -137,6 +172,10 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
     ret.ast = node
 
     return ret
+
+  #-----------------------------------------------------------------------
+  # visit_If
+  #-----------------------------------------------------------------------
 
   def visit_If( s, node ):
     cond = s.visit( node.test )
@@ -154,7 +193,13 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_For
+  #-----------------------------------------------------------------------
+
   def visit_For( s, node ):
+    # First fill the loop_var, start, end, step fields
+
     if node.orelse != []:
       raise PyMTLSyntaxError(
         s.blk, node, "for loops cannot have 'else' branch!"
@@ -224,9 +269,7 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
         s.blk, node, "1~3 arguments should be given to (x)range!"
       )
 
-    #-------------------------------------------------------------------
-    # Visit all sub-statements of the for-loop
-    #-------------------------------------------------------------------
+    # Then visit all statements inside the loop
 
     body = []
     for body_stmt in node.body:
@@ -241,9 +284,13 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_BoolOp
+  #-----------------------------------------------------------------------
+
   def visit_BoolOp( s, node ):
     try:
-      op  = opmap[ type( node.op ) ]
+      op  = s.opmap[ type( node.op ) ]
       op.ast = node.op
 
     except KeyError:
@@ -260,6 +307,12 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_Expr
+  #-----------------------------------------------------------------------
+  # ast.Expr might be useful when a statement is only a call to a task or 
+  # a non-returning function.
+
   def visit_Expr( s, node ):
     # Should only be useful as a call to SystemVerilog tasks
     # Not implemented yet!
@@ -267,12 +320,16 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
       s.blk, node, 'Task is not supported yet!'
     )
 
+  #-----------------------------------------------------------------------
+  # visit_BinOp
+  #-----------------------------------------------------------------------
+
   def visit_BinOp( s, node ):
     left  = s.visit( node.left )
     right = s.visit( node.right )
 
     try:
-      op  = opmap[ type( node.op ) ]
+      op  = s.opmap[ type( node.op ) ]
       op.ast = node.op
 
     except KeyError:
@@ -285,9 +342,13 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_UnaryOp
+  #-----------------------------------------------------------------------
+
   def visit_UnaryOp( s, node ):
     try:
-      op  = opmap[ type( node.op ) ]
+      op  = s.opmap[ type( node.op ) ]
       op.ast = node.op
 
     except KeyError:
@@ -302,6 +363,10 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_IfExp
+  #-----------------------------------------------------------------------
+
   def visit_IfExp( s, node ):
     cond = s.visit( node.test )
     body = s.visit( node.body )
@@ -312,16 +377,19 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_Compare
+  #-----------------------------------------------------------------------
+  # Continuous comparison like x < y < z is not allowed.
+
   def visit_Compare( s, node ):
-    # x < y < z
-    # continuous comparison is not allowed.
     if len( node.ops ) != 1 or len( node.comparators ) != 1:
       raise PyMTLSyntaxError(
         s.blk, node, 'Comparison can only have 2 operands!'
       )
 
     try:
-      op  = opmap[ type( node.ops[0] ) ]
+      op  = s.opmap[ type( node.ops[0] ) ]
       op.ast = node.ops[0]
 
     except KeyError:
@@ -337,10 +405,14 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
     
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_Call
+  #-----------------------------------------------------------------------
+  # Some data types are interpreted as function calls in the Python AST
+  # Example: Bits4(2)
+  # These are converted to different RAST nodes in different contexts.
+
   def visit_Call( s, node ):
-    # Some data types are interpreted as function calls in the Python AST
-    # Assume only constants are allowed as the argument of BitsX
-    # Example: Bits4(2)
     actual_node = node.func
 
     # Find the corresponding object of node.func field
@@ -405,10 +477,18 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
         s.blk, node, 'Expecting Bits object but found ' + obj.__name__
       )
 
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
+
   def visit_Attribute( s, node ):
     ret = Attribute( s.visit( node.value ), node.attr )
     ret.ast = node
     return ret
+
+  #-----------------------------------------------------------------------
+  # visit_Subscript
+  #-----------------------------------------------------------------------
 
   def visit_Subscript( s, node ):
     value = s.visit( node.value )
@@ -437,11 +517,23 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
       s.blk, node, 'Illegal subscript ' + node + ' encountered!'
     )
 
+  #-----------------------------------------------------------------------
+  # visit_Slice
+  #-----------------------------------------------------------------------
+
   def visit_Slice( s, node ):
     return ( s.visit( node.lower ), s.visit( node.upper ) )
 
+  #-----------------------------------------------------------------------
+  # visit_Index
+  #-----------------------------------------------------------------------
+
   def visit_Index( s, node ):
     return s.visit( node.value )
+
+  #-----------------------------------------------------------------------
+  # visit_Name
+  #-----------------------------------------------------------------------
 
   def visit_Name( s, node ):
     if node.id in s.globals:
@@ -482,6 +574,9 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
     ret.ast = node
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_Num
+  #-----------------------------------------------------------------------
 
   def visit_Num( s, node ):
     ret = Number( node.n )
@@ -589,36 +684,3 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
   def visit_ExtSlice( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: extslice' )
 
-#-----------------------------------------------------------------------
-# opmap definition
-#-----------------------------------------------------------------------
-
-opmap = {
-  # Bool operators
-  ast.And    : And(),
-  ast.Or     : Or(),
-  # Unary operators
-  ast.Invert : Invert(),
-  ast.Not    : Not(),
-  ast.UAdd   : UAdd(),
-  ast.USub   : USub(),
-  # Binary operators
-  ast.Add    : Add(),
-  ast.Sub    : Sub(),
-  ast.Mult   : Mult(),
-  ast.Div    : Div(),
-  ast.Mod    : Mod(),
-  ast.Pow    : Pow(),
-  ast.LShift : ShiftLeft(),
-  ast.RShift : ShiftRightLogic(),
-  ast.BitOr  : BitOr(),
-  ast.BitAnd : BitAnd(),
-  ast.BitXor : BitXor(),
-  # Compare operators
-  ast.Eq     : Eq(),
-  ast.NotEq  : NotEq(),
-  ast.Lt     : Lt(),
-  ast.LtE    : LtE(),
-  ast.Gt     : Gt(),
-  ast.GtE    : GtE()
-}

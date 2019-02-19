@@ -1,33 +1,37 @@
-#=======================================================================
-# UpblkRASTTypeCheckPass.py
-#=======================================================================
-# Perform type checking on all blocks' RAST of a given component.
+#=========================================================================
+# ComponentUpblkRASTTypeCheckPass.py
+#=========================================================================
+# Perform type checking on all blocks' RAST for a given component. This
+# pass does not have a namespace to write to because it only throws an
+# exception when a type error is detected.
 #
 # Author : Peitian Pan
 # Date   : Jan 6, 2019
 
 from pymtl    import *
-from RAST     import *
-from RASTType import *
 from BasePass import BasePass
 from errors   import PyMTLTypeError
+from Helpers  import freeze
+from RAST     import *
+from RASTType import *
 
-class UpblkRASTTypeCheckPass( BasePass ):
+class ComponentUpblkRASTTypeCheckPass( BasePass ):
   def __init__( s, type_env ):
     s.type_env = type_env
 
   def __call__( s, m ):
-    """perform type checking on all RAST in m._rast"""
+    """perform type checking on all RAST in _rast"""
 
     visitor = UpblkRASTTypeCheckVisitor( m, s.type_env )
 
     for blk in m.get_update_blocks():
 
-      visitor.enter( blk, m._rast[ blk ] )
+      visitor.enter( blk, m._pass_component_upblk_rast_gen.rast[ blk ] )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
+# UpblkRASTTypeCheckVisitor
+#-------------------------------------------------------------------------
 # Visitor that performs type checking on RAST
-#-----------------------------------------------------------------------
 
 class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
@@ -42,9 +46,9 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor 
     )
 
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # The expected evaluation result types for each type of RAST node
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
     s.type_expect = {}
 
@@ -73,6 +77,30 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       'lower':( Const, 'upper of slice must be a constant expression!' ),
       'upper':( Const, 'lower of slice must be a constant expression!' )
     }
+
+  #-----------------------------------------------------------------------
+  # eval_const_binop
+  #-----------------------------------------------------------------------
+
+  def eval_const_binop( s, l, op, r ):
+    """Evaluate ( l op r ) and return the result as an integer."""
+    assert type( l ) == int and type( r ) == int
+
+    op_dict = {
+      Add  : '+',
+      Sub  : '-',
+      Mult : '*',
+      Div  : '/',
+      Mod  : '%',
+      Pow  : '**',
+      ShiftLeft : '<<',
+      ShiftRightLogic : '>>',
+      BitAnd : '&',
+      BitOr  : '|',
+      BitXor : '^',
+    }
+
+    return eval( '{l}{op}{r}'.format( l = l, op = op_dict[ type(op) ], r = r ) )
 
   def enter( s, blk, rast ):
     """ entry point for RAST type checking """
@@ -135,9 +163,9 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   def generic_visit( s, node ):
     node.Type = None
 
-  #---------------------------------------------------------------------
-  # Valid RAST nodes
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # visit_Assign
+  #-----------------------------------------------------------------------
 
   def visit_Assign( s, node ):
     # RHS should have the same type as LHS
@@ -155,6 +183,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       )
 
     node.Type = None
+
+  #-----------------------------------------------------------------------
+  # visit_AugAssign
+  #-----------------------------------------------------------------------
 
   def visit_AugAssign( s, node ):
     target = node.target
@@ -183,6 +215,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     node.Type = None
 
+  #-----------------------------------------------------------------------
+  # visit_If
+  #-----------------------------------------------------------------------
+
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?
     if not Bool()( node.cond.Type ):
@@ -192,12 +228,24 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     node.Type = None
 
+  #-----------------------------------------------------------------------
+  # visit_Base
+  #-----------------------------------------------------------------------
+
   def visit_Base( s, node ):
     # Mark this node as having type module and find out its corresponding object
     node.Type = Module( node.base )
 
+  #-----------------------------------------------------------------------
+  # visit_Number
+  #-----------------------------------------------------------------------
+
   def visit_Number( s, node ):
     node.Type = Const( True, 0, node.value )
+
+  #-----------------------------------------------------------------------
+  # visit_Bitwidth
+  #-----------------------------------------------------------------------
 
   def visit_Bitwidth( s, node ):
     nbits = node.nbits
@@ -218,11 +266,23 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     elif isinstance( Type, Const ):
       node.Type = Const( Type.is_static, nbits, Type.value )
 
+  #-----------------------------------------------------------------------
+  # visit_LoopVar
+  #-----------------------------------------------------------------------
+
   def visit_LoopVar( s, node ):
     node.Type = Const( False, 0 )
 
+  #-----------------------------------------------------------------------
+  # visit_FreeVar
+  #-----------------------------------------------------------------------
+
   def visit_FreeVar( s, node ):
     node.Type = get_type( node.obj )
+
+  #-----------------------------------------------------------------------
+  # visit_TmpVar
+  #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
     if not node.id in s.tmp_var_type_env:
@@ -232,6 +292,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     else:
       node.Type = s.tmp_var_type_env[ node.id ]
+
+  #-----------------------------------------------------------------------
+  # visit_IfExp
+  #-----------------------------------------------------------------------
 
   def visit_IfExp( s, node ):
     # Can the type of condition be cast into bool?
@@ -245,6 +309,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       raise PyMTLTypeError(
         s.blk, node.ast, 'the body and orelse of "if-exp" must have the same type!'
       )
+
+  #-----------------------------------------------------------------------
+  # visit_UnaryOp
+  #-----------------------------------------------------------------------
 
   def visit_UnaryOp( s, node ):
     if isinstance( node.op, Not ):
@@ -261,6 +329,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
         )
       node.Type = node.operand.Type
 
+  #-----------------------------------------------------------------------
+  # visit_BoolOp
+  #-----------------------------------------------------------------------
+
   def visit_BoolOp( s, node ):
     for value in node.values:
       if not Bool()( value.Type ):
@@ -269,6 +341,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
         )
 
     node.Type = Bool()
+
+  #-----------------------------------------------------------------------
+  # visit_BinOp
+  #-----------------------------------------------------------------------
 
   def visit_BinOp( s, node ):
     op = node.op
@@ -303,7 +379,7 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       if l_type.is_static and r_type.is_static:
         l_val = l_type.value
         r_val = r_type.value
-        node.Type = Const( True, res_nbits, eval_const_binop( l_val, op, r_val ) )
+        node.Type = Const( True, res_nbits, s.eval_const_binop( l_val, op, r_val ) )
       # Either side is dynamic -> result is dynamic
       else:
         node.Type = Const( False, res_nbits )
@@ -312,8 +388,16 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     else:
       node.Type = Signal( res_nbits )
 
+  #-----------------------------------------------------------------------
+  # visit_Compare
+  #-----------------------------------------------------------------------
+
   def visit_Compare( s, node ):
     node.Type = Bool()
+
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
     # Make sure node.value has an attribute named attr
@@ -330,6 +414,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     attr_obj = node.value.Type.module.__dict__[ node.attr ]
     node.Type = s.type_env[ freeze( attr_obj ) ]
 
+  #-----------------------------------------------------------------------
+  # visit_Index
+  #-----------------------------------------------------------------------
+
   def visit_Index( s, node ):
     # Check whether the index is in the range of the array
     if node.idx.Type.is_static:
@@ -340,6 +428,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     # The result type should be array.Type
     node.Type = node.value.Type.Type
+
+  #-----------------------------------------------------------------------
+  # visit_Slice
+  #-----------------------------------------------------------------------
 
   def visit_Slice( s, node ):
     # Check slice range only if lower and upper bounds are static
@@ -365,33 +457,3 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     else:
       node.Type = Signal( 0 )
-
-#-----------------------------------------------------------------------
-# Helper functions
-#-----------------------------------------------------------------------
-
-def freeze( obj ):
-  """Freeze a potentially mutable object recursively."""
-  if isinstance( obj, list ):
-    return tuple( freeze( o ) for o in obj )
-  return obj
-
-def eval_const_binop( l, op, r ):
-  """Evaluate ( l op r ) and return the result as an integer."""
-  assert type( l ) == int and type( r ) == int
-
-  op_dict = {
-    Add  : '+',
-    Sub  : '-',
-    Mult : '*',
-    Div  : '/',
-    Mod  : '%',
-    Pow  : '**',
-    ShiftLeft : '<<',
-    ShiftRightLogic : '>>',
-    BitAnd : '&',
-    BitOr  : '|',
-    BitXor : '^',
-  }
-
-  return eval( '{l}{op}{r}'.format( l = l, op = op_dict[ type(op) ], r = r ) )

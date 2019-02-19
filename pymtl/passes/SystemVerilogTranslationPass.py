@@ -9,19 +9,23 @@
 
 import inspect
 
-from pymtl       import *
-from RASTType    import *
-from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass
 from collections import defaultdict, deque
-from errors      import TranslationError
-from Helpers     import freeze
-from ComponentTranslationPass import ComponentTranslationPass
+
+from pymtl     import *
+from pymtl.dsl import ComponentLevel1
+from BasePass  import BasePass, PassMetadata
+from errors    import TranslationError
+from Helpers   import freeze
+from RASTType  import *
+from HierarchyTranslationPass import HierarchyTranslationPass
 
 class SystemVerilogTranslationPass( BasePass ):
 
   def __call__( s, top ):
     """Recursively translate the top module with name top."""
+
+    top._pass_systemverilog_translation = PassMetadata()
+
     model_name            = top.__class__.__name__
     systemverilog_file    = model_name + '.sv'
 
@@ -78,16 +82,16 @@ class SystemVerilogTranslationPass( BasePass ):
 
             else: assert False
     
-    # We need to construct the type environment of all components here to 
+    # We need to construct the type environment of all components here to
     # perform RAST type checking.
 
     type_env = {}
 
-    extract_type_env( type_env, top )
+    s.extract_type_env( type_env, top )
 
     # Recursively translate the top component
 
-    ret = ComponentTranslationPass( 
+    ret = HierarchyTranslationPass(
       {},
       type_env,
       connections_self_self, 
@@ -100,23 +104,23 @@ class SystemVerilogTranslationPass( BasePass ):
     with open( systemverilog_file, 'w' ) as sv_out_file:
       sv_out_file.write( ret )
 
-    top._translated = True
+    top._pass_systemverilog_translation.translated = True
 
-#-----------------------------------------------------------------------
-# Helper functions
-#-----------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # extract_type_env
+  #-----------------------------------------------------------------------
 
-def extract_type_env( type_env, component ):
-  """Add the types of all attributes of the given component 
-  into the type environment."""
+  def extract_type_env( s, type_env, component ):
+    """Add the types of all attributes of the given component 
+    into the type environment."""
 
-  obj_lst = [ obj for (name, obj) in component.__dict__.iteritems() \
-    if isinstance( name, basestring ) if not name.startswith( '_' )
-  ]
+    obj_lst = [ obj for (name, obj) in component.__dict__.iteritems() \
+      if isinstance( name, basestring ) if not name.startswith( '_' )
+    ]
 
-  while obj_lst:
-    top_obj = obj_lst.pop()
-    type_env[ freeze( top_obj ) ] = get_type( top_obj )
+    while obj_lst:
+      top_obj = obj_lst.pop()
+      type_env[ freeze( top_obj ) ] = get_type( top_obj )
 
-  for child in component.get_child_components():
-    extract_type_env( type_env, child )
+    for child in component.get_child_components():
+      s.extract_type_env( type_env, child )

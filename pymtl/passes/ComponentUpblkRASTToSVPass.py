@@ -1,31 +1,36 @@
-#========================================================================
-# UpblkRASTToSVPass.py
-#========================================================================
-# Translate RAST to SystemVerilog.
+#=========================================================================
+# ComponentUpblkRASTToSVPass.py
+#=========================================================================
+# Translate RAST of all upblks in a component to SystemVerilog.
 #
 # Author : Peitian Pan
 # Date   : Jan 23, 2019
 
 from pymtl    import *
+from BasePass import BasePass, PassMetadata
+from Helpers  import freeze, make_indent
 from RAST     import *
 from RASTType import *
-from BasePass import BasePass
 # from errors   import PyMTLTranslationError
 
-class UpblkRASTToSVPass( BasePass ):
+class ComponentUpblkRASTToSVPass( BasePass ):
   def __call__( s, m ):
-    """Translate all RAST in m._rast to a list of strings."""
+    """Translate all RAST in rast to a list of strings."""
 
-    m._rast_to_sv = {}
+    m._pass_component_upblk_rast_to_sv = PassMetadata()
+
+    m._pass_component_upblk_rast_to_sv.sv = {}
 
     visitor = UpblkRASTToSVVisitor( m )
 
     for blk in m.get_update_blocks():
-      m._rast_to_sv[ blk ] = visitor.enter( blk, m._rast[ blk ] )
+      m._pass_component_upblk_rast_to_sv.sv[ blk ] =\
+        visitor.enter( blk, m._pass_component_upblk_rast_gen.rast[ blk ] )
 
-#-----------------------------------------------------------------------
-# Visitor that translates RAST to SystemVerilog
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
+# UpblkRASTToSVVisitor
+#-------------------------------------------------------------------------
+# Visitor that translates RAST to SystemVerilog for a single upblk.
 
 class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
@@ -75,19 +80,19 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return s.visit( rast )
 
-  # Helper function that selectively wraps expressions with brackets
   def visit_expr_wrap( s, node ):
+    """ Helper function that selectively wraps expressions with brackets """
     if isinstance( node, ( IfExp, UnaryOp, BoolOp, BinOp, Compare ) ):
       return '({})'.format( s.visit( node ) )
 
     else:
       return s.visit( node )
 
-  #---------------------------------------------------------------------
-  # Valid RAST nodes
-  #---------------------------------------------------------------------
-  # Only functions that visit statements will return a list of strings. 
-  # All other functions return a string.
+  #-----------------------------------------------------------------------
+  # visit_CombUpblk
+  #-----------------------------------------------------------------------
+  # CombUpblk concatenates string representation of statements inside it
+  # and return the result string.
 
   def visit_CombUpblk( s, node ):
     blk_name = node.name
@@ -113,9 +118,14 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return src
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # Statements
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # All statement nodes return a list of strings.
+
+  #-----------------------------------------------------------------------
+  # visit_Assign
+  #-----------------------------------------------------------------------
 
   def visit_Assign( s, node ):
     target        = s.visit( node.target )
@@ -128,6 +138,10 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return [ ret ]
 
+  #-----------------------------------------------------------------------
+  # visit_AugAssign
+  #-----------------------------------------------------------------------
+
   def visit_AugAssign( s, node ):
     # SystemVerilog supports augmented assignment syntax.
     target        = s.visit( node.target )
@@ -139,6 +153,10 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
     )
 
     return [ ret ]
+
+  #-----------------------------------------------------------------------
+  # visit_If
+  #-----------------------------------------------------------------------
 
   def visit_If( s, node ):
     src    = []
@@ -190,6 +208,10 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return src
 
+  #-----------------------------------------------------------------------
+  # visit_For
+  #-----------------------------------------------------------------------
+
   def visit_For( s, node ):
     src      = []
     body     = []
@@ -226,19 +248,32 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return src
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # Expressions
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+  # All expression nodes return a single string.  
+
+  #-----------------------------------------------------------------------
+  # visit_Number
+  #-----------------------------------------------------------------------
 
   def visit_Number( s, node ):
     # Create a number without width specifier
     return str( node.value )
+
+  #-----------------------------------------------------------------------
+  # visit_Bitwidth
+  #-----------------------------------------------------------------------
 
   def visit_Bitwidth( s, node ):
     if isinstance( node.value, Number ):
       return "{}'d{}".format( node.nbits, node.value.value )
     else:
       return s.visit( node.value )
+
+  #-----------------------------------------------------------------------
+  # visit_IfExp
+  #-----------------------------------------------------------------------
 
   def visit_IfExp( s, node ):
     cond  = s.visit_expr_wrap( node.cond )
@@ -249,11 +284,19 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
       cond = cond, true = true, false = false
     )
 
+  #-----------------------------------------------------------------------
+  # visit_UnaryOp
+  #-----------------------------------------------------------------------
+
   def visit_UnaryOp( s, node ):
     op      = s.ops[ type( node.op ) ]
     operand = s.visit_expr_wrap( node.operand )
 
     return '{op}{operand}'.format( op = op, operand = operand )
+
+  #-----------------------------------------------------------------------
+  # visit_BoolOp
+  #-----------------------------------------------------------------------
 
   def visit_BoolOp( s, node ):
     op     = s.ops[ type( node.op ) ]
@@ -266,6 +309,10 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return src
 
+  #-----------------------------------------------------------------------
+  # visit_BinOp
+  #-----------------------------------------------------------------------
+
   def visit_BinOp( s, node ):
     op  = s.ops[ type( node.op ) ]
     lhs = s.visit_expr_wrap( node.left )
@@ -273,12 +320,20 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return '{lhs}{op}{rhs}'.format( lhs = lhs, op = op, rhs = rhs )
 
+  #-----------------------------------------------------------------------
+  # visit_Compare
+  #-----------------------------------------------------------------------
+
   def visit_Compare( s, node ):
     op  = s.ops[ type( node.op ) ]
     lhs = s.visit_expr_wrap( node.left )
     rhs = s.visit_expr_wrap( node.right )
 
     return '( {lhs} {op} {rhs} )'.format( lhs = lhs, op = op, rhs = rhs )
+
+  #-----------------------------------------------------------------------
+  # visit_Attribute
+  #-----------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
     # import pdb
@@ -306,11 +361,19 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return ret
 
+  #-----------------------------------------------------------------------
+  # visit_Index
+  #-----------------------------------------------------------------------
+
   def visit_Index( s, node ):
     idx   = s.visit( node.idx )
     value = s.visit( node.value )
 
     return '{value}[{idx}]'.format( value = value, idx = idx )
+
+  #-----------------------------------------------------------------------
+  # visit_Slice
+  #-----------------------------------------------------------------------
 
   def visit_Slice( s, node ):
     lower = s.visit( node.lower )
@@ -319,38 +382,41 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     return '{val}[{y}-1:{x}]'.format( val = value, x = lower, y = upper )
 
+  #-----------------------------------------------------------------------
+  # visit_Base
+  #-----------------------------------------------------------------------
+
   def visit_Base( s, node ):
     return str( node.base )
+
+  #-----------------------------------------------------------------------
+  # visit_LoopVar
+  #-----------------------------------------------------------------------
 
   def visit_LoopVar( s, node ):
     return node.name
 
+  #-----------------------------------------------------------------------
+  # visit_FreeVar
+  #-----------------------------------------------------------------------
+
   def visit_FreeVar( s, node ):
     return node.name
+
+  #-----------------------------------------------------------------------
+  # visit_TmpVar
+  #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
     return node.name
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # Declarations
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
+
+  #-----------------------------------------------------------------------
+  # visit_LoopVarDecl
+  #-----------------------------------------------------------------------
 
   def visit_LoopVarDecl( s, node ):
     return node.name
-
-#-----------------------------------------------------------------------
-# Helper functions
-#-----------------------------------------------------------------------
-
-def freeze( obj ):
-  """Freeze a potentially mutable object recursively."""
-  if isinstance( obj, list ):
-    return tuple( freeze( o ) for o in obj )
-  return obj
-
-def make_indent( src, nindent ):
-  """Add nindent indention to every line in src."""
-  indent = '  '
-
-  for idx, s in enumerate( src ):
-    src[ idx ] = nindent * indent + s

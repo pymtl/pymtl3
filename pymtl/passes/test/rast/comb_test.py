@@ -5,9 +5,9 @@ from pymtl.passes.RAST import *
 from pymtl.passes.errors import PyMTLTypeError
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # verify_manual
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Verify that the generated RAST is the same as the manually generated
 # reference.
 
@@ -18,9 +18,9 @@ def verify_manual( m, ref ):
   for blk in m.get_update_blocks():
     assert m._rast[ blk ] == ref[ blk.__name__ ]
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test basic indexing support
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_index_basic():
   class index_basic( RTLComponent ):
@@ -36,22 +36,20 @@ def test_index_basic():
   a = index_basic()
 
   ref = { 'index_basic' : CombUpblk( 'index_basic', [
-    Assign( Index( Attribute( Base( a ), 'out' ), Number( 0, 0 ) ),
-      BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 0, 0 ) ), Add(),
-             Index( Attribute( Base( a ), 'in_' ), Number( 0, 1 ) ) ) ),
-    Assign( Index( Attribute( Base( a ), 'out' ), Number( 0, 1 ) ),
-      BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 0, 2 ) ), Add(),
-             Index( Attribute( Base( a ), 'in_' ), Number( 0, 3 ) ) ) )
+    Assign( Index( Attribute( Base( a ), 'out' ), Number( 0 ) ),
+      BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 0 ) ), Add(),
+             Index( Attribute( Base( a ), 'in_' ), Number( 1 ) ) ) ),
+    Assign( Index( Attribute( Base( a ), 'out' ), Number( 1 ) ),
+      BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 2 ) ), Add(),
+             Index( Attribute( Base( a ), 'in_' ), Number( 3 ) ) ) )
   ] ) }
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test assginment with mismatched width
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = "Assignment with mismatched width!",
-                    raises = PyMTLTypeError )
 def test_mismatch_width_assign():
   class A( RTLComponent ):
     def construct( s ):
@@ -64,11 +62,13 @@ def test_mismatch_width_assign():
 
   a = A()
 
-  verify_manual( a, {} )
+  try: verify_manual( a, {} )
+  except PyMTLTypeError: pass
+  except: raise
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test basic slicing support
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_slicing_basic():
   class slicing_basic( RTLComponent ):
@@ -84,7 +84,7 @@ def test_slicing_basic():
   a = slicing_basic()
 
   ref = { 'slicing_basic' : CombUpblk( 'slicing_basic', [
-    Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0, 0 ), Number( 0, 16 ) ),
+    Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0 ), Number( 16 ) ),
       Slice( Attribute( Base( a ), 'in_' ), Number( 0, 16 ), Number( 0, 32 ) ) ),
     Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0, 16 ), Number( 0, 32 ) ),
       Slice( Attribute( Base( a ), 'in_' ), Number( 0, 0 ), Number( 0, 16 ) ) )
@@ -92,9 +92,9 @@ def test_slicing_basic():
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test calls to BitsX
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_bits_basic():
   class bits_basic( RTLComponent ):
@@ -115,9 +115,9 @@ def test_bits_basic():
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test support for expressions with indexing, slicing, and BitX
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_index_bits_slicing():
   class index_bits_slicing( RTLComponent ):
@@ -163,9 +163,9 @@ def test_index_bits_slicing():
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test support for component reference
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_multi_components():
   class multi_components_B( RTLComponent ):
@@ -201,9 +201,9 @@ def test_multi_components():
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test support for if statement
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_if_basic():
   class if_basic( RTLComponent ):
@@ -230,9 +230,9 @@ def test_if_basic():
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test support for for statement
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_for_basic():
   class for_basic( RTLComponent ):
@@ -269,9 +269,9 @@ def test_for_basic():
 
   verify_manual( a, ref )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Test support for multiple upblks
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def test_multi_upblks():
   class multi_upblks( RTLComponent ):
@@ -291,5 +291,5 @@ def test_multi_upblks():
 
   verify_manual( a, {} )
 
-if __name__ == '__main__':
-  test_for_basic()
+# if __name__ == '__main__':
+  # test_for_basic()

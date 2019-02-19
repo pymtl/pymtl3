@@ -11,6 +11,19 @@ SimpleSim = [
   RTLComponent.lock_in_simulation
 ]
 
+def SimpleSchedDumpDAGPass():
+  def currying( top ):
+    return SimpleSchedPass()( top, dump_graph = True )
+  return currying
+
+SimpleSimDumpDAG = [
+  RTLComponent.elaborate,
+  GenDAGPass(),
+  SimpleSchedDumpDAGPass(),
+  SimpleTickPass(),
+  RTLComponent.lock_in_simulation
+]
+
 SimpleSimNoElaboration = [
   GenDAGPass(),
   SimpleSchedPass(),

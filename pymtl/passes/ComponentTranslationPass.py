@@ -1,31 +1,38 @@
-#========================================================================
+#=========================================================================
 # ComponentTranslationPass.py
-#========================================================================
-# Translation pass for a single RTLComponent instance. This pass will 
-# recursively translate all child components. Please note that the current
-# version of translation pass might generate multiple definitions for the
-# same Verilog module. We plan to fix this by adding a uniqueness checking
-# pass so that modules of the same type (and parameters) are translated
-# only once.
+#=========================================================================
+# Translation pass for a single RTLComponent instance. 
 #
 # Author : Shunning Jiang, Peitian Pan
-# Date   : Oct 18, 2018
+# Date   : Feb 13, 2019
 
 import re
 import inspect
 
 from pymtl       import *
 from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass
-from collections import defaultdict, deque
+from BasePass    import BasePass, PassMetadata
 from errors      import TranslationError
+from Helpers     import make_indent
 from RASTType    import get_type
-from UpblkTranslationPass import UpblkTranslationPass
+from ComponentUpblkTranslationPass import ComponentUpblkTranslationPass
 
-svmodule_template =\
-"""//----------------------------------------------------------------------
+class ComponentTranslationPass( BasePass ):
+
+  def __init__( s, type_env, connections_self_self,
+                connections_self_child, connections_child_child ):
+    """ store the connections needed in component translation """
+
+    s.component_upblk_translator = ComponentUpblkTranslationPass( type_env )
+
+    s._connections_self_self   = connections_self_self
+    s._connections_self_child  = connections_self_child
+    s._connections_child_child = connections_child_child
+
+    s.svmodule_template =\
+"""//------------------------------------------------------------------------
 // PyMTL translation result for component {module_name}
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------
 
 module {module_name}
 (
@@ -53,23 +60,11 @@ endmodule
 
 """
 
-class ComponentTranslationPass( BasePass ):
-
-  def __init__( s, translated, type_env, connections_self_self,
-                connections_self_child, connections_child_child ):
-    """ the connections are needed in recursive component translation """
-
-    s.translated = translated
-    s.type_env = type_env
-    s._connections_self_self   = connections_self_self
-    s._connections_self_child  = connections_self_child
-    s._connections_child_child = connections_child_child
-
   def __call__( s, m ):
     """ translates a single RTLComponent instance and returns its source """
 
-    # Check if this component has been translated
-    if m in s.translated: return s.translated[ m ]
+    if not '_pass_component_translation' in m.__dict__:
+      m._pass_component_translation = PassMetadata()
 
     module_name = m.__class__.__name__
 
@@ -77,18 +72,18 @@ class ComponentTranslationPass( BasePass ):
     connections_self_child  = s._connections_self_child[ m ]
     connections_child_child = s._connections_child_child[ m ]
 
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # Input, output, Wire declarations
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
     signals = {}
     signal_decl_str = { 'input':[], 'output':[], 'wire':[] }
     signal_prefix = { 'input' : 'input', 'output' : 'output', 'wire' : '' }
     
     # First collect all input/output ports
-    signals['input'] = collect_ports( m, InVPort )
-    signals['output'] = collect_ports( m, OutVPort )
-    signals['wire'] = collect_ports( m, Wire )
+    signals['input'] = s.collect_ports( m, InVPort )
+    signals['output'] = s.collect_ports( m, OutVPort )
+    signals['wire'] = s.collect_ports( m, Wire )
 
     # For in/out ports, generate and append their declarations to the list
     for prefix in [ 'input', 'output', 'wire' ]:
@@ -117,9 +112,9 @@ class ComponentTranslationPass( BasePass ):
     if wire_decls:
       wire_decls += ';'
 
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # Instantiate child components
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
     child_strs = []
 
@@ -133,8 +128,8 @@ class ComponentTranslationPass( BasePass ):
       connection_wire = { 'input':[], 'output':[] }
       
       # First collect all input/output ports
-      ifcs['input'] = collect_ports( c, InVPort )
-      ifcs['output'] = collect_ports( c, OutVPort )
+      ifcs['input'] = s.collect_ports( c, InVPort )
+      ifcs['output'] = s.collect_ports( c, OutVPort )
 
       # For in/out ports, generate and append their declarations to the list
       for prefix in [ 'input', 'output' ]:
@@ -170,9 +165,9 @@ class ComponentTranslationPass( BasePass ):
 
     child_decls = '\n  '.join( child_strs )
 
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # Continuous Assignments
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
     assign_strs = []
 
@@ -212,13 +207,14 @@ class ComponentTranslationPass( BasePass ):
 
     assignments = '\n  '.join( assign_strs )
 
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # Update blocks
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
     blks = []
 
-    UpblkTranslationPass( s.type_env )( m )
+    # Translate all upblks in component m
+    s.component_upblk_translator( m )
 
     # Add the source code and the translated code to blks
     for blk in m.get_update_blocks():
@@ -230,7 +226,7 @@ class ComponentTranslationPass( BasePass ):
 
       py_srcs.extend( inspect_srcs )
 
-      hdl_srcs = m._blk_srcs[ blk ]
+      hdl_srcs = m._pass_component_upblk_translation.blk_srcs[ blk ]
 
       make_indent( py_srcs, 1 )
       make_indent( hdl_srcs, 1 )
@@ -241,58 +237,34 @@ class ComponentTranslationPass( BasePass ):
     blk_srcs = '\n'.join( blks )
 
 
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
     # Assemble all translated parts
-    #-------------------------------------------------------------------
+    #---------------------------------------------------------------------
 
-    ret = svmodule_template.format( **vars() )
+    ret = s.svmodule_template.format( **vars() )
 
-    #-------------------------------------------------------------------
-    # Append the source code of child components at the end 
-    #-------------------------------------------------------------------
-
-    # Mark this component as translated
-    s.translated[ m ] = ''
-
-    # Recursively translate all sub-components
-    for obj in sorted( m.get_child_components(), key = repr ):
-      ret += ComponentTranslationPass(
-        s.translated,
-        s.type_env,
-        s._connections_self_self, 
-        s._connections_self_child, 
-        s._connections_child_child
-      )( obj )
-
-    # Update the full string for this component
-    s.translated[ m ] = ret
+    m._pass_component_translation.component_src = ret
 
     return ret
 
-#--------------------------------------------------------------
-# Helper functions
-#--------------------------------------------------------------
+  #-------------------------------------------------------------------------
+  # collect_ports
+  #-------------------------------------------------------------------------
 
-def is_of_type( obj, Type ):
-  """Is obj Type or contains Type?"""
-  if isinstance( obj, Type ):
-    return True
-  if isinstance( obj, list ):
-    return reduce( lambda x, y: x and is_of_type( y, Type ), obj, True )
-  return False
+  def collect_ports( s, m, Type ):
+    """Return a list of members of m that are or include Type ports"""
 
-def collect_ports( m, Type ):
-  """Return a list of members of m that are or include Type ports"""
-  ret = []
-  for name, obj in m.__dict__.iteritems():
-    if isinstance( name, basestring ) and not name.startswith( '_' ):
-      if is_of_type( obj, Type ):
-        ret.append( ( name, obj ) )
-  return ret
+    def is_of_type( obj, Type ):
+      """Is obj Type or contains Type?"""
+      if isinstance( obj, Type ):
+        return True
+      if isinstance( obj, list ):
+        return reduce( lambda x, y: x and is_of_type( y, Type ), obj, True )
+      return False
 
-def make_indent( src, nindent ):
-  """Add nindent indention to every line in src."""
-  indent = '  '
-
-  for idx, s in enumerate( src ):
-    src[ idx ] = nindent * indent + s
+    ret = []
+    for name, obj in m.__dict__.iteritems():
+      if isinstance( name, basestring ) and not name.startswith( '_' ):
+        if is_of_type( obj, Type ):
+          ret.append( ( name, obj ) )
+    return ret

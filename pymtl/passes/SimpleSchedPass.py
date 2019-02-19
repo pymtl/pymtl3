@@ -7,22 +7,23 @@
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
-from BasePass     import BasePass, PassMetadata
-from collections  import deque
-from graphviz     import Digraph
-from errors import PassOrderError
+from collections import deque
+from copy        import copy
+from graphviz    import Digraph
+from BasePass    import BasePass, PassMetadata
+from errors      import PassOrderError
 from pymtl.dsl.errors import UpblkCyclicError
 
 class SimpleSchedPass( BasePass ):
-  def __call__( self, top ):
+  def __call__( self, top, dump_graph = False ):
     if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
     top._sched = PassMetadata()
 
-    top._sched.schedule = self.schedule( top )
+    top._sched.schedule = self.schedule( top, dump_graph )
 
-  def schedule( self, top ):
+  def schedule( self, top, dump_graph ):
 
     # Construct the graph
 
@@ -34,6 +35,10 @@ class SimpleSchedPass( BasePass ):
     for (u, v) in E: # u -> v
       InD[v] += 1
       Es [u].append( v )
+
+    # Save one copy of InD so the DAG can be plotted.
+
+    in_degree = copy( InD )
 
     # Perform topological sort for a serial schedule.
 
@@ -49,33 +54,47 @@ class SimpleSchedPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
-    check_schedule( top, schedule, V, E, InD )
+    check_schedule( top, schedule, V, E, in_degree, dump_graph )
 
     return schedule
 
-def check_schedule( top, schedule, V, E, in_degree ):
+def check_schedule( top, schedule, V, E, in_degree, dump_graph ):
 
   assert schedule
 
-  if len(schedule) != len(V):
+  if len(schedule) != len(V) or dump_graph:
     from graphviz import Digraph
     dot = Digraph()
     dot.graph_attr["rank"] = "same"
     dot.graph_attr["ratio"] = "compress"
     dot.graph_attr["margin"] = "0.1"
 
-    leftovers = set( [ v for v in V if in_degree[v] ] )
+    # Show all nodes in the DAG
+    leftovers = set( [ v for v in V ] )
+    # leftovers = set( [ v for v in V if in_degree[v] ] )
+
     for x in leftovers:
-      dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
+      dot.node( x.__name__+"\\n@"+get_upblk_repr( top, x ), shape="box")
 
     for (x, y) in E:
       if x in leftovers and y in leftovers:
-        dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
-                  y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
+        dot.edge( x.__name__+"\\n@"+get_upblk_repr( top, x ),
+                  y.__name__+"\\n@"+get_upblk_repr( top, y ) )
     dot.render( "/tmp/upblk-dag.gv", view=True )
+
+    if dump_graph: return
 
     raise UpblkCyclicError( """
 Update blocks have cyclic dependencies.
 * Please consult update dependency graph for details."
     """)
 
+def get_upblk_repr( top, upblk ):
+  try:
+    ret = repr( top.get_update_block_host_component( upblk ) )
+  except:
+    # This is a net that connects different models
+    # Use its name as the representation string
+    ret = upblk.__name__
+
+  return ret

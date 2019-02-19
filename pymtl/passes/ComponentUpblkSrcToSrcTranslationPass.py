@@ -1,6 +1,6 @@
-#========================================================================
-# UpblkSrcToSrcTranslationPass.py
-#========================================================================
+#=========================================================================
+# ComponentUpblkSrcToSrcTranslationPass.py
+#=========================================================================
 # Source-to-source translation pass for all update blocks within one 
 # component. 
 #
@@ -8,19 +8,20 @@
 # Date   : Oct 18, 2018
 
 import ast
+import inspect
 
 from pymtl       import *
 from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass
-from collections import defaultdict, deque
+from BasePass    import BasePass, PassMetadata
 from errors      import TranslationError
-from inspect     import getsource
 
-class UpblkSrcToSrcTranslationPass( BasePass ):
+class ComponentUpblkSrcToSrcTranslationPass( BasePass ):
 
   def __call__( s, m ):
     """ translate all upblks in component m and return the source code
     string"""
+
+    m._pass_component_src_to_src_translation = PassMetadata()
 
     blk_srcs = ''
 
@@ -33,7 +34,7 @@ class UpblkSrcToSrcTranslationPass( BasePass ):
       blk_src = translator.enter( blk, ast )
 
       # Filter the empty lines in the source code
-      pymtl_src = filter( lambda x: x != '', getsource( blk ).split('\n') )
+      pymtl_src = filter( lambda x: x != '', inspect.getsource( blk ).split('\n') )
 
       # Remove extra leading spaces and add comments
       pymtl_srcs = '\n'.join( [ '  // ' + x[ get_indent( pymtl_src ) : ] 
@@ -42,11 +43,13 @@ class UpblkSrcToSrcTranslationPass( BasePass ):
       blk_srcs += '\n  // Original PyMTL update block\n\n' + pymtl_srcs \
                   + '\n' + blk_src 
 
+    m._pass_component_src_to_src_translation.blk_srcs = blk_srcs
+
     return blk_srcs
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Visitor for translating an update block
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 class UpblkTranslator( ast.NodeVisitor ):
 
@@ -103,9 +106,9 @@ class UpblkTranslator( ast.NodeVisitor ):
 
     return '({})'.format( s.visit( node ) )
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # Valid ast nodes
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or not isinstance( node.body[0], ast.FunctionDef ):
@@ -362,9 +365,9 @@ class UpblkTranslator( ast.NodeVisitor ):
   def visit_ExtSlice( s, node ):
     raise
 
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
   # Explicitly invalid AST nodes
-  #---------------------------------------------------------------------
+  #-----------------------------------------------------------------------
 
   def visit_LambdaOp( s, node ):
     raise TranslationError( s.blk, node, 'invalid operation: lambda function' )
@@ -441,9 +444,9 @@ class UpblkTranslator( ast.NodeVisitor ):
   def visit_Continue( s, node ):
     raise TranslationError( s.blk, node, 'invalid operation: continue' )
 
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 # opmap definition
-#-----------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 opmap = {
     ast.Add      : '+',
@@ -472,9 +475,9 @@ opmap = {
     ast.Or       : '||',
 }
 
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------
 # Helper functions
-#--------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 def get_indent( src ):
   """ find the commom indent level for the source code in src """
@@ -483,7 +486,3 @@ def get_indent( src ):
       if not stmt.startswith( ' '*nindent ):
         return nindent-1
   return 63
-
-def get_closure_dict( funct ):
-  closure_objects = [ c.cell_contents for c in funct.func_closure ]
-  return dict( zip( funct.func_code.co_freevars, closure_objects ) )
