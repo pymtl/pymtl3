@@ -8,14 +8,16 @@
 
 import ast
 
-from pymtl       import *
-from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass, PassMetadata
-from errors      import TranslationError
-from ComponentUpblkRASTGenPass import ComponentUpblkRASTGenPass
-from ComponentUpblkRASTToSVPass import ComponentUpblkRASTToSVPass
-from RASTVisualizationPass import RASTVisualizationPass
-from ComponentUpblkRASTTypeCheckPass import ComponentUpblkRASTTypeCheckPass
+from pymtl             import *
+from pymtl.dsl         import ComponentLevel1
+from pymtl.passes      import BasePass, PassMetadata
+
+from pymtl.passes.rast import ComponentUpblkRASTGenPass
+from pymtl.passes.rast import ComponentUpblkRASTToSVPass
+from pymtl.passes.rast import RASTVisualizationPass
+from pymtl.passes.rast import ComponentUpblkRASTTypeCheckPass
+
+from errors            import TranslationError
 
 class ComponentUpblkTranslationPass( BasePass ):
   def __init__( s, type_env ):

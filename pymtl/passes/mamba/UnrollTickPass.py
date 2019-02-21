@@ -10,7 +10,7 @@ import ast, py
 
 from pymtl import *
 from pymtl.passes import BasePass
-from pymtl.passes.errors import PassOrderError
+from pymtl.passes.simulation.errors import PassOrderError
 
 class UnrollTickPass( BasePass ):
 

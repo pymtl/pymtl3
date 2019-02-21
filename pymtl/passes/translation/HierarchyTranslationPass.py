@@ -9,15 +9,15 @@
 # Author : Shunning Jiang, Peitian Pan
 # Date   : Oct 18, 2018
 
-import re
-import inspect
+import re, inspect
 
-from pymtl       import *
-from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass
-from errors      import TranslationError
-from Helpers     import make_indent
-from RASTType    import get_type
+from pymtl                    import *
+from pymtl.dsl                import ComponentLevel1
+from pymtl.passes             import BasePass
+from pymtl.passes.Helpers     import make_indent
+from pymtl.passes.rast        import get_type
+
+from errors                   import TranslationError
 from ComponentTranslationPass import ComponentTranslationPass
 
 class HierarchyTranslationPass( BasePass ):

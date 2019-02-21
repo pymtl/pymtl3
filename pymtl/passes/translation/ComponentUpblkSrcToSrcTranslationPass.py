@@ -7,13 +7,13 @@
 # Author : Shunning Jiang, Peitian Pan
 # Date   : Oct 18, 2018
 
-import ast
-import inspect
+import ast, inspect
 
-from pymtl       import *
-from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass, PassMetadata
-from errors      import TranslationError
+from pymtl        import *
+from pymtl.dsl    import ComponentLevel1
+from pymtl.passes import BasePass, PassMetadata
+
+from errors       import TranslationError
 
 class ComponentUpblkSrcToSrcTranslationPass( BasePass ):
 

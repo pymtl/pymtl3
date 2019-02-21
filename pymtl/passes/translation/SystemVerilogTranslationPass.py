@@ -8,15 +8,16 @@
 # Date   : Jan 9, 2019
 
 import inspect
+from collections              import defaultdict, deque
 
-from collections import defaultdict, deque
+from pymtl                    import *
+from pymtl.dsl                import ComponentLevel1
+from pymtl.passes             import BasePass, PassMetadata
+from pymtl.passes.Helpers     import freeze
+from pymtl.passes.rast        import get_type
 
-from pymtl     import *
-from pymtl.dsl import ComponentLevel1
-from BasePass  import BasePass, PassMetadata
-from errors    import TranslationError
-from Helpers   import freeze
-from RASTType  import *
+from errors                   import TranslationError
+from ConstraintGenPass        import ConstraintGenPass
 from HierarchyTranslationPass import HierarchyTranslationPass
 
 class SystemVerilogTranslationPass( BasePass ):
@@ -98,6 +99,10 @@ class SystemVerilogTranslationPass( BasePass ):
       connections_self_self,
       connections_child_child
     )( top )
+
+    # Generate the constraint files
+
+    ConstraintGenPass()( top )
 
     # Write output directly to a file
 

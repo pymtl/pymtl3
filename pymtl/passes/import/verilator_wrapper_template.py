@@ -6,8 +6,9 @@
 
 import os
 
-from pymtl import *
 from cffi  import FFI
+
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # {top_module}

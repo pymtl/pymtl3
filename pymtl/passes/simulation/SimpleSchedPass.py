@@ -7,12 +7,14 @@
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
-from collections import deque
-from copy        import copy
-from graphviz    import Digraph
-from BasePass    import BasePass, PassMetadata
-from errors      import PassOrderError
+from copy             import copy
+from graphviz         import Digraph
+from collections      import deque
+
 from pymtl.dsl.errors import UpblkCyclicError
+from pymtl.passes     import BasePass, PassMetadata
+
+from errors           import PassOrderError
 
 class SimpleSchedPass( BasePass ):
   def __call__( self, top, dump_graph = False ):
@@ -82,9 +84,8 @@ def check_schedule( top, schedule, V, E, in_degree, dump_graph ):
                   y.__name__+"\\n@"+get_upblk_repr( top, y ) )
     dot.render( "/tmp/upblk-dag.gv", view=True )
 
-    if dump_graph: return
-
-    raise UpblkCyclicError( """
+    if len( schedule ) != len( V ):
+      raise UpblkCyclicError( """
 Update blocks have cyclic dependencies.
 * Please consult update dependency graph for details."
     """)

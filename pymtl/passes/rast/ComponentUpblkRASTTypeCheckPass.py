@@ -8,12 +8,13 @@
 # Author : Peitian Pan
 # Date   : Jan 6, 2019
 
-from pymtl    import *
-from BasePass import BasePass
-from errors   import PyMTLTypeError
-from Helpers  import freeze
-from RAST     import *
-from RASTType import *
+from pymtl                import *
+from pymtl.passes         import BasePass
+from pymtl.passes.Helpers import freeze
+
+from errors               import PyMTLTypeError
+from RAST                 import *
+from RASTType             import *
 
 class ComponentUpblkRASTTypeCheckPass( BasePass ):
   def __init__( s, type_env ):

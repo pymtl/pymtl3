@@ -307,16 +307,13 @@ class Base( BaseRAST ):
     return not s.__eq__( other )
 
 class LoopVar( BaseRAST ):
-  def __init__( s, name, obj ):
+  def __init__( s, name ):
     s.name = name
-    s.obj = obj
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
       return False
     if s.name != other.name:
-      return False
-    if s.obj != other.obj:
       return False
     return True
 

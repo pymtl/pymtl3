@@ -1,3 +1,11 @@
+#=========================================================================
+# comb_test.py
+#=========================================================================
+# This file includes the test cases for the original source-to-source
+# translation pass.
+#
+# Author : Shunning Jiang
+
 from pymtl import *
 from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
@@ -19,7 +27,8 @@ def test_wrapped_noconnect_adder():
 
       @s.update
       def up_in():
-        s.adder.in0 = s.adder.in1 = s.in_
+        s.adder.in0 = s.in_
+        s.adder.in1 = s.in_
 
       @s.update
       def up_out():
@@ -47,7 +56,8 @@ def test_wrapped_noconnect_wire_adder():
 
       @s.update
       def up_wire():
-        s.adder.in0 = s.adder.in1 = s.wire
+        s.adder.in0 = s.wire
+        s.adder.in1 = s.wire
 
       @s.update
       def up_out():

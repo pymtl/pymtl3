@@ -6,15 +6,15 @@
 # Author : Shunning Jiang, Peitian Pan
 # Date   : Feb 13, 2019
 
-import re
-import inspect
+import re, inspect
 
-from pymtl       import *
-from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass, PassMetadata
-from errors      import TranslationError
-from Helpers     import make_indent
-from RASTType    import get_type
+from pymtl                         import *
+from pymtl.dsl                     import ComponentLevel1
+from pymtl.passes                  import BasePass, PassMetadata
+from pymtl.passes.Helpers          import make_indent
+from pymtl.passes.rast             import get_type
+
+from errors                        import TranslationError
 from ComponentUpblkTranslationPass import ComponentUpblkTranslationPass
 
 class ComponentTranslationPass( BasePass ):

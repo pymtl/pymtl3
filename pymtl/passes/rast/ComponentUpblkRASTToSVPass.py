@@ -6,12 +6,12 @@
 # Author : Peitian Pan
 # Date   : Jan 23, 2019
 
-from pymtl    import *
-from BasePass import BasePass, PassMetadata
-from Helpers  import freeze, make_indent
-from RAST     import *
-from RASTType import *
-# from errors   import PyMTLTranslationError
+from pymtl                import *
+from pymtl.passes         import BasePass, PassMetadata
+from pymtl.passes.Helpers import freeze, make_indent
+
+from RAST                 import *
+from RASTType             import *
 
 class ComponentUpblkRASTToSVPass( BasePass ):
   def __call__( s, m ):

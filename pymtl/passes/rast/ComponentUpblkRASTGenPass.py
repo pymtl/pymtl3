@@ -8,11 +8,12 @@
 
 import ast
 
-from pymtl       import *
-from pymtl.dsl   import ComponentLevel1
-from BasePass    import BasePass, PassMetadata
-from errors      import PyMTLSyntaxError
-from RAST        import *
+from pymtl        import *
+from pymtl.dsl    import ComponentLevel1
+from pymtl.passes import BasePass, PassMetadata
+
+from errors       import PyMTLSyntaxError
+from RAST         import *
 
 class ComponentUpblkRASTGenPass( BasePass ):
 
@@ -94,7 +95,7 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or\
-       not isinstance( node.body[0], ast.FunctionDef ):
+        not isinstance( node.body[0], ast.FunctionDef ):
       raise PyMTLSyntaxError(
         s.blk, node, 'Update blocks should have exactly one FuncDef!' 
       )
@@ -243,15 +244,15 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     if len( args ) == 1:
       # xrange( end )
-      start = Number( 0, 0 )
+      start = Number( 0 )
       end = s.visit( args[0] )
-      step = Number( 0, 1 )
+      step = Number( 1 )
 
     elif len( args ) == 2:
       # xrange( start, end )
       start = s.visit( args[0] )
       end = s.visit( args[1] )
-      step = Number( 0, 1 )
+      step = Number( 1 )
 
     elif len( args ) == 3:
       # xrange( start, end, step )

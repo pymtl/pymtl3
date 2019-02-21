@@ -8,15 +8,14 @@
 # Author : Peitian Pan
 # Date   : Oct 18, 2018
 
-import os
-import re
-import sys
-import shutil
+import os, re, sys, shutil
 
-from pymtl      import *
-from BasePass   import BasePass
-from subprocess import check_output, STDOUT, CalledProcessError
-from errors     import VerilatorCompileError, PyMTLImportError
+from subprocess   import check_output, STDOUT, CalledProcessError
+
+from pymtl        import *
+from pymtl.passes import BasePass
+
+from errors       import VerilatorCompileError, PyMTLImportError
 
 # Indention const strings
 

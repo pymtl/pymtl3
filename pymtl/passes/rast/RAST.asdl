@@ -25,7 +25,7 @@ module RAST
        | Index( expr value, expr idx )
        | Slice( expr value, expr lower, expr upper )
        | Base( object base )
-       | LoopVar( string name, object obj )
+       | LoopVar( string name )
        | FreeVar( string name, object obj )
        | TmpVar( string name )
 

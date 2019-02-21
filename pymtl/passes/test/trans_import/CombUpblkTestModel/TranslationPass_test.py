@@ -14,7 +14,7 @@ import hypothesis.strategies as st
 from   pymtl      import *
 from   hypothesis import given, settings, HealthCheck, unlimited, seed
 from   copy       import deepcopy
-# Import the verification infrastructure
+
 from   pymtl.passes.test.trans_import.Verify import Verify
 
 @st.composite

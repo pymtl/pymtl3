@@ -1,8 +1,9 @@
 
 from BasePass import BasePass
-
-from GenDAGPass import GenDAGPass
-
-from SystemVerilogTranslationPass import SystemVerilogTranslationPass
+from BasePass import PassMetadata
 
 from PassGroups import *
+
+from simulation.GenDAGPass import GenDAGPass
+
+from translation.SystemVerilogTranslationPass import SystemVerilogTranslationPass

@@ -11,9 +11,9 @@ import ast
 from graphviz import Digraph
 from Queue    import PriorityQueue
 
-from pymtl.passes.BasePass     import BasePass, PassMetadata
-from pymtl.passes.errors import PassOrderError
-from pymtl.passes.SimpleSchedPass import check_schedule
+from pymtl.passes import BasePass, PassMetadata
+from pymtl.passes.simulation.errors import PassOrderError
+from pymtl.passes.simulation.SimpleSchedPass import check_schedule
 
 class CountBranches( ast.NodeVisitor ):
 

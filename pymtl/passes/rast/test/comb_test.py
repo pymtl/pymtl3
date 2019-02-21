@@ -1,9 +1,18 @@
+#=========================================================================
+# comb_test.py
+#=========================================================================
+# This file includes directed test cases for the RAST generation pass.
+#
+# Author : Peitian Pan
+# Date   : Feb 2, 2019
+
 import pytest
 
-from pymtl import *
-from pymtl.passes.RAST import *
-from pymtl.passes.errors import PyMTLTypeError
-from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
+from pymtl                    import *
+
+from pymtl.passes.rast.RAST   import *
+from pymtl.passes.rast.errors import PyMTLTypeError
+from pymtl.passes.translation import SystemVerilogTranslationPass
 
 #-------------------------------------------------------------------------
 # verify_manual
@@ -16,10 +25,10 @@ def verify_manual( m, ref ):
   SystemVerilogTranslationPass()( m )
 
   for blk in m.get_update_blocks():
-    assert m._rast[ blk ] == ref[ blk.__name__ ]
+    assert m._pass_component_upblk_rast_gen.rast[ blk ] == ref[ blk.__name__ ]
 
 #-------------------------------------------------------------------------
-# Test basic indexing support
+# test_index_basic
 #-------------------------------------------------------------------------
 
 def test_index_basic():
@@ -47,7 +56,7 @@ def test_index_basic():
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test assginment with mismatched width
+# test_mismatch_width_assign
 #-------------------------------------------------------------------------
 
 def test_mismatch_width_assign():
@@ -67,7 +76,7 @@ def test_mismatch_width_assign():
   except: raise
 
 #-------------------------------------------------------------------------
-# Test basic slicing support
+# test_slicing_basic
 #-------------------------------------------------------------------------
 
 def test_slicing_basic():
@@ -85,15 +94,15 @@ def test_slicing_basic():
 
   ref = { 'slicing_basic' : CombUpblk( 'slicing_basic', [
     Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0 ), Number( 16 ) ),
-      Slice( Attribute( Base( a ), 'in_' ), Number( 0, 16 ), Number( 0, 32 ) ) ),
-    Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0, 16 ), Number( 0, 32 ) ),
-      Slice( Attribute( Base( a ), 'in_' ), Number( 0, 0 ), Number( 0, 16 ) ) )
+      Slice( Attribute( Base( a ), 'in_' ), Number( 16 ), Number( 32 ) ) ),
+    Assign( Slice( Attribute( Base( a ), 'out' ), Number( 16 ), Number( 32 ) ),
+      Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 16 ) ) )
   ] ) }
 
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test calls to BitsX
+# test_bits_basic
 #-------------------------------------------------------------------------
 
 def test_bits_basic():
@@ -110,13 +119,13 @@ def test_bits_basic():
 
   ref = { 'bits_basic' : CombUpblk( 'bits_basic', [
     Assign( Attribute( Base( a ), 'out' ),
-      BinOp( Attribute( Base( a ), 'in_' ), Add(), Number( 16, 10 ) ) )
+      BinOp( Attribute( Base( a ), 'in_' ), Add(), Bitwidth( 16, Number( 10 ) ) ) )
   ] ) }
 
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test support for expressions with indexing, slicing, and BitX
+# test_index_bits_slicing
 #-------------------------------------------------------------------------
 
 def test_index_bits_slicing():
@@ -134,29 +143,29 @@ def test_index_bits_slicing():
 
   ref = { 'index_bits_slicing' : CombUpblk( 'index_bits_slicing', [
     Assign( Slice( 
-      Index( Attribute( Base( a ), 'out' ), Number( 0, 0 ) ),
-      Number( 0, 0 ), Number( 0, 8 ) 
+      Index( Attribute( Base( a ), 'out' ), Number( 0 ) ),
+      Number( 0 ), Number( 8 ) 
       ),
       BinOp( 
         BinOp( 
-          Slice( Index( Attribute( Base( a ), 'in_' ), Number( 0, 1 ) ), Number( 0, 8 ), Number( 0, 16 ) ),
+          Slice( Index( Attribute( Base( a ), 'in_' ), Number( 1 ) ), Number( 8 ), Number( 16 ) ),
           Add(),
-          Slice( Index( Attribute( Base( a ), 'in_' ), Number( 0, 2 ) ), Number( 0, 0 ), Number( 0, 8 ) ),
+          Slice( Index( Attribute( Base( a ), 'in_' ), Number( 2 ) ), Number( 0 ), Number( 8 ) ),
         ),
         Add(),
-        Number( 8, 10 ) 
+        Bitwidth( 8, Number( 10 ) )
       )
     ),
     Assign( 
-      Index( Attribute( Base( a ), 'out' ), Number( 0, 1 ) ),
+      Index( Attribute( Base( a ), 'out' ), Number( 1 ) ),
       BinOp( 
         BinOp( 
-          Slice( Index( Attribute( Base( a ), 'in_' ), Number( 0, 3 ) ), Number( 0, 0 ), Number( 0, 16 ) ),
+          Slice( Index( Attribute( Base( a ), 'in_' ), Number( 3 ) ), Number( 0 ), Number( 16 ) ),
           Add(),
-          Index( Attribute( Base( a ), 'in_' ), Number( 0, 4 ) )
+          Index( Attribute( Base( a ), 'in_' ), Number( 4 ) )
         ),
         Add(),
-        Number( 16, 1 ) 
+        Bitwidth( 16, Number( 1 ) )
       )
     ),
   ] ) }
@@ -164,7 +173,7 @@ def test_index_bits_slicing():
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test support for component reference
+# test_multi_components
 #-------------------------------------------------------------------------
 
 def test_multi_components():
@@ -202,7 +211,7 @@ def test_multi_components():
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test support for if statement
+# test_if_basic
 #-------------------------------------------------------------------------
 
 def test_if_basic():
@@ -222,16 +231,16 @@ def test_if_basic():
 
   ref = {
     'if_basic' : CombUpblk( 'if_basic', [ If(
-      Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0, 0 ), Number( 0, 8 ) ), Eq(), Number( 8, 255 ) ),
-      [ Assign( Attribute( Base( a ), 'out' ), Slice( Attribute( Base( a ), 'in_' ), Number( 0, 8 ), Number( 0, 16 ) ) ) ],
-      [ Assign( Attribute( Base( a ), 'out' ), Number( 8, 0 ) ) ]
+      Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), Bitwidth( 8, Number( 255 ) ) ),
+      [ Assign( Attribute( Base( a ), 'out' ), Slice( Attribute( Base( a ), 'in_' ), Number( 8 ), Number( 16 ) ) ) ],
+      [ Assign( Attribute( Base( a ), 'out' ), Bitwidth( 8, Number( 0 ) ) ) ]
     )
   ] ) }
 
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test support for for statement
+# test_for_basic
 #-------------------------------------------------------------------------
 
 def test_for_basic():
@@ -247,19 +256,19 @@ def test_for_basic():
 
   a = for_basic()
 
-  twice_i = BinOp( Number( 0, 2 ), Mult(), LoopVar( 'i' ) )
+  twice_i = BinOp( Number( 2 ), Mult(), LoopVar( 'i' ) )
 
   ref = {
     'for_basic' : CombUpblk( 'for_basic', [ For(
-      LoopVarDecl( 'i' ), Number( 0, 0 ), Number( 0, 8 ), Number( 0, 1 ),
+      LoopVarDecl( 'i' ), Number( 0 ), Number( 8 ), Number( 1 ),
       [ Assign(
-          Slice( Attribute( Base( a ), 'out' ), twice_i, BinOp( twice_i, Add(), Number( 0, 1 ) ) ),
+          Slice( Attribute( Base( a ), 'out' ), twice_i, BinOp( twice_i, Add(), Number( 1 ) ) ),
           BinOp(
-            Slice( Attribute( Base( a ), 'in_' ), twice_i, BinOp( twice_i, Add(), Number( 0, 1 ) ) ),
+            Slice( Attribute( Base( a ), 'in_' ), twice_i, BinOp( twice_i, Add(), Number( 1 ) ) ),
             Add(),
             Slice( Attribute( Base( a ), 'in_' ),
-              BinOp( twice_i, Add(), Number( 0, 1 ) ),
-              BinOp( twice_i, Add(), Number( 0, 2 ) )
+              BinOp( twice_i, Add(), Number( 1 ) ),
+              BinOp( twice_i, Add(), Number( 2 ) )
             )
           )
       ) 
@@ -270,26 +279,31 @@ def test_for_basic():
   verify_manual( a, ref )
 
 #-------------------------------------------------------------------------
-# Test support for multiple upblks
+# test_multi_upblks
 #-------------------------------------------------------------------------
 
 def test_multi_upblks():
   class multi_upblks( RTLComponent ):
     def construct( s ):
-      s.in_ = InVPort( Bits16 )
+      s.in_ = InVPort( Bits4 )
       s.out = OutVPort( Bits8 )
 
       @s.update
       def multi_upblks_1():
-        s.out[ 0:4 ] = s.in_[ 4:8 ]
+        s.out[ 0:4 ] = s.in_
 
       @s.update
       def multi_upblks_2():
-        s.out[ 4:8 ] = s.in_[ 12:16 ]
+        s.out[ 4:8 ] = s.in_
 
   a = multi_upblks()
 
-  verify_manual( a, {} )
+  ref = { 'multi_upblks_1' : CombUpblk( 'multi_upblks_1', [
+      Assign( Slice( Attribute( Base( a ), 'out' ), Number(0), Number(4) ), Attribute( Base( a ), 'in_' ) ),
+    ] ),
+    'multi_upblks_2' : CombUpblk( 'multi_upblks_2', [
+      Assign( Slice( Attribute( Base( a ), 'out' ), Number(4), Number(8) ), Attribute( Base( a ), 'in_' ) ),
+    ] )
+  }
 
-# if __name__ == '__main__':
-  # test_for_basic()
+  verify_manual( a, ref )
