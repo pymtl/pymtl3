@@ -1,6 +1,8 @@
 from pymtl import *
+from pymtl.dsl import *
 from pclib.rtl import Reg, RegEn, Mux
-from pclib.ifcs   import EnqIfcRTL, DeqIfcRTL
+from pclib.ifcs.EnqIfcs import EnqIfcRTL
+from pclib.ifcs.DeqIfcs import  DeqIfcRTL
 
 # The reason why we have 3 update blocks for pipe queue:
 # start: deq.rdy = full.out (queue, up1)
