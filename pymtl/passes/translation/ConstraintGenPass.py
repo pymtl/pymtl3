@@ -11,6 +11,8 @@
 # Author : Peitian Pan
 # Date   : Feb 19, 2019
 
+from copy                    import copy
+
 from pymtl                   import *
 from pymtl.passes            import BasePass
 from pymtl.passes.simulation import GenDAGPass
@@ -53,9 +55,9 @@ class ConstraintGenPass( BasePass ):
 
         for rd_signal in upblk_RD[ upblk ]:
           if rd_signal in s.net:
-            s.net[ rd_signal ] |= wr_signals
+            s.net[ rd_signal ] |= copy( wr_signals )
           else:
-            s.net[ rd_signal ] = wr_signals
+            s.net[ rd_signal ] = copy( wr_signals )
 
     # Initialize the output port sensitivity group to 'not connected'
 

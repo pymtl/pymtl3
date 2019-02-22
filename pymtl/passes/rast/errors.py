@@ -31,7 +31,7 @@ class PyMTLSyntaxError( Exception ):
     )
 
 class PyMTLTypeError( Exception ):
-  """ Raise error when the RAST type check pass finds a error """
+  """ Raise error when the RAST type check pass finds an error """
   def __init__( self, blk, ast, msg ):
     fname = os.path.abspath( inspect.getsourcefile( blk ) )
     line = inspect.getsourcelines( blk )[1]

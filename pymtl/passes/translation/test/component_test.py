@@ -1,24 +1,17 @@
 #=========================================================================
-# comb_test.py
+# component_test.py
 #=========================================================================
-# This file includes the test cases for the original source-to-source
-# translation pass.
-#
+# This file includes directed tests cases for the translation pass. Test
+# cases are mainly simple PRTL models with multiple upblks and possible
+# sub-components.
+# 
 # Author : Shunning Jiang
 
-from pymtl import *
-from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL
-from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
-
-def test_adder():
-  m = Adder( Bits32 )
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+from pymtl     import *
+from pclib.rtl import Adder
 
 def test_wrapped_noconnect_adder():
-
-  class Adder_wrap( RTLComponent ):
-
+  class Adder_wrap_noc( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits32 )
       s.out  = OutVPort( Bits32 )
@@ -34,14 +27,12 @@ def test_wrapped_noconnect_adder():
       def up_out():
         s.out = s.adder.out
 
-  m = Adder_wrap()
+  m = Adder_wrap_noc()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_wrapped_noconnect_wire_adder():
-
-  class Adder_wrap( RTLComponent ):
-
+  class Adder_wrap_wire( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits32 )
       s.out  = OutVPort( Bits32 )
@@ -63,14 +54,12 @@ def test_wrapped_noconnect_wire_adder():
       def up_out():
         s.out = s.adder.out
 
-  m = Adder_wrap()
+  m = Adder_wrap_wire()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_wrapped_noconnect_slice_adder():
-
-  class Adder_wrap( RTLComponent ):
-
+  class Adder_wrap_noc_slice( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits31 )
       s.out  = OutVPort( Bits32 )
@@ -86,28 +75,24 @@ def test_wrapped_noconnect_slice_adder():
       def up_out():
         s.out = s.adder.out
 
-  m = Adder_wrap()
+  m = Adder_wrap_noc_slice()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_wrapped_connect_adder():
-
-  class Adder_wrap( RTLComponent ):
-
+  class Adder_wrap_con( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits32 )
       s.out  = OutVPort( Bits32 )
 
       s.adder = Adder( Bits32 )( in0 = s.in_, in1 = s.in_, out = s.out )
 
-  m = Adder_wrap()
+  m = Adder_wrap_con()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_wrapped_connect_wire_adder():
-
-  class Adder_wrap( RTLComponent ):
-
+  class Adder_wrap_con_wire( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits32 )
       s.out  = OutVPort( Bits32 )
@@ -118,14 +103,12 @@ def test_wrapped_connect_wire_adder():
 
       s.connect( s.wire, s.out )
 
-  m = Adder_wrap()
+  m = Adder_wrap_con_wire()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_wrapped_connect_two_child_modules_wire():
-
-  class Adder_wrap( RTLComponent ):
-
+  class Adder_wrap_child_wire( RTLComponent ):
     def construct( s ):
       s.in0  = InVPort( Bits32 )
       s.in1  = InVPort( Bits32 )
@@ -141,23 +124,12 @@ def test_wrapped_connect_two_child_modules_wire():
       s.add = Adder( Bits32 )( in0 = s.tmp_in0, in1 = s.in1 )
       s.sub = Subtractor( Bits32 )( in0 = s.add.out, in1 = s.in2, out = s.tmp_out )
 
-  m = Adder_wrap()
+  m = Adder_wrap_child_wire()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
-# def test_mux():
-  # m = Mux( Bits32, 3 )
-  # m.elaborate()
-  # SystemVerilogTranslationPass()( m )
-
-# def test_bypass_queue():
-  # m = BypassQueue1RTL( Bits32 )
-  # m.elaborate()
-  # SystemVerilogTranslationPass()( m )
-
 def test_multiple_if():
-
-  class Foo( RTLComponent ):
+  class Foo_mul_if( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits2 )
       s.out  = OutVPort( Bits2 )
@@ -172,12 +144,11 @@ def test_multiple_if():
           s.out = s.in_
         else:                         s.out = s.in_ + s.in_
 
-  m = Foo()
+  m = Foo_mul_if()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_multiple_if_two_level():
-
   class Foo( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits2 )
@@ -193,7 +164,7 @@ def test_multiple_if_two_level():
           s.out = s.in_
         else:                         s.out = s.in_ + s.in_
 
-  class Bar( RTLComponent ):
+  class Bar_if_2( RTLComponent ):
     def construct( s ):
       s.x = Foo()
       s.y = Wire( Bits2 )
@@ -207,13 +178,13 @@ def test_multiple_if_two_level():
       def up_z():
         s.x.in_ = s.z
 
-  m = Bar()
+  m = Bar_if_2()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_bits_type():
 
-  class Foo( RTLComponent ):
+  class Foo_bits( RTLComponent ):
     def construct( s ):
       s.in_  = InVPort( Bits2 )
       s.out  = OutVPort( Bits4 )
@@ -227,13 +198,12 @@ def test_bits_type():
           s.out = Bits1( 0 )
           s.out = Bits4( 1 )
 
-  m = Foo()
+  m = Foo_bits()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_bits_type_in_self():
-
-  class Foo( RTLComponent ):
+  class Foo_bits_s( RTLComponent ):
     def construct( s ):
       nbits = 2
 
@@ -250,13 +220,13 @@ def test_bits_type_in_self():
         else:
           s.out = s.Tout( 0 )
 
-  m = Foo()
+  m = Foo_bits_s()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_bits_closure():
 
-  class Foo( RTLComponent ):
+  class Foo_bits_closure( RTLComponent ):
     def construct( s ):
       nbits = 2
 
@@ -273,13 +243,12 @@ def test_bits_closure():
         else:
           s.out = Tout( 0 )
 
-  m = Foo()
+  m = Foo_bits_closure()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_bits_value_closure():
-
-  class Foo( RTLComponent ):
+  class Foo_bits_value_closure( RTLComponent ):
     def construct( s ):
       nbits = 2
 
@@ -299,13 +268,12 @@ def test_bits_value_closure():
         else:
           s.out = s.Tout( 0 )
 
-  m = Foo()
+  m = Foo_bits_value_closure()
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
 def test_bits_val_and_call():
-
-  class Foo( RTLComponent ):
+  class Foo_bits_val_call( RTLComponent ):
     def construct( s ):
       nbits = 2
 
@@ -320,7 +288,6 @@ def test_bits_val_and_call():
 
       @s.update
       def up_if():
-
         if   s.in_ == s.Tin( 0 ):
           s.out = s.Tout( 1 ) | s.Tout( 1 )
 
@@ -339,6 +306,6 @@ def test_bits_val_and_call():
           s.out = s.Tout( 0 )
           qnm( s.Tout( 0 ) )
 
-  m = Foo()
+  m = Foo_bits_val_call()
   m.elaborate()
   SystemVerilogTranslationPass()( m )

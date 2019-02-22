@@ -240,9 +240,10 @@ class ComponentLevel1( NamedObject ):
 
     if isinstance(args[0], list):
       assert len(args) == 1
-      for step in args[0]:
+      for step in args[0][0:-1]:
         step( s )
+      return args[0][-1]( s )
 
     elif len(args) == 1:
       assert callable( args[0] )
-      args[0]( s )
+      return args[0]( s )

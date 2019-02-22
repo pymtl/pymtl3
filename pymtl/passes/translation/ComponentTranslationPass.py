@@ -140,7 +140,7 @@ endmodule
           type_str = get_type( port ).type_str()
 
           ifcs_decl_str[ prefix ].append(
-            '{dtype} {vec_size} {fname}${name} {dim_size}'.format(
+            '{dtype} {vec_size} {fname}${name} {dim_size};'.format(
               dtype = type_str[ 'dtype' ],
               vec_size = type_str[ 'vec_size' ],
               fname = child_name,
@@ -152,7 +152,8 @@ endmodule
             '  .{0:6}( {1}${0} ),'.format( fname, child_name )
           )
 
-      child_strs.extend( ifcs_decl_str )
+      child_strs.extend( ifcs_decl_str[ 'input' ] )
+      child_strs.extend( ifcs_decl_str[ 'output' ] )
       child_strs.append( '' )
       child_strs.append( c.__class__.__name__+' '+child_name )
       child_strs.append( '(' )
@@ -160,7 +161,8 @@ endmodule
       child_strs.extend( connection_wire[ 'input' ] )
       child_strs.append( "  // Child component's outputs" )
       child_strs.extend( connection_wire[ 'output' ] )
-      child_strs[-2 if not connection_wire['output'] else -1].rstrip(',')
+      child_strs[-2 if not connection_wire['output'] else -1] = \
+        child_strs[-2 if not connection_wire['output'] else -1].rstrip(',')
       child_strs.append( ');' )
 
     child_decls = '\n  '.join( child_strs )

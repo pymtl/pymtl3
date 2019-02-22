@@ -1,26 +1,25 @@
 #=========================================================================
-# comb_test.py
+# rast_test.py
 #=========================================================================
 # This file includes directed test cases for the RAST generation pass.
 #
 # Author : Peitian Pan
 # Date   : Feb 2, 2019
 
-import pytest
-
 from pymtl                    import *
-
 from pymtl.passes.rast.RAST   import *
 from pymtl.passes.rast.errors import PyMTLTypeError
 from pymtl.passes.translation import SystemVerilogTranslationPass
+from pymtl.passes.test        import expected_failure, do_test
 
 #-------------------------------------------------------------------------
-# verify_manual
+# local_do_test
 #-------------------------------------------------------------------------
 # Verify that the generated RAST is the same as the manually generated
 # reference.
 
-def verify_manual( m, ref ):
+def local_do_test( m ):
+  ref = m._rast_test_ref
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
@@ -31,7 +30,7 @@ def verify_manual( m, ref ):
 # test_index_basic
 #-------------------------------------------------------------------------
 
-def test_index_basic():
+def test_index_basic( do_test ):
   class index_basic( RTLComponent ):
     def construct( s ):
       s.in_ = [ InVPort( Bits16 ) for _ in xrange( 4 ) ]
@@ -44,7 +43,7 @@ def test_index_basic():
 
   a = index_basic()
 
-  ref = { 'index_basic' : CombUpblk( 'index_basic', [
+  a._rast_test_ref = { 'index_basic' : CombUpblk( 'index_basic', [
     Assign( Index( Attribute( Base( a ), 'out' ), Number( 0 ) ),
       BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 0 ) ), Add(),
              Index( Attribute( Base( a ), 'in_' ), Number( 1 ) ) ) ),
@@ -53,13 +52,20 @@ def test_index_basic():
              Index( Attribute( Base( a ), 'in_' ), Number( 3 ) ) ) )
   ] ) }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                                   'in_                              *out',
+    [                   [ 0, 1, 2, 3 ],                         [ 1, 5 ] ],
+    [ [ Bits16(-1), 1, Bits16(-1), 1 ],                         [ 0, 0 ] ],
+    [                   [ 9, 8, 7, 6 ],                       [ 17, 13 ] ],
+  ]
+
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_mismatch_width_assign
 #-------------------------------------------------------------------------
 
-def test_mismatch_width_assign():
+def test_mismatch_width_assign( do_test ):
   class A( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits16 )
@@ -69,17 +75,32 @@ def test_mismatch_width_assign():
       def mismatch_width_assign():
         s.out = s.in_
 
-  a = A()
+  with expected_failure( PyMTLTypeError ):
 
-  try: verify_manual( a, {} )
-  except PyMTLTypeError: pass
-  except: raise
+    a = A()
+
+    a._rast_test_ref = { 'mismatch_width_assign' : CombUpblk(
+      'mismatch_width_assign', [ Assign(
+        Attribute( Base( a ), 'out' ), Attribute( Base( a ), 'in_' )
+      )
+    ] ) }
+
+    a._test_vector = [
+                  'in_              *out',
+      [             0,               0 ],
+      [             2,               2 ],
+      [    Bits16(-1),       Bits8(-1) ],
+      [    Bits16(-2),       Bits8(-2) ],
+      [ Bits16(32767),      Bits8(255) ],
+    ]
+
+    do_test( a )
 
 #-------------------------------------------------------------------------
 # test_slicing_basic
 #-------------------------------------------------------------------------
 
-def test_slicing_basic():
+def test_slicing_basic( do_test ):
   class slicing_basic( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits32 )
@@ -92,20 +113,29 @@ def test_slicing_basic():
 
   a = slicing_basic()
 
-  ref = { 'slicing_basic' : CombUpblk( 'slicing_basic', [
+  a._rast_test_ref = { 'slicing_basic' : CombUpblk( 'slicing_basic', [
     Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0 ), Number( 16 ) ),
       Slice( Attribute( Base( a ), 'in_' ), Number( 16 ), Number( 32 ) ) ),
     Assign( Slice( Attribute( Base( a ), 'out' ), Number( 16 ), Number( 32 ) ),
       Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 16 ) ) )
   ] ) }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                'in_              *out',
+    [             0,               0 ],
+    [             2, Bits64(0x20000) ],
+    [    Bits32(-1),      Bits64(-1) ],
+    [    Bits32(-2),      Bits64(-2) ],
+    [ Bits32(32767),   Bits64(32767) ],
+  ]
+
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_bits_basic
 #-------------------------------------------------------------------------
 
-def test_bits_basic():
+def test_bits_basic( do_test ):
   class bits_basic( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits16 )
@@ -117,18 +147,27 @@ def test_bits_basic():
 
   a = bits_basic()
 
-  ref = { 'bits_basic' : CombUpblk( 'bits_basic', [
+  a._rast_test_ref = { 'bits_basic' : CombUpblk( 'bits_basic', [
     Assign( Attribute( Base( a ), 'out' ),
       BinOp( Attribute( Base( a ), 'in_' ), Add(), Bitwidth( 16, Number( 10 ) ) ) )
   ] ) }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                'in_              *out',
+    [             0,               10 ],
+    [             2,               12 ],
+    [    Bits16(-1),        Bits16(9) ],
+    [    Bits16(-2),        Bits16(8) ],
+    [ Bits16(32767),   Bits16(-32758) ],
+  ]
+
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_index_bits_slicing
 #-------------------------------------------------------------------------
 
-def test_index_bits_slicing():
+def test_index_bits_slicing( do_test ):
   class index_bits_slicing( RTLComponent ):
     def construct( s ):
       s.in_ = [ InVPort( Bits16 ) for _ in xrange( 10 ) ]
@@ -141,7 +180,7 @@ def test_index_bits_slicing():
 
   a = index_bits_slicing()
 
-  ref = { 'index_bits_slicing' : CombUpblk( 'index_bits_slicing', [
+  a._rast_test_ref = { 'index_bits_slicing' : CombUpblk( 'index_bits_slicing', [
     Assign( Slice( 
       Index( Attribute( Base( a ), 'out' ), Number( 0 ) ),
       Number( 0 ), Number( 8 ) 
@@ -170,13 +209,19 @@ def test_index_bits_slicing():
     ),
   ] ) }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                                                       'in_                                *out',
+    [ [ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 ], [ 265, 511, 0, 0, 0, 0, 0, 0, 0, 0 ] ],
+    [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], [ 10, 1, 0, 0, 0, 0, 0, 0, 0, 0 ] ]
+  ]
+
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_multi_components
 #-------------------------------------------------------------------------
 
-def test_multi_components():
+def test_multi_components( do_test ):
   class multi_components_B( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits16 )
@@ -192,13 +237,16 @@ def test_multi_components():
       s.out = OutVPort( Bits16 )
       s.b = multi_components_B()
 
+      # There should be a way to check module connections?
+      s.connect( s.in_, s.b.in_ )
+
       @s.update
       def multi_components_A():
         s.out = s.in_ + s.b.out
 
   a = multi_components_A()
 
-  ref = { 'multi_components_A' : CombUpblk( 'multi_components_A', [
+  a._rast_test_ref = { 'multi_components_A' : CombUpblk( 'multi_components_A', [
     Assign( Attribute( Base( a ), 'out' ),
       BinOp(
         Attribute( Base( a ), 'in_' ),
@@ -208,13 +256,21 @@ def test_multi_components():
     )
   ] ) }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                'in_              *out',
+    [             0,               0 ],
+    [             2,               2 ],
+    [    Bits16(-1),      Bits16(-1) ],
+    [    Bits16(-2),      Bits16(-2) ],
+  ]
+
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_if_basic
 #-------------------------------------------------------------------------
 
-def test_if_basic():
+def test_if_basic( do_test ):
   class if_basic( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits16 )
@@ -229,7 +285,7 @@ def test_if_basic():
 
   a = if_basic()
 
-  ref = {
+  a._rast_test_ref = {
     'if_basic' : CombUpblk( 'if_basic', [ If(
       Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), Bitwidth( 8, Number( 255 ) ) ),
       [ Assign( Attribute( Base( a ), 'out' ), Slice( Attribute( Base( a ), 'in_' ), Number( 8 ), Number( 16 ) ) ) ],
@@ -237,13 +293,20 @@ def test_if_basic():
     )
   ] ) }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                'in_              *out',
+    [           255,               0 ],
+    [           511,               1 ],
+    [           256,               0 ],
+  ]
+
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_for_basic
 #-------------------------------------------------------------------------
 
-def test_for_basic():
+def test_for_basic( do_test ):
   class for_basic( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits16 )
@@ -258,7 +321,7 @@ def test_for_basic():
 
   twice_i = BinOp( Number( 2 ), Mult(), LoopVar( 'i' ) )
 
-  ref = {
+  a._rast_test_ref = {
     'for_basic' : CombUpblk( 'for_basic', [ For(
       LoopVarDecl( 'i' ), Number( 0 ), Number( 8 ), Number( 1 ),
       [ Assign(
@@ -276,13 +339,13 @@ def test_for_basic():
     ) ] )
   }
 
-  verify_manual( a, ref )
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # test_multi_upblks
 #-------------------------------------------------------------------------
 
-def test_multi_upblks():
+def test_multi_upblks( do_test ):
   class multi_upblks( RTLComponent ):
     def construct( s ):
       s.in_ = InVPort( Bits4 )
@@ -298,7 +361,7 @@ def test_multi_upblks():
 
   a = multi_upblks()
 
-  ref = { 'multi_upblks_1' : CombUpblk( 'multi_upblks_1', [
+  a._rast_test_ref = { 'multi_upblks_1' : CombUpblk( 'multi_upblks_1', [
       Assign( Slice( Attribute( Base( a ), 'out' ), Number(0), Number(4) ), Attribute( Base( a ), 'in_' ) ),
     ] ),
     'multi_upblks_2' : CombUpblk( 'multi_upblks_2', [
@@ -306,4 +369,11 @@ def test_multi_upblks():
     ] )
   }
 
-  verify_manual( a, ref )
+  a._test_vector = [
+                'in_              *out',
+    [     Bits4(-1),        Bits4(-1) ],
+    [      Bits4(1),               71 ],
+    [      Bits4(7),              119 ],
+  ]
+
+  do_test( a )

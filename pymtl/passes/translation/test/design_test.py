@@ -1,363 +1,66 @@
-from pymtl import *
-from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL, ZeroComp
-from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
+#=========================================================================
+# design_test.py
+#=========================================================================
+# This file includes directed tests cases for the translation pass. Test
+# cases are mainly simple PRTL designs.
+# 
+# Author : Peitian Pan
+# Date   : Feb 21, 2019
 
-def test_deep_connect():
-  class Deep( RTLComponent ):
-    def construct( s ):
-      s.out = OutVPort( Bits1 )
-      s.deep = Wire( Bits1 )
+import pytest
 
-      @s.update
-      def out_blk():
-        s.out = s.deep
+from pymtl             import *
+from pymtl.passes.test import run_translation_test
 
-  class Bar( RTLComponent ):
-    def construct( s ):
-      s.deep = Deep()
-
-  class Foo( RTLComponent ):
-    def construct( s ):
-      s.bar = Bar()
-      s.foo = InVPort( Bits1 )
-      s.connect( s.foo, s.bar.deep.deep )
-
-  foo = Foo()
-  foo.elaborate() # Should fail because the connection is too deep
+#-------------------------------------------------------------------------
+# test_adder
+#-------------------------------------------------------------------------
 
 def test_adder():
+  from pclib.rtl import Adder
   m = Adder( Bits32 )
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+  test_vec = [
+              'in0              in1                   *out',
+    [           0,               1,                     1 ],
+    [           2,               3,                     5 ],
+    [  Bits32(-1),               0,            Bits32(-1) ],
+    [  Bits32(-1),      Bits32(-2),            Bits32(-3) ],
+    [  2147483647,               1,   Bits32(-2147483648) ],
+  ]
+  run_translation_test( m, test_vec )
 
-def test_wrapped_noconnect_adder():
+#-------------------------------------------------------------------------
+# test_mux
+#-------------------------------------------------------------------------
 
-  class Adder_wrap_noc( RTLComponent ):
-
-    def construct( s ):
-      s.in_  = InVPort( Bits32 )
-      s.out  = OutVPort( Bits32 )
-
-      s.adder = Adder( Bits32 )
-
-      @s.update
-      def up_in():
-        s.adder.in0 = s.adder.in1 = s.in_
-
-      @s.update
-      def up_out():
-        s.out = s.adder.out
-
-  m = Adder_wrap_noc()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_wrapped_noconnect_wire_adder():
-
-  class Adder_wrap_wire( RTLComponent ):
-
-    def construct( s ):
-      s.in_  = InVPort( Bits32 )
-      s.out  = OutVPort( Bits32 )
-
-      s.wire = Wire( Bits32 )
-
-      s.adder = Adder( Bits32 )
-
-      @s.update
-      def up_in():
-        s.wire = s.in_
-
-      @s.update
-      def up_wire():
-        s.adder.in0 = s.adder.in1 = s.wire
-
-      @s.update
-      def up_out():
-        s.out = s.adder.out
-
-  m = Adder_wrap_wire()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_wrapped_noconnect_slice_adder():
-
-  class Adder_wrap_noc_slice( RTLComponent ):
-
-    def construct( s ):
-      s.in_  = InVPort( Bits31 )
-      s.out  = OutVPort( Bits32 )
-
-      s.adder = Adder( Bits32 )
-
-      @s.update
-      def up_in():
-        s.adder.in0[0:31] = s.in_
-        s.adder.in1[0:31] = s.in_
-
-      @s.update
-      def up_out():
-        s.out = s.adder.out
-
-  m = Adder_wrap_noc_slice()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_wrapped_connect_adder():
-
-  class Adder_wrap_con( RTLComponent ):
-
-    def construct( s ):
-      s.in_  = InVPort( Bits32 )
-      s.out  = OutVPort( Bits32 )
-
-      s.adder = Adder( Bits32 )( in0 = s.in_, in1 = s.in_, out = s.out )
-
-  m = Adder_wrap_con()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_wrapped_connect_wire_adder():
-
-  class Adder_wrap_con_wire( RTLComponent ):
-
-    def construct( s ):
-      s.in_  = InVPort( Bits32 )
-      s.out  = OutVPort( Bits32 )
-
-      s.wire = Wire( Bits32 )
-
-      s.adder = Adder( Bits32 )( in0 = s.in_, in1 = s.in_, out = s.wire )
-
-      s.connect( s.wire, s.out )
-
-  m = Adder_wrap_con_wire()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_wrapped_connect_two_child_modules_wire():
-
-  class Adder_wrap_child_wire( RTLComponent ):
-
-    def construct( s ):
-      s.in0  = InVPort( Bits32 )
-      s.in1  = InVPort( Bits32 )
-      s.in2  = InVPort( Bits32 )
-      s.out  = OutVPort( Bits32 )
-
-      s.tmp_in0 = Wire( Bits32 )
-      s.tmp_out = Wire( Bits32 )
-
-      s.connect( s.tmp_in0, s.in0 )
-      s.connect( s.tmp_out, s.out )
-
-      s.add = Adder( Bits32 )( in0 = s.tmp_in0, in1 = s.in1 )
-      s.sub = Subtractor( Bits32 )( in0 = s.add.out, in1 = s.in2, out = s.tmp_out )
-
-  m = Adder_wrap_child_wire()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
+# @pytest.xfail( reason = 'Need support for array InVPort/OutVPort during \
+# import' )
 def test_mux():
+  from pclib.rtl import Mux
   m = Mux( Bits32, 3 )
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+  test_vec = [
+               'in              sel                   *out',
+    [      [0,1,2],               0,                     0 ],
+    [      [1,2,3],               1,                     2 ],
+    [      [7,8,9],               2,                     9 ],
+  ]
+  run_translation_test( m, test_vec )
+
+#-------------------------------------------------------------------------
+# test_bypass_queue
+#-------------------------------------------------------------------------
 
 def test_bypass_queue():
+  from pclib.rtl import BypassQueue1RTL
   m = BypassQueue1RTL( Bits32 )
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
-def test_multiple_if():
-
-  class Foo_mul_if( RTLComponent ):
-    def construct( s ):
-      s.in_  = InVPort( Bits2 )
-      s.out  = OutVPort( Bits2 )
-
-      @s.update
-      def up_if():
-        if   s.in_ == ~s.in_:         s.out = s.in_
-        elif s.in_ == s.in_ & s.in_:  s.out = ~s.in_
-        elif s.in_ == s.in_ | s.in_:
-          s.out = s.in_
-          s.out = s.in_
-          s.out = s.in_
-        else:                         s.out = s.in_ + s.in_
-
-  m = Foo_mul_if()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_multiple_if_two_level():
-
-  class Foo( RTLComponent ):
-    def construct( s ):
-      s.in_  = InVPort( Bits2 )
-      s.out  = OutVPort( Bits2 )
-
-      @s.update
-      def up_if():
-        if   s.in_ == ~s.in_:         s.out = s.in_
-        elif s.in_ == s.in_ & s.in_:  s.out = ~s.in_
-        elif s.in_ == s.in_ | s.in_:
-          s.out = s.in_
-          s.out = s.in_
-          s.out = s.in_
-        else:                         s.out = s.in_ + s.in_
-
-  class Bar_if_2( RTLComponent ):
-    def construct( s ):
-      s.x = Foo()
-      s.y = Wire( Bits2 )
-      s.z = Wire( Bits2 )
-
-      @s.update
-      def up_y():
-        s.y = s.x.out
-
-      @s.update
-      def up_z():
-        s.x.in_ = s.z
-
-  m = Bar_if_2()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_bits_type():
-
-  class Foo_bits( RTLComponent ):
-    def construct( s ):
-      s.in_  = InVPort( Bits2 )
-      s.out  = OutVPort( Bits4 )
-
-      @s.update
-      def up_if():
-        if   s.in_ == Bits2( 0 ):
-          s.out = Bits4( 1 ) | Bits4( 2 )
-          s.out = Bits4( 8 )
-        else:
-          s.out = Bits1( 0 )
-          s.out = Bits4( 1 )
-
-  m = Foo_bits()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_bits_type_in_self():
-
-  class Foo_bits_s( RTLComponent ):
-    def construct( s ):
-      nbits = 2
-
-      s.Tin  = mk_bits( nbits )
-      s.in_  = InVPort( s.Tin )
-      s.Tout = mk_bits( 1<<nbits )
-      s.out  = OutVPort( s.Tout )
-
-      @s.update
-      def up_if():
-        if   s.in_ == Bits123( 0 ):
-          s.out = s.Tout( 1 ) | s.Tout( 1 )
-          s.out = s.Tout( 8 )
-        else:
-          s.out = s.Tout( 0 )
-
-  m = Foo_bits_s()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_bits_closure():
-
-  class Foo_bits_closure( RTLComponent ):
-    def construct( s ):
-      nbits = 2
-
-      Tin   = mk_bits( nbits )
-      s.in_ = InVPort( Tin )
-      Tout  = mk_bits( 1<<nbits )
-      s.out = OutVPort( Tout )
-
-      @s.update
-      def up_if():
-        if   s.in_ == Bits123( 0 ):
-          s.out = Tout( 1 ) | Tout( 1 )
-          s.out = Tout( 8 )
-        else:
-          s.out = Tout( 0 )
-
-  m = Foo_bits_closure()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_bits_value_closure():
-
-  class Foo_bits_value_closure( RTLComponent ):
-    def construct( s ):
-      nbits = 2
-
-      s.Tin  = mk_bits( nbits )
-      s.in_  = InVPort( s.Tin )
-      s.Tout = mk_bits( 1<<nbits )
-      s.out  = OutVPort( s.Tout )
-
-      s.one = 1
-      eight = 8
-
-      @s.update
-      def up_if():
-        if   s.in_ == Bits123( 0 ):
-          s.out = s.Tout( s.one ) | s.Tout( s.one )
-          s.out = s.Tout( eight )
-        else:
-          s.out = s.Tout( 0 )
-
-  m = Foo_bits_value_closure()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
-
-def test_bits_val_and_call():
-
-  class Foo_bits_val_call( RTLComponent ):
-    def construct( s ):
-      nbits = 2
-
-      s.Tin  = mk_bits( nbits )
-      s.in_  = InVPort( s.Tin )
-      s.Tout = mk_bits( 1<<nbits )
-      s.out  = OutVPort( s.Tout )
-
-      @s.func
-      def qnm( x ):
-        s.out = x
-
-      @s.update
-      def up_if():
-
-        if   s.in_ == s.Tin( 0 ):
-          s.out = s.Tout( 1 ) | s.Tout( 1 )
-
-        elif s.in_ == s.Tin( 1 ):
-          s.out = s.Tout( 2 ) & s.Tout( 2 )
-          s.out = ~s.Tout( 2 )
-
-        elif s.in_ == s.Tin( 2 ):
-          s.out = s.Tout( 4 ) < s.Tout( 3 )
-          s.out = s.Tout( 4 ) if s.in_ == s.Tin( 2 ) else s.Tout( 5 )
-
-        elif s.in_ == s.Tin( 3 ):
-          s.out = s.Tout( 8 )
-
-        else:
-          s.out = s.Tout( 0 )
-          qnm( s.Tout( 0 ) )
-
-  m = Foo_bits_val_call()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+#-------------------------------------------------------------------------
+# test_regincr
+#-------------------------------------------------------------------------
 
 def test_regincr():
-
   class RegIncr( RTLComponent ):
     def construct( s, width ):
       s.in_     = InVPort   ( width )
@@ -376,11 +79,21 @@ def test_regincr():
         s.out = s.reg_out + width( 1 )
 
   m = RegIncr( Bits8 )
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+  test_vec = [
+               'in              *out',
+    [            4,               0 ],
+    [            3,               5 ],
+    [            9,               4 ],
+    [    Bits8(-1),              10 ],
+    [            0,        Bits8(0) ],
+  ]
+  run_translation_test( m, test_vec )
 
-def test_regincr2():
+#-------------------------------------------------------------------------
+# test_regincr_2stage
+#-------------------------------------------------------------------------
 
+def test_regincr_2stage():
   class RegIncr( RTLComponent ):
     def construct( s, width ):
       s.in_     = InVPort   ( width )
@@ -412,8 +125,11 @@ def test_regincr2():
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
-def test_regincr_n():
+#-------------------------------------------------------------------------
+# test_regincr_nstage
+#-------------------------------------------------------------------------
 
+def test_regincr_n_stage():
   class RegIncr( RTLComponent ):
     def construct( s, width ):
       s.in_     = InVPort   ( width )
@@ -439,7 +155,7 @@ def test_regincr_n():
       s.reg_out = [ Wire( width ) for x in xrange(nstages+1)]
 
       s.reg_incrs = [ RegIncr( width )( in_ = s.reg_out[x], out = s.reg_out[x+1]) 
-      for x in xrange( nstages ) ]
+        for x in xrange( nstages ) ]
 
       @s.update
       def in_update(): 
@@ -453,95 +169,81 @@ def test_regincr_n():
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
-def test_sort():
+#-------------------------------------------------------------------------
+# test_sort
+#-------------------------------------------------------------------------
 
-  class MinMaxUnit( RTLComponent ):
-    def construct( s, width ):
-      s.in0       = InVPort   ( width )
-      s.in1       = InVPort   ( width )
-      s.out_min   = OutVPort  ( width )
-      s.out_max   = OutVPort  ( width )
+# def test_sort():
+  # from pclib.rtl.registers import Reg, RegRst 
 
-      @s.update
-      def output_update():
-        if s.in0 < s.in1:
-          s.out_min = s.in0
-          s.out_max = s.in1
-        else:
-          s.out_min = s.in1
-          s.out_max = s.in0
+  # class MinMaxUnit( RTLComponent ):
+    # def construct( s, width ):
+      # s.in0       = InVPort   ( width )
+      # s.in1       = InVPort   ( width )
+      # s.out_min   = OutVPort  ( width )
+      # s.out_max   = OutVPort  ( width )
 
-  class Reg( RTLComponent ):
-    def construct( s, width ):
-      s.in_       = InVPort     ( width )
-      s.out       = OutVPort    ( width )
+      # @s.update
+      # def output_update():
+        # if s.in0 < s.in1:
+          # s.out_min = s.in0
+          # s.out_max = s.in1
+        # else:
+          # s.out_min = s.in1
+          # s.out_max = s.in0
 
-      @s.update_on_edge
-      def output_update():
-        s.out = s.in_
+  # class Sort( RTLComponent ):
+    # def construct( s, width ):
+      # s.in_val    = InVPort   ( Bits1 )
+      # s.out_val   = OutVPort  ( Bits1 )
+      # s.in_       = [ InVPort( width ) for x in xrange(4) ]
+      # s.out       = [ OutVPort( width ) for x in xrange(4) ]
 
-  class RegRst( RTLComponent ):
-    def construct( s, width ):
-      s.in_       = InVPort     ( width )
-      s.out       = OutVPort    ( width )
+      # s.val_S0S1_out = Wire( Bits1 )
+      # s.val_S1S2_out = Wire( Bits1 )
 
-      s.reset     = InVPort     ( Bits1 )
+      # s.val_S0S1 = RegRst( Bits1 )( in_ = s.in_val, out = s.val_S0S1_out )
+      # s.elm_S0S1 = [ Reg( width )( in_ = s.in_[x] ) for x in xrange(4) ]
 
-      @s.update_on_edge
-      def output_update():
-        if s.reset:
-          s.out = 0
-        else:
-          s.out = s.in_
+      # s.minmax0_S1 = MinMaxUnit( width )(in0 = s.elm_S0S1[0].out, in1 = s.elm_S0S1[1].out)
+      # s.minmax1_S1 = MinMaxUnit( width )(in0 = s.elm_S0S1[2].out, in1 = s.elm_S0S1[3].out)
 
-  class Sort( RTLComponent ):
-    def construct( s, width ):
-      s.in_val    = InVPort   ( Bits1 )
-      s.out_val   = OutVPort  ( Bits1 )
-      s.in_       = [ InVPort( width ) for x in xrange(4) ]
-      s.out       = [ OutVPort( width ) for x in xrange(4) ]
+# #      s.minmax_S1_tmp = [ s.minmax0_S1.out_min, s.minmax0_S1.out_max, 
+# #                          s.minmax1_S1.out_min, s.minmax1_S1.out_max ]
+# #      s.elm_S1S2 = [ Reg( width )( in_ = s.minmax_S1_tmp[x] ) for x in xrange(4) ]
 
-      s.val_S0S1_out = Wire( Bits1 )
-      s.val_S1S2_out = Wire( Bits1 )
+      # s.val_S1S2 = RegRst( Bits1 )( in_ = s.val_S0S1_out, out = s.val_S1S2_out )
+      # s.elm_S1S2 = [ Reg(width)(in_ = s.minmax0_S1.out_min), Reg(width)(in_ = s.minmax0_S1.out_max), 
+                     # Reg(width)(in_ = s.minmax1_S1.out_min), Reg(width)(in_ = s.minmax1_S1.out_max)]
 
-      s.val_S0S1 = RegRst( Bits1 )( in_ = s.in_val, out = s.val_S0S1_out )
-      s.elm_S0S1 = [ Reg( width )( in_ = s.in_[x] ) for x in xrange(4) ]
+      # s.minmax0_S2 = MinMaxUnit( width )(in0 = s.elm_S1S2[0].out, in1 = s.elm_S1S2[2].out)
+      # s.minmax1_S2 = MinMaxUnit( width )(in0 = s.elm_S1S2[1].out, in1 = s.elm_S1S2[3].out)
 
-      s.minmax0_S1 = MinMaxUnit( width )(in0 = s.elm_S0S1[0].out, in1 = s.elm_S0S1[1].out)
-      s.minmax1_S1 = MinMaxUnit( width )(in0 = s.elm_S0S1[2].out, in1 = s.elm_S0S1[3].out)
+# #      s.minmax_S2_tmp = [ s.minmax0_S2.out_min, s.minmax0_S2.out_max, 
+# #                          s.minmax1_S2.out_min, s.minmax1_S2.out_max ]
+# #      s.elm_S2S3 = [ Reg( width )( in_ = s.minmax_S2_tmp[x] ) for x in xrange(4) ]
 
-#      s.minmax_S1_tmp = [ s.minmax0_S1.out_min, s.minmax0_S1.out_max, 
-#                          s.minmax1_S1.out_min, s.minmax1_S1.out_max ]
-#      s.elm_S1S2 = [ Reg( width )( in_ = s.minmax_S1_tmp[x] ) for x in xrange(4) ]
+      # s.val_S2S3 = RegRst( Bits1 )( in_ = s.val_S1S2_out, out = s.out_val )
+      # s.elm_S2S3 = [Reg(width)(in_ = s.minmax0_S2.out_min, out = s.out[0]), 
+                    # Reg(width)(in_ = s.minmax0_S2.out_max), 
+                    # Reg(width)(in_ = s.minmax1_S2.out_min), 
+                    # Reg(width)(in_ = s.minmax1_S2.out_max, out = s.out[3])]
 
-      s.val_S1S2 = RegRst( Bits1 )( in_ = s.val_S0S1_out, out = s.val_S1S2_out )
-      s.elm_S1S2 = [ Reg(width)(in_ = s.minmax0_S1.out_min), Reg(width)(in_ = s.minmax0_S1.out_max), 
-                     Reg(width)(in_ = s.minmax1_S1.out_min), Reg(width)(in_ = s.minmax1_S1.out_max)]
+      # s.minmax_S3 = MinMaxUnit( width )(in0 = s.elm_S2S3[1].out, in1 = s.elm_S2S3[2].out, 
+                                        # out_min = s.out[1], out_max = s.out[2] )
 
-      s.minmax0_S2 = MinMaxUnit( width )(in0 = s.elm_S1S2[0].out, in1 = s.elm_S1S2[2].out)
-      s.minmax1_S2 = MinMaxUnit( width )(in0 = s.elm_S1S2[1].out, in1 = s.elm_S1S2[3].out)
+# #      @s.update
+# #      def output_update():
+# #        s.out[0] = s.elm_S2S3[0].out
+# #        s.out[3] = s.elm_S2S3[3].out
 
-#      s.minmax_S2_tmp = [ s.minmax0_S2.out_min, s.minmax0_S2.out_max, 
-#                          s.minmax1_S2.out_min, s.minmax1_S2.out_max ]
-#      s.elm_S2S3 = [ Reg( width )( in_ = s.minmax_S2_tmp[x] ) for x in xrange(4) ]
+  # m = Sort( Bits32 )
+  # m.elaborate()
+  # SystemVerilogTranslationPass()( m )
 
-      s.val_S2S3 = RegRst( Bits1 )( in_ = s.val_S1S2_out, out = s.out_val )
-      s.elm_S2S3 = [Reg(width)(in_ = s.minmax0_S2.out_min, out = s.out[0]), 
-                    Reg(width)(in_ = s.minmax0_S2.out_max), 
-                    Reg(width)(in_ = s.minmax1_S2.out_min), 
-                    Reg(width)(in_ = s.minmax1_S2.out_max, out = s.out[3])]
-
-      s.minmax_S3 = MinMaxUnit( width )(in0 = s.elm_S2S3[1].out, in1 = s.elm_S2S3[2].out, 
-                                        out_min = s.out[1], out_max = s.out[2] )
-
-#      @s.update
-#      def output_update():
-#        s.out[0] = s.elm_S2S3[0].out
-#        s.out[3] = s.elm_S2S3[3].out
-
-  m = Sort( Bits32 )
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+#-------------------------------------------------------------------------
+# test_gcd
+#-------------------------------------------------------------------------
 
 # def test_gcd():
 
@@ -636,9 +338,7 @@ def test_sort():
       # # )
 
       # # B mux
-
       # con_helper_b_mux = {}
-
       # con_helper_b_mux[ B_MUX_SEL_IN ] = s.req_msg_b
       # con_helper_b_mux[ B_MUX_SEL_SUB ] = s.sub_out
 

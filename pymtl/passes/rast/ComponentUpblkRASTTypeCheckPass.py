@@ -43,9 +43,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     s.tmp_var_type_env = {}
 
-    s.BinOp_same_type = ( 
-      Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor 
-    )
+    s.BinOp_max_nbits = ( Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr,
+        BitXor )
+
+    s.BinOp_left_nbits = ( ShiftLeft, ShiftRightLogic )
 
     #---------------------------------------------------------------------
     # The expected evaluation result types for each type of RAST node
@@ -56,10 +57,16 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     lhs_types = ( Signal, Array )
 
     s.type_expect[ 'Assign' ] = {
-      'target' : ( lhs_types, 'lhs of assignment must be signal/array!' )
+      'target' : ( lhs_types, 'lhs of assignment must be signal/array!' ),
+      'value' : ( (Const,Signal), 'rhs of assignment should be signal/const!' )
     }
     s.type_expect[ 'AugAssign' ] = {
-      'target' : ( lhs_types, 'lhs of assignment must be signal/array!' )
+      'target' : ( lhs_types, 'lhs of assignment must be signal/array!' ),
+      'value' : ( (Const,Signal), 'rhs of assignment should be signal/const!' )
+    }
+    s.type_expect[ 'BinOp' ] = {
+      'left' : ( (Const,Signal), 'lhs of binop should be signal/const!' ),
+      'right' : ( (Const,Signal), 'rhs of binop should be signal/const!' ),
     }
     s.type_expect[ 'For' ] = {
       'start' : ( Const, 'the start of a for-loop must be a constant expression!' ),
@@ -71,7 +78,7 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     }
     s.type_expect[ 'Index' ] = {
       'value':( Array, 'the base of an index must be an array!' ),
-      'idx':( Const, 'index must be a constant expression!' )
+      'idx':( (Const, Signal), 'index must be a constant expression or a signal!' )
     }
     s.type_expect[ 'Slice' ] = {
       'value':( Signal, 'the base of a slice must be a signal!' ),
@@ -153,6 +160,8 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
         if eval( 'not isinstance( value.Type, target_type )' ):
           raise PyMTLTypeError( s.blk, node, exception_msg )
 
+    except PyMTLTypeError:
+      raise
     except:
       # This node does not require type checking on child nodes
       pass
@@ -201,18 +210,18 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     r_nbits = value.Type.nbits
 
     # +-&|^ require the same bit width
-    if isinstance( op, s.BinOp_same_type ):
-      if not lhs_type( rhs_type ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
-        )
+    # if isinstance( op, s.BinOp_same_type ):
+      # if not lhs_type( rhs_type ):
+        # raise PyMTLTypeError(
+          # s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
+        # )
 
     # << and >> do not require the same bit width
-    elif isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
-      if not isinstance( value.Type, const ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'rhs of shift opertions must be constant!'
-        )
+    # elif isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
+      # if not isinstance( value.Type, const ):
+        # raise PyMTLTypeError(
+          # s.blk, node.ast, 'rhs of shift opertions must be constant!'
+        # )
 
     node.Type = None
 
@@ -242,7 +251,8 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Number( s, node ):
-    node.Type = Const( True, 0, node.value )
+    # By default, number literals have bitwidth of 32
+    node.Type = Const( True, 32, node.value )
 
   #-----------------------------------------------------------------------
   # visit_Bitwidth
@@ -272,7 +282,7 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_LoopVar( s, node ):
-    node.Type = Const( False, 0 )
+    node.Type = Const( False, 32 )
 
   #-----------------------------------------------------------------------
   # visit_FreeVar
@@ -355,20 +365,14 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     l_nbits = node.left.Type.nbits
     r_nbits = node.right.Type.nbits
 
-    # +-&|^ require the same bit width
-    if isinstance( op, s.BinOp_same_type ):
-      if l_nbits != 0 and r_nbits != 0 and l_nbits != r_nbits:
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'rhs and lhs of BinOp must have the same nbits!'
-        )
-      res_nbits = r_nbits if l_nbits == 0 else l_nbits
+    # Enforcing Verilog bitwidth inference rules
 
-    # << and >> require RHS to constant
-    elif isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
-      if not isinstance( node.right.Type, Const ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'rhs of shift opertions must be constant!'
-        )
+    res_nbits = 0
+
+    if isinstance( op, s.BinOp_max_nbits ):
+      res_nbits = max( l_nbits, r_nbits )
+
+    elif isinstance( op, s.BinOp_left_nbits ):
       res_nbits = l_nbits
 
     else:
@@ -420,12 +424,19 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Index( s, node ):
-    # Check whether the index is in the range of the array
-    if node.idx.Type.is_static:
-      if not ( 0 <= node.idx.Type.value <= node.value.Type.length ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'array index out of range!'
-        )
+    if isinstance( node.idx.Type, Const ):
+      # If the index is a constant expression, it is possible to do static
+      # range check.
+      # Check whether the index is in the range of the array
+      if node.idx.Type.is_static:
+        if not ( 0 <= node.idx.Type.value <= node.value.Type.length ):
+          raise PyMTLTypeError(
+            s.blk, node.ast, 'array index out of range!'
+          )
+
+    else:
+      # This is a Signal type. No further static checking can be done
+      pass
 
     # The result type should be array.Type
     node.Type = node.value.Type.Type

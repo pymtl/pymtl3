@@ -13,7 +13,7 @@ import os, re, sys, shutil
 from subprocess   import check_output, STDOUT, CalledProcessError
 
 from pymtl        import *
-from pymtl.passes import BasePass
+from pymtl.passes import BasePass, PassMetadata
 
 from errors       import VerilatorCompileError, PyMTLImportError
 
@@ -51,6 +51,8 @@ class SimpleImportPass( BasePass ):
       raise PyMTLImportError( model.__class__.__name__,
         'the target model instance should be translated first!' 
       )
+
+    model._pass_simple_import = PassMetadata()
 
     # Assume the input verilog file and the top module has the same name 
     # as the class name of model
@@ -115,7 +117,7 @@ class SimpleImportPass( BasePass ):
 
       exec( import_cmd )
 
-    model.imported_model = ImportedModel()
+    model._pass_simple_import.imported_model = ImportedModel()
 
   #-----------------------------------------------------------------------
   # create_verilator_model
@@ -455,6 +457,10 @@ class SimpleImportPass( BasePass ):
 
     ret = []
 
+    # Disable sense_group usage for now...
+
+    sense_group = None
+
     if sense_group is None:
       for port in model.get_input_value_ports():
         if port._dsl.my_name == 'clk':
@@ -474,13 +480,13 @@ class SimpleImportPass( BasePass ):
       ) )
 
     else:
-      # Generate one upblk for each sensitive group
+      # Generate one upblk for each sensitivity group
       for idx, ( out, in_ ) in enumerate( sense_group ):
         set_inputs = []
         set_comb = []
         
         for in_port in in_:
-          set_inputs.extend( s.set_input_stmt( model.__dict__[ in_port ], array_dict ) )
+          set_inputs.extend( s.set_input_stmt( model.__dict__[ in_port[1:] ], array_dict ) )
         for out_port in out:
           comb = s.set_output_stmt( model.__dict__[ out_port ], array_dict )
           set_comb.extend( comb )
