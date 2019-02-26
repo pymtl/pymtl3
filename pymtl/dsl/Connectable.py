@@ -296,7 +296,7 @@ class MethodPort( NamedObject, Connectable ):
 
   def __init__( self ):
     self.method = None
-    self.rdy    = lambda : True
+    self.rdy    = None 
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
@@ -316,6 +316,7 @@ class MethodPort( NamedObject, Connectable ):
 class CallerPort( MethodPort ):
   def __init__( self ):
     self.method = None
+    self.rdy    = None
 
   def is_callee_port( s ):
     return False
@@ -327,6 +328,7 @@ class CallerPort( MethodPort ):
 class CalleePort( MethodPort ):
   def __init__( self, method=None ):
     self.method = method
+    self.rdy    = lambda : True
 
   def is_callee_port( s ):
     return True
