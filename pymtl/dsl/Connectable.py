@@ -296,6 +296,7 @@ class MethodPort( NamedObject, Connectable ):
 
   def __init__( self ):
     self.method = None
+    self.rdy    = lambda : True
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
