@@ -4,7 +4,8 @@
 
 module RAST
 {
-  mod  = CombUpblk( string name, stmt* body )
+  upblk = CombUpblk( string name, stmt* body )
+        | SeqUpblk( string name, stmt* body )
 
   stmt = Assign( expr target, expr value )
        | AugAssign( expr target, operator op, expr value )

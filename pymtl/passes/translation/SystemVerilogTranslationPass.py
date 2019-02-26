@@ -93,7 +93,7 @@ class SystemVerilogTranslationPass( BasePass ):
     # Recursively translate the top component
 
     ret = HierarchyTranslationPass(
-      {},
+      [],
       type_env,
       connections_self_self, 
       connections_self_self,

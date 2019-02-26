@@ -7,8 +7,13 @@
 # 
 # Author : Shunning Jiang
 
-from pymtl     import *
-from pclib.rtl import Adder
+import pytest
+
+from pymtl                    import *
+from pclib.rtl                import Adder, Subtractor
+from pymtl.passes.translation import SystemVerilogTranslationPass
+from pymtl.passes.test        import expected_failure
+from pymtl.passes.rast.errors import PyMTLSyntaxError, PyMTLTypeError
 
 def test_wrapped_noconnect_adder():
   class Adder_wrap_noc( RTLComponent ):
@@ -195,12 +200,13 @@ def test_bits_type():
           s.out = Bits4( 1 ) | Bits4( 2 )
           s.out = Bits4( 8 )
         else:
-          s.out = Bits1( 0 )
+          s.out = Bits1( 0 ) # is this an error!
           s.out = Bits4( 1 )
 
-  m = Foo_bits()
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+  with expected_failure( PyMTLTypeError ):
+    m = Foo_bits()
+    m.elaborate()
+    SystemVerilogTranslationPass()( m )
 
 def test_bits_type_in_self():
   class Foo_bits_s( RTLComponent ):
@@ -272,6 +278,7 @@ def test_bits_value_closure():
   m.elaborate()
   SystemVerilogTranslationPass()( m )
 
+@pytest.mark.xfail( reason = 'Needs unimplemented task support' )
 def test_bits_val_and_call():
   class Foo_bits_val_call( RTLComponent ):
     def construct( s ):
@@ -283,7 +290,7 @@ def test_bits_val_and_call():
       s.out  = OutVPort( s.Tout )
 
       @s.func
-      def qnm( x ):
+      def foo( x ):
         s.out = x
 
       @s.update
@@ -304,7 +311,7 @@ def test_bits_val_and_call():
 
         else:
           s.out = s.Tout( 0 )
-          qnm( s.Tout( 0 ) )
+          foo( s.Tout( 0 ) )
 
   m = Foo_bits_val_call()
   m.elaborate()

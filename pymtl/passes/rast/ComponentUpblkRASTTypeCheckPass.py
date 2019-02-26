@@ -209,20 +209,6 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     l_nbits = target.Type.nbits
     r_nbits = value.Type.nbits
 
-    # +-&|^ require the same bit width
-    # if isinstance( op, s.BinOp_same_type ):
-      # if not lhs_type( rhs_type ):
-        # raise PyMTLTypeError(
-          # s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
-        # )
-
-    # << and >> do not require the same bit width
-    # elif isinstance( op, ( ShiftLeft, ShiftRightLogic ) ):
-      # if not isinstance( value.Type, const ):
-        # raise PyMTLTypeError(
-          # s.blk, node.ast, 'rhs of shift opertions must be constant!'
-        # )
-
     node.Type = None
 
   #-----------------------------------------------------------------------

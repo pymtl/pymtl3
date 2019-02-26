@@ -9,13 +9,12 @@
 import re, inspect
 
 from pymtl                         import *
-from pymtl.dsl                     import ComponentLevel1
 from pymtl.passes                  import BasePass, PassMetadata
 from pymtl.passes.Helpers          import make_indent
-from pymtl.passes.rast             import get_type
 
 from errors                        import TranslationError
 from ComponentUpblkTranslationPass import ComponentUpblkTranslationPass
+from Helpers                       import generate_signal_decl, collect_ports
 
 class ComponentTranslationPass( BasePass ):
 
@@ -80,25 +79,18 @@ endmodule
     signal_decl_str = { 'input':[], 'output':[], 'wire':[] }
     signal_prefix = { 'input' : 'input', 'output' : 'output', 'wire' : '' }
     
-    # First collect all input/output ports
-    signals['input'] = s.collect_ports( m, InVPort )
-    signals['output'] = s.collect_ports( m, OutVPort )
-    signals['wire'] = s.collect_ports( m, Wire )
+    # First collect all input/output ports and wires
+    signals['input'] = collect_ports( m, InVPort )
+    signals['output'] = collect_ports( m, OutVPort )
+    signals['wire'] = collect_ports( m, Wire )
 
     # For in/out ports, generate and append their declarations to the list
     for prefix in [ 'input', 'output', 'wire' ]:
       for name, port in signals[ prefix ]:
 
-        type_str = get_type( port ).type_str()
-
         signal_decl_str[ prefix ].append(
-          '{prefix} {dtype} {vec_size} {name} {dim_size}'.format(
-            prefix = signal_prefix[ prefix ],
-            dtype = type_str[ 'dtype' ],
-            vec_size = type_str[ 'vec_size' ],
-            name = name,
-            dim_size = type_str[ 'dim_size' ]
-        ) )
+          signal_prefix[ prefix ] + ' ' + generate_signal_decl( name, port )
+        )
 
     input_decls = ',\n  '.join( signal_decl_str[ 'input' ] )
 
@@ -128,28 +120,19 @@ endmodule
       connection_wire = { 'input':[], 'output':[] }
       
       # First collect all input/output ports
-      ifcs['input'] = s.collect_ports( c, InVPort )
-      ifcs['output'] = s.collect_ports( c, OutVPort )
+      ifcs['input'] = collect_ports( c, InVPort )
+      ifcs['output'] = collect_ports( c, OutVPort )
 
       # For in/out ports, generate and append their declarations to the list
       for prefix in [ 'input', 'output' ]:
         for name, port in ifcs[ prefix ]:
 
-          fname = name
-
-          type_str = get_type( port ).type_str()
-
           ifcs_decl_str[ prefix ].append(
-            '{dtype} {vec_size} {fname}${name} {dim_size};'.format(
-              dtype = type_str[ 'dtype' ],
-              vec_size = type_str[ 'vec_size' ],
-              fname = child_name,
-              name = fname,
-              dim_size = type_str[ 'dim_size' ]
-          ) )
+            generate_signal_decl( child_name + '$' + name, port ) + ';'
+          )
 
           connection_wire[ prefix ].append(
-            '  .{0:6}( {1}${0} ),'.format( fname, child_name )
+            '  .{0:6}( {1}${0} ),'.format( name, child_name )
           )
 
       child_strs.extend( ifcs_decl_str[ 'input' ] )
@@ -247,26 +230,4 @@ endmodule
 
     m._pass_component_translation.component_src = ret
 
-    return ret
-
-  #-------------------------------------------------------------------------
-  # collect_ports
-  #-------------------------------------------------------------------------
-
-  def collect_ports( s, m, Type ):
-    """Return a list of members of m that are or include Type ports"""
-
-    def is_of_type( obj, Type ):
-      """Is obj Type or contains Type?"""
-      if isinstance( obj, Type ):
-        return True
-      if isinstance( obj, list ):
-        return reduce( lambda x, y: x and is_of_type( y, Type ), obj, True )
-      return False
-
-    ret = []
-    for name, obj in m.__dict__.iteritems():
-      if isinstance( name, basestring ) and not name.startswith( '_' ):
-        if is_of_type( obj, Type ):
-          ret.append( ( name, obj ) )
     return ret

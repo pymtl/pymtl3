@@ -26,6 +26,24 @@ class CombUpblk( BaseRAST ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
+class SeqUpblk( BaseRAST ):
+  def __init__( s, name, body ):
+    s.name = name
+    s.body = body
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    if s.name != other.name:
+      return False
+    for x, y in zip( s.body, other.body ):
+      if x != y:
+        return False
+    return True
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
 class Assign( BaseRAST ):
   def __init__( s, target, value ):
     s.target = target

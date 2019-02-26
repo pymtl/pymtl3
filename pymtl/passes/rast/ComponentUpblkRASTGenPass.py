@@ -26,9 +26,16 @@ class ComponentUpblkRASTGenPass( BasePass ):
 
     visitor = UpblkRASTGenVisitor( m )
 
-    for blk in m.get_update_blocks():
-      m._pass_component_upblk_rast_gen.rast[ blk ] =\
-        visitor.enter( blk, m.get_update_block_ast( blk ) )
+    upblks = {
+      'CombUpblk' : m.get_update_blocks() - m.get_update_on_edge(),
+      'SeqUpblk'  : m.get_update_on_edge()
+    }
+
+    for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
+      for blk in upblks[ upblk_type ]:
+        visitor._upblk_type = upblk_type
+        m._pass_component_upblk_rast_gen.rast[ blk ] =\
+          visitor.enter( blk, m.get_update_block_ast( blk ) )
 
 #-------------------------------------------------------------------------
 # UpblkRASTGenVisitor
@@ -119,10 +126,9 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
         s.blk, node, 'Update blocks should not have arguments!' 
       )
 
-    # Assume this is a combinational update blocks
-    # Maybe sequential or other upblks should be collected in different
-    # passes?
-    ret = CombUpblk( node.name, [] )
+    # Get the type of upblk from ._upblk_type variable
+
+    ret = eval( s._upblk_type + '( node.name, [] )' )
 
     for stmt in node.body:
       ret.body.append( s.visit( stmt ) )

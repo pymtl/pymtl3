@@ -1,5 +1,5 @@
 #=========================================================================
-# V{top_module}_v.py
+# V{top_name}_v.py
 #=========================================================================
 # This wrapper makes a Verilator-generated C++ model appear as if it
 # were a normal PyMTL model. This template is based on PyMTL v2.
@@ -11,9 +11,9 @@ from cffi  import FFI
 from pymtl import *
 
 #-------------------------------------------------------------------------
-# {top_module}
+# {top_name}
 #-------------------------------------------------------------------------
-class {top_module}( RTLComponent ):
+class {top_name}( RTLComponent ):
   id_ = 0
 
   def __init__( s ):
@@ -29,11 +29,11 @@ class {top_module}( RTLComponent ):
         // Verilator model
         void * model;
 
-      }} V{top_module}_t;
+      }} V{top_name}_t;
 
-      V{top_module}_t * create_model();
-      void destroy_model( V{top_module}_t *);
-      void eval( V{top_module}_t * );
+      V{top_name}_t * create_model();
+      void destroy_model( V{top_name}_t *);
+      void eval( V{top_name}_t * );
 
     ''')
 
@@ -48,7 +48,7 @@ class {top_module}( RTLComponent ):
       # flip = False
 
     # increment instance count
-    {top_module}.id_ += 1
+    {top_name}.id_ += 1
 
   def __del__( s ):
     # s._ffi_inst.destroy_model( s._ffi_m )
@@ -66,22 +66,15 @@ class {top_module}( RTLComponent ):
     s._ffi_m = s._ffi_inst.create_model()
 
     # define the port interface
-    {port_defs}
+{port_defs}
 
-{comb_upblks}
+    {comb_upblks}
+    
+    {readout_upblks}
 
-    # The support for sequential logics will be added later.
-    # @s.update_on_edge
-    # def tick():
-
-      # s._ffi_m.clk[0] = 0
-      # s._ffi_inst.eval( s._ffi_m )
-      # s._ffi_m.clk[0] = 1
-      # s._ffi_inst.eval( s._ffi_m )
-
-      # # double buffer register outputs
-      # # FIXME: currently treat all outputs as combinational outs
     {seq_upblk}
+
+    {constraints}
 
   def line_trace( s ):
     return {line_trace}

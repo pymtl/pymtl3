@@ -17,6 +17,7 @@ from pymtl.passes             import BasePass
 from pymtl.passes.Helpers     import make_indent
 from pymtl.passes.rast        import get_type
 
+from Helpers                  import *
 from errors                   import TranslationError
 from ComponentTranslationPass import ComponentTranslationPass
 
@@ -37,19 +38,27 @@ class HierarchyTranslationPass( BasePass ):
     """ translates a single RTLComponent instance and returns its source """
 
     # Check if this component has been translated
-    if m in s.translated: return s.translated[ m ]
+
+    params = get_model_parameters( m )
+
+    for cls, param in s.translated:
+      if cls == type( m ) and is_param_equal( param, params ):
+        return ''
 
     # Translate component m
     ret = s.component_translator( m )
 
     # Mark this component as translated
-    s.translated[ m ] = ''
+    s.translated.append( [ type(m), params ] )
 
     # Recursively translate all sub-components
     for obj in sorted( m.get_child_components(), key = repr ):
       ret += s.__call__( obj )
 
     # Update the full string for this component
-    s.translated[ m ] = ret
+    
+    # FIXME: this is not correct. there should be only be 1 implementation
+    # for each unique TYPE of the model. This means we need to check
+    # equity based on class and its parameters.
 
     return ret

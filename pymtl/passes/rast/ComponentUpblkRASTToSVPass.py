@@ -15,7 +15,7 @@ from RASTType             import *
 
 class ComponentUpblkRASTToSVPass( BasePass ):
   def __call__( s, m ):
-    """Translate all RAST in rast to a list of strings."""
+    """Translate all upblk in m to a list of strings."""
 
     m._pass_component_upblk_rast_to_sv = PassMetadata()
 
@@ -103,6 +103,36 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
 
     # Add name of the upblk to this always block
     src.extend( [ 'always_comb begin : {blk_name}'.format(
+      blk_name = blk_name
+    ) ] )
+    
+    for stmt in node.body:
+      body.extend( s.visit( stmt ) )
+
+    make_indent( body, 1 )
+    src.extend( body )
+
+    src.extend( [ 'end' ] )
+
+    s.upblk_type = s.NONE
+
+    return src
+
+  #-----------------------------------------------------------------------
+  # visit_SeqUpblk
+  #-----------------------------------------------------------------------
+  # SeqUpblk concatenates string representation of statements inside it
+  # and return the result string.
+
+  def visit_SeqUpblk( s, node ):
+    blk_name = node.name
+    src      = []
+    body     = []
+
+    s.upblk_type = s.SEQUENTIAL
+
+    # Add name of the upblk to this always block
+    src.extend( [ 'always_ff @(posedge clk) begin : {blk_name}'.format(
       blk_name = blk_name
     ) ] )
     

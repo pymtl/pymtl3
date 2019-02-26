@@ -24,14 +24,20 @@ class BaseRASTType( object ):
 # Signal expressions are used for slicing, index, attribute, etc.
 
 class Signal( BaseRASTType ):
-  def __init__( s, nbits ):
+  def __init__( s, nbits, py_type = 'Wire' ):
     super( Signal, s ).__init__()
     s.nbits = nbits
+    s.py_type = py_type
 
   def type_str( s ):
     ret = {
-        'dtype' : 'logic', 'vec_size' : '[{}:{}]'.format( s.nbits-1, 0 ),
-        'dim_size' : ''
+        'dtype'      : 'logic',
+        'py_type'    : s.py_type,
+        'vec_size'   : '[{}:{}]'.format( s.nbits-1, 0 ),
+        'nbits'      : s.nbits,
+        'dim_size'   : '',
+        'c_dim_size' : '',
+        'n_dim_size' : [],
     }
     return ret
 
@@ -67,13 +73,17 @@ class Array( BaseRASTType ):
     s.Type = Type
 
   def type_str( s ):
-    ret = {
-    }
     sub_type_str = s.Type.type_str()
-    ret[ 'dtype' ] = sub_type_str[ 'dtype' ]
-    ret[ 'dim_size' ] =\
-      '[{}:{}]'.format( 0, s.length-1 ) + sub_type_str[ 'dim_size' ]
-    ret[ 'vec_size' ] = sub_type_str[ 'vec_size' ]
+    ret = {
+      'dtype'      : sub_type_str[ 'dtype' ],
+      'py_type'    : sub_type_str[ 'py_type' ],
+      'vec_size'   : sub_type_str[ 'vec_size' ],
+      'nbits'      : sub_type_str[ 'nbits' ],
+      'dim_size'   : \
+        '[{}:{}]'.format( 0, s.length-1 ) + sub_type_str[ 'dim_size' ],
+      'c_dim_size' : '[{}]'.format( s.length ) + sub_type_str[ 'c_dim_size' ],
+      'n_dim_size' : [ s.length ] + sub_type_str[ 'n_dim_size' ]
+    }
 
     return ret
 
@@ -244,7 +254,7 @@ def get_type( obj ):
       assert False, 'signal instance' + str(obj) + \
          ' must have Bits as their .Type field'
 
-    return Signal( nbits )
+    return Signal( nbits, obj.__class__.__name__ )
 
   # integers have unset bitwidth (0) 
   elif isinstance( obj, int ):

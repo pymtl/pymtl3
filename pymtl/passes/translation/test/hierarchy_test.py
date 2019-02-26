@@ -7,6 +7,10 @@
 # Author : Shunning Jiang, Peitian Pan
 # Date   : Feb 21, 2019
 
+from pymtl import *
+from pymtl.passes.test import expected_failure
+from pymtl.dsl.errors import SignalTypeError
+
 def test_deep_connection():
   class Deep( RTLComponent ):
     def construct( s ):
@@ -27,7 +31,6 @@ def test_deep_connection():
       s.foo = InVPort( Bits1 )
       s.connect( s.foo, s.bar.deep.deep )
 
-  run_translation_test( Foo )
-
-  foo = Foo()
-  foo.elaborate() # Should fail because the connection is too deep
+  with expected_failure( SignalTypeError ):
+    foo = Foo()
+    foo.elaborate() # Should fail because the connection is too deep

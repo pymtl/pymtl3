@@ -63,6 +63,27 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'body[{idx}]'.format(idx = i) )
       s.visit( f )
 
+  def visit_SeqUpblk( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">SeqUpblk</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, BaseRASTType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in node.Type.__dict__.iteritems():
+        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
+
+    s.g.node( str( s.cur ), label = label )
+    for i, f in enumerate(node.body):
+      s.g.edge( str(local_cur), str(s.cur+1), label = 'body[{idx}]'.format(idx = i) )
+      s.visit( f )
+
   def visit_Assign( s, node ):
     s.cur += 1
     local_cur = s.cur
