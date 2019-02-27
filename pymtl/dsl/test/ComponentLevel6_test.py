@@ -145,7 +145,8 @@ class SimpleQueue( ComponentLevel6 ):
 
     # TODO: Improve this
     s.add_constraints(
-      M( s.deq.method ) < M( s.enq.method ),
+      # M( s.deq.method ) < M( s.enq.method ),
+      M( s.deq ) < M( s.enq ),
       # M( s.deq.rdy ) < M( s.enq.rdy )
     )
 
@@ -160,10 +161,11 @@ class SimpleQueue( ComponentLevel6 ):
   def deq( s ):
     ret = s.element
     s.element = None
-    return ret
+    return ret 
   
   def line_trace( s ):
-    return "{}".format( "    " if s.element is None else str( s.element ) )
+    return "{}".format( 
+      "    " if s.element is None else str( s.element ) )
 
 # Test the SimpleQueue as a SW data structure. 
 
@@ -210,11 +212,41 @@ class QueueIncr( ComponentLevel6 ):
   def line_trace( s ):
     return "{} (+) {}".format( s.queue.line_trace(), s.v )
 
-# Test the QueueIncr as a CL model.
+#-------------------------------------------------------------------------
+# QueueIncrChained
+#-------------------------------------------------------------------------
+
+class QueueIncrChained( ComponentLevel6 ):
+
+  def construct( s ):
+    
+    s.recv = CalleePort()
+    s.send = CallerPort()
+
+    s.q0 = QueueIncr()
+    s.q1 = QueueIncr()
+
+    s.connect( s.recv,    s.q0.recv )
+    s.connect( s.q0.send, s.q1.recv )
+    s.connect( s.q1.send, s.send    )
+
+  def line_trace( s ):
+    return "{} -> {}".format( s.q0.line_trace(), s.q1.line_trace() )
+
+#-------------------------------------------------------------------------
+# CL tests
+#-------------------------------------------------------------------------
 
 def test_queue_incr_cl():
   q    = QueueIncr() 
   src_msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
   sink_msgs = [ Bits16( 1 ), Bits16( 2 ), Bits16( 3 ), Bits16( 4 ) ]
+  th = TestHarness( q, src_msgs, sink_msgs )
+  run_cl_sim( th )
+
+def test_chained_queue_incr_cl():
+  q    = QueueIncrChained() 
+  src_msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
+  sink_msgs = [ Bits16( 2 ), Bits16( 3 ), Bits16( 4 ), Bits16( 5 ) ]
   th = TestHarness( q, src_msgs, sink_msgs )
   run_cl_sim( th )
