@@ -206,9 +206,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         for member in net:
           if member is not writer:
             assert member.method is None
-            print "="*30
-            print "Setting method and rdy!!! 5" 
-            print "="*30
+            print "="*60
+            print "Setting method and rdy for ", member, " ( level 5 )" 
+            print "="*60
             member.method = writer.method
             member.rdy    = writer.rdy
 
@@ -236,10 +236,15 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
-      pred[ y ].add( x )
-      succ[ x ].add( y )
+      xx = x.method if isinstance( x, MethodPort ) else x
+      yy = y.method if isinstance( y, MethodPort ) else y
+      pred[ yy ].add( xx )
+      succ[ xx ].add( yy )
+    # for (x, y) in s._dsl.all_M_constraints:
+    #   pred[ y ].add( x )
+    #   succ[ x ].add( y )
 
-    verbose = False
+    verbose = False 
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
