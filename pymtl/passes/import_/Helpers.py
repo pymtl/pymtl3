@@ -233,7 +233,7 @@ def generate_comb_upblks_py( ports, ssg ):
       if in_port.startswith( ('C', 'B') ):
         inports.append( in_port[1:] )
 
-    if not inports is []:
+    if len( inports ) != 0:
       comb_ssg.append( ( inports, out, idx ) )
 
   # Purely sequential models do not need combinational blocks
@@ -374,3 +374,10 @@ def get_indices( port ):
     ( i, '[{}:{}]'.format( i*32, min( i*32+32, nbits ) ) ) \
     for i in range(num_assigns)
   ]
+
+#-------------------------------------------------------------------------
+# get_verilog_name
+#-------------------------------------------------------------------------
+
+def get_verilog_name( name ):
+  return name.replace( '[', '__' ).replace( ']', '__' )

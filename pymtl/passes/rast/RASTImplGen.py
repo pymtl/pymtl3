@@ -91,7 +91,10 @@ class {constr_name}( BaseRAST ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{{' + str( obj ) + '}}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail){label_trail}
 

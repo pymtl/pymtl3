@@ -54,7 +54,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
 
@@ -75,7 +78,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
 
@@ -96,7 +102,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -118,7 +127,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -142,7 +154,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -168,7 +183,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -197,7 +215,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(value=node.value)
 
@@ -215,7 +236,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(nbits=node.nbits)
 
@@ -235,7 +259,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -259,7 +286,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -281,7 +311,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -304,7 +337,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -328,7 +364,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -352,7 +391,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(attr=node.attr)
 
@@ -372,7 +414,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -394,7 +439,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -418,7 +466,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(base=node.base)
 
@@ -436,7 +487,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
 
@@ -454,7 +508,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name, obj=node.obj)
 
@@ -472,7 +529,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
 
@@ -490,7 +550,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail).format(name=node.name)
 
@@ -508,7 +571,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -526,7 +592,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -544,7 +613,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -562,7 +634,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -580,7 +655,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -598,7 +676,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -616,7 +697,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -634,7 +718,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -652,7 +739,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -670,7 +760,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -688,7 +781,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -706,7 +802,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -724,7 +823,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -742,7 +844,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -760,7 +865,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -778,7 +886,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -796,7 +907,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -814,7 +928,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -832,7 +949,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -850,7 +970,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -868,7 +991,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -886,7 +1012,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 
@@ -904,7 +1033,10 @@ class RASTVisualizationVisitor( RASTNodeVisitor ):
     if isinstance( node.Type, BaseRASTType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in node.Type.__dict__.iteritems():
-        table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + str( obj ) + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + str( obj ) + '}</TD></TR>'
 
     label = (table_header + table_body + table_opt + table_trail)
 

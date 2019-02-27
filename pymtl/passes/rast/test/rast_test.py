@@ -6,6 +6,8 @@
 # Author : Peitian Pan
 # Date   : Feb 2, 2019
 
+import pytest
+
 from pymtl                    import *
 from pymtl.passes.rast.RAST   import *
 from pymtl.passes.rast.errors import PyMTLTypeError
@@ -53,10 +55,12 @@ def test_index_basic( do_test ):
   ] ) }
 
   a._test_vector = [
-                                   'in_                              *out',
-    [                   [ 0, 1, 2, 3 ],                         [ 1, 5 ] ],
-    [ [ Bits16(-1), 1, Bits16(-1), 1 ],                         [ 0, 0 ] ],
-    [                   [ 9, 8, 7, 6 ],                       [ 17, 13 ] ],
+          'in_[0]     in_[1]    in_[2]    in_[3]    *out[0]     *out[1]',
+    [     Bits16,    Bits16,   Bits16,   Bits16,    Bits16,     Bits16 ],
+
+    [          0,         1,        2,        3,         1,          5 ],
+    [ Bits16(-1),         1, Bits16(-1),      1,         0,          0 ],
+    [          9,         8,        7,        6,        17,         13 ],
   ]
 
   do_test( a )
@@ -86,7 +90,9 @@ def test_mismatch_width_assign( do_test ):
     ] ) }
 
     a._test_vector = [
-                  'in_              *out',
+                  'in_             *out',
+      [        Bits16,           Bits8 ],
+
       [             0,               0 ],
       [             2,               2 ],
       [    Bits16(-1),       Bits8(-1) ],
@@ -100,6 +106,7 @@ def test_mismatch_width_assign( do_test ):
 # test_slicing_basic
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail
 def test_slicing_basic( do_test ):
   class slicing_basic( RTLComponent ):
     def construct( s ):
@@ -121,7 +128,9 @@ def test_slicing_basic( do_test ):
   ] ) }
 
   a._test_vector = [
-                'in_              *out',
+                'in_             *out',
+    [        Bits32,          Bits64 ],
+
     [             0,               0 ],
     [             2, Bits64(0x20000) ],
     [    Bits32(-1),      Bits64(-1) ],
@@ -154,11 +163,12 @@ def test_bits_basic( do_test ):
 
   a._test_vector = [
                 'in_              *out',
+    [        Bits16,           Bits16 ],
     [             0,               10 ],
     [             2,               12 ],
     [    Bits16(-1),        Bits16(9) ],
     [    Bits16(-2),        Bits16(8) ],
-    [ Bits16(32767),   Bits16(-32758) ],
+    [Bits16(0x7FFF),   Bits16(0x8009) ],
   ]
 
   do_test( a )
@@ -167,6 +177,7 @@ def test_bits_basic( do_test ):
 # test_index_bits_slicing
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail
 def test_index_bits_slicing( do_test ):
   class index_bits_slicing( RTLComponent ):
     def construct( s ):
@@ -210,9 +221,12 @@ def test_index_bits_slicing( do_test ):
   ] ) }
 
   a._test_vector = [
-                                                       'in_                                *out',
-    [ [ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 ], [ 265, 511, 0, 0, 0, 0, 0, 0, 0, 0 ] ],
-    [ [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ], [ 10, 1, 0, 0, 0, 0, 0, 0, 0, 0 ] ]
+      'in_[0] in_[1] in_[2] in_[3] in_[4] in_[5] in_[6] in_[7] in_[8] in_[9]\
+          *out[0] *out[1] *out[2] *out[3] *out[4]',
+    [ Bits16 ] * 15,
+
+    [ 255 ] * 10 + [ 265, 511, 0, 0, 0 ],
+    [ 0 ] * 10 + [ 10, 1, 0, 0, 0 ],
   ]
 
   do_test( a )
@@ -258,10 +272,12 @@ def test_multi_components( do_test ):
 
   a._test_vector = [
                 'in_              *out',
+    [ Bits16 ] *2,
+
     [             0,               0 ],
-    [             2,               2 ],
-    [    Bits16(-1),      Bits16(-1) ],
-    [    Bits16(-2),      Bits16(-2) ],
+    [             2,               4 ],
+    [    Bits16(-1),      Bits16(-2) ],
+    [    Bits16(-2),      Bits16(-4) ],
   ]
 
   do_test( a )
@@ -270,6 +286,7 @@ def test_multi_components( do_test ):
 # test_if_basic
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail
 def test_if_basic( do_test ):
   class if_basic( RTLComponent ):
     def construct( s ):
@@ -295,9 +312,10 @@ def test_if_basic( do_test ):
 
   a._test_vector = [
                 'in_              *out',
-    [           255,               0 ],
-    [           511,               1 ],
-    [           256,               0 ],
+    [         Bits16,           Bits8 ],
+    [           255,                0 ],
+    [           511,                1 ],
+    [           256,                0 ],
   ]
 
   do_test( a )
@@ -345,6 +363,7 @@ def test_for_basic( do_test ):
 # test_multi_upblks
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail
 def test_multi_upblks( do_test ):
   class multi_upblks( RTLComponent ):
     def construct( s ):
@@ -371,6 +390,8 @@ def test_multi_upblks( do_test ):
 
   a._test_vector = [
                 'in_              *out',
+    [         Bits4,            Bits8 ],
+
     [     Bits4(-1),        Bits4(-1) ],
     [      Bits4(1),               71 ],
     [      Bits4(7),              119 ],

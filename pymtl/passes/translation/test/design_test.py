@@ -22,6 +22,8 @@ def test_adder():
   m = Adder( Bits32 )
   test_vec = [
               'in0              in1                   *out',
+    [      Bits32,          Bits32,                Bits32 ],
+
     [           0,               1,                     1 ],
     [           2,               3,                     5 ],
     [  Bits32(-1),               0,            Bits32(-1) ],
@@ -38,10 +40,12 @@ def test_mux():
   from pclib.rtl import Mux
   m = Mux( Bits32, 3 )
   test_vec = [
-               'in              sel                   *out',
-    [      [0,1,2],               0,                     0 ],
-    [      [1,2,3],               1,                     2 ],
-    [      [7,8,9],               2,                     9 ],
+       'in_[0]  in_[1]  in_[2]   sel     *out', 
+    [ Bits32,  Bits32, Bits32, Bits2, Bits32 ],
+
+    [      0,       1,      2,   0,       0  ],
+    [      1,       2,      3,   1,       2  ],
+    [      7,       8,      9,   2,       9  ],
   ]
   run_translation_test( m, test_vec )
 
@@ -82,8 +86,10 @@ def test_regincr():
 
   m = RegIncr( Bits8 )
   test_vec = [
-               'in              *out',
-    [            4,               0 ],
+              'in_              *out',
+    [        Bits8,           Bits8 ],
+
+    [            4,             '*' ], # 1
     [            3,               5 ],
     [            9,               4 ],
     [    Bits8(-1),              10 ],
@@ -125,16 +131,18 @@ def test_regincr_2stage():
 
   m = RegIncr2( Bits32 )
   test_vec = [
-               'in              *out',
-    [            4,               0 ],
-    [            3,               0 ],
-    [            3,               5 ],
-    [            9,               4 ],
-    [    Bits8(-1),               4 ],
-    [            0,              10 ],
-    [            0,        Bits8(0) ],
-    [            0,               1 ],
-    [            0,               1 ],
+              'in_              *out',
+    [        Bits32,           Bits32 ],
+
+    [            4,             '*' ], # 2
+    [            3,             '*' ], # 2
+    [            3,               6 ],
+    [            9,               5 ],
+    [    Bits8(-1),               5 ],
+    [            0,              11 ],
+    [            0,     Bits32(257) ],
+    [            0,               2 ],
+    [            0,               2 ],
   ]
   run_translation_test( m, test_vec )
 
@@ -181,8 +189,24 @@ def test_regincr_n_stage():
         s.out = s.reg_out[ nstages ]
 
   m = RegIncrN( Bits32, 5 )
-  m.elaborate()
-  SystemVerilogTranslationPass()( m )
+  test_vec = [
+              'in_              *out',
+    [        Bits32,           Bits32 ],
+
+    [            4,             '*' ], # 2
+    [            3,             '*' ], # 3
+    [            3,             '*' ], # 4
+    [            9,             '*' ], # 5
+    [    Bits8(-1),             '*' ], # 5
+    [            0,               9 ],
+    [            0,               8 ],
+    [            0,               8 ],
+    [            0,              14 ],
+    [            0,             260 ],
+    [            0,               5 ],
+    [            0,               5 ],
+  ]
+  run_translation_test( m, test_vec )
 
 #-------------------------------------------------------------------------
 # test_sort

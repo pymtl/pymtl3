@@ -8,15 +8,19 @@
 
 import inspect
 
-from pymtl import *
+from pymtl                import *
+from pymtl.passes.Helpers import freeze
 
 #-------------------------------------------------------------------------
 # Base RAST Type
 #-------------------------------------------------------------------------
 
 class BaseRASTType( object ):
+  def __new__( cls, *args, **kwargs ):
+    return super( BaseRASTType, cls ).__new__( cls )
+
   def __init__( s ):
-    pass
+    super( BaseRASTType, s ).__init__()
 
 #-------------------------------------------------------------------------
 # Signal Type
@@ -35,6 +39,7 @@ class Signal( BaseRASTType ):
         'py_type'    : s.py_type,
         'vec_size'   : '[{}:{}]'.format( s.nbits-1, 0 ),
         'nbits'      : s.nbits,
+        'total_bits' : s.nbits,
         'dim_size'   : '',
         'c_dim_size' : '',
         'n_dim_size' : [],
@@ -79,11 +84,16 @@ class Array( BaseRASTType ):
       'py_type'    : sub_type_str[ 'py_type' ],
       'vec_size'   : sub_type_str[ 'vec_size' ],
       'nbits'      : sub_type_str[ 'nbits' ],
+      'total_bits' : 0,
       'dim_size'   : \
         '[{}:{}]'.format( 0, s.length-1 ) + sub_type_str[ 'dim_size' ],
       'c_dim_size' : '[{}]'.format( s.length ) + sub_type_str[ 'c_dim_size' ],
       'n_dim_size' : [ s.length ] + sub_type_str[ 'n_dim_size' ]
     }
+
+    total_vec_num = reduce( lambda x,y: x*y, ret['n_dim_size'], 1 )
+
+    ret[ 'total_bits' ] = total_vec_num * ret[ 'nbits' ]
 
     return ret
 
@@ -175,30 +185,66 @@ class Bool( BaseRASTType ):
     return 'Bool'
 
 #-------------------------------------------------------------------------
-# Module Type
+# BaseAttr Type
 #-------------------------------------------------------------------------
-# This is the type of the base of all the attributes. It looks weird 
-# in the current type system but makes more sense once we've added struct
-# to the system.
+# This is the base type for all types that can serve as the base of an
+# attribute operation.
 
-class Module( BaseRASTType ):
-  def __init__( s, module ):
-    s.module = module
+class BaseAttr( BaseRASTType ):
+  def __init__( s, obj, type_env ):
+    super( BaseAttr, s ).__init__()
+    s.obj = obj
+    s.type_env = type_env
 
   def type_str( s ):
-    return {}
+    raise NotImplementedError
+
+  def __eq__( s, other ):
+    raise NotImplementedError
+
+  def __ne__( s, other ):
+    raise NotImplementedError
+
+  def __call__( s, obj ):
+    raise NotImplementedError
+
+  def __repr__( s ):
+    raise NotImplementedError
+
+#-------------------------------------------------------------------------
+# Module Type
+#-------------------------------------------------------------------------
+# Any variable that refers to a module has this type.
+
+class Module( BaseAttr ):
+  def __init__( s, obj, type_env ):
+    super( Module, s ).__init__( obj, type_env )
+
+  def type_str( s ):
+    ret = {
+      'dtype'      : s.obj.__class__.__name__,
+      'py_type'    : s.obj.__class__.__name__,
+      'vec_size'   : '',
+      'nbits'      : 0,
+      'total_bits' : 0,
+      'dim_size'   : '',
+      'c_dim_size' : '',
+      'n_dim_size' : []
+    }
+
+    return ret
 
   def __eq__( s, other ):
     if type( s ) != type( other ):
       return False
     # We will compare the type of module objects!
-    return type(s.module) == type(other.module)
+    return type(s.obj) == type(other.obj)
 
   def __ne__( s, other ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Module?"""
+    """Can _obj be cast into RASTType.Module?"""
     if isinstance( obj, Module ) and s == obj:
       return True
     return False
@@ -207,12 +253,60 @@ class Module( BaseRASTType ):
     return 'Module'
 
 #-------------------------------------------------------------------------
-# PythonClass Type
+# Struct
+#-------------------------------------------------------------------------
+# This is the type for packed struct in SystemVerilog
+
+class Struct( BaseAttr ):
+  def __init__( s, obj, type_env ):
+    super( Struct, s ).__init__( obj, type_env )
+
+  def type_str( s ):
+    ret = {
+      'dtype'      : s.obj._dsl.Type.__class__.__name__,
+      'py_type'    : s.obj.__class__.__name__, # packed struct -> port/wire
+      'vec_size'   : '',
+      'nbits'      : 0,
+      'total_bits' : 0,
+      'dim_size'   : '',
+      'c_dim_size' : '',
+      'n_dim_size' : []
+    }
+
+    total_bits = 0
+
+    for obj, Type in s.type_env.iteritems():
+      type_str = Type.type_str()
+      total_bits += type_str[ 'total_bits' ]
+
+    ret['nbits'] = ret['total_bits'] = total_bits
+
+    return ret
+
+  def __eq__( s, other ):
+    if type( s ) != type( other ):
+      return False
+    return s is other
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+  def __call__( s, obj ):
+    """Can obj be cast into RASTType.Struct?"""
+    if isinstance( obj, Struct ) and s is obj:
+      return True
+    return False
+
+  def __repr__( s ):
+    return 'Struct'
+
+#-------------------------------------------------------------------------
+# Interface
 #-------------------------------------------------------------------------
 
-class PythonClass( BaseRASTType ):
-  def __init__( s, obj ):
-    s.obj = obj
+class Interface( BaseAttr ):
+  def __init__( s, obj, type_env ):
+    super( Interface, s ).__init__( obj, type_env )
 
   def type_str( s ):
     return {}
@@ -226,16 +320,20 @@ class PythonClass( BaseRASTType ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.PythonClass?"""
-    if isinstance( obj, PythonClass ) and s is obj:
+    """Can obj be cast into RASTType.Interface?"""
+    if isinstance( obj, Interface ) and s is obj:
       return True
     return False
 
   def __repr__( s ):
-    return 'PythonClass'
+    return 'Interface'
 
 #-------------------------------------------------------------------------
 # Helper Functions
+#-------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------
+# get_type
 #-------------------------------------------------------------------------
 
 def get_type( obj ):
@@ -243,18 +341,31 @@ def get_type( obj ):
 
   # child component of the given module
   if isinstance( obj, RTLComponent ):
-    return Module( obj )
 
-  # signals refer to in/out ports and wires
+    type_env = {}
+
+    get_type_attributes( obj, type_env )
+
+    return Module( obj, type_env )
+
+  # Signals might be parameterized with different types
   elif isinstance( obj, ( InVPort, OutVPort, Wire ) ):
-    try:
+    
+    # BitsX
+    if is_BitsX( obj._dsl.Type ):
       nbits = obj._dsl.Type.nbits
+      return Signal( nbits, obj.__class__.__name__ )
 
-    except AttributeError:
-      assert False, 'signal instance' + str(obj) + \
-         ' must have Bits as their .Type field'
+    # Struct
+    type_env = {}
 
-    return Signal( nbits, obj.__class__.__name__ )
+    get_type_attributes( obj, type_env )
+
+    # Make sure total_bits is calculated correctly
+    ret = Struct( obj, type_env )
+    ret.type_str()
+
+    return ret
 
   # integers have unset bitwidth (0) 
   elif isinstance( obj, int ):
@@ -268,15 +379,79 @@ def get_type( obj ):
   elif isinstance( obj, list ):
     assert len( obj ) > 0
 
+    type_env = {}
+
     type_list = map( lambda x: get_type( x ), obj )
 
     assert reduce(lambda x, y: x and (y == type_list[0]), type_list, True),\
       'Elements of list ' + str(obj) + ' must have the same RAST type!'
 
-    return Array( len( obj ), type_list[0] )
+    for _obj, _Type in zip( obj, type_list ):
+      type_env[ _obj ] = _Type
 
-  # python class
+    ret = Array( len( obj ), type_list[0] )
+    ret.type_env = type_env
+
+    return ret
+
   elif inspect.isclass( obj ):
-    return PythonClass( obj )
+
+    # BitsX
+    if is_BitsX( obj ):
+      nbits = obj.nbits
+      return Signal( nbits )
+
+    # Interface
+    # TODO: translation support for interfaces
+    if isinstance( obj, Interface ):
+      type_env = {}
+      
+      get_type_attributes( obj, type_env )
+
+      return Interface( obj, type_env )
 
   assert False, 'unsupported objet ' + str(obj) + '!'
+
+#-------------------------------------------------------------------------
+# is_BitsX
+#-------------------------------------------------------------------------
+
+def is_BitsX( obj ):
+  """Is obj a BitsX class?"""
+
+  try:
+    if obj.__name__.startswith( 'Bits' ):
+      try:
+        n = int( obj.__name__[4:] )
+        return True
+      except:
+        return False
+  except:
+    return False
+
+  return False
+
+#-------------------------------------------------------------------------
+# get_type_attributes
+#-------------------------------------------------------------------------
+
+def get_type_attributes( obj, type_env ):
+
+  obj_lst = [ _o for (name, _o) in obj.__dict__.iteritems()\
+    if isinstance( name, basestring ) if not name.startswith( '_' )
+  ]
+
+  while obj_lst:
+    o = obj_lst.pop()
+
+    Type = get_type( o )
+    type_env[ freeze( o ) ] = Type
+
+    # Make sure total_bits of struct is calculated correctly
+    Type.type_str()
+
+    try:
+      type_env.update( Type.type_env )
+    except:
+      pass
+

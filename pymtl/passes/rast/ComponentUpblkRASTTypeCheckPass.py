@@ -74,7 +74,8 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
       'step':( Const, 'the step of a for-loop must be a constant expression!' )
     }
     s.type_expect[ 'Attribute' ] = {
-      'value':( Module, 'the base of an attribute must be a module!' )
+      'value':( (Module, Struct, Interface),
+        'the base of an attribute must be one of: module, struct, interface!' )
     }
     s.type_expect[ 'Index' ] = {
       'value':( Array, 'the base of an index must be an array!' ),
@@ -229,8 +230,8 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Base( s, node ):
-    # Mark this node as having type module and find out its corresponding object
-    node.Type = Module( node.base )
+    # Mark this node as having type module
+    node.Type = Module( node.base, s.type_env[freeze( node.base )].type_env )
 
   #-----------------------------------------------------------------------
   # visit_Number
@@ -391,19 +392,20 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
+    # node.value should be one of: Module, Struct, Interface
     # Make sure node.value has an attribute named attr
-    if not node.attr in node.value.Type.module.__dict__:
+    if not node.attr in node.value.Type.obj.__dict__:
       raise PyMTLTypeError(
         s.blk, node.ast, 'class {base} does not have attribute {attr}!'.\
         format( 
-          base = node.value.Type.module.__class__.__name__,
+          base = node.value.Type.obj.__class__.__name__,
           attr = node.attr
         )
       )
 
     # value.attr has the type that is specified in the type environment
-    attr_obj = node.value.Type.module.__dict__[ node.attr ]
-    node.Type = s.type_env[ freeze( attr_obj ) ]
+    attr_obj = node.value.Type.obj.__dict__[ node.attr ]
+    node.Type = node.value.Type.type_env[ freeze( attr_obj ) ]
 
   #-----------------------------------------------------------------------
   # visit_Index

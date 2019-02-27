@@ -9,6 +9,12 @@
 
 import pytest
 
+
+from pymtl                import *
+from pymtl.dsl.ComponentLevel3 import ComponentLevel3
+from pclib.rtl.TestSource import TestBasicSource as TestSource
+from pclib.rtl.TestSink   import TestBasicSink   as TestSink
+
 from contextlib import contextmanager
 
 #-------------------------------------------------------------------------
@@ -48,7 +54,7 @@ def expected_failure( exception = Exception ):
 def run_translation_test( model, test_vec ):
   from pymtl.passes.import_     import SimpleImportPass
   from pymtl.passes.translation import SystemVerilogTranslationPass
-  from pymtl.passes.PassGroups  import SimpleSim
+  from pymtl.passes.PassGroups  import SimpleSim, SimpleSimDumpDAG
 
   #-----------------------------------------------------------------------
   # Parse the test vector header
@@ -58,28 +64,32 @@ def run_translation_test( model, test_vec ):
   # structure that will be used to drive the simulation.
 
   header = test_vec[0].split()
-  test_vec = test_vec[1:]
+  types  = test_vec[1]
+  test_vec = test_vec[2:]
 
   signal_pos = {}
   pos_signal = []
 
   inports, outports = [], []
+  inport_types, outport_types = {}, {}
 
-  for idx, port in enumerate( header ):
-    if port.startswith( '*' ):
-      outports.append( port[1:] )
-      signal_pos[ port[1:] ] = idx
+  for idx, (port_name, port_type) in enumerate( zip(header, types) ):
+    if port_name.startswith( '*' ):
+      outports.append( port_name[1:] )
+      outport_types[ port_name[1:] ] = port_type
+      signal_pos[ port_name[1:] ] = idx
     else:
-      inports.append( port )
-      signal_pos[ port ] = idx
-    pos_signal.append( port )
+      inports.append( port_name )
+      inport_types[ port_name ] = port_type
+      signal_pos[ port_name ] = idx
+    pos_signal.append( port_name )
 
   input_val, output_val = {}, {}
 
   # Initialize the input/output value dict with empty lists
 
-  for port in inports:  input_val[ port ]  = []
-  for port in outports: output_val[ port ] = []
+  for port_name in inports:  input_val[ port_name ]  = []
+  for port_name in outports: output_val[ port_name ] = []
 
   for vec in test_vec:
     assert len( vec ) == ( len( inports ) + len( outports ) )
@@ -90,31 +100,48 @@ def run_translation_test( model, test_vec ):
         input_val[ pos_signal[ idx ] ].append( value )
 
   #-----------------------------------------------------------------------
-  # Run the simulation
+  # Construct the test harness
   #-----------------------------------------------------------------------
 
   model.elaborate()
   model.apply( SystemVerilogTranslationPass() )
   model.apply( SimpleImportPass() )
-  sim = model._pass_simple_import.imported_model
-  sim.apply( SimpleSim )
+
+  dut = model._pass_simple_import.imported_model
+
+  class TestHarness( RTLComponent ):
+    def construct( s, dut, inport_types, outport_types, input_val, output_val ):
+
+      s.dut = dut
+      s.inport_types = inport_types
+      s.outport_types = outport_types
+      s.input_val = input_val
+      s.output_val = output_val
+
+      # Setup test sources/sinks
+      s.srcs = [ TestSource( inport_types[inport_name], input_val[inport_name] )\
+        for inport_name in input_val.keys()
+      ]
+      s.sinks = [ TestSink( outport_types[outport_name], output_val[outport_name] )\
+        for outport_name in output_val.keys()
+      ]
+
+      for idx, inport_name in enumerate(input_val.keys()):
+        exec( 's.connect( s.srcs[{idx}].out, s.dut.{name}\
+            )'.format( idx = idx, name = inport_name ) ) in globals(), locals()
+
+      for idx, outport_name in enumerate(output_val.keys()):
+        exec( 's.connect( s.sinks[{idx}].in_, s.dut.{name}\
+            )'.format( idx = idx, name = outport_name ) ) in globals(), locals()
+
+  test_harness = TestHarness( dut, inport_types, outport_types, input_val, output_val )
+
+  #-----------------------------------------------------------------------
+  # Run the simulation
+  #-----------------------------------------------------------------------
+
+  test_harness.apply( SimpleSimDumpDAG )
+  # test_harness.apply( SimpleSim )
 
   for cycle in xrange( len( test_vec ) ):
-
-    # feed input values
-    for inport in inports:
-      sim.__dict__[inport] = input_val[inport][cycle]
-
-    # tick the model
-    sim.tick()
-
-    # check output values
-    for outport in outports:
-      assert check_port( sim.__dict__[outport], output_val[outport][cycle] )
-
-def check_port( obj, ref ):
-  if isinstance( obj, list ):
-    for _obj, _ref in zip( obj, ref ):
-      if not check_port( _obj, _ref ):
-        return False
-  return True
+    test_harness.tick()

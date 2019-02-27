@@ -20,6 +20,7 @@ class ComponentUpblkRASTToSVPass( BasePass ):
     m._pass_component_upblk_rast_to_sv = PassMetadata()
 
     m._pass_component_upblk_rast_to_sv.sv = {}
+    m._pass_component_upblk_rast_to_sv.freevars = {}
 
     visitor = UpblkRASTToSVVisitor( m )
 
@@ -431,6 +432,11 @@ class UpblkRASTToSVVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_FreeVar( s, node ):
+    if not node.name in s.component._pass_component_upblk_rast_to_sv.freevars:
+      s.component._pass_component_upblk_rast_to_sv.freevars[ node.name ] = \
+        'localparam {name} = {value};'.format(
+          name = node.name, value = str( node.obj )
+        )
     return node.name
 
   #-----------------------------------------------------------------------

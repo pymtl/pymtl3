@@ -14,7 +14,7 @@ from pymtl.passes.Helpers          import make_indent
 
 from errors                        import TranslationError
 from ComponentUpblkTranslationPass import ComponentUpblkTranslationPass
-from Helpers                       import generate_signal_decl, collect_ports
+from Helpers                       import *
 
 class ComponentTranslationPass( BasePass ):
 
@@ -41,6 +41,8 @@ module {module_name}
   // Output declarations
   {output_decls}
 );
+  // Localparams ( Python free vars )
+  {local_params}
 
   // Local wire declarations
   {wire_decls}
@@ -48,7 +50,7 @@ module {module_name}
   // Submodule declarations
   {child_decls}
 
-  // Assignments due to net connection and submodule interfaces
+  // Continuous Assignments
   {assignments}
 
   // Logic block of {module_name}
@@ -114,6 +116,7 @@ endmodule
 
     for c in m.get_child_components():
       child_name = c.get_field_name()
+      child_name = get_verilog_name( child_name )
 
       ifcs = {}
       ifcs_decl_str = { 'input':[], 'output':[] }
@@ -132,7 +135,7 @@ endmodule
           )
 
           connection_wire[ prefix ].append(
-            '  .{0:6}( {1}${0} ),'.format( name, child_name )
+            '  .{0:6}( {1}${0} ),'.format( get_verilog_name(name), child_name )
           )
 
       child_strs.extend( ifcs_decl_str[ 'input' ] )
@@ -164,9 +167,9 @@ endmodule
     for writer, reader in connections_child_child:
       assign_strs.append( 'assign {}${} = {}${};'.\
         format(
-          reader.get_host_component().get_field_name(),
+          get_verilog_name(reader.get_host_component().get_field_name()),
           reader.get_field_name(), 
-          writer.get_host_component().get_field_name(), 
+          get_verilog_name(writer.get_host_component().get_field_name()),
           writer.get_field_name() 
         )
       )
@@ -175,7 +178,7 @@ endmodule
       if writer.get_host_component() is m:
         assign_strs.append( 'assign {}${} = {};'.\
           format(
-            reader.get_host_component().get_field_name(), 
+            get_verilog_name(reader.get_host_component().get_field_name()),
             reader.get_field_name(), 
             writer.get_field_name() 
           )
@@ -185,7 +188,7 @@ endmodule
         assign_strs.append( 'assign {} = {}${};'.\
           format(
             reader.get_field_name(), 
-            writer.get_host_component().get_field_name(), 
+            get_verilog_name(writer.get_host_component().get_field_name()),
             writer.get_field_name() 
           )
         )
@@ -221,6 +224,13 @@ endmodule
 
     blk_srcs = '\n'.join( blks )
 
+    #---------------------------------------------------------------------
+    # Free variables to localparams
+    #---------------------------------------------------------------------
+
+    freevars = m._pass_component_upblk_translation.freevars.values()
+
+    local_params = '\n  '.join( freevars )
 
     #---------------------------------------------------------------------
     # Assemble all translated parts

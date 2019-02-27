@@ -83,7 +83,7 @@ class ConstraintGenPass( BasePass ):
     
     with open( ssg_file_name, 'w' ) as ssg_file:
       for outport in top_outports:
-        string = s.ssg_dict_to_str( top_inports, outport )
+        string = s.ssg_dict_to_str( top_inports, outport ) + '\n'
         ssg_file.write( string )
 
   def flood_mark( s, cur, flt, inport, pre_path_type ):

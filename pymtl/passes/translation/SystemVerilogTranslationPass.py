@@ -17,6 +17,7 @@ from pymtl.passes.Helpers     import freeze
 from pymtl.passes.rast        import get_type
 
 from errors                   import TranslationError
+from Helpers                  import generate_struct_defs
 from ConstraintGenPass        import ConstraintGenPass
 from HierarchyTranslationPass import HierarchyTranslationPass
 
@@ -90,13 +91,24 @@ class SystemVerilogTranslationPass( BasePass ):
 
     s.extract_type_env( type_env, top )
 
+    # Struct definition generation
+
+    ret =\
+"""//------------------------------------------------------------------------
+// User-defined Structs
+//------------------------------------------------------------------------
+
+"""
+
+    ret += generate_struct_defs( type_env ) + '\n'
+
     # Recursively translate the top component
 
-    ret = HierarchyTranslationPass(
+    ret += HierarchyTranslationPass(
       [],
       type_env,
       connections_self_self, 
-      connections_self_self,
+      connections_self_child,
       connections_child_child
     )( top )
 
@@ -119,13 +131,7 @@ class SystemVerilogTranslationPass( BasePass ):
     """Add the types of all attributes of the given component 
     into the type environment."""
 
-    obj_lst = [ obj for (name, obj) in component.__dict__.iteritems() \
-      if isinstance( name, basestring ) if not name.startswith( '_' )
-    ]
+    Type = get_type( component )
 
-    while obj_lst:
-      top_obj = obj_lst.pop()
-      type_env[ freeze( top_obj ) ] = get_type( top_obj )
-
-    for child in component.get_child_components():
-      s.extract_type_env( type_env, child )
+    type_env[ freeze( component ) ] = Type
+    type_env.update( Type.type_env )

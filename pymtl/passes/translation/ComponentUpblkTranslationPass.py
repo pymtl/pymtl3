@@ -29,6 +29,7 @@ class ComponentUpblkTranslationPass( BasePass ):
 
     m._pass_component_upblk_translation = PassMetadata()
     m._pass_component_upblk_translation.blk_srcs = {}
+    m._pass_component_upblk_translation.freevars = {}
 
     # Generate and visualize RAST
     ComponentUpblkRASTGenPass()( m )
@@ -40,3 +41,6 @@ class ComponentUpblkTranslationPass( BasePass ):
     for blk in m.get_update_blocks():
       m._pass_component_upblk_translation.blk_srcs[ blk ] =\
         m._pass_component_upblk_rast_to_sv.sv[ blk ]
+
+    for fvar, string in m._pass_component_upblk_rast_to_sv.freevars.iteritems():
+      m._pass_component_upblk_translation.freevars[ fvar ] = string
