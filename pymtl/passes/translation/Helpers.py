@@ -7,6 +7,8 @@
 # Author : Peitian Pan
 # Date   : Feb 22, 2019
 
+from pymtl                      import *
+
 from pymtl.passes.rast          import get_type
 from pymtl.passes.Helpers       import make_indent
 from pymtl.passes.rast.RASTType import Struct
@@ -184,3 +186,16 @@ def is_param_equal( src, dst ):
 
 def get_verilog_name( name ):
   return name.replace( '[', '__' ).replace( ']', '__' )
+
+#-------------------------------------------------------------------------
+# get_topmost_member
+#-------------------------------------------------------------------------
+
+def get_topmost_member( model, signal ):
+
+  sig = signal
+
+  while not isinstance(sig._dsl.parent_obj, RTLComponent):
+    sig = sig._dsl.parent_obj
+
+  return sig

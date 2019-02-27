@@ -17,6 +17,8 @@ from pymtl                   import *
 from pymtl.passes            import BasePass
 from pymtl.passes.simulation import GenDAGPass
 
+from Helpers                 import get_topmost_member
+
 class ConstraintGenPass( BasePass ):
 
   def __call__( s, top ):
@@ -41,7 +43,26 @@ class ConstraintGenPass( BasePass ):
 
     for upblk, signal_list in top._dag.genblk_writes.iteritems():
       upblk_WR[ upblk ] = set( signal_list )
+
+    # Replace some signals with their parent_obj
+    # Example: s.in_.foo -> s.in_
+
+    _upblk_RD, _upblk_WR = {}, {}
+
+    for upblk, set_RD in upblk_RD.iteritems():
+      _set_RD = set()
+      for signal in set_RD:
+        _set_RD.add( get_topmost_member( top, signal ) )
+      _upblk_RD[ upblk ] = _set_RD
+
+    for upblk, set_WR in upblk_WR.iteritems():
+      _set_WR = set()
+      for signal in set_WR:
+        _set_WR.add( get_topmost_member( top, signal ) )
+      _upblk_WR[ upblk ] = _set_WR
     
+    upblk_RD, upblk_WR = _upblk_RD, _upblk_WR
+
     # Construct net structure for top
     
     s.net = {}
@@ -75,6 +96,8 @@ class ConstraintGenPass( BasePass ):
     # outports
 
     for inport in top_inports:
+      # import pdb
+      # pdb.set_trace()
       s.flood_mark( inport, lambda signal: signal in top_outports,\
         inport, 'CombPath' )
 

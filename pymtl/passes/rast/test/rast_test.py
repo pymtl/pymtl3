@@ -106,7 +106,6 @@ def test_mismatch_width_assign( do_test ):
 # test_slicing_basic
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_slicing_basic( do_test ):
   class slicing_basic( RTLComponent ):
     def construct( s ):
@@ -128,14 +127,14 @@ def test_slicing_basic( do_test ):
   ] ) }
 
   a._test_vector = [
-                'in_             *out',
-    [        Bits32,          Bits64 ],
+                'in_                        *out',
+    [        Bits32,                     Bits64 ],
 
-    [             0,               0 ],
-    [             2, Bits64(0x20000) ],
-    [    Bits32(-1),      Bits64(-1) ],
-    [    Bits32(-2),      Bits64(-2) ],
-    [ Bits32(32767),   Bits64(32767) ],
+    [             0,                          0 ],
+    [             2,            Bits64(0x20000) ],
+    [    Bits32(-1),         Bits64(0xffffffff) ],
+    [    Bits32(-2),         Bits64(0xfffeffff) ],
+    [ Bits32(32767),         Bits64(0x7fff0000) ],
   ]
 
   do_test( a )
@@ -177,7 +176,6 @@ def test_bits_basic( do_test ):
 # test_index_bits_slicing
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_index_bits_slicing( do_test ):
   class index_bits_slicing( RTLComponent ):
     def construct( s ):
@@ -225,8 +223,9 @@ def test_index_bits_slicing( do_test ):
           *out[0] *out[1] *out[2] *out[3] *out[4]',
     [ Bits16 ] * 15,
 
-    [ 255 ] * 10 + [ 265, 511, 0, 0, 0 ],
-    [ 0 ] * 10 + [ 10, 1, 0, 0, 0 ],
+    # 8-bit truncation!
+    [ Bits16(0xff) ] * 10 + [ Bits16(0x09), Bits16(0x01ff), 0, 0, 0 ],
+    [ Bits16(0x00) ] * 10 + [ Bits16(0x0a), Bits16(0x0001), 0, 0, 0 ],
   ]
 
   do_test( a )
@@ -286,7 +285,6 @@ def test_multi_components( do_test ):
 # test_if_basic
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_if_basic( do_test ):
   class if_basic( RTLComponent ):
     def construct( s ):
@@ -363,7 +361,6 @@ def test_for_basic( do_test ):
 # test_multi_upblks
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail
 def test_multi_upblks( do_test ):
   class multi_upblks( RTLComponent ):
     def construct( s ):
@@ -392,9 +389,9 @@ def test_multi_upblks( do_test ):
                 'in_              *out',
     [         Bits4,            Bits8 ],
 
-    [     Bits4(-1),        Bits4(-1) ],
-    [      Bits4(1),               71 ],
-    [      Bits4(7),              119 ],
+    [     Bits4(-1),      Bits8(0xff) ],
+    [      Bits4(1),      Bits8(0x11) ],
+    [      Bits4(7),      Bits8(0x77) ],
   ]
 
   do_test( a )

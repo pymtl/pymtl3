@@ -374,10 +374,3 @@ def get_indices( port ):
     ( i, '[{}:{}]'.format( i*32, min( i*32+32, nbits ) ) ) \
     for i in range(num_assigns)
   ]
-
-#-------------------------------------------------------------------------
-# get_verilog_name
-#-------------------------------------------------------------------------
-
-def get_verilog_name( name ):
-  return name.replace( '[', '__' ).replace( ']', '__' )

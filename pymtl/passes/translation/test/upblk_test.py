@@ -52,14 +52,18 @@ def test_struct_inport( do_test ):
   tmplt = struct_fields( 4, 8 )
 
   a._test_vector = [
-                                        'in_                  *out',
-    [   tmplt( Bits4( 0xF ), Bits8( 0xFF ) ),        Bits12( 0xFFF ) ],
-    [   tmplt( Bits4( 0xA ), Bits8( 0xBC ) ),        Bits12( 0xBCA ) ],
-    [   tmplt( Bits4( 0xF ), Bits8( 0xAD ) ),        Bits12( 0xADF ) ],
-    [   tmplt( Bits4( 0x1 ), Bits8( 0x00 ) ),        Bits12( 0x001 ) ],
-    [   tmplt( Bits4( 0x2 ), Bits8( 0x70 ) ),        Bits12( 0x702 ) ],
-    [   tmplt( Bits4( 0x5 ), Bits8( 0xF0 ) ),        Bits12( 0xF05 ) ],
-    [   tmplt( Bits4( 0xC ), Bits8( 0x0F ) ),        Bits12( 0x0FC ) ],
+                    'in_             *out',
+    [            Bits12,          Bits12 ],
+
+    [   Bits12( 0xF00 ), Bits12( 0x00F ) ],
+    [   Bits12( 0x0F0 ), Bits12( 0xF00 ) ],
+    [   Bits12( 0x00F ), Bits12( 0x0F0 ) ],
+    [   Bits12( 0xBCA ), Bits12( 0xCAB ) ],
+    [   Bits12( 0xADF ), Bits12( 0xDFA ) ],
+    [   Bits12( 0x001 ), Bits12( 0x010 ) ],
+    [   Bits12( 0x702 ), Bits12( 0x027 ) ],
+    [   Bits12( 0xF05 ), Bits12( 0x05F ) ],
+    [   Bits12( 0x0FC ), Bits12( 0xFC0 ) ],
   ]
 
   do_test( a )
