@@ -28,7 +28,7 @@ def method_port( guard = lambda : True ):
     print method
     print "" 
     # port = CalleePort( method ) 
-    method._rdy = guard
+    method._anti_name_conflict_rdy = guard
     return method 
   return real_guard
 
@@ -82,11 +82,14 @@ class ComponentLevel6( ComponentLevel5 ):
         # if isinstance( y, CalleePort ):
         #   y.method = bind_method( y.method )
         #   y.rdy    = bind_method( y.rdy    )
-        if hasattr( y, '_rdy' ):
+
+        # FIXME: This would break if the class has a memeber with 
+        # attribute [_anti_name_conflict_rdy]
+        if hasattr( y, '_anti_name_conflict_rdy' ):
           print "\nCreating MethodPort for ", y
           # port = CalleePort( bind_method( y ) )
           port = CalleePort( y )
-          port.rdy = bind_method( y._rdy )
+          port.rdy = bind_method( y._anti_name_conflict_rdy )
           setattr( s, x, port )
 
       s.construct( *s._dsl.args, **kwargs )
