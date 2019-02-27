@@ -10,7 +10,7 @@ from pymtl import *
 from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
-from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5
+from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5, ComponentLevel6
 from pymtl.dsl import Signal, Const, MethodPort
 
 import random, py.code
@@ -206,8 +206,23 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         for member in net:
           if member is not writer:
             assert member.method is None
+            print "="*30
+            print "Setting method and rdy!!! 5" 
+            print "="*30
             member.method = writer.method
+            member.rdy    = writer.rdy
 
+    # if isinstance( s, ComponentLevel6 ):
+    #   for writer, net in s.get_all_method_nets():
+    #     for member in net:
+    #       if member is not writer:
+    #         assert member.method is None
+    #         print "="*30
+    #         print "\nSetting method and rdy!!! 6" 
+    #         print "="*30
+    #         member.method = writer.method
+    #         member.rdy    = writer.rdy
+    
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
