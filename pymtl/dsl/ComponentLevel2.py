@@ -285,15 +285,15 @@ class ComponentLevel2( ComponentLevel1 ):
     if isinstance( m, ComponentLevel2 ):
       s._dsl.all_update_on_edge -= m._dsl.update_on_edge
 
-      for k in m._RD_U_constraints:
-        s._all_RD_U_constraints[k] -= m._RD_U_constraints[k]
-      for k in m._WR_U_constraints:
-        s._all_WR_U_constraints[k] -= m._RD_U_constraints[k]
+      for k in m._dsl.RD_U_constraints:
+        s._dsl.all_RD_U_constraints[k] -= m._dsl.RD_U_constraints[k]
+      for k in m._dsl.WR_U_constraints:
+        s._dsl.all_WR_U_constraints[k] -= m._dsl.RD_U_constraints[k]
 
-      for k in m._upblks:
-        del s._all_upblk_reads[k]
-        del s._all_upblk_writes[k]
-        del s._all_upblk_calls[k]
+      for k in m._dsl.upblks:
+        del s._dsl.all_upblk_reads[k]
+        del s._dsl.all_upblk_writes[k]
+        del s._dsl.all_upblk_calls[k]
 
   def _check_upblk_writes( s ):
 
@@ -308,7 +308,7 @@ class ComponentLevel2( ComponentLevel1 ):
       if len(wr_blks) > 1:
         raise MultiWriterError( \
         "Multiple update blocks write {}.\n - {}".format( repr(obj),
-            "\n - ".join([ x.__name__+" at "+repr(s._all_upblk_hostobj[x]) \
+            "\n - ".join([ x.__name__+" at "+repr(s._dsl.all_upblk_hostobj[x]) \
                            for x in wr_blks ]) ) )
 
       # See VarConstraintPass.py for full information
@@ -603,7 +603,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
   def get_upblk_metadata( s ):
     assert s._dsl.constructed
-    return s._upblk_reads, s._upblk_writes, s._upblk_calls
+    return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
 
   # Override
   def get_all_explicit_constraints( s ):
@@ -620,7 +620,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
-      return set( [ x for x in s._all_components | s._all_signals if filt(x) ] )
+      return set( [ x for x in s._dsl.all_components | s._dsl.all_signals if filt(x) ] )
     except AttributeError:
       return s._collect_all( filt )
 
@@ -678,21 +678,21 @@ class ComponentLevel2( ComponentLevel1 ):
 
     def _delete_component_by_name( parent, name ):
       obj = getattr( parent, name )
-      top = s._elaborate_top
+      top = s._dsl.elaborate_top
 
       # Remove all components and uncollect metadata
 
       removed_components = obj.get_all_components()
-      top._all_components -= removed_components
+      top._dsl.all_components -= removed_components
 
       for x in removed_components:
-        assert x._elaborate_top is top
+        assert x._dsl.elaborate_top is top
         top._uncollect_vars( x )
 
       for x in obj._collect_all():
         del x._dsl.parent_obj
 
-      top._all_signals -= obj._collect_all( lambda x: isinstance( x, Signal ) )
+      top._dsl.all_signals -= obj._collect_all( lambda x: isinstance( x, Signal ) )
 
       delattr( s, name )
 
@@ -713,9 +713,9 @@ class ComponentLevel2( ComponentLevel1 ):
     top._dsl.all_components |= added_components
 
     for c in added_components:
-      c._elaborate_top = top
+      c._dsl.elaborate_top = top
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
     added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._all_signals |= added_signals
+    top._dsl.all_signals |= added_signals

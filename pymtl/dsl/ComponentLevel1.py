@@ -177,14 +177,14 @@ class ComponentLevel1( NamedObject ):
 
   def get_all_components( s ):
     try:
-      return s._all_components
+      return s._dsl.all_components
     except AttributeError:
       return s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
 
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
-      return set( [ x for x in s._all_components if filt(x) ] )
+      return set( [ x for x in s._dsl.all_components if filt(x) ] )
     except AttributeError:
       return s._collect_all( filt )
 
@@ -201,19 +201,19 @@ class ComponentLevel1( NamedObject ):
 
     def _delete_component_by_name( parent, name ):
       obj = getattr( parent, name )
-      top = s._elaborate_top
+      top = s._dsl.elaborate_top
 
       # Remove all components and uncollect metadata
 
       removed_components = obj.get_all_components()
-      top._all_components -= removed_components
+      top._dsl.all_components -= removed_components
 
       for x in removed_components:
-        assert x._elaborate_top is top
+        assert x._dsl.elaborate_top is top
         top._uncollect_vars( x )
 
       for x in obj._collect_all():
-        del x._parent_obj
+        del x._dsl.parent_obj
 
       delattr( s, name )
 
@@ -227,13 +227,13 @@ class ComponentLevel1( NamedObject ):
     setattr( s, name, obj )
     del NamedObject.__setattr__
 
-    top = s._elaborate_top
+    top = s._dsl.elaborate_top
 
     added_components = obj.get_all_components()
-    top._all_components |= added_components
+    top._dsl.all_components |= added_components
 
     for c in added_components:
-      c._elaborate_top = top
+      c._dsl.elaborate_top = top
       top._collect_vars( c )
 
   def apply( s, *args ):
