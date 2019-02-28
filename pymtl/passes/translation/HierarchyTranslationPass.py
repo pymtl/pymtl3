@@ -55,10 +55,4 @@ class HierarchyTranslationPass( BasePass ):
     for obj in sorted( m.get_child_components(), key = repr ):
       ret += s.__call__( obj )
 
-    # Update the full string for this component
-    
-    # FIXME: this is not correct. there should be only be 1 implementation
-    # for each unique TYPE of the model. This means we need to check
-    # equity based on class and its parameters.
-
     return ret

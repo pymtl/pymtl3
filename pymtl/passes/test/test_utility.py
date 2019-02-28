@@ -10,12 +10,14 @@
 import pytest
 
 
-from pymtl                import *
-from pymtl.dsl.ComponentLevel3 import ComponentLevel3
-from pclib.rtl.TestSource import TestBasicSource as TestSource
-from pclib.rtl.TestSink   import TestBasicSink   as TestSink
+from pymtl                    import *
+from pymtl.passes.import_     import SimpleImportPass
+from pymtl.passes.translation import SystemVerilogTranslationPass
+from pymtl.passes.PassGroups  import SimpleSim, SimpleSimDumpDAG
+from pclib.rtl.TestSource     import TestBasicSource as TestSource
+from pclib.rtl.TestSink       import TestBasicSink   as TestSink
 
-from contextlib import contextmanager
+from contextlib               import contextmanager
 
 #-------------------------------------------------------------------------
 # do_test
@@ -52,9 +54,6 @@ def expected_failure( exception = Exception ):
 #-------------------------------------------------------------------------
 
 def run_translation_test( model, test_vec ):
-  from pymtl.passes.import_     import SimpleImportPass
-  from pymtl.passes.translation import SystemVerilogTranslationPass
-  from pymtl.passes.PassGroups  import SimpleSim, SimpleSimDumpDAG
 
   #-----------------------------------------------------------------------
   # Parse the test vector header
@@ -126,13 +125,14 @@ def run_translation_test( model, test_vec ):
         for outport_name in output_val.keys()
       ]
 
+      # Connect all srcs/sinks to ports of dut
       for idx, inport_name in enumerate(input_val.keys()):
-        exec( 's.connect( s.srcs[{idx}].out, s.dut.{name}\
-            )'.format( idx = idx, name = inport_name ) ) in globals(), locals()
+        exec( 's.connect( s.srcs[idx].out, s.dut.{name} )'\
+          .format( name = inport_name ) ) in globals(), locals()
 
       for idx, outport_name in enumerate(output_val.keys()):
-        exec( 's.connect( s.sinks[{idx}].in_, s.dut.{name}\
-            )'.format( idx = idx, name = outport_name ) ) in globals(), locals()
+        exec( 's.connect( s.sinks[idx].in_, s.dut.{name} )'\
+          .format( name = outport_name ) ) in globals(), locals()
 
   test_harness = TestHarness( dut, inport_types, outport_types, input_val, output_val )
 

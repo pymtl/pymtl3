@@ -31,6 +31,8 @@ def test_struct_inport( do_test ):
       s.foo = mk_bits( n_foo )
       s.bar = mk_bits( n_bar )
 
+      s._pack_order = [ 'foo', 'bar' ]
+
     def __call__( s, foo = 0, bar = 0 ):
       msg = struct_fields( s.foo.nbits, s.bar.nbits )
       msg.foo = msg.foo( foo )
@@ -48,9 +50,6 @@ def test_struct_inport( do_test ):
         s.out[ n_foo:n_foo+n_bar ] = s.in_.bar
 
   a = struct_inport( 4, 8 )
-
-  tmplt = struct_fields( 4, 8 )
-
   a._test_vector = [
                     'in_             *out',
     [            Bits12,          Bits12 ],
@@ -65,5 +64,4 @@ def test_struct_inport( do_test ):
     [   Bits12( 0xF05 ), Bits12( 0x05F ) ],
     [   Bits12( 0x0FC ), Bits12( 0xFC0 ) ],
   ]
-
   do_test( a )

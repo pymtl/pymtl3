@@ -18,6 +18,7 @@ from pymtl.passes.rast import RASTVisualizationPass
 from pymtl.passes.rast import ComponentUpblkRASTTypeCheckPass
 
 from errors            import TranslationError
+from Helpers           import generate_signal_decl_from_type
 
 class ComponentUpblkTranslationPass( BasePass ):
   def __init__( s, type_env ):
@@ -30,10 +31,11 @@ class ComponentUpblkTranslationPass( BasePass ):
     m._pass_component_upblk_translation = PassMetadata()
     m._pass_component_upblk_translation.blk_srcs = {}
     m._pass_component_upblk_translation.freevars = {}
+    m._pass_component_upblk_translation.tmpvars = {}
 
     # Generate and visualize RAST
     ComponentUpblkRASTGenPass()( m )
-    ComponentUpblkRASTTypeCheckPass( s.type_env )( m )
+    tmp_var_type_env = ComponentUpblkRASTTypeCheckPass( s.type_env )( m )
     RASTVisualizationPass()( m )
     ComponentUpblkRASTToSVPass()( m )
 
@@ -44,3 +46,7 @@ class ComponentUpblkTranslationPass( BasePass ):
 
     for fvar, string in m._pass_component_upblk_rast_to_sv.freevars.iteritems():
       m._pass_component_upblk_translation.freevars[ fvar ] = string
+
+    for tvar, Type in tmp_var_type_env.iteritems():
+      string = generate_signal_decl_from_type( tvar, Type )
+      m._pass_component_upblk_translation.tmpvars[ tvar ] = string

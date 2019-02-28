@@ -577,6 +577,7 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
       else:
         # This is the first time we see this tmp var
         s.tmp_var_env.add( node.id )
+        ret = TmpVar( node.id )
 
     ret.ast = node
     return ret

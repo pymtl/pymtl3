@@ -23,6 +23,37 @@ class BaseRASTType( object ):
     super( BaseRASTType, s ).__init__()
 
 #-------------------------------------------------------------------------
+# NoneType
+#-------------------------------------------------------------------------
+# This type is used when a TmpVar node is visited before getting its type
+# from an assignment
+
+class NoneType( BaseRASTType ):
+  def __init__( s ):
+    super( NoneType, s ).__init__()
+
+  def type_str( s ):
+    ret = {}
+    return ret
+
+  def __eq__( s, other ):
+    if type( s ) == type( other ):
+      return True
+    return False
+
+  def __ne__( s, other ):
+    return not s.__eq__( other )
+
+  def __call__( s, obj ):
+    """Can obj be cast into RASTType.NoneType?"""
+    if isinstance( obj, NoneType ):
+      return True
+    return False
+
+  def __repr__( s ):
+    return 'NoneType'
+
+#-------------------------------------------------------------------------
 # Signal Type
 #-------------------------------------------------------------------------
 # Signal expressions are used for slicing, index, attribute, etc.
@@ -133,10 +164,18 @@ class Const( BaseRASTType ):
     s.value = value
 
   def type_str( s ):
-    ret = {}
-    ret[ 'dtype' ] = 'parameter int'
-    if not s.value is None:
-      ret[ 'value' ] = str( s.value )
+    # A Const will only be translated to signal declaration when a tmp
+    # variable got a constant value from assignment
+    ret = {
+        'dtype'      : 'logic',
+        'py_type'    : '',
+        'vec_size'   : '[{}:{}]'.format( s.nbits-1, 0 ),
+        'nbits'      : s.nbits,
+        'total_bits' : s.nbits,
+        'dim_size'   : '',
+        'c_dim_size' : '',
+        'n_dim_size' : [],
+    }
     return ret
 
   def __eq__( s, other ):
@@ -258,8 +297,9 @@ class Module( BaseAttr ):
 # This is the type for packed struct in SystemVerilog
 
 class Struct( BaseAttr ):
-  def __init__( s, obj, type_env ):
+  def __init__( s, obj, type_env, pack_order ):
     super( Struct, s ).__init__( obj, type_env )
+    s.pack_order = pack_order
 
   def type_str( s ):
     ret = {
@@ -361,8 +401,25 @@ def get_type( obj ):
 
     get_type_attributes( obj, type_env )
 
+    pack_order = []
+    if '_pack_order' in obj._dsl.Type.__dict__:
+      for field_name in obj._dsl.Type._pack_order:
+
+        assert field_name in obj._dsl.Type.__dict__, 'Given field name is not an\
+ attribute of struct ' + obj._dsl.Type.__class__.__name__ + '!'
+
+        _obj = obj.__dict__[ field_name ]
+        _Type = type_env[ _obj ]
+        pack_order.append( (_obj, _Type) )
+
+    else:
+      key_order = sorted( type_env.keys(), key = repr )
+
+      for key in key_order:
+        pack_order.append( (key, type_env[ key ]) )
+
     # Make sure total_bits is calculated correctly
-    ret = Struct( obj, type_env )
+    ret = Struct( obj, type_env, pack_order )
     ret.type_str()
 
     return ret

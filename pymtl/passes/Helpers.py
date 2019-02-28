@@ -7,6 +7,8 @@
 # Author : Peitian Pan
 # Date   : Feb 13, 2019
 
+import inspect
+
 def freeze( obj ):
   """Convert potentially mutable objects into immutable objects."""
   if isinstance( obj, list ):
@@ -19,3 +21,9 @@ def make_indent( src, nindent ):
 
   for idx, s in enumerate( src ):
     src[ idx ] = nindent * indent + s
+
+def get_string( obj ):
+  """Return the string that identifies `obj`"""
+  if inspect.isclass( obj ):
+    return obj.__name__
+  return str( obj )

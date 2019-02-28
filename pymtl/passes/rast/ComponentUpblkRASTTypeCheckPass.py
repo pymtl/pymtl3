@@ -29,6 +29,8 @@ class ComponentUpblkRASTTypeCheckPass( BasePass ):
 
       visitor.enter( blk, m._pass_component_upblk_rast_gen.rast[ blk ] )
 
+    return visitor.tmp_var_type_env
+
 #-------------------------------------------------------------------------
 # UpblkRASTTypeCheckVisitor
 #-------------------------------------------------------------------------
@@ -54,7 +56,7 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
 
     s.type_expect = {}
 
-    lhs_types = ( Signal, Array )
+    lhs_types = ( Signal, Array, NoneType )
 
     s.type_expect[ 'Assign' ] = {
       'target' : ( lhs_types, 'lhs of assignment must be signal/array!' ),
@@ -96,17 +98,10 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     assert type( l ) == int and type( r ) == int
 
     op_dict = {
-      Add  : '+',
-      Sub  : '-',
-      Mult : '*',
-      Div  : '/',
-      Mod  : '%',
-      Pow  : '**',
-      ShiftLeft : '<<',
-      ShiftRightLogic : '>>',
-      BitAnd : '&',
-      BitOr  : '|',
-      BitXor : '^',
+      Add       : '+',  Sub   : '-',  Mult : '*',  Div  : '/',
+      Mod       : '%',  Pow   : '**',
+      ShiftLeft : '<<', ShiftRightLogic : '>>',
+      BitAnd    : '&',  BitOr : '|',  BitXor : '^',
     }
 
     return eval( '{l}{op}{r}'.format( l = l, op = op_dict[ type(op) ], r = r ) )
@@ -186,12 +181,13 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     if isinstance( node.target, TmpVar ):
       # Creating a temporaray variable
       node.target.Type = rhs_type
-      s.tmp_var_type_env[ node.target.id ] = rhs_type
+      s.tmp_var_type_env[ node.target.name ] = rhs_type
 
-    if not lhs_type( rhs_type ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
-      )
+    else:
+      if not lhs_type( rhs_type ):
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'Unagreeable types between assignment LHS and RHS!'
+        )
 
     node.Type = None
 
@@ -283,13 +279,13 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
-    if not node.id in s.tmp_var_type_env:
+    if not node.name in s.tmp_var_type_env:
       # This tmpvar is being created. Later when it is used, its type can
       # be read from tmp_var_type_env.
-      node.Type = None
+      node.Type = NoneType()
 
     else:
-      node.Type = s.tmp_var_type_env[ node.id ]
+      node.Type = s.tmp_var_type_env[ node.name ]
 
   #-----------------------------------------------------------------------
   # visit_IfExp
@@ -392,7 +388,7 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
-    # node.value should be one of: Module, Struct, Interface
+    # node.value should subclass RASTType.BaseAttr
     # Make sure node.value has an attribute named attr
     if not node.attr in node.value.Type.obj.__dict__:
       raise PyMTLTypeError(

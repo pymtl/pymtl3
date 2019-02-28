@@ -7,10 +7,12 @@
 # Author : Peitian Pan
 # Date   : Feb 22, 2019
 
+import inspect
+
 from pymtl                      import *
 
 from pymtl.passes.rast          import get_type
-from pymtl.passes.Helpers       import make_indent
+from pymtl.passes.Helpers       import make_indent, get_string
 from pymtl.passes.rast.RASTType import Struct
 
 #-------------------------------------------------------------------------
@@ -43,11 +45,17 @@ def collect_ports( m, Type ):
 
 def generate_signal_decl( name, port ):
 
+  return generate_signal_decl_from_type( name, get_type( port ) )
+
+#-------------------------------------------------------------------------
+# generate_signal_decl_from_type
+#-------------------------------------------------------------------------
+
+def generate_signal_decl_from_type( name, Type ):
+
   name = get_verilog_name( name )
 
-  # TODO: support struct signals
-
-  type_str = get_type( port ).type_str()
+  type_str = Type.type_str()
 
   return '{dtype} {vec_size} {name} {dim_size}'.format(
     dtype = type_str[ 'dtype' ], vec_size = type_str[ 'vec_size' ],
@@ -105,8 +113,9 @@ def generate_struct_defs( type_env ):
       in_degree[ _vertex ] -= 1
       if in_degree[ _vertex ] == 0:
         q.append( _vertex )
-
-  assert len( visited.keys() ) == len( dag.keys() )
+  
+  assert len( visited.keys() ) == len( dag.keys() ),\
+    "Circular dependency detected in struct definition!"
 
   return ret
 
@@ -127,7 +136,7 @@ def generate_struct_def( obj, Type ):
   defs = []
 
   # generate declarations for each field in the struct
-  for _obj, _Type in Type.type_env.iteritems():
+  for _obj, _Type in Type.pack_order:
     defs.append(
       generate_signal_decl( get_verilog_name( _obj._dsl.my_name ),
         _obj ) + ';'
@@ -162,6 +171,37 @@ def get_model_parameters( model ):
   return ret
 
 #-------------------------------------------------------------------------
+# generate_model_name
+#-------------------------------------------------------------------------
+
+def generate_module_name( model ):
+
+  ret = model.__class__.__name__
+
+  param = get_model_parameters( model )
+
+  argspec = inspect.getargspec( getattr( model, 'construct' ) )
+
+  # Add const args to module name
+  for idx, arg_name in enumerate( argspec.args[1:] ):
+    arg_value = param[ '' ][idx]
+    ret += '__' + arg_name + '_' + get_string(arg_value)
+
+  # Add varargs to module name
+  if len( param[''] ) > len( argspec.args[1:] ):
+    ret += '__' + argspec.varargs
+  
+  for arg_value in param[''][ len(argspec.args[1:]): ]:
+    ret += '___' + get_string(arg_value)
+
+  # Add kwargs to module name
+  for arg_name, arg_value in param.iteritems():
+    if arg_name == '': continue
+    ret += '__' + arg_name + '_' + get_string(arg_value)
+
+  return ret
+
+#-------------------------------------------------------------------------
 # is_param_equal
 #-------------------------------------------------------------------------
 
@@ -175,6 +215,7 @@ def is_param_equal( src, dst ):
       return False
 
   for key in src.keys():
+    if key == '': continue
     if src[key] != dst[key]:
       return False
 

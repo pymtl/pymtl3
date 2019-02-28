@@ -93,14 +93,20 @@ class SystemVerilogTranslationPass( BasePass ):
 
     # Struct definition generation
 
-    ret =\
+    ret = ''
+
+    struct_defs = generate_struct_defs( type_env )
+
+    if struct_defs != '':
+      ret +=\
 """//------------------------------------------------------------------------
 // User-defined Structs
 //------------------------------------------------------------------------
 
-"""
+  """
+      ret += struct_defs + '\n'
 
-    ret += generate_struct_defs( type_env ) + '\n'
+    # ret += generate_struct_defs( type_env ) + '\n'
 
     # Recursively translate the top component
 

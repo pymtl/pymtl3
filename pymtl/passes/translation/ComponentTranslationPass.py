@@ -41,7 +41,7 @@ module {module_name}
   // Output declarations
   {output_decls}
 );
-  // Localparams ( Python free vars )
+  // Localparams
   {local_params}
 
   // Local wire declarations
@@ -67,7 +67,8 @@ endmodule
     if not '_pass_component_translation' in m.__dict__:
       m._pass_component_translation = PassMetadata()
 
-    module_name = m.__class__.__name__
+    # module_name = m.__class__.__name__
+    module_name = generate_module_name( m )
 
     connections_self_self   = s._connections_self_self[ m ]
     connections_self_child  = s._connections_self_child[ m ]
@@ -100,11 +101,6 @@ endmodule
       input_decls += ','
 
     output_decls = ',\n  '.join( signal_decl_str[ 'output' ] )
-
-    wire_decls = ';\n  '.join( signal_decl_str[ 'wire' ] )
-
-    if wire_decls:
-      wire_decls += ';'
 
     #---------------------------------------------------------------------
     # Instantiate child components
@@ -141,7 +137,7 @@ endmodule
       child_strs.extend( ifcs_decl_str[ 'input' ] )
       child_strs.extend( ifcs_decl_str[ 'output' ] )
       child_strs.append( '' )
-      child_strs.append( c.__class__.__name__+' '+child_name )
+      child_strs.append( generate_module_name(c)+' '+child_name )
       child_strs.append( '(' )
       child_strs.append( "  // Child component's inputs" )
       child_strs.extend( connection_wire[ 'input' ] )
@@ -231,6 +227,20 @@ endmodule
     freevars = m._pass_component_upblk_translation.freevars.values()
 
     local_params = '\n  '.join( freevars )
+
+    #---------------------------------------------------------------------
+    # Temporaray variable definitions
+    #---------------------------------------------------------------------
+    
+    tmpvars = m._pass_component_upblk_translation.tmpvars.values()
+
+    for tmpvar_def in tmpvars:
+      signal_decl_str[ 'wire' ].append( tmpvar_def )
+
+    wire_decls = ';\n  '.join( signal_decl_str[ 'wire' ] )
+
+    if wire_decls:
+      wire_decls += ';'
 
     #---------------------------------------------------------------------
     # Assemble all translated parts
