@@ -242,12 +242,6 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
 
     args = node.iter.args
 
-    for arg in args:
-      if not isinstance( arg, ast.Num ):
-        raise PyMTLSyntaxError(
-          s.blk, node, "(x)range can only have constant arguments!"
-        )
-
     if len( args ) == 1:
       # xrange( end )
       start = Number( 0 )
@@ -265,11 +259,6 @@ class UpblkRASTGenVisitor( ast.NodeVisitor ):
       start = s.visit( args[0] )
       end = s.visit( args[1] )
       step = s.visit( args[2] )
-
-      if step.value == 0:
-        raise PyMTLSyntaxError(
-          s.blk, node, "step argument to (x)range cannot be 0!"
-        )
 
     else:
       raise PyMTLSyntaxError(

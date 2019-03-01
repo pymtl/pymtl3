@@ -8,17 +8,18 @@
 
 import ast
 
-from pymtl             import *
-from pymtl.dsl         import ComponentLevel1
-from pymtl.passes      import BasePass, PassMetadata
+from pymtl                      import *
+from pymtl.dsl                  import ComponentLevel1
+from pymtl.passes               import BasePass, PassMetadata
 
-from pymtl.passes.rast import ComponentUpblkRASTGenPass
-from pymtl.passes.rast import ComponentUpblkRASTToSVPass
-from pymtl.passes.rast import RASTVisualizationPass
-from pymtl.passes.rast import ComponentUpblkRASTTypeCheckPass
+from pymtl.passes.rast          import ComponentUpblkRASTGenPass
+from pymtl.passes.rast          import ComponentUpblkRASTToSVPass
+from pymtl.passes.rast          import RASTVisualizationPass
+from pymtl.passes.rast          import ComponentUpblkRASTTypeCheckPass
+from pymtl.passes.rast.RASTType import Const, Signal
 
-from errors            import TranslationError
-from Helpers           import generate_signal_decl_from_type
+from errors                     import TranslationError
+from Helpers                    import generate_signal_decl_from_type
 
 class ComponentUpblkTranslationPass( BasePass ):
   def __init__( s, type_env ):
@@ -47,6 +48,12 @@ class ComponentUpblkTranslationPass( BasePass ):
     for fvar, string in m._pass_component_upblk_rast_to_sv.freevars.iteritems():
       m._pass_component_upblk_translation.freevars[ fvar ] = string
 
-    for tvar, Type in tmp_var_type_env.iteritems():
+    for tvar, _Type in tmp_var_type_env.iteritems():
+      Type = _Type
+      if isinstance( _Type, Const ):
+        # Trying to assign constant value to a temporary variable
+        # The correct type to declare should be Signal
+        Type = Signal.cast( _Type )
+
       string = generate_signal_decl_from_type( tvar, Type )
       m._pass_component_upblk_translation.tmpvars[ tvar ] = string

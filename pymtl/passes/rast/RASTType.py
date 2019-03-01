@@ -9,7 +9,7 @@
 import inspect
 
 from pymtl                import *
-from pymtl.passes.Helpers import freeze
+from pymtl.passes.Helpers import freeze, is_obj_eq
 
 #-------------------------------------------------------------------------
 # Base RAST Type
@@ -45,7 +45,7 @@ class NoneType( BaseRASTType ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.NoneType?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, NoneType ):
       return True
     return False
@@ -86,12 +86,23 @@ class Signal( BaseRASTType ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Signal?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, Signal ) and s == obj:
       return True
     if isinstance( obj, Const ) and s.nbits == obj.nbits:
       return True
     return False
+
+  @staticmethod
+  def cast( obj ):
+    """Cast `obj` into Signal object or NoneType() if failed"""
+    if isinstance( obj, Signal ):
+      return obj
+
+    if isinstance( obj, Const ):
+      return Signal( obj.nbits )
+
+    return NoneType()
 
   def __repr__( s ):
     return 'Signal'
@@ -143,7 +154,7 @@ class Array( BaseRASTType ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Array?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, Array ) and s.Type == obj.Type:
       return True
     return False
@@ -164,18 +175,21 @@ class Const( BaseRASTType ):
     s.value = value
 
   def type_str( s ):
-    # A Const will only be translated to signal declaration when a tmp
-    # variable got a constant value from assignment
+    assert not s.value is None, "Trying to declare a constant but did not\
+ provide initial value!"
+
     ret = {
-        'dtype'      : 'logic',
-        'py_type'    : '',
+        'dtype'      : 'const logic',
+        'py_type'    : 'Bits' + str(s.nbits),
         'vec_size'   : '[{}:{}]'.format( s.nbits-1, 0 ),
+        'value'      : str(s.value),
         'nbits'      : s.nbits,
         'total_bits' : s.nbits,
         'dim_size'   : '',
         'c_dim_size' : '',
         'n_dim_size' : [],
     }
+
     return ret
 
   def __eq__( s, other ):
@@ -187,7 +201,7 @@ class Const( BaseRASTType ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Const?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, Const ) and s == obj:
       return True
     return False
@@ -215,7 +229,7 @@ class Bool( BaseRASTType ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Bool?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, ( Bool, Signal, Const ) ):
       return True
     return False
@@ -239,10 +253,10 @@ class BaseAttr( BaseRASTType ):
     raise NotImplementedError
 
   def __eq__( s, other ):
-    raise NotImplementedError
+    return is_obj_eq( s.type_env, other.type_env )
 
   def __ne__( s, other ):
-    raise NotImplementedError
+    return not s.__eq__( other )
 
   def __call__( s, obj ):
     raise NotImplementedError
@@ -273,17 +287,8 @@ class Module( BaseAttr ):
 
     return ret
 
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    # We will compare the type of module objects!
-    return type(s.obj) == type(other.obj)
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
   def __call__( s, obj ):
-    """Can _obj be cast into RASTType.Module?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, Module ) and s == obj:
       return True
     return False
@@ -323,16 +328,15 @@ class Struct( BaseAttr ):
 
     return ret
 
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    return s is other
+  def __eq__( s, u ):
+    return super( Struct, s ).__eq__( u ) and \
+           is_obj_eq( s.pack_order, u.pack_order )
 
   def __ne__( s, other ):
     return not s.__eq__( other )
 
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Struct?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, Struct ) and s is obj:
       return True
     return False
@@ -351,16 +355,8 @@ class Interface( BaseAttr ):
   def type_str( s ):
     return {}
 
-  def __eq__( s, other ):
-    if type( s ) != type( other ):
-      return False
-    return s is other
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
   def __call__( s, obj ):
-    """Can obj be cast into RASTType.Interface?"""
+    """Can obj be cast into type `s`?"""
     if isinstance( obj, Interface ) and s is obj:
       return True
     return False
@@ -511,4 +507,3 @@ def get_type_attributes( obj, type_env ):
       type_env.update( Type.type_env )
     except:
       pass
-

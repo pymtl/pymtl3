@@ -17,14 +17,14 @@ from pymtl                   import *
 from pymtl.passes            import BasePass
 from pymtl.passes.simulation import GenDAGPass
 
-from Helpers                 import get_topmost_member
+from Helpers                 import get_topmost_member, generate_module_name
 
 class ConstraintGenPass( BasePass ):
 
   def __call__( s, top ):
     """ convert the constraint DAG of top into ssg files """
 
-    model_name    = top.__class__.__name__
+    model_name    = generate_module_name( top )
     ssg_file_name = model_name + '.ssg'
 
     # Collect all vertices and edges of the constraint DAG

@@ -17,7 +17,7 @@ from pymtl.passes.Helpers     import freeze
 from pymtl.passes.rast        import get_type
 
 from errors                   import TranslationError
-from Helpers                  import generate_struct_defs
+from Helpers                  import generate_struct_defs, generate_module_name
 from ConstraintGenPass        import ConstraintGenPass
 from HierarchyTranslationPass import HierarchyTranslationPass
 
@@ -28,7 +28,7 @@ class SystemVerilogTranslationPass( BasePass ):
 
     top._pass_systemverilog_translation = PassMetadata()
 
-    model_name            = top.__class__.__name__
+    model_name            = generate_module_name( top )
     systemverilog_file    = model_name + '.sv'
 
     # Get all modules in the component hierarchy and analyze all

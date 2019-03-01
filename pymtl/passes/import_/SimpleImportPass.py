@@ -36,9 +36,8 @@ class SimpleImportPass( BasePass ):
     # Assume the input verilog file and the top module has the same name 
     # as the class name of model
     
-    sv_name  = model.__class__.__name__
-    ssg_name = model.__class__.__name__ + '.ssg'
-    # top_name = model.__class__.__name__
+    sv_name  = generate_module_name( model )
+    ssg_name = generate_module_name( model ) + '.ssg'
     top_name = generate_module_name( model )
 
     # Generate the interface structure

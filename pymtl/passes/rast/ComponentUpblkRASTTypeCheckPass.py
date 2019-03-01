@@ -222,6 +222,19 @@ class UpblkRASTTypeCheckVisitor( RASTNodeVisitor ):
     node.Type = None
 
   #-----------------------------------------------------------------------
+  # visit_For
+  #-----------------------------------------------------------------------
+
+  def visit_For( s, node ):
+    if isinstance( node.step.Type, Const ) and node.step.Type.is_static:
+      if node.step.Type.value == 0:
+        raise PyMTLTypeError(
+          s.blk, node.ast, 'the step of for-loop cannot be zero!'
+        )
+
+    node.Type = None
+
+  #-----------------------------------------------------------------------
   # visit_Base
   #-----------------------------------------------------------------------
 

@@ -65,3 +65,46 @@ def test_struct_inport( do_test ):
     [   Bits12( 0x0FC ), Bits12( 0xFC0 ) ],
   ]
   do_test( a )
+
+#-------------------------------------------------------------------------
+# test_composite_port
+#-------------------------------------------------------------------------
+
+def test_composite_port( do_test ):
+  class val_bundle( object ):
+    def __init__( s ):
+      s.val0 = Bits1
+      s.val1 = Bits1
+      
+      s._pack_order = [ 'val0', 'val1' ]
+
+    def __call__( s, val0 = 0, val1 = 0 ):
+      bundle = val_bundle()
+      bundle.val0 = bundle.val0( 0 )
+      bundle.val1 = bundle.val1( 0 )
+      return bundle
+
+  class composite_port( RTLComponent ):
+    def construct( s, num_port ):
+      s.in_ = [ InVPort( val_bundle() ) for _ in xrange( num_port ) ]
+      s.out = [ OutVPort( Bits32 ) for _ in xrange( num_port ) ]
+
+      @s.update
+      def composite_port_out():
+        for i in xrange( num_port ):
+          if s.in_[ i ].val0 and s.in_[ i ].val1:
+            s.out[ i ] = Bits32(0xac)
+          else:
+            s.out[ i ] = Bits32(0xff)
+
+  m = composite_port( 2 )
+  m._test_vector = [
+    '    in_[0]    in_[1]       *out[0]      *out[1] ',
+    [    Bits2,    Bits2,       Bits32,       Bits32 ],
+
+    [ Bits2(3), Bits2(3), Bits32(0xac), Bits32(0xac) ],
+    [ Bits2(1), Bits2(1), Bits32(0xff), Bits32(0xff) ],
+    [ Bits2(3), Bits2(1), Bits32(0xac), Bits32(0xff) ],
+    [ Bits2(1), Bits2(3), Bits32(0xff), Bits32(0xac) ],
+  ]
+  do_test( m )

@@ -55,7 +55,7 @@ def test_mux():
 # test_bypass_queue
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = 'Needs Interface support' )
+# @pytest.mark.xfail( reason = 'Needs Interface support' )
 def test_bypass_queue():
   from pclib.rtl.valrdy_queues import BypassQueue1RTL
 
@@ -367,10 +367,10 @@ def test_sort():
 #-------------------------------------------------------------------------
 # test_gcd
 #-------------------------------------------------------------------------
+# Code from pymtl-v3-design repo
 
 @pytest.mark.xfail( reason = 'Needs interface translation support' )
 def test_gcd():
-  # Code from pymtl-v3-design repo
   from pclib.rtl import RegEn, Reg, Mux, ZeroComp, LTComp, Subtractor
 
   A_MUX_SEL_IN  = 0

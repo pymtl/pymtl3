@@ -12,7 +12,7 @@ import inspect
 from pymtl                      import *
 
 from pymtl.passes.rast          import get_type
-from pymtl.passes.Helpers       import make_indent, get_string
+from pymtl.passes.Helpers       import *
 from pymtl.passes.rast.RASTType import Struct
 
 #-------------------------------------------------------------------------
@@ -66,32 +66,46 @@ def generate_signal_decl_from_type( name, Type ):
 # generate_struct_defs
 #-------------------------------------------------------------------------
 
-def generate_struct_defs( type_env ):
+def generate_struct_defs( _type_env ):
 
   ret = ''
+
+  # Generate type environment of structs
+
+  type_env = []
+
+  for obj, Type in _type_env.iteritems():
+    if isinstance( Type, Struct ):
+      type_env.append( (obj, Type) )
+
+  # Deduplicate structs
+
+  for idx, (obj, Type) in enumerate(type_env):
+    for _idx, (_obj, _Type) in enumerate(type_env[idx+1:]):
+      if is_obj_eq( obj, _obj ):
+        del type_env[ _idx ]
 
   # Generate struct dependency DAG
   
   dag = {}
   in_degree = {}
 
-  for obj, Type in type_env.iteritems():
-    if isinstance( Type, Struct ):
-      if not (obj, Type) in dag:
-        dag[ (obj, Type) ] = []
-      if not (obj, Type) in in_degree:
-        in_degree[ (obj, Type) ] = 0
+  for obj, Type in type_env:
+    if not (obj, Type) in dag:
+      dag[ (obj, Type) ] = []
+    if not (obj, Type) in in_degree:
+      in_degree[ (obj, Type) ] = 0
 
-      _env = Type.type_env
-      for _obj, _Type in _env.iteritems():
-        if isinstance( _Type, Struct ):
-          if not (_obj, _Type) in dag:
-            dag[ (_obj, _Type) ] = []
-          if not (obj, Type) in in_degree:
-            in_degree[ (obj, Type) ] = 0
+    _env = Type.type_env
+    for _obj, _Type in _env.iteritems():
+      if isinstance( _Type, Struct ):
+        if not (_obj, _Type) in dag:
+          dag[ (_obj, _Type) ] = []
+        if not (obj, Type) in in_degree:
+          in_degree[ (obj, Type) ] = 0
 
-          dag[ (_obj, _Type) ].append( (obj, Type) )
-          in_degree[ (obj, Type) ] += 1
+        dag[ (_obj, _Type) ].append( (obj, Type) )
+        in_degree[ (obj, Type) ] += 1
 
   # Topo sort on dag
 
