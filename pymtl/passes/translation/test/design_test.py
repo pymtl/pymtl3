@@ -55,7 +55,7 @@ def test_mux():
 # test_bypass_queue
 #-------------------------------------------------------------------------
 
-# @pytest.mark.xfail( reason = 'Needs Interface support' )
+@pytest.mark.xfail( reason = 'Needs Interface support' )
 def test_bypass_queue():
   from pclib.rtl.valrdy_queues import BypassQueue1RTL
 
