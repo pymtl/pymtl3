@@ -140,8 +140,8 @@ def run_translation_test( model, test_vec ):
   # Run the simulation
   #-----------------------------------------------------------------------
 
-  test_harness.apply( SimpleSimDumpDAG )
-  # test_harness.apply( SimpleSim )
+  # test_harness.apply( SimpleSimDumpDAG )
+  test_harness.apply( SimpleSim )
 
   for cycle in xrange( len( test_vec ) ):
     test_harness.tick()
