@@ -62,6 +62,13 @@ class SimpleImportPass( BasePass ):
 
     py_wrapper = py_wrapper_name.split('.')[0]
 
+    # Add CWD to sys.path so we can import from the wrappers
+
+    if not os.getcwd() in sys.path:
+      sys.path.append( os.getcwd() )
+
+    # Import the model from python wrapper
+
     if py_wrapper in sys.modules:
       # We are (probably) in a test process that is repeatedly run
       # Reloading is needed since the user may have updated the source file
