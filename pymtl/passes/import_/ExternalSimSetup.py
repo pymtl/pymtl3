@@ -133,6 +133,21 @@ def create_shared_lib( wrapper_name, top_name ):
   # Assume $PYMTL_VERILATOR_INCLUDE_DIR is defined
 
   verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
+  
+  if verilator_include_dir is None:
+    cmd = ['pkg-config', '--variable=includedir', 'verilator']
+
+    try:
+      verilator_include_dir = \
+        subprocess.check_output( cmd, stderr=subprocess.STDOUT ).strip()
+
+    except OSError:
+      raise PyMTLImportError(
+        top_name,
+        """Cannot locate the include directory of verilator. Please make """
+        """sure either $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config """
+        """has been configured properly!"""
+      )
 
   include_dirs = [
     verilator_include_dir, 
