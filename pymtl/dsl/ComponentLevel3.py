@@ -15,7 +15,7 @@ from NamedObject import NamedObject
 from ComponentLevel1 import ComponentLevel1
 from ComponentLevel2 import ComponentLevel2
 from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
-from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
+from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
 from collections import defaultdict, deque
 
 import inspect, ast # for error message
@@ -613,7 +613,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def get_signal_adjacency_dict( s ):
     try:
-      assert s._elaborate_top is s, "Getting adjacency dictionary " \
+      assert s._dsl.elaborate_top is s, "Getting adjacency dictionary " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
     except AttributeError:

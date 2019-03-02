@@ -1,11 +1,11 @@
 from pymtl import *
 from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL
-from pymtl.passes.VerilogTranslationPass import VerilogTranslationPass
+from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
 
 def test_adder():
   m = Adder( Bits32 )
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_wrapped_noconnect_adder():
 
@@ -27,7 +27,7 @@ def test_wrapped_noconnect_adder():
 
   m = Adder_wrap()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_wrapped_noconnect_wire_adder():
 
@@ -55,7 +55,7 @@ def test_wrapped_noconnect_wire_adder():
 
   m = Adder_wrap()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_wrapped_noconnect_slice_adder():
 
@@ -78,7 +78,7 @@ def test_wrapped_noconnect_slice_adder():
 
   m = Adder_wrap()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_wrapped_connect_adder():
 
@@ -92,7 +92,7 @@ def test_wrapped_connect_adder():
 
   m = Adder_wrap()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_wrapped_connect_wire_adder():
 
@@ -110,7 +110,7 @@ def test_wrapped_connect_wire_adder():
 
   m = Adder_wrap()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_wrapped_connect_two_child_modules_wire():
 
@@ -133,7 +133,7 @@ def test_wrapped_connect_two_child_modules_wire():
 
   m = Adder_wrap()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 # def test_mux():
   # m = Mux( Bits32, 3 )
@@ -164,7 +164,7 @@ def test_multiple_if():
 
   m = Foo()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_multiple_if_two_level():
 
@@ -199,7 +199,7 @@ def test_multiple_if_two_level():
 
   m = Bar()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_bits_type():
 
@@ -219,7 +219,7 @@ def test_bits_type():
 
   m = Foo()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_bits_type_in_self():
 
@@ -242,7 +242,7 @@ def test_bits_type_in_self():
 
   m = Foo()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_bits_closure():
 
@@ -265,7 +265,7 @@ def test_bits_closure():
 
   m = Foo()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 def test_bits_value_closure():
 
@@ -291,7 +291,7 @@ def test_bits_value_closure():
 
   m = Foo()
   m.elaborate()
-  VerilogTranslationPass()( m )
+  SystemVerilogTranslationPass()( m )
 
 # def test_bits_val_and_call():
 
