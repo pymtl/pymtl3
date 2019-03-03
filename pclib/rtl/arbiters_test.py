@@ -20,7 +20,7 @@ class TestVectorSimulator( object ):
 
   def run_test( self ):
 
-    SimRTLPass().apply( self.model )
+    self.model.apply( SimpleSim )
 
     self.model.sim_reset()
 

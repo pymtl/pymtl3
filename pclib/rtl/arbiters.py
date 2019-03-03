@@ -11,7 +11,7 @@ from pclib.rtl import Mux, RegEnRst
 #-----------------------------------------------------------------------
 class RoundRobinArbiter( RTLComponent ):
 
-  def __init__( s, nreqs ):
+  def construct( s, nreqs ):
 
     nreqsX2  = nreqs * 2
 
@@ -83,7 +83,7 @@ class RoundRobinArbiterEn( RTLComponent ):
   valid arbitration, the priority register is updated. This breaks the
   val-rdy dependency.
   '''
-  def __init__( s, nreqs ):
+  def construct( s, nreqs ):
 
     nreqsX2  = nreqs * 2
 
