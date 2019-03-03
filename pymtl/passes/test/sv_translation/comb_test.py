@@ -138,12 +138,12 @@ def test_wrapped_connect_two_child_modules_wire():
 # def test_mux():
   # m = Mux( Bits32, 3 )
   # m.elaborate()
-  # VerilogTranslationPass()( m )
+  # SystemVerilogTranslationPass()( m )
 
 # def test_bypass_queue():
   # m = BypassQueue1RTL( Bits32 )
   # m.elaborate()
-  # VerilogTranslationPass()( m )
+  # SystemVerilogTranslationPass()( m )
 
 def test_multiple_if():
 
@@ -331,4 +331,4 @@ def test_bits_value_closure():
 
   # m = Foo()
   # m.elaborate()
-  # VerilogTranslationPass()( m )
+  # SystemVerilogTranslationPass()( m )

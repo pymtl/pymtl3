@@ -6,7 +6,7 @@ from pymtl import *
 
 class Crossbar( RTLComponent ):
 
-  def __init__( s, nports, dtype ):
+  def construct( s, nports, dtype ):
 
     sel_nbits = clog2( nports )
 

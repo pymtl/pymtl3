@@ -10,7 +10,6 @@ from pymtl.dsl import ComponentLevel1
 from BasePass import BasePass
 from GenDAGPass import GenDAGPass
 from SimpleSchedPass import SimpleSchedPass
-from SimpleTickPass import SimpleTickPass
 from collections import defaultdict, deque
 from errors import TranslationError
 import ast
@@ -47,7 +46,6 @@ class SystemVerilogTranslationPass( BasePass ):
 
     GenDAGPass()( top )
     SimpleSchedPass()( top )
-    SimpleTickPass()( top )
 
     # Generate all names
 
@@ -135,6 +133,7 @@ class SystemVerilogTranslationPass( BasePass ):
         width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
         return "{} {}".format( width_str, x.get_field_name() )
       except AttributeError: # it is not a Bits type
+        print x.Type.nbits
         assert False, "TODO Implement data struct translation"
 
     input_strs = [ "input logic{}".format( gen_signal_width_name(x) )
@@ -250,8 +249,7 @@ class SystemVerilogTranslationPass( BasePass ):
     translator = FuncUpblkTranslator( m )
 
     for blk in m.get_update_blocks():
-      ast = m.get_update_block_ast( blk )
-      x = translator.enter( blk, ast )
+      x = translator.enter( blk, m.get_update_block_ast( blk ) )
       blk_src.append( x )
 
     # for name, func in m._name_func.iteritems():

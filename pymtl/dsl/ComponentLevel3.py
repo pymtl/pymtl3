@@ -628,7 +628,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     def _delete_component_by_name( parent, name ):
       obj = getattr( parent, name )
-      top = s._elaborate_top
+      top = s._dsl.elaborate_top
       import timeit
 
       # First make sure we flush pending connections

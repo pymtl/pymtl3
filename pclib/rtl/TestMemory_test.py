@@ -18,7 +18,7 @@ from TestMemory import TestMemoryRTL
 
 class TestHarness( RTLComponent ):
 
-  def __init__( s, nports, src_msgs, sink_msgs, stall_prob, latency,
+  def construct( s, nports, src_msgs, sink_msgs, stall_prob, latency,
                 src_delay, sink_delay ):
 
     # Message type
@@ -28,15 +28,11 @@ class TestHarness( RTLComponent ):
 
     # Instantiate models
 
-    s.srcs = []
-    for i in xrange(nports):
-      s.srcs.append( TestSourceValRdy( req, src_msgs[i] ) )
+    s.srcs = [ TestSourceValRdy( req, src_msgs[i] )  for i in xrange(nports) ]
 
     s.mem  = TestMemoryRTL( nports, [req]*nports, [resp]*nports  )
 
-    s.sinks = []
-    for i in xrange(nports):
-      s.sinks.append( TestSinkValRdy( resp, sink_msgs[i] ) )
+    s.sinks = [ TestSinkValRdy( resp, sink_msgs[i] ) for i in xrange(nports) ]
 
     # Connect
 
@@ -323,7 +319,7 @@ def test_read_write_mem( dump_vcd ):
   assert result == data
 
 def run_sim( model,dump_vcd ):
-  SimRTLPass().apply( model )
+  model.apply( SimpleSim )
   print()
   while not model.done():
     model.tick()

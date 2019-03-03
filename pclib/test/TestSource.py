@@ -6,7 +6,7 @@ from pclib.ifcs  import EnqIfcCL, EnqIfcRTL, DeqIfcFL
 
 class TestSourceValRdy( UpdatesImpl ):
 
-  def __init__( s, Type, msgs ):
+  def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
     s.msgs  = deque( msgs ) # deque.popleft() is faster
 
@@ -27,7 +27,7 @@ class TestSourceValRdy( UpdatesImpl ):
 
 class StreamSourceValRdy( UpdatesImpl ):
 
-  def __init__( s, Type ):
+  def construct( s, Type ):
     s.out = ValRdyBundle( Type )
     s.ts  = 0
 
@@ -45,7 +45,7 @@ class StreamSourceValRdy( UpdatesImpl ):
 
 class TestSourceEnRdy( UpdatesImpl ):
 
-  def __init__( s, Type, msgs = [] ):
+  def construct( s, Type, msgs = [] ):
     assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
     s.msgs = deque( msgs ) # deque.popleft() is faster
 
@@ -68,7 +68,7 @@ class TestSourceEnRdy( UpdatesImpl ):
 
 class TestSourceFL( MethodsAdapt ):
 
-  def __init__( s, Type, msgs = [] ):
+  def construct( s, Type, msgs = [] ):
     assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
     s.msgs = deque( msgs ) # deque.popleft() is faster
 
@@ -93,7 +93,7 @@ class TestSourceFL( MethodsAdapt ):
 
 class TestSourceCL( MethodsConnection ):
 
-  def __init__( s, Type, msgs = [] ):
+  def construct( s, Type, msgs = [] ):
     assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
     s.msgs = deque( msgs ) # deque.popleft() is faster
 
@@ -120,7 +120,7 @@ from pclib.cl import RandomDelay
 
 class TestSource( MethodsConnection ):
 
-  def __init__( s, Type, msgs=[], max_delay=0 ):
+  def construct( s, Type, msgs=[], max_delay=0 ):
     s.send = EnqIfcCL( Type )
 
     s.src = TestSourceCL( Type, msgs )
