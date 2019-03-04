@@ -1,0 +1,60 @@
+#=========================================================================
+# TravisCI Setup
+#=========================================================================
+
+#------------------------------------------------------------------------
+# language and build matrix
+#------------------------------------------------------------------------
+
+language: python
+python:
+ - "2.7"
+
+env:
+ - CONFIG=""
+ #- CONFIG="--test-verilog"
+ # - CONFIG="--dump-vcd"
+
+#------------------------------------------------------------------------
+# install dependencies
+#------------------------------------------------------------------------
+
+install:
+
+ # Install verilator
+
+ - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
+ - tar -C ${HOME} -xzf verilator-travis-4.008.tar.gz
+ - export VERILATOR_ROOT=${HOME}/verilator
+ - export PATH=${VERILATOR_ROOT}/bin:${PATH}
+ - export PYMTL_VERILATOR_INCLUDE_DIR=${VERILATOR_ROOT}/share/verilator/include
+ - verilator --version
+
+ # Install Python requirements
+
+ - pip install --editable .
+ - pip install --upgrade pytest
+ - pip list
+ 
+ # Install Hypothesis
+ - pip install hypothesis 
+ # Install Graphviz
+ - pip install graphviz
+
+#------------------------------------------------------------------------
+# before test runner
+#------------------------------------------------------------------------
+
+before_script:
+
+ # Make build directory
+
+ - mkdir -p build
+ - cd build
+
+#------------------------------------------------------------------------
+# test runner
+#------------------------------------------------------------------------
+
+script:
+ - py.test .. $CONFIG

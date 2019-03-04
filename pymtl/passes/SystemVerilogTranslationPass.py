@@ -6,10 +6,10 @@
 # Date   : Aug 23, 2018
 
 from pymtl import *
-from pymtl.model import ComponentLevel1
+from pymtl.dsl import ComponentLevel1
 from BasePass import BasePass
 from GenDAGPass import GenDAGPass
-from SimpleSchedTickPass import SimpleSchedTickPass
+from SimpleSchedPass import SimpleSchedPass
 from collections import defaultdict, deque
 from errors import TranslationError
 import ast
@@ -45,7 +45,7 @@ class SystemVerilogTranslationPass( BasePass ):
   def __call__( self, top ):
 
     GenDAGPass()( top )
-    SimpleSchedTickPass()( top )
+    SimpleSchedPass()( top )
 
     # Generate all names
 
@@ -129,10 +129,11 @@ class SystemVerilogTranslationPass( BasePass ):
     # deduplicate code across inport/outport/wire
     def gen_signal_width_name( x ):
       try:
-        nbits     = x.Type.nbits
+        nbits     = x._dsl.Type.nbits
         width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
         return "{} {}".format( width_str, x.get_field_name() )
       except AttributeError: # it is not a Bits type
+        print x.Type.nbits
         assert False, "TODO Implement data struct translation"
 
     input_strs = [ "input logic{}".format( gen_signal_width_name(x) )
@@ -177,14 +178,14 @@ class SystemVerilogTranslationPass( BasePass ):
       # TODO align all declarations
       for port in sorted( child.get_input_value_ports(), key=repr ):
         fname = port.get_field_name()
-        nbits = port.Type.nbits
+        nbits = port._dsl.Type.nbits
         width = "" if nbits == 1 else " [{}:0]".format(nbits-1)
         sig_decls.append("logic{} {}${};".format( width, child_name, fname ) )
         in_wiring.append("  .{0:6}( {1}${0} ),".format( fname, child_name ) )
 
       for port in sorted( child.get_output_value_ports(), key=repr ):
         fname = port.get_field_name()
-        nbits = port.Type.nbits
+        nbits = port._dsl.Type.nbits
         width = "" if nbits == 1 else " [{}:0]".format(nbits-1)
         sig_decls .append("logic{} {}${};".format( width, child_name, fname ) )
         out_wiring.append("  .{0:6}( {1}${0} ),".format( fname, child_name ) )
@@ -247,8 +248,8 @@ class SystemVerilogTranslationPass( BasePass ):
 
     translator = FuncUpblkTranslator( m )
 
-    for (blk, ast) in m.get_update_block_ast_pairs():
-      x = translator.enter( blk, ast )
+    for blk in m.get_update_blocks():
+      x = translator.enter( blk, m.get_update_block_ast( blk ) )
       blk_src.append( x )
 
     # for name, func in m._name_func.iteritems():
@@ -459,7 +460,7 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
 
     if arg in self.mapping:
       try:
-        obj_nb = self.mapping[ arg ][0].Type.nbits
+        obj_nb = self.mapping[ arg ][0]._dsl.Type.nbits
       except AttributeError:
         # This is not a signal. Use the value instead.
         return "{}'d{}".format( nb, self.mapping[ arg ][0] )

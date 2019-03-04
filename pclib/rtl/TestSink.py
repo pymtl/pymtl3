@@ -93,7 +93,7 @@ class TestSinkUnorderedValRdy( RTLComponent ):
 
 class TestSink( RTLComponent ):
 
-  def __init__( s, Type, answer ):
+  def construct( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!" 
 
     s.answer = deque( answer )

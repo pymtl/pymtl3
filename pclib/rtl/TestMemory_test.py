@@ -18,7 +18,7 @@ from TestMemory import TestMemoryRTL
 
 class TestHarness( RTLComponent ):
 
-  def __init__( s, nports, src_msgs, sink_msgs, stall_prob, latency,
+  def construct( s, nports, src_msgs, sink_msgs, stall_prob, latency,
                 src_delay, sink_delay ):
 
     # Message type
@@ -28,15 +28,11 @@ class TestHarness( RTLComponent ):
 
     # Instantiate models
 
-    s.srcs = []
-    for i in xrange(nports):
-      s.srcs.append( TestSourceValRdy( req, src_msgs[i] ) )
+    s.srcs = [ TestSourceValRdy( req, src_msgs[i] )  for i in xrange(nports) ]
 
     s.mem  = TestMemoryRTL( nports, [req]*nports, [resp]*nports  )
 
-    s.sinks = []
-    for i in xrange(nports):
-      s.sinks.append( TestSinkValRdy( resp, sink_msgs[i] ) )
+    s.sinks = [ TestSinkValRdy( resp, sink_msgs[i] ) for i in xrange(nports) ]
 
     # Connect
 
@@ -247,12 +243,14 @@ test_case_table = mk_test_case_table([
   [ "random_stall0.5_lat4_3x14", random_msgs,      0.5,  4,  3,  14   ],
 ])
 
+# FIXME use new data types
+
 #-------------------------------------------------------------------------
 # Test cases for 1 port
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def test_1port( test_params, dump_vcd ):
+def _test_1port( test_params, dump_vcd ):
   msgs = test_params.msg_func(0x1000)
   run_sim( TestHarness( 1, [ msgs[::2] ], [ msgs[1::2] ],
                         test_params.stall, test_params.lat,
@@ -264,7 +262,7 @@ def test_1port( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def test_2port( test_params, dump_vcd ):
+def _test_2port( test_params, dump_vcd ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
   run_sim( TestHarness( 2, [ msgs0[::2],  msgs1[::2]  ],
@@ -277,7 +275,7 @@ def test_2port( test_params, dump_vcd ):
 # Test Read/Write Mem
 #-------------------------------------------------------------------------
 
-def test_read_write_mem( dump_vcd ):
+def _test_read_write_mem( dump_vcd ):
 
   rgen = random.Random()
   rgen.seed(0x05a3e95b)
@@ -323,7 +321,7 @@ def test_read_write_mem( dump_vcd ):
   assert result == data
 
 def run_sim( model,dump_vcd ):
-  SimRTLPass().apply( model )
+  model.apply( SimpleSim )
   print()
   while not model.done():
     model.tick()

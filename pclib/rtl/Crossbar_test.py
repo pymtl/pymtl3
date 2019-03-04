@@ -18,7 +18,7 @@ class TestVectorSimulator( object ):
 
   def run_test( self ):
 
-    SimRTLPass().apply( self.model )
+    self.model.apply( SimpleSim )
 
     print()
     for test_vector in self.test_vectors:

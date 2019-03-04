@@ -15,7 +15,7 @@ from NamedObject import NamedObject
 from ComponentLevel1 import ComponentLevel1
 from ComponentLevel2 import ComponentLevel2
 from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
-from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError
+from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
 from collections import defaultdict, deque
 
 import inspect, ast # for error message
@@ -613,7 +613,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def get_signal_adjacency_dict( s ):
     try:
-      assert s._elaborate_top is s, "Getting adjacency dictionary " \
+      assert s._dsl.elaborate_top is s, "Getting adjacency dictionary " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
     except AttributeError:
@@ -628,7 +628,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     def _delete_component_by_name( parent, name ):
       obj = getattr( parent, name )
-      top = s._elaborate_top
+      top = s._dsl.elaborate_top
       import timeit
 
       # First make sure we flush pending connections
@@ -637,13 +637,13 @@ class ComponentLevel3( ComponentLevel2 ):
       # Remove all components and uncollect metadata
 
       removed_components = obj.get_all_components()
-      top._all_components -= removed_components
+      top._dsl.all_components -= removed_components
 
       removed_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-      top._all_signals -= removed_signals
+      top._dsl.all_signals -= removed_signals
 
       for x in removed_components:
-        assert x._elaborate_top is top
+        assert x._dsl.elaborate_top is top
         top._uncollect_vars( x )
         for y in x._dsl.consts:
           del y._dsl.parent_obj
@@ -698,12 +698,12 @@ class ComponentLevel3( ComponentLevel2 ):
     top._dsl.all_components |= added_components
 
     for c in added_components:
-      c._elaborate_top = top
+      c._dsl.elaborate_top = top
       c._elaborate_read_write_func()
       top._collect_vars( c )
 
     added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._all_signals |= added_signals
+    top._dsl.all_signals |= added_signals
 
     # Lazy -- to avoid resolve_connection call which takes non-trivial
     # time upon adding any connect, I just mark it here. Please make sure
@@ -713,7 +713,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def add_connection( s, o1, o2 ):
     # TODO support string arguments and non-top s
-    assert s._elaborate_top is s, "Adding connection by passing objects " \
+    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
 
@@ -730,7 +730,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def add_connections( s, *args ):
     # TODO support string arguments and non-top s
-    assert s._elaborate_top is s, "Adding connection by passing objects " \
+    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
 
@@ -749,11 +749,11 @@ class ComponentLevel3( ComponentLevel2 ):
     for x, adjs in added_adjacency.iteritems():
       s._dsl.all_adjacency[x].update( adjs )
 
-    s._has_pending_connections = True # Lazy
+    s._dsl.has_pending_connections = True # Lazy
 
   def disconnect( s, o1, o2 ):
     # TODO support string arguments and non-top s
-    assert s._elaborate_top is s, "Disconnecting signals by passing objects " \
+    assert s._dsl.elaborate_top is s, "Disconnecting signals by passing objects " \
                                   "is only allowed at top, but this API call " \
                                   "is on {}.".format( "top."+repr(s)[2:] )
 
