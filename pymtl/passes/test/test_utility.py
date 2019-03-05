@@ -9,7 +9,6 @@
 
 import pytest
 
-
 from pymtl                    import *
 from pymtl.passes.import_     import SimpleImportPass
 from pymtl.passes.translation import SystemVerilogTranslationPass
