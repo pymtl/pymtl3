@@ -28,9 +28,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super( ComponentLevel3, cls ).__new__( cls, *args, **kwargs )
-    inst._dsl.call_kwargs = None
-    inst._dsl.adjacency   = defaultdict(set)
-    inst._dsl.consts      = set()
+    inst._dsl.call_kwargs   = None
+    inst._dsl.adjacency     = defaultdict(set)
+    inst._dsl.connect_order = []
+    inst._dsl.consts        = set()
     return inst
 
   # Override
@@ -98,6 +99,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if o1_type is None:
       if o2_type is None:
         o1._connect( o2, adjacency_dict )
+        s._dsl.connect_order.append( (o1, o2) )
         return
       else: # o2_type is not None
         raise TypeError( "lhs has no Type, but rhs has Type {}".format( o2_type ) )
@@ -115,6 +117,7 @@ class ComponentLevel3( ComponentLevel2 ):
       assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
 
     o1._connect( o2, adjacency_dict )
+    s._dsl.connect_order.append( (o1, o2) )
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
@@ -610,6 +613,12 @@ class ComponentLevel3( ComponentLevel2 ):
       s._dsl.has_pending_connections = False
 
     return s._dsl.all_nets
+
+  def get_connect_order( s ):
+    try:
+      return s._dsl.connect_order
+    except AttributeError:
+      raise NotElaboratedError()
 
   def get_signal_adjacency_dict( s ):
     try:
