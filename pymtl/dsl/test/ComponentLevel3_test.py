@@ -550,3 +550,20 @@ def test_top_level_outport():
   trace = A.line_trace()
   print " >>>", trace
   assert trace == "1"
+
+# This is a simplified test case from Peitian
+
+def test_multiple_slices_are_net_writers():
+
+  class A( ComponentLevel3 ):
+
+    def construct( s ):
+      s.in_  = InVPort( Bits32 )
+      s.out1 = OutVPort( Bits8 )
+      s.out2 = OutVPort( Bits8 )
+
+      s.connect( s.in_[0:8], s.out1[0:8] )
+      s.connect( s.in_[0:4], s.out2[0:4] )
+
+  a = A()
+  a.elaborate()

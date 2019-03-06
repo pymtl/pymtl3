@@ -265,26 +265,28 @@ class ComponentLevel3( ComponentLevel2 ):
         for v in net:
           obj = None
           try:
+
             # Check if itself is a writer or a constant
             if v in writer_prop or isinstance( v, Const ):
               assert not has_writer
               has_writer, writer = True, v
 
-            # Check if an ancestor is a propagatable writer
-            obj = v.get_parent_object()
-            while obj.is_signal():
-              if obj in writer_prop and writer_prop[ obj ]:
-                assert not has_writer
-                has_writer, writer = True, v
-                break
-              obj = obj.get_parent_object()
-
-            # Check sibling slices
-            for obj in v.get_sibling_slices():
-              if obj.slice_overlap( v ):
+            else:
+              # Check if an ancestor is a propagatable writer
+              obj = v.get_parent_object()
+              while obj.is_signal():
                 if obj in writer_prop and writer_prop[ obj ]:
                   assert not has_writer
                   has_writer, writer = True, v
+                  break
+                obj = obj.get_parent_object()
+
+              # Check sibling slices
+              for obj in v.get_sibling_slices():
+                if obj.slice_overlap( v ):
+                  if obj in writer_prop and writer_prop[ obj ]:
+                    assert not has_writer
+                    has_writer, writer = True, v
 
           except AssertionError:
             raise MultiWriterError( \
