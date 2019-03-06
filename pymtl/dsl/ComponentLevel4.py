@@ -9,12 +9,9 @@
 
 from collections import defaultdict, deque
 
-from NamedObject import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from ComponentLevel2 import ComponentLevel2
-from ComponentLevel3 import ComponentLevel3
 from ConstraintTypes import U, M
 from Connectable import Signal, MethodPort, CalleePort
+from ComponentLevel3 import ComponentLevel3
 
 import inspect, ast # for error message
 
@@ -38,7 +35,6 @@ class ComponentLevel4( ComponentLevel3 ):
         field = getattr( inst, name )
         if callable( field ):
           setattr( inst, name, field )
-          #  inst._cache_func_meta( field )
 
     return inst
 

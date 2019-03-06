@@ -191,8 +191,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   else:
     all_constraints = expl_constraints.copy()
 
-  # Add method-base constraints
-
+  #-----------------------------------------------------------------------
+  # Process method constraints
+  #----------------------------------------------------------------------
   # I assume method don't call other methods here
 
   # Do bfs to find out all potential total constraints associated with

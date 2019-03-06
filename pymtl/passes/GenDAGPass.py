@@ -255,6 +255,9 @@ def {0}():
       if (y, x) not in U_U: # no conflicting expl
         top._dag.all_constraints.add( (x, y) )
 
+  #-----------------------------------------------------------------------
+  # Process method constraints
+  #----------------------------------------------------------------------
   # I assume method don't call other methods here
 
   # Do bfs to find out all potential total constraints associated with

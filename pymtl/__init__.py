@@ -5,8 +5,8 @@ from datatypes import _bitwidths
 from dsl.ConstraintTypes import U, M, RD, WR
 from dsl.Connectable     import Wire, InVPort, OutVPort, Interface, CallerPort, CalleePort
 from dsl.RTLComponent    import RTLComponent
+from dsl.ComponentLevel6 import ComponentLevel6
 from passes.PassGroups import SimpleSim
-from dsl.ComponentLevel5    import ComponentLevel5
 
 __all__ = [
   'U','M','RD','WR',
@@ -14,7 +14,7 @@ __all__ = [
 
   'RTLComponent',
   'SimpleSim',
-  'ComponentLevel5',
+  'ComponentLevel6',
   # 'PrintMetadataPass', 'EventDrivenPass',
 
   'sext', 'zext', 'clog2', 'concat',

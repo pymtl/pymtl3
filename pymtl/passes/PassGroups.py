@@ -12,11 +12,11 @@ SimpleSim = [
 ]
 
 SimpleCLSim = [
-  ComponentLevel5.elaborate,
+  ComponentLevel6.elaborate,
   GenDAGPass(),
   SimpleSchedPass(),
   SimpleTickPass(),
-  ComponentLevel5.lock_in_simulation
+  ComponentLevel6.lock_in_simulation
 ]
 
 from mamba.UnrollTickPass import UnrollTickPass
