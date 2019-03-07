@@ -7,40 +7,8 @@ from pymtl      import *
 from arbiters   import RoundRobinArbiter
 from arbiters   import RoundRobinArbiterEn
 
-class TestVectorSimulator( object ):
+from pclib.test import TestVectorSimulator
 
-  def __init__( self, model, test_vectors,
-                set_inputs_func, verify_outputs_func, wait_cycles = 0 ):
-
-    self.model               = model
-    self.set_inputs_func     = set_inputs_func
-    self.verify_outputs_func = verify_outputs_func
-    self.test_vectors        = test_vectors
-    self.wait_cycles         = wait_cycles
-
-  def run_test( self ):
-
-    self.model.apply( SimpleSim )
-
-    self.model.sim_reset()
-
-    print()
-    for test_vector in self.test_vectors:
-
-      # Set inputs
-      self.set_inputs_func( self.model, test_vector )
-      self.model.tick()
-
-      # Print the line trace
-      print self.model.line_trace()
-
-      # Verify outputs
-      self.verify_outputs_func( self.model, test_vector )
-
-#------------------------------------------------------------------------------
-# run_test
-#------------------------------------------------------------------------------
-# Test driver for RoundRobinArbiter
 def run_test( model, test_vectors ):
 
   # Instantiate and elaborate the model

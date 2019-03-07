@@ -5,57 +5,27 @@
 from pymtl      import *
 from Crossbar   import Crossbar
 
-class TestVectorSimulator( object ):
-
-  def __init__( self, model, test_vectors,
-                set_inputs_func, verify_outputs_func, wait_cycles = 0 ):
-
-    self.model               = model
-    self.set_inputs_func     = set_inputs_func
-    self.verify_outputs_func = verify_outputs_func
-    self.test_vectors        = test_vectors
-    self.wait_cycles         = wait_cycles
-
-  def run_test( self ):
-
-    self.model.apply( SimpleSim )
-
-    print()
-    for test_vector in self.test_vectors:
-
-      # Set inputs
-      self.set_inputs_func( self.model, test_vector )
-      self.model.tick()
-
-      # Print the line trace
-      print self.model.line_trace()
-
-      # Verify outputs
-      self.verify_outputs_func( self.model, test_vector )
+from pclib.test import TestVectorSimulator
 
 #-----------------------------------------------------------------------
 # run_test_crossbar
 #-----------------------------------------------------------------------
 def run_test_crossbar( model, test_vectors ):
 
-  # Instantiate and elaborate the model
-
-  model.elaborate()
-
   # Define functions mapping the test vector to ports in model
 
-  num_inputs = len( model.in_ )
-
   def tv_in( model, test_vector ):
-    n = num_inputs
-    for i in range(num_inputs):
+    n = len( model.in_ )
+    
+    for i in range(n):
       model.in_[i] = test_vector[i]
       model.sel[i] = test_vector[n+i]
 
   def tv_out( model, test_vector ):
-    n = 2*num_inputs
-    for i in range(num_inputs):
-      assert model.out[i] == test_vector[n+i]
+    n = len( model.in_ )
+
+    for i in range(n):
+      assert model.out[i] == test_vector[n*2+i]
 
   # Run the test
 
