@@ -8,17 +8,17 @@
 # Date   : Jan 9, 2019
 
 import inspect
-from collections              import defaultdict, deque
+from collections                       import defaultdict, deque
 
-from pymtl                    import *
-from pymtl.passes             import BasePass, PassMetadata
-from pymtl.passes.utility     import freeze
-from pymtl.passes.rast        import get_type
+from pymtl                             import *
+from pymtl.passes                      import BasePass, PassMetadata
+from pymtl.passes.utility.pass_utility import freeze
+from pymtl.passes.rast                 import get_type
 
-from errors                   import TranslationError
-from helpers                  import generate_struct_defs, generate_module_name
-from ConstraintGenPass        import ConstraintGenPass
-from HierarchyTranslationPass import HierarchyTranslationPass
+from errors                            import TranslationError
+from helpers                           import generate_struct_defs, generate_module_name
+from ConstraintGenPass                 import ConstraintGenPass
+from HierarchyTranslationPass          import HierarchyTranslationPass
 
 class TranslationPass( BasePass ):
 

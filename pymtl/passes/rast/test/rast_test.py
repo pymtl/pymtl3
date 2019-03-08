@@ -8,11 +8,11 @@
 
 import pytest
 
-from pymtl                    import *
-from pymtl.passes.rast.RAST   import *
-from pymtl.passes.rast.errors import PyMTLTypeError
-from pymtl.passes.rast        import ComponentUpblkRASTGenPass
-from pymtl.passes.utility     import expected_failure, do_test
+from pymtl                             import *
+from pymtl.passes.rast.RAST            import *
+from pymtl.passes.rast.errors          import PyMTLTypeError
+from pymtl.passes.rast                 import ComponentUpblkRASTGenPass
+from pymtl.passes.utility.test_utility import expected_failure, do_test
 
 #-------------------------------------------------------------------------
 # local_do_test

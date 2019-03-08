@@ -11,15 +11,14 @@
 
 import re, inspect
 
-from pymtl                    import *
-# from pymtl.dsl                import ComponentLevel1
-from pymtl.passes             import BasePass
-from pymtl.passes.utility     import make_indent
-from pymtl.passes.rast        import get_type
+from pymtl                             import *
+from pymtl.passes                      import BasePass
+from pymtl.passes.utility.pass_utility import make_indent
+from pymtl.passes.rast                 import get_type
 
-from helpers                  import *
-from errors                   import TranslationError
-from ComponentTranslationPass import ComponentTranslationPass
+from helpers                           import *
+from errors                            import TranslationError
+from ComponentTranslationPass          import ComponentTranslationPass
 
 class HierarchyTranslationPass( BasePass ):
 

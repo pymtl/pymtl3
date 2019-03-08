@@ -8,13 +8,13 @@
 
 import re, inspect
 
-from pymtl                         import *
-from pymtl.passes                  import BasePass, PassMetadata
-from pymtl.passes.utility          import make_indent
+from pymtl                             import *
+from pymtl.passes                      import BasePass, PassMetadata
+from pymtl.passes.utility.pass_utility import make_indent
 
-from errors                        import TranslationError
-from ComponentUpblkTranslationPass import ComponentUpblkTranslationPass
-from helpers                       import *
+from errors                            import TranslationError
+from ComponentUpblkTranslationPass     import ComponentUpblkTranslationPass
+from helpers                           import *
 
 class ComponentTranslationPass( BasePass ):
 
@@ -67,7 +67,6 @@ endmodule
     if not '_pass_component_translation' in m.__dict__:
       m._pass_component_translation = PassMetadata()
 
-    # module_name = m.__class__.__name__
     module_name = generate_module_name( m )
 
     connections_self_self   = s._connections_self_self[ m ]

@@ -9,7 +9,6 @@
 import ast
 
 from pymtl                      import *
-# from pymtl.dsl                  import ComponentLevel1
 from pymtl.passes               import BasePass, PassMetadata
 
 from pymtl.passes.rast          import ComponentUpblkRASTGenPass

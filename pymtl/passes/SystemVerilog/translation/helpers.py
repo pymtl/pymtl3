@@ -9,11 +9,11 @@
 
 import inspect
 
-from pymtl                      import *
+from pymtl                             import *
 
-from pymtl.passes.rast          import get_type
-from pymtl.passes.utility       import *
-from pymtl.passes.rast.RASTType import Struct
+from pymtl.passes.rast                 import get_type
+from pymtl.passes.utility.pass_utility import *
+from pymtl.passes.rast.RASTType        import Struct
 
 #-------------------------------------------------------------------------
 # collect_ports

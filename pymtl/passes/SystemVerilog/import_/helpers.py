@@ -7,8 +7,8 @@
 # Author : Peitian Pan
 # Date   : Feb 22, 2019
 
-from pymtl.passes.utility import make_indent
-from pymtl.passes.rast    import get_type
+from pymtl.passes.utility.pass_utility import make_indent
+from pymtl.passes.rast                 import get_type
 
 #-------------------------------------------------------------------------
 # generate_signal_decl_c

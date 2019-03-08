@@ -9,9 +9,9 @@
 
 import pytest
 
-from pymtl                      import *
-from pymtl.passes.SystemVerilog import TranslationPass, SimpleImportPass
-from pymtl.passes.utility       import do_test, run_translation_test
+from pymtl                             import *
+from pymtl.passes.SystemVerilog        import TranslationPass, SimpleImportPass
+from pymtl.passes.utility.test_utility import do_test, run_translation_test
 
 def local_do_test( m ):
 

@@ -8,8 +8,8 @@
 
 import inspect
 
-from pymtl                import *
-from pymtl.passes.utility import freeze, is_obj_eq
+from pymtl                             import *
+from pymtl.passes.utility.pass_utility import freeze, is_obj_eq
 
 #-------------------------------------------------------------------------
 # Base RAST Type

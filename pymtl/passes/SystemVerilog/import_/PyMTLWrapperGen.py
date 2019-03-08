@@ -10,9 +10,9 @@
 
 import os
 
-from pymtl.passes.utility import make_indent
+from pymtl.passes.utility.pass_utility import make_indent
 
-from helpers              import *
+from helpers                           import *
 
 #-----------------------------------------------------------------------
 # generate_py_wrapper

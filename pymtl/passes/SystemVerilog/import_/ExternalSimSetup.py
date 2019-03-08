@@ -11,10 +11,10 @@
 
 import os, shutil, subprocess, copy
 
-from pymtl.passes.utility import make_indent
+from pymtl.passes.utility.pass_utility import make_indent
 
-from errors               import VerilatorCompilationError, PyMTLImportError
-from helpers              import generate_signal_decl_c, generate_signal_init_c
+from errors  import VerilatorCompilationError, PyMTLImportError
+from helpers import generate_signal_decl_c, generate_signal_init_c
 
 #-----------------------------------------------------------------------
 # setup_external_sim
@@ -195,7 +195,6 @@ def create_shared_lib( wrapper_name, top_name ):
   # Try to call the C compiler
 
   try:
-    # subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = False )
     subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
 
   except subprocess.CalledProcessError as e:
