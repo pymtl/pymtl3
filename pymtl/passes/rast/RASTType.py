@@ -9,7 +9,7 @@
 import inspect
 
 from pymtl                import *
-from pymtl.passes.Helpers import freeze, is_obj_eq
+from pymtl.passes.utility import freeze, is_obj_eq
 
 #-------------------------------------------------------------------------
 # Base RAST Type
@@ -463,7 +463,7 @@ def get_type( obj ):
 
       return Interface( obj, type_env )
 
-  assert False, 'unsupported objet ' + str(obj) + '!'
+  assert False, 'unsupported object ' + str(obj) + '!'
 
 #-------------------------------------------------------------------------
 # is_BitsX

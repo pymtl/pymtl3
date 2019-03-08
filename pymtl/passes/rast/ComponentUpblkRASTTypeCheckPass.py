@@ -10,7 +10,7 @@
 
 from pymtl                import *
 from pymtl.passes         import BasePass
-from pymtl.passes.Helpers import freeze
+from pymtl.passes.utility import freeze
 
 from errors               import PyMTLTypeError
 from RAST                 import *

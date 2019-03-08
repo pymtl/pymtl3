@@ -6,4 +6,6 @@ from PassGroups import *
 
 from simulation.GenDAGPass import GenDAGPass
 
-from translation.SystemVerilogTranslationPass import SystemVerilogTranslationPass
+# Use the translation and import pass of SystemVerilog, which is the
+# default backend of PyMTL v3.
+from SystemVerilog import TranslationPass, SimpleImportPass

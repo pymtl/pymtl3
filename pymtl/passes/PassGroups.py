@@ -1,7 +1,5 @@
 from pymtl      import *
-from simulation import GenDAGPass
-from simulation import SimpleSchedPass
-from simulation import SimpleTickPass 
+from simulation import GenDAGPass, SimpleSchedPass, SimpleTickPass 
 
 #-------------------------------------------------------------------------
 # SimpleSim

@@ -11,8 +11,8 @@ import pytest
 from pymtl                    import *
 from pymtl.passes.rast.RAST   import *
 from pymtl.passes.rast.errors import PyMTLTypeError
-from pymtl.passes.translation import SystemVerilogTranslationPass
-from pymtl.passes.test        import expected_failure, do_test
+from pymtl.passes.rast        import ComponentUpblkRASTGenPass
+from pymtl.passes.utility     import expected_failure, do_test
 
 #-------------------------------------------------------------------------
 # local_do_test
@@ -23,7 +23,7 @@ from pymtl.passes.test        import expected_failure, do_test
 def local_do_test( m ):
   ref = m._rast_test_ref
   m.elaborate()
-  SystemVerilogTranslationPass()( m )
+  ComponentUpblkRASTGenPass()( m )
 
   for blk in m.get_update_blocks():
     assert m._pass_component_upblk_rast_gen.rast[ blk ] == ref[ blk.__name__ ]
