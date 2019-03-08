@@ -46,7 +46,8 @@ class ComponentLevel4( ComponentLevel3 ):
   # Override
   def _collect_vars( s, m ):
     super( ComponentLevel4, s )._collect_vars( m )
-    s._dsl.all_M_constraints |= m._dsl.M_constraints
+    if isinstance( m, ComponentLevel4 ):
+      s._dsl.all_M_constraints |= m._dsl.M_constraints
 
   #-----------------------------------------------------------------------
   # elaborate
