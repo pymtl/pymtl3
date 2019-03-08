@@ -57,4 +57,4 @@ before_script:
 #------------------------------------------------------------------------
 
 script:
- - py.test .. $CONFIG
+ - py.test .. $CONFIG -x --tb=short
