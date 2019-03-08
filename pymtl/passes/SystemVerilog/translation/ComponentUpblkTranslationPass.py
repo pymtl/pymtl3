@@ -36,7 +36,7 @@ class ComponentUpblkTranslationPass( BasePass ):
     # Generate and visualize RAST
     ComponentUpblkRASTGenPass()( m )
     tmp_var_type_env = ComponentUpblkRASTTypeCheckPass( s.type_env )( m )
-    RASTVisualizationPass()( m )
+    # RASTVisualizationPass()( m )
     ComponentUpblkRASTToSVPass()( m )
 
     # Copy generated SystemVerilog source code into this pass's namespace
