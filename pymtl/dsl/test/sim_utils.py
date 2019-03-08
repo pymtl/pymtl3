@@ -207,23 +207,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         for member in net:
           if member is not writer:
             assert member.method is None
-            # print "="*60
-            # print "Setting method and rdy for ", member, " ( level 5 )" 
-            # print "="*60
             member.method = writer.method
             member.rdy    = writer.rdy
 
-    # if isinstance( s, ComponentLevel6 ):
-    #   for writer, net in s.get_all_method_nets():
-    #     for member in net:
-    #       if member is not writer:
-    #         assert member.method is None
-    #         print "="*30
-    #         print "\nSetting method and rdy!!! 6" 
-    #         print "="*30
-    #         member.method = writer.method
-    #         member.rdy    = writer.rdy
-    
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
@@ -241,9 +227,6 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       yy = y.method if isinstance( y, MethodPort ) else y
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
-    # for (x, y) in s._dsl.all_M_constraints:
-    #   pred[ y ].add( x )
-    #   succ[ x ].add( y )
 
     verbose = False 
 
