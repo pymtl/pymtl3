@@ -15,7 +15,7 @@ from pymtl import *
 
 def enrdy_to_str( msg, en, rdy ):
   _str   = "{}".format( msg )
-  nchars = max( len( str_ ), 15 ) 
+  nchars = max( len( _str ), 15 ) 
   
   if en and not rdy:
     _str = "X".ljust( nchars ) # Not allowed
@@ -40,7 +40,10 @@ class RecvIfc( Interface ):
     s.rdy = OutVPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.msg ) 
+    return enrdy_to_str( s.msg, s.en, s.rdy ) 
+  
+  def __str__( s ):
+    return s.line_trace()
 
 class SendIfc( Interface ):
 
@@ -51,4 +54,7 @@ class SendIfc( Interface ):
     s.rdy =  InVPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.msg ) 
+    return enrdy_to_str( s.msg, s.en, s.rdy ) 
+
+  def __str__( s ):
+    return s.line_trace()
