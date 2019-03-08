@@ -207,9 +207,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         for member in net:
           if member is not writer:
             assert member.method is None
-            print "="*60
-            print "Setting method and rdy for ", member, " ( level 5 )" 
-            print "="*60
+            # print "="*60
+            # print "Setting method and rdy for ", member, " ( level 5 )" 
+            # print "="*60
             member.method = writer.method
             member.rdy    = writer.rdy
 
