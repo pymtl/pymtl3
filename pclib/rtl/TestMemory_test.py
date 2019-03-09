@@ -23,15 +23,15 @@ class TestHarness( RTLComponent ):
 
     # Message type
 
-    req, resp = mk_mem_msg( 8, 32, 32 )
+    ReqType, RespType = mk_mem_msg( 8, 32, 32 )
 
     # Instantiate models
 
-    s.srcs = [ TestSourceValRdy( req, src_msgs[i] )  for i in xrange(nports) ]
+    s.srcs = [ TestSourceValRdy( ReqType, src_msgs[i] )  for i in xrange(nports) ]
 
-    s.mem  = TestMemoryRTL( nports, [req]*nports, [resp]*nports  )
+    s.mem  = TestMemoryRTL( nports, [ReqType]*nports, [RespType]*nports  )
 
-    s.sinks = [ TestSinkValRdy( resp, sink_msgs[i] ) for i in xrange(nports) ]
+    s.sinks = [ TestSinkValRdy( RespType, sink_msgs[i] ) for i in xrange(nports) ]
 
     # Connect
 
@@ -72,13 +72,14 @@ resp_type_dict = {
   'sw': MemMsgType.AMO_SWAP,
   'mn': MemMsgType.AMO_MIN,
 }
+
 def req( type_, opaque, addr, len, data ):
-  req = mk_mem_req_msg( 8, 32, 32 )
-  return req( req_type_dict[type_], opaque, addr, len, data)
+  ReqType = mk_mem_req_msg( 8, 32, 32 )
+  return ReqType( req_type_dict[type_], opaque, addr, len, data)
 
 def resp( type_, opaque, len, data ):
-  resp = mk_mem_resp_msg( 8, 32 )
-  return resp( resp_type_dict[type_], opaque, 0, len, data)
+  RespType = mk_mem_resp_msg( 8, 32 )
+  return RespType( resp_type_dict[type_], opaque, 0, len, data)
 
 #----------------------------------------------------------------------
 # Test Case: basic

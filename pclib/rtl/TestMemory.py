@@ -53,20 +53,20 @@ class TestMemory( object ):
     s.mem[ idx ] = data
 
 class TestMemoryRTL( RTLComponent ):
-  def construct( s, nports = 1, req_types = [ mk_mem_req_msg(8,32,32) ], \
-                               resp_types = [ mk_mem_resp_msg(8,32)],
+  def construct( s, nports = 1, ReqTypes = [ mk_mem_req_msg(8,32,32) ], \
+                               RespTypes = [ mk_mem_resp_msg(8,32)],
                                mem_nbytes=1<<20 ):
     s.mem = TestMemory( mem_nbytes )
 
-    s.reqs  = [ InValRdyIfc( req_types[i] ) for i in xrange(nports) ]
-    s.resps = [ OutValRdyIfc( resp_types[i] ) for i in xrange(nports) ]
-    s.resp_qs = [ PipeQueue1RTL( resp_types[i] ) for i in xrange(nports) ]
+    s.reqs  = [ InValRdyIfc( ReqTypes[i] ) for i in xrange(nports) ]
+    s.resps = [ OutValRdyIfc( RespTypes[i] ) for i in xrange(nports) ]
+    s.resp_qs = [ PipeQueue1RTL( RespTypes[i] ) for i in xrange(nports) ]
 
     for i in xrange(nports):
       s.connect( s.resps[i], s.resp_qs[i].deq )
 
-    s.req_types  = req_types
-    s.resp_types = resp_types
+    s.ReqTypes  = ReqTypes
+    s.RespTypes = RespTypes
 
     s.nports = nports
 
@@ -86,14 +86,14 @@ class TestMemoryRTL( RTLComponent ):
           len = req.len if req.len else ( s.reqs[i].msg.data.nbits >> 3 )
 
           if   req.type_ == MemMsgType.READ:
-            resp = s.resp_types[i]( MemMsgType.READ, req.opaque, 0, len, s.mem.read( req.addr, len ) )
+            resp = s.RespTypes[i]( MemMsgType.READ, req.opaque, 0, len, s.mem.read( req.addr, len ) )
 
           elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len, req.data )
-            resp = s.resp_types[i]( MemMsgType.WRITE, req.opaque, 0, len )
+            resp = s.RespTypes[i]( MemMsgType.WRITE, req.opaque, 0, len )
 
           else: # AMOS
-            resp = s.resp_types[i]( req.type_, req.opaque, 0, len, \
+            resp = s.RespTypes[i]( req.type_, req.opaque, 0, len, \
                                     s.mem.amo( req.type_, req.addr, len, req.data ))
 
           s.resp_qs[i].enq.val = Bits1( 1 )
