@@ -1,4 +1,5 @@
 from pymtl import *
+from copy import deepcopy
 
 class Reg( RTLComponent ):
 
@@ -24,7 +25,7 @@ class RegEn( RTLComponent ):
     @s.update_on_edge
     def up_regen():
       if s.en:
-        s.out = Type( s.in_ )
+        s.out = deepcopy( s.in_ )
 
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
@@ -40,7 +41,7 @@ class RegRst( RTLComponent ):
     @s.update_on_edge
     def up_regrst():
       if s.reset: s.out = Type( reset_value )
-      else:       s.out = Type( s.in_ )
+      else:       s.out = s.in_
 
   def line_trace( s ):
     return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
@@ -57,7 +58,7 @@ class RegEnRst( RTLComponent ):
     @s.update_on_edge
     def up_regenrst():
       if s.reset: s.out = Type( reset_value )
-      elif s.en:  s.out = Type( s.in_ )
+      elif s.en:  s.out = deepcopy( s.in_ )
 
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
