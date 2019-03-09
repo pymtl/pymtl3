@@ -1,7 +1,7 @@
 from collections import deque
 from pymtl import *
 
-class BaseQueue( ComponentLevel5 ):
+class BaseQueue( ComponentLevel6 ):
   def construct( s, size ):
     s.queue = deque( maxlen=size )
 
