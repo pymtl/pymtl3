@@ -115,8 +115,6 @@ class MemRespMsg_{0}_{1}( object ):
     )
 
   def __eq__( s, other ):
-    print s.__dict__
-    print other.__dict__
     return s.type_ == other.type_ and \
            s.opaque == other.opaque and \
            s.test == other.test and \
