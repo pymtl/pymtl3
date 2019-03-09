@@ -4,7 +4,7 @@
 # Test suite for the memory messages
 
 from pymtl  import *
-from MemMsg import mk_mem_msg
+from MemMsg import mk_mem_msg, mk_mem_resp_msg, mk_mem_req_msg, MemMsgType
 
 #-------------------------------------------------------------------------
 # test_req_fields
@@ -14,9 +14,9 @@ def test_req_fields():
 
   # Create msg
 
-  req_type, resp_type = mk_mem_msg(8,16,40)
+  req_type = mk_mem_req_msg(8,16,40)
 
-  msg = req_type( req_type.TYPE_READ, 7, 0x1000, 3 )
+  msg = req_type( MemMsgType.READ, 7, 0x1000, 3 )
 
   # Verify msg
 
@@ -27,7 +27,7 @@ def test_req_fields():
 
   # Create msg
 
-  msg = req_type( req_type.TYPE_WRITE, 9, 0x2000, 0, 0xdeadbeef )
+  msg = req_type( MemMsgType.WRITE, 9, 0x2000, 0, 0xdeadbeef )
 
   # Verify msg
 
@@ -43,21 +43,21 @@ def test_req_fields():
 
 def test_req_str():
 
-  req_type, resp_type = mk_mem_msg(8,16,40)
+  req_type = mk_mem_req_msg(8,16,40)
 
   # Create msg
 
-  msg = req_type( req_type.TYPE_READ, 7, 0x1000, 3, 0 )
+  msg = req_type( MemMsgType.READ, 7, 0x1000, 3, 0 )
 
   # Verify string
 
   assert str(msg) == "rd:07:1000:          "
 
-  req_type, resp_type = mk_mem_msg(4,16,40)
+  req_type = mk_mem_req_msg(4,16,40)
 
   # Create msg
 
-  msg = req_type( req_type.TYPE_WRITE, 9, 0x2000, 4, 0xdeadbeef )
+  msg = req_type( MemMsgType.WRITE, 9, 0x2000, 4, 0xdeadbeef )
 
   # Verify string
 
@@ -69,11 +69,11 @@ def test_req_str():
 
 def test_resp_fields():
 
-  req_type, resp_type = mk_mem_msg(8,16,40)
+  resp_type = mk_mem_resp_msg(8,40)
 
   # Create msg
 
-  msg = resp_type( resp_type.TYPE_READ, 7, 2, 3, 0x0000adbeef )
+  msg = resp_type( MemMsgType.READ, 7, 2, 3, 0xf000adbeef )
 
   # Verify msg
 
@@ -81,11 +81,11 @@ def test_resp_fields():
   assert msg.opaque == 7
   assert msg.test   == 2
   assert msg.len    == 3
-  assert msg.data   == 0x0000adbeef
+  assert msg.data   == 0xf000adbeef
 
   # Create msg
 
-  msg = resp_type( resp_type.TYPE_WRITE, 9, 1, 0, 0 )
+  msg = resp_type( MemMsgType.WRITE, 9, 1, 0, 0 )
 
   # Verify msg
 
@@ -101,21 +101,21 @@ def test_resp_fields():
 
 def test_resp_str():
 
-  req_type, resp_type = mk_mem_msg(8,16,40)
+  resp_type = mk_mem_resp_msg(8,40)
 
   # Create msg
 
-  msg = resp_type( resp_type.TYPE_READ, 7, 2, 3, 0x0000adbeef )
+  msg = resp_type( MemMsgType.READ, 7, 2, 3, 0x0000adbeef )
 
   # Verify string
 
   assert str(msg) == "rd:07:2:0000adbeef"
 
-  req_type, resp_type = mk_mem_msg(4,16,40)
+  resp_type = mk_mem_resp_msg(4,40)
 
   # Create msg
 
-  msg = resp_type( resp_type.TYPE_WRITE, 9, 1, 0, 0 )
+  msg = resp_type( MemMsgType.WRITE, 9, 1, 0, 0 )
 
   # Verify string
 

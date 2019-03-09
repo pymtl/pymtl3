@@ -1,14 +1,14 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs import MemReqMsg, MemRespMsg
+from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
 from valrdy_queues import PipeQueue1RTL
 
-AMO_FUNS = { MemReqMsg.TYPE_AMO_ADD  : lambda m,a : m+a,
-             MemReqMsg.TYPE_AMO_AND  : lambda m,a : m&a,
-             MemReqMsg.TYPE_AMO_OR   : lambda m,a : m|a,
-             MemReqMsg.TYPE_AMO_XCHG : lambda m,a : a,
-             MemReqMsg.TYPE_AMO_MIN  : min,
+AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
+             MemMsgType.AMO_AND  : lambda m,a : m&a,
+             MemMsgType.AMO_OR   : lambda m,a : m|a,
+             MemMsgType.AMO_SWAP : lambda m,a : a,
+             MemMsgType.AMO_MIN  : min,
            }
 
 class TestMemory( object ):
@@ -53,8 +53,8 @@ class TestMemory( object ):
     s.mem[ idx ] = data
 
 class TestMemoryRTL( RTLComponent ):
-  def construct( s, nports = 1, req_types = [ MemReqMsg(8,32,32) ], \
-                               resp_types = [ MemRespMsg(8,32)   ],
+  def construct( s, nports = 1, req_types = [ mk_mem_req_msg(8,32,32) ], \
+                               resp_types = [ mk_mem_resp_msg(8,32)],
                                mem_nbytes=1<<20 ):
     s.mem = TestMemory( mem_nbytes )
 
@@ -85,16 +85,16 @@ class TestMemoryRTL( RTLComponent ):
           req = s.reqs[i].msg
           len = req.len if req.len else ( s.reqs[i].msg.data.nbits >> 3 )
 
-          if   req.type_ == MemReqMsg.TYPE_READ:
-            resp = s.resp_types[i].mk_rd( req.opaque, len, s.mem.read( req.addr, len ) )
+          if   req.type_ == MemMsgType.READ:
+            resp = s.resp_types[i]( MemMsgType.READ, req.opaque, 0, len, s.mem.read( req.addr, len ) )
 
-          elif req.type_ == MemReqMsg.TYPE_WRITE:
+          elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len, req.data )
-            resp = s.resp_types[i].mk_wr( req.opaque )
+            resp = s.resp_types[i]( MemMsgType.WRITE, req.opaque, 0, len )
 
           else: # AMOS
-            resp = s.resp_types[i].mk_msg( req.type_, req.opaque, 0, len, \
-                                            s.mem.amo( req.type_, req.addr, len, req.data ))
+            resp = s.resp_types[i]( req.type_, req.opaque, 0, len, \
+                                    s.mem.amo( req.type_, req.addr, len, req.data ))
 
           s.resp_qs[i].enq.val = Bits1( 1 )
           s.resp_qs[i].enq.msg = resp

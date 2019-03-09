@@ -2,126 +2,141 @@ from pymtl import *
 
 import py
 
-mem_msg_cache = dict()
+_mem_req_msg_cache  = dict()
+_mem_resp_msg_cache = dict()
+
 def mk_mem_msg( o, a, d ):
-  if (o,a,d) in mem_msg_cache:
-    return mem_msg_cache[ (o,a,d) ]
-  exec py.code.Source( template.format( o, a, d ) ).compile() in globals()
-  return eval( "MemReqMsg_{0}_{1}_{2}, MemRespMsg_{0}_{2}".format( o, a, d ) )
+  return mk_mem_req_msg( o, a, d ), mk_mem_resp_msg( o, d )
+
+def mk_mem_req_msg( o, a, d ):
+  if (o,a,d) in _mem_req_msg_cache:
+    return _mem_req_msg_cache[ (o,a,d) ]
+  exec py.code.Source( _req_template.format( o, a, d ) ).compile() in globals()
+  return _mem_req_msg_cache[ (o,a,d) ]
+
+def mk_mem_resp_msg( o, d ):
+  if (o,d) in _mem_resp_msg_cache:
+    return _mem_resp_msg_cache[ (o,d) ]
+  exec py.code.Source( _resp_template.format( o, d ) ).compile() in globals()
+  return _mem_resp_msg_cache[ (o,d) ]
+
+class MemMsgType(object):
+  READ       = 0
+  WRITE      = 1
+  # write no-refill
+  WRITE_INIT = 2
+  AMO_ADD    = 3
+  AMO_AND    = 4
+  AMO_OR     = 5
+  AMO_SWAP   = 6
+  AMO_MIN    = 7
+  AMO_MINU   = 8
+  AMO_MAX    = 9
+  AMO_MAXU   = 10
+  AMO_XOR    = 11
+
+  str = {
+    READ       : "rd",
+    WRITE      : "wr",
+    WRITE_INIT : "in",
+    AMO_ADD    : "ad",
+    AMO_AND    : "an",
+    AMO_OR     : "or",
+    AMO_SWAP   : "sw",
+    AMO_MIN    : "mi",
+    AMO_MINU   : "mu",
+    AMO_MAX    : "mx",
+    AMO_MAXU   : "xu",
+    AMO_XOR    : "xo",
+  }
 
 def msg_to_str( msg, width ):
   return ("" if msg is None else str(msg)).ljust(width)
 
-template = """
+_req_template = """
 class MemReqMsg_{0}_{1}_{2}( object ):
-  TYPE_READ       = 0
-  TYPE_WRITE      = 1
-  # write no-refill
-  TYPE_WRITE_INIT = 2
-  TYPE_AMO_ADD    = 3
-  TYPE_AMO_AND    = 4
-  TYPE_AMO_OR     = 5
-  TYPE_AMO_SWAP   = 6
-  TYPE_AMO_MIN    = 7
-  TYPE_AMO_MINU   = 8
-  TYPE_AMO_MAX    = 9
-  TYPE_AMO_MAXU   = 10
-  TYPE_AMO_XOR    = 11
   opaque_nbits = {0}
   addr_nbits   = {1}
   data_nbits   = {2}
-  type_str_mapping = {{
-    TYPE_READ       : "rd",
-    TYPE_WRITE      : "wr",
-    TYPE_WRITE_INIT : "in",
-    TYPE_AMO_ADD    : "ad",
-    TYPE_AMO_AND    : "an",
-    TYPE_AMO_OR     : "or",
-    TYPE_AMO_SWAP   : "sw",
-    TYPE_AMO_MIN    : "mi",
-    TYPE_AMO_MINU   : "mu",
-    TYPE_AMO_MAX    : "mx",
-    TYPE_AMO_MAXU   : "xu",
-    TYPE_AMO_XOR    : "xo",
-  }}
-  def __init__( s, type_=TYPE_READ, opaque=0, addr=0, len_=0, data=0 ):
+
+  def __init__( s, type_=MemMsgType.READ, opaque=0, addr=0, len_=0, data=0 ):
     s.type_  = Bits4( type_ )
     s.opaque = Bits{0}( opaque )
     s.addr   = Bits{1}( addr )
     s.len    = Bits2( len_ )
     s.data   = Bits{2}( data )
+
   def __str__( s ):
     return "{{}}:{{}}:{{}}:{{}}".format(
-      MemReqMsg_{0}_{1}_{2}.type_str_mapping[int(s.type_)],
+    MemMsgType.str[ int(s.type_) ],
       s.opaque, s.addr,
-      (" "*(s.data_nbits/4)) if int(s.type_) == s.TYPE_READ else s.data,
+      (" "*(s.data_nbits/4)) if int(s.type_) == MemMsgType.READ else s.data,
     )
+
   def __eq__( s, other ):
     return s.type_ == other.type_ and \
            s.opaque == other.opaque and \
            s.addr == other.addr and \
-           s.len == other.len_ and \
+           s.len == other.len and \
            s.data == other.data
   def __ne__( s, other ):
     return s.type_ != other.type_ or \
            s.opaque != other.opaque or \
            s.addr != other.addr or \
-           s.len != other.len_ or \
+           s.len != other.len or \
            s.data != other.data
 
-class MemRespMsg_{0}_{2}( object ):
-  TYPE_READ       = 0
-  TYPE_WRITE      = 1
-  # write no-refill
-  TYPE_WRITE_INIT = 2
-  TYPE_AMO_ADD    = 3
-  TYPE_AMO_AND    = 4
-  TYPE_AMO_OR     = 5
-  TYPE_AMO_SWAP   = 6
-  TYPE_AMO_MIN    = 7
-  TYPE_AMO_MINU   = 8
-  TYPE_AMO_MAX    = 9
-  TYPE_AMO_MAXU   = 10
-  TYPE_AMO_XOR    = 11
-  type_str_mapping = {{
-    TYPE_READ       : "rd",
-    TYPE_WRITE      : "wr",
-    TYPE_WRITE_INIT : "in",
-    TYPE_AMO_ADD    : "ad",
-    TYPE_AMO_AND    : "an",
-    TYPE_AMO_OR     : "or",
-    TYPE_AMO_SWAP   : "sw",
-    TYPE_AMO_MIN    : "mi",
-    TYPE_AMO_MINU   : "mu",
-    TYPE_AMO_MAX    : "mx",
-    TYPE_AMO_MAXU   : "xu",
-    TYPE_AMO_XOR    : "xo",
-  }}
+  @classmethod
+  def mk_rd( cls, opaque, addr, len_ ):
+    return cls( type_=MemMsgType.READ, opaque=opaque, addr=addr, len_=len_ )
+
+  @classmethod
+  def mk_wr( cls, opaque, addr, len_, data ):
+    return cls( type_=MemMsgType.WRITE, opaque=opaque, addr=addr, len_=len_, data=data )
+_mem_req_msg_cache[ ({0},{1},{2}) ] = MemReqMsg_{0}_{1}_{2}
+"""
+_resp_template = """
+class MemRespMsg_{0}_{1}( object ):
   opaque_nbits = {0}
-  data_nbits   = {2}
-  def __init__( s, type_=0, opaque=0, test=0, len_=0, data=0 ):
+  data_nbits   = {1}
+
+  def __init__( s, type_=MemMsgType.READ, opaque=0, test=0, len_=0, data=0 ):
     s.type_  = Bits4( type_ )
     s.opaque = Bits{0}( opaque )
     s.test   = Bits2( test )
     s.len    = Bits2( len_ )
-    s.data   = Bits{2}( data )
+    s.data   = Bits{1}( data )
+
   def __str__( s ):
     return "{{}}:{{}}:{{}}:{{}}".format(
-      MemRespMsg_{0}_{2}.type_str_mapping[int(s.type_)],
+      MemMsgType.str[int(s.type_)],
       s.opaque, s.test,
-      (" "*(s.data_nbits/4)) if int(s.type_) == s.TYPE_WRITE else s.data
+      (" "*(s.data_nbits/4)) if int(s.type_) == MemMsgType.WRITE else s.data
     )
+
   def __eq__( s, other ):
+    print s.__dict__
+    print other.__dict__
     return s.type_ == other.type_ and \
            s.opaque == other.opaque and \
            s.test == other.test and \
-           s.len == other.len_ and \
+           s.len == other.len and \
            s.data == other.data
+
   def __ne__( s, other ):
     return s.type_ != other.type_ or \
            s.opaque != other.opaque or \
            s.test != other.test or \
-           s.len != other.len_ or \
+           s.len != other.len or \
            s.data != other.data
-mem_msg_cache[ ({0},{1},{2}) ] = MemReqMsg_{0}_{1}_{2}, MemRespMsg_{0}_{2}
+
+  @classmethod
+  def mk_rd( cls, opaque, len_, data ):
+    return cls( MemMsgType.READ, opaque, 0, len_, data )
+
+  @classmethod
+  def mk_wr( cls, opaque, len_ ):
+    return cls( MemMsgType.WRITE, opaque, 0, len_ )
+
+_mem_resp_msg_cache[ ({0},{1}) ] = MemRespMsg_{0}_{1}
 """

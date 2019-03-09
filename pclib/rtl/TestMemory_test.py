@@ -9,7 +9,7 @@ import struct
 from pymtl      import *
 from pclib.test import mk_test_case_table
 from pclib.rtl  import TestSourceValRdy, TestSinkValRdy
-from pclib.ifcs import MemReqMsg, MemRespMsg
+from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
 from TestMemory import TestMemoryRTL
 
 #-------------------------------------------------------------------------
@@ -23,8 +23,7 @@ class TestHarness( RTLComponent ):
 
     # Message type
 
-    req  = MemReqMsg(8, 32, 32)
-    resp = MemRespMsg(8, 32)
+    req, resp = mk_mem_msg( 8, 32, 32 )
 
     # Instantiate models
 
@@ -55,29 +54,31 @@ class TestHarness( RTLComponent ):
 #-------------------------------------------------------------------------
 
 req_type_dict = {
-  'rd': MemReqMsg.TYPE_READ,
-  'wr': MemReqMsg.TYPE_WRITE,
-  'ad': MemReqMsg.TYPE_AMO_ADD,
-  'an': MemReqMsg.TYPE_AMO_AND,
-  'or': MemReqMsg.TYPE_AMO_OR,
-  'xg': MemReqMsg.TYPE_AMO_XCHG,
-  'mn': MemReqMsg.TYPE_AMO_MIN,
+  'rd': MemMsgType.READ,
+  'wr': MemMsgType.WRITE,
+  'ad': MemMsgType.AMO_ADD,
+  'an': MemMsgType.AMO_AND,
+  'or': MemMsgType.AMO_OR,
+  'sw': MemMsgType.AMO_SWAP,
+  'mn': MemMsgType.AMO_MIN,
 }
 
 resp_type_dict = {
-  'rd': MemRespMsg.TYPE_READ,
-  'wr': MemRespMsg.TYPE_WRITE,
-  'ad': MemRespMsg.TYPE_AMO_ADD,
-  'an': MemRespMsg.TYPE_AMO_AND,
-  'or': MemRespMsg.TYPE_AMO_OR,
-  'xg': MemRespMsg.TYPE_AMO_XCHG,
-  'mn': MemRespMsg.TYPE_AMO_MIN,
+  'rd': MemMsgType.READ,
+  'wr': MemMsgType.WRITE,
+  'ad': MemMsgType.AMO_ADD,
+  'an': MemMsgType.AMO_AND,
+  'or': MemMsgType.AMO_OR,
+  'sw': MemMsgType.AMO_SWAP,
+  'mn': MemMsgType.AMO_MIN,
 }
 def req( type_, opaque, addr, len, data ):
-  return MemReqMsg(8, 32, 32).mk_msg( req_type_dict[type_], opaque, addr, len, data)
+  req = mk_mem_req_msg( 8, 32, 32 )
+  return req( req_type_dict[type_], opaque, addr, len, data)
 
 def resp( type_, opaque, len, data ):
-  return MemRespMsg(8, 32).mk_msg( resp_type_dict[type_], opaque, 0, len, data)
+  resp = mk_mem_resp_msg( 8, 32 )
+  return resp( resp_type_dict[type_], opaque, 0, len, data)
 
 #----------------------------------------------------------------------
 # Test Case: basic
@@ -136,20 +137,20 @@ def subword_rd_msgs( base_addr ):
 def subword_wr_msgs( base_addr ):
   return [
 
-    req( 'wr', 0x0, base_addr+0, 1, 0x000000ef ), resp( 'wr', 0x0, 0, 0          ),
-    req( 'wr', 0x1, base_addr+1, 1, 0x000000be ), resp( 'wr', 0x1, 0, 0          ),
-    req( 'wr', 0x2, base_addr+2, 1, 0x000000ad ), resp( 'wr', 0x2, 0, 0          ),
-    req( 'wr', 0x3, base_addr+3, 1, 0x000000de ), resp( 'wr', 0x3, 0, 0          ),
+    req( 'wr', 0x0, base_addr+0, 1, 0x000000ef ), resp( 'wr', 0x0, 1, 0          ),
+    req( 'wr', 0x1, base_addr+1, 1, 0x000000be ), resp( 'wr', 0x1, 1, 0          ),
+    req( 'wr', 0x2, base_addr+2, 1, 0x000000ad ), resp( 'wr', 0x2, 1, 0          ),
+    req( 'wr', 0x3, base_addr+3, 1, 0x000000de ), resp( 'wr', 0x3, 1, 0          ),
     req( 'rd', 0x4, base_addr+0, 0, 0          ), resp( 'rd', 0x4, 0, 0xdeadbeef ),
 
-    req( 'wr', 0x5, base_addr+0, 2, 0x0000abcd ), resp( 'wr', 0x5, 0, 0          ),
-    req( 'wr', 0x6, base_addr+2, 2, 0x0000ef01 ), resp( 'wr', 0x6, 0, 0          ),
+    req( 'wr', 0x5, base_addr+0, 2, 0x0000abcd ), resp( 'wr', 0x5, 2, 0          ),
+    req( 'wr', 0x6, base_addr+2, 2, 0x0000ef01 ), resp( 'wr', 0x6, 2, 0          ),
     req( 'rd', 0x7, base_addr+0, 0, 0          ), resp( 'rd', 0x7, 0, 0xef01abcd ),
 
-    req( 'wr', 0x8, base_addr+1, 2, 0x00002345 ), resp( 'wr', 0x8, 0, 0          ),
+    req( 'wr', 0x8, base_addr+1, 2, 0x00002345 ), resp( 'wr', 0x8, 2, 0          ),
     req( 'rd', 0xa, base_addr+0, 0, 0          ), resp( 'rd', 0xa, 0, 0xef2345cd ),
 
-    req( 'wr', 0xb, base_addr+0, 3, 0x00cafe02 ), resp( 'wr', 0xb, 0, 0          ),
+    req( 'wr', 0xb, base_addr+0, 3, 0x00cafe02 ), resp( 'wr', 0xb, 3, 0          ),
     req( 'rd', 0xc, base_addr+0, 0, 0          ), resp( 'rd', 0xc, 0, 0xefcafe02 ),
 
   ]
@@ -177,7 +178,7 @@ def amo_msgs( base_addr ):
     req( 'or', 0x5, base_addr+8 , 0, 0x01230123 ), resp( 'or', 0x5, 0, 0x22002200 ),
     req( 'rd', 0x6, base_addr+8 , 0, 0          ), resp( 'rd', 0x6, 0, 0x23232323 ),
     # amo.xchg
-    req( 'xg', 0x5, base_addr+12, 0, 0xdeadbeef ), resp( 'xg', 0x5, 0, 0x00112233 ),
+    req( 'sw', 0x5, base_addr+12, 0, 0xdeadbeef ), resp( 'sw', 0x5, 0, 0x00112233 ),
     req( 'rd', 0x6, base_addr+12, 0, 0          ), resp( 'rd', 0x6, 0, 0xdeadbeef ),
     # amo.min -- mem is smaller
     req( 'mn', 0x7, base_addr+16, 0, 0xcafebabe ), resp( 'mn', 0x7, 0, 0x44556677 ),
@@ -250,7 +251,7 @@ test_case_table = mk_test_case_table([
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def _test_1port( test_params, dump_vcd ):
+def test_1port( test_params, dump_vcd ):
   msgs = test_params.msg_func(0x1000)
   run_sim( TestHarness( 1, [ msgs[::2] ], [ msgs[1::2] ],
                         test_params.stall, test_params.lat,
@@ -262,7 +263,7 @@ def _test_1port( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table )
-def _test_2port( test_params, dump_vcd ):
+def test_2port( test_params, dump_vcd ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
   run_sim( TestHarness( 2, [ msgs0[::2],  msgs1[::2]  ],
@@ -275,7 +276,7 @@ def _test_2port( test_params, dump_vcd ):
 # Test Read/Write Mem
 #-------------------------------------------------------------------------
 
-def _test_read_write_mem( dump_vcd ):
+def test_read_write_mem( dump_vcd ):
 
   rgen = random.Random()
   rgen.seed(0x05a3e95b)
@@ -299,6 +300,7 @@ def _test_read_write_mem( dump_vcd ):
   # Create test harness with above memory messages
 
   th = TestHarness( 1, [msgs[::2]], [msgs[1::2]], 0, 0, 0, 0 )
+  th.elaborate()
 
   # Write the data into the test memory
 
