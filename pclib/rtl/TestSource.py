@@ -1,12 +1,12 @@
 from pymtl import *
 from collections import deque
+from pclib.ifcs  import OutValRdyIfc, SendIfc, enrdy_to_str
 from pclib.valrdy import valrdy_to_str
-from pclib.ifcs   import OutValRdyIfc
 
 class TestBasicSource( RTLComponent ):
 
   def construct( s, Type, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
     s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
@@ -28,7 +28,7 @@ class TestBasicSource( RTLComponent ):
 class TestSourceValRdy( RTLComponent ):
 
   def construct( s, Type, msgs ):
-    assert type(msgs) == list, "TestSrc only accepts a list of inputs!" 
+    assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
 
     s.msgs    = msgs
     s.src_msgs = deque( msgs )
@@ -52,28 +52,40 @@ class TestSourceValRdy( RTLComponent ):
   def line_trace( s ):
     return s.out.line_trace()
 
-class TestSource( RTLComponent ):
+class TestSourceEnRdy( RTLComponent ):
 
-  def construct( s, Type, input_ = [] ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!" 
+  def construct( s, Type, input_ = [], stall_prob=0 ):
+    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
     s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
 
-    s.msg = OutVPort( Type )
-    s.en  = OutVPort( Type )
-    s.rdy = InVPort( Type )
+    s.out = SendIfc( Type )
 
-    @s.update
-    def up_src():
-      s.en  = len(s.input_) > 0 & s.rdy
-      s.msg = s.Type() if not s.input_ else s.input_[0]
-      
-      if s.en and s.input_:
-        s.input_.popleft()
+    assert 0 <= stall_prob <= 1
+
+    if stall_prob > 0:
+      import random
+
+      @s.update
+      def up_src_stall():
+        s.out.en  = (len(s.input_) > 0) & s.out.rdy & (random.random() > stall_prob )
+        s.out.msg = s.Type() if not s.input_ else s.input_[0]
+
+        if s.out.en and s.input_:
+          s.input_.popleft()
+
+    else:
+      @s.update
+      def up_src():
+        s.out.en  = (len(s.input_) > 0) & s.out.rdy
+        s.out.msg = s.Type() if not s.input_ else s.input_[0]
+
+        if s.out.en and s.input_:
+          s.input_.popleft()
 
   def done( s ):
     return not s.input_
 
   def line_trace( s ):
-    return valrdy_to_str( s.msg, s.en, s.rdy )
+    return enrdy_to_str( s.out.msg, s.out.en, s.out.rdy )
