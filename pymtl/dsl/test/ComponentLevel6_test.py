@@ -112,10 +112,8 @@ def run_cl_sim( th, max_cycles=50 ):
 
   # Create a simulator
   
-  print "\n TestHarness applying SimpleCLSim passes"
   th.elaborate()
   th.apply( simple_sim_pass )
-  print "Passes applied!"
 
   # Run simluation
 
