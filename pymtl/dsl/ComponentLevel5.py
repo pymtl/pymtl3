@@ -6,7 +6,6 @@
 # Author : Shunning Jiang
 # Date   : Dec 29, 2018
 
-from collections import defaultdict, deque
 
 from NamedObject import NamedObject
 from ComponentLevel1 import ComponentLevel1
@@ -15,8 +14,6 @@ from ComponentLevel4 import ComponentLevel4
 from Connectable import Signal, MethodPort, CalleePort, CallerPort
 
 from errors import MultiWriterError
-
-import inspect, ast # for error message
 
 class ComponentLevel5( ComponentLevel4 ):
 

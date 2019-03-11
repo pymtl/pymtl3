@@ -7,13 +7,9 @@
 # Author : Shunning Jiang
 # Date   : Dec 29, 2018
 
-from collections import defaultdict, deque
-
 from ConstraintTypes import U, M
-from Connectable import Signal, MethodPort, CalleePort
+from Connectable import Signal, CalleePort
 from ComponentLevel3 import ComponentLevel3
-
-import inspect, ast # for error message
 
 class ComponentLevel4( ComponentLevel3 ):
 

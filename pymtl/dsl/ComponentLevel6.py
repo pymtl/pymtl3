@@ -6,10 +6,6 @@
 # Author : Yanghui Ou
 #   Date : Feb 24, 2019
 
-
-from collections import defaultdict, deque
-
-from NamedObject import NamedObject
 from ComponentLevel5 import ComponentLevel5
 from Connectable import CalleePort
 
