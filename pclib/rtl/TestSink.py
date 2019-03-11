@@ -1,6 +1,6 @@
 from pymtl import *
 from collections  import deque
-from pclib.ifcs   import RecvIfc, InValRdyIfc, enrdy_to_str
+from pclib.ifcs   import RecvIfcRTL, InValRdyIfc, enrdy_to_str
 from pclib.valrdy import valrdy_to_str
 
 class TestBasicSink( RTLComponent ):
@@ -97,7 +97,7 @@ class TestSinkEnRdy( RTLComponent ):
 
     s.answer = deque( answer )
 
-    s.in_ = RecvIfc( Type )
+    s.in_ = RecvIfcRTL( Type )
 
     assert 0 <= stall_prob <= 1
 

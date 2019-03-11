@@ -14,6 +14,7 @@ from pymtl import *
 # A heler function that convert en/rdy interface into string.
 
 def enrdy_to_str( msg, en, rdy ):
+
   _str   = "{}".format( msg )
   nchars = max( len( _str ), 15 ) 
   
@@ -31,7 +32,7 @@ def enrdy_to_str( msg, en, rdy ):
 # SendRecvIfc
 #-------------------------------------------------------------------------
 
-class RecvIfc( Interface ):
+class RecvIfcRTL( Interface ):
 
   def construct( s, Type ):
 
@@ -45,7 +46,7 @@ class RecvIfc( Interface ):
   def __str__( s ):
     return s.line_trace()
 
-class SendIfc( Interface ):
+class SendIfcRTL( Interface ):
 
   def construct( s, Type ):
 

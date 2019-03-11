@@ -1,6 +1,6 @@
 from pymtl import *
 from collections import deque
-from pclib.ifcs  import OutValRdyIfc, SendIfc, enrdy_to_str
+from pclib.ifcs  import OutValRdyIfc, SendIfcRTL, enrdy_to_str
 from pclib.valrdy import valrdy_to_str
 
 class TestBasicSource( RTLComponent ):
@@ -60,7 +60,7 @@ class TestSourceEnRdy( RTLComponent ):
     s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
 
-    s.out = SendIfc( Type )
+    s.out = SendIfcRTL( Type )
 
     assert 0 <= stall_prob <= 1
 

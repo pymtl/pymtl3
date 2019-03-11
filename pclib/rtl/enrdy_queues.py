@@ -1,12 +1,12 @@
 from pymtl import *
 from pclib.rtl import Reg, RegEn, Mux
-from pclib.ifcs.SendRecvIfc import SendIfc, RecvIfc
+from pclib.ifcs.SendRecvIfc import SendIfcRTL, RecvIfcRTL
 
 class PipeQueue1RTL( RTLComponent ):
 
   def construct( s, Type ):
-    s.enq = RecvIfc( Type )
-    s.deq = SendIfc( Type )
+    s.enq = RecvIfcRTL( Type )
+    s.deq = SendIfcRTL( Type )
 
     s.buf  = RegEn( Type )( en = s.enq.en, in_ = s.enq.msg, out = s.deq.msg )
     s.full = Reg( Bits1 )
@@ -26,8 +26,8 @@ class PipeQueue1RTL( RTLComponent ):
 class BypassQueue1RTL( RTLComponent ):
 
   def construct( s, Type ):
-    s.enq = RecvIfc( Type )
-    s.deq = SendIfc( Type )
+    s.enq = RecvIfcRTL( Type )
+    s.deq = SendIfcRTL( Type )
 
     s.buf  = RegEn( Type )( in_ = s.enq.msg )
 
@@ -56,8 +56,8 @@ class BypassQueue1RTL( RTLComponent ):
 class NormalQueue1RTL( RTLComponent ):
 
   def construct( s, Type ):
-    s.enq = RecvIfc( Type )
-    s.deq = SendIfc( Type )
+    s.enq = RecvIfcRTL( Type )
+    s.deq = SendIfcRTL( Type )
 
     # Now since enq.en depends on enq.rdy, enq.en == 1 actually means
     # we will enq some stuff
