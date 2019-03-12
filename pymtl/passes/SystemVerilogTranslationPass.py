@@ -65,7 +65,7 @@ class SystemVerilogTranslationPass( BasePass ):
 
     # Distribute net connections into components' assignments
 
-    nets = top.get_all_nets()
+    nets = top.get_all_value_nets()
     adjs = top.get_signal_adjacency_dict()
 
     connections_self_child  = defaultdict(set)

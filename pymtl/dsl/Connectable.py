@@ -273,7 +273,6 @@ class Interface( NamedObject, Connectable ):
 
     for name, obj in s.__dict__.iteritems():
       if not name.startswith("_"):
-        assert hasattr( other, name )
         recursive_connect( obj, getattr( other, name ) )
 
   #-----------------------------------------------------------------------
@@ -288,3 +287,51 @@ class Interface( NamedObject, Connectable ):
 
   def is_interface( s ):
     return True
+
+# CallerPort is connected an exterior method, called by the component's
+# update block
+# CalleePort exposes the method in the component to outside world
+
+class MethodPort( NamedObject, Connectable ):
+
+  def __init__( self ):
+    self.method = None
+    self.rdy    = None 
+
+  def __call__( self, *args, **kwargs ):
+    return self.method( *args, **kwargs )
+
+  def is_component( s ):
+    return False
+
+  def is_signal( s ):
+    return False
+
+  def is_method_port( s ):
+    return False
+
+  def is_interface( s ):
+    return False
+
+class CallerPort( MethodPort ):
+  def __init__( self ):
+    self.method = None
+    self.rdy    = None
+
+  def is_callee_port( s ):
+    return False
+
+  def is_caller_port( s ):
+    return True
+
+
+class CalleePort( MethodPort ):
+  def __init__( self, method=None ):
+    self.method = method
+    self.rdy    = lambda : True
+
+  def is_callee_port( s ):
+    return True
+
+  def is_caller_port( s ):
+    return False

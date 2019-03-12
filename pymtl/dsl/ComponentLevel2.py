@@ -13,7 +13,7 @@
 
 from NamedObject     import NamedObject
 from ComponentLevel1 import ComponentLevel1
-from Connectable     import Signal, InVPort, OutVPort, Wire, Const, Interface
+from Connectable     import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 from errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, \
@@ -104,7 +104,7 @@ class ComponentLevel2( ComponentLevel1 ):
           lookup_variable( obj, name_depth+1, node_depth+1, obj_list )
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
-          if isinstance( obj, Signal ): # Signal[*] is the signal itself
+          if isinstance( obj, Connectable ): # Signal[*] is the signal itself
             add_all( obj, obj_list, node_depth )
           else:
             for i, child in enumerate( obj ):
@@ -124,7 +124,7 @@ class ComponentLevel2( ComponentLevel1 ):
         """ Already found, but it is an array of objects,
             s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ].
             Recursively collect all signals. """
-        if   isinstance( obj, Signal ):
+        if   isinstance( obj, Connectable ):
           obj_list.add( obj )
         elif isinstance( obj, list ): # SORRY
           for i, child in enumerate( obj ):
@@ -132,10 +132,11 @@ class ComponentLevel2( ComponentLevel1 ):
 
       def lookup_variable( obj, name_depth, node_depth, obj_list ):
         """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
+        if obj is None:
+          return
 
         if name_depth >= len(obj_name): # exhausted
-          if not callable(obj): # exclude function calls
-            add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
+          add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
           return
 
         # still have names
@@ -165,34 +166,13 @@ class ComponentLevel2( ComponentLevel1 ):
           lookup_variable( s, 1, 1, objs )
           all_objs |= objs
 
-      return all_objs
-
-    def extract_call_from_names( func, names, name_func ):
-      """ extract_calls_from_names:
-      Here we turn name into function calls """
-
-      all_calls = set()
-
-      for obj_name, nodelist in names:
-        call = None
-
-        # This is some instantiation I guess. TODO only support one layer
-
-        if obj_name[0][0] == "s" and len(obj_name) == 2:
-          try:
-            call = getattr( s, obj_name[1][0] )
-          except AttributeError as e:
-            raise VarNotDeclaredError( call, obj_name[1][0], func, s, nodelist[-1].lineno )
-
-          s._dsl.astnode_objs[ nodelist[1] ].append( call )
-
         # This is a function call without "s." prefix, check func list
-        elif obj_name[0][0] in name_func:
-          call = name_func[ obj_name[0][0] ]
-          all_calls.add( call )
+        elif obj_name[0][0] in s._dsl.name_func:
+          call = s._dsl.name_func[ obj_name[0][0] ]
+          all_objs.add( call )
           s._dsl.astnode_objs[ nodelist[0] ].append( call )
 
-      return all_calls
+      return all_objs
 
     """ elaborate_read_write_func """
 
@@ -213,7 +193,7 @@ class ComponentLevel2( ComponentLevel1 ):
     for name, func in s._dsl.name_func.iteritems():
       s._dsl.func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
       s._dsl.func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
-      s._dsl.func_calls [ func ] = extract_call_from_names( func, name_fc[ name ], s._dsl.name_func )
+      s._dsl.func_calls [ func ] = extract_obj_from_names( func, name_fc[ name ] )
 
     s._dsl.upblk_reads  = {}
     s._dsl.upblk_writes = {}
@@ -221,7 +201,7 @@ class ComponentLevel2( ComponentLevel1 ):
     for name, blk in s._dsl.name_upblk.iteritems():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
-      s._dsl.upblk_calls [ blk ] = extract_call_from_names( blk, name_fc[ name ], s._dsl.name_func )
+      s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
   def _collect_vars( s, m ):
@@ -251,6 +231,8 @@ class ComponentLevel2( ComponentLevel1 ):
           # has an edge to a previously marked ancestor
 
           def dfs( u, stk ):
+            if u not in m._dsl.func_reads:
+              return
 
             # Add all read/write of funcs to the outermost upblk
             s._dsl.all_upblk_reads [ blk ] |= m._dsl.func_reads[u]
