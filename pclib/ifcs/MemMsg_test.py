@@ -1,7 +1,9 @@
 #=========================================================================
 # MemMsg_test
 #=========================================================================
-# Test suite for the memory messages
+#
+# Author : Shunning Jiang
+# Date   : Mar 10, 2018
 
 from pymtl  import *
 from MemMsg import mk_mem_msg, mk_mem_resp_msg, mk_mem_req_msg, MemMsgType

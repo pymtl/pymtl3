@@ -1,3 +1,11 @@
+#=========================================================================
+# MemMsg.py
+#=========================================================================
+# New memory message type implementation.
+#
+# Author : Shunning Jiang
+# Date   : Mar 12, 2018
+
 from pymtl import *
 
 import py
