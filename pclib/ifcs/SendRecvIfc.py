@@ -21,9 +21,9 @@ def enrdy_to_str( msg, en, rdy ):
   if en and not rdy:
     _str = "X".ljust( nchars ) # Not allowed
   elif not en and rdy:
-    _str = "#".ljust( nchars )
+    _str = " ".ljust( nchars ) # Idle
   elif not en and not rdy:
-    _str = ".".ljust( nchars )
+    _str = "#".ljust( nchars ) # Stall
 
   return _str.ljust( nchars )
      
