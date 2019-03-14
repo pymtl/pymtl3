@@ -9,7 +9,7 @@
 # Date   : Jan 6, 2019
 
 from pymtl                             import *
-from pymtl.passes                      import BasePass
+from pymtl.passes                      import BasePass, PassMetadata
 from pymtl.passes.utility.pass_utility import freeze
 
 from errors                            import PyMTLTypeError
@@ -23,13 +23,17 @@ class ComponentUpblkRASTTypeCheckPass( BasePass ):
   def __call__( s, m ):
     """perform type checking on all RAST in _rast"""
 
+    if not hasattr( m, '_pass_component_upblk_rast_type_check' ):
+      m._pass_component_upblk_rast_type_check = PassMetadata()
+
     visitor = UpblkRASTTypeCheckVisitor( m, s.type_env )
 
     for blk in m.get_update_blocks():
 
       visitor.enter( blk, m._pass_component_upblk_rast_gen.rast[ blk ] )
 
-    return visitor.tmp_var_type_env
+    m._pass_component_upblk_rast_type_check.tmpvar_type_env =\
+      visitor.tmp_var_type_env
 
 #-------------------------------------------------------------------------
 # UpblkRASTTypeCheckVisitor

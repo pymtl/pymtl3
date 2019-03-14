@@ -35,7 +35,7 @@ class ComponentUpblkTranslationPass( BasePass ):
 
     # Generate and visualize RAST
     ComponentUpblkRASTGenPass()( m )
-    tmp_var_type_env = ComponentUpblkRASTTypeCheckPass( s.type_env )( m )
+    ComponentUpblkRASTTypeCheckPass( s.type_env )( m )
     # RASTVisualizationPass()( m )
     ComponentUpblkRASTToSVPass()( m )
 
@@ -47,7 +47,11 @@ class ComponentUpblkTranslationPass( BasePass ):
     for fvar, string in m._pass_component_upblk_rast_to_sv.freevars.iteritems():
       m._pass_component_upblk_translation.freevars[ fvar ] = string
 
-    for tvar, _Type in tmp_var_type_env.iteritems():
+    # Generate definitions for temporary variables
+
+    tmpvar_type_env = m._pass_component_upblk_rast_type_check.tmpvar_type_env
+
+    for tvar, _Type in tmpvar_type_env.iteritems():
       Type = _Type
       if isinstance( _Type, Const ):
         # Trying to assign constant value to a temporary variable

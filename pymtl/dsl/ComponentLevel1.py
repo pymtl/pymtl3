@@ -238,12 +238,14 @@ class ComponentLevel1( NamedObject ):
 
   def apply( s, *args ):
 
+    # Passes are supposed to write to their namespaces if they have
+    # anything to return.
+
     if isinstance(args[0], list):
       assert len(args) == 1
-      for step in args[0][0:-1]:
+      for step in args[0]:
         step( s )
-      return args[0][-1]( s )
 
     elif len(args) == 1:
       assert callable( args[0] )
-      return args[0]( s )
+      args[0]( s )
