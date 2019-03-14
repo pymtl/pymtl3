@@ -18,17 +18,7 @@ from helpers                           import *
 
 class ComponentTranslationPass( BasePass ):
 
-  def __init__( s, type_env, connections_self_self,
-                connections_self_child, connections_child_child ):
-    """ store the connections needed in component translation """
-
-    s.component_upblk_translator = ComponentUpblkTranslationPass( type_env )
-
-    s._connections_self_self   = connections_self_self
-    s._connections_self_child  = connections_self_child
-    s._connections_child_child = connections_child_child
-
-    s.svmodule_template =\
+  svmodule_template =\
 """//------------------------------------------------------------------------
 // PyMTL translation result for component {module_name}
 //------------------------------------------------------------------------
@@ -60,6 +50,16 @@ module {module_name}
 endmodule
 
 """
+
+  def __init__( s, type_env, connections_self_self,
+                connections_self_child, connections_child_child ):
+    """ store the connections needed in component translation """
+
+    s.component_upblk_translator = ComponentUpblkTranslationPass( type_env )
+
+    s._connections_self_self   = connections_self_self
+    s._connections_self_child  = connections_self_child
+    s._connections_child_child = connections_child_child
 
   def __call__( s, m ):
     """ translates a single RTLComponent instance and returns its source """
@@ -245,7 +245,7 @@ endmodule
     # Assemble all translated parts
     #---------------------------------------------------------------------
 
-    ret = s.svmodule_template.format( **vars() )
+    ret = ComponentTranslationPass.svmodule_template.format( **vars() )
 
     m._pass_component_translation.component_src = ret
 
