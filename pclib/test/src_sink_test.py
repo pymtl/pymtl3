@@ -71,6 +71,8 @@ def run_sim( th, max_cycles=100 ):
 
   th.elaborate()
   th.apply( simple_sim_pass )
+  
+  # print th._schedule
 
   # Run simluation
 
