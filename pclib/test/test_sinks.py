@@ -1,5 +1,5 @@
 #=========================================================================
-# Test sinks 
+# Test sinks
 #=========================================================================
 # Test sinks with CL and RTL interfaces.
 #
@@ -8,7 +8,7 @@
 
 from pymtl import *
 from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
-from pclib.ifcs                import RecvIfcRTL
+from pclib.ifcs                import RecvIfcRTL, enrdy_to_str
 from pclib.ifcs                import RecvCL2SendRTL, RecvRTL2SendCL
 
 #-------------------------------------------------------------------------
@@ -16,18 +16,18 @@ from pclib.ifcs                import RecvCL2SendRTL, RecvRTL2SendCL
 #-------------------------------------------------------------------------
 
 class TestSinkCL( ComponentLevel6 ):
-  
+
   def construct( s, msgs, initial_delay=0, interval_delay=0 ):
-    
+
     s.idx  = 0
     s.msgs = list( msgs )
-    
+
     s.initial_count    = initial_delay
     s.interval_delay = interval_delay
     s.interval_count   = 0
 
-    s.recv_msg    = None 
-    s.recv_called = False 
+    s.recv_msg    = None
+    s.recv_called = False
     s.recv_rdy    = False
     s.trace_len   = len( str( s.msgs[0] ) )
 
@@ -49,18 +49,18 @@ class TestSinkCL( ComponentLevel6 ):
 
       s.recv_called = False
       s.recv_msg    = None
-      s.recv_rdy    = s.recv.rdy()
+      s.recv_rdy    = s.initial_count == 0 and s.interval_count == 0
 
-    s.add_constraints( 
+    s.add_constraints(
       U( decr_count ) < M( s.recv ),
       U( decr_count ) < M( s.recv.rdy )
     )
- 
+
   @method_port( lambda s: s.initial_count==0 and s.interval_count==0 )
   def recv( s, msg ):
 
     s.recv_msg = msg
-    # Sanity check 
+    # Sanity check
     if s.idx >= len( s.msgs ):
       raise Exception( "Test Sink received more msgs than expected" )
 
@@ -76,12 +76,9 @@ class TestSinkCL( ComponentLevel6 ):
 
   def done( s ):
     return s.idx >= len( s.msgs )
-  
+
   def line_trace( s ):
-    trace = " " if not s.recv_called and s.recv_rdy else \
-            "#" if not s.recv_called and not s.recv_rdy else \
-            "X" if s.recv_called and not s.recv_rdy else \
-            str( s.recv_msg )
+    trace = enrdy_to_str( s.recv_msg, s.recv_called, s.recv_rdy )
 
     return "{}".format( trace.ljust( s.trace_len ) )
 
@@ -101,7 +98,7 @@ class TestSinkRTL( ComponentLevel6 ):
 
     s.sink    = TestSinkCL( msgs, initial_delay, interval_delay )
     s.adapter = RecvRTL2SendCL( MsgType )
-    
+
     s.connect( s.recv,         s.adapter.recv )
     s.connect( s.adapter.send, s.sink.recv    )
 
