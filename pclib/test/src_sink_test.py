@@ -1,5 +1,5 @@
 #=========================================================================
-# src_sink_test 
+# src_sink_test
 #=========================================================================
 # Tests for test sources and test sinks.
 #
@@ -19,10 +19,10 @@ from test_sinks import TestSinkCL, TestSinkRTL
 #-------------------------------------------------------------------------
 
 class TestHarnessCL( ComponentLevel6 ):
-  
-  def construct( s, src_msgs, sink_msgs, src_initial,  src_interval, 
+
+  def construct( s, src_msgs, sink_msgs, src_initial,  src_interval,
                                          sink_initial, sink_interval  ):
-   
+
     s.src     = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
     s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval )
 
@@ -33,7 +33,7 @@ class TestHarnessCL( ComponentLevel6 ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} -> {}".format( 
+    return "{} -> {}".format(
       s.src.line_trace(), s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
@@ -41,14 +41,14 @@ class TestHarnessCL( ComponentLevel6 ):
 #-------------------------------------------------------------------------
 
 class TestHarnessRTL( ComponentLevel6 ):
-  
-  def construct( s, MsgType, src_msgs, sink_msgs, 
-                    src_initial,  src_interval, 
+
+  def construct( s, MsgType, src_msgs, sink_msgs,
+                    src_initial,  src_interval,
                     sink_initial, sink_interval  ):
-   
-    s.src     = TestSrcRTL ( MsgType, src_msgs,  
+
+    s.src     = TestSrcRTL ( MsgType, src_msgs,
                              src_initial,  src_interval  )
-    s.sink    = TestSinkRTL( MsgType, sink_msgs, 
+    s.sink    = TestSinkRTL( MsgType, sink_msgs,
                              sink_initial, sink_interval )
 
     # Connections
@@ -58,7 +58,7 @@ class TestHarnessRTL( ComponentLevel6 ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} -> {}".format( 
+    return "{} -> {}".format(
       s.src.line_trace(), s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
@@ -71,8 +71,6 @@ def run_sim( th, max_cycles=100 ):
 
   th.elaborate()
   th.apply( simple_sim_pass )
-  
-  # print th._schedule
 
   # Run simluation
 
@@ -83,7 +81,7 @@ def run_sim( th, max_cycles=100 ):
     th.tick()
     ncycles += 1
     print "{}:{}".format( ncycles, th.line_trace() )
-  
+
   # Check timeout
 
   assert ncycles < max_cycles
@@ -107,7 +105,7 @@ bit_msgs = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
              Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
 
 @pytest.mark.parametrize(
-  ('msgs', 'src_init_delay',  'src_inter_delay', 
+  ('msgs', 'src_init_delay',  'src_inter_delay',
           'sink_init_delay', 'sink_inter_delay' ),
   [
     ( bit_msgs,  0,  0, 0, 0 ),
@@ -117,14 +115,14 @@ bit_msgs = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
     ( bit_msgs,  3,  4, 5, 3 )
   ]
 )
-def test_src_sink_cl( msgs, src_init_delay,  src_inter_delay, 
+def test_src_sink_cl( msgs, src_init_delay,  src_inter_delay,
                         sink_init_delay, sink_inter_delay ):
-  th = TestHarnessCL( msgs, msgs, src_init_delay,  src_inter_delay, 
+  th = TestHarnessCL( msgs, msgs, src_init_delay,  src_inter_delay,
                                 sink_init_delay, sink_inter_delay )
   run_sim( th )
 
 @pytest.mark.parametrize(
-  ('msgs', 'src_init_delay',  'src_inter_delay', 
+  ('msgs', 'src_init_delay',  'src_inter_delay',
           'sink_init_delay', 'sink_inter_delay' ),
   [
     ( bit_msgs,  0,  0, 0, 0 ),
@@ -134,8 +132,8 @@ def test_src_sink_cl( msgs, src_init_delay,  src_inter_delay,
     ( bit_msgs,  3,  4, 5, 3 )
   ]
 )
-def test_src_sink_rtl( msgs, src_init_delay,  src_inter_delay, 
+def test_src_sink_rtl( msgs, src_init_delay,  src_inter_delay,
                         sink_init_delay, sink_inter_delay ):
-  th = TestHarnessRTL( Bits16, msgs, msgs, src_init_delay,  src_inter_delay, 
+  th = TestHarnessRTL( Bits16, msgs, msgs, src_init_delay,  src_inter_delay,
                                 sink_init_delay, sink_inter_delay )
   run_sim( th )
