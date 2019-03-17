@@ -208,7 +208,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
           if member is not writer:
             assert member.method is None
             member.method = writer.method
-            member.rdy    = writer.rdy
+
+            if isinstance( s, ComponentLevel6 ):
+              member.rdy    = writer.rdy
 
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
@@ -228,7 +230,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
-    verbose = False 
+    verbose = False
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
