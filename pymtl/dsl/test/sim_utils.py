@@ -199,6 +199,8 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   # Do bfs to find out all potential total constraints associated with
   # each method, direction conflicts, and incomplete constraints
 
+  verbose = False
+
   if isinstance( s, ComponentLevel4 ):
     method_blks = defaultdict(set)
 
@@ -238,8 +240,6 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
-
-    verbose = False
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
