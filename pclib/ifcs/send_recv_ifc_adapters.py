@@ -31,14 +31,19 @@ class RecvCL2SendRTL( ComponentLevel6 ):
       s.send.en     = Bits1( 1 ) if s.recv_called else Bits1( 0 )
       s.send.msg    = s.msg_to_send
       s.recv_called = False
-      s.recv_rdy    = s.send.rdy
-
+    
+    @s.update
+    def up_recv_rdy_cl():
+      s.recv_rdy    = True if s.send.rdy else False
+ 
     s.add_constraints(
+      U( up_recv_rdy_cl ) < M( s.recv ),
+      U( up_recv_rdy_cl ) < M( s.recv.rdy ),
       M( s.recv.rdy ) < U( up_send_rtl ),
       M( s.recv ) < U( up_send_rtl ) 
     )
   
-  @method_port( lambda s : s.send.rdy )
+  @method_port( lambda s : s.recv_rdy )
   def recv( s, msg ):
     s.msg_to_send = msg
     s.recv_called = True
