@@ -100,3 +100,19 @@ def test_normal2_simple():
   th = TestHarness( NormalQueueCL, 2, test_msgs, test_msgs, 0, 0, 0, 0,
                     arrival_pipe )
   run_sim( th )
+
+@pytest.mark.parametrize(
+  ( 'QType', 'qsize', 'src_init_delay', 'src_inter_delay', 
+    'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
+  [
+    ( PipeQueueCL,   2, 1, 1, 0, 0, [ 3, 5,  7,  9 ] ),
+    ( BypassQueueCL, 1, 0, 4, 3, 1, [ 3, 6, 11, 16 ] ),
+    ( NormalQueueCL, 1, 0, 0, 5, 0, [ 5, 7,  9, 11 ] )
+  ]
+)
+def test_delay( QType, qsize, src_init_delay, src_inter_delay, 
+                sink_init_delay, sink_inter_delay, arrival_time ):
+  th = TestHarness( QType, qsize, test_msgs, test_msgs, src_init_delay,
+                    src_inter_delay, sink_init_delay, sink_inter_delay,
+                    arrival_time )
+  run_sim( th )
