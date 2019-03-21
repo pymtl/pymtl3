@@ -37,6 +37,8 @@ class PipeQueueCL( ComponentLevel6 ):
       s.deq_rdy    = s.deq.rdy()
 
     s.add_constraints(
+      U( up_pulse ) < M( s.enq.rdy ),
+      U( up_pulse ) < M( s.deq.rdy ),
       M( s.peek   ) < M( s.deq  ),
       M( s.deq    ) < M( s.enq  )
     )
@@ -91,6 +93,8 @@ class BypassQueueCL( ComponentLevel6 ):
       s.deq_rdy    = s.deq.rdy()
 
     s.add_constraints(
+      U( up_pulse ) < M( s.enq.rdy ),
+      U( up_pulse ) < M( s.deq.rdy ),
       M( s.peek   ) < M( s.enq  ),
       M( s.enq    ) < M( s.deq  )
     )
