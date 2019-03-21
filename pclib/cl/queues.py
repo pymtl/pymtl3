@@ -145,6 +145,8 @@ class NormalQueueCL( ComponentLevel6 ):
       s.deq_rdy    = len( s.queue ) > 0 
 
     s.add_constraints(
+      U( up_pulse ) < M( s.enq.rdy ),
+      U( up_pulse ) < M( s.deq.rdy ),
       M( s.peek   ) < M( s.deq  ),
       M( s.peek   ) < M( s.enq  )
     )
