@@ -142,5 +142,5 @@ def test_src_sink_cl( msgs, src_init_delay,  src_inter_delay,
 def test_src_sink_rtl( msgs, src_init_delay,  src_inter_delay,
                         sink_init_delay, sink_inter_delay, arrival_time ):
   th = TestHarnessRTL( Bits16, msgs, msgs, src_init_delay,  src_inter_delay,
-                       sink_init_delay, sink_inter_delay, arrival_time)
+                       sink_init_delay, sink_inter_delay, arrival_time )
   run_sim( th )
