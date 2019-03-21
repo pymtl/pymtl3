@@ -3,49 +3,170 @@
 #=========================================================================
 # This file contains cycle-level queues.
 #
-# Author : Shunning Jiang
+# Author : Shunning Jiang, Yanghui Ou
 # Date   : Mar 10, 2018
 
 from collections import deque
 from pymtl import *
+from pclib.ifcs.SendRecvIfc import enrdy_to_str
 
-class BaseQueue( ComponentLevel6 ):
+#-------------------------------------------------------------------------
+# PipeQueueCL
+#-------------------------------------------------------------------------
+
+class PipeQueueCL( ComponentLevel6 ):
+  
   def construct( s, size ):
     s.queue = deque( maxlen=size )
 
-    s.enq     = CalleePort( s.enq_ )
-    s.enq_rdy = CalleePort( s.enq_rdy_ )
+    # Line trace variables
+    s.enq_called = False
+    s.enq_msg    = None
+    s.enq_rdy    = False
+    s.deq_called = False
+    s.deq_msg    = None
+    s.deq_rdy    = False
 
-    s.deq     = CalleePort( s.deq_ )
-    s.deq_rdy = CalleePort( s.deq_rdy_ )
-    s.peek    = CalleePort( s.peek_ )
+    @s.update_on_edge
+    def up_pulse():
+      s.enq_called = False
+      s.enq_msg    = None
+      s.enq_rdy    = s.enq.rdy()
+      s.deq_called = False
+      s.deq_msg    = None
+      s.deq_rdy    = s.deq.rdy()
 
-  def enq_rdy_( s ): return len(s.queue) < s.queue.maxlen
-  def enq_( s, v ):  s.queue.appendleft(v)
-  def deq_rdy_( s ): return len(s.queue) > 0
-  def deq_( s ):     return s.queue.pop()
-  def peek_( s ):    return s.queue[-1]
-
-class PipeQueue( BaseQueue ):
-
-  def construct( s, size ):
-    super( PipeQueue, s ).construct( size )
     s.add_constraints(
-      M(s.deq_    ) < M(s.enq_    ), # pipe behavior
-      M(s.deq_rdy_) < M(s.enq_rdy_),
+      M( s.peek   ) < M( s.deq  ),
+      M( s.deq    ) < M( s.enq  )
     )
 
+  @method_port( lambda s: len( s.queue ) < s.queue.maxlen )
+  def enq( s, v ):
+    s.enq_called = True
+    s.enq_msg    = v
+    s.queue.appendleft( s.enq_msg )
+
+  @method_port( lambda s: len( s.queue ) > 0 )
+  def deq( s ):
+    s.deq_called = True
+    s.enq_rdy    = True
+    s.deq_msg    = s.queue.pop()
+    return s.deq_msg
+ 
+  @method_port( lambda s: len( s.queue ) > 0 )
+  def peek( s ):
+    return s.queue[-1]
+ 
   def line_trace( s ):
-    return "[P] {:5}".format(",".join( [ str(x) for x in s.queue ]) )
-
-class BypassQueue( BaseQueue ):
-
-  def construct( s, size ):
-    super( BypassQueue, s ).construct( size )
-    s.add_constraints(
-      M(s.enq_    ) < M(s.deq_    ), # bypass behavior
-      M(s.enq_rdy_) < M(s.deq_rdy_),
+    return "{}(){}".format( 
+      enrdy_to_str( s.enq_msg, s.enq_called, s.enq_rdy ), 
+      enrdy_to_str( s.deq_msg, s.deq_called, s.deq_rdy )
     )
 
+#-------------------------------------------------------------------------
+# BypassQueueCL
+#-------------------------------------------------------------------------
+
+class BypassQueueCL( ComponentLevel6 ):
+  
+  def construct( s, size ):
+    s.queue = deque( maxlen=size )
+
+    # Line trace variables
+    s.enq_called = False
+    s.enq_msg    = None
+    s.enq_rdy    = False
+    s.deq_called = False
+    s.deq_msg    = None
+    s.deq_rdy    = False
+
+    @s.update_on_edge
+    def up_pulse():
+      s.enq_called = False
+      s.enq_msg    = None
+      s.enq_rdy    = s.enq.rdy()
+      s.deq_called = False
+      s.deq_msg    = None
+      s.deq_rdy    = s.deq.rdy()
+
+    s.add_constraints(
+      M( s.peek   ) < M( s.enq  ),
+      M( s.enq    ) < M( s.deq  )
+    )
+
+  @method_port( lambda s: len( s.queue ) < s.queue.maxlen )
+  def enq( s, v ):
+    s.enq_called = True
+    s.deq_rdy    = True
+    s.enq_msg    = v
+    s.queue.appendleft( s.enq_msg )
+
+  @method_port( lambda s: len( s.queue ) > 0 )
+  def deq( s ):
+    s.deq_called = True
+    s.deq_msg    = s.queue.pop()
+    return s.deq_msg
+ 
+  @method_port( lambda s: len( s.queue ) > 0 )
+  def peek( s ):
+    return s.queue[-1]
+ 
   def line_trace( s ):
-    return "[B] {:5}".format(",".join( [ str(x) for x in s.queue ]) )
+    return "{}(){}".format( 
+      enrdy_to_str( s.enq_msg, s.enq_called, s.enq_rdy ), 
+      enrdy_to_str( s.deq_msg, s.deq_called, s.deq_rdy )
+    )
+    
+#-------------------------------------------------------------------------
+# NormalQueueCL
+#-------------------------------------------------------------------------
+
+class NormalQueueCL( ComponentLevel6 ):
+  
+  def construct( s, size ):
+    s.queue = deque( maxlen=size )
+
+    # Line trace variables
+    s.enq_called = False
+    s.enq_msg    = None
+    s.enq_rdy    = False
+    s.deq_called = False
+    s.deq_msg    = None
+    s.deq_rdy    = False
+
+    @s.update_on_edge
+    def up_pulse():
+      s.enq_called = False
+      s.enq_msg    = None
+      s.enq_rdy    = len( s.queue ) < s.queue.maxlen
+      s.deq_called = False
+      s.deq_msg    = None
+      s.deq_rdy    = len( s.queue ) > 0 
+
+    s.add_constraints(
+      M( s.peek   ) < M( s.deq  ),
+      M( s.peek   ) < M( s.enq  )
+    )
+
+  @method_port( lambda s: s.enq_rdy )
+  def enq( s, v ):
+    s.enq_called = True
+    s.enq_msg    = v
+    s.queue.appendleft( s.enq_msg )
+
+  @method_port( lambda s: s.deq_rdy )
+  def deq( s ):
+    s.deq_called = True
+    s.deq_msg    = s.queue.pop()
+    return s.deq_msg
+ 
+  @method_port( lambda s: len( s.queue ) > 0 )
+  def peek( s ):
+    return s.queue[-1]
+ 
+  def line_trace( s ):
+    return "{}(){}".format( 
+      enrdy_to_str( s.enq_msg, s.enq_called, s.enq_rdy ), 
+      enrdy_to_str( s.deq_msg, s.deq_called, s.deq_rdy )
+    )
