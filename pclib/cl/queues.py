@@ -27,7 +27,7 @@ class PipeQueueCL( ComponentLevel6 ):
     s.deq_msg    = None
     s.deq_rdy    = False
 
-    @s.update_on_edge
+    @s.update
     def up_pulse():
       s.enq_called = False
       s.enq_msg    = None
@@ -83,7 +83,7 @@ class BypassQueueCL( ComponentLevel6 ):
     s.deq_msg    = None
     s.deq_rdy    = False
 
-    @s.update_on_edge
+    @s.update
     def up_pulse():
       s.enq_called = False
       s.enq_msg    = None
@@ -139,7 +139,7 @@ class NormalQueueCL( ComponentLevel6 ):
     s.deq_msg    = None
     s.deq_rdy    = False
 
-    @s.update_on_edge
+    @s.update
     def up_pulse():
       s.enq_called = False
       s.enq_msg    = None
