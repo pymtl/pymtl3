@@ -7,7 +7,7 @@
 #   Date : Feb 24, 2019
 
 from ComponentLevel5 import ComponentLevel5
-from Connectable import CalleePort
+from Connectable import CalleePort, MethodGuard
 
 #-------------------------------------------------------------------------
 # method_port decorator
@@ -16,7 +16,7 @@ from Connectable import CalleePort
 def method_port( guard = lambda : True ):
   def real_guard( method ):
     method._anti_name_conflict_rdy = guard
-    return method 
+    return method
   return real_guard
 
 #-------------------------------------------------------------------------
@@ -47,12 +47,14 @@ class ComponentLevel6( ComponentLevel5 ):
         # This getattr will get the bounded method from ComponentLevel4
         y = getattr( s, x )
 
-        # This would break if this _method_ has a member with 
+        # This would break if this _method_ has a member with
         # attribute [_anti_name_conflict_rdy]
         if hasattr( y, '_anti_name_conflict_rdy' ):
           port = CalleePort( y )
-          port.rdy = bind_method( y._anti_name_conflict_rdy )
+          # NOTE we are in NameObject._setattr_for_elaborate_, we need
+          # to first setattr "port" to "s" then add "rdy" to "port"
           setattr( s, x, port )
+          port.rdy = MethodGuard( bind_method( y._anti_name_conflict_rdy ) )
 
       # Same as parent class _construct
 

@@ -1,3 +1,11 @@
+#=========================================================================
+# enrdy_queues.py
+#=========================================================================
+# This file contains queues with EnRdy (send/recv) interface.
+#
+# Author : Shunning Jiang
+# Date   : Mar 9, 2018
+
 from pymtl import *
 from pclib.rtl import Reg, RegEn, Mux
 from pclib.ifcs.SendRecvIfc import SendIfcRTL, RecvIfcRTL

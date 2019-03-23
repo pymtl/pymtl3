@@ -11,7 +11,7 @@ from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
 from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5, ComponentLevel6
-from pymtl.dsl import Signal, Const, MethodPort
+from pymtl.dsl import Signal, Const, MethodPort, MethodGuard
 
 import random, py.code
 
@@ -199,6 +199,8 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   # Do bfs to find out all potential total constraints associated with
   # each method, direction conflicts, and incomplete constraints
 
+  verbose = False
+
   if isinstance( s, ComponentLevel4 ):
     method_blks = defaultdict(set)
 
@@ -208,7 +210,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
           if member is not writer:
             assert member.method is None
             member.method = writer.method
-            member.rdy    = writer.rdy
+
+            if isinstance( s, ComponentLevel6 ):
+              member.rdy.func = writer.rdy.func
 
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
@@ -216,6 +220,8 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
+        elif isinstance( call, MethodGuard ):
+          method_blks[ call.func ].add( blk )
         else:
           method_blks[ call ].add( blk )
 
@@ -223,12 +229,17 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
-      xx = x.method if isinstance( x, MethodPort ) else x
-      yy = y.method if isinstance( y, MethodPort ) else y
+
+      if   isinstance( x, MethodPort ):  xx = x.method
+      elif isinstance( x, MethodGuard ): xx = x.func
+      else:                              xx = x
+
+      if   isinstance( y, MethodPort ):  yy = y.method
+      elif isinstance( y, MethodGuard ): yy = y.func
+      else:                              yy = y
+
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
-
-    verbose = False 
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
@@ -342,11 +353,27 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
   assert serial_schedule, "No update block found in the model"
 
+  if verbose:
+    from graphviz import Digraph
+    dot = Digraph()
+    dot.graph_attr["rank"] = "same"
+    dot.graph_attr["ratio"] = "compress"
+    dot.graph_attr["margin"] = "0.1"
+
+    for x in vs:
+      dot.node( x.__name__, shape="box")
+
+    for (x, y) in all_constraints:
+      dot.edge( x.__name__,
+                y.__name__ )
+
+    dot.render( "/tmp/upblk-dag.gv", view=True )
+
   def tick_normal():
     for blk in serial_schedule:
       blk()
   s.tick = tick_normal
-  s._schedule = serial_schedule
+  s._dsl.schedule = serial_schedule
 
   # Clean up Signals
 

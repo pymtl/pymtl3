@@ -104,7 +104,7 @@ class ComponentLevel2( ComponentLevel1 ):
           lookup_variable( obj, name_depth+1, node_depth+1, obj_list )
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
-          if isinstance( obj, Connectable ): # Signal[*] is the signal itself
+          if isinstance( obj, NamedObject ): # Signal[*] is the signal itself
             add_all( obj, obj_list, node_depth )
           else:
             for i, child in enumerate( obj ):
@@ -124,7 +124,7 @@ class ComponentLevel2( ComponentLevel1 ):
         """ Already found, but it is an array of objects,
             s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ].
             Recursively collect all signals. """
-        if   isinstance( obj, Connectable ):
+        if   isinstance( obj, NamedObject ):
           obj_list.add( obj )
         elif isinstance( obj, list ): # SORRY
           for i, child in enumerate( obj ):

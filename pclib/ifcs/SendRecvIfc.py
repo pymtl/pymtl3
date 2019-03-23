@@ -1,5 +1,5 @@
 #=========================================================================
-# SendRecvIfc.py 
+# SendRecvIfc.py
 #=========================================================================
 # RTL implementation of en/rdy micro-protocol.
 #
@@ -13,20 +13,18 @@ from pymtl import *
 #-------------------------------------------------------------------------
 # A heler function that convert en/rdy interface into string.
 
-def enrdy_to_str( msg, en, rdy ):
+def enrdy_to_str( msg, en, rdy, trace_len=15 ):
 
   _str   = "{}".format( msg )
-  nchars = max( len( _str ), 15 ) 
-  
-  if en and not rdy:
-    _str = "X".ljust( nchars ) # Not allowed
-  elif not en and rdy:
-    _str = "#".ljust( nchars )
-  elif not en and not rdy:
-    _str = ".".ljust( nchars )
 
-  return _str.ljust( nchars )
-     
+  if en and not rdy:
+    _str = "X".ljust( trace_len ) # Not allowed
+  elif not en and rdy:
+    _str = " ".ljust( trace_len ) # Idle
+  elif not en and not rdy:
+    _str = "#".ljust( trace_len ) # Stall
+
+  return _str.ljust( trace_len )
 
 #-------------------------------------------------------------------------
 # SendRecvIfc
@@ -41,8 +39,8 @@ class RecvIfcRTL( Interface ):
     s.rdy = OutVPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy ) 
-  
+    return enrdy_to_str( s.msg, s.en, s.rdy )
+
   def __str__( s ):
     return s.line_trace()
 
@@ -55,7 +53,7 @@ class SendIfcRTL( Interface ):
     s.rdy =  InVPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy ) 
+    return enrdy_to_str( s.msg, s.en, s.rdy )
 
   def __str__( s ):
     return s.line_trace()

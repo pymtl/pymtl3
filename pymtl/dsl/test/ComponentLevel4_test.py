@@ -14,7 +14,7 @@ def _test_model( cls ):
   A = cls()
   A.elaborate()
   simple_sim_pass( A, 0x123 )
-  print A._schedule
+  print A._dsl.schedule
 
   T, time = 0, 20
   while not A.done() and T < time:
