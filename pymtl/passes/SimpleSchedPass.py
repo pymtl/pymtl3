@@ -55,7 +55,7 @@ class SimpleSchedPass( BasePass ):
 
 def check_schedule( top, schedule, V, E, in_degree ):
 
-  assert schedule
+  #assert schedule
 
   if len(schedule) != len(V):
     from graphviz import Digraph
