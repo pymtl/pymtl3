@@ -42,8 +42,10 @@ class TestSinkCL( ComponentLevel6 ):
 
     @s.update
     def up_sink_count():
-      
-      s.cycle_count += 1
+      if not s.reset: 
+        s.cycle_count += 1
+      else:
+        s.cycle_count = 0
 
       # if recv was called in previous cycle
       if s.recv_called:
