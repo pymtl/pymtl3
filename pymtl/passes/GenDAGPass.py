@@ -9,7 +9,7 @@
 
 from pymtl import *
 from BasePass import BasePass, PassMetadata
-from pymtl.dsl import Const, MethodPort
+from pymtl.dsl import Const, MethodPort, MethodGuard
 import py, ast
 from collections import defaultdict, deque
 
@@ -279,6 +279,8 @@ def {0}():
             if member is not writer:
               assert member.method is None
               member.method = writer.method
+              # FIXME: a method must have a guard.
+              member.rdy.func = writer.rdy.func
 
     except AttributeError:
       pass
@@ -298,8 +300,15 @@ def {0}():
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in all_M_constraints:
-      xx = x.method if isinstance( x, MethodPort ) else x
-      yy = y.method if isinstance( y, MethodPort ) else y
+
+      if   isinstance( x, MethodPort ):  xx = x.method
+      elif isinstance( x, MethodGuard ): xx = x.func
+      else:                              xx = x
+
+      if   isinstance( y, MethodPort ):  yy = y.method
+      elif isinstance( y, MethodGuard ): yy = y.func
+      else:                              yy = y
+
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
