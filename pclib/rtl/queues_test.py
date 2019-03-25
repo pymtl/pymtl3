@@ -12,7 +12,7 @@ from pymtl.passes.PassGroups import SimpleCLSim
 from pclib.rtl.queues import PipeQueue1RTL, BypassQueue1RTL
 from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
 from pclib.test.stateful.test_wrapper import *
-from pclib.cl.Queue import PipeQueue, BypassQueue
+from pclib.cl.queues import PipeQueueCL, BypassQueueCL
 import pytest
 
 #-------------------------------------------------------------------------
@@ -97,8 +97,8 @@ class ReferenceWrapper( object ):
 # test_wrapper
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
-                          [( BypassQueue, BypassQueue1RTL ),
-                           ( PipeQueue, PipeQueue1RTL ) ] )
+                          [( BypassQueueCL, BypassQueue1RTL ),
+                           ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_wrapper( QueueCL, QueueRTL ):
   specs = TestStateful.inspect( QueueRTL( Bits16 ), QueueCL( 1 ) )
   wrapper = RTLWrapper( RTLAdapter( QueueRTL( Bits16 ), specs ) )
@@ -118,10 +118,10 @@ def test_wrapper( QueueCL, QueueRTL ):
 # test_cl
 #-------------------------------------------------------------------------
 def test_cl():
-  test = BypassQueue( 1 )
+  test = BypassQueueCL( 1 )
   test.apply( SimpleCLSim )
   test.tick()
-  print test.enq_rdy(), test.deq_rdy()
+  print test.enq.rdy(), test.deq.rdy()
   test.enq( 2 )
   deq = test.deq()
   print deq
@@ -131,8 +131,8 @@ def test_cl():
 # test_state_machine
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize( "QueueCL, QueueRTL, order",
-                          [( BypassQueue, BypassQueue1RTL, [ 'enq', 'deq' ] ),
-                           ( PipeQueue, PipeQueue1RTL, [ 'deq', 'enq' ] ) ] )
+                          [( BypassQueueCL, BypassQueue1RTL, [ 'enq', 'deq' ] ),
+                           ( PipeQueueCL, PipeQueue1RTL, [ 'deq', 'enq' ] ) ] )
 def test_state_machine( QueueCL, QueueRTL, order ):
-  test = run_test_state_machine(
+  run_test_state_machine(
       QueueRTL, ( Bits16,), QueueCL( 1 ), order=order )

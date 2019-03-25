@@ -44,9 +44,9 @@ class PipeQueueCL( ComponentLevel6 ):
     )
 
   @method_port( lambda s: len( s.queue ) < s.queue.maxlen )
-  def enq( s, v ):
+  def enq( s, msg ):
     s.enq_called = True
-    s.enq_msg    = v
+    s.enq_msg    = msg
     s.queue.appendleft( s.enq_msg )
 
   @method_port( lambda s: len( s.queue ) > 0 )
@@ -100,10 +100,10 @@ class BypassQueueCL( ComponentLevel6 ):
     )
 
   @method_port( lambda s: len( s.queue ) < s.queue.maxlen )
-  def enq( s, v ):
+  def enq( s, msg ):
     s.enq_called = True
     s.deq_rdy    = True
-    s.enq_msg    = v
+    s.enq_msg    = msg
     s.queue.appendleft( s.enq_msg )
 
   @method_port( lambda s: len( s.queue ) > 0 )
