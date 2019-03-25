@@ -1,10 +1,10 @@
 #=========================================================================
-# SendRecvIfc.py 
+# EnqDeqIfcs.py 
 #=========================================================================
 # RTL implementation of en/rdy micro-protocol.
 #
-# Author: Yanghui Ou
-#   Date: Feb 21, 2019
+# Author: Yixiao Zhang
+#   Date: March 24, 2019
 
 from pymtl import *
 
@@ -29,7 +29,7 @@ def enrdy_to_str( msg, en, rdy ):
      
 
 #-------------------------------------------------------------------------
-# SendRecvIfc
+# EnqIfcRTL
 #-------------------------------------------------------------------------
 
 class EnqIfcRTL( Interface ):
@@ -45,6 +45,11 @@ class EnqIfcRTL( Interface ):
   
   def __str__( s ):
     return s.line_trace()
+
+
+#-------------------------------------------------------------------------
+# DeqIfcRTL
+#-------------------------------------------------------------------------
 
 class DeqIfcRTL( Interface ):
 
