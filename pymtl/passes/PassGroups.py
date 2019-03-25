@@ -4,11 +4,11 @@ from SimpleSchedPass import SimpleSchedPass
 from SimpleTickPass import SimpleTickPass
 
 SimpleSim = [
-  RTLComponent.elaborate,
+  ComponentLevel6.elaborate,
   GenDAGPass(),
   SimpleSchedPass(),
   SimpleTickPass(),
-  RTLComponent.lock_in_simulation
+  ComponentLevel6.lock_in_simulation
 ]
 
 SimpleCLSim = [
