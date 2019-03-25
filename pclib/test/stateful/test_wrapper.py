@@ -2,16 +2,16 @@
 # test_wrapper
 #=========================================================================
 # Wrappers for testing rtl model.
-#
+# 
 # Author : Yixiao Zhang
 #   Date : March 24, 2019
 
 from pymtl import *
 from template import *
 
-
 def _mangleName( method_name, port_name ):
   return method_name + "_" + port_name
+
 
 
 #-------------------------------------------------------------------------
@@ -22,9 +22,8 @@ class Result():
 
   def __eq__( self, obj ):
     if not isinstance( obj, Result ):
-      return false
+      return False
     return self.__dict__ == obj.__dict__
-
 
 #-------------------------------------------------------------------------
 # RTLAdapter
@@ -84,7 +83,13 @@ class RTLAdapter( RTLComponent ):
     import linecache
     linecache.cache[ filename ] = ( len( updates ), None, lines, filename )
     s._rename( update, "update_" + method_spec.method_name + "_adapter" )
+    s._rename( update_rets, "update_" + method_spec.method_name + "_rets_adapter" )
+    s._rename( update_args, "update_" + method_spec.method_name + "_args_adapter" )
     s.update( update )
+    if method_spec.args:
+      s.update( update_args )
+    if method_spec.rets:
+      s.update( update_rets )
 
   def line_trace( s ):
     return s.model.line_trace()
@@ -101,26 +106,12 @@ class RTLWrapper():
     self.model = model
     self.model.apply( SimpleSim )
     self.method_specs = self.model.method_specs
-    self._post_construct()
     self.results = {}
     for method, spec in self.method_specs.iteritems():
       self._add_result( spec )
       self._add_method( spec )
     self._add_cycle()
-
-  def _post_construct( s ):
-    for method_name, method_spec in s.method_specs.iteritems():
-      ports = {}
-      ports[ "__method" ] = getattr( s.model, method_spec.method_name )
-      ports[ "rdy" ] = getattr( s.model,
-                                _mangleName( method_spec.method_name, "rdy" ) )
-      for arg, dtype in method_spec.args.iteritems():
-        ports[ arg ] = getattr( s.model,
-                                _mangleName( method_spec.method_name, arg ) )
-      for ret, dtype in method_spec.rets.iteritems():
-        ports[ ret ] = getattr( s.model,
-                                _mangleName( method_spec.method_name, ret ) )
-      s.model.ports[ method_name ] = ports
+    self.reset()
 
   def _add_result( self, method_spec ):
     self.results[ method_spec.method_name ] = Result()
@@ -154,4 +145,4 @@ class RTLWrapper():
     setattr( self, "cycle", cycle )
 
   def reset( self ):
-    pass
+    self.model.reset = 1

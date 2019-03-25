@@ -15,9 +15,15 @@ assign_rets_tmpl = """
 """
 
 update_tmpl = """
-def update():
+def update_args():
+  pass
   {assign_args}
+
+def update_rets():
+  pass
   {assign_rets}
+
+def update():
   if s.{method_name}:
     s.{method_name}_rdy = s.model.{method_name}.rdy
     if s.model.{method_name}.rdy:
@@ -44,6 +50,7 @@ arg_tmpl = """
 cycle_tmpl = """
 def cycle():
   self.model.tick()
+  self.model.reset = 0
   {assign_rets}
 """
 

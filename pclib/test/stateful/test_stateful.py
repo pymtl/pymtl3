@@ -170,8 +170,7 @@ class TestStateMachine( GenericStateMachine ):
 
   def _call_func_cl( s, model, name, data, index=-1 ):
     result = Result()
-    rdy_func = model.__dict__[ name + "_rdy" ]
-    if not rdy_func():
+    if not model.__dict__[ name ].rdy():
       result.rdy = 0
       return result
     func = model.__dict__[ name ]
@@ -485,6 +484,9 @@ class TestStateful( TestStateMachine ):
   def __init__( self ):
     TestStateMachine.__init__( self )
     self.sim.reset()
+    self.reference.reset()
+    self.sim.cycle()
+    self.reference.tick()
     #self.reference.reset()
 
   @staticmethod
