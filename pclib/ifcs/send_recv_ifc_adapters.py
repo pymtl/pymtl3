@@ -71,8 +71,8 @@ class RecvRTL2SendCL( ComponentLevel6 ):
 
     @s.update
     def up_recv_rtl_rdy():
-      s.send_rdy = s.send.rdy()
-      s.recv.rdy = Bits1( 1 ) if s.send.rdy() else Bits1( 0 )
+      s.send_rdy = s.send.rdy() and not s.reset
+      s.recv.rdy = Bits1( 1 ) if s.send.rdy() and not s.reset else Bits1( 0 )
 
     @s.update
     def up_send_cl():
