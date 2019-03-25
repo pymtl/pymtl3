@@ -484,7 +484,8 @@ class TestStateful( TestStateMachine ):
   def __init__( self ):
     TestStateMachine.__init__( self )
     self.sim.reset()
-    self.reference.reset()
+    if hasattr(self.reference, "reset"):
+      self.reference.reset()
     self.sim.cycle()
     self.reference.tick()
     #self.reference.reset()
