@@ -1,13 +1,14 @@
 #=========================================================================
 # ComponentLevel6.py
 #=========================================================================
-# Add method port decorator.
+# Add method port decorator and clk/reset signals.
 #
 # Author : Yanghui Ou
 #   Date : Feb 24, 2019
 
+from pymtl.datatypes import Bits1
 from ComponentLevel5 import ComponentLevel5
-from Connectable import CalleePort, MethodGuard
+from Connectable import CalleePort, MethodGuard, InVPort
 
 #-------------------------------------------------------------------------
 # method_port decorator
@@ -32,6 +33,10 @@ class ComponentLevel6( ComponentLevel5 ):
     elaboration happens."""
 
     if not s._dsl.constructed:
+
+      s.clk   = InVPort( Bits1 )
+      s.reset = InVPort( Bits1 )
+
       kwargs = s._dsl.kwargs.copy()
       if "elaborate" in s._dsl.param_dict:
         kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
@@ -60,7 +65,21 @@ class ComponentLevel6( ComponentLevel5 ):
 
       s.construct( *s._dsl.args, **kwargs )
 
+      try:
+        s.connect( s.clk, s.get_parent_object().clk )
+        s.connect( s.reset, s.get_parent_object().reset )
+      except AttributeError:
+        pass
+
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
 
       s._dsl.constructed = True
+
+  def sim_reset( s ):
+    assert s._dsl.elaborate_top is s # assert sim_reset is top
+
+    s.reset = Bits1( 1 )
+    s.tick() # This tick propagates the reset signal
+    s.tick()
+    s.reset = Bits1( 0 )
