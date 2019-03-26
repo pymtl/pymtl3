@@ -41,7 +41,7 @@ class TestSrcCL( ComponentLevel6 ):
         s.initial_cnt -= 1
       elif not s.interval_cnt==0:
         s.interval_cnt -= 1
-      else:
+      elif not s.reset:
         s.msg_to_send = None
         if s.send.rdy() and s.msgs:
           s.msg_to_send = s.msgs.popleft()
