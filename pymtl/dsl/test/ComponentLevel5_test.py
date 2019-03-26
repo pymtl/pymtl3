@@ -185,13 +185,34 @@ def test_method_interface():
 
   class RecvIfcCL( Interface ):
     def construct( s, recv=None, rdy=None):
-      s.msg = CalleePort( recv )
-      s.rdy = CalleePort( rdy )
+      s.recv = CalleePort( recv )
+      s.rdy  = CalleePort( rdy )
+
+    # Here we customize method interface connections
+    def connect( s, other, parent ):
+      if isinstance( other, SendIfcCL ):
+        parent.connect_pairs(
+          s.recv, other.send,
+          s.rdy, other.rdy,
+        )
+        return True
+
+      return False
 
   class SendIfcCL( Interface ):
     def construct( s ):
-      s.msg = CallerPort()
-      s.rdy = CallerPort()
+      s.send = CallerPort()
+      s.rdy  = CallerPort()
+
+    def connect( s, other, parent ):
+      if isinstance( other, RecvIfcCL ):
+        parent.connect_pairs(
+          s.send, other.recv,
+          s.rdy, other.rdy,
+        )
+        return True
+
+      return False
 
   class SimpleTestSourceIfc( ComponentLevel5 ):
 
@@ -206,7 +227,7 @@ def test_method_interface():
         s.v = None
         if s.req.rdy() and s.msgs:
           s.v = s.msgs.popleft()
-          s.req.msg( s.v )
+          s.req.send( s.v )
 
     def done( s ):
       return not s.msgs
