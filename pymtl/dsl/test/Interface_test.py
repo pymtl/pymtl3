@@ -7,19 +7,93 @@
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
-from pclib.rtl import TestSourceValRdy, TestSinkValRdy
+from pclib.ifcs import valrdy_to_str
 from sim_utils import simple_sim_pass
+
+from collections import deque
 
 def _test_model( cls ):
   A = cls()
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
+  print
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
     print A.line_trace()
     T += 1
+
+class InValRdyIfc( Interface ):
+
+  def construct( s, Type ):
+
+    s.msg = InVPort( Type )
+    s.val = InVPort( int if Type is int else Bits1 )
+    s.rdy = OutVPort( int if Type is int else Bits1 )
+
+  def line_trace( s ):
+    return valrdy_to_str( s.msg, s.val, s.rdy )
+
+class OutValRdyIfc( Interface ):
+
+  def construct( s, Type ):
+
+    s.msg = OutVPort( Type )
+    s.val = OutVPort( int if Type is int else Bits1 )
+    s.rdy = InVPort( int if Type is int else Bits1 )
+
+  def line_trace( s ):
+    return valrdy_to_str( s.msg, s.val, s.rdy )
+
+class TestSourceValRdy( ComponentLevel3 ):
+
+  def construct( s, Type, msgs ):
+    assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
+
+    s.msgs    = msgs
+    s.src_msgs = deque( msgs )
+    s.default = Type()
+    s.out     = OutValRdyIfc( Type )
+
+    @s.update_on_edge
+    def up_src():
+      if (s.out.rdy & s.out.val) and s.src_msgs:
+        s.src_msgs.popleft()
+      s.out.val = Bits1( len(s.src_msgs) > 0 )
+      s.out.msg = s.default if not s.src_msgs else s.src_msgs[0]
+
+  def done( s ):
+    return not s.src_msgs
+
+  def line_trace( s ):
+    return s.out.line_trace()
+
+class TestSinkValRdy( ComponentLevel3 ):
+
+  def construct( s, Type, msgs ):
+    assert type(msgs) == list, "TestSink only accepts a list of outputs!"
+
+    s.msgs = msgs
+    s.sink_msgs = deque( s.msgs )
+
+    s.in_ = InValRdyIfc( Type )
+
+    @s.update_on_edge
+    def up_sink():
+      s.in_.rdy = Bits1( len(s.sink_msgs) > 0 )
+
+      if s.in_.val and s.in_.rdy:
+        ref = s.sink_msgs.popleft()
+        ans = s.in_.msg
+
+        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
+
+  def done( s ):
+    return not s.sink_msgs
+
+  def line_trace( s ):
+    return s.in_.line_trace()
 
 def test_simple():
 
@@ -87,5 +161,69 @@ def test_nested_port_bundle():
     def line_trace( s ):
       return "|".join( [ x.line_trace() for x in s.src] ) + " >>> " + \
              " >>> " + s.sink.line_trace()
+
+  _test_model( Top )
+
+def test_customized_connect():
+
+  class MockRecvIfc( Interface ):
+    def construct( s ):
+      s.recv_msg = InVPort( Bits1 )
+      s.recv_val = InVPort( Bits1 )
+
+    def connect( s, other, parent ):
+      if isinstance( other, MockSendIfc ):
+        parent.connect_pairs(
+          s.recv_msg, other.send_msg,
+          s.recv_val, other.send_val,
+        )
+        return True
+
+      return False
+
+  class MockSendIfc( Interface ):
+    def construct( s ):
+      s.send_msg = OutVPort( Bits1 )
+      s.send_val = OutVPort( Bits1 )
+
+    def connect( s, other, parent ):
+      if isinstance( other, MockRecvIfc ):
+        parent.connect_pairs(
+          s.send_msg, other.recv_msg,
+          s.send_val, other.recv_val,
+        )
+        return True
+
+      return False
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.send = MockSendIfc()
+
+      @s.update
+      def up_send():
+        s.send.send_msg = Bits1( 1 )
+        s.send.send_val = Bits1( 1 )
+
+  class B( ComponentLevel3 ):
+    def construct( s ):
+      s.recv = MockRecvIfc()
+
+      @s.update
+      def up_recv():
+        print "recv_msg", s.recv.recv_msg, "recv_val", s.recv.recv_val
+
+  class Top( ComponentLevel3 ):
+
+    def construct( s ):
+      s.a = A()
+      s.b = B()
+      s.connect( s.a.send, s.b.recv )
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return ""
 
   _test_model( Top )
