@@ -1,5 +1,5 @@
 #=========================================================================
-# Test sources 
+# Test sources
 #=========================================================================
 # Test sources with CL or RTL interfaces.
 #
@@ -7,7 +7,6 @@
 #   Date : Mar 11, 2019
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
 from pclib.ifcs                import SendIfcRTL
 from collections               import deque
 from pclib.ifcs                import RecvCL2SendRTL, RecvRTL2SendCL
@@ -20,10 +19,10 @@ class TestSrcCL( ComponentLevel6 ):
 
   def construct( s, msgs, initial_delay=0, interval_delay=0 ):
 
-    s.send = CallerPort()
+    s.send = GuardedCallerIfc()
 
     s.msgs = deque( msgs )
-    
+
     s.initial_cnt    = initial_delay
     s.interval_delay = interval_delay
     s.interval_cnt   = 0
@@ -31,10 +30,8 @@ class TestSrcCL( ComponentLevel6 ):
     s.msg_to_send = None
     s.send_called = False
     s.send_rdy    = False
-    s.trace_len   = 0
     s.trace_len = len( str( s.msgs[0] ) ) if len(s.msgs) != 0 else 0
-#    s.trace_len   = len( str( s.msgs[0] ) )
- 
+
     @s.update
     def up_src_send():
 
@@ -52,8 +49,6 @@ class TestSrcCL( ComponentLevel6 ):
           s.interval_cnt = s.interval_delay
           s.send_called = True
           s.send_rdy    = True
-
-    s.add_constraints( U( up_src_send ) < M( s.send ) )
 
   def done( s ):
     return not s.msgs
@@ -84,7 +79,7 @@ class TestSrcRTL( ComponentLevel6 ):
 
     s.src     = TestSrcCL( msgs, initial_delay, interval_delay )
     s.adapter = RecvCL2SendRTL( MsgType )
-    
+
     s.connect( s.src.send,     s.adapter.recv )
     s.connect( s.adapter.send, s.send         )
 

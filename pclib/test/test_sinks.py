@@ -7,7 +7,6 @@
 #   Date : Mar 11, 2019
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
 from pclib.ifcs                import RecvIfcRTL, enrdy_to_str
 from pclib.ifcs                import RecvCL2SendRTL, RecvRTL2SendCL
 
@@ -17,11 +16,11 @@ from pclib.ifcs                import RecvCL2SendRTL, RecvRTL2SendCL
 
 class TestSinkCL( ComponentLevel6 ):
 
-  def construct( s, msgs, initial_delay=0, interval_delay=0, 
+  def construct( s, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None ):
-    
+
     # [msgs] and [arrival_time] must have the same length.
-    if arrival_time is not None: 
+    if arrival_time is not None:
       assert len( msgs ) == len( arrival_time )
 
     s.idx          = 0
@@ -70,7 +69,7 @@ class TestSinkCL( ComponentLevel6 ):
       U( up_sink_count ) < M( s.recv.rdy )
     )
 
-  @method_port( lambda s: s.initial_count==0 and s.interval_count==0 )
+  @guarded_ifc( lambda s: s.initial_count==0 and s.interval_count==0 )
   def recv( s, msg ):
 
     s.recv_msg = msg
@@ -78,7 +77,7 @@ class TestSinkCL( ComponentLevel6 ):
     if s.idx >= len( s.msgs ):
       raise Exception( "Test Sink received more msgs than expected" )
 
-    # Check correctness first 
+    # Check correctness first
     if s.recv_msg != s.msgs[ s.idx ]:
       raise Exception( """
 Test Sink received WRONG msg!
@@ -107,7 +106,7 @@ Received at    : {}""".format( s.arrival_time[ s.idx ], s.cycle_count ) )
 
 class TestSinkRTL( ComponentLevel6 ):
 
-  def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0, 
+  def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None ):
 
     # Interface
@@ -116,7 +115,7 @@ class TestSinkRTL( ComponentLevel6 ):
 
     # Components
 
-    s.sink    = TestSinkCL( msgs, initial_delay, interval_delay, 
+    s.sink    = TestSinkCL( msgs, initial_delay, interval_delay,
                             arrival_time )
     s.adapter = RecvRTL2SendCL( MsgType )
 

@@ -11,7 +11,7 @@ from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
 from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5, ComponentLevel6
-from pymtl.dsl import Signal, Const, MethodPort, MethodGuard
+from pymtl.dsl import Signal, Const, MethodPort, GuardedIfc
 
 import random, py.code
 
@@ -211,17 +211,15 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
             assert member.method is None
             member.method = writer.method
 
-            if isinstance( s, ComponentLevel6 ):
-              member.rdy.func = writer.rdy.func
-
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
+      print "--", blk, calls
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, MethodGuard ):
-          method_blks[ call.func ].add( blk )
+        elif isinstance( call, GuardedIfc ):
+          method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
 
@@ -229,14 +227,17 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
+      print (x,y)
 
-      if   isinstance( x, MethodPort ):  xx = x.method
-      elif isinstance( x, MethodGuard ): xx = x.func
-      else:                              xx = x
+      if   isinstance( x, MethodPort ): xx = x.method
+      # We allow the user to call the interface directly, so if they do
+      # call it, we use the actual method within the method field
+      elif isinstance( x, GuardedIfc ): xx = x.method.method
+      else:                             xx = x
 
-      if   isinstance( y, MethodPort ):  yy = y.method
-      elif isinstance( y, MethodGuard ): yy = y.func
-      else:                              yy = y
+      if   isinstance( y, MethodPort ): yy = y.method
+      elif isinstance( y, GuardedIfc ): yy = y.method.method
+      else:                             yy = y
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
