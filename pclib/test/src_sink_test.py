@@ -9,7 +9,6 @@
 import pytest
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
 from pymtl.dsl.test.sim_utils import simple_sim_pass
 from test_srcs  import TestSrcCL, TestSrcRTL
 from test_sinks import TestSinkCL, TestSinkRTL
@@ -23,8 +22,8 @@ class TestHarnessCL( ComponentLevel6 ):
   def construct( s, src_msgs, sink_msgs, src_initial,  src_interval,
                  sink_initial, sink_interval, arrival_time=None ):
 
-    s.src     = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
-    s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval, 
+    s.src  = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
+    s.sink = TestSinkCL( sink_msgs, sink_initial, sink_interval,
                             arrival_time )
 
     # Connections
@@ -43,8 +42,8 @@ class TestHarnessCL( ComponentLevel6 ):
 
 class TestHarnessRTL( ComponentLevel6 ):
 
-  def construct( s, MsgType, src_msgs, sink_msgs, src_initial, 
-                 src_interval, sink_initial, sink_interval, 
+  def construct( s, MsgType, src_msgs, sink_msgs, src_initial,
+                 src_interval, sink_initial, sink_interval,
                  arrival_time=None  ):
 
     s.src     = TestSrcRTL ( MsgType, src_msgs,

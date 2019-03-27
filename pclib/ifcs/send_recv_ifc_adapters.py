@@ -7,7 +7,6 @@
 #   Date : Mar 07, 2019
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
 from pclib.ifcs.SendRecvIfc  import SendIfcRTL, RecvIfcRTL, enrdy_to_str
 
 #-------------------------------------------------------------------------
@@ -24,30 +23,30 @@ class RecvCL2SendRTL( ComponentLevel6 ):
 
     s.recv_called = False
     s.recv_rdy    = False
-    s.msg_to_send = 0  
+    s.msg_to_send = 0
 
     @s.update
     def up_send_rtl():
       s.send.en     = Bits1( 1 ) if s.recv_called else Bits1( 0 )
       s.send.msg    = s.msg_to_send
       s.recv_called = False
-    
+
     @s.update
     def up_recv_rdy_cl():
       s.recv_rdy    = True if s.send.rdy else False
- 
+
     s.add_constraints(
       U( up_recv_rdy_cl ) < M( s.recv ),
       U( up_recv_rdy_cl ) < M( s.recv.rdy ),
       M( s.recv.rdy ) < U( up_send_rtl ),
-      M( s.recv ) < U( up_send_rtl ) 
+      M( s.recv ) < U( up_send_rtl )
     )
-  
-  @method_port( lambda s : s.recv_rdy )
+
+  @guarded_ifc( lambda s : s.recv_rdy )
   def recv( s, msg ):
     s.msg_to_send = msg
     s.recv_called = True
-  
+
   def line_trace( s ):
     return "{}(){}".format(
       enrdy_to_str( s.msg_to_send, s.recv_called, s.recv_rdy ),
@@ -64,8 +63,8 @@ class RecvRTL2SendCL( ComponentLevel6 ):
     # Interface
 
     s.recv = RecvIfcRTL( MsgType )
-    s.send = CallerPort()
-    
+    s.send = GuardedCallerIfc()
+
     s.sent_msg = None
     s.send_rdy = False
 

@@ -7,13 +7,13 @@
 #   Date : Feb 24, 2019
 
 from ComponentLevel5 import ComponentLevel5
-from Connectable import CalleePort, MethodGuard
+from Connectable import CallerPort, CalleePort, Interface
 
 #-------------------------------------------------------------------------
 # method_port decorator
 #-------------------------------------------------------------------------
 
-def method_port( guard = lambda : True ):
+def guarded_ifc( guard = lambda : True ):
   def real_guard( method ):
     method._anti_name_conflict_rdy = guard
     return method
@@ -22,6 +22,20 @@ def method_port( guard = lambda : True ):
 #-------------------------------------------------------------------------
 # ComponentLevel6
 #-------------------------------------------------------------------------
+
+class GuardedIfc( Interface ):
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+class GuardedCalleeIfc( GuardedIfc ):
+  def construct( s, method=None, rdy=None ):
+    s.method = CalleePort( method )
+    s.rdy    = CalleePort( rdy )
+
+class GuardedCallerIfc( GuardedIfc ):
+  def construct( s ):
+    s.method = CallerPort()
+    s.rdy    = CallerPort()
 
 class ComponentLevel6( ComponentLevel5 ):
 
@@ -50,11 +64,10 @@ class ComponentLevel6( ComponentLevel5 ):
         # This would break if this _method_ has a member with
         # attribute [_anti_name_conflict_rdy]
         if hasattr( y, '_anti_name_conflict_rdy' ):
-          port = CalleePort( y )
+          ifc = GuardedCalleeIfc( y, bind_method( y._anti_name_conflict_rdy ) )
           # NOTE we are in NameObject._setattr_for_elaborate_, we need
           # to first setattr "port" to "s" then add "rdy" to "port"
-          setattr( s, x, port )
-          port.rdy = MethodGuard( bind_method( y._anti_name_conflict_rdy ) )
+          setattr( s, x, ifc )
 
       # Same as parent class _construct
 
