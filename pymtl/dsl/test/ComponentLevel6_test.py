@@ -7,7 +7,7 @@
 #   Date : Feb 24, 2019
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc, ComponentLevel6
+from pymtl.dsl.ComponentLevel6 import generate_guard_decorator_ifcs, ComponentLevel6
 from sim_utils import simple_sim_pass
 from collections import deque
 from pymtl.passes.PassGroups import SimpleCLSim
@@ -15,6 +15,7 @@ from pymtl.passes.PassGroups import SimpleCLSim
 #-------------------------------------------------------------------------
 # TestSrc
 #-------------------------------------------------------------------------
+guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
 
 class TestSrc( ComponentLevel6 ):
 

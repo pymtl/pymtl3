@@ -11,7 +11,7 @@ from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
 from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5, ComponentLevel6
-from pymtl.dsl import Signal, Const, MethodPort, GuardedIfc
+from pymtl.dsl import Signal, Const, MethodPort, Interface
 
 import random, py.code
 
@@ -218,7 +218,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, GuardedIfc ):
+        elif isinstance( call, Interface ) and call.guarded_ifc:
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -232,11 +232,11 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       if   isinstance( x, MethodPort ): xx = x.method
       # We allow the user to call the interface directly, so if they do
       # call it, we use the actual method within the method field
-      elif isinstance( x, GuardedIfc ): xx = x.method.method
+      elif isinstance( x, Interface ) and x.guarded_ifc: xx = x.method.method
       else:                             xx = x
 
       if   isinstance( y, MethodPort ): yy = y.method
-      elif isinstance( y, GuardedIfc ): yy = y.method.method
+      elif isinstance( y, Interface ) and y.guarded_ifc: yy = y.method.method
       else:                             yy = y
 
       pred[ yy ].add( xx )
