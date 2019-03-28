@@ -218,8 +218,12 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, Interface ) and call.guarded_ifc:
-          method_blks[ call.method.method ].add( blk )
+        elif isinstance( call, Interface ):
+          try:
+            if call.guarded_ifc:
+              method_blks[ call.method.method ].add( blk )
+          except AttributeError:
+            pass
         else:
           method_blks[ call ].add( blk )
 
@@ -229,15 +233,31 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     for (x, y) in s._dsl.all_M_constraints:
       print (x,y)
 
-      if   isinstance( x, MethodPort ): xx = x.method
-      # We allow the user to call the interface directly, so if they do
-      # call it, we use the actual method within the method field
-      elif isinstance( x, Interface ) and x.guarded_ifc: xx = x.method.method
-      else:                             xx = x
+      if   isinstance( x, MethodPort ):
+        xx = x.method
 
-      if   isinstance( y, MethodPort ): yy = y.method
-      elif isinstance( y, Interface ) and y.guarded_ifc: yy = y.method.method
-      else:                             yy = y
+      # We allow the user to call the interface directly in a guarded
+      # interface, so if they do call it, we use the actual method within
+      # the method field
+      elif isinstance( x, Interface ):
+        try:
+          if x.guarded_ifc:
+            xx = x.method.method
+        except AttributeError:
+          pass
+      else:
+        xx = x
+
+      if   isinstance( y, MethodPort ):
+        yy = y.method
+      elif isinstance( y, Interface ):
+        try:
+          if y.guarded_ifc:
+            yy = y.method.method
+        except AttributeError:
+          pass
+      else:
+        yy = y
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
