@@ -14,29 +14,36 @@ from Connectable import CallerPort, CalleePort, Interface, InVPort
 # method_port decorator
 #-------------------------------------------------------------------------
 
-def guarded_ifc( guard = lambda : True ):
-  def real_guard( method ):
-    method._anti_name_conflict_rdy = guard
-    return method
-  return real_guard
+def generate_guard_decorator_ifcs( name ):
+  class GuardedCalleeIfc( Interface ):
+    guarded_ifc = True
+    def construct( s, method=None, guard=None ):
+      s.method = CalleePort( method )
+      setattr( s, name, CalleePort( guard ) )
+    def __call__( s, *args, **kwargs ):
+      return s.method( *args, **kwargs )
+
+  class GuardedCallerIfc( Interface ):
+    guarded_ifc = True
+    def construct( s ):
+      s.method = CallerPort( )
+      setattr( s, name, CallerPort() )
+    def __call__( s, *args, **kwargs ):
+      return s.method( *args, **kwargs )
+
+  def guard_decorator( guard=lambda : True ):
+    def real_guard( method ):
+      setattr( method, "_guard_method_" + name, guard )
+      setattr( method, "_guard_callee_ifc_type_" + name, GuardedCalleeIfc )
+
+      return method
+    return real_guard
+
+  return guard_decorator, GuardedCalleeIfc, GuardedCallerIfc
 
 #-------------------------------------------------------------------------
 # ComponentLevel6
 #-------------------------------------------------------------------------
-
-class GuardedIfc( Interface ):
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-class GuardedCalleeIfc( GuardedIfc ):
-  def construct( s, method=None, rdy=None ):
-    s.method = CalleePort( method )
-    s.rdy    = CalleePort( rdy )
-
-class GuardedCallerIfc( GuardedIfc ):
-  def construct( s ):
-    s.method = CallerPort()
-    s.rdy    = CallerPort()
 
 class ComponentLevel6( ComponentLevel5 ):
 
@@ -63,16 +70,17 @@ class ComponentLevel6( ComponentLevel5 ):
         return _method
 
       for x in dir( s ):
-        # This getattr will get the bounded method from ComponentLevel4
-        y = getattr( s, x )
-
-        # This would break if this _method_ has a member with
-        # attribute [_anti_name_conflict_rdy]
-        if hasattr( y, '_anti_name_conflict_rdy' ):
-          ifc = GuardedCalleeIfc( y, bind_method( y._anti_name_conflict_rdy ) )
-          # NOTE we are in NameObject._setattr_for_elaborate_, we need
-          # to first setattr "port" to "s" then add "rdy" to "port"
-          setattr( s, x, ifc )
+        method = getattr( s, x )
+        # We identify guarded methods here
+        for y in dir( method ):
+          if y.startswith( "_guard_method" ):
+            guard = getattr( method, y )
+            print y
+            # This getattr will get the bounded method from ComponentLevel4
+            ifc_type = getattr( method, "_guard_callee_ifc_type_" + y[14:] )
+            print method, ifc_type
+            ifc = ifc_type( method, bind_method( guard ) )
+            setattr( s, x, ifc )
 
       # Same as parent class _construct
 

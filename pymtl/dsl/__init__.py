@@ -8,5 +8,5 @@ from ComponentLevel2 import ComponentLevel2
 from ComponentLevel3 import ComponentLevel3
 from ComponentLevel4 import ComponentLevel4
 from ComponentLevel5 import ComponentLevel5
-from ComponentLevel6 import ComponentLevel6, guarded_ifc, GuardedIfc
+from ComponentLevel6 import ComponentLevel6, generate_guard_decorator_ifcs
 #  from RTLComponent import RTLComponent
