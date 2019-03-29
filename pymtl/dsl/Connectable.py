@@ -213,9 +213,11 @@ class OutVPort( Signal ):
 
 class Interface( NamedObject, Connectable ):
 
-  @property
-  def Type( s ):
-    return s._dsl.args
+  # FIXME: why are we doing this?
+  # Yanghui: I commented this out.
+  # @property
+  # def Type( s ):
+  #   return s._dsl.args
 
   def inverse( s ):
     s._dsl.inversed = True
