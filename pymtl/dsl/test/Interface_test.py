@@ -2,7 +2,7 @@
 # Interface_test.py
 #=========================================================================
 #
-# Author : Shunning Jiang
+# Author : Shunning Jiang, Yanghui Ou
 # Date   : Jan 1, 2018
 
 from pymtl import *
@@ -232,6 +232,101 @@ def test_customized_connect():
       s.a = A()
       s.b = B()
       s.connect( s.a.send, s.b.recv )
+
+    def done( s ):
+      return False
+
+    def line_trace( s ):
+      return ""
+
+  _test_model( Top )
+
+#-------------------------------------------------------------------------
+# Test customized connect with adapters
+#-------------------------------------------------------------------------
+
+def test_customized_connect_adapter():
+
+  class MockAdapter( ComponentLevel3 ):
+
+    count = 0
+
+    def construct( s, InType, OutType ):
+
+      s.in_ = InVPort ( InType  )
+      s.out = OutVPort( OutType )
+
+      @s.update
+      def adapter_incr():
+        s.out = s.in_ + OutType( 1 )
+
+  class MockRecvIfc( Interface ):
+
+    def construct( s, Type ):
+      s.recv_msg = InVPort( Type  )
+      s.recv_val = InVPort( Bits1 )
+
+      s.Type = Type
+
+    def connect( s, other, parent ):
+      if isinstance( other, MockSendIfc ):
+
+        MockAdapter.count += 1
+        m = MockAdapter( other.Type, s.Type )
+        setattr( parent, "mock_adapter_" + str( MockAdapter.count ), m )
+
+        parent.connect_pairs(
+          other.send_msg, m.in_,
+          m.out,          s.recv_msg,
+          other.send_val, s.recv_val
+        )
+        return True
+
+      return False
+
+  class MockSendIfc( Interface ):
+    def construct( s, Type ):
+      s.send_msg = OutVPort( Type  )
+      s.send_val = OutVPort( Bits1 )
+
+      s.Type = Type
+
+    def connect( s, other, parent ):
+      if isinstance( other, MockRecvIfc ):
+        parent.connect_pairs(
+          s.send_msg, other.recv_msg,
+          s.send_val, other.recv_val,
+        )
+        return True
+
+      return False
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.send = [ MockSendIfc( Bits8 ) for _ in range( 10 ) ]
+
+      @s.update
+      def up_send():
+        for i in range( 10 ):
+          s.send[i].send_msg = Bits1( 1 )
+          s.send[i].send_val = Bits1( 1 )
+
+  class B( ComponentLevel3 ):
+    def construct( s ):
+      s.recv = [ MockRecvIfc( Bits128 ) for _ in range( 10 ) ]
+
+      @s.update
+      def up_recv():
+        for i in range( 10 ):
+          print "recv_msg", i, s.recv[i].recv_msg, "recv_val", s.recv[i].recv_val
+
+  class Top( ComponentLevel3 ):
+
+    def construct( s ):
+      s.a = A()
+      s.b = B()
+      for i in range( 10 ):
+        s.connect( s.b.recv[i], s.a.send[i] )
 
     def done( s ):
       return False
