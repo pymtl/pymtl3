@@ -13,6 +13,9 @@ from pclib.rtl.queues import PipeQueue1RTL, BypassQueue1RTL
 from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
 from pclib.test.stateful.test_wrapper import *
 from pclib.cl.queues import PipeQueueCL, BypassQueueCL
+from pclib.cl.queues_test import TestSrcCL, TestSinkCL, test_msgs, arrival_pipe, run_sim
+from pymtl.passes.PassGroups import SimpleCLSim
+from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
 import pytest
 
 #-------------------------------------------------------------------------
@@ -23,8 +26,6 @@ import pytest
 class ReferenceRTLAdapter( RTLComponent ):
 
   def construct( s, rtl_model, method_specs ):
-    s.model = rtl_model
-    s.enq = InVPort( Bits1 )
     s.enq_rdy = OutVPort( Bits1 )
     s.enq_msg = InVPort( Bits16 )
     s.deq = InVPort( Bits1 )
@@ -64,33 +65,121 @@ class ReferenceRTLAdapter( RTLComponent ):
 #-------------------------------------------------------------------------
 # ReferenceWrapper
 #-------------------------------------------------------------------------
-class ReferenceWrapper( object ):
+class ReferenceWrapper( ComponentLevel6 ):
 
-  def __init__( self, model ):
-    self.model = model
-    self.model.apply( SimpleSim )
-    self.enq_result = Result()
-    self.deq_result = Result()
+  def construct( s, model ):
+    s.model = model
+    s.enq_called = Bits1()
+    s.enq_rdy = Bits16()
+    s.enq_msg = Bits16()
+    s.deq_called = Bits1()
+    s.deq_rdy = Bits1()
+    s.deq_msg = Bits16()
+    s.reset_called =  Bits1()
 
-  def enq( self, msg ):
-    self.model.enq = 1
-    self.model.enq_msg = msg
-    return self.enq_result
+    @s.update
+    def update_reset():
+      s.model.reset = s.reset_called
+      s.reset_called = 0
 
-  def deq( self ):
-    self.model.deq = 1
-    return self.deq_result
+    @s.update
+    def update_enq_rdy():
+      s.enq_rdy = s.model.enq.rdy
 
-  def cycle( self ):
+    @s.update
+    def update_enq_msg():
+      s.model.enq.msg = s.enq_msg
+
+    @s.update
+    def update_enq():
+      if s.enq_called:
+        if s.model.enq.rdy:
+          s.model.enq.en = 1
+        else:
+          s.model.enq.en = 0
+      else:
+        s.model.enq.en = 0
+      s.enq_called = 0
+
+    @s.update
+    def update_deq_rdy():
+      s.deq_rdy = s.model.deq.rdy
+
+    @s.update
+    def update_deq_msg():
+      s.deq_msg = s.model.deq.msg
+
+    @s.update
+    def update_deq():
+      if s.deq_called:
+        if s.model.deq.rdy:
+          s.model.deq.en = 1
+        else:
+          s.model.deq.en = 0
+      else:
+        s.model.deq.en = 0
+      s.deq_called = 0
+
+    s.add_constraints(
+      U( update_enq_rdy ) < M( s.enq ),
+      U( update_enq_rdy ) < M( s.enq.rdy ),
+      M( s.enq.rdy ) < U( update_enq ),
+      M( s.enq ) < U( update_enq ),
+      M( s.enq ) < U( update_enq_msg ),
+      U( update_deq_msg ) < M( s.deq ),
+      U( update_deq_rdy ) < M( s.deq.rdy ),
+      U( update_deq_rdy ) < M( s.deq ),
+      M( s.deq.rdy ) < U( update_deq ),
+      M( s.deq ) < U( update_deq ) 
+    )
+
+
+  @method_port( lambda s: s.enq_rdy )
+  def enq( s, msg ):
+    s.enq_called = 1
+    s.enq_msg = msg
+
+  @method_port( lambda s: s.deq_rdy )
+  def deq( s ):
+    s.deq_called = 1
+    return s.deq_msg
+
+  @method_port
+  def reset_( self ):
+    s.reset_called = 1
+
+  def tick( self ):
     self.model.tick()
-    self.enq_result.rdy = self.model.enq_rdy
-    self.deq_result.rdy = self.model.deq_rdy
-    self.deq_result.msg = self.model.deq_msg
-    self.model.deq = 0
-    self.model.enq = 0
 
-  def reset( s ):
-    pass
+  def line_trace( s ) :
+    return s.model.line_trace()
+
+
+
+class TestHarness( ComponentLevel6 ):
+
+  def construct( s, Dut, src_msgs, sink_msgs, src_initial, 
+                 src_interval, sink_initial, sink_interval, 
+                 arrival_time=None ):
+
+    s.src     = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
+    s.dut     = Dut
+    s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval, 
+                            arrival_time )
+    
+    s.connect( s.src.send, s.dut.enq )
+
+    @s.update
+    def up_deq_send():
+      if s.dut.deq.rdy() and s.sink.recv.rdy():
+        s.sink.recv( s.dut.deq() )
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return "{} ({}) {}".format( 
+      s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
 
 
 #-------------------------------------------------------------------------
@@ -101,17 +190,12 @@ class ReferenceWrapper( object ):
                            ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_wrapper( QueueCL, QueueRTL ):
   specs = TestStateful.inspect( QueueRTL( Bits16 ), QueueCL( 1 ) )
-  wrapper = RTLWrapper( RTLAdapter( QueueRTL( Bits16 ), specs ) )
-  reference = ReferenceWrapper(
-      ReferenceRTLAdapter( QueueRTL( Bits16 ), specs ) )
-  wrapper_enq = wrapper.enq( msg=2 )
-  wrapper_deq = wrapper.deq()
-  reference_enq = reference.enq( msg=2 )
-  reference_deq = reference.deq()
-  wrapper.cycle()
-  reference.cycle()
-  assert wrapper_enq == reference_enq
-  assert wrapper_deq == wrapper_deq
+  wrapper = RTL2CLWrapper( QueueRTL( Bits16 ), specs )
+  #wrapper = ReferenceWrapper( QueueRTL( Bits16 ) )
+  wrapper.method_specs = specs
+  th = TestHarness( wrapper, test_msgs, test_msgs, 0, 0, 0, 0,
+                    arrival_pipe )
+  run_sim( th )
 
 
 #-------------------------------------------------------------------------
@@ -121,12 +205,10 @@ def test_cl():
   test = BypassQueueCL( 1 )
   test.apply( SimpleCLSim )
   test.tick()
-  print test.enq.rdy(), test.deq.rdy()
   test.enq( 2 )
   deq = test.deq()
-  print deq
 
-
+"""
 #-------------------------------------------------------------------------
 # test_state_machine
 #-------------------------------------------------------------------------
@@ -136,3 +218,4 @@ def test_cl():
 def test_state_machine( QueueCL, QueueRTL, order ):
   run_test_state_machine(
       QueueRTL, ( Bits16,), QueueCL( 1 ), order=order )
+"""

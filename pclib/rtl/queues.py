@@ -9,7 +9,7 @@ from pclib.ifcs.EnqDeqIfcs import EnqIfcRTL, DeqIfcRTL
 # --> enq.en (sender AND enq.rdy with valid expression)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up3)
 
-class PipeQueue1RTL( RTLComponent ):
+class PipeQueue1RTL( ComponentLevel6 ):
 
   def construct( s, Type ):
     s.enq = EnqIfcRTL( Type )
@@ -30,7 +30,7 @@ class PipeQueue1RTL( RTLComponent ):
     def up_pipeq_full():
       s.buf.en   = s.enq.en
       s.full.in_ = s.enq.en | (s.full.out & ~s.deq.en)
-
+      
   def line_trace( s ):
     return s.buf.line_trace()
 
@@ -41,7 +41,7 @@ class PipeQueue1RTL( RTLComponent ):
 # --> deq.en  (receiver AND deq.rdy with valid expression)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up3)
 
-class BypassQueue1RTL( RTLComponent ):
+class BypassQueue1RTL( ComponentLevel6 ):
 
   def construct( s, Type ):
     s.enq = EnqIfcRTL( Type )
@@ -80,7 +80,7 @@ class BypassQueue1RTL( RTLComponent ):
 # --> enq.en and deq.en (sender and receiver do stuff)
 # --> buf.en/full.in (takes enq.en and deq.en into account, up2)
 
-class NormalQueue1RTL( RTLComponent ):
+class NormalQueue1RTL( ComponentLevel6 ):
 
   def construct( s, type_ ):
     s.enq = EnqIfcRTL( type_ )
