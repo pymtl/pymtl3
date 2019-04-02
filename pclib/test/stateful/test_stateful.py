@@ -525,8 +525,7 @@ class TestStateful( TestStateMachine ):
                                   cl_class,
                                   argument_strategy={},
                                   order=[],
-                                  adapter=RTLAdapter,
-                                  wrapper=RTLWrapper ):
+                                  wrapper=RTL2CLWrapper ):
     method_specs = TestStateful.inspect( rtl_class(*arg ), cl_class )
     rtl_class = wrapper( adapter( rtl_class(*arg ), method_specs ) )
 
@@ -569,8 +568,7 @@ def run_test_state_machine( rtl_class,
                             argument_strategy={},
                             order=[],
                             seed=None,
-                            adapter=RTLAdapter,
-                            wrapper=RTLWrapper ):
+                            wrapper=RTL2CLWrapper ):
 
   reference_class.apply( SimpleCLSim )
   state_machine_factory = TestStateful._create_test_state_machine(

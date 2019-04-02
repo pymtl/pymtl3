@@ -23,9 +23,11 @@ def update_rets():
   pass
   {assign_rets}
 
+def update_rdy():
+  s.{method_name}_rdy = s.model.{method_name}.rdy
+
 def update():
-  if s.{method_name}:
-    s.{method_name}_rdy = s.model.{method_name}.rdy
+  if s.{method_name}_called:  
     if s.model.{method_name}.rdy:
       s.model.{method_name}.en = 1
     else:
@@ -33,18 +35,20 @@ def update():
   else:
     s.model.{method_name}.en = 0
     s.{method_name}_rdy = 0
+  s.{method_name}_called = 0
+
+
 """
 
 method_tmpl = """
-def method(**kwargs):
-  assert method_spec.args.keys() == kwargs.keys()
-  self.model.{method} = 1
-  {assign_args}
-  return result
+
+assert method_spec.args.keys() == kwargs.keys()
+self.{method}_called = 1
+{assign_args}
 """
 
 arg_tmpl = """
-  self.model.{method}_{arg} = kwargs["{arg}"]
+self.{method}_{arg} = kwargs["{arg}"]
 """
 
 cycle_tmpl = """
