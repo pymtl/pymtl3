@@ -25,9 +25,9 @@ class TestSrcCL( ComponentLevel6 ):
 
     s.msgs = deque( msgs )
 
-    s.initial_cnt    = initial_delay
+    s.initial_count  = initial_delay
     s.interval_delay = interval_delay
-    s.interval_cnt   = 0
+    s.interval_count = 0
 
     s.msg_to_send = None
     s.send_called = False
@@ -38,10 +38,10 @@ class TestSrcCL( ComponentLevel6 ):
     def up_src_send():
 
       s.send_called = False
-      if not s.initial_cnt==0:
-        s.initial_cnt -= 1
-      elif not s.interval_cnt==0:
-        s.interval_cnt -= 1
+      if not s.initial_count==0:
+        s.initial_count -= 1
+      elif not s.interval_count==0:
+        s.interval_count -= 1
       elif not s.reset:
         s.msg_to_send = None
         if s.send.rdy() and s.msgs:
