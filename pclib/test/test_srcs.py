@@ -31,7 +31,9 @@ class TestSrcCL( ComponentLevel6 ):
     s.msg_to_send = None
     s.send_called = False
     s.send_rdy    = False
-    s.trace_len   = len( str( s.msgs[0] ) )
+    s.trace_len   = 0
+    s.trace_len = len( str( s.msgs[0] ) ) if len(s.msgs) != 0 else 0
+#    s.trace_len   = len( str( s.msgs[0] ) )
  
     @s.update
     def up_src_send():

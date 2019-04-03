@@ -38,7 +38,8 @@ class TestSinkCL( ComponentLevel6 ):
     s.recv_msg    = None
     s.recv_called = False
     s.recv_rdy    = False
-    s.trace_len   = len( str( s.msgs[0] ) )
+    s.trace_len   = len( str( s.msgs[0] ) ) if len(s.msgs) != 0 else 0
+#    s.trace_len   = len( str( s.msgs[0] ) )
 
     @s.update
     def up_sink_count():
