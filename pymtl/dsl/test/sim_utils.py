@@ -214,7 +214,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
-      print "--", blk, calls
+      if verbose: print "--", blk, calls
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
@@ -231,7 +231,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
-      print (x,y)
+      if verbose: print (x,y)
 
       if   isinstance( x, MethodPort ):
         xx = x.method
