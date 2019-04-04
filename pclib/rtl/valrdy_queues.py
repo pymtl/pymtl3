@@ -2,7 +2,7 @@ from pymtl import *
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
 from pclib.rtl  import Mux, Reg, RegEn, RegisterFile
 
-class PipeQueue1RTL( RTLComponent ):
+class PipeQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = InValRdyIfc ( Type )
@@ -43,7 +43,7 @@ class PipeQueue1RTL( RTLComponent ):
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
 
-class BypassQueue1RTL( RTLComponent ):
+class BypassQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = InValRdyIfc ( Type )
@@ -94,7 +94,7 @@ class BypassQueue1RTL( RTLComponent ):
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
 
-class NormalQueue1RTL( RTLComponent ):
+class NormalQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = InValRdyIfc( Type )
@@ -138,7 +138,7 @@ class NormalQueue1RTL( RTLComponent ):
 #-----------------------------------------------------------------------
 # NormalQueueRTL
 #-----------------------------------------------------------------------
-class NormalQueueRTL( RTLComponent ):
+class NormalQueueRTL( Component ):
 
   def construct( s, num_entries, Type ):
 
@@ -176,7 +176,7 @@ class NormalQueueRTL( RTLComponent ):
 #-----------------------------------------------------------------------
 # NormalQueueRTLDpath
 #-----------------------------------------------------------------------
-class NormalQueueRTLDpath( RTLComponent ):
+class NormalQueueRTLDpath( Component ):
 
   def construct( s, num_entries, Type ):
 
@@ -204,7 +204,7 @@ class NormalQueueRTLDpath( RTLComponent ):
 #-----------------------------------------------------------------------
 # NormalQueueRTLCtrl
 #-----------------------------------------------------------------------
-class NormalQueueRTLCtrl( RTLComponent ):
+class NormalQueueRTLCtrl( Component ):
 
   def construct( s, num_entries ):
 

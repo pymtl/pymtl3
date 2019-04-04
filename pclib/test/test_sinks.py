@@ -14,7 +14,7 @@ from pclib.ifcs.GuardedIfc import guarded_ifc
 # TestSinkCL
 #-------------------------------------------------------------------------
 
-class TestSinkCL( ComponentLevel6 ):
+class TestSinkCL( Component ):
 
   def construct( s, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None ):
@@ -104,7 +104,7 @@ Received at    : {}""".format( s.arrival_time[ s.idx ], s.cycle_count ) )
 # TestSinkRTL
 #-------------------------------------------------------------------------
 
-class TestSinkRTL( ComponentLevel6 ):
+class TestSinkRTL( Component ):
 
   def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None ):

@@ -9,7 +9,7 @@
 
 from pymtl import *
 from BasePass import BasePass, PassMetadata
-from pymtl.dsl import Const, MethodPort, MethodGuard
+from pymtl.dsl import Const, MethodPort
 import py, ast
 from collections import defaultdict, deque
 

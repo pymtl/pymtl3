@@ -14,7 +14,7 @@ from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCallerIfc
 # RecvCL2SendRTL
 #-------------------------------------------------------------------------
 
-class RecvCL2SendRTL( ComponentLevel6 ):
+class RecvCL2SendRTL( Component ):
 
   def construct( s, MsgType ):
 
@@ -57,7 +57,7 @@ class RecvCL2SendRTL( ComponentLevel6 ):
 # RecvRTL2SendCL
 #-------------------------------------------------------------------------
 
-class RecvRTL2SendCL( ComponentLevel6 ):
+class RecvRTL2SendCL( Component ):
 
   def construct( s, MsgType ):
 

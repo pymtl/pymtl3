@@ -4,7 +4,7 @@
 
 from pymtl import *
 
-class Crossbar( RTLComponent ):
+class Crossbar( Component ):
 
   def construct( s, nports, dtype ):
 

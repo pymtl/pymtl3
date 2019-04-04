@@ -52,7 +52,7 @@ class TestMemory( object ):
   def __setitem__( s, idx, data ):
     s.mem[ idx ] = data
 
-class TestMemoryRTL( RTLComponent ):
+class TestMemoryRTL( Component ):
   def construct( s, nports = 1, ReqTypes = [ mk_mem_req_msg(8,32,32) ], \
                                RespTypes = [ mk_mem_resp_msg(8,32)],
                                mem_nbytes=1<<20 ):

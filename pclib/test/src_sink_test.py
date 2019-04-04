@@ -17,7 +17,7 @@ from test_sinks import TestSinkCL, TestSinkRTL
 # TestHarnessCL
 #-------------------------------------------------------------------------
 
-class TestHarnessCL( ComponentLevel6 ):
+class TestHarnessCL( Component ):
 
   def construct( s, src_msgs, sink_msgs, src_initial,  src_interval,
                  sink_initial, sink_interval, arrival_time=None ):
@@ -40,7 +40,7 @@ class TestHarnessCL( ComponentLevel6 ):
 # TestHarnessRTL
 #-------------------------------------------------------------------------
 
-class TestHarnessRTL( ComponentLevel6 ):
+class TestHarnessRTL( Component ):
 
   def construct( s, MsgType, src_msgs, sink_msgs, src_initial,
                  src_interval, sink_initial, sink_interval,

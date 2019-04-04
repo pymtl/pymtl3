@@ -17,7 +17,7 @@ from pclib.ifcs.GuardedIfc import GuardedCallerIfc
 # TestSrcCL
 #-------------------------------------------------------------------------
 
-class TestSrcCL( ComponentLevel6 ):
+class TestSrcCL( Component ):
 
   def construct( s, msgs, initial_delay=0, interval_delay=0 ):
 
@@ -69,7 +69,7 @@ class TestSrcCL( ComponentLevel6 ):
 # TestSrcRTL
 #-------------------------------------------------------------------------
 
-class TestSrcRTL( ComponentLevel6 ):
+class TestSrcRTL( Component ):
 
   def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0 ):
 

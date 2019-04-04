@@ -9,7 +9,7 @@ from pclib.rtl import Mux, RegEnRst
 #-----------------------------------------------------------------------
 # RoundRobinArbiter
 #-----------------------------------------------------------------------
-class RoundRobinArbiter( RTLComponent ):
+class RoundRobinArbiter( Component ):
 
   def construct( s, nreqs ):
 
@@ -76,7 +76,7 @@ class RoundRobinArbiter( RTLComponent ):
 #-----------------------------------------------------------------------
 # RoundRobinArbiterEn
 #-----------------------------------------------------------------------
-class RoundRobinArbiterEn( RTLComponent ):
+class RoundRobinArbiterEn( Component ):
   '''Round Robin Arbiter model with an enable bit.
 
   Only when 1) the arbiter enable bit is set high AND 2) there is some

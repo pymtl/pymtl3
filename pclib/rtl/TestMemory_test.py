@@ -16,7 +16,7 @@ from TestMemory import TestMemoryRTL
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness( RTLComponent ):
+class TestHarness( Component ):
 
   def construct( s, nports, src_msgs, sink_msgs, stall_prob, latency,
                 src_delay, sink_delay ):

@@ -4,19 +4,19 @@ from SimpleSchedPass import SimpleSchedPass
 from SimpleTickPass import SimpleTickPass
 
 SimpleSim = [
-  ComponentLevel6.elaborate,
+  Component.elaborate,
   GenDAGPass(),
   SimpleSchedPass(),
   SimpleTickPass(),
-  ComponentLevel6.lock_in_simulation
+  Component.lock_in_simulation
 ]
 
 SimpleCLSim = [
-  ComponentLevel6.elaborate,
+  Component.elaborate,
   GenDAGPass(),
   SimpleSchedPass(),
   SimpleTickPass(),
-  ComponentLevel6.lock_in_simulation
+  Component.lock_in_simulation
 ]
 
 from mamba.UnrollTickPass import UnrollTickPass
