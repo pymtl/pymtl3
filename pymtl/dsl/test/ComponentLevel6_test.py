@@ -7,7 +7,7 @@
 #   Date : Feb 24, 2019
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
+from pymtl.dsl.ComponentLevel6 import generate_guard_decorator_ifcs, ComponentLevel6
 from sim_utils import simple_sim_pass
 from collections import deque
 from pymtl.passes.PassGroups import SimpleCLSim
@@ -15,30 +15,31 @@ from pymtl.passes.PassGroups import SimpleCLSim
 #-------------------------------------------------------------------------
 # TestSrc
 #-------------------------------------------------------------------------
+guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
 
 class TestSrc( ComponentLevel6 ):
 
   def construct( s, msgs ):
 
-    s.send = CallerPort()
+    s.send = GuardedCallerIfc()
 
     s.msgs = deque( msgs )
     s.head = None
     s.trace_len = len( str( s.msgs[0] ) )
- 
+
     @s.update
     def send_msg():
       s.head = None
       if s.send.rdy() and s.msgs:
         s.head = s.msgs.popleft()
         s.send( s.head )
-  
+
   def done( s ):
     return not s.msgs
-  
+
   def line_trace( s ):
-    return "{}".format( 
-        "" if s.head is None 
+    return "{}".format(
+        "" if s.head is None
            else str( s.head ) ).ljust( s.trace_len )
 
 #-------------------------------------------------------------------------
@@ -46,19 +47,18 @@ class TestSrc( ComponentLevel6 ):
 #-------------------------------------------------------------------------
 
 class TestSink( ComponentLevel6 ):
-  
+
   def construct( s, msgs ):
     s.idx  = 0
     s.msgs = list( msgs )
-    s.head = None 
+    s.head = None
     s.trace_len = len( str( s.msgs[0] ) )
-    # s.recv = CalleePort( s._recv )
 
-  @method_port( lambda s: True )
+  @guarded_ifc( lambda s: True )
   def recv( s, msg ):
-    
-    s.head = msg 
-    # Sanity check 
+
+    s.head = msg
+    # Sanity check
     if s.idx >= len( s.msgs ):
       raise Exception( "Test Sink received more msgs than expected" )
 
@@ -70,14 +70,14 @@ class TestSink( ComponentLevel6 ):
         """.format( s.msgs[s.idx], msg ) )
     else:
       s.idx += 1
-  
+
   def done( s ):
     return s.idx >= len( s.msgs )
-  
+
   def line_trace( s ):
     tmp = s.head
     s.head = None
-    return "{}".format( 
+    return "{}".format(
       "" if tmp is None else str( tmp ) ).ljust( s.trace_len )
 
 #-------------------------------------------------------------------------
@@ -85,9 +85,9 @@ class TestSink( ComponentLevel6 ):
 #-------------------------------------------------------------------------
 
 class TestHarness( ComponentLevel6 ):
-  
+
   def construct( s, DUT, src_msgs, sink_msgs ):
-   
+
     s.src     = TestSrc ( src_msgs  )
     s.sink    = TestSink( sink_msgs )
     s.dut     = DUT()
@@ -101,7 +101,7 @@ class TestHarness( ComponentLevel6 ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} ->| {} |-> {}".format( 
+    return "{} ->| {} |-> {}".format(
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
@@ -111,7 +111,7 @@ class TestHarness( ComponentLevel6 ):
 def run_cl_sim( th, max_cycles=50 ):
 
   # Create a simulator
-  
+
   th.elaborate()
   th.apply( simple_sim_pass )
 
@@ -123,7 +123,7 @@ def run_cl_sim( th, max_cycles=50 ):
     th.tick()
     ncycles += 1
     print "{}:{}".format( ncycles, th.line_trace() )
-  
+
   # Check timeout
 
   assert ncycles < max_cycles
@@ -151,21 +151,21 @@ class SimpleQueue( ComponentLevel6 ):
   def empty( s ):
     return s.element is None
 
-  @method_port( lambda s : s.empty() )
+  @guarded_ifc( lambda s : s.empty() )
   def enq( s, ele ):
     s.element = ele
 
-  @method_port( lambda s: not s.empty() )
+  @guarded_ifc( lambda s: not s.empty() )
   def deq( s ):
     ret = s.element
     s.element = None
-    return ret 
-  
+    return ret
+
   def line_trace( s ):
-    return "{}".format( 
+    return "{}".format(
       "    " if s.element is None else str( s.element ) )
 
-# Test the SimpleQueue as a SW data structure. 
+# Test the SimpleQueue as a SW data structure.
 
 def test_queue_sw():
 
@@ -193,18 +193,18 @@ def test_queue_sw():
 class QueueIncr( ComponentLevel6 ):
 
   def construct( s ):
-    s.recv  = CalleePort()
-    s.send  = CallerPort()
+    s.recv  = GuardedCalleeIfc()
+    s.send  = GuardedCallerIfc()
     s.queue = SimpleQueue()
 
     s.connect( s.recv, s.queue.enq )
-    
-    s.v = None 
+
+    s.v = None
     @s.update
     def deq_incr():
       s.v = None
       if s.queue.deq.rdy() and s.send.rdy():
-        s.v = s.queue.deq() + 1 
+        s.v = s.queue.deq() + 1
         s.send( s.v )
 
   def line_trace( s ):
@@ -217,9 +217,9 @@ class QueueIncr( ComponentLevel6 ):
 class QueueIncrChained( ComponentLevel6 ):
 
   def construct( s ):
-    
-    s.recv = CalleePort()
-    s.send = CallerPort()
+
+    s.recv = GuardedCalleeIfc()
+    s.send = GuardedCallerIfc()
 
     s.q0 = QueueIncr()
     s.q1 = QueueIncr()
@@ -236,14 +236,14 @@ class QueueIncrChained( ComponentLevel6 ):
 #-------------------------------------------------------------------------
 
 def test_queue_incr_cl():
-  q    = QueueIncr() 
+  q    = QueueIncr()
   src_msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
   sink_msgs = [ Bits16( 1 ), Bits16( 2 ), Bits16( 3 ), Bits16( 4 ) ]
   th = TestHarness( q, src_msgs, sink_msgs )
   run_cl_sim( th )
 
 def test_chained_queue_incr_cl():
-  q    = QueueIncrChained() 
+  q    = QueueIncrChained()
   src_msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
   sink_msgs = [ Bits16( 2 ), Bits16( 3 ), Bits16( 4 ), Bits16( 5 ) ]
   th = TestHarness( q, src_msgs, sink_msgs )

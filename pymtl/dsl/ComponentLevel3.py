@@ -192,7 +192,7 @@ class ComponentLevel3( ComponentLevel2 ):
       # s._dsl.connect_order.append( (o1, o2) )
 
     else:
-      raise
+      raise Exception("{} <> {}".format(type(o1), type(o2)))
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
