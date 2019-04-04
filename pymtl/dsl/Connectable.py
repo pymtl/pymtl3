@@ -265,21 +265,10 @@ class Interface( NamedObject, Connectable ):
 # update block
 # CalleePort exposes the method in the component to outside world
 
-class MethodGuard( NamedObject ):
-  def __init__( self, func=None ):
-    self.func = func
-
-  def has_method( self ):
-    return self.func is not None
-
-  def __call__( self, *args, **kwargs ):
-    return self.func( *args, **kwargs )
-
 class MethodPort( NamedObject, Connectable ):
 
   def construct( self, func=None ):
     self.method = None
-    self.rdy    = MethodGuard( func )
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
@@ -299,7 +288,6 @@ class MethodPort( NamedObject, Connectable ):
 class CallerPort( MethodPort ):
   def construct( self ):
     self.method = None
-    self.rdy    = MethodGuard()
 
   def is_callee_port( s ):
     return False
@@ -311,7 +299,6 @@ class CallerPort( MethodPort ):
 class CalleePort( MethodPort ):
   def construct( self, method=None ):
     self.method = method
-    self.rdy    = MethodGuard( lambda s:True  )
 
   def is_callee_port( s ):
     return True

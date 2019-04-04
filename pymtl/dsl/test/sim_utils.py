@@ -11,7 +11,7 @@ from collections  import deque, defaultdict
 from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
 from pymtl.dsl import NamedObject
 from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5, ComponentLevel6
-from pymtl.dsl import Signal, Const, MethodPort, MethodGuard
+from pymtl.dsl import Signal, Const, MethodPort, Interface
 
 import random, py.code
 
@@ -211,17 +211,19 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
             assert member.method is None
             member.method = writer.method
 
-            if isinstance( s, ComponentLevel6 ):
-              member.rdy.func = writer.rdy.func
-
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
+      if verbose: print "--", blk, calls
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, MethodGuard ):
-          method_blks[ call.func ].add( blk )
+        elif isinstance( call, Interface ):
+          try:
+            if call.guarded_ifc:
+              method_blks[ call.method.method ].add( blk )
+          except AttributeError:
+            pass
         else:
           method_blks[ call ].add( blk )
 
@@ -229,14 +231,33 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
+      if verbose: print (x,y)
 
-      if   isinstance( x, MethodPort ):  xx = x.method
-      elif isinstance( x, MethodGuard ): xx = x.func
-      else:                              xx = x
+      if   isinstance( x, MethodPort ):
+        xx = x.method
 
-      if   isinstance( y, MethodPort ):  yy = y.method
-      elif isinstance( y, MethodGuard ): yy = y.func
-      else:                              yy = y
+      # We allow the user to call the interface directly in a guarded
+      # interface, so if they do call it, we use the actual method within
+      # the method field
+      elif isinstance( x, Interface ):
+        try:
+          if x.guarded_ifc:
+            xx = x.method.method
+        except AttributeError:
+          pass
+      else:
+        xx = x
+
+      if   isinstance( y, MethodPort ):
+        yy = y.method
+      elif isinstance( y, Interface ):
+        try:
+          if y.guarded_ifc:
+            yy = y.method.method
+        except AttributeError:
+          pass
+      else:
+        yy = y
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )

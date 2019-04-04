@@ -29,7 +29,6 @@ class ComponentLevel5( ComponentLevel4 ):
 
   def _connect_method_ports( s, o1, o2 ):
     assert isinstance( o1, MethodPort ) and isinstance( o2, MethodPort )
-    print o1, o2
 
     s._dsl.adjacency[o1].add( o2 )
     s._dsl.adjacency[o2].add( o1 )
