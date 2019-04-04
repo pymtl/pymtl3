@@ -27,6 +27,21 @@ class ComponentLevel5( ComponentLevel4 ):
 
     s._dsl.all_method_ports = set()
 
+  def _connect_method_ports( s, o1, o2 ):
+    assert isinstance( o1, MethodPort ) and isinstance( o2, MethodPort )
+    print o1, o2
+
+    s._dsl.adjacency[o1].add( o2 )
+    s._dsl.adjacency[o2].add( o1 )
+    s._dsl.connect_order.append( (o1, o2) )
+
+  # Override
+  def _connect_objects( s, o1, o2 ):
+    if isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ):
+      s._connect_method_ports( o1, o2 )
+    else:
+      super( ComponentLevel5, s )._connect_objects( o1, o2 )
+
   #-----------------------------------------------------------------------
   # elaborate
   #-----------------------------------------------------------------------

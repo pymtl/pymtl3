@@ -68,25 +68,32 @@ class ComponentLevel3( ComponentLevel2 ):
 
       s._dsl.constructed = True
 
-  def _connect_objects( s, o1, o2, adjacency_dict ):
-    """ Connect two objects. If one of them is integer, create a new Const
-    that wraps around it in 's'. This method refactors will be called by other
-    public APIs. """
+  def _connect_signal_int( s, o1, o2 ):
 
-    if isinstance( o1, int ) or isinstance( o2, int ): # special case
-      if isinstance( o1, int ):
-        o1, o2 = o2, o1 # o1 is signal, o2 is int
-      assert isinstance( o1, Signal )
+    o2   = Const( o1._dsl.Type, o2, s )
+    host = o1.get_host_component()
 
-      o2   = Const( o1._dsl.Type, o2, s )
-      host = o1.get_host_component()
+    if isinstance( o1, InVPort ):
+      # connecting constant to inport should be at the parent level
+      host = host.get_parent_object()
 
-      if isinstance( o1, InVPort ):
-        # connecting constant to inport should be at the parent level
-        host = host.get_parent_object()
+    o2._dsl.parent_obj = s
+    s._dsl.consts.add( o2 )
 
-      o2._dsl.parent_obj = host
-      host._dsl.consts.add( o2 )
+    s._dsl.adjacency[o1].add( o2 )
+    s._dsl.adjacency[o1].add( o2 )
+
+    s._dsl.connect_order.append( (o1, o2) )
+
+  def _connect( s, other, adjacency ):
+    assert isinstance( other, Connectable ), "Unconnectable object!"
+
+    if other in adjacency[s]:
+      raise InvalidConnectionError( "This pair of signals are already connected."\
+                                    "\n - {} \n - {}".format( s, other ) )
+
+  def _connect_signal_signal( s, o1, o2 ):
+    assert isinstance( o1, Signal ) and isinstance( o2, Signal )
 
     o1_type = None
     o2_type = None
@@ -98,7 +105,8 @@ class ComponentLevel3( ComponentLevel2 ):
 
     if o1_type is None:
       if o2_type is None:
-        o1._connect( o2, adjacency_dict )
+        s._dsl.adjacency[o1].add( o2 )
+        s._dsl.adjacency[o2].add( o1 )
         s._dsl.connect_order.append( (o1, o2) )
         return
       else: # o2_type is not None
@@ -116,8 +124,75 @@ class ComponentLevel3( ComponentLevel2 ):
     except AttributeError: # at least one of them is not Bits
       assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
 
-    o1._connect( o2, adjacency_dict )
+    s._dsl.adjacency[o1].add( o2 )
+    s._dsl.adjacency[o2].add( o1 )
+
     s._dsl.connect_order.append( (o1, o2) )
+
+  # When we connect two interfaces, we first try to use o1's and o2's
+  # connect, if
+
+  def _connect_interfaces( s, o1, o2 ):
+    assert isinstance( o1, Interface ) and isinstance( o2, Interface ), \
+           "Invalid interface connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+
+    # This function recursively connect two interfaces
+    def connect_by_name( this, other ):
+
+      def recursive_connect( this_obj, other_obj ):
+        if isinstance( this_obj, Connectable ):
+          s._connect_objects( this_obj, other_obj )
+
+        elif isinstance( this_obj, list ):
+          for i in xrange(len(this_obj)):
+            # TODO add error message if other_obj is not a list
+            recursive_connect( this_obj[i], other_obj[i] )
+
+      for name, obj in this.__dict__.iteritems():
+        if not name.startswith("_"):
+          # TODO add error message if other doesn't have a field called name
+          recursive_connect( obj, getattr( other, name ) )
+
+    if hasattr( o1, "connect" ):
+      if not o1.connect( o2, s ): # o1.connect fail
+        if hasattr( o2, "connect" ):
+          if not o1.connect( o2, s ):
+            connect_by_name( o1, o2 )
+        else:
+          connect_by_name( o1, o2 )
+
+    else: # o1 has no "connect"
+      if hasattr( o2, "connect" ):
+        if not o2.connect( o1, s ):
+          connect_by_name( o1, o2 )
+      else:
+        connect_by_name( o1, o2 ) # capture s
+
+  def _connect_objects( s, o1, o2 ):
+    """ Top level private method for connecting two objects. We do
+        the function dispatch based on type here"""
+
+    # Deal with Signal <-> int
+
+    if isinstance( o1, int ) or isinstance( o2, int ): # special case
+      if isinstance( o1, int ):
+        o1, o2 = o2, o1 # o1 is signal, o2 is int
+      assert isinstance( o1, Signal )
+      s._connect_signal_int( o1, o2 )
+
+    # Deal with Signal <-> Signal
+
+    elif isinstance( o1, Signal ) and isinstance( o2, Signal ):
+      s._connect_signal_signal( o1, o2 )
+
+    # Deal with Interface <-> Interface
+
+    elif isinstance( o1, Interface ) and isinstance( o2, Interface ):
+      s._connect_interfaces( o1, o2 )
+      # s._dsl.connect_order.append( (o1, o2) )
+
+    else:
+      raise
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
@@ -141,16 +216,16 @@ class ComponentLevel3( ComponentLevel2 ):
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
           for idx, item in target.iteritems():
-            s._connect_objects( obj[idx], item, s._dsl.adjacency )
+            s._connect_objects( obj[idx], item )
 
         # Obj is a single signal
         # If the target is a list, it's fanout connection
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
-            s._connect_objects( obj, item, s._dsl.adjacency )
+            s._connect_objects( obj, item )
         # Target is a single object
         else:
-          s._connect_objects( obj, target, s._dsl.adjacency )
+          s._connect_objects( obj, target )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
@@ -519,16 +594,19 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # Here we call connect to get the mock adjacency dictionary because
     # o1 and o2 might be signal bundles and we need signal connections
-    mock_adjacency = defaultdict(set)
-    s._connect_objects( o1, o2, mock_adjacency )
+    last_adjacency = s._dsl.adjacency
+    s._dsl.adjacency = defaultdict(set)
+    s._connect_objects( o1, o2 )
 
     visited = set()
-    for u, vs in mock_adjacency.iteritems():
+    for u, vs in s._dsl.adjacency.iteritems():
       for v in vs:
         if (u, v) not in visited:
           s._disconnect_signal_signal( u, v )
           visited.add( (u, v) )
           visited.add( (v, u) )
+
+    s._dsl.adjacency = last_adjancency
 
   #-----------------------------------------------------------------------
   # Construction-time APIs
@@ -549,8 +627,8 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def connect( s, o1, o2 ):
     try:
-      s._connect_objects( o1, o2, s._dsl.adjacency )
-    except AssertionError as e:
+      s._connect_objects( o1, o2 )
+    except Exception as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
   def connect_pairs( s, *args ):
@@ -559,7 +637,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     for i in xrange(len(args)>>1) :
       try:
-        s.connect( args[ i<<1 ], args[ (i<<1)+1 ] )
+        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except Exception as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
@@ -747,19 +825,22 @@ class ComponentLevel3( ComponentLevel2 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    added_adjacency = defaultdict(set)
+    last_adjacency = s._dsl.adjancency
+    s._dsl.adjacency = defaultdict(set)
 
     for i in xrange(len(args)>>1) :
       try:
-        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ], added_adjacency )
+        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
-    for x, adjs in added_adjacency.iteritems():
+    for x, adjs in s._dsl.adjacency.iteritems():
       s._dsl.all_adjacency[x].update( adjs )
 
     s._dsl.has_pending_connections = True # Lazy
+
+    s._dsl.adjancency = last_adjacency
 
   def disconnect( s, o1, o2 ):
     # TODO support string arguments and non-top s

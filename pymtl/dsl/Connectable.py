@@ -11,19 +11,9 @@ from pymtl.datatypes import mk_bits
 from errors import InvalidConnectionError
 
 class Connectable(object):
-
   # I've given up maintaining adjacency list or disjoint set locally since
   # we need to easily disconnect things
-
-  def _connect( s, other, adjacency_dict ):
-    assert isinstance( other, Connectable ), "Unconnectable object!"
-
-    if other in adjacency_dict[s]:
-      raise InvalidConnectionError( "This pair of signals are already connected."\
-                                    "\n - {} \n - {}".format( s, other ) )
-
-    adjacency_dict[s].add( other )
-    adjacency_dict[other].add( s )
+  pass
 
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
@@ -223,9 +213,11 @@ class OutVPort( Signal ):
 
 class Interface( NamedObject, Connectable ):
 
-  @property
-  def Type( s ):
-    return s._dsl.args
+  # FIXME: why are we doing this?
+  # Yanghui: I commented this out.
+  # @property
+  # def Type( s ):
+  #   return s._dsl.args
 
   def inverse( s ):
     s._dsl.inversed = True
@@ -253,27 +245,8 @@ class Interface( NamedObject, Connectable ):
 
       s._dsl.constructed = True
 
-  def _connect( s, other, edges ):
-    # Expand the list when needed. Only connect connectables and return,
-    # inheritance will figure out what to do with Wire/WireBundle
-
-    def recursive_connect( s_obj, other_obj ):
-      if hasattr( s_obj, "_connect" ):
-        s_obj._connect( other_obj, edges )
-
-      elif isinstance( s_obj, list ):
-        for i in xrange(len(s_obj)):
-          recursive_connect( s_obj[i], other_obj[i] )
-
-    assert isinstance( other, Interface ),  "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
-
-    # if not (type(s) is type(other)):
-      # assert  s.Type == other.Type, "Invalid connection, %s <> %s." % (type(s).__name__, type(other).__name__)
-      # print "warning: need to generate adapters for this connection between %s and %s." % (type(s).__name__, type(other).__name__)
-
-    for name, obj in s.__dict__.iteritems():
-      if not name.startswith("_"):
-        recursive_connect( obj, getattr( other, name ) )
+  # We move the connect functionality to Component
+  # def connect()
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
