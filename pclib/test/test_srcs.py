@@ -25,9 +25,8 @@ class TestSrcCL( Component ):
 
     s.msgs = deque( msgs )
 
-    s.initial_count  = initial_delay
-    s.interval_delay = interval_delay
-    s.interval_count = 0
+    s.count  = initial_delay
+    s.delay  = interval_delay
 
     s.msg_to_send = None
     s.send_called = False
@@ -38,17 +37,15 @@ class TestSrcCL( Component ):
     def up_src_send():
 
       s.send_called = False
-      if not s.initial_count==0:
-        s.initial_count -= 1
-      elif not s.interval_count==0:
-        s.interval_count -= 1
+      if not s.count==0:
+        s.count -= 1
       elif not s.reset:
         s.msg_to_send = None
         if s.send.rdy() and s.msgs:
           s.msg_to_send = s.msgs.popleft()
           s.send( s.msg_to_send )
           # reset interval_cnt only after a message is sent
-          s.interval_cnt = s.interval_delay
+          s.count = s.delay
           s.send_called = True
           s.send_rdy    = True
 
