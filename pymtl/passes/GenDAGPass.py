@@ -279,8 +279,6 @@ def {0}():
             if member is not writer:
               assert member.method is None
               member.method = writer.method
-              # FIXME: a method must have a guard.
-              member.rdy.func = writer.rdy.func
 
     except AttributeError:
       pass
