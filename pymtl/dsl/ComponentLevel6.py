@@ -3,7 +3,7 @@
 #=========================================================================
 # Add method port decorator and clk/reset signals.
 #
-# Author : Yanghui Ou
+# Author : Yanghui Ou, Shunning Jiang
 #   Date : Feb 24, 2019
 
 from pymtl.datatypes import Bits1
@@ -75,10 +75,8 @@ class ComponentLevel6( ComponentLevel5 ):
         for y in dir( method ):
           if y.startswith( "_guard_method" ):
             guard = getattr( method, y )
-            print y
             # This getattr will get the bounded method from ComponentLevel4
             ifc_type = getattr( method, "_guard_callee_ifc_type_" + y[14:] )
-            print method, ifc_type
             ifc = ifc_type( method, bind_method( guard ) )
             setattr( s, x, ifc )
 
