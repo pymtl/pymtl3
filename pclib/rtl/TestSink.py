@@ -1,7 +1,7 @@
 from pymtl import *
 from collections  import deque
 from pclib.ifcs   import RecvIfcRTL, InValRdyIfc, enrdy_to_str
-from pclib.valrdy import valrdy_to_str
+from pclib.ifcs   import valrdy_to_str
 
 class TestBasicSink( RTLComponent ):
 
