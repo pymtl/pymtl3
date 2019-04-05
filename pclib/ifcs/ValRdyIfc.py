@@ -1,5 +1,13 @@
-from pymtl import *
-from pclib.valrdy import valrdy_to_str
+#=========================================================================
+# ValRdyIfc
+#=========================================================================
+# RTL val/rdy interface. 
+# 
+# Author : Shunning Jiang
+#   Date : Apr 5, 2019
+
+from pymtl      import *
+from ifcs_utils import valrdy_to_str
 
 class InValRdyIfc( Interface ):
 

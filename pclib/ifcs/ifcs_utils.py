@@ -11,7 +11,6 @@ from pymtl import *
 #-------------------------------------------------------------------------
 # enrdy_to_str
 #-------------------------------------------------------------------------
-# A heler function that convert en/rdy interface into string.
 
 def enrdy_to_str( msg, en, rdy, trace_len=15 ):
 
@@ -23,5 +22,22 @@ def enrdy_to_str( msg, en, rdy, trace_len=15 ):
     _str = " ".ljust( trace_len ) # Idle
   elif not en and not rdy:
     _str = "#".ljust( trace_len ) # Stall
+
+  return _str.ljust( trace_len )
+
+#-------------------------------------------------------------------------
+#  valrdy_to_str
+#-------------------------------------------------------------------------
+
+def valrdy_to_str( msg, val, rdy, trace_len=15 ):
+
+  _str   = "{}".format( msg )
+
+  if       val and not rdy:
+    _str = "#".ljust( trace_len )
+  elif not val and     rdy:
+    _str = " ".ljust( trace_len )
+  elif not val and not rdy:
+    _str = ".".ljust( trace_len )
 
   return _str.ljust( trace_len )
