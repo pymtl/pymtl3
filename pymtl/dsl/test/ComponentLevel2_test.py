@@ -6,7 +6,7 @@
 # Date   : Nov 3, 2018
 
 from pymtl import *
-from pymtl.dsl import ComponentLevel2, Wire, InVPort, OutVPort
+from pymtl.dsl import ComponentLevel2, Wire, InPort, OutPort
 from pymtl.dsl.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
 from sim_utils import simple_sim_pass
 
@@ -29,7 +29,7 @@ class TestSource( ComponentLevel2 ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = OutVPort(int)
+    s.out = OutPort(int)
 
     @s.update
     def up_src():
@@ -50,7 +50,7 @@ class TestSink( ComponentLevel2 ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
-    s.in_ = InVPort(int)
+    s.in_ = InPort(int)
 
     @s.update
     def up_sink():

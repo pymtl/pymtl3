@@ -15,8 +15,8 @@ class RoundRobinArbiter( Component ):
 
     nreqsX2  = nreqs * 2
 
-    s.reqs   = InVPort ( mk_bits( nreqs ) )
-    s.grants = OutVPort( mk_bits( nreqs ) )
+    s.reqs   = InPort ( mk_bits( nreqs ) )
+    s.grants = OutPort( mk_bits( nreqs ) )
 
     # priority enable
 
@@ -87,9 +87,9 @@ class RoundRobinArbiterEn( Component ):
 
     nreqsX2  = nreqs * 2
 
-    s.en     = InVPort ( Bits1 )
-    s.reqs   = InVPort ( mk_bits( nreqs ) )
-    s.grants = OutVPort( mk_bits( nreqs ) )
+    s.en     = InPort ( Bits1 )
+    s.reqs   = InPort ( mk_bits( nreqs ) )
+    s.grants = OutPort( mk_bits( nreqs ) )
 
     # priority enable
 

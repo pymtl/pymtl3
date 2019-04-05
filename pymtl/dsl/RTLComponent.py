@@ -9,7 +9,7 @@
 
 from pymtl.datatypes import Bits1
 from ComponentLevel3 import ComponentLevel3
-from Connectable import Connectable, Signal, InVPort
+from Connectable import Connectable, Signal, InPort
 
 import inspect, ast # for error message
 
@@ -22,8 +22,8 @@ class RTLComponent( ComponentLevel3 ):
     to parent after construction of all children. """
 
     if not s._dsl.constructed:
-      s.clk   = InVPort( Bits1 )
-      s.reset = InVPort( Bits1 )
+      s.clk   = InPort( Bits1 )
+      s.reset = InPort( Bits1 )
 
       kwargs = s._dsl.kwargs.copy()
       if "elaborate" in s._dsl.param_dict:

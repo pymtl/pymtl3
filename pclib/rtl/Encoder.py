@@ -13,8 +13,8 @@ class Encoder( Component ):
 
     # Interface
 
-    s.in_ =  InVPort( mk_bits( in_width  ) )
-    s.out = OutVPort( mk_bits( out_width ) )
+    s.in_ =  InPort( mk_bits( in_width  ) )
+    s.out = OutPort( mk_bits( out_width ) )
     
     # Constants
 

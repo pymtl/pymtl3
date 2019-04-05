@@ -32,7 +32,7 @@ class TestSource( ComponentLevel3 ):
 
     s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = OutVPort( Type )
+    s.out = OutPort( Type )
 
     @s.update
     def up_src():
@@ -53,7 +53,7 @@ class TestSink( ComponentLevel3 ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
-    s.in_ = InVPort( Type )
+    s.in_ = InPort( Type )
 
     @s.update
     def up_sink():
@@ -74,9 +74,9 @@ class TestSink( ComponentLevel3 ):
 class Mux( ComponentLevel3 ):
 
   def construct( s, Type, ninputs ):
-    s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
-    s.sel = InVPort( int if Type is int else mk_bits( clog2(ninputs) ) )
-    s.out = OutVPort( Type )
+    s.in_ = [ InPort( Type ) for _ in xrange(ninputs) ]
+    s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
+    s.out = OutPort( Type )
 
     @s.update
     def up_mux():
@@ -140,9 +140,9 @@ def test_connect_deep():
   class MuxWrap(ComponentLevel3):
 
     def construct( s ):
-      s.in_ = [ InVPort(int) for _ in xrange(2) ]
-      s.sel = InVPort(int)
-      s.out = OutVPort(int)
+      s.in_ = [ InPort(int) for _ in xrange(2) ]
+      s.sel = InPort(int)
+      s.out = OutPort(int)
 
       s.mux = Mux(int, 2)(
         out = s.out,
@@ -178,9 +178,9 @@ def test_deep_connect():
   class MuxWrap3(ComponentLevel3):
 
     def construct( s ):
-      s.in_ = [ InVPort(int) for _ in xrange(2) ]
-      s.sel = InVPort(int)
-      s.out = OutVPort(int)
+      s.in_ = [ InPort(int) for _ in xrange(2) ]
+      s.sel = InPort(int)
+      s.out = OutPort(int)
 
       s.mux1 = Mux(int, 2)(
         in_ = { 0: s.in_[0], 1: s.in_[1] },
@@ -506,7 +506,7 @@ def test_top_level_inport():
 
     def construct( s ):
 
-      s.a = InVPort(Bits10)
+      s.a = InPort(Bits10)
       s.b = Wire(Bits32)
       s.connect( s.a, s.b[0:10] )
 
@@ -528,7 +528,7 @@ def test_top_level_outport():
 
     def construct( s ):
 
-      s.a = OutVPort(Bits10)
+      s.a = OutPort(Bits10)
       s.b = Wire(Bits32)
       s.connect( s.a, s.b[9:19] )
 
@@ -558,9 +558,9 @@ def test_multiple_slices_are_net_writers():
   class A( ComponentLevel3 ):
 
     def construct( s ):
-      s.in_  = InVPort( Bits32 )
-      s.out1 = OutVPort( Bits8 )
-      s.out2 = OutVPort( Bits8 )
+      s.in_  = InPort( Bits32 )
+      s.out1 = OutPort( Bits8 )
+      s.out2 = OutPort( Bits8 )
 
       s.connect( s.in_[0:8], s.out1[0:8] )
       s.connect( s.in_[0:4], s.out2[0:4] )

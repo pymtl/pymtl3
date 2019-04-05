@@ -18,7 +18,7 @@ def test_reset():
 
   class B(RTLComponent):
     def construct( s ):
-      s.out = OutVPort( Bits32 )
+      s.out = OutPort( Bits32 )
       @s.update_on_edge
       def up_out():
         if s.reset:

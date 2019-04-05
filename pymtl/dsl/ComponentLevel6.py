@@ -8,7 +8,7 @@
 
 from pymtl.datatypes import Bits1
 from ComponentLevel5 import ComponentLevel5
-from Connectable import CallerPort, CalleePort, Interface, InVPort
+from Connectable import CallerPort, CalleePort, Interface, InPort
 
 #-------------------------------------------------------------------------
 # method_port decorator
@@ -55,8 +55,8 @@ class ComponentLevel6( ComponentLevel5 ):
 
     if not s._dsl.constructed:
 
-      s.clk   = InVPort( Bits1 )
-      s.reset = InVPort( Bits1 )
+      s.clk   = InPort( Bits1 )
+      s.reset = InPort( Bits1 )
 
       kwargs = s._dsl.kwargs.copy()
       if "elaborate" in s._dsl.param_dict:

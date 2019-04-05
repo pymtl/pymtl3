@@ -9,7 +9,7 @@ class TestBasicSink( RTLComponent ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
-    s.in_ = InVPort( Type )
+    s.in_ = InPort( Type )
 
     @s.update
     def up_sink():
