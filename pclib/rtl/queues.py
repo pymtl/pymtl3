@@ -52,7 +52,7 @@ class NormalQueueCtrlRTL( Component ):
     s.enq_rdy = OutPort( Bits1 )
     s.deq_en  = InPort ( Bits1 )
     s.deq_rdy = OutPort( Bits1 )
-    s.credit  = OutPort( mk_bits( addr_nbits ) )
+    s.count   = OutPort( mk_bits( addr_nbits ) )
 
     s.wen     = OutPort( Bits1 )
     s.waddr   = OutPort( mk_bits( addr_nbits ) )
@@ -62,8 +62,6 @@ class NormalQueueCtrlRTL( Component ):
 
     s.head       = Wire( mk_bits( addr_nbits ) )
     s.tail       = Wire( mk_bits( addr_nbits ) )
-    s.credit_reg = Wire( mk_bits( addr_nbits ) )
-    s.connect( s.credit, s.credit_reg )
 
     # Wires
 
@@ -74,8 +72,8 @@ class NormalQueueCtrlRTL( Component ):
 
     @s.update
     def up_rdy_signals():
-      s.enq_rdy = s.credit > 0
-      s.deq_rdy = s.credit < s.num_entries
+      s.enq_rdy = s.count < s.num_entries
+      s.deq_rdy = s.count > 0
 
     @s.update
     def up_xfer_signals():
@@ -105,14 +103,14 @@ class NormalQueueCtrlRTL( Component ):
       if s.reset:
         s.head  = 0
         s.tail  = 0
-        s.credit_reg = s.num_entries
+        s.count = 0
 
       else:
         s.head   = s.head_next if s.deq_xfer else s.head
         s.tail   = s.tail_next if s.enq_xfer else s.tail
-        s.credit_reg = s.credit_reg - 1 if s.enq_xfer and not s.deq_xfer else \
-                       s.credit_reg + 1 if s.deq_xfer and not s.enq_xfer else \
-                       s.credit_reg
+        s.count  = s.count + 1 if s.enq_xfer and not s.deq_xfer else \
+                   s.count - 1 if s.deq_xfer and not s.enq_xfer else \
+                   s.count
 
 #-------------------------------------------------------------------------
 # NormalQueueRTL
@@ -126,7 +124,7 @@ class NormalQueueRTL( Component ):
 
     s.enq    = EnqIfcRTL( MsgType )
     s.deq    = DeqIfcRTL( MsgType )
-    s.credit = OutPort( mk_bits( clog2( num_entries ) ) )
+    s.count = OutPort( mk_bits( clog2( num_entries ) ) )
     
     # Components
 
@@ -145,11 +143,11 @@ class NormalQueueRTL( Component ):
     s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
     s.connect( s.deq.en,  s.ctrl.deq_en   )
     s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
-    s.connect( s.credit,  s.ctrl.credit   )
+    s.connect( s.count,   s.ctrl.count    )
     s.connect( s.enq.msg, s.dpath.enq_msg )
     s.connect( s.deq.msg, s.dpath.deq_msg )
 
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.credit, s.deq )
+    return "{}({}){}".format( s.enq, s.count, s.deq )
