@@ -291,6 +291,12 @@ def {0}():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
+        elif isinstance( call, Interface ):
+          try:
+            if call.guarded_ifc:
+              method_blks[ call.method.method ].add( blk )
+          except AttributeError:
+            pass
         else:
           method_blks[ call ].add( blk )
 
@@ -299,13 +305,27 @@ def {0}():
     succ = defaultdict(set)
     for (x, y) in all_M_constraints:
 
-      if   isinstance( x, MethodPort ):  xx = x.method
-      elif isinstance( x, MethodGuard ): xx = x.func
-      else:                              xx = x
+      if   isinstance( x, MethodPort ):
+        xx = x.method
+      elif isinstance( x, Interface ):
+        try:
+          if x.guarded_ifc:
+            xx = x.method.method
+        except AttributeError:
+          pass
+      else:
+        xx = x
 
-      if   isinstance( y, MethodPort ):  yy = y.method
-      elif isinstance( y, MethodGuard ): yy = y.func
-      else:                              yy = y
+      if   isinstance( y, MethodPort ):
+        yy = y.method
+      elif isinstance( y, Interface ):
+        try:
+          if y.guarded_ifc:
+            yy = y.method.method
+        except AttributeError:
+          pass
+      else:
+        yy = y
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
