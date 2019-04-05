@@ -7,8 +7,9 @@
 #   Date : Mar 07, 2019
 
 from pymtl import *
-from pclib.ifcs.SendRecvIfc  import SendIfcRTL, RecvIfcRTL, enrdy_to_str
+from pclib.ifcs.SendRecvIfc  import SendIfcRTL, RecvIfcRTL
 from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCallerIfc
+from ifcs_utils import enrdy_to_str
 
 #-------------------------------------------------------------------------
 # RecvCL2SendRTL
