@@ -11,7 +11,7 @@ from pclib.ifcs  import SendIfcRTL
 from collections import deque
 from pclib.ifcs  import RecvCL2SendRTL, RecvRTL2SendCL
 
-from pclib.ifcs.GuardedIfc import GuardedCallerIfc
+from pclib.ifcs import GuardedCallerIfc
 
 #-------------------------------------------------------------------------
 # TestSrcCL
@@ -44,7 +44,7 @@ class TestSrcCL( Component ):
         if s.send.rdy() and s.msgs:
           s.msg_to_send = s.msgs.popleft()
           s.send( s.msg_to_send )
-          # reset interval_cnt only after a message is sent
+          # reset count only after a message is sent
           s.count = s.delay
           s.send_called = True
           s.send_rdy    = True

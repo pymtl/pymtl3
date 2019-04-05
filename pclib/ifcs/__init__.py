@@ -5,6 +5,8 @@ from SendRecvIfc import SendIfcRTL, RecvIfcRTL
 from GetGiveIfc  import GetIfcRTL, GiveIfcRTL
 from EnqDeqIfc   import EnqIfcRTL, DeqIfcRTL
 
+from GuardedIfc import *
+
 from ifcs_utils             import enrdy_to_str, valrdy_to_str
 from send_recv_ifc_adapters import RecvCL2SendRTL, RecvRTL2SendCL
 
