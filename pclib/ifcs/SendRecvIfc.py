@@ -10,7 +10,7 @@ from pymtl import *
 from ifcs_utils import enrdy_to_str
 
 #-------------------------------------------------------------------------
-# SendRecvIfc
+# RecvIfcRTL
 #-------------------------------------------------------------------------
 
 class RecvIfcRTL( Interface ):
@@ -26,6 +26,10 @@ class RecvIfcRTL( Interface ):
 
   def __str__( s ):
     return s.line_trace()
+
+#-------------------------------------------------------------------------
+# SendIfcRTL
+#-------------------------------------------------------------------------
 
 class SendIfcRTL( Interface ):
 

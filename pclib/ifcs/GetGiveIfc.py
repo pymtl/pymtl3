@@ -27,6 +27,10 @@ class GetIfcRTL( Interface ):
   def __str__( s ):
     return s.line_trace()
 
+#-------------------------------------------------------------------------
+# GiveIfcRTL
+#-------------------------------------------------------------------------
+
 class GiveIfcRTL( Interface ):
 
   def construct( s, Type ):
