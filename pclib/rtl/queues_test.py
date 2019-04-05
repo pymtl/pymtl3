@@ -9,7 +9,7 @@ import pytest
 
 from pymtl                    import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.test.test_srcs     import TestSrcRTL
+from pclib.test.test_srcs     import TestSrcCL
 from pclib.test.test_sinks    import TestSinkRTL
 from pclib.test               import TestVectorSimulator
 from pymtl.passes.PassGroups  import SimpleCLSim
@@ -66,7 +66,7 @@ class TestHarness( Component ):
                  src_interval, sink_initial, sink_interval, 
                  arrival_time=None ):
 
-    s.src  = TestSrcRTL ( MsgType, src_msgs,  src_initial,  src_interval )
+    s.src  = TestSrcCL  ( src_msgs,  src_initial,  src_interval )
     s.dut  = NormalQueueRTL( MsgType, qsize )
     s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval, 
                           arrival_time )
