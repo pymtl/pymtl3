@@ -5,8 +5,9 @@ from datatypes import _bitwidths
 from dsl.ConstraintTypes import U, M, RD, WR
 from dsl.Connectable     import Wire, InPort, OutPort, Interface, CallerPort, CalleePort
 from dsl.RTLComponent    import RTLComponent
-from dsl.ComponentLevel6 import ComponentLevel6 as Component, generate_guard_decorator_ifcs
-from passes.PassGroups import SimpleSim
+from dsl.ComponentLevel6 import generate_guard_decorator_ifcs
+from dsl.Component       import Component
+from passes.PassGroups   import SimpleSim
 
 __all__ = [
   'U','M','RD','WR',
