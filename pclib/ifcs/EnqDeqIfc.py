@@ -31,7 +31,7 @@ class EnqIfcRTL( Interface ):
       m = RecvCL2SendRTL( s.MsgType )
       
       if hasattr( parent, "enq_adapter_cnt" ):
-        cnt = getattr( parent, "enq_adapter_cnt" )
+        cnt = parent.enq_adapter_cnt
         setattr( parent, "enq_adapter_" + str( cnt ), m )
         parent.connect_pairs(
           other,  m.recv,
@@ -41,14 +41,14 @@ class EnqIfcRTL( Interface ):
         return True
 
       else:
-        setattr( parent, "enq_adapter_0", m )
+        parent.enq_adapter_0 = m
         parent.connect_pairs(
           other,      m.recv,
           m.send.msg, s.msg,
           m.send.en,  s.en,
           m.send.rdy, s.rdy
         )
-        setattr( parent, "enq_adapter_cnt", 1 )
+        parent.enq_adapter_cnt = 1
         return True
 
     return False
