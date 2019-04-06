@@ -11,11 +11,6 @@ from pclib.test import TestVectorSimulator
 
 def run_test( model, test_vectors ):
 
-  # Instantiate and elaborate the model
-  # Shunning: you have applied SimRTLPass in run_test
-
-  # model.elaborate()
-
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
@@ -34,12 +29,9 @@ def run_test( model, test_vectors ):
 # test_rr_arb_4
 #------------------------------------------------------------------------------
 # RoundRobinArbiter with four requesters
-def test_rr_arb_4( dump_vcd, test_verilog ):
-  model = RoundRobinArbiter( 4 )
-  model.vcd_file = dump_vcd
-  if test_verilog:
-    model = TranslationTool( model )
+def test_rr_arb_4():
 
+  model = RoundRobinArbiter( 4 )
   run_test( model, [
 
     # reqs     grants
@@ -101,10 +93,6 @@ def run_en_test( model, test_vectors ):
 def test_rr_arb_en_4( dump_vcd, test_verilog ):
 
   model = RoundRobinArbiterEn( 4 )
-  model.vcd_file = dump_vcd
-  if test_verilog:
-    model = TranslationTool( model )
-
   run_en_test( model, [
 
     # reqs     grants

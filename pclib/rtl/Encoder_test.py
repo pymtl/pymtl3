@@ -21,12 +21,9 @@ def run_test( model, test_vectors ):
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   sim.run_test()
 
-def test_encoder_5_directed( dump_vcd, test_verilog ):
-  model = Encoder( 5, 3 )
-  model.vcd_file = dump_vcd
-  if test_verilog:
-    model = TranslationTool( model )
+def test_encoder_5_directed():
 
+  model = Encoder( 5, 3 )
   run_test( model, [
     # in                out 
     [ Bits5( 0b00000 ), 0  ],
