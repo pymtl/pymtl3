@@ -6,9 +6,8 @@
 # Author : Yanghui Ou, Shunning Jiang
 #   Date : Feb 24, 2019
 
-from pymtl.datatypes import Bits1
 from ComponentLevel5 import ComponentLevel5
-from Connectable import CallerPort, CalleePort, Interface, InPort
+from Connectable import CallerPort, CalleePort, Interface
 
 #-------------------------------------------------------------------------
 # method_port decorator
