@@ -28,11 +28,6 @@ class Component( ComponentLevel6 ):
       except AttributeError:
         pass
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
-      s._dsl.constructed = True
-
   def sim_reset( s ):
     assert s._dsl.elaborate_top is s # assert sim_reset is top
 
