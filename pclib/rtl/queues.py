@@ -44,31 +44,40 @@ class NormalQueueCtrlRTL( Component ):
 
     s.num_entries = num_entries
     s.last_idx    = num_entries - 1
-    addr_nbits    = clog2( num_entries )
+    addr_nbits    = clog2( num_entries   )
+    count_nbits   = clog2( num_entries+1 )
+    PtrType       = mk_bits( addr_nbits  )
+    CountType     = mk_bits( count_nbits )
 
     # Interface
     
-    s.enq_en  = InPort ( Bits1 )
-    s.enq_rdy = OutPort( Bits1 )
-    s.deq_en  = InPort ( Bits1 )
-    s.deq_rdy = OutPort( Bits1 )
-    s.count   = OutPort( mk_bits( addr_nbits ) )
+    s.enq_en  = InPort ( Bits1   )
+    s.enq_rdy = OutPort( Bits1   )
+    s.deq_en  = InPort ( Bits1   )
+    s.deq_rdy = OutPort( Bits1   )
+    s.count   = OutPort( PtrType )
 
-    s.wen     = OutPort( Bits1 )
-    s.waddr   = OutPort( mk_bits( addr_nbits ) )
-    s.raddr   = OutPort( mk_bits( addr_nbits ) )
+    s.wen     = OutPort( Bits1   )
+    s.waddr   = OutPort( PtrType )
+    s.raddr   = OutPort( PtrType )
     
     # Registers
 
-    s.head       = Wire( mk_bits( addr_nbits ) )
-    s.tail       = Wire( mk_bits( addr_nbits ) )
+    s.head       = Wire( PtrType )
+    s.tail       = Wire( PtrType )
 
     # Wires
 
-    s.enq_xfer  = Wire( Bits1 )
-    s.deq_xfer  = Wire( Bits1 )
-    s.head_next = Wire( mk_bits( addr_nbits ) )
-    s.tail_next = Wire( mk_bits( addr_nbits ) )
+    s.enq_xfer  = Wire( Bits1   )
+    s.deq_xfer  = Wire( Bits1   )
+    s.head_next = Wire( PtrType )
+    s.tail_next = Wire( PtrType )
+    
+    # Connections
+
+    s.connect( s.wen,   s.enq_xfer )
+    s.connect( s.waddr, s.tail     )
+    s.connect( s.raddr, s.head     )
 
     @s.update
     def up_rdy_signals():
@@ -82,34 +91,22 @@ class NormalQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - 1 if s.head > 0 else s.last_idx
-      s.tail_next = s.tail + 1 if s.tail < s.last_idx else 0
-
-    @s.update
-    def up_ctrl_out():
-      s.wen     = s.enq_xfer
-
-    @s.update
-    def up_ctrl_waddr():
-      s.waddr   = s.tail
-
-    @s.update
-    def up_ctrl_raddr():
-      s.raddr   = s.head
+      s.head_next = s.head - Bits1(1) if s.head > 0 else s.last_idx
+      s.tail_next = s.tail + Bits1(1) if s.tail < s.last_idx else 0
 
     @s.update_on_edge
     def up_reg():
 
       if s.reset:
-        s.head  = 0
-        s.tail  = 0
-        s.count = 0
+        s.head  = PtrType(0)
+        s.tail  = PtrType(0)
+        s.count = CountType(0)
 
       else:
         s.head   = s.head_next if s.deq_xfer else s.head
         s.tail   = s.tail_next if s.enq_xfer else s.tail
-        s.count  = s.count + 1 if s.enq_xfer and not s.deq_xfer else \
-                   s.count - 1 if s.deq_xfer and not s.enq_xfer else \
+        s.count  = s.count + Bits1(1) if s.enq_xfer and not s.deq_xfer else \
+                   s.count - Bits1(1) if s.deq_xfer and not s.enq_xfer else \
                    s.count
 
 #-------------------------------------------------------------------------
