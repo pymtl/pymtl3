@@ -10,7 +10,7 @@ class TestBasicSource( RTLComponent ):
 
     s.Type = Type
     s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = OutVPort( Type )
+    s.out = OutPort( Type )
 
     @s.update
     def up_src():

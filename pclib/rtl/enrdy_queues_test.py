@@ -16,7 +16,7 @@ from enrdy_queues import *
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness( RTLComponent ):
+class TestHarness( Component ):
 
   def construct( s, Type, q, src_msgs, sink_msgs, src_stall_prob=0,
                                                   sink_stall_prob=0 ):

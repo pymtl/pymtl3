@@ -5,9 +5,9 @@ from pymtl import *
 class Mux( RTLComponent ):
 
   def construct( s, Type, ninputs ):
-    s.in_ = [ InVPort( Type ) for _ in xrange(ninputs) ]
-    s.sel = InVPort( int if Type is int else mk_bits( clog2(ninputs) ) )
-    s.out = OutVPort( Type )
+    s.in_ = [ InPort( Type ) for _ in xrange(ninputs) ]
+    s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
+    s.out = OutPort( Type )
 
     @s.update
     def up_mux():
@@ -18,9 +18,9 @@ class Mux( RTLComponent ):
 class RShifter( RTLComponent ):
 
   def construct( s, Type, shamt_nbits = 1 ):
-    s.in_   = InVPort( Type )
-    s.shamt = InVPort( int if Type is int else mk_bits( shamt_nbits ) )
-    s.out   = OutVPort( Type )
+    s.in_   = InPort( Type )
+    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.out   = OutPort( Type )
 
     @s.update
     def up_rshifter():
@@ -31,9 +31,9 @@ class RShifter( RTLComponent ):
 class LShifter( RTLComponent ):
 
   def construct( s, Type, shamt_nbits = 1 ):
-    s.in_   = InVPort( Type )
-    s.shamt = InVPort( int if Type is int else mk_bits( shamt_nbits ) )
-    s.out   = OutVPort( Type ) 
+    s.in_   = InPort( Type )
+    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.out   = OutPort( Type ) 
 
     @s.update
     def up_lshifter():
@@ -44,8 +44,8 @@ class LShifter( RTLComponent ):
 class Incrementer( RTLComponent ):
 
   def construct( s, Type, amount=1 ):
-    s.in_ = InVPort( Type )
-    s.out = OutVPort( Type )
+    s.in_ = InPort( Type )
+    s.out = OutPort( Type )
 
     @s.update
     def up_incrementer():
@@ -56,9 +56,9 @@ class Incrementer( RTLComponent ):
 class Adder( RTLComponent ):
 
   def construct( s, Type ):
-    s.in0 = InVPort( Type )
-    s.in1 = InVPort( Type )
-    s.out = OutVPort( Type )
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( Type )
 
     @s.update
     def up_adder():
@@ -69,9 +69,9 @@ class Adder( RTLComponent ):
 class Subtractor( RTLComponent ):
 
   def construct( s, Type ):
-    s.in0 = InVPort( Type )
-    s.in1 = InVPort( Type )
-    s.out = OutVPort( Type )
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( Type )
 
     @s.update
     def up_subtractor():
@@ -82,8 +82,8 @@ class Subtractor( RTLComponent ):
 class ZeroComp( RTLComponent ):
 
   def construct( s, Type ):
-    s.in_ = InVPort( Type )
-    s.out = OutVPort( bool if Type is int else Bits1 )
+    s.in_ = InPort( Type )
+    s.out = OutPort( bool if Type is int else Bits1 )
 
     @s.update
     def up_zerocomp():
@@ -94,9 +94,9 @@ class ZeroComp( RTLComponent ):
 class LTComp( RTLComponent ):
 
   def construct( s, Type ):
-    s.in0 = InVPort( Type )
-    s.in1 = InVPort( Type )
-    s.out = OutVPort( bool if Type is int else Bits1 )
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( bool if Type is int else Bits1 )
 
     @s.update
     def up_ltcomp():
@@ -107,9 +107,9 @@ class LTComp( RTLComponent ):
 class LEComp( RTLComponent ):
 
   def construct( s, Type ):
-    s.in0 = InVPort( Type )
-    s.in1 = InVPort( Type )
-    s.out = OutVPort( bool if Type is int else Bits1 )
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( bool if Type is int else Bits1 )
 
     @s.update
     def up_lecomp():

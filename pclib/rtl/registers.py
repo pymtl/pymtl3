@@ -4,8 +4,8 @@ from copy import deepcopy
 class Reg( RTLComponent ):
 
   def construct( s, Type ):
-    s.out = OutVPort( Type )
-    s.in_ = InVPort( Type )
+    s.out = OutPort( Type )
+    s.in_ = InPort( Type )
 
     @s.update_on_edge
     def up_reg():
@@ -17,10 +17,10 @@ class Reg( RTLComponent ):
 class RegEn( RTLComponent ):
 
   def construct( s, Type ):
-    s.out = OutVPort( Type )
-    s.in_ = InVPort( Type )
+    s.out = OutPort( Type )
+    s.in_ = InPort( Type )
 
-    s.en  = InVPort( int if Type is int else Bits1 )
+    s.en  = InPort( int if Type is int else Bits1 )
 
     @s.update_on_edge
     def up_regen():
@@ -33,10 +33,10 @@ class RegEn( RTLComponent ):
 class RegRst( RTLComponent ):
 
   def construct( s, Type, reset_value=0 ):
-    s.out = OutVPort( Type )
-    s.in_ = InVPort( Type )
+    s.out = OutPort( Type )
+    s.in_ = InPort( Type )
 
-    s.reset = InVPort( int if Type is int else Bits1 )
+    s.reset = InPort( int if Type is int else Bits1 )
 
     @s.update_on_edge
     def up_regrst():
@@ -49,11 +49,11 @@ class RegRst( RTLComponent ):
 class RegEnRst( RTLComponent ):
 
   def construct( s, Type, reset_value=0 ):
-    s.out = OutVPort( Type )
-    s.in_ = InVPort( Type )
+    s.out = OutPort( Type )
+    s.in_ = InPort( Type )
 
-    s.reset = InVPort( int if Type is int else Bits1 )
-    s.en    = InVPort( int if Type is int else Bits1 )
+    s.reset = InPort( int if Type is int else Bits1 )
+    s.en    = InPort( int if Type is int else Bits1 )
 
     @s.update_on_edge
     def up_regenrst():

@@ -15,7 +15,7 @@ from pclib.ifcs.GuardedIfc import guarded_ifc
 # PipeQueueCL
 #-------------------------------------------------------------------------
 
-class PipeQueueCL( ComponentLevel6 ):
+class PipeQueueCL( Component ):
 
   def construct( s, size ):
     s.queue = deque( maxlen=size )
@@ -71,7 +71,7 @@ class PipeQueueCL( ComponentLevel6 ):
 # BypassQueueCL
 #-------------------------------------------------------------------------
 
-class BypassQueueCL( ComponentLevel6 ):
+class BypassQueueCL( Component ):
 
   def construct( s, size ):
     s.queue = deque( maxlen=size )
@@ -127,7 +127,7 @@ class BypassQueueCL( ComponentLevel6 ):
 # NormalQueueCL
 #-------------------------------------------------------------------------
 
-class NormalQueueCL( ComponentLevel6 ):
+class NormalQueueCL( Component ):
 
   def construct( s, size ):
     s.queue = deque( maxlen=size )

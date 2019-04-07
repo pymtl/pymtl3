@@ -7,12 +7,12 @@ class RegisterFile( RTLComponent ):
 
     addr_type = mk_bits( clog2( nregs ) )
 
-    s.raddr = [ InVPort( addr_type ) for i in xrange( rd_ports ) ]
-    s.rdata = [ OutVPort( Type ) for i in xrange( rd_ports ) ]
+    s.raddr = [ InPort( addr_type ) for i in xrange( rd_ports ) ]
+    s.rdata = [ OutPort( Type ) for i in xrange( rd_ports ) ]
 
-    s.waddr = [ InVPort( addr_type ) for i in xrange( wr_ports ) ]
-    s.wdata = [ InVPort( Type ) for i in xrange( wr_ports ) ]
-    s.wen   = [ InVPort( Bits1 ) for i in xrange( wr_ports ) ]
+    s.waddr = [ InPort( addr_type ) for i in xrange( wr_ports ) ]
+    s.wdata = [ InPort( Type ) for i in xrange( wr_ports ) ]
+    s.wen   = [ InPort( Bits1 ) for i in xrange( wr_ports ) ]
 
     s.regs      = [ Wire( Type ) for i in xrange(nregs) ]
     s.next_regs = [ Wire( Type ) for i in xrange(nregs) ]

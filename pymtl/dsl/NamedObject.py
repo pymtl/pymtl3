@@ -68,7 +68,7 @@ class NamedObject(object):
         u, indices = stack.pop()
 
         if   isinstance( u, NamedObject ):
-          try:
+          # try:
             u._dsl.parent_obj  = s
             u._dsl.level       = s._dsl.level + 1
             u._dsl.my_name = u_name = name + "".join([ "[{}]".format(x)
@@ -90,9 +90,9 @@ class NamedObject(object):
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
             u._construct()
-          except AttributeError as e:
-            raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
-                                 "instead of __init__.)".format( s.__class__ ) )
+          # except AttributeError as e:
+          #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
+          #                        "instead of __init__.)".format( s.__class__ ) )
 
         # ONLY LIST IS SUPPORTED, SORRY.
         # I don't want to support any iterable object because later "Wire"

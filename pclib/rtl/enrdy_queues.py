@@ -10,7 +10,7 @@ from pymtl import *
 from pclib.rtl import Reg, RegEn, Mux
 from pclib.ifcs.SendRecvIfc import SendIfcRTL, RecvIfcRTL
 
-class PipeQueue1RTL( RTLComponent ):
+class PipeQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = RecvIfcRTL( Type )
@@ -31,7 +31,7 @@ class PipeQueue1RTL( RTLComponent ):
   def line_trace( s ):
     return s.buf.line_trace()
 
-class BypassQueue1RTL( RTLComponent ):
+class BypassQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = RecvIfcRTL( Type )

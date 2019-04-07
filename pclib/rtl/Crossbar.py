@@ -4,15 +4,15 @@
 
 from pymtl import *
 
-class Crossbar( RTLComponent ):
+class Crossbar( Component ):
 
   def construct( s, nports, dtype ):
 
     sel_nbits = clog2( nports )
 
-    s.in_ = [ InVPort  ( dtype )     for _ in range( nports ) ]
-    s.out = [ OutVPort ( dtype )     for _ in range( nports ) ]
-    s.sel = [ InVPort  ( mk_bits( sel_nbits ) ) for _ in range( nports ) ]
+    s.in_ = [ InPort  ( dtype )     for _ in range( nports ) ]
+    s.out = [ OutPort ( dtype )     for _ in range( nports ) ]
+    s.sel = [ InPort  ( mk_bits( sel_nbits ) ) for _ in range( nports ) ]
 
     @s.update
     def comb_logic():

@@ -4,7 +4,6 @@
 
 from pymtl      import *
 from Crossbar   import Crossbar
-
 from pclib.test import TestVectorSimulator
 
 #-----------------------------------------------------------------------
@@ -35,11 +34,9 @@ def run_test_crossbar( model, test_vectors ):
 #-----------------------------------------------------------------------
 # test_crossbar3
 #-----------------------------------------------------------------------
-def test_crossbar3( dump_vcd, test_verilog ):
+
+def test_crossbar3():
   model = Crossbar( 3, Bits16 )
-  model.vcd_file = dump_vcd
-  if test_verilog:
-    model = TranslationTool( model )
   run_test_crossbar( model, [
     [ 0xdead, 0xbeef, 0xcafe, 0, 1, 2, 0xdead, 0xbeef, 0xcafe ],
     [ 0xdead, 0xbeef, 0xcafe, 0, 2, 1, 0xdead, 0xcafe, 0xbeef ],

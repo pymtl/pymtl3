@@ -1,27 +1,23 @@
 #=========================================================================
-# RTLComponent.py
+# Component.py
 #=========================================================================
-# Currently we add reset and clk signal on top of ComponentLevel3 in the
-# kernel. Later this might be handled by a PyMTL pass.
+# Add clk/reset signals.
 #
-# Author : Shunning Jiang
-# Date   : Jan 7, 2018
+# Author : Yanghui Ou
+#   Date : Apr 6, 2019
 
 from pymtl.datatypes import Bits1
-from ComponentLevel3 import ComponentLevel3
-from Connectable import Connectable, Signal, InPort
+from ComponentLevel6 import ComponentLevel6
+from Connectable import InPort
 
-import inspect, ast # for error message
-
-class RTLComponent( ComponentLevel3 ):
+class Component( ComponentLevel6 ):
 
   # Override
   def _construct( s ):
-    """ We override _construct here to add clk/reset signals. I add signal
-    declarations before constructing child components and bring up them
-    to parent after construction of all children. """
 
     if not s._dsl.constructed:
+      
+      # clk and reset signals are added here.
       s.clk   = InPort( Bits1 )
       s.reset = InPort( Bits1 )
 
@@ -29,13 +25,18 @@ class RTLComponent( ComponentLevel3 ):
       if "elaborate" in s._dsl.param_dict:
         kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
-      s.construct( *s._dsl.args, **kwargs )
 
+      s._handle_guard_methods()
+      
+      # We hook up the added clk and reset signals here.
       try:
         s.connect( s.clk, s.get_parent_object().clk )
         s.connect( s.reset, s.get_parent_object().reset )
       except AttributeError:
         pass
+
+      # Same as parent class _construct
+      s.construct( *s._dsl.args, **kwargs )
 
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
@@ -47,6 +48,5 @@ class RTLComponent( ComponentLevel3 ):
 
     s.reset = Bits1( 1 )
     s.tick() # This tick propagates the reset signal
-    s.tick()
     s.reset = Bits1( 0 )
-
+    s.tick()

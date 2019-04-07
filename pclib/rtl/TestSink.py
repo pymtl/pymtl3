@@ -1,7 +1,7 @@
 from pymtl import *
 from collections  import deque
 from pclib.ifcs   import RecvIfcRTL, InValRdyIfc, enrdy_to_str
-from pclib.valrdy import valrdy_to_str
+from pclib.ifcs   import valrdy_to_str
 
 class TestBasicSink( RTLComponent ):
 
@@ -9,7 +9,7 @@ class TestBasicSink( RTLComponent ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
     s.answer = deque( answer )
-    s.in_ = InVPort( Type )
+    s.in_ = InPort( Type )
 
     @s.update
     def up_sink():

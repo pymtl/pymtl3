@@ -9,14 +9,14 @@ from pclib.rtl import Mux, RegEnRst
 #-----------------------------------------------------------------------
 # RoundRobinArbiter
 #-----------------------------------------------------------------------
-class RoundRobinArbiter( RTLComponent ):
+class RoundRobinArbiter( Component ):
 
   def construct( s, nreqs ):
 
     nreqsX2  = nreqs * 2
 
-    s.reqs   = InVPort ( mk_bits( nreqs ) )
-    s.grants = OutVPort( mk_bits( nreqs ) )
+    s.reqs   = InPort ( mk_bits( nreqs ) )
+    s.grants = OutPort( mk_bits( nreqs ) )
 
     # priority enable
 
@@ -76,7 +76,7 @@ class RoundRobinArbiter( RTLComponent ):
 #-----------------------------------------------------------------------
 # RoundRobinArbiterEn
 #-----------------------------------------------------------------------
-class RoundRobinArbiterEn( RTLComponent ):
+class RoundRobinArbiterEn( Component ):
   '''Round Robin Arbiter model with an enable bit.
 
   Only when 1) the arbiter enable bit is set high AND 2) there is some
@@ -87,9 +87,9 @@ class RoundRobinArbiterEn( RTLComponent ):
 
     nreqsX2  = nreqs * 2
 
-    s.en     = InVPort ( Bits1 )
-    s.reqs   = InVPort ( mk_bits( nreqs ) )
-    s.grants = OutVPort( mk_bits( nreqs ) )
+    s.en     = InPort ( Bits1 )
+    s.reqs   = InPort ( mk_bits( nreqs ) )
+    s.grants = OutPort( mk_bits( nreqs ) )
 
     # priority enable
 

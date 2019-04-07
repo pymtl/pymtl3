@@ -11,13 +11,13 @@ from pclib.ifcs  import SendIfcRTL
 from collections import deque
 from pclib.ifcs  import RecvCL2SendRTL, RecvRTL2SendCL
 
-from pclib.ifcs.GuardedIfc import GuardedCallerIfc
+from pclib.ifcs import GuardedCallerIfc
 
 #-------------------------------------------------------------------------
 # TestSrcCL
 #-------------------------------------------------------------------------
 
-class TestSrcCL( ComponentLevel6 ):
+class TestSrcCL( Component ):
 
   def construct( s, msgs, initial_delay=0, interval_delay=0 ):
 
@@ -25,30 +25,27 @@ class TestSrcCL( ComponentLevel6 ):
 
     s.msgs = deque( msgs )
 
-    s.initial_cnt    = initial_delay
-    s.interval_delay = interval_delay
-    s.interval_cnt   = 0
+    s.count  = initial_delay
+    s.delay  = interval_delay
 
     s.msg_to_send = None
     s.send_called = False
     s.send_rdy    = False
-    s.trace_len   = len( str( s.msgs[0] ) )
+    s.trace_len = len( str( s.msgs[0] ) ) if len(s.msgs) != 0 else 0
 
     @s.update
     def up_src_send():
 
       s.send_called = False
-      if not s.initial_cnt==0:
-        s.initial_cnt -= 1
-      elif not s.interval_cnt==0:
-        s.interval_cnt -= 1
-      else:
+      if not s.count==0:
+        s.count -= 1
+      elif not s.reset:
         s.msg_to_send = None
         if s.send.rdy() and s.msgs:
           s.msg_to_send = s.msgs.popleft()
           s.send( s.msg_to_send )
-          # reset interval_cnt only after a message is sent
-          s.interval_cnt = s.interval_delay
+          # reset count only after a message is sent
+          s.count = s.delay
           s.send_called = True
           s.send_rdy    = True
 
@@ -69,7 +66,7 @@ class TestSrcCL( ComponentLevel6 ):
 # TestSrcRTL
 #-------------------------------------------------------------------------
 
-class TestSrcRTL( ComponentLevel6 ):
+class TestSrcRTL( Component ):
 
   def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0 ):
 

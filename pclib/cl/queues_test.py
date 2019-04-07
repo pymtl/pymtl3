@@ -17,7 +17,7 @@ from queues import PipeQueueCL, BypassQueueCL, NormalQueueCL
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness( ComponentLevel6 ):
+class TestHarness( Component ):
 
   def construct( s, DutType, qsize, src_msgs, sink_msgs, src_initial, 
                  src_interval, sink_initial, sink_interval, 

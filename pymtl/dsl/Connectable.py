@@ -199,15 +199,15 @@ class Wire( Signal ):
   def inverse( s ):
     return Wire( s._dsl.Type )
 
-class InVPort( Signal ):
+class InPort( Signal ):
   def inverse( s ):
-    return OutVPort( s._dsl.Type )
+    return OutPort( s._dsl.Type )
   def is_input_value_port( s ):
     return True
 
-class OutVPort( Signal ):
+class OutPort( Signal ):
   def inverse( s ):
-    return InVPort( s._dsl.Type )
+    return InPort( s._dsl.Type )
   def is_output_value_port( s ):
     return True
 

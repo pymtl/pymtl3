@@ -14,7 +14,7 @@
 from NamedObject import NamedObject
 from ComponentLevel1 import ComponentLevel1
 from ComponentLevel2 import ComponentLevel2
-from Connectable import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
+from Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
 from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
 from collections import defaultdict, deque
 
@@ -73,7 +73,7 @@ class ComponentLevel3( ComponentLevel2 ):
     o2   = Const( o1._dsl.Type, o2, s )
     host = o1.get_host_component()
 
-    if isinstance( o1, InVPort ):
+    if isinstance( o1, InPort ):
       # connecting constant to inport should be at the parent level
       host = host.get_parent_object()
 
@@ -306,7 +306,7 @@ class ComponentLevel3( ComponentLevel2 ):
           host = host.get_parent_object() # go to the component
         member._dsl.host = host
 
-        if isinstance( member, InVPort ) and member._dsl.host == s:
+        if isinstance( member, InPort ) and member._dsl.host == s:
           writer_prop[ member ] = True
 
     headless = nets
@@ -435,14 +435,14 @@ class ComponentLevel3( ComponentLevel2 ):
             # Hence, writer is anything, reader is wire or outport
             if   whost == rhost:
               valid = ( isinstance( u, Signal )  or isinstance( u, Const) ) and \
-                      ( isinstance( v, OutVPort) or isinstance( v, Wire ) )
+                      ( isinstance( v, OutPort) or isinstance( v, Wire ) )
               if not valid:
                 raise SignalTypeError( \
 """[Type 5] Invalid port type detected at the same host component "{}" (class {})
 
 - {} "{}" cannot be driven by {} "{}".
 
-  Note: InVPort x.y cannot be driven by x.z""" \
+  Note: InPort x.y cannot be driven by x.z""" \
           .format(  repr(rhost), type(rhost).__name__,
                     type(v).__name__, repr(v), type(u).__name__, repr(u) ) )
 
@@ -450,8 +450,8 @@ class ComponentLevel3( ComponentLevel2 ):
             # Hence, writer is outport, reader is wire or outport
             # writer cannot be constant
             elif rhost == whost.get_parent_object():
-              valid = isinstance( u, OutVPort) and \
-                    ( isinstance( v, OutVPort ) or isinstance( v, Wire ) )
+              valid = isinstance( u, OutPort) and \
+                    ( isinstance( v, OutPort ) or isinstance( v, Wire ) )
 
               if not valid:
                 raise SignalTypeError( \
@@ -459,7 +459,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
 - {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
 
-  Note: InVPort x.y cannot be driven by x.z.a""" \
+  Note: InPort x.y cannot be driven by x.z.a""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
 
@@ -467,9 +467,9 @@ class ComponentLevel3( ComponentLevel2 ):
             # Hence, writer is inport or wire, reader is inport
             # writer can be constant
             elif whost == rhost.get_parent_object():
-              # valid = ( isinstance( u, InVPort ) or isinstance( u, Wire ) \
+              # valid = ( isinstance( u, InPort ) or isinstance( u, Wire ) \
                                                  # or isinstance( u, Const)) and \
-                         # isinstance( v, InVPort )
+                         # isinstance( v, InPort )
 
               # if not valid:
                 # raise SignalTypeError( \
@@ -477,13 +477,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
 # - {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
 
-  # Note: OutVPort/Wire x.y.z cannot be driven by x.a""" \
+  # Note: OutPort/Wire x.y.z cannot be driven by x.a""" \
           # .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     # type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
 
             # Shunning 9/12/2017: Actually in this case writer can be outport
               valid = ( isinstance( u, Signal ) or isinstance( u, Const )) and \
-                        isinstance( v, InVPort )
+                        isinstance( v, InPort )
 
               if not valid:
                 raise SignalTypeError( \
@@ -491,7 +491,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
 - {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
 
-  Note: OutVPort/Wire x.y.z cannot be driven by x.a""" \
+  Note: OutPort/Wire x.y.z cannot be driven by x.a""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
 
@@ -500,7 +500,7 @@ class ComponentLevel3( ComponentLevel2 ):
             # Hence, writer is outport and reader is inport
             # writer cannot be constant
             elif whost.get_parent_object() == rhost.get_parent_object():
-              valid = isinstance( u, OutVPort ) and isinstance( v, InVPort )
+              valid = isinstance( u, OutPort ) and isinstance( v, InPort )
 
               if not valid:
                 raise SignalTypeError( \
@@ -509,7 +509,7 @@ class ComponentLevel3( ComponentLevel2 ):
 - {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
 
   Note: Looks like the connection is fulfilled in "{}".
-        OutVPort/Wire x.y.z cannot be driven by x.a.b""" \
+        OutPort/Wire x.y.z cannot be driven by x.a.b""" \
           .format(  type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
                     type(u).__name__, repr(u), repr(whost), type(whost).__name__,
                     repr(whost.get_parent_object()) ) )

@@ -7,14 +7,15 @@
 #   Date : Mar 07, 2019
 
 from pymtl import *
-from pclib.ifcs.SendRecvIfc  import SendIfcRTL, RecvIfcRTL, enrdy_to_str
+from pclib.ifcs.SendRecvIfc  import SendIfcRTL, RecvIfcRTL
 from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCallerIfc
+from ifcs_utils import enrdy_to_str
 
 #-------------------------------------------------------------------------
 # RecvCL2SendRTL
 #-------------------------------------------------------------------------
 
-class RecvCL2SendRTL( ComponentLevel6 ):
+class RecvCL2SendRTL( Component ):
 
   def construct( s, MsgType ):
 
@@ -57,7 +58,7 @@ class RecvCL2SendRTL( ComponentLevel6 ):
 # RecvRTL2SendCL
 #-------------------------------------------------------------------------
 
-class RecvRTL2SendCL( ComponentLevel6 ):
+class RecvRTL2SendCL( Component ):
 
   def construct( s, MsgType ):
 
@@ -71,8 +72,8 @@ class RecvRTL2SendCL( ComponentLevel6 ):
 
     @s.update
     def up_recv_rtl_rdy():
-      s.send_rdy = s.send.rdy()
-      s.recv.rdy = Bits1( 1 ) if s.send.rdy() else Bits1( 0 )
+      s.send_rdy = s.send.rdy() and not s.reset
+      s.recv.rdy = Bits1( 1 ) if s.send.rdy() and not s.reset else Bits1( 0 )
 
     @s.update
     def up_send_cl():

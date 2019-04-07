@@ -41,9 +41,9 @@ class InValRdyIfc( Interface ):
 
   def construct( s, Type ):
 
-    s.msg = InVPort( Type )
-    s.val = InVPort( int if Type is int else Bits1 )
-    s.rdy = OutVPort( int if Type is int else Bits1 )
+    s.msg = InPort( Type )
+    s.val = InPort( int if Type is int else Bits1 )
+    s.rdy = OutPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
@@ -52,9 +52,9 @@ class OutValRdyIfc( Interface ):
 
   def construct( s, Type ):
 
-    s.msg = OutVPort( Type )
-    s.val = OutVPort( int if Type is int else Bits1 )
-    s.rdy = InVPort( int if Type is int else Bits1 )
+    s.msg = OutPort( Type )
+    s.val = OutPort( int if Type is int else Bits1 )
+    s.rdy = InPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
@@ -181,8 +181,8 @@ def test_customized_connect():
 
   class MockRecvIfc( Interface ):
     def construct( s ):
-      s.recv_msg = InVPort( Bits1 )
-      s.recv_val = InVPort( Bits1 )
+      s.recv_msg = InPort( Bits1 )
+      s.recv_val = InPort( Bits1 )
 
     def connect( s, other, parent ):
       if isinstance( other, MockSendIfc ):
@@ -196,8 +196,8 @@ def test_customized_connect():
 
   class MockSendIfc( Interface ):
     def construct( s ):
-      s.send_msg = OutVPort( Bits1 )
-      s.send_val = OutVPort( Bits1 )
+      s.send_msg = OutPort( Bits1 )
+      s.send_val = OutPort( Bits1 )
 
     def connect( s, other, parent ):
       if isinstance( other, MockRecvIfc ):
@@ -253,8 +253,8 @@ def test_customized_connect_adapter():
 
     def construct( s, InType, OutType ):
 
-      s.in_ = InVPort ( InType  )
-      s.out = OutVPort( OutType )
+      s.in_ = InPort ( InType  )
+      s.out = OutPort( OutType )
 
       @s.update
       def adapter_incr():
@@ -263,8 +263,8 @@ def test_customized_connect_adapter():
   class MockRecvIfc( Interface ):
 
     def construct( s, Type ):
-      s.recv_msg = InVPort( Type  )
-      s.recv_val = InVPort( Bits1 )
+      s.recv_msg = InPort( Type  )
+      s.recv_val = InPort( Bits1 )
 
       s.Type = Type
 
@@ -286,8 +286,8 @@ def test_customized_connect_adapter():
 
   class MockSendIfc( Interface ):
     def construct( s, Type ):
-      s.send_msg = OutVPort( Type  )
-      s.send_val = OutVPort( Bits1 )
+      s.send_msg = OutPort( Type  )
+      s.send_val = OutPort( Bits1 )
 
       s.Type = Type
 

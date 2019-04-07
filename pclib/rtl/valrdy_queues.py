@@ -2,7 +2,7 @@ from pymtl import *
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
 from pclib.rtl  import Mux, Reg, RegEn, RegisterFile
 
-class PipeQueue1RTL( RTLComponent ):
+class PipeQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = InValRdyIfc ( Type )
@@ -43,7 +43,7 @@ class PipeQueue1RTL( RTLComponent ):
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
 
-class BypassQueue1RTL( RTLComponent ):
+class BypassQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = InValRdyIfc ( Type )
@@ -94,7 +94,7 @@ class BypassQueue1RTL( RTLComponent ):
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
 
-class NormalQueue1RTL( RTLComponent ):
+class NormalQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = InValRdyIfc( Type )
@@ -138,13 +138,13 @@ class NormalQueue1RTL( RTLComponent ):
 #-----------------------------------------------------------------------
 # NormalQueueRTL
 #-----------------------------------------------------------------------
-class NormalQueueRTL( RTLComponent ):
+class NormalQueueRTL( Component ):
 
   def construct( s, num_entries, Type ):
 
     s.enq              = InValRdyIfc( Type )
     s.deq              = OutValRdyIfc( Type )
-    s.num_free_entries = OutVPort( mk_bits( clog2(num_entries) ) )
+    s.num_free_entries = OutPort( mk_bits( clog2(num_entries) ) )
 
     # Ctrl and Dpath unit instantiation
 
@@ -176,18 +176,18 @@ class NormalQueueRTL( RTLComponent ):
 #-----------------------------------------------------------------------
 # NormalQueueRTLDpath
 #-----------------------------------------------------------------------
-class NormalQueueRTLDpath( RTLComponent ):
+class NormalQueueRTLDpath( Component ):
 
   def construct( s, num_entries, Type ):
 
-    s.enq_bits  = InVPort  ( Type )
-    s.deq_bits  = OutVPort ( Type )
+    s.enq_bits  = InPort  ( Type )
+    s.deq_bits  = OutPort ( Type )
 
     # Control signal (ctrl -> dpath)
     addr_nbits  = clog2( num_entries )
-    s.wen       = InVPort  ( Bits1 )
-    s.waddr     = InVPort  ( mk_bits( addr_nbits ) )
-    s.raddr     = InVPort  ( mk_bits( addr_nbits ) )
+    s.wen       = InPort  ( Bits1 )
+    s.waddr     = InPort  ( mk_bits( addr_nbits ) )
+    s.raddr     = InPort  ( mk_bits( addr_nbits ) )
 
     # Queue storage
 
@@ -204,7 +204,7 @@ class NormalQueueRTLDpath( RTLComponent ):
 #-----------------------------------------------------------------------
 # NormalQueueRTLCtrl
 #-----------------------------------------------------------------------
-class NormalQueueRTLCtrl( RTLComponent ):
+class NormalQueueRTLCtrl( Component ):
 
   def construct( s, num_entries ):
 
@@ -213,16 +213,16 @@ class NormalQueueRTLCtrl( RTLComponent ):
 
     # Interface Ports
 
-    s.enq_val          = InVPort  ( Bits1 )
-    s.enq_rdy          = OutVPort ( Bits1 )
-    s.deq_val          = OutVPort ( Bits1 )
-    s.deq_rdy          = InVPort  ( Bits1 )
-    s.num_free_entries = OutVPort ( mk_bits( clog2( num_entries ) ) )
+    s.enq_val          = InPort  ( Bits1 )
+    s.enq_rdy          = OutPort ( Bits1 )
+    s.deq_val          = OutPort ( Bits1 )
+    s.deq_rdy          = InPort  ( Bits1 )
+    s.num_free_entries = OutPort ( mk_bits( clog2( num_entries ) ) )
 
     # Control signal (ctrl -> dpath)
-    s.wen              = OutVPort ( Bits1 )
-    s.waddr            = OutVPort ( mk_bits( addr_nbits ) )
-    s.raddr            = OutVPort ( mk_bits( addr_nbits ) )
+    s.wen              = OutPort ( Bits1 )
+    s.waddr            = OutPort ( mk_bits( addr_nbits ) )
+    s.raddr            = OutPort ( mk_bits( addr_nbits ) )
 
     # Wires
 

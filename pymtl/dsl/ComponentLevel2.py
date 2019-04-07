@@ -13,7 +13,7 @@
 
 from NamedObject     import NamedObject
 from ComponentLevel1 import ComponentLevel1
-from Connectable     import Connectable, Signal, InVPort, OutVPort, Wire, Const, Interface
+from Connectable     import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
 from ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
 from errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, \
@@ -331,8 +331,8 @@ class ComponentLevel2( ComponentLevel1 ):
         while not isinstance( host, ComponentLevel2 ):
           host = host.get_parent_object() # go to the component
 
-        if   isinstance( obj, InVPort ):  pass
-        elif isinstance( obj, OutVPort ): pass
+        if   isinstance( obj, InPort ):  pass
+        elif isinstance( obj, OutPort ): pass
         elif isinstance( obj, Wire ):
           if blk_hostobj != host:
             raise SignalTypeError("""[Type 1] Invalid read to Wire:
@@ -341,7 +341,7 @@ class ComponentLevel2( ComponentLevel1 ):
        "{}" of {} (class {}).
 
   Note: Please only read Wire "x.wire" in x's update block.
-        (Or did you intend to declare it as an OutVPort?)""" \
+        (Or did you intend to declare it as an OutPort?)""" \
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
@@ -359,14 +359,14 @@ class ComponentLevel2( ComponentLevel1 ):
       # an input port declaration. This makes assignments to a variable
       # declared as an input port illegal. -- IEEE
 
-        if   isinstance( obj, InVPort ):
+        if   isinstance( obj, InPort ):
           if host.get_parent_object() != blk_hostobj:
             raise SignalTypeError("""[Type 2] Invalid write to an input port:
 
-- InVPort "{}" of {} (class {}) is written in update block
+- InPort "{}" of {} (class {}) is written in update block
           "{}" of {} (class {}).
 
-  Note: Please only write to children's InVPort "x.y.in", not "x.in", in x's update block.""" \
+  Note: Please only write to children's InPort "x.y.in", not "x.in", in x's update block.""" \
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(host), type(host).__name__ ) )
 
@@ -375,14 +375,14 @@ class ComponentLevel2( ComponentLevel1 ):
       # continuous assignments to a variable connected to the output port
       # of an instance illegal. -- IEEE
 
-        elif isinstance( obj, OutVPort ):
+        elif isinstance( obj, OutPort ):
           if blk_hostobj != host:
             raise SignalTypeError("""[Type 3] Invalid write to output port:
 
-- OutVPort \"{}\" of {} (class {}) is written in update block
+- OutPort \"{}\" of {} (class {}) is written in update block
            \"{}\" of {} (class {}).
 
-  Note: Please only write to OutVPort "x.out", not "x.y.out", in x's update block.""" \
+  Note: Please only write to OutPort "x.out", not "x.y.out", in x's update block.""" \
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__, ) )
 
@@ -397,7 +397,7 @@ class ComponentLevel2( ComponentLevel1 ):
        "{}" of {} (class {}).
 
   Note: Please only write to Wire "x.wire" in x's update block.
-        (Or did you intend to declare it as an InVPort?)""" \
+        (Or did you intend to declare it as an InPort?)""" \
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
@@ -614,7 +614,7 @@ class ComponentLevel2( ComponentLevel1 ):
                   if not name.startswith("_") ] # filter private variables
     while stack:
       u = stack.pop()
-      if   isinstance( u, InVPort ):
+      if   isinstance( u, InPort ):
         ret.add( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
@@ -630,7 +630,7 @@ class ComponentLevel2( ComponentLevel1 ):
                   if not name.startswith("_") ] # filter private variables
     while stack:
       u = stack.pop()
-      if   isinstance( u, OutVPort ):
+      if   isinstance( u, OutPort ):
         ret.add( u )
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
