@@ -3,7 +3,7 @@ from collections import deque
 from pclib.ifcs  import OutValRdyIfc, SendIfcRTL, enrdy_to_str
 from pclib.valrdy import valrdy_to_str
 
-class TestBasicSource( RTLComponent ):
+class TestBasicSource( Component ):
 
   def construct( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!"
@@ -25,7 +25,7 @@ class TestBasicSource( RTLComponent ):
   def line_trace( s ):
     return "%s" % s.out
 
-class TestSourceValRdy( RTLComponent ):
+class TestSourceValRdy( Component ):
 
   def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSrc only accepts a list of inputs!"
@@ -52,7 +52,7 @@ class TestSourceValRdy( RTLComponent ):
   def line_trace( s ):
     return s.out.line_trace()
 
-class TestSourceEnRdy( RTLComponent ):
+class TestSourceEnRdy( Component ):
 
   def construct( s, Type, input_ = [], stall_prob=0 ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!"

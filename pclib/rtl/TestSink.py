@@ -3,7 +3,7 @@ from collections  import deque
 from pclib.ifcs   import RecvIfcRTL, InValRdyIfc, enrdy_to_str
 from pclib.ifcs   import valrdy_to_str
 
-class TestBasicSink( RTLComponent ):
+class TestBasicSink( Component ):
 
   def construct( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
@@ -27,7 +27,7 @@ class TestBasicSink( RTLComponent ):
   def line_trace( s ):
     return "%s" % s.in_
 
-class TestSinkValRdy( RTLComponent ):
+class TestSinkValRdy( Component ):
 
   def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSink only accepts a list of outputs!"
@@ -57,7 +57,7 @@ class TestSinkValRdy( RTLComponent ):
   def line_trace( s ):
     return s.in_.line_trace()
 
-class TestSinkUnorderedValRdy( RTLComponent ):
+class TestSinkUnorderedValRdy( Component ):
 
   def construct( s, Type, msgs ):
     assert type(msgs) == list, "TestSink only accepts a list of outputs!"
@@ -90,7 +90,7 @@ class TestSinkUnorderedValRdy( RTLComponent ):
   def line_trace( s ):
     return s.in_.line_trace()
 
-class TestSinkEnRdy( RTLComponent ):
+class TestSinkEnRdy( Component ):
 
   def construct( s, Type, answer, stall_prob=0 ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
