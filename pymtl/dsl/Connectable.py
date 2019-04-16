@@ -8,6 +8,7 @@
 
 from NamedObject import NamedObject, DSLMetadata
 from pymtl.datatypes import mk_bits
+from pymtl.datatypes.Bits import Bits
 from errors import InvalidConnectionError
 
 class Connectable(object):
@@ -74,8 +75,13 @@ class Signal( NamedObject, Connectable ):
     s._dsl.Type = Type
     s._dsl.type_instance = None
 
-    try:  Type.nbits
-    except AttributeError: # not Bits type
+    # Yanghui: this would break if another Type indeed has an nbits
+    #          attribute.
+    # try:  Type.nbits
+    # except AttributeError: # not Bits type
+
+    # FIXME: ckeck if Type is actually a type?
+    if not issubclass( Type, Bits ):
       s._dsl.type_instance = Type()
 
     s._dsl.slice  = None # None -- not a slice of some wire by default
