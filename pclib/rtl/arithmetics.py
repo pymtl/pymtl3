@@ -2,7 +2,7 @@ from pymtl import *
 
 # N-input Mux
 
-class Mux( RTLComponent ):
+class Mux( Component ):
 
   def construct( s, Type, ninputs ):
     s.in_ = [ InPort( Type ) for _ in xrange(ninputs) ]
@@ -15,7 +15,7 @@ class Mux( RTLComponent ):
 
 # Rshifter
 
-class RShifter( RTLComponent ):
+class RShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
@@ -28,7 +28,7 @@ class RShifter( RTLComponent ):
 
 # Lshifter
 
-class LShifter( RTLComponent ):
+class LShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
@@ -41,7 +41,7 @@ class LShifter( RTLComponent ):
 
 # Incrementer 
 
-class Incrementer( RTLComponent ):
+class Incrementer( Component ):
 
   def construct( s, Type, amount=1 ):
     s.in_ = InPort( Type )
@@ -53,7 +53,7 @@ class Incrementer( RTLComponent ):
 
 # Adder 
 
-class Adder( RTLComponent ):
+class Adder( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )
@@ -66,7 +66,7 @@ class Adder( RTLComponent ):
 
 # Subtractor
 
-class Subtractor( RTLComponent ):
+class Subtractor( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )
@@ -79,7 +79,7 @@ class Subtractor( RTLComponent ):
 
 # ZeroComparator 
 
-class ZeroComp( RTLComponent ):
+class ZeroComp( Component ):
 
   def construct( s, Type ):
     s.in_ = InPort( Type )
@@ -91,7 +91,7 @@ class ZeroComp( RTLComponent ):
 
 # LeftThanComparator
 
-class LTComp( RTLComponent ):
+class LTComp( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )
@@ -104,7 +104,7 @@ class LTComp( RTLComponent ):
 
 # LeftThanOrEqualToComparator
 
-class LEComp( RTLComponent ):
+class LEComp( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )

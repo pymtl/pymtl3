@@ -61,7 +61,7 @@ class BypassQueue1RTL( Component ):
   def line_trace( s ):
     return s.buf.line_trace()
 
-class NormalQueue1RTL( RTLComponent ):
+class NormalQueue1RTL( Component ):
 
   def construct( s, Type ):
     s.enq = RecvIfcRTL( Type )

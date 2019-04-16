@@ -21,26 +21,26 @@ SimpleCLSim = [
 
 from mamba.UnrollTickPass import UnrollTickPass
 UnrollSim = [
-  RTLComponent.elaborate,
+  Component.elaborate,
   GenDAGPass(),
   SimpleSchedPass(),
   UnrollTickPass(),
-  RTLComponent.lock_in_simulation
+  Component.lock_in_simulation
 ]
 
 from mamba.HeuristicTopoPass import HeuristicTopoPass
 HeuTopoUnrollSim = [
-  RTLComponent.elaborate,
+  Component.elaborate,
   GenDAGPass(),
   HeuristicTopoPass(),
   UnrollTickPass(),
-  RTLComponent.lock_in_simulation
+  Component.lock_in_simulation
 ]
 
 from mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 TraceBreakingSim = [
-  RTLComponent.elaborate,
+  Component.elaborate,
   GenDAGPass(),
   TraceBreakingSchedTickPass(),
-  RTLComponent.lock_in_simulation
+  Component.lock_in_simulation
 ]
