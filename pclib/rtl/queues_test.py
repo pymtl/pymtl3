@@ -316,6 +316,7 @@ class TestHarnessGeneral( Component ):
     return "{} ({}) {}".format( s.src.line_trace(), s.dut.line_trace(),
                                 s.sink.line_trace() )
 
+<<<<<<< HEAD
 #-------------------------------------------------------------------------
 # test_wrapper
 #-------------------------------------------------------------------------
