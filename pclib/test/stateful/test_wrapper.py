@@ -6,22 +6,21 @@
 # Author : Yixiao Zhang
 #   Date : March 24, 2019
 
-from pymtl import *
+from pymtl    import *
 from template import *
-from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
-from pymtl.dsl.ComponentLevel3 import ComponentLevel3
-from pymtl.dsl.Connectable import CalleePort, MethodGuard
+from pclib.ifcs.GuardedIfc     import guarded_ifc, GuardedCalleeIfc
+from pymtl.dsl.ComponentLevel6 import ComponentLevel6
+
 import inspect
 import attr
-
 
 def _mangleName( method_name, port_name ):
   return method_name + "_" + port_name
 
-
 #-------------------------------------------------------------------------
 # Result
 #-------------------------------------------------------------------------
+
 class Result():
   pass
 
@@ -30,10 +29,10 @@ class Result():
       return False
     return self.__dict__ == obj.__dict__
 
-
 #-------------------------------------------------------------------------
 # Method
 #-------------------------------------------------------------------------
+
 @attr.s()
 class Method( object ):
   method_name = attr.ib()
@@ -44,14 +43,14 @@ class Method( object ):
 def rename( f, newname ):
   f.__name__ = newname
 
-
 #-------------------------------------------------------------------------
 # RTLAdapter
 #-------------------------------------------------------------------------
-class RTL2CLWrapper( ComponentLevel6 ):
+
+class RTL2CLWrapper( Component ):
 
   def _construct( s ):
-    ComponentLevel3._construct( s )
+    Component._construct( s )
 
   def inspect( s, rtl_model ):
     method_specs = {}
@@ -63,9 +62,9 @@ class RTL2CLWrapper( ComponentLevel6 ):
         for name, port in inspect.getmembers( ifc ):
           if name == 'en' or name == 'rdy':
             continue
-          if isinstance( port, InVPort ):
+          if isinstance( port, InPort ):
             args[ name ] = port._dsl.Type
-          if isinstance( port, OutVPort ):
+          if isinstance( port, OutPort ):
             rets[ name ] = port._dsl.Type
 
         method_specs[ method ] = Method(
@@ -77,26 +76,8 @@ class RTL2CLWrapper( ComponentLevel6 ):
     # In a RTL2CLWrapper bind_method needs to be called inside construct after
     # cl methods are added, which happens after inspecting the rtl model
 
-    # The following code handles guarded methods
-    def bind_method( method ):
-
-      def _method(*args, **kwargs ):
-        return method( s, *args, **kwargs )
-
-      return _method
-
-    for x in dir( s ):
-      # This getattr will get the bounded method from ComponentLevel4
-      y = getattr( s, x )
-
-      # This would break if this _method_ has a member with
-      # attribute [_anti_name_conflict_rdy]
-      if hasattr( y, '_anti_name_conflict_rdy' ):
-        port = CalleePort( y )
-        # NOTE we are in NameObject._setattr_for_elaborate_, we need
-        # to first setattr "port" to "s" then add "rdy" to "port"
-        setattr( s, x, port )
-        port.rdy = MethodGuard( bind_method( y._anti_name_conflict_rdy ) )
+    # NOTE from Yanghui: I replaced this piece of code.
+    ComponentLevel6._handle_guard_methods( s )
 
   def construct( s, rtl_model ):
     s.model = rtl_model
@@ -112,7 +93,8 @@ class RTL2CLWrapper( ComponentLevel6 ):
     s._constraints = []
 
     s.wrapper_upblks = {}
-
+    
+    # FIXME: this appears to cause multi-writer to reset.
     if hasattr( s.model, "reset" ):
 
       @s.update
@@ -226,8 +208,9 @@ class RTL2CLWrapper( ComponentLevel6 ):
       ]
       if ret_list:
         return ret_list[ 0 ]
-
-    method = method_port( lambda s: s.__dict__[ method_name + "_rdy" ] )(
+    
+    # FIXME: is this the right way to replcae method_port?
+    method = guarded_ifc( lambda s: s.__dict__[ method_name + "_rdy" ] )(
         method )
     setattr( method, "__name__", method_name )
 
