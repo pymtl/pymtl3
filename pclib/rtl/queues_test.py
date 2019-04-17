@@ -10,10 +10,16 @@ import pytest
 from pymtl                    import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
 from pclib.test.test_srcs     import TestSrcCL
-from pclib.test.test_sinks    import TestSinkRTL
+from pclib.test.test_sinks    import TestSinkRTL, TestSinkCL
 from pclib.test               import TestVectorSimulator
+from pclib.ifcs.GuardedIfc    import guarded_ifc
 from pymtl.passes.PassGroups  import SimpleCLSim
 from queues import NormalQueueRTL
+
+from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
+from pclib.test.stateful.test_wrapper  import *
+from pclib.cl.queues                   import BypassQueueCL, PipeQueueCL
+from pclib.rtl.enrdy_queues            import BypassQueue1RTL, PipeQueue1RTL
 
 #-------------------------------------------------------------------------
 # TestVectorSimulator test
@@ -135,7 +141,7 @@ def test_normal2_simple():
 # ReferenceRTLAdapter
 #-------------------------------------------------------------------------
 
-class ReferenceRTLAdapter( RTLComponent ):
+class ReferenceRTLAdapter( Component ):
 
   def construct( s, rtl_model, method_specs ):
     s.enq_rdy = OutVPort( Bits1 )
@@ -177,7 +183,7 @@ class ReferenceRTLAdapter( RTLComponent ):
 # ReferenceWrapper
 #-------------------------------------------------------------------------
 
-class ReferenceWrapper( ComponentLevel6 ):
+class ReferenceWrapper( Component ):
 
   def construct( s, model ):
     s.model = model
@@ -241,17 +247,17 @@ class ReferenceWrapper( ComponentLevel6 ):
         M( s.deq.rdy ) < U( update_deq ),
         M( s.deq ) < U( update_deq ) )
 
-  @method_port( lambda s: s.enq_rdy )
+  @guarded_ifc( lambda s: s.enq_rdy )
   def enq( s, msg ):
     s.enq_called = 1
     s.enq_msg = msg
 
-  @method_port( lambda s: s.deq_rdy )
+  @guarded_ifc( lambda s: s.deq_rdy )
   def deq( s ):
     s.deq_called = 1
     return s.deq_msg
 
-  @method_port
+  @guarded_ifc
   def reset_( self ):
     s.reset_called = 1
 
@@ -280,7 +286,7 @@ class ReferenceWrapper( ComponentLevel6 ):
             method_name=method, args=args, rets=rets )
     return method_specs
 
-class TestHarness( ComponentLevel6 ):
+class TestHarnessGeneral( Component ):
 
   def construct( s,
                  Dut,
@@ -319,7 +325,7 @@ class TestHarness( ComponentLevel6 ):
                            ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_wrapper( QueueCL, QueueRTL ):
   wrapper = RTL2CLWrapper( QueueRTL( Bits16 ) )
-  th = TestHarness( wrapper, test_msgs, test_msgs, 0, 0, 0, 0, arrival_pipe )
+  th = TestHarnessGeneral( wrapper, test_msgs, test_msgs, 0, 0, 0, 0, arrival_pipe )
   run_sim( th )
 
 #-------------------------------------------------------------------------
