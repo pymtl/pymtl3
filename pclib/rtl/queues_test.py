@@ -341,4 +341,3 @@ def test_cl():
                            ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_state_machine( QueueCL, QueueRTL ):
   test_stateful = run_test_state_machine(  RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
->>>>>>> wrapper for teststateful
