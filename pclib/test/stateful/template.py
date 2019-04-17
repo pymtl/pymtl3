@@ -34,7 +34,6 @@ def update():
       s.model.{method_name}.en = 0
   else:
     s.model.{method_name}.en = 0
-    s.{method_name}_rdy = 0
   s.{method_name}_called = 0
 
 
@@ -67,4 +66,16 @@ ret_tmpl = """
 
 clear_tmpl = """
   self.model.{method} = 0
+"""
+
+wrapper_tmpl = """
+def test_stateful():
+  if "{method}" in s.rule_to_fire.keys():
+    if s.model.{method}.rdy():
+      assert s.reference.{method}.rdy()
+      msg1 = s.model.{method}( **s.rule_to_fire[ "{method}" ] )
+      msg2 = s.reference.{method}( **s.rule_to_fire[ "{method}" ] )
+      assert msg1 == msg2
+    else:
+      assert not s.reference.{method}.rdy()
 """
