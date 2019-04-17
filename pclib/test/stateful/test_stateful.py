@@ -101,7 +101,7 @@ class TestStateMachine( GenericStateMachine ):
     # to be added to step.
     # See MethodBasedRuleStrategy for more
     method_name = rule.method_name
-    if self.model.__dict__[ method_name ].rdy() 
+    if self.model.__dict__[ method_name ].rdy() \
       and self.reference.__dict__[ method_name ].rdy():
       m_result = self.model.__dict__[ method_name ](**data )
       r_result = self.reference.__dict__[ method_name ](**data )
