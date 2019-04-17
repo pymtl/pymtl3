@@ -8,14 +8,14 @@
 
 from pymtl import *
 from pymtl.dsl import *
-from pymtl.passes.PassGroups import SimpleCLSim
 from pclib.rtl.queues import PipeQueue1RTL, BypassQueue1RTL
-from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
+from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful, TestStatefulWrapper
 from pclib.test.stateful.test_wrapper import *
 from pclib.cl.queues import PipeQueueCL, BypassQueueCL
 from pclib.cl.queues_test import TestSrcCL, TestSinkCL, test_msgs, arrival_pipe, run_sim
 from pymtl.passes.PassGroups import SimpleCLSim
 from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
+from pymtl.dsl.test.sim_utils import simple_sim_pass
 import pytest
 
 #-------------------------------------------------------------------------
@@ -75,12 +75,9 @@ class ReferenceWrapper( ComponentLevel6 ):
     s.deq_called = Bits1()
     s.deq_rdy = Bits1()
     s.deq_msg = Bits16()
-    s.reset_called =  Bits1()
+    s.reset_called = Bits1()
+    s.method_specs = s.inspect( s.model )
 
-    @s.update
-    def update_reset():
-      s.model.reset = s.reset_called
-      s.reset_called = 0
 
     @s.update
     def update_enq_rdy():
@@ -121,18 +118,16 @@ class ReferenceWrapper( ComponentLevel6 ):
       s.deq_called = 0
 
     s.add_constraints(
-      U( update_enq_rdy ) < M( s.enq ),
-      U( update_enq_rdy ) < M( s.enq.rdy ),
-      M( s.enq.rdy ) < U( update_enq ),
-      M( s.enq ) < U( update_enq ),
-      M( s.enq ) < U( update_enq_msg ),
-      U( update_deq_msg ) < M( s.deq ),
-      U( update_deq_rdy ) < M( s.deq.rdy ),
-      U( update_deq_rdy ) < M( s.deq ),
-      M( s.deq.rdy ) < U( update_deq ),
-      M( s.deq ) < U( update_deq ) 
-    )
-
+        U( update_enq_rdy ) < M( s.enq ),
+        U( update_enq_rdy ) < M( s.enq.rdy ),
+        M( s.enq.rdy ) < U( update_enq ),
+        M( s.enq ) < U( update_enq ),
+        M( s.enq ) < U( update_enq_msg ),
+        U( update_deq_msg ) < M( s.deq ),
+        U( update_deq_rdy ) < M( s.deq.rdy ),
+        U( update_deq_rdy ) < M( s.deq ),
+        M( s.deq.rdy ) < U( update_deq ),
+        M( s.deq ) < U( update_deq ) )
 
   @method_port( lambda s: s.enq_rdy )
   def enq( s, msg ):
@@ -151,22 +146,44 @@ class ReferenceWrapper( ComponentLevel6 ):
   def tick( self ):
     self.model.tick()
 
-  def line_trace( s ) :
+  def line_trace( s ):
     return s.model.line_trace()
 
+  def inspect( s, rtl_model ):
+    method_specs = {}
 
+    for method, ifc in inspect.getmembers( rtl_model ):
+      args = {}
+      rets = {}
+      if isinstance( ifc, Interface ):
+        for name, port in inspect.getmembers( ifc ):
+          if name == 'en' or name == 'rdy':
+            continue
+          if isinstance( port, InVPort ):
+            args[ name ] = port._dsl.Type
+          if isinstance( port, OutVPort ):
+            rets[ name ] = port._dsl.Type
+
+        method_specs[ method ] = Method(
+            method_name=method, args=args, rets=rets )
+    return method_specs
 
 class TestHarness( ComponentLevel6 ):
 
-  def construct( s, Dut, src_msgs, sink_msgs, src_initial, 
-                 src_interval, sink_initial, sink_interval, 
+  def construct( s,
+                 Dut,
+                 src_msgs,
+                 sink_msgs,
+                 src_initial,
+                 src_interval,
+                 sink_initial,
+                 sink_interval,
                  arrival_time=None ):
+    s.src = TestSrcCL( src_msgs, src_initial, src_interval )
+    s.dut = Dut
+    s.sink = TestSinkCL( sink_msgs, sink_initial, sink_interval, arrival_time )
 
-    s.src     = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
-    s.dut     = Dut
-    s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval, 
-                            arrival_time )
-    
+    print "construct harness"
     s.connect( s.src.send, s.dut.enq )
 
     @s.update
@@ -178,8 +195,8 @@ class TestHarness( ComponentLevel6 ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} ({}) {}".format( 
-      s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
+    return "{} ({}) {}".format( s.src.line_trace(), s.dut.line_trace(),
+                                s.sink.line_trace() )
 
 
 #-------------------------------------------------------------------------
@@ -189,12 +206,8 @@ class TestHarness( ComponentLevel6 ):
                           [( BypassQueueCL, BypassQueue1RTL ),
                            ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_wrapper( QueueCL, QueueRTL ):
-  specs = TestStateful.inspect( QueueRTL( Bits16 ), QueueCL( 1 ) )
-  wrapper = RTL2CLWrapper( QueueRTL( Bits16 ), specs )
-  #wrapper = ReferenceWrapper( QueueRTL( Bits16 ) )
-  wrapper.method_specs = specs
-  th = TestHarness( wrapper, test_msgs, test_msgs, 0, 0, 0, 0,
-                    arrival_pipe )
+  wrapper = RTL2CLWrapper( QueueRTL( Bits16 ) )
+  th = TestHarness( wrapper, test_msgs, test_msgs, 0, 0, 0, 0, arrival_pipe )
   run_sim( th )
 
 
@@ -208,6 +221,7 @@ def test_cl():
   test.enq( 2 )
   deq = test.deq()
 
+
 """
 #-------------------------------------------------------------------------
 # test_state_machine
@@ -217,5 +231,17 @@ def test_cl():
                            ( PipeQueueCL, PipeQueue1RTL, [ 'deq', 'enq' ] ) ] )
 def test_state_machine( QueueCL, QueueRTL, order ):
   run_test_state_machine(
-      QueueRTL, ( Bits16,), QueueCL( 1 ), order=order )
+      RTL2CLWrapper( QueueRTL( Bits16 ) ), ( Bits16,), QueueCL( 1 ), order=order )
 """
+
+
+
+
+#-------------------------------------------------------------------------
+# test_state_machine
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize( "QueueCL, QueueRTL",
+                          [( BypassQueueCL, BypassQueue1RTL ),
+                           ( PipeQueueCL, PipeQueue1RTL ) ] )
+def test_state_machine( QueueCL, QueueRTL ):
+  test_stateful = run_test_state_machine(  RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )

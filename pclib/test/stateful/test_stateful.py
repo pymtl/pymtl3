@@ -11,7 +11,7 @@ import hypothesis.strategies as st
 from pymtl import *
 from hypothesis.stateful import *
 from hypothesis import settings, given, seed, PrintSettings
-from pymtl.passes.PassGroups import SimpleCLSim
+from pymtl.dsl.test.sim_utils import simple_sim_pass
 from test_wrapper import *
 
 debug = True
@@ -52,12 +52,6 @@ class MethodBasedRuleStrategy( SearchStrategy ):
         i = cu.integer_range( data, 0, len( remaining_rules ) - 1 )
         rule_to_fire += [ self.rules[ remaining_rules[ i ] ] ]
         del remaining_rules[ i ]
-    rule_to_fire.sort(
-      key=lambda rule: (
-        self.machine.order.index(rule.method_name),
-        rule.index,
-      )
-    )
 
     if rule_to_fire:
       return [( rule, data.draw( rule.arguments_strategy ) )
@@ -70,9 +64,8 @@ class MethodBasedRuleStrategy( SearchStrategy ):
 class RunMethodTestError( Exception ):
   pass
 
-
 #-------------------------------------------------------------------------
-# TestStateMachine
+# TestStateful
 #-------------------------------------------------------------------------
 class TestStateMachine( GenericStateMachine ):
   __argument_strategies = {}
@@ -89,6 +82,9 @@ class TestStateMachine( GenericStateMachine ):
     self.__rtl_pending = {}
     self.__fl_pending = {}
 
+    self.wrapper.reset()
+    self.wrapper.tick()
+
   def _sim_cycle( self, method_line_trace="" ):
     #self.sim.cycle()
     print "{}  {}".format( self.sim.model.line_trace(), method_line_trace )
@@ -99,102 +95,13 @@ class TestStateMachine( GenericStateMachine ):
     print "========================== error =========================="
     raise RunMethodTestError( error_msg )
 
-  def _validate_result( self, m_ret_names, r_ret, method_name, arg,
-                        method_line_trace ):
-    type_error_msg = """
-   Reference and model have mismatched returns!
-    - method name    : {method_name}
-    - model ret      : {model_ret}
-    - reference ret  : {reference_ret}
-  """
-    if not r_ret:
-      if m_ret_names:
-        error_msg = type_error_msg.format(
-            method_name=method_name,
-            model_ret=list_string( m_ret_names ),
-            reference_ret="" )
-        self._error_line_trace( method_line_trace, error_msg )
-      else:
-        return
-
-    r_ret_names = set( sorted( r_ret.keys() ) )
-    if r_ret_names != m_ret_names:
-      error_msg = type_error_msg.format(
-          method_name=method_name,
-          model_ret=list_string( m_ret_names ),
-          reference_ret=list_string( r_ret_names ) )
-      self._error_line_trace( method_line_trace, error_msg )
-
-  def compare_result( self, m_result, r_result, method_name, arg,
-                      method_line_trace ):
-    r_result = r_result.__dict__
-    m_result = m_result.__dict__
-
-    #self._validate_result(m_ret_names, r_result, method_name, arg,
-    #                      method_line_trace)
-
-    value_error_msg = """
-   test state machine received an incorrect value!
-    - method name    : {method_name}
-    - arguments      : {arg}
-    - ret name       : {ret_name}
-    - expected value : {expected_msg}
-    - actual value   : {actual_msg}
-  """
-
-    for k in r_result.keys():
-      if r_result[ k ] != '?' and not r_result[ k ] == m_result[ k ]:
-        m_ret_names = set( sorted( m_result.keys() ) )
-        m_result_list = [
-            value for ( key, value ) in sorted( m_result.items() )
-        ]
-        r_result_list = [
-            value for ( key, value ) in sorted( r_result.items() )
-        ]
-        error_msg = value_error_msg.format(
-            method_name=method_name,
-            arg=arg,
-            ret_name=list_string( m_ret_names ),
-            expected_msg=list_string_value( r_result_list ),
-            actual_msg=list_string_value( m_result_list ) )
-        self._error_line_trace( method_line_trace, error_msg )
 
   def steps( self ):
     return self.__rules_strategy
 
-  def _call_func( s, model, name, data, index=-1 ):
-    func = getattr( model, name )
-    if index < 0:
-      return func(**data )
-    return func[ index ](**data )
-
-  def _call_func_cl( s, model, name, data, index=-1 ):
-    result = Result()
-    if not model.__dict__[ name ].rdy():
-      result.rdy = 0
-      return result
-    func = model.__dict__[ name ]
-    result.rdy = 1
-    r = func(**data )
-    if r != None:
-      r = list(( r,) )
-      ret_keys = s.method_specs[ name ].rets.keys()
-      for i in range( len( ret_keys ) ):
-        setattr( result, ret_keys[ i ], r[ i ] )
-    return result
-
   def execute_step( self, step ):
-    # store result of sim and reference
-    s_results = []
-    r_results = []
-    method_names = []
-    data_list = []
-
-    method_line_trace = []
-    # go though all rules for this step
-    s_results_raw = []
-    r_results_raw = []
-
+    
+    self.wrapper.line_trace_string = ""
     for ruledata in step:
       rule, data = ruledata
       data = dict( data )
@@ -205,82 +112,14 @@ class TestStateMachine( GenericStateMachine ):
       if not self.is_valid( rule, data ):
         continue
 
-      data_list += [ data ]
-      for k, v in list( data.items() ):
-        if isinstance( v, VarReference ):
-          data[ k ] = self.names_to_values[ v.name ]
+      self.wrapper.rule_to_fire[ rule.method_name ] = data
 
-      # For method based interface rules, call rdy ones only
-      #methods = self.interface.methods
-      method_name = rule.method_name
-      index = rule.index
+    self.wrapper.tick()
+    print self.wrapper.model.line_trace()
 
-      s_results_raw += [ self._call_func( self.sim, method_name, data, index ) ]
-      r_results_raw += [
-          self._call_func_cl( self.reference, method_name, data )
-      ]
-
-    self.sim.cycle()
-    self.reference.tick()
-
-    for ruledata, s_result, r_result in zip( step, s_results_raw,
-                                             r_results_raw ):
-      rule, data = ruledata
-      data = dict( data )
-
-      method_name = rule.method_name
-      index = rule.index
-
-      if not s_result.rdy:
-        if r_result.rdy:
-          if self.release_cycle_accuracy:
-            self.__rtl_pending_data[ method_name ] = data
-            continue
-          raise RunMethodTestError(
-              "Reference model is rdy but RTL model is not: {}".format(
-                  method_name ) )
-        continue
-
-      if not r_result.rdy:
-        if self.release_cycle_accuracy:
-          self.__fl_pending_data[ method_name ] = data
-          continue
-        raise RunMethodTestError(
-            "RTL model is rdy but Reference is not: {}".format( method_name ) )
-
-      # Method ready, add to result list
-      method_names += [ method_name ]
-
-      # If in debug mode, print out all the methods called
-      if debug:
-        argument_string = []
-        for k, v in data.items():
-          '''
-          if isinstance(v, BitStruct):
-            v = bitstruct_detail(v)'''
-          argument_string += [ "{}={}".format( k, v ) ]
-        index_string = "[{}]".format( index ) if index >= 0 else ""
-        method_line_trace += [
-            "{}{}( {} )".format( method_name, index_string,
-                                 list_string( argument_string ) )
-            if argument_string else "{}{}()".format( method_name, index_string )
-        ]
-
-      # Add to result list
-      s_results += [ s_result ]
-      r_results += [ r_result ]
-
-    method_line_trace = ",  ".join( method_line_trace )
-
-    # Compare results
-    for s_result, r_result, method, data in zip( s_results, r_results,
-                                                 method_names, data_list ):
-      self.compare_result( s_result, r_result, method, data, method_line_trace )
-
-    self._sim_cycle( method_line_trace )
 
   def print_step( self, step ):
-    pass
+    print self.wrapper.model.line_trace()
 
   def is_valid( self, rule, data ):
     if rule.precondition and not rule.precondition( self, data ):
@@ -304,28 +143,9 @@ class TestStateMachine( GenericStateMachine ):
     return target.setdefault( method, {} )
 
   @classmethod
-  def _add_rule( cls, rules ):
+  def add_rule( cls, rules ):
     target = cls.__method_rules.setdefault( cls, [] )
     target += [ rules ]
-
-  @classmethod
-  def add_always_rule( cls, rules ):
-    target = cls.__always_rules.setdefault( cls, [] )
-    target += [ rules ]
-    cls._add_rule( rules )
-
-  @classmethod
-  def add_condition_rule( cls, rules ):
-    target = cls.__condition_rules.setdefault( cls, [] )
-    target += [ rules ]
-    cls._add_rule( rules )
-
-  @classmethod
-  def add_rule( cls, rules, hascall ):
-    if hascall:
-      cls.add_condition_rule( rules )
-    else:
-      cls.add_always_rule( rules )
 
   @classmethod
   def method_rules( cls ):
@@ -342,16 +162,111 @@ class TestStateMachine( GenericStateMachine ):
     target = cls.__preconditions.setdefault( cls, {} )
     return target.setdefault( method, None )
 
+class TestStateful( TestStateMachine ):
+  pass
 
-#-------------------------------------------------------------------------
-# Method
-#-------------------------------------------------------------------------
-@attr.s()
-class Method( object ):
-  method_name = attr.ib()
-  args = attr.ib( default={} )
-  rets = attr.ib( default={} )
+class TestStatefulWrapper( ComponentLevel6 ):
+  """
+    #print s.model.method_specs
+    @s.update
+    def enq_test_stateful():
+      if "enq" in s.rule_to_fire.keys():
+        if s.model.enq.rdy():
+          assert s.reference.enq.rdy()
+          s.model.enq( **s.rule_to_fire[ "enq" ] )
+          s.reference.enq( **s.rule_to_fire[ "enq" ] )
+        else:
+          assert not s.reference.enq.rdy()
 
+
+    @s.update
+    def deq_test_stateful():
+      if "deq" in s.rule_to_fire.keys():
+        if s.model.deq.rdy():
+          assert s.reference.deq.rdy()
+          msg1 = s.model.deq( **s.rule_to_fire[ "deq" ] )
+          msg2 = s.reference.deq( **s.rule_to_fire[ "deq" ] )
+          assert msg1 == msg2
+        else:
+          assert not s.reference.deq.rdy()
+"""
+
+
+  def construct( s, model, reference ):
+    #s.test_stateful = test_stateful
+    s.model = model
+    s.reference = reference
+    s.count = 0
+    s.rule_to_fire = {}
+    s.line_trace_string = ""
+    
+
+    for method, spec in s.model.method_specs.iteritems():
+      filename = '<dynamic-123456>'
+      updates = wrapper_tmpl.format(method=method)
+      exec ( compile( updates, filename, 'exec' ), locals() )
+      lines = [ line + '\n' for line in updates.splitlines() ]
+      import linecache
+      linecache.cache[ filename ] = ( len( updates ), None, lines, filename )
+
+      rename( test_stateful, method + "_test_stateful" )
+      s.update(test_stateful)
+
+  def reset( s ):
+    s.rule_to_fire = {}
+    if hasattr( s.model, "reset" ):
+      s.model.reset()
+    if hasattr( s.reference, "reset" ):
+      s.reference.reset()
+        
+  def line_trace( s ):
+    return s.model.line_trace(), s.line_trace_string
+
+  def done( s ):
+    return False
+
+  @staticmethod
+  def _create_test_state_machine( model, reference,
+                                  argument_strategy={} ):
+    wrapper = TestStatefulWrapper( model, reference )
+    wrapper.elaborate()
+    wrapper.apply( simple_sim_pass )
+
+    print wrapper._dsl.schedule
+
+    method_specs = wrapper.model.method_specs
+
+    Test = type(
+        type( wrapper.model ).__name__ + "TestStateful_",
+        TestStateful.__bases__, dict( TestStateful.__dict__ ) )
+
+
+    for method, spec in method_specs.iteritems():
+      arguments = {}
+      if argument_strategy.has_key( method ) and isinstance(
+          argument_strategy[ method ], ArgumentStrategy ):
+        arguments = argument_strategy[ method ].arguments
+      for arg, dtype in spec.args.iteritems():
+        if not arguments.has_key( arg ):
+          arguments[ arg ] = ArgumentStrategy.get_strategy_from_type( dtype )
+          if not arguments[ arg ]:
+            error_msg = """
+  Argument strategy not specified!
+    method name: {method_name}
+    argument   : {arg}
+"""
+            raise RunMethodTestError(
+                error_msg.format( method_name=method, arg=arg ) )
+      Test.add_argument_strategy( method, arguments )
+      Test.add_rule(
+          MethodRule(
+              method_name=method, arguments=arguments, precondition=None ) )
+
+    Test.wrapper = wrapper
+    Test.release_cycle_accuracy = False
+    Test.method_specs = method_specs
+
+    return Test
 
 #-------------------------------------------------------------------------
 # MethodRule
@@ -405,26 +320,17 @@ class ArgumentStrategy( object ):
 
   @staticmethod
   def bitstype_strategy( dtype ):
-
     if isinstance( dtype, Bits ):
       return ArgumentStrategy.bits_strategy( dtype.nbits )
     raise TypeError( "No supported bitstype strategy for {}".format(
         type( dtype ) ) )
 
   @staticmethod
-  def array_strategy( dtype ):
-    if not isinstance( dtype, Array ):
-      raise TypeError( "No supported array strategy for {}".format(
-          type( dtype ) ) )
-    return st.lists(
-        ArgumentStrategy.bitstype_strategy( dtype.Data ),
-        min_size=dtype.length,
-        max_size=dtype.length )
-
-  @staticmethod
   def get_strategy_from_type( dtype ):
-    if isinstance( dtype, Bits ) or isinstance( dtype, BitStruct ):
+    if isinstance( dtype, Bits ):
       return ArgumentStrategy.bitstype_strategy( dtype )
+    if isinstance( dtype(), Bits ):
+      return ArgumentStrategy.bitstype_strategy( dtype() )
     return None
 
 
@@ -475,123 +381,12 @@ def reference_precondition( precond ):
 
 
 #-------------------------------------------------------------------------
-# TestStateful
-#-------------------------------------------------------------------------
-class TestStateful( TestStateMachine ):
-  sim = None
-  reference = None
-
-  def __init__( self ):
-    TestStateMachine.__init__( self )
-    self.sim.reset()
-    if hasattr(self.reference, "reset"):
-      self.reference.reset()
-    self.sim.cycle()
-    self.reference.tick()
-    #self.reference.reset()
-
-  @staticmethod
-  def _run_state_machine( state_machine_factory ):
-    run_state_machine_as_test( state_machine_factory )
-
-  @staticmethod
-  def inspect( rtl_class, cl_class ):
-    rtl_class.apply( SimpleSim )
-    cl_class.apply( SimpleCLSim )
-    methods = {}
-    method_specs = {}
-    for method, ifc in inspect.getmembers( rtl_class ):
-      if isinstance( ifc, Interface ):
-        methods[ method ] = ifc.__dict__.copy()
-        del methods[ method ][ "_dsl" ]
-        del methods[ method ][ "en" ]
-        del methods[ method ][ "rdy" ]
-
-    for method, members in methods.iteritems():
-      args, _, _, _ = inspect.getargspec( cl_class.__dict__[ method ].method )
-      method_args = {}
-      rets = methods[ method ]
-      for arg in args[ 1:]:
-        method_args[ arg ] = rets[ arg ]
-        del rets[ arg ]
-      method_specs[ method ] = Method(
-          method_name=method, args=method_args, rets=rets )
-
-    return method_specs
-
-  @staticmethod
-  def _create_test_state_machine( rtl_class,
-                                  arg,
-                                  cl_class,
-                                  argument_strategy={},
-                                  order=[],
-                                  wrapper=RTL2CLWrapper ):
-    method_specs = TestStateful.inspect( rtl_class(*arg ), cl_class )
-    rtl_class = wrapper( adapter( rtl_class(*arg ), method_specs ) )
-
-    Test = type(
-        type( rtl_class ).__name__ + "TestStateMachine_",
-        TestStateful.__bases__, dict( TestStateful.__dict__ ) )
-
-    for method, spec in method_specs.iteritems():
-      arguments = {}
-      if argument_strategy.has_key( method ) and isinstance(
-          argument_strategy[ method ], ArgumentStrategy ):
-        arguments = argument_strategy[ method ].arguments
-      for arg, dtype in spec.args.iteritems():
-        if not arguments.has_key( arg ):
-          arguments[ arg ] = ArgumentStrategy.get_strategy_from_type( dtype )
-          if not arguments[ arg ]:
-            raise RunMethodTestError(
-                error_msg.format( method_name=name, arg=arg ) )
-      Test.add_argument_strategy( method, arguments )
-      Test.add_rule(
-          MethodRule(
-              method_name=method, arguments=arguments, precondition=None ),
-          True )
-
-    Test.sim = rtl_class
-    Test.reference = cl_class
-    Test.release_cycle_accuracy = False
-    Test.order = order
-    Test.method_specs = method_specs
-
-    return Test
-
-
-#-------------------------------------------------------------------------
 # run_test_state_machine
 #-------------------------------------------------------------------------
 def run_test_state_machine( rtl_class,
-                            arg,
                             reference_class,
                             argument_strategy={},
-                            order=[],
-                            seed=None,
-                            wrapper=RTL2CLWrapper ):
+                            seed=None ):
 
-  reference_class.apply( SimpleCLSim )
-  state_machine_factory = TestStateful._create_test_state_machine(
-      rtl_class,
-      arg,
-      reference_class,
-      argument_strategy,
-      order=order,
-      adapter=adapter,
-      wrapper=wrapper )
-
-  if seed != None:
-    state_machine_factory._hypothesis_internal_use_seed = seed
-    state_machine_factory.TestCase.settings = settings(
-        max_examples=50,
-        deadline=None,
-        verbosity=Verbosity.verbose,
-        print_blob=PrintSettings.ALWAYS,
-        database=None )
-  else:
-    state_machine_factory.TestCase.settings = settings(
-        max_examples=50,
-        deadline=None,
-        verbosity=Verbosity.verbose,
-        print_blob=PrintSettings.ALWAYS )
-  TestStateful._run_state_machine( state_machine_factory )
+  machine = TestStatefulWrapper._create_test_state_machine( rtl_class, reference_class  )
+  run_state_machine_as_test( machine )
