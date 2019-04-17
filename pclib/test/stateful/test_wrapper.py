@@ -40,8 +40,10 @@ class Method( object ):
   args = attr.ib( default={} )
   rets = attr.ib( default={} )
 
+
 def rename( f, newname ):
-    f.__name__ = newname
+  f.__name__ = newname
+
 
 #-------------------------------------------------------------------------
 # RTLAdapter
@@ -125,8 +127,6 @@ class RTL2CLWrapper( ComponentLevel6 ):
   def reset( s ):
     s.reset_called = 1
 
-  
-
   def _add_ports( s, method_spec ):
     setattr( s, _mangleName( method_spec.method_name, "called" ), Bits1() )
     setattr( s, _mangleName( method_spec.method_name, "rdy" ), Bits1() )
@@ -169,15 +169,11 @@ class RTL2CLWrapper( ComponentLevel6 ):
     #setattr(s, _mangleName( method_spec.method_name, "rdy" ), getattr(s.model, method_spec.method_name).rdy )
     #s.add_constraints( U( update_rdy ) < RD( getattr(s, _mangleName( method_spec.method_name, "rdy" ) ) ) )
 
-
     # Rename to avoid name conflicts
-    rename( update_rdy,
-               "update_" + method_spec.method_name + "_rdy_adapter" )
+    rename( update_rdy, "update_" + method_spec.method_name + "_rdy_adapter" )
     rename( update, "update_" + method_spec.method_name + "_adapter" )
-    rename( update_rets,
-               "update_" + method_spec.method_name + "_rets_adapter" )
-    rename( update_args,
-               "update_" + method_spec.method_name + "_args_adapter" )
+    rename( update_rets, "update_" + method_spec.method_name + "_rets_adapter" )
+    rename( update_args, "update_" + method_spec.method_name + "_args_adapter" )
 
     s.update( update )
     s.update( update_rdy )
@@ -185,8 +181,8 @@ class RTL2CLWrapper( ComponentLevel6 ):
     rdy_func = s.__dict__[ method_spec.method_name ].rdy
     method_func = s.__dict__[ method_spec.method_name ]
 
-    s.wrapper_upblks[method_spec.method_name] = {}
-    s.wrapper_upblks[method_spec.method_name]["rets"] = []
+    s.wrapper_upblks[ method_spec.method_name ] = {}
+    s.wrapper_upblks[ method_spec.method_name ][ "rets" ] = []
 
     if method_spec.args:
       s.update( update_args )
@@ -196,8 +192,7 @@ class RTL2CLWrapper( ComponentLevel6 ):
       s.update( update_rets )
       s.add_constraints( U( update_rets ) < M( method_func ) )
       s.add_constraints( U( update_rets ) < U( update ) )
-      s.wrapper_upblks[method_spec.method_name]["rets"] += [update_rets]
-
+      s.wrapper_upblks[ method_spec.method_name ][ "rets" ] += [ update_rets ]
 
     s.add_constraints(
         U( update_rdy ) < M( rdy_func ),

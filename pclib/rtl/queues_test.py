@@ -9,7 +9,7 @@
 from pymtl import *
 from pymtl.dsl import *
 from pclib.rtl.queues import PipeQueue1RTL, BypassQueue1RTL
-from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful, TestStatefulWrapper
+from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
 from pclib.test.stateful.test_wrapper import *
 from pclib.cl.queues import PipeQueueCL, BypassQueueCL
 from pclib.cl.queues_test import TestSrcCL, TestSinkCL, test_msgs, arrival_pipe, run_sim
@@ -220,21 +220,6 @@ def test_cl():
   test.tick()
   test.enq( 2 )
   deq = test.deq()
-
-
-"""
-#-------------------------------------------------------------------------
-# test_state_machine
-#-------------------------------------------------------------------------
-@pytest.mark.parametrize( "QueueCL, QueueRTL, order",
-                          [( BypassQueueCL, BypassQueue1RTL, [ 'enq', 'deq' ] ),
-                           ( PipeQueueCL, PipeQueue1RTL, [ 'deq', 'enq' ] ) ] )
-def test_state_machine( QueueCL, QueueRTL, order ):
-  run_test_state_machine(
-      RTL2CLWrapper( QueueRTL( Bits16 ) ), ( Bits16,), QueueCL( 1 ), order=order )
-"""
-
-
 
 
 #-------------------------------------------------------------------------
