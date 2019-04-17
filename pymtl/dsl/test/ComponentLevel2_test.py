@@ -300,7 +300,7 @@ def test_wr_A_b_rd_A_impl():
 
   class Top(ComponentLevel2):
     def construct( s ):
-      s.A  = Wire( SomeMsg() )
+      s.A  = Wire( SomeMsg )
 
       @s.update
       def up_wr_A_b():
