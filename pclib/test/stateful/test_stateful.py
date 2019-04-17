@@ -64,6 +64,7 @@ class MethodBasedRuleStrategy( SearchStrategy ):
 class RunMethodTestError( Exception ):
   pass
 
+
 #-------------------------------------------------------------------------
 # TestStateful
 #-------------------------------------------------------------------------
@@ -95,12 +96,11 @@ class TestStateMachine( GenericStateMachine ):
     print "========================== error =========================="
     raise RunMethodTestError( error_msg )
 
-
   def steps( self ):
     return self.__rules_strategy
 
   def execute_step( self, step ):
-    
+
     self.wrapper.line_trace_string = ""
     for ruledata in step:
       rule, data = ruledata
@@ -116,7 +116,6 @@ class TestStateMachine( GenericStateMachine ):
 
     self.wrapper.tick()
     print self.wrapper.model.line_trace()
-
 
   def print_step( self, step ):
     print self.wrapper.model.line_trace()
@@ -162,8 +161,10 @@ class TestStateMachine( GenericStateMachine ):
     target = cls.__preconditions.setdefault( cls, {} )
     return target.setdefault( method, None )
 
+
 class TestStateful( TestStateMachine ):
   pass
+
 
 class TestStatefulWrapper( ComponentLevel6 ):
   """
@@ -191,7 +192,6 @@ class TestStatefulWrapper( ComponentLevel6 ):
           assert not s.reference.deq.rdy()
 """
 
-
   def construct( s, model, reference ):
     #s.test_stateful = test_stateful
     s.model = model
@@ -199,18 +199,17 @@ class TestStatefulWrapper( ComponentLevel6 ):
     s.count = 0
     s.rule_to_fire = {}
     s.line_trace_string = ""
-    
 
     for method, spec in s.model.method_specs.iteritems():
       filename = '<dynamic-123456>'
-      updates = wrapper_tmpl.format(method=method)
+      updates = wrapper_tmpl.format( method=method )
       exec ( compile( updates, filename, 'exec' ), locals() )
       lines = [ line + '\n' for line in updates.splitlines() ]
       import linecache
       linecache.cache[ filename ] = ( len( updates ), None, lines, filename )
 
       rename( test_stateful, method + "_test_stateful" )
-      s.update(test_stateful)
+      s.update( test_stateful )
 
   def reset( s ):
     s.rule_to_fire = {}
@@ -218,7 +217,7 @@ class TestStatefulWrapper( ComponentLevel6 ):
       s.model.reset()
     if hasattr( s.reference, "reset" ):
       s.reference.reset()
-        
+
   def line_trace( s ):
     return s.model.line_trace(), s.line_trace_string
 
@@ -226,8 +225,7 @@ class TestStatefulWrapper( ComponentLevel6 ):
     return False
 
   @staticmethod
-  def _create_test_state_machine( model, reference,
-                                  argument_strategy={} ):
+  def _create_test_state_machine( model, reference, argument_strategy={} ):
     wrapper = TestStatefulWrapper( model, reference )
     wrapper.elaborate()
     wrapper.apply( simple_sim_pass )
@@ -239,7 +237,6 @@ class TestStatefulWrapper( ComponentLevel6 ):
     Test = type(
         type( wrapper.model ).__name__ + "TestStateful_",
         TestStateful.__bases__, dict( TestStateful.__dict__ ) )
-
 
     for method, spec in method_specs.iteritems():
       arguments = {}
@@ -267,6 +264,7 @@ class TestStatefulWrapper( ComponentLevel6 ):
     Test.method_specs = method_specs
 
     return Test
+
 
 #-------------------------------------------------------------------------
 # MethodRule
@@ -388,5 +386,6 @@ def run_test_state_machine( rtl_class,
                             argument_strategy={},
                             seed=None ):
 
-  machine = TestStatefulWrapper._create_test_state_machine( rtl_class, reference_class  )
+  machine = TestStatefulWrapper._create_test_state_machine(
+      rtl_class, reference_class )
   run_state_machine_as_test( machine )

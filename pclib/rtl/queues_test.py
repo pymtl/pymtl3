@@ -17,49 +17,88 @@ from pymtl.passes.PassGroups import SimpleCLSim
 from pymtl.dsl.ComponentLevel6 import method_port, ComponentLevel6
 from pymtl.dsl.test.sim_utils import simple_sim_pass
 import pytest
+from pclib.ifcs.EnqDeqIfcs import EnqIfcRTL, DeqIfcRTL
 
 #-------------------------------------------------------------------------
-# ReferenceRTLAdapter
+# EnqRTL2CL
 #-------------------------------------------------------------------------
 
 
-class ReferenceRTLAdapter( RTLComponent ):
+class EnqRTL2CL( ComponentLevel6 ):
 
-  def construct( s, rtl_model, method_specs ):
-    s.enq_rdy = OutVPort( Bits1 )
-    s.enq_msg = InVPort( Bits16 )
-    s.deq = InVPort( Bits1 )
-    s.deq_rdy = OutVPort( Bits1 )
-    s.deq_msg = OutVPort( Bits16 )
+  def construct( s, MsgType ):
+
+    # Interface
+
+    s.enq_rtl = EnqIfcRTL( MsgType ).inverse()
+
+    s.enq_called = False
+    s.enq_rdy = False
+    s.enq_msg = 0
 
     @s.update
     def update_enq():
-      if s.enq:
-        s.enq_rdy = s.model.enq.rdy
-        if s.model.enq.rdy:
-          s.model.enq.en = 1
-          s.model.enq.msg = s.enq_msg
-        else:
-          s.model.enq.en = 0
-          s.model.enq.msg = 0
-      else:
-        s.model.enq.en = 0
-        s.enq_rdy = 0
+      s.enq_rtl.en = Bits1( 1 ) if s.enq_called else Bits1( 0 )
+      s.enq_rtl.msg = s.enq_msg
+      s.enq_called = False
+
+    @s.update
+    def update_enq_rdy():
+      s.enq_rdy = True if s.enq_rtl.rdy else False
+
+    s.add_constraints(
+        U( update_enq_rdy ) < M( s.enq ),
+        U( update_enq_rdy ) < M( s.enq.rdy ),
+        M( s.enq.rdy ) < U( update_enq ),
+        M( s.enq ) < U( update_enq ) )
+
+  @method_port( lambda s: s.enq_rdy )
+  def enq( s, msg ):
+    s.enq_msg = msg
+    s.enq_called = True
+
+
+#-------------------------------------------------------------------------
+# DeqRTL2CL
+#-------------------------------------------------------------------------
+
+
+class DeqRTL2CL( ComponentLevel6 ):
+
+  def construct( s, MsgType ):
+
+    # Interface
+
+    s.deq_rtl = DeqIfcRTL( MsgType ).inverse()
+
+    s.deq_called = False
+    s.deq_rdy = False
+    s.deq_msg = 0
 
     @s.update
     def update_deq():
-      if s.deq:
-        s.deq_rdy = s.model.deq.rdy
-        s.deq_msg = s.model.deq.msg
-        if s.model.deq.rdy:
-          s.model.deq.en = 1
-        else:
-          s.model.deq.en = 0
-      else:
-        s.model.deq.en = 0
+      s.deq_rtl.en = Bits1( 1 ) if s.deq_called else Bits1( 0 )
+      s.deq_called = False
 
-  def line_trace( s ):
-    return s.model.line_trace()
+    @s.update
+    def update_deq_msg():
+      s.deq_msg = s.deq_rtl.msg
+
+    @s.update
+    def update_deq_rdy():
+      s.deq_rdy = True if s.deq_rtl.rdy else False
+
+    s.add_constraints(
+        U( update_deq_msg ) < M( s.deq ),
+        U( update_deq_rdy ) < M( s.deq.rdy ),
+        U( update_deq_rdy ) < M( s.deq ),
+        M( s.deq.rdy ) < U( update_deq ),
+        M( s.deq ) < U( update_deq ) )
+
+  @method_port( lambda s: s.deq_rdy )
+  def deq( s ):
+    s.deq_called = True
+    return s.deq_msg
 
 
 #-------------------------------------------------------------------------
@@ -67,107 +106,25 @@ class ReferenceRTLAdapter( RTLComponent ):
 #-------------------------------------------------------------------------
 class ReferenceWrapper( ComponentLevel6 ):
 
-  def construct( s, model ):
-    s.model = model
-    s.enq_called = Bits1()
-    s.enq_rdy = Bits16()
-    s.enq_msg = Bits16()
-    s.deq_called = Bits1()
-    s.deq_rdy = Bits1()
-    s.deq_msg = Bits16()
-    s.reset_called = Bits1()
-    s.method_specs = s.inspect( s.model )
+  def construct( s, model, MsgType ):
+    s.model = model( MsgType )
 
-
-    @s.update
-    def update_enq_rdy():
-      s.enq_rdy = s.model.enq.rdy
-
-    @s.update
-    def update_enq_msg():
-      s.model.enq.msg = s.enq_msg
-
-    @s.update
-    def update_enq():
-      if s.enq_called:
-        if s.model.enq.rdy:
-          s.model.enq.en = 1
-        else:
-          s.model.enq.en = 0
-      else:
-        s.model.enq.en = 0
-      s.enq_called = 0
-
-    @s.update
-    def update_deq_rdy():
-      s.deq_rdy = s.model.deq.rdy
-
-    @s.update
-    def update_deq_msg():
-      s.deq_msg = s.model.deq.msg
-
-    @s.update
-    def update_deq():
-      if s.deq_called:
-        if s.model.deq.rdy:
-          s.model.deq.en = 1
-        else:
-          s.model.deq.en = 0
-      else:
-        s.model.deq.en = 0
-      s.deq_called = 0
-
-    s.add_constraints(
-        U( update_enq_rdy ) < M( s.enq ),
-        U( update_enq_rdy ) < M( s.enq.rdy ),
-        M( s.enq.rdy ) < U( update_enq ),
-        M( s.enq ) < U( update_enq ),
-        M( s.enq ) < U( update_enq_msg ),
-        U( update_deq_msg ) < M( s.deq ),
-        U( update_deq_rdy ) < M( s.deq.rdy ),
-        U( update_deq_rdy ) < M( s.deq ),
-        M( s.deq.rdy ) < U( update_deq ),
-        M( s.deq ) < U( update_deq ) )
-
-  @method_port( lambda s: s.enq_rdy )
-  def enq( s, msg ):
-    s.enq_called = 1
-    s.enq_msg = msg
-
-  @method_port( lambda s: s.deq_rdy )
-  def deq( s ):
-    s.deq_called = 1
-    return s.deq_msg
-
-  @method_port
-  def reset_( self ):
-    s.reset_called = 1
-
-  def tick( self ):
-    self.model.tick()
+    s.enq_adapter = EnqRTL2CL( MsgType )
+    s.connect( s.enq_adapter.enq_rtl, s.model.enq )
+    s.deq_adapter = DeqRTL2CL( MsgType )
+    s.connect( s.deq_adapter.deq_rtl, s.model.deq )
+    s.deq = CalleePort()
+    s.enq = CalleePort()
+    s.connect( s.deq, s.deq_adapter.deq )
+    s.connect( s.enq, s.enq_adapter.enq )
 
   def line_trace( s ):
     return s.model.line_trace()
 
-  def inspect( s, rtl_model ):
-    method_specs = {}
 
-    for method, ifc in inspect.getmembers( rtl_model ):
-      args = {}
-      rets = {}
-      if isinstance( ifc, Interface ):
-        for name, port in inspect.getmembers( ifc ):
-          if name == 'en' or name == 'rdy':
-            continue
-          if isinstance( port, InVPort ):
-            args[ name ] = port._dsl.Type
-          if isinstance( port, OutVPort ):
-            rets[ name ] = port._dsl.Type
-
-        method_specs[ method ] = Method(
-            method_name=method, args=args, rets=rets )
-    return method_specs
-
+#-------------------------------------------------------------------------
+# test_wrapper
+#-------------------------------------------------------------------------
 class TestHarness( ComponentLevel6 ):
 
   def construct( s,
@@ -183,7 +140,6 @@ class TestHarness( ComponentLevel6 ):
     s.dut = Dut
     s.sink = TestSinkCL( sink_msgs, sink_initial, sink_interval, arrival_time )
 
-    print "construct harness"
     s.connect( s.src.send, s.dut.enq )
 
     @s.update
@@ -206,7 +162,7 @@ class TestHarness( ComponentLevel6 ):
                           [( BypassQueueCL, BypassQueue1RTL ),
                            ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_wrapper( QueueCL, QueueRTL ):
-  wrapper = RTL2CLWrapper( QueueRTL( Bits16 ) )
+  wrapper = ReferenceWrapper( QueueRTL, Bits16 )
   th = TestHarness( wrapper, test_msgs, test_msgs, 0, 0, 0, 0, arrival_pipe )
   run_sim( th )
 
@@ -222,21 +178,6 @@ def test_cl():
   deq = test.deq()
 
 
-"""
-#-------------------------------------------------------------------------
-# test_state_machine
-#-------------------------------------------------------------------------
-@pytest.mark.parametrize( "QueueCL, QueueRTL, order",
-                          [( BypassQueueCL, BypassQueue1RTL, [ 'enq', 'deq' ] ),
-                           ( PipeQueueCL, PipeQueue1RTL, [ 'deq', 'enq' ] ) ] )
-def test_state_machine( QueueCL, QueueRTL, order ):
-  run_test_state_machine(
-      RTL2CLWrapper( QueueRTL( Bits16 ) ), ( Bits16,), QueueCL( 1 ), order=order )
-"""
-
-
-
-
 #-------------------------------------------------------------------------
 # test_state_machine
 #-------------------------------------------------------------------------
@@ -244,4 +185,5 @@ def test_state_machine( QueueCL, QueueRTL, order ):
                           [( BypassQueueCL, BypassQueue1RTL ),
                            ( PipeQueueCL, PipeQueue1RTL ) ] )
 def test_state_machine( QueueCL, QueueRTL ):
-  test_stateful = run_test_state_machine(  RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+  test_stateful = run_test_state_machine(
+      RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
