@@ -14,7 +14,7 @@ from pclib.test.test_sinks    import TestSinkRTL, TestSinkCL
 from pclib.test               import TestVectorSimulator
 from pclib.ifcs.GuardedIfc    import guarded_ifc
 from pymtl.passes.PassGroups  import SimpleCLSim
-from queues import NormalQueueRTL, SingleEntryPipeQueue
+from queues import NormalQueueRTL, SingleEntryPipeQueue, SingleEntryBypassQueue
 
 from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
 from pclib.test.stateful.test_wrapper  import *
@@ -170,6 +170,11 @@ def test_normal2_simple():
 def test_pipe_single():
   th = TestHarnessSingle( SingleEntryPipeQueue, Bits16, test_msgs, test_msgs, 
                           0, 0, 0, 0, arrival_pipe )
+  run_sim( th )
+
+def test_bypass_single():
+  th = TestHarnessSingle( SingleEntryBypassQueue, Bits16, test_msgs, test_msgs, 
+                          0, 0, 0, 0 )
   run_sim( th )
 
 #-------------------------------------------------------------------------

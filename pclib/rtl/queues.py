@@ -197,8 +197,63 @@ class SingleEntryPipeQueue( Component ):
         s.enq.rdy = Bits1( 0 )
     
     @s.update
-    def up_pa_deq_rdy():
+    def up_pq_deq_rdy():
       s.deq.rdy = s.full
+
+  # Line trace
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.full, s.deq )
+
+#-------------------------------------------------------------------------
+# SingleEntryBypassQueue
+#-------------------------------------------------------------------------
+
+class SingleEntryBypassQueue( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.enq = EnqIfcRTL( EntryType )
+    s.deq = DeqIfcRTL( EntryType )
+
+    # Component
+
+    s.queue = Wire( EntryType )
+    s.full  = Wire( Bits1 )
+
+    @s.update_on_edge
+    def up_pq_reg():
+      if s.reset:
+        s.queue = EntryType()
+      elif s.enq.en and not s.deq.en:
+        s.queue = s.enq.msg
+      else:
+        s.queue = s.queue
+
+    @s.update_on_edge
+    def up_bq_full():
+      if s.reset:
+        s.full = Bits1( 0 )
+      elif not s.full and s.enq.en and not s.deq.en:
+        s.full = Bits1( 1 )
+      elif not s.full and s.enq.en and s.deq.en: 
+        s.full = Bits1( 0 )
+      else:
+        s.full = s.full
+    
+    @s.update
+    def up_bq_enq_rdy():
+      s.enq.rdy = not s.full
+
+    @s.update
+    def up_bq_deq_rdy():
+      s.deq.rdy = s.full or s.enq.en
+
+    @s.update
+    def up_bq_deq_msg():
+      s.deq.msg = s.enq.msg if s.enq.en else s.queue
 
   # Line trace
 
