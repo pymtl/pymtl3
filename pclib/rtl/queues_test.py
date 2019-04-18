@@ -14,7 +14,7 @@ from pclib.test.test_sinks    import TestSinkRTL, TestSinkCL
 from pclib.test               import TestVectorSimulator
 from pclib.ifcs.GuardedIfc    import guarded_ifc
 from pymtl.passes.PassGroups  import SimpleCLSim
-from queues import NormalQueueRTL
+from queues import NormalQueueRTL, SingleEntryPipeQueue
 
 from pclib.test.stateful.test_stateful import run_test_state_machine, TestStateful
 from pclib.test.stateful.test_wrapper  import *
@@ -66,7 +66,7 @@ def test_pipe_Bits():
 # TestHarness
 #-------------------------------------------------------------------------
 
-class TestHarness( Component ):
+class TestHarnessNormal( Component ):
 
   def construct( s, MsgType, qsize, src_msgs, sink_msgs, src_initial, 
                  src_interval, sink_initial, sink_interval, 
@@ -75,6 +75,36 @@ class TestHarness( Component ):
     s.src  = TestSrcCL  ( src_msgs,  src_initial,  src_interval )
     s.dut  = NormalQueueRTL( MsgType, qsize )
     s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval, 
+                          arrival_time )
+    
+    s.connect( s.src.send,    s.dut.enq       )
+    s.connect( s.dut.deq.msg, s.sink.recv.msg )
+
+    @s.update
+    def up_deq_send():
+      if s.dut.deq.rdy and s.sink.recv.rdy:
+        s.dut.deq.en   = Bits1( 1 )
+        s.sink.recv.en = Bits1( 1 )
+      else:
+        s.dut.deq.en   = Bits1( 0 )
+        s.sink.recv.en = Bits1( 0 )
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return "{} ({}) {}".format( 
+      s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
+
+class TestHarnessSingle( Component ):
+
+  def construct( s, QueueType, EntryType, src_msgs, sink_msgs, src_initial, 
+                 src_interval, sink_initial, sink_interval, 
+                 arrival_time=None ):
+
+    s.src  = TestSrcCL  ( src_msgs,  src_initial,  src_interval )
+    s.dut  = QueueType  ( EntryType )
+    s.sink = TestSinkRTL( EntryType, sink_msgs, sink_initial, sink_interval, 
                           arrival_time )
     
     s.connect( s.src.send,    s.dut.enq       )
@@ -133,8 +163,13 @@ test_msgs = [ Bits16( 4 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
 arrival_pipe   = [ 2, 3, 4, 5 ]
 
 def test_normal2_simple():
-  th = TestHarness( Bits16, 2, test_msgs, test_msgs, 0, 0, 0, 0,
-                    arrival_pipe )
+  th = TestHarnessNormal( Bits16, 2, test_msgs, test_msgs, 0, 0, 0, 0,
+                          arrival_pipe )
+  run_sim( th )
+
+def test_pipe_single():
+  th = TestHarnessSingle( SingleEntryPipeQueue, Bits16, test_msgs, test_msgs, 
+                          0, 0, 0, 0, arrival_pipe )
   run_sim( th )
 
 #-------------------------------------------------------------------------

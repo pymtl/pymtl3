@@ -148,3 +148,59 @@ class NormalQueueRTL( Component ):
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.count, s.deq )
+
+#-------------------------------------------------------------------------
+# SingleEntryPipeQueue
+#-------------------------------------------------------------------------
+
+class SingleEntryPipeQueue( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.enq = EnqIfcRTL( EntryType )
+    s.deq = DeqIfcRTL( EntryType )
+
+    # Component
+
+    s.queue = Wire( EntryType )
+    s.full  = Wire( Bits1 )
+    
+    s.connect( s.queue, s.deq.msg )
+
+    @s.update_on_edge
+    def up_pq_reg():
+      if s.reset:
+        s.queue = EntryType()
+      elif s.enq.en:
+        s.queue = s.enq.msg
+      else:
+        s.queue = s.queue
+
+    @s.update_on_edge
+    def up_pq_full():
+      if s.reset:
+        s.full = Bits1( 0 )
+      elif not s.full and s.enq.en:
+        s.full = Bits1( 1 )
+      elif s.full and not s.enq.en and s.deq.en: 
+        s.full = Bits1( 0 )
+      else:
+        s.full = s.full
+    
+    @s.update
+    def up_pq_enq_rdy():
+      if not s.full or ( s.full and s.deq.en ):
+        s.enq.rdy = Bits1( 1 )
+      else:
+        s.enq.rdy = Bits1( 0 )
+    
+    @s.update
+    def up_pa_deq_rdy():
+      s.deq.rdy = s.full
+
+  # Line trace
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.full, s.deq )
