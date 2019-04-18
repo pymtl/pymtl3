@@ -83,7 +83,7 @@ class NamedObject(object):
               if compiled_re.match( u_name ):
                 for x, y in subdict.iteritems(): # to merge two None subdicts
                   if x is None:
-                    u._dsl.param_dict[ None ].update( subdict )
+                    u._dsl.param_dict[ None ].update( y )
                   else:
                     u._dsl.param_dict[ x ] = y
 
@@ -167,8 +167,8 @@ class NamedObject(object):
         # We lump all regex patterns into key=None
         if x not in current_dict[ None ]: # use name to index
           current_dict[ None ][ x ] = ( re.compile(x), {} )
-
         current_dict = current_dict[ None ][ x ][ 1 ]
+        current_dict[ None ] = {}
 
       # This is a normal string
       else:
