@@ -361,8 +361,8 @@ class TestHarnessGeneral( Component ):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
-                          [( BypassQueueCL, BypassQueue1RTL ),
-                           ( PipeQueueCL, PipeQueue1RTL ) ] )
+                          [( BypassQueueCL, SingleEntryBypassQueue ),
+                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
 def test_wrapper( QueueCL, QueueRTL ):
   wrapper = RTL2CLWrapper( QueueRTL( Bits16 ) )
   th = TestHarnessGeneral( wrapper, test_msgs, test_msgs, 0, 0, 0, 0, arrival_pipe )
@@ -383,7 +383,7 @@ def test_cl():
 # test_state_machine
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
-                          [( BypassQueueCL, BypassQueue1RTL ),
-                           ( PipeQueueCL, PipeQueue1RTL ) ] )
+                          [( BypassQueueCL, SingleEntryBypassQueue ),
+                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
 def test_state_machine( QueueCL, QueueRTL ):
   test_stateful = run_test_state_machine(  RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )

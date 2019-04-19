@@ -45,7 +45,7 @@ class PipeQueueCL( Component ):
     )
 
   @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
-  def enq( s, v ):
+  def enq( s, msg ):
     s.enq_called = True
     s.enq_msg    = msg
     s.queue.appendleft( s.enq_msg )
@@ -101,7 +101,7 @@ class BypassQueueCL( Component ):
     )
 
   @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
-  def enq( s, v ):
+  def enq( s, msg ):
     s.enq_called = True
     s.deq_rdy    = True
     s.enq_msg    = msg

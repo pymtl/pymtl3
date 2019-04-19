@@ -93,21 +93,11 @@ class RTL2CLWrapper( Component ):
     s._constraints = []
 
     s.wrapper_upblks = {}
-    
-    # FIXME: this appears to cause multi-writer to reset.
-    if hasattr( s.model, "reset" ):
-
-      @s.update
-      def update_reset():
-        s.model.reset = s.reset_called
-        s.reset_called = 0
 
     for method_name, method_spec in s.method_specs.iteritems():
       s._add_ports( method_spec )
       s._gen_update( method_spec )
 
-  def reset( s ):
-    s.reset_called = 1
 
   def _add_ports( s, method_spec ):
     setattr( s, _mangleName( method_spec.method_name, "called" ), Bits1() )

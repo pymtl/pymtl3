@@ -238,7 +238,7 @@ class SingleEntryBypassQueue( Component ):
         s.full = Bits1( 0 )
       elif not s.full and s.enq.en and not s.deq.en:
         s.full = Bits1( 1 )
-      elif not s.full and s.enq.en and s.deq.en: 
+      elif s.full and not s.enq.en and s.deq.en: 
         s.full = Bits1( 0 )
       else:
         s.full = s.full

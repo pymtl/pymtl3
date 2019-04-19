@@ -75,6 +75,8 @@ class TestStateMachine( GenericStateMachine ):
     self.__printer = RepresentationPrinter( self.__stream )
     self.__rtl_pending = {}
     self.__fl_pending = {}
+    self.model.sim_reset()
+    self.reference.sim_reset()
     self.model.tick()
     self.reference.tick()
 
@@ -320,4 +322,10 @@ def run_test_state_machine( rtl_class,
                             seed=None ):
 
   machine = create_test_state_machine( rtl_class, reference_class )
+  machine.TestCase.settings = settings(
+        max_examples=50,
+        deadline=None,
+        verbosity=Verbosity.verbose,
+        print_blob=PrintSettings.ALWAYS,
+        database=None )
   run_state_machine_as_test( machine )
