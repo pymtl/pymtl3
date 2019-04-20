@@ -103,8 +103,6 @@ def dump_dag( top, V, E ):
 
 def check_schedule( top, schedule, V, E, in_degree ):
 
-  assert schedule
-
   if len(schedule) != len(V):
     V_leftovers = set( [ v for v in V if in_degree[v] ] )
     E_leftovers = set( [ (x,y) for (x,y) in E
