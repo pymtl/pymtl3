@@ -5,9 +5,10 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
+import py
+
 from BasePass     import BasePass, PassMetadata
 from collections  import deque
-from graphviz     import Digraph
 from errors import PassOrderError
 from pymtl.dsl.errors import UpblkCyclicError
 
@@ -19,7 +20,6 @@ class DynamicSchedulePass( BasePass ):
     top._sched = PassMetadata()
 
     top._sched.schedule = self.schedule( top )
-    top.tick = self.generate_tick( top )
 
   def schedule( self, top ):
 
@@ -96,32 +96,91 @@ class DynamicSchedulePass( BasePass ):
 
     # Perform topological sort on SCCs
 
-    schedule = []
+    scc_schedule = []
 
     Q = deque( [ i for i in range(len(SCCs)) if not InD[i] ] )
 
     while Q:
       u = Q.pop()
-      schedule.append( SCCs[u] )
+      scc_schedule.append( SCCs[u] )
       for v in G_new[u]:
         InD[v] -= 1
         if not InD[v]:
           Q.append( v )
 
-    return schedule
+    #  from graphviz import Digraph
+    #  dot = Digraph()
+    #  dot.graph_attr["rank"] = "same"
+    #  dot.graph_attr["ratio"] = "compress"
+    #  dot.graph_attr["margin"] = "0.1"
 
-  def generate_tick( self, top ):
-    schedule        = top._sched.schedule
-    all_constraints = top._dag.all_constraints
+    #  for x in V:
+      #  dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
 
-    blocks_funcs = []
+    #  for (x, y) in E:
+      #  dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
+                #  y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
+    #  dot.render( "/tmp/upblk-dag.gv", view=True )
 
-    for scc in schedule:
+    #---------------------------------------------------------------------
+    # Now we generate super blocks for each SCC and produce final schedule
+    #---------------------------------------------------------------------
+
+    constraint_objs = top._dag.constraint_objs
+
+    schedule = []
+
+    scc_id = 0
+    for scc in scc_schedule:
       if len(scc) == 1:
-        block_funcs = list(scc)[0]
+        schedule.append( list(scc)[0] )
       else:
-        for (u, v) in all_constraints:
+        scc_id += 1
+        variables = set()
+        for (u, v) in E:
+          # Collect all variables that triggers other blocks in the SCC
           if u in scc and v in scc:
-            print u, v
+            variables.update( constraint_objs[ (u, v) ] )
+
         # generate a loop for scc
-        print top._dag.constraint_objects
+        # Shunning: we just simply loop over the whole SCC block
+        # TODO performance optimizations using Mamba techniques
+
+        def gen_wrapped_SCCblk( s, scc, src ):
+          from copy import deepcopy
+          from pymtl.dsl.errors import UpblkCyclicError
+
+          exec py.code.Source( src ).compile() in locals()
+
+          return generated_block
+
+        template = """
+          def wrapped_SCC_{0}():
+            num_iters = 0
+            while True:
+              num_iters += 1
+              {1}
+              for blk in scc:
+                blk()
+              if {2}:
+                break
+              if num_iters > 100:
+                raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}}!")
+            print "SCC block{0} is executed", num_iters, "times"
+          generated_block = wrapped_SCC_{0}
+        """
+
+        copy_srcs  = []
+        check_srcs = []
+
+        for j, var in enumerate(variables):
+          copy_srcs .append( "_____tmp_{} = deepcopy({})".format( j, var ) )
+          check_srcs.append( "{} == _____tmp_{}".format( var, j ) )
+
+        scc_block_src = template.format( scc_id,
+                                         "; ".join( copy_srcs ),
+                                         " and ".join( check_srcs ),
+                                         ", ".join( [ x.__name__ for x in scc] ) )
+        schedule.append( gen_wrapped_SCCblk( top, scc, scc_block_src ) )
+
+    return schedule

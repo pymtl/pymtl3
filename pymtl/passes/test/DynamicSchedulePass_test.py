@@ -1,12 +1,13 @@
 #=========================================================================
-# ComponentLevel2_test.py
+# DynamicSchedulePass_test.py
 #=========================================================================
 #
 # Author : Shunning Jiang
-# Date   : Nov 3, 2018
+# Date   : Apr 19, 2019
 
 from pymtl import *
-from pymtl.passes import DynamicSchedulePass, GenDAGPass
+from pymtl.passes import DynamicSchedulePass, GenDAGPass, SimpleTickPass
+from pymtl.dsl.errors import UpblkCyclicError
 
 from collections import deque
 
@@ -15,8 +16,16 @@ def _test_model( cls ):
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( DynamicSchedulePass() )
+  A.apply( SimpleTickPass() )
+  A.lock_in_simulation()
 
-def test_simple():
+  T = 0
+  while T < 5:
+    A.tick()
+    print A.line_trace()
+    T += 1
+
+def test_false_cyclic_dependency():
 
   class Top(Component):
 
@@ -35,36 +44,80 @@ def test_simple():
       @s.update
       def up1():
         s.a = 10 + s.i
-        s.b = s.d
+        s.b = s.d + 1
 
       @s.update
       def up2():
-        s.c = s.b
+        s.c = s.a + 1
         s.e = s.d + 1
 
       @s.update
       def up3():
-        s.d = s.c
+        s.d = s.c + 1
+        print "up3 prints out d =", s.d
 
       @s.update
       def up4():
-        s.f = s.d
+        s.f = s.d + 1
 
       @s.update
       def up5():
-        s.g = s.c
+        s.g = s.c + 1
         s.h = s.j + 1
+        print "up5 prints out h =", s.h
 
       @s.update
       def up6():
-        s.i = 100
+        s.i = s.i + 1
 
       @s.update
       def up7():
         s.j = s.g + 1
-        print s.j
 
     def done( s ):
       return True
 
+    def line_trace( s ):
+      return "a {} | b {} | c {} | d {} | e {} | f {} | g {} | h {} | i {} | j {}" \
+              .format( s.a, s.b, s.c, s.d, s.e, s.f, s.g, s.h, s.i, s.j )
+
   _test_model( Top )
+
+def test_combinational_loop():
+
+  class Top(Component):
+
+    def construct( s ):
+      s.a = Wire(int)
+      s.b = Wire(int)
+      s.c = Wire(int)
+      s.d = Wire(int)
+
+      @s.update
+      def up1():
+        s.b = s.d + 1
+
+      @s.update
+      def up2():
+        s.c = s.b + 1
+
+      @s.update
+      def up3():
+        s.d = s.c + 1
+        print "up3 prints out d =", s.d
+
+
+    def done( s ):
+      return True
+
+    def line_trace( s ):
+      return "a {} | b {} | c {} | d {} | e {} | f {}" \
+              .format( s.a, s.b, s.c, s.d, s.e, s.f )
+
+
+  try:
+    _test_model( Top )
+  except UpblkCyclicError as e:
+    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    return
+  raise Exception("Should've thrown UpblkCyclicError.")

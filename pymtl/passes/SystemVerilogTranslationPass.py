@@ -50,7 +50,7 @@ class SystemVerilogTranslationPass( BasePass ):
   def __call__( self, top ):
 
     GenDAGPass()( top )
-    SimpleSchedPass()( top )
+    SimpleSchedulePass()( top )
 
     # Generate all names
 
