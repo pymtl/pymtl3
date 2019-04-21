@@ -16,8 +16,6 @@ def _test_model( cls ):
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( OpenLoopCLPass() )
-  #  A.apply( SimpleSchedPass() )
-  #  A.apply( SimpleTickPass() )
   A.lock_in_simulation()
 
   print "- push!"
@@ -51,13 +49,14 @@ def test_top_level_method():
       s.element = None
 
       s.count = Wire(int)
+      s.count_next = Wire(int)
       s.amp   = Wire(int)
 
       s.value = Wire(int)
 
       @s.update_on_edge
       def up_incr():
-        s.count = s.count + 1
+        s.count = s.count_next
 
       @s.update
       def up_amp():
@@ -70,6 +69,10 @@ def test_top_level_method():
           s.element = None
         else:
           s.value = -1
+
+      @s.update
+      def up_count_next():
+        s.count_next = s.count + 1
 
       s.add_constraints(
         M( s.push ) < U( up_compose_in ),
