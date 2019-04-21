@@ -66,6 +66,7 @@ class OpenLoopCLPass( BasePass ):
             schedule_no_method[i]()
             i += 1
           i = 0
+          top.num_cycles_executed += 1
 
         # We advance from the current point i to the method's position in
         # the schedule without method just to execute those blocks
@@ -84,6 +85,7 @@ class OpenLoopCLPass( BasePass ):
 
         if i == len(schedule_no_method):
           i = 0
+          top.num_cycles_executed += 1
 
         top._sched.schedule_execute_index = i
         return ret
@@ -145,6 +147,8 @@ class OpenLoopCLPass( BasePass ):
                                 map_next_func_of_next_method,
                                 schedule_no_method,
                                 x.method )
+
+    top.num_cycles_executed = 0
 
     #  from graphviz import Digraph
     #  dot = Digraph()
