@@ -309,7 +309,6 @@ class CallerPort( MethodPort ):
   def is_caller_port( s ):
     return True
 
-
 class CalleePort( MethodPort ):
   def construct( self, method=None ):
     self.method = method

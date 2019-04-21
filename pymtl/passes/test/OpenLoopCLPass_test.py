@@ -20,13 +20,19 @@ def _test_model( cls ):
   #  A.apply( SimpleTickPass() )
   A.lock_in_simulation()
 
+  print "- push!"
   A.push(7)
+  print "- pull!"
   print A.pull()
 
+  print "- pull!"
   print A.pull()
 
-  A.push(1333)
-  A.push(255)
+  print "- push!"
+  A.push(33)
+  print "- push!"
+  A.push(55)
+  print "- pull!"
   print A.pull()
 
   #  T = 0
@@ -47,7 +53,7 @@ def test_top_level_method():
       s.count = Wire(int)
       s.amp   = Wire(int)
 
-      s.value = OutPort(int)
+      s.value = Wire(int)
 
       @s.update_on_edge
       def up_incr():
@@ -72,7 +78,7 @@ def test_top_level_method():
 
     @method_port
     def push( s, ele ):
-      if s.element is not None:
+      if s.element is None:
         s.element = ele
 
     @method_port
@@ -80,7 +86,7 @@ def test_top_level_method():
       return s.value
 
     def line_trace( s ):
-      return "{}".format(s.value)
+      return "line trace: {}".format(s.value)
 
     def done( s ):
       return True

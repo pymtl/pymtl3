@@ -55,32 +55,41 @@ class OpenLoopCLPass( BasePass ):
     print schedule
     top._sched.schedule_execute_index = 0
 
-    def wrap_method( idx, schedule, method ):
+    def wrap_method( top, idx, schedule, method ):
 
-      def actual_method( s, *args, **kwargs ):
-        print s, args, kwargs
-        # OK this means we need to advance a cycle
-        i = s._sched.schedule_execute_index
-        print i
+      def actual_method( *args, **kwargs ):
+        i = top._sched.schedule_execute_index
         if i > idx:
+          # This means we need to advance a full cycle
+          # Skip all methods in between and get back to the beginning
           while i < len(schedule):
-            if isinstance( schedule[i], CalleePort ):
-              break
-            schedule[i]()
+            if not isinstance( schedule[i], CalleePort ):
+              print schedule[i]
+              schedule[i]()
+            i += 1
           if i == len(schedule):
-            print s.line_trace()
+            i = 0
+            print top.line_trace()
 
         while i < idx:
           if not isinstance( schedule[i], CalleePort ):
+            print schedule[i]
             schedule[i]()
+          i += 1
 
+        ret = method( *args, **kwargs )
         i += 1
-        ret = s.method( *args, **kwargs )
         while i < len(schedule):
           if isinstance( schedule[i], CalleePort ):
             break
           schedule[i]()
+          print schedule[i]
+          i += 1
+        if i == len(schedule):
+          i = 0
+          print top.line_trace()
 
+        top._sched.schedule_execute_index = i
         return ret
 
       return actual_method
@@ -88,7 +97,7 @@ class OpenLoopCLPass( BasePass ):
     for i, x in enumerate( schedule ):
       if isinstance( x, CalleePort ):
         x.original_method = x.method
-        x.method = wrap_method( i, schedule, x.method )
+        x.method = wrap_method( top, i, schedule, x.method )
 
     from graphviz import Digraph
     dot = Digraph()
@@ -112,7 +121,6 @@ class OpenLoopCLPass( BasePass ):
 
       dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
     dot.render( "/tmp/upblk-dag.gv", view=True )
-    print schedule
 
     return schedule
 
