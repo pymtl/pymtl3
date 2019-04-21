@@ -99,28 +99,28 @@ class OpenLoopCLPass( BasePass ):
         x.original_method = x.method
         x.method = wrap_method( top, i, schedule, x.method )
 
-    from graphviz import Digraph
-    dot = Digraph()
-    dot.graph_attr["rank"] = "same"
-    dot.graph_attr["ratio"] = "compress"
-    dot.graph_attr["margin"] = "0.1"
+    #  from graphviz import Digraph
+    #  dot = Digraph()
+    #  dot.graph_attr["rank"] = "same"
+    #  dot.graph_attr["ratio"] = "compress"
+    #  dot.graph_attr["margin"] = "0.1"
 
-    for x in V:
-      x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                    else top.get_update_block_host_component(x))
-      dot.node( x_name +"\\n@" + x_host, shape="box")
+    #  for x in V:
+      #  x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+      #  x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
+                    #  else top.get_update_block_host_component(x))
+      #  dot.node( x_name +"\\n@" + x_host, shape="box")
 
-    for (x, y) in E:
-      x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                    else top.get_update_block_host_component(x))
-      y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
-      y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
-                    else top.get_update_block_host_component(y))
+    #  for (x, y) in E:
+      #  x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+      #  x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
+                    #  else top.get_update_block_host_component(x))
+      #  y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
+      #  y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
+                    #  else top.get_update_block_host_component(y))
 
-      dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
-    dot.render( "/tmp/upblk-dag.gv", view=True )
+      #  dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
+    #  dot.render( "/tmp/upblk-dag.gv", view=True )
 
     return schedule
 
