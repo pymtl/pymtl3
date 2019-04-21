@@ -33,11 +33,7 @@ def _test_model( cls ):
   print "- pull!"
   print A.pull()
 
-  #  T = 0
-  #  while T < 5:
-    #  A.tick()
-    #  print A.line_trace()
-    #  T += 1
+  print "num_cycles_executed: ", A.num_cycles_executed
 
 guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
 
