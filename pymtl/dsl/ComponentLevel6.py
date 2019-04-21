@@ -46,8 +46,9 @@ def generate_guard_decorator_ifcs( name ):
 
 class ComponentLevel6( ComponentLevel5 ):
 
-  def _handle_guard_methods( s ):
-    
+  def _handle_decorated_methods( s ):
+    super( ComponentLevel6, s )._handle_decorated_methods()
+
     # The following code handles guarded methods
     def bind_method( method ):
       def _method( *args, **kwargs ):
@@ -64,26 +65,3 @@ class ComponentLevel6( ComponentLevel5 ):
           ifc_type = getattr( method, "_guard_callee_ifc_type_" + y[14:] )
           ifc = ifc_type( method, bind_method( guard ) )
           setattr( s, x, ifc )
-
-  # Override
-  def _construct( s ):
-    """ We override _construct here to add method binding. Basically
-    we do this after the class is constructed but before the construct()
-    elaboration happens."""
-
-    if not s._dsl.constructed:
-
-      kwargs = s._dsl.kwargs.copy()
-      if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
-                              if x } )
-
-      s._handle_guard_methods()
-
-      # Same as parent class _construct
-      s.construct( *s._dsl.args, **kwargs )
-
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
-      s._dsl.constructed = True

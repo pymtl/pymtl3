@@ -238,4 +238,4 @@ class NamedObject(object):
 
   def get_all_object_filter( s, filt ):
     assert callable( filt )
-    return s._dsl.collect( filt )
+    return s._collect_all( filt )

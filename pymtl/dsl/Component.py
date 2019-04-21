@@ -16,7 +16,7 @@ class Component( ComponentLevel6 ):
   def _construct( s ):
 
     if not s._dsl.constructed:
-      
+
       # clk and reset signals are added here.
       s.clk   = InPort( Bits1 )
       s.reset = InPort( Bits1 )
@@ -26,8 +26,8 @@ class Component( ComponentLevel6 ):
         kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
 
-      s._handle_guard_methods()
-      
+      s._handle_decorated_methods()
+
       # We hook up the added clk and reset signals here.
       try:
         s.connect( s.clk, s.get_parent_object().clk )

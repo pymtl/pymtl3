@@ -5,13 +5,14 @@ from datatypes import _bitwidths
 from dsl.ConstraintTypes import U, M, RD, WR
 from dsl.Connectable     import Wire, InPort, OutPort, Interface, CallerPort, CalleePort
 from dsl.ComponentLevel6 import generate_guard_decorator_ifcs
+from dsl.ComponentLevel5 import method_port
 from dsl.Component       import Component
 from passes.PassGroups   import SimpleSim
 
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
-  'generate_guard_decorator_ifcs',
+  'generate_guard_decorator_ifcs', 'method_port',
 
   'SimpleSim',
   'Component',
