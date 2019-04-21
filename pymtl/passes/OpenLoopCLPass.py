@@ -52,52 +52,99 @@ class OpenLoopCLPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
-    print schedule
     top._sched.schedule_execute_index = 0
 
-    def wrap_method( top, idx, schedule, method ):
+    def wrap_method( top, my_idx, next_idx, schedule_no_method, method ):
 
       def actual_method( *args, **kwargs ):
         i = top._sched.schedule_execute_index
-        if i > idx:
-          # This means we need to advance a full cycle
-          # Skip all methods in between and get back to the beginning
-          while i < len(schedule):
-            if not isinstance( schedule[i], CalleePort ):
-              print schedule[i]
-              schedule[i]()
+
+        if i > my_idx:
+          # This means we need to advance the current cycle to the end
+          # and then normally execute until we get to the same point
+          while i < len(schedule_no_method):
+            schedule_no_method[i]()
             i += 1
-          if i == len(schedule):
-            i = 0
-            print top.line_trace()
-
-        while i < idx:
-          if not isinstance( schedule[i], CalleePort ):
-            print schedule[i]
-            schedule[i]()
-          i += 1
-
-        ret = method( *args, **kwargs )
-        i += 1
-        while i < len(schedule):
-          if isinstance( schedule[i], CalleePort ):
-            break
-          schedule[i]()
-          print schedule[i]
-          i += 1
-        if i == len(schedule):
           i = 0
-          print top.line_trace()
+
+        # We advance from the current point i to the method's position in
+        # the schedule without method just to execute those blocks
+        while i < my_idx:
+          schedule_no_method[i]()
+          i += 1
+
+        # Execute the method
+        ret = method( *args, **kwargs )
+
+        # Execute all update blocks before the next method. Note that if
+        # there are several consecutive methods, my_idx is equal to next_idx
+        while i < next_idx:
+          schedule_no_method[i]()
+          i += 1
+
+        if i == len(schedule_no_method):
+          i = 0
 
         top._sched.schedule_execute_index = i
         return ret
 
       return actual_method
 
+    # Here we are trying to avoid scanning the original schedule that
+    # contains methods because we will need isinstance in that case.
+    # As a result we created a preprocessed list for execution and use
+    # the dictionary to look up the new index of functions.
+
+    # The last element is always line trace
+    def print_line_trace():
+      print top.line_trace()
+    schedule.append( print_line_trace )
+
+    schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
+    mapping = { x : i for i, x in enumerate( schedule_no_method ) }
+
     for i, x in enumerate( schedule ):
       if isinstance( x, CalleePort ):
         x.original_method = x.method
-        x.method = wrap_method( top, i, schedule, x.method )
+
+        # This is to find the next non-method block's position in the
+        # original schedule
+        next_func   = i + 1
+        while next_func < len(schedule):
+          if not isinstance( schedule[next_func], CalleePort ):
+            break
+          next_func += 1
+
+        # Get the index of the block in the schedule without method
+        # This always exists because we append a line trace at the end
+        map_next_func = mapping[ schedule[next_func] ]
+
+        # Get the index of the next method in the schedule without method
+        next_method = i + 1
+        while next_method < len(schedule):
+          if isinstance( schedule[next_method], CalleePort ):
+            break
+          next_method += 1
+
+        # If there is another method after me, I calculate the range of
+        # blocks that I need to call and then stop before the user calls
+        # the next method.
+        if next_method < len(schedule):
+          next_func = next_method
+          while next_func < len(schedule):
+            if not isinstance( schedule[next_func], CalleePort ):
+              break
+            next_func += 1
+          # Get the index in the compacted schedule
+          map_next_func_of_next_method = mapping[ schedule[next_func] ]
+        else:
+          map_next_func_of_next_method = len(schedule_no_method)
+
+        x.method = wrap_method( top,
+                                map_next_func,
+                                map_next_func_of_next_method,
+                                schedule_no_method,
+                                x.method )
 
     #  from graphviz import Digraph
     #  dot = Digraph()
