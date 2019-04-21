@@ -48,7 +48,8 @@ def generate_guard_decorator_ifcs( name ):
 
 class ComponentLevel6( ComponentLevel5 ):
 
-  def _handle_guard_methods( s ):
+  def _handle_decorated_methods( s ):
+    super( ComponentLevel6, s )._handle_decorated_methods()
 
     # The following code handles guarded methods
     def bind_method( method ):

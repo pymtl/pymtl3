@@ -11,7 +11,7 @@ from .passes.PassGroups import SimpleSim
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
-  'generate_guard_decorator_ifcs',
+  'generate_guard_decorator_ifcs', 'method_port',
 
   'SimpleSim',
   'Component',
