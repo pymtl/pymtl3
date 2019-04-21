@@ -283,6 +283,10 @@ def {0}():
     except AttributeError:
       pass
 
+    top._dag.top_level_callee_ports = top.get_all_object_filter(
+      lambda x: isinstance(x, CalleePort) and x.get_parent_object() is top )
+    top._dag.top_level_callee_constraints = set()
+
     method_blks = defaultdict(set)
 
     # Collect each CalleePort/method is called in which update block
@@ -303,6 +307,7 @@ def {0}():
     # Put all M-related constraints into predecessor and successor dicts
     pred = defaultdict(set)
     succ = defaultdict(set)
+
     for (x, y) in all_M_constraints:
 
       if   isinstance( x, MethodPort ):
@@ -329,6 +334,9 @@ def {0}():
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
+
+      if x in top._dag.top_level_callee_ports or y in top._dag.top_level_callee_ports:
+        top._dag.top_level_callee_constraints.add( (x, y) )
 
     verbose = False
 
