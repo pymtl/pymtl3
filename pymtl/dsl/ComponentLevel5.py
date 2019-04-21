@@ -17,11 +17,48 @@ from .errors import MultiWriterError
 from .NamedObject import NamedObject
 
 
+# This method_port is a syntactic sugar to create a CalleePort
+
+def method_port( method ):
+  setattr( method, "_callee_port", True )
+  return method
+
 class ComponentLevel5( ComponentLevel4 ):
 
   #-----------------------------------------------------------------------
   # Private methods
   #-----------------------------------------------------------------------
+
+  def _handle_decorated_methods( s ):
+
+    for x in dir( s ):
+      method = getattr( s, x )
+      # We identify decorated methods here
+      if hasattr( method, "_callee_port" ):
+        setattr( s, x, CalleePort( method ) )
+
+  # Override
+  def _construct( s ):
+    """ We override _construct here to add method binding. Basically
+    we do this after the class is constructed but before the construct()
+    elaboration happens."""
+
+    if not s._dsl.constructed:
+
+      kwargs = s._dsl.kwargs.copy()
+      if "elaborate" in s._dsl.param_dict:
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
+                              if x } )
+
+      s._handle_decorated_methods()
+
+      # Same as parent class _construct
+      s.construct( *s._dsl.args, **kwargs )
+
+      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
+        s._continue_call_connect()
+
+      s._dsl.constructed = True
 
   # Override
   def _declare_vars( s ):

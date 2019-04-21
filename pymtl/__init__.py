@@ -20,6 +20,7 @@ from .passes.PassGroups import SimpleSim
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
+  'method_port',
   'non_blocking', 'NonBlockingCalleeIfc', 'NonBlockingCallerIfc',
 
   'SimpleSim',
