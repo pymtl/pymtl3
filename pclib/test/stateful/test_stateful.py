@@ -12,6 +12,7 @@ from pymtl import *
 from hypothesis.stateful import *
 from hypothesis import settings, given, seed, PrintSettings
 from pymtl.dsl.test.sim_utils import simple_sim_pass
+import copy
 from test_wrapper import *
 
 debug = True
@@ -75,10 +76,13 @@ class TestStateMachine( GenericStateMachine ):
     self.__printer = RepresentationPrinter( self.__stream )
     self.__rtl_pending = {}
     self.__fl_pending = {}
-    self.model.sim_reset()
-    self.reference.sim_reset()
-    self.model.tick()
-    self.reference.tick()
+    self.model = copy.deepcopy( self.preconstruct_model )
+    self.reference = copy.deepcopy( self.preconstruct_reference )
+
+    self.model.elaborate()
+    self.model.apply( simple_sim_pass )
+    self.reference.elaborate()
+    self.reference.apply( simple_sim_pass )
 
   def _sim_cycle( self, method_line_trace="" ):
     #self.sim.cycle()
@@ -103,8 +107,18 @@ class TestStateMachine( GenericStateMachine ):
     # to be added to step.
     # See MethodBasedRuleStrategy for more
     method_name = rule.method_name
-    if self.model.__dict__[ method_name ].rdy() \
-      and self.reference.__dict__[ method_name ].rdy():
+    if self.model.__dict__[ method_name ].rdy(
+    ) and not self.reference.__dict__[ method_name ].rdy():
+      raise ValueError(
+          "Dut method is rdy but reference is not: {method_name}".format(
+              method_name=method_name ) )
+    if not self.model.__dict__[ method_name ].rdy(
+    ) and self.reference.__dict__[ method_name ].rdy():
+      raise ValueError(
+          "Reference method is rdy but dut is not: {method_name}".format(
+              method_name=method_name ) )
+    if self.model.__dict__[ method_name ].rdy(
+    ) and self.reference.__dict__[ method_name ].rdy():
       m_result = self.model.__dict__[ method_name ](**data )
       r_result = self.reference.__dict__[ method_name ](**data )
       self.line_trace_string += method_name + "(" + ", ".join([
@@ -274,16 +288,16 @@ def reference_precondition( precond ):
 
 
 def create_test_state_machine( model, reference, argument_strategy={} ):
-  model.elaborate()
-  model.apply( simple_sim_pass )
-  reference.elaborate()
-  reference.apply( simple_sim_pass )
-
-  method_specs = model.method_specs
-
   Test = type(
       type( model ).__name__ + "TestStateful_", TestStateful.__bases__,
       dict( TestStateful.__dict__ ) )
+
+  Test.preconstruct_model = copy.deepcopy( model )
+  Test.preconstruct_reference = copy.deepcopy( model )
+
+  model.elaborate()
+
+  method_specs = model.method_specs
 
   for method, spec in method_specs.iteritems():
     arguments = {}
@@ -306,8 +320,6 @@ def create_test_state_machine( model, reference, argument_strategy={} ):
         MethodRule(
             method_name=method, arguments=arguments, precondition=None ) )
 
-  Test.model = model
-  Test.reference = reference
   Test.method_specs = method_specs
 
   return Test
@@ -323,9 +335,9 @@ def run_test_state_machine( rtl_class,
 
   machine = create_test_state_machine( rtl_class, reference_class )
   machine.TestCase.settings = settings(
-        max_examples=50,
-        deadline=None,
-        verbosity=Verbosity.verbose,
-        print_blob=PrintSettings.ALWAYS,
-        database=None )
+      max_examples=50,
+      deadline=None,
+      verbosity=Verbosity.verbose,
+      print_blob=PrintSettings.ALWAYS,
+      database=None )
   run_state_machine_as_test( machine )
