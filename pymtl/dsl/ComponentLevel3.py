@@ -216,16 +216,16 @@ class ComponentLevel3( ComponentLevel2 ):
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
           for idx, item in target.iteritems():
-            s._connect_objects( obj[idx], item )
+            s._dsl.parent_obj._connect_objects( obj[idx], item )
 
         # Obj is a single signal
         # If the target is a list, it's fanout connection
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
-            s._connect_objects( obj, item )
+            s._dsl.parent_obj._connect_objects( obj, item )
         # Target is a single object
         else:
-          s._connect_objects( obj, target )
+          s._dsl.parent_obj._connect_objects( obj, target )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
