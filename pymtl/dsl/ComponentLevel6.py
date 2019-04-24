@@ -77,6 +77,9 @@ class ComponentLevel6( ComponentLevel5 ):
       if "elaborate" in s._dsl.param_dict:
         kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
+      if "construct" in s._dsl.param_dict:
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "construct" ].iteritems()
+                              if x } )
 
       s._handle_guard_methods()
 

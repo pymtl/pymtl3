@@ -54,6 +54,10 @@ class NamedObject(object):
         more_args = s._dsl.param_dict[ "elaborate" ].iteritems()
         kwargs.update( { x: y for x, y in more_args if x } )
 
+      if "construct" in s._dsl.param_dict:
+        more_args = s._dsl.param_dict[ "construct" ].iteritems()
+        kwargs.update( { x: y for x, y in more_args if x } )
+
       s.construct( *s._dsl.args, **kwargs )
 
       s._dsl.constructed = True
@@ -181,6 +185,43 @@ class NamedObject(object):
     assert "*" not in x, "We don't allow the last name to be *"
     if x not in current_dict:
       current_dict[ x ] = value
+
+#  def set_param( s, string, value ):
+  def set_param( s, string, **kwargs ):
+
+    assert not s._dsl.constructed
+
+    strs = string.split( "." )
+
+    assert strs[0] == "top", "The component should start at top"
+
+    strs     = strs[1:]
+    strs_len = len(strs)
+    assert strs_len >= 1
+
+    current_dict = s._dsl.param_dict
+
+    for x in strs:
+      # TODO should we only allow * as regular expression to accelerate
+      # the common case? or always store as regex no matterwhat?
+      if "*" in x:
+        # We lump all regex patterns into key=None
+        if x not in current_dict[ None ]: # use name to index
+          current_dict[ None ][ x ] = ( re.compile(x), {} )
+        current_dict = current_dict[ None ][ x ][ 1 ]
+        current_dict[ None ] = {}
+
+      # This is a normal string
+      else:
+        if x not in current_dict:
+          current_dict[ x ] = { None: {} }
+        current_dict = current_dict[ x ]
+
+    # The last element in strs
+    for k,v in kwargs.iteritems():
+      assert "*" not in k, "We don't allow the last name to be *"
+      if k not in current_dict:
+        current_dict[ k ] = v
 
   def elaborate( s ):
     if s._dsl.constructed:

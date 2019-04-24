@@ -60,6 +60,9 @@ class ComponentLevel3( ComponentLevel2 ):
       if "elaborate" in s._dsl.param_dict:
         kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
+      if "construct" in s._dsl.param_dict:
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "construct" ].iteritems()
+                              if x } )
 
       s.construct( *s._dsl.args, **kwargs )
 
