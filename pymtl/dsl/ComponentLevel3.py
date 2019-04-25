@@ -32,6 +32,7 @@ class ComponentLevel3( ComponentLevel2 ):
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
+    inst.draw_graph         = None
     return inst
 
   # Override
@@ -132,12 +133,18 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._dsl.connect_order.append( (o1, o2) )
 
+  def set_draw_graph( s, draw ):
+    s.draw_graph = draw
+
   # When we connect two interfaces, we first try to use o1's and o2's
   # connect, if
 
   def _connect_interfaces( s, o1, o2 ):
     assert isinstance( o1, Interface ) and isinstance( o2, Interface ), \
            "Invalid interface connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+
+    if s.draw_graph != None:
+        s.draw_graph.register_connection( o1, o2 )
 
     # This function recursively connect two interfaces
     def connect_by_name( this, other ):
