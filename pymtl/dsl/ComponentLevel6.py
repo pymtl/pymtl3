@@ -19,8 +19,15 @@ def generate_guard_decorator_ifcs( name ):
     def construct( s, method=None, guard=None ):
       s.method = CalleePort( method )
       setattr( s, name, CalleePort( guard ) )
+      s._dsl.guard = getattr( s, name )
+
+      s.method._dsl.is_guard      = False
+      s._dsl.guard._dsl.is_guard  = True
+
     def __call__( s, *args, **kwargs ):
       return s.method( *args, **kwargs )
+    def get_guard( s ):
+      return s._dsl.guard
 
   class GuardedCallerIfc( Interface ):
     guarded_ifc = True
