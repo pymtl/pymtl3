@@ -298,7 +298,8 @@ def {0}():
       pass
 
     top._dag.top_level_callee_ports = top.get_all_object_filter(
-      lambda x: isinstance(x, CalleePort) and x.get_parent_object() is top )
+      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
+
     top._dag.top_level_callee_constraints = set()
 
     method_blks = defaultdict(set)
@@ -320,6 +321,8 @@ def {0}():
 
     for (x, y) in all_M_constraints:
 
+      # Use the actual method object for constraints
+
       if   isinstance( x, MethodPort ):
         xx = x.method
       elif isinstance( x, NonBlockingInterface ):
@@ -337,8 +340,13 @@ def {0}():
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
-      if x in top._dag.top_level_callee_ports or y in top._dag.top_level_callee_ports:
-        top._dag.top_level_callee_constraints.add( (x, y) )
+      if xx is not x:
+        if x.get_host_component() is top:
+          top._dag.top_level_callee_constraints.add( (x, y) )
+
+      elif yy is not y:
+        if y.get_host_component() is top:
+          top._dag.top_level_callee_constraints.add( (x, y) )
 
     verbose = False
 
