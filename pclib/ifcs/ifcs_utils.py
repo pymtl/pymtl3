@@ -17,7 +17,7 @@ def enrdy_to_str( msg, en, rdy, trace_len=15 ):
   _str   = "{}".format( msg )
 
   if en and not rdy:
-    _str = "X".ljust( trace_len ) # Not allowed
+    _str = str(msg).ljust( trace_len ) # Not allowed
   elif not en and rdy:
     _str = " ".ljust( trace_len ) # Idle
   elif not en and not rdy:

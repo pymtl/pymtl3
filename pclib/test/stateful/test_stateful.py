@@ -81,6 +81,7 @@ class TestStateMachine( GenericStateMachine ):
 
     self.model.elaborate()
     self.model.apply( simple_sim_pass )
+    self.model.sim_reset()
     self.reference.elaborate()
     self.reference.apply( simple_sim_pass )
 
@@ -293,7 +294,7 @@ def create_test_state_machine( model, reference, argument_strategy={} ):
       dict( TestStateful.__dict__ ) )
 
   Test.preconstruct_model = copy.deepcopy( model )
-  Test.preconstruct_reference = copy.deepcopy( model )
+  Test.preconstruct_reference = copy.deepcopy( reference )
 
   model.elaborate()
 

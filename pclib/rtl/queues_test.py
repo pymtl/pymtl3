@@ -184,11 +184,11 @@ def test_bypass_single():
 class ReferenceRTLAdapter( Component ):
 
   def construct( s, rtl_model, method_specs ):
-    s.enq_rdy = OutVPort( Bits1 )
-    s.enq_msg = InVPort( Bits16 )
-    s.deq = InVPort( Bits1 )
-    s.deq_rdy = OutVPort( Bits1 )
-    s.deq_msg = OutVPort( Bits16 )
+    s.enq_rdy = OutPort( Bits1 )
+    s.enq_msg = InPort( Bits16 )
+    s.deq = InPort( Bits1 )
+    s.deq_rdy = OutPort( Bits1 )
+    s.deq_msg = OutPort( Bits16 )
 
     @s.update
     def update_enq():
@@ -248,10 +248,7 @@ class ReferenceWrapper( Component ):
     @s.update
     def update_enq():
       if s.enq_called:
-        if s.model.enq.rdy:
-          s.model.enq.en = 1
-        else:
-          s.model.enq.en = 0
+        s.model.enq.en = 1
       else:
         s.model.enq.en = 0
       s.enq_called = 0
@@ -267,25 +264,16 @@ class ReferenceWrapper( Component ):
     @s.update
     def update_deq():
       if s.deq_called:
-        if s.model.deq.rdy:
-          s.model.deq.en = 1
-        else:
-          s.model.deq.en = 0
+        s.model.deq.en = 1
       else:
         s.model.deq.en = 0
       s.deq_called = 0
 
     s.add_constraints(
-        U( update_enq_rdy ) < M( s.enq ),
-        U( update_enq_rdy ) < M( s.enq.rdy ),
-        M( s.enq.rdy ) < U( update_enq ),
-        M( s.enq ) < U( update_enq ),
-        M( s.enq ) < U( update_enq_msg ),
-        U( update_deq_msg ) < M( s.deq ),
-        U( update_deq_rdy ) < M( s.deq.rdy ),
-        U( update_deq_rdy ) < M( s.deq ),
-        M( s.deq.rdy ) < U( update_deq ),
-        M( s.deq ) < U( update_deq ) )
+        U( update_enq ) < RD ( s.model.enq.en ), 
+        U( update_deq ) < RD ( s.model.deq.en ), 
+        U( update_enq_msg) < RD ( s.model.enq.msg ),
+        WR ( s.model.deq.msg ) < U( update_deq_msg) )
 
   @guarded_ifc( lambda s: s.enq_rdy )
   def enq( s, msg ):
@@ -317,9 +305,9 @@ class ReferenceWrapper( Component ):
         for name, port in inspect.getmembers( ifc ):
           if name == 'en' or name == 'rdy':
             continue
-          if isinstance( port, InVPort ):
+          if isinstance( port, InPort ):
             args[ name ] = port._dsl.Type
-          if isinstance( port, OutVPort ):
+          if isinstance( port, OutPort ):
             rets[ name ] = port._dsl.Type
 
         method_specs[ method ] = Method(
@@ -341,7 +329,6 @@ class TestHarnessGeneral( Component ):
     s.dut = Dut
     s.sink = TestSinkCL( sink_msgs, sink_initial, sink_interval, arrival_time )
 
-    print "construct harness"
     s.connect( s.src.send, s.dut.enq )
 
     @s.update

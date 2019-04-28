@@ -28,10 +28,7 @@ def update_rdy():
 
 def update():
   if s.{method_name}_called:  
-    if s.model.{method_name}.rdy:
-      s.model.{method_name}.en = 1
-    else:
-      s.model.{method_name}.en = 0
+    s.model.{method_name}.en = 1
   else:
     s.model.{method_name}.en = 0
   s.{method_name}_called = 0
