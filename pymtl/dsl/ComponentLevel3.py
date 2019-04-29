@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel3.py
 #=========================================================================
@@ -11,11 +12,11 @@
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from NamedObject import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from ComponentLevel2 import ComponentLevel2
-from Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
+from .NamedObject import NamedObject
+from .ComponentLevel1 import ComponentLevel1
+from .ComponentLevel2 import ComponentLevel2
+from .Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
+from .errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
 from collections import defaultdict, deque
 
 import inspect, ast # for error message

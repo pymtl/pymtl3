@@ -1,3 +1,4 @@
+from __future__ import print_function
 #=========================================================================
 # NamedObject_test.py
 #=========================================================================
@@ -49,7 +50,7 @@ def test_NamedObject_normal():
 
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner.chicken.protein)== "s.dinner.chicken.protein"
-  print x.dinner.chicken.protein
+  print(x.dinner.chicken.protein)
 
 def test_NamedObject_list1():
 
@@ -66,7 +67,7 @@ def test_NamedObject_list1():
 
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner[1].chicken.protein)== "s.dinner[1].chicken.protein"
-  print x.dinner[1].chicken.protein
+  print(x.dinner[1].chicken.protein)
 
 def test_NamedObject_list2():
 
@@ -83,4 +84,4 @@ def test_NamedObject_list2():
 
   assert repr(x.lunch[3].rooster.protein) == "s.lunch[3].rooster.protein"
   assert repr(x.dinner.chicken.protein) == "s.dinner.chicken.protein"
-  print repr(x.lunch[3].rooster.protein)
+  print(repr(x.lunch[3].rooster.protein))

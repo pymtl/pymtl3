@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 #==============================================================================
 # arbiters_test.py
 #==============================================================================
 # This file contains unit tests for the arbiters collection models.
 
 from pymtl      import *
-from arbiters   import RoundRobinArbiter
-from arbiters   import RoundRobinArbiterEn
+from .arbiters   import RoundRobinArbiter
+from .arbiters   import RoundRobinArbiterEn
 
 from pclib.test import TestVectorSimulator
 

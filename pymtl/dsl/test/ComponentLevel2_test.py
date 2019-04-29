@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel2_test.py
 #=========================================================================
@@ -8,7 +10,7 @@
 from pymtl import *
 from pymtl.dsl import ComponentLevel2, Wire, InPort, OutPort
 from pymtl.dsl.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
-from sim_utils import simple_sim_pass
+from .sim_utils import simple_sim_pass
 
 from collections import deque
 
@@ -20,7 +22,7 @@ def _test_model( cls ):
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 class TestSource( ComponentLevel2 ):
@@ -111,7 +113,7 @@ def test_cyclic_impl_dependency():
   try:
     _test_model( Top )
   except UpblkCyclicError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown UpblkCyclicError.")
 
@@ -131,7 +133,7 @@ def test_invalid_dependency():
   try:
     _test_model( Top )
   except InvalidConstraintError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
 
   raise Exception("Should've thrown InvalidConstraintError.")
@@ -171,7 +173,7 @@ def test_variable_not_declared():
   try:
     _test_model( Top )
   except VarNotDeclaredError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown VarNotDeclaredError.")
 
@@ -520,7 +522,7 @@ def test_func_cyclic_invalid():
   try:
     _test_model( Top )
   except InvalidFuncCallError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidFuncCallError.")
 

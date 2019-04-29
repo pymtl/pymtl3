@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel6.py
 #=========================================================================
@@ -6,8 +7,8 @@
 # Author : Yanghui Ou, Shunning Jiang
 #   Date : Feb 24, 2019
 
-from ComponentLevel5 import ComponentLevel5
-from Connectable import CallerPort, CalleePort, Interface
+from .ComponentLevel5 import ComponentLevel5
+from .Connectable import CallerPort, CalleePort, Interface
 
 #-------------------------------------------------------------------------
 # method_port decorator

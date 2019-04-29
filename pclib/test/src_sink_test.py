@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # src_sink_test
 #=========================================================================
@@ -10,8 +12,8 @@ import pytest
 
 from pymtl import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from test_srcs  import TestSrcCL, TestSrcRTL
-from test_sinks import TestSinkCL, TestSinkRTL
+from .test_srcs  import TestSrcCL, TestSrcRTL
+from .test_sinks import TestSinkCL, TestSinkRTL
 
 #-------------------------------------------------------------------------
 # TestHarnessCL
@@ -74,13 +76,13 @@ def run_sim( th, max_cycles=100 ):
 
   # Run simluation
 
-  print ""
+  print("")
   ncycles = 0
-  print "{}:{}".format( ncycles, th.line_trace() )
+  print("{}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{}:{}".format( ncycles, th.line_trace() )
+    print("{}:{}".format( ncycles, th.line_trace() ))
 
   # Check timeout
 

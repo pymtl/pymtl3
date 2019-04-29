@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # GenDAGPass.py
 #=========================================================================
@@ -8,7 +10,7 @@
 # Date   : Jan 18, 2018
 
 from pymtl import *
-from BasePass import BasePass, PassMetadata
+from .BasePass import BasePass, PassMetadata
 from pymtl.dsl import Const, MethodPort
 import py, ast
 from collections import defaultdict, deque
@@ -117,7 +119,7 @@ def {0}():
 
       var = locals()
       var.update( globals() )
-      exec( compile( src, filename=repr(s), mode="exec") ) in var
+      exec(( compile( src, filename=repr(s), mode="exec") ), var)
 
     for hostobj, allsrc in hostobj_allsrc.iteritems():
       compile_upblks( hostobj, allsrc )
@@ -336,10 +338,10 @@ def {0}():
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
-      if verbose: print
+      if verbose: print()
       while Q:
         (u, w) = Q.popleft()
-        if verbose: print (u, w)
+        if verbose: print((u, w))
 
         if w <= 0:
           for v in pred[u]:
@@ -351,9 +353,9 @@ def {0}():
               for blk in assoc_blks:
                 if blk not in pred[u]:
                   if v != blk:
-                    if verbose: print "w<=0, v is blk".center(10),v, blk
-                    if verbose: print v.__name__.center(25)," < ", \
-                                blk.__name__.center(25)
+                    if verbose: print("w<=0, v is blk".center(10),v, blk)
+                    if verbose: print(v.__name__.center(25)," < ", \
+                                blk.__name__.center(25))
                     top._dag.all_constraints.add( (v, blk) )
 
             else:
@@ -370,9 +372,9 @@ def {0}():
                     for blk in assoc_blks:
                       if blk not in pred[v]:
                         if vb != blk:
-                          if verbose: print "w<=0, v is method".center(10),v, blk
-                          if verbose: print vb.__name__.center(25)," < ", \
-                                      blk.__name__.center(25)
+                          if verbose: print("w<=0, v is method".center(10),v, blk)
+                          if verbose: print(vb.__name__.center(25)," < ", \
+                                      blk.__name__.center(25))
                           top._dag.all_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
@@ -387,9 +389,9 @@ def {0}():
               for blk in assoc_blks:
                 if blk not in succ[u]:
                   if v != blk:
-                    if verbose: print "w>=0, v is blk".center(10),blk, v
-                    if verbose: print blk.__name__.center(25)," < ", \
-                                      v.__name__.center(25)
+                    if verbose: print("w>=0, v is blk".center(10),blk, v)
+                    if verbose: print(blk.__name__.center(25)," < ", \
+                                      v.__name__.center(25))
                     top._dag.all_constraints.add( (blk, v) )
 
             else:
@@ -407,9 +409,9 @@ def {0}():
                     for blk in assoc_blks:
                       if not blk in succ[v]:
                         if vb != blk:
-                          if verbose: print "w>=0, v is method".center(10), blk, v
-                          if verbose: print blk.__name__.center(25)," < ", \
-                                            vb.__name__.center(25)
+                          if verbose: print("w>=0, v is method".center(10), blk, v)
+                          if verbose: print(blk.__name__.center(25)," < ", \
+                                            vb.__name__.center(25))
                           top._dag.all_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?

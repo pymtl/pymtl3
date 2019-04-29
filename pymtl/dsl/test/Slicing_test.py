@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # Slicing_test.py
 #=========================================================================
@@ -8,7 +10,7 @@
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pymtl.dsl.errors import MultiWriterError, NoWriterError
-from sim_utils import simple_sim_pass
+from .sim_utils import simple_sim_pass
 
 def _test_model( cls ):
   A = cls()
@@ -91,7 +93,7 @@ def test_write_two_overlapping_slices():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -116,7 +118,7 @@ def test_write_two_slices_and_bit():
 
       @s.update
       def up_rd_A():
-        print s.A[0:17]
+        print(s.A[0:17])
 
   m = Top()
   m.elaborate()
@@ -147,12 +149,12 @@ def test_write_slices_and_bit_overlapped():
 
       @s.update
       def up_rd_A():
-        print s.A[0:17]
+        print(s.A[0:17])
 
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -313,7 +315,7 @@ def test_wr_As_wr_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -339,7 +341,7 @@ def test_wr_As_wr_At_intersect():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -591,7 +593,7 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -630,7 +632,7 @@ def test_connect_wr_As_rd_x_conn_At_no_driver():
   try:
     _test_model( Top )
   except NoWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown NoWriterError.")
 
@@ -656,7 +658,7 @@ def test_connect_wr_As_wr_x_conn_At_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -730,7 +732,7 @@ def test_connect_wr_x_conn_As_wr_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -779,7 +781,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -807,7 +809,7 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -931,7 +933,7 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
   try:
     _test_model( Top )
   except NoWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown NoWriterError.")
 
@@ -978,6 +980,6 @@ def test_multiple_sibling_slices():
   try:
     _test_model( Top )
   except NoWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown NoWriterError.")

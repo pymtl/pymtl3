@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # Interface_test.py
 #=========================================================================
@@ -7,20 +9,21 @@
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
-from sim_utils import simple_sim_pass
+from .sim_utils import simple_sim_pass
 
 from collections import deque
+from functools import reduce
 
 def _test_model( cls ):
   A = cls()
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  print
+  print()
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 def valrdy_to_str( msg, val, rdy ):
@@ -224,7 +227,7 @@ def test_customized_connect():
 
       @s.update
       def up_recv():
-        print "recv_msg", s.recv.recv_msg, "recv_val", s.recv.recv_val
+        print("recv_msg", s.recv.recv_msg, "recv_val", s.recv.recv_val)
 
   class Top( ComponentLevel3 ):
 
@@ -318,7 +321,7 @@ def test_customized_connect_adapter():
       @s.update
       def up_recv():
         for i in range( 10 ):
-          print "recv_msg", i, s.recv[i].recv_msg, "recv_val", s.recv[i].recv_val
+          print("recv_msg", i, s.recv[i].recv_msg, "recv_val", s.recv[i].recv_val)
 
   class Top( ComponentLevel3 ):
 

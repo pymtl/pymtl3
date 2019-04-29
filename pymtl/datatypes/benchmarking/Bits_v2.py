@@ -1,3 +1,4 @@
+from __future__ import print_function
 #=======================================================================
 # Bits.py
 #=======================================================================
@@ -107,11 +108,11 @@ class Bits( object ):
     return str
 
   def __oct__( self ):
-    print "DEPRECATED: Please use .oct()!"
+    print("DEPRECATED: Please use .oct()!")
     return self.oct()
 
   def __hex__( self ):
-    print "DEPRECATED: Please use .oct()!"
+    print("DEPRECATED: Please use .oct()!")
     return self.hex()
 
   def bin(self):

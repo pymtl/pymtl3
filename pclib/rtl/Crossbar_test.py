@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 #=======================================================================
 # Crossbar_test.py
 #=======================================================================
 
 from pymtl      import *
-from Crossbar   import Crossbar
+from .Crossbar   import Crossbar
 from pclib.test import TestVectorSimulator
 
 #-----------------------------------------------------------------------

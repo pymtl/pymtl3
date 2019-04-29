@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # TestMemory_test.py
 #=========================================================================
@@ -10,7 +12,7 @@ from pymtl      import *
 from pclib.test import mk_test_case_table
 from pclib.rtl  import TestSourceValRdy, TestSinkValRdy
 from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
-from TestMemory import TestMemoryRTL
+from .TestMemory import TestMemoryRTL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -328,7 +330,7 @@ def run_sim( model,dump_vcd ):
   print()
   while not model.done():
     model.tick()
-    print model.line_trace()
+    print(model.line_trace())
 
   model.tick()
   model.tick()

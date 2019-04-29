@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # ValRdyIfc
 #=========================================================================
@@ -7,7 +8,7 @@
 #   Date : Apr 5, 2019
 
 from pymtl      import *
-from ifcs_utils import valrdy_to_str
+from .ifcs_utils import valrdy_to_str
 
 class InValRdyIfc( Interface ):
 

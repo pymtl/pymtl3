@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # NamedObject.py
 #=========================================================================
@@ -17,7 +19,7 @@
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
-from errors import NotElaboratedError
+from .errors import NotElaboratedError
 import re
 
 class DSLMetadata(object):
@@ -184,8 +186,8 @@ class NamedObject(object):
 
   def elaborate( s ):
     if s._dsl.constructed:
-      print "Don't elaborate the same model twice. \
-             Use APIs to mutate the model."
+      print("Don't elaborate the same model twice. \
+             Use APIs to mutate the model.")
       return
 
     # Initialize the top level

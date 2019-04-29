@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # MemMsg_test
 #=========================================================================
@@ -6,7 +7,7 @@
 # Date   : Mar 10, 2018
 
 from pymtl  import *
-from MemMsg import mk_mem_msg, mk_mem_resp_msg, mk_mem_req_msg, MemMsgType
+from .MemMsg import mk_mem_msg, mk_mem_resp_msg, mk_mem_req_msg, MemMsgType
 
 #-------------------------------------------------------------------------
 # test_req_fields

@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel4_test.py
 #=========================================================================
@@ -7,19 +9,19 @@
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel4
-from sim_utils import simple_sim_pass
+from .sim_utils import simple_sim_pass
 from collections import deque
 
 def _test_model( cls ):
   A = cls()
   A.elaborate()
   simple_sim_pass( A, 0x123 )
-  print A._dsl.schedule
+  print(A._dsl.schedule)
 
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 class SimpleReg( ComponentLevel4 ):

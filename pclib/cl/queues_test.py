@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # Tests for CL queues
 #=========================================================================
@@ -11,7 +13,7 @@ from pymtl                    import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
 from pclib.test.test_srcs     import TestSrcCL
 from pclib.test.test_sinks    import TestSinkCL
-from queues import PipeQueueCL, BypassQueueCL, NormalQueueCL
+from .queues import PipeQueueCL, BypassQueueCL, NormalQueueCL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -55,13 +57,13 @@ def run_sim( th, max_cycles=100 ):
 
   # Run simulation
 
-  print ""
+  print("")
   ncycles = 0
-  print "{:2}:{}".format( ncycles, th.line_trace() )
+  print("{:2}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{:2}:{}".format( ncycles, th.line_trace() )
+    print("{:2}:{}".format( ncycles, th.line_trace() ))
   
   # Check timeout
 

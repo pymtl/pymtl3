@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel5_test.py
 #=========================================================================
@@ -7,7 +9,7 @@
 
 from pymtl import *
 from pymtl.dsl.ComponentLevel5 import ComponentLevel5
-from sim_utils import simple_sim_pass
+from .sim_utils import simple_sim_pass
 from collections import deque
 
 def _test_model( cls ):
@@ -18,7 +20,7 @@ def _test_model( cls ):
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 class SimpleTestSource( ComponentLevel5 ):

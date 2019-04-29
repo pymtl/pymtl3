@@ -19,13 +19,13 @@ def mk_mem_msg( o, a, d ):
 def mk_mem_req_msg( o, a, d ):
   if (o,a,d) in _mem_req_msg_cache:
     return _mem_req_msg_cache[ (o,a,d) ]
-  exec py.code.Source( _req_template.format( o, a, d ) ).compile() in globals()
+  exec(py.code.Source( _req_template.format( o, a, d ) ).compile(), globals())
   return _mem_req_msg_cache[ (o,a,d) ]
 
 def mk_mem_resp_msg( o, d ):
   if (o,d) in _mem_resp_msg_cache:
     return _mem_resp_msg_cache[ (o,d) ]
-  exec py.code.Source( _resp_template.format( o, d ) ).compile() in globals()
+  exec(py.code.Source( _resp_template.format( o, d ) ).compile(), globals())
   return _mem_resp_msg_cache[ (o,d) ]
 
 class MemMsgType(object):

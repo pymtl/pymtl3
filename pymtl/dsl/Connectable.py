@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # Connectable.py
 #=========================================================================
@@ -6,10 +7,10 @@
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from NamedObject import NamedObject, DSLMetadata
+from .NamedObject import NamedObject, DSLMetadata
 from pymtl.datatypes import mk_bits
 from pymtl.datatypes.Bits import Bits
-from errors import InvalidConnectionError
+from .errors import InvalidConnectionError
 
 class Connectable(object):
   # I've given up maintaining adjacency list or disjoint set locally since

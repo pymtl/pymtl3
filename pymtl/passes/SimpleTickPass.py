@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # SimpleTickPass.py
 #=========================================================================
@@ -9,7 +10,7 @@
 from pymtl.passes import BasePass
 from collections  import deque
 from graphviz     import Digraph
-from errors import PassOrderError
+from .errors import PassOrderError
 from pymtl.dsl.errors import UpblkCyclicError
 
 class SimpleTickPass( BasePass ):

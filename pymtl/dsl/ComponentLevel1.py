@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel1.py
 #=========================================================================
@@ -14,9 +15,9 @@
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
-from NamedObject     import NamedObject
-from ConstraintTypes import U
-from errors          import UpblkFuncSameNameError, NotElaboratedError
+from .NamedObject     import NamedObject
+from .ConstraintTypes import U
+from .errors          import UpblkFuncSameNameError, NotElaboratedError
 from pymtl.datatypes import *
 
 import inspect, re, ast, py

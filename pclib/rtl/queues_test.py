@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # Tests for CL queues
 #=========================================================================
@@ -13,7 +15,7 @@ from pclib.test.test_srcs     import TestSrcCL
 from pclib.test.test_sinks    import TestSinkRTL
 from pclib.test               import TestVectorSimulator
 from pymtl.passes.PassGroups  import SimpleCLSim
-from queues import NormalQueueRTL
+from .queues import NormalQueueRTL
 
 #-------------------------------------------------------------------------
 # TestVectorSimulator test
@@ -102,13 +104,13 @@ def run_sim( th, max_cycles=100 ):
   th.apply( SimpleCLSim )
   th.sim_reset()
 
-  print ""
+  print("")
   ncycles = 0
-  print "{:2}:{}".format( ncycles, th.line_trace() )
+  print("{:2}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{:2}:{}".format( ncycles, th.line_trace() )
+    print("{:2}:{}".format( ncycles, th.line_trace() ))
   
   # Check timeout
 

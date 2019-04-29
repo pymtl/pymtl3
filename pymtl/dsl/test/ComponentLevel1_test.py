@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel1_test.py
 #=========================================================================
@@ -8,7 +10,7 @@
 from pymtl import *
 from pymtl.dsl import ComponentLevel1
 from pymtl.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
-from sim_utils import simple_sim_pass
+from .sim_utils import simple_sim_pass
 
 from collections import deque
 
@@ -20,7 +22,7 @@ def _test_model( cls ):
 
   while not A.done():
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
 
 class TestSource( ComponentLevel1 ):
 
@@ -89,7 +91,7 @@ def test_cyclic_dependency():
   try:
     _test_model( Top )
   except UpblkCyclicError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown cyclic dependency UpblkCyclicError.")
 
@@ -110,7 +112,7 @@ def test_upblock_same_name():
   try:
     _test_model( Top )
   except UpblkFuncSameNameError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown name conflict UpblkFuncSameNameError.")
 

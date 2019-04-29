@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import random
 from pymtl import *
-from valrdy_queues import *
+from .valrdy_queues import *
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
 
 from pclib.test import TestVectorSimulator

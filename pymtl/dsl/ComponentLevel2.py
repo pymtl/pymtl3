@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 #=========================================================================
 # ComponentLevel2.py
 #=========================================================================
@@ -11,14 +13,14 @@
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from NamedObject     import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from Connectable     import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from ConstraintTypes import U, RD, WR, ValueConstraint
+from .NamedObject     import NamedObject
+from .ComponentLevel1 import ComponentLevel1
+from .Connectable     import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
+from .ConstraintTypes import U, RD, WR, ValueConstraint
 from collections     import defaultdict
-from errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, \
+from .errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, \
                    MultiWriterError, VarNotDeclaredError, InvalidFuncCallError, UpblkFuncSameNameError
-import AstHelper
+from . import AstHelper
 
 import inspect, re, ast, gc
 p = re.compile('( *(@|def))')
@@ -144,7 +146,7 @@ class ComponentLevel2( ComponentLevel1 ):
         try:
           child = getattr( obj, field )
         except AttributeError as e:
-          print e
+          print(e)
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
         s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )

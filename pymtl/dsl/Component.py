@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # Component.py
 #=========================================================================
@@ -7,8 +8,8 @@
 #   Date : Apr 6, 2019
 
 from pymtl.datatypes import Bits1
-from ComponentLevel6 import ComponentLevel6
-from Connectable import InPort
+from .ComponentLevel6 import ComponentLevel6
+from .Connectable import InPort
 
 class Component( ComponentLevel6 ):
 

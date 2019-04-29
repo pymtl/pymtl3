@@ -13,8 +13,8 @@ class DetectVarNames( ast.NodeVisitor ):
   def __init__( self, upblk ):
     self.upblk   = upblk
     self.closure = {}
-    for i, var in enumerate( upblk.func_code.co_freevars ):
-      try:  self.closure[ var ] = upblk.func_closure[i].cell_contents
+    for i, var in enumerate( upblk.__code__.co_freevars ):
+      try:  self.closure[ var ] = upblk.__closure__[i].cell_contents
       except ValueError: pass
 
   # Helper function to get the full name containing "s"
@@ -41,8 +41,8 @@ class DetectVarNames( ast.NodeVisitor ):
         low = node.slice.lower.n
       elif isinstance( lower, ast.Name ):
         x = lower.id
-        if   x in self.upblk.func_globals:
-          low = self.upblk.func_globals[ x ] # TODO check low is int
+        if   x in self.upblk.__globals__:
+          low = self.upblk.__globals__[ x ] # TODO check low is int
         elif x in self.closure:
           low = self.closure[ x ]
 
@@ -50,8 +50,8 @@ class DetectVarNames( ast.NodeVisitor ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
         x = upper.id
-        if   x in self.upblk.func_globals:
-          up = self.upblk.func_globals[ x ] # TODO check low is int
+        if   x in self.upblk.__globals__:
+          up = self.upblk.__globals__[ x ] # TODO check low is int
         elif x in self.closure:
           up = self.closure[ x ]
 
@@ -75,8 +75,8 @@ class DetectVarNames( ast.NodeVisitor ):
           n = v.n
         elif isinstance( v, ast.Name ):
           x = v.id
-          if   x in self.upblk.func_globals: # Only support global const indexing for now
-            n = self.upblk.func_globals[ x ]
+          if   x in self.upblk.__globals__: # Only support global const indexing for now
+            n = self.upblk.__globals__[ x ]
           elif x in self.closure:
             n = self.closure[ x ]
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant

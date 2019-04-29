@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 #=========================================================================
 # EnqDeqIfc.py
 #=========================================================================
@@ -7,9 +8,9 @@
 #   Date: Mar 21, 2019
 
 from pymtl import *
-from ifcs_utils import enrdy_to_str
-from GuardedIfc import *
-from send_recv_ifc_adapters import RecvCL2SendRTL, RecvRTL2SendCL
+from .ifcs_utils import enrdy_to_str
+from .GuardedIfc import *
+from .send_recv_ifc_adapters import RecvCL2SendRTL, RecvRTL2SendCL
 
 #-------------------------------------------------------------------------
 # EnqIfcRTL
