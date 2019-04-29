@@ -5,7 +5,7 @@
 
 from builtins import range
 
-from pclib.rtl import Mux, RegEnRst
+from .registers import RegEnRst
 from pymtl import *
 
 
