@@ -7,6 +7,8 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 25, 2017
 
+from builtins import str
+from builtins import range
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pymtl.dsl.errors import MultiWriterError, InvalidConnectionError
@@ -76,7 +78,7 @@ class TestSink( ComponentLevel3 ):
 class Mux( ComponentLevel3 ):
 
   def construct( s, Type, ninputs ):
-    s.in_ = [ InPort( Type ) for _ in xrange(ninputs) ]
+    s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
     s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
 
@@ -142,7 +144,7 @@ def test_connect_deep():
   class MuxWrap(ComponentLevel3):
 
     def construct( s ):
-      s.in_ = [ InPort(int) for _ in xrange(2) ]
+      s.in_ = [ InPort(int) for _ in range(2) ]
       s.sel = InPort(int)
       s.out = OutPort(int)
 
@@ -180,7 +182,7 @@ def test_deep_connect():
   class MuxWrap3(ComponentLevel3):
 
     def construct( s ):
-      s.in_ = [ InPort(int) for _ in xrange(2) ]
+      s.in_ = [ InPort(int) for _ in range(2) ]
       s.sel = InPort(int)
       s.out = OutPort(int)
 
@@ -231,7 +233,7 @@ def test_2d_array_vars_connect_impl():
       s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
                                  (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
       s.connect( s.wire[0][0], s.src.out )
 
       @s.update
@@ -365,7 +367,7 @@ def test_2d_array_vars_connect():
       s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
                                      (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
       s.connect( s.wire[0][0], s.src.out )
 
       @s.update
@@ -379,7 +381,7 @@ def test_2d_array_vars_connect():
       def up_reg():
         s.reg = s.wire[0][0] + s.wire[0][1]
 
-      for i in xrange(2):
+      for i in range(2):
         s.add_constraints(
           U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
         )

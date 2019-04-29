@@ -12,6 +12,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
+from builtins import range
 from .NamedObject import NamedObject
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
@@ -59,7 +60,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if not s._dsl.constructed:
       kwargs = s._dsl.kwargs.copy()
       if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].items()
                               if x } )
 
       s.construct( *s._dsl.args, **kwargs )
@@ -145,11 +146,11 @@ class ComponentLevel3( ComponentLevel2 ):
           s._connect_objects( this_obj, other_obj )
 
         elif isinstance( this_obj, list ):
-          for i in xrange(len(this_obj)):
+          for i in range(len(this_obj)):
             # TODO add error message if other_obj is not a list
             recursive_connect( this_obj[i], other_obj[i] )
 
-      for name, obj in this.__dict__.iteritems():
+      for name, obj in this.__dict__.items():
         if not name.startswith("_"):
           # TODO add error message if other doesn't have a field called name
           recursive_connect( obj, getattr( other, name ) )
@@ -205,7 +206,7 @@ class ComponentLevel3( ComponentLevel2 ):
     try: # Catch AssertionError from _connect
 
       # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.iteritems():
+      for (kw, target) in s._dsl.call_kwargs.items():
         try:
           obj = getattr( s, kw )
         except AttributeError:
@@ -216,7 +217,7 @@ class ComponentLevel3( ComponentLevel2 ):
           # Make sure the connection target is a dictionary {idx: obj}
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.iteritems():
+          for idx, item in target.items():
             s._dsl.parent_obj._connect_objects( obj[idx], item )
 
         # Obj is a single signal
@@ -288,7 +289,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     writer_prop = {}
 
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.items():
       for obj in writes:
         writer_prop[ obj ] = True # propagatable
 
@@ -600,7 +601,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._connect_objects( o1, o2 )
 
     visited = set()
-    for u, vs in s._dsl.adjacency.iteritems():
+    for u, vs in s._dsl.adjacency.items():
       for v in vs:
         if (u, v) not in visited:
           s._disconnect_signal_signal( u, v )
@@ -636,7 +637,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    for i in xrange(len(args)>>1) :
+    for i in range(len(args)>>1) :
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except Exception as e:
@@ -812,7 +813,7 @@ class ComponentLevel3( ComponentLevel2 ):
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
-    for x, adjs in added_adjacency.iteritems():
+    for x, adjs in added_adjacency.items():
       s._dsl.all_adjacency[x].update( adjs )
 
     s._dsl.has_pending_connections = True # Lazy
@@ -829,14 +830,14 @@ class ComponentLevel3( ComponentLevel2 ):
     last_adjacency = s._dsl.adjancency
     s._dsl.adjacency = defaultdict(set)
 
-    for i in xrange(len(args)>>1) :
+    for i in range(len(args)>>1) :
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
-    for x, adjs in s._dsl.adjacency.iteritems():
+    for x, adjs in s._dsl.adjacency.items():
       s._dsl.all_adjacency[x].update( adjs )
 
     s._dsl.has_pending_connections = True # Lazy
@@ -879,5 +880,5 @@ class ComponentLevel3( ComponentLevel2 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    for i in xrange(len(args)>>1):
+    for i in range(len(args)>>1):
       s.disconnect( args[ i<<1 ], args[ (i<<1)+1 ] )

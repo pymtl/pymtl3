@@ -7,9 +7,11 @@
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
+from future import standard_library
+standard_library.install_aliases()
 import ast
 from graphviz import Digraph
-from Queue    import PriorityQueue
+from queue    import PriorityQueue
 
 from pymtl.passes.BasePass     import BasePass, PassMetadata
 from pymtl.passes.errors import PassOrderError

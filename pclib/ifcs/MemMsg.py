@@ -6,6 +6,8 @@
 # Author : Shunning Jiang
 # Date   : Mar 12, 2018
 
+from builtins import str
+from builtins import object
 from pymtl import *
 
 import py

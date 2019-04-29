@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 25, 2017
 
+from builtins import range
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
@@ -18,7 +19,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 def test_illegal_inport_write():

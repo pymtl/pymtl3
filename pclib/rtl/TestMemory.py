@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import range
+from builtins import object
 from pymtl import *
 from collections import deque
 from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
@@ -21,7 +23,7 @@ class TestMemory( object ):
     ret, shamt = Bits( nbytes<<3, 0 ), Bits32(0)
     addr = int(addr)
     end  = addr + nbytes
-    for j in xrange( addr, end ):
+    for j in range( addr, end ):
       ret += Bits32( s.mem[j] ) << shamt
       shamt += Bits32(8)
     return ret
@@ -30,7 +32,7 @@ class TestMemory( object ):
     tmp  = int(data)
     addr = int(addr)
     end  = addr + int(nbytes)
-    for j in xrange( addr, end ):
+    for j in range( addr, end ):
       s.mem[j] = tmp & 255
       tmp >>= 8
 
@@ -59,11 +61,11 @@ class TestMemoryRTL( Component ):
                                mem_nbytes=1<<20 ):
     s.mem = TestMemory( mem_nbytes )
 
-    s.reqs  = [ InValRdyIfc( ReqTypes[i] ) for i in xrange(nports) ]
-    s.resps = [ OutValRdyIfc( RespTypes[i] ) for i in xrange(nports) ]
-    s.resp_qs = [ PipeQueue1RTL( RespTypes[i] ) for i in xrange(nports) ]
+    s.reqs  = [ InValRdyIfc( ReqTypes[i] ) for i in range(nports) ]
+    s.resps = [ OutValRdyIfc( RespTypes[i] ) for i in range(nports) ]
+    s.resp_qs = [ PipeQueue1RTL( RespTypes[i] ) for i in range(nports) ]
 
-    for i in xrange(nports):
+    for i in range(nports):
       s.connect( s.resps[i], s.resp_qs[i].deq )
 
     s.ReqTypes  = ReqTypes
@@ -73,13 +75,13 @@ class TestMemoryRTL( Component ):
 
     @s.update
     def up_set_rdy():
-      for i in xrange(nports):
+      for i in range(nports):
         s.reqs[i].rdy = s.resp_qs[i].enq.rdy
 
     @s.update
     def up_process_memreq():
 
-      for i in xrange(nports):
+      for i in range(nports):
         s.resp_qs[i].enq.val = Bits1( 0 )
 
         if s.reqs[i].val & s.resp_qs[i].enq.rdy:
@@ -108,4 +110,4 @@ class TestMemoryRTL( Component ):
 
   def line_trace( s ):
     return "|".join( [ "{}>{}".format( s.reqs[i].line_trace(), s.resps[i].line_trace() ) \
-                                for i in xrange(s.nports) ] )
+                                for i in range(s.nports) ] )

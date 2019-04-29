@@ -9,6 +9,8 @@
 # Author : Shunning Jiang
 # Date   : Mar 12, 2018
 
+from builtins import range
+from builtins import object
 from pymtl       import *
 from collections import deque
 
@@ -80,7 +82,7 @@ class TestMemory( object ):
     ret, shamt = Bits( nbits, 0 ), Bits( nbits, 0 )
     addr = int(addr)
     end  = addr + nbytes
-    for j in xrange( addr, end ):
+    for j in range( addr, end ):
       ret += Bits( nbits, s.mem[j] ) << shamt
       shamt += 8
     return ret
@@ -89,7 +91,7 @@ class TestMemory( object ):
     tmp  = int(data)
     addr = int(addr)
     end  = addr + int(nbytes)
-    for j in xrange( addr, end ):
+    for j in range( addr, end ):
       s.mem[j] = tmp & 255
       tmp >>= 8
 
@@ -168,8 +170,8 @@ class TwoPortTestMemoryCL( ComponentLevel6 ):
 
     # Queues
 
-    s.req_qs  = [ deque(maxlen=3) for i in xrange(2) ]
-    s.resp_qs = [ deque(maxlen=3) for i in xrange(2) ]
+    s.req_qs  = [ deque(maxlen=3) for i in range(2) ]
+    s.resp_qs = [ deque(maxlen=3) for i in range(2) ]
 
     # Local constants
 
@@ -178,7 +180,7 @@ class TwoPortTestMemoryCL( ComponentLevel6 ):
     @s.update
     def up_mem():
 
-      for i in xrange(s.nports):
+      for i in range(s.nports):
 
         if s.req_qs[i] and len(s.resp_qs[i]) < s.resp_qs[i].maxlen:
 

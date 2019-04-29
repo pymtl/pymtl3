@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author: Yanghui Ou
 #   Date: Mar 21, 2019
 
+from builtins import str
 from pymtl import *
 from .ifcs_utils import enrdy_to_str
 from .GuardedIfc import *

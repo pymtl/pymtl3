@@ -7,6 +7,9 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
+from builtins import str
+from builtins import range
+from builtins import object
 from pymtl import *
 from pymtl.dsl import ComponentLevel2, Wire, InPort, OutPort
 from pymtl.dsl.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
@@ -187,7 +190,7 @@ def test_2d_array_vars():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():
@@ -206,10 +209,10 @@ def test_2d_array_vars():
 
       @s.update
       def upA():
-        for i in xrange(2):
+        for i in range(2):
           s.wire[1][i] = s.reg + i
 
-      for i in xrange(2):
+      for i in range(2):
         s.add_constraints(
           U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
         )
@@ -407,7 +410,7 @@ def test_2d_array_vars_impl():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():
@@ -422,7 +425,7 @@ def test_2d_array_vars_impl():
 
       @s.update
       def upA():
-        for i in xrange(2):
+        for i in range(2):
           s.wire[1][i] = s.reg + i
 
       @s.update

@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Mar 9, 2018
 
+from builtins import map
 import pytest
 import struct
 
@@ -59,8 +60,8 @@ def run_sim( model ):
 
 F = lambda x: Bits32(x)
 
-req  = map( F, [1,2,3,4,5,6,7,8,9,10] )
-resp = map( F, [1,2,3,4,5,6,7,8,9,10] )
+req  = list(map( F, [1,2,3,4,5,6,7,8,9,10] ))
+resp = list(map( F, [1,2,3,4,5,6,7,8,9,10] ))
 
 def test_normal_queue():
   run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp) )

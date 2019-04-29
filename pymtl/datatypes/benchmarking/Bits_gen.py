@@ -1,4 +1,6 @@
 from __future__ import print_function
+from builtins import range
+from builtins import object
 import py.code
 
 class Bits1( object ):
@@ -95,7 +97,7 @@ class Bits1( object ):
   def __ge__( self, other ):
     return Bits1( self.value >= int(other) )
 
-  def __nonzero__( self ):
+  def __bool__( self ):
     return int(self.value) != 0
 
   def __int__( self ):
@@ -152,7 +154,7 @@ class Bits{nbits}(Bits1):
 _bits_types[{nbits}] = Bits{nbits}
 """
 
-_bitwidths     = range(2, 192) + [ 384, 512, 768, 1024 ]
+_bitwidths     = list(range(2, 192)) + [ 384, 512, 768, 1024 ]
 _bits_types    = dict()
 
 source_str = ""

@@ -9,6 +9,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Jan 18, 2018
 
+from builtins import range
 from pymtl import *
 from .BasePass import BasePass, PassMetadata
 from pymtl.dsl import Const, MethodPort
@@ -63,11 +64,11 @@ class GenDAGPass( BasePass ):
 
       # First navigate all objects to the same level deep
 
-      for i in xrange( mindep, wr_lca.get_component_level() ):
+      for i in range( mindep, wr_lca.get_component_level() ):
         wr_lca = wr_lca.get_parent_object()
 
       for i, x in enumerate( rd_lcas ):
-        for j in xrange( mindep, x.get_component_level() ):
+        for j in range( mindep, x.get_component_level() ):
           x = x.get_parent_object()
         rd_lcas[i] = x
 
@@ -83,7 +84,7 @@ class GenDAGPass( BasePass ):
 
         # Bring up all objects for another level
         wr_lca = wr_lca.get_parent_object()
-        for i in xrange( len(rd_lcas) ):
+        for i in range( len(rd_lcas) ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
       lca     = wr_lca # this is the object we want to insert the block to
@@ -121,7 +122,7 @@ def {0}():
       var.update( globals() )
       exec(( compile( src, filename=repr(s), mode="exec") ), var)
 
-    for hostobj, allsrc in hostobj_allsrc.iteritems():
+    for hostobj, allsrc in hostobj_allsrc.items():
       compile_upblks( hostobj, allsrc )
 
   def _process_value_constraints( self, top ):
@@ -151,12 +152,12 @@ def {0}():
     write_upblks = defaultdict(set)
 
     for data in [ upblk_reads, genblk_reads ]:
-      for blk, reads in data.iteritems():
+      for blk, reads in data.items():
         for rd in reads:
           read_upblks[ rd ].add( blk )
 
     for data in [ upblk_writes, genblk_writes ]:
-      for blk, writes in data.iteritems():
+      for blk, writes in data.items():
         for wr in writes:
           write_upblks[ wr ].add( blk )
 
@@ -169,7 +170,7 @@ def {0}():
         equal_blks  = write_upblks
 
       # enumerate variable objects
-      for obj, constrained_blks in constraints.iteritems():
+      for obj, constrained_blks in constraints.items():
 
         # enumerate upblks that has a constraint with x
         for (sign, co_blk) in constrained_blks:
@@ -200,7 +201,7 @@ def {0}():
     # 2) RD A.b[1:10] - WR A.b[1:10], A.b, A
     # 3) RD A.b[1:10] - WR A.b[0:5], A.b[6], A.b[8:11]
 
-    for obj, rd_blks in read_upblks.iteritems():
+    for obj, rd_blks in read_upblks.items():
       writers = []
 
       # Check parents. Cover 1) and 2)
@@ -232,7 +233,7 @@ def {0}():
     # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
     # "WR A.b[1:10] - RD A.b[0:5], A.b[6], A.b[8:11]" has been discovered
 
-    for obj, wr_blks in write_upblks.iteritems():
+    for obj, wr_blks in write_upblks.items():
       readers = []
 
       # Check parents. Cover 2) and 3). 1) and 4) should be detected in elaboration
@@ -289,7 +290,7 @@ def {0}():
 
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
-    for blk, calls in top._dsl.all_upblk_calls.iteritems():
+    for blk, calls in top._dsl.all_upblk_calls.items():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
@@ -336,7 +337,7 @@ def {0}():
 
     all_upblks = top.get_all_update_blocks()
 
-    for method, assoc_blks in method_blks.iteritems():
+    for method, assoc_blks in method_blks.items():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
       if verbose: print()
       while Q:

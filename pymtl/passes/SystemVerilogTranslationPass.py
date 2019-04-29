@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Aug 23, 2018
 
+from builtins import zip
 from pymtl import *
 from pymtl.dsl import ComponentLevel1
 from .BasePass import BasePass
@@ -637,4 +638,4 @@ opmap = {
 
 def get_closure_dict( fn ):
   closure_objects = [c.cell_contents for c in fn.__closure__]
-  return dict( zip( fn.__code__.co_freevars, closure_objects ))
+  return dict( list(zip( fn.__code__.co_freevars, closure_objects )))

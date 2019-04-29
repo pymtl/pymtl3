@@ -7,6 +7,8 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 23, 2017
 
+from builtins import str
+from builtins import range
 from pymtl import *
 from pymtl.dsl import ComponentLevel1
 from pymtl.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
@@ -322,7 +324,7 @@ def test_2d_array_vars():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [0 for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [0 for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():

@@ -6,6 +6,7 @@
 # Author : Yanghui Ou
 #   Date : Mar 11, 2019
 
+from builtins import str
 from pymtl import *
 from pclib.ifcs import RecvIfcRTL, enrdy_to_str
 from pclib.ifcs import RecvCL2SendRTL, RecvRTL2SendCL

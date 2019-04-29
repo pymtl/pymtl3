@@ -1,9 +1,12 @@
 from __future__ import print_function
+from __future__ import division
 #=======================================================================
 # Bits.py
 #=======================================================================
 # Module containing the Bits class.
 
+from builtins import object
+from past.utils import old_div
 import copy
 
 #-----------------------------------------------------------------------
@@ -60,7 +63,7 @@ class Bits( object ):
   #---------------------------------------------------------------------
   # Type conversion to a long.
   def __long__( self ):
-    return long( self._uint )
+    return int( self._uint )
 
   #---------------------------------------------------------------------
   # __index__
@@ -103,7 +106,7 @@ class Bits( object ):
     return "Bits( {0}, {1} )".format(self.nbits, self.hex())
 
   def __str__(self):
-    num_chars = (((self.nbits-1)/4)+1)
+    num_chars = ((old_div((self.nbits-1),4))+1)
     str = "{:x}".format(self._uint).zfill(num_chars)
     return str
 
@@ -120,12 +123,12 @@ class Bits( object ):
     return "0b"+str
 
   def oct( self ):
-    num_chars = (((self.nbits-1)/2)+1)
+    num_chars = ((old_div((self.nbits-1),2))+1)
     str = "{:o}".format(self._uint).zfill(num_chars)
     return "0o"+str
 
   def hex( self ):
-    num_chars = (((self.nbits-1)/4)+1)
+    num_chars = ((old_div((self.nbits-1),4))+1)
     str = "{:x}".format(self._uint).zfill(num_chars)
     return "0x"+str
 
@@ -317,12 +320,12 @@ class Bits( object ):
     return self.__mul__( other )
 
   def __div__(self, other):
-    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
-    except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
+    try:    return Bits( 2*max( self.nbits, other.nbits), old_div(self._uint, other._uint), trunc=True )
+    except: return Bits( 2*self.nbits,                    old_div(self._uint, other),       trunc=True )
 
   def __floordiv__(self, other):
-    try:    return Bits( 2*max( self.nbits, other.nbits), self._uint / other._uint, trunc=True )
-    except: return Bits( 2*self.nbits,                    self._uint / other,       trunc=True )
+    try:    return Bits( 2*max( self.nbits, other.nbits), old_div(self._uint, other._uint), trunc=True )
+    except: return Bits( 2*self.nbits,                    old_div(self._uint, other),       trunc=True )
 
   def __mod__(self, other):
     try:    return Bits( 2*max( self.nbits, other.nbits), self._uint % other._uint, trunc=True )
@@ -383,7 +386,7 @@ class Bits( object ):
   # Comparison Operators
   #----------------------------------------------------------------------
 
-  def __nonzero__( self ):
+  def __bool__( self ):
     return self._uint != 0
 
   # TODO: allow comparison with negative numbers?

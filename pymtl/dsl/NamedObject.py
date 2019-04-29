@@ -19,6 +19,8 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
+from past.builtins import basestring
+from builtins import object
 from .errors import NotElaboratedError
 import re
 
@@ -53,7 +55,7 @@ class NamedObject(object):
       # Merge the actual keyword args and those args set by set_parameter
       kwargs = s._dsl.kwargs.copy()
       if "elaborate" in s._dsl.param_dict:
-        more_args = s._dsl.param_dict[ "elaborate" ].iteritems()
+        more_args = iter(s._dsl.param_dict[ "elaborate" ].items())
         kwargs.update( { x: y for x, y in more_args if x } )
 
       s.construct( *s._dsl.args, **kwargs )
@@ -81,9 +83,9 @@ class NamedObject(object):
               u._dsl.param_dict.update( s._dsl.param_dict[ u_name ] )
 
             for pattern, (compiled_re, subdict) in \
-                s._dsl.param_dict[ None ].iteritems():
+                s._dsl.param_dict[ None ].items():
               if compiled_re.match( u_name ):
-                for x, y in subdict.iteritems(): # to merge two None subdicts
+                for x, y in subdict.items(): # to merge two None subdicts
                   if x is None:
                     u._dsl.param_dict[ None ].update( subdict )
                   else:
@@ -117,7 +119,7 @@ class NamedObject(object):
         if filt( u ): # Check if m satisfies the filter
           ret.add( u )
 
-        for name, obj in u.__dict__.iteritems():
+        for name, obj in u.__dict__.items():
 
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice

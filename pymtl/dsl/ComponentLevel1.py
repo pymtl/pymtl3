@@ -15,6 +15,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
+from past.builtins import basestring
 from .NamedObject     import NamedObject
 from .ConstraintTypes import U
 from .errors          import UpblkFuncSameNameError, NotElaboratedError
@@ -163,7 +164,7 @@ class ComponentLevel1( NamedObject ):
     assert s._dsl.constructed
     ret = set()
     stack = []
-    for (name, obj) in s.__dict__.iteritems():
+    for (name, obj) in s.__dict__.items():
       if   isinstance( name, basestring ): # python2 specific
         if not name.startswith("_"): # filter private variables
           stack.append( obj )

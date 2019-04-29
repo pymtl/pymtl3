@@ -11,6 +11,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Aug 23, 2018
 
+from builtins import range
 import py.code, os
 
 if os.getenv("PYMTL_BITS") == "1":
@@ -33,7 +34,7 @@ class Bits{nbits}(object):
 _bits_types[{nbits}] = Bits{nbits}
 """
 
-_bitwidths     = range(1, 256) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
+_bitwidths     = list(range(1, 256)) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
 _bits_types    = dict()
 
 exec(py.code.Source( "".join([ bits_template.format( **vars() ) \

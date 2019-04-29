@@ -8,6 +8,7 @@ from __future__ import absolute_import
 # Author : Yanghui Ou
 #   Date : Feb 24, 2019
 
+from builtins import str
 from pymtl import *
 from pymtl.dsl.ComponentLevel6 import generate_guard_decorator_ifcs, ComponentLevel6
 from .sim_utils import simple_sim_pass

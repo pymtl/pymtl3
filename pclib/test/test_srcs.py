@@ -6,6 +6,7 @@
 # Author : Yanghui Ou
 #   Date : Mar 11, 2019
 
+from builtins import str
 from pymtl import *
 from pclib.ifcs  import SendIfcRTL
 from collections import deque

@@ -2,6 +2,8 @@
 # Crossbar.py
 #=======================================================================
 
+from builtins import str
+from builtins import range
 from pymtl import *
 
 class Crossbar( Component ):

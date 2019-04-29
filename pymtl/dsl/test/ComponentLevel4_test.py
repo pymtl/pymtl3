@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 25, 2017
 
+from builtins import str
 from pymtl import *
 from pymtl.dsl import ComponentLevel4
 from .sim_utils import simple_sim_pass

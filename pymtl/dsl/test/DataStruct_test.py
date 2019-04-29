@@ -7,6 +7,8 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
+from builtins import range
+from builtins import object
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pymtl.dsl.errors import MultiWriterError, NoWriterError
@@ -26,7 +28,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 # All situations when we allow nested data struct:

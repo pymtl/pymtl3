@@ -1,3 +1,4 @@
+from builtins import range
 from pymtl import *
 
 class RegisterFile( Component ):
@@ -7,36 +8,36 @@ class RegisterFile( Component ):
 
     addr_type = mk_bits( clog2( nregs ) )
 
-    s.raddr = [ InPort( addr_type ) for i in xrange( rd_ports ) ]
-    s.rdata = [ OutPort( Type ) for i in xrange( rd_ports ) ]
+    s.raddr = [ InPort( addr_type ) for i in range( rd_ports ) ]
+    s.rdata = [ OutPort( Type ) for i in range( rd_ports ) ]
 
-    s.waddr = [ InPort( addr_type ) for i in xrange( wr_ports ) ]
-    s.wdata = [ InPort( Type ) for i in xrange( wr_ports ) ]
-    s.wen   = [ InPort( Bits1 ) for i in xrange( wr_ports ) ]
+    s.waddr = [ InPort( addr_type ) for i in range( wr_ports ) ]
+    s.wdata = [ InPort( Type ) for i in range( wr_ports ) ]
+    s.wen   = [ InPort( Bits1 ) for i in range( wr_ports ) ]
 
-    s.regs      = [ Wire( Type ) for i in xrange(nregs) ]
-    s.next_regs = [ Wire( Type ) for i in xrange(nregs) ]
+    s.regs      = [ Wire( Type ) for i in range(nregs) ]
+    s.next_regs = [ Wire( Type ) for i in range(nregs) ]
 
     @s.update_on_edge
     def up_rfile():
-      for i in xrange( nregs ):
+      for i in range( nregs ):
         s.regs[i] = s.next_regs[i]
 
     @s.update
     def up_rf_read():
-      for i in xrange( rd_ports ):
+      for i in range( rd_ports ):
         s.rdata[i] = s.regs[ s.raddr[i] ]
 
     if const_zero:
       @s.update
       def up_rf_write_constzero():
-        for i in xrange( wr_ports ):
+        for i in range( wr_ports ):
           if s.wen[i] & (s.waddr[i] != addr_type(0)):
             s.next_regs[ s.waddr[i] ] = s.wdata[i]
 
     else:
       @s.update
       def up_rf_write():
-        for i in xrange( wr_ports ):
+        for i in range( wr_ports ):
           if s.wen[i]:
             s.next_regs[ s.waddr[i] ] = s.wdata[i]

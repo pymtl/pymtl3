@@ -6,6 +6,7 @@
 # Author : Shunning Jiang
 # Date   : Dec 17, 2017
 
+from builtins import object
 class PassMetadata(object):
   pass
 

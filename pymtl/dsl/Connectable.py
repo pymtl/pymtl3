@@ -7,6 +7,8 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
+from builtins import str
+from builtins import object
 from .NamedObject import NamedObject, DSLMetadata
 from pymtl.datatypes import mk_bits
 from pymtl.datatypes.Bits import Bits
@@ -191,7 +193,7 @@ class Signal( NamedObject, Connectable ):
   def get_sibling_slices( s ):
     if s._dsl.slice:
       parent = s.get_parent_object()
-      ret = parent._dsl.slices.values()
+      ret = list(parent._dsl.slices.values())
       ret.remove( s )
       return ret
     return []
@@ -243,7 +245,7 @@ class Interface( NamedObject, Connectable ):
       except AttributeError: pass
 
       if inversed:
-        for name, obj in s.__dict__.iteritems():
+        for name, obj in s.__dict__.items():
           if not name.startswith("_"):
             if isinstance( obj, Signal ):
               setattr( s, name, obj.inverse() )

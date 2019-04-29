@@ -6,6 +6,7 @@
 # Author : Shunning Jiang
 # Date   : July 7, 2017
 
+from builtins import object
 class FuncConstraint(object):
   def __init__( self, func ):  self.func = func
   def __lt__( self, other ):   return (self, other)

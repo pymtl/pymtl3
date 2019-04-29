@@ -4,6 +4,8 @@ from __future__ import absolute_import
 # TestMemory_test.py
 #=========================================================================
 
+from builtins import zip
+from builtins import range
 import pytest
 import random
 import struct
@@ -29,15 +31,15 @@ class TestHarness( Component ):
 
     # Instantiate models
 
-    s.srcs = [ TestSourceValRdy( ReqType, src_msgs[i] )  for i in xrange(nports) ]
+    s.srcs = [ TestSourceValRdy( ReqType, src_msgs[i] )  for i in range(nports) ]
 
     s.mem  = TestMemoryRTL( nports, [ReqType]*nports, [RespType]*nports  )
 
-    s.sinks = [ TestSinkValRdy( RespType, sink_msgs[i] ) for i in xrange(nports) ]
+    s.sinks = [ TestSinkValRdy( RespType, sink_msgs[i] ) for i in range(nports) ]
 
     # Connect
 
-    for i in xrange( nports ):
+    for i in range( nports ):
       s.connect( s.srcs[i].out, s.mem.reqs[i] )
       s.connect( s.sinks[i].in_, s.mem.resps[i] )
 

@@ -13,6 +13,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
+from past.builtins import basestring
 from .NamedObject     import NamedObject
 from .ComponentLevel1 import ComponentLevel1
 from .Connectable     import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
@@ -192,7 +193,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.func_reads  = {}
     s._dsl.func_writes = {}
     s._dsl.func_calls  = {}
-    for name, func in s._dsl.name_func.iteritems():
+    for name, func in s._dsl.name_func.items():
       s._dsl.func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
       s._dsl.func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
       s._dsl.func_calls [ func ] = extract_obj_from_names( func, name_fc[ name ] )
@@ -200,7 +201,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_reads  = {}
     s._dsl.upblk_writes = {}
     s._dsl.upblk_calls  = {}
-    for name, blk in s._dsl.name_upblk.iteritems():
+    for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
@@ -212,17 +213,17 @@ class ComponentLevel2( ComponentLevel1 ):
     if isinstance( m, ComponentLevel2 ):
       s._dsl.all_update_on_edge |= m._dsl.update_on_edge
 
-      for k, k_cons in m._dsl.RD_U_constraints.iteritems():
+      for k, k_cons in m._dsl.RD_U_constraints.items():
         s._dsl.all_RD_U_constraints[k] |= k_cons
 
-      for k, k_cons in m._dsl.WR_U_constraints.iteritems():
+      for k, k_cons in m._dsl.WR_U_constraints.items():
         s._dsl.all_WR_U_constraints[k] |= k_cons
 
       # I assume different update blocks will always have different ids
       s._dsl.all_upblk_reads.update( m._dsl.upblk_reads )
       s._dsl.all_upblk_writes.update( m._dsl.upblk_writes )
 
-      for blk, calls in m._dsl.upblk_calls.iteritems():
+      for blk, calls in m._dsl.upblk_calls.items():
         s._dsl.all_upblk_calls[ blk ] = calls
 
         for call in calls:
@@ -282,11 +283,11 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_upblk_writes( s ):
 
     write_upblks = defaultdict(set)
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.items():
       for wr in writes:
         write_upblks[ wr ].add( blk )
 
-    for obj, wr_blks in write_upblks.iteritems():
+    for obj, wr_blks in write_upblks.items():
       wr_blks = list(wr_blks)
 
       if len(wr_blks) > 1:
@@ -324,7 +325,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_port_in_upblk( s ):
 
     # Check read first
-    for blk, reads in s._dsl.all_upblk_reads.iteritems():
+    for blk, reads in s._dsl.all_upblk_reads.items():
 
       blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
@@ -348,7 +349,7 @@ class ComponentLevel2( ComponentLevel1 ):
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
     # Then check write
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.items():
 
       blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
@@ -495,7 +496,7 @@ class ComponentLevel2( ComponentLevel1 ):
         iterable = enumerate( current_obj )
         is_list = True
       elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.iteritems()
+        iterable = iter(current_obj.__dict__.items())
         is_list = False
       else:
         return
@@ -533,7 +534,7 @@ class ComponentLevel2( ComponentLevel1 ):
     except:
       raise AttributeError("Cannot unlock an unlocked/never locked model.")
 
-    for component, records in s._dsl.swapped_signals.iteritems():
+    for component, records in s._dsl.swapped_signals.items():
       for current_obj, i, obj, is_list in records:
         if is_list:
           s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
@@ -611,7 +612,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_input_value_ports( s ):
     assert s._dsl.constructed
     ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
+    stack = [ obj for (name, obj) in s.__dict__.items() \
                   if isinstance( name, basestring ) # python2 specific
                   if not name.startswith("_") ] # filter private variables
     while stack:
@@ -627,7 +628,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_output_value_ports( s ):
     assert s._dsl.constructed
     ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
+    stack = [ obj for (name, obj) in s.__dict__.items() \
                   if isinstance( name, basestring ) # python2 specific
                   if not name.startswith("_") ] # filter private variables
     while stack:
@@ -642,7 +643,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def get_wires( s ):
     assert s._dsl.constructed
     ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
+    stack = [ obj for (name, obj) in s.__dict__.items() \
                   if isinstance( name, basestring ) # python2 specific
                   if not name.startswith("_") ] # filter private variables
     while stack:

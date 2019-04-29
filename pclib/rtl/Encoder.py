@@ -6,6 +6,7 @@
 # Author : Yanghui Ou, Cheng Tan
 #   Date : Mar 1, 2019
 
+from builtins import range
 from pymtl import *
 
 class Encoder( Component ):

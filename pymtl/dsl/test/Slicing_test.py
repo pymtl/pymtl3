@@ -7,6 +7,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Aug 23, 2018
 
+from builtins import range
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pymtl.dsl.errors import MultiWriterError, NoWriterError
@@ -17,7 +18,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 # write two disjoint slices

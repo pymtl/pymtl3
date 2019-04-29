@@ -6,6 +6,7 @@
 # Author : Shunning Jiang
 # Date   : Jan 17, 2018
 
+from builtins import range
 import ast
 
 class DetectVarNames( ast.NodeVisitor ):
@@ -109,7 +110,7 @@ class DetectVarNames( ast.NodeVisitor ):
 
     if slices:
       assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
-        ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in xrange(len(obj_name)) ] ) \
+        ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in range(len(obj_name)) ] ) \
         +  "[%d:%d]" % (x[0], x[1]), self.upblk.__name__ )
 
       obj_name[0][1].append( slices[0] )

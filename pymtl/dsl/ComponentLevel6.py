@@ -76,7 +76,7 @@ class ComponentLevel6( ComponentLevel5 ):
 
       kwargs = s._dsl.kwargs.copy()
       if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
+        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].items()
                               if x } )
 
       s._handle_guard_methods()
