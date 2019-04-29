@@ -66,16 +66,12 @@ class TestStateMachine( GenericStateMachine ):
   __argument_strategies = {}
   __preconditions = {}
   __method_rules = {}
-  __always_rules = {}
-  __condition_rules = {}
 
   def __init__( self ):
     super( TestStateMachine, self ).__init__()
     self.__rules_strategy = MethodBasedRuleStrategy( self )
     self.__stream = CUnicodeIO()
     self.__printer = RepresentationPrinter( self.__stream )
-    self.__rtl_pending = {}
-    self.__fl_pending = {}
     self.model = copy.deepcopy( self.preconstruct_model )
     self.reference = copy.deepcopy( self.preconstruct_reference )
 
@@ -84,16 +80,6 @@ class TestStateMachine( GenericStateMachine ):
     self.model.sim_reset()
     self.reference.elaborate()
     self.reference.apply( simple_sim_pass )
-
-  def _sim_cycle( self, method_line_trace="" ):
-    #self.sim.cycle()
-    print "{}  {}".format( self.sim.model.line_trace(), method_line_trace )
-
-  def _error_line_trace( self, method_line_trace, error_msg ):
-    self._sim_cycle( method_line_trace )
-    #self.reference.cycle()
-    print "========================== error =========================="
-    raise RunMethodTestError( error_msg )
 
   def steps( self ):
     return self.__rules_strategy
@@ -143,9 +129,6 @@ class TestStateMachine( GenericStateMachine ):
     self.reference.tick()
 
     print self.model.line_trace(), self.line_trace_string
-
-  def print_step( self, step ):
-    print self.model.line_trace()
 
   def is_valid( self, rule, data ):
     if rule.precondition and not rule.precondition( self, data ):
