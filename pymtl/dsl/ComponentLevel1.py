@@ -1,7 +1,8 @@
 from __future__ import absolute_import
-#=========================================================================
+
+# =========================================================================
 # ComponentLevel1.py
-#=========================================================================
+# =========================================================================
 # At the bottom level, we only have update blocks and explicit constraints
 # between two update blocks/one update block. Basically this layer defines
 # the scheduling policy/elaboration process.
@@ -16,235 +17,248 @@ from __future__ import absolute_import
 # Date   : Nov 3, 2018
 
 from past.builtins import basestring
-from .NamedObject     import NamedObject
+from .NamedObject import NamedObject
 from .ConstraintTypes import U
-from .errors          import UpblkFuncSameNameError, NotElaboratedError
+from .errors import UpblkFuncSameNameError, NotElaboratedError
 from pymtl.datatypes import *
 
 import inspect, re, ast, py
-p = re.compile('( *((@|def).*))')
 
-class ComponentLevel1( NamedObject ):
+p = re.compile("( *((@|def).*))")
 
-  #-----------------------------------------------------------------------
-  # Private methods
-  #-----------------------------------------------------------------------
 
-  def __new__( cls, *args, **kwargs ):
-    """ Convention: variables local to the object is created in __new__ """
+class ComponentLevel1(NamedObject):
 
-    inst = super( ComponentLevel1, cls ).__new__( cls, *args, **kwargs )
+    # -----------------------------------------------------------------------
+    # Private methods
+    # -----------------------------------------------------------------------
 
-    inst._dsl.name_upblk = {}
-    inst._dsl.upblks     = set()
-    inst._dsl.U_U_constraints = set() # contains ( id(func), id(func) )s
+    def __new__(cls, *args, **kwargs):
+        """ Convention: variables local to the object is created in __new__ """
 
-    return inst
+        inst = super(ComponentLevel1, cls).__new__(cls, *args, **kwargs)
 
-  def _declare_vars( s ):
-    """ Convention: the top level component on which we call elaborate
+        inst._dsl.name_upblk = {}
+        inst._dsl.upblks = set()
+        inst._dsl.U_U_constraints = set()  # contains ( id(func), id(func) )s
+
+        return inst
+
+    def _declare_vars(s):
+        """ Convention: the top level component on which we call elaborate
     declare variables in _declare_vars; it shouldn't have them before
     elaboration.
 
     Convention: the variables that hold all metadata of descendants
     should have _all prefix."""
 
-    s._dsl.all_upblks = set()
-    s._dsl.all_upblk_hostobj = {}
-    s._dsl.all_U_U_constraints = set()
+        s._dsl.all_upblks = set()
+        s._dsl.all_upblk_hostobj = {}
+        s._dsl.all_U_U_constraints = set()
 
-  def _collect_vars( s, m ):
-    """ Called on individual objects during elaboration.
+    def _collect_vars(s, m):
+        """ Called on individual objects during elaboration.
     The general format resembles "s._all_X.update/append( s._X ). """
 
-    if isinstance( m, ComponentLevel1 ):
-      s._dsl.all_upblks |= m._dsl.upblks
-      for blk in m._dsl.upblks:
-        s._dsl.all_upblk_hostobj[ blk ] = m
-      s._dsl.all_U_U_constraints |= m._dsl.U_U_constraints
+        if isinstance(m, ComponentLevel1):
+            s._dsl.all_upblks |= m._dsl.upblks
+            for blk in m._dsl.upblks:
+                s._dsl.all_upblk_hostobj[blk] = m
+            s._dsl.all_U_U_constraints |= m._dsl.U_U_constraints
 
-  def _uncollect_vars( s, m ):
+    def _uncollect_vars(s, m):
 
-    if isinstance( m, ComponentLevel1 ):
-      s._dsl.all_upblks -= m._dsl.upblks
-      for k in m._dsl.upblks:
-        del s._dsl.all_upblk_hostobj[ k ]
-      s._dsl.all_U_U_constraints -= m._dsl.U_U_constraints
+        if isinstance(m, ComponentLevel1):
+            s._dsl.all_upblks -= m._dsl.upblks
+            for k in m._dsl.upblks:
+                del s._dsl.all_upblk_hostobj[k]
+            s._dsl.all_U_U_constraints -= m._dsl.U_U_constraints
 
-  #-----------------------------------------------------------------------
-  # Construction-time APIs
-  #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Construction-time APIs
+    # -----------------------------------------------------------------------
 
-  def update( s, blk ):
-    name = blk.__name__
-    if name in s._dsl.name_upblk:
-      raise UpblkFuncSameNameError( name )
+    def update(s, blk):
+        name = blk.__name__
+        if name in s._dsl.name_upblk:
+            raise UpblkFuncSameNameError(name)
 
-    s._dsl.name_upblk[ name ] = blk
-    s._dsl.upblks.add( blk )
-    return blk
+        s._dsl.name_upblk[name] = blk
+        s._dsl.upblks.add(blk)
+        return blk
 
-  def add_constraints( s, *args ):
-    for (x0, x1) in args:
-      assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
-      assert (x0.func, x1.func) not in s._dsl.U_U_constraints, \
-        "Duplicated constraint"
-      s._dsl.U_U_constraints.add( (x0.func, x1.func) )
+    def add_constraints(s, *args):
+        for (x0, x1) in args:
+            assert isinstance(x0, U) and isinstance(x1, U), "Only accept up1<up2"
+            assert (
+                x0.func,
+                x1.func,
+            ) not in s._dsl.U_U_constraints, "Duplicated constraint"
+            s._dsl.U_U_constraints.add((x0.func, x1.func))
 
-  def construct( s, *args, **kwargs ):
-    raise NotImplementedError("construct method, where the design is built,"
-                              " is not implemented in {}".format( s.__class__.__name__ ) )
+    def construct(s, *args, **kwargs):
+        raise NotImplementedError(
+            "construct method, where the design is built,"
+            " is not implemented in {}".format(s.__class__.__name__)
+        )
 
-  #-----------------------------------------------------------------------
-  # elaborate
-  #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # elaborate
+    # -----------------------------------------------------------------------
 
-  def elaborate( s ):
-    # Directly use the base class elaborate
-    NamedObject.elaborate( s )
+    def elaborate(s):
+        # Directly use the base class elaborate
+        NamedObject.elaborate(s)
 
-    s._declare_vars()
-    for c in s._dsl.all_named_objects:
-      if isinstance( c, ComponentLevel1 ):
-        s._collect_vars( c )
+        s._declare_vars()
+        for c in s._dsl.all_named_objects:
+            if isinstance(c, ComponentLevel1):
+                s._collect_vars(c)
 
-  #-----------------------------------------------------------------------
-  # Public APIs (only can be called after elaboration)
-  #-----------------------------------------------------------------------
+    # -----------------------------------------------------------------------
+    # Public APIs (only can be called after elaboration)
+    # -----------------------------------------------------------------------
 
-  def is_component( s ):
-    return True
+    def is_component(s):
+        return True
 
-  def is_signal( s ):
-    return False
+    def is_signal(s):
+        return False
 
-  def is_interface( s ):
-    return False
+    def is_interface(s):
+        return False
 
-  def get_update_block( s, name ):
-    return s._dsl.name_upblk[ name ]
+    def get_update_block(s, name):
+        return s._dsl.name_upblk[name]
 
-  def get_update_block_host_component( s, blk ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting update block host component " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_upblk_hostobj[ blk ]
-    except AttributeError:
-      raise NotElaboratedError()
+    def get_update_block_host_component(s, blk):
+        try:
+            assert s._dsl.elaborate_top is s, (
+                "Getting update block host component "
+                "is only allowed at top, but this API call "
+                "is on {}.".format("top." + repr(s)[2:])
+            )
+            return s._dsl.all_upblk_hostobj[blk]
+        except AttributeError:
+            raise NotElaboratedError()
 
-  def get_update_blocks( s ):
-    return s._dsl.upblks
+    def get_update_blocks(s):
+        return s._dsl.upblks
 
-  def get_all_update_blocks( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all update blocks " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_upblks
-    except AttributeError:
-      raise NotElaboratedError()
+    def get_all_update_blocks(s):
+        try:
+            assert s._dsl.elaborate_top is s, (
+                "Getting all update blocks "
+                "is only allowed at top, but this API call "
+                "is on {}.".format("top." + repr(s)[2:])
+            )
+            return s._dsl.all_upblks
+        except AttributeError:
+            raise NotElaboratedError()
 
-  def get_component_level( s ):
-    try:
-      return s._dsl.level
-    except AttributeError:
-      raise NotElaboratedError()
+    def get_component_level(s):
+        try:
+            return s._dsl.level
+        except AttributeError:
+            raise NotElaboratedError()
 
-  def get_all_explicit_constraints( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all explicit constraints " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_U_U_constraints
-    except AttributeError:
-      raise NotElaboratedError()
+    def get_all_explicit_constraints(s):
+        try:
+            assert s._dsl.elaborate_top is s, (
+                "Getting all explicit constraints "
+                "is only allowed at top, but this API call "
+                "is on {}.".format("top." + repr(s)[2:])
+            )
+            return s._dsl.all_U_U_constraints
+        except AttributeError:
+            raise NotElaboratedError()
 
-  def get_child_components( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = []
-    for (name, obj) in s.__dict__.items():
-      if   isinstance( name, basestring ): # python2 specific
-        if not name.startswith("_"): # filter private variables
-          stack.append( obj )
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, ComponentLevel1 ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-    return ret
+    def get_child_components(s):
+        assert s._dsl.constructed
+        ret = set()
+        stack = []
+        for (name, obj) in s.__dict__.items():
+            if isinstance(name, basestring):  # python2 specific
+                if not name.startswith("_"):  # filter private variables
+                    stack.append(obj)
+        while stack:
+            u = stack.pop()
+            if isinstance(u, ComponentLevel1):
+                ret.add(u)
+            # ONLY LIST IS SUPPORTED
+            elif isinstance(u, list):
+                stack.extend(u)
+        return ret
 
-  def get_all_components( s ):
-    try:
-      return s._dsl.all_components
-    except AttributeError:
-      return s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
+    def get_all_components(s):
+        try:
+            return s._dsl.all_components
+        except AttributeError:
+            return s._collect_all(lambda x: isinstance(x, ComponentLevel1))
 
-  def get_all_object_filter( s, filt ):
-    assert callable( filt )
-    try:
-      return set( [ x for x in s._dsl.all_components if filt(x) ] )
-    except AttributeError:
-      return s._collect_all( filt )
+    def get_all_object_filter(s, filt):
+        assert callable(filt)
+        try:
+            return set([x for x in s._dsl.all_components if filt(x)])
+        except AttributeError:
+            return s._collect_all(filt)
 
-  def delete_component_by_name( s, name ):
+    def delete_component_by_name(s, name):
 
-    # This nested delete function is to create an extra layer to properly
-    # call garbage collector. If we can make sure it is collected
-    # automatically and fast enough, we might remove this extra layer
-    #
-    # EDIT: After experimented w/ and w/o gc.collect(), it seems like it
-    # is eventually collected, but sometimes the intermediate memory
-    # footprint might reach up to gigabytes, so let's keep the
-    # gc.collect() for now
+        # This nested delete function is to create an extra layer to properly
+        # call garbage collector. If we can make sure it is collected
+        # automatically and fast enough, we might remove this extra layer
+        #
+        # EDIT: After experimented w/ and w/o gc.collect(), it seems like it
+        # is eventually collected, but sometimes the intermediate memory
+        # footprint might reach up to gigabytes, so let's keep the
+        # gc.collect() for now
 
-    def _delete_component_by_name( parent, name ):
-      obj = getattr( parent, name )
-      top = s._dsl.elaborate_top
+        def _delete_component_by_name(parent, name):
+            obj = getattr(parent, name)
+            top = s._dsl.elaborate_top
 
-      # Remove all components and uncollect metadata
+            # Remove all components and uncollect metadata
 
-      removed_components = obj.get_all_components()
-      top._dsl.all_components -= removed_components
+            removed_components = obj.get_all_components()
+            top._dsl.all_components -= removed_components
 
-      for x in removed_components:
-        assert x._dsl.elaborate_top is top
-        top._uncollect_vars( x )
+            for x in removed_components:
+                assert x._dsl.elaborate_top is top
+                top._uncollect_vars(x)
 
-      for x in obj._collect_all():
-        del x._dsl.parent_obj
+            for x in obj._collect_all():
+                del x._dsl.parent_obj
 
-      delattr( s, name )
+            delattr(s, name)
 
-    _delete_component_by_name( s, name )
-    import gc
-    gc.collect()
+        _delete_component_by_name(s, name)
+        import gc
 
-  def add_component_by_name( s, name, obj ):
-    assert not hasattr( s, name )
-    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    setattr( s, name, obj )
-    del NamedObject.__setattr__
+        gc.collect()
 
-    top = s._dsl.elaborate_top
+    def add_component_by_name(s, name, obj):
+        assert not hasattr(s, name)
+        NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+        setattr(s, name, obj)
+        del NamedObject.__setattr__
 
-    added_components = obj.get_all_components()
-    top._dsl.all_components |= added_components
+        top = s._dsl.elaborate_top
 
-    for c in added_components:
-      c._dsl.elaborate_top = top
-      top._collect_vars( c )
+        added_components = obj.get_all_components()
+        top._dsl.all_components |= added_components
 
-  def apply( s, *args ):
+        for c in added_components:
+            c._dsl.elaborate_top = top
+            top._collect_vars(c)
 
-    if isinstance(args[0], list):
-      assert len(args) == 1
-      for step in args[0]:
-        step( s )
+    def apply(s, *args):
 
-    elif len(args) == 1:
-      assert callable( args[0] )
-      args[0]( s )
+        if isinstance(args[0], list):
+            assert len(args) == 1
+            for step in args[0]:
+                step(s)
+
+        elif len(args) == 1:
+            assert callable(args[0])
+            args[0](s)

@@ -1,6 +1,6 @@
-#=========================================================================
+# =========================================================================
 # ifcs_utils.py
-#=========================================================================
+# =========================================================================
 # Utility functions for ifcs.
 #
 # Author: Yanghui Ou
@@ -8,36 +8,39 @@
 
 from pymtl import *
 
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # enrdy_to_str
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
-def enrdy_to_str( msg, en, rdy, trace_len=15 ):
 
-  _str   = "{}".format( msg )
+def enrdy_to_str(msg, en, rdy, trace_len=15):
 
-  if en and not rdy:
-    _str = "X".ljust( trace_len ) # Not allowed
-  elif not en and rdy:
-    _str = " ".ljust( trace_len ) # Idle
-  elif not en and not rdy:
-    _str = "#".ljust( trace_len ) # Stall
+    _str = "{}".format(msg)
 
-  return _str.ljust( trace_len )
+    if en and not rdy:
+        _str = "X".ljust(trace_len)  # Not allowed
+    elif not en and rdy:
+        _str = " ".ljust(trace_len)  # Idle
+    elif not en and not rdy:
+        _str = "#".ljust(trace_len)  # Stall
 
-#-------------------------------------------------------------------------
+    return _str.ljust(trace_len)
+
+
+# -------------------------------------------------------------------------
 #  valrdy_to_str
-#-------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
-def valrdy_to_str( msg, val, rdy, trace_len=15 ):
 
-  _str   = "{}".format( msg )
+def valrdy_to_str(msg, val, rdy, trace_len=15):
 
-  if       val and not rdy:
-    _str = "#".ljust( trace_len )
-  elif not val and     rdy:
-    _str = " ".ljust( trace_len )
-  elif not val and not rdy:
-    _str = ".".ljust( trace_len )
+    _str = "{}".format(msg)
 
-  return _str.ljust( trace_len )
+    if val and not rdy:
+        _str = "#".ljust(trace_len)
+    elif not val and rdy:
+        _str = " ".ljust(trace_len)
+    elif not val and not rdy:
+        _str = ".".ljust(trace_len)
+
+    return _str.ljust(trace_len)

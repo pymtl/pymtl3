@@ -1,7 +1,8 @@
 from __future__ import absolute_import
-#=========================================================================
+
+# =========================================================================
 # Component.py
-#=========================================================================
+# =========================================================================
 # Add clk/reset signals.
 #
 # Author : Yanghui Ou
@@ -11,44 +12,46 @@ from pymtl.datatypes import Bits1
 from .ComponentLevel6 import ComponentLevel6
 from .Connectable import InPort
 
-class Component( ComponentLevel6 ):
 
-  # Override
-  def _construct( s ):
+class Component(ComponentLevel6):
 
-    if not s._dsl.constructed:
-      
-      # clk and reset signals are added here.
-      s.clk   = InPort( Bits1 )
-      s.reset = InPort( Bits1 )
+    # Override
+    def _construct(s):
 
-      kwargs = s._dsl.kwargs.copy()
-      if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].items()
-                              if x } )
+        if not s._dsl.constructed:
 
-      s._handle_guard_methods()
-      
-      # We hook up the added clk and reset signals here.
-      try:
-        parent = s.get_parent_object()
-        parent.connect( s.clk, parent.clk )
-        parent.connect( s.reset, parent.reset )
-      except AttributeError:
-        pass
+            # clk and reset signals are added here.
+            s.clk = InPort(Bits1)
+            s.reset = InPort(Bits1)
 
-      # Same as parent class _construct
-      s.construct( *s._dsl.args, **kwargs )
+            kwargs = s._dsl.kwargs.copy()
+            if "elaborate" in s._dsl.param_dict:
+                kwargs.update(
+                    {x: y for x, y in s._dsl.param_dict["elaborate"].items() if x}
+                )
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
+            s._handle_guard_methods()
 
-      s._dsl.constructed = True
+            # We hook up the added clk and reset signals here.
+            try:
+                parent = s.get_parent_object()
+                parent.connect(s.clk, parent.clk)
+                parent.connect(s.reset, parent.reset)
+            except AttributeError:
+                pass
 
-  def sim_reset( s ):
-    assert s._dsl.elaborate_top is s # assert sim_reset is top
+            # Same as parent class _construct
+            s.construct(*s._dsl.args, **kwargs)
 
-    s.reset = Bits1( 1 )
-    s.tick() # This tick propagates the reset signal
-    s.reset = Bits1( 0 )
-    s.tick()
+            if s._dsl.call_kwargs is not None:  # s.a = A()( b = s.b )
+                s._continue_call_connect()
+
+            s._dsl.constructed = True
+
+    def sim_reset(s):
+        assert s._dsl.elaborate_top is s  # assert sim_reset is top
+
+        s.reset = Bits1(1)
+        s.tick()  # This tick propagates the reset signal
+        s.reset = Bits1(0)
+        s.tick()

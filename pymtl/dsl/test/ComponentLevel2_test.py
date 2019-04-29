@@ -1,8 +1,9 @@
 from __future__ import print_function
 from __future__ import absolute_import
-#=========================================================================
+
+# =========================================================================
 # ComponentLevel2_test.py
-#=========================================================================
+# =========================================================================
 #
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
@@ -12,520 +13,542 @@ from builtins import range
 from builtins import object
 from pymtl import *
 from pymtl.dsl import ComponentLevel2, Wire, InPort, OutPort
-from pymtl.dsl.errors import UpblkCyclicError, InvalidConstraintError, VarNotDeclaredError, InvalidFuncCallError
+from pymtl.dsl.errors import (
+    UpblkCyclicError,
+    InvalidConstraintError,
+    VarNotDeclaredError,
+    InvalidFuncCallError,
+)
 from .sim_utils import simple_sim_pass
 
 from collections import deque
 
-def _test_model( cls ):
-  A = cls()
-  A.elaborate()
-  simple_sim_pass( A, 0x123 )
 
-  T, time = 0, 20
-  while not A.done() and T < time:
-    A.tick()
-    print(A.line_trace())
-    T += 1
+def _test_model(cls):
+    A = cls()
+    A.elaborate()
+    simple_sim_pass(A, 0x123)
 
-class TestSource( ComponentLevel2 ):
+    T, time = 0, 20
+    while not A.done() and T < time:
+        A.tick()
+        print(A.line_trace())
+        T += 1
 
-  def construct( s, input_ ):
-    assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
-    s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = OutPort(int)
+class TestSource(ComponentLevel2):
+    def construct(s, input_):
+        assert type(input_) == list, "TestSrc only accepts a list of inputs!"
 
-    @s.update
-    def up_src():
-      if not s.input_:
-        s.out = 0
-      else:
-        s.out = s.input_.popleft()
+        s.input_ = deque(input_)  # deque.popleft() is faster
+        s.out = OutPort(int)
 
-  def done( s ):
-    return not s.input_
+        @s.update
+        def up_src():
+            if not s.input_:
+                s.out = 0
+            else:
+                s.out = s.input_.popleft()
 
-  def line_trace( s ):
-    return "%s" % s.out
+    def done(s):
+        return not s.input_
 
-class TestSink( ComponentLevel2 ):
+    def line_trace(s):
+        return "%s" % s.out
 
-  def construct( s, answer ):
-    assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
-    s.answer = deque( answer )
-    s.in_ = InPort(int)
+class TestSink(ComponentLevel2):
+    def construct(s, answer):
+        assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
-    @s.update
-    def up_sink():
-      if not s.answer:
-        assert False, "Simulation has ended"
-      else:
-        ref = s.answer.popleft()
-        ans = s.in_
+        s.answer = deque(answer)
+        s.in_ = InPort(int)
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        @s.update
+        def up_sink():
+            if not s.answer:
+                assert False, "Simulation has ended"
+            else:
+                ref = s.answer.popleft()
+                ans = s.in_
 
-  def done( s ):
-    return not s.answer
+                assert ref == ans or ref == "*", "Expect %s, get %s instead" % (
+                    ref,
+                    ans,
+                )
 
-  def line_trace( s ):
-    return "%s" % s.in_
+    def done(s):
+        return not s.answer
+
+    def line_trace(s):
+        return "%s" % s.in_
+
 
 def test_simple():
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.a = Wire(int)
+            s.b = Wire(int)
 
-  class Top(ComponentLevel2):
+            @s.update
+            def upA():
+                s.a = s.b + 1
 
-    def construct( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
+            @s.update
+            def upB():
+                s.b = s.b + 1
 
-      @s.update
-      def upA():
-        s.a = s.b + 1
+        def done(s):
+            return True
 
-      @s.update
-      def upB():
-        s.b = s.b + 1
+    _test_model(Top)
 
-    def done( s ):
-      return True
-
-  _test_model( Top )
 
 def test_cyclic_impl_dependency():
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.a = Wire(int)
+            s.b = Wire(int)
 
-  class Top(ComponentLevel2):
+            @s.update
+            def upA():
+                s.a = s.b
 
-    def construct( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
+            @s.update
+            def upB():
+                s.b = s.a
 
-      @s.update
-      def upA():
-        s.a = s.b
+        def done(s):
+            return True
 
-      @s.update
-      def upB():
-        s.b = s.a
+    try:
+        _test_model(Top)
+    except UpblkCyclicError as e:
+        print("{} is thrown\n{}".format(e.__class__.__name__, e))
+        return
+    raise Exception("Should've thrown UpblkCyclicError.")
 
-    def done( s ):
-      return True
-
-  try:
-    _test_model( Top )
-  except UpblkCyclicError as e:
-    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
-    return
-  raise Exception("Should've thrown UpblkCyclicError.")
 
 def test_invalid_dependency():
+    class Top(ComponentLevel2):
+        def construct(s):
 
-  class Top(ComponentLevel2):
+            s.a = Wire(int)
+            s.b = Wire(int)
 
-    def construct( s ):
+            s.add_constraints(WR(s.a) < RD(s.b))
 
-      s.a = Wire(int)
-      s.b = Wire(int)
+    try:
+        _test_model(Top)
+    except InvalidConstraintError as e:
+        print("{} is thrown\n{}".format(e.__class__.__name__, e))
+        return
 
-      s.add_constraints(
-        WR(s.a) < RD(s.b),
-      )
+    raise Exception("Should've thrown InvalidConstraintError.")
 
-  try:
-    _test_model( Top )
-  except InvalidConstraintError as e:
-    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
-    return
-
-  raise Exception("Should've thrown InvalidConstraintError.")
 
 def test_variable_not_declared():
+    class SomeMsg(object):
+        def __init__(s, a=0, b=0):
+            s.a = int(a)
+            s.b = Bits32(b)
 
-  class SomeMsg( object ):
+        def __eq__(s, other):
+            return s.a == other.a and s.b == other.b
 
-    def __init__( s, a=0, b=0 ):
-      s.a = int( a )
-      s.b = Bits32( b )
+    class A(ComponentLevel2):
+        def construct(s):
+            s.a = Wire(SomeMsg)
+            s.b = Wire(int)
 
-    def __eq__( s, other ):
-      return s.a == other.a and s.b == other.b
+            @s.update
+            def upA():
+                s.a.a.zzz = s.b + 1
 
-  class A(ComponentLevel2):
-    def construct( s ):
-      s.a = Wire( SomeMsg )
-      s.b = Wire( int )
+            @s.update
+            def upB():
+                s.b = s.b + 1
 
-      @s.update
-      def upA():
-        s.a.a.zzz = s.b + 1
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.x = A()
 
-      @s.update
-      def upB():
-        s.b = s.b + 1
+        def done(s):
+            return True
 
-  class Top(ComponentLevel2):
+    try:
+        _test_model(Top)
+    except VarNotDeclaredError as e:
+        print("{} is thrown\n{}".format(e.__class__.__name__, e))
+        return
+    raise Exception("Should've thrown VarNotDeclaredError.")
 
-    def construct( s ):
-      s.x = A()
-
-    def done( s ):
-      return True
-
-  try:
-    _test_model( Top )
-  except VarNotDeclaredError as e:
-    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
-    return
-  raise Exception("Should've thrown VarNotDeclaredError.")
 
 def test_2d_array_vars():
+    class Top(ComponentLevel2):
+        def construct(s):
 
-  class Top(ComponentLevel2):
+            s.src = TestSource([2, 1, 0, 2, 1, 0])
+            s.sink = TestSink(
+                ["*", (5 + 6), (3 + 4), (1 + 2), (5 + 6), (3 + 4), (1 + 2)]
+            )
 
-    def construct( s ):
+            s.wire = [[Wire(int) for _ in range(2)] for _ in range(2)]
 
-      s.src  = TestSource( [2,1,0,2,1,0] )
-      s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
-                                (5+6),(3+4),(1+2)] )
+            @s.update
+            def up_from_src():
+                s.wire[0][0] = s.src.out
+                s.wire[0][1] = s.src.out + 1
 
-      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
+            s.reg = Wire(int)
 
-      @s.update
-      def up_from_src():
-        s.wire[0][0] = s.src.out
-        s.wire[0][1] = s.src.out + 1
+            @s.update
+            def up_reg():
+                s.reg = s.wire[0][0] + s.wire[0][1]
 
-      s.reg = Wire(int)
+            s.add_constraints(U(up_reg) < RD(s.reg))  # up_reg writes s.reg
 
-      @s.update
-      def up_reg():
-        s.reg = s.wire[0][0] + s.wire[0][1]
+            @s.update
+            def upA():
+                for i in range(2):
+                    s.wire[1][i] = s.reg + i
 
-      s.add_constraints(
-        U(up_reg) < RD(s.reg), # up_reg writes s.reg
-      )
+            for i in range(2):
+                s.add_constraints(
+                    U(up_reg) < WR(s.wire[0][i])  # up_reg reads  s.wire[0][i]
+                )
 
-      @s.update
-      def upA():
-        for i in range(2):
-          s.wire[1][i] = s.reg + i
+            @s.update
+            def up_to_sink():
+                s.sink.in_ = s.wire[1][0] + s.wire[1][1]
 
-      for i in range(2):
-        s.add_constraints(
-          U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
-        )
+            up_sink = s.sink.get_update_block("up_sink")
 
-      @s.update
-      def up_to_sink():
-        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+            s.add_constraints(U(upA) < U(up_to_sink), U(up_to_sink) < U(up_sink))
 
-      up_sink = s.sink.get_update_block("up_sink")
+        def done(s):
+            return s.src.done() and s.sink.done()
 
-      s.add_constraints(
-        U(upA)        < U(up_to_sink),
-        U(up_to_sink) < U(up_sink),
-      )
+        def line_trace(s):
+            return (
+                s.src.line_trace()
+                + " >>> "
+                + str(s.wire)
+                + "r0=%s" % s.reg
+                + " >>> "
+                + s.sink.line_trace()
+            )
 
-    def done( s ):
-      return s.src.done() and s.sink.done()
+    _test_model(Top)
 
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-             str(s.wire)+"r0=%s" % s.reg + \
-             " >>> " + s.sink.line_trace()
-
-  _test_model( Top )
 
 def test_wire_up_constraint():
+    class Top(ComponentLevel2):
+        def construct(s):
 
-  class Top(ComponentLevel2):
+            s.src = TestSource([4, 3, 2, 1, 4, 3, 2, 1])
+            s.sink = TestSink([5, 4, 3, 2, 5, 4, 3, 2])
 
-    def construct( s ):
+            @s.update
+            def up_from_src():
+                s.sink.in_ = s.src.out + 1
 
-      s.src  = TestSource( [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( [5,4,3,2,5,4,3,2] )
+            s.add_constraints(U(up_from_src) < RD(s.sink.in_))
 
-      @s.update
-      def up_from_src():
-        s.sink.in_ = s.src.out + 1
+        def done(s):
+            return s.src.done() and s.sink.done()
 
-      s.add_constraints(
-        U(up_from_src) < RD(s.sink.in_),
-      )
+        def line_trace(s):
+            return s.src.line_trace() + " >>> " + " >>> " + s.sink.line_trace()
 
-    def done( s ):
-      return s.src.done() and s.sink.done()
+    _test_model(Top)
 
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-             " >>> " + s.sink.line_trace()
-
-  _test_model( Top )
 
 # write two disjoint slices
 def test_write_two_disjoint_slices():
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.A = Wire(Bits32)
 
-  class Top(ComponentLevel2):
-    def construct( s ):
-      s.A  = Wire( Bits32 )
+            @s.update
+            def up_wr_0_16():
+                s.A[0:16] = Bits16(0xFF)
 
-      @s.update
-      def up_wr_0_16():
-        s.A[0:16] = Bits16( 0xff )
+            @s.update
+            def up_wr_16_30():
+                s.A[16:30] = Bits16(0xFF)
 
-      @s.update
-      def up_wr_16_30():
-        s.A[16:30] = Bits16( 0xff )
+            @s.update
+            def up_rd_12_30():
+                assert s.A[12:30] == 0xFF0
 
-      @s.update
-      def up_rd_12_30():
-        assert s.A[12:30] == 0xff0
+        def done(s):
+            return True
 
-    def done( s ):
-      return True
+    _test_model(Top)
 
-  _test_model( Top )
 
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
+    class SomeMsg(object):
+        def __init__(s):
+            s.a = int
+            s.b = Bits32
 
-  class SomeMsg( object ):
+        def __call__(s, a=0, b=Bits1()):
+            x = SomeMsg()
+            x.a = x.a(a)
+            x.b = x.b(b)
+            return x
 
-    def __init__( s ):
-      s.a = int
-      s.b = Bits32
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.A = Wire(SomeMsg)
 
-    def __call__( s, a = 0, b = Bits1() ):
-      x = SomeMsg()
-      x.a = x.a(a)
-      x.b = x.b(b)
-      return x
+            @s.update
+            def up_wr_A_b():
+                s.A.b = 123
 
-  class Top(ComponentLevel2):
-    def construct( s ):
-      s.A  = Wire( SomeMsg )
+            @s.update
+            def up_rd_A():
+                z = s.A
 
-      @s.update
-      def up_wr_A_b():
-        s.A.b = 123
+        def done(s):
+            return True
 
-      @s.update
-      def up_rd_A():
-        z = s.A
+    _test_model(Top)
 
-    def done( s ):
-      return True
-
-  _test_model( Top )
 
 def test_add_loopback():
+    class Top(ComponentLevel2):
+        def construct(s):
 
-  class Top(ComponentLevel2):
+            s.src = TestSource([4, 3, 2, 1])
+            s.sink = TestSink(
+                [
+                    "*",
+                    (4 + 1),
+                    (3 + 1) + (4 + 1),
+                    (2 + 1) + (3 + 1) + (4 + 1),
+                    (1 + 1) + (2 + 1) + (3 + 1) + (4 + 1),
+                ]
+            )
 
-    def construct( s ):
+            s.wire0 = Wire(int)
+            s.wire1 = Wire(int)
 
-      s.src  = TestSource( [4,3,2,1] )
-      s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+            @s.update
+            def up_from_src():
+                s.wire0 = s.src.out + 1
 
-      s.wire0 = Wire(int)
-      s.wire1 = Wire(int)
+            s.reg0 = Wire(int)
 
-      @s.update
-      def up_from_src():
-        s.wire0 = s.src.out + 1
+            @s.update
+            def upA():
+                s.reg0 = s.wire0 + s.wire1
 
-      s.reg0 = Wire(int)
+            @s.update
+            def up_to_sink_and_loop_back():
+                s.sink.in_ = s.reg0
+                s.wire1 = s.reg0
 
-      @s.update
-      def upA():
-        s.reg0 = s.wire0 + s.wire1
+            s.add_constraints(
+                U(upA) < WR(s.wire1),
+                U(upA) < WR(s.wire0),
+                U(upA) < RD(s.reg0),  # also implicit
+            )
 
-      @s.update
-      def up_to_sink_and_loop_back():
-        s.sink.in_ = s.reg0
-        s.wire1 = s.reg0
+        def done(s):
+            return s.src.done() and s.sink.done()
 
-      s.add_constraints(
-        U(upA) < WR(s.wire1),
-        U(upA) < WR(s.wire0),
-        U(upA) < RD(s.reg0), # also implicit
-      )
+        def line_trace(s):
+            return (
+                s.src.line_trace()
+                + " >>> "
+                + "w0=%s > r0=%s > w1=%s" % (s.wire0, s.reg0, s.wire1)
+                + " >>> "
+                + s.sink.line_trace()
+            )
 
-    def done( s ):
-      return s.src.done() and s.sink.done()
+    _test_model(Top)
 
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
-             " >>> " + s.sink.line_trace()
-  _test_model( Top )
 
 def test_add_loopback_on_edge():
+    class Top(ComponentLevel2):
+        def construct(s):
 
-  class Top(ComponentLevel2):
+            s.src = TestSource([4, 3, 2, 1])
+            s.sink = TestSink(
+                [
+                    "*",
+                    (4 + 1),
+                    (3 + 1) + (4 + 1),
+                    (2 + 1) + (3 + 1) + (4 + 1),
+                    (1 + 1) + (2 + 1) + (3 + 1) + (4 + 1),
+                ]
+            )
 
-    def construct( s ):
+            s.wire0 = Wire(int)
+            s.wire1 = Wire(int)
 
-      s.src  = TestSource( [4,3,2,1] )
-      s.sink = TestSink  ( ["*",(4+1),(3+1)+(4+1),(2+1)+(3+1)+(4+1),(1+1)+(2+1)+(3+1)+(4+1)] )
+            @s.update
+            def up_from_src():
+                s.wire0 = s.src.out + 1
 
-      s.wire0 = Wire(int)
-      s.wire1 = Wire(int)
+            s.reg0 = Wire(int)
 
-      @s.update
-      def up_from_src():
-        s.wire0 = s.src.out + 1
+            # UPDATE ON EDGE!
+            @s.update_on_edge
+            def upA():
+                s.reg0 = s.wire0 + s.wire1
 
-      s.reg0 = Wire(int)
+            @s.update
+            def up_to_sink_and_loop_back():
+                s.sink.in_ = s.reg0
+                s.wire1 = s.reg0
 
-      # UPDATE ON EDGE!
-      @s.update_on_edge
-      def upA():
-        s.reg0 = s.wire0 + s.wire1
+        def done(s):
+            return s.src.done() and s.sink.done()
 
-      @s.update
-      def up_to_sink_and_loop_back():
-        s.sink.in_ = s.reg0
-        s.wire1 = s.reg0
+        def line_trace(s):
+            return (
+                s.src.line_trace()
+                + " >>> "
+                + "w0=%s > r0=%s > w1=%s" % (s.wire0, s.reg0, s.wire1)
+                + " >>> "
+                + s.sink.line_trace()
+            )
 
-    def done( s ):
-      return s.src.done() and s.sink.done()
+    _test_model(Top)
 
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
-             " >>> " + s.sink.line_trace()
-
-  _test_model( Top )
 
 def test_2d_array_vars_impl():
+    class Top(ComponentLevel2):
+        def construct(s):
 
-  class Top(ComponentLevel2):
+            s.src = TestSource([2, 1, 0, 2, 1, 0])
+            s.sink = TestSink(
+                ["*", (5 + 6), (3 + 4), (1 + 2), (5 + 6), (3 + 4), (1 + 2)]
+            )
 
-    def construct( s ):
+            s.wire = [[Wire(int) for _ in range(2)] for _ in range(2)]
 
-      s.src  = TestSource( [2,1,0,2,1,0] )
-      s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
-                                (5+6),(3+4),(1+2)] )
+            @s.update
+            def up_from_src():
+                s.wire[0][0] = s.src.out
+                s.wire[0][1] = s.src.out + 1
 
-      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
+            s.reg = Wire(int)
 
-      @s.update
-      def up_from_src():
-        s.wire[0][0] = s.src.out
-        s.wire[0][1] = s.src.out + 1
+            @s.update_on_edge
+            def up_reg():
+                s.reg = s.wire[0][0] + s.wire[0][1]
 
-      s.reg = Wire(int)
+            @s.update
+            def upA():
+                for i in range(2):
+                    s.wire[1][i] = s.reg + i
 
-      @s.update_on_edge
-      def up_reg():
-        s.reg = s.wire[0][0] + s.wire[0][1]
+            @s.update
+            def up_to_sink():
+                s.sink.in_ = s.wire[1][0] + s.wire[1][1]
 
-      @s.update
-      def upA():
-        for i in range(2):
-          s.wire[1][i] = s.reg + i
+        def done(s):
+            return s.src.done() and s.sink.done()
 
-      @s.update
-      def up_to_sink():
-        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+        def line_trace(s):
+            return (
+                s.src.line_trace()
+                + " >>> "
+                + str(s.wire)
+                + "r0=%s" % s.reg
+                + " >>> "
+                + s.sink.line_trace()
+            )
 
-    def done( s ):
-      return s.src.done() and s.sink.done()
+    _test_model(Top)
 
-    def line_trace( s ):
-      return s.src.line_trace() + " >>> " + \
-             str(s.wire)+"r0=%s" % s.reg + \
-             " >>> " + s.sink.line_trace()
-
-  _test_model( Top )
 
 def test_simple_func_impl():
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.a = Wire(int)
+            s.b = Wire(int)
 
-  class Top(ComponentLevel2):
+            s.counter_assign = Wire(int)
+            s.counter_read = Wire(int)
 
-    def construct( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
+            @s.func
+            def assignb(b):
+                s.b = b + (s.counter_assign == -1)  # never -1
 
-      s.counter_assign = Wire(int)
-      s.counter_read   = Wire(int)
+            @s.update
+            def up_write():
+                if s.counter_assign & 1:
+                    assign(1, 2)
+                else:
+                    assign(10, 20)
+                s.counter_assign += 1
 
-      @s.func
-      def assignb( b ):
-        s.b = b + (s.counter_assign == -1) # never -1
+            @s.update
+            def up_read():
+                if s.counter_read & 1:
+                    assert s.a == 1 and s.b == min(100, 2)
+                else:
+                    assert s.a == 10 and s.b == 20
+                s.counter_read += 1
 
-      @s.update
-      def up_write():
-        if s.counter_assign & 1:
-          assign( 1, 2 )
-        else:
-          assign( 10, 20 )
-        s.counter_assign += 1
+            # The order doesn't matter. As a result, funcs should be processed
+            # after construction time
+            @s.func
+            def assign(a, b):
+                s.a = a + (s.counter_assign == -1)
+                assignb(b)
 
-      @s.update
-      def up_read():
-        if s.counter_read & 1:
-          assert s.a == 1 and s.b == min(100,2)
-        else:
-          assert s.a == 10 and s.b == 20
-        s.counter_read += 1
+        def done(s):
+            return False
 
-      # The order doesn't matter. As a result, funcs should be processed
-      # after construction time
-      @s.func
-      def assign( a, b ):
-        s.a = a + (s.counter_assign == -1)
-        assignb( b )
+        def line_trace(s):
+            return "{} {}".format(s.a, s.b)
 
-    def done( s ):
-      return False
+    _test_model(Top)
 
-    def line_trace( s ):
-      return "{} {}".format( s.a, s.b )
-
-  _test_model( Top )
 
 def test_func_cyclic_invalid():
+    class Top(ComponentLevel2):
+        def construct(s):
+            s.a = Wire(int)
+            s.b = Wire(int)
+            s.c = Wire(int)
 
-  class Top(ComponentLevel2):
+            @s.func
+            def assignc(a, b):
+                s.c = a
+                assign(a, b)
 
-    def construct( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
-      s.c = Wire(int)
+            @s.func
+            def assignb(a, b):
+                s.b = b
+                assignc(a, b)
 
-      @s.func
-      def assignc( a, b ):
-        s.c = a
-        assign( a, b )
+            @s.func
+            def assign(a, b):
+                s.a = b
+                assignb(b, a)
 
-      @s.func
-      def assignb( a, b ):
-        s.b = b
-        assignc( a, b )
+            @s.update
+            def up_write():
+                assign(1, 2)
 
-      @s.func
-      def assign( a, b ):
-        s.a = b
-        assignb( b, a )
+        def done(s):
+            return False
 
-      @s.update
-      def up_write():
-        assign( 1, 2 )
+        def line_trace(s):
+            return "{} {}".format(s.a, s.b)
 
-    def done( s ):
-      return False
-
-    def line_trace( s ):
-      return "{} {}".format( s.a, s.b )
-
-  try:
-    _test_model( Top )
-  except InvalidFuncCallError as e:
-    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
-    return
-  raise Exception("Should've thrown InvalidFuncCallError.")
-
+    try:
+        _test_model(Top)
+    except InvalidFuncCallError as e:
+        print("{} is thrown\n{}".format(e.__class__.__name__, e))
+        return
+    raise Exception("Should've thrown InvalidFuncCallError.")

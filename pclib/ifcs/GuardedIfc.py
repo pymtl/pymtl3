@@ -1,6 +1,6 @@
-#=========================================================================
+# =========================================================================
 # GuardedIfc.py
-#=========================================================================
+# =========================================================================
 # Generating guarded rdy interface
 #
 # Author : Shunning Jiang
@@ -8,4 +8,4 @@
 
 from pymtl import *
 
-guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
+guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs("rdy")

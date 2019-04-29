@@ -1,6 +1,6 @@
-#=========================================================================
+# =========================================================================
 # MemMsg.py
-#=========================================================================
+# =========================================================================
 # New memory message type implementation.
 #
 # Author : Shunning Jiang
@@ -12,56 +12,62 @@ from pymtl import *
 
 import py
 
-_mem_req_msg_cache  = dict()
+_mem_req_msg_cache = dict()
 _mem_resp_msg_cache = dict()
 
-def mk_mem_msg( o, a, d ):
-  return mk_mem_req_msg( o, a, d ), mk_mem_resp_msg( o, d )
 
-def mk_mem_req_msg( o, a, d ):
-  if (o,a,d) in _mem_req_msg_cache:
-    return _mem_req_msg_cache[ (o,a,d) ]
-  exec(py.code.Source( _req_template.format( o, a, d ) ).compile(), globals())
-  return _mem_req_msg_cache[ (o,a,d) ]
+def mk_mem_msg(o, a, d):
+    return mk_mem_req_msg(o, a, d), mk_mem_resp_msg(o, d)
 
-def mk_mem_resp_msg( o, d ):
-  if (o,d) in _mem_resp_msg_cache:
-    return _mem_resp_msg_cache[ (o,d) ]
-  exec(py.code.Source( _resp_template.format( o, d ) ).compile(), globals())
-  return _mem_resp_msg_cache[ (o,d) ]
+
+def mk_mem_req_msg(o, a, d):
+    if (o, a, d) in _mem_req_msg_cache:
+        return _mem_req_msg_cache[(o, a, d)]
+    exec(py.code.Source(_req_template.format(o, a, d)).compile(), globals())
+    return _mem_req_msg_cache[(o, a, d)]
+
+
+def mk_mem_resp_msg(o, d):
+    if (o, d) in _mem_resp_msg_cache:
+        return _mem_resp_msg_cache[(o, d)]
+    exec(py.code.Source(_resp_template.format(o, d)).compile(), globals())
+    return _mem_resp_msg_cache[(o, d)]
+
 
 class MemMsgType(object):
-  READ       = 0
-  WRITE      = 1
-  # write no-refill
-  WRITE_INIT = 2
-  AMO_ADD    = 3
-  AMO_AND    = 4
-  AMO_OR     = 5
-  AMO_SWAP   = 6
-  AMO_MIN    = 7
-  AMO_MINU   = 8
-  AMO_MAX    = 9
-  AMO_MAXU   = 10
-  AMO_XOR    = 11
+    READ = 0
+    WRITE = 1
+    # write no-refill
+    WRITE_INIT = 2
+    AMO_ADD = 3
+    AMO_AND = 4
+    AMO_OR = 5
+    AMO_SWAP = 6
+    AMO_MIN = 7
+    AMO_MINU = 8
+    AMO_MAX = 9
+    AMO_MAXU = 10
+    AMO_XOR = 11
 
-  str = {
-    READ       : "rd",
-    WRITE      : "wr",
-    WRITE_INIT : "in",
-    AMO_ADD    : "ad",
-    AMO_AND    : "an",
-    AMO_OR     : "or",
-    AMO_SWAP   : "sw",
-    AMO_MIN    : "mi",
-    AMO_MINU   : "mu",
-    AMO_MAX    : "mx",
-    AMO_MAXU   : "xu",
-    AMO_XOR    : "xo",
-  }
+    str = {
+        READ: "rd",
+        WRITE: "wr",
+        WRITE_INIT: "in",
+        AMO_ADD: "ad",
+        AMO_AND: "an",
+        AMO_OR: "or",
+        AMO_SWAP: "sw",
+        AMO_MIN: "mi",
+        AMO_MINU: "mu",
+        AMO_MAX: "mx",
+        AMO_MAXU: "xu",
+        AMO_XOR: "xo",
+    }
 
-def msg_to_str( msg, width ):
-  return ("" if msg is None else str(msg)).ljust(width)
+
+def msg_to_str(msg, width):
+    return ("" if msg is None else str(msg)).ljust(width)
+
 
 _req_template = """
 class MemReqMsg_{0}_{1}_{2}( object ):
