@@ -1,21 +1,23 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import random
+import struct
+from builtins import range, zip
+
+import pytest
+
+from pclib.ifcs import MemMsgType, mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg
+from pclib.rtl import TestSinkValRdy, TestSourceValRdy
+from pclib.test import mk_test_case_table
+from pymtl import *
+
+from .TestMemory import TestMemoryRTL
 
 # =========================================================================
 # TestMemory_test.py
 # =========================================================================
 
-from builtins import zip
-from builtins import range
-import pytest
-import random
-import struct
 
-from pymtl import *
-from pclib.test import mk_test_case_table
-from pclib.rtl import TestSourceValRdy, TestSinkValRdy
-from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
-from .TestMemory import TestMemoryRTL
 
 # -------------------------------------------------------------------------
 # TestHarness

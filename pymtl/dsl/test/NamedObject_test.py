@@ -1,5 +1,11 @@
 from __future__ import print_function
 
+from builtins import range
+from collections import deque
+
+from pymtl import *
+from pymtl.dsl import NamedObject
+
 # =========================================================================
 # NamedObject_test.py
 # =========================================================================
@@ -7,10 +13,6 @@ from __future__ import print_function
 # Author : Shunning Jiang
 # Date   : Dec 23, 2017
 
-from builtins import range
-from pymtl import *
-from pymtl.dsl import NamedObject
-from collections import deque
 
 
 class Chicken(NamedObject):

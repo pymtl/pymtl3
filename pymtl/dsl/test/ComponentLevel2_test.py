@@ -1,5 +1,18 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import object, range, str
+from collections import deque
+
+from pymtl import *
+from pymtl.dsl import ComponentLevel2, InPort, OutPort, Wire
+from pymtl.dsl.errors import (
+    InvalidConstraintError,
+    InvalidFuncCallError,
+    UpblkCyclicError,
+    VarNotDeclaredError,
+)
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # ComponentLevel2_test.py
@@ -8,20 +21,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
-from builtins import str
-from builtins import range
-from builtins import object
-from pymtl import *
-from pymtl.dsl import ComponentLevel2, Wire, InPort, OutPort
-from pymtl.dsl.errors import (
-    UpblkCyclicError,
-    InvalidConstraintError,
-    VarNotDeclaredError,
-    InvalidFuncCallError,
-)
-from .sim_utils import simple_sim_pass
 
-from collections import deque
 
 
 def _test_model(cls):

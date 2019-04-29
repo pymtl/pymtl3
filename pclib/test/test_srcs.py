@@ -7,12 +7,10 @@
 #   Date : Mar 11, 2019
 
 from builtins import str
-from pymtl import *
-from pclib.ifcs import SendIfcRTL
 from collections import deque
-from pclib.ifcs import RecvCL2SendRTL, RecvRTL2SendCL
 
-from pclib.ifcs import GuardedCallerIfc
+from pclib.ifcs import GuardedCallerIfc, RecvCL2SendRTL, RecvRTL2SendCL, SendIfcRTL
+from pymtl import *
 
 # -------------------------------------------------------------------------
 # TestSrcCL

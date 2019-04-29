@@ -1,5 +1,14 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import range
+
+from pclib.rtl import TestBasicSink as TestSink
+from pclib.rtl import TestBasicSource as TestSource
+from pymtl import *
+from pymtl.dsl import ComponentLevel3
+from pymtl.dsl.errors import SignalTypeError
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # PortCheck_test.py
@@ -8,12 +17,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 25, 2017
 
-from builtins import range
-from pymtl import *
-from pymtl.dsl import ComponentLevel3
-from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
-from pymtl.dsl.errors import SignalTypeError
-from .sim_utils import simple_sim_pass
 
 
 def _test_model(cls):

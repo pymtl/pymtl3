@@ -1,5 +1,13 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import range, str
+from collections import deque
+
+from pymtl import *
+from pymtl.dsl import ComponentLevel3
+from pymtl.dsl.errors import InvalidConnectionError, MultiWriterError
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # ComponentLevel3_test.py
@@ -8,13 +16,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 25, 2017
 
-from builtins import str
-from builtins import range
-from pymtl import *
-from pymtl.dsl import ComponentLevel3
-from pymtl.dsl.errors import MultiWriterError, InvalidConnectionError
-from .sim_utils import simple_sim_pass
-from collections import deque
 
 
 def _test_model(cls):

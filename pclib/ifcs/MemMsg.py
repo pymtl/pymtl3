@@ -6,11 +6,11 @@
 # Author : Shunning Jiang
 # Date   : Mar 12, 2018
 
-from builtins import str
-from builtins import object
-from pymtl import *
+from builtins import object, str
 
 import py
+
+from pymtl import *
 
 _mem_req_msg_cache = dict()
 _mem_resp_msg_cache = dict()

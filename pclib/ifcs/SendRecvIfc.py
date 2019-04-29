@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 
+from pymtl import *
+
+from .ifcs_utils import enrdy_to_str
+
 # =========================================================================
 # SendRecvIfc.py
 # =========================================================================
@@ -8,8 +12,6 @@ from __future__ import absolute_import
 # Author: Yanghui Ou
 #   Date: Feb 21, 2019
 
-from pymtl import *
-from .ifcs_utils import enrdy_to_str
 
 # -------------------------------------------------------------------------
 # RecvIfcRTL

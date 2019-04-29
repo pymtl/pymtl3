@@ -1,14 +1,15 @@
-from __future__ import print_function
-from __future__ import division
+from __future__ import division, print_function
+
+import copy
+from builtins import object
+
+from past.utils import old_div
 
 # =======================================================================
 # Bits.py
 # =======================================================================
 # Module containing the Bits class.
 
-from builtins import object
-from past.utils import old_div
-import copy
 
 # -----------------------------------------------------------------------
 # _get_nbits

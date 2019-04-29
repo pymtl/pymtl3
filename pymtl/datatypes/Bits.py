@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+from builtins import object
+
 # =========================================================================
 # Bits.py
 # =========================================================================
@@ -8,7 +10,6 @@ from __future__ import print_function
 # Author : Shunning Jiang
 # Date   : Oct 31, 2017
 
-from builtins import object
 
 
 class Bits(object):

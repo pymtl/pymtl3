@@ -1,5 +1,14 @@
 from __future__ import absolute_import
 
+from collections import deque
+
+from graphviz import Digraph
+
+from pymtl.dsl.errors import UpblkCyclicError
+from pymtl.passes import BasePass
+
+from .errors import PassOrderError
+
 # =========================================================================
 # SimpleTickPass.py
 # =========================================================================
@@ -8,11 +17,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
-from pymtl.passes import BasePass
-from collections import deque
-from graphviz import Digraph
-from .errors import PassOrderError
-from pymtl.dsl.errors import UpblkCyclicError
 
 
 class SimpleTickPass(BasePass):

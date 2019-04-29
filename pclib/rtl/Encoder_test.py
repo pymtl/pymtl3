@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 
+from pclib.test import TestVectorSimulator
+from pymtl import *
+
+from .Encoder import Encoder
+
 # =========================================================================
 # Encoder_test
 # =========================================================================
@@ -8,9 +13,6 @@ from __future__ import absolute_import
 # Author : Yanghui Ou
 #   Date : Apr 5, 2019
 
-from pymtl import *
-from pclib.test import TestVectorSimulator
-from .Encoder import Encoder
 
 
 def run_test(model, test_vectors):

@@ -1,7 +1,8 @@
-from pymtl import *
 from collections import deque
+
 from pclib.ifcs import OutValRdyIfc, SendIfcRTL, enrdy_to_str
 from pclib.valrdy import valrdy_to_str
+from pymtl import *
 
 
 class TestBasicSource(Component):

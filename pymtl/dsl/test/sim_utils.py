@@ -1,5 +1,27 @@
 from __future__ import print_function
 
+import random
+from collections import defaultdict, deque
+
+import py.code
+from past.builtins import basestring
+
+from pymtl import *
+from pymtl.dsl import (
+    ComponentLevel1,
+    ComponentLevel2,
+    ComponentLevel3,
+    ComponentLevel4,
+    ComponentLevel5,
+    ComponentLevel6,
+    Const,
+    Interface,
+    MethodPort,
+    NamedObject,
+    Signal,
+)
+from pymtl.dsl.errors import NotElaboratedError, UpblkCyclicError
+
 # =========================================================================
 # sim_utils.py
 # =========================================================================
@@ -8,22 +30,7 @@ from __future__ import print_function
 # Author : Shunning Jiang
 # Date   : Jan 1, 2018
 
-from past.builtins import basestring
-from pymtl import *
-from collections import deque, defaultdict
-from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
-from pymtl.dsl import NamedObject
-from pymtl.dsl import (
-    ComponentLevel1,
-    ComponentLevel2,
-    ComponentLevel3,
-    ComponentLevel4,
-    ComponentLevel5,
-    ComponentLevel6,
-)
-from pymtl.dsl import Signal, Const, MethodPort, Interface
 
-import random, py.code
 
 
 def simple_sim_pass(s, seed=0xDEADBEEF):

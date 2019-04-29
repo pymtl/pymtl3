@@ -4,8 +4,10 @@
 """Collection of arbiter implementations based on vc-Arbiters."""
 
 from builtins import range
-from pymtl import *
+
 from pclib.rtl import Mux, RegEnRst
+from pymtl import *
+
 
 # -----------------------------------------------------------------------
 # RoundRobinArbiter

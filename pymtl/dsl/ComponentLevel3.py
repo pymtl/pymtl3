@@ -1,5 +1,22 @@
 from __future__ import absolute_import
 
+import ast
+import inspect  # for error message
+from builtins import range
+from collections import defaultdict, deque
+
+from .ComponentLevel1 import ComponentLevel1
+from .ComponentLevel2 import ComponentLevel2
+from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
+from .errors import (
+    InvalidConnectionError,
+    MultiWriterError,
+    NotElaboratedError,
+    NoWriterError,
+    SignalTypeError,
+)
+from .NamedObject import NamedObject
+
 # =========================================================================
 # ComponentLevel3.py
 # =========================================================================
@@ -13,21 +30,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from builtins import range
-from .NamedObject import NamedObject
-from .ComponentLevel1 import ComponentLevel1
-from .ComponentLevel2 import ComponentLevel2
-from .Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from .errors import (
-    InvalidConnectionError,
-    SignalTypeError,
-    NoWriterError,
-    MultiWriterError,
-    NotElaboratedError,
-)
-from collections import defaultdict, deque
 
-import inspect, ast  # for error message
 
 
 class ComponentLevel3(ComponentLevel2):

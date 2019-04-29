@@ -1,5 +1,13 @@
-from __future__ import print_function
-from __future__ import division
+from __future__ import division, print_function
+
+import timeit
+from builtins import hex, range
+
+from past.utils import old_div
+
+from Bits_gen import *
+from Bits_v2 import Bits as Bv2
+from Bits_v3 import Bits as Bv3
 
 # =========================================================================
 # bits_benchmark.py
@@ -9,14 +17,7 @@ from __future__ import division
 # Author : Shunning Jiang
 # Date   : Dec 18, 2017
 
-from builtins import hex
-from builtins import range
-from past.utils import old_div
-import timeit
 
-from Bits_v2 import Bits as Bv2
-from Bits_v3 import Bits as Bv3
-from Bits_gen import *
 
 # =========================================================================
 # ARITH

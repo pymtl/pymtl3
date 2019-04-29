@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 
+from .ComponentLevel3 import ComponentLevel3
+from .Connectable import CalleePort, Signal
+from .ConstraintTypes import M, U
+
 # =========================================================================
 # ComponentLevel4.py
 # =========================================================================
@@ -9,9 +13,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 29, 2018
 
-from .ConstraintTypes import U, M
-from .Connectable import Signal, CalleePort
-from .ComponentLevel3 import ComponentLevel3
 
 
 class ComponentLevel4(ComponentLevel3):

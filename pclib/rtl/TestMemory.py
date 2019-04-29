@@ -1,10 +1,18 @@
 from __future__ import absolute_import
-from builtins import range
-from builtins import object
-from pymtl import *
+
+from builtins import object, range
 from collections import deque
-from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
-from pclib.ifcs import InValRdyIfc, OutValRdyIfc
+
+from pclib.ifcs import (
+    InValRdyIfc,
+    MemMsgType,
+    OutValRdyIfc,
+    mk_mem_msg,
+    mk_mem_req_msg,
+    mk_mem_resp_msg,
+)
+from pymtl import *
+
 from .valrdy_queues import PipeQueue1RTL
 
 AMO_FUNS = {

@@ -1,5 +1,11 @@
 from __future__ import absolute_import
 
+from pclib.ifcs.GuardedIfc import GuardedCallerIfc, guarded_ifc
+from pclib.ifcs.SendRecvIfc import RecvIfcRTL, SendIfcRTL
+from pymtl import *
+
+from .ifcs_utils import enrdy_to_str
+
 # =========================================================================
 # Send/RecvIfc adapters
 # =========================================================================
@@ -8,10 +14,6 @@ from __future__ import absolute_import
 # Author : Yanghui Ou
 #   Date : Mar 07, 2019
 
-from pymtl import *
-from pclib.ifcs.SendRecvIfc import SendIfcRTL, RecvIfcRTL
-from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCallerIfc
-from .ifcs_utils import enrdy_to_str
 
 # -------------------------------------------------------------------------
 # RecvCL2SendRTL

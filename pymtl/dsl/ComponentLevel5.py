@@ -1,5 +1,12 @@
 from __future__ import absolute_import
 
+from .ComponentLevel1 import ComponentLevel1
+from .ComponentLevel2 import ComponentLevel2
+from .ComponentLevel4 import ComponentLevel4
+from .Connectable import CalleePort, CallerPort, MethodPort, Signal
+from .errors import MultiWriterError
+from .NamedObject import NamedObject
+
 # =========================================================================
 # ComponentLevel5.py
 # =========================================================================
@@ -9,13 +16,7 @@ from __future__ import absolute_import
 # Date   : Dec 29, 2018
 
 
-from .NamedObject import NamedObject
-from .ComponentLevel1 import ComponentLevel1
-from .ComponentLevel2 import ComponentLevel2
-from .ComponentLevel4 import ComponentLevel4
-from .Connectable import Signal, MethodPort, CalleePort, CallerPort
 
-from .errors import MultiWriterError
 
 
 class ComponentLevel5(ComponentLevel4):

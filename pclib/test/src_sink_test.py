@@ -1,5 +1,12 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import pytest
+
+from pymtl import *
+from pymtl.dsl.test.sim_utils import simple_sim_pass
+
+from .test_sinks import TestSinkCL, TestSinkRTL
+from .test_srcs import TestSrcCL, TestSrcRTL
 
 # =========================================================================
 # src_sink_test
@@ -9,12 +16,7 @@ from __future__ import absolute_import
 # Author : Yanghui Ou
 #   Date : Mar 11, 2019
 
-import pytest
 
-from pymtl import *
-from pymtl.dsl.test.sim_utils import simple_sim_pass
-from .test_srcs import TestSrcCL, TestSrcRTL
-from .test_sinks import TestSinkCL, TestSinkRTL
 
 # -------------------------------------------------------------------------
 # TestHarnessCL

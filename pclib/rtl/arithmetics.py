@@ -1,4 +1,5 @@
 from builtins import range
+
 from pymtl import *
 
 # N-input Mux

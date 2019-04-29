@@ -1,6 +1,11 @@
 from __future__ import absolute_import
+
 from pymtl import *
+
 from .GenDAGPass import GenDAGPass
+from .mamba.HeuristicTopoPass import HeuristicTopoPass
+from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
+from .mamba.UnrollTickPass import UnrollTickPass
 from .SimpleSchedPass import SimpleSchedPass
 from .SimpleTickPass import SimpleTickPass
 
@@ -20,7 +25,6 @@ SimpleCLSim = [
     Component.lock_in_simulation,
 ]
 
-from .mamba.UnrollTickPass import UnrollTickPass
 
 UnrollSim = [
     Component.elaborate,
@@ -30,7 +34,6 @@ UnrollSim = [
     Component.lock_in_simulation,
 ]
 
-from .mamba.HeuristicTopoPass import HeuristicTopoPass
 
 HeuTopoUnrollSim = [
     Component.elaborate,
@@ -40,7 +43,6 @@ HeuTopoUnrollSim = [
     Component.lock_in_simulation,
 ]
 
-from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 
 TraceBreakingSim = [
     Component.elaborate,

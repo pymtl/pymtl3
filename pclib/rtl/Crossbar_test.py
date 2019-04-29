@@ -1,13 +1,16 @@
 from __future__ import absolute_import
 
+from builtins import range
+
+from pclib.test import TestVectorSimulator
+from pymtl import *
+
+from .Crossbar import Crossbar
+
 # =======================================================================
 # Crossbar_test.py
 # =======================================================================
 
-from builtins import range
-from pymtl import *
-from .Crossbar import Crossbar
-from pclib.test import TestVectorSimulator
 
 # -----------------------------------------------------------------------
 # run_test_crossbar

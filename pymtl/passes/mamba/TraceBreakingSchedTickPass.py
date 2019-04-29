@@ -1,13 +1,10 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-# -------------------------------------------------------------------------
-# MetaBlkPass
-# -------------------------------------------------------------------------
-
+import ast
 from builtins import range
-import ast, py
-from collections import deque, defaultdict
+from collections import defaultdict, deque
+
+import py
 from graphviz import Digraph
 
 from pymtl import *
@@ -16,6 +13,13 @@ from pymtl.passes.errors import PassOrderError
 from pymtl.passes.SimpleSchedPass import check_schedule
 
 from .HeuristicTopoPass import CountBranches
+
+# -------------------------------------------------------------------------
+# MetaBlkPass
+# -------------------------------------------------------------------------
+
+
+
 
 
 class TraceBreakingSchedTickPass(BasePass):

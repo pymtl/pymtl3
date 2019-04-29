@@ -1,5 +1,14 @@
 from __future__ import absolute_import
 
+from collections import deque
+
+from graphviz import Digraph
+
+from pymtl.dsl.errors import UpblkCyclicError
+
+from .BasePass import BasePass, PassMetadata
+from .errors import PassOrderError
+
 # =========================================================================
 # SimpleSchedPass.py
 # =========================================================================
@@ -9,11 +18,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
-from .BasePass import BasePass, PassMetadata
-from collections import deque
-from graphviz import Digraph
-from .errors import PassOrderError
-from pymtl.dsl.errors import UpblkCyclicError
 
 
 class SimpleSchedPass(BasePass):

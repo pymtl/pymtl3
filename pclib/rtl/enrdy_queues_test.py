@@ -1,5 +1,14 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import struct
+from builtins import map
+
+import pytest
+
+from pclib.rtl import TestSinkEnRdy, TestSourceEnRdy
+from pymtl import *
+
+from .enrdy_queues import *
 
 # =========================================================================
 # enrdy_queues_test.py
@@ -8,13 +17,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Mar 9, 2018
 
-from builtins import map
-import pytest
-import struct
 
-from pymtl import *
-from pclib.rtl import TestSourceEnRdy, TestSinkEnRdy
-from .enrdy_queues import *
 
 # -------------------------------------------------------------------------
 # TestHarness

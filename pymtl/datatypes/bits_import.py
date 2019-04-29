@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 
+import os
+from builtins import range
+
+import py.code
+
 # =========================================================================
 # bits_import.py
 # =========================================================================
@@ -12,8 +17,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Aug 23, 2018
 
-from builtins import range
-import py.code, os
 
 if os.getenv("PYMTL_BITS") == "1":
     from .Bits import Bits

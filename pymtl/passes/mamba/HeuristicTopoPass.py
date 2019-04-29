@@ -7,16 +7,18 @@
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
-from future import standard_library
-
-standard_library.install_aliases()
 import ast
-from graphviz import Digraph
 from queue import PriorityQueue
+
+from future import standard_library
+from graphviz import Digraph
 
 from pymtl.passes.BasePass import BasePass, PassMetadata
 from pymtl.passes.errors import PassOrderError
 from pymtl.passes.SimpleSchedPass import check_schedule
+
+standard_library.install_aliases()
+
 
 
 class CountBranches(ast.NodeVisitor):

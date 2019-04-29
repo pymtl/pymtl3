@@ -1,5 +1,12 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import str
+from collections import deque
+
+from pymtl import *
+from pymtl.dsl import ComponentLevel4
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # ComponentLevel4_test.py
@@ -8,11 +15,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Dec 25, 2017
 
-from builtins import str
-from pymtl import *
-from pymtl.dsl import ComponentLevel4
-from .sim_utils import simple_sim_pass
-from collections import deque
 
 
 def _test_model(cls):

@@ -1,5 +1,13 @@
 from __future__ import absolute_import
 
+from builtins import object, str
+
+from pymtl.datatypes import mk_bits
+from pymtl.datatypes.Bits import Bits
+
+from .errors import InvalidConnectionError
+from .NamedObject import DSLMetadata, NamedObject
+
 # =========================================================================
 # Connectable.py
 # =========================================================================
@@ -8,12 +16,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from builtins import str
-from builtins import object
-from .NamedObject import NamedObject, DSLMetadata
-from pymtl.datatypes import mk_bits
-from pymtl.datatypes.Bits import Bits
-from .errors import InvalidConnectionError
 
 
 class Connectable(object):

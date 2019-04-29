@@ -1,5 +1,13 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import pytest
+
+from pclib.test.test_sinks import TestSinkCL
+from pclib.test.test_srcs import TestSrcCL
+from pymtl import *
+from pymtl.dsl.test.sim_utils import simple_sim_pass
+
+from .queues import BypassQueueCL, NormalQueueCL, PipeQueueCL
 
 # =========================================================================
 # Tests for CL queues
@@ -8,13 +16,7 @@ from __future__ import absolute_import
 # Author: Yanghui Ou
 #   Date: Mar 20, 2019
 
-import pytest
 
-from pymtl import *
-from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.test.test_srcs import TestSrcCL
-from pclib.test.test_sinks import TestSinkCL
-from .queues import PipeQueueCL, BypassQueueCL, NormalQueueCL
 
 # -------------------------------------------------------------------------
 # TestHarness

@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 
+import math
+
+from .bits_import import *
+
 # =========================================================================
 # helpers.py
 # =========================================================================
@@ -9,8 +13,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2017
 
-from .bits_import import *
-import math
 
 
 def concat(*args):

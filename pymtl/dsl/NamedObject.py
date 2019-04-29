@@ -1,5 +1,11 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import re
+from builtins import object
+
+from past.builtins import basestring
+
+from .errors import NotElaboratedError
 
 # =========================================================================
 # NamedObject.py
@@ -20,10 +26,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
-from past.builtins import basestring
-from builtins import object
-from .errors import NotElaboratedError
-import re
 
 
 class DSLMetadata(object):

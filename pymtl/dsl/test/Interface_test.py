@@ -1,5 +1,13 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import range, str
+from collections import deque
+from functools import reduce
+
+from pymtl import *
+from pymtl.dsl import ComponentLevel3
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # Interface_test.py
@@ -8,14 +16,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang, Yanghui Ou
 # Date   : Jan 1, 2018
 
-from builtins import str
-from builtins import range
-from pymtl import *
-from pymtl.dsl import ComponentLevel3
-from .sim_utils import simple_sim_pass
 
-from collections import deque
-from functools import reduce
 
 
 def _test_model(cls):

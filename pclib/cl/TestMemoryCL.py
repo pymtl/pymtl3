@@ -9,14 +9,14 @@
 # Author : Shunning Jiang
 # Date   : Mar 12, 2018
 
-from builtins import range
-from builtins import object
-from pymtl import *
+from builtins import object, range
 from collections import deque
+
+from pclib.ifcs import mk_mem_msg
+from pymtl import *
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
-from pclib.ifcs import mk_mem_msg
 
 # - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - -
 # -------------------------------------------------------------------------

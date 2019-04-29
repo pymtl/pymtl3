@@ -1,5 +1,13 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import str
+from collections import deque
+
+from pymtl import *
+from pymtl.dsl.ComponentLevel6 import ComponentLevel6, generate_guard_decorator_ifcs
+from pymtl.passes.PassGroups import SimpleCLSim
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # ComponentLevel6_test.py
@@ -9,12 +17,6 @@ from __future__ import absolute_import
 # Author : Yanghui Ou
 #   Date : Feb 24, 2019
 
-from builtins import str
-from pymtl import *
-from pymtl.dsl.ComponentLevel6 import generate_guard_decorator_ifcs, ComponentLevel6
-from .sim_utils import simple_sim_pass
-from collections import deque
-from pymtl.passes.PassGroups import SimpleCLSim
 
 # -------------------------------------------------------------------------
 # TestSrc

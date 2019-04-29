@@ -6,9 +6,10 @@
 # Author : Shunning Jiang
 # Date   : Dec 26, 2018
 
-from builtins import map
-from builtins import range
-import ast, py
+import ast
+from builtins import map, range
+
+import py
 
 from pymtl import *
 from pymtl.passes import BasePass

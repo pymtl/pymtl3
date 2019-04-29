@@ -1,5 +1,5 @@
+from pclib.rtl import Adder, BypassQueue1RTL, Mux, Subtractor
 from pymtl import *
-from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
 
 

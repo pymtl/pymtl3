@@ -1,5 +1,12 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+from builtins import object, range
+
+from pymtl import *
+from pymtl.dsl import ComponentLevel3
+from pymtl.dsl.errors import MultiWriterError, NoWriterError
+
+from .sim_utils import simple_sim_pass
 
 # =========================================================================
 # DataStruct_test.py
@@ -8,12 +15,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from builtins import range
-from builtins import object
-from pymtl import *
-from pymtl.dsl import ComponentLevel3
-from pymtl.dsl.errors import MultiWriterError, NoWriterError
-from .sim_utils import simple_sim_pass
 
 
 class SomeMsg(object):

@@ -5,9 +5,9 @@
 # Author : Yanghui Ou
 #   Date : Mar 23, 2019
 
-from pymtl import *
-from pclib.ifcs import EnqIfcRTL, DeqIfcRTL
+from pclib.ifcs import DeqIfcRTL, EnqIfcRTL
 from pclib.rtl import Mux, Reg, RegEn, RegisterFile
+from pymtl import *
 
 # -------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL

@@ -1,5 +1,16 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import ast
+from builtins import zip
+from collections import defaultdict, deque
+
+from pymtl import *
+from pymtl.dsl import ComponentLevel1
+
+from .BasePass import BasePass
+from .errors import TranslationError
+from .GenDAGPass import GenDAGPass
+from .SimpleSchedPass import SimpleSchedPass
 
 # =========================================================================
 # SystemVerilogTranslationPass.py
@@ -8,15 +19,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Aug 23, 2018
 
-from builtins import zip
-from pymtl import *
-from pymtl.dsl import ComponentLevel1
-from .BasePass import BasePass
-from .GenDAGPass import GenDAGPass
-from .SimpleSchedPass import SimpleSchedPass
-from collections import defaultdict, deque
-from .errors import TranslationError
-import ast
 
 vmodule_template = """
 module {module_name}

@@ -1,5 +1,15 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import ast
+from builtins import range
+from collections import defaultdict, deque
+
+import py
+
+from pymtl import *
+from pymtl.dsl import Const, MethodPort
+
+from .BasePass import BasePass, PassMetadata
 
 # =========================================================================
 # GenDAGPass.py
@@ -10,12 +20,6 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Jan 18, 2018
 
-from builtins import range
-from pymtl import *
-from .BasePass import BasePass, PassMetadata
-from pymtl.dsl import Const, MethodPort
-import py, ast
-from collections import defaultdict, deque
 
 
 class GenDAGPass(BasePass):

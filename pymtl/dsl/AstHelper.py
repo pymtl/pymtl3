@@ -6,8 +6,8 @@
 # Author : Shunning Jiang
 # Date   : Jan 17, 2018
 
-from builtins import range
 import ast
+from builtins import range
 
 
 class DetectVarNames(ast.NodeVisitor):

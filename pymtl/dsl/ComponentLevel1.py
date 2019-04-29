@@ -1,5 +1,18 @@
 from __future__ import absolute_import
 
+import ast
+import inspect
+import re
+
+import py
+from past.builtins import basestring
+
+from pymtl.datatypes import *
+
+from .ConstraintTypes import U
+from .errors import NotElaboratedError, UpblkFuncSameNameError
+from .NamedObject import NamedObject
+
 # =========================================================================
 # ComponentLevel1.py
 # =========================================================================
@@ -16,13 +29,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Nov 3, 2018
 
-from past.builtins import basestring
-from .NamedObject import NamedObject
-from .ConstraintTypes import U
-from .errors import UpblkFuncSameNameError, NotElaboratedError
-from pymtl.datatypes import *
 
-import inspect, re, ast, py
 
 p = re.compile("( *((@|def).*))")
 

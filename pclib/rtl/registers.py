@@ -1,5 +1,6 @@
-from pymtl import *
 from copy import deepcopy
+
+from pymtl import *
 
 
 class Reg(Component):

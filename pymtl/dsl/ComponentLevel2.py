@@ -1,5 +1,27 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
+
+import ast
+import gc
+import inspect
+import re
+from collections import defaultdict
+
+from past.builtins import basestring
+
+from . import AstHelper
+from .ComponentLevel1 import ComponentLevel1
+from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
+from .ConstraintTypes import RD, WR, U, ValueConstraint
+from .errors import (
+    InvalidConstraintError,
+    InvalidFuncCallError,
+    MultiWriterError,
+    NotElaboratedError,
+    SignalTypeError,
+    UpblkFuncSameNameError,
+    VarNotDeclaredError,
+)
+from .NamedObject import NamedObject
 
 # =========================================================================
 # ComponentLevel2.py
@@ -14,24 +36,7 @@ from __future__ import absolute_import
 # Author : Shunning Jiang
 # Date   : Apr 16, 2018
 
-from past.builtins import basestring
-from .NamedObject import NamedObject
-from .ComponentLevel1 import ComponentLevel1
-from .Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from .ConstraintTypes import U, RD, WR, ValueConstraint
-from collections import defaultdict
-from .errors import (
-    InvalidConstraintError,
-    SignalTypeError,
-    NotElaboratedError,
-    MultiWriterError,
-    VarNotDeclaredError,
-    InvalidFuncCallError,
-    UpblkFuncSameNameError,
-)
-from . import AstHelper
 
-import inspect, re, ast, gc
 
 p = re.compile("( *(@|def))")
 
