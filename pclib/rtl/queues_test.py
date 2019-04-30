@@ -1,19 +1,23 @@
-#=========================================================================
-# Tests for CL queues
-#=========================================================================
-#
-# Author: Yanghui Ou
-#   Date: Mar 24, 2019
+"""
+========================================================================
+Tests for CL queues
+========================================================================
+
+Author: Yanghui Ou
+  Date: Mar 24, 2019
+"""
+from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl                    import *
+from pclib.test import TestVectorSimulator
+from pclib.test.test_sinks import TestSinkRTL
+from pclib.test.test_srcs import TestSrcCL
+from pymtl import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.test.test_srcs     import TestSrcCL
-from pclib.test.test_sinks    import TestSinkRTL
-from pclib.test               import TestVectorSimulator
-from pymtl.passes.PassGroups  import SimpleCLSim
-from queues import NormalQueueRTL
+from pymtl.passes.PassGroups import SimpleCLSim
+
+from .queues import NormalQueueRTL
 
 #-------------------------------------------------------------------------
 # TestVectorSimulator test
@@ -102,13 +106,13 @@ def run_sim( th, max_cycles=100 ):
   th.apply( SimpleCLSim )
   th.sim_reset()
 
-  print ""
+  print("")
   ncycles = 0
-  print "{:2}:{}".format( ncycles, th.line_trace() )
+  print("{:2}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{:2}:{}".format( ncycles, th.line_trace() )
+    print("{:2}:{}".format( ncycles, th.line_trace() ))
   
   # Check timeout
 

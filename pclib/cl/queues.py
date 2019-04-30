@@ -1,15 +1,20 @@
-#=========================================================================
-# queues.py
-#=========================================================================
-# This file contains cycle-level queues.
-#
-# Author : Shunning Jiang, Yanghui Ou
-# Date   : Mar 10, 2018
+"""
+========================================================================
+queues.py
+========================================================================
+This file contains cycle-level queues.
+
+Author : Shunning Jiang, Yanghui Ou
+Date   : Mar 10, 2018
+"""
+
+from __future__ import absolute_import, division, print_function
 
 from collections import deque
-from pymtl import *
-from pclib.ifcs.SendRecvIfc import enrdy_to_str
+
 from pclib.ifcs.GuardedIfc import guarded_ifc
+from pclib.ifcs.SendRecvIfc import enrdy_to_str
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # PipeQueueCL

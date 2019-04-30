@@ -1,9 +1,11 @@
-import random
-from pymtl import *
-from valrdy_queues import *
-from pclib.ifcs import InValRdyIfc, OutValRdyIfc
+from __future__ import absolute_import, division, print_function
 
+from pclib.ifcs import InValRdyIfc, OutValRdyIfc
 from pclib.test import TestVectorSimulator
+from pymtl import *
+
+from .valrdy_queues import *
+
 
 def run_test_queue( model, test_vectors ):
 
@@ -161,4 +163,3 @@ def test_3entry_normal_Bits():
     [ B1(0), B1(1), B32(0x0000), B1(1), B1(1), B32(0x0007) ],
     [ B1(0), B1(1), B32(0x0000), B1(0), B1(1),      '?'    ],
   ])
-

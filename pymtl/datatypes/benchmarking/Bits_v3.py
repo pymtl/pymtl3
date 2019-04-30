@@ -1,3 +1,6 @@
+from __future__ import absolute_import, division, print_function
+
+
 class Bits( object ):
   __slots__ = ( "nbits", "value" )
 
@@ -124,11 +127,11 @@ class Bits( object ):
     return str
 
   def __oct__( self ):
-    print "DEPRECATED: Please use .oct()!"
+    print("DEPRECATED: Please use .oct()!")
     return self.oct()
 
   def __hex__( self ):
-    print "DEPRECATED: Please use .hex()!"
+    print("DEPRECATED: Please use .hex()!")
     return self.hex()
 
   def bin(self):

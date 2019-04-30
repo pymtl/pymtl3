@@ -1,25 +1,31 @@
-#=========================================================================
-# ComponentLevel4_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Dec 25, 2017
+"""
+========================================================================
+ComponentLevel4_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Dec 25, 2017
+"""
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel4
-from sim_utils import simple_sim_pass
-from collections import deque
+
+from .sim_utils import simple_sim_pass
+
 
 def _test_model( cls ):
   A = cls()
   A.elaborate()
   simple_sim_pass( A, 0x123 )
-  print A._dsl.schedule
+  print(A._dsl.schedule)
 
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 class SimpleReg( ComponentLevel4 ):

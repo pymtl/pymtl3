@@ -1,16 +1,21 @@
-#=========================================================================
-# ComponentLevel6_test.py
-#=========================================================================
-# Tests for component level6.
-#
-# Author : Yanghui Ou
-#   Date : Feb 24, 2019
+"""
+========================================================================
+ComponentLevel6_test.py
+========================================================================
+Tests for component level6.
+
+Author : Yanghui Ou
+  Date : Feb 24, 2019
+"""
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import generate_guard_decorator_ifcs, ComponentLevel6
-from sim_utils import simple_sim_pass
-from collections import deque
+from pymtl.dsl.ComponentLevel6 import ComponentLevel6, generate_guard_decorator_ifcs
 from pymtl.passes.PassGroups import SimpleCLSim
+
+from .sim_utils import simple_sim_pass
 
 #-------------------------------------------------------------------------
 # TestSrc
@@ -118,11 +123,11 @@ def run_cl_sim( th, max_cycles=50 ):
   # Run simluation
 
   ncycles = 0
-  print "{}:{}".format( ncycles, th.line_trace() )
+  print("{}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{}:{}".format( ncycles, th.line_trace() )
+    print("{}:{}".format( ncycles, th.line_trace() ))
 
   # Check timeout
 

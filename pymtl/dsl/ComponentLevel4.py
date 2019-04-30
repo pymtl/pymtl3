@@ -1,15 +1,19 @@
-#=========================================================================
-# ComponentLevel4.py
-#=========================================================================
-# We recognize methods and method call in update blocks. At this level
-# we only need CalleePort that contains actual method
-#
-# Author : Shunning Jiang
-# Date   : Dec 29, 2018
+"""
+========================================================================
+ComponentLevel4.py
+========================================================================
+We recognize methods and method call in update blocks. At this level
+we only need CalleePort that contains actual method
 
-from ConstraintTypes import U, M
-from Connectable import Signal, CalleePort
-from ComponentLevel3 import ComponentLevel3
+Author : Shunning Jiang
+Date   : Dec 29, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+from .ComponentLevel3 import ComponentLevel3
+from .Connectable import CalleePort, Signal
+from .ConstraintTypes import M, U
+
 
 class ComponentLevel4( ComponentLevel3 ):
 

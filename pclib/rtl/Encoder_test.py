@@ -1,14 +1,19 @@
-#=========================================================================
-# Encoder_test
-#=========================================================================
-# Test for RTL priority encoder.
-#
-# Author : Yanghui Ou
-#   Date : Apr 5, 2019
+"""
+========================================================================
+Encoder_test
+========================================================================
+Test for RTL priority encoder.
 
-from pymtl       import *
-from pclib.test  import TestVectorSimulator
-from Encoder     import Encoder 
+Author : Yanghui Ou
+  Date : Apr 5, 2019
+"""
+from __future__ import absolute_import, division, print_function
+
+from pclib.test import TestVectorSimulator
+from pymtl import *
+
+from .Encoder import Encoder
+
 
 def run_test( model, test_vectors ):
 

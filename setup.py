@@ -1,13 +1,18 @@
-#=========================================================================
-# setup.py
-#=========================================================================
-# setup.py inspired by the PyPA sample project:
-# https://github.com/pypa/sampleproject/blob/master/setup.py
+"""
+========================================================================
+setup.py
+========================================================================
+setup.py inspired by the PyPA sample project:
+https://github.com/pypa/sampleproject/blob/master/setup.py
+"""
 
-from setuptools import setup, find_packages
-from codecs     import open   # To use a consistent encoding
-from os         import path
+from __future__ import absolute_import, division, print_function
+
+from codecs import open  # To use a consistent encoding
+from os import path
 from subprocess import check_output
+
+from setuptools import find_packages, setup
 
 #-------------------------------------------------------------------------
 # get_version

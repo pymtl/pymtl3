@@ -1,14 +1,19 @@
-#=========================================================================
-# DataStruct_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Apr 16, 2018
+"""
+========================================================================
+DataStruct_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Apr 16, 2018
+"""
+from __future__ import absolute_import, division, print_function
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pymtl.dsl.errors import MultiWriterError, NoWriterError
-from sim_utils import simple_sim_pass
+
+from .sim_utils import simple_sim_pass
+
 
 class SomeMsg( object ):
 
@@ -110,7 +115,7 @@ def test_wr_A_b_wr_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -284,7 +289,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -331,7 +336,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -380,7 +385,7 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -497,6 +502,6 @@ def test_deep_connections():
   try:
     _test_model( Top )
   except NoWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown NoWriterError.")

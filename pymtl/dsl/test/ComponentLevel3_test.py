@@ -1,15 +1,21 @@
-#=========================================================================
-# ComponentLevel3_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Dec 25, 2017
+"""
+========================================================================
+ComponentLevel3_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Dec 25, 2017
+"""
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
-from pymtl.dsl.errors import MultiWriterError, InvalidConnectionError
-from sim_utils import simple_sim_pass
-from collections import deque
+from pymtl.dsl.errors import InvalidConnectionError, MultiWriterError
+
+from .sim_utils import simple_sim_pass
+
 
 def _test_model( cls ):
   A = cls()
@@ -19,7 +25,7 @@ def _test_model( cls ):
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 MUX_SEL_0 = 0
@@ -411,7 +417,7 @@ def test_connect_const_same_level():
 
       @s.update
       def up_printa():
-        print s.a
+        print(s.a)
 
     def done( s ):
       return False
@@ -432,7 +438,7 @@ def test_connect_const_two_writer():
 
       @s.update
       def up_printa():
-        print s.a
+        print(s.a)
 
       @s.update
       def up_writea():
@@ -447,7 +453,7 @@ def test_connect_const_two_writer():
   try:
     _test_model( Top )
   except MultiWriterError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
 
@@ -512,7 +518,7 @@ def test_top_level_inport():
 
       @s.update
       def up():
-        print s.b[10:32]
+        print(s.b[10:32])
 
     def done( s ):
       return False
@@ -548,7 +554,7 @@ def test_top_level_outport():
 
   A.tick()
   trace = A.line_trace()
-  print " >>>", trace
+  print(" >>>", trace)
   assert trace == "1"
 
 # This is a simplified test case from Peitian

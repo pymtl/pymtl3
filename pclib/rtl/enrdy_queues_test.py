@@ -1,16 +1,19 @@
-#=========================================================================
-# enrdy_queues_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Mar 9, 2018
+"""
+========================================================================
+enrdy_queues_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Mar 9, 2018
+"""
+from __future__ import absolute_import, division, print_function
 
 import pytest
-import struct
 
-from pymtl      import *
-from pclib.rtl  import TestSourceEnRdy, TestSinkEnRdy
-from enrdy_queues import *
+from pclib.rtl import TestSinkEnRdy, TestSourceEnRdy
+from pymtl import *
+
+from .enrdy_queues import *
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -45,7 +48,7 @@ def run_sim( model ):
   cycle = 0
   while not model.done() and cycle < 1000:
     model.tick()
-    print model.line_trace()
+    print(model.line_trace())
     cycle += 1
 
   assert cycle < 1000

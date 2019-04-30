@@ -1,17 +1,19 @@
-#=========================================================================
-# Test sources
-#=========================================================================
-# Test sources with CL or RTL interfaces.
-#
-# Author : Yanghui Ou
-#   Date : Mar 11, 2019
+"""
+========================================================================
+Test sources
+========================================================================
+Test sources with CL or RTL interfaces.
 
-from pymtl import *
-from pclib.ifcs  import SendIfcRTL
+Author : Yanghui Ou
+  Date : Mar 11, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
+
 from collections import deque
-from pclib.ifcs  import RecvCL2SendRTL, RecvRTL2SendCL
 
-from pclib.ifcs import GuardedCallerIfc
+from pclib.ifcs import GuardedCallerIfc, RecvCL2SendRTL, RecvRTL2SendCL, SendIfcRTL
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # TestSrcCL

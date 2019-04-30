@@ -1,13 +1,16 @@
-#==============================================================================
-# arbiters_test.py
-#==============================================================================
-# This file contains unit tests for the arbiters collection models.
-
-from pymtl      import *
-from arbiters   import RoundRobinArbiter
-from arbiters   import RoundRobinArbiterEn
+"""
+=============================================================================
+arbiters_test.py
+=============================================================================
+This file contains unit tests for the arbiters collection models.
+"""
+from __future__ import absolute_import, division, print_function
 
 from pclib.test import TestVectorSimulator
+from pymtl import *
+
+from .arbiters import RoundRobinArbiter, RoundRobinArbiterEn
+
 
 def run_test( model, test_vectors ):
 

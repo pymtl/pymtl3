@@ -1,6 +1,8 @@
+from __future__ import absolute_import, division, print_function
+
 import collections
 
-from pymtl      import *
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -58,8 +60,7 @@ class TestVectorSimulator( object ):
       self.model.tick()
 
       # Print the line trace
-      print self.model.line_trace()
+      print(self.model.line_trace())
 
       # Verify outputs
       self.verify_outputs_func( self.model, test_vector )
-

@@ -1,16 +1,20 @@
-#=========================================================================
-# ComponentLevel1_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Dec 23, 2017
+"""
+========================================================================
+ComponentLevel1_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Dec 23, 2017
+"""
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel1
 from pymtl.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
-from sim_utils import simple_sim_pass
 
-from collections import deque
+from .sim_utils import simple_sim_pass
 
 
 def _test_model( cls ):
@@ -20,7 +24,7 @@ def _test_model( cls ):
 
   while not A.done():
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
 
 class TestSource( ComponentLevel1 ):
 
@@ -89,7 +93,7 @@ def test_cyclic_dependency():
   try:
     _test_model( Top )
   except UpblkCyclicError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown cyclic dependency UpblkCyclicError.")
 
@@ -110,7 +114,7 @@ def test_upblock_same_name():
   try:
     _test_model( Top )
   except UpblkFuncSameNameError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown name conflict UpblkFuncSameNameError.")
 

@@ -1,10 +1,14 @@
-#=========================================================================
-# errors.py
-#=========================================================================
-# Errors thrown by other files in this folder.
-#
-# Author : Shunning Jiang
-# Date   : Dec 27, 2018
+"""
+========================================================================
+errors.py
+========================================================================
+Errors thrown by other files in this folder.
+
+Author : Shunning Jiang
+Date   : Dec 27, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
 
 class SignalTypeError( Exception ):
   """ Raise when a declared signal is of wrong type """
