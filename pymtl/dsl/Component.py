@@ -33,8 +33,9 @@ class Component( ComponentLevel6 ):
       
       # We hook up the added clk and reset signals here.
       try:
-        s.connect( s.clk, s.get_parent_object().clk )
-        s.connect( s.reset, s.get_parent_object().reset )
+        parent = s.get_parent_object()
+        parent.connect( s.clk, parent.clk )
+        parent.connect( s.reset, parent.reset )
       except AttributeError:
         pass
 

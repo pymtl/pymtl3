@@ -9,7 +9,7 @@ def test_adder():
 
 def test_wrapped_noconnect_adder():
 
-  class Adder_wrap( RTLComponent ):
+  class Adder_wrap( Component ):
 
     def construct( s ):
       s.in_  = InPort( Bits32 )
@@ -31,7 +31,7 @@ def test_wrapped_noconnect_adder():
 
 def test_wrapped_noconnect_wire_adder():
 
-  class Adder_wrap( RTLComponent ):
+  class Adder_wrap( Component ):
 
     def construct( s ):
       s.in_  = InPort( Bits32 )
@@ -59,7 +59,7 @@ def test_wrapped_noconnect_wire_adder():
 
 def test_wrapped_noconnect_slice_adder():
 
-  class Adder_wrap( RTLComponent ):
+  class Adder_wrap( Component ):
 
     def construct( s ):
       s.in_  = InPort( Bits31 )
@@ -82,7 +82,7 @@ def test_wrapped_noconnect_slice_adder():
 
 def test_wrapped_connect_adder():
 
-  class Adder_wrap( RTLComponent ):
+  class Adder_wrap( Component ):
 
     def construct( s ):
       s.in_  = InPort( Bits32 )
@@ -96,7 +96,7 @@ def test_wrapped_connect_adder():
 
 def test_wrapped_connect_wire_adder():
 
-  class Adder_wrap( RTLComponent ):
+  class Adder_wrap( Component ):
 
     def construct( s ):
       s.in_  = InPort( Bits32 )
@@ -114,7 +114,7 @@ def test_wrapped_connect_wire_adder():
 
 def test_wrapped_connect_two_child_modules_wire():
 
-  class Adder_wrap( RTLComponent ):
+  class Adder_wrap( Component ):
 
     def construct( s ):
       s.in0  = InPort( Bits32 )
@@ -147,7 +147,7 @@ def test_wrapped_connect_two_child_modules_wire():
 
 def test_multiple_if():
 
-  class Foo( RTLComponent ):
+  class Foo( Component ):
     def construct( s ):
       s.in_  = InPort( Bits2 )
       s.out  = OutPort( Bits2 )
@@ -168,7 +168,7 @@ def test_multiple_if():
 
 def test_multiple_if_two_level():
 
-  class Foo( RTLComponent ):
+  class Foo( Component ):
     def construct( s ):
       s.in_  = InPort( Bits2 )
       s.out  = OutPort( Bits2 )
@@ -183,7 +183,7 @@ def test_multiple_if_two_level():
           s.out = s.in_
         else:                         s.out = s.in_ + s.in_
 
-  class Bar( RTLComponent ):
+  class Bar( Component ):
     def construct( s ):
       s.x = Foo()
       s.y = Wire( Bits2 )
@@ -203,7 +203,7 @@ def test_multiple_if_two_level():
 
 def test_bits_type():
 
-  class Foo( RTLComponent ):
+  class Foo( Component ):
     def construct( s ):
       s.in_  = InPort( Bits2 )
       s.out  = OutPort( Bits4 )
@@ -223,7 +223,7 @@ def test_bits_type():
 
 def test_bits_type_in_self():
 
-  class Foo( RTLComponent ):
+  class Foo( Component ):
     def construct( s ):
       nbits = 2
 
@@ -246,7 +246,7 @@ def test_bits_type_in_self():
 
 def test_bits_closure():
 
-  class Foo( RTLComponent ):
+  class Foo( Component ):
     def construct( s ):
       nbits = 2
 
@@ -269,7 +269,7 @@ def test_bits_closure():
 
 def test_bits_value_closure():
 
-  class Foo( RTLComponent ):
+  class Foo( Component ):
     def construct( s ):
       nbits = 2
 
@@ -295,7 +295,7 @@ def test_bits_value_closure():
 
 # def test_bits_val_and_call():
 
-  # class Foo( RTLComponent ):
+  # class Foo( Component ):
     # def construct( s ):
       # nbits = 2
 

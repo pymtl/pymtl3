@@ -1,7 +1,7 @@
 from pymtl import *
 from copy import deepcopy
 
-class Reg( RTLComponent ):
+class Reg( Component ):
 
   def construct( s, Type ):
     s.out = OutPort( Type )
@@ -14,7 +14,7 @@ class Reg( RTLComponent ):
   def line_trace( s ):
     return "[{} > {}]".format(s.in_, s.out)
 
-class RegEn( RTLComponent ):
+class RegEn( Component ):
 
   def construct( s, Type ):
     s.out = OutPort( Type )
@@ -30,7 +30,7 @@ class RegEn( RTLComponent ):
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
 
-class RegRst( RTLComponent ):
+class RegRst( Component ):
 
   def construct( s, Type, reset_value=0 ):
     s.out = OutPort( Type )
@@ -46,7 +46,7 @@ class RegRst( RTLComponent ):
   def line_trace( s ):
     return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
 
-class RegEnRst( RTLComponent ):
+class RegEnRst( Component ):
 
   def construct( s, Type, reset_value=0 ):
     s.out = OutPort( Type )

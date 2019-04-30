@@ -10,4 +10,3 @@ from ComponentLevel4 import ComponentLevel4
 from ComponentLevel5 import ComponentLevel5
 from ComponentLevel6 import ComponentLevel6, generate_guard_decorator_ifcs
 from Component       import Component
-#  from RTLComponent import RTLComponent
