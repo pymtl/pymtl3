@@ -78,7 +78,7 @@ class MemReqMsg_{0}_{1}_{2}( object ):
     return "{{}}:{{}}:{{}}:{{}}".format(
     MemMsgType.str[ int(s.type_) ],
       s.opaque, s.addr,
-      (" "*(s.data_nbits/4)) if int(s.type_) == MemMsgType.READ else s.data,
+      (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.READ else s.data,
     )
 
   def __eq__( s, other ):
@@ -119,7 +119,7 @@ class MemRespMsg_{0}_{1}( object ):
     return "{{}}:{{}}:{{}}:{{}}".format(
       MemMsgType.str[int(s.type_)],
       s.opaque, s.test,
-      (" "*(s.data_nbits/4)) if int(s.type_) == MemMsgType.WRITE else s.data
+      (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.WRITE else s.data
     )
 
   def __eq__( s, other ):

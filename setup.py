@@ -33,7 +33,7 @@ def get_version():
 def get_long_description():
   here = path.abspath(path.dirname(__file__))
   with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+    return f.read()
 
 #-------------------------------------------------------------------------
 # setup
@@ -45,7 +45,7 @@ setup(
   version          = get_version(),
   description      = 'Python-based hardware modeling framework',
   long_description = get_long_description(),
-  url              = 'https://github.com/cornell-brg/pymtl-v3', 
+  url              = 'https://github.com/cornell-brg/pymtl-v3',
   author           = 'Batten Research Group',
   author_email     = 'brg-pymtl@csl.cornell.edu',
 
@@ -81,7 +81,7 @@ setup(
 
   install_requires = [
     'pytest',
-    'hypothesis',
+    'hypothesis >= 4.18.1',
     'pytest-xdist',
     'cffi',
     'greenlet',
