@@ -4,7 +4,7 @@
 '''Collection of arbiter implementations based on vc-Arbiters.'''
 
 from pymtl     import *
-from pclib.rtl import Mux, RegEnRst
+from registers import RegEnRst
 
 #-----------------------------------------------------------------------
 # RoundRobinArbiter
