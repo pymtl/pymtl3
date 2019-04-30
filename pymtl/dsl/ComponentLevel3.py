@@ -81,7 +81,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.consts.add( o2 )
 
     s._dsl.adjacency[o1].add( o2 )
-    s._dsl.adjacency[o1].add( o2 )
+    s._dsl.adjacency[o2].add( o1 )
 
     s._dsl.connect_order.append( (o1, o2) )
 
