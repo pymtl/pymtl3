@@ -153,7 +153,7 @@ class ReorderBuffer( Component ):
       if s.reset:
         s.head = 0
       else:
-        s.head = index_type( s.head ) if s.remove.en else s.head
+        s.head = index_type( s.head + 1 ) if s.remove.en else s.head
 
     @s.update_on_edge
     def update_tail():
