@@ -115,6 +115,7 @@ class TestStateMachine( GenericStateMachine ):
 
       if not m_result == r_result:
         print "============================= error ========================"
+        print self.model.line_trace(), self.line_trace_string
         raise ValueError( """mismatch found in method {method}:
   - args: {data}
   - reference result: {r_result}
@@ -129,6 +130,13 @@ class TestStateMachine( GenericStateMachine ):
     self.reference.tick()
 
     print self.model.line_trace(), self.line_trace_string
+
+  def print_step( self, step ):
+    """Print a step to the current reporter.
+
+    This is called right before a step is executed.
+    """
+    pass
 
   def is_valid( self, rule, data ):
     if rule.precondition and not rule.precondition( self, data ):
@@ -322,6 +330,5 @@ def run_test_state_machine( rtl_class,
       max_examples=50,
       deadline=None,
       verbosity=Verbosity.verbose,
-      print_blob=PrintSettings.ALWAYS,
       database=None )
   run_state_machine_as_test( machine )
