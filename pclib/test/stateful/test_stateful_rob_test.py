@@ -24,6 +24,7 @@ class ReorderBufferCL( Component ):
     idx_nbits = clog2( num_entries )
     assert 2**idx_nbits == num_entries
     s.num_entries = num_entries
+
     s.data = [ None ] * s.num_entries
     s.allocated = [ 0 ] * s.num_entries
 
@@ -153,12 +154,9 @@ class ReorderBuffer( Component ):
     s.empty = Wire( Bits1 )
 
     @s.update
-    def set_alloc_rdy():
-      s.alloc.rdy = s.num < num_entries or s.remove.en  # Alloc rdy
-
-    @s.update
-    def set_update_entry_rdy():
+    def set_update_rdy():
       s.empty = s.num == 0
+      s.alloc.rdy = s.num < num_entries or s.remove.en
       s.update_entry.rdy = not s.empty
       s.remove.rdy = s.valid[ s.head ]
 
@@ -178,14 +176,14 @@ class ReorderBuffer( Component ):
         s.num = s.num
 
     @s.update_on_edge
-    def handle_tail():
+    def update_tail():
       if s.reset:
         s.tail = 0
       else:
         s.tail = index_type( s.tail + 1 ) if s.alloc.en else s.tail
 
     @s.update_on_edge
-    def handle_head():
+    def update_head():
       if s.reset:
         s.head = 0
       else:
