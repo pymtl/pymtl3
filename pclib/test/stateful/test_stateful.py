@@ -110,6 +110,8 @@ class TestStateMachine( GenericStateMachine ):
       raise ValueError(
           "Reference method is rdy but dut is not: {method_name}".format(
               method_name=method_name ) )
+
+    r_result = None
     if self.model.__dict__[ method_name ].rdy(
     ) and self.reference.__dict__[ method_name ].rdy():
       m_result = self.model.__dict__[ method_name ](**data )
@@ -119,8 +121,8 @@ class TestStateMachine( GenericStateMachine ):
           for arg, value in data.iteritems()
       ] ) + ")"
 
-      if r_result:
-        self.line_trace_string += " --> " + str(r_result)
+      if r_result != None:
+        self.line_trace_string += " --> " + str( r_result )
 
       if not m_result == r_result:
         self.error_line_trace()
