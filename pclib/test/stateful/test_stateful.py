@@ -119,6 +119,9 @@ class TestStateMachine( GenericStateMachine ):
           for arg, value in data.iteritems()
       ] ) + ")"
 
+      if r_result:
+        self.line_trace_string += " --> " + str(r_result)
+
       if not m_result == r_result:
         self.error_line_trace()
         raise ValueError( """mismatch found in method {method}:
