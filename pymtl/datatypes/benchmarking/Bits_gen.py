@@ -1,4 +1,7 @@
+from __future__ import absolute_import, division, print_function
+
 import py.code
+
 
 class Bits1( object ):
   nbits = 1
@@ -122,11 +125,11 @@ class Bits1( object ):
     return str
 
   def __oct__( self ):
-    print "DEPRECATED: Please use .oct()!"
+    print("DEPRECATED: Please use .oct()!")
     return self.oct()
 
   def __hex__( self ):
-    print "DEPRECATED: Please use .hex()!"
+    print("DEPRECATED: Please use .hex()!")
     return self.hex()
 
   def bin(self):
@@ -158,7 +161,7 @@ source_str = ""
 for nbits in _bitwidths: 
   mask = (1 << nbits) - 1
   source_str += bits_template.format( **vars() )
-exec py.code.Source( source_str ).compile()
+exec(py.code.Source( source_str ).compile())
 
 _bits_types[1] = Bits1
 _bitwidths = [1] + _bitwidths
@@ -167,5 +170,5 @@ def mk_bits( nbits ):
   if nbits in _bits_types:  return _bits_types[ nbits ]
 
   mask = (1 << nbits) - 1
-  exec py.code.Source( bits_template.format( **vars() ) ).compile()
+  exec(py.code.Source( bits_template.format( **vars() ) ).compile())
   return _bits_types[ nbits ]

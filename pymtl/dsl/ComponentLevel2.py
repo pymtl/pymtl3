@@ -1,26 +1,40 @@
-#=========================================================================
-# ComponentLevel2.py
-#=========================================================================
-# At level two we introduce implicit variable constraints.
-# By default we assume combinational semantics:
-# - upA reads Wire x while upB writes Wire x ==> upB = WR(x) < RD(x) = upA
-# When upA is marked as update_on_edge ==> for all upblks upX that
-# write/read variables in upA, upA < upX:
-# - upA = RD(x) < WR(x) = upB and upA = WR(x) < RD(x) = upB
-#
-# Author : Shunning Jiang
-# Date   : Apr 16, 2018
+"""
+========================================================================
+ComponentLevel2.py
+========================================================================
+At level two we introduce implicit variable constraints.
+By default we assume combinational semantics:
+- upA reads Wire x while upB writes Wire x ==> upB = WR(x) < RD(x) = upA
+When upA is marked as update_on_edge ==> for all upblks upX that
+write/read variables in upA, upA < upX:
+- upA = RD(x) < WR(x) = upB and upA = WR(x) < RD(x) = upB
 
-from NamedObject     import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from Connectable     import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from ConstraintTypes import U, RD, WR, ValueConstraint
-from collections     import defaultdict
-from errors import InvalidConstraintError, SignalTypeError, NotElaboratedError, \
-                   MultiWriterError, VarNotDeclaredError, InvalidFuncCallError, UpblkFuncSameNameError
-import AstHelper
+Author : Shunning Jiang
+Date   : Apr 16, 2018
+"""
+from __future__ import absolute_import, division, print_function
 
-import inspect, re, ast, gc
+import ast
+import gc
+import inspect
+import re
+from collections import defaultdict
+
+from . import AstHelper
+from .ComponentLevel1 import ComponentLevel1
+from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
+from .ConstraintTypes import RD, WR, U, ValueConstraint
+from .errors import (
+    InvalidConstraintError,
+    InvalidFuncCallError,
+    MultiWriterError,
+    NotElaboratedError,
+    SignalTypeError,
+    UpblkFuncSameNameError,
+    VarNotDeclaredError,
+)
+from .NamedObject import NamedObject
+
 p = re.compile('( *(@|def))')
 
 class ComponentLevel2( ComponentLevel1 ):
@@ -144,7 +158,7 @@ class ComponentLevel2( ComponentLevel1 ):
         try:
           child = getattr( obj, field )
         except AttributeError as e:
-          print e
+          print(e)
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
         s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )

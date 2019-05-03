@@ -1,9 +1,13 @@
-#=========================================================================
-# errors.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Jul 4, 2017
+"""
+========================================================================
+errors.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Jul 4, 2017
+"""
+from __future__ import absolute_import, division, print_function
+
 
 class PassOrderError( Exception ):
   """ Raise when applying a pass to a component and some required variable

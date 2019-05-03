@@ -1,20 +1,25 @@
-#=========================================================================
-# TestMemory
-#=========================================================================
-# A behavioral Test Memory which is parameterized based on the number of
-# memory request/response ports. This version is a little different from
-# the one in pclib because we actually use the memory messages correctly
-# in the interface.
-#
-# Author : Shunning Jiang
-# Date   : Mar 12, 2018
+"""
+========================================================================
+TestMemory
+========================================================================
+A behavioral Test Memory which is parameterized based on the number of
+memory request/response ports. This version is a little different from
+the one in pclib because we actually use the memory messages correctly
+in the interface.
 
-from pymtl       import *
+Author : Shunning Jiang
+Date   : Mar 12, 2018
+"""
+
+from __future__ import absolute_import, division, print_function
+
 from collections import deque
+
+from pclib.ifcs import mk_mem_msg
+from pymtl import *
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
-from pclib.ifcs import mk_mem_msg
 
 #- - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - -
 #-------------------------------------------------------------------------
@@ -229,4 +234,3 @@ class TwoPortTestMemoryCL( ComponentLevel6 ):
       #  trace_str += "{}({}){} ".format( req, resp_q, resp )
 
     #  return trace_str
-

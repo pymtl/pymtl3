@@ -1,10 +1,15 @@
-#=======================================================================
-# Crossbar_test.py
-#=======================================================================
+"""
+======================================================================
+Crossbar_test.py
+======================================================================
+"""
+from __future__ import absolute_import, division, print_function
 
-from pymtl      import *
-from Crossbar   import Crossbar
 from pclib.test import TestVectorSimulator
+from pymtl import *
+
+from .Crossbar import Crossbar
+
 
 #-----------------------------------------------------------------------
 # run_test_crossbar

@@ -1,15 +1,19 @@
-#=========================================================================
-# Test sinks
-#=========================================================================
-# Test sinks with CL and RTL interfaces.
-#
-# Author : Yanghui Ou
-#   Date : Mar 11, 2019
+"""
+========================================================================
+Test sinks
+========================================================================
+Test sinks with CL and RTL interfaces.
 
-from pymtl import *
-from pclib.ifcs import RecvIfcRTL, enrdy_to_str
-from pclib.ifcs import RecvCL2SendRTL, RecvRTL2SendCL
+Author : Yanghui Ou
+  Date : Mar 11, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
+
+from pclib.ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
 from pclib.ifcs.GuardedIfc import guarded_ifc
+from pymtl import *
+
 #-------------------------------------------------------------------------
 # TestSinkCL
 #-------------------------------------------------------------------------

@@ -1,14 +1,18 @@
-#=========================================================================
-# MemMsg.py
-#=========================================================================
-# New memory message type implementation.
-#
-# Author : Shunning Jiang
-# Date   : Mar 12, 2018
+"""
+========================================================================
+MemMsg.py
+========================================================================
+New memory message type implementation.
 
-from pymtl import *
+Author : Shunning Jiang
+Date   : Mar 12, 2018
+"""
+
+from __future__ import absolute_import, division, print_function
 
 import py
+
+from pymtl import *
 
 _mem_req_msg_cache  = dict()
 _mem_resp_msg_cache = dict()
@@ -19,13 +23,13 @@ def mk_mem_msg( o, a, d ):
 def mk_mem_req_msg( o, a, d ):
   if (o,a,d) in _mem_req_msg_cache:
     return _mem_req_msg_cache[ (o,a,d) ]
-  exec py.code.Source( _req_template.format( o, a, d ) ).compile() in globals()
+  exec(py.code.Source( _req_template.format( o, a, d ) ).compile(), globals())
   return _mem_req_msg_cache[ (o,a,d) ]
 
 def mk_mem_resp_msg( o, d ):
   if (o,d) in _mem_resp_msg_cache:
     return _mem_resp_msg_cache[ (o,d) ]
-  exec py.code.Source( _resp_template.format( o, d ) ).compile() in globals()
+  exec(py.code.Source( _resp_template.format( o, d ) ).compile(), globals())
   return _mem_resp_msg_cache[ (o,d) ]
 
 class MemMsgType(object):
@@ -78,7 +82,7 @@ class MemReqMsg_{0}_{1}_{2}( object ):
     return "{{}}:{{}}:{{}}:{{}}".format(
     MemMsgType.str[ int(s.type_) ],
       s.opaque, s.addr,
-      (" "*(s.data_nbits/4)) if int(s.type_) == MemMsgType.READ else s.data,
+      (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.READ else s.data,
     )
 
   def __eq__( s, other ):
@@ -119,7 +123,7 @@ class MemRespMsg_{0}_{1}( object ):
     return "{{}}:{{}}:{{}}:{{}}".format(
       MemMsgType.str[int(s.type_)],
       s.opaque, s.test,
-      (" "*(s.data_nbits/4)) if int(s.type_) == MemMsgType.WRITE else s.data
+      (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.WRITE else s.data
     )
 
   def __eq__( s, other ):

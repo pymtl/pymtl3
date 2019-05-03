@@ -1,14 +1,20 @@
-#=========================================================================
-# ComponentLevel5_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Jan 4, 2019
+"""
+========================================================================
+ComponentLevel5_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Jan 4, 2019
+"""
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
 
 from pymtl import *
 from pymtl.dsl.ComponentLevel5 import ComponentLevel5
-from sim_utils import simple_sim_pass
-from collections import deque
+
+from .sim_utils import simple_sim_pass
+
 
 def _test_model( cls ):
   A = cls()
@@ -18,7 +24,7 @@ def _test_model( cls ):
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 class SimpleTestSource( ComponentLevel5 ):

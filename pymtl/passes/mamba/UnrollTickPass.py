@@ -1,16 +1,22 @@
-#=========================================================================
-# UnrollTickPass.py
-#=========================================================================
-# Generate an unrolled tick function
-#
-# Author : Shunning Jiang
-# Date   : Dec 26, 2018
+"""
+========================================================================
+UnrollTickPass.py
+========================================================================
+Generate an unrolled tick function
 
-import ast, py
+Author : Shunning Jiang
+Date   : Dec 26, 2018
+"""
+
+
+from __future__ import absolute_import, division, print_function
+
+import py
 
 from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.errors import PassOrderError
+
 
 class UnrollTickPass( BasePass ):
 
@@ -32,6 +38,6 @@ class UnrollTickPass( BasePass ):
                         xrange( len( schedule ) ) ) ),
                         "\n          ".join( strs ) )
 
-    exec py.code.Source( gen_tick_src ).compile() in locals()
+    exec(py.code.Source( gen_tick_src ).compile(), locals())
 
     top.tick = tick_unroll

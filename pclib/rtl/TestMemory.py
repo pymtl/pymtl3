@@ -1,8 +1,16 @@
+from __future__ import absolute_import, division, print_function
+
+from pclib.ifcs import (
+    InValRdyIfc,
+    MemMsgType,
+    OutValRdyIfc,
+    mk_mem_msg,
+    mk_mem_req_msg,
+    mk_mem_resp_msg,
+)
 from pymtl import *
-from collections import deque
-from pclib.ifcs import mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg, MemMsgType
-from pclib.ifcs import InValRdyIfc, OutValRdyIfc
-from valrdy_queues import PipeQueue1RTL
+
+from .valrdy_queues import PipeQueue1RTL
 
 AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
              MemMsgType.AMO_AND  : lambda m,a : m&a,

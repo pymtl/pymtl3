@@ -1,13 +1,17 @@
-#=========================================================================
-# SendRecvIfc.py
-#=========================================================================
-# RTL implementation of en/rdy micro-protocol.
-#
-# Author: Yanghui Ou
-#   Date: Feb 21, 2019
+"""
+========================================================================
+SendRecvIfc.py
+========================================================================
+RTL implementation of en/rdy micro-protocol.
+
+Author: Yanghui Ou
+  Date: Feb 21, 2019
+"""
+from __future__ import absolute_import, division, print_function
 
 from pymtl import *
-from ifcs_utils import enrdy_to_str
+
+from .ifcs_utils import enrdy_to_str
 
 #-------------------------------------------------------------------------
 # RecvIfcRTL

@@ -1,16 +1,21 @@
-#=========================================================================
-# SimpleTickPass.py
-#=========================================================================
-# Generate a simple tick function (no Mamba techniques here)
-#
-# Author : Shunning Jiang
-# Date   : Dec 26, 2018
+"""
+========================================================================
+SimpleTickPass.py
+========================================================================
+Generate a simple tick function (no Mamba techniques here)
 
-from pymtl.passes import BasePass
-from collections  import deque
-from graphviz     import Digraph
-from errors import PassOrderError
+Author : Shunning Jiang
+Date   : Dec 26, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+from graphviz import Digraph
+
 from pymtl.dsl.errors import UpblkCyclicError
+from pymtl.passes import BasePass
+
+from .errors import PassOrderError
+
 
 class SimpleTickPass( BasePass ):
 

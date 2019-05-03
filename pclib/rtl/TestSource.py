@@ -1,7 +1,11 @@
-from pymtl import *
+from __future__ import absolute_import, division, print_function
+
 from collections import deque
-from pclib.ifcs  import OutValRdyIfc, SendIfcRTL, enrdy_to_str
+
+from pclib.ifcs import OutValRdyIfc, SendIfcRTL, enrdy_to_str
 from pclib.valrdy import valrdy_to_str
+from pymtl import *
+
 
 class TestBasicSource( Component ):
 

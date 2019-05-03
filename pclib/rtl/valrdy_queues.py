@@ -1,6 +1,9 @@
-from pymtl import *
+from __future__ import absolute_import, division, print_function
+
 from pclib.ifcs import InValRdyIfc, OutValRdyIfc
-from pclib.rtl  import Mux, Reg, RegEn, RegisterFile
+from pclib.rtl import Mux, Reg, RegEn, RegisterFile
+from pymtl import *
+
 
 class PipeQueue1RTL( Component ):
 
@@ -315,4 +318,3 @@ class NormalQueueRTLCtrl( Component ):
       elif s.full_next_cycle:     s.full = 1
       elif (s.do_deq and s.full): s.full = 0
       else:                       s.full = s.full
-

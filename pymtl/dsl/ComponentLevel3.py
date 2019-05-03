@@ -1,24 +1,33 @@
-#=========================================================================
-# ComponentLevel3.py
-#=========================================================================
-# We add value wire/interface connections. Basically, all connected
-# value signal in the whole graph should have the same value of the unique
-# "net writer" written in an update block.
-# Then, the update block for a net is basically one writer writes to those
-# readers. Interface connections are handled separately, and they should
-# be revamped when adding method-based interfaces.
-#
-# Author : Shunning Jiang
-# Date   : Apr 16, 2018
+"""
+========================================================================
+ComponentLevel3.py
+========================================================================
+We add value wire/interface connections. Basically, all connected
+value signal in the whole graph should have the same value of the unique
+"net writer" written in an update block.
+Then, the update block for a net is basically one writer writes to those
+readers. Interface connections are handled separately, and they should
+be revamped when adding method-based interfaces.
 
-from NamedObject import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from ComponentLevel2 import ComponentLevel2
-from Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
+Author : Shunning Jiang
+Date   : Apr 16, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
 from collections import defaultdict, deque
 
-import inspect, ast # for error message
+from .ComponentLevel1 import ComponentLevel1
+from .ComponentLevel2 import ComponentLevel2
+from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
+from .errors import (
+    InvalidConnectionError,
+    MultiWriterError,
+    NotElaboratedError,
+    NoWriterError,
+    SignalTypeError,
+)
+from .NamedObject import NamedObject
+
 
 class ComponentLevel3( ComponentLevel2 ):
 

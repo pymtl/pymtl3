@@ -1,18 +1,23 @@
-#=========================================================================
-# SystemVerilogTranslationPass.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Aug 23, 2018
+"""
+========================================================================
+SystemVerilogTranslationPass.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Aug 23, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+import ast
+from collections import defaultdict, deque
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel1
-from BasePass import BasePass
-from GenDAGPass import GenDAGPass
-from SimpleSchedPass import SimpleSchedPass
-from collections import defaultdict, deque
-from errors import TranslationError
-import ast
+
+from .BasePass import BasePass
+from .errors import TranslationError
+from .GenDAGPass import GenDAGPass
+from .SimpleSchedPass import SimpleSchedPass
 
 vmodule_template = """
 module {module_name}
@@ -113,7 +118,7 @@ class SystemVerilogTranslationPass( BasePass ):
         ret += self.translate_component( obj, connections_self_self[ obj ],
                                               connections_self_child[ obj ],
                                               connections_child_child[ obj ] )
-    print ret
+    print(ret)
 
   def translate_component( self, m, connections_self_self,
                                     connections_self_child,
@@ -133,7 +138,7 @@ class SystemVerilogTranslationPass( BasePass ):
         width_str = "" if nbits == 1 else " [{}:0]".format(nbits-1)
         return "{} {}".format( width_str, x.get_field_name() )
       except AttributeError: # it is not a Bits type
-        print x.Type.nbits
+        print(x.Type.nbits)
         assert False, "TODO Implement data struct translation"
 
     input_strs = [ "input logic{}".format( gen_signal_width_name(x) )
@@ -272,10 +277,10 @@ class FuncUpblkTranslator( ast.NodeVisitor ):
     self.blk     = blk
     self.nindent = 2
 
-    self.globals = blk.func_globals
+    self.globals = blk.__globals__
     self.closure = {}
-    for i, var in enumerate( blk.func_code.co_freevars ):
-      try:  self.closure[ var ] = blk.func_closure[i].cell_contents
+    for i, var in enumerate( blk.__code__.co_freevars ):
+      try:  self.closure[ var ] = blk.__closure__[i].cell_contents
       except ValueError: pass
 
     ret = self.visit( ast )
@@ -634,5 +639,5 @@ opmap = {
 }
 
 def get_closure_dict( fn ):
-  closure_objects = [c.cell_contents for c in fn.func_closure]
-  return dict( zip( fn.func_code.co_freevars, closure_objects ))
+  closure_objects = [c.cell_contents for c in fn.__closure__]
+  return dict( zip( fn.__code__.co_freevars, closure_objects ))

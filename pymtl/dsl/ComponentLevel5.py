@@ -1,19 +1,21 @@
-#=========================================================================
-# ComponentLevel5.py
-#=========================================================================
-# We allow CallerPort to be connected to CalleePort
-#
-# Author : Shunning Jiang
-# Date   : Dec 29, 2018
+"""
+========================================================================
+ComponentLevel5.py
+========================================================================
+We allow CallerPort to be connected to CalleePort
 
+Author : Shunning Jiang
+Date   : Dec 29, 2018
+"""
+from __future__ import absolute_import, division, print_function
 
-from NamedObject import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from ComponentLevel2 import ComponentLevel2
-from ComponentLevel4 import ComponentLevel4
-from Connectable import Signal, MethodPort, CalleePort, CallerPort
+from .ComponentLevel1 import ComponentLevel1
+from .ComponentLevel2 import ComponentLevel2
+from .ComponentLevel4 import ComponentLevel4
+from .Connectable import CalleePort, CallerPort, MethodPort, Signal
+from .errors import MultiWriterError
+from .NamedObject import NamedObject
 
-from errors import MultiWriterError
 
 class ComponentLevel5( ComponentLevel4 ):
 

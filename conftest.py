@@ -1,4 +1,7 @@
+from __future__ import absolute_import, division, print_function
+
 import pytest
+
 
 def pytest_addoption(parser):
   parser.addoption( "--test-verilog", action="store", default='', nargs='?', const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],

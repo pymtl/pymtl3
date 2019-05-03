@@ -1,12 +1,12 @@
+from __future__ import absolute_import, division, print_function
 
-from datatypes import *
-from datatypes import _bitwidths
-
-from dsl.ConstraintTypes import U, M, RD, WR
-from dsl.Connectable     import Wire, InPort, OutPort, Interface, CallerPort, CalleePort
-from dsl.ComponentLevel6 import generate_guard_decorator_ifcs
-from dsl.Component       import Component
-from passes.PassGroups   import SimpleSim
+from .datatypes import *
+from .datatypes import _bitwidths
+from .dsl.Component import Component
+from .dsl.ComponentLevel6 import generate_guard_decorator_ifcs
+from .dsl.Connectable import CalleePort, CallerPort, InPort, Interface, OutPort, Wire
+from .dsl.ConstraintTypes import RD, WR, M, U
+from .passes.PassGroups import SimpleSim
 
 __all__ = [
   'U','M','RD','WR',

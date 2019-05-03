@@ -1,17 +1,21 @@
-#=========================================================================
-# src_sink_test
-#=========================================================================
-# Tests for test sources and test sinks.
-#
-# Author : Yanghui Ou
-#   Date : Mar 11, 2019
+"""
+========================================================================
+src_sink_test
+========================================================================
+Tests for test sources and test sinks.
+
+Author : Yanghui Ou
+  Date : Mar 11, 2019
+"""
+from __future__ import absolute_import, division, print_function
 
 import pytest
 
 from pymtl import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from test_srcs  import TestSrcCL, TestSrcRTL
-from test_sinks import TestSinkCL, TestSinkRTL
+
+from .test_sinks import TestSinkCL, TestSinkRTL
+from .test_srcs import TestSrcCL, TestSrcRTL
 
 #-------------------------------------------------------------------------
 # TestHarnessCL
@@ -74,13 +78,13 @@ def run_sim( th, max_cycles=100 ):
 
   # Run simluation
 
-  print ""
+  print("")
   ncycles = 0
-  print "{}:{}".format( ncycles, th.line_trace() )
+  print("{}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{}:{}".format( ncycles, th.line_trace() )
+    print("{}:{}".format( ncycles, th.line_trace() ))
 
   # Check timeout
 

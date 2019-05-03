@@ -1,25 +1,30 @@
-#=========================================================================
-# ComponentLevel1.py
-#=========================================================================
-# At the bottom level, we only have update blocks and explicit constraints
-# between two update blocks/one update block. Basically this layer defines
-# the scheduling policy/elaboration process.
-# Each update block is called exactly once every cycle. PyMTL will
-# schedule all update blocks based on the constraints. A total constraint
-# between two update blocks specifies the order of the two blocks, i.e.
-# call A before B.
-# We collect one type of explicit constraints at this level:
-# * Block constraint: s.add_constraints( U(upA) < U(upB) )
+"""
+========================================================================
+ComponentLevel1.py
+========================================================================
+At the bottom level, we only have update blocks and explicit constraints
+between two update blocks/one update block. Basically this layer defines
+the scheduling policy/elaboration process.
+Each update block is called exactly once every cycle. PyMTL will
+schedule all update blocks based on the constraints. A total constraint
+between two update blocks specifies the order of the two blocks, i.e.
+call A before B.
+We collect one type of explicit constraints at this level:
+* Block constraint: s.add_constraints( U(upA) < U(upB) )
 
-# Author : Shunning Jiang
-# Date   : Nov 3, 2018
+Author : Shunning Jiang
+Date   : Nov 3, 2018
+"""
+from __future__ import absolute_import, division, print_function
 
-from NamedObject     import NamedObject
-from ConstraintTypes import U
-from errors          import UpblkFuncSameNameError, NotElaboratedError
+import re
+
 from pymtl.datatypes import *
 
-import inspect, re, ast, py
+from .ConstraintTypes import U
+from .errors import NotElaboratedError, UpblkFuncSameNameError
+from .NamedObject import NamedObject
+
 p = re.compile('( *((@|def).*))')
 
 class ComponentLevel1( NamedObject ):
