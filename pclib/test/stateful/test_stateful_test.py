@@ -33,7 +33,6 @@ class EnqIfcRTL( Interface ):
     return s.line_trace()
 
 
-
 #-------------------------------------------------------------------------
 # DeqIfcRTL
 #-------------------------------------------------------------------------
@@ -123,29 +122,28 @@ class NormalQueueRTL( Component ):
     return ":".join([ "{}".format( x ).ljust( 8 ) for x in s.data ] )
 
 
-
 #-------------------------------------------------------------------------
 # QueueFL
 #-------------------------------------------------------------------------
+
 
 class QueueFL( Component ):
 
   def construct( s, maxsize ):
     s.q = deque( maxlen=maxsize )
 
-  @guarded_ifc( lambda s: len(s.q) < s.q.maxlen )
+  @guarded_ifc( lambda s: len( s.q ) < s.q.maxlen )
   def enq( s, value ):
     s.q.appendleft( value )
 
-  @guarded_ifc( lambda s: len(s.q) > 0 )
+  @guarded_ifc( lambda s: len( s.q ) > 0 )
   def deq( s ):
     return s.q.pop()
-
-
 
 
 #-------------------------------------------------------------------------
 # test_state_machine
 #-------------------------------------------------------------------------
 def test_state_machine():
-  test_stateful = run_test_state_machine(  RTL2CLWrapper( NormalQueueRTL( Bits16, 4 ) ), QueueFL( 4 ) )
+  test_stateful = run_test_state_machine(
+      RTL2CLWrapper( NormalQueueRTL( Bits16, 4 ) ), QueueFL( 4 ) )

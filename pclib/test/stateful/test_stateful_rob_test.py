@@ -7,7 +7,7 @@
 
 from pymtl import *
 from pclib.ifcs.GuardedIfc import guarded_ifc
-from pclib.rtl import RegEnRst, RegRst, RegEn
+from pymtl.dsl.test.sim_utils import simple_sim_pass
 from pclib.test.stateful.test_stateful import run_test_state_machine
 from pclib.test.stateful.test_wrapper import *
 import math
@@ -19,7 +19,7 @@ import math
 
 class ReorderBufferCL( Component ):
 
-  def construct( s, DataType, num_entries ):
+  def construct( s, num_entries ):
     # We want to be a power of two so mod arithmetic is efficient
     idx_nbits = clog2( num_entries )
     assert 2**idx_nbits == num_entries
@@ -57,6 +57,20 @@ class ReorderBufferCL( Component ):
 
   def empty( s ):
     return s.num == 0
+
+
+#-------------------------------------------------------------------------
+# test_rob_cl
+#-------------------------------------------------------------------------
+def test_rob_cl():
+  rob = ReorderBufferCL( 4 )
+  rob.elaborate()
+  rob.apply( simple_sim_pass )
+  rob.alloc()
+  assert not rob.remove.rdy()
+  rob.update_entry( 0, 1 )
+  assert rob.remove.rdy()
+  assert rob.remove() == 1
 
 
 #-------------------------------------------------------------------------
@@ -202,7 +216,7 @@ class ReorderBuffer( Component ):
 
   def line_trace( s ):
     return ":".join([
-        "{}".format( s.data[ i ] if s.valid[ i ] else "O" if s
+        "{}".format( s.data[ i ] if s.valid[ i ] else "......" if s
                      .allocated[ i ] else "-" ).ljust( 8 )
         for i in range( len( s.data ) )
     ] )
@@ -213,5 +227,4 @@ class ReorderBuffer( Component ):
 #-------------------------------------------------------------------------
 def test_state_machine():
   test = run_test_state_machine(
-      RTL2CLWrapper( ReorderBuffer( Bits16, 4 ) ), ReorderBufferCL( Bits16,
-                                                                    4 ) )
+      RTL2CLWrapper( ReorderBuffer( Bits16, 4 ) ), ReorderBufferCL( 4 ) )

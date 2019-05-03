@@ -98,14 +98,21 @@ class TestStateMachine( GenericStateMachine ):
     # to be added to step.
     # See MethodBasedRuleStrategy for more
     method_name = rule.method_name
+    line_trace = method_name + "(" + ", ".join([
+        "{arg}={value}".format( arg=arg, value=value )
+        for arg, value in data.iteritems()
+    ] ) + ")"
+
     if self.model.__dict__[ method_name ].rdy(
     ) and not self.reference.__dict__[ method_name ].rdy():
+      self.line_trace_string += line_trace
       self.error_line_trace()
       raise ValueError(
           "Dut method is rdy but reference is not: {method_name}".format(
               method_name=method_name ) )
     if not self.model.__dict__[ method_name ].rdy(
     ) and self.reference.__dict__[ method_name ].rdy():
+      self.line_trace_string += line_trace
       self.error_line_trace()
       raise ValueError(
           "Reference method is rdy but dut is not: {method_name}".format(
@@ -116,15 +123,12 @@ class TestStateMachine( GenericStateMachine ):
     ) and self.reference.__dict__[ method_name ].rdy():
       m_result = self.model.__dict__[ method_name ](**data )
       r_result = self.reference.__dict__[ method_name ](**data )
-      self.line_trace_string += method_name + "(" + ", ".join([
-          "{arg}={value}".format( arg=arg, value=value )
-          for arg, value in data.iteritems()
-      ] ) + ")"
-
-      if r_result != None:
-        self.line_trace_string += " --> " + str( r_result )
+      self.line_trace_string += line_trace
 
       if not m_result == r_result:
+        if r_result != None:
+          self.line_trace_string += " --> " + "dut: " + str(
+              r_result ) + " ref: " + str( m_result )
         self.error_line_trace()
         raise ValueError( """mismatch found in method {method}:
   - args: {data}
@@ -135,6 +139,9 @@ class TestStateMachine( GenericStateMachine ):
             data=str( data ),
             r_result=r_result,
             m_result=m_result ) )
+
+      if r_result != None:
+        self.line_trace_string += " --> " + str( r_result )
 
     self.model.tick()
     self.reference.tick()
