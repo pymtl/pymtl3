@@ -142,6 +142,7 @@ class ReorderBuffer( Component ):
     s.head = Wire( index_type )
     s.tail = Wire( index_type )
     s.num = Wire( mk_bits( idx_nbits + 1 ) )
+
     s.data = [ Wire( DataType ) for _ in range( num_entries ) ]
     s.valid = [ Wire( Bits1 ) for _ in range( num_entries ) ]
     s.allocated = [ Wire( Bits1 ) for _ in range( num_entries ) ]
@@ -154,15 +155,16 @@ class ReorderBuffer( Component ):
     s.empty = Wire( Bits1 )
 
     @s.update
-    def set_update_rdy():
+    def update_rdy():
       s.empty = s.num == 0
       s.alloc.rdy = s.num < num_entries or s.remove.en
       s.update_entry.rdy = not s.empty
       s.remove.rdy = s.valid[ s.head ]
 
     @s.update
-    def update_alloc():
+    def update_ret():
       s.alloc.index = s.tail
+      s.remove.value = s.data[ s.head ]
 
     @s.update_on_edge
     def update_num():
@@ -190,7 +192,7 @@ class ReorderBuffer( Component ):
         s.head = index_type( s.head + 1 ) if s.remove.en else s.head
 
     @s.update_on_edge
-    def handle_en():
+    def handle_data_and_flags():
       if s.reset:
         for i in range( num_entries ):
           s.data[ i ] = 0
@@ -207,10 +209,6 @@ class ReorderBuffer( Component ):
       if s.remove.en:
         s.valid[ s.head ] = 0
         s.allocated[ s.head ] = 0
-
-    @s.update
-    def handle_remove_value():
-      s.remove.value = s.data[ s.head ]
 
   def line_trace( s ):
     return ":".join([
