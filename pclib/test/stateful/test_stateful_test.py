@@ -74,7 +74,7 @@ class NormalQueueRTL( Component ):
 
     @s.update
     def set_enq_rdy():
-      s.enq.rdy = s.num < num_entries  # Alloc rdy
+      s.enq.rdy = s.num < num_entries
 
     @s.update
     def set_deq_rdy():
@@ -113,7 +113,6 @@ class NormalQueueRTL( Component ):
           s.data[ i ] = 0
 
       if s.enq.en:
-        s.data[ s.tail ] = 1
         s.data[ s.tail ] = s.enq.value
 
     @s.update
