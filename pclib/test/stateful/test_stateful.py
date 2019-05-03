@@ -84,6 +84,10 @@ class TestStateMachine( GenericStateMachine ):
   def steps( self ):
     return self.__rules_strategy
 
+  def error_line_trace( self ):
+    print "============================= error ========================"
+    print self.model.line_trace(), self.line_trace_string
+
   def execute_step( self, step ):
 
     self.line_trace_string = ""
@@ -96,11 +100,13 @@ class TestStateMachine( GenericStateMachine ):
     method_name = rule.method_name
     if self.model.__dict__[ method_name ].rdy(
     ) and not self.reference.__dict__[ method_name ].rdy():
+      self.error_line_trace()
       raise ValueError(
           "Dut method is rdy but reference is not: {method_name}".format(
               method_name=method_name ) )
     if not self.model.__dict__[ method_name ].rdy(
     ) and self.reference.__dict__[ method_name ].rdy():
+      self.error_line_trace()
       raise ValueError(
           "Reference method is rdy but dut is not: {method_name}".format(
               method_name=method_name ) )
@@ -114,8 +120,7 @@ class TestStateMachine( GenericStateMachine ):
       ] ) + ")"
 
       if not m_result == r_result:
-        print "============================= error ========================"
-        print self.model.line_trace(), self.line_trace_string
+        self.error_line_trace()
         raise ValueError( """mismatch found in method {method}:
   - args: {data}
   - reference result: {r_result}
