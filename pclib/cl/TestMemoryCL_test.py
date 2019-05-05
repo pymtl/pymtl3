@@ -12,7 +12,7 @@ from pclib.test import mk_test_case_table
 from pclib.test.test_sinks import TestSinkCL
 from pclib.test.test_srcs  import TestSrcCL
 from pclib.ifcs import mk_mem_msg, MemMsgType
-from TestMemoryCL import TwoPortTestMemoryCL
+from TestMemoryCL import TestMemoryCL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -27,15 +27,14 @@ class TestHarness( Component ):
 
     s.srcs = [ TestSrcCL( src_msgs[i], src_initial, src_interval )
                 for i in xrange(nports) ]
-    s.mem  = cls()
+    s.mem  = cls( nports, [mk_mem_msg(8,32,32)]*nports )
     s.sinks = [ TestSinkCL( sink_msgs[i], sink_initial, sink_interval,
                             arrival_time ) for i in xrange(nports) ]
 
     # Connections
-    s.connect( s.srcs[0].send, s.mem.recv0 )
-    s.connect( s.srcs[1].send, s.mem.recv1 )
-    s.connect( s.mem.send[0], s.sinks[0].recv  )
-    s.connect( s.mem.send[1], s.sinks[1].recv  )
+    for i in range(nports):
+      s.connect( s.srcs[i].send, s.mem.recv[i] )
+      s.connect( s.mem.send[i],  s.sinks[i].recv  )
 
   def done( s ):
     done = True
@@ -44,9 +43,9 @@ class TestHarness( Component ):
     return done
 
   def line_trace( s ):
-    return "{}|{} >>>    >>> {}|{}".format(
-      s.srcs[0].line_trace(), s.srcs[1].line_trace(),
-      s.sinks[0].line_trace(), s.sinks[1].line_trace() )
+    return "{} >>>    >>> {}".format(
+      "|".join( [ x.line_trace() for x in s.srcs ] ),
+      "|".join( [ x.line_trace() for x in s.sinks ] ) )
 
 #-------------------------------------------------------------------------
 # make messages
@@ -237,11 +236,11 @@ test_case_table = mk_test_case_table([
   [ "subword_wr",                subword_wr_msgs,  0.0,  0,  0,       0,       0,        0         ],
   [ "amo",                       amo_msgs,         0.0,  0,  0,       0,       0,        0         ],
   [ "random",                    random_msgs,      0.0,  0,  0,       0,       0,        0         ],
-  [ "random_3x14",               random_msgs,      0.0,  0,  3,       14,      0,        0         ],
+  [ "random_3x14",               random_msgs,      0.0,  0,  5,       3,       7,        14        ],
   [ "stream_stall0.5_lat0",      stream_msgs,      0.5,  0,  0,       0,       0,        0         ],
   [ "stream_stall0.0_lat4",      stream_msgs,      0.0,  4,  0,       0,       0,        0         ],
   [ "stream_stall0.5_lat4",      stream_msgs,      0.5,  4,  0,       0,       0,        0         ],
-  [ "random_stall0.5_lat4_3x14", random_msgs,      0.5,  4,  3,       14,      0,        0         ],
+  [ "random_stall0.5_lat4_3x14", random_msgs,      0.5,  4,  5,       14,      7,        14        ],
 ])
 
 #-------------------------------------------------------------------------
@@ -264,13 +263,22 @@ test_case_table = mk_test_case_table([
 def test_2port( test_params, dump_vcd ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
-  run_sim( TestHarness( TwoPortTestMemoryCL, 2,
+  run_sim( TestHarness( TestMemoryCL, 2,
                         [ msgs0[::2],  msgs1[::2]  ],
                         [ msgs0[1::2], msgs1[1::2] ],
                         test_params.stall, test_params.lat,
                         test_params.src_init, test_params.src_intv,
                         test_params.sink_init, test_params.sink_intv ) )
 
+@pytest.mark.parametrize( **test_case_table )
+def test_20port( test_params, dump_vcd ):
+  msgs = [ test_params.msg_func(0x1000*i) for i in xrange(20) ]
+  run_sim( TestHarness( TestMemoryCL, 20,
+                        [ x[::2]  for x in msgs ],
+                        [ x[1::2] for x in msgs ],
+                        test_params.stall, test_params.lat,
+                        test_params.src_init, test_params.src_intv,
+                        test_params.sink_init, test_params.sink_intv ) )
 #-------------------------------------------------------------------------
 # Test Read/Write Mem
 #-------------------------------------------------------------------------
@@ -298,7 +306,7 @@ def test_read_write_mem( dump_vcd ):
 
   # Create test harness with above memory messages
 
-  th = TestHarness( TwoPortTestMemoryCL, 2, [msgs[::2], []], [msgs[1::2], []],
+  th = TestHarness( TestMemoryCL, 2, [msgs[::2], []], [msgs[1::2], []],
                     0, 0, 0, 0, 0, 0 )
   th.elaborate()
 

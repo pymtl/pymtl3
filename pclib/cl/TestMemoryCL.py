@@ -118,7 +118,7 @@ class TestMemory( object ):
   def __setitem__( s, idx, data ):
     s.mem[ idx ] = data
 
-class TwoPortTestMemoryCL( Component ):
+class TestMemoryCL( Component ):
 
   # Magical methods
 
@@ -130,16 +130,16 @@ class TwoPortTestMemoryCL( Component ):
 
   # Actual method
 
-  @guarded_ifc( lambda s: len(s.req_qs[0]) < s.req_qs[0].maxlen )
-  def recv0( s, msg ):
-    s.req_qs[0].appendleft( msg )
-
-  @guarded_ifc( lambda s: len(s.req_qs[1]) < s.req_qs[1].maxlen )
-  def recv1( s, msg ):
-    s.req_qs[1].appendleft( msg )
+  @guarded_ifc( lambda s, x: len(s.req_qs[x]) < s.req_qs[x].maxlen )
+  def recv( s, msg, x ):
+    s.req_qs[x].appendleft( msg )
 
   # Actual stuff
-  def construct( s, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], mem_nbytes=2**20 ):
+  def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], mem_nbytes=2**20 ):
+
+    # Local constants
+
+    s.nports = nports
     req_classes  = [ x for (x,y) in mem_ifc_dtypes ]
     resp_classes = [ y for (x,y) in mem_ifc_dtypes ]
 
@@ -147,15 +147,17 @@ class TwoPortTestMemoryCL( Component ):
 
     # Interface
 
-    s.send = [ GuardedCallerIfc() for i in xrange(2) ]
+    from functools import partial
+
+    s.recv = [ GuardedCalleeIfc( partial( s.recv.method, x=i ),
+                                 partial( s.recv.rdy, x=i ) ) for i in range(nports) ]
+
+    s.send = [ GuardedCallerIfc() for i in xrange(nports) ]
 
     # Queues
 
-    s.req_qs  = [ deque(maxlen=2) for i in xrange(2) ]
+    s.req_qs  = [ deque(maxlen=2) for i in xrange(nports) ]
 
-    # Local constants
-
-    s.nports = 2
 
     @s.update
     def up_mem():
@@ -186,10 +188,10 @@ class TwoPortTestMemoryCL( Component ):
 
           s.send[i]( resp )
 
-    s.add_constraints(
-      U(up_mem) < M(s.recv0)    , # execute mem block before receiving request
-      U(up_mem) < M(s.recv1)    , # for pipe behavior
-    )
+    for i in range(s.nports):
+      s.add_constraints(
+        U(up_mem) < M(s.recv[i]), # execute mem block before receiving request
+      )
 
   #-----------------------------------------------------------------------
   # line_trace
@@ -197,9 +199,3 @@ class TwoPortTestMemoryCL( Component ):
 
   def line_trace( s ):
     return ""
-
-    #  trace_str = ""
-    #  for req, resp_q, resp in zip( s.reqs, s.resps_q, s.resps ):
-      #  trace_str += "{}({}){} ".format( req, resp_q, resp )
-
-    #  return trace_str
