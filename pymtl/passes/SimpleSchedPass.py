@@ -48,7 +48,9 @@ class SimpleSchedPass( BasePass ):
 
     Q = deque( [ v for v in V if not InD[v] ] )
 
+    import random
     while Q:
+      random.shuffle(Q)
       u = Q.pop()
       schedule.append( u )
       for v in Es[u]:
@@ -57,6 +59,39 @@ class SimpleSchedPass( BasePass ):
           Q.append( v )
 
     check_schedule( top, schedule, V, E, InD )
+
+    from graphviz import Digraph
+    from pymtl.dsl import CalleePort
+    dot = Digraph()
+    dot.graph_attr["rank"] = "same"
+    dot.graph_attr["ratio"] = "compress"
+    dot.graph_attr["margin"] = "0.1"
+
+    for x in V:
+      x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+      try:
+        x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
+                      else top.get_update_block_host_component(x))
+      except:
+        x_host = ""
+      dot.node( x_name +"\\n@" + x_host, shape="box")
+
+    for (x, y) in E:
+      x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+      try:
+        x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
+                      else top.get_update_block_host_component(x))
+      except:
+        x_host = ""
+      y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
+      try:
+        y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
+                      else top.get_update_block_host_component(y))
+      except:
+        y_host = ""
+
+      dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
+    dot.render( "/tmp/upblk-dag.gv", view=False )
 
     return schedule
 
