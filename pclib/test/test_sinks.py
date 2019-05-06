@@ -46,7 +46,7 @@ class TestSinkCL( Component ):
 
     @s.update
     def up_sink_count():
-      if not s.reset: 
+      if not s.reset:
         s.cycle_count += 1
       else:
         s.cycle_count = 0
