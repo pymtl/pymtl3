@@ -21,6 +21,9 @@ env:
 
 install:
 
+ # Install packages
+ - sudo apt-get install -y graphviz
+
  # Install verilator
 
  - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
