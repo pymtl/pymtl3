@@ -13,7 +13,7 @@ from pymtl import *
 
 from .GuardedIfc import *
 from .ifcs_utils import enrdy_to_str
-from .send_recv_ifc_adapters import RecvCL2SendRTL, RecvRTL2SendCL
+from .SendRecvIfc import RecvCL2SendRTL, RecvRTL2SendCL
 
 #-------------------------------------------------------------------------
 # EnqIfcRTL
@@ -33,13 +33,15 @@ class EnqIfcRTL( Interface ):
     if isinstance( other, GuardedCallerIfc ):
 
       m = RecvCL2SendRTL( s.MsgType )
-      
+
       if hasattr( parent, "enq_adapter_cnt" ):
         cnt = parent.enq_adapter_cnt
         setattr( parent, "enq_adapter_" + str( cnt ), m )
         parent.connect_pairs(
           other,  m.recv,
-          m.send, s
+          m.send.msg, s.msg,
+          m.send.en,  s.en,
+          m.send.rdy, s.rdy
         )
         parent.enq_adapter_cnt += 1
         return True

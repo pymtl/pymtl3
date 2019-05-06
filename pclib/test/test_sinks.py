@@ -132,5 +132,5 @@ class TestSinkRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "|{}|->{}".format(
+    return "[{}>]{}".format(
       s.adapter.line_trace(), s.sink.line_trace() )
