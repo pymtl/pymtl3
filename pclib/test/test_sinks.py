@@ -10,8 +10,7 @@ Author : Yanghui Ou
 
 from __future__ import absolute_import, division, print_function
 
-from pclib.ifcs import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
-from pclib.ifcs.GuardedIfc import guarded_ifc
+from pclib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str, guarded_ifc
 from pymtl import *
 
 #-------------------------------------------------------------------------

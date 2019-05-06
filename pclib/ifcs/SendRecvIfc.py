@@ -44,25 +44,19 @@ class RecvIfcRTL( Interface ):
       if hasattr( parent, "RecvCL2SendRTL_count" ):
         count = parent.RecvCL2SendRTL_count
         setattr( parent, "RecvCL2SendRTL_" + str( count ), m )
-        parent.connect_pairs(
-          other,  m.recv,
-          m.send.msg, s.msg,
-          m.send.en,  s.en,
-          m.send.rdy, s.rdy
-        )
-        parent.RecvCL2SendRTL_count += 1
-        return True
-
       else:
+        parent.RecvCL2SendRTL_count = 0
         parent.RecvCL2SendRTL_0 = m
-        parent.connect_pairs(
-          other, m.recv,
-          m.send.msg, s.msg,
-          m.send.en,  s.en,
-          m.send.rdy, s.rdy,
-        )
-        parent.RecvCL2SendRTL_count = 1
-        return True
+
+      parent.connect_pairs(
+        other,  m.recv,
+        m.send.msg, s.msg,
+        m.send.en,  s.en,
+        m.send.rdy, s.rdy
+      )
+      parent.RecvCL2SendRTL_count += 1
+      return True
+
     return False
 
 #-------------------------------------------------------------------------
@@ -72,6 +66,7 @@ class RecvIfcRTL( Interface ):
 class SendIfcRTL( Interface ):
 
   def construct( s, Type ):
+
     s.msg = OutPort( Type )
     s.en  = OutPort( int if Type is int else Bits1 )
     s.rdy =  InPort( int if Type is int else Bits1 )
@@ -94,25 +89,19 @@ class SendIfcRTL( Interface ):
       if hasattr( parent, "RecvRTL2SendCL_count" ):
         count = parent.RecvRTL2SendCL_count
         setattr( parent, "RecvRTL2SendCL_" + str( count ), m )
-        parent.connect_pairs(
-          m.send, other,
-          s.msg, m.recv.msg,
-          s.en,  m.recv.en,
-          s.rdy, m.recv.rdy,
-        )
-        parent.RecvRTL2SendCL_count += 1
-        return True
-
       else:
+        parent.RecvRTL2SendCL_count = 0
         parent.RecvRTL2SendCL_0 = m
-        parent.connect_pairs(
-          m.send, other,
-          s.msg, m.recv.msg,
-          s.en,  m.recv.en,
-          s.rdy, m.recv.rdy,
-        )
-        parent.RecvRTL2SendCL_count = 1
-        return True
+
+      parent.connect_pairs(
+        m.send, other,
+        s.msg, m.recv.msg,
+        s.en,  m.recv.en,
+        s.rdy, m.recv.rdy,
+      )
+      parent.RecvRTL2SendCL_count += 1
+      return True
+
     return False
 """
 ========================================================================

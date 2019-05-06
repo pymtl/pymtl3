@@ -8,8 +8,6 @@ Date   : Dec 25, 2017
 """
 from __future__ import absolute_import, division, print_function
 
-from pclib.rtl import TestBasicSink as TestSink
-from pclib.rtl import TestBasicSource as TestSource
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
 from pymtl.dsl.errors import SignalTypeError

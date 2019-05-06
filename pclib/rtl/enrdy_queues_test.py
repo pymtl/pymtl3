@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pclib.rtl import TestSinkEnRdy, TestSourceEnRdy
+from pclib.test import TestSinkCL, TestSrcCL
 from pymtl import *
 
 from .enrdy_queues import *
@@ -26,14 +26,14 @@ class TestHarness( Component ):
 
     # Instantiate models
 
-    s.src = TestSourceEnRdy( Type, src_msgs, src_stall_prob )
-    s.q   = q
-    s.sink = TestSinkEnRdy( Type, sink_msgs, sink_stall_prob )
+    s.src  = TestSrcCL( src_msgs )
+    s.q    = q
+    s.sink = TestSinkCL( sink_msgs )
 
     # Connect
 
-    s.connect( s.src.out, s.q.enq )
-    s.connect( s.sink.in_, s.q.deq )
+    s.connect( s.src.send, s.q.enq )
+    s.connect( s.sink.recv, s.q.deq )
 
   def done( s ):
     return s.src.done() and s.sink.done()
