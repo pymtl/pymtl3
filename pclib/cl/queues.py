@@ -45,7 +45,7 @@ class PipeQueueCL( Component ):
     s.add_constraints(
       U( up_pulse ) < M( s.enq.rdy ),
       U( up_pulse ) < M( s.deq.rdy ),
-      M( s.peek   ) < M( s.deq  ),
+      M( s.peek   ) < M( s.enq  ),
       M( s.deq    ) < M( s.enq  )
     )
 
@@ -101,8 +101,8 @@ class BypassQueueCL( Component ):
     s.add_constraints(
       U( up_pulse ) < M( s.enq.rdy ),
       U( up_pulse ) < M( s.deq.rdy ),
-      M( s.peek   ) < M( s.enq  ),
-      M( s.enq    ) < M( s.deq  )
+      M( s.enq    ) < M( s.peek    ),
+      M( s.enq    ) < M( s.deq     ),
     )
 
   @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
