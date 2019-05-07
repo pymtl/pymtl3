@@ -170,7 +170,7 @@ class TestMemoryCL( Component ):
 
           req = s.req_qs[i].pop()
           len_ = int(req.len)
-          if not len_: len_ = 4
+          if not len_: len_ = req_classes[i].data_nbits >> 3
 
           if   req.type_ == MemMsgType.READ:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
