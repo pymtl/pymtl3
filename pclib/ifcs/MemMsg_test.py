@@ -57,7 +57,7 @@ def test_req_str():
 
   # Verify string
 
-  assert str(msg) == "rd:07:1000:          "
+  assert str(msg) == "rd:07:1000:3:          "
 
   ReqType = mk_mem_req_msg(4,16,40)
 
@@ -67,7 +67,7 @@ def test_req_str():
 
   # Verify string
 
-  assert str(msg) == "wr:9:2000:00deadbeef"
+  assert str(msg) == "wr:9:2000:0:00deadbeef"
 
 #-------------------------------------------------------------------------
 # test_resp_fields
@@ -115,7 +115,7 @@ def test_resp_str():
 
   # Verify string
 
-  assert str(msg) == "rd:07:2:0000adbeef"
+  assert str(msg) == "rd:07:2:3:0000adbeef"
 
   RespType = mk_mem_resp_msg(4,40)
 
@@ -125,4 +125,4 @@ def test_resp_str():
 
   # Verify string
 
-  assert str(msg) == "wr:9:1:          "
+  assert str(msg) == "wr:9:1:0:          "

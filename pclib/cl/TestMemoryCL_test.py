@@ -2,17 +2,20 @@
 # TestMemory_test.py
 #=========================================================================
 
-import pytest
+from __future__ import absolute_import, division, print_function
+
 import random
 import struct
 
-from pymtl      import *
-from pymtl.passes import SimpleCLSim
+import pytest
+
+from pclib.ifcs import MemMsgType, mk_mem_msg
 from pclib.test import mk_test_case_table
 from pclib.test.test_sinks import TestSinkCL
-from pclib.test.test_srcs  import TestSrcCL
-from pclib.ifcs import mk_mem_msg, MemMsgType
-from TestMemoryCL import TestMemoryCL
+from pclib.test.test_srcs import TestSrcCL
+from pymtl import *
+from pymtl.passes import SimpleCLSim
+from .TestMemoryCL import TestMemoryCL
 
 #-------------------------------------------------------------------------
 # TestHarness

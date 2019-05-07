@@ -79,9 +79,9 @@ class MemReqMsg_{0}_{1}_{2}( object ):
     s.data   = Bits{2}( data )
 
   def __str__( s ):
-    return "{{}}:{{}}:{{}}:{{}}".format(
+    return "{{}}:{{}}:{{}}:{{}}:{{}}".format(
     MemMsgType.str[ int(s.type_) ],
-      s.opaque, s.addr,
+      s.opaque, s.addr, s.len,
       (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.READ else s.data,
     )
 
@@ -120,9 +120,9 @@ class MemRespMsg_{0}_{1}( object ):
     s.data   = Bits{1}( data )
 
   def __str__( s ):
-    return "{{}}:{{}}:{{}}:{{}}".format(
+    return "{{}}:{{}}:{{}}:{{}}:{{}}".format(
       MemMsgType.str[int(s.type_)],
-      s.opaque, s.test,
+      s.opaque, s.test, s.len,
       (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.WRITE else s.data
     )
 
