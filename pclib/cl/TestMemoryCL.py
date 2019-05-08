@@ -88,7 +88,7 @@ class TestMemory( object ):
     end  = addr + nbytes
     for j in xrange( addr, end ):
       ret += Bits( nbits, s.mem[j] ) << shamt
-      shamt += 8
+      shamt += Bits4(8)
     return ret
 
   def write( s, addr, nbytes, data ):

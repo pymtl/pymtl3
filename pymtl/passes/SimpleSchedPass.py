@@ -58,63 +58,58 @@ class SimpleSchedPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
+    import os
+
     check_schedule( top, schedule, V, E, InD )
 
-    from graphviz import Digraph
-    from pymtl.dsl import CalleePort
-    dot = Digraph()
-    dot.graph_attr["rank"] = "same"
-    dot.graph_attr["ratio"] = "compress"
-    dot.graph_attr["margin"] = "0.1"
-
-    for x in V:
-      x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      try:
-        x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                      else top.get_update_block_host_component(x))
-      except:
-        x_host = ""
-      dot.node( x_name +"\\n@" + x_host, shape="box")
-
-    for (x, y) in E:
-      x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      try:
-        x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                      else top.get_update_block_host_component(x))
-      except:
-        x_host = ""
-      y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
-      try:
-        y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
-                      else top.get_update_block_host_component(y))
-      except:
-        y_host = ""
-
-      dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
-    dot.render( "/tmp/upblk-dag.gv", view=False )
+    if 'MAMBA_DAG' in os.environ:
+      dump_dag( top, V, E )
 
     return schedule
+
+def dump_dag( top, V, E ):
+  from graphviz import Digraph
+  from pymtl.dsl import CalleePort
+  dot = Digraph()
+  dot.graph_attr["rank"] = "same"
+  dot.graph_attr["ratio"] = "compress"
+  dot.graph_attr["margin"] = "0.1"
+
+  for x in V:
+    x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+    try:
+      x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
+                    else top.get_update_block_host_component(x))
+    except:
+      x_host = ""
+    dot.node( x_name +"\\n@" + x_host, shape="box")
+
+  for (x, y) in E:
+    x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+    try:
+      x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
+                    else top.get_update_block_host_component(x))
+    except:
+      x_host = ""
+    y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
+    try:
+      y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
+                    else top.get_update_block_host_component(y))
+    except:
+      y_host = ""
+
+    dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
+  dot.render( "/tmp/upblk-dag.gv", view=True )
 
 def check_schedule( top, schedule, V, E, in_degree ):
 
   assert schedule
 
   if len(schedule) != len(V):
-    from graphviz import Digraph
-    dot = Digraph()
-    dot.graph_attr["rank"] = "same"
-    dot.graph_attr["ratio"] = "compress"
-    dot.graph_attr["margin"] = "0.1"
-
-    leftovers = set( [ v for v in V if in_degree[v] ] )
-    for x in leftovers:
-      dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
-
-    for (x, y) in E:
-      if x in leftovers and y in leftovers:
-        dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
-                  y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
-    dot.render( "/tmp/upblk-dag.gv", view=True )
+    V_leftovers = set( [ v for v in V if in_degree[v] ] )
+    E_leftovers = set( [ (x,y) for (x,y) in E
+                         if x in V_leftovers and y in V_leftovers ] )
+    dump_dag( top, V_leftovers, E_leftovers )
 
     raise UpblkCyclicError( """
 Update blocks have cyclic dependencies.
