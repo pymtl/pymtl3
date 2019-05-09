@@ -104,6 +104,8 @@ def basic_msgs():
   (                      "msg_func        lat   src_lat sink_lat  "),
   [ "basic",             basic_msgs,      0,    0,      0          ],
   [ "basic_lat1",        basic_msgs,      1,    0,      0          ],
+  [ "basic_lat2",        basic_msgs,      2,    0,      0          ],
+  [ "basic_lat3",        basic_msgs,      3,    0,      0          ],
   [ "basic_lat4",        basic_msgs,      4,    0,      0          ],
   [ "basic_lat10",       basic_msgs,      10,   0,      0          ],
   [ "basic_3_14",        basic_msgs,      0,    3,      14         ],

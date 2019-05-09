@@ -42,7 +42,7 @@ class DelayPipeCL( Component ):
       )
 
     else: # delay >= 1, pipe behavior
-      s.pipeline = deque( [None]*delay, maxlen=delay )
+      s.pipeline = deque( [None]*(delay+1), maxlen=(delay+1) )
 
       @s.update
       def up_delay():
@@ -56,4 +56,4 @@ class DelayPipeCL( Component ):
       )
 
   def line_trace( s ):
-    return "[{}]".format( "".join( [ " " if x is None else "*" for x in s.pipeline ] ) )
+    return "[{}]".format( "".join( [ " " if x is None else "*" for x in list(s.pipeline)[:-1] ] ) )
