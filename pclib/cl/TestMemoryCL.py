@@ -18,7 +18,7 @@ from collections import deque
 from pclib.ifcs import MemMsgType, mk_mem_msg
 from pclib.ifcs.GuardedIfc import *
 from pymtl import *
-from .DelayPipeCL import DelayPipeCL
+from .DelayPipeCL import DelayPipeDeqCL
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
@@ -147,7 +147,7 @@ class TestMemoryCL( Component ):
 
     # Queues
 
-    s.req_qs = [ DelayPipeCL( latency )( enq = s.recv[i] ) for i in range(nports) ]
+    s.req_qs = [ DelayPipeDeqCL( latency )( enq = s.recv[i] ) for i in range(nports) ]
 
     @s.update
     def up_mem():

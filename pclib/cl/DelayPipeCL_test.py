@@ -16,7 +16,7 @@ from pclib.test import TestSinkCL, TestSrcCL, mk_test_case_table
 from pymtl import *
 from pymtl.passes.PassGroups import SimpleCLSim
 
-from .DelayPipeCL import DelayPipeCL
+from .DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -24,24 +24,28 @@ from .DelayPipeCL import DelayPipeCL
 
 class TestHarness( Component ):
 
-  def construct( s, src_msgs, sink_msgs, stall_prob, latency, src_lat, sink_lat ):
+  def construct( s, dut_class, src_msgs, sink_msgs, stall_prob, latency, src_lat, sink_lat ):
 
     # Messge type
 
     # Instantiate models
 
     s.src  = TestSrcCL( src_msgs, 0, src_lat )
-    s.dut  = DelayPipeCL( latency )
+    s.dut  = dut_class( latency )
     s.sink = TestSinkCL( sink_msgs, 0, sink_lat )
 
     # Connect
 
     s.connect( s.src.send,  s.dut.enq )
 
-    @s.update
-    def up_adapt():
-      if s.dut.deq.rdy() and s.sink.recv.rdy():
-        s.sink.recv( s.dut.deq() )
+    if   dut_class is DelayPipeDeqCL:
+      @s.update
+      def up_adapt():
+        if s.dut.deq.rdy() and s.sink.recv.rdy():
+          s.sink.recv( s.dut.deq() )
+
+    elif dut_class is DelayPipeSendCL:
+      s.connect( s.dut.send, s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -113,8 +117,27 @@ def basic_msgs():
   [ "basic_lat4_3_14",   basic_msgs,      4,    3,      14         ],
   [ "basic_lat10_3_14",  basic_msgs,      10,   3,      14         ],
 ]) )
-def test_delay_pipe( test_params, dump_vcd ):
+def test_delay_pipe_deq( test_params, dump_vcd ):
   msgs = test_params.msg_func()
-  run_cl_sim( TestHarness( msgs[::2], msgs[1::2],
+  run_cl_sim( TestHarness( DelayPipeDeqCL, msgs[::2], msgs[1::2],
+                           0, test_params.lat,
+                           test_params.src_lat, test_params.sink_lat ) )
+
+@pytest.mark.parametrize( **mk_test_case_table([
+  (                      "msg_func        lat   src_lat sink_lat  "),
+  [ "basic",             basic_msgs,      0,    0,      0          ],
+  [ "basic_lat1",        basic_msgs,      1,    0,      0          ],
+  [ "basic_lat2",        basic_msgs,      2,    0,      0          ],
+  [ "basic_lat3",        basic_msgs,      3,    0,      0          ],
+  [ "basic_lat4",        basic_msgs,      4,    0,      0          ],
+  [ "basic_lat10",       basic_msgs,      10,   0,      0          ],
+  [ "basic_3_14",        basic_msgs,      0,    3,      14         ],
+  [ "basic_lat1_3_14",   basic_msgs,      1,    3,      14         ],
+  [ "basic_lat4_3_14",   basic_msgs,      4,    3,      14         ],
+  [ "basic_lat10_3_14",  basic_msgs,      10,   3,      14         ],
+]) )
+def test_delay_pipe_send( test_params, dump_vcd ):
+  msgs = test_params.msg_func()
+  run_cl_sim( TestHarness( DelayPipeSendCL, msgs[::2], msgs[1::2],
                            0, test_params.lat,
                            test_params.src_lat, test_params.sink_lat ) )
