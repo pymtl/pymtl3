@@ -15,6 +15,7 @@ from pclib.test.test_sinks import TestSinkCL
 from pclib.test.test_srcs import TestSrcCL
 from pymtl import *
 from pymtl.passes import SimpleCLSim
+
 from .TestMemoryCL import TestMemoryCL
 
 #-------------------------------------------------------------------------

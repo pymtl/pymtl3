@@ -67,7 +67,7 @@ def test_req_str():
 
   # Verify string
 
-  assert str(msg) == "wr:9:2000:0:00deadbeef"
+  assert str(msg) == "wr:9:2000:4:00deadbeef"
 
 #-------------------------------------------------------------------------
 # test_resp_fields
