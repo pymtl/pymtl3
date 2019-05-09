@@ -49,10 +49,13 @@ class DelayPipeCL( Component ):
         if not s.pipeline[-1]:
           s.pipeline.rotate()
 
+      # Model decoupled pipe behavior to cut cyclic dependencies.
+      # Basically no matter in what order s.deq and s.enq are called,
+      # the outcomes are the same as long as up_delay is called before
+      # both of them.
       s.add_constraints(
-        U(up_delay) < M(s.deq.rdy),
-        U(up_delay) < M(s.enq.rdy),
-        U(up_delay) < M(s.deq) < M(s.enq), # pipe behavior
+        U(up_delay) < M(s.deq),
+        U(up_delay) < M(s.enq),
       )
 
   def line_trace( s ):
