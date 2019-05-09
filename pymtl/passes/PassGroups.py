@@ -2,12 +2,14 @@ from pymtl import *
 from GenDAGPass import GenDAGPass
 from SimpleSchedPass import SimpleSchedPass
 from SimpleTickPass import SimpleTickPass
+from OCNPlacePass import OCNPlacePass
 
 SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
   SimpleSchedPass(),
   SimpleTickPass(),
+  OCNPlacePass(),
   Component.lock_in_simulation
 ]
 

@@ -9,6 +9,7 @@
 from pymtl.datatypes import Bits1
 from ComponentLevel6 import ComponentLevel6
 from Connectable import InPort
+from PhysicalDimension import PhysicalDimension
 
 class Component( ComponentLevel6 ):
 
@@ -46,6 +47,8 @@ class Component( ComponentLevel6 ):
         s._continue_call_connect()
 
       s._dsl.constructed = True
+
+      s.dim = PhysicalDimension()
 
   def sim_reset( s ):
     assert s._dsl.elaborate_top is s # assert sim_reset is top
