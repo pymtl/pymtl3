@@ -20,7 +20,7 @@ from .BasePass import BasePass, PassMetadata
 from .errors import PassOrderError
 
 
-class SimpleSchedPass( BasePass ):
+class SimpleSchedulePass( BasePass ):
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )

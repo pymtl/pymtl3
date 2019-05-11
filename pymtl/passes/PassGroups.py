@@ -7,9 +7,8 @@ from .GenDAGPass import GenDAGPass
 from .mamba.HeuristicTopoPass import HeuristicTopoPass
 from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .mamba.UnrollTickPass import UnrollTickPass
-from .SimpleSchedPass import SimpleSchedPass
+from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
-from SimpleTickPass      import SimpleTickPass
 
 SimpleSim = [
   Component.elaborate,
