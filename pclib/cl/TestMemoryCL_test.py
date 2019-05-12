@@ -17,6 +17,7 @@ from pymtl import *
 from pymtl.passes import SimpleCLSim
 
 from .TestMemoryCL import TestMemoryCL
+from functools import reduce
 
 #-------------------------------------------------------------------------
 # TestHarness

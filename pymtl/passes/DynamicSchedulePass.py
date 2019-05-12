@@ -195,7 +195,7 @@ class DynamicSchedulePass( BasePass ):
           from pymtl.dsl.errors import UpblkCyclicError
 
           # print src
-          exec py.code.Source( src ).compile() in locals()
+          exec(py.code.Source( src ).compile(), locals())
 
           return generated_block
 
