@@ -5,12 +5,17 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
+
 import py
 
-from BasePass     import BasePass, PassMetadata
-from collections  import deque
-from errors import PassOrderError
 from pymtl.dsl.errors import UpblkCyclicError
+
+from .BasePass import BasePass, PassMetadata
+from .errors import PassOrderError
+
 
 class DynamicSchedulePass( BasePass ):
   def __call__( self, top ):
@@ -112,19 +117,19 @@ class DynamicSchedulePass( BasePass ):
           Q.append( v )
           scc_pred[ v ] = u
 
-    #  from graphviz import Digraph
-    #  dot = Digraph()
-    #  dot.graph_attr["rank"] = "same"
-    #  dot.graph_attr["ratio"] = "compress"
-    #  dot.graph_attr["margin"] = "0.1"
+    # from graphviz import Digraph
+    # dot = Digraph()
+    # dot.graph_attr["rank"] = "same"
+    # dot.graph_attr["ratio"] = "compress"
+    # dot.graph_attr["margin"] = "0.1"
 
-    #  for x in V:
-      #  dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
+    # for x in V:
+      # dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
 
-    #  for (x, y) in E:
-      #  dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
-                #  y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
-    #  dot.render( "/tmp/upblk-dag.gv", view=True )
+    # for (x, y) in E:
+      # dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
+                # y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
+    # dot.render( "/tmp/upblk-dag.gv", view=True )
 
     #---------------------------------------------------------------------
     # Now we generate super blocks for each SCC and produce final schedule
@@ -153,17 +158,27 @@ class DynamicSchedulePass( BasePass ):
         tmp_schedule = []
         Q = deque()
 
-        # We start bfs with the blocks that are successors of the
-        # predecessor scc in the previous SCC-level topological sort.
-        # Sort by names for a fixed outcome
+        if scc_pred[i] is None:
+          # We start bfs from the block that has the least number of input
+          # edges in the SCC
+          InD = { v: 0 for v in scc }
+          for (u, v) in E: # u -> v
+            if u in scc and v in scc:
+              InD[ v ] += 1
+          in_degree_ranking = sorted( [ (InD[v], v) for v in InD ] )
+          Q.append( in_degree_ranking[0][1] )
 
-        pred = set( SCCs[ scc_pred[i] ] )
-        for x in sorted( scc, key = lambda x: x.__name__ ):
-          for v in G_T[x]: # find reversed edges point back to pred SCC
-            if v in pred:
-              Q.append( v )
+        else:
+          # We start bfs with the blocks that are successors of the
+          # predecessor scc in the previous SCC-level topological sort.
+          pred = set( SCCs[ scc_pred[i] ] )
+          # Sort by names for a fixed outcome
+          for x in sorted( scc, key = lambda x: x.__name__ ):
+            for v in G_T[x]: # find reversed edges point back to pred SCC
+              if v in pred:
+                Q.append( x )
 
-        # Perform bfs to find
+        # Perform bfs to find a heuristic schedule
         visited = set(Q)
         while Q:
           u = Q.popleft()

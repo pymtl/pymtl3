@@ -5,11 +5,14 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-from pymtl import *
-from pymtl.passes import DynamicSchedulePass, GenDAGPass, SimpleTickPass
-from pymtl.dsl.errors import UpblkCyclicError
+from __future__ import absolute_import, division, print_function
 
 from collections import deque
+
+from pymtl import *
+from pymtl.dsl.errors import UpblkCyclicError
+from pymtl.passes import DynamicSchedulePass, GenDAGPass, SimpleTickPass
+
 
 def _test_model( cls ):
   A = cls()
@@ -22,7 +25,7 @@ def _test_model( cls ):
   T = 0
   while T < 5:
     A.tick()
-    print A.line_trace()
+    print(A.line_trace())
     T += 1
 
 def test_false_cyclic_dependency():
@@ -54,7 +57,7 @@ def test_false_cyclic_dependency():
       @s.update
       def up3():
         s.d = s.c + 1
-        print "up3 prints out d =", s.d
+        print("up3 prints out d =", s.d)
 
       @s.update
       def up4():
@@ -64,7 +67,7 @@ def test_false_cyclic_dependency():
       def up5():
         s.g = s.c + 1
         s.h = s.j + 1
-        print "up5 prints out h =", s.h
+        print("up5 prints out h =", s.h)
 
       @s.update
       def up6():
@@ -104,20 +107,20 @@ def test_combinational_loop():
       @s.update
       def up3():
         s.d = s.c + 1
-        print "up3 prints out d =", s.d
+        print("up3 prints out d =", s.d)
 
 
     def done( s ):
       return True
 
     def line_trace( s ):
-      return "a {} | b {} | c {} | d {} | e {} | f {}" \
-              .format( s.a, s.b, s.c, s.d, s.e, s.f )
+      return "a {} | b {} | c {} | d {}" \
+              .format( s.a, s.b, s.c, s.d )
 
 
   try:
     _test_model( Top )
   except UpblkCyclicError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown UpblkCyclicError.")
