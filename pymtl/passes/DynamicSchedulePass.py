@@ -220,7 +220,7 @@ class DynamicSchedulePass( BasePass ):
                 break
               if num_iters > 100:
                 raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}}!")
-            print "SCC block{0} is executed", num_iters, "times"
+            # print "SCC block{0} is executed", num_iters, "times"
           generated_block = wrapped_SCC_{0}
         """
 
