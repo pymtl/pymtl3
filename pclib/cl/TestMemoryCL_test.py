@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import random
 import struct
+from functools import reduce
 
 import pytest
 
@@ -17,7 +18,6 @@ from pymtl import *
 from pymtl.passes import SimpleCLSim
 
 from .TestMemoryCL import TestMemoryCL
-from functools import reduce
 
 #-------------------------------------------------------------------------
 # TestHarness

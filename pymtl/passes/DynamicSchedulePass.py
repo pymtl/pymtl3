@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 from collections import deque
+from copy import deepcopy
 
 import py
 
@@ -191,8 +192,6 @@ class DynamicSchedulePass( BasePass ):
         # TODO performance optimizations using Mamba techniques within a SCC block
 
         def gen_wrapped_SCCblk( s, scc, src ):
-          from copy import deepcopy
-          from pymtl.dsl.errors import UpblkCyclicError
 
           # print src
           exec(py.code.Source( src ).compile(), locals())
