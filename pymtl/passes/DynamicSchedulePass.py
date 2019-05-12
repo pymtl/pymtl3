@@ -7,6 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
 from collections import deque
 
 import py
@@ -15,6 +16,7 @@ from pymtl.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
 from .errors import PassOrderError
+from .SimpleSchedulePass import dump_dag
 
 
 class DynamicSchedulePass( BasePass ):
@@ -34,6 +36,9 @@ class DynamicSchedulePass( BasePass ):
     E  = top._dag.all_constraints
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V } # transpose graph
+
+    if 'MAMBA_DAG' in os.environ:
+      dump_dag( top, V, E )
 
     for (u, v) in E: # u -> v
       G  [u].append( v )
@@ -116,20 +121,6 @@ class DynamicSchedulePass( BasePass ):
         if not InD[v]:
           Q.append( v )
           scc_pred[ v ] = u
-
-    # from graphviz import Digraph
-    # dot = Digraph()
-    # dot.graph_attr["rank"] = "same"
-    # dot.graph_attr["ratio"] = "compress"
-    # dot.graph_attr["margin"] = "0.1"
-
-    # for x in V:
-      # dot.node( x.__name__+"\\n@"+repr( top.get_update_block_host_component(x) ), shape="box")
-
-    # for (x, y) in E:
-      # dot.edge( x.__name__+"\\n@"+repr(top.get_update_block_host_component(x)),
-                # y.__name__+"\\n@"+repr(top.get_update_block_host_component(y)) )
-    # dot.render( "/tmp/upblk-dag.gv", view=True )
 
     #---------------------------------------------------------------------
     # Now we generate super blocks for each SCC and produce final schedule
