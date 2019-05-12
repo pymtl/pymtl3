@@ -189,7 +189,6 @@ class DynamicSchedulePass( BasePass ):
         # TODO performance optimizations using Mamba techniques within a SCC block
 
         def gen_wrapped_SCCblk( s, scc, src ):
-          from copy import deepcopy
           from pymtl.dsl.errors import UpblkCyclicError
 
           # print src
@@ -198,6 +197,7 @@ class DynamicSchedulePass( BasePass ):
           return generated_block
 
         template = """
+          from copy import deepcopy
           def wrapped_SCC_{0}():
             num_iters = 0
             while True:
