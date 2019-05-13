@@ -9,6 +9,8 @@ Date   : Dec 27, 2018
 """
 from __future__ import absolute_import, division, print_function
 
+import inspect
+
 
 class SignalTypeError( Exception ):
   """ Raise when a declared signal is of wrong type """
@@ -36,13 +38,33 @@ class VarNotDeclaredError( Exception ):
     self.obj    = obj
     self.field  = field
     self.blk    = blk
-    # TODO add inspect file path
+
     if not self.blk:
       return super( VarNotDeclaredError, self ).__init__() # this is just temporary message
+
+    filepath = inspect.getfile( blk_hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
     return super( VarNotDeclaredError, self ).__init__( \
-      "Object {} of class {} does not have field <{}> ({}.{})\n - Occurred at Line {} of {} at {} (class {})".format( \
-      repr(obj), obj.__class__.__name__, field, repr(obj), field, lineno, blk.__name__,
-      repr(blk_hostobj), blk_hostobj.__class__.__name__ ) )
+"""
+In file {}:{} in {}
+When constructing instance {} of class \"{}\" in the hierarchy:
+
+{} {}
+^^^ Block \"{}\" tries to access field \"{}\" of object \"{}\" (class \"{}\"),
+    but {} does not have field \"{}\".
+
+Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
+      filepath, error_lineno, blk.__name__,
+      repr(blk_hostobj), blk_hostobj.__class__.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      blk.__name__, field, repr(obj), obj.__class__.__name__,
+      repr(obj), field, error_lineno ) )
 
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """
