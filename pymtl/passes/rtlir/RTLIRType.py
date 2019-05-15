@@ -227,7 +227,7 @@ class InterfaceView( BaseRTLIRType ):
 
     # Sanity check
     for name, rtype in properties.iteritems():
-      assert isinstance( name, str ) and is_of_type( rtype, Port )
+      assert isinstance( name, str ) and _is_of_type( rtype, Port )
 
   def _set_interface( s, interface ): s.interface = interface
 
@@ -492,7 +492,7 @@ def get_rtlir( obj ):
       if not is_rtlir_ifc_convertible( _obj ): continue
       _obj_type = get_rtlir( _obj )
       properties[ _id ] = _obj_type
-      if not is_of_type( _obj_type, ( Port ) ):
+      if not _is_of_type( _obj_type, Port ):
         assert False,\
           "RTLIR Interface type can only include Port objects!"
       if isinstance( _obj_type, Array ):
