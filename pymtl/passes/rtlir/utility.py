@@ -5,8 +5,10 @@
 # Date   : Feb 13, 2019
 """Helper methods for RTLIR."""
 
-import inspect, copy
+from __future__ import absolute_import, division, print_function
+
 from functools import reduce
+
 
 def _is_of_type( obj, Type ):
   if isinstance(obj, Type):

@@ -4,14 +4,16 @@
 # Author : Peitian Pan
 # Date   : March 30, 2019
 """Provide L5 behavioral RTLIR type check pass."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes         import BasePass
+from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.RTLIRType import *
 
-from BehavioralRTLIR import *
-from BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
-from errors             import PyMTLTypeError
+from .BehavioralRTLIR import *
+from .BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
+from .errors import PyMTLTypeError
+
 
 class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
 
@@ -33,11 +35,6 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRTypeCheckVisitorL5
-#-------------------------------------------------------------------------
-# Visitor that performs type checking on RTLIR
-
 class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
 
   def __init__( s, component, freevars, tmpvars ):
@@ -45,12 +42,11 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     super( BehavioralRTLIRTypeCheckVisitorL5, s ).\
         __init__( component, freevars, tmpvars )
 
-  #-----------------------------------------------------------------------
-  # visit_Index
-  #-----------------------------------------------------------------------
-  # Only static constant expressions can be the index of component arrays
-
   def visit_Index( s, node ):
+    """Type check the index node.
+    
+    Only static constant expressions can be the index of component arrays
+    """
 
     if isinstance( node.value.Type, Array ) and\
        isinstance( node.value.Type.get_sub_type(), Component ):
@@ -64,12 +60,11 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
 
     super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Index( node )
 
-  #-----------------------------------------------------------------------
-  # visit_Attribute
-  #-----------------------------------------------------------------------
-  # Detect cross-hierarchy reference
-
   def visit_Attribute( s, node ):
+    """Type check an attribute.
+    
+    Detect cross-hierarchy reference at level 5.
+    """
 
     if not hasattr( s, '_hierarchy_level' ):
       s._hierarhcy_level = 0

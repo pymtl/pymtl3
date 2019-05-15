@@ -5,7 +5,11 @@
 # Date   : Jan 4, 2019
 """Behavioral code errors."""
 
-import os, inspect
+from __future__ import absolute_import, division, print_function
+
+import inspect
+import os
+
 
 class PyMTLSyntaxError( Exception ):
   """ Raise error when the RTLIR generation pass finds a syntax error """

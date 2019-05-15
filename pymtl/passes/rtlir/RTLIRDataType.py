@@ -10,16 +10,17 @@ these type objects. Each instance of the type class defined in this module
 is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
+from __future__ import absolute_import, division, print_function
 
-import inspect, pymtl, __builtin__
+import __builtin__
+from functools import reduce
 
-from pymtl.dsl.Connectable import Signal as pymtl_Signal
+import pymtl
 from pymtl.dsl.Connectable import Const as pymtl_Const
-from utility import collect_objs, is_BitsX
+from pymtl.dsl.Connectable import Signal as pymtl_Signal
 
-#-------------------------------------------------------------------------
-# BaseRTLIRDataType
-#-------------------------------------------------------------------------
+from .utility import collect_objs, is_BitsX
+
 
 class BaseRTLIRDataType( object ):
   """Base abstract RTLIR data type class."""
@@ -29,10 +30,6 @@ class BaseRTLIRDataType( object ):
 
   def __init__( s ):
     super( BaseRTLIRDataType, s ).__init__()
-
-#-------------------------------------------------------------------------
-# Vector
-#-------------------------------------------------------------------------
 
 class Vector( BaseRTLIRDataType ):
   """RTLIR data type class for vector type."""
@@ -59,10 +56,6 @@ class Vector( BaseRTLIRDataType ):
 
   def __str__( s ):
     return 'Vector{}'.format( s.nbits )
-
-#-------------------------------------------------------------------------
-# Struct
-#-------------------------------------------------------------------------
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
@@ -110,10 +103,6 @@ class Struct( BaseRTLIRDataType ):
   def __str__( s ):
     return 'Struct'
 
-#-------------------------------------------------------------------------
-# Bool
-#-------------------------------------------------------------------------
-
 class Bool( BaseRTLIRDataType ):
   """RTLIR data type class for struct type.
   
@@ -141,10 +130,6 @@ class Bool( BaseRTLIRDataType ):
 
   def __str__( s ):
     return 'Bool'
-
-#-------------------------------------------------------------------------
-# PackedArray
-#-------------------------------------------------------------------------
 
 class PackedArray( BaseRTLIRDataType ):
   """RTLIR data type class for packed array type."""
@@ -189,10 +174,6 @@ class PackedArray( BaseRTLIRDataType ):
 
   def __str__( s ):
     return 'PackedArray'
-
-#-------------------------------------------------------------------------
-# _get_rtlir_dtype_struct
-#-------------------------------------------------------------------------
 
 def _get_rtlir_dtype_struct( obj ):
 
@@ -256,10 +237,6 @@ attribute of struct ' + obj.__name__ + '!'
   
   else: assert False, str(obj) + ' is not allowed as a field of struct!'
 
-#-------------------------------------------------------------------------
-# get_rtlir_dtype
-#-------------------------------------------------------------------------
-
 def get_rtlir_dtype( obj ):
   """Return the RTLIR data type of obj."""
 
@@ -290,4 +267,3 @@ def get_rtlir_dtype( obj ):
     return Vector( obj.nbits )
 
   else: assert False, 'cannot infer data type for object ' + str(obj) + '!'
-

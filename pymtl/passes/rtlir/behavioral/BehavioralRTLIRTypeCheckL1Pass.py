@@ -4,15 +4,16 @@
 # Author : Peitian Pan
 # Date   : March 20, 2019
 """Provide L1 behavioral RTLIR type check pass."""
+from __future__ import absolute_import, division, print_function
 
 import pymtl
-
-from pymtl.passes         import BasePass
+from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.RTLIRType import *
 
-from BehavioralRTLIR import *
-from errors import PyMTLTypeError
+from .BehavioralRTLIR import *
+from .errors import PyMTLTypeError
+
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
 
@@ -31,11 +32,6 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRTypeCheckVisitorL1
-#-------------------------------------------------------------------------
-# Visitor that performs type checking on RTLIR
-
 class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
   def __init__( s, component, freevars ):
@@ -43,10 +39,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     s.component = component
 
     s.freevars = freevars
-
-    #---------------------------------------------------------------------
-    # The expected evaluation result types for each type of RTLIR node
-    #---------------------------------------------------------------------
 
     s.type_expect = {}
 
@@ -79,15 +71,15 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     # s.globals contains a dict of the global namespace of the module where
     # blk was defined
-    s.globals = blk.func_globals
+    s.globals = blk.__globals__
 
     # s.closure contains the free variables defined in an enclosing scope.
     # Basically this is the model instance s.
     s.closure = {}
 
-    for i, var in enumerate( blk.func_code.co_freevars ):
+    for i, var in enumerate( blk.__code__.co_freevars ):
       try: 
-        s.closure[ var ] = blk.func_closure[ i ].cell_contents
+        s.closure[ var ] = blk.__closure__[ i ].cell_contents
       except ValueError: 
         pass
 
@@ -133,10 +125,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
   def generic_visit( s, node ):
     node.Type = None
 
-  #-----------------------------------------------------------------------
-  # visit_Assign
-  #-----------------------------------------------------------------------
-
   def visit_Assign( s, node ):
 
     # RHS should have the same type as LHS
@@ -153,10 +141,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     node.Type = None
 
-  #-----------------------------------------------------------------------
-  # visit_FreeVar
-  #-----------------------------------------------------------------------
-
   def visit_FreeVar( s, node ):
 
     if not node.name in s.freevars.keys():
@@ -170,10 +154,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     node.Type = t
 
-  #-----------------------------------------------------------------------
-  # visit_Base
-  #-----------------------------------------------------------------------
-
   def visit_Base( s, node ):
 
     # Mark this node as having type Component
@@ -183,20 +163,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     assert isinstance( node.Type, Component )
 
-  #-----------------------------------------------------------------------
-  # visit_Number
-  #-----------------------------------------------------------------------
-
   def visit_Number( s, node ):
 
     # By default, number literals have bitwidth of 32
 
     node.Type = get_rtlir( node.value )
     node._value = pymtl.Bits32( node.value )
-
-  #-----------------------------------------------------------------------
-  # visit_BitsCast
-  #-----------------------------------------------------------------------
 
   def visit_BitsCast( s, node ):
 
@@ -210,10 +182,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     if hasattr( node, '_value' ):
       node._value = mk_Bits( nbits, node._value )
-
-  #-----------------------------------------------------------------------
-  # visit_Attribute
-  #-----------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
 
@@ -236,10 +204,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     # value.attr has the type that is specified by the base
 
     node.Type = node.value.Type.get_property( node.attr )
-
-  #-----------------------------------------------------------------------
-  # visit_Index
-  #-----------------------------------------------------------------------
 
   def visit_Index( s, node ):
 
@@ -296,10 +260,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
       raise PyMTLTypeError(
         s.blk, node.ast, 'cannot perform index on {}!'.format(
           node.value.Type ) )
-
-  #-----------------------------------------------------------------------
-  # visit_Slice
-  #-----------------------------------------------------------------------
 
   def visit_Slice( s, node ):
 

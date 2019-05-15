@@ -3,25 +3,21 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Feb 2, 2019
+"""Test the behavioral RTLIR generation pass."""
 
 from __future__ import absolute_import, division, print_function
 
 import pytest
 
 from pymtl import *
+from pymtl.passes.rtlir.behavioral import BehavioralRTLIRGenPass
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
+from pymtl.passes.rtlir.behavioral.errors import PyMTLTypeError
 from pymtl.passes.rtlir.test_utility import do_test, expected_failure
 
-from pymtl.passes.rtlir.behavioral import BehavioralRTLIRGenPass
-from pymtl.passes.rtlir.behavioral.errors import PyMTLTypeError
-
-#-------------------------------------------------------------------------
-# local_do_test
-#-------------------------------------------------------------------------
-# Verify that the generated RTLIR is the same as the manually generated
-# reference.
 
 def local_do_test( m ):
+  """Check if generated behavioral RTLIR is the same as reference."""
 
   ref = m._rtlir_test_ref
   m.elaborate()
@@ -30,10 +26,6 @@ def local_do_test( m ):
   for blk in m.get_update_blocks():
     assert\
       m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] == ref[ blk.__name__ ]
-
-#-------------------------------------------------------------------------
-# test_index_basic
-#-------------------------------------------------------------------------
 
 def test_index_basic( do_test ):
   class index_basic( Component ):
@@ -68,10 +60,6 @@ def test_index_basic( do_test ):
 
   do_test( a )
 
-#-------------------------------------------------------------------------
-# test_mismatch_width_assign
-#-------------------------------------------------------------------------
-
 def test_mismatch_width_assign( do_test ):
   class A( Component ):
     def construct( s ):
@@ -102,10 +90,6 @@ def test_mismatch_width_assign( do_test ):
   ]
 
   do_test( a )
-
-#-------------------------------------------------------------------------
-# test_slicing_basic
-#-------------------------------------------------------------------------
 
 def test_slicing_basic( do_test ):
   class slicing_basic( Component ):
@@ -140,10 +124,6 @@ def test_slicing_basic( do_test ):
 
   do_test( a )
 
-#-------------------------------------------------------------------------
-# test_bits_basic
-#-------------------------------------------------------------------------
-
 def test_bits_basic( do_test ):
   class bits_basic( Component ):
     def construct( s ):
@@ -172,10 +152,6 @@ def test_bits_basic( do_test ):
   ]
 
   do_test( a )
-
-#-------------------------------------------------------------------------
-# test_index_bits_slicing
-#-------------------------------------------------------------------------
 
 def test_index_bits_slicing( do_test ):
   class index_bits_slicing( Component ):
@@ -231,10 +207,6 @@ def test_index_bits_slicing( do_test ):
 
   do_test( a )
 
-#-------------------------------------------------------------------------
-# test_multi_components
-#-------------------------------------------------------------------------
-
 def test_multi_components( do_test ):
   class multi_components_B( Component ):
     def construct( s ):
@@ -282,10 +254,6 @@ def test_multi_components( do_test ):
 
   do_test( a )
 
-#-------------------------------------------------------------------------
-# test_if_basic
-#-------------------------------------------------------------------------
-
 def test_if_basic( do_test ):
   class if_basic( Component ):
     def construct( s ):
@@ -318,10 +286,6 @@ def test_if_basic( do_test ):
   ]
 
   do_test( a )
-
-#-------------------------------------------------------------------------
-# test_for_basic
-#-------------------------------------------------------------------------
 
 def test_for_basic( do_test ):
   class for_basic( Component ):
@@ -359,10 +323,6 @@ def test_for_basic( do_test ):
   a._test_vector = []
 
   do_test( a )
-
-#-------------------------------------------------------------------------
-# test_multi_upblks
-#-------------------------------------------------------------------------
 
 def test_multi_upblks( do_test ):
   class multi_upblks( Component ):

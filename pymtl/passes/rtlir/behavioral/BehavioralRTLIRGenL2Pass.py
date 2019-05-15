@@ -4,16 +4,18 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L2 behavioral RTLIR generation pass."""
+from __future__ import absolute_import, division, print_function
 
 import ast
 
-from pymtl        import *
+from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 
-from errors     import PyMTLSyntaxError
-from BehavioralRTLIR import *
-from BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
+from .BehavioralRTLIR import *
+from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
+from .errors import PyMTLSyntaxError
+
 
 class BehavioralRTLIRGenL2Pass( BasePass ):
 
@@ -37,10 +39,6 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
         visitor._upblk_type = upblk_type
         m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] =\
           visitor.enter( blk, m.get_update_block_ast( blk ) )
-
-#-------------------------------------------------------------------------
-# BehavioralRTLIRGeneratorL2
-#-------------------------------------------------------------------------
 
 class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
@@ -71,13 +69,12 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       ast.Gt     : Gt(),        ast.GtE    : GtE()
     }
 
-  #-----------------------------------------------------------------------
-  # visit_AugAssign
-  #-----------------------------------------------------------------------
-  # Preserve the form of augmented assignment instead of transforming it 
-  # into a normal assignment.
-
   def visit_AugAssign( s, node ): 
+    """Return the behavioral RTLIR of augmented assign.
+    
+    Preserve the form of augmented assignment instead of transforming it 
+    into a normal assignment.
+    """
     value = s.visit( node.value )
     target = s.visit( node.target )
 
@@ -95,10 +92,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_Call
-  #-----------------------------------------------------------------------
-
   def visit_Call( s, node ):
 
     obj = s.get_call_obj( node )
@@ -112,10 +105,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       )
 
     return super( BehavioralRTLIRGeneratorL2, s ).visit_Call( node )
-
-  #-----------------------------------------------------------------------
-  # visit_Name
-  #-----------------------------------------------------------------------
 
   def visit_Name( s, node ):
 
@@ -145,10 +134,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     else:
       return super( BehavioralRTLIRGeneratorL2, s ).visit_Name( node )
 
-  #-----------------------------------------------------------------------
-  # visit_If
-  #-----------------------------------------------------------------------
-
   def visit_If( s, node ):
     cond = s.visit( node.test )
 
@@ -164,10 +149,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     ret.ast = node
 
     return ret
-
-  #-----------------------------------------------------------------------
-  # visit_For
-  #-----------------------------------------------------------------------
 
   def visit_For( s, node ):
     # First fill the loop_var, start, end, step fields
@@ -245,10 +226,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_BoolOp
-  #-----------------------------------------------------------------------
-
   def visit_BoolOp( s, node ):
     try:
       op  = s.opmap[ type( node.op ) ]
@@ -268,10 +245,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_BinOp
-  #-----------------------------------------------------------------------
-
   def visit_BinOp( s, node ):
     left  = s.visit( node.left )
     right = s.visit( node.right )
@@ -290,10 +263,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_UnaryOp
-  #-----------------------------------------------------------------------
-
   def visit_UnaryOp( s, node ):
     try:
       op  = s.opmap[ type( node.op ) ]
@@ -311,10 +280,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_IfExp
-  #-----------------------------------------------------------------------
-
   def visit_IfExp( s, node ):
     cond = s.visit( node.test )
     body = s.visit( node.body )
@@ -324,11 +289,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     ret.ast = node
 
     return ret
-
-  #-----------------------------------------------------------------------
-  # visit_Compare
-  #-----------------------------------------------------------------------
-  # Continuous comparison like x < y < z is not supported.
 
   def visit_Compare( s, node ):
     if len( node.ops ) != 1 or len( node.comparators ) != 1:

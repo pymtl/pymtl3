@@ -4,16 +4,18 @@
 # Author : Peitian Pan
 # Date   : March 30, 2019
 """Provide L3 behavioral RTLIR type check pass."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl                import *
-from pymtl.passes         import BasePass
+from pymtl import *
+from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.utility import freeze
 from pymtl.passes.rtlir.RTLIRType import *
+from pymtl.passes.rtlir.utility import freeze
 
-from BehavioralRTLIR import *
-from BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
-from errors             import PyMTLTypeError
+from .BehavioralRTLIR import *
+from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
+from .errors import PyMTLTypeError
+
 
 class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
 
@@ -35,11 +37,6 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRTypeCheckVisitorL3
-#-------------------------------------------------------------------------
-# Visitor that performs type checking on RTLIR
-
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
 
   def __init__( s, component, freevars, tmpvars ):
@@ -51,10 +48,6 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       'value':( (Component, Signal),
         'the base of an attribute must be one of: component, signal!' )
     }
-
-  #-------------------------------------------------------------------------
-  # visit_Attribute
-  #-------------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
 
@@ -89,19 +82,18 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
 
       super( BehavioralRTLIRTypeCheckVisitorL3, s ).visit_Attribute( node )
 
-  #-----------------------------------------------------------------------
-  # visit_StructInst
-  #-----------------------------------------------------------------------
-  # TODO
-  # To instantiate a struct inside an upblk the instantiator needs to:
-  # 1. guarantee to return an instance of the desired struct ( static
-  # analysis on a very limited subset of python syntax may be able to do
-  # this )
-  # 2. say how it composes the parameters into a struct instance (
-  # translate the instantiator to its backend representation like a
-  # function in SV )
-
   def visit_StructInst( s, node ):
+    """Type check the struct instantiation node.
+    
+    TODO
+    To instantiate a struct inside an upblk the instantiator needs to:
+    1. guarantee to return an instance of the desired struct ( static
+    analysis on a very limited subset of python syntax may be able to do
+    this )
+    2. say how it composes the parameters into a struct instance (
+    translate the instantiator to its backend representation like a
+    function in SV )
+    """
 
     assert (not Type is bool) and (not is_BitsX( Type )),\
         "internal error: StructInst did not get struct Type!"

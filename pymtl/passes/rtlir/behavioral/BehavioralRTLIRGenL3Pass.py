@@ -4,16 +4,18 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L3 behavioral RTLIR generation pass."""
+from __future__ import absolute_import, division, print_function
 
 import inspect
 
-from pymtl        import *
+from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.utility import is_BitsX
 
-from errors import PyMTLSyntaxError
-from BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
+from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
+from .errors import PyMTLSyntaxError
+
 
 class BehavioralRTLIRGenL3Pass( BasePass ):
 
@@ -38,23 +40,18 @@ class BehavioralRTLIRGenL3Pass( BasePass ):
         m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] =\
           visitor.enter( blk, m.get_update_block_ast( blk ) )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRGeneratorL3
-#-------------------------------------------------------------------------
-
 class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
 
   def __init__( s, component ):
 
     super( BehavioralRTLIRGeneratorL3, s ).__init__( component )
 
-  #-----------------------------------------------------------------------
-  # visit_Call
-  #-----------------------------------------------------------------------
-  # At L3 we need to support the syntax of struct instantiation in upblks.
-  # This is achieved by function calls like `struct( 1, 2, 0 )`.
-
   def visit_Call( s, node ):
+    """Return behavioral RTLIR of a method call.
+    
+    At L3 we need to support the syntax of struct instantiation in upblks.
+    This is achieved by function calls like `struct( 1, 2, 0 )`.
+    """
 
     obj = s.get_call_obj( node )
 

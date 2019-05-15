@@ -3,9 +3,14 @@
 #=========================================================================
 """RTLIR signal expression class definitions and generation method."""
 
+from __future__ import absolute_import, division, print_function
+
+from functools import reduce
+
 import pymtl
 
 from ..RTLIRType import *
+
 
 class BaseSignalExpr( object ):
   """Base abstract class of RTLIR signal expressions."""
@@ -24,10 +29,6 @@ class BaseSignalExpr( object ):
     return type(s) == type(other) and s.rtype == other.rtype
 
   def __ne__( s, other ): return not s.__eq__( other )
-
-#-------------------------------------------------------------------------
-# Private classes from which the signal expression classes are derived
-#-------------------------------------------------------------------------
 
 class _Index( BaseSignalExpr ):
 
@@ -111,19 +112,6 @@ class _Index( BaseSignalExpr ):
     except: return None
 
     return ComponentIndex
-
-  # @staticmethod
-  # def is_unpacked_index( index_base, index ):
-
-    # try:
-
-      # base_rtype = index_base.get_rtype()
-      # assert isinstance( base_rtype, Array )
-      # rtype = base_rtype.get_next_dim_type()
-
-    # except: return None
-
-    # return UnpackedIndex
 
   @staticmethod
   def is_packed_index( index_base, index ):
@@ -275,10 +263,6 @@ class _Attribute( BaseSignalExpr ):
 
     return StructAttr
 
-#-------------------------------------------------------------------------
-# Concrete signal expression classes
-#-------------------------------------------------------------------------
-
 class ConstInstance( BaseSignalExpr ):
 
   def __init__( s, obj, value ):
@@ -408,10 +392,6 @@ class StructAttr( _Attribute ):
     else: assert False
 
     super( StructAttr, s ).__init__( attr_base, attr, rtype )
-
-#-------------------------------------------------------------------------
-# gen_signal_expr
-#-------------------------------------------------------------------------
 
 signal_expr_classes = {
     'Attr' :  [ _Attribute.is_cur_comp_attr, _Attribute.is_subcomp_attr,

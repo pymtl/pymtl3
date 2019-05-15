@@ -4,16 +4,19 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L1 behavioral RTLIR generation pass."""
+from __future__ import absolute_import, division, print_function
 
-import ast, copy
+import ast
+import copy
 
-from pymtl        import *
+from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.utility import is_BitsX
 
-from errors     import PyMTLSyntaxError
-from BehavioralRTLIR import *
+from .BehavioralRTLIR import *
+from .errors import PyMTLSyntaxError
+
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
 
@@ -38,10 +41,6 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
         m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] =\
           visitor.enter( blk, m.get_update_block_ast( blk ) )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRGeneratorL1
-#-------------------------------------------------------------------------
-
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def __init__( s, component ):
@@ -56,15 +55,15 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # s.globals contains a dict of the global namespace of the module where
     # blk was defined
-    s.globals = blk.func_globals
+    s.globals = blk.__globals__
 
     # s.closure contains the free variables defined in an enclosing scope.
     # Basically this is the model instance s.
     s.closure = {}
 
-    for i, var in enumerate( blk.func_code.co_freevars ):
+    for i, var in enumerate( blk.__code__.co_freevars ):
       try: 
-        s.closure[ var ] = blk.func_closure[ i ].cell_contents
+        s.closure[ var ] = blk.__closure__[ i ].cell_contents
 
       except ValueError: 
         pass
@@ -74,14 +73,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret.component = s.component
 
     return ret 
-
-  #-----------------------------------------------------------------------
-  # Helper functions of L1
-  #-----------------------------------------------------------------------
-
-  #-----------------------------------------------------------------------
-  # get_call_obj
-  #-----------------------------------------------------------------------
 
   def get_call_obj( s, node ):
 
@@ -128,12 +119,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     return obj
 
-  #---------------------------------------------------------------------
-  # visit_Module
-  #---------------------------------------------------------------------
-  # The root of each upblk. RTLIR does not have a dedicated `module` node
-  # type.
-
   def visit_Module( s, node ):
     if len( node.body ) != 1 or\
         not isinstance( node.body[0], ast.FunctionDef ):
@@ -146,14 +131,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_FunctionDef
-  #-----------------------------------------------------------------------
-  # We do not need to check the decorator list -- the fact that we are
-  # visiting this node ensures this node was added to the upblk
-  # dictionary through s.update() (or other PyMTL decorators) earlier!
-
   def visit_FunctionDef( s, node ):
+    """Return the behavioral RTLIR of function node.
+
+    We do not need to check the decorator list -- the fact that we are
+    visiting this node ensures this node was added to the upblk
+    dictionary through s.update() (or other PyMTL decorators) earlier!
+    """
     # Check the arguments of the function
     if node.args.args or node.args.vararg or node.args.kwarg:
       raise PyMTLSyntaxError(
@@ -171,11 +155,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_Assign
-  #-----------------------------------------------------------------------
-  # Only one assignement target is allowed!
-
   def visit_Assign( s, node ):
     if len( node.targets ) != 1:
       raise PyMTLSyntaxError(
@@ -190,14 +169,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     return ret
 
-  #-----------------------------------------------------------------------
-  # visit_Call
-  #-----------------------------------------------------------------------
-  # Some data types are interpreted as function calls in the Python AST
-  # Example: Bits4(2)
-  # These are converted to different RTLIR nodes in different contexts.
-
   def visit_Call( s, node ):
+    """Return the behavioral RTLIR of method calls.
+    
+    Some data types are interpreted as function calls in the Python AST.
+    Example: Bits4(2)
+    These are converted to different RTLIR nodes in different contexts.
+    """
 
     obj = s.get_call_obj( node )
 
@@ -249,18 +227,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         s.blk, node, 'Expecting Bits object but found ' + obj.__name__
       )
 
-  #-----------------------------------------------------------------------
-  # visit_Attribute
-  #-----------------------------------------------------------------------
-
   def visit_Attribute( s, node ):
     ret = Attribute( s.visit( node.value ), node.attr )
     ret.ast = node
     return ret
-
-  #-----------------------------------------------------------------------
-  # visit_Subscript
-  #-----------------------------------------------------------------------
 
   def visit_Subscript( s, node ):
     value = s.visit( node.value )
@@ -289,23 +259,11 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       s.blk, node, 'Illegal subscript ' + node + ' encountered!'
     )
 
-  #-----------------------------------------------------------------------
-  # visit_Slice
-  #-----------------------------------------------------------------------
-
   def visit_Slice( s, node ):
     return ( s.visit( node.lower ), s.visit( node.upper ) )
 
-  #-----------------------------------------------------------------------
-  # visit_Index
-  #-----------------------------------------------------------------------
-
   def visit_Index( s, node ):
     return s.visit( node.value )
-
-  #-----------------------------------------------------------------------
-  # visit_Name
-  #-----------------------------------------------------------------------
 
   def visit_Name( s, node ):
 
@@ -335,18 +293,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     assert False, 'Temporary variables are not supported at L1!'
 
-  #-----------------------------------------------------------------------
-  # visit_Num
-  #-----------------------------------------------------------------------
-
   def visit_Num( s, node ):
     ret = Number( node.n )
     ret.ast = node
     return ret
-
-  #-----------------------------------------------------------------------
-  # AST node types not supported at L1
-  #-----------------------------------------------------------------------
 
   def visit_AugAssign( s, node ): 
     raise NotImplementedError()
@@ -372,10 +322,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def visit_Compare( s, node ):
     raise NotImplementedError()
 
-  #-----------------------------------------------------------------------
-  # TODO: Support some other AST nodes
-  #-----------------------------------------------------------------------
-
   # $display
   def visit_Print( s, node ):
     raise
@@ -388,22 +334,15 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def visit_Assert( s, node ):
     raise
 
-  #-----------------------------------------------------------------------
-  # visit_Expr
-  #-----------------------------------------------------------------------
-  # ast.Expr might be useful when a statement is only a call to a task or 
-  # a non-returning function.
-
   def visit_Expr( s, node ):
-    # Should only be useful as a call to SystemVerilog tasks
-    # Not implemented yet!
+    """Return the behavioral RTLIR of an expression.
+    
+    ast.Expr might be useful when a statement is only a call to a task or 
+    a non-returning function.
+    """
     raise PyMTLSyntaxError(
       s.blk, node, 'Task is not supported yet!'
     )
-
-  #-----------------------------------------------------------------------
-  # Explicitly invalid AST nodes
-  #-----------------------------------------------------------------------
 
   def visit_LambdaOp( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )

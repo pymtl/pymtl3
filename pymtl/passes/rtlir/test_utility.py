@@ -5,27 +5,26 @@
 # Date   : Feb 21, 2019
 """Test utilities used by RTLIR tests."""
 
-import pytest, inspect, copy
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.rtlir.behavioral import MinBehavioralRTLIRLevel,\
-                                          MaxBehavioralRTLIRLevel
-from pymtl.passes.rtlir.structural import MinStructuralRTLIRLevel,\
-                                          MaxStructuralRTLIRLevel
+from contextlib import contextmanager
 
-from contextlib              import contextmanager
+import pytest
 
-#-------------------------------------------------------------------------
-# do_test
-#-------------------------------------------------------------------------
+from pymtl.passes.rtlir.behavioral import (
+    MaxBehavioralRTLIRLevel,
+    MinBehavioralRTLIRLevel,
+)
+from pymtl.passes.rtlir.structural import (
+    MaxStructuralRTLIRLevel,
+    MinStructuralRTLIRLevel,
+)
+
 
 @pytest.fixture
 def do_test( request ):
   """Call `local_do_test` of the requesting module."""
   return request.module.local_do_test
-
-#-------------------------------------------------------------------------
-# expected_failure
-#-------------------------------------------------------------------------
 
 @contextmanager
 def expected_failure( exception = Exception ):
@@ -44,10 +43,6 @@ def expected_failure( exception = Exception ):
     raise
 
   raise Exception( 'expected-to-fail test unexpectedly passed!' )
-
-#-------------------------------------------------------------------------
-# gen_rtlir_translator
-#-------------------------------------------------------------------------
 
 _rtlir_translators = {}
 
@@ -69,8 +64,8 @@ def gen_rtlir_translator( structural_level, behavioral_level ):
     'from pymtl.passes.rtlir.translation.behavioral.BehavioralTranslatorL{0}\
        import BehavioralTranslatorL{0} as _BehavioralTranslator'
 
-  exec structural_tplt.format( structural_level ) in globals(), locals()
-  exec behavioral_tplt.format( behavioral_level ) in globals(), locals()
+  exec(structural_tplt.format( structural_level ), globals(), locals())
+  exec(behavioral_tplt.format( behavioral_level ), globals(), locals())
   
   from pymtl.passes.rtlir.translation.RTLIRTranslator import mk_RTLIRTranslator
 

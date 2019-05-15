@@ -4,14 +4,14 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L4 behavioral RTLIR generation pass."""
+from __future__ import absolute_import, division, print_function
 
-import inspect
-
-from pymtl        import *
+from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 
-from BehavioralRTLIRGenL3Pass import BehavioralRTLIRGeneratorL3
+from .BehavioralRTLIRGenL3Pass import BehavioralRTLIRGeneratorL3
+
 
 class BehavioralRTLIRGenL4Pass( BasePass ):
 
@@ -36,12 +36,12 @@ class BehavioralRTLIRGenL4Pass( BasePass ):
         m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] =\
           visitor.enter( blk, m.get_update_block_ast( blk ) )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRGeneratorL4
-#-------------------------------------------------------------------------
-# The attribute operation has been handled at previous levels.
-
 class BehavioralRTLIRGeneratorL4( BehavioralRTLIRGeneratorL3 ):
+  """Behavioral RTLIR generator level 4.
+  
+  Do nothing here because attributes have been handled in previous
+  levels.
+  """
 
   def __init__( s, component ):
 

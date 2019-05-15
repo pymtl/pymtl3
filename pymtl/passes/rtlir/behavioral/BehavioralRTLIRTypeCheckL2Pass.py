@@ -4,15 +4,17 @@
 # Author : Peitian Pan
 # Date   : March 29, 2019
 """Provide L2 behavioral RTLIR type check pass."""
+from __future__ import absolute_import, division, print_function
 
 import pymtl
-from pymtl.passes         import BasePass
+from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.RTLIRType import *
 
-from BehavioralRTLIR import *
-from BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
-from errors             import PyMTLTypeError
+from .BehavioralRTLIR import *
+from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
+from .errors import PyMTLTypeError
+
 
 class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
 
@@ -34,11 +36,6 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRTypeCheckVisitorL2
-#-------------------------------------------------------------------------
-# Visitor that performs type checking on RTLIR
-
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
   def __init__( s, component, freevars, tmpvars ):
@@ -53,10 +50,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
         ( Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor )
 
     s.BinOp_left_nbits = ( ShiftLeft, ShiftRightLogic )
-
-    #---------------------------------------------------------------------
-    # The expected evaluation result types for each type of RTLIR node
-    #---------------------------------------------------------------------
 
     s.type_expect = {}
 
@@ -91,10 +84,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       'orelse' : ( Signal, 'the else branch of if-exp must be a signal!' )
     }
 
-  #-----------------------------------------------------------------------
-  # eval_const_binop
-  #-----------------------------------------------------------------------
-
   def eval_const_binop( s, l, op, r ):
     """Evaluate ( l op r ) and return the result as an integer."""
 
@@ -112,10 +101,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     return eval( 'l{_op}r'.format( **locals() ) )
 
-  #-----------------------------------------------------------------------
-  # visit_Assign
-  #-----------------------------------------------------------------------
-
   def visit_Assign( s, node ):
     # RHS should have the same type as LHS
     rhs_type = node.value.Type
@@ -132,10 +117,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       # non-temporary assignment is an L1 thing
       super( BehavioralRTLIRTypeCheckVisitorL2, s ).visit_Assign( node )
 
-  #-----------------------------------------------------------------------
-  # visit_AugAssign
-  #-----------------------------------------------------------------------
-
   def visit_AugAssign( s, node ):
     target = node.target
     op = node.op
@@ -149,10 +130,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     node.Type = None
 
-  #-----------------------------------------------------------------------
-  # visit_If
-  #-----------------------------------------------------------------------
-
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?
     dtype = node.cond.Type.get_dtype()
@@ -163,10 +140,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     node.Type = None
 
-  #-----------------------------------------------------------------------
-  # visit_For
-  #-----------------------------------------------------------------------
-
   def visit_For( s, node ):
     if isinstance( node.step.Type, Const ) and hasattr( node, '_value' ):
       if node.step._value == 0:
@@ -176,16 +149,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     node.Type = None
 
-  #-----------------------------------------------------------------------
-  # visit_LoopVar
-  #-----------------------------------------------------------------------
-
   def visit_LoopVar( s, node ):
     node.Type = Const( Vector( 32 ) )
-
-  #-----------------------------------------------------------------------
-  # visit_TmpVar
-  #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
     if not node.name in s.tmpvars:
@@ -195,10 +160,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     else:
       node.Type = s.tmpvars[ node.name ]
-
-  #-----------------------------------------------------------------------
-  # visit_IfExp
-  #-----------------------------------------------------------------------
 
   def visit_IfExp( s, node ):
     # Can the type of condition be cast into bool?
@@ -216,10 +177,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     node.Type = node.body.Type
 
-  #-----------------------------------------------------------------------
-  # visit_UnaryOp
-  #-----------------------------------------------------------------------
-
   def visit_UnaryOp( s, node ):
     if isinstance( node.op, Not ):
       if not Bool()( node.operand.Type.get_dtype() ):
@@ -230,10 +187,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     else:
       node.Type = node.operand.Type
-
-  #-----------------------------------------------------------------------
-  # visit_BoolOp
-  #-----------------------------------------------------------------------
 
   def visit_BoolOp( s, node ):
     for value in node.values:
@@ -246,10 +199,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
         )
 
     node.Type = Wire( Bool() )
-
-  #-----------------------------------------------------------------------
-  # visit_BinOp
-  #-----------------------------------------------------------------------
 
   def visit_BinOp( s, node ):
     op = node.op
@@ -288,23 +237,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     else:
       node.Type = Wire( Vector( res_nbits ) )
-
-    # if isinstance( l_type, Const ) and isinstance( r_type, Const ):
-      # # Both sides are static -> result is static
-      # if l_type.is_static and r_type.is_static:
-        # l_val = l_type.value
-        # r_val = r_type.value
-        # node.Type = Const( True, res_nbits, s.eval_const_binop( l_val, op, r_val ) )
-      # # Either side is dynamic -> result is dynamic
-      # else:
-        # node.Type = Const( False, res_nbits )
-
-    # Non-constant expressions
-    # else: node.Type = Signal( res_nbits )
-
-  #-----------------------------------------------------------------------
-  # visit_Compare
-  #-----------------------------------------------------------------------
 
   def visit_Compare( s, node ):
     node.Type = Wire( Bool() )

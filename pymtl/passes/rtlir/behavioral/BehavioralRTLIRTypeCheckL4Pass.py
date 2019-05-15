@@ -4,14 +4,16 @@
 # Author : Peitian Pan
 # Date   : March 30, 2019
 """Provide L4 behavioral RTLIR type check pass."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes         import BasePass
+from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.RTLIRType import *
 
-from BehavioralRTLIR import *
-from BehavioralRTLIRTypeCheckL3Pass import BehavioralRTLIRTypeCheckVisitorL3
-from errors             import PyMTLTypeError
+from .BehavioralRTLIR import *
+from .BehavioralRTLIRTypeCheckL3Pass import BehavioralRTLIRTypeCheckVisitorL3
+from .errors import PyMTLTypeError
+
 
 class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
 
@@ -33,11 +35,6 @@ class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
-#-------------------------------------------------------------------------
-# BehavioralRTLIRTypeCheckVisitorL4
-#-------------------------------------------------------------------------
-# Visitor that performs type checking on RTLIR
-
 class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
 
   def __init__( s, component, freevars, tmpvars ):
@@ -49,10 +46,6 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
       'value':( (Component, Signal, InterfaceView),
         'the base of an attribute must be one of: module, struct, interface!' )
     }
-
-  #-------------------------------------------------------------------------
-  # visit_Attribute
-  #-------------------------------------------------------------------------
 
   def visit_Attribute( s, node ):
 
@@ -70,10 +63,6 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
     else:
 
       super( BehavioralRTLIRTypeCheckVisitorL4, s ).visit_Attribute( node )
-
-  #-----------------------------------------------------------------------
-  # visit_Index
-  #-----------------------------------------------------------------------
 
   def visit_Index( s, node ):
 

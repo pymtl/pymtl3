@@ -2,7 +2,8 @@
 
 PyMTL user should only interact with the passes exposed here.
 """
-from StructuralRTLIRGenL4Pass\
-    import StructuralRTLIRGenL4Pass as StructuralRTLIRGenPass
+from __future__ import absolute_import, division, print_function
+
+from .StructuralRTLIRGenL4Pass import StructuralRTLIRGenL4Pass as StructuralRTLIRGenPass
 
 MinStructuralRTLIRLevel, MaxStructuralRTLIRLevel = 1, 4

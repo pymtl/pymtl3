@@ -4,13 +4,17 @@
 # Author : Shunning Jiang, Peitian Pan
 # Date   : Apr 3, 2019
 """Provide L1 structural RTLIR generation pass."""
+from __future__ import absolute_import, division, print_function
 
-import ast, pymtl
 from collections import defaultdict, deque
+
+import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+
 from ..RTLIRType import *
-from StructuralRTLIRSignalExpr import gen_signal_expr
+from .StructuralRTLIRSignalExpr import gen_signal_expr
+
 
 class StructuralRTLIRGenL1Pass( BasePass ):
 
@@ -26,17 +30,9 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     s.gen_constants( top )
     s.gen_connections( top )
 
-  #-----------------------------------------------------------------------
-  # gen_rtlir_types
-  #-----------------------------------------------------------------------
-
   def gen_rtlir_types( s, top ):
 
     top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( top )
-
-  #-----------------------------------------------------------------------
-  # gen_constants
-  #-----------------------------------------------------------------------
 
   def gen_constants( s, m ):
 
@@ -51,13 +47,11 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       const_instance = m.__dict__[ const_name ]
       ns.consts.append( ( const_name, const_rtype, const_instance ) )
 
-  #-----------------------------------------------------------------------
-  # gen_connections
-  #-----------------------------------------------------------------------
-  # Generate connections based on the net structures. This function must
-  # be called from the top component!
-
   def gen_connections( s, top ):
+    """Generate connections based on the net structure.
+    
+    Must be called from the top component!
+    """
 
     ns = top._pass_structural_rtlir_gen
     ns.connections_self_self = defaultdict( set )
@@ -117,10 +111,6 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
     s.sort_connections( top )
 
-  #-----------------------------------------------------------------------
-  # add_conn_self_self
-  #-----------------------------------------------------------------------
-
   def add_conn_self_self( s, component, writer, reader ):
 
     ns = s.top._pass_structural_rtlir_gen
@@ -130,38 +120,19 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
     ns.connections_self_self[ component ].add( _rw_pair )
 
-  #-----------------------------------------------------------------------
-  # add_conn_self_child
-  #-----------------------------------------------------------------------
-  # No subcomponent at L1!
-
   def add_conn_self_child( s, component, writer, reader ):
 
     raise NotImplementedError()
 
-  #-----------------------------------------------------------------------
-  # add_conn_child_child
-  #-----------------------------------------------------------------------
-  # No subcomponent at L1!
-
   def add_conn_child_child( s, component, writer, reader ):
 
     raise NotImplementedError()
-
-  #-----------------------------------------------------------------------
-  # collect_connections
-  #-----------------------------------------------------------------------
 
   def collect_connections( s, m ):
 
     ns = s.top._pass_structural_rtlir_gen
 
     return map( lambda x: ( x, False ), ns.connections_self_self[m] )
-
-  #-----------------------------------------------------------------------
-  # sort_connections
-  #-----------------------------------------------------------------------
-  # At L1 every signal in the net corresponds to one `s.connect` statement
 
   def sort_connections( s, m ):
 
@@ -186,10 +157,11 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
     m._pass_structural_rtlir_gen.connections = connections
 
-  #-----------------------------------------------------------------------
-  # contains
-  #-----------------------------------------------------------------------
-
   def contains( s, obj, signal ):
+    """Return if obj contains signal.
+    
+    At level 1 all signals have their corresponding object in `s.connect`. 
+    Therefore just checking whether obj is equal to signal is enough at level 1.
+    """
 
     return obj == signal
