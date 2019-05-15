@@ -55,3 +55,10 @@ script:
  - mkdir -p build
  - cd build
  - py.test --cov-report xml --cov=pymtl .. $CONFIG
+
+#-------------------------------------------------------------------------
+# after success
+#-------------------------------------------------------------------------
+
+after_success:
+  - codecov
