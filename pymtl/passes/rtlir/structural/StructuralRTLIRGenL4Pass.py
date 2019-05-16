@@ -1,7 +1,7 @@
 #=========================================================================
 # StructuralRTLIRGenL4Pass.py
 #=========================================================================
-# Author : Shunning Jiang, Peitian Pan
+# Author : Peitian Pan
 # Date   : Apr 3, 2019
 """Provide L4 structural RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
