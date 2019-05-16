@@ -9,6 +9,10 @@ from __future__ import absolute_import, division, print_function
 
 
 class BaseBehavioralRTLIR( object ):
+  """Base class for all behavioral RTLIR AST nodes."""
+  def __eq__( s, other ):
+    return type(s) is type(other)
+
   def __ne__( s, other ):
     return not s.__eq__( other )
 
@@ -266,99 +270,76 @@ class LoopVarDecl( BaseBehavioralRTLIR ):
     return type(s) is type(other) and s.name == other.name
 
 class Invert( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Not( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class UAdd( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class USub( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class And( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Or( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Add( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Sub( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Mult( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Div( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Mod( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Pow( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class ShiftLeft( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class ShiftRightLogic( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class BitAnd( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class BitOr( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class BitXor( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Eq( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class NotEq( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Lt( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class LtE( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class Gt( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class GtE( BaseBehavioralRTLIR ):
-  def __eq__( s, other ):
-    return type(s) is type(other)
+  pass
 
 class BehavioralRTLIRNodeVisitor( object ):
-  # This visitor uses the same code as the Python AST node visitor
+  """Class for behavioral RTLIR AST visitors."""
   def visit( self, node, *args ):
     method = 'visit_' + node.__class__.__name__
     visitor = getattr( self, method, self.generic_visit )
