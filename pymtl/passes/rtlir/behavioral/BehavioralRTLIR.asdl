@@ -1,6 +1,8 @@
 -- Behavioral RTLIR description in Zephyr ASDL
 -- identifier, int, string, object, bool are the five built-in types of
 -- Zephyr ASDL
+-- Note that this is not the final version of Behavioral RTLIR grammar. We might extend
+-- the grammar to support more features in the future.
 
 module BehavioralRTLIR
 {
