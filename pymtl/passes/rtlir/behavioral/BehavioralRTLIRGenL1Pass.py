@@ -12,24 +12,19 @@ import copy
 from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.utility import is_BitsX
 
 from .BehavioralRTLIR import *
 from .errors import PyMTLSyntaxError
 
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
-
   def __call__( s, m ):
     """ generate RTLIR for all upblks of m """
-
     if not hasattr( m, '_pass_behavioral_rtlir_gen' ):
       m._pass_behavioral_rtlir_gen = PassMetadata()
 
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
-
     visitor = BehavioralRTLIRGeneratorL1( m )
-
     upblks = {
       'CombUpblk' : m.get_update_blocks() - m.get_update_on_edge(),
       'SeqUpblk'  : m.get_update_on_edge()
@@ -42,15 +37,12 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
           visitor.enter( blk, m.get_update_block_ast( blk ) )
 
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
-
   def __init__( s, component ):
-
     s.component = component
     s.mapping   = component.get_astnode_obj_mapping()
 
   def enter( s, blk, ast ):
     """ entry point for RTLIR generation """
-
     s.blk     = blk
 
     # s.globals contains a dict of the global namespace of the module where
@@ -64,28 +56,22 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     for i, var in enumerate( blk.__code__.co_freevars ):
       try: 
         s.closure[ var ] = blk.__closure__[ i ].cell_contents
-
       except ValueError: 
         pass
 
     ret = s.visit( ast )
-
     ret.component = s.component
-
     return ret 
 
   def get_call_obj( s, node ):
-
     if not node.starargs is None:
       raise PyMTLSyntaxError(
         s.blk, node, 'star argument is not supported!'
       )
-
     if not node.kwargs is None:
       raise PyMTLSyntaxError(
         s.blk, node, 'double-star keyword argument is not supported during!'
       )
-
     func = node.func
 
     # Find the corresponding object of node.func field
@@ -93,17 +79,14 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if func in s.mapping:
       # The node.func field corresponds to a member of this class
       obj = s.mapping[ func ][ 0 ]
-
     else:
       try:
         # An object in global namespace is used
         if func.id in s.globals:
           obj = s.globals[ func.id ]
-
         # An object in closure is used
         elif func.id in s.closure:
           obj = s.closure[ func.id ]
-
         else:
           raise NameError
 
@@ -111,12 +94,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError(
           s.blk, node, node.func + ' function call is not supported!'
         )
-
       except NameError:
         raise PyMTLSyntaxError(
           s.blk, node, node.func.id + ' function is not found!'
         )
-
     return obj
 
   def visit_Module( s, node ):
@@ -125,10 +106,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       raise PyMTLSyntaxError(
         s.blk, node, 'Update blocks should have exactly one FuncDef!' 
       )
-
     ret = s.visit( node.body[0] )
     ret.ast = node
-
     return ret
 
   def visit_FunctionDef( s, node ):
@@ -145,14 +124,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       )
 
     # Get the type of upblk from ._upblk_type variable
-
     ret = eval( s._upblk_type + '( node.name, [] )' )
-
     for stmt in node.body:
       ret.body.append( s.visit( stmt ) )
-
     ret.ast = node
-
     return ret
 
   def visit_Assign( s, node ):
@@ -163,10 +138,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     value = s.visit( node.value )
     target = s.visit( node.targets[0] )
-
     ret = Assign( target, value )
     ret.ast = node
-
     return ret
 
   def visit_Call( s, node ):
@@ -178,7 +151,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     """
 
     obj = s.get_call_obj( node )
-
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
       assert len( node.args ) == 1,\
         'copy function {} takes exactly 1 argument!'.format( obj )
@@ -193,21 +165,18 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # 2. Real function call: not supported yet
 
     # Deal with Bits type cast
-    if is_BitsX( obj ):
+    if issubclass( obj, Bits ):
       nbits = obj.nbits
-
       if (len( node.args ) != 1) or (node.keywords):
         raise PyMTLSyntaxError(
           s.blk, node, 'exactly 1 non-keyword argument should be given to Bits!'
         )
-
       if nbits <= 0:
         raise PyMTLSyntaxError(
           s.blk, node, 'bit width should be positive integers!'
         )
 
       value = s.visit( node.args[0] )
-
       if not isinstance( value, Number ):
         ret = value
         ret.ast = node
@@ -215,10 +184,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         # raise PyMTLSyntaxError(
           # s.blk, node, 'only constant numbers can be instantiated!'
         # )
-
       ret = BitsCast( nbits, value )
       ret.ast = node
-
       return ret
 
     else:
@@ -239,20 +206,15 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError(
           s.blk, node, 'Slice with steps is not supported!'
         )
-
       lower, upper = s.visit( node.slice )
-
       ret = Slice( value, lower, upper )
       ret.ast = node
-
       return ret
 
     if isinstance( node.slice, ast.Index ):
       idx = s.visit( node.slice )
-
       ret = Index( value, idx )
       ret.ast = node
-
       return ret
 
     raise PyMTLSyntaxError(
@@ -266,17 +228,14 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return s.visit( node.value )
 
   def visit_Name( s, node ):
-
     if node.id in s.globals:
       # free var from the global name space
       ret = FreeVar( node.id, s.globals[ node.id ] )
       ret.ast = node
       return ret
-
     elif node.id in s.closure:
       # free var from closure
       obj = s.closure[ node.id ]
-
       if isinstance( obj, Component ):
         # Component freevars are an L1 thing.
         assert isinstance( obj, Component ) and (obj is s.component),\
@@ -284,13 +243,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
                 obj, s.component
             )
         ret = Base( obj )
-
       else:
         ret =  FreeVar( node.id, obj )
-
       ret.ast = node
       return ret
-
     assert False, 'Temporary variables are not supported at L1!'
 
   def visit_Num( s, node ):
@@ -298,41 +254,30 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret.ast = node
     return ret
 
-  def visit_AugAssign( s, node ): 
-    raise NotImplementedError()
+  def visit_AugAssign( s, node ):  raise NotImplementedError()
 
-  def visit_If( s, node ):
-    raise NotImplementedError()
+  def visit_If( s, node ): raise NotImplementedError()
 
-  def visit_For( s, node ):
-    raise NotImplementedError()
+  def visit_For( s, node ): raise NotImplementedError()
 
-  def visit_BoolOp( s, node ):
-    raise NotImplementedError()
+  def visit_BoolOp( s, node ): raise NotImplementedError()
 
-  def visit_BinOp( s, node ):
-    raise NotImplementedError()
+  def visit_BinOp( s, node ): raise NotImplementedError()
 
-  def visit_UnaryOp( s, node ):
-    raise NotImplementedError()
+  def visit_UnaryOp( s, node ): raise NotImplementedError()
 
-  def visit_IfExp( s, node ):
-    raise NotImplementedError()
+  def visit_IfExp( s, node ): raise NotImplementedError()
 
-  def visit_Compare( s, node ):
-    raise NotImplementedError()
+  def visit_Compare( s, node ): raise NotImplementedError()
 
   # $display
-  def visit_Print( s, node ):
-    raise
+  def visit_Print( s, node ): raise NotImplementedError()
 
   # function
-  def visit_Return( s, node ):
-    raise
+  def visit_Return( s, node ): raise NotImplementedError()
 
   # SV assertion
-  def visit_Assert( s, node ):
-    raise
+  def visit_Assert( s, node ): raise NotImplementedError()
 
   def visit_Expr( s, node ):
     """Return the behavioral RTLIR of an expression.

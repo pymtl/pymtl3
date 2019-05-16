@@ -44,12 +44,3 @@ def freeze( obj ):
   if isinstance( obj, list ):
     return tuple( freeze( o ) for o in obj )
   return obj
-
-def is_BitsX( obj ):
-  """Return if `obj` is a BitsX class."""
-  try:
-    assert obj.__name__.startswith('Bits')
-    n = int(obj.__name__[4:])
-    return True
-  except:
-    return False

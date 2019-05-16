@@ -19,7 +19,7 @@ import pymtl
 from pymtl.dsl.Connectable import Const as pymtl_Const
 from pymtl.dsl.Connectable import Signal as pymtl_Signal
 
-from .utility import collect_objs, is_BitsX
+from .utility import collect_objs
 
 
 class BaseRTLIRDataType( object ):
@@ -247,7 +247,7 @@ def get_rtlir_dtype( obj ):
   if isinstance( obj, ( pymtl_Signal, pymtl_Const ) ):
     Type = obj._dsl.Type
     # Vector data type
-    if is_BitsX( Type ):
+    if issubclass( Type, pymtl.Bits ):
       return Vector( Type.nbits )
     # Struct data type
     elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtin__):

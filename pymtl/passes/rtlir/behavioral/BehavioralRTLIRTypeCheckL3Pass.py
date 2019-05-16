@@ -95,7 +95,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     function in SV )
     """
 
-    assert (not Type is bool) and (not is_BitsX( Type )),\
+    assert (not Type is bool) and (not issubclass( Type, Bits )),\
         "internal error: StructInst did not get struct Type!"
 
     raise NotImplementedError()

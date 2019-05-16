@@ -8,10 +8,9 @@ from __future__ import absolute_import, division, print_function
 
 import inspect
 
-from pymtl import *
+import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.utility import is_BitsX
 
 from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
 from .errors import PyMTLSyntaxError
@@ -56,7 +55,7 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
     obj = s.get_call_obj( node )
 
     if ( inspect.isclass( obj ) ) and \
-        ( not is_BitsX(obj) ) and ( not obj is bool ):
+        ( not issubclass(obj, pymtl.Bits) ) and ( not obj is bool ):
 
       if node.args:
         raise PyMTLSyntaxError(
