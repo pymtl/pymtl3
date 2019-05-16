@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.RTLIRType import *
+from pymtl.passes.rtlir.RTLIRType import Array, Component, Port, _is_of_type
 
 from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
@@ -86,7 +86,7 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
 
       prop = node.value.Type.get_property( node.attr )
 
-      if not is_of_type( prop, Port ):
+      if not _is_of_type( prop, Port ):
         raise PyMTLTypeError(
           s.blk, node.ast,
           '{} is not a port of subcomponent {}!'.format(
