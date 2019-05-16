@@ -17,22 +17,44 @@ import os
 
 import py.code
 
+# This __new__ approach has better performance
+# bits_template = """
+# class Bits{nbits}(object):
+  # nbits = {nbits}
+  # def __new__( cls, value = 0 ):
+    # return Bits( {nbits}, value )
+
 if os.getenv("PYMTL_BITS") == "1":
   from .Bits import Bits
   # print "[env: PYMTL_BITS=1] Use Python Bits"
+  bits_template = """
+class Bits{nbits}(Bits):
+  nbits = {nbits}
+  def __init__( s, value=0 ):
+    return super( Bits{nbits}, s ).__init__( {nbits}, value )
+
+_bits_types[{nbits}] = Bits{nbits}
+"""
 else:
   try:
     from mamba import Bits
     # print "[default w/  Mamba] Use Mamba Bits"
+    bits_template = """
+class Bits{nbits}(Bits):
+  nbits = {nbits}
+  def __new__( cls, value=0 ):
+    return Bits.__new__( cls, {nbits}, value )
+
+_bits_types[{nbits}] = Bits{nbits}
+"""
   except ImportError:
     from .Bits import Bits
     # print "[default w/o Mamba] Use Python Bits"
-
-bits_template = """
-class Bits{nbits}(object):
+    bits_template = """
+class Bits{nbits}(Bits):
   nbits = {nbits}
-  def __new__( cls, value = 0 ):
-    return Bits( {nbits}, value )
+  def __init__( s, value=0 ):
+    return super( Bits{nbits}, s ).__init__( {nbits}, value )
 
 _bits_types[{nbits}] = Bits{nbits}
 """
