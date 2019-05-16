@@ -27,13 +27,8 @@ class constructor( object ):
   impl_template =\
 """
 class {constr_name}( BaseBehavioralRTLIR ):
-  def __init__( s{params_name} ):
-    {params_assign}
-
-  def __eq__( s, other ):
-    if type( s ) is not type( other ){single_term}:
-      return False
-    {check_equal}return True
+  {init}def __eq__( s, other ):
+    {eq}
 """
 
   viz_impl_template =\
@@ -162,15 +157,16 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     """Return the implementation of this constructor as a Python class."""
 
     if s.type_list is None:
-      params_name = ''
-      params_assign = 'pass'
+      init = ''
       single_term = ''
+      not_single_term = ''
       check_equal = ''
 
     else: 
       # Generate statements for checking sub fields
       eq = []
       single_term = ''
+      not_single_term = ''
       for t, f in zip( s.type_list, s.field_list ):
         if s.is_sequence( t ):
           eq.append( 'for x, y in zip( s.{field}, other.{field} ):'.format( field = f ) )
@@ -178,6 +174,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
           eq.append( '    return False' )
         else:
           single_term += ' or s.{field} != other.{field}'.format( field = f )
+          not_single_term += ' and s.{field} == other.{field}'.format( field = f )
 
       params_name = ', ' + ', '.join( s.field_list )
       params_assign = '\n    '.join(
@@ -186,13 +183,25 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
       check_equal = '\n    '.join( eq )
       if check_equal:
         check_equal += '\n    '
+      init = """\
+def __init__( s{params_name} ):
+    {params_assign}
+
+  """.format( **locals() )
+
+    eq_template = """\
+if type(s) is not type(other){single_term}:
+      return False
+    {check_equal}return True"""
+    if check_equal == '':
+      eq = 'return type(s) is type(other){not_single_term}'.format( **locals() )
+    else:
+      eq = eq_template.format( **locals() )
 
     return constructor.impl_template.format(
       constr_name = s.name,
-      params_name = params_name, 
-      params_assign = params_assign,
-      single_term = single_term,
-      check_equal = check_equal
+      init = init,
+      eq = eq
     )
 
   def viz_impl_str( s ):
