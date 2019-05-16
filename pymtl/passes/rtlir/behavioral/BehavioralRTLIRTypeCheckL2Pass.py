@@ -209,7 +209,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     # if not (isinstance( l_type, Vector ) and isinstance( r_type, Vector )):
     if not( Vector(1)( l_type ) and Vector(1)( r_type ) ):
       raise PyMTLTypeError(
-        s.blk, node.ast, "both sides of operation should be vector!"
+        s.blk, node.ast, "both sides of operation should be of vector type!"
       )
 
     l_nbits = l_type.get_length()
@@ -233,6 +233,10 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       l_val = node.left._value
       r_val = node.right._value
       node._value = s.eval_const_binop( l_val, op, r_val )
+      node.Type = Const( Vector( res_nbits ) )
+
+    # Both sides are constant but the value cannot be determined at elaboration time
+    elif isinstance(node.left.Type, Const) and isinstance(node.right.Type, Const):
       node.Type = Const( Vector( res_nbits ) )
 
     else:

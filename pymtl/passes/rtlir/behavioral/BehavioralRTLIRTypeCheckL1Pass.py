@@ -10,9 +10,23 @@ import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.RTLIRDataType import Vector
-from pymtl.passes.rtlir.RTLIRType import Array, Port, Signal, Wire
+from pymtl.passes.rtlir.RTLIRType import (
+    Array,
+    Component,
+    Const,
+    Port,
+    Signal,
+    Wire,
+    get_rtlir,
+)
 
-from .BehavioralRTLIR import Base, BaseBehavioralRTLIR, BehavioralRTLIRNodeVisitor
+from .BehavioralRTLIR import (
+    Add,
+    Base,
+    BaseBehavioralRTLIR,
+    BehavioralRTLIRNodeVisitor,
+    BinOp,
+)
 from .errors import PyMTLTypeError
 
 
@@ -87,7 +101,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     func = getattr( s, method, s.generic_visit )
 
     # First visit (type check) all child nodes
-    for field, value in vars(node):
+    for field, value in vars(node).iteritems():
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, BaseBehavioralRTLIR ):
@@ -116,6 +130,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
   # Override the default generic_visit()
   def generic_visit( s, node ):
     node.Type = None
+
+  def is_same( s, u, v ):
+    """Return if the sub-AST at u and v are the same."""
+    if type(u) is not type(v):
+      return False
+    return u == v
 
   def visit_Assign( s, node ):
     # RHS should have the same type as LHS
@@ -264,7 +284,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
       if not ( 0 <= lower_val < upper_val <= signal_nbits ):
         raise PyMTLTypeError(
           s.blk, node.ast, 'upper/lower bound of slice out of width of signal!' )
-      node.Type = Wire( Vector( upper_val - lower_val ) )
+      node.Type = Wire( Vector( int( upper_val - lower_val ) ) )
+
     else:
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'slice bounds must be constant!' )
+      # Try to special case the constant-stride part selection
+      if isinstance(node.upper, BinOp) and isinstance(node.upper.op, Add) and\
+         hasattr(node.upper.right, '_value') and s.is_same(node.lower, node.upper.left):
+        node.Type = Wire(Vector(node.upper.right._value))
+      else:
+        raise PyMTLTypeError( s.blk, node.ast, 'slice bounds must be constant!' )
