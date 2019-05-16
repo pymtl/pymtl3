@@ -41,8 +41,7 @@ class Vector( BaseRTLIRDataType ):
 
   def __call__( s, obj ):
     """Return if type `obj` be cast into type `s`."""
-    if isinstance( obj, Vector ): return True
-    if isinstance( obj, Bool ): return True
+    if isinstance( obj, ( Vector, Bool ) ): return True
     return False
 
   def __str__( s ):
@@ -56,9 +55,7 @@ class Struct( BaseRTLIRDataType ):
     s.properties = properties
 
   def __eq__( s, u ):
-    if type( s ) is not type( u ): return False
-    if s.name != u.name: return False
-    return True
+    return type(s) is type(u) and s.name == u.name
 
   def get_name( s ):
     return s.name
@@ -115,7 +112,6 @@ class Bool( BaseRTLIRDataType ):
 
 class PackedArray( BaseRTLIRDataType ):
   """RTLIR data type class for packed array type."""
-
   def __init__( s, dim_sizes, sub_dtype ):
     assert isinstance( sub_dtype, BaseRTLIRDataType )
     assert not isinstance( sub_dtype, PackedArray )

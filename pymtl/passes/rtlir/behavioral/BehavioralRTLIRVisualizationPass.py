@@ -57,7 +57,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -82,7 +82,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -107,7 +107,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -133,7 +133,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -161,7 +161,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -191,7 +191,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -224,7 +224,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -246,7 +246,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -270,7 +270,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -298,7 +298,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -326,7 +326,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -352,7 +352,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -379,7 +379,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -407,7 +407,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -435,7 +435,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -459,7 +459,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -485,7 +485,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -513,7 +513,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -535,7 +535,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -557,7 +557,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -579,7 +579,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -601,7 +601,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -623,7 +623,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -645,7 +645,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -667,7 +667,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -689,7 +689,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -711,7 +711,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -733,7 +733,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -755,7 +755,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -777,7 +777,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -799,7 +799,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -821,7 +821,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -843,7 +843,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -865,7 +865,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -887,7 +887,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -909,7 +909,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -931,7 +931,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -953,7 +953,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -975,7 +975,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -997,7 +997,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -1019,7 +1019,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -1041,7 +1041,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -1063,7 +1063,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -1085,7 +1085,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -1107,7 +1107,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     if isinstance( node.Type, BaseBehavioralRTLIRType ):
       table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in node.Type.__dict__.iteritems():
+      for name, obj in vars(node.Type).iteritems():
         obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
         if not isinstance( obj, dict ):
           table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'

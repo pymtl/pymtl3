@@ -38,22 +38,16 @@ def _is_of_type( obj, Type ):
 
 class NoneType( BaseRTLIRType ):
   """Type for not yet typed RTLIR temporary variables."""
-
-  def __init__( s ):
-    super( NoneType, s ).__init__()
-
   def __eq__( s, other ):
     return type( s ) is type( other )
 
 class Array( BaseRTLIRType ):
   """Unpacked RTLIR array type."""
-
   def __init__( s, dim_sizes, sub_type, unpacked = False ):
     assert isinstance( sub_type, BaseRTLIRType )
     assert not isinstance( sub_type, Array )
     assert len( dim_sizes ) >= 1
     assert reduce( lambda s, i: s+i, dim_sizes, 0 ) > 0
-    super( Array, s ).__init__()
     s.dim_sizes = dim_sizes
     s.sub_type = sub_type
     s.unpacked = unpacked
@@ -90,10 +84,8 @@ class Signal( BaseRTLIRType ):
   
   A Signal can be a Port, a Wire, or a Const.
   """
-
   def __init__( s, dtype, unpacked = False ):
     assert isinstance( dtype, BaseRTLIRDataType )
-    super( Signal, s ).__init__()
     s.dtype = dtype
     s.unpacked = unpacked
 
@@ -101,15 +93,17 @@ class Signal( BaseRTLIRType ):
     if type( s ) is not type( other ): return False
     return s.dtype == other.dtype
 
-  def is_packed_indexable( s ): return isinstance( s.dtype, PackedArray )
+  def is_packed_indexable( s ):
+    return isinstance( s.dtype, PackedArray )
 
-  def get_dtype( s ): return s.dtype
+  def get_dtype( s ):
+    return s.dtype
 
-  def _is_unpacked( s ): return s.unpacked
+  def _is_unpacked( s ):
+    return s.unpacked
 
 class Port( Signal ):
   """Port RTLIR instance type."""
-
   def __init__( s, direction, dtype, unpacked = False ):
     super( Port, s ).__init__( dtype, unpacked )
     s.direction = direction
@@ -117,7 +111,8 @@ class Port( Signal ):
   def __eq__( s, other ):
     return super( Port, s ).__eq__( other ) and s.direction == other.direction
 
-  def get_direction( s ): return s.direction
+  def get_direction( s ):
+    return s.direction
 
   def get_next_dim_type( s ):
     assert s.is_packed_indexable()
@@ -125,7 +120,6 @@ class Port( Signal ):
 
 class Wire( Signal ):
   """Wire RTLIR instance type."""
-
   def __init__( s, dtype, unpacked = False ):
     super( Wire, s ).__init__( dtype, unpacked )
 
@@ -135,7 +129,6 @@ class Wire( Signal ):
 
 class Const( Signal ):
   """Const RTLIR instance type."""
-
   def __init__( s, dtype, unpacked = False ):
     super( Const, s ).__init__( dtype, unpacked )
 
@@ -145,16 +138,15 @@ class Const( Signal ):
 
 class Interface( BaseRTLIRType ):
   """Interface RTLIR instance type."""
-
   def __init__( s, name, views = [] ):
-    super( Interface, s ).__init__()
     assert s._check_views( views ),\
         '{} does not belong to interface {}!'.format( views, name )
     s.name = name
     s.views = views
     s.properties = s._gen_properties( views )
 
-  def _set_name( s, name ): s.name = name
+  def _set_name( s, name ):
+    s.name = name
 
   def _gen_properties( s, views ):
     _properties = {}
@@ -180,9 +172,11 @@ class Interface( BaseRTLIRType ):
         if Wire(prop_rtype.get_dtype()) != _properties[prop_id]: return False
     return True
 
-  def get_name( s ): return s.name
+  def get_name( s ):
+    return s.name
 
-  def get_all_views( s ): return s.views
+  def get_all_views( s ):
+    return s.views
 
   def get_all_wires( s ):
     return filter(
@@ -199,7 +193,8 @@ class Interface( BaseRTLIRType ):
       s.properties.iteritems()
     )
 
-  def can_add_view( s, view ): return s._check_views( s.views + [ view ] )
+  def can_add_view( s, view ):
+    return s._check_views( s.views + [ view ] )
 
   def add_view( s, view ):
     if s.can_add_view( view ):
@@ -208,9 +203,7 @@ class Interface( BaseRTLIRType ):
 
 class InterfaceView( BaseRTLIRType ):
   """RTLIR instance type for a view of an interface."""
-
   def __init__( s, name, properties, unpacked = False ):
-    super( InterfaceView, s ).__init__()
     s.name = name
     s.interface = None
     s.properties = properties
@@ -220,14 +213,17 @@ class InterfaceView( BaseRTLIRType ):
     for name, rtype in properties.iteritems():
       assert isinstance( name, str ) and _is_of_type( rtype, Port )
 
-  def _set_interface( s, interface ): s.interface = interface
+  def _set_interface( s, interface ):
+    s.interface = interface
 
-  def _is_unpacked( s ): return s.unpacked
+  def _is_unpacked( s ):
+    return s.unpacked
 
   def __eq__( s, other ):
     return type(s) is type(other) and s.name == other.name
 
-  def get_name( s ): return s.name
+  def get_name( s ):
+    return s.name
 
   def get_interface( s ):
     if s.interface is None:
@@ -246,9 +242,11 @@ class InterfaceView( BaseRTLIRType ):
       s.properties.iteritems()
     )
 
-  def has_property( s, p ): return p in s.properties
+  def has_property( s, p ):
+    return p in s.properties
 
-  def get_property( s, p ): return s.properties[ p ]
+  def get_property( s, p ):
+    return s.properties[ p ]
 
   def get_all_ports( s ):
     return filter(
@@ -267,9 +265,7 @@ class InterfaceView( BaseRTLIRType ):
 
 class Component( BaseRTLIRType ):
   """RTLIR instance type for a component."""
-
   def __init__( s, obj, properties, unpacked = False ):
-    super( Component, s ).__init__()
     s.name = obj.__class__.__name__
     s.argspec = inspect.getargspec( getattr( obj, 'construct' ) )
     s.params = s._gen_parameters( obj )
@@ -293,18 +289,22 @@ class Component( BaseRTLIRType ):
     ret.update( kwargs )
     return ret
 
-  def _is_unpacked( s ): return s.unpacked
+  def _is_unpacked( s ):
+    return s.unpacked
 
   def __eq__( s, other ):
     if type( s ) is type( other ): return False
     if s.name != other.name or s.params != other.params: return False
     return True
 
-  def get_name( s ): return s.name
+  def get_name( s ):
+    return s.name
 
-  def get_params( s ): return s.params
+  def get_params( s ):
+    return s.params
 
-  def get_argspec( s ): return s.argspec
+  def get_argspec( s ):
+    return s.argspec
 
   def get_ports( s ):
     return filter(
@@ -388,11 +388,14 @@ class Component( BaseRTLIRType ):
       s.properties.iteritems()
     )
 
-  def has_property( s, p ): return p in s.properties
+  def has_property( s, p ):
+    return p in s.properties
 
-  def get_property( s, p ): return s.properties[ p ]
+  def get_property( s, p ):
+    return s.properties[ p ]
 
-  def get_all_properties( s ): return s.properties
+  def get_all_properties( s ):
+    return s.properties
 
 def is_rtlir_convertible( obj ):
   """Return if `obj` can be converted into an RTLIR instance."""

@@ -10,8 +10,8 @@ from __future__ import absolute_import, division, print_function
 
 
 class BaseBehavioralRTLIR( object ):
-  def __init__( s ):
-    pass
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 class CombUpblk( BaseBehavioralRTLIR ):
   def __init__( s, name, body ):
@@ -19,17 +19,12 @@ class CombUpblk( BaseBehavioralRTLIR ):
     s.body = body
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.name != other.name:
+    if type( s ) is not type( other ) or s.name != other.name:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
         return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class SeqUpblk( BaseBehavioralRTLIR ):
   def __init__( s, name, body ):
@@ -37,17 +32,12 @@ class SeqUpblk( BaseBehavioralRTLIR ):
     s.body = body
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.name != other.name:
+    if type( s ) is not type( other ) or s.name != other.name:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
         return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Assign( BaseBehavioralRTLIR ):
   def __init__( s, target, value ):
@@ -55,16 +45,9 @@ class Assign( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.target != other.target:
-      return False
-    if s.value != other.value:
+    if type( s ) is not type( other ) or s.target != other.target or s.value != other.value:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class AugAssign( BaseBehavioralRTLIR ):
   def __init__( s, target, op, value ):
@@ -73,18 +56,9 @@ class AugAssign( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.target != other.target:
-      return False
-    if s.op != other.op:
-      return False
-    if s.value != other.value:
+    if type( s ) is not type( other ) or s.target != other.target or s.op != other.op or s.value != other.value:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class If( BaseBehavioralRTLIR ):
   def __init__( s, cond, body, orelse ):
@@ -93,9 +67,7 @@ class If( BaseBehavioralRTLIR ):
     s.orelse = orelse
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.cond != other.cond:
+    if type( s ) is not type( other ) or s.cond != other.cond:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
@@ -104,9 +76,6 @@ class If( BaseBehavioralRTLIR ):
       if x != y:
         return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class For( BaseBehavioralRTLIR ):
   def __init__( s, var, start, end, step, body ):
@@ -117,37 +86,21 @@ class For( BaseBehavioralRTLIR ):
     s.body = body
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.var != other.var:
-      return False
-    if s.start != other.start:
-      return False
-    if s.end != other.end:
-      return False
-    if s.step != other.step:
+    if type( s ) is not type( other ) or s.var != other.var or s.start != other.start or s.end != other.end or s.step != other.step:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
         return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Number( BaseBehavioralRTLIR ):
   def __init__( s, value ):
     s.value = value
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.value != other.value:
+    if type( s ) is not type( other ) or s.value != other.value:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class BitsCast( BaseBehavioralRTLIR ):
   def __init__( s, nbits, value ):
@@ -155,16 +108,9 @@ class BitsCast( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.nbits != other.nbits:
-      return False
-    if s.value != other.value:
+    if type( s ) is not type( other ) or s.nbits != other.nbits or s.value != other.value:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class StructInst( BaseBehavioralRTLIR ):
   def __init__( s, struct, keywords, kwargs ):
@@ -173,9 +119,7 @@ class StructInst( BaseBehavioralRTLIR ):
     s.kwargs = kwargs
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.struct != other.struct:
+    if type( s ) is not type( other ) or s.struct != other.struct:
       return False
     for x, y in zip( s.keywords, other.keywords ):
       if x != y:
@@ -185,9 +129,6 @@ class StructInst( BaseBehavioralRTLIR ):
         return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class IfExp( BaseBehavioralRTLIR ):
   def __init__( s, cond, body, orelse ):
     s.cond = cond
@@ -195,18 +136,9 @@ class IfExp( BaseBehavioralRTLIR ):
     s.orelse = orelse
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.cond != other.cond:
-      return False
-    if s.body != other.body:
-      return False
-    if s.orelse != other.orelse:
+    if type( s ) is not type( other ) or s.cond != other.cond or s.body != other.body or s.orelse != other.orelse:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class UnaryOp( BaseBehavioralRTLIR ):
   def __init__( s, op, operand ):
@@ -214,16 +146,9 @@ class UnaryOp( BaseBehavioralRTLIR ):
     s.operand = operand
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.op != other.op:
-      return False
-    if s.operand != other.operand:
+    if type( s ) is not type( other ) or s.op != other.op or s.operand != other.operand:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class BoolOp( BaseBehavioralRTLIR ):
   def __init__( s, op, values ):
@@ -231,17 +156,12 @@ class BoolOp( BaseBehavioralRTLIR ):
     s.values = values
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.op != other.op:
+    if type( s ) is not type( other ) or s.op != other.op:
       return False
     for x, y in zip( s.values, other.values ):
       if x != y:
         return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class BinOp( BaseBehavioralRTLIR ):
   def __init__( s, left, op, right ):
@@ -250,18 +170,9 @@ class BinOp( BaseBehavioralRTLIR ):
     s.right = right
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.left != other.left:
-      return False
-    if s.op != other.op:
-      return False
-    if s.right != other.right:
+    if type( s ) is not type( other ) or s.left != other.left or s.op != other.op or s.right != other.right:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Compare( BaseBehavioralRTLIR ):
   def __init__( s, left, op, right ):
@@ -270,18 +181,9 @@ class Compare( BaseBehavioralRTLIR ):
     s.right = right
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.left != other.left:
-      return False
-    if s.op != other.op:
-      return False
-    if s.right != other.right:
+    if type( s ) is not type( other ) or s.left != other.left or s.op != other.op or s.right != other.right:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Attribute( BaseBehavioralRTLIR ):
   def __init__( s, value, attr ):
@@ -289,16 +191,9 @@ class Attribute( BaseBehavioralRTLIR ):
     s.attr = attr
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.value != other.value:
-      return False
-    if s.attr != other.attr:
+    if type( s ) is not type( other ) or s.value != other.value or s.attr != other.attr:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Index( BaseBehavioralRTLIR ):
   def __init__( s, value, idx ):
@@ -306,16 +201,9 @@ class Index( BaseBehavioralRTLIR ):
     s.idx = idx
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.value != other.value:
-      return False
-    if s.idx != other.idx:
+    if type( s ) is not type( other ) or s.value != other.value or s.idx != other.idx:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Slice( BaseBehavioralRTLIR ):
   def __init__( s, value, lower, upper ):
@@ -324,46 +212,27 @@ class Slice( BaseBehavioralRTLIR ):
     s.upper = upper
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.value != other.value:
-      return False
-    if s.lower != other.lower:
-      return False
-    if s.upper != other.upper:
+    if type( s ) is not type( other ) or s.value != other.value or s.lower != other.lower or s.upper != other.upper:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Base( BaseBehavioralRTLIR ):
   def __init__( s, base ):
     s.base = base
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.base != other.base:
+    if type( s ) is not type( other ) or s.base != other.base:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class LoopVar( BaseBehavioralRTLIR ):
   def __init__( s, name ):
     s.name = name
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.name != other.name:
+    if type( s ) is not type( other ) or s.name != other.name:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class FreeVar( BaseBehavioralRTLIR ):
   def __init__( s, name, obj ):
@@ -371,44 +240,27 @@ class FreeVar( BaseBehavioralRTLIR ):
     s.obj = obj
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.name != other.name:
-      return False
-    if s.obj != other.obj:
+    if type( s ) is not type( other ) or s.name != other.name or s.obj != other.obj:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class TmpVar( BaseBehavioralRTLIR ):
   def __init__( s, name ):
     s.name = name
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.name != other.name:
+    if type( s ) is not type( other ) or s.name != other.name:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class LoopVarDecl( BaseBehavioralRTLIR ):
   def __init__( s, name ):
     s.name = name
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ):
-      return False
-    if s.name != other.name:
+    if type( s ) is not type( other ) or s.name != other.name:
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Invert( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -419,9 +271,6 @@ class Invert( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Not( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -430,9 +279,6 @@ class Not( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class UAdd( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -443,9 +289,6 @@ class UAdd( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class USub( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -454,9 +297,6 @@ class USub( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class And( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -467,9 +307,6 @@ class And( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Or( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -478,9 +315,6 @@ class Or( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Add( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -491,9 +325,6 @@ class Add( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Sub( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -502,9 +333,6 @@ class Sub( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Mult( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -515,9 +343,6 @@ class Mult( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Div( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -526,9 +351,6 @@ class Div( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class Mod( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -539,9 +361,6 @@ class Mod( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Pow( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -550,9 +369,6 @@ class Pow( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class ShiftLeft( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -563,9 +379,6 @@ class ShiftLeft( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class ShiftRightLogic( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -574,9 +387,6 @@ class ShiftRightLogic( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class BitAnd( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -587,9 +397,6 @@ class BitAnd( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class BitOr( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -598,9 +405,6 @@ class BitOr( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class BitXor( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -611,9 +415,6 @@ class BitXor( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Eq( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -622,9 +423,6 @@ class Eq( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class NotEq( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -635,9 +433,6 @@ class NotEq( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Lt( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -646,9 +441,6 @@ class Lt( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class LtE( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -659,9 +451,6 @@ class LtE( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class Gt( BaseBehavioralRTLIR ):
   def __init__( s ):
     pass
@@ -670,9 +459,6 @@ class Gt( BaseBehavioralRTLIR ):
     if type( s ) is not type( other ):
       return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
 class GtE( BaseBehavioralRTLIR ):
   def __init__( s ):
@@ -683,9 +469,6 @@ class GtE( BaseBehavioralRTLIR ):
       return False
     return True
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
 class BehavioralRTLIRNodeVisitor( object ):
   # This visitor uses the same code as the Python AST node visitor
   def visit( self, node, *args ):
@@ -694,8 +477,7 @@ class BehavioralRTLIRNodeVisitor( object ):
     return visitor( node, *args )
 
   def generic_visit( self, node, *args ):
-    for field in node.__dict__.keys():
-      value = node.__dict__[ field ]
+    for field, value in vars(node).iteritems():
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, BaseBehavioralRTLIR ):
