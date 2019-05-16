@@ -9,4 +9,5 @@ from __future__ import absolute_import, division, print_function
 from .StructuralRTLIRGenL1Pass import StructuralRTLIRGenL1Pass
 
 
-class StructuralRTLIRGenL2Pass( StructuralRTLIRGenL1Pass ): pass
+class StructuralRTLIRGenL2Pass( StructuralRTLIRGenL1Pass ):
+  pass

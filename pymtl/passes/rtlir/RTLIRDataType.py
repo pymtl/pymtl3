@@ -41,8 +41,7 @@ class Vector( BaseRTLIRDataType ):
 
   def __call__( s, obj ):
     """Return if type `obj` be cast into type `s`."""
-    if isinstance( obj, ( Vector, Bool ) ): return True
-    return False
+    return isinstance( obj, ( Vector, Bool ) )
 
   def __str__( s ):
     return 'Vector{}'.format( s.nbits )
@@ -79,9 +78,7 @@ class Struct( BaseRTLIRDataType ):
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
-    if isinstance( obj, Struct ) and s == obj:
-      return True
-    return False
+    return isinstance( obj, Struct ) and s == obj
 
   def __str__( s ):
     return 'Struct'
@@ -103,9 +100,7 @@ class Bool( BaseRTLIRDataType ):
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
-    if isinstance( obj, ( Bool, Vector ) ):
-      return True
-    return False
+    return isinstance( obj, ( Bool, Vector ) )
 
   def __str__( s ):
     return 'Bool'
