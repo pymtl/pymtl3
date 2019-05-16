@@ -24,29 +24,20 @@ from .utility import collect_objs
 
 class BaseRTLIRDataType( object ):
   """Base abstract RTLIR data type class."""
-
-  def __new__( cls, *args, **kwargs ):
-    return super( BaseRTLIRDataType, cls ).__new__( cls )
-
-  def __init__( s ):
-    super( BaseRTLIRDataType, s ).__init__()
+  def __ne__( s, other ):
+    return not s.__eq__( other )
 
 class Vector( BaseRTLIRDataType ):
   """RTLIR data type class for vector type."""
-
   def __init__( s, nbits ):
     assert nbits > 0
-    super( Vector, s ).__init__()
     s.nbits = nbits
 
   def get_length( s ):
     return s.nbits
 
   def __eq__( s, other ):
-    return ( type(s) == type(other) ) and ( s.nbits == other.nbits )
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
+    return type(s) is type(other) and ( s.nbits == other.nbits )
 
   def __call__( s, obj ):
     """Return if type `obj` be cast into type `s`."""
@@ -59,20 +50,15 @@ class Vector( BaseRTLIRDataType ):
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
-
   def __init__( s, name, properties ):
     assert len( properties ) > 0
-    super( Struct, s ).__init__()
     s.name = name
     s.properties = properties
 
   def __eq__( s, u ):
-    if type( s ) != type( u ): return False
+    if type( s ) is not type( u ): return False
     if s.name != u.name: return False
     return True
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
   def get_name( s ):
     return s.name
@@ -109,15 +95,11 @@ class Bool( BaseRTLIRDataType ):
   Bool data type cannot be instantiated explicitly. It can only appear as
   the result of comparisons.
   """
-
   def __init__( s ):
-    super( Bool, s ).__init__()
+    pass
 
   def __eq__( s, other ):
-    return type( s ) == type( other )
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
+    return type( s ) is type( other )
 
   def get_length( s ):
     return 1
@@ -139,20 +121,16 @@ class PackedArray( BaseRTLIRDataType ):
     assert not isinstance( sub_dtype, PackedArray )
     assert len( dim_sizes ) >= 1
     assert reduce( lambda s, i: s+i, dim_sizes, 0 ) > 0
-    super( PackedArray, s ).__init__()
     s.dim_sizes = dim_sizes
     s.sub_dtype = sub_dtype
 
   def __eq__( s, other ):
-    if type( s ) != type( other ): return False
+    if type( s ) is not type( other ): return False
     if len( s.dim_sizes ) != len( other.dim_sizes ): return False
     zipped_sizes = zip( s.dim_sizes, other.dim_sizes )
     if not reduce( lambda res, (x,y): res and (x==y), zipped_sizes ):
       return False
     return s.sub_dtype == other.sub_dtype
-
-  def __ne__( s, other ):
-    return not s.__eq__( other )
 
   def get_length( s ):
     return s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 )

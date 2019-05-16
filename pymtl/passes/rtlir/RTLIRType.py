@@ -25,13 +25,6 @@ from .utility import collect_objs
 
 class BaseRTLIRType( object ):
   """Base abstract class for all RTLIR instance types."""
-
-  def __new__( cls, *args, **kwargs ):
-    return super( BaseRTLIRType, cls ).__new__( cls )
-
-  def __init__( s ):
-    super( BaseRTLIRType, s ).__init__()
-
   def __ne__( s, other ):
     return not s.__eq__( other )
 
@@ -50,7 +43,7 @@ class NoneType( BaseRTLIRType ):
     super( NoneType, s ).__init__()
 
   def __eq__( s, other ):
-    return type( s ) == type( other )
+    return type( s ) is type( other )
 
 class Array( BaseRTLIRType ):
   """Unpacked RTLIR array type."""
@@ -69,7 +62,7 @@ class Array( BaseRTLIRType ):
     return s.unpacked
 
   def __eq__( s, other ):
-    if type( s ) != type( other ): return False
+    if type( s ) is not type( other ): return False
     if s.dim_sizes != other.dim_sizes: return False
     return s.sub_type == other.sub_type
 
@@ -105,10 +98,8 @@ class Signal( BaseRTLIRType ):
     s.unpacked = unpacked
 
   def __eq__( s, other ):
-    if type( s ) != type( other ): return False
+    if type( s ) is not type( other ): return False
     return s.dtype == other.dtype
-
-  def __ne__( s, other ): return not s.__eq__( other )
 
   def is_packed_indexable( s ): return isinstance( s.dtype, PackedArray )
 
@@ -234,7 +225,7 @@ class InterfaceView( BaseRTLIRType ):
   def _is_unpacked( s ): return s.unpacked
 
   def __eq__( s, other ):
-    return type(s) == type(other) and s.name == other.name
+    return type(s) is type(other) and s.name == other.name
 
   def get_name( s ): return s.name
 
@@ -305,7 +296,7 @@ class Component( BaseRTLIRType ):
   def _is_unpacked( s ): return s.unpacked
 
   def __eq__( s, other ):
-    if type( s ) != type( other ): return False
+    if type( s ) is type( other ): return False
     if s.name != other.name or s.params != other.params: return False
     return True
 
@@ -353,7 +344,6 @@ class Component( BaseRTLIRType ):
     )
 
   def get_consts_packed( s ):
-
     return filter(
       lambda id__t6:\
         ( isinstance( id__t6[1], Const ) and not id__t6[1]._is_unpacked() ) or\
@@ -363,14 +353,12 @@ class Component( BaseRTLIRType ):
     )
 
   def get_ifc_views( s ):
-
     return filter(
       lambda id__ifc: isinstance( id__ifc[1], InterfaceView ),
       s.properties.iteritems()
     )
 
   def get_ifc_views_packed( s ):
-
     return filter(
       lambda id__t7:\
         ( isinstance( id__t7[1], InterfaceView ) and not id__t7[1]._is_unpacked() ) or\
@@ -380,21 +368,18 @@ class Component( BaseRTLIRType ):
     )
 
   def get_ifcs( s ):
-
     return filter(
       lambda id__ifc8: isinstance( id__ifc8[1], Interface ),
       s.properties.iteritems()
     )
 
   def get_subcomps( s ):
-
     return filter(
       lambda id__subcomp: isinstance( id__subcomp[1], Component ),
       s.properties.iteritems()
     )
 
   def get_subcomps_packed( s ):
-
     return filter(
       lambda id__t9:\
         ( isinstance( id__t9[1], Component ) and not id__t9[1]._is_unpacked() ) or\

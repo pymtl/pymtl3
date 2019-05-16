@@ -1,6 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
-
 #=========================================================================
 # BehavioralRTLIRImplGen.py
 #=========================================================================
@@ -17,6 +14,9 @@ visualization pass is printed to BehavioralRTLIRVisualizationPass.py
 under the same directory.
 """
 
+from __future__ import absolute_import, division, print_function
+
+
 class constructor( object ):
   """The class of constructors that make up the node types. name is the name
   of this constructor and should be capitalized. type_list is the list of
@@ -31,7 +31,7 @@ class {constr_name}( BaseBehavioralRTLIR ):
     {params_assign}
 
   def __eq__( s, other ):
-    if type( s ) != type( other ):
+    if type( s ) is not type( other ):
       return False
     {check_equal}return True
 
