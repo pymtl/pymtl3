@@ -10,7 +10,11 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl import *
-from pymtl.passes.rtlir.behavioral import BehavioralRTLIRGenPass
+from pymtl.passes.rtlir.behavioral import (
+    BehavioralRTLIRGenPass,
+    BehavioralRTLIRTypeCheckPass,
+    BehavioralRTLIRVisualizationPass,
+)
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.behavioral.errors import PyMTLTypeError
 from pymtl.passes.rtlir.test_utility import do_test, expected_failure
@@ -21,7 +25,9 @@ def local_do_test( m ):
 
   ref = m._rtlir_test_ref
   m.elaborate()
-  BehavioralRTLIRGenPass()( m )
+  m.apply( BehavioralRTLIRGenPass() )
+  m.apply( BehavioralRTLIRTypeCheckPass() )
+  m.apply( BehavioralRTLIRVisualizationPass() )
 
   for blk in m.get_update_blocks():
     assert\
@@ -296,7 +302,7 @@ def test_for_basic( do_test ):
       @s.update
       def for_basic():
         for i in xrange( 8 ):
-          s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:2*i+2 ]
+          s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
 
   a = for_basic()
 
@@ -312,10 +318,10 @@ def test_for_basic( do_test ):
             Add(),
             Slice( Attribute( Base( a ), 'in_' ),
               BinOp( twice_i, Add(), Number( 1 ) ),
-              BinOp( twice_i, Add(), Number( 2 ) )
+              BinOp( BinOp( twice_i, Add(), Number( 1 ) ), Add(), Number( 1 ) )
             )
           )
-      ) 
+      )
     ]
     ) ] )
   }
