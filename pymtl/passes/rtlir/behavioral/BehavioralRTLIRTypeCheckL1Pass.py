@@ -82,7 +82,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
         s.closure[ var ] = blk.__closure__[ i ].cell_contents
       except ValueError: 
         pass
-
     s.visit( rtlir )
 
   # Override the default visit()
@@ -92,8 +91,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     func = getattr( s, method, s.generic_visit )
 
     # First visit (type check) all child nodes
-    for field in node.__dict__.keys():
-      value = node.__dict__[ field ]
+    for field, value in vars(node):
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, BaseBehavioralRTLIR ):
@@ -105,13 +103,11 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     try:
       # Check the expected types of child nodes
       for field, type_rule in s.type_expect[node_name].iteritems():
-        value = node.__dict__[ field ]
+        value = vars(node)[field]
         target_type = type_rule[ 0 ]
         exception_msg = type_rule[ 1 ]
-
         if eval( 'not isinstance( value.Type, target_type )' ):
           raise PyMTLTypeError( s.blk, node.ast, exception_msg )
-
     except PyMTLTypeError:
       raise
     except:

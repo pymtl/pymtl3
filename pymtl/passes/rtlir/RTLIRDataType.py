@@ -196,7 +196,7 @@ def _get_rtlir_dtype_struct( obj ):
 
     # Use user-provided pack order
     pack_order = []
-    if '_pack_order' in type_instance.__dict__:
+    if hasattr( type_instance, '_pack_order' ):
       for field_name in type_instance._pack_order:
         assert field_name in all_properties, field_name + ' is not an \
 attribute of struct ' + obj.__name__ + '!'

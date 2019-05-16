@@ -30,7 +30,7 @@ def _ungroup_list( obj ):
 def collect_objs( m, Type, grouped=False ):
   """Return a list of members of `m` that are of type `Type`."""
   ret = []
-  for name, obj in m.__dict__.iteritems():
+  for name, obj in vars(m).iteritems():
     if isinstance( name, basestring ) and not name.startswith( '_' ):
       if _is_of_type( obj, Type ):
         if isinstance( obj, list ) and not grouped:

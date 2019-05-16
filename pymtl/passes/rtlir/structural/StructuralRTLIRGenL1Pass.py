@@ -43,8 +43,8 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
     for const_name, const_rtype in const_types:
 
-      assert const_name in m.__dict__
-      const_instance = m.__dict__[ const_name ]
+      hasattr(m, const_name)
+      const_instance = getattr(m, const_name)
       ns.consts.append( ( const_name, const_rtype, const_instance ) )
 
   def gen_connections( s, top ):
