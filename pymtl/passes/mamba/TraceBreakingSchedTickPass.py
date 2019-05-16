@@ -1,7 +1,11 @@
 """
 -------------------------------------------------------------------------
-MetaBlkPass
+TraceBreakingSchedTickPas.py
 -------------------------------------------------------------------------
+Generate the schedule and tick with trace breaking + heuristic toposort.
+
+Author : Shunning Jiang
+Date   : Dec 26, 2018
 """
 from __future__ import absolute_import, division, print_function
 
@@ -11,7 +15,7 @@ from graphviz import Digraph
 from pymtl import *
 from pymtl.passes.BasePass import BasePass, PassMetadata
 from pymtl.passes.errors import PassOrderError
-from pymtl.passes.SimpleSchedPass import check_schedule
+from pymtl.passes.SimpleSchedulePass import check_schedule
 
 from .HeuristicTopoPass import CountBranches
 

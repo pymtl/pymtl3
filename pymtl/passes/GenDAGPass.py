@@ -153,6 +153,8 @@ def {0}():
     read_upblks = defaultdict(set)
     write_upblks = defaultdict(set)
 
+    constraint_objs = defaultdict(set)
+
     for data in [ upblk_reads, genblk_reads ]:
       for blk, reads in data.iteritems():
         for rd in reads:
@@ -182,9 +184,11 @@ def {0}():
               if sign == 1: # RD/WR(x) < U is 1, RD/WR(x) > U is -1
                 # eq_blk == RD/WR(x) < co_blk
                 expl_constraints.add( (eq_blk, co_blk) )
+                constraint_objs[ (eq_blk, co_blk) ].add( obj )
               else:
                 # co_blk < RD/WR(x) == eq_blk
                 expl_constraints.add( (co_blk, eq_blk) )
+                constraint_objs[ (co_blk, eq_blk) ].add( obj )
 
     #---------------------------------------------------------------------
     # Implicit constraint
@@ -225,8 +229,10 @@ def {0}():
             if wr_blk != rd_blk:
               if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -252,9 +258,12 @@ def {0}():
             if wr_blk != rd_blk:
               if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
+    top._dag.constraint_objs = constraint_objs
     top._dag.all_constraints = U_U.copy()
     for (x, y) in impl_constraints:
       if (y, x) not in U_U: # no conflicting expl

@@ -17,7 +17,7 @@ from pymtl.dsl import ComponentLevel1
 from .BasePass import BasePass
 from .errors import TranslationError
 from .GenDAGPass import GenDAGPass
-from .SimpleSchedPass import SimpleSchedPass
+from .SimpleSchedulePass import SimpleSchedulePass
 
 vmodule_template = """
 module {module_name}
@@ -50,7 +50,7 @@ class SystemVerilogTranslationPass( BasePass ):
   def __call__( self, top ):
 
     GenDAGPass()( top )
-    SimpleSchedPass()( top )
+    SimpleSchedulePass()( top )
 
     # Generate all names
 
