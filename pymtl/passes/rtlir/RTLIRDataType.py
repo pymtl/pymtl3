@@ -81,7 +81,7 @@ class Struct( BaseRTLIRDataType ):
     return isinstance( obj, Struct ) and s == obj
 
   def __str__( s ):
-    return 'Struct'
+    return 'Struct {}'.format( s.name )
 
 class Bool( BaseRTLIRDataType ):
   """RTLIR data type class for struct type.
@@ -142,7 +142,7 @@ class PackedArray( BaseRTLIRDataType ):
     return s.__eq__( obj )
 
   def __str__( s ):
-    return 'PackedArray'
+    return 'PackedArray{} of {}'.format( s.dim_sizes, s.sub_dtype )
 
 def _get_rtlir_dtype_struct( obj ):
 

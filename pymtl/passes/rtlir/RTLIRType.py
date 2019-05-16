@@ -41,6 +41,12 @@ class NoneType( BaseRTLIRType ):
   def __eq__( s, other ):
     return type( s ) is type( other )
 
+  def __str__( s ):
+    return 'NoneType'
+
+  def __repr__( s ):
+    return 'NoneType'
+
 class Array( BaseRTLIRType ):
   """Unpacked RTLIR array type."""
   def __init__( s, dim_sizes, sub_type, unpacked = False ):
@@ -79,6 +85,9 @@ class Array( BaseRTLIRType ):
   def __str__( s ):
     return 'Array'
 
+  def __repr__( s ):
+    return 'Array{} of {}'.format( s.dim_sizes, s.sub_type )
+
 class Signal( BaseRTLIRType ):
   """Signal abstract RTLIR instance type.
   
@@ -111,6 +120,12 @@ class Port( Signal ):
   def __eq__( s, other ):
     return super( Port, s ).__eq__( other ) and s.direction == other.direction
 
+  def __str__( s ):
+    return 'Port'
+
+  def __repr__( s ):
+    return 'Port of {}'.format( s.dtype )
+
   def get_direction( s ):
     return s.direction
 
@@ -123,6 +138,12 @@ class Wire( Signal ):
   def __init__( s, dtype, unpacked = False ):
     super( Wire, s ).__init__( dtype, unpacked )
 
+  def __str__( s ):
+    return 'Wire'
+
+  def __repr__( s ):
+    return 'Wire of {}'.format( s.dtype )
+
   def get_next_dim_type( s ):
     assert s.is_packed_indexable()
     return Wire( s.dtype.get_next_dim_type(), s.unpacked )
@@ -131,6 +152,12 @@ class Const( Signal ):
   """Const RTLIR instance type."""
   def __init__( s, dtype, unpacked = False ):
     super( Const, s ).__init__( dtype, unpacked )
+
+  def __str__( s ):
+    return 'Const'
+
+  def __repr__( s ):
+    return 'Const of {}'.format( s.dtype )
 
   def get_next_dim_type( s ):
     assert s.is_packed_indexable()
@@ -144,6 +171,12 @@ class Interface( BaseRTLIRType ):
     s.name = name
     s.views = views
     s.properties = s._gen_properties( views )
+
+  def __str__( s ):
+    return 'Interface'
+
+  def __repr__( s ):
+    return 'Interface {}'.format( s.name )
 
   def _set_name( s, name ):
     s.name = name
@@ -212,6 +245,12 @@ class InterfaceView( BaseRTLIRType ):
     # Sanity check
     for name, rtype in properties.iteritems():
       assert isinstance( name, str ) and _is_of_type( rtype, Port )
+
+  def __str__( s ):
+    return 'InterfaceView'
+
+  def __repr__( s ):
+    return 'InterfaceView {}'.format( s.name )
 
   def _set_interface( s, interface ):
     s.interface = interface
@@ -296,6 +335,12 @@ class Component( BaseRTLIRType ):
     if type( s ) is type( other ): return False
     if s.name != other.name or s.params != other.params: return False
     return True
+
+  def __str__( s ):
+    return 'Component'
+
+  def __repr__( s ):
+    return 'Component {}'.format( s.name )
 
   def get_name( s ):
     return s.name
