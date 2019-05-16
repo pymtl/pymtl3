@@ -416,7 +416,6 @@ def is_rtlir_convertible( obj ):
 
 def get_rtlir( obj ):
   """Return an RTLIR instance corresponding to `obj`."""
-
   def is_rtlir_ifc_convertible( obj ):
     pymtl_ports = ( pymtl.InPort, pymtl.OutPort )
     if isinstance( obj, list ):

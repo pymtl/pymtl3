@@ -235,12 +235,111 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
     s.g.node( str( s.cur ), label = label )
 
-  def visit_BitsCast( s, node ):
+  def visit_Concat( s, node ):
     s.cur += 1
     local_cur = s.cur
 
     table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_body = '<TR><TD COLSPAN="2">BitsCast</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">Concat</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, BaseBehavioralRTLIRType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in vars(node.Type).iteritems():
+        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + obj_str + '}</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail)
+
+    s.g.node( str( s.cur ), label = label )
+    for i, f in enumerate(node.values):
+      s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
+      s.visit( f )
+
+  def visit_ZeroExt( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">ZeroExt</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, BaseBehavioralRTLIRType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in vars(node.Type).iteritems():
+        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + obj_str + '}</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail).format(nbits=node.nbits)
+
+    s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
+    s.visit( node.value )
+
+  def visit_SignExt( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">SignExt</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, BaseBehavioralRTLIRType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in vars(node.Type).iteritems():
+        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + obj_str + '}</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail).format(nbits=node.nbits)
+
+    s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
+    s.visit( node.value )
+
+  def visit_Reduce( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">Reduce</TD></TR>'
+    table_opt = ''
+    table_trail = ' </TABLE>>'
+
+    if isinstance( node.Type, BaseBehavioralRTLIRType ):
+      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in vars(node.Type).iteritems():
+        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        if not isinstance( obj, dict ):
+          table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
+        else:
+          table_opt += ' <TR><TD>' + name + '</TD><TD>{' + obj_str + '}</TD></TR>'
+
+    label = (table_header + table_body + table_opt + table_trail)
+
+    s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'op' )
+    s.visit( node.op )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
+    s.visit( node.value )
+
+  def visit_SizeCast( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+
+    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    table_body = '<TR><TD COLSPAN="2">SizeCast</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
     table_opt = ''
     table_trail = ' </TABLE>>'
 

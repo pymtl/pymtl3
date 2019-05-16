@@ -9,7 +9,8 @@ from __future__ import absolute_import, division, print_function
 import ast
 import copy
 
-from pymtl import *
+# from pymtl import *
+import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 
@@ -19,7 +20,7 @@ from .errors import PyMTLSyntaxError
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
   def __call__( s, m ):
-    """ generate RTLIR for all upblks of m """
+    """Generate RTLIR for all upblks of m."""
     if not hasattr( m, '_pass_behavioral_rtlir_gen' ):
       m._pass_behavioral_rtlir_gen = PassMetadata()
 
@@ -42,7 +43,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     s.mapping   = component.get_astnode_obj_mapping()
 
   def enter( s, blk, ast ):
-    """ entry point for RTLIR generation """
+    """Entry point of RTLIR generation."""
     s.blk     = blk
 
     # s.globals contains a dict of the global namespace of the module where
@@ -61,16 +62,20 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     ret = s.visit( ast )
     ret.component = s.component
-    return ret 
+    return ret
 
   def get_call_obj( s, node ):
-    if not node.starargs is None:
+    if node.starargs:
       raise PyMTLSyntaxError(
         s.blk, node, 'star argument is not supported!'
       )
-    if not node.kwargs is None:
+    if node.kwargs:
       raise PyMTLSyntaxError(
-        s.blk, node, 'double-star keyword argument is not supported during!'
+        s.blk, node, 'double-star keyword argument is not supported!'
+      )
+    if node.keywords:
+      raise PyMTLSyntaxError(
+        s.blk, node, 'keyword argument is not supported!'
       )
     func = node.func
 
@@ -153,7 +158,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     obj = s.get_call_obj( node )
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
       assert len( node.args ) == 1,\
-        'copy function {} takes exactly 1 argument!'.format( obj )
+        'copy method {} takes exactly 1 argument!'.format( obj )
       ret = s.visit( node.args[0] )
       ret.ast = node
       return ret
@@ -162,10 +167,14 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # we need to treat separately:
     # 1. Instantiation: Bits16( 10 ) where obj is an instance of Bits
     # Bits16( 1+2 ), Bits16( s.STATE_A )?
-    # 2. Real function call: not supported yet
+    # 2. concat()
+    # 3. zext(), sext()
+    # TODO: support the following
+    # 4. reduce_and(), reduce_or(), reduce_xor()
+    # 5. Real function call: not supported yet
 
     # Deal with Bits type cast
-    if issubclass( obj, Bits ):
+    if issubclass( obj, pymtl.Bits ):
       nbits = obj.nbits
       if (len( node.args ) != 1) or (node.keywords):
         raise PyMTLSyntaxError(
@@ -175,7 +184,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError(
           s.blk, node, 'bit width should be positive integers!'
         )
-
       value = s.visit( node.args[0] )
       if not isinstance( value, Number ):
         ret = value
@@ -184,7 +192,42 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         # raise PyMTLSyntaxError(
           # s.blk, node, 'only constant numbers can be instantiated!'
         # )
-      ret = BitsCast( nbits, value )
+      ret = SizeCast( nbits, value )
+      ret.ast = node
+      return ret
+
+    # concat method
+    elif obj is pymtl.concat:
+      if (len( node.args ) < 1) or (node.keywords):
+        raise PyMTLSyntaxError(
+          s.blk, node, 'at least 1 non-keyword argument should be given to concat!'
+        )
+      values = map( lambda c: s.visit(c), node.args )
+      ret = Concat( values )
+      ret.ast = node
+      return ret
+
+    # zext method
+    elif obj is pymtl.zext:
+      if (len( node.args ) != 1) or (node.keywords):
+        raise PyMTLSyntaxError(
+          s.blk, node, 'exactly 1 non-keyword argument should be given to zext!'
+        )
+      nbits = s.visit( node.args[1] )
+      value = s.visit( node.args[0] )
+      ret = ZeroExt( nbits, value )
+      ret.ast = node
+      return ret
+
+    # sext method
+    elif obj is pymtl.sext:
+      if (len( node.args ) != 1) or (node.keywords):
+        raise PyMTLSyntaxError(
+          s.blk, node, 'exactly 1 non-keyword argument should be given to sext!'
+        )
+      nbits = s.visit( node.args[1] )
+      value = s.visit( node.args[0] )
+      ret = SignExt( nbits, value )
       ret.ast = node
       return ret
 
@@ -236,12 +279,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     elif node.id in s.closure:
       # free var from closure
       obj = s.closure[ node.id ]
-      if isinstance( obj, Component ):
+      if isinstance( obj, pymtl.Component ):
         # Component freevars are an L1 thing.
-        assert isinstance( obj, Component ) and (obj is s.component),\
-            "Component {} is not a sub-component of {}!".format(
-                obj, s.component
-            )
+        assert obj is s.component,\
+            "Component {} is not a sub-component of {}!".format(obj, s.component)
         ret = Base( obj )
       else:
         ret =  FreeVar( node.id, obj )

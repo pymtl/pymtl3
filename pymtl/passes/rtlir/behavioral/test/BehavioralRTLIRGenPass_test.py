@@ -138,7 +138,7 @@ def test_bits_basic( do_test ):
 
   a._rtlir_test_ref = { 'bits_basic' : CombUpblk( 'bits_basic', [
     Assign( Attribute( Base( a ), 'out' ),
-      BinOp( Attribute( Base( a ), 'in_' ), Add(), BitsCast( 16, Number( 10 ) ) ) )
+      BinOp( Attribute( Base( a ), 'in_' ), Add(), SizeCast( 16, Number( 10 ) ) ) )
   ] ) }
 
   a._test_vector = [
@@ -178,7 +178,7 @@ def test_index_bits_slicing( do_test ):
           Slice( Index( Attribute( Base( a ), 'in_' ), Number( 2 ) ), Number( 0 ), Number( 8 ) ),
         ),
         Add(),
-        BitsCast( 8, Number( 10 ) )
+        SizeCast( 8, Number( 10 ) )
       )
     ),
     Assign( 
@@ -190,7 +190,7 @@ def test_index_bits_slicing( do_test ):
           Index( Attribute( Base( a ), 'in_' ), Number( 4 ) )
         ),
         Add(),
-        BitsCast( 16, Number( 1 ) )
+        SizeCast( 16, Number( 1 ) )
       )
     ),
   ] ) }
@@ -271,9 +271,9 @@ def test_if_basic( do_test ):
 
   a._rtlir_test_ref = {
     'if_basic' : CombUpblk( 'if_basic', [ If(
-      Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), BitsCast( 8, Number( 255 ) ) ),
+      Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), SizeCast( 8, Number( 255 ) ) ),
       [ Assign( Attribute( Base( a ), 'out' ), Slice( Attribute( Base( a ), 'in_' ), Number( 8 ), Number( 16 ) ) ) ],
-      [ Assign( Attribute( Base( a ), 'out' ), BitsCast( 8, Number( 0 ) ) ) ]
+      [ Assign( Attribute( Base( a ), 'out' ), SizeCast( 8, Number( 0 ) ) ) ]
     )
   ] ) }
 
