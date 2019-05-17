@@ -48,10 +48,11 @@ class Vector( BaseRTLIRDataType ):
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
-  def __init__( s, name, properties ):
-    assert len( properties ) > 0
+  def __init__( s, name, properties, packed_order ):
+    assert len( packed_order ) > 0
     s.name = name
     s.properties = properties
+    s.packed_order = packed_order
 
   def __eq__( s, u ):
     return type(s) is type(u) and s.name == u.name
@@ -60,21 +61,19 @@ class Struct( BaseRTLIRDataType ):
     return s.name
 
   def get_pack_order( s ):
-    return map( lambda x: x[0], s.properties )
+    return s.packed_order
 
   def get_length( s ):
-    return reduce( lambda s, dtype: s+dtype[1].get_length(), s.properties, 0 )
+    return reduce(lambda s, d: s+d.get_length(), s.properties.values(), 0)
 
   def has_property( s, p ):
-    return p in s.get_pack_order()
+    return p in s.properties
 
   def get_property( s, p ):
-    assert s.has_property( p )
-    for name, prop in s.properties:
-      if name == p: return prop
+    return s.properties[ p ]
 
   def get_all_properties( s ):
-    return s.properties
+    return s.properties.iteritems()
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
@@ -199,10 +198,12 @@ attribute of struct ' + obj.__name__ + '!'
 
     # Generate the property list according to pack order
     properties = []
+    packed_order = []
     for field_name in pack_order:
       assert field_name in all_properties
       properties.append( ( field_name, all_properties[ field_name ] ) )
-    return Struct( obj.__name__, properties )
+      packed_order.append( field_name )
+    return Struct(obj.__name__, dict(properties), packed_order)
   
   else: assert False, str(obj) + ' is not allowed as a field of struct!'
 
