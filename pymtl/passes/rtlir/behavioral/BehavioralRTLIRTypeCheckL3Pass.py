@@ -18,13 +18,10 @@ from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
-
   def __call__( s, m ):
-    """perform type checking on all RTLIR in rtlir_upblks"""
-
+    """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
 
@@ -38,35 +35,25 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
-
   def __init__( s, component, freevars, tmpvars ):
-
     super( BehavioralRTLIRTypeCheckVisitorL3, s ).\
         __init__( component, freevars, tmpvars )
-
     s.type_expect[ 'Attribute' ] = {
       'value':( (Component, Signal),
         'the base of an attribute must be one of: component, signal!' )
     }
 
   def visit_Attribute( s, node ):
-
     if isinstance( node.value.Type, Signal ):
-
       dtype = node.value.Type.get_dtype()
-
       if not isinstance( dtype, Struct ):
         raise PyMTLTypeError(
           s.blk, node.ast, 'attribute base should be a struct signal!'
         )
-
       if not dtype.has_property( node.attr ):
         raise PyMTLTypeError(
           s.blk, node.ast, '{} does not have field {}!'.format(
-            dtype.get_name(), node.attr
-          )
-        )
-
+            dtype.get_name(), node.attr ))
       dtype = dtype.get_property( node.attr )
       if isinstance( node.value.Type, Port ):
         rtype = Port( node.value.Type.get_direction(), dtype )
@@ -75,11 +62,9 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       else:
         raise PyMTLTypeError(
           s.blk, node.ast, 'constant struct is not supported!' )
-
       node.Type = rtype
 
     else:
-
       super( BehavioralRTLIRTypeCheckVisitorL3, s ).visit_Attribute( node )
 
   def visit_StructInst( s, node ):
@@ -94,8 +79,6 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     translate the instantiator to its backend representation like a
     function in SV )
     """
-
-    assert (not Type is bool) and (not issubclass( Type, Bits )),\
+    assert Type is not bool and not issubclass( Type, Bits ),\
         "internal error: StructInst did not get struct Type!"
-
     raise NotImplementedError()

@@ -17,13 +17,10 @@ from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
-
   def __call__( s, m ):
-    """perform type checking on all RTLIR in rtlir_upblks"""
-
+    """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
 
@@ -37,22 +34,13 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
-
   def __init__( s, component, freevars, tmpvars ):
-
-    super( BehavioralRTLIRTypeCheckVisitorL2, s ).\
-        __init__( component, freevars )
-
+    super(BehavioralRTLIRTypeCheckVisitorL2, s).__init__(component, freevars)
     s.freevars = freevars
     s.tmpvars = tmpvars
-
-    s.BinOp_max_nbits =\
-        ( Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor )
-
+    s.BinOp_max_nbits = (Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor)
     s.BinOp_left_nbits = ( ShiftLeft, ShiftRightLogic )
-
     s.type_expect = {}
-
     lhs_types = ( Port, Wire, NoneType )
 
     s.type_expect[ 'Assign' ] = {
@@ -86,19 +74,15 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
   def eval_const_binop( s, l, op, r ):
     """Evaluate ( l op r ) and return the result as an integer."""
-
     assert type( l ) == int or isinstance( l, pymtl.Bits )
     assert type( r ) == int or isinstance( r, pymtl.Bits )
-
     op_dict = {
       Add       : '+',  Sub   : '-',  Mult : '*',  Div  : '/',
       Mod       : '%',  Pow   : '**',
       ShiftLeft : '<<', ShiftRightLogic : '>>',
       BitAnd    : '&',  BitOr : '|',  BitXor : '^',
     }
-
     _op = op_dict[ type( op ) ]
-
     return eval( 'l{_op}r'.format( **locals() ) )
 
   def visit_Assign( s, node ):
@@ -110,7 +94,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       # Creating a temporaray variable
       node.target.Type = rhs_type
       s.tmpvars[ node.target.name ] = rhs_type
-
       node.Type = None
 
     else:
@@ -124,10 +107,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     
     # perform type check as if this node corresponds to
     # target = target op value
-
     l_nbits = target.Type.nbits
     r_nbits = value.Type.nbits
-
     node.Type = None
 
   def visit_If( s, node ):
@@ -137,16 +118,19 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       raise PyMTLTypeError(
         s.blk, node.ast, 'the condition of "if" cannot be converted to bool!'
       )
-
     node.Type = None
 
   def visit_For( s, node ):
-    if isinstance( node.step.Type, Const ) and hasattr( node, '_value' ):
-      if node.step._value == 0:
+    try:
+      step = node.step._value
+      if step == 0:
         raise PyMTLTypeError(
-          s.blk, node.ast, 'the step of for-loop cannot be zero!'
-        )
-
+          s.blk, node.ast, 'the step of for-loop cannot be zero!' )
+    except AttributeError:
+      raise PyMTLTypeError(
+        s.blk, node.ast, 'the step of for-loop must be a constant!' )
+    except Exception:
+      raise
     node.Type = None
 
   def visit_LoopVar( s, node ):
@@ -157,7 +141,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       # This tmpvar is being created. Later when it is used, its type can
       # be read from the tmpvar type environment.
       node.Type = NoneType()
-
     else:
       node.Type = s.tmpvars[ node.name ]
 
@@ -167,14 +150,12 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       raise PyMTLTypeError(
         s.blk, node.ast, 'the condition of "if-exp" cannot be converted to bool!'
       )
-
     # body and orelse must have the same type
     # if node.body.Type != node.orelse.Type:
     if not node.body.Type.get_dtype()( node.orelse.Type.get_dtype() ):
       raise PyMTLTypeError(
         s.blk, node.ast, 'the body and orelse of "if-exp" must have the same type!'
       )
-
     node.Type = node.body.Type
 
   def visit_UnaryOp( s, node ):
@@ -184,61 +165,46 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
           s.blk, node.ast, 'the operand of "unary-expr" cannot be cast to bool!'
         )
       node.Type = Wire( Bool() )
-
     else:
       node.Type = node.operand.Type
 
   def visit_BoolOp( s, node ):
     for value in node.values:
-      if not isinstance( value.Type, Signal ) or\
-         not Bool()( value.Type.get_dtype() ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, "{} of {} cannot be cast into bool!".format(
-            value, value.Type
-          )
-        )
-
+      if not isinstance(value.Type, Signal) or not Bool()(value.Type.get_dtype()):
+        raise PyMTLTypeError( s.blk, node.ast,
+            "{} of {} cannot be cast into bool!".format( value, value.Type ))
     node.Type = Wire( Bool() )
 
   def visit_BinOp( s, node ):
     op = node.op
-
     l_type = node.left.Type.get_dtype()
     r_type = node.right.Type.get_dtype()
-
-    # if not (isinstance( l_type, Vector ) and isinstance( r_type, Vector )):
     if not( Vector(1)( l_type ) and Vector(1)( r_type ) ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, "both sides of operation should be of vector type!"
-      )
+      raise PyMTLTypeError( s.blk, node.ast,
+          "both sides of operation should be of vector type!" )
 
     l_nbits = l_type.get_length()
     r_nbits = r_type.get_length()
 
     # Enforcing Verilog bitwidth inference rules
-
     res_nbits = 0
-
     if isinstance( op, s.BinOp_max_nbits ):
       res_nbits = max( l_nbits, r_nbits )
-
     elif isinstance( op, s.BinOp_left_nbits ):
       res_nbits = l_nbits
-
     else:
       raise Exception( 'RTLIRTypeCheck internal error: unrecognized op!' )
 
+    l_val = getattr( node.left, '_value', None )
+    r_val = getattr( node.right, '_value', None )
     # Both sides are constant expressions
-    if hasattr( node.left, '_value' ) and hasattr( node.right, '_value' ):
-      l_val = node.left._value
-      r_val = node.right._value
+    # if hasattr( node.left, '_value' ) and hasattr( node.right, '_value' ):
+    if l_val is not None and r_val is not None:
       node._value = s.eval_const_binop( l_val, op, r_val )
       node.Type = Const( Vector( res_nbits ) )
-
     # Both sides are constant but the value cannot be determined at elaboration time
     elif isinstance(node.left.Type, Const) and isinstance(node.right.Type, Const):
       node.Type = Const( Vector( res_nbits ) )
-
     else:
       node.Type = Wire( Vector( res_nbits ) )
 

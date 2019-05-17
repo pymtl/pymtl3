@@ -357,7 +357,6 @@ def gen_signal_expr( cur_component, signal ):
   try:
     expr = signal._dsl.full_name
     base_comp = signal
-
   except AttributeError:
     assert hasattr( signal._dsl, 'const' ), '{} is not supported!'.format(signal)
     assert isinstance( signal._dsl.const, int ),\

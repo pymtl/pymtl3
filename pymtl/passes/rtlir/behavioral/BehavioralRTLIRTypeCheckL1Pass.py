@@ -6,6 +6,7 @@
 """Provide L1 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
+import copy
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
@@ -32,7 +33,7 @@ from .errors import PyMTLTypeError
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
   def __call__( s, m ):
-    """perform type checking on all RTLIR in rtlir_upblks"""
+    """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
 
@@ -79,11 +80,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
   def enter( s, blk, rtlir ):
     """ entry point for RTLIR type checking """
     s.blk     = blk
-
     # s.globals contains a dict of the global namespace of the module where
     # blk was defined
     s.globals = blk.__globals__
-
     # s.closure contains the free variables defined in an enclosing scope.
     # Basically this is the model instance s.
     s.closure = {}
@@ -120,7 +119,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
           raise PyMTLTypeError( s.blk, node.ast, exception_msg )
     except PyMTLTypeError:
       raise
-    except:
+    except Exception:
       # This node does not require type checking on child nodes
       pass
 
@@ -178,37 +177,44 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     node.Type = Wire( Vector( nbits ) )
 
   def visit_ZeroExt( s, node ):
-    if not hasattr( node.nbits, '_value' ):
+    try:
+      new_nbits = node.nbits._value
+    except AttributeError:
       raise PyMTLTypeError(
         s.blk, node.ast, '{} is not a constant number!'.format( node.nbits ) )
     child_type = node.value.Type
-    new_nbits = node.nbits._value
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits <= old_nbits:
       raise PyMTLTypeError(
         s.blk, node.ast, '{} is not greater than {}!'.format(new_nbits, old_nbits) )
-    node.Type = child_type.__class__( Vector( new_nbits ) )
+    node.Type = copy.copy( child_type )
+    node.Type.dtype = Vector( new_nbits )
 
   def visit_SignExt( s, node ):
-    if not hasattr( node.nbits, '_value' ):
+    try:
+      new_nbits = node.nbits._value
+    except AttributeError:
       raise PyMTLTypeError(
         s.blk, node.ast, '{} is not a constant number!'.format( node.nbits ) )
     child_type = node.value.Type
-    new_nbits = node.nbits._value
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits <= old_nbits:
       raise PyMTLTypeError(
         s.blk, node.ast, '{} is not greater than {}!'.format(new_nbits, old_nbits) )
-    node.Type = child_type.__class__( Vector( new_nbits ) )
+    node.Type = copy.copy( child_type )
+    node.Type.dtype = Vector( new_nbits )
 
   def visit_SizeCast( s, node ):
     nbits = node.nbits
     Type = node.value.Type
     # We do not check for bitwidth mismatch here because the user should
     # be able to explicitly convert signals/constatns to different bitwidth.
-    node.Type = Wire( Vector( nbits ) )
-    if hasattr( node, '_value' ):
-      node._value = mk_Bits( nbits, node._value )
+    node.Type = copy.copy( Type )
+    node.Type.dtype = Vector( nbits )
+    try:
+      node._value = node.value._value
+    except AttributeError:
+      pass
 
   def visit_Attribute( s, node ):
     # Attribute supported at L1: CurCompAttr
@@ -229,40 +235,34 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
   def visit_Index( s, node ):
     idx = getattr( node.idx, '_value', None )
     if isinstance( node.value.Type, Array ):
-      if ( not idx is None ) and not(
-          0<=idx<=node.value.Type.get_dim_sizes()[0] ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'array index out of range!' )
+      if idx is not None and not (0 <= idx <= node.value.Type.get_dim_sizes()[0]):
+        raise PyMTLTypeError( s.blk, node.ast, 'array index out of range!' )
       # Unpacked array index must be a static constant integer!
       subtype = node.value.Type.get_sub_type()
-      if not isinstance( subtype, ( Port, Wire, Const ) ):
-        if not hasattr( node.value, '_value' ):
-          raise PyMTLTypeError(
-            s.blk, node.ast,\
-'index of unpacked array {} must be a constant integer expression!'.format(
-            node.value ) )
+      if idx is not None and not isinstance( subtype, ( Port, Wire, Const ) ):
+        raise PyMTLTypeError( s.blk, node.ast,
+'index of unpacked array {} must be a constant integer expression!'.format(node.value))
       node.Type = node.value.Type.get_next_dim_type()
 
     elif isinstance( node.value.Type, Signal ):
       dtype = node.value.Type.get_dtype()
       if node.value.Type.is_packed_indexable():
-        if ( not idx is None ) and not( 0<=idx<=dtype.get_length() ):
+        if idx is not None and not (0 <= idx <= dtype.get_length()):
           raise PyMTLTypeError(
             s.blk, node.ast, 'bit selection index out of range!' )
         node.Type = node.value.Type.get_next_dim_type()
       elif isinstance( dtype, Vector ):
-        if ( not idx is None ) and not( 0<=idx<=dtype.get_length() ):
+        if idx is not None and not(0 <= idx <= dtype.get_length()):
           raise PyMTLTypeError(
             s.blk, node.ast, 'bit selection index out of range!' )
         node.Type = Wire( Vector( 1 ) )
       else:
         raise PyMTLTypeError(
-          s.blk, node.ast, 'cannot perform index on {}!'.format(dtype) )
+          s.blk, node.ast, 'cannot perform index on {}!'.format(dtype))
 
     else:
       raise PyMTLTypeError(
-        s.blk, node.ast, 'cannot perform index on {}!'.format(
-          node.value.Type ) )
+        s.blk, node.ast, 'cannot perform index on {}!'.format(node.value.Type))
 
   def visit_Slice( s, node ):
     lower_val = getattr( node.lower, '_value', None )
@@ -271,14 +271,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     if not isinstance( dtype, Vector ):
       raise PyMTLTypeError(
-        s.blk, node.ast, 'cannot perform slicing on type {}!'.format(
-          node.value.Type ) )
+        s.blk, node.ast, 'cannot perform slicing on type {}!'.format(node.value.Type))
     if not lower_val is None and not upper_val is None:
       signal_nbits = dtype.get_length()
       # upper bound must be strictly larger than the lower bound
       if ( lower_val >= upper_val ):
-        raise PyMTLTypeError(
-          s.blk, node.ast,
+        raise PyMTLTypeError( s.blk, node.ast,
           'the upper bound of a slice must be larger than the lower bound!' )
       # upper & lower bound should be less than the bit width of the signal
       if not ( 0 <= lower_val < upper_val <= signal_nbits ):
@@ -288,8 +286,11 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     else:
       # Try to special case the constant-stride part selection
-      if isinstance(node.upper, BinOp) and isinstance(node.upper.op, Add) and\
-         hasattr(node.upper.right, '_value') and s.is_same(node.lower, node.upper.left):
-        node.Type = Wire(Vector(node.upper.right._value))
-      else:
+      try:
+        assert isinstance( node.upper, BinOp )
+        assert isinstance( node.upper.op, Add )
+        nbits = node.upper.right
+        assert s.is_same( node.lower, node.upper.left )
+        node.Type = Wire( Vector( nbits ) )
+      except Exception:
         raise PyMTLTypeError( s.blk, node.ast, 'slice bounds must be constant!' )
