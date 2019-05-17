@@ -35,7 +35,8 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     rtype = ns.rtlir_type
     const_types = rtype.get_consts_packed()
     for const_name, const_rtype in const_types:
-      hasattr(m, const_name)
+      assert hasattr(m, const_name), \
+        "Internal error: {} is not a member of {}".format( const_name, m )
       const_instance = getattr(m, const_name)
       ns.consts.append( ( const_name, const_rtype, const_instance ) )
 
