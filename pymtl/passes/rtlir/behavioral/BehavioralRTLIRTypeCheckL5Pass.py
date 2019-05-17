@@ -44,7 +44,9 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     """
     if isinstance( node.value.Type, Array ) and\
        isinstance( node.value.Type.get_sub_type(), Component ):
-      if not hasattr( node, '_value' ):
+      try:
+        idx = node._value
+      except AttributeError:
         raise PyMTLTypeError( s.blk, node.ast,
           'index of component array must be a static constant expression!' )
     super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Index( node )
