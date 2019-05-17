@@ -87,3 +87,18 @@ def test_NamedObject_list2():
   assert repr(x.lunch[3].rooster.protein) == "s.lunch[3].rooster.protein"
   assert repr(x.dinner.chicken.protein) == "s.dinner.chicken.protein"
   print(repr(x.lunch[3].rooster.protein))
+
+def test_use_init_error():
+
+  class Crocodile(NamedObject):
+
+    def __init__( s ):
+      s.food = Dog()
+      print(s.food.chicken)
+
+  # x = Chicken()
+  # x.elaborate()
+  # y = Crocodile()
+  # y.elaborate()
+  # z = Chicken()
+  # z.elaborate()
