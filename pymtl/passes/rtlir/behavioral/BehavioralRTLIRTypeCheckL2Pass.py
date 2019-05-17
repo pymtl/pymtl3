@@ -115,8 +115,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     # Can the type of condition be cast into bool?
     dtype = node.cond.Type.get_dtype()
     if not Bool()( dtype ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the condition of "if" cannot be converted to bool!'
+      raise PyMTLTypeError( s.blk, node.ast,
+        'the condition of "if" cannot be converted to bool!'
       )
     node.Type = None
 
@@ -124,11 +124,11 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     try:
       step = node.step._value
       if step == 0:
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'the step of for-loop cannot be zero!' )
+        raise PyMTLTypeError( s.blk, node.ast,
+          'the step of for-loop cannot be zero!' )
     except AttributeError:
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the step of for-loop must be a constant!' )
+      raise PyMTLTypeError( s.blk, node.ast,
+        'the step of for-loop must be a constant!' )
     except Exception:
       raise
     node.Type = None
@@ -147,23 +147,20 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
   def visit_IfExp( s, node ):
     # Can the type of condition be cast into bool?
     if not Bool()( node.cond.Type.get_dtype() ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the condition of "if-exp" cannot be converted to bool!'
-      )
+      raise PyMTLTypeError( s.blk, node.ast,
+        'the condition of "if-exp" cannot be converted to bool!' )
     # body and orelse must have the same type
     # if node.body.Type != node.orelse.Type:
     if not node.body.Type.get_dtype()( node.orelse.Type.get_dtype() ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'the body and orelse of "if-exp" must have the same type!'
-      )
+      raise PyMTLTypeError( s.blk, node.ast,
+        'the body and orelse of "if-exp" must have the same type!' )
     node.Type = node.body.Type
 
   def visit_UnaryOp( s, node ):
     if isinstance( node.op, Not ):
       if not Bool()( node.operand.Type.get_dtype() ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'the operand of "unary-expr" cannot be cast to bool!'
-        )
+        raise PyMTLTypeError( s.blk, node.ast,
+          'the operand of "unary-expr" cannot be cast to bool!' )
       node.Type = Wire( Bool() )
     else:
       node.Type = node.operand.Type
@@ -172,7 +169,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     for value in node.values:
       if not isinstance(value.Type, Signal) or not Bool()(value.Type.get_dtype()):
         raise PyMTLTypeError( s.blk, node.ast,
-            "{} of {} cannot be cast into bool!".format( value, value.Type ))
+          "{} of {} cannot be cast into bool!".format( value, value.Type ))
     node.Type = Wire( Bool() )
 
   def visit_BinOp( s, node ):
@@ -181,7 +178,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     r_type = node.right.Type.get_dtype()
     if not( Vector(1)( l_type ) and Vector(1)( r_type ) ):
       raise PyMTLTypeError( s.blk, node.ast,
-          "both sides of operation should be of vector type!" )
+        "both sides of operation should be of vector type!" )
 
     l_nbits = l_type.get_length()
     r_nbits = r_type.get_length()

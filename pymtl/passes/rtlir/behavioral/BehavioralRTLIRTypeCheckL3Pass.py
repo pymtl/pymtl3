@@ -47,12 +47,12 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     if isinstance( node.value.Type, Signal ):
       dtype = node.value.Type.get_dtype()
       if not isinstance( dtype, Struct ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'attribute base should be a struct signal!'
+        raise PyMTLTypeError( s.blk, node.ast,
+          'attribute base should be a struct signal!'
         )
       if not dtype.has_property( node.attr ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, '{} does not have field {}!'.format(
+        raise PyMTLTypeError( s.blk, node.ast,
+          '{} does not have field {}!'.format(
             dtype.get_name(), node.attr ))
       dtype = dtype.get_property( node.attr )
       if isinstance( node.value.Type, Port ):
@@ -60,8 +60,8 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       elif isinstance( node.value.Type, Wire ):
         rtype = Wire( dtype )
       else:
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'constant struct is not supported!' )
+        raise PyMTLTypeError( s.blk, node.ast,
+          'constant struct is not supported!' )
       node.Type = rtype
 
     else:

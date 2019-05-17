@@ -141,11 +141,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     rhs_type = node.value.Type.get_dtype()
     lhs_type = node.target.Type.get_dtype()
     if not lhs_type( rhs_type ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'Unagreeable types {} and {}!'.format(
-          lhs_type, rhs_type
-        )
-      )
+      raise PyMTLTypeError( s.blk, node.ast,
+        'Unagreeable types {} and {}!'.format( lhs_type, rhs_type ) )
     node.Type = None
 
   def visit_FreeVar( s, node ):
@@ -171,8 +168,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     nbits = 0
     for child in node.values:
       if not isinstance(child.Type, Signal):
-        raise PyMTLTypeError(
-          s.blk, node.ast, '{} is not a signal!'.format( child ) )
+        raise PyMTLTypeError( s.blk, node.ast,
+          '{} is not a signal!'.format( child ) )
       nbits += child.Type.get_dtype().get_length()
     node.Type = Wire( Vector( nbits ) )
 
@@ -180,13 +177,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     try:
       new_nbits = node.nbits._value
     except AttributeError:
-      raise PyMTLTypeError(
-        s.blk, node.ast, '{} is not a constant number!'.format( node.nbits ) )
+      raise PyMTLTypeError( s.blk, node.ast,
+        '{} is not a constant number!'.format( node.nbits ) )
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits <= old_nbits:
-      raise PyMTLTypeError(
-        s.blk, node.ast, '{} is not greater than {}!'.format(new_nbits, old_nbits) )
+      raise PyMTLTypeError( s.blk, node.ast,
+        '{} is not greater than {}!'.format(new_nbits, old_nbits) )
     node.Type = copy.copy( child_type )
     node.Type.dtype = Vector( new_nbits )
 
@@ -194,13 +191,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     try:
       new_nbits = node.nbits._value
     except AttributeError:
-      raise PyMTLTypeError(
-        s.blk, node.ast, '{} is not a constant number!'.format( node.nbits ) )
+      raise PyMTLTypeError( s.blk, node.ast,
+        '{} is not a constant number!'.format( node.nbits ) )
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits <= old_nbits:
-      raise PyMTLTypeError(
-        s.blk, node.ast, '{} is not greater than {}!'.format(new_nbits, old_nbits) )
+      raise PyMTLTypeError( s.blk, node.ast,
+        '{} is not greater than {}!'.format(new_nbits, old_nbits) )
     node.Type = copy.copy( child_type )
     node.Type.dtype = Vector( new_nbits )
 
@@ -220,15 +217,11 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     # Attribute supported at L1: CurCompAttr
     if isinstance( node.value, Base ):
       if not node.value.Type.has_property( node.attr ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'type {} does not have attribute {}!'.format(
-            node.value.Type, node.attr
-        ) )
+        raise PyMTLTypeError( s.blk, node.ast,
+          'type {} does not have attribute {}!'.format(node.value.Type, node.attr))
     else:
-      raise PyMTLTypeError(
-        s.blk, node.ast, '{} of type {} is not supported at L1!'.format(
-          node.attr, node.value.Type
-      ) )
+      raise PyMTLTypeError( s.blk, node.ast,
+        '{} of type {} is not supported at L1!'.format(node.attr, node.value.Type))
     # value.attr has the type that is specified by the base
     node.Type = node.value.Type.get_property( node.attr )
 
@@ -248,21 +241,21 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
       dtype = node.value.Type.get_dtype()
       if node.value.Type.is_packed_indexable():
         if idx is not None and not (0 <= idx <= dtype.get_length()):
-          raise PyMTLTypeError(
-            s.blk, node.ast, 'bit selection index out of range!' )
+          raise PyMTLTypeError( s.blk, node.ast,
+            'bit selection index out of range!' )
         node.Type = node.value.Type.get_next_dim_type()
       elif isinstance( dtype, Vector ):
         if idx is not None and not(0 <= idx <= dtype.get_length()):
-          raise PyMTLTypeError(
-            s.blk, node.ast, 'bit selection index out of range!' )
+          raise PyMTLTypeError( s.blk, node.ast,
+            'bit selection index out of range!' )
         node.Type = Wire( Vector( 1 ) )
       else:
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'cannot perform index on {}!'.format(dtype))
+        raise PyMTLTypeError( s.blk, node.ast,
+          'cannot perform index on {}!'.format(dtype))
 
     else:
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'cannot perform index on {}!'.format(node.value.Type))
+      raise PyMTLTypeError( s.blk, node.ast,
+        'cannot perform index on {}!'.format(node.value.Type))
 
   def visit_Slice( s, node ):
     lower_val = getattr( node.lower, '_value', None )
@@ -270,8 +263,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     dtype = node.value.Type.get_dtype()
 
     if not isinstance( dtype, Vector ):
-      raise PyMTLTypeError(
-        s.blk, node.ast, 'cannot perform slicing on type {}!'.format(node.value.Type))
+      raise PyMTLTypeError( s.blk, node.ast,
+        'cannot perform slicing on type {}!'.format(node.value.Type))
     if not lower_val is None and not upper_val is None:
       signal_nbits = dtype.get_length()
       # upper bound must be strictly larger than the lower bound
@@ -280,8 +273,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
           'the upper bound of a slice must be larger than the lower bound!' )
       # upper & lower bound should be less than the bit width of the signal
       if not ( 0 <= lower_val < upper_val <= signal_nbits ):
-        raise PyMTLTypeError(
-          s.blk, node.ast, 'upper/lower bound of slice out of width of signal!' )
+        raise PyMTLTypeError( s.blk, node.ast,
+          'upper/lower bound of slice out of width of signal!' )
       node.Type = Wire( Vector( int( upper_val - lower_val ) ) )
 
     else:

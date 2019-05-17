@@ -66,17 +66,12 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def get_call_obj( s, node ):
     if node.starargs:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'star argument is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node, 'star argument is not supported!')
     if node.kwargs:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'double-star keyword argument is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'double-star keyword argument is not supported!')
     if node.keywords:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'keyword argument is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
     func = node.func
 
     # Find the corresponding object of node.func field
@@ -96,21 +91,18 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           raise NameError
 
       except AttributeError:
-        raise PyMTLSyntaxError(
-          s.blk, node, node.func + ' function call is not supported!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          node.func + ' function call is not supported!' )
       except NameError:
-        raise PyMTLSyntaxError(
-          s.blk, node, node.func.id + ' function is not found!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          node.func.id + ' function is not found!' )
     return obj
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or\
         not isinstance( node.body[0], ast.FunctionDef ):
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Update blocks should have exactly one FuncDef!' 
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Update blocks should have exactly one FuncDef!' )
     ret = s.visit( node.body[0] )
     ret.ast = node
     return ret
@@ -124,9 +116,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     """
     # Check the arguments of the function
     if node.args.args or node.args.vararg or node.args.kwarg:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Update blocks should not have arguments!' 
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Update blocks should not have arguments!' )
 
     # Get the type of upblk from ._upblk_type variable
     ret = eval( s._upblk_type + '( node.name, [] )' )
@@ -137,9 +128,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_Assign( s, node ):
     if len( node.targets ) != 1:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Assigning to multiple targets is not allowed!' 
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Assigning to multiple targets is not allowed!' )
 
     value = s.visit( node.value )
     target = s.visit( node.targets[0] )
@@ -177,21 +167,16 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if issubclass( obj, pymtl.Bits ):
       nbits = obj.nbits
       if (len( node.args ) != 1) or (node.keywords):
-        raise PyMTLSyntaxError(
-          s.blk, node, 'exactly 1 non-keyword argument should be given to Bits!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly 1 non-keyword argument should be given to Bits!' )
       if nbits <= 0:
-        raise PyMTLSyntaxError(
-          s.blk, node, 'bit width should be positive integers!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'bit width should be positive integers!' )
       value = s.visit( node.args[0] )
       if not isinstance( value, Number ):
         ret = value
         ret.ast = node
         return ret
-        # raise PyMTLSyntaxError(
-          # s.blk, node, 'only constant numbers can be instantiated!'
-        # )
       ret = SizeCast( nbits, value )
       ret.ast = node
       return ret
@@ -199,9 +184,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # concat method
     elif obj is pymtl.concat:
       if (len( node.args ) < 1) or (node.keywords):
-        raise PyMTLSyntaxError(
-          s.blk, node, 'at least 1 non-keyword argument should be given to concat!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'at least 1 non-keyword argument should be given to concat!' )
       values = map( lambda c: s.visit(c), node.args )
       ret = Concat( values )
       ret.ast = node
@@ -210,9 +194,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # zext method
     elif obj is pymtl.zext:
       if (len( node.args ) != 1) or (node.keywords):
-        raise PyMTLSyntaxError(
-          s.blk, node, 'exactly 1 non-keyword argument should be given to zext!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly 1 non-keyword argument should be given to zext!' )
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = ZeroExt( nbits, value )
@@ -222,9 +205,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # sext method
     elif obj is pymtl.sext:
       if (len( node.args ) != 1) or (node.keywords):
-        raise PyMTLSyntaxError(
-          s.blk, node, 'exactly 1 non-keyword argument should be given to sext!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly 1 non-keyword argument should be given to sext!' )
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = SignExt( nbits, value )
@@ -233,9 +215,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     else:
       # Only Bits class instantiation is supported at L1
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Expecting Bits object but found ' + obj.__name__
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Expecting Bits object but found ' + obj.__name__ )
 
   def visit_Attribute( s, node ):
     ret = Attribute( s.visit( node.value ), node.attr )
@@ -246,9 +227,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     value = s.visit( node.value )
     if isinstance( node.slice, ast.Slice ):
       if not node.slice.step is None:
-        raise PyMTLSyntaxError(
-          s.blk, node, 'Slice with steps is not supported!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'Slice with steps is not supported!' )
       lower, upper = s.visit( node.slice )
       ret = Slice( value, lower, upper )
       ret.ast = node
@@ -260,9 +240,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       ret.ast = node
       return ret
 
-    raise PyMTLSyntaxError(
-      s.blk, node, 'Illegal subscript ' + node + ' encountered!'
-    )
+    raise PyMTLSyntaxError( s.blk, node,
+      'Illegal subscript ' + node + ' encountered!' )
 
   def visit_Slice( s, node ):
     return ( s.visit( node.lower ), s.visit( node.upper ) )
