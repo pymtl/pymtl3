@@ -192,18 +192,21 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     else:
       raise Exception( 'RTLIRTypeCheck internal error: unrecognized op!' )
 
-    l_val = getattr( node.left, '_value', None )
-    r_val = getattr( node.right, '_value', None )
-    # Both sides are constant expressions
-    # if hasattr( node.left, '_value' ) and hasattr( node.right, '_value' ):
-    if l_val is not None and r_val is not None:
+    try:
+      # Both sides are constant expressions
+      l_val = node.left._value
+      r_val = node.rigth._value
       node._value = s.eval_const_binop( l_val, op, r_val )
       node.Type = Const( Vector( res_nbits ) )
-    # Both sides are constant but the value cannot be determined at elaboration time
-    elif isinstance(node.left.Type, Const) and isinstance(node.right.Type, Const):
-      node.Type = Const( Vector( res_nbits ) )
-    else:
-      node.Type = Wire( Vector( res_nbits ) )
+    except AttributeError:
+      # Both sides are constant but the value cannot be determined statically
+      if isinstance(node.left.Type, Const) and isinstance(node.right.Type, Const):
+        node.Type = Const( Vector( res_nbits ) )
+      # Variable
+      else:
+        node.Type = Wire( Vector( res_nbits ) )
+    except Exception:
+      raise
 
   def visit_Compare( s, node ):
     node.Type = Wire( Bool() )

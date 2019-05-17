@@ -56,12 +56,12 @@ def gen_rtlir_translator( structural_level, behavioral_level ):
   assert MinStructuralRTLIRLevel <= structural_level <= MaxStructuralRTLIRLevel
   assert MinBehavioralRTLIRLevel <= behavioral_level <= MaxBehavioralRTLIRLevel
 
-  structural_tplt =\
-    'from pymtl.passes.rtlir.translation.structural.StructuralTranslatorL{0}\
+  structural_tplt = \
+    'from pymtl.passes.rtlir.translation.structural.StructuralTranslatorL{0} \
        import StructuralTranslatorL{0} as _StructuralTranslator'
 
-  behavioral_tplt =\
-    'from pymtl.passes.rtlir.translation.behavioral.BehavioralTranslatorL{0}\
+  behavioral_tplt = \
+    'from pymtl.passes.rtlir.translation.behavioral.BehavioralTranslatorL{0} \
        import BehavioralTranslatorL{0} as _BehavioralTranslator'
 
   exec(structural_tplt.format( structural_level ), globals(), locals())

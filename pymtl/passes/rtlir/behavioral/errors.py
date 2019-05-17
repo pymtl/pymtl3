@@ -23,13 +23,13 @@ class PyMTLSyntaxError( Exception ):
       line += ast.lineno - 1
       col = ast.col_offset
       code_line = inspect.getsourcelines( blk )[0][ ast.lineno-1 ]
-      code = '\n  ' + code_line.strip() +\
+      code = '\n  ' + code_line.strip() + \
         '\n  '+ ' ' * (col-len(code_line)+len(code_line.lstrip())) + '^'
     except AttributeError:
       # The given AST node is not expr nor stmt
       pass
     return super( PyMTLSyntaxError, self ).__init__(
-      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}".\
+      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() ) 
     )
 
@@ -45,12 +45,12 @@ class PyMTLTypeError( Exception ):
       line += ast.lineno - 1
       col = ast.col_offset
       code_line = inspect.getsourcelines( blk )[0][ ast.lineno-1 ]
-      code = '\n  ' + code_line.strip() +\
+      code = '\n  ' + code_line.strip() + \
         '\n  '+ ' ' * (col-len(code_line)+len(code_line.lstrip())) + '^'
     except AttributeError:
       # The given AST node is not expr nor stmt
       pass
     return super( PyMTLTypeError, self ).__init__(
-      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}".\
+      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() ) 
     )

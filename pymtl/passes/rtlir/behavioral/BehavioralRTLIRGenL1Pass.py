@@ -34,7 +34,7 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] =\
+        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
           visitor.enter( blk, m.get_update_block_ast( blk ) )
 
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
@@ -99,7 +99,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return obj
 
   def visit_Module( s, node ):
-    if len( node.body ) != 1 or\
+    if len( node.body ) != 1 or \
         not isinstance( node.body[0], ast.FunctionDef ):
       raise PyMTLSyntaxError( s.blk, node,
         'Update blocks should have exactly one FuncDef!' )
@@ -147,7 +147,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     obj = s.get_call_obj( node )
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
-      assert len( node.args ) == 1,\
+      assert len( node.args ) == 1, \
         'copy method {} takes exactly 1 argument!'.format( obj )
       ret = s.visit( node.args[0] )
       ret.ast = node
@@ -260,7 +260,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       obj = s.closure[ node.id ]
       if isinstance( obj, pymtl.Component ):
         # Component freevars are an L1 thing.
-        assert obj is s.component,\
+        assert obj is s.component, \
             "Component {} is not a sub-component of {}!".format(obj, s.component)
         ret = Base( obj )
       else:

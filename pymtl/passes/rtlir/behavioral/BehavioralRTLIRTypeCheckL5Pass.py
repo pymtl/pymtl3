@@ -34,7 +34,7 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
   def __init__( s, component, freevars, tmpvars ):
-    super( BehavioralRTLIRTypeCheckVisitorL5, s ).\
+    super( BehavioralRTLIRTypeCheckVisitorL5, s ). \
         __init__( component, freevars, tmpvars )
 
   def visit_Index( s, node ):
@@ -42,7 +42,7 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     
     Only static constant expressions can be the index of component arrays
     """
-    if isinstance( node.value.Type, Array ) and\
+    if isinstance( node.value.Type, Array ) and \
        isinstance( node.value.Type.get_sub_type(), Component ):
       try:
         idx = node._value
@@ -63,7 +63,7 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
       _cleanup_level = False
 
     # Attributes of subcomponent can only access ports
-    if isinstance( node.value.Type, Component ) and\
+    if isinstance( node.value.Type, Component ) and \
        not node.value.Type.get_name() == s.component.__class__.__name__:
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,

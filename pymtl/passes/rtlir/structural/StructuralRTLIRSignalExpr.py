@@ -34,8 +34,8 @@ class _Index( BaseSignalExpr ):
     s.base = index_base
 
   def __eq__( s, other ):
-    return super( _Index, s ).__eq__( other ) and\
-           s.index == other.index and\
+    return super( _Index, s ).__eq__( other ) and \
+           s.index == other.index and \
            s.base == other.base
 
   def get_index( s ):
@@ -47,7 +47,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_port_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and\
+    if isinstance(base_rtype, Array) and \
        isinstance(base_rtype.get_sub_type(), Port):
       return PortIndex
     else:
@@ -56,7 +56,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_wire_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and\
+    if isinstance(base_rtype, Array) and \
        isinstance(base_rtype.get_sub_type(), Wire):
       return WireIndex
     else:
@@ -65,7 +65,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_const_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and\
+    if isinstance(base_rtype, Array) and \
        isinstance(base_rtype.get_sub_type(), Const):
       return ConstIndex
     else:
@@ -74,7 +74,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_ifc_view_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and\
+    if isinstance(base_rtype, Array) and \
        isinstance(base_rtype.get_sub_type(), InterfaceView):
       return InterfaceViewIndex
     else:
@@ -83,7 +83,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_component_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and\
+    if isinstance(base_rtype, Array) and \
        isinstance(base_rtype.get_sub_type(), Component):
       return ComponentIndex
     else:
@@ -92,7 +92,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_packed_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, (Port, Wire)) and\
+    if isinstance(base_rtype, (Port, Wire)) and \
        isinstance(base_rtype.get_dtype(), PackedArray):
       return PackedIndex
     else:
@@ -101,7 +101,7 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_bit_selection( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, (Port, Wire)) and\
+    if isinstance(base_rtype, (Port, Wire)) and \
        isinstance(base_rtype.get_dtype(), Vector):
       return BitSelection
     else:
@@ -128,8 +128,8 @@ class _Slice( BaseSignalExpr ):
     s.slice = ( start, stop )
 
   def __eq__( s, other ):
-    return super( _Slice, s ).__eq__( other ) and\
-           s.start == other.start and s.stop == other.stop and\
+    return super( _Slice, s ).__eq__( other ) and \
+           s.start == other.start and s.stop == other.stop and \
            s.slice_base == other.slice_base
 
   def get_slice( s ):
@@ -141,8 +141,8 @@ class _Slice( BaseSignalExpr ):
   @staticmethod
   def is_part_selection( slice_base, start, stop ):
     base_rtype = slice_base.get_rtype()
-    if isinstance(base_rtype, (Port, Wire)) and\
-       isinstance(base_rtype.get_dtype(), Vector) and\
+    if isinstance(base_rtype, (Port, Wire)) and \
+       isinstance(base_rtype.get_dtype(), Vector) and \
        isinstance(start, int) and isinstance(stop, int):
       return PartSelection
     else:
@@ -155,8 +155,8 @@ class _Attribute( BaseSignalExpr ):
     s.base = attr_base
 
   def __eq__( s, other ):
-    return super( _Attribute, s ).__eq__( other ) and\
-           s.attr == other.attr and\
+    return super( _Attribute, s ).__eq__( other ) and \
+           s.attr == other.attr and \
            s.attr_base == other.attr_base
 
   def get_base( s ):
@@ -176,7 +176,7 @@ class _Attribute( BaseSignalExpr ):
   @staticmethod
   def is_subcomp_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
-    if isinstance(attr_base, CurComp) and\
+    if isinstance(attr_base, CurComp) and \
        isinstance(base_rtype, Component) and base_rtype.has_property(attr):
       return SubCompAttr
     else:
@@ -194,7 +194,7 @@ class _Attribute( BaseSignalExpr ):
   def is_struct_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
     dtype = base_rtype.get_dtype()
-    if isinstance(base_rtype, Signal) and isinstance(dtype, Struct) and\
+    if isinstance(base_rtype, Signal) and isinstance(dtype, Struct) and \
        dtype.has_property(attr):
       return StructAttr
     else:
@@ -218,7 +218,7 @@ class CurComp( BaseSignalExpr ):
     s.comp_id = comp_id
 
   def __eq__( s, other ):
-    return super( CurComp, s ).__eq__( other ) and\
+    return super( CurComp, s ).__eq__( other ) and \
            s.comp_id == other.comp_id
 
   def get_component_id( s ):
@@ -347,7 +347,7 @@ def gen_signal_expr( cur_component, signal ):
 
   def get_cls_inst( func_list, cur_node, ops ):
     classes = map( lambda f: f( cur_node, *ops ), func_list )
-    assert reduce( lambda r, c: r + (1 if c else 0), classes, 0 ) == 1,\
+    assert reduce( lambda r, c: r + (1 if c else 0), classes, 0 ) == 1, \
       'internal error: not unique class {}!'.format( classes )
     for cls in classes:
       if cls:
@@ -359,7 +359,7 @@ def gen_signal_expr( cur_component, signal ):
     base_comp = signal
   except AttributeError:
     assert hasattr( signal._dsl, 'const' ), '{} is not supported!'.format(signal)
-    assert isinstance( signal._dsl.const, int ),\
+    assert isinstance( signal._dsl.const, int ), \
         '{} is not an integer const!'.format( signal._dsl.const )
     return ConstInstance( signal, signal._dsl.const )
 

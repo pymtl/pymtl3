@@ -110,7 +110,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       _u, _v = gen_signal_expr( m, u ), gen_signal_expr( m, v )
       for idx, ( ( wr, rd ), visited ) in enumerate( m_connections ):
 
-        if not visited and ( ( s.contains( u, wr ) and s.contains( v, rd ) ) or\
+        if not visited and ( ( s.contains( u, wr ) and s.contains( v, rd ) ) or \
            ( s.contains( u, rd ) and s.contains( v, wr ) ) ):
           connections.append( ( wr, rd ) )
           m_connections[idx] = ( m_connections[idx][0], True )

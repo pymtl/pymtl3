@@ -36,7 +36,7 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def __init__( s, component, freevars, tmpvars ):
-    super( BehavioralRTLIRTypeCheckVisitorL3, s ).\
+    super( BehavioralRTLIRTypeCheckVisitorL3, s ). \
         __init__( component, freevars, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (Component, Signal),
@@ -79,6 +79,6 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     translate the instantiator to its backend representation like a
     function in SV )
     """
-    assert Type is not bool and not issubclass( Type, Bits ),\
+    assert Type is not bool and not issubclass( Type, Bits ), \
         "internal error: StructInst did not get struct Type!"
     raise NotImplementedError()

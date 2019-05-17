@@ -166,7 +166,7 @@ class Const( Signal ):
 class Interface( BaseRTLIRType ):
   """Interface RTLIR instance type."""
   def __init__( s, name, views = [] ):
-    assert s._check_views( views ),\
+    assert s._check_views( views ), \
         '{} does not belong to interface {}!'.format( views, name )
     s.name = name
     s.views = views
@@ -219,9 +219,9 @@ class Interface( BaseRTLIRType ):
 
   def get_all_wires_packed( s ):
     return filter(
-      lambda id__t:\
-        ( isinstance( id__t[1], Wire ) and not id__t[1]._is_unpacked() ) or\
-        ( isinstance( id__t[1], Array ) and isinstance( id__t[1].get_sub_type(), Wire )\
+      lambda id__t: \
+        ( isinstance( id__t[1], Wire ) and not id__t[1]._is_unpacked() ) or \
+        ( isinstance( id__t[1], Array ) and isinstance( id__t[1].get_sub_type(), Wire ) \
           and not id__t[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -295,9 +295,9 @@ class InterfaceView( BaseRTLIRType ):
 
   def get_all_ports_packed( s ):
     return filter(
-      lambda id__t2:\
-        ( isinstance( id__t2[1], Port ) and not id__t2[1]._is_unpacked() ) or\
-        ( isinstance( id__t2[1], Array ) and isinstance( id__t2[1].get_sub_type(), Port )\
+      lambda id__t2: \
+        ( isinstance( id__t2[1], Port ) and not id__t2[1]._is_unpacked() ) or \
+        ( isinstance( id__t2[1], Array ) and isinstance( id__t2[1].get_sub_type(), Port ) \
           and not id__t2[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -316,7 +316,7 @@ class Component( BaseRTLIRType ):
     # The non-keyword parameters are indexed by an empty string
     ret = { '' : obj._dsl.args }
     default_len = len(s.argspec.args[1:])-len(ret[''])
-    assert default_len <= len( defaults ),\
+    assert default_len <= len( defaults ), \
       'varargs are not allowed at construct() of {}!'.format( obj )
     if not default_len == 0:
       ret[''] = ret[''] + defaults[-default_len:]
@@ -359,9 +359,9 @@ class Component( BaseRTLIRType ):
 
   def get_ports_packed( s ):
     return filter(
-      lambda id__t4:\
-        ( isinstance( id__t4[1], Port ) and not id__t4[1]._is_unpacked() ) or\
-        ( isinstance( id__t4[1], Array ) and isinstance( id__t4[1].get_sub_type(), Port )\
+      lambda id__t4: \
+        ( isinstance( id__t4[1], Port ) and not id__t4[1]._is_unpacked() ) or \
+        ( isinstance( id__t4[1], Array ) and isinstance( id__t4[1].get_sub_type(), Port ) \
           and not id__t4[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -374,9 +374,9 @@ class Component( BaseRTLIRType ):
 
   def get_wires_packed( s ):
     return filter(
-      lambda id__t5:\
-        ( isinstance( id__t5[1], Wire ) and not id__t5[1]._is_unpacked() ) or\
-        ( isinstance( id__t5[1], Array ) and isinstance( id__t5[1].get_sub_type(), Wire )\
+      lambda id__t5: \
+        ( isinstance( id__t5[1], Wire ) and not id__t5[1]._is_unpacked() ) or \
+        ( isinstance( id__t5[1], Array ) and isinstance( id__t5[1].get_sub_type(), Wire ) \
           and not id__t5[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -390,9 +390,9 @@ class Component( BaseRTLIRType ):
 
   def get_consts_packed( s ):
     return filter(
-      lambda id__t6:\
-        ( isinstance( id__t6[1], Const ) and not id__t6[1]._is_unpacked() ) or\
-        ( isinstance( id__t6[1], Array ) and isinstance( id__t6[1].get_sub_type(), Const )\
+      lambda id__t6: \
+        ( isinstance( id__t6[1], Const ) and not id__t6[1]._is_unpacked() ) or \
+        ( isinstance( id__t6[1], Array ) and isinstance( id__t6[1].get_sub_type(), Const ) \
           and not id__t6[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -405,9 +405,9 @@ class Component( BaseRTLIRType ):
 
   def get_ifc_views_packed( s ):
     return filter(
-      lambda id__t7:\
-        ( isinstance( id__t7[1], InterfaceView ) and not id__t7[1]._is_unpacked() ) or\
-        ( isinstance( id__t7[1], Array ) and isinstance( id__t7[1].get_sub_type(),InterfaceView )\
+      lambda id__t7: \
+        ( isinstance( id__t7[1], InterfaceView ) and not id__t7[1]._is_unpacked() ) or \
+        ( isinstance( id__t7[1], Array ) and isinstance( id__t7[1].get_sub_type(),InterfaceView ) \
           and not id__t7[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -426,9 +426,9 @@ class Component( BaseRTLIRType ):
 
   def get_subcomps_packed( s ):
     return filter(
-      lambda id__t9:\
-        ( isinstance( id__t9[1], Component ) and not id__t9[1]._is_unpacked() ) or\
-        ( isinstance( id__t9[1], Array ) and isinstance( id__t9[1].get_sub_type(), Component )\
+      lambda id__t9: \
+        ( isinstance( id__t9[1], Component ) and not id__t9[1]._is_unpacked() ) or \
+        ( isinstance( id__t9[1], Array ) and isinstance( id__t9[1].get_sub_type(), Component ) \
           and not id__t9[1]._is_unpacked() ),
       s.properties.iteritems()
     )
@@ -490,8 +490,8 @@ def get_rtlir( obj ):
   if isinstance( obj, list ):
     assert len( obj ) > 0
     ref_type = get_rtlir( obj[0] )
-    assert\
-      reduce( lambda res,i: res and (get_rtlir(i)==ref_type),obj ),\
+    assert \
+      reduce( lambda res,i: res and (get_rtlir(i)==ref_type),obj ), \
       'all elements of array {} must have the same type {}!'.format(
         obj, ref_type )
     dim_sizes = []
@@ -525,7 +525,7 @@ def get_rtlir( obj ):
       _obj_type = get_rtlir( _obj )
       properties[ _id ] = _obj_type
       if not _is_of_type( _obj_type, Port ):
-        assert False,\
+        assert False, \
           "RTLIR Interface type can only include Port objects!"
       if isinstance( _obj_type, Array ):
         add_packed_instances( _id, _obj_type, properties )

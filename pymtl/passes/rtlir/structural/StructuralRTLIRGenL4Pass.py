@@ -53,8 +53,8 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
   # Override
   def collect_connections( s, m ):
     ns = s.top._pass_structural_rtlir_gen
-    return super( StructuralRTLIRGenL4Pass, s ).collect_connections( m )+\
-           map( lambda x: ( x, False ), ns.connections_self_child[m] )+\
+    return super( StructuralRTLIRGenL4Pass, s ).collect_connections( m )+ \
+           map( lambda x: ( x, False ), ns.connections_self_child[m] )+ \
            map( lambda x: ( x, False ), ns.connections_child_child[m] )
 
   # Override

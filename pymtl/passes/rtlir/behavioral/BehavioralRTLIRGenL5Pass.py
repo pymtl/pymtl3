@@ -27,7 +27,7 @@ class BehavioralRTLIRGenL5Pass( BasePass ):
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] =\
+        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
           visitor.enter( blk, m.get_update_block_ast( blk ) )
 
 class BehavioralRTLIRGeneratorL5( BehavioralRTLIRGeneratorL4 ):

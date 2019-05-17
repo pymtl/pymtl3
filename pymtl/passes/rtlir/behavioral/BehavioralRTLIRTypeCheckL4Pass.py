@@ -34,7 +34,7 @@ class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
   def __init__( s, component, freevars, tmpvars ):
-    super( BehavioralRTLIRTypeCheckVisitorL4, s ).\
+    super( BehavioralRTLIRTypeCheckVisitorL4, s ). \
         __init__( component, freevars, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (Component, Signal, InterfaceView),
@@ -51,7 +51,7 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
       super( BehavioralRTLIRTypeCheckVisitorL4, s ).visit_Attribute( node )
 
   def visit_Index( s, node ):
-    if isinstance( node.value.Type, Array ) and\
+    if isinstance( node.value.Type, Array ) and \
        isinstance( node.value.Type.get_sub_type(), InterfaceView ):
       try:
         # if no exception is raised, L1 visit_Index will generate type for `node`
