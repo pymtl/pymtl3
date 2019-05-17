@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
