@@ -35,9 +35,8 @@ def generate_guard_decorator_ifcs( name ):
 
   def guard_decorator( guard=lambda : True ):
     def real_guard( method ):
-      setattr( method, "_guard_method_" + name, guard )
-      setattr( method, "_guard_callee_ifc_type_" + name, GuardedCalleeIfc )
-
+      method._guard_method = guard
+      method._guard_callee_ifc_type = GuardedCalleeIfc
       return method
     return real_guard
 
@@ -50,23 +49,23 @@ def generate_guard_decorator_ifcs( name ):
 class ComponentLevel6( ComponentLevel5 ):
 
   def _handle_guard_methods( s ):
-    
+
     # The following code handles guarded methods
     def bind_method( method ):
       def _method( *args, **kwargs ):
         return method( s, *args, **kwargs )
       return _method
 
-    for x in dir( s ):
-      method = getattr( s, x )
-      # We identify guarded methods here
-      for y in dir( method ):
-        if y.startswith( "_guard_method" ):
-          guard = getattr( method, y )
-          # This getattr will get the bounded method from ComponentLevel4
-          ifc_type = getattr( method, "_guard_callee_ifc_type_" + y[14:] )
-          ifc = ifc_type( method, bind_method( guard ) )
-          setattr( s, x, ifc )
+    base_dir = set(dir(ComponentLevel6))
+    s_dir  = dir(s)
+    for x in s_dir:
+      if x not in base_dir:
+        method = getattr( s, x )
+        # We identify guarded methods here
+        if hasattr( method, "_guard_method" ):
+          guard    = method._guard_method
+          ifc_type = method._guard_callee_ifc_type
+          setattr( s, x, ifc_type( method, bind_method( guard ) ) )
 
   # Override
   def _construct( s ):

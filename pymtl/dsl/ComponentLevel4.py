@@ -29,9 +29,21 @@ class ComponentLevel4( ComponentLevel3 ):
     # We don't want to get different objects everytime when we get a
     # method object from an instance. We do this by bounding the method
     # object to instance.
-    for name in dir(cls):
-      if name not in dir(ComponentLevel4) and not name.startswith("_") \
-                                          and name != "line_trace":
+
+    # Shunning: After some profiling I found that getting dir(xxx) is
+    # really slow so we would really like to avoid redundant calls to dir.
+    # For example the previous code looks like this, which is REALLY bad.
+    #
+    # for name in dir(cls):
+    #   if name in dir(ComponentLevel4)
+    #
+    # This means dir(ComponentLevel4) is called unnecessarily a huge
+    # number of times.
+
+    base_dir = set(dir(ComponentLevel4))
+    cls_dir  = dir(cls)
+    for name in cls_dir:
+      if not name.startswith("_") and name not in base_dir and name != "line_trace":
         field = getattr( inst, name )
         if callable( field ):
           setattr( inst, name, field )
