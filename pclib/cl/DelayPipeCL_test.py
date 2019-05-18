@@ -7,7 +7,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-
 import pytest
 
 from pclib.test import TestSinkCL, TestSrcCL, mk_test_case_table
