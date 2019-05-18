@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs import guarded_ifc, GuardedCallerIfc
+from pclib.ifcs import GuardedCallerIfc, guarded_ifc
 from pymtl import *
 
 # This delay pipe is for cycle-level performance modeling purpose
