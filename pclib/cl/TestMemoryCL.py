@@ -13,11 +13,11 @@ Date   : Mar 12, 2018
 
 from __future__ import absolute_import, division, print_function
 
-from collections import deque
-
 from pclib.ifcs import MemMsgType, mk_mem_msg
 from pclib.ifcs.GuardedIfc import *
 from pymtl import *
+
+from .DelayPipeCL import DelayPipeDeqCL
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
@@ -128,14 +128,8 @@ class TestMemoryCL( Component ):
   def write_mem( s, addr, data ):
     return s.mem.write_mem( addr, data )
 
-  # Actual method
-
-  @guarded_ifc( lambda s, x: len(s.req_qs[x]) < s.req_qs[x].maxlen )
-  def recv( s, msg, x ):
-    s.req_qs[x].appendleft( msg )
-
   # Actual stuff
-  def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], mem_nbytes=2**20 ):
+  def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], latency=1, mem_nbytes=2**20 ):
 
     # Local constants
 
@@ -147,28 +141,23 @@ class TestMemoryCL( Component ):
 
     # Interface
 
-    from functools import partial
-
-    s.recv = [ GuardedCalleeIfc( partial( s.recv.method, x=i ),
-                                 partial( s.recv.rdy, x=i ) ) for i in range(nports) ]
-
-    s.send = [ GuardedCallerIfc() for i in xrange(nports) ]
+    s.recv = [ GuardedCalleeIfc() for i in range(nports) ]
+    s.send = [ GuardedCallerIfc() for i in range(nports) ]
 
     # Queues
 
-    s.req_qs  = [ deque(maxlen=2) for i in xrange(nports) ]
-
+    s.req_qs = [ DelayPipeDeqCL( latency )( enq = s.recv[i] ) for i in range(nports) ]
 
     @s.update
     def up_mem():
 
       for i in range(s.nports):
 
-        if s.req_qs[i] and s.send[i].rdy():
+        if s.req_qs[i].deq.rdy() and s.send[i].rdy():
 
           # Dequeue memory request message
 
-          req = s.req_qs[i].pop()
+          req = s.req_qs[i].deq()
           len_ = int(req.len)
           if not len_: len_ = req_classes[i].data_nbits >> 3
 
@@ -188,14 +177,9 @@ class TestMemoryCL( Component ):
 
           s.send[i]( resp )
 
-    for i in range(s.nports):
-      s.add_constraints(
-        U(up_mem) < M(s.recv[i]), # execute mem block before receiving request
-      )
-
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return ""
+    return "|".join( [ x.line_trace() for x in s.req_qs ] )

@@ -66,36 +66,27 @@ def test_pipe_Bits():
 
 class TestHarness( Component ):
 
-  def construct( s, MsgType, qsize, src_msgs, sink_msgs, src_initial, 
-                 src_interval, sink_initial, sink_interval, 
+  def construct( s, MsgType, qsize, src_msgs, sink_msgs, src_initial,
+                 src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
 
     s.src  = TestSrcCL  ( src_msgs,  src_initial,  src_interval )
     s.dut  = NormalQueueRTL( MsgType, qsize )
-    s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval, 
+    s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval,
                           arrival_time )
-    
-    s.connect( s.src.send,    s.dut.enq       )
-    s.connect( s.dut.deq.msg, s.sink.recv.msg )
 
-    @s.update
-    def up_deq_send():
-      if s.dut.deq.rdy and s.sink.recv.rdy:
-        s.dut.deq.en   = Bits1( 1 )
-        s.sink.recv.en = Bits1( 1 )
-      else:
-        s.dut.deq.en   = Bits1( 0 )
-        s.sink.recv.en = Bits1( 0 )
+    s.connect( s.src.send, s.dut.enq   )
+    s.connect( s.dut.deq,  s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} ({}) {}".format( 
+    return "{} ({}) {}".format(
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
-# run_sim 
+# run_sim
 #-------------------------------------------------------------------------
 
 def run_sim( th, max_cycles=100 ):
@@ -113,7 +104,7 @@ def run_sim( th, max_cycles=100 ):
     th.tick()
     ncycles += 1
     print("{:2}:{}".format( ncycles, th.line_trace() ))
-  
+
   # Check timeout
 
   assert ncycles < max_cycles

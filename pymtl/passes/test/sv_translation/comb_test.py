@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
-from pclib.rtl import Adder, BypassQueue1RTL, Mux, Subtractor
+from pclib.rtl import Adder, Mux, Subtractor
+from pclib.rtl.valrdy_queues import BypassQueue1RTL
 from pymtl import *
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
 

@@ -32,7 +32,7 @@ class TestHarness( Component ):
 
     s.srcs = [ TestSrcCL( src_msgs[i], src_initial, src_interval )
                 for i in xrange(nports) ]
-    s.mem  = cls( nports, [mk_mem_msg(8,32,32)]*nports )
+    s.mem  = cls( nports, [mk_mem_msg(8,32,32)]*nports, mem_latency )
     s.sinks = [ TestSinkCL( sink_msgs[i], sink_initial, sink_interval,
                             arrival_time ) for i in xrange(nports) ]
 
@@ -48,8 +48,9 @@ class TestHarness( Component ):
     return done
 
   def line_trace( s ):
-    return "{} >>>    >>> {}".format(
+    return "{} >>>  {}  >>> {}".format(
       "|".join( [ x.line_trace() for x in s.srcs ] ),
+      s.mem.line_trace(),
       "|".join( [ x.line_trace() for x in s.sinks ] ) )
 
 #-------------------------------------------------------------------------

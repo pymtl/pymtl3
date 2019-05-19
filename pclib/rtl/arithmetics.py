@@ -35,13 +35,13 @@ class LShifter( Component ):
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
     s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
-    s.out   = OutPort( Type ) 
+    s.out   = OutPort( Type )
 
     @s.update
     def up_lshifter():
       s.out = s.in_ << s.shamt
 
-# Incrementer 
+# Incrementer
 
 class Incrementer( Component ):
 
@@ -53,7 +53,7 @@ class Incrementer( Component ):
     def up_incrementer():
       s.out = s.in_ + Type(amount)
 
-# Adder 
+# Adder
 
 class Adder( Component ):
 
@@ -65,6 +65,19 @@ class Adder( Component ):
     @s.update
     def up_adder():
       s.out = s.in0 + s.in1
+
+# And
+
+class And( Component ):
+
+  def construct( s, Type ):
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( Type )
+
+    @s.update
+    def up_and():
+      s.out = s.in0 & s.in1
 
 # Subtractor
 
@@ -79,7 +92,7 @@ class Subtractor( Component ):
     def up_subtractor():
       s.out = s.in0 - s.in1
 
-# ZeroComparator 
+# ZeroComparator
 
 class ZeroComp( Component ):
 

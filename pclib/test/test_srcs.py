@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs import GuardedCallerIfc, RecvCL2SendRTL, RecvRTL2SendCL, SendIfcRTL
+from pclib.ifcs import GuardedCallerIfc, RecvCL2SendRTL, SendIfcRTL
 from pymtl import *
 
 #-------------------------------------------------------------------------
