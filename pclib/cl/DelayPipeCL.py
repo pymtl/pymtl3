@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs import GuardedCallerIfc, guarded_ifc
+from pclib.ifcs import GuardedCalleeIfc, GuardedCallerIfc, guarded_ifc
 from pymtl import *
 
 # This delay pipe is for cycle-level performance modeling purpose
@@ -69,31 +69,25 @@ class DelayPipeDeqCL( Component ):
 
 class DelayPipeSendCL( Component ):
 
-  @guarded_ifc( lambda s: s.pipeline[0] is None )
-  def enq( s, msg ):
+  def enq_pipe( s, msg ):
     assert s.pipeline[0] is None
     s.pipeline[0] = msg
 
-  def construct( s, delay=5, trace_len=0 ):
+  def enq_rdy_pipe( s ):
+    return s.pipeline[0] is None
+
+  def construct( s, delay=5 ):
 
     s.send = GuardedCallerIfc()
 
     s.delay = delay
-    s.trace_len = trace_len
 
-    if delay == 0: # This is essentially a bypass queue
-      s.pipeline = [ None ]
+    if delay == 0: # combinational behavior
+      s.enq = GuardedCalleeIfc()
+      s.connect( s.enq, s.send )
 
-      @s.update
-      def up_no_delay():
-        if s.pipeline[0] is not None and s.send.rdy():
-          s.send( s.pipeline[0] )
-          s.pipeline[0] = None
-
-      s.add_constraints(
-        M(s.enq) < U(up_no_delay),  # bypass behavior
-      )
     else: # delay >= 1, pipe behavior
+      s.enq = GuardedCalleeIfc( s.enq_pipe, s.enq_rdy_pipe )
       s.pipeline = deque( [None]*delay, maxlen=delay )
 
       @s.update
@@ -111,4 +105,6 @@ class DelayPipeSendCL( Component ):
       )
 
   def line_trace( s ):
-    return "[{}]".format( "".join( [ " " if x is None else "*" for x in s.pipeline ] ) )
+    if s.delay > 0:
+      return "[{}]".format( "".join( [ " " if x is None else "*" for x in s.pipeline ] ) )
+    return ""
