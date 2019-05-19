@@ -56,14 +56,14 @@ In file {}:{} in {}
 When constructing instance {} of class \"{}\" in the hierarchy:
 
 {} {}
-^^^ Block \"{}\" tries to access field \"{}\" of object \"{}\" (class \"{}\"),
+^^^ Field \"{}\" of object \"{}\" (class \"{}\") is accessed in block \"{}\",
     but {} does not have field \"{}\".
 
 Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
       filepath, error_lineno, blk.__name__,
       repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
-      blk.__name__, field, repr(obj), obj.__class__.__name__,
+      field, repr(obj), obj.__class__.__name__, blk.__name__,
       repr(obj), field, error_lineno ) )
 
 class UpblkFuncSameNameError( Exception ):
