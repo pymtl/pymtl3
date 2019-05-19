@@ -66,9 +66,9 @@ class Adder( Component ):
     def up_adder():
       s.out = s.in0 + s.in1
 
-# Ander
+# And
 
-class Ander( Component ):
+class And( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )
@@ -76,7 +76,7 @@ class Ander( Component ):
     s.out = OutPort( Type )
 
     @s.update
-    def up_adder():
+    def up_and():
       s.out = s.in0 & s.in1
 
 # Subtractor

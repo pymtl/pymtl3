@@ -9,7 +9,7 @@ Author: Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-from pclib.rtl import Ander
+from pclib.rtl import And
 from pymtl import *
 
 from .GuardedIfc import *
@@ -50,7 +50,7 @@ class DeqIfcRTL( Interface ):
     if isinstance( other, RecvIfcRTL ):
       parent.connect( s.msg, other.msg )
 
-      m = Ander( Bits1 )
+      m = And( Bits1 )
 
       if hasattr( parent, "deq_recv_ander_cnt" ):
         cnt = parent.deq_recv_ander_cnt

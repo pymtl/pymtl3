@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 from .arbiters import RoundRobinArbiter, RoundRobinArbiterEn
 from .arithmetics import (
     Adder,
-    Ander,
+    And,
     Incrementer,
     LEComp,
     LShifter,
