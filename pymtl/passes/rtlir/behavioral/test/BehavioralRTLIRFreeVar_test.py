@@ -18,6 +18,8 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.errors import PyMTLTypeError
 from pymtl.passes.rtlir.test_utility import do_test, expected_failure
 
+# from test_module import pymtl_Bits_global_freevar
+
 
 def local_do_test( m ):
   """Check if generated behavioral RTLIR is the same as reference."""
@@ -70,4 +72,21 @@ def test_pymtl_Bits_global( do_test ):
   a.elaborate()
   a._rtlir_freevar_ref = \
     { 'pymtl_Bits_global_freevar' : pymtl_Bits_global_freevar }
+  do_test( a )
+
+def test_pymtl_struct_closure( do_test ):
+  class B( object ):
+    def __init__( s, foo=42 ):
+      s.foo = Bits32(foo)
+  class A( Component ):
+    def construct( s ):
+      foo = InPort( B )
+      s.foo = foo
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = foo.foo
+  a = A()
+  a.elaborate()
+  a._rtlir_freevar_ref = { 'foo' : a.foo }
   do_test( a )
