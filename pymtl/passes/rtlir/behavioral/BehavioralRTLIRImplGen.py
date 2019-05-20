@@ -31,23 +31,9 @@ class {constr_name}( BaseBehavioralRTLIR ):
   def visit_{constr_name}( s, node ):
     s.cur += 1
     local_cur = s.cur
-
-    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
     table_body = '{table_body}'
-    table_opt = ''
-    table_trail = ' </TABLE>>'
-
-    if isinstance( node.Type, BaseRTLIRType ):
-      table_opt = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in vars(node.Type).iteritems():
-        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
-        if not isinstance( obj, dict ):
-          table_opt += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
-        else:
-          table_opt += ' <TR><TD>' + name + '</TD><TD>{{' + obj_str + '}}</TD></TR>'
-
-    label = (table_header + table_body + table_opt + table_trail){label_trail}
-
+    table_opt = s.gen_table_opt( node )
+    label = (s.table_header + table_body + table_opt + s.table_trail){label_trail}
     {body}
 """
 
@@ -126,14 +112,28 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
   def __init__( s ):
     s.output = 'unamed'
     s.output_dir = 'rast-viz'
+    s.table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
+    s.table_trail = ' </TABLE>>'
 
   def init( s, name ):
-    s.g = Digraph( 
+    s.g = Digraph(
       comment = 'BehavioralRTLIR Visualization of ' + name,
       node_attr = { 'shape' : 'plaintext' }
     )
     s.blk_name = name
     s.cur = 0
+
+  def gen_table_opt( s, node ):
+    ret = ''
+    if isinstance( node.Type, BaseRTLIRType ):
+      ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
+      for name, obj in vars(node.Type).iteritems():
+        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        if not isinstance( obj, dict ):
+          ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
+        else:
+          ret += ' <TR><TD>' + name + '</TD><TD>{' + obj_str + '}</TD></TR>'
+    return ret
 
   def dump( s ):
     if not os.path.exists( s.output_dir ):
@@ -221,41 +221,28 @@ def __eq__( s, other ):
   def viz_impl_str( s ):
     """Return the implementation of the visualization visitor of this
     constructor as a Python function.""" 
-
-    # Black box around the text between header and trail
-    table_header = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0"> '
-    table_trail = ' </TABLE>>'
-
     body = []
-
     if s.type_list is None:
       # No parameter for this BehavioralRTLIR node.
       # Just creating a single vertex is enough.
-
       body.append( "s.g.node( str( s.cur ), label = label )" )
       table_body = '<TR><TD COLSPAN="2">{name}</TD></TR>'.format( name = s.name )
-
       body_str = '\n    '.join( body )
       body_str = body_str
-
       label_trail = ''
 
     else: 
       # 1. Create a vertex corresponding to this BehavioralRTLIR node
       # 2. Add edges between this BehavioralRTLIR node and all child nodes
-
       body.append( "s.g.node( str( s.cur ), label = label )" )
-
       # The top string of vertex label
       table_body = '<TR><TD COLSPAN="2">{name}</TD></TR>'.format( name = s.name )
-
       # Templates for built-in fields
       built_in_str = \
         '<TR><TD>{type_name}</TD><TD>{{{value}}}</TD></TR>'
       built_in_trail = \
         '.format({built_in_trail_body})'
       built_in_trail_body = []
-
       # Template for user-defined fields
       customized_str = \
       "s.g.edge( str({s}), str({t}), label = '{edge_label}'{edge_label_trail} )"
@@ -273,9 +260,7 @@ def __eq__( s, other ):
           if s.is_sequence( t ):
             # A sequence of customized types
             indented = []
-            indented.append( 'for i, f in enumerate(node.{field}):'.format( 
-              field = f 
-            ) )
+            indented.append('for i, f in enumerate(node.{field}):'.format(field = f))
             indented.append( customized_str.format(
               s = 'local_cur',
               t = 's.cur+1',
@@ -293,16 +278,12 @@ def __eq__( s, other ):
               edge_label = f, 
               edge_label_trail = ''
             ) )
-            body.append( 's.visit( node.{field} )'.format(
-              field = f
-            ) )
-
+            body.append( 's.visit( node.{field} )'.format( field = f ) )
       if built_in_trail_body == []:
         label_trail = ''
       else:
         label_trail = built_in_trail.format(
           built_in_trail_body = ', '.join( built_in_trail_body ) )
-
       body_str = '\n    '.join( body )
 
     return constructor.viz_impl_template.format(
