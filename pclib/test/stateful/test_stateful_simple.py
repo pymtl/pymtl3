@@ -11,10 +11,9 @@ import hypothesis.strategies as st
 from pymtl import *
 from hypothesis.stateful import *
 from hypothesis import settings, given, seed, PrintSettings
-from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
+from pymtl.dsl.test.sim_utils import simple_sim_pass
 import copy
 from test_wrapper import *
-import sys
 
 debug = True
 
@@ -65,6 +64,7 @@ class RunMethodTestError( Exception ):
 #-------------------------------------------------------------------------
 class TestStateMachine( GenericStateMachine ):
   __argument_strategies = {}
+  __preconditions = {}
   __method_rules = {}
 
   def __init__( self ):
@@ -75,52 +75,22 @@ class TestStateMachine( GenericStateMachine ):
     self.model = copy.deepcopy( self.preconstruct_model )
     self.reference = copy.deepcopy( self.preconstruct_reference )
 
-    # elaborate dut
     self.model.elaborate()
-    self.model.apply( GenDAGPass() )
-    self.model.apply( OpenLoopCLPass() )
-    self.model.lock_in_simulation()
-
-    # elaborate ref
+    self.model.apply( simple_sim_pass )
+    self.model.sim_reset()
     self.reference.elaborate()
-    self.reference.apply( GenDAGPass() )
-    self.reference.apply( OpenLoopCLPass() )
-    self.reference.lock_in_simulation()
-
-    self.line_trace_string = ""
-
-    self.wrap_line_trace( self.model )
-    self.wrap_line_trace( self.reference )
-    print ""
-
-  def wrap_line_trace( s, model ):
-
-    model.line_trace_string = ""
-
-    def wrap_line_trace( model, f ):
-
-      def new_line_trace():
-        model.line_trace_string += f()
-        return "\r"
-
-      return new_line_trace
-
-    setattr( model, "line_trace", wrap_line_trace( model, model.line_trace ) )
+    self.reference.apply( simple_sim_pass )
 
   def steps( self ):
     return self.__rules_strategy
 
   def error_line_trace( self ):
     print "============================= error ========================"
-    if self.model.line_trace_string:
-      print self.model.line_trace_string,
-    print self.line_trace_string
-    self.model.line_trace_string = ""
-    self.reference.line_trace_string = ""
-    self.line_trace_string = ""
+    print self.model.line_trace(), self.line_trace_string
 
   def execute_step( self, step ):
 
+    self.line_trace_string = ""
     rule, data = step
     data = dict( data )
 
@@ -133,29 +103,31 @@ class TestStateMachine( GenericStateMachine ):
         for arg, value in data.iteritems()
     ] ) + ")"
 
-    model_rdy = self.model.__dict__[ method_name ].rdy()
-    reference_rdy = self.reference.__dict__[ method_name ].rdy()
-    if model_rdy and not reference_rdy:
+    if self.model.__dict__[ method_name ].rdy(
+    ) and not self.reference.__dict__[ method_name ].rdy():
       self.line_trace_string += line_trace
       self.error_line_trace()
       raise ValueError(
           "Dut method is rdy but reference is not: {method_name}".format(
               method_name=method_name ) )
-    if not model_rdy and reference_rdy:
+    if not self.model.__dict__[ method_name ].rdy(
+    ) and self.reference.__dict__[ method_name ].rdy():
       self.line_trace_string += line_trace
       self.error_line_trace()
       raise ValueError(
           "Reference method is rdy but dut is not: {method_name}".format(
               method_name=method_name ) )
+
     r_result = None
-    if model_rdy and reference_rdy:
-      self.line_trace_string += "  " + line_trace
+    if self.model.__dict__[ method_name ].rdy(
+    ) and self.reference.__dict__[ method_name ].rdy():
       m_result = self.model.__dict__[ method_name ](**data )
       r_result = self.reference.__dict__[ method_name ](**data )
+      self.line_trace_string += line_trace
 
       if not m_result == r_result:
         if r_result != None:
-          self.line_trace_string += " -> " + "dut: " + str(
+          self.line_trace_string += " --> " + "dut: " + str(
               r_result ) + " ref: " + str( m_result )
         self.error_line_trace()
         raise ValueError( """mismatch found in method {method}:
@@ -167,17 +139,14 @@ class TestStateMachine( GenericStateMachine ):
             data=str( data ),
             r_result=r_result,
             m_result=m_result ) )
-    else:
-      #self.line_trace_string += "  " + "[ {} ]".format(line_trace)
 
       if r_result != None:
-        self.line_trace_string += " -> " + str( r_result )
+        self.line_trace_string += " --> " + str( r_result )
 
-    if self.model.line_trace_string:
-      print "\033[A\033[A" + self.model.line_trace_string + self.line_trace_string
-      self.model.line_trace_string = ""
-      self.reference.line_trace_string = ""
-      self.line_trace_string = ""
+    self.model.tick()
+    self.reference.tick()
+
+    print self.model.line_trace(), self.line_trace_string
 
   def print_step( self, step ):
     """Print a step to the current reporter.
@@ -185,6 +154,11 @@ class TestStateMachine( GenericStateMachine ):
     This is called right before a step is executed.
     """
     pass
+
+  def is_valid( self, rule, data ):
+    if rule.precondition and not rule.precondition( self, data ):
+      return False
+    return True
 
   @classmethod
   def add_argument_strategy( cls, method, arguments ):
@@ -212,6 +186,16 @@ class TestStateMachine( GenericStateMachine ):
     target = cls.__method_rules.setdefault( cls, [] )
     return target
 
+  @classmethod
+  def add_precondition( cls, method, precondition ):
+    target = cls.__preconditions.setdefault( cls, {} )
+    target[ method ] = precondition
+
+  @classmethod
+  def precondition( cls, method ):
+    target = cls.__preconditions.setdefault( cls, {} )
+    return target.setdefault( method, None )
+
 
 class TestStateful( TestStateMachine ):
   pass
@@ -226,6 +210,7 @@ class TestStateful( TestStateMachine ):
 class MethodRule( object ):
   method_name = attr.ib()
   arguments = attr.ib()
+  precondition = attr.ib()
   index = attr.ib( default=-1 )
 
   def __attrs_post_init__( self ):
@@ -266,11 +251,55 @@ class ArgumentStrategy( object ):
 
 
 #-------------------------------------------------------------------------
-# create_test_state_machine
+# ReferencePrecondition
 #-------------------------------------------------------------------------
+@attr.s()
+class ReferencePrecondition( object ):
+  precondition = attr.ib()
+
+
+#-------------------------------------------------------------------------
+# reference_precondition
+#-------------------------------------------------------------------------
+REFERENCE_PRECONDITION_MARKER = u'pymtl-method-based-precondition'
+
+
+def reference_precondition( precond ):
+  """Decorator to apply add precondition to an FL model, usually 
+    enforces validity of datas
+
+    For example::
+
+        class TestFL:
+
+            @precondition_fl( lambda machine, data: not data[ 'id' ] in machine.reference.snap_shot_free_list )
+            def test_method_call( self, id ):
+                ...
+    """
+
+  def accept( f ):
+    existing_precondition = getattr( f, REFERENCE_PRECONDITION_MARKER, None )
+    if existing_precondition is not None:
+      raise InvalidDefinition(
+          'A function cannot be used for two distinct preconditions.',
+          Settings.default,
+      )
+    precondition = ReferencePrecondition( precondition=precond )
+
+    @proxies( f )
+    def precondition_wrapper(*args, **kwargs ):
+      return f(*args, **kwargs )
+
+    setattr( precondition_wrapper, REFERENCE_PRECONDITION_MARKER, precondition )
+    return precondition_wrapper
+
+  return accept
+
+
 def create_test_state_machine( model, reference, argument_strategy={} ):
-  Test = type( model.model_name + "_TestStateful", TestStateful.__bases__,
-               dict( TestStateful.__dict__ ) )
+  Test = type(
+      type( model ).__name__ + "TestStateful_", TestStateful.__bases__,
+      dict( TestStateful.__dict__ ) )
 
   Test.preconstruct_model = copy.deepcopy( model )
   Test.preconstruct_reference = copy.deepcopy( reference )
@@ -279,7 +308,6 @@ def create_test_state_machine( model, reference, argument_strategy={} ):
 
   method_specs = model.method_specs
 
-  # add arg strategy based on spec
   for method, spec in method_specs.iteritems():
     arguments = {}
     if argument_strategy.has_key( method ) and isinstance(
@@ -297,7 +325,9 @@ def create_test_state_machine( model, reference, argument_strategy={} ):
           raise RunMethodTestError(
               error_msg.format( method_name=method, arg=arg ) )
     Test.add_argument_strategy( method, arguments )
-    Test.add_rule( MethodRule( method_name=method, arguments=arguments ) )
+    Test.add_rule(
+        MethodRule(
+            method_name=method, arguments=arguments, precondition=None ) )
 
   Test.method_specs = method_specs
 

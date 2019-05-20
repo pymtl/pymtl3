@@ -312,7 +312,6 @@ def {0}():
     succ = defaultdict(set)
 
     for (x, y) in all_M_constraints:
-
       # Use the actual method object for constraints
 
       if   isinstance( x, MethodPort ):
@@ -343,10 +342,41 @@ def {0}():
       if xx is not x:
         if x.get_host_component() is top:
           top._dag.top_level_callee_constraints.add( (x, y) )
+        for adj in top._dsl.adjacency[ x ]:
+          if adj.get_host_component() is top:
+            try:
+              if adj._dsl.is_guard:
+                adj = adj._dsl.parent_obj
+            except AttributeError:
+              pass
+            top._dag.top_level_callee_constraints.add( (adj, y) )
+        try:
+          if x.guarded_ifc:
+            for adj in top._dsl.adjacency[ x.method ]:
+              if adj.get_host_component() is top:
+                top._dag.top_level_callee_constraints.add( ( adj._dsl.parent_obj, y) )
+        except AttributeError:
+          pass
 
       elif yy is not y:
         if y.get_host_component() is top:
           top._dag.top_level_callee_constraints.add( (x, y) )
+        for adj in top._dsl.adjacency[ y ]:
+          if adj.get_host_component() is top:
+            try:
+              if adj._dsl.is_guard:
+                adj = adj._dsl.parent_obj
+            except AttributeError:
+              pass
+            top._dag.top_level_callee_constraints.add( (x, adj) )
+            #top._dag.all_constraints.add( (x, adj) )
+        try:
+          if y.guarded_ifc:
+            for adj in top._dsl.adjacency[ y.method ]:
+              if adj.get_host_component() is top:
+                top._dag.top_level_callee_constraints.add( (x, adj._dsl.parent_obj) )
+        except AttributeError:
+          pass
 
     verbose = False
 

@@ -372,7 +372,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       '* Please consult update dependency graph for details.'
     )
 
-  assert serial_schedule, "No update block found in the model"
+  #assert serial_schedule, "No update block found in the model"
 
   if verbose:
     from graphviz import Digraph

@@ -33,7 +33,6 @@ def update():
     s.model.{method_name}.en = 0
   s.{method_name}_called = 0
 
-
 """
 
 method_tmpl = """

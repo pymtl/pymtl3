@@ -4,12 +4,13 @@
 # Wrappers for testing rtl model.
 #
 # Author : Yixiao Zhang
-#   Date : March 24, 2019
+#   Date : May 20, 2019
 
 from pymtl import *
 from template import *
 from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCalleeIfc
 from pymtl.dsl.ComponentLevel6 import ComponentLevel6
+import copy
 
 import inspect
 import attr
@@ -49,38 +50,191 @@ def rename( f, newname ):
   f.__name__ = newname
 
 
+def inspect_rtl( rtl ):
+  method_specs = {}
+
+  for method, ifc in inspect.getmembers( rtl ):
+    args = {}
+    rets = {}
+    if isinstance( ifc, Interface ):
+      for name, port in inspect.getmembers( ifc ):
+        if name == 'en' or name == 'rdy':
+          continue
+        if isinstance( port, InPort ):
+          args[ name ] = port._dsl.Type
+        if isinstance( port, OutPort ):
+          rets[ name ] = port._dsl.Type
+
+      method_specs[ method ] = Method(
+          method_name=method, args=args, rets=rets )
+  return method_specs
+
+
 #-------------------------------------------------------------------------
-# RTLAdapter
+# gen_adapter
+#-------------------------------------------------------------------------
+
+
+def gen_adapter( rtl, method_spec ):
+  initialize_args = ""
+  update_args = ""
+  assign_args = ""
+
+  for arg in method_spec.args:
+    initialize_args += """
+    s.{name}_{arg} = 0
+""".format(
+        arg=arg, name=method_spec.method_name )
+
+    update_args += """
+      s.{name}_rtl.{arg} = s.{name}_{arg}
+""".format(
+        arg=arg, name=method_spec.method_name )
+
+    assign_args += """
+    s.{name}_{arg} = {arg}
+""".format(
+        arg=arg, name=method_spec.method_name )
+
+  if method_spec.rets:
+    # has ret values
+    update_rets = ""
+    initialize_rets = ""
+
+    for ret in method_spec.rets:
+      update_rets += """
+      s.{name}_{ret} = s.{name}_rtl.{ret}
+""".format(
+          ret=ret, name=method_spec.method_name )
+
+      initialize_rets += """
+    s.{name}_{ret} = 0
+""".format(
+          ret=ret, name=method_spec.method_name )
+
+    rets = ",".join([
+        "s.{name}_{ret}".format( name=method_spec.method_name, ret=ret )
+        for ret in method_spec.rets.keys()
+    ] )
+
+    tmpl = """
+class RTL2CL( Component ):
+
+  def construct( s, {name} ):
+
+    {name}_rtl = copy.deepcopy( {name} )
+    {name}_rtl._dsl.constructed = False
+    s.{name}_rtl = {name}_rtl.inverse()
+
+    s.{name}_called = False
+    s.{name}_rdy = False
+{initialize_args}
+{initialize_rets}
+
+    @s.update
+    def update_{name}():
+      s.{name}_rtl.en = Bits1( 1 ) if s.{name}_called else Bits1( 0 )
+      s.{name}_called = False
+{update_args}
+
+    @s.update
+    def update_{name}_rdy():
+      s.{name}_rdy = True if s.{name}_rtl.rdy else False
+
+    @s.update
+    def update_{name}_ret():
+{update_rets}
+
+    s.add_constraints(
+        U( update_{name}_ret ) < M( s.{name} ),
+        U( update_{name}_rdy ) < M( s.{name} ),
+        U( update_{name}_rdy ) < M( s.{name}.rdy ),
+        M( s.{name}.rdy ) < U( update_{name} ),
+        M( s.{name} ) < U( update_{name} ) )
+
+  @guarded_ifc( lambda s: s.{name}_rdy )
+  def {name}( s, {args} ):
+    s.{name}_called = True
+{assign_args}
+    return {rets}
+""".format(
+        name=method_spec.method_name,
+        args=",".join( method_spec.args.keys() ),
+        initialize_args=initialize_args,
+        assign_args=assign_args,
+        update_args=update_args,
+        rets=rets,
+        update_rets=update_rets,
+        initialize_rets=initialize_rets )
+
+  else:
+    # no ret values
+    tmpl = """
+class RTL2CL( Component ):
+
+  def construct( s, {name} ):
+
+    {name}_rtl = copy.deepcopy( {name} )
+    {name}_rtl._dsl.constructed = False
+    s.{name}_rtl = {name}_rtl.inverse()
+
+    s.{name}_called = False
+    s.{name}_rdy = False
+{initialize_args}
+
+    @s.update
+    def update_{name}():
+      s.{name}_rtl.en = Bits1( 1 ) if s.{name}_called else Bits1( 0 )
+      s.{name}_called = False
+{update_args}
+
+    @s.update
+    def update_{name}_rdy():
+      s.{name}_rdy = True if s.{name}_rtl.rdy else False
+
+    s.add_constraints(
+        U( update_{name}_rdy ) < M( s.{name} ),
+        U( update_{name}_rdy ) < M( s.{name}.rdy ),
+        M( s.{name}.rdy ) < U( update_{name} ),
+        M( s.{name} ) < U( update_{name} ) )
+
+  @guarded_ifc( lambda s: s.{name}_rdy )
+  def {name}( s, {args} ):
+    s.{name}_called = True
+{assign_args}
+""".format(
+        name=method_spec.method_name,
+        args=",".join( method_spec.args.keys() ),
+        initialize_args=initialize_args,
+        assign_args=assign_args,
+        update_args=update_args )
+
+  # Compile
+  filename = '<dynamic-123456>'
+  lcs = locals().update({ "Component": Component, "guarded_ifc": guarded_ifc} )
+  exec ( compile( tmpl, filename, 'exec' ), globals() )
+  lines = [ line + '\n' for line in tmpl.splitlines() ]
+  import linecache
+  linecache.cache[ filename ] = ( len( tmpl ), None, lines, filename )
+
+  RTL2CL.__name__ = method_spec.method_name + "RTL2CL"
+  return RTL2CL
+
+
+#-------------------------------------------------------------------------
+# RTL2CLWrapper
 #-------------------------------------------------------------------------
 
 
 class RTL2CLWrapper( Component ):
-  def __init__(s, rtl_model):
-    super(RTL2CLWrapper, s).__init__(rtl_model)
+
+  def __init__( s, rtl_model ):
+    super( RTL2CLWrapper, s ).__init__( rtl_model )
 
     s.model_name = type( rtl_model ).__name__
 
   def _construct( s ):
     Component._construct( s )
-
-  def inspect( s, rtl_model ):
-    method_specs = {}
-
-    for method, ifc in inspect.getmembers( rtl_model ):
-      args = {}
-      rets = {}
-      if isinstance( ifc, Interface ):
-        for name, port in inspect.getmembers( ifc ):
-          if name == 'en' or name == 'rdy':
-            continue
-          if isinstance( port, InPort ):
-            args[ name ] = port._dsl.Type
-          if isinstance( port, OutPort ):
-            rets[ name ] = port._dsl.Type
-
-        method_specs[ method ] = Method(
-            method_name=method, args=args, rets=rets )
-    return method_specs
 
   def bind_methods( s ):
     # This code is copied from ComponentLevel6
@@ -91,92 +245,38 @@ class RTL2CLWrapper( Component ):
     ComponentLevel6._handle_decorated_methods( s )
 
   def construct( s, rtl_model ):
+    """Create adapter & add top-level method for each ifc in rtl_model
+    """
+
     s.model = rtl_model
 
-    s.method_specs = s.inspect( s.model )
+    s.method_specs = inspect_rtl( s.model )
+    # Add method
     for method_name, method_spec in s.method_specs.iteritems():
       s._add_method( method_spec )
 
     s.bind_methods()
 
-    s.ports = {}
-    s.reset_called = Bits1()
-    s._constraints = []
-
+    # Add adapters
     for method_name, method_spec in s.method_specs.iteritems():
-      s._add_ports( method_spec )
-      s._gen_update( method_spec )
+      s._gen_adapter( method_spec )
 
-  def _add_ports( s, method_spec ):
-    setattr( s, _mangleName( method_spec.method_name, "called" ), Bits1() )
-    setattr( s, _mangleName( method_spec.method_name, "rdy" ), Bits1() )
-    for arg, dtype in method_spec.args.iteritems():
-      setattr( s, _mangleName( method_spec.method_name, arg ), dtype() )
-    for ret, dtype in method_spec.rets.iteritems():
-      setattr( s, _mangleName( method_spec.method_name, ret ), dtype() )
+  def _gen_adapter( s, method_spec ):
+    name = method_spec.method_name
+    setattr( s, name + "_adapter",
+             gen_adapter( s.model.__dict__[ name ], method_spec ) )
+    setattr( s, name, GuardedCalleeIfc() )
+    RTL2CL = gen_adapter( s.model.__dict__[ name ], method_spec )
 
-  def _gen_update( s, method_spec ):
+    tmpl = """
+s.{name}_adapter = RTL2CL( s.model.{name} )
+s.{name} = GuardedCalleeIfc()
+s.connect( s.{name}, s.{name}_adapter.{name} )
+s.connect( s.{name}_adapter.{name}_rtl, s.model.{name} )
+""".format( name=name )
 
-    assign_args = ""
-    for arg in method_spec.args.keys():
-      assign_args += assign_args_tmpl.format(
-          method_name=method_spec.method_name, arg=arg )
-
-    assign_rets = ""
-    for ret in method_spec.rets.keys():
-      assign_rets += assign_rets_tmpl.format(
-          method_name=method_spec.method_name, ret=ret )
-
-    updates = update_tmpl.format(
-        assign_rets=assign_rets,
-        assign_args=assign_args,
-        method_name=method_spec.method_name )
-
-    # The problem with generating update block code is that
-    # inpect.getsource will throw exception. To work around that we create
-    # a fake filename and write the source code to linecache
-    # This is a hacky workaround that might change later
-    filename = '<dynamic-123456>'
-    exec ( compile( updates, filename, 'exec' ), locals() )
-    lines = [ line + '\n' for line in updates.splitlines() ]
-    import linecache
-    linecache.cache[ filename ] = ( len( updates ), None, lines, filename )
-
-    # Rename to avoid name conflicts
-    rename( update_rdy, "update_" + method_spec.method_name + "_rdy_adapter" )
-    rename( update, "update_" + method_spec.method_name + "_adapter" )
-    rename( update_rets, "update_" + method_spec.method_name + "_rets_adapter" )
-    rename( update_args, "update_" + method_spec.method_name + "_args_adapter" )
-
-    s.update( update )
-    s.update( update_rdy )
-
-    rdy_func = s.__dict__[ method_spec.method_name ].rdy
-    method_func = s.__dict__[ method_spec.method_name ]
-    ifcs = s.model.__dict__[ method_spec.method_name ]
-
-    if method_spec.args:
-      s.update( update_args )
-      s.add_constraints( M( method_func ) < U( update_args ) )
-      for arg in method_spec.args.keys():
-        s.add_constraints( U( update_args ) < RD( ifcs.__dict__[ arg ] ) )
-        s.add_constraints( U( update ) < RD( ifcs.__dict__[ arg ] ) )
-
-    if method_spec.rets:
-      s.update( update_rets )
-      s.add_constraints( U( update_rets ) < M( method_func ) )
-      for ret in method_spec.args.keys():
-        s.add_constraints( WR( ifcs.__dict__[ ret ] ) < U( update_rets ) )
-
-      #s.add_constraints( U( update_rets ) < U( update ) )
-
-    s.add_constraints(
-        U( update_rdy ) < M( method_func ),
-        U( update_rdy ) < M( method_func ),
-        #M( method_func ) < U( update ),
-        M( method_func ) < U( update ),
-        U( update ) < RD( ifcs.en )
-        )
+    lcs = locals().update({ "GuardedCalleeIfc": GuardedCalleeIfc} )
+    exec ( compile( tmpl, "<string>", 'exec' ), lcs )
 
   def _add_method( self, method_spec ):
 
