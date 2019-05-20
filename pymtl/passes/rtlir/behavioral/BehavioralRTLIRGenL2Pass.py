@@ -11,10 +11,11 @@ import ast
 from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLSyntaxError
+from pymtl.passes.rtlir.RTLIRDataType import Bool
 
 from .BehavioralRTLIR import *
 from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
-from .errors import PyMTLSyntaxError
 
 
 class BehavioralRTLIRGenL2Pass( BasePass ):
@@ -69,9 +70,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     into a normal assignment.
     """
     if not type(node.op) in s.opmap:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Operator ' + node.op + ' is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Operator ' + node.op + ' is not supported!' )
     value = s.visit( node.value )
     target = s.visit( node.target )
     op  = s.opmap[ type( node.op ) ]
@@ -81,15 +81,12 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     return ret
 
   def visit_Call( s, node ):
-
     obj = s.get_call_obj( node )
-
     # At L2 we add bool type but we do not support instantiating a bool
     # value -- that should always be the result of a comparison!
-    if obj is bool:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'bool values cannot be instantiated explicitly!'
-      )
+    if obj is Bool:
+      raise PyMTLSyntaxError( s.blk, node,
+        'bool values cannot be instantiated explicitly!' )
     return super( BehavioralRTLIRGeneratorL2, s ).visit_Call( node )
 
   def visit_Name( s, node ):
@@ -102,9 +99,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
         ret = TmpVar( node.id )
       elif isinstance( node.ctx, ast.Load ):
         # trying to load an unregistered tmpvar
-        raise PyMTLSyntaxError(
-          s.blk, node, 'tmpvar ' + node.id + ' used before assignment!'
-        )
+        raise PyMTLSyntaxError( s.blk, node,
+          'tmpvar ' + node.id + ' used before assignment!' )
       else:
         # This is the first time we see this tmp var
         s.tmp_var_env.add( node.id )
@@ -130,32 +126,27 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
   def visit_For( s, node ):
     # First fill the loop_var, start, end, step fields
     if node.orelse != []:
-      raise PyMTLSyntaxError(
-        s.blk, node, "for loops cannot have 'else' branch!"
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        "for loops cannot have 'else' branch!" )
     if not isinstance( node.target, ast.Name ):
-      raise PyMTLSyntaxError(
-        s.blk, node, "The loop index must be a temporary variable!"
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        "The loop index must be a temporary variable!" )
     loop_var_name = node.target.id
 
     # Check whether loop_var_name has been defined before
     if loop_var_name in s.loop_var_env:
-      raise PyMTLSyntaxError(
-        s.blk, node, "Redefinition of loop index " + loop_var_name + "!"
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        "Redefinition of loop index " + loop_var_name + "!" )
 
     # Add loop_var to the loop variable environment
     s.loop_var_env.add( loop_var_name )
     var = LoopVarDecl( node.target.id )
     if not isinstance( node.iter, ast.Call ):
-      raise PyMTLSyntaxError(
-        s.blk, node, "for loops can only use (x)range() after 'in'!"
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        "for loops can only use (x)range() after 'in'!" )
     if not node.iter.func.id in [ 'xrange', 'range' ]:
-      raise PyMTLSyntaxError(
-        s.blk, node, "for loops can only use (x)range() after 'in'!"
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        "for loops can only use (x)range() after 'in'!" )
     args = node.iter.args
 
     if len( args ) == 1:
@@ -174,9 +165,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       end = s.visit( args[1] )
       step = s.visit( args[2] )
     else:
-      raise PyMTLSyntaxError(
-        s.blk, node, "1~3 arguments should be given to (x)range!"
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        "1~3 arguments should be given to (x)range!" )
 
     # Then visit all statements inside the loop
     body = []
@@ -192,9 +182,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
   def visit_BoolOp( s, node ):
     if not type(node.op) in s.opmap:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Operator ' + node.op + ' is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Operator ' + str( node.op ) + ' is not supported!' )
     op  = s.opmap[ type( node.op ) ]
     op.ast = node.op
 
@@ -210,9 +199,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     left  = s.visit( node.left )
     right = s.visit( node.right )
     if not type(node.op) in s.opmap:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Operator ' + node.op + ' is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Operator ' + str( node.op ) + ' is not supported!' )
     op  = s.opmap[ type( node.op ) ]
     op.ast = node.op
     ret = BinOp( left, op, right )
@@ -221,9 +209,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
   def visit_UnaryOp( s, node ):
     if not type(node.op) in s.opmap:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Operator ' + node.op + ' is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Operator ' + str( node.op ) + ' is not supported!' )
     op  = s.opmap[ type( node.op ) ]
     op.ast = node.op
     operand = s.visit( node.operand )
@@ -241,13 +228,11 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
   def visit_Compare( s, node ):
     if not type(node.ops[0]) in s.opmap:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Operator ' + node.ops[0] + ' is not supported!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Operator ' + str( node.ops[0] ) + ' is not supported!' )
     if len( node.ops ) != 1 or len( node.comparators ) != 1:
-      raise PyMTLSyntaxError(
-        s.blk, node, 'Comparison can only have 2 operands!'
-      )
+      raise PyMTLSyntaxError( s.blk, node,
+        'Comparison can only have 2 operands!' )
 
     op  = s.opmap[ type( node.ops[0] ) ]
     op.ast = node.ops[0]

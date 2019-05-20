@@ -6,7 +6,6 @@
 """Provide L4 behavioral RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 
@@ -17,14 +16,10 @@ class BehavioralRTLIRGenL4Pass( BasePass ):
 
   def __call__( s, m ):
     """ generate RTLIR for all upblks of m """
-
     if not hasattr( m, '_pass_behavioral_rtlir_gen' ):
       m._pass_behavioral_rtlir_gen = PassMetadata()
-
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
-
     visitor = BehavioralRTLIRGeneratorL4( m )
-
     upblks = {
       'CombUpblk' : m.get_update_blocks() - m.get_update_on_edge(),
       'SeqUpblk'  : m.get_update_on_edge()
@@ -42,7 +37,5 @@ class BehavioralRTLIRGeneratorL4( BehavioralRTLIRGeneratorL3 ):
   Do nothing here because attributes have been handled in previous
   levels.
   """
-
   def __init__( s, component ):
-
     super( BehavioralRTLIRGeneratorL4, s ).__init__( component )

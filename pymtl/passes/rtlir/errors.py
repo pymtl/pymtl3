@@ -11,9 +11,16 @@ import inspect
 import os
 
 
-class PyMTLSyntaxError( Exception ):
-  """ Raise error when the RTLIR generation pass finds a syntax error """
+class RTLIRConversionError( Exception ):
+  """Error while converting a PyMTL structure into RTLIR."""
+  def __init__( self, obj, msg ):
+    obj = str(obj)
+    return super( RTLIRConversionError, self ).__init__(
+      "\nError trying to convert {obj} into RTLIR:\n- {msg}". \
+      format( **locals() ) )
 
+class PyMTLSyntaxError( Exception ):
+  """Behavioral RTLIR syntax error."""
   def __init__( self, blk, ast, msg ):
     fname = os.path.abspath( inspect.getsourcefile( blk ) )
     line = inspect.getsourcelines( blk )[1]
@@ -26,16 +33,15 @@ class PyMTLSyntaxError( Exception ):
       code = '\n  ' + code_line.strip() + \
         '\n  '+ ' ' * (col-len(code_line)+len(code_line.lstrip())) + '^'
     except AttributeError:
-      # The given AST node is not expr nor stmt
+      # The given AST node is neither expr nor stmt
       pass
     return super( PyMTLSyntaxError, self ).__init__(
-      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
+      "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() ) 
     )
 
 class PyMTLTypeError( Exception ):
-  """ Raise error when the RTLIR type check pass finds an error """
-
+  """Behavioral RTLIR type error."""
   def __init__( self, blk, ast, msg ):
     fname = os.path.abspath( inspect.getsourcefile( blk ) )
     line = inspect.getsourcelines( blk )[1]
@@ -48,9 +54,9 @@ class PyMTLTypeError( Exception ):
       code = '\n  ' + code_line.strip() + \
         '\n  '+ ' ' * (col-len(code_line)+len(code_line.lstrip())) + '^'
     except AttributeError:
-      # The given AST node is not expr nor stmt
+      # The given AST node is neither expr nor stmt
       pass
     return super( PyMTLTypeError, self ).__init__(
-      "File {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
+      "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() ) 
     )

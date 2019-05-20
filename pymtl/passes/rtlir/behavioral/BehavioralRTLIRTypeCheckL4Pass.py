@@ -8,11 +8,10 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.RTLIRType import *
+from pymtl.passes.rtlir.errors import PyMTLTypeError
+from pymtl.passes.rtlir.RTLIRType import Array, Component, InterfaceView, Signal
 
-from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL3Pass import BehavioralRTLIRTypeCheckVisitorL3
-from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
@@ -22,7 +21,6 @@ class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
-
     visitor = BehavioralRTLIRTypeCheckVisitorL4(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
@@ -56,7 +54,9 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
       try:
         # if no exception is raised, L1 visit_Index will generate type for `node`
         nbits = node.idx._value
-      except Exception:
+        node.Type = node.value.Type.get_sub_type()
+      except AttributeError:
         raise PyMTLTypeError( s.blk, node.ast,
           'index of interface array must be a static constant expression!' )
-    super( BehavioralRTLIRTypeCheckVisitorL4, s ).visit_Index( node )
+    else:
+      super( BehavioralRTLIRTypeCheckVisitorL4, s ).visit_Index( node )

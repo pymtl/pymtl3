@@ -11,6 +11,7 @@ from collections import defaultdict, deque
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import RTLIRConversionError
 
 from ..RTLIRType import *
 from .StructuralRTLIRSignalExpr import gen_signal_expr
@@ -22,9 +23,13 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     if not hasattr( top, '_pass_structural_rtlir_gen' ):
       top._pass_structural_rtlir_gen = PassMetadata()
     s.top = top
-    s.gen_rtlir_types( top )
-    s.gen_constants( top )
-    s.gen_connections( top )
+    try:
+      s.gen_rtlir_types( top )
+      s.gen_constants( top )
+      s.gen_connections( top )
+    except AssertionError as e:
+      msg = '' if e.args[0] is None else e.args[0]
+      raise RTLIRConversionError( top, msg )
 
   def gen_rtlir_types( s, top ):
     top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( top )
@@ -84,7 +89,8 @@ class StructuralRTLIRGenL1Pass( BasePass ):
               s.add_conn_self_child( writer_host, u, v )
             elif writer_host_parent == reader_host_parent:
               s.add_conn_child_child( writer_host_parent, u, v )
-            else: assert False
+            else:
+              assert False, "unexpected connection type!"
     s.sort_connections( top )
 
   def add_conn_self_self( s, component, writer, reader ):
@@ -110,8 +116,8 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       _u, _v = gen_signal_expr( m, u ), gen_signal_expr( m, v )
       for idx, ( ( wr, rd ), visited ) in enumerate( m_connections ):
 
-        if not visited and ( ( s.contains( u, wr ) and s.contains( v, rd ) ) or \
-           ( s.contains( u, rd ) and s.contains( v, wr ) ) ):
+        if not visited and ( ( s.contains( _u, wr ) and s.contains( _v, rd ) ) or \
+           ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
           connections.append( ( wr, rd ) )
           m_connections[idx] = ( m_connections[idx][0], True )
           continue
@@ -121,7 +127,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
   def contains( s, obj, signal ):
     """Return if obj contains signal.
     
-    At level 1 all signals have their corresponding object in `s.connect`. 
+    At level 1 all signals have their corresponding object in `s.connect`.
     Therefore just checking whether obj is equal to signal is enough at level 1.
     """
     return obj == signal

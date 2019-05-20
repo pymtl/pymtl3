@@ -9,12 +9,12 @@ from __future__ import absolute_import, division, print_function
 from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLTypeError
 from pymtl.passes.rtlir.RTLIRType import *
 from pymtl.passes.rtlir.utility import freeze
 
 from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
-from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL3Pass( BasePass ):

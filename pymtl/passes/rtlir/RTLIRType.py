@@ -29,7 +29,8 @@ class BaseRTLIRType( object ):
     return not s.__eq__( other )
 
 def _is_of_type( obj, Type ):
-  assert issubclass( Type, BaseRTLIRType )
+  assert issubclass( Type, BaseRTLIRType ), \
+    "_is_of_type() applied on non-RTLIR type {}!".format( Type )
   if isinstance( obj, Type ):
     return True
   if isinstance( obj, Array ) and isinstance( obj.get_sub_type(), Type ):
@@ -50,10 +51,13 @@ class NoneType( BaseRTLIRType ):
 class Array( BaseRTLIRType ):
   """Unpacked RTLIR array type."""
   def __init__( s, dim_sizes, sub_type, unpacked = False ):
-    assert isinstance( sub_type, BaseRTLIRType )
-    assert not isinstance( sub_type, Array )
-    assert len( dim_sizes ) >= 1
-    assert reduce( lambda s, i: s+i, dim_sizes, 0 ) > 0
+    assert isinstance( sub_type, BaseRTLIRType ), \
+      "array subtype {} is not RTLIR type!".format( sub_type )
+    assert not isinstance( sub_type, Array ), \
+      "array subtype {} should not be array RTLIR type!".format( sub_type )
+    assert len( dim_sizes ) >= 1, "array should be non-empty!"
+    assert reduce( lambda s, i: s+i, dim_sizes, 0 ) > 0, \
+      "array should have at least one element!"
     s.dim_sizes = dim_sizes
     s.sub_type = sub_type
     s.unpacked = unpacked
@@ -94,7 +98,8 @@ class Signal( BaseRTLIRType ):
   A Signal can be a Port, a Wire, or a Const.
   """
   def __init__( s, dtype, unpacked = False ):
-    assert isinstance( dtype, BaseRTLIRDataType )
+    assert isinstance( dtype, BaseRTLIRDataType ), \
+      "signal parameterized by non-RTLIR data type {}!".format( dtype )
     s.dtype = dtype
     s.unpacked = unpacked
 
@@ -130,7 +135,7 @@ class Port( Signal ):
     return s.direction
 
   def get_next_dim_type( s ):
-    assert s.is_packed_indexable()
+    assert s.is_packed_indexable(), "cannot index on unindexable port!"
     return Port( s.direction, s.dtype.get_next_dim_type(), s.unpacked )
 
 class Wire( Signal ):
@@ -145,7 +150,7 @@ class Wire( Signal ):
     return 'Wire of {}'.format( s.dtype )
 
   def get_next_dim_type( s ):
-    assert s.is_packed_indexable()
+    assert s.is_packed_indexable(), "cannot index on unindexable wire!"
     return Wire( s.dtype.get_next_dim_type(), s.unpacked )
 
 class Const( Signal ):
@@ -160,79 +165,8 @@ class Const( Signal ):
     return 'Const of {}'.format( s.dtype )
 
   def get_next_dim_type( s ):
-    assert s.is_packed_indexable()
+    assert s.is_packed_indexable(), "cannot index on unindexable constant!"
     return Const( s.dtype.get_next_dim_type(), s.unpacked )
-
-class Interface( BaseRTLIRType ):
-  """Interface RTLIR instance type."""
-  def __init__( s, name, views = [] ):
-    assert s._check_views( views ), \
-        '{} does not belong to interface {}!'.format( views, name )
-    s.name = name
-    s.views = views
-    s.properties = s._gen_properties( views )
-
-  def __str__( s ):
-    return 'Interface'
-
-  def __repr__( s ):
-    return 'Interface {}'.format( s.name )
-
-  def _set_name( s, name ):
-    s.name = name
-
-  def _gen_properties( s, views ):
-    _properties = {}
-    for view in views:
-      assert isinstance( view, InterfaceView )
-      for id_, rtype in view.get_all_ports_packed():
-        if isinstance( rtype, Array ):
-          _properties[ id_ ] = Array( rtype.get_dim_sizes(),
-            Wire( rtype.get_subcomps().get_dtype() ), rtype.unpacked )
-        else:
-          _properties[ id_ ] = Wire( rtype.get_dtype(), rtype.unpacked )
-    return _properties
-
-  def _check_views( s, views ):
-    _properties = s._gen_properties( views )
-    for view in views:
-      assert isinstance( view, InterfaceView )
-      props = view.get_all_ports()
-      if len( props ) != len( _properties.keys() ):
-        return False
-      for prop_id, prop_rtype in props:
-        if not prop_id in _properties: return False
-        if Wire(prop_rtype.get_dtype()) != _properties[prop_id]: return False
-    return True
-
-  def get_name( s ):
-    return s.name
-
-  def get_all_views( s ):
-    return s.views
-
-  def get_all_wires( s ):
-    return filter(
-      lambda name_wire: isinstance( name_wire[1], Wire ),
-      s.properties.iteritems()
-    )
-
-  def get_all_wires_packed( s ):
-    return filter(
-      lambda id__t: \
-        ( isinstance( id__t[1], Wire ) and not id__t[1]._is_unpacked() ) or \
-        ( isinstance( id__t[1], Array ) and isinstance( id__t[1].get_sub_type(), Wire ) \
-          and not id__t[1]._is_unpacked() ),
-      s.properties.iteritems()
-    )
-
-  def can_add_view( s, view ):
-    return s._check_views( s.views + [ view ] )
-
-  def add_view( s, view ):
-    if s.can_add_view( view ):
-      s.views.append( view )
-      s.properties = s._gen_properties( s.views )
 
 class InterfaceView( BaseRTLIRType ):
   """RTLIR instance type for a view of an interface."""
@@ -332,7 +266,9 @@ class Component( BaseRTLIRType ):
     return s.unpacked
 
   def __eq__( s, other ):
-    if type( s ) is type( other ): return False
+    # import pdb
+    # pdb.set_trace()
+    if type( s ) is not type( other ): return False
     if s.name != other.name or s.params != other.params: return False
     return True
 
@@ -382,7 +318,6 @@ class Component( BaseRTLIRType ):
     )
 
   def get_consts( s ):
-
     return filter(
       lambda id__const: isinstance( id__const[1], Const ),
       s.properties.iteritems()
@@ -409,12 +344,6 @@ class Component( BaseRTLIRType ):
         ( isinstance( id__t7[1], InterfaceView ) and not id__t7[1]._is_unpacked() ) or \
         ( isinstance( id__t7[1], Array ) and isinstance( id__t7[1].get_sub_type(),InterfaceView ) \
           and not id__t7[1]._is_unpacked() ),
-      s.properties.iteritems()
-    )
-
-  def get_ifcs( s ):
-    return filter(
-      lambda id__ifc8: isinstance( id__ifc8[1], Interface ),
       s.properties.iteritems()
     )
 
@@ -465,7 +394,7 @@ def get_rtlir( obj ):
     pymtl_ports = ( pymtl.InPort, pymtl.OutPort )
     if isinstance( obj, list ):
       while isinstance( obj, list ):
-        assert len( obj ) > 0
+        assert len( obj ) > 0, "one dimension of {} is 0!".format( obj )
         obj = obj[0]
       return is_rtlir_ifc_convertible( obj )
     elif isinstance( obj, pymtl_ports ): return True
@@ -480,70 +409,76 @@ def get_rtlir( obj ):
     return ret
 
   def add_packed_instances( id_, Type, properties ):
-    assert isinstance( Type, Array )
+    assert isinstance( Type, Array ), "{} is not an array type!".format( Type )
     for _id, _Type in unpack( id_, Type ):
-      assert hasattr( _Type, 'unpacked' )
+      assert hasattr( _Type, 'unpacked' ), \
+        "{} {} is not unpacked!".format( _Type, _id )
       _Type.unpacked = True
       properties[ _id ] = _Type
 
-  # A list of instances
-  if isinstance( obj, list ):
-    assert len( obj ) > 0
-    ref_type = get_rtlir( obj[0] )
-    assert \
-      reduce( lambda res,i: res and (get_rtlir(i)==ref_type),obj ), \
-      'all elements of array {} must have the same type {}!'.format(
-        obj, ref_type )
-    dim_sizes = []
-    while isinstance( obj, list ):
-      assert len( obj ) > 0
-      dim_sizes.append( len( obj ) )
-      obj = obj[0]
-    return Array( dim_sizes, get_rtlir( obj ) )
+  try:
+    # A list of instances
+    if isinstance( obj, list ):
+      assert len( obj ) > 0, "list {} is empty!".format( obj )
+      ref_type = get_rtlir( obj[0] )
+      assert \
+        reduce( lambda res,i: res and (get_rtlir(i)==ref_type),obj ), \
+        'all elements of array {} must have the same type {}!'.format(
+          obj, ref_type )
+      dim_sizes = []
+      while isinstance( obj, list ):
+        assert len( obj ) > 0, "{} is an empty list!".format( obj )
+        dim_sizes.append( len( obj ) )
+        obj = obj[0]
+      return Array( dim_sizes, get_rtlir( obj ) )
 
-  # A Port instance
-  elif isinstance( obj, ( pymtl.InPort, pymtl.OutPort ) ):
-    if isinstance( obj, pymtl.InPort ):
-      return Port( 'input', get_rtlir_dtype( obj ) )
-    elif isinstance( obj, pymtl.OutPort ):
-      return Port( 'output', get_rtlir_dtype( obj ) )
-    else: assert False
+    # A Port instance
+    elif isinstance( obj, ( pymtl.InPort, pymtl.OutPort ) ):
+      if isinstance( obj, pymtl.InPort ):
+        return Port( 'input', get_rtlir_dtype( obj ) )
+      elif isinstance( obj, pymtl.OutPort ):
+        return Port( 'output', get_rtlir_dtype( obj ) )
+      else:
+        assert False, "unrecognized port {}".format( obj )
 
-  # A Wire instance
-  elif isinstance( obj, pymtl.Wire ):
-    return Wire( get_rtlir_dtype( obj ) )
+    # A Wire instance
+    elif isinstance( obj, pymtl.Wire ):
+      return Wire( get_rtlir_dtype( obj ) )
 
-  # A Constant instance
-  elif isinstance( obj, ( int, pymtl.Bits ) ):
-    return Const( get_rtlir_dtype( obj ) )
+    # A Constant instance
+    elif isinstance( obj, ( int, pymtl.Bits ) ):
+      return Const( get_rtlir_dtype( obj ) )
 
-  # An Interface view instance
-  elif isinstance( obj, pymtl.Interface ):
-    properties = {}
-    for _id, _obj in collect_objs( obj, object, True ):
-      if not is_rtlir_ifc_convertible( _obj ): continue
-      _obj_type = get_rtlir( _obj )
-      properties[ _id ] = _obj_type
-      if not _is_of_type( _obj_type, Port ):
-        assert False, \
-          "RTLIR Interface type can only include Port objects!"
-      if isinstance( _obj_type, Array ):
-        add_packed_instances( _id, _obj_type, properties )
-    return InterfaceView( obj.__class__.__name__, properties )
+    # An Interface view instance
+    elif isinstance( obj, pymtl.Interface ):
+      properties = {}
+      for _id, _obj in collect_objs( obj, object, True ):
+        if not is_rtlir_ifc_convertible( _obj ):
+          assert False, "RTLIR Interface type can only include Port objects!"
+        _obj_type = get_rtlir( _obj )
+        if not _is_of_type( _obj_type, Port ):
+          assert False, "RTLIR Interface type can only include Port objects!"
+        properties[ _id ] = _obj_type
+        if isinstance( _obj_type, Array ):
+          add_packed_instances( _id, _obj_type, properties )
+      return InterfaceView( obj.__class__.__name__, properties )
 
-  # A Component instance
-  elif isinstance( obj, pymtl.Component ):
-    # Collect all attributes of `obj`
-    properties = {}
-    for _id, _obj in collect_objs( obj, object, True ):
-      # Untranslatable attributes will be ignored
-      if not is_rtlir_convertible( _obj ): continue
-      _obj_type = get_rtlir( _obj )
-      properties[ _id ] = _obj_type
-      if isinstance( _obj_type, Array ):
-        add_packed_instances( _id, _obj_type, properties )
-    return Component( obj, properties )
+    # A Component instance
+    elif isinstance( obj, pymtl.Component ):
+      # Collect all attributes of `obj`
+      properties = {}
+      for _id, _obj in collect_objs( obj, object, True ):
+        # Untranslatable attributes will be ignored
+        if not is_rtlir_convertible( _obj ): continue
+        _obj_type = get_rtlir( _obj )
+        properties[ _id ] = _obj_type
+        if isinstance( _obj_type, Array ):
+          add_packed_instances( _id, _obj_type, properties )
+      return Component( obj, properties )
 
-  # Cannot convert `obj` into RTLIR representation
-  else:
-    assert False, 'cannot convert {} into RTLIR!'.format( obj )
+    # Cannot convert `obj` into RTLIR representation
+    else:
+      assert False, 'cannot convert {} into RTLIR!'.format( obj )
+  except AssertionError as e:
+    msg = '' if e.args[0] is None else e.args[0]
+    raise RTLIRConversionError( obj, msg )

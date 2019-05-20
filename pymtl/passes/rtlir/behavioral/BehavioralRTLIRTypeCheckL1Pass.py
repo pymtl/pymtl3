@@ -11,6 +11,7 @@ import copy
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLTypeError
 from pymtl.passes.rtlir.RTLIRDataType import Vector
 from pymtl.passes.rtlir.RTLIRType import (
     Array,
@@ -29,7 +30,6 @@ from .BehavioralRTLIR import (
     BehavioralRTLIRNodeVisitor,
     BinOp,
 )
-from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
@@ -37,11 +37,9 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
-    visitor = BehavioralRTLIRTypeCheckVisitorL1( m,
-      m._pass_behavioral_rtlir_type_check.rtlir_freevars
-    )
+    visitor = BehavioralRTLIRTypeCheckVisitorL1(
+      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars )
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
@@ -63,10 +61,10 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
       'value':( Signal, 'extension only applies to signals!' )
     }
     s.type_expect[ 'SizeCast' ] = {
-      'value':( Signal, 'size casting only apply to signals/consts!' )
+      'value':( Signal, 'size casting only applies to signals/consts!' )
     }
     s.type_expect[ 'Attribute' ] = {
-      'value':( Component, 'the base of an attribute must be a module!' )
+      'value':( Component, 'the base of an attribute must be a component!' )
     }
     s.type_expect[ 'Index' ] = {
       'idx':(Signal, 'index must be a signal or constant expression!'),
@@ -158,7 +156,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     # Mark this node as having type Component
     # In L1 the `s` top component is the only possible base
     node.Type = get_rtlir( node.base )
-    assert isinstance( node.Type, Component )
+    if not isinstance( node.Type, Component ):
+      raise PyMTLTypeError( s.blk, node.ast,
+        '{} is not a Component!'.format( node ) )
 
   def visit_Number( s, node ):
     # By default, number literals have bitwidth of 32
@@ -229,7 +229,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
   def visit_Index( s, node ):
     idx = getattr( node.idx, '_value', None )
     if isinstance( node.value.Type, Array ):
-      if idx is not None and not (0 <= idx <= node.value.Type.get_dim_sizes()[0]):
+      if idx is not None and not (0 <= idx < node.value.Type.get_dim_sizes()[0]):
         raise PyMTLTypeError( s.blk, node.ast, 'array index out of range!' )
       # Unpacked array index must be a static constant integer!
       subtype = node.value.Type.get_sub_type()
@@ -241,12 +241,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
     elif isinstance( node.value.Type, Signal ):
       dtype = node.value.Type.get_dtype()
       if node.value.Type.is_packed_indexable():
-        if idx is not None and not (0 <= idx <= dtype.get_length()):
+        if idx is not None and not (0 <= idx < dtype.get_length()):
           raise PyMTLTypeError( s.blk, node.ast,
             'bit selection index out of range!' )
         node.Type = node.value.Type.get_next_dim_type()
       elif isinstance( dtype, Vector ):
-        if idx is not None and not(0 <= idx <= dtype.get_length()):
+        if idx is not None and not(0 <= idx < dtype.get_length()):
           raise PyMTLTypeError( s.blk, node.ast,
             'bit selection index out of range!' )
         node.Type = Wire( Vector( 1 ) )
@@ -255,6 +255,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
           'cannot perform index on {}!'.format(dtype))
 
     else:
+      # Should be unreachable
       raise PyMTLTypeError( s.blk, node.ast,
         'cannot perform index on {}!'.format(node.value.Type))
 
@@ -265,7 +266,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
 
     if not isinstance( dtype, Vector ):
       raise PyMTLTypeError( s.blk, node.ast,
-        'cannot perform slicing on type {}!'.format(node.value.Type))
+        'cannot perform slicing on type {}!'.format(dtype))
     if not lower_val is None and not upper_val is None:
       signal_nbits = dtype.get_length()
       # upper bound must be strictly larger than the lower bound

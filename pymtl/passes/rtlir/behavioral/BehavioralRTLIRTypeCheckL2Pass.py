@@ -9,11 +9,11 @@ from __future__ import absolute_import, division, print_function
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLTypeError
 from pymtl.passes.rtlir.RTLIRType import *
 
 from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
-from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
@@ -56,7 +56,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       'right' : ( Signal, 'rhs of binop should be signal/const!' ),
     }
     s.type_expect[ 'UnaryOp' ] = {
-      'operand' : ( Signal, 'op of binop should be signal/const!' )
+      'operand' : ( Signal, 'unary op only applies to signals and consts!' )
     }
     s.type_expect[ 'For' ] = {
       'start' : ( Const, 'the start of a for-loop must be a constant expression!' ),
@@ -77,10 +77,11 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     assert type( l ) == int or isinstance( l, pymtl.Bits )
     assert type( r ) == int or isinstance( r, pymtl.Bits )
     op_dict = {
-      Add       : '+',  Sub   : '-',  Mult : '*',  Div  : '/',
-      Mod       : '%',  Pow   : '**',
-      ShiftLeft : '<<', ShiftRightLogic : '>>',
-      BitAnd    : '&',  BitOr : '|',  BitXor : '^',
+      And       : 'and', Or    : 'or',
+      Add       : '+',   Sub   : '-',  Mult : '*',  Div  : '/',
+      Mod       : '%',   Pow   : '**',
+      ShiftLeft : '<<',  ShiftRightLogic : '>>',
+      BitAnd    : '&',   BitOr : '|',  BitXor : '^',
     }
     _op = op_dict[ type( op ) ]
     return eval( 'l{_op}r'.format( **locals() ) )
@@ -129,8 +130,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     except AttributeError:
       raise PyMTLTypeError( s.blk, node.ast,
         'the step of for-loop must be a constant!' )
-    except Exception:
-      raise
     node.Type = None
 
   def visit_LoopVar( s, node ):
@@ -205,8 +204,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       # Variable
       else:
         node.Type = Wire( Vector( res_nbits ) )
-    except Exception:
-      raise
 
   def visit_Compare( s, node ):
     node.Type = Wire( Bool() )

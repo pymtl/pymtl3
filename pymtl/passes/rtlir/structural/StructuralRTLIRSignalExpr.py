@@ -8,14 +8,25 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 import pymtl
-
-from ..RTLIRType import *
+from pymtl.passes.rtlir.errors import RTLIRConversionError
+from pymtl.passes.rtlir.RTLIRDataType import Struct, Vector, get_rtlir_dtype
+from pymtl.passes.rtlir.RTLIRType import (
+    Array,
+    BaseRTLIRType,
+    Component,
+    Const,
+    InterfaceView,
+    Port,
+    Signal,
+    Wire,
+)
 
 
 class BaseSignalExpr( object ):
   """Base abstract class of RTLIR signal expressions."""
   def __init__( s, rtype ):
-    assert isinstance( rtype, BaseRTLIRType )
+    assert isinstance( rtype, BaseRTLIRType ), \
+      "non-RTLIR type {} encountered!".format( rtype )
     s.rtype = rtype
 
   def get_rtype( s ):
@@ -122,15 +133,15 @@ class _Slice( BaseSignalExpr ):
     elif isinstance( base_rtype, Wire ):
       rtype = Wire( Vector( stop-start ) )
     else:
-      assert False
+      assert False, \
+        "unrecognized signal type {} for slicing".format( base_rtype )
     super( _Slice, s ).__init__( rtype )
     s.base = slice_base
     s.slice = ( start, stop )
 
   def __eq__( s, other ):
     return super( _Slice, s ).__eq__( other ) and \
-           s.start == other.start and s.stop == other.stop and \
-           s.slice_base == other.slice_base
+           s.slice == other.slice and s.base == other.base
 
   def get_slice( s ):
     return s.slice
@@ -157,7 +168,7 @@ class _Attribute( BaseSignalExpr ):
   def __eq__( s, other ):
     return super( _Attribute, s ).__eq__( other ) and \
            s.attr == other.attr and \
-           s.attr_base == other.attr_base
+           s.base == other.base
 
   def get_base( s ):
     return s.base
@@ -176,7 +187,7 @@ class _Attribute( BaseSignalExpr ):
   @staticmethod
   def is_subcomp_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
-    if isinstance(attr_base, CurComp) and \
+    if not isinstance(attr_base, CurComp) and \
        isinstance(base_rtype, Component) and base_rtype.has_property(attr):
       return SubCompAttr
     else:
@@ -193,10 +204,12 @@ class _Attribute( BaseSignalExpr ):
   @staticmethod
   def is_struct_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
-    dtype = base_rtype.get_dtype()
-    if isinstance(base_rtype, Signal) and isinstance(dtype, Struct) and \
-       dtype.has_property(attr):
-      return StructAttr
+    if isinstance(base_rtype, Signal):
+      dtype = base_rtype.get_dtype()
+      if isinstance(dtype, Struct) and dtype.has_property(attr):
+        return StructAttr
+      else:
+        return None
     else:
       return None
 
@@ -256,7 +269,8 @@ class PackedIndex( _Index ):
     elif isinstance( base_rtype, Wire ):
       rtype = Wire( dtype.get_next_dim_type() )
     else:
-      assert False
+      assert False, \
+        "unrecognized signal type {} for indexing".format( base_rtype )
     super( PackedIndex, s ).__init__( index_base, index, rtype )
 
 class BitSelection( _Index ):
@@ -268,7 +282,8 @@ class BitSelection( _Index ):
     elif isinstance( base_rtype, Wire ):
       rtype = Wire( Vector( 1 ) )
     else:
-      assert False
+      assert False, \
+        "unrecognized signal type {} for indexing".format( base_rtype )
     super( BitSelection, s ).__init__( index_base, index, rtype )
 
 class PartSelection( _Slice ):
@@ -298,7 +313,8 @@ class StructAttr( _Attribute ):
     elif isinstance( base_rtype, Wire ):
       rtype = Wire( dtype.get_property( attr ) )
     else:
-      assert False
+      assert False, \
+        "unrecognized signal type {} for field selection".format( base_rtype )
     super( StructAttr, s ).__init__( attr_base, attr, rtype )
 
 signal_expr_classes = {
@@ -316,7 +332,6 @@ def gen_signal_expr( cur_component, signal ):
   """Return an RTLIR signal expression for the given signal."""
   def get_next_op( expr, cur_pos, my_name, full_name ):
     if not expr[cur_pos:]: return ( 'Done', '' ), 0
-
     pos = len( expr )
     dot_pos = expr.find( '.', cur_pos+1 )
     lb_pos  = expr.find( '[', cur_pos+1 )
@@ -330,7 +345,8 @@ def gen_signal_expr( cur_component, signal ):
     elif expr[cur_pos] == '[':
       rb_pos = expr.find( ']', cur_pos )
       colon_pos = expr.find( ':', cur_pos )
-      assert rb_pos != -1 and pos == rb_pos+1
+      assert rb_pos != -1 and pos == rb_pos+1, \
+        "unrecognized expression {}".format( expr )
 
       if cur_pos < colon_pos < rb_pos:
         start = int( expr[cur_pos+1:colon_pos] )
@@ -342,7 +358,8 @@ def gen_signal_expr( cur_component, signal ):
     # The current component ( base of attribute )
     else:
       base_pos = expr.find( full_name )
-      assert base_pos >= 0
+      assert base_pos >= 0, \
+        "cannot find the base of attribute {} in {}".format( full_name, expr )
       return ( 'Base', my_name ), base_pos + len( full_name )
 
   def get_cls_inst( func_list, cur_node, ops ):
@@ -352,32 +369,36 @@ def gen_signal_expr( cur_component, signal ):
     for cls in classes:
       if cls:
         return cls( cur_node, *ops )
-    assert False
+    assert False, \
+      'internal error: no available expression nodes for {}!'.format(cur_node)
 
   try:
-    expr = signal._dsl.full_name
-    base_comp = signal
-  except AttributeError:
-    assert hasattr( signal._dsl, 'const' ), '{} is not supported!'.format(signal)
-    assert isinstance( signal._dsl.const, int ), \
-        '{} is not an integer const!'.format( signal._dsl.const )
-    return ConstInstance( signal, signal._dsl.const )
+    try:
+      expr = signal._dsl.full_name
+      base_comp = signal
+    except AttributeError:
+      assert hasattr( signal._dsl, 'const' ), '{} is not supported!'.format(signal)
+      assert isinstance( signal._dsl.const, int ), \
+          '{} is not an integer const!'.format( signal._dsl.const )
+      return ConstInstance( signal, signal._dsl.const )
+    while hasattr( base_comp._dsl, 'parent_obj' ) and base_comp._dsl.parent_obj:
+      base_comp = base_comp._dsl.parent_obj
+      if base_comp == cur_component: break
+    assert isinstance( base_comp, pymtl.Component ) and base_comp == cur_component, \
+      "cannot find root component for signal {}".format( signal )
+    full_name = base_comp._dsl.full_name
+    my_name = base_comp._dsl.my_name
+    assert expr.find( full_name ) >= 0, \
+      "cannot find the base of attribute {} in {}".format( full_name, expr )
 
-  while hasattr( base_comp._dsl, 'parent_obj' ) and base_comp._dsl.parent_obj:
-    base_comp = base_comp._dsl.parent_obj
-    if base_comp == cur_component: break
-
-  assert isinstance( base_comp, pymtl.Component ) and base_comp == cur_component
-  full_name = base_comp._dsl.full_name
-  my_name = base_comp._dsl.my_name
-  assert expr.find( full_name ) >= 0
-
-  # Start from the base component and process one operation per iteration
-  cur_pos, cur_node = 0, base_comp
-
-  while cur_pos < len( expr ):
-    op, next_pos = get_next_op( expr, cur_pos, my_name, full_name )
-    if op[0] == 'Done': break
-    cur_node = get_cls_inst( signal_expr_classes[ op[0] ], cur_node, op[1:] )
-    cur_pos = next_pos
-  return cur_node
+    # Start from the base component and process one operation per iteration
+    cur_pos, cur_node = 0, base_comp
+    while cur_pos < len( expr ):
+      op, next_pos = get_next_op( expr, cur_pos, my_name, full_name )
+      if op[0] == 'Done': break
+      cur_node = get_cls_inst( signal_expr_classes[ op[0] ], cur_node, op[1:] )
+      cur_pos = next_pos
+    return cur_node
+  except AssertionError as e:
+    msg = '' if e.args[0] is None else e.args[0]
+    raise RTLIRConversionError( signal, msg )

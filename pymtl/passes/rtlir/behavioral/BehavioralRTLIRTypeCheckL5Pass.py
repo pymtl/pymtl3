@@ -8,11 +8,11 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLTypeError
 from pymtl.passes.rtlir.RTLIRType import Array, Component, Port, _is_of_type
 
 from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
-from .errors import PyMTLTypeError
 
 
 class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
@@ -23,8 +23,7 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
 
-    visitor = BehavioralRTLIRTypeCheckVisitorL5(
-      m,
+    visitor = BehavioralRTLIRTypeCheckVisitorL5( m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
@@ -45,26 +44,23 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     if isinstance( node.value.Type, Array ) and \
        isinstance( node.value.Type.get_sub_type(), Component ):
       try:
-        idx = node._value
+        idx = node.idx._value
+        node.Type = node.value.Type.get_sub_type()
       except AttributeError:
         raise PyMTLTypeError( s.blk, node.ast,
           'index of component array must be a static constant expression!' )
-    super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Index( node )
+    else:
+      super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Index( node )
 
   def visit_Attribute( s, node ):
     """Type check an attribute.
     
-    Detect cross-hierarchy reference at level 5.
+    Since only the ports of a subcomponent can be accessed, no explicit
+    cross-hierarchy access detection is needed.
     """
-    if not hasattr( s, '_hierarchy_level' ):
-      s._hierarhcy_level = 0
-      _cleanup_level = True
-    else:
-      _cleanup_level = False
-
     # Attributes of subcomponent can only access ports
     if isinstance( node.value.Type, Component ) and \
-       not node.value.Type.get_name() == s.component.__class__.__name__:
+       node.value.Type.get_name() != s.component.__class__.__name__:
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
           'Component {} does not have attribute {}!'.format(
@@ -77,11 +73,3 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
       node.Type = prop
     else:
       super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Attribute( node )
-
-    if isinstance( node.value, Component ):
-      s._hierarhcy_level += 1
-    if s._hierarhcy_level > 2:
-      raise PyMTLTypeError( s.blk, node.ast,
-        'corss-hierarhcy reference: attribute {} of {} accessed in {}.'.format(
-          node.attr, node.value, s.component ) )
-    if _cleanup_level: delattr( s, '_hierarhcy_level' )

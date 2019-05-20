@@ -13,9 +13,9 @@ import copy
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLSyntaxError
 
 from .BehavioralRTLIR import *
-from .errors import PyMTLSyntaxError
 
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
@@ -69,9 +69,12 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       raise PyMTLSyntaxError( s.blk, node, 'star argument is not supported!')
     if node.kwargs:
       raise PyMTLSyntaxError( s.blk, node,
-        'double-star keyword argument is not supported!')
+        'double-star argument is not supported!')
     if node.keywords:
       raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
+    if not isinstance( node.func, ast.Name ):
+      raise PyMTLSyntaxError( s.blk, node,
+        '{} is called but is not a name!'.format(node.func))
     func = node.func
 
     # Find the corresponding object of node.func field
@@ -89,10 +92,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           obj = s.closure[ func.id ]
         else:
           raise NameError
-
-      except AttributeError:
-        raise PyMTLSyntaxError( s.blk, node,
-          node.func + ' function call is not supported!' )
       except NameError:
         raise PyMTLSyntaxError( s.blk, node,
           node.func.id + ' function is not found!' )
@@ -144,11 +143,11 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     Example: Bits4(2)
     These are converted to different RTLIR nodes in different contexts.
     """
-
     obj = s.get_call_obj( node )
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
-      assert len( node.args ) == 1, \
-        'copy method {} takes exactly 1 argument!'.format( obj )
+      if len( node.args ) != 1:
+        raise PyMTLSyntaxError( s.blk, node,
+          'copy method {} takes exactly 1 argument!'.format(obj))
       ret = s.visit( node.args[0] )
       ret.ast = node
       return ret
@@ -164,28 +163,21 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # 5. Real function call: not supported yet
 
     # Deal with Bits type cast
-    if issubclass( obj, pymtl.Bits ):
+    if isinstance(obj, type) and issubclass( obj, pymtl.Bits ):
       nbits = obj.nbits
-      if (len( node.args ) != 1) or (node.keywords):
+      if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly 1 non-keyword argument should be given to Bits!' )
-      if nbits <= 0:
-        raise PyMTLSyntaxError( s.blk, node,
-          'bit width should be positive integers!' )
+          'exactly one argument should be given to Bits!' )
       value = s.visit( node.args[0] )
-      if not isinstance( value, Number ):
-        ret = value
-        ret.ast = node
-        return ret
       ret = SizeCast( nbits, value )
       ret.ast = node
       return ret
 
     # concat method
     elif obj is pymtl.concat:
-      if (len( node.args ) < 1) or (node.keywords):
+      if len( node.args ) < 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'at least 1 non-keyword argument should be given to concat!' )
+          'at least one argument should be given to concat!' )
       values = map( lambda c: s.visit(c), node.args )
       ret = Concat( values )
       ret.ast = node
@@ -193,9 +185,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # zext method
     elif obj is pymtl.zext:
-      if (len( node.args ) != 1) or (node.keywords):
+      if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly 1 non-keyword argument should be given to zext!' )
+          'exactly two arguments should be given to zext!' )
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = ZeroExt( nbits, value )
@@ -204,9 +196,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # sext method
     elif obj is pymtl.sext:
-      if (len( node.args ) != 1) or (node.keywords):
+      if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly 1 non-keyword argument should be given to sext!' )
+          'exactly two arguments should be given to sext!' )
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = SignExt( nbits, value )
@@ -216,7 +208,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     else:
       # Only Bits class instantiation is supported at L1
       raise PyMTLSyntaxError( s.blk, node,
-        'Expecting Bits object but found ' + obj.__name__ )
+        'Unrecgonized method call {}!' + obj.__name__ )
 
   def visit_Attribute( s, node ):
     ret = Attribute( s.visit( node.value ), node.attr )
@@ -260,14 +252,16 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       obj = s.closure[ node.id ]
       if isinstance( obj, pymtl.Component ):
         # Component freevars are an L1 thing.
-        assert obj is s.component, \
-            "Component {} is not a sub-component of {}!".format(obj, s.component)
+        if obj is not s.component:
+          raise PyMTLSyntaxError( s.blk, node,
+            'Component {} is not a sub-component of {}!'.format(obj, s.component))
         ret = Base( obj )
       else:
         ret =  FreeVar( node.id, obj )
       ret.ast = node
       return ret
-    assert False, 'Temporary variables are not supported at L1!'
+    raise PyMTLSyntaxError( s.blk, node,
+      'Temporary variable {} is not supported at L1!'.format(node.id))
 
   def visit_Num( s, node ):
     ret = Number( node.n )
@@ -306,10 +300,10 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     a non-returning function.
     """
     raise PyMTLSyntaxError(
-      s.blk, node, 'Task is not supported yet!'
+      s.blk, node, 'Stand-alone expression is not supported yet!'
     )
 
-  def visit_LambdaOp( s, node ):
+  def visit_Lambda( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )
 
   def visit_Dict( s, node ):
@@ -384,7 +378,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def visit_Continue( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: continue' )
 
-  def visit_While( s, ndoe ):
+  def visit_While( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: while' )
 
   def visit_ExtSlice( s, node ):

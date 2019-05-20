@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
+from pymtl.passes.rtlir.errors import PyMTLSyntaxError
 
 from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
-from .errors import PyMTLSyntaxError
 
 
 class BehavioralRTLIRGenL3Pass( BasePass ):
