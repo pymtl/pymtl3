@@ -208,7 +208,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     else:
       # Only Bits class instantiation is supported at L1
       raise PyMTLSyntaxError( s.blk, node,
-        'Unrecgonized method call {}!' + obj.__name__ )
+        'Unrecognized method call {}!' + obj.__name__ )
 
   def visit_Attribute( s, node ):
     ret = Attribute( s.visit( node.value ), node.attr )
