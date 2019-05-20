@@ -1,9 +1,13 @@
 #=========================================================================
-# BehavioralRTLIRGenPass_test.py
+# BehavioralRTLIRPass_test.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Feb 2, 2019
-"""Test the behavioral RTLIR generation pass."""
+"""Test the behavioral RTLIR passes.
+
+The generation, type check, and visualization passes are invoked. The
+results of generation pass are verifed against a reference AST.
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -16,7 +20,7 @@ from pymtl.passes.rtlir.behavioral import (
     BehavioralRTLIRVisualizationPass,
 )
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
-from pymtl.passes.rtlir.behavioral.errors import PyMTLTypeError
+from pymtl.passes.rtlir.errors import PyMTLTypeError
 from pymtl.passes.rtlir.test_utility import do_test, expected_failure
 
 
