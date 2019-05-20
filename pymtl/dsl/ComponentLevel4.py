@@ -39,11 +39,10 @@ class ComponentLevel4( ComponentLevel3 ):
     #
     # This means dir(ComponentLevel4) is called unnecessarily a huge
     # number of times.
+    # Update: we should use cls.__dict__ to get all added methods!
 
-    base_dir = set(dir(ComponentLevel4))
-    cls_dir  = dir(cls)
-    for name in cls_dir:
-      if not name.startswith("_") and name not in base_dir and name != "line_trace":
+    for name in cls.__dict__:
+      if not name.startswith("_"):
         field = getattr( inst, name )
         if callable( field ):
           setattr( inst, name, field )

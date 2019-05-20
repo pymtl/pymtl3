@@ -56,16 +56,14 @@ class ComponentLevel6( ComponentLevel5 ):
         return method( s, *args, **kwargs )
       return _method
 
-    base_dir = set(dir(ComponentLevel6))
-    s_dir  = dir(s)
-    for x in s_dir:
-      if x not in base_dir:
-        method = getattr( s, x )
-        # We identify guarded methods here
-        if hasattr( method, "_guard_method" ):
-          guard    = method._guard_method
-          ifc_type = method._guard_callee_ifc_type
-          setattr( s, x, ifc_type( method, bind_method( guard ) ) )
+    cls_dict = s.__class__.__dict__
+    for x in cls_dict:
+      method = getattr( s, x )
+      # We identify guarded methods here
+      if hasattr( method, "_guard_method" ):
+        guard    = method._guard_method
+        ifc_type = method._guard_callee_ifc_type
+        setattr( s, x, ifc_type( method, bind_method( guard ) ) )
 
   # Override
   def _construct( s ):
