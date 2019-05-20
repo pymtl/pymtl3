@@ -119,7 +119,7 @@ def test_L1_sext_small_nbits( do_test ):
 def test_L1_wrong_attribute( do_test ):
   class A( Component ):
     def construct( s ):
-      # s.in_ is not recgonized by RTLIR and will be dropped
+      # s.in_ is not recognized by RTLIR and will be dropped
       s.in_ = 'string'
       s.out = OutPort( Bits16 )
       @s.update
@@ -544,14 +544,23 @@ def test_L1_call_sext_num_args( do_test ):
   with expected_failure( PyMTLSyntaxError, "exactly two arguments" ):
     do_test( A() )
 
-def test_L1_call_unrecgonized( do_test ):
+def test_L1_call_unrecognized( do_test ):
   class A( Component ):
     def construct( s ):
       def foo(): pass
       @s.update
       def upblk():
         x = foo()
-  with expected_failure( PyMTLSyntaxError, "Unrecgonized method" ):
+  with expected_failure( PyMTLSyntaxError, "Unrecognized method" ):
+    do_test( A() )
+
+def test_L1_call_global_unrecognized( do_test ):
+  class A( Component ):
+    def construct( s ):
+      @s.update
+      def upblk():
+        t = do_test(u)
+  with expected_failure( PyMTLSyntaxError, "Unrecognized method" ):
     do_test( A() )
 
 #-------------------------------------------------------------------------
