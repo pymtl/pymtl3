@@ -12,7 +12,7 @@ import pytest
 from pymtl import *
 from pymtl.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
-    BehavioralRTLIRTypeCheckPass
+    BehavioralRTLIRTypeCheckPass,
 )
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.errors import PyMTLTypeError
