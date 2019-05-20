@@ -342,6 +342,7 @@ def {0}():
       if xx is not x:
         if x.get_host_component() is top:
           top._dag.top_level_callee_constraints.add( (x, y) )
+        """
         for adj in top._dsl.adjacency[ x ]:
           if adj.get_host_component() is top:
             try:
@@ -357,10 +358,12 @@ def {0}():
                 top._dag.top_level_callee_constraints.add( ( adj._dsl.parent_obj, y) )
         except AttributeError:
           pass
+        """
 
       elif yy is not y:
         if y.get_host_component() is top:
           top._dag.top_level_callee_constraints.add( (x, y) )
+        """
         for adj in top._dsl.adjacency[ y ]:
           if adj.get_host_component() is top:
             try:
@@ -377,6 +380,7 @@ def {0}():
                 top._dag.top_level_callee_constraints.add( (x, adj._dsl.parent_obj) )
         except AttributeError:
           pass
+        """
 
     verbose = False
 

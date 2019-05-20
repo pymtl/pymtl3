@@ -91,6 +91,8 @@ class OpenLoopCLPass( BasePass ):
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
 
+    print schedule
+
     def wrap_method( top, method,
                      my_idx_new, next_idx_new, schedule_no_method,
                      my_idx_orig, next_idx_orig ):

@@ -15,6 +15,7 @@ from collections import deque
 import copy
 import pytest
 
+from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
 
 #-------------------------------------------------------------------------
 # SingleEntryPipeQueue
@@ -289,9 +290,7 @@ class ReferenceWrapper( Component ):
   def construct( s, model ):
     s.model = model
     s.method_specs = inspect_rtl( s.model )
-    EnqRTL2CL = gen_adapter( s.model.enq, s.method_specs[ "enq" ] )
     s.enq_adapter = EnqRTL2CL( s.model.enq )
-    DeqRTL2CL = gen_adapter( s.model.deq, s.method_specs[ "deq" ] )
     s.deq_adapter = DeqRTL2CL( s.model.deq )
     s.deq = GuardedCalleeIfc()
     s.enq = GuardedCalleeIfc()
@@ -311,5 +310,22 @@ class ReferenceWrapper( Component ):
                           [( BypassQueueCL, SingleEntryBypassQueue ),
                            ( PipeQueueCL, SingleEntryPipeQueue ) ] )
 def test_state_machine( QueueCL, QueueRTL ):
-  # run_test_state_machine( ReferenceWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+  wrapper = ReferenceWrapper( QueueRTL( Bits16 ) )
+  wrapper.elaborate()
+  wrapper.apply( GenDAGPass() )
+  wrapper.apply( OpenLoopCLPass() )
+  wrapper.lock_in_simulation()
+
   run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+
+"""
+#-------------------------------------------------------------------------
+# test_state_machine
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize( "QueueCL, QueueRTL",
+                          [( BypassQueueCL, SingleEntryBypassQueue ),
+                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
+def test_state_machine( QueueCL, QueueRTL ):
+  run_test_state_machine( ReferenceWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+  run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+"""
