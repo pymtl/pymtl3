@@ -11,11 +11,11 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl.datatypes import Bits1
 
-from .ComponentLevel6 import ComponentLevel6
+from .ComponentLevel7 import ComponentLevel7
 from .Connectable import InPort
 
 
-class Component( ComponentLevel6 ):
+class Component( ComponentLevel7 ):
 
   # Override
   def _construct( s ):

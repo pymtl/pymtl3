@@ -11,10 +11,12 @@ from .mamba.UnrollTickPass import UnrollTickPass
 from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
+from .WrapGreenletPass import WrapGreenletPass
 
 SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
+  WrapGreenletPass(),
   SimpleSchedulePass(),
   CLLineTracePass(),
   SimpleTickPass(),
@@ -24,16 +26,8 @@ SimpleSim = [
 DynamicSim = [
   Component.elaborate,
   GenDAGPass(),
+  WrapGreenletPass(),
   DynamicSchedulePass(),
-  SimpleTickPass(),
-  Component.lock_in_simulation
-]
-
-SimpleCLSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  SimpleSchedulePass(),
-  CLLineTracePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]

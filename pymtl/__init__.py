@@ -5,6 +5,7 @@ from .datatypes import _bitwidths
 from .dsl.Component import Component
 from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
+from .dsl.ComponentLevel7 import blocking
 from .dsl.Connectable import (
     CalleePort,
     CallerPort,
@@ -22,7 +23,7 @@ __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
   'method_port',
-  'non_blocking', 'NonBlockingCalleeIfc', 'NonBlockingCallerIfc',
+  'non_blocking', 'NonBlockingCalleeIfc', 'NonBlockingCallerIfc', 'blocking',
 
   'SimpleSim',
   'Component',

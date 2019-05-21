@@ -26,7 +26,7 @@ class GenDAGPass( BasePass ):
 
     self._generate_net_blocks( top )
     self._process_value_constraints( top )
-    self._process_method_constraints( top )
+    self._process_methods( top )
 
   def _generate_net_blocks( self, top ):
     """ _generate_net_blocks:
@@ -126,6 +126,9 @@ def {0}():
 
     for hostobj, allsrc in hostobj_allsrc.iteritems():
       compile_upblks( hostobj, allsrc )
+
+    # Get the final list of update blocks
+    top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
 
   def _process_value_constraints( self, top ):
 
@@ -270,14 +273,14 @@ def {0}():
         top._dag.all_constraints.add( (x, y) )
 
   #-----------------------------------------------------------------------
-  # Process method constraints
+  # Process methods
   #----------------------------------------------------------------------
   # I assume method don't call other methods here
 
   # Do bfs to find out all potential total constraints associated with
   # each method, direction conflicts, and incomplete constraints
 
-  def _process_method_constraints( self, top ):
+  def _process_methods( self, top ):
 
     try:
       all_M_constraints = top._dsl.all_M_constraints
@@ -517,3 +520,11 @@ def {0}():
               if (v, 1) not in visited:
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
+
+    # Mark update blocks that call blocking methods for greenlet wrapping
+
+    top._dag.greenlet_upblks = set()
+
+    for blocking_method in top._dsl.all_blocking_methods:
+      for blk in method_blks[ blocking_method ]:
+        top._dag.greenlet_upblks.add( blk )
