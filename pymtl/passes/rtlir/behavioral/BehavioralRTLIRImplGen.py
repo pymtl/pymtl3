@@ -160,6 +160,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
   def impl_str( s ):
     """Return the implementation of this constructor as a Python class."""
+    constr_name = s.name
     if s.type_list is None:
       init = ''
       single_term = ''
@@ -194,11 +195,11 @@ def __init__( s{params_name} ):
   """.format( **locals() )
 
     eq_template = """\
-if type(s) is not type(other){single_term}:
+if not isinstance(other, {constr_name}){single_term}:
       return False
     {check_equal}return True"""
     if check_equal == '':
-      eq = 'return type(s) is type(other){not_single_term}'.format( **locals() )
+      eq = 'return isinstance(other, {constr_name}){not_single_term}'.format( **locals() )
     else:
       eq = eq_template.format( **locals() )
 

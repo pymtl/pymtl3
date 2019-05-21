@@ -33,7 +33,7 @@ class BaseSignalExpr( object ):
     return s.rtype
 
   def __eq__( s, other ):
-    return type(s) == type(other) and s.rtype == other.rtype
+    return type(s) is type(other) and s.rtype == other.rtype
 
   def __ne__( s, other ):
     return not s.__eq__( other )
@@ -45,7 +45,7 @@ class _Index( BaseSignalExpr ):
     s.base = index_base
 
   def __eq__( s, other ):
-    return super( _Index, s ).__eq__( other ) and \
+    return type(s) is type(other) and s.rtype == other.rtype and\
            s.index == other.index and \
            s.base == other.base
 
@@ -140,7 +140,7 @@ class _Slice( BaseSignalExpr ):
     s.slice = ( start, stop )
 
   def __eq__( s, other ):
-    return super( _Slice, s ).__eq__( other ) and \
+    return type(s) is type(other) and s.rtype == other.rtype and \
            s.slice == other.slice and s.base == other.base
 
   def get_slice( s ):
@@ -166,7 +166,7 @@ class _Attribute( BaseSignalExpr ):
     s.base = attr_base
 
   def __eq__( s, other ):
-    return super( _Attribute, s ).__eq__( other ) and \
+    return type(s) is type(other) and s.rtype == other.rtype and \
            s.attr == other.attr and \
            s.base == other.base
 
@@ -219,7 +219,8 @@ class ConstInstance( BaseSignalExpr ):
     s.value = value
 
   def __eq__( s, other ):
-    return super( ConstInstance, s ).__eq__( other ) and s.value == other.value
+    return isinstance(other, ConstInstance) and s.rtype == other.rtype and \
+           s.value == other.value
 
   def get_value( s ):
     return s.value
@@ -231,7 +232,7 @@ class CurComp( BaseSignalExpr ):
     s.comp_id = comp_id
 
   def __eq__( s, other ):
-    return super( CurComp, s ).__eq__( other ) and \
+    return isinstance(other, CurComp) and s.rtype == other.rtype and \
            s.comp_id == other.comp_id
 
   def get_component_id( s ):

@@ -40,7 +40,7 @@ def _is_of_type( obj, Type ):
 class NoneType( BaseRTLIRType ):
   """Type for not yet typed RTLIR temporary variables."""
   def __eq__( s, other ):
-    return type( s ) is type( other )
+    return isinstance( other, NoneType )
 
   def __str__( s ):
     return 'NoneType'
@@ -66,7 +66,7 @@ class Array( BaseRTLIRType ):
     return s.unpacked
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ): return False
+    if not isinstance( other, Array ): return False
     if s.dim_sizes != other.dim_sizes: return False
     return s.sub_type == other.sub_type
 
@@ -103,10 +103,6 @@ class Signal( BaseRTLIRType ):
     s.dtype = dtype
     s.unpacked = unpacked
 
-  def __eq__( s, other ):
-    if type( s ) is not type( other ): return False
-    return s.dtype == other.dtype
-
   def is_packed_indexable( s ):
     return isinstance( s.dtype, PackedArray )
 
@@ -123,7 +119,8 @@ class Port( Signal ):
     s.direction = direction
 
   def __eq__( s, other ):
-    return super( Port, s ).__eq__( other ) and s.direction == other.direction
+    return isinstance(other, Port) and s.dtype == other.dtype and \
+           s.direction == other.direction
 
   def __str__( s ):
     return 'Port'
@@ -143,6 +140,9 @@ class Wire( Signal ):
   def __init__( s, dtype, unpacked = False ):
     super( Wire, s ).__init__( dtype, unpacked )
 
+  def __eq__( s, other ):
+    return isinstance(other, Wire) and s.dtype == other.dtype
+
   def __str__( s ):
     return 'Wire'
 
@@ -157,6 +157,9 @@ class Const( Signal ):
   """Const RTLIR instance type."""
   def __init__( s, dtype, unpacked = False ):
     super( Const, s ).__init__( dtype, unpacked )
+
+  def __eq__( s, other ):
+    return isinstance(other, Const) and s.dtype == other.dtype
 
   def __str__( s ):
     return 'Const'
@@ -266,11 +269,8 @@ class Component( BaseRTLIRType ):
     return s.unpacked
 
   def __eq__( s, other ):
-    # import pdb
-    # pdb.set_trace()
-    if type( s ) is not type( other ): return False
-    if s.name != other.name or s.params != other.params: return False
-    return True
+    return isinstance(other, Component) and s.name == other.name and \
+           s.params == other.params
 
   def __str__( s ):
     return 'Component'
@@ -377,6 +377,7 @@ def is_rtlir_convertible( obj ):
     pymtl.InPort, pymtl.OutPort, pymtl.Wire, pymtl.Bits, pymtl.Interface,
     pymtl.Component
   )
+  # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
     while isinstance( obj, list ):
       assert len( obj ) > 0
@@ -469,11 +470,11 @@ def get_rtlir( obj ):
       properties = {}
       for _id, _obj in collect_objs( obj, object, True ):
         # Untranslatable attributes will be ignored
-        if not is_rtlir_convertible( _obj ): continue
-        _obj_type = get_rtlir( _obj )
-        properties[ _id ] = _obj_type
-        if isinstance( _obj_type, Array ):
-          add_packed_instances( _id, _obj_type, properties )
+        if is_rtlir_convertible( _obj ):
+          _obj_type = get_rtlir( _obj )
+          properties[ _id ] = _obj_type
+          if isinstance( _obj_type, Array ):
+            add_packed_instances( _id, _obj_type, properties )
       return Component( obj, properties )
 
     # Cannot convert `obj` into RTLIR representation

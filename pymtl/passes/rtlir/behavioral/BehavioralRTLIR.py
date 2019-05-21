@@ -22,7 +22,7 @@ class CombUpblk( BaseBehavioralRTLIR ):
     s.body = body
 
   def __eq__( s, other ):
-    if type(s) is not type(other) or s.name != other.name:
+    if not isinstance(other, CombUpblk) or s.name != other.name:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
@@ -35,7 +35,7 @@ class SeqUpblk( BaseBehavioralRTLIR ):
     s.body = body
 
   def __eq__( s, other ):
-    if type(s) is not type(other) or s.name != other.name:
+    if not isinstance(other, SeqUpblk) or s.name != other.name:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
@@ -48,7 +48,7 @@ class Assign( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.target == other.target and s.value == other.value
+    return isinstance(other, Assign) and s.target == other.target and s.value == other.value
 
 class AugAssign( BaseBehavioralRTLIR ):
   def __init__( s, target, op, value ):
@@ -57,7 +57,7 @@ class AugAssign( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.target == other.target and s.op == other.op and s.value == other.value
+    return isinstance(other, AugAssign) and s.target == other.target and s.op == other.op and s.value == other.value
 
 class If( BaseBehavioralRTLIR ):
   def __init__( s, cond, body, orelse ):
@@ -66,7 +66,7 @@ class If( BaseBehavioralRTLIR ):
     s.orelse = orelse
 
   def __eq__( s, other ):
-    if type(s) is not type(other) or s.cond != other.cond:
+    if not isinstance(other, If) or s.cond != other.cond:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
@@ -85,7 +85,7 @@ class For( BaseBehavioralRTLIR ):
     s.body = body
 
   def __eq__( s, other ):
-    if type(s) is not type(other) or s.var != other.var or s.start != other.start or s.end != other.end or s.step != other.step:
+    if not isinstance(other, For) or s.var != other.var or s.start != other.start or s.end != other.end or s.step != other.step:
       return False
     for x, y in zip( s.body, other.body ):
       if x != y:
@@ -97,14 +97,14 @@ class Number( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.value == other.value
+    return isinstance(other, Number) and s.value == other.value
 
 class Concat( BaseBehavioralRTLIR ):
   def __init__( s, values ):
     s.values = values
 
   def __eq__( s, other ):
-    if type(s) is not type(other):
+    if not isinstance(other, Concat):
       return False
     for x, y in zip( s.values, other.values ):
       if x != y:
@@ -117,7 +117,7 @@ class ZeroExt( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.nbits == other.nbits and s.value == other.value
+    return isinstance(other, ZeroExt) and s.nbits == other.nbits and s.value == other.value
 
 class SignExt( BaseBehavioralRTLIR ):
   def __init__( s, nbits, value ):
@@ -125,7 +125,7 @@ class SignExt( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.nbits == other.nbits and s.value == other.value
+    return isinstance(other, SignExt) and s.nbits == other.nbits and s.value == other.value
 
 class Reduce( BaseBehavioralRTLIR ):
   def __init__( s, op, value ):
@@ -133,7 +133,7 @@ class Reduce( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.op == other.op and s.value == other.value
+    return isinstance(other, Reduce) and s.op == other.op and s.value == other.value
 
 class SizeCast( BaseBehavioralRTLIR ):
   def __init__( s, nbits, value ):
@@ -141,7 +141,7 @@ class SizeCast( BaseBehavioralRTLIR ):
     s.value = value
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.nbits == other.nbits and s.value == other.value
+    return isinstance(other, SizeCast) and s.nbits == other.nbits and s.value == other.value
 
 class StructInst( BaseBehavioralRTLIR ):
   def __init__( s, struct, keywords, kwargs ):
@@ -150,7 +150,7 @@ class StructInst( BaseBehavioralRTLIR ):
     s.kwargs = kwargs
 
   def __eq__( s, other ):
-    if type(s) is not type(other) or s.struct != other.struct:
+    if not isinstance(other, StructInst) or s.struct != other.struct:
       return False
     for x, y in zip( s.keywords, other.keywords ):
       if x != y:
@@ -167,7 +167,7 @@ class IfExp( BaseBehavioralRTLIR ):
     s.orelse = orelse
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.cond == other.cond and s.body == other.body and s.orelse == other.orelse
+    return isinstance(other, IfExp) and s.cond == other.cond and s.body == other.body and s.orelse == other.orelse
 
 class UnaryOp( BaseBehavioralRTLIR ):
   def __init__( s, op, operand ):
@@ -175,7 +175,7 @@ class UnaryOp( BaseBehavioralRTLIR ):
     s.operand = operand
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.op == other.op and s.operand == other.operand
+    return isinstance(other, UnaryOp) and s.op == other.op and s.operand == other.operand
 
 class BoolOp( BaseBehavioralRTLIR ):
   def __init__( s, op, values ):
@@ -183,7 +183,7 @@ class BoolOp( BaseBehavioralRTLIR ):
     s.values = values
 
   def __eq__( s, other ):
-    if type(s) is not type(other) or s.op != other.op:
+    if not isinstance(other, BoolOp) or s.op != other.op:
       return False
     for x, y in zip( s.values, other.values ):
       if x != y:
@@ -197,7 +197,7 @@ class BinOp( BaseBehavioralRTLIR ):
     s.right = right
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.left == other.left and s.op == other.op and s.right == other.right
+    return isinstance(other, BinOp) and s.left == other.left and s.op == other.op and s.right == other.right
 
 class Compare( BaseBehavioralRTLIR ):
   def __init__( s, left, op, right ):
@@ -206,7 +206,7 @@ class Compare( BaseBehavioralRTLIR ):
     s.right = right
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.left == other.left and s.op == other.op and s.right == other.right
+    return isinstance(other, Compare) and s.left == other.left and s.op == other.op and s.right == other.right
 
 class Attribute( BaseBehavioralRTLIR ):
   def __init__( s, value, attr ):
@@ -214,7 +214,7 @@ class Attribute( BaseBehavioralRTLIR ):
     s.attr = attr
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.value == other.value and s.attr == other.attr
+    return isinstance(other, Attribute) and s.value == other.value and s.attr == other.attr
 
 class Index( BaseBehavioralRTLIR ):
   def __init__( s, value, idx ):
@@ -222,7 +222,7 @@ class Index( BaseBehavioralRTLIR ):
     s.idx = idx
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.value == other.value and s.idx == other.idx
+    return isinstance(other, Index) and s.value == other.value and s.idx == other.idx
 
 class Slice( BaseBehavioralRTLIR ):
   def __init__( s, value, lower, upper ):
@@ -231,21 +231,21 @@ class Slice( BaseBehavioralRTLIR ):
     s.upper = upper
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.value == other.value and s.lower == other.lower and s.upper == other.upper
+    return isinstance(other, Slice) and s.value == other.value and s.lower == other.lower and s.upper == other.upper
 
 class Base( BaseBehavioralRTLIR ):
   def __init__( s, base ):
     s.base = base
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.base == other.base
+    return isinstance(other, Base) and s.base == other.base
 
 class LoopVar( BaseBehavioralRTLIR ):
   def __init__( s, name ):
     s.name = name
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.name == other.name
+    return isinstance(other, LoopVar) and s.name == other.name
 
 class FreeVar( BaseBehavioralRTLIR ):
   def __init__( s, name, obj ):
@@ -253,21 +253,21 @@ class FreeVar( BaseBehavioralRTLIR ):
     s.obj = obj
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.name == other.name and s.obj == other.obj
+    return isinstance(other, FreeVar) and s.name == other.name and s.obj == other.obj
 
 class TmpVar( BaseBehavioralRTLIR ):
   def __init__( s, name ):
     s.name = name
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.name == other.name
+    return isinstance(other, TmpVar) and s.name == other.name
 
 class LoopVarDecl( BaseBehavioralRTLIR ):
   def __init__( s, name ):
     s.name = name
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.name == other.name
+    return isinstance(other, LoopVarDecl) and s.name == other.name
 
 class Invert( BaseBehavioralRTLIR ):
   pass

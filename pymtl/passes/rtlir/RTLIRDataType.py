@@ -38,7 +38,7 @@ class Vector( BaseRTLIRDataType ):
     return s.nbits
 
   def __eq__( s, other ):
-    return type(s) is type(other) and ( s.nbits == other.nbits )
+    return isinstance(other, Vector) and ( s.nbits == other.nbits )
 
   def __call__( s, obj ):
     """Return if type `obj` be cast into type `s`."""
@@ -56,7 +56,7 @@ class Struct( BaseRTLIRDataType ):
     s.packed_order = packed_order
 
   def __eq__( s, u ):
-    return type(s) is type(u) and s.name == u.name
+    return isinstance(u, Struct) and s.name == u.name
 
   def get_name( s ):
     return s.name
@@ -78,7 +78,7 @@ class Struct( BaseRTLIRDataType ):
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
-    return isinstance( obj, Struct ) and s == obj
+    return s == obj
 
   def __str__( s ):
     return 'Struct {}'.format( s.name )
@@ -93,7 +93,7 @@ class Bool( BaseRTLIRDataType ):
     pass
 
   def __eq__( s, other ):
-    return type( s ) is type( other )
+    return isinstance(other, Bool)
 
   def get_length( s ):
     return 1
@@ -120,7 +120,7 @@ class PackedArray( BaseRTLIRDataType ):
     s.sub_dtype = sub_dtype
 
   def __eq__( s, other ):
-    if type( s ) is not type( other ): return False
+    if not isinstance(other, PackedArray): return False
     if len( s.dim_sizes ) != len( other.dim_sizes ): return False
     zipped_sizes = zip( s.dim_sizes, other.dim_sizes )
     if not reduce( lambda res, (x,y): res and (x==y), zipped_sizes ):
@@ -143,7 +143,7 @@ class PackedArray( BaseRTLIRDataType ):
 
   def __call__( s, obj ):
     """Return if obj can be cast into type `s`."""
-    return s.__eq__( obj )
+    return s == obj
 
   def __str__( s ):
     return 'PackedArray{} of {}'.format( s.dim_sizes, s.sub_dtype )
@@ -183,10 +183,11 @@ def _get_rtlir_dtype_struct( obj ):
         achieve this by adding default values to your arguments )!'.format(
           obj.__name__ )
     fields = collect_objs( type_instance, object, grouped = True )
+    static_member_names = map(lambda x: x[0], static_members)
     for name, field in fields:
       # Exclude the static members of the type instance
-      if name in map( lambda x: x[0], static_members ): continue
-      all_properties[ name ] = _get_rtlir_dtype_struct( field )
+      if name not in static_member_names:
+        all_properties[ name ] = _get_rtlir_dtype_struct( field )
 
     # Use user-provided pack order
     pack_order = []
