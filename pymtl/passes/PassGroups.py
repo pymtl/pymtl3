@@ -10,7 +10,7 @@ from .mamba.UnrollTickPass import UnrollTickPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
 
-from OpenLoopCLPass import OpenLoopCLPass
+from .OpenLoopCLPass import OpenLoopCLPass
 
 SimpleSim = [
   Component.elaborate,
@@ -40,7 +40,7 @@ OpenLoopCLSim = [
   Component.elaborate,
   GenDAGPass(),
   OpenLoopCLPass(), # Inject this pass to build infrastructure
-  SimpleSchedPass(), # Still generate schedule and tick
+  SimpleSchedulePass(), # Still generate schedule and tick
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
