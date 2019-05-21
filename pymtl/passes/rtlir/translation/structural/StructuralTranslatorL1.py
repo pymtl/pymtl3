@@ -5,18 +5,28 @@
 # Date   : March 24, 2019
 """Provide L1 structural translator."""
 
-import inspect, pymtl
+from __future__ import absolute_import, division, print_function
 
-from collections import defaultdict, deque
+from functools import reduce
 
-from pymtl.passes.rtlir.RTLIRType import Vector, Array
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL1Pass\
-    import StructuralRTLIRGenL1Pass
-from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr\
-    import CurComp, CurCompAttr, BitSelection, PartSelection, PortIndex,
-           WireIndex, ConstIndex, ConstInstance
+import pymtl
+from pymtl.passes.rtlir.RTLIRType import Array, Vector
+from pymtl.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
+    StructuralRTLIRGenL1Pass,
+)
+from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import (
+    BitSelection,
+    ConstIndex,
+    ConstInstance,
+    CurComp,
+    CurCompAttr,
+    PartSelection,
+    PortIndex,
+    WireIndex,
+)
 
 from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
+
 
 class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def __init__( s, top ):
@@ -70,7 +80,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
   def _translate_structural( s, m ):
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
-    s.structural.component_unique_name[m] =\
+    s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
 
     # Translate declarations of signals

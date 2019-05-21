@@ -4,12 +4,14 @@
 # Author : Peitian Pan
 # Date   : March 15, 2019
 """Provide translators that convert RTLIR to backend representation."""
+from __future__ import absolute_import, division, print_function
 
-import inspect
+from functools import reduce
 
-from behavioral import BehavioralTranslator
-from structural import StructuralTranslator
-from BaseRTLIRTranslator import TranslatorMetadata
+from .BaseRTLIRTranslator import TranslatorMetadata
+from .behavioral import BehavioralTranslator
+from .structural import StructuralTranslator
+
 
 def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
   """Return an RTLIRTranslator from the two given translators."""

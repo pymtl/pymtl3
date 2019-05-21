@@ -4,13 +4,17 @@
 # Author : Peitian Pan
 # Date   : March 22, 2019
 """Provide L5 behavioral translator."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL5Pass\
-    import BehavioralRTLIRGenL5Pass
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL5Pass\
-    import BehavioralRTLIRTypeCheckL5Pass
+from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL5Pass import (
+    BehavioralRTLIRGenL5Pass,
+)
+from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL5Pass import (
+    BehavioralRTLIRTypeCheckL5Pass,
+)
 
-from BehavioralTranslatorL4 import BehavioralTranslatorL4
+from .BehavioralTranslatorL4 import BehavioralTranslatorL4
+
 
 class BehavioralTranslatorL5( BehavioralTranslatorL4 ):
   def __init__( s, top ):

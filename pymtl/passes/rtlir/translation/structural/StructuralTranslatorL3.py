@@ -4,18 +4,20 @@
 # Author : Peitian Pan
 # Date   : Apr 4, 2019
 """Provide L3 structural translator."""
+from __future__ import absolute_import, division, print_function
 
-import inspect, pymtl
-
-from collections import defaultdict, deque
-
+import pymtl
 from pymtl.passes.rtlir.RTLIRType import Array
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL3Pass\
-    import StructuralRTLIRGenL3Pass
-from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr\
-    import InterfaceAttr, InterfaceViewIndex
+from pymtl.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (
+    StructuralRTLIRGenL3Pass,
+)
+from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import (
+    InterfaceAttr,
+    InterfaceViewIndex,
+)
 
-from StructuralTranslatorL2 import StructuralTranslatorL2
+from .StructuralTranslatorL2 import StructuralTranslatorL2
+
 
 class StructuralTranslatorL3( StructuralTranslatorL2 ):
 
@@ -100,7 +102,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
         expr.get_index() )
 
     else:
-      return super( StructuralTranslatorL3, s ).\
+      return super( StructuralTranslatorL3, s ). \
           rtlir_signal_expr_translation( expr, m )
 
   #-----------------------------------------------------------------------

@@ -4,16 +4,19 @@
 # Author : Peitian Pan
 # Date   : March 22, 2019
 """Provide L1 behavioral translator."""
+from __future__ import absolute_import, division, print_function
 
 from pymtl.passes.rtlir import get_rtlir
-
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass\
-    import BehavioralRTLIRGenL1Pass
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass\
-    import BehavioralRTLIRTypeCheckL1Pass
+from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
+    BehavioralRTLIRGenL1Pass,
+)
+from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
+    BehavioralRTLIRTypeCheckL1Pass,
+)
 from pymtl.passes.rtlir.RTLIRType import Array, Vector
 
-from BehavioralTranslatorL0 import BehavioralTranslatorL0
+from .BehavioralTranslatorL0 import BehavioralTranslatorL0
+
 
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def __init__( s, top ):
@@ -38,9 +41,9 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def _gen_behavioral_trans_metadata( s, m ):
     m.apply( BehavioralRTLIRGenL1Pass() )
     m.apply( BehavioralRTLIRTypeCheckL1Pass() )
-    s.behavioral.rtlir[m] =\
+    s.behavioral.rtlir[m] = \
         m._pass_behavioral_rtlir_gen.rtlir_upblks
-    s.behavioral.freevars[m] =\
+    s.behavioral.freevars[m] = \
         m._pass_behavioral_rtlir_type_check.rtlir_freevars
 
   #-----------------------------------------------------------------------
@@ -49,13 +52,13 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
   # Override
   def translate_behavioral( s, m ):
-    # Generate behavioral RTLIR for component `m`
+    """Translate behavioral part of `m`."""
+    # Translate upblks
     upblk_srcs = []
     upblks = {
       'CombUpblk' : m.get_update_blocks() - m.get_update_on_edge(),
       'SeqUpblk'  : m.get_update_on_edge()
     }
-
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
         upblk_srcs.append( s.rtlir_tr_upblk_decl(
@@ -65,7 +68,6 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     # Generate free variable declarations
     freevars = []
-
     for name, fvar in s.behavioral.freevars[m].iteritems():
       rtype = get_rtlir( fvar )
       if isinstance( rtype, Array ):
@@ -75,8 +77,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
         fvar_rtype = rtype
         array_rtype = None
       dtype = fvar_rtype.get_dtype()
-      assert isinstance( dtype, Vector ),\
-      '{} freevar should be an integer or a list of integers!'.format( name )
+      assert isinstance( dtype, Vector ), \
+        '{} freevar should be an integer or a list of integers!'.format( name )
       freevars.append( s.rtlir_tr_behavioral_freevar(
         name,
         fvar_rtype,
@@ -84,7 +86,6 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
         s.rtlir_tr_vector_dtype( dtype ),
         fvar
       ) )
-
     s.behavioral.decl_freevars[m] = s.rtlir_tr_behavioral_freevars(freevars)
 
   #-----------------------------------------------------------------------

@@ -4,18 +4,22 @@
 # Author : Peitian Pan
 # Date   : March 24, 2019
 """Provide L2 structural translator."""
+from __future__ import absolute_import, division, print_function
 
-import inspect, pymtl
+from functools import reduce
 
-from collections import defaultdict, deque
-
+import pymtl
 from pymtl.passes.rtlir.RTLIRDataType import Struct
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL2Pass\
-    import StructuralRTLIRGenL2Pass
-from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr\
-    import PackedIndex, StructAttr
+from pymtl.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
+    StructuralRTLIRGenL2Pass,
+)
+from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import (
+    PackedIndex,
+    StructAttr,
+)
 
-from StructuralTranslatorL1 import StructuralTranslatorL1
+from .StructuralTranslatorL1 import StructuralTranslatorL1
+
 
 class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
@@ -66,7 +70,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
         s.structural.decl_type_struct.append( ( dtype, ret ) )
       return ret
     else:
-      return super( StructuralTranslatorL2, s ).\
+      return super( StructuralTranslatorL2, s ). \
           rtlir_data_type_translation( m, dtype )
 
   #-----------------------------------------------------------------------
@@ -88,7 +92,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
         expr.get_attr() )
     else:
-      return super( StructuralTranslatorL2, s ).\
+      return super( StructuralTranslatorL2, s ). \
           rtlir_signal_expr_translation( expr, m )
 
   #-----------------------------------------------------------------------
