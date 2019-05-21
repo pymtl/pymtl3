@@ -13,7 +13,7 @@ Date   : Mar 12, 2018
 
 from __future__ import absolute_import, division, print_function
 
-from pclib.fl   import MemoryFL
+from pclib.fl import MemoryFL
 from pclib.ifcs import MemMsgType, mk_mem_msg
 from pymtl import *
 

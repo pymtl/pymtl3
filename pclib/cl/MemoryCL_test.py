@@ -15,7 +15,6 @@ from pclib.test import mk_test_case_table
 from pclib.test.test_sinks import TestSinkCL
 from pclib.test.test_srcs import TestSrcCL
 from pymtl import *
-from pymtl.passes import SimpleCLSim
 
 from .MemoryCL import MemoryCL
 
@@ -341,7 +340,7 @@ def run_sim( th, max_cycles=1000 ):
 
   # Create a simulator
 
-  th.apply( SimpleCLSim )
+  th.apply( SimpleSim )
 
   # Run simulation
 
