@@ -142,7 +142,7 @@ class ComponentLevel3( ComponentLevel2 ):
             # TODO add error message if other_obj is not a list
             recursive_connect( this_obj[i], other_obj[i] )
         else:
-          s._connect_objects( other_obj, this_obj )
+          s._connect_objects( other_obj, this_obj, internal=True )
 
       for name, obj in this.__dict__.iteritems():
         if not name.startswith("_"):
@@ -176,15 +176,20 @@ class ComponentLevel3( ComponentLevel2 ):
       else:
         connect_by_name( o1, o2 ) # capture s
 
-  def _connect_objects( s, o1, o2 ):
+  def _connect_objects( s, o1, o2, internal=False ):
     """ Top level private method for connecting two objects. We do
-        the function dispatch based on type here"""
+        the function dispatch based on type here. Note that internal=False
+        means we are just calling this API internally so that """
 
     o1_connectable = isinstance( o1, Connectable )
     o2_connectable = isinstance( o2, Connectable )
 
     if not o1_connectable and not o2_connectable:
-      return
+      if internal:
+        return
+      raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
+          "  (when connecting {} to {})" \
+                .format( type(o1), type(o2), o1, o2) )
 
     # Deal with Signal <-> int
 

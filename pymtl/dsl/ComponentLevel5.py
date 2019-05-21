@@ -75,11 +75,11 @@ class ComponentLevel5( ComponentLevel4 ):
     s._dsl.connect_order.append( (o1, o2) )
 
   # Override
-  def _connect_objects( s, o1, o2 ):
+  def _connect_objects( s, o1, o2, internal=False ):
     if isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ):
       s._connect_method_ports( o1, o2 )
     else:
-      super( ComponentLevel5, s )._connect_objects( o1, o2 )
+      super( ComponentLevel5, s )._connect_objects( o1, o2, internal )
 
   #-----------------------------------------------------------------------
   # elaborate
