@@ -84,7 +84,7 @@ class Array( BaseRTLIRType ):
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
-    return s.__eq__( obj )
+    return s == obj
 
   def __str__( s ):
     return 'Array'
@@ -196,7 +196,7 @@ class InterfaceView( BaseRTLIRType ):
     return s.unpacked
 
   def __eq__( s, other ):
-    return type(s) is type(other) and s.name == other.name
+    return isinstance(other, InterfaceView) and s.name == other.name
 
   def get_name( s ):
     return s.name
@@ -387,7 +387,8 @@ def is_rtlir_convertible( obj ):
     return True
   elif isinstance( obj, int ):
     return True
-  else: return False
+  else:
+    return False
 
 def get_rtlir( obj ):
   """Return an RTLIR instance corresponding to `obj`."""
@@ -479,7 +480,7 @@ def get_rtlir( obj ):
 
     # Cannot convert `obj` into RTLIR representation
     else:
-      assert False, 'cannot convert {} into RTLIR!'.format( obj )
+      assert False, 'unrecognized object {}!'.format( obj )
   except AssertionError as e:
     msg = '' if e.args[0] is None else e.args[0]
     raise RTLIRConversionError( obj, msg )

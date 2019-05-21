@@ -38,7 +38,7 @@ class Vector( BaseRTLIRDataType ):
     return s.nbits
 
   def __eq__( s, other ):
-    return isinstance(other, Vector) and ( s.nbits == other.nbits )
+    return isinstance(other, Vector) and s.nbits == other.nbits
 
   def __call__( s, obj ):
     """Return if type `obj` be cast into type `s`."""
