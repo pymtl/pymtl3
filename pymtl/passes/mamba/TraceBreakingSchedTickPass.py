@@ -34,10 +34,7 @@ class TraceBreakingSchedTickPass( BasePass ):
 
     # Construct the graph
 
-    normal_blks = top.get_all_update_blocks()
-    net_blks    = top._dag.genblks
-
-    V   = normal_blks | net_blks
+    V   = top._dag.final_upblks
     E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }

@@ -33,7 +33,7 @@ class SimpleSchedulePass( BasePass ):
 
     # Construct the graph
 
-    V   = top.get_all_update_blocks() | top._dag.genblks
+    V   = top._dag.final_upblks
     E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }

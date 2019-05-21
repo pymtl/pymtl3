@@ -30,7 +30,7 @@ class DynamicSchedulePass( BasePass ):
 
     # Construct the graph
 
-    V  = top.get_all_update_blocks() | top._dag.genblks
+    V  = top._dag.final_upblks
     E  = top._dag.all_constraints
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V } # transpose graph
