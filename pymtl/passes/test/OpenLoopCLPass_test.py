@@ -6,7 +6,7 @@
 # Date   : Apr 19, 2019
 
 from pymtl import *
-from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
+from pymtl.passes import OpenLoopCLPass, GenDAGPass
 from pymtl.dsl.errors import UpblkCyclicError
 
 from collections import deque

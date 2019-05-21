@@ -86,7 +86,7 @@ class ComponentLevel6( ComponentLevel5 ):
         kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
                               if x } )
 
-      s._handle_guard_methods()
+      s._handle_decorated_methods()
 
       # Same as parent class _construct
       s.construct( *s._dsl.args, **kwargs )
