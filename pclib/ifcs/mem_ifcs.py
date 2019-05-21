@@ -3,12 +3,17 @@
 #=========================================================================
 #
 # Author: Shunning Jiang
-# Date  : May 8, 2019
+# Date  : May 18, 2019
 
-from pymtl      import *
+from __future__ import absolute_import, division, print_function
 
+from greenlet import greenlet
+
+from pymtl import *
+
+from .GuardedIfc import GuardedCalleeIfc, GuardedCallerIfc, guarded_ifc
 from .MemMsg import MemMsgType, mk_mem_msg
-from .GuardedIfc import guarded_ifc, GuardedCallerIfc, GuardedCalleeIfc
+
 
 class MemMasterIfcCL( Interface ):
   def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
@@ -46,6 +51,30 @@ class MemMinionIfcCL( Interface ):
     s.resp_class = resp_class
     s.req  = GuardedCalleeIfc( req, req_rdy )
     s.resp = GuardedCallerIfc()
+
+  def connect( s, other, parent ):
+    if isinstance( other, MemMasterIfcFL ):
+      m = MemIfcFL2CLAdapter( s.req_class, s.resp_class )
+
+      if hasattr( parent, "MemIfcFL2CL_count" ):
+        count = parent.MemIfcFL2CL_count
+        setattr( parent, "MemIfcFL2CL_" + str( count ), m )
+      else:
+        parent.MemIfcFL2CL_count = 0
+        parent.MemIfcFL2CL_0 = m
+
+      parent.connect_pairs(
+        other,   m.left,
+        m.right, s,
+      )
+      parent.MemIfcFL2CL_count += 1
+      return True
+
+    elif isinstance( other, MemMinionIfcCL ):
+      assert s.req_class is other.req_class and s.resp_class is other.resp_class
+      return False # use the default connect-by-name method
+
+    return False
 
 class MemMasterIfcFL( Interface ):
   def construct( s ):
@@ -105,3 +134,64 @@ class MemIfcCL2FLAdapter( Component ):
     s.add_constraints(
       M(s.left.req) < U(up_memifc_cl_fl_blk), # bypass behavior
     )
+
+class MemIfcFL2CLAdapter( Component ):
+
+  @blocking
+  def read( s, addr, nbytes ):
+
+    while not s.right.req.rdy():
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req( s.req_class.mk_rd( 0, addr, nbytes ) )
+
+    while s.entry is None:
+      greenlet.getcurrent().parent.switch(0)
+
+    ret = s.entry.data
+    s.entry = None
+    return ret
+
+  @blocking
+  def write( s, addr, nbytes, data ):
+
+    while not s.right.req.rdy():
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req( s.req_class.mk_wr( 0, addr, nbytes, data ) )
+
+    while s.entry is None:
+      greenlet.getcurrent().parent.switch(0)
+
+    s.entry = None
+
+  @blocking
+  def amo( s, amo, addr, nbytes, data ):
+
+    while not s.right.req.rdy():
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req( s.req_class.mk_msg( amo, 0, addr, nbytes ) )
+
+    while s.entry is None:
+      greenlet.getcurrent().parent.switch(0)
+
+    ret = s.entry.data
+    s.entry = None
+    return ret
+
+  def recv_rdy( s ):
+    return s.entry is None
+
+  def recv( s, msg ):
+    assert s.entry is None
+    s.entry = msg
+
+  def construct( s, req_class, resp_class ):
+    s.entry = None # store response
+
+    s.req_class  = req_class
+    s.resp_class = resp_class
+
+    s.left  = MemMinionIfcFL( s.read, s.write, s.amo )
+    s.right = MemMasterIfcCL( req_class, resp_class, s.recv, s.recv_rdy )
