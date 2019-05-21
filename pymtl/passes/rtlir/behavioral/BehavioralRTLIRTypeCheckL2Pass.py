@@ -92,12 +92,13 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     lhs_type = node.target.Type
 
     if isinstance( node.target, TmpVar ):
+      tmpvar_id = (node.target.name, node.target.upblk_name)
       if lhs_type != NoneType() and lhs_type != rhs_type:
         raise PyMTLTypeError( s.blk, node.ast,
           'conflicting type for temporary variable {}!'.format(node.target.name) )
       # Creating a temporaray variable
       node.target.Type = Wire( rhs_type.get_dtype() )
-      s.tmpvars[ node.target.name ] = Wire( rhs_type.get_dtype() )
+      s.tmpvars[ tmpvar_id ] = Wire( rhs_type.get_dtype() )
       node.Type = None
 
     else:
@@ -139,12 +140,13 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     node.Type = Const( Vector( 32 ) )
 
   def visit_TmpVar( s, node ):
-    if not node.name in s.tmpvars:
+    tmpvar_id = (node.name, node.upblk_name)
+    if tmpvar_id not in s.tmpvars:
       # This tmpvar is being created. Later when it is used, its type can
       # be read from the tmpvar type environment.
       node.Type = NoneType()
     else:
-      node.Type = s.tmpvars[ node.name ]
+      node.Type = s.tmpvars[ tmpvar_id ]
 
   def visit_IfExp( s, node ):
     # Can the type of condition be cast into bool?

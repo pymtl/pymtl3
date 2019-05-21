@@ -96,7 +96,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       if node.id in s.loop_var_env:
         ret = LoopVar( node.id )
       elif node.id in s.tmp_var_env:
-        ret = TmpVar( node.id )
+        ret = TmpVar( node.id, s._upblk_name )
       elif isinstance( node.ctx, ast.Load ):
         # trying to load an unregistered tmpvar
         raise PyMTLSyntaxError( s.blk, node,
@@ -104,7 +104,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       else:
         # This is the first time we see this tmp var
         s.tmp_var_env.add( node.id )
-        ret = TmpVar( node.id )
+        ret = TmpVar( node.id, s._upblk_name )
       ret.ast = node
       return ret
     else:

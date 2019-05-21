@@ -35,7 +35,7 @@ module BehavioralRTLIR
        | Base( object base )
        | LoopVar( string name )
        | FreeVar( string name, object obj )
-       | TmpVar( string name )
+       | TmpVar( string name, string upblk_name )
 
   loopvar_decl = LoopVarDecl( string name )
 

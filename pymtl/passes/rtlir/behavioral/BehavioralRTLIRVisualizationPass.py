@@ -349,9 +349,9 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
   def visit_TmpVar( s, node ):
     s.cur += 1
     local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">TmpVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">TmpVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR> <TR><TD>upblk_name</TD><TD>{upblk_name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name, upblk_name=node.upblk_name)
     s.g.node( str( s.cur ), label = label )
 
   def visit_LoopVarDecl( s, node ):

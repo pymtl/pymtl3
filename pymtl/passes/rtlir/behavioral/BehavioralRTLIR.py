@@ -256,11 +256,12 @@ class FreeVar( BaseBehavioralRTLIR ):
     return isinstance(other, FreeVar) and s.name == other.name and s.obj == other.obj
 
 class TmpVar( BaseBehavioralRTLIR ):
-  def __init__( s, name ):
+  def __init__( s, name, upblk_name ):
     s.name = name
+    s.upblk_name = upblk_name
 
   def __eq__( s, other ):
-    return isinstance(other, TmpVar) and s.name == other.name
+    return isinstance(other, TmpVar) and s.name == other.name and s.upblk_name == other.upblk_name
 
 class LoopVarDecl( BaseBehavioralRTLIR ):
   def __init__( s, name ):

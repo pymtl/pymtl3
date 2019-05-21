@@ -222,7 +222,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( BehavioralRTLIRNodeVisitor ):
           'type {} does not have attribute {}!'.format(node.value.Type, node.attr))
     else:
       raise PyMTLTypeError( s.blk, node.ast,
-        '{} of type {} is not supported at L1!'.format(node.attr, node.value.Type))
+        'non-component attribute is not supported at L1!'.format(node.attr, node.value.Type))
     # value.attr has the type that is specified by the base
     node.Type = node.value.Type.get_property( node.attr )
 

@@ -118,6 +118,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       raise PyMTLSyntaxError( s.blk, node,
         'Update blocks should not have arguments!' )
 
+    # Save the name of the upblk
+    s._upblk_name = node.name
+
     # Get the type of upblk from ._upblk_type variable
     ret = eval( s._upblk_type + '( node.name, [] )' )
     for stmt in node.body:
