@@ -177,11 +177,15 @@ class OpenLoopCLPass( BasePass ):
 
     # The last element is always line trace
     def print_line_trace():
+      # ================ FIXME ====================
+      # Not needed when method trace is moved?
       try:
         if top.hide_line_trace:
-          print top.line_trace()
+          return
       except AttributeError:
         pass
+      # ================= end ===================
+      print top.line_trace()
     schedule.append( print_line_trace )
 
     schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]

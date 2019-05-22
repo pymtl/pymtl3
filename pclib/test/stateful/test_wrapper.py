@@ -268,8 +268,8 @@ class RTL2CLWrapper( Component ):
 
     tmpl = """
 s.{name}_adapter = RTL2CL( s.model.{name} )
-#s.{name} = GuardedCalleeIfc()
-#s.connect( s.{name}, s.{name}_adapter.{name} )
+s.{name} = GuardedCalleeIfc()
+s.connect( s.{name}, s.{name}_adapter.{name} )
 s.connect( s.{name}_adapter.{name}_rtl, s.model.{name} )
 """.format( name=name )
 
@@ -282,12 +282,13 @@ s.connect( s.{name}_adapter.{name}_rtl, s.model.{name} )
     name = method_spec.method_name
 
     def method(*args, **kwargs ):
-      ret = s.__dict__[ name + "_adapter" ].__dict__[ name ](**kwargs )
+      ret = s.__dict__[ name+"_adapter"].__dict__[name](**kwargs)
       return ret
 
-    gifc = guarded_ifc(
-        lambda s: s.__dict__[ name + "_adapter" ].__dict__[ name ].rdy() )(
-            method )
+    gifc = guarded_ifc( lambda s: s.__dict__[ name+"_adapter"].__dict__[name].rdy() )(
+        method )
+
+    s.add_constraints( U(method) )
 
     setattr( gifc, "__name__", name )
     setattr( s, name, gifc )
