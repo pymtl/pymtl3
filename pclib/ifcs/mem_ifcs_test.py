@@ -22,26 +22,26 @@ def test_mem_fl_cl_adapter():
       s.addr = 0x1000 + base
       s.end  = 0x1000 + base + 0x10
 
-      s.trace = "         "
+      s.trace = "                   "
 
       if has_loop == 1:
         @s.update
         def up_master_while():
-          s.trace = "         "
+          s.trace = "                   "
           while s.addr < s.end:
             s.mem.write( s.addr, 4, 0xdead0000 | s.addr )
-            s.trace = "wr 0x{:x}".format( s.addr )
-            s.mem.read( s.addr, 4 )
-            s.trace = "rd 0x{:x}".format( s.addr )
+            s.trace = "wr 0x{:x}         ".format( s.addr )
+            x = s.mem.read( s.addr, 4 )
+            s.trace = "rd 0x{:x} {}".format( s.addr, x )
             s.addr += 4
       else:
         @s.update
         def up_master_noloop():
-          s.trace = "#        "
+          s.trace = "#                 "
           s.mem.write( s.addr, 4, 0xdead0000 | s.addr )
-          s.trace = "wr 0x{:x}".format( s.addr )
-          s.mem.read( s.addr, 4 )
-          s.trace = "rd 0x{:x}".format( s.addr )
+          s.trace = "wr 0x{:x}         ".format( s.addr )
+          x = s.mem.read( s.addr, 4 )
+          s.trace = "rd 0x{:x} {}".format( s.addr, x )
           s.addr += 4
 
     def done( s ):
@@ -133,7 +133,7 @@ def test_mem_fl_cl_adapter():
     th.tick()
     ncycles += 1
     trace = th.line_trace()
-    print("{}: {}".format( ncycles, trace ))
+    print("{:3}: {}".format( ncycles, trace ))
 
   # Check timeout
 
