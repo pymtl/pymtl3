@@ -8,8 +8,8 @@
 from pymtl import *
 from pclib.ifcs.GuardedIfc import guarded_ifc
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.test.stateful.test_stateful_simple import run_test_state_machine
-from pclib.test.stateful.test_wrapper_simple import *
+from pclib.test.stateful.test_stateful import run_test_state_machine
+from pclib.test.stateful.test_wrapper import *
 import math
 
 #-------------------------------------------------------------------------
@@ -31,6 +31,10 @@ class ReorderBufferCL( Component ):
     s.head = 0
     s.num = 0
     s.next_slot = 0
+
+    s.add_constraints(
+        M( s.update_entry ) < M( s.remove ),
+        M( s.remove ) < M( s.alloc ) )
 
   @guarded_ifc( lambda s: s.num < s.num_entries )
   def alloc( s ):
@@ -58,6 +62,9 @@ class ReorderBufferCL( Component ):
 
   def empty( s ):
     return s.num == 0
+
+  def line_trace( s ):
+    return ""
 
 
 #-------------------------------------------------------------------------
@@ -155,16 +162,29 @@ class ReorderBuffer( Component ):
     s.empty = Wire( Bits1 )
 
     @s.update
-    def update_rdy():
+    def update_rdy_update():
       s.empty = s.num == 0
-      s.alloc.rdy = s.num < num_entries or s.remove.en
       s.update_entry.rdy = not s.empty
-      s.remove.rdy = s.valid[ s.head ]
 
     @s.update
-    def update_ret():
+    def update_rdy_remove():
+      s.remove.rdy = s.valid[
+          s.head ] or s.update_entry.en and s.update_entry.index == s.head
+
+    @s.update
+    def update_rdy_alloc():
+      s.alloc.rdy = s.num < num_entries or s.remove.en
+
+    @s.update
+    def update_ret_alloc():
       s.alloc.index = s.tail
-      s.remove.value = s.data[ s.head ]
+
+    @s.update
+    def update_en():
+      if s.update_entry.en and s.update_entry.index == s.head:
+        s.remove.value = s.update_entry.value
+      else:
+        s.remove.value = s.data[ s.head ]
 
     @s.update_on_edge
     def update_num():
@@ -203,12 +223,12 @@ class ReorderBuffer( Component ):
           s.data[ s.update_entry.index ] = s.update_entry.value
           s.valid[ s.update_entry.index ] = 1
 
-      if s.alloc.en:
-        s.allocated[ s.tail ] = 1
-
       if s.remove.en:
         s.valid[ s.head ] = 0
         s.allocated[ s.head ] = 0
+
+      if s.alloc.en:
+        s.allocated[ s.tail ] = 1
 
   def line_trace( s ):
     return ":".join([
@@ -216,6 +236,20 @@ class ReorderBuffer( Component ):
                      .allocated[ i ] else "-" ).ljust( 8 )
         for i in range( len( s.data ) )
     ] )
+
+
+from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
+
+
+#-------------------------------------------------------------------------
+# test_state_machine
+#-------------------------------------------------------------------------
+def test_state_machine():
+  wrapper = RTL2CLWrapper( ReorderBuffer( Bits16, 4 ) )
+  wrapper.elaborate()
+  wrapper.apply( GenDAGPass() )
+  wrapper.apply( OpenLoopCLPass() )
+  wrapper.lock_in_simulation()
 
 
 #-------------------------------------------------------------------------

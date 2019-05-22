@@ -17,6 +17,7 @@ import pytest
 
 from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
 
+
 #-------------------------------------------------------------------------
 # SingleEntryPipeQueue
 #-------------------------------------------------------------------------
@@ -317,6 +318,7 @@ def test_state_machine( QueueCL, QueueRTL ):
   wrapper.lock_in_simulation()
 
   run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+
 
 """
 #-------------------------------------------------------------------------

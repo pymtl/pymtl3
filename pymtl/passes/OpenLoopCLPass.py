@@ -90,8 +90,39 @@ class OpenLoopCLPass( BasePass ):
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
+    
+    # ================ FIXME ====================
+    # Line trace stuffs should go in wrapper class
+    # when constraint is fixed
+    def wrap_line_trace( top, f ):
+      top.line_trace_string = ""
+      def new_line_trace():
+        line_trace_string = top.line_trace_string
+        top.line_trace_string = ""
+        return f() + " " + line_trace_string
 
-    print schedule
+      return new_line_trace
+
+    setattr( top, "line_trace", wrap_line_trace( top, top.line_trace ) )
+
+
+    def wrap_method_trace( top, name, method ):
+      top.line_trace_string = ""
+      def wrapped_method( **kwargs ):
+        line_trace = " " + name + "(" + ", ".join([
+          "{arg}={value}".format( arg=arg, value=value )
+          for arg, value in kwargs.iteritems()
+      ] ) + ")"
+        ret = method(**kwargs)
+
+        if not ret is None:
+          line_trace += " -> " + str(ret)
+
+        top.line_trace_string += " " + line_trace
+        
+        return ret
+      return wrapped_method
+    # ================= end ===================
 
     def wrap_method( top, method,
                      my_idx_new, next_idx_new, schedule_no_method,
@@ -146,7 +177,11 @@ class OpenLoopCLPass( BasePass ):
 
     # The last element is always line trace
     def print_line_trace():
-      print top.line_trace()
+      try:
+        if top.hide_line_trace:
+          print top.line_trace()
+      except AttributeError:
+        pass
     schedule.append( print_line_trace )
 
     schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
@@ -196,6 +231,16 @@ class OpenLoopCLPass( BasePass ):
           map_next_func_of_next_method = mapping[ schedule[next_func] ]
         else:
           map_next_func_of_next_method = len(schedule_no_method)
+
+        # ================ FIXME ====================
+        # Line trace stuffs should go in wrapper class
+        # when constraint is fixed
+        try:
+          if not x._dsl.is_guard:
+            x.method = wrap_method_trace( top, x.method.__name__, x.method )
+        except AttributeError:
+          pass
+        # ================ end ====================
 
         x.method = wrap_method( top, x.method,
                                 map_next_func, map_next_func_of_next_method,

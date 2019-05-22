@@ -132,25 +132,27 @@ class RTL2CL( Component ):
 {initialize_rets}
 
     @s.update
-    def update_{name}():
+    def update_{name}_adapter():
       s.{name}_rtl.en = Bits1( 1 ) if s.{name}_called else Bits1( 0 )
       s.{name}_called = False
 {update_args}
 
     @s.update
-    def update_{name}_rdy():
+    def update_{name}_adapter_rdy():
       s.{name}_rdy = True if s.{name}_rtl.rdy else False
 
     @s.update
-    def update_{name}_ret():
+    def update_{name}_adapter_ret():
 {update_rets}
 
     s.add_constraints(
-        U( update_{name}_ret ) < M( s.{name} ),
-        U( update_{name}_rdy ) < M( s.{name} ),
-        U( update_{name}_rdy ) < M( s.{name}.rdy ),
-        M( s.{name}.rdy ) < U( update_{name} ),
-        M( s.{name} ) < U( update_{name} ) )
+        U( update_{name}_adapter_ret ) < M( s.{name} ),
+        U( update_{name}_adapter_rdy ) < M( s.{name} ),
+        U( update_{name}_adapter_rdy ) < M( s.{name}.rdy ),
+        WR( s.{name}_rtl.rdy ) < U( update_{name}_adapter_rdy ),
+        U( update_{name}_adapter ) < RD( s.{name}_rtl.en ),
+        M( s.{name}.rdy ) < U( update_{name}_adapter ),
+        M( s.{name} ) < U( update_{name}_adapter ) )
 
   @guarded_ifc( lambda s: s.{name}_rdy )
   def {name}( s, {args} ):
@@ -183,20 +185,22 @@ class RTL2CL( Component ):
 {initialize_args}
 
     @s.update
-    def update_{name}():
+    def update_{name}_adapter():
       s.{name}_rtl.en = Bits1( 1 ) if s.{name}_called else Bits1( 0 )
       s.{name}_called = False
 {update_args}
 
     @s.update
-    def update_{name}_rdy():
+    def update_{name}_adapter_rdy():
       s.{name}_rdy = True if s.{name}_rtl.rdy else False
 
     s.add_constraints(
-        U( update_{name}_rdy ) < M( s.{name} ),
-        U( update_{name}_rdy ) < M( s.{name}.rdy ),
-        M( s.{name}.rdy ) < U( update_{name} ),
-        M( s.{name} ) < U( update_{name} ) )
+        U( update_{name}_adapter_rdy ) < M( s.{name} ),
+        U( update_{name}_adapter_rdy ) < M( s.{name}.rdy ),
+        WR( s.{name}_rtl.rdy ) < U( update_{name}_adapter_rdy ),
+        U( update_{name}_adapter ) < RD( s.{name}_rtl.en ),
+        M( s.{name}.rdy ) < U( update_{name}_adapter ),
+        M( s.{name} ) < U( update_{name}_adapter ) )
 
   @guarded_ifc( lambda s: s.{name}_rdy )
   def {name}( s, {args} ):
@@ -252,65 +256,41 @@ class RTL2CLWrapper( Component ):
 
     s.method_specs = inspect_rtl( s.model )
     # Add method
-    for method_name, method_spec in s.method_specs.iteritems():
-      s._add_method( method_spec )
-
-    s.bind_methods()
-
     # Add adapters
     for method_name, method_spec in s.method_specs.iteritems():
       s._gen_adapter( method_spec )
 
+    s.bind_methods()
+
   def _gen_adapter( s, method_spec ):
     name = method_spec.method_name
-    setattr( s, name + "_adapter",
-             gen_adapter( s.model.__dict__[ name ], method_spec ) )
-    setattr( s, name, GuardedCalleeIfc() )
     RTL2CL = gen_adapter( s.model.__dict__[ name ], method_spec )
 
     tmpl = """
 s.{name}_adapter = RTL2CL( s.model.{name} )
-s.{name} = GuardedCalleeIfc()
-s.connect( s.{name}, s.{name}_adapter.{name} )
+#s.{name} = GuardedCalleeIfc()
+#s.connect( s.{name}, s.{name}_adapter.{name} )
 s.connect( s.{name}_adapter.{name}_rtl, s.model.{name} )
 """.format( name=name )
 
     lcs = locals().update({ "GuardedCalleeIfc": GuardedCalleeIfc} )
     exec ( compile( tmpl, "<string>", 'exec' ), lcs )
 
-  def _add_method( self, method_spec ):
-
-    method_name = method_spec.method_name
-    assign_args = ""
-    for arg in method_spec.args.keys():
-      assign_args += arg_tmpl.format( arg=arg, method=method_name )
-
-    method_code = method_tmpl.format(
-        method=method_name, assign_args=assign_args )
-
-    method_spec = method_spec
+  # FIXME: Method line trace should go in here, but this method does not work
+  # due to top-lvel-method constraint problem
+  def _gen_method( s, method_spec ):
+    name = method_spec.method_name
 
     def method(*args, **kwargs ):
-      namespace = { 'method_spec': method_spec, 'kwargs': kwargs, 'self': self}
-      if not kwargs and args:
-        count = 0
-        for arg in method_spec.args.keys():
-          kwargs[ arg ] = args[ count ]
-          count += 1
-      exec ( compile( method_code, "<string>", 'exec' ), namespace )
-      ret_list = [
-          self.__dict__[ _mangleName( method_name, ret ) ]
-          for ret in method_spec.rets.keys()
-      ]
-      if ret_list:
-        return ret_list[ 0 ]
+      ret = s.__dict__[ name + "_adapter" ].__dict__[ name ](**kwargs )
+      return ret
 
-    # FIXME: is this the right way to replcae method_port?
-    method = guarded_ifc( lambda s: s.__dict__[ method_name + "_rdy" ] )(
-        method )
-    setattr( method, "__name__", method_name )
+    gifc = guarded_ifc(
+        lambda s: s.__dict__[ name + "_adapter" ].__dict__[ name ].rdy() )(
+            method )
 
-    setattr( self, method_name, method )
+    setattr( gifc, "__name__", name )
+    setattr( s, name, gifc )
 
   def line_trace( s ):
     return s.model.line_trace()

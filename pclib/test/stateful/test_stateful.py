@@ -86,38 +86,13 @@ class TestStateMachine( GenericStateMachine ):
     self.reference.apply( GenDAGPass() )
     self.reference.apply( OpenLoopCLPass() )
     self.reference.lock_in_simulation()
-
-    self.line_trace_string = ""
-
-    self.wrap_line_trace( self.model )
-    self.wrap_line_trace( self.reference )
-    print ""
-
-  def wrap_line_trace( s, model ):
-
-    model.line_trace_string = ""
-
-    def wrap_line_trace( model, f ):
-
-      def new_line_trace():
-        model.line_trace_string += f()
-        return "\r"
-
-      return new_line_trace
-
-    setattr( model, "line_trace", wrap_line_trace( model, model.line_trace ) )
+    self.reference.hide_line_trace = True
 
   def steps( self ):
     return self.__rules_strategy
 
   def error_line_trace( self ):
     print "============================= error ========================"
-    if self.model.line_trace_string:
-      print self.model.line_trace_string,
-    print self.line_trace_string
-    self.model.line_trace_string = ""
-    self.reference.line_trace_string = ""
-    self.line_trace_string = ""
 
   def execute_step( self, step ):
 
@@ -128,35 +103,24 @@ class TestStateMachine( GenericStateMachine ):
     # to be added to step.
     # See MethodBasedRuleStrategy for more
     method_name = rule.method_name
-    line_trace = method_name + "(" + ", ".join([
-        "{arg}={value}".format( arg=arg, value=value )
-        for arg, value in data.iteritems()
-    ] ) + ")"
-
     model_rdy = self.model.__dict__[ method_name ].rdy()
     reference_rdy = self.reference.__dict__[ method_name ].rdy()
     if model_rdy and not reference_rdy:
-      self.line_trace_string += line_trace
       self.error_line_trace()
       raise ValueError(
           "Dut method is rdy but reference is not: {method_name}".format(
               method_name=method_name ) )
     if not model_rdy and reference_rdy:
-      self.line_trace_string += line_trace
       self.error_line_trace()
       raise ValueError(
           "Reference method is rdy but dut is not: {method_name}".format(
               method_name=method_name ) )
     r_result = None
     if model_rdy and reference_rdy:
-      self.line_trace_string += "  " + line_trace
       m_result = self.model.__dict__[ method_name ](**data )
       r_result = self.reference.__dict__[ method_name ](**data )
 
       if not m_result == r_result:
-        if r_result != None:
-          self.line_trace_string += " -> " + "dut: " + str(
-              r_result ) + " ref: " + str( m_result )
         self.error_line_trace()
         raise ValueError( """mismatch found in method {method}:
   - args: {data}
@@ -167,17 +131,6 @@ class TestStateMachine( GenericStateMachine ):
             data=str( data ),
             r_result=r_result,
             m_result=m_result ) )
-    else:
-      #self.line_trace_string += "  " + "[ {} ]".format(line_trace)
-
-      if r_result != None:
-        self.line_trace_string += " -> " + str( r_result )
-
-    if self.model.line_trace_string:
-      print "\033[A\033[A" + self.model.line_trace_string + self.line_trace_string
-      self.model.line_trace_string = ""
-      self.reference.line_trace_string = ""
-      self.line_trace_string = ""
 
   def print_step( self, step ):
     """Print a step to the current reporter.
@@ -315,6 +268,7 @@ def run_test_state_machine( rtl_class,
   machine = create_test_state_machine( rtl_class, reference_class )
   machine.TestCase.settings = settings(
       max_examples=50,
+      stateful_step_count=100,
       deadline=None,
       verbosity=Verbosity.verbose,
       database=None )
