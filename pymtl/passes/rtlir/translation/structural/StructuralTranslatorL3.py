@@ -56,6 +56,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
         array_rtype = None
         ifc_rtype = rtype
 
+      # Translate all ports inside the interface
       ports = []
       for port_id, p_rtype in ifc_rtype.get_all_ports_packed():
         if isinstance( p_rtype, Array ):
@@ -79,6 +80,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
           s.rtlir_tr_interface_port_decls( ports )
       ) )
     s.structural.decl_ifcs[m] = s.rtlir_tr_interface_decls( ifc_decls )
+
     super( StructuralTranslatorL3, s ).translate_decls( m )
 
   #-----------------------------------------------------------------------
@@ -93,17 +95,14 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
     """
     if isinstance( expr, InterfaceAttr ):
       return s.rtlir_tr_interface_attr(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_attr() )
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr())
 
     elif isinstance( expr, InterfaceViewIndex ):
       return s.rtlir_tr_interface_array_index(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index())
 
     else:
-      return super( StructuralTranslatorL3, s ). \
-          rtlir_signal_expr_translation( expr, m )
+      return super(StructuralTranslatorL3, s).rtlir_signal_expr_translation(expr, m)
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator
@@ -127,15 +126,13 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
   def rtlir_tr_interface_port_decls( s, port_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_port_decl( s, port_id, port_rtype, port_array_type,
-      port_dtype ):
+  def rtlir_tr_interface_port_decl( s, port_id, port_rtype, port_array_type, port_dtype ):
     raise NotImplementedError()
 
   def rtlir_tr_interface_decls( s, ifc_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type,
-      port_decls ):
+  def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type, port_decls ):
     raise NotImplementedError()
 
   # Signal operations

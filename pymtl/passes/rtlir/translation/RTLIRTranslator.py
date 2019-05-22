@@ -10,8 +10,8 @@ from functools import reduce
 
 from .BaseRTLIRTranslator import TranslatorMetadata
 from .behavioral import BehavioralTranslator
-from .structural import StructuralTranslator
 from .errors import RTLIRTranslationError
+from .structural import StructuralTranslator
 
 
 def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):

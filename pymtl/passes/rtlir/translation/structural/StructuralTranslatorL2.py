@@ -85,12 +85,10 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     """
     if isinstance( expr, PackedIndex ):
       return s.rtlir_tr_packed_index(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index())
     elif isinstance( expr, StructAttr ):
       return s.rtlir_tr_struct_attr(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_attr() )
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr())
     else:
       return super( StructuralTranslatorL2, s ). \
           rtlir_signal_expr_translation( expr, m )

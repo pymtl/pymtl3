@@ -20,7 +20,6 @@ from .StructuralTranslatorL3 import StructuralTranslatorL3
 
 
 class StructuralTranslatorL4( StructuralTranslatorL3 ):
-
   #-----------------------------------------------------------------------
   # gen_structural_trans_metadata
   #-----------------------------------------------------------------------
@@ -136,7 +135,8 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
         expr.get_index() )
 
-    else: return super( StructuralTranslatorL4, s ). \
+    else:
+      return super( StructuralTranslatorL4, s ). \
               rtlir_signal_expr_translation( expr, m )
 
   #-----------------------------------------------------------------------

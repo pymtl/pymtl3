@@ -31,12 +31,10 @@ from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def __init__( s, top ):
     super( StructuralTranslatorL1, s ).__init__( top )
-
     # Metadata namespace for RTLIR structural translator and the backend
     # structural translator
     s.structural = TranslatorMetadata()
     s.s_backend = TranslatorMetadata()
-
     # Generate metadata
     s.gen_structural_trans_metadata( top )
 
@@ -57,17 +55,14 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     This function will only be called once during the whole translation
     process.
     """
-
     # Component metadata
     s.structural.component_unique_name = {}
-
     # Declarations
     s.structural.decl_type_vector = []
     s.structural.decl_type_array  = []
     s.structural.decl_ports  = {}
     s.structural.decl_wires  = {}
     s.structural.decl_consts = {}
-
     # Connections
     s.structural.connections = {}
     s._translate_structural( top )
@@ -75,17 +70,18 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
   # _translate_structural
   #-----------------------------------------------------------------------
-  # This function will be recursively applied to differnet components in
-  # the hierarchy.
 
   def _translate_structural( s, m ):
+    """Translate structural part of component m.
+    
+    This method will be recursively applied to different components in the
+    hierarchy.
+    """
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
-
     # Translate declarations of signals
     s.translate_decls( m )
-
     # Translate connections
     s.translate_connections( m )
 
@@ -177,7 +173,9 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
           s.structural.decl_type_vector, True ):
         s.structural.decl_type_vector.append( ( dtype, ret ) )
       return ret
-    else: assert False, "unsupported RTLIR dtype {} at L1!".format( dtype )
+
+    else:
+      assert False, "unsupported RTLIR dtype {} at L1!".format( dtype )
 
   #-----------------------------------------------------------------------
   # rtlir_signal_expr_translation
@@ -216,33 +214,28 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
     elif isinstance( expr, BitSelection ):
       base = expr.get_base()
-      if isinstance( base, (PartSelection, BitSelection) ):
-        assert False,\
-          'bit selection {} over bit/part selection {} is not allowed!'.format(
-              expr, base )
+      assert not isinstance(base, (PartSelection, BitSelection)), \
+        'bit selection {} over bit/part selection {} is not allowed!'.format(expr, base)
       return s.rtlir_tr_bit_selection(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        s.rtlir_signal_expr_translation( expr.get_base(), m ), expr.get_index() )
       
     elif isinstance( expr, PartSelection ):
       base = expr.get_base()
-      if isinstance( base, (PartSelection, BitSelection) ):
-        assert False,\
-          'part selection {} over bit/part selection {} is not allowed!'.format(
-              expr, base )
+      assert not isinstance(base, (PartSelection, BitSelection)), \
+        'part selection {} over bit/part selection {} is not allowed!'.format(expr, base)
       start, stop = expr.get_slice()[0], expr.get_slice()[1]
       return s.rtlir_tr_part_selection(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        start, stop )
+        s.rtlir_signal_expr_translation( expr.get_base(), m ), start, stop )
 
     elif isinstance( expr, ConstInstance ):
       dtype = expr.get_rtype().get_dtype()
-      assert isinstance( dtype, Vector ),\
+      assert isinstance( dtype, Vector ), \
           '{} is not supported at L1!'.format( dtype )
       return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value() )
 
     # Other operations are not supported at L1
-    else: assert False, '{} is not supported at L1!'.format( expr )
+    else:
+      assert False, '{} is not supported at L1!'.format( expr )
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator
