@@ -11,6 +11,7 @@ from functools import reduce
 from .BaseRTLIRTranslator import TranslatorMetadata
 from .behavioral import BehavioralTranslator
 from .structural import StructuralTranslator
+from .errors import RTLIRTranslationError
 
 
 def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
@@ -62,9 +63,13 @@ def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
       s.hierarchy.decl_type_struct = []
       s.hierarchy.def_ifcs = []
 
-      s.translate_behavioral( s.top )
-      s.translate_structural( s.top )
-      translate_component( s.top, s.hierarchy.components, [] )
+      try:
+        s.translate_behavioral( s.top )
+        s.translate_structural( s.top )
+        translate_component( s.top, s.hierarchy.components, [] )
+      except AssertionError as e:
+        msg = '' if e.args[0] is None else e.args[0]
+        raise RTLIRTranslationError( obj, msg )
 
       # Generate the representation for all components
       s.hierarchy.component_src = s.rtlir_tr_components(s.hierarchy.components)
