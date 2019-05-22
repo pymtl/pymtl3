@@ -1,15 +1,18 @@
-#=========================================================================
-# Test sinks
-#=========================================================================
-# Test sinks with CL and RTL interfaces.
-#
-# Author : Yanghui Ou
-#   Date : Mar 11, 2019
+"""
+========================================================================
+Test sinks
+========================================================================
+Test sinks with CL and RTL interfaces.
 
+Author : Yanghui Ou
+  Date : Mar 11, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
+
+from pclib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str, guarded_ifc
 from pymtl import *
-from pclib.ifcs import RecvIfcRTL, enrdy_to_str
-from pclib.ifcs import RecvCL2SendRTL, RecvRTL2SendCL
-from pclib.ifcs.GuardedIfc import guarded_ifc
+
 #-------------------------------------------------------------------------
 # TestSinkCL
 #-------------------------------------------------------------------------
@@ -42,7 +45,7 @@ class TestSinkCL( Component ):
 
     @s.update
     def up_sink_count():
-      if not s.reset: 
+      if not s.reset:
         s.cycle_count += 1
       else:
         s.cycle_count = 0
@@ -128,5 +131,5 @@ class TestSinkRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "|{}|->{}".format(
+    return "[{}>]{}".format(
       s.adapter.line_trace(), s.sink.line_trace() )

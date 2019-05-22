@@ -1,14 +1,29 @@
-from pymtl import *
-from GenDAGPass import GenDAGPass
-from SimpleSchedPass import SimpleSchedPass
-from SimpleTickPass import SimpleTickPass
+from __future__ import absolute_import, division, print_function
 
-from OpenLoopCLPass import OpenLoopCLPass
+from pymtl import *
+
+from .DynamicSchedulePass import DynamicSchedulePass
+from .GenDAGPass import GenDAGPass
+from .mamba.HeuristicTopoPass import HeuristicTopoPass
+from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
+from .mamba.UnrollTickPass import UnrollTickPass
+from .SimpleSchedulePass import SimpleSchedulePass
+from .SimpleTickPass import SimpleTickPass
+
+from .OpenLoopCLPass import OpenLoopCLPass
 
 SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
-  SimpleSchedPass(),
+  SimpleSchedulePass(),
+  SimpleTickPass(),
+  Component.lock_in_simulation
+]
+
+DynamicSim = [
+  Component.elaborate,
+  GenDAGPass(),
+  DynamicSchedulePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
@@ -16,7 +31,7 @@ SimpleSim = [
 SimpleCLSim = [
   Component.elaborate,
   GenDAGPass(),
-  SimpleSchedPass(),
+  SimpleSchedulePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
@@ -25,21 +40,19 @@ OpenLoopCLSim = [
   Component.elaborate,
   GenDAGPass(),
   OpenLoopCLPass(), # Inject this pass to build infrastructure
-  SimpleSchedPass(), # Still generate schedule and tick
+  SimpleSchedulePass(), # Still generate schedule and tick
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
 
-from mamba.UnrollTickPass import UnrollTickPass
 UnrollSim = [
   Component.elaborate,
   GenDAGPass(),
-  SimpleSchedPass(),
+  SimpleSchedulePass(),
   UnrollTickPass(),
   Component.lock_in_simulation
 ]
 
-from mamba.HeuristicTopoPass import HeuristicTopoPass
 HeuTopoUnrollSim = [
   Component.elaborate,
   GenDAGPass(),
@@ -48,7 +61,6 @@ HeuTopoUnrollSim = [
   Component.lock_in_simulation
 ]
 
-from mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 TraceBreakingSim = [
   Component.elaborate,
   GenDAGPass(),

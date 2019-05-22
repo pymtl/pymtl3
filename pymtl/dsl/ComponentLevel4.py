@@ -1,15 +1,19 @@
-#=========================================================================
-# ComponentLevel4.py
-#=========================================================================
-# We recognize methods and method call in update blocks. At this level
-# we only need CalleePort that contains actual method
-#
-# Author : Shunning Jiang
-# Date   : Dec 29, 2018
+"""
+========================================================================
+ComponentLevel4.py
+========================================================================
+We recognize methods and method call in update blocks. At this level
+we only need CalleePort that contains actual method
 
-from ConstraintTypes import U, M
-from Connectable import Signal, CalleePort
-from ComponentLevel3 import ComponentLevel3
+Author : Shunning Jiang
+Date   : Dec 29, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+from .ComponentLevel3 import ComponentLevel3
+from .Connectable import CalleePort, Signal
+from .ConstraintTypes import M, U
+
 
 class ComponentLevel4( ComponentLevel3 ):
 
@@ -25,9 +29,20 @@ class ComponentLevel4( ComponentLevel3 ):
     # We don't want to get different objects everytime when we get a
     # method object from an instance. We do this by bounding the method
     # object to instance.
-    for name in dir(cls):
-      if name not in dir(ComponentLevel4) and not name.startswith("_") \
-                                          and name != "line_trace":
+
+    # Shunning: After some profiling I found that getting dir(xxx) is
+    # really slow so we would really like to avoid redundant calls to dir.
+    # For example the previous code looks like this, which is REALLY bad.
+    #
+    # for name in dir(cls):
+    #   if name in dir(ComponentLevel4)
+    #
+    # This means dir(ComponentLevel4) is called unnecessarily a huge
+    # number of times.
+    # Update: we should use cls.__dict__ to get all added methods!
+
+    for name in cls.__dict__:
+      if not name.startswith("_"):
         field = getattr( inst, name )
         if callable( field ):
           setattr( inst, name, field )

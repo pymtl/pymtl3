@@ -1,6 +1,10 @@
+from __future__ import absolute_import, division, print_function
+
+from pclib.rtl import Adder, Mux, Subtractor
+from pclib.rtl.valrdy_queues import BypassQueue1RTL
 from pymtl import *
-from pclib.rtl import Adder, Subtractor, Mux, BypassQueue1RTL
 from pymtl.passes.SystemVerilogTranslationPass import SystemVerilogTranslationPass
+
 
 def test_adder():
   m = Adder( Bits32 )

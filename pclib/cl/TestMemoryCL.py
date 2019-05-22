@@ -1,20 +1,26 @@
-#=========================================================================
-# TestMemory
-#=========================================================================
-# A behavioral Test Memory which is parameterized based on the number of
-# memory request/response ports. This version is a little different from
-# the one in pclib because we actually use the memory messages correctly
-# in the interface.
-#
-# Author : Shunning Jiang
-# Date   : Mar 12, 2018
+"""
+========================================================================
+TestMemory
+========================================================================
+A behavioral Test Memory which is parameterized based on the number of
+memory request/response ports. This version is a little different from
+the one in pclib because we actually use the memory messages correctly
+in the interface.
 
-from pymtl       import *
-from collections import deque
+Author : Shunning Jiang
+Date   : Mar 12, 2018
+"""
+
+from __future__ import absolute_import, division, print_function
+
+from pclib.ifcs import MemMsgType, mk_mem_msg
+from pclib.ifcs.GuardedIfc import *
+from pymtl import *
+
+from .DelayPipeCL import DelayPipeDeqCL
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
-from pclib.ifcs import mk_mem_msg
 
 #- - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - -
 #-------------------------------------------------------------------------
@@ -40,29 +46,29 @@ from pclib.ifcs import mk_mem_msg
 #-------------------------------------------------------------------------
 #- - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - - - NOTE  - -
 
-TYPE_READ       = 0
-TYPE_WRITE      = 1
+READ       = 0
+WRITE      = 1
 # write no-refill
-TYPE_WRITE_INIT = 2
-TYPE_AMO_ADD    = 3
-TYPE_AMO_AND    = 4
-TYPE_AMO_OR     = 5
-TYPE_AMO_SWAP   = 6
-TYPE_AMO_MIN    = 7
-TYPE_AMO_MINU   = 8
-TYPE_AMO_MAX    = 9
-TYPE_AMO_MAXU   = 10
-TYPE_AMO_XOR    = 11
+WRITE_INIT = 2
+AMO_ADD    = 3
+AMO_AND    = 4
+AMO_OR     = 5
+AMO_SWAP   = 6
+AMO_MIN    = 7
+AMO_MINU   = 8
+AMO_MAX    = 9
+AMO_MAXU   = 10
+AMO_XOR    = 11
 
-AMO_FUNS = { TYPE_AMO_ADD  : lambda m,a : m+a,
-             TYPE_AMO_AND  : lambda m,a : m&a,
-             TYPE_AMO_OR   : lambda m,a : m|a,
-             TYPE_AMO_SWAP : lambda m,a : a,
-             TYPE_AMO_MIN  : lambda m,a : m if m.int() < a.int() else a,
-             TYPE_AMO_MINU : min,
-             TYPE_AMO_MAX  : lambda m,a : m if m.int() > a.int() else a,
-             TYPE_AMO_MAXU : max,
-             TYPE_AMO_XOR  : lambda m,a : m^a,
+AMO_FUNS = { AMO_ADD  : lambda m,a : m+a,
+             AMO_AND  : lambda m,a : m&a,
+             AMO_OR   : lambda m,a : m|a,
+             AMO_SWAP : lambda m,a : a,
+             AMO_MIN  : lambda m,a : m if m.int() < a.int() else a,
+             AMO_MINU : min,
+             AMO_MAX  : lambda m,a : m if m.int() > a.int() else a,
+             AMO_MAXU : max,
+             AMO_XOR  : lambda m,a : m^a,
            }
 
 #-------------------------------------------------------------------------
@@ -82,7 +88,7 @@ class TestMemory( object ):
     end  = addr + nbytes
     for j in xrange( addr, end ):
       ret += Bits( nbits, s.mem[j] ) << shamt
-      shamt += 8
+      shamt += Bits4(8)
     return ret
 
   def write( s, addr, nbytes, data ):
@@ -112,7 +118,7 @@ class TestMemory( object ):
   def __setitem__( s, idx, data ):
     s.mem[ idx ] = data
 
-class TwoPortTestMemoryCL( ComponentLevel6 ):
+class TestMemoryCL( Component ):
 
   # Magical methods
 
@@ -122,111 +128,58 @@ class TwoPortTestMemoryCL( ComponentLevel6 ):
   def write_mem( s, addr, data ):
     return s.mem.write_mem( addr, data )
 
-  # Actual method
-
-  def req0_( s, msg ):
-    s.req_qs[0].appendleft( msg )
-
-  def req0_rdy_( s ):
-    return len(s.req_qs[0]) < s.req_qs[0].maxlen
-
-  def resp0_( s ):
-    return s.resp_qs[0].pop()
-
-  def resp0_rdy_( s ):
-    return len(s.resp_qs[0]) > 0
-
-  def req1_( s, msg ):
-    s.req_qs[1].appendleft( msg )
-
-  def req1_rdy_( s ):
-    return len(s.req_qs[1]) < s.req_qs[1].maxlen
-
-  def resp1_( s ):
-    return s.resp_qs[1].pop()
-
-  def resp1_rdy_( s ):
-    return len(s.resp_qs[1]) > 0
-
   # Actual stuff
-  def construct( s, mem_ifc_dtypes=mk_mem_msg(8,32,32), mem_nbytes=2**20 ):
-    req_class, resp_class = mem_ifc_dtypes
+  def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], latency=1, mem_nbytes=2**20 ):
+
+    # Local constants
+
+    s.nports = nports
+    req_classes  = [ x for (x,y) in mem_ifc_dtypes ]
+    resp_classes = [ y for (x,y) in mem_ifc_dtypes ]
 
     s.mem = TestMemory( mem_nbytes )
 
     # Interface
 
-    s.req0      = CalleePort( s.req0_ )
-    s.req0_rdy  = CalleePort( s.req0_rdy_ )
-    s.resp0     = CalleePort( s.resp0_ )
-    s.resp0_rdy = CalleePort( s.resp0_rdy_ )
-
-    s.req1      = CalleePort( s.req1_ )
-    s.req1_rdy  = CalleePort( s.req1_rdy_ )
-    s.resp1     = CalleePort( s.resp1_ )
-    s.resp1_rdy = CalleePort( s.resp1_rdy_ )
+    s.recv = [ GuardedCalleeIfc() for i in range(nports) ]
+    s.send = [ GuardedCallerIfc() for i in range(nports) ]
 
     # Queues
 
-    s.req_qs  = [ deque(maxlen=3) for i in xrange(2) ]
-    s.resp_qs = [ deque(maxlen=3) for i in xrange(2) ]
-
-    # Local constants
-
-    s.nports = 2
+    s.req_qs = [ DelayPipeDeqCL( latency )( enq = s.recv[i] ) for i in range(nports) ]
 
     @s.update
     def up_mem():
 
-      for i in xrange(s.nports):
+      for i in range(s.nports):
 
-        if s.req_qs[i] and len(s.resp_qs[i]) < s.resp_qs[i].maxlen:
+        if s.req_qs[i].deq.rdy() and s.send[i].rdy():
 
           # Dequeue memory request message
-          req = s.req_qs[i].pop()
-          len_ = int(req.len_)
-          if not len_: len_ = 4
 
-          if   req.type_ == resp_class.TYPE_READ:
-            resp = resp_class( resp_class.TYPE_READ,
-                               req.opaque, 0, req.len_,
-                               s.mem.read( req.addr, len_ ) )
+          req = s.req_qs[i].deq()
+          len_ = int(req.len)
+          if not len_: len_ = req_classes[i].data_nbits >> 3
 
-          elif req.type_ == resp_class.TYPE_WRITE:
+          if   req.type_ == MemMsgType.READ:
+            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
+                                    s.mem.read( req.addr, len_ ) )
+
+          elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
-            resp = resp_class( resp_class.TYPE_WRITE,
-                               req.opaque, 0, req.len_,
-                               0 )
+            # FIXME do we really set len=0 in response when doing subword wr?
+            # resp = resp_classes[i]( req.type_, req.opaque, 0, req.len, 0 )
+            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
 
           else: # AMOS
-            s.mem.write( req.type, req.addr, len_, req.data )
-            resp = resp_class( req.type, req.opaque, 0, req.len_,
+            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
                s.mem.amo( req.type_, req.addr, len_, req.data ) )
 
-          s.resp_qs[i].appendleft( resp )
-
-    s.add_constraints(
-      U(up_mem) < M(s.req0_)    , # execute mem block before receiving request
-      U(up_mem) < M(s.req0_rdy_), # for pipe behavior
-      U(up_mem) < M(s.req1_)    ,
-      U(up_mem) < M(s.req1_rdy_),
-
-      M(s.resp0_)     < U(up_mem), # execute resp before mem block for
-      M(s.resp0_rdy_) < U(up_mem), # pipe behavior
-      M(s.resp1_)     < U(up_mem),
-      M(s.resp1_rdy_) < U(up_mem),
-    )
+          s.send[i]( resp )
 
   #-----------------------------------------------------------------------
   # line_trace
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return ""
-
-    #  trace_str = ""
-    #  for req, resp_q, resp in zip( s.reqs, s.resps_q, s.resps ):
-      #  trace_str += "{}({}){} ".format( req, resp_q, resp )
-
-    #  return trace_str
-
+    return "|".join( [ x.line_trace() for x in s.req_qs ] )

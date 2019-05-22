@@ -1,19 +1,23 @@
-#=========================================================================
-# Tests for CL queues
-#=========================================================================
-#
-# Author: Yanghui Ou
-#   Date: Mar 24, 2019
+"""
+========================================================================
+Tests for CL queues
+========================================================================
+
+Author: Yanghui Ou
+  Date: Mar 24, 2019
+"""
+from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl                    import *
+from pclib.test import TestVectorSimulator
+from pclib.test.test_sinks import TestSinkRTL
+from pclib.test.test_srcs import TestSrcCL
+from pymtl import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.test.test_srcs     import TestSrcCL
-from pclib.test.test_sinks    import TestSinkRTL
-from pclib.test               import TestVectorSimulator
-from pymtl.passes.PassGroups  import SimpleCLSim
-from queues import NormalQueueRTL
+from pymtl.passes.PassGroups import SimpleCLSim
+
+from .queues import NormalQueueRTL
 
 #-------------------------------------------------------------------------
 # TestVectorSimulator test
@@ -62,36 +66,27 @@ def test_pipe_Bits():
 
 class TestHarness( Component ):
 
-  def construct( s, MsgType, qsize, src_msgs, sink_msgs, src_initial, 
-                 src_interval, sink_initial, sink_interval, 
+  def construct( s, MsgType, qsize, src_msgs, sink_msgs, src_initial,
+                 src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
 
     s.src  = TestSrcCL  ( src_msgs,  src_initial,  src_interval )
     s.dut  = NormalQueueRTL( MsgType, qsize )
-    s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval, 
+    s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval,
                           arrival_time )
-    
-    s.connect( s.src.send,    s.dut.enq       )
-    s.connect( s.dut.deq.msg, s.sink.recv.msg )
 
-    @s.update
-    def up_deq_send():
-      if s.dut.deq.rdy and s.sink.recv.rdy:
-        s.dut.deq.en   = Bits1( 1 )
-        s.sink.recv.en = Bits1( 1 )
-      else:
-        s.dut.deq.en   = Bits1( 0 )
-        s.sink.recv.en = Bits1( 0 )
+    s.connect( s.src.send, s.dut.enq   )
+    s.connect( s.dut.deq,  s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} ({}) {}".format( 
+    return "{} ({}) {}".format(
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
-# run_sim 
+# run_sim
 #-------------------------------------------------------------------------
 
 def run_sim( th, max_cycles=100 ):
@@ -102,14 +97,14 @@ def run_sim( th, max_cycles=100 ):
   th.apply( SimpleCLSim )
   th.sim_reset()
 
-  print ""
+  print("")
   ncycles = 0
-  print "{:2}:{}".format( ncycles, th.line_trace() )
+  print("{:2}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{:2}:{}".format( ncycles, th.line_trace() )
-  
+    print("{:2}:{}".format( ncycles, th.line_trace() ))
+
   # Check timeout
 
   assert ncycles < max_cycles

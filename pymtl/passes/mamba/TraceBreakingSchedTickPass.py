@@ -1,17 +1,24 @@
-#-------------------------------------------------------------------------
-# MetaBlkPass
-#-------------------------------------------------------------------------
+"""
+-------------------------------------------------------------------------
+TraceBreakingSchedTickPas.py
+-------------------------------------------------------------------------
+Generate the schedule and tick with trace breaking + heuristic toposort.
 
-import ast, py
-from collections import deque, defaultdict
-from graphviz    import Digraph
+Author : Shunning Jiang
+Date   : Dec 26, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+import py
+from graphviz import Digraph
 
 from pymtl import *
-from pymtl.passes.BasePass     import BasePass, PassMetadata
+from pymtl.passes.BasePass import BasePass, PassMetadata
 from pymtl.passes.errors import PassOrderError
-from pymtl.passes.SimpleSchedPass import check_schedule
+from pymtl.passes.SimpleSchedulePass import check_schedule
 
-from HeuristicTopoPass import CountBranches
+from .HeuristicTopoPass import CountBranches
+
 
 class TraceBreakingSchedTickPass( BasePass ):
   def __call__( self, top ):
@@ -145,12 +152,12 @@ class TraceBreakingSchedTickPass( BasePass ):
     if current_meta:
       metas.append( current_meta )
 
-    print "num_metablks:", len(metas)
+    print("num_metablks:", len(metas))
 
     for meta in metas:
-      print "---------------"
+      print("---------------")
       for blk in meta:
-        print " - {}: {}".format( blk.__name__, branchiness[ blk ] )
+        print(" - {}: {}".format( blk.__name__, branchiness[ blk ] ))
 
     top._sched.meta_schedule = metas
     self.branchiness = branchiness
@@ -198,8 +205,7 @@ class TraceBreakingSchedTickPass( BasePass ):
     gen_tick_src += "\ndef tick_top():\n  "
     gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in xrange(len(metas)) ] )
 
-    exec py.code.Source( gen_tick_src ).compile() in locals()
+    exec(py.code.Source( gen_tick_src ).compile(), locals())
 
     #  print gen_tick_src
     top.tick = tick_top
-

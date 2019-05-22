@@ -1,13 +1,16 @@
-#=========================================================================
-# NamedObject_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Dec 23, 2017
+"""
+========================================================================
+NamedObject_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Dec 23, 2017
+"""
+from __future__ import absolute_import, division, print_function
 
 from pymtl import *
 from pymtl.dsl import NamedObject
-from collections import deque
+
 
 class Chicken(NamedObject):
 
@@ -49,7 +52,7 @@ def test_NamedObject_normal():
 
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner.chicken.protein)== "s.dinner.chicken.protein"
-  print x.dinner.chicken.protein
+  print(x.dinner.chicken.protein)
 
 def test_NamedObject_list1():
 
@@ -66,7 +69,7 @@ def test_NamedObject_list1():
 
   assert repr(x.lunch.rooster.protein) == "s.lunch.rooster.protein"
   assert repr(x.dinner[1].chicken.protein)== "s.dinner[1].chicken.protein"
-  print x.dinner[1].chicken.protein
+  print(x.dinner[1].chicken.protein)
 
 def test_NamedObject_list2():
 
@@ -83,4 +86,19 @@ def test_NamedObject_list2():
 
   assert repr(x.lunch[3].rooster.protein) == "s.lunch[3].rooster.protein"
   assert repr(x.dinner.chicken.protein) == "s.dinner.chicken.protein"
-  print repr(x.lunch[3].rooster.protein)
+  print(repr(x.lunch[3].rooster.protein))
+
+def test_use_init_error():
+
+  class Crocodile(NamedObject):
+
+    def __init__( s ):
+      s.food = Dog()
+      print(s.food.chicken)
+
+  # x = Chicken()
+  # x.elaborate()
+  # y = Crocodile()
+  # y.elaborate()
+  # z = Chicken()
+  # z.elaborate()

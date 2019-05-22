@@ -1,17 +1,21 @@
-#=========================================================================
-# src_sink_test
-#=========================================================================
-# Tests for test sources and test sinks.
-#
-# Author : Yanghui Ou
-#   Date : Mar 11, 2019
+"""
+========================================================================
+src_sink_test
+========================================================================
+Tests for test sources and test sinks.
+
+Author : Yanghui Ou
+  Date : Mar 11, 2019
+"""
+from __future__ import absolute_import, division, print_function
 
 import pytest
 
 from pymtl import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from test_srcs  import TestSrcCL, TestSrcRTL
-from test_sinks import TestSinkCL, TestSinkRTL
+
+from .test_sinks import TestSinkCL, TestSinkRTL
+from .test_srcs import TestSrcCL, TestSrcRTL
 
 #-------------------------------------------------------------------------
 # TestHarnessCL
@@ -74,13 +78,13 @@ def run_sim( th, max_cycles=100 ):
 
   # Run simluation
 
-  print ""
+  print("")
   ncycles = 0
-  print "{}:{}".format( ncycles, th.line_trace() )
+  print("{}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print "{}:{}".format( ncycles, th.line_trace() )
+    print("{}:{}".format( ncycles, th.line_trace() ))
 
   # Check timeout
 
@@ -142,4 +146,74 @@ def test_src_sink_rtl( msgs, src_init_delay,  src_inter_delay,
                         sink_init_delay, sink_inter_delay, arrival_time ):
   th = TestHarnessRTL( Bits16, msgs, msgs, src_init_delay,  src_inter_delay,
                        sink_init_delay, sink_inter_delay, arrival_time )
+  run_sim( th )
+
+#-------------------------------------------------------------------------
+# Adaptive composition test
+#-------------------------------------------------------------------------
+# This test attempts to mix-and-match different levels of test srcs and
+# sinks for all possible combinations -- cl/cl, rtl/cl, cl/rtl, rtl/rtl.
+# It also creates multiple src/sink pairs to stress the management of
+# multiple instances of the same adapter class
+
+class TestHarness( Component ):
+
+  def construct( s, src_level, sink_level, MsgType, src_msgs, sink_msgs,
+                 src_initial, src_interval,
+                 sink_initial, sink_interval, arrival_time=None ):
+    s.num_pairs = 2
+
+    if src_level == 'cl':
+      s.srcs = [ TestSrcCL ( src_msgs, src_initial, src_interval )
+                  for i in range(s.num_pairs) ]
+    elif src_level == 'rtl':
+      s.srcs = [ TestSrcRTL( MsgType, src_msgs, src_initial, src_interval )
+                  for i in range(s.num_pairs) ]
+    else:
+      raise
+
+    if sink_level == 'cl':
+      s.sinks = [ TestSinkCL( sink_msgs, sink_initial, sink_interval, arrival_time )
+                  for i in range(s.num_pairs) ]
+    elif sink_level == 'rtl':
+      s.sinks = [ TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval, arrival_time )
+                  for i in range(s.num_pairs) ]
+    else:
+      raise
+
+    # Connections
+    for i in range(s.num_pairs):
+      s.connect( s.srcs[i].send, s.sinks[i].recv )
+
+  def done( s ):
+    for i in range(s.num_pairs):
+      if not s.srcs[i].done() or not s.sinks[i].done():
+        return False
+    return True
+
+  def line_trace( s ):
+    return "{} >>> {}".format( "|".join( [ x.line_trace() for x in s.srcs ] ),
+                               "|".join( [ x.line_trace() for x in s.sinks ] ) )
+
+test_case_table = []
+for src in ['cl', 'rtl']:
+  for sink in ['cl', 'rtl']:
+    test_case_table += [
+      ( src, sink, bit_msgs,  0,  0, 0, 0, arrival0 ),
+      ( src, sink, int_msgs, 10,  0, 0, 0, arrival1 ),
+      ( src, sink, bit_msgs, 10,  1, 0, 0, arrival2 ),
+      ( src, sink, bit_msgs, 10,  0, 0, 1, arrival3 ),
+      ( src, sink, bit_msgs,  3,  4, 5, 3, arrival4 ),
+    ]
+
+@pytest.mark.parametrize(
+  ('src_level', 'sink_level', 'msgs',
+   'src_init_delay',  'src_inter_delay', 'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
+  test_case_table,
+)
+def test_adaptive( src_level, sink_level, msgs, src_init_delay,  src_inter_delay,
+                        sink_init_delay, sink_inter_delay, arrival_time ):
+  th = TestHarness( src_level, sink_level, Bits16, msgs, msgs,
+                    src_init_delay,  src_inter_delay, sink_init_delay,
+                    sink_inter_delay, arrival_time )
   run_sim( th )

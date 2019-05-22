@@ -1,18 +1,22 @@
+"""
+========================================================================
+GenDAGPass.py
+========================================================================
+Generate a DAG of update blocks (including net connection blocks) from
+a model.
 
-#=========================================================================
-# GenDAGPass.py
-#=========================================================================
-# Generate a DAG of update blocks (including net connection blocks) from
-# a model.
-#
-# Author : Shunning Jiang
-# Date   : Jan 18, 2018
+Author : Shunning Jiang
+Date   : Jan 18, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+from collections import defaultdict, deque
 
 from pymtl import *
-from BasePass import BasePass, PassMetadata
 from pymtl.dsl import Const, MethodPort
-import py, ast
-from collections import defaultdict, deque
+
+from .BasePass import BasePass, PassMetadata
+
 
 class GenDAGPass( BasePass ):
 
@@ -118,7 +122,7 @@ def {0}():
 
       var = locals()
       var.update( globals() )
-      exec( compile( src, filename=repr(s), mode="exec") ) in var
+      exec(( compile( src, filename=repr(s), mode="exec") ), var)
 
     for hostobj, allsrc in hostobj_allsrc.iteritems():
       compile_upblks( hostobj, allsrc )
@@ -151,6 +155,8 @@ def {0}():
     read_upblks = defaultdict(set)
     write_upblks = defaultdict(set)
 
+    constraint_objs = defaultdict(set)
+
     for data in [ upblk_reads, genblk_reads ]:
       for blk, reads in data.iteritems():
         for rd in reads:
@@ -180,9 +186,11 @@ def {0}():
               if sign == 1: # RD/WR(x) < U is 1, RD/WR(x) > U is -1
                 # eq_blk == RD/WR(x) < co_blk
                 expl_constraints.add( (eq_blk, co_blk) )
+                constraint_objs[ (eq_blk, co_blk) ].add( obj )
               else:
                 # co_blk < RD/WR(x) == eq_blk
                 expl_constraints.add( (co_blk, eq_blk) )
+                constraint_objs[ (co_blk, eq_blk) ].add( obj )
 
     #---------------------------------------------------------------------
     # Implicit constraint
@@ -223,8 +231,10 @@ def {0}():
             if wr_blk != rd_blk:
               if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -250,9 +260,12 @@ def {0}():
             if wr_blk != rd_blk:
               if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
+                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
+    top._dag.constraint_objs = constraint_objs
     top._dag.all_constraints = U_U.copy()
     for (x, y) in impl_constraints:
       if (y, x) not in U_U: # no conflicting expl
@@ -313,6 +326,7 @@ def {0}():
     succ = defaultdict(set)
 
     for (x, y) in all_M_constraints:
+
       # Use the actual method object for constraints
 
       if   isinstance( x, MethodPort ):
@@ -393,10 +407,10 @@ def {0}():
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
-      if verbose: print
+      if verbose: print()
       while Q:
         (u, w) = Q.popleft()
-        if verbose: print (u, w)
+        if verbose: print((u, w))
 
         if w <= 0:
           for v in pred[u]:
@@ -408,9 +422,9 @@ def {0}():
               for blk in assoc_blks:
                 if blk not in pred[u]:
                   if v != blk:
-                    if verbose: print "w<=0, v is blk".center(10),v, blk
-                    if verbose: print v.__name__.center(25)," < ", \
-                                blk.__name__.center(25)
+                    if verbose: print("w<=0, v is blk".center(10),v, blk)
+                    if verbose: print(v.__name__.center(25)," < ", \
+                                blk.__name__.center(25))
                     top._dag.all_constraints.add( (v, blk) )
 
             else:
@@ -427,9 +441,9 @@ def {0}():
                     for blk in assoc_blks:
                       if blk not in pred[v]:
                         if vb != blk:
-                          if verbose: print "w<=0, v is method".center(10),v, blk
-                          if verbose: print vb.__name__.center(25)," < ", \
-                                      blk.__name__.center(25)
+                          if verbose: print("w<=0, v is method".center(10),v, blk)
+                          if verbose: print(vb.__name__.center(25)," < ", \
+                                      blk.__name__.center(25))
                           top._dag.all_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
@@ -444,9 +458,9 @@ def {0}():
               for blk in assoc_blks:
                 if blk not in succ[u]:
                   if v != blk:
-                    if verbose: print "w>=0, v is blk".center(10),blk, v
-                    if verbose: print blk.__name__.center(25)," < ", \
-                                      v.__name__.center(25)
+                    if verbose: print("w>=0, v is blk".center(10),blk, v)
+                    if verbose: print(blk.__name__.center(25)," < ", \
+                                      v.__name__.center(25))
                     top._dag.all_constraints.add( (blk, v) )
 
             else:
@@ -464,9 +478,9 @@ def {0}():
                     for blk in assoc_blks:
                       if not blk in succ[v]:
                         if vb != blk:
-                          if verbose: print "w>=0, v is method".center(10), blk, v
-                          if verbose: print blk.__name__.center(25)," < ", \
-                                            vb.__name__.center(25)
+                          if verbose: print("w>=0, v is method".center(10), blk, v)
+                          if verbose: print(blk.__name__.center(25)," < ", \
+                                            vb.__name__.center(25))
                           top._dag.all_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?

@@ -1,15 +1,19 @@
-#=========================================================================
-# PortCheck_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Dec 25, 2017
+"""
+========================================================================
+PortCheck_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Dec 25, 2017
+"""
+from __future__ import absolute_import, division, print_function
 
 from pymtl import *
 from pymtl.dsl import ComponentLevel3
-from pclib.rtl import TestBasicSource as TestSource, TestBasicSink as TestSink
 from pymtl.dsl.errors import SignalTypeError
-from sim_utils import simple_sim_pass
+
+from .sim_utils import simple_sim_pass
+
 
 def _test_model( cls ):
   A = cls()
@@ -36,7 +40,7 @@ def test_illegal_inport_write():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid input port write SignalTypeError.")
 
@@ -48,7 +52,7 @@ def test_illegal_inport_deep_write():
 
       @s.update
       def up_B_print():
-        print s.in_
+        print(s.in_)
 
   class BWrap( ComponentLevel3 ):
     def construct( s ):
@@ -65,7 +69,7 @@ def test_illegal_inport_deep_write():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid input port write SignalTypeError.")
 
@@ -77,7 +81,7 @@ def test_legal_inport_write():
 
       @s.update
       def up_B_print():
-        print s.in_
+        print(s.in_)
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -97,7 +101,7 @@ def test_illegal_outport_write():
 
       @s.update
       def up_A_read():
-        print s.out
+        print(s.out)
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -110,7 +114,7 @@ def test_illegal_outport_write():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid output port write SignalTypeError.")
 
@@ -122,7 +126,7 @@ def test_illegal_outport_deep_write():
 
       @s.update
       def up_A_read():
-        print s.out
+        print(s.out)
 
   class AWrap( ComponentLevel3 ):
     def construct( s ):
@@ -139,7 +143,7 @@ def test_illegal_outport_deep_write():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid output port write SignalTypeError.")
 
@@ -159,7 +163,7 @@ def test_legal_outport_write():
 
       @s.update
       def up_read_a_out():
-        print s.a.out
+        print(s.a.out)
 
   _test_model( Top )
 
@@ -180,7 +184,7 @@ def test_illegal_wire_write():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid wire write SignalTypeError.")
 
@@ -199,12 +203,12 @@ def test_illegal_wire_read():
 
       @s.update
       def up_read_a_out():
-        print s.a.wire[1:10]
+        print(s.a.wire[1:10])
 
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid wire write SignalTypeError.")
 
@@ -224,7 +228,7 @@ def test_legal_port_connect():
 
       @s.update
       def up_B_read():
-        print s.in_
+        print(s.in_)
 
   class OutWrap(ComponentLevel3):
     def construct( s ):
@@ -233,7 +237,7 @@ def test_legal_port_connect():
 
       @s.update
       def up_out_read():
-        print s.out
+        print(s.out)
 
   class InWrap(ComponentLevel3):
     def construct( s ):
@@ -242,7 +246,7 @@ def test_legal_port_connect():
 
       @s.update
       def up_in_read():
-        print s.in_
+        print(s.in_)
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -277,7 +281,7 @@ def test_illegal_same_host():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid port type SignalTypeError.")
 
@@ -302,7 +306,7 @@ def test_illegal_rdhost_is_wrhost_parent():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid wire type SignalTypeError.")
 
@@ -320,7 +324,7 @@ def test_illegal_wrhost_is_rdhost_parent():
       s.in_ = OutPort(int) # Should be InPort
       @s.update
       def up_B_read():
-        print s.in_
+        print(s.in_)
 
   class BWrap(ComponentLevel3):
     def construct( s ):
@@ -336,7 +340,7 @@ def test_illegal_wrhost_is_rdhost_parent():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid wire type SignalTypeError.")
 
@@ -354,7 +358,7 @@ def test_illegal_hosts_same_parent():
       s.in_ = InPort(int)
       @s.update
       def up_B_read():
-        print s.in_
+        print(s.in_)
 
   class BWrap(ComponentLevel3):
     def construct( s ):
@@ -370,7 +374,7 @@ def test_illegal_hosts_same_parent():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown invalid wire type SignalTypeError.")
 
@@ -398,6 +402,6 @@ def test_illegal_hosts_too_far():
   try:
     _test_model( Top )
   except SignalTypeError as e:
-    print "{} is thrown\n{}".format( e.__class__.__name__, e )
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown hosts too far SignalTypeError.")

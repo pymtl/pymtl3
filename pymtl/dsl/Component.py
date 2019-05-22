@@ -1,14 +1,19 @@
-#=========================================================================
-# Component.py
-#=========================================================================
-# Add clk/reset signals.
-#
-# Author : Yanghui Ou
-#   Date : Apr 6, 2019
+"""
+========================================================================
+Component.py
+========================================================================
+Add clk/reset signals.
+
+Author : Yanghui Ou
+  Date : Apr 6, 2019
+"""
+from __future__ import absolute_import, division, print_function
 
 from pymtl.datatypes import Bits1
-from ComponentLevel6 import ComponentLevel6
-from Connectable import InPort
+
+from .ComponentLevel6 import ComponentLevel6
+from .Connectable import InPort
+
 
 class Component( ComponentLevel6 ):
 
@@ -30,8 +35,9 @@ class Component( ComponentLevel6 ):
 
       # We hook up the added clk and reset signals here.
       try:
-        s.connect( s.clk, s.get_parent_object().clk )
-        s.connect( s.reset, s.get_parent_object().reset )
+        parent = s.get_parent_object()
+        parent.connect( s.clk, parent.clk )
+        parent.connect( s.reset, parent.reset )
       except AttributeError:
         pass
 

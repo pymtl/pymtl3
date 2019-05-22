@@ -1,13 +1,18 @@
-#=========================================================================
-# ValRdyIfc
-#=========================================================================
-# RTL val/rdy interface. 
-# 
-# Author : Shunning Jiang
-#   Date : Apr 5, 2019
+"""
+========================================================================
+ValRdyIfc
+========================================================================
+RTL val/rdy interface.
 
-from pymtl      import *
-from ifcs_utils import valrdy_to_str
+Author : Shunning Jiang
+  Date : Apr 5, 2019
+"""
+from __future__ import absolute_import, division, print_function
+
+from pymtl import *
+
+from .ifcs_utils import valrdy_to_str
+
 
 class InValRdyIfc( Interface ):
 

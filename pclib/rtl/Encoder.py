@@ -1,12 +1,17 @@
-#=========================================================================
-# Encoder.py
-#=========================================================================
-# A priority encoder for arbitration
-#
-# Author : Yanghui Ou, Cheng Tan
-#   Date : Mar 1, 2019
+"""
+========================================================================
+Encoder.py
+========================================================================
+A priority encoder for arbitration
+
+Author : Yanghui Ou, Cheng Tan
+  Date : Mar 1, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
 
 from pymtl import *
+
 
 class Encoder( Component ):
   def construct( s, in_nbits, out_nbits ):

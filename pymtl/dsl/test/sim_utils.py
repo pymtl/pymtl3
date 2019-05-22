@@ -1,19 +1,35 @@
-#=========================================================================
-# sim_utils.py
-#=========================================================================
-# Simple util functions to bootstrap simulation without simulation passes.
-#
-# Author : Shunning Jiang
-# Date   : Jan 1, 2018
+"""
+========================================================================
+sim_utils.py
+========================================================================
+Simple util functions to bootstrap simulation without simulation passes.
+
+Author : Shunning Jiang
+Date   : Jan 1, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
+import random
+from collections import defaultdict, deque
+
+import py.code
 
 from pymtl import *
-from collections  import deque, defaultdict
-from pymtl.dsl.errors import UpblkCyclicError, NotElaboratedError
-from pymtl.dsl import NamedObject
-from pymtl.dsl import ComponentLevel1, ComponentLevel2, ComponentLevel3, ComponentLevel4, ComponentLevel5, ComponentLevel6
-from pymtl.dsl import Signal, Const, MethodPort, Interface
+from pymtl.dsl import (
+    ComponentLevel1,
+    ComponentLevel2,
+    ComponentLevel3,
+    ComponentLevel4,
+    ComponentLevel5,
+    ComponentLevel6,
+    Const,
+    Interface,
+    MethodPort,
+    NamedObject,
+    Signal,
+)
+from pymtl.dsl.errors import NotElaboratedError, UpblkCyclicError
 
-import random, py.code
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
   #  random.seed( seed )
@@ -54,7 +70,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         _recent_blk = {0}
         """.format( upblk_name, wstr, "; ".join(
                     [ "{} = common_writer".format( x ) for x in rstrs ] ) )
-        exec py.code.Source( src ).compile() in locals(), globals()
+        exec(py.code.Source( src ).compile(), locals(), globals())
 
         all_upblks.add( _recent_blk )
 
@@ -214,7 +230,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
     for blk, calls in s._dsl.all_upblk_calls.iteritems():
-      if verbose: print "--", blk, calls
+      if verbose: print("--", blk, calls)
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
@@ -231,7 +247,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     pred = defaultdict(set)
     succ = defaultdict(set)
     for (x, y) in s._dsl.all_M_constraints:
-      if verbose: print (x,y)
+      if verbose: print((x,y))
 
       if   isinstance( x, MethodPort ):
         xx = x.method
@@ -264,10 +280,10 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
     for method, assoc_blks in method_blks.iteritems():
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
-      if verbose: print
+      if verbose: print()
       while Q:
         (u, w) = Q.popleft()
-        if verbose: print (u, w)
+        if verbose: print((u, w))
 
         if w <= 0:
           for v in pred[u]:
@@ -279,9 +295,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
               for blk in assoc_blks:
                 if blk not in pred[u]:
                   if v != blk:
-                    if verbose: print "w<=0, v is blk".center(10),v, blk
-                    if verbose: print v.__name__.center(25)," < ", \
-                                blk.__name__.center(25)
+                    if verbose: print("w<=0, v is blk".center(10),v, blk)
+                    if verbose: print(v.__name__.center(25)," < ", \
+                                blk.__name__.center(25))
                     all_constraints.add( (v, blk) )
 
             else:
@@ -298,9 +314,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                     for blk in assoc_blks:
                       if blk not in pred[v]:
                         if vb != blk:
-                          if verbose: print "w<=0, v is method".center(10),v, blk
-                          if verbose: print vb.__name__.center(25)," < ", \
-                                      blk.__name__.center(25)
+                          if verbose: print("w<=0, v is method".center(10),v, blk)
+                          if verbose: print(vb.__name__.center(25)," < ", \
+                                      blk.__name__.center(25))
                           all_constraints.add( (vb, blk) )
 
               Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
@@ -315,9 +331,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
               for blk in assoc_blks:
                 if blk not in succ[u]:
                   if v != blk:
-                    if verbose: print "w>=0, v is blk".center(10),blk, v
-                    if verbose: print blk.__name__.center(25)," < ", \
-                                      v.__name__.center(25)
+                    if verbose: print("w>=0, v is blk".center(10),blk, v)
+                    if verbose: print(blk.__name__.center(25)," < ", \
+                                      v.__name__.center(25))
                     all_constraints.add( (blk, v) )
 
             else:
@@ -335,9 +351,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                     for blk in assoc_blks:
                       if not blk in succ[v]:
                         if vb != blk:
-                          if verbose: print "w>=0, v is method".center(10), blk, v
-                          if verbose: print blk.__name__.center(25)," < ", \
-                                            vb.__name__.center(25)
+                          if verbose: print("w>=0, v is method".center(10), blk, v)
+                          if verbose: print(blk.__name__.center(25)," < ", \
+                                            vb.__name__.center(25))
                           all_constraints.add( (blk, vb) )
 
               Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?

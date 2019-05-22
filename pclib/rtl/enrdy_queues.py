@@ -1,14 +1,19 @@
-#=========================================================================
-# enrdy_queues.py
-#=========================================================================
-# This file contains queues with EnRdy (send/recv) interface.
-#
-# Author : Shunning Jiang
-# Date   : Mar 9, 2018
+"""
+========================================================================
+enrdy_queues.py
+========================================================================
+This file contains queues with EnRdy (send/recv) interface.
 
+Author : Shunning Jiang
+Date   : Mar 9, 2018
+"""
+
+from __future__ import absolute_import, division, print_function
+
+from pclib.ifcs.SendRecvIfc import RecvIfcRTL, SendIfcRTL
+from pclib.rtl import Mux, Reg, RegEn
 from pymtl import *
-from pclib.rtl import Reg, RegEn, Mux
-from pclib.ifcs.SendRecvIfc import SendIfcRTL, RecvIfcRTL
+
 
 class PipeQueue1RTL( Component ):
 

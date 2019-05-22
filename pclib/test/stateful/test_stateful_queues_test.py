@@ -15,7 +15,7 @@ from collections import deque
 import copy
 import pytest
 
-from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
+from pymtl.passes import OpenLoopCLPass, GenDAGPass
 
 
 #-------------------------------------------------------------------------

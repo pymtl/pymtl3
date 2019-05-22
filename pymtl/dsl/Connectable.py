@@ -1,15 +1,20 @@
-#=========================================================================
-# Connectable.py
-#=========================================================================
-# Wires, ports, and interfaces, all inherited from Connectable.
-#
-# Author : Shunning Jiang
-# Date   : Apr 16, 2018
+"""
+========================================================================
+Connectable.py
+========================================================================
+Wires, ports, and interfaces, all inherited from Connectable.
 
-from NamedObject import NamedObject, DSLMetadata
+Author : Shunning Jiang
+Date   : Apr 16, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
 from pymtl.datatypes import mk_bits
 from pymtl.datatypes.Bits import Bits
-from errors import InvalidConnectionError
+
+from .errors import InvalidConnectionError
+from .NamedObject import DSLMetadata, NamedObject
+
 
 class Connectable(object):
   # I've given up maintaining adjacency list or disjoint set locally since
@@ -73,6 +78,9 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type ):
+    # TODO
+    if isinstance( Type, int ):
+      raise Exception("Use actual type instead of int (it is deprecated).")
     s._dsl.Type = Type
     s._dsl.type_instance = None
 

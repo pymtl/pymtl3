@@ -1,9 +1,13 @@
-#=======================================================================
-# Bits.py
-#=======================================================================
-# Module containing the Bits class.
+"""
+======================================================================
+Bits.py
+======================================================================
+Module containing the Bits class.
+"""
+from __future__ import absolute_import, division, print_function
 
 import copy
+
 
 #-----------------------------------------------------------------------
 # _get_nbits
@@ -107,11 +111,11 @@ class Bits( object ):
     return str
 
   def __oct__( self ):
-    print "DEPRECATED: Please use .oct()!"
+    print("DEPRECATED: Please use .oct()!")
     return self.oct()
 
   def __hex__( self ):
-    print "DEPRECATED: Please use .oct()!"
+    print("DEPRECATED: Please use .oct()!")
     return self.hex()
 
   def bin(self):

@@ -1,16 +1,19 @@
-#=========================================================================
-# enrdy_queues_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Mar 9, 2018
+"""
+========================================================================
+enrdy_queues_test.py
+========================================================================
+
+Author : Shunning Jiang
+Date   : Mar 9, 2018
+"""
+from __future__ import absolute_import, division, print_function
 
 import pytest
-import struct
 
-from pymtl      import *
-from pclib.rtl  import TestSourceEnRdy, TestSinkEnRdy
-from enrdy_queues import *
+from pclib.test import TestSinkCL, TestSrcCL
+from pymtl import *
+
+from .enrdy_queues import *
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -23,14 +26,14 @@ class TestHarness( Component ):
 
     # Instantiate models
 
-    s.src = TestSourceEnRdy( Type, src_msgs, src_stall_prob )
-    s.q   = q
-    s.sink = TestSinkEnRdy( Type, sink_msgs, sink_stall_prob )
+    s.src  = TestSrcCL( src_msgs )
+    s.q    = q
+    s.sink = TestSinkCL( sink_msgs )
 
     # Connect
 
-    s.connect( s.src.out, s.q.enq )
-    s.connect( s.sink.in_, s.q.deq )
+    s.connect( s.src.send, s.q.enq )
+    s.connect( s.sink.recv, s.q.deq )
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -45,7 +48,7 @@ def run_sim( model ):
   cycle = 0
   while not model.done() and cycle < 1000:
     model.tick()
-    print model.line_trace()
+    print(model.line_trace())
     cycle += 1
 
   assert cycle < 1000

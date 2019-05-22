@@ -238,20 +238,6 @@ class ReorderBuffer( Component ):
     ] )
 
 
-from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
-
-
-#-------------------------------------------------------------------------
-# test_state_machine
-#-------------------------------------------------------------------------
-def test_state_machine():
-  wrapper = RTL2CLWrapper( ReorderBuffer( Bits16, 4 ) )
-  wrapper.elaborate()
-  wrapper.apply( GenDAGPass() )
-  wrapper.apply( OpenLoopCLPass() )
-  wrapper.lock_in_simulation()
-
-
 #-------------------------------------------------------------------------
 # test_state_machine
 #-------------------------------------------------------------------------

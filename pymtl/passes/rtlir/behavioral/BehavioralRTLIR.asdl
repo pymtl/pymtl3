@@ -1,0 +1,49 @@
+-- Behavioral RTLIR description in Zephyr ASDL
+-- identifier, int, string, object, bool are the five built-in types of
+-- Zephyr ASDL
+-- Note that this is not the final version of Behavioral RTLIR grammar. We might extend
+-- the grammar to support more features in the future.
+
+module BehavioralRTLIR
+{
+  upblk = CombUpblk( string name, stmt* body )
+        | SeqUpblk( string name, stmt* body )
+
+  stmt = Assign( expr target, expr value )
+       | AugAssign( expr target, operator op, expr value )
+       | If( expr cond, stmt* body, stmt* orelse )
+       | For( loopvar_decl var, expr start, expr end, expr step, stmt* body )
+
+  expr = Number( int value )
+       | Concat( expr* values )
+       | ZeroExt( int nbits, expr value )
+       | SignExt( int nbits, expr value )
+       | Reduce( operator op, expr value )
+       | SizeCast( int nbits, expr value )
+       | StructInst( object struct, string* keywords, expr* kwargs )
+       | IfExp( expr cond, expr body, expr orelse )
+       | UnaryOp( unaryop op, expr operand )
+       | BoolOp( boolop op, expr* values )
+       | BinOp( expr left, operator op, expr right )
+       | Compare( expr left, cmpop op, expr right )
+
+       -- Only the following types of nodes might appear in the LHS of
+       -- an assignment
+       | Attribute( expr value, identifier attr )
+       | Index( expr value, expr idx )
+       | Slice( expr value, expr lower, expr upper )
+       | Base( object base )
+       | LoopVar( string name )
+       | FreeVar( string name, object obj )
+       | TmpVar( string name )
+
+  loopvar_decl = LoopVarDecl( string name )
+
+  unaryop = Invert | Not | UAdd | USub
+
+  boolop = And | Or
+
+  operator = Add | Sub | Mult | Div | Mod | Pow | ShiftLeft | ShiftRightLogic | BitAnd | BitOr | BitXor
+
+  cmpop = Eq | NotEq | Lt | LtE | Gt | GtE
+}

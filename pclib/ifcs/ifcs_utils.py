@@ -1,10 +1,14 @@
-#=========================================================================
-# ifcs_utils.py
-#=========================================================================
-# Utility functions for ifcs.
-#
-# Author: Yanghui Ou
-#   Date: Feb 21, 2019
+"""
+========================================================================
+ifcs_utils.py
+========================================================================
+Utility functions for ifcs.
+
+Author: Yanghui Ou
+  Date: Feb 21, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
 
 from pymtl import *
 

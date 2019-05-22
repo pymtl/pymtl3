@@ -1,13 +1,17 @@
-#-------------------------------------------------------------------------
-# Library of RTL queues
-#-------------------------------------------------------------------------
-#
-# Author : Yanghui Ou
-#   Date : Mar 23, 2019
+"""
+-------------------------------------------------------------------------
+Library of RTL queues
+-------------------------------------------------------------------------
 
-from pymtl import *
-from pclib.ifcs import EnqIfcRTL, DeqIfcRTL
+Author : Yanghui Ou
+  Date : Mar 23, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
+
+from pclib.ifcs import DeqIfcRTL, EnqIfcRTL
 from pclib.rtl import Mux, Reg, RegEn, RegisterFile
+from pymtl import *
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL

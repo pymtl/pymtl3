@@ -1,24 +1,33 @@
-#=========================================================================
-# ComponentLevel3.py
-#=========================================================================
-# We add value wire/interface connections. Basically, all connected
-# value signal in the whole graph should have the same value of the unique
-# "net writer" written in an update block.
-# Then, the update block for a net is basically one writer writes to those
-# readers. Interface connections are handled separately, and they should
-# be revamped when adding method-based interfaces.
-#
-# Author : Shunning Jiang
-# Date   : Apr 16, 2018
+"""
+========================================================================
+ComponentLevel3.py
+========================================================================
+We add value wire/interface connections. Basically, all connected
+value signal in the whole graph should have the same value of the unique
+"net writer" written in an update block.
+Then, the update block for a net is basically one writer writes to those
+readers. Interface connections are handled separately, and they should
+be revamped when adding method-based interfaces.
 
-from NamedObject import NamedObject
-from ComponentLevel1 import ComponentLevel1
-from ComponentLevel2 import ComponentLevel2
-from Connectable import Connectable, Signal, InPort, OutPort, Wire, Const, Interface
-from errors      import InvalidConnectionError, SignalTypeError, NoWriterError, MultiWriterError, NotElaboratedError
+Author : Shunning Jiang
+Date   : Apr 16, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
 from collections import defaultdict, deque
 
-import inspect, ast # for error message
+from .ComponentLevel1 import ComponentLevel1
+from .ComponentLevel2 import ComponentLevel2
+from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
+from .errors import (
+    InvalidConnectionError,
+    MultiWriterError,
+    NotElaboratedError,
+    NoWriterError,
+    SignalTypeError,
+)
+from .NamedObject import NamedObject
+
 
 class ComponentLevel3( ComponentLevel2 ):
 
@@ -68,8 +77,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
       s._dsl.constructed = True
 
-  def _connect_signal_int( s, o1, o2 ):
+  # The following three methods should only be called when types are
 
+  # already checked
+  def _connect_signal_int( s, o1, o2 ):
     o2   = Const( o1._dsl.Type, o2, s )
     host = o1.get_host_component()
 
@@ -81,20 +92,11 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.consts.add( o2 )
 
     s._dsl.adjacency[o1].add( o2 )
-    s._dsl.adjacency[o1].add( o2 )
+    s._dsl.adjacency[o2].add( o1 )
 
     s._dsl.connect_order.append( (o1, o2) )
 
-  def _connect( s, other, adjacency ):
-    assert isinstance( other, Connectable ), "Unconnectable object!"
-
-    if other in adjacency[s]:
-      raise InvalidConnectionError( "This pair of signals are already connected."\
-                                    "\n - {} \n - {}".format( s, other ) )
-
   def _connect_signal_signal( s, o1, o2 ):
-    assert isinstance( o1, Signal ) and isinstance( o2, Signal )
-
     o1_type = None
     o2_type = None
 
@@ -129,29 +131,35 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._dsl.connect_order.append( (o1, o2) )
 
-  # When we connect two interfaces, we first try to use o1's and o2's
-  # connect, if
-
   def _connect_interfaces( s, o1, o2 ):
-    assert isinstance( o1, Interface ) and isinstance( o2, Interface ), \
-           "Invalid interface connection, %s <> %s." % (type(s).__name__, type(other).__name__)
+    # When we connect two interfaces, we first try to use o1's and o2's
+    # connect. If failed, we fall back to by-name connection
 
-    # This function recursively connect two interfaces
     def connect_by_name( this, other ):
-
       def recursive_connect( this_obj, other_obj ):
-        if isinstance( this_obj, Connectable ):
-          s._connect_objects( this_obj, other_obj )
-
-        elif isinstance( this_obj, list ):
+        if isinstance( this_obj, list ):
           for i in xrange(len(this_obj)):
             # TODO add error message if other_obj is not a list
             recursive_connect( this_obj[i], other_obj[i] )
+        else:
+          s._connect_objects( other_obj, this_obj )
 
       for name, obj in this.__dict__.iteritems():
         if not name.startswith("_"):
-          # TODO add error message if other doesn't have a field called name
-          recursive_connect( obj, getattr( other, name ) )
+          if hasattr( other, name ):
+            # other has the corresponding field, connect recursively
+            recursive_connect( obj, getattr( other, name ) )
+
+          else:
+            # other doesn't have the corresponding field, raise error
+            # if obj is connectable.
+            if isinstance( obj, Connectable ):
+              raise InvalidConnectionError("There is no \"{}\" field in {} "
+              "to connect to {} during by-name connection\n"
+              "Suggestion: check the implementation of \n"
+              "          - {} (class {})\n"
+              "          - {} (class {})".format( name, other, obj,
+                this, type(this), other, type(other) ) )
 
     if hasattr( o1, "connect" ):
       if not o1.connect( o2, s ): # o1.connect fail
@@ -171,6 +179,12 @@ class ComponentLevel3( ComponentLevel2 ):
   def _connect_objects( s, o1, o2 ):
     """ Top level private method for connecting two objects. We do
         the function dispatch based on type here"""
+
+    o1_connectable = isinstance( o1, Connectable )
+    o2_connectable = isinstance( o2, Connectable )
+
+    if not o1_connectable and not o2_connectable:
+      return
 
     # Deal with Signal <-> int
 
@@ -192,7 +206,8 @@ class ComponentLevel3( ComponentLevel2 ):
       # s._dsl.connect_order.append( (o1, o2) )
 
     else:
-      raise Exception("{} <> {}".format(type(o1), type(o2)))
+      raise InvalidConnectionError("{} cannot be connected to {}: {} != {}" \
+              .format(o1, o2, type(o1), type(o2)) )
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
@@ -216,16 +231,16 @@ class ComponentLevel3( ComponentLevel2 ):
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
           for idx, item in target.iteritems():
-            s._connect_objects( obj[idx], item )
+            s._dsl.parent_obj._connect_objects( obj[idx], item )
 
         # Obj is a single signal
         # If the target is a list, it's fanout connection
         elif isinstance( target, tuple ) or isinstance( target, list ):
           for item in target:
-            s._connect_objects( obj, item )
+            s._dsl.parent_obj._connect_objects( obj, item )
         # Target is a single object
         else:
-          s._connect_objects( obj, target )
+          s._dsl.parent_obj._connect_objects( obj, target )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
@@ -628,6 +643,8 @@ class ComponentLevel3( ComponentLevel2 ):
   def connect( s, o1, o2 ):
     try:
       s._connect_objects( o1, o2 )
+    except InvalidConnectionError:
+      raise
     except Exception as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
@@ -638,6 +655,8 @@ class ComponentLevel3( ComponentLevel2 ):
     for i in xrange(len(args)>>1) :
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
+      except InvalidConnectionError:
+        raise
       except Exception as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )

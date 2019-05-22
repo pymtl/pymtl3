@@ -1,24 +1,29 @@
-#=========================================================================
-# NamedObject.py
-#=========================================================================
-# This is the very base class of PyMTL objects. It enables all pymtl
-# components/signals to share the functionality of recursively collecting
-# objects and tagging objects with the full name.
-#
-# We bookkeep name hierarchy for error message and other purposes.
-# For example, s.x[0][3].y[2].z[1:3] is stored as
-# ( ["top","x","y","z"], [ [], [0,3], [2], [slice(1,3,0)] ] )
-# Note that len(name) == len(idx)-1 only when the variable ends with slice
-#
-# We keep all metadata in inst._dsl.*. This is to create a namespace
-# to centralize all DSL-related metadata. Passes will create other
-# namespaces to put their created metadata.
-#
-# Author : Shunning Jiang
-# Date   : Nov 3, 2018
+"""
+========================================================================
+NamedObject.py
+========================================================================
+This is the very base class of PyMTL objects. It enables all pymtl
+components/signals to share the functionality of recursively collecting
+objects and tagging objects with the full name.
 
-from errors import NotElaboratedError
+We bookkeep name hierarchy for error message and other purposes.
+For example, s.x[0][3].y[2].z[1:3] is stored as
+( ["top","x","y","z"], [ [], [0,3], [2], [slice(1,3,0)] ] )
+Note that len(name) == len(idx)-1 only when the variable ends with slice
+
+We keep all metadata in inst._dsl.*. This is to create a namespace
+to centralize all DSL-related metadata. Passes will create other
+namespaces to put their created metadata.
+
+Author : Shunning Jiang
+Date   : Nov 3, 2018
+"""
+from __future__ import absolute_import, division, print_function
+
 import re
+
+from .errors import NotElaboratedError
+
 
 class DSLMetadata(object):
   pass
@@ -184,8 +189,8 @@ class NamedObject(object):
 
   def elaborate( s ):
     if s._dsl.constructed:
-      print "Don't elaborate the same model twice. \
-             Use APIs to mutate the model."
+      print("Don't elaborate the same model twice. \
+             Use APIs to mutate the model.")
       return
 
     # Initialize the top level

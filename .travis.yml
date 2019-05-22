@@ -21,6 +21,9 @@ env:
 
 install:
 
+ # Install packages
+ - sudo apt-get install -y graphviz
+
  # Install verilator
 
  - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
@@ -32,29 +35,23 @@ install:
 
  # Install Python requirements
 
- - pip install --editable .
- - pip install --upgrade pytest
+ - pip install --upgrade pip setuptools twine
+ - pip install --requirement requirements.txt
+ - pip install .
  - pip list
- 
- # Install Hypothesis
- - pip install hypothesis 
- # Install Graphviz
- - pip install graphviz
-
-#------------------------------------------------------------------------
-# before test runner
-#------------------------------------------------------------------------
-
-before_script:
-
- # Make build directory
-
- - mkdir -p build
- - cd build
 
 #------------------------------------------------------------------------
 # test runner
 #------------------------------------------------------------------------
 
 script:
+ - futurize --write --stage1 .
+ # - futurize --write --stage2 .
+ - autoflake --in-place --remove-duplicate-keys $(find . -name '*.py')
+ - isort --apply --recursive .
+ # - black .
+ # - flake8 .
+ - git diff --exit-code
+ - mkdir -p build
+ - cd build
  - py.test .. $CONFIG

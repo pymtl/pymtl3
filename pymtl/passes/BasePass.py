@@ -1,10 +1,14 @@
-#=========================================================================
-# BasePass.py
-#=========================================================================
-# An "abstract" base class for all passes.
-#
-# Author : Shunning Jiang
-# Date   : Dec 17, 2017
+"""
+========================================================================
+BasePass.py
+========================================================================
+An "abstract" base class for all passes.
+
+Author : Shunning Jiang
+Date   : Dec 17, 2017
+"""
+from __future__ import absolute_import, division, print_function
+
 
 class PassMetadata(object):
   pass

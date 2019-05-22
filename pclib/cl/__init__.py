@@ -1,1 +1,3 @@
-from queues import PipeQueueCL
+from __future__ import absolute_import, division, print_function
+
+from .queues import PipeQueueCL

@@ -11,7 +11,7 @@ import hypothesis.strategies as st
 from pymtl import *
 from hypothesis.stateful import *
 from hypothesis import settings, given, seed, PrintSettings
-from pymtl.passes import OpenLoopCLPass, GenDAGPass, SimpleSchedPass, SimpleTickPass
+from pymtl.passes import OpenLoopCLPass, GenDAGPass
 import copy
 from test_wrapper import *
 import sys

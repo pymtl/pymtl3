@@ -1,14 +1,19 @@
-#=========================================================================
-# helpers.py
-#=========================================================================
-# Useful helper functions of Bits operations. Ideally these functions
-# should be implemented in RPython.
-#
-# Author : Shunning Jiang
-# Date   : Nov 3, 2017
+"""
+========================================================================
+helpers.py
+========================================================================
+Useful helper functions of Bits operations. Ideally these functions
+should be implemented in RPython.
 
-from bits_import import *
+Author : Shunning Jiang
+Date   : Nov 3, 2017
+"""
+from __future__ import absolute_import, division, print_function
+
 import math
+
+from .bits_import import *
+
 
 def concat( *args ):
   nbits = sum( [ x.nbits for x in args ] )

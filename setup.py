@@ -1,13 +1,18 @@
-#=========================================================================
-# setup.py
-#=========================================================================
-# setup.py inspired by the PyPA sample project:
-# https://github.com/pypa/sampleproject/blob/master/setup.py
+"""
+========================================================================
+setup.py
+========================================================================
+setup.py inspired by the PyPA sample project:
+https://github.com/pypa/sampleproject/blob/master/setup.py
+"""
 
-from setuptools import setup, find_packages
-from codecs     import open   # To use a consistent encoding
-from os         import path
+from __future__ import absolute_import, division, print_function
+
+from codecs import open  # To use a consistent encoding
+from os import path
 from subprocess import check_output
+
+from setuptools import find_packages, setup
 
 #-------------------------------------------------------------------------
 # get_version
@@ -33,7 +38,7 @@ def get_version():
 def get_long_description():
   here = path.abspath(path.dirname(__file__))
   with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+    return f.read()
 
 #-------------------------------------------------------------------------
 # setup
@@ -45,7 +50,7 @@ setup(
   version          = get_version(),
   description      = 'Python-based hardware modeling framework',
   long_description = get_long_description(),
-  url              = 'https://github.com/cornell-brg/pymtl-v3', 
+  url              = 'https://github.com/cornell-brg/pymtl-v3',
   author           = 'Batten Research Group',
   author_email     = 'brg-pymtl@csl.cornell.edu',
 
@@ -81,7 +86,7 @@ setup(
 
   install_requires = [
     'pytest',
-    'hypothesis',
+    'hypothesis >= 4.18.1',
     'pytest-xdist',
     'cffi',
     'greenlet',
