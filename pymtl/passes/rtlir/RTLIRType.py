@@ -249,20 +249,40 @@ class Component( BaseRTLIRType ):
     s.unpacked = unpacked
 
   def _gen_parameters( s, obj ):
-    defaults = s.argspec.defaults if s.argspec.defaults else ()
-    # The non-keyword parameters are indexed by an empty string
-    ret = { '' : obj._dsl.args }
-    default_len = len(s.argspec.args[1:])-len(ret[''])
-    assert default_len <= len( defaults ), \
-      'varargs are not allowed at construct() of {}!'.format( obj )
-    if not default_len == 0:
-      ret[''] = ret[''] + defaults[-default_len:]
-    kwargs = obj._dsl.kwargs.copy()
+    # s.argspec: static code reflection results
+    # _dsl.args: all unnamed arguments supplied to construct()
+    # _dsl.kwargs: all named arguments supplied to construct()
+    arg_names = s.argspec.args[1:]
+    assert s.argspec.varargs is None, "varargs are not allowed for construct!"
+    assert s.argspec.keywords is None, "keyword args are not allowed for construct!"
+    kwargs = ()
     if 'elaborate' in obj._dsl.param_dict:
-      kwargs.update( {
-        x:y for x, y in obj._dsl.param_dict['elaborate'].iteritems() if x
-      } )
-    ret.update( kwargs )
+      kwargs = tuple(obj._dsl.param_dict.keys())
+    defaults = s.argspec.defaults if s.argspec.defaults else ()
+    num_args = len(arg_names)
+    num_supplied = len(obj._dsl.args) + len(obj._dsl.kwargs)
+    num_defaults = len(defaults)
+    # No default values: each arg is either keyword or unnamed
+    # Has default values: num. supplied values + num. of defaults >= num. args
+    assert num_args == num_supplied or num_args <= num_supplied + num_defaults
+    use_defaults = num_args != num_supplied
+    ret = []
+    # Handle method construct arguments
+    for idx, arg_name in enumerate(arg_names):
+      # Use values from _dsl.args
+      if idx < len(obj._dsl.args):
+        ret.append((arg_name, obj._dsl.args[idx]))
+      # Use values from _dsl.kwargs
+      elif arg_name in obj._dsl.kwargs:
+        ret.append((arg_name, obj._dsl.kwargs[arg_name]))
+      # Use default values
+      else:
+        assert use_defaults
+        ret.append((arg_name, defaults[idx-len(arg_names)]))
+    # Handle added keyword arguments
+    for arg_name in enumerate(kwargs):
+      assert arg_name in obj._dsl.param_dict
+      ret.append((arg_name, obj._dsl.param_dict[arg_names]))
     return ret
 
   def _is_unpacked( s ):
@@ -424,7 +444,7 @@ def get_rtlir( obj ):
       assert len( obj ) > 0, "list {} is empty!".format( obj )
       ref_type = get_rtlir( obj[0] )
       assert \
-        reduce( lambda res,i: res and (get_rtlir(i)==ref_type),obj ), \
+        reduce( lambda res,i: res and (get_rtlir(i)==ref_type), obj, True ), \
         'all elements of array {} must have the same type {}!'.format(
           obj, ref_type )
       dim_sizes = []

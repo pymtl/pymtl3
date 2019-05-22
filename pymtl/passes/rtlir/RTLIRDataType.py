@@ -159,9 +159,8 @@ def _get_rtlir_dtype_struct( obj ):
     assert len( obj ) > 0, 'list length should be greater than 0!'
     ref_type = _get_rtlir_dtype_struct( obj[0] )
     assert\
-      reduce(lambda res,i:res and (_get_rtlir_dtype_struct(i)==ref_type),obj),\
-      'all elements of array {} must have the same type {}!'.format(
-          obj, ref_type )
+      reduce(lambda res,i:res and (_get_rtlir_dtype_struct(i)==ref_type),obj, True), \
+      'all elements of array {} must have the same type {}!'.format( obj, ref_type )
     dim_sizes = []
     while isinstance( obj, list ):
       assert len( obj ) > 0, 'list length should be greater than 0!'
