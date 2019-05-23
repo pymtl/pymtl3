@@ -14,9 +14,9 @@ from .errors import RTLIRTranslationError
 from .structural import StructuralTranslator
 
 
-def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
+def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
   """Return an RTLIRTranslator from the two given translators."""
-  class _RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
+  class _RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
     """Template translator class parameterized by behavioral/structural translator.
 
     Components are assembled here because they have both behavioral
@@ -34,10 +34,10 @@ def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
 
       def get_component_nspace( nspace, m ):
         ns = TranslatorMetadata()
-        for name, metadata_d in nspace.__dict__.iteritems():
+        for name, metadata_d in vars(nspace).iteritems():
           # Hierarchical metadata will not be added
-          if not m in metadata_d: continue
-          ns.__dict__[ name ] = metadata_d[ m ]
+          if m in metadata_d:
+            setattr( ns, name, metadata_d[m] )
         return ns
 
       def translate_component( m, components, translated ):
@@ -53,7 +53,6 @@ def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
         s.gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
         s.gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array' )
         s.gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
-        s.gen_hierarchy_metadata( 'def_ifcs', 'def_ifcs' )
 
       s.component = {}
       # Generate backend representation for each component
@@ -61,7 +60,6 @@ def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
       s.hierarchy.decl_type_vector = []
       s.hierarchy.decl_type_array = []
       s.hierarchy.decl_type_struct = []
-      s.hierarchy.def_ifcs = []
 
       try:
         s.translate_behavioral( s.top )
@@ -69,7 +67,7 @@ def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
         translate_component( s.top, s.hierarchy.components, [] )
       except AssertionError as e:
         msg = '' if e.args[0] is None else e.args[0]
-        raise RTLIRTranslationError( obj, msg )
+        raise RTLIRTranslationError( s.top, msg )
 
       # Generate the representation for all components
       s.hierarchy.component_src = s.rtlir_tr_components(s.hierarchy.components)
@@ -79,9 +77,10 @@ def mk_RTLIRTranslator( _BehavioralTranslator, _StructuralTranslator ):
 
     def gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
       metadata = getattr( s.structural, structural_ns, [] )
+      List = getattr( s.hierarchy, hierarchy_ns )
       for Type, data in metadata:
-        if not s.in_list( Type, s.hierarchy.__dict__[ hierarchy_ns ] ):
-          s.hierarchy.__dict__[ hierarchy_ns ].append( ( Type, data ) )
+        if not s.in_list( Type, List ):
+          List.append( ( Type, data ) )
 
     def in_list( s, dtype, List ):
       return reduce( lambda r, x: r or x[0] == dtype, List, False )
