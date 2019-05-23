@@ -42,8 +42,9 @@ class ComponentLevel6( ComponentLevel5 ):
       method = getattr( s, x )
       # We identify non_blocking methods here
       if hasattr( method, "_non_blocking_rdy" ):
-        rdy = method._non_blocking_rdy
-        setattr( s, x, NonBlockingCalleeIfc( method, bind_method( rdy ) ) )
+        rdy  = method._non_blocking_rdy
+        Type = method._non_blocking_type
+        setattr( s, x, NonBlockingCalleeIfc( Type, method, bind_method( rdy ) ) )
 
   # Override
   def _construct( s ):

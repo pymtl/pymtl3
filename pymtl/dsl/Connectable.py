@@ -344,7 +344,7 @@ class NonBlockingInterface( Interface ):
     return s.method( *args, **kwargs )
 
 class NonBlockingCalleeIfc( NonBlockingInterface ):
-  def construct( s, method=None, rdy=None, Type=None ):
+  def construct( s, Type=None, method=None, rdy=None ):
     s.Type = Type
     s.method = CalleePort( method )
     s.rdy    = CalleePort( rdy )
