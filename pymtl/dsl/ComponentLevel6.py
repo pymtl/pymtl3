@@ -10,39 +10,18 @@ Author : Yanghui Ou, Shunning Jiang
 from __future__ import absolute_import, division, print_function
 
 from .ComponentLevel5 import ComponentLevel5
-from .Connectable import CalleePort, CallerPort, Interface
+from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
 
 #-------------------------------------------------------------------------
-# non blocking interfaces and decorator
+# non blocking decorator
 #-------------------------------------------------------------------------
 
-class NonBlockingCalleeIfc( Interface ):
-  def construct( s, Type=method=None, rdy=None ):
-    s.method = CalleePort( method )
-    setattr( s, name, CalleePort( rdy ) )
-    s._dsl.rdy = getattr( s, name )
-
-    s.method._dsl.is_rdy    = False
-    s._dsl.rdy._dsl.is_rdy  = True
-
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-  def get_rdy( s ):
-    return s._dsl.rdy
-
-class NonBlockingCallerIfc( Interface ):
-
-  def construct( s, Type ):
-    s.method = CallerPort( Type )
-    setattr( s, name, CallerPort() )
-
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-def non_blocking( method ):
-  method._rdy_method = guard
-  return method
+def non_blocking( rdy=lambda : True, Type=None ):
+  def real_decorator( method ):
+    method._non_blocking_rdy  = rdy
+    method._non_blocking_type = Type
+    return method
+  return real_decorator
 
 #-------------------------------------------------------------------------
 # ComponentLevel6
@@ -51,9 +30,8 @@ def non_blocking( method ):
 class ComponentLevel6( ComponentLevel5 ):
 
   def _handle_decorated_methods( s ):
-    super( ComponentLevel6, s )._handle_decorated_methods()
 
-    # The following code handles guarded methods
+    # The following code handles non-blocking methods
     def bind_method( method ):
       def _method( *args, **kwargs ):
         return method( s, *args, **kwargs )
@@ -62,10 +40,10 @@ class ComponentLevel6( ComponentLevel5 ):
     cls_dict = s.__class__.__dict__
     for x in cls_dict:
       method = getattr( s, x )
-      # We identify guarded methods here
-      if hasattr( method, "_rdy_method" ):
-        guard    = method._rdy_method
-        setattr( s, x, NonblockingCalleeIfc( method, bind_method( guard ) ) )
+      # We identify non_blocking methods here
+      if hasattr( method, "_non_blocking_rdy" ):
+        rdy = method._non_blocking_rdy
+        setattr( s, x, NonBlockingCalleeIfc( method, bind_method( rdy ) ) )
 
   # Override
   def _construct( s ):

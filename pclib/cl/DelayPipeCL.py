@@ -10,25 +10,24 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs import GuardedCalleeIfc, GuardedCallerIfc, guarded_ifc
 from pymtl import *
 
 # This delay pipe is for cycle-level performance modeling purpose
 
 class DelayPipeDeqCL( Component ):
 
-  @guarded_ifc( lambda s: s.pipeline[0] is None )
+  @non_blocking( lambda s: s.pipeline[0] is None )
   def enq( s, msg ):
     assert s.pipeline[0] is None
     s.pipeline[0] = msg
 
-  @guarded_ifc( lambda s: s.pipeline[-1] is not None )
+  @non_blocking( lambda s: s.pipeline[-1] is not None )
   def deq( s ):
     ret = s.pipeline[-1]
     s.pipeline[-1] = None
     return ret
 
-  @guarded_ifc( lambda s: True )
+  @non_blocking( lambda s: True )
   def peek( s ):
     assert s.pipeline[-1] is not None
     return s.pipeline[-1]
@@ -78,16 +77,16 @@ class DelayPipeSendCL( Component ):
 
   def construct( s, delay=5 ):
 
-    s.send = GuardedCallerIfc()
+    s.send = NonBlockingCallerIfc()
 
     s.delay = delay
 
     if delay == 0: # combinational behavior
-      s.enq = GuardedCalleeIfc()
+      s.enq = NonBlockingCalleeIfc()
       s.connect( s.enq, s.send )
 
     else: # delay >= 1, pipe behavior
-      s.enq = GuardedCalleeIfc( s.enq_pipe, s.enq_rdy_pipe )
+      s.enq = NonBlockingCalleeIfc( s.enq_pipe, s.enq_rdy_pipe )
       s.pipeline = deque( [None]*delay, maxlen=delay )
 
       @s.update

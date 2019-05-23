@@ -315,7 +315,8 @@ class MethodPort( NamedObject, Connectable ):
     return False
 
 class CallerPort( MethodPort ):
-  def construct( self ):
+  def construct( self, Type=None ):
+    self.Type = Type
     self.method = None
 
   def is_callee_port( s ):
@@ -326,7 +327,8 @@ class CallerPort( MethodPort ):
 
 
 class CalleePort( MethodPort ):
-  def construct( self, method=None ):
+  def construct( self, method=None, Type=None ):
+    self.Type = Type
     self.method = method
 
   def is_callee_port( s ):
@@ -334,3 +336,28 @@ class CalleePort( MethodPort ):
 
   def is_caller_port( s ):
     return False
+
+class NonBlockingInterface( Interface ):
+
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+class NonBlockingCalleeIfc( NonBlockingInterface ):
+  def construct( s, method=None, rdy=None, Type=None ):
+    s.Type = Type
+    s.method = CalleePort( method )
+    s.rdy    = CalleePort( rdy )
+
+    s.method._dsl.is_rdy    = False
+    s.rdy._dsl.is_rdy  = True
+
+class NonBlockingCallerIfc( NonBlockingInterface ):
+
+  def construct( s, Type=None ):
+    s.Type = Type
+
+    s.method = CallerPort( Type=Type )
+    s.rdy    = CallerPort( Type=Type )
+
+    s.method._dsl.is_rdy    = False
+    s.rdy._dsl.is_rdy  = True

@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs.GuardedIfc import guarded_ifc
 from pclib.ifcs.SendRecvIfc import enrdy_to_str
 from pymtl import *
 
@@ -49,20 +48,20 @@ class PipeQueueCL( Component ):
       M( s.deq    ) < M( s.enq  )
     )
 
-  @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
+  @non_blocking( lambda s: len( s.queue ) < s.queue.maxlen )
   def enq( s, v ):
     s.enq_called = True
     s.enq_msg    = v
     s.queue.appendleft( s.enq_msg )
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def deq( s ):
     s.deq_called = True
     s.enq_rdy    = True
     s.deq_msg    = s.queue.pop()
     return s.deq_msg
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def peek( s ):
     return s.queue[-1]
 
@@ -105,20 +104,20 @@ class BypassQueueCL( Component ):
       M( s.enq    ) < M( s.deq     ),
     )
 
-  @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
+  @non_blocking( lambda s: len( s.queue ) < s.queue.maxlen )
   def enq( s, v ):
     s.enq_called = True
     s.deq_rdy    = True
     s.enq_msg    = v
     s.queue.appendleft( s.enq_msg )
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def deq( s ):
     s.deq_called = True
     s.deq_msg    = s.queue.pop()
     return s.deq_msg
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def peek( s ):
     return s.queue[-1]
 
@@ -161,19 +160,19 @@ class NormalQueueCL( Component ):
       M( s.peek   ) < M( s.enq  )
     )
 
-  @guarded_ifc( lambda s: s.enq_rdy )
+  @non_blocking( lambda s: s.enq_rdy )
   def enq( s, v ):
     s.enq_called = True
     s.enq_msg    = v
     s.queue.appendleft( s.enq_msg )
 
-  @guarded_ifc( lambda s: s.deq_rdy )
+  @non_blocking( lambda s: s.deq_rdy )
   def deq( s ):
     s.deq_called = True
     s.deq_msg    = s.queue.pop()
     return s.deq_msg
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def peek( s ):
     return s.queue[-1]
 

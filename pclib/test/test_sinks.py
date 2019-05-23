@@ -10,7 +10,7 @@ Author : Yanghui Ou
 
 from __future__ import absolute_import, division, print_function
 
-from pclib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str, guarded_ifc
+from pclib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
 from pymtl import *
 
 #-------------------------------------------------------------------------
@@ -72,7 +72,7 @@ class TestSinkCL( Component ):
       U( up_sink_count ) < M( s.recv.rdy )
     )
 
-  @guarded_ifc( lambda s: s.initial_count==0 and s.interval_count==0 )
+  @non_blocking( lambda s: s.initial_count==0 and s.interval_count==0 )
   def recv( s, msg ):
 
     s.recv_msg = msg
