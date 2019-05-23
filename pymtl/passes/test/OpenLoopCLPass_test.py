@@ -11,8 +11,6 @@ from pymtl.dsl.errors import UpblkCyclicError
 
 from collections import deque
 
-guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
-
 def test_top_level_method():
 
   class Top(Component):
@@ -89,7 +87,7 @@ def test_top_level_method():
 
   print "num_cycles_executed: ", A.num_cycles_executed
 
-def test_top_level_guarded_ifc():
+def test_top_level_non_blocking_ifc():
 
   class Top(Component):
 
@@ -127,11 +125,11 @@ def test_top_level_guarded_ifc():
         U( up_compose_in ) < M( s.pull ), # bypass behavior
       )
 
-    @guarded_ifc( lambda s: s.element is None and s.count % 5 == 4 )
+    @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
     def push( s, ele ):
       s.element = ele
 
-    @guarded_ifc( lambda s: s.value >= 0 )
+    @non_blocking( lambda s: s.value >= 0 )
     def pull( s ):
       return s.value
 
@@ -199,12 +197,12 @@ def test_top_level_guarded_ifc():
 
   assert A.num_cycles_executed == 8
 
-def test_top_level_guarded_ifc_in_net():
+def test_top_level_non_blocking_ifc_in_net():
 
   class Top(Component):
     def construct( s ):
-      s.push = GuardedCalleeIfc()
-      s.pull = GuardedCalleeIfc()
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
       s.inner = Top_inner()( push = s.push, pull = s.pull )
 
     def line_trace( s ):
@@ -249,11 +247,11 @@ def test_top_level_guarded_ifc_in_net():
         U( up_compose_in ) < M( s.pull ), # bypass behavior
       )
 
-    @guarded_ifc( lambda s: s.element is None and s.count % 5 == 4 )
+    @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
     def push( s, ele ):
       s.element = ele
 
-    @guarded_ifc( lambda s: s.value >= 0 )
+    @non_blocking( lambda s: s.value >= 0 )
     def pull( s ):
       return s.value
 

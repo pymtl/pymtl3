@@ -11,6 +11,7 @@ from BasePass     import BasePass, PassMetadata
 from collections  import deque
 from graphviz     import Digraph
 from errors import PassOrderError
+from pymtl.dsl import NonBlockingInterface
 from pymtl.dsl.errors import UpblkCyclicError
 from pymtl import *
 
@@ -31,9 +32,9 @@ class OpenLoopCLPass( BasePass ):
 
     for x in top._dag.top_level_callee_ports:
       try:
-        if not x._dsl.is_guard:
+        if not x._dsl.is_rdy:
           V.add(x)
-      except AttributeError:
+      except AttributeError: # Normal callee port
         V.add(x)
 
     E   = top._dag.all_constraints
@@ -51,20 +52,14 @@ class OpenLoopCLPass( BasePass ):
       # Use the actual method object for constraints
 
       xx = x
-      try:
-        if x.guarded_ifc:
-          xx = x.method
-          method_guard_mapping[xx] = x.get_guard()
-      except AttributeError:
-        pass
+      if isinstance( x, NonBlockingInterface ):
+        xx = x.method
+        method_guard_mapping[xx] = x.rdy
 
       yy = y
-      try:
-        if y.guarded_ifc:
-          yy = y.method
-          method_guard_mapping[yy] = y.get_guard()
-      except AttributeError:
-        pass
+      if isinstance( y, NonBlockingInterface ):
+        yy = y.method
+        method_guard_mapping[yy] = y.rdy
 
       InD[yy] += 1
       Es [xx].append( yy )
