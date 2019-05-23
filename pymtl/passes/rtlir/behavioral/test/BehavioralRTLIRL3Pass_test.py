@@ -129,6 +129,7 @@ def test_L3_const_struct( do_test ):
 # PyMTL syntax errors
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail( reason = "StructInst is not supported yet" )
 def test_L3_call_struct_inst( do_test ):
   class B( object ):
     def __init__( s, foo=42 ):
@@ -139,6 +140,4 @@ def test_L3_call_struct_inst( do_test ):
       @s.update
       def upblk():
         s.out = B( 42 )
-  with expected_failure( PyMTLSyntaxError,
-    "only keyword args are accepted by struct instantiation" ):
-    do_test( A() )
+  do_test( A() )

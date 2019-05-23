@@ -12,6 +12,7 @@ from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError
 
 from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
+from .BehavioralRTLIR import StructInst
 
 
 class BehavioralRTLIRGenL3Pass( BasePass ):
@@ -45,16 +46,12 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
     """
     obj = s.get_call_obj( node )
     if isinstance(obj, type) and not issubclass(obj, pymtl.Bits) and obj is not bool:
-      if node.args:
+      if len(node.args) < 1:
         raise PyMTLSyntaxError(
-          s.blk, node, 'only keyword args are accepted by struct instantiation!'
+          s.blk, node, 'at least one value should be provided to struct instantiation!'
         )
-      keywords = []
-      kwargs = []
-      for keyword in node.keywords:
-        keywords.append( keyword.arg )
-        kwargs.append( s.visit( keyword.value ) )
-      ret = StructInst( obj, keywords, kwargs )
+      values = map(lambda arg: s.visit(arg), node.args)
+      ret = StructInst( obj, values )
       ret.ast = node
       return ret
 

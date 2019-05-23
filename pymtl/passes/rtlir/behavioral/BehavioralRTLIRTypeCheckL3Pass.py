@@ -79,6 +79,4 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     translate the instantiator to its backend representation like a
     function in SV )
     """
-    assert Type is not bool and not issubclass( Type, Bits ), \
-        "internal error: StructInst did not get struct Type!"
     raise NotImplementedError()
