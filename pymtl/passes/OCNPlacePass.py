@@ -16,8 +16,11 @@ class OCNPlacePass( BasePass ):
 
   def __call__( self, top ):
     if not hasattr( top, "elaborate_physical" ):
-      print( "Note that there is no elaborate_physical defined in "
-             "network module:{}".format(top.__class__.__name__) )
+#      print( "Note that there is no elaborate_physical defined in "
+#             "network module:{}".format(top.__class__.__name__) )
+      all_components = sorted( top.get_all_components(), key=repr )
+      translatable_roots = top.get_translatable_roots()
+      print 'translatable_roots: ', translatable_roots
       return
 
     all_components = sorted( top.get_all_components(), key=repr )

@@ -3,6 +3,7 @@ from GenDAGPass import GenDAGPass
 from SimpleSchedPass import SimpleSchedPass
 from SimpleTickPass import SimpleTickPass
 from OCNPlacePass import OCNPlacePass
+from OCNDrawPass import OCNDrawPass
 
 SimpleSim = [
   Component.elaborate,
@@ -10,6 +11,7 @@ SimpleSim = [
   SimpleSchedPass(),
   SimpleTickPass(),
   OCNPlacePass(),
+  OCNDrawPass(),
   Component.lock_in_simulation
 ]
 

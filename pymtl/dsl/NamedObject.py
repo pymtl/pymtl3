@@ -38,6 +38,8 @@ class NamedObject(object):
 
     inst._dsl.param_dict = { None:{} } # None is for regex patterns
 
+    inst._dsl.translatable = False
+
     return inst
 
   #-----------------------------------------------------------------------
@@ -50,6 +52,7 @@ class NamedObject(object):
 
       # Merge the actual keyword args and those args set by set_parameter
       kwargs = s._dsl.kwargs.copy()
+
       if "elaborate" in s._dsl.param_dict:
         more_args = s._dsl.param_dict[ "elaborate" ].iteritems()
         kwargs.update( { x: y for x, y in more_args if x } )
@@ -90,6 +93,11 @@ class NamedObject(object):
                     u._dsl.param_dict[ None ].update( y )
                   else:
                     u._dsl.param_dict[ x ] = y
+
+            # Set flag of 'translatable' for the optional Verilog translation
+            if len(u._dsl.param_dict) > 1:
+              if 'translate' in u._dsl.param_dict:
+                u._dsl.translatable = True
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
@@ -187,7 +195,7 @@ class NamedObject(object):
       current_dict[ x ] = value
 
 #  def set_param( s, string, value ):
-  def set_param( s, string, **kwargs ):
+  def set_param( s, string, trans_flag = False, **kwargs ):
 
     assert not s._dsl.constructed
 
@@ -198,6 +206,14 @@ class NamedObject(object):
     strs     = strs[1:]
     strs_len = len(strs)
     assert strs_len >= 1
+
+    # Ignore if the translatable flag is proactively set as False
+    if strs[-1] == 'translate' and trans_flag == False:
+      return
+    # Check whether the 'top' is set as 'translatable'
+    if strs_len == 1 and strs[0] == 'translate':
+      s._dsl.translatable = trans_flag
+      return
 
     current_dict = s._dsl.param_dict
 

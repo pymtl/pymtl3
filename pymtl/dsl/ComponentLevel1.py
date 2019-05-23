@@ -181,6 +181,19 @@ class ComponentLevel1( NamedObject ):
     except AttributeError:
       return s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
 
+  def get_translatable_roots( s ):
+    translatable_roots = []
+    try:
+      for u in s._dsl.all_components:
+        if u._dsl.translatable == True:
+          translatable_roots.append( u )
+      return translatable_roots
+    except AttributeError:
+      for u in s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) ):
+        if u._dsl.translatable == True:
+          translatable_roots.append( u )
+      return translatable_roots
+
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
