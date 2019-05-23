@@ -81,12 +81,12 @@ def test_pymtl_struct_closure( do_test ):
   class A( Component ):
     def construct( s ):
       foo = InPort( B )
-      s.foo = foo
+      s._foo = foo
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
         s.out = foo.foo
   a = A()
   a.elaborate()
-  a._rtlir_freevar_ref = { 'foo' : a.foo }
+  a._rtlir_freevar_ref = { 'foo' : a._foo }
   do_test( a )
