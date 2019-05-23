@@ -301,6 +301,12 @@ class MethodPort( NamedObject, Connectable ):
     raise NotImplementedError("You can only instantiate Caller/CalleePort.")
 
   def __call__( self, *args, **kwargs ):
+    if not self._dsl.line_trace_flag:
+      return self.method( *args, **kwargs )
+    else:
+      return self.__call_trace__( *args, **kwargs )
+
+  def __call_trace__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
 
   def is_component( s ):
@@ -319,6 +325,7 @@ class CallerPort( MethodPort ):
   def construct( self, Type=None ):
     self.Type = Type
     self.method = None
+    self._dsl.line_trace_flag = False
 
   def is_callee_port( s ):
     return False
@@ -330,6 +337,8 @@ class CalleePort( MethodPort ):
   def construct( self, Type=None, method=None ):
     self.Type = Type
     self.method = method
+    self._dsl.line_trace_flag = False
+    self._dsl.is_writer = False
 
   def is_callee_port( s ):
     return True
@@ -344,6 +353,40 @@ class NonBlockingInterface( Interface ):
   def __call__( s, *args, **kwargs ):
     return s.method( *args, **kwargs )
 
+  def __str__( s ):
+    if s.method._dsl.line_trace_flag:
+      if s.method.called:
+        args_str = ",".join(
+          [ str( arg ) for arg in s.method.saved_args ] 
+        )
+        kwargs_str = ",".join(
+          [ str( arg ) for _, arg in s.method.saved_kwargs.items() ]
+        )
+        ret_str = (
+          "" if s.method.saved_ret is None else 
+          str( s.method.saved_ret )
+        )
+        trace = []
+        if len( args_str ) > 0: trace.append( args_str )
+        if len( kwargs_str ) > 0: trace.append( kwargs_str )
+        if len( ret_str ) > 0 : trace.append( ret_str )
+        trace_str = ",".join( trace )
+        return trace_str.ljust( s._dsl.trace_len ) 
+      elif s.rdy.called:
+        if s.rdy.saved_ret:
+          return " ".ljust( s._dsl.trace_len )
+        else:
+          return "#".ljust( s._dsl.trace_len )
+      elif not s.rdy.called:
+        return ".".ljust( s._dsl.trace_len )
+      else:
+        return "X".ljust( s._dsl.trace_len )
+
+    # Just return its name if the line trace flag is off
+    else:
+      return "{}".format( s._dsl.my_name ).ljust( s._dsl.trace_len )
+
+
 class NonBlockingCalleeIfc( NonBlockingInterface ):
   def construct( s, Type=None, method=None, rdy=None ):
     s.Type = Type
@@ -352,6 +395,10 @@ class NonBlockingCalleeIfc( NonBlockingInterface ):
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
+    if Type is not None:
+      s._dsl.trace_len = len( str( Type() ) )
+    else:
+      s._dsl.trace_len = 16
 
 class NonBlockingCallerIfc( NonBlockingInterface ):
 
@@ -363,3 +410,7 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
+    if Type is not None:
+      s._dsl.trace_len = len( str( Type() ) )
+    else:
+      s._dsl.trace_len = 16

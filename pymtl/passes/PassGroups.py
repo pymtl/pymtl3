@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl import *
 
+from .CLLineTracePass import CLLineTracePass
 from .DynamicSchedulePass import DynamicSchedulePass
 from .GenDAGPass import GenDAGPass
 from .mamba.HeuristicTopoPass import HeuristicTopoPass
@@ -14,6 +15,7 @@ SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
   SimpleSchedulePass(),
+  CLLineTracePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
@@ -30,6 +32,7 @@ SimpleCLSim = [
   Component.elaborate,
   GenDAGPass(),
   SimpleSchedulePass(),
+  CLLineTracePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
