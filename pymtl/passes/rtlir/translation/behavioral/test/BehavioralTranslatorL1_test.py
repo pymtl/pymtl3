@@ -14,6 +14,7 @@ from pymtl.passes.rtlir.test_utility import do_test
 from pymtl.passes.rtlir.translation.behavioral.BehavioralTranslatorL1 import (
     BehavioralTranslatorL1,
 )
+
 from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 

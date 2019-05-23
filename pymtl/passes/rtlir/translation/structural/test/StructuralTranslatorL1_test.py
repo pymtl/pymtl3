@@ -7,7 +7,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from functools import reduce
 
 import pymtl.passes.rtlir.RTLIRDataType as rdt
 from pymtl import *
@@ -16,6 +15,7 @@ from pymtl.passes.rtlir.test_utility import do_test, expected_failure
 from pymtl.passes.rtlir.translation.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
+
 from .TestStructuralTranslator import mk_TestStructuralTranslator
 
 

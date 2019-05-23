@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 import traceback
 
+
 class RTLIRTranslationError( Exception ):
   """Exception type for errors happening during translation of RTLIR."""
   def __init__( self, obj, msg ):

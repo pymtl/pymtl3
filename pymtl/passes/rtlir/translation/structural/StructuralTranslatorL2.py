@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 import pymtl
-from pymtl.passes.rtlir.RTLIRDataType import Struct, PackedArray
+from pymtl.passes.rtlir.RTLIRDataType import PackedArray, Struct
 from pymtl.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )

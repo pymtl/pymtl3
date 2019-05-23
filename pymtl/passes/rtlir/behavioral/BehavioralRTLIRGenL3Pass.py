@@ -11,8 +11,8 @@ from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError
 
-from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
 from .BehavioralRTLIR import StructInst
+from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
 
 
 class BehavioralRTLIRGenL3Pass( BasePass ):

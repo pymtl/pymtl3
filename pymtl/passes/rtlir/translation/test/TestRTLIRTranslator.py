@@ -7,9 +7,11 @@
 
 from __future__ import absolute_import, division, print_function
 
+from functools import reduce
+
 from ..behavioral.test.TestBehavioralTranslator import TestBehavioralTranslator
-from ..structural.test.TestStructuralTranslator import TestStructuralTranslator
 from ..RTLIRTranslator import RTLIRTranslator
+from ..structural.test.TestStructuralTranslator import TestStructuralTranslator
 
 
 def make_indent( src, nindent ):
