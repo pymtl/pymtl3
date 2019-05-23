@@ -27,7 +27,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
 
     def rtlir_tr_upblk_decls( s, upblk_srcs ):
       srcs = ''
-      for upblk_src in upblk_srcs:
+      for upblk_src in sorted(upblk_srcs, key=lambda x: x[0]):
         make_indent( upblk_src, 1 )
         srcs += '\n' + '\n'.join( upblk_src )
       return 'upblk_decls:{}\n'.format( srcs )
@@ -37,7 +37,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
 
     def rtlir_tr_behavioral_freevars( s, freevars ):
       srcs = ''
-      for freevar in freevars:
+      for freevar in sorted(freevars, key=lambda x: x[0]):
         make_indent( freevar, 1 )
         srcs += '\n' + '\n'.join( freevar )
       return 'freevars:{}\n'.format( srcs )
@@ -47,7 +47,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
 
     def rtlir_tr_behavioral_tmpvars( s, tmpvars ):
       srcs = ''
-      for tmpvar in tmpvars:
+      for tmpvar in sorted(tmpvars, key=lambda x: x[0]):
         make_indent( tmpvar, 1 )
         srcs += '\n' + '\n'.join( tmpvar )
       return 'tmpvars:{}\n'.format( srcs )

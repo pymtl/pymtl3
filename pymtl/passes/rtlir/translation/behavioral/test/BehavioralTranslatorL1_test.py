@@ -24,8 +24,8 @@ def local_do_test( m ):
   tr.translate_behavioral( m )
   upblk_src = tr.behavioral.upblk_srcs[m]
   decl_freevars = tr.behavioral.decl_freevars[m]
-  assert reduce(lambda r, o: r or upblk_src == o, m._ref_upblk_repr, False)
-  assert reduce(lambda r, o: r or decl_freevars == o, m._ref_freevar_repr, False)
+  assert upblk_src == m._ref_upblk_repr
+  assert decl_freevars == m._ref_freevar_repr
 
 def test_pymtl_Bits_freevar( do_test ):
   freevar = Bits32( 42 )
@@ -36,16 +36,16 @@ def test_pymtl_Bits_freevar( do_test ):
       def upblk():
         s.out = freevar
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk
-""" ]
-  a._ref_freevar_repr = [
+"""
+  a._ref_freevar_repr = \
 """\
 freevars:
   freevar: freevar
-""" ]
+"""
   do_test( a )
 
 def test_pymtl_list_Bits_freevar( do_test ):
@@ -57,16 +57,16 @@ def test_pymtl_list_Bits_freevar( do_test ):
       def upblk():
         s.out = freevar[2]
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk
-""" ]
-  a._ref_freevar_repr = [
+"""
+  a._ref_freevar_repr = \
 """\
 freevars:
   freevar: freevar
-""" ]
+"""
   do_test( a )
 
 def test_pymtl_multi_upblks( do_test ):
@@ -80,18 +80,13 @@ def test_pymtl_multi_upblks( do_test ):
       def upblk2():
         s.out[1] = Bits32(42)
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
   upblk_decl: upblk2
-""",
-"""\
-upblk_decls:
-  upblk_decl: upblk2
-  upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [ """freevars:\n""" ]
+"""
+  a._ref_freevar_repr = """freevars:\n"""
   do_test( a )
 
 def test_pymtl_multi_freevars( do_test ):
@@ -107,26 +102,16 @@ def test_pymtl_multi_freevars( do_test ):
       def upblk2():
         s.out[1] = STATE_WORK
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
   upblk_decl: upblk2
-""",
-"""\
-upblk_decls:
-  upblk_decl: upblk2
-  upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [
+"""
+  a._ref_freevar_repr = \
 """\
 freevars:
   freevar: STATE_IDLE
   freevar: STATE_WORK
-""",
-"""\
-freevars:
-  freevar: STATE_WORK
-  freevar: STATE_IDLE
-""" ]
+"""
   do_test( a )

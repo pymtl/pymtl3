@@ -27,9 +27,9 @@ def local_do_test( m ):
   upblk_src = tr.behavioral.upblk_srcs[m]
   decl_freevars = tr.behavioral.decl_freevars[m]
   decl_tmpvars = tr.behavioral.decl_tmpvars[m]
-  assert reduce(lambda r, o: r or upblk_src == o, m._ref_upblk_repr, False)
-  assert reduce(lambda r, o: r or decl_freevars == o, m._ref_freevar_repr, False)
-  assert reduce(lambda r, o: r or decl_tmpvars == o, m._ref_tmpvar_repr, False)
+  assert upblk_src == m._ref_upblk_repr
+  assert decl_freevars == m._ref_freevar_repr
+  assert decl_tmpvars == m._ref_tmpvar_repr
 
 def test_tmp_wire( do_test ):
   class A( Component ):
@@ -41,17 +41,17 @@ def test_tmp_wire( do_test ):
         u = s.in_ + Bits32(42)
         s.out = u
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk of Vector32
-""" ]
+"""
   do_test( a )
 
 def test_tmpvar_alias( do_test ):
@@ -68,29 +68,19 @@ def test_tmpvar_alias( do_test ):
         u = s.in_ + Bits32(42)
         s.out[1] = u
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
   upblk_decl: upblk2
-""",
-"""\
-upblk_decls:
-  upblk_decl: upblk2
-  upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk1 of Vector32
   tmpvar: u in upblk2 of Vector32
-""",
-"""\
-tmpvars:
-  tmpvar: u in upblk2 of Vector32
-  tmpvar: u in upblk1 of Vector32
-""" ]
+"""
   do_test( a )
 
 def test_multi_tmpvar( do_test ):
@@ -105,23 +95,18 @@ def test_multi_tmpvar( do_test ):
         s.out[0] = u
         s.out[1] = u
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk1 of Vector32
   tmpvar: v in upblk1 of Vector32
-""",
-"""\
-tmpvars:
-  tmpvar: v in upblk1 of Vector32
-  tmpvar: u in upblk1 of Vector32
-""" ]
+"""
   do_test( a )
 
 def test_freevar_to_tmpvar( do_test ):
@@ -134,21 +119,21 @@ def test_freevar_to_tmpvar( do_test ):
         u = STATE_IDLE
         s.out = u
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [
+"""
+  a._ref_freevar_repr = \
 """\
 freevars:
   freevar: STATE_IDLE
-""" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk1 of Vector32
-""" ]
+"""
   do_test( a )
 
 def test_Bits_to_tmpvar( do_test ):
@@ -160,17 +145,17 @@ def test_Bits_to_tmpvar( do_test ):
         u = Bits16(0)
         s.out = u
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk1 of Vector16
-""" ]
+"""
   do_test( a )
 
 def test_py_int_to_tmpvar( do_test ):
@@ -182,15 +167,15 @@ def test_py_int_to_tmpvar( do_test ):
         u = 1
         s.out = u
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk1 of Vector32
-""" ]
+"""
   do_test( a )

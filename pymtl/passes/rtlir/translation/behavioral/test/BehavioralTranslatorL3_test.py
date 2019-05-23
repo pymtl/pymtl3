@@ -27,9 +27,9 @@ def local_do_test( m ):
   upblk_src = tr.behavioral.upblk_srcs[m]
   decl_freevars = tr.behavioral.decl_freevars[m]
   decl_tmpvars = tr.behavioral.decl_tmpvars[m]
-  assert reduce(lambda r, o: r or upblk_src == o, m._ref_upblk_repr, False)
-  assert reduce(lambda r, o: r or decl_freevars == o, m._ref_freevar_repr, False)
-  assert reduce(lambda r, o: r or decl_tmpvars == o, m._ref_tmpvar_repr, False)
+  assert upblk_src == m._ref_upblk_repr
+  assert decl_freevars == m._ref_freevar_repr
+  assert decl_tmpvars == m._ref_tmpvar_repr
 
 def test_tmp_wire_struct( do_test ):
   class B( object ):
@@ -44,17 +44,17 @@ def test_tmp_wire_struct( do_test ):
         u = s.in_
         s.out = u.foo
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk of Struct B
-""" ]
+"""
   do_test( a )
 
 def test_multi_tmp_wire_struct( do_test ):
@@ -79,27 +79,17 @@ def test_multi_tmp_wire_struct( do_test ):
         u = s.in_c
         s.out_c = u.bar
   a = A()
-  a._ref_upblk_repr = [
+  a._ref_upblk_repr = \
 """\
 upblk_decls:
   upblk_decl: upblk1
   upblk_decl: upblk2
-""",
-"""\
-upblk_decls:
-  upblk_decl: upblk2
-  upblk_decl: upblk1
-""" ]
-  a._ref_freevar_repr = [ "freevars:\n" ]
-  a._ref_tmpvar_repr = [
+"""
+  a._ref_freevar_repr = "freevars:\n"
+  a._ref_tmpvar_repr = \
 """\
 tmpvars:
   tmpvar: u in upblk1 of Struct B
   tmpvar: u in upblk2 of Struct C
-""",
-"""\
-tmpvars:
-  tmpvar: u in upblk2 of Struct C
-  tmpvar: u in upblk1 of Struct B
-""" ]
+"""
   do_test( a )
