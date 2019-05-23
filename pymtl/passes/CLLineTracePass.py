@@ -10,45 +10,72 @@ from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
 
-from pymtl.dsl.Connectable import CalleePort, CallerPort, MethodPort
+from pymtl.dsl.Connectable import (
+    CalleePort,
+    CallerPort,
+    MethodPort,
+    NonBlockingInterface,
+)
 from pymtl.passes.BasePass import BasePass, PassMetadata
 
 
 class CLLineTracePass( BasePass ):
 
   def __call__( self, top ):
-    
-    # A new __call__ function for CallerPort
-    def __caller_call__( self, *args, **kwargs ):
-      self.saved_args = args
-      self.saved_kwargs = kwargs
-      self.called = True
-      self.saved_ret = self._dsl.driver( *args, **kwargs )
-      return self.saved_ret
 
-    # A new __call__ function for CalleePort
-    def __callee_call__( self, *args, **kwargs ):
-      self.saved_args = args
-      self.saved_kwargs = kwargs
-      self.called = True
-      self.saved_ret = self.method( *args, **kwargs )
-      if self._dsl.is_writer:
-        for mport in self._dsl.drived_methods:
-          mport.update_trace( self.saved_ret, *args, **kwargs )
-      return self.saved_ret
+    def wrap_callee_method( mport ):
+      mport._dsl.raw_method = mport.method
+      def wrapped_method( self, *args, **kwargs ):
+        self.saved_args = args
+        self.saved_kwargs = kwargs
+        self.called = True
+        self.saved_ret = self._dsl.raw_method( *args, **kwargs )
+        if self._dsl.is_writer:
+          for m in self._dsl.drived_methods:
+            m.called = True
+            m.saved_args = self.saved_args
+            m.saved_kwargs = self.saved_kwargs
+            m.saved_ret = self.saved_ret
+        return self.saved_ret
+      mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
-    # Update trace function for MethodPort, so that the actual driver
-    # can update the trace of all methods it's driving
-    def update_trace( self, ret, *args, **kwargs ):
-      self.called = True
-      self.saved_args = args
-      self.saved_kwargs = kwargs
-      self.saved_ret = ret
+    def wrap_caller_method( mport ):
+      mport._dsl.raw_method = mport.method
+      def wrapped_method( self, *args, **kwargs ):
+        self.saved_args = args
+        self.saved_kwargs = kwargs
+        self.called = True
+        self.saved_ret = self._dsl.driver( *args, **kwargs )
+        return self.saved_ret
+      mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
-    # Mutate classes
-    MethodPort.update_trace = update_trace
-    CallerPort.__call_trace__ = __caller_call__
-    CalleePort.__call_trace__ = __callee_call__
+    def new_str( s ):
+      if s.method.called:
+        args_str = ",".join(
+          [ str( arg ) for arg in s.method.saved_args ] 
+        )
+        kwargs_str = ",".join(
+          [ str( arg ) for _, arg in s.method.saved_kwargs.items() ]
+        )
+        ret_str = (
+          "" if s.method.saved_ret is None else 
+          str( s.method.saved_ret )
+        )
+        trace = []
+        if len( args_str ) > 0: trace.append( args_str )
+        if len( kwargs_str ) > 0: trace.append( kwargs_str )
+        if len( ret_str ) > 0 : trace.append( ret_str )
+        trace_str = ",".join( trace )
+        return trace_str.ljust( s._dsl.trace_len ) 
+      elif s.rdy.called:
+        if s.rdy.saved_ret:
+          return " ".ljust( s._dsl.trace_len )
+        else:
+          return "#".ljust( s._dsl.trace_len )
+      elif not s.rdy.called:
+        return ".".ljust( s._dsl.trace_len )
+      else:
+        return "X".ljust( s._dsl.trace_len )
 
     # Collect all method ports and add some stamps
     all_method_ports = top.get_all_object_filter( 
@@ -56,7 +83,20 @@ class CLLineTracePass( BasePass ):
     )
     for mport in all_method_ports:
       mport.called = False
-      mport._dsl.line_trace_flag = True
+      mport.saved_args = None
+      mport.saved_kwargs = None
+      mport.saved_ret = None
+      if isinstance( mport, CalleePort ):
+        wrap_callee_method( mport )
+      else:
+        wrap_caller_method( mport )
+
+    # Collecting all non blocking interfaces and replace the str hook
+    all_nblk_ifcs = top.get_all_object_filter( 
+      lambda s: isinstance( s, NonBlockingInterface ) 
+    )
+    for ifc in all_nblk_ifcs:
+      ifc._str_hook = lambda : new_str( ifc )
 
     # An update block that resets all method ports to not called
     def reset_method_ports():
