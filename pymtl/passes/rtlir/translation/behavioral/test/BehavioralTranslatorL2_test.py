@@ -7,8 +7,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from functools import reduce
-
 import pymtl.passes.rtlir.RTLIRDataType as rdt
 import pymtl.passes.rtlir.RTLIRType as rt
 from pymtl import *

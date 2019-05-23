@@ -7,8 +7,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from functools import reduce
-
 from pymtl import *
 from pymtl.passes.rtlir.test_utility import do_test
 from pymtl.passes.rtlir.translation.behavioral.BehavioralTranslatorL1 import (
