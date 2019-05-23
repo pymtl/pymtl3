@@ -7,7 +7,6 @@
 #   Date : May 20, 2019
 
 from pymtl import *
-from template import *
 from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCalleeIfc
 from pymtl.dsl.ComponentLevel6 import ComponentLevel6
 import copy
@@ -282,13 +281,14 @@ s.connect( s.{name}_adapter.{name}_rtl, s.model.{name} )
     name = method_spec.method_name
 
     def method(*args, **kwargs ):
-      ret = s.__dict__[ name+"_adapter"].__dict__[name](**kwargs)
+      ret = s.__dict__[ name + "_adapter" ].__dict__[ name ](**kwargs )
       return ret
 
-    gifc = guarded_ifc( lambda s: s.__dict__[ name+"_adapter"].__dict__[name].rdy() )(
-        method )
+    gifc = guarded_ifc(
+        lambda s: s.__dict__[ name + "_adapter" ].__dict__[ name ].rdy() )(
+            method )
 
-    s.add_constraints( U(method) )
+    s.add_constraints( U( method ) )
 
     setattr( gifc, "__name__", name )
     setattr( s, name, gifc )

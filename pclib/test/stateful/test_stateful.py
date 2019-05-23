@@ -4,19 +4,16 @@
 # Hypothesis stateful testing on RTL and CL model
 #
 # Author : Yixiao Zhang
-#   Date : March 24, 2019
+#   Date : May 22, 2019
 
-import inspect
-import hypothesis.strategies as st
 from pymtl import *
+from pymtl.passes import OpenLoopCLPass, GenDAGPass
 from hypothesis.stateful import *
 from hypothesis import settings, given, seed, PrintSettings
-from pymtl.passes import OpenLoopCLPass, GenDAGPass
+import hypothesis.strategies as st
 import copy
+import inspect
 from test_wrapper import *
-import sys
-
-debug = True
 
 
 def list_string( lst ):
@@ -28,161 +25,6 @@ def list_string_value( lst ):
   for x in lst:
     str_list += [ str( x ) ]
   return ", ".join( str_list )
-
-
-#-------------------------------------------------------------------------
-# MethodBasedRuleStrategy
-#-------------------------------------------------------------------------
-class MethodBasedRuleStrategy( SearchStrategy ):
-
-  def __init__( self, machine ):
-    SearchStrategy.__init__( self )
-    self.machine = machine
-    self.rules = machine.method_rules()
-
-  def do_draw( self, data ):
-    # This strategy draw a randomly selected number of rules and do not care about
-    # validity. In execute_step(step), only valid rules will be fired. We do this to
-    # test possible dependencies - some rules are not valid in the first place become
-    # valid if some other rules fire in the same cycle
-    n = len( self.rules )
-    if n > 0:
-      i = cu.integer_range( data, 0, n - 1 )
-      rule = self.rules[ i ]
-      return ( rule, data.draw( rule.arguments_strategy ) )
-    raise ValueError( "No rule in state machine" )
-
-
-#-------------------------------------------------------------------------
-# RunMethodTestError
-#-------------------------------------------------------------------------
-class RunMethodTestError( Exception ):
-  pass
-
-
-#-------------------------------------------------------------------------
-# TestStateMachine
-#-------------------------------------------------------------------------
-class TestStateMachine( GenericStateMachine ):
-  __argument_strategies = {}
-  __method_rules = {}
-
-  def __init__( self ):
-    super( TestStateMachine, self ).__init__()
-    self.__rules_strategy = MethodBasedRuleStrategy( self )
-    self.__stream = CUnicodeIO()
-    self.__printer = RepresentationPrinter( self.__stream )
-    self.model = copy.deepcopy( self.preconstruct_model )
-    self.reference = copy.deepcopy( self.preconstruct_reference )
-
-    # elaborate dut
-    self.model.elaborate()
-    self.model.apply( GenDAGPass() )
-    self.model.apply( OpenLoopCLPass() )
-    self.model.lock_in_simulation()
-
-    # elaborate ref
-    self.reference.elaborate()
-    self.reference.apply( GenDAGPass() )
-    self.reference.apply( OpenLoopCLPass() )
-    self.reference.lock_in_simulation()
-    self.reference.hide_line_trace = True
-
-  def steps( self ):
-    return self.__rules_strategy
-
-  def error_line_trace( self ):
-    print "============================= error ========================"
-
-  def execute_step( self, step ):
-
-    rule, data = step
-    data = dict( data )
-
-    # For dependency reason we do allow rules invalid in the first place
-    # to be added to step.
-    # See MethodBasedRuleStrategy for more
-    method_name = rule.method_name
-    model_rdy = self.model.__dict__[ method_name ].rdy()
-    reference_rdy = self.reference.__dict__[ method_name ].rdy()
-    if model_rdy and not reference_rdy:
-      self.error_line_trace()
-      raise ValueError(
-          "Dut method is rdy but reference is not: {method_name}".format(
-              method_name=method_name ) )
-    if not model_rdy and reference_rdy:
-      self.error_line_trace()
-      raise ValueError(
-          "Reference method is rdy but dut is not: {method_name}".format(
-              method_name=method_name ) )
-    r_result = None
-    if model_rdy and reference_rdy:
-      m_result = self.model.__dict__[ method_name ](**data )
-      r_result = self.reference.__dict__[ method_name ](**data )
-
-      if not m_result == r_result:
-        self.error_line_trace()
-        raise ValueError( """mismatch found in method {method}:
-  - args: {data}
-  - reference result: {r_result}
-  - model result : {m_result}
-  """.format(
-            method=method_name,
-            data=str( data ),
-            r_result=r_result,
-            m_result=m_result ) )
-
-  def print_step( self, step ):
-    """Print a step to the current reporter.
-
-    This is called right before a step is executed.
-    """
-    pass
-
-  @classmethod
-  def add_argument_strategy( cls, method, arguments ):
-    target = cls.__argument_strategies.setdefault( cls, {} )
-    if target.has_key( method ):
-      error_msg = """
-      A method cannot have two distinct strategies. 
-        method_name : {method_name}
-      """.format( method_name=method )
-      raise InvalidDefinition( error_msg )
-    target[ method ] = arguments
-
-  @classmethod
-  def argument_strategy( cls, method ):
-    target = cls.__argument_strategies.setdefault( cls, {} )
-    return target.setdefault( method, {} )
-
-  @classmethod
-  def add_rule( cls, rules ):
-    target = cls.__method_rules.setdefault( cls, [] )
-    target += [ rules ]
-
-  @classmethod
-  def method_rules( cls ):
-    target = cls.__method_rules.setdefault( cls, [] )
-    return target
-
-
-class TestStateful( TestStateMachine ):
-  pass
-
-
-#-------------------------------------------------------------------------
-# MethodRule
-#-------------------------------------------------------------------------
-
-
-@attr.s()
-class MethodRule( object ):
-  method_name = attr.ib()
-  arguments = attr.ib()
-  index = attr.ib( default=-1 )
-
-  def __attrs_post_init__( self ):
-    self.arguments_strategy = st.fixed_dictionaries( self.arguments )
 
 
 #-------------------------------------------------------------------------
@@ -219,9 +61,112 @@ class ArgumentStrategy( object ):
 
 
 #-------------------------------------------------------------------------
+# TestStateful
+#-------------------------------------------------------------------------
+
+
+class BaseStateMachine( RuleBasedStateMachine ):
+
+  def __init__( s ):
+    super( BaseStateMachine, s ).__init__()
+
+    s.dut = copy.deepcopy( s.preconstruct_model )
+    s.ref = copy.deepcopy( s.preconstruct_reference )
+
+    # elaborate dut
+    s.dut.elaborate()
+    s.dut.apply( GenDAGPass() )
+    s.dut.apply( OpenLoopCLPass() )
+    s.dut.lock_in_simulation()
+
+    # elaborate ref
+    s.ref.elaborate()
+    s.ref.apply( GenDAGPass() )
+    s.ref.apply( OpenLoopCLPass() )
+    s.ref.lock_in_simulation()
+    s.ref.hide_line_trace = True
+
+
+#-------------------------------------------------------------------------
+# TestStateful
+#-------------------------------------------------------------------------
+
+
+class TestStateful( BaseStateMachine ):
+
+  def error_line_trace( self ):
+    print "============================= error ========================"
+
+
+#-------------------------------------------------------------------------
+# rename
+#-------------------------------------------------------------------------
+
+
+def rename( name ):
+
+  def wrap( f ):
+    f.__name__ = name
+    return f
+
+  return wrap
+
+
+#-------------------------------------------------------------------------
+# wrap_method
+#-------------------------------------------------------------------------
+
+
+def wrap_method( method_spec, arguments ):
+  method_name = method_spec.method_name
+
+  @rename( method_name + "_rdy" )
+  def method_rdy( s ):
+    dut_rdy = s.dut.__dict__[ method_name ].rdy()
+    ref_rdy = s.ref.__dict__[ method_name ].rdy()
+
+    if dut_rdy and not ref_rdy:
+      s.error_line_trace()
+      raise ValueError( "Dut method is rdy but reference is not: " +
+                        method_name )
+
+    if not dut_rdy and ref_rdy:
+      s.error_line_trace()
+      raise ValueError( "Reference method is rdy but dut is not: " +
+                        method_name )
+    return dut_rdy
+
+  @precondition( lambda s: method_rdy( s ) )
+  @rule(**arguments )
+  @rename( method_name )
+  def method_rule( s, **kwargs ):
+    dut_result = s.dut.__dict__[ method_name ](**kwargs )
+    ref_result = s.ref.__dict__[ method_name ](**kwargs )
+
+    #compare results
+    if dut_result != ref_result:
+      s.error_line_trace()
+      raise ValueError( """mismatch found in method {method}:
+  - args: {data}
+  - ref result: {ref_result}
+  - dut result: {dut_result}
+  """.format(
+          method=method_name,
+          data=list_string_value(
+              [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] ),
+          ref_result=ref_result,
+          dut_result=dut_result ) )
+
+  return method_rule, method_rdy
+
+
+#-------------------------------------------------------------------------
 # create_test_state_machine
 #-------------------------------------------------------------------------
-def create_test_state_machine( model, reference, argument_strategy={} ):
+def create_test_state_machine( model,
+                               reference,
+                               method_specs=None,
+                               argument_strategy={} ):
   Test = type( model.model_name + "_TestStateful", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
 
@@ -230,14 +175,21 @@ def create_test_state_machine( model, reference, argument_strategy={} ):
 
   model.elaborate()
 
-  method_specs = model.method_specs
+  if not method_specs:
+    try:
+      method_specs = model.method_specs
+    except Exception:
+      raise "No method specs specified"
 
-  # add arg strategy based on spec
-  for method, spec in method_specs.iteritems():
+  # go through spec for each method
+  for method_name, spec in method_specs.iteritems():
     arguments = {}
-    if argument_strategy.has_key( method ) and isinstance(
-        argument_strategy[ method ], ArgumentStrategy ):
-      arguments = argument_strategy[ method ].arguments
+    # First ad customized
+    if argument_strategy.has_key( method_name ) and isinstance(
+        argument_strategy[ method_name ], ArgumentStrategy ):
+      arguments = argument_strategy[ method_name ].arguments
+
+    # add the rest from inspection result
     for arg, dtype in spec.args.iteritems():
       if not arguments.has_key( arg ):
         arguments[ arg ] = ArgumentStrategy.get_strategy_from_type( dtype )
@@ -248,11 +200,12 @@ def create_test_state_machine( model, reference, argument_strategy={} ):
     argument   : {arg}
 """
           raise RunMethodTestError(
-              error_msg.format( method_name=method, arg=arg ) )
-    Test.add_argument_strategy( method, arguments )
-    Test.add_rule( MethodRule( method_name=method, arguments=arguments ) )
+              error_msg.format( method_name=method_name, arg=arg ) )
 
-  Test.method_specs = method_specs
+    method_rule, method_rdy = wrap_method( method_specs[ method_name ],
+                                           arguments )
+    setattr( Test, method_name, method_rule )
+    setattr( Test, method_name + "_rdy", method_rdy )
 
   return Test
 
