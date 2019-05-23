@@ -21,6 +21,9 @@ from pymtl.passes.BasePass import BasePass, PassMetadata
 
 class CLLineTracePass( BasePass ):
 
+  def __init__( self, trace_len=16 ):
+    self.default_trace_len = trace_len
+
   def __call__( self, top ):
 
     def wrap_callee_method( mport, drived_methods ):
@@ -66,16 +69,16 @@ class CLLineTracePass( BasePass ):
         if len( kwargs_str ) > 0: trace.append( kwargs_str )
         if len( ret_str ) > 0 : trace.append( ret_str )
         trace_str = ",".join( trace )
-        return trace_str.ljust( s._dsl.trace_len ) 
+        return trace_str.ljust( s.trace_len ) 
       elif s.rdy.called:
         if s.rdy.saved_ret:
-          return " ".ljust( s._dsl.trace_len )
+          return " ".ljust( s.trace_len )
         else:
-          return "#".ljust( s._dsl.trace_len )
+          return "#".ljust( s.trace_len )
       elif not s.rdy.called:
-        return ".".ljust( s._dsl.trace_len )
+        return ".".ljust( s.trace_len )
       else:
-        return "X".ljust( s._dsl.trace_len )
+        return "X".ljust( s.trace_len )
 
     # Collect all method ports and add some stamps
     all_callees = set()
@@ -105,12 +108,16 @@ class CLLineTracePass( BasePass ):
     for mport in ( all_callees - all_drivers ):
       wrap_callee_method( mport, set() )
 
-
     # Collecting all non blocking interfaces and replace the str hook
     all_nblk_ifcs = top.get_all_object_filter( 
       lambda s: isinstance( s, NonBlockingInterface ) 
     )
     for ifc in all_nblk_ifcs:
+      if ifc.method.Type is not None:
+        trace_len = len( str( ifc.method.Type() ) )
+      else:
+        trace_len = self.default_trace_len
+      ifc.trace_len = trace_len
       ifc._str_hook = lambda : new_str( ifc )
 
     # An update block that resets all method ports to not called

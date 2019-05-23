@@ -358,10 +358,6 @@ class NonBlockingCalleeIfc( NonBlockingInterface ):
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
-    if Type is not None:
-      s._dsl.trace_len = len( str( Type() ) )
-    else:
-      s._dsl.trace_len = 16
 
 class NonBlockingCallerIfc( NonBlockingInterface ):
 
@@ -373,7 +369,3 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
-    if Type is not None:
-      s._dsl.trace_len = len( str( Type() ) )
-    else:
-      s._dsl.trace_len = 16
