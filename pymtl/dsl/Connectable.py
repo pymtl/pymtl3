@@ -297,8 +297,8 @@ class Interface( NamedObject, Connectable ):
 
 class MethodPort( NamedObject, Connectable ):
 
-  def construct( self, func=None ):
-    self.method = None
+  def construct( self, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate Caller/CalleePort.")
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
@@ -326,9 +326,8 @@ class CallerPort( MethodPort ):
   def is_caller_port( s ):
     return True
 
-
 class CalleePort( MethodPort ):
-  def construct( self, method=None, Type=None ):
+  def construct( self, Type=None, method=None ):
     self.Type = Type
     self.method = method
 
@@ -339,6 +338,8 @@ class CalleePort( MethodPort ):
     return False
 
 class NonBlockingInterface( Interface ):
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate NonBlockingCaller/NonBlockingCalleeIfc.")
 
   def __call__( s, *args, **kwargs ):
     return s.method( *args, **kwargs )
@@ -346,19 +347,19 @@ class NonBlockingInterface( Interface ):
 class NonBlockingCalleeIfc( NonBlockingInterface ):
   def construct( s, Type=None, method=None, rdy=None ):
     s.Type = Type
-    s.method = CalleePort( method )
-    s.rdy    = CalleePort( rdy )
+    s.method = CalleePort( Type, method )
+    s.rdy    = CalleePort( None, rdy )
 
-    s.method._dsl.is_rdy    = False
-    s.rdy._dsl.is_rdy  = True
+    s.method._dsl.is_rdy = False
+    s.rdy._dsl.is_rdy    = True
 
 class NonBlockingCallerIfc( NonBlockingInterface ):
 
   def construct( s, Type=None ):
     s.Type = Type
 
-    s.method = CallerPort( Type=Type )
-    s.rdy    = CallerPort( Type=Type )
+    s.method = CallerPort( Type )
+    s.rdy    = CallerPort( Type )
 
-    s.method._dsl.is_rdy    = False
-    s.rdy._dsl.is_rdy  = True
+    s.method._dsl.is_rdy = False
+    s.rdy._dsl.is_rdy    = True
