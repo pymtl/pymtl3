@@ -35,8 +35,8 @@ class TestSinkCL( Component ):
     )
     s.perf_regr = True if arrival_time is not None else False
 
-    s.count  = initial_delay
-    s.interval_delay = interval_delay
+    s.count = initial_delay
+    s.intv  = interval_delay
 
     s.recv_called = False
 
@@ -49,7 +49,7 @@ class TestSinkCL( Component ):
 
       # if recv was called in previous cycle
       if s.recv_called:
-        s.count = s.interval_delay
+        s.count = s.intv  
       elif s.count != 0:
         s.count -= 1
       else:
@@ -78,8 +78,13 @@ Received : {}""".format( s.msgs[ s.idx ], msg ) )
     elif s.perf_regr and s.cycle_count > s.arrival_time[ s.idx ]:
       raise Exception( """
 Test Sink received msg LATER than expected!
+Expected msg   : {}
 Expected cycles: {}
-Received at    : {}""".format( s.arrival_time[ s.idx ], s.cycle_count ) )
+Received at    : {}""".format( 
+        s.msgs[ s.idx ], 
+        s.arrival_time[ s.idx ], 
+        s.cycle_count 
+      ) )
     else:
       s.idx += 1
       s.recv_called = True
