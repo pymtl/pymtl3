@@ -23,29 +23,29 @@ class CLLineTracePass( BasePass ):
 
   def __call__( self, top ):
 
-    def wrap_callee_method( mport ):
-      mport._dsl.raw_method = mport.method
+    def wrap_callee_method( mport, drived_methods ):
+
+      mport.raw_method = mport.method
       def wrapped_method( self, *args, **kwargs ):
         self.saved_args = args
         self.saved_kwargs = kwargs
         self.called = True
-        self.saved_ret = self._dsl.raw_method( *args, **kwargs )
-        if self._dsl.is_writer:
-          for m in self._dsl.drived_methods:
-            m.called = True
-            m.saved_args = self.saved_args
-            m.saved_kwargs = self.saved_kwargs
-            m.saved_ret = self.saved_ret
+        self.saved_ret = self.raw_method( *args, **kwargs )
+        for m in drived_methods:
+          m.called = True
+          m.saved_args = self.saved_args
+          m.saved_kwargs = self.saved_kwargs
+          m.saved_ret = self.saved_ret
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
-    def wrap_caller_method( mport ):
-      mport._dsl.raw_method = mport.method
+    def wrap_caller_method( mport, driver ):
+      mport.raw_method = mport.method
       def wrapped_method( self, *args, **kwargs ):
         self.saved_args = args
         self.saved_kwargs = kwargs
         self.called = True
-        self.saved_ret = self._dsl.driver( *args, **kwargs )
+        self.saved_ret = driver( *args, **kwargs )
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
@@ -78,6 +78,7 @@ class CLLineTracePass( BasePass ):
         return "X".ljust( s._dsl.trace_len )
 
     # Collect all method ports and add some stamps
+    all_callees = set()
     all_method_ports = top.get_all_object_filter( 
       lambda s: isinstance( s, MethodPort ) 
     )
@@ -87,9 +88,23 @@ class CLLineTracePass( BasePass ):
       mport.saved_kwargs = None
       mport.saved_ret = None
       if isinstance( mport, CalleePort ):
-        wrap_callee_method( mport )
-      else:
-        wrap_caller_method( mport )
+        all_callees.add( mport )
+
+    # Collect all method nets and wrap the actual driving method
+    all_drivers = set()
+    all_method_nets = top.get_all_method_nets()
+    for driver, net in all_method_nets:
+      wrap_callee_method( driver, net )
+      all_drivers.add( driver )
+      for member in net:
+        if isinstance( member, CallerPort ):
+          assert member is not driver
+          wrap_caller_method( member, driver )
+    
+    # Handle other callee that is not driving anything
+    for mport in ( all_callees - all_drivers ):
+      wrap_callee_method( mport, set() )
+
 
     # Collecting all non blocking interfaces and replace the str hook
     all_nblk_ifcs = top.get_all_object_filter( 

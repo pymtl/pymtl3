@@ -330,7 +330,6 @@ class CalleePort( MethodPort ):
   def construct( self, Type=None, method=None ):
     self.Type = Type
     self.method = method
-    self._dsl.is_writer = False
 
   def is_callee_port( s ):
     return True

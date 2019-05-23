@@ -286,18 +286,13 @@ def {0}():
 
     try:
       all_method_nets = top.get_all_method_nets()
-
-      for writer, net in top.get_all_method_nets():
-        writer._dsl.drived_methods = net
+      print( "dag:", all_method_nets )
+      for writer, net in all_method_nets:
         if writer is not None:
           for member in net:
             if member is not writer:
               assert member.method is None
               member.method = writer.method
-              # Additional stuff for CL line trace
-              member._dsl.driver = writer
-              member._dsl.is_writer = False
-              writer._dsl.is_writer = True
 
     except AttributeError:
       pass
