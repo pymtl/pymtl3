@@ -7,6 +7,9 @@
 
 from __future__ import absolute_import, division, print_function
 
+from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import CurCompAttr
+from pymtl.passes.rtlir.translation.structural import StructuralTranslator
+
 
 def mk_TestStructuralTranslator( _StructuralTranslator ):
   def make_indent( src, nindent ):
@@ -21,8 +24,12 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
     return str( obj )
 
   class TestStructuralTranslator( _StructuralTranslator ):
-    def rtlir_tr_vector_dtype( s, Type ):
-      return str( Type )
+
+    def rtlir_tr_vector_dtype( s, dtype ):
+      return str( dtype )
+
+    def rtlir_tr_struct_dtype( s, dtype ):
+      return dtype.get_name()
 
     def rtlir_tr_unpacked_array_type( s, Type ):
       return "" if Type is None else repr( Type )
@@ -56,23 +63,119 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
     def rtlir_tr_const_decls( s, const_decls ):
       decls = ''
       for decl in const_decls:
-        make_indent( decl, 1 )
-        decls += '\n' + '\n'.join( decl )
+        if decl:
+          make_indent( decl, 1 )
+          decls += '\n' + '\n'.join( decl )
       return 'const_decls:{}\n'.format( decls )
 
     def rtlir_tr_const_decl( s, id_, Type, array_type, dtype, value ):
       array_type = repr(Type) if not array_type else array_type
       return ['const_decl: {id_} {array_type}'.format( **locals() )]
 
+    def rtlir_tr_interface_port_decls( s, port_decls ):
+      decls = [['interface_ports:']]
+      for decl in port_decls:
+        make_indent( decl, 1 )
+        decls.append( [ decl[0] ] )
+      return decls
+
+    def rtlir_tr_interface_port_decl( s, id_, rtype, array_type, dtype ):
+      rtype = repr(rtype) if not array_type else array_type
+      return ['interface_port: {id_} {rtype}'.format(**locals())]
+
+    def rtlir_tr_interface_decls( s, ifc_decls ):
+      decls = ''
+      for decl in ifc_decls:
+        if decl:
+          make_indent( decl, 1 )
+          decls += '\n' + '\n'.join( decl )
+      return 'interface_decls:{}\n'.format( decls )
+
+    def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type, port_decls ):
+      ifc_rtype = str(ifc_rtype) if not array_type else array_type
+      ret = ['interface_decl: {ifc_id} {ifc_rtype}'.format(**locals())]
+      for decl in port_decls:
+        make_indent( decl, 1 )
+        ret.append( decl[0] )
+      return ret
+
+    def rtlir_tr_subcomp_port_decls( s, port_decls ):
+      decls = [['component_ports:']]
+      for decl in port_decls:
+        if decl:
+          make_indent( decl, 1 )
+          decls.append( [ decl[0] ] )
+      return decls
+
+    def rtlir_tr_subcomp_ifc_port_decls( s, ifc_port_decls ):
+      decls = [['component_ifc_ports:']]
+      for decl in ifc_port_decls:
+        if decl:
+          make_indent( decl, 1 )
+          decls.append( [ decl[0] ] )
+      return decls
+
+    def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
+        port_rtype, array_type ):
+      if port_id not in ["clk", "reset"]:
+        port_rtype = repr(port_rtype) if not array_type else array_type
+        return ['component_port: {port_id} {port_rtype}'.format(**locals())]
+      else:
+        return ""
+
+    def rtlir_tr_subcomp_ifc_decls( s, ifc_decls ):
+      decls = [['component_ifcs:']]
+      for ifc_decl in ifc_decls:
+        for decl in ifc_decl:
+          if decl:
+            make_indent( decl, 1 )
+            decls.append( [ decl[0] ] )
+      return decls
+
+    def rtlir_tr_subcomp_ifc_decl( s, c_id, c_rtype, c_array_type, ifc_id,
+        ifc_rtype, ifc_array_type, ports ):
+      ifc_rtype = repr(ifc_rtype) if not ifc_array_type else ifc_array_type
+      decls = [['component_ifc: {ifc_id} {ifc_rtype}'.format(**locals())]]
+      for decl in ports:
+        if decl:
+          make_indent( decl, 1 )
+          decls.append( [ decl[0] ] )
+      return decls
+
+    def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
+        ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
+      port_rtype = repr(port_rtype) if not port_array_type else port_array_type
+      return ['component_ifc_port: {port_id} {port_rtype}'.format(**locals())]
+
+    def rtlir_tr_subcomp_decls( s, subcomps ):
+      decls = ''
+      for decl in subcomps:
+        make_indent( decl, 1 )
+        decls += '\n' + '\n'.join( decl )
+      return 'component_decls:{}\n'.format( decls )
+
+    def rtlir_tr_subcomp_decl( s, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+      c_rtype = repr(c_rtype) if not c_array_type else c_array_type
+      ret = ['component_decl: {c_id} {c_rtype}'.format(**locals())]
+      for port in port_conns:
+        make_indent( port, 1 )
+        ret.append( port[0] )
+      for ifc in ifc_conns:
+        make_indent( ifc, 1 )
+        ret.append( ifc[0] )
+      return ret
+
     def rtlir_tr_connections( s, connections ):
       conns = ''
       for conn in connections:
-        make_indent( conn, 1 )
-        conns += '\n' + '\n'.join( conn )
+        if conn:
+          make_indent( conn, 1 )
+          conns += '\n' + '\n'.join( conn )
       return 'connections:{}\n'.format( conns )
 
     def rtlir_tr_connection( s, wr, rd ):
-      return ['connection: {wr} -> {rd}'.format( **locals() )]
+      if "clk" not in wr and "reset" not in wr:
+        return ['connection: {wr} -> {rd}'.format( **locals() )]
 
     def rtlir_tr_bit_selection( s, base_signal, index ):
       return 'BitSel {base_signal} {index}'.format( **locals() )
@@ -88,6 +191,24 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
 
     def rtlir_tr_const_array_index( s, base_signal, index ):
       return 'ConstArrayIdx {base_signal} {index}'.format( **locals() )
+
+    def rtlir_tr_packed_index( s, base_signal, index ):
+      return 'PackedIndex {base_signal} {index}'.format( **locals() )
+
+    def rtlir_tr_interface_array_index( s, base_signal, index ):
+      return 'IfcArrayIdx {base_signal} {index}'.format( **locals() )
+
+    def rtlir_tr_component_array_index( s, base_signal, index ):
+      return 'CompArrayIdx {base_signal} {index}'.format( **locals() )
+
+    def rtlir_tr_struct_attr( s, base_signal, attr ):
+      return 'StructAttr {base_signal} {attr}'.format( **locals() )
+    
+    def rtlir_tr_interface_attr( s, base_signal, attr ):
+      return 'IfcAttr {base_signal} {attr}'.format( **locals() )
+
+    def rtlir_tr_subcomp_attr( s, base_signal, attr ):
+      return 'SubCompAttr {base_signal} {attr}'.format( **locals() )
 
     def rtlir_tr_current_comp_attr( s, base_signal, attr ):
       return 'CurCompAttr {attr}'.format( **locals() )
@@ -111,3 +232,5 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
       return comp_name
 
   return TestStructuralTranslator
+
+TestStructuralTranslator = mk_TestStructuralTranslator( StructuralTranslator )

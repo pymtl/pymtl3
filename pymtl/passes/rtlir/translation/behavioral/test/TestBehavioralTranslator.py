@@ -7,6 +7,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from pymtl.passes.rtlir.translation.behavioral import BehavioralTranslator
+
 
 def mk_TestBehavioralTranslator( _BehavioralTranslator ):
   def make_indent( src, nindent ):
@@ -17,7 +19,11 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
 
   class TestBehavioralTranslator( _BehavioralTranslator ):
     def rtlir_data_type_translation( s, m, dtype ):
-      return str(dtype)
+      if s.__class__.__name__ == 'TestRTLIRTranslator':
+        return super(TestBehavioralTranslator, s). \
+          rtlir_data_type_translation( m, dtype )
+      else:
+        return str(dtype)
 
     def rtlir_tr_upblk_decls( s, upblk_srcs ):
       srcs = ''
@@ -50,9 +56,17 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       return ['tmpvar: {id_} in {upblk_id} of {dtype}'.format( **locals() )]
 
     def rtlir_tr_unpacked_array_type( s, array_rtype ):
-      return 'unpacked_array: {}'.format( array_rtype )
+      if s.__class__.__name__ == 'TestRTLIRTranslator':
+        return "" if array_rtype is None else repr(array_rtype)
+      else:
+        return 'unpacked_array: {}'.format( array_rtype )
 
     def rtlir_tr_vector_dtype( s, dtype ):
-      return 'vector: {}'.format( dtype )
+      if s.__class__.__name__ == 'TestRTLIRTranslator':
+        return str( dtype )
+      else:
+        return 'vector: {}'.format( dtype )
 
   return TestBehavioralTranslator
+
+TestBehavioralTranslator = mk_TestBehavioralTranslator( BehavioralTranslator )

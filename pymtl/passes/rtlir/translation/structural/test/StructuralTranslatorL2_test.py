@@ -1,0 +1,412 @@
+#=========================================================================
+# StructuralTranslatorL2_test.py
+#=========================================================================
+# Author : Peitian Pan
+# Date   : May 21, 2019
+"""Test the level 2 structural translators."""
+
+from __future__ import absolute_import, division, print_function
+
+from functools import reduce
+
+import pytest
+
+import pymtl.passes.rtlir.RTLIRDataType as rdt
+from pymtl import *
+from pymtl.passes.rtlir.errors import RTLIRConversionError
+from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.translation.structural.StructuralTranslatorL2 import (
+    StructuralTranslatorL2,
+)
+from .TestStructuralTranslator import mk_TestStructuralTranslator
+
+
+def local_do_test( m ):
+  m.elaborate()
+  tr = mk_TestStructuralTranslator(StructuralTranslatorL2)(m)
+  tr.translate_structural(m)
+  try:
+    name = tr.structural.component_unique_name[m]
+    assert name == m._ref_name
+    decl_ports = tr.structural.decl_ports[m]
+    assert decl_ports == m._ref_ports
+    decl_wires = tr.structural.decl_wires[m]
+    assert decl_wires == m._ref_wires
+    decl_consts = tr.structural.decl_consts[m]
+    assert decl_consts == m._ref_consts
+    connections = tr.structural.connections[m]
+    assert connections == m._ref_conns
+    struct_types = tr.structural.decl_type_struct
+    assert sorted(struct_types, key=lambda x: str(x[1])) == m._ref_structs
+  except AttributeError:
+    pass
+
+def test_struct_port_decl( do_test ):
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = Bits16(bar)
+  class A( Component ):
+    def construct( s ):
+      s.struct = InPort( B )
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: struct Port of Struct B
+"""
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+  a._ref_src = \
+"""\
+struct B
+component A
+(
+port_decls:
+  port_decl: struct Port of Struct B
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+def test_struct_wire_decl( do_test ):
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = Bits16(bar)
+  class A( Component ):
+    def construct( s ):
+      s.struct = Wire( B )
+      @s.update
+      def upblk():
+        s.struct.foo = 0
+        s.struct.bar = Bits16(42)
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = "port_decls:\n"
+  a._ref_wires = \
+"""\
+wire_decls:
+  wire_decl: struct Wire of Struct B
+"""
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+  a._ref_src = \
+"""\
+struct B
+component A
+(
+port_decls:
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+  wire_decl: struct Wire of Struct B
+component_decls:
+tmpvars:
+upblk_decls:
+  upblk_decl: upblk
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+@pytest.mark.xfail( reason = "RTLIR not support const struct instance yet" )
+def test_struct_const_decl( do_test ):
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = Bits16(bar)
+  class A( Component ):
+    def construct( s ):
+      s.struct = B()
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = "port_decls:\n"
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = \
+"""\
+const_decls:
+  const_decl: struct Const of Struct B
+"""
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+  a._ref_src = \
+"""\
+struct B
+component A
+(
+port_decls:
+interface_decls:
+);
+const_decls:
+  const_decl: struct Const of Struct B
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+def test_struct_port_array( do_test ):
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = Bits16(bar)
+  class A( Component ):
+    def construct( s ):
+      s.struct = [ InPort( B ) for _ in xrange(5) ]
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: struct Array[5] of Port
+"""
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+  a._ref_src = \
+"""\
+struct B
+component A
+(
+port_decls:
+  port_decl: struct Array[5] of Port
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+def test_nested_struct_port_decl( do_test ):
+  class C( object ):
+    def __init__( s, bar=42 ):
+      s.bar = Bits16(bar)
+  class B( object ):
+    def __init__( s, foo=0 ):
+      s.foo = Bits32(foo)
+      s.bar = C()
+  class A( Component ):
+    def construct( s ):
+      s.struct = InPort( B )
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: struct Port of Struct B
+"""
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32),
+      'bar':rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar'])},
+    ['bar', 'foo']),
+    'B'),
+    (rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']), 'C')
+  ]
+  a._ref_src = \
+"""\
+struct C
+struct B
+component A
+(
+port_decls:
+  port_decl: struct Port of Struct B
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+def test_struct_packed_array_port_decl( do_test ):
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = [ Bits32(foo) for _ in xrange( 5 ) ]
+      s.bar = Bits16(bar)
+  class A( Component ):
+    def construct( s ):
+      s.struct = InPort( B )
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: struct Port of Struct B
+"""
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.PackedArray([5], rdt.Vector(32)),
+     'bar':rdt.Vector(16) },
+    ['bar', 'foo']),
+    'B')
+  ]
+  a._ref_src = \
+"""\
+struct B
+component A
+(
+port_decls:
+  port_decl: struct Port of Struct B
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+def test_nested_struct_packed_array_port_decl( do_test ):
+  class C( object ):
+    def __init__( s, bar=42 ):
+      s.bar = Bits16(bar)
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = [ C() for _ in xrange(5) ]
+  class A( Component ):
+    def construct( s ):
+      s.struct = InPort( B )
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: struct Port of Struct B
+"""
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32),
+     'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']))},
+    ['bar', 'foo']),
+    'B'),
+    (rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']), 'C')
+  ]
+  a._ref_src = \
+"""\
+struct C
+struct B
+component A
+(
+port_decls:
+  port_decl: struct Port of Struct B
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+@pytest.mark.xfail( reason = "PyMTL DSL incorrect type check" )
+def test_nested_struct_packed_array_index( do_test ):
+  class C( object ):
+    def __init__( s, bar=42 ):
+      s.bar = Bits16(bar)
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = [ C() for _ in xrange(5) ]
+  class A( Component ):
+    def construct( s ):
+      s.struct = InPort( B )
+      s.out = OutPort( C )
+      s.connect( s.struct.bar[1], s.out )
+  a = A()
+  a._ref_name = "A"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: struct Port of Struct B
+"""
+  a._ref_wires = "wire_decls:\n"
+  a._ref_consts = "const_decls:\n"
+  a._ref_conns = "connections:\n"
+  a._ref_structs = [(rdt.Struct('B',
+    {'foo':rdt.Vector(32),
+     'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']))},
+    ['bar', 'foo']),
+    'B'),
+    (rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']), 'C')
+  ]
+  a._ref_src = \
+"""\
+struct C
+struct B
+component A
+(
+port_decls:
+  port_decl: struct Port of Struct B
+interface_decls:
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+
+endcomponent
+"""
+  do_test( a )
+
+__all__ = filter(lambda s: s.startswith('test_'), dir())
