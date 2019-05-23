@@ -505,3 +505,45 @@ def test_deep_connections():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown NoWriterError.")
+
+def test_struct_with_list_of_bits():
+
+  class B( object ):
+    def __init__( s, foo=42 ):
+      s.foo = [ Bits32( foo ) for _ in xrange(5) ]
+
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( B )
+      s.out = OutPort( Bits32 )
+      # PyMTL mistakenly takes s.in_.foo[1] as a single bit!
+      s.connect( s.out, s.in_.foo[1] )
+
+  a = A()
+  a.elaborate()
+
+def test_nested_struct_2d_array_index():
+
+  class C( object ):
+    def __init__( s, bar=42 ):
+      s.bar = Bits16(bar)
+
+  class B( object ):
+    def __init__( s, foo=0, bar=42 ):
+      s.foo = Bits32(foo)
+      s.bar = [ [ C() for _ in xrange(5) ] for _ in xrange(5) ]
+
+  class A( Component ):
+    def construct( s ):
+      s.struct = InPort( B )
+      s.out    = OutPort( C )
+      s.out2   = OutPort( Bits16 )
+      s.connect( s.struct.bar[1][4], s.out )
+      s.connect( s.struct.bar[1][4].bar, s.out2 )
+
+  a = A()
+  a.elaborate()
+  print(a.struct.__dict__)
+  print(a.struct.bar[1][4].__dict__)
+  print(a.struct.bar[1][4].bar._dsl.__dict__)
+

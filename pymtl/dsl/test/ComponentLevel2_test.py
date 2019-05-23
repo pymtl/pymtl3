@@ -296,17 +296,16 @@ def test_write_two_disjoint_slices():
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
 
+
   class SomeMsg( object ):
 
-    def __init__( s ):
-      s.a = int
-      s.b = Bits32
+    def __init__( s, a=0, b=0 ):
+      s.a = int(a)
+      s.b = Bits32(b)
 
-    def __call__( s, a = 0, b = Bits1() ):
-      x = SomeMsg()
-      x.a = x.a(a)
-      x.b = x.b(b)
-      return x
+    def __eq__( s, other ):
+      return s.a == other.a and s.b == other.b
+
 
   class Top(ComponentLevel2):
     def construct( s ):

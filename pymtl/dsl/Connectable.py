@@ -9,6 +9,7 @@ Date   : Apr 16, 2018
 """
 from __future__ import absolute_import, division, print_function
 
+from collections import deque
 from pymtl.datatypes import mk_bits
 from pymtl.datatypes.Bits import Bits
 
@@ -88,12 +89,11 @@ class Signal( NamedObject, Connectable ):
     # try:  Type.nbits
     # except AttributeError: # not Bits type
 
-    # FIXME: ckeck if Type is actually a type?
+    # FIXME: check if Type is actually a type?
     if not issubclass( Type, Bits ):
       s._dsl.type_instance = Type()
 
     s._dsl.slice  = None # None -- not a slice of some wire by default
-    s._dsl.attrs  = {}
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
 
@@ -105,23 +105,38 @@ class Signal( NamedObject, Connectable ):
       return super( Signal, s ).__getattribute__( name )
 
     if name not in s.__dict__:
-      _obj = getattr( s._dsl.type_instance, name )
+      obj = getattr( s._dsl.type_instance, name )
 
-      # if the object is Bits, we need to generate a Bits type
-      try:
-        x = s.__class__( mk_bits( _obj.nbits ) )
-      except AttributeError:
-        x = s.__class__( _obj.__class__ )
+      # We handle three cases here:
+      # 1. If the object is list, we recursively generate lists of signals
+      # 2. If the object is Bits, we use the Bits type
+      # 3. Otherwise we just go for obj.__class__
+      # Note that BitsN is a type now. 2 and 3 are actually unified.
 
-      x._dsl.type_instance = _obj
+      Q = deque( [ (obj, [], s, False) ] )
 
-      x._dsl.parent_obj = s
-      x._dsl.top_level_signal = s._dsl.top_level_signal
+      while Q:
+        u, indices, parent, parent_is_list = Q.popleft()
+        cls = u.__class__
 
-      x._dsl.full_name = s._dsl.full_name + "." + name
-      x._dsl.my_name   = name
+        if cls is list:
+          x = []
+          for i, v in enumerate( u ):
+            Q.append( ( v, indices+[i], x, True ) )
 
-      s.__dict__[ name ] = s._dsl.attrs[ name ] = x
+        else:
+          x = s.__class__( cls )
+          x._dsl.type_instance = u
+          x._dsl.parent_obj = s
+          x._dsl.top_level_signal = s._dsl.top_level_signal
+
+          x._dsl.my_name   = name + "".join([ "[{}]".format(y) for y in indices ])
+          x._dsl.full_name = s._dsl.full_name + "." + x._dsl.my_name
+
+        if parent_is_list:
+          parent.append( x )
+        else:
+          parent.__dict__[ name ] = x
 
     return s.__dict__[ name ]
 
