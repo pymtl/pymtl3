@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 import pymtl
-from pymtl.passes.rtlir.RTLIRDataType import Struct
+from pymtl.passes.rtlir.RTLIRDataType import Struct, PackedArray
 from pymtl.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )
@@ -22,6 +22,11 @@ from .StructuralTranslatorL1 import StructuralTranslatorL1
 
 
 class StructuralTranslatorL2( StructuralTranslatorL1 ):
+
+  def __init__( s, top ):
+    super( StructuralTranslatorL2, s ).__init__( top )
+    # Declarations
+    s.structural.decl_type_struct = []
 
   #-----------------------------------------------------------------------
   # gen_structural_trans_metadata
@@ -37,8 +42,6 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   # Override
   def translate_structural( s, top ):
-    # Declarations
-    s.structural.decl_type_struct = []
     super( StructuralTranslatorL2, s ).translate_structural( top )
 
   #-----------------------------------------------------------------------
@@ -63,10 +66,20 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   # Override
   def rtlir_data_type_translation( s, m, dtype ):
+    def recurse_struct_dtype_translation( dtype ):
+      for key, value in dtype.get_all_properties():
+        if isinstance( value, PackedArray ):
+          value = value.get_sub_dtype()
+        if not isinstance(value, Struct):
+          s.rtlir_data_type_translation( m, value )
+        else:
+          s.rtlir_data_type_translation( m, value )
+
     if isinstance( dtype, Struct ):
       ret = s.rtlir_tr_struct_dtype( dtype )
       if reduce( lambda r, x: r and dtype != x[0],
           s.structural.decl_type_struct, True ):
+        recurse_struct_dtype_translation( dtype )
         s.structural.decl_type_struct.append( ( dtype, ret ) )
       return ret
     else:

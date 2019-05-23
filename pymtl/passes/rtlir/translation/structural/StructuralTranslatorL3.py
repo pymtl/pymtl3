@@ -108,20 +108,6 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
   # Methods to be implemented by the backend translator
   #-----------------------------------------------------------------------
 
-  # Definitions
-  def rtlir_tr_interface_def( s, ifc_name, ifc_rtype, port_decls ):
-    raise NotImplementedError()
-
-  def rtlir_tr_interface_defs( s, ifc_defs ):
-    raise NotImplementedError()
-
-  def rtlir_tr_interface_def_port_decl( s, port_id, port_rtype,
-      port_array_type, port_data_type ):
-    raise NotImplementedError()
-
-  def rtlir_tr_interface_def_port_decls( s, port_decls ):
-    raise NotImplementedError()
-
   # Declarations
   def rtlir_tr_interface_port_decls( s, port_decls ):
     raise NotImplementedError()
