@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 from pclib.rtl import And
 from pymtl import *
 
-from .GuardedIfc import *
 from .ifcs_utils import enrdy_to_str
 from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL
 

@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs import GuardedCallerIfc, RecvCL2SendRTL, SendIfcRTL
+from pclib.ifcs import RecvCL2SendRTL, SendIfcRTL
 from pymtl import *
 
 #-------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class TestSrcCL( Component ):
 
   def construct( s, msgs, initial_delay=0, interval_delay=0 ):
 
-    s.send = GuardedCallerIfc()
+    s.send = NonBlockingCallerIfc()
 
     s.msgs = deque( msgs )
 

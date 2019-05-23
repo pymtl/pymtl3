@@ -10,6 +10,7 @@ Date   : Apr 16, 2018
 from __future__ import absolute_import, division, print_function
 
 from collections import deque
+
 from pymtl.datatypes import mk_bits
 from pymtl.datatypes.Bits import Bits
 
@@ -296,8 +297,8 @@ class Interface( NamedObject, Connectable ):
 
 class MethodPort( NamedObject, Connectable ):
 
-  def construct( self, func=None ):
-    self.method = None
+  def construct( self, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate Caller/CalleePort.")
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
@@ -315,7 +316,8 @@ class MethodPort( NamedObject, Connectable ):
     return False
 
 class CallerPort( MethodPort ):
-  def construct( self ):
+  def construct( self, Type=None ):
+    self.Type = Type
     self.method = None
 
   def is_callee_port( s ):
@@ -324,9 +326,9 @@ class CallerPort( MethodPort ):
   def is_caller_port( s ):
     return True
 
-
 class CalleePort( MethodPort ):
-  def construct( self, method=None ):
+  def construct( self, Type=None, method=None ):
+    self.Type = Type
     self.method = method
 
   def is_callee_port( s ):
@@ -334,3 +336,30 @@ class CalleePort( MethodPort ):
 
   def is_caller_port( s ):
     return False
+
+class NonBlockingInterface( Interface ):
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate NonBlockingCaller/NonBlockingCalleeIfc.")
+
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+class NonBlockingCalleeIfc( NonBlockingInterface ):
+  def construct( s, Type=None, method=None, rdy=None ):
+    s.Type = Type
+    s.method = CalleePort( Type, method )
+    s.rdy    = CalleePort( None, rdy )
+
+    s.method._dsl.is_rdy = False
+    s.rdy._dsl.is_rdy    = True
+
+class NonBlockingCallerIfc( NonBlockingInterface ):
+
+  def construct( s, Type=None ):
+    s.Type = Type
+
+    s.method = CallerPort( Type )
+    s.rdy    = CallerPort()
+
+    s.method._dsl.is_rdy = False
+    s.rdy._dsl.is_rdy    = True

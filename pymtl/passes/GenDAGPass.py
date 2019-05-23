@@ -13,7 +13,7 @@ from __future__ import absolute_import, division, print_function
 from collections import defaultdict, deque
 
 from pymtl import *
-from pymtl.dsl import Const, MethodPort
+from pymtl.dsl import Const, MethodPort, NonBlockingInterface
 
 from .BasePass import BasePass, PassMetadata
 
@@ -305,12 +305,8 @@ def {0}():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, Interface ):
-          try:
-            if call.guarded_ifc:
-              method_blks[ call.method.method ].add( blk )
-          except AttributeError:
-            pass
+        elif isinstance( call, NonBlockingInterface ):
+          method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
 
@@ -321,23 +317,15 @@ def {0}():
 
       if   isinstance( x, MethodPort ):
         xx = x.method
-      elif isinstance( x, Interface ):
-        try:
-          if x.guarded_ifc:
-            xx = x.method.method
-        except AttributeError:
-          pass
+      elif isinstance( x, NonBlockingInterface ):
+        xx = x.method.method
       else:
         xx = x
 
       if   isinstance( y, MethodPort ):
         yy = y.method
-      elif isinstance( y, Interface ):
-        try:
-          if y.guarded_ifc:
-            yy = y.method.method
-        except AttributeError:
-          pass
+      elif isinstance( y, NonBlockingInterface ):
+        yy = y.method.method
       else:
         yy = y
 

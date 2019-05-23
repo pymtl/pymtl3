@@ -11,7 +11,6 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl import *
 
-from .GuardedIfc import *
 from .ifcs_utils import enrdy_to_str
 
 #-------------------------------------------------------------------------
@@ -38,7 +37,7 @@ class RecvIfcRTL( Interface ):
 
     # We are doing SendCL (other) -> [ RecvCL -> SendRTL ] -> RecvRTL (s)
     # SendCL is a caller interface
-    if isinstance( other, GuardedCallerIfc ):
+    if isinstance( other, NonBlockingCallerIfc ):
       m = RecvCL2SendRTL( s.MsgType )
 
       if hasattr( parent, "RecvCL2SendRTL_count" ):
@@ -83,7 +82,7 @@ class SendIfcRTL( Interface ):
 
     # We are doing SendRTL (s) -> [ RecvRTL -> SendCL ] -> RecvCL (other)
     # RecvCL is a callee interface
-    if isinstance( other, GuardedCalleeIfc ):
+    if isinstance( other, NonBlockingCalleeIfc ):
       m = RecvRTL2SendCL( s.MsgType )
 
       if hasattr( parent, "RecvRTL2SendCL_count" ):
@@ -146,7 +145,7 @@ class RecvCL2SendRTL( Component ):
       M( s.recv ) < U( up_send_rtl )
     )
 
-  @guarded_ifc( lambda s : s.recv_rdy )
+  @non_blocking( lambda s : s.recv_rdy )
   def recv( s, msg ):
     s.msg_to_send = msg
     s.recv_called = True
@@ -167,7 +166,7 @@ class RecvRTL2SendCL( Component ):
     # Interface
 
     s.recv = RecvIfcRTL( MsgType )
-    s.send = GuardedCallerIfc()
+    s.send = NonBlockingCallerIfc()
 
     s.sent_msg = None
     s.send_rdy = False
