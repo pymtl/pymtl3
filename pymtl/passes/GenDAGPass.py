@@ -286,7 +286,6 @@ def {0}():
 
     try:
       all_method_nets = top.get_all_method_nets()
-      print( "dag:", all_method_nets )
       for writer, net in all_method_nets:
         if writer is not None:
           for member in net:
