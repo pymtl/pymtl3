@@ -359,7 +359,7 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
     s.Type = Type
 
     s.method = CallerPort( Type )
-    s.rdy    = CallerPort( Type )
+    s.rdy    = CallerPort()
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
