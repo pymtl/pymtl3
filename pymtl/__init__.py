@@ -4,7 +4,16 @@ from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl.Component import Component
 from .dsl.ComponentLevel6 import non_blocking
-from .dsl.Connectable import CalleePort, CallerPort, InPort, Interface, OutPort, Wire, NonBlockingCalleeIfc, NonBlockingCallerIfc
+from .dsl.Connectable import (
+    CalleePort,
+    CallerPort,
+    InPort,
+    Interface,
+    NonBlockingCalleeIfc,
+    NonBlockingCallerIfc,
+    OutPort,
+    Wire,
+)
 from .dsl.ConstraintTypes import RD, WR, M, U
 from .passes.PassGroups import SimpleSim
 

@@ -546,4 +546,3 @@ def test_nested_struct_2d_array_index():
   print(a.struct.__dict__)
   print(a.struct.bar[1][4].__dict__)
   print(a.struct.bar[1][4].bar._dsl.__dict__)
-

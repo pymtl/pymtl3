@@ -10,6 +10,7 @@ Date   : Apr 16, 2018
 from __future__ import absolute_import, division, print_function
 
 from collections import deque
+
 from pymtl.datatypes import mk_bits
 from pymtl.datatypes.Bits import Bits
 
