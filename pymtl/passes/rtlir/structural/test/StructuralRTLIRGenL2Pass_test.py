@@ -35,7 +35,6 @@ def test_L2_struct_attr():
   assert ns.connections == \
     [(sexp.StructAttr(sexp.CurCompAttr(comp, 'in_'), 'foo'), sexp.CurCompAttr(comp, 'out'))]
 
-@pytest.mark.xfail( reason = 'PyMTL DSL connection parsing failed' )
 def test_L2_packed_index():
   class B( object ):
     def __init__( s, foo=42 ):
@@ -44,7 +43,6 @@ def test_L2_packed_index():
     def construct( s ):
       s.in_ = InPort( B )
       s.out = OutPort( Bits32 )
-      # PyMTL mistakenly takes s.in_.foo[1] as a single bit!
       s.connect( s.out, s.in_.foo[1] )
   a = A()
   a.elaborate()

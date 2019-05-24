@@ -355,7 +355,6 @@ endcomponent
 """
   do_test( a )
 
-@pytest.mark.xfail( reason = "PyMTL DSL incorrect type check" )
 def test_nested_struct_packed_array_index( do_test ):
   class C( object ):
     def __init__( s, bar=42 ):
@@ -374,11 +373,16 @@ def test_nested_struct_packed_array_index( do_test ):
   a._ref_ports = \
 """\
 port_decls:
+  port_decl: out Port of Struct C
   port_decl: struct Port of Struct B
 """
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = "const_decls:\n"
-  a._ref_conns = "connections:\n"
+  a._ref_conns = \
+"""\
+connections:
+  connection: PackedIndex StructAttr CurCompAttr struct bar 1 -> CurCompAttr out
+"""
   a._ref_structs = [(rdt.Struct('B',
     {'foo':rdt.Vector(32),
      'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']))},
@@ -393,6 +397,7 @@ struct B
 component A
 (
 port_decls:
+  port_decl: out Port of Struct C
   port_decl: struct Port of Struct B
 interface_decls:
 );
@@ -403,6 +408,7 @@ component_decls:
 tmpvars:
 upblk_decls:
 connections:
+  connection: PackedIndex StructAttr CurCompAttr struct bar 1 -> CurCompAttr out
 
 endcomponent
 """

@@ -9,8 +9,8 @@ from functools import reduce
 
 import pymtl
 from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl.passes.rtlir.rtype import RTLIRType as rt
+from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl.passes.rtlir.rtype.RTLIRDataType import get_rtlir_dtype
 
 
@@ -96,7 +96,7 @@ class _Index( BaseSignalExpr ):
   def is_packed_index( index_base, index ):
     base_rtype = index_base.get_rtype()
     if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
-       isinstance(base_rtype.get_dtype(), Packedrt.Array):
+       isinstance(base_rtype.get_dtype(), rdt.PackedArray):
       return PackedIndex
     else:
       return None

@@ -22,6 +22,7 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL3Pass import (
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL3Pass import (
     BehavioralRTLIRTypeCheckL3Pass,
 )
+from pymtl.dsl.errors import VarNotDeclaredError
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
@@ -83,7 +84,6 @@ def test_L3_struct_inst( do_test ):
 # PyMTL type errors
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_L3_vector_attr( do_test ):
   class A( Component ):
     def construct( s ):
@@ -92,10 +92,9 @@ def test_L3_vector_attr( do_test ):
       @s.update
       def upblk():
         s.out = s.in_.foo
-  with expected_failure( PyMTLTypeError, "should be a struct signal" ):
+  with expected_failure( VarNotDeclaredError, 's.in_ does not have field "foo"' ):
     do_test( A() )
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_L3_struct_no_field( do_test ):
   class B( object ):
     def __init__( s, foo=42 ):
@@ -107,7 +106,7 @@ def test_L3_struct_no_field( do_test ):
       @s.update
       def upblk():
         s.out = s.in_.bar
-  with expected_failure( PyMTLTypeError, "does not have field bar" ):
+  with expected_failure( VarNotDeclaredError, 's.in_ does not have field "bar"' ):
     do_test( A() )
 
 @pytest.mark.xfail( reason = "RTLIR conversion does not support const struct yet" )

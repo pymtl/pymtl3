@@ -32,7 +32,6 @@ def test_py_list():
   with expected_failure( RTLIRConversionError, 'should be a field of some struct' ):
     get_rtlir_dtype( [ 1, 2, 3 ] )
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_py_struct_arg_no_default_value():
   class B( object ):
     def __init__( s, foo ):
@@ -41,8 +40,8 @@ def test_py_struct_arg_no_default_value():
     def construct( s ):
       s.in_ = InPort( B )
   a = A()
-  a.elaborate()
-  with expected_failure( RTLIRConversionError, 'adding deafult values' ):
+  with expected_failure( TypeError, 'takes exactly 2 arguments (1 given)' ):
+    a.elaborate()
     get_rtlir_dtype( a.in_ )
 
 def test_py_struct():
