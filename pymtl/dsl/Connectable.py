@@ -344,6 +344,12 @@ class NonBlockingInterface( Interface ):
   def __call__( s, *args, **kwargs ):
     return s.method( *args, **kwargs )
 
+  def __str__( s ):
+    return s._str_hook()
+
+  def _str_hook( s ):
+    return "{}".format( s._dsl.my_name )
+
 class NonBlockingCalleeIfc( NonBlockingInterface ):
   def construct( s, Type=None, method=None, rdy=None ):
     s.Type = Type

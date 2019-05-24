@@ -73,18 +73,17 @@ def run_sim( th, max_cycles=100 ):
 
   # Create a simulator
 
-  th.elaborate()
-  th.apply( simple_sim_pass )
+  th.apply( SimpleSim )
 
   # Run simluation
 
   print("")
   ncycles = 0
-  print("{}:{}".format( ncycles, th.line_trace() ))
+  print("{:2}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print("{}:{}".format( ncycles, th.line_trace() ))
+    print("{:2}:{}".format( ncycles, th.line_trace() ))
 
   # Check timeout
 

@@ -29,19 +29,16 @@ class TestSinkCL( Component ):
     s.idx          = 0
     s.cycle_count  = 0
     s.msgs         = list( msgs )
-    s.arrival_time = None if arrival_time is None else \
-                     list( arrival_time )
-    s.perf_regr    = True if arrival_time is not None else False
+    s.arrival_time = (
+      None if arrival_time is None else 
+      list( arrival_time )
+    )
+    s.perf_regr = True if arrival_time is not None else False
 
-    s.initial_count  = initial_delay
-    s.interval_delay = interval_delay
-    s.interval_count = 0
+    s.count = initial_delay
+    s.intv  = interval_delay
 
-    s.recv_msg    = None
     s.recv_called = False
-    s.recv_rdy    = False
-    s.trace_len   = len( str( s.msgs[0] ) ) if len(s.msgs) != 0 else 0
-#    s.trace_len   = len( str( s.msgs[0] ) )
 
     @s.update
     def up_sink_count():
@@ -52,45 +49,42 @@ class TestSinkCL( Component ):
 
       # if recv was called in previous cycle
       if s.recv_called:
-        s.interval_count = s.interval_delay
-
-      elif s.initial_count != 0:
-        s.initial_count -= 1
-
-      elif s.interval_count != 0:
-        s.interval_count -= 1
-
+        s.count = s.intv  
+      elif s.count != 0:
+        s.count -= 1
       else:
-        s.interval_count = 0
+        s.count = 0
 
       s.recv_called = False
-      s.recv_msg    = None
-      s.recv_rdy    = s.initial_count == 0 and s.interval_count == 0
 
     s.add_constraints(
       U( up_sink_count ) < M( s.recv ),
       U( up_sink_count ) < M( s.recv.rdy )
     )
 
-  @non_blocking( lambda s: s.initial_count==0 and s.interval_count==0 )
+  @non_blocking( lambda s: s.count==0 )
   def recv( s, msg ):
 
-    s.recv_msg = msg
     # Sanity check
     if s.idx >= len( s.msgs ):
       raise Exception( "Test Sink received more msgs than expected" )
 
     # Check correctness first
-    if s.recv_msg != s.msgs[ s.idx ]:
+    if msg != s.msgs[ s.idx ]:
       raise Exception( """
 Test Sink received WRONG msg!
 Expected : {}
-Received : {}""".format( s.msgs[ s.idx ], s.recv_msg ) )
+Received : {}""".format( s.msgs[ s.idx ], msg ) )
     elif s.perf_regr and s.cycle_count > s.arrival_time[ s.idx ]:
       raise Exception( """
 Test Sink received msg LATER than expected!
+Expected msg   : {}
 Expected cycles: {}
-Received at    : {}""".format( s.arrival_time[ s.idx ], s.cycle_count ) )
+Received at    : {}""".format( 
+        s.msgs[ s.idx ], 
+        s.arrival_time[ s.idx ], 
+        s.cycle_count 
+      ) )
     else:
       s.idx += 1
       s.recv_called = True
@@ -100,8 +94,7 @@ Received at    : {}""".format( s.arrival_time[ s.idx ], s.cycle_count ) )
 
   # Line trace
   def line_trace( s ):
-    trace = enrdy_to_str( s.recv_msg, s.recv_called, s.recv_rdy )
-    return "{}".format( trace.ljust( s.trace_len ) )
+    return "{}".format( s.recv )
 
 #-------------------------------------------------------------------------
 # TestSinkRTL
@@ -131,5 +124,4 @@ class TestSinkRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "[{}>]{}".format(
-      s.adapter.line_trace(), s.sink.line_trace() )
+    return "{}".format( s.recv )
