@@ -25,7 +25,7 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
     BehavioralRTLIRTypeCheckL1Pass,
 )
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):

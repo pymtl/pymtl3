@@ -9,17 +9,16 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-import pymtl.passes.rtlir.RTLIRDataType as rdt
-import pymtl.passes.rtlir.RTLIRType as rt
 from pymtl import *
+from pymtl.passes.rtlir import RTLIRDataType as rdt
+from pymtl.passes.rtlir import RTLIRType as rt
 from pymtl.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
     BehavioralRTLIRVisualizationPass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):

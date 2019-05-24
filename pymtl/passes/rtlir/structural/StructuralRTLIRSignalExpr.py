@@ -9,23 +9,15 @@ from functools import reduce
 
 import pymtl
 from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.RTLIRDataType import Struct, Vector, get_rtlir_dtype
-from pymtl.passes.rtlir.RTLIRType import (
-    Array,
-    BaseRTLIRType,
-    Component,
-    Const,
-    InterfaceView,
-    Port,
-    Signal,
-    Wire,
-)
+from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl.passes.rtlir.rtype import RTLIRType as rt
+from pymtl.passes.rtlir.rtype.RTLIRDataType import get_rtlir_dtype
 
 
 class BaseSignalExpr( object ):
   """Base abstract class of RTLIR signal expressions."""
   def __init__( s, rtype ):
-    assert isinstance( rtype, BaseRTLIRType ), \
+    assert isinstance( rtype, rt.BaseRTLIRType ), \
       "non-RTLIR type {} encountered!".format( rtype )
     s.rtype = rtype
 
@@ -58,8 +50,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_port_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and \
-       isinstance(base_rtype.get_sub_type(), Port):
+    if isinstance(base_rtype, rt.Array) and \
+       isinstance(base_rtype.get_sub_type(), rt.Port):
       return PortIndex
     else:
       return None
@@ -67,8 +59,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_wire_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and \
-       isinstance(base_rtype.get_sub_type(), Wire):
+    if isinstance(base_rtype, rt.Array) and \
+       isinstance(base_rtype.get_sub_type(), rt.Wire):
       return WireIndex
     else:
       return None
@@ -76,8 +68,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_const_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and \
-       isinstance(base_rtype.get_sub_type(), Const):
+    if isinstance(base_rtype, rt.Array) and \
+       isinstance(base_rtype.get_sub_type(), rt.Const):
       return ConstIndex
     else:
       return None
@@ -85,8 +77,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_ifc_view_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and \
-       isinstance(base_rtype.get_sub_type(), InterfaceView):
+    if isinstance(base_rtype, rt.Array) and \
+       isinstance(base_rtype.get_sub_type(), rt.InterfaceView):
       return InterfaceViewIndex
     else:
       return None
@@ -94,8 +86,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_component_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, Array) and \
-       isinstance(base_rtype.get_sub_type(), Component):
+    if isinstance(base_rtype, rt.Array) and \
+       isinstance(base_rtype.get_sub_type(), rt.Component):
       return ComponentIndex
     else:
       return None
@@ -103,8 +95,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_packed_index( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, (Port, Wire)) and \
-       isinstance(base_rtype.get_dtype(), PackedArray):
+    if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
+       isinstance(base_rtype.get_dtype(), Packedrt.Array):
       return PackedIndex
     else:
       return None
@@ -112,8 +104,8 @@ class _Index( BaseSignalExpr ):
   @staticmethod
   def is_bit_selection( index_base, index ):
     base_rtype = index_base.get_rtype()
-    if isinstance(base_rtype, (Port, Wire)) and \
-       isinstance(base_rtype.get_dtype(), Vector):
+    if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
+       isinstance(base_rtype.get_dtype(), rdt.Vector):
       return BitSelection
     else:
       return None
@@ -128,10 +120,10 @@ class _Slice( BaseSignalExpr ):
   def __init__( s, slice_base, start, stop ):
     base_rtype = slice_base.get_rtype()
     dtype = base_rtype.get_dtype()
-    if isinstance( base_rtype, Port ):
-      rtype = Port( base_rtype.get_direction(), Vector( stop-start ) )
-    elif isinstance( base_rtype, Wire ):
-      rtype = Wire( Vector( stop-start ) )
+    if isinstance( base_rtype, rt.Port ):
+      rtype = rt.Port( base_rtype.get_direction(), rdt.Vector( stop-start ) )
+    elif isinstance( base_rtype, rt.Wire ):
+      rtype = rt.Wire( rdt.Vector( stop-start ) )
     else:
       assert False, \
         "unrecognized signal type {} for slicing".format( base_rtype )
@@ -152,8 +144,8 @@ class _Slice( BaseSignalExpr ):
   @staticmethod
   def is_part_selection( slice_base, start, stop ):
     base_rtype = slice_base.get_rtype()
-    if isinstance(base_rtype, (Port, Wire)) and \
-       isinstance(base_rtype.get_dtype(), Vector) and \
+    if isinstance(base_rtype, (rt.Port, rt.Wire)) and \
+       isinstance(base_rtype.get_dtype(), rdt.Vector) and \
        isinstance(start, int) and isinstance(stop, int):
       return PartSelection
     else:
@@ -188,7 +180,7 @@ class _Attribute( BaseSignalExpr ):
   def is_subcomp_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
     if not isinstance(attr_base, CurComp) and \
-       isinstance(base_rtype, Component) and base_rtype.has_property(attr):
+       isinstance(base_rtype, rt.Component) and base_rtype.has_property(attr):
       return SubCompAttr
     else:
       return None
@@ -196,7 +188,7 @@ class _Attribute( BaseSignalExpr ):
   @staticmethod
   def is_interface_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
-    if isinstance(base_rtype, InterfaceView) and base_rtype.has_property(attr):
+    if isinstance(base_rtype, rt.InterfaceView) and base_rtype.has_property(attr):
       return InterfaceAttr
     else:
       return None
@@ -204,9 +196,9 @@ class _Attribute( BaseSignalExpr ):
   @staticmethod
   def is_struct_attr( attr_base, attr ):
     base_rtype = attr_base.get_rtype()
-    if isinstance(base_rtype, Signal):
+    if isinstance(base_rtype, rt.Signal):
       dtype = base_rtype.get_dtype()
-      if isinstance(dtype, Struct) and dtype.has_property(attr):
+      if isinstance(dtype, rdt.Struct) and dtype.has_property(attr):
         return StructAttr
       else:
         return None
@@ -215,7 +207,7 @@ class _Attribute( BaseSignalExpr ):
 
 class ConstInstance( BaseSignalExpr ):
   def __init__( s, obj, value ):
-    super( ConstInstance, s ).__init__(Const(get_rtlir_dtype( obj )))
+    super( ConstInstance, s ).__init__(rt.Const(get_rtlir_dtype( obj )))
     s.value = value
 
   def __eq__( s, other ):
@@ -264,11 +256,11 @@ class PackedIndex( _Index ):
   def __init__( s, index_base, index ):
     base_rtype = index_base.get_rtype()
     dtype = base_rtype.get_dtype()
-    if isinstance( base_rtype, Port ):
-      rtype = Port( base_rtype.get_direction(),
+    if isinstance( base_rtype, rt.Port ):
+      rtype = rt.Port( base_rtype.get_direction(),
                     dtype.get_next_dim_type() )
-    elif isinstance( base_rtype, Wire ):
-      rtype = Wire( dtype.get_next_dim_type() )
+    elif isinstance( base_rtype, rt.Wire ):
+      rtype = rt.Wire( dtype.get_next_dim_type() )
     else:
       assert False, \
         "unrecognized signal type {} for indexing".format( base_rtype )
@@ -278,10 +270,10 @@ class BitSelection( _Index ):
   def __init__( s, index_base, index ):
     base_rtype = index_base.get_rtype()
     dtype = base_rtype.get_dtype()
-    if isinstance( base_rtype, Port ):
-      rtype = Port( base_rtype.get_direction(), Vector( 1 ) )
-    elif isinstance( base_rtype, Wire ):
-      rtype = Wire( Vector( 1 ) )
+    if isinstance( base_rtype, rt.Port ):
+      rtype = rt.Port( base_rtype.get_direction(), rdt.Vector( 1 ) )
+    elif isinstance( base_rtype, rt.Wire ):
+      rtype = rt.Wire( rdt.Vector( 1 ) )
     else:
       assert False, \
         "unrecognized signal type {} for indexing".format( base_rtype )
@@ -309,10 +301,10 @@ class StructAttr( _Attribute ):
   def __init__( s, attr_base, attr ):
     base_rtype = attr_base.get_rtype()
     dtype = base_rtype.get_dtype()
-    if isinstance( base_rtype, Port ):
-      rtype = Port( base_rtype.get_direction(), dtype.get_property( attr ) )
-    elif isinstance( base_rtype, Wire ):
-      rtype = Wire( dtype.get_property( attr ) )
+    if isinstance( base_rtype, rt.Port ):
+      rtype = rt.Port( base_rtype.get_direction(), dtype.get_property( attr ) )
+    elif isinstance( base_rtype, rt.Wire ):
+      rtype = rt.Wire( dtype.get_property( attr ) )
     else:
       assert False, \
         "unrecognized signal type {} for field selection".format( base_rtype )

@@ -11,7 +11,7 @@ from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError
 
-from .BehavioralRTLIR import StructInst
+from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
 
 
@@ -51,7 +51,7 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
           s.blk, node, 'at least one value should be provided to struct instantiation!'
         )
       values = map(lambda arg: s.visit(arg), node.args)
-      ret = StructInst( obj, values )
+      ret = bir.StructInst( obj, values )
       ret.ast = node
       return ret
 

@@ -10,20 +10,15 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl import *
+from pymtl.passes.rtlir import RTLIRDataType as rdt
+from pymtl.passes.rtlir import get_rtlir_dtype
 from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.RTLIRDataType import (
-    BaseRTLIRDataType,
-    Bool,
-    PackedArray,
-    Struct,
-    Vector,
-    get_rtlir_dtype,
-)
-from pymtl.passes.rtlir.test_utility import expected_failure
+
+from .test_utility import expected_failure
 
 
 def test_py_int():
-  assert Vector(32) == get_rtlir_dtype( 42 )
+  assert rdt.Vector(32) == get_rtlir_dtype( 42 )
 
 def test_py_float():
   with expected_failure( RTLIRConversionError ):
@@ -59,14 +54,14 @@ def test_py_struct():
       s.in_ = InPort( B )
   a = A()
   a.elaborate()
-  assert Struct( 'B', {'foo':Vector(32)}, ['foo'] ) == get_rtlir_dtype( a.in_ )
+  assert rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ) == get_rtlir_dtype( a.in_ )
 
 def test_pymtl_Bits():
-  assert Vector(1) == get_rtlir_dtype( Bits1(0) )
-  assert Vector(2) == get_rtlir_dtype( Bits2(0) )
-  assert Vector(8) == get_rtlir_dtype( Bits8(0) )
-  assert Vector(32) == get_rtlir_dtype( Bits32(0) )
-  assert Vector(255) == get_rtlir_dtype( Bits255(0) )
+  assert rdt.Vector(1) == get_rtlir_dtype( Bits1(0) )
+  assert rdt.Vector(2) == get_rtlir_dtype( Bits2(0) )
+  assert rdt.Vector(8) == get_rtlir_dtype( Bits8(0) )
+  assert rdt.Vector(32) == get_rtlir_dtype( Bits32(0) )
+  assert rdt.Vector(255) == get_rtlir_dtype( Bits255(0) )
 
 def test_pymtl_signal():
   class A( Component ):
@@ -74,7 +69,7 @@ def test_pymtl_signal():
       s.in_ = InPort( Bits32 )
   a = A()
   a.elaborate()
-  assert Vector(32) == get_rtlir_dtype( a.in_ )
+  assert rdt.Vector(32) == get_rtlir_dtype( a.in_ )
 
 def test_pymtl_packed_array():
   class B( object ):
@@ -85,5 +80,5 @@ def test_pymtl_packed_array():
       s.in_ = InPort( B )
   a = A()
   a.elaborate()
-  assert Struct( 'B', {'foo':PackedArray([5], Vector(32))}, ['foo'] ) == \
+  assert rdt.Struct( 'B', {'foo':rdt.PackedArray([5], rdt.Vector(32))}, ['foo'] ) == \
          get_rtlir_dtype( a.in_ )

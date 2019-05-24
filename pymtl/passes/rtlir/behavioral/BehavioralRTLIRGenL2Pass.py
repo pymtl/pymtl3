@@ -12,9 +12,9 @@ from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError
-from pymtl.passes.rtlir.RTLIRDataType import Bool
+from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
 
-from .BehavioralRTLIR import *
+from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
 
 
@@ -46,21 +46,21 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     # opmap maps an ast operator to its RTLIR counterpart.
     s.opmap = {
       # Bool operators
-      ast.And    : And(),       ast.Or     : Or(),
+      ast.And    : bir.And(),       ast.Or     : bir.Or(),
       # Unary operators
-      ast.Invert : Invert(),    ast.Not    : Not(),
-      ast.UAdd   : UAdd(),      ast.USub   : USub(),
+      ast.Invert : bir.Invert(),    ast.Not    : bir.Not(),
+      ast.UAdd   : bir.UAdd(),      ast.USub   : bir.USub(),
       # Binary operators
-      ast.Add    : Add(),       ast.Sub    : Sub(),
-      ast.Mult   : Mult(),      ast.Div    : Div(),
-      ast.Mod    : Mod(),       ast.Pow    : Pow(),
-      ast.LShift : ShiftLeft(), ast.RShift : ShiftRightLogic(),
-      ast.BitOr  : BitOr(),     ast.BitAnd : BitAnd(),
-      ast.BitXor : BitXor(),
-      # Compare operators
-      ast.Eq     : Eq(),        ast.NotEq  : NotEq(),
-      ast.Lt     : Lt(),        ast.LtE    : LtE(),
-      ast.Gt     : Gt(),        ast.GtE    : GtE()
+      ast.Add    : bir.Add(),       ast.Sub    : bir.Sub(),
+      ast.Mult   : bir.Mult(),      ast.Div    : bir.Div(),
+      ast.Mod    : bir.Mod(),       ast.Pow    : bir.Pow(),
+      ast.LShift : bir.ShiftLeft(), ast.RShift : bir.ShiftRightLogic(),
+      ast.BitOr  : bir.BitOr(),     ast.BitAnd : bir.BitAnd(),
+      ast.BitXor : bir.BitXor(),
+      # Compare bir.bir.operators
+      ast.Eq     : bir.Eq(),        ast.NotEq  : bir.NotEq(),
+      ast.Lt     : bir.Lt(),        ast.LtE    : bir.LtE(),
+      ast.Gt     : bir.Gt(),        ast.GtE    : bir.GtE()
     }
 
   def visit_AugAssign( s, node ):
@@ -76,7 +76,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     target = s.visit( node.target )
     op  = s.opmap[ type( node.op ) ]
     op.ast = node.op
-    ret = AugAssign( target, op, value )
+    ret = bir.AugAssign( target, op, value )
     ret.ast = node
     return ret
 
@@ -84,7 +84,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     obj = s.get_call_obj( node )
     # At L2 we add bool type but we do not support instantiating a bool
     # value -- that should always be the result of a comparison!
-    if obj is Bool:
+    if obj is rdt.Bool:
       raise PyMTLSyntaxError( s.blk, node,
         'bool values cannot be instantiated explicitly!' )
     return super( BehavioralRTLIRGeneratorL2, s ).visit_Call( node )
@@ -94,9 +94,9 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       # temporary variable
       # check if is a LoopVar or not
       if node.id in s.loop_var_env:
-        ret = LoopVar( node.id )
+        ret = bir.LoopVar( node.id )
       elif node.id in s.tmp_var_env:
-        ret = TmpVar( node.id, s._upblk_name )
+        ret = bir.TmpVar( node.id, s._upblk_name )
       elif isinstance( node.ctx, ast.Load ):
         # trying to load an unregistered tmpvar
         raise PyMTLSyntaxError( s.blk, node,
@@ -104,7 +104,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       else:
         # This is the first time we see this tmp var
         s.tmp_var_env.add( node.id )
-        ret = TmpVar( node.id, s._upblk_name )
+        ret = bir.TmpVar( node.id, s._upblk_name )
       ret.ast = node
       return ret
     else:
@@ -119,7 +119,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     orelse = []
     for orelse_stmt in node.orelse:
       orelse.append( s.visit( orelse_stmt ) )
-    ret = If( cond, body, orelse )
+    ret = bir.If( cond, body, orelse )
     ret.ast = node
     return ret
 
@@ -140,7 +140,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     # Add loop_var to the loop variable environment
     s.loop_var_env.add( loop_var_name )
-    var = LoopVarDecl( node.target.id )
+    var = bir.LoopVarDecl( node.target.id )
     if not isinstance( node.iter, ast.Call ):
       raise PyMTLSyntaxError( s.blk, node,
         "for loops can only use (x)range() after 'in'!" )
@@ -151,14 +151,14 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
     if len( args ) == 1:
       # xrange( end )
-      start = Number( 0 )
+      start = bir.Number( 0 )
       end = s.visit( args[0] )
-      step = Number( 1 )
+      step = bir.Number( 1 )
     elif len( args ) == 2:
       # xrange( start, end )
       start = s.visit( args[0] )
       end = s.visit( args[1] )
-      step = Number( 1 )
+      step = bir.Number( 1 )
     elif len( args ) == 3:
       # xrange( start, end, step )
       start = s.visit( args[0] )
@@ -176,7 +176,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     # Before we return, clear the loop variable in the loop variable
     # environment
     s.loop_var_env.remove( loop_var_name )
-    ret = For( var, start, end, step, body )
+    ret = bir.For( var, start, end, step, body )
     ret.ast = node
     return ret
 
@@ -191,7 +191,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     for value in node.values:
       values.append( s.visit( value ) )
 
-    ret = BoolOp( op, values )
+    ret = bir.BoolOp( op, values )
     ret.ast = node
     return ret
 
@@ -203,7 +203,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
         'Operator ' + str( node.op ) + ' is not supported!' )
     op  = s.opmap[ type( node.op ) ]
     op.ast = node.op
-    ret = BinOp( left, op, right )
+    ret = bir.BinOp( left, op, right )
     ret.ast = node
     return ret
 
@@ -214,7 +214,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     op  = s.opmap[ type( node.op ) ]
     op.ast = node.op
     operand = s.visit( node.operand )
-    ret = UnaryOp( op, operand )
+    ret = bir.UnaryOp( op, operand )
     ret.ast = node
     return ret
 
@@ -222,7 +222,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     cond = s.visit( node.test )
     body = s.visit( node.body )
     orelse = s.visit( node.orelse )
-    ret = IfExp( cond, body, orelse )
+    ret = bir.IfExp( cond, body, orelse )
     ret.ast = node
     return ret
 
@@ -238,6 +238,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     op.ast = node.ops[0]
     left = s.visit( node.left )
     right = s.visit( node.comparators[0] )
-    ret = Compare( left, op, right )
+    ret = bir.Compare( left, op, right )
     ret.ast = node
     return ret

@@ -12,11 +12,10 @@ import pytest
 import pymtl
 from pymtl import Bits1, Bits4, Bits32, InPort, OutPort
 from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.RTLIRDataType import Vector
+from pymtl.passes.rtlir import StructuralRTLIRSignalExpr as sexp
 from pymtl.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )
-from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 
 def test_L2_struct_attr():
@@ -32,9 +31,9 @@ def test_L2_struct_attr():
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass() )
   ns = a._pass_structural_rtlir_gen
-  comp = CurComp(a, 's')
+  comp = sexp.CurComp(a, 's')
   assert ns.connections == \
-    [(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), CurCompAttr(comp, 'out'))]
+    [(sexp.StructAttr(sexp.CurCompAttr(comp, 'in_'), 'foo'), sexp.CurCompAttr(comp, 'out'))]
 
 @pytest.mark.xfail( reason = 'PyMTL DSL connection parsing failed' )
 def test_L2_packed_index():
@@ -51,7 +50,7 @@ def test_L2_packed_index():
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass() )
   ns = a._pass_structural_rtlir_gen
-  comp = CurComp(a, 's')
+  comp = sexp.CurComp(a, 's')
   assert ns.connections == \
-    [(PackedIndex(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), 1),
-      CurCompAttr(comp, 'out'))]
+    [(sexp.PackedIndex(sexp.StructAttr(sexp.CurCompAttr(comp, 'in_'), 'foo'), 1),
+      sexp.CurCompAttr(comp, 'out'))]

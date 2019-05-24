@@ -13,9 +13,8 @@ import os
 
 from graphviz import Digraph
 
-from pymtl import *
 from pymtl.passes import BasePass
-from pymtl.passes.rtlir.RTLIRType import BaseRTLIRType
+from pymtl.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 

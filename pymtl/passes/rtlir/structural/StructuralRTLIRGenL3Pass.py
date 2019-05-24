@@ -6,7 +6,6 @@
 """Provide L3 structural RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-from ..RTLIRType import *
 from .StructuralRTLIRGenL2Pass import StructuralRTLIRGenL2Pass
 from .StructuralRTLIRSignalExpr import CurComp
 

@@ -9,9 +9,8 @@ from __future__ import absolute_import, division, print_function
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.RTLIRType import Array, Component, Port, _is_of_type
+from pymtl.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
 
 
@@ -41,8 +40,8 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     
     Only static constant expressions can be the index of component arrays
     """
-    if isinstance( node.value.Type, Array ) and \
-       isinstance( node.value.Type.get_sub_type(), Component ):
+    if isinstance( node.value.Type, rt.Array ) and \
+       isinstance( node.value.Type.get_sub_type(), rt.Component ):
       try:
         idx = node.idx._value
         node.Type = node.value.Type.get_sub_type()
@@ -59,14 +58,14 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     cross-hierarchy access detection is needed.
     """
     # Attributes of subcomponent can only access ports
-    if isinstance( node.value.Type, Component ) and \
+    if isinstance( node.value.Type, rt.Component ) and \
        node.value.Type.get_name() != s.component.__class__.__name__:
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
-          'Component {} does not have attribute {}!'.format(
+          'rt.Component {} does not have attribute {}!'.format(
             node.value.Type.get_name(), node.attr ) )
       prop = node.value.Type.get_property( node.attr )
-      if not _is_of_type( prop, Port ):
+      if not rt._is_of_type( prop, rt.Port ):
         raise PyMTLTypeError( s.blk, node.ast,
           '{} is not a port of subcomponent {}!'.format(
             node.attr, node.value.Type.get_name() ) )

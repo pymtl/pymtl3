@@ -11,17 +11,12 @@ import pytest
 
 import pymtl
 from pymtl import Bits1, Bits16, Bits32, InPort, Interface, OutPort
+from pymtl.passes.rtlir import RTLIRDataType as rdt
+from pymtl.passes.rtlir import RTLIRType as rt
+from pymtl.passes.rtlir import get_rtlir, get_rtlir_dtype, is_rtlir_convertible
 from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.RTLIRDataType import (
-    BaseRTLIRDataType,
-    Bool,
-    PackedArray,
-    Struct,
-    Vector,
-    get_rtlir_dtype,
-)
-from pymtl.passes.rtlir.RTLIRType import *
-from pymtl.passes.rtlir.test_utility import expected_failure
+
+from .test_utility import expected_failure
 
 
 def test_pymtl_list_ports():
@@ -31,7 +26,7 @@ def test_pymtl_list_ports():
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
-  assert Array([5], Port('input', Vector(32))) == get_rtlir( a.in_ )
+  assert rt.Array([5], rt.Port('input', rdt.Vector(32))) == get_rtlir( a.in_ )
 
 def test_pymtl_list_wires():
   class A( pymtl.Component ):
@@ -40,7 +35,7 @@ def test_pymtl_list_wires():
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
-  assert Array([5], Wire(Vector(32))) == get_rtlir( a.in_ )
+  assert rt.Array([5], rt.Wire(rdt.Vector(32))) == get_rtlir( a.in_ )
 
 def test_pymtl_list_consts():
   class A( pymtl.Component ):
@@ -49,7 +44,7 @@ def test_pymtl_list_consts():
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
-  assert Array([5], Const(Vector(32))) == get_rtlir( a.in_ )
+  assert rt.Array([5], rt.Const(rdt.Vector(32))) == get_rtlir( a.in_ )
 
 def test_pymtl_list_interface_views():
   class Ifc( Interface ):
@@ -62,9 +57,9 @@ def test_pymtl_list_interface_views():
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
-  assert Array([5],
-    InterfaceView('Ifc',
-      {'msg':Port('output', Vector(32)), 'rdy':Port('input', Vector(1))})) == \
+  assert rt.Array([5],
+    rt.InterfaceView('Ifc',
+      {'msg':rt.Port('output', rdt.Vector(32)), 'rdy':rt.Port('input', rdt.Vector(1))})) == \
         get_rtlir( a.in_ )
 
 def test_pymtl_list_components():
@@ -78,8 +73,8 @@ def test_pymtl_list_components():
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.b )
-  assert Array([5], Component( a.b[0],
-    {'in_':Port('input', Vector(32)), 'out':Port('output', Vector(32))})) == \
+  assert rt.Array([5], rt.Component( a.b[0],
+    {'in_':rt.Port('input', rdt.Vector(32)), 'out':rt.Port('output', rdt.Vector(32))})) == \
         get_rtlir( a.b )
 
 def test_pymtl_list_multi_dimension():
@@ -90,7 +85,7 @@ def test_pymtl_list_multi_dimension():
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.out )
-  assert Array([3, 2, 1], Port('output', Vector(32))) == get_rtlir(a.out)
+  assert rt.Array([3, 2, 1], rt.Port('output', rdt.Vector(32))) == get_rtlir(a.out)
 
 def test_py_float():
   with expected_failure( RTLIRConversionError ):
