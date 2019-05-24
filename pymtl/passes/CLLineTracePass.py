@@ -8,8 +8,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from copy import deepcopy
-
 from pymtl.dsl.Connectable import (
     CalleePort,
     CallerPort,
@@ -144,7 +142,7 @@ class CLLineTracePass( BasePass ):
         trace_len = len( str( ifc.method.Type() ) )
       else:
         trace_len = self.default_trace_len
-      ifc.trace_len = self.default_trace_len
+      ifc.trace_len = trace_len
       mk_new_str( ifc )
 
     # An update block that resets all method ports to not called
@@ -158,6 +156,6 @@ class CLLineTracePass( BasePass ):
     top._cl_trace = PassMetadata()
 
     # Create a new schedule
-    new_schedule = deepcopy( top._sched.schedule )
+    new_schedule = top._sched.schedule[:]
     new_schedule.insert( 0, reset_method_ports )
     top._cl_trace.schedule = new_schedule
