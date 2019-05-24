@@ -25,9 +25,14 @@ class CLLineTracePass( BasePass ):
     self.default_trace_len = trace_len
 
   def __call__( self, top ):
-
+    
+    # [wrap_callee_method] wraps the original method in a callee port
+    # into a new method that not only calls the origianl method, but
+    # also saves the arguments to the method and the return value,
+    # which can be used for composing the line trace.
+    # The wrapped method also need to update the saved arguments and
+    # return value of all the methods this callee port is driving.
     def wrap_callee_method( mport, drived_methods ):
-
       mport.raw_method = mport.method
       def wrapped_method( self, *args, **kwargs ):
         self.saved_args = args
@@ -42,6 +47,10 @@ class CLLineTracePass( BasePass ):
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
+    # [wrap_caller_method] wraps the original method in a caller port
+    # into a new method that calls its driver instead of the actual
+    # method, which will trigger the actual driver to update all other
+    # method ports connected to this net.
     def wrap_caller_method( mport, driver ):
       mport.raw_method = mport.method
       def wrapped_method( self, *args, **kwargs ):
@@ -51,34 +60,52 @@ class CLLineTracePass( BasePass ):
         self.saved_ret = driver( *args, **kwargs )
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
-
-    def new_str( s ):
-      if s.method.called:
-        args_str = ",".join(
-          [ str( arg ) for arg in s.method.saved_args ] 
-        )
-        kwargs_str = ",".join(
-          [ str( arg ) for _, arg in s.method.saved_kwargs.items() ]
-        )
-        ret_str = (
-          "" if s.method.saved_ret is None else 
-          str( s.method.saved_ret )
-        )
-        trace = []
-        if len( args_str ) > 0: trace.append( args_str )
-        if len( kwargs_str ) > 0: trace.append( kwargs_str )
-        if len( ret_str ) > 0 : trace.append( ret_str )
-        trace_str = ",".join( trace )
-        return trace_str.ljust( s.trace_len ) 
-      elif s.rdy.called:
-        if s.rdy.saved_ret:
-          return " ".ljust( s.trace_len )
+    
+    # [mk_new_str] replaces [_str_hook] in a non-blocking interface with
+    # a new to-string function that uses the metadata to compose line 
+    # trace.
+    # When the interface is ready and the method gets called, the line 
+    # trace just prints out the actual message. Otherwise, it prints out
+    # some special characters under different circumstances: 
+    # - " " empty space means the interface is ready but not called.
+    # - "." dot means whether the interface is ready is not checked at all.
+    # - "#" hash means the interface is checked but it is not ready.
+    # - "X" means the interface is called when not ready.
+    # For example, a cycle-level single element normal queue would have 
+    # the following line trace:
+    #      enq     deq
+    #  1:( 0000 () #    ) - enq(0000) called, deq is not ready
+    #  2:( #    () 0000 ) - enq is not ready, deq() gets called
+    #  3:( 0001 () #    ) - enq(0001) called, deq is not ready again
+    def mk_new_str( ifc ):
+      def new_str( self ):
+        if self.method.called and self.rdy.called and self.rdy.saved_ret:
+          args_str = ",".join(
+            [ str( arg ) for arg in self.method.saved_args ] 
+          )
+          kwargs_str = ",".join(
+            [ str( arg ) for _, arg in self.method.saved_kwargs.items() ]
+          )
+          ret_str = (
+            "" if self.method.saved_ret is None else 
+            str( self.method.saved_ret )
+          )
+          trace = []
+          if len( args_str ) > 0: trace.append( args_str )
+          if len( kwargs_str ) > 0: trace.append( kwargs_str )
+          if len( ret_str ) > 0 : trace.append( ret_str )
+          trace_str = ",".join( trace )
+          return trace_str.ljust( self.trace_len ) 
+        elif self.rdy.called:
+          if self.rdy.saved_ret:
+            return " ".ljust( self.trace_len )
+          else:
+            return "#".ljust( self.trace_len )
+        elif not self.rdy.called:
+          return ".".ljust( self.trace_len )
         else:
-          return "#".ljust( s.trace_len )
-      elif not s.rdy.called:
-        return ".".ljust( s.trace_len )
-      else:
-        return "X".ljust( s.trace_len )
+          return "X".ljust( self.trace_len )
+      ifc._str_hook = lambda : new_str( ifc )
 
     # Collect all method ports and add some stamps
     all_callees = set()
@@ -117,8 +144,8 @@ class CLLineTracePass( BasePass ):
         trace_len = len( str( ifc.method.Type() ) )
       else:
         trace_len = self.default_trace_len
-      ifc.trace_len = trace_len
-      ifc._str_hook = lambda : new_str( ifc )
+      ifc.trace_len = self.default_trace_len
+      mk_new_str( ifc )
 
     # An update block that resets all method ports to not called
     def reset_method_ports():

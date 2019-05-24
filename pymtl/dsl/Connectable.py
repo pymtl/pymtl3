@@ -348,7 +348,7 @@ class NonBlockingInterface( Interface ):
     return s._str_hook()
 
   def _str_hook( s ):
-    return "{}".format( s._dsl.my_name ).ljust( s._dsl.trace_len )
+    return "{}".format( s._dsl.my_name )
 
 class NonBlockingCalleeIfc( NonBlockingInterface ):
   def construct( s, Type=None, method=None, rdy=None ):
