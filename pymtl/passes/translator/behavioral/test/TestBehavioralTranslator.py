@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.translator import BehavioralTranslator
+from pymtl.passes.translator.behavioral import BehavioralTranslator
 
 
 def mk_TestBehavioralTranslator( _BehavioralTranslator ):
