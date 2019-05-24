@@ -1,15 +1,17 @@
 #=========================================================================
-# RTLIRTranslatorL1_test.py
+# RTLIRTranslator_L2_cases_test.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : May 23, 2019
 """Test the RTLIR transaltor."""
 from __future__ import absolute_import, division, print_function
 
+import pytest
+
 from pymtl.passes.rtlir.test.test_utility import do_test
 
-from ..behavioral.test.BehavioralTranslatorL1_test import *
-from ..structural.test.StructuralTranslatorL1_test import *
+from ..behavioral.test.BehavioralTranslatorL2_test import *
+from ..structural.test.StructuralTranslatorL2_test import *
 from .TestRTLIRTranslator import TestRTLIRTranslator
 
 

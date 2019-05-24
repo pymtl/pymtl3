@@ -1,5 +1,5 @@
 #=========================================================================
-# RTLIRTranslatorL4_test.py
+# RTLIRTranslator_L1_cases_test.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : May 23, 2019
@@ -8,8 +8,8 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl.passes.rtlir.test.test_utility import do_test
 
-from ..behavioral.test.BehavioralTranslatorL4_test import *
-from ..structural.test.StructuralTranslatorL4_test import *
+from ..behavioral.test.BehavioralTranslatorL1_test import *
+from ..structural.test.StructuralTranslatorL1_test import *
 from .TestRTLIRTranslator import TestRTLIRTranslator
 
 
