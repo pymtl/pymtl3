@@ -10,44 +10,18 @@ Author : Yanghui Ou, Shunning Jiang
 from __future__ import absolute_import, division, print_function
 
 from .ComponentLevel5 import ComponentLevel5
-from .Connectable import CalleePort, CallerPort, Interface
+from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
 
 #-------------------------------------------------------------------------
-# method_port decorator
+# non blocking decorator
 #-------------------------------------------------------------------------
 
-def generate_guard_decorator_ifcs( name ):
-  class GuardedCalleeIfc( Interface ):
-    guarded_ifc = True
-    def construct( s, method=None, guard=None ):
-      s.method = CalleePort( method )
-      setattr( s, name, CalleePort( guard ) )
-      s._dsl.guard = getattr( s, name )
-
-      s.method._dsl.is_guard      = False
-      s._dsl.guard._dsl.is_guard  = True
-
-    def __call__( s, *args, **kwargs ):
-      return s.method( *args, **kwargs )
-    def get_guard( s ):
-      return s._dsl.guard
-
-  class GuardedCallerIfc( Interface ):
-    guarded_ifc = True
-    def construct( s ):
-      s.method = CallerPort( )
-      setattr( s, name, CallerPort() )
-    def __call__( s, *args, **kwargs ):
-      return s.method( *args, **kwargs )
-
-  def guard_decorator( guard=lambda : True ):
-    def real_guard( method ):
-      method._guard_method = guard
-      method._guard_callee_ifc_type = GuardedCalleeIfc
-      return method
-    return real_guard
-
-  return guard_decorator, GuardedCalleeIfc, GuardedCallerIfc
+def non_blocking( rdy, Type=None ):
+  def real_decorator( method ):
+    method._non_blocking_rdy  = rdy
+    method._non_blocking_type = Type
+    return method
+  return real_decorator
 
 #-------------------------------------------------------------------------
 # ComponentLevel6
@@ -58,7 +32,7 @@ class ComponentLevel6( ComponentLevel5 ):
   def _handle_decorated_methods( s ):
     super( ComponentLevel6, s )._handle_decorated_methods()
 
-    # The following code handles guarded methods
+    # The following code handles non-blocking methods
     def bind_method( method ):
       def _method( *args, **kwargs ):
         return method( s, *args, **kwargs )
@@ -67,11 +41,11 @@ class ComponentLevel6( ComponentLevel5 ):
     cls_dict = s.__class__.__dict__
     for x in cls_dict:
       method = getattr( s, x )
-      # We identify guarded methods here
-      if hasattr( method, "_guard_method" ):
-        guard    = method._guard_method
-        ifc_type = method._guard_callee_ifc_type
-        setattr( s, x, ifc_type( method, bind_method( guard ) ) )
+      # We identify non_blocking methods here
+      if hasattr( method, "_non_blocking_rdy" ):
+        rdy  = method._non_blocking_rdy
+        Type = method._non_blocking_type
+        setattr( s, x, NonBlockingCalleeIfc( Type, method, bind_method( rdy ) ) )
 
   # Override
   def _construct( s ):

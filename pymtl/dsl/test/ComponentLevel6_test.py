@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 from collections import deque
 
 from pymtl import *
-from pymtl.dsl.ComponentLevel6 import ComponentLevel6, generate_guard_decorator_ifcs
+from pymtl.dsl.ComponentLevel6 import ComponentLevel6
 from pymtl.passes.PassGroups import SimpleCLSim
 
 from .sim_utils import simple_sim_pass
@@ -20,13 +20,12 @@ from .sim_utils import simple_sim_pass
 #-------------------------------------------------------------------------
 # TestSrc
 #-------------------------------------------------------------------------
-guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
 
 class TestSrc( ComponentLevel6 ):
 
   def construct( s, msgs ):
 
-    s.send = GuardedCallerIfc()
+    s.send = NonBlockingCallerIfc()
 
     s.msgs = deque( msgs )
     s.head = None
@@ -59,7 +58,7 @@ class TestSink( ComponentLevel6 ):
     s.head = None
     s.trace_len = len( str( s.msgs[0] ) )
 
-  @guarded_ifc( lambda s: True )
+  @non_blocking( lambda s: True )
   def recv( s, msg ):
 
     s.head = msg
@@ -156,11 +155,11 @@ class SimpleQueue( ComponentLevel6 ):
   def empty( s ):
     return s.element is None
 
-  @guarded_ifc( lambda s : s.empty() )
+  @non_blocking( lambda s : s.empty() )
   def enq( s, ele ):
     s.element = ele
 
-  @guarded_ifc( lambda s: not s.empty() )
+  @non_blocking( lambda s: not s.empty() )
   def deq( s ):
     ret = s.element
     s.element = None
@@ -198,8 +197,8 @@ def test_queue_sw():
 class QueueIncr( ComponentLevel6 ):
 
   def construct( s ):
-    s.recv  = GuardedCalleeIfc()
-    s.send  = GuardedCallerIfc()
+    s.recv  = NonBlockingCalleeIfc()
+    s.send  = NonBlockingCallerIfc()
     s.queue = SimpleQueue()
 
     s.connect( s.recv, s.queue.enq )
@@ -223,8 +222,8 @@ class QueueIncrChained( ComponentLevel6 ):
 
   def construct( s ):
 
-    s.recv = GuardedCalleeIfc()
-    s.send = GuardedCallerIfc()
+    s.recv = NonBlockingCalleeIfc()
+    s.send = NonBlockingCallerIfc()
 
     s.q0 = QueueIncr()
     s.q1 = QueueIncr()

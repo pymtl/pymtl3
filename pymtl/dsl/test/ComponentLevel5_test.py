@@ -75,8 +75,8 @@ The test sink received an incorrect message!
     s.msgs = list( msgs )
     s.idx  = 0
 
-    s.resp     = CalleePort( s.resp_     )
-    s.resp_rdy = CalleePort( s.resp_rdy_ )
+    s.resp     = CalleePort( method = s.resp_     )
+    s.resp_rdy = CalleePort( method = s.resp_rdy_ )
 
   def done( s ):
     return s.idx >= len(s.msgs)
@@ -119,8 +119,8 @@ class TestSinkUp( ComponentLevel5 ):
     s.queue = deque( maxlen=1 )
     s.idx  = 0
 
-    s.resp     = CalleePort( s.resp_ )
-    s.resp_rdy = CalleePort( s.resp_rdy_ )
+    s.resp     = CalleePort( method = s.resp_ )
+    s.resp_rdy = CalleePort( method = s.resp_rdy_ )
 
     s.v = None
 
@@ -191,8 +191,8 @@ def test_method_interface():
 
   class RecvIfcCL( Interface ):
     def construct( s, recv=None, rdy=None):
-      s.recv = CalleePort( recv )
-      s.rdy  = CalleePort( rdy )
+      s.recv = CalleePort( method = recv )
+      s.rdy  = CalleePort( method = rdy )
 
     # Here we customize method interface connections
     def connect( s, other, parent ):

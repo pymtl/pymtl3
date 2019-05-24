@@ -1,3 +1,9 @@
+from __future__ import absolute_import, division, print_function
+
+from pymtl import *
+from pymtl.dsl.errors import UpblkCyclicError
+from pymtl.passes import GenDAGPass, OpenLoopCLPass
+
 #=========================================================================
 # OpenLoopCLPass_test.py
 #=========================================================================
@@ -5,13 +11,7 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-from pymtl import *
-from pymtl.passes import OpenLoopCLPass, GenDAGPass
-from pymtl.dsl.errors import UpblkCyclicError
 
-from collections import deque
-
-guarded_ifc, GuardedCalleeIfc, GuardedCallerIfc = generate_guard_decorator_ifcs( "rdy" )
 
 def test_top_level_method():
 
@@ -72,24 +72,24 @@ def test_top_level_method():
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print "- push!"
+  print("- push!")
   A.push(7)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- push!"
+  print("- push!")
   A.push(33)
-  print "- push!"
+  print("- push!")
   A.push(55)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "num_cycles_executed: ", A.num_cycles_executed
+  print("num_cycles_executed: ", A.num_cycles_executed)
 
-def test_top_level_guarded_ifc():
+def test_top_level_non_blocking_ifc():
 
   class Top(Component):
 
@@ -127,11 +127,11 @@ def test_top_level_guarded_ifc():
         U( up_compose_in ) < M( s.pull ), # bypass behavior
       )
 
-    @guarded_ifc( lambda s: s.element is None and s.count % 5 == 4 )
+    @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
     def push( s, ele ):
       s.element = ele
 
-    @guarded_ifc( lambda s: s.value >= 0 )
+    @non_blocking( lambda s: s.value >= 0 )
     def pull( s ):
       return s.value
 
@@ -147,64 +147,86 @@ def test_top_level_guarded_ifc():
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(7)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(8)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(9)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(11)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(13)
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- push!"
+  print("- push!")
   A.push(33)
-  print "- push!"
+  print("- push!")
   A.push(55)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
   # regression
 
   assert A.num_cycles_executed == 8
 
-def test_top_level_guarded_ifc_in_net():
+def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top(Component):
     def construct( s ):
-      s.push = GuardedCalleeIfc()
-      s.pull = GuardedCalleeIfc()
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
+      s.inner = Top_less_less_inner()( push = s.push, pull = s.pull )
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+    def done( s ):
+      return True
+
+  class Top_less_less_inner(Component):
+    def construct( s ):
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
+      s.inner = Top_less_inner()( push = s.push, pull = s.pull )
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+    def done( s ):
+      return True
+
+  class Top_less_inner(Component):
+    def construct( s ):
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
       s.inner = Top_inner()( push = s.push, pull = s.pull )
 
     def line_trace( s ):
@@ -249,11 +271,11 @@ def test_top_level_guarded_ifc_in_net():
         U( up_compose_in ) < M( s.pull ), # bypass behavior
       )
 
-    @guarded_ifc( lambda s: s.element is None and s.count % 5 == 4 )
+    @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
     def push( s, ele ):
       s.element = ele
 
-    @guarded_ifc( lambda s: s.value >= 0 )
+    @non_blocking( lambda s: s.value >= 0 )
     def pull( s ):
       return s.value
 
@@ -269,53 +291,53 @@ def test_top_level_guarded_ifc_in_net():
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(7)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(8)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(9)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(11)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(13)
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- push!"
+  print("- push!")
   A.push(33)
-  print "- push!"
+  print("- push!")
   A.push(55)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
   # regression
 

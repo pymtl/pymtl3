@@ -23,7 +23,10 @@ class SimpleTickPass( BasePass ):
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
-    schedule = top._sched.schedule
+    if hasattr( top, "_cl_trace" ):
+      schedule = top._cl_trace.schedule
+    else:
+      schedule = top._sched.schedule
 
     def tick_normal():
       for blk in schedule:

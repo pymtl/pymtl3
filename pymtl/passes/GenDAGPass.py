@@ -13,7 +13,7 @@ from __future__ import absolute_import, division, print_function
 from collections import defaultdict, deque
 
 from pymtl import *
-from pymtl.dsl import Const, MethodPort
+from pymtl.dsl import Const, MethodPort, NonBlockingInterface
 
 from .BasePass import BasePass, PassMetadata
 
@@ -286,38 +286,50 @@ def {0}():
     except AttributeError:
       return
 
+    # Here we collect all top level callee ports and collect all
+    # constraints that involves a top level callee. NOTE THAT it is
+    # possible that the top level callee is connected to an actual callee
+    # somewhere else. Hence we use the ACTUAL METHOD as identifier
+    # because all members in the net will eventually point to the same
+    # method object.
+
+    top._dsl.top_level_callee_ports = top.get_all_object_filter(
+      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
+
+    method_is_top_level_callee = set()
+
     try:
       all_method_nets = top.get_all_method_nets()
-
-      for writer, net in top.get_all_method_nets():
+      for writer, net in all_method_nets:
         if writer is not None:
           for member in net:
             if member is not writer:
               assert member.method is None
               member.method = writer.method
 
+            # If the member is a top level callee, we add the writer's
+            # actual method to the set
+            if member.get_host_component() is top:
+              method_is_top_level_callee.add( writer.method )
+
     except AttributeError:
       pass
 
-    top._dag.top_level_callee_ports = top.get_all_object_filter(
-      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
-
-    top._dag.top_level_callee_constraints = set()
+    # Add those callee ports that are not part of a net
+    for callee in top._dsl.top_level_callee_ports:
+      if callee.method:
+        method_is_top_level_callee.add( callee.method )
 
     method_blks = defaultdict(set)
 
     # Collect each CalleePort/method is called in which update block
-    # We use bounded method of CalleePort to identify each call
+    # We use the actual method of CalleePort to identify each call
     for blk, calls in top._dsl.all_upblk_calls.iteritems():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, Interface ):
-          try:
-            if call.guarded_ifc:
-              method_blks[ call.method.method ].add( blk )
-          except AttributeError:
-            pass
+        elif isinstance( call, NonBlockingInterface ):
+          method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
 
@@ -325,81 +337,39 @@ def {0}():
     pred = defaultdict(set)
     succ = defaultdict(set)
 
+    top._dag.top_level_callee_constraints = set()
+
     for (x, y) in all_M_constraints:
 
       # Use the actual method object for constraints
 
       if   isinstance( x, MethodPort ):
         xx = x.method
-      elif isinstance( x, Interface ):
-        try:
-          if x.guarded_ifc:
-            xx = x.method.method
-        except AttributeError:
-          pass
+      elif isinstance( x, NonBlockingInterface ):
+        xx = x.method.method
       else:
         xx = x
 
       if   isinstance( y, MethodPort ):
         yy = y.method
-      elif isinstance( y, Interface ):
-        try:
-          if y.guarded_ifc:
-            yy = y.method.method
-        except AttributeError:
-          pass
+      elif isinstance( y, NonBlockingInterface ):
+        yy = y.method.method
       else:
         yy = y
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
-      if xx is not x:
-        if x.get_host_component() is top:
-          top._dag.top_level_callee_constraints.add( (x, y) )
-        # ================ FIXME ====================
-        # Hardcoding constraint propagation for s.connect on two guarded_ifc
-        # Should be removed when top-level-method constraint is fixed
-        for adj in top._dsl.adjacency[ x ]:
-          if adj.get_host_component() is top:
-            try:
-              if adj._dsl.is_guard:
-                adj = adj._dsl.parent_obj
-            except AttributeError:
-              pass
-            top._dag.top_level_callee_constraints.add( (adj, y) )
-        try:
-          if x.guarded_ifc:
-            for adj in top._dsl.adjacency[ x.method ]:
-              if adj.get_host_component() is top:
-                top._dag.top_level_callee_constraints.add( ( adj._dsl.parent_obj, y) )
-        except AttributeError:
-          pass
-        # ================= end ===================
+      xx_in_top = xx in method_is_top_level_callee
+      yy_in_top = yy in method_is_top_level_callee
 
-      elif yy is not y:
-        if y.get_host_component() is top:
-          top._dag.top_level_callee_constraints.add( (x, y) )
-        # ================ FIXME ====================
-        # Hardcoding constraint propagation for s.connect on two guarded_ifc
-        # Should be removed when top-level-method constraint is fixed
-        for adj in top._dsl.adjacency[ y ]:
-          if adj.get_host_component() is top:
-            try:
-              if adj._dsl.is_guard:
-                adj = adj._dsl.parent_obj
-            except AttributeError:
-              pass
-            top._dag.top_level_callee_constraints.add( (x, adj) )
-            #top._dag.all_constraints.add( (x, adj) )
-        try:
-          if y.guarded_ifc:
-            for adj in top._dsl.adjacency[ y.method ]:
-              if adj.get_host_component() is top:
-                top._dag.top_level_callee_constraints.add( (x, adj._dsl.parent_obj) )
-        except AttributeError:
-          pass
-        # =============== end =====================
+      # If either method is in the set we collected, we add the actual
+      # constraints to the top level constraint set. Assuming the user
+      # never set constraints on the actual method, we can use the type
+      # of the object (method port or nb interface) to tell if it's method
+      # or update block.
+      if xx_in_top or yy_in_top:
+        top._dag.top_level_callee_constraints.add( (x, y) )
 
     verbose = False
 

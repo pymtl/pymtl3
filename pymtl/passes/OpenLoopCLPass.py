@@ -7,12 +7,19 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 
-from BasePass     import BasePass, PassMetadata
-from collections  import deque
-from graphviz     import Digraph
-from errors import PassOrderError
-from pymtl.dsl.errors import UpblkCyclicError
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
+
+from graphviz import Digraph
+
 from pymtl import *
+from pymtl.dsl import MethodPort, NonBlockingCalleeIfc, NonBlockingInterface
+from pymtl.dsl.errors import UpblkCyclicError
+
+from .BasePass import BasePass, PassMetadata
+from .errors import PassOrderError
+
 
 class OpenLoopCLPass( BasePass ):
   def __call__( self, top ):
@@ -29,12 +36,34 @@ class OpenLoopCLPass( BasePass ):
 
     V = top.get_all_update_blocks() | top._dag.genblks
 
-    for x in top._dag.top_level_callee_ports:
-      try:
-        if not x._dsl.is_guard:
-          V.add(x)
-      except AttributeError:
+    # We collect all top level callee ports/nonblocking callee interfaces
+
+    top_level_callee_ports = top.get_all_object_filter(
+      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
+
+    top_level_nb_ifcs = top.get_all_object_filter(
+      lambda x: isinstance(x, NonBlockingCalleeIfc) and x.get_host_component() is top )
+
+    # We still tell the top level
+    method_callee_mapping = {}
+    method_guard_mapping  = {}
+
+    # First deal with normal calleeports. We map the actual method to the
+    # callee port, and add the port to the vertex set
+    for x in top_level_callee_ports:
+      if not x.in_non_blocking_interface(): # Normal callee port
         V.add(x)
+        assert x.method not in method_callee_mapping
+        method_callee_mapping[x.method] = x
+
+    # Then deal with non-blocking callee interfaces. Map the method of the
+    # interface to the actual method and set up method-rdy mapping
+
+    for x in top_level_nb_ifcs:
+      V.add( x.method )
+      method_guard_mapping [x.method] = x.rdy
+      assert x.method.method not in method_callee_mapping
+      method_callee_mapping[x.method.method] = x.method
 
     E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
@@ -44,27 +73,27 @@ class OpenLoopCLPass( BasePass ):
       InD[v] += 1
       Es [u].append( v )
 
-    method_guard_mapping = {}
+    # In addition to existing constraints, we process the constraints that
+    # involve top level callee ports. NOTE THAT we assume the user never
+    # set the constraint on the actual method object inside the CalleePort
+    # In GenDAGPass we already collect those constraints, but these
+    # constraints might involve CALLEES IN THE SAME METHOD NET as the top
+    # level callee (i.e. we cannot directly use it) Hence when we unbox
+    # them, we use the ACTUAL METHOD - callee mapping we set up above to
+    # avoid missing any constraints.
 
     for (x, y) in top._dag.top_level_callee_constraints:
-
-      # Use the actual method object for constraints
-
       xx = x
-      try:
-        if x.guarded_ifc:
-          xx = x.method
-          method_guard_mapping[xx] = x.get_guard()
-      except AttributeError:
-        pass
+      if isinstance( x, MethodPort ):
+        xx = method_callee_mapping[ x.method ]
+      elif isinstance( x, NonBlockingInterface ):
+        xx = method_callee_mapping[ x.method.method ]
 
       yy = y
-      try:
-        if y.guarded_ifc:
-          yy = y.method
-          method_guard_mapping[yy] = y.get_guard()
-      except AttributeError:
-        pass
+      if isinstance( y, MethodPort ):
+        yy = method_callee_mapping[ y.method ]
+      elif isinstance( y, NonBlockingInterface ):
+        yy = method_callee_mapping[ y.method.method ]
 
       InD[yy] += 1
       Es [xx].append( yy )
@@ -90,44 +119,24 @@ class OpenLoopCLPass( BasePass ):
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
-    
-    # ================ FIXME ====================
-    # Line trace stuffs should go in wrapper class
-    # when constraint is fixed
-    def wrap_line_trace( top, f ):
-      top.line_trace_string = ""
-      def new_line_trace():
-        line_trace_string = top.line_trace_string
-        top.line_trace_string = ""
-        return f() + " " + line_trace_string
 
-      return new_line_trace
+    # Here we are trying to avoid scanning the original schedule that
+    # contains methods because we will need isinstance in that case.
+    # As a result we created a preprocessed list for execution and use
+    # the dictionary to look up the new index of functions.
 
-    setattr( top, "line_trace", wrap_line_trace( top, top.line_trace ) )
+    # The last element is always line trace
+    def print_line_trace():
+      print(top.line_trace())
 
+    schedule.append( print_line_trace )
 
-    def wrap_method_trace( top, name, method ):
-      top.line_trace_string = ""
-      def wrapped_method( **kwargs ):
-        line_trace = " " + name + "(" + ", ".join([
-          "{arg}={value}".format( arg=arg, value=value )
-          for arg, value in kwargs.iteritems()
-      ] ) + ")"
-        ret = method(**kwargs)
-
-        if not ret is None:
-          line_trace += " -> " + str(ret)
-
-        top.line_trace_string += " " + line_trace
-        
-        return ret
-      return wrapped_method
-    # ================= end ===================
+    schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
+    mapping = { x : i for i, x in enumerate( schedule_no_method ) }
 
     def wrap_method( top, method,
                      my_idx_new, next_idx_new, schedule_no_method,
                      my_idx_orig, next_idx_orig ):
-      #  print "new", my_idx_new, next_idx_new, "orig", my_idx_orig, next_idx_orig
 
       def actual_method( *args, **kwargs ):
         i = top._sched.new_schedule_index
@@ -170,35 +179,6 @@ class OpenLoopCLPass( BasePass ):
 
       return actual_method
 
-    # Here we are trying to avoid scanning the original schedule that
-    # contains methods because we will need isinstance in that case.
-    # As a result we created a preprocessed list for execution and use
-    # the dictionary to look up the new index of functions.
-
-    # The last element is always line trace
-    def print_line_trace():
-      # ================ FIXME ====================
-      # Not needed when method trace is moved?
-      try:
-        if top.hide_line_trace:
-          return
-      except AttributeError:
-        pass
-      # ================= end ===================
-      print top.line_trace()
-    schedule.append( print_line_trace )
-
-    schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
-    mapping = { x : i for i, x in enumerate( schedule_no_method ) }
-
-    #  print "new"
-    #  for i, x in enumerate(schedule_no_method):
-      #  print i, x
-    #  print
-    #  print "orig"
-    #  for i, x in enumerate(schedule):
-      #  print i, x
-
     for i, x in enumerate( schedule ):
       if isinstance( x, CalleePort ):
         x.original_method = x.method
@@ -236,56 +216,11 @@ class OpenLoopCLPass( BasePass ):
         else:
           map_next_func_of_next_method = len(schedule_no_method)
 
-        # ================ FIXME ====================
-        # Line trace stuffs should go in wrapper class
-        # when constraint is fixed
-        try:
-          if not x._dsl.is_guard:
-            x.method = wrap_method_trace( top, x.method.__name__, x.method )
-        except AttributeError:
-          pass
-        # ================ end ====================
-
         x.method = wrap_method( top, x.method,
                                 map_next_func, map_next_func_of_next_method,
                                 schedule_no_method,
                                 i, next_method )
 
-                     #  my_idx_new, next_idx_new, schedule_no_method,
-                     #  my_idx_orig, next_idx_orig ):
     top.num_cycles_executed = 0
 
-    #  from graphviz import Digraph
-    #  dot = Digraph()
-    #  dot.graph_attr["rank"] = "same"
-    #  dot.graph_attr["ratio"] = "compress"
-    #  dot.graph_attr["margin"] = "0.1"
-
-    #  for x in V:
-      #  x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      #  try:
-        #  x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                      #  else top.get_update_block_host_component(x))
-      #  except:
-        #  x_host = ""
-      #  dot.node( x_name +"\\n@" + x_host, shape="box")
-
-    #  for (x, y) in E:
-      #  x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      #  try:
-        #  x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                      #  else top.get_update_block_host_component(x))
-      #  except:
-        #  x_host = ""
-      #  y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
-      #  try:
-        #  y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
-                      #  else top.get_update_block_host_component(y))
-      #  except:
-        #  y_host = ""
-
-      #  dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
-    #  dot.render( "/tmp/upblk-dag.gv", view=True )
-
     return schedule
-

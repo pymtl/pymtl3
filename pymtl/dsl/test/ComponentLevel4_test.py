@@ -31,8 +31,8 @@ def _test_model( cls ):
 class SimpleReg( ComponentLevel4 ):
 
   def construct( s ):
-    s.read  = CalleePort( s.rd )
-    s.write = CalleePort( s.wr )
+    s.read  = CalleePort( method = s.rd )
+    s.write = CalleePort( method = s.wr )
 
     s.v = 0
 
@@ -52,8 +52,8 @@ class SimpleReg( ComponentLevel4 ):
 class SimpleWire( ComponentLevel4 ):
 
   def construct( s ):
-    s.read  = CalleePort( s.rd )
-    s.write = CalleePort( s.wr )
+    s.read  = CalleePort( method = s.rd )
+    s.write = CalleePort( method = s.wr )
 
     s.v = 0
 
@@ -74,11 +74,11 @@ class BaseQueue( ComponentLevel4 ):
   def construct( s, size ):
     s.queue = deque( maxlen=size )
 
-    s.enq     = CalleePort( s.enq_ )
-    s.enq_rdy = CalleePort( s.enq_rdy_ )
+    s.enq     = CalleePort( method = s.enq_ )
+    s.enq_rdy = CalleePort( method = s.enq_rdy_ )
 
-    s.deq     = CalleePort( s.deq_ )
-    s.deq_rdy = CalleePort( s.deq_rdy_ )
+    s.deq     = CalleePort( method = s.deq_ )
+    s.deq_rdy = CalleePort( method = s.deq_rdy_ )
 
   def enq_rdy_( s ): return len(s.queue) < s.queue.maxlen
   def enq_( s, v ):  s.queue.appendleft(v)

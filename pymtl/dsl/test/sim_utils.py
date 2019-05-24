@@ -26,6 +26,7 @@ from pymtl.dsl import (
     Interface,
     MethodPort,
     NamedObject,
+    NonBlockingInterface,
     Signal,
 )
 from pymtl.dsl.errors import NotElaboratedError, UpblkCyclicError
@@ -234,12 +235,8 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, Interface ):
-          try:
-            if call.guarded_ifc:
-              method_blks[ call.method.method ].add( blk )
-          except AttributeError:
-            pass
+        elif isinstance( call, NonBlockingInterface ):
+          method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
 
@@ -252,26 +249,21 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       if   isinstance( x, MethodPort ):
         xx = x.method
 
-      # We allow the user to call the interface directly in a guarded
+      # We allow the user to call the interface directly in a non-blocking
       # interface, so if they do call it, we use the actual method within
       # the method field
-      elif isinstance( x, Interface ):
-        try:
-          if x.guarded_ifc:
-            xx = x.method.method
-        except AttributeError:
-          pass
+      elif isinstance( x, NonBlockingInterface ):
+        xx = x.method.method
+
       else:
         xx = x
 
       if   isinstance( y, MethodPort ):
         yy = y.method
-      elif isinstance( y, Interface ):
-        try:
-          if y.guarded_ifc:
-            yy = y.method.method
-        except AttributeError:
-          pass
+
+      elif isinstance( y, NonBlockingInterface ):
+        yy = y.method.method
+
       else:
         yy = y
 
