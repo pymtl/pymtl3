@@ -13,8 +13,7 @@ from pymtl import *
 from pymtl.passes.rtlir import RTLIRDataType as rdt
 from pymtl.passes.rtlir import get_rtlir_dtype
 from pymtl.passes.rtlir.errors import RTLIRConversionError
-
-from .test_utility import expected_failure
+from pymtl.passes.rtlir.test.test_utility import expected_failure
 
 
 def test_py_int():
