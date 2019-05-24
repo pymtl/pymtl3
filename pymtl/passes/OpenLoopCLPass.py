@@ -11,7 +11,7 @@ from BasePass     import BasePass, PassMetadata
 from collections  import deque
 from graphviz     import Digraph
 from errors import PassOrderError
-from pymtl.dsl import NonBlockingInterface
+from pymtl.dsl import MethodPort, NonBlockingInterface, NonBlockingCalleeIfc
 from pymtl.dsl.errors import UpblkCyclicError
 from pymtl import *
 
@@ -30,13 +30,28 @@ class OpenLoopCLPass( BasePass ):
 
     V = top.get_all_update_blocks() | top._dag.genblks
 
-    for x in top._dag.top_level_callee_ports:
-      try:
-        if not x._dsl.is_rdy:
-          V.add(x)
-      except AttributeError: # Normal callee port
-        V.add(x)
+    top_level_callee_ports = top.get_all_object_filter(
+      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
 
+    top_level_nb_ifcs = top.get_all_object_filter(
+      lambda x: isinstance(x, NonBlockingCalleeIfc) and x.get_host_component() is top )
+
+    method_callee_mapping = {}
+    method_guard_mapping  = {}
+
+    for x in top_level_callee_ports:
+      if not x.in_non_blocking_interface(): # Normal callee port
+        V.add(x)
+        assert x.method not in method_callee_mapping
+        method_callee_mapping[x.method] = x
+
+    for x in top_level_nb_ifcs:
+      V.add( x.method )
+      method_guard_mapping [x.method] = x.rdy
+      assert x.method.method not in method_callee_mapping
+      method_callee_mapping[x.method.method] = x.method
+
+    print "???", method_callee_mapping, method_guard_mapping
     E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
@@ -45,21 +60,21 @@ class OpenLoopCLPass( BasePass ):
       InD[v] += 1
       Es [u].append( v )
 
-    method_guard_mapping = {}
-
     for (x, y) in top._dag.top_level_callee_constraints:
 
-      # Use the actual method object for constraints
-
+      # Constraints involve actual method objects
       xx = x
-      if isinstance( x, NonBlockingInterface ):
-        xx = x.method
-        method_guard_mapping[xx] = x.rdy
+      if isinstance( x, MethodPort ):
+        xx = method_callee_mapping[ x.method ]
+      elif isinstance( x, NonBlockingInterface ):
+        xx = method_callee_mapping[ x.method.method ]
 
       yy = y
-      if isinstance( y, NonBlockingInterface ):
-        yy = y.method
-        method_guard_mapping[yy] = y.rdy
+      if isinstance( y, MethodPort ):
+        yy = method_callee_mapping[ y.method ]
+      elif isinstance( y, NonBlockingInterface ):
+        yy = method_callee_mapping[ y.method.method ]
+      print "...", x, xx, y, yy
 
       InD[yy] += 1
       Es [xx].append( yy )
@@ -89,7 +104,6 @@ class OpenLoopCLPass( BasePass ):
     def wrap_method( top, method,
                      my_idx_new, next_idx_new, schedule_no_method,
                      my_idx_orig, next_idx_orig ):
-      #  print "new", my_idx_new, next_idx_new, "orig", my_idx_orig, next_idx_orig
 
       def actual_method( *args, **kwargs ):
         i = top._sched.new_schedule_index
@@ -145,14 +159,6 @@ class OpenLoopCLPass( BasePass ):
     schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
     mapping = { x : i for i, x in enumerate( schedule_no_method ) }
 
-    #  print "new"
-    #  for i, x in enumerate(schedule_no_method):
-      #  print i, x
-    #  print
-    #  print "orig"
-    #  for i, x in enumerate(schedule):
-      #  print i, x
-
     for i, x in enumerate( schedule ):
       if isinstance( x, CalleePort ):
         x.original_method = x.method
@@ -195,8 +201,6 @@ class OpenLoopCLPass( BasePass ):
                                 schedule_no_method,
                                 i, next_method )
 
-                     #  my_idx_new, next_idx_new, schedule_no_method,
-                     #  my_idx_orig, next_idx_orig ):
     top.num_cycles_executed = 0
 
     #  from graphviz import Digraph

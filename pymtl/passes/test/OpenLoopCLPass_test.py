@@ -197,9 +197,31 @@ def test_top_level_non_blocking_ifc():
 
   assert A.num_cycles_executed == 8
 
-def test_top_level_non_blocking_ifc_in_net():
+def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top(Component):
+    def construct( s ):
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
+      s.inner = Top_less_less_inner()( push = s.push, pull = s.pull )
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+    def done( s ):
+      return True
+
+  class Top_less_less_inner(Component):
+    def construct( s ):
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
+      s.inner = Top_less_inner()( push = s.push, pull = s.pull )
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+    def done( s ):
+      return True
+
+  class Top_less_inner(Component):
     def construct( s ):
       s.push = NonBlockingCalleeIfc()
       s.pull = NonBlockingCalleeIfc()

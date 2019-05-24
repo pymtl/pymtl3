@@ -284,6 +284,11 @@ def {0}():
     except AttributeError:
       return
 
+    top._dsl.top_level_callee_ports = top.get_all_object_filter(
+      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
+
+    method_is_top_level_callee = set()
+
     try:
       all_method_nets = top.get_all_method_nets()
 
@@ -294,13 +299,16 @@ def {0}():
               assert member.method is None
               member.method = writer.method
 
+              if member.get_host_component() is top:
+                method_is_top_level_callee.add( writer.method )
+
     except AttributeError:
       pass
 
-    top._dag.top_level_callee_ports = top.get_all_object_filter(
-      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
-
-    top._dag.top_level_callee_constraints = set()
+    for callee in top._dsl.top_level_callee_ports:
+      print (callee, callee.method)
+      if callee.method:
+        method_is_top_level_callee.add( callee.method )
 
     method_blks = defaultdict(set)
 
@@ -319,6 +327,9 @@ def {0}():
     pred = defaultdict(set)
     succ = defaultdict(set)
 
+    top._dag.top_level_callee_constraints = set()
+
+    print (method_is_top_level_callee)
     for (x, y) in all_M_constraints:
 
       # Use the actual method object for constraints
@@ -340,13 +351,13 @@ def {0}():
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
-      if xx is not x:
-        if x.get_host_component() is top:
-          top._dag.top_level_callee_constraints.add( (x, y) )
+      xx_in_top = xx in method_is_top_level_callee
+      yy_in_top = yy in method_is_top_level_callee
 
-      elif yy is not y:
-        if y.get_host_component() is top:
-          top._dag.top_level_callee_constraints.add( (x, y) )
+      print(x,xx,y,yy, xx_in_top, yy_in_top)
+
+      if xx_in_top or yy_in_top:
+        top._dag.top_level_callee_constraints.add( (x, y) )
 
     verbose = False
 
