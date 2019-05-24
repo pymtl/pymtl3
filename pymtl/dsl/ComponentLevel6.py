@@ -16,7 +16,7 @@ from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
 # non blocking decorator
 #-------------------------------------------------------------------------
 
-def non_blocking( rdy=lambda : True, Type=None ):
+def non_blocking( rdy, Type=None ):
   def real_decorator( method ):
     method._non_blocking_rdy  = rdy
     method._non_blocking_type = Type
@@ -30,6 +30,7 @@ def non_blocking( rdy=lambda : True, Type=None ):
 class ComponentLevel6( ComponentLevel5 ):
 
   def _handle_decorated_methods( s ):
+    super( ComponentLevel6, s )._handle_decorated_methods()
 
     # The following code handles non-blocking methods
     def bind_method( method ):

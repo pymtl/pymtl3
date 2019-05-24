@@ -284,6 +284,18 @@ def {0}():
     except AttributeError:
       return
 
+    # Here we collect all top level callee ports and collect all
+    # constraints that involves a top level callee. NOTE THAT it is
+    # possible that the top level callee is connected to an actual callee
+    # somewhere else. Hence we use the ACTUAL METHOD as identifier
+    # because all members in the net will eventually point to the same
+    # method object.
+
+    top._dsl.top_level_callee_ports = top.get_all_object_filter(
+      lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
+
+    method_is_top_level_callee = set()
+
     try:
       all_method_nets = top.get_all_method_nets()
       for writer, net in all_method_nets:
@@ -293,13 +305,23 @@ def {0}():
               assert member.method is None
               member.method = writer.method
 
+            # If the member is a top level callee, we add the writer's
+            # actual method to the set
+            if member.get_host_component() is top:
+              method_is_top_level_callee.add( writer.method )
+
     except AttributeError:
       pass
+
+    # Add those callee ports that are not part of a net
+    for callee in top._dsl.top_level_callee_ports:
+      if callee.method:
+        method_is_top_level_callee.add( callee.method )
 
     method_blks = defaultdict(set)
 
     # Collect each CalleePort/method is called in which update block
-    # We use bounded method of CalleePort to identify each call
+    # We use the actual method of CalleePort to identify each call
     for blk, calls in top._dsl.all_upblk_calls.iteritems():
       for call in calls:
         if isinstance( call, MethodPort ):
@@ -312,7 +334,12 @@ def {0}():
     # Put all M-related constraints into predecessor and successor dicts
     pred = defaultdict(set)
     succ = defaultdict(set)
+
+    top._dag.top_level_callee_constraints = set()
+
     for (x, y) in all_M_constraints:
+
+      # Use the actual method object for constraints
 
       if   isinstance( x, MethodPort ):
         xx = x.method
@@ -330,6 +357,17 @@ def {0}():
 
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
+
+      xx_in_top = xx in method_is_top_level_callee
+      yy_in_top = yy in method_is_top_level_callee
+
+      # If either method is in the set we collected, we add the actual
+      # constraints to the top level constraint set. Assuming the user
+      # never set constraints on the actual method, we can use the type
+      # of the object (method port or nb interface) to tell if it's method
+      # or update block.
+      if xx_in_top or yy_in_top:
+        top._dag.top_level_callee_constraints.add( (x, y) )
 
     verbose = False
 

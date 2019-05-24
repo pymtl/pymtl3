@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl.Component import Component
+from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
 from .dsl.Connectable import (
     CalleePort,
@@ -20,6 +21,7 @@ from .passes.PassGroups import SimpleSim
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
+  'method_port',
   'non_blocking', 'NonBlockingCalleeIfc', 'NonBlockingCallerIfc',
 
   'SimpleSim',

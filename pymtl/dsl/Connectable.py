@@ -21,7 +21,21 @@ from .NamedObject import DSLMetadata, NamedObject
 class Connectable(object):
   # I've given up maintaining adjacency list or disjoint set locally since
   # we need to easily disconnect things
-  pass
+
+  # Public API
+
+  def get_host_component( s ):
+    try:
+      return s._dsl.host
+    except AttributeError:
+      try:
+        host = s
+        while not host.is_component():
+          host = host.get_parent_object() # go to the component
+        s._dsl.host = host
+        return s._dsl.host
+      except AttributeError:
+        raise NotElaboratedError()
 
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
@@ -50,19 +64,6 @@ class Const( Connectable ):
       return s._dsl.parent_obj
     except AttributeError:
       raise NotElaboratedError()
-
-  def get_host_component( s ):
-    try:
-      return s._dsl.host
-    except AttributeError:
-      try:
-        host = s
-        while not host.is_component():
-          host = host.get_parent_object() # go to the component
-        s._dsl.host = host
-        return s._dsl.host
-      except AttributeError:
-        raise NotElaboratedError()
 
   def get_sibling_slices( s ):
     return []
@@ -175,19 +176,6 @@ class Signal( NamedObject, Connectable ):
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------
-
-  def get_host_component( s ):
-    try:
-      return s._dsl.host
-    except AttributeError:
-      try:
-        host = s
-        while not host.is_component():
-          host = host.get_parent_object() # go to the component
-        s._dsl.host = host
-        return s._dsl.host
-      except AttributeError:
-        raise NotElaboratedError()
 
   def is_component( s ):
     return False
@@ -315,10 +303,14 @@ class MethodPort( NamedObject, Connectable ):
   def is_interface( s ):
     return False
 
+  def in_non_blocking_interface( s ):
+    return s._dsl.in_non_blocking_ifc
+
 class CallerPort( MethodPort ):
   def construct( self, Type=None ):
     self.Type = Type
     self.method = None
+    self._dsl.in_non_blocking_ifc = False
 
   def is_callee_port( s ):
     return False
@@ -330,6 +322,7 @@ class CalleePort( MethodPort ):
   def construct( self, Type=None, method=None ):
     self.Type = Type
     self.method = method
+    self._dsl.in_non_blocking_ifc = False
 
   def is_callee_port( s ):
     return True
@@ -356,6 +349,9 @@ class NonBlockingCalleeIfc( NonBlockingInterface ):
     s.method = CalleePort( Type, method )
     s.rdy    = CalleePort( None, rdy )
 
+    s.method._dsl.in_non_blocking_ifc = True
+    s.rdy._dsl.in_non_blocking_ifc    = True
+
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
 
@@ -366,6 +362,9 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
 
     s.method = CallerPort( Type )
     s.rdy    = CallerPort()
+
+    s.method._dsl.in_non_blocking_ifc = True
+    s.rdy._dsl.in_non_blocking_ifc    = True
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True

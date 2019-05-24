@@ -8,6 +8,7 @@ from .GenDAGPass import GenDAGPass
 from .mamba.HeuristicTopoPass import HeuristicTopoPass
 from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .mamba.UnrollTickPass import UnrollTickPass
+from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
 
@@ -33,6 +34,15 @@ SimpleCLSim = [
   GenDAGPass(),
   SimpleSchedulePass(),
   CLLineTracePass(),
+  SimpleTickPass(),
+  Component.lock_in_simulation
+]
+
+OpenLoopCLSim = [
+  Component.elaborate,
+  GenDAGPass(),
+  OpenLoopCLPass(), # Inject this pass to build infrastructure
+  SimpleSchedulePass(), # Still generate schedule and tick
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
