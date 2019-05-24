@@ -30,20 +30,28 @@ class OpenLoopCLPass( BasePass ):
 
     V = top.get_all_update_blocks() | top._dag.genblks
 
+    # We collect all top level callee ports/nonblocking callee interfaces
+
     top_level_callee_ports = top.get_all_object_filter(
       lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
 
     top_level_nb_ifcs = top.get_all_object_filter(
       lambda x: isinstance(x, NonBlockingCalleeIfc) and x.get_host_component() is top )
 
+    # We still tell the top level
     method_callee_mapping = {}
     method_guard_mapping  = {}
 
+    # First deal with normal calleeports. We map the actual method to the
+    # callee port, and add the port to the vertex set
     for x in top_level_callee_ports:
       if not x.in_non_blocking_interface(): # Normal callee port
         V.add(x)
         assert x.method not in method_callee_mapping
         method_callee_mapping[x.method] = x
+
+    # Then deal with non-blocking callee interfaces. Map the method of the
+    # interface to the actual method and set up method-rdy mapping
 
     for x in top_level_nb_ifcs:
       V.add( x.method )
@@ -51,7 +59,6 @@ class OpenLoopCLPass( BasePass ):
       assert x.method.method not in method_callee_mapping
       method_callee_mapping[x.method.method] = x.method
 
-    print "???", method_callee_mapping, method_guard_mapping
     E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
@@ -60,9 +67,16 @@ class OpenLoopCLPass( BasePass ):
       InD[v] += 1
       Es [u].append( v )
 
-    for (x, y) in top._dag.top_level_callee_constraints:
+    # In addition to existing constraints, we process the constraints that
+    # involve top level callee ports. NOTE THAT we assume the user never
+    # set the constraint on the actual method object inside the CalleePort
+    # In GenDAGPass we already collect those constraints, but these
+    # constraints might involve CALLEES IN THE SAME METHOD NET as the top
+    # level callee (i.e. we cannot directly use it) Hence when we unbox
+    # them, we use the ACTUAL METHOD - callee mapping we set up above to
+    # avoid missing any constraints.
 
-      # Constraints involve actual method objects
+    for (x, y) in top._dag.top_level_callee_constraints:
       xx = x
       if isinstance( x, MethodPort ):
         xx = method_callee_mapping[ x.method ]
@@ -74,7 +88,6 @@ class OpenLoopCLPass( BasePass ):
         yy = method_callee_mapping[ y.method ]
       elif isinstance( y, NonBlockingInterface ):
         yy = method_callee_mapping[ y.method.method ]
-      print "...", x, xx, y, yy
 
       InD[yy] += 1
       Es [xx].append( yy )
@@ -202,38 +215,6 @@ class OpenLoopCLPass( BasePass ):
                                 i, next_method )
 
     top.num_cycles_executed = 0
-
-    #  from graphviz import Digraph
-    #  dot = Digraph()
-    #  dot.graph_attr["rank"] = "same"
-    #  dot.graph_attr["ratio"] = "compress"
-    #  dot.graph_attr["margin"] = "0.1"
-
-    #  for x in V:
-      #  x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      #  try:
-        #  x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                      #  else top.get_update_block_host_component(x))
-      #  except:
-        #  x_host = ""
-      #  dot.node( x_name +"\\n@" + x_host, shape="box")
-
-    #  for (x, y) in E:
-      #  x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
-      #  try:
-        #  x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
-                      #  else top.get_update_block_host_component(x))
-      #  except:
-        #  x_host = ""
-      #  y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
-      #  try:
-        #  y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
-                      #  else top.get_update_block_host_component(y))
-      #  except:
-        #  y_host = ""
-
-      #  dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
-    #  dot.render( "/tmp/upblk-dag.gv", view=True )
 
     return schedule
 
