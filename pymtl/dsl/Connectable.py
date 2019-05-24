@@ -290,6 +290,7 @@ class MethodPort( NamedObject, Connectable ):
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
+
   def is_component( s ):
     return False
 
@@ -302,10 +303,14 @@ class MethodPort( NamedObject, Connectable ):
   def is_interface( s ):
     return False
 
+  def in_non_blocking_interface( s ):
+    return s._dsl.in_non_blocking_ifc
+
 class CallerPort( MethodPort ):
   def construct( self, Type=None ):
     self.Type = Type
     self.method = None
+    self._dsl.in_non_blocking_ifc = False
 
   def is_callee_port( s ):
     return False
@@ -317,6 +322,7 @@ class CalleePort( MethodPort ):
   def construct( self, Type=None, method=None ):
     self.Type = Type
     self.method = method
+    self._dsl.in_non_blocking_ifc = False
 
   def is_callee_port( s ):
     return True
@@ -337,6 +343,9 @@ class NonBlockingCalleeIfc( NonBlockingInterface ):
     s.method = CalleePort( Type, method )
     s.rdy    = CalleePort( None, rdy )
 
+    s.method._dsl.in_non_blocking_ifc = True
+    s.rdy._dsl.in_non_blocking_ifc    = True
+
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
 
@@ -347,6 +356,9 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
 
     s.method = CallerPort( Type )
     s.rdy    = CallerPort()
+
+    s.method._dsl.in_non_blocking_ifc = True
+    s.rdy._dsl.in_non_blocking_ifc    = True
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True

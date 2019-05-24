@@ -18,9 +18,9 @@ from .NamedObject import NamedObject
 
 
 # This method_port is a syntactic sugar to create a CalleePort
-
+# Note that for a simple method port we currently don't care about type
 def method_port( method ):
-  setattr( method, "_callee_port", True )
+  method._callee_port = True
   return method
 
 class ComponentLevel5( ComponentLevel4 ):
@@ -31,11 +31,12 @@ class ComponentLevel5( ComponentLevel4 ):
 
   def _handle_decorated_methods( s ):
 
-    for x in dir( s ):
+    cls_dict = s.__class__.__dict__
+    for x in cls_dict:
       method = getattr( s, x )
-      # We identify decorated methods here
+      # We identify decorated method port here
       if hasattr( method, "_callee_port" ):
-        setattr( s, x, CalleePort( method ) )
+        setattr( s, x, CalleePort( method = method ) )
 
   # Override
   def _construct( s ):

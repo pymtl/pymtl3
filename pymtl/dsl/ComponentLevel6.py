@@ -16,7 +16,7 @@ from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
 # non blocking decorator
 #-------------------------------------------------------------------------
 
-def non_blocking( rdy=lambda : True, Type=None ):
+def non_blocking( rdy, Type=None ):
   def real_decorator( method ):
     method._non_blocking_rdy  = rdy
     method._non_blocking_type = Type
