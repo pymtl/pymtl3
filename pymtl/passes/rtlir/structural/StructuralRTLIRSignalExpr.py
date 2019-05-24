@@ -9,8 +9,8 @@ from functools import reduce
 
 import pymtl
 from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
 from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl.passes.rtlir.rtype import RTLIRType as rt
 from pymtl.passes.rtlir.rtype.RTLIRDataType import get_rtlir_dtype
 
 
