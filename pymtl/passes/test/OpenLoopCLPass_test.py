@@ -1,3 +1,9 @@
+from __future__ import absolute_import, division, print_function
+
+from pymtl import *
+from pymtl.dsl.errors import UpblkCyclicError
+from pymtl.passes import GenDAGPass, OpenLoopCLPass
+
 #=========================================================================
 # OpenLoopCLPass_test.py
 #=========================================================================
@@ -5,11 +11,7 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-from pymtl import *
-from pymtl.passes import OpenLoopCLPass, GenDAGPass
-from pymtl.dsl.errors import UpblkCyclicError
 
-from collections import deque
 
 def test_top_level_method():
 
@@ -70,22 +72,22 @@ def test_top_level_method():
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print "- push!"
+  print("- push!")
   A.push(7)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- push!"
+  print("- push!")
   A.push(33)
-  print "- push!"
+  print("- push!")
   A.push(55)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "num_cycles_executed: ", A.num_cycles_executed
+  print("num_cycles_executed: ", A.num_cycles_executed)
 
 def test_top_level_non_blocking_ifc():
 
@@ -145,53 +147,53 @@ def test_top_level_non_blocking_ifc():
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(7)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(8)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(9)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(11)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(13)
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- push!"
+  print("- push!")
   A.push(33)
-  print "- push!"
+  print("- push!")
   A.push(55)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
   # regression
 
@@ -289,53 +291,53 @@ def test_top_level_non_blocking_ifc_in_deep_net():
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(7)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(8)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(9)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(11)
 
-  print "- push_rdy?",
+  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print rdy
+  print(rdy)
   if rdy:
-    print "- push!"
+    print("- push!")
     A.push(13)
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
-  print "- push!"
+  print("- push!")
   A.push(33)
-  print "- push!"
+  print("- push!")
   A.push(55)
-  print "- pull!"
-  print A.pull()
+  print("- pull!")
+  print(A.pull())
 
   # regression
 

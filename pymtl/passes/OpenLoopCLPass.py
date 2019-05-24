@@ -7,13 +7,19 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 
-from BasePass     import BasePass, PassMetadata
-from collections  import deque
-from graphviz     import Digraph
-from errors import PassOrderError
-from pymtl.dsl import MethodPort, NonBlockingInterface, NonBlockingCalleeIfc
-from pymtl.dsl.errors import UpblkCyclicError
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
+
+from graphviz import Digraph
+
 from pymtl import *
+from pymtl.dsl import MethodPort, NonBlockingCalleeIfc, NonBlockingInterface
+from pymtl.dsl.errors import UpblkCyclicError
+
+from .BasePass import BasePass, PassMetadata
+from .errors import PassOrderError
+
 
 class OpenLoopCLPass( BasePass ):
   def __call__( self, top ):
@@ -114,6 +120,20 @@ class OpenLoopCLPass( BasePass ):
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
 
+    # Here we are trying to avoid scanning the original schedule that
+    # contains methods because we will need isinstance in that case.
+    # As a result we created a preprocessed list for execution and use
+    # the dictionary to look up the new index of functions.
+
+    # The last element is always line trace
+    def print_line_trace():
+      print(top.line_trace())
+
+    schedule.append( print_line_trace )
+
+    schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
+    mapping = { x : i for i, x in enumerate( schedule_no_method ) }
+
     def wrap_method( top, method,
                      my_idx_new, next_idx_new, schedule_no_method,
                      my_idx_orig, next_idx_orig ):
@@ -158,19 +178,6 @@ class OpenLoopCLPass( BasePass ):
         return ret
 
       return actual_method
-
-    # Here we are trying to avoid scanning the original schedule that
-    # contains methods because we will need isinstance in that case.
-    # As a result we created a preprocessed list for execution and use
-    # the dictionary to look up the new index of functions.
-
-    # The last element is always line trace
-    def print_line_trace():
-      print top.line_trace()
-    schedule.append( print_line_trace )
-
-    schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
-    mapping = { x : i for i, x in enumerate( schedule_no_method ) }
 
     for i, x in enumerate( schedule ):
       if isinstance( x, CalleePort ):
@@ -217,4 +224,3 @@ class OpenLoopCLPass( BasePass ):
     top.num_cycles_executed = 0
 
     return schedule
-
