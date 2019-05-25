@@ -66,12 +66,15 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def enter( s, blk, rtlir ):
     """ entry point for RTLIR type checking """
     s.blk     = blk
+
     # s.globals contains a dict of the global namespace of the module where
     # blk was defined
     s.globals = blk.__globals__
+
     # s.closure contains the free variables defined in an enclosing scope.
     # Basically this is the model instance s.
     s.closure = {}
+
     for i, var in enumerate( blk.__code__.co_freevars ):
       try: 
         s.closure[ var ] = blk.__closure__[ i ].cell_contents
@@ -192,10 +195,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_SizeCast( s, node ):
     nbits = node.nbits
     Type = node.value.Type
+
     # We do not check for bitwidth mismatch here because the user should
     # be able to explicitly convert signals/constatns to different bitwidth.
     node.Type = copy.copy( Type )
     node.Type.dtype = rdt.Vector( nbits )
+
     try:
       node._value = node.value._value
     except AttributeError:
@@ -207,6 +212,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
           'type {} does not have attribute {}!'.format(node.value.Type, node.attr))
+
     else:
       raise PyMTLTypeError( s.blk, node.ast,
         'non-component attribute is not supported at L1!'.format(node.attr, node.value.Type))
@@ -254,6 +260,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if not isinstance( dtype, rdt.Vector ):
       raise PyMTLTypeError( s.blk, node.ast,
         'cannot perform slicing on type {}!'.format(dtype))
+
     if not lower_val is None and not upper_val is None:
       signal_nbits = dtype.get_length()
       # upper bound must be strictly larger than the lower bound

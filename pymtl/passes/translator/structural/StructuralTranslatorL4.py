@@ -100,6 +100,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
             s.rtlir_tr_unpacked_array_type( ifc_port_array_rtype ),
             port_id, port_rtype, s.rtlir_tr_unpacked_array_type( port_array_rtype )
           ) )
+
         # Assemble all ports of the current interface into a complete interface
         ifc_conns.append( s.rtlir_tr_subcomp_ifc_decl(
           '{c_id}', c_rtype, s.rtlir_tr_unpacked_array_type( c_array_rtype ),

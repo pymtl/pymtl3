@@ -172,9 +172,11 @@ def _get_rtlir_dtype_struct( obj ):
   # Struct field
   elif hasattr( obj, '__class__' ) and not obj.__class__.__name__ in dir( __builtin__ ):
     cls = obj.__class__
-    # Collect all fields of the struct object
     all_properties = {}
+
+    # Collect all fields of the struct object
     static_members = collect_objs( cls, object, True )
+
     # Infer the type of each field from the type instance
     try:
       type_instance = cls()
@@ -224,9 +226,11 @@ def get_rtlir_dtype( obj ):
     # Signals might be parameterized with different data types
     if isinstance( obj, ( pymtl_Signal, pymtl_Const ) ):
       Type = obj._dsl.Type
+
       # Vector data type
       if issubclass( Type, pymtl.Bits ):
         return Vector( Type.nbits )
+
       # Struct data type
       elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtin__):
         try:
@@ -236,6 +240,7 @@ def get_rtlir_dtype( obj ):
             '__init__() of supposed struct {} should take 0 argument ( you can \
             achieve this by adding default values to your arguments )!'.format(
               Type.__name__ )
+
       else:
         assert False, 'cannot convert object of type {} into RTLIR!'.format(Type)
 

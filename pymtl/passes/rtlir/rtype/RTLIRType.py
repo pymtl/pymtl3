@@ -257,29 +257,37 @@ class Component( BaseRTLIRType ):
     assert s.argspec.varargs is None, "varargs are not allowed for construct!"
     assert s.argspec.keywords is None, "keyword args are not allowed for construct!"
     kwargs = ()
+
     if 'elaborate' in obj._dsl.param_dict:
       kwargs = tuple(obj._dsl.param_dict.keys())
+
     defaults = s.argspec.defaults if s.argspec.defaults else ()
     num_args = len(arg_names)
     num_supplied = len(obj._dsl.args) + len(obj._dsl.kwargs)
     num_defaults = len(defaults)
+
     # No default values: each arg is either keyword or unnamed
     # Has default values: num. supplied values + num. of defaults >= num. args
     assert num_args == num_supplied or num_args <= num_supplied + num_defaults
     use_defaults = num_args != num_supplied
+
     ret = []
     # Handle method construct arguments
     for idx, arg_name in enumerate(arg_names):
+
       # Use values from _dsl.args
       if idx < len(obj._dsl.args):
         ret.append((arg_name, obj._dsl.args[idx]))
+
       # Use values from _dsl.kwargs
       elif arg_name in obj._dsl.kwargs:
         ret.append((arg_name, obj._dsl.kwargs[arg_name]))
+
       # Use default values
       else:
         assert use_defaults
         ret.append((arg_name, defaults[idx-len(arg_names)]))
+
     # Handle added keyword arguments
     for arg_name in enumerate(kwargs):
       assert arg_name in obj._dsl.param_dict

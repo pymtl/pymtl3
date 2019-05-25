@@ -27,8 +27,10 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     # structural translator
     s.structural = TranslatorMetadata()
     s.s_backend = TranslatorMetadata()
+
     # Generate metadata
     s.gen_structural_trans_metadata( top )
+
     # Data type declaration
     s.structural.decl_type_vector = []
     s.structural.decl_type_array  = []
@@ -52,10 +54,12 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     """
     # Component metadata
     s.structural.component_unique_name = {}
+
     # Declarations
     s.structural.decl_ports  = {}
     s.structural.decl_wires  = {}
     s.structural.decl_consts = {}
+
     # Connections
     s.structural.connections = {}
     s._translate_structural( top )
@@ -73,8 +77,10 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
+
     # Translate declarations of signals
     s.translate_decls( m )
+
     # Translate connections
     s.translate_connections( m )
 

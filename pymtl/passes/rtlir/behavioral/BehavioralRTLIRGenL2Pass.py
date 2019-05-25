@@ -90,8 +90,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     return super( BehavioralRTLIRGeneratorL2, s ).visit_Call( node )
 
   def visit_Name( s, node ):
+    # temporary variable
     if (not node.id in s.closure) and (not node.id in s.globals):
-      # temporary variable
       # check if is a LoopVar or not
       if node.id in s.loop_var_env:
         ret = bir.LoopVar( node.id )
@@ -107,12 +107,12 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
         ret = bir.TmpVar( node.id, s._upblk_name )
       ret.ast = node
       return ret
+
     else:
       return super( BehavioralRTLIRGeneratorL2, s ).visit_Name( node )
 
   def visit_If( s, node ):
     cond = s.visit( node.test )
-
     body = []
     for body_stmt in node.body:
       body.append( s.visit( body_stmt ) )

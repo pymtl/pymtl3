@@ -23,7 +23,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
     def rtlir_data_type_translation( s, m, dtype ):
       """Translate `dtype` in component `m`.
       
-      This method should be implemented by the strcutural translator. Since
+      This method should be implemented by the structural translator. Since
       we are doing unit testing of the behavioral translator, I added it here
       so everything will work. This method does conflict with the actual
       implementation of `rtlir_data_type_translation` when we start testing
@@ -70,7 +70,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
     def rtlir_tr_unpacked_array_type( s, array_rtype ):
       """Translate unpacked array type.
       
-      This method should be implemented by the strcutural translator. Since
+      This method should be implemented by the structural translator. Since
       we are doing unit testing of the behavioral translator, I added it here
       so everything will work. To avoid conflicting with the actual implementation
       of `rtlir_tr_unpacked_array_type`, this method returns different values
@@ -85,7 +85,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
     def rtlir_tr_vector_dtype( s, dtype ):
       """Translate vector data type.
       
-      This method should be implemented by the strcutural translator. Since
+      This method should be implemented by the structural translator. Since
       we are doing unit testing of the behavioral translator, I added it here
       so everything will work. To avoid conflicting with the actual implementation
       of `rtlir_tr_vector_dtype`, this method returns different values

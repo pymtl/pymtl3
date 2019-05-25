@@ -22,6 +22,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   def __init__( s, top ):
     super( StructuralTranslatorL2, s ).__init__( top )
+
     # Declarations
     s.structural.decl_type_struct = []
 

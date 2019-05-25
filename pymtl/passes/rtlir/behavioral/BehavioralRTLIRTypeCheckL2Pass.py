@@ -98,6 +98,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       if lhs_type != rt.NoneType() and lhs_type != rhs_type:
         raise PyMTLTypeError( s.blk, node.ast,
           'conflicting type for temporary variable {}!'.format(node.target.name) )
+
       # Creating a temporaray variable
       node.target.Type = rt.Wire( rhs_type.get_dtype() )
       s.tmpvars[ tmpvar_id ] = rt.Wire( rhs_type.get_dtype() )
@@ -147,6 +148,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       # This tmpvar is being created. Later when it is used, its type can
       # be read from the tmpvar type environment.
       node.Type = rt.NoneType()
+
     else:
       node.Type = s.tmpvars[ tmpvar_id ]
 
@@ -155,6 +157,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     if not rdt.Bool()( node.cond.Type.get_dtype() ):
       raise PyMTLTypeError( s.blk, node.ast,
         'the condition of "if-exp" cannot be converted to bool!' )
+
     # body and orelse must have the same type
     # if node.body.Type != node.orelse.Type:
     if not node.body.Type.get_dtype()( node.orelse.Type.get_dtype() ):
@@ -208,6 +211,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       # Both sides are constant but the value cannot be determined statically
       if isinstance(node.left.Type, rt.Const) and isinstance(node.right.Type, rt.Const):
         node.Type = rt.Const( rdt.Vector( res_nbits ) )
+
       # Variable
       else:
         node.Type = rt.Wire( rdt.Vector( res_nbits ) )
