@@ -8,6 +8,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from functools import reduce
+
 import py
 
 from pymtl import *
@@ -93,9 +95,9 @@ def mk_bit_struct( name, fields, str_func=None ):
       assign_str += "    s.{} = {}\n".format( field_name, field_name )
     args_str = args_str[:-2]
 
-    exec py.code.Source(
+    exec(py.code.Source(
       _struct_tmpl.format( **locals() )
-    ).compile() in globals()
+    ).compile(), globals())
 
     cls = _struct_dict[name]
 
