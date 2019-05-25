@@ -27,7 +27,7 @@ def test_mem_fl_cl_adapter():
       if has_loop == 1:
         @s.update
         def up_master_while():
-          s.trace = "                   "
+          s.trace = "                  "
           while s.addr < s.end:
             s.mem.write( s.addr, 4, 0xdead0000 | s.addr )
             s.trace = "wr 0x{:x}         ".format( s.addr )
@@ -107,6 +107,11 @@ def test_mem_fl_cl_adapter():
 
           s.mem.resp( resp )
 
+      s.add_constraints( U(up_process) < M(s.mem.resp) ) # pipe behavior
+
+    def line_trace( s ):
+      return s.mem.line_trace()
+
   class TestHarness( Component ):
     def construct( s ):
       s.master = [ SomeMasterFL( i*0x222, i ) for i in range(2) ]
@@ -114,7 +119,8 @@ def test_mem_fl_cl_adapter():
                     for i in range(2) ]
 
     def line_trace( s ):
-      return "|".join( [ x.line_trace() for x in s.master ] )
+      return "|".join( [ x.line_trace() for x in s.master ] ) + " >>> " + \
+             "|".join( [ x.line_trace() for x in s.minion ] )
 
     def done( s ):
       return all( [ x.done() for x in s.master ] )

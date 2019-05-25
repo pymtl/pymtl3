@@ -11,7 +11,6 @@ from greenlet import greenlet
 
 from pymtl import *
 
-from .GuardedIfc import GuardedCalleeIfc, GuardedCallerIfc, guarded_ifc
 from .MemMsg import MemMsgType, mk_mem_msg
 
 
@@ -19,8 +18,11 @@ class MemMasterIfcCL( Interface ):
   def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
     s.req_class  = req_class
     s.resp_class = resp_class
-    s.req  = GuardedCallerIfc()
-    s.resp = GuardedCalleeIfc( resp, resp_rdy )
+    s.req  = NonBlockingCallerIfc( req_class )
+    s.resp = NonBlockingCalleeIfc( resp_class, resp, resp_rdy )
+
+  def line_trace( s ):
+    return "{} > {}".format( s.req, s.resp )
 
   def connect( s, other, parent ):
     if isinstance( other, MemMinionIfcFL ):
@@ -49,8 +51,11 @@ class MemMinionIfcCL( Interface ):
   def construct( s, req_class, resp_class, req=None, req_rdy=None ):
     s.req_class  = req_class
     s.resp_class = resp_class
-    s.req  = GuardedCalleeIfc( req, req_rdy )
-    s.resp = GuardedCallerIfc()
+    s.req  = NonBlockingCalleeIfc( req_class, req, req_rdy )
+    s.resp = NonBlockingCallerIfc( resp_class )
+
+  def line_trace( s ):
+    return "{} > {}".format( s.req, s.resp )
 
   def connect( s, other, parent ):
     if isinstance( other, MemMasterIfcFL ):
@@ -84,9 +89,9 @@ class MemMasterIfcFL( Interface ):
 
 class MemMinionIfcFL( Interface ):
   def construct( s, read, write, amo ):
-    s.read  = CalleePort( read )
-    s.write = CalleePort( write )
-    s.amo   = CalleePort( amo )
+    s.read  = CalleePort( method=read )
+    s.write = CalleePort( method=write )
+    s.amo   = CalleePort( method=amo )
 
 class MemIfcCL2FLAdapter( Component ):
 
