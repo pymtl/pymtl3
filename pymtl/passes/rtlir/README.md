@@ -24,6 +24,8 @@
       - `L3` adds support for `Struct` data type.
       - `L4` adds support for PyMTL interface.
       - `L5` adds support for component hierarchy.
+      - The `L1` through `L5` passes are really for creating an incremental development narrative to avoid having all
+      methods in a gigantic class. Only the highest level `L5` is and should be used by other passes!
     - The user should only use passes exposed through the top level `__init__.py`. The other passes are used for 
     framework testing purposes.
   - `structural/`
@@ -33,6 +35,8 @@
       - `L2` adds support for `Struct` data type, and accessing attributes of a `Struct` signal.
       - `L3` adds support for PyMTL interface, and accessing attribute signals of an interface.
       - `L4` adds support for component hierarchy, and connecting ports of components.
+      - The `L1` through `L4` passes are really for creating an incremental development narrative to avoid having all
+      methods in a gigantic class. Only the highest level `L4` is and should be used by other passes!
     - `StructuralSignalExpr.py` generates the IR of a signal expression (e.g. `s.in_[2].bar[0:4]`).
     - The user should only use passes exposed through the top level `__init__.py`. Other passes are used only for 
     framework testing purposes.
