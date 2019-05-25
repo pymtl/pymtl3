@@ -23,6 +23,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
     return str( obj )
 
   class TestStructuralTranslator( _StructuralTranslator ):
+    """Testing translator that implements structural callback methods."""
 
     def rtlir_tr_vector_dtype( s, dtype ):
       return str( dtype )

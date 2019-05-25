@@ -18,7 +18,19 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       src[ idx ] = nindent * indent + s
 
   class TestBehavioralTranslator( _BehavioralTranslator ):
+    """Testing translator that implements behavioral callback methods."""
+
     def rtlir_data_type_translation( s, m, dtype ):
+      """Translate `dtype` in component `m`.
+      
+      This method should be implemented by the strcutural translator. Since
+      we are doing unit testing of the behavioral translator, I added it here
+      so everything will work. This method does conflict with the actual
+      implementation of `rtlir_data_type_translation` when we start testing
+      RTLIRTranslator. My current solution is to explicitly check for the
+      test translator's name and if it's a match then call the actual
+      implementation.
+      """
       if s.__class__.__name__ == 'TestRTLIRTranslator':
         return super(TestBehavioralTranslator, s). \
           rtlir_data_type_translation( m, dtype )
@@ -56,12 +68,30 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       return ['tmpvar: {id_} in {upblk_id} of {dtype}'.format( **locals() )]
 
     def rtlir_tr_unpacked_array_type( s, array_rtype ):
+      """Translate unpacked array type.
+      
+      This method should be implemented by the strcutural translator. Since
+      we are doing unit testing of the behavioral translator, I added it here
+      so everything will work. To avoid conflicting with the actual implementation
+      of `rtlir_tr_unpacked_array_type`, this method returns different values
+      depending on the name of the class (i.e. whether we are doing unit testing
+      of the behavioral translator or the RTLIR translator).
+      """
       if s.__class__.__name__ == 'TestRTLIRTranslator':
         return "" if array_rtype is None else repr(array_rtype)
       else:
         return 'unpacked_array: {}'.format( array_rtype )
 
     def rtlir_tr_vector_dtype( s, dtype ):
+      """Translate vector data type.
+      
+      This method should be implemented by the strcutural translator. Since
+      we are doing unit testing of the behavioral translator, I added it here
+      so everything will work. To avoid conflicting with the actual implementation
+      of `rtlir_tr_vector_dtype`, this method returns different values
+      depending on the name of the class (i.e. whether we are doing unit testing
+      of the behavioral translator or the RTLIR translator).
+      """
       if s.__class__.__name__ == 'TestRTLIRTranslator':
         return str( dtype )
       else:
