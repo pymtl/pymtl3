@@ -441,8 +441,10 @@ class ComponentLevel2( ComponentLevel1 ):
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints
 
-    for (x0, x1) in args:
+    for (x0, x1, is_equal) in args:
+
       if   isinstance( x0, U ) and isinstance( x1, U ): # U & U, same
+        assert is_equal == False
         assert (x0.func, x1.func) not in s._dsl.U_U_constraints, \
           "Duplicated constraint"
         s._dsl.U_U_constraints.add( (x0.func, x1.func) )
@@ -451,6 +453,7 @@ class ComponentLevel2( ComponentLevel1 ):
         raise InvalidConstraintError
 
       elif isinstance( x0, ValueConstraint ) or isinstance( x1, ValueConstraint ):
+        assert is_equal == False
         sign = 1 # RD(x) < U is 1, RD(x) > U is -1
         if isinstance( x1, ValueConstraint ):
           sign = -1

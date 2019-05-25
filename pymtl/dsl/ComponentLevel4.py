@@ -69,16 +69,16 @@ class ComponentLevel4( ComponentLevel3 ):
     super( ComponentLevel4, s ).add_constraints( *args )
 
     # add M-U, U-M, M-M constraints
-    for (x0, x1) in args:
+    for (x0, x1, is_equal) in args:
       if   isinstance( x0, M ):
         if   isinstance( x1, U ):
-          s._dsl.M_constraints.add( (x0.func, x1.func) )
+          s._dsl.M_constraints.add( (x0.func, x1.func, is_equal) )
         elif isinstance( x1, M ):
-          s._dsl.M_constraints.add( (x0.func, x1.func) )
+          s._dsl.M_constraints.add( (x0.func, x1.func, is_equal) )
         else:
           assert False
       elif isinstance( x1, M ):
         if   isinstance( x0, U ):
-          s._dsl.M_constraints.add( (x0.func, x1.func) )
+          s._dsl.M_constraints.add( (x0.func, x1.func, is_equal) )
         else:
           assert False

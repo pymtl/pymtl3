@@ -21,11 +21,13 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
+  print()
   T, time = 0, 20
   while not A.done() and T < time:
     A.tick()
     print(A.line_trace())
     T += 1
+  return T
 
 class SimpleTestSource( ComponentLevel5 ):
 
@@ -104,7 +106,7 @@ def test_simple_src_dumb_sink():
       return  s.src.line_trace() + " >>> " + s.sink.line_trace()
 
 
-  _test_model( Top )
+  assert _test_model( Top ) == 4 # regression: 4 cycles
 
 class TestSinkUp( ComponentLevel5 ):
 
@@ -184,8 +186,85 @@ def test_simple_src_up_sink():
     def line_trace( s ):
       return  s.src.line_trace() + " >>> " + s.sink.line_trace()
 
+  assert _test_model( Top ) == 5 # regression: 5 cycles
 
-  _test_model( Top )
+class PassThrough( ComponentLevel5 ):
+
+  @method_port
+  def req( s, msg ):
+    assert s.resp_rdy()
+    s.resp( msg )
+
+  @method_port
+  def req_rdy( s ):
+    return s.resp_rdy()
+
+  def construct( s ):
+    s.resp     = CalleePort()
+    s.resp_rdy = CalleePort()
+    s.entry = None
+
+    s.add_constraints(
+      M(s.req) == M(s.resp),
+      M(s.req_rdy) == M(s.resp_rdy),
+    )
+
+def test_constraint_equal_pass_through():
+
+  class Top( ComponentLevel5 ):
+
+    def construct( s ):
+      s.src  = SimpleTestSource( [1,2,3,4] )
+      s.mid  = PassThrough()
+      s.sink = TestSinkUp( [1,2,3,4] )
+
+      s.connect_pairs(
+        s.src.req,     s.mid.req,
+        s.src.req_rdy, s.mid.req_rdy,
+        s.mid.resp,    s.sink.resp,
+        s.mid.resp_rdy, s.sink.resp_rdy,
+      )
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return  s.src.line_trace() + " >>> " + s.sink.line_trace()
+
+  assert _test_model( Top ) == 5 # regression: 5 cycles
+
+def test_constraint_equal_pass_way_through():
+
+  class Top( ComponentLevel5 ):
+
+    def construct( s ):
+      s.src  = SimpleTestSource( [1,2,3,4] )
+      s.mid  = [ PassThrough() for _ in range(5) ]
+      s.sink = TestSinkUp( [1,2,3,4] )
+
+      s.connect_pairs(
+        s.src.req,     s.mid[0].req,
+        s.src.req_rdy, s.mid[0].req_rdy,
+      )
+
+      for i in range(4):
+        s.connect_pairs(
+          s.mid[i].resp, s.mid[i+1].req,
+          s.mid[i].resp_rdy, s.mid[i+1].resp_rdy,
+        )
+
+      s.connect_pairs(
+        s.mid[4].resp,    s.sink.resp,
+        s.mid[4].resp_rdy, s.sink.resp_rdy,
+      )
+
+    def done( s ):
+      return s.src.done() and s.sink.done()
+
+    def line_trace( s ):
+      return  s.src.line_trace() + " >>> " + s.sink.line_trace()
+
+  assert _test_model( Top ) == 5 # regression: 5 cycles
 
 def test_method_interface():
 
@@ -288,4 +367,4 @@ def test_method_interface():
     def line_trace( s ):
       return  s.src.line_trace() + " >>> " + s.sink.line_trace()
 
-  _test_model( Top )
+  assert _test_model( Top ) == 4 # regression: 4 cycles

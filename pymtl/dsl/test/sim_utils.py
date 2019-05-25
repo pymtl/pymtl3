@@ -243,8 +243,13 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     # Put all M-related constraints into predecessor and successor dicts
     pred = defaultdict(set)
     succ = defaultdict(set)
-    for (x, y) in s._dsl.all_M_constraints:
-      if verbose: print((x,y))
+
+    # We also pre-process M(x) == M(y) constraints into per-method
+    # equivalence sets
+    equiv = defaultdict(set)
+
+    for (x, y, is_equal) in s._dsl.all_M_constraints:
+      if verbose: print((x,y,is_equal))
 
       if   isinstance( x, MethodPort ):
         xx = x.method
@@ -270,12 +275,24 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
+      if is_equal: # M(x) == M(y)
+        equiv[xx].add( yy )
+        equiv[yy].add( xx )
+
     for method, assoc_blks in method_blks.iteritems():
+      visited = set( [ (method, 0) ] )
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
+
       if verbose: print()
       while Q:
-        (u, w) = Q.popleft()
+        (u, w) = Q.pop()
         if verbose: print((u, w))
+
+        if u in equiv:
+          for v in equiv[u]:
+            if (v, w) not in visited:
+              visited.add( (v, w) )
+              Q.append( (v, w) )
 
         if w <= 0:
           for v in pred[u]:
@@ -311,7 +328,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                                       blk.__name__.center(25))
                           all_constraints.add( (vb, blk) )
 
-              Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
+              if (v, -1) not in visited:
+                visited.add( (v, -1) )
+                Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
         if w >= 0:
           for v in succ[u]:
@@ -348,7 +367,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                                             vb.__name__.center(25))
                           all_constraints.add( (blk, vb) )
 
-              Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
+              if (v, 1) not in visited:
+                visited.add( (v, 1) )
+                Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
   # Construct the graph
 
