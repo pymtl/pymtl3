@@ -107,7 +107,7 @@ def test_mem_fl_cl_adapter():
 
           s.mem.resp( resp )
 
-      s.add_constraints( U(up_process) < M(s.mem.resp) ) # pipe behavior
+      s.add_constraints( U(up_process) < M(s.mem.req) ) # definite pipe behavior
 
     def line_trace( s ):
       return s.mem.line_trace()

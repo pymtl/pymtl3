@@ -200,3 +200,9 @@ class MemIfcFL2CLAdapter( Component ):
 
     s.left  = MemMinionIfcFL( s.read, s.write, s.amo )
     s.right = MemMasterIfcCL( req_class, resp_class, s.recv, s.recv_rdy )
+
+    s.add_constraints(
+      M(s.left.read)  == M(s.right.req),
+      M(s.left.write) == M(s.right.req),
+      M(s.left.amo)   == M(s.right.req),
+    )
