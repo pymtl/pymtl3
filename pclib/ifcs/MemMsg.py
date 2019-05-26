@@ -4,7 +4,7 @@ MemMsg.py
 ========================================================================
 New memory message type implementation.
 
-Author : Shunning Jiang
+Author : Shunning Jiang, Yanghui Ou
 Date   : Mar 12, 2018
 """
 
@@ -14,25 +14,56 @@ import py
 
 from pymtl import *
 
-_mem_req_msg_cache  = dict()
-_mem_resp_msg_cache = dict()
 
-def mk_mem_msg( o, a, d ):
-  return mk_mem_req_msg( o, a, d ), mk_mem_resp_msg( o, d )
+def mk_mem_msg( opq, addr, data ):
+  return mk_mem_req_msg( opq, addr, data ), mk_mem_resp_msg( opq, data )
 
-def mk_mem_req_msg( o, a, d ):
-  if (o,a,d) in _mem_req_msg_cache:
-    return _mem_req_msg_cache[ (o,a,d) ]
-  exec(py.code.Source( _req_template.format( o, a, clog2(d>>3), d ) ).compile(), globals())
-  return _mem_req_msg_cache[ (o,a,d) ]
+def mk_mem_req_msg( opq, addr, data ):
+  OpqType  = mk_bits( opq            )
+  AddrType = mk_bits( addr           )
+  LenType  = mk_bits( clog2(data>>3) )
+  DataType = mk_bits( data           )
+  cls_name = "MemReqMsg_{}_{}_{}".format( opq, addr, data )
+  def req_to_str( self ):
+    return "{}:{}:{}:{}:{}".format(
+      MemMsgType.str[ int( self.type_ ) ],
+      OpqType( self.opaque ),
+      AddrType( self.addr ),
+      LenType( self.len ),
+      DataType( self.data ) if self.type_ != MemMsgType.READ else
+      " " * ( data//4 ),
+    )
+  return mk_bit_struct( cls_name, [
+    ( 'type_',  Bits4    ),
+    ( 'opaque', OpqType  ),
+    ( 'addr',   AddrType ),
+    ( 'len',    LenType  ),
+    ( 'data',   DataType ),
+  ], req_to_str )
 
-def mk_mem_resp_msg( o, d ):
-  if (o,d) in _mem_resp_msg_cache:
-    return _mem_resp_msg_cache[ (o,d) ]
-  exec(py.code.Source( _resp_template.format( o, clog2(d>>3), d ) ).compile(), globals())
-  return _mem_resp_msg_cache[ (o,d) ]
+def mk_mem_resp_msg( opq, data ):
+  OpqType  = mk_bits( opq            )
+  LenType  = mk_bits( clog2(data>>3) )
+  DataType = mk_bits( data           )
+  cls_name = "MemRespMsg_{}_{}".format( opq, data )
+  def resp_to_str( self ):
+    return "{}:{}:{}:{}:{}".format(
+      MemMsgType.str[ int( self.type_ ) ],
+      OpqType( self.opaque ),
+      Bits2( self.test ),
+      LenType( self.len ),
+      DataType( self.data ) if self.type_ != MemMsgType.WRITE else
+      " " * ( data//4 ),
+    )
+  return mk_bit_struct( cls_name, [
+    ( 'type_',  Bits4    ),
+    ( 'opaque', OpqType  ),
+    ( 'test',   Bits2    ),
+    ( 'len',    LenType  ),
+    ( 'data',   DataType ),
+  ], resp_to_str )
 
-class MemMsgType(object):
+class MemMsgType( object ):
   READ       = 0
   WRITE      = 1
   # write no-refill
@@ -62,91 +93,6 @@ class MemMsgType(object):
     AMO_XOR    : "xo",
   }
 
+# Yanghui : what is this used for?
 def msg_to_str( msg, width ):
   return ("" if msg is None else str(msg)).ljust(width)
-
-_req_template = """
-class MemReqMsg_{0}_{1}_{3}( object ):
-  opaque_nbits = {0}
-  addr_nbits   = {1}
-  data_nbits   = {3}
-
-  def __init__( s, type_=MemMsgType.READ, opaque=0, addr=0, len_=0, data=0 ):
-    s.type_  = Bits4( type_ )
-    s.opaque = Bits{0}( opaque )
-    s.addr   = Bits{1}( addr )
-    s.len    = Bits{2}( len_ )
-    s.data   = Bits{3}( data )
-
-  def __str__( s ):
-    return "{{}}:{{}}:{{}}:{{}}:{{}}".format(
-    MemMsgType.str[ int(s.type_) ],
-      s.opaque, s.addr, s.len,
-      (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.READ else s.data,
-    )
-
-  def __eq__( s, other ):
-    return s.type_ == other.type_ and \
-           s.opaque == other.opaque and \
-           s.addr == other.addr and \
-           s.len == other.len and \
-           s.data == other.data
-  def __ne__( s, other ):
-    return s.type_ != other.type_ or \
-           s.opaque != other.opaque or \
-           s.addr != other.addr or \
-           s.len != other.len or \
-           s.data != other.data
-
-  @classmethod
-  def mk_rd( cls, opaque, addr, len_ ):
-    return cls( type_=MemMsgType.READ, opaque=opaque, addr=addr, len_=len_ )
-
-  @classmethod
-  def mk_wr( cls, opaque, addr, len_, data ):
-    return cls( type_=MemMsgType.WRITE, opaque=opaque, addr=addr, len_=len_, data=data )
-_mem_req_msg_cache[ ({0},{1},{3}) ] = MemReqMsg_{0}_{1}_{3}
-"""
-_resp_template = """
-class MemRespMsg_{0}_{2}( object ):
-  opaque_nbits = {0}
-  data_nbits   = {2}
-
-  def __init__( s, type_=MemMsgType.READ, opaque=0, test=0, len_=0, data=0 ):
-    s.type_  = Bits4( type_ )
-    s.opaque = Bits{0}( opaque )
-    s.test   = Bits2( test )
-    s.len    = Bits{1}( len_ )
-    s.data   = Bits{2}( data )
-
-  def __str__( s ):
-    return "{{}}:{{}}:{{}}:{{}}:{{}}".format(
-      MemMsgType.str[int(s.type_)],
-      s.opaque, s.test, s.len,
-      (" "*(s.data_nbits//4)) if int(s.type_) == MemMsgType.WRITE else s.data
-    )
-
-  def __eq__( s, other ):
-    return s.type_ == other.type_ and \
-           s.opaque == other.opaque and \
-           s.test == other.test and \
-           s.len == other.len and \
-           s.data == other.data
-
-  def __ne__( s, other ):
-    return s.type_ != other.type_ or \
-           s.opaque != other.opaque or \
-           s.test != other.test or \
-           s.len != other.len or \
-           s.data != other.data
-
-  @classmethod
-  def mk_rd( cls, opaque, len_, data ):
-    return cls( MemMsgType.READ, opaque, 0, len_, data )
-
-  @classmethod
-  def mk_wr( cls, opaque, len_ ):
-    return cls( MemMsgType.WRITE, opaque, 0, len_ )
-
-_mem_resp_msg_cache[ ({0},{2}) ] = MemRespMsg_{0}_{2}
-"""
