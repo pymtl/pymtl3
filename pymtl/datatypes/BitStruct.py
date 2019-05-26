@@ -12,7 +12,8 @@ from functools import reduce
 
 import py
 
-from pymtl import *
+from .Bits import Bits
+from .bits_import import *
 
 
 class BitStruct( object ):
@@ -94,10 +95,10 @@ def mk_bit_struct( name, fields, str_func=None ):
       # assert_str += "    assert isinstance( {}, {} )\n".format( field_name, FieldType.__name__ ) 
       assign_str += "    s.{} = {}\n".format( field_name, field_name )
     args_str = args_str[:-2]
-
+  
     exec(py.code.Source(
       _struct_tmpl.format( **locals() )
-    ).compile(), globals())
+    ).compile(), globals() )
 
     cls = _struct_dict[name]
 
