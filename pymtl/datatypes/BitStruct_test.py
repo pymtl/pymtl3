@@ -8,9 +8,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
+from copy import deepcopy
 
-from .BitStruct import BitStruct, mk_bit_struct
+from pymtl import *
 
 StaticPoint = mk_bit_struct( "BasePoint", [
     ( 'x', Bits4 ), 
@@ -81,17 +81,17 @@ def test_component():
 
       @s.update
       def up_bit_struct():
-        s.out = s.in_
+        s.out = deepcopy( s.in_ )
         s.out.pt0.x += 1
         s.out.pt0.y -= 1
         s.out.pt1.x += 1
         s.out.pt1.y -= 1
-        # s.out_pt = s.in_.pt1 FIXME: this mutates the object in s.in_
+        s.out_pt = s.in_.pt1
 
   dut = A()
   dut.apply( SimpleSim )
   dut.in_ = NestedSimple( StaticPoint(1,2), StaticPoint(3,4) )
   dut.tick()
   assert dut.out == NestedSimple( StaticPoint(2,1), StaticPoint(4,3) )
-  #print( dut.out_pt )
-  #assert dut.out_pt == StaticPoint(3,4)
+  print( dut.out_pt )
+  assert dut.out_pt == StaticPoint(3,4)
