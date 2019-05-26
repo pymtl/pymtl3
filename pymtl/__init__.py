@@ -29,4 +29,5 @@ __all__ = [
 
   'sext', 'zext', 'clog2', 'concat',
   'mk_bits', 'Bits',
+  'mk_bit_struct', 'BitStruct',
 ] + [ "Bits{}".format(x) for x in _bitwidths ]
