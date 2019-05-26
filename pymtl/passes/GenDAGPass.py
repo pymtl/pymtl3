@@ -365,10 +365,11 @@ def {0}():
 
     # flood-fill to find out all equivalent classes
 
-    visited = set( [x] )
+    visited = set( [] )
     for x in equiv:
       if x not in visited:
         equiv_class = set()
+        visited.add( x )
         Q = deque( [x] )
         while Q:
           u = Q.popleft()
