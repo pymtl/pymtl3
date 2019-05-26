@@ -76,24 +76,17 @@ class OpenLoopCLPass( BasePass ):
     # In addition to existing constraints, we process the constraints that
     # involve top level callee ports. NOTE THAT we assume the user never
     # set the constraint on the actual method object inside the CalleePort
-    # In GenDAGPass we already collect those constraints, but these
-    # constraints might involve CALLEES IN THE SAME METHOD NET as the top
-    # level callee (i.e. we cannot directly use it) Hence when we unbox
-    # them, we use the ACTUAL METHOD - callee mapping we set up above to
-    # avoid missing any constraints.
+    # In GenDAGPass we already collect those constraints between update
+    # blocks and ACTUAL METHODs. We use the ACTUAL METHOD to callee
+    # mapping we set up above to avoid missing constraints.
 
-    for (x, y) in top._dag.top_level_callee_constraints:
-      xx = x
-      if isinstance( x, MethodPort ):
-        xx = method_callee_mapping[ x.method ]
-      elif isinstance( x, NonBlockingInterface ):
-        xx = method_callee_mapping[ x.method.method ]
+    for (xx, yy) in top._dag.top_level_callee_constraints:
 
-      yy = y
-      if isinstance( y, MethodPort ):
-        yy = method_callee_mapping[ y.method ]
-      elif isinstance( y, NonBlockingInterface ):
-        yy = method_callee_mapping[ y.method.method ]
+      if xx in method_callee_mapping:
+        xx = method_callee_mapping[ xx ]
+
+      if yy in method_callee_mapping:
+        yy = method_callee_mapping[ yy ]
 
       InD[yy] += 1
       Es [xx].append( yy )
@@ -130,6 +123,7 @@ class OpenLoopCLPass( BasePass ):
       print(top.line_trace())
 
     schedule.append( print_line_trace )
+    print(schedule)
 
     schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
     mapping = { x : i for i, x in enumerate( schedule_no_method ) }

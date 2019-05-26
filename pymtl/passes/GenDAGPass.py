@@ -337,7 +337,54 @@ def {0}():
 
     top._dag.top_level_callee_constraints = set()
 
-    for (x, y) in all_M_constraints:
+    # We pre-process M(x) == M(y) constraints into per-method equivalence
+    # sets. We have to do it here for potential open-loop constraints
+
+    equiv = defaultdict(set)
+    for (x, y, is_equal) in all_M_constraints:
+
+      if is_equal: # M(x) == M(y)
+        # Use the actual method object for constraints
+
+        if   isinstance( x, MethodPort ):
+          xx = x.method
+        elif isinstance( x, NonBlockingInterface ):
+          xx = x.method.method
+        else:
+          xx = x
+
+        if   isinstance( y, MethodPort ):
+          yy = y.method
+        elif isinstance( y, NonBlockingInterface ):
+          yy = y.method.method
+        else:
+          yy = y
+
+        equiv[xx].add( yy )
+        equiv[yy].add( xx )
+
+    # flood-fill to find out all equivalent classes
+
+    visited = set( [x] )
+    for x in equiv:
+      if x not in visited:
+        equiv_class = set()
+        Q = deque( [x] )
+        while Q:
+          u = Q.popleft()
+          equiv_class.add(u)
+
+          for v in equiv[u]:
+            if v not in visited:
+              visited.add(v)
+              Q.append(v)
+
+        # Point all nodes in the equivalence class to the same set
+        for u in equiv_class:
+          equiv[ u ] = equiv_class
+
+    for (x, y, is_equal) in all_M_constraints:
+      if is_equal: continue
 
       # Use the actual method object for constraints
 
@@ -358,27 +405,40 @@ def {0}():
       pred[ yy ].add( xx )
       succ[ xx ].add( yy )
 
-      xx_in_top = xx in method_is_top_level_callee
-      yy_in_top = yy in method_is_top_level_callee
+      if xx in equiv: # xx is in a equivalence class
+        for zz in equiv[xx]:
+          if zz in method_is_top_level_callee:
+            top._dag.top_level_callee_constraints.add( (zz, yy) )
+      else:
+        if xx in method_is_top_level_callee:
+          top._dag.top_level_callee_constraints.add( (xx, yy) )
 
-      # If either method is in the set we collected, we add the actual
-      # constraints to the top level constraint set. Assuming the user
-      # never set constraints on the actual method, we can use the type
-      # of the object (method port or nb interface) to tell if it's method
-      # or update block.
-      if xx_in_top or yy_in_top:
-        top._dag.top_level_callee_constraints.add( (x, y) )
+      if yy in equiv: # yy is in a equivalence class
+        for zz in equiv[yy]:
+          if zz in method_is_top_level_callee:
+            top._dag.top_level_callee_constraints.add( (xx, zz) )
+      else:
+        if yy in method_is_top_level_callee:
+          top._dag.top_level_callee_constraints.add( (xx, yy) )
 
     verbose = False
 
     all_upblks = top.get_all_update_blocks()
 
     for method, assoc_blks in method_blks.iteritems():
+      visited = set( [ (method, 0) ] )
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
+
       if verbose: print()
       while Q:
-        (u, w) = Q.popleft()
+        (u, w) = Q.pop()
         if verbose: print((u, w))
+
+        if u in equiv:
+          for v in equiv[u]:
+            if (v, w) not in visited:
+              visited.add( (v, w) )
+              Q.append( (v, w) )
 
         if w <= 0:
           for v in pred[u]:
@@ -414,7 +474,9 @@ def {0}():
                                       blk.__name__.center(25))
                           top._dag.all_constraints.add( (vb, blk) )
 
-              Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
+              if (v, -1) not in visited:
+                visited.add( (v, -1) )
+                Q.append( (v, -1) ) # ? < v < u < ... < method < blk_id
 
         if w >= 0:
           for v in succ[u]:
@@ -451,4 +513,6 @@ def {0}():
                                             vb.__name__.center(25))
                           top._dag.all_constraints.add( (blk, vb) )
 
-              Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
+              if (v, 1) not in visited:
+                visited.add( (v, 1) )
+                Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
