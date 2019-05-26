@@ -6,14 +6,12 @@
 """Provide L3 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.RTLIRType import *
-from pymtl.passes.rtlir.utility import freeze
+from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIR import *
 from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
 
 
@@ -39,14 +37,14 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     super( BehavioralRTLIRTypeCheckVisitorL3, s ). \
         __init__( component, freevars, tmpvars )
     s.type_expect[ 'Attribute' ] = {
-      'value':( (Component, Signal),
+      'value':( (rt.Component, rt.Signal),
         'the base of an attribute must be one of: component, signal!' )
     }
 
   def visit_Attribute( s, node ):
-    if isinstance( node.value.Type, Signal ):
+    if isinstance( node.value.Type, rt.Signal ):
       dtype = node.value.Type.get_dtype()
-      if not isinstance( dtype, Struct ):
+      if not isinstance( dtype, rdt.Struct ):
         raise PyMTLTypeError( s.blk, node.ast,
           'attribute base should be a struct signal!'
         )
@@ -55,10 +53,10 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
           '{} does not have field {}!'.format(
             dtype.get_name(), node.attr ))
       dtype = dtype.get_property( node.attr )
-      if isinstance( node.value.Type, Port ):
-        rtype = Port( node.value.Type.get_direction(), dtype )
-      elif isinstance( node.value.Type, Wire ):
-        rtype = Wire( dtype )
+      if isinstance( node.value.Type, rt.Port ):
+        rtype = rt.Port( node.value.Type.get_direction(), dtype )
+      elif isinstance( node.value.Type, rt.Wire ):
+        rtype = rt.Wire( dtype )
       else:
         raise PyMTLTypeError( s.blk, node.ast,
           'constant struct is not supported!' )
@@ -79,6 +77,4 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     translate the instantiator to its backend representation like a
     function in SV )
     """
-    assert Type is not bool and not issubclass( Type, Bits ), \
-        "internal error: StructInst did not get struct Type!"
     raise NotImplementedError()

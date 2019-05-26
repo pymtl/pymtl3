@@ -13,9 +13,8 @@ import os
 
 from graphviz import Digraph
 
-from pymtl import *
 from pymtl.passes import BasePass
-from pymtl.passes.rtlir.RTLIRType import BaseRTLIRType
+from pymtl.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 
@@ -212,11 +211,8 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     table_opt = s.gen_table_opt( node )
     label = (s.table_header + table_body + table_opt + s.table_trail).format(struct=node.struct)
     s.g.node( str( s.cur ), label = label )
-    for i, f in enumerate(node.keywords):
-      s.g.edge( str(local_cur), str(s.cur+1), label = 'keywords[{idx}]'.format(idx = i) )
-      s.visit( f )
-    for i, f in enumerate(node.kwargs):
-      s.g.edge( str(local_cur), str(s.cur+1), label = 'kwargs[{idx}]'.format(idx = i) )
+    for i, f in enumerate(node.values):
+      s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
       s.visit( f )
 
   def visit_IfExp( s, node ):
@@ -349,9 +345,9 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
   def visit_TmpVar( s, node ):
     s.cur += 1
     local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">TmpVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">TmpVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR> <TR><TD>upblk_name</TD><TD>{upblk_name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name, upblk_name=node.upblk_name)
     s.g.node( str( s.cur ), label = label )
 
   def visit_LoopVarDecl( s, node ):

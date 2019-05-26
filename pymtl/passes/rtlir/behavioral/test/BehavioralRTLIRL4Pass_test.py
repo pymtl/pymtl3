@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl import Bits32, Component, Interface, OutPort
+from pymtl.dsl.errors import VarNotDeclaredError
 from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL4Pass import (
@@ -23,7 +24,7 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL4Pass import (
     BehavioralRTLIRTypeCheckL4Pass,
 )
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -83,7 +84,6 @@ def test_L4_interface_array_index( do_test ):
 # PyMTL type errors
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_L4_interface_no_field( do_test ):
   class Ifc( Interface ):
     def construct( s ):
@@ -95,5 +95,5 @@ def test_L4_interface_no_field( do_test ):
       @s.update
       def upblk():
         s.out = s.in_.bar
-  with expected_failure( PyMTLTypeError, "Ifc does not have field bar" ):
+  with expected_failure( VarNotDeclaredError, 's.in_ does not have field "bar"' ):
     do_test( A() )

@@ -10,9 +10,10 @@ import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.RTLIRType import *
+from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIR import *
+from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
 
 
@@ -38,38 +39,39 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     super(BehavioralRTLIRTypeCheckVisitorL2, s).__init__(component, freevars)
     s.freevars = freevars
     s.tmpvars = tmpvars
-    s.BinOp_max_nbits = (Add, Sub, Mult, Div, Mod, Pow, BitAnd, BitOr, BitXor)
-    s.BinOp_left_nbits = ( ShiftLeft, ShiftRightLogic )
+    s.BinOp_max_nbits = (bir.Add, bir.Sub, bir.Mult, bir.Div, bir.Mod, bir.Pow,
+                         bir.BitAnd, bir.BitOr, bir.BitXor)
+    s.BinOp_left_nbits = ( bir.ShiftLeft, bir.ShiftRightLogic )
     s.type_expect = {}
-    lhs_types = ( Port, Wire, NoneType )
+    lhs_types = ( rt.Port, rt.Wire, rt.NoneType )
 
     s.type_expect[ 'Assign' ] = {
       'target' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
-      'value' : ( Signal, 'rhs of assignment should be signal/const!' )
+      'value' : ( rt.Signal, 'rhs of assignment should be signal/const!' )
     }
     s.type_expect[ 'AugAssign' ] = {
       'target' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
-      'value' : ( Signal, 'rhs of assignment should be signal/const!' )
+      'value' : ( rt.Signal, 'rhs of assignment should be signal/const!' )
     }
     s.type_expect[ 'BinOp' ] = {
-      'left' : ( Signal, 'lhs of binop should be signal/const!' ),
-      'right' : ( Signal, 'rhs of binop should be signal/const!' ),
+      'left' : ( rt.Signal, 'lhs of binop should be signal/const!' ),
+      'right' : ( rt.Signal, 'rhs of binop should be signal/const!' ),
     }
     s.type_expect[ 'UnaryOp' ] = {
-      'operand' : ( Signal, 'unary op only applies to signals and consts!' )
+      'operand' : ( rt.Signal, 'unary op only applies to signals and consts!' )
     }
     s.type_expect[ 'For' ] = {
-      'start' : ( Const, 'the start of a for-loop must be a constant expression!' ),
-      'end':( Const, 'the end of a for-loop must be a constant expression!' ),
-      'step':( Const, 'the step of a for-loop must be a constant expression!' )
+      'start' : ( rt.Const, 'the start of a for-loop must be a constant expression!' ),
+      'end':( rt.Const, 'the end of a for-loop must be a constant expression!' ),
+      'step':( rt.Const, 'the step of a for-loop must be a constant expression!' )
     }
     s.type_expect[ 'If' ] = {
-      'cond' : ( Signal, 'the condition of if must be a signal!' )
+      'cond' : ( rt.Signal, 'the condition of if must be a signal!' )
     }
     s.type_expect[ 'IfExp' ] = {
-      'cond' : ( Signal, 'the condition of if-exp must be a signal!' ),
-      'body' : ( Signal, 'the body of if-exp must be a signal!' ),
-      'orelse' : ( Signal, 'the else branch of if-exp must be a signal!' )
+      'cond' : ( rt.Signal, 'the condition of if-exp must be a signal!' ),
+      'body' : ( rt.Signal, 'the body of if-exp must be a signal!' ),
+      'orelse' : ( rt.Signal, 'the else branch of if-exp must be a signal!' )
     }
 
   def eval_const_binop( s, l, op, r ):
@@ -77,11 +79,11 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     assert type( l ) == int or isinstance( l, pymtl.Bits )
     assert type( r ) == int or isinstance( r, pymtl.Bits )
     op_dict = {
-      And       : 'and', Or    : 'or',
-      Add       : '+',   Sub   : '-',  Mult : '*',  Div  : '/',
-      Mod       : '%',   Pow   : '**',
-      ShiftLeft : '<<',  ShiftRightLogic : '>>',
-      BitAnd    : '&',   BitOr : '|',  BitXor : '^',
+      bir.And       : 'and', bir.Or    : 'or',
+      bir.Add       : '+',   bir.Sub   : '-',  bir.Mult : '*',  bir.Div  : '/',
+      bir.Mod       : '%',   bir.Pow   : '**',
+      bir.ShiftLeft : '<<',  bir.ShiftRightLogic : '>>',
+      bir.BitAnd    : '&',   bir.BitOr : '|',  bir.BitXor : '^',
     }
     _op = op_dict[ type( op ) ]
     return eval( 'l{_op}r'.format( **locals() ) )
@@ -91,13 +93,15 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     rhs_type = node.value.Type
     lhs_type = node.target.Type
 
-    if isinstance( node.target, TmpVar ):
-      if lhs_type != NoneType() and lhs_type != rhs_type:
+    if isinstance( node.target, bir.TmpVar ):
+      tmpvar_id = (node.target.name, node.target.upblk_name)
+      if lhs_type != rt.NoneType() and lhs_type != rhs_type:
         raise PyMTLTypeError( s.blk, node.ast,
           'conflicting type for temporary variable {}!'.format(node.target.name) )
+
       # Creating a temporaray variable
-      node.target.Type = Wire( rhs_type.get_dtype() )
-      s.tmpvars[ node.target.name ] = Wire( rhs_type.get_dtype() )
+      node.target.Type = rt.Wire( rhs_type.get_dtype() )
+      s.tmpvars[ tmpvar_id ] = rt.Wire( rhs_type.get_dtype() )
       node.Type = None
 
     else:
@@ -118,7 +122,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?
     dtype = node.cond.Type.get_dtype()
-    if not Bool()( dtype ):
+    if not rdt.Bool()( dtype ):
       raise PyMTLTypeError( s.blk, node.ast,
         'the condition of "if" cannot be converted to bool!'
       )
@@ -136,21 +140,24 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     node.Type = None
 
   def visit_LoopVar( s, node ):
-    node.Type = Const( Vector( 32 ) )
+    node.Type = rt.Const( rdt.Vector( 32 ) )
 
   def visit_TmpVar( s, node ):
-    if not node.name in s.tmpvars:
+    tmpvar_id = (node.name, node.upblk_name)
+    if tmpvar_id not in s.tmpvars:
       # This tmpvar is being created. Later when it is used, its type can
       # be read from the tmpvar type environment.
-      node.Type = NoneType()
+      node.Type = rt.NoneType()
+
     else:
-      node.Type = s.tmpvars[ node.name ]
+      node.Type = s.tmpvars[ tmpvar_id ]
 
   def visit_IfExp( s, node ):
     # Can the type of condition be cast into bool?
-    if not Bool()( node.cond.Type.get_dtype() ):
+    if not rdt.Bool()( node.cond.Type.get_dtype() ):
       raise PyMTLTypeError( s.blk, node.ast,
         'the condition of "if-exp" cannot be converted to bool!' )
+
     # body and orelse must have the same type
     # if node.body.Type != node.orelse.Type:
     if not node.body.Type.get_dtype()( node.orelse.Type.get_dtype() ):
@@ -159,26 +166,26 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     node.Type = node.body.Type
 
   def visit_UnaryOp( s, node ):
-    if isinstance( node.op, Not ):
-      if not Bool()( node.operand.Type.get_dtype() ):
+    if isinstance( node.op, bir.Not ):
+      if not rdt.Bool()( node.operand.Type.get_dtype() ):
         raise PyMTLTypeError( s.blk, node.ast,
           'the operand of "unary-expr" cannot be cast to bool!' )
-      node.Type = Wire( Bool() )
+      node.Type = rt.Wire( rdt.Bool() )
     else:
       node.Type = node.operand.Type
 
   def visit_BoolOp( s, node ):
     for value in node.values:
-      if not isinstance(value.Type, Signal) or not Bool()(value.Type.get_dtype()):
+      if not isinstance(value.Type, rt.Signal) or not rdt.Bool()(value.Type.get_dtype()):
         raise PyMTLTypeError( s.blk, node.ast,
           "{} of {} cannot be cast into bool!".format( value, value.Type ))
-    node.Type = Wire( Bool() )
+    node.Type = rt.Wire( rdt.Bool() )
 
   def visit_BinOp( s, node ):
     op = node.op
     l_type = node.left.Type.get_dtype()
     r_type = node.right.Type.get_dtype()
-    if not( Vector(1)( l_type ) and Vector(1)( r_type ) ):
+    if not( rdt.Vector(1)( l_type ) and rdt.Vector(1)( r_type ) ):
       raise PyMTLTypeError( s.blk, node.ast,
         "both sides of operation should be of vector type!" )
 
@@ -199,14 +206,15 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       l_val = node.left._value
       r_val = node.rigth._value
       node._value = s.eval_const_binop( l_val, op, r_val )
-      node.Type = Const( Vector( res_nbits ) )
+      node.Type = rt.Const( rdt.Vector( res_nbits ) )
     except AttributeError:
       # Both sides are constant but the value cannot be determined statically
-      if isinstance(node.left.Type, Const) and isinstance(node.right.Type, Const):
-        node.Type = Const( Vector( res_nbits ) )
+      if isinstance(node.left.Type, rt.Const) and isinstance(node.right.Type, rt.Const):
+        node.Type = rt.Const( rdt.Vector( res_nbits ) )
+
       # Variable
       else:
-        node.Type = Wire( Vector( res_nbits ) )
+        node.Type = rt.Wire( rdt.Vector( res_nbits ) )
 
   def visit_Compare( s, node ):
-    node.Type = Wire( Bool() )
+    node.Type = rt.Wire( rdt.Bool() )

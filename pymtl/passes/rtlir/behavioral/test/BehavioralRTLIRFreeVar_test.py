@@ -9,16 +9,13 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import *
+from pymtl import Bits32, Component, InPort, OutPort
 from pymtl.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
-
-# from test_module import pymtl_Bits_global_freevar
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -81,12 +78,12 @@ def test_pymtl_struct_closure( do_test ):
   class A( Component ):
     def construct( s ):
       foo = InPort( B )
-      s.foo = foo
+      s._foo = foo
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
         s.out = foo.foo
   a = A()
   a.elaborate()
-  a._rtlir_freevar_ref = { 'foo' : a.foo }
+  a._rtlir_freevar_ref = { 'foo' : a._foo }
   do_test( a )

@@ -12,8 +12,8 @@ import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import RTLIRConversionError
+from pymtl.passes.rtlir.rtype.RTLIRType import get_rtlir
 
-from ..RTLIRType import *
 from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 

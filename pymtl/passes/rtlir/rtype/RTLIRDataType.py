@@ -19,8 +19,8 @@ import pymtl
 from pymtl.dsl.Connectable import Const as pymtl_Const
 from pymtl.dsl.Connectable import Signal as pymtl_Signal
 
-from .errors import RTLIRConversionError
-from .utility import collect_objs
+from ..errors import RTLIRConversionError
+from ..utility import collect_objs
 
 
 class BaseRTLIRDataType( object ):
@@ -74,7 +74,8 @@ class Struct( BaseRTLIRDataType ):
     return s.properties[ p ]
 
   def get_all_properties( s ):
-    return s.properties.iteritems()
+    order = { key : i for i, key in enumerate(s.packed_order) }
+    return sorted(s.properties.iteritems(), key = lambda x: order[x[0]])
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
@@ -159,9 +160,8 @@ def _get_rtlir_dtype_struct( obj ):
     assert len( obj ) > 0, 'list length should be greater than 0!'
     ref_type = _get_rtlir_dtype_struct( obj[0] )
     assert\
-      reduce(lambda res,i:res and (_get_rtlir_dtype_struct(i)==ref_type),obj),\
-      'all elements of array {} must have the same type {}!'.format(
-          obj, ref_type )
+      reduce(lambda res,i:res and (_get_rtlir_dtype_struct(i)==ref_type),obj, True), \
+      'all elements of array {} must have the same type {}!'.format( obj, ref_type )
     dim_sizes = []
     while isinstance( obj, list ):
       assert len( obj ) > 0, 'list length should be greater than 0!'
@@ -170,18 +170,21 @@ def _get_rtlir_dtype_struct( obj ):
     return PackedArray( dim_sizes, _get_rtlir_dtype_struct( obj ) )
 
   # Struct field
-  elif hasattr( obj, '__name__' ) and not obj.__name__ in dir( __builtin__ ):
-    # Collect all fields of the struct object
+  elif hasattr( obj, '__class__' ) and not obj.__class__.__name__ in dir( __builtin__ ):
+    cls = obj.__class__
     all_properties = {}
-    static_members = collect_objs( obj, object, True )
+
+    # Collect all fields of the struct object
+    static_members = collect_objs( cls, object, True )
+
     # Infer the type of each field from the type instance
     try:
-      type_instance = obj()
+      type_instance = cls()
     except TypeError:
       assert False, \
         '__init__() of supposed struct {} should take 0 argument ( you can \
         achieve this by adding default values to your arguments )!'.format(
-          obj.__name__ )
+          cls.__name__ )
     fields = collect_objs( type_instance, object, grouped = True )
     static_member_names = map(lambda x: x[0], static_members)
     for name, field in fields:
@@ -194,7 +197,7 @@ def _get_rtlir_dtype_struct( obj ):
     if hasattr( type_instance, '_pack_order' ):
       for field_name in type_instance._pack_order:
         assert field_name in all_properties, \
-          field_name + ' is not an attribute of struct ' + obj.__name__ + '!'
+          field_name + ' is not an attribute of struct ' + cls.__name__ + '!'
         pack_order.append( field_name )
 
     # Generate default pack order ( sort by `repr` )
@@ -206,10 +209,10 @@ def _get_rtlir_dtype_struct( obj ):
     packed_order = []
     for field_name in pack_order:
       assert field_name in all_properties, \
-        '{} is not an attirubte of struct {}!'.format( field_name, obj.__name__ )
+        '{} is not an attirubte of struct {}!'.format( field_name, cls.__name__ )
       properties.append( ( field_name, all_properties[ field_name ] ) )
       packed_order.append( field_name )
-    return Struct(obj.__name__, dict(properties), packed_order)
+    return Struct(cls.__name__, dict(properties), packed_order)
   
   else:
     assert False, str(obj) + ' is not allowed as a field of struct!'
@@ -217,22 +220,29 @@ def _get_rtlir_dtype_struct( obj ):
 def get_rtlir_dtype( obj ):
   """Return the RTLIR data type of obj."""
   try:
-    if isinstance( obj, list ):
-      raise RTLIRConversionError( obj,
-        'array datatype object should be a field of some struct!')
+    assert not isinstance(obj, list), \
+      'array datatype object should be a field of some struct!'
 
     # Signals might be parameterized with different data types
     if isinstance( obj, ( pymtl_Signal, pymtl_Const ) ):
       Type = obj._dsl.Type
+
       # Vector data type
       if issubclass( Type, pymtl.Bits ):
         return Vector( Type.nbits )
+
       # Struct data type
       elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtin__):
-        return _get_rtlir_dtype_struct( Type )
+        try:
+          return _get_rtlir_dtype_struct( Type() )
+        except TypeError:
+          assert False, \
+            '__init__() of supposed struct {} should take 0 argument ( you can \
+            achieve this by adding default values to your arguments )!'.format(
+              Type.__name__ )
+
       else:
-        raise RTLIRConversionError( obj,
-          'cannot convert object of type {} into RTLIR!'.format(Type))
+        assert False, 'cannot convert object of type {} into RTLIR!'.format(Type)
 
     # Python integer objects
     elif isinstance( obj, int ):
@@ -245,8 +255,7 @@ def get_rtlir_dtype( obj ):
       return Vector( obj.nbits )
 
     else:
-      raise RTLIRConversionError( obj,
-        'cannot infer the data type of the given object!')
+      assert False, 'cannot infer the data type of the given object!'
   except AssertionError as e:
     msg = '' if e.args[0] is None else e.args[0]
     raise RTLIRConversionError( obj, msg )

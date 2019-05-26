@@ -9,17 +9,16 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-import pymtl.passes.rtlir.RTLIRDataType as rdt
-import pymtl.passes.rtlir.RTLIRType as rt
 from pymtl import *
+from pymtl.passes.rtlir import RTLIRDataType as rdt
+from pymtl.passes.rtlir import RTLIRType as rt
 from pymtl.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
     BehavioralRTLIRVisualizationPass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -45,7 +44,7 @@ def test_tmp_wire( do_test ):
         s.out = u
   a = A()
   a.elaborate()
-  a._rtlir_tmpvar_ref = {'u' : rt.Wire(rdt.Vector(32))}
+  a._rtlir_tmpvar_ref = {('u', 'upblk') : rt.Wire(rdt.Vector(32))}
   do_test( a )
 
 def test_tmp_wire_struct( do_test ):
@@ -63,7 +62,7 @@ def test_tmp_wire_struct( do_test ):
   a = A()
   a.elaborate()
   a._rtlir_tmpvar_ref = \
-    {'u' : rt.Wire(rdt.Struct('B', {'foo':rdt.Vector(32)}, ['foo']))}
+    {('u', 'upblk') : rt.Wire(rdt.Struct('B', {'foo':rdt.Vector(32)}, ['foo']))}
   do_test( a )
 
 def test_tmp_wire_overwrite_conflict_type( do_test ):

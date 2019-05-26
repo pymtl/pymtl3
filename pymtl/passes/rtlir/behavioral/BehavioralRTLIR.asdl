@@ -20,7 +20,7 @@ module BehavioralRTLIR
        | SignExt( int nbits, expr value )
        | Reduce( operator op, expr value )
        | SizeCast( int nbits, expr value )
-       | StructInst( object struct, string* keywords, expr* kwargs )
+       | StructInst( object struct, expr* values )
        | IfExp( expr cond, expr body, expr orelse )
        | UnaryOp( unaryop op, expr operand )
        | BoolOp( boolop op, expr* values )
@@ -35,7 +35,7 @@ module BehavioralRTLIR
        | Base( object base )
        | LoopVar( string name )
        | FreeVar( string name, object obj )
-       | TmpVar( string name )
+       | TmpVar( string name, string upblk_name )
 
   loopvar_decl = LoopVarDecl( string name )
 

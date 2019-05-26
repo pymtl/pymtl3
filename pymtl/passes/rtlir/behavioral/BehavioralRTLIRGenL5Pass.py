@@ -6,7 +6,6 @@
 """Provide L5 behavioral RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 

@@ -144,18 +144,14 @@ class SizeCast( BaseBehavioralRTLIR ):
     return isinstance(other, SizeCast) and s.nbits == other.nbits and s.value == other.value
 
 class StructInst( BaseBehavioralRTLIR ):
-  def __init__( s, struct, keywords, kwargs ):
+  def __init__( s, struct, values ):
     s.struct = struct
-    s.keywords = keywords
-    s.kwargs = kwargs
+    s.values = values
 
   def __eq__( s, other ):
     if not isinstance(other, StructInst) or s.struct != other.struct:
       return False
-    for x, y in zip( s.keywords, other.keywords ):
-      if x != y:
-        return False
-    for x, y in zip( s.kwargs, other.kwargs ):
+    for x, y in zip( s.values, other.values ):
       if x != y:
         return False
     return True
@@ -256,11 +252,12 @@ class FreeVar( BaseBehavioralRTLIR ):
     return isinstance(other, FreeVar) and s.name == other.name and s.obj == other.obj
 
 class TmpVar( BaseBehavioralRTLIR ):
-  def __init__( s, name ):
+  def __init__( s, name, upblk_name ):
     s.name = name
+    s.upblk_name = upblk_name
 
   def __eq__( s, other ):
-    return isinstance(other, TmpVar) and s.name == other.name
+    return isinstance(other, TmpVar) and s.name == other.name and s.upblk_name == other.upblk_name
 
 class LoopVarDecl( BaseBehavioralRTLIR ):
   def __init__( s, name ):

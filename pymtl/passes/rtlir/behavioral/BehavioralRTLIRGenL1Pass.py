@@ -9,13 +9,13 @@ from __future__ import absolute_import, division, print_function
 import ast
 import copy
 
-# from pymtl import *
 import pymtl
 from pymtl.passes import BasePass
 from pymtl.passes.BasePass import PassMetadata
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError
 
-from .BehavioralRTLIR import *
+from . import BehavioralRTLIR as bir
+from .BehavioralRTLIR import CombUpblk, SeqUpblk
 
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
@@ -118,6 +118,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       raise PyMTLSyntaxError( s.blk, node,
         'Update blocks should not have arguments!' )
 
+    # Save the name of the upblk
+    s._upblk_name = node.name
+
     # Get the type of upblk from ._upblk_type variable
     ret = eval( s._upblk_type + '( node.name, [] )' )
     for stmt in node.body:
@@ -132,7 +135,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     value = s.visit( node.value )
     target = s.visit( node.targets[0] )
-    ret = Assign( target, value )
+    ret = bir.Assign( target, value )
     ret.ast = node
     return ret
 
@@ -169,7 +172,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError( s.blk, node,
           'exactly one argument should be given to Bits!' )
       value = s.visit( node.args[0] )
-      ret = SizeCast( nbits, value )
+      ret = bir.SizeCast( nbits, value )
       ret.ast = node
       return ret
 
@@ -179,7 +182,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError( s.blk, node,
           'at least one argument should be given to concat!' )
       values = map( lambda c: s.visit(c), node.args )
-      ret = Concat( values )
+      ret = bir.Concat( values )
       ret.ast = node
       return ret
 
@@ -190,7 +193,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           'exactly two arguments should be given to zext!' )
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
-      ret = ZeroExt( nbits, value )
+      ret = bir.ZeroExt( nbits, value )
       ret.ast = node
       return ret
 
@@ -201,7 +204,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           'exactly two arguments should be given to sext!' )
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
-      ret = SignExt( nbits, value )
+      ret = bir.SignExt( nbits, value )
       ret.ast = node
       return ret
 
@@ -211,7 +214,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         'Unrecognized method call {}!' + obj.__name__ )
 
   def visit_Attribute( s, node ):
-    ret = Attribute( s.visit( node.value ), node.attr )
+    ret = bir.Attribute( s.visit( node.value ), node.attr )
     ret.ast = node
     return ret
 
@@ -222,13 +225,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError( s.blk, node,
           'Slice with steps is not supported!' )
       lower, upper = s.visit( node.slice )
-      ret = Slice( value, lower, upper )
+      ret = bir.Slice( value, lower, upper )
       ret.ast = node
       return ret
 
     if isinstance( node.slice, ast.Index ):
       idx = s.visit( node.slice )
-      ret = Index( value, idx )
+      ret = bir.Index( value, idx )
       ret.ast = node
       return ret
 
@@ -244,7 +247,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def visit_Name( s, node ):
     if node.id in s.globals:
       # free var from the global name space
-      ret = FreeVar( node.id, s.globals[ node.id ] )
+      ret = bir.FreeVar( node.id, s.globals[ node.id ] )
       ret.ast = node
       return ret
     elif node.id in s.closure:
@@ -255,16 +258,16 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         if obj is not s.component:
           raise PyMTLSyntaxError( s.blk, node,
             'Component {} is not a sub-component of {}!'.format(obj, s.component))
-        ret = Base( obj )
+        ret = bir.Base( obj )
       else:
-        ret =  FreeVar( node.id, obj )
+        ret =  bir.FreeVar( node.id, obj )
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
       'Temporary variable {} is not supported at L1!'.format(node.id))
 
   def visit_Num( s, node ):
-    ret = Number( node.n )
+    ret = bir.Number( node.n )
     ret.ast = node
     return ret
 

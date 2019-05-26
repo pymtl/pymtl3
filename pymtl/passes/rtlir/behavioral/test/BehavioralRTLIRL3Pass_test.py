@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl import *
+from pymtl.dsl.errors import VarNotDeclaredError
 from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL3Pass import (
@@ -23,7 +24,7 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL3Pass import (
     BehavioralRTLIRTypeCheckL3Pass,
 )
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -83,7 +84,6 @@ def test_L3_struct_inst( do_test ):
 # PyMTL type errors
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_L3_vector_attr( do_test ):
   class A( Component ):
     def construct( s ):
@@ -92,10 +92,9 @@ def test_L3_vector_attr( do_test ):
       @s.update
       def upblk():
         s.out = s.in_.foo
-  with expected_failure( PyMTLTypeError, "should be a struct signal" ):
+  with expected_failure( VarNotDeclaredError, 's.in_ does not have field "foo"' ):
     do_test( A() )
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_L3_struct_no_field( do_test ):
   class B( object ):
     def __init__( s, foo=42 ):
@@ -107,7 +106,7 @@ def test_L3_struct_no_field( do_test ):
       @s.update
       def upblk():
         s.out = s.in_.bar
-  with expected_failure( PyMTLTypeError, "does not have field bar" ):
+  with expected_failure( VarNotDeclaredError, 's.in_ does not have field "bar"' ):
     do_test( A() )
 
 @pytest.mark.xfail( reason = "RTLIR conversion does not support const struct yet" )
@@ -129,6 +128,7 @@ def test_L3_const_struct( do_test ):
 # PyMTL syntax errors
 #-------------------------------------------------------------------------
 
+@pytest.mark.xfail( reason = "StructInst is not supported yet" )
 def test_L3_call_struct_inst( do_test ):
   class B( object ):
     def __init__( s, foo=42 ):
@@ -139,6 +139,4 @@ def test_L3_call_struct_inst( do_test ):
       @s.update
       def upblk():
         s.out = B( 42 )
-  with expected_failure( PyMTLSyntaxError,
-    "only keyword args are accepted by struct instantiation" ):
-    do_test( A() )
+  do_test( A() )

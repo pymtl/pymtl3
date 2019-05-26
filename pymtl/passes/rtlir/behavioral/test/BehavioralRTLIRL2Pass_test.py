@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl import *
+from pymtl.passes.rtlir import RTLIRDataType as rdt
 from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
@@ -23,8 +24,8 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL2Pass import (
     BehavioralRTLIRTypeCheckL2Pass,
 )
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.RTLIRDataType import Bool
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.rtype.RTLIRDataType import Bool
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):

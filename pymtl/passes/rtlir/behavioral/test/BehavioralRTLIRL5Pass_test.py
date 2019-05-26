@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl import *
+from pymtl.dsl.errors import VarNotDeclaredError
 from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL5Pass import (
@@ -23,7 +24,7 @@ from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL5Pass import (
     BehavioralRTLIRTypeCheckL5Pass,
 )
 from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.test_utility import do_test, expected_failure
+from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -83,7 +84,6 @@ def test_L5_component_array_index( do_test ):
 # PyMTL type errors
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = "PyMTL DSL intercepted this error" )
 def test_L5_component_no_field( do_test ):
   class B( Component ):
     def construct( s ):
@@ -95,7 +95,7 @@ def test_L5_component_no_field( do_test ):
       @s.update
       def upblk():
         s.out = s.comp.bar
-  with expected_failure( PyMTLTypeError, "comp does not have field bar" ):
+  with expected_failure( VarNotDeclaredError, 's.comp does not have field "bar"' ):
     do_test( A() )
 
 def test_L5_component_not_port( do_test ):
