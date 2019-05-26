@@ -123,7 +123,6 @@ class OpenLoopCLPass( BasePass ):
       print(top.line_trace())
 
     schedule.append( print_line_trace )
-    print(schedule)
 
     schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
     mapping = { x : i for i, x in enumerate( schedule_no_method ) }
