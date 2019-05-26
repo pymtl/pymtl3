@@ -96,12 +96,24 @@ class OpenLoopCLPass( BasePass ):
 
     schedule = []
 
-    Q = deque( [ v for v in V if not InD[v] ] )
+    Q = list( [ v for v in V if not InD[v] ] )
 
     while Q:
       import random
       random.shuffle(Q)
-      u = Q.pop()
+
+      # Prioritize update blocks instead of method
+      # TODO make it O(logn) by balanced BST if needed ...
+
+      u = None
+      for i in range(len(Q)):
+        if Q[i] not in method_guard_mapping:
+          u = Q.pop(i)
+          break
+
+      if u is None:
+        u = Q.pop()
+
       if u in method_guard_mapping:
         schedule.append( method_guard_mapping[ u ] )
       schedule.append( u )

@@ -119,7 +119,6 @@ class TestModuleNonBlockingIfc(Component):
       s.count_next = s.count + 1
 
     s.add_constraints(
-      U(up_incr) < M( s.push ), # TODO put all update_on_edge before top level methods???
       M( s.push ) < U( up_compose_in ),
       U( up_compose_in ) < M( s.pull ), # bypass behavior
     )
