@@ -37,8 +37,8 @@ class TestHarness( Component ):
 
     # Connections
     for i in range(nports):
-      s.connect( s.srcs[i].send, s.mem.recv[i] )
-      s.connect( s.mem.send[i],  s.sinks[i].recv  )
+      s.connect( s.srcs[i].send, s.mem.ifc[i].req )
+      s.connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
 
   def done( s ):
     done = True

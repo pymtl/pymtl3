@@ -15,6 +15,7 @@ from __future__ import absolute_import, division, print_function
 
 from pclib.fl import MemoryFL
 from pclib.ifcs import MemMsgType, mk_mem_msg
+from pclib.ifcs.mem_ifcs import MemMinionIfcCL
 from pymtl import *
 
 from .DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
@@ -68,15 +69,14 @@ class MemoryCL( Component ):
 
     # Interface
 
-    s.recv = [ NonBlockingCalleeIfc() for i in range(nports) ]
-    s.send = [ NonBlockingCallerIfc() for i in range(nports) ]
+    s.ifc = [ MemMinionIfcCL( req_classes[i], resp_classes[i] ) for i in range(nports) ]
 
     # Queues
     req_latency = min(1, latency)
     resp_latency = latency - req_latency
 
-    s.req_qs  = [ DelayPipeDeqCL( req_latency )( enq = s.recv[i] ) for i in range(nports) ]
-    s.resp_qs = [ DelayPipeSendCL( resp_latency )( send = s.send[i] ) for i in range(nports) ]
+    s.req_qs  = [ DelayPipeDeqCL( req_latency )( enq = s.ifc[i].req ) for i in range(nports) ]
+    s.resp_qs = [ DelayPipeSendCL( resp_latency )( send = s.ifc[i].resp ) for i in range(nports) ]
 
     @s.update
     def up_mem():
