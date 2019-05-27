@@ -88,7 +88,8 @@ class ComponentLevel1( NamedObject ):
     return blk
 
   def add_constraints( s, *args ):
-    for (x0, x1) in args:
+    for (x0, x1, is_equal) in args:
+      assert is_equal == False
       assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"
       assert (x0.func, x1.func) not in s._dsl.U_U_constraints, \
         "Duplicated constraint"

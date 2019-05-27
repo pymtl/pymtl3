@@ -11,8 +11,6 @@ from pymtl.passes import GenDAGPass, OpenLoopCLPass
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-
-
 def test_top_level_method():
 
   class Top(Component):
@@ -89,115 +87,124 @@ def test_top_level_method():
 
   print("num_cycles_executed: ", A.num_cycles_executed)
 
-def test_top_level_non_blocking_ifc():
+class TestModuleNonBlockingIfc(Component):
 
-  class Top(Component):
+  def construct( s ):
+    s.element = None
 
-    def construct( s ):
-      s.element = None
+    s.count = Wire(int)
+    s.count_next = Wire(int)
+    s.amp   = Wire(int)
 
-      s.count = Wire(int)
-      s.count_next = Wire(int)
-      s.amp   = Wire(int)
+    s.value = Wire(int)
 
-      s.value = Wire(int)
+    @s.update_on_edge
+    def up_incr():
+      s.count = s.count_next
 
-      @s.update_on_edge
-      def up_incr():
-        s.count = s.count_next
+    @s.update
+    def up_amp():
+      s.amp = s.count * 100
 
-      @s.update
-      def up_amp():
-        s.amp = s.count * 100
+    @s.update
+    def up_compose_in():
+      if s.element:
+        s.value = s.amp + s.element
+        s.element = None
+      else:
+        s.value = -1
 
-      @s.update
-      def up_compose_in():
-        if s.element:
-          s.value = s.amp + s.element
-          s.element = None
-        else:
-          s.value = -1
+    @s.update
+    def up_count_next():
+      s.count_next = s.count + 1
 
-      @s.update
-      def up_count_next():
-        s.count_next = s.count + 1
+    s.add_constraints(
+      M( s.push ) < U( up_compose_in ),
+      U( up_compose_in ) < M( s.pull ), # bypass behavior
+    )
 
-      s.add_constraints(
-        M( s.push ) < U( up_compose_in ),
-        U( up_compose_in ) < M( s.pull ), # bypass behavior
-      )
+  @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
+  def push( s, ele ):
+    assert s.element is None and s.count % 5 == 4
+    s.element = ele
 
-    @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
-    def push( s, ele ):
-      s.element = ele
+  @non_blocking( lambda s: s.value >= 0 )
+  def pull( s ):
+    return s.value
 
-    @non_blocking( lambda s: s.value >= 0 )
-    def pull( s ):
-      return s.value
+  def line_trace( s ):
+    return "line trace: {}".format(s.value)
 
-    def line_trace( s ):
-      return "line trace: {}".format(s.value)
+  def done( s ):
+    return True
 
-    def done( s ):
-      return True
+def _test_TestModuleNonBlockingIfc( cls ):
 
-  A = Top()
+  A = cls()
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
 
-  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(7)
+  print("- push_rdy?", rdy )
+  assert not rdy
 
-  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(8)
+  print("- push_rdy?", rdy)
+  assert not rdy
 
-  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(9)
+  print("- push_rdy?", rdy)
+  assert not rdy
 
-  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(11)
+  print("- push_rdy?", rdy)
+  assert not rdy
 
-  print("- push_rdy?", end=' ')
   rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(13)
+  print("- push_rdy?", rdy)
+  assert rdy
+  print("- push 13!")
+  A.push(13)
 
-  print("- pull!")
-  print(A.pull())
+  assert A.pull.rdy()
+  ret = A.pull()
+  print("- pull!", ret)
+  assert ret == 413
 
-  print("- pull!")
-  print(A.pull())
+  assert not A.pull.rdy()
 
-  print("- push!")
+  rdy = A.push.rdy()
+  print("- push_rdy?", rdy )
+  assert not rdy
+
+  rdy = A.push.rdy()
+  print("- push_rdy?", rdy)
+  assert not rdy
+
+  rdy = A.push.rdy()
+  print("- push_rdy?", rdy)
+  assert not rdy
+
+  rdy = A.push.rdy()
+  print("- push_rdy?", rdy)
+  assert rdy
+  print("- push 33!")
   A.push(33)
-  print("- push!")
-  A.push(55)
-  print("- pull!")
-  print(A.pull())
 
-  # regression
+  assert A.pull.rdy()
+  ret = A.pull()
+  print("- pull!", ret)
+  assert ret == 933
 
-  assert A.num_cycles_executed == 8
+  assert not A.pull.rdy()
+
+  return A.num_cycles_executed
+
+def test_top_level_non_blocking_ifc():
+  num_cycles = _test_TestModuleNonBlockingIfc( TestModuleNonBlockingIfc )
+  assert num_cycles == 10 # regression
 
 def test_top_level_non_blocking_ifc_in_deep_net():
 
@@ -227,7 +234,7 @@ def test_top_level_non_blocking_ifc_in_deep_net():
     def construct( s ):
       s.push = NonBlockingCalleeIfc()
       s.pull = NonBlockingCalleeIfc()
-      s.inner = Top_inner()( push = s.push, pull = s.pull )
+      s.inner = TestModuleNonBlockingIfc()( push = s.push, pull = s.pull )
 
     def line_trace( s ):
       return s.inner.line_trace()
@@ -235,110 +242,64 @@ def test_top_level_non_blocking_ifc_in_deep_net():
     def done( s ):
       return True
 
-  class Top_inner(Component):
+  num_cycles = _test_TestModuleNonBlockingIfc( Top )
+  assert num_cycles == 10 # regression
 
+class PassThroughPlus100( Component ):
+
+  @non_blocking( lambda s: s.real_push.rdy() )
+  def push( s, msg ):
+    assert s.real_push.rdy()
+    s.real_push( msg )
+
+  def construct( s ):
+    s.real_push = NonBlockingCallerIfc()
+
+    s.add_constraints(
+      M(s.push) == M(s.real_push),
+    )
+
+def test_pass_through_equal_m_constraint():
+
+  class Top(Component):
     def construct( s ):
-      s.element = None
-
-      s.count = Wire(int)
-      s.count_next = Wire(int)
-      s.amp   = Wire(int)
-
-      s.value = Wire(int)
-
-      @s.update_on_edge
-      def up_incr():
-        s.count = s.count_next
-
-      @s.update
-      def up_amp():
-        s.amp = s.count * 100
-
-      @s.update
-      def up_compose_in():
-        if s.element:
-          s.value = s.amp + s.element
-          s.element = None
-        else:
-          s.value = -1
-
-      @s.update
-      def up_count_next():
-        s.count_next = s.count + 1
-
-      s.add_constraints(
-        M( s.push ) < U( up_compose_in ),
-        U( up_compose_in ) < M( s.pull ), # bypass behavior
-      )
-
-    @non_blocking( lambda s: s.element is None and s.count % 5 == 4 )
-    def push( s, ele ):
-      s.element = ele
-
-    @non_blocking( lambda s: s.value >= 0 )
-    def pull( s ):
-      return s.value
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
+      s.pass1 = PassThroughPlus100()( push = s.push )
+      s.inner = TestModuleNonBlockingIfc()( push = s.pass1.real_push, pull = s.pull )
 
     def line_trace( s ):
-      return "line trace: {}".format(s.value)
+      return s.inner.line_trace()
 
     def done( s ):
       return True
 
-  A = Top()
-  A.elaborate()
-  A.apply( GenDAGPass() )
-  A.apply( OpenLoopCLPass() )
-  A.lock_in_simulation()
+  num_cycles = _test_TestModuleNonBlockingIfc( Top )
+  assert num_cycles == 10 # regression
 
-  print("- push_rdy?", end=' ')
-  rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(7)
 
-  print("- push_rdy?", end=' ')
-  rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(8)
+def test_deep_pass_through_equal_m_constraint():
 
-  print("- push_rdy?", end=' ')
-  rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(9)
+  class Top(Component):
+    def construct( s ):
+      s.push = NonBlockingCalleeIfc()
+      s.pull = NonBlockingCalleeIfc()
+      s.through = [ PassThroughPlus100() for _ in range(10) ]
+      for i in range(10):
+        s.connect( s.through[i].push, s.push if i == 0 else \
+                                      s.through[i-1].real_push,
+        )
 
-  print("- push_rdy?", end=' ')
-  rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(11)
+      s.inner = TestModuleNonBlockingIfc()(
+        push = s.through[-1].real_push,
+        pull = s.pull,
+      )
 
-  print("- push_rdy?", end=' ')
-  rdy = A.push.rdy()
-  print(rdy)
-  if rdy:
-    print("- push!")
-    A.push(13)
+    def line_trace( s ):
+      return s.inner.line_trace()
 
-  print("- pull!")
-  print(A.pull())
+    def done( s ):
+      return True
 
-  print("- pull!")
-  print(A.pull())
-
-  print("- push!")
-  A.push(33)
-  print("- push!")
-  A.push(55)
-  print("- pull!")
-  print(A.pull())
-
-  # regression
-
-  assert A.num_cycles_executed == 8
+  num_cycles = _test_TestModuleNonBlockingIfc( Top )
+  assert num_cycles == 10 # regression
