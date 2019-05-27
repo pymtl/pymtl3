@@ -50,7 +50,7 @@ class DelayPipeDeqCL( Component ):
 
       @s.update
       def up_delay():
-        if not s.pipeline[-1]:
+        if s.pipeline[-1] is None:
           s.pipeline.rotate()
 
       # Model decoupled pipe behavior to cut cyclic dependencies.

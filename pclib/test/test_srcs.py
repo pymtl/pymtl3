@@ -32,7 +32,7 @@ class TestSrcCL( Component ):
 
     @s.update
     def up_src_send():
-      if not s.count==0:
+      if s.count > 0:
         s.count -= 1
       elif not s.reset:
         if s.send.rdy() and s.msgs:
