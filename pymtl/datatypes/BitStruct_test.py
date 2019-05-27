@@ -22,8 +22,8 @@ StaticPoint = mk_bit_struct( "BasePoint", [
 # mk_bit_struct.
 # class StaticPoint( 
 #   mk_bit_struct( "BasePoint", [
-#     ( 'x', Bits16 ), 
-#     ( 'y', Bits16 ), 
+#     ( 'x', Bits4 ), 
+#     ( 'y', Bits4 ), 
 #   ]) ):
 # 
 #   def __str__( s ):
@@ -38,6 +38,14 @@ def test_struct():
   pt = StaticPoint( Bits4(2), Bits4(4) )
   print( pt           )
   print( pt.to_bits() )
+  try:
+    StaticPoint.field_nbits( 'haha' )
+  except AssertionError as e:
+    print( e )
+    assert str( e ) == "BasePoint does not have field haha!"
+  assert StaticPoint.nbits == 8
+  assert StaticPoint.field_nbits( 'x' ) == 4
+  assert StaticPoint.field_nbits( 'y' ) == 4
   assert pt.to_bits() == 0x24
   assert pt.x == 2
   assert pt.y == 4
@@ -46,12 +54,24 @@ def test_struct():
   print( NestedSimple ) 
   print( np           )
   print( np.to_bits() )
+  assert NestedSimple.nbits == 16
+  assert NestedSimple.field_nbits( 'pt0' ) == 8
+  assert NestedSimple.field_nbits( 'pt1' ) == 8
   assert np.pt0 == StaticPoint(1,2)
   assert np.pt0 != StaticPoint(1,1)
   assert np.pt0.x == 1
   assert np.pt0.y == 2
   assert np.pt1.x == 3
   assert np.pt1.y == 4
+
+  try:
+    BadStruct = mk_bit_struct( "BadStruct", [
+      ( 'x', Bits4 ),
+      ( 'x', Bits5 )
+    ])
+  except AssertionError as e:
+    print( e )
+    assert str( e ) == "Failed to create BadStruct due to duplicate fields!"
 
   def dynamic_point( xnbits, ynbits ):
     XType = mk_bits( xnbits )
@@ -69,6 +89,7 @@ def test_struct():
   dp = DPoint( 1, 2 )
   print( DPoint )
   print( dp     )
+  assert DPoint.nbits == 12
   assert dp.x == 1
   assert dp.y == 2
 
