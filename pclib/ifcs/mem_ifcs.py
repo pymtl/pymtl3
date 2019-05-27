@@ -118,7 +118,7 @@ class MemIfcCL2FLAdapter( Component ):
         s.entry = None
 
         len_ = int(req.len)
-        if not len_: len_ = req_classes[i].data_nbits >> 3
+        if not len_: len_ = req_class.data_nbits >> 3
 
         if   req.type_ == MemMsgType.READ:
           resp = resp_class( req.type_, req.opaque, 0, req.len,
