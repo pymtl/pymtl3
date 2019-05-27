@@ -235,7 +235,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
         # Obj is a single signal
         # If the target is a list, it's fanout connection
-        elif isinstance( target, tuple ) or isinstance( target, list ):
+        elif isinstance( target, (tuple, list) ):
           for item in target:
             s._dsl.parent_obj._connect_objects( obj, item )
         # Target is a single object
@@ -449,8 +449,8 @@ class ComponentLevel3( ComponentLevel2 ):
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport
             if   whost == rhost:
-              valid = ( isinstance( u, Signal )  or isinstance( u, Const) ) and \
-                      ( isinstance( v, OutPort) or isinstance( v, Wire ) )
+              valid = isinstance( u, (Signal, Const) ) and \
+                      isinstance( v, (OutPort, Wire) )
               if not valid:
                 raise SignalTypeError( \
 """[Type 5] Invalid port type detected at the same host component "{}" (class {})
@@ -465,8 +465,8 @@ class ComponentLevel3( ComponentLevel2 ):
             # Hence, writer is outport, reader is wire or outport
             # writer cannot be constant
             elif rhost == whost.get_parent_object():
-              valid = isinstance( u, OutPort) and \
-                    ( isinstance( v, OutPort ) or isinstance( v, Wire ) )
+              valid = isinstance( u, OutPort ) and \
+                      isinstance( v, (OutPort, Wire) )
 
               if not valid:
                 raise SignalTypeError( \
@@ -497,8 +497,7 @@ class ComponentLevel3( ComponentLevel2 ):
                     # type(u).__name__, repr(u), repr(whost), type(whost).__name__ ) )
 
             # Shunning 9/12/2017: Actually in this case writer can be outport
-              valid = ( isinstance( u, Signal ) or isinstance( u, Const )) and \
-                        isinstance( v, InPort )
+              valid = isinstance( u, (Signal, Const) ) and isinstance( v, InPort )
 
               if not valid:
                 raise SignalTypeError( \

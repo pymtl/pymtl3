@@ -345,8 +345,7 @@ class ComponentLevel2( ComponentLevel1 ):
         while not isinstance( host, ComponentLevel2 ):
           host = host.get_parent_object() # go to the component
 
-        if   isinstance( obj, InPort ):  pass
-        elif isinstance( obj, OutPort ): pass
+        if   isinstance( obj, (InPort, OutPort) ):  pass
         elif isinstance( obj, Wire ):
           if blk_hostobj != host:
             raise SignalTypeError("""[Type 1] Invalid read to Wire:
@@ -521,9 +520,8 @@ class ComponentLevel2( ComponentLevel1 ):
 
         if   isinstance( obj, ComponentLevel1 ):
           cleanup_connectables( obj, obj )
-        elif isinstance( obj, Interface ):
-          cleanup_connectables( obj, host_component )
-        elif isinstance( obj, list ):
+
+        elif isinstance( obj, (Interface, list) ):
           cleanup_connectables( obj, host_component )
 
         elif isinstance( obj, Signal ):
