@@ -24,6 +24,7 @@ def mk_mem_req_msg( opq, addr, data ):
   LenType  = mk_bits( clog2(data>>3) )
   DataType = mk_bits( data           )
   cls_name = "MemReqMsg_{}_{}_{}".format( opq, addr, data )
+
   def req_to_str( self ):
     return "{}:{}:{}:{}:{}".format(
       MemMsgType.str[ int( self.type_ ) ],
@@ -33,22 +34,21 @@ def mk_mem_req_msg( opq, addr, data ):
       DataType( self.data ) if self.type_ != MemMsgType.READ else
       " " * ( data//4 ),
     )
-  req_cls =  mk_bit_struct( cls_name, [
+
+  return mk_bit_struct( cls_name, [
     ( 'type_',  Bits4    ),
     ( 'opaque', OpqType  ),
     ( 'addr',   AddrType ),
     ( 'len',    LenType  ),
     ( 'data',   DataType ),
   ], req_to_str )
-  req_cls.opaque_nbits = opq
-  req_cls.data_nbits = data
-  return req_cls
 
 def mk_mem_resp_msg( opq, data ):
   OpqType  = mk_bits( opq            )
   LenType  = mk_bits( clog2(data>>3) )
   DataType = mk_bits( data           )
   cls_name = "MemRespMsg_{}_{}".format( opq, data )
+
   def resp_to_str( self ):
     return "{}:{}:{}:{}:{}".format(
       MemMsgType.str[ int( self.type_ ) ],
@@ -58,16 +58,14 @@ def mk_mem_resp_msg( opq, data ):
       DataType( self.data ) if self.type_ != MemMsgType.WRITE else
       " " * ( data//4 ),
     )
-  resp_cls = mk_bit_struct( cls_name, [
+
+  return mk_bit_struct( cls_name, [
     ( 'type_',  Bits4    ),
     ( 'opaque', OpqType  ),
     ( 'test',   Bits2    ),
     ( 'len',    LenType  ),
     ( 'data',   DataType ),
   ], resp_to_str )
-  resp_cls.opaque_nbits = opq
-  resp_cls.data_nbits = data
-  return resp_cls
 
 class MemMsgType( object ):
   READ       = 0
@@ -98,7 +96,3 @@ class MemMsgType( object ):
     AMO_MAXU   : "xu",
     AMO_XOR    : "xo",
   }
-
-# Yanghui : what is this used for?
-def msg_to_str( msg, width ):
-  return ("" if msg is None else str(msg)).ljust(width)
