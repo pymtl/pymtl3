@@ -46,8 +46,7 @@ class BitStruct( object ):
       "{} does not have field {}!".format( cls.__name__, field_name )
     )
 
-
-  # Default line trace
+  # Default __str__ function
 
   def __str__( self ):
     trace = ""
@@ -56,14 +55,16 @@ class BitStruct( object ):
     return trace[:-1]
   
   # Compare only fields
-
+  # TODO: figure out how frequently user might directly compare the whole
+  # struct as the comparison between structs can be slow. We assume this
+  # would mainly happen in test sinks.
   def __eq__( self, other ): 
     if type( self ) != type( other ):
       raise AssertionError(
         "Cannot compare {} against {}".format( type( self ), type( other ) )
       )
-    # Maybe we should compare each fields recursively so that BitStruct can
-    # support types that cannot be converted to bits?
+    # TODO: figure out whether we should just compare each fields 
+    # recursively so that it supports types that cannot be converted to bits?
     return self.to_bits() == other.to_bits()
 
   def __ne__( self, other ):
@@ -71,7 +72,6 @@ class BitStruct( object ):
       raise AssertionError(
         "Cannot compare {} against {}".format( type( self ), type( other ) )
       )
-    # Same thing here...
     return self.to_bits() != other.to_bits()
 
 #-------------------------------------------------------------------------
@@ -120,7 +120,7 @@ def mk_bit_struct( name, fields, str_func=None ):
     exec( py.code.Source( tmpl ).compile(), globals() )
 
     cls = _struct_dict[name]
-  
+
     cls.fields = fields
     cls.nbits  = nbits
     if str_func is not None:
