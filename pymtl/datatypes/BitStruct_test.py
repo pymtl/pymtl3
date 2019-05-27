@@ -102,6 +102,8 @@ def test_component():
 
       @s.update
       def up_bit_struct():
+        # TODO:We have to use deepcopy here as a temporary workaround
+        # to prevent s.in_ beingmutated by the following operations.
         s.out = deepcopy( s.in_ )
         s.out.pt0.x += 1
         s.out.pt0.y -= 1
