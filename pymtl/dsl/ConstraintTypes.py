@@ -24,7 +24,5 @@ class ValueConstraint(object):
 class U(FuncConstraint): pass
 class M(FuncConstraint): pass
 
-class M(FuncConstraint): pass
-
 class RD(ValueConstraint): pass
 class WR(ValueConstraint): pass
