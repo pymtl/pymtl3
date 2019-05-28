@@ -166,7 +166,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
       not_single_term = ''
       check_equal = ''
 
-    else: 
+    else:
       # Generate statements for checking sub fields
       eq = []
       single_term = ''
@@ -220,7 +220,7 @@ def __eq__( s, other ):
 
   def viz_impl_str( s ):
     """Return the implementation of the visualization visitor of this
-    constructor as a Python function.""" 
+    constructor as a Python function."""
     body = []
     if s.type_list is None:
       # No parameter for this BehavioralRTLIR node.
@@ -231,7 +231,7 @@ def __eq__( s, other ):
       body_str = body_str
       label_trail = ''
 
-    else: 
+    else:
       # 1. Create a vertex corresponding to this BehavioralRTLIR node
       # 2. Add edges between this BehavioralRTLIR node and all child nodes
       body.append( "s.g.node( str( s.cur ), label = label )" )
@@ -275,7 +275,7 @@ def __eq__( s, other ):
             body.append( customized_str.format(
               s = 'local_cur',
               t = 's.cur+1',
-              edge_label = f, 
+              edge_label = f,
               edge_label_trail = ''
             ) )
             body.append( 's.visit( node.{field} )'.format( field = f ) )
@@ -320,7 +320,7 @@ def parse_constructor( constr_str ):
       param_lst = param.strip().split()
       type_list.append( param_lst[0] )
       field_list.append( param_lst[1] )
-  else: 
+  else:
     # no parameters
     constr_name = constr_str
     type_list = None
@@ -347,7 +347,7 @@ def get_constr( module_str, start, end ):
     bracket_idx = module_str.find( ')', start, end )
     constr = module_str[ constr_start : bracket_idx+1 ]
     l = bracket_idx + 1
-  else: 
+  else:
     # this constructor has no parameters
     l = constr_start
     while l < end and module_str[ l ] != ' ':
@@ -387,7 +387,7 @@ def implement_module( module_str ):
 
       # parse each possible constructor and move to the next
       constr_str, l = get_constr(
-        module_str, constructor_start, constructor_end 
+        module_str, constructor_start, constructor_end
       )
 
       constr = parse_constructor( constr_str )
@@ -410,7 +410,7 @@ def implement_module( module_str ):
     # constr_list.add( parse_constructor( constr_str ) )
 
     start = l
-  
+
   # sanity check
   for constr in constr_list:
     if not constr.type_list is None:
@@ -431,7 +431,7 @@ def implement_module( module_str ):
     output.write( viz_impl_str )
 
 def extract_module( asdl_str ):
-  """Return the module name and the module string of the given asdl 
+  """Return the module name and the module string of the given asdl
   string."""
   module_name_start = asdl_str.index( 'module' ) + len( 'module' )
   module_name_end = asdl_str.index( '{' )
@@ -442,7 +442,7 @@ def extract_module( asdl_str ):
 
   return module_name, module_str
 
-# This file should be run first to generate the correct implementation 
+# This file should be run first to generate the correct implementation
 # of BehavioralRTLIR.
 if __name__ == '__main__':
   with open( 'BehavioralRTLIR.asdl', 'r') as asdl_file:

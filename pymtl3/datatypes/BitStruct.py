@@ -2,7 +2,7 @@
 # BitStruct.py
 #=========================================================================
 # A basic BitStruct definition.
-# 
+#
 # Author : Yanghui Ou
 #   Date : Apr 8, 2019
 
@@ -26,12 +26,12 @@ class BitStruct( object ):
     bits_lst = []
     for name, Type in self.fields:
       if issubclass( Type, Bits ):
-        bits_lst.append( Type( vars( self )[name] ) ) 
+        bits_lst.append( Type( vars( self )[name] ) )
       elif issubclass( Type, BitStruct ):
         assert isinstance( vars( self )[name], BitStruct )
         bits_lst.append( vars( self )[name].to_bits() )
       else:
-        raise AssertionError( 
+        raise AssertionError(
           "Type {} cannot be translated into bits!".format( Type )
         )
     return reduce( lambda x, y : concat( x, y ), bits_lst )
@@ -53,17 +53,17 @@ class BitStruct( object ):
     for name, _ in self.fields:
       trace += "{}:".format( vars( self )[name] )
     return trace[:-1]
-  
+
   # Compare only fields
   # TODO: figure out how frequently user might directly compare the whole
   # struct as the comparison between structs can be slow. We assume this
   # would mainly happen in test sinks.
-  def __eq__( self, other ): 
+  def __eq__( self, other ):
     if type( self ) != type( other ):
       raise AssertionError(
         "Cannot compare {} against {}".format( type( self ), type( other ) )
       )
-    # TODO: figure out whether we should just compare each fields 
+    # TODO: figure out whether we should just compare each fields
     # recursively so that it supports types that cannot be converted to bits?
     return self.to_bits() == other.to_bits()
 
@@ -96,7 +96,7 @@ def mk_bit_struct( name, fields, str_func=None ):
       return _struct_dict[name]
     else:
       raise AssertionError(
-        "BitStruct {} has already been created!".format( name ) 
+        "BitStruct {} has already been created!".format( name )
       )
   else:
     # Check for duplicate fields first.
@@ -115,7 +115,7 @@ def mk_bit_struct( name, fields, str_func=None ):
       args_str   += "{}={}(), ".format( field_name, FieldType.__name__ )
       assign_str += "    s.{} = {}\n".format( field_name, field_name )
     args_str = args_str[:-2]
-    
+
     tmpl = _struct_tmpl.format( **locals() )
     exec( py.code.Source( tmpl ).compile(), globals() )
 

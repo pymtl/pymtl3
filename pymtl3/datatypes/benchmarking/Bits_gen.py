@@ -39,7 +39,7 @@ class Bits1( object ):
 
   def __add__( self, other ):
     return self.__class__( self.value + int(other) )
-  
+
   def __radd__( self, other ):
     return self.__add__( other )
 
@@ -143,7 +143,7 @@ class Bits1( object ):
   def hex( self ):
     str = "{:x}".format(self.value).zfill(((self.nbits-1)>>2)+1)
     return "0x"+str
-    
+
 bits_template = """
 class Bits{nbits}(Bits1):
   nbits = {nbits}
@@ -158,7 +158,7 @@ _bitwidths     = range(2, 192) + [ 384, 512, 768, 1024 ]
 _bits_types    = dict()
 
 source_str = ""
-for nbits in _bitwidths: 
+for nbits in _bitwidths:
   mask = (1 << nbits) - 1
   source_str += bits_template.format( **vars() )
 exec(py.code.Source( source_str ).compile())

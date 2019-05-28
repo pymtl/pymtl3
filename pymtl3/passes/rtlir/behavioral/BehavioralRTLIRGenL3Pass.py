@@ -46,7 +46,7 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
     obj = s.get_call_obj( node )
     if isinstance(obj, type) and not issubclass(obj, Bits) and obj is not bool:
       if len(node.args) < 1:
-        raise PyMTLSyntaxError( s.blk, node, 
+        raise PyMTLSyntaxError( s.blk, node,
           'at least one value should be provided to struct instantiation!' )
       values = map(lambda arg: s.visit(arg), node.args)
       ret = bir.StructInst( obj, values )

@@ -52,7 +52,7 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
   # Override
   def translate_behavioral( s, m ):
     """Translate behavioral part of `m`.
-    
+
     Support for translating temporary variables is added at level 2.
     """
     super(BehavioralTranslatorL2, s).translate_behavioral(m)

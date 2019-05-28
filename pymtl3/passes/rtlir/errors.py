@@ -44,7 +44,7 @@ class PyMTLSyntaxError( Exception ):
       pass
     return super( PyMTLSyntaxError, self ).__init__(
       "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
-      format( **locals() ) 
+      format( **locals() )
     )
 
 class PyMTLTypeError( Exception ):
@@ -65,5 +65,5 @@ class PyMTLTypeError( Exception ):
       pass
     return super( PyMTLTypeError, self ).__init__(
       "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
-      format( **locals() ) 
+      format( **locals() )
     )

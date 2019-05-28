@@ -47,7 +47,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
   def translate_structural( s, top ):
     """Translate structural part of top component.
-    
+
     This function will only be called once during the whole translation
     process.
     """
@@ -69,7 +69,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
   def _translate_structural( s, m ):
     """Translate structural part of component m.
-    
+
     This method will be recursively applied to different components in the
     hierarchy.
     """
@@ -216,7 +216,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
         'bit selection {} over bit/part selection {} is not allowed!'.format(expr, base)
       return s.rtlir_tr_bit_selection(
         s.rtlir_signal_expr_translation( expr.get_base(), m ), expr.get_index() )
-      
+
     elif isinstance( expr, sexp.PartSelection ):
       base = expr.get_base()
       assert not isinstance(base, (sexp.PartSelection, sexp.BitSelection)), \

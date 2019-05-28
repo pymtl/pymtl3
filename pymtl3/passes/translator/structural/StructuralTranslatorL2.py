@@ -114,6 +114,6 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   # Signal operations
   def rtlir_tr_packed_index( s, base_signal, index ):
     raise NotImplementedError()
-  
+
   def rtlir_tr_struct_attr( s, base_signal, attr ):
     raise NotImplementedError()

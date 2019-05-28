@@ -203,7 +203,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
 
     def rtlir_tr_struct_attr( s, base_signal, attr ):
       return 'StructAttr {base_signal} {attr}'.format( **locals() )
-    
+
     def rtlir_tr_interface_attr( s, base_signal, attr ):
       return 'IfcAttr {base_signal} {attr}'.format( **locals() )
 

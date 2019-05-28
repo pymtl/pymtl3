@@ -14,7 +14,7 @@ class StructuralRTLIRGenL3Pass( StructuralRTLIRGenL2Pass ):
   # Override
   def contains( s, obj, signal ):
     """Return if obj contains signal.
-    
+
     At L3 not all signals have direct correspondance to `s.connect`
     statements because of interfaces. Therefore we need to check if `obj`
     is some parent of `signal`.
