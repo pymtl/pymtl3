@@ -114,6 +114,11 @@ def test_set_param():
       s.lunch  = lunch 
       s.dinner = dinner
 
+  class Panda( NamedObject ):
+    def construct( s, lunch="dirt", dinner="dirt" ):
+      s.lunch  = lunch
+      s.dinner = dinner
+
   class Zoo( NamedObject ):
     def construct( s, animals=[] ):
       s.animals = [ A() for A in animals ]
@@ -127,13 +132,16 @@ def test_set_param():
   assert A.dinner == "dirt" 
 
   Z = Zoo()
-  Z.set_param( "top.construct", animals=[ HoneyBadger, Dromaius ] )
+  Z.set_param( "top.construct", animals=[ HoneyBadger, Dromaius, Panda ] )
   Z.set_param( "top.animals*.construct", 
       lunch ="grass",
       dinner="poisoned onion"
   )
+  Z.set_param( "top.animals[2].construct", dinner="bamboo" )
   Z.elaborate()
   assert Z.animals[0].lunch == "grass"
   assert Z.animals[1].lunch == "grass"
   assert Z.animals[0].dinner == "poisoned onion"
   assert Z.animals[1].dinner == "poisoned onion"
+  #FIXME: this does not work
+  # assert Z.animals[2].dinner == "bamboo"
