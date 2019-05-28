@@ -1,3 +1,4 @@
+"""
 #=========================================================================
 # BitStruct_test.py
 #=========================================================================
@@ -5,6 +6,7 @@
 #
 # Author : Yanghui Ou
 #   Date : May 24, 2019
+"""
 
 from __future__ import absolute_import, division, print_function
 
