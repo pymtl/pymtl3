@@ -1,8 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
-from pymtl.dsl.errors import UpblkCyclicError
-from pymtl.passes import GenDAGPass, OpenLoopCLPass
+from pymtl3.dsl import *
+from pymtl3.dsl.errors import UpblkCyclicError
+from pymtl3.passes.GenDAGPass import GenDAGPass
+from pymtl3.passes.OpenLoopCLPass import OpenLoopCLPass
 
 #=========================================================================
 # OpenLoopCLPass_test.py

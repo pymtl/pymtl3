@@ -14,7 +14,7 @@ from collections import deque
 
 from graphviz import Digraph
 
-from pymtl.dsl.errors import UpblkCyclicError
+from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
 from .errors import PassOrderError

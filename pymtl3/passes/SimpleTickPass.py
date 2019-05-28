@@ -11,8 +11,8 @@ from __future__ import absolute_import, division, print_function
 
 from graphviz import Digraph
 
-from pymtl.dsl.errors import UpblkCyclicError
-from pymtl.passes import BasePass
+from pymtl3.dsl.errors import UpblkCyclicError
+from pymtl3.passes.BasePass import BasePass
 
 from .errors import PassOrderError
 

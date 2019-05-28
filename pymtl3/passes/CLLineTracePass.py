@@ -8,13 +8,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl.dsl.Connectable import (
-    CalleePort,
-    CallerPort,
-    MethodPort,
-    NonBlockingInterface,
-)
-from pymtl.passes.BasePass import BasePass, PassMetadata
+from pymtl3.dsl import *
+from .BasePass import BasePass, PassMetadata
 
 
 class CLLineTracePass( BasePass ):
@@ -23,7 +18,7 @@ class CLLineTracePass( BasePass ):
     self.default_trace_len = trace_len
 
   def __call__( self, top ):
-    
+
     # [wrap_callee_method] wraps the original method in a callee port
     # into a new method that not only calls the origianl method, but
     # also saves the arguments to the method and the return value,
@@ -58,18 +53,18 @@ class CLLineTracePass( BasePass ):
         self.saved_ret = driver( *args, **kwargs )
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
-    
+
     # [mk_new_str] replaces [_str_hook] in a non-blocking interface with
-    # a new to-string function that uses the metadata to compose line 
+    # a new to-string function that uses the metadata to compose line
     # trace.
-    # When the interface is ready and the method gets called, the line 
+    # When the interface is ready and the method gets called, the line
     # trace just prints out the actual message. Otherwise, it prints out
-    # some special characters under different circumstances: 
+    # some special characters under different circumstances:
     # - " " empty space means the interface is ready but not called.
     # - "." dot means whether the interface is ready is not checked at all.
     # - "#" hash means the interface is checked but it is not ready.
     # - "X" means the interface is called when not ready.
-    # For example, a cycle-level single element normal queue would have 
+    # For example, a cycle-level single element normal queue would have
     # the following line trace:
     #      enq     deq
     #  1:( 0000 () #    ) - enq(0000) called, deq is not ready
@@ -79,13 +74,13 @@ class CLLineTracePass( BasePass ):
       def new_str( self ):
         if self.method.called and self.rdy.called and self.rdy.saved_ret:
           args_str = ",".join(
-            [ str( arg ) for arg in self.method.saved_args ] 
+            [ str( arg ) for arg in self.method.saved_args ]
           )
           kwargs_str = ",".join(
             [ str( arg ) for _, arg in self.method.saved_kwargs.items() ]
           )
           ret_str = (
-            "" if self.method.saved_ret is None else 
+            "" if self.method.saved_ret is None else
             str( self.method.saved_ret )
           )
           trace = []
@@ -93,7 +88,7 @@ class CLLineTracePass( BasePass ):
           if len( kwargs_str ) > 0: trace.append( kwargs_str )
           if len( ret_str ) > 0 : trace.append( ret_str )
           trace_str = ",".join( trace )
-          return trace_str.ljust( self.trace_len ) 
+          return trace_str.ljust( self.trace_len )
         elif self.rdy.called:
           if self.rdy.saved_ret:
             return " ".ljust( self.trace_len )
@@ -107,8 +102,8 @@ class CLLineTracePass( BasePass ):
 
     # Collect all method ports and add some stamps
     all_callees = set()
-    all_method_ports = top.get_all_object_filter( 
-      lambda s: isinstance( s, MethodPort ) 
+    all_method_ports = top.get_all_object_filter(
+      lambda s: isinstance( s, MethodPort )
     )
     for mport in all_method_ports:
       mport.called = False
@@ -128,14 +123,14 @@ class CLLineTracePass( BasePass ):
         if isinstance( member, CallerPort ):
           assert member is not driver
           wrap_caller_method( member, driver )
-    
+
     # Handle other callee that is not driving anything
     for mport in ( all_callees - all_drivers ):
       wrap_callee_method( mport, set() )
 
     # Collecting all non blocking interfaces and replace the str hook
-    all_nblk_ifcs = top.get_all_object_filter( 
-      lambda s: isinstance( s, NonBlockingInterface ) 
+    all_nblk_ifcs = top.get_all_object_filter(
+      lambda s: isinstance( s, NonBlockingInterface )
     )
     for ifc in all_nblk_ifcs:
       if ifc.method.Type is not None:
