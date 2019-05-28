@@ -148,7 +148,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class.mk_rd( 0, addr, nbytes ) )
+    s.right.req( s.req_class( MemMsgType.READ, addr, nbytes ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -163,7 +163,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class.mk_wr( 0, addr, nbytes, data ) )
+    s.right.req( s.req_class( MemMsgType.WRITE, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -176,7 +176,7 @@ class MemIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class.mk_msg( amo, 0, addr, nbytes ) )
+    s.right.req( s.req_class( amo, 0, addr, nbytes ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
