@@ -6,7 +6,8 @@
 """Provide L1 behavioral translator."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.passes.rtlir import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
     BehavioralRTLIRGenL1Pass,
 )

@@ -11,8 +11,8 @@ import pytest
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import Component, InPort, OutPort
-from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
 
 

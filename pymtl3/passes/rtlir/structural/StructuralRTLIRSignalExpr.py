@@ -9,7 +9,8 @@ from functools import reduce
 
 import pymtl3.dsl as dsl
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
-from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 
 class BaseSignalExpr( object ):

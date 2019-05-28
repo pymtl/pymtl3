@@ -11,6 +11,7 @@ from contextlib import contextmanager
 
 import pytest
 
+
 @pytest.fixture
 def do_test( request ):
   """Call `local_do_test` of the requesting module."""

@@ -15,8 +15,8 @@ from __future__ import absolute_import, division, print_function
 import __builtin__
 from functools import reduce
 
-from pymtl3.datatypes import Bits
 import pymtl3.dsl as dsl
+from pymtl3.datatypes import Bits
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs

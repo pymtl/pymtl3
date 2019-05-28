@@ -15,8 +15,17 @@ from copy import copy, deepcopy
 
 import pytest
 
-from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits8, Bits16, Bits32, \
-                             concat, zext, sext
+from pymtl3.datatypes import (
+    Bits1,
+    Bits2,
+    Bits4,
+    Bits8,
+    Bits16,
+    Bits32,
+    concat,
+    sext,
+    zext,
+)
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
     BehavioralRTLIRGenL1Pass,

@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits16, Bits32
 import pymtl3.dsl as dsl
+from pymtl3.datatypes import Bits16, Bits32
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,

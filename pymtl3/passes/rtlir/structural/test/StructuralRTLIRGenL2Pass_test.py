@@ -9,12 +9,12 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits32
 import pymtl3.dsl as dsl
-from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
+from pymtl3.datatypes import Bits32
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )
+from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 
 def test_L2_struct_attr():

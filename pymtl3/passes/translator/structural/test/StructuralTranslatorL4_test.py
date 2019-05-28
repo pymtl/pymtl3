@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, Interface, InPort, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.translator.structural.StructuralTranslatorL4 import (

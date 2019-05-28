@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 import ast
 import copy
 
-from pymtl3.datatypes import Bits, concat, sext, zext
 import pymtl3.dsl as dsl
+from pymtl3.datatypes import Bits, concat, sext, zext
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 

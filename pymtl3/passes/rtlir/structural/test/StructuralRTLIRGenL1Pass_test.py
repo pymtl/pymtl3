@@ -7,9 +7,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits4, Bits32
 import pymtl3.dsl as dsl
-from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.datatypes import Bits1, Bits4, Bits32
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,

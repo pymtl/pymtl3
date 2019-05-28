@@ -7,8 +7,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32
 import pymtl3.dsl as dsl
+from pymtl3.datatypes import Bits1, Bits32
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (
     StructuralRTLIRGenL3Pass,
 )

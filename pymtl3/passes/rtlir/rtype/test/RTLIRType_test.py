@@ -9,10 +9,11 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits1, Bits16, Bits32
 import pymtl3.dsl as dsl
-from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.datatypes import Bits1, Bits16, Bits32
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
 
 
