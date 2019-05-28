@@ -44,6 +44,7 @@ OpenLoopCLSim = [
 UnrollSim = [
   Component.elaborate,
   GenDAGPass(),
+  WrapGreenletPass(),
   SimpleSchedulePass(),
   UnrollTickPass(),
   Component.lock_in_simulation
