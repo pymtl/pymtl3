@@ -20,6 +20,7 @@ from .ifcs_utils import enrdy_to_str
 class GetIfcRTL( Interface ):
 
   def construct( s, Type ):
+    s.MsgType = Type
 
     s.msg = InPort ( Type )
     s.en  = OutPort( int if Type is int else Bits1 )
@@ -38,6 +39,7 @@ class GetIfcRTL( Interface ):
 class GiveIfcRTL( Interface ):
 
   def construct( s, Type ):
+    s.MsgType = Type
 
     s.msg = OutPort( Type )
     s.en  = InPort ( int if Type is int else Bits1 )

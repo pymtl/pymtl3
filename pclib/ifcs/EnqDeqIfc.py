@@ -13,7 +13,8 @@ from pclib.rtl import And
 from pymtl import *
 
 from .ifcs_utils import enrdy_to_str
-from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL
+from .SendRecvIfc import RecvIfcRTL
+from .GetGiveIfc  import GiveIfcRTL
 
 #-------------------------------------------------------------------------
 # EnqIfcRTL
@@ -26,21 +27,9 @@ class EnqIfcRTL( RecvIfcRTL ):
 # DeqIfcRTL
 #-------------------------------------------------------------------------
 
-class DeqIfcRTL( Interface ):
+class DeqIfcRTL( GiveIfcRTL ):
 
-  def construct( s, Type ):
-
-    s.msg = OutPort( Type )
-    s.en  = InPort ( int if Type is int else Bits1 )
-    s.rdy = OutPort( int if Type is int else Bits1 )
-
-    s.MsgType = Type
-
-  def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy )
-
-  def __str__( s ):
-    return s.line_trace()
+  # Interfaces are the same as GiveIfc. We just need to add custom connect
 
   def connect( s, other, parent ):
 
