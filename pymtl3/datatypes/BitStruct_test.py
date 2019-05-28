@@ -2,7 +2,7 @@
 # BitStruct_test.py
 #=========================================================================
 # A basic BitStruct definition.
-# 
+#
 # Author : Yanghui Ou
 #   Date : May 24, 2019
 
@@ -10,28 +10,31 @@ from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
 
-from pymtl import *
+from .bits_import import Bits4, Bits5, mk_bits
+from .BitStruct import mk_bit_struct
+from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.passes.PassGroups import SimpleSim
 
 StaticPoint = mk_bit_struct( "BasePoint", [
-    ( 'x', Bits4 ), 
-    ( 'y', Bits4 ), 
-  ] ) 
+    ( 'x', Bits4 ),
+    ( 'y', Bits4 ),
+  ] )
 
 # FIXME: The following inherited bit struct cannot be used for construct
-# nested struct as the newly made class is not captured in the scope of 
+# nested struct as the newly made class is not captured in the scope of
 # mk_bit_struct.
-# class StaticPoint( 
+# class StaticPoint(
 #   mk_bit_struct( "BasePoint", [
-#     ( 'x', Bits4 ), 
-#     ( 'y', Bits4 ), 
+#     ( 'x', Bits4 ),
+#     ( 'y', Bits4 ),
 #   ]) ):
-# 
+#
 #   def __str__( s ):
 #     return "({},{})".format( int(s.x), int(s.y) )
 
-NestedSimple = mk_bit_struct( "NestedSimple", [ 
-    ( 'pt0', StaticPoint ), 
-    ( 'pt1', StaticPoint ), 
+NestedSimple = mk_bit_struct( "NestedSimple", [
+    ( 'pt0', StaticPoint ),
+    ( 'pt1', StaticPoint ),
   ] )
 
 def test_struct():
@@ -49,9 +52,9 @@ def test_struct():
   assert pt.to_bits() == 0x24
   assert pt.x == 2
   assert pt.y == 4
-  
+
   np = NestedSimple( StaticPoint(1,2), StaticPoint(3,4) )
-  print( NestedSimple ) 
+  print( NestedSimple )
   print( np           )
   print( np.to_bits() )
   assert NestedSimple.nbits == 16
@@ -77,14 +80,14 @@ def test_struct():
     XType = mk_bits( xnbits )
     YType = mk_bits( ynbits )
 
-    return mk_bit_struct( 
+    return mk_bit_struct(
       "Point_{}_{}".format( xnbits, ynbits ), [
         ( 'x', XType ),
         ( 'y', YType ),
       ],
       lambda s: "({},{})".format( int(s.x), int(s.y) )
     )
-  
+
   DPoint = dynamic_point( 4, 8 )
   dp = DPoint( 1, 2 )
   print( DPoint )
