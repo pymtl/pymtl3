@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits8, Bits10, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import WR, U

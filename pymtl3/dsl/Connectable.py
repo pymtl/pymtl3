@@ -11,8 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pymtl3.datatypes import mk_bits
-from pymtl3.datatypes.Bits import Bits
+from pymtl3.datatypes import Bits, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject

@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits16
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6, non_blocking
 from pymtl3.dsl.Connectable import NonBlockingCalleeIfc, NonBlockingCallerIfc
 from pymtl3.dsl.ConstraintTypes import M, U

@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 from collections import deque
 from functools import reduce
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits1, Bits8, Bits128
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 
