@@ -35,13 +35,16 @@ def mk_mem_req_msg( opq, addr, data ):
       " " * ( data//4 ),
     )
 
-  return mk_bit_struct( cls_name, [
+  req_cls = mk_bit_struct( cls_name, [
     ( 'type_',  Bits4    ),
     ( 'opaque', OpqType  ),
     ( 'addr',   AddrType ),
     ( 'len',    LenType  ),
     ( 'data',   DataType ),
   ], req_to_str )
+
+  req_cls.data_nbits = data
+  return req_cls
 
 def mk_mem_resp_msg( opq, data ):
   OpqType  = mk_bits( opq            )
@@ -59,13 +62,16 @@ def mk_mem_resp_msg( opq, data ):
       " " * ( data//4 ),
     )
 
-  return mk_bit_struct( cls_name, [
+  resp_cls = mk_bit_struct( cls_name, [
     ( 'type_',  Bits4    ),
     ( 'opaque', OpqType  ),
     ( 'test',   Bits2    ),
     ( 'len',    LenType  ),
     ( 'data',   DataType ),
   ], resp_to_str )
+
+  resp_cls.data_nbits = data
+  return resp_cls
 
 class MemMsgType( object ):
   READ       = 0
