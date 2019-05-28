@@ -32,7 +32,7 @@ from .DelayPipeCL import DelayPipeDeqCL
 # read_data from the TestMemory used with AMOs cannot just be the memory
 # request message size (e.g., 128b):
 #
-#         read_data = Bits( s.field_nbits( 'data' ) )
+#         read_data = Bits( s.data_nbits )
 #
 # It must instead be the number of bytes matching the bitwidth in the
 # processor (e.g., 32b):
