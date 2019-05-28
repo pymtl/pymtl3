@@ -28,6 +28,7 @@ DynamicSim = [
   GenDAGPass(),
   WrapGreenletPass(),
   DynamicSchedulePass(),
+  CLLineTracePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
@@ -37,6 +38,7 @@ OpenLoopCLSim = [
   GenDAGPass(),
   OpenLoopCLPass(), # Inject this pass to build infrastructure
   SimpleSchedulePass(), # Still generate schedule and tick
+  # TODO: make OpenLoopCLPass work with CLLineTracePass
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
