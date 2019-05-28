@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import *
-from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.datatypes import Bits16, Bits32
+import pymtl3.dsl as dsl
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
@@ -35,10 +35,10 @@ def local_do_test( m ):
     assert ns.rtlir_tmpvars[tvar_name] == ref[tvar_name]
 
 def test_tmp_wire( do_test ):
-  class A( Component ):
+  class A( dsl.Component ):
     def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits32 )
+      s.in_ = dsl.InPort( Bits32 )
+      s.out = dsl.OutPort( Bits32 )
       @s.update
       def upblk():
         u = s.in_ + Bits32(42)
@@ -52,10 +52,10 @@ def test_tmp_wire_struct( do_test ):
   class B( object ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
-  class A( Component ):
+  class A( dsl.Component ):
     def construct( s ):
-      s.in_ = InPort( B )
-      s.out = OutPort( Bits32 )
+      s.in_ = dsl.InPort( B )
+      s.out = dsl.OutPort( Bits32 )
       @s.update
       def upblk():
         u = s.in_
@@ -67,11 +67,11 @@ def test_tmp_wire_struct( do_test ):
   do_test( a )
 
 def test_tmp_wire_overwrite_conflict_type( do_test ):
-  class A( Component ):
+  class A( dsl.Component ):
     def construct( s ):
-      s.in_1 = InPort( Bits32 )
-      s.in_2 = InPort( Bits16 )
-      s.out = OutPort( Bits32 )
+      s.in_1 = dsl.InPort( Bits32 )
+      s.in_2 = dsl.InPort( Bits16 )
+      s.out = dsl.OutPort( Bits32 )
       @s.update
       def upblk():
         u = s.in_1 + Bits32(42)
@@ -83,11 +83,11 @@ def test_tmp_wire_overwrite_conflict_type( do_test ):
     do_test( a )
 
 def test_tmp_scope_conflict_type( do_test ):
-  class A( Component ):
+  class A( dsl.Component ):
     def construct( s ):
-      s.in_1 = InPort( Bits32 )
-      s.in_2 = InPort( Bits16 )
-      s.out = OutPort( Bits32 )
+      s.in_1 = dsl.InPort( Bits32 )
+      s.in_2 = dsl.InPort( Bits16 )
+      s.out = dsl.OutPort( Bits32 )
       @s.update
       def upblk():
         if 1:

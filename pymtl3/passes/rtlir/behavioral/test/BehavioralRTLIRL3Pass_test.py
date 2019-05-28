@@ -13,16 +13,18 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits1, Bits32
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.errors import VarNotDeclaredError
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
-# from pymtl3.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL3Pass import (
     BehavioralRTLIRGenL3Pass,
 )
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL3Pass import (
     BehavioralRTLIRTypeCheckL3Pass,
+)
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRVisualizationPass import (
+    BehavioralRTLIRVisualizationPass,
 )
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
@@ -33,7 +35,7 @@ def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenL3Pass() )
   m.apply( BehavioralRTLIRTypeCheckL3Pass() )
-  # m.apply( BehavioralRTLIRVisualizationPass() )
+  m.apply( BehavioralRTLIRVisualizationPass() )
 
   try:
     ref = m._rtlir_test_ref

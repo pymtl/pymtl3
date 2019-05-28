@@ -6,7 +6,6 @@
 """Provide L2 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
-import pymtl3.datatypes as pymtl3_datatypes
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt

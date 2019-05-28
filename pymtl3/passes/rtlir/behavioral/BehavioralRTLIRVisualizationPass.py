@@ -13,7 +13,6 @@ import os
 
 from graphviz import Digraph
 
-import pymtl3.datatypes as pymtl3_datatypes
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 

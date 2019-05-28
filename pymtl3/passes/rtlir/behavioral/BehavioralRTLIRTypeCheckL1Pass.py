@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 
-import pymtl3.datatypes as pymtl3_datatypes
+from pymtl3.datatypes import Bits32, mk_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
@@ -137,7 +137,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       s.freevars[ node.name ] = node.obj
     t = rt.get_rtlir( node.obj )
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
-      node._value = pymtl3_datatypes.mk_bits( t.get_dtype().get_length() )( node.obj )
+      node._value = mk_bits( t.get_dtype().get_length() )( node.obj )
     node.Type = t
 
   def visit_Base( s, node ):
@@ -151,7 +151,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_Number( s, node ):
     # By default, number literals have bitwidth of 32
     node.Type = rt.get_rtlir( node.value )
-    node._value = pymtl3_datatypes.Bits32( node.value )
+    node._value = Bits32( node.value )
 
   def visit_Concat( s, node ):
     nbits = 0

@@ -9,5 +9,3 @@ from .BehavioralRTLIRTypeCheckL5Pass import (
     BehavioralRTLIRTypeCheckL5Pass as BehavioralRTLIRTypeCheckPass,
 )
 from .BehavioralRTLIRVisualizationPass import BehavioralRTLIRVisualizationPass
-
-MinBehavioralRTLIRLevel, MaxBehavioralRTLIRLevel = 0, 5

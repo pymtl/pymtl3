@@ -13,9 +13,8 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits32
 from pymtl3.dsl import Component, InPort, OutPort, Wire
-# from pymtl3.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
     BehavioralRTLIRGenL2Pass,
 )
@@ -24,7 +23,6 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL2Pass import (
 )
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
-from pymtl3.passes.rtlir.rtype.RTLIRDataType import Bool
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
@@ -33,7 +31,6 @@ def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenL2Pass() )
   m.apply( BehavioralRTLIRTypeCheckL2Pass() )
-  # m.apply( BehavioralRTLIRVisualizationPass() )
 
   try:
     ref = m._rtlir_test_ref
@@ -258,6 +255,7 @@ def test_L2_binop_non_vector( do_test ):
 #-------------------------------------------------------------------------
 
 def test_L2_call_bool( do_test ):
+  Bool = rdt.Bool
   class A( Component ):
     def construct( s ):
       s.out = OutPort( Bits1 )

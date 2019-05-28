@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits32
 import pymtl3.dsl as dsl
-from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
+from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )
@@ -30,9 +30,9 @@ def test_L2_struct_attr():
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass() )
   ns = a._pass_structural_rtlir_gen
-  comp = sexp.CurComp(a, 's')
+  comp = CurComp(a, 's')
   assert ns.connections == \
-    [(sexp.StructAttr(sexp.CurCompAttr(comp, 'in_'), 'foo'), sexp.CurCompAttr(comp, 'out'))]
+    [(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), CurCompAttr(comp, 'out'))]
 
 def test_L2_packed_index():
   class B( object ):
@@ -47,7 +47,7 @@ def test_L2_packed_index():
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass() )
   ns = a._pass_structural_rtlir_gen
-  comp = sexp.CurComp(a, 's')
+  comp = CurComp(a, 's')
   assert ns.connections == \
-    [(sexp.PackedIndex(sexp.StructAttr(sexp.CurCompAttr(comp, 'in_'), 'foo'), 1),
-      sexp.CurCompAttr(comp, 'out'))]
+    [(PackedIndex(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), 1),
+      CurCompAttr(comp, 'out'))]

@@ -9,13 +9,12 @@ from __future__ import absolute_import, division, print_function
 import ast
 import copy
 
-import pymtl3.datatypes as pymtl3_datatypes
-import pymtl3.dsl as pymtl3_dsl
+from pymtl3.datatypes import Bits, concat, sext, zext
+import pymtl3.dsl as dsl
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 
 from . import BehavioralRTLIR as bir
-from .BehavioralRTLIR import CombUpblk, SeqUpblk
 
 
 class BehavioralRTLIRGenL1Pass( BasePass ):
@@ -122,7 +121,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     s._upblk_name = node.name
 
     # Get the type of upblk from ._upblk_type variable
-    ret = eval( s._upblk_type + '( node.name, [] )' )
+    ret = eval( 'bir.' + s._upblk_type + '( node.name, [] )' )
     for stmt in node.body:
       ret.body.append( s.visit( stmt ) )
     ret.ast = node
@@ -166,7 +165,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # 5. Real function call: not supported yet
 
     # Deal with Bits type cast
-    if isinstance(obj, type) and issubclass( obj, pymtl3_datatypes.Bits ):
+    if isinstance(obj, type) and issubclass( obj, Bits ):
       nbits = obj.nbits
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
@@ -177,7 +176,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return ret
 
     # concat method
-    elif obj is pymtl3_datatypes.concat:
+    elif obj is concat:
       if len( node.args ) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one argument should be given to concat!' )
@@ -187,7 +186,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return ret
 
     # zext method
-    elif obj is pymtl3_datatypes.zext:
+    elif obj is zext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
@@ -198,7 +197,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return ret
 
     # sext method
-    elif obj is pymtl3_datatypes.sext:
+    elif obj is sext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
@@ -253,7 +252,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     elif node.id in s.closure:
       # free var from closure
       obj = s.closure[ node.id ]
-      if isinstance( obj, pymtl3_dsl.Component ):
+      if isinstance( obj, dsl.Component ):
         # Component freevars are an L1 thing.
         if obj is not s.component:
           raise PyMTLSyntaxError( s.blk, node,

@@ -15,9 +15,9 @@ from copy import copy, deepcopy
 
 import pytest
 
-from pymtl3.datatypes import *
+from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits8, Bits16, Bits32, \
+                             concat, zext, sext
 from pymtl3.dsl import Component, InPort, OutPort
-# from pymtl3.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
     BehavioralRTLIRGenL1Pass,
 )
@@ -33,7 +33,6 @@ def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenL1Pass() )
   m.apply( BehavioralRTLIRTypeCheckL1Pass() )
-  # m.apply( BehavioralRTLIRVisualizationPass() )
 
   try:
     ref = m._rtlir_test_ref
