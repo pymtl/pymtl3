@@ -17,11 +17,11 @@ import copy
 import inspect
 from functools import reduce
 
-import pymtl3.datatypes as pymtl3_datatypes
-import pymtl3.dsl as pymtl3_dsl
+from pymtl3.datatypes import Bits
+import pymtl3.dsl as dsl
 
 from ..errors import RTLIRConversionError
-from ..utility import collect_objs
+from ..util.utility import collect_objs
 from . import RTLIRDataType as rdt
 
 
@@ -404,8 +404,8 @@ class Component( BaseRTLIRType ):
 def is_rtlir_convertible( obj ):
   """Return if `obj` can be converted into an RTLIR instance."""
   pymtl3_constructs = (
-    pymtl3_dsl.InPort, pymtl3_dsl.OutPort, pymtl3_dsl.Wire,
-    pymtl3_datatypes.Bits, pymtl3_dsl.Interface, pymtl3_dsl.Component,
+    dsl.InPort, dsl.OutPort, dsl.Wire,
+    Bits, dsl.Interface, dsl.Component,
   )
   # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
@@ -423,7 +423,7 @@ def is_rtlir_convertible( obj ):
 def get_rtlir( obj ):
   """Return an RTLIR instance corresponding to `obj`."""
   def is_rtlir_ifc_convertible( obj ):
-    pymtl3_ports = ( pymtl3_dsl.InPort, pymtl3_dsl.OutPort )
+    pymtl3_ports = ( dsl.InPort, dsl.OutPort )
     if isinstance( obj, list ):
       while isinstance( obj, list ):
         assert len( obj ) > 0, "one dimension of {} is 0!".format( obj )
@@ -465,24 +465,24 @@ def get_rtlir( obj ):
       return Array( dim_sizes, get_rtlir( obj ) )
 
     # A Port instance
-    elif isinstance( obj, ( pymtl3_dsl.InPort, pymtl3_dsl.OutPort ) ):
-      if isinstance( obj, pymtl3_dsl.InPort ):
+    elif isinstance( obj, ( dsl.InPort, dsl.OutPort ) ):
+      if isinstance( obj, dsl.InPort ):
         return Port( 'input', rdt.get_rtlir_dtype( obj ) )
-      elif isinstance( obj, pymtl3_dsl.OutPort ):
+      elif isinstance( obj, dsl.OutPort ):
         return Port( 'output', rdt.get_rtlir_dtype( obj ) )
       else:
         assert False, "unrecognized port {}".format( obj )
 
     # A Wire instance
-    elif isinstance( obj, pymtl3_dsl.Wire ):
+    elif isinstance( obj, dsl.Wire ):
       return Wire( rdt.get_rtlir_dtype( obj ) )
 
     # A Constant instance
-    elif isinstance( obj, ( int, pymtl3_datatypes.Bits ) ):
+    elif isinstance( obj, ( int, Bits ) ):
       return Const( rdt.get_rtlir_dtype( obj ) )
 
     # An Interface view instance
-    elif isinstance( obj, pymtl3_dsl.Interface ):
+    elif isinstance( obj, dsl.Interface ):
       properties = {}
       for _id, _obj in collect_objs( obj, object, True ):
         if not is_rtlir_ifc_convertible( _obj ):
@@ -496,7 +496,7 @@ def get_rtlir( obj ):
       return InterfaceView( obj.__class__.__name__, properties )
 
     # A Component instance
-    elif isinstance( obj, pymtl3_dsl.Component ):
+    elif isinstance( obj, dsl.Component ):
       # Collect all attributes of `obj`
       properties = {}
       for _id, _obj in collect_objs( obj, object, True ):

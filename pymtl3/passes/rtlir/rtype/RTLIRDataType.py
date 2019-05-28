@@ -15,11 +15,11 @@ from __future__ import absolute_import, division, print_function
 import __builtin__
 from functools import reduce
 
-import pymtl3.datatypes as pymtl3_datatypes
-from pymtl3.dsl import Const as pymtl3_Const, Signal as pymtl3_Signal
+from pymtl3.datatypes import Bits
+import pymtl3.dsl as dsl
 
 from ..errors import RTLIRConversionError
-from ..utility import collect_objs
+from ..util.utility import collect_objs
 
 
 class BaseRTLIRDataType( object ):
@@ -151,7 +151,7 @@ class PackedArray( BaseRTLIRDataType ):
 def _get_rtlir_dtype_struct( obj ):
 
   # Vector field
-  if isinstance( obj, pymtl3_datatypes.Bits ):
+  if isinstance( obj, Bits ):
     return Vector( obj.nbits )
 
   # PackedArray field
@@ -223,11 +223,11 @@ def get_rtlir_dtype( obj ):
       'array datatype object should be a field of some struct!'
 
     # Signals might be parameterized with different data types
-    if isinstance( obj, ( pymtl3_Signal, pymtl3_Const ) ):
+    if isinstance( obj, ( dsl.Signal, dsl.Const ) ):
       Type = obj._dsl.Type
 
       # Vector data type
-      if issubclass( Type, pymtl3_datatypes.Bits ):
+      if issubclass( Type, Bits ):
         return Vector( Type.nbits )
 
       # Struct data type
@@ -250,7 +250,7 @@ def get_rtlir_dtype( obj ):
       return Vector( 32 )
 
     # PyMTL Bits objects
-    elif isinstance( obj, pymtl3_datatypes.Bits ):
+    elif isinstance( obj, Bits ):
       return Vector( obj.nbits )
 
     else:
