@@ -145,6 +145,7 @@ class MemIfcFL2CLAdapter( Component ):
   @blocking
   def read( s, addr, nbytes ):
 
+    # TODO refactor this greenlet stuff into some utility API
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 

@@ -179,7 +179,8 @@ class ComponentLevel3( ComponentLevel2 ):
   def _connect_objects( s, o1, o2, internal=False ):
     """ Top level private method for connecting two objects. We do
         the function dispatch based on type here. Note that internal=False
-        means we are just calling this API internally so that """
+        means we are just calling this API internally so that we don't
+        connect other unconnectable fields by name in the interface."""
 
     o1_connectable = isinstance( o1, Connectable )
     o2_connectable = isinstance( o2, Connectable )
