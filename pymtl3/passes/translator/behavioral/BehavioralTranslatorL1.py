@@ -6,13 +6,11 @@
 """Provide L1 behavioral translator."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir import RTLIRType as rt
-from pymtl.passes.rtlir import get_rtlir
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
+from pymtl3.passes.rtlir import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
     BehavioralRTLIRGenL1Pass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
     BehavioralRTLIRTypeCheckL1Pass,
 )
 
@@ -70,7 +68,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     # Generate free variable declarations
     freevars = []
     for name, fvar in s.behavioral.freevars[m].iteritems():
-      rtype = get_rtlir( fvar )
+      rtype = rt.get_rtlir( fvar )
       if isinstance( rtype, rt.Array ):
         fvar_rtype = rtype.get_sub_type()
         array_rtype = rtype

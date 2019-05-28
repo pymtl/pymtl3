@@ -6,10 +6,9 @@
 """Provide L4 structural translator."""
 from __future__ import absolute_import, division, print_function
 
-import pymtl
-from pymtl.passes.rtlir import RTLIRType as rt
-from pymtl.passes.rtlir import StructuralRTLIRSignalExpr as sexp
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL4Pass import (
+from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
+from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL4Pass import (
     StructuralRTLIRGenL4Pass,
 )
 

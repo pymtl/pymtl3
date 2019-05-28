@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.translator.structural import StructuralTranslator
+from pymtl3.passes.translator.structural import StructuralTranslator
 
 
 def mk_TestStructuralTranslator( _StructuralTranslator ):

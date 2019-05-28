@@ -6,8 +6,9 @@
 """Test the RTLIR transaltor."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl import Bits1, Bits32, Component, InPort, OutPort
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
+from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 from ..behavioral.test.BehavioralTranslatorL1_test import *
 from ..errors import RTLIRTranslationError

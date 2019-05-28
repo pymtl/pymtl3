@@ -6,10 +6,10 @@
 """Provide L4 behavioral translator."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL4Pass import (
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL4Pass import (
     BehavioralRTLIRGenL4Pass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL4Pass import (
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL4Pass import (
     BehavioralRTLIRTypeCheckL4Pass,
 )
 

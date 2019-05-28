@@ -7,11 +7,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
-from pymtl.passes.translator.structural.StructuralTranslatorL1 import (
+from pymtl3.datatypes import Bits1, Bits4, Bits16, Bits32
+from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
+from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
 

@@ -8,8 +8,6 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl.passes.rtlir.test.test_utility import do_test
-
 from ..behavioral.test.BehavioralTranslatorL2_test import *
 from ..structural.test.StructuralTranslatorL2_test import *
 from .TestRTLIRTranslator import TestRTLIRTranslator

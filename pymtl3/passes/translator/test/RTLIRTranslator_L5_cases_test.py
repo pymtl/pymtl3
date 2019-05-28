@@ -6,8 +6,6 @@
 """Test the RTLIR transaltor."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.rtlir.test.test_utility import do_test
-
 from ..behavioral.test.BehavioralTranslatorL5_test import *
 from .TestRTLIRTranslator import TestRTLIRTranslator
 

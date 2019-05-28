@@ -9,11 +9,9 @@ from __future__ import absolute_import, division, print_function
 
 from functools import reduce
 
-import pymtl
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir import RTLIRType as rt
-from pymtl.passes.rtlir import StructuralRTLIRSignalExpr as sexp
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
+from pymtl3.passes.rtlir import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
+from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
 
