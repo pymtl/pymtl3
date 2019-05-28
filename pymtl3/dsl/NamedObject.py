@@ -62,6 +62,8 @@ class NamedObject(object):
       s.construct( *s._dsl.args, **kwargs )
 
       s._dsl.constructed = True
+      print( "="*30, "constrcut", "="*30 )
+      print( s, s._dsl.param_dict ) 
 
   def __setattr_for_elaborate__( s, name, obj ):
 
@@ -72,16 +74,13 @@ class NamedObject(object):
       while stack:
         u, indices = stack.pop()
 
-        if   isinstance( u, NamedObject ):
+        if isinstance( u, NamedObject ):
           # try:
             u._dsl.parent_obj  = s
             u._dsl.level       = s._dsl.level + 1
             u._dsl.my_name = u_name = name + "".join([ "[{}]".format(x)
                                                       for x in indices ])
             u._dsl.param_dict = { None:{} }
-
-            if u_name in s._dsl.param_dict:
-              u._dsl.param_dict.update( s._dsl.param_dict[ u_name ] )
 
             for pattern, (compiled_re, subdict) in \
                 s._dsl.param_dict[ None ].iteritems():
@@ -91,6 +90,9 @@ class NamedObject(object):
                     u._dsl.param_dict[ None ].update( subdict )
                   else:
                     u._dsl.param_dict[ x ] = y
+
+            if u_name in s._dsl.param_dict:
+              u._dsl.param_dict.update( s._dsl.param_dict[ u_name ] )
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
@@ -167,6 +169,8 @@ class NamedObject(object):
     assert strs_len >= 1
 
     current_dict = s._dsl.param_dict
+    print( "="*74 )
+    print( s, current_dict )
     for x in strs:
       # TODO should we only allow * as regular expression to accelerate
       # the common case? or always store as regex no matterwhat?
@@ -182,8 +186,9 @@ class NamedObject(object):
           current_dict[ x ] = { None: {} }
         current_dict = current_dict[ x ]
       
-      # print( x )
-      # print( current_dict )
+      print( x )
+      print( current_dict )
+    print( "after\n", s._dsl.param_dict )
 
     # The last element in strs
     x = strs[-1]
@@ -191,8 +196,9 @@ class NamedObject(object):
     for k, v in kwargs.iteritems():
       # assert "*" not in k, "We don't allow the last name to be *!"
       # Yanghui : why do we prevent overwrite here?
-      if k not in current_dict:
-        current_dict[ k ] = v
+      # if k not in current_dict:
+      #   current_dict[ k ] = v
+      current_dict[ k ] = v
 
   # There are two reason I refactored this function into two separate
   # functions. First of all in later levels of components, named objects
