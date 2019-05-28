@@ -13,7 +13,7 @@ from collections import deque
 from pymtl3.datatypes import *
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.ConstraintTypes import RD, WR, U
+from pymtl3.dsl.ConstraintTypes import WR, U
 from pymtl3.dsl.errors import InvalidConnectionError, MultiWriterError
 
 from .sim_utils import simple_sim_pass

@@ -8,9 +8,10 @@ Date   : Apr 16, 2018
 """
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
-from pymtl.dsl import ComponentLevel3
-from pymtl.dsl.errors import MultiWriterError, NoWriterError
+from pymtl3.datatypes import *
+from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
+from pymtl3.dsl.Connectable import InPort, OutPort, Wire
+from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
 from .sim_utils import simple_sim_pass
 
@@ -512,7 +513,7 @@ def test_struct_with_list_of_bits():
     def __init__( s, foo=42 ):
       s.foo = [ Bits32( foo ) for _ in xrange(5) ]
 
-  class A( Component ):
+  class A( ComponentLevel3 ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out = OutPort( Bits32 )
@@ -533,7 +534,7 @@ def test_nested_struct_2d_array_index():
       s.foo = Bits32(foo)
       s.bar = [ [ C() for _ in xrange(5) ] for _ in xrange(5) ]
 
-  class A( Component ):
+  class A( ComponentLevel3 ):
     def construct( s ):
       s.struct = InPort( B )
       s.out    = OutPort( C )
