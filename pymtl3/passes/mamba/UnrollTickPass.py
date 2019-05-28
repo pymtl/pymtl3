@@ -13,9 +13,9 @@ from __future__ import absolute_import, division, print_function
 
 import py
 
-from pymtl import *
-from pymtl.passes import BasePass
-from pymtl.passes.errors import PassOrderError
+from pymtl3 import *
+from pymtl3.passes import BasePass
+from pymtl3.passes.errors import PassOrderError
 
 
 class UnrollTickPass( BasePass ):

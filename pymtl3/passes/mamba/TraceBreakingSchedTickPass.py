@@ -12,10 +12,10 @@ from __future__ import absolute_import, division, print_function
 import py
 from graphviz import Digraph
 
-from pymtl import *
-from pymtl.passes.BasePass import BasePass, PassMetadata
-from pymtl.passes.errors import PassOrderError
-from pymtl.passes.SimpleSchedulePass import check_schedule
+from pymtl3.dsl import *
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.errors import PassOrderError
+from pymtl3.passes.SimpleSchedulePass import check_schedule
 
 from .HeuristicTopoPass import CountBranches
 
