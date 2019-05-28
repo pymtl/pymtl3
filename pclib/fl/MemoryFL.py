@@ -28,24 +28,27 @@ class MemoryFL( Component ):
       s.trace = "     "
 
   def read( s, addr, nbytes ):
-    nbytes = int(nbytes)
-    nbits = nbytes << 3
-    ret, shamt = Bits( nbits, 0 ), Bits( nbits, 0 )
-    addr = int(addr)
-    end  = addr + nbytes
-    for j in xrange( addr, end ):
-      ret += Bits( nbits, s.mem[j] ) << shamt
-      shamt += Bits4(8)
+
+    ret, shamt = Bits( nbytes << 3, 0 ), 0
+
+    begin = int(addr)
+    addr  = begin + nbytes - 1
+
+    while addr >= begin:
+      ret = (ret << 8) + s.mem[addr]
+      addr -= 1
     s.trace = "[rd ]"
     return ret
 
   def write( s, addr, nbytes, data ):
-    tmp  = int(data)
+
     addr = int(addr)
-    end  = addr + int(nbytes)
-    for j in xrange( addr, end ):
-      s.mem[j] = tmp & 255
-      tmp >>= 8
+    end  = addr + nbytes
+
+    while addr < end:
+      s.mem[addr] = data & 255
+      data >>= 8
+      addr += 1
     s.trace = "[wr ]"
 
   def amo( s, amo, addr, nbytes, data ):
