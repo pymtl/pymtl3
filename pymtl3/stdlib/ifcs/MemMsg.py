@@ -7,7 +7,6 @@ New memory message type implementation.
 Author : Shunning Jiang, Yanghui Ou
 Date   : Mar 12, 2018
 """
-
 from __future__ import absolute_import, division, print_function
 
 import py
