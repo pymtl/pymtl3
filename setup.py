@@ -46,9 +46,9 @@ def get_long_description():
 
 setup(
 
-  name             = 'pymtl',
+  name             = 'pymtl3',
   version          = get_version(),
-  description      = 'Python-based hardware modeling framework',
+  description      = 'PyMTL 3 (Mamba): Python-based hardware generation, simulation, and verification framework',
   long_description = get_long_description(),
   url              = 'https://github.com/cornell-brg/pymtl-v3',
   author           = 'Batten Research Group',
@@ -75,12 +75,7 @@ setup(
   ),
 
   package_data={
-    'pymtl': [
-      # 'tools/translation/verilator_wrapper.templ.c',
-      # 'tools/translation/verilator_wrapper.templ.py',
-      # 'tools/translation/cpp_wrapper.templ.py',
-      # 'tools/integration/systemc_wrapper.templ.cpp',
-      # 'tools/integration/systemc_wrapper.templ.py',
+    'pymtl3': [
     ],
   },
 
