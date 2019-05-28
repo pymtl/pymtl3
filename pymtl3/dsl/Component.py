@@ -9,7 +9,7 @@ Author : Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-from pymtl.datatypes import Bits1
+from pymtl3.datatypes import Bits1
 
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import InPort

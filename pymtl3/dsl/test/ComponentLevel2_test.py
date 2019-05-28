@@ -10,9 +10,11 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pymtl import *
-from pymtl.dsl import ComponentLevel2, InPort, OutPort, Wire
-from pymtl.dsl.errors import (
+from pymtl3.datatypes import *
+from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
+from pymtl3.dsl.Connectable import InPort, OutPort, Wire
+from pymtl3.dsl.ConstraintTypes import RD, WR, U
+from pymtl3.dsl.errors import (
     InvalidConstraintError,
     InvalidFuncCallError,
     UpblkCyclicError,

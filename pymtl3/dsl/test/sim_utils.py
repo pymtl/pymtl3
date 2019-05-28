@@ -14,22 +14,22 @@ from collections import defaultdict, deque
 
 import py.code
 
-from pymtl import *
-from pymtl.dsl import (
-    ComponentLevel1,
-    ComponentLevel2,
-    ComponentLevel3,
-    ComponentLevel4,
-    ComponentLevel5,
-    ComponentLevel6,
+from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
+from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
+from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
+from pymtl3.dsl.ComponentLevel4 import ComponentLevel4
+from pymtl3.dsl.ComponentLevel5 import ComponentLevel5
+from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
+from pymtl3.dsl.ComponentLevel7 import ComponentLevel7
+from pymtl3.dsl.Connectable import (
     Const,
     Interface,
     MethodPort,
-    NamedObject,
     NonBlockingInterface,
     Signal,
 )
-from pymtl.dsl.errors import NotElaboratedError, UpblkCyclicError
+from pymtl3.dsl.errors import NotElaboratedError, UpblkCyclicError
+from pymtl3.dsl.NamedObject import NamedObject
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):

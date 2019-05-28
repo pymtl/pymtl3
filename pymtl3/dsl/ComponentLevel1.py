@@ -19,8 +19,6 @@ from __future__ import absolute_import, division, print_function
 
 import re
 
-from pymtl.datatypes import *
-
 from .ConstraintTypes import U
 from .errors import NotElaboratedError, UpblkFuncSameNameError
 from .NamedObject import NamedObject

@@ -8,8 +8,7 @@ Date   : Dec 23, 2017
 """
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
-from pymtl.dsl import NamedObject
+from pymtl3.dsl.NamedObject import NamedObject
 
 
 class Chicken(NamedObject):

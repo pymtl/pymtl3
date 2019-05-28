@@ -10,9 +10,9 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pymtl import *
-from pymtl.dsl import ComponentLevel1
-from pymtl.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
+from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
+from pymtl3.dsl.ConstraintTypes import U
+from pymtl3.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
 
 from .sim_utils import simple_sim_pass
 
