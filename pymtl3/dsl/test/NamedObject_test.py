@@ -103,13 +103,37 @@ def test_use_init_error():
   # z.elaborate()
 
 def test_set_param():
+
+  class HoneyBadger( NamedObject ):
+    def construct( s, lunch="dirt", dinner="dirt" ):
+      s.lunch  = lunch 
+      s.dinner = dinner
+
   class Dromaius( NamedObject ):
-    def construct( s, food="dirt" ):
-      s.lunch = food 
+    def construct( s, lunch="dirt", dinner="dirt" ):
+      s.lunch  = lunch 
+      s.dinner = dinner
+
+  class Zoo( NamedObject ):
+    def construct( s, animals=[] ):
+      s.animals = [ A() for A in animals ]
 
   A = Dromaius()
-  A.set_param( "top.construct.food", "grass" )
+  A.set_param( "top.construct", lunch="grass" )
   A.elaborate()
 
   print( A.lunch )
-  assert A.lunch == "grass" 
+  assert A.lunch  == "grass" 
+  assert A.dinner == "dirt" 
+
+  Z = Zoo()
+  Z.set_param( "top.construct", animals=[ HoneyBadger, Dromaius ] )
+  Z.set_param( "top.animals*.construct", 
+      lunch ="grass",
+      dinner="poisoned onion"
+  )
+  Z.elaborate()
+  assert Z.animals[0].lunch == "grass"
+  assert Z.animals[1].lunch == "grass"
+  assert Z.animals[0].dinner == "poisoned onion"
+  assert Z.animals[1].dinner == "poisoned onion"

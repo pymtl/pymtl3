@@ -152,7 +152,7 @@ class NamedObject(object):
   def construct( s, *args, **kwargs ):
     pass
 
-  def set_param( s, string, value ):
+  def set_param( s, string, **kwargs ):
     # Assert no positional argumets
     assert len( s._dsl.args ) == 0, \
       "Cannot use set_param because {} has positional arguments!".format(s._dsl.my_name)
@@ -167,15 +167,13 @@ class NamedObject(object):
     assert strs_len >= 1
 
     current_dict = s._dsl.param_dict
-
-    for x in strs[:-1]:
+    for x in strs:
       # TODO should we only allow * as regular expression to accelerate
       # the common case? or always store as regex no matterwhat?
       if "*" in x:
         # We lump all regex patterns into key=None
         if x not in current_dict[ None ]: # use name to index
-          current_dict[ None ][ x ] = ( re.compile(x), {} )
-
+          current_dict[ None ][ x ] = ( re.compile(x), { None: {} } )
         current_dict = current_dict[ None ][ x ][ 1 ]
 
       # This is a normal string
@@ -183,12 +181,18 @@ class NamedObject(object):
         if x not in current_dict:
           current_dict[ x ] = { None: {} }
         current_dict = current_dict[ x ]
+      
+      # print( x )
+      # print( current_dict )
 
     # The last element in strs
     x = strs[-1]
     assert "*" not in x, "We don't allow the last name to be *"
-    if x not in current_dict:
-      current_dict[ x ] = value
+    for k, v in kwargs.iteritems():
+      # assert "*" not in k, "We don't allow the last name to be *!"
+      # Yanghui : why do we prevent overwrite here?
+      if k not in current_dict:
+        current_dict[ k ] = v
 
   # There are two reason I refactored this function into two separate
   # functions. First of all in later levels of components, named objects
@@ -207,9 +211,9 @@ class NamedObject(object):
     # Initialize the top level
 
     s._dsl.parent_obj = None
-    s._dsl.level     = 0
-    s._dsl.my_name   = "s"
-    s._dsl.full_name = "s"
+    s._dsl.level      = 0
+    s._dsl.my_name    = "s"
+    s._dsl.full_name  = "s"
 
     # Secret source for letting the child know the field name of itself
     # -- override setattr for elaboration, and remove it afterwards
