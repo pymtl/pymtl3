@@ -7,7 +7,6 @@
 # Author : Yanghui Ou
 #   Date : Apr 8, 2019
 """
-
 from __future__ import absolute_import, division, print_function
 
 from functools import reduce
