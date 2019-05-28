@@ -15,9 +15,8 @@ from __future__ import absolute_import, division, print_function
 import __builtin__
 from functools import reduce
 
-import pymtl
-from pymtl.dsl.Connectable import Const as pymtl_Const
-from pymtl.dsl.Connectable import Signal as pymtl_Signal
+import pymtl3.datatypes as pymtl3_datatypes
+from pymtl3.dsl import Const as pymtl3_Const, Signal as pymtl3_Signal
 
 from ..errors import RTLIRConversionError
 from ..utility import collect_objs
@@ -86,7 +85,7 @@ class Struct( BaseRTLIRDataType ):
 
 class Bool( BaseRTLIRDataType ):
   """RTLIR data type class for struct type.
-  
+
   Bool data type cannot be instantiated explicitly. It can only appear as
   the result of comparisons.
   """
@@ -152,7 +151,7 @@ class PackedArray( BaseRTLIRDataType ):
 def _get_rtlir_dtype_struct( obj ):
 
   # Vector field
-  if isinstance( obj, pymtl.Bits ):
+  if isinstance( obj, pymtl3_datatypes.Bits ):
     return Vector( obj.nbits )
 
   # PackedArray field
@@ -213,7 +212,7 @@ def _get_rtlir_dtype_struct( obj ):
       properties.append( ( field_name, all_properties[ field_name ] ) )
       packed_order.append( field_name )
     return Struct(cls.__name__, dict(properties), packed_order)
-  
+
   else:
     assert False, str(obj) + ' is not allowed as a field of struct!'
 
@@ -224,11 +223,11 @@ def get_rtlir_dtype( obj ):
       'array datatype object should be a field of some struct!'
 
     # Signals might be parameterized with different data types
-    if isinstance( obj, ( pymtl_Signal, pymtl_Const ) ):
+    if isinstance( obj, ( pymtl3_Signal, pymtl3_Const ) ):
       Type = obj._dsl.Type
 
       # Vector data type
-      if issubclass( Type, pymtl.Bits ):
+      if issubclass( Type, pymtl3_datatypes.Bits ):
         return Vector( Type.nbits )
 
       # Struct data type
@@ -251,7 +250,7 @@ def get_rtlir_dtype( obj ):
       return Vector( 32 )
 
     # PyMTL Bits objects
-    elif isinstance( obj, pymtl.Bits ):
+    elif isinstance( obj, pymtl3_datatypes.Bits ):
       return Vector( obj.nbits )
 
     else:

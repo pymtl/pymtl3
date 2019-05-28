@@ -9,11 +9,12 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import *
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir import get_rtlir_dtype
-from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.test.test_utility import expected_failure
+from pymtl3.datatypes import *
+from pymtl3.dsl import *
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype.RTLIRDataType import get_rtlir_dtype
+from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.util.test_utility import expected_failure
 
 
 def test_py_int():

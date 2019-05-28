@@ -11,16 +11,6 @@ from contextlib import contextmanager
 
 import pytest
 
-from pymtl.passes.rtlir.behavioral import (
-    MaxBehavioralRTLIRLevel,
-    MinBehavioralRTLIRLevel,
-)
-from pymtl.passes.rtlir.structural import (
-    MaxStructuralRTLIRLevel,
-    MinStructuralRTLIRLevel,
-)
-
-
 @pytest.fixture
 def do_test( request ):
   """Call `local_do_test` of the requesting module."""
@@ -52,6 +42,14 @@ def gen_rtlir_translator( structural_level, behavioral_level ):
 
   if label in _rtlir_translators: return _rtlir_translators[ label ]
 
+  from pymtl3.passes.rtlir.behavioral import (
+      MaxBehavioralRTLIRLevel,
+      MinBehavioralRTLIRLevel,
+  )
+  from pymtl3.passes.rtlir.structural import (
+      MaxStructuralRTLIRLevel,
+      MinStructuralRTLIRLevel,
+  )
   assert MinStructuralRTLIRLevel <= structural_level <= MaxStructuralRTLIRLevel
   assert MinBehavioralRTLIRLevel <= behavioral_level <= MaxBehavioralRTLIRLevel
 
@@ -65,7 +63,7 @@ def gen_rtlir_translator( structural_level, behavioral_level ):
 
   exec(structural_tplt.format( structural_level ), globals(), locals())
   exec(behavioral_tplt.format( behavioral_level ), globals(), locals())
-  
+
   from pymtl.passes.rtlir.translation.RTLIRTranslator import mk_RTLIRTranslator
 
   _rtlir_translators[ label ] = mk_RTLIRTranslator(

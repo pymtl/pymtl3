@@ -9,48 +9,48 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-import pymtl
-from pymtl import Bits1, Bits16, Bits32, InPort, Interface, OutPort
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir import RTLIRType as rt
-from pymtl.passes.rtlir import get_rtlir, get_rtlir_dtype, is_rtlir_convertible
-from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.test.test_utility import expected_failure
+import pymtl3.datatypes as pymtl3_datatypes
+import pymtl3.dsl as pymtl3_dsl
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt, RTLIRType as rt
+from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir, is_rtlir_convertible
+from pymtl3.passes.rtlir.rtype.RTLIRDataType import get_rtlir_dtype
+from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.util.test_utility import expected_failure
 
 
-def test_pymtl_list_ports():
-  class A( pymtl.Component ):
+def test_pymtl3_list_ports():
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ pymtl3_dsl.InPort( pymtl3_datatypes.Bits32 ) for _ in xrange(5) ]
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
   assert rt.Array([5], rt.Port('input', rdt.Vector(32))) == get_rtlir( a.in_ )
 
-def test_pymtl_list_wires():
-  class A( pymtl.Component ):
+def test_pymtl3_list_wires():
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
-      s.in_ = [ pymtl.Wire( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ pymtl3_dsl.Wire( pymtl3_datatypes.Bits32 ) for _ in xrange(5) ]
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
   assert rt.Array([5], rt.Wire(rdt.Vector(32))) == get_rtlir( a.in_ )
 
-def test_pymtl_list_consts():
-  class A( pymtl.Component ):
+def test_pymtl3_list_consts():
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
-      s.in_ = [ Bits32(42) for _ in xrange(5) ]
+      s.in_ = [ pymtl3_datatypes.Bits32(42) for _ in xrange(5) ]
   a = A()
   a.elaborate()
   assert is_rtlir_convertible( a.in_ )
   assert rt.Array([5], rt.Const(rdt.Vector(32))) == get_rtlir( a.in_ )
 
-def test_pymtl_list_interface_views():
-  class Ifc( Interface ):
+def test_pymtl3_list_interface_views():
+  class Ifc( pymtl3_dsl.Interface ):
     def construct( s ):
-      s.msg = OutPort( Bits32 )
-      s.rdy = InPort( Bits1 )
-  class A( pymtl.Component ):
+      s.msg = pymtl3_dsl.OutPort( pymtl3_datatypes.Bits32 )
+      s.rdy = pymtl3_dsl.InPort ( pymtl3_datatypes.Bits1 )
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
       s.in_ = [ Ifc() for _ in xrange(5) ]
   a = A()
@@ -62,11 +62,11 @@ def test_pymtl_list_interface_views():
         get_rtlir( a.in_ )
 
 def test_pymtl_list_components():
-  class B( pymtl.Component ):
+  class B( pymtl3_dsl.Component ):
     def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits32 )
-  class A( pymtl.Component ):
+      s.in_ = pymtl3_dsl.InPort( pymtl3_datatypes.Bits32 )
+      s.out = pymtl3_dsl.OutPort( pymtl3_datatypes.Bits32 )
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
       s.b = [ B() for _ in xrange(5) ]
   a = A()
@@ -77,9 +77,9 @@ def test_pymtl_list_components():
         get_rtlir( a.b )
 
 def test_pymtl_list_multi_dimension():
-  class A( pymtl.Component ):
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
-      s.out = [[[OutPort(Bits32) for _ in xrange(1)] \
+      s.out = [[[pymtl3_dsl.OutPort(pymtl3_datatypes.Bits32) for _ in xrange(1)] \
               for _ in xrange(2)] for _ in xrange(3)]
   a = A()
   a.elaborate()
@@ -100,14 +100,14 @@ def test_py_empty_list():
 
 def test_py_untyped_list():
   with expected_failure( RTLIRConversionError, 'must have the same type' ):
-    get_rtlir( [ 4, Bits16(42) ] )
+    get_rtlir( [ 4, pymtl3_datatypes.Bits16(42) ] )
 
-def test_pymtl_interface_wire():
-  class Ifc( Interface ):
+def test_pymtl3_interface_wire():
+  class Ifc( pymtl3_dsl.Interface ):
     def construct( s ):
-      s.foo = pymtl.Wire( Bits32 )
-      s.bar = InPort( Bits32 )
-  class A( pymtl.Component ):
+      s.foo = pymtl3_dsl.Wire( pymtl3_datatypes.Bits32 )
+      s.bar = pymtl3_dsl.InPort( pymtl3_datatypes.Bits32 )
+  class A( pymtl3_dsl.Component ):
     def construct( s ):
       s.in_ = Ifc()
   a = A()
