@@ -7,24 +7,23 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymtl
-from pymtl import Bits32, InPort, OutPort
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL4Pass import (
+from pymtl3.datatypes import *
+import pymtl3.dsl as dsl
+from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL4Pass import (
     StructuralRTLIRGenL4Pass,
 )
-from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
+from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 
 def test_L4_subcomp_attr():
-  class B( pymtl.Component ):
+  class B( dsl.Component ):
     def construct( s ):
-      s.msg = OutPort( Bits32 )
+      s.msg = dsl.OutPort( Bits32 )
       s.connect( s.msg, 42 )
-  class A( pymtl.Component ):
+  class A( dsl.Component ):
     def construct( s ):
       s.b = B()
-      s.out = OutPort( Bits32 )
+      s.out = dsl.OutPort( Bits32 )
       s.connect( s.out, s.b.msg )
   a = A()
   a.elaborate()
@@ -36,14 +35,14 @@ def test_L4_subcomp_attr():
     (SubCompAttr(CurCompAttr(comp, 'b'), 'msg'), CurCompAttr(comp, 'out'))
 
 def test_L4_subcomp_index():
-  class B( pymtl.Component ):
+  class B( dsl.Component ):
     def construct( s ):
-      s.msg = OutPort( Bits32 )
+      s.msg = dsl.OutPort( Bits32 )
       s.connect( s.msg, 42 )
-  class A( pymtl.Component ):
+  class A( dsl.Component ):
     def construct( s ):
       s.b = [ B() for _ in xrange(5) ]
-      s.out = OutPort( Bits32 )
+      s.out = dsl.OutPort( Bits32 )
       s.connect( s.out, s.b[1].msg )
   a = A()
   a.elaborate()

@@ -7,11 +7,9 @@ from __future__ import absolute_import, division, print_function
 
 from functools import reduce
 
-import pymtl
-from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
-from pymtl.passes.rtlir.rtype.RTLIRDataType import get_rtlir_dtype
+import pymtl3.dsl as dsl
+from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt, RTLIRType as rt
 
 
 class BaseSignalExpr( object ):
@@ -207,7 +205,7 @@ class _Attribute( BaseSignalExpr ):
 
 class ConstInstance( BaseSignalExpr ):
   def __init__( s, obj, value ):
-    super( ConstInstance, s ).__init__(rt.Const(get_rtlir_dtype( obj )))
+    super( ConstInstance, s ).__init__(rt.Const(rdt.get_rtlir_dtype( obj )))
     s.value = value
 
   def __eq__( s, other ):
@@ -377,7 +375,7 @@ def gen_signal_expr( cur_component, signal ):
     while hasattr( base_comp._dsl, 'parent_obj' ) and base_comp._dsl.parent_obj:
       base_comp = base_comp._dsl.parent_obj
       if base_comp == cur_component: break
-    assert isinstance( base_comp, pymtl.Component ) and base_comp == cur_component, \
+    assert isinstance( base_comp, dsl.Component ) and base_comp == cur_component, \
       "cannot find root component for signal {}".format( signal )
     full_name = base_comp._dsl.full_name
     my_name = base_comp._dsl.my_name

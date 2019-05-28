@@ -8,11 +8,9 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict, deque
 
-import pymtl
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import RTLIRConversionError
-from pymtl.passes.rtlir.rtype.RTLIRType import get_rtlir
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import RTLIRConversionError
+from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir
 
 from .StructuralRTLIRSignalExpr import gen_signal_expr
 
@@ -47,7 +45,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
   def gen_connections( s, top ):
     """Generate connections based on the net structure.
-    
+
     Must be called from the top component!
     """
     ns = top._pass_structural_rtlir_gen
@@ -74,7 +72,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
             reader_host_parent = reader_host.get_parent_object()
 
             # Four possible cases for the reader and writer signals:
-            # 1.   They have the same host component. Both need 
+            # 1.   They have the same host component. Both need
             #       to be added to the host component.
             # 2/3. One's host component is the parent of the other.
             #       Both need to be added to the parent component.
@@ -126,7 +124,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
   def contains( s, obj, signal ):
     """Return if obj contains signal.
-    
+
     At level 1 all signals have their corresponding object in `s.connect`.
     Therefore just checking whether obj is equal to signal is enough at level 1.
     """

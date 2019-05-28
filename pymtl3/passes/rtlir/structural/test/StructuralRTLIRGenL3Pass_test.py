@@ -7,23 +7,22 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymtl
-from pymtl import Bits1, Bits32, InPort, OutPort
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (
+from pymtl3.datatypes import *
+import pymtl3.dsl as dsl
+from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (
     StructuralRTLIRGenL3Pass,
 )
-from pymtl.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
+from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 
 def test_L3_ifc_view_attr():
-  class Ifc( pymtl.Interface ):
+  class Ifc( dsl.Interface ):
     def construct( s ):
-      s.msg = InPort( Bits32 )
-  class A( pymtl.Component ):
+      s.msg = dsl.InPort( Bits32 )
+  class A( dsl.Component ):
     def construct( s ):
       s.in_ = Ifc()
-      s.out = OutPort( Bits32 )
+      s.out = dsl.OutPort( Bits32 )
       s.connect( s.out, s.in_.msg )
   a = A()
   a.elaborate()
@@ -34,13 +33,13 @@ def test_L3_ifc_view_attr():
     [(InterfaceAttr(CurCompAttr(comp, 'in_'), 'msg'), CurCompAttr(comp, 'out'))]
 
 def test_L3_ifc_view_index():
-  class Ifc( pymtl.Interface ):
+  class Ifc( dsl.Interface ):
     def construct( s ):
-      s.msg = InPort( Bits32 )
-  class A( pymtl.Component ):
+      s.msg = dsl.InPort( Bits32 )
+  class A( dsl.Component ):
     def construct( s ):
       s.in_ = [ Ifc() for _ in xrange(5) ]
-      s.out = OutPort( Bits32 )
+      s.out = dsl.OutPort( Bits32 )
       s.connect( s.in_[2].msg, s.out )
   a = A()
   a.elaborate()
@@ -52,17 +51,17 @@ def test_L3_ifc_view_index():
      CurCompAttr(comp, 'out'))]
 
 def test_L3_ifc_view_connection():
-  class InIfc( pymtl.Interface ):
+  class InIfc( dsl.Interface ):
     def construct( s ):
-      s.msg = InPort( Bits32 )
-      s.val = InPort( Bits1 )
-      s.rdy = OutPort( Bits1 )
-  class OutIfc( pymtl.Interface ):
+      s.msg = dsl.InPort( Bits32 )
+      s.val = dsl.InPort( Bits1 )
+      s.rdy = dsl.OutPort( Bits1 )
+  class OutIfc( dsl.Interface ):
     def construct( s ):
-      s.msg = OutPort( Bits32 )
-      s.val = OutPort( Bits1 )
-      s.rdy = InPort( Bits1 )
-  class A( pymtl.Component ):
+      s.msg = dsl.OutPort( Bits32 )
+      s.val = dsl.OutPort( Bits1 )
+      s.rdy = dsl.InPort( Bits1 )
+  class A( dsl.Component ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()

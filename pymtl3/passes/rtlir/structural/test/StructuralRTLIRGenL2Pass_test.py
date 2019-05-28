@@ -9,11 +9,10 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-import pymtl
-from pymtl import Bits1, Bits4, Bits32, InPort, OutPort
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir import StructuralRTLIRSignalExpr as sexp
-from pymtl.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
+from pymtl3.datatypes import *
+import pymtl3.dsl as dsl
+from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
+from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )
 
@@ -22,10 +21,10 @@ def test_L2_struct_attr():
   class B( object ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
-  class A( pymtl.Component ):
+  class A( dsl.Component ):
     def construct( s ):
-      s.in_ = InPort( B )
-      s.out = OutPort( Bits32 )
+      s.in_ = dsl.InPort( B )
+      s.out = dsl.OutPort( Bits32 )
       s.connect( s.out, s.in_.foo )
   a = A()
   a.elaborate()
@@ -39,10 +38,10 @@ def test_L2_packed_index():
   class B( object ):
     def __init__( s, foo=42 ):
       s.foo = [ Bits32( foo ) for _ in xrange(5) ]
-  class A( pymtl.Component ):
+  class A( dsl.Component ):
     def construct( s ):
-      s.in_ = InPort( B )
-      s.out = OutPort( Bits32 )
+      s.in_ = dsl.InPort( B )
+      s.out = dsl.OutPort( Bits32 )
       s.connect( s.out, s.in_.foo[1] )
   a = A()
   a.elaborate()

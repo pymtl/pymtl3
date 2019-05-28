@@ -6,7 +6,7 @@
 """Provide L4 structural RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.BasePass import PassMetadata
+from pymtl3.passes.BasePass import PassMetadata
 
 from .StructuralRTLIRGenL3Pass import StructuralRTLIRGenL3Pass
 from .StructuralRTLIRSignalExpr import gen_signal_expr
