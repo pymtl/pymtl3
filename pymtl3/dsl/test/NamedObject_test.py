@@ -101,3 +101,15 @@ def test_use_init_error():
   # y.elaborate()
   # z = Chicken()
   # z.elaborate()
+
+def test_set_param():
+  class Dromaius( NamedObject ):
+    def construct( s, food="dirt" ):
+      s.lunch = food 
+
+  A = Dromaius()
+  A.set_param( "top.construct.food", "grass" )
+  A.elaborate()
+
+  print( A.lunch )
+  assert A.lunch == "grass" 
