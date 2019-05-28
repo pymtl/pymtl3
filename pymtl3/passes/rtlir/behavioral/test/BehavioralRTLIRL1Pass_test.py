@@ -15,17 +15,17 @@ from copy import copy, deepcopy
 
 import pytest
 
-from pymtl import *
-from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
+from pymtl3.datatypes import *
+from pymtl3.dsl import Component, InPort, OutPort
+# from pymtl3.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
     BehavioralRTLIRGenL1Pass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
     BehavioralRTLIRTypeCheckL1Pass,
 )
-from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -33,7 +33,7 @@ def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenL1Pass() )
   m.apply( BehavioralRTLIRTypeCheckL1Pass() )
-  m.apply( BehavioralRTLIRVisualizationPass() )
+  # m.apply( BehavioralRTLIRVisualizationPass() )
 
   try:
     ref = m._rtlir_test_ref
@@ -300,7 +300,7 @@ def test_L1_size_cast_component( do_test ):
 def test_L1_attr_signal( do_test ):
   class B( object ):
     """Struct class used to trigger certain exception.
-    
+
     Struct does not belong to level 1. It is just used for testing purposes.
     """
     def __init__( s ):

@@ -9,13 +9,13 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import Bits32, Component, InPort, OutPort
-from pymtl.passes.rtlir.behavioral import (
+from pymtl3.datatypes import *
+from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
 )
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):

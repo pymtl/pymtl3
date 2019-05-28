@@ -9,10 +9,10 @@ from __future__ import absolute_import, division, print_function
 import ast
 import copy
 
-import pymtl
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLSyntaxError
+import pymtl3.datatypes as pymtl3_datatypes
+import pymtl3.dsl as pymtl3_dsl
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIR import CombUpblk, SeqUpblk
@@ -55,9 +55,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     s.closure = {}
 
     for i, var in enumerate( blk.__code__.co_freevars ):
-      try: 
+      try:
         s.closure[ var ] = blk.__closure__[ i ].cell_contents
-      except ValueError: 
+      except ValueError:
         pass
 
     ret = s.visit( ast )
@@ -141,7 +141,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_Call( s, node ):
     """Return the behavioral RTLIR of method calls.
-    
+
     Some data types are interpreted as function calls in the Python AST.
     Example: Bits4(2)
     These are converted to different RTLIR nodes in different contexts.
@@ -166,7 +166,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # 5. Real function call: not supported yet
 
     # Deal with Bits type cast
-    if isinstance(obj, type) and issubclass( obj, pymtl.Bits ):
+    if isinstance(obj, type) and issubclass( obj, pymtl3_datatypes.Bits ):
       nbits = obj.nbits
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
@@ -177,7 +177,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return ret
 
     # concat method
-    elif obj is pymtl.concat:
+    elif obj is pymtl3_datatypes.concat:
       if len( node.args ) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one argument should be given to concat!' )
@@ -187,7 +187,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return ret
 
     # zext method
-    elif obj is pymtl.zext:
+    elif obj is pymtl3_datatypes.zext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
@@ -198,7 +198,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return ret
 
     # sext method
-    elif obj is pymtl.sext:
+    elif obj is pymtl3_datatypes.sext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
@@ -253,7 +253,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     elif node.id in s.closure:
       # free var from closure
       obj = s.closure[ node.id ]
-      if isinstance( obj, pymtl.Component ):
+      if isinstance( obj, pymtl3_dsl.Component ):
         # Component freevars are an L1 thing.
         if obj is not s.component:
           raise PyMTLSyntaxError( s.blk, node,
@@ -298,8 +298,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_Expr( s, node ):
     """Return the behavioral RTLIR of an expression.
-    
-    ast.Expr might be useful when a statement is only a call to a task or 
+
+    ast.Expr might be useful when a statement is only a call to a task or
     a non-returning function.
     """
     raise PyMTLSyntaxError(

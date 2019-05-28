@@ -6,8 +6,7 @@
 """Provide L5 behavioral RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
+from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .BehavioralRTLIRGenL4Pass import BehavioralRTLIRGeneratorL4
 
@@ -31,7 +30,7 @@ class BehavioralRTLIRGenL5Pass( BasePass ):
 
 class BehavioralRTLIRGeneratorL5( BehavioralRTLIRGeneratorL4 ):
   """Behavioral RTLIR generator level 5.
-  
+
   Do nothing here because attributes have been handled in previous
   levels.
   """

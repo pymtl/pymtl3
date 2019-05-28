@@ -8,13 +8,11 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 
-import pymtl
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
-from pymtl.passes.rtlir.rtype.RTLIRType import get_rtlir
+import pymtl3.datatypes as pymtl3_datatypes
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
 
@@ -76,9 +74,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.closure = {}
 
     for i, var in enumerate( blk.__code__.co_freevars ):
-      try: 
+      try:
         s.closure[ var ] = blk.__closure__[ i ].cell_contents
-      except ValueError: 
+      except ValueError:
         pass
     s.visit( rtlir )
 
@@ -137,23 +135,23 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_FreeVar( s, node ):
     if not node.name in s.freevars.keys():
       s.freevars[ node.name ] = node.obj
-    t = get_rtlir( node.obj )
+    t = rt.get_rtlir( node.obj )
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
-      node._value = pymtl.mk_bits( t.get_dtype().get_length() )( node.obj )
+      node._value = pymtl3_datatypes.mk_bits( t.get_dtype().get_length() )( node.obj )
     node.Type = t
 
   def visit_Base( s, node ):
     # Mark this node as having type rt.Component
     # In L1 the `s` top component is the only possible base
-    node.Type = get_rtlir( node.base )
+    node.Type = rt.get_rtlir( node.base )
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
         '{} is not a rt.Component!'.format( node ) )
 
   def visit_Number( s, node ):
     # By default, number literals have bitwidth of 32
-    node.Type = get_rtlir( node.value )
-    node._value = pymtl.Bits32( node.value )
+    node.Type = rt.get_rtlir( node.value )
+    node._value = pymtl3_datatypes.Bits32( node.value )
 
   def visit_Concat( s, node ):
     nbits = 0

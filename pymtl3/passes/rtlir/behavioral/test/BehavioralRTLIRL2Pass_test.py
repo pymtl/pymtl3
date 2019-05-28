@@ -13,19 +13,19 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import *
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
+from pymtl3.datatypes import *
+from pymtl3.dsl import Component, InPort, OutPort, Wire
+# from pymtl3.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
     BehavioralRTLIRGenL2Pass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL2Pass import (
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL2Pass import (
     BehavioralRTLIRTypeCheckL2Pass,
 )
-from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.rtype.RTLIRDataType import Bool
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype.RTLIRDataType import Bool
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -33,7 +33,7 @@ def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenL2Pass() )
   m.apply( BehavioralRTLIRTypeCheckL2Pass() )
-  m.apply( BehavioralRTLIRVisualizationPass() )
+  # m.apply( BehavioralRTLIRVisualizationPass() )
 
   try:
     ref = m._rtlir_test_ref

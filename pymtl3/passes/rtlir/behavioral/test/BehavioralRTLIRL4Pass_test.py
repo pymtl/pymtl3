@@ -13,18 +13,21 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import Bits32, Component, Interface, OutPort
-from pymtl.dsl.errors import VarNotDeclaredError
-from pymtl.passes.rtlir.behavioral import BehavioralRTLIRVisualizationPass
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRGenL4Pass import (
+from pymtl3.datatypes import Bits32
+from pymtl3.dsl import Component, Interface, OutPort
+from pymtl3.dsl.errors import VarNotDeclaredError
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL4Pass import (
     BehavioralRTLIRGenL4Pass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL4Pass import (
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL4Pass import (
     BehavioralRTLIRTypeCheckL4Pass,
 )
-from pymtl.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRVisualizationPass import (
+    BehavioralRTLIRVisualizationPass,
+)
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):

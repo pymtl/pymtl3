@@ -6,11 +6,10 @@
 """Provide L3 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
 
@@ -67,7 +66,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
 
   def visit_StructInst( s, node ):
     """Type check the struct instantiation node.
-    
+
     TODO
     To instantiate a struct inside an upblk the instantiator needs to:
     1. guarantee to return an instance of the desired struct ( static

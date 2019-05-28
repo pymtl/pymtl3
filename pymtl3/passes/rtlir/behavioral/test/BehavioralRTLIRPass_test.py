@@ -13,15 +13,15 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import *
-from pymtl.passes.rtlir.behavioral import (
+from pymtl3.datatypes import *
+from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
     BehavioralRTLIRVisualizationPass,
 )
-from pymtl.passes.rtlir.behavioral.BehavioralRTLIR import *
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.test.test_utility import do_test, expected_failure
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
 def local_do_test( m ):
@@ -177,12 +177,12 @@ def test_index_bits_slicing( do_test ):
   a = index_bits_slicing()
 
   a._rtlir_test_ref = { 'index_bits_slicing' : CombUpblk( 'index_bits_slicing', [
-    Assign( Slice( 
+    Assign( Slice(
       Index( Attribute( Base( a ), 'out' ), Number( 0 ) ),
-      Number( 0 ), Number( 8 ) 
+      Number( 0 ), Number( 8 )
       ),
-      BinOp( 
-        BinOp( 
+      BinOp(
+        BinOp(
           Slice( Index( Attribute( Base( a ), 'in_' ), Number( 1 ) ), Number( 8 ), Number( 16 ) ),
           Add(),
           Slice( Index( Attribute( Base( a ), 'in_' ), Number( 2 ) ), Number( 0 ), Number( 8 ) ),
@@ -191,10 +191,10 @@ def test_index_bits_slicing( do_test ):
         SizeCast( 8, Number( 10 ) )
       )
     ),
-    Assign( 
+    Assign(
       Index( Attribute( Base( a ), 'out' ), Number( 1 ) ),
-      BinOp( 
-        BinOp( 
+      BinOp(
+        BinOp(
           Slice( Index( Attribute( Base( a ), 'in_' ), Number( 3 ) ), Number( 0 ), Number( 16 ) ),
           Add(),
           Index( Attribute( Base( a ), 'in_' ), Number( 4 ) )
@@ -248,7 +248,7 @@ def test_multi_components( do_test ):
         Attribute( Base( a ), 'in_' ),
         Add(),
         Attribute( Attribute( Base( a ), 'b' ), 'out' )
-      ) 
+      )
     )
   ] ) }
 

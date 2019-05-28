@@ -8,11 +8,9 @@ from __future__ import absolute_import, division, print_function
 
 import ast
 
-from pymtl import *
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLSyntaxError
-from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
@@ -65,8 +63,8 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of augmented assign.
-    
-    Preserve the form of augmented assignment instead of transforming it 
+
+    Preserve the form of augmented assignment instead of transforming it
     into a normal assignment.
     """
     if not type(node.op) in s.opmap:

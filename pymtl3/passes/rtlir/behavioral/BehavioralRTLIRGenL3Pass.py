@@ -6,10 +6,9 @@
 """Provide L3 behavioral RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-import pymtl
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLSyntaxError
+import pymtl3.datatypes as pymtl3_datatypes
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
@@ -40,12 +39,12 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
 
   def visit_Call( s, node ):
     """Return behavioral RTLIR of a method call.
-    
+
     At L3 we need to support the syntax of struct instantiation in upblks.
     This is achieved by function calls like `struct( 1, 2, 0 )`.
     """
     obj = s.get_call_obj( node )
-    if isinstance(obj, type) and not issubclass(obj, pymtl.Bits) and obj is not bool:
+    if isinstance(obj, type) and not issubclass(obj, pymtl3_datatypes.Bits) and obj is not bool:
       if len(node.args) < 1:
         raise PyMTLSyntaxError(
           s.blk, node, 'at least one value should be provided to struct instantiation!'

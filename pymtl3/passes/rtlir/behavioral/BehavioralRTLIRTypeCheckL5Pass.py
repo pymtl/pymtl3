@@ -6,10 +6,9 @@
 """Provide L5 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from .BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
 
@@ -37,7 +36,7 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
 
   def visit_Index( s, node ):
     """Type check the index node.
-    
+
     Only static constant expressions can be the index of component arrays
     """
     if isinstance( node.value.Type, rt.Array ) and \
@@ -53,7 +52,7 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
 
   def visit_Attribute( s, node ):
     """Type check an attribute.
-    
+
     Since only the ports of a subcomponent can be accessed, no explicit
     cross-hierarchy access detection is needed.
     """

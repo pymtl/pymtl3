@@ -6,10 +6,9 @@
 """Provide L4 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from .BehavioralRTLIRTypeCheckL3Pass import BehavioralRTLIRTypeCheckVisitorL3
 

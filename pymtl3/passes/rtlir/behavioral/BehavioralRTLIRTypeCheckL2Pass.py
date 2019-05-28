@@ -6,12 +6,11 @@
 """Provide L2 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
-import pymtl
-from pymtl.passes import BasePass
-from pymtl.passes.BasePass import PassMetadata
-from pymtl.passes.rtlir.errors import PyMTLTypeError
-from pymtl.passes.rtlir.rtype import RTLIRDataType as rdt
-from pymtl.passes.rtlir.rtype import RTLIRType as rt
+import pymtl3.datatypes as pymtl3_datatypes
+from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
@@ -76,8 +75,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
   def eval_const_binop( s, l, op, r ):
     """Evaluate ( l op r ) and return the result as an integer."""
-    assert type( l ) == int or isinstance( l, pymtl.Bits )
-    assert type( r ) == int or isinstance( r, pymtl.Bits )
+    assert type( l ) == int or isinstance( l, pymtl3_datatype.Bits )
+    assert type( r ) == int or isinstance( r, pymtl3_datatype.Bits )
     op_dict = {
       bir.And       : 'and', bir.Or    : 'or',
       bir.Add       : '+',   bir.Sub   : '-',  bir.Mult : '*',  bir.Div  : '/',
@@ -112,7 +111,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     target = node.target
     op = node.op
     value = node.value
-    
+
     # perform type check as if this node corresponds to
     # target = target op value
     l_nbits = target.Type.nbits

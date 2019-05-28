@@ -13,8 +13,9 @@ import os
 
 from graphviz import Digraph
 
-from pymtl.passes import BasePass
-from pymtl.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
+import pymtl3.datatypes as pymtl3_datatypes
+from pymtl3.passes.BasePass import BasePass
+from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 
