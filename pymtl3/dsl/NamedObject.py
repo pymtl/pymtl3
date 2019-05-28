@@ -55,8 +55,8 @@ class NamedObject(object):
 
       # Merge the actual keyword args and those args set by set_parameter
       kwargs = s._dsl.kwargs.copy()
-      if "elaborate" in s._dsl.param_dict:
-        more_args = s._dsl.param_dict[ "elaborate" ].iteritems()
+      if "construct" in s._dsl.param_dict:
+        more_args = s._dsl.param_dict[ "construct" ].iteritems()
         kwargs.update( { x: y for x, y in more_args if x } )
 
       s.construct( *s._dsl.args, **kwargs )
@@ -152,7 +152,10 @@ class NamedObject(object):
   def construct( s, *args, **kwargs ):
     pass
 
-  def set_parameter( s, string, value ):
+  def set_param( s, string, value ):
+    # Assert no positional argumets
+    assert len( s._dsl.args ) == 0, \
+      "Cannot use set_param because {} has positional arguments!".format(s._dsl.my_name)
     assert not s._dsl.constructed
 
     strs = string.split( "." )
