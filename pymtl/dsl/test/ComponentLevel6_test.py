@@ -13,7 +13,6 @@ from collections import deque
 
 from pymtl import *
 from pymtl.dsl.ComponentLevel6 import ComponentLevel6
-from pymtl.passes.PassGroups import SimpleCLSim
 
 from .sim_utils import simple_sim_pass
 

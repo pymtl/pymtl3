@@ -11,7 +11,6 @@ import pytest
 
 from pclib.test import TestSinkCL, TestSrcCL, mk_test_case_table
 from pymtl import *
-from pymtl.passes.PassGroups import SimpleCLSim
 
 from .DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
 

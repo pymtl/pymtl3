@@ -15,7 +15,6 @@ from pclib.test.test_sinks import TestSinkRTL
 from pclib.test.test_srcs import TestSrcCL
 from pymtl import *
 from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pymtl.passes.PassGroups import SimpleCLSim
 
 from .queues import NormalQueueRTL
 
@@ -94,7 +93,7 @@ def run_sim( th, max_cycles=100 ):
   # Create a simulator
   # th.elaborate()
   # th.apply( simple_sim_pass )
-  th.apply( SimpleCLSim )
+  th.apply( SimpleSim )
   th.sim_reset()
 
   print("")

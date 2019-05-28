@@ -15,9 +15,8 @@ from pclib.test import mk_test_case_table
 from pclib.test.test_sinks import TestSinkCL
 from pclib.test.test_srcs import TestSrcCL
 from pymtl import *
-from pymtl.passes import SimpleCLSim
 
-from .TestMemoryCL import TestMemoryCL
+from .MemoryCL import MemoryCL
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -38,8 +37,8 @@ class TestHarness( Component ):
 
     # Connections
     for i in range(nports):
-      s.connect( s.srcs[i].send, s.mem.recv[i] )
-      s.connect( s.mem.send[i],  s.sinks[i].recv  )
+      s.connect( s.srcs[i].send, s.mem.ifc[i].req )
+      s.connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
 
   def done( s ):
     done = True
@@ -237,14 +236,14 @@ def random_msgs( base_addr ):
 
 test_case_table = mk_test_case_table([
   (                             "msg_func          stall lat src_init src_intv sink_init sink_intv"),
-  [ "basic",                     basic_msgs,       0.0,  0,  0,       0,       0,        0         ],
-  [ "stream",                    stream_msgs,      0.0,  0,  0,       0,       0,        0         ],
-  [ "subword_rd",                subword_rd_msgs,  0.0,  0,  0,       0,       0,        0         ],
-  [ "subword_wr",                subword_wr_msgs,  0.0,  0,  0,       0,       0,        0         ],
-  [ "amo",                       amo_msgs,         0.0,  0,  0,       0,       0,        0         ],
-  [ "random",                    random_msgs,      0.0,  0,  0,       0,       0,        0         ],
-  [ "random_3x14",               random_msgs,      0.0,  0,  5,       3,       7,        14        ],
-  [ "stream_stall0.5_lat0",      stream_msgs,      0.5,  0,  0,       0,       0,        0         ],
+  [ "basic",                     basic_msgs,       0.0,  1,  0,       0,       0,        0         ],
+  [ "stream",                    stream_msgs,      0.0,  1,  0,       0,       0,        0         ],
+  [ "subword_rd",                subword_rd_msgs,  0.0,  1,  0,       0,       0,        0         ],
+  [ "subword_wr",                subword_wr_msgs,  0.0,  1,  0,       0,       0,        0         ],
+  [ "amo",                       amo_msgs,         0.0,  1,  0,       0,       0,        0         ],
+  [ "random",                    random_msgs,      0.0,  1,  0,       0,       0,        0         ],
+  [ "random_3x14",               random_msgs,      0.0,  1,  5,       3,       7,        14        ],
+  [ "stream_stall0.5_lat0",      stream_msgs,      0.5,  1,  0,       0,       0,        0         ],
   [ "stream_stall0.0_lat4",      stream_msgs,      0.0,  4,  0,       0,       0,        0         ],
   [ "stream_stall0.5_lat4",      stream_msgs,      0.5,  4,  0,       0,       0,        0         ],
   [ "random_stall0.5_lat4_3x14", random_msgs,      0.5,  4,  5,       14,      7,        14        ],
@@ -270,7 +269,7 @@ test_case_table = mk_test_case_table([
 def test_2port( test_params, dump_vcd ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
-  run_sim( TestHarness( TestMemoryCL, 2,
+  run_sim( TestHarness( MemoryCL, 2,
                         [ msgs0[::2],  msgs1[::2]  ],
                         [ msgs0[1::2], msgs1[1::2] ],
                         test_params.stall, test_params.lat,
@@ -280,7 +279,7 @@ def test_2port( test_params, dump_vcd ):
 @pytest.mark.parametrize( **test_case_table )
 def test_20port( test_params, dump_vcd ):
   msgs = [ test_params.msg_func(0x1000*i) for i in xrange(20) ]
-  run_sim( TestHarness( TestMemoryCL, 20,
+  run_sim( TestHarness( MemoryCL, 20,
                         [ x[::2]  for x in msgs ],
                         [ x[1::2] for x in msgs ],
                         test_params.stall, test_params.lat,
@@ -313,7 +312,7 @@ def test_read_write_mem( dump_vcd ):
 
   # Create test harness with above memory messages
 
-  th = TestHarness( TestMemoryCL, 2, [msgs[::2], []], [msgs[1::2], []],
+  th = TestHarness( MemoryCL, 2, [msgs[::2], []], [msgs[1::2], []],
                     0, 0, 0, 0, 0, 0 )
   th.elaborate()
 
@@ -341,7 +340,7 @@ def run_sim( th, max_cycles=1000 ):
 
   # Create a simulator
 
-  th.apply( SimpleCLSim )
+  th.apply( SimpleSim )
 
   # Run simulation
 
