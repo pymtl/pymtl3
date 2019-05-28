@@ -6,8 +6,8 @@ This file contains unit tests for the arbiters collection models.
 """
 from __future__ import absolute_import, division, print_function
 
-from pclib.test import TestVectorSimulator
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.test import TestVectorSimulator
 
 from .arbiters import RoundRobinArbiter, RoundRobinArbiterEn
 

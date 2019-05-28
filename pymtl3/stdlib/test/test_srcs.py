@@ -12,8 +12,8 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs import RecvCL2SendRTL, SendIfcRTL
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import RecvCL2SendRTL, SendIfcRTL
 
 #-------------------------------------------------------------------------
 # TestSrcCL

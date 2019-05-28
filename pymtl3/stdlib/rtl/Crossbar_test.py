@@ -5,8 +5,8 @@ Crossbar_test.py
 """
 from __future__ import absolute_import, division, print_function
 
-from pclib.test import TestVectorSimulator
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.test import TestVectorSimulator
 
 from .Crossbar import Crossbar
 
@@ -20,7 +20,7 @@ def run_test_crossbar( model, test_vectors ):
 
   def tv_in( model, test_vector ):
     n = len( model.in_ )
-    
+
     for i in range(n):
       model.in_[i] = test_vector[i]
       model.sel[i] = test_vector[n+i]

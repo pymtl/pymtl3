@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 from greenlet import greenlet
 
-from pymtl import *
+from pymtl3 import *
 
 from .MemMsg import MemMsgType, mk_mem_msg
 

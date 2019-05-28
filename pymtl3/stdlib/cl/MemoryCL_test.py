@@ -10,11 +10,11 @@ from functools import reduce
 
 import pytest
 
-from pclib.ifcs import MemMsgType, mk_mem_msg
-from pclib.test import mk_test_case_table
-from pclib.test.test_sinks import TestSinkCL
-from pclib.test.test_srcs import TestSrcCL
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
+from pymtl3.stdlib.test import mk_test_case_table
+from pymtl3.stdlib.test.test_sinks import TestSinkCL
+from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
 from .MemoryCL import MemoryCL
 

@@ -8,7 +8,6 @@ from .Component import Component
 from .ComponentLevel5 import method_port
 from .ComponentLevel6 import non_blocking
 from .ComponentLevel7 import blocking
-
 from .Connectable import (
     CalleePort,
     CallerPort,
@@ -23,4 +22,4 @@ from .Connectable import (
     Signal,
     Wire,
 )
-from .ConstraintTypes import U, M, RD, WR
+from .ConstraintTypes import RD, WR, M, U

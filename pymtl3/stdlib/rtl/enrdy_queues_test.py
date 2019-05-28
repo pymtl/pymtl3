@@ -10,8 +10,8 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pclib.test import TestSinkCL, TestSrcCL
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from .enrdy_queues import *
 

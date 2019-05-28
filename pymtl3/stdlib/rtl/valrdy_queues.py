@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from pclib.ifcs import InValRdyIfc, OutValRdyIfc
-from pclib.rtl import Mux, Reg, RegEn, RegisterFile
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import InValRdyIfc, OutValRdyIfc
+from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegisterFile
 
 
 class PipeQueue1RTL( Component ):

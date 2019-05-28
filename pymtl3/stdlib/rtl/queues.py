@@ -9,9 +9,9 @@ Author : Yanghui Ou
 
 from __future__ import absolute_import, division, print_function
 
-from pclib.ifcs import DeqIfcRTL, EnqIfcRTL
-from pclib.rtl import Mux, Reg, RegEn, RegisterFile
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
+from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegisterFile
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL
@@ -20,7 +20,7 @@ from pymtl import *
 class NormalQueueDpathRTL( Component ):
 
   def construct( s, MsgType, num_entries=2 ):
-    
+
     # Interface
 
     s.enq_msg =  InPort( MsgType )
@@ -43,7 +43,7 @@ class NormalQueueDpathRTL( Component ):
 class NormalQueueCtrlRTL( Component ):
 
   def construct( s, num_entries=2 ):
-    
+
     # Constants
 
     s.num_entries = num_entries
@@ -54,7 +54,7 @@ class NormalQueueCtrlRTL( Component ):
     CountType     = mk_bits( count_nbits )
 
     # Interface
-    
+
     s.enq_en  = InPort ( Bits1   )
     s.enq_rdy = OutPort( Bits1   )
     s.deq_en  = InPort ( Bits1   )
@@ -64,7 +64,7 @@ class NormalQueueCtrlRTL( Component ):
     s.wen     = OutPort( Bits1   )
     s.waddr   = OutPort( PtrType )
     s.raddr   = OutPort( PtrType )
-    
+
     # Registers
 
     s.head       = Wire( PtrType )
@@ -76,7 +76,7 @@ class NormalQueueCtrlRTL( Component ):
     s.deq_xfer  = Wire( Bits1   )
     s.head_next = Wire( PtrType )
     s.tail_next = Wire( PtrType )
-    
+
     # Connections
 
     s.connect( s.wen,   s.enq_xfer )
@@ -120,13 +120,13 @@ class NormalQueueCtrlRTL( Component ):
 class NormalQueueRTL( Component ):
 
   def construct( s, MsgType, num_entries=2 ):
-    
+
     # Interface
 
     s.enq    = EnqIfcRTL( MsgType )
     s.deq    = DeqIfcRTL( MsgType )
     s.count = OutPort( mk_bits( clog2( num_entries ) ) )
-    
+
     # Components
 
     s.ctrl  = NormalQueueCtrlRTL ( num_entries )

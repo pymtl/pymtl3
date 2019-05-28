@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 from collections import deque
 
 from pymtl3.dsl.ComponentLevel4 import ComponentLevel4
-from pymtl3.dsl.Connectable import Wire, CalleePort
+from pymtl3.dsl.Connectable import CalleePort, Wire
 from pymtl3.dsl.ConstraintTypes import M
 
 from .sim_utils import simple_sim_pass

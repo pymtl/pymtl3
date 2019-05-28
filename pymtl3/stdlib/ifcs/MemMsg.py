@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 
 import py
 
-from pymtl import *
+from pymtl3 import *
 
 
 def mk_mem_msg( opq, addr, data ):

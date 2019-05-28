@@ -9,7 +9,7 @@ Author: Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
+from pymtl3 import *
 
 from .ifcs_utils import enrdy_to_str
 

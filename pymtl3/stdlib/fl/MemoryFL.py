@@ -1,8 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from pclib.ifcs import MemMsgType
-from pclib.ifcs.mem_ifcs import MemMinionIfcFL
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import MemMsgType
+from pymtl3.stdlib.ifcs.mem_ifcs import MemMinionIfcFL
 
 AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
              MemMsgType.AMO_AND  : lambda m,a : m&a,

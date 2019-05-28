@@ -9,8 +9,8 @@ Author : Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-from pclib.test import TestVectorSimulator
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.test import TestVectorSimulator
 
 from .Encoder import Encoder
 
@@ -30,7 +30,7 @@ def test_encoder_5_directed():
 
   model = Encoder( 5, 3 )
   run_test( model, [
-    # in                out 
+    # in                out
     [ Bits5( 0b00000 ), 0  ],
     [ Bits5( 0b00001 ), 0  ],
     [ Bits5( 0b00010 ), 1  ],

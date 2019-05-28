@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import collections
 
-from pymtl import *
+from pymtl3 import *
 
 #-------------------------------------------------------------------------
 # mk_test_case_table

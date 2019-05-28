@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from pymtl import *
+from pymtl3 import *
 
 
 class RegisterFile( Component ):

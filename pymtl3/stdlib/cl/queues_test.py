@@ -10,10 +10,9 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pclib.test.test_sinks import TestSinkCL
-from pclib.test.test_srcs import TestSrcCL
-from pymtl import *
-from pymtl.dsl.test.sim_utils import simple_sim_pass
+from pymtl3 import *
+from pymtl3.stdlib.test.test_sinks import TestSinkCL
+from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
 from .queues import BypassQueueCL, NormalQueueCL, PipeQueueCL
 
@@ -23,15 +22,15 @@ from .queues import BypassQueueCL, NormalQueueCL, PipeQueueCL
 
 class TestHarness( Component ):
 
-  def construct( s, DutType, qsize, src_msgs, sink_msgs, src_initial, 
-                 src_interval, sink_initial, sink_interval, 
+  def construct( s, DutType, qsize, src_msgs, sink_msgs, src_initial,
+                 src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
 
     s.src     = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
     s.dut     = DutType( qsize )
-    s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval, 
+    s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval,
                             arrival_time )
-    
+
     s.connect( s.src.send, s.dut.enq )
 
     @s.update
@@ -43,11 +42,11 @@ class TestHarness( Component ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} ({}) {}".format( 
+    return "{} ({}) {}".format(
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
 
 #-------------------------------------------------------------------------
-# run_sim 
+# run_sim
 #-------------------------------------------------------------------------
 
 def run_sim( th, max_cycles=100 ):
@@ -65,7 +64,7 @@ def run_sim( th, max_cycles=100 ):
     th.tick()
     ncycles += 1
     print("{:2}:{}".format( ncycles, th.line_trace() ))
-  
+
   # Check timeout
 
   assert ncycles < max_cycles
@@ -105,7 +104,7 @@ def test_normal2_simple():
   run_sim( th )
 
 @pytest.mark.parametrize(
-  ( 'QType', 'qsize', 'src_init_delay', 'src_inter_delay', 
+  ( 'QType', 'qsize', 'src_init_delay', 'src_inter_delay',
     'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
   [
     ( PipeQueueCL,   2, 1, 1, 0, 0, [ 3, 5,  7,  9 ] ),
@@ -113,7 +112,7 @@ def test_normal2_simple():
     ( NormalQueueCL, 1, 0, 0, 5, 0, [ 5, 7,  9, 11 ] )
   ]
 )
-def test_delay( QType, qsize, src_init_delay, src_inter_delay, 
+def test_delay( QType, qsize, src_init_delay, src_inter_delay,
                 sink_init_delay, sink_inter_delay, arrival_time ):
   th = TestHarness( QType, qsize, test_msgs, test_msgs, src_init_delay,
                     src_inter_delay, sink_init_delay, sink_inter_delay,

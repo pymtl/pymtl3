@@ -10,10 +10,11 @@ from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
 
-from .bits_import import Bits4, Bits5, mk_bits
-from .BitStruct import mk_bit_struct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.PassGroups import SimpleSim
+
+from .bits_import import Bits4, Bits5, mk_bits
+from .BitStruct import mk_bit_struct
 
 StaticPoint = mk_bit_struct( "BasePoint", [
     ( 'x', Bits4 ),

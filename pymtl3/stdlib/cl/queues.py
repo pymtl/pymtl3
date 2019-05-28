@@ -12,8 +12,8 @@ from __future__ import absolute_import, division, print_function
 
 from collections import deque
 
-from pclib.ifcs.SendRecvIfc import enrdy_to_str
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs.SendRecvIfc import enrdy_to_str
 
 #-------------------------------------------------------------------------
 # PipeQueueCL

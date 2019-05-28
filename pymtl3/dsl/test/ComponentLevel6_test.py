@@ -13,7 +13,7 @@ from collections import deque
 
 from pymtl3.datatypes import *
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6, non_blocking
-from pymtl3.dsl.Connectable import NonBlockingCallerIfc, NonBlockingCalleeIfc
+from pymtl3.dsl.Connectable import NonBlockingCalleeIfc, NonBlockingCallerIfc
 from pymtl3.dsl.ConstraintTypes import M, U
 
 from .sim_utils import simple_sim_pass

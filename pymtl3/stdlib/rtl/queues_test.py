@@ -10,11 +10,10 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pclib.test import TestVectorSimulator
-from pclib.test.test_sinks import TestSinkRTL
-from pclib.test.test_srcs import TestSrcCL
-from pymtl import *
-from pymtl.dsl.test.sim_utils import simple_sim_pass
+from pymtl3 import *
+from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.stdlib.test.test_sinks import TestSinkRTL
+from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
 from .queues import NormalQueueRTL
 

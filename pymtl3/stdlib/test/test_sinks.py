@@ -10,8 +10,8 @@ Author : Yanghui Ou
 
 from __future__ import absolute_import, division, print_function
 
-from pclib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
-from pymtl import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
 
 #-------------------------------------------------------------------------
 # TestSinkCL
@@ -30,7 +30,7 @@ class TestSinkCL( Component ):
     s.cycle_count  = 0
     s.msgs         = list( msgs )
     s.arrival_time = (
-      None if arrival_time is None else 
+      None if arrival_time is None else
       list( arrival_time )
     )
     s.perf_regr = True if arrival_time is not None else False
@@ -49,7 +49,7 @@ class TestSinkCL( Component ):
 
       # if recv was called in previous cycle
       if s.recv_called:
-        s.count = s.intv  
+        s.count = s.intv
       elif s.count != 0:
         s.count -= 1
       else:
@@ -80,10 +80,10 @@ Received : {}""".format( s.msgs[ s.idx ], msg ) )
 Test Sink received msg LATER than expected!
 Expected msg   : {}
 Expected cycles: {}
-Received at    : {}""".format( 
-        s.msgs[ s.idx ], 
-        s.arrival_time[ s.idx ], 
-        s.cycle_count 
+Received at    : {}""".format(
+        s.msgs[ s.idx ],
+        s.arrival_time[ s.idx ],
+        s.cycle_count
       ) )
     else:
       s.idx += 1

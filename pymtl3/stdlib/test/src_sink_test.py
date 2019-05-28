@@ -11,8 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl import *
-from pymtl.dsl.test.sim_utils import simple_sim_pass
+from pymtl3 import *
 
 from .test_sinks import TestSinkCL, TestSinkRTL
 from .test_srcs import TestSrcCL, TestSrcRTL
