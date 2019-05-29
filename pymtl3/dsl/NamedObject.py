@@ -21,6 +21,7 @@ Date   : Nov 3, 2018
 from __future__ import absolute_import, division, print_function
 
 import re
+from collections import OrderedDict as ord_dict
 
 from .errors import NotElaboratedError
 
@@ -41,7 +42,7 @@ class NamedObject(object):
     inst._dsl.kwargs      = kwargs
     inst._dsl.constructed = False
 
-    inst._dsl.param_dict = { None:{} } # None is for regex patterns
+    inst._dsl.param_dict = ord_dict() # None is for regex patterns
 
     return inst
 
@@ -80,19 +81,35 @@ class NamedObject(object):
             u._dsl.level       = s._dsl.level + 1
             u._dsl.my_name = u_name = name + "".join([ "[{}]".format(x)
                                                       for x in indices ])
-            u._dsl.param_dict = { None:{} }
+            u._dsl.param_dict = ord_dict()
 
-            for pattern, (compiled_re, subdict) in \
-                s._dsl.param_dict[ None ].iteritems():
-              if compiled_re.match( u_name ):
-                for x, y in subdict.iteritems(): # to merge two None subdicts
-                  if x is None:
-                    u._dsl.param_dict[ None ].update( subdict )
-                  else:
-                    u._dsl.param_dict[ x ] = y
+            # for pattern, (compiled_re, subdict) in \
+            #     s._dsl.param_dict[ None ].iteritems():
+            #   if compiled_re.match( u_name ):
+            #     for x, y in subdict.iteritems(): # to merge two None subdicts
+            #       if x is None:
+            #         u._dsl.param_dict[ None ].update( subdict )
+            #       else:
+            #         u._dsl.param_dict[ x ] = y
+            
+            # Iterate through the param_dict and update u's dict
+            for key, subdict in s._dsl.param_dict.iteritems():
+              if u_name == key:
+                print( "updating", u_name, "normal" )
+                for x, y in subdict.iteritems():
+                  if x not in u._dsl.param_dict:
+                    u._dsl.param_dict[ x ] = ord_dict()
+                  u._dsl.param_dict[ x ].update( y )
 
-            if u_name in s._dsl.param_dict:
-              u._dsl.param_dict.update( s._dsl.param_dict[ u_name ] )
+              elif "*" in key:
+                compiled_re = re.compile( key )
+                if compiled_re.match( u_name ):
+                  for x, y in subdict.iteritems():
+                    if x not in u._dsl.param_dict:
+                      u._dsl.param_dict[ x ] = ord_dict()
+                    u._dsl.param_dict[ x ].update( y )
+                  #u._dsl.param_dict.update( subdict )
+                  print( "updating", u_name, "star" )
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
@@ -171,21 +188,26 @@ class NamedObject(object):
     current_dict = s._dsl.param_dict
     print( "="*74 )
     print( s, current_dict )
-    for x in strs:
-      # TODO should we only allow * as regular expression to accelerate
-      # the common case? or always store as regex no matterwhat?
-      if "*" in x:
-        # We lump all regex patterns into key=None
-        if x not in current_dict[ None ]: # use name to index
-          current_dict[ None ][ x ] = ( re.compile(x), { None: {} } )
-        current_dict = current_dict[ None ][ x ][ 1 ]
+    # for x in strs:
+    #   # TODO should we only allow * as regular expression to accelerate
+    #   # the common case? or always store as regex no matterwhat?
+    #   if "*" in x:
+    #     # We lump all regex patterns into key=None
+    #     if x not in current_dict[ None ]: # use name to index
+    #       current_dict[ None ][ x ] = ( re.compile(x), { None: {} } )
+    #     current_dict = current_dict[ None ][ x ][ 1 ]
 
-      # This is a normal string
-      else:
-        if x not in current_dict:
-          current_dict[ x ] = { None: {} }
-        current_dict = current_dict[ x ]
-      
+    #   # This is a normal string
+    #   else:
+    #     if x not in current_dict:
+    #       current_dict[ x ] = { None: {} }
+    #     current_dict = current_dict[ x ]
+
+    for x in strs:
+      if x not in current_dict:
+        current_dict[ x ] = ord_dict()
+      current_dict = current_dict[ x ]
+
       print( x )
       print( current_dict )
     print( "after\n", s._dsl.param_dict )
