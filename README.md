@@ -1,7 +1,8 @@
 PyMTL 3 (Mamba)
 ==========================================================================
 
-[![Build Status](https://travis-ci.org/cornell-brg/pymtl3.svg?branch=master)](https://travis-ci.org/cornell-brg/pymtl3)
+[![Build Status](https://travis-ci.com/cornell-brg/pymtl3.svg?branch=master)](https://travis-ci.com/cornell-brg/pymtl3)
+[![Codecov Status](https://codecov.io/gh/cornell-brg/pymtl3/branch/master/graph/badge.svg)](https://codecov.io/gh/cornell-brg/pymtl3)
 
 PyMTL 3 (Mamba) is the latest version of PyMTL, an open-source
 Python-based hardware generation, simulation, and verification framework with
