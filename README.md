@@ -4,7 +4,7 @@ PyMTL 3 (Mamba)
 [![Build Status](https://travis-ci.org/cornell-brg/pymtl3.svg?branch=master)](https://travis-ci.org/cornell-brg/pymtl3)
 
 PyMTL 3 (Mamba) is the latest version of PyMTL, an open-source
-Python-based generation, simulation, and verification framework with
+Python-based hardware generation, simulation, and verification framework with
 multi-level hardware modeling support. The original PyMTL was introduced
 at MICRO-47 in December, 2014. Please note that PyMTL 3 is currently
 **alpha** software that is under active development and documentation is
