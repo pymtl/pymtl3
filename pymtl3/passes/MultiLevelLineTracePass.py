@@ -23,7 +23,7 @@ class MultiLevelLineTracePass( BasePass ):
       obj._ml_trace.line_trace = obj.line_trace
 
       def wrapped_line_trace( self, *args, **kwargs ):
-        if 'line_trace' in obj._dsl.param_dict:
+        if 'line_trace' in self._dsl.param_dict:
           # TODO: figure out whether it is necessary to enforce no 
           # positional args.
           assert len( args ) == 0
