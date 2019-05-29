@@ -1,5 +1,5 @@
 #========================================================================
-# MultiLevelLineTracePass.py
+# LineTraceParamPass.py
 #========================================================================
 # Enable multi-level line trace.
 #
@@ -13,7 +13,7 @@ from pymtl3.dsl import *
 from .BasePass import BasePass, PassMetadata
 
 
-class MultiLevelLineTracePass( BasePass ):
+class LineTraceParamPass( BasePass ):
 
   def __call__( self, top ):
 
