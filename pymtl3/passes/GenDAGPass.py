@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict, deque
 
+from pymtl3.datatypes import *
 from pymtl3.dsl import *
 
 from .BasePass import BasePass, PassMetadata
