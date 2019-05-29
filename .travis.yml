@@ -25,7 +25,6 @@ install:
  - sudo apt-get install -y graphviz
 
  # Install verilator
-
  - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
  - tar -C ${HOME} -xzf verilator-travis-4.008.tar.gz
  - export VERILATOR_ROOT=${HOME}/verilator
@@ -34,7 +33,6 @@ install:
  - verilator --version
 
  # Install Python requirements
-
  - pip install --upgrade pip setuptools twine
  - pip install --requirement requirements.txt
  - pip install .
@@ -54,4 +52,11 @@ script:
  - git diff --exit-code
  - mkdir -p build
  - cd build
- - py.test .. $CONFIG
+ - py.test --cov-report xml --cov=pymtl3 .. $CONFIG
+
+#-------------------------------------------------------------------------
+# after success
+#-------------------------------------------------------------------------
+
+after_success:
+  - codecov

@@ -1,16 +1,21 @@
-# Pymtl-v3 working directory
+PyMTL 3 (Mamba)
+==========================================================================
 
-TODO or Problems (Updated June 12):
+[![Build Status](https://travis-ci.com/cornell-brg/pymtl3.svg?branch=master)](https://travis-ci.com/cornell-brg/pymtl3)
+[![Codecov Status](https://codecov.io/gh/cornell-brg/pymtl3/branch/master/graph/badge.svg)](https://codecov.io/gh/cornell-brg/pymtl3)
 
-- [x] enforce port direction checking and net datatype checking
-- [x] dataflow graph visualizer which lays the foundation of Vtranslation
-- [x] create various exception type for better error catching
-- [x] connectable Const
-- [x] use extensive exception types for different kinds of errors
-- [x] support open-ended top level ports
-- [x] variable constraint through @s.func func
-- [x] performance regression, port designs
-- [ ] HOW TO IMPLEMENT DATA STRUCT TYPE? TYPE OR __CALL__?
-- [ ] PORTBUNDLE (INTERFACE) INVERSE? WHAT IF THERE ARE PARAMETERS? SV INTERFACE WIRE ONLY?
-- [ ] combinational/sequential variables of arbitrary verilog import (difficult)
-- [ ] verilator debug information for combinational changes (complicated)
+PyMTL 3 (Mamba) is the latest version of PyMTL, an open-source
+Python-based hardware generation, simulation, and verification framework with
+multi-level hardware modeling support. The original PyMTL was introduced
+at MICRO-47 in December, 2014. Please note that PyMTL 3 is currently
+**alpha** software that is under active development and documentation is
+currently quite sparse.
+
+License
+--------------------------------------------------------------------------
+
+PyMTL is offered under the terms of the Open Source Initiative BSD
+3-Clause License. More information about this license can be found here:
+
+  - http://choosealicense.com/licenses/bsd-3-clause
+  - http://opensource.org/licenses/BSD-3-Clause

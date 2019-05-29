@@ -9,7 +9,6 @@
 build*/
 autom4te.cache/
 .pytest_cache/
-pymtl.egg-info
 *__pycache__
 *.pyc
 *.pyo
@@ -17,3 +16,5 @@ pymtl.egg-info
 .cache/
 *.sw*
 *.tmp
+rast-viz/
+pymtl3.egg-info/

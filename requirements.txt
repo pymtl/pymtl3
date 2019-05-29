@@ -10,3 +10,5 @@ graphviz
 autoflake
 future
 isort
+pytest-cov
+codecov
