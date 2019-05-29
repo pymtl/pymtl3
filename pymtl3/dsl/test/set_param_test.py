@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.dsl.NamedObject import NamedObject
 
+
 class HoneyBadger( NamedObject ):
   def construct( s, lunch="dirt", dinner="dirt" ):
     s.lunch  = lunch 
@@ -104,5 +105,3 @@ def test_set_param_hierarchical():
   assert isinstance(Z.houses[1], TigerTerrace)
   assert Z.houses[1].animals[0].lunch == "grass"
   assert Z.houses[1].animals[1].lunch == "meat"
-
-
