@@ -144,8 +144,10 @@ class ComponentLevel3( ComponentLevel2 ):
         else:
           s._connect_objects( other_obj, this_obj, internal=True )
 
-      for name, obj in this.__dict__.iteritems():
+      # Sort the keys to always connect in a unique order
+      for name in sorted(this.__dict__):
         if not name.startswith("_"):
+          obj = this.__dict__[ name ]
           if hasattr( other, name ):
             # other has the corresponding field, connect recursively
             recursive_connect( obj, getattr( other, name ) )
