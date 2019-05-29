@@ -1,0 +1,39 @@
+#========================================================================
+# MultiLevelLineTracePass.py
+#========================================================================
+# Enable multi-level line trace.
+#
+# Author : Yanghui Ou
+#   Date : May 29, 2019
+
+from __future__ import absolute_import, division, print_function
+
+from pymtl3.dsl import *
+
+from .BasePass import BasePass, PassMetadata
+
+
+class MultiLevelLineTracePass( BasePass ):
+
+  def __call__( self, top ):
+
+    def wrap_line_trace( obj ):
+      if not hasattr( obj, '_ml_trace' ):
+        obj._ml_trace = PassMetadata()
+      obj._ml_trace.line_trace = obj.line_trace
+
+      def wrapped_line_trace( self, *args, **kwargs ):
+        if 'line_trace' in obj._dsl.param_dict:
+          # TODO: figure out whether it is necessary to enforce no 
+          # positional args.
+          assert len( args ) == 0
+          more_args = self._dsl.param_dict['line_trace'].iteritems()
+          kwargs.update({ x:y for x, y in more_args })
+        return self._ml_trace.line_trace( *args, **kwargs )
+
+      obj.line_trace = lambda *args, **kwargs : wrapped_line_trace( obj, *args, **kwargs )
+
+    all_objects = top.get_all_object_filter( lambda x: True )
+    for obj in all_objects:
+      if hasattr( obj, 'line_trace' ):
+        wrap_line_trace( obj )

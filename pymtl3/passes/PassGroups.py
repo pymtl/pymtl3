@@ -8,6 +8,7 @@ from .GenDAGPass import GenDAGPass
 from .mamba.HeuristicTopoPass import HeuristicTopoPass
 from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .mamba.UnrollTickPass import UnrollTickPass
+from .MultiLevelLineTracePass import MultiLevelLineTracePass
 from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
@@ -21,6 +22,7 @@ SimpleSim = [
   SimpleSchedulePass(),
   CLLineTracePass(),
   SimpleTickPass(),
+  MultiLevelLineTracePass(),
   Component.lock_in_simulation
 ]
 
