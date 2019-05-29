@@ -54,7 +54,7 @@ script:
  - git diff --exit-code
  - mkdir -p build
  - cd build
- - py.test --cov-report xml --cov=pymtl .. $CONFIG
+ - py.test --cov-report xml --cov=pymtl3 .. $CONFIG
 
 #-------------------------------------------------------------------------
 # after success
