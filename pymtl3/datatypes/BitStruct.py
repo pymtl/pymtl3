@@ -13,7 +13,6 @@ from functools import reduce
 
 import py
 
-from .Bits import Bits
 from .bits_import import *
 from .helpers import concat
 

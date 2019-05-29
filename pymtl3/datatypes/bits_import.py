@@ -25,7 +25,7 @@ import py.code
     # return Bits( {nbits}, value )
 
 if os.getenv("PYMTL_BITS") == "1":
-  from .Bits import Bits
+  from .PythonBits import Bits
   # print "[env: PYMTL_BITS=1] Use Python Bits"
   bits_template = """
 class Bits{nbits}(Bits):
@@ -48,7 +48,7 @@ class Bits{nbits}(Bits):
 _bits_types[{nbits}] = Bits{nbits}
 """
   except ImportError:
-    from .Bits import Bits
+    from .PythonBits import Bits
     # print "[default w/o Mamba] Use Python Bits"
     bits_template = """
 class Bits{nbits}(Bits):
