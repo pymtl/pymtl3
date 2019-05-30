@@ -52,6 +52,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     process.
     """
     # Component metadata
+    s.structural.component_name = {}
     s.structural.component_unique_name = {}
 
     # Declarations
@@ -74,6 +75,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     hierarchy.
     """
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    s.structural.component_name[m] = m_rtype.get_name()
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
 
