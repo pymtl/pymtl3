@@ -69,7 +69,7 @@ class SimpleSchedulePass( BasePass ):
 
 def dump_dag( top, V, E ):
   from graphviz import Digraph
-  from pymtl.dsl import CalleePort
+  from pymtl3.dsl import CalleePort
   dot = Digraph()
   dot.graph_attr["rank"] = "same"
   dot.graph_attr["ratio"] = "compress"
