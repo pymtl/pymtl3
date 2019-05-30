@@ -20,18 +20,6 @@ class SVStructuralTranslatorL4(
     SVStructuralTranslatorL3, StructuralTranslatorL4 ):
 
   #-----------------------------------------------------------------------
-  # Helper methods
-  #-----------------------------------------------------------------------
-
-  def _gen_subcomp_port_array_rtype( s, c_array_type, p_array_type, p_rtype ):
-    assert isinstance( p_rtype, rt.Port )
-    c_ndim_sizes = c_array_type['n_dim']
-    p_ndim_sizes = p_array_type['n_dim']
-    res_ndim_sizes = c_ndim_sizes + p_ndim_sizes
-    array_type = Array(res_ndim_sizes, p_rtype) if res_ndim_sizes else None
-    return s.rtlir_tr_unpacked_array_type(array_type)
-
-  #-----------------------------------------------------------------------
   # Declarations
   #-----------------------------------------------------------------------
 
@@ -46,12 +34,9 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
-      port_rtype, _port_array_type ):
+      port_rtype, port_array_type ):
     port_dtype = port_rtype.get_dtype()
     port_def_rtype = rt.Wire(port_rtype.get_dtype())
-    # Add sub-component array dimensions to the port array dimension
-    port_array_type = \
-      s._gen_subcomp_port_array_rtype(c_array_type, _port_array_type, port_rtype)
 
     if isinstance( port_dtype, rdt.Vector ):
       dtype = s.rtlir_tr_vector_dtype( port_dtype )
@@ -77,12 +62,9 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
-      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, _port_array_type ):
+      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
     port_dtype = port_rtype.get_dtype()
     port_def_rtype = rt.Wire(port_rtype.get_dtype())
-    # Add sub-component array dimensions to the port array dimension
-    port_array_type = \
-      s._gen_subcomp_port_array_rtype(c_array_type, _port_array_type, port_rtype)
 
     if isinstance( port_dtype, rdt.Vector ):
       dtype = s.rtlir_tr_vector_dtype( port_dtype )

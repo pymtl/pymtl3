@@ -27,7 +27,8 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       'def'  : '',
       'nbits' : dtype.get_length(),
       'const_decl' : '[{msb}:0] {{id_}}'.format( **locals() ),
-      'decl' : 'logic [{msb}:0] {{id_}}'.format( **locals() )
+      'decl' : 'logic [{msb}:0] {{id_}}'.format( **locals() ),
+      'raw_dtype' : dtype
     }
 
   def rtlir_tr_unpacked_array_type( s, Type ):

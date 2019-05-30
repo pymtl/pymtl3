@@ -25,10 +25,13 @@ class SVBehavioralTranslatorL2( SVBehavioralTranslatorL1, BehavioralTranslatorL2
     return BehavioralRTLIRToSVVisitorL2
 
   def rtlir_tr_behavioral_tmpvars( s, tmpvars ):
+    make_indent( tmpvars, 1 )
     return '\n'.join( tmpvars )
 
   def rtlir_tr_behavioral_tmpvar( s, id_, upblk_id, dtype ):
-    return s.rtlir_tr_wire_decl( upblk_id+'_'+id_, rt.Wire(dtype), None, dtype )
+    return s.rtlir_tr_wire_decl(
+        upblk_id+'_'+id_, rt.Wire(dtype['raw_dtype']),
+        s.rtlir_tr_unpacked_array_type(None), dtype )
 
 #-------------------------------------------------------------------------
 # BehavioralRTLIRToSVVisitorL2

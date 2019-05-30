@@ -52,6 +52,8 @@ endmodule
       port_decls = get_pretty(structural, 'decl_ports', False)
       ifc_decls = get_pretty(structural, 'decl_ifcs', False)
       if port_decls or ifc_decls:
+        if port_decls and ifc_decls:
+          port_decls += ',\n'
         ifc_decls += '\n'
       ports = ports_template.format(**locals())
 
@@ -61,11 +63,12 @@ endmodule
       tmpvar_decls = get_pretty(behavioral, "decl_tmpvars")
       subcomp_decls = get_pretty(structural, "decl_subcomps")
       upblk_srcs = get_pretty(behavioral, "upblk_srcs")
-      connections = get_pretty(structural, "connections")
-      if upblk_srcs and connections:
-        upblk_srcs += '\n'
       body = const_decls + fvar_decls + wire_decls + subcomp_decls \
-           + tmpvar_decls + upblk_srcs + connections
+           + tmpvar_decls + upblk_srcs
+      connections = get_pretty(structural, "connections")
+      if (body and connections) or (not body and connections):
+        connections = '\n' + connections
+      body += connections
 
       s._top_module_name = getattr( structural, "component_name", module_name )
       s._top_module_full_name = module_name

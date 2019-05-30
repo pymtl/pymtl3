@@ -128,7 +128,7 @@ def test_packed_array( do_test ):
     ( rdt.Struct( 'B', {'foo':_foo}, ['foo'] ), \
 """\
 typedef struct packed {
-  logic [31:0] foo [0:1];
+  logic [1:0][31:0] foo;
 } B;
 """ ) ]
   a._ref_ports = { a : \
@@ -173,7 +173,7 @@ typedef struct packed {
     ( rdt.Struct( 'B', {'c':rdt.PackedArray([2], _C)}, ['c'] ), \
 """\
 typedef struct packed {
-  C c [0:1];
+  C [1:0] c;
 } B;
 """ ) ]
   a._ref_ports = { a : \

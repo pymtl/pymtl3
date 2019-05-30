@@ -30,11 +30,17 @@ class SVStructuralTranslatorL2(
       sub_dtype_template = s.rtlir_tr_struct_dtype( sub_dtype )
     else:
       assert False, "unsupported data type {} in packed array!".format(sub_dtype)
-    dim_str = reduce(lambda x,y: x+'[0:{}]'.format(y-1), dtype.get_dim_sizes(), '')
+    dim_str = reduce(lambda x,y: x+'[{}:0]'.format(y-1), dtype.get_dim_sizes(), '')
+    str_list = sub_dtype_template['decl'].split()
+    if '[' in str_list[-2]:
+      str_list[-2] = dim_str + str_list[-2]
+    else:
+      str_list = str_list[:-1] + [ dim_str ] + [ str_list[-1] ]
     return {
       'def' : '',
-      'decl' : sub_dtype_template['decl'] + ' ' + dim_str,
-      'ndim' : dtype.get_dim_sizes()
+      'decl' : ' '.join( str_list ),
+      'ndim' : dtype.get_dim_sizes(),
+      'raw_dtype' : dtype
     }
 
   def rtlir_tr_struct_dtype( s, dtype ):
@@ -60,7 +66,8 @@ class SVStructuralTranslatorL2(
     return {
       'def' : \
       'typedef struct packed {{\n{field_decl}\n}} {dtype_name};\n'.format(**locals()),
-      'decl' : '{dtype_name} {{id_}}'.format( **locals() )
+      'decl' : '{dtype_name} {{id_}}'.format( **locals() ),
+      'raw_dtype' : dtype
     }
 
   #-----------------------------------------------------------------------
