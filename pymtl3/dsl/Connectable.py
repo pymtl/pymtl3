@@ -194,6 +194,12 @@ class Signal( NamedObject, Connectable ):
   def is_interface( s ):
     return False
 
+  def is_sliced_signal( s ):
+    return s._dsl.slice is not None
+
+  def is_top_level_signal( s ):
+    return s._dsl.top_level_signal is None
+
   def get_top_level_signal( s ):
     top = s._dsl.top_level_signal
     return s if top is None else top

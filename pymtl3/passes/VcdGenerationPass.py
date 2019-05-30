@@ -44,6 +44,10 @@ def _gen_vcd_symbol():
     yield next_vcd_symbol(n)
     n += 1
 
+# Vcd file takes a(0) instead of a[0]
+def vcd_mangle_name( name ):
+  return name.replace('[','(').replace(']',')')
+
 #-----------------------------------------------------------------------
 # insert_vcd_callbacks
 #-----------------------------------------------------------------------
@@ -77,7 +81,6 @@ def insert_vcd_callbacks( sim, nets ):
   # put on the event queue to execute later).
   for net in nets:
     net.register_slice( create_vcd_callback( sim, net ) )
-
 
 class VcdGenerationPass( BasePass ):
 
@@ -117,17 +120,35 @@ class VcdGenerationPass( BasePass ):
     component_signals = defaultdict(list)
 
     all_components = set()
+
+    # We only collect non-sliced signals
     for x in top._dsl.all_signals:
-      host = x.get_host_component()
-      component_signals[ host ].append(x)
+      if not x.is_sliced_signal():
+        host = x.get_host_component()
+        component_signals[ host ].append(x)
 
-    all_value_nets = top.get_all_value_nets()
+    # We pre-process all nets in order to remove all sliced wires because
+    # they belong to a top level wire and we count that wire
 
-    net_symbol_mapping = [ vcd_symbols.next() for x in all_value_nets ]
+    trimmed_value_nets = []
+    # Hardcode clock net because it needs to go up and down two times
+    clock_net_idx = None
+
+    for writer, net in top.get_all_value_nets():
+      new_net = []
+      for x in net:
+        if not x.is_sliced_signal():
+          new_net.append( x )
+          if clock_net
+      if new_net:
+        trimmed_value_nets.append( new_net )
+        print(new_net)
+
+    net_symbol_mapping = [ vcd_symbols.next() for x in trimmed_value_nets ]
     signal_net_mapping = {}
 
-    for i in range(len(all_value_nets)):
-      for x in all_value_nets[i][1]:
+    for i in range(len(trimmed_value_nets)):
+      for x in trimmed_value_nets[i]:
         signal_net_mapping[x] = i
 
     # Inner utility function to perform recursive descent of the model.
@@ -136,10 +157,14 @@ class VcdGenerationPass( BasePass ):
     def recurse_models( m, level ):
 
       # Create a new scope for this module
-      print( "{}$scope module {} $end".format( "    "*level, m ), file=top._vcd.vcd_file )
+      print( "{}$scope module {} $end".format( "    "*level,
+              vcd_mangle_name( m.get_field_name() ) ),
+              file=top._vcd.vcd_file )
 
+      m_name = repr(m)
       # Define all signals for this model.
       for signal in component_signals[m]:
+
         # Multiple signals may be collapsed into a single net in the
         # simulator if they are connected. Generate new vcd symbols per
         # net, not per signal as an optimization.
@@ -148,17 +173,27 @@ class VcdGenerationPass( BasePass ):
           net_id = signal_net_mapping[signal]
           symbol = net_symbol_mapping[net_id]
         else:
+          # We treat this as a new net
+          trimmed_value_nets.append( [ signal ] )
+          signal_net_mapping[signal] = len(signal_net_mapping)
           symbol = vcd_symbols.next()
+          net_symbol_mapping.append( symbol )
 
+        # This signal can be a part of an interface so we have to
+        # "subtract" host component's name from signal's full name
+        # to get the actual name like enq.rdy
+        # TODO struct
+        signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
         print( "{}$var {type} {nbits} {symbol} {name} $end".format( "    "*(level+1),
-            type='reg', nbits=signal._dsl.Type.nbits, symbol=symbol, name=repr(signal),
-        ), file=top._vcd.vcd_file )
+                type='reg', nbits=signal._dsl.Type.nbits, symbol=symbol, name= signal_name),
+              file=top._vcd.vcd_file )
 
       # Recursively visit all submodels.
       for child in m.get_child_components():
         recurse_models( child, level+1 )
 
-      print( "{}$upscope $end".format("    "*level), file=top._vcd.vcd_file )
+      print( "{}$upscope $end".format("    "*level),
+              file=top._vcd.vcd_file )
 
     # Begin recursive descent from the top-level model.
     recurse_models( top, 0 )
@@ -168,7 +203,26 @@ class VcdGenerationPass( BasePass ):
     # nets in the design.
     print( "$enddefinitions $end\n", file=top._vcd.vcd_file )
 
-    # for net in all_nets:
-      # print( "b{value} {symbol}".format(
-          # value=net.bin(), symbol=net._vcd_symbol,
-      # ), file=o )
+    for i, x in enumerate(trimmed_value_nets):
+      print( "b{value} {symbol}".format(
+          value=x[0]._dsl.Type().bin(), symbol=net_symbol_mapping[i],
+      ), file=top._vcd.vcd_file )
+
+    # Now we create per-cycle signal value collect functions
+    for i, x in enumerate(trimmed_value_nets):
+      print(i, net_symbol_mapping[i], x)
+
+  def create_vcd_callback( sim, net ):
+
+    # Each signal writes its binary value and unique identifier to the
+    # specified vcd file
+    tmp = {signal}
+    if {signal} != top._vcd.last_{net_id}:
+      print( 'b%s %s\n' % (tmp.bin(), net_symbol_mapping),
+              file=top._vcd.vcd_file )
+
+    # The clock signal additionally must update the vcd time stamp
+    else:
+      cb = lambda: print( '#%s\nb%s %s\n' % (100*sim.ncycles+50*net.uint(),
+                          net.bin(), net._vcd_symbol),
+                          file=sim.vcd )
