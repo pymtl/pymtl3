@@ -70,7 +70,9 @@ def test_set_param_overwrite():
   Z.set_param( "top.houses[0].animals*.construct", lunch="bamboo", dinner="bamboo" )
   Z.set_param( "top.houses[1].animals[0].meats*.construct", lunch="bamboo" )
   Z.set_param( "top.houses[1].animals[0].meats[1].construct", lunch="grass" )
-
+  Z.set_param( "top.houses[2].animals[0].construct", lunch="bugs" )
+  Z.set_param( "top.houses[2].animals*.construct", lunch="grass" )
+  Z.set_param( "top.houses[2].animals[0].construct", lunch="bugs", dinner="bugs" )
   Z.elaborate()
 
   assert isinstance( Z.houses[0], PandaHouse )
@@ -79,14 +81,21 @@ def test_set_param_overwrite():
   assert isinstance( Z.houses[3], Aquarium )
   for i in range( 3 ):
     assert isinstance( Z.houses[0].animals[i], Panda )
-    assert Z.houses[0].animals[i].lunch == "bamboo"
+    assert Z.houses[0].animals[i].lunch  == "bamboo"
     assert Z.houses[0].animals[i].dinner == "bamboo"
+
   assert isinstance( Z.houses[1].animals[0], Tiger )
   assert isinstance( Z.houses[1].animals[1], BabyTiger )
-  assert isinstance( Z.houses[2].animals[0], Dromaius )
-  assert isinstance( Z.houses[2].animals[1], HoneyBadger )
   assert Z.houses[1].animals[0].meats[0].lunch == "bamboo"
   assert Z.houses[1].animals[0].meats[1].lunch == "grass"
+
+  assert isinstance( Z.houses[2].animals[0], Dromaius )
+  assert isinstance( Z.houses[2].animals[1], HoneyBadger )
+  # FIXME
+  # assert Z.houses[2].animals[0].lunch  == "bugs"
+  assert Z.houses[2].animals[0].dinner == "bugs"
+  assert Z.houses[2].animals[1].lunch  == "grass"
+  assert Z.houses[2].animals[1].dinner == "dirt"
 
 def test_set_param_hierarchical():
 
