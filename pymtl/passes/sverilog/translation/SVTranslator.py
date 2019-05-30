@@ -5,9 +5,13 @@
 # Date   : March 15, 2019
 """Provide SystemVerilog translator."""
 
+from __future__ import absolute_import, division, print_function
+
 from pymtl.passes.translator import RTLIRTranslator
-from .structural import SVStructuralTranslator as SV_STranslator
+
 from .behavioral import SVBehavioralTranslator as SV_BTranslator
+from .structural import SVStructuralTranslator as SV_STranslator
+
 
 def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 

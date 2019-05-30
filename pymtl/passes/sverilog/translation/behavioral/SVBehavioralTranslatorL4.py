@@ -4,14 +4,19 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 4 SystemVerilog translator implementation."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.translator.behavioral.BehavioralTranslatorL4 \
-    import BehavioralTranslatorL4
-from pymtl.passes.sverilog.errors import SVerilogTranslationError
 from pymtl.passes.rtlir import RTLIRType as rt
+from pymtl.passes.sverilog.errors import SVerilogTranslationError
+from pymtl.passes.translator.behavioral.BehavioralTranslatorL4 import (
+    BehavioralTranslatorL4,
+)
 
-from SVBehavioralTranslatorL3 import BehavioralRTLIRToSVVisitorL3, \
-                                     SVBehavioralTranslatorL3
+from .SVBehavioralTranslatorL3 import (
+    BehavioralRTLIRToSVVisitorL3,
+    SVBehavioralTranslatorL3,
+)
+
 
 class SVBehavioralTranslatorL4(
     SVBehavioralTranslatorL3, BehavioralTranslatorL4):

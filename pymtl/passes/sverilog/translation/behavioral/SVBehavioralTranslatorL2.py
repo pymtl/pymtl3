@@ -4,14 +4,20 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 2 SystemVerilog translator implementation."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.translator.behavioral.BehavioralTranslatorL2 \
-    import BehavioralTranslatorL2
-from pymtl.passes.sverilog.utility import make_indent
 from pymtl.passes.rtlir import BehavioralRTLIR as bir
 from pymtl.passes.rtlir import RTLIRType as rt
-from SVBehavioralTranslatorL1 import SVBehavioralTranslatorL1, \
-                                     BehavioralRTLIRToSVVisitorL1
+from pymtl.passes.sverilog.utility import make_indent
+from pymtl.passes.translator.behavioral.BehavioralTranslatorL2 import (
+    BehavioralTranslatorL2,
+)
+
+from .SVBehavioralTranslatorL1 import (
+    BehavioralRTLIRToSVVisitorL1,
+    SVBehavioralTranslatorL1,
+)
+
 
 class SVBehavioralTranslatorL2( SVBehavioralTranslatorL1, BehavioralTranslatorL2 ):
 

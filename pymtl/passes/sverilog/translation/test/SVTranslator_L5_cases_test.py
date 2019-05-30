@@ -3,10 +3,12 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from pymtl import Component, InPort, OutPort, Bits32, Bits64, concat, \
-                  sext, zext
+from __future__ import absolute_import, division, print_function
+
+from pymtl import Bits32, Bits64, Component, InPort, OutPort, concat, sext, zext
 from pymtl.passes.rtlir.test.test_utility import do_test
 from pymtl.passes.sverilog.translation.SVTranslator import SVTranslator
+
 
 def local_do_test( m ):
   m.elaborate()

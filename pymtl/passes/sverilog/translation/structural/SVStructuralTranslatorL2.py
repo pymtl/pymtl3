@@ -2,13 +2,18 @@
 # SVStructuralTranslatorL2.py
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
+from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.sverilog.utility import make_indent
-from pymtl.passes.translator.structural.StructuralTranslatorL2\
-    import StructuralTranslatorL2
+from functools import reduce
+
 from pymtl.passes.rtlir import RTLIRDataType as rdt
+from pymtl.passes.sverilog.utility import make_indent
+from pymtl.passes.translator.structural.StructuralTranslatorL2 import (
+    StructuralTranslatorL2,
+)
 
-from SVStructuralTranslatorL1 import SVStructuralTranslatorL1
+from .SVStructuralTranslatorL1 import SVStructuralTranslatorL1
+
 
 class SVStructuralTranslatorL2(
     SVStructuralTranslatorL1, StructuralTranslatorL2 ):

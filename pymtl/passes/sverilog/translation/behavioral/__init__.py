@@ -1,1 +1,3 @@
-from SVBehavioralTranslatorL5 import SVBehavioralTranslatorL5 as SVBehavioralTranslator
+from __future__ import absolute_import, division, print_function
+
+from .SVBehavioralTranslatorL5 import SVBehavioralTranslatorL5 as SVBehavioralTranslator

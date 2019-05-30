@@ -5,11 +5,15 @@
 # Date   : May 28, 2019
 """Test the SystemVerilog translator implementation."""
 
-from pymtl import Component, InPort, OutPort, Bits1, Bits32
+from __future__ import absolute_import, division, print_function
+
+from pymtl import Bits1, Bits32, Component, InPort, OutPort
 from pymtl.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl.passes.rtlir.test.test_utility import do_test
-from pymtl.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import \
-    BehavioralRTLIRToSVVisitorL2
+from pymtl.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
+    BehavioralRTLIRToSVVisitorL2,
+)
+
 
 def local_do_test( m ):
   m.elaborate()

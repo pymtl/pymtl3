@@ -5,10 +5,14 @@
 # Date   : May 29, 2019
 """Test the level 4 SystemVerilog structural translator."""
 
-from pymtl import Component, Interface, InPort, OutPort, Bits1, Bits32
+from __future__ import absolute_import, division, print_function
+
+from pymtl import Bits1, Bits32, Component, InPort, Interface, OutPort
 from pymtl.passes.rtlir.test.test_utility import do_test
-from pymtl.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import \
-    SVStructuralTranslatorL4
+from pymtl.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import (
+    SVStructuralTranslatorL4,
+)
+
 
 def local_do_test( m ):
   m.elaborate()

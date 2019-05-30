@@ -5,6 +5,9 @@
 # Date   : May 27, 2019
 """Provide helper methods that might be useful to sverilog passes."""
 
+from __future__ import absolute_import, division, print_function
+
+
 def make_indent( src, nindent ):
   """Add nindent indention to every line in src."""
   indent = '  '

@@ -4,16 +4,20 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 1 SystemVerilog translator implementation."""
+from __future__ import absolute_import, division, print_function
 
 import pymtl
-from pymtl.passes.translator.behavioral.BehavioralTranslatorL1 \
-    import BehavioralTranslatorL1
-from pymtl.passes.sverilog.utility import make_indent
-from pymtl.passes.sverilog.errors import SVerilogTranslationError
 from pymtl.passes.rtlir import BehavioralRTLIR as bir
-from pymtl.passes.rtlir import RTLIRType as rt
 from pymtl.passes.rtlir import RTLIRDataType as rdt
-from SVBehavioralTranslatorL0 import SVBehavioralTranslatorL0
+from pymtl.passes.rtlir import RTLIRType as rt
+from pymtl.passes.sverilog.errors import SVerilogTranslationError
+from pymtl.passes.sverilog.utility import make_indent
+from pymtl.passes.translator.behavioral.BehavioralTranslatorL1 import (
+    BehavioralTranslatorL1,
+)
+
+from .SVBehavioralTranslatorL0 import SVBehavioralTranslatorL0
+
 
 class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1 ):
 
@@ -62,15 +66,15 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
     # s.globals contains a dict of the global namespace of the module where
     # blk was defined
-    s.globals = blk.func_globals
+    s.globals = blk.__globals__
 
     # s.closure contains the free variables defined in an enclosing scope.
     # Basically this is the model instance s.
     s.closure = {}
 
-    for i, var in enumerate( blk.func_code.co_freevars ):
+    for i, var in enumerate( blk.__code__.co_freevars ):
       try: 
-        s.closure[ var ] = blk.func_closure[ i ].cell_contents
+        s.closure[ var ] = blk.__closure__[ i ].cell_contents
       except ValueError: 
         pass
 
