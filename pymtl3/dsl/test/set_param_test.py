@@ -10,44 +10,47 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.dsl.NamedObject import NamedObject
 
-
-class HoneyBadger( NamedObject ):
+class Animal( NamedObject ):
   def construct( s, lunch="dirt", dinner="dirt" ):
     s.lunch  = lunch 
     s.dinner = dinner
 
-class Dromaius( NamedObject ):
-  def construct( s, lunch="dirt", dinner="dirt" ):
-    s.lunch  = lunch 
-    s.dinner = dinner
+class AnimalHouse( NamedObject ):
+  def construct( s, AnimalTypes=[] ):
+    s.animals = [ A() for A in AnimalTypes ]
 
-class Panda( NamedObject ):
-  def construct( s, lunch="dirt", dinner="dirt" ):
-    s.lunch  = lunch
-    s.dinner = dinner
+class HoneyBadger( Animal ):
+  pass
 
-class Tiger( NamedObject ):
+class Dromaius( Animal ):
+  pass
+
+class Panda( Animal ):
+  pass
+
+class Tiger( Animal ):
   def construct( s, MeatTypes=[], lunch="dirt", dinner="dirt" ):
     s.meats  = [ Meat() for Meat in MeatTypes ]
     s.lunch  = lunch
     s.dinner = dinner
 
-class Aquarium( NamedObject ):
-  def construct( s, AnimalTypes=[], AnimalHouseTypes=[] ):
-    s.animals = [ A() for A in AnimalTypes ]
-    s.houses = [ H() for H in AnimalHouseTypes ]
+class BabyTiger( Tiger ):
+  pass
 
-class TigerTerrace( NamedObject ):
-  def construct( s, AnimalTypes=[], AnimalHouseTypes=[] ):
-    s.animals = [ A() for A in AnimalTypes ]
-    s.houses = [ H() for H in AnimalHouseTypes ]
+class Aquarium( AnimalHouse ):
+  pass
+
+class TigerTerrace( AnimalHouse ):
+  pass
+
+class PandaHouse( AnimalHouse ):
+  pass
 
 class Zoo( NamedObject ):
-  def construct( s, AnimalTypes=[], AnimalHouseTypes=[] ):
-    s.animals = [ A() for A in AnimalTypes ]
+  def construct( s, AnimalHouseTypes=[] ):
     s.houses = [ H() for H in AnimalHouseTypes ]
 
-def test_set_param_overwrite():
+def test_simple():
   A = Dromaius()
   A.set_param( "top.construct", lunch="grass" )
   A.elaborate()
@@ -56,34 +59,32 @@ def test_set_param_overwrite():
   assert A.lunch  == "grass" 
   assert A.dinner == "dirt" 
 
+def test_set_param_overwrite():
+
   Z = Zoo()
-  Z.set_param( "top.construct", AnimalTypes=[ HoneyBadger, Dromaius, Panda ] )
-  Z.set_param( "top.construct", AnimalHouseTypes=[ Aquarium, TigerTerrace ] )
-  Z.set_param( "top.houses[1].construct", AnimalTypes=[ Tiger, Panda ] )
-  Z.set_param( "top.houses[1].animals[0].construct", MeatTypes=[ Panda, Tiger ] )
+  Z.set_param( "top.construct", AnimalHouseTypes=[ PandaHouse, TigerTerrace, AnimalHouse, Aquarium ] )
+  Z.set_param( "top.houses[0].construct", AnimalTypes=[ Panda, Panda, Panda   ] )
+  Z.set_param( "top.houses[1].construct", AnimalTypes=[ Tiger, BabyTiger      ] )
+  Z.set_param( "top.houses[2].construct", AnimalTypes=[ Dromaius, HoneyBadger ] )
+  Z.set_param( "top.houses[1].animals[0].construct", MeatTypes=[ Dromaius, HoneyBadger ] )
+  Z.set_param( "top.houses[0].animals*.construct", lunch="bamboo", dinner="bamboo" )
   Z.set_param( "top.houses[1].animals[0].meats*.construct", lunch="bamboo" )
   Z.set_param( "top.houses[1].animals[0].meats[1].construct", lunch="grass" )
-  Z.set_param( "top.animals[0].construct", dinner="bamboo" )
-  Z.set_param( "top.animals*.construct", 
-      lunch ="grass",
-      dinner="poisoned onion"
-  )
-  Z.set_param( "top.animals[2].construct", dinner="bamboo" )
-  Z.set_param( "top.animals[1].construct", lunch=Panda() )
-  Z.set_param( "top.animals[1].lunch.construct", lunch=Dromaius() )
-  Z.set_param( "top.animals[1].lunch.lunch.construct", lunch="bug" )
 
   Z.elaborate()
 
-  assert Z.animals[0].lunch  == "grass"
-  assert Z.animals[0].dinner == "poisoned onion"
-  assert Z.animals[1].dinner == "poisoned onion"
-  assert Z.animals[2].lunch  == "grass"
-  assert Z.animals[2].dinner == "bamboo"
-  assert isinstance(Z.animals[1].lunch, Panda)
-  assert isinstance(Z.animals[1].lunch.lunch, Dromaius)
-  assert Z.animals[1].lunch.lunch.lunch == "bug"
-  assert isinstance(Z.houses[1], TigerTerrace)
+  assert isinstance( Z.houses[0], PandaHouse )
+  assert isinstance( Z.houses[1], TigerTerrace )
+  assert isinstance( Z.houses[2], AnimalHouse )
+  assert isinstance( Z.houses[3], Aquarium )
+  for i in range( 3 ):
+    assert isinstance( Z.houses[0].animals[i], Panda )
+    assert Z.houses[0].animals[i].lunch == "bamboo"
+    assert Z.houses[0].animals[i].dinner == "bamboo"
+  assert isinstance( Z.houses[1].animals[0], Tiger )
+  assert isinstance( Z.houses[1].animals[1], BabyTiger )
+  assert isinstance( Z.houses[2].animals[0], Dromaius )
+  assert isinstance( Z.houses[2].animals[1], HoneyBadger )
   assert Z.houses[1].animals[0].meats[0].lunch == "bamboo"
   assert Z.houses[1].animals[0].meats[1].lunch == "grass"
 
@@ -91,7 +92,6 @@ def test_set_param_hierarchical():
 
   Z = Zoo()
 
-  Z.set_param( "top.construct", AnimalTypes=[ HoneyBadger, Dromaius, Panda ] )
   Z.set_param( "top.construct", AnimalHouseTypes=[ Aquarium, TigerTerrace ] )
   Z.set_param( "top.houses[1].construct", AnimalTypes=[ Tiger, Panda ] )
   Z.set_param( "top.houses*.animals*.construct", lunch="grass" )
