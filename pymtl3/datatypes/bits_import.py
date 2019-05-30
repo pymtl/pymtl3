@@ -59,7 +59,7 @@ class Bits{nbits}(Bits):
 _bits_types[{nbits}] = Bits{nbits}
 """
 
-_bitwidths     = range(1, 256) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
+_bitwidths     = list(range(1, 256)) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
 _bits_types    = dict()
 
 exec(py.code.Source( "".join([ bits_template.format( **vars() ) \

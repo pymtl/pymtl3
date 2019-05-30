@@ -588,12 +588,18 @@ def test_multiple_fields_are_net_writers():
     def __eq__( s, other ):
       return s.a == other.a and s.b == other.b
 
+    def __hash__( s ):
+      return hash((type(s), s.a, s.b))
+
   class SomeMsg2( object ):
     def __init__( s, a=0 ):
       s.c = Bits8(a)
 
     def __eq__( s, other ):
-      return s.a == other.a
+      return s.c == other.c
+
+    def __hash__( s ):
+      return hash((type(s), s.c))
 
   class A( ComponentLevel3 ):
 
@@ -625,12 +631,18 @@ def test_multiple_fields_are_assigned():
     def __eq__( s, other ):
       return s.a == other.a and s.b == other.b
 
+    def __hash__( s ):
+      return hash((type(s), s.a, s.b))
+
   class SomeMsg2( object ):
     def __init__( s, a=0 ):
       s.c = Bits8(a)
 
     def __eq__( s, other ):
-      return s.a == other.a
+      return s.c == other.c
+
+    def __hash__( s ):
+      return hash((type(s), s.c))
 
   class A( ComponentLevel3 ):
 

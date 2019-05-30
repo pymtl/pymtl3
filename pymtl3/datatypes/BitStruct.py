@@ -86,6 +86,9 @@ class {name}( BitStruct ):
   def __init__( s, {args_str} ):
 {assign_str}
 
+  def __hash__( s ):
+    return hash(({hash_str}))
+
 _struct_dict[\"{name}\"] = {name}
 """
 
@@ -109,11 +112,13 @@ def mk_bit_struct( name, fields, str_func=None ):
 
     args_str   = ""
     assign_str = ""
+    hash_str = name + ", "
     nbits      = 0
     for field_name, FieldType in fields:
       nbits += FieldType.nbits
       args_str   += "{}={}(), ".format( field_name, FieldType.__name__ )
       assign_str += "    s.{} = {}\n".format( field_name, field_name )
+      hash_str += "s.{}, ".format(field_name)
     args_str = args_str[:-2]
 
     tmpl = _struct_tmpl.format( **locals() )

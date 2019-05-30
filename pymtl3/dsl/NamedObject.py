@@ -76,6 +76,8 @@ class ord_dict( object ):
     for k, v in self.data:
       yield k, v
 
+  items = iteritems
+
 # Special data structure for constructing the parameter tree.
 class ParamTreeNode(object):
   def __init__( self ):

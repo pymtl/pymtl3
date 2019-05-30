@@ -51,8 +51,9 @@ class ComponentLevel3( ComponentLevel2 ):
   def _collect_vars( s, m ):
     super( ComponentLevel3, s )._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
-      for k in m._dsl.adjacency:
-        s._dsl.all_adjacency[k] |= m._dsl.adjacency[k]
+      all_ajd = s._dsl.all_adjacency
+      for k, v in m._dsl.adjacency.items():
+        all_ajd[k] |= v
 
   # Override
   def _construct( s ):

@@ -159,6 +159,9 @@ def test_variable_not_declared():
     def __eq__( s, other ):
       return s.a == other.a and s.b == other.b
 
+    def __hash__( s ):
+      return hash((type(s), s.a, s.b))
+
   class A(ComponentLevel2):
     def construct( s ):
       s.a = Wire( SomeMsg )
@@ -307,6 +310,9 @@ def test_wr_A_b_rd_A_impl():
 
     def __eq__( s, other ):
       return s.a == other.a and s.b == other.b
+
+    def __hash__( s ):
+      return hash((type(s), s.a, s.b))
 
 
   class Top(ComponentLevel2):

@@ -112,6 +112,9 @@ class Bits( object ):
       return False
     return Bits( 1, int(self.value) == other )
 
+  def __hash__( self ):
+    return hash((self.nbits, self.value))
+
   def __ne__( self, other ):
     try:
       other = int(other)
