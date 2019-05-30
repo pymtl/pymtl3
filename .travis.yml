@@ -6,9 +6,21 @@
 # language and build matrix
 #------------------------------------------------------------------------
 
+dist: xenial
 language: python
 python:
  - "2.7"
+ - "pypy"
+ - "3.6"
+ - "3.7"
+ - "pypy3.5"
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - python: "3.6"
+    - python: "3.7"
+    - python: "pypy3.5"
 
 env:
  - CONFIG=""
@@ -43,7 +55,7 @@ install:
 #------------------------------------------------------------------------
 
 script:
- - futurize --write --stage1 .
+ - futurize --write --stage1 . &> /dev/null
  # - futurize --write --stage2 .
  - autoflake --in-place --remove-duplicate-keys $(find . -name '*.py')
  - pyupgrade --keep-percent-format $(find . -name '*.py')
@@ -51,6 +63,7 @@ script:
  # - black .
  # - flake8 .
  - git diff --exit-code
+ - python --version | grep "Python 3" && futurize --write --stage2 . &> /dev/null || true
  - mkdir -p build
  - cd build
  - py.test --cov-report xml --cov=pymtl3 .. $CONFIG
