@@ -8,6 +8,8 @@ Date   : May 29, 2019
 """
 from __future__ import absolute_import, division, print_function
 
+from collections import defaultdict
+
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .errors import PassOrderError
@@ -41,57 +43,6 @@ def _gen_vcd_symbol():
   while 1:
     yield next_vcd_symbol(n)
     n += 1
-
-#-----------------------------------------------------------------------
-# write_vcd_signal_defs
-#-----------------------------------------------------------------------
-def write_vcd_signal_defs( o, model ):
-
-  vcd_symbol = _gen_vcd_symbol()
-  all_nets   = []
-
-  # Inner utility function to perform recursive descent of the model.
-  def recurse_models( model, level ):
-
-    # Create a new scope for this module
-    print( "$scope module {name} $end".format( name=model.name ), file=o )
-
-    # Define all signals for this model.
-    for i in model.get_ports() + model.get_wires():
-
-      # Multiple signals may be collapsed into a single net in the
-      # simulator if they are connected. Generate new vcd symbols per
-      # net, not per signal as an optimization.
-      net = i._signalvalue
-      if not hasattr( net, '_vcd_symbol' ):
-        net._vcd_symbol = vcd_symbol.next()
-        net._vcd_is_clk = i.name == 'clk'
-        all_nets.append( net )
-      symbol = net._vcd_symbol
-
-      print( "$var {type} {nbits} {symbol} {name} $end".format(
-          type='reg', nbits=i.nbits, symbol=symbol, name=i.name,
-      ), file=o )
-
-    # Recursively visit all submodels.
-    for submodel in model.get_submodules():
-      recurse_models( submodel, level+1 )
-
-    print( "$upscope $end", file=o )
-
-  # Begin recursive descent from the top-level model.
-  recurse_models( model, 0 )
-
-  # Once all models and their signals have been defined, end the
-  # definition section of the vcd and print the initial values of all
-  # nets in the design.
-  print( "$enddefinitions $end\n", file=o )
-  for net in all_nets:
-    print( "b{value} {symbol}".format(
-        value=net.bin(), symbol=net._vcd_symbol,
-    ), file=o )
-
-  return all_nets
 
 #-----------------------------------------------------------------------
 # insert_vcd_callbacks
@@ -155,7 +106,7 @@ class VcdGenerationPass( BasePass ):
 
     # Print vcd header
 
-    print( "$date\n    {}\n$end\n$version\n     PyMTL 3 (Mamba)\n$end\n"
+    print( "$date\n    {}\n$end\n$version\n    PyMTL 3 (Mamba)\n$end\n"
            "$timescale {}\n$end\n".format( time.asctime(), vcd_timescale ),
            file=top._vcd.vcd_file )
 
@@ -182,10 +133,10 @@ class VcdGenerationPass( BasePass ):
     # Inner utility function to perform recursive descent of the model.
     # Shunning: I mostly follow v2's implementation
 
-    def recurse_models( m ):
+    def recurse_models( m, level ):
 
       # Create a new scope for this module
-      print( "$scope module {name} $end".format( name=repr(m) ), file=top._vcd.vcd_file )
+      print( "{}$scope module {} $end".format( "    "*level, m ), file=top._vcd.vcd_file )
 
       # Define all signals for this model.
       for signal in component_signals[m]:
@@ -194,32 +145,30 @@ class VcdGenerationPass( BasePass ):
         # net, not per signal as an optimization.
 
         if signal in signal_net_mapping:
-          net = i._signalvalue
-        if not hasattr( net, '_vcd_symbol' ):
-          net._vcd_symbol = vcd_symbol.next()
-          net._vcd_is_clk = i.name == 'clk'
-          all_nets.append( net )
-        symbol = net._vcd_symbol
+          net_id = signal_net_mapping[signal]
+          symbol = net_symbol_mapping[net_id]
+        else:
+          symbol = vcd_symbols.next()
 
-        print( "$var {type} {nbits} {symbol} {name} $end".format(
-            type='reg', nbits=i.nbits, symbol=symbol, name=i.name,
+        print( "{}$var {type} {nbits} {symbol} {name} $end".format( "    "*(level+1),
+            type='reg', nbits=signal._dsl.Type.nbits, symbol=symbol, name=repr(signal),
         ), file=top._vcd.vcd_file )
 
       # Recursively visit all submodels.
-      for submodel in model.get_child_components():
-        recurse_models( submodel )
+      for child in m.get_child_components():
+        recurse_models( child, level+1 )
 
-      print( "$upscope $end", file=top._vcd.vcd_file )
+      print( "{}$upscope $end".format("    "*level), file=top._vcd.vcd_file )
 
     # Begin recursive descent from the top-level model.
-    recurse_models( top )
+    recurse_models( top, 0 )
 
     # Once all models and their signals have been defined, end the
     # definition section of the vcd and print the initial values of all
     # nets in the design.
     print( "$enddefinitions $end\n", file=top._vcd.vcd_file )
 
-    for net in all_nets:
-      print( "b{value} {symbol}".format(
-          value=net.bin(), symbol=net._vcd_symbol,
-      ), file=o )
+    # for net in all_nets:
+      # print( "b{value} {symbol}".format(
+          # value=net.bin(), symbol=net._vcd_symbol,
+      # ), file=o )
