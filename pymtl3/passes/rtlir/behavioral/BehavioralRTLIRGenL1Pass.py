@@ -270,8 +270,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret.ast = node
     return ret
 
-  def visit_AugAssign( s, node ):  raise NotImplementedError()
-
   def visit_If( s, node ): raise NotImplementedError()
 
   def visit_For( s, node ): raise NotImplementedError()
@@ -304,6 +302,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     raise PyMTLSyntaxError(
       s.blk, node, 'Stand-alone expression is not supported yet!'
     )
+
+  def visit_AugAssign( s, node ):
+    raise PyMTLSyntaxError( s.blk, node, 'invalid operation: augmented assignment' )
 
   def visit_Lambda( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )
