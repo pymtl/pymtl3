@@ -108,8 +108,8 @@ class GenDAGPass( BasePass ):
                     .replace( "(", "_" ).replace( ")", "" )
       gen_src = """
 @update
-def {0}():
-  {1} = {2}""".format( upblk_name, " = ".join( rstrs ), wstr )
+def {}():
+  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
 
       hostobj_allsrc[ lca ] += gen_src
       blkname_meta[ upblk_name ] = (gen_src, writer, readers)
@@ -371,7 +371,7 @@ def {0}():
 
     # flood-fill to find out all equivalent classes
 
-    visited = set( [] )
+    visited = set()
     for x in equiv:
       if x not in visited:
         equiv_class = set()
@@ -433,7 +433,7 @@ def {0}():
     all_upblks = top.get_all_update_blocks()
 
     for method, assoc_blks in method_blks.iteritems():
-      visited = set( [ (method, 0) ] )
+      visited = {  (method, 0)  }
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
 
       if verbose: print()

@@ -46,6 +46,7 @@ script:
  - futurize --write --stage1 .
  # - futurize --write --stage2 .
  - autoflake --in-place --remove-duplicate-keys $(find . -name '*.py')
+ - pyupgrade --keep-percent-format $(find . -name '*.py')
  - isort --apply --recursive .
  # - black .
  # - flake8 .

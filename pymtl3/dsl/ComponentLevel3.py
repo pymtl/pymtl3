@@ -480,7 +480,7 @@ class ComponentLevel3( ComponentLevel2 ):
       # Each node is a writer when we expand it to other nodes
 
       S = deque( [ writer ] )
-      visited = set( [ writer ] )
+      visited = {  writer  }
 
       while S:
         u = S.pop() # u is the writer
