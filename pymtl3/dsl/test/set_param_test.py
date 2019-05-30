@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.dsl.NamedObject import NamedObject
 
+
 class Animal( NamedObject ):
   def construct( s, lunch="dirt", dinner="dirt" ):
     s.lunch  = lunch 
