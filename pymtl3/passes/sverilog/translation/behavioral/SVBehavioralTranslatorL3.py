@@ -6,10 +6,10 @@
 """Provide the level 3 SystemVerilog translator implementation."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir import RTLIRType as rt
-from pymtl.passes.sverilog.errors import SVerilogTranslationError
-from pymtl.passes.translator.behavioral.BehavioralTranslatorL3 import (
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.translator.behavioral.BehavioralTranslatorL3 import (
     BehavioralTranslatorL3,
 )
 

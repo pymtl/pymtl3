@@ -16,8 +16,6 @@ from graphviz import Digraph
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
-from pymtl.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
-
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 
 

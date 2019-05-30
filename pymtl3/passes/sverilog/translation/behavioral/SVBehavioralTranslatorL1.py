@@ -6,13 +6,13 @@
 """Provide the level 1 SystemVerilog translator implementation."""
 from __future__ import absolute_import, division, print_function
 
-import pymtl
-from pymtl.passes.rtlir import BehavioralRTLIR as bir
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.rtlir import RTLIRType as rt
-from pymtl.passes.sverilog.errors import SVerilogTranslationError
-from pymtl.passes.sverilog.utility import make_indent
-from pymtl.passes.translator.behavioral.BehavioralTranslatorL1 import (
+from pymtl3.datatypes import Bits32
+from pymtl3.passes.rtlir import BehavioralRTLIR as bir
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.sverilog.utility import make_indent
+from pymtl3.passes.translator.behavioral.BehavioralTranslatorL1 import (
     BehavioralTranslatorL1,
 )
 
@@ -343,7 +343,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     value = s.visit( node.value )
 
     if hasattr( node.upper, '_value' ):
-      upper = str( int( node.upper._value - pymtl.Bits32(1) ) )
+      upper = str( int( node.upper._value - Bits32(1) ) )
     else:
       upper = s.visit( node.upper ) + '-1'
 

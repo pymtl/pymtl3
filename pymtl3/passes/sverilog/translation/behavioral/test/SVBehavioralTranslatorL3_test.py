@@ -7,10 +7,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl import Bits32, Bits96, Component, InPort, OutPort, concat
-from pymtl.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
-from pymtl.passes.rtlir.test.test_utility import do_test
-from pymtl.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL3 import (
+from pymtl3.datatypes import Bits32, Bits96, concat
+from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
+from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL3 import (
     BehavioralRTLIRToSVVisitorL3,
 )
 

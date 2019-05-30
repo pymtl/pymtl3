@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-from pymtl.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .SVTranslator import SVTranslator
 

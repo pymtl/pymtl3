@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl.passes.translator import RTLIRTranslator
+from pymtl3.passes.translator import RTLIRTranslator
 
 from .behavioral import SVBehavioralTranslator as SV_BTranslator
 from .structural import SVStructuralTranslator as SV_STranslator

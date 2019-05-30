@@ -5,9 +5,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl import Bits1, Bits32, Bits64, Component, InPort, OutPort, concat, sext, zext
-from pymtl.passes.rtlir.test.test_utility import do_test
-from pymtl.passes.sverilog.translation.SVTranslator import SVTranslator
+from pymtl3.datatypes import Bits1, Bits32, Bits64, concat, sext, zext
+from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
 
 def local_do_test( m ):

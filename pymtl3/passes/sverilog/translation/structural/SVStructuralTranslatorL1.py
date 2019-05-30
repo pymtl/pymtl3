@@ -7,10 +7,10 @@ from __future__ import absolute_import, division, print_function
 
 from functools import reduce
 
-import pymtl
-from pymtl.passes.rtlir import RTLIRDataType as rdt
-from pymtl.passes.sverilog.utility import get_component_unique_name, make_indent
-from pymtl.passes.translator.structural.StructuralTranslatorL1 import (
+from pymtl3.datatypes import Bits
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.sverilog.utility import get_component_unique_name, make_indent
+from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
 
@@ -70,7 +70,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     def gen_array_param( n_dim, array ):
       if not n_dim:
         assert not isinstance( array, list )
-        if isinstance( array, pymtl.Bits ):
+        if isinstance( array, Bits ):
           return s.rtlir_tr_literal_number( array.nbits, array.value )
         elif isinstance( array, int ):
           return s.rtlir_tr_literal_number( 32, array )

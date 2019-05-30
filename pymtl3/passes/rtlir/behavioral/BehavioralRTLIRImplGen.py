@@ -87,9 +87,9 @@ import os
 
 from graphviz import Digraph
 
-from pymtl.passes import BasePass
+from pymtl3.passes import BasePass
 
-from pymtl.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
+from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 """.format( '"""Provide visualization for behavioral RTLIR AST.\n\n\
 Visualize Behavioral RTLIR using Graphviz packeage. The output graph is in PDF\n\

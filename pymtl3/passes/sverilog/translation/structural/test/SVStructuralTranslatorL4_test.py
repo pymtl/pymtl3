@@ -7,9 +7,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl import Bits1, Bits32, Component, InPort, Interface, OutPort
-from pymtl.passes.rtlir.test.test_utility import do_test
-from pymtl.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import (
+from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import (
     SVStructuralTranslatorL4,
 )
 
