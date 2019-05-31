@@ -95,8 +95,8 @@ class NormalQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - Bits1(1) if s.head > 0 else s.last_idx
-      s.tail_next = s.tail + Bits1(1) if s.tail < s.last_idx else 0
+      s.head_next = s.head - 1 if s.head > 0 else PtrType( s.last_idx )
+      s.tail_next = s.tail + 1 if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
     def up_reg():

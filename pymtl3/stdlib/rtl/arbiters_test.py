@@ -12,15 +12,19 @@ from pymtl3.stdlib.test import TestVectorSimulator
 from .arbiters import RoundRobinArbiter, RoundRobinArbiterEn
 
 
-def run_test( model, test_vectors ):
+def run_test( cls, args, test_vectors ):
+
+  model = cls( *args )
+
+  BitsN = mk_bits( args[0] )
 
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
-    model.reqs = test_vector[0]
+    model.reqs = BitsN(test_vector[0])
 
   def tv_out( model, test_vector ):
-    assert model.grants == test_vector[1]
+    assert model.grants == BitsN(test_vector[1])
 
   # Run the test
 
@@ -34,8 +38,7 @@ def run_test( model, test_vectors ):
 # RoundRobinArbiter with four requesters
 def test_rr_arb_4():
 
-  model = RoundRobinArbiter( 4 )
-  run_test( model, [
+  run_test( RoundRobinArbiter, (4,), [
 
     # reqs     grants
     [ 0b0000,  0b0000 ],
@@ -69,16 +72,20 @@ def test_rr_arb_4():
 # run_en_test
 #------------------------------------------------------------------------------
 # Test driver for RoundRobinArbiterEn
-def run_en_test( model, test_vectors ):
+def run_en_test( cls, args, test_vectors ):
+
+  model = cls( *args )
+
+  BitsN = mk_bits( args[0] )
 
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
     model.en   = Bits1( test_vector[0] )
-    model.reqs = Bits4( test_vector[1] )
+    model.reqs = BitsN( test_vector[1] )
 
   def tv_out( model, test_vector ):
-    assert model.grants == test_vector[2]
+    assert model.grants == BitsN(test_vector[2])
 
   # Run the test
 
@@ -91,8 +98,7 @@ def run_en_test( model, test_vectors ):
 # RoundRobinArbiterEn with four requesters
 def test_rr_arb_en_4( dump_vcd, test_verilog ):
 
-  model = RoundRobinArbiterEn( 4 )
-  run_en_test( model, [
+  run_en_test( RoundRobinArbiterEn, (4,), [
 
     # reqs     grants
     [ 0, 0b0000,  0b0000 ],

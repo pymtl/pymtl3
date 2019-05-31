@@ -126,7 +126,7 @@ class RecvCL2SendRTL( Component ):
 
     s.recv_called = False
     s.recv_rdy    = False
-    s.msg_to_send = 0
+    s.msg_to_send = MsgType()
 
     @s.update
     def up_send_rtl():

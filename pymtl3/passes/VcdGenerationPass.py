@@ -89,7 +89,7 @@ class VcdGenerationPass( BasePass ):
     # they belong to a top level wire and we count that wire
 
     trimmed_value_nets = []
-    clock_net_idx = None
+    vcdmeta.clock_net_idx = None
 
     for writer, net in top.get_all_value_nets():
       new_net = []
@@ -98,8 +98,8 @@ class VcdGenerationPass( BasePass ):
           new_net.append( x )
           if repr(x) == "s.clk":
             # Hardcode clock net because it needs to go up and down
-            assert clock_net_idx is None
-            clock_net_idx = len(trimmed_value_nets)
+            assert vcdmeta.clock_net_idx is None
+            vcdmeta.clock_net_idx = len(trimmed_value_nets)
 
       if new_net:
         trimmed_value_nets.append( new_net )
@@ -147,6 +147,12 @@ class VcdGenerationPass( BasePass ):
           symbol = net_symbol_mapping[net_id]
         else:
           # We treat this as a new net
+
+          # Check if it's clock. Hardcode clock net
+          if repr(signal) == "s.clk":
+            assert vcdmeta.clock_net_idx is None
+            vcdmeta.clock_net_idx = len(trimmed_value_nets)
+
           trimmed_value_nets.append( [ signal ] )
           signal_net_mapping[signal] = len(signal_net_mapping)
           symbol = vcd_symbols.next()
@@ -192,9 +198,8 @@ class VcdGenerationPass( BasePass ):
     if vcdmeta.last_{0} != {1}:
       try:
         value_str = {1}.bin()
-      except AttributeError:
-        print('{1} becomes int. Please check your code.')
-        raise
+      except AttributeError as e:
+        raise AttributeError( '{{}}\\n - {1} becomes another type. Please check your code.'.format(e) )
       print( 'b{{}} {2}'.format( value_str ), file=vcdmeta.vcd_file )
       vcdmeta.last_{0} = deepcopy({1})"""
 
@@ -202,17 +207,20 @@ class VcdGenerationPass( BasePass ):
 
     # Concatenate the strings for all signals
 
+    # Give all ' and " characters a preceding backslash for .format
+    for i, x in enumerate(net_symbol_mapping):
+      net_symbol_mapping[i] = x.replace('\'','\\\'').replace('\"','\\\"')
+
     vcd_srcs = []
     for i, net in enumerate( trimmed_value_nets ):
-      if i != clock_net_idx:
-        symbol = net_symbol_mapping[i].replace('\'','\\\'').replace('\"','\\\"')
+      if i != vcdmeta.clock_net_idx:
+        symbol = net_symbol_mapping[i]
         vcd_srcs.append( dump_vcd_per_signal.format( i, net[0], symbol ) )
 
     src =  """
 def dump_vcd():
   # Flip clock at the beginning of cycle
-  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles ),
-        file=vcdmeta.vcd_file )
+  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles ), file=vcdmeta.vcd_file )
 
   try:
     # Type check
@@ -226,8 +234,8 @@ def dump_vcd():
   print( '\\n#{{}}\\nb0b0 {0}'.format(100*vcdmeta.sim_ncycles+50 ),
         file=vcdmeta.vcd_file )
   vcdmeta.sim_ncycles += 1
-""".format( net_symbol_mapping[ clock_net_idx ], "", "".join(vcd_srcs) )
+""".format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
 
     s = top
-    exec compile( src, filename=repr(s), mode="exec") in globals().update(locals())
+    exec compile( src, filename="vcd_generation", mode="exec") in globals().update(locals())
     return dump_vcd
