@@ -61,7 +61,6 @@ def test_simple():
   assert A.dinner == "dirt" 
 
 def test_set_param_overwrite():
-
   Z = Zoo()
   Z.set_param( "top.construct", AnimalHouseTypes=[ PandaHouse, TigerTerrace, AnimalHouse, Aquarium ] )
   Z.set_param( "top.houses[0].construct", AnimalTypes=[ Panda, Panda, Panda   ] )
@@ -99,8 +98,20 @@ def test_set_param_overwrite():
   assert Z.houses[2].animals[1].lunch  == "grass"
   assert Z.houses[2].animals[1].dinner == "dirt"
 
-def test_set_param_hierarchical():
+def test_multi_regex():
+  Z = Zoo()
+  Z.set_param( "top.construct", AnimalHouseTypes=[ PandaHouse, TigerTerrace, AnimalHouse, Aquarium ] )
+  Z.set_param( "top.houses[0].construct", AnimalTypes=[ Panda, Panda, Panda   ] )
+  Z.set_param( "top.houses[1].construct", AnimalTypes=[ Tiger, BabyTiger      ] )
+  Z.set_param( "top.houses[2].construct", AnimalTypes=[ Dromaius, HoneyBadger ] )
+  Z.set_param( "top.houses[0].animals[0].construct", lunch="potato", dinner="bamboo" )  
+  Z.set_param( "top.houses*.animals[0].construct", lunch="potato" )  
+  Z.elaborate()
 
+  assert Z.houses[0].animals[0].lunch  == "potato"
+  assert Z.houses[0].animals[0].dinner == "bamboo"
+
+def test_set_param_hierarchical():
   Z = Zoo()
 
   Z.set_param( "top.construct", AnimalHouseTypes=[ Aquarium, TigerTerrace ] )

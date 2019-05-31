@@ -35,12 +35,19 @@ class ParamTreeNode(object):
     self.children = ord_dict()
     self.leaf = {}
 
-  def update( self, other ):
-    self.children.update( other.children )
+  def merge( self, other ):
+    # Merge leaf
     for func_name, subdict in other.leaf.iteritems():
       if func_name not in self.leaf:
         self.leaf[ func_name ] = {}
       self.leaf[ func_name ].update( subdict )
+
+    # Merge children
+    for comp_name, node in other.children.iteritems():
+      if comp_name in self.children:
+        self.children[ comp_name ].merge( node )
+      else:
+        self.children[ comp_name ] = node
 
   def add_params( self, strs, func_name, **kwargs ):
     # Traverse to the node
@@ -127,11 +134,11 @@ class NamedObject(object):
             # Iterate through the param_tree and update u
             for comp_name, node in s._dsl.param_tree.children.iteritems():
               if comp_name == u_name:
-                u._dsl.param_tree.update( node )
+                u._dsl.param_tree.merge( node )
 
               elif node.compiled_re is not None:
                 if node.compiled_re.match( u_name ):
-                  u._dsl.param_tree.update( node )
+                  u._dsl.param_tree.merge( node )
 
             u._dsl.param_dict = u._dsl.param_tree.leaf
 
