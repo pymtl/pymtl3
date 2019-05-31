@@ -94,6 +94,8 @@ class Signal( NamedObject, Connectable ):
     if not issubclass( Type, Bits ):
       s._dsl.type_instance = Type()
 
+    s._dsl.is_bits_signal = issubclass( Type, Bits ) or (Type is int)
+
     s._dsl.slice  = None # None -- not a slice of some wire by default
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
@@ -194,8 +196,32 @@ class Signal( NamedObject, Connectable ):
   def is_interface( s ):
     return False
 
+  # Note: We currently define a leaf signal as int/Bits type signal, as
+  #       opposed to BitStruct or normal Python object. A sliced signal is
+  #       not a leaf signal. A non-leaf signal cannot be sliced or be a
+  #       sliced signal.
+
+  def is_leaf_signal( s ):
+    return s._dsl.is_bits_signal and not s.is_sliced_signal()
+
+  def get_leaf_signals( s ):
+    if s.is_sliced_signal(): return []
+    if s.is_leaf_signal():   return [ s ]
+
+    leaf_signals = []
+    def recursive_getattr( m, instance ):
+      for x in instance.__dict__:
+        signal = getattr( m, x )
+        if signal.is_leaf_signal():
+          leaf_signals.append( signal )
+        else:
+          recursive_getattr( signal, instance.__dict__[x] )
+
+    recursive_getattr( s, s._dsl.type_instance )
+    return leaf_signals
+
   def is_sliced_signal( s ):
-    return s._dsl.slice is not None
+    return not s._dsl.slice is None
 
   def is_top_level_signal( s ):
     return s._dsl.top_level_signal is None

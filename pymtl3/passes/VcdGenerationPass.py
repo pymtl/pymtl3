@@ -74,16 +74,16 @@ class VcdGenerationPass( BasePass ):
 
     # Preprocess some metadata
 
-    component_signals = defaultdict(list)
+    component_signals = defaultdict(set)
 
     all_components = set()
 
-    # We only collect non-sliced signals
-    # TODO only collect leaf signals for nested structs
+    # We only collect non-sliced leaf signals
+    # TODO only collect leaf signals and for nested structs
     for x in top._dsl.all_signals:
-      if not x.is_sliced_signal():
-        host = x.get_host_component()
-        component_signals[ host ].append(x)
+      for y in x.get_leaf_signals():
+        host = y.get_host_component()
+        component_signals[ host ].add(y)
 
     # We pre-process all nets in order to remove all sliced wires because
     # they belong to a top level wire and we count that wire
@@ -194,6 +194,10 @@ class VcdGenerationPass( BasePass ):
 
     vcdmeta.sim_ncycles = 0
 
+    # Flip clock for the first cycle
+    print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
+           file=vcdmeta.vcd_file )
+
     dump_vcd_per_signal = """
     if vcdmeta.last_{0} != {1}:
       try:
@@ -219,8 +223,6 @@ class VcdGenerationPass( BasePass ):
 
     src =  """
 def dump_vcd():
-  # Flip clock at the beginning of cycle
-  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles ), file=vcdmeta.vcd_file )
 
   try:
     # Type check
@@ -233,6 +235,8 @@ def dump_vcd():
   # Flop clock at the end of cycle
   print( '\\n#{{}}\\nb0b0 {0}'.format(100*vcdmeta.sim_ncycles+50 ),
         file=vcdmeta.vcd_file )
+  # Flip clock of the next cycle
+  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles+100 ), file=vcdmeta.vcd_file )
   vcdmeta.sim_ncycles += 1
 """.format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
 
