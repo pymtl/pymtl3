@@ -1,6 +1,6 @@
 """
 #=========================================================================
-# MultiLevelLineTracePass_test.py
+# LineTraceParamPass_test.py
 #=========================================================================
 # Test for multi-level line trace pass.
 #
@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.dsl import *
 from pymtl3.passes.CLLineTracePass import CLLineTracePass
 from pymtl3.passes.GenDAGPass import GenDAGPass
-from pymtl3.passes.MultiLevelLineTracePass import MultiLevelLineTracePass
+from pymtl3.passes.LineTraceParamPass import LineTraceParamPass
 from pymtl3.passes.SimpleSchedulePass import SimpleSchedulePass
 from pymtl3.passes.SimpleTickPass import SimpleTickPass
 from pymtl3.passes.WrapGreenletPass import WrapGreenletPass
@@ -41,7 +41,7 @@ def test_multi_level_trace():
   A.apply( SimpleSchedulePass()      )
   A.apply( CLLineTracePass()         )
   A.apply( SimpleTickPass()          )
-  A.apply( MultiLevelLineTracePass() )
+  A.apply( LineTraceParamPass()      )
   A.lock_in_simulation()
   A.tick()
   print( A.line_trace() )
