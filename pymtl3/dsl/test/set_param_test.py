@@ -105,10 +105,11 @@ def test_multi_regex():
   Z.set_param( "top.houses[1].construct", AnimalTypes=[ Tiger, BabyTiger      ] )
   Z.set_param( "top.houses[2].construct", AnimalTypes=[ Dromaius, HoneyBadger ] )
   Z.set_param( "top.houses[0].animals[0].construct", lunch="potato", dinner="bamboo" )  
+  Z.set_param( "top.houses*.animals*.construct", lunch="onion" )
   Z.set_param( "top.houses*.animals[0].construct", lunch="potato" )  
   Z.elaborate()
 
-  assert Z.houses[0].animals[0].lunch  == "potato"
+  assert Z.houses[0].animals[0].lunch  == "onion"
   assert Z.houses[0].animals[0].dinner == "bamboo"
 
 def test_set_param_hierarchical():
