@@ -204,8 +204,8 @@ class NamedObject(object):
 
   def set_param( s, string, **kwargs ):
     # Assert no positional argumets
-    assert len( s._dsl.args ) == 0, \
-      "Cannot use set_param because {} has positional arguments!".format(s._dsl.my_name)
+    # assert len( s._dsl.args ) == 0, \
+    #   "Cannot use set_param because {} has positional arguments!".format(s._dsl.my_name)
     assert not s._dsl.constructed
 
     strs = string.split( "." )
