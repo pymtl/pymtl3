@@ -11,76 +11,12 @@ from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from copy import deepcopy
 
 from .errors import PassOrderError
 
+import py
 import time
-import sys
-
-#-----------------------------------------------------------------------
-# _gen_vcd_symbol
-#-----------------------------------------------------------------------
-# Utility generator to create new symbols for each VCD signal.
-# Code inspired by MyHDL 0.7.
-# Shunning: I just reuse it from pymtl v2
-def _gen_vcd_symbol():
-
-  # Generate a string containing all valid vcd symbol characters
-  _codechars = ''.join([chr(i) for i in range(33, 127)])
-  _mod       = len(_codechars)
-
-  # Function to map an integer n to a new vcd symbol
-  def next_vcd_symbol(n):
-    q, r = divmod(n, _mod)
-    code = _codechars[r]
-    while q > 0:
-      q, r = divmod(q, _mod)
-      code = _codechars[r] + code
-    return code
-
-  # Generator logic
-  n = 0
-  while 1:
-    yield next_vcd_symbol(n)
-    n += 1
-
-# Vcd file takes a(0) instead of a[0]
-def vcd_mangle_name( name ):
-  return name.replace('[','(').replace(']',')')
-
-#-----------------------------------------------------------------------
-# insert_vcd_callbacks
-#-----------------------------------------------------------------------
-# Add callbacks which write the vcd file for each net in the design.
-def insert_vcd_callbacks( sim, nets ):
-
-  # A utility function which creates callbacks that write a nets current
-  # value to the vcd file. The returned callback function is a closure
-  # which is executed by the simulator whenever the net's value changes.
-  def create_vcd_callback( sim, net ):
-
-    # Each signal writes its binary value and unique identifier to the
-    # specified vcd file
-    if not net._vcd_is_clk:
-      cb = lambda: print( 'b%s %s\n' % (net.bin(), net._vcd_symbol),
-                          file=sim.vcd )
-
-    # The clock signal additionally must update the vcd time stamp
-    else:
-      cb = lambda: print( '#%s\nb%s %s\n' % (100*sim.ncycles+50*net.uint(),
-                          net.bin(), net._vcd_symbol),
-                          file=sim.vcd )
-
-    # Return the callback
-    return cb
-
-  # For each net in the simulator, create a callback and register it with
-  # the net to be fired whenever the value changes. We repurpose the
-  # existing callback facilities designed for slices (these execute
-  # immediately), rather than the default callback mechanism (these are
-  # put on the event queue to execute later).
-  for net in nets:
-    net.register_slice( create_vcd_callback( sim, net ) )
 
 class VcdGenerationPass( BasePass ):
 
@@ -95,12 +31,12 @@ class VcdGenerationPass( BasePass ):
 
     top._vcd = PassMetadata()
 
-    self.append_vcd_func_to_schedule( top )
+    schedule.append( self.make_vcd_func( top, top._vcd ) )
 
-  def append_vcd_func_to_schedule( self, top ):
+  def make_vcd_func( self, top, vcdmeta ):
 
-    top._vcd.vcd_file_name = str(top.__class__) + ".vcd"
-    top._vcd.vcd_file = open( top._vcd.vcd_file_name, "w" )
+    vcdmeta.vcd_file_name = str(top.__class__) + ".vcd"
+    vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
 
     # Get vcd timescale
 
@@ -111,17 +47,39 @@ class VcdGenerationPass( BasePass ):
 
     print( "$date\n    {}\n$end\n$version\n    PyMTL 3 (Mamba)\n$end\n"
            "$timescale {}\n$end\n".format( time.asctime(), vcd_timescale ),
-           file=top._vcd.vcd_file )
+           file=vcdmeta.vcd_file )
 
-    # Preprocessing some metadata
+    # Utility generator to create new symbols for each VCD signal.
+    # Code inspired by MyHDL 0.7.
+    # Shunning: I just reuse it from pymtl v2
+
+    def _gen_vcd_symbol():
+
+      # Generate a string containing all valid vcd symbol characters
+      _codechars = ''.join([chr(i) for i in range(33, 127)])
+      _mod       = len(_codechars)
+
+      # Generator logic
+      n = 0
+      while True:
+        q, r = divmod(n, _mod)
+        code = _codechars[r]
+        while q > 0:
+          q, r = divmod(q, _mod)
+          code = _codechars[r] + code
+        yield code
+        n += 1
 
     vcd_symbols = _gen_vcd_symbol()
+
+    # Preprocess some metadata
 
     component_signals = defaultdict(list)
 
     all_components = set()
 
     # We only collect non-sliced signals
+    # TODO only collect leaf signals for nested structs
     for x in top._dsl.all_signals:
       if not x.is_sliced_signal():
         host = x.get_host_component()
@@ -131,7 +89,6 @@ class VcdGenerationPass( BasePass ):
     # they belong to a top level wire and we count that wire
 
     trimmed_value_nets = []
-    # Hardcode clock net because it needs to go up and down two times
     clock_net_idx = None
 
     for writer, net in top.get_all_value_nets():
@@ -139,10 +96,15 @@ class VcdGenerationPass( BasePass ):
       for x in net:
         if not x.is_sliced_signal():
           new_net.append( x )
-          if clock_net
+          if repr(x) == "s.clk":
+            # Hardcode clock net because it needs to go up and down
+            assert clock_net_idx is None
+            clock_net_idx = len(trimmed_value_nets)
+
       if new_net:
         trimmed_value_nets.append( new_net )
-        print(new_net)
+
+    # Generate symbol for existing nets
 
     net_symbol_mapping = [ vcd_symbols.next() for x in trimmed_value_nets ]
     signal_net_mapping = {}
@@ -154,14 +116,25 @@ class VcdGenerationPass( BasePass ):
     # Inner utility function to perform recursive descent of the model.
     # Shunning: I mostly follow v2's implementation
 
+    # Vcd file takes a(0) instead of a[0]
+    def vcd_mangle_name( name ):
+      return name.replace('[','(').replace(']',')')
+
     def recurse_models( m, level ):
+
+      # Special case the top level "s" to "top"
+
+      my_name = m.get_field_name()
+      if my_name == "s":
+        my_name = "top"
 
       # Create a new scope for this module
       print( "{}$scope module {} $end".format( "    "*level,
-              vcd_mangle_name( m.get_field_name() ) ),
-              file=top._vcd.vcd_file )
+              vcd_mangle_name( my_name ) ),
+              file=vcdmeta.vcd_file )
 
       m_name = repr(m)
+
       # Define all signals for this model.
       for signal in component_signals[m]:
 
@@ -186,14 +159,14 @@ class VcdGenerationPass( BasePass ):
         signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
         print( "{}$var {type} {nbits} {symbol} {name} $end".format( "    "*(level+1),
                 type='reg', nbits=signal._dsl.Type.nbits, symbol=symbol, name= signal_name),
-              file=top._vcd.vcd_file )
+              file=vcdmeta.vcd_file )
 
       # Recursively visit all submodels.
       for child in m.get_child_components():
         recurse_models( child, level+1 )
 
       print( "{}$upscope $end".format("    "*level),
-              file=top._vcd.vcd_file )
+              file=vcdmeta.vcd_file )
 
     # Begin recursive descent from the top-level model.
     recurse_models( top, 0 )
@@ -201,28 +174,60 @@ class VcdGenerationPass( BasePass ):
     # Once all models and their signals have been defined, end the
     # definition section of the vcd and print the initial values of all
     # nets in the design.
-    print( "$enddefinitions $end\n", file=top._vcd.vcd_file )
+    print( "$enddefinitions $end\n", file=vcdmeta.vcd_file )
 
-    for i, x in enumerate(trimmed_value_nets):
+    for i, net in enumerate(trimmed_value_nets):
       print( "b{value} {symbol}".format(
-          value=x[0]._dsl.Type().bin(), symbol=net_symbol_mapping[i],
-      ), file=top._vcd.vcd_file )
+          value=net[0]._dsl.Type().bin(), symbol=net_symbol_mapping[i],
+      ), file=vcdmeta.vcd_file )
+
+      # Set this to be the last cycle value
+      setattr( vcdmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
 
     # Now we create per-cycle signal value collect functions
-    for i, x in enumerate(trimmed_value_nets):
-      print(i, net_symbol_mapping[i], x)
 
-  def create_vcd_callback( sim, net ):
+    vcdmeta.sim_ncycles = 0
 
-    # Each signal writes its binary value and unique identifier to the
-    # specified vcd file
-    tmp = {signal}
-    if {signal} != top._vcd.last_{net_id}:
-      print( 'b%s %s\n' % (tmp.bin(), net_symbol_mapping),
-              file=top._vcd.vcd_file )
+    dump_vcd_per_signal = """
+    if vcdmeta.last_{0} != {1}:
+      try:
+        value_str = {1}.bin()
+      except AttributeError:
+        print('{1} becomes int. Please check your code.')
+        raise
+      print( 'b{{}} {2}'.format( value_str ), file=vcdmeta.vcd_file )
+      vcdmeta.last_{0} = deepcopy({1})"""
 
-    # The clock signal additionally must update the vcd time stamp
-    else:
-      cb = lambda: print( '#%s\nb%s %s\n' % (100*sim.ncycles+50*net.uint(),
-                          net.bin(), net._vcd_symbol),
-                          file=sim.vcd )
+    # TODO type check
+
+    # Concatenate the strings for all signals
+
+    vcd_srcs = []
+    for i, net in enumerate( trimmed_value_nets ):
+      if i != clock_net_idx:
+        symbol = net_symbol_mapping[i].replace('\'','\\\'').replace('\"','\\\"')
+        vcd_srcs.append( dump_vcd_per_signal.format( i, net[0], symbol ) )
+
+    src =  """
+def dump_vcd():
+  # Flip clock at the beginning of cycle
+  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles ),
+        file=vcdmeta.vcd_file )
+
+  try:
+    # Type check
+    {1}
+    # Dump VCD
+    {2}
+  except Exception:
+    raise
+
+  # Flop clock at the end of cycle
+  print( '\\n#{{}}\\nb0b0 {0}'.format(100*vcdmeta.sim_ncycles+50 ),
+        file=vcdmeta.vcd_file )
+  vcdmeta.sim_ncycles += 1
+""".format( net_symbol_mapping[ clock_net_idx ], "", "".join(vcd_srcs) )
+
+    s = top
+    exec compile( src, filename=repr(s), mode="exec") in globals().update(locals())
+    return dump_vcd

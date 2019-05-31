@@ -11,6 +11,7 @@ from .mamba.UnrollTickPass import UnrollTickPass
 from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
+from .VcdGenerationPass import VcdGenerationPass
 from .WrapGreenletPass import WrapGreenletPass
 
 SimpleSim = [
@@ -20,6 +21,7 @@ SimpleSim = [
   SimpleSchedulePass(),
   CLLineTracePass(),
   SimpleTickPass(),
+  VcdGenerationPass(),
   Component.lock_in_simulation
 ]
 
