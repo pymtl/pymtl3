@@ -607,6 +607,11 @@ def test_multiple_fields_are_net_writers():
 
   a = A()
   a.elaborate()
+  simple_sim_pass( a )
+
+  a.in_ = SomeMsg1(4, 5)
+  a.tick()
+  assert a.out1.c == 4
 
 # The counterpart of the above test
 
@@ -643,3 +648,8 @@ def test_multiple_fields_are_assigned():
 
   a = A()
   a.elaborate()
+  simple_sim_pass( a )
+
+  a.in_ = SomeMsg1(4, 5)
+  a.tick()
+  assert a.out1.c == 4

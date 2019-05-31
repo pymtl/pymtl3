@@ -50,8 +50,8 @@ class ComponentLevel4( ComponentLevel3 ):
     return inst
 
   # Override
-  def _declare_vars( s ):
-    super( ComponentLevel4, s )._declare_vars()
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel4, s )._elaborate_declare_vars()
     s._dsl.all_M_constraints = set()
 
   # Override

@@ -44,11 +44,6 @@ class ComponentLevel3( ComponentLevel2 ):
     return inst
 
   # Override
-  def _declare_vars( s ):
-    super( ComponentLevel3, s )._declare_vars()
-    s._dsl.all_adjacency = defaultdict(set)
-
-  # Override
   def _collect_vars( s, m ):
     super( ComponentLevel3, s )._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
@@ -672,28 +667,20 @@ class ComponentLevel3( ComponentLevel2 ):
   # elaborate
   #-----------------------------------------------------------------------
 
+  # Since the spawned signals are handled by the updated elaborate
+  # template in ComponentLevel2, we just need to add a bit more
+  # functionalities to handle nets.
+
   # Override
-  def elaborate( s ):
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel3, s )._elaborate_declare_vars()
+    s._dsl.all_adjacency = defaultdict(set)
 
-    NamedObject.elaborate( s )
-
-    s._declare_vars()
-
-    for c in s._dsl.all_named_objects:
-
-      if isinstance( c, Signal ):
-        s._dsl.all_signals.add( c )
-
-      if isinstance( c, ComponentLevel2 ):
-        c._elaborate_read_write_func()
-
-      if isinstance( c, ComponentLevel1 ):
-        s._collect_vars( c )
-
+  # Override
+  def _elaborate_collect_all_vars( s ):
+    super( ComponentLevel3, s )._elaborate_collect_all_vars()
     s._dsl.all_value_nets = s._resolve_value_connections()
     s._dsl.has_pending_connections = False
-
-    s.check()
 
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)

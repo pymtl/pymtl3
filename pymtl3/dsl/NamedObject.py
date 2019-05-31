@@ -187,7 +187,15 @@ class NamedObject(object):
     if x not in current_dict:
       current_dict[ x ] = value
 
-  def elaborate( s ):
+  # There are two reason I refactored this function into two separate
+  # functions. First of all in later levels of components, named objects
+  # can be spawned after the previous monolithic elaborate and hence this
+  # collect part won't capture them. Second, later levels can override
+  # this function and simply call construct at the beginning and call
+  # collect at the middle/end.
+
+  def _elaborate_construct( s ):
+
     if s._dsl.constructed:
       print("Don't elaborate the same model twice. \
              Use APIs to mutate the model.")
@@ -214,9 +222,14 @@ class NamedObject(object):
 
     del NamedObject.__setattr__
 
+  def _elaborate_collect_and_mark_all_named_objects( s ):
     s._dsl.all_named_objects = s._collect_all()
     for c in s._dsl.all_named_objects:
       c._dsl.elaborate_top = s
+
+  def elaborate( s ):
+    s._elaborate_construct()
+    s._elaborate_collect_and_mark_all_named_objects()
 
   # The following APIs can only be called after elaboration
 
