@@ -71,9 +71,10 @@ def test_set_param_overwrite():
   Z.set_param( "top.houses[0].animals*.construct", lunch="bamboo", dinner="bamboo" )
   Z.set_param( "top.houses[1].animals[0].meats*.construct", lunch="bamboo" )
   Z.set_param( "top.houses[1].animals[0].meats[1].construct", lunch="grass" )
-  Z.set_param( "top.houses[2].animals[0].construct", lunch="bugs" )
-  Z.set_param( "top.houses[2].animals*.construct", lunch="grass" )
+  # The following set_param test tricky overwrite behavior.
   Z.set_param( "top.houses[2].animals[0].construct", lunch="bugs", dinner="bugs" )
+  Z.set_param( "top.houses[2].animals*.construct", lunch="grass" )
+  Z.set_param( "top.houses[2].animals[0].construct", lunch="bugs" )
   Z.elaborate()
 
   assert isinstance( Z.houses[0], PandaHouse )
@@ -93,7 +94,7 @@ def test_set_param_overwrite():
   assert isinstance( Z.houses[2].animals[0], Dromaius )
   assert isinstance( Z.houses[2].animals[1], HoneyBadger )
   # FIXME
-  # assert Z.houses[2].animals[0].lunch  == "bugs"
+  assert Z.houses[2].animals[0].lunch  == "bugs"
   assert Z.houses[2].animals[0].dinner == "bugs"
   assert Z.houses[2].animals[1].lunch  == "grass"
   assert Z.houses[2].animals[1].dinner == "dirt"

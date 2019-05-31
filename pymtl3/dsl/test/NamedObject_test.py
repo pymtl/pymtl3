@@ -136,14 +136,35 @@ def test_set_param():
   Z.set_param( "top.animals[0].construct", dinner="bamboo" )
   Z.set_param( "top.animals*.construct", 
       lunch ="grass",
-      dinner="poisoned onion"
+      dinner="poisoned onion",
   )
   Z.set_param( "top.animals[2].construct", dinner="bamboo" )
+  print( "="*30, "Z", "="*30 )
+  print( Z._dsl.param_tree.leaf )
+  print( Z._dsl.param_tree.children )
+  print( "="*30, "Z.animals[0]", "="*30 )
+  print( Z._dsl.param_tree.children["animals[0]"].leaf )
+  print( Z._dsl.param_tree.children["animals[0]"].children )
+  print( "="*30, "Z.animals*", "="*30 )
+  print( Z._dsl.param_tree.children["animals*"].leaf )
+  print( Z._dsl.param_tree.children["animals*"].children )
+  print( "="*30, "Z.animals[2]", "="*30 )
+  print( Z._dsl.param_tree.children["animals[2]"].leaf )
+  print( Z._dsl.param_tree.children["animals[2]"].children )
   Z.elaborate()
+  print( "="*30, "animals[0]", "="*30 )
+  print( Z.animals[0]._dsl.param_dict )
+  print( Z.animals[1]._dsl.param_tree.children )
+  print( "="*30, "animals[1]", "="*30 )
+  print( Z.animals[0]._dsl.param_dict )
+  print( Z.animals[1]._dsl.param_tree.children )
+  print( "="*30, "animals[2]", "="*30 )
+  print( Z.animals[0]._dsl.param_dict )
+  print( Z.animals[1]._dsl.param_tree.children )
+
   assert Z.animals[0].lunch  == "grass"
   assert Z.animals[1].lunch  == "grass"
+  assert Z.animals[2].lunch  == "grass"
   assert Z.animals[0].dinner == "poisoned onion"
   assert Z.animals[1].dinner == "poisoned onion"
-  #FIXME: this does not work
-  assert Z.animals[2].lunch  == "grass"
   assert Z.animals[2].dinner == "bamboo"
