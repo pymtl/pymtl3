@@ -79,12 +79,16 @@ class ComponentLevel5( ComponentLevel4 ):
   # elaborate
   #-----------------------------------------------------------------------
 
+  # We still reuse the elaborate template by adding functionalities to
+  # sub-functions called by elaborate
   # Override
   def _elaborate_declare_vars( s ):
     super( ComponentLevel5, s )._elaborate_declare_vars()
 
     s._dsl.all_method_ports = set()
 
+  # However, we need to override the whole function here because we want
+  # to add some fine-grained functionalities to avoid reduntant isinstance
   # Override
   def _elaborate_collect_all_vars( s ):
     for c in s._dsl.all_named_objects:
