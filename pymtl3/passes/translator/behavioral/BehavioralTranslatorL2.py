@@ -74,8 +74,8 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
   # Methods to be implemented by the backend translator
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_tmpvars( s, tmpvars ):
+  def rtlir_tr_behavioral_tmpvars( s, tmpvars ):
     raise NotImplementedError()
 
-  def rtlir_tr_tmpvar( s, name, upblk_name, dtype ):
+  def rtlir_tr_behavioral_tmpvar( s, name, upblk_name, dtype ):
     raise NotImplementedError()

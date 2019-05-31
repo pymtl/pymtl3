@@ -94,20 +94,6 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
     s.visit( node.value )
 
-  def visit_AugAssign( s, node ):
-    s.cur += 1
-    local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">AugAssign</TD></TR>'
-    table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
-    s.g.node( str( s.cur ), label = label )
-    s.g.edge( str(local_cur), str(s.cur+1), label = 'target' )
-    s.visit( node.target )
-    s.g.edge( str(local_cur), str(s.cur+1), label = 'op' )
-    s.visit( node.op )
-    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
-    s.visit( node.value )
-
   def visit_If( s, node ):
     s.cur += 1
     local_cur = s.cur

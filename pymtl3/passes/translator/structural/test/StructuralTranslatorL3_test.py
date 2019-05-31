@@ -246,4 +246,75 @@ endcomponent
 """
   do_test( a )
 
+# TODO: support nested interface
+@pytest.mark.xfail( reason = "TOOD: support nested interface" )
+def test_nested_ifc( do_test ):
+  class ReqIfc( Interface ):
+    def construct( s ):
+      s.msg = InPort( Bits32 )
+      s.val = InPort( Bits1 )
+      s.rdy = OutPort( Bits1 )
+  class MemReqIfc( Interface ):
+    def construct( s ):
+      s.req_ifc = ReqIfc()
+      s.ctrl_foo = InPort( Bits1 )
+      s.ctrl_bar = OutPort( Bits1 )
+  class RespIfc( Interface ):
+    def construct( s ):
+      s.msg = OutPort( Bits32 )
+      s.val = OutPort( Bits1 )
+      s.rdy = InPort( Bits1 )
+  class MemRespIfc( Interface ):
+    def construct( s ):
+      s.resp_ifc = RespIfc()
+      s.ctrl_foo = OutPort( Bits1 )
+      s.ctrl_bar = InPort( Bits1 )
+  class A( Component ):
+    def construct( s ):
+      s.in_ = [ MemReqIfc() for _ in xrange(5) ]
+      s.out = [ MemRespIfc() for _ in xrange(5) ]
+      for i in xrange(5):
+        s.connect( s.out[i], s.in_[i] )
+  a = A()
+  a._ref_ifcs = \
+"""\
+interface_decls:
+  interface_decl: in_ Array[5] of InterfaceView MemReqIfc
+    interface_ports:
+      interface_port: msg Port of Vector32
+  interface_decl: out Array[5] of InterfaceView OutIfc
+    interface_ports:
+      interface_port: msg Port of Vector32
+"""
+  a._ref_conns = \
+"""\
+connections:
+  connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 msg -> IfcAttr IfcArrayIdx CurCompAttr out 0 msg
+"""
+  a._ref_src = \
+"""\
+component A
+(
+port_decls:
+interface_decls:
+  interface_decl: in_ Array[5] of InterfaceView InIfc
+    interface_ports:
+      interface_port: msg Port of Vector32
+  interface_decl: out Array[5] of InterfaceView OutIfc
+    interface_ports:
+      interface_port: msg Port of Vector32
+);
+const_decls:
+freevars:
+wire_decls:
+component_decls:
+tmpvars:
+upblk_decls:
+connections:
+  connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 msg -> IfcAttr IfcArrayIdx CurCompAttr out 0 msg
+
+endcomponent
+"""
+  do_test( a )
+
 __all__ = filter(lambda s: s.startswith('test_'), dir())

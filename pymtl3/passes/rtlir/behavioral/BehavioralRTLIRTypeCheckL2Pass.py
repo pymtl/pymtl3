@@ -47,10 +47,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       'target' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
       'value' : ( rt.Signal, 'rhs of assignment should be signal/const!' )
     }
-    s.type_expect[ 'AugAssign' ] = {
-      'target' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
-      'value' : ( rt.Signal, 'rhs of assignment should be signal/const!' )
-    }
     s.type_expect[ 'BinOp' ] = {
       'left' : ( rt.Signal, 'lhs of binop should be signal/const!' ),
       'right' : ( rt.Signal, 'rhs of binop should be signal/const!' ),
@@ -93,9 +89,10 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     if isinstance( node.target, bir.TmpVar ):
       tmpvar_id = (node.target.name, node.target.upblk_name)
-      if lhs_type != rt.NoneType() and lhs_type != rhs_type:
+      if lhs_type != rt.NoneType() and lhs_type.get_dtype() != rhs_type.get_dtype():
         raise PyMTLTypeError( s.blk, node.ast,
-          'conflicting type for temporary variable {}!'.format(node.target.name) )
+          'conflicting type {} for temporary variable {}({})!'.format(
+            rhs_type, node.target.name, lhs_type) )
 
       # Creating a temporaray variable
       node.target.Type = rt.Wire( rhs_type.get_dtype() )
@@ -105,17 +102,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     else:
       # non-temporary assignment is an L1 thing
       super( BehavioralRTLIRTypeCheckVisitorL2, s ).visit_Assign( node )
-
-  def visit_AugAssign( s, node ):
-    target = node.target
-    op = node.op
-    value = node.value
-
-    # perform type check as if this node corresponds to
-    # target = target op value
-    l_nbits = target.Type.nbits
-    r_nbits = value.Type.nbits
-    node.Type = None
 
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?
