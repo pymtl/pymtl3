@@ -71,15 +71,11 @@ def test_rr_arb_4():
 # Test driver for RoundRobinArbiterEn
 def run_en_test( model, test_vectors ):
 
-  # Instantiate and elaborate the model
-
-  # model.elaborate()
-
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
-    model.en   = test_vector[0]
-    model.reqs = test_vector[1]
+    model.en   = Bits1( test_vector[0] )
+    model.reqs = Bits4( test_vector[1] )
 
   def tv_out( model, test_vector ):
     assert model.grants == test_vector[2]
