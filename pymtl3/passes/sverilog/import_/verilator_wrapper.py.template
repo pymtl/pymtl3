@@ -1,0 +1,110 @@
+#=========================================================================
+# V{component_name}_v.py
+#=========================================================================
+"""Provide a template of PyMTL wrapper to import verilated models.
+
+This wrapper makes a Verilator-generated C++ model appear as if it were a
+normal PyMTL model. This template is based on PyMTL v2.
+"""
+
+import os
+
+from cffi  import FFI
+
+from pymtl3.dsl import Component, InPort, OutPort
+
+def get_bit_slice( num, start, stop ):
+  return (num >> start) & (2**(stop-start)-1)
+
+#-------------------------------------------------------------------------
+# {component_name}
+#-------------------------------------------------------------------------
+class {component_name}( Component ):
+  id_ = 0
+
+  def __init__( s ):
+    s._finalization_count = 0
+
+    # initialize FFI, define the exposed interface
+    s.ffi = FFI()
+    s.ffi.cdef("""
+      typedef struct {{
+
+        // Exposed port interface
+        {port_cdefs}
+
+        // Verilator model
+        void * model;
+
+      }} V{component_name}_t;
+
+      V{component_name}_t * create_model();
+      void destroy_model( V{component_name}_t *);
+      void eval( V{component_name}_t * );
+
+    """)
+
+    # Print the modification time stamp of the shared lib
+    # print 'Modification time of {{}}: {{}}'.format(
+      # '{lib_file}', os.path.getmtime( './{lib_file}' ) )
+
+    # Import the shared library containing the model. We defer
+    # construction to the elaborate_logic function to allow the user to
+    # set the vcd_file.
+    s._ffi_inst = s.ffi.dlopen('./{lib_file}')
+
+    # increment instance count
+    {component_name}.id_ += 1
+
+  def finalize( s ):
+    assert s._finalization_count == 0,\
+      'Imported component can only be finalized once!'
+    s._finalization_count += 1
+    s._ffi_inst.destroy_model( s._ffi_m )
+    s.ffi.dlclose( s._ffi_inst )
+    s.ffi = None
+    s._ffi_inst = None
+
+  def __del__( s ):
+    if s._finalization_count == 0:
+      s._finalization_count += 1
+      s._ffi_inst.destroy_model( s._ffi_m )
+      s.ffi.dlclose( s._ffi_inst )
+      s.ffi = None
+      s._ffi_inst = None
+
+  def construct( s ):
+    # Construct the model
+    s._ffi_m = s._ffi_inst.create_model()
+
+    # define the port interface
+{port_defs}
+
+    @s.update
+    def comb_upblk():
+      # Set inputs
+{set_comb_input}
+
+      s._ffi_inst.eval( s._ffi_m )
+
+      # Write all outputs
+      # TODO: only write combinational outputs?
+{set_comb_output}
+
+    @s.update_on_edge
+    def seq_upblk():
+      # Advance the clock
+      s._ffi_m.clk[0] = 0
+      s._ffi_inst.eval( s._ffi_m )
+      s._ffi_m.clk[0] = 1
+      s._ffi_inst.eval( s._ffi_m )
+
+      # Write all outputs
+      # TODO: only write sequential outputs?
+{set_seq_output}
+
+  def line_trace( s ):
+{line_trace}
+
+  def internal_line_trace( s ):
+{in_line_trace}

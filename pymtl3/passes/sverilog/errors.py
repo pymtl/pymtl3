@@ -13,8 +13,8 @@ import sys
 import traceback
 
 
-class SVerilogArbitraryImportError( Exception ):
-  """Error while performing arbitrary import."""
+class SVerilogImportError( Exception ):
+  """Error while performing import."""
   def __init__( self, obj, msg ):
     obj = str(obj)
     _, _, tb = sys.exc_info()
@@ -23,7 +23,7 @@ class SVerilogArbitraryImportError( Exception ):
     fname, line, func, text = tb_info[-1]
     return super( SVerilogArbitraryImportError, self ).__init__(
       "\nIn file {fname}, Line {line}, Method {func}:"
-      "\nError trying to perform arbitrary import on {obj}:\n- {msg}"
+      "\nError trying to perform import on {obj}:\n- {msg}"
       "\n  {text}".format( **locals() ) )
 
 class SVerilogTranslationError( Exception ):
