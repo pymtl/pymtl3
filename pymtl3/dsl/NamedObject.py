@@ -29,6 +29,46 @@ from .errors import NotElaboratedError
 class DSLMetadata(object):
   pass
 
+class ParamTreeNode(object):
+  def __init__( self ):
+    self.compiled_re = None
+    self.children = ord_dict()
+    self.leaf = {}
+
+  def update( self, other ):
+    self.children.update( other.children )
+    for func_name, subdict in other.leaf.iteritems():
+      if func_name not in self.leaf:
+        self.leaf[ func_name ] = {}
+      self.leaf[ func_name ].update( subdict )
+
+  def add_params( self, strs, func_name, **kwargs ):
+    # Traverse to the node
+    cur_node = self
+    idx = 1
+    for comp_name in strs:
+      if comp_name not in cur_node.children:
+        new_node = ParamTreeNode()
+        if '*' in comp_name:
+          new_node.compiled_re = re.compile( comp_name )
+          # Recursively update exisiting nodes that matches the regex
+          for name, node in cur_node.children.iteritems():
+            if node.compiled_re is None:
+              if new_node.compiled_re.match( name ):
+                node.add_params( strs[idx:], func_name, **kwargs )
+        cur_node.children[ comp_name ] = new_node
+        cur_node = new_node
+      else:
+        new_node = cur_node.children.pop( comp_name )
+        cur_node.children[ comp_name ] = new_node
+        cur_node = new_node
+      idx += 1
+
+    # Add parameters to leaf
+    if func_name not in cur_node.leaf:
+      cur_node.leaf[ func_name ] = {}
+    cur_node.leaf[ func_name].update( kwargs )
+
 class NamedObject(object):
 
   def __new__( cls, *args, **kwargs ):
@@ -41,8 +81,11 @@ class NamedObject(object):
     inst._dsl.args        = args
     inst._dsl.kwargs      = kwargs
     inst._dsl.constructed = False
-
-    inst._dsl.param_dict = ord_dict() # None is for regex patterns
+    
+    # A tree of parameters.
+    inst._dsl.param_tree = ParamTreeNode()
+    # TODO: cleanup param_dict in all levels.
+    inst._dsl.param_dict = inst._dsl.param_tree.leaf 
 
     return inst
 
@@ -57,14 +100,12 @@ class NamedObject(object):
       # Merge the actual keyword args and those args set by set_parameter
       kwargs = s._dsl.kwargs.copy()
       if "construct" in s._dsl.param_dict:
-        more_args = s._dsl.param_dict[ "construct" ].iteritems()
-        kwargs.update( { x: y for x, y in more_args if x } )
+        more_args = s._dsl.param_dict[ "construct" ]
+        kwargs.update( more_args )
 
       s.construct( *s._dsl.args, **kwargs )
 
       s._dsl.constructed = True
-      print( "="*30, "constrcut", "="*30 )
-      print( s, s._dsl.param_dict ) 
 
   def __setattr_for_elaborate__( s, name, obj ):
 
@@ -77,39 +118,22 @@ class NamedObject(object):
 
         if isinstance( u, NamedObject ):
           # try:
-            u._dsl.parent_obj  = s
-            u._dsl.level       = s._dsl.level + 1
-            u._dsl.my_name = u_name = name + "".join([ "[{}]".format(x)
-                                                      for x in indices ])
-            u._dsl.param_dict = ord_dict()
+            u._dsl.parent_obj = s
+            u._dsl.level      = s._dsl.level + 1
+            u._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x) 
+                                                           for x in indices ] )
+            u._dsl.param_tree = ParamTreeNode()
 
-            # for pattern, (compiled_re, subdict) in \
-            #     s._dsl.param_dict[ None ].iteritems():
-            #   if compiled_re.match( u_name ):
-            #     for x, y in subdict.iteritems(): # to merge two None subdicts
-            #       if x is None:
-            #         u._dsl.param_dict[ None ].update( subdict )
-            #       else:
-            #         u._dsl.param_dict[ x ] = y
-            
-            # Iterate through the param_dict and update u's dict
-            for key, subdict in s._dsl.param_dict.iteritems():
-              if u_name == key:
-                print( "updating", u_name, "normal" )
-                for x, y in subdict.iteritems():
-                  if x not in u._dsl.param_dict:
-                    u._dsl.param_dict[ x ] = ord_dict()
-                  u._dsl.param_dict[ x ].update( y )
+            # Iterate through the param_tree and update u
+            for comp_name, node in s._dsl.param_tree.children.iteritems():
+              if comp_name == u_name:
+                u._dsl.param_tree.update( node )
 
-              elif "*" in key:
-                compiled_re = re.compile( key )
-                if compiled_re.match( u_name ):
-                  for x, y in subdict.iteritems():
-                    if x not in u._dsl.param_dict:
-                      u._dsl.param_dict[ x ] = ord_dict()
-                    u._dsl.param_dict[ x ].update( y )
-                  #u._dsl.param_dict.update( subdict )
-                  print( "updating", u_name, "star" )
+              elif node.compiled_re is not None:
+                if node.compiled_re.match( u_name ):
+                  u._dsl.param_tree.update( node )
+
+            u._dsl.param_dict = u._dsl.param_tree.leaf
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
@@ -180,47 +204,12 @@ class NamedObject(object):
     strs = string.split( "." )
 
     assert strs[0] == "top", "The component should start at top"
+    assert '*' not in strs[-1], "We don't support * with function name!"
 
-    strs     = strs[1:]
-    strs_len = len(strs)
-    assert strs_len >= 1
-
-    current_dict = s._dsl.param_dict
-    print( "="*74 )
-    print( s, current_dict )
-    # for x in strs:
-    #   # TODO should we only allow * as regular expression to accelerate
-    #   # the common case? or always store as regex no matterwhat?
-    #   if "*" in x:
-    #     # We lump all regex patterns into key=None
-    #     if x not in current_dict[ None ]: # use name to index
-    #       current_dict[ None ][ x ] = ( re.compile(x), { None: {} } )
-    #     current_dict = current_dict[ None ][ x ][ 1 ]
-
-    #   # This is a normal string
-    #   else:
-    #     if x not in current_dict:
-    #       current_dict[ x ] = { None: {} }
-    #     current_dict = current_dict[ x ]
-
-    for x in strs:
-      if x not in current_dict:
-        current_dict[ x ] = ord_dict()
-      current_dict = current_dict[ x ]
-
-      print( x )
-      print( current_dict )
-    print( "after\n", s._dsl.param_dict )
-
-    # The last element in strs
-    x = strs[-1]
-    assert "*" not in x, "We don't allow the last name to be *"
-    for k, v in kwargs.iteritems():
-      # assert "*" not in k, "We don't allow the last name to be *!"
-      # Yanghui : why do we prevent overwrite here?
-      # if k not in current_dict:
-      #   current_dict[ k ] = v
-      current_dict[ k ] = v
+    assert len( strs ) >= 2
+    func_name = strs[-1]
+    strs = strs[1:-1]
+    s._dsl.param_tree.add_params( strs, func_name, **kwargs )
 
   # There are two reason I refactored this function into two separate
   # functions. First of all in later levels of components, named objects
