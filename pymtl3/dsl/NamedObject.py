@@ -21,13 +21,51 @@ Date   : Nov 3, 2018
 from __future__ import absolute_import, division, print_function
 
 import re
-from collections import OrderedDict as ord_dict
 
 from .errors import NotElaboratedError
+
+# from collections import OrderedDict as ord_dict
+
 
 
 class DSLMetadata(object):
   pass
+
+class ord_dict( object ):
+  def __init__( self ):
+    self.data = []
+
+  def __getitem__( self, key ):
+    for k, v in self.data:
+      if key == k:
+        return v
+    raise KeyError( "Key error:{}".format( key ) )
+
+  def __setitem__( self, key, value ):
+    idx = 0
+    for k, v in self.data:
+      if key == k:
+        self.data[ idx ] = ( k, value )
+        return
+      idx += 1
+    self.data.append( ( key, value ) )
+  
+  def __iter__( self ):
+    for k, _ in self.data:
+      yield k
+
+  def pop( self, key ):
+    idx = 0
+    for k, v in self.data:
+      if key == k:
+        _, ret = self.data.pop( idx )
+        return ret
+      idx += 1
+    raise KeyError( "Key error:{}".format( key ) )
+
+  def iteritems( self ):
+    for k, v in self.data:
+      yield k, v
 
 class ParamTreeNode(object):
   def __init__( self ):
