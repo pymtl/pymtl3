@@ -33,7 +33,7 @@ from .helpers import (
 
 class ImportPass( BasePass ):
   """Import an arbitrary SystemVerilog module as a PyMTL component.
-  
+
   The import pass takes as input a PyMTL component hierarchy where
   the components to be imported have an `import` entry in their parameter
   dictionary( set by calling the `set_parameter` PyMTL API ).
@@ -131,7 +131,7 @@ Fail to verilate model {} in file {}.sv
 
 def create_verilator_c_wrapper( file_name, all_ports ):
   """Return the file name of generated C component wrapper.
-  
+
   Create a C wrapper that calls verilator C API and provides interfaces
   that can be later called through CFFI.
   """
@@ -213,9 +213,9 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 
   # Complete the cpp sources file list
   cpp_sources_list += [
-    obj_dir_prefix + '__Syms.cpp', 
-    verilator_include_dir + '/verilated.cpp', 
-    verilator_include_dir + '/verilated_dpi.cpp', 
+    obj_dir_prefix + '__Syms.cpp',
+    verilator_include_dir + '/verilated.cpp',
+    verilator_include_dir + '/verilated_dpi.cpp',
     wrapper_name,
   ]
 
@@ -244,7 +244,7 @@ Fail to compile Verilated model into a shared library:
   C compiler output:
   {}
 """.format( cmd, e.output )
-  
+
   return lib_name
 
 #-----------------------------------------------------------------------
@@ -277,10 +277,10 @@ def create_py_wrapper( name, all_ports, lib_file, port_cdefs ):
   make_indent( set_comb_output, 3 )
   make_indent( set_seq_output, 3 )
 
-  # Line trace 
+  # Line trace
   line_trace = gen_line_trace_py( all_ports )
 
-  # Internal line trace 
+  # Internal line trace
   in_line_trace = gen_internal_line_trace_py( all_ports )
 
   # Fill in the python wrapper template

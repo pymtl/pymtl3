@@ -14,7 +14,6 @@ from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.helpers import gen_all_ports
 
-
 def local_do_test( m ):
   m.elaborate()
   rtype = rt.get_component_ifc_rtlir( m )
