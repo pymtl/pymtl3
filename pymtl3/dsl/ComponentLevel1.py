@@ -20,8 +20,9 @@ from __future__ import absolute_import, division, print_function
 import re
 
 from .ConstraintTypes import U
-from .errors import NotElaboratedError, UpblkFuncSameNameError
+from .errors import NotElaboratedError, UpblkFuncSameNameError, InvalidPlaceholderError
 from .NamedObject import NamedObject
+from .Placeholder import Placeholder
 
 p = re.compile('( *((@|def).*))')
 
@@ -65,6 +66,9 @@ class ComponentLevel1( NamedObject ):
   #-----------------------------------------------------------------------
 
   def update( s, blk ):
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot define update block <{}> "
+              "in a placeholder component.".format( blk.__name__ ) )
     name = blk.__name__
     if name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )
@@ -74,6 +78,9 @@ class ComponentLevel1( NamedObject ):
     return blk
 
   def add_constraints( s, *args ):
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot define constraints "
+              "in a placeholder component.".format( blk.__name__ ) )
     for (x0, x1, is_equal) in args:
       assert is_equal == False
       assert isinstance( x0, U ) and isinstance( x1, U ), "Only accept up1<up2"

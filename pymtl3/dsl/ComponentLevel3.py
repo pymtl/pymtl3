@@ -650,6 +650,9 @@ class ComponentLevel3( ComponentLevel2 ):
     return s
 
   def connect( s, o1, o2 ):
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot call connect "
+            "in a placeholder component.".format( blk.__name__ ) )
     try:
       s._connect_objects( o1, o2 )
     except InvalidConnectionError:
@@ -658,6 +661,9 @@ class ComponentLevel3( ComponentLevel2 ):
       raise InvalidConnectionError( "\n{}".format(e) )
 
   def connect_pairs( s, *args ):
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot call connect_pairs "
+            "in a placeholder component.".format( blk.__name__ ) )
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 

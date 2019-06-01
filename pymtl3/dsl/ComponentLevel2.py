@@ -402,6 +402,9 @@ class ComponentLevel2( ComponentLevel1 ):
   #-----------------------------------------------------------------------
 
   def func( s, func ): # @s.func is for those functions
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot define function "
+              "in a placeholder component.".format( func.__name__ ) )
     name = func.__name__
     if name in s._dsl.name_func or name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )
@@ -422,6 +425,9 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot define constraints "
+              "in a placeholder component." )
 
     for (x0, x1, is_equal) in args:
 
@@ -670,53 +676,3 @@ class ComponentLevel2( ComponentLevel1 ):
       elif isinstance( u, list ):
         stack.extend( u )
     return ret
-
-  # Override
-  def delete_component_by_name( s, name ):
-
-    # This nested delete function is to create an extra layer to properly
-    # call garbage collector
-
-    def _delete_component_by_name( parent, name ):
-      obj = getattr( parent, name )
-      top = s._dsl.elaborate_top
-
-      # Remove all components and uncollect metadata
-
-      removed_components = obj.get_all_components()
-      top._dsl.all_components -= removed_components
-
-      for x in removed_components:
-        assert x._dsl.elaborate_top is top
-        top._uncollect_vars( x )
-
-      for x in obj._collect_all():
-        del x._dsl.parent_obj
-
-      top._dsl.all_signals -= obj._collect_all( lambda x: isinstance( x, Signal ) )
-
-      delattr( s, name )
-
-    _delete_component_by_name( s, name )
-    import gc
-    gc.collect()
-
-  # Override
-  def add_component_by_name( s, name, obj ):
-    assert not hasattr( s, name )
-    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    setattr( s, name, obj )
-    del NamedObject.__setattr__
-
-    top = s._dsl.elaborate_top
-
-    added_components = obj.get_all_components()
-    top._dsl.all_components |= added_components
-
-    for c in added_components:
-      c._dsl.elaborate_top = top
-      c._elaborate_read_write_func()
-      top._collect_vars( c )
-
-    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._dsl.all_signals |= added_signals

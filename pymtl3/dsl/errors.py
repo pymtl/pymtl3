@@ -86,3 +86,6 @@ class InvalidConnectionError( Exception ):
 
 class InvalidFuncCallError( Exception ):
   """ Raise upon an inappropriate @s.func function call """
+
+class InvalidPlaceholderError( Exception ):
+  """ Raise upon declaring an update block in a placeholder component. """
