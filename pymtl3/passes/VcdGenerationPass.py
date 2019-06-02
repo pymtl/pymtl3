@@ -8,15 +8,16 @@ Date   : May 29, 2019
 """
 from __future__ import absolute_import, division, print_function
 
+import time
 from collections import defaultdict
+from copy import deepcopy
+
+import py
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-from copy import deepcopy
 
 from .errors import PassOrderError
 
-import py
-import time
 
 class VcdGenerationPass( BasePass ):
 
@@ -106,7 +107,7 @@ class VcdGenerationPass( BasePass ):
 
     # Generate symbol for existing nets
 
-    net_symbol_mapping = [ vcd_symbols.next() for x in trimmed_value_nets ]
+    net_symbol_mapping = [ next(vcd_symbols) for x in trimmed_value_nets ]
     signal_net_mapping = {}
 
     for i in range(len(trimmed_value_nets)):
@@ -155,7 +156,7 @@ class VcdGenerationPass( BasePass ):
 
           trimmed_value_nets.append( [ signal ] )
           signal_net_mapping[signal] = len(signal_net_mapping)
-          symbol = vcd_symbols.next()
+          symbol = next(vcd_symbols)
           net_symbol_mapping.append( symbol )
 
         # This signal can be a part of an interface so we have to
@@ -221,6 +222,8 @@ class VcdGenerationPass( BasePass ):
         symbol = net_symbol_mapping[i]
         vcd_srcs.append( dump_vcd_per_signal.format( i, net[0], symbol ) )
 
+    deepcopy # I have to do this to circumvent the tools
+
     src =  """
 def dump_vcd():
 
@@ -241,5 +244,5 @@ def dump_vcd():
 """.format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
 
     s = top
-    exec compile( src, filename="vcd_generation", mode="exec") in globals().update(locals())
+    exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()))
     return dump_vcd
