@@ -27,7 +27,6 @@ from .errors import NotElaboratedError
 # from collections import OrderedDict as ord_dict
 
 
-
 class DSLMetadata(object):
   pass
 
