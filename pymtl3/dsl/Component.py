@@ -58,6 +58,22 @@ class Component( ComponentLevel7 ):
 
       s._dsl.constructed = True
 
+  #-----------------------------------------------------------------------
+  # Post-elaborate public APIs (can only be called after elaboration)
+  #-----------------------------------------------------------------------
+
+  def apply( s, *args ):
+
+    if isinstance(args[0], list):
+      assert len(args) == 1
+      for step in args[0]:
+        step( s )
+
+    elif len(args) == 1:
+      assert callable( args[0] )
+      args[0]( s )
+
+  # Simulation related APIs
   def sim_reset( s ):
     assert s._dsl.elaborate_top is s # assert sim_reset is top
 
@@ -68,6 +84,8 @@ class Component( ComponentLevel7 ):
 
   def check( s ):
     s._check_valid_dsl_code()
+
+  # APIs that give metadata
 
   def get_component_level( s ):
     try:
@@ -97,18 +115,6 @@ class Component( ComponentLevel7 ):
       return s._dsl.all_components
     except AttributeError:
       return s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
-
-  def apply( s, *args ):
-
-    if isinstance(args[0], list):
-      assert len(args) == 1
-      for step in args[0]:
-        step( s )
-
-    elif len(args) == 1:
-      assert callable( args[0] )
-      args[0]( s )
-
 
   def get_update_block_host_component( s, blk ):
     try:
@@ -171,15 +177,15 @@ class Component( ComponentLevel7 ):
     assert s._dsl.constructed
     return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
 
-  # Override
   def get_all_explicit_constraints( s ):
     try:
       assert s._dsl.elaborate_top is s, "Getting all explicit constraints " \
                                     "is only allowed at top, but this API call " \
                                     "is on {}.".format( "top."+repr(s)[2:] )
       return s._dsl.all_U_U_constraints, \
-             s._dsl.RD_U_constraints, \
-             s._dsl.WR_U_constraints
+             s._dsl.all_RD_U_constraints, \
+             s._dsl.all_WR_U_constraints, \
+             s._dsl.all_M_constraints
     except AttributeError:
       raise NotElaboratedError()
 

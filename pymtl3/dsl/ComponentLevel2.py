@@ -498,7 +498,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._elaborate_construct()
 
     # First elaborate all functions to spawn more named objects
-    for c in s.get_all_object_filter( lambda s: isinstance( s, ComponentLevel2 ) ):
+    for c in s._collect_all( lambda s: isinstance( s, ComponentLevel2 ) ):
       c._elaborate_read_write_func()
 
     s._elaborate_collect_and_mark_all_named_objects()
