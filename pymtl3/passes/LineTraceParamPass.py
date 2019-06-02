@@ -23,12 +23,13 @@ class LineTraceParamPass( BasePass ):
       obj._ml_trace.line_trace = obj.line_trace
 
       def wrapped_line_trace( self, *args, **kwargs ):
-        if 'line_trace' in self._dsl.param_tree.leaf:
-          # TODO: figure out whether it is necessary to enforce no 
-          # positional args.
-          assert len( args ) == 0
-          more_args = self._dsl.param_tree.leaf['line_trace'].iteritems()
-          kwargs.update({ x:y for x, y in more_args })
+        if self._dsl.param_tree is not None:
+          if 'line_trace' in self._dsl.param_tree.leaf:
+            # TODO: figure out whether it is necessary to enforce no 
+            # positional args.
+            assert len( args ) == 0
+            more_args = self._dsl.param_tree.leaf['line_trace'].iteritems()
+            kwargs.update({ x:y for x, y in more_args })
         return self._ml_trace.line_trace( *args, **kwargs )
 
       obj.line_trace = lambda *args, **kwargs : wrapped_line_trace( obj, *args, **kwargs )
