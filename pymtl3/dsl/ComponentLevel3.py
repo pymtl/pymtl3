@@ -61,7 +61,10 @@ class ComponentLevel3( ComponentLevel2 ):
 
     if not s._dsl.constructed:
 
-      if s._dsl.param_tree.leaf is None:
+      # Merge the actual keyword args and those args set by set_parameter
+      if s._dsl.param_tree is None:
+        kwargs = s._dsl.kwargs
+      elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
         kwargs = s._dsl.kwargs.copy()

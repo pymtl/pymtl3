@@ -151,7 +151,7 @@ class NamedObject(object):
     inst._dsl.constructed = False
 
     # A tree of parameters.
-    inst._dsl.param_tree = ParamTreeNode()
+    inst._dsl.param_tree = None
 
     return inst
 
@@ -164,7 +164,9 @@ class NamedObject(object):
     if not s._dsl.constructed:
 
       # Merge the actual keyword args and those args set by set_parameter
-      if s._dsl.param_tree.leaf is None:
+      if s._dsl.param_tree is None:
+        kwargs = s._dsl.kwargs
+      elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
         kwargs = s._dsl.kwargs.copy()
@@ -193,14 +195,21 @@ class NamedObject(object):
                                                            for x in indices ] )
 
             # Iterate through the param_tree and update u
-            if s._dsl.param_tree.children is not None:
-              for comp_name, node in s._dsl.param_tree.children.iteritems():
-                if comp_name == u_name:
-                  u._dsl.param_tree.merge( node )
-
-                elif node.compiled_re is not None:
-                  if node.compiled_re.match( u_name ):
+            if s._dsl.param_tree is not None:
+              if s._dsl.param_tree.children is not None:
+                for comp_name, node in s._dsl.param_tree.children.iteritems():
+                  if comp_name == u_name:
+                    # Lazily create the param tree
+                    if u._dsl.param_tree is None:
+                      u._dsl.param_tree = ParamTreeNode()
                     u._dsl.param_tree.merge( node )
+
+                  elif node.compiled_re is not None:
+                    if node.compiled_re.match( u_name ):
+                      # Lazily create the param tree
+                      if u._dsl.param_tree is None:
+                        u._dsl.param_tree = ParamTreeNode()
+                      u._dsl.param_tree.merge( node )
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
@@ -276,6 +285,8 @@ class NamedObject(object):
     assert len( strs ) >= 2
     func_name = strs[-1]
     strs = strs[1:-1]
+    if s._dsl.param_tree is None:
+      s._dsl.param_tree = ParamTreeNode()
     s._dsl.param_tree.add_params( strs, func_name, **kwargs )
 
   # There are two reason I refactored this function into two separate

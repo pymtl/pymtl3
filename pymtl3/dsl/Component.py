@@ -27,7 +27,9 @@ class Component( ComponentLevel7 ):
       s.reset = InPort( Bits1 )
 
       # Merge the actual keyword args and those args set by set_parameter
-      if s._dsl.param_tree.leaf is None:
+      if s._dsl.param_tree is None:
+        kwargs = s._dsl.kwargs
+      elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
         kwargs = s._dsl.kwargs.copy()
