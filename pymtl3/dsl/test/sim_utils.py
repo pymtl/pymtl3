@@ -222,7 +222,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     method_blks = defaultdict(set)
 
     if isinstance( s, ComponentLevel5 ):
-      for writer, net in s.get_all_method_nets():
+      for writer, net in s._dsl.all_method_nets:
         for member in net:
           if member is not writer:
             assert member.method is None

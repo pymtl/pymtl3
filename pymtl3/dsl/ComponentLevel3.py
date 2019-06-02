@@ -21,12 +21,14 @@ from .ComponentLevel2 import ComponentLevel2
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .errors import (
     InvalidConnectionError,
+    InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
     NoWriterError,
     SignalTypeError,
 )
 from .NamedObject import NamedObject
+from .Placeholder import Placeholder
 
 
 class ComponentLevel3( ComponentLevel2 ):
@@ -424,7 +426,7 @@ class ComponentLevel3( ComponentLevel2 ):
     return headed + [ (None, x) for x in headless ]
 
   def _check_port_in_nets( s ):
-    nets = s.get_all_value_nets()
+    nets = s._dsl.all_value_nets
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is
@@ -632,6 +634,12 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._dsl.adjacency = last_adjancency
 
+  # Override
+  def _check_valid_dsl_code( s ):
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+    s._check_port_in_nets()
+
   #-----------------------------------------------------------------------
   # Construction-time APIs
   #-----------------------------------------------------------------------
@@ -695,214 +703,3 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.all_value_nets = s._resolve_value_connections()
     s._dsl.has_pending_connections = False
 
-  #-----------------------------------------------------------------------
-  # Public APIs (only can be called after elaboration)
-  #-----------------------------------------------------------------------
-
-  # Override
-  def check( s ):
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
-    s._check_port_in_nets()
-
-  def get_all_value_nets( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all nets " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
-
-    if s._dsl.has_pending_connections:
-      s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl.has_pending_connections = False
-
-    return s._dsl.all_value_nets
-
-  def get_connect_order( s ):
-    try:
-      return s._dsl.connect_order
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_signal_adjacency_dict( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting adjacency dictionary " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
-    return s._dsl.all_adjacency
-
-  # Override
-  def delete_component_by_name( s, name ):
-
-    # This nested delete function is to create an extra layer to properly
-    # call garbage collector
-
-    def _delete_component_by_name( parent, name ):
-      obj = getattr( parent, name )
-      top = s._dsl.elaborate_top
-      import timeit
-
-      # First make sure we flush pending connections
-      nets = top.get_all_value_nets()
-
-      # Remove all components and uncollect metadata
-
-      removed_components = obj.get_all_components()
-      top._dsl.all_components -= removed_components
-
-      removed_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-      top._dsl.all_signals -= removed_signals
-
-      for x in removed_components:
-        assert x._dsl.elaborate_top is top
-        top._uncollect_vars( x )
-        for y in x._dsl.consts:
-          del y._dsl.parent_obj
-
-      for x in obj._collect_all():
-        del x._dsl.parent_obj
-
-      # TODO somehow save the adjs for reconnection
-
-      for x in removed_signals:
-        for other in top._dsl.all_adjacency[x]:
-          # If other will be removed, we don't need to remove it here ..
-          if   other not in removed_signals:
-            top._dsl.all_adjacency[other].remove( x )
-
-        del top._dsl.all_adjacency[x]
-
-      # The following implementation of breaking nets is faster than a
-      # full connection resolution.
-
-      new_nets = []
-      for writer, signals in nets:
-        broken_nets = s._floodfill_nets( signals, top._dsl.all_adjacency )
-
-        for net_signals in broken_nets:
-          if len(net_signals) > 1:
-            if writer in net_signals:
-              new_nets.append( (writer, net_signals) )
-            else:
-              new_nets.append( (None, net_signals) )
-      t1 = timeit.default_timer()
-
-      top._dsl.all_value_nets = new_nets
-
-      delattr( s, name )
-
-    _delete_component_by_name( s, name )
-    # import gc
-    # gc.collect() # this takes 0.1 seconds
-
-  # Override
-  # FIXME
-  def add_component_by_name( s, name, obj ):
-    assert not hasattr( s, name )
-    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    setattr( s, name, obj )
-    del NamedObject.__setattr__
-
-    top = s._dsl.elaborate_top
-
-    added_components = obj.get_all_components()
-    top._dsl.all_components |= added_components
-
-    for c in added_components:
-      c._dsl.elaborate_top = top
-      c._elaborate_read_write_func()
-      top._collect_vars( c )
-
-    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._dsl.all_signals |= added_signals
-
-    # Lazy -- to avoid resolve_connection call which takes non-trivial
-    # time upon adding any connect, I just mark it here. Please make sure
-    # to call s.get_all_value_nets() to flush all pending connections
-    # whenever you want to get the nets
-    s._dsl.has_pending_connections = True
-
-  def add_connection( s, o1, o2 ):
-    # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    added_adjacency = defaultdict(set)
-    try:
-      s._connect_objects( o1, o2, added_adjacency )
-    except AssertionError as e:
-      raise InvalidConnectionError( "\n{}".format(e) )
-
-    for x, adjs in added_adjacency.iteritems():
-      s._dsl.all_adjacency[x].update( adjs )
-
-    s._dsl.has_pending_connections = True # Lazy
-
-  def add_connections( s, *args ):
-    # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    last_adjacency = s._dsl.adjancency
-    s._dsl.adjacency = defaultdict(set)
-
-    for i in xrange(len(args)>>1) :
-      try:
-        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
-      except InvalidConnectionError as e:
-        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
-              .format( (i<<1)+1, (i<<1)+2 , e ) )
-
-    for x, adjs in s._dsl.adjacency.iteritems():
-      s._dsl.all_adjacency[x].update( adjs )
-
-    s._dsl.has_pending_connections = True # Lazy
-
-    s._dsl.adjancency = last_adjacency
-
-  def disconnect( s, o1, o2 ):
-    # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Disconnecting signals by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-
-    if isinstance( o1, int ): # o1 is signal, o2 is int
-      o1, o2 = o2, o1
-
-    # First handle the case where a const is disconnected from the signal
-    if isinstance( o2, int ):
-      assert isinstance( o1, Signal ), "You can only disconnect a const from a signal."
-      s._disconnect_signal_int( o1, o2 )
-
-    # Disconnect two signals
-    elif isinstance( o1, Signal ):
-      assert isinstance( o2, Signal )
-      s._disconnect_signal_signal( o1, o2 )
-
-    elif isinstance( o1, Interface ):
-      assert isinstance( o2, Interface )
-      s._disconnect_interface_interface( o1, o2 )
-
-    else:
-      assert False, "what the hell?"
-
-  def disconnect_pair( s, *args ):
-    # TODO support string arguments and non-top s
-    assert s._elaborate_top is s, "Disconnecting signals by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    for i in xrange(len(args)>>1):
-      s.disconnect( args[ i<<1 ], args[ (i<<1)+1 ] )

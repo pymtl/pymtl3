@@ -273,7 +273,7 @@ class NamedObject(object):
       return super( NamedObject, s ).__repr__()
 
   #-----------------------------------------------------------------------
-  # Public APIs
+  # elaborate-related public APIs
   #-----------------------------------------------------------------------
 
   def construct( s, *args, **kwargs ):
@@ -341,7 +341,9 @@ class NamedObject(object):
     s._elaborate_construct()
     s._elaborate_collect_and_mark_all_named_objects()
 
-  # The following APIs can only be called after elaboration
+  #-----------------------------------------------------------------------
+  # Post-elaborate public APIs (can only be called after elaboration)
+  #-----------------------------------------------------------------------
 
   def is_component( s ):
     raise NotImplemented
@@ -351,6 +353,8 @@ class NamedObject(object):
 
   def is_interface( s ):
     raise NotImplemented
+
+  # These two APIs are reused across Connectable and Component
 
   def get_field_name( s ):
     try:
@@ -363,7 +367,3 @@ class NamedObject(object):
       return s._dsl.parent_obj
     except AttributeError:
       raise NotElaboratedError()
-
-  def get_all_object_filter( s, filt ):
-    assert callable( filt )
-    return s._collect_all( filt )
