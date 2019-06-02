@@ -511,4 +511,6 @@ class ComponentLevel2( ComponentLevel1 ):
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
+  # We have moved these implementations to Component.py because the
+  # outside world should only use Component.py
 

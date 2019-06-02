@@ -685,7 +685,7 @@ class ComponentLevel3( ComponentLevel2 ):
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
   #-----------------------------------------------------------------------
-  # elaborate
+  # elaborate-related public APIs
   #-----------------------------------------------------------------------
 
   # Since the spawned signals are handled by the updated elaborate
@@ -703,3 +703,10 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.all_value_nets = s._resolve_value_connections()
     s._dsl.has_pending_connections = False
 
+    s._check_valid_dsl_code()
+
+  #-----------------------------------------------------------------------
+  # Post-elaborate public APIs (can only be called after elaboration)
+  #-----------------------------------------------------------------------
+  # We have moved these implementations to Component.py because the
+  # outside world should only use Component.py

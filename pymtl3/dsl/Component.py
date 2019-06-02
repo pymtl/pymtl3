@@ -235,6 +235,7 @@ class Component( ComponentLevel7 ):
       elif isinstance( u, list ):
         stack.extend( u )
     return ret
+
   def get_all_method_nets( s ):
     try:
       assert s._dsl.elaborate_top is s, "Getting all method nets " \

@@ -61,7 +61,7 @@ class ComponentLevel4( ComponentLevel3 ):
       s._dsl.all_M_constraints |= m._dsl.M_constraints
 
   #-----------------------------------------------------------------------
-  # elaborate
+  # elaborate-related public APIs
   #-----------------------------------------------------------------------
 
   # Override
