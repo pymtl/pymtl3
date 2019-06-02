@@ -273,7 +273,7 @@ class NamedObject(object):
       return super( NamedObject, s ).__repr__()
 
   #-----------------------------------------------------------------------
-  # elaborate-related public APIs
+  # Construction time APIs
   #-----------------------------------------------------------------------
 
   def construct( s, *args, **kwargs ):
@@ -303,6 +303,10 @@ class NamedObject(object):
   # collect part won't capture them. Second, later levels can override
   # this function and simply call construct at the beginning and call
   # collect at the middle/end.
+
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
 
   def _elaborate_construct( s ):
 

@@ -96,7 +96,7 @@ class ComponentLevel1( NamedObject ):
                               " is not implemented in {}".format( s.__class__.__name__ ) )
 
   #-----------------------------------------------------------------------
-  # elaborate-related public APIs
+  # elaborate
   #-----------------------------------------------------------------------
 
   # We refactor the monolithic elaborate function into smaller functions
@@ -124,6 +124,7 @@ class ComponentLevel1( NamedObject ):
 
     s._elaborate_declare_vars()
     s._elaborate_collect_all_vars()
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------

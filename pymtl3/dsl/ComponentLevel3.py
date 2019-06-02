@@ -685,9 +685,8 @@ class ComponentLevel3( ComponentLevel2 ):
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
   #-----------------------------------------------------------------------
-  # elaborate-related public APIs
+  # elaborate
   #-----------------------------------------------------------------------
-
   # Since the spawned signals are handled by the updated elaborate
   # template in ComponentLevel2, we just need to add a bit more
   # functionalities to handle nets.

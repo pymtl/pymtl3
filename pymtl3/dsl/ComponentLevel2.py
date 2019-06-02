@@ -513,4 +513,3 @@ class ComponentLevel2( ComponentLevel1 ):
   #-----------------------------------------------------------------------
   # We have moved these implementations to Component.py because the
   # outside world should only use Component.py
-

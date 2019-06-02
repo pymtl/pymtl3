@@ -114,13 +114,13 @@ class ComponentLevel5( ComponentLevel4 ):
     return ret
 
   # TODO Check if all method net port directions are correct
-  
+
   #-----------------------------------------------------------------------
   # elaborate
   #-----------------------------------------------------------------------
-
   # We still reuse the elaborate template by adding functionalities to
   # sub-functions called by elaborate
+
   # Override
   def _elaborate_declare_vars( s ):
     super( ComponentLevel5, s )._elaborate_declare_vars()
