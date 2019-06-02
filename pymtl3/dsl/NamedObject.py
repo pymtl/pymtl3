@@ -15,7 +15,7 @@ We keep all metadata in inst._dsl.*. This is to create a namespace
 to centralize all DSL-related metadata. Passes will create other
 namespaces to put their created metadata.
 
-Author : Shunning Jiang
+Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
 from __future__ import absolute_import, division, print_function
@@ -30,6 +30,12 @@ from .errors import NotElaboratedError
 class DSLMetadata(object):
   pass
 
+# NOTE: We found that the built-in OrderedDict slows down the elaboration
+# time because much time was spent calling OrderedDict.__init__. 
+# The time for instantiating an OrderedDict is quite long compared
+# to other primitive data structures such as list or dict. We have to
+# implement our own ordered dictionary to mitigate this overhead.
+# TODO: When we move to python3, we won't need this any more.
 class ord_dict( object ):
   def __init__( self ):
     self.data = []
@@ -69,6 +75,7 @@ class ord_dict( object ):
     for k, v in self.data:
       yield k, v
 
+# Special data structure for constructing the parameter tree.
 class ParamTreeNode(object):
   def __init__( self ):
     self.compiled_re = None
@@ -107,6 +114,7 @@ class ParamTreeNode(object):
     cur_node = self
     idx = 1
     for comp_name in strs:
+      # Lazily create children
       if cur_node.children is None:
         cur_node.children = ord_dict()
       if comp_name not in cur_node.children:
