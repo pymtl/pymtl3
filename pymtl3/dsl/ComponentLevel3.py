@@ -700,7 +700,7 @@ class ComponentLevel3( ComponentLevel2 ):
   def _elaborate_collect_all_vars( s ):
     super( ComponentLevel3, s )._elaborate_collect_all_vars()
     s._dsl.all_value_nets = s._resolve_value_connections()
-    s._dsl.has_pending_connections = False
+    s._dsl._has_pending_connections = False
 
     s._check_valid_dsl_code()
 

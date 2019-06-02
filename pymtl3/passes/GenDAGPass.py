@@ -137,7 +137,7 @@ def {0}():
     update_on_edge               = top.get_all_update_on_edge()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
     genblk_reads, genblk_writes  = top._dag.genblk_reads, top._dag.genblk_writes
-    U_U, RD_U, WR_U              = top.get_all_explicit_constraints()
+    U_U, RD_U, WR_U, U_M         = top.get_all_explicit_constraints()
 
     #---------------------------------------------------------------------
     # Explicit constraint
@@ -281,11 +281,7 @@ def {0}():
   # each method, direction conflicts, and incomplete constraints
 
   def _process_methods( self, top ):
-
-    try:
-      all_M_constraints = top._dsl.all_M_constraints
-    except AttributeError:
-      return
+    _, _, _, all_M_constraints = top.get_all_explicit_constraints()
 
     # Here we collect all top level callee ports and collect all
     # constraints that involves a top level callee. NOTE THAT it is

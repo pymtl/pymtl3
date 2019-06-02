@@ -16,7 +16,7 @@ from pymtl3.datatypes import Bits1
 from .NamedObject import NamedObject
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import InPort, OutPort, Wire, Signal, Interface
-
+from .errors import NotElaboratedError, InvalidAPICallError
 
 class Component( ComponentLevel7 ):
 
@@ -58,10 +58,36 @@ class Component( ComponentLevel7 ):
 
       s._dsl.constructed = True
 
+  # This function deduplicates those checks in each API
+  def _check_called_at_elaborate_top( s, func_name ):
+    try:
+      if s._dsl.elaborate_top is not s:
+        raise InvalidAPICallError( func_name, s, s._dsl.elaborate_top )
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def _collect_objects_local( s, filt ):
+    assert s._dsl.constructed
+    ret = set()
+    stack = []
+    for (name, obj) in s.__dict__.iteritems():
+      if   isinstance( name, basestring ): # python2 specific
+        if not name.startswith("_"): # filter private variables
+          stack.append( obj )
+    while stack:
+      u = stack.pop()
+      if filt( u ):
+        ret.add( u )
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
 
+  """ Convenience/utility APIs """
   def apply( s, *args ):
 
     if isinstance(args[0], list):
@@ -75,7 +101,7 @@ class Component( ComponentLevel7 ):
 
   # Simulation related APIs
   def sim_reset( s ):
-    assert s._dsl.elaborate_top is s # assert sim_reset is top
+    s._check_called_at_elaborate_top( "sim_reset" )
 
     s.reset = Bits1( 1 )
     s.tick() # This tick propagates the reset signal
@@ -85,7 +111,68 @@ class Component( ComponentLevel7 ):
   def check( s ):
     s._check_valid_dsl_code()
 
-  # APIs that give metadata
+  # TODO maybe we should implement these two lock/unlock APIs as passes?
+  # They expose kernel implementation details though ...
+  def lock_in_simulation( s ):
+    s._check_called_at_elaborate_top( "lock_in_simulation" )
+
+    s._dsl.swapped_signals = defaultdict(list)
+    s._dsl.swapped_values  = defaultdict(list)
+
+    def cleanup_connectables( current_obj, host_component ):
+
+      # Deduplicate code. Choose operation based on type of current_obj
+      if isinstance( current_obj, list ):
+        iterable = enumerate( current_obj )
+        is_list = True
+      elif isinstance( current_obj, NamedObject ):
+        iterable = current_obj.__dict__.iteritems()
+        is_list = False
+      else:
+        return
+
+      for i, obj in iterable:
+        if not is_list and i.startswith("_"): # impossible to have tuple
+          continue
+
+        if   isinstance( obj, Component ):
+          cleanup_connectables( obj, obj )
+
+        elif isinstance( obj, (Interface, list) ):
+          cleanup_connectables( obj, host_component )
+
+        elif isinstance( obj, Signal ):
+          try:
+            if is_list: current_obj[i] = obj.default_value()
+            else:       setattr( current_obj, i, obj.default_value() )
+          except Exception as err:
+            err.message = repr(obj) + " -- " + err.message
+            err.args = (err.message,)
+            raise err
+          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
+
+    cleanup_connectables( s, s )
+    s._dsl.locked_simulation = True
+
+  def unlock_simulation( s ):
+    s._check_called_at_elaborate_top( "unlock_simulation" )
+    try:
+      assert s._dsl.locked_simulation
+    except:
+      raise AttributeError("Cannot unlock an unlocked/never locked model.")
+
+    for component, records in s._dsl.swapped_signals.iteritems():
+      for current_obj, i, obj, is_list in records:
+        if is_list:
+          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          current_obj[i] = obj
+        else:
+          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          setattr( current_obj, i, obj )
+
+    s._dsl.locked_simulation = False
+
+  """ APIs that provide local metadata of a component """
 
   def get_component_level( s ):
     try:
@@ -94,21 +181,43 @@ class Component( ComponentLevel7 ):
       raise NotElaboratedError()
 
   def get_child_components( s ):
+    return s._collect_objects_local( lambda x: isinstance( x, Component ) )
+
+  def get_input_value_ports( s ):
+    return s._collect_objects_local( lambda x: isinstance( x, InPort ) )
+
+  def get_output_value_ports( s ):
+    return s._collect_objects_local( lambda x: isinstance( x, OutPort ) )
+
+  def get_wires( s ):
+    return s._collect_objects_local( lambda x: isinstance( x, Wire ) )
+
+  def get_update_blocks( s ):
     assert s._dsl.constructed
-    ret = set()
-    stack = []
-    for (name, obj) in s.__dict__.iteritems():
-      if   isinstance( name, basestring ): # python2 specific
-        if not name.startswith("_"): # filter private variables
-          stack.append( obj )
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, Component ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-    return ret
+    return s._dsl.upblks
+
+  def get_update_on_edge( s ):
+    assert s._dsl.constructed
+    return s._dsl.update_on_edge
+
+  def get_upblk_metadata( s ):
+    assert s._dsl.constructed
+    return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
+
+  def get_connect_order( s ):
+    try:
+      return s._dsl.connect_order
+    except AttributeError:
+      raise NotElaboratedError()
+
+  """ Metadata APIs that should only be called at elaborated top"""
+
+  def get_all_object_filter( s, filt ):
+    assert callable( filt )
+    try:
+      return set( [ x for x in s._dsl.all_components | s._dsl.all_signals if filt(x) ] )
+    except AttributeError:
+      return s._collect_all( filt )
 
   def get_all_components( s ):
     try:
@@ -116,24 +225,32 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       return s._collect_all( lambda x: isinstance( x, ComponentLevel1 ) )
 
-  def get_update_block_host_component( s, blk ):
+  def get_all_update_blocks( s ):
     try:
-      assert s._dsl.elaborate_top is s, "Getting update block host component " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_upblk_hostobj[ blk ]
+      s._check_called_at_elaborate_top( "get_all_update_blocks" )
+      return s._dsl.all_upblks
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_update_blocks( s ):
-    return s._dsl.upblks
-
-  def get_all_update_blocks( s ):
+  def get_all_update_on_edge( s ):
     try:
-      assert s._dsl.elaborate_top is s, "Getting all update blocks " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_upblks
+      s._check_called_at_elaborate_top( "get_all_update_on_edge" )
+      return s._dsl.all_update_on_edge
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_all_upblk_metadata( s ):
+    try:
+      s._check_called_at_elaborate_top( "get_all_upblk_metadata" )
+      return s._dsl.all_upblk_reads, s._dsl.all_upblk_writes, s._dsl.all_upblk_calls
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_all_explicit_constraints( s ):
+    try:
+      s._check_called_at_elaborate_top( "get_all_explicit_constraints" )
+      return s._dsl.all_U_U_constraints, s._dsl.all_RD_U_constraints, \
+             s._dsl.all_WR_U_constraints, s._dsl.all_M_constraints
     except AttributeError:
       raise NotElaboratedError()
 
@@ -145,152 +262,60 @@ class Component( ComponentLevel7 ):
 
     return name_ast[blk.__name__]
 
+  def get_update_block_host_component( s, blk ):
+    try:
+      s._check_called_at_elaborate_top( "get_update_block_host_component" )
+      return s._dsl.all_upblk_hostobj[ blk ]
+    except AttributeError:
+      raise NotElaboratedError()
+
   def get_astnode_obj_mapping( s ):
     try:
       return s._dsl.astnode_objs
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_update_on_edge( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all update_on_edge blocks  " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_update_on_edge
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_update_on_edge( s ):
-    assert s._dsl.constructed
-    return s._dsl.update_on_edge
-
-  def get_all_upblk_metadata( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all update block metadata  " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_upblk_reads, s._dsl.all_upblk_writes, s._dsl.all_upblk_calls
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_upblk_metadata( s ):
-    assert s._dsl.constructed
-    return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
-
-  def get_all_explicit_constraints( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all explicit constraints " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_U_U_constraints, \
-             s._dsl.all_RD_U_constraints, \
-             s._dsl.all_WR_U_constraints, \
-             s._dsl.all_M_constraints
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_all_object_filter( s, filt ):
-    assert callable( filt )
-    try:
-      return set( [ x for x in s._dsl.all_components | s._dsl.all_signals if filt(x) ] )
-    except AttributeError:
-      return s._collect_all( filt )
-
-  def get_input_value_ports( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
-                  if isinstance( name, basestring ) # python2 specific
-                  if not name.startswith("_") ] # filter private variables
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, InPort ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-
-    return ret
-
-  def get_output_value_ports( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
-                  if isinstance( name, basestring ) # python2 specific
-                  if not name.startswith("_") ] # filter private variables
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, OutPort ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-    return ret
-
-  def get_wires( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
-                  if isinstance( name, basestring ) # python2 specific
-                  if not name.startswith("_") ] # filter private variables
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, Wire ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-    return ret
-
   def get_all_method_nets( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all method nets " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
+    s._check_called_at_elaborate_top( "get_all_method_nets" )
 
-    if s._dsl.has_pending_connections:
+    if s._dsl._has_pending_connections:
       s._dsl.all_value_nets = s._resolve_value_connections()
       s._dsl.all_method_nets = s._resolve_method_connections()
-      s._dsl.has_pending_connections = False
+      s._dsl._has_pending_connections = False
 
     return s._dsl.all_method_nets
 
   def get_all_value_nets( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all nets " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
+    s._check_called_at_elaborate_top( "get_all_value_nets" )
 
-    if s._dsl.has_pending_connections:
+    if s._dsl._has_pending_connections:
       s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl.has_pending_connections = False
+      s._dsl.all_method_nets = s._resolve_method_connections()
+      s._dsl._has_pending_connections = False
 
     return s._dsl.all_value_nets
 
-  def get_connect_order( s ):
-    try:
-      return s._dsl.connect_order
-    except AttributeError:
-      raise NotElaboratedError()
-
   def get_signal_adjacency_dict( s ):
     try:
-      assert s._dsl.elaborate_top is s, "Getting adjacency dictionary " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
+      s._check_called_at_elaborate_top( "get_signal_adjacency_dict" )
     except AttributeError:
       raise NotElaboratedError()
     return s._dsl.all_adjacency
 
+  """ Mutation APIs to add/delete components and connections"""
+
   # Override
   def delete_component_by_name( s, name ):
+    s._check_called_at_elaborate_top( "delete_component_by_name" )
 
     # This nested delete function is to create an extra layer to properly
-    # call garbage collector
+    # call garbage collector. If we can make sure it is collected
+    # automatically and fast enough, we might remove this extra layer
+    #
+    # EDIT: After experimented w/ and w/o gc.collect(), it seems like it
+    # is eventually collected, but sometimes the intermediate memory
+    # footprint might reach up to gigabytes, so let's keep the
+    # gc.collect() for now
 
     def _delete_component_by_name( parent, name ):
       obj = getattr( parent, name )
@@ -353,6 +378,8 @@ class Component( ComponentLevel7 ):
   # Override
   # FIXME
   def add_component_by_name( s, name, obj ):
+    s._check_called_at_elaborate_top( "add_component_by_name" )
+
     assert not hasattr( s, name )
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
     setattr( s, name, obj )
@@ -375,13 +402,11 @@ class Component( ComponentLevel7 ):
     # time upon adding any connect, I just mark it here. Please make sure
     # to call s.get_all_value_nets() to flush all pending connections
     # whenever you want to get the nets
-    s._dsl.has_pending_connections = True
+    s._dsl._has_pending_connections = True
 
   def add_connection( s, o1, o2 ):
     # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
+    s._check_called_at_elaborate_top( "add_connection" )
 
     added_adjacency = defaultdict(set)
     try:
@@ -392,13 +417,11 @@ class Component( ComponentLevel7 ):
     for x, adjs in added_adjacency.iteritems():
       s._dsl.all_adjacency[x].update( adjs )
 
-    s._dsl.has_pending_connections = True # Lazy
+    s._dsl._has_pending_connections = True # Lazy
 
   def add_connections( s, *args ):
     # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
+    s._check_called_at_elaborate_top( "add_connections" )
 
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
@@ -416,15 +439,13 @@ class Component( ComponentLevel7 ):
     for x, adjs in s._dsl.adjacency.iteritems():
       s._dsl.all_adjacency[x].update( adjs )
 
-    s._dsl.has_pending_connections = True # Lazy
+    s._dsl._has_pending_connections = True # Lazy
 
     s._dsl.adjancency = last_adjacency
 
   def disconnect( s, o1, o2 ):
     # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Disconnecting signals by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
+    s._check_called_at_elaborate_top( "disconnect" )
 
 
     if isinstance( o1, int ): # o1 is signal, o2 is int
@@ -449,75 +470,10 @@ class Component( ComponentLevel7 ):
 
   def disconnect_pair( s, *args ):
     # TODO support string arguments and non-top s
-    assert s._elaborate_top is s, "Disconnecting signals by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
+    s._check_called_at_elaborate_top( "disconnect_pair" )
 
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
     for i in xrange(len(args)>>1):
       s.disconnect( args[ i<<1 ], args[ (i<<1)+1 ] )
-
-
-  def lock_in_simulation( s ):
-    assert s._dsl.elaborate_top is s, "Locking in simulation " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-    s._dsl.swapped_signals = defaultdict(list)
-    s._dsl.swapped_values  = defaultdict(list)
-
-    def cleanup_connectables( current_obj, host_component ):
-
-      # Deduplicate code. Choose operation based on type of current_obj
-      if isinstance( current_obj, list ):
-        iterable = enumerate( current_obj )
-        is_list = True
-      elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.iteritems()
-        is_list = False
-      else:
-        return
-
-      for i, obj in iterable:
-        if not is_list and i.startswith("_"): # impossible to have tuple
-          continue
-
-        if   isinstance( obj, Component ):
-          cleanup_connectables( obj, obj )
-
-        elif isinstance( obj, (Interface, list) ):
-          cleanup_connectables( obj, host_component )
-
-        elif isinstance( obj, Signal ):
-          try:
-            if is_list: current_obj[i] = obj.default_value()
-            else:       setattr( current_obj, i, obj.default_value() )
-          except Exception as err:
-            err.message = repr(obj) + " -- " + err.message
-            err.args = (err.message,)
-            raise err
-          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
-
-    cleanup_connectables( s, s )
-    s._dsl.locked_simulation = True
-
-  def unlock_simulation( s ):
-    assert s._dsl.elaborate_top is s, "Unlocking simulation " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-    try:
-      assert s._dsl.locked_simulation
-    except:
-      raise AttributeError("Cannot unlock an unlocked/never locked model.")
-
-    for component, records in s._dsl.swapped_signals.iteritems():
-      for current_obj, i, obj, is_list in records:
-        if is_list:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
-          current_obj[i] = obj
-        else:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
-          setattr( current_obj, i, obj )
-
-    s._dsl.locked_simulation = False
