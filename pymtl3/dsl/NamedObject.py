@@ -54,6 +54,9 @@ class ord_dict( object ):
     for k, _ in self.data:
       yield k
 
+  def __str__( self ):
+    return str( self.data )
+
   def pop( self, key ):
     idx = 0
     for k, v in self.data:
@@ -70,39 +73,30 @@ class ord_dict( object ):
 class ParamTreeNode(object):
   def __init__( self ):
     self.compiled_re = None
+    self.children = None
     self.leaf = None
 
-  def get_leaf( self ):
-
-    if self.leaf is None:
-      self.leaf = {}
-      self.children = ord_dict()
-    return self.leaf
-
-  def get_children( self ):
-
-    if self.leaf is None:
-      self.leaf = {}
-      self.children = ord_dict()
-    return self.children
-
   def merge( self, other ):
-    if self.leaf is None:
-      self.leaf = {}
-      self.children = ord_dict()
-
     # Merge leaf
-    for func_name, subdict in other.leaf.iteritems():
-      if func_name not in self.leaf:
-        self.leaf[ func_name ] = {}
-      self.leaf[ func_name ].update( subdict )
+    if other.leaf is not None:
+      # Lazily create leaf
+      if self.leaf is None:
+        self.leaf = {}
+      for func_name, subdict in other.leaf.iteritems():
+        if func_name not in self.leaf:
+          self.leaf[ func_name ] = {}
+        self.leaf[ func_name ].update( subdict )
 
     # Merge children
-    for comp_name, node in other.children.iteritems():
-      if comp_name in self.children:
-        self.children[ comp_name ].merge( node )
-      else:
-        self.children[ comp_name ] = node
+    if other.children is not None:
+      # Lazily create children
+      if self.children is None:
+        self.children = ord_dict()
+      for comp_name, node in other.children.iteritems():
+        if comp_name in self.children:
+          self.children[ comp_name ].merge( node )
+        else:
+          self.children[ comp_name ] = node
 
   def add_params( self, strs, func_name, **kwargs ):
 
@@ -114,29 +108,34 @@ class ParamTreeNode(object):
     cur_node = self
     idx = 1
     for comp_name in strs:
-      cur_node_children = cur_node.get_children()
-      if comp_name not in cur_node_children:
+      if cur_node.children is None:
+        cur_node.children = ord_dict()
+      if comp_name not in cur_node.children:
         new_node = ParamTreeNode()
         if '*' in comp_name:
           new_node.compiled_re = re.compile( comp_name )
           # Recursively update exisiting nodes that matches the regex
-          for name, node in cur_node_children.iteritems():
+          for name, node in cur_node.children.iteritems():
             if node.compiled_re is None:
               if new_node.compiled_re.match( name ):
                 node.add_params( strs[idx:], func_name, **kwargs )
-        cur_node_children[ comp_name ] = new_node
+        cur_node.children[ comp_name ] = new_node
         cur_node = new_node
       else:
-        new_node = cur_node_children.pop( comp_name )
-        cur_node_children[ comp_name ] = new_node
+        new_node = cur_node.children.pop( comp_name )
+        cur_node.children[ comp_name ] = new_node
         cur_node = new_node
       idx += 1
 
     # Add parameters to leaf
-    leaf = cur_node.get_leaf()
-    if func_name not in leaf:
-      leaf[ func_name ] = {}
-    leaf[ func_name].update( kwargs )
+    if cur_node.leaf is None:
+      cur_node.leaf = {}
+    if func_name not in cur_node.leaf:
+      cur_node.leaf[ func_name ] = {}
+    cur_node.leaf[ func_name].update( kwargs )
+
+  def __repr__( self ):
+    return "\nleaf:{}\nchildren:{}".format( self.leaf, self.children )
 
 class NamedObject(object):
 
@@ -194,13 +193,14 @@ class NamedObject(object):
                                                            for x in indices ] )
 
             # Iterate through the param_tree and update u
-            for comp_name, node in s._dsl.param_tree.get_children().iteritems():
-              if comp_name == u_name:
-                u._dsl.param_tree.merge( node )
-
-              elif node.compiled_re is not None:
-                if node.compiled_re.match( u_name ):
+            if s._dsl.param_tree.children is not None:
+              for comp_name, node in s._dsl.param_tree.children.iteritems():
+                if comp_name == u_name:
                   u._dsl.param_tree.merge( node )
+
+                elif node.compiled_re is not None:
+                  if node.compiled_re.match( u_name ):
+                    u._dsl.param_tree.merge( node )
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
