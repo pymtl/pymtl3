@@ -31,6 +31,7 @@ def test_py_list():
   with expected_failure( RTLIRConversionError, 'should be a field of some struct' ):
     rdt.get_rtlir_dtype( [ 1, 2, 3 ] )
 
+# Yanghui : this test no longer passes.
 def test_py_struct_arg_no_default_value():
   class B( object ):
     def __init__( s, foo ):
