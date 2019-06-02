@@ -69,5 +69,5 @@ def mk_bits( nbits ):
   assert nbits < 16384, "We don't allow bitwidth to exceed 16384."
   if nbits in _bits_types:  return _bits_types[ nbits ]
 
-  exec(py.code.Source( bits_template.format( **vars() ) ).compile()) in globals()
+  exec((py.code.Source( bits_template.format( **vars() ) ).compile()), globals())
   return _bits_types[ nbits ]
