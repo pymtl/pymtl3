@@ -333,7 +333,11 @@ class ComponentLevel3( ComponentLevel2 ):
           host = host.get_parent_object() # go to the component
         member._dsl.host = host
 
-        if isinstance( member, InPort ) and member._dsl.host == s:
+        # Specialize two cases:
+        # 1. A top-level input port is writer.
+        # 2. An output port of a placeholder module is a writer
+        if ( isinstance( member, InPort ) and member._dsl.host == s ) or \
+           ( isinstance( member, OutPort ) and isinstance( member._dsl.host, Placeholder ) ):
           writer_prop[ member ] = True
 
     headless = nets
@@ -367,7 +371,6 @@ class ComponentLevel3( ComponentLevel2 ):
         for v in net:
           obj = None
           try:
-
             # Check if itself is a writer or a constant
             if v in writer_prop or isinstance( v, Const ):
               assert not has_writer

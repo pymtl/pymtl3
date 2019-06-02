@@ -28,8 +28,9 @@ from pymtl3.dsl.Connectable import (
     NonBlockingInterface,
     Signal,
 )
-from pymtl3.dsl.errors import NotElaboratedError, UpblkCyclicError
+from pymtl3.dsl.errors import NotElaboratedError, UpblkCyclicError, LeftoverPlaceholderError
 from pymtl3.dsl.NamedObject import NamedObject
+from pymtl3.dsl.Placeholder import Placeholder
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
@@ -38,6 +39,12 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
   if not hasattr( s._dsl, "all_U_U_constraints" ):
     raise NotElaboratedError()
+
+  placeholders = [ x for x in s._dsl.all_named_objects
+                   if isinstance( x, Placeholder ) ]
+
+  if placeholders:
+    raise LeftoverPlaceholderError( placeholders )
 
   all_upblks = set( s._dsl.all_upblks )
   expl_constraints = set( s._dsl.all_U_U_constraints )

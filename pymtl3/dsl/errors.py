@@ -97,3 +97,11 @@ class InvalidAPICallError( Exception ):
     "{} is only allowed to be called at the top module that .elaborate() "
     "was called on (an instance of {}), but this API call is on {}." \
     .format( api_name, top.__class__, "top."+repr(obj)[2:] ) )
+
+class LeftoverPlaceholderError( Exception ):
+  """ Raise upon declaring an update block in a placeholder component. """
+  def __init__( self, placeholders ):
+    return super( LeftoverPlaceholderError, self ).__init__( \
+    "Please replace all placeholders with valid components:\n - {}".format(
+      "\n - ".join( [ "top.{} (instance of {})".format( repr(x)[2:], x.__class__ ) \
+                     for x in placeholders ] ) ) )
