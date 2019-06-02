@@ -42,20 +42,8 @@ class ComponentLevel1( NamedObject ):
 
     return inst
 
-  def _declare_vars( s ):
-    """ Convention: the top level component on which we call elaborate
-    declare variables in _declare_vars; it shouldn't have them before
-    elaboration.
-
-    Convention: the variables that hold all metadata of descendants
-    should have _all prefix."""
-
-    s._dsl.all_upblks = set()
-    s._dsl.all_upblk_hostobj = {}
-    s._dsl.all_U_U_constraints = set()
-
   def _collect_vars( s, m ):
-    """ Called on individual objects during elaboration.
+    """ Called on individual objects during elaboration/addcomponent.
     The general format resembles "s._all_X.update/append( s._X ). """
 
     if isinstance( m, ComponentLevel1 ):
@@ -101,15 +89,31 @@ class ComponentLevel1( NamedObject ):
   # elaborate
   #-----------------------------------------------------------------------
 
-  def elaborate( s ):
-    # Directly use the base class elaborate
-    NamedObject.elaborate( s )
+  # We refactor the monolithic elaborate function into smaller functions
 
-    s._declare_vars()
+  def _elaborate_declare_vars( s ):
+    """ Convention: the top level component on which we call elaborate
+    declare variables in _declare_vars; it shouldn't have them before
+    elaboration.
+
+    Convention: the variables that hold all metadata of descendants
+    should have _all prefix."""
+
+    s._dsl.all_upblks = set()
+    s._dsl.all_upblk_hostobj = {}
+    s._dsl.all_U_U_constraints = set()
+
+  def _elaborate_collect_all_vars( s ):
     for c in s._dsl.all_named_objects:
       if isinstance( c, ComponentLevel1 ):
         s._collect_vars( c )
 
+  def elaborate( s ):
+    # Directly use the base class elaborate
+    NamedObject.elaborate( s )
+
+    s._elaborate_declare_vars()
+    s._elaborate_collect_all_vars()
   #-----------------------------------------------------------------------
   # Public APIs (only can be called after elaboration)
   #-----------------------------------------------------------------------

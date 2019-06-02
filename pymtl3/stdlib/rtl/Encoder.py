@@ -18,8 +18,11 @@ class Encoder( Component ):
 
     # Interface
 
-    s.in_ =  InPort( mk_bits( in_nbits  ) )
-    s.out = OutPort( mk_bits( out_nbits ) )
+    InType  = mk_bits(in_nbits)
+    OutType = mk_bits(out_nbits)
+
+    s.in_ =  InPort( InType )
+    s.out = OutPort( OutType )
 
     # Constants
 
@@ -30,9 +33,10 @@ class Encoder( Component ):
 
     @s.update
     def encode():
-      s.out = 0
+      s.out = OutType( 0 )
       for i in range( s.in_nbits ):
-        s.out = i if s.in_[i] else s.out
+        if s.in_[i]:
+          s.out = OutType( i )
 
   def line_trace( s ):
     return "in:{:0>{n}b} | out:{}".format(

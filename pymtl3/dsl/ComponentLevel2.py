@@ -86,23 +86,6 @@ class ComponentLevel2( ComponentLevel1 ):
       name_fc[ name ]  = fc   = []
       AstHelper.extract_reads_writes_calls( func, tree, rd, wr, fc )
 
-  # Override
-  def _declare_vars( s ):
-    super( ComponentLevel2, s )._declare_vars()
-
-    s._dsl.all_update_on_edge = set()
-
-    s._dsl.all_RD_U_constraints = defaultdict(set)
-    s._dsl.all_WR_U_constraints = defaultdict(set)
-
-    # We don't collect func's metadata
-    # because every func is local to the component
-    s._dsl.all_upblk_reads  = {}
-    s._dsl.all_upblk_writes = {}
-    s._dsl.all_upblk_calls  = {}
-
-    s._dsl.all_signals = set()
-
   def _elaborate_read_write_func( s ):
 
     # We have parsed AST to extract every read/write variable name.
@@ -472,22 +455,43 @@ class ComponentLevel2( ComponentLevel1 ):
   #-----------------------------------------------------------------------
 
   # Override
-  def elaborate( s ):
-    # Directly use the base class elaborate
-    NamedObject.elaborate( s )
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel2, s )._elaborate_declare_vars()
 
-    s._declare_vars()
+    s._dsl.all_update_on_edge = set()
 
+    s._dsl.all_RD_U_constraints = defaultdict(set)
+    s._dsl.all_WR_U_constraints = defaultdict(set)
+
+    # We don't collect func's metadata
+    # because every func is local to the component
+    s._dsl.all_upblk_reads  = {}
+    s._dsl.all_upblk_writes = {}
+    s._dsl.all_upblk_calls  = {}
+
+    s._dsl.all_signals = set()
+
+  # Override
+  def _elaborate_collect_all_vars( s ):
     for c in s._dsl.all_named_objects:
-
       if isinstance( c, Signal ):
         s._dsl.all_signals.add( c )
-
-      if isinstance( c, ComponentLevel2 ):
-        c._elaborate_read_write_func()
-
-      if isinstance( c, ComponentLevel1 ):
+      elif isinstance( c, ComponentLevel1 ):
         s._collect_vars( c )
+
+  # Override
+  def elaborate( s ):
+    # Don't directly use the base class elaborate anymore
+    s._elaborate_construct()
+
+    # First elaborate all functions to spawn more named objects
+    for c in s.get_all_object_filter( lambda s: isinstance( s, ComponentLevel2 ) ):
+      c._elaborate_read_write_func()
+
+    s._elaborate_collect_and_mark_all_named_objects()
+
+    s._elaborate_declare_vars()
+    s._elaborate_collect_all_vars()
 
     s.check()
 

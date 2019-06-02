@@ -108,7 +108,7 @@ def test_component():
       @s.update
       def up_bit_struct():
         # TODO:We have to use deepcopy here as a temporary workaround
-        # to prevent s.in_ beingmutated by the following operations.
+        # to prevent s.in_ being mutated by the following operations.
         s.out = deepcopy( s.in_ )
         s.out.pt0.x += 1
         s.out.pt0.y -= 1
@@ -118,8 +118,8 @@ def test_component():
 
   dut = A()
   dut.apply( SimpleSim )
-  dut.in_ = NestedSimple( StaticPoint(1,2), StaticPoint(3,4) )
+  dut.in_ = NestedSimple( StaticPoint(Bits4(1),Bits4(2)), StaticPoint(Bits4(3),Bits4(4)) )
   dut.tick()
-  assert dut.out == NestedSimple( StaticPoint(2,1), StaticPoint(4,3) )
+  assert dut.out == NestedSimple( StaticPoint(Bits4(2),Bits4(1)), StaticPoint(Bits4(4),Bits4(3)) )
   print( dut.out_pt )
-  assert dut.out_pt == StaticPoint(3,4)
+  assert dut.out_pt == StaticPoint(Bits4(3),Bits4(4))

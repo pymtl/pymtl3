@@ -11,6 +11,7 @@ from .mamba.UnrollTickPass import UnrollTickPass
 from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
+from .VcdGenerationPass import VcdGenerationPass
 from .WrapGreenletPass import WrapGreenletPass
 
 SimpleSim = [
