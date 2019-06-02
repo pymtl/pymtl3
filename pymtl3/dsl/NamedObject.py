@@ -49,7 +49,7 @@ class ord_dict( object ):
         return
       idx += 1
     self.data.append( ( key, value ) )
-  
+
   def __iter__( self ):
     for k, _ in self.data:
       yield k
@@ -70,10 +70,27 @@ class ord_dict( object ):
 class ParamTreeNode(object):
   def __init__( self ):
     self.compiled_re = None
-    self.children = ord_dict()
-    self.leaf = {}
+    self.leaf = None
+
+  def get_leaf( self ):
+
+    if self.leaf is None:
+      self.leaf = {}
+      self.children = ord_dict()
+    return self.leaf
+
+  def get_children( self ):
+
+    if self.leaf is None:
+      self.leaf = {}
+      self.children = ord_dict()
+    return self.children
 
   def merge( self, other ):
+    if self.leaf is None:
+      self.leaf = {}
+      self.children = ord_dict()
+
     # Merge leaf
     for func_name, subdict in other.leaf.iteritems():
       if func_name not in self.leaf:
@@ -88,31 +105,38 @@ class ParamTreeNode(object):
         self.children[ comp_name ] = node
 
   def add_params( self, strs, func_name, **kwargs ):
+
+    if self.leaf is None:
+      self.leaf = {}
+      self.children = ord_dict()
+
     # Traverse to the node
     cur_node = self
     idx = 1
     for comp_name in strs:
-      if comp_name not in cur_node.children:
+      cur_node_children = cur_node.get_children()
+      if comp_name not in cur_node_children:
         new_node = ParamTreeNode()
         if '*' in comp_name:
           new_node.compiled_re = re.compile( comp_name )
           # Recursively update exisiting nodes that matches the regex
-          for name, node in cur_node.children.iteritems():
+          for name, node in cur_node_children.iteritems():
             if node.compiled_re is None:
               if new_node.compiled_re.match( name ):
                 node.add_params( strs[idx:], func_name, **kwargs )
-        cur_node.children[ comp_name ] = new_node
+        cur_node_children[ comp_name ] = new_node
         cur_node = new_node
       else:
-        new_node = cur_node.children.pop( comp_name )
-        cur_node.children[ comp_name ] = new_node
+        new_node = cur_node_children.pop( comp_name )
+        cur_node_children[ comp_name ] = new_node
         cur_node = new_node
       idx += 1
 
     # Add parameters to leaf
-    if func_name not in cur_node.leaf:
-      cur_node.leaf[ func_name ] = {}
-    cur_node.leaf[ func_name].update( kwargs )
+    leaf = cur_node.get_leaf()
+    if func_name not in leaf:
+      leaf[ func_name ] = {}
+    leaf[ func_name].update( kwargs )
 
 class NamedObject(object):
 
@@ -126,11 +150,9 @@ class NamedObject(object):
     inst._dsl.args        = args
     inst._dsl.kwargs      = kwargs
     inst._dsl.constructed = False
-    
+
     # A tree of parameters.
     inst._dsl.param_tree = ParamTreeNode()
-    # TODO: cleanup param_dict in all levels.
-    inst._dsl.param_dict = inst._dsl.param_tree.leaf 
 
     return inst
 
@@ -143,10 +165,13 @@ class NamedObject(object):
     if not s._dsl.constructed:
 
       # Merge the actual keyword args and those args set by set_parameter
-      kwargs = s._dsl.kwargs.copy()
-      if "construct" in s._dsl.param_dict:
-        more_args = s._dsl.param_dict[ "construct" ]
-        kwargs.update( more_args )
+      if s._dsl.param_tree.leaf is None:
+        kwargs = s._dsl.kwargs
+      else:
+        kwargs = s._dsl.kwargs.copy()
+        if "construct" in s._dsl.param_tree.leaf:
+          more_args = s._dsl.param_tree.leaf[ "construct" ]
+          kwargs.update( more_args )
 
       s.construct( *s._dsl.args, **kwargs )
 
@@ -165,20 +190,17 @@ class NamedObject(object):
           # try:
             u._dsl.parent_obj = s
             u._dsl.level      = s._dsl.level + 1
-            u._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x) 
+            u._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
                                                            for x in indices ] )
-            u._dsl.param_tree = ParamTreeNode()
 
             # Iterate through the param_tree and update u
-            for comp_name, node in s._dsl.param_tree.children.iteritems():
+            for comp_name, node in s._dsl.param_tree.get_children().iteritems():
               if comp_name == u_name:
                 u._dsl.param_tree.merge( node )
 
               elif node.compiled_re is not None:
                 if node.compiled_re.match( u_name ):
                   u._dsl.param_tree.merge( node )
-
-            u._dsl.param_dict = u._dsl.param_tree.leaf
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )

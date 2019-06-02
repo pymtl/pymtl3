@@ -85,17 +85,6 @@ class Signal( NamedObject, Connectable ):
     s._dsl.Type = Type
     s._dsl.type_instance = None
 
-    # Yanghui: this would break if another Type indeed has an nbits
-    #          attribute.
-    # try:  Type.nbits
-    # except AttributeError: # not Bits type
-
-    # FIXME: check if Type is actually a type?
-    if not issubclass( Type, Bits ):
-      s._dsl.type_instance = Type()
-
-    s._dsl.is_bits_signal = issubclass( Type, Bits ) or (Type is int)
-
     s._dsl.slice  = None # None -- not a slice of some wire by default
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
@@ -108,6 +97,19 @@ class Signal( NamedObject, Connectable ):
       return super( Signal, s ).__getattribute__( name )
 
     if name not in s.__dict__:
+      # Shunning: we move this from __init__ to here for on-demand type
+      #           checking when the __getattr__ is indeed used.
+      if s._dsl.type_instance is None:
+        # Yanghui: this would break if another Type indeed has an nbits
+        #          attribute.
+        # try:  Type.nbits
+        # except AttributeError: # not Bits type
+
+        # FIXME: check if Type is actually a type?
+        Type = s._dsl.Type
+        if not issubclass( Type, Bits ):
+          s._dsl.type_instance = Type()
+
       obj = getattr( s._dsl.type_instance, name )
 
       # We handle three cases here:
@@ -281,8 +283,8 @@ class Interface( NamedObject, Connectable ):
       s.construct( *s._dsl.args, **s._dsl.kwargs )
 
       inversed = False
-      try:  inversed = s._dsl.inversed
-      except AttributeError: pass
+      if hasattr( s._dsl, "inversed" ):
+        inversed = s._dsl.inversed
 
       if inversed:
         for name, obj in s.__dict__.iteritems():
