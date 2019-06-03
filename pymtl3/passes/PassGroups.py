@@ -5,6 +5,7 @@ from pymtl3.dsl import Component
 from .CLLineTracePass import CLLineTracePass
 from .DynamicSchedulePass import DynamicSchedulePass
 from .GenDAGPass import GenDAGPass
+from .LineTraceParamPass import LineTraceParamPass
 from .mamba.HeuristicTopoPass import HeuristicTopoPass
 from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .mamba.UnrollTickPass import UnrollTickPass
@@ -21,6 +22,7 @@ SimpleSim = [
   SimpleSchedulePass(),
   CLLineTracePass(),
   SimpleTickPass(),
+  LineTraceParamPass(),
   Component.lock_in_simulation
 ]
 

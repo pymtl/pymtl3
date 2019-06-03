@@ -257,10 +257,6 @@ class Component( BaseRTLIRType ):
     arg_names = s.argspec.args[1:]
     assert s.argspec.varargs is None, "varargs are not allowed for construct!"
     assert s.argspec.keywords is None, "keyword args are not allowed for construct!"
-    kwargs = ()
-
-    if 'elaborate' in obj._dsl.param_dict:
-      kwargs = tuple(obj._dsl.param_dict.keys())
 
     defaults = s.argspec.defaults if s.argspec.defaults else ()
     num_args = len(arg_names)
@@ -289,10 +285,6 @@ class Component( BaseRTLIRType ):
         assert use_defaults
         ret.append((arg_name, defaults[idx-len(arg_names)]))
 
-    # Handle added keyword arguments
-    for arg_name in enumerate(kwargs):
-      assert arg_name in obj._dsl.param_dict
-      ret.append((arg_name, obj._dsl.param_dict[arg_names]))
     return ret
 
   def _is_unpacked( s ):

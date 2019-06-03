@@ -118,8 +118,9 @@ class CLLineTracePass( BasePass ):
     all_drivers = set()
     all_method_nets = top.get_all_method_nets()
     for driver, net in all_method_nets:
-      wrap_callee_method( driver, net )
-      all_drivers.add( driver )
+      if driver is not None:
+        wrap_callee_method( driver, net )
+        all_drivers.add( driver )
       for member in net:
         if isinstance( member, CallerPort ):
           assert member is not driver

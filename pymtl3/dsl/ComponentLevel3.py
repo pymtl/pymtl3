@@ -60,10 +60,17 @@ class ComponentLevel3( ComponentLevel2 ):
     tagging, so this is valid. (see NamedObject.py). """
 
     if not s._dsl.constructed:
-      kwargs = s._dsl.kwargs.copy()
-      if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
-                              if x } )
+
+      # Merge the actual keyword args and those args set by set_parameter
+      if s._dsl.param_tree is None:
+        kwargs = s._dsl.kwargs
+      elif s._dsl.param_tree.leaf is None:
+        kwargs = s._dsl.kwargs
+      else:
+        kwargs = s._dsl.kwargs.copy()
+        if "construct" in s._dsl.param_tree.leaf:
+          more_args = s._dsl.param_tree.leaf[ "construct" ]
+          kwargs.update( more_args )
 
       s.construct( *s._dsl.args, **kwargs )
 
