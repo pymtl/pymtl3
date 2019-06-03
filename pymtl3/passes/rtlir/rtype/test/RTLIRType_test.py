@@ -111,5 +111,5 @@ def test_pymtl3_interface_wire():
       s.in_ = Ifc()
   a = A()
   a.elaborate()
-  with expected_failure( RTLIRConversionError ):
-    rt.get_rtlir( a.in_ )
+  # in_.foo will be silently dropped!
+  rt.get_rtlir( a.in_ )

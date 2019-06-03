@@ -93,7 +93,7 @@ def test_concat_constants( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { 32'd42, 32'd0 };
+  out = { 32'( 42 ), 32'( 0 ) };
 end\
 """ }
   do_test( a )
@@ -110,7 +110,7 @@ def test_concat_mixed( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_, 32'd0 };
+  out = { in_, 32'( 0 ) };
 end\
 """ }
   do_test( a )

@@ -66,8 +66,8 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
       prop = node.value.Type.get_property( node.attr )
       if not rt._is_of_type( prop, ( rt.Port, rt.InterfaceView ) ):
         raise PyMTLTypeError( s.blk, node.ast,
-          '{} is not a port of {} subcomponent {}!'.format(
-            node.attr, node.value._dsl.my_name, node.value.Type.get_name() ) )
+          '{} is not a port of {} subcomponent!'.format(
+            node.attr, node.value.Type.get_name() ) )
       node.Type = prop
     else:
       super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Attribute( node )

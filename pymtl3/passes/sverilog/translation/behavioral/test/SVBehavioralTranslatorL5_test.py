@@ -52,7 +52,7 @@ end\
 """ }, a.b : { 'upblk' : \
 """\
 always_comb begin : upblk
-  foo = 32'd42;
+  foo = 32'( 42 );
 end\
 """
 } }

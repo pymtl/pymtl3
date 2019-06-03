@@ -42,7 +42,7 @@ module B
 );
 
   always_comb begin : upblk
-    foo = 32'd42;
+    foo = 32'( 42 );
   end
 
 endmodule
@@ -100,7 +100,7 @@ module B
 );
 
   always_comb begin : upblk
-    out_b = 32'd0;
+    out_b = 32'( 0 );
   end
 
 endmodule
