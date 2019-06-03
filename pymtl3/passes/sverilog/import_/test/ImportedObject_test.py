@@ -9,10 +9,11 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
-from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.datatypes import Bits1, Bits32, Bits64
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.ImportPass import get_imported_object
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.test import TestVectorSimulator
 
 
@@ -22,8 +23,10 @@ def get_dir():
 def local_do_test( _m ):
   _m.elaborate()
   m = get_imported_object( _m )
-  m.elaborate()
+  # import pdb
+  # pdb.set_trace()
   sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+  sim.run_test()
 
 def test_reg( do_test ):
   def tv_in( m, test_vector ):
@@ -73,6 +76,44 @@ def test_adder( do_test ):
     [    1,     -1,     0,     0, 1 ],
     [   42,     42,     1,    85, 0 ],
     [   42,    -43,     1,     0, 1 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
+
+def test_imul( do_test ):
+  def tv_in( m, test_vector ):
+    m.recv.msg[0:32] = Bits32( test_vector[0] )
+    m.recv.msg[32:64] = Bits32( test_vector[1] )
+    m.recv.en = Bits1( test_vector[2] )
+    m.send.rdy = Bits1(1)
+  def tv_out( m, test_vector ):
+    if test_vector[3] != '*':
+      assert m.send.msg == Bits32( test_vector[3] )
+    if test_vector[4] != '*':
+      assert m.send.en == Bits32( test_vector[4] )
+  class IntMulVarLat( Component ):
+    def construct( s ):
+      s.recv = RecvIfcRTL( Bits64 )
+      s.send = SendIfcRTL( Bits32 )
+  a = IntMulVarLat()
+  a._sverilog_import_path = get_dir()+'VIntMulVarLat.sv'
+  a._test_vectors = [
+    #    x       y     en      res     en
+    [    1,      1,     1,     '*',   '*' ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,       1,     1 ],
+    [    2,      2,     1,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,       4,     1 ],
+    [    3,      3,     1,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,     '*',     0 ],
+    [    0,      0,     0,       9,     1 ],
   ]
   a._tv_in = tv_in
   a._tv_out = tv_out

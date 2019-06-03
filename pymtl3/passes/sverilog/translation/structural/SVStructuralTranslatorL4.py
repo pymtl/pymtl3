@@ -106,7 +106,7 @@ class SVStructuralTranslatorL4(
             c_n_dim+'_$'+str( idx ), ports ), xrange( n_dim[0] )
         ), [] )
 
-    n_dim = ifc_port_array_type[ 'n_dim' ]
+    n_dim = ifc_array_type[ 'n_dim' ]
     return \
       gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim, "", ports )
 

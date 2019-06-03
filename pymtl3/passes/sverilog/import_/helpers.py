@@ -36,7 +36,7 @@ def _gen_ref_write( lhs, rhs, nbits ):
 
 def _gen_ref_read( lhs, rhs, nbits ):
   if nbits <= 64:
-    return [ "{lhs} = {rhs}[0]".format( **locals() ) ]
+    return [ "{lhs} = Bits{nbits}({rhs}[0])".format( **locals() ) ]
   else:
     ret = []
     ITEM_BITWIDTH = 32
@@ -44,7 +44,8 @@ def _gen_ref_read( lhs, rhs, nbits ):
     for idx in xrange(num_assigns):
       l = ITEM_BITWIDTH*idx
       r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
-      ret.append("{lhs}[{l}:{r}] = {rhs}[{idx}]".format(**locals()))
+      _nbits = r - l
+      ret.append("{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])".format(**locals()))
     return ret
 
 def _is_of_port( rtype ):
@@ -226,21 +227,22 @@ def gen_signal_decl_py( rtype ):
   def gen_port_decl_py( ports ):
     symbols, decls = {}, []
     for id_, _port in ports:
-      if isinstance( _port, rt.Array ):
-        n_dim = _port.get_dim_sizes()
-        rhs = "{direction}( {dtype} )"
-        port = _port.get_sub_type()
-        _n_dim = copy.copy( n_dim )
-        _n_dim.reverse()
-        for length in _n_dim:
-          rhs = "[ " + rhs + (" for _ in xrange({length}) ]".format(**locals()))
-      else:
-        rhs = "{direction}( {dtype} )"
-        port = _port
-      direction = _get_direction( port )
-      dtype = gen_dtype_str( symbols, port.get_dtype() )
-      rhs = rhs.format( **locals() )
-      decls.append("s.{id_} = {rhs}".format(**locals()))
+      if id_ not in ['clk', 'reset']:
+        if isinstance( _port, rt.Array ):
+          n_dim = _port.get_dim_sizes()
+          rhs = "{direction}( {dtype} )"
+          port = _port.get_sub_type()
+          _n_dim = copy.copy( n_dim )
+          _n_dim.reverse()
+          for length in _n_dim:
+            rhs = "[ " + rhs + (" for _ in xrange({length}) ]".format(**locals()))
+        else:
+          rhs = "{direction}( {dtype} )"
+          port = _port
+        direction = _get_direction( port )
+        dtype = gen_dtype_str( symbols, port.get_dtype() )
+        rhs = rhs.format( **locals() )
+        decls.append("s.{id_} = {rhs}".format(**locals()))
     return symbols, decls
 
   def gen_ifc_decl_py( ifcs ):
@@ -323,7 +325,7 @@ def gen_signal_decl_py( rtype ):
   def gen_dtype_conns( id_py, id_v, dtype ):
     template = "s.connect( {py}, {v} )"
     if isinstance( dtype, rdt.Vector ):
-      py, v = "s."+id_py, "s.mangled__"+id_v
+      py, v = "s."+id_py, "s.mangled__"+_verilator_name( id_v )
       return [ template.format( **locals() ) ]
     elif isinstance( dtype, rdt.Struct ):
       ret = []
@@ -423,6 +425,7 @@ def gen_signal_decl_py( rtype ):
 
 def gen_wire_decl_py( name, wire ):
   """Return the PyMTL definition of `wire`."""
+  name = _verilator_name( name )
   nbits = wire.get_dtype().get_length()
   return "s.mangled__{name} = Wire( Bits{nbits} )".format(**locals())
 
@@ -435,6 +438,7 @@ def gen_comb_input( all_ports ):
   for py_name, port_rtype in all_ports:
     if port_rtype.get_direction() == 'input':
       v_name = _verilator_name( py_name )
+      py_name = _verilator_name( py_name )
       nbits = port_rtype.get_dtype().get_length()
       ret += _gen_ref_write( "s._ffi_m."+v_name, "s.mangled__"+py_name, nbits )
   return ret
@@ -448,6 +452,7 @@ def gen_comb_output( all_ports ):
   for py_name, port_rtype in all_ports:
     if port_rtype.get_direction() == 'output':
       v_name = _verilator_name( py_name )
+      py_name = _verilator_name( py_name )
       nbits = port_rtype.get_dtype().get_length()
       ret += _gen_ref_read( "s.mangled__"+py_name, "s._ffi_m."+v_name, nbits )
   return ret
@@ -460,6 +465,7 @@ def gen_constraints( all_ports ):
   ret = []
   template = "U( seq_upblk ) < {op}( {signal_name} ),"
   for py_name, port_rtype in all_ports:
+    py_name = _verilator_name( py_name )
     direction = port_rtype.get_direction()
     signal_name = "s.mangled__" + py_name
     if direction == 'input':
@@ -482,7 +488,7 @@ def gen_line_trace_py( all_ports ):
   template = 'lt += "{my_name} = {{}}, ".format({full_name})'
   for name, port in all_ports:
     my_name = name
-    full_name = 's.mangled__'+name
+    full_name = 's.mangled__'+_verilator_name(name)
     ret.append( template.format( **locals() ) )
   ret.append( 'return lt' )
   make_indent( ret, 2 )
@@ -496,8 +502,9 @@ def gen_internal_line_trace_py( all_ports ):
   """Return the line trace method body that shows all CFFI ports."""
   ret = [ 'lt = ""' ]
   template = \
-    "lt += '{my_name} = {{}}, '.format(full_vector(s._ffi_m.{my_name}))"
+    "lt += '{my_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, s._ffi_m.{my_name}))"
   for my_name, port in all_ports:
+    my_name = _verilator_name( my_name )
     ret.append( template.format(**locals()) )
   ret.append( 'return lt' )
   make_indent( ret, 2 )

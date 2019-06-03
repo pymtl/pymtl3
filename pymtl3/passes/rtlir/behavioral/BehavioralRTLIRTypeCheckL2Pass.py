@@ -151,9 +151,13 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
   def visit_UnaryOp( s, node ):
     if isinstance( node.op, bir.Not ):
-      if not rdt.Bool()( node.operand.Type.get_dtype() ):
+      dtype = node.operand.Type.get_dtype()
+      if not rdt.Bool()( dtype ):
         raise PyMTLTypeError( s.blk, node.ast,
-          'the operand of "unary-expr" cannot be cast to bool!' )
+          'the operand of "Logic-not" cannot be cast to bool!' )
+      if dtype.get_length() != 1:
+        raise PyMTLTypeError( s.blk, node.ast,
+          'the operand of "Logic-not" is not a single bit!' )
       node.Type = rt.Wire( rdt.Bool() )
     else:
       node.Type = node.operand.Type

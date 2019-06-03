@@ -30,9 +30,7 @@ def test_port_single( do_test ):
   a = A()
   a._ref_symbols = { 'Bits322' : mk_bits(322) }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = InPort( Bits322 )",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
@@ -48,15 +46,13 @@ def test_port_array( do_test ):
   a = A()
   a._ref_symbols = {}
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = [ InPort( Bits32 ) for _ in xrange(3) ]",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0], s.mangled__in__$0 )",
-    "s.connect( s.in_[1], s.mangled__in__$1 )",
-    "s.connect( s.in_[2], s.mangled__in__$2 )",
+    "s.connect( s.in_[0], s.mangled__in___05F__0240 )",
+    "s.connect( s.in_[1], s.mangled__in___05F__0241 )",
+    "s.connect( s.in_[2], s.mangled__in___05F__0242 )",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -68,18 +64,16 @@ def test_port_2d_array( do_test ):
   a = A()
   a._ref_symbols = {}
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = [ [ InPort( Bits32 ) for _ in xrange(2) ] for _ in xrange(3) ]",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0][0], s.mangled__in__$0_$0 )",
-    "s.connect( s.in_[0][1], s.mangled__in__$0_$1 )",
-    "s.connect( s.in_[1][0], s.mangled__in__$1_$0 )",
-    "s.connect( s.in_[1][1], s.mangled__in__$1_$1 )",
-    "s.connect( s.in_[2][0], s.mangled__in__$2_$0 )",
-    "s.connect( s.in_[2][1], s.mangled__in__$2_$1 )",
+    "s.connect( s.in_[0][0], s.mangled__in___05F__0240___0240 )",
+    "s.connect( s.in_[0][1], s.mangled__in___05F__0240___0241 )",
+    "s.connect( s.in_[1][0], s.mangled__in___05F__0241___0240 )",
+    "s.connect( s.in_[1][1], s.mangled__in___05F__0241___0241 )",
+    "s.connect( s.in_[2][0], s.mangled__in___05F__0242___0240 )",
+    "s.connect( s.in_[2][1], s.mangled__in___05F__0242___0241 )",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -95,14 +89,12 @@ def test_struct_port_single( do_test ):
   a = A()
   a._ref_symbols = { 'struct' : struct }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = InPort( struct )",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_.bar, s.mangled__in__$bar )",
-    "s.connect( s.in_.foo, s.mangled__in__$foo )",
+    "s.connect( s.in_.bar, s.mangled__in___05F__024bar )",
+    "s.connect( s.in_.foo, s.mangled__in___05F__024foo )",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -118,16 +110,14 @@ def test_struct_port_array( do_test ):
   a = A()
   a._ref_symbols = { 'struct' : struct }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = [ InPort( struct ) for _ in xrange(2) ]",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0].bar, s.mangled__in__$0_$bar )",
-    "s.connect( s.in_[0].foo, s.mangled__in__$0_$foo )",
-    "s.connect( s.in_[1].bar, s.mangled__in__$1_$bar )",
-    "s.connect( s.in_[1].foo, s.mangled__in__$1_$foo )",
+    "s.connect( s.in_[0].bar, s.mangled__in___05F__0240___024bar )",
+    "s.connect( s.in_[0].foo, s.mangled__in___05F__0240___024foo )",
+    "s.connect( s.in_[1].bar, s.mangled__in___05F__0241___024bar )",
+    "s.connect( s.in_[1].foo, s.mangled__in___05F__0241___024foo )",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -143,26 +133,24 @@ def test_packed_array_port_array( do_test ):
   a = A()
   a._ref_symbols = { 'struct' : struct }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = [ InPort( struct ) for _ in xrange(2) ]",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0].bar, s.mangled__in__$0_$bar )",
-    "s.connect( s.in_[0].foo[0][0], s.mangled__in__$0_$foo_$0_$0 )",
-    "s.connect( s.in_[0].foo[0][1], s.mangled__in__$0_$foo_$0_$1 )",
-    "s.connect( s.in_[0].foo[1][0], s.mangled__in__$0_$foo_$1_$0 )",
-    "s.connect( s.in_[0].foo[1][1], s.mangled__in__$0_$foo_$1_$1 )",
-    "s.connect( s.in_[0].foo[2][0], s.mangled__in__$0_$foo_$2_$0 )",
-    "s.connect( s.in_[0].foo[2][1], s.mangled__in__$0_$foo_$2_$1 )",
-    "s.connect( s.in_[1].bar, s.mangled__in__$1_$bar )",
-    "s.connect( s.in_[1].foo[0][0], s.mangled__in__$1_$foo_$0_$0 )",
-    "s.connect( s.in_[1].foo[0][1], s.mangled__in__$1_$foo_$0_$1 )",
-    "s.connect( s.in_[1].foo[1][0], s.mangled__in__$1_$foo_$1_$0 )",
-    "s.connect( s.in_[1].foo[1][1], s.mangled__in__$1_$foo_$1_$1 )",
-    "s.connect( s.in_[1].foo[2][0], s.mangled__in__$1_$foo_$2_$0 )",
-    "s.connect( s.in_[1].foo[2][1], s.mangled__in__$1_$foo_$2_$1 )",
+    "s.connect( s.in_[0].bar, s.mangled__in___05F__0240___024bar )",
+    "s.connect( s.in_[0].foo[0][0], s.mangled__in___05F__0240___024foo___0240___0240 )",
+    "s.connect( s.in_[0].foo[0][1], s.mangled__in___05F__0240___024foo___0240___0241 )",
+    "s.connect( s.in_[0].foo[1][0], s.mangled__in___05F__0240___024foo___0241___0240 )",
+    "s.connect( s.in_[0].foo[1][1], s.mangled__in___05F__0240___024foo___0241___0241 )",
+    "s.connect( s.in_[0].foo[2][0], s.mangled__in___05F__0240___024foo___0242___0240 )",
+    "s.connect( s.in_[0].foo[2][1], s.mangled__in___05F__0240___024foo___0242___0241 )",
+    "s.connect( s.in_[1].bar, s.mangled__in___05F__0241___024bar )",
+    "s.connect( s.in_[1].foo[0][0], s.mangled__in___05F__0241___024foo___0240___0240 )",
+    "s.connect( s.in_[1].foo[0][1], s.mangled__in___05F__0241___024foo___0240___0241 )",
+    "s.connect( s.in_[1].foo[1][0], s.mangled__in___05F__0241___024foo___0241___0240 )",
+    "s.connect( s.in_[1].foo[1][1], s.mangled__in___05F__0241___024foo___0241___0241 )",
+    "s.connect( s.in_[1].foo[2][0], s.mangled__in___05F__0241___024foo___0242___0240 )",
+    "s.connect( s.in_[1].foo[2][1], s.mangled__in___05F__0241___024foo___0242___0241 )",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -183,16 +171,14 @@ def test_nested_struct( do_test ):
   # refers to it!
   a._ref_symbols = { 'struct' : struct }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
     "s.in_ = [ InPort( struct ) for _ in xrange(2) ]",
-    "s.reset = InPort( Bits1 )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0].bar, s.mangled__in__$0_$bar )",
-    "s.connect( s.in_[0].inner.foo, s.mangled__in__$0_$inner_$foo )",
-    "s.connect( s.in_[1].bar, s.mangled__in__$1_$bar )",
-    "s.connect( s.in_[1].inner.foo, s.mangled__in__$1_$inner_$foo )",
+    "s.connect( s.in_[0].bar, s.mangled__in___05F__0240___024bar )",
+    "s.connect( s.in_[0].inner.foo, s.mangled__in___05F__0240___024inner___024foo )",
+    "s.connect( s.in_[1].bar, s.mangled__in___05F__0241___024bar )",
+    "s.connect( s.in_[1].inner.foo, s.mangled__in___05F__0241___024inner___024foo )",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -209,16 +195,14 @@ def test_interface( do_test ):
   a = A()
   a._ref_symbols = { 'Ifc' : Ifc }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
-    "s.reset = InPort( Bits1 )",
     "s.ifc = Ifc()"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
     "s.connect( s.reset, s.mangled__reset )",
-    "s.connect( s.ifc.msg, s.mangled__ifc_$msg )",
-    "s.connect( s.ifc.rdy, s.mangled__ifc_$rdy )",
-    "s.connect( s.ifc.val, s.mangled__ifc_$val )",
+    "s.connect( s.ifc.msg, s.mangled__ifc___024msg )",
+    "s.connect( s.ifc.rdy, s.mangled__ifc___024rdy )",
+    "s.connect( s.ifc.val, s.mangled__ifc___024val )",
   ]
   do_test( a )
 
@@ -236,16 +220,14 @@ def test_interface_parameter( do_test ):
   a = A()
   a._ref_symbols = { 'Ifc' : Ifc }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
-    "s.reset = InPort( Bits1 )",
     "s.ifc = Ifc( Bits32, 1, Bits1( 1 ) )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
     "s.connect( s.reset, s.mangled__reset )",
-    "s.connect( s.ifc.msg, s.mangled__ifc_$msg )",
-    "s.connect( s.ifc.rdy, s.mangled__ifc_$rdy )",
-    "s.connect( s.ifc.val, s.mangled__ifc_$val )",
+    "s.connect( s.ifc.msg, s.mangled__ifc___024msg )",
+    "s.connect( s.ifc.rdy, s.mangled__ifc___024rdy )",
+    "s.connect( s.ifc.val, s.mangled__ifc___024val )",
   ]
   do_test( a )
 
@@ -264,16 +246,14 @@ def test_interface_parameter_long_vector( do_test ):
   a = A()
   a._ref_symbols = { 'Ifc' : Ifc, 'Bits322' : mk_bits(322) }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
-    "s.reset = InPort( Bits1 )",
     "s.ifc = Ifc( Bits322, 1, Bits322( 1 ) )"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
     "s.connect( s.reset, s.mangled__reset )",
-    "s.connect( s.ifc.msg, s.mangled__ifc_$msg )",
-    "s.connect( s.ifc.rdy, s.mangled__ifc_$rdy )",
-    "s.connect( s.ifc.val, s.mangled__ifc_$val )",
+    "s.connect( s.ifc.msg, s.mangled__ifc___024msg )",
+    "s.connect( s.ifc.rdy, s.mangled__ifc___024rdy )",
+    "s.connect( s.ifc.val, s.mangled__ifc___024val )",
   ]
   do_test( a )
 
@@ -289,19 +269,17 @@ def test_interface_array( do_test ):
   a = A()
   a._ref_symbols = { 'Ifc' : Ifc }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
-    "s.reset = InPort( Bits1 )",
     "s.ifc = [ Ifc() for _ in xrange(2) ]"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
     "s.connect( s.reset, s.mangled__reset )",
-    "s.connect( s.ifc[0].msg, s.mangled__ifc_$0_$msg )",
-    "s.connect( s.ifc[0].rdy, s.mangled__ifc_$0_$rdy )",
-    "s.connect( s.ifc[0].val, s.mangled__ifc_$0_$val )",
-    "s.connect( s.ifc[1].msg, s.mangled__ifc_$1_$msg )",
-    "s.connect( s.ifc[1].rdy, s.mangled__ifc_$1_$rdy )",
-    "s.connect( s.ifc[1].val, s.mangled__ifc_$1_$val )"
+    "s.connect( s.ifc[0].msg, s.mangled__ifc___0240___024msg )",
+    "s.connect( s.ifc[0].rdy, s.mangled__ifc___0240___024rdy )",
+    "s.connect( s.ifc[0].val, s.mangled__ifc___0240___024val )",
+    "s.connect( s.ifc[1].msg, s.mangled__ifc___0241___024msg )",
+    "s.connect( s.ifc[1].rdy, s.mangled__ifc___0241___024rdy )",
+    "s.connect( s.ifc[1].val, s.mangled__ifc___0241___024val )"
   ]
   do_test( a )
 
@@ -324,23 +302,21 @@ def test_nested_interface( do_test ):
   # to it!
   a._ref_symbols = { 'Ifc' : Ifc }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
-    "s.reset = InPort( Bits1 )",
     "s.ifc = [ Ifc() for _ in xrange(2) ]"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
     "s.connect( s.reset, s.mangled__reset )",
-    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc_$0_$ctrl_bar )",
-    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc_$0_$ctrl_foo )",
-    "s.connect( s.ifc[0].valrdy_ifc.msg, s.mangled__ifc_$0_$valrdy_ifc_$msg )",
-    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc_$0_$valrdy_ifc_$rdy )",
-    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc_$0_$valrdy_ifc_$val )",
-    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc_$1_$ctrl_bar )",
-    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc_$1_$ctrl_foo )",
-    "s.connect( s.ifc[1].valrdy_ifc.msg, s.mangled__ifc_$1_$valrdy_ifc_$msg )",
-    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc_$1_$valrdy_ifc_$rdy )",
-    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc_$1_$valrdy_ifc_$val )",
+    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc___0240___024ctrl_bar )",
+    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc___0240___024ctrl_foo )",
+    "s.connect( s.ifc[0].valrdy_ifc.msg, s.mangled__ifc___0240___024valrdy_ifc___024msg )",
+    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc___0240___024valrdy_ifc___024rdy )",
+    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc___0240___024valrdy_ifc___024val )",
+    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc___0241___024ctrl_bar )",
+    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc___0241___024ctrl_foo )",
+    "s.connect( s.ifc[1].valrdy_ifc.msg, s.mangled__ifc___0241___024valrdy_ifc___024msg )",
+    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc___0241___024valrdy_ifc___024rdy )",
+    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc___0241___024valrdy_ifc___024val )",
   ]
   do_test( a )
 
@@ -363,24 +339,22 @@ def test_nested_interface_port_array( do_test ):
   # to it!
   a._ref_symbols = { 'Ifc' : Ifc }
   a._ref_decls = [
-    "s.clk = InPort( Bits1 )",
-    "s.reset = InPort( Bits1 )",
     "s.ifc = [ Ifc() for _ in xrange(2) ]"
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk )",
     "s.connect( s.reset, s.mangled__reset )",
-    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc_$0_$ctrl_bar )",
-    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc_$0_$ctrl_foo )",
-    "s.connect( s.ifc[0].valrdy_ifc.msg[0], s.mangled__ifc_$0_$valrdy_ifc_$msg_$0 )",
-    "s.connect( s.ifc[0].valrdy_ifc.msg[1], s.mangled__ifc_$0_$valrdy_ifc_$msg_$1 )",
-    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc_$0_$valrdy_ifc_$rdy )",
-    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc_$0_$valrdy_ifc_$val )",
-    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc_$1_$ctrl_bar )",
-    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc_$1_$ctrl_foo )",
-    "s.connect( s.ifc[1].valrdy_ifc.msg[0], s.mangled__ifc_$1_$valrdy_ifc_$msg_$0 )",
-    "s.connect( s.ifc[1].valrdy_ifc.msg[1], s.mangled__ifc_$1_$valrdy_ifc_$msg_$1 )",
-    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc_$1_$valrdy_ifc_$rdy )",
-    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc_$1_$valrdy_ifc_$val )",
+    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc___0240___024ctrl_bar )",
+    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc___0240___024ctrl_foo )",
+    "s.connect( s.ifc[0].valrdy_ifc.msg[0], s.mangled__ifc___0240___024valrdy_ifc___024msg___0240 )",
+    "s.connect( s.ifc[0].valrdy_ifc.msg[1], s.mangled__ifc___0240___024valrdy_ifc___024msg___0241 )",
+    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc___0240___024valrdy_ifc___024rdy )",
+    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc___0240___024valrdy_ifc___024val )",
+    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc___0241___024ctrl_bar )",
+    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc___0241___024ctrl_foo )",
+    "s.connect( s.ifc[1].valrdy_ifc.msg[0], s.mangled__ifc___0241___024valrdy_ifc___024msg___0240 )",
+    "s.connect( s.ifc[1].valrdy_ifc.msg[1], s.mangled__ifc___0241___024valrdy_ifc___024msg___0241 )",
+    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc___0241___024valrdy_ifc___024rdy )",
+    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc___0241___024valrdy_ifc___024val )",
   ]
   do_test( a )

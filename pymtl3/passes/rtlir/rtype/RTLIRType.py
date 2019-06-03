@@ -490,12 +490,14 @@ def _handle_Interface( obj ):
   properties = {}
   collected_objs = collect_objs( obj, object, True )
   for _id, _obj in collected_objs:
-    if not _is_rtlir_ifc_convertible( _obj ):
-      assert False, "RTLIR Interface type can only include ports and interfaces !"
-    _obj_type = get_rtlir( _obj )
-    properties[ _id ] = _obj_type
-    if isinstance( _obj_type, Array ):
-      _add_packed_instances( _id, _obj_type, properties )
+    # TODO: warn the user about a silently dropped attribute?
+    # assert False, \
+      # "non-port-or-interface {} in interface {}!".format( _obj, obj )
+    if _is_rtlir_ifc_convertible( _obj ):
+      _obj_type = get_rtlir( _obj )
+      properties[ _id ] = _obj_type
+      if isinstance( _obj_type, Array ):
+        _add_packed_instances( _id, _obj_type, properties )
   return InterfaceView( obj.__class__.__name__, properties, obj )
 
 def _handle_Component( obj ):
@@ -503,6 +505,7 @@ def _handle_Component( obj ):
   collected_objs = collect_objs( obj, object, True )
   for _id, _obj in collected_objs:
     # Untranslatable attributes will be ignored
+    # TODO: warn the user about a silently dropped attribute?
     if is_rtlir_convertible( _obj ):
       _obj_type = get_rtlir( _obj )
       properties[ _id ] = _obj_type

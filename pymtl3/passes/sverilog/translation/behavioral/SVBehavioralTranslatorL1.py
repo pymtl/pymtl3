@@ -234,7 +234,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_SizeCast( s, node ):
     nbits = node.nbits
     value = s.visit( node.value )
-    return "{nbits}'d{value}".format( **locals() )
+    return "{nbits}'( {value} )".format( **locals() )
 
   #-----------------------------------------------------------------------
   # visit_StructInst
