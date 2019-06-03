@@ -14,7 +14,7 @@ from copy import deepcopy
 from pymtl3.datatypes.bits_import import Bits4, Bits5, Bits8, mk_bits
 from pymtl3.datatypes.BitStruct import BitStruct, mk_bit_struct
 from pymtl3.dsl import Component, InPort, OutPort
-from pymtl3.passes.PassGroups import SimpleSim
+from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
 
 # Manually created bit struct
@@ -179,7 +179,8 @@ def test_component():
         s.out_pt = s.in_.pt1
 
   dut = A()
-  dut.apply( SimpleSim )
+  dut.elaborate()
+  dut.apply( simple_sim_pass )
   dut.in_ = NestedSimple( StaticPoint(Bits4(1),Bits4(2)), StaticPoint(Bits4(3),Bits4(4)) )
   dut.tick()
   assert dut.out == NestedSimple( StaticPoint(Bits4(2),Bits4(1)), StaticPoint(Bits4(4),Bits4(3)) )

@@ -12,7 +12,8 @@ from pymtl3.datatypes.bits_import import Bits4, Bits8
 from pymtl3.dsl.Component import Component
 from pymtl3.dsl.Connectable import InPort, OutPort
 from pymtl3.dsl.NamedObject import NamedObject
-from pymtl3.passes.PassGroups import SimpleSim
+
+from .sim_utils import simple_sim_pass
 
 
 class Animal( NamedObject ):
@@ -158,7 +159,8 @@ def test_component():
 
   A = Incr()
   A.set_param( "top.construct", DataType=Bits8, incr_value=2 )
-  A.apply( SimpleSim )
+  A.elaborate()
+  A.apply( simple_sim_pass )
   A.in_ = 1
   A.tick()
   print( "A.out==", A.out )
@@ -168,7 +170,8 @@ def test_component():
   B.set_param( "top.construct", DataType=Bits8, num_incrs=3 )
   B.set_param( "top.incrs*.construct", incr_value=3 )
   B.set_param( "top.incrs[2].construct", incr_value=5 )
-  B.apply( SimpleSim )
+  B.elaborate()
+  B.apply( simple_sim_pass )
   B.in_[0] = 1
   B.in_[1] = 2
   B.in_[2] = 3
