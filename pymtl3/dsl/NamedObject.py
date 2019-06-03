@@ -21,6 +21,7 @@ Date   : Nov 3, 2018
 from __future__ import absolute_import, division, print_function
 
 import re
+import warnings
 
 from .errors import NotElaboratedError
 
@@ -306,8 +307,8 @@ class NamedObject(object):
   def _elaborate_construct( s ):
 
     if s._dsl.constructed:
-      print("Don't elaborate the same model twice. \
-             Use APIs to mutate the model.")
+      warnings.warn( "Don't elaborate the same model twice. "
+                     "Use APIs to mutate the model." )
       return
 
     # Initialize the top level
