@@ -53,11 +53,12 @@ class Vector( BaseRTLIRDataType ):
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
-  def __init__( s, name, properties, packed_order ):
+  def __init__( s, name, properties, packed_order, cls = None ):
     assert len( packed_order ) > 0, 'packed_order is empty!'
     s.name = name
     s.properties = properties
     s.packed_order = packed_order
+    s.cls = cls
 
   def __eq__( s, u ):
     return isinstance(u, Struct) and s.name == u.name
@@ -67,6 +68,9 @@ class Struct( BaseRTLIRDataType ):
 
   def get_name( s ):
     return s.name
+
+  def get_class( s ):
+    return s.cls
 
   def get_pack_order( s ):
     return s.packed_order
@@ -222,7 +226,7 @@ def _get_rtlir_dtype_struct( obj ):
         '{} is not an attirubte of struct {}!'.format( field_name, cls.__name__ )
       properties.append( ( field_name, all_properties[ field_name ] ) )
       packed_order.append( field_name )
-    return Struct(cls.__name__, dict(properties), packed_order)
+    return Struct(cls.__name__, dict(properties), packed_order, cls)
 
   else:
     assert False, str(obj) + ' is not allowed as a field of struct!'

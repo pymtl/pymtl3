@@ -184,11 +184,19 @@ class Const( Signal ):
 
 class InterfaceView( BaseRTLIRType ):
   """RTLIR instance type for a view of an interface."""
-  def __init__( s, name, properties, unpacked = False ):
+  def __init__( s, name, properties, obj = None, unpacked = False ):
     s.name = name
-    s.interface = None
     s.properties = properties
+    s.obj = obj
+    s.cls = obj.__class__
     s.unpacked = unpacked
+
+    if obj is not None:
+      try:
+        s.args = obj._dsl.args
+        s.kwargs = obj._dsl.kwargs
+      except AttributeError:
+        assert False, "interface object {} is not constructed!".format( s.obj )
 
     # Sanity check
     for name, rtype in properties.iteritems():
@@ -202,9 +210,6 @@ class InterfaceView( BaseRTLIRType ):
   def __repr__( s ):
     return 'InterfaceView {}'.format( s.name )
 
-  def _set_interface( s, interface ):
-    s.interface = interface
-
   def _is_unpacked( s ):
     return s.unpacked
 
@@ -217,10 +222,14 @@ class InterfaceView( BaseRTLIRType ):
   def get_name( s ):
     return s.name
 
-  def get_interface( s ):
-    if s.interface is None:
-      assert False, 'internal error: {} has no interface!'.format( s )
-    return s.interface
+  def get_class( s ):
+    return s.cls
+
+  def get_args( s ):
+    if s.obj is not None:
+      return ( s.args, s.kwargs )
+    else:
+      return ( [], {} )
 
   def get_input_ports( s ):
     return sorted(filter(
@@ -487,7 +496,7 @@ def _handle_Interface( obj ):
     properties[ _id ] = _obj_type
     if isinstance( _obj_type, Array ):
       _add_packed_instances( _id, _obj_type, properties )
-  return InterfaceView( obj.__class__.__name__, properties )
+  return InterfaceView( obj.__class__.__name__, properties, obj )
 
 def _handle_Component( obj ):
   properties = {}
