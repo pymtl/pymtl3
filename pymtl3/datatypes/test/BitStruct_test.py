@@ -14,8 +14,8 @@ from copy import deepcopy
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.PassGroups import SimpleSim
 
-from .bits_import import Bits4, Bits5, mk_bits
-from .BitStruct import mk_bit_struct
+from pymtl3.datatypes.bits_import import Bits4, Bits5, mk_bits
+from pymtl3.datatypes.BitStruct import BitStruct, mk_bit_struct
 
 StaticPoint = mk_bit_struct( "BasePoint", [
     ( 'x', Bits4 ),
