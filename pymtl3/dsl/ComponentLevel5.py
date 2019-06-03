@@ -132,10 +132,10 @@ class ComponentLevel5( ComponentLevel4 ):
   # Override
   def _elaborate_collect_all_vars( s ):
     for c in s._dsl.all_named_objects:
-
       if isinstance( c, Signal ):
         s._dsl.all_signals.add( c )
       elif isinstance( c, ComponentLevel1 ):
+        s._dsl.all_components.add( c )
         s._collect_vars( c )
       # Added here
       elif isinstance( c, MethodPort ):

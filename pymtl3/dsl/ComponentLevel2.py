@@ -482,6 +482,11 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.all_upblk_writes = {}
     s._dsl.all_upblk_calls  = {}
 
+    # Like all_components in level1, although this all_signals is a subset
+    # of all_named_objects in NamedObject class, I still maintain it here
+    # because we want to avoid redundant isinstance check. I'm going to pay the
+    # extra cost of removing from both all_named_objects and all_signals
+    # when I delete a signal
     s._dsl.all_signals = set()
 
   # Override
@@ -490,6 +495,7 @@ class ComponentLevel2( ComponentLevel1 ):
       if isinstance( c, Signal ):
         s._dsl.all_signals.add( c )
       elif isinstance( c, ComponentLevel1 ):
+        s._dsl.all_components.add( c )
         s._collect_vars( c )
 
   # Override
@@ -498,7 +504,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._elaborate_construct()
 
     # First elaborate all functions to spawn more named objects
-    for c in s._collect_all( lambda s: isinstance( s, ComponentLevel2 ) ):
+    for c in s._collect_all( [ lambda s: isinstance( s, ComponentLevel2 ) ] )[0]:
       c._elaborate_read_write_func()
 
     s._elaborate_collect_and_mark_all_named_objects()

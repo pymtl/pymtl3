@@ -113,9 +113,17 @@ class ComponentLevel1( NamedObject ):
     s._dsl.all_upblk_hostobj = {}
     s._dsl.all_U_U_constraints = set()
 
+    # Although this all_components is a subset of all_named_objects in
+    # NamedObject class, I still maintain it here because we want to avoid
+    # redundant isinstance check. This being said, I'm going to pay the
+    # extra cost of removing from both all_named_objects and this
+    # all_components when I delete a component
+    s._dsl.all_components = set()
+
   def _elaborate_collect_all_vars( s ):
     for c in s._dsl.all_named_objects:
       if isinstance( c, ComponentLevel1 ):
+        s._dsl.all_components.add( c )
         s._collect_vars( c )
 
   def elaborate( s ):

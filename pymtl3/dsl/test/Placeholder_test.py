@@ -7,8 +7,8 @@ Author : Shunning Jiang
 Date   : June 1, 2019
 """
 from pymtl3.datatypes import *
-from pymtl3.dsl import InPort, OutPort, Placeholder, Component, WR, U
-from pymtl3.dsl.errors import InvalidPlaceholderError
+from pymtl3.dsl import InPort, OutPort, Wire, Placeholder, Component, WR, U
+from pymtl3.dsl.errors import InvalidPlaceholderError, LeftoverPlaceholderError
 from sim_utils import simple_sim_pass
 
 def test_placeholder_no_upblk():
@@ -84,19 +84,10 @@ class Foo_wrap( Component ):
   def construct( s, nbits=0 ):
     s.in_ = InPort ( mk_bits(nbits) )
     s.out = OutPort( mk_bits(nbits) )
+    s.w   = Wire( mk_bits(nbits) )
+    s.connect( s.w, s.out )
 
-    s.inner = Foo( 32 )( in_ = s.in_, out = s.out )
-
-  def line_trace( s ):
-    return s.inner.line_trace()
-
-class FooStruct_wrap( Component ):
-  def construct( s ):
-    s.in_ = InPort ( Bits16 )
-    s.out = OutPort( Bits32 )
-
-    s.inner = FooStruct( 16 )( in_ = s.in_ )
-    s.connect( s.inner.out.b, s.out )
+    s.inner = Foo( 32 )( in_ = s.in_, out = s.w )
 
   def line_trace( s ):
     return s.inner.line_trace()
@@ -110,43 +101,67 @@ def test_dumb_foo_cannot_simulate():
   foo = Foo( 32 )
   foo.elaborate()
   # should elaborate just fine ..
-  simple_sim_pass( foo )
+  try:
+    simple_sim_pass( foo )
+  except LeftoverPlaceholderError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown LeftoverPlaceholderError.")
 
 def test_foo_as_writer():
-  foo = Foo( 32 )
   foo_wrap = Foo_wrap( 32 )
 
   foo_wrap.elaborate()
-
-def test_foo_as_writer():
-  foo = Foo( 32 )
-  foo_wrap = Foo_wrap( 32 )
-
-  foo_wrap.elaborate()
+  try:
+    simple_sim_pass( foo_wrap )
+  except LeftoverPlaceholderError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown LeftoverPlaceholderError.")
 
 def test_foo_field_as_writer():
-  foo = Foo( 32 )
+
+  class FooStruct_wrap( Component ):
+    def construct( s ):
+      s.in_ = InPort ( Bits16 )
+      s.out = OutPort( Bits32 )
+
+      s.inner = FooStruct( 16 )( in_ = s.in_ )
+      s.connect( s.inner.out.b, s.out )
+
+    def line_trace( s ):
+      return s.inner.line_trace()
+
   foo_wrap = FooStruct_wrap()
-
   foo_wrap.elaborate()
-
-def test_foo_field_as_writer():
-  foo = Foo( 32 )
-  foo_wrap = FooStruct_wrap()
-
-  foo_wrap.elaborate()
-def test_foo_delete_then_add():
-  foo = Foo( 32 )
-  foo_wrap = Foo_wrap( 32 )
-
-  foo_wrap.elaborate()
-  foo_wrap.replace_component( foo_wrap.inner, Real() )
-  connections = foo_wrap.delete_component( foo_wrap.inner )
-  foo_wrap.add_component( foo_wrap, "inner" , Real(), reconnect=connections )
+  try:
+    simple_sim_pass( foo_wrap )
+  except LeftoverPlaceholderError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown LeftoverPlaceholderError.")
 
 def test_foo_replaced_by_real():
-  foo = Foo( 32 )
   foo_wrap = Foo_wrap( 32 )
 
   foo_wrap.elaborate()
-  foo_wrap.replace_component( foo_wrap.inner, Real() )
+  foo_wrap.replace_placeholder( foo_wrap.inner, Real )
+
+  simple_sim_pass( foo_wrap )
+
+def test_list_of_foo_replaced_by_real():
+  class Foo_list_wrap( Component ):
+    def construct( s, nbits=0 ):
+      s.in_ = InPort ( mk_bits(nbits) )
+      s.out = [ OutPort( mk_bits(nbits) ) for i in range(5) ]
+
+      s.inner = [ Foo( 32 )( in_ = s.in_, out = s.out[i] ) for i in range(5) ]
+
+    def line_trace( s ):
+      return s.inner.line_trace()
+  foo_wrap = Foo_list_wrap( 32 )
+
+  foo_wrap.elaborate()
+  foo_wrap.replace_placeholder( foo_wrap.inner[0], Real )
+
+  simple_sim_pass( foo_wrap )

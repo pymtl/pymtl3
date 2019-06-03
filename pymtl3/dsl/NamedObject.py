@@ -221,6 +221,11 @@ class NamedObject(object):
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
+
+            # store the name/indices
+            u._dsl._my_name     = name
+            u._dsl._my_indices  = indices
+
             u._construct()
           # except AttributeError as e:
           #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
@@ -237,15 +242,17 @@ class NamedObject(object):
 
     super( NamedObject, s ).__setattr__( name, obj )
 
-  def _collect_all( s, filt=lambda x: isinstance( x, NamedObject ) ):
-    ret = set()
+  # It is possible to take multiple filters
+  def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
+    ret = [ set() for _ in filt ]
     stack = [s]
     while stack:
       u = stack.pop()
       if   isinstance( u, NamedObject ):
 
-        if filt( u ): # Check if m satisfies the filter
-          ret.add( u )
+        for i in range( len(filt) ):
+          if filt[i]( u ): # Check if m satisfies the filter
+            ret[i].add( u )
 
         for name, obj in u.__dict__.iteritems():
 
@@ -337,7 +344,7 @@ class NamedObject(object):
     del NamedObject.__setattr__
 
   def _elaborate_collect_and_mark_all_named_objects( s ):
-    s._dsl.all_named_objects = s._collect_all()
+    s._dsl.all_named_objects = s._collect_all()[0]
     for c in s._dsl.all_named_objects:
       c._dsl.elaborate_top = s
 

@@ -266,7 +266,7 @@ class ComponentLevel3( ComponentLevel2 ):
     pred    = {} # detect cycle that has >=3 nodes
     for obj in signal_list:
       # If obj has adjacent signals
-      if adjacency[obj] and obj not in visited:
+      if obj in adjacency and obj not in visited:
         net = set()
         Q   = deque( [ obj ] )
         while Q:
@@ -279,7 +279,6 @@ class ComponentLevel3( ComponentLevel2 ):
               Q.append( v )
             elif v is not pred[u]:
               raise InvalidConnectionError(repr(v)+" is in a connection loop.")
-        assert len(net) > 1, "what the hell?"
         nets.append( net )
     return nets
 
