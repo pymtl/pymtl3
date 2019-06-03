@@ -160,19 +160,55 @@ def test_foo_replaced_by_real():
   print(foo_wrap.line_trace())
   assert foo_wrap.out == 6
 
-def test_list_of_foo_replaced_by_real():
+def test_list_of_foo_replaced_by_different_real():
+
+  class Foo( Placeholder, Component ):
+    def construct( s, shamt=1 ):
+      s.in_ = InPort ( Bits32 )
+      s.out = OutPort( Bits32 )
+
+      # Nothing here
+
+    def line_trace( s ):
+      return "{}>{}".format( s.in_, s.out )
+
+  class Real( Component ):
+    def construct( s, shamt=1 ):
+      s.in_ = InPort ( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def up_x2():
+        s.out = s.in_ << shamt
+
+    def line_trace( s ):
+      return "{}>{}".format( s.in_, s.out )
+
   class Foo_list_wrap( Component ):
     def construct( s, nbits=0 ):
       s.in_ = InPort ( mk_bits(nbits) )
       s.out = [ OutPort( mk_bits(nbits) ) for i in range(5) ]
 
-      s.inner = [ Foo( 32 )( in_ = s.in_, out = s.out[i] ) for i in range(5) ]
+      s.inner = [ Foo( i )( in_ = s.in_, out = s.out[i] ) for i in range(5) ]
 
     def line_trace( s ):
-      return s.inner.line_trace()
+      return "|".join( [ x.line_trace() for x in s.inner ] )
+
   foo_wrap = Foo_list_wrap( 32 )
 
   foo_wrap.elaborate()
+  foo_wrap.replace_placeholder( foo_wrap.inner[2], Real )
+  foo_wrap.replace_placeholder( foo_wrap.inner[1], Real )
+  foo_wrap.replace_placeholder( foo_wrap.inner[4], Real )
+  foo_wrap.replace_placeholder( foo_wrap.inner[3], Real )
   foo_wrap.replace_placeholder( foo_wrap.inner[0], Real )
 
   simple_sim_pass( foo_wrap )
+
+  print()
+  foo_wrap.in_ = Bits32(16)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+
+  foo_wrap.in_ = Bits32(4)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())

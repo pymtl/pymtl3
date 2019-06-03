@@ -91,6 +91,112 @@ class Component( ComponentLevel7 ):
       s._dsl.all_method_nets = s._resolve_method_connections()
       s._dsl._has_pending_connections = False
 
+  # Override
+  def _add_component( s, parent, name, indices, obj, provided_connections=[] ):
+    try:
+      top = s._dsl.elaborate_top
+    except AttributeError:
+      raise NotElaboratedError()
+
+    # Check if we are adding obj to a list of to a component
+    if not indices:
+      # If we are adding field s.x, we simply reuse the setattr hook
+      assert not hasattr( s, name )
+      NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+      setattr( parent, name, obj )
+      del NamedObject.__setattr__
+
+    else:
+      assert hasattr( s, name )
+
+      # We use the indices to get the list parent and set the element
+
+      list_parent = getattr( parent, name )
+      i = 0
+      while i < len(indices) - 1:
+        list_parent = list_parent[ indices[i] ]
+        i += 1
+      list_parent[ indices[i] ] = obj
+
+      # NOTE THAT we cannot use setattr hook for the top level metadata
+      # because setting an element in the list doesn't call setattr.
+      # As a result we have to copy some code from setattr hook and do it
+      # manually here for the top level
+
+      obj._dsl.parent_obj = parent
+      obj._dsl.level      = parent._dsl.level + 1
+      obj._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
+                                                     for x in indices ] )
+      # FIXME properly implement param_tree
+      # Iterate through the param_tree and update u
+      if parent._dsl.param_tree is not None:
+        if parent._dsl.param_tree.children is not None:
+          for comp_name, node in parent._dsl.param_tree.children.iteritems():
+            if comp_name == u_name:
+              # Lazily create the param tree
+              if obj._dsl.param_tree is None:
+                obj._dsl.param_tree = ParamTreeNode()
+              obj._dsl.param_tree.merge( node )
+
+            elif node.compiled_re is not None:
+              if node.compiled_re.match( u_name ):
+                # Lazily create the param tree
+                if obj._dsl.param_tree is None:
+                  obj._dsl.param_tree = ParamTreeNode()
+                obj._dsl.param_tree.merge( node )
+
+      obj._dsl.full_name = ( parent._dsl.full_name + "." + u_name )
+
+      # store the name/indices
+      obj._dsl._my_name     = name
+      obj._dsl._my_indices  = indices
+
+      NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+      obj._construct()
+      del NamedObject.__setattr__
+
+    top = s._dsl.elaborate_top
+
+    added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
+
+    # First elaborate all functions to spawn more named objects
+    for c in added_components:
+      c._dsl.elaborate_top = top
+      c._elaborate_read_write_func()
+
+    added_signals, added_method_ports = \
+      obj._collect_all( [ lambda x: isinstance( x, Signal ), \
+                          lambda x: isinstance( x, MethodPort ) ] )
+
+    top._dsl.all_components    |= added_components
+    top._dsl.all_signals       |= added_signals
+    top._dsl.all_method_ports  |= added_method_ports
+
+    top._dsl.all_named_objects |= added_components
+    top._dsl.all_named_objects |= added_signals
+    top._dsl.all_named_objects |= added_method_ports
+
+    for c in added_components:
+      top._collect_vars( c )
+
+    for c in added_signals | added_method_ports:
+      c._dsl.elaborate_top = top
+
+    # assert False
+    # Lazy -- to avoid resolve_connection call which takes non-trivial
+    # time upon adding any connect, I just mark it here. Please make sure
+    # to call s.get_all_value_nets() to flush all pending connections
+    # whenever you want to get the nets
+    connection_pairs = []
+    for (x, y) in provided_connections:
+      # top.add_connections( x, eval(y) )
+      connection_pairs.append( x )
+      connection_pairs.append( eval(y) )
+
+    top.add_connections( *connection_pairs )
+
+    s._dsl._has_pending_connections = True
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
@@ -311,22 +417,30 @@ class Component( ComponentLevel7 ):
     assert isinstance( foo, Placeholder ), foo.__class__
     assert foo._dsl.elaborate_top is top
 
-    # First delete the placeholder
-    parent = foo.get_parent_object()
-    # print(foo._dsl._my_name, foo._dsl._my_indices)
-
-    # TODO handle s.x[0] = SomePlaceholder()
-    assert not foo._dsl._my_indices
-
     # First make sure we flush pending connections
     nets = top.get_all_value_nets()
+
+    # Delete the placeholder from parent. We need to see if we are
+    # dealing with a list parent or a component parent.
+
+    parent = foo.get_parent_object()
+
+    if foo._dsl._my_indices:
+      # We use the saved indices to get the list parent and set the index
+      my_indices = foo._dsl._my_indices
+      list_parent = getattr( parent, foo._dsl._my_name )
+      i = 0
+      while i < len(my_indices) - 1:
+        list_parent = list_parent[ my_indices[i] ]
+        i += 1
+      list_parent[ my_indices[i] ] = None
+    else:
+      delattr( parent, foo._dsl.my_name )
 
     # Note that when we are deleting a placeholder foo, there is no other
     # components inside foo, nor constraints or update blocks. As a result
     # we don't need to uncollect vars. We just need to break the nets and
     # save the connections.
-
-    top._dsl.all_named_objects.remove( foo )
 
     removed_components, removed_signals, removed_method_ports = \
       foo._collect_all( [ lambda x: isinstance( x, Component ), \
@@ -387,8 +501,6 @@ class Component( ComponentLevel7 ):
 
     # TODO break method nets too
 
-    delattr( parent, foo._dsl.my_name )
-
     # FIXME the last task is to fix connect_order
 
     return saved_connections
@@ -396,70 +508,22 @@ class Component( ComponentLevel7 ):
   # Override
   # FIXME currently only support s.x = y. Should support s.x[10] = y
   def add_component_by_name( s, name, obj, provided_connections=[] ):
-    try:
-      top = s._dsl.elaborate_top
-    except AttributeError:
-      raise NotElaboratedError()
-
-    assert not hasattr( s, name )
-
-    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    setattr( s, name, obj )
-    del NamedObject.__setattr__
-
-    top = s._dsl.elaborate_top
-
-    added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
-
-    # First elaborate all functions to spawn more named objects
-    for c in added_components:
-      c._dsl.elaborate_top = top
-      c._elaborate_read_write_func()
-
-    added_signals, added_method_ports = \
-      obj._collect_all( [ lambda x: isinstance( x, Signal ), \
-                          lambda x: isinstance( x, MethodPort ) ] )
-
-    top._dsl.all_components    |= added_components
-    top._dsl.all_signals       |= added_signals
-    top._dsl.all_method_ports  |= added_method_ports
-
-    top._dsl.all_named_objects |= added_components
-    top._dsl.all_named_objects |= added_signals
-    top._dsl.all_named_objects |= added_method_ports
-
-    for c in added_components:
-      top._collect_vars( c )
-
-    for c in added_signals | added_method_ports:
-      c._dsl.elaborate_top = top
-
-    # assert False
-    # Lazy -- to avoid resolve_connection call which takes non-trivial
-    # time upon adding any connect, I just mark it here. Please make sure
-    # to call s.get_all_value_nets() to flush all pending connections
-    # whenever you want to get the nets
-    connection_pairs = []
-    for (x, y) in provided_connections:
-      # top.add_connections( x, eval(y) )
-      connection_pairs.append( x )
-      connection_pairs.append( eval(y) )
-
-    top.add_connections( *connection_pairs )
-
-    s._dsl._has_pending_connections = True
+    raise NotImplementedError()
 
   def replace_placeholder( top, foo, cls, check=True ):
     top._check_called_at_elaborate_top( "replace_placeholder" )
 
     parent = foo.get_parent_object()
+    foo_name    = foo._dsl._my_name
+    foo_indices = foo._dsl._my_indices
+
     saved_connections = top.delete_placeholder( foo, cls )
 
     new_obj = cls( *foo._dsl.args, **foo._dsl.kwargs )
 
     # FIXME also merge the parameter from parameter tree
 
-    parent.add_component_by_name( foo._dsl.my_name, new_obj, saved_connections )
+    top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections )
 
     top._flush_pending_connections()
     if check:
