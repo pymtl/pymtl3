@@ -8,7 +8,11 @@ Date   : May 28, 2019
 """
 from __future__ import absolute_import, division, print_function
 
+from pymtl3.datatypes.bits_import import Bits4, Bits8
+from pymtl3.dsl.Component import Component
+from pymtl3.dsl.Connectable import InPort, OutPort
 from pymtl3.dsl.NamedObject import NamedObject
+from pymtl3.passes.PassGroups import SimpleSim
 
 
 class Animal( NamedObject ):
@@ -128,3 +132,47 @@ def test_set_param_hierarchical():
   assert isinstance(Z.houses[1], TigerTerrace)
   assert Z.houses[1].animals[0].lunch == "grass"
   assert Z.houses[1].animals[1].lunch == "meat"
+
+def test_component():
+  class Incr( Component ):
+    def construct( s, DataType=Bits4(), incr_value=1 ):
+      s.in_ = InPort ( DataType )
+      s.out = OutPort( DataType )
+
+      s.incr_value = DataType( incr_value )
+
+      @s.update
+      def up_incr():
+        s.out = s.in_ + s.incr_value
+  
+  class IncrArray( Component ):
+    def construct( s, num_incrs=1, DataType=Bits4() ):
+      s.in_ = [ InPort ( DataType ) for _ in range( num_incrs ) ]
+      s.out = [ OutPort( DataType ) for _ in range( num_incrs ) ]
+
+      s.incrs = [ Incr( DataType=DataType ) for _ in range( num_incrs ) ]
+
+      for i in range( num_incrs ):
+        s.connect( s.in_[i], s.incrs[i].in_ )
+        s.connect( s.out[i], s.incrs[i].out )
+
+  A = Incr()
+  A.set_param( "top.construct", DataType=Bits8, incr_value=2 )
+  A.apply( SimpleSim )
+  A.in_ = 1
+  A.tick()
+  print( "A.out==", A.out )
+  assert A.out == 3
+
+  B = IncrArray()
+  B.set_param( "top.construct", DataType=Bits8, num_incrs=3 )
+  B.set_param( "top.incrs*.construct", incr_value=3 )
+  B.set_param( "top.incrs[2].construct", incr_value=5 )
+  B.apply( SimpleSim )
+  B.in_[0] = 1
+  B.in_[1] = 2
+  B.in_[2] = 3
+  B.tick()
+  assert B.out[0] == 4
+  assert B.out[1] == 5
+  assert B.out[2] == 8
