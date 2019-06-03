@@ -85,6 +85,12 @@ class Component( ComponentLevel7 ):
         stack.extend( u )
     return ret
 
+  def _flush_pending_connections( s ):
+    if s._dsl._has_pending_connections:
+      s._dsl.all_value_nets = s._resolve_value_connections()
+      s._dsl.all_method_nets = s._resolve_method_connections()
+      s._dsl._has_pending_connections = False
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
@@ -280,22 +286,13 @@ class Component( ComponentLevel7 ):
 
   def get_all_method_nets( s ):
     s._check_called_at_elaborate_top( "get_all_method_nets" )
-
-    if s._dsl._has_pending_connections:
-      s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl.all_method_nets = s._resolve_method_connections()
-      s._dsl._has_pending_connections = False
-
+    s._flush_pending_connections()
     return s._dsl.all_method_nets
 
+  # Override
   def get_all_value_nets( s ):
     s._check_called_at_elaborate_top( "get_all_value_nets" )
-
-    if s._dsl._has_pending_connections:
-      s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl.all_method_nets = s._resolve_method_connections()
-      s._dsl._has_pending_connections = False
-
+    s._flush_pending_connections()
     return s._dsl.all_value_nets
 
   def get_signal_adjacency_dict( s ):
@@ -361,7 +358,7 @@ class Component( ComponentLevel7 ):
           # If other will be removed, we don't need to remove it here ..
           if other not in removed_signals:
             top._dsl.all_adjacency[other].remove( x )
-            saved_connections.append( (other, repr(x)) ) # other is from outside
+            saved_connections.append( (other, "top"+repr(x)[1:]) ) # other is from outside
         del top._dsl.all_adjacency[x]
 
       # Clean up adjacency at parent
@@ -388,6 +385,8 @@ class Component( ComponentLevel7 ):
 
     top._dsl.all_value_nets = new_nets
 
+    # TODO break method nets too
+
     delattr( parent, foo._dsl.my_name )
 
     # FIXME the last task is to fix connect_order
@@ -395,9 +394,12 @@ class Component( ComponentLevel7 ):
     return saved_connections
 
   # Override
-  # FIXME
-  def add_component_by_name( s, name, obj ):
-    s._check_called_at_elaborate_top( "add_component_by_name" )
+  # FIXME currently only support s.x = y. Should support s.x[10] = y
+  def add_component_by_name( s, name, obj, provided_connections=[] ):
+    try:
+      top = s._dsl.elaborate_top
+    except AttributeError:
+      raise NotElaboratedError()
 
     assert not hasattr( s, name )
 
@@ -407,41 +409,61 @@ class Component( ComponentLevel7 ):
 
     top = s._dsl.elaborate_top
 
-    added_components = obj.get_all_components()
-    top._dsl.all_components |= added_components
+    added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
 
+    # First elaborate all functions to spawn more named objects
     for c in added_components:
       c._dsl.elaborate_top = top
       c._elaborate_read_write_func()
+
+    added_signals, added_method_ports = \
+      obj._collect_all( [ lambda x: isinstance( x, Signal ), \
+                          lambda x: isinstance( x, MethodPort ) ] )
+
+    top._dsl.all_components    |= added_components
+    top._dsl.all_signals       |= added_signals
+    top._dsl.all_method_ports  |= added_method_ports
+
+    top._dsl.all_named_objects |= added_components
+    top._dsl.all_named_objects |= added_signals
+    top._dsl.all_named_objects |= added_method_ports
+
+    for c in added_components:
       top._collect_vars( c )
 
-    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._dsl.all_signals |= added_signals
+    for c in added_signals | added_method_ports:
+      c._dsl.elaborate_top = top
 
+    # assert False
     # Lazy -- to avoid resolve_connection call which takes non-trivial
     # time upon adding any connect, I just mark it here. Please make sure
     # to call s.get_all_value_nets() to flush all pending connections
     # whenever you want to get the nets
+    connection_pairs = []
+    for (x, y) in provided_connections:
+      # top.add_connections( x, eval(y) )
+      connection_pairs.append( x )
+      connection_pairs.append( eval(y) )
+
+    top.add_connections( *connection_pairs )
+
     s._dsl._has_pending_connections = True
 
-  def replace_placeholder( top, foo, cls ):
+  def replace_placeholder( top, foo, cls, check=True ):
     top._check_called_at_elaborate_top( "replace_placeholder" )
 
+    parent = foo.get_parent_object()
     saved_connections = top.delete_placeholder( foo, cls )
-
-    print(saved_connections)
 
     new_obj = cls( *foo._dsl.args, **foo._dsl.kwargs )
 
     # FIXME also merge the parameter from parameter tree
-    print(new_obj)
 
-    # parent = foo.get_parent_object()
-    # top.add(  )
-    # print()
+    parent.add_component_by_name( foo._dsl.my_name, new_obj, saved_connections )
 
-    assert False
-
+    top._flush_pending_connections()
+    if check:
+      top.check()
 
   # TODO test everything below and figure out whether we need to delete
   # a normal component
@@ -518,31 +540,31 @@ class Component( ComponentLevel7 ):
     # gc.collect() # this takes 0.1 seconds
 
   def add_connection( s, o1, o2 ):
-    # TODO support string arguments and non-top s
-    s._check_called_at_elaborate_top( "add_connection" )
-
-    added_adjacency = defaultdict(set)
     try:
-      s._connect_objects( o1, o2, added_adjacency )
+      top = s._dsl.elaborate_top
+    except AttributeError:
+      raise NotElaboratedError()
+
+    try:
+      parent._connect_objects( o1, o2 )
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
-    for x, adjs in added_adjacency.iteritems():
-      s._dsl.all_adjacency[x].update( adjs )
+    for x, adjs in parent._dsl.adjacency.iteritems():
+      top._dsl.all_adjacency[x].update( adjs )
 
-    s._dsl._has_pending_connections = True # Lazy
+    top._dsl._has_pending_connections = True # Lazy
 
   def add_connections( s, *args ):
-    # TODO support string arguments and non-top s
-    s._check_called_at_elaborate_top( "add_connections" )
+    try:
+      top = s._dsl.elaborate_top
+    except AttributeError:
+      raise NotElaboratedError()
 
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    last_adjacency = s._dsl.adjancency
-    s._dsl.adjacency = defaultdict(set)
-
-    for i in xrange(len(args)>>1) :
+    for i in xrange(len(args)>>1):
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError as e:
@@ -550,11 +572,9 @@ class Component( ComponentLevel7 ):
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
     for x, adjs in s._dsl.adjacency.iteritems():
-      s._dsl.all_adjacency[x].update( adjs )
+      top._dsl.all_adjacency[x].update( adjs )
 
-    s._dsl._has_pending_connections = True # Lazy
-
-    s._dsl.adjancency = last_adjacency
+    top._dsl._has_pending_connections = True # Lazy
 
   def disconnect( s, o1, o2 ):
     # TODO support string arguments and non-top s

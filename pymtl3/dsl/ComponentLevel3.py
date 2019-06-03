@@ -279,6 +279,8 @@ class ComponentLevel3( ComponentLevel2 ):
               Q.append( v )
             elif v is not pred[u]:
               raise InvalidConnectionError(repr(v)+" is in a connection loop.")
+        if len(net) == 1:
+          continue
         nets.append( net )
     return nets
 
@@ -685,6 +687,14 @@ class ComponentLevel3( ComponentLevel2 ):
       except Exception as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
+
+  def get_all_value_nets( s ):
+
+    if s._dsl._has_pending_connections:
+      s._dsl.all_value_nets = s._resolve_value_connections()
+      s._dsl._has_pending_connections = False
+
+    return s._dsl.all_value_nets
 
   #-----------------------------------------------------------------------
   # elaborate

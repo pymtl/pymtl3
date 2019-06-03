@@ -145,9 +145,20 @@ def test_foo_replaced_by_real():
   foo_wrap = Foo_wrap( 32 )
 
   foo_wrap.elaborate()
-  foo_wrap.replace_placeholder( foo_wrap.inner, Real )
+  foo_wrap.replace_placeholder( foo_wrap.inner, Real, check=True )
 
   simple_sim_pass( foo_wrap )
+  foo_wrap.sim_reset()
+
+  foo_wrap.in_ = Bits32(100)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 200
+
+  foo_wrap.in_ = Bits32(3)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 6
 
 def test_list_of_foo_replaced_by_real():
   class Foo_list_wrap( Component ):

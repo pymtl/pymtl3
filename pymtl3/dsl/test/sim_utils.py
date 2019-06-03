@@ -56,7 +56,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     all_update_on_edge = set( s._dsl.all_update_on_edge )
 
     if isinstance( s, ComponentLevel3 ):
-      nets = s._dsl.all_value_nets
+      nets = s.get_all_value_nets()
 
       for writer, signals in nets:
         if len(signals) == 1: continue
