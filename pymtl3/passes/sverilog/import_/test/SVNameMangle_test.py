@@ -14,10 +14,11 @@ from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.helpers import gen_all_ports
 
+
 def local_do_test( m ):
   m.elaborate()
   rtype = rt.get_component_ifc_rtlir( m )
-  result = gen_all_ports( m, rtype )
+  result = gen_all_ports( rtype )
   assert result == m._ref_ports
 
 def test_port_single( do_test ):

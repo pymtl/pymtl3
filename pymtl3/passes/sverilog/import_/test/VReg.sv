@@ -1,4 +1,3 @@
-
 module VReg(
   input           clk,
   input           reset,
@@ -6,7 +5,8 @@ module VReg(
   input  [32-1:0] d
 );
   logic q;
-  always_ff
+  always_ff @(posedge clk) begin
     q <= d;
+  end
 
 endmodule

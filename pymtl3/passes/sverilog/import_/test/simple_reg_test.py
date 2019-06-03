@@ -2,18 +2,24 @@
 # simple_reg_test.py
 #=======================================================================
 
-from pymtl3 import *
+from __future__ import absolute_import, division, print_function
 
-from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
-from pymtl3.passes.PassGroups import *
 import os
-import random
+
 import pytest
 
+from pymtl3 import *
+from pymtl3.passes.PassGroups import *
+from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+
+
+def get_dir():
+  return os.path.dirname(os.path.abspath(__file__))+os.path.sep
+
+@pytest.mark.xfail( reason = "port mapping not supported yet" )
 def test_VReg( dump_vcd ):
 
   class VReg( Component ):
-    sourcefile = "VReg.sv"
 
     def construct( s ):
       s.in_ = InPort ( Bits32 )
@@ -40,6 +46,7 @@ def test_VReg( dump_vcd ):
   #---------------------------------------------------------------------
 
   m = Wrapper()
+  m._sverilog_import_path = get_dir()+'VReg.sv'
   dtype = Bits32
 
   m.elaborate()
@@ -57,5 +64,5 @@ def test_VReg( dump_vcd ):
   for i in range( 10 ):
     m.in_ = dtype( i )
     m.tick()
-    print m.line_trace()
+    print(m.line_trace())
     assert m.out == i
