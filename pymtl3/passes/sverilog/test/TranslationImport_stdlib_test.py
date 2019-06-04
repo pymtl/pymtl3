@@ -46,8 +46,12 @@ def test_arbiter_rr_arb_4( do_test ):
     do_test( m )
 
   test_func = _rr_arb_4
+  _run_test = test_func.__globals__['run_test']
   test_func.__globals__['run_test'] = run_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test'] = _run_test
 
 def test_arbiter_rr_arb_en_4( do_test ):
   def run_test( cls, args, test_vectors ):
@@ -63,8 +67,12 @@ def test_arbiter_rr_arb_en_4( do_test ):
     do_test( m )
 
   test_func = _rr_arb_en_4
+  _run_test = test_func.__globals__['run_en_test']
   test_func.__globals__['run_en_test'] = run_test
-  test_func( None, None )
+  try:
+    test_func( None, None )
+  finally:
+    test_func.__globals__['run_en_test'] = _run_test
 
 def test_crossbar3( do_test ):
   def run_test( cls, args, test_vectors ):
@@ -84,8 +92,12 @@ def test_crossbar3( do_test ):
     do_test( m )
 
   test_func = _crossbar3
+  _run_test = test_func.__globals__['run_test_crossbar']
   test_func.__globals__['run_test_crossbar'] = run_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_crossbar'] = _run_test
 
 def test_encoder_5_directed( do_test ):
   def run_test( m, test_vectors ):
@@ -98,8 +110,12 @@ def test_encoder_5_directed( do_test ):
     do_test( m )
 
   test_func = _encoder5
+  _run_test = test_func.__globals__['run_test']
   test_func.__globals__['run_test'] = run_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test'] = _run_test
 
 #-------------------------------------------------------------------------
 # Queue tests
@@ -121,8 +137,12 @@ def test_bypass_Bits( do_test ):
     m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
     do_test( m )
   test_func = _bypass_Bits
+  _run_test = test_func.__globals__['run_test_queue']
   test_func.__globals__['run_test_queue'] = _run_queue_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_queue'] = _run_test
 
 def test_pipe_Bits( do_test ):
   def _run_queue_test( m, test_vectors ):
@@ -130,8 +150,12 @@ def test_pipe_Bits( do_test ):
     m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
     do_test( m )
   test_func = _pipe_Bits
+  _run_test = test_func.__globals__['run_test_queue']
   test_func.__globals__['run_test_queue'] = _run_queue_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_queue'] = _run_test
 
 def test_normal_Bits( do_test ):
   def _run_queue_test( m, test_vectors ):
@@ -139,8 +163,12 @@ def test_normal_Bits( do_test ):
     m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
     do_test( m )
   test_func = _normal_Bits
+  _run_test = test_func.__globals__['run_test_queue']
   test_func.__globals__['run_test_queue'] = _run_queue_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_queue'] = _run_test
 
 def test_2entry_normal_Bits( do_test ):
   def _run_queue_test( m, test_vectors ):
@@ -148,8 +176,12 @@ def test_2entry_normal_Bits( do_test ):
     m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
     do_test( m )
   test_func = _n2
+  _run_test = test_func.__globals__['run_test_queue']
   test_func.__globals__['run_test_queue'] = _run_queue_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_queue'] = _run_test
 
 def test_3entry_normal_Bits( do_test ):
   def _run_queue_test( m, test_vectors ):
@@ -157,5 +189,9 @@ def test_3entry_normal_Bits( do_test ):
     m._tv_in, m._tv_out = _queue_test_tv_in, _queue_test_tv_out
     do_test( m )
   test_func = _n3
+  _run_test = test_func.__globals__['run_test_queue']
   test_func.__globals__['run_test_queue'] = _run_queue_test
-  test_func()
+  try:
+    test_func()
+  finally:
+    test_func.__globals__['run_test_queue'] = _run_test
