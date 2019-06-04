@@ -175,7 +175,13 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     r_type = node.right.Type.get_dtype()
     if not( rdt.Vector(1)( l_type ) and rdt.Vector(1)( r_type ) ):
       raise PyMTLTypeError( s.blk, node.ast,
-        "both sides of operation should be of vector type!" )
+        "both sides of {} should be of vector type!".format(
+            op.__class__.__name__) )
+
+    if l_type != r_type:
+      raise PyMTLTypeError( s.blk, node.ast,
+        "LHS and RHS of {} should have the same type ({} vs {})!".format(
+            op.__class__.__name__, l_type, r_type ) )
 
     l_nbits = l_type.get_length()
     r_nbits = r_type.get_length()
@@ -205,4 +211,10 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
         node.Type = rt.Wire( rdt.Vector( res_nbits ) )
 
   def visit_Compare( s, node ):
+    l_type = node.left.Type.get_dtype()
+    r_type = node.right.Type.get_dtype()
+    if l_type != r_type:
+      raise PyMTLTypeError( s.blk, node.ast,
+        "LHS and RHS of {} have different types ({} vs {})!".format(
+          node.op.__class__.__name__, l_type, r_type ))
     node.Type = rt.Wire( rdt.Bool() )

@@ -127,9 +127,18 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # RHS should have the same type as LHS
     rhs_type = node.value.Type.get_dtype()
     lhs_type = node.target.Type.get_dtype()
+
+    # Weak (agreealbe) type checking
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError( s.blk, node.ast,
         'Unagreeable types {} and {}!'.format( lhs_type, rhs_type ) )
+
+    # Strong (same) type checking
+    if rhs_type != lhs_type:
+      raise PyMTLTypeError( s.blk, node.ast,
+        'LHS and RHS of assignment should have the same type ({} vs {})!'. \
+            format( lhs_type, rhs_type ) )
+
     node.Type = None
 
   def visit_FreeVar( s, node ):

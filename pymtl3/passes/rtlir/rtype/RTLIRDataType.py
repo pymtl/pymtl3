@@ -39,7 +39,8 @@ class Vector( BaseRTLIRDataType ):
     return s.nbits
 
   def __eq__( s, other ):
-    return isinstance(other, Vector) and s.nbits == other.nbits
+    return (isinstance(other, Vector) and s.nbits == other.nbits) or \
+           (s.nbits == 1 and isinstance(other, Bool))
 
   def __hash__( s ):
     return hash((type(s), s.nbits))
@@ -105,7 +106,8 @@ class Bool( BaseRTLIRDataType ):
     pass
 
   def __eq__( s, other ):
-    return isinstance(other, Bool)
+    return isinstance(other, Bool) or \
+           (isinstance(other, Vector) and other.nbits==1)
 
   def get_length( s ):
     return 1
@@ -244,6 +246,10 @@ def get_rtlir_dtype( obj ):
       # Vector data type
       if issubclass( Type, Bits ):
         return Vector( Type.nbits )
+
+      # python int object
+      elif Type is int:
+        return Vector( 32 )
 
       # Struct data type
       elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtins__):
