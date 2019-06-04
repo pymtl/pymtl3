@@ -1,10 +1,10 @@
 """
-#=========================================================================
-# XcelIfcs
-#=========================================================================
-#
-# Author: Yanghui Ou
-#   Date: June 3, 2019
+==========================================================================
+ XcelIfcs
+==========================================================================
+
+ Author: Yanghui Ou
+   Date: June 3, 2019
 """
 from __future__ import absolute_import, division, print_function
 
@@ -14,6 +14,24 @@ from pymtl3 import *
 
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
+#=========================================================================
+# FL interfaces
+#=========================================================================
+
+class XcelMasterIfcFL( Interface ):
+  def construct( s ):
+    s.read  = CallerPort()
+    s.write = CallerPort()
+  # TODO: implement __str__.
+
+class XcelMinionIfcFL( Interface ):
+  def construct( s, read, write ):
+    s.read  = CalleePort( method=read )
+    s.write = CalleePort( method=write )
+
+#=========================================================================
+# CL interfaces
+#=========================================================================
 
 class XcelMasterIfcCL( Interface ):
   def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
@@ -60,7 +78,8 @@ class XcelMinionIfcCL( Interface ):
 
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
-
+  
+  # TODO: implement CL-RTL connection
   def connect( s, other, parent ):
     if isinstance( other, XcelMasterIfcFL ):
       m = XcelIfcFL2CLAdapter( s.req_class, s.resp_class )
@@ -88,16 +107,37 @@ class XcelMinionIfcCL( Interface ):
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
-class XcelMasterIfcFL( Interface ):
-  def construct( s ):
-    s.read  = CallerPort()
-    s.write = CallerPort()
-  # TODO: implement line trace here.
+#=========================================================================
+# RTL interfaces
+#=========================================================================
 
-class XcelMinionIfcFL( Interface ):
-  def construct( s, read, write ):
-    s.read  = CalleePort( method=read )
-    s.write = CalleePort( method=write )
+class XcelMasterIfcRTL( Interface ):
+  def construct( s, req_class, resp_class ):
+    s.req  = SendIfcRTL( req_class  )
+    s.resp = RecvIfcRTL( resp_class )
+
+  def connect( s, other, parent ):
+    if isinstance( other, XcelMinionIfcRTL ):
+      parent.connect_pairs(
+        s.req, other.req,
+      )
+      return True
+    elif isinstance( ohter, XcelMinionIfcCL ):
+      pass
+    else:
+      return False
+
+class XcelMinionIfcRTL( Interface ):
+  def construct( s, req_class, resp_class ):
+    s.req  = RecvIfcRTL( req_class  )
+    s.resp = SendIfcRTL( resp_class )
+
+  def connect( s, other, parent ):
+    pass
+
+#=========================================================================
+# CL/FL adapters
+#=========================================================================
 
 class XcelIfcCL2FLAdapter( Component ):
 
