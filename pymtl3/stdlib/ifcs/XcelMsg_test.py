@@ -10,12 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 
-from .XcelMsg import(
-  XcelMsgType,
-  mk_xcel_msg,
-  mk_xcel_req_msg,
-  mk_xcel_resp_msg,
-)
+from .XcelMsg import XcelMsgType, mk_xcel_msg, mk_xcel_req_msg, mk_xcel_resp_msg
 
 #-------------------------------------------------------------------------
 # test_req_fields
