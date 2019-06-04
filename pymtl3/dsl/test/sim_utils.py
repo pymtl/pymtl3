@@ -28,7 +28,11 @@ from pymtl3.dsl.Connectable import (
     NonBlockingInterface,
     Signal,
 )
-from pymtl3.dsl.errors import NotElaboratedError, UpblkCyclicError, LeftoverPlaceholderError
+from pymtl3.dsl.errors import (
+    LeftoverPlaceholderError,
+    NotElaboratedError,
+    UpblkCyclicError,
+)
 from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.dsl.Placeholder import Placeholder
 

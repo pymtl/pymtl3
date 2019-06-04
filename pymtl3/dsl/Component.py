@@ -13,12 +13,13 @@ from collections import defaultdict
 
 from pymtl3.datatypes import Bits1
 
-from .NamedObject import NamedObject
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
-from .Connectable import InPort, OutPort, Wire, Signal, Interface, MethodPort
-from .errors import NotElaboratedError, InvalidAPICallError
+from .Connectable import InPort, Interface, MethodPort, OutPort, Signal, Wire
+from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
+from .NamedObject import NamedObject
 from .Placeholder import Placeholder
+
 
 class Component( ComponentLevel7 ):
 
@@ -91,7 +92,9 @@ class Component( ComponentLevel7 ):
       s._dsl.all_method_nets = s._resolve_method_connections()
       s._dsl._has_pending_connections = False
 
-  # Override
+  # These internal functions are implemented in a more generic way. The
+  # public APIs should wrap around these functions.
+
   def _add_component( s, parent, name, indices, obj, provided_connections=[] ):
     try:
       top = s._dsl.elaborate_top
@@ -182,7 +185,6 @@ class Component( ComponentLevel7 ):
     for c in added_signals | added_method_ports:
       c._dsl.elaborate_top = top
 
-    # assert False
     # Lazy -- to avoid resolve_connection call which takes non-trivial
     # time upon adding any connect, I just mark it here. Please make sure
     # to call s.get_all_value_nets() to flush all pending connections
@@ -196,6 +198,127 @@ class Component( ComponentLevel7 ):
     top.add_connections( *connection_pairs )
 
     s._dsl._has_pending_connections = True
+
+  def _delete_component( top, obj ):
+
+    # This nested delete function is to create an extra layer to properly
+    # call garbage collector. If we can make sure it is collected
+    # automatically and fast enough, we might remove this extra layer
+    #
+    # EDIT: After experimented w/ and w/o gc.collect(), it seems like it
+    # is eventually collected, but sometimes the intermediate memory
+    # footprint might reach up to gigabytes, so let's keep the
+    # gc.collect() for now
+
+    def _delete_component_internal( top, foo ):
+      is_placeholder = isinstance( obj, Placeholder )
+
+      assert obj._dsl.elaborate_top is top
+
+      # First make sure we flush pending connections
+      nets = top.get_all_value_nets()
+
+      # Delete the placeholder from parent. We need to see if we are
+      # dealing with a list parent or a component parent.
+
+      parent = foo.get_parent_object()
+
+      if foo._dsl._my_indices:
+        # We use the saved indices to get the list parent and set the index
+        my_indices = foo._dsl._my_indices
+        list_parent = getattr( parent, foo._dsl._my_name )
+        i = 0
+        while i < len(my_indices) - 1:
+          list_parent = list_parent[ my_indices[i] ]
+          i += 1
+        list_parent[ my_indices[i] ] = None
+      else:
+        # Simply delete the attribute if it's merely a field
+        delattr( parent, foo._dsl.my_name )
+
+      # Remove all components, signals, and method ports
+      removed_components, removed_signals, removed_method_ports = \
+        foo._collect_all( [ lambda x: isinstance( x, Component ), \
+                            lambda x: isinstance( x, Signal ), \
+                            lambda x: isinstance( x, MethodPort ) ] )
+
+      top._dsl.all_components    -= removed_components
+      top._dsl.all_signals       -= removed_signals
+      top._dsl.all_method_ports  -= removed_method_ports
+
+      top._dsl.all_named_objects -= removed_components
+      top._dsl.all_named_objects -= removed_signals
+      top._dsl.all_named_objects -= removed_method_ports
+
+      if isinstance( foo, Placeholder ):
+        # No need to uncollect vars from a placeholder
+        assert not foo._dsl.consts
+      else:
+        for x in removed_components:
+          # remove consts
+          for y in x._dsl.consts:
+            del y._dsl.parent_obj
+          # uncollect variables
+          top._uncollect_vars( x )
+
+      for x in removed_components | removed_signals | removed_method_ports:
+        del x._dsl.parent_obj
+
+      saved_connections = []
+
+      for x in removed_signals:
+        # Clean up all_adjancency at top
+        if x in top._dsl.all_adjacency:
+          for other in top._dsl.all_adjacency[x]:
+            # other must be in the dict
+            # If other will be removed, we don't need to remove it here ..
+            if other not in removed_signals:
+              top._dsl.all_adjacency[other].remove( x )
+              saved_connections.append( (other, "top"+repr(x)[1:]) ) # other is from outside
+          del top._dsl.all_adjacency[x]
+
+        # Clean up adjacency at parent
+        if x in parent._dsl.adjacency:
+          for other in parent._dsl.adjacency[x]:
+            # other must be in the dict
+            if other not in removed_signals:
+              parent._dsl.adjacency[other].remove( x )
+          del parent._dsl.adjacency[x]
+
+      # The following implementation of breaking nets is faster than a
+      # full connection resolution.
+
+      new_nets = []
+      for writer, signals in nets:
+        broken_nets = top._floodfill_nets( signals, top._dsl.all_adjacency )
+
+        for net_signals in broken_nets:
+          if len(net_signals) > 1:
+            if writer in net_signals:
+              new_nets.append( (writer, net_signals) )
+            else:
+              new_nets.append( (None, net_signals) )
+
+      top._dsl.all_value_nets = new_nets
+
+      # TODO break method nets too
+
+      # We clean up the connect_order list. If we want to preserve the
+      # original connect order, we can play some other tricks here such as
+      # leaving the strings in there. However I don't think that's clean
+      # enough. Thus I'm just removing them right now.
+      new_connect_order = []
+      for (x, y) in parent._dsl.connect_order:
+        if x not in removed_signals and y not in removed_signals: # TODO method port
+          new_connect_order.append( (x, y) )
+
+      parent._dsl.connect_order = new_connect_order
+
+      return saved_connections
+
+    return _delete_component_internal( top, obj )
+    # import gc
+    # gc.collect() # this takes 0.1 seconds
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
@@ -410,114 +533,20 @@ class Component( ComponentLevel7 ):
 
   """ Mutation APIs to add/delete components and connections"""
 
-  # Shunning: These API implement replacing a placeholder with a real
+  # Shunning: These API implement replacing a component with another
   # module. This is the first mutation API we want to test thoroughly
 
-  def delete_placeholder( top, foo, cls ):
-    assert isinstance( foo, Placeholder ), foo.__class__
-    assert foo._dsl.elaborate_top is top
+  # TODO test everything below and figure out whether we need to delete
+  # a normal component
 
-    # First make sure we flush pending connections
-    nets = top.get_all_value_nets()
-
-    # Delete the placeholder from parent. We need to see if we are
-    # dealing with a list parent or a component parent.
-
-    parent = foo.get_parent_object()
-
-    if foo._dsl._my_indices:
-      # We use the saved indices to get the list parent and set the index
-      my_indices = foo._dsl._my_indices
-      list_parent = getattr( parent, foo._dsl._my_name )
-      i = 0
-      while i < len(my_indices) - 1:
-        list_parent = list_parent[ my_indices[i] ]
-        i += 1
-      list_parent[ my_indices[i] ] = None
-    else:
-      delattr( parent, foo._dsl.my_name )
-
-    # Note that when we are deleting a placeholder foo, there is no other
-    # components inside foo, nor constraints or update blocks. As a result
-    # we don't need to uncollect vars. We just need to break the nets and
-    # save the connections.
-
-    removed_components, removed_signals, removed_method_ports = \
-      foo._collect_all( [ lambda x: isinstance( x, Component ), \
-                          lambda x: isinstance( x, Signal ), \
-                          lambda x: isinstance( x, MethodPort ) ] )
-    # print(removed_components, removed_signals, removed_method_ports)
-
-    top._dsl.all_components    -= removed_components
-    top._dsl.all_signals       -= removed_signals
-    top._dsl.all_method_ports  -= removed_method_ports
-
-    top._dsl.all_named_objects -= removed_components
-    top._dsl.all_named_objects -= removed_signals
-    top._dsl.all_named_objects -= removed_method_ports
-
-    # No need to uncollect vars from a placeholder
-    assert not foo._dsl.consts
-
-    for x in removed_components | removed_signals | removed_method_ports:
-      del x._dsl.parent_obj
-
-    saved_connections = []
-
-    for x in removed_signals:
-      # Clean up all_adjancency at top
-      if x in top._dsl.all_adjacency:
-        for other in top._dsl.all_adjacency[x]:
-          # other must be in the dict
-          # If other will be removed, we don't need to remove it here ..
-          if other not in removed_signals:
-            top._dsl.all_adjacency[other].remove( x )
-            saved_connections.append( (other, "top"+repr(x)[1:]) ) # other is from outside
-        del top._dsl.all_adjacency[x]
-
-      # Clean up adjacency at parent
-      if x in parent._dsl.adjacency:
-        for other in parent._dsl.adjacency[x]:
-          # other must be in the dict
-          if other not in removed_signals:
-            parent._dsl.adjacency[other].remove( x )
-        del parent._dsl.adjacency[x]
-
-    # The following implementation of breaking nets is faster than a
-    # full connection resolution.
-
-    new_nets = []
-    for writer, signals in nets:
-      broken_nets = top._floodfill_nets( signals, top._dsl.all_adjacency )
-
-      for net_signals in broken_nets:
-        if len(net_signals) > 1:
-          if writer in net_signals:
-            new_nets.append( (writer, net_signals) )
-          else:
-            new_nets.append( (None, net_signals) )
-
-    top._dsl.all_value_nets = new_nets
-
-    # TODO break method nets too
-
-    # FIXME the last task is to fix connect_order
-
-    return saved_connections
-
-  # Override
-  # FIXME currently only support s.x = y. Should support s.x[10] = y
-  def add_component_by_name( s, name, obj, provided_connections=[] ):
-    raise NotImplementedError()
-
-  def replace_placeholder( top, foo, cls, check=True ):
-    top._check_called_at_elaborate_top( "replace_placeholder" )
+  def replace_component( top, foo, cls, check=True ):
+    top._check_called_at_elaborate_top( "replace_component" )
 
     parent = foo.get_parent_object()
     foo_name    = foo._dsl._my_name
     foo_indices = foo._dsl._my_indices
 
-    saved_connections = top.delete_placeholder( foo, cls )
+    saved_connections = top._delete_component( foo )
 
     new_obj = cls( *foo._dsl.args, **foo._dsl.kwargs )
 
@@ -528,80 +557,6 @@ class Component( ComponentLevel7 ):
     top._flush_pending_connections()
     if check:
       top.check()
-
-  # TODO test everything below and figure out whether we need to delete
-  # a normal component
-
-  # Override
-  def delete_component_by_name( s, name ):
-    s._check_called_at_elaborate_top( "delete_component_by_name" )
-
-    # This nested delete function is to create an extra layer to properly
-    # call garbage collector. If we can make sure it is collected
-    # automatically and fast enough, we might remove this extra layer
-    #
-    # EDIT: After experimented w/ and w/o gc.collect(), it seems like it
-    # is eventually collected, but sometimes the intermediate memory
-    # footprint might reach up to gigabytes, so let's keep the
-    # gc.collect() for now
-
-    def _delete_component_by_name( parent, name ):
-      obj = getattr( parent, name )
-      top = s._dsl.elaborate_top
-      import timeit
-
-      # First make sure we flush pending connections
-      nets = top.get_all_value_nets()
-
-      # Remove all components and uncollect metadata
-
-      removed_components = obj.get_all_components()
-      top._dsl.all_components -= removed_components
-
-      removed_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-      top._dsl.all_signals -= removed_signals
-
-      for x in removed_components:
-        assert x._dsl.elaborate_top is top
-        top._uncollect_vars( x )
-        for y in x._dsl.consts:
-          del y._dsl.parent_obj
-
-      for x in obj._collect_all():
-        del x._dsl.parent_obj
-
-      # TODO somehow save the adjs for reconnection
-
-      for x in removed_signals:
-        for other in top._dsl.all_adjacency[x]:
-          # If other will be removed, we don't need to remove it here ..
-          if   other not in removed_signals:
-            top._dsl.all_adjacency[other].remove( x )
-
-        del top._dsl.all_adjacency[x]
-
-      # The following implementation of breaking nets is faster than a
-      # full connection resolution.
-
-      new_nets = []
-      for writer, signals in nets:
-        broken_nets = s._floodfill_nets( signals, top._dsl.all_adjacency )
-
-        for net_signals in broken_nets:
-          if len(net_signals) > 1:
-            if writer in net_signals:
-              new_nets.append( (writer, net_signals) )
-            else:
-              new_nets.append( (None, net_signals) )
-      t1 = timeit.default_timer()
-
-      top._dsl.all_value_nets = new_nets
-
-      delattr( s, name )
-
-    _delete_component_by_name( s, name )
-    # import gc
-    # gc.collect() # this takes 0.1 seconds
 
   def add_connection( s, o1, o2 ):
     try:
@@ -640,37 +595,15 @@ class Component( ComponentLevel7 ):
 
     top._dsl._has_pending_connections = True # Lazy
 
-  def disconnect( s, o1, o2 ):
-    # TODO support string arguments and non-top s
-    s._check_called_at_elaborate_top( "disconnect" )
+  # TODO implement everything below and test them
 
+  # Override
+  # FIXME currently only support s.x = y. Should support s.x[10] = y
+  def add_component_by_name( s, name, obj, provided_connections=[] ):
+    raise NotImplementedError()
 
-    if isinstance( o1, int ): # o1 is signal, o2 is int
-      o1, o2 = o2, o1
+  # Override
+  def delete_component( s, name ):
+    raise NotImplementedError()
 
-    # First handle the case where a const is disconnected from the signal
-    if isinstance( o2, int ):
-      assert isinstance( o1, Signal ), "You can only disconnect a const from a signal."
-      s._disconnect_signal_int( o1, o2 )
-
-    # Disconnect two signals
-    elif isinstance( o1, Signal ):
-      assert isinstance( o2, Signal )
-      s._disconnect_signal_signal( o1, o2 )
-
-    elif isinstance( o1, Interface ):
-      assert isinstance( o2, Interface )
-      s._disconnect_interface_interface( o1, o2 )
-
-    else:
-      assert False, "what the hell?"
-
-  def disconnect_pair( s, *args ):
-    # TODO support string arguments and non-top s
-    s._check_called_at_elaborate_top( "disconnect_pair" )
-
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    for i in xrange(len(args)>>1):
-      s.disconnect( args[ i<<1 ], args[ (i<<1)+1 ] )
+  # Do we still need disconnect and disconnect_pair?

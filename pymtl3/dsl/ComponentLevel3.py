@@ -95,6 +95,8 @@ class ComponentLevel3( ComponentLevel2 ):
     o2._dsl.parent_obj = s
     s._dsl.consts.add( o2 )
 
+    # o2 should be a new object
+
     s._dsl.adjacency[o1].add( o2 )
     s._dsl.adjacency[o2].add( o1 )
 
@@ -104,6 +106,7 @@ class ComponentLevel3( ComponentLevel2 ):
     o1_type = None
     o2_type = None
 
+
     try:  o1_type = o1._dsl.Type
     except AttributeError:  pass
     try:  o2_type = o2._dsl.Type
@@ -111,10 +114,12 @@ class ComponentLevel3( ComponentLevel2 ):
 
     if o1_type is None:
       if o2_type is None:
-        s._dsl.adjacency[o1].add( o2 )
-        s._dsl.adjacency[o2].add( o1 )
-        s._dsl.connect_order.append( (o1, o2) )
-        return
+        if o1 not in s._dsl.adjacency[o2]:
+          assert o2 not in s._dsl.adjacency[o1]
+          s._dsl.adjacency[o1].add( o2 )
+          s._dsl.adjacency[o2].add( o1 )
+          s._dsl.connect_order.append( (o1, o2) )
+          return
       else: # o2_type is not None
         raise TypeError( "lhs has no Type, but rhs has Type {}".format( o2_type ) )
     else: # o1_type is not None
@@ -126,14 +131,17 @@ class ComponentLevel3( ComponentLevel2 ):
     try:
       o1_nbits = o1_type.nbits
       o2_nbits = o2_type.nbits
-      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {}".format( o1_nbits, o2_nbits )
+      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {} " \
+      "({}-bit {} <> {}-bit {})".format( o1_nbits, o2_nbits, o1_nbits, o1, o2_nbits, o2 )
     except AttributeError: # at least one of them is not Bits
       assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
 
-    s._dsl.adjacency[o1].add( o2 )
-    s._dsl.adjacency[o2].add( o1 )
+    if o1 not in s._dsl.adjacency[o2]:
+      assert o2 not in s._dsl.adjacency[o1]
+      s._dsl.adjacency[o1].add( o2 )
+      s._dsl.adjacency[o2].add( o1 )
 
-    s._dsl.connect_order.append( (o1, o2) )
+      s._dsl.connect_order.append( (o1, o2) )
 
   def _connect_interfaces( s, o1, o2 ):
     # When we connect two interfaces, we first try to use o1's and o2's

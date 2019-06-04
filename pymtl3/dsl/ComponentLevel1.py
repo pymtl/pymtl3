@@ -20,7 +20,7 @@ from __future__ import absolute_import, division, print_function
 import re
 
 from .ConstraintTypes import U
-from .errors import NotElaboratedError, UpblkFuncSameNameError, InvalidPlaceholderError
+from .errors import InvalidPlaceholderError, NotElaboratedError, UpblkFuncSameNameError
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
@@ -145,4 +145,3 @@ class ComponentLevel1( NamedObject ):
 
   def is_interface( s ):
     return False
-

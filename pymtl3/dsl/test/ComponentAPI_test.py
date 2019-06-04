@@ -6,9 +6,15 @@ ComponentAPI_test.py
 Author : Shunning Jiang
 Date   : June 2, 2019
 """
+from __future__ import absolute_import, division, print_function
+
+import random
+
 from pymtl3.datatypes import *
-from pymtl3.dsl import InPort, OutPort, Component
+from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire
 from pymtl3.dsl.errors import InvalidAPICallError
+from .sim_utils import simple_sim_pass
+
 
 def test_api_not_elaborated():
 
@@ -34,3 +40,128 @@ def test_api_not_elaborated():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidAPICallError.")
+
+# The following two tests cases test x.replace_component()
+
+class Foo_shamt( Placeholder, Component ):
+  def construct( s, shamt=1 ):
+    s.in_ = InPort ( Bits32 )
+    s.out = OutPort( Bits32 )
+
+    # Nothing here
+
+  def line_trace( s ):
+    return "{}>{}".format( s.in_, s.out )
+
+class Real_shamt( Component ):
+  def construct( s, shamt=1 ):
+    s.in_ = InPort ( Bits32 )
+    s.out = OutPort( Bits32 )
+    @s.update
+    def up_real():
+      s.out = s.in_ << shamt
+
+  def line_trace( s ):
+    return "{}>{}".format( s.in_, s.out )
+
+class Real_shamt2( Component ):
+  def construct( s, shamt=1 ):
+    s.in_ = InPort ( Bits32 )
+    s.out = OutPort( Bits32 )
+    @s.update
+    def up_real():
+      s.out = s.in_ + shamt
+
+  def line_trace( s ):
+    return "{}>{}".format( s.in_, s.out )
+
+class Foo_shamt_list_wrap( Component ):
+  def construct( s, nbits=0 ):
+    s.in_ = InPort ( mk_bits(nbits) )
+    s.out = [ OutPort( mk_bits(nbits) ) for i in range(5) ]
+
+    s.inner = [ Foo_shamt( i )( in_ = s.in_, out = s.out[i] ) for i in range(5) ]
+
+  def line_trace( s ):
+    return "|".join( [ x.line_trace() for x in s.inner ] )
+
+def test_real_replaced_by_real2():
+
+  class Real_wrap( Component ):
+    def construct( s, nbits=0 ):
+      s.in_ = InPort ( mk_bits(nbits) )
+      s.out = OutPort( mk_bits(nbits) )
+      s.w   = Wire( mk_bits(nbits) )
+      s.connect( s.w, s.out )
+
+      s.inner = Real_shamt( 5 )( in_ = s.in_, out = s.w )
+
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+  foo_wrap = Real_wrap( 32 )
+
+  foo_wrap.elaborate()
+  foo_wrap.replace_component( foo_wrap.inner, Real_shamt2, check=True )
+
+  simple_sim_pass( foo_wrap )
+  foo_wrap.sim_reset()
+
+  foo_wrap.in_ = Bits32(100)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 105
+
+  foo_wrap.in_ = Bits32(3)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 8
+
+def test_replace_component_list_of_foo_by_real():
+
+  foo_wrap = Foo_shamt_list_wrap( 32 )
+
+  foo_wrap.elaborate()
+  order = range(5)
+  random.shuffle( order )
+  for i in order:
+    foo_wrap.replace_component( foo_wrap.inner[i], Real_shamt )
+
+  simple_sim_pass( foo_wrap )
+
+  print()
+  foo_wrap.in_ = Bits32(16)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+
+  foo_wrap.in_ = Bits32(4)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+
+def test_replace_component_list_of_real_by_real2():
+
+  foo_wrap = Foo_shamt_list_wrap( 32 )
+
+  order = range(5)
+  random.shuffle( order )
+
+  foo_wrap.elaborate()
+
+  for i in order:
+    foo_wrap.replace_component( foo_wrap.inner[i], Real_shamt )
+
+  random.shuffle( order )
+  for i in order:
+    foo_wrap.replace_component( foo_wrap.inner[i], Real_shamt2 )
+
+  print(len(foo_wrap._dsl.connect_order))
+  simple_sim_pass( foo_wrap )
+
+  print()
+  foo_wrap.in_ = Bits32(16)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+
+  foo_wrap.in_ = Bits32(4)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
