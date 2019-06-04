@@ -144,4 +144,5 @@ class ComponentLevel5( ComponentLevel4 ):
     s._dsl.all_value_nets  = s._resolve_value_connections()
     # Added here
     s._dsl.all_method_nets = s._resolve_method_connections()
-    s._dsl._has_pending_connections = False
+    s._dsl._has_pending_value_connections = False
+    s._dsl._has_pending_method_connections = False

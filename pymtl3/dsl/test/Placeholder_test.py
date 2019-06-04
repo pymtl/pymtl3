@@ -8,8 +8,10 @@ Date   : June 1, 2019
 """
 from __future__ import absolute_import, division, print_function
 
+from collections import deque
+
 from pymtl3.datatypes import *
-from pymtl3.dsl import WR, Component, InPort, OutPort, Placeholder, U, Wire
+from pymtl3.dsl import M, WR, Component, InPort, OutPort, Placeholder, U, Wire, CalleePort, CallerPort, method_port
 from pymtl3.dsl.errors import InvalidPlaceholderError, LeftoverPlaceholderError
 
 from .sim_utils import simple_sim_pass
@@ -163,3 +165,53 @@ def test_foo_replaced_by_real():
   foo_wrap.tick()
   print(foo_wrap.line_trace())
   assert foo_wrap.out == 6
+
+
+def test_cl_methodport_placeholder():
+
+  class FooCL( Placeholder, Component ):
+    def construct( s ):
+      s.enq = CalleePort()
+      s.deq = CalleePort()
+
+  class FooCL_wrap( Component ):
+    def construct( s ):
+      s.enq = CalleePort()
+      s.deq = CalleePort()
+      s.foo = FooCL()( enq = s.enq, deq = s.deq )
+
+  class FooCL_top( Component ):
+    def construct( s ):
+      s.x = FooCL_wrap()
+
+      s.counter = 0
+      @s.update
+      def up_enq():
+        s.x.enq(s.counter + 1)
+        s.counter += 1
+
+      @s.update
+      def up_recv():
+        print(s.x.deq())
+
+  class RealQueue( Component ):
+    @method_port
+    def enq( s, msg ):
+      s.q.appendleft( msg )
+    @method_port
+    def deq( s ):
+      return s.q.pop()
+
+    def construct( s ):
+      s.q = deque()
+      s.add_constraints( M(s.enq) < M(s.deq) )
+
+  a = FooCL_top()
+  a.elaborate()
+
+  a.replace_component( a.x.foo, RealQueue )
+
+  simple_sim_pass( a )
+  a.tick()
+  a.tick()
+  a.tick()

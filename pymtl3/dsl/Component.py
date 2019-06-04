@@ -86,11 +86,15 @@ class Component( ComponentLevel7 ):
         stack.extend( u )
     return ret
 
-  def _flush_pending_connections( s ):
-    if s._dsl._has_pending_connections:
+  def _flush_pending_value_connections( s ):
+    if s._dsl._has_pending_value_connections:
       s._dsl.all_value_nets = s._resolve_value_connections()
+      s._dsl._has_pending_value_connections = False
+
+  def _flush_pending_method_connections( s ):
+    if s._dsl._has_pending_method_connections:
       s._dsl.all_method_nets = s._resolve_method_connections()
-      s._dsl._has_pending_connections = False
+      s._dsl._has_pending_method_connections = False
 
   # These internal functions are implemented in a more generic way. The
   # public APIs should wrap around these functions.
@@ -191,13 +195,15 @@ class Component( ComponentLevel7 ):
     # whenever you want to get the nets
     connection_pairs = []
     for (x, y) in provided_connections:
-      # top.add_connections( x, eval(y) )
       connection_pairs.append( x )
       connection_pairs.append( eval(y) )
 
-    top.add_connections( *connection_pairs )
+      if not top._dsl._has_pending_value_connections and isinstance( x, Signal ):
+        top._dsl._has_pending_value_connections = True
+      if not top._dsl._has_pending_method_connections and isinstance( x, MethodPort ):
+        top._dsl._has_pending_method_connections = True
 
-    s._dsl._has_pending_connections = True
+    top.add_connections( *connection_pairs )
 
   def _delete_component( top, obj ):
 
@@ -216,7 +222,8 @@ class Component( ComponentLevel7 ):
       assert obj._dsl.elaborate_top is top
 
       # First make sure we flush pending connections
-      nets = top.get_all_value_nets()
+      value_nets  = top.get_all_value_nets()
+      method_nets = top.get_all_method_nets()
 
       # Delete the placeholder from parent. We need to see if we are
       # dealing with a list parent or a component parent.
@@ -247,8 +254,9 @@ class Component( ComponentLevel7 ):
       top._dsl.all_method_ports  -= removed_method_ports
 
       top._dsl.all_named_objects -= removed_components
-      top._dsl.all_named_objects -= removed_signals
-      top._dsl.all_named_objects -= removed_method_ports
+
+      removed_connectables = removed_signals | removed_method_ports
+      top._dsl.all_named_objects -= removed_connectables
 
       if isinstance( foo, Placeholder ):
         # No need to uncollect vars from a placeholder
@@ -261,18 +269,20 @@ class Component( ComponentLevel7 ):
           # uncollect variables
           top._uncollect_vars( x )
 
-      for x in removed_components | removed_signals | removed_method_ports:
+      for x in removed_components:
+        del x._dsl.parent_obj
+      for x in removed_connectables:
         del x._dsl.parent_obj
 
       saved_connections = []
 
-      for x in removed_signals:
+      for x in removed_connectables:
         # Clean up all_adjancency at top
         if x in top._dsl.all_adjacency:
           for other in top._dsl.all_adjacency[x]:
             # other must be in the dict
             # If other will be removed, we don't need to remove it here ..
-            if other not in removed_signals:
+            if other not in removed_connectables:
               top._dsl.all_adjacency[other].remove( x )
               saved_connections.append( (other, "top"+repr(x)[1:]) ) # other is from outside
           del top._dsl.all_adjacency[x]
@@ -281,27 +291,14 @@ class Component( ComponentLevel7 ):
         if x in parent._dsl.adjacency:
           for other in parent._dsl.adjacency[x]:
             # other must be in the dict
-            if other not in removed_signals:
+            if other not in removed_connectables:
               parent._dsl.adjacency[other].remove( x )
           del parent._dsl.adjacency[x]
 
-      # The following implementation of breaking nets is faster than a
-      # full connection resolution.
-
-      new_nets = []
-      for writer, signals in nets:
-        broken_nets = top._floodfill_nets( signals, top._dsl.all_adjacency )
-
-        for net_signals in broken_nets:
-          if len(net_signals) > 1:
-            if writer in net_signals:
-              new_nets.append( (writer, net_signals) )
-            else:
-              new_nets.append( (None, net_signals) )
-
-      top._dsl.all_value_nets = new_nets
-
-      # TODO break method nets too
+      # We don't break nets anymore. Instead, we set the flags to true so
+      # that the next get_xxx_net will immediately recollect nets.
+      top._dsl._has_pending_value_connections = True
+      top._dsl._has_pending_method_connections = True
 
       # We clean up the connect_order list. If we want to preserve the
       # original connect order, we can play some other tricks here such as
@@ -515,13 +512,13 @@ class Component( ComponentLevel7 ):
 
   def get_all_method_nets( s ):
     s._check_called_at_elaborate_top( "get_all_method_nets" )
-    s._flush_pending_connections()
+    s._flush_pending_method_connections()
     return s._dsl.all_method_nets
 
   # Override
   def get_all_value_nets( s ):
     s._check_called_at_elaborate_top( "get_all_value_nets" )
-    s._flush_pending_connections()
+    s._flush_pending_value_connections()
     return s._dsl.all_value_nets
 
   def get_signal_adjacency_dict( s ):
@@ -554,7 +551,8 @@ class Component( ComponentLevel7 ):
 
     top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections )
 
-    top._flush_pending_connections()
+    top._flush_pending_value_connections()
+    top._flush_pending_method_connections()
     if check:
       top.check()
 
@@ -565,14 +563,12 @@ class Component( ComponentLevel7 ):
       raise NotElaboratedError()
 
     try:
-      parent._connect_objects( o1, o2 )
+      s._connect_objects( o1, o2 )
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
-    for x, adjs in parent._dsl.adjacency.iteritems():
+    for x, adjs in s._dsl.adjacency.iteritems():
       top._dsl.all_adjacency[x].update( adjs )
-
-    top._dsl._has_pending_connections = True # Lazy
 
   def add_connections( s, *args ):
     try:
@@ -592,8 +588,6 @@ class Component( ComponentLevel7 ):
 
     for x, adjs in s._dsl.adjacency.iteritems():
       top._dsl.all_adjacency[x].update( adjs )
-
-    top._dsl._has_pending_connections = True # Lazy
 
   # TODO implement everything below and test them
 

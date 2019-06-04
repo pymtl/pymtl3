@@ -32,7 +32,7 @@ class DSLMetadata(object):
   pass
 
 # NOTE: We found that the built-in OrderedDict slows down the elaboration
-# time because much time was spent calling OrderedDict.__init__. 
+# time because much time was spent calling OrderedDict.__init__.
 # The time for instantiating an OrderedDict is quite long compared
 # to other primitive data structures such as list or dict. We have to
 # implement our own ordered dictionary to mitigate this overhead.
