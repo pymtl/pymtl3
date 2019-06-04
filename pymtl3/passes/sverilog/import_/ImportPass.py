@@ -21,12 +21,11 @@ from pymtl3.passes.sverilog.errors import SVerilogImportError
 from pymtl3.passes.sverilog.utility import get_component_unique_name, make_indent
 
 from .helpers import (
-    gen_all_ports,
     gen_comb_input,
     gen_comb_output,
-    gen_constraints,
     gen_internal_line_trace_py,
     gen_line_trace_py,
+    gen_packed_ports,
     gen_signal_decl_c,
     gen_signal_decl_py,
     gen_signal_init_c,
@@ -82,7 +81,7 @@ class ImportPass( BasePass ):
 def get_imported_object( m ):
   rtype = get_component_ifc_rtlir( m )
   full_name = get_component_unique_name( rtype )
-  all_ports = gen_all_ports( rtype )
+  packed_ports = gen_packed_ports( rtype )
 
   try:
     sv_file_path = m._sverilog_import_path
@@ -92,13 +91,14 @@ def get_imported_object( m ):
   create_verilator_model( sv_file_path, full_name )
 
   c_wrapper_name, port_cdefs = \
-      create_verilator_c_wrapper( full_name, all_ports )
+      create_verilator_c_wrapper( full_name, packed_ports )
 
   lib_name = \
       create_shared_lib( c_wrapper_name, full_name )
 
   py_wrapper_name, symbols = \
-      create_py_wrapper( full_name, rtype, all_ports, lib_name, port_cdefs )
+      create_py_wrapper( full_name, rtype, packed_ports,
+                         lib_name, port_cdefs )
 
   imp = import_component( py_wrapper_name, full_name, symbols )
 
@@ -147,7 +147,7 @@ Fail to verilate model {} in file {}
 # create_verilator_c_wrapper
 #-----------------------------------------------------------------------
 
-def create_verilator_c_wrapper( full_name, all_ports ):
+def create_verilator_c_wrapper( full_name, packed_ports ):
   """Return the file name of generated C component wrapper.
 
   Create a C wrapper that calls verilator C API and provides interfaces
@@ -164,7 +164,7 @@ def create_verilator_c_wrapper( full_name, all_ports ):
 
   # Generate port declarations for the verilated model in C
   port_defs = []
-  for name, port in all_ports:
+  for name, port in packed_ports:
     port_defs.append( gen_signal_decl_c( name, port ) )
   port_cdefs = copy.copy( port_defs )
   make_indent( port_defs, 2 )
@@ -172,8 +172,8 @@ def create_verilator_c_wrapper( full_name, all_ports ):
 
   # Generate initialization statements for in/out ports
   port_inits = []
-  for name, port in all_ports:
-    port_inits.append( gen_signal_init_c( name, port ) )
+  for name, port in packed_ports:
+    port_inits.extend( gen_signal_init_c( name, port ) )
   make_indent( port_inits, 1 )
   port_inits = '\n'.join( port_inits )
 
@@ -269,7 +269,8 @@ Fail to compile Verilated model into a shared library:
 # create_py_wrapper
 #-----------------------------------------------------------------------
 
-def create_py_wrapper( m_name, rtype, all_ports, lib_file, port_cdefs ):
+def create_py_wrapper( m_name, rtype, packed_ports, lib_file,
+                       port_cdefs ):
   """Return the file name of the generated PyMTL component wrapper."""
 
   # Load the wrapper template
@@ -284,31 +285,31 @@ def create_py_wrapper( m_name, rtype, all_ports, lib_file, port_cdefs ):
   # Port definition in PyMTL style
   symbols, port_defs, connections = gen_signal_decl_py( rtype )
   make_indent( port_defs, 2 )
-  make_indent( connections, 2 ) 
+  make_indent( connections, 2 )
   # Wire definition in PyMTL style
   wire_defs = []
-  for name, port in all_ports:
+  for name, port in packed_ports:
     wire_defs.append( gen_wire_decl_py( name, port ) )
   make_indent( wire_defs, 2 )
 
   # Set upblk inputs and outputs
-  set_comb_input = gen_comb_input( all_ports )
-  set_comb_output = gen_comb_output( all_ports )
+  set_comb_input = gen_comb_input( packed_ports )
+  set_comb_output = gen_comb_output( packed_ports )
   make_indent( set_comb_input, 3 )
   make_indent( set_comb_output, 3 )
 
   # Generate constraints for sequential upblk
-  constraints = gen_constraints( all_ports )
-  make_indent( constraints, 3 )
-  constraint_str = ''.join( map( lambda s: "\n"+s, constraints ) )
-  if constraint_str:
-    constraint_str += '\n    '
+  # constraints = gen_constraints( all_ports )
+  # make_indent( constraints, 3 )
+  # constraint_str = ''.join( map( lambda s: "\n"+s, constraints ) )
+  # if constraint_str:
+    # constraint_str += '\n    '
 
   # Line trace
-  line_trace = gen_line_trace_py( all_ports )
+  line_trace = gen_line_trace_py( packed_ports )
 
   # Internal line trace
-  in_line_trace = gen_internal_line_trace_py( all_ports )
+  in_line_trace = gen_internal_line_trace_py( packed_ports )
 
   # Fill in the python wrapper template
   with open( template_name, 'r' ) as template:
@@ -323,7 +324,7 @@ def create_py_wrapper( m_name, rtype, all_ports, lib_file, port_cdefs ):
         connections     = '\n'.join( connections ),
         set_comb_input  = '\n'.join( set_comb_input ),
         set_comb_output = '\n'.join( set_comb_output ),
-        constraints     = constraint_str,
+        # constraints     = constraint_str,
         line_trace      = line_trace,
         in_line_trace   = in_line_trace,
       )

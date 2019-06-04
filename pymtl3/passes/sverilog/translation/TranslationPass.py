@@ -26,7 +26,7 @@ def mk_TranslationPass( _SVTranslator ):
       translator = _SVTranslator( top )
       translator.translate()
 
-      module_name = translator._top_module_name
+      module_name = translator._top_module_full_name
       output_file = module_name + '.sv'
 
       with open( output_file, 'w', 0 ) as output:

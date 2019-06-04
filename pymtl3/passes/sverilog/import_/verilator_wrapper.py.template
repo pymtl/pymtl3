@@ -122,8 +122,8 @@ class {component_name}( Component ):
       s._ffi_m.clk[0] = 1
       s._ffi_inst.eval( s._ffi_m )
 
-    constraint_list = [{constraints}]
-    #s.add_constraints( *constraint_list )
+    # constraint_list = [{{constraints}}]
+    # s.add_constraints( *constraint_list )
 
   def line_trace( s ):
 {line_trace}
