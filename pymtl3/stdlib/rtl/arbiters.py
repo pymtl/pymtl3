@@ -19,11 +19,11 @@ class RoundRobinArbiter( Component ):
 
   def construct( s, nreqs ):
 
-    nreqsX2  = nreqs * 2
-    nreq_bits = mk_bits( nreqs )
+    nreqsX2 = nreqs * 2
+    Type    = mk_bits( nreqs )
 
-    s.reqs   = InPort ( mk_bits( nreqs ) )
-    s.grants = OutPort( mk_bits( nreqs ) )
+    s.reqs   = InPort ( Type )
+    s.grants = OutPort( Type )
 
     # priority enable
 
@@ -31,7 +31,7 @@ class RoundRobinArbiter( Component ):
 
     # priority register
 
-    s.priority_reg = m = RegEnRst( mk_bits( nreqs ), reset_value = 1 )
+    s.priority_reg = m = RegEnRst( Type, reset_value = 1 )
 
     s.connect( m.en,           s.priority_en )
     s.connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
@@ -71,7 +71,7 @@ class RoundRobinArbiter( Component ):
     def comb_priority_en():
 
       # Set the priority enable
-      s.priority_en = ( s.grants != Bits4(0) )
+      s.priority_en = ( s.grants != Type(0) )
 
     #-------------------------------------------------------------------
     # comb_priority_int
@@ -81,7 +81,7 @@ class RoundRobinArbiter( Component ):
     def comb_priority_int():
 
       s.priority_int[    0:nreqs  ] = s.priority_reg.out
-      s.priority_int[nreqs:nreqsX2] = nreq_bits(0)
+      s.priority_int[nreqs:nreqsX2] = Type(0)
 
     #-------------------------------------------------------------------
     # comb_kills
@@ -134,12 +134,12 @@ class RoundRobinArbiterEn( Component ):
   '''
   def construct( s, nreqs ):
 
-    nreqsX2  = nreqs * 2
-    nreq_bits = mk_bits( nreqs )
+    nreqsX2 = nreqs * 2
+    Type    = mk_bits( nreqs )
 
     s.en     = InPort ( Bits1 )
-    s.reqs   = InPort ( mk_bits( nreqs ) )
-    s.grants = OutPort( mk_bits( nreqs ) )
+    s.reqs   = InPort ( Type )
+    s.grants = OutPort( Type )
 
     # priority enable
 
@@ -187,7 +187,7 @@ class RoundRobinArbiterEn( Component ):
     def comb_priority_en():
 
       # Set the priority enable
-      s.priority_en = ( s.grants != Bits4(0) ) & s.en
+      s.priority_en = ( s.grants != Type(0) ) & s.en
 
     #-------------------------------------------------------------------
     # comb_priority_int
@@ -197,7 +197,7 @@ class RoundRobinArbiterEn( Component ):
     def comb_priority_int():
 
       s.priority_int[    0:nreqs  ] = s.priority_reg.out
-      s.priority_int[nreqs:nreqsX2] = nreq_bits(0)
+      s.priority_int[nreqs:nreqsX2] = Type(0)
 
     #-------------------------------------------------------------------
     # comb_kills
