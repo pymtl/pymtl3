@@ -598,7 +598,6 @@ class Component( ComponentLevel7 ):
   # TODO implement everything below and test them
 
   # Override
-  # FIXME currently only support s.x = y. Should support s.x[10] = y
   def add_component_by_name( s, name, obj, provided_connections=[] ):
     raise NotImplementedError()
 
