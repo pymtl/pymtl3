@@ -11,7 +11,7 @@ class PipeQueue1RTL( Component ):
     s.enq = InValRdyIfc ( Type )
     s.deq = OutValRdyIfc( Type )
 
-    s.buf  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
+    s.buffer  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
 
     s.next_full = Wire( int if Type is int else Bits1 )
     s.full      = Wire( int if Type is int else Bits1 )
@@ -28,7 +28,7 @@ class PipeQueue1RTL( Component ):
 
       @s.update
       def up_pipeq_full():
-        s.buf.en    = s.enq.val & s.enq.rdy
+        s.buffer.en    = s.enq.val & s.enq.rdy
         s.next_full = s.enq.val | (s.full & (not s.deq.rdy))
 
     else:
@@ -38,7 +38,7 @@ class PipeQueue1RTL( Component ):
 
       @s.update
       def up_pipeq_full():
-        s.buf.en    = s.enq.val & s.enq.rdy
+        s.buffer.en    = s.enq.val & s.enq.rdy
         s.next_full = s.enq.val | (s.full & ~s.deq.rdy)
 
   def line_trace( s ):
@@ -52,7 +52,7 @@ class BypassQueue1RTL( Component ):
     s.enq = InValRdyIfc ( Type )
     s.deq = OutValRdyIfc( Type )
 
-    s.buf = RegEn( Type )( in_ = s.enq.msg )
+    s.buffer = RegEn( Type )( in_ = s.enq.msg )
 
     s.next_full = Wire( int if Type is int else Bits1 )
     s.full      = Wire( int if Type is int else Bits1 )
@@ -60,8 +60,8 @@ class BypassQueue1RTL( Component ):
     s.byp_mux = Mux( Type, 2 )(
       out = s.deq.msg,
       in_ = { 0: s.enq.msg,
-              1: s.buf.out, },
-      sel = s.full, # full -- buf.out, empty -- bypass
+              1: s.buffer.out, },
+      sel = s.full, # full -- buffer.out, empty -- bypass
     )
 
     @s.update_on_edge
@@ -75,7 +75,7 @@ class BypassQueue1RTL( Component ):
 
       @s.update
       def up_bypq_internal():
-        s.buf.en    = (not s.deq.rdy) & (s.enq.val & s.enq.rdy)
+        s.buffer.en    = (not s.deq.rdy) & (s.enq.val & s.enq.rdy)
         s.next_full = (not s.deq.rdy) & s.deq.val
     else:
       @s.update
@@ -84,7 +84,7 @@ class BypassQueue1RTL( Component ):
 
       @s.update
       def up_bypq_internal():
-        s.buf.en    = (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
+        s.buffer.en    = (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
         s.next_full = (~s.deq.rdy) & s.deq.val
 
     # this enables the sender to make enq.val depend on enq.rdy
@@ -103,7 +103,7 @@ class NormalQueue1RTL( Component ):
     s.enq = InValRdyIfc( Type )
     s.deq = OutValRdyIfc( Type )
 
-    s.buf  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
+    s.buffer  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
 
     s.next_full = Wire( int if Type is int else Bits1 )
     s.full      = Wire( int if Type is int else Bits1 )
@@ -120,8 +120,8 @@ class NormalQueue1RTL( Component ):
 
       @s.update
       def up_normq_internal():
-        s.buf.en    = s.enq.val & s.enq.rdy
-        s.next_full = (s.full & (not s.deq.rdy)) | s.buf.en
+        s.buffer.en    = s.enq.val & s.enq.rdy
+        s.next_full = (s.full & (not s.deq.rdy)) | s.buffer.en
     else:
       @s.update
       def up_normq_set_enq_rdy():
@@ -129,8 +129,8 @@ class NormalQueue1RTL( Component ):
 
       @s.update
       def up_normq_internal():
-        s.buf.en    = s.enq.val & s.enq.rdy
-        s.next_full = (s.full & ~s.deq.rdy) | s.buf.en
+        s.buffer.en    = s.enq.val & s.enq.rdy
+        s.next_full = (s.full & ~s.deq.rdy) | s.buffer.en
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
@@ -183,14 +183,15 @@ class NormalQueueRTLDpath( Component ):
 
   def construct( s, num_entries, Type ):
 
+    AddrType    = mk_bits( clog2( num_entries ) )
+
     s.enq_bits  = InPort  ( Type )
     s.deq_bits  = OutPort ( Type )
 
     # Control signal (ctrl -> dpath)
-    addr_nbits  = clog2( num_entries )
     s.wen       = InPort  ( Bits1 )
-    s.waddr     = InPort  ( mk_bits( addr_nbits ) )
-    s.raddr     = InPort  ( mk_bits( addr_nbits ) )
+    s.waddr     = InPort  ( AddrType )
+    s.raddr     = InPort  ( AddrType )
 
     # Queue storage
 
@@ -211,8 +212,9 @@ class NormalQueueRTLCtrl( Component ):
 
   def construct( s, num_entries ):
 
-    s.num_entries = num_entries
-    addr_nbits    = clog2( num_entries )
+    AddrType      = mk_bits( clog2( num_entries ) )
+
+    s.num_entries = AddrType( num_entries )
 
     # Interface Ports
 
@@ -220,12 +222,12 @@ class NormalQueueRTLCtrl( Component ):
     s.enq_rdy          = OutPort ( Bits1 )
     s.deq_val          = OutPort ( Bits1 )
     s.deq_rdy          = InPort  ( Bits1 )
-    s.num_free_entries = OutPort ( mk_bits( clog2( num_entries ) ) )
+    s.num_free_entries = OutPort ( AddrType )
 
     # Control signal (ctrl -> dpath)
     s.wen              = OutPort ( Bits1 )
-    s.waddr            = OutPort ( mk_bits( addr_nbits ) )
-    s.raddr            = OutPort ( mk_bits( addr_nbits ) )
+    s.waddr            = OutPort ( AddrType )
+    s.raddr            = OutPort ( AddrType )
 
     # Wires
 
@@ -233,16 +235,16 @@ class NormalQueueRTLCtrl( Component ):
     s.empty            = Wire ( Bits1 )
     s.do_enq           = Wire ( Bits1 )
     s.do_deq           = Wire ( Bits1 )
-    s.enq_ptr          = Wire ( mk_bits( addr_nbits ) )
-    s.deq_ptr          = Wire ( mk_bits( addr_nbits ) )
-    s.enq_ptr_next     = Wire ( mk_bits( addr_nbits ) )
-    s.deq_ptr_next     = Wire ( mk_bits( addr_nbits ) )
+    s.enq_ptr          = Wire ( AddrType )
+    s.deq_ptr          = Wire ( AddrType )
+    s.enq_ptr_next     = Wire ( AddrType )
+    s.deq_ptr_next     = Wire ( AddrType )
     # TODO: can't infer these temporaries due to if statement, fix
-    s.enq_ptr_inc      = Wire ( mk_bits( addr_nbits ) )
-    s.deq_ptr_inc      = Wire ( mk_bits( addr_nbits ) )
+    s.enq_ptr_inc      = Wire ( AddrType )
+    s.deq_ptr_inc      = Wire ( AddrType )
     s.full_next_cycle  = Wire ( Bits1 )
 
-    s.last_idx         = num_entries - 1
+    s.last_idx         = AddrType( num_entries - 1 )
 
     @s.update
     def comb():
@@ -258,13 +260,13 @@ class NormalQueueRTLCtrl( Component ):
 
       # enq ptr incrementer
 
-      if s.enq_ptr == s.last_idx: s.enq_ptr_inc = 0
-      else:                       s.enq_ptr_inc = s.enq_ptr + 1
+      if s.enq_ptr == s.last_idx: s.enq_ptr_inc = AddrType(0)
+      else:                       s.enq_ptr_inc = s.enq_ptr + AddrType(1)
 
       # deq ptr incrementer
 
-      if s.deq_ptr == s.last_idx: s.deq_ptr_inc = 0
-      else:                       s.deq_ptr_inc = s.deq_ptr + 1
+      if s.deq_ptr == s.last_idx: s.deq_ptr_inc = AddrType(0)
+      else:                       s.deq_ptr_inc = s.deq_ptr + AddrType(1)
 
       # set the next ptr value
 
@@ -279,7 +281,7 @@ class NormalQueueRTLCtrl( Component ):
       if   s.reset:
         s.num_free_entries = s.num_entries
       elif s.full:
-        s.num_free_entries = 0
+        s.num_free_entries = AddrType( 0 )
       elif s.empty:
         s.num_free_entries = s.num_entries
       elif s.enq_ptr > s.deq_ptr:
@@ -308,13 +310,13 @@ class NormalQueueRTLCtrl( Component ):
     @s.update_on_edge
     def seq():
 
-      if s.reset: s.deq_ptr = 0
+      if s.reset: s.deq_ptr = AddrType( 0 )
       else:       s.deq_ptr = s.deq_ptr_next
 
-      if s.reset: s.enq_ptr = 0
+      if s.reset: s.enq_ptr = AddrType( 0 )
       else:       s.enq_ptr = s.enq_ptr_next
 
-      if   s.reset:               s.full = 0
-      elif s.full_next_cycle:     s.full = 1
-      elif (s.do_deq and s.full): s.full = 0
+      if   s.reset:               s.full = Bits1(0)
+      elif s.full_next_cycle:     s.full = Bits1(1)
+      elif (s.do_deq and s.full): s.full = Bits1(0)
       else:                       s.full = s.full

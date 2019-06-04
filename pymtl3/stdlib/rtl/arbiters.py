@@ -9,7 +9,6 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 
-from .arithmetics import Mux, Or
 from .registers import RegEnRst
 
 
@@ -72,7 +71,7 @@ class RoundRobinArbiter( Component ):
     def comb_priority_en():
 
       # Set the priority enable
-      s.priority_en = ( s.grants != 0 )
+      s.priority_en = ( s.grants != Bits4(0) )
 
     #-------------------------------------------------------------------
     # comb_priority_int
@@ -188,7 +187,7 @@ class RoundRobinArbiterEn( Component ):
     def comb_priority_en():
 
       # Set the priority enable
-      s.priority_en = ( s.grants != 0 ) & s.en
+      s.priority_en = ( s.grants != Bits4(0) ) & s.en
 
     #-------------------------------------------------------------------
     # comb_priority_int
