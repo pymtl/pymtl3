@@ -78,9 +78,9 @@ def test_multi_components_freevars( do_test ):
       @s.update
       def upblk():
         if 1:
-          s.out = STATE_IDLE
+          s.out = Bits16(STATE_IDLE)
         else:
-          s.out = STATE_WORK
+          s.out = Bits16(STATE_WORK)
   class A( Component ):
     def construct( s ):
       s.b = B()
@@ -90,7 +90,7 @@ def test_multi_components_freevars( do_test ):
         if 1:
           s.out = s.b.out
         else:
-          s.out = STATE_IDLE
+          s.out = Bits16(STATE_IDLE)
   a = A()
   a.elaborate()
   a._ref_upblk_repr = { a : \

@@ -22,6 +22,7 @@ from pymtl3.passes.rtlir.behavioral import (
 )
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
@@ -100,7 +101,8 @@ def test_mismatch_width_assign( do_test ):
     [ Bits16(32767),      Bits8(255) ],
   ]
 
-  do_test( a )
+  with expected_failure( PyMTLTypeError, "LHS and RHS of assignment" ):
+    do_test( a )
 
 def test_slicing_basic( do_test ):
   class slicing_basic( Component ):
