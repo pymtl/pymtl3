@@ -13,6 +13,7 @@ import random
 from pymtl3.datatypes import *
 from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire
 from pymtl3.dsl.errors import InvalidAPICallError
+
 from .sim_utils import simple_sim_pass
 
 

@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.datatypes import *
 from pymtl3.dsl import WR, Component, InPort, OutPort, Placeholder, U, Wire
 from pymtl3.dsl.errors import InvalidPlaceholderError, LeftoverPlaceholderError
+
 from .sim_utils import simple_sim_pass
 
 
