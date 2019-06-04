@@ -134,7 +134,7 @@ class Component( ComponentLevel7 ):
       obj._dsl.level      = parent._dsl.level + 1
       obj._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
                                                      for x in indices ] )
-      # FIXME properly implement param_tree
+
       # Iterate through the param_tree and update u
       if parent._dsl.param_tree is not None:
         if parent._dsl.param_tree.children is not None:
@@ -547,8 +547,9 @@ class Component( ComponentLevel7 ):
 
     new_obj = cls( *foo._dsl.args, **foo._dsl.kwargs )
 
-    # FIXME also merge the parameter from parameter tree
-
+    # We actually don't need to merge param tree here because when we call
+    # _add_component, the parameters stored in parent will be pushed down
+    # to new_obj
     top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections )
 
     top._flush_pending_value_connections()

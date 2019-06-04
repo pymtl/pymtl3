@@ -11,7 +11,21 @@ from __future__ import absolute_import, division, print_function
 from collections import deque
 
 from pymtl3.datatypes import *
-from pymtl3.dsl import M, WR, Component, InPort, OutPort, Placeholder, U, Wire, CalleePort, CallerPort, method_port
+from pymtl3.dsl import (
+    WR,
+    CalleePort,
+    CallerPort,
+    Component,
+    InPort,
+    M,
+    NonBlockingCalleeIfc,
+    OutPort,
+    Placeholder,
+    U,
+    Wire,
+    method_port,
+    non_blocking,
+)
 from pymtl3.dsl.errors import InvalidPlaceholderError, LeftoverPlaceholderError
 
 from .sim_utils import simple_sim_pass
@@ -207,6 +221,74 @@ def test_cl_methodport_placeholder():
       s.add_constraints( M(s.enq) < M(s.deq) )
 
   a = FooCL_top()
+  a.elaborate()
+
+  a.replace_component( a.x.foo, RealQueue )
+
+  simple_sim_pass( a )
+  a.tick()
+  a.tick()
+  a.tick()
+
+def test_cl_interface_placeholder():
+
+  class FooCL( Placeholder, Component ):
+    def construct( s, queue_type="none" ):
+      s.enq = NonBlockingCalleeIfc()
+      s.deq = NonBlockingCalleeIfc()
+
+  class FooCL_wrap( Component ):
+    def construct( s ):
+      s.enq = NonBlockingCalleeIfc()
+      s.deq = NonBlockingCalleeIfc()
+      s.foo = FooCL()( enq = s.enq, deq = s.deq )
+
+  class FooCL_top( Component ):
+    def construct( s ):
+      s.x = FooCL_wrap()
+
+      s.counter = 0
+      @s.update
+      def up_enq():
+        if s.x.enq.rdy():
+          s.x.enq(s.counter + 1)
+          s.counter += 1
+        else:
+          print("enq not rdy")
+
+      @s.update
+      def up_recv():
+        if s.x.deq.rdy():
+          print(s.x.deq())
+        else:
+          print("deq not rdy")
+
+  class RealQueue( Component ):
+    def construct( s, queue_type ):
+      s.element = None
+
+      if queue_type == "bypass":
+        s.add_constraints( M( s.deq ) < M( s.enq ) )
+      else:
+        assert queue_type == "pipe"
+        s.add_constraints( M( s.deq ) > M( s.enq ) )
+
+    def empty( s ):
+      return s.element is None
+
+    @non_blocking( lambda s : s.empty() )
+    def enq( s, ele ):
+      s.element = ele
+
+    @non_blocking( lambda s: not s.empty() )
+    def deq( s ):
+      ret = s.element
+      s.element = None
+      return ret
+
+  a = FooCL_top()
+  a.set_param( "top.x.foo.construct", queue_type="bypass" )
+
   a.elaborate()
 
   a.replace_component( a.x.foo, RealQueue )
