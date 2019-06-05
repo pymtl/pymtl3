@@ -43,8 +43,8 @@ def test_tmp_ifc_port( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -75,8 +75,8 @@ def test_tmp_ifc_port_struct( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \

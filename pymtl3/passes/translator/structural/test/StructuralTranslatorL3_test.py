@@ -73,8 +73,8 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -141,7 +141,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: IfcAttr CurCompAttr in_ msg -> IfcAttr CurCompAttr out msg
   connection: IfcAttr CurCompAttr out rdy -> IfcAttr CurCompAttr in_ rdy
@@ -224,7 +224,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 msg -> IfcAttr IfcArrayIdx CurCompAttr out 0 msg
   connection: IfcAttr IfcArrayIdx CurCompAttr out 0 rdy -> IfcAttr IfcArrayIdx CurCompAttr in_ 0 rdy
@@ -309,7 +309,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 msg -> IfcAttr IfcArrayIdx CurCompAttr out 0 msg
 

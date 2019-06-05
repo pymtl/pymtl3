@@ -23,8 +23,6 @@ def get_dir():
 def local_do_test( _m ):
   _m.elaborate()
   m = get_imported_object( _m )
-  # import pdb
-  # pdb.set_trace()
   sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
   sim.run_test()
 

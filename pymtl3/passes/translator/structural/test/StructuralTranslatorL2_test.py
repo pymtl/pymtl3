@@ -75,7 +75,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -120,8 +120,8 @@ wire_decls:
   wire_decl: struct Wire of Struct B
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -163,7 +163,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -204,7 +204,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -254,7 +254,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -299,7 +299,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -349,7 +349,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -407,7 +407,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PackedIndex StructAttr CurCompAttr struct bar 1 -> CurCompAttr out
 

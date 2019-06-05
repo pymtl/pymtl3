@@ -78,8 +78,8 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -99,7 +99,7 @@ component_decls:
       component_port: out_b Port of Vector32
     component_ifcs:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: SubCompAttr CurCompAttr b out_b -> CurCompAttr out_a
 
@@ -179,7 +179,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: Bits32(0) -> CurCompAttr out_b
   connection: Bits32(0) -> IfcAttr CurCompAttr ifc_b msg
@@ -212,7 +212,7 @@ component_decls:
           component_ifc_port: rdy Port of Vector1
           component_ifc_port: val Port of Vector1
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: SubCompAttr CurCompAttr b out_b -> CurCompAttr out_a
   connection: IfcAttr SubCompAttr CurCompAttr b ifc_b msg -> IfcAttr CurCompAttr ifc_a msg

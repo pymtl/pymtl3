@@ -6,6 +6,8 @@
 """Provide the level 1 SystemVerilog translator implementation."""
 from __future__ import absolute_import, division, print_function
 
+import inspect
+
 from pymtl3.datatypes import Bits32
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -21,19 +23,60 @@ from .SVBehavioralTranslatorL0 import SVBehavioralTranslatorL0
 
 class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1 ):
 
+  def rtlir_tr_upblk_decls( s, upblk_decls ):
+    ret = ''
+    for idx, upblk_decl in enumerate(upblk_decls):
+      make_indent( upblk_decl, 1 )
+      if idx != 0:
+        ret += '\n'
+      ret += '\n' + '\n'.join( upblk_decl )
+    return ret
+
+  def rtlir_tr_upblk_decl( s, upblk, src, py_src ):
+    return py_src + [ "" ] + src
+
   def _get_rtlir2sv_visitor( s ):
     return BehavioralRTLIRToSVVisitorL1
 
-  def rtlir_tr_upblk_decls( s, upblk_srcs ):
+  def rtlir_tr_upblk_srcs( s, upblk_srcs ):
     ret = ''
     for upblk_src in upblk_srcs:
       make_indent( upblk_src, 1 )
       ret += '\n' + '\n'.join( upblk_src )
     return ret
 
-  def rtlir_tr_upblk_decl( s, upblk, rtlir_upblk ):
+  def rtlir_tr_upblk_src( s, upblk, rtlir_upblk ):
     visitor = s._get_rtlir2sv_visitor()()
     return visitor.enter( upblk, rtlir_upblk )
+
+  def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
+    ret = ''
+    for upblk_py_src in upblk_py_srcs:
+      make_indent( upblk_py_src, 1 )
+      ret += '\n' + '\n'.join( upblk_py_src )
+    return ret
+
+  def rtlir_tr_upblk_py_src( s, upblk ):
+    def _trim( py_src ):
+      indent = 100
+      for line in py_src:
+        if line:
+          n_spaces = len( line ) - len( line.lstrip() )
+          if n_spaces < indent:
+            indent = n_spaces
+      for idx, line in enumerate( py_src ):
+        if line:
+          py_src[ idx ] = line[indent:]
+    try:
+      upblk_py_src = inspect.getsource( upblk )
+    except IOError:
+      upblk_py_src = "IOError: cannot retrieve Python update block code!"
+    upblk_py_src = upblk_py_src.split( '\n' )
+    _trim( upblk_py_src )
+    while upblk_py_src and not upblk_py_src[-1]:
+      upblk_py_src = upblk_py_src[:-1]
+    py_src = [ "PYMTL SOURCE:", "" ] + upblk_py_src
+    return map( lambda x: "// "+x, py_src )
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
     make_indent( freevars, 1 )

@@ -50,12 +50,12 @@ def test_multi_components_tmpvars( do_test ):
   a.elaborate()
   a._ref_upblk_repr = { a : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """, a.b : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """ }
   a._ref_freevar_repr = { a : "freevars:\n", a.b : "freevars:\n" }
   a._ref_tmpvar_repr = { a : \
@@ -95,12 +95,12 @@ def test_multi_components_freevars( do_test ):
   a.elaborate()
   a._ref_upblk_repr = { a : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """, a.b : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """ }
   a._ref_freevar_repr = { a.b : \
 """\

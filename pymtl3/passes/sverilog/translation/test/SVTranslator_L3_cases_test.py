@@ -56,6 +56,14 @@ module A
   output logic [0:0] out_$val
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out.val = s.in_.val
+  //   s.out.msg = s.in_.msg
+  //   s.in_.rdy = s.out.rdy
+  
   always_comb begin : upblk
     out_$val = in__$val;
     out_$msg = in__$msg;
@@ -89,6 +97,12 @@ module A
   output logic [31:0] in__$1_$foo
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[1].foo
+  
   always_comb begin : upblk
     out = in__$1_$foo;
   end

@@ -37,8 +37,8 @@ def test_pymtl_Bits_freevar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = \
 """\
@@ -58,8 +58,8 @@ def test_pymtl_list_Bits_freevar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = \
 """\
@@ -81,9 +81,9 @@ def test_pymtl_multi_upblks( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
-  upblk_decl: upblk2
+upblk_srcs:
+  upblk_src: upblk1
+  upblk_src: upblk2
 """
   a._ref_freevar_repr = """freevars:\n"""
   do_test( a )
@@ -103,9 +103,9 @@ def test_pymtl_multi_freevars( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
-  upblk_decl: upblk2
+upblk_srcs:
+  upblk_src: upblk1
+  upblk_src: upblk2
 """
   a._ref_freevar_repr = \
 """\

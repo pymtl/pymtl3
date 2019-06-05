@@ -40,8 +40,8 @@ def test_tmp_wire( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -67,9 +67,9 @@ def test_tmpvar_alias( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
-  upblk_decl: upblk2
+upblk_srcs:
+  upblk_src: upblk1
+  upblk_src: upblk2
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -94,8 +94,8 @@ def test_multi_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -118,8 +118,8 @@ def test_freevar_to_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = \
 """\
@@ -144,8 +144,8 @@ def test_Bits_to_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -166,8 +166,8 @@ def test_py_int_to_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \

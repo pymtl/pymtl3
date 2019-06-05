@@ -58,7 +58,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -84,7 +84,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -110,7 +110,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -147,7 +147,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -184,7 +184,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -209,7 +209,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -243,7 +243,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -274,7 +274,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -313,8 +313,8 @@ wire_decls:
   wire_decl: foo Wire of Vector32
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -350,8 +350,8 @@ wire_decls:
   wire_decl: foo Array[5] of Wire
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -387,7 +387,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -420,7 +420,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -463,7 +463,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PartSel CurCompAttr foo 1 2 -> CurCompAttr bar
 
@@ -506,7 +506,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PartSel CurCompAttr foo 0 4 -> CurCompAttr bar
 
@@ -549,7 +549,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PortArrayIdx CurCompAttr foo 1 -> CurCompAttr bar
 
@@ -599,8 +599,8 @@ wire_decls:
   wire_decl: wire Array[5] of Wire
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
   connection: WireArrayIdx CurCompAttr wire 1 -> CurCompAttr bar
 
@@ -649,7 +649,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: Bits32(0) -> CurCompAttr bar
 
@@ -685,7 +685,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent

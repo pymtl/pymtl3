@@ -41,6 +41,12 @@ module B
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.foo = Bits32(42)
+  
   always_comb begin : upblk
     foo = 32'( 42 );
   end
@@ -64,6 +70,12 @@ module A
     .reset( b$reset )
   );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.b.foo
+  
   always_comb begin : upblk
     out = b$foo;
   end
@@ -99,6 +111,12 @@ module B
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out_b = Bits32(0)
+  
   always_comb begin : upblk
     out_b = 32'( 0 );
   end
@@ -122,6 +140,12 @@ module A
     .reset( b$reset )
   );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = zext( s.b.out_b, 64 )
+  
   always_comb begin : upblk
     out = { { 32 { 1'b0 } }, b$out_b };
   end
@@ -183,6 +207,12 @@ module A
     .reset( comp_$1$reset )
   );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.comp[1].out
+  
   always_comb begin : upblk
     out = comp_$1$out;
   end

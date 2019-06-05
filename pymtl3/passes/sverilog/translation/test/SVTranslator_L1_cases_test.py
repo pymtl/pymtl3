@@ -40,6 +40,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_
+  
   always_comb begin : upblk
     out = in_;
   end
@@ -67,6 +73,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update_on_edge
+  // def upblk():
+  //   s.out = s.in_
+  
   always_ff @(posedge clk) begin : upblk
     out <= in_;
   end
@@ -96,6 +108,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_1, s.in_2 )
+  
   always_comb begin : upblk
     out = { in_1, in_2 };
   end
@@ -121,6 +139,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( Bits32(42), Bits32(0) )
+  
   always_comb begin : upblk
     out = { 32'( 42 ), 32'( 0 ) };
   end
@@ -148,6 +172,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_, Bits32(0) )
+  
   always_comb begin : upblk
     out = { in_, 32'( 0 ) };
   end
@@ -175,6 +205,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = sext( s.in_, 64 )
+  
   always_comb begin : upblk
     out = { { 32 { in_[31] } }, in_ };
   end
@@ -202,6 +238,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = zext( s.in_, 64 )
+  
   always_comb begin : upblk
     out = { { 32 { 1'b0 } }, in_ };
   end
@@ -231,6 +273,12 @@ module A
 );
   localparam [31:0] _fvar_STATE_IDLE = 32'd42;
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_, STATE_IDLE )
+  
   always_comb begin : upblk
     out = { in_, _fvar_STATE_IDLE };
   end
@@ -258,6 +306,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_[0], s.in_[1] )
+  
   always_comb begin : upblk
     out = { in_[0], in_[1] };
   end
@@ -285,6 +339,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[1]
+  
   always_comb begin : upblk
     out = in_[1];
   end
@@ -312,6 +372,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[4:36]
+  
   always_comb begin : upblk
     out = in_[35:4];
   end
