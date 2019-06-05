@@ -45,6 +45,19 @@ always_comb begin : upblk
   out = in_;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [    0,   0 ],
+    [   42,   42 ],
+    [   24,   24 ],
+    [   -2,   -2 ],
+    [   -1,   -1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_seq_assign( do_test ):
@@ -62,6 +75,20 @@ always_ff @(posedge clk) begin : upblk
   out <= in_;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    if tv[1] != '*':
+      assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [    0,   '*' ],
+    [   42,    0 ],
+    [   24,    42 ],
+    [   -2,    24 ],
+    [   -1,    -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_concat( do_test ):
@@ -80,6 +107,19 @@ always_comb begin : upblk
   out = { in_1, in_2 };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[2])
+  a._test_vectors = [
+    [    0,    0,     concat(    Bits32(0),    Bits32(0) ) ],
+    [   42,    0,     concat(   Bits32(42),    Bits32(0) ) ],
+    [   42,   42,     concat(   Bits32(42),    Bits32(42) ) ],
+    [   -1,   42,     concat(   Bits32(-1),    Bits32(42) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_concat_constants( do_test ):
@@ -93,9 +133,18 @@ def test_concat_constants( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { 32'( 42 ), 32'( 0 ) };
+  out = { 32'd42, 32'd0 };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[0])
+  a._test_vectors = [
+    [    concat(    Bits32(42),    Bits32(0) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_concat_mixed( do_test ):
@@ -110,9 +159,21 @@ def test_concat_mixed( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_, 32'( 0 ) };
+  out = { in_, 32'd0 };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[1])
+  a._test_vectors = [
+    [  42,  concat(    Bits32(42),    Bits32(0) ) ],
+    [  -1,  concat(    Bits32(-1),    Bits32(0) ) ],
+    [  -2,  concat(    Bits32(-2),    Bits32(0) ) ],
+    [   2,  concat(     Bits32(2),    Bits32(0) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_sext( do_test ):
@@ -130,6 +191,18 @@ always_comb begin : upblk
   out = { { 32 { in_[31] } }, in_ };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[0])
+  a._test_vectors = [
+    [  42,   sext(    Bits32(42),    64 ) ],
+    [  -2,   sext(    Bits32(-2),    64 ) ],
+    [  -1,   sext(    Bits32(-1),    64 ) ],
+    [   2,   sext(     Bits32(2),    64 ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_zext( do_test ):
@@ -147,6 +220,18 @@ always_comb begin : upblk
   out = { { 32 { 1'b0 } }, in_ };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[1])
+  a._test_vectors = [
+    [  42,  zext(    Bits32(42),    64 ) ],
+    [  -1,  zext(    Bits32(-1),    64 ) ],
+    [  -2,  zext(    Bits32(-2),    64 ) ],
+    [   2,  zext(     Bits32(2),    64 ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_sub_component_attr( do_test ):
@@ -182,6 +267,18 @@ always_comb begin : upblk
   out = { in_, _fvar_STATE_IDLE };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[1])
+  a._test_vectors = [
+    [  42,  concat(    Bits32(42),    Bits32(42) ) ],
+    [  -1,  concat(    Bits32(-1),    Bits32(42) ) ],
+    [  -2,  concat(    Bits32(-2),    Bits32(42) ) ],
+    [   2,  concat(     Bits32(2),    Bits32(42) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_unpacked_signal_index( do_test ):
@@ -199,6 +296,19 @@ always_comb begin : upblk
   out = { in_[0], in_[1] };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out == Bits64(tv[2])
+  a._test_vectors = [
+    [  42,   2,  concat(    Bits32(42),     Bits32(2) ) ],
+    [  -1,  42,  concat(    Bits32(-1),    Bits32(42) ) ],
+    [  -2,  -1,  concat(    Bits32(-2),    Bits32(-1) ) ],
+    [   2,  -2,  concat(     Bits32(2),    Bits32(-2) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_bit_selection( do_test ):
@@ -216,6 +326,18 @@ always_comb begin : upblk
   out = in_[1];
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits1(tv[1])
+  a._test_vectors = [
+    [   0,   0 ],
+    [  -1,   1 ],
+    [  -2,   1 ],
+    [   2,   1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_part_selection( do_test ):
@@ -233,4 +355,19 @@ always_comb begin : upblk
   out = in_[35:4];
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits64(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [   -1,   -1 ],
+    [   -2,   -1 ],
+    [   -4,   -1 ],
+    [   -8,   -1 ],
+    [  -16,   -1 ],
+    [  -32,   -2 ],
+    [  -64,   -4 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

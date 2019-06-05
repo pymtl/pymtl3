@@ -69,7 +69,7 @@ def _gen_ref_write( lhs, rhs, nbits ):
   else:
     ret = []
     ITEM_BITWIDTH = 32
-    num_assigns = (nbits-1)/ITEM_BITWIDTH+1
+    num_assigns = (nbits-1)//ITEM_BITWIDTH+1
     for idx in xrange(num_assigns):
       l = ITEM_BITWIDTH*idx
       r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
@@ -82,7 +82,7 @@ def _gen_ref_read( lhs, rhs, nbits ):
   else:
     ret = []
     ITEM_BITWIDTH = 32
-    num_assigns = (nbits-1)/ITEM_BITWIDTH+1
+    num_assigns = (nbits-1)//ITEM_BITWIDTH+1
     for idx in xrange(num_assigns):
       l = ITEM_BITWIDTH*idx
       r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
@@ -348,7 +348,7 @@ def gen_signal_decl_py( rtype ):
     elif isinstance( dtype, rdt.PackedArray ):
       n_dim = dtype.get_dim_sizes()
       _dtype = dtype.get_sub_dtype()
-      return gen_packed_array_conns( lhs, rhs, _dtype, n_dim, 0 )
+      return gen_packed_array_conns( lhs, rhs, _dtype, n_dim, pos )
     else:
       assert False, "unrecognized data type {}!".format( dtype )
 

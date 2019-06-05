@@ -52,10 +52,19 @@ end\
 """ }, a.b : { 'upblk' : \
 """\
 always_comb begin : upblk
-  foo = 32'( 42 );
+  foo = 32'd42;
 end\
 """
 } }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[0])
+  a._test_vectors = [
+    [    42 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_subcomponent_index( do_test ):
@@ -77,4 +86,13 @@ always_comb begin : upblk
   out = comp_$2$out;
 end\
 """ } }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[0])
+  a._test_vectors = [
+    [    0 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

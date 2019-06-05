@@ -49,6 +49,7 @@ class ImportPass( BasePass ):
   The top module inside the target .sv file should also have a full name.
   """
   def __call__( s, top ):
+    s.top = top
     if not top._dsl.constructed:
       raise SVerilogImportError( top, 
         "please elaborate design {} before applying the import pass!". \
@@ -69,7 +70,7 @@ class ImportPass( BasePass ):
   def do_import( s, m ):
     try:
       imp = get_imported_object( m )
-      swap_in_imported_component( m, imp )
+      swap_in_imported_component( s.top, m, imp )
     except AssertionError as e:
       msg = '' if e.args[0] is None else e.args[0]
       raise SVerilogImportError( m, msg )
@@ -378,5 +379,5 @@ def import_component( wrapper_name, component_name, symbols ):
 # swap_in_imported_component
 #-----------------------------------------------------------------------
 
-def swap_in_imported_component( m, imp ):
-  pass
+def swap_in_imported_component( top, m, imp ):
+  top.replace_component_with_obj( m, imp )

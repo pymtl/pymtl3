@@ -79,11 +79,11 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
           assert False, '{} is not an integer!'.format( array )
       assert isinstance( array, list )
 
-      ret = '{ '
+      ret = "'{ "
       for _idx, idx in enumerate( xrange( n_dim[0] ) ):
         if _idx != 0: ret += ', '
         ret += gen_array_param( n_dim[1:], array[idx] )
-      ret += ' }'
+      ret += " }"
       return ret
 
     assert isinstance( Type.get_dtype(), rdt.Vector ),\

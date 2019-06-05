@@ -62,6 +62,19 @@ typedef struct packed {
   assign out = in_.foo;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [       B(),   42 ],
+    [    B( 0 ),    0 ],
+    [   B( -1 ),   -1 ],
+    [   B( -2 ),   -2 ],
+    [   B( 24 ),   24 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_nested_struct_port( do_test ):
@@ -110,6 +123,20 @@ typedef struct packed {
   assign out_bar = in_.c.bar;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out_foo == Bits32(tv[1])
+    assert m.out_bar == Bits32(tv[2])
+  a._test_vectors = [
+    [       B(),    42,    1 ],
+    [    B( 1 ),     1,    1 ],
+    [   B( -1 ),    -1,    1 ],
+    [   B( -2 ),    -2,    1 ],
+    [   B( 24 ),    24,    1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_packed_array( do_test ):
@@ -146,6 +173,20 @@ typedef struct packed {
   assign out[1] = in_.foo[1];\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[1])
+    assert m.out[1] == Bits32(tv[2])
+  a._test_vectors = [
+    [       B(),    42,   42 ],
+    [    B( 1 ),     1,    1 ],
+    [   B( -1 ),    -1,   -1 ],
+    [   B( -2 ),    -2,   -2 ],
+    [   B( 24 ),    24,   24 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_struct_packed_array( do_test ):
@@ -191,4 +232,14 @@ typedef struct packed {
   assign out[1] = in_.c[1].bar;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[1])
+    assert m.out[1] == Bits32(tv[2])
+  a._test_vectors = [
+    [       B(),     1,    1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

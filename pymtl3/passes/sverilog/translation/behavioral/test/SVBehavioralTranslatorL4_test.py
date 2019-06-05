@@ -58,12 +58,29 @@ always_comb begin : upblk
   in__$rdy = out_$rdy;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_.val = Bits1(tv[0])
+    m.in_.msg = Bits32(tv[1])
+    m.out.rdy = Bits1(1)
+  def tv_out( m, tv ):
+    assert m.in_.rdy == Bits1(1)
+    assert m.out.val == Bits1(tv[2])
+    assert m.out.msg == Bits32(tv[3])
+  a._test_vectors = [
+    [   1,      0,   1,      0 ],
+    [   0,     42,   0,     42 ],
+    [   1,     42,   1,     42 ],
+    [   1,     -1,   1,     -1 ],
+    [   1,     -2,   1,     -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_interface_index( do_test ):
   class Ifc( Interface ):
     def construct( s ):
-      s.foo = OutPort( Bits32 )
+      s.foo = InPort( Bits32 )
   class A( Component ):
     def construct( s ):
       s.in_ = [ Ifc() for _ in xrange(2) ]
@@ -78,4 +95,18 @@ always_comb begin : upblk
   out = in__$1_$foo;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0].foo = Bits32(tv[0])
+    m.in_[1].foo = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[2])
+  a._test_vectors = [
+    [    0,    0,      0 ],
+    [    0,   42,     42 ],
+    [   24,   42,     42 ],
+    [   -2,   -1,     -1 ],
+    [   -1,   -2,     -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

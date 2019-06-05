@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 
 import inspect
 
-from pymtl3.datatypes import Bits32
+from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -277,7 +277,15 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_SizeCast( s, node ):
     nbits = node.nbits
     value = s.visit( node.value )
-    return "{nbits}'( {value} )".format( **locals() )
+    if hasattr( node, "_value" ):
+      template = "{nbits}'d{value}"
+      if isinstance( node._value, Bits ):
+        value = node._value.value
+      else:
+        value = node._value
+    else:
+      template = "{nbits}'( {value} )"
+    return template.format( **locals() )
 
   #-----------------------------------------------------------------------
   # visit_StructInst

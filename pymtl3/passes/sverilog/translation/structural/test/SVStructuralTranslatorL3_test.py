@@ -53,6 +53,14 @@ def test_ifc_decls( do_test ):
   assign ifc_$val = 1'd1;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.ifc.msg == Bits32(42)
+    assert m.ifc.val == Bits1(1)
+  a._test_vectors = []
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_multi_ifc_decls( do_test ):
@@ -89,4 +97,21 @@ def test_multi_ifc_decls( do_test ):
   assign out_$val = in__$val;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_.val = Bits1(tv[0])
+    m.in_.msg = Bits32(tv[1])
+    m.out.rdy = Bits1(tv[2])
+  def tv_out( m, tv ):
+    assert m.out.val == Bits1(tv[3])
+    assert m.out.msg == Bits32(tv[4])
+    assert m.in_.rdy == Bits1(tv[5])
+  a._test_vectors = [
+    [    0,    42,   1,    0,    42,    1 ],
+    [    1,    -1,   1,    1,    -1,    1 ],
+    [    1,    -2,   0,    1,    -2,    0 ],
+    [    0,     2,   0,    0,     2,    0 ],
+    [    1,    24,   1,    1,    24,    1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

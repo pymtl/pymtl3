@@ -32,7 +32,7 @@ def local_do_test( m ):
 def test_struct( do_test ):
   class B( object ):
     def __init__( s, foo=42 ):
-      s.foo = Bits32(42)
+      s.foo = Bits32(foo)
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -47,6 +47,21 @@ always_comb begin : upblk
   out = in_.foo;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [     B(),  42 ],
+    [    B(0),   0 ],
+    [   B(-1),  -1 ],
+    [   B(42),  42 ],
+    [   B(-2),  -2 ],
+    [   B(10),  10 ],
+    [  B(256), 256 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_packed_array( do_test ):
@@ -68,6 +83,20 @@ always_comb begin : upblk
   out = { in_.bar[0], in_.bar[1], in_.foo };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out == Bits96(tv[1])
+  a._test_vectors = [
+    [        B(),   concat(   Bits32(1),   Bits32(1),  Bits32(42) ) ],
+    [    B(0, 0),   concat(   Bits32(0),   Bits32(0),   Bits32(0) ) ],
+    [  B(-1, -1),   concat(  Bits32(-1),  Bits32(-1),  Bits32(-1) ) ],
+    [  B(-1, 42),   concat(  Bits32(42),  Bits32(42),  Bits32(-1) ) ],
+    [  B(42, 42),   concat(  Bits32(42),  Bits32(42),  Bits32(42) ) ],
+    [  B(42, -1),   concat(  Bits32(-1),  Bits32(-1),  Bits32(42) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_nested_struct( do_test ):
@@ -93,4 +122,18 @@ always_comb begin : upblk
   out = { in_.bar[0], in_.c.woof, in_.foo };
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out == Bits96(tv[1])
+  a._test_vectors = [
+    [        B(),   concat(   Bits32(1),   Bits32(2),  Bits32(42) ) ],
+    [    B(0, 0),   concat(   Bits32(0),   Bits32(2),   Bits32(0) ) ],
+    [  B(-1, -1),   concat(  Bits32(-1),   Bits32(2),  Bits32(-1) ) ],
+    [  B(-1, 42),   concat(  Bits32(42),   Bits32(2),  Bits32(-1) ) ],
+    [  B(42, 42),   concat(  Bits32(42),   Bits32(2),  Bits32(42) ) ],
+    [  B(42, -1),   concat(  Bits32(-1),   Bits32(2),  Bits32(42) ) ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

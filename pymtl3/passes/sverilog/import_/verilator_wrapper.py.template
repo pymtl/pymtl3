@@ -31,9 +31,6 @@ def full_vector( wire, signal ):
       ret = to_string( signal[idx], _nbits )[2:] + ret
     return "0x" + ret
 
-def get_bit_slice( num, start, stop ):
-  return (num >> start) & (2**(stop-start)-1)
-
 #-------------------------------------------------------------------------
 # {component_name}
 #-------------------------------------------------------------------------
@@ -75,6 +72,22 @@ class {component_name}( Component ):
     {component_name}.id_ += 1
 
   def finalize( s ):
+    """Finalize the imported component.
+    
+    This method closes the shared library opened through CFFI. If an imported
+    component is not finalized explicitly (i.e. if you rely on GC to collect a
+    no longer used imported component), importing a component with the same
+    name before all previous imported components are GCed might lead to
+    confusing behaviors. This is because once opened, the shared lib
+    is cached by the OS until the OS reference counter for this lib reaches
+    0 (you can decrement the reference counter by calling `dl_close()` syscall).
+
+    Fortunately real designs tend to always have the same shared lib corresponding
+    to the components with the same name. If you are doing translation testing and
+    use the same component class name even if they refer to different designs,
+    you might need to call `imported_object.finalize()` at the end of each test
+    to ensure correct behaviors.
+    """
     assert s._finalization_count == 0,\
       'Imported component can only be finalized once!'
     s._finalization_count += 1
