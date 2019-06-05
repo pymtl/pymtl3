@@ -1,7 +1,8 @@
 """
 ==========================================================================
- XcelIfcs
+ xcel_ifcs.py
 ==========================================================================
+Accelerator interface implementations at FL, CL, and RTL.
 
  Author: Yanghui Ou
    Date: June 3, 2019
@@ -12,6 +13,7 @@ from greenlet import greenlet
 
 from pymtl3 import *
 
+from .SendRecvIfc import RecvIfcRTL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
 #=========================================================================
@@ -116,24 +118,16 @@ class XcelMasterIfcRTL( Interface ):
     s.req  = SendIfcRTL( req_class  )
     s.resp = RecvIfcRTL( resp_class )
 
-  def connect( s, other, parent ):
-    if isinstance( other, XcelMinionIfcRTL ):
-      parent.connect_pairs(
-        s.req, other.req,
-      )
-      return True
-    elif isinstance( ohter, XcelMinionIfcCL ):
-      pass
-    else:
-      return False
+  def __str__( s ):
+    return "{},{}".format( s.req, s.resp )
 
 class XcelMinionIfcRTL( Interface ):
   def construct( s, req_class, resp_class ):
     s.req  = RecvIfcRTL( req_class  )
     s.resp = SendIfcRTL( resp_class )
 
-  def connect( s, other, parent ):
-    pass
+  def __str__( s ):
+    return "{},{}".format( s.req, s.resp )
 
 #=========================================================================
 # CL/FL adapters
