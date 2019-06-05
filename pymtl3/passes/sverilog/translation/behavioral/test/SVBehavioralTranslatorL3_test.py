@@ -64,7 +64,7 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
-def test_packed_array( do_test ):
+def test_packed_array_behavioral( do_test ):
   class B( object ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)

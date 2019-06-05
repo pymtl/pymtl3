@@ -43,7 +43,7 @@ from ..translation.behavioral.test.SVBehavioralTranslatorL2_test import (
     test_tmpvar,
 )
 from ..translation.behavioral.test.SVBehavioralTranslatorL3_test import (
-    test_b_packed_array,
+    test_packed_array_behavioral,
     test_nested_struct,
     test_struct,
 )
