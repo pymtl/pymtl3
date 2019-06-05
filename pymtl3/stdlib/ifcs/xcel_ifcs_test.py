@@ -3,8 +3,8 @@
  xcel_ifcs_test.py
 ==========================================================================
 
-Author: Yanghui Ou
-  Date: June 4, 2019
+Author : Yanghui Ou
+  Date : June 4, 2019
 """
 from __future__ import absolute_import, division, print_function
 
@@ -200,7 +200,7 @@ def test_xcel_cl_rtl():
 
       # Components
 
-      s.req_q = NormalQueueRTL( ReqType, 2 )
+      s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
       s.wen   = Wire( Bits1 )
       s.reg_file = RegisterFile( DataType, nregs )(
         raddr = { 0: s.req_q.deq.msg.addr },
