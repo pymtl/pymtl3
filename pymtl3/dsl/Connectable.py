@@ -204,7 +204,8 @@ class Signal( NamedObject, Connectable ):
   #       sliced signal.
 
   def is_leaf_signal( s ):
-    return s._dsl.is_bits_signal and not s.is_sliced_signal()
+    return ( issubclass( s._dsl.Type, Bits ) and not s.is_sliced_signal() ) or \
+           (Type is int)
 
   def get_leaf_signals( s ):
     if s.is_sliced_signal(): return []
