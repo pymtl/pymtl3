@@ -32,7 +32,7 @@ class DSLMetadata(object):
   pass
 
 # NOTE: We found that the built-in OrderedDict slows down the elaboration
-# time because much time was spent calling OrderedDict.__init__. 
+# time because much time was spent calling OrderedDict.__init__.
 # The time for instantiating an OrderedDict is quite long compared
 # to other primitive data structures such as list or dict. We have to
 # implement our own ordered dictionary to mitigate this overhead.
@@ -221,6 +221,11 @@ class NamedObject(object):
 
             s_name = s._dsl.full_name
             u._dsl.full_name = ( s_name + "." + u_name )
+
+            # store the name/indices
+            u._dsl._my_name     = name
+            u._dsl._my_indices  = indices
+
             u._construct()
           # except AttributeError as e:
           #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
@@ -237,15 +242,17 @@ class NamedObject(object):
 
     super( NamedObject, s ).__setattr__( name, obj )
 
-  def _collect_all( s, filt=lambda x: isinstance( x, NamedObject ) ):
-    ret = set()
+  # It is possible to take multiple filters
+  def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
+    ret = [ set() for _ in filt ]
     stack = [s]
     while stack:
       u = stack.pop()
       if   isinstance( u, NamedObject ):
 
-        if filt( u ): # Check if m satisfies the filter
-          ret.add( u )
+        for i in range( len(filt) ):
+          if filt[i]( u ): # Check if m satisfies the filter
+            ret[i].add( u )
 
         for name, obj in u.__dict__.iteritems():
 
@@ -273,7 +280,7 @@ class NamedObject(object):
       return super( NamedObject, s ).__repr__()
 
   #-----------------------------------------------------------------------
-  # Public APIs
+  # Construction time APIs
   #-----------------------------------------------------------------------
 
   def construct( s, *args, **kwargs ):
@@ -304,6 +311,10 @@ class NamedObject(object):
   # this function and simply call construct at the beginning and call
   # collect at the middle/end.
 
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+
   def _elaborate_construct( s ):
 
     if s._dsl.constructed:
@@ -333,7 +344,7 @@ class NamedObject(object):
     del NamedObject.__setattr__
 
   def _elaborate_collect_and_mark_all_named_objects( s ):
-    s._dsl.all_named_objects = s._collect_all()
+    s._dsl.all_named_objects = s._collect_all()[0]
     for c in s._dsl.all_named_objects:
       c._dsl.elaborate_top = s
 
@@ -341,7 +352,9 @@ class NamedObject(object):
     s._elaborate_construct()
     s._elaborate_collect_and_mark_all_named_objects()
 
-  # The following APIs can only be called after elaboration
+  #-----------------------------------------------------------------------
+  # Post-elaborate public APIs (can only be called after elaboration)
+  #-----------------------------------------------------------------------
 
   def is_component( s ):
     raise NotImplemented
@@ -351,6 +364,8 @@ class NamedObject(object):
 
   def is_interface( s ):
     raise NotImplemented
+
+  # These two APIs are reused across Connectable and Component
 
   def get_field_name( s ):
     try:
@@ -363,7 +378,3 @@ class NamedObject(object):
       return s._dsl.parent_obj
     except AttributeError:
       raise NotElaboratedError()
-
-  def get_all_object_filter( s, filt ):
-    assert callable( filt )
-    return s._collect_all( filt )

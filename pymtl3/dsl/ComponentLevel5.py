@@ -81,37 +81,6 @@ class ComponentLevel5( ComponentLevel4 ):
     else:
       super( ComponentLevel5, s )._connect_objects( o1, o2, internal )
 
-  #-----------------------------------------------------------------------
-  # elaborate
-  #-----------------------------------------------------------------------
-
-  # We still reuse the elaborate template by adding functionalities to
-  # sub-functions called by elaborate
-  # Override
-  def _elaborate_declare_vars( s ):
-    super( ComponentLevel5, s )._elaborate_declare_vars()
-
-    s._dsl.all_method_ports = set()
-
-  # However, we need to override the whole function here because we want
-  # to add some fine-grained functionalities to avoid reduntant isinstance
-  # Override
-  def _elaborate_collect_all_vars( s ):
-    for c in s._dsl.all_named_objects:
-
-      if isinstance( c, Signal ):
-        s._dsl.all_signals.add( c )
-      elif isinstance( c, ComponentLevel1 ):
-        s._collect_vars( c )
-      # Added here
-      elif isinstance( c, MethodPort ):
-        s._dsl.all_method_ports.add( c )
-
-    s._dsl.all_value_nets  = s._resolve_value_connections()
-    # Added here
-    s._dsl.all_method_nets = s._resolve_method_connections()
-    s._dsl.has_pending_connections = False
-
   def _resolve_method_connections( s ):
 
     # First of all, bfs the "forest" to find out all nets
@@ -144,17 +113,36 @@ class ComponentLevel5( ComponentLevel4 ):
 
     return ret
 
-  def get_all_method_nets( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all method nets " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
+  # TODO Check if all method net port directions are correct
 
-    if s._dsl.has_pending_connections:
-      s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl.all_method_nets = s._resolve_method_connections()
-      s._dsl.has_pending_connections = False
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+  # We still reuse the elaborate template by adding functionalities to
+  # sub-functions called by elaborate
 
-    return s._dsl.all_method_nets
+  # Override
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel5, s )._elaborate_declare_vars()
+
+    s._dsl.all_method_ports = set()
+
+  # However, we need to override the whole function here because we want
+  # to add some fine-grained functionalities to avoid reduntant isinstance
+  # Override
+  def _elaborate_collect_all_vars( s ):
+    for c in s._dsl.all_named_objects:
+      if isinstance( c, Signal ):
+        s._dsl.all_signals.add( c )
+      elif isinstance( c, ComponentLevel1 ):
+        s._dsl.all_components.add( c )
+        s._collect_vars( c )
+      # Added here
+      elif isinstance( c, MethodPort ):
+        s._dsl.all_method_ports.add( c )
+
+    s._dsl.all_value_nets  = s._resolve_value_connections()
+    # Added here
+    s._dsl.all_method_nets = s._resolve_method_connections()
+    s._dsl._has_pending_value_connections = False
+    s._dsl._has_pending_method_connections = False

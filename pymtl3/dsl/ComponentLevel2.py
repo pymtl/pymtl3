@@ -27,6 +27,7 @@ from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
     InvalidFuncCallError,
+    InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
     SignalTypeError,
@@ -34,6 +35,7 @@ from .errors import (
     VarNotDeclaredError,
 )
 from .NamedObject import NamedObject
+from .Placeholder import Placeholder
 
 p = re.compile('( *(@|def))')
 
@@ -397,11 +399,19 @@ class ComponentLevel2( ComponentLevel1 ):
           .format(  repr(obj), repr(host), type(host).__name__,
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
+  # TODO rename
+  def _check_valid_dsl_code( s ):
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+
   #-----------------------------------------------------------------------
   # Construction-time APIs
   #-----------------------------------------------------------------------
 
   def func( s, func ): # @s.func is for those functions
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot define function "
+              "in a placeholder component.".format( func.__name__ ) )
     name = func.__name__
     if name in s._dsl.name_func or name in s._dsl.name_upblk:
       raise UpblkFuncSameNameError( name )
@@ -422,6 +432,9 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot define constraints "
+              "in a placeholder component." )
 
     for (x0, x1, is_equal) in args:
 
@@ -469,6 +482,11 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.all_upblk_writes = {}
     s._dsl.all_upblk_calls  = {}
 
+    # Like all_components in level1, although this all_signals is a subset
+    # of all_named_objects in NamedObject class, I still maintain it here
+    # because we want to avoid redundant isinstance check. I'm going to pay the
+    # extra cost of removing from both all_named_objects and all_signals
+    # when I delete a signal
     s._dsl.all_signals = set()
 
   # Override
@@ -477,6 +495,7 @@ class ComponentLevel2( ComponentLevel1 ):
       if isinstance( c, Signal ):
         s._dsl.all_signals.add( c )
       elif isinstance( c, ComponentLevel1 ):
+        s._dsl.all_components.add( c )
         s._collect_vars( c )
 
   # Override
@@ -485,7 +504,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._elaborate_construct()
 
     # First elaborate all functions to spawn more named objects
-    for c in s.get_all_object_filter( lambda s: isinstance( s, ComponentLevel2 ) ):
+    for c in s._collect_all( [ lambda s: isinstance( s, ComponentLevel2 ) ] )[0]:
       c._elaborate_read_write_func()
 
     s._elaborate_collect_and_mark_all_named_objects()
@@ -493,230 +512,10 @@ class ComponentLevel2( ComponentLevel1 ):
     s._elaborate_declare_vars()
     s._elaborate_collect_all_vars()
 
-    s.check()
+    s._check_valid_dsl_code()
 
   #-----------------------------------------------------------------------
-  # Public APIs (only can be called after elaboration)
+  # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
-
-  def lock_in_simulation( s ):
-    assert s._dsl.elaborate_top is s, "Locking in simulation " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-    s._dsl.swapped_signals = defaultdict(list)
-    s._dsl.swapped_values  = defaultdict(list)
-
-    def cleanup_connectables( current_obj, host_component ):
-
-      # Deduplicate code. Choose operation based on type of current_obj
-      if isinstance( current_obj, list ):
-        iterable = enumerate( current_obj )
-        is_list = True
-      elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.iteritems()
-        is_list = False
-      else:
-        return
-
-      for i, obj in iterable:
-        if not is_list and i.startswith("_"): # impossible to have tuple
-          continue
-
-        if   isinstance( obj, ComponentLevel1 ):
-          cleanup_connectables( obj, obj )
-
-        elif isinstance( obj, (Interface, list) ):
-          cleanup_connectables( obj, host_component )
-
-        elif isinstance( obj, Signal ):
-          try:
-            if is_list: current_obj[i] = obj.default_value()
-            else:       setattr( current_obj, i, obj.default_value() )
-          except Exception as err:
-            err.message = repr(obj) + " -- " + err.message
-            err.args = (err.message,)
-            raise err
-          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
-
-    cleanup_connectables( s, s )
-    s._dsl.locked_simulation = True
-
-  def unlock_simulation( s ):
-    assert s._dsl.elaborate_top is s, "Unlocking simulation " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-    try:
-      assert s._dsl.locked_simulation
-    except:
-      raise AttributeError("Cannot unlock an unlocked/never locked model.")
-
-    for component, records in s._dsl.swapped_signals.iteritems():
-      for current_obj, i, obj, is_list in records:
-        if is_list:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
-          current_obj[i] = obj
-        else:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
-          setattr( current_obj, i, obj )
-
-    s._dsl.locked_simulation = False
-
-  # TODO rename
-  def check( s ):
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
-
-  def get_update_block_ast( s, blk ):
-    try:
-      name_ast = s.__class__._name_ast
-    except AttributeError: # This component doesn't have update block
-      return None
-
-    return name_ast[blk.__name__]
-
-  def get_astnode_obj_mapping( s ):
-    try:
-      return s._dsl.astnode_objs
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_all_update_on_edge( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all update_on_edge blocks  " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_update_on_edge
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_update_on_edge( s ):
-    assert s._dsl.constructed
-    return s._dsl.update_on_edge
-
-  def get_all_upblk_metadata( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all update block metadata  " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_upblk_reads, s._dsl.all_upblk_writes, s._dsl.all_upblk_calls
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_upblk_metadata( s ):
-    assert s._dsl.constructed
-    return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
-
-  # Override
-  def get_all_explicit_constraints( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all explicit constraints " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-      return s._dsl.all_U_U_constraints, \
-             s._dsl.RD_U_constraints, \
-             s._dsl.WR_U_constraints
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_all_object_filter( s, filt ):
-    assert callable( filt )
-    try:
-      return set( [ x for x in s._dsl.all_components | s._dsl.all_signals if filt(x) ] )
-    except AttributeError:
-      return s._collect_all( filt )
-
-  def get_input_value_ports( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
-                  if isinstance( name, basestring ) # python2 specific
-                  if not name.startswith("_") ] # filter private variables
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, InPort ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-
-    return ret
-
-  def get_output_value_ports( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
-                  if isinstance( name, basestring ) # python2 specific
-                  if not name.startswith("_") ] # filter private variables
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, OutPort ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-    return ret
-
-  def get_wires( s ):
-    assert s._dsl.constructed
-    ret = set()
-    stack = [ obj for (name, obj) in s.__dict__.iteritems() \
-                  if isinstance( name, basestring ) # python2 specific
-                  if not name.startswith("_") ] # filter private variables
-    while stack:
-      u = stack.pop()
-      if   isinstance( u, Wire ):
-        ret.add( u )
-      # ONLY LIST IS SUPPORTED
-      elif isinstance( u, list ):
-        stack.extend( u )
-    return ret
-
-  # Override
-  def delete_component_by_name( s, name ):
-
-    # This nested delete function is to create an extra layer to properly
-    # call garbage collector
-
-    def _delete_component_by_name( parent, name ):
-      obj = getattr( parent, name )
-      top = s._dsl.elaborate_top
-
-      # Remove all components and uncollect metadata
-
-      removed_components = obj.get_all_components()
-      top._dsl.all_components -= removed_components
-
-      for x in removed_components:
-        assert x._dsl.elaborate_top is top
-        top._uncollect_vars( x )
-
-      for x in obj._collect_all():
-        del x._dsl.parent_obj
-
-      top._dsl.all_signals -= obj._collect_all( lambda x: isinstance( x, Signal ) )
-
-      delattr( s, name )
-
-    _delete_component_by_name( s, name )
-    import gc
-    gc.collect()
-
-  # Override
-  def add_component_by_name( s, name, obj ):
-    assert not hasattr( s, name )
-    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    setattr( s, name, obj )
-    del NamedObject.__setattr__
-
-    top = s._dsl.elaborate_top
-
-    added_components = obj.get_all_components()
-    top._dsl.all_components |= added_components
-
-    for c in added_components:
-      c._dsl.elaborate_top = top
-      c._elaborate_read_write_func()
-      top._collect_vars( c )
-
-    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._dsl.all_signals |= added_signals
+  # We have moved these implementations to Component.py because the
+  # outside world should only use Component.py

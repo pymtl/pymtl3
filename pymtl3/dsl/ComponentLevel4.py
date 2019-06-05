@@ -50,18 +50,13 @@ class ComponentLevel4( ComponentLevel3 ):
     return inst
 
   # Override
-  def _elaborate_declare_vars( s ):
-    super( ComponentLevel4, s )._elaborate_declare_vars()
-    s._dsl.all_M_constraints = set()
-
-  # Override
   def _collect_vars( s, m ):
     super( ComponentLevel4, s )._collect_vars( m )
     if isinstance( m, ComponentLevel4 ):
       s._dsl.all_M_constraints |= m._dsl.M_constraints
 
   #-----------------------------------------------------------------------
-  # elaborate
+  # Construction-time APIs
   #-----------------------------------------------------------------------
 
   # Override
@@ -78,3 +73,12 @@ class ComponentLevel4( ComponentLevel3 ):
       elif isinstance( x1, M ):
         assert isinstance( x0, U )
         s._dsl.M_constraints.add( (x0.func, x1.func, is_equal) )
+
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+
+  # Override
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel4, s )._elaborate_declare_vars()
+    s._dsl.all_M_constraints = set()

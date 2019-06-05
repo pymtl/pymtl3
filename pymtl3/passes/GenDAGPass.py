@@ -14,6 +14,7 @@ from collections import defaultdict, deque
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
+from pymtl3.dsl.errors import LeftoverPlaceholderError
 
 from .BasePass import BasePass, PassMetadata
 
@@ -23,6 +24,12 @@ class GenDAGPass( BasePass ):
   def __call__( self, top ):
     top.check()
     top._dag = PassMetadata()
+
+    placeholders = [ x for x in top._dsl.all_named_objects
+                     if isinstance( x, Placeholder ) ]
+
+    if placeholders:
+      raise LeftoverPlaceholderError( placeholders )
 
     self._generate_net_blocks( top )
     self._process_value_constraints( top )
@@ -137,7 +144,7 @@ def {0}():
     update_on_edge               = top.get_all_update_on_edge()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
     genblk_reads, genblk_writes  = top._dag.genblk_reads, top._dag.genblk_writes
-    U_U, RD_U, WR_U              = top.get_all_explicit_constraints()
+    U_U, RD_U, WR_U, U_M         = top.get_all_explicit_constraints()
 
     #---------------------------------------------------------------------
     # Explicit constraint
@@ -281,11 +288,7 @@ def {0}():
   # each method, direction conflicts, and incomplete constraints
 
   def _process_methods( self, top ):
-
-    try:
-      all_M_constraints = top._dsl.all_M_constraints
-    except AttributeError:
-      return
+    _, _, _, all_M_constraints = top.get_all_explicit_constraints()
 
     # Here we collect all top level callee ports and collect all
     # constraints that involves a top level callee. NOTE THAT it is

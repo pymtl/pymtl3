@@ -26,12 +26,6 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
-class NotElaboratedError( Exception ):
-  """ Raise when processing a model that hasn't been elaborated yet """
-  def __init__( self ):
-    return super( NotElaboratedError, self ).__init__( \
-    "Please elaborate the model first." )
-
 class VarNotDeclaredError( Exception ):
   """ Raise when a variable in an update block is not declared """
   def __init__( self, obj, field, blk=None, blk_hostobj=None, lineno=0 ):
@@ -86,3 +80,28 @@ class InvalidConnectionError( Exception ):
 
 class InvalidFuncCallError( Exception ):
   """ Raise upon an inappropriate @s.func function call """
+
+class InvalidPlaceholderError( Exception ):
+  """ Raise upon declaring an update block in a placeholder component. """
+
+class NotElaboratedError( Exception ):
+  """ Raise when processing a model that hasn't been elaborated yet """
+  def __init__( self ):
+    return super( NotElaboratedError, self ).__init__( \
+    "Please elaborate the model first." )
+
+class InvalidAPICallError( Exception ):
+  """ Raise when processing a model that hasn't been elaborated yet """
+  def __init__( self, api_name, obj, top ):
+    return super( InvalidAPICallError, self ).__init__( \
+    "{} is only allowed to be called at the top module that .elaborate() "
+    "was called on (an instance of {}), but this API call is on {}." \
+    .format( api_name, top.__class__, "top."+repr(obj)[2:] ) )
+
+class LeftoverPlaceholderError( Exception ):
+  """ Raise upon declaring an update block in a placeholder component. """
+  def __init__( self, placeholders ):
+    return super( LeftoverPlaceholderError, self ).__init__( \
+    "Please replace all placeholders with valid components:\n - {}".format(
+      "\n - ".join( [ "top.{} (instance of {})".format( repr(x)[2:], x.__class__ ) \
+                     for x in placeholders ] ) ) )
