@@ -464,7 +464,7 @@ class ComponentLevel2( ComponentLevel1 ):
           s._dsl.WR_U_constraints[ x0.var ].add( (sign, x1.func) )
 
   #-----------------------------------------------------------------------
-  # elaborate-related public APIs
+  # elaborate
   #-----------------------------------------------------------------------
 
   # Override

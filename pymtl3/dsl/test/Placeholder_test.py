@@ -247,6 +247,7 @@ def test_cl_interface_placeholder():
     def construct( s ):
       s.x = FooCL_wrap()
 
+      s.received = None
       s.counter = 0
       @s.update
       def up_enq():
@@ -259,7 +260,8 @@ def test_cl_interface_placeholder():
       @s.update
       def up_recv():
         if s.x.deq.rdy():
-          print(s.x.deq())
+          s.received = s.x.deq()
+          print(s.received)
         else:
           print("deq not rdy")
 
@@ -268,10 +270,10 @@ def test_cl_interface_placeholder():
       s.element = None
 
       if queue_type == "bypass":
-        s.add_constraints( M( s.deq ) < M( s.enq ) )
+        s.add_constraints( M( s.enq ) < M( s.deq ) )
       else:
         assert queue_type == "pipe"
-        s.add_constraints( M( s.deq ) > M( s.enq ) )
+        s.add_constraints( M( s.deq ) < M( s.enq ) )
 
     def empty( s ):
       return s.element is None
@@ -287,13 +289,30 @@ def test_cl_interface_placeholder():
       return ret
 
   a = FooCL_top()
-  a.set_param( "top.x.foo.construct", queue_type="bypass" )
+  b = FooCL_top()
+
+  a.set_param( "top.x.foo.construct", queue_type="pipe" )
+  b.set_param( "top.x.foo.construct", queue_type="bypass" )
 
   a.elaborate()
+  b.elaborate()
 
   a.replace_component( a.x.foo, RealQueue )
+  b.replace_component( b.x.foo, RealQueue )
 
   simple_sim_pass( a )
+  simple_sim_pass( b )
+
   a.tick()
+  b.tick()
+  assert a.received == None # pipe queue cannot receive the packet in the first cycle
+  assert b.received == 1 # bypass queue receive the packet in the first cycle
   a.tick()
+  b.tick()
+  assert a.received == 1 # pipe queue cannot receive the packet in the first cycle
+  assert b.received == 2 # bypass queue receive the packet in the first cycle
+
   a.tick()
+  b.tick()
+  assert a.received == 2 # pipe queue cannot receive the packet in the first cycle
+  assert b.received == 3 # bypass queue receive the packet in the first cycle

@@ -190,9 +190,11 @@ class Component( ComponentLevel7 ):
       c._dsl.elaborate_top = top
 
     # Lazy -- to avoid resolve_connection call which takes non-trivial
-    # time upon adding any connect, I just mark it here. Please make sure
-    # to call s.get_all_value_nets() to flush all pending connections
-    # whenever you want to get the nets
+    # time upon adding any connect, I just mark pending here. Whenever you
+    # call the right API which is get_all_value_nets()/get_method_nets(),
+    # the API will batch flush all pending connections if the flag is
+    # true. So please make sure to call the API whenever you want to get
+    # the value/method nets.
     connection_pairs = []
     for (x, y) in provided_connections:
       connection_pairs.append( x )
@@ -217,8 +219,6 @@ class Component( ComponentLevel7 ):
     # gc.collect() for now
 
     def _delete_component_internal( top, foo ):
-      is_placeholder = isinstance( obj, Placeholder )
-
       assert obj._dsl.elaborate_top is top
 
       # First make sure we flush pending connections
