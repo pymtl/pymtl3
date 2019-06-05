@@ -146,7 +146,7 @@ module A
   //   s.out = concat( Bits32(42), Bits32(0) )
   
   always_comb begin : upblk
-    out = { 32'( 42 ), 32'( 0 ) };
+    out = { 32'd42, 32'd0 };
   end
 
 endmodule
@@ -179,7 +179,7 @@ module A
   //   s.out = concat( s.in_, Bits32(0) )
   
   always_comb begin : upblk
-    out = { in_, 32'( 0 ) };
+    out = { in_, 32'd0 };
   end
 
 endmodule
@@ -477,7 +477,7 @@ module A
   output logic [31:0] out [0:4],
   input logic [0:0] reset
 );
-  localparam [31:0] STATES [0:4] = { 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };
+  localparam [31:0] STATES [0:4] = '{ 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };
 
   assign out[0] = 32'd1;
   assign out[1] = 32'd2;

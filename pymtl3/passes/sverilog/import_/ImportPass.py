@@ -18,7 +18,7 @@ import sys
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.sverilog.errors import SVerilogImportError
-from pymtl3.passes.sverilog.utility import get_component_unique_name, make_indent
+from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
 
 from .helpers import (
     gen_comb_input,

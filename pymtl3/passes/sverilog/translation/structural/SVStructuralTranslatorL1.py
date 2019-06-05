@@ -9,7 +9,7 @@ from functools import reduce
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.sverilog.utility import get_component_unique_name, make_indent
+from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )

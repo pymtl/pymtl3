@@ -55,7 +55,7 @@ module A
   //     s.out = s.in_2
   
   always_comb begin : upblk
-    if ( 1'( 1 ) ) begin
+    if ( 1'd1 ) begin
       out = in_1;
     end
     else
@@ -102,8 +102,8 @@ module A
   //       s.out = s.in_2
   
   always_comb begin : upblk
-    if ( 1'( 1 ) ) begin
-      if ( 1'( 0 ) ) begin
+    if ( 1'd1 ) begin
+      if ( 1'd0 ) begin
         out = in_1;
       end
       else
@@ -151,8 +151,8 @@ module A
   //     s.out = s.in_2
   
   always_comb begin : upblk
-    if ( 1'( 1 ) ) begin
-      if ( 1'( 0 ) ) begin
+    if ( 1'd1 ) begin
+      if ( 1'd0 ) begin
         out = in_1;
       end
     end
@@ -204,10 +204,10 @@ module A
   //     s.out = s.in_3
   
   always_comb begin : upblk
-    if ( 1'( 1 ) ) begin
+    if ( 1'd1 ) begin
       out = in_1;
     end
-    else if ( 1'( 0 ) ) begin
+    else if ( 1'd0 ) begin
       out = in_2;
     end
     else
@@ -276,21 +276,21 @@ module A
   //       s.out = s.in_1
   
   always_comb begin : upblk
-    if ( 1'( 1 ) ) begin
-      if ( 1'( 0 ) ) begin
+    if ( 1'd1 ) begin
+      if ( 1'd0 ) begin
         out = in_1;
       end
       else
         out = in_2;
     end
-    else if ( 1'( 0 ) ) begin
-      if ( 1'( 1 ) ) begin
+    else if ( 1'd0 ) begin
+      if ( 1'd1 ) begin
         out = in_2;
       end
       else
         out = in_3;
     end
-    else if ( 1'( 1 ) ) begin
+    else if ( 1'd1 ) begin
       out = in_3;
     end
     else
@@ -646,7 +646,7 @@ module A
         out[i] = in_[i];
       end
       else
-        out[i] = 32'( 0 );
+        out[i] = 32'd0;
   end
 
 endmodule
@@ -695,7 +695,7 @@ module A
         upblk_tmpvar = in_[i];
       end
       else
-        upblk_tmpvar = 32'( 0 );
+        upblk_tmpvar = 32'd0;
       out[i] = upblk_tmpvar;
     end
   end

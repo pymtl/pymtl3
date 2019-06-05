@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.sverilog.utility import make_indent
+from pymtl3.passes.sverilog.util.utility import make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL3 import (
     StructuralTranslatorL3,
 )

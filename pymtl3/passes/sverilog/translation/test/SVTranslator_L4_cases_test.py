@@ -48,7 +48,7 @@ module B
   //   s.foo = Bits32(42)
   
   always_comb begin : upblk
-    foo = 32'( 42 );
+    foo = 32'd42;
   end
 
 endmodule
@@ -118,7 +118,7 @@ module B
   //   s.out_b = Bits32(0)
   
   always_comb begin : upblk
-    out_b = 32'( 0 );
+    out_b = 32'd0;
   end
 
 endmodule
