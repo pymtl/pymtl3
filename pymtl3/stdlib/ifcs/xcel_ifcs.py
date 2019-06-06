@@ -46,9 +46,24 @@ class XcelMasterIfcFL( Interface ):
       parent.XcelIfcFL2RTL_count += 1
       return True
 
-    # TODO: figure out clean way to do this or unify all special connect
-    #       in FL.
-    return other.connect( s, parent )
+    elif isinstance( other, XcelMinionIfcCL ):
+      m = XcelIfcFL2CLAdapter( s.ReqType, s.RespType )
+
+      if hasattr( parent, "XcelIfcFL2CL_count" ):
+        count = parent.XcelIfcFL2CL_count
+        setattr( parent, "XcelIfcFL2CL_" + str( count ), m )
+      else:
+        parent.XcelIfcFL2CL_count = 0
+        parent.XcelIfcFL2CL_0 = m
+
+      parent.connect_pairs(
+        s,       m.left,
+        m.right, other,
+      )
+      parent.XcelIfcFL2CL_count += 1
+      return True
+
+    return False
 
 class XcelMinionIfcFL( Interface ):
   def construct( s, ReqType, RespType, read=None, write=None ):
@@ -75,8 +90,24 @@ class XcelMinionIfcFL( Interface ):
       parent.XcelIfcRTL2FL_count += 1
       return True
 
-    return False
+    elif isinstance( other, XcelMasterIfcCL ):
+      m = XcelIfcCL2FLAdapter( s.ReqType, s.RespType )
 
+      if hasattr( parent, "XcelIfcCL2FL_count" ):
+        count = parent.XcelIfcCL2FL_count
+        setattr( parent, "XcelIfcCL2FL_" + str( count ), m )
+      else:
+        parent.XcelIfcCL2FL_count = 0
+        parent.XcelIfcCL2FL_0 = m
+
+      parent.connect_pairs(
+        other,   m.left,
+        m.right, s,
+      )
+      parent.XcelIfcCL2FL_count += 1
+      return True
+
+    return False
 
 #-------------------------------------------------------------------------
 # CL interfaces
@@ -128,9 +159,8 @@ class XcelMinionIfcCL( Interface ):
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
 
-  # TODO: implement CL-RTL connection
   def connect( s, other, parent ):
-    if isinstance( other, XcelMasterIfcFL ):
+    if isinstance( other, XcelMasterIfcCL ):
       m = XcelIfcFL2CLAdapter( s.ReqType, s.RespType )
 
       if hasattr( parent, "XcelIfcFL2CL_count" ):
@@ -147,7 +177,7 @@ class XcelMinionIfcCL( Interface ):
       parent.XcelIfcFL2CL_count += 1
       return True
 
-    elif isinstance( other, XcelMinionIfcCL ):
+    if isinstance( other, XcelMinionIfcCL ):
       assert s.ReqType is other.ReqType and s.RespType is other.RespType
       return False # use the default connect-by-name method
 
