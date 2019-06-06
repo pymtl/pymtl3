@@ -340,7 +340,6 @@ class Component( ComponentLevel7 ):
     s.reset = Bits1( 1 )
     s.tick() # This tick propagates the reset signal
     s.reset = Bits1( 0 )
-    s.tick()
 
   def check( s ):
     s._check_valid_dsl_code()
