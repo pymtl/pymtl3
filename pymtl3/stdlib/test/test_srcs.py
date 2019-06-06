@@ -41,6 +41,7 @@ class TestSrcCL( Component ):
         s.count -= 1
       elif not s.reset:
         if not s.has_sent and s.send.rdy() and s.msgs:
+          print("Sending...")
           s.send( s.msgs.popleft() )
           s.count = s.delay # reset count after a message is sent
           s.has_sent = True

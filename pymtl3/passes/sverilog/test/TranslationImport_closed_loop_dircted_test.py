@@ -37,6 +37,7 @@ def run_sim( _th ):
     _th.apply( TranslationPass() )
     th = ImportPass()( _th )
     th.apply( DynamicSim )
+    print("sched = {}".format( th._sched.schedule ))
 
     print()
     cycle = 0
