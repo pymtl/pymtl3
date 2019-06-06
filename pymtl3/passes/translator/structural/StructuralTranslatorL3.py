@@ -23,7 +23,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
 
   # Override
   def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL3Pass( s ) )
+    tr_top.apply( StructuralRTLIRGenL3Pass( s.c_ss, s.c_sc, s.c_cc ) )
 
   #-----------------------------------------------------------------------
   # translate_structural

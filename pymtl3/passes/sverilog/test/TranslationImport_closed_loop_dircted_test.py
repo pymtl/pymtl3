@@ -30,25 +30,32 @@ from pymtl3.stdlib.rtl.enrdy_queues_test import (
 #-------------------------------------------------------------------------
 
 def run_sim( _th ):
-  _th.elaborate()
-  _th.q._sverilog_translate = True
-  _th.q._sverilog_import = True
-  _th.apply( TranslationPass() )
-  th = ImportPass()( _th )
-  th.apply( DynamicSim )
+  try:
+    _th.elaborate()
+    _th.q._sverilog_translate = True
+    _th.q._sverilog_import = True
+    _th.apply( TranslationPass() )
+    th = ImportPass()( _th )
+    th.apply( DynamicSim )
 
-  print()
-  cycle = 0
-  while not th.done() and cycle < 1000:
+    print()
+    cycle = 0
+    while not th.done() and cycle < 1000:
+      th.tick()
+      print(th.line_trace())
+      cycle += 1
+
+    assert cycle < 1000
+
     th.tick()
-    print(th.line_trace())
-    cycle += 1
-
-  assert cycle < 1000
-
-  th.tick()
-  th.tick()
-  th.tick()
+    th.tick()
+    th.tick()
+  finally:
+    try:
+      th.q.finalize()
+    except UnboundLocalError:
+      # This test fails due to translation errors
+      pass
 
 def test_normal_queue():
   test_func = _normal_queue

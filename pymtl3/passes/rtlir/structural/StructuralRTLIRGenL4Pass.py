@@ -42,10 +42,10 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
       super( StructuralRTLIRGenL4Pass, s ).collect_connections( m ) + \
       map( lambda x: \
         ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), \
-        s.tr._top_connections_self_child[m] ) + \
+          s.c_sc[m] ) + \
       map( lambda x: \
         ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), \
-        s.tr._top_connections_child_child[m] )
+          s.c_cc[m] )
 
   # Override
   def sort_connections( s, m ):

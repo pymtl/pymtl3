@@ -14,8 +14,11 @@ from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
 class StructuralRTLIRGenL1Pass( BasePass ):
-  def __init__( s, tr ):
-    s.tr = tr
+  def __init__( s, conns_self_self, conns_self_child, conns_child_child ):
+    # connections_self_self, connections_self_child, connections_child_child
+    s.c_ss = conns_self_self
+    s.c_sc = conns_self_child
+    s.c_cc = conns_child_child
 
   def __call__( s, tr_top ):
     """ generate structural RTLIR for component `tr_top` """
@@ -46,8 +49,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
   def collect_connections( s, m ):
     return map( lambda x: \
-      ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False),
-      s.tr._top_connections_self_self[m] )
+      ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), s.c_ss[m] )
 
   def sort_connections( s, m ):
     m_connections = s.collect_connections( m )
@@ -60,7 +62,6 @@ class StructuralRTLIRGenL1Pass( BasePass ):
            ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
           connections.append( ( wr, rd ) )
           m_connections[idx] = ( m_connections[idx][0], True )
-          # continue
     connections += map(lambda x:x[0],filter(lambda x:not x[1],m_connections))
     m._pass_structural_rtlir_gen.connections = connections
 

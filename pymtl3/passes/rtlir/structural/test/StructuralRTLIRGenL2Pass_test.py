@@ -16,6 +16,8 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
 )
 from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
+from .StructuralRTLIRGenL1Pass_test import gen_connections
+
 
 def test_L2_struct_attr():
   class B( object ):
@@ -28,7 +30,7 @@ def test_L2_struct_attr():
       s.connect( s.out, s.in_.foo )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL2Pass() )
+  a.apply( StructuralRTLIRGenL2Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
@@ -45,7 +47,7 @@ def test_L2_packed_index():
       s.connect( s.out, s.in_.foo[1] )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL2Pass() )
+  a.apply( StructuralRTLIRGenL2Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \

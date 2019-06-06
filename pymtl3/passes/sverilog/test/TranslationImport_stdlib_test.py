@@ -27,13 +27,20 @@ from pymtl3.stdlib.test import TestVectorSimulator
 
 
 def local_do_test( _m ):
-  _m.elaborate()
-  _m._sverilog_translate = True
-  _m._sverilog_import = True
-  _m.apply( TranslationPass() )
-  m = ImportPass()( _m )
-  sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
-  sim.run_test()
+  try:
+    _m.elaborate()
+    _m._sverilog_translate = True
+    _m._sverilog_import = True
+    _m.apply( TranslationPass() )
+    m = ImportPass()( _m )
+    sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+    sim.run_test()
+  finally:
+    try:
+      m.finalize()
+    except UnboundLocalError:
+      # This test fails due to translation errors
+      pass
 
 def test_arbiter_rr_arb_4( do_test ):
   def run_test( cls, args, test_vectors ):

@@ -1,11 +1,11 @@
-from __future__ import absolute_import, division, print_function
-
 #=========================================================================
 # test_utility.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Jun 5, 2019
 """Provide utility methods for testing."""
+from __future__ import absolute_import, division, print_function
+
 
 #-------------------------------------------------------------------------
 # closed_loop_component_input_test

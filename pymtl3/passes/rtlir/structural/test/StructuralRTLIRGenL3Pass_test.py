@@ -14,6 +14,8 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (
 )
 from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
+from .StructuralRTLIRGenL1Pass_test import gen_connections
+
 
 def test_L3_ifc_view_attr():
   class Ifc( dsl.Interface ):
@@ -26,7 +28,7 @@ def test_L3_ifc_view_attr():
       s.connect( s.out, s.in_.msg )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL3Pass() )
+  a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
@@ -43,7 +45,7 @@ def test_L3_ifc_view_index():
       s.connect( s.in_[2].msg, s.out )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL3Pass() )
+  a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
@@ -70,7 +72,7 @@ def test_L3_ifc_view_connection():
       s.connect( s.out, s.in_ )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL3Pass() )
+  a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   ref = \
