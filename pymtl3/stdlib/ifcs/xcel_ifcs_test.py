@@ -38,11 +38,12 @@ class SomeMasterNonBlockingFL( Component ):
     def up_master_while():
       s.trace = "             "
       while s.addr < s.nregs:
+        s.trace = "#            "
         wr_data = 0xbabe0000 | s.addr
         s.xcel.write( s.addr, wr_data )
         s.trace = "wr:{:x}:{:x}".format( int(s.addr), int(wr_data) )
         rd_data = s.xcel.read( s.addr )
-        assert rd_data == wr_data
+        assert rd_data == wr_data, "{} {}".format( hex(int(rd_data)), hex(int(wr_data)) )
         s.trace = "rd:{:x}:{:x}".format( int(s.addr), int(rd_data) )
         s.addr += 1
 
@@ -50,7 +51,9 @@ class SomeMasterNonBlockingFL( Component ):
     return s.addr >= s.nregs
 
   def line_trace( s ):
-    return s.trace
+    ret = s.trace
+    s.trace = "#            "
+    return ret
 
 class SomeMasterBlockingFL( Component ):
   def construct( s, ReqType, RespType, nregs=16 ):
@@ -68,27 +71,29 @@ class SomeMasterBlockingFL( Component ):
         s.xcel.write( s.addr, wr_data )
         s.trace = "wr:{:x}:{:x}".format( s.addr, wr_data )
         rd_data = s.xcel.read( s.addr )
-        assert rd_data == wr_data
-        s.trace = "rd:{:x}:{:x}".format( s.addr, rd_data )
+        assert rd_data == wr_data, "{} {}".format( hex(int(rd_data)), hex(int(wr_data)) )
+        s.trace = "rd:{:x}:{:x}".format( int(s.addr), int(rd_data) )
         s.addr += 1
 
   def done( s ):
     return s.addr >= s.nregs
 
   def line_trace( s ):
-    return s.trace
+    ret = s.trace
+    s.trace = "#            "
+    return ret
 
 class SomeMinionFL( Component ):
   def read_method( s, addr ):
     return s.reg_file[ int(addr) ]
-  
+
   def write_method( s, addr, data ):
     s.reg_file[ int(addr) ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
     s.xcel = XcelMinionIfcFL( ReqType, RespType, s.read_method, s.write_method )
     s.reg_file = [ None for _ in range( nregs ) ]
-  
+
   def line_trace( s ):
     return ""
 
@@ -251,9 +256,9 @@ class SomeMinionRTL( Component ):
     # Interface
 
     s.xcel = XcelMinionIfcRTL( ReqType, RespType )
-    
+
     # Local parameters
-    
+
     s.data_nbits = max( ReqType.data_nbits, RespType.data_nbits )
     DataType     = mk_bits( s.data_nbits )
     s.nregs      = nregs
@@ -289,7 +294,7 @@ class SomeMinionRTL( Component ):
 #-------------------------------------------------------------------------
 
 class TestHarness( Component ):
-  def construct( s, 
+  def construct( s,
                  MasterType = SomeMasterBlockingFL,
                  MinionType=SomeMinionFL,
                  nregs = 16 ):
@@ -325,7 +330,7 @@ class TestHarness( Component ):
 
 def test_xcel_fl_fl_blocking():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterBlockingFL,
     MinionType = SomeMinionFL,
     nregs      = 16,
@@ -335,7 +340,7 @@ def test_xcel_fl_fl_blocking():
 
 def test_xcel_fl_fl_nonblocking():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterNonBlockingFL,
     MinionType = SomeMinionFL,
     nregs      = 16,
@@ -349,7 +354,7 @@ def test_xcel_fl_fl_nonblocking():
 
 def test_xcel_fl_cl_blocking():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterBlockingFL,
     MinionType = SomeMinionCL,
     nregs      = 16,
@@ -359,7 +364,7 @@ def test_xcel_fl_cl_blocking():
 
 def test_xcel_fl_cl_nonblocking():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterNonBlockingFL,
     MinionType = SomeMinionCL,
     nregs      = 16,
@@ -373,20 +378,22 @@ def test_xcel_fl_cl_nonblocking():
 
 def test_xcel_fl_rtl_blocking():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterBlockingFL,
     MinionType = SomeMinionRTL,
-    nregs      = 8,
+    nregs      = 16,
   )
   th.apply( SimpleSim )
+  for x in th._sched.schedule:
+    print(x)
   th.run_sim()
 
 def test_xcel_fl_rtl_nonblocking():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterNonBlockingFL,
     MinionType = SomeMinionRTL,
-    nregs      = 8,
+    nregs      = 16,
   )
   th.apply( SimpleSim )
   th.run_sim()
@@ -397,7 +404,7 @@ def test_xcel_fl_rtl_nonblocking():
 
 def test_xcel_cl_cl():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterCL,
     MinionType = SomeMinionCL,
     nregs      = 8,
@@ -411,7 +418,7 @@ def test_xcel_cl_cl():
 
 def test_xcel_cl_rtl():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterCL,
     MinionType = SomeMinionRTL,
     nregs      = 8,
@@ -425,7 +432,7 @@ def test_xcel_cl_rtl():
 
 def test_xcel_cl_fl():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterCL,
     MinionType = SomeMinionFL,
     nregs      = 8,
@@ -439,7 +446,7 @@ def test_xcel_cl_fl():
 
 def test_xcel_rtl_rtl():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterRTL,
     MinionType = SomeMinionRTL,
     nregs      = 8,
@@ -453,7 +460,7 @@ def test_xcel_rtl_rtl():
 
 def test_xcel_rtl_cl():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterRTL,
     MinionType = SomeMinionCL,
     nregs      = 8,
@@ -467,7 +474,7 @@ def test_xcel_rtl_cl():
 
 def test_xcel_rtl_fl():
   th = TestHarness()
-  th.set_param( "top.construct", 
+  th.set_param( "top.construct",
     MasterType = SomeMasterRTL,
     MinionType = SomeMinionFL,
     nregs      = 8,
