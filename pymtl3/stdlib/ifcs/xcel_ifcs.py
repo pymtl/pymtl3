@@ -13,7 +13,7 @@ from greenlet import greenlet
 
 from pymtl3 import *
 
-from .SendRecvIfc import RecvIfcRTL, SendIfcRTL
+from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
 #-------------------------------------------------------------------------
@@ -51,7 +51,7 @@ class XcelMasterIfcFL( Interface ):
     return other.connect( s, parent )
 
 class XcelMinionIfcFL( Interface ):
-  def construct( s, ReqType, RespType, read, write ):
+  def construct( s, ReqType, RespType, read=None, write=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
     s.read  = CalleePort( method=read )
@@ -299,54 +299,73 @@ class XcelIfcRTL2FLAdapter( Component ):
       s.left.req.rdy = s.left.resp.rdy
 
 # FIXME: This adapter doesn't work.
+# class XcelIfcFL2RTLAdapter( Component ):
+# 
+#   @blocking
+#   def read( s, addr ):
+# 
+#     # TODO: refactor this greenlet stuff into some utility API
+#     while not s.right.req.rdy:
+#       s.right.req.en = Bits1(0)
+#       print( "here" )
+#       greenlet.getcurrent().parent.switch(0)
+# 
+#     s.right.req.en  = Bits1(1)
+#     s.right.req.msg = s.ReqType( XcelMsgType.READ, addr, s.DataType(0) )
+# 
+#     while not s.right.resp.en:
+#       greenlet.getcurrent().parent.switch(0)
+# 
+#     ret = s.right.resp.msg.data
+#     return ret
+# 
+#   @blocking
+#   def write( s, addr, data ):
+# 
+#     while not s.right.req.rdy:
+#       s.right.req.en = Bits1(0)
+#       greenlet.getcurrent().parent.switch(0)
+# 
+#     s.right.req.en  = Bits1(1)
+#     s.right.req.msg = s.ReqType( XcelMsgType.WRITE, addr, s.DataType(data) )
+# 
+#     while not s.right.resp.en:
+#       greenlet.getcurrent().parent.switch(0)
+# 
+#   def construct( s, ReqType, RespType ):
+#     s.ReqType  = ReqType
+#     s.RespType = RespType
+#     s.DataType = mk_bits( ReqType.data_nbits )
+# 
+#     s.left  = XcelMinionIfcFL ( ReqType, RespType, s.read, s.write )
+#     s.right = XcelMasterIfcRTL( ReqType, RespType )
+#     
+#     @s.update
+#     def up_fl_rtl_adapter():
+#       s.right.req.en   = Bits1(0)
+#       s.right.req.msg  = s.ReqType()
+#       s.right.resp.rdy = Bits1(1)
+# 
+#     s.add_constraints( 
+#       U( up_fl_rtl_adapter ) < M( s.left.read  ),
+#       U( up_fl_rtl_adapter ) < M( s.left.write ), 
+#     )
+
+# This adapter works.
 class XcelIfcFL2RTLAdapter( Component ):
-
-  @blocking
-  def read( s, addr ):
-
-    # TODO: refactor this greenlet stuff into some utility API
-    while not s.right.req.rdy:
-      s.right.req.en = Bits1(0)
-      print( "here" )
-      greenlet.getcurrent().parent.switch(0)
-
-    s.right.req.en  = Bits1(1)
-    s.right.req.msg = s.ReqType( XcelMsgType.READ, addr, s.DataType(0) )
-
-    while not s.right.resp.en:
-      greenlet.getcurrent().parent.switch(0)
-
-    ret = s.right.resp.msg.data
-    return ret
-
-  @blocking
-  def write( s, addr, data ):
-
-    while not s.right.req.rdy:
-      s.right.req.en = Bits1(0)
-      greenlet.getcurrent().parent.switch(0)
-
-    s.right.req.en  = Bits1(1)
-    s.right.req.msg = s.ReqType( XcelMsgType.WRITE, addr, s.DataType(data) )
-
-    while not s.right.resp.en:
-      greenlet.getcurrent().parent.switch(0)
-
   def construct( s, ReqType, RespType ):
-    s.ReqType  = ReqType
-    s.RespType = RespType
-    s.DataType = mk_bits( ReqType.data_nbits )
-
-    s.left  = XcelMinionIfcFL ( ReqType, RespType, s.read, s.write )
+    s.left  = XcelMinionIfcFL ( ReqType, RespType )
     s.right = XcelMasterIfcRTL( ReqType, RespType )
-    
-    @s.update
-    def up_fl_rtl_adapter():
-      s.right.req.en   = Bits1(0)
-      s.right.req.msg  = s.ReqType()
-      s.right.resp.rdy = Bits1(1)
 
-    s.add_constraints( 
-      U( up_fl_rtl_adapter ) < M( s.left.read  ),
-      U( up_fl_rtl_adapter ) < M( s.left.write ), 
+    s.fl2cl       = XcelIfcFL2CLAdapter( ReqType, RespType )
+    s.req_cl2rtl  = RecvCL2SendRTL( ReqType )
+    s.resp_rtl2cl = RecvRTL2SendCL( RespType)
+    s.connect( s.left, s.fl2cl.left )
+    s.connect_pairs(
+      s.fl2cl.right.req, s.req_cl2rtl.recv,
+      s.req_cl2rtl.send, s.right.req, 
+    )
+    s.connect_pairs(
+      s.fl2cl.right.resp, s.resp_rtl2cl.send,
+      s.resp_rtl2cl.recv, s.right.resp, 
     )

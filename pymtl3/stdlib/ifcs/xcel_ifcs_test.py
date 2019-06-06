@@ -370,17 +370,26 @@ def test_xcel_fl_cl_nonblocking():
 #-------------------------------------------------------------------------
 # FL-RTL composition
 #-------------------------------------------------------------------------
-# FIXME: broken.
 
-# def test_xcel_fl_rtl_blocking():
-#   th = TestHarness()
-#   th.set_param( "top.construct", 
-#     MasterType = SomeMasterBlockingFL,
-#     MinionType = SomeMinionRTL,
-#     nregs      = 16,
-#   )
-#   th.apply( SimpleSim )
-#   th.run_sim( 10 )
+def test_xcel_fl_rtl_blocking():
+  th = TestHarness()
+  th.set_param( "top.construct", 
+    MasterType = SomeMasterBlockingFL,
+    MinionType = SomeMinionRTL,
+    nregs      = 16,
+  )
+  th.apply( SimpleSim )
+  th.run_sim()
+
+def test_xcel_fl_rtl_nonblocking():
+  th = TestHarness()
+  th.set_param( "top.construct", 
+    MasterType = SomeMasterNonBlockingFL,
+    MinionType = SomeMinionRTL,
+    nregs      = 16,
+  )
+  th.apply( SimpleSim )
+  th.run_sim()
 
 #-------------------------------------------------------------------------
 # CL-CL composition
