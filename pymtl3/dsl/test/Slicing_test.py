@@ -987,3 +987,42 @@ def test_multiple_sibling_slices():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown NoWriterError.")
+
+def test_multiple_write_same_slice():
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.out = Wire( Bits32 )
+      s.wire = Wire( Bits32 )
+      s.connect( s.out, s.wire[0:32] )
+
+      @s.update
+      def comb_upblk():
+        s.wire[0:16]  = 0
+        s.wire[16:32] = 1
+
+  a = A()
+  a.elaborate()
+
+def test_multiple_write_same_slice_with_overlap():
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.out = Wire( Bits32 )
+      s.wire = Wire( Bits32 )
+      s.connect( s.out, s.wire[0:32] )
+
+      s.wire2 = Wire( Bits24 )
+      s.connect( s.wire2[0:24], s.wire[8:32] )
+
+      @s.update
+      def comb_upblk():
+        s.wire[0:16]  = 0
+        s.wire2[0:24] = 1
+
+  try:
+    _test_model( A )
+  except MultiWriterError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown MultiWriterError.")

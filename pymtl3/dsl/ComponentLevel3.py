@@ -401,6 +401,11 @@ class ComponentLevel3( ComponentLevel2 ):
                   if obj in writer_prop and writer_prop[ obj ]:
                     assert not has_writer
                     has_writer, writer = True, v
+                    # Shunning: is breaking out of here enough? If we
+                    # don't break the loop, we might a list here storing
+                    # "why the writer became writer" and do some sibling
+                    # overlap checks when we enter the loop body later
+                    break
 
           except AssertionError:
             raise MultiWriterError( \
