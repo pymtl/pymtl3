@@ -40,10 +40,10 @@ class SomeMasterNonBlockingFL( Component ):
       while s.addr < s.nregs:
         wr_data = 0xbabe0000 | s.addr
         s.xcel.write( s.addr, wr_data )
-        s.trace = "wr:{:x}:{:x}".format( s.addr, wr_data )
+        s.trace = "wr:{:x}:{:x}".format( int(s.addr), int(wr_data) )
         rd_data = s.xcel.read( s.addr )
         assert rd_data == wr_data
-        s.trace = "rd:{:x}:{:x}".format( s.addr, rd_data )
+        s.trace = "rd:{:x}:{:x}".format( int(s.addr), int(rd_data) )
         s.addr += 1
 
   def done( s ):
@@ -376,7 +376,7 @@ def test_xcel_fl_rtl_blocking():
   th.set_param( "top.construct", 
     MasterType = SomeMasterBlockingFL,
     MinionType = SomeMinionRTL,
-    nregs      = 16,
+    nregs      = 8,
   )
   th.apply( SimpleSim )
   th.run_sim()
@@ -386,7 +386,7 @@ def test_xcel_fl_rtl_nonblocking():
   th.set_param( "top.construct", 
     MasterType = SomeMasterNonBlockingFL,
     MinionType = SomeMinionRTL,
-    nregs      = 16,
+    nregs      = 8,
   )
   th.apply( SimpleSim )
   th.run_sim()
