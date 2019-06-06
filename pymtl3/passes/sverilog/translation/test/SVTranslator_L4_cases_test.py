@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
-  tr.translate()
+  tr.translate( m )
   assert tr.hierarchy.src == m._ref_src
 
 def test_subcomponent( do_test ):

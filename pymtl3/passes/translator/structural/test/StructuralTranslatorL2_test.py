@@ -24,6 +24,7 @@ from .TestStructuralTranslator import mk_TestStructuralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestStructuralTranslator(StructuralTranslatorL2)(m)
+  tr.clear( m )
   tr.translate_structural(m)
   try:
     name = tr.structural.component_unique_name[m]

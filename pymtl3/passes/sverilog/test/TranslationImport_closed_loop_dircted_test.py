@@ -32,8 +32,8 @@ from pymtl3.stdlib.rtl.enrdy_queues_test import (
 def run_sim( _th ):
   _th.elaborate()
   _th.q._sverilog_translate = True
-  _th.apply( TranslationPass() )
   _th.q._sverilog_import = True
+  _th.apply( TranslationPass() )
   th = ImportPass()( _th )
   th.apply( DynamicSim )
 

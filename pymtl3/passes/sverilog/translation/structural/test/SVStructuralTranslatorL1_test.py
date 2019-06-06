@@ -18,6 +18,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 impo
 def local_do_test( m ):
   m.elaborate()
   tr = SVStructuralTranslatorL1( m )
+  tr.clear( m )
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]

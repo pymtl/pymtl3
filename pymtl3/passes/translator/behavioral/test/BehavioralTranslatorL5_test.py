@@ -19,6 +19,7 @@ from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 def local_do_test( m ):
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL5)(m)
+  tr.clear( m )
   tr.translate_behavioral( m )
   for component, _ref_upblk_repr in m._ref_upblk_repr.iteritems():
     upblk_src = tr.behavioral.upblk_srcs[component]

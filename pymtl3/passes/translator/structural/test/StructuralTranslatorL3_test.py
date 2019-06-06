@@ -23,6 +23,7 @@ from .TestStructuralTranslator import mk_TestStructuralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestStructuralTranslator(StructuralTranslatorL3)(m)
+  tr.clear( m )
   tr.translate_structural(m)
   try:
     decl_ifcs = tr.structural.decl_ifcs[m]

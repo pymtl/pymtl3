@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog import TranslationPass
-from pymtl3.passes.sverilog.import_.ImportPass import get_imported_object
+from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import (
@@ -83,8 +83,10 @@ from ..translation.structural.test.SVStructuralTranslatorL4_test import (
 def local_do_test( _m ):
   try:
     _m.elaborate()
+    _m._sverilog_translate = True
+    _m._sverilog_import = True
     _m.apply( TranslationPass() )
-    m = get_imported_object( _m )
+    m = ImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:

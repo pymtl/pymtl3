@@ -20,6 +20,7 @@ from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL2)(m)
+  tr.clear( m )
   tr.translate_behavioral( m )
   upblk_src = tr.behavioral.upblk_srcs[m]
   decl_freevars = tr.behavioral.decl_freevars[m]

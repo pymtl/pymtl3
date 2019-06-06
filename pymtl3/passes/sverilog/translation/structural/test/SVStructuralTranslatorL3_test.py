@@ -19,6 +19,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 impo
 def local_do_test( m ):
   m.elaborate()
   tr = SVStructuralTranslatorL3( m )
+  tr.clear( m )
   tr.translate_structural( m )
 
   ifcs = tr.structural.decl_ifcs[m]

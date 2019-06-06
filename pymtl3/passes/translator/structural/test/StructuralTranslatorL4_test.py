@@ -22,6 +22,7 @@ from .TestStructuralTranslator import mk_TestStructuralTranslator
 
 def local_do_test( m ):
   tr = mk_TestStructuralTranslator(StructuralTranslatorL4)(m)
+  tr.clear( m )
   tr.translate_structural(m)
   for comp in m._ref_comps.keys():
     decl_comp = tr.structural.decl_subcomps[comp]

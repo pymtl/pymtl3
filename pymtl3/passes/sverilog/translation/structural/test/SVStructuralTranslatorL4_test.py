@@ -18,6 +18,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 impo
 def local_do_test( m ):
   m.elaborate()
   tr = SVStructuralTranslatorL4( m )
+  tr.clear( m )
   tr.translate_structural( m )
   subcomps = tr.structural.decl_subcomps
   for comp in m._ref_subcomps.keys():
