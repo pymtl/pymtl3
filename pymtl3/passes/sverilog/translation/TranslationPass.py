@@ -20,23 +20,31 @@ def mk_TranslationPass( _SVTranslator ):
 
     def __call__( s, top ):
 
-      if not hasattr( top, '_pass_sverilog_translation' ):
-        top._pass_sverilog_translation = PassMetadata()
+      s.top = top
+      s.translator = _SVTranslator( s.top )
+      s.traverse_hierarchy( top )
 
-      translator = _SVTranslator( top )
-      translator.translate()
+    def traverse_hierarchy( s, m ):
+      if hasattr(m, "_sverilog_translate") and m._sverilog_translate:
+        if not hasattr( m, '_pass_sverilog_translation' ):
+          m._pass_sverilog_translation = PassMetadata()
 
-      module_name = translator._top_module_full_name
-      output_file = module_name + '.sv'
+        s.translator.translate( m )
 
-      with open( output_file, 'w', 0 ) as output:
-        output.write( translator.hierarchy.src )
-        output.flush()
-        os.fsync( output )
-        output.close()
+        module_name = s.translator._top_module_full_name
+        output_file = module_name + '.sv'
 
-      top._translator = translator
-      top._pass_sverilog_translation.translated = True
+        with open( output_file, 'w', 0 ) as output:
+          output.write( s.translator.hierarchy.src )
+          output.flush()
+          os.fsync( output )
+          output.close()
+
+        m._translator = s.translator
+        m._pass_sverilog_translation.translated = True
+      else:
+        for child in m.get_child_components():
+          s.traverse_hierarchy( child )
 
   return _TranslationPass
 

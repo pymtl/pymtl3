@@ -12,9 +12,12 @@ class BaseRTLIRTranslator( object ):
 
   def __init__( s, top ):
     s.top = top
+
+  def clear( s, tr_top ):
+    s.tr_top = tr_top
     s.component = {}
     s.hierarchy = TranslatorMetadata()
-    s.gen_base_rtlir_trans_metadata( s.top )
+    s.gen_base_rtlir_trans_metadata( s.tr_top )
 
   def gen_base_rtlir_trans_metadata( s, m ):
     s.component[m] = TranslatorMetadata()

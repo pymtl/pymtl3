@@ -393,8 +393,8 @@ def gen_signal_expr( cur_component, signal ):
       return ConstInstance( signal, signal._dsl.const )
     while hasattr( base_comp._dsl, 'parent_obj' ) and base_comp._dsl.parent_obj:
       base_comp = base_comp._dsl.parent_obj
-      if base_comp == cur_component: break
-    assert isinstance( base_comp, dsl.Component ) and base_comp == cur_component, \
+      if base_comp is cur_component: break
+    assert isinstance( base_comp, dsl.Component ) and base_comp is cur_component, \
       "cannot find root component for signal {}".format( signal )
     full_name = base_comp._dsl.full_name
     my_name = base_comp._dsl.my_name

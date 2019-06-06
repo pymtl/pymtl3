@@ -29,15 +29,21 @@ class TestSrcCL( Component ):
 
     s.count  = initial_delay
     s.delay  = interval_delay
+    s.has_sent = False
+
+    @s.update_on_edge
+    def clear_flag():
+      s.has_sent = False
 
     @s.update
     def up_src_send():
       if s.count > 0:
         s.count -= 1
       elif not s.reset:
-        if s.send.rdy() and s.msgs:
+        if not s.has_sent and s.send.rdy() and s.msgs:
           s.send( s.msgs.popleft() )
           s.count = s.delay # reset count after a message is sent
+          s.has_sent = True
 
   def done( s ):
     return not s.msgs

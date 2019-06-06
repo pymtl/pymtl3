@@ -12,6 +12,8 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test.test_srcs import TestSrcRTL
+from pymtl3.stdlib.test.test_sinks import TestSinkRTL
 
 from .enrdy_queues import *
 
@@ -26,9 +28,11 @@ class TestHarness( Component ):
 
     # Instantiate models
 
-    s.src  = TestSrcCL( src_msgs )
+    # s.src  = TestSrcCL( src_msgs )
+    s.src  = TestSrcRTL( Bits32, src_msgs )
     s.q    = q
-    s.sink = TestSinkCL( sink_msgs )
+    # s.sink = TestSinkCL( sink_msgs )
+    s.sink = TestSinkRTL( Bits32, sink_msgs )
 
     # Connect
 

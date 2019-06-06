@@ -54,23 +54,28 @@ class ImportPass( BasePass ):
       raise SVerilogImportError( top, 
         "please elaborate design {} before applying the import pass!". \
           format(top) )
-    s.traverse_hierarchy( top )
+    ret = s.traverse_hierarchy( top )
+    if ret is None:
+      ret = top
+    return ret
 
   def traverse_hierarchy( s, m ):
-    if hasattr( m._pass_sverilog_import, "import_" ):
-      if m._dsl.parent_obj is None:
-        raise SVerilogImportError( top, 
-          "cannot import top component {}!".format(m) )
-      else:
-        s.do_import( m )
-    else:
+    try:
+      if m._sverilog_import:
+        return s.do_import( m )
+    except AttributeError:
+      pass
+    finally:
       for child in m.get_child_components():
         s.traverse_hierarchy( child )
 
   def do_import( s, m ):
     try:
       imp = get_imported_object( m )
-      swap_in_imported_component( s.top, m, imp )
+      if m is s.top:
+        return imp
+      else:
+        s.top.replace_component_with_obj( m, imp )
     except AssertionError as e:
       msg = '' if e.args[0] is None else e.args[0]
       raise SVerilogImportError( m, msg )
@@ -88,6 +93,9 @@ def get_imported_object( m ):
     sv_file_path = m._sverilog_import_path
   except AttributeError:
     sv_file_path = full_name + '.sv'
+
+  assert os.path.isfile( sv_file_path ), \
+    "Cannot import {}: {} is not a file!".format( m, sv_file_path )
 
   create_verilator_model( sv_file_path, full_name )
 
@@ -374,10 +382,3 @@ def import_component( wrapper_name, component_name, symbols ):
   imp.construct.__globals__.update( symbols )
 
   return imp
-
-#-----------------------------------------------------------------------
-# swap_in_imported_component
-#-----------------------------------------------------------------------
-
-def swap_in_imported_component( top, m, imp ):
-  top.replace_component_with_obj( m, imp )

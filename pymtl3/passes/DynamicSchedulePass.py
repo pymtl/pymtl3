@@ -205,6 +205,7 @@ class DynamicSchedulePass( BasePass ):
             while True:
               num_iters += 1
               {1}
+              # {4}
               for blk in scc: # TODO Mamba
                 blk()
               if {2}:
@@ -227,8 +228,8 @@ class DynamicSchedulePass( BasePass ):
         scc_block_src = template.format( scc_id,
                                          "; ".join( copy_srcs ),
                                          " and ".join( check_srcs ),
-                                         ", ".join( [ x.__name__ for x in scc] ) )
-                                         # "; ".join( print_srcs )
+                                         ", ".join( [ x.__name__ for x in scc] ),# )
+                                         "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
     return schedule

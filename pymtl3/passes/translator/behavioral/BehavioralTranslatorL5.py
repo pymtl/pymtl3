@@ -20,6 +20,9 @@ class BehavioralTranslatorL5( BehavioralTranslatorL4 ):
   def __init__( s, top ):
     super( BehavioralTranslatorL5, s ).__init__( top )
 
+  def clear( s, tr_top ):
+    super( BehavioralTranslatorL5, s ).clear( tr_top )
+
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata
   #-----------------------------------------------------------------------

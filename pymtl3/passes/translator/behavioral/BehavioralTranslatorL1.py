@@ -21,20 +21,23 @@ from .BehavioralTranslatorL0 import BehavioralTranslatorL0
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def __init__( s, top ):
     super( BehavioralTranslatorL1, s ).__init__( top )
-    s.gen_behavioral_trans_metadata( top )
+
+  def clear( s, tr_top ):
+    super( BehavioralTranslatorL1, s ).clear( tr_top )
+    s.gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
   # gen_behavioral_trans_metadata
   #-----------------------------------------------------------------------
 
-  def gen_behavioral_trans_metadata( s, top ):
+  def gen_behavioral_trans_metadata( s, tr_top ):
     s.behavioral.rtlir = {}
     s.behavioral.freevars = {}
     s.behavioral.upblk_decls = {}
     s.behavioral.upblk_srcs = {}
     s.behavioral.upblk_py_srcs = {}
     s.behavioral.decl_freevars = {}
-    s._gen_behavioral_trans_metadata( top )
+    s._gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata
