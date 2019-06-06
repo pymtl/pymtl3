@@ -127,7 +127,7 @@ class XcelMinionIfcCL( Interface ):
 
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
-  
+
   # TODO: implement CL-RTL connection
   def connect( s, other, parent ):
     if isinstance( other, XcelMasterIfcFL ):
@@ -267,6 +267,8 @@ class XcelIfcFL2CLAdapter( Component ):
     s.add_constraints(
       M( s.left.read  ) == M( s.right.req ),
       M( s.left.write ) == M( s.right.req ),
+      M( s.left.read  ) > M( s.right.resp ),
+      M( s.left.write ) > M( s.right.resp ),
     )
 
 #-------------------------------------------------------------------------
@@ -290,66 +292,13 @@ class XcelIfcRTL2FLAdapter( Component ):
         elif s.left.req.msg.type_ == XcelMsgType.WRITE:
           s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
           resp = RespType( s.left.req.msg.type_, 0 )
-        
+
         s.left.resp.en  = Bits1(1)
         s.left.resp.msg = resp
-    
+
     @s.update
     def up_xcelifc_rtl_fl_rdy():
       s.left.req.rdy = s.left.resp.rdy
-
-# FIXME: This adapter doesn't work.
-# class XcelIfcFL2RTLAdapter( Component ):
-# 
-#   @blocking
-#   def read( s, addr ):
-# 
-#     # TODO: refactor this greenlet stuff into some utility API
-#     while not s.right.req.rdy:
-#       s.right.req.en = Bits1(0)
-#       print( "here" )
-#       greenlet.getcurrent().parent.switch(0)
-# 
-#     s.right.req.en  = Bits1(1)
-#     s.right.req.msg = s.ReqType( XcelMsgType.READ, addr, s.DataType(0) )
-# 
-#     while not s.right.resp.en:
-#       greenlet.getcurrent().parent.switch(0)
-# 
-#     ret = s.right.resp.msg.data
-#     return ret
-# 
-#   @blocking
-#   def write( s, addr, data ):
-# 
-#     while not s.right.req.rdy:
-#       s.right.req.en = Bits1(0)
-#       greenlet.getcurrent().parent.switch(0)
-# 
-#     s.right.req.en  = Bits1(1)
-#     s.right.req.msg = s.ReqType( XcelMsgType.WRITE, addr, s.DataType(data) )
-# 
-#     while not s.right.resp.en:
-#       greenlet.getcurrent().parent.switch(0)
-# 
-#   def construct( s, ReqType, RespType ):
-#     s.ReqType  = ReqType
-#     s.RespType = RespType
-#     s.DataType = mk_bits( ReqType.data_nbits )
-# 
-#     s.left  = XcelMinionIfcFL ( ReqType, RespType, s.read, s.write )
-#     s.right = XcelMasterIfcRTL( ReqType, RespType )
-#     
-#     @s.update
-#     def up_fl_rtl_adapter():
-#       s.right.req.en   = Bits1(0)
-#       s.right.req.msg  = s.ReqType()
-#       s.right.resp.rdy = Bits1(1)
-# 
-#     s.add_constraints( 
-#       U( up_fl_rtl_adapter ) < M( s.left.read  ),
-#       U( up_fl_rtl_adapter ) < M( s.left.write ), 
-#     )
 
 # This adapter works.
 class XcelIfcFL2RTLAdapter( Component ):
@@ -363,9 +312,128 @@ class XcelIfcFL2RTLAdapter( Component ):
     s.connect( s.left, s.fl2cl.left )
     s.connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,
-      s.req_cl2rtl.send, s.right.req, 
+      s.req_cl2rtl.send, s.right.req,
     )
     s.connect_pairs(
       s.fl2cl.right.resp, s.resp_rtl2cl.send,
-      s.resp_rtl2cl.recv, s.right.resp, 
+      s.resp_rtl2cl.recv, s.right.resp,
     )
+
+class XcelIfcRTL2FLAdapter( Component ):
+
+  def construct( s, ReqType, RespType ):
+    s.left  = XcelMinionIfcRTL( ReqType, RespType )
+    s.right = XcelMasterIfcFL( ReqType, RespType )
+
+    @s.update
+    def up_xcelifc_rtl_fl_blk():
+
+      if s.left.req.en and s.left.resp.rdy:
+
+        if s.left.req.msg.type_ == XcelMsgType.READ:
+          resp = RespType( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
+
+        elif s.left.req.msg.type_ == XcelMsgType.WRITE:
+          s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
+          resp = RespType( s.left.req.msg.type_, 0 )
+
+        s.left.resp.en  = Bits1(1)
+        s.left.resp.msg = resp
+
+    @s.update
+    def up_xcelifc_rtl_fl_rdy():
+      s.left.req.rdy = s.left.resp.rdy
+
+
+# Shunning: this flat one also works.
+"""
+class XcelIfcFL2RTLAdapter( Component ):
+
+  @blocking
+  def read( s, addr ):
+
+    s.req_en = Bits1(0)
+
+    # TODO: refactor this greenlet stuff into some utility API
+    while not s.req_rdy:
+      greenlet.getcurrent().parent.switch(0)
+    s.req_rdy = Bits1(0)
+
+    s.req_en  = Bits1(1)
+    s.req_msg = s.ReqType( XcelMsgType.READ, addr, s.DataType(0) )
+
+    while not s.resp_rdy:
+      greenlet.getcurrent().parent.switch(0)
+    # !!!!!!!!!!!!!! Shunning: this is important in RTL because we must
+    # "set the entry to None"
+    s.resp_rdy = Bits1(0)
+
+    s.resp_en = Bits1(1)
+    return s.resp_msg.data
+
+  @blocking
+  def write( s, addr, data ):
+
+    s.req_en = Bits1(0)
+
+    while not s.req_rdy:
+      greenlet.getcurrent().parent.switch(0)
+    s.req_rdy = Bits1( 0 )
+
+    s.req_en   = Bits1(1)
+    s.req_msg  = s.ReqType( XcelMsgType.WRITE, addr, s.DataType(data) )
+
+    while not s.resp_rdy:
+      greenlet.getcurrent().parent.switch(0)
+    # !!!!!!!!!!!!!! Shunning: this is important in RTL because we must
+    # "set the entry to None"
+    s.resp_rdy = Bits1(0)
+
+    s.resp_en = Bits1(1)
+
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.DataType = mk_bits( ReqType.data_nbits )
+
+    s.left  = XcelMinionIfcFL ( ReqType, RespType, s.read, s.write )
+    s.right = XcelMasterIfcRTL( ReqType, RespType )
+
+    # Buffer the input, as we did in CL
+    s.resp_buffer = NormalQueueRTL( RespType, 2 )( enq = s.right.resp )
+
+    s.req_en  = Bits1( 0 )
+    s.req_rdy = Bits1( 0 )
+    s.req_msg = s.DataType( 0 )
+
+    s.resp_en  = Bits1( 0 )
+    s.resp_rdy = Bits1( 0 )
+    s.resp_msg = s.DataType( 0 )
+
+    # We need a few blocks for propagation
+    @s.update_on_edge
+    def up_fl_rtl_adapter_clear_forward():
+      s.req_en  = Bits1( 0 )
+      s.resp_en = Bits1( 0 )
+      s.req_msg = s.DataType( 0 )
+
+    # We need a few blocks for propagation
+    @s.update
+    def up_fl_rtl_adapter_1_back():
+      s.req_rdy = s.right.req.rdy
+      s.resp_rdy = s.resp_buffer.deq.rdy
+      s.resp_msg = s.resp_buffer.deq.msg
+
+    @s.update
+    def up_fl_rtl_adapter_2_forward():
+      s.right.req.en  = s.req_en
+      s.right.req.msg = s.req_msg
+      s.resp_buffer.deq.en = s.resp_en
+
+    s.add_constraints(
+      U( up_fl_rtl_adapter_1_back ) < M( s.left.read  ),
+      U( up_fl_rtl_adapter_1_back ) < M( s.left.write ),
+      M( s.left.read  ) < U( up_fl_rtl_adapter_2_forward ),
+      M( s.left.write ) < U( up_fl_rtl_adapter_2_forward ),
+    )
+"""
