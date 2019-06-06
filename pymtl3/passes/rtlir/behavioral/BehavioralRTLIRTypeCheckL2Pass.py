@@ -178,7 +178,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
         "both sides of {} should be of vector type!".format(
             op.__class__.__name__) )
 
-    if l_type != r_type:
+    if not isinstance( op, s.BinOp_left_nbits ) and l_type != r_type:
       raise PyMTLTypeError( s.blk, node.ast,
         "LHS and RHS of {} should have the same type ({} vs {})!".format(
             op.__class__.__name__, l_type, r_type ) )

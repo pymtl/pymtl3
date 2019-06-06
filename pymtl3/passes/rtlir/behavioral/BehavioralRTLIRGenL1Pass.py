@@ -220,7 +220,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def visit_Subscript( s, node ):
     value = s.visit( node.value )
     if isinstance( node.slice, ast.Slice ):
-      if not node.slice.step is None:
+      if node.slice.step is not None:
         raise PyMTLSyntaxError( s.blk, node,
           'Slice with steps is not supported!' )
       lower, upper = s.visit( node.slice )
@@ -228,9 +228,24 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       ret.ast = node
       return ret
 
+    # signal[ index ]
+    # index might be a slice object!
     if isinstance( node.slice, ast.Index ):
       idx = s.visit( node.slice )
-      ret = bir.Index( value, idx )
+      # If we haev a static slice object then use it
+      if isinstance( idx, bir.FreeVar ) and isinstance( idx.obj, slice ):
+        slice_obj = idx.obj
+        if slice_obj.step is not None:
+          raise PyMTLSyntaxError( s.blk, node,
+            'Slice with steps is not supported!' )
+        assert isinstance( slice_obj.start, int ) and \
+               isinstance( slice_obj.stop, int ), \
+            "start and stop of slice object {} must be integers!".format( slice_obj )
+        ret = bir.Slice( value, 
+              bir.Number(slice_obj.start), bir.Number(slice_obj.stop) )
+      # Else this is a real index
+      else:
+        ret = bir.Index( value, idx )
       ret.ast = node
       return ret
 

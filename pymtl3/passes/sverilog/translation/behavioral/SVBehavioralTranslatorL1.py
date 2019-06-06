@@ -242,6 +242,10 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
   # visit_SignExt
   #-----------------------------------------------------------------------
+  # We need to special case the situation where a bit-selection or single-bit
+  # part selection # needs to be sign-extended ( Verilator throws an error
+  # at this ):
+  # in_[31:31][0] should be translated into in_[31:31]
 
   def visit_SignExt( s, node ):
     value = s.visit( node.value )
@@ -250,11 +254,31 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     except AttributeError:
       raise SVerilogTranslationError( s.blk, node, 
         "new bitwidth of sign extension must be known at elaboration time!" )
+    # Check if the signal to be extended is a bit selection or one-bit part
+    # selection.
+    if isinstance( node.value, bir.Slice ):
+      try:
+        lower = node.value.lower._value
+        upper = node.value.upper._value
+        if upper - lower == 1:
+          _one_bit = True
+        else:
+          _one_bit = False
+      except AttributeError:
+        _one_bit = False
+    elif isinstance( node.value, bir.Index ):
+      _one_bit = True
+    else:
+      _one_bit = False
     current_nbits = int(node.value.Type.get_dtype().get_length())
     last_bit = current_nbits - 1
     padded_nbits = target_nbits - current_nbits
-    return "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}". \
-        format( **locals() )
+    template = "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}"
+    one_bit_template = "{{ {{ {padded_nbits} {{ {value} }} }}, {value} }}"
+    if _one_bit:
+      return one_bit_template.format( **locals() )
+    else:
+      return template.format( **locals() )
 
   #-----------------------------------------------------------------------
   # visit_Reduce
