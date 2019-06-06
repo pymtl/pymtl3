@@ -16,38 +16,85 @@ from pymtl3 import *
 from .SendRecvIfc import RecvIfcRTL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
-#=========================================================================
+#-------------------------------------------------------------------------
 # FL interfaces
-#=========================================================================
+#-------------------------------------------------------------------------
+# TODO: figure out how to do __str__ for FL interfaces.
 
 class XcelMasterIfcFL( Interface ):
-  def construct( s ):
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
     s.read  = CallerPort()
     s.write = CallerPort()
-  # TODO: implement __str__.
+
+  def connect( s, other, parent ):
+    if isinstance( other, XcelMinionIfcRTL ):
+      m = XcelIfcFL2RTLAdapter( s.ReqType, s.RespType )
+
+      if hasattr( parent, "XcelIfcFL2RTL_count" ):
+        count = parent.XcelIfcFL2RTL_count
+        setattr( parent, "XcelIfcFL2RTL_" + str( count ), m )
+      else:
+        parent.XcelIfcFL2RTL_count = 0
+        parent.XcelIfcFL2RTL_0 = m
+
+      parent.connect_pairs(
+        s,       m.left,
+        m.right, other,
+      )
+      parent.XcelIfcFL2RTL_count += 1
+      return True
+
+    # TODO: figure out clean way to do this or unify all special connect
+    #       in FL.
+    return other.connect( s, parent )
 
 class XcelMinionIfcFL( Interface ):
-  def construct( s, read, write ):
+  def construct( s, ReqType, RespType, read, write ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
     s.read  = CalleePort( method=read )
     s.write = CalleePort( method=write )
 
-#=========================================================================
+  def connect( s, other, parent ):
+    if isinstance( other, XcelMasterIfcRTL ):
+      m = XcelIfcRTL2FLAdapter( s.ReqType, s.RespType )
+
+      if hasattr( parent, "XcelIfcRTL2FL_count" ):
+        count = parent.XcelIfcRTL2FL_count
+        setattr( parent, "XcelIfcRTL2FL_" + str( count ), m )
+      else:
+        parent.XcelIfcRTL2FL_count = 0
+        parent.XcelIfcRTL2FL_0 = m
+
+      parent.connect_pairs(
+        other,   m.left,
+        m.right, s,
+      )
+      parent.XcelIfcRTL2FL_count += 1
+      return True
+
+    return False
+
+
+#-------------------------------------------------------------------------
 # CL interfaces
-#=========================================================================
+#-------------------------------------------------------------------------
 
 class XcelMasterIfcCL( Interface ):
-  def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = NonBlockingCallerIfc( req_class )
-    s.resp = NonBlockingCalleeIfc( resp_class, resp, resp_rdy )
+  def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = NonBlockingCallerIfc( ReqType )
+    s.resp = NonBlockingCalleeIfc( RespType, resp, resp_rdy )
 
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
 
   def connect( s, other, parent ):
     if isinstance( other, XcelMinionIfcFL ):
-      m = XcelIfcCL2FLAdapter( s.req_class, s.resp_class )
+      m = XcelIfcCL2FLAdapter( s.ReqType, s.RespType )
 
       if hasattr( parent, "XcelIfcCL2FL_count" ):
         count = parent.XcelIfcCL2FL_count
@@ -63,7 +110,7 @@ class XcelMasterIfcCL( Interface ):
       parent.XcelIfcCL2FL_count += 1
       return True
     elif isinstance( other, XcelMinionIfcCL ):
-      assert s.req_class is other.req_class and s.resp_class is other.resp_class
+      assert s.ReqType is other.ReqType and s.RespType is other.RespType
       return False # use the default connect-by-name method
 
     return False
@@ -72,11 +119,11 @@ class XcelMasterIfcCL( Interface ):
     return "{},{}".format( s.req, s.resp )
 
 class XcelMinionIfcCL( Interface ):
-  def construct( s, req_class, resp_class, req=None, req_rdy=None ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = NonBlockingCalleeIfc( req_class, req, req_rdy )
-    s.resp = NonBlockingCallerIfc( resp_class )
+  def construct( s, ReqType, RespType, req=None, req_rdy=None ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = NonBlockingCalleeIfc( ReqType, req, req_rdy )
+    s.resp = NonBlockingCallerIfc( RespType )
 
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
@@ -84,7 +131,7 @@ class XcelMinionIfcCL( Interface ):
   # TODO: implement CL-RTL connection
   def connect( s, other, parent ):
     if isinstance( other, XcelMasterIfcFL ):
-      m = XcelIfcFL2CLAdapter( s.req_class, s.resp_class )
+      m = XcelIfcFL2CLAdapter( s.ReqType, s.RespType )
 
       if hasattr( parent, "XcelIfcFL2CL_count" ):
         count = parent.XcelIfcFL2CL_count
@@ -101,7 +148,7 @@ class XcelMinionIfcCL( Interface ):
       return True
 
     elif isinstance( other, XcelMinionIfcCL ):
-      assert s.req_class is other.req_class and s.resp_class is other.resp_class
+      assert s.ReqType is other.ReqType and s.RespType is other.RespType
       return False # use the default connect-by-name method
 
     return False
@@ -109,29 +156,29 @@ class XcelMinionIfcCL( Interface ):
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
-#=========================================================================
+#-------------------------------------------------------------------------
 # RTL interfaces
-#=========================================================================
+#-------------------------------------------------------------------------
 
 class XcelMasterIfcRTL( Interface ):
-  def construct( s, req_class, resp_class ):
-    s.req  = SendIfcRTL( req_class  )
-    s.resp = RecvIfcRTL( resp_class )
+  def construct( s, ReqType, RespType ):
+    s.req  = SendIfcRTL( ReqType  )
+    s.resp = RecvIfcRTL( RespType )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
 class XcelMinionIfcRTL( Interface ):
-  def construct( s, req_class, resp_class ):
-    s.req  = RecvIfcRTL( req_class  )
-    s.resp = SendIfcRTL( resp_class )
+  def construct( s, ReqType, RespType ):
+    s.req  = RecvIfcRTL( ReqType  )
+    s.resp = SendIfcRTL( RespType )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
-#=========================================================================
+#-------------------------------------------------------------------------
 # CL/FL adapters
-#=========================================================================
+#-------------------------------------------------------------------------
 
 class XcelIfcCL2FLAdapter( Component ):
 
@@ -142,9 +189,9 @@ class XcelIfcCL2FLAdapter( Component ):
     assert s.entry is None
     s.entry = msg
 
-  def construct( s, req_class, resp_class ):
-    s.left  = XcelMinionIfcCL( req_class, resp_class, s.recv, s.recv_rdy )
-    s.right = XcelMasterIfcFL()
+  def construct( s, ReqType, RespType ):
+    s.left  = XcelMinionIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.right = XcelMasterIfcFL( ReqType, RespType )
     s.entry = None
 
     @s.update
@@ -158,11 +205,11 @@ class XcelIfcCL2FLAdapter( Component ):
         s.entry = None
 
         if req.type_ == XcelMsgType.READ:
-          resp = resp_class( req.type_, s.right.read( req.addr ) )
+          resp = RespType( req.type_, s.right.read( req.addr ) )
 
         elif req.type_ == XcelMsgType.WRITE:
           s.right.write( req.addr, req.data )
-          resp = resp_class( req.type_, 0 )
+          resp = RespType( req.type_, 0 )
 
         s.left.resp( resp )
 
@@ -179,7 +226,7 @@ class XcelIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class( XcelMsgType.READ, addr ) )
+    s.right.req( s.ReqType( XcelMsgType.READ, addr ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -194,7 +241,7 @@ class XcelIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class( XcelMsgType.WRITE, addr, data ) )
+    s.right.req( s.ReqType( XcelMsgType.WRITE, addr, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -208,16 +255,98 @@ class XcelIfcFL2CLAdapter( Component ):
     assert s.entry is None
     s.entry = msg
 
-  def construct( s, req_class, resp_class ):
+  def construct( s, ReqType, RespType ):
     s.entry = None # store response
 
-    s.req_class  = req_class
-    s.resp_class = resp_class
+    s.ReqType  = ReqType
+    s.RespType = RespType
 
-    s.left  = XcelMinionIfcFL( s.read, s.write )
-    s.right = XcelMasterIfcCL( req_class, resp_class, s.recv, s.recv_rdy )
+    s.left  = XcelMinionIfcFL( ReqType, RespType, s.read, s.write )
+    s.right = XcelMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
 
     s.add_constraints(
       M( s.left.read  ) == M( s.right.req ),
       M( s.left.write ) == M( s.right.req ),
+    )
+
+#-------------------------------------------------------------------------
+# RTL/FL adapters
+#-------------------------------------------------------------------------
+
+class XcelIfcRTL2FLAdapter( Component ):
+
+  def construct( s, ReqType, RespType ):
+    s.left  = XcelMinionIfcRTL( ReqType, RespType )
+    s.right = XcelMasterIfcFL( ReqType, RespType )
+
+    @s.update
+    def up_xcelifc_rtl_fl_blk():
+
+      if s.left.req.en and s.left.resp.rdy:
+
+        if s.left.req.msg.type_ == XcelMsgType.READ:
+          resp = RespType( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
+
+        elif s.left.req.msg.type_ == XcelMsgType.WRITE:
+          s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
+          resp = RespType( s.left.req.msg.type_, 0 )
+        
+        s.left.resp.en  = Bits1(1)
+        s.left.resp.msg = resp
+    
+    @s.update
+    def up_xcelifc_rtl_fl_rdy():
+      s.left.req.rdy = s.left.resp.rdy
+
+# FIXME: This adapter doesn't work.
+class XcelIfcFL2RTLAdapter( Component ):
+
+  @blocking
+  def read( s, addr ):
+
+    # TODO: refactor this greenlet stuff into some utility API
+    while not s.right.req.rdy:
+      s.right.req.en = Bits1(0)
+      print( "here" )
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req.en  = Bits1(1)
+    s.right.req.msg = s.ReqType( XcelMsgType.READ, addr, s.DataType(0) )
+
+    while not s.right.resp.en:
+      greenlet.getcurrent().parent.switch(0)
+
+    ret = s.right.resp.msg.data
+    return ret
+
+  @blocking
+  def write( s, addr, data ):
+
+    while not s.right.req.rdy:
+      s.right.req.en = Bits1(0)
+      greenlet.getcurrent().parent.switch(0)
+
+    s.right.req.en  = Bits1(1)
+    s.right.req.msg = s.ReqType( XcelMsgType.WRITE, addr, s.DataType(data) )
+
+    while not s.right.resp.en:
+      greenlet.getcurrent().parent.switch(0)
+
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.DataType = mk_bits( ReqType.data_nbits )
+
+    s.left  = XcelMinionIfcFL ( ReqType, RespType, s.read, s.write )
+    s.right = XcelMasterIfcRTL( ReqType, RespType )
+    
+    @s.update
+    def up_fl_rtl_adapter():
+      s.right.req.en   = Bits1(0)
+      s.right.req.msg  = s.ReqType()
+      s.right.resp.rdy = Bits1(1)
+
+    s.add_constraints( 
+      U( up_fl_rtl_adapter ) < M( s.left.read  ),
+      U( up_fl_rtl_adapter ) < M( s.left.write ), 
     )
