@@ -12,8 +12,8 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
-from pymtl3.stdlib.test.test_srcs import TestSrcRTL
 from pymtl3.stdlib.test.test_sinks import TestSinkRTL
+from pymtl3.stdlib.test.test_srcs import TestSrcRTL
 
 from .enrdy_queues import *
 
