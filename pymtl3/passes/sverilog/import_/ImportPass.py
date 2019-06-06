@@ -60,12 +60,9 @@ class ImportPass( BasePass ):
     return ret
 
   def traverse_hierarchy( s, m ):
-    try:
-      if m._sverilog_import:
-        return s.do_import( m )
-    except AttributeError:
-      pass
-    finally:
+    if hasattr(m, "_sverilog_import") and m._sverilog_import:
+      return s.do_import( m )
+    else:
       for child in m.get_child_components():
         s.traverse_hierarchy( child )
 
