@@ -530,27 +530,6 @@ def gen_comb_output( packed_ports ):
   return ret
 
 #-------------------------------------------------------------------------
-# gen_constraints
-#-------------------------------------------------------------------------
-
-# def gen_constraints( all_ports ):
-  # ret = []
-  # template = "U( seq_upblk ) < {op}( {signal_name} ),"
-  # for py_name, port_rtype in all_ports:
-    # py_name = _verilator_name( py_name )
-    # direction = port_rtype.get_direction()
-    # signal_name = "s.mangled__" + py_name
-    # if direction == 'input':
-      # op = 'WR'
-    # elif direction == 'output':
-      # op = 'RD'
-    # else:
-      # assert False, "unrecognized port direction {}".format( direction )
-    # ret.append( template.format( **locals() ) )
-  # return ret
-
-
-#-------------------------------------------------------------------------
 # gen_line_trace_py
 #-------------------------------------------------------------------------
 

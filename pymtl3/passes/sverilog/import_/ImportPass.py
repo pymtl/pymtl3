@@ -304,13 +304,6 @@ def create_py_wrapper( m_name, rtype, packed_ports, lib_file,
   make_indent( set_comb_input, 3 )
   make_indent( set_comb_output, 3 )
 
-  # Generate constraints for sequential upblk
-  # constraints = gen_constraints( all_ports )
-  # make_indent( constraints, 3 )
-  # constraint_str = ''.join( map( lambda s: "\n"+s, constraints ) )
-  # if constraint_str:
-    # constraint_str += '\n    '
-
   # Line trace
   line_trace = gen_line_trace_py( packed_ports )
 
@@ -330,7 +323,6 @@ def create_py_wrapper( m_name, rtype, packed_ports, lib_file,
         connections     = '\n'.join( connections ),
         set_comb_input  = '\n'.join( set_comb_input ),
         set_comb_output = '\n'.join( set_comb_output ),
-        # constraints     = constraint_str,
         line_trace      = line_trace,
         in_line_trace   = in_line_trace,
       )

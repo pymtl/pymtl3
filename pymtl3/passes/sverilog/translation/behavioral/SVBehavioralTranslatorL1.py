@@ -243,9 +243,8 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   # visit_SignExt
   #-----------------------------------------------------------------------
   # We need to special case the situation where a bit-selection or single-bit
-  # part selection # needs to be sign-extended ( Verilator throws an error
-  # at this ):
-  # in_[31:31][0] should be translated into in_[31:31]
+  # part selection needs to be sign-extended ( Verilator throws an error
+  # at this ) e.g. in_[31:31][0] should be translated into in_[31:31].
 
   def visit_SignExt( s, node ):
     value = s.visit( node.value )

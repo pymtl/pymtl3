@@ -515,8 +515,6 @@ def _handle_Component( obj ):
 
 def _is_of_type( obj, Type ):
   """Return True is `obj` is of RTLIR type `Type`."""
-  # assert issubclass( Type, BaseRTLIRType ), \
-    # "_is_of_type() applied on non-RTLIR type {}!".format( Type )
   if isinstance( obj, Type ):
     return True
   if isinstance( obj, Array ) and isinstance( obj.get_sub_type(), Type ):

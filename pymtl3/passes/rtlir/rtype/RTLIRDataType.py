@@ -213,7 +213,7 @@ def _get_rtlir_dtype_struct( obj ):
     if hasattr( cls, "fields" ) and cls.fields != []:
       assert len(cls.fields) == len(all_properties.keys()), \
         "{}.fields does not match the attributes of its instance!". \
-          format( cls.__name )
+          format( cls.__name__ )
       for field_name, field in cls.fields:
         assert field_name in all_properties, \
           field_name + ' is not an attribute of struct ' + cls.__name__ + '!'
