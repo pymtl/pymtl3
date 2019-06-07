@@ -85,6 +85,7 @@ class SomeMasterBlockingFL( Component ):
     return ret
 
 class SomeMinionFL( Component ):
+
   def read_method( s, addr ):
     return s.reg_file[ int(addr) ]
 
