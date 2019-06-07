@@ -113,6 +113,11 @@ class XcelMinionIfcFL( Interface ):
 # CL interfaces
 #-------------------------------------------------------------------------
 
+# There is no custom connect method in CL ifcs.
+# For MasterCL-MinionRTL and MasterRTL-MinionCL connections, we just need
+# to connect by name and leverage the custom connect method of the nested
+# Send/RecvIfc. The CL-FL and FL-CL has been implemented in the FL ifc.
+
 class XcelMasterIfcCL( Interface ):
   def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
     s.ReqType  = ReqType
@@ -122,29 +127,6 @@ class XcelMasterIfcCL( Interface ):
 
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
-
-  def connect( s, other, parent ):
-    if isinstance( other, XcelMinionIfcFL ):
-      m = XcelIfcCL2FLAdapter( s.ReqType, s.RespType )
-
-      if hasattr( parent, "XcelIfcCL2FL_count" ):
-        count = parent.XcelIfcCL2FL_count
-        setattr( parent, "XcelIfcCL2FL_" + str( count ), m )
-      else:
-        parent.XcelIfcCL2FL_count = 0
-        parent.XcelIfcCL2FL_0 = m
-
-      parent.connect_pairs(
-        s,       m.left,
-        m.right, other,
-      )
-      parent.XcelIfcCL2FL_count += 1
-      return True
-    elif isinstance( other, XcelMinionIfcCL ):
-      assert s.ReqType is other.ReqType and s.RespType is other.RespType
-      return False # use the default connect-by-name method
-
-    return False
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
@@ -159,36 +141,17 @@ class XcelMinionIfcCL( Interface ):
   def line_trace( s ):
     return "{},{}".format( s.req, s.resp )
 
-  def connect( s, other, parent ):
-    if isinstance( other, XcelMasterIfcCL ):
-      m = XcelIfcFL2CLAdapter( s.ReqType, s.RespType )
-
-      if hasattr( parent, "XcelIfcFL2CL_count" ):
-        count = parent.XcelIfcFL2CL_count
-        setattr( parent, "XcelIfcFL2CL_" + str( count ), m )
-      else:
-        parent.XcelIfcFL2CL_count = 0
-        parent.XcelIfcFL2CL_0 = m
-
-      parent.connect_pairs(
-        other,   m.left,
-        m.right, s,
-      )
-      parent.XcelIfcFL2CL_count += 1
-      return True
-
-    if isinstance( other, XcelMinionIfcCL ):
-      assert s.ReqType is other.ReqType and s.RespType is other.RespType
-      return False # use the default connect-by-name method
-
-    return False
-
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
 #-------------------------------------------------------------------------
 # RTL interfaces
 #-------------------------------------------------------------------------
+
+# There is no custom connect method in CL ifcs.
+# For MasterCL-MinionRTL and MasterRTL-MinionCL connections, we just need
+# to connect by name and leverage the custom connect method of the nested
+# Send/RecvIfc. The RTL-FL and FL-RTL has been implemented in the FL ifc.
 
 class XcelMasterIfcRTL( Interface ):
   def construct( s, ReqType, RespType ):
