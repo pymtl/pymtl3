@@ -228,7 +228,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if isinstance( o1, (int, Bits) ) or isinstance( o2, (int, Bits)  ): # special case
       if isinstance( o1, (int, Bits)  ):
         o1, o2 = o2, o1 # o1 is signal, o2 is int
-      assert isinstance( o1, Signal )
+      assert isinstance( o1, Signal ), "- when connecting {} to {}".format( repr(o1), repr(o2) )
       s._connect_signal_const( o1, o2 )
 
     # Deal with Signal <-> Signal

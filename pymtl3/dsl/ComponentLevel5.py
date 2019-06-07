@@ -68,7 +68,7 @@ class ComponentLevel5( ComponentLevel4 ):
       s._dsl.constructed = True
 
   def _connect_method_ports( s, o1, o2 ):
-    assert isinstance( o1, MethodPort ) and isinstance( o2, MethodPort )
+    assert isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ), "not method port!"
 
     s._dsl.adjacency[o1].add( o2 )
     s._dsl.adjacency[o2].add( o1 )
