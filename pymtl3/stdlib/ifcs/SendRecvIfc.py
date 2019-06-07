@@ -24,16 +24,17 @@ class RecvIfcRTL( Interface ):
     s.msg =  InPort( Type )
     s.en  =  InPort( int if Type is int else Bits1 )
     s.rdy = OutPort( int if Type is int else Bits1 )
-    
-    # Some metadata.
+
     s.MsgType = Type
-    try:
-      s.trace_len = len( "{}".format( Type() ) )
-    except:
-      s.trace_len = 16
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy, s.trace_len )
+    try:
+      trace_len = s.trace_len
+    except AttributeError:
+      s.trace_len = len( "{}".format( s.MsgType() ) )
+      trace_len = s.trace_len
+
+    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
 
   def __str__( s ):
     return s.line_trace()
@@ -74,16 +75,17 @@ class SendIfcRTL( Interface ):
     s.msg = OutPort( Type )
     s.en  = OutPort( int if Type is int else Bits1 )
     s.rdy =  InPort( int if Type is int else Bits1 )
-    
-    # Some metadata.
+
     s.MsgType = Type
-    try:
-      s.trace_len = len( "{}".format( Type() ) )
-    except:
-      s.trace_len = 16
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy, s.trace_len )
+    try:
+      trace_len = s.trace_len
+    except AttributeError:
+      s.trace_len = len( "{}".format( s.MsgType() ) )
+      trace_len = s.trace_len
+
+    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
 
   def __str__( s ):
     return s.line_trace()
