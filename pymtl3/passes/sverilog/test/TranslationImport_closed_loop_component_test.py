@@ -11,7 +11,7 @@ from itertools import product
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given, settings, reproduce_failure
+from hypothesis import given, reproduce_failure, settings
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
