@@ -51,12 +51,10 @@ class Component( ComponentLevel7 ):
       # We hook up the added clk and reset signals here. NOTE THAT if the
       # user overwrites clk/reset inside the component, we still get the
       # correct connection.
-      try:
-        parent = s.get_parent_object()
+      parent = s.get_parent_object()
+      if parent is not None:
         parent.connect( s.clk, parent.clk )
         parent.connect( s.reset, parent.reset )
-      except AttributeError:
-        pass
 
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
