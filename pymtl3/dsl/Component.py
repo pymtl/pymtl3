@@ -15,7 +15,7 @@ from pymtl3.datatypes import Bits1
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
-from .Connectable import InPort, Interface, MethodPort, OutPort, Signal, Wire
+from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
 from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
@@ -45,16 +45,16 @@ class Component( ComponentLevel7 ):
 
       s._handle_decorated_methods()
 
-      # We hook up the added clk and reset signals here.
-      try:
-        parent = s.get_parent_object()
-        parent.connect( s.clk, parent.clk )
-        parent.connect( s.reset, parent.reset )
-      except AttributeError:
-        pass
-
       # Same as parent class _construct
       s.construct( *s._dsl.args, **kwargs )
+
+      # We hook up the added clk and reset signals here. NOTE THAT if the
+      # user overwrites clk/reset inside the component, we still get the
+      # correct connection.
+      parent = s.get_parent_object()
+      if parent is not None:
+        parent.connect( s.clk, parent.clk )
+        parent.connect( s.reset, parent.reset )
 
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
@@ -258,21 +258,16 @@ class Component( ComponentLevel7 ):
       removed_connectables = removed_signals | removed_method_ports
       top._dsl.all_named_objects -= removed_connectables
 
+      removed_consts = set()
       if isinstance( foo, Placeholder ):
         # No need to uncollect vars from a placeholder
         assert not foo._dsl.consts
       else:
         for x in removed_components:
           # remove consts
-          for y in x._dsl.consts:
-            del y._dsl.parent_obj
+          removed_consts |= x._dsl.consts
           # uncollect variables
           top._uncollect_vars( x )
-
-      for x in removed_components:
-        del x._dsl.parent_obj
-      for x in removed_connectables:
-        del x._dsl.parent_obj
 
       saved_connections = []
 
@@ -282,7 +277,7 @@ class Component( ComponentLevel7 ):
           for other in top._dsl.all_adjacency[x]:
             # other must be in the dict
             # If other will be removed, we don't need to remove it here ..
-            if other not in removed_connectables:
+            if other not in removed_connectables and other not in removed_consts:
               top._dsl.all_adjacency[other].remove( x )
               saved_connections.append( (other, "top"+repr(x)[1:]) ) # other is from outside
           del top._dsl.all_adjacency[x]
@@ -294,6 +289,13 @@ class Component( ComponentLevel7 ):
             if other not in removed_connectables:
               parent._dsl.adjacency[other].remove( x )
           del parent._dsl.adjacency[x]
+
+      for x in removed_components:
+        del x._dsl.parent_obj
+      for x in removed_connectables:
+        del x._dsl.parent_obj
+      for y in removed_consts:
+        del y._dsl.parent_obj
 
       # We don't break nets anymore. Instead, we set the flags to true so
       # that the next get_xxx_net will immediately recollect nets.
