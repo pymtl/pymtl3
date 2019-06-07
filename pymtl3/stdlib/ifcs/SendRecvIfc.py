@@ -126,35 +126,36 @@ class RecvCL2SendRTL( Component ):
 
     s.recv_called = False
     s.recv_rdy    = False
-    s.msg_to_send = MsgType()
+    s.entry = None
+
+    @s.update_on_edge
+    def up_clear():
+      if s.send.en: # update_on_edge reverse this
+        s.entry = None
 
     @s.update
     def up_send_rtl():
-      s.send.en     = Bits1( 1 ) if s.recv_called else Bits1( 0 )
-      s.send.msg    = s.msg_to_send
-      s.recv_called = False
-
-    @s.update
-    def up_recv_rdy_cl():
-      s.recv_rdy    = True if s.send.rdy and not s.reset else False
+      if s.entry is None:
+        s.send.en  = Bits1( 0 )
+        s.send.msg = MsgType()
+      else:
+        s.send.en  = s.send.rdy
+        s.send.msg = s.entry
 
     s.add_constraints(
-      U( up_recv_rdy_cl ) < M( s.recv ),
-      U( up_recv_rdy_cl ) < M( s.recv.rdy ),
-      M( s.recv.rdy ) < U( up_send_rtl ),
-      M( s.recv ) < U( up_send_rtl )
+      U( up_clear )   < M( s.recv ),
+      U( up_clear )   < M( s.recv.rdy ),
+      M( s.recv )     < U( up_send_rtl ),
+      M( s.recv.rdy ) < U( up_send_rtl )
     )
 
-  @non_blocking( lambda s : s.recv_rdy )
+  @non_blocking( lambda s : s.entry is None )
   def recv( s, msg ):
-    s.msg_to_send = msg
-    s.recv_called = True
+    s.entry = msg
 
   def line_trace( s ):
-    return "{}(){}".format(
-      enrdy_to_str( s.msg_to_send, s.recv_called, s.recv_rdy ),
-      s.send.line_trace()
-    )
+    return "{}(){}".format( s.recv, s.send )
+
 #-------------------------------------------------------------------------
 # RecvRTL2SendCL
 #-------------------------------------------------------------------------
