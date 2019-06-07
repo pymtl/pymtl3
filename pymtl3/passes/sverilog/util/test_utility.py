@@ -139,7 +139,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
 
   dut.elaborate()
   reference_output = deque()
-  all_output_ports = dut.get_all_object_filter( outport_filter )
+  all_output_ports = dut.get_local_object_filter( outport_filter )
 
   # Method to record reference outputs of the pure python component
   def ref_tv_out( model, test_vector ):

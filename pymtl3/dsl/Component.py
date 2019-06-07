@@ -457,6 +457,10 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       return s._collect_all( [ filt ] )[0]
 
+  def get_local_object_filter( s, filt ):
+    assert callable( filt )
+    return s._collect_objects_local( filt )
+
   def get_all_components( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_update_blocks" )

@@ -98,3 +98,37 @@ def test_nested_struct( data ):
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
   closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+
+@given( st.data() )
+@settings( deadline = None, max_examples = 10 )
+def test_subcomp( data ):
+  class inner_struct( object ):
+    def __init__( s, bar=42 ):
+      s.bar = Bits32( bar )
+  class strc( object ):
+    def __init__( s, foo=42, bar=42, arr=1 ):
+      s.foo = Bits32( foo )
+      s.inner = inner_struct(bar)
+      s.packed_array = [[ Bits16(arr) for _ in xrange(2) ] for _ in xrange(3)]
+  class B( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      s.connect( s.out, 0 )
+  class A( Component ):
+    def construct( s ):
+      s.b = B()
+      s.in_ = InPort( strc )
+      s.out_foo = OutPort( Bits32 )
+      s.out_bar = OutPort( Bits32 )
+      s.out_sum = OutPort( Bits16 )
+      s.sum = [ Wire( Bits16 ) for _ in xrange(3) ]
+      @s.update
+      def upblk():
+        for i in xrange(3):
+          s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
+        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+      s.connect( s.out_foo, s.b.out )
+      s.connect( s.out_bar, s.in_.inner.bar )
+    def line_trace( s ): return "out_sum = " + str( s.out_sum )
+  a = A()
+  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
