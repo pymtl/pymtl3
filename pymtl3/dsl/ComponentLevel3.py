@@ -16,6 +16,8 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict, deque
 
+from pymtl3.datatypes import Bits
+
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
@@ -82,10 +84,25 @@ class ComponentLevel3( ComponentLevel2 ):
       s._dsl.constructed = True
 
   # The following three methods should only be called when types are
-
   # already checked
-  def _connect_signal_int( s, o1, o2 ):
-    o2   = Const( o1._dsl.Type, o2, s )
+
+  def _connect_signal_const( s, o1, o2 ):
+    if isinstance( o2, int ):
+      if not issubclass( o1._dsl.Type, (int, Bits) ):
+        raise InvalidConnectionError( "We don't support connecting an integer constant "
+                                       "to non-int/Bits type {}".format( o1._dsl.Type ) )
+      o2 = Const( o1._dsl.Type, o2, s )
+    elif isinstance( o2, Bits ):
+      if not issubclass( o1._dsl.Type, Bits ):
+        raise InvalidConnectionError( "We don't support connecting a Bits{} constant "
+                                      "to non-Bits type {}".format( o2.nbits, o1._dsl.Type ) )
+      if o1._dsl.Type.nbits != o2.nbits:
+        raise InvalidConnectionError( "Bitwidth mismatch when connecting a Bits{} constant "
+                                      "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
+      o2 = Const( o1._dsl.Type, o2, s )
+
+  # TODO implement connecting a const struct
+
     host = o1.get_host_component()
 
     if isinstance( o1, InPort ):
@@ -105,7 +122,6 @@ class ComponentLevel3( ComponentLevel2 ):
   def _connect_signal_signal( s, o1, o2 ):
     o1_type = None
     o2_type = None
-
 
     try:  o1_type = o1._dsl.Type
     except AttributeError:  pass
@@ -206,13 +222,14 @@ class ComponentLevel3( ComponentLevel2 ):
           "  (when connecting {} to {})" \
                 .format( type(o1), type(o2), o1, o2) )
 
-    # Deal with Signal <-> int
+    # Deal with Signal <-> const
+    # TODO implement connecting a signal to a struct
 
-    if isinstance( o1, int ) or isinstance( o2, int ): # special case
-      if isinstance( o1, int ):
+    if isinstance( o1, (int, Bits) ) or isinstance( o2, (int, Bits)  ): # special case
+      if isinstance( o1, (int, Bits)  ):
         o1, o2 = o2, o1 # o1 is signal, o2 is int
       assert isinstance( o1, Signal )
-      s._connect_signal_int( o1, o2 )
+      s._connect_signal_const( o1, o2 )
 
     # Deal with Signal <-> Signal
 
