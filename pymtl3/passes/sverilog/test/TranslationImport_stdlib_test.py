@@ -3,7 +3,14 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Jun 3, 2019
-"""Test stdlib RTL components with SystemVerilog translation and import."""
+"""Test stdlib RTL components with SystemVerilog translation and import.
+
+We reuse all the test cases from stdlib test files. To achieve this I
+overwrite the original reference to the test function used in stdlib test
+files and add my own test function (the `run_test`s). However we need
+to make sure the orignal reference is not lost and is restored after
+finishing each test (no matter it fails or passes).
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -29,20 +36,25 @@ from pymtl3.stdlib.test import TestVectorSimulator
 def local_do_test( _m ):
   try:
     _m.elaborate()
+    # Mark component `_m` as to be translated and imported
     _m._sverilog_translate = True
     _m._sverilog_import = True
     _m.apply( TranslationPass() )
+    # We are importing the top component and therefore should expect a new top
+    # as the return value.
     m = ImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:
     try:
+      # Explicitly finalize imported component to avoid shared lib name aliasing
       m.finalize()
     except UnboundLocalError:
       # This test fails due to translation errors
       pass
 
 def test_arbiter_rr_arb_4( do_test ):
+  # Customized test function
   def run_test( cls, args, test_vectors ):
     m = cls( *args )
     BitsN = mk_bits( args[0] )
@@ -54,12 +66,14 @@ def test_arbiter_rr_arb_4( do_test ):
     m._tv_in, m._tv_out = tv_in, tv_out
     do_test( m )
 
+  # Swap in the customized test method
   test_func = _rr_arb_4
   _run_test = test_func.__globals__['run_test']
   test_func.__globals__['run_test'] = run_test
   try:
     test_func()
   finally:
+    # Restore the original method regardless of the test result
     test_func.__globals__['run_test'] = _run_test
 
 def test_arbiter_rr_arb_en_4( do_test ):
