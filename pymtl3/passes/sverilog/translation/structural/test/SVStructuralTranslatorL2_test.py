@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.datatypes import Bits1, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -33,7 +33,7 @@ def local_do_test( m ):
   assert conns == m._ref_conns[m]
 
 def test_struct_port( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):
@@ -79,10 +79,10 @@ typedef struct packed {
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
       s.c = C()
@@ -141,7 +141,7 @@ typedef struct packed {
   do_test( a )
 
 def test_packed_array( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = [ Bits32(foo) for _ in xrange(2) ]
   class A( Component ):
@@ -191,10 +191,10 @@ typedef struct packed {
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.c = [ C() for _ in xrange(2) ]
   class A( Component ):

@@ -23,6 +23,7 @@ from pymtl3.datatypes import (
     Bits8,
     Bits16,
     Bits32,
+    BitStruct,
     concat,
     sext,
     zext,
@@ -66,9 +67,9 @@ def local_do_test( m ):
 #-------------------------------------------------------------------------
 
 def test_L1_assign_unagreeable( do_test ):
-  class B( object ):
-    def __init__( s ):
-      s.foobar = Bits32( 0 )
+  class B( BitStruct ):
+    def __init__( s, foobar=Bits32(0) ):
+      s.foobar = foobar
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -184,8 +185,8 @@ def test_L1_bit_sel_index_out_of_range( do_test ):
     do_test( A() )
 
 def test_L1_index_on_struct( do_test ):
-  class B( object ):
-    def __init__( s ):
+  class B( BitStruct ):
+    def __init__( s, foo=42 ):
       s.foo = [ Bits4( 42 ) for _ in xrange(4) ]
   class A( Component ):
     def construct( s ):
@@ -198,8 +199,8 @@ def test_L1_index_on_struct( do_test ):
     do_test( A() )
 
 def test_L1_slice_on_struct( do_test ):
-  class B( object ):
-    def __init__( s ):
+  class B( BitStruct ):
+    def __init__( s, foo=42 ):
       s.foo = [ Bits4( 42 ) for _ in xrange(4) ]
   class A( Component ):
     def construct( s ):
@@ -316,7 +317,7 @@ def test_L1_size_cast_component( do_test ):
     do_test( A() )
 
 def test_L1_attr_signal( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     """Struct class used to trigger certain exception.
 
     Struct does not belong to level 1. It is just used for testing purposes.

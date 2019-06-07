@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits32
+from pymtl3.datatypes import Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
@@ -72,9 +72,9 @@ def test_pymtl_Bits_global( do_test ):
   do_test( a )
 
 def test_pymtl_struct_closure( do_test ):
-  class B( object ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  class B( BitStruct ):
+    def __init__( s, foo=Bits32(42) ):
+      s.foo = foo
   class A( Component ):
     def construct( s ):
       foo = InPort( B )

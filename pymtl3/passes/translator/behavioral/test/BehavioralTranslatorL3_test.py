@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits32
+from pymtl3.datatypes import Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.translator.behavioral.BehavioralTranslatorL3 import (
@@ -30,7 +30,7 @@ def local_do_test( m ):
   assert decl_tmpvars == m._ref_tmpvar_repr
 
 def test_tmp_wire_struct( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):
@@ -56,10 +56,10 @@ tmpvars:
   do_test( a )
 
 def test_multi_tmp_wire_struct( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):

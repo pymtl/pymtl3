@@ -13,7 +13,7 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import given, reproduce_failure, settings
 
-from pymtl3.datatypes import Bits1, Bits16, Bits32, clog2, mk_bits
+from pymtl3.datatypes import Bits1, Bits16, Bits32, BitStruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
 
 from ..util.test_utility import DataStrategy, closed_loop_component_test
@@ -58,7 +58,7 @@ def test_mux( Type, n_ports, data ):
 @given( st.data() )
 @settings( deadline = None, max_examples = 5 )
 def test_struct( data ):
-  class strc( object ):
+  class strc( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):
@@ -73,10 +73,10 @@ def test_struct( data ):
 @given( st.data() )
 @settings( deadline = None, max_examples = 10 )
 def test_nested_struct( data ):
-  class inner_struct( object ):
+  class inner_struct( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits32( bar )
-  class strc( object ):
+  class strc( BitStruct ):
     def __init__( s, foo=42, bar=42, arr=1 ):
       s.foo = Bits32( foo )
       s.inner = inner_struct(bar)
@@ -102,10 +102,10 @@ def test_nested_struct( data ):
 @given( st.data() )
 @settings( deadline = None, max_examples = 10 )
 def test_subcomp( data ):
-  class inner_struct( object ):
+  class inner_struct( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits32( bar )
-  class strc( object ):
+  class strc( BitStruct ):
     def __init__( s, foo=42, bar=42, arr=1 ):
       s.foo = Bits32( foo )
       s.inner = inner_struct(bar)

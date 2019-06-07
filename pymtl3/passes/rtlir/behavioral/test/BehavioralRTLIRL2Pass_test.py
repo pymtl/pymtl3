@@ -13,7 +13,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits32
+from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
     BehavioralRTLIRGenL2Pass,
@@ -141,7 +141,7 @@ def test_L2_ifexp_orelse_component( do_test ):
     do_test( A() )
 
 def test_L2_if_cond_bool( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.foo = Bits32( 42 )
   class A( Component ):
@@ -181,7 +181,7 @@ def test_L2_for_step_variable( do_test ):
     do_test( A() )
 
 def test_L2_ifexp_cond_bool( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.foo = Bits32( 42 )
   class A( Component ):
@@ -195,7 +195,7 @@ def test_L2_ifexp_cond_bool( do_test ):
     do_test( A() )
 
 def test_L2_ifexp_body_else_diff_type( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.foo = Bits32( 42 )
   class A( Component ):
@@ -209,7 +209,7 @@ def test_L2_ifexp_body_else_diff_type( do_test ):
     do_test( A() )
 
 def test_L2_unary_not_cast_to_bool( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.foo = Bits32( 42 )
   class A( Component ):
@@ -223,7 +223,7 @@ def test_L2_unary_not_cast_to_bool( do_test ):
     do_test( A() )
 
 def test_L2_bool_cast_to_bool( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.foo = Bits32( 42 )
   class A( Component ):
@@ -237,7 +237,7 @@ def test_L2_bool_cast_to_bool( do_test ):
     do_test( A() )
 
 def test_L2_binop_non_vector( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.foo = Bits32( 42 )
   class A( Component ):

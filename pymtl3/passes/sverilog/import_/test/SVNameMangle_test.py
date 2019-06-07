@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.datatypes import Bits1, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -58,7 +58,7 @@ def test_port_2d_array( do_test ):
   do_test( a )
 
 def test_struct_port_single( do_test ):
-  class struct( object ):
+  class struct( BitStruct ):
     def __init__( s, bar=1, foo=42 ):
       s.bar = Bits32(bar)
       s.foo = Bits32(foo)
@@ -76,7 +76,7 @@ def test_struct_port_single( do_test ):
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  class struct( object ):
+  class struct( BitStruct ):
     def __init__( s, bar=1, foo=42 ):
       s.bar = Bits32(bar)
       s.foo = Bits32(foo)
@@ -94,7 +94,7 @@ def test_struct_port_array( do_test ):
   do_test( a )
 
 def test_packed_array_port_array( do_test ):
-  class struct( object ):
+  class struct( BitStruct ):
     def __init__( s, bar=1, foo=42 ):
       s.bar = Bits32(bar)
       s.foo = [ [ Bits32(foo) for _ in xrange(2) ] for _ in xrange(3) ]
@@ -113,10 +113,10 @@ def test_packed_array_port_array( do_test ):
   do_test( a )
 
 def test_nested_struct( do_test ):
-  class inner_struct( object ):
+  class inner_struct( BitStruct ):
     def __init__( s, foo = 42 ):
       s.foo = Bits32(foo)
-  class struct( object ):
+  class struct( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
       s.inner = inner_struct()

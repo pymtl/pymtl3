@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits16, Bits32
+from pymtl3.datatypes import Bits16, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
@@ -43,7 +43,7 @@ def local_do_test( m ):
     pass
 
 def test_struct_port_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -84,7 +84,7 @@ endcomponent
   do_test( a )
 
 def test_struct_wire_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -131,7 +131,7 @@ endcomponent
 
 @pytest.mark.xfail( reason = "RTLIR not support const struct instance yet" )
 def test_struct_const_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -172,7 +172,7 @@ endcomponent
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -213,10 +213,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_port_decl( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0 ):
       s.foo = Bits32(foo)
       s.bar = C()
@@ -263,7 +263,7 @@ endcomponent
   do_test( a )
 
 def test_struct_packed_array_port_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = [ Bits32(foo) for _ in xrange( 5 ) ]
       s.bar = Bits16(bar)
@@ -308,10 +308,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_port_decl( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = [ C() for _ in xrange(5) ]
@@ -358,10 +358,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_index( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = [ C() for _ in xrange(5) ]

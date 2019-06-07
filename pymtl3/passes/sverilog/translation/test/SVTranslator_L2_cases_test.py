@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32, Bits96, concat
+from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
@@ -705,7 +705,7 @@ endmodule
   do_test( a )
 
 def test_struct( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(42)
   class A( Component ):
@@ -745,7 +745,7 @@ endmodule
   do_test( a )
 
 def test_packed_array_concat( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
       s.bar = [ Bits32(bar) for _ in xrange(2) ]
@@ -787,10 +787,10 @@ endmodule
   do_test( a )
 
 def test_nested_struct( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, woof=2 ):
       s.woof = Bits32(woof)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
       s.bar = [ Bits32(bar) for _ in xrange(2) ]
@@ -842,7 +842,7 @@ endmodule
 #-------------------------------------------------------------------------
 
 def test_struct_port( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):
@@ -872,10 +872,10 @@ endmodule
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
       s.c = C()
@@ -915,7 +915,7 @@ endmodule
   do_test( a )
 
 def test_packed_array( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = [ Bits32(foo) for _ in xrange(2) ]
   class A( Component ):
@@ -947,10 +947,10 @@ endmodule
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
       s.c = [ C() for _ in xrange(2) ]
   class A( Component ):
