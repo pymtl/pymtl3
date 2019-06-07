@@ -22,6 +22,7 @@ from .XcelMsg import XcelMsgType, mk_xcel_msg
 # TODO: figure out how to do __str__ for FL interfaces.
 
 class XcelMasterIfcFL( Interface ):
+
   def construct( s, ReqType, RespType ):
     s.ReqType  = ReqType
     s.RespType = RespType
@@ -66,6 +67,7 @@ class XcelMasterIfcFL( Interface ):
     return False
 
 class XcelMinionIfcFL( Interface ):
+
   def construct( s, ReqType, RespType, read=None, write=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
@@ -119,6 +121,7 @@ class XcelMinionIfcFL( Interface ):
 # Send/RecvIfc. The CL-FL and FL-CL has been implemented in the FL ifc.
 
 class XcelMasterIfcCL( Interface ):
+
   def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
@@ -129,6 +132,7 @@ class XcelMasterIfcCL( Interface ):
     return "{},{}".format( s.req, s.resp )
 
 class XcelMinionIfcCL( Interface ):
+
   def construct( s, ReqType, RespType, req=None, req_rdy=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
@@ -148,6 +152,7 @@ class XcelMinionIfcCL( Interface ):
 # Send/RecvIfc. The RTL-FL and FL-RTL has been implemented in the FL ifc.
 
 class XcelMasterIfcRTL( Interface ):
+
   def construct( s, ReqType, RespType ):
     s.req  = SendIfcRTL( ReqType  )
     s.resp = RecvIfcRTL( RespType )
@@ -262,6 +267,7 @@ class XcelIfcFL2CLAdapter( Component ):
 #-------------------------------------------------------------------------
 
 class XcelIfcRTL2FLAdapter( Component ):
+
   def construct( s, ReqType, RespType ):
     s.left  = XcelMinionIfcRTL( ReqType, RespType )
     s.right = XcelMasterIfcFL( ReqType, RespType )
@@ -288,6 +294,7 @@ class XcelIfcRTL2FLAdapter( Component ):
 # Yanghui: directly adapting FL to RTL is tricky. I first convert FL to CL
 # then CL to RTL using the adapters we already have.
 class XcelIfcFL2RTLAdapter( Component ):
+
   def construct( s, ReqType, RespType ):
     s.left  = XcelMinionIfcFL ( ReqType, RespType )
     s.right = XcelMasterIfcRTL( ReqType, RespType )
