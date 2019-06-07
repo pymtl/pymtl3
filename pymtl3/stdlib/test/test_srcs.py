@@ -23,7 +23,6 @@ class TestSrcCL( Component ):
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
     s.send = NonBlockingCallerIfc( Type )
-    print( "HEREH", msgs )
     s.msgs = deque( msgs )
 
     s.count  = initial_delay
