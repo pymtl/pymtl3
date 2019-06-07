@@ -35,17 +35,17 @@ def StructDataStrategy( draw, dtype ):
   all_properties = dtype.get_all_properties()
   for field_name, field in all_properties:
     setattr( data, field_name, draw(
-      DataTypeDataStrategy( id_+"."+field_name, field ) ) )
+      DataTypeDataStrategy( field ) ) )
   return data
 
 @st.composite
 def PackedArrayDataStrategy( draw, n_dim, sub_dtype ):
   if not n_dim:
-    return [ draw( DataTypeDataStrategy( sub_dtype ) ) ]
+    return draw( DataTypeDataStrategy( sub_dtype ) )
   else:
     data = []
     for i in xrange(n_dim[0]):
-      data += draw(PackedArrayDataStrategy( n_dim[1:], sub_dtype ))
+      data += [ draw(PackedArrayDataStrategy( n_dim[1:], sub_dtype )) ]
     return data
 
 @st.composite
@@ -150,14 +150,14 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
 
   # Method to compare the outputs of the imported model and the pure python one
   def tv_out( model, test_vector ):
-    assert reference_output, \
+    assert len(reference_output) > 0, \
       "Reference runs for fewer cycles than the imported model!"
     for out_port in all_output_ports:
       ref = reference_output[0][out_port]
       imp = getattr( model, out_port._dsl.my_name )
       assert ref == imp, \
         "Value mismatch: reference: {}, imported: {}".format( ref, imp )
-      reference_output.popleft()
+    reference_output.popleft()
 
   # First simulate the pure python component to see if it has sane behavior
   reference_sim = TestVectorSimulator( dut, test_vector, tv_in, ref_tv_out )
@@ -191,9 +191,9 @@ def closed_loop_component_test( dut, test_vector ):
   """Test the DUT with the given test_vector.
   
   User who wish to use this method should generate the test vector from
-  data.draw( DataStrategy() ) ( `data` is a hypothesis strategy that allows
-  you to draw examples in the body of a test ), which allows hypothesis to
-  shrink the generated test vector when the test fails.
+  data.draw( DataStrategy( dut ) ) ( `data` is a hypothesis strategy that 
+  allows you to draw examples in the body of a test ), which allows hypothesis
+  to shrink the generated test vector when the test fails.
   """
   # Method to feed data into the DUT
   def tv_in( model, test_vector ):
