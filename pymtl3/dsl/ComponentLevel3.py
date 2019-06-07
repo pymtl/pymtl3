@@ -132,7 +132,7 @@ class ComponentLevel3( ComponentLevel2 ):
       o1_nbits = o1_type.nbits
       o2_nbits = o2_type.nbits
       assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {} " \
-      "({}-bit {} <> {}-bit {})".format( o1_nbits, o2_nbits, o1_nbits, o1, o2_nbits, o2 )
+      "({}-bit {} <> {}-bit {})".format( o1_nbits, o2_nbits, o1_nbits, repr(o1), o2_nbits, repr(o2) )
     except AttributeError: # at least one of them is not Bits
       assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
 
@@ -173,12 +173,12 @@ class ComponentLevel3( ComponentLevel2 ):
               "Suggestion: check the implementation of \n"
               "          - {} (class {})\n"
               "          - {} (class {})".format( name, other, obj,
-                this, type(this), other, type(other) ) )
+                repr(this), type(this), repr(other), type(other) ) )
 
     if hasattr( o1, "connect" ):
       if not o1.connect( o2, s ): # o1.connect fail
         if hasattr( o2, "connect" ):
-          if not o1.connect( o2, s ):
+          if not o2.connect( o1, s ):
             connect_by_name( o1, o2 )
         else:
           connect_by_name( o1, o2 )
@@ -204,7 +204,7 @@ class ComponentLevel3( ComponentLevel2 ):
         return
       raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
           "  (when connecting {} to {})" \
-                .format( type(o1), type(o2), o1, o2) )
+                .format( type(o1), type(o2), repr(o1), repr(o2)) )
 
     # Deal with Signal <-> int
 
@@ -227,7 +227,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     else:
       raise InvalidConnectionError("{} cannot be connected to {}: {} != {}" \
-              .format(o1, o2, type(o1), type(o2)) )
+              .format(repr(o1), repr(o2), type(o1), type(o2)) )
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
