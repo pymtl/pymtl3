@@ -50,7 +50,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       if not dtype.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
           '{} does not have field {}!'.format(
-            dtype.get_name(), node.attr ))
+            dtype.get_name(), node.attr ) )
       dtype = dtype.get_property( node.attr )
       if isinstance( node.value.Type, rt.Port ):
         rtype = rt.Port( node.value.Type.get_direction(), dtype )

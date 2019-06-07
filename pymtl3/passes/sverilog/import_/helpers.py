@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import copy
 from functools import reduce
 
-from pymtl3.datatypes import Bits, mk_bits
+from pymtl3.datatypes import Bits, BitStruct, mk_bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.util.utility import make_indent
@@ -258,7 +258,7 @@ def gen_signal_decl_py( rtype ):
 
     def gen_ifc_str( symbols, ifc ):
 
-      def _get_arg_str( obj ):
+      def _get_arg_str( name, obj ):
         if isinstance( obj, int ):
           return str(obj)
         elif isinstance( obj, Bits ):
@@ -270,6 +270,16 @@ def gen_signal_decl_py( rtype ):
             Bits_class = mk_bits( nbits )
             symbols.update( { Bits_name : Bits_class } )
           return Bits_arg_str
+        elif isinstance( obj, BitStruct ):
+          # This is hacky: we don't know how to construct an object that
+          # is the same as `obj`, but we do have the object itself. If we
+          # add `obj` to the namespace of `construct` everything works fine
+          # but the user cannot tell what object is passed to the constructor
+          # just from the code.
+          bs_name = "_"+name+"_obj"
+          if bs_name not in symbols:
+            symbols.update( { bs_name : obj } )
+          return bs_name
         elif isinstance( obj, type ) and issubclass( obj, Bits ):
           nbits = obj.nbits
           Bits_name = "Bits{nbits}".format( **locals() )
@@ -277,9 +287,14 @@ def gen_signal_decl_py( rtype ):
             Bits_class = mk_bits( nbits )
             symbols.update( { Bits_name : Bits_class } )
           return Bits_name
+        elif isinstance( obj, type ) and issubclass( obj, BitStruct ):
+          BitStruct_name = obj.__name__
+          if BitStruct_name not in symbols:
+            symbols.update( { BitStruct_name : obj } )
+          return BitStruct_name
         else:
           assert False, \
-            "Interface constructor argument {} is not an integer or Bits!". \
+            "Interface constructor argument {} is not an int/Bits/BitStruct!". \
               format( obj )
 
       name, cls = ifc.get_name(), ifc.get_class()
@@ -287,10 +302,10 @@ def gen_signal_decl_py( rtype ):
         symbols.update( { name : cls } )
       arg_list = []
       args = ifc.get_args()
-      for obj in args[0]:
-        arg_list.append( _get_arg_str( obj ) )
+      for idx, obj in enumerate(args[0]):
+        arg_list.append( _get_arg_str( "_ifc_arg"+str(idx), obj ) )
       for arg_name, arg_obj in args[1].iteritems():
-        arg_list.append( arg_name + " = " + _get_arg_str( arg_obj ) )
+        arg_list.append( arg_name + " = " + _get_arg_str( arg_name, arg_obj ) )
       return name, ', '.join( arg_list )
 
     symbols, decls = {}, []

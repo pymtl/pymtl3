@@ -30,10 +30,12 @@ class TestSrcCL( Component ):
     s.count  = initial_delay
     s.delay  = interval_delay
     s.has_sent = False
+    s.msg_sent = None
 
     @s.update_on_edge
     def clear_flag():
       s.has_sent = False
+      s.msg_sent = None
 
     @s.update
     def up_src_send():
