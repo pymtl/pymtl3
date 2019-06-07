@@ -279,6 +279,8 @@ class Component( ComponentLevel7 ):
             # If other will be removed, we don't need to remove it here ..
             if other not in removed_connectables and other not in removed_consts:
               top._dsl.all_adjacency[other].remove( x )
+              if isinstance( other, Const ):
+                other = other._dsl.const
               saved_connections.append( (other, "top"+repr(x)[1:]) ) # other is from outside
           del top._dsl.all_adjacency[x]
 
