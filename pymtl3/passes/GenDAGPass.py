@@ -432,6 +432,8 @@ def {0}():
 
     all_upblks = top.get_all_update_blocks()
 
+    constraints_from_method = set()
+
     for method, assoc_blks in method_blks.iteritems():
       visited = set( [ (method, 0) ] )
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
@@ -460,7 +462,7 @@ def {0}():
                     if verbose: print("w<=0, v is blk".center(10),v, blk)
                     if verbose: print(v.__name__.center(25)," < ", \
                                 blk.__name__.center(25))
-                    top._dag.all_constraints.add( (v, blk) )
+                    constraints_from_method.add( (v, blk) )
 
             else:
               if v in method_blks:
@@ -479,7 +481,7 @@ def {0}():
                           if verbose: print("w<=0, v is method".center(10),v, blk)
                           if verbose: print(vb.__name__.center(25)," < ", \
                                       blk.__name__.center(25))
-                          top._dag.all_constraints.add( (vb, blk) )
+                          constraints_from_method.add( (vb, blk) )
 
               if (v, -1) not in visited:
                 visited.add( (v, -1) )
@@ -498,7 +500,7 @@ def {0}():
                     if verbose: print("w>=0, v is blk".center(10),blk, v)
                     if verbose: print(blk.__name__.center(25)," < ", \
                                       v.__name__.center(25))
-                    top._dag.all_constraints.add( (blk, v) )
+                    constraints_from_method.add( (blk, v) )
 
             else:
               if v in method_blks:
@@ -518,11 +520,21 @@ def {0}():
                           if verbose: print("w>=0, v is method".center(10), blk, v)
                           if verbose: print(blk.__name__.center(25)," < ", \
                                             vb.__name__.center(25))
-                          top._dag.all_constraints.add( (blk, vb) )
+                          constraints_from_method.add( (blk, vb) )
 
               if (v, 1) not in visited:
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
+
+    # TODO this is a temporary workaround to make some of the update_once
+    # as update_on_edge. We might have to introduce update_once for
+    # combinational cycle-level update blocks with side effect.
+    all_update_on_edge = top.get_all_update_on_edge()
+    for (x, y) in constraints_from_method:
+      if y in all_update_on_edge:
+        top._dag.all_constraints.add( (y, x) )
+      else:
+        top._dag.all_constraints.add( (x, y) )
 
     # Mark update blocks that call blocking methods for greenlet wrapping
 

@@ -427,7 +427,6 @@ def test_mix_cl_rtl_constraints():
     def recv_rdy( s ):
       return s.recv_rdy
 
-
   class DUT( ComponentLevel5 ):
 
     def construct( s ):
