@@ -21,14 +21,13 @@ from .enrdy_queues import *
 
 class TestHarness( Component ):
 
-  def construct( s, Type, q, src_msgs, sink_msgs, src_stall_prob=0,
-                                                  sink_stall_prob=0 ):
+  def construct( s, Type, q, src_msgs, sink_msgs ):
 
     # Instantiate models
 
-    s.src  = TestSrcCL( src_msgs )
+    s.src  = TestSrcCL( Type, src_msgs )
     s.q    = q
-    s.sink = TestSinkCL( sink_msgs )
+    s.sink = TestSinkCL( Type, sink_msgs )
 
     # Connect
 
@@ -67,16 +66,16 @@ def test_normal_queue():
   run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp) )
 
 def test_normal_queue_stall():
-  run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp,  0.5, 0.25) )
+  run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp ) )
 
 def test_pipe_queue():
   run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp) )
 
 def test_pipe_queue_stall():
-  run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp,  0.5, 0.25) )
+  run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp ) )
 
 def test_bypass_queue():
-  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp) )
+  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp ) )
 
 def test_bypass_queue_stall():
-  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp,  0.5, 0.25) )
+  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp ) )

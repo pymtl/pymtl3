@@ -68,7 +68,7 @@ class TestHarness( Component ):
                  src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
 
-    s.src  = TestSrcCL  ( src_msgs,  src_initial,  src_interval )
+    s.src  = TestSrcCL ( MsgType, src_msgs,  src_initial,  src_interval )
     s.dut  = NormalQueueRTL( MsgType, qsize )
     s.sink = TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval,
                           arrival_time )
@@ -90,8 +90,7 @@ class TestHarness( Component ):
 def run_sim( th, max_cycles=100 ):
 
   # Create a simulator
-  # th.elaborate()
-  # th.apply( simple_sim_pass )
+
   th.apply( SimpleSim )
   th.sim_reset()
 
