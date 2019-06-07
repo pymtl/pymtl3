@@ -27,6 +27,7 @@ from .xcel_ifcs import (
 #-------------------------------------------------------------------------
 
 class SomeMasterNonBlockingFL( Component ):
+
   def construct( s, ReqType, RespType, nregs=16 ):
     s.xcel = XcelMasterIfcFL( ReqType, RespType )
 
@@ -36,7 +37,6 @@ class SomeMasterNonBlockingFL( Component ):
 
     @s.update
     def up_master_while():
-      s.trace = "             "
       while s.addr < s.nregs:
         s.trace = "#            "
         wr_data = 0xbabe0000 | s.addr
@@ -56,6 +56,7 @@ class SomeMasterNonBlockingFL( Component ):
     return ret
 
 class SomeMasterBlockingFL( Component ):
+
   def construct( s, ReqType, RespType, nregs=16 ):
     s.xcel = XcelMasterIfcFL( ReqType, RespType )
 
@@ -102,6 +103,7 @@ class SomeMinionFL( Component ):
 #-------------------------------------------------------------------------
 
 class SomeMasterCL( Component ):
+
   def recv( s, msg ):
     if msg.type_ == XcelMsgType.READ:
       assert msg.data == 0xface0000 | s.addr-1
@@ -176,13 +178,14 @@ class SomeMinionCL( Component ):
     s.add_constraints( U(up_process) < M(s.xcel.req) ) # pipeline behavior
 
   def line_trace( s ):
-    return s.xcel.line_trace()
+    return "{}".format( s.xcel )
 
 #-------------------------------------------------------------------------
 # RTL master/minion
 #-------------------------------------------------------------------------
 
 class SomeMasterRTL( Component ):
+
   def construct( s, ReqType, RespType, nregs=16 ):
 
     # Interface
@@ -251,6 +254,7 @@ class SomeMasterRTL( Component ):
     return "{}({}){}".format( s.xcel.req, s.flag, s.xcel.resp )
 
 class SomeMinionRTL( Component ):
+
   def construct( s, ReqType, RespType, nregs=16 ):
 
     # Interface
@@ -294,6 +298,7 @@ class SomeMinionRTL( Component ):
 #-------------------------------------------------------------------------
 
 class TestHarness( Component ):
+
   def construct( s,
                  MasterType = SomeMasterBlockingFL,
                  MinionType=SomeMinionFL,
@@ -384,8 +389,6 @@ def test_xcel_fl_rtl_blocking():
     nregs      = 16,
   )
   th.apply( SimpleSim )
-  for x in th._sched.schedule:
-    print(x)
   th.run_sim()
 
 def test_xcel_fl_rtl_nonblocking():

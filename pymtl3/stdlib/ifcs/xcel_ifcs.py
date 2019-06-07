@@ -125,9 +125,6 @@ class XcelMasterIfcCL( Interface ):
     s.req  = NonBlockingCallerIfc( ReqType )
     s.resp = NonBlockingCalleeIfc( RespType, resp, resp_rdy )
 
-  def line_trace( s ):
-    return "{},{}".format( s.req, s.resp )
-
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
@@ -137,9 +134,6 @@ class XcelMinionIfcCL( Interface ):
     s.RespType = RespType
     s.req  = NonBlockingCalleeIfc( ReqType, req, req_rdy )
     s.resp = NonBlockingCallerIfc( RespType )
-
-  def line_trace( s ):
-    return "{},{}".format( s.req, s.resp )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
@@ -193,7 +187,6 @@ class XcelIfcCL2FLAdapter( Component ):
       if s.entry is not None and s.left.resp.rdy():
 
         # Dequeue xcel request message
-
         req     = s.entry
         s.entry = None
 
@@ -269,7 +262,6 @@ class XcelIfcFL2CLAdapter( Component ):
 #-------------------------------------------------------------------------
 
 class XcelIfcRTL2FLAdapter( Component ):
-
   def construct( s, ReqType, RespType ):
     s.left  = XcelMinionIfcRTL( ReqType, RespType )
     s.right = XcelMasterIfcFL( ReqType, RespType )
@@ -293,7 +285,8 @@ class XcelIfcRTL2FLAdapter( Component ):
     def up_xcelifc_rtl_fl_rdy():
       s.left.req.rdy = s.left.resp.rdy
 
-# This adapter works.
+# Yanghui: directly adapting FL to RTL is tricky. I first convert FL to CL
+# then CL to RTL using the adapters we already have.
 class XcelIfcFL2RTLAdapter( Component ):
   def construct( s, ReqType, RespType ):
     s.left  = XcelMinionIfcFL ( ReqType, RespType )
@@ -311,32 +304,6 @@ class XcelIfcFL2RTLAdapter( Component ):
       s.fl2cl.right.resp, s.resp_rtl2cl.send,
       s.resp_rtl2cl.recv, s.right.resp,
     )
-
-class XcelIfcRTL2FLAdapter( Component ):
-
-  def construct( s, ReqType, RespType ):
-    s.left  = XcelMinionIfcRTL( ReqType, RespType )
-    s.right = XcelMasterIfcFL( ReqType, RespType )
-
-    @s.update
-    def up_xcelifc_rtl_fl_blk():
-
-      if s.left.req.en and s.left.resp.rdy:
-
-        if s.left.req.msg.type_ == XcelMsgType.READ:
-          resp = RespType( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
-
-        elif s.left.req.msg.type_ == XcelMsgType.WRITE:
-          s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
-          resp = RespType( s.left.req.msg.type_, 0 )
-
-        s.left.resp.en  = Bits1(1)
-        s.left.resp.msg = resp
-
-    @s.update
-    def up_xcelifc_rtl_fl_rdy():
-      s.left.req.rdy = s.left.resp.rdy
-
 
 # Shunning: this flat one also works.
 """
