@@ -452,7 +452,7 @@ class Component( ComponentLevel7 ):
   def get_all_object_filter( s, filt ):
     assert callable( filt )
     try:
-      return set( [ x for x in s._dsl.all_named_objects if filt(x) ] )
+      return { x for x in s._dsl.all_named_objects if filt(x) }
     except AttributeError:
       return s._collect_all( [ filt ] )[0]
 

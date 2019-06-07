@@ -322,7 +322,7 @@ def test_read_write_mem( dump_vcd ):
 
   # Run the test
 
-  run_sim( th, dump_vcd )
+  run_sim( th )
 
   # Read the data back out of the test memory
 

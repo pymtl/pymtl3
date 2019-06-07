@@ -64,9 +64,9 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return ret
 
   def get_call_obj( s, node ):
-    if node.starargs:
+    if getattr(node, "starargs", False):
       raise PyMTLSyntaxError( s.blk, node, 'star argument is not supported!')
-    if node.kwargs:
+    if getattr(node, "kwargs", False):
       raise PyMTLSyntaxError( s.blk, node,
         'double-star argument is not supported!')
     if node.keywords:

@@ -59,7 +59,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
     for writer, net in nets:
       S = deque( [ writer ] )
-      visited = set( [ writer ] )
+      visited = {  writer  }
       while S:
         u = S.pop()
         writer_host        = u.get_host_component()

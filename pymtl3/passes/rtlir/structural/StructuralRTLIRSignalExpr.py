@@ -29,6 +29,9 @@ class BaseSignalExpr( object ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
+  def __hash__( s ):
+    return hash((type(s), s.rtype))
+
 class _Index( BaseSignalExpr ):
   def __init__( s, index_base, index, rtype ):
     super( _Index, s ).__init__( rtype )
@@ -39,6 +42,9 @@ class _Index( BaseSignalExpr ):
     return type(s) is type(other) and s.rtype == other.rtype and\
            s.index == other.index and \
            s.base == other.base
+
+  def __hash__( s ):
+    return hash((type(s), s.rtype, s.index, s.base))
 
   def get_index( s ):
     return s.index
@@ -134,6 +140,9 @@ class _Slice( BaseSignalExpr ):
     return type(s) is type(other) and s.rtype == other.rtype and \
            s.slice == other.slice and s.base == other.base
 
+  def __hash__( s ):
+    return hash((type(s), s.rtype, s.slice, s.base))
+
   def get_slice( s ):
     return s.slice
 
@@ -160,6 +169,9 @@ class _Attribute( BaseSignalExpr ):
     return type(s) is type(other) and s.rtype == other.rtype and \
            s.attr == other.attr and \
            s.base == other.base
+
+  def __hash__( s ):
+    return hash((type(s), s.rtype, s.attr, s.base))
 
   def get_base( s ):
     return s.base
@@ -213,6 +225,9 @@ class ConstInstance( BaseSignalExpr ):
     return isinstance(other, ConstInstance) and s.rtype == other.rtype and \
            s.value == other.value
 
+  def __hash__( s ):
+    return hash((type(s), s.rtype, s.value))
+
   def get_value( s ):
     return s.value
 
@@ -225,6 +240,9 @@ class CurComp( BaseSignalExpr ):
   def __eq__( s, other ):
     return isinstance(other, CurComp) and s.rtype == other.rtype and \
            s.comp_id == other.comp_id
+
+  def __hash__( s ):
+    return hash((type(s), s.rtype, s.comp_id))
 
   def get_component_id( s ):
     return s.comp_id

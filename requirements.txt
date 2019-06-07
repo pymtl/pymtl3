@@ -11,4 +11,5 @@ autoflake
 future
 isort
 pytest-cov
+pyupgrade
 codecov

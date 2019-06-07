@@ -12,7 +12,6 @@ can be parameterized by the generated type objects.
 """
 from __future__ import absolute_import, division, print_function
 
-import __builtin__
 from functools import reduce
 
 import pymtl3.dsl as dsl
@@ -27,6 +26,9 @@ class BaseRTLIRDataType( object ):
   def __ne__( s, other ):
     return not s.__eq__( other )
 
+  def __hash__( s ):
+    return hash(type(s))
+
 class Vector( BaseRTLIRDataType ):
   """RTLIR data type class for vector type."""
   def __init__( s, nbits ):
@@ -38,6 +40,9 @@ class Vector( BaseRTLIRDataType ):
 
   def __eq__( s, other ):
     return isinstance(other, Vector) and s.nbits == other.nbits
+
+  def __hash__( s ):
+    return hash((type(s), s.nbits))
 
   def __call__( s, obj ):
     """Return if type `obj` be cast into type `s`."""
@@ -56,6 +61,9 @@ class Struct( BaseRTLIRDataType ):
 
   def __eq__( s, u ):
     return isinstance(u, Struct) and s.name == u.name
+
+  def __hash__( s ):
+    return hash((type(s), s.name))
 
   def get_name( s ):
     return s.name
@@ -123,9 +131,12 @@ class PackedArray( BaseRTLIRDataType ):
     if not isinstance(other, PackedArray): return False
     if len( s.dim_sizes ) != len( other.dim_sizes ): return False
     zipped_sizes = zip( s.dim_sizes, other.dim_sizes )
-    if not reduce( lambda res, (x,y): res and (x==y), zipped_sizes ):
+    if not reduce( lambda res, xy: res and (xy[0] == xy[1]), zipped_sizes ):
       return False
     return s.sub_dtype == other.sub_dtype
+
+  def __hash__( s ):
+    return hash((type(s), tuple(s.dim_sizes), s.sub_dtype))
 
   def get_length( s ):
     return s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 )
@@ -169,7 +180,7 @@ def _get_rtlir_dtype_struct( obj ):
     return PackedArray( dim_sizes, _get_rtlir_dtype_struct( obj ) )
 
   # Struct field
-  elif hasattr( obj, '__class__' ) and not obj.__class__.__name__ in dir( __builtin__ ):
+  elif hasattr( obj, '__class__' ) and not obj.__class__.__name__ in dir( __builtins__ ):
     cls = obj.__class__
     all_properties = {}
 
@@ -231,7 +242,7 @@ def get_rtlir_dtype( obj ):
         return Vector( Type.nbits )
 
       # Struct data type
-      elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtin__):
+      elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtins__):
         try:
           return _get_rtlir_dtype_struct( Type() )
         except TypeError:

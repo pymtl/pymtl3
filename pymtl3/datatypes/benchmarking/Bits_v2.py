@@ -103,7 +103,7 @@ class Bits( object ):
   #---------------------------------------------------------------------
 
   def __repr__(self):
-    return "Bits( {0}, {1} )".format(self.nbits, self.hex())
+    return "Bits( {}, {} )".format(self.nbits, self.hex())
 
   def __str__(self):
     num_chars = (((self.nbits-1)/4)+1)

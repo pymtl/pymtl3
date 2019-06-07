@@ -27,6 +27,8 @@ def get_version():
   cmd = "git describe --dirty"
   try:
     result = check_output( cmd.split(),  ).strip()
+    if not isinstance(result, str):
+      result = result.decode()
   except:
     result = "?"
   return result

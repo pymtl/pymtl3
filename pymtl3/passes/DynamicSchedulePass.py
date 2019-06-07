@@ -157,8 +157,7 @@ class DynamicSchedulePass( BasePass ):
           for (u, v) in E: # u -> v
             if u in scc and v in scc:
               InD[ v ] += 1
-          in_degree_ranking = sorted( [ (InD[v], v) for v in InD ] )
-          Q.append( in_degree_ranking[0][1] )
+          Q.append( max(InD, key=InD.get) )
 
         else:
           # We start bfs with the blocks that are successors of the

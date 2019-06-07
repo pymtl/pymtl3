@@ -44,6 +44,9 @@ class NoneType( BaseRTLIRType ):
   def __eq__( s, other ):
     return isinstance( other, NoneType )
 
+  def __hash__( s ):
+    return hash(type(s))
+
   def __str__( s ):
     return 'NoneType'
 
@@ -71,6 +74,9 @@ class Array( BaseRTLIRType ):
     if not isinstance( other, Array ): return False
     if s.dim_sizes != other.dim_sizes: return False
     return s.sub_type == other.sub_type
+
+  def __hash__( s ):
+    return hash((type(s), tuple(s.dim_sizes), s.sub_type))
 
   def get_next_dim_type( s ):
     if len( s.dim_sizes ) == 1: return copy.copy( s.sub_type )
@@ -105,6 +111,9 @@ class Signal( BaseRTLIRType ):
     s.dtype = dtype
     s.unpacked = unpacked
 
+  def __hash__( s ):
+    return hash((type(s), s.dtype))
+
   def is_packed_indexable( s ):
     return isinstance( s.dtype, rdt.PackedArray )
 
@@ -123,6 +132,9 @@ class Port( Signal ):
   def __eq__( s, other ):
     return isinstance(other, Port) and s.dtype == other.dtype and \
            s.direction == other.direction
+
+  def __hash__( s ):
+    return hash((type(s), s.dtype, s.direction))
 
   def __str__( s ):
     return 'Port'
@@ -145,6 +157,9 @@ class Wire( Signal ):
   def __eq__( s, other ):
     return isinstance(other, Wire) and s.dtype == other.dtype
 
+  def __hash__( s ):
+    return hash((type(s), s.dtype))
+
   def __str__( s ):
     return 'Wire'
 
@@ -162,6 +177,9 @@ class Const( Signal ):
 
   def __eq__( s, other ):
     return isinstance(other, Const) and s.dtype == other.dtype
+
+  def __hash__( s ):
+    return hash((type(s), s.dtype))
 
   def __str__( s ):
     return 'Const'
@@ -199,6 +217,9 @@ class InterfaceView( BaseRTLIRType ):
 
   def __eq__( s, other ):
     return isinstance(other, InterfaceView) and s.name == other.name
+
+  def __hash__( s ):
+    return hash((type(s), s.name))
 
   def get_name( s ):
     return s.name
@@ -245,7 +266,6 @@ class Component( BaseRTLIRType ):
   """RTLIR instance type for a component."""
   def __init__( s, obj, properties, unpacked = False ):
     s.name = obj.__class__.__name__
-    s.argspec = inspect.getargspec( getattr( obj, 'construct' ) )
     s.params = s._gen_parameters( obj )
     s.properties = properties
     s.unpacked = unpacked
@@ -254,11 +274,17 @@ class Component( BaseRTLIRType ):
     # s.argspec: static code reflection results
     # _dsl.args: all unnamed arguments supplied to construct()
     # _dsl.kwargs: all named arguments supplied to construct()
-    arg_names = s.argspec.args[1:]
-    assert s.argspec.varargs is None, "varargs are not allowed for construct!"
-    assert s.argspec.keywords is None, "keyword args are not allowed for construct!"
+    try:
+      argspec = inspect.getfullargspec( getattr( obj, 'construct' ) )
+      assert not argspec.varkw, "keyword args are not allowed for construct!"
+      assert not argspec.kwonlyargs, "keyword args are not allowed for construct!"
+    except AttributeError:
+      argspec = inspect.getargspec( getattr( obj, 'construct' ) )
+      assert not argspec.keywords, "keyword args are not allowed for construct!"
+    assert not argspec.varargs, "varargs are not allowed for construct!"
+    arg_names = argspec.args[1:]
 
-    defaults = s.argspec.defaults if s.argspec.defaults else ()
+    defaults = argspec.defaults or ()
     num_args = len(arg_names)
     num_supplied = len(obj._dsl.args) + len(obj._dsl.kwargs)
     num_defaults = len(defaults)
@@ -294,6 +320,9 @@ class Component( BaseRTLIRType ):
     return isinstance(other, Component) and s.name == other.name and \
            s.params == other.params
 
+  def __hash__( s ):
+    return hash((type(s), s.name, tuple(s.params)))
+
   def __str__( s ):
     return 'Component'
 
@@ -305,9 +334,6 @@ class Component( BaseRTLIRType ):
 
   def get_params( s ):
     return s.params
-
-  def get_argspec( s ):
-    return s.argspec
 
   def get_ports( s ):
     return sorted(filter(

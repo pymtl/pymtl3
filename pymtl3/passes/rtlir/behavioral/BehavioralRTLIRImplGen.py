@@ -361,7 +361,7 @@ def implement_module( module_str ):
   string."""
   start = 0
   node_type = set()
-  built_in_node_type = set( ['identifier', 'int', 'string', 'bool', 'object'] )
+  built_in_node_type = { 'identifier', 'int', 'string', 'bool', 'object' }
   constr_list = []
   # constr_list = set()
 

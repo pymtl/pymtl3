@@ -291,7 +291,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         equiv[yy].add( xx )
 
     for method, assoc_blks in method_blks.iteritems():
-      visited = set( [ (method, 0) ] )
+      visited = {  (method, 0)  }
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
 
       if verbose: print()
