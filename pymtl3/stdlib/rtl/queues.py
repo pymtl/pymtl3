@@ -85,8 +85,12 @@ class NormalQueueCtrlRTL( Component ):
 
     @s.update
     def up_rdy_signals():
-      s.enq_rdy = s.count < s.num_entries
-      s.deq_rdy = s.count > 0
+      if ~s.reset:
+        s.enq_rdy = s.count < s.num_entries
+        s.deq_rdy = s.count > 0
+      else:
+        s.enq_rdy = Bits1(0)
+        s.deq_rdy = Bits1(0)
 
     @s.update
     def up_xfer_signals():

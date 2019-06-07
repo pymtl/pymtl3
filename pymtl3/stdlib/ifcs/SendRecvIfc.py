@@ -136,7 +136,7 @@ class RecvCL2SendRTL( Component ):
 
     @s.update
     def up_recv_rdy_cl():
-      s.recv_rdy    = True if s.send.rdy else False
+      s.recv_rdy    = True if s.send.rdy and not s.reset else False
 
     s.add_constraints(
       U( up_recv_rdy_cl ) < M( s.recv ),
