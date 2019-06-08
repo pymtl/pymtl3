@@ -72,7 +72,7 @@ def test_pymtl_signal():
 def test_pymtl_packed_array():
   class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in xrange(5) ]
+      s.foo = [ Bits32( foo ) for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )

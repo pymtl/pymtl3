@@ -26,7 +26,7 @@ def full_vector( wire, signal ):
   else:
     ret = ""
     num_elements = (nbits-1)/32+1
-    for idx in xrange(num_elements):
+    for idx in range(num_elements):
       _nbits = 32 if idx != num_elements-1 else nbits%32
       ret = to_string( signal[idx], _nbits )[2:] + ret
     return "0x" + ret

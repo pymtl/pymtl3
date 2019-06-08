@@ -20,7 +20,7 @@ from pymtl3.passes.rtlir.util.test_utility import expected_failure
 def test_pymtl3_list_ports():
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ dsl.InPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
   a = A()
   a.elaborate()
   assert rt.is_rtlir_convertible( a.in_ )
@@ -29,7 +29,7 @@ def test_pymtl3_list_ports():
 def test_pymtl3_list_wires():
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ dsl.Wire( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ dsl.Wire( Bits32 ) for _ in range(5) ]
   a = A()
   a.elaborate()
   assert rt.is_rtlir_convertible( a.in_ )
@@ -38,7 +38,7 @@ def test_pymtl3_list_wires():
 def test_pymtl3_list_consts():
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ Bits32(42) for _ in xrange(5) ]
+      s.in_ = [ Bits32(42) for _ in range(5) ]
   a = A()
   a.elaborate()
   assert rt.is_rtlir_convertible( a.in_ )
@@ -51,7 +51,7 @@ def test_pymtl3_list_interface_views():
       s.rdy = dsl.InPort ( Bits1 )
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ Ifc() for _ in xrange(5) ]
+      s.in_ = [ Ifc() for _ in range(5) ]
   a = A()
   a.elaborate()
   assert rt.is_rtlir_convertible( a.in_ )
@@ -67,7 +67,7 @@ def test_pymtl_list_components():
       s.out = dsl.OutPort( Bits32 )
   class A( dsl.Component ):
     def construct( s ):
-      s.b = [ B() for _ in xrange(5) ]
+      s.b = [ B() for _ in range(5) ]
   a = A()
   a.elaborate()
   assert rt.is_rtlir_convertible( a.b )
@@ -78,8 +78,8 @@ def test_pymtl_list_components():
 def test_pymtl_list_multi_dimension():
   class A( dsl.Component ):
     def construct( s ):
-      s.out = [[[dsl.OutPort(Bits32) for _ in xrange(1)] \
-              for _ in xrange(2)] for _ in xrange(3)]
+      s.out = [[[dsl.OutPort(Bits32) for _ in range(1)] \
+              for _ in range(2)] for _ in range(3)]
   a = A()
   a.elaborate()
   assert rt.is_rtlir_convertible( a.out )

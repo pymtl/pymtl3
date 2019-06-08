@@ -163,7 +163,7 @@ def test_subcomponent_index( do_test ):
       s.out = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.comp = [ B() for _ in xrange(2) ]
+      s.comp = [ B() for _ in range(2) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():

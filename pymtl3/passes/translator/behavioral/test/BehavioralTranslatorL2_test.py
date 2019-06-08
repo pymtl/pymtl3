@@ -56,7 +56,7 @@ def test_tmpvar_alias( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk1():
         u = s.in_ + Bits32(42)
@@ -85,7 +85,7 @@ def test_multi_tmpvar( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk1():
         u = s.in_ + Bits32(42)

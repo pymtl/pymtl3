@@ -66,7 +66,7 @@ def gen_connections( top ):
 def test_L1_const_numbers():
   class A( dsl.Component ):
     def construct( s ):
-      s.const = [ Bits32(42) for _ in xrange(5) ]
+      s.const = [ Bits32(42) for _ in range(5) ]
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -94,7 +94,7 @@ def test_L1_connection_order():
 def test_L1_port_index():
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ dsl.InPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
       s.connect( s.in_[2], s.out )
   a = A()
@@ -108,11 +108,11 @@ def test_L1_port_index():
 def test_L1_wire_index():
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ dsl.InPort( Bits32 ) for _ in xrange(5) ]
-      s.wire = [ dsl.Wire( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
+      s.wire = [ dsl.Wire( Bits32 ) for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
       s.connect( s.wire[2], s.out )
-      for i in xrange(5):
+      for i in range(5):
         s.connect( s.wire[i], s.in_[i] )
   a = A()
   a.elaborate()
@@ -125,7 +125,7 @@ def test_L1_wire_index():
 def test_L1_const_index():
   class A( dsl.Component ):
     def construct( s ):
-      s.const = [ 42 for _ in xrange(5) ]
+      s.const = [ 42 for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
       s.connect( s.const[2], s.out )
   a = A()

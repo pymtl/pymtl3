@@ -36,7 +36,7 @@ def test_port_single( do_test ):
 def test_port_array( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange( 3 ) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range( 3 ) ]
   a = A()
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
@@ -48,7 +48,7 @@ def test_port_array( do_test ):
 def test_port_2d_array( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ [ InPort( Bits32 ) for _ in xrange(2) ] for _ in xrange(3) ]
+      s.in_ = [ [ InPort( Bits32 ) for _ in range(2) ] for _ in range(3) ]
   a = A()
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
@@ -82,7 +82,7 @@ def test_struct_port_array( do_test ):
       s.foo = Bits32(foo)
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( struct ) for _ in xrange(2) ]
+      s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
   st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'foo':rdt.Vector(32)},
                   ['bar', 'foo'])
@@ -97,10 +97,10 @@ def test_packed_array_port_array( do_test ):
   class struct( BitStruct ):
     def __init__( s, bar=1, foo=42 ):
       s.bar = Bits32(bar)
-      s.foo = [ [ Bits32(foo) for _ in xrange(2) ] for _ in xrange(3) ]
+      s.foo = [ [ Bits32(foo) for _ in range(2) ] for _ in range(3) ]
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( struct ) for _ in xrange(2) ]
+      s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
   foo = rdt.PackedArray([3,2], rdt.Vector(32))
   st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'foo':foo},
@@ -122,7 +122,7 @@ def test_nested_struct( do_test ):
       s.inner = inner_struct()
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( struct ) for _ in xrange(2) ]
+      s.in_ = [ InPort( struct ) for _ in range(2) ]
   a = A()
   inner = rdt.Struct('inner_struct', {'foo':rdt.Vector(32)}, ['foo'])
   st = rdt.Struct('struct', {'bar':rdt.Vector(32), 'inner':inner}, ['bar', 'inner'])
@@ -160,7 +160,7 @@ def test_interface_array( do_test ):
       s.rdy = OutPort( Bits1 )
   class A( Component ):
     def construct( s ):
-      s.ifc = [ Ifc() for _ in xrange(2) ]
+      s.ifc = [ Ifc() for _ in range(2) ]
   a = A()
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
@@ -187,7 +187,7 @@ def test_nested_interface( do_test ):
       s.ctrl_foo = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.ifc = [ Ifc() for _ in xrange(2) ]
+      s.ifc = [ Ifc() for _ in range(2) ]
   a = A()
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
@@ -208,7 +208,7 @@ def test_nested_interface( do_test ):
 def test_nested_interface_port_array( do_test ):
   class InnerIfc( Interface ):
     def construct( s ):
-      s.msg = [ InPort( Bits32 ) for _ in xrange(2) ]
+      s.msg = [ InPort( Bits32 ) for _ in range(2) ]
       s.val = InPort( Bits1 )
       s.rdy = OutPort( Bits1 )
   class Ifc( Interface ):
@@ -218,7 +218,7 @@ def test_nested_interface_port_array( do_test ):
       s.ctrl_foo = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.ifc = [ Ifc() for _ in xrange(2) ]
+      s.ifc = [ Ifc() for _ in range(2) ]
   a = A()
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),

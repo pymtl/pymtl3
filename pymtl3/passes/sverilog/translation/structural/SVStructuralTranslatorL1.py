@@ -80,7 +80,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       assert isinstance( array, list )
 
       ret = "'{ "
-      for _idx, idx in enumerate( xrange( n_dim[0] ) ):
+      for _idx, idx in enumerate( range( n_dim[0] ) ):
         if _idx != 0: ret += ', '
         ret += gen_array_param( n_dim[1:], array[idx] )
       ret += " }"

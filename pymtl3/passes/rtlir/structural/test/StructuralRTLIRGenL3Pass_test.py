@@ -40,7 +40,7 @@ def test_L3_ifc_view_index():
       s.msg = dsl.InPort( Bits32 )
   class A( dsl.Component ):
     def construct( s ):
-      s.in_ = [ Ifc() for _ in xrange(5) ]
+      s.in_ = [ Ifc() for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
       s.connect( s.in_[2].msg, s.out )
   a = A()

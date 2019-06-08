@@ -70,7 +70,7 @@ def test_L2_for_start_component( do_test ):
       s.out = OutPort( Bits1 )
       @s.update
       def upblk():
-        for i in xrange( s, 8, 1 ):
+        for i in range( s, 8, 1 ):
           s.out = ~Bits1( 1 )
   with expected_failure( PyMTLTypeError, "must be a constant expression" ):
     do_test( A() )
@@ -81,7 +81,7 @@ def test_L2_for_end_component( do_test ):
       s.out = OutPort( Bits1 )
       @s.update
       def upblk():
-        for i in xrange( 0, s, 1 ):
+        for i in range( 0, s, 1 ):
           s.out = ~Bits1( 1 )
   with expected_failure( PyMTLTypeError, "must be a constant expression" ):
     do_test( A() )
@@ -92,7 +92,7 @@ def test_L2_for_step_component( do_test ):
       s.out = OutPort( Bits1 )
       @s.update
       def upblk():
-        for i in xrange( 0, 8, s ):
+        for i in range( 0, 8, s ):
           s.out = ~Bits1( 1 )
   with expected_failure( PyMTLTypeError, "must be a constant expression" ):
     do_test( A() )
@@ -163,7 +163,7 @@ def test_L2_for_step_zero( do_test ):
       s.out = OutPort( Bits1 )
       @s.update
       def upblk():
-        for i in xrange( 0, 4, 0 ):
+        for i in range( 0, 4, 0 ):
           s.out = Bits1( 1 )
   with expected_failure( PyMTLTypeError, "step of for-loop cannot be zero" ):
     do_test( A() )
@@ -175,7 +175,7 @@ def test_L2_for_step_variable( do_test ):
       s.out = OutPort( Bits1 )
       @s.update
       def upblk():
-        for i in xrange( 0, 4, s.in_ ):
+        for i in range( 0, 4, s.in_ ):
           s.out = Bits1( 1 )
   with expected_failure( PyMTLTypeError, "step of a for-loop must be a constant" ):
     do_test( A() )
@@ -281,7 +281,7 @@ def test_L2_for_else( do_test ):
       s.out = OutPort( Bits4 )
       @s.update
       def upblk():
-        for i in xrange(4):
+        for i in range(4):
           s.out = Bits4( 1 )
         else:
           s.out = Bits4( 1 )
@@ -295,7 +295,7 @@ def test_L2_for_index_signal( do_test ):
       s.out = OutPort( Bits4 )
       @s.update
       def upblk():
-        for s.in_ in xrange(4):
+        for s.in_ in range(4):
           s.out = Bits4( 1 )
   with expected_failure( PyMTLSyntaxError, "loop index must be a temporary variable" ):
     do_test( A() )
@@ -306,8 +306,8 @@ def test_L2_for_index_redefined( do_test ):
       s.out = OutPort( Bits4 )
       @s.update
       def upblk():
-        for i in xrange(4):
-          for i in xrange(4):
+        for i in range(4):
+          for i in range(4):
             s.out = Bits4( 1 )
   with expected_failure( PyMTLSyntaxError, "Redefinition of loop index i" ):
     do_test( A() )
@@ -427,7 +427,7 @@ def test_Break( do_test ):
     def construct( s ):
       @s.update
       def upblk():
-        for i in xrange(42): break
+        for i in range(42): break
   with expected_failure( PyMTLSyntaxError, "invalid operation: break" ):
     do_test( A() )
 
@@ -436,6 +436,6 @@ def test_Continue( do_test ):
     def construct( s ):
       @s.update
       def upblk():
-        for i in xrange(42): continue
+        for i in range(42): continue
   with expected_failure( PyMTLSyntaxError, "invalid operation: continue" ):
     do_test( A() )

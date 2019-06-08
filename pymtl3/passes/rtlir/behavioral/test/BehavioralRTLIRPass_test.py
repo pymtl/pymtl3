@@ -42,8 +42,8 @@ def local_do_test( m ):
 def test_index_basic( do_test ):
   class index_basic( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits16 ) for _ in xrange( 4 ) ]
-      s.out = [ OutPort( Bits16 ) for _ in xrange( 2 ) ]
+      s.in_ = [ InPort( Bits16 ) for _ in range( 4 ) ]
+      s.out = [ OutPort( Bits16 ) for _ in range( 2 ) ]
 
       @s.update
       def index_basic():
@@ -169,8 +169,8 @@ def test_bits_basic( do_test ):
 def test_index_bits_slicing( do_test ):
   class index_bits_slicing( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits16 ) for _ in xrange( 10 ) ]
-      s.out = [ OutPort( Bits16 ) for _ in xrange( 5 ) ]
+      s.in_ = [ InPort( Bits16 ) for _ in range( 10 ) ]
+      s.out = [ OutPort( Bits16 ) for _ in range( 5 ) ]
 
       @s.update
       def index_bits_slicing():
@@ -309,7 +309,7 @@ def test_for_basic( do_test ):
 
       @s.update
       def for_basic():
-        for i in xrange( 8 ):
+        for i in range( 8 ):
           s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
 
   a = for_basic()

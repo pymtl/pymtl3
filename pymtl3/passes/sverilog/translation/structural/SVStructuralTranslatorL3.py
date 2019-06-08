@@ -51,7 +51,7 @@ class SVStructuralTranslatorL3(
         return reduce( lambda res, l: res+l, map(
           lambda idx: gen_interface_array_decl(
             ifc_id, ifc_rtype, n_dim[1:0], c_n_dim+'_$'+str(idx), port_decls
-        ), xrange( n_dim[0] ) ), [] )
+        ), range( n_dim[0] ) ), [] )
     n_dim = array_type['n_dim']
     return gen_interface_array_decl( ifc_id, ifc_rtype, n_dim, '', port_decls )
 

@@ -47,7 +47,7 @@ def test_adder( Type, data ):
 def test_mux( Type, n_ports, data ):
   class A( Component ):
     def construct( s, Type, n_ports ):
-      s.in_ = [ InPort( Type ) for _ in xrange(n_ports) ]
+      s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
       s.sel = InPort( mk_bits( clog2(n_ports) ) )
       s.out = OutPort( Type )
       @s.update
@@ -82,17 +82,17 @@ def test_nested_struct( data ):
     def __init__( s, foo=42, bar=42, arr=1 ):
       s.foo = Bits32( foo )
       s.inner = inner_struct(bar)
-      s.packed_array = [[ Bits16(arr) for _ in xrange(2) ] for _ in xrange(3)]
+      s.packed_array = [[ Bits16(arr) for _ in range(2) ] for _ in range(3)]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( strc )
       s.out_foo = OutPort( Bits32 )
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
-      s.sum = [ Wire( Bits16 ) for _ in xrange(3) ]
+      s.sum = [ Wire( Bits16 ) for _ in range(3) ]
       @s.update
       def upblk():
-        for i in xrange(3):
+        for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
         s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
       s.connect( s.out_foo, s.in_.foo )
@@ -111,7 +111,7 @@ def test_subcomp( data ):
     def __init__( s, foo=42, bar=42, arr=1 ):
       s.foo = Bits32( foo )
       s.inner = inner_struct(bar)
-      s.packed_array = [[ Bits16(arr) for _ in xrange(2) ] for _ in xrange(3)]
+      s.packed_array = [[ Bits16(arr) for _ in range(2) ] for _ in range(3)]
   class B( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
@@ -123,10 +123,10 @@ def test_subcomp( data ):
       s.out_foo = OutPort( Bits32 )
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
-      s.sum = [ Wire( Bits16 ) for _ in xrange(3) ]
+      s.sum = [ Wire( Bits16 ) for _ in range(3) ]
       @s.update
       def upblk():
-        for i in xrange(3):
+        for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
         s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
       s.connect( s.out_foo, s.b.out )

@@ -43,7 +43,7 @@ def test_L4_subcomp_index():
       s.connect( s.msg, 42 )
   class A( dsl.Component ):
     def construct( s ):
-      s.b = [ B() for _ in xrange(5) ]
+      s.b = [ B() for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
       s.connect( s.out, s.b[1].msg )
   a = A()

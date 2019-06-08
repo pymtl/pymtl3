@@ -284,7 +284,7 @@ end\
 def test_unpacked_signal_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
       s.out = OutPort( Bits64 )
       @s.update
       def upblk():

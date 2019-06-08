@@ -154,8 +154,8 @@ def test_L1_unsupported_attr( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits4 )
-      s.out = [ OutPort( Bits1 ) for _ in xrange(5) ]
-      s.comp_array = [ B() for _ in xrange(5) ]
+      s.out = [ OutPort( Bits1 ) for _ in range(5) ]
+      s.comp_array = [ B() for _ in range(5) ]
       @s.update
       def upblk():
         s.out = s.comp_array[ s.in_ ].out
@@ -165,7 +165,7 @@ def test_L1_unsupported_attr( do_test ):
 def test_L1_array_index_out_of_range( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits1 ) for _ in xrange(4) ]
+      s.in_ = [ InPort( Bits1 ) for _ in range(4) ]
       s.out = OutPort( Bits1 )
       @s.update
       def upblk():
@@ -187,7 +187,7 @@ def test_L1_bit_sel_index_out_of_range( do_test ):
 def test_L1_index_on_struct( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits4( 42 ) for _ in xrange(4) ]
+      s.foo = [ Bits4( 42 ) for _ in range(4) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -201,7 +201,7 @@ def test_L1_index_on_struct( do_test ):
 def test_L1_slice_on_struct( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits4( 42 ) for _ in xrange(4) ]
+      s.foo = [ Bits4( 42 ) for _ in range(4) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -653,7 +653,7 @@ def test_ListComp( do_test ):
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
-        s.out = [ 42 for _ in xrange(1) ]
+        s.out = [ 42 for _ in range(1) ]
   with expected_failure( PyMTLSyntaxError, "invalid operation: list comprehension" ):
     do_test( A() )
 
@@ -663,7 +663,7 @@ def test_SetComp( do_test ):
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
-        s.out = { 42 for _ in xrange(1) }
+        s.out = { 42 for _ in range(1) }
   with expected_failure( PyMTLSyntaxError, "invalid operation: set comprehension" ):
     do_test( A() )
 
@@ -673,7 +673,7 @@ def test_DictComp( do_test ):
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
-        s.out = { 1:42 for _ in xrange(1) }
+        s.out = { 1:42 for _ in range(1) }
   with expected_failure( PyMTLSyntaxError, "invalid operation: dict comprehension" ):
     do_test( A() )
 
@@ -683,7 +683,7 @@ def test_GeneratorExp( do_test ):
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
-        s.out = ( 42 for _ in xrange(1) )
+        s.out = ( 42 for _ in range(1) )
   with expected_failure( PyMTLSyntaxError, "invalid operation: generator expression" ):
     do_test( A() )
 

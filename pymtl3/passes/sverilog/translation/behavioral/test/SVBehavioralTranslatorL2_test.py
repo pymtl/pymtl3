@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.datatypes import Bits1, Bits32
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
+from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
@@ -264,11 +265,13 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
+# xrange gone in Python 3
+@XFAIL_ON_PY3
 def test_for_xrange_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in xrange(2):
@@ -301,8 +304,8 @@ end\
 def test_for_range_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in range(2):
@@ -332,11 +335,13 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
+# xrange gone in Python 3
+@XFAIL_ON_PY3
 def test_for_xrange_lower_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in xrange(1, 2):
@@ -371,8 +376,8 @@ end\
 def test_for_range_lower_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in range(1, 2):
@@ -404,11 +409,13 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
+# xrange gone in Python 3
+@XFAIL_ON_PY3
 def test_for_xrange_lower_upper_step( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in xrange(0, 5, 2):
@@ -451,8 +458,8 @@ end\
 def test_for_range_lower_upper_step( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(0, 5, 2):
@@ -495,8 +502,8 @@ end\
 def test_if_exp_for( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -535,8 +542,8 @@ end\
 def test_if_exp_unary_op( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -575,8 +582,8 @@ end\
 def test_if_bool_op( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -622,8 +629,8 @@ end\
 def test_tmpvar( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):

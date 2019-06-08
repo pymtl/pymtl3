@@ -143,11 +143,11 @@ typedef struct packed {
 def test_packed_array( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32(foo) for _ in xrange(2) ]
+      s.foo = [ Bits32(foo) for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
-      s.out =  [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
       s.connect( s.out[0], s.in_.foo[0] )
       s.connect( s.out[1], s.in_.foo[1] )
   a = A()
@@ -196,11 +196,11 @@ def test_struct_packed_array( do_test ):
       s.bar = Bits32(bar)
   class B( BitStruct ):
     def __init__( s ):
-      s.c = [ C() for _ in xrange(2) ]
+      s.c = [ C() for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
-      s.out =  [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
       s.connect( s.out[0], s.in_.c[0].bar )
       s.connect( s.out[1], s.in_.c[1].bar )
   a = A()

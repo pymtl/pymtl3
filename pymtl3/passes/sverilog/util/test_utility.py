@@ -44,7 +44,7 @@ def PackedArrayDataStrategy( draw, n_dim, sub_dtype ):
     return draw( DataTypeDataStrategy( sub_dtype ) )
   else:
     data = []
-    for i in xrange(n_dim[0]):
+    for i in range(n_dim[0]):
       data += [ draw(PackedArrayDataStrategy( n_dim[1:], sub_dtype )) ]
     return data
 
@@ -92,7 +92,7 @@ def ArrayDataStrategy( draw, id_, n_dim, subtype ):
       return draw(InterfaceDataStrategy( id_, subtype ))
   else:
     data = {}
-    for i in xrange(n_dim[0]):
+    for i in range(n_dim[0]):
       data.update(draw(
         ArrayDataStrategy(id_+'[{}]'.format(i), n_dim[1:], subtype)))
     return data
@@ -107,7 +107,7 @@ def DataStrategy( draw, dut ):
   rifc = rt.get_component_ifc_rtlir( dut )
   ports = rifc.get_ports_packed()
   ifcs = rifc.get_ifc_views_packed()
-  for i in xrange(max_cycles):
+  for i in range(max_cycles):
     data = {}
     for id_, port in ports:
       if isinstance( port, rt.Array ):

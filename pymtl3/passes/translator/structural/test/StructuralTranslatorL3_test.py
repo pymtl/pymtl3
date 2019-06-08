@@ -165,9 +165,9 @@ def test_ifc_array_idx( do_test ):
       s.rdy = InPort( Bits1 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InIfc() for _ in xrange(5) ]
-      s.out = [ OutIfc() for _ in xrange(5) ]
-      for i in xrange(5):
+      s.in_ = [ InIfc() for _ in range(5) ]
+      s.out = [ OutIfc() for _ in range(5) ]
+      for i in range(5):
         s.connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
@@ -272,9 +272,9 @@ def test_nested_ifc( do_test ):
       s.ctrl_bar = InPort( Bits1 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ MemReqIfc() for _ in xrange(5) ]
-      s.out = [ MemRespIfc() for _ in xrange(5) ]
-      for i in xrange(5):
+      s.in_ = [ MemReqIfc() for _ in range(5) ]
+      s.out = [ MemRespIfc() for _ in range(5) ]
+      for i in range(5):
         s.connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \

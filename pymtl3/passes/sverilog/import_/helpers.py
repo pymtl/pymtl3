@@ -70,7 +70,7 @@ def _gen_ref_write( lhs, rhs, nbits ):
     ret = []
     ITEM_BITWIDTH = 32
     num_assigns = (nbits-1)//ITEM_BITWIDTH+1
-    for idx in xrange(num_assigns):
+    for idx in range(num_assigns):
       l = ITEM_BITWIDTH*idx
       r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
       ret.append("{lhs}[{idx}] = int({rhs}[{l}:{r}])".format(**locals()))
@@ -83,7 +83,7 @@ def _gen_ref_read( lhs, rhs, nbits ):
     ret = []
     ITEM_BITWIDTH = 32
     num_assigns = (nbits-1)//ITEM_BITWIDTH+1
-    for idx in xrange(num_assigns):
+    for idx in range(num_assigns):
       l = ITEM_BITWIDTH*idx
       r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
       _nbits = r - l
@@ -128,7 +128,7 @@ def gen_packed_ports( rtype ):
         return _gen_single_ifc( id_, ifc )
       else:
         ret = []
-        for idx in xrange( n_dim[0] ):
+        for idx in range( n_dim[0] ):
           ret += _gen_ifc( id_+"_$"+str(idx), ifc, n_dim[1:] )
         return ret
     if isinstance( _ifc, rt.Array ):
@@ -196,7 +196,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
     # Indent the for loop
     for start, dim_size in enumerate( n_dim_size ):
-      for idx in xrange( start + 1, len( n_dim_size ) + 1 ):
+      for idx in range( start + 1, len( n_dim_size ) + 1 ):
         ret[ idx ] = "  " + ret[ idx ]
 
   else:
@@ -244,7 +244,7 @@ def gen_signal_decl_py( rtype ):
           _n_dim = copy.copy( n_dim )
           _n_dim.reverse()
           for length in _n_dim:
-            rhs = "[ " + rhs + (" for _ in xrange({length}) ]".format(**locals()))
+            rhs = "[ " + rhs + (" for _ in range({length}) ]".format(**locals()))
         else:
           rhs = "{direction}( {dtype} )"
           port = _port
@@ -317,7 +317,7 @@ def gen_signal_decl_py( rtype ):
         _n_dim = copy.copy( n_dim )
         _n_dim.reverse()
         for length in _n_dim:
-          rhs = "[ " + rhs + (" for _ in xrange({length}) ]".format(**locals()))
+          rhs = "[ " + rhs + (" for _ in range({length}) ]".format(**locals()))
       else:
         rhs = "{ifc_class}({ifc_params})"
         _ifc = ifc
@@ -339,7 +339,7 @@ def gen_signal_decl_py( rtype ):
       return gen_dtype_conns( lhs, rhs, dtype, pos )
     else:
       ret = []
-      for idx in xrange(n_dim[0]):
+      for idx in range(n_dim[0]):
         _lhs = lhs + "[{idx}]".format( **locals() )
         _ret, pos = \
           gen_packed_array_conns( _lhs, rhs, dtype, n_dim[1:], pos )
@@ -379,7 +379,7 @@ def gen_signal_decl_py( rtype ):
         return ret
       else:
         ret = []
-        for idx in xrange(n_dim[0]):
+        for idx in range(n_dim[0]):
           _id_py = id_py + "[{idx}]".format( **locals() )
           _id_v = id_v + "[{idx}]".format( **locals() )
           ret += _gen_port_conns( _id_py, _id_v, port, n_dim[1:] )
@@ -412,7 +412,7 @@ def gen_signal_decl_py( rtype ):
         return _gen_single_ifc_conn( id_py, id_v, ifc )
       else:
         ret = []
-        for idx in xrange( n_dim[0] ):
+        for idx in range( n_dim[0] ):
           _id_py = id_py + "[{idx}]".format( **locals() )
           _id_v = id_v + "_${idx}".format( **locals() )
           ret += _gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:] )
@@ -465,7 +465,7 @@ def gen_wire_decl_py( name, _wire ):
     dtype = _wire.get_dtype()
   nbits = dtype.get_length()
   for idx in reversed(n_dim):
-    rhs = "[ " + rhs + ( " for _ in xrange({idx}) ]".format( **locals() ) )
+    rhs = "[ " + rhs + ( " for _ in range({idx}) ]".format( **locals() ) )
   rhs = rhs.format( **locals() )
   return template.format( **locals() )
 
@@ -479,7 +479,7 @@ def gen_comb_input( packed_ports ):
       return _gen_ref_write( lhs, rhs, nbits )
     else:
       ret = []
-      for idx in xrange( n_dim[0] ):
+      for idx in range( n_dim[0] ):
         _lhs = lhs+"[{idx}]".format(**locals())
         _rhs = rhs+"[{idx}]".format(**locals())
         ret += _gen_port_array_input( _lhs, _rhs, nbits, n_dim[1:] )
@@ -509,7 +509,7 @@ def gen_comb_output( packed_ports ):
       return _gen_ref_read( lhs, rhs, nbits )
     else:
       ret = []
-      for idx in xrange( n_dim[0] ):
+      for idx in range( n_dim[0] ):
         _lhs = lhs+"[{idx}]".format(**locals())
         _rhs = rhs+"[{idx}]".format(**locals())
         ret += _gen_port_array_output( _lhs, _rhs, nbits, n_dim[1:] )

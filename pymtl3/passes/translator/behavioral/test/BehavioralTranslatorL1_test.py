@@ -49,7 +49,7 @@ freevars:
   do_test( a )
 
 def test_pymtl_list_Bits_freevar( do_test ):
-  freevar = [ Bits32(42) for _ in xrange(5) ]
+  freevar = [ Bits32(42) for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
@@ -72,7 +72,7 @@ freevars:
 def test_pymtl_multi_upblks( do_test ):
   class A( Component ):
     def construct( s ):
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk1():
         s.out[0] = Bits32(42)
@@ -94,7 +94,7 @@ def test_pymtl_multi_freevars( do_test ):
     def construct( s ):
       STATE_IDLE = Bits2(0)
       STATE_WORK = Bits2(1)
-      s.out = [ OutPort( Bits2 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits2 ) for _ in range(5) ]
       @s.update
       def upblk1():
         s.out[0] = STATE_IDLE

@@ -254,7 +254,7 @@ endcomponent
 def test_array_port_decl( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ InPort( Bits32 ) for _ in xrange(5) ]
+      s.foo = [ InPort( Bits32 ) for _ in range(5) ]
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -325,10 +325,10 @@ endcomponent
 def test_array_wire_decl( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ Wire( Bits32 ) for _ in xrange(5) ]
+      s.foo = [ Wire( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
-        for i in xrange(5):
+        for i in range(5):
           s.foo[i] = Bits32(0)
   a = A()
   a._ref_name = "A"
@@ -398,7 +398,7 @@ endcomponent
 def test_array_const_decl( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ Bits32(0) for _ in xrange(5) ]
+      s.foo = [ Bits32(0) for _ in range(5) ]
   a = A()
   a._ref_name = "A"
   a._ref_ports = "port_decls:\n"
@@ -518,7 +518,7 @@ endcomponent
 def test_expr_port_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ InPort( Bits32 ) for _ in xrange(5) ]
+      s.foo = [ InPort( Bits32 ) for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.foo[1] )
   a = A()
@@ -561,12 +561,12 @@ endcomponent
 def test_expr_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.wire = [ Wire( Bits32 ) for _ in xrange(5) ]
+      s.wire = [ Wire( Bits32 ) for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.wire[1] )
       @s.update
       def upblk():
-        for i in xrange(5):
+        for i in range(5):
           s.wire[i] = Bits32(0)
   a = A()
   a._ref_name = "A"
@@ -615,7 +615,7 @@ def test_expr_const_array_index( do_test ):
   # and just treat them as constant integers.
   class A( Component ):
     def construct( s ):
-      s.const = [ 0 for _ in xrange(5) ]
+      s.const = [ 0 for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.const[1] )
   a = A()

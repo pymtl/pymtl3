@@ -68,7 +68,7 @@ def test_packed_array_behavioral( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in xrange(2) ]
+      s.bar = [ Bits32(bar) for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -106,7 +106,7 @@ def test_nested_struct( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in xrange(2) ]
+      s.bar = [ Bits32(bar) for _ in range(2) ]
       s.c = C()
   class A( Component ):
     def construct( s ):

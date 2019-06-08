@@ -447,7 +447,7 @@ def _is_rtlir_ifc_convertible( obj ):
 def _unpack( id_, Type ):
   if not isinstance( Type, Array ): return [ ( id_, Type ) ]
   ret = []
-  for idx in xrange( Type.get_dim_sizes()[0] ):
+  for idx in range( Type.get_dim_sizes()[0] ):
     ret.append( ( id_+'[{}]'.format(idx), Type.get_next_dim_type() ) )
     ret.extend(_unpack(id_+'[{}]'.format( idx ), Type.get_next_dim_type()))
   return ret

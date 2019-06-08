@@ -80,7 +80,7 @@ def test_interface_index( do_test ):
       s.foo = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ Ifc() for _ in xrange(2) ]
+      s.in_ = [ Ifc() for _ in range(2) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():

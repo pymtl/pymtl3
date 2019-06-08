@@ -70,7 +70,7 @@ def test_L5_component_array_index( do_test ):
       s.out = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.comp = [ B() for _ in xrange(4) ]
+      s.comp = [ B() for _ in range(4) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():

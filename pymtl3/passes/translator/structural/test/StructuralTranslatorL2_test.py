@@ -178,7 +178,7 @@ def test_struct_port_array( do_test ):
       s.bar = Bits16(bar)
   class A( Component ):
     def construct( s ):
-      s.struct = [ InPort( B ) for _ in xrange(5) ]
+      s.struct = [ InPort( B ) for _ in range(5) ]
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -265,7 +265,7 @@ endcomponent
 def test_struct_packed_array_port_decl( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
-      s.foo = [ Bits32(foo) for _ in xrange( 5 ) ]
+      s.foo = [ Bits32(foo) for _ in range( 5 ) ]
       s.bar = Bits16(bar)
   class A( Component ):
     def construct( s ):
@@ -314,7 +314,7 @@ def test_nested_struct_packed_array_port_decl( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
-      s.bar = [ C() for _ in xrange(5) ]
+      s.bar = [ C() for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -364,7 +364,7 @@ def test_nested_struct_packed_array_index( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
-      s.bar = [ C() for _ in xrange(5) ]
+      s.bar = [ C() for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )

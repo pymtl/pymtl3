@@ -39,7 +39,7 @@ def test_L2_struct_attr():
 def test_L2_packed_index():
   class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in xrange(5) ]
+      s.foo = [ Bits32( foo ) for _ in range(5) ]
   class A( dsl.Component ):
     def construct( s ):
       s.in_ = dsl.InPort( B )

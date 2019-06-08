@@ -290,7 +290,7 @@ endmodule
 def test_unpacked_signal_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
       s.out = OutPort( Bits64 )
       @s.update
       def upblk():
@@ -465,8 +465,8 @@ def test_port_const_array( do_test ):
   class A( Component ):
     def construct( s ):
       s.STATES = [ 1, 2, 3, 4, 5 ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      for i in range(5):
         s.connect( s.STATES[i], s.out[i] )
   a = A()
   a._ref_src = \
@@ -538,9 +538,9 @@ endmodule
 def test_port_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      s.wire = [ Wire(Bits32) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      s.wire = [ Wire(Bits32) for _ in range(5) ]
+      for i in range(5):
         s.connect( s.wire[i], s.out[i] )
         s.connect( s.wire[i], i )
   a = A()

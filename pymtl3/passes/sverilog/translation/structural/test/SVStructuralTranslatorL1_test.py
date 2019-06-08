@@ -150,8 +150,8 @@ def test_port_const_array( do_test ):
   class A( Component ):
     def construct( s ):
       s.STATES = [ 1, 2, 3, 4, 5 ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      for i in range(5):
         s.connect( s.STATES[i], s.out[i] )
   a = A()
   a._ref_ports = { a : \
@@ -277,9 +277,9 @@ def test_port_part_selection( do_test ):
 def test_port_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      s.wire_ = [ Wire(Bits32) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      s.wire_ = [ Wire(Bits32) for _ in range(5) ]
+      for i in range(5):
         s.connect( s.wire_[i], s.out[i] )
         s.connect( s.wire_[i], i )
   a = A()

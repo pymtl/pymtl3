@@ -72,7 +72,7 @@ def test_L4_interface_array_index( do_test ):
       s.foo = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ Ifc() for _ in xrange(4) ]
+      s.in_ = [ Ifc() for _ in range(4) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():

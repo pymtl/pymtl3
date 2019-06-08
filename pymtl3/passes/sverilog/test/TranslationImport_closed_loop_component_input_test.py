@@ -39,12 +39,12 @@ def test_adder( Type ):
 @pytest.mark.parametrize("Type, n_ports", product([Bits16, Bits32], [2, 3, 4]))
 def test_mux( Type, n_ports ):
   def tv_in( model, test_vector ):
-    for i in xrange(n_ports):
+    for i in range(n_ports):
       model.in_[i] = Type( test_vector[i] )
     model.sel = mk_bits( clog2(n_ports) )( test_vector[n_ports] )
   class A( Component ):
     def construct( s, Type, n_ports ):
-      s.in_ = [ InPort( Type ) for _ in xrange(n_ports) ]
+      s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
       s.sel = InPort( mk_bits( clog2(n_ports) ) )
       s.out = OutPort( Type )
       @s.update
@@ -52,9 +52,9 @@ def test_mux( Type, n_ports ):
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
   test_vector = []
-  for _ in xrange(10):
+  for _ in range(10):
     _tmp = []
-    for i in xrange(n_ports):
+    for i in range(n_ports):
       _tmp.append( randint(-255, 255) )
     _tmp.append( randint(0, n_ports-1) )
     test_vector.append( _tmp )
