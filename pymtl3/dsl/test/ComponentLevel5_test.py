@@ -372,7 +372,7 @@ def test_method_interface():
   assert _test_model( Top ) == 4 # regression: 4 cycles
 
 
-def test_mix_cl_rtl_constraints():
+def test_mix_cl_rtl_constraints_cl_send_to_rtl():
 
   class Source( ComponentLevel5 ):
 
@@ -383,7 +383,7 @@ def test_mix_cl_rtl_constraints():
       s.req_rdy = CallerPort()
 
       s.v = 0
-      @s.update_on_edge
+      @s.update
       def up_src():
         s.v = None
         if s.req_rdy() and s.msgs:
@@ -397,23 +397,18 @@ def test_mix_cl_rtl_constraints():
       s.send_en  = OutPort( Bits1 )
       s.send_msg = OutPort( Bits32 )
 
-      s.recv_called = False
-      s.recv_rdy_   = False
-      s.msg_to_send = Bits32(0)
+      s.entry = None
 
       @s.update
       def up_send_rtl():
-        s.send_en     = Bits1( 1 ) if s.recv_called else Bits1( 0 )
-        s.send_msg    = s.msg_to_send
-        s.recv_called = False
-
-      @s.update
-      def up_recv_rdy_cl():
-        s.recv_rdy_   = True if s.send_rdy else False
+        if s.entry is None:
+          s.send_en  = Bits1( 0 )
+          s.send_msg = Bits32( 0 )
+        else:
+          s.send_en  = s.send_rdy
+          s.send_msg = s.entry
 
       s.add_constraints(
-        U( up_recv_rdy_cl ) < M( s.recv ),
-        U( up_recv_rdy_cl ) < M( s.recv_rdy ),
         M( s.recv_rdy ) < U( up_send_rtl ),
         M( s.recv ) < U( up_send_rtl )
       )
@@ -421,11 +416,10 @@ def test_mix_cl_rtl_constraints():
     @method_port
     def recv( s, msg ):
       s.msg_to_send = msg
-      s.recv_called = True
 
     @method_port
     def recv_rdy( s ):
-      return s.recv_rdy
+      return s.entry is None
 
   class DUT( ComponentLevel5 ):
 
@@ -449,5 +443,92 @@ def test_mix_cl_rtl_constraints():
                     )
   x = Top()
   x.elaborate()
-  simple_sim_pass( x )
+  from pymtl3.passes import DynamicSim
+  for y in DynamicSim:
+    y(x)
 
+  x.tick()
+  x.tick()
+  x.tick()
+  x.tick()
+
+def test_mix_cl_rtl_constraints_rtl_send_to_cl():
+
+  class Sink( ComponentLevel5 ):
+
+    @method_port
+    def recv_rdy( s ):
+      return s.entry is None
+
+    @method_port
+    def recv( s, v ):
+      s.entry = v
+
+    def construct( s, msgs ):
+      s.msgs  = list( msgs )
+      s.entry = None
+      s.idx  = 0
+
+      @s.update
+      def up_sink():
+        if s.entry is not None:
+          assert s.idx < len(s.msgs)
+          ref = s.msgs[ s.idx ]
+          s.idx += 1
+          assert msg == ref
+          s.entry = None
+
+      s.add_constraints(
+        U(up_sink) > M(s.recv    ),
+        U(up_sink) > M(s.recv_rdy),
+      )
+
+  class RTL2CL( ComponentLevel5 ):
+
+    def construct( s ):
+      s.recv_rdy = OutPort( Bits1 )
+      s.recv_en  = InPort( Bits1 )
+      s.recv_msg = InPort( Bits32 )
+
+      s.send     = CallerPort()
+      s.send_rdy = CallerPort()
+
+      @s.update
+      def up_recv_rtl_rdy():
+        s.recv_rdy = Bits1( 1 ) if s.send_rdy() else Bits1( 0 )
+
+      @s.update
+      def up_send_cl():
+        if s.recv_en:
+          s.send( s.recv_msg )
+
+      s.add_constraints( U( up_recv_rtl_rdy ) < U( up_send_cl ) )
+
+  class DUT( ComponentLevel5 ):
+
+    def construct( s ):
+      s.send_rdy = InPort ( Bits1 )
+      s.send_en  = OutPort( Bits1 )
+      s.send_msg = OutPort( Bits32 )
+
+      @s.update
+      def up_dut():
+        if s.send_rdy:
+          s.send_en  = Bits1( 1 )
+          s.send_msg = Bits32( 100 )
+        else:
+          s.send_en  = Bits1( 0 )
+          s.send_msg = Buts32( 0 )
+
+  class Top( ComponentLevel5 ):
+    def construct( s ):
+      s.dut = DUT()
+      s.adp = RTL2CL()( recv_rdy = s.dut.send_rdy,
+                        recv_en  = s.dut.send_en,
+                        recv_msg = s.dut.send_msg,
+                      )
+      s.sink = Sink([100,100,100,100])( recv = s.adp.send, recv_rdy = s.adp.send_rdy )
+
+  x = Top()
+  x.elaborate()
+  simple_sim_pass( x )
