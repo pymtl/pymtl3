@@ -34,6 +34,7 @@ class Bits{nbits}(Bits):
     return super( Bits{nbits}, s ).__init__( {nbits}, value )
 
 _bits_types[{nbits}] = Bits{nbits}
+b{nbits} = Bits{nbits}
 """
 else:
   try:
@@ -46,6 +47,7 @@ class Bits{nbits}(Bits):
     return Bits.__new__( cls, {nbits}, value )
 
 _bits_types[{nbits}] = Bits{nbits}
+b{nbits} = Bits{nbits}
 """
   except ImportError:
     from .PythonBits import Bits
@@ -57,6 +59,7 @@ class Bits{nbits}(Bits):
     return super( Bits{nbits}, s ).__init__( {nbits}, value )
 
 _bits_types[{nbits}] = Bits{nbits}
+b{nbits} = Bits{nbits}
 """
 
 _bitwidths     = list(range(1, 256)) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
