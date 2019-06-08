@@ -34,7 +34,7 @@ def mk_TranslationPass( _SVTranslator ):
         module_name = s.translator._top_module_full_name
         output_file = module_name + '.sv'
 
-        with open( output_file, 'w', 0 ) as output:
+        with open( output_file, 'w' ) as output:
           output.write( s.translator.hierarchy.src )
           output.flush()
           os.fsync( output )

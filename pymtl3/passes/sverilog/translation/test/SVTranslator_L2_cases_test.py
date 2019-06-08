@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
 
@@ -301,6 +302,8 @@ endmodule
 """
   do_test( a )
 
+# xrange gone in Python 3
+@XFAIL_ON_PY3
 def test_for_xrange_upper( do_test ):
   class A( Component ):
     def construct( s ):
@@ -373,6 +376,8 @@ endmodule
 """
   do_test( a )
 
+# xrange gone in Python 3
+@XFAIL_ON_PY3
 def test_for_xrange_lower_upper( do_test ):
   class A( Component ):
     def construct( s ):
@@ -451,6 +456,8 @@ endmodule
 """
   do_test( a )
 
+# xrange gone in Python 3
+@XFAIL_ON_PY3
 def test_for_xrange_lower_upper_step( do_test ):
   class A( Component ):
     def construct( s ):
