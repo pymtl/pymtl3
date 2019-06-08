@@ -232,7 +232,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     # index might be a slice object!
     if isinstance( node.slice, ast.Index ):
       idx = s.visit( node.slice )
-      # If we haev a static slice object then use it
+      # If we have a static slice object then use it
       if isinstance( idx, bir.FreeVar ) and isinstance( idx.obj, slice ):
         slice_obj = idx.obj
         if slice_obj.step is not None:
