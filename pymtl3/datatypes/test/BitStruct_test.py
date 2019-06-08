@@ -41,9 +41,9 @@ class ManualPixel( BitStruct ):
 class ManualNestedPixel( BitStruct ):
   fields = [
     ( 'px0', ManualPixel ),
-    ( 'px1', ManualPixel ),    
+    ( 'px1', ManualPixel ),
   ]
-  
+
   def __init__( s, px0=ManualPixel(), px1=ManualPixel() ):
     s.px0 = px0
     s.px1 = px1
@@ -100,7 +100,7 @@ def test_manual():
   assert npx.px1.r == 0xff
   assert npx.px1.g == 0x00
   assert npx.px1.b == 0x00
-  
+
 def test_struct():
   pt = StaticPoint( Bits4(2), Bits4(4) )
   print( pt           )
@@ -181,7 +181,7 @@ def test_component():
   dut = A()
   dut.elaborate()
   dut.apply( simple_sim_pass )
-  dut.in_ = NestedSimple( StaticPoint(Bits4(1),Bits4(2)), StaticPoint(Bits4(3),Bits4(4)) )
+  dut.in_ = NestedSimple( StaticPoint(b4(1),b4(2)), StaticPoint(b4(3),b4(4)) )
   dut.tick()
   assert dut.out == NestedSimple( StaticPoint(Bits4(2),Bits4(1)), StaticPoint(Bits4(4),Bits4(3)) )
   print( dut.out_pt )
