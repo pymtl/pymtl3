@@ -28,7 +28,13 @@ class RecvIfcRTL( Interface ):
     s.MsgType = Type
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy )
+    try:
+      trace_len = s.trace_len
+    except AttributeError:
+      s.trace_len = len( "{}".format( s.MsgType() ) )
+      trace_len = s.trace_len
+
+    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
 
   def __str__( s ):
     return s.line_trace()
@@ -73,7 +79,13 @@ class SendIfcRTL( Interface ):
     s.MsgType = Type
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy )
+    try:
+      trace_len = s.trace_len
+    except AttributeError:
+      s.trace_len = len( "{}".format( s.MsgType() ) )
+      trace_len = s.trace_len
+
+    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
 
   def __str__( s ):
     return s.line_trace()

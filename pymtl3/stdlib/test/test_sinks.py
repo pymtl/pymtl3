@@ -19,8 +19,10 @@ from pymtl3.stdlib.ifcs import RecvIfcRTL, RecvRTL2SendCL, enrdy_to_str
 
 class TestSinkCL( Component ):
 
-  def construct( s, msgs, initial_delay=0, interval_delay=0,
+  def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None ):
+    
+    s.recv.Type = Type
 
     # [msgs] and [arrival_time] must have the same length.
     if arrival_time is not None:
@@ -102,18 +104,18 @@ Received at    : {}""".format(
 
 class TestSinkRTL( Component ):
 
-  def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0,
+  def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None ):
 
     # Interface
 
-    s.recv = RecvIfcRTL( MsgType )
+    s.recv = RecvIfcRTL( Type )
 
     # Components
 
-    s.sink    = TestSinkCL( msgs, initial_delay, interval_delay,
+    s.sink    = TestSinkCL( Type, msgs, initial_delay, interval_delay,
                             arrival_time )
-    s.adapter = RecvRTL2SendCL( MsgType )
+    s.adapter = RecvRTL2SendCL( Type )
 
     s.connect( s.recv,         s.adapter.recv )
     s.connect( s.adapter.send, s.sink.recv    )

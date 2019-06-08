@@ -21,8 +21,8 @@ from pymtl3.stdlib.ifcs.SendRecvIfc import enrdy_to_str
 
 class PipeQueueCL( Component ):
 
-  def construct( s, size ):
-    s.queue = deque( maxlen=size )
+  def construct( s, num_entries=1 ):
+    s.queue = deque( maxlen=num_entries )
 
     s.add_constraints(
       M( s.peek   ) < M( s.enq  ),
@@ -55,8 +55,8 @@ class PipeQueueCL( Component ):
 
 class BypassQueueCL( Component ):
 
-  def construct( s, size ):
-    s.queue = deque( maxlen=size )
+  def construct( s, num_entries=1 ):
+    s.queue = deque( maxlen=num_entries )
 
     s.add_constraints(
       M( s.enq    ) < M( s.peek    ),
@@ -84,8 +84,8 @@ class BypassQueueCL( Component ):
 
 class NormalQueueCL( Component ):
 
-  def construct( s, size ):
-    s.queue = deque( maxlen=size )
+  def construct( s, num_entries=1 ):
+    s.queue = deque( maxlen=num_entries )
     s.enq_rdy = False
     s.deq_rdy = False
 
