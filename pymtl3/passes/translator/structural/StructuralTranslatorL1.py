@@ -21,11 +21,20 @@ from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 
 def gen_connections( top ):
+  """Return a tuple of all connections in the hierarchy whose top is `top`.
+  
+  Return a three element tuple ( ss, sc, cc ). `ss` is a dictionary indexed
+  by component `m` and has a set of pairs of connected signals within component
+  `m` ( and thus is called "self_self" ). `sc` is a dictionary indexed by
+  component `m` and has a set of pairs of connected signals between component
+  `m` and its child components ( "self_child" ). `cc` is a dictionary indexed
+  by component `m` and has a set of pairs of connected signals between two
+  child components of `m` ( "child_child" ).
+  """
   _top_conns_self_self = defaultdict( set )
   _top_conns_self_child = defaultdict( set )
   _top_conns_child_child = defaultdict( set )
 
-  # Generate the connections assuming no sub-components
   nets = top.get_all_value_nets()
   adjs = top.get_signal_adjacency_dict()
 
@@ -70,6 +79,9 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     super( StructuralTranslatorL1, s ).__init__( top )
     # To avoid doing redundant computation, we generate the connections of
     # the entire hierarchy once and only once here.
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
     s.c_ss, s.c_sc, s.c_cc = gen_connections( top )
 
   def clear( s, tr_top ):
@@ -91,6 +103,9 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
 
   def gen_structural_trans_metadata( s, tr_top ):
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
     tr_top.apply( StructuralRTLIRGenL1Pass( s.c_ss, s.c_sc, s.c_cc ) )
 
   #-----------------------------------------------------------------------

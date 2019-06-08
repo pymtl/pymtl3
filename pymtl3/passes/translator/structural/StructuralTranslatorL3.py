@@ -23,6 +23,9 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
 
   # Override
   def gen_structural_trans_metadata( s, tr_top ):
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
     tr_top.apply( StructuralRTLIRGenL3Pass( s.c_ss, s.c_sc, s.c_cc ) )
 
   #-----------------------------------------------------------------------
