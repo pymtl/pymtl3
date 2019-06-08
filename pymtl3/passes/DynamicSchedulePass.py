@@ -193,10 +193,12 @@ class DynamicSchedulePass( BasePass ):
         def gen_wrapped_SCCblk( s, scc, src ):
           from pymtl3.dsl.errors import UpblkCyclicError
 
+          namespace = {}
+          namespace.update( locals() )
           # print src
-          exec(py.code.Source( src ).compile(), locals())
+          exec(py.code.Source( src ).compile(), namespace)
 
-          return generated_block
+          return namespace['generated_block']
 
         template = """
           from copy import deepcopy

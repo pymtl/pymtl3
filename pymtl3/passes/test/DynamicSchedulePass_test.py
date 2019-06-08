@@ -11,7 +11,6 @@ from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.DynamicSchedulePass import DynamicSchedulePass
 from pymtl3.passes.GenDAGPass import GenDAGPass
-from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.SimpleTickPass import SimpleTickPass
 
 
@@ -29,7 +28,6 @@ def _test_model( cls ):
     print(A.line_trace())
     T += 1
 
-@XFAIL_ON_PY3
 def test_false_cyclic_dependency():
 
   class Top(Component):
@@ -88,7 +86,6 @@ def test_false_cyclic_dependency():
 
   _test_model( Top )
 
-@XFAIL_ON_PY3
 def test_combinational_loop():
 
   class Top(Component):
