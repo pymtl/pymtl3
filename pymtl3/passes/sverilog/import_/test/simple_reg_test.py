@@ -46,7 +46,7 @@ def test_VReg( dump_vcd ):
   #---------------------------------------------------------------------
 
   m = Wrapper()
-  m._sverilog_import_path = get_dir()+'VReg.sv'
+  m.sverilog_import_path = get_dir()+'VReg.sv'
   dtype = Bits32
 
   m.elaborate()

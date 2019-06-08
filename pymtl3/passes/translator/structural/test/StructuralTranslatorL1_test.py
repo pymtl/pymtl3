@@ -364,9 +364,18 @@ def test_const_decls( do_test ):
     def construct( s ):
       s.foo = Bits32(0)
       s.bar = Bits4(0)
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.foo
+        s.out = Bits32(s.bar)
   a = A()
   a._ref_name = "A"
-  a._ref_ports = "port_decls:\n"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: out Port of Vector32
+"""
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = \
 """\
@@ -379,6 +388,7 @@ const_decls:
 component {}
 (
 port_decls:
+  port_decl: out Port of Vector32
 interface_decls:
 );
 const_decls:
@@ -389,6 +399,7 @@ wire_decls:
 component_decls:
 tmpvars:
 upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -399,9 +410,17 @@ def test_array_const_decl( do_test ):
   class A( Component ):
     def construct( s ):
       s.foo = [ Bits32(0) for _ in range(5) ]
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.foo[0]
   a = A()
   a._ref_name = "A"
-  a._ref_ports = "port_decls:\n"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: out Port of Vector32
+"""
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = \
 """\
@@ -413,6 +432,7 @@ const_decls:
 component {}
 (
 port_decls:
+  port_decl: out Port of Vector32
 interface_decls:
 );
 const_decls:
@@ -422,6 +442,7 @@ wire_decls:
 component_decls:
 tmpvars:
 upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -618,12 +639,17 @@ def test_expr_const_array_index( do_test ):
       s.const = [ 0 for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.const[1] )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.const[0]
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
 """\
 port_decls:
   port_decl: bar Port of Vector32
+  port_decl: out Port of Vector32
 """
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = \
@@ -642,6 +668,7 @@ component {}
 (
 port_decls:
   port_decl: bar Port of Vector32
+  port_decl: out Port of Vector32
 interface_decls:
 );
 const_decls:
@@ -651,6 +678,7 @@ wire_decls:
 component_decls:
 tmpvars:
 upblk_srcs:
+  upblk_src: upblk
 connections:
   connection: Bits32(0) -> CurCompAttr bar
 

@@ -67,7 +67,7 @@ class ImportPass( BasePass ):
     return ret
 
   def traverse_hierarchy( s, m ):
-    if hasattr(m, "_sverilog_import") and m._sverilog_import:
+    if hasattr(m, "sverilog_import") and m.sverilog_import:
       return s.do_import( m )
     else:
       for child in m.get_child_components():
@@ -94,7 +94,7 @@ def get_imported_object( m ):
   packed_ports = gen_packed_ports( rtype )
 
   try:
-    sv_file_path = m._sverilog_import_path
+    sv_file_path = m.sverilog_import_path
   except AttributeError:
     sv_file_path = full_name + '.sv'
 

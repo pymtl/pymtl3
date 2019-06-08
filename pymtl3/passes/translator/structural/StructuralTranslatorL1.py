@@ -182,21 +182,30 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
     # Consts
     const_decls = []
+    if hasattr( s, "behavioral" ):
+      used_set = s.behavioral.accessed[m]
+    else:
+      used_set = None
+
+    # import pdb
+    # pdb.set_trace()
+
     for const_id, rtype, instance in m._pass_structural_rtlir_gen.consts:
-      if isinstance( rtype, rt.Array ):
-        array_type = rtype
-        const_rtype = rtype.get_sub_type()
-      else:
-        array_type = None
-        const_rtype = rtype
-      const_decls.append(
-        s.rtlir_tr_const_decl(
-          s.rtlir_tr_var_id( const_id ),
-          const_rtype,
-          s.rtlir_tr_unpacked_array_type( array_type ),
-          s.rtlir_data_type_translation( m, const_rtype.get_dtype() ),
-          instance
-      ) )
+      if used_set is None or const_id in used_set:
+        if isinstance( rtype, rt.Array ):
+          array_type = rtype
+          const_rtype = rtype.get_sub_type()
+        else:
+          array_type = None
+          const_rtype = rtype
+        const_decls.append(
+          s.rtlir_tr_const_decl(
+            s.rtlir_tr_var_id( const_id ),
+            const_rtype,
+            s.rtlir_tr_unpacked_array_type( array_type ),
+            s.rtlir_data_type_translation( m, const_rtype.get_dtype() ),
+            instance
+        ) )
     s.structural.decl_consts[m] = s.rtlir_tr_const_decls( const_decls )
 
   #-----------------------------------------------------------------------

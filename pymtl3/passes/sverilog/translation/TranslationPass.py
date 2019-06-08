@@ -25,7 +25,7 @@ def mk_TranslationPass( _SVTranslator ):
       s.traverse_hierarchy( top )
 
     def traverse_hierarchy( s, m ):
-      if hasattr(m, "_sverilog_translate") and m._sverilog_translate:
+      if hasattr(m, "sverilog_translate") and m.sverilog_translate:
         if not hasattr( m, '_pass_sverilog_translation' ):
           m._pass_sverilog_translation = PassMetadata()
 

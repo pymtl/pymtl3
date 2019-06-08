@@ -37,8 +37,8 @@ def local_do_test( _m ):
   try:
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
-    _m._sverilog_translate = True
-    _m._sverilog_import = True
+    _m.sverilog_translate = True
+    _m.sverilog_import = True
     _m.apply( TranslationPass() )
     # We are importing the top component and therefore should expect a new top
     # as the return value.

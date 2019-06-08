@@ -167,8 +167,8 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
   try:
     # If it simulates correctly, translate it and import it back
     dut.elaborate()
-    dut._sverilog_translate = True
-    dut._sverilog_import = True
+    dut.sverilog_translate = True
+    dut.sverilog_import = True
     dut.apply( TranslationPass() )
     imported_obj = ImportPass()( dut )
     # Run another vector simulator spin

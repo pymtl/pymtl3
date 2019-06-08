@@ -23,15 +23,18 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
     visitor = BehavioralRTLIRTypeCheckVisitorL1(
-      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars )
+      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed )
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
-  def __init__( s, component, freevars ):
+  def __init__( s, component, freevars, accessed ):
     s.component = component
     s.freevars = freevars
+    s.accessed = accessed
     s.type_expect = {}
     lhs_types = ( rt.Port, rt.Wire )
     index_types = ( rt.Port, rt.Wire, rt.Array )
@@ -219,6 +222,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
           'type {} does not have attribute {}!'.format(node.value.Type, node.attr))
+      s.accessed.add( node.attr )
 
     else:
       raise PyMTLTypeError( s.blk, node.ast,

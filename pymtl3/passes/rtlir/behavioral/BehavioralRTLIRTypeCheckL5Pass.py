@@ -20,9 +20,11 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
     visitor = BehavioralRTLIRTypeCheckVisitorL5( m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
@@ -30,9 +32,9 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
-  def __init__( s, component, freevars, tmpvars ):
+  def __init__( s, component, freevars, accessed, tmpvars ):
     super( BehavioralRTLIRTypeCheckVisitorL5, s ). \
-        __init__( component, freevars, tmpvars )
+        __init__( component, freevars, accessed, tmpvars )
 
   def visit_Index( s, node ):
     """Type check the index node.

@@ -142,6 +142,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return var_id.replace( '[', '_$' ).replace( ']', '' )
 
   def rtlir_tr_literal_number( s, nbits, value ):
+    value = int( value )
     return "{nbits}'d{value}".format( **locals() )
 
   def rtlir_tr_component_unique_name( s, c_rtype ):

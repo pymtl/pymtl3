@@ -33,6 +33,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def gen_behavioral_trans_metadata( s, tr_top ):
     s.behavioral.rtlir = {}
     s.behavioral.freevars = {}
+    s.behavioral.accessed = {}
     s.behavioral.upblk_decls = {}
     s.behavioral.upblk_srcs = {}
     s.behavioral.upblk_py_srcs = {}
@@ -58,6 +59,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   # Override
   def translate_behavioral( s, m ):
     """Translate behavioral part of `m`."""
+    # Get upblk metadata
+    s.behavioral.accessed[m] = m._pass_behavioral_rtlir_type_check.rtlir_accessed
     # Translate upblks
     upblk_decls = []
     upblk_srcs = []

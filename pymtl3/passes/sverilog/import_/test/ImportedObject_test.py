@@ -37,7 +37,7 @@ def test_reg( do_test ):
       s.q = OutPort( Bits32 )
       s.d = InPort( Bits32 )
   a = VReg()
-  a._sverilog_import_path = get_dir()+'VReg.sv'
+  a.sverilog_import_path = get_dir()+'VReg.sv'
   a._test_vectors = [
     [    1,    '*' ],
     [    2,      1 ],
@@ -68,7 +68,7 @@ def test_adder( do_test ):
       s.out = OutPort( Bits32 )
       s.cout = OutPort( Bits1 )
   a = VAdder()
-  a._sverilog_import_path = get_dir()+'VAdder.sv'
+  a.sverilog_import_path = get_dir()+'VAdder.sv'
   a._test_vectors = [
     [    1,      1,     1,     3, 0 ],
     [    1,     -1,     0,     0, 1 ],

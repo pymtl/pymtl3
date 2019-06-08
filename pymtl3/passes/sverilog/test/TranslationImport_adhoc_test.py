@@ -80,8 +80,8 @@ from ..translation.structural.test.SVStructuralTranslatorL4_test import (
 def local_do_test( _m ):
   try:
     _m.elaborate()
-    _m._sverilog_translate = True
-    _m._sverilog_import = True
+    _m.sverilog_translate = True
+    _m.sverilog_import = True
     _m.apply( TranslationPass() )
     m = ImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
