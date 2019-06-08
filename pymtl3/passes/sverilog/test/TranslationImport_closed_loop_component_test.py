@@ -11,8 +11,7 @@ from itertools import product
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given, reproduce_failure, settings
-from hypothesis.HealthCheck import too_slow
+from hypothesis import given, reproduce_failure, settings, HealthCheck
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, BitStruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
@@ -20,12 +19,15 @@ from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
 from ..util.test_utility import DataStrategy, closed_loop_component_test
 
 
+too_slow = [ HealthCheck.too_slow ]
+
 # Use @given(st.data()) to draw input vector inside the test function
 #  - also note that data should the rightmost argument of the test function
 # Set deadline to None to avoid checking how long each test spin is
 # Set max_examples to limit the number of attempts after multiple successes
+# Suppress `too_slow` healthcheck to avoid marking a long test as failed
 @given(st.data())
-@settings(deadline = None, max_examples = 5, suppress_health_check = [too_slow])
+@settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 @pytest.mark.parametrize("Type", [Bits16, Bits32])
 def test_adder( Type, data ):
   class A( Component ):
@@ -41,7 +43,7 @@ def test_adder( Type, data ):
   closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
 
 @given(st.data())
-@settings(deadline = None, max_examples = 5, suppress_health_check = [too_slow])
+@settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 @pytest.mark.parametrize("Type, n_ports", product([Bits16, Bits32], [2, 4]))
 def test_mux( Type, n_ports, data ):
   class A( Component ):
@@ -57,7 +59,7 @@ def test_mux( Type, n_ports, data ):
   closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
 
 @given(st.data())
-@settings(deadline = None, max_examples = 5, suppress_health_check = [too_slow])
+@settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 def test_struct( data ):
   class strc( BitStruct ):
     def __init__( s, foo=42 ):
@@ -72,7 +74,7 @@ def test_struct( data ):
   closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
 
 @given(st.data())
-@settings(deadline = None, max_examples = 10, suppress_health_check = [too_slow])
+@settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
 def test_nested_struct( data ):
   class inner_struct( BitStruct ):
     def __init__( s, bar=42 ):
@@ -101,7 +103,7 @@ def test_nested_struct( data ):
   closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
 
 @given(st.data())
-@settings(deadline = None, max_examples = 10, suppress_health_check = [too_slow])
+@settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
 def test_subcomp( data ):
   class inner_struct( BitStruct ):
     def __init__( s, bar=42 ):
