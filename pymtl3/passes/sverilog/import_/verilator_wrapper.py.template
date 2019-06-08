@@ -108,6 +108,10 @@ class {component_name}( Component ):
     # Construct the model
     s._ffi_m = s._ffi_inst.create_model()
 
+    # Use non-attribute varialbe to reduce CPython bytecode count
+    _ffi_m = s._ffi_m
+    _ffi_inst = s._ffi_inst
+
     # declare the port interface
 {port_defs}
 
@@ -122,7 +126,7 @@ class {component_name}( Component ):
       # Set inputs
 {set_comb_input}
 
-      s._ffi_inst.eval( s._ffi_m )
+      _ffi_inst.eval( _ffi_m )
 
       # Write all outputs
 {set_comb_output}
@@ -130,10 +134,10 @@ class {component_name}( Component ):
     @s.update_on_edge
     def seq_upblk():
       # Advance the clock
-      s._ffi_m.clk[0] = 0
-      s._ffi_inst.eval( s._ffi_m )
-      s._ffi_m.clk[0] = 1
-      s._ffi_inst.eval( s._ffi_m )
+      _ffi_m.clk[0] = 0
+      _ffi_inst.eval( _ffi_m )
+      _ffi_m.clk[0] = 1
+      _ffi_inst.eval( _ffi_m )
 
   def line_trace( s ):
 {line_trace}

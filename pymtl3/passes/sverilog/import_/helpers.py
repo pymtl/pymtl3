@@ -494,7 +494,7 @@ def gen_comb_input( packed_ports ):
         n_dim = []
         dtype = rtype.get_dtype()
       v_name = _verilator_name( py_name )
-      lhs = "s._ffi_m."+v_name
+      lhs = "_ffi_m."+v_name
       rhs = "s.mangled__"+v_name
       ret += _gen_port_array_input( lhs, rhs, dtype.get_length(), n_dim )
   return ret
@@ -525,7 +525,7 @@ def gen_comb_output( packed_ports ):
         dtype = rtype.get_dtype()
       v_name = _verilator_name( py_name )
       lhs = "s.mangled__" + v_name
-      rhs = "s._ffi_m." + v_name
+      rhs = "_ffi_m." + v_name
       ret += _gen_port_array_output( lhs, rhs, dtype.get_length(), n_dim )
   return ret
 
@@ -551,9 +551,9 @@ def gen_line_trace_py( packed_ports ):
 
 def gen_internal_line_trace_py( packed_ports ):
   """Return the line trace method body that shows all CFFI ports."""
-  ret = [ 'lt = ""' ]
+  ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
   template = \
-    "lt += '{my_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, s._ffi_m.{my_name}))"
+    "lt += '{my_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, _ffi_m.{my_name}))"
   for my_name, port in packed_ports:
     my_name = _verilator_name( my_name )
     ret.append( template.format(**locals()) )
