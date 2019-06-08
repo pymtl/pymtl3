@@ -7,7 +7,6 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire
-from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
@@ -302,44 +301,6 @@ endmodule
 """
   do_test( a )
 
-# xrange gone in Python 3
-@XFAIL_ON_PY3
-def test_for_xrange_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_src = \
-"""\
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_ [0:1],
-  output logic [31:0] out [0:1],
-  input logic [0:0] reset
-);
-
-  // PYMTL SOURCE:
-  // 
-  // @s.update
-  // def upblk():
-  //   for i in xrange(2):
-  //     s.out[i] = s.in_[i]
-  
-  always_comb begin : upblk
-    for ( int i = 0; i < 2; i += 1 )
-      out[i] = in_[i];
-  end
-
-endmodule
-"""
-  do_test( a )
-
 def test_for_range_upper( do_test ):
   class A( Component ):
     def construct( s ):
@@ -370,47 +331,6 @@ module A
   always_comb begin : upblk
     for ( int i = 0; i < 2; i += 1 )
       out[i] = in_[i];
-  end
-
-endmodule
-"""
-  do_test( a )
-
-# xrange gone in Python 3
-@XFAIL_ON_PY3
-def test_for_xrange_lower_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(1, 2):
-          s.out[i] = s.in_[i]
-        s.out[0] = s.in_[0]
-  a = A()
-  a._ref_src = \
-"""\
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_ [0:1],
-  output logic [31:0] out [0:1],
-  input logic [0:0] reset
-);
-
-  // PYMTL SOURCE:
-  // 
-  // @s.update
-  // def upblk():
-  //   for i in xrange(1, 2):
-  //     s.out[i] = s.in_[i]
-  //   s.out[0] = s.in_[0]
-  
-  always_comb begin : upblk
-    for ( int i = 1; i < 2; i += 1 )
-      out[i] = in_[i];
-    out[0] = in_[0];
   end
 
 endmodule
@@ -450,50 +370,6 @@ module A
     for ( int i = 1; i < 2; i += 1 )
       out[i] = in_[i];
     out[0] = in_[0];
-  end
-
-endmodule
-"""
-  do_test( a )
-
-# xrange gone in Python 3
-@XFAIL_ON_PY3
-def test_for_xrange_lower_upper_step( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
-      @s.update
-      def upblk():
-        for i in xrange(0, 5, 2):
-          s.out[i] = s.in_[i]
-        for i in xrange(1, 5, 2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_src = \
-"""\
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_ [0:4],
-  output logic [31:0] out [0:4],
-  input logic [0:0] reset
-);
-
-  // PYMTL SOURCE:
-  // 
-  // @s.update
-  // def upblk():
-  //   for i in xrange(0, 5, 2):
-  //     s.out[i] = s.in_[i]
-  //   for i in xrange(1, 5, 2):
-  //     s.out[i] = s.in_[i]
-  
-  always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 2 )
-      out[i] = in_[i];
-    for ( int i = 1; i < 5; i += 2 )
-      out[i] = in_[i];
   end
 
 endmodule

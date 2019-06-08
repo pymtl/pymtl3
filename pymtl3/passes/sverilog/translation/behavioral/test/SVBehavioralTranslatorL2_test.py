@@ -10,7 +10,6 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.datatypes import Bits1, Bits32
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
-from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
@@ -265,42 +264,6 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
-# xrange gone in Python 3
-@XFAIL_ON_PY3
-def test_for_xrange_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_upblk_srcs = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  for ( int i = 0; i < 2; i += 1 )
-    out[i] = in_[i];
-end\
-""" }
-  # TestVectorSimulator properties
-  def tv_in( m, tv ):
-    m.in_[0] = Bits32(tv[0])
-    m.in_[1] = Bits32(tv[1])
-  def tv_out( m, tv ):
-    assert m.out[0] == Bits32(tv[2])
-    assert m.out[1] == Bits32(tv[3])
-  a._test_vectors = [
-    [    0,    -1,   0,  -1 ],
-    [   42,     0,  42,   0 ],
-    [   24,    42,  24,  42 ],
-    [   -2,    24,  -2,  24 ],
-    [   -1,    -2,  -1,  -2 ],
-  ]
-  a._tv_in, a._tv_out = tv_in, tv_out
-  do_test( a )
-
 def test_for_range_upper( do_test ):
   class A( Component ):
     def construct( s ):
@@ -316,44 +279,6 @@ def test_for_range_upper( do_test ):
 always_comb begin : upblk
   for ( int i = 0; i < 2; i += 1 )
     out[i] = in_[i];
-end\
-""" }
-  # TestVectorSimulator properties
-  def tv_in( m, tv ):
-    m.in_[0] = Bits32(tv[0])
-    m.in_[1] = Bits32(tv[1])
-  def tv_out( m, tv ):
-    assert m.out[0] == Bits32(tv[2])
-    assert m.out[1] == Bits32(tv[3])
-  a._test_vectors = [
-    [    0,    -1,   0,  -1 ],
-    [   42,     0,  42,   0 ],
-    [   24,    42,  24,  42 ],
-    [   -2,    24,  -2,  24 ],
-    [   -1,    -2,  -1,  -2 ],
-  ]
-  a._tv_in, a._tv_out = tv_in, tv_out
-  do_test( a )
-
-# xrange gone in Python 3
-@XFAIL_ON_PY3
-def test_for_xrange_lower_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(1, 2):
-          s.out[i] = s.in_[i]
-        s.out[0] = s.in_[0]
-  a = A()
-  a._ref_upblk_srcs = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  for ( int i = 1; i < 2; i += 1 )
-    out[i] = in_[i];
-  out[0] = in_[0];
 end\
 """ }
   # TestVectorSimulator properties
@@ -405,52 +330,6 @@ end\
     [   24,    42,  24,  42 ],
     [   -2,    24,  -2,  24 ],
     [   -1,    -2,  -1,  -2 ],
-  ]
-  a._tv_in, a._tv_out = tv_in, tv_out
-  do_test( a )
-
-# xrange gone in Python 3
-@XFAIL_ON_PY3
-def test_for_xrange_lower_upper_step( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
-      @s.update
-      def upblk():
-        for i in xrange(0, 5, 2):
-          s.out[i] = s.in_[i]
-        for i in xrange(1, 5, 2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_upblk_srcs = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  for ( int i = 0; i < 5; i += 2 )
-    out[i] = in_[i];
-  for ( int i = 1; i < 5; i += 2 )
-    out[i] = in_[i];
-end\
-""" }
-  # TestVectorSimulator properties
-  def tv_in( m, tv ):
-    m.in_[0] = Bits32(tv[0])
-    m.in_[1] = Bits32(tv[1])
-    m.in_[2] = Bits32(tv[2])
-    m.in_[3] = Bits32(tv[3])
-    m.in_[4] = Bits32(tv[4])
-  def tv_out( m, tv ):
-    assert m.out[0] == Bits32(tv[5])
-    assert m.out[1] == Bits32(tv[6])
-    assert m.out[2] == Bits32(tv[7])
-    assert m.out[3] == Bits32(tv[8])
-    assert m.out[4] == Bits32(tv[9])
-  a._test_vectors = [
-    [    0,    -1,   0,  -1,   0,    0,    -1,   0,  -1,   0, ],
-    [   42,     0,  42,   0,  42,   42,     0,  42,   0,  42, ],
-    [   24,    42,  24,  42,  24,   24,    42,  24,  42,  24, ],
-    [   -2,    24,  -2,  24,  -2,   -2,    24,  -2,  24,  -2, ],
-    [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
