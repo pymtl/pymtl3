@@ -46,26 +46,3 @@ class ComponentLevel6( ComponentLevel5 ):
         rdy  = method._non_blocking_rdy
         Type = method._non_blocking_type
         setattr( s, x, NonBlockingCalleeIfc( Type, method, bind_method( rdy ) ) )
-
-  # Override
-  def _construct( s ):
-    """ We override _construct here to add method binding. Basically
-    we do this after the class is constructed but before the construct()
-    elaboration happens."""
-
-    if not s._dsl.constructed:
-
-      kwargs = s._dsl.kwargs.copy()
-      if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
-                              if x } )
-
-      s._handle_decorated_methods()
-
-      # Same as parent class _construct
-      s.construct( *s._dsl.args, **kwargs )
-
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
-      s._dsl.constructed = True

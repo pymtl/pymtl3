@@ -98,9 +98,10 @@ class DynamicSchedulePass( BasePass ):
     InD   = { i: 0     for i in range(len(SCCs)) }
 
     for (u, v) in E: # u -> v
-      if v_SCC[u] != v_SCC[v]:
-        InD[ v_SCC[v] ] += 1
-        G_new[ v_SCC[u] ].add( v_SCC[v] )
+      scc_u, scc_v = v_SCC[u], v_SCC[v]
+      if scc_u != scc_v and scc_v not in G_new[ scc_u ]:
+        InD[ scc_v ] += 1
+        G_new[ scc_u ].add( scc_v )
 
     # Perform topological sort on SCCs
 
@@ -119,6 +120,8 @@ class DynamicSchedulePass( BasePass ):
         if not InD[v]:
           Q.append( v )
           scc_pred[ v ] = u
+
+    assert len(scc_schedule) == len(SCCs)
 
     #---------------------------------------------------------------------
     # Now we generate super blocks for each SCC and produce final schedule
@@ -154,8 +157,7 @@ class DynamicSchedulePass( BasePass ):
           for (u, v) in E: # u -> v
             if u in scc and v in scc:
               InD[ v ] += 1
-          in_degree_ranking = sorted( [ (InD[v], v) for v in InD ] )
-          Q.append( in_degree_ranking[0][1] )
+          Q.append( max(InD, key=InD.get) )
 
         else:
           # We start bfs with the blocks that are successors of the
@@ -215,15 +217,18 @@ class DynamicSchedulePass( BasePass ):
 
         copy_srcs  = []
         check_srcs = []
+        print_srcs = []
 
         for j, var in enumerate(variables):
           copy_srcs .append( "_____tmp_{} = deepcopy({})".format( j, var ) )
           check_srcs.append( "{} == _____tmp_{}".format( var, j ) )
+          print_srcs.append( "print '{}', {}, _____tmp_{}".format( var, var, j ) )
 
         scc_block_src = template.format( scc_id,
                                          "; ".join( copy_srcs ),
                                          " and ".join( check_srcs ),
                                          ", ".join( [ x.__name__ for x in scc] ) )
+                                         # "; ".join( print_srcs )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
     return schedule

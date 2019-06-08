@@ -575,3 +575,166 @@ def test_multiple_slices_are_net_writers():
 
   a = A()
   a.elaborate()
+
+# A similar case for struct
+
+def test_multiple_fields_are_net_writers():
+
+  class SomeMsg1( object ):
+    def __init__( s, a=0, b=0 ):
+      s.a = Bits8(a)
+      s.b = Bits32(b)
+
+  class SomeMsg2( object ):
+    def __init__( s, a=0 ):
+      s.c = Bits8(a)
+
+  class A( ComponentLevel3 ):
+
+    def construct( s ):
+      s.in_  = InPort( SomeMsg1 )
+      s.out1 = OutPort( SomeMsg2 )
+      s.out2 = OutPort( SomeMsg2 )
+
+      s.connect( s.in_.a, s.out1.c )
+      s.connect( s.in_.b[0:8], s.out2.c )
+
+  a = A()
+  a.elaborate()
+  simple_sim_pass( a )
+
+  a.in_ = SomeMsg1(4, 5)
+  a.tick()
+  assert a.out1.c == 4
+
+# The counterpart of the above test
+
+def test_multiple_fields_are_assigned():
+
+  class SomeMsg1( object ):
+    def __init__( s, a=0, b=0 ):
+      s.a = Bits8(a)
+      s.b = Bits32(b)
+
+  class SomeMsg2( object ):
+    def __init__( s, a=0 ):
+      s.c = Bits8(a)
+
+  class A( ComponentLevel3 ):
+
+    def construct( s ):
+      s.in_  = InPort( SomeMsg1 )
+      s.out1 = OutPort( SomeMsg2 )
+      s.out2 = OutPort( SomeMsg2 )
+
+      # s.connect( s.in_.a, s.out1.c )
+      # s.connect( s.in_.b[0:8], s.out2.c )
+      @s.update
+      def up_pass():
+        s.out1.c = s.in_.a
+        s.out2.c = s.in_.b[0:8]
+
+  a = A()
+  a.elaborate()
+  simple_sim_pass( a )
+
+  a.in_ = SomeMsg1(4, 5)
+  a.tick()
+  assert a.out1.c == 4
+
+def test_const_connect_struct_signal_to_int():
+
+  class SomeMsg1( object ):
+    def __init__( s, a=0, b=0 ):
+      s.a = Bits8(a)
+      s.b = Bits32(b)
+
+    def __eq__( s, other ):
+      return s.a == other.a and s.b == other.b
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire(SomeMsg1)
+      s.connect( s.wire, 1 )
+
+  try:
+    x = Top()
+    x.elaborate()
+  except InvalidConnectionError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_const_connect_struct_signal_to_Bits():
+
+  class SomeMsg1( object ):
+    def __init__( s, a=0, b=0 ):
+      s.a = Bits8(a)
+      s.b = Bits32(b)
+
+    def __eq__( s, other ):
+      return s.a == other.a and s.b == other.b
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire(SomeMsg1)
+      s.connect( s.wire, Bits32(1) )
+
+  try:
+    x = Top()
+    x.elaborate()
+  except InvalidConnectionError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_const_connect_Bits_signal_to_int():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire(Bits32)
+      s.connect( s.wire, 1 )
+
+  x = Top()
+  x.elaborate()
+  print(x._dsl.consts)
+  assert len(x._dsl.consts) == 1
+
+def test_const_connect_int_signal_to_int():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire(int)
+      s.connect( s.wire, 1 )
+
+  x = Top()
+  x.elaborate()
+  print(x._dsl.consts)
+  assert len(x._dsl.consts) == 1
+
+def test_const_connect_Bits_signal_to_Bits():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire(Bits32)
+      s.connect( s.wire, Bits32(0) )
+
+  x = Top()
+  x.elaborate()
+  print(x._dsl.consts)
+  assert len(x._dsl.consts) == 1
+
+def test_const_connect_Bits_signal_to_mismatch_Bits():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire(Bits32)
+      s.connect( s.wire, Bits8(8) )
+
+  try:
+    x = Top()
+    x.elaborate()
+  except InvalidConnectionError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")

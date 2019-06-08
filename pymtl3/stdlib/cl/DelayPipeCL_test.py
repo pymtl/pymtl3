@@ -20,15 +20,15 @@ from .DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
 
 class TestHarness( Component ):
 
-  def construct( s, dut_class, src_msgs, sink_msgs, stall_prob, latency, src_lat, sink_lat ):
+  def construct( s, dut_class, src_msgs, sink_msgs, latency, src_lat, sink_lat ):
 
     # Messge type
 
     # Instantiate models
 
-    s.src  = TestSrcCL( src_msgs, 0, src_lat )
+    s.src  = TestSrcCL( None, src_msgs, 0, src_lat )
     s.dut  = dut_class( latency )
-    s.sink = TestSinkCL( sink_msgs, 0, sink_lat )
+    s.sink = TestSinkCL( None, sink_msgs, 0, sink_lat )
 
     # Connect
 
@@ -116,7 +116,7 @@ def basic_msgs():
 def test_delay_pipe_deq( test_params, dump_vcd ):
   msgs = test_params.msg_func()
   run_cl_sim( TestHarness( DelayPipeDeqCL, msgs[::2], msgs[1::2],
-                           0, test_params.lat,
+                           test_params.lat,
                            test_params.src_lat, test_params.sink_lat ) )
 
 @pytest.mark.parametrize( **mk_test_case_table([
@@ -135,5 +135,5 @@ def test_delay_pipe_deq( test_params, dump_vcd ):
 def test_delay_pipe_send( test_params, dump_vcd ):
   msgs = test_params.msg_func()
   run_cl_sim( TestHarness( DelayPipeSendCL, msgs[::2], msgs[1::2],
-                           0, test_params.lat,
+                           test_params.lat,
                            test_params.src_lat, test_params.sink_lat ) )

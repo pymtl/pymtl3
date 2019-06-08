@@ -10,7 +10,6 @@ module BehavioralRTLIR
         | SeqUpblk( string name, stmt* body )
 
   stmt = Assign( expr target, expr value )
-       | AugAssign( expr target, operator op, expr value )
        | If( expr cond, stmt* body, stmt* orelse )
        | For( loopvar_decl var, expr start, expr end, expr step, stmt* body )
 

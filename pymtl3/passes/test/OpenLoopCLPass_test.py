@@ -1,3 +1,11 @@
+"""
+#=========================================================================
+# OpenLoopCLPass_test.py
+#=========================================================================
+#
+# Author : Shunning Jiang
+# Date   : Apr 19, 2019
+"""
 from __future__ import absolute_import, division, print_function
 
 from pymtl3.dsl import *
@@ -5,12 +13,6 @@ from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.GenDAGPass import GenDAGPass
 from pymtl3.passes.OpenLoopCLPass import OpenLoopCLPass
 
-#=========================================================================
-# OpenLoopCLPass_test.py
-#=========================================================================
-#
-# Author : Shunning Jiang
-# Date   : Apr 19, 2019
 
 def test_top_level_method():
 

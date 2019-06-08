@@ -50,7 +50,7 @@ class RoundRobinArbiter( Component ):
       s.kills[0] = 1
 
       s.priority_int[    0:nreqs  ] = s.priority_reg.out
-      s.priority_int[nreqs:nreqsX2] = 0
+      s.priority_int[nreqs:nreqsX2] = mk_bits( nreqs )(0)
       s.reqs_int    [    0:nreqs  ] = s.reqs
       s.reqs_int    [nreqs:nreqsX2] = s.reqs
 
@@ -124,7 +124,7 @@ class RoundRobinArbiterEn( Component ):
       s.kills[0] = 1
 
       s.priority_int[    0:nreqs  ] = s.priority_reg.out
-      s.priority_int[nreqs:nreqsX2] = 0
+      s.priority_int[nreqs:nreqsX2] = mk_bits( nreqs )(0)
       s.reqs_int    [    0:nreqs  ] = s.reqs
       s.reqs_int    [nreqs:nreqsX2] = s.reqs
 

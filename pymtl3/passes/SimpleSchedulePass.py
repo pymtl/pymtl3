@@ -69,7 +69,7 @@ class SimpleSchedulePass( BasePass ):
 
 def dump_dag( top, V, E ):
   from graphviz import Digraph
-  from pymtl.dsl import CalleePort
+  from pymtl3.dsl import CalleePort
   dot = Digraph()
   dot.graph_attr["rank"] = "same"
   dot.graph_attr["ratio"] = "compress"
@@ -104,9 +104,9 @@ def dump_dag( top, V, E ):
 def check_schedule( top, schedule, V, E, in_degree ):
 
   if len(schedule) != len(V):
-    V_leftovers = set( [ v for v in V if in_degree[v] ] )
-    E_leftovers = set( [ (x,y) for (x,y) in E
-                         if x in V_leftovers and y in V_leftovers ] )
+    V_leftovers = {  v for v in V if in_degree[v]  }
+    E_leftovers = {  (x,y) for (x,y) in E
+                         if x in V_leftovers and y in V_leftovers  }
     dump_dag( top, V_leftovers, E_leftovers )
 
     raise UpblkCyclicError( """

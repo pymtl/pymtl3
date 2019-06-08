@@ -61,23 +61,6 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       ast.Gt     : bir.Gt(),        ast.GtE    : bir.GtE()
     }
 
-  def visit_AugAssign( s, node ):
-    """Return the behavioral RTLIR of augmented assign.
-
-    Preserve the form of augmented assignment instead of transforming it
-    into a normal assignment.
-    """
-    if not type(node.op) in s.opmap:
-      raise PyMTLSyntaxError( s.blk, node,
-        'Operator ' + node.op + ' is not supported!' )
-    value = s.visit( node.value )
-    target = s.visit( node.target )
-    op  = s.opmap[ type( node.op ) ]
-    op.ast = node.op
-    ret = bir.AugAssign( target, op, value )
-    ret.ast = node
-    return ret
-
   def visit_Call( s, node ):
     obj = s.get_call_obj( node )
     # At L2 we add bool type but we do not support instantiating a bool

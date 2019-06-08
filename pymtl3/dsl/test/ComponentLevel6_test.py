@@ -118,7 +118,7 @@ def run_cl_sim( th, max_cycles=50 ):
   # Create a simulator
 
   th.elaborate()
-  th.apply( simple_sim_pass )
+  simple_sim_pass( th )
 
   # Run simluation
 

@@ -16,17 +16,21 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict, deque
 
+from pymtl3.datatypes import Bits
+
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .errors import (
     InvalidConnectionError,
+    InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
     NoWriterError,
     SignalTypeError,
 )
 from .NamedObject import NamedObject
+from .Placeholder import Placeholder
 
 
 class ComponentLevel3( ComponentLevel2 ):
@@ -44,16 +48,12 @@ class ComponentLevel3( ComponentLevel2 ):
     return inst
 
   # Override
-  def _declare_vars( s ):
-    super( ComponentLevel3, s )._declare_vars()
-    s._dsl.all_adjacency = defaultdict(set)
-
-  # Override
   def _collect_vars( s, m ):
     super( ComponentLevel3, s )._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
-      for k in m._dsl.adjacency:
-        s._dsl.all_adjacency[k] |= m._dsl.adjacency[k]
+      all_ajd = s._dsl.all_adjacency
+      for k, v in m._dsl.adjacency.items():
+        all_ajd[k] |= v
 
   # Override
   def _construct( s ):
@@ -65,10 +65,17 @@ class ComponentLevel3( ComponentLevel2 ):
     tagging, so this is valid. (see NamedObject.py). """
 
     if not s._dsl.constructed:
-      kwargs = s._dsl.kwargs.copy()
-      if "elaborate" in s._dsl.param_dict:
-        kwargs.update( { x: y for x, y in s._dsl.param_dict[ "elaborate" ].iteritems()
-                              if x } )
+
+      # Merge the actual keyword args and those args set by set_parameter
+      if s._dsl.param_tree is None:
+        kwargs = s._dsl.kwargs
+      elif s._dsl.param_tree.leaf is None:
+        kwargs = s._dsl.kwargs
+      else:
+        kwargs = s._dsl.kwargs.copy()
+        if "construct" in s._dsl.param_tree.leaf:
+          more_args = s._dsl.param_tree.leaf[ "construct" ]
+          kwargs.update( more_args )
 
       s.construct( *s._dsl.args, **kwargs )
 
@@ -78,10 +85,25 @@ class ComponentLevel3( ComponentLevel2 ):
       s._dsl.constructed = True
 
   # The following three methods should only be called when types are
-
   # already checked
-  def _connect_signal_int( s, o1, o2 ):
-    o2   = Const( o1._dsl.Type, o2, s )
+
+  def _connect_signal_const( s, o1, o2 ):
+    if isinstance( o2, int ):
+      if not issubclass( o1._dsl.Type, (int, Bits) ):
+        raise InvalidConnectionError( "We don't support connecting an integer constant "
+                                       "to non-int/Bits type {}".format( o1._dsl.Type ) )
+      o2 = Const( o1._dsl.Type, o2, s )
+    elif isinstance( o2, Bits ):
+      if not issubclass( o1._dsl.Type, Bits ):
+        raise InvalidConnectionError( "We don't support connecting a Bits{} constant "
+                                      "to non-Bits type {}".format( o2.nbits, o1._dsl.Type ) )
+      if o1._dsl.Type.nbits != o2.nbits:
+        raise InvalidConnectionError( "Bitwidth mismatch when connecting a Bits{} constant "
+                                      "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
+      o2 = Const( o1._dsl.Type, o2, s )
+
+  # TODO implement connecting a const struct
+
     host = o1.get_host_component()
 
     if isinstance( o1, InPort ):
@@ -90,6 +112,8 @@ class ComponentLevel3( ComponentLevel2 ):
 
     o2._dsl.parent_obj = s
     s._dsl.consts.add( o2 )
+
+    # o2 should be a new object
 
     s._dsl.adjacency[o1].add( o2 )
     s._dsl.adjacency[o2].add( o1 )
@@ -107,10 +131,12 @@ class ComponentLevel3( ComponentLevel2 ):
 
     if o1_type is None:
       if o2_type is None:
-        s._dsl.adjacency[o1].add( o2 )
-        s._dsl.adjacency[o2].add( o1 )
-        s._dsl.connect_order.append( (o1, o2) )
-        return
+        if o1 not in s._dsl.adjacency[o2]:
+          assert o2 not in s._dsl.adjacency[o1]
+          s._dsl.adjacency[o1].add( o2 )
+          s._dsl.adjacency[o2].add( o1 )
+          s._dsl.connect_order.append( (o1, o2) )
+          return
       else: # o2_type is not None
         raise TypeError( "lhs has no Type, but rhs has Type {}".format( o2_type ) )
     else: # o1_type is not None
@@ -122,14 +148,17 @@ class ComponentLevel3( ComponentLevel2 ):
     try:
       o1_nbits = o1_type.nbits
       o2_nbits = o2_type.nbits
-      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {}".format( o1_nbits, o2_nbits )
+      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {} " \
+      "({}-bit {} <> {}-bit {})".format( o1_nbits, o2_nbits, o1_nbits, repr(o1), o2_nbits, repr(o2) )
     except AttributeError: # at least one of them is not Bits
       assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
 
-    s._dsl.adjacency[o1].add( o2 )
-    s._dsl.adjacency[o2].add( o1 )
+    if o1 not in s._dsl.adjacency[o2]:
+      assert o2 not in s._dsl.adjacency[o1]
+      s._dsl.adjacency[o1].add( o2 )
+      s._dsl.adjacency[o2].add( o1 )
 
-    s._dsl.connect_order.append( (o1, o2) )
+      s._dsl.connect_order.append( (o1, o2) )
 
   def _connect_interfaces( s, o1, o2 ):
     # When we connect two interfaces, we first try to use o1's and o2's
@@ -144,8 +173,10 @@ class ComponentLevel3( ComponentLevel2 ):
         else:
           s._connect_objects( other_obj, this_obj, internal=True )
 
-      for name, obj in this.__dict__.iteritems():
+      # Sort the keys to always connect in a unique order
+      for name in sorted(this.__dict__):
         if not name.startswith("_"):
+          obj = this.__dict__[ name ]
           if hasattr( other, name ):
             # other has the corresponding field, connect recursively
             recursive_connect( obj, getattr( other, name ) )
@@ -159,12 +190,12 @@ class ComponentLevel3( ComponentLevel2 ):
               "Suggestion: check the implementation of \n"
               "          - {} (class {})\n"
               "          - {} (class {})".format( name, other, obj,
-                this, type(this), other, type(other) ) )
+                repr(this), type(this), repr(other), type(other) ) )
 
     if hasattr( o1, "connect" ):
       if not o1.connect( o2, s ): # o1.connect fail
         if hasattr( o2, "connect" ):
-          if not o1.connect( o2, s ):
+          if not o2.connect( o1, s ):
             connect_by_name( o1, o2 )
         else:
           connect_by_name( o1, o2 )
@@ -190,15 +221,16 @@ class ComponentLevel3( ComponentLevel2 ):
         return
       raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
           "  (when connecting {} to {})" \
-                .format( type(o1), type(o2), o1, o2) )
+                .format( type(o1), type(o2), repr(o1), repr(o2)) )
 
-    # Deal with Signal <-> int
+    # Deal with Signal <-> const
+    # TODO implement connecting a signal to a struct
 
-    if isinstance( o1, int ) or isinstance( o2, int ): # special case
-      if isinstance( o1, int ):
+    if isinstance( o1, (int, Bits) ) or isinstance( o2, (int, Bits)  ): # special case
+      if isinstance( o1, (int, Bits)  ):
         o1, o2 = o2, o1 # o1 is signal, o2 is int
       assert isinstance( o1, Signal )
-      s._connect_signal_int( o1, o2 )
+      s._connect_signal_const( o1, o2 )
 
     # Deal with Signal <-> Signal
 
@@ -213,7 +245,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     else:
       raise InvalidConnectionError("{} cannot be connected to {}: {} != {}" \
-              .format(o1, o2, type(o1), type(o2)) )
+              .format(repr(o1), repr(o2), type(o1), type(o2)) )
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
@@ -260,7 +292,7 @@ class ComponentLevel3( ComponentLevel2 ):
     pred    = {} # detect cycle that has >=3 nodes
     for obj in signal_list:
       # If obj has adjacent signals
-      if adjacency[obj] and obj not in visited:
+      if obj in adjacency and obj not in visited:
         net = set()
         Q   = deque( [ obj ] )
         while Q:
@@ -273,7 +305,8 @@ class ComponentLevel3( ComponentLevel2 ):
               Q.append( v )
             elif v is not pred[u]:
               raise InvalidConnectionError(repr(v)+" is in a connection loop.")
-        assert len(net) > 1, "what the hell?"
+        if len(net) == 1:
+          continue
         nets.append( net )
     return nets
 
@@ -327,7 +360,11 @@ class ComponentLevel3( ComponentLevel2 ):
           host = host.get_parent_object() # go to the component
         member._dsl.host = host
 
-        if isinstance( member, InPort ) and member._dsl.host == s:
+        # Specialize two cases:
+        # 1. A top-level input port is writer.
+        # 2. An output port of a placeholder module is a writer
+        if ( isinstance( member, InPort ) and member._dsl.host == s ) or \
+           ( isinstance( member, OutPort ) and isinstance( member._dsl.host, Placeholder ) ):
           writer_prop[ member ] = True
 
     headless = nets
@@ -361,7 +398,6 @@ class ComponentLevel3( ComponentLevel2 ):
         for v in net:
           obj = None
           try:
-
             # Check if itself is a writer or a constant
             if v in writer_prop or isinstance( v, Const ):
               assert not has_writer
@@ -383,6 +419,11 @@ class ComponentLevel3( ComponentLevel2 ):
                   if obj in writer_prop and writer_prop[ obj ]:
                     assert not has_writer
                     has_writer, writer = True, v
+                    # Shunning: is breaking out of here enough? If we
+                    # don't break the loop, we might a list here storing
+                    # "why the writer became writer" and do some sibling
+                    # overlap checks when we enter the loop body later
+                    break
 
           except AssertionError:
             raise MultiWriterError( \
@@ -420,7 +461,7 @@ class ComponentLevel3( ComponentLevel2 ):
     return headed + [ (None, x) for x in headless ]
 
   def _check_port_in_nets( s ):
-    nets = s.get_all_value_nets()
+    nets = s._dsl.all_value_nets
 
     # The case of connection is very tricky because we put a single upblk
     # in the lowest common ancestor node and the "output port" chain is
@@ -440,7 +481,7 @@ class ComponentLevel3( ComponentLevel2 ):
       # Each node is a writer when we expand it to other nodes
 
       S = deque( [ writer ] )
-      visited = set( [ writer ] )
+      visited = {  writer  }
 
       while S:
         u = S.pop() # u is the writer
@@ -628,6 +669,12 @@ class ComponentLevel3( ComponentLevel2 ):
 
     s._dsl.adjacency = last_adjancency
 
+  # Override
+  def _check_valid_dsl_code( s ):
+    s._check_upblk_writes()
+    s._check_port_in_upblk()
+    s._check_port_in_nets()
+
   #-----------------------------------------------------------------------
   # Construction-time APIs
   #-----------------------------------------------------------------------
@@ -646,6 +693,9 @@ class ComponentLevel3( ComponentLevel2 ):
     return s
 
   def connect( s, o1, o2 ):
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot call connect "
+            "in a placeholder component.".format( blk.__name__ ) )
     try:
       s._connect_objects( o1, o2 )
     except InvalidConnectionError:
@@ -654,6 +704,9 @@ class ComponentLevel3( ComponentLevel2 ):
       raise InvalidConnectionError( "\n{}".format(e) )
 
   def connect_pairs( s, *args ):
+    if isinstance( s, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot call connect_pairs "
+            "in a placeholder component.".format( blk.__name__ ) )
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
@@ -666,241 +719,36 @@ class ComponentLevel3( ComponentLevel2 ):
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
-  #-----------------------------------------------------------------------
-  # elaborate
-  #-----------------------------------------------------------------------
-
-  # Override
-  def elaborate( s ):
-
-    NamedObject.elaborate( s )
-
-    s._declare_vars()
-
-    for c in s._dsl.all_named_objects:
-
-      if isinstance( c, Signal ):
-        s._dsl.all_signals.add( c )
-
-      if isinstance( c, ComponentLevel2 ):
-        c._elaborate_read_write_func()
-
-      if isinstance( c, ComponentLevel1 ):
-        s._collect_vars( c )
-
-    s._dsl.all_value_nets = s._resolve_value_connections()
-    s._dsl.has_pending_connections = False
-
-    s.check()
-
-  #-----------------------------------------------------------------------
-  # Public APIs (only can be called after elaboration)
-  #-----------------------------------------------------------------------
-
-  # Override
-  def check( s ):
-    s._check_upblk_writes()
-    s._check_port_in_upblk()
-    s._check_port_in_nets()
-
   def get_all_value_nets( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting all nets " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
 
-    if s._dsl.has_pending_connections:
+    if s._dsl._has_pending_value_connections:
       s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl.has_pending_connections = False
+      s._dsl._has_pending_value_connections = False
 
     return s._dsl.all_value_nets
 
-  def get_connect_order( s ):
-    try:
-      return s._dsl.connect_order
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_signal_adjacency_dict( s ):
-    try:
-      assert s._dsl.elaborate_top is s, "Getting adjacency dictionary " \
-                                    "is only allowed at top, but this API call " \
-                                    "is on {}.".format( "top."+repr(s)[2:] )
-    except AttributeError:
-      raise NotElaboratedError()
-    return s._dsl.all_adjacency
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+  # Since the spawned signals are handled by the updated elaborate
+  # template in ComponentLevel2, we just need to add a bit more
+  # functionalities to handle nets.
 
   # Override
-  def delete_component_by_name( s, name ):
-
-    # This nested delete function is to create an extra layer to properly
-    # call garbage collector
-
-    def _delete_component_by_name( parent, name ):
-      obj = getattr( parent, name )
-      top = s._dsl.elaborate_top
-      import timeit
-
-      # First make sure we flush pending connections
-      nets = top.get_all_value_nets()
-
-      # Remove all components and uncollect metadata
-
-      removed_components = obj.get_all_components()
-      top._dsl.all_components -= removed_components
-
-      removed_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-      top._dsl.all_signals -= removed_signals
-
-      for x in removed_components:
-        assert x._dsl.elaborate_top is top
-        top._uncollect_vars( x )
-        for y in x._dsl.consts:
-          del y._dsl.parent_obj
-
-      for x in obj._collect_all():
-        del x._dsl.parent_obj
-
-      # TODO somehow save the adjs for reconnection
-
-      for x in removed_signals:
-        for other in top._dsl.all_adjacency[x]:
-          # If other will be removed, we don't need to remove it here ..
-          if   other not in removed_signals:
-            top._dsl.all_adjacency[other].remove( x )
-
-        del top._dsl.all_adjacency[x]
-
-      # The following implementation of breaking nets is faster than a
-      # full connection resolution.
-
-      new_nets = []
-      for writer, signals in nets:
-        broken_nets = s._floodfill_nets( signals, top._dsl.all_adjacency )
-
-        for net_signals in broken_nets:
-          if len(net_signals) > 1:
-            if writer in net_signals:
-              new_nets.append( (writer, net_signals) )
-            else:
-              new_nets.append( (None, net_signals) )
-      t1 = timeit.default_timer()
-
-      top._dsl.all_value_nets = new_nets
-
-      delattr( s, name )
-
-    _delete_component_by_name( s, name )
-    # import gc
-    # gc.collect() # this takes 0.1 seconds
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel3, s )._elaborate_declare_vars()
+    s._dsl.all_adjacency = defaultdict(set)
 
   # Override
-  # FIXME
-  def add_component_by_name( s, name, obj ):
-    assert not hasattr( s, name )
-    NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
-    setattr( s, name, obj )
-    del NamedObject.__setattr__
+  def _elaborate_collect_all_vars( s ):
+    super( ComponentLevel3, s )._elaborate_collect_all_vars()
+    s._dsl.all_value_nets = s._resolve_value_connections()
+    s._dsl._has_pending_value_connections = False
 
-    top = s._dsl.elaborate_top
+    s._check_valid_dsl_code()
 
-    added_components = obj.get_all_components()
-    top._dsl.all_components |= added_components
-
-    for c in added_components:
-      c._dsl.elaborate_top = top
-      c._elaborate_read_write_func()
-      top._collect_vars( c )
-
-    added_signals = obj._collect_all( lambda x: isinstance( x, Signal ) )
-    top._dsl.all_signals |= added_signals
-
-    # Lazy -- to avoid resolve_connection call which takes non-trivial
-    # time upon adding any connect, I just mark it here. Please make sure
-    # to call s.get_all_value_nets() to flush all pending connections
-    # whenever you want to get the nets
-    s._dsl.has_pending_connections = True
-
-  def add_connection( s, o1, o2 ):
-    # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    added_adjacency = defaultdict(set)
-    try:
-      s._connect_objects( o1, o2, added_adjacency )
-    except AssertionError as e:
-      raise InvalidConnectionError( "\n{}".format(e) )
-
-    for x, adjs in added_adjacency.iteritems():
-      s._dsl.all_adjacency[x].update( adjs )
-
-    s._dsl.has_pending_connections = True # Lazy
-
-  def add_connections( s, *args ):
-    # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Adding connection by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    last_adjacency = s._dsl.adjancency
-    s._dsl.adjacency = defaultdict(set)
-
-    for i in xrange(len(args)>>1) :
-      try:
-        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
-      except InvalidConnectionError as e:
-        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
-              .format( (i<<1)+1, (i<<1)+2 , e ) )
-
-    for x, adjs in s._dsl.adjacency.iteritems():
-      s._dsl.all_adjacency[x].update( adjs )
-
-    s._dsl.has_pending_connections = True # Lazy
-
-    s._dsl.adjancency = last_adjacency
-
-  def disconnect( s, o1, o2 ):
-    # TODO support string arguments and non-top s
-    assert s._dsl.elaborate_top is s, "Disconnecting signals by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-
-    if isinstance( o1, int ): # o1 is signal, o2 is int
-      o1, o2 = o2, o1
-
-    # First handle the case where a const is disconnected from the signal
-    if isinstance( o2, int ):
-      assert isinstance( o1, Signal ), "You can only disconnect a const from a signal."
-      s._disconnect_signal_int( o1, o2 )
-
-    # Disconnect two signals
-    elif isinstance( o1, Signal ):
-      assert isinstance( o2, Signal )
-      s._disconnect_signal_signal( o1, o2 )
-
-    elif isinstance( o1, Interface ):
-      assert isinstance( o2, Interface )
-      s._disconnect_interface_interface( o1, o2 )
-
-    else:
-      assert False, "what the hell?"
-
-  def disconnect_pair( s, *args ):
-    # TODO support string arguments and non-top s
-    assert s._elaborate_top is s, "Disconnecting signals by passing objects " \
-                                  "is only allowed at top, but this API call " \
-                                  "is on {}.".format( "top."+repr(s)[2:] )
-
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    for i in xrange(len(args)>>1):
-      s.disconnect( args[ i<<1 ], args[ (i<<1)+1 ] )
+  #-----------------------------------------------------------------------
+  # Post-elaborate public APIs (can only be called after elaboration)
+  #-----------------------------------------------------------------------
+  # We have moved these implementations to Component.py because the
+  # outside world should only use Component.py

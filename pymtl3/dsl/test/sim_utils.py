@@ -28,8 +28,13 @@ from pymtl3.dsl.Connectable import (
     NonBlockingInterface,
     Signal,
 )
-from pymtl3.dsl.errors import NotElaboratedError, UpblkCyclicError
+from pymtl3.dsl.errors import (
+    LeftoverPlaceholderError,
+    NotElaboratedError,
+    UpblkCyclicError,
+)
 from pymtl3.dsl.NamedObject import NamedObject
+from pymtl3.dsl.Placeholder import Placeholder
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
@@ -38,6 +43,12 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
   if not hasattr( s._dsl, "all_U_U_constraints" ):
     raise NotElaboratedError()
+
+  placeholders = [ x for x in s._dsl.all_named_objects
+                   if isinstance( x, Placeholder ) ]
+
+  if placeholders:
+    raise LeftoverPlaceholderError( placeholders )
 
   all_upblks = set( s._dsl.all_upblks )
   expl_constraints = set( s._dsl.all_U_U_constraints )
@@ -49,7 +60,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     all_update_on_edge = set( s._dsl.all_update_on_edge )
 
     if isinstance( s, ComponentLevel3 ):
-      nets = s._dsl.all_value_nets
+      nets = s.get_all_value_nets()
 
       for writer, signals in nets:
         if len(signals) == 1: continue
@@ -222,7 +233,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     method_blks = defaultdict(set)
 
     if isinstance( s, ComponentLevel5 ):
-      for writer, net in s.get_all_method_nets():
+      for writer, net in s._dsl.all_method_nets:
         for member in net:
           if member is not writer:
             assert member.method is None
@@ -280,7 +291,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         equiv[yy].add( xx )
 
     for method, assoc_blks in method_blks.iteritems():
-      visited = set( [ (method, 0) ] )
+      visited = {  (method, 0)  }
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
 
       if verbose: print()

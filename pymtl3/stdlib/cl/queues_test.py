@@ -22,14 +22,11 @@ from .queues import BypassQueueCL, NormalQueueCL, PipeQueueCL
 
 class TestHarness( Component ):
 
-  def construct( s, DutType, qsize, src_msgs, sink_msgs, src_initial,
-                 src_interval, sink_initial, sink_interval,
-                 arrival_time=None ):
+  def construct( s, MsgType, DutType, src_msgs, sink_msgs ):
 
-    s.src     = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
-    s.dut     = DutType( qsize )
-    s.sink    = TestSinkCL( sink_msgs, sink_initial, sink_interval,
-                            arrival_time )
+    s.src     = TestSrcCL ( MsgType, src_msgs )
+    s.dut     = DutType()
+    s.sink    = TestSinkCL( MsgType, sink_msgs )
 
     s.connect( s.src.send, s.dut.enq )
 
@@ -84,37 +81,49 @@ arrival_bypass = [ 1, 2, 3, 4 ]
 arrival_normal = [ 2, 4, 6, 8 ]
 
 def test_pipe_simple():
-  th = TestHarness( PipeQueueCL, 1, test_msgs, test_msgs, 0, 0, 0, 0,
-                    arrival_pipe )
+  th = TestHarness( Bits16, PipeQueueCL, test_msgs, test_msgs )
+  th.set_param( "top.dut.construct", num_entries=1 )
+  th.set_param( "top.sink.construct", arrival_time=arrival_pipe )
   run_sim( th )
 
 def test_bypass_simple():
-  th = TestHarness( BypassQueueCL, 1, test_msgs, test_msgs, 0, 0, 0, 0,
-                    arrival_bypass )
+  th = TestHarness( Bits16, BypassQueueCL, test_msgs, test_msgs )
+  th.set_param( "top.dut.construct", num_entries=1 )
+  th.set_param( "top.sink.construct", arrival_time=arrival_bypass )
   run_sim( th )
 
 def test_normal_simple():
-  th = TestHarness( NormalQueueCL, 1, test_msgs, test_msgs, 0, 0, 0, 0,
-                    arrival_normal )
+  th = TestHarness( Bits16, NormalQueueCL, test_msgs, test_msgs )
+  th.set_param( "top.dut.construct", num_entries=1 )
+  th.set_param( "top.sink.construct", arrival_time=arrival_normal )
   run_sim( th )
 
 def test_normal2_simple():
-  th = TestHarness( NormalQueueCL, 2, test_msgs, test_msgs, 0, 0, 0, 0,
-                    arrival_pipe )
+  th = TestHarness( Bits16, NormalQueueCL, test_msgs, test_msgs )
+  th.set_param( "top.dut.construct", num_entries=2 )
+  th.set_param( "top.sink.construct", arrival_time=arrival_pipe )
   run_sim( th )
 
 @pytest.mark.parametrize(
-  ( 'QType', 'qsize', 'src_init_delay', 'src_inter_delay',
-    'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
+  ( 'QType', 'qsize', 'src_init', 'src_intv',
+    'sink_init', 'sink_intv', 'arrival_time' ),
   [
     ( PipeQueueCL,   2, 1, 1, 0, 0, [ 3, 5,  7,  9 ] ),
     ( BypassQueueCL, 1, 0, 4, 3, 1, [ 3, 6, 11, 16 ] ),
     ( NormalQueueCL, 1, 0, 0, 5, 0, [ 5, 7,  9, 11 ] )
   ]
 )
-def test_delay( QType, qsize, src_init_delay, src_inter_delay,
-                sink_init_delay, sink_inter_delay, arrival_time ):
-  th = TestHarness( QType, qsize, test_msgs, test_msgs, src_init_delay,
-                    src_inter_delay, sink_init_delay, sink_inter_delay,
-                    arrival_time )
+def test_delay( QType, qsize, src_init, src_intv,
+                sink_init, sink_intv, arrival_time ):
+  th = TestHarness( Bits16, QType, test_msgs, test_msgs )
+  th.set_param( "top.src.construct",
+    initial_delay  = src_init,
+    interval_delay = src_intv, 
+  )
+  th.set_param( "top.dut.construct", num_entries=qsize )
+  th.set_param( "top.sink.construct",
+    initial_delay  = sink_init,
+    interval_delay = sink_intv,
+    arrival_time   = arrival_time,
+  )
   run_sim( th )

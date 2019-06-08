@@ -107,6 +107,14 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
           decls.append( [ decl[0] ] )
       return decls
 
+    def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
+        port_rtype, array_type ):
+      if port_id not in ["clk", "reset"]:
+        port_rtype = repr(port_rtype) if not array_type else array_type
+        return ['component_port: {port_id} {port_rtype}'.format(**locals())]
+      else:
+        return ""
+
     def rtlir_tr_subcomp_ifc_port_decls( s, ifc_port_decls ):
       decls = [['component_ifc_ports:']]
       for decl in ifc_port_decls:
@@ -115,13 +123,10 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
           decls.append( [ decl[0] ] )
       return decls
 
-    def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
-        port_rtype, array_type ):
-      if port_id not in ["clk", "reset"]:
-        port_rtype = repr(port_rtype) if not array_type else array_type
-        return ['component_port: {port_id} {port_rtype}'.format(**locals())]
-      else:
-        return ""
+    def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
+        ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
+      port_rtype = repr(port_rtype) if not port_array_type else port_array_type
+      return ['component_ifc_port: {port_id} {port_rtype}'.format(**locals())]
 
     def rtlir_tr_subcomp_ifc_decls( s, ifc_decls ):
       decls = [['component_ifcs:']]
@@ -141,11 +146,6 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
           make_indent( decl, 1 )
           decls.append( [ decl[0] ] )
       return decls
-
-    def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
-        ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
-      port_rtype = repr(port_rtype) if not port_array_type else port_array_type
-      return ['component_ifc_port: {port_id} {port_rtype}'.format(**locals())]
 
     def rtlir_tr_subcomp_decls( s, subcomps ):
       decls = ''

@@ -7,7 +7,6 @@ Test sources with CL or RTL interfaces.
 Author : Yanghui Ou
   Date : Mar 11, 2019
 """
-
 from __future__ import absolute_import, division, print_function
 
 from collections import deque
@@ -21,10 +20,9 @@ from pymtl3.stdlib.ifcs import RecvCL2SendRTL, SendIfcRTL
 
 class TestSrcCL( Component ):
 
-  def construct( s, msgs, initial_delay=0, interval_delay=0 ):
+  def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
-    s.send = NonBlockingCallerIfc()
-
+    s.send = NonBlockingCallerIfc( Type )
     s.msgs = deque( msgs )
 
     s.count  = initial_delay
@@ -50,19 +48,20 @@ class TestSrcCL( Component ):
 #-------------------------------------------------------------------------
 # TestSrcRTL
 #-------------------------------------------------------------------------
+# TODO: deprecating TestSrcRTL.
 
 class TestSrcRTL( Component ):
 
-  def construct( s, MsgType, msgs, initial_delay=0, interval_delay=0 ):
+  def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
     # Interface
 
-    s.send = SendIfcRTL( MsgType )
+    s.send = SendIfcRTL( Type )
 
     # Components
 
-    s.src     = TestSrcCL( msgs, initial_delay, interval_delay )
-    s.adapter = RecvCL2SendRTL( MsgType )
+    s.src     = TestSrcCL( Type, msgs, initial_delay, interval_delay )
+    s.adapter = RecvCL2SendRTL( Type )
 
     s.connect( s.src.send,     s.adapter.recv )
     s.connect( s.adapter.send, s.send         )

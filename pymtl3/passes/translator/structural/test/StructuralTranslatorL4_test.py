@@ -108,11 +108,6 @@ endcomponent
   do_test( a )
 
 def test_multi_components_ifc_hierarchy_connect( do_test ):
-  class InIfc( Interface ):
-    def construct( s ):
-      s.msg = InPort( Bits32 )
-      s.rdy = OutPort( Bits1 )
-      s.val = InPort( Bits1 )
   class OutIfc( Interface ):
     def construct( s ):
       s.msg = OutPort( Bits32 )
@@ -124,11 +119,7 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
       s.ifc_b = OutIfc()
       s.connect( s.out_b, 0 )
       s.connect( s.ifc_b.msg, 0 )
-      # Cannot do this -- a python integer will be treated as Bits32!
-      # s.connect( s.ifc_b.val, 1 )
-      @s.update
-      def upblk():
-        s.ifc_b.val = Bits1(1)
+      s.connect( s.ifc_b.val, 1 )
   class A( Component ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
@@ -168,6 +159,7 @@ connections:
 connections:
   connection: Bits32(0) -> CurCompAttr out_b
   connection: Bits32(0) -> IfcAttr CurCompAttr ifc_b msg
+  connection: Bits1(1) -> IfcAttr CurCompAttr ifc_b val
 """}
   a._ref_src = \
 """\
@@ -188,10 +180,10 @@ wire_decls:
 component_decls:
 tmpvars:
 upblk_decls:
-  upblk_decl: upblk
 connections:
   connection: Bits32(0) -> CurCompAttr out_b
   connection: Bits32(0) -> IfcAttr CurCompAttr ifc_b msg
+  connection: Bits1(1) -> IfcAttr CurCompAttr ifc_b val
 
 endcomponent
 
@@ -231,4 +223,4 @@ endcomponent
 """
   do_test( a )
 
-__all__ = filter(lambda s: s.startswith('test_'), dir())
+__all__ = list(filter(lambda s: s.startswith('test_'), dir()))

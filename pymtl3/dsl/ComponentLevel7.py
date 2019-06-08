@@ -40,13 +40,17 @@ class ComponentLevel7( ComponentLevel6 ):
     return inst
 
   # Override
-  def _declare_vars( s ):
-    super( ComponentLevel7, s )._declare_vars()
-
-    s._dsl.all_blocking_methods = set()
-
-  # Override
   def _collect_vars( s, m ):
     super( ComponentLevel7, s )._collect_vars( m )
     if isinstance( m, ComponentLevel7 ):
       s._dsl.all_blocking_methods |= m._dsl.blocking_methods
+
+  #-----------------------------------------------------------------------
+  # elaborate
+  #-----------------------------------------------------------------------
+
+  # Override
+  def _elaborate_declare_vars( s ):
+    super( ComponentLevel7, s )._elaborate_declare_vars()
+
+    s._dsl.all_blocking_methods = set()

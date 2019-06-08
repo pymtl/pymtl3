@@ -74,8 +74,8 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
     if isinstance( dtype, rdt.Struct ):
       ret = s.rtlir_tr_struct_dtype( dtype )
-      if reduce( lambda r, x: r and dtype != x[0],
-          s.structural.decl_type_struct, True ):
+      ns_struct = s.structural.decl_type_struct
+      if reduce(lambda r, x: r and dtype != x[0], ns_struct, True):
         recurse_struct_dtype_translation( dtype )
         s.structural.decl_type_struct.append( ( dtype, ret ) )
       return ret

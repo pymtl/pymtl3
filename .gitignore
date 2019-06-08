@@ -17,4 +17,9 @@ autom4te.cache/
 *.sw*
 *.tmp
 rast-viz/
+
 pymtl3.egg-info/
+
+htmlcov/
+.coverage
+coverage.xml

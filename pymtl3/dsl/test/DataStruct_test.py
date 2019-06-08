@@ -22,9 +22,6 @@ class SomeMsg( object ):
     s.a = int(a)
     s.b = Bits32(b)
 
-  def __eq__( s, other ):
-    return s.a == other.a and s.b == other.b
-
 def _test_model( cls ):
   A = cls()
   A.elaborate()

@@ -21,6 +21,7 @@ from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRVisualizationPass,
 )
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
+from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
@@ -297,6 +298,7 @@ def test_if_basic( do_test ):
 
   do_test( a )
 
+@XFAIL_ON_PY3
 def test_for_basic( do_test ):
   class for_basic( Component ):
     def construct( s ):

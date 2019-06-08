@@ -87,9 +87,9 @@ import os
 
 from graphviz import Digraph
 
-from pymtl.passes import BasePass
+from pymtl3.passes import BasePass
 
-from pymtl.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
+from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 """.format( '"""Provide visualization for behavioral RTLIR AST.\n\n\
 Visualize Behavioral RTLIR using Graphviz packeage. The output graph is in PDF\n\
@@ -361,7 +361,7 @@ def implement_module( module_str ):
   string."""
   start = 0
   node_type = set()
-  built_in_node_type = set( ['identifier', 'int', 'string', 'bool', 'object'] )
+  built_in_node_type = { 'identifier', 'int', 'string', 'bool', 'object' }
   constr_list = []
   # constr_list = set()
 

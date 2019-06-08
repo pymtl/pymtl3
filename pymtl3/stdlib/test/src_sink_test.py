@@ -17,80 +17,37 @@ from .test_sinks import TestSinkCL, TestSinkRTL
 from .test_srcs import TestSrcCL, TestSrcRTL
 
 #-------------------------------------------------------------------------
-# TestHarnessCL
+# TestHarnessSimple
 #-------------------------------------------------------------------------
+# Test a single pair of test src/sink.
 
-class TestHarnessCL( Component ):
+class TestHarnessSimple( Component ):
 
-  def construct( s, src_msgs, sink_msgs, src_initial,  src_interval,
-                 sink_initial, sink_interval, arrival_time=None ):
+  def construct( s, MsgType, SrcType, SinkType, src_msgs, sink_msgs ):
 
-    s.src  = TestSrcCL ( src_msgs,  src_initial,  src_interval  )
-    s.sink = TestSinkCL( sink_msgs, sink_initial, sink_interval,
-                            arrival_time )
+    s.src  = SrcType ( MsgType, src_msgs  )
+    s.sink = SinkType( MsgType, sink_msgs )
 
-    # Connections
     s.connect( s.src.send, s.sink.recv  )
 
   def done( s ):
     return s.src.done() and s.sink.done()
 
   def line_trace( s ):
-    return "{} -> {}".format(
-      s.src.line_trace(), s.sink.line_trace() )
+    return "{} > {}".format( s.src.line_trace(), s.sink.line_trace() )
 
-#-------------------------------------------------------------------------
-# TestHarnessRTL
-#-------------------------------------------------------------------------
-
-class TestHarnessRTL( Component ):
-
-  def construct( s, MsgType, src_msgs, sink_msgs, src_initial,
-                 src_interval, sink_initial, sink_interval,
-                 arrival_time=None  ):
-
-    s.src     = TestSrcRTL ( MsgType, src_msgs,
-                             src_initial,  src_interval  )
-    s.sink    = TestSinkRTL( MsgType, sink_msgs,
-                             sink_initial, sink_interval, arrival_time )
-
-    # Connections
-    s.connect( s.src.send, s.sink.recv  )
-
-  def done( s ):
-    return s.src.done() and s.sink.done()
-
-  def line_trace( s ):
-    return "{} -> {}".format(
-      s.src.line_trace(), s.sink.line_trace() )
-
-#-------------------------------------------------------------------------
-# run_sim
-#-------------------------------------------------------------------------
-
-def run_sim( th, max_cycles=100 ):
-
-  # Create a simulator
-
-  th.apply( SimpleSim )
-
-  # Run simluation
-
-  print("")
-  ncycles = 0
-  print("{:2}:{}".format( ncycles, th.line_trace() ))
-  while not th.done() and ncycles < max_cycles:
-    th.tick()
-    ncycles += 1
-    print("{:2}:{}".format( ncycles, th.line_trace() ))
-
-  # Check timeout
-
-  assert ncycles < max_cycles
-
-  th.tick()
-  th.tick()
-  th.tick()
+  def run_sim( s, max_cycles=100 ):
+    s.apply( SimpleSim )
+    ncycles = 0
+    print("")
+    print("{:2}:{}".format( ncycles, s.line_trace() ))
+    while not s.done() and ncycles < max_cycles:
+      s.tick()
+      ncycles += 1
+      print("{:2}:{}".format( ncycles, s.line_trace() ))
+    
+    # Check timeout
+    assert ncycles < max_cycles
 
 #-------------------------------------------------------------------------
 # Test cases
@@ -98,8 +55,8 @@ def run_sim( th, max_cycles=100 ):
 
 def test_cl_no_delay():
   msgs  = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
-  th = TestHarnessCL( msgs, msgs, 0, 0, 0, 0, [ 1, 2, 3, 4 ] )
-  run_sim( th )
+  th = TestHarnessSimple( Bits16, TestSrcCL, TestSinkCL, msgs, msgs )
+  th.run_sim()
 
 int_msgs = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 bit_msgs = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
@@ -113,38 +70,54 @@ arrival3 = [ 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33 ]
 arrival4 = [ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 ]
 
 @pytest.mark.parametrize(
-  ('msgs', 'src_init_delay',  'src_inter_delay',
-   'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
+  ('Type', 'msgs', 'src_init',  'src_intv',
+   'sink_init', 'sink_intv', 'arrival_time' ),
   [
-    ( bit_msgs,  0,  0, 0, 0, arrival0 ),
-    ( int_msgs, 10,  0, 0, 0, arrival1 ),
-    ( bit_msgs, 10,  1, 0, 0, arrival2 ),
-    ( bit_msgs, 10,  0, 0, 1, arrival3 ),
-    ( bit_msgs,  3,  4, 5, 3, arrival4 )
+    ( Bits16, bit_msgs,  0,  0, 0, 0, arrival0 ),
+    ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
+    ( Bits16, bit_msgs, 10,  1, 0, 0, arrival2 ),
+    ( Bits16, bit_msgs, 10,  0, 0, 1, arrival3 ),
+    ( Bits16, bit_msgs,  3,  4, 5, 3, arrival4 )
   ]
 )
-def test_src_sink_cl( msgs, src_init_delay,  src_inter_delay,
-                      sink_init_delay, sink_inter_delay, arrival_time ):
-  th = TestHarnessCL( msgs, msgs, src_init_delay,  src_inter_delay,
-                      sink_init_delay, sink_inter_delay, arrival_time )
-  run_sim( th )
+def test_src_sink_cl( Type, msgs, src_init,  src_intv,
+                      sink_init, sink_intv, arrival_time ):
+  th = TestHarnessSimple( Type, TestSrcCL, TestSinkCL, msgs, msgs )
+  th.set_param( "top.src.construct",
+    initial_delay  = src_init, 
+    interval_delay = src_intv,
+  )
+  th.set_param( "top.sink.construct",
+    initial_delay  = sink_init,
+    interval_delay = sink_intv,
+    arrival_time   = arrival_time, 
+  )
+  th.run_sim()
 
 @pytest.mark.parametrize(
-  ('msgs', 'src_init_delay',  'src_inter_delay',
-          'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
+  ('Type', 'msgs', 'src_init',  'src_intv',
+   'sink_init', 'sink_intv', 'arrival_time' ),
   [
-    ( bit_msgs,  0,  0, 0, 0, arrival0 ),
-    ( int_msgs, 10,  0, 0, 0, arrival1 ),
-    ( bit_msgs, 10,  1, 0, 0, arrival2 ),
-    ( bit_msgs, 10,  0, 0, 1, arrival3 ),
-    ( bit_msgs,  3,  4, 5, 3, arrival4 )
+    ( Bits16, bit_msgs,  0,  0, 0, 0, arrival0 ),
+    ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
+    ( Bits16, bit_msgs, 10,  1, 0, 0, arrival2 ),
+    ( Bits16, bit_msgs, 10,  0, 0, 1, arrival3 ),
+    ( Bits16, bit_msgs,  3,  4, 5, 3, arrival4 )
   ]
 )
-def test_src_sink_rtl( msgs, src_init_delay,  src_inter_delay,
-                        sink_init_delay, sink_inter_delay, arrival_time ):
-  th = TestHarnessRTL( Bits16, msgs, msgs, src_init_delay,  src_inter_delay,
-                       sink_init_delay, sink_inter_delay, arrival_time )
-  run_sim( th )
+def test_src_sink_rtl( Type, msgs, src_init,  src_intv,
+                       sink_init, sink_intv, arrival_time ):
+  th = TestHarnessSimple( Type, TestSrcRTL, TestSinkRTL, msgs, msgs )
+  th.set_param( "top.src.construct",
+    initial_delay  = src_init, 
+    interval_delay = src_intv,
+  )
+  th.set_param( "top.sink.construct",
+    initial_delay  = sink_init,
+    interval_delay = sink_intv,
+    arrival_time   = arrival_time, 
+  )
+  th.run_sim()
 
 #-------------------------------------------------------------------------
 # Adaptive composition test
@@ -157,24 +130,24 @@ def test_src_sink_rtl( msgs, src_init_delay,  src_inter_delay,
 class TestHarness( Component ):
 
   def construct( s, src_level, sink_level, MsgType, src_msgs, sink_msgs,
-                 src_initial, src_interval,
-                 sink_initial, sink_interval, arrival_time=None ):
+                 src_init, src_intv,
+                 sink_init, sink_interval, arrival_time=None ):
     s.num_pairs = 2
 
     if src_level == 'cl':
-      s.srcs = [ TestSrcCL ( src_msgs, src_initial, src_interval )
+      s.srcs = [ TestSrcCL ( MsgType, src_msgs, src_init, src_intv )
                   for i in range(s.num_pairs) ]
     elif src_level == 'rtl':
-      s.srcs = [ TestSrcRTL( MsgType, src_msgs, src_initial, src_interval )
+      s.srcs = [ TestSrcRTL( MsgType, src_msgs, src_init, src_intv )
                   for i in range(s.num_pairs) ]
     else:
       raise
 
     if sink_level == 'cl':
-      s.sinks = [ TestSinkCL( sink_msgs, sink_initial, sink_interval, arrival_time )
+      s.sinks = [ TestSinkCL( MsgType, sink_msgs, sink_init, sink_interval, arrival_time )
                   for i in range(s.num_pairs) ]
     elif sink_level == 'rtl':
-      s.sinks = [ TestSinkRTL( MsgType, sink_msgs, sink_initial, sink_interval, arrival_time )
+      s.sinks = [ TestSinkRTL( MsgType, sink_msgs, sink_init, sink_interval, arrival_time )
                   for i in range(s.num_pairs) ]
     else:
       raise
@@ -193,6 +166,19 @@ class TestHarness( Component ):
     return "{} >>> {}".format( "|".join( [ x.line_trace() for x in s.srcs ] ),
                                "|".join( [ x.line_trace() for x in s.sinks ] ) )
 
+  def run_sim( s, max_cycles=100 ):
+    s.apply( SimpleSim )
+    ncycles = 0
+    print("")
+    print("{:2}:{}".format( ncycles, s.line_trace() ))
+    while not s.done() and ncycles < max_cycles:
+      s.tick()
+      ncycles += 1
+      print("{:2}:{}".format( ncycles, s.line_trace() ))
+    
+    # Check timeout
+    assert ncycles < max_cycles
+
 test_case_table = []
 for src in ['cl', 'rtl']:
   for sink in ['cl', 'rtl']:
@@ -206,12 +192,12 @@ for src in ['cl', 'rtl']:
 
 @pytest.mark.parametrize(
   ('src_level', 'sink_level', 'msgs',
-   'src_init_delay',  'src_inter_delay', 'sink_init_delay', 'sink_inter_delay', 'arrival_time' ),
+   'src_init',  'src_intv', 'sink_init', 'sink_intv', 'arrival_time' ),
   test_case_table,
 )
-def test_adaptive( src_level, sink_level, msgs, src_init_delay,  src_inter_delay,
-                        sink_init_delay, sink_inter_delay, arrival_time ):
+def test_adaptive( src_level, sink_level, msgs, src_init,  src_intv,
+                        sink_init, sink_intv, arrival_time ):
   th = TestHarness( src_level, sink_level, Bits16, msgs, msgs,
-                    src_init_delay,  src_inter_delay, sink_init_delay,
-                    sink_inter_delay, arrival_time )
-  run_sim( th )
+                    src_init,  src_intv, sink_init,
+                    sink_intv, arrival_time )
+  th.run_sim()

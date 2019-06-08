@@ -39,7 +39,7 @@ def test_py_struct_arg_no_default_value():
     def construct( s ):
       s.in_ = InPort( B )
   a = A()
-  with expected_failure( TypeError, 'takes exactly 2 arguments (1 given)' ):
+  with expected_failure( RTLIRConversionError, 'struct B should take 0 argument' ):
     a.elaborate()
     rdt.get_rtlir_dtype( a.in_ )
 

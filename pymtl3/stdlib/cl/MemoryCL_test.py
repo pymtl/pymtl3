@@ -28,11 +28,11 @@ class TestHarness( Component ):
                  stall_prob, mem_latency,
                  src_initial,  src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
-
-    s.srcs = [ TestSrcCL( src_msgs[i], src_initial, src_interval )
+    ReqType, RespType = mk_mem_msg(8,32,32)
+    s.srcs = [ TestSrcCL( ReqType, src_msgs[i], src_initial, src_interval )
                 for i in xrange(nports) ]
-    s.mem  = cls( nports, [mk_mem_msg(8,32,32)]*nports, mem_latency )
-    s.sinks = [ TestSinkCL( sink_msgs[i], sink_initial, sink_interval,
+    s.mem  = cls( nports, [(ReqType, RespType)]*nports, mem_latency )
+    s.sinks = [ TestSinkCL( RespType, sink_msgs[i], sink_initial, sink_interval,
                             arrival_time ) for i in xrange(nports) ]
 
     # Connections
@@ -322,7 +322,7 @@ def test_read_write_mem( dump_vcd ):
 
   # Run the test
 
-  run_sim( th, dump_vcd )
+  run_sim( th )
 
   # Read the data back out of the test memory
 
@@ -346,11 +346,11 @@ def run_sim( th, max_cycles=1000 ):
 
   print("")
   ncycles = 0
-  print("{}:{}".format( ncycles, th.line_trace() ))
+  print("{:3}:{}".format( ncycles, th.line_trace() ))
   while not th.done() and ncycles < max_cycles:
     th.tick()
     ncycles += 1
-    print("{}:{}".format( ncycles, th.line_trace() ))
+    print("{:3}:{}".format( ncycles, th.line_trace() ))
 
   # Check timeout
 
