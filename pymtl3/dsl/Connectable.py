@@ -110,7 +110,11 @@ class Signal( NamedObject, Connectable ):
         if not issubclass( Type, Bits ):
           s._dsl.type_instance = Type()
 
-      obj = getattr( s._dsl.type_instance, name )
+      if s._dsl.type_instance is None:
+        raise AttributeError("{} is not a signals with struct type, and has no attribute '{}'".format( s, name ))
+      else:
+        obj = getattr( s._dsl.type_instance, name )
+
 
       # We handle three cases here:
       # 1. If the object is list, we recursively generate lists of signals
