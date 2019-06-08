@@ -328,7 +328,7 @@ module A
   // 
   // @s.update
   // def upblk():
-  //   for i in range(2):
+  //   for i in xrange(2):
   //     s.out[i] = s.in_[i]
   
   always_comb begin : upblk
@@ -403,7 +403,7 @@ module A
   // 
   // @s.update
   // def upblk():
-  //   for i in range(1, 2):
+  //   for i in xrange(1, 2):
   //     s.out[i] = s.in_[i]
   //   s.out[0] = s.in_[0]
   
@@ -484,9 +484,9 @@ module A
   // 
   // @s.update
   // def upblk():
-  //   for i in range(0, 5, 2):
+  //   for i in xrange(0, 5, 2):
   //     s.out[i] = s.in_[i]
-  //   for i in range(1, 5, 2):
+  //   for i in xrange(1, 5, 2):
   //     s.out[i] = s.in_[i]
   
   always_comb begin : upblk
