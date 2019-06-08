@@ -32,6 +32,13 @@ from .helpers import (
     gen_wire_decl_py,
 )
 
+try:
+  # Python 2
+  reload
+except NameError:
+  # Python 3
+  from importlib import reload
+
 
 class ImportPass( BasePass ):
   """Import an arbitrary SystemVerilog module as a PyMTL component.
@@ -351,7 +358,7 @@ def import_component( wrapper_name, component_name, symbols ):
 
   if wrapper in sys.modules:
     # Reload the wrapper module in case the user has updated the wrapper
-    importlib.reload(sys.modules[wrapper])
+    reload(sys.modules[wrapper])
   else:
     # importlib.import_module inserts the wrapper module into sys.modules
     importlib.import_module(wrapper)
