@@ -11,13 +11,12 @@ from itertools import product
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given, reproduce_failure, settings, HealthCheck
+from hypothesis import HealthCheck, given, reproduce_failure, settings
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, BitStruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
 
 from ..util.test_utility import DataStrategy, closed_loop_component_test
-
 
 too_slow = [ HealthCheck.too_slow ]
 
