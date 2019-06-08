@@ -351,7 +351,7 @@ def import_component( wrapper_name, component_name, symbols ):
 
   if wrapper in sys.modules:
     # Reload the wrapper module in case the user has updated the wrapper
-    reload(sys.modules[wrapper])
+    importlib.reload(sys.modules[wrapper])
   else:
     # importlib.import_module inserts the wrapper module into sys.modules
     importlib.import_module(wrapper)
