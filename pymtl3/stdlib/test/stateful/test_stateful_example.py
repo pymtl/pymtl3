@@ -6,14 +6,17 @@
 # Author : Yixiao Zhang
 #   Date : May 22, 2019
 
-from pymtl3 import *
-from pymtl3.passes import OpenLoopCLPass, GenDAGPass
-from hypothesis.stateful import *
-from hypothesis import settings, Verbosity
-import hypothesis.strategies as st
+from __future__ import absolute_import, division, print_function
 
+import hypothesis.strategies as st
+from hypothesis import Verbosity, settings
+from hypothesis.stateful import *
+from pymtl3 import *
+from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+
+from .test_stateful_test import BypassQueueCL, SingleEntryBypassQueue
 from .test_wrapper import *
-from .test_stateful_test import SingleEntryBypassQueue, BypassQueueCL
+
 
 #-------------------------------------------------------------------------
 # EnqRTL2CL

@@ -6,12 +6,15 @@
 # Author : Yixiao Zhang
 #   Date : May 20, 2019
 
-from pymtl3 import *
-from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
+from __future__ import absolute_import, division, print_function
+
 import copy
 import inspect
-import attr
 import linecache
+
+import attr
+from pymtl3 import *
+from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 
 
 #-------------------------------------------------------------------------

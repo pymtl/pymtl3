@@ -5,10 +5,14 @@
 # Author: Yixiao Zhang
 #   Date: May 1, 2019
 
+from __future__ import absolute_import, division, print_function
+
+import math
+
 from pymtl3 import *
+
 from .test_stateful import run_test_state_machine
 from .test_wrapper import *
-import math
 
 
 #-------------------------------------------------------------------------

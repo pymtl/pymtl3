@@ -1,18 +1,24 @@
 #=========================================================================
-# Tests for test_stateful using the queue
+# test_stateful_test
 #=========================================================================
+#
+# Tests for test_stateful using the queue
 #
 # Author: Yixiao Zhang
 #   Date: May 20, 2019
 
+from __future__ import absolute_import, division, print_function
+
+from collections import deque
+
+import pytest
 from pymtl3 import *
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
-from pymtl3.stdlib.ifcs import EnqIfcRTL, DeqIfcRTL
-from pymtl3.passes import OpenLoopCLPass, GenDAGPass
+from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
+
 from .test_stateful import run_test_state_machine
 from .test_wrapper import *
-from collections import deque
-import pytest
 
 
 #-------------------------------------------------------------------------

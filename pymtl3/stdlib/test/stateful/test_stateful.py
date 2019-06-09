@@ -6,14 +6,18 @@
 # Author : Yixiao Zhang
 #   Date : May 22, 2019
 
-from pymtl3 import *
-from pymtl3.passes import GenDAGPass, OpenLoopCLPass
-from .test_wrapper import *
-from hypothesis.stateful import *
-from hypothesis import settings
-import hypothesis.strategies as st
+from __future__ import absolute_import, division, print_function
+
 import copy
 import inspect
+
+import hypothesis.strategies as st
+from hypothesis import settings
+from hypothesis.stateful import *
+from pymtl3 import *
+from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+
+from .test_wrapper import *
 
 
 #-------------------------------------------------------------------------
@@ -84,7 +88,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
 class TestStateful( BaseStateMachine ):
 
   def error_line_trace( self ):
-    print "============================= error ========================"
+    print("============================= error ========================")
 
 
 #-------------------------------------------------------------------------
