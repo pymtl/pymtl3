@@ -9,6 +9,8 @@ Author: Yanghui Ou, Shunning Jiang
 """
 from __future__ import absolute_import, division, print_function
 
+from copy import deepcopy
+
 from pymtl3 import *
 
 from .ifcs_utils import enrdy_to_str
@@ -136,8 +138,6 @@ class RecvCL2SendRTL( Component ):
 
     s.send = SendIfcRTL( MsgType )
 
-    s.recv_called = False
-    s.recv_rdy    = False
     s.entry = None
 
     @s.update_on_edge
@@ -163,7 +163,7 @@ class RecvCL2SendRTL( Component ):
 
   @non_blocking( lambda s : s.entry is None )
   def recv( s, msg ):
-    s.entry = msg
+    s.entry = deepcopy(msg)
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )

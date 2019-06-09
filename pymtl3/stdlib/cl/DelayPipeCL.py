@@ -9,6 +9,7 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import deque
+from copy import deepcopy
 
 from pymtl3 import *
 
@@ -19,7 +20,7 @@ class DelayPipeDeqCL( Component ):
   @non_blocking( lambda s: s.pipeline[0] is None )
   def enq( s, msg ):
     assert s.pipeline[0] is None
-    s.pipeline[0] = msg
+    s.pipeline[0] = deepcopy(msg)
 
   @non_blocking( lambda s: s.pipeline[-1] is not None )
   def deq( s ):
@@ -57,10 +58,15 @@ class DelayPipeDeqCL( Component ):
       # Basically no matter in what order s.deq and s.enq are called,
       # the outcomes are the same as long as up_delay is called before
       # both of them.
+
+      # NOTE THAT this up_delay affects ready signal, we need to mark it
+      # before enq.rdy
       s.add_constraints(
         U(up_delay) < M(s.peek),
         U(up_delay) < M(s.deq),
+        U(up_delay) < M(s.deq.rdy),
         U(up_delay) < M(s.enq),
+        U(up_delay) < M(s.enq.rdy),
       )
 
   def line_trace( s ):
@@ -70,7 +76,7 @@ class DelayPipeSendCL( Component ):
 
   def enq_pipe( s, msg ):
     assert s.pipeline[0] is None
-    s.pipeline[0] = msg
+    s.pipeline[0] = deepcopy(msg)
 
   def enq_rdy_pipe( s ):
     return s.pipeline[0] is None
@@ -101,6 +107,7 @@ class DelayPipeSendCL( Component ):
 
       s.add_constraints(
         M(s.enq) > U(up_delay),  # pipe behavior
+        M(s.enq.rdy) > U(up_delay),  # pipe behavior
       )
 
   def line_trace( s ):
