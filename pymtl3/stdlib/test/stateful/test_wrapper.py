@@ -6,38 +6,17 @@
 # Author : Yixiao Zhang
 #   Date : May 20, 2019
 
-from pymtl import *
-from pclib.ifcs.GuardedIfc import guarded_ifc, GuardedCalleeIfc
-from pymtl.dsl.ComponentLevel6 import ComponentLevel6
+from pymtl3 import *
+from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 import copy
-
 import inspect
 import attr
-
-
-def _mangleName( method_name, port_name ):
-  return method_name + "_" + port_name
-
-
-#-------------------------------------------------------------------------
-# Result
-#-------------------------------------------------------------------------
-
-
-class Result():
-  pass
-
-  def __eq__( self, obj ):
-    if not isinstance( obj, Result ):
-      return False
-    return self.__dict__ == obj.__dict__
+import linecache
 
 
 #-------------------------------------------------------------------------
 # Method
 #-------------------------------------------------------------------------
-
-
 @attr.s()
 class Method( object ):
   method_name = attr.ib()
@@ -45,10 +24,21 @@ class Method( object ):
   rets = attr.ib( default={} )
 
 
-def rename( f, newname ):
-  f.__name__ = newname
+#-------------------------------------------------------------------------
+# rename
+#-------------------------------------------------------------------------
+def rename( name ):
+
+  def wrap( f ):
+    f.__name__ = name
+    return f
+
+  return wrap
 
 
+#-------------------------------------------------------------------------
+# inspect_rtl
+#-------------------------------------------------------------------------
 def inspect_rtl( rtl ):
   method_specs = {}
 
@@ -72,8 +62,6 @@ def inspect_rtl( rtl ):
 #-------------------------------------------------------------------------
 # gen_adapter
 #-------------------------------------------------------------------------
-
-
 def gen_adapter( rtl, method_spec ):
   initialize_args = ""
   update_args = ""
@@ -116,6 +104,8 @@ def gen_adapter( rtl, method_spec ):
         for ret in method_spec.rets.keys()
     ] )
 
+    # template for generated adapter
+    # three upblk: args + call, rdy, ret
     tmpl = """
 class RTL2CL( Component ):
 
@@ -147,13 +137,10 @@ class RTL2CL( Component ):
     s.add_constraints(
         U( update_{name}_adapter_ret ) < M( s.{name} ),
         U( update_{name}_adapter_rdy ) < M( s.{name} ),
-        U( update_{name}_adapter_rdy ) < M( s.{name}.rdy ),
-        WR( s.{name}_rtl.rdy ) < U( update_{name}_adapter_rdy ),
         U( update_{name}_adapter ) < RD( s.{name}_rtl.en ),
-        M( s.{name}.rdy ) < U( update_{name}_adapter ),
         M( s.{name} ) < U( update_{name}_adapter ) )
 
-  @guarded_ifc( lambda s: s.{name}_rdy )
+  @non_blocking( lambda s: s.{name}_rdy )
   def {name}( s, {args} ):
     s.{name}_called = True
 {assign_args}
@@ -195,13 +182,10 @@ class RTL2CL( Component ):
 
     s.add_constraints(
         U( update_{name}_adapter_rdy ) < M( s.{name} ),
-        U( update_{name}_adapter_rdy ) < M( s.{name}.rdy ),
-        WR( s.{name}_rtl.rdy ) < U( update_{name}_adapter_rdy ),
         U( update_{name}_adapter ) < RD( s.{name}_rtl.en ),
-        M( s.{name}.rdy ) < U( update_{name}_adapter ),
         M( s.{name} ) < U( update_{name}_adapter ) )
 
-  @guarded_ifc( lambda s: s.{name}_rdy )
+  @non_blocking( lambda s: s.{name}_rdy )
   def {name}( s, {args} ):
     s.{name}_called = True
 {assign_args}
@@ -213,11 +197,14 @@ class RTL2CL( Component ):
         update_args=update_args )
 
   # Compile
-  filename = '<dynamic-123456>'
-  lcs = locals().update({ "Component": Component, "guarded_ifc": guarded_ifc} )
+  # FIXME: add compiled code to linecache to make inspect source code work
+  filename = '<add-to-line-cache>'
+  lcs = locals().update({
+      "Component": Component,
+      "non_blocking": non_blocking
+  } )
   exec ( compile( tmpl, filename, 'exec' ), globals() )
   lines = [ line + '\n' for line in tmpl.splitlines() ]
-  import linecache
   linecache.cache[ filename ] = ( len( tmpl ), None, lines, filename )
 
   RTL2CL.__name__ = method_spec.method_name + "RTL2CL"
@@ -227,25 +214,12 @@ class RTL2CL( Component ):
 #-------------------------------------------------------------------------
 # RTL2CLWrapper
 #-------------------------------------------------------------------------
-
-
 class RTL2CLWrapper( Component ):
 
   def __init__( s, rtl_model ):
-    super( RTL2CLWrapper, s ).__init__( rtl_model )
+    super( RTL2CLWrapper, s ).__init__()
 
     s.model_name = type( rtl_model ).__name__
-
-  def _construct( s ):
-    Component._construct( s )
-
-  def bind_methods( s ):
-    # This code is copied from ComponentLevel6
-    # In a RTL2CLWrapper bind_method needs to be called inside construct after
-    # cl methods are added, which happens after inspecting the rtl model
-
-    # NOTE from Yanghui: I replaced this piece of code.
-    ComponentLevel6._handle_decorated_methods( s )
 
   def construct( s, rtl_model ):
     """Create adapter & add top-level method for each ifc in rtl_model
@@ -254,12 +228,12 @@ class RTL2CLWrapper( Component ):
     s.model = rtl_model
 
     s.method_specs = inspect_rtl( s.model )
-    # Add method
+
     # Add adapters
     for method_name, method_spec in s.method_specs.iteritems():
       s._gen_adapter( method_spec )
 
-    s.bind_methods()
+    ComponentLevel6._handle_decorated_methods( s )
 
   def _gen_adapter( s, method_spec ):
     name = method_spec.method_name
@@ -267,31 +241,13 @@ class RTL2CLWrapper( Component ):
 
     tmpl = """
 s.{name}_adapter = RTL2CL( s.model.{name} )
-s.{name} = GuardedCalleeIfc()
+s.{name} = NonBlockingCalleeIfc()
 s.connect( s.{name}, s.{name}_adapter.{name} )
 s.connect( s.{name}_adapter.{name}_rtl, s.model.{name} )
 """.format( name=name )
 
-    lcs = locals().update({ "GuardedCalleeIfc": GuardedCalleeIfc} )
+    lcs = locals().update({ "NonBlockingCalleeIfc": NonBlockingCalleeIfc} )
     exec ( compile( tmpl, "<string>", 'exec' ), lcs )
-
-  # FIXME: Method line trace should go in here, but this method does not work
-  # due to top-lvel-method constraint problem
-  def _gen_method( s, method_spec ):
-    name = method_spec.method_name
-
-    def method(*args, **kwargs ):
-      ret = s.__dict__[ name + "_adapter" ].__dict__[ name ](**kwargs )
-      return ret
-
-    gifc = guarded_ifc(
-        lambda s: s.__dict__[ name + "_adapter" ].__dict__[ name ].rdy() )(
-            method )
-
-    s.add_constraints( U( method ) )
-
-    setattr( gifc, "__name__", name )
-    setattr( s, name, gifc )
 
   def line_trace( s ):
     return s.model.line_trace()

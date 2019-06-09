@@ -164,6 +164,7 @@ def {}():
     write_upblks = defaultdict(set)
 
     constraint_objs = defaultdict(set)
+    expl_constraints = set( top._dsl.all_U_U_constraints )
 
     for data in [ upblk_reads, genblk_reads ]:
       for blk, reads in data.iteritems():

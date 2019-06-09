@@ -6,25 +6,21 @@
 # Author : Yixiao Zhang
 #   Date : May 22, 2019
 
-from pymtl import *
-from pymtl.passes import OpenLoopCLPass, GenDAGPass
+from pymtl3 import *
+from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+from .test_wrapper import *
 from hypothesis.stateful import *
-from hypothesis import settings, given, seed, PrintSettings
+from hypothesis import settings
 import hypothesis.strategies as st
 import copy
 import inspect
-from test_wrapper import *
 
 
+#-------------------------------------------------------------------------
+# list_string
+#-------------------------------------------------------------------------
 def list_string( lst ):
   return ", ".join([ str( x ) for x in lst ] )
-
-
-def list_string_value( lst ):
-  str_list = []
-  for x in lst:
-    str_list += [ str( x ) ]
-  return ", ".join( str_list )
 
 
 #-------------------------------------------------------------------------
@@ -35,36 +31,31 @@ class ArgumentStrategy( object ):
   def __init__( s, **kwargs ):
     s.arguments = kwargs
 
-  @staticmethod
-  def bits_strategy( nbits ):
-    return st.integers( min_value=0, max_value=( 1 << nbits ) - 1 )
 
-  @staticmethod
-  def value_strategy( range_value=None, start=0 ):
-    return st.integers(
-        min_value=start, max_value=range_value - 1 if range_value else None )
-
-  @staticmethod
-  def bitstype_strategy( dtype ):
-    if isinstance( dtype, Bits ):
-      return ArgumentStrategy.bits_strategy( dtype.nbits )
-    raise TypeError( "No supported bitstype strategy for {}".format(
-        type( dtype ) ) )
-
-  @staticmethod
-  def get_strategy_from_type( dtype ):
-    if isinstance( dtype, Bits ):
-      return ArgumentStrategy.bitstype_strategy( dtype )
-    if isinstance( dtype(), Bits ):
-      return ArgumentStrategy.bitstype_strategy( dtype() )
-    return None
+#-------------------------------------------------------------------------
+# bitstype_strategy
+#-------------------------------------------------------------------------
+def bitstype_strategy( dtype ):
+  if isinstance( dtype, Bits ):
+    return st.integers( min_value=0, max_value=( 1 << dtype.nbits ) - 1 )
+  raise TypeError( "No supported bitstype strategy for {}".format(
+      type( dtype ) ) )
 
 
 #-------------------------------------------------------------------------
-# TestStateful
+# get_strategy_from_type
 #-------------------------------------------------------------------------
+def get_strategy_from_type( dtype ):
+  if isinstance( dtype, Bits ):
+    return bitstype_strategy( dtype )
+  if isinstance( dtype(), Bits ):
+    return bitstype_strategy( dtype() )
+  return None
 
 
+#-------------------------------------------------------------------------
+# BaseStateMachine
+#-------------------------------------------------------------------------
 class BaseStateMachine( RuleBasedStateMachine ):
 
   def __init__( s ):
@@ -90,8 +81,6 @@ class BaseStateMachine( RuleBasedStateMachine ):
 #-------------------------------------------------------------------------
 # TestStateful
 #-------------------------------------------------------------------------
-
-
 class TestStateful( BaseStateMachine ):
 
   def error_line_trace( self ):
@@ -99,24 +88,8 @@ class TestStateful( BaseStateMachine ):
 
 
 #-------------------------------------------------------------------------
-# rename
-#-------------------------------------------------------------------------
-
-
-def rename( name ):
-
-  def wrap( f ):
-    f.__name__ = name
-    return f
-
-  return wrap
-
-
-#-------------------------------------------------------------------------
 # wrap_method
 #-------------------------------------------------------------------------
-
-
 def wrap_method( method_spec, arguments ):
   method_name = method_spec.method_name
 
@@ -152,7 +125,7 @@ def wrap_method( method_spec, arguments ):
   - dut result: {dut_result}
   """.format(
           method=method_name,
-          data=list_string_value(
+          data=list_string(
               [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] ),
           ref_result=ref_result,
           dut_result=dut_result ) )
@@ -184,7 +157,7 @@ def create_test_state_machine( model,
   # go through spec for each method
   for method_name, spec in method_specs.iteritems():
     arguments = {}
-    # First ad customized
+    # First add customized arguments
     if argument_strategy.has_key( method_name ) and isinstance(
         argument_strategy[ method_name ], ArgumentStrategy ):
       arguments = argument_strategy[ method_name ].arguments
@@ -192,7 +165,7 @@ def create_test_state_machine( model,
     # add the rest from inspection result
     for arg, dtype in spec.args.iteritems():
       if not arguments.has_key( arg ):
-        arguments[ arg ] = ArgumentStrategy.get_strategy_from_type( dtype )
+        arguments[ arg ] = get_strategy_from_type( dtype )
         if not arguments[ arg ]:
           error_msg = """
   Argument strategy not specified!
@@ -213,10 +186,7 @@ def create_test_state_machine( model,
 #-------------------------------------------------------------------------
 # run_test_state_machine
 #-------------------------------------------------------------------------
-def run_test_state_machine( rtl_class,
-                            reference_class,
-                            argument_strategy={},
-                            seed=None ):
+def run_test_state_machine( rtl_class, reference_class, argument_strategy={} ):
 
   machine = create_test_state_machine( rtl_class, reference_class )
   machine.TestCase.settings = settings(

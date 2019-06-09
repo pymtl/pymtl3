@@ -5,17 +5,14 @@
 # Author: Yixiao Zhang
 #   Date: May 20, 2019
 
-from pymtl import *
-from pclib.ifcs import EnqIfcRTL, DeqIfcRTL
-from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.ifcs.GuardedIfc import guarded_ifc
-from pclib.test.stateful.test_stateful import run_test_state_machine
-from pclib.test.stateful.test_wrapper import *
+from pymtl3 import *
+from pymtl3.dsl.test.sim_utils import simple_sim_pass
+from pymtl3.stdlib.ifcs import EnqIfcRTL, DeqIfcRTL
+from pymtl3.passes import OpenLoopCLPass, GenDAGPass
+from .test_stateful import run_test_state_machine
+from .test_wrapper import *
 from collections import deque
-import copy
 import pytest
-
-from pymtl.passes import OpenLoopCLPass, GenDAGPass
 
 
 #-------------------------------------------------------------------------
@@ -77,8 +74,6 @@ class SingleEntryPipeQueue( Component ):
 #-------------------------------------------------------------------------
 # NormalQueueCL
 #-------------------------------------------------------------------------
-
-
 class PipeQueueCL( Component ):
 
   def construct( s, size=1 ):
@@ -93,11 +88,11 @@ class PipeQueueCL( Component ):
 
     s.add_constraints( M( s.deq ) < M( s.enq ) )
 
-  @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
+  @non_blocking( lambda s: len( s.queue ) < s.queue.maxlen )
   def enq( s, msg ):
     s.queue.appendleft( msg )
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def deq( s ):
     return s.queue.pop()
 
@@ -108,8 +103,6 @@ class PipeQueueCL( Component ):
 #-------------------------------------------------------------------------
 # SingleEntryBypassQueue
 #-------------------------------------------------------------------------
-
-
 class SingleEntryBypassQueue( Component ):
 
   def construct( s, EntryType ):
@@ -165,8 +158,6 @@ class SingleEntryBypassQueue( Component ):
 #-------------------------------------------------------------------------
 # NormalQueueCL
 #-------------------------------------------------------------------------
-
-
 class BypassQueueCL( Component ):
 
   def construct( s, size=1 ):
@@ -181,11 +172,11 @@ class BypassQueueCL( Component ):
 
     s.add_constraints( M( s.enq ) < M( s.deq ) )
 
-  @guarded_ifc( lambda s: len( s.queue ) < s.queue.maxlen )
+  @non_blocking( lambda s: len( s.queue ) < s.queue.maxlen )
   def enq( s, msg ):
     s.queue.appendleft( msg )
 
-  @guarded_ifc( lambda s: len( s.queue ) > 0 )
+  @non_blocking( lambda s: len( s.queue ) > 0 )
   def deq( s ):
     return s.queue.pop()
 
@@ -194,140 +185,10 @@ class BypassQueueCL( Component ):
 
 
 #-------------------------------------------------------------------------
-# EnqRTL2CL
-#-------------------------------------------------------------------------
-
-
-class EnqRTL2CL( Component ):
-
-  def construct( s, enq ):
-
-    enq_rtl = copy.deepcopy( enq )
-    enq_rtl._dsl.constructed = False
-    s.enq_rtl = enq_rtl.inverse()
-
-    s.enq_called = False
-    s.enq_rdy = False
-    s.enq_msg = 0
-
-    @s.update
-    def update_enq():
-      s.enq_rtl.en = Bits1( 1 ) if s.enq_called else Bits1( 0 )
-      s.enq_rtl.msg = s.enq_msg
-      s.enq_called = False
-
-    @s.update
-    def update_enq_rdy():
-      s.enq_rdy = True if s.enq_rtl.rdy else False
-
-    s.add_constraints(
-        U( update_enq_rdy ) < M( s.enq ),
-        U( update_enq_rdy ) < M( s.enq.rdy ),
-        M( s.enq.rdy ) < U( update_enq ),
-        M( s.enq ) < U( update_enq ) )
-
-  @guarded_ifc( lambda s: s.enq_rdy )
-  def enq( s, msg ):
-    s.enq_msg = msg
-    s.enq_called = True
-
-
-#-------------------------------------------------------------------------
-# DeqRTL2CL
-#-------------------------------------------------------------------------
-
-
-class DeqRTL2CL( Component ):
-
-  def construct( s, deq ):
-
-    # Interface
-
-    deq_rtl = copy.deepcopy( deq )
-    deq_rtl._dsl.constructed = False
-    s.deq_rtl = deq_rtl.inverse()
-
-    s.deq_called = False
-    s.deq_rdy = False
-    s.deq_msg = 0
-
-    @s.update
-    def update_deq():
-      s.deq_rtl.en = Bits1( 1 ) if s.deq_called else Bits1( 0 )
-      s.deq_called = False
-
-    @s.update
-    def update_deq_msg():
-      s.deq_msg = s.deq_rtl.msg
-
-    @s.update
-    def update_deq_rdy():
-      s.deq_rdy = True if s.deq_rtl.rdy else False
-
-    s.add_constraints(
-        U( update_deq_msg ) < M( s.deq ),
-        U( update_deq_rdy ) < M( s.deq.rdy ),
-        U( update_deq_rdy ) < M( s.deq ),
-        M( s.deq.rdy ) < U( update_deq ),
-        M( s.deq ) < U( update_deq ) )
-
-  @guarded_ifc( lambda s: s.deq_rdy )
-  def deq( s ):
-    s.deq_called = True
-    return s.deq_msg
-
-
-#-------------------------------------------------------------------------
-# ReferenceWrapper
-#-------------------------------------------------------------------------
-
-
-class ReferenceWrapper( Component ):
-  model_name = "ref"
-
-  def _construct( s ):
-    Component._construct( s )
-
-  def construct( s, model ):
-    s.model = model
-    s.method_specs = inspect_rtl( s.model )
-    s.enq_adapter = EnqRTL2CL( s.model.enq )
-    s.deq_adapter = DeqRTL2CL( s.model.deq )
-    s.deq = GuardedCalleeIfc()
-    s.enq = GuardedCalleeIfc()
-    s.connect( s.deq, s.deq_adapter.deq )
-    s.connect( s.enq, s.enq_adapter.enq )
-    s.connect( s.enq_adapter.enq_rtl, s.model.enq )
-    s.connect( s.deq_adapter.deq_rtl, s.model.deq )
-
-  def line_trace( s ):
-    return s.model.line_trace()
-
-
-#-------------------------------------------------------------------------
 # test_state_machine
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
                           [( BypassQueueCL, SingleEntryBypassQueue ),
                            ( PipeQueueCL, SingleEntryPipeQueue ) ] )
 def test_state_machine( QueueCL, QueueRTL ):
-  wrapper = ReferenceWrapper( QueueRTL( Bits16 ) )
-  wrapper.elaborate()
-  wrapper.apply( GenDAGPass() )
-  wrapper.apply( OpenLoopCLPass() )
-  wrapper.lock_in_simulation()
-
   run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
-
-
-"""
-#-------------------------------------------------------------------------
-# test_state_machine
-#-------------------------------------------------------------------------
-@pytest.mark.parametrize( "QueueCL, QueueRTL",
-                          [( BypassQueueCL, SingleEntryBypassQueue ),
-                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
-def test_state_machine( QueueCL, QueueRTL ):
-  run_test_state_machine( ReferenceWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
-  run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
-"""

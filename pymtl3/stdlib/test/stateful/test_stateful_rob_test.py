@@ -5,18 +5,16 @@
 # Author: Yixiao Zhang
 #   Date: May 1, 2019
 
-from pymtl import *
-from pclib.ifcs.GuardedIfc import guarded_ifc
-from pymtl.dsl.test.sim_utils import simple_sim_pass
-from pclib.test.stateful.test_stateful import run_test_state_machine
-from pclib.test.stateful.test_wrapper import *
+from pymtl3 import *
+from pymtl3.dsl.test.sim_utils import simple_sim_pass
+from .test_stateful import run_test_state_machine
+from .test_wrapper import *
 import math
+
 
 #-------------------------------------------------------------------------
 # ReorderBufferCL
 #-------------------------------------------------------------------------
-
-
 class ReorderBufferCL( Component ):
 
   def construct( s, num_entries ):
@@ -36,7 +34,7 @@ class ReorderBufferCL( Component ):
         M( s.update_entry ) < M( s.remove ),
         M( s.remove ) < M( s.alloc ) )
 
-  @guarded_ifc( lambda s: s.num < s.num_entries )
+  @non_blocking( lambda s: s.num < s.num_entries )
   def alloc( s ):
     index = s.next_slot
     s.allocated[ s.next_slot ] = True
@@ -44,13 +42,13 @@ class ReorderBufferCL( Component ):
     s.next_slot = ( s.next_slot + 1 ) % s.num_entries
     return index
 
-  @guarded_ifc( lambda s: not s.empty() )
+  @non_blocking( lambda s: not s.empty() )
   def update_entry( s, index, value ):
     assert index >= 0 and index < s.num_entries
     if s.allocated[ index ]:
       s.data[ index ] = value
 
-  @guarded_ifc( lambda s: s.data[ s.head ] != None )
+  @non_blocking( lambda s: s.data[ s.head ] != None )
   def remove( s ):
     head = s.head
     data = s.data[ s.head ]
@@ -84,8 +82,6 @@ def test_rob_cl():
 #-------------------------------------------------------------------------
 # clog2
 #-------------------------------------------------------------------------
-
-
 def clog2( num ):
   return int( math.ceil( math.log( num, 2 ) ) )
 
@@ -93,8 +89,6 @@ def clog2( num ):
 #-------------------------------------------------------------------------
 # AllocIfcRTL
 #-------------------------------------------------------------------------
-
-
 class AllocIfcRTL( Interface ):
 
   def construct( s, Type, IndexType ):
@@ -107,8 +101,6 @@ class AllocIfcRTL( Interface ):
 #-------------------------------------------------------------------------
 # UpdateIfcRTL
 #-------------------------------------------------------------------------
-
-
 class UpdateIfcRTL( Interface ):
 
   def construct( s, Type, IndexType ):
@@ -122,8 +114,6 @@ class UpdateIfcRTL( Interface ):
 #-------------------------------------------------------------------------
 # RemoveIfcRTL
 #-------------------------------------------------------------------------
-
-
 class RemoveIfcRTL( Interface ):
 
   def construct( s, Type ):
@@ -136,8 +126,6 @@ class RemoveIfcRTL( Interface ):
 #-------------------------------------------------------------------------
 # ReorderBuffer
 #-------------------------------------------------------------------------
-
-
 class ReorderBuffer( Component ):
   # This stores (key, value) pairs in a finite size FIFO queue
   def construct( s, DataType, num_entries ):
