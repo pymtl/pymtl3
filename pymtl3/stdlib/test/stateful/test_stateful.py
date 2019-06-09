@@ -8,8 +8,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import inspect
+from copy import deepcopy
 
 import hypothesis.strategies as st
 from hypothesis import settings
@@ -65,8 +65,8 @@ class BaseStateMachine( RuleBasedStateMachine ):
   def __init__( s ):
     super( BaseStateMachine, s ).__init__()
 
-    s.dut = copy.deepcopy( s.preconstruct_model )
-    s.ref = copy.deepcopy( s.preconstruct_reference )
+    s.dut = deepcopy( s.preconstruct_model )
+    s.ref = deepcopy( s.preconstruct_reference )
 
     # elaborate dut
     s.dut.elaborate()
@@ -88,7 +88,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
 class TestStateful( BaseStateMachine ):
 
   def error_line_trace( self ):
-    print("============================= error ========================")
+    print( "============================= error ========================" )
 
 
 #-------------------------------------------------------------------------
@@ -147,8 +147,8 @@ def create_test_state_machine( model,
   Test = type( model.model_name + "_TestStateful", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
 
-  Test.preconstruct_model = copy.deepcopy( model )
-  Test.preconstruct_reference = copy.deepcopy( reference )
+  Test.preconstruct_model = deepcopy( model )
+  Test.preconstruct_reference = deepcopy( reference )
 
   model.elaborate()
 

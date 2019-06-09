@@ -1,8 +1,8 @@
 #=========================================================================
-# test_stateful_test
+# test_stateful_qeueues_test
 #=========================================================================
 #
-# Tests for test_stateful using the queue
+# Tests for test_stateful using single entry queue
 #
 # Author: Yixiao Zhang
 #   Date: May 20, 2019

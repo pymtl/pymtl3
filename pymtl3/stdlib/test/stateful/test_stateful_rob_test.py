@@ -1,6 +1,8 @@
 #=========================================================================
-# Tests for test_stateful using the reorder buffer
+# test_stateful_rob_test
 #=========================================================================
+#
+# Tests for test_stateful using a reorder buffer
 #
 # Author: Yixiao Zhang
 #   Date: May 1, 2019
@@ -66,6 +68,7 @@ class ReorderBufferCL( Component ):
 
   def line_trace( s ):
     return ""
+
 
 #-------------------------------------------------------------------------
 # clog2

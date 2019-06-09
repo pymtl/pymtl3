@@ -8,9 +8,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
 import inspect
 import linecache
+from copy import deepcopy
 
 import attr
 from pymtl3 import *
@@ -114,7 +114,7 @@ class RTL2CL( Component ):
 
   def construct( s, {name} ):
 
-    {name}_rtl = copy.deepcopy( {name} )
+    {name}_rtl = deepcopy( {name} )
     {name}_rtl._dsl.constructed = False
     s.{name}_rtl = {name}_rtl.inverse()
 
@@ -165,7 +165,7 @@ class RTL2CL( Component ):
 
   def construct( s, {name} ):
 
-    {name}_rtl = copy.deepcopy( {name} )
+    {name}_rtl = deepcopy( {name} )
     {name}_rtl._dsl.constructed = False
     s.{name}_rtl = {name}_rtl.inverse()
 
