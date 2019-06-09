@@ -21,13 +21,13 @@ from .enrdy_queues import *
 
 class TestHarness( Component ):
 
-  def construct( s, Type, q, src_msgs, sink_msgs ):
+  def construct( s, Type, q, src_msgs, sink_msgs, src_interval, sink_interval ):
 
     # Instantiate models
 
-    s.src  = TestSrcCL( Type, src_msgs )
+    s.src  = TestSrcCL( Type, src_msgs, interval_delay=src_interval )
     s.q    = q
-    s.sink = TestSinkCL( Type, sink_msgs )
+    s.sink = TestSinkCL( Type, sink_msgs, interval_delay=sink_interval )
 
     # Connect
 
@@ -47,7 +47,7 @@ def run_sim( model ):
   cycle = 0
   while not model.done() and cycle < 1000:
     model.tick()
-    print(model.line_trace())
+    print( "{:3}: {}".format( cycle, model.line_trace() ) )
     cycle += 1
 
   assert cycle < 1000
@@ -63,19 +63,25 @@ req  = map( F, [1,2,3,4,5,6,7,8,9,10] )
 resp = map( F, [1,2,3,4,5,6,7,8,9,10] )
 
 def test_normal_queue():
-  run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp) )
+  run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp, 0, 0 ) )
 
 def test_normal_queue_stall():
-  run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp ) )
+  run_sim( TestHarness( Bits32, NormalQueue1RTL(Bits32), req, resp, 3, 4 ) )
 
 def test_pipe_queue():
-  run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp) )
+  run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp, 0, 0 ) )
 
 def test_pipe_queue_stall():
-  run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp ) )
+  run_sim( TestHarness( Bits32, PipeQueue1RTL(Bits32), req, resp, 3, 4  ) )
 
 def test_bypass_queue():
-  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp ) )
+  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp, 0, 0 ) )
 
 def test_bypass_queue_stall():
-  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp ) )
+  run_sim( TestHarness( Bits32, BypassQueue1RTL(Bits32), req, resp, 3, 4  ) )
+
+def test_bypass_queue2():
+  run_sim( TestHarness( Bits32, BypassQueue2RTL(Bits32), req, resp, 0, 0 ) )
+
+def test_bypass_queue2_stall():
+  run_sim( TestHarness( Bits32, BypassQueue2RTL(Bits32), req, resp, 3, 4  ) )

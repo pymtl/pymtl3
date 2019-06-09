@@ -66,6 +66,18 @@ class BypassQueue1RTL( Component ):
   def line_trace( s ):
     return s.buf.line_trace()
 
+class BypassQueue2RTL( Component ):
+
+  def construct( s, MsgType, queue_size=2 ):
+    assert queue_size == 2
+    s.enq = RecvIfcRTL( MsgType )
+    s.deq = SendIfcRTL( MsgType )
+    s.q1 = BypassQueue1RTL( MsgType )( enq = s.enq )
+    s.q2 = BypassQueue1RTL( MsgType )( enq = s.q1.deq, deq = s.deq )
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.q1.deq, s.deq )
+
 class NormalQueue1RTL( Component ):
 
   def construct( s, Type ):
