@@ -13,6 +13,7 @@ import linecache
 from copy import deepcopy
 
 import attr
+
 from pymtl3 import *
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 
@@ -204,7 +205,8 @@ class RTL2CL( Component ):
   filename = '<add-to-line-cache>'
   lcs = locals().update({
       "Component": Component,
-      "non_blocking": non_blocking
+      "non_blocking": non_blocking,
+      "deepcopy": deepcopy
   } )
   exec ( compile( tmpl, filename, 'exec' ), globals() )
   lines = [ line + '\n' for line in tmpl.splitlines() ]

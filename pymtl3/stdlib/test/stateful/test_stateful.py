@@ -8,12 +8,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-import inspect
-from copy import deepcopy
-
 import hypothesis.strategies as st
 from hypothesis import settings
 from hypothesis.stateful import *
+
 from pymtl3 import *
 from pymtl3.passes import GenDAGPass, OpenLoopCLPass
 
@@ -162,13 +160,13 @@ def create_test_state_machine( model,
   for method_name, spec in method_specs.iteritems():
     arguments = {}
     # First add customized arguments
-    if argument_strategy.has_key( method_name ) and isinstance(
+    if method_name in argument_strategy and isinstance(
         argument_strategy[ method_name ], ArgumentStrategy ):
       arguments = argument_strategy[ method_name ].arguments
 
     # add the rest from inspection result
     for arg, dtype in spec.args.iteritems():
-      if not arguments.has_key( arg ):
+      if arg not in arguments:
         arguments[ arg ] = get_strategy_from_type( dtype )
         if not arguments[ arg ]:
           error_msg = """

@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function
 from collections import deque
 
 import pytest
+
 from pymtl3 import *
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 from pymtl3.passes import GenDAGPass, OpenLoopCLPass
