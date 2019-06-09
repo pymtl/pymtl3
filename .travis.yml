@@ -50,12 +50,10 @@ install:
 
 script:
  - futurize --write --stage1 ./pymtl3 &> /dev/null
- # - futurize --write --stage2 .
- - autoflake --in-place --remove-duplicate-keys $(find ./pymtl3 -name '*.py')
- - pyupgrade --keep-percent-format $(find ./pymtl3 -name '*.py')
+ - autoflake --in-place --remove-duplicate-keys .
+ - pyupgrade --keep-percent-format $(find . -name '*.py')
  - isort --apply --recursive ./pymtl3
- # - black .
- # - flake8 .
+ - flake8 --select=F --ignore=F401,F405,F403,F811,F821,F841
  - git diff --exit-code
  - python --version | grep "Python 3" && futurize --write --stage2 ./pymtl3 &> /dev/null || true
  - mkdir -p build
