@@ -328,6 +328,7 @@ class MethodPort( NamedObject, Connectable ):
 
   def __call__( self, *args, **kwargs ):
     return self.method( *args, **kwargs )
+
   def is_component( s ):
     return False
 

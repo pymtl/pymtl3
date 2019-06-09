@@ -18,8 +18,6 @@ from .test_stateful_test import SingleEntryBypassQueue, BypassQueueCL
 #-------------------------------------------------------------------------
 # EnqRTL2CL
 #-------------------------------------------------------------------------
-
-
 class EnqRTL2CL( Component ):
 
   def construct( s, enq ):
@@ -55,8 +53,6 @@ class EnqRTL2CL( Component ):
 #-------------------------------------------------------------------------
 # DeqRTL2CL
 #-------------------------------------------------------------------------
-
-
 class DeqRTL2CL( Component ):
 
   def construct( s, deq ):
@@ -98,8 +94,6 @@ class DeqRTL2CL( Component ):
 #-------------------------------------------------------------------------
 # ReferenceWrapper
 #-------------------------------------------------------------------------
-
-
 class ExampleWrapper( Component ):
   model_name = "ref"
 
@@ -125,8 +119,6 @@ class ExampleWrapper( Component ):
 #-------------------------------------------------------------------------
 # QueueMachine
 #-------------------------------------------------------------------------
-
-
 class QueueMachine( RuleBasedStateMachine ):
 
   def __init__( s ):
@@ -173,7 +165,5 @@ class QueueMachine( RuleBasedStateMachine ):
 #-------------------------------------------------------------------------
 # test_stateful
 #-------------------------------------------------------------------------
-
-
 def test_stateful():
   run_state_machine_as_test( QueueMachine )

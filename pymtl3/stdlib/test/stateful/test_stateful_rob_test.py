@@ -6,7 +6,6 @@
 #   Date: May 1, 2019
 
 from pymtl3 import *
-from pymtl3.dsl.test.sim_utils import simple_sim_pass
 from .test_stateful import run_test_state_machine
 from .test_wrapper import *
 import math
@@ -63,21 +62,6 @@ class ReorderBufferCL( Component ):
 
   def line_trace( s ):
     return ""
-
-
-#-------------------------------------------------------------------------
-# test_rob_cl
-#-------------------------------------------------------------------------
-def test_rob_cl():
-  rob = ReorderBufferCL( 4 )
-  rob.elaborate()
-  rob.apply( simple_sim_pass )
-  rob.alloc()
-  assert not rob.remove.rdy()
-  rob.update_entry( 0, 1 )
-  assert rob.remove.rdy()
-  assert rob.remove() == 1
-
 
 #-------------------------------------------------------------------------
 # clog2
