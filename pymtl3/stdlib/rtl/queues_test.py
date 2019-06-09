@@ -15,7 +15,14 @@ from pymtl3.stdlib.test import TestVectorSimulator
 from pymtl3.stdlib.test.test_sinks import TestSinkRTL
 from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
-from .queues import BypassQueueRTL, NormalQueueRTL, PipeQueueRTL
+from .queues import (
+    BypassQueue1EntryRTL,
+    BypassQueueRTL,
+    NormalQueue1EntryRTL,
+    NormalQueueRTL,
+    PipeQueue1EntryRTL,
+    PipeQueueRTL,
+)
 
 #-------------------------------------------------------------------------
 # TestVectorSimulator test
@@ -156,4 +163,21 @@ def test_bypass2_sparse():
   th = TestHarness( Bits16, BypassQueueRTL, test_msgs, test_msgs )
   th.set_param( "top.src.construct", interval_delay = 3 )
   th.set_param( "top.dut.construct", num_entries = 2 )
+  run_sim( th )
+
+def test_singel_normal_simple():
+  th = TestHarness( Bits16, NormalQueue1EntryRTL, test_msgs, test_msgs )
+  run_sim( th )
+
+def test_singel_pipe_simple():
+  th = TestHarness( Bits16, PipeQueue1EntryRTL, test_msgs, test_msgs )
+  run_sim( th )
+
+def test_singel_bypass_simple():
+  th = TestHarness( Bits16, BypassQueue1EntryRTL, test_msgs, test_msgs )
+  run_sim( th )
+
+def test_singel_bypass_backpressure():
+  th = TestHarness( Bits16, BypassQueue1EntryRTL, test_msgs, test_msgs )
+  th.set_param( "top.sink.construct", initial_delay = 10, interval_delay=2 )
   run_sim( th )

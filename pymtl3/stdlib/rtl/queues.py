@@ -19,12 +19,12 @@ from pymtl3.stdlib.rtl import Mux, RegisterFile
 
 class NormalQueueDpathRTL( Component ):
 
-  def construct( s, MsgType, num_entries=2 ):
+  def construct( s, EntryType, num_entries=2 ):
 
     # Interface
 
-    s.enq_msg =  InPort( MsgType )
-    s.deq_msg = OutPort( MsgType )
+    s.enq_msg =  InPort( EntryType )
+    s.deq_msg = OutPort( EntryType )
 
     s.wen   = InPort( Bits1 )
     s.waddr = InPort( mk_bits( clog2( num_entries ) ) )
@@ -32,7 +32,7 @@ class NormalQueueDpathRTL( Component ):
 
     # Component
 
-    s.queue = RegisterFile( MsgType, num_entries )(
+    s.queue = RegisterFile( EntryType, num_entries )(
       raddr = { 0: s.raddr   },
       rdata = { 0: s.deq_msg },
       wen   = { 0: s.wen     },
@@ -123,18 +123,18 @@ class NormalQueueCtrlRTL( Component ):
 
 class NormalQueueRTL( Component ):
 
-  def construct( s, MsgType, num_entries=2 ):
+  def construct( s, EntryType, num_entries=2 ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( MsgType )
-    s.deq   = DeqIfcRTL( MsgType )
+    s.enq   = EnqIfcRTL( EntryType )
+    s.deq   = DeqIfcRTL( EntryType )
     s.count = OutPort( mk_bits( clog2( num_entries ) ) )
 
     # Components
 
     s.ctrl  = NormalQueueCtrlRTL ( num_entries )
-    s.dpath = NormalQueueDpathRTL( MsgType, num_entries )
+    s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
 
     # Connect ctrl to data path
 
@@ -250,18 +250,18 @@ class PipeQueueCtrlRTL( Component ):
 
 class PipeQueueRTL( Component ):
 
-  def construct( s, MsgType, num_entries=2 ):
+  def construct( s, EntryType, num_entries=2 ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( MsgType )
-    s.deq   = DeqIfcRTL( MsgType )
+    s.enq   = EnqIfcRTL( EntryType )
+    s.deq   = DeqIfcRTL( EntryType )
     s.count = OutPort( mk_bits( clog2( num_entries ) ) )
 
     # Components
 
     s.ctrl  = PipeQueueCtrlRTL ( num_entries )
-    s.dpath = NormalQueueDpathRTL( MsgType, num_entries )
+    s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
 
     # Connect ctrl to data path
 
@@ -290,12 +290,12 @@ class PipeQueueRTL( Component ):
 
 class BypassQueueDpathRTL( Component ):
 
-  def construct( s, MsgType, num_entries=2 ):
+  def construct( s, EntryType, num_entries=2 ):
 
     # Interface
 
-    s.enq_msg =  InPort( MsgType )
-    s.deq_msg = OutPort( MsgType )
+    s.enq_msg =  InPort( EntryType )
+    s.deq_msg = OutPort( EntryType )
 
     s.wen     = InPort( Bits1 )
     s.waddr   = InPort( mk_bits( clog2( num_entries ) ) )
@@ -304,14 +304,14 @@ class BypassQueueDpathRTL( Component ):
 
     # Component
 
-    s.queue = RegisterFile( MsgType, num_entries )(
+    s.queue = RegisterFile( EntryType, num_entries )(
       raddr = { 0: s.raddr   },
       wen   = { 0: s.wen     },
       waddr = { 0: s.waddr   },
       wdata = { 0: s.enq_msg },
     )
 
-    s.mux = Mux( MsgType, 2 )(
+    s.mux = Mux( EntryType, 2 )(
       sel = s.mux_sel,
       in_ = { 0: s.queue.rdata[0], 1: s.enq_msg },
       out = s.deq_msg,
@@ -410,18 +410,18 @@ class BypassQueueCtrlRTL( Component ):
 
 class BypassQueueRTL( Component ):
 
-  def construct( s, MsgType, num_entries=2 ):
+  def construct( s, EntryType, num_entries=2 ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( MsgType )
-    s.deq   = DeqIfcRTL( MsgType )
+    s.enq   = EnqIfcRTL( EntryType )
+    s.deq   = DeqIfcRTL( EntryType )
     s.count = OutPort( mk_bits( clog2( num_entries ) ) )
 
     # Components
 
     s.ctrl  = BypassQueueCtrlRTL ( num_entries )
-    s.dpath = BypassQueueDpathRTL( MsgType, num_entries )
+    s.dpath = BypassQueueDpathRTL( EntryType, num_entries )
 
     # Connect ctrl to data path
 
@@ -444,3 +444,170 @@ class BypassQueueRTL( Component ):
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.count, s.deq )
+
+#-------------------------------------------------------------------------
+# NormalQueue1EntryRTL
+#-------------------------------------------------------------------------
+
+class NormalQueue1EntryRTL( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.enq = EnqIfcRTL( EntryType )
+    s.deq = DeqIfcRTL( EntryType )
+
+    # Components
+
+    s.entry = Wire( EntryType )
+    s.full  = Wire( Bits1 )
+
+    # Logic
+
+    @s.update_on_edge
+    def up_full():
+      if s.reset:
+        s.full = b1(0)
+      elif ~s.full and s.enq.en:
+        s.full = b1(1)
+      elif s.full and s.deq.en:
+        s.full = b1(0)
+      else:
+        s.full = s.full
+    
+    # TODO: figure out whether to use deepcopy here.
+    @s.update_on_edge
+    def up_entry():
+      s.entry = s.enq.msg if s.enq.en else s.entry
+
+    @s.update
+    def up_enq_rdy():
+      if ~s.reset:
+        s.enq.rdy = b1(1) if ~s.full else b1(0)
+      else:
+        s.enq.rdy = b1(0)
+
+    @s.update
+    def up_deq_rdy():
+      if ~s.reset:
+        s.deq.rdy = b1(1) if s.full else b1(0)
+      else:
+        s.deq.rdy = b1(0)
+
+    s.connect( s.entry, s.deq.msg )
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.full, s.deq )
+
+#-------------------------------------------------------------------------
+# PipeQueue1EntryRTL
+#-------------------------------------------------------------------------
+
+class PipeQueue1EntryRTL( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.enq = EnqIfcRTL( EntryType )
+    s.deq = DeqIfcRTL( EntryType )
+
+    # Components
+
+    s.entry = Wire( EntryType )
+    s.full  = Wire( Bits1 )
+
+    # Logic
+
+    @s.update_on_edge
+    def up_full():
+      if s.reset:
+        s.full = b1(0)
+      elif ~s.full and s.enq.en and ~s.deq.en:
+        s.full = b1(1)
+      elif s.full and ~s.enq.en and s.deq.en:
+        s.full = b1(0)
+      else:
+        s.full = s.full
+    
+    # TODO: figure out whether to use deepcopy here.
+    @s.update_on_edge
+    def up_entry():
+      s.entry = s.enq.msg if s.enq.en else s.entry
+
+    @s.update
+    def up_enq_rdy():
+      if ~s.reset:
+        s.enq.rdy = b1(1) if ~s.full or s.deq.en else b1(0)
+      else:
+        s.enq.rdy = b1(0)
+
+    @s.update
+    def up_deq_rdy():
+      if ~s.reset:
+        s.deq.rdy = b1(1) if s.full else b1(0)
+      else:
+        s.deq.rdy = b1(0)
+
+    s.connect( s.entry, s.deq.msg )
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.full, s.deq )
+
+#-------------------------------------------------------------------------
+# BypassQueue1EntryRTL
+#-------------------------------------------------------------------------
+
+class BypassQueue1EntryRTL( Component ):
+
+  def construct( s, EntryType ):
+
+    # Interface
+
+    s.enq = EnqIfcRTL( EntryType )
+    s.deq = DeqIfcRTL( EntryType )
+
+    # Components
+
+    s.entry = Wire( EntryType )
+    s.full  = Wire( Bits1 )
+
+    # Logic
+
+    @s.update_on_edge
+    def up_full():
+      if s.reset:
+        s.full = b1(0)
+      elif ~s.full and s.enq.en and ~s.deq.en:
+        s.full = b1(1)
+      elif s.full and ~s.enq.en and s.deq.en:
+        s.full = b1(0)
+      else:
+        s.full = s.full
+    
+    # TODO: figure out whether to use deepcopy here.
+    @s.update_on_edge
+    def up_entry():
+      s.entry = s.enq.msg if s.enq.en and ~s.deq.en else s.entry
+
+    @s.update
+    def up_enq_rdy():
+      if ~s.reset:
+        s.enq.rdy = b1(1) if ~s.full else b1(0)
+      else:
+        s.enq.rdy = b1(0)
+
+    @s.update
+    def up_deq_rdy():
+      if ~s.reset:
+        s.deq.rdy = b1(1) if s.full or s.enq.en else b1(0)
+      else:
+        s.deq.rdy = b1(0)
+    
+    @s.update
+    def up_deq_msg():
+      s.deq.msg = s.entry if s.full else s.enq.msg
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.full, s.deq )
