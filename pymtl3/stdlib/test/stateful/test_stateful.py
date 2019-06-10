@@ -63,8 +63,8 @@ class BaseStateMachine( RuleBasedStateMachine ):
   def __init__( s ):
     super( BaseStateMachine, s ).__init__()
 
-    s.dut = deepcopy( s.preconstruct_model )
-    s.ref = deepcopy( s.preconstruct_reference )
+    s.dut = deepcopy( s.preconstruct_dut )
+    s.ref = deepcopy( s.preconstruct_ref )
 
     # elaborate dut
     s.dut.elaborate()
@@ -138,21 +138,21 @@ def wrap_method( method_spec, arguments ):
 #-------------------------------------------------------------------------
 # create_test_state_machine
 #-------------------------------------------------------------------------
-def create_test_state_machine( model,
-                               reference,
+def create_test_state_machine( dut,
+                               ref,
                                method_specs=None,
                                argument_strategy={} ):
-  Test = type( model.model_name + "_TestStateful", TestStateful.__bases__,
+  Test = type( dut.model_name + "_TestStateful", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
 
-  Test.preconstruct_model = deepcopy( model )
-  Test.preconstruct_reference = deepcopy( reference )
+  Test.preconstruct_dut = deepcopy( dut )
+  Test.preconstruct_ref = deepcopy( ref )
 
-  model.elaborate()
+  dut.elaborate()
 
   if not method_specs:
     try:
-      method_specs = model.method_specs
+      method_specs = dut.method_specs
     except Exception:
       raise "No method specs specified"
 
@@ -188,9 +188,9 @@ def create_test_state_machine( model,
 #-------------------------------------------------------------------------
 # run_test_state_machine
 #-------------------------------------------------------------------------
-def run_test_state_machine( rtl_class, reference_class, argument_strategy={} ):
+def run_test_state_machine( dut, ref, argument_strategy={} ):
 
-  machine = create_test_state_machine( rtl_class, reference_class )
+  machine = create_test_state_machine( dut, ref )
   machine.TestCase.settings = settings(
       max_examples=50,
       stateful_step_count=100,
