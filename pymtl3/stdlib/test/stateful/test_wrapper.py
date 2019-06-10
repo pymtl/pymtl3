@@ -41,25 +41,34 @@ def rename( name ):
 
 
 #-------------------------------------------------------------------------
+# inspect_ifc
+#-------------------------------------------------------------------------
+def inspect_ifc( ifc ):
+  args = {}
+  rets = {}
+  for name, port in inspect.getmembers( ifc ):
+    if name == 'en' or name == 'rdy':
+      continue
+    if isinstance( port, InPort ):
+      args[ name ] = port._dsl.Type
+    if isinstance( port, OutPort ):
+      rets[ name ] = port._dsl.Type
+
+  return args, rets
+
+
+#-------------------------------------------------------------------------
 # inspect_rtl
 #-------------------------------------------------------------------------
 def inspect_rtl( rtl ):
   method_specs = {}
 
   for method, ifc in inspect.getmembers( rtl ):
-    args = {}
-    rets = {}
     if isinstance( ifc, Interface ):
-      for name, port in inspect.getmembers( ifc ):
-        if name == 'en' or name == 'rdy':
-          continue
-        if isinstance( port, InPort ):
-          args[ name ] = port._dsl.Type
-        if isinstance( port, OutPort ):
-          rets[ name ] = port._dsl.Type
+      args, rets = inspect_ifc( ifc )
+      ifc.method_spec = Method( method_name=method, args=args, rets=rets )
+      method_specs[ method ] = ifc.method_spec
 
-      method_specs[ method ] = Method(
-          method_name=method, args=args, rets=rets )
   return method_specs
 
 
