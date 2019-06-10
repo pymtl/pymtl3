@@ -37,15 +37,35 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       else:
         return str(dtype)
 
-    def rtlir_tr_upblk_decls( s, upblk_srcs ):
+    def rtlir_tr_upblk_decls( s, upblk_decls ):
+      decls = ''
+      for upblk_decl in sorted(upblk_decls, key=lambda x: x[0]):
+        make_indent( upblk_decl, 1 )
+        decls += '\n' + '\n'.join( upblk_decl )
+      return 'upblk_decls:{}\n'.format( decls )
+
+    def rtlir_tr_upblk_decl( s, upblk, src, py_src ):
+      return ['upblk_decl: {}'.format( upblk.__name__ )]
+
+    def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
+      py_srcs = ''
+      for upblk_py_src in sorted(upblk_py_srcs, key=lambda x: x[0]):
+        make_indent( upblk_py_src, 1 )
+        py_srcs += '\n' + '\n'.join( upblk_py_src )
+      return 'upblk_py_srcs:{}\n'.format( py_srcs )
+
+    def rtlir_tr_upblk_py_src( s, upblk ):
+      return ['upblk_py_src: {}'.format( upblk.__name__ )]
+
+    def rtlir_tr_upblk_srcs( s, upblk_srcs ):
       srcs = ''
       for upblk_src in sorted(upblk_srcs, key=lambda x: x[0]):
         make_indent( upblk_src, 1 )
         srcs += '\n' + '\n'.join( upblk_src )
-      return 'upblk_decls:{}\n'.format( srcs )
+      return 'upblk_srcs:{}\n'.format( srcs )
 
-    def rtlir_tr_upblk_decl( m, upblk, rtlir_upblk ):
-      return ['upblk_decl: {}'.format( rtlir_upblk.name )]
+    def rtlir_tr_upblk_src( m, upblk, rtlir_upblk ):
+      return ['upblk_src: {}'.format( rtlir_upblk.name )]
 
     def rtlir_tr_behavioral_freevars( s, freevars ):
       srcs = ''

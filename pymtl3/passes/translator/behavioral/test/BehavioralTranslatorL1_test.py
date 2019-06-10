@@ -20,6 +20,7 @@ from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL1)(m)
+  tr.clear( m )
   tr.translate_behavioral( m )
   upblk_src = tr.behavioral.upblk_srcs[m]
   decl_freevars = tr.behavioral.decl_freevars[m]
@@ -37,8 +38,8 @@ def test_pymtl_Bits_freevar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = \
 """\
@@ -48,7 +49,7 @@ freevars:
   do_test( a )
 
 def test_pymtl_list_Bits_freevar( do_test ):
-  freevar = [ Bits32(42) for _ in xrange(5) ]
+  freevar = [ Bits32(42) for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
@@ -58,8 +59,8 @@ def test_pymtl_list_Bits_freevar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = \
 """\
@@ -71,7 +72,7 @@ freevars:
 def test_pymtl_multi_upblks( do_test ):
   class A( Component ):
     def construct( s ):
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk1():
         s.out[0] = Bits32(42)
@@ -81,9 +82,9 @@ def test_pymtl_multi_upblks( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
-  upblk_decl: upblk2
+upblk_srcs:
+  upblk_src: upblk1
+  upblk_src: upblk2
 """
   a._ref_freevar_repr = """freevars:\n"""
   do_test( a )
@@ -93,7 +94,7 @@ def test_pymtl_multi_freevars( do_test ):
     def construct( s ):
       STATE_IDLE = Bits2(0)
       STATE_WORK = Bits2(1)
-      s.out = [ OutPort( Bits2 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits2 ) for _ in range(5) ]
       @s.update
       def upblk1():
         s.out[0] = STATE_IDLE
@@ -103,9 +104,9 @@ def test_pymtl_multi_freevars( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
-  upblk_decl: upblk2
+upblk_srcs:
+  upblk_src: upblk1
+  upblk_src: upblk2
 """
   a._ref_freevar_repr = \
 """\

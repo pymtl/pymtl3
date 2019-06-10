@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
-  tr.translate()
+  tr.translate( m )
   assert tr.hierarchy.src == m._ref_src
 
 def test_subcomponent( do_test ):
@@ -41,6 +41,12 @@ module B
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.foo = Bits32(42)
+  
   always_comb begin : upblk
     foo = 32'd42;
   end
@@ -64,6 +70,12 @@ module A
     .reset( b$reset )
   );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.b.foo
+  
   always_comb begin : upblk
     out = b$foo;
   end
@@ -99,6 +111,12 @@ module B
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out_b = Bits32(0)
+  
   always_comb begin : upblk
     out_b = 32'd0;
   end
@@ -122,6 +140,12 @@ module A
     .reset( b$reset )
   );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = zext( s.b.out_b, 64 )
+  
   always_comb begin : upblk
     out = { { 32 { 1'b0 } }, b$out_b };
   end
@@ -139,7 +163,7 @@ def test_subcomponent_index( do_test ):
       s.out = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.comp = [ B() for _ in xrange(2) ]
+      s.comp = [ B() for _ in range(2) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
@@ -183,6 +207,12 @@ module A
     .reset( comp_$1$reset )
   );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.comp[1].out
+  
   always_comb begin : upblk
     out = comp_$1$out;
   end

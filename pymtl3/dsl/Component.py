@@ -326,6 +326,7 @@ class Component( ComponentLevel7 ):
   #-----------------------------------------------------------------------
 
   """ Convenience/utility APIs """
+
   def apply( s, *args ):
 
     if isinstance(args[0], list):
@@ -456,6 +457,10 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       return s._collect_all( [ filt ] )[0]
 
+  def get_local_object_filter( s, filt ):
+    assert callable( filt )
+    return s._collect_objects_local( filt )
+
   def get_all_components( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_update_blocks" )
@@ -549,6 +554,25 @@ class Component( ComponentLevel7 ):
     saved_connections = top._delete_component( foo )
 
     new_obj = cls( *foo._dsl.args, **foo._dsl.kwargs )
+
+    # We actually don't need to merge param tree here because when we call
+    # _add_component, the parameters stored in parent will be pushed down
+    # to new_obj
+    top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections )
+
+    top._flush_pending_value_connections()
+    top._flush_pending_method_connections()
+    if check:
+      top.check()
+
+  def replace_component_with_obj( top, foo, new_obj, check=True ):
+    top._check_called_at_elaborate_top( "replace_component" )
+
+    parent = foo.get_parent_object()
+    foo_name    = foo._dsl._my_name
+    foo_indices = foo._dsl._my_indices
+
+    saved_connections = top._delete_component( foo )
 
     # We actually don't need to merge param tree here because when we call
     # _add_component, the parameters stored in parent will be pushed down

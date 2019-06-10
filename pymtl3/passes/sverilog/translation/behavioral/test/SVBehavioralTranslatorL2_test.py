@@ -52,6 +52,20 @@ always_comb begin : upblk
     out = in_2;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[2])
+  a._test_vectors = [
+    [    0,    -1,   0 ],
+    [   42,     0,  42 ],
+    [   24,    42,  24 ],
+    [   -2,    24,  -2 ],
+    [   -1,    -2,  -1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_if_dangling_else_inner( do_test ):
@@ -80,6 +94,20 @@ always_comb begin : upblk
   end
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[2])
+  a._test_vectors = [
+    [    0,    -1,  -1 ],
+    [   42,     0,   0 ],
+    [   24,    42,  42 ],
+    [   -2,    24,  24 ],
+    [   -1,    -2,  -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_if_dangling_else_outter( do_test ):
@@ -108,6 +136,20 @@ always_comb begin : upblk
     out = in_2;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[2])
+  a._test_vectors = [
+    [    0,    -1,   0 ],
+    [   42,     0,   0 ],
+    [   24,    42,   0 ],
+    [   -2,    24,   0 ],
+    [   -1,    -2,   0 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_if_branches( do_test ):
@@ -139,6 +181,21 @@ always_comb begin : upblk
     out = in_3;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+    m.in_3 = Bits32(tv[2])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[3])
+  a._test_vectors = [
+    [    0,    -1,   0,  0 ],
+    [   42,     0,  42, 42 ],
+    [   24,    42,  24, 24 ],
+    [   -2,    24,  -2, -2 ],
+    [   -1,    -2,  -1, -1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_nested_if( do_test ):
@@ -190,32 +247,28 @@ always_comb begin : upblk
     out = in_1;
 end\
 """ }
-  do_test( a )
-
-def test_for_xrange_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_upblk_srcs = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  for ( int i = 0; i < 2; i += 1 )
-    out[i] = in_[i];
-end\
-""" }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+    m.in_3 = Bits32(tv[2])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[3])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1 ],
+    [   42,     0,  42,   0 ],
+    [   24,    42,  24,  42 ],
+    [   -2,    24,  -2,  24 ],
+    [   -1,    -2,  -1,  -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_for_range_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in range(2):
@@ -228,34 +281,28 @@ always_comb begin : upblk
     out[i] = in_[i];
 end\
 """ }
-  do_test( a )
-
-def test_for_xrange_lower_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(1, 2):
-          s.out[i] = s.in_[i]
-        s.out[0] = s.in_[0]
-  a = A()
-  a._ref_upblk_srcs = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  for ( int i = 1; i < 2; i += 1 )
-    out[i] = in_[i];
-  out[0] = in_[0];
-end\
-""" }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[2])
+    assert m.out[1] == Bits32(tv[3])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1 ],
+    [   42,     0,  42,   0 ],
+    [   24,    42,  24,  42 ],
+    [   -2,    24,  -2,  24 ],
+    [   -1,    -2,  -1,  -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_for_range_lower_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in range(1, 2):
@@ -270,36 +317,28 @@ always_comb begin : upblk
   out[0] = in_[0];
 end\
 """ }
-  do_test( a )
-
-def test_for_xrange_lower_upper_step( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      @s.update
-      def upblk():
-        for i in xrange(0, 5, 2):
-          s.out[i] = s.in_[i]
-        for i in xrange(1, 5, 2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_upblk_srcs = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  for ( int i = 0; i < 5; i += 2 )
-    out[i] = in_[i];
-  for ( int i = 1; i < 5; i += 2 )
-    out[i] = in_[i];
-end\
-""" }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[2])
+    assert m.out[1] == Bits32(tv[3])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1 ],
+    [   42,     0,  42,   0 ],
+    [   24,    42,  24,  42 ],
+    [   -2,    24,  -2,  24 ],
+    [   -1,    -2,  -1,  -2 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_for_range_lower_upper_step( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(0, 5, 2):
@@ -316,13 +355,34 @@ always_comb begin : upblk
     out[i] = in_[i];
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+    m.in_[2] = Bits32(tv[2])
+    m.in_[3] = Bits32(tv[3])
+    m.in_[4] = Bits32(tv[4])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[5])
+    assert m.out[1] == Bits32(tv[6])
+    assert m.out[2] == Bits32(tv[7])
+    assert m.out[3] == Bits32(tv[8])
+    assert m.out[4] == Bits32(tv[9])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1,   0,    0,    -1,   0,  -1,   0, ],
+    [   42,     0,  42,   0,  42,   42,     0,  42,   0,  42, ],
+    [   24,    42,  24,  42,  24,   24,    42,  24,  42,  24, ],
+    [   -2,    24,  -2,  24,  -2,   -2,    24,  -2,  24,  -2, ],
+    [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_if_exp_for( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -335,13 +395,34 @@ always_comb begin : upblk
     out[i] = ( i == 1 ) ? in_[i] : in_[0];
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+    m.in_[2] = Bits32(tv[2])
+    m.in_[3] = Bits32(tv[3])
+    m.in_[4] = Bits32(tv[4])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[5])
+    assert m.out[1] == Bits32(tv[6])
+    assert m.out[2] == Bits32(tv[7])
+    assert m.out[3] == Bits32(tv[8])
+    assert m.out[4] == Bits32(tv[9])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1,   0,    0,    -1,   0,   0,   0, ],
+    [   42,     0,  42,   0,  42,   42,     0,  42,  42,  42, ],
+    [   24,    42,  24,  42,  24,   24,    42,  24,  24,  24, ],
+    [   -2,    24,  -2,  24,  -2,   -2,    24,  -2,  -2,  -2, ],
+    [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -1,  -1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_if_exp_unary_op( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -354,17 +435,38 @@ always_comb begin : upblk
     out[i] = ( i == 1 ) ? ~in_[i] : in_[0];
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+    m.in_[2] = Bits32(tv[2])
+    m.in_[3] = Bits32(tv[3])
+    m.in_[4] = Bits32(tv[4])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[5])
+    assert m.out[1] == Bits32(tv[6])
+    assert m.out[2] == Bits32(tv[7])
+    assert m.out[3] == Bits32(tv[8])
+    assert m.out[4] == Bits32(tv[9])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1,   0,    0,    ~-1,   0,   0,   0, ],
+    [   42,     0,  42,   0,  42,   42,     ~0,  42,  42,  42, ],
+    [   24,    42,  24,  42,  24,   24,    ~42,  24,  24,  24, ],
+    [   -2,    24,  -2,  24,  -2,   -2,    ~24,  -2,  -2,  -2, ],
+    [   -1,    -2,  -1,  -2,  -1,   -1,    ~-2,  -1,  -1,  -1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_if_bool_op( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
-          if s.in_[i] and (s.in_[i+1] if i<5 else s.in_[4]):
+          if ( s.in_[i] != Bits32(0) ) and ( ( s.in_[i+1] != Bits32(0) ) if i<4 else ( s.in_[4] != Bits32(0) )):
             s.out[i] = s.in_[i]
           else:
             s.out[i] = Bits32(0)
@@ -373,24 +475,45 @@ def test_if_bool_op( do_test ):
 """\
 always_comb begin : upblk
   for ( int i = 0; i < 5; i += 1 )
-    if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
+    if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
       out[i] = in_[i];
     end
     else
       out[i] = 32'd0;
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+    m.in_[2] = Bits32(tv[2])
+    m.in_[3] = Bits32(tv[3])
+    m.in_[4] = Bits32(tv[4])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[5])
+    assert m.out[1] == Bits32(tv[6])
+    assert m.out[2] == Bits32(tv[7])
+    assert m.out[3] == Bits32(tv[8])
+    assert m.out[4] == Bits32(tv[9])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
+    [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
+    [   24,    42,  24,  42,  24,    24,    42,   24,   42,   24, ],
+    [   -2,    24,  -2,  24,  -2,    -2,    24,   -2,   24,   -2, ],
+    [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_tmpvar( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
-          if s.in_[i] and (s.in_[i+1] if i<5 else s.in_[4]):
+          if ( s.in_[i]  != Bits32(0) ) and ( ( s.in_[i+1] != Bits32(0) ) if i<4 else ( s.in_[4] != Bits32(0) ) ):
             tmpvar = s.in_[i]
           else:
             tmpvar = Bits32(0)
@@ -400,7 +523,7 @@ def test_tmpvar( do_test ):
 """\
 always_comb begin : upblk
   for ( int i = 0; i < 5; i += 1 ) begin
-    if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
+    if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
       upblk_tmpvar = in_[i];
     end
     else
@@ -409,4 +532,25 @@ always_comb begin : upblk
   end
 end\
 """ }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+    m.in_[2] = Bits32(tv[2])
+    m.in_[3] = Bits32(tv[3])
+    m.in_[4] = Bits32(tv[4])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[5])
+    assert m.out[1] == Bits32(tv[6])
+    assert m.out[2] == Bits32(tv[7])
+    assert m.out[3] == Bits32(tv[8])
+    assert m.out[4] == Bits32(tv[9])
+  a._test_vectors = [
+    [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
+    [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
+    [   24,    42,  24,  42,  24,    24,    42,   24,   42,   24, ],
+    [   -2,    24,  -2,  24,  -2,    -2,    24,   -2,   24,   -2, ],
+    [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

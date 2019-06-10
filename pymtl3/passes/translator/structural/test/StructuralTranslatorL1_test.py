@@ -22,6 +22,7 @@ from .TestStructuralTranslator import mk_TestStructuralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestStructuralTranslator(StructuralTranslatorL1)(m)
+  tr.clear( m )
   tr.translate_structural(m)
   try:
     name = tr.structural.component_unique_name[m]
@@ -58,7 +59,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -84,7 +85,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -110,7 +111,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -147,7 +148,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -184,7 +185,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -209,7 +210,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -243,7 +244,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -253,7 +254,7 @@ endcomponent
 def test_array_port_decl( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ InPort( Bits32 ) for _ in xrange(5) ]
+      s.foo = [ InPort( Bits32 ) for _ in range(5) ]
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -274,7 +275,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -313,8 +314,8 @@ wire_decls:
   wire_decl: foo Wire of Vector32
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -324,10 +325,10 @@ endcomponent
 def test_array_wire_decl( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ Wire( Bits32 ) for _ in xrange(5) ]
+      s.foo = [ Wire( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
-        for i in xrange(5):
+        for i in range(5):
           s.foo[i] = Bits32(0)
   a = A()
   a._ref_name = "A"
@@ -350,8 +351,8 @@ wire_decls:
   wire_decl: foo Array[5] of Wire
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -363,9 +364,18 @@ def test_const_decls( do_test ):
     def construct( s ):
       s.foo = Bits32(0)
       s.bar = Bits4(0)
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.foo
+        s.out = Bits32(s.bar)
   a = A()
   a._ref_name = "A"
-  a._ref_ports = "port_decls:\n"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: out Port of Vector32
+"""
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = \
 """\
@@ -378,6 +388,7 @@ const_decls:
 component {}
 (
 port_decls:
+  port_decl: out Port of Vector32
 interface_decls:
 );
 const_decls:
@@ -387,7 +398,8 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -397,10 +409,18 @@ endcomponent
 def test_array_const_decl( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ Bits32(0) for _ in xrange(5) ]
+      s.foo = [ Bits32(0) for _ in range(5) ]
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.foo[0]
   a = A()
   a._ref_name = "A"
-  a._ref_ports = "port_decls:\n"
+  a._ref_ports = \
+"""\
+port_decls:
+  port_decl: out Port of Vector32
+"""
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = \
 """\
@@ -412,6 +432,7 @@ const_decls:
 component {}
 (
 port_decls:
+  port_decl: out Port of Vector32
 interface_decls:
 );
 const_decls:
@@ -420,7 +441,8 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -463,7 +485,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PartSel CurCompAttr foo 1 2 -> CurCompAttr bar
 
@@ -506,7 +528,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PartSel CurCompAttr foo 0 4 -> CurCompAttr bar
 
@@ -517,7 +539,7 @@ endcomponent
 def test_expr_port_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.foo = [ InPort( Bits32 ) for _ in xrange(5) ]
+      s.foo = [ InPort( Bits32 ) for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.foo[1] )
   a = A()
@@ -549,7 +571,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PortArrayIdx CurCompAttr foo 1 -> CurCompAttr bar
 
@@ -560,12 +582,12 @@ endcomponent
 def test_expr_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.wire = [ Wire( Bits32 ) for _ in xrange(5) ]
+      s.wire = [ Wire( Bits32 ) for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.wire[1] )
       @s.update
       def upblk():
-        for i in xrange(5):
+        for i in range(5):
           s.wire[i] = Bits32(0)
   a = A()
   a._ref_name = "A"
@@ -599,8 +621,8 @@ wire_decls:
   wire_decl: wire Array[5] of Wire
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
   connection: WireArrayIdx CurCompAttr wire 1 -> CurCompAttr bar
 
@@ -614,15 +636,20 @@ def test_expr_const_array_index( do_test ):
   # and just treat them as constant integers.
   class A( Component ):
     def construct( s ):
-      s.const = [ 0 for _ in xrange(5) ]
+      s.const = [ 0 for _ in range(5) ]
       s.bar = OutPort( Bits32 )
       s.connect( s.bar, s.const[1] )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.const[0]
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
 """\
 port_decls:
   port_decl: bar Port of Vector32
+  port_decl: out Port of Vector32
 """
   a._ref_wires = "wire_decls:\n"
   a._ref_consts = \
@@ -641,6 +668,7 @@ component {}
 (
 port_decls:
   port_decl: bar Port of Vector32
+  port_decl: out Port of Vector32
 interface_decls:
 );
 const_decls:
@@ -649,7 +677,8 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
+  upblk_src: upblk
 connections:
   connection: Bits32(0) -> CurCompAttr bar
 
@@ -685,7 +714,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent

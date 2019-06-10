@@ -7,6 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from collections import defaultdict, deque
 from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -19,16 +20,79 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
 from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 
+def gen_connections( top ):
+  """Return a tuple of all connections in the hierarchy whose top is `top`.
+  
+  Return a three element tuple ( ss, sc, cc ). `ss` is a dictionary indexed
+  by component `m` and has a set of pairs of connected signals within component
+  `m` ( and thus is called "self_self" ). `sc` is a dictionary indexed by
+  component `m` and has a set of pairs of connected signals between component
+  `m` and its child components ( "self_child" ). `cc` is a dictionary indexed
+  by component `m` and has a set of pairs of connected signals between two
+  child components of `m` ( "child_child" ).
+  """
+  _top_conns_self_self = defaultdict( set )
+  _top_conns_self_child = defaultdict( set )
+  _top_conns_child_child = defaultdict( set )
+
+  nets = top.get_all_value_nets()
+  adjs = top.get_signal_adjacency_dict()
+
+  for writer, net in nets:
+    S = deque( [ writer ] )
+    visited = {  writer  }
+    while S:
+      u = S.pop()
+      writer_host        = u.get_host_component()
+      writer_host_parent = writer_host.get_parent_object()
+      for v in adjs[u]:
+        if v not in visited:
+          visited.add( v )
+          S.append( v )
+          reader_host        = v.get_host_component()
+          reader_host_parent = reader_host.get_parent_object()
+
+          # Four possible cases for the reader and writer signals:
+          # 1.   They have the same host component. Both need
+          #       to be added to the host component.
+          # 2/3. One's host component is the parent of the other.
+          #       Both need to be added to the parent component.
+          # 4.   They have the same parent component.
+          #       Both need to be added to the parent component.
+
+          if writer_host is reader_host:
+            _top_conns_self_self[writer_host].add( ( u, v ) )
+          elif writer_host_parent is reader_host:
+            _top_conns_self_child[reader_host].add( ( u, v ) )
+          elif writer_host is reader_host_parent:
+            _top_conns_self_child[writer_host].add( ( u, v ) )
+          elif writer_host_parent == reader_host_parent:
+            _top_conns_child_child[writer_host_parent].add( ( u, v ) )
+          else:
+            assert False, "unexpected connection type!"
+
+  return \
+    _top_conns_self_self, _top_conns_self_child, _top_conns_child_child
+
 class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def __init__( s, top ):
     super( StructuralTranslatorL1, s ).__init__( top )
+    # To avoid doing redundant computation, we generate the connections of
+    # the entire hierarchy once and only once here.
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
+    s.c_ss, s.c_sc, s.c_cc = gen_connections( top )
+
+  def clear( s, tr_top ):
+    super( StructuralTranslatorL1, s ).clear( tr_top )
     # Metadata namespace for RTLIR structural translator and the backend
     # structural translator
     s.structural = TranslatorMetadata()
     s.s_backend = TranslatorMetadata()
 
     # Generate metadata
-    s.gen_structural_trans_metadata( top )
+    s.gen_structural_trans_metadata( tr_top )
 
     # Data type declaration
     s.structural.decl_type_vector = []
@@ -38,15 +102,18 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   # gen_structural_trans_metadata
   #-----------------------------------------------------------------------
 
-  def gen_structural_trans_metadata( s, top ):
-    top.apply( StructuralRTLIRGenL1Pass() )
+  def gen_structural_trans_metadata( s, tr_top ):
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
+    tr_top.apply( StructuralRTLIRGenL1Pass( s.c_ss, s.c_sc, s.c_cc ) )
 
   #-----------------------------------------------------------------------
   # translate_structural
   #-----------------------------------------------------------------------
 
-  def translate_structural( s, top ):
-    """Translate structural part of top component.
+  def translate_structural( s, tr_top ):
+    """Translate structural part of top component under translation.
 
     This function will only be called once during the whole translation
     process.
@@ -62,7 +129,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
     # Connections
     s.structural.connections = {}
-    s._translate_structural( top )
+    s._translate_structural( tr_top )
 
   #-----------------------------------------------------------------------
   # _translate_structural
@@ -130,21 +197,30 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
     # Consts
     const_decls = []
+    if hasattr( s, "behavioral" ):
+      used_set = s.behavioral.accessed[m]
+    else:
+      used_set = None
+
+    # import pdb
+    # pdb.set_trace()
+
     for const_id, rtype, instance in m._pass_structural_rtlir_gen.consts:
-      if isinstance( rtype, rt.Array ):
-        array_type = rtype
-        const_rtype = rtype.get_sub_type()
-      else:
-        array_type = None
-        const_rtype = rtype
-      const_decls.append(
-        s.rtlir_tr_const_decl(
-          s.rtlir_tr_var_id( const_id ),
-          const_rtype,
-          s.rtlir_tr_unpacked_array_type( array_type ),
-          s.rtlir_data_type_translation( m, const_rtype.get_dtype() ),
-          instance
-      ) )
+      if used_set is None or const_id in used_set:
+        if isinstance( rtype, rt.Array ):
+          array_type = rtype
+          const_rtype = rtype.get_sub_type()
+        else:
+          array_type = None
+          const_rtype = rtype
+        const_decls.append(
+          s.rtlir_tr_const_decl(
+            s.rtlir_tr_var_id( const_id ),
+            const_rtype,
+            s.rtlir_tr_unpacked_array_type( array_type ),
+            s.rtlir_data_type_translation( m, const_rtype.get_dtype() ),
+            instance
+        ) )
     s.structural.decl_consts[m] = s.rtlir_tr_const_decls( const_decls )
 
   #-----------------------------------------------------------------------

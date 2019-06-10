@@ -32,7 +32,7 @@ def test_py_list():
     rdt.get_rtlir_dtype( [ 1, 2, 3 ] )
 
 def test_py_struct_arg_no_default_value():
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo ):
       s.foo = Bits32( foo )
   class A( Component ):
@@ -44,7 +44,7 @@ def test_py_struct_arg_no_default_value():
     rdt.get_rtlir_dtype( a.in_ )
 
 def test_py_struct():
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):
@@ -70,9 +70,9 @@ def test_pymtl_signal():
   assert rdt.Vector(32) == rdt.get_rtlir_dtype( a.in_ )
 
 def test_pymtl_packed_array():
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in xrange(5) ]
+      s.foo = [ Bits32( foo ) for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )

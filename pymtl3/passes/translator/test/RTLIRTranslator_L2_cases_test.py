@@ -17,7 +17,7 @@ def local_do_test( m ):
   if not m._dsl.constructed:
     m.elaborate()
   tr = TestRTLIRTranslator(m)
-  tr.translate()
+  tr.translate( m )
   src = tr.hierarchy.src
   try:
     assert src == m._ref_src

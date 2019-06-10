@@ -22,6 +22,7 @@ from pymtl3.passes.rtlir.behavioral import (
 )
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
+from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
@@ -41,8 +42,8 @@ def local_do_test( m ):
 def test_index_basic( do_test ):
   class index_basic( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits16 ) for _ in xrange( 4 ) ]
-      s.out = [ OutPort( Bits16 ) for _ in xrange( 2 ) ]
+      s.in_ = [ InPort( Bits16 ) for _ in range( 4 ) ]
+      s.out = [ OutPort( Bits16 ) for _ in range( 2 ) ]
 
       @s.update
       def index_basic():
@@ -100,7 +101,8 @@ def test_mismatch_width_assign( do_test ):
     [ Bits16(32767),      Bits8(255) ],
   ]
 
-  do_test( a )
+  with expected_failure( PyMTLTypeError, "LHS and RHS of assignment" ):
+    do_test( a )
 
 def test_slicing_basic( do_test ):
   class slicing_basic( Component ):
@@ -167,8 +169,8 @@ def test_bits_basic( do_test ):
 def test_index_bits_slicing( do_test ):
   class index_bits_slicing( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits16 ) for _ in xrange( 10 ) ]
-      s.out = [ OutPort( Bits16 ) for _ in xrange( 5 ) ]
+      s.in_ = [ InPort( Bits16 ) for _ in range( 10 ) ]
+      s.out = [ OutPort( Bits16 ) for _ in range( 5 ) ]
 
       @s.update
       def index_bits_slicing():
@@ -307,7 +309,7 @@ def test_for_basic( do_test ):
 
       @s.update
       def for_basic():
-        for i in xrange( 8 ):
+        for i in range( 8 ):
           s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
 
   a = for_basic()

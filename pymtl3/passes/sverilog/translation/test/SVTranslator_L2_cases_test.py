@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32, Bits96, concat
+from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
-  tr.translate()
+  tr.translate( m )
   assert tr.hierarchy.src == m._ref_src
 
 #-------------------------------------------------------------------------
@@ -45,6 +45,15 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   if Bits1(1):
+  //     s.out = s.in_1
+  //   else:
+  //     s.out = s.in_2
+  
   always_comb begin : upblk
     if ( 1'd1 ) begin
       out = in_1;
@@ -82,6 +91,16 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   if Bits1(1):
+  //     if Bits1(0):
+  //       s.out = s.in_1
+  //     else:
+  //       s.out = s.in_2
+  
   always_comb begin : upblk
     if ( 1'd1 ) begin
       if ( 1'd0 ) begin
@@ -121,6 +140,16 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   if Bits1(1):
+  //     if Bits1(0):
+  //       s.out = s.in_1
+  //   else:
+  //     s.out = s.in_2
+  
   always_comb begin : upblk
     if ( 1'd1 ) begin
       if ( 1'd0 ) begin
@@ -163,6 +192,17 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   if Bits1(1):
+  //     s.out = s.in_1
+  //   elif Bits1(0):
+  //     s.out = s.in_2
+  //   else:
+  //     s.out = s.in_3
+  
   always_comb begin : upblk
     if ( 1'd1 ) begin
       out = in_1;
@@ -215,6 +255,26 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   if Bits1(1):
+  //     if Bits1(0):
+  //       s.out = s.in_1
+  //     else:
+  //       s.out = s.in_2
+  //   elif Bits1(0):
+  //     if Bits1(1):
+  //       s.out = s.in_2
+  //     else:
+  //       s.out = s.in_3
+  //   else:
+  //     if Bits1(1):
+  //       s.out = s.in_3
+  //     else:
+  //       s.out = s.in_1
+  
   always_comb begin : upblk
     if ( 1'd1 ) begin
       if ( 1'd0 ) begin
@@ -241,40 +301,11 @@ endmodule
 """
   do_test( a )
 
-def test_for_xrange_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_src = \
-"""\
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_ [0:1],
-  output logic [31:0] out [0:1],
-  input logic [0:0] reset
-);
-
-  always_comb begin : upblk
-    for ( int i = 0; i < 2; i += 1 )
-      out[i] = in_[i];
-  end
-
-endmodule
-"""
-  do_test( a )
-
 def test_for_range_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in range(2):
@@ -290,6 +321,13 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(2):
+  //     s.out[i] = s.in_[i]
+  
   always_comb begin : upblk
     for ( int i = 0; i < 2; i += 1 )
       out[i] = in_[i];
@@ -299,42 +337,11 @@ endmodule
 """
   do_test( a )
 
-def test_for_xrange_lower_upper( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
-      @s.update
-      def upblk():
-        for i in xrange(1, 2):
-          s.out[i] = s.in_[i]
-        s.out[0] = s.in_[0]
-  a = A()
-  a._ref_src = \
-"""\
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_ [0:1],
-  output logic [31:0] out [0:1],
-  input logic [0:0] reset
-);
-
-  always_comb begin : upblk
-    for ( int i = 1; i < 2; i += 1 )
-      out[i] = in_[i];
-    out[0] = in_[0];
-  end
-
-endmodule
-"""
-  do_test( a )
-
 def test_for_range_lower_upper( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
       @s.update
       def upblk():
         for i in range(1, 2):
@@ -351,6 +358,14 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(1, 2):
+  //     s.out[i] = s.in_[i]
+  //   s.out[0] = s.in_[0]
+  
   always_comb begin : upblk
     for ( int i = 1; i < 2; i += 1 )
       out[i] = in_[i];
@@ -361,44 +376,11 @@ endmodule
 """
   do_test( a )
 
-def test_for_xrange_lower_upper_step( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      @s.update
-      def upblk():
-        for i in xrange(0, 5, 2):
-          s.out[i] = s.in_[i]
-        for i in xrange(1, 5, 2):
-          s.out[i] = s.in_[i]
-  a = A()
-  a._ref_src = \
-"""\
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_ [0:4],
-  output logic [31:0] out [0:4],
-  input logic [0:0] reset
-);
-
-  always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 2 )
-      out[i] = in_[i];
-    for ( int i = 1; i < 5; i += 2 )
-      out[i] = in_[i];
-  end
-
-endmodule
-"""
-  do_test( a )
-
 def test_for_range_lower_upper_step( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(0, 5, 2):
@@ -416,6 +398,15 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(0, 5, 2):
+  //     s.out[i] = s.in_[i]
+  //   for i in range(1, 5, 2):
+  //     s.out[i] = s.in_[i]
+  
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 2 )
       out[i] = in_[i];
@@ -430,8 +421,8 @@ endmodule
 def test_if_exp_for( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -447,6 +438,13 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(5):
+  //     s.out[i] = s.in_[i] if i == 1 else s.in_[0]
+  
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 )
       out[i] = ( i == 1 ) ? in_[i] : in_[0];
@@ -459,8 +457,8 @@ endmodule
 def test_if_exp_unary_op( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -476,6 +474,13 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(5):
+  //     s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
+  
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 )
       out[i] = ( i == 1 ) ? ~in_[i] : in_[0];
@@ -488,8 +493,8 @@ endmodule
 def test_if_bool_op( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -508,6 +513,16 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(5):
+  //     if s.in_[i] and (s.in_[i+1] if i<5 else s.in_[4]):
+  //       s.out[i] = s.in_[i]
+  //     else:
+  //       s.out[i] = Bits32(0)
+  
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 )
       if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
@@ -524,8 +539,8 @@ endmodule
 def test_tmpvar( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(5) ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk():
         for i in range(5):
@@ -546,6 +561,17 @@ module A
 );
   logic [31:0] upblk_tmpvar;
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   for i in range(5):
+  //     if s.in_[i] and (s.in_[i+1] if i<5 else s.in_[4]):
+  //       tmpvar = s.in_[i]
+  //     else:
+  //       tmpvar = Bits32(0)
+  //     s.out[i] = tmpvar
+  
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 ) begin
       if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
@@ -562,7 +588,7 @@ endmodule
   do_test( a )
 
 def test_struct( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(42)
   class A( Component ):
@@ -587,6 +613,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_.foo
+  
   always_comb begin : upblk
     out = in_.foo;
   end
@@ -596,10 +628,10 @@ endmodule
   do_test( a )
 
 def test_packed_array_concat( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in xrange(2) ]
+      s.bar = [ Bits32(bar) for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -623,6 +655,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_.bar[0], s.in_.bar[1], s.in_.foo )
+  
   always_comb begin : upblk
     out = { in_.bar[0], in_.bar[1], in_.foo };
   end
@@ -632,13 +670,13 @@ endmodule
   do_test( a )
 
 def test_nested_struct( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, woof=2 ):
       s.woof = Bits32(woof)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in xrange(2) ]
+      s.bar = [ Bits32(bar) for _ in range(2) ]
       s.c = C()
   class A( Component ):
     def construct( s ):
@@ -668,6 +706,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_.bar[0], s.in_.c.woof, s.in_.foo )
+  
   always_comb begin : upblk
     out = { in_.bar[0], in_.c.woof, in_.foo };
   end
@@ -681,7 +725,7 @@ endmodule
 #-------------------------------------------------------------------------
 
 def test_struct_port( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):
@@ -711,10 +755,10 @@ endmodule
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
       s.c = C()
@@ -754,13 +798,13 @@ endmodule
   do_test( a )
 
 def test_packed_array( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32(foo) for _ in xrange(2) ]
+      s.foo = [ Bits32(foo) for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
-      s.out =  [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
       s.connect( s.out[0], s.in_.foo[0] )
       s.connect( s.out[1], s.in_.foo[1] )
   a = A()
@@ -786,16 +830,16 @@ endmodule
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
-      s.c = [ C() for _ in xrange(2) ]
+      s.c = [ C() for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
-      s.out =  [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
       s.connect( s.out[0], s.in_.c[0].bar )
       s.connect( s.out[1], s.in_.c[1].bar )
   a = A()

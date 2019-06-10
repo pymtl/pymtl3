@@ -21,18 +21,24 @@ from .BehavioralTranslatorL0 import BehavioralTranslatorL0
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def __init__( s, top ):
     super( BehavioralTranslatorL1, s ).__init__( top )
-    s.gen_behavioral_trans_metadata( top )
+
+  def clear( s, tr_top ):
+    super( BehavioralTranslatorL1, s ).clear( tr_top )
+    s.gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
   # gen_behavioral_trans_metadata
   #-----------------------------------------------------------------------
 
-  def gen_behavioral_trans_metadata( s, top ):
+  def gen_behavioral_trans_metadata( s, tr_top ):
     s.behavioral.rtlir = {}
     s.behavioral.freevars = {}
+    s.behavioral.accessed = {}
+    s.behavioral.upblk_decls = {}
     s.behavioral.upblk_srcs = {}
+    s.behavioral.upblk_py_srcs = {}
     s.behavioral.decl_freevars = {}
-    s._gen_behavioral_trans_metadata( top )
+    s._gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata
@@ -53,18 +59,28 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   # Override
   def translate_behavioral( s, m ):
     """Translate behavioral part of `m`."""
+    # Get upblk metadata
+    s.behavioral.accessed[m] = m._pass_behavioral_rtlir_type_check.rtlir_accessed
     # Translate upblks
+    upblk_decls = []
     upblk_srcs = []
+    upblk_py_srcs = []
     upblks = {
       'CombUpblk' : m.get_update_blocks() - m.get_update_on_edge(),
       'SeqUpblk'  : m.get_update_on_edge()
     }
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
-        upblk_srcs.append( s.rtlir_tr_upblk_decl(
+        upblk_srcs.append( s.rtlir_tr_upblk_src(
           blk, s.behavioral.rtlir[ m ][ blk ]
         ) )
-    s.behavioral.upblk_srcs[m] = s.rtlir_tr_upblk_decls( upblk_srcs )
+        upblk_py_srcs.append( s.rtlir_tr_upblk_py_src( blk ) )
+        upblk_decls.append( s.rtlir_tr_upblk_decl(
+          blk, upblk_srcs[-1], upblk_py_srcs[-1]
+        ) )
+    s.behavioral.upblk_srcs[m] = s.rtlir_tr_upblk_srcs( upblk_srcs )
+    s.behavioral.upblk_py_srcs[m] = s.rtlir_tr_upblk_decls( upblk_py_srcs )
+    s.behavioral.upblk_decls[m] = s.rtlir_tr_upblk_decls( upblk_decls )
 
     # Generate free variable declarations
     freevars = []
@@ -92,10 +108,22 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   # Methods to be implemented by the backend translator
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_upblk_decls( s, upblk_srcs ):
+  def rtlir_tr_upblk_decls( s, upblk_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_upblk_decl( s, upblk, rtlir_upblk ):
+  def rtlir_tr_upblk_decl( s, upblk, src, py_src ):
+    raise NotImplementedError()
+
+  def rtlir_tr_upblk_srcs( s, upblk_srcs ):
+    raise NotImplementedError()
+
+  def rtlir_tr_upblk_src( s, upblk, rtlir_upblk ):
+    raise NotImplementedError()
+
+  def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
+    raise NotImplementedError()
+
+  def rtlir_tr_upblk_py_src( s, upblk ):
     raise NotImplementedError()
 
   def rtlir_tr_behavioral_freevars( s, freevars ):

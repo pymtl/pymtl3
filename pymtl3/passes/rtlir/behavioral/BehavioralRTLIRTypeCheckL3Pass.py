@@ -21,10 +21,12 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
     visitor = BehavioralRTLIRTypeCheckVisitorL3(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
@@ -32,9 +34,9 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
-  def __init__( s, component, freevars, tmpvars ):
+  def __init__( s, component, freevars, accessed, tmpvars ):
     super( BehavioralRTLIRTypeCheckVisitorL3, s ). \
-        __init__( component, freevars, tmpvars )
+        __init__( component, freevars, accessed, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (rt.Component, rt.Signal),
         'the base of an attribute must be one of: component, signal!' )
@@ -50,7 +52,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       if not dtype.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
           '{} does not have field {}!'.format(
-            dtype.get_name(), node.attr ))
+            dtype.get_name(), node.attr ) )
       dtype = dtype.get_property( node.attr )
       if isinstance( node.value.Type, rt.Port ):
         rtype = rt.Port( node.value.Type.get_direction(), dtype )

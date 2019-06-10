@@ -18,6 +18,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 impo
 def local_do_test( m ):
   m.elaborate()
   tr = SVStructuralTranslatorL4( m )
+  tr.clear( m )
   tr.translate_structural( m )
   subcomps = tr.structural.decl_subcomps
   for comp in m._ref_subcomps.keys():
@@ -49,6 +50,15 @@ def test_subcomp_decl( do_test ):
   );\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out_a == Bits32(tv[0])
+  a._test_vectors = [
+    [    0   ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_multi_components_ifc_hierarchy_connect( do_test ):
@@ -91,3 +101,13 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
   );\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out_a == Bits32(0)
+    assert m.ifc_a.msg == Bits32(0)
+    assert m.ifc_a.val == Bits32(1)
+  a._test_vectors = []
+  a._tv_in, a._tv_out = tv_in, tv_out
+  do_test( a )

@@ -62,9 +62,9 @@ endmodule
       wire_decls = get_pretty(structural, "decl_wires")
       tmpvar_decls = get_pretty(behavioral, "decl_tmpvars")
       subcomp_decls = get_pretty(structural, "decl_subcomps")
-      upblk_srcs = get_pretty(behavioral, "upblk_srcs")
+      upblk_decls = get_pretty(behavioral, "upblk_decls")
       body = const_decls + fvar_decls + wire_decls + subcomp_decls \
-           + tmpvar_decls + upblk_srcs
+           + tmpvar_decls + upblk_decls
       connections = get_pretty(structural, "connections")
       if (body and connections) or (not body and connections):
         connections = '\n' + connections

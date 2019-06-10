@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
-  tr.translate()
+  tr.translate( m )
   assert tr.hierarchy.src == m._ref_src
 
 #-------------------------------------------------------------------------
@@ -40,6 +40,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_
+  
   always_comb begin : upblk
     out = in_;
   end
@@ -67,6 +73,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update_on_edge
+  // def upblk():
+  //   s.out = s.in_
+  
   always_ff @(posedge clk) begin : upblk
     out <= in_;
   end
@@ -96,6 +108,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_1, s.in_2 )
+  
   always_comb begin : upblk
     out = { in_1, in_2 };
   end
@@ -121,6 +139,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( Bits32(42), Bits32(0) )
+  
   always_comb begin : upblk
     out = { 32'd42, 32'd0 };
   end
@@ -148,6 +172,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_, Bits32(0) )
+  
   always_comb begin : upblk
     out = { in_, 32'd0 };
   end
@@ -175,6 +205,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = sext( s.in_, 64 )
+  
   always_comb begin : upblk
     out = { { 32 { in_[31] } }, in_ };
   end
@@ -202,6 +238,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = zext( s.in_, 64 )
+  
   always_comb begin : upblk
     out = { { 32 { 1'b0 } }, in_ };
   end
@@ -231,6 +273,12 @@ module A
 );
   localparam [31:0] _fvar_STATE_IDLE = 32'd42;
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_, STATE_IDLE )
+  
   always_comb begin : upblk
     out = { in_, _fvar_STATE_IDLE };
   end
@@ -242,7 +290,7 @@ endmodule
 def test_unpacked_signal_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InPort( Bits32 ) for _ in xrange(2) ]
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
       s.out = OutPort( Bits64 )
       @s.update
       def upblk():
@@ -258,6 +306,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_[0], s.in_[1] )
+  
   always_comb begin : upblk
     out = { in_[0], in_[1] };
   end
@@ -285,6 +339,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[1]
+  
   always_comb begin : upblk
     out = in_[1];
   end
@@ -312,6 +372,12 @@ module A
   input logic [0:0] reset
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[4:36]
+  
   always_comb begin : upblk
     out = in_[35:4];
   end
@@ -372,7 +438,7 @@ endmodule
 """
   do_test( a )
 
-def test_port_const( do_test ):
+def test_port_const_unaccessed( do_test ):
   class A( Component ):
     def construct( s ):
       s.STATE_IDLE = 42
@@ -387,9 +453,46 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-  localparam [31:0] STATE_IDLE = 32'd42;
 
   assign out = 32'd42;
+
+endmodule
+"""
+  do_test( a )
+
+def test_port_const_accessed( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.STATE_IDLE = 42
+      s.out_1 = OutPort( Bits32 )
+      s.out_2 = OutPort( Bits32 )
+      s.connect( s.STATE_IDLE, s.out_1 )
+      @s.update
+      def upblk():
+        s.out_2 = s.STATE_IDLE
+  a = A()
+  a._ref_src = \
+"""\
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out_1,
+  output logic [31:0] out_2,
+  input logic [0:0] reset
+);
+  localparam [31:0] STATE_IDLE = 32'd42;
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out_2 = s.STATE_IDLE
+  
+  always_comb begin : upblk
+    out_2 = STATE_IDLE;
+  end
+
+  assign out_1 = 32'd42;
 
 endmodule
 """
@@ -399,9 +502,13 @@ def test_port_const_array( do_test ):
   class A( Component ):
     def construct( s ):
       s.STATES = [ 1, 2, 3, 4, 5 ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      s.tmp = OutPort( Bits32 )
+      for i in range(5):
         s.connect( s.STATES[i], s.out[i] )
+      @s.update
+      def upblk():
+        s.tmp = s.STATES[0]
   a = A()
   a._ref_src = \
 """\
@@ -409,9 +516,20 @@ module A
 (
   input logic [0:0] clk,
   output logic [31:0] out [0:4],
-  input logic [0:0] reset
+  input logic [0:0] reset,
+  output logic [31:0] tmp
 );
-  localparam [31:0] STATES [0:4] = { 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };
+  localparam [31:0] STATES [0:4] = '{ 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.tmp = s.STATES[0]
+  
+  always_comb begin : upblk
+    tmp = STATES[0];
+  end
 
   assign out[0] = 32'd1;
   assign out[1] = 32'd2;
@@ -472,9 +590,9 @@ endmodule
 def test_port_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      s.wire = [ Wire(Bits32) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      s.wire = [ Wire(Bits32) for _ in range(5) ]
+      for i in range(5):
         s.connect( s.wire[i], s.out[i] )
         s.connect( s.wire[i], i )
   a = A()
