@@ -12,8 +12,9 @@ from greenlet import greenlet
 
 from pymtl3 import *
 
-from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .MemMsg import MemMsgType, mk_mem_msg
+from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
+
 
 class MemMasterIfcFL( Interface ):
   def construct( s ):
