@@ -1,7 +1,6 @@
 #=========================================================================
 # test_stateful_qeueues_test
 #=========================================================================
-#
 # Tests for test_stateful using single entry queue
 #
 # Author: Yixiao Zhang
@@ -79,7 +78,7 @@ class SingleEntryPipeQueue( Component ):
 
 
 #-------------------------------------------------------------------------
-# NormalQueueCL
+# PipeQueueCL
 #-------------------------------------------------------------------------
 class PipeQueueCL( Component ):
 
@@ -163,7 +162,7 @@ class SingleEntryBypassQueue( Component ):
 
 
 #-------------------------------------------------------------------------
-# NormalQueueCL
+# BypassQueueCL
 #-------------------------------------------------------------------------
 class BypassQueueCL( Component ):
 

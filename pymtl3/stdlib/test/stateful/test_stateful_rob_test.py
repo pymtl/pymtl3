@@ -1,7 +1,6 @@
 #=========================================================================
 # test_stateful_rob_test
 #=========================================================================
-#
 # Tests for test_stateful using a reorder buffer
 #
 # Author: Yixiao Zhang
