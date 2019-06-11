@@ -9,8 +9,6 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
-import linecache
-from copy import deepcopy
 
 import attr
 import hypothesis.strategies as st

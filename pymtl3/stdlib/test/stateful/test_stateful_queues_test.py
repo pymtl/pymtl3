@@ -17,7 +17,7 @@ from pymtl3.dsl.test.sim_utils import simple_sim_pass
 from pymtl3.passes import GenDAGPass, OpenLoopCLPass
 from pymtl3.stdlib.ifcs import CalleeIfcRTL
 
-from .test_stateful import run_test_state_machine, get_strategy_from_type
+from .test_stateful import get_strategy_from_type, run_test_state_machine
 from .test_wrapper import *
 
 

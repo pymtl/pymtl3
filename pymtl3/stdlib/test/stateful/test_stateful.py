@@ -8,6 +8,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from copy import deepcopy
+
 import hypothesis.strategies as st
 from hypothesis import settings
 from hypothesis.searchstrategy import SearchStrategy
@@ -152,6 +154,13 @@ def wrap_method( method_spec, arguments ):
     #compare results
     if dut_result != ref_result:
       s.error_line_trace()
+
+      def format_result( result ):
+        result_list = []
+        for name, _ in result.fields:
+          result_list += [ "{}={}".format( name, vars( result )[ name ] ) ]
+        return list_string( result_list )
+
       raise ValueError( """mismatch found in method {method}:
   - args: {data}
   - ref result: {ref_result}
@@ -160,8 +169,8 @@ def wrap_method( method_spec, arguments ):
           method=method_name,
           data=list_string(
               [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] ),
-          ref_result=ref_result,
-          dut_result=dut_result ) )
+          ref_result=format_result( ref_result ),
+          dut_result=format_result( dut_result ) ) )
 
   return method_rule, method_rdy
 
