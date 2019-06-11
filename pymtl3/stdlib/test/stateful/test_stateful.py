@@ -36,15 +36,22 @@ def bitstype_strategy( bits ):
 #-------------------------------------------------------------------------
 # bits_struct_strategy
 #-------------------------------------------------------------------------
-def bits_struct_strategy( bits_struct_type, all_field_st={} ):
+def bits_struct_strategy( bits_struct_type,
+                          predefined={},
+                          remaining_names=None ):
+
+  field_strategies = {}
+  for name, field_type in bits_struct_type.fields:
+    predefined_field = predefined.get( name, {} )
+    field_strategies[ name ] = get_strategy_from_type(
+        field_type, predefined_field, remaining_names )
 
   @st.composite
   def strategy( draw ):
     new_bits_struct = bits_struct_type()
     for name, field_type in bits_struct_type.fields:
-      field_st = all_field_st.get( name, {} )
       # recursively draw st
-      data = draw( get_strategy_from_type( field_type, field_st ) )
+      data = draw( field_strategies[ name ] )
       setattr( new_bits_struct, name, data )
     return new_bits_struct
 
@@ -54,18 +61,22 @@ def bits_struct_strategy( bits_struct_type, all_field_st={} ):
 #-------------------------------------------------------------------------
 # get_strategy_from_type
 #-------------------------------------------------------------------------
-def get_strategy_from_type( dtype, all_field_st ):
+def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
+  if isinstance( predefined, tuple ):
+    assert isinstance( predefined[ 0 ], SearchStrategy )
+    remaining_names.discard( predefined[ 1 ] )
+    return predefined[ 0 ]
+
   if isinstance( dtype(), Bits ):
-    if all_field_st:
-      assert isinstance(
-          all_field_st,
-          SearchStrategy ), "need strategy for Bits type {}, got {}".format(
-              repr( dtype ), str( all_field_st ) )
-      return all_field_st
+    if predefined:
+      raise TypeError( "Need strategy for Bits type {}".format(
+          repr( dtype ) ) )
     return bitstype_strategy( dtype() )
+
   if isinstance( dtype(), BitStruct ):
-    return bits_struct_strategy( dtype, all_field_st )
-  return None
+    return bits_struct_strategy( dtype, predefined, remaining_names )
+
+  raise TypeError( "Argument strategy for {} not supported".format( dtype ) )
 
 
 #-------------------------------------------------------------------------
@@ -131,8 +142,12 @@ def wrap_method( method_spec, arguments ):
     dut_result = s.dut.__dict__[ method_name ](**kwargs )
     ref_result = s.ref.__dict__[ method_name ](**kwargs )
 
-    if method_spec.rets_type:
-      ref_result = method_spec.rets_type( ref_result )
+    ret_type = method_spec.rets_type
+    if ret_type:
+      if len( ret_type.fields ) > 1:
+        ref_result = method_spec.rets_type(*ref_result )
+      else:
+        ref_result = method_spec.rets_type( ref_result )
 
     #compare results
     if dut_result != ref_result:
@@ -152,28 +167,42 @@ def wrap_method( method_spec, arguments ):
 
 
 def get_strategy_from_list( st_list ):
-
+  # Generate a nested dictionary for customized strategy
+  # e.g. [ ( 'enq.msg', st1 ), ('deq.msg.msg0', st2 ) ]
+  # turns into {
+  #  'enq': { 'msg': st1 },
+  #  'deq': { 'msg': { 'msg0': st2 } }
+  # }
   all_field_st = {}
   all_subfield_st = {}
-  # First go through all customized strategy
+
+  # First go through all customized strategy,
+  # Create a dict of ( field, [ ( subfield, strategy ) ] ) for non-leaf
+  # Create a dict of ( field, strategy ) for leaf
   for name, st in st_list:
     field_name, subfield_name = name.split( ".", 1 )
     field_st = all_field_st.setdefault( field_name, {} )
-    # strategy for a field
+    # leaf
     if not "." in subfield_name:
       field_st[ subfield_name ] = st
-    # strategy for subfield
+
+    # non-leaf
     else:
       subfield_list = all_subfield_st.setdefault( field_name, [] )
       subfield_list += [( subfield_name, st ) ]
 
+  # Recursively generate dict for subfields
   for field_name, subfield_list in all_subfield_st.items():
     subfield_dict = get_strategy_from_list( subfield_list )
     for subfield in subfield_dict.keys():
-      # a field with its strategy specified directly should not have
-      # strategy for subfield. e.g. s.enq.msg and s.enq.msg.msg0 should
+      # If a field has a customized strategy, there should not be any
+      # strategy for its subfields. e.g. s.enq.msg and s.enq.msg.msg0 should
       # not be in st_list simultaneously
-      assert not subfield in all_field_st
+      field_st = all_field_st[ field_name ]
+      assert not subfield in field_st.keys(), (
+          "Found customized strategy for {}. "
+          "Separate strategy for its fields are not allowed".format(
+              field_st[ subfield ][ 1 ] ) )
     all_field_st[ field_name ].update( subfield_dict )
   return all_field_st
 
@@ -199,28 +228,37 @@ def create_test_state_machine( dut,
     except Exception:
       raise "No method specs specified"
 
-  # get customized strategy
-  method_arg_st = get_strategy_from_list( argument_strategy )
+  # Store ( strategy, full_name )
+  arg_st_with_full_name = []
+  all_st_full_names = set()
+  for name, st in argument_strategy:
+
+    if not isinstance( st, SearchStrategy ):
+      raise TypeError( "Only strategy is allowed! got {} for {}".format(
+          type( st ), name ) )
+
+    arg_st_with_full_name += [( name, ( st, name ) ) ]
+    all_st_full_names.add( name )
+
+  # get nested dict of strategy
+  method_arg_st = get_strategy_from_list( arg_st_with_full_name )
 
   # go through spec for each method
   for method_name, spec in method_specs.iteritems():
     arg_st = method_arg_st.get( method_name, {} )
 
-    # add the rest from inspection result
+    # create strategy based on types and predefined customization
     for arg, dtype in spec.args:
-      arg_st[ arg ] = get_strategy_from_type( dtype, arg_st.get( arg, {} ) )
-      if not arg_st[ arg ]:
-        error_msg = """
-Argument strategy not specified!
-  method name: {method_name}
-  argument   : {arg}
-"""
-        raise ValueError( error_msg.format( method_name=method_name, arg=arg ) )
+      arg_st[ arg ] = get_strategy_from_type( dtype, arg_st.get( arg, {} ),
+                                              all_st_full_names )
 
+    # wrap method
     method_rule, method_rdy = wrap_method( method_specs[ method_name ], arg_st )
     setattr( Test, method_name, method_rule )
     setattr( Test, method_name + "_rdy", method_rdy )
 
+  assert not all_st_full_names, "Got strategy for unrecognized field: {}".format(
+      list_string( all_st_full_names ) )
   return Test
 
 

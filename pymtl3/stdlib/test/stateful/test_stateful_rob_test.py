@@ -52,6 +52,7 @@ class ReorderBufferCL( Component ):
     if s.allocated[ index ]:
       s.data[ index ] = value
 
+  # testing returning multiple fields
   @non_blocking( lambda s: s.data[ s.head ] != None )
   def remove( s ):
     head = s.head
@@ -60,7 +61,7 @@ class ReorderBufferCL( Component ):
     s.allocated[ s.head ] = False
     s.head = ( s.head + 1 ) % s.num_entries
     s.num -= 1
-    return data
+    return head, data
 
   def empty( s ):
     return s.num == 0
@@ -99,7 +100,9 @@ class ReorderBuffer( Component ):
     s.alloc = CalleeIfcRTL( RetTypes=[( 'index', index_type ) ] )
     s.update_entry = CalleeIfcRTL(
         ArgTypes=[( 'index', index_type ), ( 'value', DataType ) ] )
-    s.remove = CalleeIfcRTL( RetTypes=[( 'value', DataType ) ] )
+    # This order has to be consistent with CL
+    s.remove = CalleeIfcRTL( RetTypes=[( 'index',
+                                         index_type ), ( 'value', DataType ) ] )
 
     s.empty = Wire( Bits1 )
 
@@ -127,6 +130,7 @@ class ReorderBuffer( Component ):
         s.remove.rets.value = s.update_entry.args.value
       else:
         s.remove.rets.value = s.data[ s.head ]
+      s.remove.rets.index = s.head
 
     @s.update_on_edge
     def update_num():
