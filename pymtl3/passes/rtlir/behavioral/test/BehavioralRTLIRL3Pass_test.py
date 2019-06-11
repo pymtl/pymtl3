@@ -13,7 +13,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.datatypes import Bits1, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.errors import VarNotDeclaredError
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
@@ -50,7 +50,7 @@ def local_do_test( m ):
 #-------------------------------------------------------------------------
 
 def test_L3_struct_attr( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):
@@ -68,7 +68,7 @@ def test_L3_struct_attr( do_test ):
 
 @pytest.mark.xfail( reason = "Behavioral RTLIR does not support struct instantiation yet" )
 def test_L3_struct_inst( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):
@@ -99,7 +99,7 @@ def test_L3_vector_attr( do_test ):
     do_test( A() )
 
 def test_L3_struct_no_field( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):
@@ -114,7 +114,7 @@ def test_L3_struct_no_field( do_test ):
 
 @pytest.mark.xfail( reason = "RTLIR conversion does not support const struct yet" )
 def test_L3_const_struct( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):
@@ -133,7 +133,7 @@ def test_L3_const_struct( do_test ):
 
 @pytest.mark.xfail( reason = "StructInst is not supported yet" )
 def test_L3_call_struct_inst( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):

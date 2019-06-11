@@ -299,7 +299,7 @@ def test_deep_pass_through_equal_m_constraint():
       )
 
     def line_trace( s ):
-      return s.inner.line_trace()
+      return "push's line trace:" + str(s.push)
 
     def done( s ):
       return True

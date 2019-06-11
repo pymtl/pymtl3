@@ -22,6 +22,8 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   def __init__( s, top ):
     super( StructuralTranslatorL2, s ).__init__( top )
 
+  def clear( s, tr_top ):
+    super( StructuralTranslatorL2, s ).clear( tr_top )
     # Declarations
     s.structural.decl_type_struct = []
 
@@ -30,16 +32,19 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, top ):
-    top.apply( StructuralRTLIRGenL2Pass() )
+  def gen_structural_trans_metadata( s, tr_top ):
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
+    tr_top.apply( StructuralRTLIRGenL2Pass( s.c_ss, s.c_sc, s.c_cc ) )
 
   #-----------------------------------------------------------------------
   # translate_structural
   #-----------------------------------------------------------------------
 
   # Override
-  def translate_structural( s, top ):
-    super( StructuralTranslatorL2, s ).translate_structural( top )
+  def translate_structural( s, tr_top ):
+    super( StructuralTranslatorL2, s ).translate_structural( tr_top )
 
   #-----------------------------------------------------------------------
   # _translate_structural

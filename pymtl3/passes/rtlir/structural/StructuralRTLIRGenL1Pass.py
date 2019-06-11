@@ -6,8 +6,6 @@
 """Provide L1 structural RTLIR generation pass."""
 from __future__ import absolute_import, division, print_function
 
-from collections import defaultdict, deque
-
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir
@@ -16,21 +14,27 @@ from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
 class StructuralRTLIRGenL1Pass( BasePass ):
-  def __call__( s, top ):
-    """ generate structural RTLIR for component `top` """
-    if not hasattr( top, '_pass_structural_rtlir_gen' ):
-      top._pass_structural_rtlir_gen = PassMetadata()
-    s.top = top
+  def __init__( s, conns_self_self, conns_self_child, conns_child_child ):
+    # connections_self_self, connections_self_child, connections_child_child
+    s.c_ss = conns_self_self
+    s.c_sc = conns_self_child
+    s.c_cc = conns_child_child
+
+  def __call__( s, tr_top ):
+    """ generate structural RTLIR for component `tr_top` """
+    if not hasattr( tr_top, '_pass_structural_rtlir_gen' ):
+      tr_top._pass_structural_rtlir_gen = PassMetadata()
+    s.tr_top = tr_top
     try:
-      s.gen_rtlir_types( top )
-      s.gen_constants( top )
-      s.gen_connections( top )
+      s.gen_rtlir_types( tr_top )
+      s.gen_constants( tr_top )
+      s.sort_connections( tr_top )
     except AssertionError as e:
       msg = '' if e.args[0] is None else e.args[0]
-      raise RTLIRConversionError( top, msg )
+      raise RTLIRConversionError( tr_top, msg )
 
-  def gen_rtlir_types( s, top ):
-    top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( top )
+  def gen_rtlir_types( s, tr_top ):
+    tr_top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( tr_top )
 
   def gen_constants( s, m ):
     ns = m._pass_structural_rtlir_gen
@@ -43,69 +47,9 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       const_instance = getattr(m, const_name)
       ns.consts.append( ( const_name, const_rtype, const_instance ) )
 
-  def gen_connections( s, top ):
-    """Generate connections based on the net structure.
-
-    Must be called from the top component!
-    """
-    ns = top._pass_structural_rtlir_gen
-    ns.connections_self_self = defaultdict( set )
-    ns.connections_self_child = defaultdict( set )
-    ns.connections_child_child = defaultdict( set )
-
-    # Generate the connections assuming no sub-components
-    nets = top.get_all_value_nets()
-    adjs = top.get_signal_adjacency_dict()
-
-    for writer, net in nets:
-      S = deque( [ writer ] )
-      visited = {  writer  }
-      while S:
-        u = S.pop()
-        writer_host        = u.get_host_component()
-        writer_host_parent = writer_host.get_parent_object()
-        for v in adjs[u]:
-          if v not in visited:
-            visited.add( v )
-            S.append( v )
-            reader_host        = v.get_host_component()
-            reader_host_parent = reader_host.get_parent_object()
-
-            # Four possible cases for the reader and writer signals:
-            # 1.   They have the same host component. Both need
-            #       to be added to the host component.
-            # 2/3. One's host component is the parent of the other.
-            #       Both need to be added to the parent component.
-            # 4.   They have the same parent component.
-            #       Both need to be added to the parent component.
-
-            if writer_host is reader_host:
-              s.add_conn_self_self( writer_host, u, v )
-            elif writer_host_parent is reader_host:
-              s.add_conn_self_child( reader_host, u, v )
-            elif writer_host is reader_host_parent:
-              s.add_conn_self_child( writer_host, u, v )
-            elif writer_host_parent == reader_host_parent:
-              s.add_conn_child_child( writer_host_parent, u, v )
-            else:
-              assert False, "unexpected connection type!"
-    s.sort_connections( top )
-
-  def add_conn_self_self( s, component, writer, reader ):
-    ns = s.top._pass_structural_rtlir_gen
-    _rw_pair = ( gen_signal_expr( component, writer ),
-                 gen_signal_expr( component, reader ) )
-    ns.connections_self_self[ component ].add( _rw_pair )
-
-  def add_conn_self_child( s, component, writer, reader ):
-    raise NotImplementedError()
-
-  def add_conn_child_child( s, component, writer, reader ):
-    raise NotImplementedError()
-
   def collect_connections( s, m ):
-    ns = s.top._pass_structural_rtlir_gen
-    return map( lambda x: ( x, False ), ns.connections_self_self[m] )
+    return map( lambda x: \
+      ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), s.c_ss[m] )
 
   def sort_connections( s, m ):
     m_connections = s.collect_connections( m )
@@ -118,7 +62,6 @@ class StructuralRTLIRGenL1Pass( BasePass ):
            ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
           connections.append( ( wr, rd ) )
           m_connections[idx] = ( m_connections[idx][0], True )
-          continue
     connections += map(lambda x:x[0],filter(lambda x:not x[1],m_connections))
     m._pass_structural_rtlir_gen.connections = connections
 

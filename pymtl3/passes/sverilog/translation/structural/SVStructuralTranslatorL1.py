@@ -9,7 +9,7 @@ from functools import reduce
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.sverilog.utility import get_component_unique_name, make_indent
+from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
@@ -79,11 +79,11 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
           assert False, '{} is not an integer!'.format( array )
       assert isinstance( array, list )
 
-      ret = '{ '
-      for _idx, idx in enumerate( xrange( n_dim[0] ) ):
+      ret = "'{ "
+      for _idx, idx in enumerate( range( n_dim[0] ) ):
         if _idx != 0: ret += ', '
         ret += gen_array_param( n_dim[1:], array[idx] )
-      ret += ' }'
+      ret += " }"
       return ret
 
     assert isinstance( Type.get_dtype(), rdt.Vector ),\
@@ -142,6 +142,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return var_id.replace( '[', '_$' ).replace( ']', '' )
 
   def rtlir_tr_literal_number( s, nbits, value ):
+    value = int( value )
     return "{nbits}'d{value}".format( **locals() )
 
   def rtlir_tr_component_unique_name( s, c_rtype ):

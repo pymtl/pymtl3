@@ -16,6 +16,7 @@ from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
+from .CLLineTracePass import CLLineTracePass
 from .errors import PassOrderError
 
 
@@ -120,6 +121,10 @@ class OpenLoopCLPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
+    # Shunning: we call CL line trace pass here.
+    cl_trace = CLLineTracePass()
+    schedule.insert( 0, cl_trace.process_component( top ) )
+
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
 
@@ -223,7 +228,6 @@ class OpenLoopCLPass( BasePass ):
                                 map_next_func, map_next_func_of_next_method,
                                 schedule_no_method,
                                 i, next_method )
-
     top.num_cycles_executed = 0
 
     return schedule

@@ -70,7 +70,7 @@ def test_L5_component_array_index( do_test ):
       s.out = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.comp = [ B() for _ in xrange(4) ]
+      s.comp = [ B() for _ in range(4) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
@@ -114,5 +114,5 @@ def test_L5_component_not_port( do_test ):
       @s.update
       def upblk():
         s.a_out = s.comp.comp.c_out
-  with expected_failure( PyMTLTypeError, "comp is not a port of subcomponent B" ):
+  with expected_failure( PyMTLTypeError, "comp is not a port of B subcomponent" ):
     do_test( A() )

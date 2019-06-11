@@ -23,6 +23,7 @@ from .TestStructuralTranslator import mk_TestStructuralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestStructuralTranslator(StructuralTranslatorL3)(m)
+  tr.clear( m )
   tr.translate_structural(m)
   try:
     decl_ifcs = tr.structural.decl_ifcs[m]
@@ -73,8 +74,8 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -141,7 +142,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: IfcAttr CurCompAttr in_ msg -> IfcAttr CurCompAttr out msg
   connection: IfcAttr CurCompAttr out rdy -> IfcAttr CurCompAttr in_ rdy
@@ -164,9 +165,9 @@ def test_ifc_array_idx( do_test ):
       s.rdy = InPort( Bits1 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ InIfc() for _ in xrange(5) ]
-      s.out = [ OutIfc() for _ in xrange(5) ]
-      for i in xrange(5):
+      s.in_ = [ InIfc() for _ in range(5) ]
+      s.out = [ OutIfc() for _ in range(5) ]
+      for i in range(5):
         s.connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
@@ -224,7 +225,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 msg -> IfcAttr IfcArrayIdx CurCompAttr out 0 msg
   connection: IfcAttr IfcArrayIdx CurCompAttr out 0 rdy -> IfcAttr IfcArrayIdx CurCompAttr in_ 0 rdy
@@ -271,9 +272,9 @@ def test_nested_ifc( do_test ):
       s.ctrl_bar = InPort( Bits1 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ MemReqIfc() for _ in xrange(5) ]
-      s.out = [ MemRespIfc() for _ in xrange(5) ]
-      for i in xrange(5):
+      s.in_ = [ MemReqIfc() for _ in range(5) ]
+      s.out = [ MemRespIfc() for _ in range(5) ]
+      for i in range(5):
         s.connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
@@ -309,7 +310,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 msg -> IfcAttr IfcArrayIdx CurCompAttr out 0 msg
 

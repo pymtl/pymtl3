@@ -27,10 +27,14 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
     # Override
     def __init__( s, top ):
       super( _RTLIRTranslator, s ).__init__( top )
+
+    # Override
+    def clear( s, tr_top ):
+      super( _RTLIRTranslator, s ).clear( tr_top )
       s.hierarchy = TranslatorMetadata()
 
     # Override
-    def translate( s ):
+    def translate( s, tr_top ):
 
       def get_component_nspace( namespace, m ):
         ns = TranslatorMetadata()
@@ -54,6 +58,9 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
         s.gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array' )
         s.gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
 
+      # Clear all translator metadata
+      s.clear( tr_top )
+
       s.component = {}
       # Generate backend representation for each component
       s.hierarchy.components = []
@@ -62,12 +69,12 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
       s.hierarchy.decl_type_struct = []
 
       try:
-        s.translate_behavioral( s.top )
-        s.translate_structural( s.top )
-        translate_component( s.top, s.hierarchy.components, [] )
+        s.translate_behavioral( s.tr_top )
+        s.translate_structural( s.tr_top )
+        translate_component( s.tr_top, s.hierarchy.components, [] )
       except AssertionError as e:
         msg = '' if e.args[0] is None else e.args[0]
-        raise RTLIRTranslationError( s.top, msg )
+        raise RTLIRTranslationError( s.tr_top, msg )
 
       # Generate the representation for all components
       s.hierarchy.component_src = s.rtlir_tr_components(s.hierarchy.components)

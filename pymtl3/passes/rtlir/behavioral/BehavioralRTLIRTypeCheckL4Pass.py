@@ -20,9 +20,11 @@ class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
     visitor = BehavioralRTLIRTypeCheckVisitorL4(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
@@ -30,9 +32,9 @@ class BehavioralRTLIRTypeCheckL4Pass( BasePass ):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
-  def __init__( s, component, freevars, tmpvars ):
+  def __init__( s, component, freevars, accessed, tmpvars ):
     super( BehavioralRTLIRTypeCheckVisitorL4, s ). \
-        __init__( component, freevars, tmpvars )
+        __init__( component, freevars, accessed, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (rt.Component, rt.Signal, rt.InterfaceView),
         'the base of an attribute must be one of: module, struct, interface!' )

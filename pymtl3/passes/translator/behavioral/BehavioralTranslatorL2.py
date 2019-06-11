@@ -21,15 +21,18 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
   def __init__( s, top ):
     super( BehavioralTranslatorL2, s ).__init__( top )
 
+  def clear( s, tr_top ):
+    super( BehavioralTranslatorL2, s ).clear( tr_top )
+
   #-----------------------------------------------------------------------
   # gen_behavioral_trans_metadata
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_behavioral_trans_metadata( s, top ):
+  def gen_behavioral_trans_metadata( s, tr_top ):
     s.behavioral.tmpvars = {}
     s.behavioral.decl_tmpvars = {}
-    super( BehavioralTranslatorL2, s ).gen_behavioral_trans_metadata( top )
+    super( BehavioralTranslatorL2, s ).gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata

@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
-  tr.translate()
+  tr.translate( m )
   assert tr.hierarchy.src == m._ref_src
 
 #-------------------------------------------------------------------------
@@ -56,6 +56,14 @@ module A
   output logic [0:0] out_$val
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out.val = s.in_.val
+  //   s.out.msg = s.in_.msg
+  //   s.in_.rdy = s.out.rdy
+  
   always_comb begin : upblk
     out_$val = in__$val;
     out_$msg = in__$msg;
@@ -72,7 +80,7 @@ def test_interface_index( do_test ):
       s.foo = OutPort( Bits32 )
   class A( Component ):
     def construct( s ):
-      s.in_ = [ Ifc() for _ in xrange(2) ]
+      s.in_ = [ Ifc() for _ in range(2) ]
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
@@ -89,6 +97,12 @@ module A
   output logic [31:0] in__$1_$foo
 );
 
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[1].foo
+  
   always_comb begin : upblk
     out = in__$1_$foo;
   end

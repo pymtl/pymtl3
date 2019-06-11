@@ -6,12 +6,14 @@
 """Provide the level 1 SystemVerilog translator implementation."""
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits32
+import inspect
+
+from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.sverilog.utility import make_indent
+from pymtl3.passes.sverilog.util.utility import make_indent
 from pymtl3.passes.translator.behavioral.BehavioralTranslatorL1 import (
     BehavioralTranslatorL1,
 )
@@ -21,19 +23,60 @@ from .SVBehavioralTranslatorL0 import SVBehavioralTranslatorL0
 
 class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1 ):
 
+  def rtlir_tr_upblk_decls( s, upblk_decls ):
+    ret = ''
+    for idx, upblk_decl in enumerate(upblk_decls):
+      make_indent( upblk_decl, 1 )
+      if idx != 0:
+        ret += '\n'
+      ret += '\n' + '\n'.join( upblk_decl )
+    return ret
+
+  def rtlir_tr_upblk_decl( s, upblk, src, py_src ):
+    return py_src + [ "" ] + src
+
   def _get_rtlir2sv_visitor( s ):
     return BehavioralRTLIRToSVVisitorL1
 
-  def rtlir_tr_upblk_decls( s, upblk_srcs ):
+  def rtlir_tr_upblk_srcs( s, upblk_srcs ):
     ret = ''
     for upblk_src in upblk_srcs:
       make_indent( upblk_src, 1 )
       ret += '\n' + '\n'.join( upblk_src )
     return ret
 
-  def rtlir_tr_upblk_decl( s, upblk, rtlir_upblk ):
+  def rtlir_tr_upblk_src( s, upblk, rtlir_upblk ):
     visitor = s._get_rtlir2sv_visitor()()
     return visitor.enter( upblk, rtlir_upblk )
+
+  def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
+    ret = ''
+    for upblk_py_src in upblk_py_srcs:
+      make_indent( upblk_py_src, 1 )
+      ret += '\n' + '\n'.join( upblk_py_src )
+    return ret
+
+  def rtlir_tr_upblk_py_src( s, upblk ):
+    def _trim( py_src ):
+      indent = 100
+      for line in py_src:
+        if line:
+          n_spaces = len( line ) - len( line.lstrip() )
+          if n_spaces < indent:
+            indent = n_spaces
+      for idx, line in enumerate( py_src ):
+        if line:
+          py_src[ idx ] = line[indent:]
+    try:
+      upblk_py_src = inspect.getsource( upblk )
+    except IOError:
+      upblk_py_src = "IOError: cannot retrieve Python update block code!"
+    upblk_py_src = upblk_py_src.split( '\n' )
+    _trim( upblk_py_src )
+    while upblk_py_src and not upblk_py_src[-1]:
+      upblk_py_src = upblk_py_src[:-1]
+    py_src = [ "PYMTL SOURCE:", "" ] + upblk_py_src
+    return map( lambda x: "// "+x, py_src )
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
     make_indent( freevars, 1 )
@@ -199,6 +242,9 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
   # visit_SignExt
   #-----------------------------------------------------------------------
+  # We need to special case the situation where a bit-selection or single-bit
+  # part selection needs to be sign-extended ( Verilator throws an error
+  # at this ) e.g. in_[31:31][0] should be translated into in_[31:31].
 
   def visit_SignExt( s, node ):
     value = s.visit( node.value )
@@ -207,11 +253,31 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     except AttributeError:
       raise SVerilogTranslationError( s.blk, node, 
         "new bitwidth of sign extension must be known at elaboration time!" )
+    # Check if the signal to be extended is a bit selection or one-bit part
+    # selection.
+    if isinstance( node.value, bir.Slice ):
+      try:
+        lower = node.value.lower._value
+        upper = node.value.upper._value
+        if upper - lower == 1:
+          _one_bit = True
+        else:
+          _one_bit = False
+      except AttributeError:
+        _one_bit = False
+    elif isinstance( node.value, bir.Index ):
+      _one_bit = True
+    else:
+      _one_bit = False
     current_nbits = int(node.value.Type.get_dtype().get_length())
     last_bit = current_nbits - 1
     padded_nbits = target_nbits - current_nbits
-    return "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}". \
-        format( **locals() )
+    template = "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}"
+    one_bit_template = "{{ {{ {padded_nbits} {{ {value} }} }}, {value} }}"
+    if _one_bit:
+      return one_bit_template.format( **locals() )
+    else:
+      return template.format( **locals() )
 
   #-----------------------------------------------------------------------
   # visit_Reduce
@@ -234,7 +300,15 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_SizeCast( s, node ):
     nbits = node.nbits
     value = s.visit( node.value )
-    return "{nbits}'d{value}".format( **locals() )
+    if hasattr( node, "_value" ):
+      template = "{nbits}'d{value}"
+      if isinstance( node._value, Bits ):
+        value = node._value.value
+      else:
+        value = node._value
+    else:
+      template = "{nbits}'( {value} )"
+    return template.format( **locals() )
 
   #-----------------------------------------------------------------------
   # visit_StructInst

@@ -19,6 +19,7 @@ from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 def local_do_test( m ):
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL5)(m)
+  tr.clear( m )
   tr.translate_behavioral( m )
   for component, _ref_upblk_repr in m._ref_upblk_repr.iteritems():
     upblk_src = tr.behavioral.upblk_srcs[component]
@@ -50,12 +51,12 @@ def test_multi_components_tmpvars( do_test ):
   a.elaborate()
   a._ref_upblk_repr = { a : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """, a.b : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """ }
   a._ref_freevar_repr = { a : "freevars:\n", a.b : "freevars:\n" }
   a._ref_tmpvar_repr = { a : \
@@ -78,9 +79,9 @@ def test_multi_components_freevars( do_test ):
       @s.update
       def upblk():
         if 1:
-          s.out = STATE_IDLE
+          s.out = Bits16(STATE_IDLE)
         else:
-          s.out = STATE_WORK
+          s.out = Bits16(STATE_WORK)
   class A( Component ):
     def construct( s ):
       s.b = B()
@@ -90,17 +91,17 @@ def test_multi_components_freevars( do_test ):
         if 1:
           s.out = s.b.out
         else:
-          s.out = STATE_IDLE
+          s.out = Bits16(STATE_IDLE)
   a = A()
   a.elaborate()
   a._ref_upblk_repr = { a : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """, a.b : \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """ }
   a._ref_freevar_repr = { a.b : \
 """\

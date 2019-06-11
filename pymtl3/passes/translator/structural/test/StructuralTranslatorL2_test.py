@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from pymtl3.datatypes import Bits16, Bits32
+from pymtl3.datatypes import Bits16, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
@@ -24,6 +24,7 @@ from .TestStructuralTranslator import mk_TestStructuralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestStructuralTranslator(StructuralTranslatorL2)(m)
+  tr.clear( m )
   tr.translate_structural(m)
   try:
     name = tr.structural.component_unique_name[m]
@@ -42,7 +43,7 @@ def local_do_test( m ):
     pass
 
 def test_struct_port_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -75,7 +76,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -83,7 +84,7 @@ endcomponent
   do_test( a )
 
 def test_struct_wire_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -120,8 +121,8 @@ wire_decls:
   wire_decl: struct Wire of Struct B
 component_decls:
 tmpvars:
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 connections:
 
 endcomponent
@@ -130,7 +131,7 @@ endcomponent
 
 @pytest.mark.xfail( reason = "RTLIR not support const struct instance yet" )
 def test_struct_const_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
@@ -163,7 +164,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -171,13 +172,13 @@ endcomponent
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
       s.bar = Bits16(bar)
   class A( Component ):
     def construct( s ):
-      s.struct = [ InPort( B ) for _ in xrange(5) ]
+      s.struct = [ InPort( B ) for _ in range(5) ]
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -204,7 +205,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -212,10 +213,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_port_decl( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0 ):
       s.foo = Bits32(foo)
       s.bar = C()
@@ -254,7 +255,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -262,9 +263,9 @@ endcomponent
   do_test( a )
 
 def test_struct_packed_array_port_decl( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
-      s.foo = [ Bits32(foo) for _ in xrange( 5 ) ]
+      s.foo = [ Bits32(foo) for _ in range( 5 ) ]
       s.bar = Bits16(bar)
   class A( Component ):
     def construct( s ):
@@ -299,7 +300,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -307,13 +308,13 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_port_decl( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
-      s.bar = [ C() for _ in xrange(5) ]
+      s.bar = [ C() for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -349,7 +350,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
 
 endcomponent
@@ -357,13 +358,13 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_index( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
-      s.bar = [ C() for _ in xrange(5) ]
+      s.bar = [ C() for _ in range(5) ]
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -407,7 +408,7 @@ freevars:
 wire_decls:
 component_decls:
 tmpvars:
-upblk_decls:
+upblk_srcs:
 connections:
   connection: PackedIndex StructAttr CurCompAttr struct bar 1 -> CurCompAttr out
 

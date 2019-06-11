@@ -20,6 +20,14 @@ class CLLineTracePass( BasePass ):
 
   def __call__( self, top ):
 
+    # Create a new schedule
+
+    if hasattr( top, "_sched" ):
+      top._cl_trace = PassMetadata()
+      top._cl_trace.schedule = [ self.process_component( top ) ] + top._sched.schedule
+
+  def process_component( self, top ):
+
     # [wrap_callee_method] wraps the original method in a callee port
     # into a new method that not only calls the origianl method, but
     # also saves the arguments to the method and the return value,
@@ -150,9 +158,4 @@ class CLLineTracePass( BasePass ):
         mport.saved_kwargs = None
         mport.saved_ret = None
 
-    top._cl_trace = PassMetadata()
-
-    # Create a new schedule
-    new_schedule = top._sched.schedule[:]
-    new_schedule.insert( 0, reset_method_ports )
-    top._cl_trace.schedule = new_schedule
+    return reset_method_ports

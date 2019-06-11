@@ -15,7 +15,7 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, BitStruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -39,7 +39,8 @@ class Vector( BaseRTLIRDataType ):
     return s.nbits
 
   def __eq__( s, other ):
-    return isinstance(other, Vector) and s.nbits == other.nbits
+    return (isinstance(other, Vector) and s.nbits == other.nbits) or \
+           (s.nbits == 1 and isinstance(other, Bool))
 
   def __hash__( s ):
     return hash((type(s), s.nbits))
@@ -53,11 +54,12 @@ class Vector( BaseRTLIRDataType ):
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
-  def __init__( s, name, properties, packed_order ):
+  def __init__( s, name, properties, packed_order, cls = None ):
     assert len( packed_order ) > 0, 'packed_order is empty!'
     s.name = name
     s.properties = properties
     s.packed_order = packed_order
+    s.cls = cls
 
   def __eq__( s, u ):
     return isinstance(u, Struct) and s.name == u.name
@@ -67,6 +69,9 @@ class Struct( BaseRTLIRDataType ):
 
   def get_name( s ):
     return s.name
+
+  def get_class( s ):
+    return s.cls
 
   def get_pack_order( s ):
     return s.packed_order
@@ -101,7 +106,8 @@ class Bool( BaseRTLIRDataType ):
     pass
 
   def __eq__( s, other ):
-    return isinstance(other, Bool)
+    return isinstance(other, Bool) or \
+           (isinstance(other, Vector) and other.nbits==1)
 
   def get_length( s ):
     return 1
@@ -180,7 +186,7 @@ def _get_rtlir_dtype_struct( obj ):
     return PackedArray( dim_sizes, _get_rtlir_dtype_struct( obj ) )
 
   # Struct field
-  elif hasattr( obj, '__class__' ) and not obj.__class__.__name__ in dir( __builtins__ ):
+  elif isinstance( obj, BitStruct ):
     cls = obj.__class__
     all_properties = {}
 
@@ -204,8 +210,11 @@ def _get_rtlir_dtype_struct( obj ):
 
     # Use user-provided pack order
     pack_order = []
-    if hasattr( type_instance, '_pack_order' ):
-      for field_name in type_instance._pack_order:
+    if hasattr( cls, "fields" ) and cls.fields != []:
+      assert len(cls.fields) == len(all_properties.keys()), \
+        "{}.fields does not match the attributes of its instance!". \
+          format( cls.__name__ )
+      for field_name, field in cls.fields:
         assert field_name in all_properties, \
           field_name + ' is not an attribute of struct ' + cls.__name__ + '!'
         pack_order.append( field_name )
@@ -222,7 +231,7 @@ def _get_rtlir_dtype_struct( obj ):
         '{} is not an attirubte of struct {}!'.format( field_name, cls.__name__ )
       properties.append( ( field_name, all_properties[ field_name ] ) )
       packed_order.append( field_name )
-    return Struct(cls.__name__, dict(properties), packed_order)
+    return Struct(cls.__name__, dict(properties), packed_order, cls)
 
   else:
     assert False, str(obj) + ' is not allowed as a field of struct!'
@@ -241,8 +250,12 @@ def get_rtlir_dtype( obj ):
       if issubclass( Type, Bits ):
         return Vector( Type.nbits )
 
+      # python int object
+      elif Type is int:
+        return Vector( 32 )
+
       # Struct data type
-      elif hasattr( Type, '__name__' ) and not Type.__name__ in dir(__builtins__):
+      elif issubclass( Type, BitStruct ):
         try:
           return _get_rtlir_dtype_struct( Type() )
         except TypeError:

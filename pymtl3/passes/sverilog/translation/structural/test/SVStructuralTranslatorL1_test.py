@@ -18,6 +18,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 impo
 def local_do_test( m ):
   m.elaborate()
   tr = SVStructuralTranslatorL1( m )
+  tr.clear( m )
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]
@@ -33,10 +34,10 @@ def test_port_wire( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.wire = Wire( Bits32 )
+      s.wire_ = Wire( Bits32 )
       s.out = OutPort( Bits32 )
-      s.connect( s.in_, s.wire )
-      s.connect( s.wire, s.out )
+      s.connect( s.in_, s.wire_ )
+      s.connect( s.wire_, s.out )
   a = A()
   a._ref_ports = { a : \
 """\
@@ -48,16 +49,29 @@ def test_port_wire( do_test ):
 }
   a._ref_wires = { a : \
 """\
-  logic [31:0] wire;\
+  logic [31:0] wire_;\
 """
 }
   a._ref_consts = { a : "" }
   a._ref_conns = { a : \
 """\
-  assign wire = in_;
-  assign out = wire;\
+  assign wire_ = in_;
+  assign out = wire_;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [    0,   0 ],
+    [   42,   42 ],
+    [   24,   24 ],
+    [   -2,   -2 ],
+    [   -1,   -1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_connect_constant( do_test ):
@@ -80,6 +94,15 @@ def test_connect_constant( do_test ):
   assign out = 32'd42;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[0])
+  a._test_vectors = [
+    [    42  ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_port_const( do_test ):
@@ -112,14 +135,23 @@ def test_port_const( do_test ):
   assign out = 32'd42;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[0])
+  a._test_vectors = [
+    [    42  ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_port_const_array( do_test ):
   class A( Component ):
     def construct( s ):
       s.STATES = [ 1, 2, 3, 4, 5 ]
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      for i in xrange(5):
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      for i in range(5):
         s.connect( s.STATES[i], s.out[i] )
   a = A()
   a._ref_ports = { a : \
@@ -132,7 +164,7 @@ def test_port_const_array( do_test ):
   a._ref_wires = { a : "" }
   a._ref_consts = { a : \
 """\
-  localparam [31:0] STATES [0:4] = { 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };\
+  localparam [31:0] STATES [0:4] = '{ 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };\
 """
 }
   # Structural reference to constant number will be replaced
@@ -149,6 +181,19 @@ def test_port_const_array( do_test ):
   assign out[4] = 32'd5;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[0])
+    assert m.out[1] == Bits32(tv[1])
+    assert m.out[2] == Bits32(tv[2])
+    assert m.out[3] == Bits32(tv[3])
+    assert m.out[4] == Bits32(tv[4])
+  a._test_vectors = [
+    [ 1, 2, 3, 4, 5 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_port_bit_selection( do_test ):
@@ -174,6 +219,20 @@ def test_port_bit_selection( do_test ):
   assign out = in_[2:2];\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits1(tv[1])
+  a._test_vectors = [
+    [    0,   0, ],
+    [    1,   0, ],
+    [    2,   0, ],
+    [    3,   0, ],
+    [   -1,   1, ],
+    [   -2,   1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_port_part_selection( do_test ):
@@ -199,16 +258,30 @@ def test_port_part_selection( do_test ):
   assign out = in_[5:2];\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    assert m.out == Bits4(tv[1])
+  a._test_vectors = [
+    [    0,   0, ],
+    [    1,   0, ],
+    [    2,   0, ],
+    [    3,   0, ],
+    [   -1,  -1, ],
+    [   -2,  -1, ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_port_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
-      s.wire = [ Wire(Bits32) for _ in xrange(5) ]
-      for i in xrange(5):
-        s.connect( s.wire[i], s.out[i] )
-        s.connect( s.wire[i], i )
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      s.wire_ = [ Wire(Bits32) for _ in range(5) ]
+      for i in range(5):
+        s.connect( s.wire_[i], s.out[i] )
+        s.connect( s.wire_[i], i )
   a = A()
   a._ref_ports = { a : \
 """\
@@ -219,23 +292,36 @@ def test_port_wire_array_index( do_test ):
 }
   a._ref_wires = { a : \
 """\
-  logic [31:0] wire [0:4];\
+  logic [31:0] wire_ [0:4];\
 """
 }
   a._ref_consts = { a : "" }
   # DSL treats a bit selection as a one-bit part selection
   a._ref_conns = { a : \
 """\
-  assign out[0] = wire[0];
-  assign wire[0] = 32'd0;
-  assign out[1] = wire[1];
-  assign wire[1] = 32'd1;
-  assign out[2] = wire[2];
-  assign wire[2] = 32'd2;
-  assign out[3] = wire[3];
-  assign wire[3] = 32'd3;
-  assign out[4] = wire[4];
-  assign wire[4] = 32'd4;\
+  assign out[0] = wire_[0];
+  assign wire_[0] = 32'd0;
+  assign out[1] = wire_[1];
+  assign wire_[1] = 32'd1;
+  assign out[2] = wire_[2];
+  assign wire_[2] = 32'd2;
+  assign out[3] = wire_[3];
+  assign wire_[3] = 32'd3;
+  assign out[4] = wire_[4];
+  assign wire_[4] = 32'd4;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[0])
+    assert m.out[1] == Bits32(tv[1])
+    assert m.out[2] == Bits32(tv[2])
+    assert m.out[3] == Bits32(tv[3])
+    assert m.out[4] == Bits32(tv[4])
+  a._test_vectors = [
+    [    0,    1,   2,   3,   4 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

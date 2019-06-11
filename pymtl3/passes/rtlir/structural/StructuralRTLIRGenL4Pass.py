@@ -14,9 +14,9 @@ from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
   # Override
-  def __call__( s, top ):
-    s.gen_metadata( top )
-    super( StructuralRTLIRGenL4Pass, s ).__call__( top )
+  def __call__( s, tr_top ):
+    s.gen_metadata( tr_top )
+    super( StructuralRTLIRGenL4Pass, s ).__call__( tr_top )
 
   def gen_metadata( s, m ):
     if not hasattr( m, '_pass_structural_rtlir_gen' ):
@@ -37,25 +37,15 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
       s.gen_constants( child )
 
   # Override
-  def add_conn_self_child( s, component, writer, reader ):
-    ns = s.top._pass_structural_rtlir_gen
-    _rw_pair = ( gen_signal_expr( component, writer ),
-                 gen_signal_expr( component, reader ) )
-    ns.connections_self_child[ component ].add( _rw_pair )
-
-  # Override
-  def add_conn_child_child( s, component, writer, reader ):
-    ns = s.top._pass_structural_rtlir_gen
-    _rw_pair = ( gen_signal_expr( component, writer ),
-                 gen_signal_expr( component, reader ) )
-    ns.connections_child_child[ component ].add( _rw_pair )
-
-  # Override
   def collect_connections( s, m ):
-    ns = s.top._pass_structural_rtlir_gen
-    return super( StructuralRTLIRGenL4Pass, s ).collect_connections( m )+ \
-           map( lambda x: ( x, False ), ns.connections_self_child[m] )+ \
-           map( lambda x: ( x, False ), ns.connections_child_child[m] )
+    return \
+      super( StructuralRTLIRGenL4Pass, s ).collect_connections( m ) + \
+      map( lambda x: \
+        ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), \
+          s.c_sc[m] ) + \
+      map( lambda x: \
+        ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), \
+          s.c_cc[m] )
 
   # Override
   def sort_connections( s, m ):

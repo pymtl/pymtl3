@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.datatypes import Bits1, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -19,6 +19,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 impo
 def local_do_test( m ):
   m.elaborate()
   tr = SVStructuralTranslatorL2( m )
+  tr.clear( m )
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]
@@ -32,7 +33,7 @@ def local_do_test( m ):
   assert conns == m._ref_conns[m]
 
 def test_struct_port( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):
@@ -62,13 +63,26 @@ typedef struct packed {
   assign out = in_.foo;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [       B(),   42 ],
+    [    B( 0 ),    0 ],
+    [   B( -1 ),   -1 ],
+    [   B( -2 ),   -2 ],
+    [   B( 24 ),   24 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
       s.c = C()
@@ -110,16 +124,30 @@ typedef struct packed {
   assign out_bar = in_.c.bar;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out_foo == Bits32(tv[1])
+    assert m.out_bar == Bits32(tv[2])
+  a._test_vectors = [
+    [       B(),    42,    1 ],
+    [    B( 1 ),     1,    1 ],
+    [   B( -1 ),    -1,    1 ],
+    [   B( -2 ),    -2,    1 ],
+    [   B( 24 ),    24,    1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_packed_array( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32(foo) for _ in xrange(2) ]
+      s.foo = [ Bits32(foo) for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
-      s.out =  [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
       s.connect( s.out[0], s.in_.foo[0] )
       s.connect( s.out[1], s.in_.foo[1] )
   a = A()
@@ -146,19 +174,33 @@ typedef struct packed {
   assign out[1] = in_.foo[1];\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[1])
+    assert m.out[1] == Bits32(tv[2])
+  a._test_vectors = [
+    [       B(),    42,   42 ],
+    [    B( 1 ),     1,    1 ],
+    [   B( -1 ),    -1,   -1 ],
+    [   B( -2 ),    -2,   -2 ],
+    [   B( 24 ),    24,   24 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  class C( object ):
+  class C( BitStruct ):
     def __init__( s, bar=1 ):
       s.bar = Bits32(bar)
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s ):
-      s.c = [ C() for _ in xrange(2) ]
+      s.c = [ C() for _ in range(2) ]
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
-      s.out =  [ OutPort( Bits32 ) for _ in xrange(2) ]
+      s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
       s.connect( s.out[0], s.in_.c[0].bar )
       s.connect( s.out[1], s.in_.c[1].bar )
   a = A()
@@ -191,4 +233,14 @@ typedef struct packed {
   assign out[1] = in_.c[1].bar;\
 """
 }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = tv[0]
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[1])
+    assert m.out[1] == Bits32(tv[2])
+  a._test_vectors = [
+    [       B(),     1,    1 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

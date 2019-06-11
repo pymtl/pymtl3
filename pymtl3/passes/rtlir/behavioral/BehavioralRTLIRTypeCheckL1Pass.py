@@ -23,15 +23,18 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
     visitor = BehavioralRTLIRTypeCheckVisitorL1(
-      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars )
+      m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed )
     for blk in m.get_update_blocks():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
-  def __init__( s, component, freevars ):
+  def __init__( s, component, freevars, accessed ):
     s.component = component
     s.freevars = freevars
+    s.accessed = accessed
     s.type_expect = {}
     lhs_types = ( rt.Port, rt.Wire )
     index_types = ( rt.Port, rt.Wire, rt.Array )
@@ -127,9 +130,18 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # RHS should have the same type as LHS
     rhs_type = node.value.Type.get_dtype()
     lhs_type = node.target.Type.get_dtype()
+
+    # Weak type checking (agreeable types)
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError( s.blk, node.ast,
         'Unagreeable types {} and {}!'.format( lhs_type, rhs_type ) )
+
+    # Strong type checking (same type)
+    if rhs_type != lhs_type:
+      raise PyMTLTypeError( s.blk, node.ast,
+        'LHS and RHS of assignment should have the same type ({} vs {})!'. \
+            format( lhs_type, rhs_type ) )
+
     node.Type = None
 
   def visit_FreeVar( s, node ):
@@ -210,6 +222,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
           'type {} does not have attribute {}!'.format(node.value.Type, node.attr))
+      s.accessed.add( node.attr )
 
     else:
       raise PyMTLTypeError( s.blk, node.ast,

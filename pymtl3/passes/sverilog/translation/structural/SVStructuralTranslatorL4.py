@@ -8,7 +8,7 @@ from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.utility import make_indent
+from pymtl3.passes.sverilog.util.utility import make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
@@ -103,10 +103,10 @@ class SVStructuralTranslatorL4(
       else:
         return reduce( lambda res, l: res + l, map(
           lambda idx: gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
-            c_n_dim+'_$'+str( idx ), ports ), xrange( n_dim[0] )
+            c_n_dim+'_$'+str( idx ), ports ), range( n_dim[0] )
         ), [] )
 
-    n_dim = ifc_port_array_type[ 'n_dim' ]
+    n_dim = ifc_array_type[ 'n_dim' ]
     return \
       gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim, "", ports )
 
@@ -145,7 +145,7 @@ class SVStructuralTranslatorL4(
         return reduce( lambda res, l: res+l, map(
           lambda idx: gen_subcomp_array_decl( c_id,
             port_conns, ifc_conns, n_dim[1:], c_n_dim+'_$'+str(idx) ),
-          xrange( n_dim[0] )
+          range( n_dim[0] )
         ), [] )
 
     # If `c_array_type` is not None we need to impelement an array of

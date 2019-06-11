@@ -19,10 +19,11 @@ class RoundRobinArbiter( Component ):
 
   def construct( s, nreqs ):
 
-    nreqsX2  = nreqs * 2
+    nreqsX2 = nreqs * 2
+    Type    = mk_bits( nreqs )
 
-    s.reqs   = InPort ( mk_bits( nreqs ) )
-    s.grants = OutPort( mk_bits( nreqs ) )
+    s.reqs   = InPort ( Type )
+    s.grants = OutPort( Type )
 
     # priority enable
 
@@ -30,7 +31,7 @@ class RoundRobinArbiter( Component ):
 
     # priority register
 
-    s.priority_reg = m = RegEnRst( mk_bits( nreqs ), reset_value = 1 )
+    s.priority_reg = m = RegEnRst( Type, reset_value = 1 )
 
     s.connect( m.en,           s.priority_en )
     s.connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
@@ -42,39 +43,81 @@ class RoundRobinArbiter( Component ):
     s.grants_int   = Wire( mk_bits( 2*nreqs ) )
 
     #-------------------------------------------------------------------
-    # comb
+    # comb_reqs_int
     #-------------------------------------------------------------------
+
     @s.update
-    def comb():
+    def comb_reqs_int():
 
-      s.kills[0] = 1
+      s.reqs_int [    0:nreqs  ] = s.reqs
+      s.reqs_int [nreqs:nreqsX2] = s.reqs
 
-      s.priority_int[    0:nreqs  ] = s.priority_reg.out
-      s.priority_int[nreqs:nreqsX2] = mk_bits( nreqs )(0)
-      s.reqs_int    [    0:nreqs  ] = s.reqs
-      s.reqs_int    [nreqs:nreqsX2] = s.reqs
+    #-------------------------------------------------------------------
+    # comb_grants
+    #-------------------------------------------------------------------
 
-      # Calculate the kill chain
-      for i in range( nreqsX2 ):
-
-        # Set internal grants
-        if s.priority_int[i]:
-          s.grants_int[i] = s.reqs_int[i]
-        else:
-          s.grants_int[i] = ~s.kills[i] & s.reqs_int[i]
-
-        # Set kill signals
-        if s.priority_int[i]:
-          s.kills[i+1] = s.grants_int[i]
-        else:
-          s.kills[i+1] = s.kills[i] | s.grants_int[i]
+    @s.update
+    def comb_grants():
 
       # Assign the output ports
       for i in range( nreqs ):
         s.grants[i] = s.grants_int[i] | s.grants_int[nreqs+i]
 
+    #-------------------------------------------------------------------
+    # comb_priority_en
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_priority_en():
+
       # Set the priority enable
-      s.priority_en = ( s.grants != 0 )
+      s.priority_en = ( s.grants != Type(0) )
+
+    #-------------------------------------------------------------------
+    # comb_priority_int
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_priority_int():
+
+      s.priority_int[    0:nreqs  ] = s.priority_reg.out
+      s.priority_int[nreqs:nreqsX2] = Type(0)
+
+    #-------------------------------------------------------------------
+    # comb_kills
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_kills():
+
+      # Set kill signals
+
+      s.kills[0] = Bits1(1)
+
+      for i in xrange( nreqsX2 ):
+
+        if s.priority_int[i]:
+          s.kills[i+1] = s.reqs_int[i]
+
+        else:
+          s.kills[i+1] = s.kills[i] | ( ~s.kills[i] & s.reqs_int[i] )
+
+    #-------------------------------------------------------------------
+    # comb_grants_int
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_grants_int():
+
+      for i in xrange( nreqsX2 ):
+
+        # Set internal grants
+
+        if s.priority_int[i]:
+          s.grants_int[i] = s.reqs_int[i]
+
+        else:
+          s.grants_int[i] = ~s.kills[i] & s.reqs_int[i]
 
   def line_trace( s ):
     return "{} | {}".format( s.reqs, s.grants )
@@ -91,11 +134,12 @@ class RoundRobinArbiterEn( Component ):
   '''
   def construct( s, nreqs ):
 
-    nreqsX2  = nreqs * 2
+    nreqsX2 = nreqs * 2
+    Type    = mk_bits( nreqs )
 
     s.en     = InPort ( Bits1 )
-    s.reqs   = InPort ( mk_bits( nreqs ) )
-    s.grants = OutPort( mk_bits( nreqs ) )
+    s.reqs   = InPort ( Type )
+    s.grants = OutPort( Type )
 
     # priority enable
 
@@ -115,45 +159,81 @@ class RoundRobinArbiterEn( Component ):
     s.grants_int   = Wire( mk_bits( 2*nreqs ) )
 
     #-------------------------------------------------------------------
-    # comb_arbitrate
+    # comb_reqs_int
     #-------------------------------------------------------------------
 
     @s.update
-    def comb_arbitrate():
+    def comb_reqs_int():
 
-      s.kills[0] = 1
+      s.reqs_int [    0:nreqs  ] = s.reqs
+      s.reqs_int [nreqs:nreqsX2] = s.reqs
 
-      s.priority_int[    0:nreqs  ] = s.priority_reg.out
-      s.priority_int[nreqs:nreqsX2] = mk_bits( nreqs )(0)
-      s.reqs_int    [    0:nreqs  ] = s.reqs
-      s.reqs_int    [nreqs:nreqsX2] = s.reqs
+    #-------------------------------------------------------------------
+    # comb_grants
+    #-------------------------------------------------------------------
 
-      # Calculate the kill chain
-      for i in range( nreqsX2 ):
-
-        # Set internal grants
-        if s.priority_int[i]:
-          s.grants_int[i] = s.reqs_int[i]
-        else:
-          s.grants_int[i] = ~s.kills[i] & s.reqs_int[i]
-
-        # Set kill signals
-        if s.priority_int[i]:
-          s.kills[i+1] = s.grants_int[i]
-        else:
-          s.kills[i+1] = s.kills[i] | s.grants_int[i]
+    @s.update
+    def comb_grants():
 
       # Assign the output ports
       for i in range( nreqs ):
         s.grants[i] = s.grants_int[i] | s.grants_int[nreqs+i]
 
     #-------------------------------------------------------------------
-    # comb_feedback
+    # comb_priority_en
     #-------------------------------------------------------------------
 
     @s.update
-    def comb_feedback():
-      s.priority_en = ( s.grants != 0 ) & s.en
+    def comb_priority_en():
+
+      # Set the priority enable
+      s.priority_en = ( s.grants != Type(0) ) & s.en
+
+    #-------------------------------------------------------------------
+    # comb_priority_int
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_priority_int():
+
+      s.priority_int[    0:nreqs  ] = s.priority_reg.out
+      s.priority_int[nreqs:nreqsX2] = Type(0)
+
+    #-------------------------------------------------------------------
+    # comb_kills
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_kills():
+
+      # Set kill signals
+
+      s.kills[0] = Bits1(1)
+
+      for i in xrange( nreqsX2 ):
+
+        if s.priority_int[i]:
+          s.kills[i+1] = s.reqs_int[i]
+
+        else:
+          s.kills[i+1] = s.kills[i] | ( ~s.kills[i] & s.reqs_int[i] )
+
+    #-------------------------------------------------------------------
+    # comb_grants_int
+    #-------------------------------------------------------------------
+
+    @s.update
+    def comb_grants_int():
+
+      for i in xrange( nreqsX2 ):
+
+        # Set internal grants
+
+        if s.priority_int[i]:
+          s.grants_int[i] = s.reqs_int[i]
+
+        else:
+          s.grants_int[i] = ~s.kills[i] & s.reqs_int[i]
 
   def line_trace( s ):
     return "{} | {}".format( s.reqs, s.grants )

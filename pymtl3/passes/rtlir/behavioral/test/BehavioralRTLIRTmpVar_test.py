@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits16, Bits32
+from pymtl3.datatypes import Bits16, Bits32, BitStruct
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
@@ -49,7 +49,7 @@ def test_tmp_wire( do_test ):
   do_test( a )
 
 def test_tmp_wire_struct( do_test ):
-  class B( object ):
+  class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( dsl.Component ):

@@ -22,10 +22,12 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
     visitor = BehavioralRTLIRTypeCheckVisitorL2(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
+      m._pass_behavioral_rtlir_type_check.rtlir_accessed,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
@@ -33,9 +35,8 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
-  def __init__( s, component, freevars, tmpvars ):
-    super(BehavioralRTLIRTypeCheckVisitorL2, s).__init__(component, freevars)
-    s.freevars = freevars
+  def __init__( s, component, freevars, accessed, tmpvars ):
+    super(BehavioralRTLIRTypeCheckVisitorL2, s).__init__(component, freevars, accessed)
     s.tmpvars = tmpvars
     s.BinOp_max_nbits = (bir.Add, bir.Sub, bir.Mult, bir.Div, bir.Mod, bir.Pow,
                          bir.BitAnd, bir.BitOr, bir.BitXor)
@@ -151,9 +152,13 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
   def visit_UnaryOp( s, node ):
     if isinstance( node.op, bir.Not ):
-      if not rdt.Bool()( node.operand.Type.get_dtype() ):
+      dtype = node.operand.Type.get_dtype()
+      if not rdt.Bool()( dtype ):
         raise PyMTLTypeError( s.blk, node.ast,
-          'the operand of "unary-expr" cannot be cast to bool!' )
+          'the operand of "Logic-not" cannot be cast to bool!' )
+      if dtype.get_length() != 1:
+        raise PyMTLTypeError( s.blk, node.ast,
+          'the operand of "Logic-not" is not a single bit!' )
       node.Type = rt.Wire( rdt.Bool() )
     else:
       node.Type = node.operand.Type
@@ -171,7 +176,13 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     r_type = node.right.Type.get_dtype()
     if not( rdt.Vector(1)( l_type ) and rdt.Vector(1)( r_type ) ):
       raise PyMTLTypeError( s.blk, node.ast,
-        "both sides of operation should be of vector type!" )
+        "both sides of {} should be of vector type!".format(
+            op.__class__.__name__) )
+
+    if not isinstance( op, s.BinOp_left_nbits ) and l_type != r_type:
+      raise PyMTLTypeError( s.blk, node.ast,
+        "LHS and RHS of {} should have the same type ({} vs {})!".format(
+            op.__class__.__name__, l_type, r_type ) )
 
     l_nbits = l_type.get_length()
     r_nbits = r_type.get_length()
@@ -201,4 +212,10 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
         node.Type = rt.Wire( rdt.Vector( res_nbits ) )
 
   def visit_Compare( s, node ):
+    l_type = node.left.Type.get_dtype()
+    r_type = node.right.Type.get_dtype()
+    if l_type != r_type:
+      raise PyMTLTypeError( s.blk, node.ast,
+        "LHS and RHS of {} have different types ({} vs {})!".format(
+          node.op.__class__.__name__, l_type, r_type ))
     node.Type = rt.Wire( rdt.Bool() )

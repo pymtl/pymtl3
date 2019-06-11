@@ -20,6 +20,7 @@ from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 def local_do_test( m ):
   m.elaborate()
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL2)(m)
+  tr.clear( m )
   tr.translate_behavioral( m )
   upblk_src = tr.behavioral.upblk_srcs[m]
   decl_freevars = tr.behavioral.decl_freevars[m]
@@ -40,8 +41,8 @@ def test_tmp_wire( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk
+upblk_srcs:
+  upblk_src: upblk
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -55,7 +56,7 @@ def test_tmpvar_alias( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk1():
         u = s.in_ + Bits32(42)
@@ -67,9 +68,9 @@ def test_tmpvar_alias( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
-  upblk_decl: upblk2
+upblk_srcs:
+  upblk_src: upblk1
+  upblk_src: upblk2
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -84,7 +85,7 @@ def test_multi_tmpvar( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.out = [ OutPort( Bits32 ) for _ in xrange(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       @s.update
       def upblk1():
         u = s.in_ + Bits32(42)
@@ -94,8 +95,8 @@ def test_multi_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -118,8 +119,8 @@ def test_freevar_to_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = \
 """\
@@ -144,8 +145,8 @@ def test_Bits_to_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \
@@ -166,8 +167,8 @@ def test_py_int_to_tmpvar( do_test ):
   a = A()
   a._ref_upblk_repr = \
 """\
-upblk_decls:
-  upblk_decl: upblk1
+upblk_srcs:
+  upblk_src: upblk1
 """
   a._ref_freevar_repr = "freevars:\n"
   a._ref_tmpvar_repr = \

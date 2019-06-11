@@ -13,17 +13,17 @@ import sys
 import traceback
 
 
-class SVerilogArbitraryImportError( Exception ):
-  """Error while performing arbitrary import."""
+class SVerilogImportError( Exception ):
+  """Error while performing import."""
   def __init__( self, obj, msg ):
     obj = str(obj)
     _, _, tb = sys.exc_info()
     traceback.print_tb(tb)
     tb_info = traceback.extract_tb(tb)
     fname, line, func, text = tb_info[-1]
-    return super( SVerilogArbitraryImportError, self ).__init__(
+    return super( SVerilogImportError, self ).__init__(
       "\nIn file {fname}, Line {line}, Method {func}:"
-      "\nError trying to perform arbitrary import on {obj}:\n- {msg}"
+      "\nError trying to perform import on {obj}:\n- {msg}"
       "\n  {text}".format( **locals() ) )
 
 class SVerilogTranslationError( Exception ):
@@ -46,3 +46,10 @@ class SVerilogTranslationError( Exception ):
     return super( SVerilogTranslationError, self ).__init__(
       "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() ) )
+
+class SVerilogCloseLoopPurePythonSimError( Exception ):
+  """SystemVerilog closed loop test error during pure python simulation."""
+  def __init__( self, obj, msg ):
+    return super( SVerilogCloseLoopPurePythonSimError, self ).__init__(
+      "\nCalling closed-loop test method with component {obj}:\n- {msg}". \
+          format( **locals() ) )

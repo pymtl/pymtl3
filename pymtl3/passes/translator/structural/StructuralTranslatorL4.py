@@ -21,17 +21,20 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, top ):
-    top.apply( StructuralRTLIRGenL4Pass() )
+  def gen_structural_trans_metadata( s, tr_top ):
+    # c_ss: self-self connections
+    # c_sc: self-child connections
+    # c_cc: child-child connections
+    tr_top.apply( StructuralRTLIRGenL4Pass( s.c_ss, s.c_sc, s.c_cc ) )
 
   #-----------------------------------------------------------------------
   # translate_structural
   #-----------------------------------------------------------------------
 
   # Override
-  def translate_structural( s, top ):
+  def translate_structural( s, tr_top ):
     s.structural.decl_subcomps = {}
-    super( StructuralTranslatorL4, s ).translate_structural( top )
+    super( StructuralTranslatorL4, s ).translate_structural( tr_top )
 
   #-----------------------------------------------------------------------
   # _translate_structural
