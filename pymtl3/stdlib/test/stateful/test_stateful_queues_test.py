@@ -4,7 +4,7 @@
 # Tests for test_stateful using single entry queue
 #
 # Author: Yixiao Zhang
-#   Date: May 20, 2019
+#   Date: June 10, 2019
 
 from __future__ import absolute_import, division, print_function
 
@@ -15,7 +15,7 @@ import pytest
 from pymtl3 import *
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 from pymtl3.passes import GenDAGPass, OpenLoopCLPass
-from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
+from pymtl3.stdlib.ifcs import CalleeIfcRTL
 
 from .test_stateful import run_test_state_machine
 from .test_wrapper import *
@@ -30,22 +30,22 @@ class SingleEntryPipeQueue( Component ):
 
     # Interface
 
-    s.enq = EnqIfcRTL( EntryType )
-    s.deq = DeqIfcRTL( EntryType )
+    s.enq = CalleeIfcRTL( ArgTypes=[( 'msg', EntryType ) ] )
+    s.deq = CalleeIfcRTL( RetTypes=[( 'msg', EntryType ) ] )
 
     # Component
 
     s.queue = Wire( EntryType )
     s.full = Wire( Bits1 )
 
-    s.connect( s.queue, s.deq.msg )
+    s.connect( s.queue, s.deq.rets.msg )
 
     @s.update_on_edge
     def up_pq_reg():
       if s.reset:
         s.queue = EntryType()
       elif s.enq.en:
-        s.queue = s.enq.msg
+        s.queue = s.enq.args.msg
       else:
         s.queue = s.queue
 
@@ -74,7 +74,7 @@ class SingleEntryPipeQueue( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.full, s.deq )
+    return "{} ({}) {}".format( s.enq.args.msg, s.full, s.deq.rets.msg )
 
 
 #-------------------------------------------------------------------------
@@ -115,8 +115,8 @@ class SingleEntryBypassQueue( Component ):
 
     # Interface
 
-    s.enq = EnqIfcRTL( EntryType )
-    s.deq = DeqIfcRTL( EntryType )
+    s.enq = CalleeIfcRTL( ArgTypes=[( 'msg', EntryType ) ] )
+    s.deq = CalleeIfcRTL( RetTypes=[( 'msg', EntryType ) ] )
 
     # Component
 
@@ -128,7 +128,7 @@ class SingleEntryBypassQueue( Component ):
       if s.reset:
         s.queue = EntryType()
       elif s.enq.en and not s.deq.en:
-        s.queue = s.enq.msg
+        s.queue = s.enq.args.msg
       else:
         s.queue = s.queue
 
@@ -153,12 +153,13 @@ class SingleEntryBypassQueue( Component ):
 
     @s.update
     def up_bq_deq_msg():
-      s.deq.msg = s.enq.msg if s.enq.en else s.queue
+      s.deq.rets.msg = s.enq.args.msg if s.enq.en else s.queue
 
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.full, s.deq )
+    return "{} ({}) {}".format( s.enq.args.msg if s.enq.en else "", s.full,
+                                s.deq.rets.msg if s.deq.en else "" )
 
 
 #-------------------------------------------------------------------------
@@ -191,10 +192,62 @@ class BypassQueueCL( Component ):
 
 
 #-------------------------------------------------------------------------
-# test_state_machine
+# test_stateful_simple
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
                           [( BypassQueueCL, SingleEntryBypassQueue ),
                            ( PipeQueueCL, SingleEntryPipeQueue ) ] )
-def test_state_machine( QueueCL, QueueRTL ):
+def test_stateful_simple( QueueCL, QueueRTL ):
   run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16 ) ), QueueCL( 1 ) )
+
+
+#-------------------------------------------------------------------------
+# test_stateful_bits_struct
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize( "QueueCL, QueueRTL",
+                          [( BypassQueueCL, SingleEntryBypassQueue ),
+                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
+def test_stateful_bits_struct( QueueCL, QueueRTL ):
+  Msg1Type = mk_bit_struct( "Msg1Type", [( 'msg0', Bits8 ),
+                                         ( 'msg1', Bits8 ) ] )
+  run_test_state_machine(
+      RTL2CLWrapper(
+          QueueRTL(
+              mk_bit_struct( "MsgType", [( 'msg0', Bits8 ),
+                                         ( 'msg1', Msg1Type ) ] ) ) ),
+      QueueCL( 1 ) )
+
+
+#-------------------------------------------------------------------------
+# test_stateful_overwrite
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize( "QueueCL, QueueRTL",
+                          [( BypassQueueCL, SingleEntryBypassQueue ),
+                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
+def test_stateful_overwrite( QueueCL, QueueRTL ):
+  run_test_state_machine(
+      RTL2CLWrapper( QueueRTL( Bits32 ) ),
+      QueueCL( 1 ),
+      argument_strategy=[( 'enq.msg', st.integers( min_value=0,
+                                                   max_value=11 ) ) ] )
+
+
+#-------------------------------------------------------------------------
+# test_stateful_overwrite_nested
+#-------------------------------------------------------------------------
+@pytest.mark.parametrize( "QueueCL, QueueRTL",
+                          [( BypassQueueCL, SingleEntryBypassQueue ),
+                           ( PipeQueueCL, SingleEntryPipeQueue ) ] )
+def test_stateful_overwrite_nested( QueueCL, QueueRTL ):
+  Msg1Type = mk_bit_struct( "Msg1Type", [( 'msg0', Bits8 ),
+                                         ( 'msg1', Bits8 ) ] )
+  run_test_state_machine(
+      RTL2CLWrapper(
+          QueueRTL(
+              mk_bit_struct( "MsgType", [( 'msg0', Bits8 ),
+                                         ( 'msg1', Msg1Type ) ] ) ) ),
+      QueueCL( 1 ),
+      argument_strategy=[( 'enq.msg.msg0',
+                           st.integers( min_value=100, max_value=100 ) ),
+                         ( 'enq.msg.msg1.msg0',
+                           st.integers( min_value=200, max_value=200 ) ) ] )

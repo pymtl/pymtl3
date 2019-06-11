@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 import hypothesis.strategies as st
 from hypothesis import settings
+from hypothesis.searchstrategy import SearchStrategy
 from hypothesis.stateful import *
 
 from pymtl3 import *
@@ -26,32 +27,44 @@ def list_string( lst ):
 
 
 #-------------------------------------------------------------------------
-# ArgumentStrategy
-#-------------------------------------------------------------------------
-class ArgumentStrategy( object ):
-
-  def __init__( s, **kwargs ):
-    s.arguments = kwargs
-
-
-#-------------------------------------------------------------------------
 # bitstype_strategy
 #-------------------------------------------------------------------------
-def bitstype_strategy( dtype ):
-  if isinstance( dtype, Bits ):
-    return st.integers( min_value=0, max_value=( 1 << dtype.nbits ) - 1 )
-  raise TypeError( "No supported bitstype strategy for {}".format(
-      type( dtype ) ) )
+def bitstype_strategy( bits ):
+  return st.integers( min_value=0, max_value=( 1 << bits.nbits ) - 1 )
+
+
+#-------------------------------------------------------------------------
+# bits_struct_strategy
+#-------------------------------------------------------------------------
+def bits_struct_strategy( bits_struct_type, all_field_st={} ):
+
+  @st.composite
+  def strategy( draw ):
+    new_bits_struct = bits_struct_type()
+    for name, field_type in bits_struct_type.fields:
+      field_st = all_field_st.get( name, {} )
+      # recursively draw st
+      data = draw( get_strategy_from_type( field_type, field_st ) )
+      setattr( new_bits_struct, name, data )
+    return new_bits_struct
+
+  return strategy()
 
 
 #-------------------------------------------------------------------------
 # get_strategy_from_type
 #-------------------------------------------------------------------------
-def get_strategy_from_type( dtype ):
-  if isinstance( dtype, Bits ):
-    return bitstype_strategy( dtype )
+def get_strategy_from_type( dtype, all_field_st ):
   if isinstance( dtype(), Bits ):
+    if all_field_st:
+      assert isinstance(
+          all_field_st,
+          SearchStrategy ), "need strategy for Bits type {}, got {}".format(
+              repr( dtype ), str( all_field_st ) )
+      return all_field_st
     return bitstype_strategy( dtype() )
+  if isinstance( dtype(), BitStruct ):
+    return bits_struct_strategy( dtype, all_field_st )
   return None
 
 
@@ -118,6 +131,9 @@ def wrap_method( method_spec, arguments ):
     dut_result = s.dut.__dict__[ method_name ](**kwargs )
     ref_result = s.ref.__dict__[ method_name ](**kwargs )
 
+    if method_spec.rets_type:
+      ref_result = method_spec.rets_type( ref_result )
+
     #compare results
     if dut_result != ref_result:
       s.error_line_trace()
@@ -133,6 +149,33 @@ def wrap_method( method_spec, arguments ):
           dut_result=dut_result ) )
 
   return method_rule, method_rdy
+
+
+def get_strategy_from_list( st_list ):
+
+  all_field_st = {}
+  all_subfield_st = {}
+  # First go through all customized strategy
+  for name, st in st_list:
+    field_name, subfield_name = name.split( ".", 1 )
+    field_st = all_field_st.setdefault( field_name, {} )
+    # strategy for a field
+    if not "." in subfield_name:
+      field_st[ subfield_name ] = st
+    # strategy for subfield
+    else:
+      subfield_list = all_subfield_st.setdefault( field_name, [] )
+      subfield_list += [( subfield_name, st ) ]
+
+  for field_name, subfield_list in all_subfield_st.items():
+    subfield_dict = get_strategy_from_list( subfield_list )
+    for subfield in subfield_dict.keys():
+      # a field with its strategy specified directly should not have
+      # strategy for subfield. e.g. s.enq.msg and s.enq.msg.msg0 should
+      # not be in st_list simultaneously
+      assert not subfield in all_field_st
+    all_field_st[ field_name ].update( subfield_dict )
+  return all_field_st
 
 
 #-------------------------------------------------------------------------
@@ -156,29 +199,25 @@ def create_test_state_machine( dut,
     except Exception:
       raise "No method specs specified"
 
+  # get customized strategy
+  method_arg_st = get_strategy_from_list( argument_strategy )
+
   # go through spec for each method
   for method_name, spec in method_specs.iteritems():
-    arguments = {}
-    # First add customized arguments
-    if method_name in argument_strategy and isinstance(
-        argument_strategy[ method_name ], ArgumentStrategy ):
-      arguments = argument_strategy[ method_name ].arguments
+    arg_st = method_arg_st.get( method_name, {} )
 
     # add the rest from inspection result
-    for arg, dtype in spec.args.iteritems():
-      if arg not in arguments:
-        arguments[ arg ] = get_strategy_from_type( dtype )
-        if not arguments[ arg ]:
-          error_msg = """
-  Argument strategy not specified!
-    method name: {method_name}
-    argument   : {arg}
+    for arg, dtype in spec.args:
+      arg_st[ arg ] = get_strategy_from_type( dtype, arg_st.get( arg, {} ) )
+      if not arg_st[ arg ]:
+        error_msg = """
+Argument strategy not specified!
+  method name: {method_name}
+  argument   : {arg}
 """
-          raise RunMethodTestError(
-              error_msg.format( method_name=method_name, arg=arg ) )
+        raise ValueError( error_msg.format( method_name=method_name, arg=arg ) )
 
-    method_rule, method_rdy = wrap_method( method_specs[ method_name ],
-                                           arguments )
+    method_rule, method_rdy = wrap_method( method_specs[ method_name ], arg_st )
     setattr( Test, method_name, method_rule )
     setattr( Test, method_name + "_rdy", method_rdy )
 
@@ -190,7 +229,8 @@ def create_test_state_machine( dut,
 #-------------------------------------------------------------------------
 def run_test_state_machine( dut, ref, argument_strategy={} ):
 
-  machine = create_test_state_machine( dut, ref )
+  machine = create_test_state_machine(
+      dut, ref, argument_strategy=argument_strategy )
   machine.TestCase.settings = settings(
       max_examples=50,
       stateful_step_count=100,

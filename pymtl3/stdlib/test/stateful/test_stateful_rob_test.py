@@ -77,43 +77,6 @@ def clog2( num ):
 
 
 #-------------------------------------------------------------------------
-# AllocIfcRTL
-#-------------------------------------------------------------------------
-class AllocIfcRTL( Interface ):
-
-  def construct( s, Type, IndexType ):
-
-    s.index = OutPort( IndexType )
-    s.en = InPort( Bits1 )
-    s.rdy = OutPort( Bits1 )
-
-
-#-------------------------------------------------------------------------
-# UpdateIfcRTL
-#-------------------------------------------------------------------------
-class UpdateIfcRTL( Interface ):
-
-  def construct( s, Type, IndexType ):
-
-    s.value = InPort( Type )
-    s.index = InPort( IndexType )
-    s.en = InPort( Bits1 )
-    s.rdy = OutPort( Bits1 )
-
-
-#-------------------------------------------------------------------------
-# RemoveIfcRTL
-#-------------------------------------------------------------------------
-class RemoveIfcRTL( Interface ):
-
-  def construct( s, Type ):
-
-    s.value = OutPort( Type )
-    s.en = InPort( Bits1 )
-    s.rdy = OutPort( Bits1 )
-
-
-#-------------------------------------------------------------------------
 # ReorderBuffer
 #-------------------------------------------------------------------------
 class ReorderBuffer( Component ):
@@ -133,9 +96,10 @@ class ReorderBuffer( Component ):
     s.allocated = [ Wire( Bits1 ) for _ in range( num_entries ) ]
 
     # These are the methods that can be performed
-    s.alloc = AllocIfcRTL( DataType, index_type )
-    s.update_entry = UpdateIfcRTL( DataType, index_type )
-    s.remove = RemoveIfcRTL( DataType )
+    s.alloc = CalleeIfcRTL( RetTypes=[( 'index', index_type ) ] )
+    s.update_entry = CalleeIfcRTL(
+        ArgTypes=[( 'index', index_type ), ( 'value', DataType ) ] )
+    s.remove = CalleeIfcRTL( RetTypes=[( 'value', DataType ) ] )
 
     s.empty = Wire( Bits1 )
 
@@ -147,7 +111,7 @@ class ReorderBuffer( Component ):
     @s.update
     def update_rdy_remove():
       s.remove.rdy = s.valid[
-          s.head ] or s.update_entry.en and s.update_entry.index == s.head
+          s.head ] or s.update_entry.en and s.update_entry.args.index == s.head
 
     @s.update
     def update_rdy_alloc():
@@ -155,14 +119,14 @@ class ReorderBuffer( Component ):
 
     @s.update
     def update_ret_alloc():
-      s.alloc.index = s.tail
+      s.alloc.rets.index = s.tail
 
     @s.update
     def update_en():
-      if s.update_entry.en and s.update_entry.index == s.head:
-        s.remove.value = s.update_entry.value
+      if s.update_entry.en and s.update_entry.args.index == s.head:
+        s.remove.rets.value = s.update_entry.args.value
       else:
-        s.remove.value = s.data[ s.head ]
+        s.remove.rets.value = s.data[ s.head ]
 
     @s.update_on_edge
     def update_num():
@@ -197,9 +161,9 @@ class ReorderBuffer( Component ):
 
       # Handle update
       if s.update_entry.en:
-        if s.allocated[ s.update_entry.index ]:
-          s.data[ s.update_entry.index ] = s.update_entry.value
-          s.valid[ s.update_entry.index ] = 1
+        if s.allocated[ s.update_entry.args.index ]:
+          s.data[ s.update_entry.args.index ] = s.update_entry.args.value
+          s.valid[ s.update_entry.args.index ] = 1
 
       if s.remove.en:
         s.valid[ s.head ] = 0
