@@ -10,12 +10,14 @@ from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
+from .SVTranslator_L1_cases_test import trim
+
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert tr.hierarchy.src == m._ref_src
+  assert trim( tr.hierarchy.src ) == m._ref_src
 
 #-------------------------------------------------------------------------
 # Behavioral
@@ -36,6 +38,7 @@ def test_if( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -82,6 +85,7 @@ def test_if_dangling_else_inner( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -131,6 +135,7 @@ def test_if_dangling_else_outter( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -182,6 +187,7 @@ def test_if_branches( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -245,6 +251,7 @@ def test_nested_if( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -313,6 +320,7 @@ def test_for_range_upper( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -350,6 +358,7 @@ def test_for_range_lower_upper( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -390,6 +399,7 @@ def test_for_range_lower_upper_step( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -430,6 +440,7 @@ def test_if_exp_for( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -466,6 +477,7 @@ def test_if_exp_unary_op( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -505,6 +517,7 @@ def test_if_bool_op( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -552,6 +565,7 @@ def test_tmpvar( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -559,7 +573,7 @@ module A
   output logic [31:0] out [0:4],
   input logic [0:0] reset
 );
-  logic [31:0] upblk_tmpvar;
+  logic [31:0] __tmpvar_upblk$tmpvar;
 
   // PYMTL SOURCE:
   // 
@@ -575,11 +589,11 @@ module A
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 ) begin
       if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
-        upblk_tmpvar = in_[i];
+        __tmpvar_upblk$tmpvar = in_[i];
       end
       else
-        upblk_tmpvar = 32'd0;
-      out[i] = upblk_tmpvar;
+        __tmpvar_upblk$tmpvar = 32'd0;
+      out[i] = __tmpvar_upblk$tmpvar;
     end
   end
 
@@ -601,6 +615,7 @@ def test_struct( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [31:0] foo;
 } B;
@@ -642,6 +657,7 @@ def test_packed_array_concat( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [1:0][31:0] bar;
   logic [31:0] foo;
@@ -688,6 +704,7 @@ def test_nested_struct( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [31:0] woof;
 } C;
@@ -736,6 +753,7 @@ def test_struct_port( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [31:0] foo;
 } B;
@@ -772,6 +790,7 @@ def test_nested_struct_port( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [31:0] bar;
 } C;
@@ -810,6 +829,7 @@ def test_packed_array( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [1:0][31:0] foo;
 } B;
@@ -845,6 +865,7 @@ def test_struct_packed_array( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 typedef struct packed {
   logic [31:0] bar;
 } C;

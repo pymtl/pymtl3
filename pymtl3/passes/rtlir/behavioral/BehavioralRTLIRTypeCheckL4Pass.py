@@ -52,12 +52,7 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
   def visit_Index( s, node ):
     if isinstance( node.value.Type, rt.Array ) and \
        isinstance( node.value.Type.get_sub_type(), rt.InterfaceView ):
-      try:
-        # if no exception is raised, L1 visit_Index will generate type for `node`
-        nbits = node.idx._value
-        node.Type = node.value.Type.get_sub_type()
-      except AttributeError:
-        raise PyMTLTypeError( s.blk, node.ast,
-          'index of interface array must be a static constant expression!' )
+      node.Type = node.value.Type.get_sub_type()
+
     else:
       super( BehavioralRTLIRTypeCheckVisitorL4, s ).visit_Index( node )

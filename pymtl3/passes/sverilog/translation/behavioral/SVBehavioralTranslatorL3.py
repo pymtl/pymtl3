@@ -57,6 +57,7 @@ class BehavioralRTLIRToSVVisitorL3( BehavioralRTLIRToSVVisitorL2 ):
       if isinstance( node.value.Type.get_dtype(), rdt.Struct ):
         value = s.visit( node.value )
         attr = node.attr
+        s.check_res( node, attr )
         return '{value}.{attr}'.format( **locals() )
 
     return super( BehavioralRTLIRToSVVisitorL3, s ).visit_Attribute( node )

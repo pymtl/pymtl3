@@ -10,12 +10,14 @@ from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
+from .SVTranslator_L1_cases_test import trim
+
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert tr.hierarchy.src == m._ref_src
+  assert trim( tr.hierarchy.src ) == m._ref_src
 
 def test_subcomponent( do_test ):
   class B( Component ):
@@ -34,6 +36,7 @@ def test_subcomponent( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module B
 (
   input logic [0:0] clk,
@@ -104,6 +107,7 @@ def test_sub_component_attr( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module B
 (
   input logic [0:0] clk,
@@ -171,6 +175,7 @@ def test_subcomponent_index( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module B
 (
   input logic [0:0] clk,
@@ -187,24 +192,24 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-  logic [0:0] comp_$0$clk;
-  logic [31:0] comp_$0$out;
-  logic [0:0] comp_$0$reset;
+  logic [0:0] comp$__0$clk;
+  logic [31:0] comp$__0$out;
+  logic [0:0] comp$__0$reset;
 
-  B comp_$0 (
-    .clk( comp_$0$clk ),
-    .out( comp_$0$out ),
-    .reset( comp_$0$reset )
+  B comp$__0 (
+    .clk( comp$__0$clk ),
+    .out( comp$__0$out ),
+    .reset( comp$__0$reset )
   );
 
-  logic [0:0] comp_$1$clk;
-  logic [31:0] comp_$1$out;
-  logic [0:0] comp_$1$reset;
+  logic [0:0] comp$__1$clk;
+  logic [31:0] comp$__1$out;
+  logic [0:0] comp$__1$reset;
 
-  B comp_$1 (
-    .clk( comp_$1$clk ),
-    .out( comp_$1$out ),
-    .reset( comp_$1$reset )
+  B comp$__1 (
+    .clk( comp$__1$clk ),
+    .out( comp$__1$out ),
+    .reset( comp$__1$reset )
   );
 
   // PYMTL SOURCE:
@@ -214,13 +219,13 @@ module A
   //   s.out = s.comp[1].out
   
   always_comb begin : upblk
-    out = comp_$1$out;
+    out = comp$__1$out;
   end
 
-  assign comp_$1$clk = clk;
-  assign comp_$1$reset = reset;
-  assign comp_$0$clk = clk;
-  assign comp_$0$reset = reset;
+  assign comp$__1$clk = clk;
+  assign comp$__1$reset = reset;
+  assign comp$__0$clk = clk;
+  assign comp$__0$reset = reset;
 
 endmodule
 """

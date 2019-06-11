@@ -74,9 +74,9 @@ class SVStructuralTranslatorL4(
       assert False
 
     return {
-      'def' : s.rtlir_tr_wire_decl('{c_id}${ifc_id}_$'+port_id, port_def_rtype,
+      'def' : s.rtlir_tr_wire_decl('{c_id}${ifc_id}$'+port_id, port_def_rtype,
                 port_array_type, dtype),
-      'decl' : '.{{ifc_id}}_${port_id}( {{c_id}}${{ifc_id}}_${port_id} )'. \
+      'decl' : '.{{ifc_id}}${port_id}( {{c_id}}${{ifc_id}}${port_id} )'. \
                 format(**locals())
     }
 
@@ -103,7 +103,7 @@ class SVStructuralTranslatorL4(
       else:
         return reduce( lambda res, l: res + l, map(
           lambda idx: gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
-            c_n_dim+'_$'+str( idx ), ports ), range( n_dim[0] )
+            c_n_dim+'$__'+str( idx ), ports ), range( n_dim[0] )
         ), [] )
 
     n_dim = ifc_array_type[ 'n_dim' ]
@@ -144,7 +144,7 @@ class SVStructuralTranslatorL4(
       else:
         return reduce( lambda res, l: res+l, map(
           lambda idx: gen_subcomp_array_decl( c_id,
-            port_conns, ifc_conns, n_dim[1:], c_n_dim+'_$'+str(idx) ),
+            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ),
           range( n_dim[0] )
         ), [] )
 
@@ -162,7 +162,7 @@ class SVStructuralTranslatorL4(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_component_array_index( s, base_signal, index ):
-    return '{base_signal}_${index}'.format(**locals())
+    return '{base_signal}$__{index}'.format(**locals())
 
   def rtlir_tr_subcomp_attr( s, base_signal, attr ):
     return '{base_signal}${attr}'.format(**locals())

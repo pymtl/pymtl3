@@ -119,9 +119,9 @@ def gen_packed_ports( rtype ):
       all_properties = ifc.get_all_properties_packed()
       for prop_name, prop_rtype in all_properties:
         if _is_of_port( prop_rtype ):
-          ret += _mangle_port( id_+'_$'+prop_name, prop_rtype )
+          ret += _mangle_port( id_+'$'+prop_name, prop_rtype )
         else:
-          ret += _mangle_interface( id_+'_$'+prop_name, prop_rtype )
+          ret += _mangle_interface( id_+'$'+prop_name, prop_rtype )
       return ret
     def _gen_ifc( id_, ifc, n_dim ):
       if not n_dim:
@@ -129,7 +129,7 @@ def gen_packed_ports( rtype ):
       else:
         ret = []
         for idx in range( n_dim[0] ):
-          ret += _gen_ifc( id_+"_$"+str(idx), ifc, n_dim[1:] )
+          ret += _gen_ifc( id_+"$__"+str(idx), ifc, n_dim[1:] )
         return ret
     if isinstance( _ifc, rt.Array ):
       ifc = _ifc.get_sub_type()
@@ -200,7 +200,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret[ idx ] = "  " + ret[ idx ]
 
   else:
-    ret.append('m->{name} = {deference}model->{name};'.format( **locals() ))
+    ret.append('m->{name} = {deference}model->{name};'.format(**locals()))
 
   return ret
 
@@ -400,7 +400,7 @@ def gen_signal_decl_py( rtype ):
       all_properties = ifc.get_all_properties_packed()
       for prop_name, prop_rtype in all_properties:
         _id_py = id_py + ".{prop_name}".format( **locals() )
-        _id_v = id_v + "_${prop_name}".format( **locals() )
+        _id_v = id_v + "${prop_name}".format( **locals() )
         if _is_of_port( prop_rtype ):
           ret += gen_port_conns( _id_py, _id_v, prop_rtype )
         else:
@@ -414,7 +414,7 @@ def gen_signal_decl_py( rtype ):
         ret = []
         for idx in range( n_dim[0] ):
           _id_py = id_py + "[{idx}]".format( **locals() )
-          _id_v = id_v + "_${idx}".format( **locals() )
+          _id_v = id_v + "$__{idx}".format( **locals() )
           ret += _gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:] )
         return ret
 

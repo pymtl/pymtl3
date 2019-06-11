@@ -11,11 +11,19 @@ from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
 
+def trim( src ):
+  lines = src.split( "\n" )
+  ret = []
+  for line in lines:
+    if not line.startswith( "//" ):
+      ret.append( line )
+  return "\n".join( ret )
+
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert tr.hierarchy.src == m._ref_src
+  assert trim( tr.hierarchy.src ) == m._ref_src
 
 #-------------------------------------------------------------------------
 # Behavioral
@@ -32,6 +40,7 @@ def test_comb_assign( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -65,6 +74,7 @@ def test_seq_assign( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -99,6 +109,7 @@ def test_concat( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -132,6 +143,7 @@ def test_concat_constants( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -164,6 +176,7 @@ def test_concat_mixed( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -197,6 +210,7 @@ def test_sext( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -230,6 +244,7 @@ def test_zext( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -264,6 +279,7 @@ def test_freevar( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -271,7 +287,7 @@ module A
   output logic [63:0] out,
   input logic [0:0] reset
 );
-  localparam [31:0] _fvar_STATE_IDLE = 32'd42;
+  localparam [31:0] __const$STATE_IDLE = 32'd42;
 
   // PYMTL SOURCE:
   // 
@@ -280,7 +296,7 @@ module A
   //   s.out = concat( s.in_, STATE_IDLE )
   
   always_comb begin : upblk
-    out = { in_, _fvar_STATE_IDLE };
+    out = { in_, __const$STATE_IDLE };
   end
 
 endmodule
@@ -298,6 +314,7 @@ def test_unpacked_signal_index( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -331,6 +348,7 @@ def test_bit_selection( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -364,6 +382,7 @@ def test_part_selection( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -394,13 +413,14 @@ def test_port_wire( do_test ):
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
-      s.wire = Wire( Bits32 )
+      s.wire_ = Wire( Bits32 )
       s.out = OutPort( Bits32 )
-      s.connect( s.in_, s.wire )
-      s.connect( s.wire, s.out )
+      s.connect( s.in_, s.wire_ )
+      s.connect( s.wire_, s.out )
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -408,10 +428,10 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-  logic [31:0] wire;
+  logic [31:0] wire_;
 
-  assign wire = in_;
-  assign out = wire;
+  assign wire_ = in_;
+  assign out = wire_;
 
 endmodule
 """
@@ -425,6 +445,7 @@ def test_connect_constant( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -447,6 +468,7 @@ def test_port_const_unaccessed( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -473,6 +495,7 @@ def test_port_const_accessed( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -512,6 +535,7 @@ def test_port_const_array( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -550,6 +574,7 @@ def test_port_bit_selection( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -573,6 +598,7 @@ def test_port_part_selection( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
@@ -591,31 +617,32 @@ def test_port_wire_array_index( do_test ):
   class A( Component ):
     def construct( s ):
       s.out = [ OutPort( Bits32 ) for _ in range(5) ]
-      s.wire = [ Wire(Bits32) for _ in range(5) ]
+      s.wire_ = [ Wire(Bits32) for _ in range(5) ]
       for i in range(5):
-        s.connect( s.wire[i], s.out[i] )
-        s.connect( s.wire[i], i )
+        s.connect( s.wire_[i], s.out[i] )
+        s.connect( s.wire_[i], i )
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
   output logic [31:0] out [0:4],
   input logic [0:0] reset
 );
-  logic [31:0] wire [0:4];
+  logic [31:0] wire_ [0:4];
 
-  assign out[0] = wire[0];
-  assign wire[0] = 32'd0;
-  assign out[1] = wire[1];
-  assign wire[1] = 32'd1;
-  assign out[2] = wire[2];
-  assign wire[2] = 32'd2;
-  assign out[3] = wire[3];
-  assign wire[3] = 32'd3;
-  assign out[4] = wire[4];
-  assign wire[4] = 32'd4;
+  assign out[0] = wire_[0];
+  assign wire_[0] = 32'd0;
+  assign out[1] = wire_[1];
+  assign wire_[1] = 32'd1;
+  assign out[2] = wire_[2];
+  assign wire_[2] = 32'd2;
+  assign out[3] = wire_[3];
+  assign wire_[3] = 32'd3;
+  assign out[4] = wire_[4];
+  assign wire_[4] = 32'd4;
 
 endmodule
 """

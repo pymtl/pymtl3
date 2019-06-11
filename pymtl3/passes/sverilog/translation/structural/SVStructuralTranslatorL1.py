@@ -9,6 +9,7 @@ from functools import reduce
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.sverilog.errors import SVerilogReservedKeywordError
 from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
@@ -16,6 +17,10 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
 
 
 class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
+
+  def check_decl( s, name, msg ):
+    if s.is_sverilog_reserved( name ):
+      raise SVerilogReservedKeywordError( name, msg )
 
   #-----------------------------------------------------------------------
   # Data types
@@ -52,6 +57,13 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return ',\n'.join( port_decls )
   
   def rtlir_tr_port_decl( s, id_, Type, array_type, dtype ):
+    _dtype = Type.get_dtype()
+    if array_type:
+      template = "Note: port {id_} has data type {_dtype}"
+    else:
+      n_dim = array_type['n_dim']
+      template = "Note: {n_dim} array of ports {id_} has data type {_dtype}"
+    s.check_decl( id_, template.format( **locals() ) )
     return Type.get_direction() + ' ' +\
            dtype['decl'].format( **locals() ) + array_type['decl']
   
@@ -60,6 +72,13 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return '\n'.join( wire_decls )
   
   def rtlir_tr_wire_decl( s, id_, Type, array_type, dtype ):
+    _dtype = Type.get_dtype()
+    if array_type:
+      template = "Note: wire {id_} has data type {_dtype}"
+    else:
+      n_dim = array_type['n_dim']
+      template = "Note: {n_dim} array of wires {id_} has data type {_dtype}"
+    s.check_decl( id_, template.format( **locals() ) )
     return dtype['decl'].format( **locals() ) + array_type['decl'] + ';'
   
   def rtlir_tr_const_decls( s, const_decls ):
@@ -88,6 +107,14 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
 
     assert isinstance( Type.get_dtype(), rdt.Vector ),\
       '{} is not a vector constant!'.format( value )
+
+    _dtype = Type.get_dtype()
+    if array_type:
+      template = "Note: constant {id_} has data type {_dtype}"
+    else:
+      n_dim = array_type['n_dim']
+      template = "Note: {n_dim} array of constants {id_} has data type {_dtype}"
+    s.check_decl( id_, template.format( **locals() ) )
 
     nbits = dtype['nbits']
     _dtype = dtype['const_decl'].format( **locals() ) + array_type['decl']

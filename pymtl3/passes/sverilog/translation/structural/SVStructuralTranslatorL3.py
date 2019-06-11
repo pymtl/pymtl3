@@ -28,9 +28,9 @@ class SVStructuralTranslatorL3(
   def rtlir_tr_interface_port_decl( s, port_id, port_rtype, port_array_type,
       port_dtype ):
     # Port id is appended after the template of interface id:
-    #   > `{id_}_$msg` where `msg` is an attribute of the interface.
+    #   > `{id_}$msg` where `msg` is an attribute of the interface.
     decl_tmplt = port_rtype.get_direction() + ' ' + \
-                 port_dtype['decl'] + '_$' + port_id + port_array_type['decl']
+                 port_dtype['decl'] + '$' + port_id + port_array_type['decl']
     return decl_tmplt
 
   def rtlir_tr_interface_decls( s, ifc_decls ):
@@ -41,8 +41,8 @@ class SVStructuralTranslatorL3(
   def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type, port_decls ):
     def gen_interface_array_decl( ifc_id, ifc_rtype, n_dim, c_n_dim, port_decls ):
       # Fill in the interface id to complete the signal name:
-      #   > `in_ifc_$0_$msg` where `_$msg` is filled when calling
-      # rtlir_tr_interface_port_decl and `id_` = `in_ifc_$0`.
+      #   > `in_ifc$__0$msg` where `$msg` is filled when calling
+      # rtlir_tr_interface_port_decl and `id_` = `in_ifc$__0`.
       ret = []
       if not n_dim:
         id_ = ifc_id + c_n_dim
@@ -50,7 +50,7 @@ class SVStructuralTranslatorL3(
       else:
         return reduce( lambda res, l: res+l, map(
           lambda idx: gen_interface_array_decl(
-            ifc_id, ifc_rtype, n_dim[1:0], c_n_dim+'_$'+str(idx), port_decls
+            ifc_id, ifc_rtype, n_dim[1:0], c_n_dim+'$__'+str(idx), port_decls
         ), range( n_dim[0] ) ), [] )
     n_dim = array_type['n_dim']
     return gen_interface_array_decl( ifc_id, ifc_rtype, n_dim, '', port_decls )
@@ -60,7 +60,7 @@ class SVStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_array_index( s, base_signal, index ):
-    return '{base_signal}_${index}'.format( **locals() )
+    return '{base_signal}$__{index}'.format( **locals() )
 
   def rtlir_tr_interface_attr( s, base_signal, attr ):
-    return '{base_signal}_${attr}'.format( **locals() )
+    return '{base_signal}${attr}'.format( **locals() )

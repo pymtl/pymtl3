@@ -30,7 +30,7 @@ class SVBehavioralTranslatorL2( SVBehavioralTranslatorL1, BehavioralTranslatorL2
 
   def rtlir_tr_behavioral_tmpvar( s, id_, upblk_id, dtype ):
     return s.rtlir_tr_wire_decl(
-        upblk_id+'_'+id_, rt.Wire(dtype['raw_dtype']),
+        "__tmpvar_"+upblk_id+'$'+id_, rt.Wire(dtype['raw_dtype']),
         s.rtlir_tr_unpacked_array_type(None), dtype )
 
 #-------------------------------------------------------------------------
@@ -40,8 +40,8 @@ class SVBehavioralTranslatorL2( SVBehavioralTranslatorL1, BehavioralTranslatorL2
 class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   """Visitor that translates RTLIR to SystemVerilog for a single upblk."""
 
-  def __init__( s ):
-    super( BehavioralRTLIRToSVVisitorL2, s ).__init__()
+  def __init__( s, is_reserved ):
+    super( BehavioralRTLIRToSVVisitorL2, s ).__init__( is_reserved )
 
     # The dictionary of operator-character pairs
     s.ops = {
@@ -225,6 +225,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_LoopVar( s, node ):
+    s.check_res( node, node.name )
     return node.name
 
   #-----------------------------------------------------------------------
@@ -232,11 +233,12 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
-    return node.upblk_name + '_' + node.name
+    return "__tmpvar_" + node.upblk_name + '$' + node.name
 
   #-----------------------------------------------------------------------
   # visit_LoopVarDecl
   #-----------------------------------------------------------------------
 
   def visit_LoopVarDecl( s, node ):
+    s.check_res( node, node.name )
     return node.name

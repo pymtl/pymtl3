@@ -200,9 +200,9 @@ def test_interface( do_test ):
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
     "s.connect( s.reset, s.mangled__reset[0:1] )",
-    "s.connect( s.ifc.msg, s.mangled__ifc___024msg[0:32] )",
-    "s.connect( s.ifc.rdy, s.mangled__ifc___024rdy[0:1] )",
-    "s.connect( s.ifc.val, s.mangled__ifc___024val[0:1] )",
+    "s.connect( s.ifc.msg, s.mangled__ifc__024msg[0:32] )",
+    "s.connect( s.ifc.rdy, s.mangled__ifc__024rdy[0:1] )",
+    "s.connect( s.ifc.val, s.mangled__ifc__024val[0:1] )",
   ]
   do_test( a )
 
@@ -225,9 +225,9 @@ def test_interface_parameter( do_test ):
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
     "s.connect( s.reset, s.mangled__reset[0:1] )",
-    "s.connect( s.ifc.msg, s.mangled__ifc___024msg[0:32] )",
-    "s.connect( s.ifc.rdy, s.mangled__ifc___024rdy[0:1] )",
-    "s.connect( s.ifc.val, s.mangled__ifc___024val[0:1] )",
+    "s.connect( s.ifc.msg, s.mangled__ifc__024msg[0:32] )",
+    "s.connect( s.ifc.rdy, s.mangled__ifc__024rdy[0:1] )",
+    "s.connect( s.ifc.val, s.mangled__ifc__024val[0:1] )",
   ]
   do_test( a )
 
@@ -251,9 +251,9 @@ def test_interface_parameter_long_vector( do_test ):
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
     "s.connect( s.reset, s.mangled__reset[0:1] )",
-    "s.connect( s.ifc.msg, s.mangled__ifc___024msg[0:322] )",
-    "s.connect( s.ifc.rdy, s.mangled__ifc___024rdy[0:322] )",
-    "s.connect( s.ifc.val, s.mangled__ifc___024val[0:1] )",
+    "s.connect( s.ifc.msg, s.mangled__ifc__024msg[0:322] )",
+    "s.connect( s.ifc.rdy, s.mangled__ifc__024rdy[0:322] )",
+    "s.connect( s.ifc.val, s.mangled__ifc__024val[0:1] )",
   ]
   do_test( a )
 
@@ -274,12 +274,12 @@ def test_interface_array( do_test ):
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
     "s.connect( s.reset, s.mangled__reset[0:1] )",
-    "s.connect( s.ifc[0].msg, s.mangled__ifc___0240___024msg[0:32] )",
-    "s.connect( s.ifc[0].rdy, s.mangled__ifc___0240___024rdy[0:1] )",
-    "s.connect( s.ifc[0].val, s.mangled__ifc___0240___024val[0:1] )",
-    "s.connect( s.ifc[1].msg, s.mangled__ifc___0241___024msg[0:32] )",
-    "s.connect( s.ifc[1].rdy, s.mangled__ifc___0241___024rdy[0:1] )",
-    "s.connect( s.ifc[1].val, s.mangled__ifc___0241___024val[0:1] )"
+    "s.connect( s.ifc[0].msg, s.mangled__ifc__024___05F0__024msg[0:32] )",
+    "s.connect( s.ifc[0].rdy, s.mangled__ifc__024___05F0__024rdy[0:1] )",
+    "s.connect( s.ifc[0].val, s.mangled__ifc__024___05F0__024val[0:1] )",
+    "s.connect( s.ifc[1].msg, s.mangled__ifc__024___05F1__024msg[0:32] )",
+    "s.connect( s.ifc[1].rdy, s.mangled__ifc__024___05F1__024rdy[0:1] )",
+    "s.connect( s.ifc[1].val, s.mangled__ifc__024___05F1__024val[0:1] )"
   ]
   do_test( a )
 
@@ -307,16 +307,16 @@ def test_nested_interface( do_test ):
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
     "s.connect( s.reset, s.mangled__reset[0:1] )",
-    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc___0240___024ctrl_bar[0:32] )",
-    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc___0240___024ctrl_foo[0:32] )",
-    "s.connect( s.ifc[0].valrdy_ifc.msg, s.mangled__ifc___0240___024valrdy_ifc___024msg[0:32] )",
-    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc___0240___024valrdy_ifc___024rdy[0:1] )",
-    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc___0240___024valrdy_ifc___024val[0:1] )",
-    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc___0241___024ctrl_bar[0:32] )",
-    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc___0241___024ctrl_foo[0:32] )",
-    "s.connect( s.ifc[1].valrdy_ifc.msg, s.mangled__ifc___0241___024valrdy_ifc___024msg[0:32] )",
-    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc___0241___024valrdy_ifc___024rdy[0:1] )",
-    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc___0241___024valrdy_ifc___024val[0:1] )",
+    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc__024___05F0__024ctrl_bar[0:32] )",
+    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc__024___05F0__024ctrl_foo[0:32] )",
+    "s.connect( s.ifc[0].valrdy_ifc.msg, s.mangled__ifc__024___05F0__024valrdy_ifc__024msg[0:32] )",
+    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc__024___05F0__024valrdy_ifc__024rdy[0:1] )",
+    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc__024___05F0__024valrdy_ifc__024val[0:1] )",
+    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc__024___05F1__024ctrl_bar[0:32] )",
+    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc__024___05F1__024ctrl_foo[0:32] )",
+    "s.connect( s.ifc[1].valrdy_ifc.msg, s.mangled__ifc__024___05F1__024valrdy_ifc__024msg[0:32] )",
+    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc__024___05F1__024valrdy_ifc__024rdy[0:1] )",
+    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc__024___05F1__024valrdy_ifc__024val[0:1] )",
   ]
   do_test( a )
 
@@ -344,17 +344,17 @@ def test_nested_interface_port_array( do_test ):
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
     "s.connect( s.reset, s.mangled__reset[0:1] )",
-    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc___0240___024ctrl_bar[0:32] )",
-    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc___0240___024ctrl_foo[0:32] )",
-    "s.connect( s.ifc[0].valrdy_ifc.msg[0], s.mangled__ifc___0240___024valrdy_ifc___024msg[0][0:32] )",
-    "s.connect( s.ifc[0].valrdy_ifc.msg[1], s.mangled__ifc___0240___024valrdy_ifc___024msg[1][0:32] )",
-    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc___0240___024valrdy_ifc___024rdy[0:1] )",
-    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc___0240___024valrdy_ifc___024val[0:1] )",
-    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc___0241___024ctrl_bar[0:32] )",
-    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc___0241___024ctrl_foo[0:32] )",
-    "s.connect( s.ifc[1].valrdy_ifc.msg[0], s.mangled__ifc___0241___024valrdy_ifc___024msg[0][0:32] )",
-    "s.connect( s.ifc[1].valrdy_ifc.msg[1], s.mangled__ifc___0241___024valrdy_ifc___024msg[1][0:32] )",
-    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc___0241___024valrdy_ifc___024rdy[0:1] )",
-    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc___0241___024valrdy_ifc___024val[0:1] )",
+    "s.connect( s.ifc[0].ctrl_bar, s.mangled__ifc__024___05F0__024ctrl_bar[0:32] )",
+    "s.connect( s.ifc[0].ctrl_foo, s.mangled__ifc__024___05F0__024ctrl_foo[0:32] )",
+    "s.connect( s.ifc[0].valrdy_ifc.msg[0], s.mangled__ifc__024___05F0__024valrdy_ifc__024msg[0][0:32] )",
+    "s.connect( s.ifc[0].valrdy_ifc.msg[1], s.mangled__ifc__024___05F0__024valrdy_ifc__024msg[1][0:32] )",
+    "s.connect( s.ifc[0].valrdy_ifc.rdy, s.mangled__ifc__024___05F0__024valrdy_ifc__024rdy[0:1] )",
+    "s.connect( s.ifc[0].valrdy_ifc.val, s.mangled__ifc__024___05F0__024valrdy_ifc__024val[0:1] )",
+    "s.connect( s.ifc[1].ctrl_bar, s.mangled__ifc__024___05F1__024ctrl_bar[0:32] )",
+    "s.connect( s.ifc[1].ctrl_foo, s.mangled__ifc__024___05F1__024ctrl_foo[0:32] )",
+    "s.connect( s.ifc[1].valrdy_ifc.msg[0], s.mangled__ifc__024___05F1__024valrdy_ifc__024msg[0][0:32] )",
+    "s.connect( s.ifc[1].valrdy_ifc.msg[1], s.mangled__ifc__024___05F1__024valrdy_ifc__024msg[1][0:32] )",
+    "s.connect( s.ifc[1].valrdy_ifc.rdy, s.mangled__ifc__024___05F1__024valrdy_ifc__024rdy[0:1] )",
+    "s.connect( s.ifc[1].valrdy_ifc.val, s.mangled__ifc__024___05F1__024valrdy_ifc__024val[0:1] )",
   ]
   do_test( a )

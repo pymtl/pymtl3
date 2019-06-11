@@ -15,9 +15,12 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 impo
     SVStructuralTranslatorL2,
 )
 
+from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+
 
 def local_do_test( m ):
   m.elaborate()
+  SVStructuralTranslatorL2.is_sverilog_reserved = is_sverilog_reserved
   tr = SVStructuralTranslatorL2( m )
   tr.clear( m )
   tr.translate_structural( m )

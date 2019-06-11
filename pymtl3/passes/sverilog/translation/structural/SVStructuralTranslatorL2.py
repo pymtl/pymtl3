@@ -63,9 +63,15 @@ class SVStructuralTranslatorL2(
     make_indent( field_decls, 1 )
     field_decl = '\n'.join( field_decls )
 
+    file_info = dtype.get_file_info()
+
     return {
       'def' : \
-      'typedef struct packed {{\n{field_decl}\n}} {dtype_name};\n'.format(**locals()),
+"""\
+typedef struct packed {{
+{field_decl}
+}} {dtype_name};
+""".format( **locals() ),
       'decl' : '{dtype_name} {{id_}}'.format( **locals() ),
       'raw_dtype' : dtype
     }

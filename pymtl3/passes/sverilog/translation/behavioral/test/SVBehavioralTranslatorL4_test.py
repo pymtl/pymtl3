@@ -10,10 +10,13 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.datatypes import Bits1, Bits32, concat
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
-from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
+from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL4 import (
     BehavioralRTLIRToSVVisitorL4,
 )
+
+from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
 
 
 def local_do_test( m ):
@@ -21,7 +24,7 @@ def local_do_test( m ):
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = BehavioralRTLIRToSVVisitorL4()
+  visitor = BehavioralRTLIRToSVVisitorL4(is_sverilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
   for blk in m_all_upblks:
@@ -53,9 +56,9 @@ def test_interface( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out_$val = in__$val;
-  out_$msg = in__$msg;
-  in__$rdy = out_$rdy;
+  out$val = in_$val;
+  out$msg = in_$msg;
+  in_$rdy = out$rdy;
 end\
 """ }
   # TestVectorSimulator properties
@@ -75,6 +78,7 @@ end\
     [   1,     -2,   1,     -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_interface_index( do_test ):
@@ -92,7 +96,7 @@ def test_interface_index( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in__$1_$foo;
+  out = in_$__1$foo;
 end\
 """ }
   # TestVectorSimulator properties
@@ -109,4 +113,19 @@ end\
     [   -1,   -2,     -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
+
+def test_interface_array_non_static_index( do_test ):
+  class Ifc( Interface ):
+    def construct( s ):
+      s.foo = InPort( Bits32 )
+  class A( Component ):
+    def construct( s ):
+      s.in_ = [ Ifc() for _ in range(2) ]
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.in_[s.in_[0].foo].foo
+  with expected_failure( SVerilogTranslationError, "static constant expression" ):
+    do_test( A() )

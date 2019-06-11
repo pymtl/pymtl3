@@ -12,6 +12,7 @@ can be parameterized by the generated type objects.
 """
 from __future__ import absolute_import, division, print_function
 
+import inspect
 from functools import reduce
 
 import pymtl3.dsl as dsl
@@ -60,6 +61,15 @@ class Struct( BaseRTLIRDataType ):
     s.properties = properties
     s.packed_order = packed_order
     s.cls = cls
+    if cls is not None:
+      try:
+        file_name = inspect.getsourcefile( cls )
+        line_no = inspect.getsourcelines( cls )[1]
+        s.file_info = "File: {file_name}, Line: {line_no}".format( **locals() )
+      except IOError:
+        s.file_info = "Dynamically generated class " + cls.__name__
+    else:
+      s.file_info = "Not available"
 
   def __eq__( s, u ):
     return isinstance(u, Struct) and s.name == u.name
@@ -69,6 +79,9 @@ class Struct( BaseRTLIRDataType ):
 
   def get_name( s ):
     return s.name
+
+  def get_file_info( s ):
+    return s.file_info
 
   def get_class( s ):
     return s.cls

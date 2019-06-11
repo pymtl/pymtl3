@@ -46,7 +46,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
     return ret
 
   def rtlir_tr_upblk_src( s, upblk, rtlir_upblk ):
-    visitor = s._get_rtlir2sv_visitor()()
+    visitor = s._get_rtlir2sv_visitor()(s.is_sverilog_reserved)
     return visitor.enter( upblk, rtlir_upblk )
 
   def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
@@ -87,7 +87,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
       '{} freevar should be a constant!'.format( id_ )
     assert isinstance( rtype.get_dtype(), rdt.Vector ), \
       '{} freevar should be a (list of) integer!'.format( id_ )
-    return s.rtlir_tr_const_decl( '_fvar_'+id_, rtype, array_type, dtype, obj )
+    return s.rtlir_tr_const_decl( '__const$'+id_, rtype, array_type, dtype, obj )
 
 #-------------------------------------------------------------------------
 # BehavioralRTLIRToSVVisitorL1
@@ -96,12 +96,16 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
 class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   """Visitor that translates RTLIR to SystemVerilog for a single upblk."""
 
-  def __init__( s ):
+  def __init__( s, is_reserved ):
     # Should use enum here, but enum is a python 3 feature...
     s.NONE          = 0
     s.COMBINATIONAL = 1
     s.SEQUENTIAL    = 2
     s.upblk_type    = s.NONE
+    s._is_sverilog_reserved = is_reserved
+
+  def is_sverilog_reserved( s, name ):
+    return s._is_sverilog_reserved( name )
 
   def enter( s, blk, rtlir ):
     """Entry point for RTLIR generation."""
@@ -123,6 +127,11 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
     return s.visit( rtlir )
 
+  def check_res( s, node, name ):
+    if s.is_sverilog_reserved( name ):
+      raise SVerilogTranslationError( s.blk, node, 
+        "name {} is a SystemVerilog reserved keyword!".format( name ) )
+
   #-----------------------------------------------------------------------
   # visit_CombUpblk
   #-----------------------------------------------------------------------
@@ -133,6 +142,8 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     src      = []
     body     = []
     s.upblk_type = s.COMBINATIONAL
+
+    s.check_res( node, blk_name )
 
     # Add name of the upblk to this always block
     src.extend( [ 'always_comb begin : {blk_name}'.format( **locals() ) ] )
@@ -155,8 +166,9 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     blk_name = node.name
     src      = []
     body     = []
-
     s.upblk_type = s.SEQUENTIAL
+
+    s.check_res( node, blk_name )
 
     # Add name of the upblk to this always block
     src.extend( [
@@ -361,6 +373,8 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     attr  = node.attr
     value = s.visit( node.value )
 
+    s.check_res( node, attr )
+
     if isinstance( node.value, bir.Base ):
       # The base of this attribute node is the component 's'.
       # Example: s.out, s.STATE_IDLE
@@ -385,10 +399,16 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if isinstance( Type, rt.Array ):
 
       subtype = Type.get_sub_type()
+      # Unpacked array index must be a static constant integer!
+      # if idx is None and not isinstance(subtype, (rt.Port, rt.Wire, rt.Const)):
+        # raise SVerilogTranslationError( s.blk, node.ast,
+# 'index of unpacked array {} must be a constant integer expression!'. \
+            # format(node.value) )
+
       if isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
         return '{value}[{idx}]'.format( **locals() )
       else:
-        return '{value}_${idx}'.format( **locals() )
+        return '{value}$__{idx}'.format( **locals() )
 
     # Index on a signal
     elif isinstance( Type, rt.Signal ):
@@ -442,7 +462,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_FreeVar( s, node ):
-    return '_fvar_'+node.name
+    return '__const$'+node.name
 
   #-----------------------------------------------------------------------
   # visit_TmpVar

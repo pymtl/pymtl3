@@ -13,10 +13,15 @@ from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 import (
     SVStructuralTranslatorL1,
 )
+from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
 
+
+def is_sverilog_reserved( s, name ):
+  return name in sverilog_reserved
 
 def local_do_test( m ):
   m.elaborate()
+  SVStructuralTranslatorL1.is_sverilog_reserved = is_sverilog_reserved
   tr = SVStructuralTranslatorL1( m )
   tr.clear( m )
   tr.translate_structural( m )
