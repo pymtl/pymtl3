@@ -86,4 +86,7 @@ class RTL2CLWrapper( Component ):
     ComponentLevel6._handle_decorated_methods( s )
 
   def line_trace( s ):
-    return s.model.line_trace()
+    trace = ""
+    for name in s.method_specs:
+      trace += str( getattr( s, name ) )
+    return s.model.line_trace() + "  " + trace

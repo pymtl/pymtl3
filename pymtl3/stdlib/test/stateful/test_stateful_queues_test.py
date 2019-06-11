@@ -74,7 +74,7 @@ class SingleEntryPipeQueue( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{} ({}) {}".format( s.enq.args.msg, s.full, s.deq.rets.msg )
+    return "({})".format( s.full )
 
 
 #-------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class PipeQueueCL( Component ):
     return s.queue.pop()
 
   def line_trace( s ):
-    return str( s.queue )
+    return ""
 
 
 #-------------------------------------------------------------------------
@@ -158,8 +158,7 @@ class SingleEntryBypassQueue( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{} ({}) {}".format( s.enq.args.msg if s.enq.en else "", s.full,
-                                s.deq.rets.msg if s.deq.en else "" )
+    return "({})".format( s.full )
 
 
 #-------------------------------------------------------------------------
@@ -188,7 +187,7 @@ class BypassQueueCL( Component ):
     return s.queue.pop()
 
   def line_trace( s ):
-    return str( s.queue )
+    return ""
 
 
 #-------------------------------------------------------------------------
