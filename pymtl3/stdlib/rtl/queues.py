@@ -471,14 +471,9 @@ class NormalQueue1EntryRTL( Component ):
     def up_full():
       if s.reset:
         s.full = b1(0)
-      elif ~s.full & s.enq.en:
-        s.full = b1(1)
-      elif s.full & s.deq.en:
-        s.full = b1(0)
       else:
-        s.full = s.full
-    
-    # TODO: figure out whether to use deepcopy here.
+        s.full = ~s.deq.en & (s.enq.en | s.full)
+
     @s.update_on_edge
     def up_entry():
       if s.enq.en:
@@ -527,14 +522,9 @@ class PipeQueue1EntryRTL( Component ):
     def up_full():
       if s.reset:
         s.full = b1(0)
-      elif ~s.full & s.enq.en & ~s.deq.en:
-        s.full = b1(1)
-      elif s.full & ~s.enq.en & s.deq.en:
-        s.full = b1(0)
       else:
-        s.full = s.full
-    
-    # TODO: figure out whether to use deepcopy here.
+        s.full = ~s.deq.en & (s.enq.en | s.full) | s.enq.en & s.full
+
     @s.update_on_edge
     def up_entry():
       if s.enq.en:
@@ -583,14 +573,9 @@ class BypassQueue1EntryRTL( Component ):
     def up_full():
       if s.reset:
         s.full = b1(0)
-      elif ~s.full & s.enq.en & ~s.deq.en:
-        s.full = b1(1)
-      elif s.full & ~s.enq.en & s.deq.en:
-        s.full = b1(0)
       else:
-        s.full = s.full
-    
-    # TODO: figure out whether to use deepcopy here.
+        s.full = ~s.deq.en & (s.enq.en | s.full)
+
     @s.update_on_edge
     def up_entry():
       if s.enq.en & ~s.deq.en:
