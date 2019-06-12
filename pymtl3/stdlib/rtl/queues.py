@@ -55,11 +55,11 @@ class NormalQueueCtrlRTL( Component ):
 
     # Interface
 
-    s.enq_en  = InPort ( Bits1   )
-    s.enq_rdy = OutPort( Bits1   )
-    s.deq_en  = InPort ( Bits1   )
-    s.deq_rdy = OutPort( Bits1   )
-    s.count   = OutPort( PtrType )
+    s.enq_en  = InPort ( Bits1     )
+    s.enq_rdy = OutPort( Bits1     )
+    s.deq_en  = InPort ( Bits1     )
+    s.deq_rdy = OutPort( Bits1     )
+    s.count   = OutPort( CountType )
 
     s.wen     = OutPort( Bits1   )
     s.waddr   = OutPort( PtrType )
@@ -129,7 +129,7 @@ class NormalQueueRTL( Component ):
 
     s.enq   = EnqIfcRTL( EntryType )
     s.deq   = DeqIfcRTL( EntryType )
-    s.count = OutPort( mk_bits( clog2( num_entries ) ) )
+    s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
 
     # Components
 
@@ -176,11 +176,11 @@ class PipeQueueCtrlRTL( Component ):
 
     # Interface
 
-    s.enq_en  = InPort ( Bits1   )
-    s.enq_rdy = OutPort( Bits1   )
-    s.deq_en  = InPort ( Bits1   )
-    s.deq_rdy = OutPort( Bits1   )
-    s.count   = OutPort( PtrType )
+    s.enq_en  = InPort ( Bits1     )
+    s.enq_rdy = OutPort( Bits1     )
+    s.deq_en  = InPort ( Bits1     )
+    s.deq_rdy = OutPort( Bits1     )
+    s.count   = OutPort( CountType )
 
     s.wen     = OutPort( Bits1   )
     s.waddr   = OutPort( PtrType )
@@ -256,7 +256,7 @@ class PipeQueueRTL( Component ):
 
     s.enq   = EnqIfcRTL( EntryType )
     s.deq   = DeqIfcRTL( EntryType )
-    s.count = OutPort( mk_bits( clog2( num_entries ) ) )
+    s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
 
     # Components
 
@@ -332,11 +332,11 @@ class BypassQueueCtrlRTL( Component ):
 
     # Interface
 
-    s.enq_en  = InPort ( Bits1   )
-    s.enq_rdy = OutPort( Bits1   )
-    s.deq_en  = InPort ( Bits1   )
-    s.deq_rdy = OutPort( Bits1   )
-    s.count   = OutPort( PtrType )
+    s.enq_en  = InPort ( Bits1     )
+    s.enq_rdy = OutPort( Bits1     )
+    s.deq_en  = InPort ( Bits1     )
+    s.deq_rdy = OutPort( Bits1     )
+    s.count   = OutPort( CountType )
 
     s.wen     = OutPort( Bits1   )
     s.waddr   = OutPort( PtrType )
@@ -416,7 +416,7 @@ class BypassQueueRTL( Component ):
 
     s.enq   = EnqIfcRTL( EntryType )
     s.deq   = DeqIfcRTL( EntryType )
-    s.count = OutPort( mk_bits( clog2( num_entries ) ) )
+    s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
 
     # Components
 
