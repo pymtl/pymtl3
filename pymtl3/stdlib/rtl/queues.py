@@ -87,22 +87,18 @@ class NormalQueueCtrlRTL( Component ):
 
     @s.update
     def up_rdy_signals():
-      if ~s.reset:
-        s.enq_rdy = s.count < s.num_entries
-        s.deq_rdy = s.count > CountType(0)
-      else:
-        s.enq_rdy = b1(0)
-        s.deq_rdy = b1(0)
+        s.enq_rdy = ( s.count < s.num_entries ) & ~s.reset
+        s.deq_rdy = ( s.count > CountType(0) ) & ~s.reset
 
     @s.update
     def up_xfer_signals():
-      s.enq_xfer = s.enq_en and s.enq_rdy
-      s.deq_xfer = s.deq_en and s.deq_rdy
+      s.enq_xfer = s.enq_en & s.enq_rdy
+      s.deq_xfer = s.deq_en & s.deq_rdy
 
     @s.update
     def up_next():
-      s.head_next = s.head - 1 if s.head > CountType(0) else s.last_idx
-      s.tail_next = s.tail + 1 if s.tail < s.last_idx else PtrType(0)
+      s.head_next = s.head - PtrType(1) if s.head > PtrType(0) else s.last_idx
+      s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
     def up_reg():
@@ -115,8 +111,8 @@ class NormalQueueCtrlRTL( Component ):
       else:
         s.head  = s.head_next if s.deq_xfer else s.head
         s.tail  = s.tail_next if s.enq_xfer else s.tail
-        s.count = s.count + b1(1) if s.enq_xfer & ~s.deq_xfer else \
-                  s.count - b1(1) if s.deq_xfer & ~s.enq_xfer else \
+        s.count = s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
+                  s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
                   s.count
 
 #-------------------------------------------------------------------------
@@ -208,15 +204,12 @@ class PipeQueueCtrlRTL( Component ):
 
     @s.update
     def up_rdy_signals():
-      if ~s.reset:
-        s.deq_rdy = s.count > CountType(0)
-      else:
-        s.deq_rdy = b1(0)
+      s.deq_rdy = ( s.count > CountType(0) ) & ~s.reset
 
     @s.update
     def up_enq_rdy():
       if ~s.reset:
-        s.enq_rdy = s.count < s.num_entries or s.deq_en
+        s.enq_rdy = ( s.count < s.num_entries ) | s.deq_en
       else:
         s.enq_rdy = b1(0)
 
@@ -228,8 +221,8 @@ class PipeQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - b1(1) if s.head > CountType(0) else s.last_idx
-      s.tail_next = s.tail + b1(1) if s.tail < s.last_idx else PtrType(0)
+      s.head_next = s.head - PtrType(1) if s.head > PtrType(0) else s.last_idx
+      s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
     def up_reg():
@@ -242,8 +235,8 @@ class PipeQueueCtrlRTL( Component ):
       else:
         s.head  = s.head_next if s.deq_xfer else s.head
         s.tail  = s.tail_next if s.enq_xfer else s.tail
-        s.count = s.count + b1(1) if s.enq_xfer & ~s.deq_xfer else \
-                  s.count - b1(1) if s.deq_xfer & ~s.enq_xfer else \
+        s.count = s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
+                  s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
                   s.count
 
 #-------------------------------------------------------------------------
@@ -365,10 +358,7 @@ class BypassQueueCtrlRTL( Component ):
 
     @s.update
     def up_enq_rdy():
-      if ~s.reset:
-        s.enq_rdy = s.count < s.num_entries
-      else:
-        s.enq_rdy = b1(0)
+      s.enq_rdy = ( s.count < s.num_entries ) & ~s.reset
 
     @s.update
     def up_deq_rdy():
@@ -379,7 +369,7 @@ class BypassQueueCtrlRTL( Component ):
     
     @s.update
     def up_mux_sel():
-      s.mux_sel = s.count == 0
+      s.mux_sel = s.count == CountType(0)
 
     @s.update
     def up_xfer_signals():
@@ -388,8 +378,8 @@ class BypassQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - b1(1) if s.head > CountType(0) else s.last_idx
-      s.tail_next = s.tail + b1(1) if s.tail < s.last_idx else PtrType(0)
+      s.head_next = s.head - PtrType(1) if s.head > PtrType(0) else s.last_idx
+      s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
     def up_reg():
@@ -402,8 +392,8 @@ class BypassQueueCtrlRTL( Component ):
       else:
         s.head   = s.head_next if s.deq_xfer else s.head
         s.tail   = s.tail_next if s.enq_xfer else s.tail
-        s.count  = s.count + b1(1) if s.enq_xfer & ~s.deq_xfer else \
-                   s.count - b1(1) if s.deq_xfer & ~s.enq_xfer else \
+        s.count  = s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
+                   s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
                    s.count
 
 #-------------------------------------------------------------------------
@@ -488,10 +478,7 @@ class NormalQueue1EntryRTL( Component ):
 
     @s.update
     def up_deq_rdy():
-      if ~s.reset:
-        s.deq.rdy = s.full
-      else:
-        s.deq.rdy = b1(0)
+      s.deq.rdy = s.full & ~s.reset
 
     s.connect( s.entry, s.deq.msg )
 
@@ -532,17 +519,11 @@ class PipeQueue1EntryRTL( Component ):
 
     @s.update
     def up_enq_rdy():
-      if ~s.reset:
-        s.enq.rdy = ~s.full | s.deq.en
-      else:
-        s.enq.rdy = b1(0)
+      s.enq.rdy = ( ~s.full | s.deq.en ) & ~s.reset
 
     @s.update
     def up_deq_rdy():
-      if ~s.reset:
-        s.deq.rdy = s.full
-      else:
-        s.deq.rdy = b1(0)
+      s.deq.rdy = s.full & ~s.reset
 
     s.connect( s.entry, s.deq.msg )
 
@@ -583,18 +564,12 @@ class BypassQueue1EntryRTL( Component ):
 
     @s.update
     def up_enq_rdy():
-      if ~s.reset:
-        s.enq.rdy = ~s.full
-      else:
-        s.enq.rdy = b1(0)
+        s.enq.rdy = ~s.full & ~s.reset
 
     @s.update
     def up_deq_rdy():
-      if ~s.reset:
-        s.deq.rdy = s.full | s.enq.en
-      else:
-        s.deq.rdy = b1(0)
-    
+      s.deq.rdy = ( s.full | s.enq.en ) & ~s.reset
+
     @s.update
     def up_deq_msg():
       s.deq.msg = s.entry if s.full else s.enq.msg
