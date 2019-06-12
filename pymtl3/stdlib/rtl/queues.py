@@ -9,6 +9,8 @@ Author : Yanghui Ou
 
 from __future__ import absolute_import, division, print_function
 
+from copy import deepcopy
+
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
 from pymtl3.stdlib.rtl import Mux, RegisterFile
@@ -479,7 +481,8 @@ class NormalQueue1EntryRTL( Component ):
     # TODO: figure out whether to use deepcopy here.
     @s.update_on_edge
     def up_entry():
-      s.entry = s.enq.msg if s.enq.en else s.entry
+      if s.enq.en:
+        s.entry = s.enq.msg
 
     @s.update
     def up_enq_rdy():
@@ -534,7 +537,8 @@ class PipeQueue1EntryRTL( Component ):
     # TODO: figure out whether to use deepcopy here.
     @s.update_on_edge
     def up_entry():
-      s.entry = s.enq.msg if s.enq.en else s.entry
+      if s.enq.en:
+        s.entry = deepcopy( s.enq.msg )
 
     @s.update
     def up_enq_rdy():
@@ -589,7 +593,8 @@ class BypassQueue1EntryRTL( Component ):
     # TODO: figure out whether to use deepcopy here.
     @s.update_on_edge
     def up_entry():
-      s.entry = s.enq.msg if s.enq.en and ~s.deq.en else s.entry
+      if s.enq.en and ~s.deq.en:
+        s.entry = deepcopy( s.enq.msg )
 
     @s.update
     def up_enq_rdy():
