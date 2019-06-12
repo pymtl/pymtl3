@@ -145,7 +145,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
   def ref_tv_out( model, test_vector ):
     dct = {}
     for out_port in all_output_ports:
-      dct[ out_port ] = getattr( model, out_port._dsl.my_name )
+      dct[ out_port ] = eval( "model." + out_port._dsl.my_name )
     reference_output.append( dct )
 
   # Method to compare the outputs of the imported model and the pure python one
@@ -154,7 +154,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
       "Reference runs for fewer cycles than the imported model!"
     for out_port in all_output_ports:
       ref = reference_output[0][out_port]
-      imp = getattr( model, out_port._dsl.my_name )
+      imp = eval( "model." + out_port._dsl.my_name )
       assert ref == imp, \
         "Value mismatch: reference: {}, imported: {}".format( ref, imp )
     reference_output.popleft()

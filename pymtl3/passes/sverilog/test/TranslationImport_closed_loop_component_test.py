@@ -134,3 +134,28 @@ def test_subcomp( data ):
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
   closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+
+# Test contributed by Cheng Tan
+@given( st.data() )
+@settings( deadline = None, max_examples = 5 )
+@pytest.mark.parametrize( "Type", [ Bits16, Bits32 ] )
+def test_index_static( Type, data ):
+  class A( Component ):
+    def construct( s, Type ):
+      s.in_ = [InPort ( Type ) for _ in range(2)]
+      s.out = [OutPort( Type ) for _ in range(2)]
+      @s.update
+      def index_upblk():
+        if s.in_[0] > s.in_[1]:
+          s.out[0] = Type(1)
+          s.out[1] = Type(0)
+        else:
+          s.out[0] = Type(0)
+          s.out[1] = Type(1)
+
+    def line_trace( s ): return "s.in0  = " + str( s.in_[0] ) +\
+                                "s.in1  = " + str( s.in_[1] ) +\
+                                "s.out0 = " + str( s.out[0] ) +\
+                                "s.out1 = " + str( s.out[1] )
+  a = A( Type )
+  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
