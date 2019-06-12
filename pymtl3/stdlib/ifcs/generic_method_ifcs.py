@@ -1,5 +1,5 @@
 #=========================================================================
-# CalleeIfc.py
+# generic_method_ifcs.py
 #=========================================================================
 # RTL method interface. RTL equivalence of NonBlockingCalleeIfc in CL
 #
@@ -19,57 +19,60 @@ from pymtl3.dsl.errors import InvalidConnectionError
 #-------------------------------------------------------------------------
 class CalleeRTL2CL( Component ):
 
-  def construct( s, ifc_rtl_callee ):
+  def construct( s, ArgTypes, RetTypes ):
 
-    ifc_rtl_caller = deepcopy( ifc_rtl_callee )
-    ifc_rtl_caller._dsl.constructed = False
-    s.ifc_rtl_caller = ifc_rtl_caller.inverse()
-
-    s.called = False
+    s.ifc_rtl_caller = CalleeIfcRTL( ArgTypes, RetTypes ).inverse()
     s.rdy = False
+    s.called = False
+
+    # clear call signal
+    @s.update_on_edge
+    def up_clear():
+      s.called = False
 
     # generate upblk depending on args
-    if s.ifc_rtl_caller.args:
-      # has args, create tmp var
-      s.args = s.ifc_rtl_caller.args._dsl.Type()
+
+    if ArgTypes:
+      s.ArgType = s.ifc_rtl_caller.args._dsl.Type
+      s.args = s.ArgType()
 
       # update args & en
       @s.update
-      def update_en_args():
+      def up_en_args():
         s.ifc_rtl_caller.en = Bits1( 1 ) if s.called else Bits1( 0 )
         s.ifc_rtl_caller.args = s.args
-        s.called = False
+
+      # select which method to use for NonBlockingCalleeIfc
+      s.cl_method = s.cl_callee_method
 
       # add constraints between callee method and upblk
-      s.add_constraints( M( s.cl_callee_method ) < U( update_en_args ) )
-
-      # know which method to add constraints on later
-      cl_method = s.cl_callee_method
+      s.add_constraints( M( s.cl_method ) < U( up_en_args ) )
 
     else:
       # no args, update en
       @s.update
-      def update_en():
+      def up_en():
         s.ifc_rtl_caller.en = Bits1( 1 ) if s.called else Bits1( 0 )
-        s.called = False
+
+      # select which method to use for NonBlockingCalleeIfc
+      s.cl_method = s.cl_callee_method_no_arg
 
       # add constraints between callee method and upblk
-      s.add_constraints( M( s.cl_callee_method_no_arg ) < U( update_en ) )
+      s.add_constraints( M( s.cl_method ) < U( up_en ) )
 
-      # know which method to add constraints on later
-      cl_method = s.cl_callee_method_no_arg
+    s.cl_method = NonBlockingCalleeIfc( method=s.cl_method, rdy=lambda: s.rdy )
 
     # generate upblk depending on rets
-    if s.ifc_rtl_caller.rets:
+    if RetTypes:
       # create tmp var for rets
       s.rets = s.ifc_rtl_caller.rets._dsl.Type()
 
       # generate upblk for rets
       @s.update
-      def update_rets():
+      def up_rets():
         s.rets = s.ifc_rtl_caller.rets
 
-      s.add_constraints( U( update_rets ) < M( cl_method ) )
+      s.add_constraints( U( up_rets ) < M( s.cl_method ) )
 
     else:
       # return None if no ret
@@ -77,18 +80,17 @@ class CalleeRTL2CL( Component ):
 
     # Generate upblk and add constraints for rdy
     @s.update
-    def update_rdy():
+    def up_rdy():
       s.rdy = True if s.ifc_rtl_caller.rdy else False
 
-    s.add_constraints( U( update_rdy ) < M( cl_method ) )
+    s.add_constraints( U( up_rdy ) < M( s.cl_method ) )
 
-  @non_blocking( lambda s: s.rdy )
   def cl_callee_method( s, **kwargs ):
+    s.args = s.ArgType()
     s.args.__dict__.update( kwargs )
     s.called = True
     return s.rets
 
-  @non_blocking( lambda s: s.rdy )
   def cl_callee_method_no_arg( s ):
     s.called = True
     return s.rets
@@ -100,6 +102,10 @@ class CalleeRTL2CL( Component ):
 class CalleeIfcRTL( Interface ):
 
   def construct( s, ArgTypes=None, RetTypes=None ):
+
+    s.ArgTypes = ArgTypes
+    s.RetTypes = RetTypes
+
     if ArgTypes:
       # mangle arg bit_struct name by fields
       arg_cls_name = "CalleeIfcRTL_Arg"
@@ -126,21 +132,6 @@ class CalleeIfcRTL( Interface ):
     s.rdy = OutPort( Bits1 )
 
   def connect( s, other, parent ):
-
-    def connect_callee_ifc( this, other ):
-      if this.args:
-        assert other.args
-        parent.connect( other.args, this.args )
-      if this.rets:
-        assert other.rets
-        parent.connect( this.rets, other.rets )
-
-      parent.connect_pairs( this.en, other.en, this.rdy, other.rdy )
-
-    if isinstance( other, CalleeIfcRTL ):
-      connect_callee_ifc( s, other )
-      return True
-
     if isinstance( other, NonBlockingCalleeIfc ):
       if s._dsl.level <= other._dsl.level:
         raise InvalidConnectionError(
@@ -151,17 +142,12 @@ class CalleeIfcRTL( Interface ):
                 s._dsl.level, repr( s ), type( s ), other._dsl.level,
                 repr( other ), type( other ) ) )
 
-      rtl2cl_adapter = CalleeRTL2CL( s )
+      rtl2cl_adapter = CalleeRTL2CL( s.ArgTypes, s.RetTypes )
 
       setattr( parent, "callee_rtl2cl_adapter_" + s._dsl.my_name,
                rtl2cl_adapter )
 
-      connect_callee_ifc( s, rtl2cl_adapter.ifc_rtl_caller )
-
-      if s.args:
-        parent.connect( other, rtl2cl_adapter.cl_callee_method )
-      else:
-        parent.connect( other, rtl2cl_adapter.cl_callee_method_no_arg )
+      parent.connect_pairs( s, rtl2cl_adapter.ifc_rtl_caller, other, rtl2cl_adapter.cl_method )
 
       return True
     return False

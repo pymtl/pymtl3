@@ -81,8 +81,6 @@ class RTL2CLWrapper( Component ):
       setattr( s, method_name, callee_ifc )
       s.connect( callee_ifc, getattr( s.model, method_name ) )
 
-    ComponentLevel6._handle_decorated_methods( s )
-
   def line_trace( s ):
     trace = ""
     for name in s.method_specs:
