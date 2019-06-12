@@ -97,7 +97,7 @@ class NormalQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - PtrType(1) if s.head > PtrType(0) else s.last_idx
+      s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
       s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
@@ -153,7 +153,7 @@ class NormalQueueRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.count, s.deq )
+    return "{}({},{},{}){}".format( s.enq, s.count, s.ctrl.head, s.ctrl.tail, s.deq )
 
 #-------------------------------------------------------------------------
 # Ctrl for PipeQueue
@@ -221,7 +221,7 @@ class PipeQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - PtrType(1) if s.head > PtrType(0) else s.last_idx
+      s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
       s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
@@ -378,7 +378,7 @@ class BypassQueueCtrlRTL( Component ):
 
     @s.update
     def up_next():
-      s.head_next = s.head - PtrType(1) if s.head > PtrType(0) else s.last_idx
+      s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
       s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
     @s.update_on_edge
