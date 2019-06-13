@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.passes import DynamicSim
+from pymtl3.passes.sverilog.translation.TranslationPass import TranslationPass
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
@@ -61,3 +62,13 @@ class SrcSinkTestsRTL( SrcSinkTestsScycleCL ):
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
     cls.nstages = None
+
+#-------------------------------------------------------------------------
+# Translation (temporary)
+#-------------------------------------------------------------------------
+
+# def test_translate_sv():
+#   dut = ChecksumRTL()
+#   dut.elaborate()
+#   dut.sverilog_translate = True
+#   dut.apply( TranslationPass() )
