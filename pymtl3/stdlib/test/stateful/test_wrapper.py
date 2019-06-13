@@ -48,8 +48,8 @@ def inspect_rtl( rtl ):
 
   for method, ifc in inspect.getmembers( rtl ):
     if isinstance( ifc, CalleeIfcRTL ):
-      args = ifc.args._dsl.Type.fields if ifc.args else []
-      rets_type = ifc.rets._dsl.Type if ifc.rets else None
+      args = ifc.ArgType.fields if ifc.args else []
+      rets_type = ifc.RetType if ifc.rets else None
       ifc.method_spec = Method(
           method_name=method, args=args, rets_type=rets_type )
       method_specs[ method ] = ifc.method_spec
