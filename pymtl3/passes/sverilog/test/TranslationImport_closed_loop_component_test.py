@@ -39,7 +39,7 @@ def test_adder( Type, data ):
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
   a = A( Type )
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  closed_loop_component_test( a, data )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
@@ -55,7 +55,7 @@ def test_mux( Type, n_ports, data ):
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
   a = A( Type, n_ports )
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  closed_loop_component_test( a, data )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
@@ -70,7 +70,7 @@ def test_struct( data ):
       s.connect( s.out, s.in_.foo )
     def line_trace( s ): return "out = " + str( s.out )
   a = A()
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  closed_loop_component_test( a, data )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
@@ -99,7 +99,7 @@ def test_nested_struct( data ):
       s.connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  closed_loop_component_test( a, data )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
@@ -133,7 +133,7 @@ def test_subcomp( data ):
       s.connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  closed_loop_component_test( a, data )
 
 # Test contributed by Cheng Tan
 @given( st.data() )
@@ -158,4 +158,4 @@ def test_index_static( Type, data ):
                                 "s.out0 = " + str( s.out[0] ) +\
                                 "s.out1 = " + str( s.out[1] )
   a = A( Type )
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  closed_loop_component_test( a, data )
