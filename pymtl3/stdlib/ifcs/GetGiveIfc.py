@@ -27,7 +27,13 @@ class GetIfcRTL( Interface ):
     s.rdy = InPort ( int if Type is int else Bits1 )
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy )
+    try:
+      trace_len = s.trace_len
+    except AttributeError:
+      s.trace_len = len( "{}".format( s.MsgType() ) )
+      trace_len = s.trace_len
+
+    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
 
   def __str__( s ):
     return s.line_trace()
@@ -46,7 +52,13 @@ class GiveIfcRTL( Interface ):
     s.rdy = OutPort( int if Type is int else Bits1 )
 
   def line_trace( s ):
-    return enrdy_to_str( s.msg, s.en, s.rdy )
+    try:
+      trace_len = s.trace_len
+    except AttributeError:
+      s.trace_len = len( "{}".format( s.MsgType() ) )
+      trace_len = s.trace_len
+
+    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
 
   def __str__( s ):
     return s.line_trace()
