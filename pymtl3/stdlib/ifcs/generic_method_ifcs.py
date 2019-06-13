@@ -43,8 +43,8 @@ class CalleeRTL2CL( Component ):
         s.ifc_rtl_caller.en = Bits1( 1 ) if s.called else Bits1( 0 )
         s.ifc_rtl_caller.args = s.args
 
-      # select which method to use for NonBlockingCalleeIfc
-      s.cl_method = s.cl_callee_method
+      s.cl_method = NonBlockingCalleeIfc(
+          method=s.cl_callee_method, rdy=lambda: s.rdy )
 
       # add constraints between callee method and upblk
       s.add_constraints( M( s.cl_method ) < U( up_en_args ) )
@@ -55,13 +55,11 @@ class CalleeRTL2CL( Component ):
       def up_en():
         s.ifc_rtl_caller.en = Bits1( 1 ) if s.called else Bits1( 0 )
 
-      # select which method to use for NonBlockingCalleeIfc
-      s.cl_method = s.cl_callee_method_no_arg
+      s.cl_method = NonBlockingCalleeIfc(
+          method=s.cl_callee_method_no_arg, rdy=lambda: s.rdy )
 
       # add constraints between callee method and upblk
       s.add_constraints( M( s.cl_method ) < U( up_en ) )
-
-    s.cl_method = NonBlockingCalleeIfc( method=s.cl_method, rdy=lambda: s.rdy )
 
     # generate upblk depending on rets
     if RetType:
