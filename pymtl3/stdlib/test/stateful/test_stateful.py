@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, print_function
 from copy import deepcopy
 
 import hypothesis.strategies as st
+from hypothesis import PrintSettings
+from hypothesis import reproduce_failure as rf
 from hypothesis import settings
 from hypothesis.searchstrategy import SearchStrategy
 from hypothesis.stateful import *
@@ -111,8 +113,10 @@ class BaseStateMachine( RuleBasedStateMachine ):
 #-------------------------------------------------------------------------
 class TestStateful( BaseStateMachine ):
 
-  def error_line_trace( self ):
+  def error_line_trace( self, error_msg="" ):
     print( "============================= error ========================" )
+    print( error_msg )
+    raise ValueError( error_msg )
 
 
 #-------------------------------------------------------------------------
@@ -127,14 +131,12 @@ def wrap_method( method_spec, arguments ):
     ref_rdy = s.ref.__dict__[ method_name ].rdy()
 
     if dut_rdy and not ref_rdy:
-      s.error_line_trace()
-      raise ValueError( "Dut method is rdy but reference is not: " +
-                        method_name )
+      error_msg = "Dut method is rdy but reference is not: " + method_name
+      s.error_line_trace( error_msg )
 
     if not dut_rdy and ref_rdy:
-      s.error_line_trace()
-      raise ValueError( "Reference method is rdy but dut is not: " +
-                        method_name )
+      error_msg = "Reference method is rdy but dut is not: " + method_name
+      s.error_line_trace( error_msg )
     return dut_rdy
 
   @precondition( lambda s: method_rdy( s ) )
@@ -153,7 +155,6 @@ def wrap_method( method_spec, arguments ):
 
     #compare results
     if dut_result != ref_result:
-      s.error_line_trace()
 
       def format_result( result ):
         result_list = []
@@ -161,7 +162,7 @@ def wrap_method( method_spec, arguments ):
           result_list += [ "{}={}".format( name, vars( result )[ name ] ) ]
         return list_string( result_list )
 
-      raise ValueError( """mismatch found in method {method}:
+      error_msg = """mismatch found in method {method}:
   - args: {data}
   - ref result: {ref_result}
   - dut result: {dut_result}
@@ -170,7 +171,9 @@ def wrap_method( method_spec, arguments ):
           data=list_string(
               [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] ),
           ref_result=format_result( ref_result ),
-          dut_result=format_result( dut_result ) ) )
+          dut_result=format_result( dut_result ) )
+
+      s.error_line_trace( error_msg )
 
   return method_rule, method_rdy
 
@@ -274,7 +277,10 @@ def create_test_state_machine( dut,
 #-------------------------------------------------------------------------
 # run_test_state_machine
 #-------------------------------------------------------------------------
-def run_test_state_machine( dut, ref, argument_strategy={} ):
+def run_test_state_machine( dut,
+                            ref,
+                            argument_strategy={},
+                            reproduce_failure=None ):
 
   machine = create_test_state_machine(
       dut, ref, argument_strategy=argument_strategy )
@@ -284,4 +290,7 @@ def run_test_state_machine( dut, ref, argument_strategy={} ):
       deadline=None,
       verbosity=Verbosity.verbose,
       database=None )
+
+  if reproduce_failure:
+    rf(*reproduce_failure )( machine )
   run_state_machine_as_test( machine )
