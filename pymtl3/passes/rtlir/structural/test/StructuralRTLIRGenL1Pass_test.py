@@ -84,7 +84,7 @@ def test_L1_connection_order():
       s.connect( s.in_2, s.out2 )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a )) )
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   assert ns.connections == \
@@ -99,7 +99,7 @@ def test_L1_port_index():
       s.connect( s.in_[2], s.out )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a )) )
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   assert ns.connections == \
@@ -116,7 +116,7 @@ def test_L1_wire_index():
         s.connect( s.wire[i], s.in_[i] )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a )) )
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   assert ns.connections[0] == \
@@ -130,7 +130,7 @@ def test_L1_const_index():
       s.connect( s.const[2], s.out )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a )) )
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   # The expression structure is removed and only the constant value
@@ -146,7 +146,7 @@ def test_L1_bit_selection():
       s.connect( s.in_[0], s.out )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a )) )
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   # PyMTL DSL converts bit selection into 1-bit part selection!
@@ -161,8 +161,21 @@ def test_L1_part_selection():
       s.connect( s.in_[4:8], s.out )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a )) )
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   assert ns.connections == \
     [(sexp.PartSelection(sexp.CurCompAttr(comp, 'in_'), 4, 8), sexp.CurCompAttr(comp, 'out'))]
+
+def test_L1_bits_connection():
+  class A( dsl.Component ):
+    def construct( s ):
+      s.out = dsl.OutPort( Bits32 )
+      s.connect( s.out, Bits32(0) )
+  a = A()
+  a.elaborate()
+  a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
+  ns = a._pass_structural_rtlir_gen
+  comp = sexp.CurComp(a, 's')
+  assert ns.connections == \
+    [(sexp.ConstInstance(Bits32(0), 0), sexp.CurCompAttr(comp, 'out'))]
