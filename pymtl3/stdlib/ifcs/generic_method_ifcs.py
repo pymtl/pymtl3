@@ -19,9 +19,13 @@ from pymtl3.dsl.errors import InvalidConnectionError
 #-------------------------------------------------------------------------
 class CalleeRTL2CL( Component ):
 
-  def construct( s, ArgTypes, RetTypes ):
+  def construct( s, ArgType, RetType ):
 
-    s.ifc_rtl_caller = CalleeIfcRTL( ArgTypes, RetTypes ).inverse()
+    s.ifc_rtl_caller = CallerIfcRTL( ArgType, RetType )
+
+    s.ArgType = ArgType
+    s.RetType = RetType
+
     s.rdy = False
     s.called = False
 
@@ -32,9 +36,8 @@ class CalleeRTL2CL( Component ):
 
     # generate upblk depending on args
 
-    if ArgTypes:
-      s.ArgType = s.ifc_rtl_caller.args._dsl.Type
-      s.args = s.ArgType()
+    if ArgType:
+      s.args = ArgType()
 
       # update args & en
       @s.update
@@ -63,9 +66,9 @@ class CalleeRTL2CL( Component ):
     s.cl_method = NonBlockingCalleeIfc( method=s.cl_method, rdy=lambda: s.rdy )
 
     # generate upblk depending on rets
-    if RetTypes:
+    if RetType:
       # create tmp var for rets
-      s.rets = s.ifc_rtl_caller.rets._dsl.Type()
+      s.rets = RetType()
 
       # generate upblk for rets
       @s.update
@@ -97,34 +100,46 @@ class CalleeRTL2CL( Component ):
 
 
 #-------------------------------------------------------------------------
+# CallerIfcRTL
+#-------------------------------------------------------------------------
+class CallerIfcRTL( Interface ):
+
+  def construct( s, ArgType=None, RetType=None ):
+
+    s.ArgType = ArgType
+    s.RetType = RetType
+
+    if ArgType:
+      s.args = OutPort( ArgType )
+    else:
+      s.args = None
+
+    if RetType:
+      s.rets = InPort( RetType )
+    else:
+      s.rets = None
+
+    s.en = OutPort( Bits1 )
+    s.rdy = InPort( Bits1 )
+
+
+#-------------------------------------------------------------------------
 # CalleeIfcRTL
 #-------------------------------------------------------------------------
 class CalleeIfcRTL( Interface ):
 
-  def construct( s, ArgTypes=None, RetTypes=None ):
+  def construct( s, ArgType=None, RetType=None ):
 
-    s.ArgTypes = ArgTypes
-    s.RetTypes = RetTypes
+    s.ArgType = ArgType
+    s.RetType = RetType
 
-    if ArgTypes:
-      # mangle arg bit_struct name by fields
-      arg_cls_name = "CalleeIfcRTL_Arg"
-      for arg_name, arg_type in ArgTypes:
-        arg_cls_name += "_{}_{}".format( arg_name, arg_type.__name__ )
-
-      s.args = InPort( mk_bit_struct( arg_cls_name, ArgTypes ) )
-
+    if ArgType:
+      s.args = InPort( ArgType )
     else:
       s.args = None
 
-    if RetTypes:
-      # mangle ret bit_struct name by fields
-      ret_cls_name = "CalleeIfcRTL_Ret"
-      for ret_name, ret_type in RetTypes:
-        ret_cls_name += "__{}_{}".format( ret_name, ret_type.__name__ )
-
-      s.rets = OutPort( mk_bit_struct( ret_cls_name, RetTypes ) )
-
+    if RetType:
+      s.rets = OutPort( RetType )
     else:
       s.rets = None
 
@@ -142,12 +157,45 @@ class CalleeIfcRTL( Interface ):
                 s._dsl.level, repr( s ), type( s ), other._dsl.level,
                 repr( other ), type( other ) ) )
 
-      rtl2cl_adapter = CalleeRTL2CL( s.ArgTypes, s.RetTypes )
+      rtl2cl_adapter = CalleeRTL2CL( s.ArgType, s.RetType )
 
       setattr( parent, "callee_rtl2cl_adapter_" + s._dsl.my_name,
                rtl2cl_adapter )
 
-      parent.connect_pairs( s, rtl2cl_adapter.ifc_rtl_caller, other, rtl2cl_adapter.cl_method )
+      parent.connect_pairs( s, rtl2cl_adapter.ifc_rtl_caller, other,
+                            rtl2cl_adapter.cl_method )
 
       return True
     return False
+
+
+#-------------------------------------------------------------------------
+# mk_callee_ifc_args_rets
+#-------------------------------------------------------------------------
+def mk_callee_ifc_args_rets( fields ):
+  if fields:
+    # mangle arg bit_struct name by fields
+    cls_name = "CalleeIfcRTL"
+    for name, field_type in fields:
+      cls_name += "_{}_{}".format( name, field_type.__name__ )
+
+    return mk_bit_struct( cls_name, fields )
+
+  else:
+    return None
+
+
+#-------------------------------------------------------------------------
+# callee_ifc_rtl
+#-------------------------------------------------------------------------
+def callee_ifc_rtl( ArgTypes=None, RetTypes=None ):
+  return CalleeIfcRTL(
+      mk_callee_ifc_args_rets( ArgTypes ), mk_callee_ifc_args_rets( RetTypes ) )
+
+
+#-------------------------------------------------------------------------
+# caller_ifc_rtl
+#-------------------------------------------------------------------------
+def caller_ifc_rtl( ArgTypes=None, RetTypes=None ):
+  return CallerIfcRTL(
+      mk_callee_ifc_args_rets( ArgTypes ), mk_callee_ifc_args_rets( RetTypes ) )

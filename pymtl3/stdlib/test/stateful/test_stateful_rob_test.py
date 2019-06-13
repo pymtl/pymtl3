@@ -97,12 +97,12 @@ class ReorderBuffer( Component ):
     s.allocated = [ Wire( Bits1 ) for _ in range( num_entries ) ]
 
     # These are the methods that can be performed
-    s.alloc = CalleeIfcRTL( RetTypes=[( 'index', index_type ) ] )
-    s.update_entry = CalleeIfcRTL(
+    s.alloc = callee_ifc_rtl( RetTypes=[( 'index', index_type ) ] )
+    s.update_entry = callee_ifc_rtl(
         ArgTypes=[( 'index', index_type ), ( 'value', DataType ) ] )
     # This order has to be consistent with CL
-    s.remove = CalleeIfcRTL( RetTypes=[( 'index',
-                                         index_type ), ( 'value', DataType ) ] )
+    s.remove = callee_ifc_rtl( 
+        RetTypes=[( 'index',index_type ), ( 'value', DataType ) ] )
 
     s.empty = Wire( Bits1 )
 

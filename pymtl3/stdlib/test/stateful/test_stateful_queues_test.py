@@ -30,8 +30,8 @@ class SingleEntryPipeQueue( Component ):
 
     # Interface
 
-    s.enq = CalleeIfcRTL( ArgTypes=[( 'msg', EntryType ) ] )
-    s.deq = CalleeIfcRTL( RetTypes=[( 'msg', EntryType ) ] )
+    s.enq = callee_ifc_rtl( ArgTypes=[( 'msg', EntryType ) ] )
+    s.deq = callee_ifc_rtl( RetTypes=[( 'msg', EntryType ) ] )
 
     # Component
 
@@ -115,8 +115,8 @@ class SingleEntryBypassQueue( Component ):
 
     # Interface
 
-    s.enq = CalleeIfcRTL( ArgTypes=[( 'msg', EntryType ) ] )
-    s.deq = CalleeIfcRTL( RetTypes=[( 'msg', EntryType ) ] )
+    s.enq = callee_ifc_rtl( ArgTypes=[( 'msg', EntryType ) ] )
+    s.deq = callee_ifc_rtl( RetTypes=[( 'msg', EntryType ) ] )
 
     # Component
 

@@ -15,7 +15,7 @@ import hypothesis.strategies as st
 
 from pymtl3 import *
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
-from pymtl3.stdlib.ifcs import CalleeIfcRTL
+from pymtl3.stdlib.ifcs import callee_ifc_rtl, CalleeIfcRTL
 
 
 #-------------------------------------------------------------------------
