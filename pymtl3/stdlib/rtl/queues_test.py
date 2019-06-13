@@ -122,8 +122,16 @@ def run_sim( th, max_cycles=100 ):
 
 test_msgs = [ Bits16( 4 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
 
+arrival_normal = [ 2, 4, 6, 8 ]
 arrival_pipe   = [ 2, 3, 4, 5 ]
 arrival_bypass = [ 1, 2, 3, 4 ]
+
+
+def test_normal1_simple():
+  th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )
+  th.set_param( "top.sink.construct", arrival_time = arrival_normal )
+  th.set_param( "top.dut.construct", num_entries = 1 )
+  run_sim( th )
 
 def test_normal2_simple():
   th = TestHarness( Bits16, NormalQueueRTL, test_msgs, test_msgs )

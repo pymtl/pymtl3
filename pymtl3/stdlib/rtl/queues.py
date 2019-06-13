@@ -131,29 +131,37 @@ class NormalQueueRTL( Component ):
 
     # Components
 
-    s.ctrl  = NormalQueueCtrlRTL ( num_entries )
-    s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
+    assert num_entries > 0
+    if num_entries == 1:
+      s.q = NormalQueue1EntryRTL( EntryType )
+      s.connect( s.enq,   s.q.enq )
+      s.connect( s.deq,   s.q.deq )
+      s.connect( s.count, s.q.count )
 
-    # Connect ctrl to data path
+    else:
+      s.ctrl  = NormalQueueCtrlRTL ( num_entries )
+      s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
 
-    s.connect( s.ctrl.wen,     s.dpath.wen     )
-    s.connect( s.ctrl.waddr,   s.dpath.waddr   )
-    s.connect( s.ctrl.raddr,   s.dpath.raddr   )
+      # Connect ctrl to data path
 
-    # Connect to interface
+      s.connect( s.ctrl.wen,     s.dpath.wen     )
+      s.connect( s.ctrl.waddr,   s.dpath.waddr   )
+      s.connect( s.ctrl.raddr,   s.dpath.raddr   )
 
-    s.connect( s.enq.en,  s.ctrl.enq_en   )
-    s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
-    s.connect( s.deq.en,  s.ctrl.deq_en   )
-    s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
-    s.connect( s.count,   s.ctrl.count    )
-    s.connect( s.enq.msg, s.dpath.enq_msg )
-    s.connect( s.deq.msg, s.dpath.deq_msg )
+      # Connect to interface
+
+      s.connect( s.enq.en,  s.ctrl.enq_en   )
+      s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
+      s.connect( s.deq.en,  s.ctrl.deq_en   )
+      s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
+      s.connect( s.count,   s.ctrl.count    )
+      s.connect( s.enq.msg, s.dpath.enq_msg )
+      s.connect( s.deq.msg, s.dpath.deq_msg )
 
   # Line trace
 
   def line_trace( s ):
-    return "{}({},{},{}){}".format( s.enq, s.count, s.ctrl.head, s.ctrl.tail, s.deq )
+    return "{}({}){}".format( s.enq, s.count, s.deq )
 
 #-------------------------------------------------------------------------
 # Ctrl for PipeQueue
@@ -255,24 +263,32 @@ class PipeQueueRTL( Component ):
 
     # Components
 
-    s.ctrl  = PipeQueueCtrlRTL ( num_entries )
-    s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
+    assert num_entries > 0
+    if num_entries == 1:
+      s.q = PipeQueue1EntryRTL( EntryType )
+      s.connect( s.enq,   s.q.enq )
+      s.connect( s.deq,   s.q.deq )
+      s.connect( s.count, s.q.count )
 
-    # Connect ctrl to data path
+    else:
+      s.ctrl  = PipeQueueCtrlRTL ( num_entries )
+      s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
 
-    s.connect( s.ctrl.wen,     s.dpath.wen     )
-    s.connect( s.ctrl.waddr,   s.dpath.waddr   )
-    s.connect( s.ctrl.raddr,   s.dpath.raddr   )
+      # Connect ctrl to data path
 
-    # Connect to interface
+      s.connect( s.ctrl.wen,     s.dpath.wen     )
+      s.connect( s.ctrl.waddr,   s.dpath.waddr   )
+      s.connect( s.ctrl.raddr,   s.dpath.raddr   )
 
-    s.connect( s.enq.en,  s.ctrl.enq_en   )
-    s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
-    s.connect( s.deq.en,  s.ctrl.deq_en   )
-    s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
-    s.connect( s.count,   s.ctrl.count    )
-    s.connect( s.enq.msg, s.dpath.enq_msg )
-    s.connect( s.deq.msg, s.dpath.deq_msg )
+      # Connect to interface
+
+      s.connect( s.enq.en,  s.ctrl.enq_en   )
+      s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
+      s.connect( s.deq.en,  s.ctrl.deq_en   )
+      s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
+      s.connect( s.count,   s.ctrl.count    )
+      s.connect( s.enq.msg, s.dpath.enq_msg )
+      s.connect( s.deq.msg, s.dpath.deq_msg )
 
   # Line trace
 
@@ -412,25 +428,33 @@ class BypassQueueRTL( Component ):
 
     # Components
 
-    s.ctrl  = BypassQueueCtrlRTL ( num_entries )
-    s.dpath = BypassQueueDpathRTL( EntryType, num_entries )
+    assert num_entries > 0
+    if num_entries == 1:
+      s.q = BypassQueue1EntryRTL( EntryType )
+      s.connect( s.enq,   s.q.enq )
+      s.connect( s.deq,   s.q.deq )
+      s.connect( s.count, s.q.count )
 
-    # Connect ctrl to data path
+    else:
+      s.ctrl  = BypassQueueCtrlRTL ( num_entries )
+      s.dpath = BypassQueueDpathRTL( EntryType, num_entries )
 
-    s.connect( s.ctrl.wen,     s.dpath.wen     )
-    s.connect( s.ctrl.waddr,   s.dpath.waddr   )
-    s.connect( s.ctrl.raddr,   s.dpath.raddr   )
-    s.connect( s.ctrl.mux_sel, s.dpath.mux_sel )
+      # Connect ctrl to data path
 
-    # Connect to interface
+      s.connect( s.ctrl.wen,     s.dpath.wen     )
+      s.connect( s.ctrl.waddr,   s.dpath.waddr   )
+      s.connect( s.ctrl.raddr,   s.dpath.raddr   )
+      s.connect( s.ctrl.mux_sel, s.dpath.mux_sel )
 
-    s.connect( s.enq.en,  s.ctrl.enq_en   )
-    s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
-    s.connect( s.deq.en,  s.ctrl.deq_en   )
-    s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
-    s.connect( s.count,   s.ctrl.count    )
-    s.connect( s.enq.msg, s.dpath.enq_msg )
-    s.connect( s.deq.msg, s.dpath.deq_msg )
+      # Connect to interface
+
+      s.connect( s.enq.en,  s.ctrl.enq_en   )
+      s.connect( s.enq.rdy, s.ctrl.enq_rdy  )
+      s.connect( s.deq.en,  s.ctrl.deq_en   )
+      s.connect( s.deq.rdy, s.ctrl.deq_rdy  )
+      s.connect( s.count,   s.ctrl.count    )
+      s.connect( s.enq.msg, s.dpath.enq_msg )
+      s.connect( s.deq.msg, s.dpath.deq_msg )
 
   # Line trace
 
@@ -447,13 +471,16 @@ class NormalQueue1EntryRTL( Component ):
 
     # Interface
 
-    s.enq = EnqIfcRTL( EntryType )
-    s.deq = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL( EntryType )
+    s.deq   = DeqIfcRTL( EntryType )
+    s.count = OutPort  ( Bits1     )
 
     # Components
 
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
+
+    s.connect( s.count, s.full )
 
     # Logic
 
@@ -495,13 +522,16 @@ class PipeQueue1EntryRTL( Component ):
 
     # Interface
 
-    s.enq = EnqIfcRTL( EntryType )
-    s.deq = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL( EntryType )
+    s.deq   = DeqIfcRTL( EntryType )
+    s.count = OutPort  ( Bits1     )
 
     # Components
 
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
+
+    s.connect( s.count, s.full )
 
     # Logic
 
@@ -540,13 +570,16 @@ class BypassQueue1EntryRTL( Component ):
 
     # Interface
 
-    s.enq = EnqIfcRTL( EntryType )
-    s.deq = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL( EntryType )
+    s.deq   = DeqIfcRTL( EntryType )
+    s.count = OutPort  ( Bits1     )
 
     # Components
 
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
+
+    s.connect( s.count, s.full )
 
     # Logic
 
