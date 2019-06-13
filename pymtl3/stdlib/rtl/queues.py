@@ -510,7 +510,7 @@ class PipeQueue1EntryRTL( Component ):
       if s.reset:
         s.full = b1(0)
       else:
-        s.full = ~s.deq.en & (s.enq.en | s.full) | s.enq.en & s.full
+        s.full = s.enq.en | s.full & ~s.deq.en
 
     @s.update_on_edge
     def up_entry():
