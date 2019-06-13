@@ -216,10 +216,10 @@ class PipeQueueCtrlRTL( Component ):
 
     @s.update
     def up_enq_rdy():
-      if ~s.reset:
-        s.enq_rdy = ( s.count < s.num_entries ) | s.deq_en
-      else:
+      if s.reset:
         s.enq_rdy = b1(0)
+      else:
+        s.enq_rdy = ( s.count < s.num_entries ) | s.deq_en
 
 
     @s.update
@@ -378,10 +378,10 @@ class BypassQueueCtrlRTL( Component ):
 
     @s.update
     def up_deq_rdy():
-      if ~s.reset:
-        s.deq_rdy = ( s.count > CountType(0) ) | s.enq_en
-      else:
+      if s.reset:
         s.deq_rdy = b1(0)
+      else:
+        s.deq_rdy = ( s.count > CountType(0) ) | s.enq_en
     
     @s.update
     def up_mux_sel():
@@ -498,10 +498,10 @@ class NormalQueue1EntryRTL( Component ):
 
     @s.update
     def up_enq_rdy():
-      if ~s.reset:
-        s.enq.rdy = ~s.full
-      else:
+      if s.reset:
         s.enq.rdy = b1(0)
+      else:
+        s.enq.rdy = ~s.full
 
     @s.update
     def up_deq_rdy():
