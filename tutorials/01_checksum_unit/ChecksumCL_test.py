@@ -14,13 +14,12 @@ from unittest import TestCase
 import hypothesis
 from hypothesis import strategies as st
 
-from pymtl3 import *
-from pymtl3.stdlib.cl.queues import BypassQueueCL
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
-
 from ChecksumCL import ChecksumMcycleCL, ChecksumScycleCL
 from ChecksumFL import b128_to_words, checksum, words_to_b128
 from ChecksumFL_test import FuncTestsFL
+from pymtl3 import *
+from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 #-------------------------------------------------------------------------
 # Wrap CL component into a function

@@ -9,11 +9,10 @@ Author : Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
+from ChecksumFL import b128_to_words, checksum
 from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
 from pymtl3.stdlib.cl.queues import PipeQueueCL
-
-from ChecksumFL import b128_to_words, checksum
 
 #-------------------------------------------------------------------------
 # ChecksumScycleCL 
