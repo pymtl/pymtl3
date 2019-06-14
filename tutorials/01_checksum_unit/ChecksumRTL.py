@@ -43,7 +43,7 @@ class StepUnit( Component ):
 
 class ChecksumRTL( Component ):
 
-  def construct( s, nstages=1 ):
+  def construct( s ):
 
     # Interface
 
