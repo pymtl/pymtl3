@@ -166,3 +166,98 @@ def test_replace_component_list_of_real_by_real2():
   foo_wrap.in_ = Bits32(4)
   foo_wrap.tick()
   print(foo_wrap.line_trace())
+
+# This test is to test if we save the fact that up_in writes the inport
+# of the inner module and recover it when we put in the new component
+
+def test_replace_component_upblk_rw_port():
+
+  class Real_wrap( Component ):
+    def construct( s, nbits=0 ):
+      s.in_ = InPort ( mk_bits(nbits) )
+      s.out = OutPort( mk_bits(nbits) )
+      s.w   = Wire( mk_bits(nbits) )
+      s.connect( s.w, s.out )
+
+      @s.update
+      def up_in():
+        s.inner.in_ = s.in_
+
+      @s.update
+      def up_out():
+        s.w = s.inner.out
+
+      s.inner = Real_shamt( 5 )#( in_ = s.in_, out = s.w )
+
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+  foo_wrap = Real_wrap( 32 )
+
+  foo_wrap.elaborate()
+  foo_wrap.replace_component( foo_wrap.inner, Real_shamt2, check=True )
+
+  simple_sim_pass( foo_wrap )
+  foo_wrap.sim_reset()
+
+  foo_wrap.in_ = Bits32(100)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 105
+
+  foo_wrap.in_ = Bits32(3)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 8
+
+
+# This test is the extended version of the previous one which tests if we
+# save and recover functions in the parent correctly
+
+def test_replace_component_func_rw_port():
+
+  class Real_wrap( Component ):
+    def construct( s, nbits=0 ):
+      s.in_ = InPort ( mk_bits(nbits) )
+      s.out = OutPort( mk_bits(nbits) )
+      s.w   = Wire( mk_bits(nbits) )
+      s.connect( s.w, s.out )
+
+      @s.func
+      def assign_in( x ):
+        s.inner.in_ = x
+
+      @s.update
+      def up_in():
+        assign_in( s.in_ )
+
+      @s.func
+      def read_out():
+        s.w = s.inner.out
+
+      @s.update
+      def up_out():
+        read_out()
+
+      s.inner = Real_shamt( 5 )#( in_ = s.in_, out = s.w )
+
+    def line_trace( s ):
+      return s.inner.line_trace()
+
+  foo_wrap = Real_wrap( 32 )
+
+  foo_wrap.elaborate()
+  foo_wrap.replace_component( foo_wrap.inner, Real_shamt2, check=True )
+
+  simple_sim_pass( foo_wrap )
+  foo_wrap.sim_reset()
+
+  foo_wrap.in_ = Bits32(100)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 105
+
+  foo_wrap.in_ = Bits32(3)
+  foo_wrap.tick()
+  print(foo_wrap.line_trace())
+  assert foo_wrap.out == 8
