@@ -98,5 +98,10 @@ end\
     [    0 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { a : { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = comp$out[2];
+end\
+""" } }
   do_test( a )

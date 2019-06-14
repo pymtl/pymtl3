@@ -58,14 +58,29 @@ typedef struct packed {
   input B in_,
   output logic [31:0] out,
   input logic [0:0] reset\
-"""
-}
+""" }
   a._ref_wires = { a : "" }
   a._ref_conns = { a : \
 """\
   assign out = in_.foo;\
-"""
-}
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ports_port_yosys = { a : \
+"""\
+  input logic [0:0] clk,
+  input logic [31:0] in_$foo,
+  output logic [31:0] out,
+  input logic [0:0] reset\
+""" }
+  a._ref_ports_wire_yosys = { a : "" }
+  a._ref_ports_conn_yosys = { a : "" }
+  a._ref_wires_yosys = a._ref_wires
+  a._ref_conns_yosys = { a : \
+"""\
+  assign out = in_$foo;\
+""" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     m.in_ = tv[0]
@@ -118,15 +133,33 @@ typedef struct packed {
   output logic [31:0] out_bar,
   output logic [31:0] out_foo,
   input logic [0:0] reset\
-"""
-}
+""" }
   a._ref_wires = { a : "" }
   a._ref_conns = { a : \
 """\
   assign out_foo = in_.foo;
   assign out_bar = in_.c.bar;\
-"""
-}
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ports_port_yosys = { a : \
+"""\
+  input logic [0:0] clk,
+  input logic [31:0] in_$c$bar,
+  input logic [31:0] in_$foo,
+  output logic [31:0] out_bar,
+  output logic [31:0] out_foo,
+  input logic [0:0] reset\
+""" }
+  a._ref_ports_wire_yosys = { a : "" }
+  a._ref_ports_conn_yosys = { a : "" }
+  a._ref_wires_yosys = a._ref_wires
+  a._ref_conns_yosys = { a : \
+"""\
+  assign out_foo = in_$foo;
+  assign out_bar = in_$c$bar;\
+""" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     m.in_ = tv[0]
@@ -168,15 +201,43 @@ typedef struct packed {
   input B in_,
   output logic [31:0] out [0:1],
   input logic [0:0] reset\
-"""
-}
+""" }
   a._ref_wires = { a : "" }
   a._ref_conns = { a : \
 """\
   assign out[0] = in_.foo[0];
   assign out[1] = in_.foo[1];\
-"""
-}
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ports_port_yosys = { a : \
+"""\
+  input logic [0:0] clk,
+  input logic [31:0] in_$foo$__0,
+  input logic [31:0] in_$foo$__1,
+  output logic [31:0] out$__0,
+  output logic [31:0] out$__1,
+  input logic [0:0] reset\
+""" }
+  a._ref_ports_wire_yosys = { a : \
+"""\
+  logic [31:0] in_$foo [0:1];
+  logic [31:0] out [0:1];\
+""" }
+  a._ref_ports_conn_yosys = { a : \
+"""\
+  assign in_$foo[0] = in_$foo$__0;
+  assign in_$foo[1] = in_$foo$__1;
+  assign out$__0 = out[0];
+  assign out$__1 = out[1];\
+""" }
+  a._ref_wires_yosys = a._ref_wires
+  a._ref_conns_yosys = { a : \
+"""\
+  assign out[0] = in_$foo[0];
+  assign out[1] = in_$foo[1];\
+""" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     m.in_ = tv[0]
@@ -227,15 +288,43 @@ typedef struct packed {
   input B in_,
   output logic [31:0] out [0:1],
   input logic [0:0] reset\
-"""
-}
+""" }
   a._ref_wires = { a : "" }
   a._ref_conns = { a : \
 """\
   assign out[0] = in_.c[0].bar;
   assign out[1] = in_.c[1].bar;\
-"""
-}
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ports_port_yosys = { a : \
+"""\
+  input logic [0:0] clk,
+  input logic [31:0] in_$c$__0$bar,
+  input logic [31:0] in_$c$__1$bar,
+  output logic [31:0] out$__0,
+  output logic [31:0] out$__1,
+  input logic [0:0] reset\
+""" }
+  a._ref_ports_wire_yosys = { a : \
+"""\
+  logic [31:0] in_$c$bar [0:1];
+  logic [31:0] out [0:1];\
+""" }
+  a._ref_ports_conn_yosys = { a : \
+"""\
+  assign in_$c$bar[0] = in_$c$__0$bar;
+  assign in_$c$bar[1] = in_$c$__1$bar;
+  assign out$__0 = out[0];
+  assign out$__1 = out[1];\
+""" }
+  a._ref_wires_yosys = a._ref_wires
+  a._ref_conns_yosys = { a : \
+"""\
+  assign out[0] = in_$c$bar[0];
+  assign out[1] = in_$c$bar[1];\
+""" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     m.in_ = tv[0]

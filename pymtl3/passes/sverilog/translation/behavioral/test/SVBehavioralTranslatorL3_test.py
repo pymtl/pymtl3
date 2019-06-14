@@ -67,7 +67,7 @@ end\
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in__$foo;
+  out = in_$foo;
 end\
 """ }
   do_test( a )
@@ -105,7 +105,12 @@ end\
     [  B(42, -1),   concat(  Bits32(-1),  Bits32(-1),  Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = None
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = { in_$bar[0], in_$bar[1], in_$foo };
+end\
+""" }
   do_test( a )
 
 def test_nested_struct( do_test ):
@@ -145,5 +150,10 @@ end\
     [  B(42, -1),   concat(  Bits32(-1),   Bits32(2),  Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = None
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = { in_$bar[0], in_$c$woof, in_$foo };
+end\
+""" }
   do_test( a )

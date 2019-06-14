@@ -64,7 +64,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of ports {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-    return Type.get_direction() + ' ' +\
+    return Type.get_direction() + ' ' + \
            dtype['decl'].format( **locals() ) + array_type['decl']
   
   def rtlir_tr_wire_decls( s, wire_decls ):
@@ -91,9 +91,9 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       if not n_dim:
         assert not isinstance( array, list )
         if isinstance( array, Bits ):
-          return s.rtlir_tr_literal_number( array.nbits, array.value )
+          return s._literal_number( array.nbits, array.value )
         elif isinstance( array, int ):
-          return s.rtlir_tr_literal_number( 32, array )
+          return s._literal_number( 32, array )
         else:
           assert False, '{} is not an integer!'.format( array )
       assert isinstance( array, list )
@@ -105,7 +105,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       ret += " }"
       return ret
 
-    assert isinstance( Type.get_dtype(), rdt.Vector ),\
+    assert isinstance( Type.get_dtype(), rdt.Vector ), \
       '{} is not a vector constant!'.format( value )
 
     _dtype = Type.get_dtype()
@@ -168,9 +168,12 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   def rtlir_tr_var_id( s, var_id ):
     return var_id.replace( '[', '_$' ).replace( ']', '' )
 
-  def rtlir_tr_literal_number( s, nbits, value ):
+  def _literal_number( s, nbits, value ):
     value = int( value )
     return "{nbits}'d{value}".format( **locals() )
+
+  def rtlir_tr_literal_number( s, nbits, value ):
+    return s._literal_number( nbits, value )
 
   def rtlir_tr_component_unique_name( s, c_rtype ):
     return get_component_unique_name( c_rtype )

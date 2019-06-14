@@ -45,8 +45,7 @@ def test_interface( do_test ):
         s.in_.rdy = s.out.rdy
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -75,6 +74,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_interface_index( do_test ):
@@ -90,8 +90,7 @@ def test_interface_index( do_test ):
         s.out = s.in_[1].foo
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -110,6 +109,33 @@ module A
   always_comb begin : upblk
     out = in_$__1$foo;
   end
+
+endmodule
+"""
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out,
+  input logic [0:0] reset,
+  output logic [31:0] in_$__0$foo,
+  output logic [31:0] in_$__1$foo
+);
+  logic [31:0] in_$foo [0:1];
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[1].foo
+  
+  always_comb begin : upblk
+    out = in_$foo[1];
+  end
+
+  assign in_$__0$foo = in_$foo[0];
+  assign in_$__1$foo = in_$foo[1];
 
 endmodule
 """
@@ -150,6 +176,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_multi_ifc_decls( do_test ):
@@ -190,4 +217,5 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )

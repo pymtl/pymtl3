@@ -39,8 +39,7 @@ def test_comb_assign( do_test ):
         s.out = s.in_
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -61,6 +60,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_seq_assign( do_test ):
@@ -73,8 +73,7 @@ def test_seq_assign( do_test ):
         s.out = s.in_
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -95,6 +94,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_concat( do_test ):
@@ -108,8 +108,7 @@ def test_concat( do_test ):
         s.out = concat( s.in_1, s.in_2 )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -131,6 +130,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_concat_constants( do_test ):
@@ -142,8 +142,7 @@ def test_concat_constants( do_test ):
         s.out = concat( Bits32(42), Bits32(0) )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -163,6 +162,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_concat_mixed( do_test ):
@@ -175,8 +175,7 @@ def test_concat_mixed( do_test ):
         s.out = concat( s.in_, Bits32(0) )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -197,6 +196,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_sext( do_test ):
@@ -209,8 +209,7 @@ def test_sext( do_test ):
         s.out = sext( s.in_, 64 )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -231,6 +230,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_zext( do_test ):
@@ -243,8 +243,7 @@ def test_zext( do_test ):
         s.out = zext( s.in_, 64 )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -265,6 +264,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_freevar( do_test ):
@@ -278,8 +278,7 @@ def test_freevar( do_test ):
         s.out = concat( s.in_, STATE_IDLE )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -301,6 +300,28 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  input logic [31:0] in_,
+  output logic [63:0] out,
+  input logic [0:0] reset
+);
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_, STATE_IDLE )
+  
+  always_comb begin : upblk
+    out = { in_, 32'd42 };
+  end
+
+endmodule
+"""
   do_test( a )
 
 def test_unpacked_signal_index( do_test ):
@@ -313,8 +334,7 @@ def test_unpacked_signal_index( do_test ):
         s.out = concat( s.in_[0], s.in_[1] )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -335,6 +355,33 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  input logic [31:0] in_$__0,
+  input logic [31:0] in_$__1,
+  output logic [63:0] out,
+  input logic [0:0] reset
+);
+  logic [31:0] in_ [0:1];
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = concat( s.in_[0], s.in_[1] )
+  
+  always_comb begin : upblk
+    out = { in_[0], in_[1] };
+  end
+
+  assign in_[0] = in_$__0;
+  assign in_[1] = in_$__1;
+
+endmodule
+"""
   do_test( a )
 
 def test_bit_selection( do_test ):
@@ -347,8 +394,7 @@ def test_bit_selection( do_test ):
         s.out = s.in_[1]
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -369,6 +415,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_part_selection( do_test ):
@@ -381,8 +428,7 @@ def test_part_selection( do_test ):
         s.out = s.in_[4:36]
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -403,6 +449,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 #-------------------------------------------------------------------------
@@ -419,8 +466,7 @@ def test_port_wire( do_test ):
       s.connect( s.wire_, s.out )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -435,6 +481,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_connect_constant( do_test ):
@@ -444,8 +491,7 @@ def test_connect_constant( do_test ):
       s.connect( 42, s.out )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -457,6 +503,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_port_const_unaccessed( do_test ):
@@ -467,8 +514,7 @@ def test_port_const_unaccessed( do_test ):
       s.connect( s.STATE_IDLE, s.out )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -480,6 +526,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_port_const_accessed( do_test ):
@@ -494,8 +541,7 @@ def test_port_const_accessed( do_test ):
         s.out_2 = s.STATE_IDLE
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -519,6 +565,30 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out_1,
+  output logic [31:0] out_2,
+  input logic [0:0] reset
+);
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out_2 = s.STATE_IDLE
+  
+  always_comb begin : upblk
+    out_2 = 32'd42;
+  end
+
+  assign out_1 = 32'd42;
+
+endmodule
+"""
   do_test( a )
 
 def test_port_const_array( do_test ):
@@ -534,8 +604,7 @@ def test_port_const_array( do_test ):
         s.tmp = s.STATES[0]
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -563,6 +632,44 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out$__0,
+  output logic [31:0] out$__1,
+  output logic [31:0] out$__2,
+  output logic [31:0] out$__3,
+  output logic [31:0] out$__4,
+  input logic [0:0] reset,
+  output logic [31:0] tmp
+);
+  logic [31:0] out [0:4];
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.tmp = s.STATES[0]
+  
+  always_comb begin : upblk
+    tmp = 32'd1;
+  end
+
+  assign out$__0 = out[0];
+  assign out$__1 = out[1];
+  assign out$__2 = out[2];
+  assign out$__3 = out[3];
+  assign out$__4 = out[4];
+  assign out[0] = 32'd1;
+  assign out[1] = 32'd2;
+  assign out[2] = 32'd3;
+  assign out[3] = 32'd4;
+  assign out[4] = 32'd5;
+
+endmodule
+"""
   do_test( a )
 
 def test_port_bit_selection( do_test ):
@@ -573,8 +680,7 @@ def test_port_bit_selection( do_test ):
       s.connect( s.out, s.in_[2] )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -587,6 +693,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_port_part_selection( do_test ):
@@ -597,8 +704,7 @@ def test_port_part_selection( do_test ):
       s.connect( s.out, s.in_[2:6] )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -611,6 +717,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_port_wire_array_index( do_test ):
@@ -623,8 +730,7 @@ def test_port_wire_array_index( do_test ):
         s.connect( s.wire_[i], i )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module A
 (
   input logic [0:0] clk,
@@ -633,6 +739,39 @@ module A
 );
   logic [31:0] wire_ [0:4];
 
+  assign out[0] = wire_[0];
+  assign wire_[0] = 32'd0;
+  assign out[1] = wire_[1];
+  assign wire_[1] = 32'd1;
+  assign out[2] = wire_[2];
+  assign wire_[2] = 32'd2;
+  assign out[3] = wire_[3];
+  assign wire_[3] = 32'd3;
+  assign out[4] = wire_[4];
+  assign wire_[4] = 32'd4;
+
+endmodule
+"""
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out$__0,
+  output logic [31:0] out$__1,
+  output logic [31:0] out$__2,
+  output logic [31:0] out$__3,
+  output logic [31:0] out$__4,
+  input logic [0:0] reset
+);
+  logic [31:0] out [0:4];
+  logic [31:0] wire_ [0:4];
+
+  assign out$__0 = out[0];
+  assign out$__1 = out[1];
+  assign out$__2 = out[2];
+  assign out$__3 = out[3];
+  assign out$__4 = out[4];
   assign out[0] = wire_[0];
   assign wire_[0] = 32'd0;
   assign out[1] = wire_[1];

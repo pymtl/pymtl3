@@ -113,7 +113,12 @@ end\
     [   -1,   -2,     -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = in_$foo[1];
+end\
+""" }
   do_test( a )
 
 def test_interface_array_non_static_index( do_test ):

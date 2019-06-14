@@ -34,20 +34,12 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
-      port_rtype, port_array_type ):
-    port_dtype = port_rtype.get_dtype()
-    port_def_rtype = rt.Wire(port_rtype.get_dtype())
-
-    if isinstance( port_dtype, rdt.Vector ):
-      dtype = s.rtlir_tr_vector_dtype( port_dtype )
-    elif isinstance( port_dtype, rdt.Struct ):
-      dtype = s.rtlir_tr_struct_dtype( port_dtype )
-    else:
-      assert False
+      port_rtype, port_dtype, port_array_type ):
+    port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {
       'def' : s.rtlir_tr_wire_decl('{c_id}$'+port_id, port_def_rtype,
-                port_array_type, dtype),
+                port_array_type, port_dtype),
       'decl' : '.{port_id}( {{c_id}}${port_id} )'.format(**locals())
     }
 
@@ -62,20 +54,13 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
-      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
-    port_dtype = port_rtype.get_dtype()
-    port_def_rtype = rt.Wire(port_rtype.get_dtype())
-
-    if isinstance( port_dtype, rdt.Vector ):
-      dtype = s.rtlir_tr_vector_dtype( port_dtype )
-    elif isinstance( port_dtype, rdt.Struct ):
-      dtype = s.rtlir_tr_struct_dtype( port_dtype )
-    else:
-      assert False
+      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_dtype,
+      port_array_type ):
+    port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {
       'def' : s.rtlir_tr_wire_decl('{c_id}${ifc_id}$'+port_id, port_def_rtype,
-                port_array_type, dtype),
+                port_array_type, port_dtype),
       'decl' : '.{{ifc_id}}${port_id}( {{c_id}}${{ifc_id}}${port_id} )'. \
                 format(**locals())
     }
@@ -123,7 +108,8 @@ class SVStructuralTranslatorL4(
 """\
 {port_wire_defs}{ifc_inst_defs}
 
-  {c_name} {c_id} (
+  {c_name} {c_id}
+  (
 {port_conn_decls}{ifc_conn_decls}
   );\
 """
@@ -153,7 +139,8 @@ class SVStructuralTranslatorL4(
     # This means we will only support component indexing where the index
     # is a constant integer.
     n_dim = c_array_type['n_dim']
-    if port_conns['decl'] and ifc_conns['decl']: port_conns['decl'] += ','
+    if port_conns['decl'] and ifc_conns['decl']:
+      port_conns['decl'] += ','
     return\
       gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, '' )
 

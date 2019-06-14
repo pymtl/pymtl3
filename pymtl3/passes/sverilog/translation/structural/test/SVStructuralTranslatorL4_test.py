@@ -46,13 +46,19 @@ def test_subcomp_decl( do_test ):
   logic [31:0] b$out_b;
   logic [0:0] b$reset;
 
-  B b (
+  B b
+  (
     .clk( b$clk ),
     .out_b( b$out_b ),
     .reset( b$reset )
   );\
 """
 }
+
+  a._ref_comps_port_yosys = a._ref_subcomps
+  a._ref_comps_wire_yosys = { a : "" }
+  a._ref_comps_conn_yosys = { a : "" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass
@@ -94,7 +100,8 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
   logic [0:0] b$ifc_b$rdy;
   logic [0:0] b$ifc_b$val;
 
-  B b (
+  B b
+  (
     .clk( b$clk ),
     .out_b( b$out_b ),
     .reset( b$reset ),
@@ -104,6 +111,11 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
   );\
 """
 }
+
+  a._ref_comps_port_yosys = a._ref_subcomps
+  a._ref_comps_wire_yosys = { a : "" }
+  a._ref_comps_conn_yosys = { a : "" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass

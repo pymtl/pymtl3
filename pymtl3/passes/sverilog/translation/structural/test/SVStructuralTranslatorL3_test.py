@@ -49,14 +49,19 @@ def test_ifc_decls( do_test ):
   output logic [31:0] ifc$msg,
   input logic [0:0] ifc$rdy,
   output logic [0:0] ifc$val\
-"""
-}
+""" }
   a._ref_conns = { a : \
 """\
   assign ifc$msg = 32'd42;
   assign ifc$val = 1'd1;\
-"""
-}
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ifcs_port_yosys = a._ref_ifcs
+  a._ref_ifcs_wire_yosys = { a : "" }
+  a._ref_ifcs_conn_yosys = { a : "" }
+  a._ref_conns_yosys = a._ref_conns
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass
@@ -92,15 +97,20 @@ def test_multi_ifc_decls( do_test ):
   output logic [31:0] out$msg,
   input logic [0:0] out$rdy,
   output logic [0:0] out$val\
-"""
-}
+""" }
   a._ref_conns = { a : \
 """\
   assign out$msg = in_$msg;
   assign in_$rdy = out$rdy;
   assign out$val = in_$val;\
-"""
-}
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ifcs_port_yosys = a._ref_ifcs
+  a._ref_ifcs_wire_yosys = { a : "" }
+  a._ref_ifcs_conn_yosys = { a : "" }
+  a._ref_conns_yosys = a._ref_conns
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     m.in_.val = Bits1(tv[0])

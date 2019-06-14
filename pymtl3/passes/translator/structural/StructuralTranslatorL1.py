@@ -204,9 +204,6 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     else:
       used_set = None
 
-    # import pdb
-    # pdb.set_trace()
-
     for const_id, rtype, instance in m._pass_structural_rtlir_gen.consts:
       if used_set is None or const_id in used_set:
         if isinstance( rtype, rt.Array ):

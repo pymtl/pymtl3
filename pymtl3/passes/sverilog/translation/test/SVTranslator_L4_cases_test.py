@@ -1,5 +1,5 @@
 #=========================================================================
-# SVTranslator_L5_cases_test.py
+# SVTranslator_L4_cases_test.py
 #=========================================================================
 """Test the SystemVerilog translator."""
 
@@ -35,8 +35,7 @@ def test_subcomponent( do_test ):
         s.out = s.b.foo
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module B
 (
   input logic [0:0] clk,
@@ -67,7 +66,8 @@ module A
   logic [31:0] b$foo;
   logic [0:0] b$reset;
 
-  B b (
+  B b
+  (
     .clk( b$clk ),
     .foo( b$foo ),
     .reset( b$reset )
@@ -88,6 +88,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_sub_component_attr( do_test ):
@@ -106,8 +107,7 @@ def test_sub_component_attr( do_test ):
         s.out = zext( s.b.out_b, 64 )
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module B
 (
   input logic [0:0] clk,
@@ -138,7 +138,8 @@ module A
   logic [31:0] b$out_b;
   logic [0:0] b$reset;
 
-  B b (
+  B b
+  (
     .clk( b$clk ),
     .out_b( b$out_b ),
     .reset( b$reset )
@@ -159,6 +160,7 @@ module A
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_subcomponent_index( do_test ):
@@ -174,8 +176,7 @@ def test_subcomponent_index( do_test ):
         s.out = s.comp[1].out
   a = A()
   a._ref_src = \
-"""\
-
+"""
 module B
 (
   input logic [0:0] clk,
@@ -196,7 +197,8 @@ module A
   logic [31:0] comp$__0$out;
   logic [0:0] comp$__0$reset;
 
-  B comp$__0 (
+  B comp$__0
+  (
     .clk( comp$__0$clk ),
     .out( comp$__0$out ),
     .reset( comp$__0$reset )
@@ -206,7 +208,8 @@ module A
   logic [31:0] comp$__1$out;
   logic [0:0] comp$__1$reset;
 
-  B comp$__1 (
+  B comp$__1
+  (
     .clk( comp$__1$clk ),
     .out( comp$__1$out ),
     .reset( comp$__1$reset )
@@ -226,6 +229,72 @@ module A
   assign comp$__1$reset = reset;
   assign comp$__0$clk = clk;
   assign comp$__0$reset = reset;
+
+endmodule
+"""
+  a._ref_src_yosys = \
+"""
+module B
+(
+  input logic [0:0] clk,
+  output logic [31:0] out,
+  input logic [0:0] reset
+);
+
+endmodule
+
+
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out,
+  input logic [0:0] reset
+);
+  logic [0:0] comp$clk [0:1];
+  logic [31:0] comp$out [0:1];
+  logic [0:0] comp$reset [0:1];
+  logic [0:0] comp$__0$clk;
+  logic [31:0] comp$__0$out;
+  logic [0:0] comp$__0$reset;
+
+  B comp$__0
+  (
+    .clk( comp$__0$clk ),
+    .out( comp$__0$out ),
+    .reset( comp$__0$reset )
+  );
+
+  logic [0:0] comp$__1$clk;
+  logic [31:0] comp$__1$out;
+  logic [0:0] comp$__1$reset;
+
+  B comp$__1
+  (
+    .clk( comp$__1$clk ),
+    .out( comp$__1$out ),
+    .reset( comp$__1$reset )
+  );
+  assign comp$__0$clk = comp$clk[0];
+  assign comp$__1$clk = comp$clk[1];
+  assign comp$out[0] = comp$__0$out;
+  assign comp$out[1] = comp$__1$out;
+  assign comp$__0$reset = comp$reset[0];
+  assign comp$__1$reset = comp$reset[1];
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.comp[1].out
+  
+  always_comb begin : upblk
+    out = comp$out[1];
+  end
+
+  assign comp$clk[1] = clk;
+  assign comp$reset[1] = reset;
+  assign comp$clk[0] = clk;
+  assign comp$reset[0] = reset;
 
 endmodule
 """
