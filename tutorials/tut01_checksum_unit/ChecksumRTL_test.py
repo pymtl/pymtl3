@@ -9,14 +9,15 @@ Author : Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-from ChecksumCL_test import FuncTestsScycleCL, SrcSinkTestsScycleCL, TestHarness
-from ChecksumFL import b128_to_words, checksum, words_to_b128
-from ChecksumRTL import ChecksumRTL
 from pymtl3 import *
 from pymtl3.passes import DynamicSim
 from pymtl3.passes.sverilog.translation.TranslationPass import TranslationPass
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+
+from .ChecksumCL_test import FuncTestsScycleCL, SrcSinkTestsScycleCL, TestHarness
+from .ChecksumFL import b128_to_words, checksum, words_to_b128
+from .ChecksumRTL import ChecksumRTL
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function

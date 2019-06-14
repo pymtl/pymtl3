@@ -14,8 +14,10 @@ from unittest import TestCase
 import hypothesis
 from hypothesis import strategies as st
 
-from ChecksumFL import b128_to_words, checksum, words_to_b128
 from pymtl3 import *
+
+from tutorials.tut01_checksum_unit.ChecksumFL import b128_to_words, checksum, words_to_b128
+# from .ChecksumFL import b128_to_words, checksum, words_to_b128
 
 #-------------------------------------------------------------------------
 # Test helper functions with hypothesis
