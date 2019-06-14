@@ -24,13 +24,6 @@ from .test_wrapper import *
 
 
 #-------------------------------------------------------------------------
-# list_string
-#-------------------------------------------------------------------------
-def list_string( lst ):
-  return ", ".join([ str( x ) for x in lst ] )
-
-
-#-------------------------------------------------------------------------
 # bitstype_strategy
 #-------------------------------------------------------------------------
 def bitstype_strategy( bits ):
@@ -94,6 +87,36 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.dut = deepcopy( s.preconstruct_dut )
     s.ref = deepcopy( s.preconstruct_ref )
 
+    def wrap_line_trace( top ):
+
+      def new_str( self ):
+        if self.method.called and self.rdy.called and self.rdy.saved_ret:
+          kwargs_str = kwarg_to_str( self.method.saved_kwargs )
+          ret_str = ( "" if self.method.saved_ret is None else
+                      " -> " + str( self.method.saved_ret ) )
+          return "{name}({kwargs}){ret}  ".format(
+              name=self._dsl.my_name, kwargs=kwargs_str, ret=ret_str )
+        elif self.rdy.called:
+          if self.rdy.saved_ret:
+            return "-  "
+          else:
+            return "#  "
+        elif not self.rdy.called:
+          return ".  "
+        return "X  "
+
+      func = top.line_trace
+
+      def line_trace():
+        trace = func() + "  "
+        for ifc in top.top_level_nb_ifcs:
+          trace += new_str( ifc )
+        return trace
+
+      top.line_trace = line_trace
+
+    wrap_line_trace( s.dut )
+
     # elaborate dut
     s.dut.elaborate()
     s.dut.apply( GenDAGPass() )
@@ -156,22 +179,15 @@ def wrap_method( method_spec, arguments ):
     #compare results
     if dut_result != ref_result:
 
-      def format_result( result ):
-        result_list = []
-        for name, _ in result.fields:
-          result_list += [ "{}={}".format( name, vars( result )[ name ] ) ]
-        return list_string( result_list )
-
       error_msg = """mismatch found in method {method}:
   - args: {data}
   - ref result: {ref_result}
   - dut result: {dut_result}
   """.format(
           method=method_name,
-          data=list_string(
-              [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] ),
-          ref_result=format_result( ref_result ),
-          dut_result=format_result( dut_result ) )
+          data=kwarg_to_str( kwargs ),
+          ref_result=ref_result,
+          dut_result=dut_result )
 
       s.error_line_trace( error_msg )
 

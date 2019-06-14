@@ -19,6 +19,13 @@ from pymtl3.stdlib.ifcs import CalleeIfcRTL, callee_ifc_rtl
 
 
 #-------------------------------------------------------------------------
+# list_string
+#-------------------------------------------------------------------------
+def list_string( lst ):
+  return ", ".join([ str( x ) for x in lst ] )
+
+
+#-------------------------------------------------------------------------
 # Method
 #-------------------------------------------------------------------------
 @attr.s()
@@ -57,6 +64,11 @@ def inspect_rtl( rtl ):
   return method_specs
 
 
+def kwarg_to_str( kwargs ):
+  return list_string(
+      [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] )
+
+
 #-------------------------------------------------------------------------
 # RTL2CLWrapper
 #-------------------------------------------------------------------------
@@ -82,7 +94,4 @@ class RTL2CLWrapper( Component ):
       s.connect( callee_ifc, getattr( s.model, method_name ) )
 
   def line_trace( s ):
-    trace = ""
-    for name in s.method_specs:
-      trace += str( getattr( s, name ) )
-    return s.model.line_trace() + "  " + trace
+    return s.model.line_trace()

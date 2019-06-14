@@ -47,6 +47,8 @@ class OpenLoopCLPass( BasePass ):
     method_callee_mapping = {}
     method_guard_mapping  = {}
 
+    top.top_level_nb_ifcs = []
+
     # First deal with normal calleeports. We map the actual method to the
     # callee port, and add the port to the vertex set
     for x in top_level_callee_ports:
@@ -115,6 +117,7 @@ class OpenLoopCLPass( BasePass ):
 
       if u in method_guard_mapping:
         schedule.append( method_guard_mapping[ u ] )
+        top.top_level_nb_ifcs.append( u.get_parent_object() )
       schedule.append( u )
       for v in Es[u]:
         InD[v] -= 1

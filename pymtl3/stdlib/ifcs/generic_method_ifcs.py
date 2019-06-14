@@ -175,7 +175,12 @@ def mk_callee_ifc_args_rets( fields ):
     for name, field_type in fields:
       cls_name += "_{}_{}".format( name, field_type.__name__ )
 
-    return mk_bit_struct( cls_name, fields )
+    def args_rets_str( s ):
+      return ", ".join(
+          [ "{}={}".format( name,
+                            vars( s )[ name ] ) for name, _ in s.fields ] )
+
+    return mk_bit_struct( cls_name, fields, args_rets_str )
 
   else:
     return None
