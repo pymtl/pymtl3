@@ -39,13 +39,13 @@ class FuncTestsFL( TestCase ):
 
   def test_simple( s ):
     words = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
-    words = [ b16(x) for x in words ]
+    words = [ b16(x) for x in words ] # Convert words to a list of Bits16
     assert s.func_impl( words ) == b32( 0x00780024 )
 
   def test_order( s ):
     words0 = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
-    words0 = [ b16(x) for x in words0 ]
     words1 = [ 1, 2, 3, 4, 8, 7, 6, 5 ]
+    words0 = [ b16(x) for x in words0 ]
     words1 = [ b16(x) for x in words1 ]
     assert s.func_impl( words0 ) != s.func_impl( words1 )
     assert s.func_impl( words0 ) == b32( 0x00780024 )

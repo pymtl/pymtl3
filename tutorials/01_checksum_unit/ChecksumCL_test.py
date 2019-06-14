@@ -139,21 +139,25 @@ class SrcSinkTestsScycleCL( TestCase ):
   
   # TODO: clean this up.
   def test_simple( s ):
-    words  = concat( b16(8), b16(7), b16(6), b16(5), b16(4), b16(3), b16(2), b16(1) )
+    words  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
+    bits   = words_to_b128( words )
     result = b32( 0x00780024 )
-    th = TestHarness( s.DutType, [ words ], [ result ] )
+    th = TestHarness( s.DutType, [ bits ], [ result ] )
     if s.nstages is not None:
       th.set_param( "top.dut.construct", nstages=s.nstages )
     th.apply( SimpleSim )
     th.run_sim()
 
   def test_pipeline( s ):
-    words0  = concat( b16(8), b16(7), b16(6), b16(5), b16(4), b16(3), b16(2), b16(1) )
+    words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
+    words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
     result0 = b32( 0x00780024 )
-    words1  = concat( b16(1), b16(2), b16(3), b16(4), b16(5), b16(6), b16(7), b16(8) )
     result1 = b32( 0x00cc0024 )
 
-    src_msgs  = [ words0, words1, words0, words1 ]
+    bits0 = words_to_b128( words0 )
+    bits1 = words_to_b128( words1 )
+
+    src_msgs  = [ bits0, bits1, bits0, bits1 ]
     sink_msgs = [ result0, result1, result0, result1 ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
@@ -163,12 +167,15 @@ class SrcSinkTestsScycleCL( TestCase ):
     th.run_sim()
 
   def test_backpressure( s ):
-    words0  = concat( b16(8), b16(7), b16(6), b16(5), b16(4), b16(3), b16(2), b16(1) )
+    words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
+    words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
     result0 = b32( 0x00780024 )
-    words1  = concat( b16(1), b16(2), b16(3), b16(4), b16(5), b16(6), b16(7), b16(8) )
     result1 = b32( 0x00cc0024 )
 
-    src_msgs  = [ words0, words1, words0, words1 ]
+    bits0 = words_to_b128( words0 )
+    bits1 = words_to_b128( words1 )
+
+    src_msgs  = [ bits0, bits1, bits0, bits1 ]
     sink_msgs = [ result0, result1, result0, result1 ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
