@@ -115,7 +115,7 @@ def test_rtl():
   print( "   buf1    buf2")
   for i in range( 6 ):
     incr.tick()
-    print("{:2}: {}".format( i, incr.line_trace() ))
+    print( "{:2}: {}".format( i, incr.line_trace() ) )
 
 #-------------------------------------------------------------------------
 # Create an incrementer module using value ports
@@ -134,13 +134,49 @@ class IncrModuleRTL( Component ):
     s.connect( s.out, s.buf2 )
 
     @s.update
-    def up_incr_rtl():
+    def upB():
       s.out = s.in_ + 1
 
   def line_trace( s ):
     return "{:2} (+1) {:2}".format( s.in_, s.out )
 
-# TODO: Figure out how to simulate the incr module.
+#-------------------------------------------------------------------------
+# Simulate the incrementer module with a test bench
+#-------------------------------------------------------------------------
+
+def test_tb_rtl():
+  class TestBenchRTL( Component ):
+    def construct( s ):
+      s.incr_input = 10
+      s.incr = IncrModuleRTL()      
+      s.incr_output = 0
+
+      # UpA writes data to input
+      @s.update
+      def upA():
+        s.incr.in_ = s.incr_input
+        s.incr_input += 10
+      
+      # UpC read data from output
+      @s.update
+      def upC():
+        s.incr_output = s.incr.out
+
+    def line_trace( s ):
+      return "{:2} (+1) {:2}".format( s.incr.in_, s.incr.out )
+
+  tb = TestBenchRTL()
+  tb.apply( SimpleSim )
+
+  print( "\n==== Schedule ====" )
+  for blk in tb._sched.schedule:
+    print( blk.__name__ )
+
+  print( "\n==== Line trace ====" )
+  print( "   in_     out")
+  for i in range( 6 ):
+    tb.tick()
+    print( "{:2}: {}".format( i, tb.line_trace() ) )
 
 #-------------------------------------------------------------------------
 # Model an incrementer using methods
@@ -216,7 +252,7 @@ class IncrModuleCL( Component ):
   def construct( s ):
 
     s.write = CalleePort()
-    s.read = CalleePort()
+    s.read  = CalleePort()
     
     s.buf1 = BufferCL()
     s.buf2 = BufferCL()
@@ -225,9 +261,47 @@ class IncrModuleCL( Component ):
     s.connect( s.read,  s.buf2.read  )
 
     @s.update
-    def up_incr_cl():
+    def upB():
       tmp = s.buf1.read()
-      s.buf2.write( tmp )
+      s.buf2.write( tmp+1 )
 
   def line_trace( s ):
     return "{:2} (+1) {:2}".format( s.buf1.data, s.buf2.data )
+
+#-------------------------------------------------------------------------
+# Simulate the incrementer module with a test bench
+#-------------------------------------------------------------------------
+
+def test_tb_cl():
+  class TestBenchCL( Component ):
+    def construct( s ):
+      s.incr_input  = 10
+      s.incr        = IncrModuleCL()      
+      s.incr_output = 0
+
+      # UpA writes data to input
+      @s.update
+      def upA():
+        s.incr.write( s.incr_input )
+        s.incr_input += 10
+      
+      # UpC read data from output
+      @s.update
+      def upC():
+        s.incr_output = s.incr.read()
+
+    def line_trace( s ):
+      return "{:2} (+1) {:2}".format( s.incr.buf1.data, s.incr.buf2.data )
+
+  tb = TestBenchCL()
+  tb.apply( SimpleSim )
+
+  print( "\n==== Schedule ====" )
+  for blk in tb._sched.schedule:
+    print( blk.__name__ )
+
+  print( "\n==== Line trace ====" )
+  print( "   in_     out")
+  for i in range( 6 ):
+    tb.tick()
+    print( "{:2}: {}".format( i, tb.line_trace() ) )
