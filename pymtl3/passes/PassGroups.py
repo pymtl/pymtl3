@@ -21,6 +21,7 @@ SimpleSim = [
   WrapGreenletPass(),
   SimpleSchedulePass(),
   CLLineTracePass(),
+  # VcdGenerationPass(),
   SimpleTickPass(),
   LineTraceParamPass(),
   Component.lock_in_simulation
