@@ -9,8 +9,6 @@ Author : Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-from unittest import TestCase
-
 import hypothesis
 from hypothesis import strategies as st
 
@@ -18,10 +16,9 @@ from pymtl3 import *
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from .ChecksumFL_test import ChecksumFL_Tests as BaseTestsFL
-from .ChecksumFL import b128_to_words, checksum, words_to_b128
 from .ChecksumCL import ChecksumMcycleCL, ChecksumScycleCL
-
+from .ChecksumFL import b128_to_words, checksum, words_to_b128
+from .ChecksumFL_test import ChecksumFL_Tests as BaseTestsFL
 
 #-------------------------------------------------------------------------
 # Wrap CL component into a function
