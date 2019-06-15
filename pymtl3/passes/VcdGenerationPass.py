@@ -14,6 +14,7 @@ from copy import deepcopy
 
 import py
 
+from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .errors import PassOrderError
@@ -92,10 +93,12 @@ class VcdGenerationPass( BasePass ):
     trimmed_value_nets = []
     vcdmeta.clock_net_idx = None
 
+    # FIXME handle the case where the top level signal is in a value net
     for writer, net in top.get_all_value_nets():
       new_net = []
+      print(writer)
       for x in net:
-        if not x.is_sliced_signal():
+        if not isinstance(x, Const) and not x.is_sliced_signal():
           new_net.append( x )
           if repr(x) == "s.clk":
             # Hardcode clock net because it needs to go up and down
@@ -214,7 +217,7 @@ class VcdGenerationPass( BasePass ):
 
     # Give all ' and " characters a preceding backslash for .format
     for i, x in enumerate(net_symbol_mapping):
-      net_symbol_mapping[i] = x.replace('\'','\\\'').replace('\"','\\\"')
+      net_symbol_mapping[i] = x.replace('\\', '\\\\').replace('\'','\\\'').replace('\"','\\\"')
 
     vcd_srcs = []
     for i, net in enumerate( trimmed_value_nets ):
@@ -244,5 +247,6 @@ def dump_vcd():
 """.format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
 
     s = top
+    print(src)
     exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()))
     return dump_vcd
