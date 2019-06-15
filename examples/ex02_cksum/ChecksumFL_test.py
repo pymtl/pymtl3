@@ -23,18 +23,29 @@ from tutorials.tut01_checksum_unit.ChecksumFL import b128_to_words, checksum, wo
 # Test helper functions with hypothesis
 #-------------------------------------------------------------------------
 
+# Write a directed test for utils
+
+def test_b128_to_words():
+  bits = b128(0x00010002000300040005000600070008)
+  words = [ 8, 7, 6, 5, 4, 3, 2, 1 ]
+  assert b128_to_words( bits ) == words
+
+def test_words_to_b128():
+  pass
+
+# Add a Bits strategy
 @hypothesis.given(
   words = st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8 ) 
 )
 def test_helper( words ):
   words = [ b16(x) for x in words ]
-  assert words == b128_to_words( words_to_b128( words ) )
+  assert b128_to_words( words_to_b128( words ) ) == words
 
 #-------------------------------------------------------------------------
 # Test checksum as a function
 #-------------------------------------------------------------------------
 
-class FuncTestsFL( TestCase ):
+class ChecksumFL_Tests( object ):
 
   def func_impl( s, words ):
     return checksum( words )

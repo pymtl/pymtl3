@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
-from pymtl3.stdlib.cl.queues import PipeQueueCL
+from pymtl3.stdlib.cl.queues import NormalQueueCL # Rename NormalQueue to Queue
 
 from .ChecksumFL import b128_to_words, checksum
 
@@ -26,17 +26,18 @@ class ChecksumScycleCL( Component ):
     # Interface
 
     s.recv = NonBlockingCalleeIfc( Bits128 )
-    s.send = NonBlockingCallerIfc( Bits32 )
+    s.send = NonBlockingCallerIfc( Bits32  )
 
     # Component
     
-    s.input_buffer = PipeQueueCL( num_entries=1 )
-    s.connect( s.recv, s.input_buffer.enq )
+    # s.input_buffer = NormalQueueCL( num_entries=2 )
+    s.in_q = NormalQueueCL( num_entries=2 )
+    s.connect( s.recv, s.in_q.enq )
     
     @s.update
-    def up_cl_send():
-      if s.input_buffer.deq.rdy() and s.send.rdy():
-        bits   = s.input_buffer.deq()
+    def upA():
+      if s.in_q.deq.rdy() and s.send.rdy():
+        bits   = s.in_q.deq()
         result = checksum( b128_to_words( bits ) )
         s.send( result )
 

@@ -18,7 +18,7 @@ from pymtl3 import *
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from .ChecksumFL_test import FuncTestsFL
+from .ChecksumFL_test import ChecksumFL_Tests as Whatever
 from .ChecksumFL import b128_to_words, checksum, words_to_b128
 from .ChecksumCL import ChecksumMcycleCL, ChecksumScycleCL
 
@@ -26,7 +26,7 @@ from .ChecksumCL import ChecksumMcycleCL, ChecksumScycleCL
 #-------------------------------------------------------------------------
 # Wrap CL component into a function
 #-------------------------------------------------------------------------
-
+# Name
 class WrappedCheckSumCL( Component ):
 
   def construct( s, DutType=ChecksumScycleCL ):
@@ -35,6 +35,7 @@ class WrappedCheckSumCL( Component ):
     
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )
+    # use 3 connects
     s.connect_pairs(
       s.recv,               s.checksum_unit.recv,
       s.checksum_unit.send, s.out_q.enq,
@@ -66,7 +67,7 @@ def checksum_cl( words, nstages=None ):
 #-------------------------------------------------------------------------
 # FIXME: Side effect: TestCasesFL gets executed again
 
-class FuncTestsScycleCL( FuncTestsFL ):
+class ChecksumScycleCL_Tests( Whatever ):
   
   def func_impl( s, words ):
     return checksum_cl( words )    
@@ -79,13 +80,11 @@ class FuncTestsScycleCL( FuncTestsFL ):
     words = [ b16(x) for x in words ]
     assert s.func_impl( words ) == checksum( words )
 
-class FuncTests2cycleCL( FuncTestsFL ):
-  
+class ChecksumMcycleCL2_Tests( Whatever ):
   def func_impl( s, words ):
     return checksum_cl( words, 2 )    
 
-class FuncTests4cycleCL( FuncTestsFL ):
-  
+class ChecksumMcycleCL4_Tests( Whatever ):
   def func_impl( s, words ):
     return checksum_cl( words, 4 )    
 
