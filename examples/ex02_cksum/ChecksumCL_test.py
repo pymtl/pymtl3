@@ -18,7 +18,7 @@ from pymtl3 import *
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from .ChecksumFL_test import ChecksumFL_Tests as Whatever
+from .ChecksumFL_test import ChecksumFL_Tests as BaseTestsFL
 from .ChecksumFL import b128_to_words, checksum, words_to_b128
 from .ChecksumCL import ChecksumMcycleCL, ChecksumScycleCL
 
@@ -26,7 +26,7 @@ from .ChecksumCL import ChecksumMcycleCL, ChecksumScycleCL
 #-------------------------------------------------------------------------
 # Wrap CL component into a function
 #-------------------------------------------------------------------------
-# Name
+
 class WrappedCheckSumCL( Component ):
 
   def construct( s, DutType=ChecksumScycleCL ):
@@ -65,9 +65,8 @@ def checksum_cl( words, nstages=None ):
 #-------------------------------------------------------------------------
 # Reuse FL tests
 #-------------------------------------------------------------------------
-# FIXME: Side effect: TestCasesFL gets executed again
 
-class ChecksumScycleCL_Tests( Whatever ):
+class ChecksumScycleCL_Tests( BaseTestsFL ):
   
   def func_impl( s, words ):
     return checksum_cl( words )    
@@ -80,13 +79,13 @@ class ChecksumScycleCL_Tests( Whatever ):
     words = [ b16(x) for x in words ]
     assert s.func_impl( words ) == checksum( words )
 
-class ChecksumMcycleCL2_Tests( Whatever ):
-  def func_impl( s, words ):
-    return checksum_cl( words, 2 )    
+# class ChecksumMcycleCL2_Tests( BaseTestsFL ):
+#   def func_impl( s, words ):
+#     return checksum_cl( words, 2 )    
 
-class ChecksumMcycleCL4_Tests( Whatever ):
-  def func_impl( s, words ):
-    return checksum_cl( words, 4 )    
+# class ChecksumMcycleCL4_Tests( BaseTestsFL ):
+#   def func_impl( s, words ):
+#     return checksum_cl( words, 4 )    
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -131,7 +130,7 @@ class TestHarness( Component ):
 # Src/sink based tests
 #-------------------------------------------------------------------------
 
-class SrcSinkTestsScycleCL( TestCase ):
+class ChecksumScycleCLSrcSink_Tests( object ):
 
   @classmethod
   def setup_class( cls ):
@@ -217,16 +216,16 @@ class SrcSinkTestsScycleCL( TestCase ):
 # Reuse single cycle tests to test multi cycle design
 #-------------------------------------------------------------------------
 
-class SrcSinkTests2cycleCL( SrcSinkTestsScycleCL ):
+# class SrcSinkTests2cycleCL( ChecksumScycleCLSrcSink_Tests ):
+# 
+#   @classmethod
+#   def setup_class( cls ):
+#     cls.DutType = ChecksumMcycleCL
+#     cls.nstages = 2
 
-  @classmethod
-  def setup_class( cls ):
-    cls.DutType = ChecksumMcycleCL
-    cls.nstages = 2
-
-class SrcSinkTests4cycleCL( SrcSinkTestsScycleCL ):
-
-  @classmethod
-  def setup_class( cls ):
-    cls.DutType = ChecksumMcycleCL
-    cls.nstages = 4
+# class SrcSinkTests4cycleCL( ChecksumScycleCLSrcSink_Tests ):
+# 
+#   @classmethod
+#   def setup_class( cls ):
+#     cls.DutType = ChecksumMcycleCL
+#     cls.nstages = 4

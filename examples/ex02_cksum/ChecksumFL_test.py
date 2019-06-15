@@ -16,14 +16,13 @@ from hypothesis import strategies as st
 
 from pymtl3 import *
 
-from tutorials.tut01_checksum_unit.ChecksumFL import b128_to_words, checksum, words_to_b128
-# from .ChecksumFL import b128_to_words, checksum, words_to_b128
+from .ChecksumFL import b128_to_words, checksum, words_to_b128
 
 #-------------------------------------------------------------------------
 # Test helper functions with hypothesis
 #-------------------------------------------------------------------------
 
-# Write a directed test for utils
+# TODO: Write a directed test for utils
 
 def test_b128_to_words():
   bits = b128(0x00010002000300040005000600070008)
@@ -33,7 +32,7 @@ def test_b128_to_words():
 def test_words_to_b128():
   pass
 
-# Add a Bits strategy
+# TODO: Add a Bits strategy
 @hypothesis.given(
   words = st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8 ) 
 )
