@@ -231,5 +231,3 @@ class IncrModuleCL( Component ):
 
   def line_trace( s ):
     return "{:2} (+1) {:2}".format( s.buf1.data, s.buf2.data )
-
-# TODO: Figure out how to simulate the incr module.
