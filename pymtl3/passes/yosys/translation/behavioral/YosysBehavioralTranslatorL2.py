@@ -51,7 +51,44 @@ class YosysBehavioralRTLIRToSVVisitorL2(
     node.start._top_expr = 1
     node.end._top_expr = 1
     node.step._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_For( node )
+
+    # Yosys-comptabile Verilog for loop
+    src      = []
+    body     = []
+    loop_var = s.visit( node.var )
+    start    = s.visit( node.start )
+    end      = s.visit( node.end )
+
+    loop_var = "__loopvar_" + s.blk.__name__ + "$" + loop_var
+    if loop_var not in s.loopvars:
+      s.loopvars.add( loop_var )
+
+    begin    = ' begin' if len( node.body ) > 1 else ''
+
+    cmp_op   = '<' if node.step.value > 0 else '<'
+    inc_op   = '+' if node.step.value > 0 else '-'
+
+    step_abs = s.visit( node.step )
+    step_abs = step_abs if node.step.value > 0 else step_abs[ 1 : ]
+
+    for stmt in node.body:
+      body.extend( s.visit( stmt ) )
+    make_indent( body, 1 )
+
+    for_begin = \
+      'for ( {v} = {s}; {v} {comp} {t}; {v} = {v} {inc} {stp} ){begin}'.format(
+      v = loop_var, s = start, t = end, stp = step_abs,
+      comp = cmp_op, inc = inc_op, begin = begin
+    )
+
+    # Assemble for statement
+    src.extend( [ for_begin ] )
+    src.extend( body )
+
+    if len( node.body ) > 1:
+      src.extend( [ 'end' ] )
+
+    return src
 
   #-----------------------------------------------------------------------
   # visit_IfExp
@@ -97,3 +134,11 @@ class YosysBehavioralRTLIRToSVVisitorL2(
     node.left._top_expr = 1
     node.right._top_expr = 1
     return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_Compare( node )
+
+  #-----------------------------------------------------------------------
+  # visit_LoopVar
+  #-----------------------------------------------------------------------
+
+  def visit_LoopVar( s, node ):
+    s.check_res( node, node.name )
+    return "__loopvar_" + s.blk.__name__ + "$" + node.name

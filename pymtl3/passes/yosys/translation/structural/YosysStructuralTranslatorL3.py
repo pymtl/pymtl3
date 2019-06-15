@@ -118,20 +118,19 @@ class YosysStructuralTranslatorL3(
         msb, _id, n_dim = wire_decl["msb"], wire_decl["id_"], wire_decl["n_dim"]
         id_ = ifc_id + "$" + _id
         array_dim_str = s._get_array_dim_str( ifc_ndim + n_dim )
-        if n_dim or ifc_ndim:
+        if n_dim or ifc_ndim or "present" in wire_decl:
           ret_wire.append( wire_template.format( **locals() ) )
 
     # Assemble the connections
     ret_connections = []
-    if ifc_ndim:
-      _connections = ports["connections"]
-      for connections in _connections:
-        for connection in connections:
-          d = connection["direction"]
-          pid, wid, idx = connection["pid"], connection["wid"], connection["idx"]
-          if idx or ifc_ndim:
-            ret_connections += \
-              s.ifc_conn_gen( d, ifc_id, pid, ifc_id, wid, idx, ifc_ndim )
+    _connections = ports["connections"]
+    for connections in _connections:
+      for connection in connections:
+        d = connection["direction"]
+        pid, wid, idx = connection["pid"], connection["wid"], connection["idx"]
+        if idx or ifc_ndim or "present" in connection:
+          ret_connections += \
+            s.ifc_conn_gen( d, ifc_id, pid, ifc_id, wid, idx, ifc_ndim )
 
     return {
       "port_decls" : ret_port,

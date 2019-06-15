@@ -73,8 +73,15 @@ typedef struct packed {
   output logic [31:0] out,
   input logic [0:0] reset\
 """ }
-  a._ref_ports_wire_yosys = { a : "" }
-  a._ref_ports_conn_yosys = { a : "" }
+  a._ref_ports_wire_yosys = { a : \
+"""\
+  logic [31:0] in_;\
+""" }
+  a._ref_ports_conn_yosys = { a : \
+"""\
+  assign in_[31:0] = in_$foo;\
+"""
+}
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = { a : \
 """\
@@ -151,8 +158,18 @@ typedef struct packed {
   output logic [31:0] out_foo,
   input logic [0:0] reset\
 """ }
-  a._ref_ports_wire_yosys = { a : "" }
-  a._ref_ports_conn_yosys = { a : "" }
+  a._ref_ports_wire_yosys = { a : \
+"""\
+  logic [31:0] in_$c;
+  logic [63:0] in_;\
+""" }
+  a._ref_ports_conn_yosys = { a : \
+"""\
+  assign in_$c[31:0] = in_$c$bar;
+  assign in_[63:32] = in_$c$bar;
+  assign in_[31:0] = in_$foo;\
+"""
+}
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = { a : \
 """\
@@ -222,12 +239,15 @@ typedef struct packed {
   a._ref_ports_wire_yosys = { a : \
 """\
   logic [31:0] in_$foo [0:1];
+  logic [63:0] in_;
   logic [31:0] out [0:1];\
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
   assign in_$foo[0] = in_$foo$__0;
   assign in_$foo[1] = in_$foo$__1;
+  assign in_[63:32] = in_$foo$__1;
+  assign in_[31:0] = in_$foo$__0;
   assign out$__0 = out[0];
   assign out$__1 = out[1];\
 """ }
@@ -309,12 +329,18 @@ typedef struct packed {
   a._ref_ports_wire_yosys = { a : \
 """\
   logic [31:0] in_$c$bar [0:1];
+  logic [31:0] in_$c [0:1];
+  logic [63:0] in_;
   logic [31:0] out [0:1];\
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
   assign in_$c$bar[0] = in_$c$__0$bar;
+  assign in_$c[0][31:0] = in_$c$__0$bar;
   assign in_$c$bar[1] = in_$c$__1$bar;
+  assign in_$c[1][31:0] = in_$c$__1$bar;
+  assign in_[63:32] = in_$c$__1$bar;
+  assign in_[31:0] = in_$c$__0$bar;
   assign out$__0 = out[0];
   assign out$__1 = out[1];\
 """ }

@@ -11,6 +11,7 @@ from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.sverilog.util.utility import make_indent
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL1 import (
     BehavioralRTLIRToSVVisitorL1,
@@ -38,6 +39,10 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
   int or a Bits object;
   """
 
+  def __init__( s, is_reserved ):
+    super( YosysBehavioralRTLIRToSVVisitorL1, s ).__init__( is_reserved )
+    s.loopvars = set()
+
   def signal_expr_prologue( s, node ):
     # Setup the signal expression attributes
     # attr: an array of all attributes that will be filled into the attribute
@@ -62,6 +67,35 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       # If the current node is not a top level signal expression then we
       # are done. Return the given return value for debugging purposes.
       return ret
+
+  def get_loopvars( s ):
+    loopvars = list( s.loopvars )
+    for i, loopvar in enumerate( loopvars ):
+      loopvars[i] = "integer " + loopvar + ";"
+    if loopvars:
+      loopvars.append( "" )
+    return loopvars
+    # make_indent( loopvars, 1 )
+    # s_loopvars = "\n".join( loopvars )
+    # if s_loopvars:
+      # s_loopvars += "\n\n"
+    # return s_loopvars
+
+  #-----------------------------------------------------------------------
+  # visit_CombUpblk
+  #-----------------------------------------------------------------------
+
+  def visit_CombUpblk( s, node ):
+    upblk = super(YosysBehavioralRTLIRToSVVisitorL1, s).visit_CombUpblk( node )
+    return s.get_loopvars() + upblk
+
+  #-----------------------------------------------------------------------
+  # visit_SeqUpblk
+  #-----------------------------------------------------------------------
+
+  def visit_SeqUpblk( s, node ):
+    upblk = super(YosysBehavioralRTLIRToSVVisitorL1, s).visit_SeqUpblk( node )
+    return s.get_loopvars() + upblk
 
   #-----------------------------------------------------------------------
   # visit_Assign
@@ -114,14 +148,14 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
     value = getattr( node.value, "_value", None )
 
     if value is None:
-      raise SVerilogTranslationError( s.blk, node, 
+      raise SVerilogTranslationError( s.blk, node,
 """\
-Operand {} of bitwidth casting is not an integer! If you are trying to cast \
-a signal to a different bitwdith, you probably want to use sext or zext to \
-extend the signal to the desired bitwidth or slicing to extract desired \
+Operand {} of bitwidth casting is not an integer! If you are trying to cast 
+a signal to a different bitwdith, you probably want to use sext or zext to 
+extend the signal to the desired bitwidth or slicing to extract desired 
 amount of bits.
-NOTE: this error is yosys-specific because it does not support SystemVerilog \
-      bitwidth casting syntax. You can still use this syntax in the canonical \
+NOTE: this error is yosys-specific because it does not support SystemVerilog 
+      bitwidth casting syntax. You can still use this syntax in the canonical 
       SystemVerilog translation ( passes.sverilog.TranslationPass ).
 """.format( node.value ) )
 

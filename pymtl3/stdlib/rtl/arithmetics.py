@@ -102,7 +102,8 @@ class ZeroComp( Component ):
 
     @s.update
     def up_zerocomp():
-      s.out = Bits1( s.in_ == Type(0) )
+      # s.out = Bits1( s.in_ == Type(0) )
+      s.out = s.in_ == Type(0)
 
 # LeftThanComparator
 

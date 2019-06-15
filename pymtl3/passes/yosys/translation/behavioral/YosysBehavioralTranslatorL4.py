@@ -33,8 +33,6 @@ class YosysBehavioralRTLIRToSVVisitorL4(
     
     Add support for accessing interface attribute in L4.
     """
-    # import pdb
-    # pdb.set_trace()
     if isinstance( node.value.Type, rt.InterfaceView ):
       value = s.visit( node.value )
       s.signal_expr_prologue( node )

@@ -92,19 +92,28 @@ class YosysStructuralTranslatorL4(
     # Add interface info to wire declarations
     for wire in ports["wire_decls"]:
       for _wire in wire:
+        present = "present" in _wire
         msb, _id, n_dim = _wire["msb"], _wire["id_"], _wire["n_dim"]
         id_ = ifc_id + "$" + _id
         # if ifc_n_dim or n_dim:
-        wire_decl.append( { "msb" : msb, "id_" : id_, "n_dim" : ifc_n_dim+n_dim } )
+        dct = { "msb" : msb, "id_" : id_, "n_dim" : ifc_n_dim+n_dim }
+        if present:
+          dct["present"] = True
+        wire_decl.append( dct )
 
     # Add interface info to connections
     for conn in ports["connections"]:
       for _conn in conn:
+        present = "present" in _conn
         d = _conn["direction"]
         pid, wid, idx = _conn["pid"], _conn["wid"], _conn["idx"]
         # if idx or ifc_n_dim:
-        connections += \
+        dct_list = \
           _subcomp_ifc_conn_gen( d, ifc_id, pid, ifc_id, wid, idx, ifc_n_dim )
+        if present:
+          for dct in dct_list:
+            dct["present"] = True
+        connections += dct_list
 
     return {
       "port_decls" : port_decl,
@@ -205,13 +214,13 @@ class YosysStructuralTranslatorL4(
       msb, _id, n_dim = wire["msb"], wire["id_"], wire["n_dim"]
       id_ = c_id + "$" + _id
       array_dim_str = s._get_array_dim_str( c_n_dim + n_dim )
-      if c_n_dim or n_dim:
+      if c_n_dim or n_dim or "present" in wire:
         wire_decls.append( wire_template.format( **locals() ) )
 
     # Add sub-component info to connections and generate connections
     for _conn in _connections:
       d, pid, wid, idx = _conn["direction"], _conn["pid"], _conn["wid"], _conn["idx"]
-      if c_n_dim or idx:
+      if c_n_dim or idx or "present" in _conn:
         connections += _subcomp_conn_gen( d, c_id, pid, c_id, wid, idx, c_n_dim )
 
     return {

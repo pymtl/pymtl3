@@ -153,7 +153,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       msb, id_, n_dim = dct["msb"], dct["id_"], dct["n_dim"]
       array_dim_str = s._get_array_dim_str( n_dim )
-      if n_dim:
+      if n_dim or "present" in dct:
         wire_decl.append( wire_template.format( **locals() ) )
 
     # Assemble connections
@@ -161,7 +161,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in conn_list:
       direction = dct["direction"]
       pid, wid, idx = dct["pid"], dct["wid"], dct["idx"]
-      if idx:
+      if idx or "present" in dct:
         if direction.startswith( "input" ):
           connections.append( in_conn_template.format( **locals() ) )
         else:

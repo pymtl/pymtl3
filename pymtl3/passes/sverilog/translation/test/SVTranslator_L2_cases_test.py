@@ -363,9 +363,11 @@ module A
   //   for i in range(2):
   //     s.out[i] = s.in_[i]
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 0; i < 2; i += 1 )
-      out[i] = in_[i];
+    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
   end
 
   assign in_[0] = in_$__0;
@@ -436,9 +438,11 @@ module A
   //     s.out[i] = s.in_[i]
   //   s.out[0] = s.in_[0]
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 1; i < 2; i += 1 )
-      out[i] = in_[i];
+    for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
     out[0] = in_[0];
   end
 
@@ -520,11 +524,13 @@ module A
   //   for i in range(1, 5, 2):
   //     s.out[i] = s.in_[i]
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 2 )
-      out[i] = in_[i];
-    for ( int i = 1; i < 5; i += 2 )
-      out[i] = in_[i];
+    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
+      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
+      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
   end
 
   assign in_[0] = in_$__0;
@@ -603,9 +609,11 @@ module A
   //   for i in range(5):
   //     s.out[i] = s.in_[i] if i == 1 else s.in_[0]
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 1 )
-      out[i] = ( i == 1 ) ? in_[i] : in_[0];
+    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+      out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? in_[__loopvar_upblk$i] : in_[0];
   end
 
   assign in_[0] = in_$__0;
@@ -684,9 +692,11 @@ module A
   //   for i in range(5):
   //     s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 1 )
-      out[i] = ( i == 1 ) ? ~in_[i] : in_[0];
+    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+      out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? ~in_[__loopvar_upblk$i] : in_[0];
   end
 
   assign in_[0] = in_$__0;
@@ -778,13 +788,15 @@ module A
   //     else:
   //       s.out[i] = Bits32(0)
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 1 )
-      if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
-        out[i] = in_[i];
+    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+      if ( in_[__loopvar_upblk$i] && ( ( __loopvar_upblk$i < 5 ) ? in_[__loopvar_upblk$i + 1] : in_[4] ) ) begin
+        out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
       end
       else
-        out[i] = 32'd0;
+        out[__loopvar_upblk$i] = 32'd0;
   end
 
   assign in_[0] = in_$__0;
@@ -883,14 +895,16 @@ module A
   //       tmpvar = Bits32(0)
   //     s.out[i] = tmpvar
   
+  integer __loopvar_upblk$i;
+  
   always_comb begin : upblk
-    for ( int i = 0; i < 5; i += 1 ) begin
-      if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
-        __tmpvar_upblk$tmpvar = in_[i];
+    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 ) begin
+      if ( in_[__loopvar_upblk$i] && ( ( __loopvar_upblk$i < 5 ) ? in_[__loopvar_upblk$i + 1] : in_[4] ) ) begin
+        __tmpvar_upblk$tmpvar = in_[__loopvar_upblk$i];
       end
       else
         __tmpvar_upblk$tmpvar = 32'd0;
-      out[i] = __tmpvar_upblk$tmpvar;
+      out[__loopvar_upblk$i] = __tmpvar_upblk$tmpvar;
     end
   end
 
@@ -956,6 +970,7 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
+  logic [31:0] in_;
 
   // PYMTL SOURCE:
   // 
@@ -966,6 +981,8 @@ module A
   always_comb begin : upblk
     out = in_$foo;
   end
+
+  assign in_[31:0] = in_$foo;
 
 endmodule
 """
@@ -1023,6 +1040,7 @@ module A
   input logic [0:0] reset
 );
   logic [31:0] in_$bar [0:1];
+  logic [95:0] in_;
 
   // PYMTL SOURCE:
   // 
@@ -1036,6 +1054,9 @@ module A
 
   assign in_$bar[0] = in_$bar$__0;
   assign in_$bar[1] = in_$bar$__1;
+  assign in_[95:64] = in_$bar$__1;
+  assign in_[63:32] = in_$bar$__0;
+  assign in_[31:0] = in_$foo;
 
 endmodule
 """
@@ -1103,6 +1124,8 @@ module A
   input logic [0:0] reset
 );
   logic [31:0] in_$bar [0:1];
+  logic [31:0] in_$c;
+  logic [127:0] in_;
 
   // PYMTL SOURCE:
   // 
@@ -1116,6 +1139,11 @@ module A
 
   assign in_$bar[0] = in_$bar$__0;
   assign in_$bar[1] = in_$bar$__1;
+  assign in_$c[31:0] = in_$c$woof;
+  assign in_[127:96] = in_$bar$__1;
+  assign in_[95:64] = in_$bar$__0;
+  assign in_[63:32] = in_$c$woof;
+  assign in_[31:0] = in_$foo;
 
 endmodule
 """
@@ -1162,7 +1190,9 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
+  logic [31:0] in_;
 
+  assign in_[31:0] = in_$foo;
   assign out = in_$foo;
 
 endmodule
@@ -1221,7 +1251,12 @@ module A
   output logic [31:0] out_foo,
   input logic [0:0] reset
 );
+  logic [31:0] in_$c;
+  logic [63:0] in_;
 
+  assign in_$c[31:0] = in_$c$bar;
+  assign in_[63:32] = in_$c$bar;
+  assign in_[31:0] = in_$foo;
   assign out_foo = in_$foo;
   assign out_bar = in_$c$bar;
 
@@ -1271,10 +1306,13 @@ module A
   input logic [0:0] reset
 );
   logic [31:0] in_$foo [0:1];
+  logic [63:0] in_;
   logic [31:0] out [0:1];
 
   assign in_$foo[0] = in_$foo$__0;
   assign in_$foo[1] = in_$foo$__1;
+  assign in_[63:32] = in_$foo$__1;
+  assign in_[31:0] = in_$foo$__0;
   assign out$__0 = out[0];
   assign out$__1 = out[1];
   assign out[0] = in_$foo[0];
@@ -1333,10 +1371,16 @@ module A
   input logic [0:0] reset
 );
   logic [31:0] in_$c$bar [0:1];
+  logic [31:0] in_$c [0:1];
+  logic [63:0] in_;
   logic [31:0] out [0:1];
 
   assign in_$c$bar[0] = in_$c$__0$bar;
+  assign in_$c[0][31:0] = in_$c$__0$bar;
   assign in_$c$bar[1] = in_$c$__1$bar;
+  assign in_$c[1][31:0] = in_$c$__1$bar;
+  assign in_[63:32] = in_$c$__1$bar;
+  assign in_[31:0] = in_$c$__0$bar;
   assign out$__0 = out[0];
   assign out$__1 = out[1];
   assign out[0] = in_$c$bar[0];

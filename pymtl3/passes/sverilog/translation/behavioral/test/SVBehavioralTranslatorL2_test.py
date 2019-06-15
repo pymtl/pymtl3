@@ -303,7 +303,15 @@ end\
     [   -1,    -2,  -1,  -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+end\
+""" }
   do_test( a )
 
 def test_for_range_lower_upper( do_test ):
@@ -340,7 +348,16 @@ end\
     [   -1,    -2,  -1,  -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  out[0] = in_[0];
+end\
+""" }
   do_test( a )
 
 def test_for_range_lower_upper_step( do_test ):
@@ -385,7 +402,17 @@ end\
     [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+end\
+""" }
   do_test( a )
 
 def test_if_exp_for( do_test ):
@@ -426,7 +453,15 @@ end\
     [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -1,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? in_[__loopvar_upblk$i] : in_[0];
+end\
+""" }
   do_test( a )
 
 def test_if_exp_unary_op( do_test ):
@@ -467,7 +502,15 @@ end\
     [   -1,    -2,  -1,  -2,  -1,   -1,    ~-2,  -1,  -1,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? ~in_[__loopvar_upblk$i] : in_[0];
+end\
+""" }
   do_test( a )
 
 def test_if_bool_op( do_test ):
@@ -515,7 +558,19 @@ end\
     [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    if ( ( in_[__loopvar_upblk$i] != 32'd0 ) && ( ( __loopvar_upblk$i < 4 ) ? in_[__loopvar_upblk$i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
+      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    end
+    else
+      out[__loopvar_upblk$i] = 32'd0;
+end\
+""" }
   do_test( a )
 
 def test_tmpvar( do_test ):
@@ -566,5 +621,19 @@ end\
     [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
-  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 ) begin
+    if ( ( in_[__loopvar_upblk$i] != 32'd0 ) && ( ( __loopvar_upblk$i < 4 ) ? in_[__loopvar_upblk$i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
+      __tmpvar_upblk$tmpvar = in_[__loopvar_upblk$i];
+    end
+    else
+      __tmpvar_upblk$tmpvar = 32'd0;
+    out[__loopvar_upblk$i] = __tmpvar_upblk$tmpvar;
+  end
+end\
+""" }
   do_test( a )

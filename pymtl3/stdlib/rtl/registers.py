@@ -13,7 +13,8 @@ class Reg( Component ):
 
     @s.update_on_edge
     def up_reg():
-      s.out = Type( s.in_ )
+      # s.out = Type( s.in_ )
+      s.out = s.in_
 
   def line_trace( s ):
     return "[{} > {}]".format(s.in_, s.out)

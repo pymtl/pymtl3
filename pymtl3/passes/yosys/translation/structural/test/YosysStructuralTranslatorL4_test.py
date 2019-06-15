@@ -139,14 +139,16 @@ def test_comp_array_ifc_array_port_array_packed_array( do_test ):
   logic [0:0] b$clk [0:0];
   logic [31:0] b$out [0:0];
   logic [0:0] b$reset [0:0];
-  logic [31:0] b$ifc$foo$bar [0:0][0:0][0:0][0:0];\
+  logic [31:0] b$ifc$foo$bar [0:0][0:0][0:0][0:0];
+  logic [31:0] b$ifc$foo [0:0][0:0][0:0];\
 """ }
   a._ref_comps_conn_yosys = { a : \
 """\
   assign b$__0$clk = b$clk[0];
   assign b$out[0] = b$__0$out;
   assign b$__0$reset = b$reset[0];
-  assign b$__0$ifc$__0$foo$__0$bar$__0 = b$ifc$foo$bar[0][0][0][0];\
+  assign b$__0$ifc$__0$foo$__0$bar$__0 = b$ifc$foo$bar[0][0][0][0];
+  assign b$__0$ifc$__0$foo$__0$bar$__0 = b$ifc$foo[0][0][0][31:0];\
 """
 }
   a._ref_conns_yosys = { a : \

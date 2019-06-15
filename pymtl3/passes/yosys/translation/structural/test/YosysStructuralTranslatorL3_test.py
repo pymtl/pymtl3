@@ -149,12 +149,15 @@ def test_struct_ifc( do_test ):
 """ }
   a._ref_ifcs_wire_yosys = { a : \
 """\
-  logic [31:0] in_$foo$bar [0:1];\
+  logic [31:0] in_$foo$bar [0:1];
+  logic [31:0] in_$foo [0:1];\
 """ }
   a._ref_ifcs_conn_yosys = { a : \
 """\
   assign in_$foo$bar[0] = in_$__0$foo$bar;
-  assign in_$foo$bar[1] = in_$__1$foo$bar;\
+  assign in_$foo$bar[1] = in_$__1$foo$bar;
+  assign in_$foo[0][31:0] = in_$__0$foo$bar;
+  assign in_$foo[1][31:0] = in_$__1$foo$bar;\
 """
 }
   a._ref_conns_yosys = { a : \

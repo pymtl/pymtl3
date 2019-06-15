@@ -23,11 +23,66 @@ class YosysStructuralTranslatorL2(
   # Connection helper method
   #-----------------------------------------------------------------------
 
+  def vec_conn_vector_gen( s, d, c_nbits, pid, wid, idx, dtype ):
+    nbits = dtype.get_length()
+    assert c_nbits - nbits >= 0
+    msb, lsb = c_nbits-1, c_nbits-nbits
+    return [ {
+      "direction" : d,
+      "pid" : pid,
+      "wid" : wid,
+      "idx" : idx + "[{msb}:{lsb}]".format( **locals() ),
+      "present" : True
+    } ]
+
+  def vec_conn_struct_gen( s, d, c_nbits, pid, wid, idx, dtype ):
+    all_properties = dtype.get_all_properties()
+    ret = []
+    for name, field in all_properties:
+      ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"$"+name, wid, idx, field )
+      c_nbits -= field.get_length()
+    return ret
+
+  def vec_conn_packed_gen( s, d, c_nbits, pid, wid, idx, _dtype ):
+
+    def _packed_gen( d, c_nbits, pid, wid, idx, n_dim, p_nbits, dtype ):
+      if not n_dim:
+        return s.vec_conn_dtype_gen( d, c_nbits, pid, wid, idx, dtype )
+      else:
+        ret = []
+        dec_nbits = p_nbits // n_dim[0]
+        for i in reversed( range( n_dim[0] ) ):
+          ret += \
+            _packed_gen(d, c_nbits, pid+"$__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
+          c_nbits -= dec_nbits
+          assert c_nbits >= 0
+        return ret
+
+    p_n_dim = _dtype.get_dim_sizes()
+    p_nbits = _dtype.get_length()
+    dtype = _dtype.get_sub_dtype()
+    return _packed_gen( d, c_nbits, pid, wid, idx, p_n_dim, p_nbits, dtype )
+
+  def vec_conn_dtype_gen( s, d, c_nbits, pid, wid, idx, dtype ):
+    if isinstance( dtype, rdt.Vector ):
+      return s.vec_conn_vector_gen( d, c_nbits, pid, wid, idx, dtype )
+    elif isinstance( dtype, rdt.Struct ):
+      return s.vec_conn_struct_gen( d, c_nbits, pid, wid, idx, dtype )
+    elif isinstance( dtype, rdt.PackedArray ):
+      return s.vec_conn_packed_gen( d, c_nbits, pid, wid, idx, dtype )
+    else:
+      assert False, "unrecognized data type {}!".format( dtype )
+
   def struct_conn_gen( s, d, pid, wid, idx, dtype ):
     all_properties = dtype.get_all_properties()
     ret = []
     for name, field in all_properties:
       ret += s.dtype_conn_gen( d, pid+"$"+name, wid+"$"+name, idx, field )
+    cur_nbits = dtype.get_length()
+    for name, field in all_properties:
+      ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"$"+name, wid, idx, field )
+      cur_nbits -= field.get_length()
+    assert cur_nbits == 0
     return ret
 
   def _packed_conn_gen( s, d, pid, wid, idx, n_dim, dtype ):
@@ -63,14 +118,33 @@ class YosysStructuralTranslatorL2(
   def wire_struct_gen( s, id_, dtype, n_dim ):
     all_properties = dtype.get_all_properties()
     ret = []
+    # Generate wire for each field
     for name, field in all_properties:
       ret += s.wire_dtype_gen( id_+"$"+name, field, n_dim )
+    # Generate a long vector for this struct signal
+    ret.append( {
+      "msb" : dtype.get_length()-1,
+      "id_" : id_,
+      "n_dim" : n_dim,
+      "present" : True
+    } )
     return ret
 
   def wire_packed_gen( s, id_, _dtype, n_dim ):
     _n_dim = _dtype.get_dim_sizes()
     dtype = _dtype.get_sub_dtype()
-    return s.wire_dtype_gen( id_, dtype, n_dim + _n_dim )
+    ret = s.wire_dtype_gen( id_, dtype, n_dim + _n_dim )
+    # Rigth now don't generate dedicated wire for the whole packed array -
+    # we generate an unpacked array to group together all signals. Users
+    # should access each element of the array instead of manipulating
+    # this array as a whole.
+    # ret.append( {
+      # "msb" : _dtype.get_length()-1,
+      # "id_" : id_,
+      # "n_dim" : n_dim,
+      # "present" : True
+    # } )
+    return ret
 
   def wire_dtype_gen( s, id_, dtype, n_dim ):
     if isinstance( dtype, rdt.Struct ):
