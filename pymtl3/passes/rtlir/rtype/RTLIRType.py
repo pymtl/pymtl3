@@ -300,7 +300,8 @@ class Component( BaseRTLIRType ):
 
     # No default values: each arg is either keyword or unnamed
     # Has default values: num. supplied values + num. of defaults >= num. args
-    assert num_args == num_supplied or num_args <= num_supplied + num_defaults
+    assert num_args == num_supplied or num_args <= num_supplied + num_defaults, \
+        "internal error: fail to parse the arguments!"
     use_defaults = num_args != num_supplied
 
     ret = []
@@ -317,7 +318,7 @@ class Component( BaseRTLIRType ):
 
       # Use default values
       else:
-        assert use_defaults
+        assert use_defaults, "internal error: didn't expect to use default values!"
         ret.append((arg_name, defaults[idx-len(arg_names)]))
 
     return ret
@@ -436,7 +437,10 @@ def _is_rtlir_ifc_convertible( obj ):
   valid_ifc_attributes = ( dsl.InPort, dsl.OutPort, dsl.Interface )
   if isinstance( obj, list ):
     while isinstance( obj, list ):
-      assert len( obj ) > 0, "one dimension of {} is 0!".format( obj )
+      # Empty lists will be dropped
+      if len( obj ) == 0:
+        return True
+      # assert len( obj ) > 0, "one dimension of {} is 0!".format( obj )
       obj = obj[0]
     return _is_rtlir_ifc_convertible( obj )
   elif isinstance( obj, valid_ifc_attributes ):
@@ -461,7 +465,9 @@ def _add_packed_instances( id_, Type, properties ):
     properties[ _id ] = _Type
 
 def _handle_Array( obj ):
-  assert len( obj ) > 0, "list {} is empty!".format( obj )
+  if len( obj ) == 0:
+    return None
+  # assert len( obj ) > 0, "list {} is empty!".format( obj )
   ref_type = get_rtlir( obj[0] )
   assert \
     reduce( lambda res,i: res and (get_rtlir(i)==ref_type), obj, True ), \
@@ -469,7 +475,9 @@ def _handle_Array( obj ):
       obj, ref_type )
   dim_sizes = []
   while isinstance( obj, list ):
-    assert len( obj ) > 0, "{} is an empty list!".format( obj )
+    if len( obj ) == 0:
+      return None
+    # assert len( obj ) > 0, "{} is an empty list!".format( obj )
     dim_sizes.append( len( obj ) )
     obj = obj[0]
   return Array( dim_sizes, get_rtlir( obj ) )
@@ -495,9 +503,10 @@ def _handle_Interface( obj ):
       # "non-port-or-interface {} in interface {}!".format( _obj, obj )
     if _is_rtlir_ifc_convertible( _obj ):
       _obj_type = get_rtlir( _obj )
-      properties[ _id ] = _obj_type
-      if isinstance( _obj_type, Array ):
-        _add_packed_instances( _id, _obj_type, properties )
+      if _obj_type is not None:
+        properties[ _id ] = _obj_type
+        if isinstance( _obj_type, Array ):
+          _add_packed_instances( _id, _obj_type, properties )
   return InterfaceView( obj.__class__.__name__, properties, obj )
 
 def _handle_Component( obj ):
@@ -508,9 +517,10 @@ def _handle_Component( obj ):
     # TODO: warn the user about a silently dropped attribute?
     if is_rtlir_convertible( _obj ):
       _obj_type = get_rtlir( _obj )
-      properties[ _id ] = _obj_type
-      if isinstance( _obj_type, Array ):
-        _add_packed_instances( _id, _obj_type, properties )
+      if _obj_type is not None:
+        properties[ _id ] = _obj_type
+        if isinstance( _obj_type, Array ):
+          _add_packed_instances( _id, _obj_type, properties )
   return Component( obj, properties )
 
 def _is_of_type( obj, Type ):
@@ -589,7 +599,10 @@ def is_rtlir_convertible( obj ):
   # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
     while isinstance( obj, list ):
-      assert len( obj ) > 0
+      # Empty lists will be dropped
+      if len( obj ) == 0:
+        return True
+      # assert len( obj ) > 0
       obj = obj[0]
     return is_rtlir_convertible( obj )
   elif isinstance( obj, pymtl_constructs ):

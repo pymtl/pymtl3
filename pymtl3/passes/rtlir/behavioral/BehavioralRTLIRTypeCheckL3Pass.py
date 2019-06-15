@@ -78,4 +78,5 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
     translate the instantiator to its backend representation like a
     function in SV )
     """
-    raise NotImplementedError()
+    raise PyMTLTypeError( s.blk, node.ast,
+      'struct instantiation is not supported!' )
