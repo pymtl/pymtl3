@@ -34,10 +34,11 @@ def full_vector( wire, signal ):
 #-------------------------------------------------------------------------
 # {component_name}
 #-------------------------------------------------------------------------
+
 class {component_name}( Component ):
   id_ = 0
 
-  def __init__( s ):
+  def __init__( s, *args, **kwargs ):
     s._finalization_count = 0
 
     # initialize FFI, define the exposed interface
@@ -104,7 +105,7 @@ class {component_name}( Component ):
       s.ffi = None
       s._ffi_inst = None
 
-  def construct( s ):
+  def construct( s, *args, **kwargs ):
     # Construct the model
     s._ffi_m = s._ffi_inst.create_model()
 

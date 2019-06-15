@@ -46,7 +46,7 @@ class NoneType( BaseRTLIRType ):
 
 class Array( BaseRTLIRType ):
   """Unpacked RTLIR array type."""
-  def __init__( s, dim_sizes, sub_type, unpacked = False ):
+  def __init__( s, dim_sizes, sub_type, obj = None, unpacked = False ):
     assert isinstance( sub_type, BaseRTLIRType ), \
       "array subtype {} is not RTLIR type!".format( sub_type )
     assert not isinstance( sub_type, Array ), \
@@ -57,6 +57,7 @@ class Array( BaseRTLIRType ):
     s.dim_sizes = dim_sizes
     s.sub_type = sub_type
     s.unpacked = unpacked
+    s.obj = obj
 
   def _is_unpacked( s ):
     return s.unpacked
@@ -68,6 +69,9 @@ class Array( BaseRTLIRType ):
 
   def __hash__( s ):
     return hash((type(s), tuple(s.dim_sizes), s.sub_type))
+
+  def get_obj( s ):
+    return s.obj
 
   def get_next_dim_type( s ):
     if len( s.dim_sizes ) == 1: return copy.copy( s.sub_type )
@@ -490,6 +494,12 @@ def _is_rtlir_ifc_convertible( obj ):
   else:
     return False
 
+def _freeze( obj ):
+  if isinstance( obj, list ):
+    return tuple( _freeze(value) for value in obj )
+  else:
+    return obj
+
 def _unpack( id_, Type ):
   if not isinstance( Type, Array ): return [ ( id_, Type ) ]
   ret = []
@@ -506,10 +516,10 @@ def _add_packed_instances( id_, Type, properties ):
     _Type.unpacked = True
     properties[ _id ] = _Type
 
-def _handle_Array( obj ):
+def _handle_Array( _obj ):
+  obj = _obj
   if len( obj ) == 0:
     return None
-  # assert len( obj ) > 0, "list {} is empty!".format( obj )
   ref_type = get_rtlir( obj[0] )
   assert \
     reduce( lambda res,i: res and (get_rtlir(i)==ref_type), obj, True ), \
@@ -522,7 +532,10 @@ def _handle_Array( obj ):
     # assert len( obj ) > 0, "{} is an empty list!".format( obj )
     dim_sizes.append( len( obj ) )
     obj = obj[0]
-  return Array( dim_sizes, get_rtlir( obj ) )
+  if isinstance( obj, ( int, Bits ) ):
+    return Array( dim_sizes, get_rtlir( obj ), _obj )
+  else:
+    return Array( dim_sizes, get_rtlir( obj ) )
 
 def _handle_InPort( obj ):
   return Port( 'input', rdt.get_rtlir_dtype( obj ) )
@@ -541,8 +554,6 @@ def _handle_Interface( obj ):
   collected_objs = collect_objs( obj, object, True )
   for _id, _obj in collected_objs:
     # TODO: warn the user about a silently dropped attribute?
-    # assert False, \
-      # "non-port-or-interface {} in interface {}!".format( _obj, obj )
     if _is_rtlir_ifc_convertible( _obj ):
       _obj_type = get_rtlir( _obj )
       if _obj_type is not None:
@@ -654,14 +665,21 @@ def is_rtlir_convertible( obj ):
   else:
     return False
 
-def get_rtlir( obj ):
+__rtlir_cache = {}
+
+def get_rtlir( _obj ):
   """Return an RTLIR instance corresponding to `obj`."""
-  try:
-    for Type, handler in _RTLIR_handlers:
-      if isinstance( obj, Type ):
-        return handler( obj )
-    # Cannot convert `obj` into RTLIR representation
-    assert False, 'unrecognized object {}!'.format( obj )
-  except AssertionError as e:
-    msg = '' if e.args[0] is None else e.args[0]
-    raise RTLIRConversionError( obj, msg )
+  obj = _freeze( _obj )
+  if obj in __rtlir_cache:
+    return __rtlir_cache[ obj ]
+  else:
+    try:
+      for Type, handler in _RTLIR_handlers:
+        if isinstance( _obj, Type ):
+          __rtlir_cache[ obj ] = handler( _obj )
+          return __rtlir_cache[ obj ]
+      # Cannot convert `obj` into RTLIR representation
+      assert False, 'unrecognized object {}!'.format( _obj )
+    except AssertionError as e:
+      msg = '' if e.args[0] is None else e.args[0]
+      raise RTLIRConversionError( _obj, msg )

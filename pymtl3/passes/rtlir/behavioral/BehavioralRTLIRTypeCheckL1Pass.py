@@ -237,6 +237,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if idx is not None and not (0 <= idx < node.value.Type.get_dim_sizes()[0]):
         raise PyMTLTypeError( s.blk, node.ast, 'array index out of range!' )
       node.Type = node.value.Type.get_next_dim_type()
+      obj = node.value.Type.get_obj()
+      if idx is not None and obj is not None:
+        if isinstance( node.Type, rt.Array ):
+          node.Type.obj = obj[ int( idx ) ]
+        else:
+          node._value = obj[ int( idx ) ]
 
     elif isinstance( node.value.Type, rt.Signal ):
       dtype = node.value.Type.get_dtype()

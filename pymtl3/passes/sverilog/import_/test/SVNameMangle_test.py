@@ -12,13 +12,14 @@ from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.import_.helpers import gen_packed_ports
+from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
 
 
 def local_do_test( m ):
   m.elaborate()
   rtype = rt.get_component_ifc_rtlir( m )
-  result = gen_packed_ports( rtype )
+  ipass = ImportPass()
+  result = ipass.gen_packed_ports( rtype )
   assert result == m._ref_ports
 
 def test_port_single( do_test ):
@@ -31,6 +32,7 @@ def test_port_single( do_test ):
     ( 'in_', rt.Port('input', rdt.Vector(32)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = a._ref_ports
   do_test( a )
 
 def test_port_array( do_test ):
@@ -43,6 +45,13 @@ def test_port_array( do_test ):
     ( 'in_', rt.Array([3], rt.Port('input', rdt.Vector(32))) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'in_$__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__2', rt.Port('input', rdt.Vector(32)) ),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) )
+  ]
   do_test( a )
 
 def test_port_2d_array( do_test ):
@@ -53,6 +62,16 @@ def test_port_2d_array( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'in_', rt.Array( [3, 2], rt.Port('input', rdt.Vector(32)) ) ),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) )
+  ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'in_$__0$__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__0$__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__1$__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__1$__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__2$__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in_$__2$__1', rt.Port('input', rdt.Vector(32)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -73,6 +92,12 @@ def test_struct_port_single( do_test ):
     ( 'in_', rt.Port('input', st ) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'in_$bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) )
+  ]
   do_test( a )
 
 def test_struct_port_array( do_test ):
@@ -89,6 +114,14 @@ def test_struct_port_array( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'in_', rt.Array([2], rt.Port('input', st)) ),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) )
+  ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'in_$__0$bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$__0$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$__1$bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$__1$foo', rt.Port('input', rdt.Vector(32) ) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -108,6 +141,24 @@ def test_packed_array_port_array( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'in_', rt.Array([2], rt.Port('input', st ))),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) )
+  ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'in_$__0$bar', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__0$foo$__0$__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__0$foo$__0$__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__0$foo$__1$__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__0$foo$__1$__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__0$foo$__2$__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__0$foo$__2$__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$bar', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$foo$__0$__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$foo$__0$__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$foo$__1$__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$foo$__1$__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$foo$__2$__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in_$__1$foo$__2$__1', rt.Port('input', rdt.Vector(32) )),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -131,6 +182,14 @@ def test_nested_struct( do_test ):
     ( 'in_', rt.Array([2], rt.Port('input', st )) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'in_$__0$bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$__0$inner$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$__1$bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in_$__1$inner$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) )
+  ]
   do_test( a )
 
 def test_interface( do_test ):
@@ -150,6 +209,7 @@ def test_interface( do_test ):
     ( 'ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
     ( 'ifc$val', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = a._ref_ports
   do_test( a )
 
 def test_interface_array( do_test ):
@@ -172,6 +232,7 @@ def test_interface_array( do_test ):
     ( 'ifc$__1$rdy', rt.Port('output', rdt.Vector(1)) ),
     ( 'ifc$__1$val', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = a._ref_ports
   do_test( a )
 
 def test_nested_interface( do_test ):
@@ -203,6 +264,7 @@ def test_nested_interface( do_test ):
     ( 'ifc$__1$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
     ( 'ifc$__1$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) )
   ]
+  a._ref_ports_yosys = a._ref_ports
   do_test( a )
 
 def test_nested_interface_port_array( do_test ):
@@ -231,6 +293,22 @@ def test_nested_interface_port_array( do_test ):
     ( 'ifc$__1$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
     ( 'ifc$__1$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
     ( 'ifc$__1$valrdy_ifc$msg', rt.Array([2], rt.Port('input', rdt.Vector(32))) ),
+    ( 'ifc$__1$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc$__1$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) )
+  ]
+  a._ref_ports_yosys = [
+    ( 'clk', rt.Port('input', rdt.Vector(1)) ),
+    ( 'reset', rt.Port('input', rdt.Vector(1)) ),
+    ( 'ifc$__0$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc$__0$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc$__0$valrdy_ifc$msg$__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc$__0$valrdy_ifc$msg$__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc$__0$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc$__0$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) ),
+    ( 'ifc$__1$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc$__1$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc$__1$valrdy_ifc$msg$__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc$__1$valrdy_ifc$msg$__1', rt.Port('input', rdt.Vector(32)) ),
     ( 'ifc$__1$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
     ( 'ifc$__1$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) )
   ]

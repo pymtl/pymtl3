@@ -31,7 +31,6 @@ from pymtl3.passes.sverilog.translation.test.SVTranslator_L1_cases_test import (
 )
 from pymtl3.passes.yosys.translation.YosysTranslator import YosysTranslator
 
-[ pytest.mark.xfail(x) for x in [ test_port_const_array ] ]
 
 def trim( src ):
   lines = src.split( "\n" )

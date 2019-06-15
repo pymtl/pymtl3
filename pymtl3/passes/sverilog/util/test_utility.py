@@ -16,7 +16,10 @@ from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.dsl import OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog import ImportPass, TranslationPass
+from pymtl3.passes.sverilog import ImportPass as SVImportPass
+from pymtl3.passes.sverilog import TranslationPass as SVTranslationPass
+from pymtl3.passes.yosys import ImportPass as YosysImportPass
+from pymtl3.passes.yosys import TranslationPass as YosysTranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 
@@ -255,11 +258,13 @@ def DataStrategy( draw, dut ):
 # closed_loop_component_input_test
 #-------------------------------------------------------------------------
 
-def closed_loop_component_input_test( dut, test_vector, tv_in ):
+def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sverilog" ):
 
   # Filter to collect all output ports of a component
   def outport_filter( obj ):
     return isinstance( obj, OutPort )
+
+  assert backend in [ "sverilog", "yosys" ], "invalid backend {}!".format(backend)
 
   dut.elaborate()
   reference_output = deque()
@@ -291,10 +296,16 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
   try:
     # If it simulates correctly, translate it and import it back
     dut.elaborate()
-    dut.sverilog_translate = True
-    dut.sverilog_import = True
-    dut.apply( TranslationPass() )
-    imported_obj = ImportPass()( dut )
+    if backend == "sverilog":
+      dut.sverilog_translate = True
+      dut.sverilog_import = True
+      dut.apply( SVTranslationPass() )
+      imported_obj = SVImportPass()( dut )
+    elif backend == "yosys":
+      dut.yosys_translate = True
+      dut.yosys_import = True
+      dut.apply( YosysTranslationPass() )
+      imported_obj = YosysImportPass()( dut )
     # Run another vector simulator spin
     imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )
     imported_sim.run_test()
@@ -311,7 +322,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
 # closed_loop_component_test
 #-------------------------------------------------------------------------
 
-def closed_loop_component_test( dut, data ):
+def closed_loop_component_test( dut, data, backend = "sverilog" ):
   """Test the DUT with the given test_vector.
   
   User who wish to use this method should pass in the hypothesis data
@@ -323,7 +334,7 @@ def closed_loop_component_test( dut, data ):
     for name, data in test_vector.iteritems():
       exec( "model." + name + " = data" )
   test_vector = data.draw( DataStrategy( dut ) )
-  closed_loop_component_input_test( dut, test_vector, tv_in )
+  closed_loop_component_input_test( dut, test_vector, tv_in, backend )
 
 #-------------------------------------------------------------------------
 # closed_loop_test

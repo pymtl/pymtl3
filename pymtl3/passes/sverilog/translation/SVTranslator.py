@@ -7,8 +7,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from datetime import datetime
-
 from pymtl3.passes.translator import RTLIRTranslator
 
 from .behavioral import SVBehavioralTranslator as SV_BTranslator
