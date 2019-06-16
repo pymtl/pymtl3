@@ -16,6 +16,7 @@ from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.test  import TestSrcCL, TestSinkCL
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 
+from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
 
 #=========================================================================
@@ -144,7 +145,7 @@ def run_test( ProcModel, gen_test, dump_vcd=None,
 
   # Instantiate and elaborate the model
 
-  th = TestHarness( ProcModel, dump_vcd,
+  th = TestHarness( ProcModel, NullXcelRTL, dump_vcd,
                     src_delay, sink_delay,
                     mem_stall_prob, mem_latency )
 

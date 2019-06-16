@@ -14,7 +14,7 @@ from inst_utils import *
 def gen_basic_test():
   return """
     csrr x1, mngr2proc < 0xdeadbeef
-    csrw 0x7E0, x1
+    csrw 0x7E9, x1
     csrr x2, 0x7FF
     csrw proc2mngr, x2 > 0xdeadbeef
   """

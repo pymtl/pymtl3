@@ -24,13 +24,13 @@ class ChecksumXcelFL( Component ):
 
     ReqType, RespType = mk_xcel_msg( 3, 32 )
 
-    s.xcel = XcelMinionIfcFL( ReqType, RespType, 
+    s.xcel = XcelMinionIfcFL( ReqType, RespType,
                               read=s.read, write=s.write)
 
     # Components
 
     s.reg_file = [ b32(0) for _ in range(6) ]
-  
+
   def read( s, addr ):
     return s.reg_file[ int(addr) ]
 
@@ -44,3 +44,6 @@ class ChecksumXcelFL( Component ):
         words.append( s.reg_file[i][0 :16] )
         words.append( s.reg_file[i][16:32] )
       s.reg_file[5] = checksum( words )
+
+  def line_trace( s ):
+    return ""

@@ -345,7 +345,7 @@ class ProcCtrl( Component ):
       if   inst == NOP  : cs( y, br_na,  n, imm_x, bm_x,   n, alu_x,   nr, wm_a, n,  n, n )
       elif inst == CSRRX: cs( y, br_na,  n, imm_i, bm_imm, n, alu_cp1, nr, wm_c, y,  y, n )
       elif inst == CSRR : cs( y, br_na,  n, imm_i, bm_csr, n, alu_cp1, nr, wm_a, y,  y, n )
-      elif inst == CSRW : cs( y, br_na,  y, imm_i, bm_rf,  n, alu_cp0, nr, wm_a, n,  n, y )
+      elif inst == CSRW : cs( y, br_na,  y, imm_i, bm_imm, n, alu_cp0, nr, wm_a, n,  n, y )
       elif inst == ADD  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_add, nr, wm_a, y,  n, n )
       elif inst == SLL  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_sll, nr, wm_a, y,  n, n )
       elif inst == SRL  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_srl, nr, wm_a, y,  n, n )
