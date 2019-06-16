@@ -14,7 +14,7 @@ import pytest
 from hypothesis import strategies as st
 
 from pymtl3.datatypes.bits_import import *
-from pymtl3.datatypes.strategies import bits_strat, signed_bits_strat
+from pymtl3.datatypes.strategies import bits_strat
 
 
 @pytest.mark.parametrize( 'nbits', [3, 4, 8, 16, 32] )
