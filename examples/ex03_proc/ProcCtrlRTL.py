@@ -396,7 +396,6 @@ class ProcCtrl( Component ):
     # ostall due to mngr2proc
 
     s.ostall_mngr_D     = Wire( Bits1 )
-    s.ostall_xcel_D     = Wire( Bits1 )
 
     # bypassing logic
 
@@ -463,11 +462,8 @@ class ProcCtrl( Component ):
       # ostall due to mngr2proc not ready
       s.ostall_mngr_D = s.mngr2proc_D & ~s.mngr2proc_rdy # This is get, rdy means we can get the message
 
-      # ostall due to xcelreq not ready
-      s.ostall_xcel_D = s.val_D & s.xcelreq_D & ~s.xcelreq_rdy # This is send
-
       # put together all ostall conditions
-      s.ostall_D = s.val_D & ( s.ostall_mngr_D | s.ostall_hazard_D | s.ostall_xcel_D )
+      s.ostall_D = s.val_D & ( s.ostall_mngr_D | s.ostall_hazard_D )
 
       # stall in D stage
       s.stall_D  = s.val_D & ( s.ostall_D | s.ostall_X | s.ostall_M | s.ostall_W   )
@@ -523,6 +519,8 @@ class ProcCtrl( Component ):
       s.pc_redirect_X = s.val_X & (s.br_type_X == br_ne) & s.ne_X
 
     s.ostall_dmem_X = Wire( Bits1 )
+    s.ostall_xcel_X = Wire( Bits1 )
+
     s.next_val_X    = Wire( Bits1 )
 
     @s.update
@@ -532,7 +530,10 @@ class ProcCtrl( Component ):
 
       s.ostall_dmem_X = ( s.dmemreq_type_X != nr ) & ~s.dmemreq_rdy
 
-      s.ostall_X = s.val_X & s.ostall_dmem_X
+      # ostall due to xcelreq
+      s.ostall_xcel_X = s.xcelreq_X & ~s.xcelreq_rdy # This is send
+
+      s.ostall_X = s.val_X & ( s.ostall_dmem_X | s.ostall_xcel_X )
 
       # stall in X stage
 
