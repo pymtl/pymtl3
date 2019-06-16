@@ -65,7 +65,7 @@ class TestHarness(Component):
     s.proc = proc_cls()
     s.xcel = xcel_cls()
 
-    s.mem  = MemoryCL(2)
+    s.mem  = MemoryCL(2, latency = mem_latency)
 
     # Processor <-> Proc/Mngr
     s.connect( s.proc.commit_inst, s.commit_inst )

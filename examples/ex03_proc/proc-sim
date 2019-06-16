@@ -10,7 +10,7 @@
 #  --verify            Verify results
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
-#  --stats             Output stats about execution
+#  --delay             Add some delays
 #
 # Author : Shunning Jiang, Christopher Batten
 # Date   : June 10, 2019
@@ -74,7 +74,7 @@ def parse_cmdline():
   p.add_argument( "--input", default="vvadd-unopt",
                              choices=["vvadd-unopt", "vvadd-opt", "cksum"] )
   p.add_argument( "--limit",   default=1000000, type=int )
-  p.add_argument( "--stats",   action="store_true"      )
+  p.add_argument( "--delay",   action="store_true"      )
   p.add_argument( "--verify",  action="store_true"    )
 
   opts = p.parse_args()
@@ -110,9 +110,14 @@ def main():
 
   # Create test harness and elaborate
 
-  model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL, 0,
-                      # src sink memstall memlat
-                        0,  0,   0,       0 )
+  if opts.delay:
+    model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL, 0,
+                        # src sink memstall memlat
+                          3,  4,   0.5,     4 )
+  else:
+    model = TestHarness( impl_dict[ opts.impl ], NullXcelRTL, 0,
+                        # src sink memstall memlat
+                          0,  0,   0,       1 )
 
   from pymtl3.passes import SimpleSim
   model.apply( SimpleSim )

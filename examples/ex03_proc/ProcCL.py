@@ -157,11 +157,11 @@ class ProcCL( Component ):
               else:
                 executed = False
 
-        # If we execute any instruction, we pop from queues
-        if executed:
-          s.F_DXM_queue.deq()
-          s.imemresp_q.deq()
-          s.DXM_line_trace = "{:5}".format( inst_name )
+          # If we execute any instruction, we pop from queues
+          if executed:
+            s.F_DXM_queue.deq()
+            s.imemresp_q.deq()
+            s.DXM_line_trace = "{:5}".format( inst_name )
 
     @s.update
     def W():
