@@ -158,7 +158,7 @@ def test_L1_unsupported_attr( do_test ):
       s.comp_array = [ B() for _ in range(5) ]
       @s.update
       def upblk():
-        s.out = s.comp_array[ s.in_ ].out
+        s.out = s.comp_array[ 0 ].out
   with expected_failure( PyMTLTypeError, "not supported at L1" ):
     do_test( A() )
 

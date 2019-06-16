@@ -15,9 +15,12 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 impo
     SVStructuralTranslatorL3,
 )
 
+from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+
 
 def local_do_test( m ):
   m.elaborate()
+  SVStructuralTranslatorL3.is_sverilog_reserved = is_sverilog_reserved
   tr = SVStructuralTranslatorL3( m )
   tr.clear( m )
   tr.translate_structural( m )
@@ -43,17 +46,22 @@ def test_ifc_decls( do_test ):
   a = A()
   a._ref_ifcs = { a : \
 """\
-  output logic [31:0] ifc_$msg,
-  input logic [0:0] ifc_$rdy,
-  output logic [0:0] ifc_$val\
-"""
-}
+  output logic [31:0] ifc$msg,
+  input logic [0:0] ifc$rdy,
+  output logic [0:0] ifc$val\
+""" }
   a._ref_conns = { a : \
 """\
-  assign ifc_$msg = 32'd42;
-  assign ifc_$val = 1'd1;\
-"""
-}
+  assign ifc$msg = 32'd42;
+  assign ifc$val = 1'd1;\
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ifcs_port_yosys = a._ref_ifcs
+  a._ref_ifcs_wire_yosys = { a : "" }
+  a._ref_ifcs_conn_yosys = { a : "" }
+  a._ref_conns_yosys = a._ref_conns
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass
@@ -83,21 +91,26 @@ def test_multi_ifc_decls( do_test ):
   a = A()
   a._ref_ifcs = { a : \
 """\
-  input logic [31:0] in__$msg,
-  output logic [0:0] in__$rdy,
-  input logic [0:0] in__$val,
-  output logic [31:0] out_$msg,
-  input logic [0:0] out_$rdy,
-  output logic [0:0] out_$val\
-"""
-}
+  input logic [31:0] in_$msg,
+  output logic [0:0] in_$rdy,
+  input logic [0:0] in_$val,
+  output logic [31:0] out$msg,
+  input logic [0:0] out$rdy,
+  output logic [0:0] out$val\
+""" }
   a._ref_conns = { a : \
 """\
-  assign out_$msg = in__$msg;
-  assign in__$rdy = out_$rdy;
-  assign out_$val = in__$val;\
-"""
-}
+  assign out$msg = in_$msg;
+  assign in_$rdy = out$rdy;
+  assign out$val = in_$val;\
+""" }
+
+  # Yosys backend test reference output
+  a._ref_ifcs_port_yosys = a._ref_ifcs
+  a._ref_ifcs_wire_yosys = { a : "" }
+  a._ref_ifcs_conn_yosys = { a : "" }
+  a._ref_conns_yosys = a._ref_conns
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     m.in_.val = Bits1(tv[0])

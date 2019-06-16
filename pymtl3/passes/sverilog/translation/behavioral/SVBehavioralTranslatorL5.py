@@ -47,6 +47,26 @@ class BehavioralRTLIRToSVVisitorL5( BehavioralRTLIRToSVVisitorL4 ):
 
       value = s.visit( node.value )
       attr = node.attr
+      s.check_res( node, attr )
       return '{value}${attr}'.format( **locals() )
 
     return super( BehavioralRTLIRToSVVisitorL5, s ).visit_Attribute( node )
+
+  #-----------------------------------------------------------------------
+  # visit_Index
+  #-----------------------------------------------------------------------
+
+  def visit_Index( s, node ):
+    if isinstance( node.value.Type, rt.Array ) and \
+       isinstance( node.value.Type.get_sub_type(), rt.Component ):
+      try:
+        idx = node.idx._value
+      except AttributeError:
+        raise SVerilogTranslationError( s.blk, node,
+          'index of component array must be a static constant expression!' )
+      idx = int( idx )
+      value = s.visit( node.value )
+      return "{value}$__{idx}".format( **locals() )
+
+    else:
+      return super( BehavioralRTLIRToSVVisitorL5, s ).visit_Index( node )

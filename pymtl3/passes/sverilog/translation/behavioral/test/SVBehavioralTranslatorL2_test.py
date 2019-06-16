@@ -15,13 +15,15 @@ from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 impo
     BehavioralRTLIRToSVVisitorL2,
 )
 
+from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
+
 
 def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = BehavioralRTLIRToSVVisitorL2()
+  visitor = BehavioralRTLIRToSVVisitorL2(is_sverilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
   for blk in m_all_upblks:
@@ -66,6 +68,7 @@ end\
     [   -1,    -2,  -1 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_if_dangling_else_inner( do_test ):
@@ -108,6 +111,7 @@ end\
     [   -1,    -2,  -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_if_dangling_else_outter( do_test ):
@@ -150,6 +154,7 @@ end\
     [   -1,    -2,   0 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_if_branches( do_test ):
@@ -196,6 +201,7 @@ end\
     [   -1,    -2,  -1, -1 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_nested_if( do_test ):
@@ -262,6 +268,7 @@ end\
     [   -1,    -2,  -1,  -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_for_range_upper( do_test ):
@@ -296,6 +303,15 @@ end\
     [   -1,    -2,  -1,  -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+end\
+""" }
   do_test( a )
 
 def test_for_range_lower_upper( do_test ):
@@ -332,6 +348,16 @@ end\
     [   -1,    -2,  -1,  -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  out[0] = in_[0];
+end\
+""" }
   do_test( a )
 
 def test_for_range_lower_upper_step( do_test ):
@@ -376,6 +402,17 @@ end\
     [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
+    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+end\
+""" }
   do_test( a )
 
 def test_if_exp_for( do_test ):
@@ -416,6 +453,15 @@ end\
     [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -1,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? in_[__loopvar_upblk$i] : in_[0];
+end\
+""" }
   do_test( a )
 
 def test_if_exp_unary_op( do_test ):
@@ -456,6 +502,15 @@ end\
     [   -1,    -2,  -1,  -2,  -1,   -1,    ~-2,  -1,  -1,  -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? ~in_[__loopvar_upblk$i] : in_[0];
+end\
+""" }
   do_test( a )
 
 def test_if_bool_op( do_test ):
@@ -503,6 +558,19 @@ end\
     [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
+    if ( ( in_[__loopvar_upblk$i] != 32'd0 ) && ( ( __loopvar_upblk$i < 4 ) ? in_[__loopvar_upblk$i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
+      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    end
+    else
+      out[__loopvar_upblk$i] = 32'd0;
+end\
+""" }
   do_test( a )
 
 def test_tmpvar( do_test ):
@@ -524,11 +592,11 @@ def test_tmpvar( do_test ):
 always_comb begin : upblk
   for ( int i = 0; i < 5; i += 1 ) begin
     if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-      upblk_tmpvar = in_[i];
+      __tmpvar_upblk$tmpvar = in_[i];
     end
     else
-      upblk_tmpvar = 32'd0;
-    out[i] = upblk_tmpvar;
+      __tmpvar_upblk$tmpvar = 32'd0;
+    out[i] = __tmpvar_upblk$tmpvar;
   end
 end\
 """ }
@@ -553,4 +621,19 @@ end\
     [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar_upblk$i;
+
+always_comb begin : upblk
+  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 ) begin
+    if ( ( in_[__loopvar_upblk$i] != 32'd0 ) && ( ( __loopvar_upblk$i < 4 ) ? in_[__loopvar_upblk$i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
+      __tmpvar_upblk$tmpvar = in_[__loopvar_upblk$i];
+    end
+    else
+      __tmpvar_upblk$tmpvar = 32'd0;
+    out[__loopvar_upblk$i] = __tmpvar_upblk$tmpvar;
+  end
+end\
+""" }
   do_test( a )

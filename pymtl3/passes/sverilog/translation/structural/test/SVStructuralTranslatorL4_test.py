@@ -14,9 +14,12 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 impo
     SVStructuralTranslatorL4,
 )
 
+from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+
 
 def local_do_test( m ):
   m.elaborate()
+  SVStructuralTranslatorL4.is_sverilog_reserved = is_sverilog_reserved
   tr = SVStructuralTranslatorL4( m )
   tr.clear( m )
   tr.translate_structural( m )
@@ -43,13 +46,19 @@ def test_subcomp_decl( do_test ):
   logic [31:0] b$out_b;
   logic [0:0] b$reset;
 
-  B b (
+  B b
+  (
     .clk( b$clk ),
     .out_b( b$out_b ),
     .reset( b$reset )
   );\
 """
 }
+
+  a._ref_comps_port_yosys = a._ref_subcomps
+  a._ref_comps_wire_yosys = { a : "" }
+  a._ref_comps_conn_yosys = { a : "" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass
@@ -87,20 +96,26 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
   logic [0:0] b$clk;
   logic [31:0] b$out_b;
   logic [0:0] b$reset;
-  logic [31:0] b$ifc_b_$msg;
-  logic [0:0] b$ifc_b_$rdy;
-  logic [0:0] b$ifc_b_$val;
+  logic [31:0] b$ifc_b$msg;
+  logic [0:0] b$ifc_b$rdy;
+  logic [0:0] b$ifc_b$val;
 
-  B b (
+  B b
+  (
     .clk( b$clk ),
     .out_b( b$out_b ),
     .reset( b$reset ),
-    .ifc_b_$msg( b$ifc_b_$msg ),
-    .ifc_b_$rdy( b$ifc_b_$rdy ),
-    .ifc_b_$val( b$ifc_b_$val )
+    .ifc_b$msg( b$ifc_b$msg ),
+    .ifc_b$rdy( b$ifc_b$rdy ),
+    .ifc_b$val( b$ifc_b$val )
   );\
 """
 }
+
+  a._ref_comps_port_yosys = a._ref_subcomps
+  a._ref_comps_wire_yosys = { a : "" }
+  a._ref_comps_conn_yosys = { a : "" }
+
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass

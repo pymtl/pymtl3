@@ -10,12 +10,14 @@ from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
+from .SVTranslator_L1_cases_test import trim
+
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert tr.hierarchy.src == m._ref_src
+  assert trim( tr.hierarchy.src ) == m._ref_src
 
 #-------------------------------------------------------------------------
 # Behavioral
@@ -43,17 +45,17 @@ def test_interface( do_test ):
         s.in_.rdy = s.out.rdy
   a = A()
   a._ref_src = \
-"""\
+"""
 module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  input logic [31:0] in__$msg,
-  output logic [0:0] in__$rdy,
-  input logic [0:0] in__$val,
-  output logic [31:0] out_$msg,
-  input logic [0:0] out_$rdy,
-  output logic [0:0] out_$val
+  input logic [31:0] in_$msg,
+  output logic [0:0] in_$rdy,
+  input logic [0:0] in_$val,
+  output logic [31:0] out$msg,
+  input logic [0:0] out$rdy,
+  output logic [0:0] out$val
 );
 
   // PYMTL SOURCE:
@@ -65,13 +67,14 @@ module A
   //   s.in_.rdy = s.out.rdy
   
   always_comb begin : upblk
-    out_$val = in__$val;
-    out_$msg = in__$msg;
-    in__$rdy = out_$rdy;
+    out$val = in_$val;
+    out$msg = in_$msg;
+    in_$rdy = out$rdy;
   end
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_interface_index( do_test ):
@@ -87,14 +90,14 @@ def test_interface_index( do_test ):
         s.out = s.in_[1].foo
   a = A()
   a._ref_src = \
-"""\
+"""
 module A
 (
   input logic [0:0] clk,
   output logic [31:0] out,
   input logic [0:0] reset,
-  output logic [31:0] in__$0_$foo,
-  output logic [31:0] in__$1_$foo
+  output logic [31:0] in_$__0$foo,
+  output logic [31:0] in_$__1$foo
 );
 
   // PYMTL SOURCE:
@@ -104,8 +107,35 @@ module A
   //   s.out = s.in_[1].foo
   
   always_comb begin : upblk
-    out = in__$1_$foo;
+    out = in_$__1$foo;
   end
+
+endmodule
+"""
+  a._ref_src_yosys = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  output logic [31:0] out,
+  input logic [0:0] reset,
+  output logic [31:0] in_$__0$foo,
+  output logic [31:0] in_$__1$foo
+);
+  logic [31:0] in_$foo [0:1];
+
+  // PYMTL SOURCE:
+  // 
+  // @s.update
+  // def upblk():
+  //   s.out = s.in_[1].foo
+  
+  always_comb begin : upblk
+    out = in_$foo[1];
+  end
+
+  assign in_$__0$foo = in_$foo[0];
+  assign in_$__1$foo = in_$foo[1];
 
 endmodule
 """
@@ -131,20 +161,22 @@ def test_ifc_decls( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  output logic [31:0] ifc_$msg,
-  input logic [0:0] ifc_$rdy,
-  output logic [0:0] ifc_$val
+  output logic [31:0] ifc$msg,
+  input logic [0:0] ifc$rdy,
+  output logic [0:0] ifc$val
 );
 
-  assign ifc_$msg = 32'd42;
-  assign ifc_$val = 1'd1;
+  assign ifc$msg = 32'd42;
+  assign ifc$val = 1'd1;
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 def test_multi_ifc_decls( do_test ):
@@ -166,22 +198,24 @@ def test_multi_ifc_decls( do_test ):
   a = A()
   a._ref_src = \
 """\
+
 module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  input logic [31:0] in__$msg,
-  output logic [0:0] in__$rdy,
-  input logic [0:0] in__$val,
-  output logic [31:0] out_$msg,
-  input logic [0:0] out_$rdy,
-  output logic [0:0] out_$val
+  input logic [31:0] in_$msg,
+  output logic [0:0] in_$rdy,
+  input logic [0:0] in_$val,
+  output logic [31:0] out$msg,
+  input logic [0:0] out$rdy,
+  output logic [0:0] out$val
 );
 
-  assign out_$msg = in__$msg;
-  assign in__$rdy = out_$rdy;
-  assign out_$val = in__$val;
+  assign out$msg = in_$msg;
+  assign in_$rdy = out$rdy;
+  assign out$val = in_$val;
 
 endmodule
 """
+  a._ref_src_yosys = a._ref_src
   do_test( a )

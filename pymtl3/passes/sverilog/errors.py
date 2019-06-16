@@ -47,6 +47,13 @@ class SVerilogTranslationError( Exception ):
       "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() ) )
 
+class SVerilogReservedKeywordError( Exception ):
+  """SystemVerilog reserved keyword error."""
+  def __init__( self, name, msg ):
+    return super( SVerilogReservedKeywordError, self ).__init__(
+      "- {name} is a SystemVerilog reserved keyword!\n- {msg}". \
+          format( **locals() ) )
+
 class SVerilogCloseLoopPurePythonSimError( Exception ):
   """SystemVerilog closed loop test error during pure python simulation."""
   def __init__( self, obj, msg ):

@@ -15,9 +15,11 @@ from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL5 impo
     BehavioralRTLIRToSVVisitorL5,
 )
 
+from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
+
 
 def local_do_test( m ):
-  visitor = BehavioralRTLIRToSVVisitorL5()
+  visitor = BehavioralRTLIRToSVVisitorL5(is_sverilog_reserved)
   for comp, _all_upblks in m._ref_upblk_srcs.iteritems():
     comp.apply( BehavioralRTLIRGenPass() )
     comp.apply( BehavioralRTLIRTypeCheckPass() )
@@ -65,6 +67,7 @@ end\
     [    42 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_subcomponent_index( do_test ):
@@ -83,7 +86,7 @@ def test_subcomponent_index( do_test ):
   a._ref_upblk_srcs = { a : { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = comp_$2$out;
+  out = comp$__2$out;
 end\
 """ } }
   # TestVectorSimulator properties
@@ -95,4 +98,10 @@ end\
     [    0 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { a : { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = comp$out[2];
+end\
+""" } }
   do_test( a )
