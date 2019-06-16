@@ -52,7 +52,6 @@ def mk_xcel_transaction( words ):
 # Wrap Xcel into a function
 #-------------------------------------------------------------------------
 
-
 class WrappedChecksumXcelCL( Component ):
   def construct( s ):
     ReqType, RespType = mk_xcel_msg( 3, 32 )
