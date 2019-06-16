@@ -102,7 +102,7 @@ class ChecksumXcelRTL( Component ):
         s.checksum_unit.recv.en  = s.checksum_unit.recv.rdy
         s.checksum_unit.send.rdy = b1(1)
 
-      elif s.state == s.BUSY:
+      else: # s.state == s.BUSY:
         s.in_q.deq.en = b1(0)
         s.xcel.resp.en = b1(0)
         s.checksum_unit.recv.en  = b1(0)
@@ -117,6 +117,9 @@ class ChecksumXcelRTL( Component ):
 
     @s.update
     def up_wr_regfile():
+      for i in range(6):
+        s.reg_file[i].in_ = s.reg_file[i].out
+
       if s.in_q.deq.en and s.in_q.deq.msg.type_ == WR:
         for i in range(6):
           s.reg_file[i].in_ = (
