@@ -16,7 +16,7 @@ from pymtl3 import *
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from .ChecksumCL import ChecksumMcycleCL, ChecksumCL
+from .ChecksumCL import ChecksumCL
 from .ChecksumFL import checksum
 from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 from .utils import b128_to_words, words_to_b128

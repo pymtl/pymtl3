@@ -64,7 +64,6 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
-    cls.nstages = None
 
 #-------------------------------------------------------------------------
 # Translation (temporary)
