@@ -34,8 +34,8 @@ class ChecksumXcelRTL( Component ):
 
     # Local parameters
 
-    RD = XcelMsgType.READ
-    WR = XcelMsgType.WRITE
+    s.RD = XcelMsgType.READ
+    s.WR = XcelMsgType.WRITE
 
     # Components
 
@@ -62,7 +62,7 @@ class ChecksumXcelRTL( Component ):
     def up_start_pulse():
       s.start_pulse = (
         s.xcel.resp.en and 
-        s.in_q.deq.msg.type_ == WR and 
+        s.in_q.deq.msg.type_ == s.WR and 
         s.in_q.deq.msg.addr == b5(4) 
       )
 
@@ -112,7 +112,7 @@ class ChecksumXcelRTL( Component ):
     def up_resp_msg():
       s.xcel.resp.msg.type_ = s.in_q.deq.msg.type_
       s.xcel.resp.msg.data  = b32(0) 
-      if s.in_q.deq.msg.type_ == RD: 
+      if s.in_q.deq.msg.type_ == s.RD: 
         s.xcel.resp.msg.data = s.reg_file[ s.in_q.deq.msg.addr[0:3] ].out
 
     @s.update
@@ -120,7 +120,7 @@ class ChecksumXcelRTL( Component ):
       for i in range(6):
         s.reg_file[i].in_ = s.reg_file[i].out
 
-      if s.in_q.deq.en and s.in_q.deq.msg.type_ == WR:
+      if s.in_q.deq.en and s.in_q.deq.msg.type_ == s.WR:
         for i in range(6):
           s.reg_file[i].in_ = (
             s.in_q.deq.msg.data if b5(i) == s.in_q.deq.msg.addr else

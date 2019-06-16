@@ -71,14 +71,14 @@ class ChecksumXcelCL( Component ):
     s.reg_file = [ b32(0) for _ in range(6) ]
     s.checksum_unit = ChecksumCL()
 
-    s.busy = False
     s.state = s.XCFG
 
-    s.connect( s.xcel.req, s.in_q.enq )
     
     # TODO: replace out_q with a combinational adapter
     s.out_q = BypassQueueCL( num_entries=1 )
+
     s.connect( s.checksum_unit.send, s.out_q.enq )
+    s.connect( s.xcel.req, s.in_q.enq )
 
     @s.update
     def up_tick():
