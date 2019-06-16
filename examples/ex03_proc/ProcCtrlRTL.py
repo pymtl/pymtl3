@@ -15,6 +15,9 @@ class ProcCtrl( Component ):
 
   def construct( s ):
 
+    XcelMsgType_READ  = XcelMsgType.READ
+    XcelMsgType_WRITE = XcelMsgType.WRITE
+
     #---------------------------------------------------------------------
     # Interface
     #---------------------------------------------------------------------
@@ -65,7 +68,7 @@ class ProcCtrl( Component ):
     s.imm_type_D       = OutPort( Bits3 )
 
     s.reg_en_X         = OutPort( Bits1 )
-    s.alu_fn_X         = OutPort( Bits3 )
+    s.alu_fn_X         = OutPort( Bits4 )
 
     s.reg_en_M         = OutPort( Bits1 )
     s.wb_result_sel_M  = OutPort( Bits2 )
@@ -176,9 +179,9 @@ class ProcCtrl( Component ):
     @s.update
     def comb_PC_sel_F():
       if   s.pc_redirect_X:
-        s.pc_sel_F = b2( 1 ) # branch target
+        s.pc_sel_F = b1( 1 ) # branch target
       else:
-        s.pc_sel_F = b2( 0 ) # use pc+4
+        s.pc_sel_F = b1( 0 ) # use pc+4
 
     s.next_val_F = Wire( Bits1 )
 
@@ -305,57 +308,44 @@ class ProcCtrl( Component ):
     wm_m = b2( 1 )
     wm_c = b2( 2 )
 
-    # helper function to assign control signal table
-
-    @s.func
-    def cs (
-        cs_inst_val,
-        cs_br_type,
-        cs_rs1_en,
-        cs_imm_type,
-        cs_op2_sel,
-        cs_rs2_en,
-        cs_alu_fn,
-        cs_dmemreq_type,
-        cs_wb_result_sel,
-        cs_rf_wen_pending,
-        cs_csrr,
-        cs_csrw
-    ):
-      s.inst_val_D       = cs_inst_val
-      s.br_type_D        = cs_br_type
-      s.rs1_en_D         = cs_rs1_en
-      s.imm_type_D       = cs_imm_type
-      s.op2_sel_D        = cs_op2_sel
-      s.rs2_en_D         = cs_rs2_en
-      s.alu_fn_D         = cs_alu_fn
-      s.dmemreq_type_D   = cs_dmemreq_type
-      s.wb_result_sel_D  = cs_wb_result_sel
-      s.rf_wen_pending_D = cs_rf_wen_pending
-      s.csrr_D           = cs_csrr
-      s.csrw_D           = cs_csrw
+    # Control signal
+    
+    s.cs = Wire( Bits20 )
 
     # control signal table
 
     @s.update
     def comb_control_table_D():
       inst = s.inst_type_decoder_D.out
-      #                          br     rs1 imm    op2    rs2 alu      dmm wbmux rf  cs cs
-      #                      val type    en type   muxsel  en fn       typ sel   wen rr rw
-      if   inst == NOP  : cs( y, br_na,  n, imm_x, bm_x,   n, alu_x,   nr, wm_a, n,  n, n )
-      elif inst == CSRRX: cs( y, br_na,  n, imm_i, bm_imm, n, alu_cp1, nr, wm_c, y,  y, n )
-      elif inst == CSRR : cs( y, br_na,  n, imm_i, bm_csr, n, alu_cp1, nr, wm_a, y,  y, n )
-      elif inst == CSRW : cs( y, br_na,  y, imm_i, bm_imm, n, alu_cp0, nr, wm_a, n,  n, y )
-      elif inst == ADD  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_add, nr, wm_a, y,  n, n )
-      elif inst == SLL  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_sll, nr, wm_a, y,  n, n )
-      elif inst == SRL  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_srl, nr, wm_a, y,  n, n )
-      elif inst == ADDI : cs( y, br_na,  y, imm_i, bm_imm, n, alu_add, nr, wm_a, y,  n, n )
-      elif inst == LW   : cs( y, br_na,  y, imm_i, bm_imm, n, alu_add, ld, wm_m, y,  n, n )
-      elif inst == SW   : cs( y, br_na,  y, imm_s, bm_imm, y, alu_add, st, wm_m, n,  n, n )
-      elif inst == BNE  : cs( y, br_ne,  y, imm_b, bm_rf,  y, alu_x,   nr, wm_x, n,  n, n )
+      #                                     br     rs1 imm    op2    rs2 alu      dmm wbmux rf  cs cs
+      #                                 val type    en type   muxsel  en fn       typ sel   wen rr rw
+      if   inst == NOP  : s.cs = concat( y, br_na,  n, imm_x, bm_x,   n, alu_x,   nr, wm_a, n,  n, n )
+      elif inst == CSRRX: s.cs = concat( y, br_na,  n, imm_i, bm_imm, n, alu_cp1, nr, wm_c, y,  y, n )
+      elif inst == CSRR : s.cs = concat( y, br_na,  n, imm_i, bm_csr, n, alu_cp1, nr, wm_a, y,  y, n )
+      elif inst == CSRW : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_cp0, nr, wm_a, n,  n, y )
+      elif inst == ADD  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_add, nr, wm_a, y,  n, n )
+      elif inst == SLL  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_sll, nr, wm_a, y,  n, n )
+      elif inst == SRL  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_srl, nr, wm_a, y,  n, n )
+      elif inst == ADDI : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, nr, wm_a, y,  n, n )
+      elif inst == LW   : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, ld, wm_m, y,  n, n )
+      elif inst == SW   : s.cs = concat( y, br_na,  y, imm_s, bm_imm, y, alu_add, st, wm_m, n,  n, n )
+      elif inst == BNE  : s.cs = concat( y, br_ne,  y, imm_b, bm_rf,  y, alu_x,   nr, wm_x, n,  n, n )
       # Task: implement AND
-      elif inst == AND  : cs( y, br_na,  y, imm_x, bm_rf,  y, alu_and, nr, wm_a, y,  n, n )
-      else:               cs( n, br_x,   n, imm_x, bm_x,   n, alu_x,   nr, wm_x, n,  n, n )
+      elif inst == AND  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_and, nr, wm_a, y,  n, n )
+      else:               s.cs = concat( n, br_x,   n, imm_x, bm_x,   n, alu_x,   nr, wm_x, n,  n, n )
+
+      s.inst_val_D       = s.cs[19:20]
+      s.br_type_D        = s.cs[18:19]
+      s.rs1_en_D         = s.cs[17:18]
+      s.imm_type_D       = s.cs[14:17]
+      s.op2_sel_D        = s.cs[12:14]
+      s.rs2_en_D         = s.cs[11:12]
+      s.alu_fn_D         = s.cs[7:11]
+      s.dmemreq_type_D   = s.cs[5:7]
+      s.wb_result_sel_D  = s.cs[3:5]
+      s.rf_wen_pending_D = s.cs[2:3]
+      s.csrr_D           = s.cs[1:2]
+      s.csrw_D           = s.cs[0:1]
 
       # setting the actual write address
 
@@ -368,11 +358,11 @@ class ProcCtrl( Component ):
 
       # accelerator
       if s.csrr_D and (s.inst_D[CSRNUM] != CSR_MNGR2PROC):
-        s.xcelreq_type_D = XcelMsgType.READ
+        s.xcelreq_type_D = XcelMsgType_READ
         s.xcelreq_D = b1(1)
 
       elif s.csrw_D and (s.inst_D[CSRNUM] != CSR_PROC2MNGR):
-        s.xcelreq_type_D = XcelMsgType.WRITE
+        s.xcelreq_type_D = XcelMsgType_WRITE
         s.xcelreq_D = b1(1)
       else:
         s.xcelreq_type_D = b1(0)
@@ -411,22 +401,22 @@ class ProcCtrl( Component ):
 
       if s.rs1_en_D:
 
-        if   s.val_X & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+        if   s.val_X & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
                      & s.rf_wen_pending_X:    s.op1_byp_sel_D = byp_x
-        elif s.val_M & ( s.inst_D[ RS1 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != 0 ) \
+        elif s.val_M & ( s.inst_D[ RS1 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != b5(0) ) \
                      & s.rf_wen_pending_M:    s.op1_byp_sel_D = byp_m
-        elif s.val_W & ( s.inst_D[ RS1 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != 0 ) \
+        elif s.val_W & ( s.inst_D[ RS1 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != b5(0) ) \
                      & s.rf_wen_pending_W:    s.op1_byp_sel_D = byp_w
 
       s.op2_byp_sel_D = byp_d
 
       if s.rs2_en_D:
 
-        if   s.val_X & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+        if   s.val_X & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
                      & s.rf_wen_pending_X:    s.op2_byp_sel_D = byp_x
-        elif s.val_M & ( s.inst_D[ RS2 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != 0 ) \
+        elif s.val_M & ( s.inst_D[ RS2 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != b5(0) ) \
                      & s.rf_wen_pending_M:    s.op2_byp_sel_D = byp_m
-        elif s.val_W & ( s.inst_D[ RS2 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != 0 ) \
+        elif s.val_W & ( s.inst_D[ RS2 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != b5(0) ) \
                      & s.rf_wen_pending_W:    s.op2_byp_sel_D = byp_w
 
     # hazards checking logic
@@ -436,19 +426,19 @@ class ProcCtrl( Component ):
     @s.update
     def comb_hazard_D():
       s.ostall_ld_X_rs1_D = s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
-                            & s.dmemreq_type_X == ld
+                            & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+                            & ( s.dmemreq_type_X == ld )
 
       s.ostall_ld_X_rs2_D = s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
-                            & s.dmemreq_type_X == ld
+                            & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+                            & ( s.dmemreq_type_X == ld )
 
       s.ostall_xcel_X_rs1_D = s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                            & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
                             & s.xcelreq_X
 
       s.ostall_xcel_X_rs2_D = s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
-                            & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
+                            & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
                             & s.xcelreq_X
 
       s.ostall_hazard_D   = s.ostall_ld_X_rs1_D   | s.ostall_ld_X_rs2_D | \
@@ -490,7 +480,7 @@ class ProcCtrl( Component ):
     s.rf_wen_pending_X = Wire( Bits1 )
     s.proc2mngr_en_X   = Wire( Bits1 )
     s.dmemreq_type_X   = Wire( Bits2 )
-    s.wb_result_sel_X  = Wire( Bits1 )
+    s.wb_result_sel_X  = Wire( Bits2 )
     s.br_type_X        = Wire( Bits1 )
     s.xcelreq_X        = Wire( Bits1 )
     s.xcelreq_type_X   = Wire( Bits1 )
@@ -550,7 +540,7 @@ class ProcCtrl( Component ):
 
       s.dmemreq_en = s.val_X & ~s.stall_X & ( s.dmemreq_type_X != nr )
 
-      s.dmemreq_type = (s.dmemreq_type_X == st)  # 0-load/DC, 1-store
+      s.dmemreq_type = b4( s.dmemreq_type_X == st )  # 0-load/DC, 1-store
 
       # send xcelreq enable if not stalling
 

@@ -65,7 +65,7 @@ class ProcDpath( Component ):
     s.imm_type_D       = InPort ( Bits3 )
 
     s.reg_en_X         = InPort ( Bits1 )
-    s.alu_fn_X         = InPort ( Bits3 )
+    s.alu_fn_X         = InPort ( Bits4 )
 
     s.reg_en_M         = InPort ( Bits1 )
     s.wb_result_sel_M  = InPort ( Bits2 )

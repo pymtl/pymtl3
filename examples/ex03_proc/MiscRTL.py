@@ -114,7 +114,7 @@ class AluRTL( Component ):
 
     s.in0      = InPort ( dtype )
     s.in1      = InPort ( dtype )
-    s.fn       = InPort ( Bits3 )
+    s.fn       = InPort ( Bits4 )
 
     s.out      = OutPort( dtype )
     s.ops_ne   = OutPort( Bits1 )

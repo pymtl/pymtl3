@@ -38,8 +38,6 @@ class RegisterFile( Component ):
         for i in xrange( nregs ):
           s.next_regs[i] = deepcopy( s.regs[i] )
         for i in xrange( wr_ports ):
-          s.next_regs[i] = s.regs[i]
-        for i in xrange( wr_ports ):
           if s.wen[i] & (s.waddr[i] != addr_type(0)):
             s.next_regs[ s.waddr[i] ] = deepcopy( s.wdata[i] )
 
@@ -48,8 +46,6 @@ class RegisterFile( Component ):
       def up_rf_write():
         for i in xrange( nregs ):
           s.next_regs[i] = deepcopy( s.regs[i] )
-        for i in xrange( wr_ports ):
-          s.next_regs[i] = s.regs[i]
         for i in xrange( wr_ports ):
           if s.wen[i]:
             s.next_regs[ s.waddr[i] ] = deepcopy( s.wdata[i] )
