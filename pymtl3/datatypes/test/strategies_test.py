@@ -9,12 +9,13 @@ Author : Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
-import pytest
 import hypothesis
+import pytest
 from hypothesis import strategies as st
 
 from pymtl3.datatypes.bits_import import *
 from pymtl3.datatypes.strategies import bits_strat, signed_bits_strat
+
 
 @pytest.mark.parametrize( 'nbits', [3, 4, 8, 16, 32] )
 def test_unsiged_pro( nbits ):
@@ -37,6 +38,6 @@ def test_signed_pro( nbits ):
   @hypothesis.settings( max_examples=16 )
   def actual_test( bits ):
     assert bits.nbits == nbits
-    print
+    print()
     print( bits, bits.int() )
   actual_test()
