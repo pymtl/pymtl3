@@ -72,6 +72,41 @@ end\
 """ }
   do_test( a )
 
+def test_struct_const( do_test ):
+  class B( BitStruct ):
+    fields = [ ( 'foo', Bits32 ) ]
+    def __init__( s, foo=42 ):
+      s.foo = Bits32(foo)
+  class A( Component ):
+    def construct( s ):
+      s.in_ = B()
+      s.out = OutPort( Bits32 )
+      s.out_b = OutPort( B )
+      @s.update
+      def upblk():
+        s.out = s.in_.foo
+        s.out_b = s.in_
+  a = A()
+  a._ref_upblk_srcs = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = in_.foo;
+  out_b = in_;
+end\
+""" }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out_b == tv[0]
+    assert m.out == Bits32(tv[1])
+  a._test_vectors = [
+    [       B(),   42 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
+  do_test( a )
+
+
 def test_packed_array_behavioral( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42, bar=1 ):

@@ -18,7 +18,7 @@ import inspect
 from functools import reduce
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, BitStruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -592,13 +592,13 @@ _RTLIR_ifc_handlers = [
 ]
 
 _RTLIR_handlers = [
-  ( list,          _handle_Array ),
-  ( dsl.InPort,    _handle_InPort ),
-  ( dsl.OutPort,   _handle_OutPort ),
-  ( dsl.Wire,      _handle_Wire ),
-  ( ( int, Bits ), _handle_Const ),
-  ( dsl.Interface, _handle_Interface ),
-  ( dsl.Component, _handle_Component ),
+  ( list,                     _handle_Array ),
+  ( dsl.InPort,               _handle_InPort ),
+  ( dsl.OutPort,              _handle_OutPort ),
+  ( dsl.Wire,                 _handle_Wire ),
+  ( ( int, Bits, BitStruct ), _handle_Const ),
+  ( dsl.Interface,            _handle_Interface ),
+  ( dsl.Component,            _handle_Component ),
 ]
 
 #-------------------------------------------------------------------------
@@ -647,7 +647,7 @@ def is_rtlir_convertible( obj ):
   """Return if `obj` can be converted into an RTLIR instance."""
   pymtl_constructs = (
     dsl.InPort, dsl.OutPort, dsl.Wire,
-    Bits, dsl.Interface, dsl.Component,
+    Bits, BitStruct, dsl.Interface, dsl.Component,
   )
   # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
@@ -655,7 +655,6 @@ def is_rtlir_convertible( obj ):
       # Empty lists will be dropped
       if len( obj ) == 0:
         return True
-      # assert len( obj ) > 0
       obj = obj[0]
     return is_rtlir_convertible( obj )
   elif isinstance( obj, pymtl_constructs ):

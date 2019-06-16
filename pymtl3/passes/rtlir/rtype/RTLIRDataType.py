@@ -290,6 +290,10 @@ def get_rtlir_dtype( obj ):
     elif isinstance( obj, Bits ):
       return Vector( obj.nbits )
 
+    # PyMTL BitStruct objects
+    elif isinstance( obj, BitStruct ):
+      return _get_rtlir_dtype_struct( obj )
+
     else:
       assert False, 'cannot infer the data type of the given object!'
   except AssertionError as e:

@@ -58,25 +58,49 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
         rtype = rt.Port( node.value.Type.get_direction(), dtype )
       elif isinstance( node.value.Type, rt.Wire ):
         rtype = rt.Wire( dtype )
+      elif isinstance( node.value.Type, rt.Const ):
+        rtype = rt.Const( dtype )
       else:
         raise PyMTLTypeError( s.blk, node.ast,
-          'constant struct is not supported!' )
+          'unrecognized signal type {}!'.format( node.value.Type ) )
       node.Type = rtype
 
     else:
       super( BehavioralRTLIRTypeCheckVisitorL3, s ).visit_Attribute( node )
 
   def visit_StructInst( s, node ):
-    """Type check the struct instantiation node.
+    cls = node.struct
 
-    TODO
-    To instantiate a struct inside an upblk the instantiator needs to:
-    1. guarantee to return an instance of the desired struct ( static
-    analysis on a very limited subset of python syntax may be able to do
-    this )
-    2. say how it composes the parameters into a struct instance (
-    translate the instantiator to its backend representation like a
-    function in SV )
-    """
-    raise PyMTLTypeError( s.blk, node.ast,
-      'struct instantiation is not supported!' )
+    try:
+      type_instance = cls()
+    except TypeError:
+      raise PyMTLTypeError( s.blk, node.ast,
+""""\
+__init__ of BitStruct {} should take 0 arguments! You can achieve this by
+adding default values to the arguments.
+""".format( cls.__name__ ) )
+
+    dtype = rdt.get_rtlir_dtype( cls() )
+    all_properties = dtype.get_all_properties()
+
+    if len( all_properties ) != len( node.values ):
+      raise PyMTLTypeError( s.blk, node.ast,
+        "BitStruct {} has {} fields but only {} arguments are given!". \
+            format(cls.__name__, len(all_properties), len(node.values)) )
+
+    all_types = zip( node.values, all_properties )
+    for idx, ( value, ( name, field ) ) in enumerate( all_types ):
+      s.visit( value )
+      # Expect each argument to be a signal
+      if not isinstance( value.Type, rt.Signal ):
+        raise PyMTLTypeError( s.blk, node.ast,
+          "argument #{} has type {} but not a signal!". \
+              format( idx, value.Type ) )
+      v_dtype = value.Type.get_dtype()
+      # Expect each argument to have data type which corresponds to the field
+      if v_dtype != field:
+        raise PyMTLTypeError( s.blk, node.ast,
+          "Expected argument#{} ( field {} ) to have type {}, but got {}.". \
+              format( idx, name, field, v_dtype ) )
+
+    node.Type = rt.Const( dtype )

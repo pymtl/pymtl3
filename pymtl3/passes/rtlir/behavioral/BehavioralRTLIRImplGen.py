@@ -87,7 +87,7 @@ import os
 
 from graphviz import Digraph
 
-from pymtl3.passes import BasePass
+from pymtl3.passes.BasePass import BasePass
 
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
@@ -122,12 +122,15 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.blk_name = name
     s.cur = 0
 
+  def get_str( s, obj ):
+    return str(obj).replace('<', '&lt;').replace('>', '&gt;')
+
   def gen_table_opt( s, node ):
     ret = ''
     if isinstance( node.Type, BaseRTLIRType ):
       ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in vars(node.Type).iteritems():
-        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        obj_str = s.get_str( obj )
         if not isinstance( obj, dict ):
           ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
         else:
@@ -253,7 +256,7 @@ def __eq__( s, other ):
           # Add this built-in type to the label string
           # Assume built-in types will never have sequence modifier
           built_in = built_in_str.format( type_name = f, value = f )
-          built_in_trail_body.append( f + '=node.' + f )
+          built_in_trail_body.append( f + '=s.get_str(node.' + f + ")" )
           table_body += ' ' + built_in
         else:
           # Add the user-defined field to the label string

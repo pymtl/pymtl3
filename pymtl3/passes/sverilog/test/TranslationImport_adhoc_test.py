@@ -43,6 +43,7 @@ from ..translation.behavioral.test.SVBehavioralTranslatorL3_test import (
     test_nested_struct,
     test_packed_array_behavioral,
     test_struct,
+    test_struct_const,
 )
 from ..translation.behavioral.test.SVBehavioralTranslatorL4_test import (
     test_interface,
@@ -65,6 +66,7 @@ from ..translation.structural.test.SVStructuralTranslatorL2_test import (
     test_nested_struct_port,
     test_packed_array,
     test_struct_packed_array,
+    test_struct_const_structural,
     test_struct_port,
 )
 from ..translation.structural.test.SVStructuralTranslatorL3_test import (
