@@ -32,6 +32,11 @@ class ChecksumXcelRTL( Component ):
     s.WAIT = b2(1)
     s.BUSY = b2(2)
 
+    # Local parameters
+
+    RD = XcelMsgType.READ
+    WR = XcelMsgType.WRITE
+
     # Components
 
     s.in_q = NormalQueueRTL( ReqType, num_entries=2 )
@@ -41,15 +46,17 @@ class ChecksumXcelRTL( Component ):
     s.state       = Wire( Bits2 )
     s.state_next  = Wire( Bits2 )
     s.start_pulse = Wire( Bits1 )
-
-    RD = XcelMsgType.READ
-    WR = XcelMsgType.WRITE
     
+    
+    # Connections
+
     s.connect( s.xcel.req, s.in_q.enq )
     s.connect( s.checksum_unit.recv.msg[0 :32 ], s.reg_file[0].out )
     s.connect( s.checksum_unit.recv.msg[32:64 ], s.reg_file[1].out )
     s.connect( s.checksum_unit.recv.msg[64:96 ], s.reg_file[2].out )
     s.connect( s.checksum_unit.recv.msg[96:128], s.reg_file[3].out )
+
+    # Logic
 
     @s.update
     def up_start_pulse():
