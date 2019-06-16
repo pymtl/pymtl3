@@ -60,6 +60,9 @@ class DropUnitRTL( Component ):
 
       elif s.snoop_state.out == WAIT:
         s.out.en = b1(0)
+      
+      else:
+        s.out.en = b1(0)
 
     @s.update
     def state_output_rdy():
@@ -67,6 +70,9 @@ class DropUnitRTL( Component ):
         s.in_.rdy = s.out.rdy
 
       elif s.snoop_state.out == WAIT:
+        s.in_.rdy = b1(1)
+
+      else:
         s.in_.rdy = b1(1)
 
 #-------------------------------------------------------------------------
