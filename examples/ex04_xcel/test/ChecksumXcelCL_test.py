@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.passes.PassGroups import DynamicSim
+from pymtl3.passes.yosys import TranslationPass, ImportPass
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
@@ -161,6 +162,13 @@ class ChecksumXcelCLSrcSink_Tests( object ):
     src_msgs, sink_msgs = mk_xcel_transaction( words )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
+
+    th.elaborate()
+    th.dut.yosys_translate = True
+    th.dut.yosys_import = True
+    th.apply( TranslationPass() )
+    th = ImportPass()( th )
+
     th.apply( DynamicSim )
     th.run_sim()
 
@@ -179,5 +187,12 @@ class ChecksumXcelCLSrcSink_Tests( object ):
       sink_msgs.extend( resps )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
+
+    th.elaborate()
+    th.dut.yosys_translate = True
+    th.dut.yosys_import = True
+    th.apply( TranslationPass() )
+    th = ImportPass()( th )
+
     th.apply( DynamicSim )
     th.run_sim()

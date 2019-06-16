@@ -113,7 +113,7 @@ class ChecksumXcelRTL( Component ):
       s.xcel.resp.msg.type_ = s.in_q.deq.msg.type_
       s.xcel.resp.msg.data  = b32(0) 
       if s.in_q.deq.msg.type_ == RD: 
-        s.xcel.resp.msg.data = s.reg_file[ s.in_q.deq.msg.addr ].out
+        s.xcel.resp.msg.data = s.reg_file[ s.in_q.deq.msg.addr[0:3] ].out
 
     @s.update
     def up_wr_regfile():
