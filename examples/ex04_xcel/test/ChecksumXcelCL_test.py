@@ -10,6 +10,7 @@ Author : Yanghui Ou
 from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
+from pymtl3.passes.PassGroups import DynamicSim
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
@@ -75,7 +76,7 @@ def checksum_xcel_cl( words ):
   # Create a simulator
 
   dut = WrappedChecksumXcelCL()
-  dut.apply( SimpleSim )
+  dut.apply( DynamicSim )
   
   reqs, _ = mk_xcel_transaction( words )
 
@@ -160,7 +161,7 @@ class ChecksumXcelCLSrcSink_Tests( object ):
     src_msgs, sink_msgs = mk_xcel_transaction( words )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-    th.apply( SimpleSim )
+    th.apply( DynamicSim )
     th.run_sim()
 
   def test_xcel_multi_msg( s ):
@@ -178,5 +179,5 @@ class ChecksumXcelCLSrcSink_Tests( object ):
       sink_msgs.extend( resps )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-    th.apply( SimpleSim )
+    th.apply( DynamicSim )
     th.run_sim()
