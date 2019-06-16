@@ -156,6 +156,7 @@ class ChecksumXcelCLSrcSink_Tests( object ):
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumXcelCL
+    cls.translate = False
 
   def test_xcel_simple( s ):
     words = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
@@ -163,11 +164,12 @@ class ChecksumXcelCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
 
-    th.elaborate()
-    th.dut.yosys_translate = True
-    th.dut.yosys_import = True
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
+    if s.translate:
+      th.elaborate()
+      th.dut.yosys_translate = True
+      th.dut.yosys_import = True
+      th.apply( TranslationPass() )
+      th = ImportPass()( th )
 
     th.apply( DynamicSim )
     th.run_sim()
@@ -188,11 +190,12 @@ class ChecksumXcelCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
 
-    th.elaborate()
-    th.dut.yosys_translate = True
-    th.dut.yosys_import = True
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
+    if s.translate:
+      th.elaborate()
+      th.dut.yosys_translate = True
+      th.dut.yosys_import = True
+      th.apply( TranslationPass() )
+      th = ImportPass()( th )
 
     th.apply( DynamicSim )
     th.run_sim()
