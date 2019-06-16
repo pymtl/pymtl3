@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.rtl.queues import PipeQueueRTL
+from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 #-------------------------------------------------------------------------
 # Step unit
@@ -56,7 +56,7 @@ class ChecksumRTL( Component ):
     s.sum1   = Wire( Bits32 )
     s.sum2   = Wire( Bits32 )
 
-    s.input_buffer = PipeQueueRTL( Bits128, num_entries=1 )
+    s.input_buffer = NormalQueueRTL( Bits128, num_entries=2 )
     s.steps        = [ StepUnit() for _ in range( 8 ) ]
 
     # Register input

@@ -18,8 +18,9 @@ from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 from .ChecksumCL_test import ChecksumScycleCL_Tests as BaseCLTests
 from .ChecksumCL_test import ChecksumScycleCLSrcSink_Tests as BaseSrcSinkTests
 from .ChecksumCL_test import TestHarness
-from .ChecksumFL import b128_to_words, checksum, words_to_b128
+from .ChecksumFL import checksum
 from .ChecksumRTL import ChecksumRTL
+from .utils import b128_to_words, words_to_b128
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function

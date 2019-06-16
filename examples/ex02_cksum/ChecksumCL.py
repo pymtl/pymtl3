@@ -13,7 +13,8 @@ from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
 from pymtl3.stdlib.cl.queues import NormalQueueCL
 
-from .ChecksumFL import b128_to_words, checksum
+from .ChecksumFL import checksum
+from .utils import b128_to_words
 
 #-------------------------------------------------------------------------
 # ChecksumScycleCL 
