@@ -10,7 +10,7 @@ import copy
 
 from pymtl3.datatypes import Bits32, mk_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.errors import PyMTLTypeError, RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
@@ -148,7 +148,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_FreeVar( s, node ):
     if node.name not in s.freevars.keys():
       s.freevars[ node.name ] = node.obj
-    t = rt.get_rtlir( node.obj )
+
+    try:
+      t = rt.get_rtlir( node.obj )
+    except RTLIRConversionError as e:
+      raise PyMTLTypeError(s.blk, node.ast,
+        '{} cannot be converted into a valid RTLIR object!'.format(node.name))
+
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
       node._value = mk_bits( t.get_dtype().get_length() )( node.obj )
     node.Type = t

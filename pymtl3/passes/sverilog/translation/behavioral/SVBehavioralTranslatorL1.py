@@ -265,6 +265,14 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     except AttributeError:
       raise SVerilogTranslationError( s.blk, node, 
         "new bitwidth of sign extension must be known at elaboration time!" )
+
+    current_nbits = int(node.value.Type.get_dtype().get_length())
+    last_bit = current_nbits - 1
+    padded_nbits = target_nbits - current_nbits
+
+    template = "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}"
+    one_bit_template = "{{ {{ {padded_nbits} {{ {_value} }} }}, {value} }}"
+
     # Check if the signal to be extended is a bit selection or one-bit part
     # selection.
     if isinstance( node.value, bir.Slice ):
@@ -277,16 +285,21 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
           _one_bit = False
       except AttributeError:
         _one_bit = False
+
+      # Manipulate the slicing string to avoid indexing on a sliced signal
+      if not _one_bit:
+        l, col, r = value.rfind('['), value.rfind(':'), value.rfind(']')
+        if -1 < l < col < r:
+          _value = value[:col] + ']'
+          return one_bit_template.format( **locals() )
+
     elif isinstance( node.value, bir.Index ):
       _one_bit = True
     else:
       _one_bit = False
-    current_nbits = int(node.value.Type.get_dtype().get_length())
-    last_bit = current_nbits - 1
-    padded_nbits = target_nbits - current_nbits
-    template = "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}"
-    one_bit_template = "{{ {{ {padded_nbits} {{ {value} }} }}, {value} }}"
+
     if _one_bit:
+      _value = value
       return one_bit_template.format( **locals() )
     else:
       return template.format( **locals() )

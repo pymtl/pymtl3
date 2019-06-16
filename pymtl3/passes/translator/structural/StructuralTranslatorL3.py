@@ -55,21 +55,22 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
         array_rtype = None
         ifc_rtype = rtype
 
-      # Translate all ports inside the interface
+      # Translate all ports and interfaces inside the interface
       ports = []
-      for port_id, p_rtype in ifc_rtype.get_all_ports_packed():
-        if isinstance( p_rtype, rt.Array ):
-          port_array_rtype = p_rtype
-          port_rtype = p_rtype.get_sub_type()
+      all_properties = ifc_rtype.get_all_properties_packed()
+      for p_id, _p_rtype in all_properties:
+        if isinstance( _p_rtype, rt.Array ):
+          p_array_rtype = _p_rtype
+          p_rtype = _p_rtype.get_sub_type()
         else:
-          port_array_rtype = None
-          port_rtype = p_rtype
+          p_array_rtype = None
+          p_rtype = _p_rtype
 
         ports.append( s.rtlir_tr_interface_port_decl(
-          s.rtlir_tr_var_id( port_id ),
-          port_rtype,
-          s.rtlir_tr_unpacked_array_type( port_array_rtype ),
-          s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
+          m,
+          s.rtlir_tr_var_id( p_id ),
+          p_rtype,
+          s.rtlir_tr_unpacked_array_type( p_array_rtype ),
         ) )
       ifc_decls.append(
         s.rtlir_tr_interface_decl(
@@ -111,7 +112,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
   def rtlir_tr_interface_port_decls( s, port_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_port_decl( s, port_id, port_rtype, port_array_type, port_dtype ):
+  def rtlir_tr_interface_port_decl( s, m, port_id, port_rtype, port_array_type ):
     raise NotImplementedError()
 
   def rtlir_tr_interface_decls( s, ifc_decls ):

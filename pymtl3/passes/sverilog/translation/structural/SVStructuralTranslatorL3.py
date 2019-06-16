@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.util.utility import make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL3 import (
     StructuralTranslatorL3,
@@ -23,15 +24,38 @@ class SVStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_port_decls( s, port_decls ):
-    return port_decls
+    return reduce( lambda x, y: x+y, port_decls, [] )
 
-  def rtlir_tr_interface_port_decl( s, port_id, port_rtype, port_array_type,
-      port_dtype ):
+  def rtlir_tr_interface_port_decl( s, m, port_id, port_rtype, port_array_type ):
+    def _gen_ifc( id_, ifc, n_dim ):
+      if not n_dim:
+        ret = []
+        all_properties = ifc.get_all_properties_packed()
+        for name, _rtype in all_properties:
+          if isinstance( _rtype, rt.Array ):
+            array_type = _rtype
+            rtype = _rtype.get_sub_type()
+          else:
+            array_type = None
+            rtype = _rtype
+          ret += s.rtlir_tr_interface_port_decl(
+            m, id_+"$"+name, rtype, s.rtlir_tr_unpacked_array_type( array_type ) )
+        return ret
+      else:
+        ret = []
+        for i in range( n_dim[0] ):
+          ret += _gen_ifc( id_+"$__"+str(i), ifc, n_dim[1:] )
+        return ret
     # Port id is appended after the template of interface id:
     #   > `{id_}$msg` where `msg` is an attribute of the interface.
-    decl_tmplt = port_rtype.get_direction() + ' ' + \
-                 port_dtype['decl'] + '$' + port_id + port_array_type['decl']
-    return decl_tmplt
+    if isinstance( port_rtype, rt.Port ):
+      port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
+      decl_tmplt = port_rtype.get_direction() + ' ' + \
+                   port_dtype['decl'] + '$' + port_id + port_array_type['decl']
+      return [ decl_tmplt ]
+    else:
+      n_dim = port_array_type["n_dim"]
+      return _gen_ifc( port_id, port_rtype, n_dim )
 
   def rtlir_tr_interface_decls( s, ifc_decls ):
     all_decls = reduce( lambda res, l: res + l, ifc_decls, [] )

@@ -7,6 +7,9 @@
 
 from __future__ import absolute_import, division, print_function
 
+from functools import reduce
+
+from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 import (
     SVStructuralTranslatorL3,
@@ -57,8 +60,9 @@ class YosysStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_port_decls( s, _port_decls ):
+    port_decl_list = reduce(lambda x, y: x + y, _port_decls, [])
     port_decls, wire_decls, connections = [], [], []
-    for dct in _port_decls:
+    for dct in port_decl_list:
       port_decls.append( dct["port_decls"] )
       wire_decls.append( dct["wire_decls"] )
       connections.append( dct["connections"] )
@@ -68,19 +72,42 @@ class YosysStructuralTranslatorL3(
       "connections" : connections
     }
 
-  def rtlir_tr_interface_port_decl( s, port_id, port_rtype, port_array_type,
-      _port_dtype ):
-    port_dtype = _port_dtype["raw_dtype"]
-    direction = port_rtype.get_direction()
-    n_dim = port_array_type["n_dim"]
-    port_decl = s.port_gen( direction, port_id, n_dim, port_dtype )
-    wire_decl = s.port_wire_gen( port_id, n_dim, port_dtype )
-    connections = s.port_connection_gen( direction, port_id, n_dim, port_dtype )
-    return {
-      "port_decls" : port_decl,
-      "wire_decls" : wire_decl,
-      "connections" : connections
-    }
+  def rtlir_tr_interface_port_decl( s, m, port_id, port_rtype, port_array_type ):
+    def _gen_ifc( id_, ifc, n_dim ):
+      if not n_dim:
+        ret = []
+        all_properties = ifc.get_all_properties_packed()
+        for name, _rtype in all_properties:
+          if isinstance( _rtype, rt.Array ):
+            array_type = _rtype
+            rtype = _rtype.get_sub_type()
+          else:
+            array_type = None
+            rtype = _rtype
+          ret += s.rtlir_tr_interface_port_decl(
+            m, id_+"$"+name, rtype, s.rtlir_tr_unpacked_array_type( array_type ) )
+        return ret
+      else:
+        ret = []
+        for i in range( n_dim[0] ):
+          ret += _gen_ifc( id_+"$__"+str(i), ifc, n_dim[1:] )
+        return ret
+    if isinstance( port_rtype, rt.Port ):
+      _port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
+      port_dtype = _port_dtype["raw_dtype"]
+      direction = port_rtype.get_direction()
+      n_dim = port_array_type["n_dim"]
+      port_decl = s.port_gen( direction, port_id, n_dim, port_dtype )
+      wire_decl = s.port_wire_gen( port_id, n_dim, port_dtype )
+      connections = s.port_connection_gen( direction, port_id, n_dim, port_dtype )
+      return [ {
+        "port_decls" : port_decl,
+        "wire_decls" : wire_decl,
+        "connections" : connections
+      } ]
+    else:
+      n_dim = port_array_type["n_dim"]
+      return _gen_ifc( port_id, port_rtype, n_dim )
 
   def rtlir_tr_interface_decls( s, ifc_decls ):
     port_decls, wire_decls, connections = [], [], []

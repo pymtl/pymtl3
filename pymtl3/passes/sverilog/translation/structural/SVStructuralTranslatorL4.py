@@ -33,7 +33,7 @@ class SVStructuralTranslatorL4(
       'decl' : ',\n'.join( port_decls )
     }
 
-  def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
+  def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
@@ -53,7 +53,7 @@ class SVStructuralTranslatorL4(
       'decl' : ',\n'.join( port_decls )
     }
 
-  def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
+  def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_dtype,
       port_array_type ):
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
@@ -74,7 +74,7 @@ class SVStructuralTranslatorL4(
       'decl' : ',\n'.join( ifc_decls )
     }
 
-  def rtlir_tr_subcomp_ifc_decl( s, c_id, c_rtype, c_array_type,
+  def rtlir_tr_subcomp_ifc_decl( s, m, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, ports ):
 
     def gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim, c_n_dim, ports ):
@@ -99,7 +99,7 @@ class SVStructuralTranslatorL4(
     subcomp_decls = reduce( lambda res, l: res+l, subcomps, [] )
     return '\n\n'.join( subcomp_decls )
 
-  def rtlir_tr_subcomp_decl( s, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+  def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
 
     _c_name = s.rtlir_tr_component_unique_name( c_rtype )
 
