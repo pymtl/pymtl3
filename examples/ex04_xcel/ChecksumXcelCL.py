@@ -25,7 +25,7 @@ class ChecksumXcelCL( Component ):
 
     # Interface
 
-    ReqType, RespType = mk_xcel_msg( 3, 32 )
+    ReqType, RespType = mk_xcel_msg( 5, 32 )
     s.xcel = XcelMinionIfcCL( ReqType, RespType, s.req, s.req_rdy )
 
     s.RespType = RespType

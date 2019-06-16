@@ -23,7 +23,7 @@ class ChecksumXcelRTL( Component ):
     
     # Interface
 
-    ReqType, RespType = mk_xcel_msg( 3, 32 )
+    ReqType, RespType = mk_xcel_msg( 5, 32 )
     s.xcel = XcelMinionIfcRTL( ReqType, RespType )
 
     # State encoding
@@ -33,7 +33,7 @@ class ChecksumXcelRTL( Component ):
     s.RESP = b2(3) 
 
     # Components
-
+    # s.in_q = NormalQueueRTL( ReqType, num_entries=2 )
     s.reg_file = [ Reg( Bits32 ) for _ in range(6) ]
     s.checksum_unit = ChecksumRTL()
     
@@ -45,7 +45,8 @@ class ChecksumXcelRTL( Component ):
 
     RD = XcelMsgType.READ
     WR = XcelMsgType.WRITE
-
+    
+    # s.connect( s.xcel.req, s.in_q.enq )
     s.connect( s.checksum_unit.recv.msg[0 :32 ], s.reg_file[0].out )
     s.connect( s.checksum_unit.recv.msg[32:64 ], s.reg_file[1].out )
     s.connect( s.checksum_unit.recv.msg[64:96 ], s.reg_file[2].out )
@@ -122,7 +123,7 @@ class ChecksumXcelRTL( Component ):
       s.xcel.resp.msg.data  = b32(0) 
       if s.req_type_reg == RD: 
         for i in range(6):
-          if b3(i) == s.req_addr_reg:
+          if b5(i) == s.req_addr_reg:
             s.xcel.resp.msg.data = s.reg_file[i].out
 
     @s.update
@@ -130,7 +131,7 @@ class ChecksumXcelRTL( Component ):
       if s.xcel.req.en and s.xcel.req.msg.type_ == WR:
         for i in range(6):
           s.reg_file[i].in_ = (
-            s.xcel.req.msg.data if b3(i) == s.xcel.req.msg.addr else
+            s.xcel.req.msg.data if b5(i) == s.xcel.req.msg.addr else
             s.reg_file[i].out
           )
 

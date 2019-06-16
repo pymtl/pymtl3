@@ -22,7 +22,7 @@ class ChecksumXcelFL( Component ):
 
     # Interface
 
-    ReqType, RespType = mk_xcel_msg( 3, 32 )
+    ReqType, RespType = mk_xcel_msg( 5, 32 )
 
     s.xcel = XcelMinionIfcFL( ReqType, RespType,
                               read=s.read, write=s.write)

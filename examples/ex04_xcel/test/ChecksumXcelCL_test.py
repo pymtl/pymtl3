@@ -23,7 +23,7 @@ from ..ChecksumXcelCL import ChecksumXcelCL
 # Helper functions to create a sequence of req/resp msg
 #-------------------------------------------------------------------------
 
-Req, Resp = mk_xcel_msg( 3, 32 )
+Req, Resp = mk_xcel_msg( 5, 32 )
 rd = XcelMsgType.READ
 wr = XcelMsgType.WRITE
 
@@ -31,12 +31,12 @@ def mk_xcel_transaction( words ):
   words = [ b16(x) for x in words ]
   bits = words_to_b128( words )
   reqs = []
-  reqs.append( Req( wr, b3(0), bits[0 :32 ] ) )
-  reqs.append( Req( wr, b3(1), bits[32:64 ] ) )
-  reqs.append( Req( wr, b3(2), bits[64:96 ] ) )
-  reqs.append( Req( wr, b3(3), bits[96:128] ) )
-  reqs.append( Req( wr, b3(4), b32(1)       ) )
-  reqs.append( Req( rd, b3(5), b32(0)       ) )
+  reqs.append( Req( wr, b5(0), bits[0 :32 ] ) )
+  reqs.append( Req( wr, b5(1), bits[32:64 ] ) )
+  reqs.append( Req( wr, b5(2), bits[64:96 ] ) )
+  reqs.append( Req( wr, b5(3), bits[96:128] ) )
+  reqs.append( Req( wr, b5(4), b32(1)       ) )
+  reqs.append( Req( rd, b5(5), b32(0)       ) )
   
   resps = []
   resps.append( Resp( wr, b32(0)          ) )
@@ -54,7 +54,7 @@ def mk_xcel_transaction( words ):
 
 class WrappedChecksumXcelCL( Component ):
   def construct( s ):
-    ReqType, RespType = mk_xcel_msg( 3, 32 )
+    ReqType, RespType = mk_xcel_msg( 5, 32 )
     s.recv = NonBlockingCalleeIfc( ReqType  )
     s.give = NonBlockingCalleeIfc( RespType )
 
@@ -114,7 +114,7 @@ class TestHarness( Component ):
 
   def construct( s, DutType=ChecksumXcelCL, src_msgs=[], sink_msgs=[] ):
     
-    ReqType, RespType = mk_xcel_msg( 3, 32 )
+    ReqType, RespType = mk_xcel_msg( 5, 32 )
 
     s.src  = TestSrcCL( ReqType, src_msgs )
     s.dut  = DutType()
