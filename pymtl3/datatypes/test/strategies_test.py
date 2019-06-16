@@ -11,7 +11,6 @@ from __future__ import absolute_import, division, print_function
 
 import hypothesis
 import pytest
-from hypothesis import strategies as st
 
 from pymtl3.datatypes.bits_import import *
 from pymtl3.datatypes.strategies import bits_strat
