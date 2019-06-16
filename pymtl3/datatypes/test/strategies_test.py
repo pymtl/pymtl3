@@ -38,6 +38,5 @@ def test_signed_pro( nbits ):
   @hypothesis.settings( max_examples=16 )
   def actual_test( bits ):
     assert bits.nbits == nbits
-    print()
     print( bits, bits.int() )
   actual_test()
