@@ -14,8 +14,8 @@ from hypothesis import strategies as st
 
 from pymtl3 import *
 
-from .ChecksumFL import checksum
-from .utils import b128_to_words, words_to_b128
+from ..ChecksumFL import checksum
+from ..utils import b128_to_words, words_to_b128
 
 #-------------------------------------------------------------------------
 # Test checksum as a function

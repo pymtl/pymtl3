@@ -15,12 +15,14 @@ from pymtl3.passes.sverilog.translation.TranslationPass import TranslationPass
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
-from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
-from .ChecksumCL_test import TestHarness
-from .ChecksumFL import checksum
-from .ChecksumRTL import ChecksumRTL
-from .utils import b128_to_words, words_to_b128
+from ..ChecksumFL import checksum
+from ..ChecksumRTL import ChecksumRTL
+from ..utils import b128_to_words, words_to_b128
+from .ChecksumCL_test import(
+  ChecksumCL_Tests as BaseTests,
+  ChecksumCLSrcSink_Tests as BaseSrcSinkTests,
+  TestHarness,
+)
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
