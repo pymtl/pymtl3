@@ -12,6 +12,7 @@
 from __future__ import print_function
 
 import binascii
+import struct
 
 class SparseMemoryImage (object):
 
@@ -101,3 +102,14 @@ class SparseMemoryImage (object):
     for key,value in self.symbols.iteritems():
       print( " {:0>8x} {}".format( value, key ) )
 
+#-------------------------------------------------------------------------
+# mk_section
+#-------------------------------------------------------------------------
+# Helper function to make a section from a list of words.
+
+def mk_section( name, addr, words ):
+  data = bytearray()
+  for word in words:
+    data.extend(struct.pack("<I",word))
+
+  return SparseMemoryImage.Section( name, addr, data )

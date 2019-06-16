@@ -15,7 +15,6 @@ from pymtl3.passes import DynamicSim
 from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.test  import TestSrcCL, TestSinkCL
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-from examples.ex03_proc.NullXcel import NullXcelRTL
 
 from examples.ex03_proc.tinyrv0_encoding import assemble
 
@@ -54,20 +53,22 @@ class TestHarness(Component):
   # constructor
   #-----------------------------------------------------------------------
 
-  def construct( s, proc_cls, dump_vcd,
+  def construct( s, proc_cls, xcel_cls, dump_vcd,
                 src_delay, sink_delay,
                 mem_stall_prob, mem_latency ):
 
+    s.commit_inst = OutPort( Bits1 )
     req, resp = mk_mem_msg( 8, 32, 32 )
 
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
     s.proc = proc_cls()
-    s.xcel = NullXcelRTL()
+    s.xcel = xcel_cls()
 
     s.mem  = MemoryCL(2)
 
     # Processor <-> Proc/Mngr
+    s.connect( s.proc.commit_inst, s.commit_inst )
 
     s.connect( s.src.send, s.proc.mngr2proc )
     s.connect( s.proc.proc2mngr, s.sink.recv )
