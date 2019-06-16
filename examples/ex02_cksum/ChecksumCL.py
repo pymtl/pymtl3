@@ -17,10 +17,10 @@ from .ChecksumFL import checksum
 from .utils import b128_to_words
 
 #-------------------------------------------------------------------------
-# ChecksumScycleCL 
+# ChecksumCL 
 #-------------------------------------------------------------------------
 
-class ChecksumScycleCL( Component ):
+class ChecksumCL( Component ):
 
   def construct( s ):
 

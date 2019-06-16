@@ -42,11 +42,11 @@ def bits_strat( draw, nbits ):
 @hypothesis.given(
   words = st.lists( bits_strat(16), min_size=8, max_size=8 ) 
 )
-def test_encode_decode( words ):
+def test_words_to_b128_to_words( words ):
   assert b128_to_words( words_to_b128( words ) ) == words
 
 @hypothesis.given(
   bits = bits_strat(128)
 )
-def test_decode_encode( bits ):
+def test_b128_to_words_to_b128( bits ):
   assert words_to_b128( b128_to_words( bits ) ) == bits

@@ -15,8 +15,8 @@ from pymtl3.passes.sverilog.translation.TranslationPass import TranslationPass
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from .ChecksumCL_test import ChecksumScycleCL_Tests as BaseCLTests
-from .ChecksumCL_test import ChecksumScycleCLSrcSink_Tests as BaseSrcSinkTests
+from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
+from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
 from .ChecksumCL_test import TestHarness
 from .ChecksumFL import checksum
 from .ChecksumRTL import ChecksumRTL
@@ -50,9 +50,9 @@ def checksum_rtl( words ):
 # Functionality test
 #-------------------------------------------------------------------------
 
-class ChecksumRTL_Tests( BaseCLTests ):
+class ChecksumRTL_Tests( BaseTests ):
   
-  def func_impl( s, words ):
+  def cksum_func( s, words ):
     return checksum_rtl( words )
 
 #-------------------------------------------------------------------------
