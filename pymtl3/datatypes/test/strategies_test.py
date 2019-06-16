@@ -16,8 +16,8 @@ from pymtl3.datatypes.bits_import import *
 from pymtl3.datatypes.strategies import bits_strat
 
 
-@pytest.mark.parametrize( 'nbits', [3, 4, 8, 16, 32] )
-def test_unsiged_pro( nbits ):
+@pytest.mark.parametrize( 'nbits', [1, 3, 4, 8, 16, 32] )
+def test_unsiged( nbits ):
   print("")
   @hypothesis.given(
     bits = bits_strat(nbits)
@@ -29,7 +29,7 @@ def test_unsiged_pro( nbits ):
   actual_test()
 
 @pytest.mark.parametrize( 'nbits', [1, 3, 4, 8, 16, 32] )
-def test_signed_pro( nbits ):
+def test_signed( nbits ):
   print("")
   @hypothesis.given(
     bits = bits_strat(nbits, True)
