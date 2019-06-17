@@ -12,8 +12,8 @@ from __future__ import absolute_import, division, print_function
 import hypothesis
 import pytest
 
-from pymtl3.datatypes.bits_import import *
 from pymtl3.datatypes import strategies as pst
+from pymtl3.datatypes.bits_import import *
 
 
 @pytest.mark.parametrize( 'nbits', [1, 3, 4, 8, 16, 32] )
