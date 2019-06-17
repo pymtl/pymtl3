@@ -13,14 +13,14 @@ import hypothesis
 import pytest
 
 from pymtl3.datatypes.bits_import import *
-from pymtl3.datatypes.strategies import bits_strat
+from pymtl3.datatypes import strategies as pst
 
 
 @pytest.mark.parametrize( 'nbits', [1, 3, 4, 8, 16, 32] )
 def test_unsiged( nbits ):
   print("")
   @hypothesis.given(
-    bits = bits_strat(nbits)
+    bits = pst.bits(nbits)
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( bits ):
@@ -32,7 +32,7 @@ def test_unsiged( nbits ):
 def test_signed( nbits ):
   print("")
   @hypothesis.given(
-    bits = bits_strat(nbits, True)
+    bits = pst.bits(nbits, True)
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( bits ):

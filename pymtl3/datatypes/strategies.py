@@ -19,7 +19,7 @@ from .bits_import import mk_bits
 #-------------------------------------------------------------------------
 
 @st.composite
-def bits_strat( draw, nbits, signed=False ):
+def bits( draw, nbits, signed=False ):
   if nbits == 1:
     value = draw( st.booleans() )
   elif not signed:
