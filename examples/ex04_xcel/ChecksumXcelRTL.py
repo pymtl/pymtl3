@@ -20,7 +20,7 @@ from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 
 class ChecksumXcelRTL( Component ):
   def construct( s ):
-    
+
     # Interface
 
     ReqType, RespType = mk_xcel_msg( 5, 32 )
@@ -28,7 +28,7 @@ class ChecksumXcelRTL( Component ):
 
     # State encoding
 
-    s.XCFG = b2(0) 
+    s.XCFG = b2(0)
     s.WAIT = b2(1)
     s.BUSY = b2(2)
 
@@ -42,12 +42,12 @@ class ChecksumXcelRTL( Component ):
     s.in_q = NormalQueueRTL( ReqType, num_entries=2 )
     s.reg_file = [ Reg( Bits32 ) for _ in range(6) ]
     s.checksum_unit = ChecksumRTL()
-    
+
     s.state       = Wire( Bits2 )
     s.state_next  = Wire( Bits2 )
     s.start_pulse = Wire( Bits1 )
-    
-    
+
+
     # Connections
 
     s.connect( s.xcel.req, s.in_q.enq )
@@ -61,9 +61,9 @@ class ChecksumXcelRTL( Component ):
     @s.update
     def up_start_pulse():
       s.start_pulse = (
-        s.xcel.resp.en and 
-        s.in_q.deq.msg.type_ == s.WR and 
-        s.in_q.deq.msg.addr == b5(4) 
+        s.xcel.resp.en and
+        s.in_q.deq.msg.type_ == s.WR and
+        s.in_q.deq.msg.addr == b5(4)
       )
 
     @s.update
@@ -72,7 +72,7 @@ class ChecksumXcelRTL( Component ):
         s.state_next = (
           s.WAIT if s.start_pulse & ~s.checksum_unit.recv.rdy else
           s.BUSY if s.start_pulse &  s.checksum_unit.recv.rdy else
-          s.XCFG 
+          s.XCFG
         )
 
       elif s.state == s.WAIT:
@@ -87,7 +87,7 @@ class ChecksumXcelRTL( Component ):
         s.state = s.XCFG
       else:
         s.state = s.state_next
-  
+
     @s.update
     def up_fsm_output():
       if s.state == s.XCFG:
@@ -111,8 +111,8 @@ class ChecksumXcelRTL( Component ):
     @s.update
     def up_resp_msg():
       s.xcel.resp.msg.type_ = s.in_q.deq.msg.type_
-      s.xcel.resp.msg.data  = b32(0) 
-      if s.in_q.deq.msg.type_ == s.RD: 
+      s.xcel.resp.msg.data  = b32(0)
+      if s.in_q.deq.msg.type_ == s.RD:
         s.xcel.resp.msg.data = s.reg_file[ s.in_q.deq.msg.addr[0:3] ].out
 
     @s.update
@@ -137,4 +137,4 @@ class ChecksumXcelRTL( Component ):
       "BUSY" if s.state == s.BUSY else
       "XXXX"
     )
-    return "{}({}){}".format( s.xcel.req, state_str, s.xcel.resp )
+    return "{}(RTL:{}){}".format( s.xcel.req, state_str, s.xcel.resp )

@@ -27,17 +27,17 @@ class CombLogicCL( Component ):
   def construct( s ):
     _, Resp = mk_xcel_msg( 5, 32 )
     s.Resp = Resp
-    s.data = None 
+    s.data = None
 
     s.add_constraints( M(s.write) < M(s.read) )
-  
+
   @method_port
   def write( data ):
     s.data = b32(data)
 
   @method_port
   def read( type_ ):
-    return s.Resp( b1(type_), s.data ) 
+    return s.Resp( b1(type_), s.data )
 
 #-------------------------------------------------------------------------
 # A piece of CL logic that converts Bits32 to a response message
@@ -73,7 +73,7 @@ class ChecksumXcelCL( Component ):
 
     s.state = s.XCFG
 
-    
+
     # TODO: replace out_q with a combinational adapter
     s.out_q = BypassQueueCL( num_entries=1 )
 
@@ -91,9 +91,9 @@ class ChecksumXcelCL( Component ):
           elif req.type_ == XcelMsgType.WRITE:
             s.reg_file[ int(req.addr) ] = req.data
             s.xcel.resp( s.RespType( WR, 0 ) )
-            
+
             # If the go bit is written
-            if req.addr == 4: 
+            if req.addr == 4:
               if s.checksum_unit.recv.rdy():
                 s.state = s.BUSY
                 words = []
@@ -106,7 +106,6 @@ class ChecksumXcelCL( Component ):
 
       elif s.state == s.WAIT:
         if s.checksum_unit.recv.rdy():
-          s.state == s.BUSY
           words = []
           for i in range( 4 ):
             words.append( s.reg_file[i][0 :16] )
@@ -126,4 +125,4 @@ class ChecksumXcelCL( Component ):
       "BUSY" if s.state == s.BUSY else
       "XXXX"
     )
-    return "{}({}){}".format( s.xcel.req, state_str, s.xcel.resp )
+    return "{}(CL :{}){}".format( s.xcel.req, state_str, s.xcel.resp )

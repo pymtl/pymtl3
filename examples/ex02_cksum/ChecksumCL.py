@@ -17,7 +17,7 @@ from .ChecksumFL import checksum
 from .utils import b128_to_words
 
 #-------------------------------------------------------------------------
-# ChecksumCL 
+# ChecksumCL
 #-------------------------------------------------------------------------
 
 class ChecksumCL( Component ):
@@ -30,22 +30,22 @@ class ChecksumCL( Component ):
     s.send = NonBlockingCallerIfc( Bits32  )
 
     # Component
-  
+
     s.in_q = NormalQueueCL( num_entries=2 )
     s.connect( s.recv, s.in_q.enq )
-    
+
     @s.update
-    def upA():
+    def up_checksum_cl():
       if s.in_q.deq.rdy() and s.send.rdy():
-        bits   = s.in_q.deq()
-        result = checksum( b128_to_words( bits ) )
+        raw_bits = s.in_q.deq()
+        result   = checksum( b128_to_words( raw_bits ) )
         s.send( result )
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
 
 #-------------------------------------------------------------------------
-# ChecksumCL 
+# ChecksumCL
 #-------------------------------------------------------------------------
 
 class ChecksumMcycleCL( Component ):
@@ -58,11 +58,11 @@ class ChecksumMcycleCL( Component ):
     s.send = NonBlockingCallerIfc( Bits32 )
 
     # Component
-    
+
     s.in_q = NormalQueueCL( num_entries=2 )
     s.pipeline = DelayPipeDeqCL( delay = nstages+1 )
     s.connect( s.recv, s.in_q.enq )
-    
+
     @s.update
     def up_cl_send():
       if s.send.rdy() and s.pipeline.deq.rdy():

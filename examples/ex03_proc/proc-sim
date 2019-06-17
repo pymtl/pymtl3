@@ -137,12 +137,15 @@ def main():
 
   limit = 10000
 
+  if opts.trace:
+    print "{:3}: {}".format( count, model.line_trace() )
+
   while not model.done() and count < limit:
-    count = count + 1
-    commit_inst += int(model.commit_inst)
-    if opts.trace:
-      print "{}: {}".format( count, model.line_trace() )
     model.tick()
+    commit_inst += int(model.commit_inst)
+    count = count + 1
+    if opts.trace:
+      print "{:3}: {}".format( count, model.line_trace() )
 
   assert count < limit
 

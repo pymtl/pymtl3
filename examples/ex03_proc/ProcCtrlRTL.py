@@ -309,7 +309,7 @@ class ProcCtrl( Component ):
     wm_c = b2( 2 )
 
     # Control signal
-    
+
     s.cs = Wire( Bits20 )
 
     # control signal table

@@ -47,8 +47,10 @@ from ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 from pymtl3 import *
 from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.ifcs import mk_mem_msg
 
 from ex03_proc.test.harness import TestHarness
+from ex04_xcel.ProcXcel import ProcXcel
 
 #=========================================================================
 # Command line processing
@@ -100,6 +102,86 @@ input_dict = {
   "cksum-xcel-single" : ubmark_cksum_xcel_single,
 }
 
+class TestHarness(Component):
+
+  #-----------------------------------------------------------------------
+  # constructor
+  #-----------------------------------------------------------------------
+
+  def construct( s, proc_cls, xcel_cls, dump_vcd,
+                 src_delay, sink_delay,
+                 mem_stall_prob, mem_latency ):
+
+    s.commit_inst = OutPort( Bits1 )
+    req, resp = mk_mem_msg( 8, 32, 32 )
+
+    s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
+    s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
+
+    s.dut  = ProcXcel( proc_cls, xcel_cls )
+
+    s.mem  = MemoryCL(2, latency = mem_latency)
+
+    # Processor <-> Proc/Mngr
+    s.connect( s.dut.commit_inst, s.commit_inst )
+
+    s.connect( s.src.send, s.dut.mngr2proc )
+    s.connect( s.dut.proc2mngr, s.sink.recv )
+
+    # Processor <-> Memory
+
+    s.connect( s.dut.imem,  s.mem.ifc[0] )
+    s.connect( s.dut.dmem,  s.mem.ifc[1] )
+
+  #-----------------------------------------------------------------------
+  # load
+  #-----------------------------------------------------------------------
+
+  def load( self, mem_image ):
+
+    # Iterate over the sections
+
+    sections = mem_image.get_sections()
+    for section in sections:
+
+      # For .mngr2proc sections, copy section into mngr2proc src
+
+      if section.name == ".mngr2proc":
+        for i in xrange(0,len(section.data),4):
+          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
+          # self.src.src.msgs.append( Bits(32,bits) )
+          self.src.msgs.append( Bits(32,bits) )
+
+      # For .proc2mngr sections, copy section into proc2mngr_ref src
+
+      elif section.name == ".proc2mngr":
+        for i in xrange(0,len(section.data),4):
+          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
+          # self.sink.sink.msgs.append( Bits(32,bits) )
+          self.sink.msgs.append( Bits(32,bits) )
+
+      # For all other sections, simply copy them into the memory
+
+      else:
+        self.mem.write_mem( section.addr, section.data )
+
+  #-----------------------------------------------------------------------
+  # done
+  #-----------------------------------------------------------------------
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  #-----------------------------------------------------------------------
+  # line_trace
+  #-----------------------------------------------------------------------
+
+  def line_trace( s ):
+    return s.src.line_trace()  + " >" + \
+           s.dut.line_trace() + \
+           s.mem.line_trace()  + " > " + \
+           s.sink.line_trace()
+
 #=========================================================================
 # Main
 #=========================================================================
@@ -122,12 +204,8 @@ def main():
                       # src sink memstall memlat
                         0,  0,   0,       1 )
 
-  from pymtl3.passes import SimpleSim
-  model.apply( SimpleSim )
-  for x in model._sched.schedule:
-    if "up_start" in x.__name__:print(x)
-    if "up_pulse" in x.__name__: print(x)
-    if "upA" in x.__name__: print(x)
+  from pymtl3.passes import DynamicSim
+  model.apply( DynamicSim )
 
   # Load the program into the model
 
@@ -144,12 +222,15 @@ def main():
 
   limit = 10000
 
+  if opts.trace:
+    print "{:3}: {}".format( count, model.line_trace() )
+
   while not model.done() and count < limit:
-    count = count + 1
+    model.tick()
     commit_inst += int(model.commit_inst)
+    count = count + 1
     if opts.trace:
       print "{:3}: {}".format( count, model.line_trace() )
-    model.tick()
 
   assert count < limit
 

@@ -61,6 +61,7 @@ class ProcCL( Component ):
       mem   = 1
       xcel  = 2
       arith = 3
+      mngr  = 4
 
     @s.update
     def F():
@@ -133,11 +134,9 @@ class ProcCL( Component ):
 
           elif inst_name == "csrw":
             if inst.csrnum == 0x7C0: # CSR: proc2mngr
-              if s.proc2mngr.rdy():
-                s.proc2mngr( s.R[ inst.rs1 ] )
-                s.DXM_W_queue.enq( None )
-              else:
-                executed = False
+              # We execute csrw in W stage
+              s.DXM_W_queue.enq( (0, s.R[ inst.rs1 ], DXM_W.mngr) )
+
             elif 0x7E0 <= inst.csrnum <= 0x7FF:
               if s.xcel.req.rdy():
                 s.xcel.req( xreq_class( XcelMsgType.WRITE, inst.csrnum[0:5], s.R[inst.rs1]) )
@@ -195,10 +194,18 @@ class ProcCL( Component ):
             else:
               s.W_line_trace = "#  "
 
+          elif entry_type == DXM_W.mngr:
+            if s.proc2mngr.rdy():
+              s.proc2mngr( data )
+              s.W_line_trace = "x--"
+            else:
+              s.W_line_trace = "#  "
+
           else: # other WB insts
             assert entry_type == DXM_W.arith
             if rd > 0: s.R[ rd ] = Bits32( data )
             s.W_line_trace = "x{:02}".format( int(rd) )
+
         else: # non-WB insts
           s.W_line_trace = "x--"
 
