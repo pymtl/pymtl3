@@ -58,7 +58,8 @@ def test_pyvar():
   
   print( "\n==== Schedule ====" )
   for blk in incr._sched.schedule:
-    print( blk.__name__ )
+    if not blk.__name__.startswith('s'):
+      print( blk.__name__ )
 
   print( "\n==== Line trace ====" )
   print( "   buf1    buf2")
@@ -109,7 +110,8 @@ def test_rtl():
   
   print( "\n==== Schedule ====" )
   for blk in incr._sched.schedule:
-    print( blk.__name__ )
+    if not blk.__name__.startswith('s'):
+      print( blk.__name__ )
 
   print( "\n==== Line trace ====" )
   print( "   buf1    buf2")
@@ -170,7 +172,8 @@ def test_tb_rtl():
 
   print( "\n==== Schedule ====" )
   for blk in tb._sched.schedule:
-    print( blk.__name__ )
+    if not blk.__name__.startswith('s'):
+      print( blk.__name__ )
 
   print( "\n==== Line trace ====" )
   print( "   in_     out")
@@ -182,7 +185,74 @@ def test_tb_rtl():
 # Model an incrementer using methods
 #-------------------------------------------------------------------------
 
-class BufferCL( Component ):
+class BufferObjCL( object ):
+  def __init__( s ):
+    s.data = 0
+   
+  def write( s, value ):
+    s.data = value
+
+  def read( s ):
+    return s.data
+
+class IncrObjCL( Component ):
+  def construct( s, verbose=True ):
+
+    s.incr_input = 10
+
+    s.buf1 = BufferObjCL() 
+    s.buf2 = BufferObjCL()
+
+    s.incr_output = 0
+    
+    # UpA writes data to buf1
+    @s.update
+    def upA():
+      s.buf1.write( s.incr_input )
+      s.incr_input += 10
+
+    # UpB read data from buf1, increment it by 1, and write to buf2.
+    @s.update
+    def upB():
+      tmp = s.buf1.read()
+      s.buf2.write( tmp+1 )
+    
+    # UpC read data from buf2.
+    @s.update
+    def upC():
+      s.incr_output = s.buf2.read()
+
+    s.add_constraints( U(upA) < U(upB) )
+    s.add_constraints( U(upB) < U(upC) )
+
+  def line_trace( s ):
+    return "{:2} (+1) {:2}".format( s.buf1.data, s.buf2.data )
+
+#-------------------------------------------------------------------------
+# Simulate the incrementer with python objects 
+#-------------------------------------------------------------------------
+
+def test_obj_cl():
+  incr = IncrObjCL()
+  incr.apply( SimpleSim )
+
+  # FIXME: ignore s_reset__2 and s_clk__2?
+  print( "\n==== Schedule ====" )
+  for blk in incr._sched.schedule:
+    if not blk.__name__.startswith('s'):
+      print( blk.__name__ )
+
+  print( "\n==== Line trace ====" )
+  print( "   buf1    buf2")
+  for i in range( 6 ):
+    incr.tick()
+    print("{:2}: {}".format( i, incr.line_trace() ))
+
+#-------------------------------------------------------------------------
+# Model an incrementer using methods
+#-------------------------------------------------------------------------
+
+class BufferCompCL( Component ):
   def construct( s ):
     s.data = 0
     s.add_constraints( M( s.read ) < M( s.write ) )
@@ -195,13 +265,13 @@ class BufferCL( Component ):
   def read( s ):
     return s.data
 
-class IncrCL( Component ):
+class IncrCompCL( Component ):
   def construct( s, verbose=True ):
 
     s.incr_input = 10
 
-    s.buf1 = BufferCL() 
-    s.buf2 = BufferCL()
+    s.buf1 = BufferCompCL() 
+    s.buf2 = BufferCompCL()
 
     s.incr_output = 0
     
@@ -226,17 +296,18 @@ class IncrCL( Component ):
     return "{:2} (+1) {:2}".format( s.buf1.data, s.buf2.data )
 
 #-------------------------------------------------------------------------
-# Simulate the incrementer
+# Simulate the incrementer with CL component
 #-------------------------------------------------------------------------
 
-def test_cl():
-  incr = IncrCL()
+def test_comp_cl():
+  incr = IncrCompCL()
   incr.apply( SimpleSim )
 
-  # FIXME: Why is there a s_reset__2 and s_clk__2?
+  # FIXME: ignore s_reset__2 and s_clk__2?
   print( "\n==== Schedule ====" )
   for blk in incr._sched.schedule:
-    print( blk.__name__ )
+    if not blk.__name__.startswith('s'):
+      print( blk.__name__ )
 
   print( "\n==== Line trace ====" )
   print( "   buf1    buf2")
@@ -254,8 +325,8 @@ class IncrModuleCL( Component ):
     s.write = CalleePort()
     s.read  = CalleePort()
     
-    s.buf1 = BufferCL()
-    s.buf2 = BufferCL()
+    s.buf1 = BufferCompCL()
+    s.buf2 = BufferCompCL()
 
     s.connect( s.write, s.buf1.write )
     s.connect( s.read,  s.buf2.read  )
@@ -298,7 +369,8 @@ def test_tb_cl():
 
   print( "\n==== Schedule ====" )
   for blk in tb._sched.schedule:
-    print( blk.__name__ )
+    if not blk.__name__.startswith('s'):
+      print( blk.__name__ )
 
   print( "\n==== Line trace ====" )
   print( "   in_     out")
