@@ -16,13 +16,30 @@ from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
-from ..ChecksumRTL import ChecksumRTL
+from ..ChecksumRTL import ChecksumRTL, StepUnit
 from ..utils import b128_to_words, words_to_b128
 from .ChecksumCL_test import(
   ChecksumCL_Tests as BaseTests,
   ChecksumCLSrcSink_Tests as BaseSrcSinkTests,
   TestHarness,
 )
+
+#-------------------------------------------------------------------------
+# Unit test the step unit
+#-------------------------------------------------------------------------
+
+def test_step_unit():
+  step_unit = StepUnit()
+  step_unit.apply( SimpleSim )
+  step_unit.sim_reset()
+
+  step_unit.word_in  = b16(1)
+  step_unit.sum1_acc = b32(1)
+  step_unit.sum2_acc = b32(1)
+  step_unit.tick()
+
+  step_unit.sum1_out = b32(2) 
+  step_unit.sum2_out = b32(3) 
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
