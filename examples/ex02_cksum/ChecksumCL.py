@@ -37,8 +37,10 @@ class ChecksumCL( Component ):
     @s.update
     def up_checksum_cl():
       if s.in_q.deq.rdy() and s.send.rdy():
-        raw_bits = s.in_q.deq()
-        result   = checksum( b128_to_words( raw_bits ) )
+        bits = s.in_q.deq()
+        words = b128_to_words( bits )
+        # Inject a bug: words[5] = b16(0)
+        result = checksum( words )
         s.send( result )
 
   def line_trace( s ):

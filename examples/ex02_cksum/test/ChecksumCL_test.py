@@ -71,6 +71,7 @@ class ChecksumCL_Tests( BaseTests ):
     words = st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8 ) 
   )
   def test_hypothesis( s, words ):
+    print( words )
     words = [ b16(x) for x in words ]
     assert s.cksum_func( words ) == checksum( words )
 
