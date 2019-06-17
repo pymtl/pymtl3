@@ -17,7 +17,7 @@ from pymtl3 import *
 #-------------------------------------------------------------------------
 
 class IncrPyVar( Component ):
-  def construct( s, verbose=True ):
+  def construct( s ):
 
     s.incr_input = 10
 
@@ -72,7 +72,7 @@ def test_pyvar():
 #-------------------------------------------------------------------------
 
 class IncrRTL( Component ):
-  def construct( s, verbose=True ):
+  def construct( s ):
     
     s.incr_input = 10
 
@@ -196,7 +196,7 @@ class BufferObjCL( object ):
     return s.data
 
 class IncrObjCL( Component ):
-  def construct( s, verbose=True ):
+  def construct( s ):
 
     s.incr_input = 10
 
@@ -266,7 +266,7 @@ class BufferCompCL( Component ):
     return s.data
 
 class IncrCompCL( Component ):
-  def construct( s, verbose=True ):
+  def construct( s ):
 
     s.incr_input = 10
 
