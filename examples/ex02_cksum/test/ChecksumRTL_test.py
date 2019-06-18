@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 from pymtl3 import *
 from pymtl3.passes import DynamicSim
 from pymtl3.passes.yosys import TranslationPass, ImportPass
-from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
