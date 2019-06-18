@@ -551,7 +551,7 @@ def _handle_Const( obj ):
 
 def _handle_Interface( obj ):
   properties = {}
-  collected_objs = collect_objs( obj, object, True )
+  collected_objs = collect_objs( obj, object )
   for _id, _obj in collected_objs:
     # TODO: warn the user about a silently dropped attribute?
     if _is_rtlir_ifc_convertible( _obj ):
@@ -564,7 +564,7 @@ def _handle_Interface( obj ):
 
 def _handle_Component( obj ):
   properties = {}
-  collected_objs = collect_objs( obj, object, True )
+  collected_objs = collect_objs( obj, object )
   for _id, _obj in collected_objs:
     # Untranslatable attributes will be ignored
     # TODO: warn the user about a silently dropped attribute?
@@ -630,7 +630,7 @@ def get_component_ifc_rtlir( obj ):
     assert isinstance(obj, dsl.Component), \
       "the given object is not a PyMTL component!"
     properties = {}
-    collected_objs = collect_objs( obj, object, True )
+    collected_objs = collect_objs( obj, object )
     for _id, _obj in collected_objs:
       if _is_interface( _obj ):
         _obj_type = _get_ifc_rtlir( _obj )
