@@ -174,10 +174,10 @@ class ProcRTL( Component ):
     else:                 F_str = "{:08x}".format( s.dpath.pc_reg_F.out.uint() )
 
     # D stage
-    if not s.ctrl.val_D:  D_str = "{:<23s}".format( ' ' )
-    elif s.ctrl.squash_D: D_str = "{:<23s}".format( '~' )
-    elif s.ctrl.stall_D:  D_str = "{:<23s}".format( '#' )
-    else:                 D_str = "{:<23s}".format( disassemble_inst(s.ctrl.inst_D) )
+    if not s.ctrl.val_D:  D_str = "{:<22s}".format( ' ' )
+    elif s.ctrl.squash_D: D_str = "{:<22s}".format( '~' )
+    elif s.ctrl.stall_D:  D_str = "{:<22s}".format( '#' )
+    else:                 D_str = "{:<22s}".format( disassemble_inst(s.ctrl.inst_D) )
 
     # X stage
     if not s.ctrl.val_X:  X_str = "{:<5s}".format( ' ' )
@@ -194,4 +194,4 @@ class ProcRTL( Component ):
     elif s.ctrl.stall_W:  W_str = "{:<5s}".format( '#' )
     else:                 W_str = "{:<5s}".format( inst_dict[s.ctrl.inst_type_W] )
 
-    return "{}|{}|{}|{}|{}|".format( F_str, D_str, X_str, M_str, W_str)
+    return "[{}|{}|{}|{}|{}]".format( F_str, D_str, X_str, M_str, W_str)

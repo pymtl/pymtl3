@@ -198,12 +198,14 @@ def main():
   #-----------------------------------------------------------------------
 
   # Create test harness and elaborate
-  print "--- Proc:", opts.proc_impl, "--- Xcel:", opts.xcel_impl, "---"
+  print
+  print "----- Proc:", opts.proc_impl.upper(), "-"*50 , "Xcel:", opts.xcel_impl.upper(), "-----"
+  print
 
   model = TestHarness( proc_impl_dict[ opts.proc_impl ],
                        xcel_impl_dict[ opts.xcel_impl ], 0,
                       # src sink memstall memlat
-                        3,  4,   0,       1 )
+                        0,  0,   0,       1 )
 
   from pymtl3.passes import DynamicSim
   model.apply( DynamicSim )

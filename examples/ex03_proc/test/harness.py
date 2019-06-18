@@ -7,17 +7,17 @@ Author : Shunning Jiang
   Date : June 15, 2019
 """
 
+from __future__ import absolute_import, division, print_function
+
 import struct
-
-from pymtl3 import *
-
-from pymtl3.passes import DynamicSim
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test  import TestSrcCL, TestSinkCL
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
+from pymtl3 import *
+from pymtl3.passes import DynamicSim
+from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 #=========================================================================
 # TestHarness
@@ -131,7 +131,6 @@ class TestHarness(Component):
   def line_trace( s ):
     return s.src.line_trace()  + " >" + \
            s.proc.line_trace() + "|" + s.xcel.line_trace() + "|" + \
-           s.mem.line_trace()  + " > " + \
            s.sink.line_trace()
 
 #=========================================================================
@@ -161,7 +160,14 @@ def run_test( ProcModel, gen_test, dump_vcd=None,
 
   # Run the simulation
 
-  th.apply( SimpleSim[1:] )
+  # from pymtl3.passes.yosys import TranslationPass, ImportPass
+
+  # th.elaborate()
+  # th.proc.yosys_translate = True
+  # th.proc.yosys_import = True
+  # th.apply( TranslationPass() )
+  # th = ImportPass()( th )
+  th.apply( DynamicSim )
   th.sim_reset()
 
   print()
@@ -169,7 +175,7 @@ def run_test( ProcModel, gen_test, dump_vcd=None,
   T = 0
   while not th.done() and T < max_cycles:
     th.tick()
-    print "{:3}: {}".format( T, th.line_trace() )
+    print("{:3}: {}".format( T, th.line_trace() ))
     T += 1
 
   # Force a test failure if we timed out
@@ -181,4 +187,3 @@ def run_test( ProcModel, gen_test, dump_vcd=None,
   th.tick()
   th.tick()
   th.tick()
-

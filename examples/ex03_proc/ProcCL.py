@@ -20,8 +20,18 @@ from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
 from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
 
-from .tinyrv0_encoding import RegisterFile, TinyRV0Inst
+from .tinyrv0_encoding import disassemble_inst, RegisterFile, TinyRV0Inst
 
+class DXM_W(Enum):
+  mem   = 1
+  xcel  = 2
+  arith = 3
+  mngr  = 4
+
+class PipelineStatus(Enum):
+  idle  = 0
+  stall = 1
+  work  = 2
 
 class ProcCL( Component ):
 
@@ -55,19 +65,18 @@ class ProcCL( Component ):
     s.F_DXM_queue = PipeQueueCL(1)
     s.DXM_W_queue = PipeQueueCL(1)
 
-    s.F_line_trace = " "*5
-    s.DXM_line_trace = " "*5
-    s.W_line_trace = " "*3
-
-    class DXM_W(Enum):
-      mem   = 1
-      xcel  = 2
-      arith = 3
-      mngr  = 4
+    s.F_status   = PipelineStatus.idle
+    s.DXM_status = PipelineStatus.idle
+    s.W_status   = PipelineStatus.idle
 
     @s.update
     def F():
-      s.F_line_trace = "     "
+      s.F_status = PipelineStatus.idle
+
+      if s.reset:
+        s.pc = b32( 0x200 )
+        return
+
       if s.imem.req.rdy() and s.F_DXM_queue.enq.rdy():
         if s.redirected_pc_DXM >= 0:
           s.imem.req( memreq_cls( MemMsgType.READ, 0, s.redirected_pc_DXM ) )
@@ -76,28 +85,32 @@ class ProcCL( Component ):
           s.imem.req( memreq_cls( MemMsgType.READ, 0, s.pc ) )
 
         s.F_DXM_queue.enq( s.pc )
-        s.F_line_trace = "{:5}".format( hex(int(s.pc)) )
+        s.F_status = PipelineStatus.work
         s.pc += 4
+      else:
+        s.F_status = PipelineStatus.stall
 
     s.redirected_pc_DXM = -1
+
+    s.raw_inst = b32(0)
 
     @s.update
     def DXM():
       s.redirected_pc_DXM = -1
-      s.DXM_line_trace = "     "
+      s.DXM_status = PipelineStatus.idle
 
-      if s.F_DXM_queue.deq.rdy() and s.DXM_W_queue.enq.rdy():
-        if not s.imemresp_q.deq.rdy():
-          s.DXM_line_trace = "#    "
+      if s.F_DXM_queue.deq.rdy() and s.imemresp_q.deq.rdy():
+
+        if not s.DXM_W_queue.enq.rdy():
+          s.DXM_status = PipelineStatus.stall
         else:
-          pc   = s.F_DXM_queue.peek()
-          raw_inst = s.imemresp_q.peek().data
+          pc = s.F_DXM_queue.peek()
 
-          inst = TinyRV0Inst( raw_inst )
+          s.raw_inst = s.imemresp_q.peek().data
+          inst       = TinyRV0Inst( s.raw_inst )
+          inst_name  = inst.name
 
-          inst_name = inst.name
-
-          executed = True
+          s.DXM_status = PipelineStatus.work
 
           if inst_name == "nop":
             pass
@@ -119,7 +132,8 @@ class ProcCL( Component ):
                                       s.R[ inst.rs2 ] ) )
               s.DXM_W_queue.enq( (0, 0, DXM_W.mem) )
             else:
-              executed = False
+              s.DXM_status = PipelineStatus.stall
+
           elif inst_name == "lw":
             if s.dmem.req.rdy():
               s.dmem.req( memreq_cls( MemMsgType.READ, 0,
@@ -127,7 +141,7 @@ class ProcCL( Component ):
                                       0 ) )
               s.DXM_W_queue.enq( (inst.rd, 0, DXM_W.mem) )
             else:
-              executed = False
+              s.DXM_status = PipelineStatus.stall
 
           elif inst_name == "bne":
             if s.R[ inst.rs1 ] != s.R[ inst.rs2 ]:
@@ -144,74 +158,77 @@ class ProcCL( Component ):
                 s.xcel.req( xreq_class( XcelMsgType.WRITE, inst.csrnum[0:5], s.R[inst.rs1]) )
                 s.DXM_W_queue.enq( (0, 0, DXM_W.xcel) )
               else:
-                executed = False
+                s.DXM_status = PipelineStatus.stall
           elif inst_name == "csrr":
             if inst.csrnum == 0xFC0: # CSR: mngr2proc
               if s.mngr2proc_q.deq.rdy():
                 s.DXM_W_queue.enq( (inst.rd, s.mngr2proc_q.deq(), DXM_W.arith) )
               else:
-                executed = False
+                s.DXM_status = PipelineStatus.stall
             elif 0x7E0 <= inst.csrnum <= 0x7FF:
               if s.xcel.req.rdy():
                 s.xcel.req( xreq_class( XcelMsgType.READ, inst.csrnum[0:5], s.R[inst.rs1]) )
                 s.DXM_W_queue.enq( (inst.rd, 0, DXM_W.xcel) )
               else:
-                executed = False
+                s.DXM_status = PipelineStatus.stall
 
           # If we execute any instruction, we pop from queues
-          if executed:
+          if s.DXM_status == PipelineStatus.work:
             s.F_DXM_queue.deq()
             s.imemresp_q.deq()
-            s.DXM_line_trace = "{:5}".format( inst_name )
+
+    s.rd = b5(0)
 
     @s.update
     def W():
       s.commit_inst = Bits1(0)
-      s.W_line_trace = "   "
+      s.W_status = PipelineStatus.idle
 
       if s.DXM_W_queue.deq.rdy():
         entry = s.DXM_W_queue.peek()
         if entry is not None:
           rd, data, entry_type = entry
+          s.rd = rd
 
           if entry_type == DXM_W.mem:
             if s.dmemresp_q.deq.rdy():
               if rd > 0: # load
                 s.R[ rd ] = Bits32( s.dmemresp_q.deq().data )
-                s.W_line_trace = "x{:02}".format( int(rd) )
               else: # store
                 s.dmemresp_q.deq()
-                s.W_line_trace = "x--"
+
+              s.W_status = PipelineStatus.work
+
             else:
-              s.W_line_trace = "#  "
+              s.W_status = PipelineStatus.stall
 
           elif entry_type == DXM_W.xcel:
             if s.xcelresp_q.deq.rdy():
               if rd > 0: # csrr
                 s.R[ rd ] = Bits32( s.xcelresp_q.deq().data )
-                s.W_line_trace = "x{:02}".format( int(rd) )
               else: # csrw
                 s.xcelresp_q.deq()
-                s.W_line_trace = "x--"
+
+              s.W_status = PipelineStatus.work
             else:
-              s.W_line_trace = "#  "
+              s.W_status = PipelineStatus.stall
 
           elif entry_type == DXM_W.mngr:
             if s.proc2mngr.rdy():
               s.proc2mngr( data )
-              s.W_line_trace = "x--"
+              s.W_status = PipelineStatus.work
             else:
-              s.W_line_trace = "#  "
+              s.W_status = PipelineStatus.stall
 
           else: # other WB insts
             assert entry_type == DXM_W.arith
             if rd > 0: s.R[ rd ] = Bits32( data )
-            s.W_line_trace = "x{:02}".format( int(rd) )
+            s.W_status = PipelineStatus.work
 
         else: # non-WB insts
-          s.W_line_trace = "x--"
+          s.W_status = PipelineStatus.work
 
-      if s.W_line_trace[0] != " " and s.W_line_trace[0] != "#":
+      if s.W_status == PipelineStatus.work:
         s.DXM_W_queue.deq()
         s.commit_inst = Bits1(1)
 
@@ -220,4 +237,22 @@ class ProcCL( Component ):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return "{}|{}|{}".format( s.F_line_trace, s.DXM_line_trace, s.W_line_trace )
+    F_line_trace = " "
+    if s.F_status == PipelineStatus.work:
+      F_line_trace = str(s.pc)
+    elif s.F_status == PipelineStatus.stall:
+      F_line_trace = "#"
+
+    DXM_line_trace = " "
+    if s.DXM_status == PipelineStatus.work:
+      DXM_line_trace = disassemble_inst(s.raw_inst)
+    elif s.DXM_status == PipelineStatus.stall:
+      DXM_line_trace = "#"
+
+    W_line_trace = " "
+    if s.W_status == PipelineStatus.work:
+      W_line_trace = "x{:2}".format(str(s.rd) if s.rd > 0 else "--")
+    elif s.F_status == PipelineStatus.stall:
+      W_line_trace = "#"
+
+    return "[{:<8s}|{:<23s}|{:<3s}]".format( F_line_trace, DXM_line_trace, W_line_trace )
