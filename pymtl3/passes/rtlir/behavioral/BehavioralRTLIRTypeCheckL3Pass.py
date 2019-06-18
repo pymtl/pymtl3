@@ -59,7 +59,14 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       elif isinstance( node.value.Type, rt.Wire ):
         rtype = rt.Wire( dtype )
       elif isinstance( node.value.Type, rt.Const ):
-        rtype = rt.Const( dtype )
+        obj = node.value.Type.get_object()
+        if obj is None:
+          rtype = rt.Const( dtype )
+        else:
+          try:
+            rtype = rt.Const( dtype, getattr( obj, node.attr ) )
+          except AttributeError:
+            rtype = rt.Const( dtype )
       else:
         raise PyMTLTypeError( s.blk, node.ast,
           'unrecognized signal type {}!'.format( node.value.Type ) )

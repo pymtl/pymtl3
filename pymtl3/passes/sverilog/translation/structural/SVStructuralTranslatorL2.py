@@ -104,12 +104,20 @@ typedef struct packed {{
   def rtlir_tr_struct_instance( s, dtype, struct ):
     def _gen_packed_array( dtype, n_dim, array ):
       if not n_dim:
-        return s.rtlir_tr_struct_instance( dtype, array )
+        if isinstance( dtype, rdt.Vector ):
+          return s.rtlir_tr_literal_number( dtype.nbits, array )
+        elif isinstance( dtype, rdt.Struct ):
+          return s.rtlir_tr_struct_instance( dtype, array )
+        else:
+          assert False, "unrecognized data type {}!".format( dtype )
       else:
         ret = []
-        for i in range( n_dim[0] ):
+        for i in reversed( range( n_dim[0] ) ):
           ret.append( _gen_packed_array( dtype, n_dim[1:], array[i] ) )
-        cat_str = ", ".join( ret )
+        if n_dim[0] > 1:
+          cat_str = "{" + ", ".join( ret ) + "}"
+        else:
+          cat_str = ", ".join( ret )
         return "{{ {cat_str} }}".format( **locals() )
     ret = []
     all_properties = dtype.get_all_properties()

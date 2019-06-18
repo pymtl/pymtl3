@@ -104,8 +104,14 @@ end\
     [       B(),   42 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = 32'd42;
+  out_b = 32'd42;
+end\
+""" }
   do_test( a )
-
 
 def test_packed_array_behavioral( do_test ):
   class B( BitStruct ):

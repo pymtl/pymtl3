@@ -65,6 +65,12 @@ typedef struct packed {
   assign out = 32'd42;\
 """
 }
+  # Yosys backend test reference output
+  a._ref_ports_port_yosys = a._ref_ports
+  a._ref_ports_wire_yosys = { a : "" }
+  a._ref_ports_conn_yosys = { a : "" }
+  a._ref_wires_yosys = a._ref_wires
+  a._ref_conns_yosys = a._ref_conns
   # TestVectorSimulator properties
   def tv_in( m, tv ):
     pass

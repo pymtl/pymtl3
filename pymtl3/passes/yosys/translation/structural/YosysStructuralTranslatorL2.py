@@ -205,3 +205,44 @@ class YosysStructuralTranslatorL2(
     s.deq[-1]['s_attr'] += "${}"
     s.deq[-1]['attr'].append( attr )
     return '{base_signal}.{attr}'.format( **locals() )
+
+  def rtlir_tr_struct_instance( s, dtype, struct ):
+    def _gen_packed_array( dtype, n_dim, array ):
+      if not n_dim:
+        if isinstance( dtype, rdt.Vector ):
+          return s.rtlir_tr_literal_number( dtype.nbits, array )
+        elif isinstance( dtype, rdt.Struct ):
+          return s.rtlir_tr_struct_instance( dtype, array )
+        else:
+          assert False, "unrecognized data type {}!".format( dtype )
+      else:
+        ret = []
+        for i in reversed( range( n_dim[0] ) ):
+          _ret = _gen_packed_array( dtype, n_dim[1:], array[i] )
+          ret.append( _ret["s_attr"] )
+        if n_dim[0] > 1:
+          cat_str = "{" + ", ".join( ret ) + "}"
+        else:
+          cat_str = ", ".join( ret )
+        return {'attr':[], 'index':[], 's_attr':cat_str, 's_index':""}
+    fields = []
+    all_properties = dtype.get_all_properties()
+    for name, Type in all_properties:
+      field = getattr( struct, name )
+      if isinstance( Type, rdt.Vector ):
+        _field = s.rtlir_tr_literal_number( Type.nbits, field )
+      elif isinstance( Type, rdt.Struct ):
+        _field = s.rtlir_tr_struct_instance( Type, field )
+      elif isinstance( Type, rdt.PackedArray ):
+        n_dim = Type.get_dim_sizes()
+        sub_dtype = Type.get_sub_dtype()
+        _field = _gen_packed_array( sub_dtype, n_dim, field )
+      else:
+        assert False, "unrecognized data type {}!".format( Type )
+      fields.append( _field["s_attr"] )
+    if len( fields ) == 1:
+      struct_str = fields[0]
+    else:
+      struct_str = "{" + ", ".join( fields ) + "}"
+    s.deq.append( {'attr':[], 'index':[], 's_attr':struct_str, 's_index':""} )
+    return struct_str

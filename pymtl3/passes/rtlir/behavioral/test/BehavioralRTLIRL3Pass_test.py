@@ -26,7 +26,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL3Pass import (
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRVisualizationPass import (
     BehavioralRTLIRVisualizationPass,
 )
-from pymtl3.passes.rtlir.errors import PyMTLTypeError, PyMTLSyntaxError
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 

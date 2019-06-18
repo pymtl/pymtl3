@@ -14,6 +14,7 @@ from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL2_test import (
     test_nested_struct_port,
     test_packed_array,
+    test_struct_const_structural,
     test_struct_packed_array,
     test_struct_port,
 )

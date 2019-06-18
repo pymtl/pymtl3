@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, BitStruct
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -161,10 +161,15 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       obj = Type.get_object()
       if isinstance( obj, int ):
         node.sexpr['s_attr'] = "32'd{}".format( obj )
+        node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
         nbits = obj.nbits
         value = int( obj.value )
         node.sexpr['s_attr'] = "{nbits}'d{value}".format( **locals() )
+        node.sexpr['s_index'] = ""
+      elif isinstance( obj, BitStruct ):
+        node.sexpr['s_attr'] = s._struct_instance( node.Type.get_dtype(), obj )
+        node.sexpr['s_index'] = ""
       else:
         raise SVerilogTranslationError( s.blk, node,
           "{} {} is not an integer!".format( node.attr, obj ) )

@@ -46,7 +46,7 @@ class BehavioralRTLIRToSVVisitorL3( BehavioralRTLIRToSVVisitorL2 ):
   #-----------------------------------------------------------------------
 
   def visit_StructInst( s, node ):
-    values = list( reversed( map( s.visit, node.values ) ) )
+    values = list( map( s.visit, node.values ) )
     if len( values ) == 1:
       return values[0]
     else:
