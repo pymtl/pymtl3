@@ -25,21 +25,22 @@ import sys
 
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while sim_dir:
-  if os.path.exists( sim_dir + os.path.sep + ".pymtl-python-path" ):
+  #if os.path.exists( sim_dir + os.path.sep + ".pymtl-python-path" ):
+  if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
     sys.path.insert(0,sim_dir)
     break
   sim_dir = os.path.dirname(sim_dir)
 
-from ex03_proc.SparseMemoryImage import SparseMemoryImage
-from ex03_proc.tinyrv0_encoding import assemble
-from ex03_proc.ubmark.proc_ubmark_vvadd_opt import ubmark_vvadd_opt
-from ex03_proc.ubmark.proc_ubmark_vvadd_unopt import ubmark_vvadd_unopt
-from ex03_proc.ubmark.proc_ubmark_checksum import ubmark_cksum
+from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
+from examples.ex03_proc.tinyrv0_encoding import assemble
+from examples.ex03_proc.ubmark.proc_ubmark_vvadd_opt import ubmark_vvadd_opt
+from examples.ex03_proc.ubmark.proc_ubmark_vvadd_unopt import ubmark_vvadd_unopt
+from examples.ex03_proc.ubmark.proc_ubmark_cksum_blk import ubmark_cksum
 
 # from ex03_proc.ProcFL import ProcFL
-from ex03_proc.ProcCL import ProcCL
-from ex03_proc.ProcRTL import ProcRTL
-from ex03_proc.NullXcel import NullXcelRTL
+from examples.ex03_proc.ProcCL import ProcCL
+from examples.ex03_proc.ProcRTL import ProcRTL
+from examples.ex03_proc.NullXcel import NullXcelRTL
 
 from pymtl3 import *
 from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
@@ -72,7 +73,7 @@ def parse_cmdline():
   p.add_argument( "--trace", action="store_true"      )
   p.add_argument( "--impl",  default="rtl", choices=["fl", "cl", "rtl"] )
   p.add_argument( "--input", default="vvadd-unopt",
-                             choices=["vvadd-unopt", "vvadd-opt", "cksum"] )
+                             choices=["vvadd-unopt", "vvadd-opt", "cksum-blk"] )
   p.add_argument( "--limit",   default=1000000, type=int )
   p.add_argument( "--delay",   action="store_true"      )
   p.add_argument( "--verify",  action="store_true"    )
@@ -90,7 +91,7 @@ impl_dict = {
 input_dict = {
   "vvadd-unopt": ubmark_vvadd_unopt,
   "vvadd-opt"  : ubmark_vvadd_opt,
-  "cksum"      : ubmark_cksum,
+  "cksum-blk"  : ubmark_cksum,
 }
 
 #=========================================================================

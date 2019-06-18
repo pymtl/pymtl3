@@ -14,8 +14,8 @@ import struct
 
 from pymtl3                      import *
 from string                      import translate, maketrans
-from ex03_proc.tinyrv0_encoding  import assemble
-from ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
+from examples.ex03_proc.tinyrv0_encoding  import assemble
+from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 from proc_ubmark_vvadd_data      import src0, src1, ref
 
 c_vvadd_src0_ptr = 0x2000;
