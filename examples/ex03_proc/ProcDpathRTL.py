@@ -7,14 +7,14 @@ Author : Shunning Jiang
   Date : June 12, 2019
 """
 
-from pymtl3            import *
-from pymtl3.stdlib.rtl import RegisterFile, Mux, RegEnRst, RegEn
-from pymtl3.stdlib.rtl import Adder, Incrementer
+from __future__ import absolute_import, division, print_function
 
-from MiscRTL        import AluRTL, ImmGenRTL
-from TinyRV0InstRTL import OPCODE, RS1, RS2, RD, SHAMT
-
+from pymtl3 import *
 from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.rtl import Adder, Incrementer, Mux, RegEn, RegEnRst, RegisterFile
+
+from .MiscRTL import AluRTL, ImmGenRTL
+from .TinyRV0InstRTL import OPCODE, RD, RS1, RS2, SHAMT
 
 #-------------------------------------------------------------------------
 # Constants

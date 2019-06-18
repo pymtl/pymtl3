@@ -6,10 +6,13 @@
 Author : Shunning Jiang
   Date : June 13, 2019
 """
-from pymtl3        import *
+from __future__ import absolute_import, division, print_function
 
+from pymtl3 import *
 from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType
-from TinyRV0InstRTL import *
+
+from .TinyRV0InstRTL import *
+
 
 class ProcCtrl( Component ):
 

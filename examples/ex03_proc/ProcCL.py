@@ -7,19 +7,21 @@ TinyRV0 CL proc
 Author : Shunning Jiang
   Date : June 14, 2019
 """
+from __future__ import absolute_import, division, print_function
+
 from collections import deque
 from enum import Enum
 
-from pymtl3      import *
-
-from pymtl3.stdlib.ifcs import mk_mem_msg, MemMsgType
-from pymtl3.stdlib.ifcs.mem_ifcs  import MemMasterIfcCL, MemMasterIfcFL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
-from pymtl3.stdlib.ifcs.XcelMsg   import mk_xcel_msg, XcelMsgType
-from pymtl3.stdlib.cl.queues import PipeQueueCL
+from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
+from pymtl3.stdlib.cl.queues import PipeQueueCL
+from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
+from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL
+from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
+from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
 
-from tinyrv0_encoding import RegisterFile, TinyRV0Inst
+from .tinyrv0_encoding import RegisterFile, TinyRV0Inst
+
 
 class ProcCL( Component ):
 

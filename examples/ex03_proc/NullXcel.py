@@ -6,11 +6,14 @@
 Author : Shunning Jiang
   Date : June 14, 2019
 """
+from __future__ import absolute_import, division, print_function
+
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcRTL
-from pymtl3.stdlib.ifcs.XcelMsg import mk_xcel_msg, XcelMsgType
+from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.rtl import RegEn
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
+
 
 class NullXcelRTL(Component):
 

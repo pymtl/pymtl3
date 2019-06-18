@@ -2,15 +2,19 @@
 # ProcCL
 #=========================================================================
 
+from __future__ import absolute_import, division, print_function
+
 from collections import deque
 
-from tinyrv0_encoding import disassemble_inst, RegisterFile, TinyRV0Inst
 from pymtl3 import *
-from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcFL
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcFL
-from pymtl3.stdlib.ifcs.XcelMsg   import mk_xcel_msg
 from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL
+from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcFL
 from pymtl3.stdlib.ifcs.SendRecvIfc import SendIfcFL
+from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcFL
+from pymtl3.stdlib.ifcs.XcelMsg import mk_xcel_msg
+
+from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
+
 
 class ProcFL( Component ):
 

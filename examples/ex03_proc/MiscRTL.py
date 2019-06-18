@@ -7,11 +7,13 @@ Miscellaneous components for building the RTL processor.
 Author : Shunning Jiang
   Date : June 13, 2019
 """
-from pymtl3          import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.rtl  import RegRst
+from __future__ import absolute_import, division, print_function
 
-from TinyRV0InstRTL  import *
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
+from pymtl3.stdlib.rtl import RegRst
+
+from .TinyRV0InstRTL import *
 
 # State Constants
 
@@ -60,7 +62,7 @@ class DropUnitRTL( Component ):
 
       elif s.snoop_state.out == WAIT:
         s.out.en = b1(0)
-      
+
       else:
         s.out.en = b1(0)
 

@@ -8,20 +8,21 @@ Author : Shunning Jiang
   Date : June 12, 2019
 """
 
-from pymtl3             import *
+from __future__ import absolute_import, division, print_function
+
+from pymtl3 import *
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg, mk_xcel_msg
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcRTL
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcRTL
-from pymtl3.stdlib.ifcs        import RecvIfcRTL, SendIfcRTL, mk_xcel_msg
-from pymtl3.stdlib.rtl.queues  import BypassQueueRTL
-from pymtl3.stdlib.rtl.enrdy_queues  import BypassQueue2RTL
-from tinyrv0_encoding  import disassemble_inst
-from TinyRV0InstRTL   import inst_dict
+from pymtl3.stdlib.rtl.enrdy_queues import BypassQueue2RTL
+from pymtl3.stdlib.rtl.queues import BypassQueueRTL
 
-from ProcDpathRTL  import ProcDpath
-from ProcCtrlRTL   import ProcCtrl
-from MiscRTL       import DropUnitRTL
+from .MiscRTL import DropUnitRTL
+from .ProcCtrlRTL import ProcCtrl
+from .ProcDpathRTL import ProcDpath
+from .tinyrv0_encoding import disassemble_inst
+from .TinyRV0InstRTL import inst_dict
 
-from pymtl3.stdlib.ifcs import mk_mem_msg
 
 class ProcRTL( Component ):
 

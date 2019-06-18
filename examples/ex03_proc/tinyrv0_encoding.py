@@ -14,11 +14,14 @@
  Date   : June 14, 2019
 """
 
-import struct
+from __future__ import absolute_import, division, print_function
 
-from pymtl3            import *
-from string            import translate,maketrans
-from SparseMemoryImage import SparseMemoryImage
+import struct
+from string import maketrans, translate
+
+from pymtl3 import *
+
+from .SparseMemoryImage import SparseMemoryImage
 
 #=========================================================================
 # Encoding Table
