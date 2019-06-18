@@ -1,6 +1,6 @@
 """
 ==========================================================================
-IncrBuf_test.py
+IncrMethodPorts_test.py
 ==========================================================================
 Model an incrementer using PyMTL component with method ports and method
 constraints.
