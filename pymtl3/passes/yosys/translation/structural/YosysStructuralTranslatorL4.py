@@ -36,7 +36,7 @@ class YosysStructuralTranslatorL4(
 
   def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
-      port_dtype, port_array_type ):
+      port_array_type ):
     return s.rtlir_tr_interface_port_decl(
         m, port_id, port_rtype, port_array_type )
 

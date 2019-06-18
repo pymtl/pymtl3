@@ -125,7 +125,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
 
     def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
         ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
-        port_dtype, port_array_type ):
+        port_array_type ):
       port_rtype = repr(port_rtype) if not port_array_type else port_array_type
       return ['component_ifc_port: {port_id} {port_rtype}'.format(**locals())]
 
