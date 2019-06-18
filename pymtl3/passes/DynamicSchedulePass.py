@@ -200,6 +200,7 @@ class DynamicSchedulePass( BasePass ):
 
           return namespace['generated_block']
 
+        # FIXME when there is nothing in {2} ..
         template = """
           from copy import deepcopy
           def wrapped_SCC_{0}():
