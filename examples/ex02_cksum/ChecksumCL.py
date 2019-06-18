@@ -39,7 +39,9 @@ class ChecksumCL( Component ):
       if s.in_q.deq.rdy() and s.send.rdy():
         bits = s.in_q.deq()
         words = b128_to_words( bits )
-        # Inject a bug: words[5] = b16(0)
+        # Inject a bug and let hypothesis catch it. For example, you can
+        # add the following statement:
+        # words[5] = b16(0)
         result = checksum( words )
         s.send( result )
 
