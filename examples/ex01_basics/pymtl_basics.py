@@ -333,8 +333,7 @@ class IncrModuleCL( Component ):
 
     @s.update
     def upB():
-      tmp = s.buf1.read()
-      s.buf2.write( tmp+1 )
+      s.buf2.write( s.buf1.read() + 1 )
 
   def line_trace( s ):
     return "{:2} (+1) {:2}".format( s.buf1.data, s.buf2.data )
