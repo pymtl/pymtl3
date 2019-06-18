@@ -4,7 +4,7 @@ ubmark-checksum: a modified fletcher checksum algorithm.
 ==========================================================================
 
 This code computes checksum of an array of 16 byte blocks and stores
-:
+result to the destination array.
 
 void cksum( int *dest, int *src0, int size ) {
   for ( int i = 0; i < size; i++ ){
