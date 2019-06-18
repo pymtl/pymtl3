@@ -6,7 +6,7 @@
 #  -h --help           Display this message
 #
 #  --impl              {fl,cl,rtl}
-#  --input <dataset>   {vvadd-unopt,vvadd-opt,bsearch,cmult,mfilt}
+#  --input <dataset>   {vvadd-unopt,vvadd-opt,cksum-blk}
 #  --verify            Verify results
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
