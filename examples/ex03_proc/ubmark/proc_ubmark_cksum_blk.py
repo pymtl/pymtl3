@@ -72,18 +72,24 @@ class ubmark_cksum:
       loop_i:
         add   x6,  x0,  x0 # sum1 = 0
         add   x7,  x0,  x0 # sum2 = 0
-        addi  x10, x0,  8
+        addi  x10, x0,  4
 
       loop_j:
         lw    x8,  0(x2)          # load 2 16-bit ints
         and   x9,  x8,  x13       # src[j]
+        srl   x8,  x8,  x5        # src[j+1]
 
         add   x6,  x6,  x9        # sum1 += src[j]
         and   x6,  x6,  x13       # sum1 &= 0xffff
         add   x7,  x7,  x6        # sum2 += sum1
         and   x7,  x7,  x13       # sum2 &= 0xffff
 
-        addi  x2,  x2,  2         # j++
+        add   x6,  x6,  x8        # sum1 += src[j+1]
+        and   x6,  x6,  x13       # sum1 &= 0xffff
+        add   x7,  x7,  x6        # sum2 += sum1
+        and   x7,  x7,  x13       # sum2 &= 0xffff
+
+        addi  x2,  x2,  4         # j+=2
         addi  x10, x10, -1        # decrement loop counter
         bne   x10, x0,  loop_j
 
