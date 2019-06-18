@@ -95,7 +95,6 @@ class YosysStructuralTranslatorL4(
         present = "present" in _wire
         msb, _id, n_dim = _wire["msb"], _wire["id_"], _wire["n_dim"]
         id_ = ifc_id + "$" + _id
-        # if ifc_n_dim or n_dim:
         dct = { "msb" : msb, "id_" : id_, "n_dim" : ifc_n_dim+n_dim }
         if present:
           dct["present"] = True
@@ -107,7 +106,6 @@ class YosysStructuralTranslatorL4(
         present = "present" in _conn
         d = _conn["direction"]
         pid, wid, idx = _conn["pid"], _conn["wid"], _conn["idx"]
-        # if idx or ifc_n_dim:
         dct_list = \
           _subcomp_ifc_conn_gen( d, ifc_id, pid, ifc_id, wid, idx, ifc_n_dim )
         if present:
@@ -138,8 +136,8 @@ class YosysStructuralTranslatorL4(
   def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
 
     def _subcomp_port_gen( c_name, c_id, n_dim, port_decls ):
-      p_wire_tplt = "logic [{msb}:0] {id_};"
-      p_conn_tplt = ".{port_id}( {port_wire_id} )"
+      p_wire_tplt = "logic {packed_type: <8} {id_};"
+      p_conn_tplt = ".{port_id: <15}( {port_wire_id} )"
       template = \
 """\
 {port_wires}
@@ -155,7 +153,8 @@ class YosysStructuralTranslatorL4(
           msb, _id = port["msb"], port["id_"]
           id_ = c_id + "$" + _id
           port_id = _id
-          port_wire_id = c_id + "$" + _id
+          port_wire_id = ( c_id + "$" + _id ).center( 25 )
+          packed_type = "[{msb}:0]".format( **locals() )
           p_wires.append( p_wire_tplt.format( **locals() ) )
           p_conns.append( p_conn_tplt.format( **locals() ) )
         make_indent( p_wires, 1 )
@@ -186,7 +185,7 @@ class YosysStructuralTranslatorL4(
           ret += _subcomp_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
         return ret
 
-    wire_template = "logic [{msb}:0] {id_}{array_dim_str};"
+    wire_template = "logic {packed_type: <8} {id_}{array_dim_str};"
     _port_decls, _wire_decls, _connections = [], [], []
 
     for port_decl in port_conns["port_decls"]:
@@ -214,6 +213,7 @@ class YosysStructuralTranslatorL4(
       msb, _id, n_dim = wire["msb"], wire["id_"], wire["n_dim"]
       id_ = c_id + "$" + _id
       array_dim_str = s._get_array_dim_str( c_n_dim + n_dim )
+      packed_type = "[{msb}:0]".format( **locals() )
       if c_n_dim or n_dim or "present" in wire:
         wire_decls.append( wire_template.format( **locals() ) )
 

@@ -29,10 +29,6 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   def vector_conn_gen( s, d, pid, wid, idx, dtype ):
-    if d == "input":
-      template = "assign {wid}{idx} = {pid};"
-    else:
-      template = "assign {pid} = {wid}{idx};"
     return [ {
       "direction" : d,
       "pid" : pid,
@@ -131,8 +127,8 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     return ret
 
   def rtlir_tr_port_decl( s, port_id, Type, array_type, _dtype ):
-    port_template = "{direction}logic [{msb}:0] {id_}"
-    wire_template = "logic [{msb}:0] {id_}{array_dim_str};"
+    port_template = "{direction: <7}logic {packed_type: <8} {id_}"
+    wire_template = "logic {packed_type: <8} {id_}{array_dim_str};"
     in_conn_template = "assign {wid}{idx} = {pid};"
     out_conn_template = "assign {pid} = {wid}{idx};"
 
@@ -146,6 +142,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       direction = dct["direction"]
       msb, id_ = dct["msb"], dct["id_"]
+      packed_type = "[{msb}:0]".format( **locals() )
       port_decl.append( port_template.format( **locals() ) )
 
     # Assemble wire declarations
@@ -153,6 +150,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       msb, id_, n_dim = dct["msb"], dct["id_"], dct["n_dim"]
       array_dim_str = s._get_array_dim_str( n_dim )
+      packed_type = "[{msb}:0]".format( **locals() )
       if n_dim or "present" in dct:
         wire_decl.append( wire_template.format( **locals() ) )
 
@@ -181,7 +179,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     return '\n'.join( wires )
 
   def rtlir_tr_wire_decl( s, wire_id, Type, array_type, _dtype ):
-    wire_template = "logic [{msb}:0] {id_}{array_dim_str};"
+    wire_template = "logic {packed_type: <8} {id_}{array_dim_str};"
 
     wire_dtype = _dtype['raw_dtype']
     wire_n_dim = array_type['n_dim']
@@ -192,6 +190,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       msb, id_ = dct["msb"], dct["id_"]
       array_dim_str = s._get_array_dim_str( dct["n_dim"] )
+      packed_type = "[{msb}:0]".format( **locals() )
       wire_decl.append( wire_template.format( **locals() ) )
 
     return wire_decl

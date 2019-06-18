@@ -27,9 +27,10 @@ class YosysStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def ifc_port_gen( s, d, msb, ifc_id, _id, n_dim ):
-    template = "{d}logic [{msb}:0] {id_}"
+    template = "{d: <7}logic {packed_type: <8} {id_}"
     if not n_dim:
       id_ = ifc_id + "$" + _id
+      packed_type = "[{msb}:0]".format( **locals() )
       return [ template.format( **locals() ) ]
     else:
       ret = []
@@ -126,7 +127,7 @@ class YosysStructuralTranslatorL3(
 
   def rtlir_tr_interface_decl( s, ifc_id, ifc_rtype, array_type, ports ):
     ifc_ndim = array_type["n_dim"]
-    wire_template = "logic [{msb}:0] {id_}{array_dim_str};"
+    wire_template = "logic {packed_type: <8} {id_}{array_dim_str};"
 
     # Assemble the interface port declarations
     ret_port = []
@@ -145,6 +146,7 @@ class YosysStructuralTranslatorL3(
         msb, _id, n_dim = wire_decl["msb"], wire_decl["id_"], wire_decl["n_dim"]
         id_ = ifc_id + "$" + _id
         array_dim_str = s._get_array_dim_str( ifc_ndim + n_dim )
+        packed_type = "[{msb}:0]".format( **locals() )
         if n_dim or ifc_ndim or "present" in wire_decl:
           ret_wire.append( wire_template.format( **locals() ) )
 
