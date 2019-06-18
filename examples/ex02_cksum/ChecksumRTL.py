@@ -34,8 +34,8 @@ class StepUnit( Component ):
 
     @s.update
     def up_step():
-     s.sum1_out = ( zext( s.word_in, 32 ) + s.sum1_acc  ) & b32(0xffff)
-     s.sum2_out = ( s.sum1_out + s.sum2_acc ) & b32(0xffff)
+     s.sum1_out = ( b32(s.word_in) + s.sum1_acc ) & b32(0xffff)
+     s.sum2_out = ( s.sum1_out     + s.sum2_acc ) & b32(0xffff)
 
 #-------------------------------------------------------------------------
 # ChecksumRTL
@@ -56,17 +56,17 @@ class ChecksumRTL( Component ):
     s.sum1   = Wire( Bits32 )
     s.sum2   = Wire( Bits32 )
 
-    s.input_buffer = NormalQueueRTL( Bits128, num_entries=2 )
+    s.in_q = NormalQueueRTL( Bits128, num_entries=2 )
     s.steps        = [ StepUnit() for _ in range( 8 ) ]
 
     # Register input
 
-    s.connect( s.recv, s.input_buffer.enq )
+    s.connect( s.recv, s.in_q.enq )
 
     # Decompose input message into 8 words
 
     for i in range( 8 ):
-      s.connect( s.words[i], s.input_buffer.deq.msg[i*16:(i+1)*16] )
+      s.connect( s.words[i], s.in_q.deq.msg[i*16:(i+1)*16] )
     
     # Connect step units
 
@@ -83,8 +83,8 @@ class ChecksumRTL( Component ):
 
     @s.update
     def up_rtl_send():
-      s.send.en  = s.input_buffer.deq.rdy & s.send.rdy
-      s.input_buffer.deq.en = s.input_buffer.deq.rdy & s.send.rdy
+      s.send.en  = s.in_q.deq.rdy & s.send.rdy
+      s.in_q.deq.en = s.in_q.deq.rdy & s.send.rdy
 
     @s.update
     def up_rtl_sum():
