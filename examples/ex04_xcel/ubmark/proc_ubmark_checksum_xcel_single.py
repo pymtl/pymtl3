@@ -4,10 +4,10 @@
 
 import struct
 
-from pymtl3                      import *
-from string                      import translate, maketrans
-from ex03_proc.tinyrv0_encoding  import assemble
-from ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
+from pymtl3 import *
+from string import translate, maketrans
+from examples.ex03_proc.tinyrv0_encoding import assemble
+from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 
 class ubmark_cksum_xcel_single:
 

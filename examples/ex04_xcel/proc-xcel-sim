@@ -26,31 +26,31 @@ import sys
 
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while sim_dir:
-  if os.path.exists( sim_dir + os.path.sep + ".pymtl-python-path" ):
+  if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
     sys.path.insert(0,sim_dir)
     break
   sim_dir = os.path.dirname(sim_dir)
 
-from ex03_proc.SparseMemoryImage import SparseMemoryImage
-from ex03_proc.tinyrv0_encoding import assemble
+from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
+from examples.ex03_proc.tinyrv0_encoding import assemble
 
-from ex04_xcel.ubmark.proc_ubmark_checksum_xcel_single import ubmark_cksum_xcel_single
+from examples.ex04_xcel.ubmark.proc_ubmark_checksum_xcel_single import ubmark_cksum_xcel_single
 
-from ex03_proc.ProcFL import ProcFL
-from ex03_proc.ProcCL import ProcCL
-from ex03_proc.ProcRTL import ProcRTL
+from examples.ex03_proc.ProcFL import ProcFL
+from examples.ex03_proc.ProcCL import ProcCL
+from examples.ex03_proc.ProcRTL import ProcRTL
 
-from ex04_xcel.ChecksumXcelFL  import ChecksumXcelFL
-from ex04_xcel.ChecksumXcelCL  import ChecksumXcelCL
-from ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
+from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
+from examples.ex04_xcel.ChecksumXcelCL import ChecksumXcelCL
+from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 
 from pymtl3 import *
 from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 from pymtl3.stdlib.ifcs import mk_mem_msg
 
-from ex03_proc.test.harness import TestHarness
-from ex04_xcel.ProcXcel import ProcXcel
+from examples.ex03_proc.test.harness import TestHarness
+from examples.ex04_xcel.ProcXcel import ProcXcel
 
 #=========================================================================
 # Command line processing
