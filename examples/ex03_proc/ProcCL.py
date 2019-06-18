@@ -16,7 +16,7 @@ from pymtl3.stdlib.ifcs import mk_mem_msg, MemMsgType
 from pymtl3.stdlib.ifcs.mem_ifcs  import MemMasterIfcCL, MemMasterIfcFL
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
 from pymtl3.stdlib.ifcs.XcelMsg   import mk_xcel_msg, XcelMsgType
-from pymtl3.stdlib.cl.queues import BypassQueueCL, PipeQueueCL
+from pymtl3.stdlib.cl.queues import PipeQueueCL
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
 
 from tinyrv0_encoding import RegisterFile, TinyRV0Inst

@@ -36,7 +36,7 @@ from ex03_proc.tinyrv0_encoding import assemble
 
 from ex04_xcel.ubmark.proc_ubmark_checksum_xcel_single import ubmark_cksum_xcel_single
 
-# from ex03_proc.ProcFL import ProcFL
+from ex03_proc.ProcFL import ProcFL
 from ex03_proc.ProcCL import ProcCL
 from ex03_proc.ProcRTL import ProcRTL
 
@@ -88,7 +88,7 @@ def parse_cmdline():
   return opts
 
 proc_impl_dict = {
-  # "fl" : ProcFL,
+  "fl" : ProcFL,
   "cl" : ProcCL,
   "rtl": ProcRTL,
 }
@@ -198,11 +198,12 @@ def main():
   #-----------------------------------------------------------------------
 
   # Create test harness and elaborate
+  print "--- Proc:", opts.proc_impl, "--- Xcel:", opts.xcel_impl, "---"
 
   model = TestHarness( proc_impl_dict[ opts.proc_impl ],
                        xcel_impl_dict[ opts.xcel_impl ], 0,
                       # src sink memstall memlat
-                        0,  0,   0,       1 )
+                        3,  4,   0,       1 )
 
   from pymtl3.passes import DynamicSim
   model.apply( DynamicSim )

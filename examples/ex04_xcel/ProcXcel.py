@@ -11,12 +11,14 @@ Author : Shunning Jiang
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.mem_ifcs  import MemMasterIfcRTL, MemMasterIfcCL, MemMasterIfcFL
 from pymtl3.stdlib.ifcs  import SendIfcRTL, RecvIfcRTL
+from pymtl3.stdlib.ifcs.GetGiveIfc  import GetIfcFL
+from pymtl3.stdlib.ifcs.SendRecvIfc  import SendIfcFL
 
 from pymtl3.stdlib.ifcs import mk_mem_msg
 
 class ProcXcel( Component ):
 
-  def construct( s, proc_cls, xcel_cls ):
+  def construct( s, ProcClass, XcelClass ):
 
     req_class, resp_class = mk_mem_msg( 8, 32, 32 )
 
@@ -24,8 +26,8 @@ class ProcXcel( Component ):
 
     # Instruction Memory Request/Response Interface
 
-    s.proc = proc_cls()( commit_inst = s.commit_inst )
-    s.xcel = xcel_cls()( xcel = s.proc.xcel )
+    s.proc = ProcClass()( commit_inst = s.commit_inst )
+    s.xcel = XcelClass()( xcel = s.proc.xcel )
 
     if   isinstance( s.proc.imem, MemMasterIfcRTL ): # RTL proc
       s.mngr2proc = RecvIfcRTL( Bits32 )
@@ -39,11 +41,11 @@ class ProcXcel( Component ):
       s.imem = MemMasterIfcCL( req_class, resp_class )
       s.dmem = MemMasterIfcCL( req_class, resp_class )
 
-    elif isinstance( s.proc.imem, MemMasterIfcFL ): # CL proc
-      s.mngr2proc = NonBlockingCalleeIfc( Bits32 )
-      s.proc2mngr = NonBlockingCallerIfc( Bits32 )
-      s.imem = MemMasterIfcCL( req_class, resp_class )
-      s.dmem = MemMasterIfcCL( req_class, resp_class )
+    elif isinstance( s.proc.imem, MemMasterIfcFL ): # FL proc
+      s.mngr2proc = GetIfcFL()
+      s.proc2mngr = SendIfcFL()
+      s.imem = MemMasterIfcFL()
+      s.dmem = MemMasterIfcFL()
 
     s.connect_pairs(
       s.mngr2proc, s.proc.mngr2proc,

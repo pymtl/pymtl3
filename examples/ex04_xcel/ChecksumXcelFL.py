@@ -31,10 +31,20 @@ class ChecksumXcelFL( Component ):
 
     s.reg_file = [ b32(0) for _ in range(6) ]
 
+    s.trace = "            "
+    @s.update
+    def up_clear_trace():
+      s.trace = "            "
+
+    s.add_constraints( U(up_clear_trace) < M(s.read) )
+    s.add_constraints( U(up_clear_trace) < M(s.write) )
+
   def read( s, addr ):
+    s.trace = "fl:<rd xr{:02}>".format(int(addr))
     return s.reg_file[ int(addr) ]
 
   def write( s, addr, data ):
+    s.trace = "fl:<wr xr{:02}>".format(int(addr))
     s.reg_file[ int(addr) ] = b32(data)
 
     # If go bit is written
@@ -46,4 +56,4 @@ class ChecksumXcelFL( Component ):
       s.reg_file[5] = checksum( words )
 
   def line_trace( s ):
-    return ""
+    return s.trace
