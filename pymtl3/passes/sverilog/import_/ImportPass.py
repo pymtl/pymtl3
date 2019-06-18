@@ -107,7 +107,6 @@ class ImportPass( BasePass ):
     if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
-    print('is_same = ', is_same, ", cached = ", cached)
 
     s.create_verilator_model( sv_file_path, full_name, dump_vcd, cached )
 

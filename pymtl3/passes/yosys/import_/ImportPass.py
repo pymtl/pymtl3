@@ -55,6 +55,7 @@ class ImportPass( SVerilogImportPass ):
     if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
+    print('is_same = ', is_same, ", cached = ", cached)
 
     assert os.path.isfile( sv_file_path ), \
       "Cannot import {}: {} is not a file!".format( m, sv_file_path )
