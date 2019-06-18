@@ -474,11 +474,18 @@ constraint_list = [
     """Return C variable declaration of `port`."""
     c_dim = s._get_c_dim( port )
     nbits = s._get_c_nbits( port )
-    if    nbits <= 8:  data_type = 'unsigned char'
-    elif  nbits <= 16: data_type = 'unsigned short'
-    elif  nbits <= 32: data_type = 'unsigned int'
-    elif  nbits <= 64: data_type = 'unsigned long'
-    else:              data_type = 'unsigned int'
+    UNSIGNED_8  = 'unsigned char'
+    UNSIGNED_16 = 'unsigned short'
+    UNSIGNED_32 = 'unsigned int'
+    if sys.maxsize > 2**32:
+      UNSIGNED_64 = 'unsigned long'
+    else:
+      UNSIGNED_64 = 'unsigned long long'
+    if    nbits <= 8:  data_type = UNSIGNED_8
+    elif  nbits <= 16: data_type = UNSIGNED_16
+    elif  nbits <= 32: data_type = UNSIGNED_32
+    elif  nbits <= 64: data_type = UNSIGNED_64
+    else:              data_type = UNSIGNED_32
     name = s._verilator_name( name )
     return '{data_type} * {name}{c_dim};'.format( **locals() )
 
@@ -940,17 +947,6 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return 'OutPort'
     else:
       assert False, "unrecognized direction {}!".format( d )
-
-  def _get_bit_width( s, port ):
-    if isinstance( port, rt.Array ):
-      nbits = port.get_sub_type().get_dtype().get_length()
-    else:
-      nbits = port.get_dtype().get_length()
-    if    nbits <= 8:  return 8
-    elif  nbits <= 16: return 16
-    elif  nbits <= 32: return 32
-    elif  nbits <= 64: return 64
-    else:              return 32
 
   def _get_c_n_dim( s, port ):
     if isinstance( port, rt.Array ):
