@@ -149,6 +149,8 @@ class {component_name}( Component ):
       _ffi_inst.eval( _ffi_m )
       set_output()
 
+    {constraint_str}
+
   def line_trace( s ):
 {line_trace}
 

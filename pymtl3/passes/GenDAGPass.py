@@ -193,11 +193,11 @@ def {}():
             if co_blk != eq_blk:
               if sign == 1: # RD/WR(x) < U is 1, RD/WR(x) > U is -1
                 # eq_blk == RD/WR(x) < co_blk
-                expl_constraints.add( (eq_blk, co_blk) )
+                U_U.add( (eq_blk, co_blk) )
                 constraint_objs[ (eq_blk, co_blk) ].add( obj )
               else:
                 # co_blk < RD/WR(x) == eq_blk
-                expl_constraints.add( (co_blk, eq_blk) )
+                U_U.add( (co_blk, eq_blk) )
                 constraint_objs[ (co_blk, eq_blk) ].add( obj )
 
     #---------------------------------------------------------------------
