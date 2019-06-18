@@ -130,6 +130,7 @@ def test_L3_struct_no_field( do_test ):
 
 def test_L3_const_struct( do_test ):
   class B( BitStruct ):
+    fields = [ ( 'foo', Bits32 ) ]
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):

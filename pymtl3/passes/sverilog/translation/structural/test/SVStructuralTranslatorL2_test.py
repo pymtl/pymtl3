@@ -37,6 +37,7 @@ def local_do_test( m ):
 
 def test_struct_const_structural( do_test ):
   class B( BitStruct ):
+    fields = [ ( 'foo', Bits32 ) ]
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
   class A( Component ):

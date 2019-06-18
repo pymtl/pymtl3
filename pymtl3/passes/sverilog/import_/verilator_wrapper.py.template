@@ -112,7 +112,7 @@ class {component_name}( Component ):
       verilator_vcd_file = "{component_name}.verilator1.vcd"
 
     # Construct the model
-    s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", verilator_vcd_file) )
+    s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", list(verilator_vcd_file)) )
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
