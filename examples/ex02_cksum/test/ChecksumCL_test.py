@@ -22,8 +22,12 @@ from ..utils import b128_to_words, words_to_b128
 from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
-# Wrap CL component into a function
+# WrappedChecksumCL
 #-------------------------------------------------------------------------
+# WrappedChecksumCL is a simple wrapper around the CL checksum unit. It
+# simply appends an output queue to the send side of the checksum unit.
+# In this way it only exposes callee interfaces which can be directly
+# called by the outside world.
 
 class WrappedChecksumCL( Component ):
 
@@ -38,8 +42,16 @@ class WrappedChecksumCL( Component ):
     s.connect( s.checksum_unit.send, s.out_q.enq          )
     s.connect( s.out_q.deq,          s.give               )
 
-def checksum_cl( words ):
+#-------------------------------------------------------------------------
+# Wrap CL component into a function
+#-------------------------------------------------------------------------
+# [checksum_cl] takes a list of 16-bit words, converts it to bits, creates
+# a checksum unit instance and feed in the input. It then ticks the
+# checksum unit until the output is ready to be taken.
 
+def checksum_cl( words ):
+  
+  # Create a simulator
   dut = WrappedChecksumCL()
   dut.apply( SimpleSim )
   
@@ -60,6 +72,10 @@ def checksum_cl( words ):
 #-------------------------------------------------------------------------
 # Reuse FL tests
 #-------------------------------------------------------------------------
+# By directly inhering from the FL test class, we can easily reuse all the
+# FL tests. We only need to overwrite the cksum_func that is used in all
+# test cases. Here we also extend the test case by adding a hypothesis
+# test that compares the CL implementation against the FL as reference.
 
 class ChecksumCL_Tests( BaseTests ):
   
@@ -70,6 +86,7 @@ class ChecksumCL_Tests( BaseTests ):
   @hypothesis.given(
     words = st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8 ) 
   )
+  @hypothesis.settings( deadline=None )
   def test_hypothesis( s, words ):
     print( words )
     words = [ b16(x) for x in words ]
@@ -78,6 +95,10 @@ class ChecksumCL_Tests( BaseTests ):
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
+# TestHarness is used for more advanced source/sink based testing. It
+# hooks a test source to the input of the design under test and a test
+# sink to the output of the DUT. Test source feeds data into the DUT 
+# while test sink drains data from the DUT and verifies it.
 
 class TestHarness( Component ):
   def construct( s, DutType, src_msgs, sink_msgs ):
@@ -99,32 +120,43 @@ class TestHarness( Component ):
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace()
     )
 
-  def run_sim( s, max_cycles=1000 ):
-    # Run simulation
-    print("")
-    ncycles = 0
-    s.sim_reset()
-    print("{:3}: {}".format( ncycles, s.line_trace() ))
-    while not s.done() and ncycles < max_cycles:
-      s.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, s.line_trace() ))
-
-    # Check timeout
-    assert ncycles < max_cycles
-
-
 #-------------------------------------------------------------------------
 # Src/sink based tests
 #-------------------------------------------------------------------------
+# We use source/sink based tests to stress test the checksum unit.
 
 class ChecksumCLSrcSink_Tests( object ):
-
+  
+  # [setup_class] will be called by pytest before running all the tests in
+  # the test class. Here we specify the type of the design under test
+  # that is used in all test cases. We can easily reuse all the tests in
+  # this class simply by creating a new test class that inherits from
+  # this class and overwrite the setup_class to provide a different DUT
+  # type.
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumCL
   
-  # TODO: clean this up.
+  # [run_sim] is a helper function in the test suite that creates a
+  # simulator and runs test.
+  def rum_sim( s, th, max_cycles=1000 ):
+
+    # Create a simulator
+    th.apply( SimpleSim )
+    ncycles = 0
+    th.sim_reset()
+    print( "" )
+    
+    # Tick the simulator
+    print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and ncycles < max_cycles:
+      th.tick()
+      ncycles += 1
+      print("{:3}: {}".format( ncycles, th.line_trace() ))
+
+    # Check timeout
+    assert ncycles < max_cycles
+
   def test_simple( s ):
     words = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     bits  = words_to_b128( words )
@@ -135,8 +167,7 @@ class ChecksumCLSrcSink_Tests( object ):
     sink_msgs = [ result ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-    th.apply( SimpleSim )
-    th.run_sim()
+    s.rum_sim( th )
 
   def test_pipeline( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
@@ -151,8 +182,7 @@ class ChecksumCLSrcSink_Tests( object ):
     sink_msgs = [ result0, result1, result0, result1 ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-    th.apply( SimpleSim )
-    th.run_sim()
+    s.rum_sim( th )
 
   def test_backpressure( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
@@ -168,29 +198,27 @@ class ChecksumCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     th.set_param( "top.sink.construct", initial_delay=10 )
-    th.apply( SimpleSim )
-    th.run_sim()
+    s.rum_sim( th )
   
-  # TODO: clean this up with bits strategy.
+  # This hypothesis test not only generates a sequence of input to the
+  # the checksum unit but it also configure the test source and sink with
+  # different initial and interval delays.
   @hypothesis.given(
     input_msgs = st.lists( 
                    st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8
                    ).map( lambda lst: [ b16(x) for x in lst ] ) 
                  ),
-    nstages    = st.integers( 0, 8  ),
     src_init   = st.integers( 0, 10 ),
     src_intv   = st.integers( 0, 3  ),
     sink_init  = st.integers( 0, 10 ),
     sink_intv  = st.integers( 0, 3  ),
   )
-  def test_hypothesis( s, input_msgs, nstages, src_init, src_intv, sink_init, sink_intv ):
-    for words in input_msgs:
-      words = [ b16(x) for x in words ]
+  @hypothesis.settings( deadline=None, max_examples=16 )
+  def test_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
     src_msgs  = [ words_to_b128( words ) for words in input_msgs ]
     sink_msgs = [ checksum( words ) for words in input_msgs ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs  )
     th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
     th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
-    th.apply( SimpleSim )
-    th.run_sim()
+    s.rum_sim( th )
