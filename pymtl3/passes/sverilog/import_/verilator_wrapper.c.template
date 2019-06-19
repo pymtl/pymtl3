@@ -120,7 +120,7 @@ void destroy_model( V{component_name}_t * m ) {{
 
   #if DUMP_VCD
   if ( m->_vcd_en ) {{
-    printf("DESTROYING %d\n", m->trace_time);
+    // printf("DESTROYING %d\n", m->trace_time);
     VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
     tfp->close();
   }}
@@ -153,12 +153,13 @@ void eval( V{component_name}_t * m ) {{
       g_main_time += 50;
     }}
     m->prev_clk = model->clk;
-  }}
 
-  // dump current signal values
-  VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
-  tfp->dump( m->trace_time );
-  tfp->flush();
+    // dump current signal values
+    VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
+    tfp->dump( m->trace_time );
+    tfp->flush();
+
+  }}
   #endif
 
 }}

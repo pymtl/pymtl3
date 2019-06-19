@@ -316,7 +316,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
           "unrecognized operator {} for reduce method!".format(op_t) )
     value = s.visit( node.value )
     op = reduce_ops[ op_t ]
-    return "({op}{value})".format( **locals() )
+    return "({op} {value})".format( **locals() )
 
   #-----------------------------------------------------------------------
   # visit_SizeCast

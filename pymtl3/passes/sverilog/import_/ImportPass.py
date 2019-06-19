@@ -206,12 +206,15 @@ Fail to verilate model {} in file {}
     port_inits = '\n'.join( port_inits )
 
     # Fill in the C wrapper template
-    if not cached:
-      with open( template_name, 'r' ) as template:
-        with open( wrapper_name, 'w' ) as output:
-          c_wrapper = template.read()
-          c_wrapper = c_wrapper.format( **locals() )
-          output.write( c_wrapper )
+    # Since we may run import with or without dump_vcd enabled, we need
+    # to dump C wrapper regardless of whether the verilated model is
+    # cached or not.
+    # if not cached:
+    with open( template_name, 'r' ) as template:
+      with open( wrapper_name, 'w' ) as output:
+        c_wrapper = template.read()
+        c_wrapper = c_wrapper.format( **locals() )
+        output.write( c_wrapper )
 
     return wrapper_name, port_cdefs
 
@@ -223,7 +226,13 @@ Fail to verilate model {} in file {}
     """Return the name of compiled shared lib."""
     lib_name = 'lib{}_v.so'.format( full_name )
 
-    if not cached:
+    # Since we may run import with or without dump_vcd enabled, we need
+    # to compile C wrapper regardless of whether the verilated model is
+    # cached or not. 
+    # TODO: A better caching strategy is to attch some metadata
+    # to the C wrapper so that we know the wrapper was generated with or
+    # without dump_vcd enabled.
+    if dump_vcd or not cached:
       # Find out the include directory of Verilator
       # First look at $PYMTL_VERILATOR_INCLUDE_DIR environment variable
       verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
@@ -831,7 +840,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     ret = []
     for py_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
-      if s._get_direction( p_rtype ) == 'InPort':
+      if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk':
         dtype = p_rtype.get_dtype()
         v_name = s._verilator_name( py_name )
         lhs = "_ffi_m."+v_name
