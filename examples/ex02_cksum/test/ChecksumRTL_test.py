@@ -24,7 +24,8 @@ from ..utils import b128_to_words, words_to_b128
 
 def test_step_unit():
   step_unit = StepUnit()
-  step_unit.apply( SimpleSim )
+  step_unit.elaborate()
+  step_unit.apply( SimulationPass )
 
   step_unit.word_in  = b16(1)
   step_unit.sum1_acc = b32(1)

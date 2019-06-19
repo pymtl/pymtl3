@@ -20,7 +20,6 @@ from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 from ..ChecksumCL import ChecksumCL
 from ..ChecksumFL import checksum
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # WrappedChecksumCL
@@ -54,7 +53,8 @@ def checksum_cl( words ):
   
   # Create a simulator
   dut = WrappedChecksumCL()
-  dut.apply( SimpleSim )
+  dut.elaborate()
+  dut.apply( SimulationPass )
   
   # Wait until recv ready
   while not dut.recv.rdy():
@@ -77,6 +77,8 @@ def checksum_cl( words ):
 # FL tests. We only need to overwrite the cksum_func that is used in all
 # test cases. Here we also extend the test case by adding a hypothesis
 # test that compares the CL implementation against the FL as reference.
+
+from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 class ChecksumCL_Tests( BaseTests ):
   
@@ -143,7 +145,8 @@ class ChecksumCLSrcSink_Tests( object ):
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
-    th.apply( SimpleSim )
+    th.elaborate()
+    th.apply( SimulationPass )
     ncycles = 0
     th.sim_reset()
     print( "" )
