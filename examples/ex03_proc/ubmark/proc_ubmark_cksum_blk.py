@@ -31,7 +31,7 @@ c_cksum_msk_ptr = 0x3000;
 c_cksum_dst_ptr = 0x4000;
 c_cksum_size    = 3;
 
-class ubmark_cksum:
+class ubmark_cksum_blk:
 
   # verification function, argument is a bytearray from TestMemory instance
 
@@ -50,7 +50,7 @@ class ubmark_cksum:
         return False
 
     if is_pass:
-      print( " [ passed ]: cksum_blk" )
+      print( " [ passed ]: cksum-blk" )
       return True
 
   @staticmethod
