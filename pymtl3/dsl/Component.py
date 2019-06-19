@@ -428,7 +428,8 @@ class Component( ComponentLevel7 ):
     s._check_called_at_elaborate_top( "sim_reset" )
 
     s.reset = Bits1( 1 )
-    s.tick() # This tick propagates the reset signal
+    s.tick() # Tick twice to propagate the reset signal
+    s.tick()
     s.reset = Bits1( 0 )
 
   def check( s ):
