@@ -20,6 +20,7 @@ class NullXcelRTL(Component):
   def construct( s, nbits=32 ):
 
     dtype = mk_bits(32)
+    XcelMsgType_WRITE = XcelMsgType.WRITE
     xreq_class, xresp_class = mk_xcel_msg( 5,nbits )
 
     s.xcel = XcelMinionIfcRTL( xreq_class, xresp_class )
@@ -36,7 +37,7 @@ class NullXcelRTL(Component):
         s.xcel.resp.en     = b1(1)
         s.xcel.resp.msg.type_ = s.xcelreq_q.deq.msg.type_
 
-        if s.xcelreq_q.deq.msg.type_ == XcelMsgType.WRITE:
+        if s.xcelreq_q.deq.msg.type_ == XcelMsgType_WRITE:
           s.xr0.en             = b1(1)
           s.xcel.resp.msg.data = dtype(0)
         else:
