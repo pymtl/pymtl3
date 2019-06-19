@@ -1,8 +1,9 @@
 """
 ==========================================================================
-ubmark-checksum-rolling: a modified fletcher checksum algorithm.
+ubmark-checksum-xcel-rolling: a modified fletcher checksum algorithm.
 ==========================================================================
-This code computes a checksum of a sequence of 16-bit integers.
+This code computes a checksum of a sequence of 16-bit integers using the
+checksum accelerator.
 
 void cksum_rolling( int *dest, int *src, int size ) {
   int idx = 0;
@@ -33,14 +34,14 @@ from string import translate, maketrans
 from examples.ex03_proc.tinyrv0_encoding  import assemble
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 
-from proc_ubmark_cksum_roll_data import src, ref, mask, dataset_size
+from examples.ex03_proc.ubmark.proc_ubmark_cksum_roll_data import src, ref, mask, dataset_size
 
 c_cksum_src_ptr = 0x2000;
 c_cksum_msk_ptr = 0x3000;
 c_cksum_dst_ptr = 0x4000;
 c_cksum_size    = dataset_size;
 
-class ubmark_cksum_roll:
+class ubmark_cksum_xcel_roll:
 
   # verification function, argument is a bytearray from TestMemory instance
 
@@ -76,49 +77,30 @@ class ubmark_cksum_roll:
 
         addi  x5,  x0,  16        # shift amount
         lw    x6,  0(x3)          # mask = 0xffff
-        add   x7,  x0,  x0        # sum1 = 0
-        add   x8,  x0,  x0        # sum2 = 0
-        add   x9,  x0,  x0        # sum1_prev = 0
-        add   x10, x0,  x0        # sum2_prev = 0
+        addi  x11, x0,  1         # Go bit 
+        add   x7,  x0,  x0        # cksum = 0
 
       loop_i:
-        and   x7,  x9,  x6        # sum1 = sum1_prev & 0xffff
-        and   x8,  x7,  x6        # sum2 = sum1 & 0xffff
-        add   x7,  x7,  x10       # sum1 += sum2_prev
-        and   x7,  x7,  x6        # sum1 &= 0xffff
-        add   x8,  x8,  x7        # sum2 += sum1
-        and   x8,  x8,  x6        # sum2 &= 0xffff
-        addi  x11, x0,  3         # j = 3
+        lw    x8,  0(x2)          # load first 32-bit word
+        lw    x9,  4(x2)          # load second 32-bit word
+        lw    x10, 8(x2)          # load third 32-bit word
 
-      loop_j:
-        lw    x12, 0(x2)          # load 2 16-bit ints
-        and   x13, x12, x6        # src[i+j] = word & 0xffff
-        srl   x12, x12, x5        # src[i+j+1] = word >> 16
+        # transfer data to accelerator
 
-        add   x7,  x7,  x13       # sum1 += src[i+j]
-        and   x7,  x7,  x6        # sum1 &= 0xffff
-        add   x8,  x8,  x7        # sum2 += sum1
-        and   x8,  x8,  x6        # sum2 &= 0xffff
+        csrw  0x7E0, x7
+        csrw  0x7E1, x8
+        csrw  0x7E2, x9
+        csrw  0x7E3, x10
+        csrw  0x7E4, x11
+        
+        # read back the result
+        csrr  x7, 0x7E5
 
-        add   x7,  x7,  x12       # sum1 += src[i+j+1]
-        and   x7,  x7,  x6        # sum1 &= 0xffff
-        add   x8,  x8,  x7        # sum2 += sum1
-        and   x8,  x8,  x6        # sum2 &= 0xffff
-
-        addi  x2,  x2,  4         # increment word address
-        addi  x11, x11, -1        # decrement loop counter
-        bne   x11, x0,  loop_j
-
-        add   x9,  x0,  x7        # sum1_prev = sum1
-        add   x10, x0,  x8        # sum2_prev = sum2
-
+        addi  x2,  x2,  12        # increment word address
         addi  x1,  x1,  -6        # decrement loop counter i
         bne   x1,  x0,  loop_i
-        
-        add   x14, x0,  x8        # ret = sum2
-        sll   x14, x14, x5        # ret = sum2 << 16
-        add   x14, x14, x7        # ret |= sum1
-        sw    x14, 0(x4)
+
+        sw    x7, 0(x4)
 
         # End of program
         csrw  proc2mngr, x0 > 0

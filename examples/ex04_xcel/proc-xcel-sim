@@ -35,6 +35,7 @@ from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
 from examples.ex03_proc.tinyrv0_encoding import assemble
 
 from examples.ex04_xcel.ubmark.proc_ubmark_checksum_xcel_single import ubmark_cksum_xcel_single
+from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
 
 from examples.ex03_proc.ProcFL import ProcFL
 from examples.ex03_proc.ProcCL import ProcCL
@@ -78,7 +79,7 @@ def parse_cmdline():
   p.add_argument( "--proc-impl",  default="rtl", choices=["fl", "cl", "rtl"] )
   p.add_argument( "--xcel-impl",  default="rtl", choices=["fl", "cl", "rtl"] )
   p.add_argument( "--input", default="cksum-xcel-single",
-                             choices=["cksum-xcel-single", "cksum-xcel-loop"] )
+                             choices=["cksum-xcel-single", "cksum-xcel-loop", "cksum-xcel-roll"] )
   p.add_argument( "--limit",   default=1000000, type=int )
   p.add_argument( "--stats",   action="store_true"      )
   p.add_argument( "--verify",  action="store_true"    )
@@ -100,6 +101,7 @@ xcel_impl_dict = {
 
 input_dict = {
   "cksum-xcel-single" : ubmark_cksum_xcel_single,
+  "cksum-xcel-roll"   : ubmark_cksum_xcel_roll,
 }
 
 class TestHarness(Component):

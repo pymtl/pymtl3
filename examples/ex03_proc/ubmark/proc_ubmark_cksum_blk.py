@@ -1,6 +1,6 @@
 """
 ==========================================================================
-ubmark-checksum: a modified fletcher checksum algorithm.
+ubmark-checksum-block: a modified fletcher checksum algorithm.
 ==========================================================================
 This code computes checksum of an array of 16 byte blocks and stores
 result to the destination array.
@@ -15,6 +15,8 @@ void cksum( int *dest, int *src0, int size ) {
     }
     dest[i] = ( sum2 << 16 ) | sum1;
   }
+Author : Yanghui Ou
+  Date : June 11, 2019
 """
 
 import struct
@@ -24,13 +26,13 @@ from string import translate, maketrans
 from examples.ex03_proc.tinyrv0_encoding  import assemble
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 
-from proc_ubmark_cksum_blk_data import src, ref, mask
+from proc_ubmark_cksum_blk_data import src, ref, mask, dataset_size
 
 c_cksum_src_ptr = 0x2000;
 c_cksum_msk_ptr = 0x3000;
 c_cksum_dst_ptr = 0x4000;
-c_cksum_size    = 3;
-
+c_cksum_size    = dataset_size;
+    
 class ubmark_cksum_blk:
 
   # verification function, argument is a bytearray from TestMemory instance

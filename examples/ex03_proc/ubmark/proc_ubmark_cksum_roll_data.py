@@ -2,6 +2,8 @@
 # proc_ubmark_cksum_roll_data.py
 #=========================================================================
 
+dataset_size = 12
+
 mask = [ 0x0000ffff ]
 
 ref = [
