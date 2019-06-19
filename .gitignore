@@ -20,6 +20,8 @@ rast-viz/
 
 pymtl3.egg-info/
 
+.hypothesis
+
 htmlcov/
 .coverage
 coverage.xml
