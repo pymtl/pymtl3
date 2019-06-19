@@ -32,7 +32,7 @@ class IncrValuePorts( Component ):
 
     @s.update
     def upB():
-      s.out = s.in_ + b8(1)
+      s.buf2 = s.buf1 + b8(1)
 
   def line_trace( s ):
     return "{:2} (+1) {:2}".format( int(s.in_), int(s.out) )
