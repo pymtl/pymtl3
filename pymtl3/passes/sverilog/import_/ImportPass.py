@@ -890,7 +890,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return ret
 
   def gen_constraints( s, packed_ports ):
-    ret = []
+    ret = ["U( seq_upblk ) > WR( s.mangled__reset ),"]
     for py_name, rtype in packed_ports:
       if s._get_direction( rtype ) == 'OutPort':
         if isinstance( rtype, rt.Array ):

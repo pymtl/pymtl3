@@ -142,6 +142,7 @@ class {component_name}( Component ):
 
     @s.update_on_edge
     def seq_upblk():
+      _ffi_m.reset[0] = int(s.mangled__reset)
       # Advance the clock
       _ffi_m.clk[0] = 0
       _ffi_inst.eval( _ffi_m )
