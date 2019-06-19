@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 import hypothesis
 from hypothesis import strategies as st
+from pymtl3.datatypes import strategies as pm_st
 
 from pymtl3 import *
 from pymtl3.stdlib.cl.queues import BypassQueueCL
@@ -84,12 +85,11 @@ class ChecksumCL_Tests( BaseTests ):
 
   # Use hypothesis to compare the wrapped CL function against FL
   @hypothesis.given(
-    words = st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8 ) 
+    words = st.lists( pm_st.bits(16), min_size=8, max_size=8 ) 
   )
   @hypothesis.settings( deadline=None )
   def test_hypothesis( s, words ):
-    print( words )
-    words = [ b16(x) for x in words ]
+    print( [ int(x) for x in words ] )
     assert s.cksum_func( words ) == checksum( words )
 
 #-------------------------------------------------------------------------
@@ -156,7 +156,8 @@ class ChecksumCLSrcSink_Tests( object ):
 
     # Check timeout
     assert ncycles < max_cycles
-
+  
+  # [test_simple] is a simple test case with only 1 input.
   def test_simple( s ):
     words = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     bits  = words_to_b128( words )
@@ -168,7 +169,8 @@ class ChecksumCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.rum_sim( th )
-
+  
+  # [test_pipeline] test the checksum unit with a sequence of inputs.
   def test_pipeline( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
@@ -183,7 +185,8 @@ class ChecksumCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.rum_sim( th )
-
+  
+  # [test_pipeline] test the checksum unit with a large sink delay. 
   def test_backpressure( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
@@ -204,10 +207,7 @@ class ChecksumCLSrcSink_Tests( object ):
   # the checksum unit but it also configure the test source and sink with
   # different initial and interval delays.
   @hypothesis.given(
-    input_msgs = st.lists( 
-                   st.lists( st.integers(0, 2**16-1), min_size=8, max_size=8
-                   ).map( lambda lst: [ b16(x) for x in lst ] ) 
-                 ),
+    input_msgs = st.lists( st.lists( pm_st.bits(16), min_size=8, max_size=8 ) ),
     src_init   = st.integers( 0, 10 ),
     src_intv   = st.integers( 0, 3  ),
     sink_init  = st.integers( 0, 10 ),
