@@ -138,7 +138,8 @@ class ChecksumCLSrcSink_Tests( object ):
     cls.DutType = ChecksumCL
   
   # [run_sim] is a helper function in the test suite that creates a
-  # simulator and runs test.
+  # simulator and runs test. We can overwrite this function when
+  # inheriting from the test class to apply different passes to the DUT.
   def rum_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
