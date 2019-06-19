@@ -10,35 +10,31 @@ Author : Yanghui Ou
 from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
-from pymtl3.passes.PassGroups import DynamicSim
-from pymtl3.passes.yosys import TranslationPass, ImportPass
+
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as BaseTests
 
-
-class XcelRTLSrcSinkSim_Tests( BaseTests ):
-
-  @classmethod
-  def setup_class( cls ):
-    cls.DutType = ChecksumXcelRTL
-
-class XcelRTLSrcSinkTranslate_Tests( BaseTests ):
+# TODO: add wrap func test.
+# TODO: add more comments.
+class ChecksumXcelRTLSrcSink_Tests( BaseTests ):
 
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumXcelRTL
 
+  # TODO: comments.
   def run_sim( s, th, max_cycles=1000 ):
 
-    # Translate the DUT and import it back in using the yosys backend.
-    th.elaborate()
-    th.dut.yosys_translate = True
-    th.dut.yosys_import = True
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
+    # Check command line arguments for vcd dumping
+    import sys
+    if hasattr( sys, '_pymtl_dump_vcd' ):
+      if sys._pymtl_dump_vcd:
+        th.dump_vcd = True
+        th.vcd_file_name = "ChecksumXcelRTL"
 
     # Create a simulator
-    th.apply( DynamicSim )
+    th.elaborate()
+    th.apply( SimulationPass )
     ncycles = 0
     th.sim_reset()
     print( "" )
@@ -52,3 +48,4 @@ class XcelRTLSrcSinkTranslate_Tests( BaseTests ):
 
     # Check timeout
     assert ncycles < max_cycles
+

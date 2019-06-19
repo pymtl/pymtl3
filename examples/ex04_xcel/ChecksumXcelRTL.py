@@ -17,7 +17,7 @@ from pymtl3.stdlib.rtl.registers import Reg
 
 from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 
-
+# TODO: add more comments.
 class ChecksumXcelRTL( Component ):
   def construct( s ):
 

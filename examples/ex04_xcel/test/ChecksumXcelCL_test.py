@@ -17,7 +17,6 @@ from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
 
 from examples.ex02_cksum.ChecksumFL import checksum
 from examples.ex02_cksum.utils import words_to_b128
-from examples.ex02_cksum.test.ChecksumCL_test import ChecksumCL_Tests as BaseTests
 from ..ChecksumXcelCL import ChecksumXcelCL
 
 #-------------------------------------------------------------------------
@@ -85,7 +84,8 @@ def checksum_xcel_cl( words ):
   # Create a simulator
 
   dut = WrappedChecksumXcelCL()
-  dut.apply( DynamicSim )
+  dut.elaborate()
+  dut.apply( SimulationPass )
   
   reqs, _ = mk_xcel_transaction( words )
 
@@ -113,6 +113,8 @@ def checksum_xcel_cl( words ):
 #-------------------------------------------------------------------------
 # We reuse the extened FL tests in ex02_cksum.test.ChecksumCL_test.
 
+from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
+
 class ChecksumXcelCL_Tests( BaseTests ):
 
   def cksum_func( s, words ):
@@ -121,6 +123,8 @@ class ChecksumXcelCL_Tests( BaseTests ):
 #-------------------------------------------------------------------------
 # Test Harness for src/sink based tests
 #-------------------------------------------------------------------------
+# The test harness has a test source that sends requests to the xcel and a
+# test sink that checks the xcel responses.
 
 class TestHarness( Component ):
 
@@ -165,7 +169,8 @@ class ChecksumXcelCLSrcSink_Tests( object ):
   def run_sim( s, th, max_cycles=1000 ):
     
     # Create a simulator
-    th.apply( DynamicSim )
+    th.elaborate()
+    th.apply( SimulationPass )
     ncycles = 0
     th.sim_reset()
     print( "" )
