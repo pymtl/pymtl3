@@ -57,7 +57,7 @@ class ProcCL( Component ):
     s.imemresp_q  = DelayPipeDeqCL(0)( enq = s.imem.resp )
     s.dmemresp_q  = DelayPipeDeqCL(1)( enq = s.dmem.resp )
     s.mngr2proc_q = DelayPipeDeqCL(1)( enq = s.mngr2proc )
-    s.xcelresp_q  = DelayPipeDeqCL(1)( enq = s.xcel.resp )
+    s.xcelresp_q  = DelayPipeDeqCL(0)( enq = s.xcel.resp )
 
     s.pc = Bits32( 0x200 )
     s.R  = RegisterFile( 32 )
