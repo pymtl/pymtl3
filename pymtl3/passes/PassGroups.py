@@ -36,6 +36,17 @@ DynamicSim = [
   Component.lock_in_simulation
 ]
 
+# This pass is created to be used for 2019 isca tutorial.
+SimulationPass = [
+  GenDAGPass(),
+  WrapGreenletPass(),
+  DynamicSchedulePass(),
+  CLLineTracePass(),
+  VcdGenerationPass(),
+  SimpleTickPass(),
+  Component.lock_in_simulation
+]
+
 OpenLoopCLSim = [
   Component.elaborate,
   GenDAGPass(),
