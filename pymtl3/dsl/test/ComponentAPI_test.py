@@ -261,3 +261,64 @@ def test_replace_component_func_rw_port():
   foo_wrap.tick()
   print(foo_wrap.line_trace())
   assert foo_wrap.out == 8
+
+def test_ctrl_dpath_connected_replaced_both():
+
+  class Module1( Component ):
+    def construct( s ):
+      s.in_  = InPort( Bits32 )
+      s.wire = Wire( Bits32 )
+      s.out  = OutPort( Bits32 )
+
+      s.connect( s.in_, s.wire )
+
+      @s.update
+      def out():
+        s.out = s.wire + 10
+
+  class Module2( Component ):
+    def construct( s ):
+      s.in_  = InPort( Bits32 )
+      s.wire = Wire( Bits32 )
+      s.out  = OutPort( Bits32 )
+
+      s.connect( s.in_, s.wire )
+
+      @s.update
+      def out():
+        s.out = s.wire + 444
+
+  class Inner( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.m1  = Module1()
+      s.m2  = Module1()
+      s.out = OutPort( Bits32 )
+
+      s.connect( s.in_, s.m1.in_ )
+      s.connect( s.m1.out, s.m2.in_ )
+      s.connect( s.m2.out, s.out )
+
+  class Top( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.inner = Inner()
+      s.out = OutPort( Bits32 )
+
+      s.connect( s.in_, s.inner.in_)
+      s.connect( s.inner.out, s.out )
+
+    def line_trace( s ):
+      return "{} > {}".format( s.in_, s.out )
+
+  a = Top()
+
+  a.elaborate()
+  a.replace_component( a.inner.m1, Module2() )
+  a.replace_component( a.inner.m2, Module2() )
+
+  simple_sim_pass( a )
+
+  a.in_ = Bits32(10)
+  a.tick()
+  assert a.out == 10 + 444 * 2

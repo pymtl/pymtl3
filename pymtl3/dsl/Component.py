@@ -164,8 +164,6 @@ class Component( ComponentLevel7 ):
       obj._construct()
       del NamedObject.__setattr__
 
-    top = s._dsl.elaborate_top
-
     added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
 
     # First elaborate all functions to spawn more named objects
@@ -206,7 +204,8 @@ class Component( ComponentLevel7 ):
       if not top._dsl._has_pending_method_connections and isinstance( x, MethodPort ):
         top._dsl._has_pending_method_connections = True
 
-    top.add_connections( *connection_pairs )
+    # WE NEED TO ADD CONNECTIONS AT PARENT INSTEAD OF TOP
+    parent.add_connections( *connection_pairs )
 
     # Now we put back the provided upblk metadata to parent and top
     for blk, obj_name in provided_upblk_reads:
@@ -380,6 +379,7 @@ class Component( ComponentLevel7 ):
         del x._dsl.parent_obj
       for x in removed_connectables:
         del x._dsl.parent_obj
+        x._dsl.full_name = "<deleted>"+x._dsl.full_name
       for y in removed_consts:
         del y._dsl.parent_obj
 
