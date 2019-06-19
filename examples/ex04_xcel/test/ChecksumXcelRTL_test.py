@@ -1,4 +1,12 @@
+"""
+==========================================================================
+ ChecksumXcelRTL_test.py
+==========================================================================
+Test cases for RTL checksum accelerator.
 
+Author : Yanghui Ou
+  Date : June 14, 2019
+"""
 from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
