@@ -8,8 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog import TranslationPass
-from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+from pymtl3.passes.sverilog import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import (
@@ -37,6 +36,7 @@ from ..translation.behavioral.test.SVBehavioralTranslatorL2_test import (
     test_if_exp_for,
     test_if_exp_unary_op,
     test_nested_if,
+    test_reduce,
     test_tmpvar,
 )
 from ..translation.behavioral.test.SVBehavioralTranslatorL3_test import (

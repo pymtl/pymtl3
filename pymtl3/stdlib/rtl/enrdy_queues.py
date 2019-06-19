@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.SendRecvIfc import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.rtl import Mux, Reg, RegEn
+from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegRst
 
 
 class PipeQueue1RTL( Component ):
@@ -44,7 +44,7 @@ class BypassQueue1RTL( Component ):
 
     s.buffer  = RegEn( Type )( in_ = s.enq.msg )
 
-    s.full = Reg( Bits1 )
+    s.full = RegRst( Bits1, reset_value = 0 )
 
     s.byp_mux = Mux( Type, 2 )(
       out = s.deq.msg,

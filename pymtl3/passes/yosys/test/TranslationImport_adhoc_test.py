@@ -45,6 +45,7 @@ from pymtl3.passes.sverilog.test.TranslationImport_adhoc_test import (
     test_port_part_selection,
     test_port_wire,
     test_port_wire_array_index,
+    test_reduce,
     test_seq_assign,
     test_sext,
     test_struct,

@@ -24,6 +24,7 @@ from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL2
     test_if_exp_for,
     test_if_exp_unary_op,
     test_nested_if,
+    test_reduce,
     test_tmpvar,
 )
 

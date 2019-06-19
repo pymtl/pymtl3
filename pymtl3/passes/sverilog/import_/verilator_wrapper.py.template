@@ -143,9 +143,9 @@ class {component_name}( Component ):
     @s.update_on_edge
     def seq_upblk():
       # Advance the clock
-      _ffi_m.clk[0] = 1
-      _ffi_inst.eval( _ffi_m )
       _ffi_m.clk[0] = 0
+      _ffi_inst.eval( _ffi_m )
+      _ffi_m.clk[0] = 1
       _ffi_inst.eval( _ffi_m )
       set_output()
 

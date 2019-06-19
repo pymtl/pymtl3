@@ -558,13 +558,15 @@ def _handle_Interface( i_id, obj ):
         properties[ _id ] = _obj_type
         if isinstance( _obj_type, Array ):
           _add_packed_instances( _id, _obj_type, properties )
-    else:
-      err_msg = \
-"""\
- - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
-         not an interface, a port, or a list of them. \
-"""
-      print( err_msg.format( _id, _obj, i_id ) )
+    # TODO: Figure out a way to inform user of dropped attributes without
+    # flooding STDOUT
+    # else:
+      # err_msg = \
+# """\
+ # - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
+         # not an interface, a port, or a list of them. \
+# """
+      # print( err_msg.format( _id, _obj, i_id ) )
   return InterfaceView( obj.__class__.__name__, properties, obj )
 
 def _handle_Component( c_id, obj ):
@@ -578,14 +580,16 @@ def _handle_Component( c_id, obj ):
         properties[ _id ] = _obj_type
         if isinstance( _obj_type, Array ):
           _add_packed_instances( _id, _obj_type, properties )
-    else:
-      err_msg = \
-"""\
- - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
-         not a port, a, wire, an interface, a component, a constantor, or a
-         list of them. \
-"""
-      print( err_msg.format( _id, _obj, c_id ) )
+    # TODO: Figure out a way to inform user of dropped attributes without
+    # flooding STDOUT
+    # else:
+      # err_msg = \
+# """\
+ # - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
+         # not a port, a, wire, an interface, a component, a constantor, or a
+         # list of them. \
+# """
+      # print( err_msg.format( _id, _obj, c_id ) )
   return Component( obj, properties )
 
 def _is_of_type( obj, Type ):
