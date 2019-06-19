@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+#=========================================================================
+# proc-xcel-translate [options]
+#=========================================================================
+# This script imports the RTL processor-accelerator unit and translate it
+# into yosys-compatible SystemVerilog. The generated SystemVerilog file
+# will be dumped into the current directory ( if no output directory is
+# specified ) or the specified output directory.
+#
+#  -h --help           Display this message
+#
+#  --xcel              Set the type of accelerator to be used
+#  --output-dir        Set the output directory of translation
+#
+# Author : Peitian Pan, Shunning Jiang, Christopher Batten
+# Date   : June 19, 2019
+
+# Hack to add project root to python path
+
+import argparse
+import os
+import sys
+
+cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
+while cur_dir:
+  if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):
+    sys.path.insert(0, cur_dir)
+    break
+  cur_dir = os.path.dirname(cur_dir)
+
+# Import the RTL processor, accelerators, and their composition
+
+from examples.ex03_proc.ProcRTL         import ProcRTL
+from examples.ex03_proc.NullXcel        import NullXcelRTL
+from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
+from examples.ex04_xcel.ProcXcel        import ProcXcel
+
+# Import the translation pass from yosys backend
+
+from pymtl3.passes.yosys import TranslationPass
+
+#=========================================================================
+# Command line processing
+#=========================================================================
+
+class ArgumentParserWithCustomError(argparse.ArgumentParser):
+  def error( self, msg = "" ):
+    if ( msg ): print "\n ERROR: %s" % msg
+    print ""
+    file = open( sys.argv[0] )
+    for ( lineno, line ) in enumerate( file ):
+      if ( line[0] != '#' ): sys.exit(msg != "")
+      if ( (lineno == 2) or (lineno >= 4) ): print line[1:].rstrip("\n")
+
+def parse_cmdline():
+  def valid_dir(string):
+    assert not string or (os.path.isdir(string) and os.path.exists(string)), \
+      "the given path {} does not exist or is not a directory!".format(string)
+    return string
+  p = ArgumentParserWithCustomError( add_help=False )
+
+  # Standard command line arguments
+
+  p.add_argument( "-h", "--help", action="store_true" )
+
+  # Additional commane line arguments for the translator
+
+  p.add_argument( "--xcel", default="null", choices=["null", "cksum"] )
+  p.add_argument( "--output-dir", default="", type=valid_dir )
+
+  opts = p.parse_args()
+  if opts.help: p.error()
+  return opts
+
+xcel_dict = {
+  "null"  : NullXcelRTL,
+  "cksum" : ChecksumXcelRTL
+}
+
+#=========================================================================
+# Main
+#=========================================================================
+
+def main():
+  opts = parse_cmdline()
+
+  # If output directory was specified, change to that directory
+
+  if opts.output_dir:
+    os.chdir( opts.output_dir )
+
+  # Instantiate the RTL processor-accelerator unit
+
+  proc_xcel = ProcXcel( ProcRTL, xcel_dict[ opts.xcel ] )
+
+  # Tag the processor-accelerator unit as to be translated
+
+  proc_xcel.yosys_translate = True
+
+  # Perform translation
+
+  success = False
+
+  try:
+    proc_xcel.elaborate()
+    proc_xcel.apply( TranslationPass() )
+    success = True
+  finally:
+    if success:
+      path = os.getcwd() + \
+             "/{}.sv".format(proc_xcel._translator._top_module_full_name)
+      print("\nTranslation finished successfully!")
+      print("You can find the generated SystemVerilog file at {}.".format(path))
+    else:
+      print()
+      print("\nTranslation failed!")
+
+main()
