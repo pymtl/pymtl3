@@ -1,0 +1,3 @@
+ignore:
+  - "pymtl3/passes/rtlir/behavioral/BehavioralRTLIRImplGen.py"
+  - "*_test.py"

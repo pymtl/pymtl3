@@ -11,6 +11,7 @@ from pymtl3.datatypes import Bits1, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
     is_sverilog_reserved,
 )
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL4_test import (
@@ -30,9 +31,10 @@ def local_do_test( m ):
   tr.translate_structural( m )
 
   comps = tr.structural.decl_subcomps[m]
-  assert comps["port_decls"] == m._ref_comps_port_yosys[m]
-  assert comps["wire_decls"] == m._ref_comps_wire_yosys[m]
-  assert comps["connections"] == m._ref_comps_conn_yosys[m]
+
+  check_eq( comps["port_decls"], m._ref_comps_port_yosys[m] )
+  check_eq( comps["wire_decls"], m._ref_comps_wire_yosys[m] )
+  check_eq( comps["connections"], m._ref_comps_conn_yosys[m] )
 
 def test_comp_array( do_test ):
   class B( Component ):

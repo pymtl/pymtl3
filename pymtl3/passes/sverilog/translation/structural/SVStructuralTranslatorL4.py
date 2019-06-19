@@ -54,8 +54,12 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
-      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_dtype,
+      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
       port_array_type ):
+    assert isinstance( port_rtype, rt.Port ), \
+      "SystemVerilog backend does not support nested interface {} yet!".format(
+          port_id )
+    port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {

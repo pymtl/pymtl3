@@ -84,30 +84,21 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   def rtlir_tr_const_decls( s, const_decls ):
     make_indent( const_decls, 1 )
     return '\n'.join( const_decls )
+
+  def gen_array_param( s, n_dim, dtype, array ):
+    if not n_dim:
+      if isinstance( dtype, rdt.Vector ):
+        return s._literal_number( dtype.get_length(), array )
+      else:
+        assert False, '{} is not an integer or a BitStruct!'.format( array )
+    else:
+      ret = []
+      for _idx, idx in enumerate( range( n_dim[0] ) ):
+        ret.append( s.gen_array_param( n_dim[1:], dtype, array[idx] ) )
+      cat_str = ", ".join( ret )
+      return "'{{ {cat_str} }}".format( **locals() )
   
   def rtlir_tr_const_decl( s, id_, Type, array_type, dtype, value ):
-
-    def gen_array_param( n_dim, array ):
-      if not n_dim:
-        assert not isinstance( array, list )
-        if isinstance( array, Bits ):
-          return s._literal_number( array.nbits, array.value )
-        elif isinstance( array, int ):
-          return s._literal_number( 32, array )
-        else:
-          assert False, '{} is not an integer!'.format( array )
-      assert isinstance( array, list )
-
-      ret = "'{ "
-      for _idx, idx in enumerate( range( n_dim[0] ) ):
-        if _idx != 0: ret += ', '
-        ret += gen_array_param( n_dim[1:], array[idx] )
-      ret += " }"
-      return ret
-
-    assert isinstance( Type.get_dtype(), rdt.Vector ), \
-      '{} is not a vector constant!'.format( value )
-
     _dtype = Type.get_dtype()
     if array_type:
       template = "Note: constant {id_} has data type {_dtype}"
@@ -115,10 +106,8 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of constants {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-
-    nbits = dtype['nbits']
     _dtype = dtype['const_decl'].format( **locals() ) + array_type['decl']
-    _value = gen_array_param( array_type['n_dim'], value )
+    _value = s.gen_array_param( array_type['n_dim'], dtype['raw_dtype'], value )
 
     return 'localparam {_dtype} = {_value};'.format( **locals() )
 

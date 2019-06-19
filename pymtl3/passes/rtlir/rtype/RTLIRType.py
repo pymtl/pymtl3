@@ -18,7 +18,7 @@ import inspect
 from functools import reduce
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, BitStruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -516,7 +516,7 @@ def _add_packed_instances( id_, Type, properties ):
     _Type.unpacked = True
     properties[ _id ] = _Type
 
-def _handle_Array( _obj ):
+def _handle_Array( _id, _obj ):
   obj = _obj
   if len( obj ) == 0:
     return None
@@ -529,7 +529,6 @@ def _handle_Array( _obj ):
   while isinstance( obj, list ):
     if len( obj ) == 0:
       return None
-    # assert len( obj ) > 0, "{} is an empty list!".format( obj )
     dim_sizes.append( len( obj ) )
     obj = obj[0]
   if isinstance( obj, ( int, Bits ) ):
@@ -537,43 +536,56 @@ def _handle_Array( _obj ):
   else:
     return Array( dim_sizes, get_rtlir( obj ) )
 
-def _handle_InPort( obj ):
+def _handle_InPort( p_id, obj ):
   return Port( 'input', rdt.get_rtlir_dtype( obj ) )
 
-def _handle_OutPort( obj ):
+def _handle_OutPort( p_id, obj ):
   return Port( 'output', rdt.get_rtlir_dtype( obj ) )
 
-def _handle_Wire( obj ):
+def _handle_Wire( w_id, obj ):
   return Wire( rdt.get_rtlir_dtype( obj ) )
 
-def _handle_Const( obj ):
+def _handle_Const( c_id, obj ):
   return Const( rdt.get_rtlir_dtype( obj ), obj )
 
-def _handle_Interface( obj ):
+def _handle_Interface( i_id, obj ):
   properties = {}
-  collected_objs = collect_objs( obj, object, True )
+  collected_objs = collect_objs( obj, object )
   for _id, _obj in collected_objs:
-    # TODO: warn the user about a silently dropped attribute?
     if _is_rtlir_ifc_convertible( _obj ):
       _obj_type = get_rtlir( _obj )
       if _obj_type is not None:
         properties[ _id ] = _obj_type
         if isinstance( _obj_type, Array ):
           _add_packed_instances( _id, _obj_type, properties )
+    else:
+      err_msg = \
+"""\
+ - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
+         not an interface, a port, or a list of them. \
+"""
+      print( err_msg.format( _id, _obj, i_id ) )
   return InterfaceView( obj.__class__.__name__, properties, obj )
 
-def _handle_Component( obj ):
+def _handle_Component( c_id, obj ):
   properties = {}
-  collected_objs = collect_objs( obj, object, True )
+  collected_objs = collect_objs( obj, object )
   for _id, _obj in collected_objs:
     # Untranslatable attributes will be ignored
-    # TODO: warn the user about a silently dropped attribute?
     if is_rtlir_convertible( _obj ):
       _obj_type = get_rtlir( _obj )
       if _obj_type is not None:
         properties[ _id ] = _obj_type
         if isinstance( _obj_type, Array ):
           _add_packed_instances( _id, _obj_type, properties )
+    else:
+      err_msg = \
+"""\
+ - Note: {} attribute {} of {} was dropped during conversion to RTLIR because it is
+         not a port, a, wire, an interface, a component, a constantor, or a
+         list of them. \
+"""
+      print( err_msg.format( _id, _obj, c_id ) )
   return Component( obj, properties )
 
 def _is_of_type( obj, Type ):
@@ -592,13 +604,13 @@ _RTLIR_ifc_handlers = [
 ]
 
 _RTLIR_handlers = [
-  ( list,          _handle_Array ),
-  ( dsl.InPort,    _handle_InPort ),
-  ( dsl.OutPort,   _handle_OutPort ),
-  ( dsl.Wire,      _handle_Wire ),
-  ( ( int, Bits ), _handle_Const ),
-  ( dsl.Interface, _handle_Interface ),
-  ( dsl.Component, _handle_Component ),
+  ( list,                     _handle_Array ),
+  ( dsl.InPort,               _handle_InPort ),
+  ( dsl.OutPort,              _handle_OutPort ),
+  ( dsl.Wire,                 _handle_Wire ),
+  ( ( int, Bits, BitStruct ), _handle_Const ),
+  ( dsl.Interface,            _handle_Interface ),
+  ( dsl.Component,            _handle_Component ),
 ]
 
 #-------------------------------------------------------------------------
@@ -609,31 +621,31 @@ def get_component_ifc_rtlir( obj ):
   """Return the RTLIR of the interfaces of component `obj`."""
   primitive_types = tuple( x[0] for x in _RTLIR_ifc_handlers[1:] )
 
-  def _is_interface( obj ):
+  def _is_interface( id_, obj ):
     _type = type(obj)
     if isinstance( obj, primitive_types ):
       return True
     if not isinstance( obj, list ):
       return False
     while isinstance( obj, list ):
-      assert len( obj ) > 0, "{} is an empty list!".format( obj )
+      assert len( obj ) > 0, "{} is an empty list!".format( id_ )
       obj = obj[0]
     return isinstance( obj, primitive_types )
 
-  def _get_ifc_rtlir( obj ):
+  def _get_ifc_rtlir( id_, obj ):
     for Type, handler in _RTLIR_ifc_handlers:
       if isinstance( obj, Type ):
-        return handler( obj )
+        return handler( id_, obj )
     return None
 
   try:
     assert isinstance(obj, dsl.Component), \
       "the given object is not a PyMTL component!"
     properties = {}
-    collected_objs = collect_objs( obj, object, True )
+    collected_objs = collect_objs( obj, object )
     for _id, _obj in collected_objs:
-      if _is_interface( _obj ):
-        _obj_type = _get_ifc_rtlir( _obj )
+      if _is_interface( _id, _obj ):
+        _obj_type = _get_ifc_rtlir( _id, _obj )
         if _obj_type is not None:
           properties[ _id ] = _obj_type
           if isinstance( _obj_type, Array ):
@@ -647,7 +659,7 @@ def is_rtlir_convertible( obj ):
   """Return if `obj` can be converted into an RTLIR instance."""
   pymtl_constructs = (
     dsl.InPort, dsl.OutPort, dsl.Wire,
-    Bits, dsl.Interface, dsl.Component,
+    Bits, BitStruct, dsl.Interface, dsl.Component,
   )
   # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
@@ -655,7 +667,6 @@ def is_rtlir_convertible( obj ):
       # Empty lists will be dropped
       if len( obj ) == 0:
         return True
-      # assert len( obj ) > 0
       obj = obj[0]
     return is_rtlir_convertible( obj )
   elif isinstance( obj, pymtl_constructs ):
@@ -676,7 +687,7 @@ def get_rtlir( _obj ):
     try:
       for Type, handler in _RTLIR_handlers:
         if isinstance( _obj, Type ):
-          __rtlir_cache[ obj ] = handler( _obj )
+          __rtlir_cache[ obj ] = handler( "<name not available>", _obj )
           return __rtlir_cache[ obj ]
       # Cannot convert `obj` into RTLIR representation
       assert False, 'unrecognized object {}!'.format( _obj )

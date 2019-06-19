@@ -204,7 +204,7 @@ def _get_rtlir_dtype_struct( obj ):
     all_properties = {}
 
     # Collect all fields of the struct object
-    static_members = collect_objs( cls, object, True )
+    static_members = collect_objs( cls, object )
 
     # Infer the type of each field from the type instance
     try:
@@ -214,7 +214,7 @@ def _get_rtlir_dtype_struct( obj ):
         '__init__() of supposed struct {} should take 0 argument ( you can \
         achieve this by adding default values to your arguments )!'.format(
           cls.__name__ )
-    fields = collect_objs( type_instance, object, grouped = True )
+    fields = collect_objs( type_instance, object )
     static_member_names = map(lambda x: x[0], static_members)
     for name, field in fields:
       # Exclude the static members of the type instance
@@ -289,6 +289,10 @@ def get_rtlir_dtype( obj ):
     # PyMTL Bits objects
     elif isinstance( obj, Bits ):
       return Vector( obj.nbits )
+
+    # PyMTL BitStruct objects
+    elif isinstance( obj, BitStruct ):
+      return _get_rtlir_dtype_struct( obj )
 
     else:
       assert False, 'cannot infer the data type of the given object!'

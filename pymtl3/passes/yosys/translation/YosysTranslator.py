@@ -78,6 +78,8 @@ endmodule
     ports = ports_template.format(**locals())
 
     # Assemble body of module definition
+
+    # Begin with port_wires
     p_port_wires = s.get_pretty(structural, "p_wire_decls", False)
     i_port_wires = s.get_pretty(structural, "i_wire_decls", False)
 
@@ -86,21 +88,61 @@ endmodule
         p_port_wires += ",\n"
       i_port_wires += "\n"
     port_wires = p_port_wires + i_port_wires
+    if port_wires:
+      port_wires = \
+          "  // Struct/Array ports in the form of wires\n" \
+          + port_wires
 
+    body = port_wires
+
+    # Add wire declarations
     wire_decls = s.get_pretty(structural, "decl_wires")
-    tmpvar_decls = s.get_pretty(behavioral, "decl_tmpvars")
+    if wire_decls:
+      wire_decls = "  // Wire declarations\n" + wire_decls
+    if body and wire_decls:
+      wire_decls = "\n" + wire_decls
+    body += wire_decls
 
+    # Add wires for sub-component struct/array ports
     subcomp_wires = s.get_pretty(structural, "c_wire_decls")
+    if subcomp_wires:
+      subcomp_wires = \
+          "  // Struct/Array ports of sub-components in the form of wires\n" \
+          + subcomp_wires
+    if body and subcomp_wires:
+      subcomp_wires = "\n" + subcomp_wires
+    body += subcomp_wires
+
+    # Add sub-component declarations
     subcomp_ports = s.get_pretty(structural, "c_port_decls")
+    if subcomp_ports:
+      subcomp_ports = "  // Sub-component declarations\n" + subcomp_ports
+    if body and subcomp_ports:
+      subcomp_ports = "\n" + subcomp_ports
+    body += subcomp_ports
+
+    # Add connections between wires and sub-component struct/array ports
     subcomp_conns = s.get_pretty(structural, "c_connections")
+    if subcomp_conns:
+      subcomp_conns = "  // Connect struct/array ports and their wire forms\n" \
+                      + subcomp_conns
+    if body and subcomp_conns:
+      subcomp_conns = "\n" + subcomp_conns
+    body += subcomp_conns
 
+    # Add temporary wire definitions
+    tmpvar_decls = s.get_pretty(behavioral, "decl_tmpvars")
+    if tmpvar_decls:
+      tmpvar_decls = "  // Temporary wire definitions\n" + tmpvar_decls
+    if body and tmpvar_decls:
+      tmpvar_decls = "\n" + tmpvar_decls
+    body += tmpvar_decls
+
+    # Add procedural blocks
     upblk_decls = s.get_pretty(behavioral, "upblk_decls")
+    body += upblk_decls
 
-    body = port_wires + wire_decls \
-         + subcomp_wires + subcomp_ports + subcomp_conns \
-         + tmpvar_decls + upblk_decls
-
-    # Assemble connections
+    # Add connections
     p_conns = s.get_pretty(structural, "p_connections", False)
     i_conns = s.get_pretty(structural, "i_connections", False)
 
@@ -111,10 +153,14 @@ endmodule
     port_connections = p_conns + i_conns
     connections = port_connections \
                 + s.get_pretty(structural, "connections")
+    if connections:
+      connections = "  // Connections\n" + connections
     if (body and connections) or (not body and connections):
       connections = '\n' + connections
     body += connections
 
     s._top_module_name = getattr( structural, "component_name", module_name )
     s._top_module_full_name = module_name
+
+    # Fill in the template and return
     return template.format( **locals() )

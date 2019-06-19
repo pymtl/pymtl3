@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+from collections import OrderedDict
 
 from pymtl3.datatypes import Bits32, mk_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -22,7 +23,7 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
     visitor = BehavioralRTLIRTypeCheckVisitorL1(
       m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,

@@ -35,26 +35,41 @@ class ImportPass( SVerilogImportPass ):
     rtype = get_component_ifc_rtlir( m )
     full_name = get_component_unique_name( rtype )
     packed_ports = s.gen_packed_ports( rtype )
+    dump_vcd = 1 if hasattr( m, "dump_vcd" ) else 0
+    try:
+      is_same = m._pass_yosys_translation.is_same
+    except AttributeError:
+      is_same = False
 
     try:
       sv_file_path = m.yosys_import_path
     except AttributeError:
       sv_file_path = full_name + '.sv'
 
+    # Check if the verilated model is cached
+    cached = False
+    obj_dir = 'obj_dir_' + full_name
+    c_wrapper = full_name + '_v.cpp'
+    py_wrapper = full_name + '_v.py'
+    shared_lib = 'lib{}_v.so'.format( full_name )
+    if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
+       os.path.exists(py_wrapper) and os.path.exists(shared_lib):
+      cached = True
+
     assert os.path.isfile( sv_file_path ), \
       "Cannot import {}: {} is not a file!".format( m, sv_file_path )
 
-    s.create_verilator_model( sv_file_path, full_name )
+    s.create_verilator_model( sv_file_path, full_name, dump_vcd, cached )
 
     c_wrapper_name, port_cdefs = \
-        s.create_verilator_c_wrapper( full_name, packed_ports )
+        s.create_verilator_c_wrapper( m, full_name, packed_ports, dump_vcd, cached )
 
     lib_name = \
-        s.create_shared_lib( c_wrapper_name, full_name )
+        s.create_shared_lib( c_wrapper_name, full_name, dump_vcd, cached )
 
     py_wrapper_name, symbols = \
         s.create_py_wrapper( full_name, rtype, packed_ports,
-                           lib_name, port_cdefs )
+                           lib_name, port_cdefs, dump_vcd, cached)
 
     imp = s.import_component( py_wrapper_name, full_name, symbols )
 
@@ -111,38 +126,66 @@ class ImportPass( SVerilogImportPass ):
   # Python signal connections generation functions
   #-------------------------------------------------------------------------
 
-  def gen_vector_conns( s, lhs, rhs, dtype, pos ):
+  def gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
     nbits = dtype.get_length()
     _lhs, _rhs = s._verilator_name(lhs), s._verilator_name(rhs)
     ret = ["s.connect( s.{_lhs}, s.mangled__{_rhs} )".format(**locals())]
     return ret, pos + nbits
 
-  def gen_struct_conns( s, lhs, rhs, dtype, pos ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
+    dtype_name = dtype.get_class().__name__
+    upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
+    ret = [
+      "@s.update",
+      "def " + upblk_name + "():",
+    ]
+    if d == "output":
+      ret.append( "  s.{lhs} = {dtype_name}()".format( **locals() ) )
+    body = []
+    all_properties = reversed(dtype.get_all_properties())
+    for name, field in all_properties:
+      # Use upblk to generate assignment to a struct port
+      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs+"$"+name, field, pos )
+      body += _ret
+    return ret + body, pos
+
+  def _gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
+    nbits = dtype.get_length()
+    l, r = pos, pos+nbits
+    _lhs, _rhs = s._verilator_name( lhs ), s._verilator_name( rhs )
+    if d == "input":
+      ret = ["  s.mangled__{_rhs} = s.{_lhs}".format( **locals() )]
+    else:
+      ret = ["  s.{_lhs} = s.mangled__{_rhs}".format( **locals() )]
+    return ret, r
+
+  def _gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
     ret = []
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
-      _ret, pos = s.gen_dtype_conns( lhs+"."+name, rhs+"$"+name, field, pos )
+      _ret, pos = s._gen_dtype_conns(d, lhs+"."+name, rhs+"$"+name, field, pos)
       ret += _ret
     return ret, pos
 
-  def gen_packed_array_conns( s, lhs, rhs, dtype, n_dim, pos ):
+  def _gen_packed_array_conns( s, d, lhs, rhs, dtype, n_dim, pos ):
     if not n_dim:
-      return s.gen_dtype_conns( lhs, rhs, dtype, pos )
+      return s._gen_dtype_conns( d, lhs, rhs, dtype, pos )
     else:
       ret = []
       for idx in range(n_dim[0]):
         _lhs = lhs + "[{idx}]".format( **locals() )
         _rhs = rhs + "$__{idx}".format( **locals() )
         _ret, pos = \
-          s.gen_packed_array_conns( _lhs, _rhs, dtype, n_dim[1:], pos )
+          s._gen_packed_array_conns( d, _lhs, _rhs, dtype, n_dim[1:], pos )
         ret += _ret
       return ret, pos
 
   def gen_port_conns( s, id_py, id_v, port, n_dim ):
     if not n_dim:
+      d = port.get_direction()
       dtype = port.get_dtype()
       nbits = dtype.get_length()
-      ret, pos = s.gen_dtype_conns( id_py, id_v, dtype, 0 )
+      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0 )
       assert pos == nbits, \
         "internal error: {} wire length mismatch!".format( id_py )
       return ret
@@ -220,4 +263,17 @@ class ImportPass( SVerilogImportPass ):
         _lhs = lhs + "[{i}]".format( **locals() )
         _rhs = rhs + "$__{i}".format( **locals() )
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
+      return ret
+
+  #-------------------------------------------------------------------------
+  # PyMTL wrapper constraint generation function
+  #-------------------------------------------------------------------------
+
+  def _gen_constraints( s, name, n_dim, rtype ):
+    if not n_dim:
+      return ["U( seq_upblk ) < RD( {} ),".format("s.mangled__"+name)]
+    else:
+      ret = []
+      for i in range( n_dim[0] ):
+        ret += s._gen_constraints( name+"$__"+str(i), n_dim[1:], rtype )
       return ret

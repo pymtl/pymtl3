@@ -84,6 +84,11 @@ class ImportPass( BasePass ):
     rtype = get_component_ifc_rtlir( m )
     full_name = get_component_unique_name( rtype )
     packed_ports = s.gen_packed_ports( rtype )
+    dump_vcd = 1 if hasattr( m, "dump_vcd" ) else 0
+    try:
+      is_same = m._pass_sverilog_translation.is_same
+    except AttributeError:
+      is_same = False
 
     try:
       sv_file_path = m.sverilog_import_path
@@ -93,17 +98,27 @@ class ImportPass( BasePass ):
     assert os.path.isfile( sv_file_path ), \
       "Cannot import {}: {} is not a file!".format( m, sv_file_path )
 
-    s.create_verilator_model( sv_file_path, full_name )
+    # Check if the verilated model is cached
+    cached = False
+    obj_dir = 'obj_dir_' + full_name
+    c_wrapper = full_name + '_v.cpp'
+    py_wrapper = full_name + '_v.py'
+    shared_lib = 'lib{}_v.so'.format( full_name )
+    if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
+       os.path.exists(py_wrapper) and os.path.exists(shared_lib):
+      cached = True
+
+    s.create_verilator_model( sv_file_path, full_name, dump_vcd, cached )
 
     c_wrapper_name, port_cdefs = \
-        s.create_verilator_c_wrapper( full_name, packed_ports )
+        s.create_verilator_c_wrapper( m, full_name, packed_ports, dump_vcd, cached )
 
     lib_name = \
-        s.create_shared_lib( c_wrapper_name, full_name )
+        s.create_shared_lib( c_wrapper_name, full_name, dump_vcd, cached )
 
     py_wrapper_name, symbols = \
         s.create_py_wrapper( full_name, rtype, packed_ports,
-                           lib_name, port_cdefs )
+                           lib_name, port_cdefs, dump_vcd, cached )
 
     imp = s.import_component( py_wrapper_name, full_name, symbols )
 
@@ -113,32 +128,36 @@ class ImportPass( BasePass ):
   # create_verilator_model
   #-----------------------------------------------------------------------
 
-  def create_verilator_model( s, sv_file_path, top_name ):
+  def create_verilator_model( s, sv_file_path, top_name, dump_vcd, cached ):
     """Verilate module `top_name` in `sv_file_path`."""
-    obj_dir = 'obj_dir_' + top_name
-    flags = ' '.join( [
-      '--unroll-count 1000000', '--unroll-stmts 1000000', '--assert',
-      '-Wno-UNOPTFLAT', '-Wno-UNSIGNED', ] )
-    cmd = \
+    if not cached:
+      obj_dir = 'obj_dir_' + top_name
+      flags = [
+        '--unroll-count 1000000', '--unroll-stmts 1000000', '--assert',
+        '-Wno-UNOPTFLAT', '-Wno-UNSIGNED', ]
+      if dump_vcd:
+        flags.append( "--trace" )
+      flags = " ".join( flags )
+      cmd = \
 """\
 verilator -cc {sv_file_path} -top-module {top_name} --Mdir {obj_dir} -O3 {flags}
 """
-    cmd = cmd.format( **locals() )
+      cmd = cmd.format( **locals() )
 
-    # Remove obj_dir directory if it already exists.
-    # obj_dir is where the verilator output ( C headers and sources ) is stored
-    if os.path.exists( obj_dir ):
-      shutil.rmtree( obj_dir )
+      # Remove obj_dir directory if it already exists.
+      # obj_dir is where the verilator output ( C headers and sources ) is stored
+      if os.path.exists( obj_dir ):
+        shutil.rmtree( obj_dir )
 
-    # Print out the modification time stamp of SystemVerilog source file
-    # print 'Modification timestamp of {}.sv: {}'.format(
-        # top_name, os.path.getmtime( top_name + '.sv' ) )
+      # Print out the modification time stamp of SystemVerilog source file
+      # print 'Modification timestamp of {}.sv: {}'.format(
+          # top_name, os.path.getmtime( top_name + '.sv' ) )
 
-    # Try to call verilator
-    try:
-      subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
-    except subprocess.CalledProcessError as e:
-      assert False, \
+      # Try to call verilator
+      try:
+        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
+      except subprocess.CalledProcessError as e:
+        assert False, \
 """\
 Fail to verilate model {} in file {}
   Verilator command:
@@ -152,13 +171,17 @@ Fail to verilate model {} in file {}
   # create_verilator_c_wrapper
   #-----------------------------------------------------------------------
 
-  def create_verilator_c_wrapper( s, full_name, packed_ports ):
+  def create_verilator_c_wrapper( s, m, full_name, packed_ports, dump_vcd, cached ):
     """Return the file name of generated C component wrapper.
 
     Create a C wrapper that calls verilator C API and provides interfaces
     that can be later called through CFFI.
     """
     component_name = full_name
+    try:
+      vcd_timescale = m.vcd_timescale
+    except AttributeError:
+      vcd_timescale = "10ps"
 
     # The wrapper template should be in the same directory as this file
     template_name = \
@@ -183,11 +206,12 @@ Fail to verilate model {} in file {}
     port_inits = '\n'.join( port_inits )
 
     # Fill in the C wrapper template
-    with open( template_name, 'r' ) as template:
-      with open( wrapper_name, 'w' ) as output:
-        c_wrapper = template.read()
-        c_wrapper = c_wrapper.format( **locals() )
-        output.write( c_wrapper )
+    if not cached:
+      with open( template_name, 'r' ) as template:
+        with open( wrapper_name, 'w' ) as output:
+          c_wrapper = template.read()
+          c_wrapper = c_wrapper.format( **locals() )
+          output.write( c_wrapper )
 
     return wrapper_name, port_cdefs
 
@@ -195,70 +219,78 @@ Fail to verilate model {} in file {}
   # create_shared_lib
   #-----------------------------------------------------------------------
 
-  def create_shared_lib( s, wrapper_name, full_name ):
+  def create_shared_lib( s, wrapper_name, full_name, dump_vcd, cached ):
     """Return the name of compiled shared lib."""
     lib_name = 'lib{}_v.so'.format( full_name )
 
-    # Find out the include directory of Verilator
-    # First look at $PYMTL_VERILATOR_INCLUDE_DIR environment variable
-    verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
+    if not cached:
+      # Find out the include directory of Verilator
+      # First look at $PYMTL_VERILATOR_INCLUDE_DIR environment variable
+      verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
 
-    # If it is not defined, try to obtain the directory through `pkg-config`
-    if verilator_include_dir is None:
-      cmd = ['pkg-config', '--variable=includedir', 'verilator']
-      try:
-        verilator_include_dir = \
-          subprocess.check_output( cmd, stderr=subprocess.STDOUT ).strip()
-      except OSError:
-        assert False, \
+      # If it is not defined, try to obtain the directory through `pkg-config`
+      if verilator_include_dir is None:
+        cmd = ['pkg-config', '--variable=includedir', 'verilator']
+        try:
+          verilator_include_dir = \
+            subprocess.check_output( cmd, stderr=subprocess.STDOUT ).strip()
+        except OSError:
+          assert False, \
 """\
 Cannot locate the include directory of verilator. Please make sure either
 $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 """
 
-    include_dirs = [ verilator_include_dir, verilator_include_dir + '/vltstd' ]
-    obj_dir_prefix = 'obj_dir_{}/V{}'.format( full_name, full_name )
-    cpp_sources_list = []
+      include_dirs = [ verilator_include_dir, verilator_include_dir + '/vltstd' ]
+      obj_dir_prefix = 'obj_dir_{}/V{}'.format( full_name, full_name )
+      cpp_sources_list = []
 
-    # Read through make file of the verilated model to find the cpp files we need
-    with open( obj_dir_prefix + "_classes.mk" ) as makefile:
-      found = False
-      for line in makefile:
-        if line.startswith("VM_CLASSES_FAST += "):
-          found = True
-        elif found:
-          if line.strip() == '':
-            found = False
-          else:
-            cpp_file_name = line.strip()[:-2]
-            cpp_file = 'obj_dir_{}/{}.cpp'.format( full_name, cpp_file_name )
-            cpp_sources_list.append( cpp_file )
+      # Read through make file of the verilated model to find the cpp files we need
+      with open( obj_dir_prefix + "_classes.mk" ) as makefile:
+        found = False
+        for line in makefile:
+          if line.startswith("VM_CLASSES_FAST += "):
+            found = True
+          elif found:
+            if line.strip() == '':
+              found = False
+            else:
+              cpp_file_name = line.strip()[:-2]
+              cpp_file = 'obj_dir_{}/{}.cpp'.format( full_name, cpp_file_name )
+              cpp_sources_list.append( cpp_file )
 
-    # Complete the cpp sources file list
-    cpp_sources_list += [
-      obj_dir_prefix + '__Syms.cpp',
-      verilator_include_dir + '/verilated.cpp',
-      verilator_include_dir + '/verilated_dpi.cpp',
-      wrapper_name,
-    ]
+      # Complete the cpp sources file list
+      cpp_sources_list += [
+        obj_dir_prefix + '__Syms.cpp',
+        verilator_include_dir + '/verilated.cpp',
+        verilator_include_dir + '/verilated_dpi.cpp',
+        wrapper_name,
+      ]
 
-    # Call compiler with generated flags & dirs
-    cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles}'.format(
-      flags  = '-O0 -fPIC -shared',
-      idirs  = ' '.join( [ '-I' + d for d in include_dirs ] ),
-      ofile  = lib_name,
-      ifiles = ' '.join( cpp_sources_list )
-    )
+      if dump_vcd:
+        cpp_sources_list += [
+          verilator_include_dir + "/verilated_vcd_c.cpp",
+          obj_dir_prefix + "__Trace.cpp",
+          obj_dir_prefix + "__Trace__Slow.cpp",
+        ]
 
-    # Print out the modification timestamp of C wrapper
-    # print 'Modification timestamp of {}: {}'.format(
-        # wrapper_name, os.path.getmtime( wrapper_name ))
+      # Call compiler with generated flags & dirs
+      cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles}'.format(
+        flags  = '-O0 -fPIC -shared',
+        idirs  = ' '.join( [ '-I' + d for d in include_dirs ] ),
+        ofile  = lib_name,
+        ifiles = ' '.join( cpp_sources_list )
+      )
 
-    # Try to call the C compiler
-    try:
-      subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
-    except subprocess.CalledProcessError as e:
-      assert False, \
+      # Print out the modification timestamp of C wrapper
+      # print 'Modification timestamp of {}: {}'.format(
+          # wrapper_name, os.path.getmtime( wrapper_name ))
+
+      # Try to call the C compiler
+      try:
+        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
+      except subprocess.CalledProcessError as e:
+        assert False, \
 """\
 Fail to compile Verilated model into a shared library:
   C compiler command:
@@ -275,7 +307,7 @@ Fail to compile Verilated model into a shared library:
   #-----------------------------------------------------------------------
 
   def create_py_wrapper( s, m_name, rtype, packed_ports, lib_file,
-                         port_cdefs ):
+                         port_cdefs, dump_vcd, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
 
     # Load the wrapper template
@@ -303,6 +335,19 @@ Fail to compile Verilated model into a shared library:
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
+    # Generate constraints for sequential block
+    constraints = s.gen_constraints( packed_ports )
+    make_indent( constraints, 3 )
+    constraint_str = '' if not constraints else \
+"""\
+constraint_list = [
+{}
+    ]
+
+    s.add_constraints( *constraint_list )
+""".format( '\n'.join( constraints ) )
+
+
     # Line trace
     line_trace = s.gen_line_trace_py( packed_ports )
 
@@ -310,22 +355,25 @@ Fail to compile Verilated model into a shared library:
     in_line_trace = s.gen_internal_line_trace_py( packed_ports )
 
     # Fill in the python wrapper template
-    with open( template_name, 'r' ) as template:
-      with open( wrapper_name, 'w' ) as output:
-        py_wrapper = template.read()
-        py_wrapper = py_wrapper.format(
-          component_name  = m_name,
-          lib_file        = lib_file,
-          port_cdefs      = ('  '*4+'\n').join( port_cdefs ),
-          port_defs       = '\n'.join( port_defs ),
-          wire_defs       = '\n'.join( wire_defs ),
-          connections     = '\n'.join( connections ),
-          set_comb_input  = '\n'.join( set_comb_input ),
-          set_comb_output = '\n'.join( set_comb_output ),
-          line_trace      = line_trace,
-          in_line_trace   = in_line_trace,
-        )
-        output.write( py_wrapper )
+    if not cached:
+      with open( template_name, 'r' ) as template:
+        with open( wrapper_name, 'w' ) as output:
+          py_wrapper = template.read()
+          py_wrapper = py_wrapper.format(
+            component_name  = m_name,
+            lib_file        = lib_file,
+            port_cdefs      = ('  '*4+'\n').join( port_cdefs ),
+            port_defs       = '\n'.join( port_defs ),
+            wire_defs       = '\n'.join( wire_defs ),
+            connections     = '\n'.join( connections ),
+            set_comb_input  = '\n'.join( set_comb_input ),
+            set_comb_output = '\n'.join( set_comb_output ),
+            constraint_str  = constraint_str,
+            line_trace      = line_trace,
+            in_line_trace   = in_line_trace,
+            dump_vcd        = dump_vcd,
+          )
+          output.write( py_wrapper )
 
     return wrapper_name, symbols
 
@@ -426,11 +474,18 @@ Fail to compile Verilated model into a shared library:
     """Return C variable declaration of `port`."""
     c_dim = s._get_c_dim( port )
     nbits = s._get_c_nbits( port )
-    if    nbits <= 8:  data_type = 'unsigned char'
-    elif  nbits <= 16: data_type = 'unsigned short'
-    elif  nbits <= 32: data_type = 'unsigned int'
-    elif  nbits <= 64: data_type = 'unsigned long'
-    else:              data_type = 'unsigned int'
+    UNSIGNED_8  = 'unsigned char'
+    UNSIGNED_16 = 'unsigned short'
+    UNSIGNED_32 = 'unsigned int'
+    if sys.maxsize > 2**32:
+      UNSIGNED_64 = 'unsigned long'
+    else:
+      UNSIGNED_64 = 'unsigned long long'
+    if    nbits <= 8:  data_type = UNSIGNED_8
+    elif  nbits <= 16: data_type = UNSIGNED_16
+    elif  nbits <= 32: data_type = UNSIGNED_32
+    elif  nbits <= 64: data_type = UNSIGNED_64
+    else:              data_type = UNSIGNED_32
     name = s._verilator_name( name )
     return '{data_type} * {name}{c_dim};'.format( **locals() )
 
@@ -480,50 +535,85 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # Ports and interfaces will have the same name; their name-mangled
   # counterparts will have a mangled name starting with 'mangled__'.
 
-  def gen_vector_conns( s, lhs, rhs, dtype, pos ):
+  def gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     _lhs, _rhs = s._verilator_name(lhs), s._verilator_name(rhs)
     ret = ["s.connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )".format(**locals())]
     return ret, r
 
-  def gen_struct_conns( s, lhs, rhs, dtype, pos ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
+    dtype_name = dtype.get_class().__name__
+    upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
+    ret = [
+      "@s.update",
+      "def " + upblk_name + "():",
+    ]
+    if d == "output":
+      ret.append( "  s.{lhs} = {dtype_name}()".format( **locals() ) )
+    body = []
+    all_properties = reversed(dtype.get_all_properties())
+    for name, field in all_properties:
+      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs, field, pos )
+      body += _ret
+    return ret + body, pos
+
+  def _gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
+    nbits = dtype.get_length()
+    l, r = pos, pos+nbits
+    _lhs, _rhs = s._verilator_name( lhs ), s._verilator_name( rhs )
+    if d == "input":
+      ret = ["  s.mangled__{_rhs}[{l}:{r}] = s.{_lhs}".format(**locals())]
+    else:
+      ret = ["  s.{_lhs} = s.mangled__{_rhs}[{l}:{r}]".format(**locals())]
+    return ret, r
+
+  def _gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
     ret = []
     all_properties = reversed(dtype.get_all_properties())
     for field_name, field in all_properties:
-      _ret, pos = s.gen_dtype_conns( lhs+"."+field_name, rhs, field, pos )
+      _ret, pos = s._gen_dtype_conns(d, lhs+"."+field_name, rhs, field, pos)
       ret += _ret
     return ret, pos
 
-  def gen_packed_array_conns( s, lhs, rhs, dtype, n_dim, pos ):
+  def _gen_packed_array_conns( s, d, lhs, rhs, dtype, n_dim, pos ):
     if not n_dim:
-      return s.gen_dtype_conns( lhs, rhs, dtype, pos )
+      return s._gen_dtype_conns( d, lhs, rhs, dtype, pos )
     else:
       ret = []
       for idx in range(n_dim[0]):
         _lhs = lhs + "[{idx}]".format( **locals() )
         _ret, pos = \
-          s.gen_packed_array_conns( _lhs, rhs, dtype, n_dim[1:], pos )
+          s._gen_packed_array_conns( d, _lhs, rhs, dtype, n_dim[1:], pos )
         ret += _ret
       return ret, pos
 
-  def gen_dtype_conns( s, lhs, rhs, dtype, pos ):
+  def _gen_dtype_conns( s, d, lhs, rhs, dtype, pos ):
     if isinstance( dtype, rdt.Vector ):
-      return s.gen_vector_conns( lhs, rhs, dtype, pos )
+      return s._gen_vector_conns( d, lhs, rhs, dtype, pos )
     elif isinstance( dtype, rdt.Struct ):
-      return s.gen_struct_conns( lhs, rhs, dtype, pos )
+      return s._gen_struct_conns( d, lhs, rhs, dtype, pos )
     elif isinstance( dtype, rdt.PackedArray ):
       n_dim = dtype.get_dim_sizes()
-      _dtype = dtype.get_sub_dtype()
-      return s.gen_packed_array_conns( lhs, rhs, _dtype, n_dim, pos )
+      sub_dtype = dtype.get_sub_dtype()
+      return s._gen_packed_array_conns( d, lhs, rhs, sub_dtype, n_dim, pos )
+    else:
+      assert False, "unrecognized data type {}!".format( dtype )
+
+  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos ):
+    if isinstance( dtype, rdt.Vector ):
+      return s.gen_vector_conns( d, lhs, rhs, dtype, pos )
+    elif isinstance( dtype, rdt.Struct ):
+      return s.gen_struct_conns( d, lhs, rhs, dtype, pos )
     else:
       assert False, "unrecognized data type {}!".format( dtype )
 
   def gen_port_conns( s, id_py, id_v, port, n_dim ):
     if not n_dim:
+      d = port.get_direction()
       dtype = port.get_dtype()
       nbits = dtype.get_length()
-      ret, pos = s.gen_dtype_conns( id_py, id_v, dtype, 0 )
+      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0 )
       assert pos == nbits, \
         "internal error: {} wire length mismatch!".format( id_py )
       return ret
@@ -778,6 +868,34 @@ m->{name}{sub} = {deference}model->{name}{sub};
     return ret
 
   #-------------------------------------------------------------------------
+  # gen_constraints
+  #-------------------------------------------------------------------------
+
+  def _gen_constraints( s, name, n_dim, rtype ):
+    if not n_dim:
+      return ["U( seq_upblk ) < RD( {} ),".format("s.mangled__"+name)]
+    else:
+      ret = []
+      for i in range( n_dim[0] ):
+        ret += s._gen_constraints( name+"[{}]".format(i), n_dim[1:], rtype )
+      return ret
+
+  def gen_constraints( s, packed_ports ):
+    ret = []
+    for py_name, rtype in packed_ports:
+      if s._get_direction( rtype ) == 'OutPort':
+        if isinstance( rtype, rt.Array ):
+          n_dim = rtype.get_dim_sizes()
+          sub_type = rtype.get_sub_type()
+          ret += s._gen_constraints( py_name, n_dim, sub_type )
+        else:
+          v_name = s._verilator_name( py_name )
+          wire_name = "s.mangled__" + v_name
+          ret.append( "U( seq_upblk ) < RD( {} ),".format( wire_name ) )
+    ret.append( "U( seq_upblk ) < U( comb_upblk )," )
+    return ret
+
+  #-------------------------------------------------------------------------
   # gen_line_trace_py
   #-------------------------------------------------------------------------
 
@@ -829,17 +947,6 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return 'OutPort'
     else:
       assert False, "unrecognized direction {}!".format( d )
-
-  def _get_bit_width( s, port ):
-    if isinstance( port, rt.Array ):
-      nbits = port.get_sub_type().get_dtype().get_length()
-    else:
-      nbits = port.get_dtype().get_length()
-    if    nbits <= 8:  return 8
-    elif  nbits <= 16: return 16
-    elif  nbits <= 32: return 32
-    elif  nbits <= 64: return 64
-    else:              return 32
 
   def _get_c_n_dim( s, port ):
     if isinstance( port, rt.Array ):

@@ -7,6 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import filecmp
 import os
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -33,12 +34,24 @@ class TranslationPass( BasePass ):
 
       module_name = s.translator._top_module_full_name
       output_file = module_name + '.sv'
+      temporary_file = module_name + '.sv.tmp'
 
-      with open( output_file, 'w' ) as output:
+      # First write the file to a temporary file
+      m._pass_yosys_translation.is_same = False
+      with open( temporary_file, 'w' ) as output:
         output.write( s.translator.hierarchy.src )
         output.flush()
         os.fsync( output )
         output.close()
+
+      # `is_same` is set if there exists a file that has the same filename as
+      # `output_file`, and that file is the same as the temporary file
+      if ( os.path.exists(output_file) ):
+        m._pass_yosys_translation.is_same = \
+            filecmp.cmp( temporary_file, output_file )
+
+      # Rename the temporary file to the output file
+      os.rename( temporary_file, output_file )
 
       m._translator = s.translator
       m._pass_yosys_translation.translated = True

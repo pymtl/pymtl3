@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 from functools import reduce
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, BitStruct
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
@@ -469,9 +469,9 @@ def gen_signal_expr( cur_component, signal ):
     except AttributeError:
       # Special case for a ConstInstance because it has no name
       assert hasattr( signal._dsl, 'const' ), '{} is not supported!'.format(signal)
-      assert isinstance( signal._dsl.const, ( int, Bits ) ), \
-          '{} is not an integer const!'.format( signal._dsl.const )
-      return ConstInstance( signal, int( signal._dsl.const ) )
+      assert isinstance( signal._dsl.const, ( int, Bits, BitStruct ) ), \
+          '{} is not an integer/BitStruct const!'.format( signal._dsl.const )
+      return ConstInstance( signal, signal._dsl.const )
 
     # Get the base component
     base_comp = cur_component

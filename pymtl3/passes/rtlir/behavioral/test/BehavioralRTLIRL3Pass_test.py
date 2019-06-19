@@ -26,7 +26,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL3Pass import (
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRVisualizationPass import (
     BehavioralRTLIRVisualizationPass,
 )
-from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 
@@ -66,8 +66,7 @@ def test_L3_struct_attr( do_test ):
         Attribute( Base( a ), 'in_' ), 'foo' ) ) ] ) }
   do_test( a )
 
-@pytest.mark.xfail( reason = "Behavioral RTLIR does not support struct instantiation yet" )
-def test_L3_struct_inst( do_test ):
+def test_L3_struct_inst_kwargs( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
@@ -80,7 +79,24 @@ def test_L3_struct_inst( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), StructInst(
-        B, [ 'foo' ], [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
+        B, [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
+  with expected_failure( PyMTLSyntaxError, 'keyword argument is not supported' ):
+    do_test( a )
+
+def test_L3_struct_inst( do_test ):
+  class B( BitStruct ):
+    def __init__( s, foo=42 ):
+      s.foo = Bits32( foo )
+  class A( Component ):
+    def construct( s ):
+      s.out = OutPort( B )
+      @s.update
+      def upblk():
+        s.out = B( Bits32( 42 ) )
+  a = A()
+  a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
+      Attribute( Base( a ), 'out' ), StructInst(
+        B, [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
   do_test( a )
 
 #-------------------------------------------------------------------------
@@ -112,26 +128,24 @@ def test_L3_struct_no_field( do_test ):
   with expected_failure( VarNotDeclaredError, 's.in_ does not have field "bar"' ):
     do_test( A() )
 
-@pytest.mark.xfail( reason = "RTLIR conversion does not support const struct yet" )
 def test_L3_const_struct( do_test ):
   class B( BitStruct ):
+    fields = [ ( 'foo', Bits32 ) ]
     def __init__( s, foo=42 ):
       s.foo = Bits32( foo )
   class A( Component ):
     def construct( s ):
       s.in_ = B()
-      s.out = OutPort( Bits1 )
+      s.out = OutPort( Bits32 )
       @s.update
       def upblk():
         s.out = s.in_.foo
-  with expected_failure( PyMTLTypeError, "constant struct is not supported" ):
-    do_test( A() )
+  do_test( A() )
 
 #-------------------------------------------------------------------------
 # PyMTL syntax errors
 #-------------------------------------------------------------------------
 
-@pytest.mark.xfail( reason = "StructInst is not supported yet" )
 def test_L3_call_struct_inst( do_test ):
   class B( BitStruct ):
     def __init__( s, foo=42 ):

@@ -116,14 +116,18 @@ def test_struct_port_single( do_test ):
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
-    "s.connect( s.in_.foo, s.mangled__in_[0:32] )",
-    "s.connect( s.in_.bar, s.mangled__in_[32:64] )",
+    "@s.update",
+    "def in_():",
+    "  s.mangled__in_[0:32] = s.in_.foo",
+    "  s.mangled__in_[32:64] = s.in_.bar",
     "s.connect( s.reset, s.mangled__reset[0:1] )"
   ]
   a._ref_conns_yosys = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_.foo, s.mangled__in___024foo )",
-    "s.connect( s.in_.bar, s.mangled__in___024bar )",
+    "@s.update",
+    "def in_():",
+    "  s.mangled__in___024foo = s.in_.foo",
+    "  s.mangled__in___024bar = s.in_.bar",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -143,18 +147,26 @@ def test_struct_port_array( do_test ):
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
-    "s.connect( s.in_[0].foo, s.mangled__in_[0][0:32] )",
-    "s.connect( s.in_[0].bar, s.mangled__in_[0][32:64] )",
-    "s.connect( s.in_[1].foo, s.mangled__in_[1][0:32] )",
-    "s.connect( s.in_[1].bar, s.mangled__in_[1][32:64] )",
+    "@s.update",
+    "def in__LBR_0_RBR_():",
+    "  s.mangled__in_[0][0:32] = s.in_[0].foo",
+    "  s.mangled__in_[0][32:64] = s.in_[0].bar",
+    "@s.update",
+    "def in__LBR_1_RBR_():",
+    "  s.mangled__in_[1][0:32] = s.in_[1].foo",
+    "  s.mangled__in_[1][32:64] = s.in_[1].bar",
     "s.connect( s.reset, s.mangled__reset[0:1] )"
   ]
   a._ref_conns_yosys = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0].foo, s.mangled__in___024___05F0__024foo )",
-    "s.connect( s.in_[0].bar, s.mangled__in___024___05F0__024bar )",
-    "s.connect( s.in_[1].foo, s.mangled__in___024___05F1__024foo )",
-    "s.connect( s.in_[1].bar, s.mangled__in___024___05F1__024bar )",
+    "@s.update",
+    "def in__LBR_0_RBR_():",
+    "  s.mangled__in___024___05F0__024foo = s.in_[0].foo",
+    "  s.mangled__in___024___05F0__024bar = s.in_[0].bar",
+    "@s.update",
+    "def in__LBR_1_RBR_():",
+    "  s.mangled__in___024___05F1__024foo = s.in_[1].foo",
+    "  s.mangled__in___024___05F1__024bar = s.in_[1].bar",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -174,38 +186,46 @@ def test_packed_array_port_array( do_test ):
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
-    "s.connect( s.in_[0].foo[0][0], s.mangled__in_[0][0:32] )",
-    "s.connect( s.in_[0].foo[0][1], s.mangled__in_[0][32:64] )",
-    "s.connect( s.in_[0].foo[1][0], s.mangled__in_[0][64:96] )",
-    "s.connect( s.in_[0].foo[1][1], s.mangled__in_[0][96:128] )",
-    "s.connect( s.in_[0].foo[2][0], s.mangled__in_[0][128:160] )",
-    "s.connect( s.in_[0].foo[2][1], s.mangled__in_[0][160:192] )",
-    "s.connect( s.in_[0].bar, s.mangled__in_[0][192:224] )",
-    "s.connect( s.in_[1].foo[0][0], s.mangled__in_[1][0:32] )",
-    "s.connect( s.in_[1].foo[0][1], s.mangled__in_[1][32:64] )",
-    "s.connect( s.in_[1].foo[1][0], s.mangled__in_[1][64:96] )",
-    "s.connect( s.in_[1].foo[1][1], s.mangled__in_[1][96:128] )",
-    "s.connect( s.in_[1].foo[2][0], s.mangled__in_[1][128:160] )",
-    "s.connect( s.in_[1].foo[2][1], s.mangled__in_[1][160:192] )",
-    "s.connect( s.in_[1].bar, s.mangled__in_[1][192:224] )",
+    "@s.update",
+    "def in__LBR_0_RBR_():",
+    "  s.mangled__in_[0][0:32] = s.in_[0].foo[0][0]",
+    "  s.mangled__in_[0][32:64] = s.in_[0].foo[0][1]",
+    "  s.mangled__in_[0][64:96] = s.in_[0].foo[1][0]",
+    "  s.mangled__in_[0][96:128] = s.in_[0].foo[1][1]",
+    "  s.mangled__in_[0][128:160] = s.in_[0].foo[2][0]",
+    "  s.mangled__in_[0][160:192] = s.in_[0].foo[2][1]",
+    "  s.mangled__in_[0][192:224] = s.in_[0].bar",
+    "@s.update",
+    "def in__LBR_1_RBR_():",
+    "  s.mangled__in_[1][0:32] = s.in_[1].foo[0][0]",
+    "  s.mangled__in_[1][32:64] = s.in_[1].foo[0][1]",
+    "  s.mangled__in_[1][64:96] = s.in_[1].foo[1][0]",
+    "  s.mangled__in_[1][96:128] = s.in_[1].foo[1][1]",
+    "  s.mangled__in_[1][128:160] = s.in_[1].foo[2][0]",
+    "  s.mangled__in_[1][160:192] = s.in_[1].foo[2][1]",
+    "  s.mangled__in_[1][192:224] = s.in_[1].bar",
     "s.connect( s.reset, s.mangled__reset[0:1] )"
   ]
   a._ref_conns_yosys = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0].foo[0][0], s.mangled__in___024___05F0__024foo__024___05F0__024___05F0 )",
-    "s.connect( s.in_[0].foo[0][1], s.mangled__in___024___05F0__024foo__024___05F0__024___05F1 )",
-    "s.connect( s.in_[0].foo[1][0], s.mangled__in___024___05F0__024foo__024___05F1__024___05F0 )",
-    "s.connect( s.in_[0].foo[1][1], s.mangled__in___024___05F0__024foo__024___05F1__024___05F1 )",
-    "s.connect( s.in_[0].foo[2][0], s.mangled__in___024___05F0__024foo__024___05F2__024___05F0 )",
-    "s.connect( s.in_[0].foo[2][1], s.mangled__in___024___05F0__024foo__024___05F2__024___05F1 )",
-    "s.connect( s.in_[0].bar, s.mangled__in___024___05F0__024bar )",
-    "s.connect( s.in_[1].foo[0][0], s.mangled__in___024___05F1__024foo__024___05F0__024___05F0 )",
-    "s.connect( s.in_[1].foo[0][1], s.mangled__in___024___05F1__024foo__024___05F0__024___05F1 )",
-    "s.connect( s.in_[1].foo[1][0], s.mangled__in___024___05F1__024foo__024___05F1__024___05F0 )",
-    "s.connect( s.in_[1].foo[1][1], s.mangled__in___024___05F1__024foo__024___05F1__024___05F1 )",
-    "s.connect( s.in_[1].foo[2][0], s.mangled__in___024___05F1__024foo__024___05F2__024___05F0 )",
-    "s.connect( s.in_[1].foo[2][1], s.mangled__in___024___05F1__024foo__024___05F2__024___05F1 )",
-    "s.connect( s.in_[1].bar, s.mangled__in___024___05F1__024bar )",
+    "@s.update",
+    "def in__LBR_0_RBR_():",
+    "  s.mangled__in___024___05F0__024foo__024___05F0__024___05F0 = s.in_[0].foo[0][0]",
+    "  s.mangled__in___024___05F0__024foo__024___05F0__024___05F1 = s.in_[0].foo[0][1]",
+    "  s.mangled__in___024___05F0__024foo__024___05F1__024___05F0 = s.in_[0].foo[1][0]",
+    "  s.mangled__in___024___05F0__024foo__024___05F1__024___05F1 = s.in_[0].foo[1][1]",
+    "  s.mangled__in___024___05F0__024foo__024___05F2__024___05F0 = s.in_[0].foo[2][0]",
+    "  s.mangled__in___024___05F0__024foo__024___05F2__024___05F1 = s.in_[0].foo[2][1]",
+    "  s.mangled__in___024___05F0__024bar = s.in_[0].bar",
+    "@s.update",
+    "def in__LBR_1_RBR_():",
+    "  s.mangled__in___024___05F1__024foo__024___05F0__024___05F0 = s.in_[1].foo[0][0]",
+    "  s.mangled__in___024___05F1__024foo__024___05F0__024___05F1 = s.in_[1].foo[0][1]",
+    "  s.mangled__in___024___05F1__024foo__024___05F1__024___05F0 = s.in_[1].foo[1][0]",
+    "  s.mangled__in___024___05F1__024foo__024___05F1__024___05F1 = s.in_[1].foo[1][1]",
+    "  s.mangled__in___024___05F1__024foo__024___05F2__024___05F0 = s.in_[1].foo[2][0]",
+    "  s.mangled__in___024___05F1__024foo__024___05F2__024___05F1 = s.in_[1].foo[2][1]",
+    "  s.mangled__in___024___05F1__024bar = s.in_[1].bar",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )
@@ -230,18 +250,26 @@ def test_nested_struct( do_test ):
   ]
   a._ref_conns = [
     "s.connect( s.clk, s.mangled__clk[0:1] )",
-    "s.connect( s.in_[0].inner.foo, s.mangled__in_[0][0:32] )",
-    "s.connect( s.in_[0].bar, s.mangled__in_[0][32:64] )",
-    "s.connect( s.in_[1].inner.foo, s.mangled__in_[1][0:32] )",
-    "s.connect( s.in_[1].bar, s.mangled__in_[1][32:64] )",
+    "@s.update",
+    "def in__LBR_0_RBR_():",
+    "  s.mangled__in_[0][0:32] = s.in_[0].inner.foo",
+    "  s.mangled__in_[0][32:64] = s.in_[0].bar",
+    "@s.update",
+    "def in__LBR_1_RBR_():",
+    "  s.mangled__in_[1][0:32] = s.in_[1].inner.foo",
+    "  s.mangled__in_[1][32:64] = s.in_[1].bar",
     "s.connect( s.reset, s.mangled__reset[0:1] )"
   ]
   a._ref_conns_yosys = [
     "s.connect( s.clk, s.mangled__clk )",
-    "s.connect( s.in_[0].inner.foo, s.mangled__in___024___05F0__024inner__024foo )",
-    "s.connect( s.in_[0].bar, s.mangled__in___024___05F0__024bar )",
-    "s.connect( s.in_[1].inner.foo, s.mangled__in___024___05F1__024inner__024foo )",
-    "s.connect( s.in_[1].bar, s.mangled__in___024___05F1__024bar )",
+    "@s.update",
+    "def in__LBR_0_RBR_():",
+    "  s.mangled__in___024___05F0__024inner__024foo = s.in_[0].inner.foo",
+    "  s.mangled__in___024___05F0__024bar = s.in_[0].bar",
+    "@s.update",
+    "def in__LBR_1_RBR_():",
+    "  s.mangled__in___024___05F1__024inner__024foo = s.in_[1].inner.foo",
+    "  s.mangled__in___024___05F1__024bar = s.in_[1].bar",
     "s.connect( s.reset, s.mangled__reset )"
   ]
   do_test( a )

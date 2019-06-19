@@ -7,6 +7,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from pymtl3.datatypes import Bits32, BitStruct
+from pymtl3.dsl import Component, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.test.TranslationImport_adhoc_test import (
     test_bit_selection,
@@ -46,6 +48,8 @@ from pymtl3.passes.sverilog.test.TranslationImport_adhoc_test import (
     test_seq_assign,
     test_sext,
     test_struct,
+    test_struct_const,
+    test_struct_const_structural,
     test_struct_packed_array,
     test_struct_port,
     test_subcomp_decl,

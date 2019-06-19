@@ -15,7 +15,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 impo
     SVStructuralTranslatorL2,
 )
 
-from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+from .SVStructuralTranslatorL1_test import check_eq, is_sverilog_reserved
 
 
 def local_do_test( m ):
@@ -26,14 +26,62 @@ def local_do_test( m ):
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]
-  assert ports == m._ref_ports[m]
   wires = tr.structural.decl_wires[m]
-  assert wires == m._ref_wires[m]
   structs = tr.structural.decl_type_struct
-  assert map(lambda x: x[0], structs) == map(lambda x: x[0], m._ref_structs)
-  assert map(lambda x: x[1]['def'], structs) == map(lambda x: x[1], m._ref_structs)
   conns = tr.structural.connections[m]
-  assert conns == m._ref_conns[m]
+  check_eq( ports, m._ref_ports[m] )
+  check_eq( wires, m._ref_wires[m] )
+  assert map(lambda x: x[0], structs) == map(lambda x: x[0], m._ref_structs)
+  check_eq( map(lambda x: x[1]['def'], structs), map(lambda x: x[1], m._ref_structs) )
+  check_eq( conns, m._ref_conns[m] )
+
+def test_struct_const_structural( do_test ):
+  class B( BitStruct ):
+    fields = [ ( 'foo', Bits32 ) ]
+    def __init__( s, foo=42 ):
+      s.foo = Bits32(foo)
+  class A( Component ):
+    def construct( s ):
+      s.in_ = B()
+      s.out = OutPort( Bits32 )
+      s.connect( s.out, s.in_.foo )
+  a = A()
+  a._ref_structs = [
+    ( rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ), \
+"""\
+typedef struct packed {
+  logic [31:0] foo;
+} B;
+""" ) ]
+  a._ref_ports = { a : \
+"""\
+  input logic [0:0] clk,
+  output logic [31:0] out,
+  input logic [0:0] reset\
+"""
+}
+  a._ref_wires = { a : "" }
+  a._ref_conns = { a : \
+"""\
+  assign out = 32'd42;\
+"""
+}
+  # Yosys backend test reference output
+  a._ref_ports_port_yosys = a._ref_ports
+  a._ref_ports_wire_yosys = { a : "" }
+  a._ref_ports_conn_yosys = { a : "" }
+  a._ref_wires_yosys = a._ref_wires
+  a._ref_conns_yosys = a._ref_conns
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    pass
+  def tv_out( m, tv ):
+    assert m.out == Bits32(tv[0])
+  a._test_vectors = [
+    [       42 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
+  do_test( a )
 
 def test_struct_port( do_test ):
   class B( BitStruct ):

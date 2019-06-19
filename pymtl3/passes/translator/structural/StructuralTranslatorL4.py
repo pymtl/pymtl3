@@ -89,7 +89,8 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
           ifc_port_rtype = _ifc_port_rtype
 
         ports = []
-        for port_id, p_rtype in ifc_port_rtype.get_all_ports_packed():
+        all_ifc_ports = ifc_port_rtype.get_all_properties_packed()
+        for port_id, p_rtype in all_ifc_ports:
           if isinstance( p_rtype, rt.Array ):
             port_array_rtype = p_rtype
             port_rtype = p_rtype.get_sub_type()
@@ -104,7 +105,6 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
             ifc_port_id, ifc_port_rtype,
             s.rtlir_tr_unpacked_array_type( ifc_port_array_rtype ),
             port_id, port_rtype,
-            s.rtlir_data_type_translation( m, port_rtype.get_dtype() ),
             s.rtlir_tr_unpacked_array_type( port_array_rtype )
           ) )
 
@@ -173,7 +173,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
 
   def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_rtype, port_id, port_rtype,
-      port_dtype, port_array_type ):
+      port_array_type ):
     raise NotImplementedError()
 
   def rtlir_tr_subcomp_decls( s, subcomps ):
