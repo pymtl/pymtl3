@@ -316,9 +316,7 @@ def push( opts ):
 
   # Determine version number of current repo
 
-  version = runq( "git describe --match 'rel-*' --dirty" )
-  if version.startswith( "rel-" ):
-    version = version[4:]
+  version = runq( "git describe --always --dirty" )
   vprint( " - version number:", version )
 
   # Is current repo dirty?
