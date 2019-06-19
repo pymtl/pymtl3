@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 impo
     SVStructuralTranslatorL4,
 )
 
-from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+from .SVStructuralTranslatorL1_test import is_sverilog_reserved, check_eq
 
 
 def local_do_test( m ):
@@ -25,7 +25,7 @@ def local_do_test( m ):
   tr.translate_structural( m )
   subcomps = tr.structural.decl_subcomps
   for comp in m._ref_subcomps.keys():
-    assert subcomps[comp] == m._ref_subcomps[comp]
+    check_eq( subcomps[comp], m._ref_subcomps[comp] )
 
 def test_subcomp_decl( do_test ):
   class B( Component ):

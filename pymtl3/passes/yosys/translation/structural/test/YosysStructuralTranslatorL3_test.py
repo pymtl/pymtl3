@@ -12,6 +12,7 @@ from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     is_sverilog_reserved,
+    check_eq,
 )
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL3_test import (
     test_ifc_decls,
@@ -30,12 +31,12 @@ def local_do_test( m ):
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ifcs[m]
-  assert ports["port_decls"] == m._ref_ifcs_port_yosys[m]
-  assert ports["wire_decls"] == m._ref_ifcs_wire_yosys[m]
-  assert ports["connections"] == m._ref_ifcs_conn_yosys[m]
-
   conns = tr.structural.connections[m]
-  assert conns == m._ref_conns_yosys[m]
+
+  check_eq( ports["port_decls"], m._ref_ifcs_port_yosys[m] )
+  check_eq( ports["wire_decls"], m._ref_ifcs_wire_yosys[m] )
+  check_eq( ports["connections"], m._ref_ifcs_conn_yosys[m] )
+  check_eq( conns, m._ref_conns_yosys[m] )
 
 def test_ifc_array( do_test ):
   class InValRdy( Interface ):

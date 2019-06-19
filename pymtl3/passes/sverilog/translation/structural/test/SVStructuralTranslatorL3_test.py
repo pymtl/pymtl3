@@ -15,7 +15,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 impo
     SVStructuralTranslatorL3,
 )
 
-from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+from .SVStructuralTranslatorL1_test import is_sverilog_reserved, check_eq
 
 
 def local_do_test( m ):
@@ -26,9 +26,9 @@ def local_do_test( m ):
   tr.translate_structural( m )
 
   ifcs = tr.structural.decl_ifcs[m]
-  assert ifcs == m._ref_ifcs[m]
   conns = tr.structural.connections[m]
-  assert conns == m._ref_conns[m]
+  check_eq( ifcs, m._ref_ifcs[m] )
+  check_eq( conns, m._ref_conns[m] )
 
 def test_ifc_decls( do_test ):
   class Ifc( Interface ):

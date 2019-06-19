@@ -24,9 +24,8 @@ class BitStruct( object ):
 
   def to_bits( self ):
     bits_lst = []
-    cls_name = self.__class__.__name__
     assert self.fields, \
-        "fields of BitStruct {} are not specified!".format( cls_name )
+        "fields of BitStruct {} are not specified!".format( self.__class__.__name__ )
     for name, Type in self.fields:
       if issubclass( Type, Bits ):
         bits_lst.append( Type( vars( self )[name] ) )

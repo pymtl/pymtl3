@@ -15,7 +15,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 impo
     SVStructuralTranslatorL2,
 )
 
-from .SVStructuralTranslatorL1_test import is_sverilog_reserved
+from .SVStructuralTranslatorL1_test import is_sverilog_reserved, check_eq
 
 
 def local_do_test( m ):
@@ -26,14 +26,14 @@ def local_do_test( m ):
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]
-  assert ports == m._ref_ports[m]
   wires = tr.structural.decl_wires[m]
-  assert wires == m._ref_wires[m]
   structs = tr.structural.decl_type_struct
-  assert map(lambda x: x[0], structs) == map(lambda x: x[0], m._ref_structs)
-  assert map(lambda x: x[1]['def'], structs) == map(lambda x: x[1], m._ref_structs)
   conns = tr.structural.connections[m]
-  assert conns == m._ref_conns[m]
+  check_eq( ports, m._ref_ports[m] )
+  check_eq( wires, m._ref_wires[m] )
+  assert map(lambda x: x[0], structs) == map(lambda x: x[0], m._ref_structs)
+  check_eq( map(lambda x: x[1]['def'], structs), map(lambda x: x[1], m._ref_structs) )
+  check_eq( conns, m._ref_conns[m] )
 
 def test_struct_const_structural( do_test ):
   class B( BitStruct ):

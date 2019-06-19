@@ -8,6 +8,9 @@ from __future__ import absolute_import, division, print_function
 import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
+)
 from pymtl3.passes.sverilog.translation.test.SVTranslator_L3_cases_test import (
     test_ifc_decls,
     test_interface,
@@ -29,5 +32,4 @@ def local_do_test( m ):
   m.elaborate()
   tr = YosysTranslator( m )
   tr.translate( m )
-  src = trim( tr.hierarchy.src )
-  assert src == m._ref_src_yosys
+  check_eq( tr.hierarchy.src, m._ref_src_yosys )

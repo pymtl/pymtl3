@@ -19,6 +19,23 @@ from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
 def is_sverilog_reserved( s, name ):
   return name in sverilog_reserved
 
+def trim( s ):
+  string = []
+  lines = s.split( '\n' )
+  for line in lines:
+    _line = line.split()
+    _string = "".join( _line )
+    if _string and not _string.startswith( '//' ):
+      string.append( "".join( line.split() ) )
+  return "\n".join( string )
+
+def check_eq( s, t ):
+  if isinstance( s, list ) and isinstance( t, list ):
+    for _s, _t in zip( s, t ):
+      assert trim(_s) == trim(_t)
+  else:
+    assert trim(s) == trim(t)
+
 def local_do_test( m ):
   m.elaborate()
   SVStructuralTranslatorL1.is_sverilog_reserved = is_sverilog_reserved
@@ -27,13 +44,14 @@ def local_do_test( m ):
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]
-  assert ports == m._ref_ports[m]
   wires = tr.structural.decl_wires[m]
-  assert wires == m._ref_wires[m]
   consts = tr.structural.decl_consts[m]
-  assert consts == m._ref_consts[m]
   conns = tr.structural.connections[m]
-  assert conns == m._ref_conns[m]
+
+  check_eq( ports, m._ref_ports[m] )
+  check_eq( wires, m._ref_wires[m] )
+  check_eq( consts, m._ref_consts[m] )
+  check_eq( conns, m._ref_conns[m] )
 
 def test_port_wire( do_test ):
   class A( Component ):
