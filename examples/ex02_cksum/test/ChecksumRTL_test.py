@@ -2,7 +2,7 @@
 ==========================================================================
  ChecksumRTL_test.py
 ==========================================================================
-Test cases for CL checksum unit.
+Test cases for RTL checksum unit.
 
 Author : Yanghui Ou
   Date : June 6, 2019
@@ -111,7 +111,10 @@ class ChecksumRTLTranslation_Tests( BaseSrcSinkTests ):
     cls.DutType = ChecksumRTL
 
   def run_sim( s, th, max_cycles=1000 ):
-
+    
+    import sys
+    if hasattr( sys, '_pymtl_dump_vcd' ):
+      if sys._pymtl_dump_vcd: print( "--dump-vcd flag is set!" )
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
     th.dut.yosys_translate = True
