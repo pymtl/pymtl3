@@ -1,0 +1,51 @@
+#=========================================================================
+# Configuration file for generating a release
+#=========================================================================
+# This is a list of the files that should be included in a release. It is
+# a YAML file with the following syntax:
+#
+# dirname:
+#  - file0
+#  - file1
+#  - file2
+#
+# The special EXTRA prefix is used to refer to extra files that are
+# stored in the release subdirectory, and should be copied into the
+# release.
+#
+# The special KEEP prefix is used to refer to files which should
+# be grabbed from master and copied into the release when doing the
+# upstream commit. I think we can get rid of keep files if we actually
+# create an initial commit with no content that we use for the initial
+# upstream branch.
+#
+# The FULLDIR prefix is used to list entire directories that should be
+# copied over into the release without any kind of filtering. If you need
+# more advanced filtering, then you need to list out the files in the
+# "Regular Files" section.
+
+#-------------------------------------------------------------------------
+# Special Files
+#-------------------------------------------------------------------------
+
+KEEP:
+ - README.md
+
+#-------------------------------------------------------------------------
+# Basic Files
+#-------------------------------------------------------------------------
+
+.:
+ - .gitignore
+ - conftest.py
+ - pytest.ini
+
+#-------------------------------------------------------------------------
+# Ex 01 Files
+#-------------------------------------------------------------------------
+
+examples/ex01_basics:
+
+ - incr_test.py
+ - __init__.py
+
