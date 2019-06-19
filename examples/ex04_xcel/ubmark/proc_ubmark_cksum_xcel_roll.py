@@ -53,7 +53,7 @@ class ubmark_cksum_xcel_roll:
 
     for i in range(1):
       x = struct.unpack('i', memory[c_cksum_dst_ptr + i * 4 : c_cksum_dst_ptr + (i+1) * 4] )[0]
-      if not ( x == ref[i] ):
+      if not ( b32(x) == b32(ref[i]) ):
         is_pass     = False
         first_faild = i
         print( " [ failed ] dest[{i}]: {x} != ref[{i}]: {ref} ".format( i=i, x=hex(x), ref=hex(ref[i]) ) )
