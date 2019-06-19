@@ -22,6 +22,13 @@ from .errors import PassOrderError
 class VcdGenerationPass( BasePass ):
 
   def __call__( self, top ):
+
+    # Check for dum_vcd flag
+    if not hasattr( top, "dump_vcd" ):
+      return
+    if not top.dump_vcd:
+      return
+
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
