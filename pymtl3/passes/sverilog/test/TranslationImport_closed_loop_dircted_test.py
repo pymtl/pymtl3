@@ -40,6 +40,7 @@ def run_sim( _th ):
 
     print()
     cycle = 0
+    th.sim_reset()
     while not th.done() and cycle < 1000:
       th.tick()
       print(th.line_trace())

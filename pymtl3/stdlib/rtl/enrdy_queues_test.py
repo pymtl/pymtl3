@@ -45,6 +45,7 @@ def run_sim( model ):
 
   print()
   cycle = 0
+  model.sim_reset()
   while not model.done() and cycle < 1000:
     model.tick()
     print( "{:3}: {}".format( cycle, model.line_trace() ) )
