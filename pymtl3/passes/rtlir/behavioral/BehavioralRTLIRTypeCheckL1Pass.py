@@ -50,6 +50,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.type_expect[ 'SignExt' ] = {
       'value':( rt.Signal, 'extension only applies to signals!' )
     }
+    s.type_expect[ 'Reduce' ] = {
+      'value':( rt.Signal, 'reduce only applies on a signal!' )
+    }
     s.type_expect[ 'SizeCast' ] = {
       'value':( rt.Signal, 'size casting only applies to signals/consts!' )
     }
@@ -209,6 +212,11 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         '{} is not greater than {}!'.format(new_nbits, old_nbits) )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
+
+  def visit_Reduce( s, node ):
+    child_type = node.value.Type
+    node.Type = copy.copy( child_type )
+    node.Type.dtype = rdt.Vector( 1 )
 
   def visit_SizeCast( s, node ):
     nbits = node.nbits

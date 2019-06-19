@@ -10,7 +10,7 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, sext, zext
+from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 
@@ -207,6 +207,23 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = bir.SignExt( nbits, value )
+      ret.ast = node
+      return ret
+
+    # reduce methods
+    elif obj is reduce_and or obj is reduce_or or obj is reduce_xor:
+      if obj is reduce_and:
+        op = bir.BitAnd()
+      elif obj is reduce_or:
+        op = bir.BitOr()
+      elif obj is reduce_xor:
+        op = bir.BitXor()
+      if len( node.args ) != 1:
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly two arguments should be given to reduce {} methods!'. \
+              format( op ) )
+      value = s.visit( node.args[0] )
+      ret = bir.Reduce( op, value )
       ret.ast = node
       return ret
 

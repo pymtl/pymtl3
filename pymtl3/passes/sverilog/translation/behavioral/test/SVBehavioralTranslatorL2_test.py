@@ -7,7 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymtl3.datatypes import Bits1, Bits32
+from pymtl3.datatypes import Bits1, Bits32, reduce_and, reduce_or, reduce_xor
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -30,6 +30,40 @@ def local_do_test( m ):
     upblk_src = visitor.enter( blk, upblks[blk] )
     upblk_src = "\n".join( upblk_src )
     assert upblk_src == m._ref_upblk_srcs[blk.__name__]
+
+def test_reduce( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.in_3 = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      @s.update
+      def upblk():
+        s.out = reduce_and( s.in_1 ) & reduce_or( s.in_2 ) | reduce_xor( s.in_3 )
+  a = A()
+  a._ref_upblk_srcs = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = ( ( & in_1 ) & ( | in_2 ) ) | ( ^ in_3 );
+end\
+""" }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_1 = Bits32(tv[0])
+    m.in_2 = Bits32(tv[1])
+    m.in_3 = Bits32(tv[2])
+  def tv_out( m, tv ):
+    assert m.out == Bits1(tv[3])
+  a._test_vectors = [
+    [  0,   1,    2,  1   ],
+    [ -1,   1,   -1,  1   ],
+    [  9,   8,    7,  1   ],
+    [  9,   8,    0,  0   ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
+  do_test( a )
 
 def test_if( do_test ):
   class A( Component ):

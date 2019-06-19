@@ -39,6 +39,41 @@ def local_do_test( m ):
     assert\
       m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] == ref[ blk.__name__ ]
 
+def test_reduce( do_test ):
+  class v_reduce( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.in_3 = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      @s.update
+      def v_reduce():
+        s.out = reduce_and( s.in_1 ) & reduce_or( s.in_2 ) | reduce_xor( s.in_3 )
+
+  a = v_reduce()
+  in_1 = Attribute( Base( a ), 'in_1' )
+  in_2 = Attribute( Base( a ), 'in_2' )
+  in_3 = Attribute( Base( a ), 'in_3' )
+  out = Attribute( Base( a ), 'out' )
+
+  a._rtlir_test_ref = { 'v_reduce' : CombUpblk( 'v_reduce', [
+    Assign( out, BinOp(
+      BinOp( Reduce( BitAnd(), in_1 ), BitAnd(), Reduce( BitOr(), in_2 ) ),
+      BitOr(), Reduce( BitXor(), in_3 ),
+    ) )
+  ] ) }
+
+  a._test_vector = [
+          ' in_1        in_2     in_3     *out',
+    [     Bits32,    Bits32,   Bits32,   Bits1    ],
+
+    [          0,         1,        2,        1   ],
+    [    b32(-1),         1,  b32(-1),        1   ],
+    [          9,         8,        7,        1   ],
+  ]
+
+  do_test( a )
+
 def test_index_basic( do_test ):
   class index_basic( Component ):
     def construct( s ):
