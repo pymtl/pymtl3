@@ -88,7 +88,7 @@ class ChecksumXcelCL( Component ):
           req = s.in_q.deq()
           if req.type_ == RD:
             s.xcel.resp( s.RespType( RD, s.reg_file[ int(req.addr) ] ) )
-          elif req.type_ == XcelMsgType.WRITE:
+          elif req.type_ == WR:
             s.reg_file[ int(req.addr) ] = req.data
             s.xcel.resp( s.RespType( WR, 0 ) )
 
@@ -96,20 +96,14 @@ class ChecksumXcelCL( Component ):
             if req.addr == 4:
               if s.checksum_unit.recv.rdy():
                 s.state = s.BUSY
-                words = []
-                for i in range( 4 ):
-                  words.append( s.reg_file[i][0 :16] )
-                  words.append( s.reg_file[i][16:32] )
+                words = s.get_words()
                 s.checksum_unit.recv( words_to_b128( words ) )
               else:
                 s.state = s.WAIT
 
       elif s.state == s.WAIT:
         if s.checksum_unit.recv.rdy():
-          words = []
-          for i in range( 4 ):
-            words.append( s.reg_file[i][0 :16] )
-            words.append( s.reg_file[i][16:32] )
+          words = s.get_words()
           s.checksum_unit.recv( words_to_b128( words ) )
           s.state = s.BUSY
 
@@ -117,6 +111,15 @@ class ChecksumXcelCL( Component ):
         if s.out_q.deq.rdy():
           s.reg_file[5] = s.out_q.deq()
           s.state = s.XCFG
+  
+  # [get_words] is a helper function that extracts the 128-bit input from
+  # the register file.
+  def get_words( s ):
+    words = []
+    for i in range( 4 ):
+      words.append( s.reg_file[i][0 :16] )
+      words.append( s.reg_file[i][16:32] )
+    return words
 
   def line_trace( s ):
     state_str = (
