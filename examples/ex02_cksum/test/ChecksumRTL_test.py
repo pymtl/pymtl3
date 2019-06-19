@@ -110,7 +110,7 @@ class ChecksumRTLTranslation_Tests( BaseSrcSinkTests ):
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
 
-  def rum_sim( s, th, max_cycles=1000 ):
+  def run_sim( s, th, max_cycles=1000 ):
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()

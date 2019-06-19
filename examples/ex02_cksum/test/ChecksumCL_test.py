@@ -140,7 +140,7 @@ class ChecksumCLSrcSink_Tests( object ):
   # [run_sim] is a helper function in the test suite that creates a
   # simulator and runs test. We can overwrite this function when
   # inheriting from the test class to apply different passes to the DUT.
-  def rum_sim( s, th, max_cycles=1000 ):
+  def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
     th.apply( SimpleSim )
@@ -169,7 +169,7 @@ class ChecksumCLSrcSink_Tests( object ):
     sink_msgs = [ result ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-    s.rum_sim( th )
+    s.run_sim( th )
   
   # [test_pipeline] test the checksum unit with a sequence of inputs.
   def test_pipeline( s ):
@@ -185,7 +185,7 @@ class ChecksumCLSrcSink_Tests( object ):
     sink_msgs = [ result0, result1, result0, result1 ]
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-    s.rum_sim( th )
+    s.run_sim( th )
   
   # [test_pipeline] test the checksum unit with a large sink delay. 
   def test_backpressure( s ):
@@ -202,7 +202,7 @@ class ChecksumCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     th.set_param( "top.sink.construct", initial_delay=10 )
-    s.rum_sim( th )
+    s.run_sim( th )
   
   # This hypothesis test not only generates a sequence of input to the
   # the checksum unit but it also configure the test source and sink with
@@ -222,4 +222,4 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs  )
     th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
     th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
-    s.rum_sim( th )
+    s.run_sim( th )
