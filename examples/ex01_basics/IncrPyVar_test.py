@@ -20,23 +20,23 @@ from pymtl3 import *
 class IncrPyVar( Component ):
   def construct( s ):
 
-    s.incr_input = 10
+    s.incr_input = b8(10)
 
-    s.buf1 = 0
-    s.buf2 = 0
+    s.buf1 = b8(0)
+    s.buf2 = b8(0)
 
-    s.incr_output = 0
+    s.incr_output = b8(0)
 
     # UpA writes data to buf1
     @s.update
     def upA():
       s.buf1 = s.incr_input
-      s.incr_input += 10
+      s.incr_input += b8(10)
     
     # UpB read data from buf1, increment it by 1, and write to buf2.
     @s.update
     def upB():
-      s.buf2 = s.buf1 + 1
+      s.buf2 = s.buf1 + b8(1)
     
     # UpC read data from buf2.
     @s.update
