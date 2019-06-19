@@ -37,8 +37,8 @@ def test_step_unit():
   step_unit.sum2_acc = b32(1)
   step_unit.tick()
 
-  step_unit.sum1_out = b32(2) 
-  step_unit.sum2_out = b32(3) 
+  assert step_unit.sum1_out == b32(2) 
+  assert step_unit.sum2_out == b32(3) 
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
