@@ -17,6 +17,7 @@ autom4te.cache/
 *.sw*
 *.tmp
 rast-viz/
+scripts/work
 
 pymtl3.egg-info/
 
