@@ -105,10 +105,8 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
         th.dump_vcd = True
         th.vcd_file_name = "ChecksumRTL"
 
-    # Elaborate the component
-    th.elaborate()
-
     # Create a simulator
+    th.elaborate()
     th.apply( SimulationPass )
     ncycles = 0
     th.sim_reset()
