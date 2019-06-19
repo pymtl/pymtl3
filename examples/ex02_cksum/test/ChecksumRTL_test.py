@@ -94,3 +94,33 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
+
+  def run_sim( s, th, max_cycles=1000 ):
+    
+    dump_vcd = False
+    
+    # Check command line arguments for vcd dumping
+    import sys
+    if hasattr( sys, '_pymtl_dump_vcd' ):
+      if sys._pymtl_dump_vcd:
+        dump_vcd = True
+
+    # Elaborate the component
+    th.elaborate()
+    th.dump_vcd = dump_vcd
+
+    # Create a simulator
+    th.apply( SimulationPass )
+    ncycles = 0
+    th.sim_reset()
+    print( "" )
+
+    # Tick the simulator
+    print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and ncycles < max_cycles:
+      th.tick()
+      ncycles += 1
+      print("{:3}: {}".format( ncycles, th.line_trace() ))
+
+    # Check timeout
+    assert ncycles < max_cycles
