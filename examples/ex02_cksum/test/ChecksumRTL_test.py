@@ -97,17 +97,15 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   def run_sim( s, th, max_cycles=1000 ):
     
-    dump_vcd = False
-    
     # Check command line arguments for vcd dumping
     import sys
     if hasattr( sys, '_pymtl_dump_vcd' ):
       if sys._pymtl_dump_vcd:
-        dump_vcd = True
+        th.dump_vcd = True
+        th.vcd_file_name = "ChecksumRTL"
 
     # Elaborate the component
     th.elaborate()
-    th.dump_vcd = dump_vcd
 
     # Create a simulator
     th.apply( SimulationPass )

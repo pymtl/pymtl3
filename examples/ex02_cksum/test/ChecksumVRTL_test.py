@@ -110,17 +110,16 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
   def run_sim( s, th, max_cycles=1000 ):
     
-    dump_vcd = False
     
     # Check command line arguments for vcd dumping
     import sys
     if hasattr( sys, '_pymtl_dump_vcd' ):
       if sys._pymtl_dump_vcd:
-        dump_vcd = True
+        th.dump_vcd = True
+        th.vcd_file_name = "ChecksumVRTL"
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
-    th.dump_vcd = dump_vcd
     th.dut.yosys_translate = True
     th.dut.yosys_import = True
     th.apply( TranslationPass() )
