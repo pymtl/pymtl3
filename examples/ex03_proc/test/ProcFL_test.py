@@ -26,6 +26,13 @@ import inst_sw
 import inst_csr
 import inst_xcel
 
+#-------------------------------------------------------------------------
+# ProcFL_Tests
+#-------------------------------------------------------------------------
+# We group all our test cases into a class so that we can easily reuse
+# these test cases in our CL and RTL tests. We can simply inherit from
+# this test class and overwrite the ProcType of the test class.
+
 class ProcFL_Tests( object ):
 
   @classmethod
