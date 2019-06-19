@@ -26,13 +26,6 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
 
   def run_sim( s, th, max_cycles=1000 ):
 
-    # Check command line arguments for vcd dumping
-    import sys
-    if hasattr( sys, '_pymtl_dump_vcd' ):
-      if sys._pymtl_dump_vcd:
-        th.dump_vcd = True
-        th.vcd_file_name = "ChecksumXcelRTL"
-
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
     th.dut.yosys_translate = True
