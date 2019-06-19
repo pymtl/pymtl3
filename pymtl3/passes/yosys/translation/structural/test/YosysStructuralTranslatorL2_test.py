@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
-    is_sverilog_reserved,
     check_eq,
+    is_sverilog_reserved,
 )
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL2_test import (
     test_nested_struct_port,

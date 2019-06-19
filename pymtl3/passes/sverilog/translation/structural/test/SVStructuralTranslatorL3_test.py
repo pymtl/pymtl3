@@ -15,7 +15,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 impo
     SVStructuralTranslatorL3,
 )
 
-from .SVStructuralTranslatorL1_test import is_sverilog_reserved, check_eq
+from .SVStructuralTranslatorL1_test import check_eq, is_sverilog_reserved
 
 
 def local_do_test( m ):

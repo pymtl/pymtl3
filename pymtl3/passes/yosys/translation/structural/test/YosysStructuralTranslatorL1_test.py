@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
     is_sverilog_reserved,
     test_connect_constant,
     test_port_bit_selection,
@@ -17,7 +18,6 @@ from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1
     test_port_part_selection,
     test_port_wire,
     test_port_wire_array_index,
-    check_eq,
 )
 from pymtl3.passes.yosys.translation.structural.YosysStructuralTranslatorL1 import (
     YosysStructuralTranslatorL1,

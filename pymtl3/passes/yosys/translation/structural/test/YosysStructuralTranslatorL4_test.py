@@ -11,8 +11,8 @@ from pymtl3.datatypes import Bits1, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
-    is_sverilog_reserved,
     check_eq,
+    is_sverilog_reserved,
 )
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL4_test import (
     test_multi_components_ifc_hierarchy_connect,
