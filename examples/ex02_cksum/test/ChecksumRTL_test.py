@@ -10,18 +10,12 @@ Author : Yanghui Ou
 from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
-from pymtl3.passes import DynamicSim
 from pymtl3.passes.yosys import TranslationPass, ImportPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumCL_test import(
-  ChecksumCL_Tests as BaseTests,
-  ChecksumCLSrcSink_Tests as BaseSrcSinkTests,
-  TestHarness,
-)
 
 #-------------------------------------------------------------------------
 # Unit test the step unit
@@ -52,7 +46,8 @@ def checksum_rtl( words ):
   
   # Create a simulator
   dut = ChecksumRTL()
-  dut.apply( DynamicSim )
+  dut.elaborate()
+  dut.apply( SimulationPass )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
@@ -79,6 +74,8 @@ def checksum_rtl( words ):
 # inherit from the CL test class and overwrite cksum_func to use the rtl
 # version instead.
 
+from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
+
 class ChecksumRTL_Tests( BaseTests ):
   
   def cksum_func( s, words ):
@@ -90,50 +87,10 @@ class ChecksumRTL_Tests( BaseTests ):
 # Again, we reuse all source/sink based tests for CL by simply inheriting
 # from the test class and providing a different DUT type in [setup_class].
 
+from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
+
 class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
-
-#-------------------------------------------------------------------------
-# Reuse src/sink based tests from CL test suite to test translation
-#-------------------------------------------------------------------------
-# We reuse all source/sink based tests for CL again to test whether our
-# RTL code can be properly transalted into system verilog. We overwrite 
-# [run_sim] of the CL test suite so that we can apply the translation and 
-# import pass to the DUT.
-
-class ChecksumRTLTranslation_Tests( BaseSrcSinkTests ):
-
-  @classmethod
-  def setup_class( cls ):
-    cls.DutType = ChecksumRTL
-
-  def run_sim( s, th, max_cycles=1000 ):
-    
-    import sys
-    if hasattr( sys, '_pymtl_dump_vcd' ):
-      if sys._pymtl_dump_vcd: print( "--dump-vcd flag is set!" )
-    # Translate the DUT and import it back in using the yosys backend.
-    th.elaborate()
-    th.dut.yosys_translate = True
-    th.dut.yosys_import = True
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
-
-    # Create a simulator
-    th.apply( DynamicSim )
-    ncycles = 0
-    th.sim_reset()
-    print( "" )
-
-    # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
-
-    # Check timeout
-    assert ncycles < max_cycles

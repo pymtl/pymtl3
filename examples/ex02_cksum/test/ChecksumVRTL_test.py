@@ -16,11 +16,6 @@ from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumCL_test import(
-  ChecksumCL_Tests as BaseTests,
-  ChecksumCLSrcSink_Tests as BaseSrcSinkTests,
-  TestHarness,
-)
 
 #-------------------------------------------------------------------------
 # Unit test the step unit
@@ -90,7 +85,7 @@ def checksum_vrtl( words ):
 # inherit from the CL test class and overwrite cksum_func to use the rtl
 # version instead.
 
-from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
+from .ChecksumRTL_test import ChecksumRTL_Tests as BaseTests
 
 class ChecksumVRTL_Tests( BaseTests ):
   
@@ -105,7 +100,7 @@ class ChecksumVRTL_Tests( BaseTests ):
 # [run_sim] of the CL test suite so that we can apply the translation and 
 # import pass to the DUT.
 
-from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
+from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
 
 class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
@@ -117,11 +112,10 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     
     dump_vcd = False
     
-    # Check command line arguments
+    # Check command line arguments for vcd dumping
     import sys
     if hasattr( sys, '_pymtl_dump_vcd' ):
       if sys._pymtl_dump_vcd:
-        print( "--dump-vcd flag is set!" )
         dump_vcd = True
 
     # Translate the DUT and import it back in using the yosys backend.
