@@ -92,6 +92,18 @@ class Bits( object ):
   def __rxor__( self, other ):
     return self.__xor__( other )
 
+  def __div__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) / int(other) )
+    except: return Bits( self.nbits, int(self.value) / int(other) )
+
+  def __floordiv__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) / int(other) )
+    except: return Bits( self.nbits, int(self.value) / int(other) )
+
+  def __mod__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) % int(other) )
+    except: return Bits( self.nbits, int(self.value) / int(other) )
+
   def __invert__( self ):
     return Bits( self.nbits, ~int(self.value) )
 
@@ -161,11 +173,11 @@ class Bits( object ):
     return str
 
   def __oct__( self ):
-    print("DEPRECATED: Please use .oct()!")
+    # print("DEPRECATED: Please use .oct()!")
     return self.oct()
 
   def __hex__( self ):
-    print("DEPRECATED: Please use .hex()!")
+    # print("DEPRECATED: Please use .hex()!")
     return self.hex()
 
   def bin(self):
