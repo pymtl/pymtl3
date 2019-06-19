@@ -83,7 +83,7 @@ def main():
 
   proc = ProcRTL()
 
-  # Tag the checksum unit as to be translated
+  # Tag the processor as to be translated
 
   proc.yosys_translate = True
 
