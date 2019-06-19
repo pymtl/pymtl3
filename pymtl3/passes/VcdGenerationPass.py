@@ -44,7 +44,10 @@ class VcdGenerationPass( BasePass ):
 
   def make_vcd_func( self, top, vcdmeta ):
 
-    vcdmeta.vcd_file_name = str(top.__class__) + ".vcd"
+    if hasattr( top, "vcd_file_name" ):
+      vcdmeta.vcd_file_name = str(top.vcd_file_name) + ".vcd"
+    else:
+      vcdmeta.vcd_file_name = str(top.__class__) + ".vcd"
     vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
 
     # Get vcd timescale
