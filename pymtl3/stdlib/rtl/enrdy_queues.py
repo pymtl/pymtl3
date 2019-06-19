@@ -44,7 +44,7 @@ class BypassQueue1RTL( Component ):
 
     s.buffer  = RegEn( Type )( in_ = s.enq.msg )
 
-    s.full = RegRst( Bits1, reset_value = Bits1(0) )
+    s.full = RegRst( Bits1, reset_value = 0 )
 
     s.byp_mux = Mux( Type, 2 )(
       out = s.deq.msg,
