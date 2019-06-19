@@ -206,10 +206,12 @@ Fail to verilate model {} in file {}
     port_inits = '\n'.join( port_inits )
 
     # Fill in the C wrapper template
+
     # Since we may run import with or without dump_vcd enabled, we need
     # to dump C wrapper regardless of whether the verilated model is
     # cached or not.
-    # if not cached:
+    # TODO: we can avoid dumping C wrapper if we attach some metadata to
+    # tell if the wrapper was generated with or without `dump_vcd` enabled.
     with open( template_name, 'r' ) as template:
       with open( wrapper_name, 'w' ) as output:
         c_wrapper = template.read()
@@ -229,7 +231,7 @@ Fail to verilate model {} in file {}
     # Since we may run import with or without dump_vcd enabled, we need
     # to compile C wrapper regardless of whether the verilated model is
     # cached or not.
-    # TODO: A better caching strategy is to attch some metadata
+    # TODO: A better caching strategy is to attach some metadata
     # to the C wrapper so that we know the wrapper was generated with or
     # without dump_vcd enabled.
     if dump_vcd or not cached:
@@ -838,6 +840,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_comb_input( s, packed_ports ):
     ret = []
+    # Read all input ports ( except for 'clk' ) from component ports into
+    # the verilated model. We do NOT want `clk` signal to be read into
+    # the verilated model because only the sequential update block of
+    # the imported component should manipulate it.
     for py_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk':
