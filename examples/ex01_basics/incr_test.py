@@ -11,6 +11,10 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 
+# ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# Implement the incr_8bit function and a corresponding unit test
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
 #-------------------------------------------------------------------------
 #  An 8-bit increment function
 #-------------------------------------------------------------------------
@@ -23,4 +27,8 @@ def incr_8bit( x ):
 #-------------------------------------------------------------------------
 
 def test_incr_8bit_simple():
-  assert incr_8bit( b8(1) ) == b8(2)
+  assert incr_8bit( b8(2) ) == b8(3)
+
+def test_incr_8bit_overflow():
+  assert incr_8bit( b8(0xff) ) == b8(0)
+
