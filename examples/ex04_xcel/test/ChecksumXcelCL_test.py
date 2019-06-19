@@ -11,7 +11,6 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.passes.PassGroups import DynamicSim
-from pymtl3.passes.yosys import TranslationPass, ImportPass
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
@@ -51,8 +50,11 @@ def mk_xcel_transaction( words ):
   return reqs, resps
 
 #-------------------------------------------------------------------------
-# Wrap Xcel into a function
+# WrappedChecksumXcelCL
 #-------------------------------------------------------------------------
+# WrappedChecksumXcelCL is a simple wrapper around the CL accelerator. It
+# simply appends an output buffer at its response side so that its
+# response can be obtained by calling dequeue.
 
 class WrappedChecksumXcelCL( Component ):
   def construct( s ):
@@ -70,6 +72,12 @@ class WrappedChecksumXcelCL( Component ):
 
   def line_trace( s ):
     return s.checksum_xcel.line_trace()
+
+#-------------------------------------------------------------------------
+# Wrap CL Xcel into a function
+#-------------------------------------------------------------------------
+# [checksum_xcel_cl] creates a checksum accelerator, feeds in the input,
+# ticks it, gets the response, and returns the result.
 
 def checksum_xcel_cl( words ):
   assert len( words ) == 8
@@ -101,10 +109,12 @@ def checksum_xcel_cl( words ):
   return resp_msg.data
 
 #-------------------------------------------------------------------------
-# Test checksum as a function
+# Reuse ChecksumCL_test
 #-------------------------------------------------------------------------
+# We reuse the extened FL tests in ex02_cksum.test.ChecksumCL_test.
 
 class ChecksumXcelCL_Tests( BaseTests ):
+
   def cksum_func( s, words ):
     return checksum_xcel_cl( words )
 
@@ -133,47 +143,52 @@ class TestHarness( Component ):
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace()
     )
 
-  def run_sim( s, max_cycles=1000 ):
-    # Run simulation
-    print("")
-    ncycles = 0
-    s.sim_reset()
-    print("{:3}: {}".format( ncycles, s.line_trace() ))
-    while not s.done() and ncycles < max_cycles:
-      s.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, s.line_trace() ))
-
-    # Check timeout
-    assert ncycles < max_cycles
-
 #-------------------------------------------------------------------------
 # Src/sink based tests
 #-------------------------------------------------------------------------
 
 class ChecksumXcelCLSrcSink_Tests( object ):
 
+  # [setup_class] will be called by pytest before running all the tests in
+  # the test class. Here we specify the type of the design under test
+  # that is used in all test cases. We can easily reuse all the tests in
+  # this class simply by creating a new test class that inherits from
+  # this class and overwrite the setup_class to provide a different DUT
+  # type.
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumXcelCL
-    cls.translate = False
 
+  # [run_sim] is a helper function in the test suite that creates a
+  # simulator and runs test. We can overwrite this function when
+  # inheriting from the test class to apply different passes to the DUT.
+  def run_sim( s, th, max_cycles=1000 ):
+    
+    # Create a simulator
+    th.apply( DynamicSim )
+    ncycles = 0
+    th.sim_reset()
+    print( "" )
+    
+    # Tick the simulator
+    print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and ncycles < max_cycles:
+      th.tick()
+      ncycles += 1
+      print("{:3}: {}".format( ncycles, th.line_trace() ))
+
+    # Check timeout
+    assert ncycles < max_cycles
+
+  # [test_xcel_simple] is a simple test case with only 1 xcel transaction.
   def test_xcel_simple( s ):
     words = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
     src_msgs, sink_msgs = mk_xcel_transaction( words )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-
-    if s.translate:
-      th.elaborate()
-      th.dut.yosys_translate = True
-      th.dut.yosys_import = True
-      th.apply( TranslationPass() )
-      th = ImportPass()( th )
-
-    th.apply( DynamicSim )
-    th.run_sim()
-
+    s.run_sim( th )
+  
+  # [test_xcel_multi_msg] tests the xcel with multiple transactions.
   def test_xcel_multi_msg( s ):
     seq = [
       [ 1, 2, 3, 4, 5, 6, 7, 8 ],
@@ -189,13 +204,4 @@ class ChecksumXcelCLSrcSink_Tests( object ):
       sink_msgs.extend( resps )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
-
-    if s.translate:
-      th.elaborate()
-      th.dut.yosys_translate = True
-      th.dut.yosys_import = True
-      th.apply( TranslationPass() )
-      th = ImportPass()( th )
-
-    th.apply( DynamicSim )
-    th.run_sim()
+    s.run_sim( th )
