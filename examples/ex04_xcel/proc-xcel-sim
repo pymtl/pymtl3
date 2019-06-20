@@ -7,7 +7,7 @@
 #
 #  --proc-impl         {fl,cl,rtl}
 #  --xcel-impl         {fl,cl,rtl,null}
-#  --input <dataset>   {cksum-xcel, cksum-null}
+#  --bmark <dataset>   {cksum-xcel, cksum}
 #  --translate         Simulate translated and imported DUTs
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
@@ -79,8 +79,8 @@ def parse_cmdline():
   p.add_argument( "--proc-impl", default="rtl", choices=["fl", "cl", "rtl"] )
   p.add_argument( "--xcel-impl", default="rtl", choices=["fl", "cl", "rtl", "null"] )
   p.add_argument( "--translate", action="store_true" )
-  p.add_argument( "--input", default="cksum-xcel",
-                             choices=["cksum-null", "cksum-xcel"] )
+  p.add_argument( "--bmark", default="cksum-xcel",
+                             choices=["cksum", "cksum-xcel"] )
   p.add_argument( "--limit", default=100000, type=int )
 
   opts = p.parse_args()
@@ -99,9 +99,9 @@ xcel_impl_dict = {
   "null" : NullXcelRTL,
 }
 
-input_dict = {
+bmark_dict = {
   "cksum-xcel" : ubmark_cksum_xcel_roll,
-  "cksum-null" : ubmark_cksum_roll
+  "cksum"      : ubmark_cksum_roll
 }
 
 class TestHarness(Component):
@@ -200,14 +200,14 @@ def main():
     assert opts.xcel_impl == "rtl" or opts.xcel_impl == "null", \
       "--translate option can only be used with NullXcel or RTL accelerator!"
 
-  # If --xcel null is true, then only cksum-null is valid as input
+  # If --xcel null is true, then only cksum is valid as bmark
   if opts.xcel_impl == 'null':
-    assert opts.input == 'cksum-null', \
-      "--xcel-impl null option can only be used with cksum-null input!"
+    assert opts.bmark == 'cksum', \
+      "--xcel-impl null option can only be used with cksum bmark!"
 
   # Assemble the test program
 
-  mem_image = input_dict[ opts.input ].gen_mem_image()
+  mem_image = bmark_dict[ opts.bmark ].gen_mem_image()
 
   #-----------------------------------------------------------------------
   # Setup simulator
@@ -267,7 +267,7 @@ def main():
   # Verify the results of simulation
 
   print
-  passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
+  passed = bmark_dict[ opts.bmark ].verify( model.mem.mem.mem )
   print
 
   if not passed:

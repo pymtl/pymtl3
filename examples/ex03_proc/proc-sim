@@ -6,7 +6,7 @@
 #  -h --help           Display this message
 #
 #  --impl              {fl,cl,rtl}
-#  --input <dataset>   {vvadd-unopt,vvadd-opt,cksum-blk}
+#  --bmark <dataset>   {vvadd-unopt,vvadd-opt,cksum}
 #  --translate         Simulate translated and imported DUTs
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
@@ -34,7 +34,6 @@ from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
 from examples.ex03_proc.tinyrv0_encoding import assemble
 from examples.ex03_proc.ubmark.proc_ubmark_vvadd_opt import ubmark_vvadd_opt
 from examples.ex03_proc.ubmark.proc_ubmark_vvadd_unopt import ubmark_vvadd_unopt
-from examples.ex03_proc.ubmark.proc_ubmark_cksum_blk import ubmark_cksum_blk
 from examples.ex03_proc.ubmark.proc_ubmark_cksum_roll import ubmark_cksum_roll
 
 from examples.ex03_proc.ProcFL import ProcFL
@@ -73,8 +72,8 @@ def parse_cmdline():
   p.add_argument( "--trace", action="store_true" )
   p.add_argument( "--impl",  default="rtl", choices=["fl", "cl", "rtl"] )
   p.add_argument( "--translate", action="store_true" )
-  p.add_argument( "--input", default="vvadd-unopt",
-                             choices=["vvadd-unopt", "vvadd-opt", "cksum-blk", "cksum-roll"] )
+  p.add_argument( "--bmark", default="vvadd-unopt",
+                             choices=["vvadd-unopt", "vvadd-opt", "cksum"] )
   p.add_argument( "--limit",   default=1000000, type=int )
   p.add_argument( "--delay",   action="store_true" )
 
@@ -88,11 +87,10 @@ impl_dict = {
   "rtl": ProcRTL,
 }
 
-input_dict = {
+bmark_dict = {
   "vvadd-unopt": ubmark_vvadd_unopt,
   "vvadd-opt"  : ubmark_vvadd_opt,
-  "cksum-blk"  : ubmark_cksum_blk,
-  "cksum-roll" : ubmark_cksum_roll
+  "cksum"      : ubmark_cksum_roll
 }
 
 #=========================================================================
@@ -111,7 +109,7 @@ def main():
 
   # Assemble the test program
 
-  mem_image = input_dict[ opts.input ].gen_mem_image()
+  mem_image = bmark_dict[ opts.bmark ].gen_mem_image()
 
   #-----------------------------------------------------------------------
   # Setup simulator
@@ -171,7 +169,7 @@ def main():
   # Verify the results of simulation
 
   print
-  passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
+  passed = bmark_dict[ opts.bmark ].verify( model.mem.mem.mem )
   print
   if not passed:
     exit(1)
