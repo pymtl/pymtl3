@@ -93,6 +93,13 @@ def main():
   # If output directory was specified, change to that directory
 
   if opts.output_dir:
+    assert os.path.isdir(opts.output_dir+"/outputs") and \
+           os.path.exists(opts.output_dir+"/outputs"), \
+"""\
+the given output directory is not an alloy-asic compatilbe design \
+directory. \
+A valid output directory should be alloy-asic/designs/<design_name>/rtl
+"""
     os.chdir( opts.output_dir )
 
   # Instantiate the RTL processor-accelerator unit
@@ -115,6 +122,18 @@ def main():
     if success:
       path = os.getcwd() + \
              "/{}.sv".format(proc_xcel._translator._top_module_full_name)
+
+      if opts.output_dir:
+        # Upon success, symlink the file to outputs/design.v which is the
+        # handoff point to alloy-asic
+        design_v = os.getcwd() + "/outputs/design.v"
+
+        # If design.v exists then delete it
+        if os.path.exists( design_v ):
+          os.remove( design_v )
+
+        os.symlink( path, design_v )
+
       print("\nTranslation finished successfully!")
       print("You can find the generated SystemVerilog file at {}.".format(path))
     else:
