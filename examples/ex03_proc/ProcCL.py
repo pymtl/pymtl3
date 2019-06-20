@@ -59,7 +59,7 @@ class ProcCL( Component ):
     s.mngr2proc_q = DelayPipeDeqCL(1)( enq = s.mngr2proc )
     s.xcelresp_q  = DelayPipeDeqCL(0)( enq = s.xcel.resp )
 
-    s.pc = Bits32( 0x200 )
+    s.pc = b32( 0x200 )
     s.R  = RegisterFile( 32 )
 
     s.F_DXM_queue = PipeQueueCL(1)

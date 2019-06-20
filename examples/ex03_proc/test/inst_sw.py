@@ -54,7 +54,7 @@ def gen_random_test():
   # Generate random accesses to this data
 
   asm_code = []
-  for i in xrange(5):
+  for i in xrange(50):
 
     a = random.randint(0,127)
     b = random.randint(0,127)
@@ -94,5 +94,4 @@ def gen_random_test():
   # Add the data to the end of the assembly code
 
   asm_code.append( gen_word_data( initial_data ) )
-  print "".join(asm_code)
   return asm_code

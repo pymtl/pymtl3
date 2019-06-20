@@ -81,7 +81,7 @@ def gen_value_test():
 def gen_random_test():
 
   asm_code = []
-  for i in xrange(100):
+  for i in xrange(50):
     value = random.randint(0,0xffffffff)
     asm_code.append( """
 

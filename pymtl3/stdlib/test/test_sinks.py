@@ -66,6 +66,7 @@ class TestSinkCL( Component ):
 
   @non_blocking( lambda s: s.count==0 )
   def recv( s, msg ):
+    assert s.count == 0
 
     # Sanity check
     if s.idx >= len( s.msgs ):

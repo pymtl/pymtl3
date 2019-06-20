@@ -57,8 +57,8 @@ class TestHarness(Component):
   #-----------------------------------------------------------------------
 
   def construct( s, proc_cls, xcel_cls=NullXcelRTL, dump_vcd=False,
-                src_delay=0, sink_delay=0,
-                  mem_stall_prob=0, mem_latency=1 ):
+                 src_delay=0, sink_delay=0,
+                 mem_stall_prob=0, mem_latency=1 ):
 
     s.commit_inst = OutPort( Bits1 )
     req, resp = mk_mem_msg( 8, 32, 32 )
@@ -131,8 +131,8 @@ class TestHarness(Component):
   #-----------------------------------------------------------------------
 
   def line_trace( s ):
-    return s.src.line_trace()  + " >" + \
-           s.proc.line_trace() + "|" + s.xcel.line_trace() + "|" + \
+    return s.src.line_trace()  + " > " + \
+           s.proc.line_trace() + " > " + \
            s.sink.line_trace()
 
 #=========================================================================

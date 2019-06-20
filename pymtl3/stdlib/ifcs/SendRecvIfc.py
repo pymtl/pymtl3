@@ -138,7 +138,9 @@ class SendIfcFL( Interface ):
 
     # We are doing SendFL (s) -> [ RecvFL -> SendCL ] -> RecvCL (s)
     # SendCL is a caller interface
-    if isinstance( other, NonBlockingCallerIfc ):
+    # FIXME direction
+    if isinstance( other, NonBlockingCallerIfc ) or \
+       isinstance( other, NonBlockingCalleeIfc ):
       m = RecvFL2SendCL()
 
       if hasattr( parent, "RecvFL2SendCL_count" ):
@@ -149,8 +151,8 @@ class SendIfcFL( Interface ):
         parent.RecvFL2SendCL_0 = m
 
       parent.connect_pairs(
-        other,  m.recv,
-        m.send, s
+        s,      m.recv,
+        m.send, other,
       )
       parent.RecvFL2SendCL_count += 1
       return True
@@ -270,6 +272,7 @@ class RecvFL2SendCL( Component ):
   def recv( s, msg ):
     while not s.send.rdy():
       greenlet.getcurrent().parent.switch(0)
+    assert s.send.rdy()
     s.send( msg )
 
   def construct( s ):
