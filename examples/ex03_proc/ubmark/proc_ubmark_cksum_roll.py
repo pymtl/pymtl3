@@ -59,7 +59,7 @@ class ubmark_cksum_roll:
         return False
 
     if is_pass:
-      print( " [ passed ]: cksum-roll" )
+      print( " [ passed ]: cksum-null" )
       return True
 
   @staticmethod

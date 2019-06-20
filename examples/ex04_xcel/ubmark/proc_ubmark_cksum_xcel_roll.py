@@ -60,7 +60,7 @@ class ubmark_cksum_xcel_roll:
         return False
 
     if is_pass:
-      print( " [ passed ]: cksum-roll" )
+      print( " [ passed ]: cksum-xcel" )
       return True
 
   @staticmethod
