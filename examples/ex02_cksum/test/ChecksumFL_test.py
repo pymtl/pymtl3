@@ -24,8 +24,8 @@ from ..ChecksumFL import checksum
 
 class ChecksumFL_Tests( object ):
 
-  # You can overwrite this function after inheriting the test class, in
-  # which way you can reuse all the test cases to test another 
+  # We can overwrite this function after inheriting the test class, in
+  # which way we can reuse all the test cases to test another
   # implementation.
   def cksum_func( s, words ):
     return checksum( words )

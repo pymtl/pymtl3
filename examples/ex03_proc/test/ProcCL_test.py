@@ -2,8 +2,7 @@
 =========================================================================
  ProcCL_test.py
 =========================================================================
- Includes a test harness that composes a processor, src/sink, and test
- memory, and a run_test function.
+ Includes test cases for the cycle level TinyRV0 processor.
 
 Author : Shunning Jiang, Yanghui Ou
   Date : June 12, 2019
@@ -14,13 +13,14 @@ random.seed(0xdeadbeef)
 
 from pymtl3  import *
 from examples.ex03_proc.ProcCL import ProcCL
-from ProcFL_test import ProcFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # ProcCL_Tests
 #-------------------------------------------------------------------------
 # It is as simple as inheriting from FL tests and change the ProcType to
-# use.
+# ProcCL.
+
+from .ProcFL_test import ProcFL_Tests as BaseTests
 
 class ProcCL_Tests( BaseTests ):
 

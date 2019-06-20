@@ -1,7 +1,9 @@
 """
 =========================================================================
- ProcCL_test.py
+ harness.py
 =========================================================================
+ Includes a test harness that composes a processor, src/sink, and test
+ memory, and a run_test function.
 
 Author : Shunning Jiang
   Date : June 15, 2019
@@ -54,9 +56,9 @@ class TestHarness(Component):
   # constructor
   #-----------------------------------------------------------------------
 
-  def construct( s, proc_cls, xcel_cls, dump_vcd,
-                src_delay, sink_delay,
-                mem_stall_prob, mem_latency ):
+  def construct( s, proc_cls, xcel_cls=NullXcelRTL, dump_vcd=False,
+                src_delay=0, sink_delay=0,
+                  mem_stall_prob=0, mem_latency=1 ):
 
     s.commit_inst = OutPort( Bits1 )
     req, resp = mk_mem_msg( 8, 32, 32 )
