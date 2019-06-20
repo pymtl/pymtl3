@@ -12,13 +12,14 @@ random.seed(0xdeadbeef)
 
 from pymtl3  import *
 from examples.ex03_proc.ProcRTL import ProcRTL
-from ProcFL_test import ProcFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # ProcRTL_Tests
 #-------------------------------------------------------------------------
-# It is as simple as inheriting from FL tests and change the ProcType to
+# It is as simple as inheriting from CL tests and change the ProcType to
 # use.
+
+from .ProcCL_test import ProcCL_Tests as BaseTests
 
 class ProcRTL_Tests( BaseTests ):
 
