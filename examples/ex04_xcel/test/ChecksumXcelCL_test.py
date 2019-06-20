@@ -37,7 +37,7 @@ def mk_xcel_transaction( words ):
   reqs.append( Req( wr, b5(3), bits[96:128] ) )
   reqs.append( Req( wr, b5(4), b32(1)       ) )
   reqs.append( Req( rd, b5(5), b32(0)       ) )
-  
+
   resps = []
   resps.append( Resp( wr, b32(0)          ) )
   resps.append( Resp( wr, b32(0)          ) )
@@ -66,7 +66,7 @@ class WrappedChecksumXcelCL( Component ):
     s.out_q = BypassQueueCL( num_entries=1 )
     s.connect_pairs(
       s.recv,                    s.checksum_xcel.xcel.req,
-      s.checksum_xcel.xcel.resp, s.out_q.enq, 
+      s.checksum_xcel.xcel.resp, s.out_q.enq,
       s.out_q.deq,               s.give,
     )
 
@@ -86,19 +86,19 @@ def checksum_xcel_cl( words ):
   dut = WrappedChecksumXcelCL()
   dut.elaborate()
   dut.apply( SimulationPass )
-  
+
   reqs, _ = mk_xcel_transaction( words )
 
   for req in reqs:
 
-    # Wait until xcel is ready to accept a request    
+    # Wait until xcel is ready to accept a request
     while not dut.recv.rdy():
       dut.tick()
-    
+
     # Send the request message to xcel
     dut.recv( req )
     dut.tick()
-    
+
     # Wait until xcel is ready to give a response
     while not dut.give.rdy():
       dut.tick()
@@ -115,10 +115,20 @@ def checksum_xcel_cl( words ):
 
 from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
 
+# ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# Implement the tests for ChecksumXcelCL
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+#; Create a class called ChecksumXcelCL_Tests that inherits from BaseTests
+#; and override the cksum_func by calling checksum_xcel_cl. This way helps
+#; you reuse all test cases in the ChecksumXcelFL_Tests to test this
+#; ChecksumXcelCL model
+
 class ChecksumXcelCL_Tests( BaseTests ):
 
   def cksum_func( s, words ):
     return checksum_xcel_cl( words )
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 #-------------------------------------------------------------------------
 # Test Harness for src/sink based tests
@@ -129,7 +139,7 @@ class ChecksumXcelCL_Tests( BaseTests ):
 class TestHarness( Component ):
 
   def construct( s, DutType=ChecksumXcelCL, src_msgs=[], sink_msgs=[] ):
-    
+
     ReqType, RespType = mk_xcel_msg( 5, 32 )
 
     s.src  = TestSrcCL( ReqType, src_msgs )
@@ -141,7 +151,7 @@ class TestHarness( Component ):
 
   def done( s ):
     return s.src.done() and s.sink.done()
-  
+
   def line_trace( s ):
     return "{}>{}>{}".format(
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace()
@@ -168,14 +178,14 @@ class ChecksumXcelCLSrcSink_Tests( object ):
   # simulator and runs test. We can overwrite this function when
   # inheriting from the test class to apply different passes to the DUT.
   def run_sim( s, th, max_cycles=1000 ):
-    
+
     # Create a simulator
     th.elaborate()
     th.apply( SimulationPass )
     ncycles = 0
     th.sim_reset()
     print( "" )
-    
+
     # Tick the simulator
     print("{:3}: {}".format( ncycles, th.line_trace() ))
     while not th.done() and ncycles < max_cycles:
@@ -193,7 +203,7 @@ class ChecksumXcelCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
-  
+
   # [test_xcel_multi_msg] tests the xcel with multiple transactions.
   def test_xcel_multi_msg( s ):
     seq = [

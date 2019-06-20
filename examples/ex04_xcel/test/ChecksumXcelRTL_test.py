@@ -28,7 +28,7 @@ def checksum_xcel_rtl( words ):
   dut.elaborate()
   dut.apply( SimulationPass )
   dut.sim_reset()
-  
+
   reqs, _ = mk_xcel_transaction( words )
 
   for req in reqs:
@@ -38,12 +38,12 @@ def checksum_xcel_rtl( words ):
     while not dut.xcel.req.rdy:
       dut.xcel.req.en   = b1(0)
       dut.tick()
-    
+
     # Send a request
     dut.xcel.req.en  = b1(1)
     dut.xcel.req.msg = req
     dut.tick()
-   
+
     # Wait for response
     while not dut.xcel.resp.en:
       dut.xcel.req.en = b1(0)
@@ -62,10 +62,20 @@ def checksum_xcel_rtl( words ):
 
 from .ChecksumXcelCL_test import ChecksumXcelCL_Tests as BaseTests
 
+# ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# Implement the tests for ChecksumXcelRTL
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+#; Create a class called ChecksumXcelRTL_Tests that inherits from
+#; BaseTests and override the cksum_func by calling checksum_xcel_rtl.
+#; This way helps you reuse all test cases in the ChecksumXcelFL_Tests to
+#; test this ChecksumXcelRTL model
+
 class ChecksumXcelRTL_Tests( BaseTests ):
 
   def cksum_func( s, words ):
     return checksum_xcel_rtl( words )
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 #-------------------------------------------------------------------------
 # Src/sink based tests

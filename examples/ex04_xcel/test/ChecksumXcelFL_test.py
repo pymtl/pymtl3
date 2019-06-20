@@ -21,7 +21,7 @@ from ..ChecksumXcelFL import ChecksumXcelFL
 
 Req, Resp = mk_xcel_msg( 3, 32 )
 
-def checksum_fl( words ):
+def checksum_xcel_fl( words ):
   assert len( words ) == 8
 
   # Create a simulator using ChecksumXcelFL
@@ -29,7 +29,7 @@ def checksum_fl( words ):
   dut.elaborate()
   dut.apply( SimulationPass )
 
-  # Transfer checksum input 
+  # Transfer checksum input
   for i in range( 4 ):
     data = concat( words[i*2+1], words[i*2] )
     dut.xcel.write( i, data )
@@ -47,7 +47,16 @@ def checksum_fl( words ):
 
 from examples.ex02_cksum.test.ChecksumCL_test import ChecksumCL_Tests as BaseTests
 
+# ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# Implement the tests for ChecksumXcelFL
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+#; Write a ChecksumXcelFL_Tests class that inherits from BaseTests which
+#; is basically ChecksumCL_Tests. ChecksumCL_Tests is developed in Task 2
+#; for the checksum unit.
+
 class ChecksumXcelFL_Tests( BaseTests ):
 
   def cksum_func( s, words ):
-    return checksum_fl( words )
+    return checksum_xcel_fl( words )
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
