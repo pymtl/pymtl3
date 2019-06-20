@@ -134,7 +134,16 @@ class AluRTL( Component ):
       elif s.fn == b4(2): s.out = s.in0 + s.in1       # ADD
       elif s.fn == b4(3): s.out = s.in0 << s.in1[0:5] # SLL
       elif s.fn == b4(4): s.out = s.in0 >> s.in1[0:5] # SRL
+
+      # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''
+      # Implement instruction AND in RTL processor
+      # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+      #; Add code to implement a bitwise-and operation for in0 and in1
+
       elif s.fn == b4(5): s.out = s.in0 & s.in1       # AND
+
+      # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+
       else:               s.out = dtype(0)            # Unknown
 
       s.ops_ne = s.in0 != s.in1

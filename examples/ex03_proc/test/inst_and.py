@@ -12,6 +12,14 @@ from inst_utils import *
 #-------------------------------------------------------------------------
 
 def gen_basic_test():
+# ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# Implement your own test for AND instruction
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+#; Define a function named gen_basic_test that tests AND instruction
+#
+#  return """
+#  """
+
   return """
     csrr x1, mngr2proc < 0x0f0f0f0f
     csrr x2, mngr2proc < 0x00ff00ff
@@ -42,6 +50,8 @@ def gen_basic_test():
     nop
     nop
   """
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 #-------------------------------------------------------------------------
 # gen_dest_dep_test

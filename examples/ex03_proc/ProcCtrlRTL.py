@@ -333,8 +333,16 @@ class ProcCtrl( Component ):
       elif inst == LW   : s.cs = concat( y, br_na,  y, imm_i, bm_imm, n, alu_add, ld, wm_m, y,  n, n )
       elif inst == SW   : s.cs = concat( y, br_na,  y, imm_s, bm_imm, y, alu_add, st, wm_m, n,  n, n )
       elif inst == BNE  : s.cs = concat( y, br_ne,  y, imm_b, bm_rf,  y, alu_x,   nr, wm_x, n,  n, n )
-      # Task: implement AND
+
+      # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''
+      # Implement instruction AND in RTL processor
+      # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+      #; Add a single line to set up signals for  AND instruction
+
       elif inst == AND  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_and, nr, wm_a, y,  n, n )
+
+      # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+
       else:               s.cs = concat( n, br_x,   n, imm_x, bm_x,   n, alu_x,   nr, wm_x, n,  n, n )
 
       s.inst_val_D       = s.cs[19:20]

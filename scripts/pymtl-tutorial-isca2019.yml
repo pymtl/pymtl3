@@ -56,6 +56,56 @@ examples/ex01_basics:
  - __init__.py
 
 #-------------------------------------------------------------------------
+# Ex 03 Files
+#-------------------------------------------------------------------------
+
+examples/ex03_proc:
+ - __init__.py
+ - MiscRTL.py
+ - NullXcel.py
+ - ProcCL.py
+ - ProcCtrlRTL.py
+ - ProcDpathRTL.py
+ - ProcFL.py
+ - ProcRTL.py
+ - proc-sim
+ - proc-translate
+ - SparseMemoryImage.py
+ - tinyrv0_encoding.py
+ - TinyRV0InstRTL.py
+ - tinyrv0-isa.md
+
+examples/ex03_proc/test:
+ - harness.py
+ - __init__.py
+ - inst_addi.py
+ - inst_add.py
+ - inst_and.py
+ - inst_bne.py
+ - inst_csr.py
+ - inst_lw.py
+ - inst_sll.py
+ - inst_srl.py
+ - inst_sw.py
+ - inst_utils.py
+ - inst_xcel.py
+ - ProcCL_test.py
+ - ProcFL_test.py
+ - ProcRTL_test.py
+ - ProcVRTL_test.py
+
+examples/ex03_proc/ubmark:
+
+ - __init__.py
+ - proc_ubmark_cksum_blk_data.py
+ - proc_ubmark_cksum_blk.py
+ - proc_ubmark_cksum_roll_data.py
+ - proc_ubmark_cksum_roll.py
+ - proc_ubmark_vvadd_data.py
+ - proc_ubmark_vvadd_opt.py
+ - proc_ubmark_vvadd_unopt.py
+
+#-------------------------------------------------------------------------
 # Ex 04 Files
 #-------------------------------------------------------------------------
 

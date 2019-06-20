@@ -63,9 +63,20 @@ class ProcFL( Component ):
         elif inst_name == "srl":
           s.R[inst.rd] = s.R[inst.rs1] >> (s.R[inst.rs2].uint() & 0x1F)
           s.PC += 4
+
+        # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''
+        # Implement instruction AND in FL processor
+        # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+        #; Make an "elif" statement here to implement instruction AND
+        #; that applies bit-wise "and" operator to rs1 and rs2 and returns
+        #; the result to rd
+
         elif inst_name == "and":
           s.R[inst.rd] = s.R[inst.rs1] & s.R[inst.rs2]
           s.PC += 4
+
+        # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+
         elif inst_name == "addi":
           s.R[inst.rd] = s.R[inst.rs1] + sext( inst.i_imm, 32 )
           s.PC += 4

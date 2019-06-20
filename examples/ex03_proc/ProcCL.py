@@ -120,8 +120,19 @@ class ProcCL( Component ):
             s.DXM_W_queue.enq( (inst.rd, s.R[inst.rs1] << (s.R[inst.rs2] & 0x1F), DXM_W.arith) )
           elif inst_name == "srl":
             s.DXM_W_queue.enq( (inst.rd, s.R[inst.rs1] >> (s.R[inst.rs2].uint() & 0x1F), DXM_W.arith) )
+
+          # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''
+          # Implement instruction AND in FL processor
+          # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+          #; Make an "elif" statement here to implement instruction AND
+          #; that applies bit-wise "and" operator to rs1 and rs2 and
+          #; returns the result to rd
+
           elif inst_name == "and":
             s.DXM_W_queue.enq( (inst.rd, s.R[inst.rs1] & s.R[inst.rs2], DXM_W.arith) )
+
+          # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+
           elif inst_name == "addi":
             s.DXM_W_queue.enq( (inst.rd, s.R[ inst.rs1 ] + inst.i_imm.int(), DXM_W.arith) )
           elif inst_name == "sw":
