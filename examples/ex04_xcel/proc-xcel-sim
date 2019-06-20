@@ -7,7 +7,7 @@
 #
 #  --proc-impl         {fl,cl,rtl}
 #  --xcel-impl         {fl,cl,rtl,null}
-#  --input <dataset>   {cksum-xcel}
+#  --input <dataset>   {cksum-xcel, cksum-null}
 #  --translate         Simulate translated and imported DUTs
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
