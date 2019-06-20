@@ -205,7 +205,7 @@ class XcelIfcCL2FLAdapter( Component ):
         s.left.resp( resp )
 
     s.add_constraints(
-      M( s.left.req ) < U( up_xcelifc_cl_fl_blk ), # bypass behavior
+      M( s.left.req ) > U( up_xcelifc_cl_fl_blk ), # add an edge
     )
 
 class XcelIfcFL2CLAdapter( Component ):
