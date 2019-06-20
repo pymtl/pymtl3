@@ -12,7 +12,6 @@ from __future__ import absolute_import, division, print_function
 from greenlet import greenlet
 
 from pymtl3 import *
-
 from pymtl3.stdlib.rtl.queues import BypassQueueRTL, NormalQueueRTL
 
 from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL

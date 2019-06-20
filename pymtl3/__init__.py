@@ -17,7 +17,7 @@ from .dsl.Connectable import (
     Wire,
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
-from .passes.PassGroups import SimpleSim, DynamicSim, SimulationPass
+from .passes.PassGroups import DynamicSim, SimpleSim, SimulationPass
 
 __all__ = [
   'U','M','RD','WR',

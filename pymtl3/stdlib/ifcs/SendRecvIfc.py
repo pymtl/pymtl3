@@ -9,9 +9,9 @@ Author: Yanghui Ou, Shunning Jiang
 """
 from __future__ import absolute_import, division, print_function
 
-import greenlet
-
 from copy import deepcopy
+
+import greenlet
 
 from pymtl3 import *
 
