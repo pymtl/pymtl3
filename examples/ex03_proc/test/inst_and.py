@@ -17,8 +17,8 @@ def gen_basic_test():
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 #; Define a function named gen_basic_test that tests AND instruction
 #
-#  return """
-#  """
+#:  return """
+#:  """
 
   return """
     csrr x1, mngr2proc < 0x0f0f0f0f
