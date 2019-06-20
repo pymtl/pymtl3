@@ -21,6 +21,7 @@ SimpleSim = [
   WrapGreenletPass(),
   SimpleSchedulePass(),
   CLLineTracePass(),
+  # VcdGenerationPass(),
   SimpleTickPass(),
   LineTraceParamPass(),
   Component.lock_in_simulation
@@ -32,6 +33,17 @@ DynamicSim = [
   WrapGreenletPass(),
   DynamicSchedulePass(),
   CLLineTracePass(),
+  SimpleTickPass(),
+  Component.lock_in_simulation
+]
+
+# This pass is created to be used for 2019 isca tutorial.
+SimulationPass = [
+  GenDAGPass(),
+  WrapGreenletPass(),
+  DynamicSchedulePass(),
+  CLLineTracePass(),
+  VcdGenerationPass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]

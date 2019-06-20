@@ -209,7 +209,7 @@ class Signal( NamedObject, Connectable ):
 
   def is_leaf_signal( s ):
     return ( issubclass( s._dsl.Type, Bits ) and not s.is_sliced_signal() ) or \
-           (Type is int)
+           (s._dsl.Type is int)
 
   def get_leaf_signals( s ):
     if s.is_sliced_signal(): return []
@@ -224,6 +224,10 @@ class Signal( NamedObject, Connectable ):
         else:
           recursive_getattr( signal, instance.__dict__[x] )
 
+    # OK now it's not Bits or int, let's instantiate it if it's never
+    # accessed
+    if s._dsl.type_instance is None:
+      s._dsl.type_instance = s._dsl.Type()
     recursive_getattr( s, s._dsl.type_instance )
     return leaf_signals
 
