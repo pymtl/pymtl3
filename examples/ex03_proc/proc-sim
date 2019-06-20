@@ -7,7 +7,6 @@
 #
 #  --impl              {fl,cl,rtl}
 #  --input <dataset>   {vvadd-unopt,vvadd-opt,cksum-blk}
-#  --verify            Verify results
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
 #  --delay             Add some delays
@@ -76,7 +75,6 @@ def parse_cmdline():
                              choices=["vvadd-unopt", "vvadd-opt", "cksum-blk", "cksum-roll"] )
   p.add_argument( "--limit",   default=1000000, type=int )
   p.add_argument( "--delay",   action="store_true"      )
-  p.add_argument( "--verify",  action="store_true"    )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -151,12 +149,13 @@ def main():
 
   assert count < limit
 
-  if opts.verify:
-    print
-    passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
-    print
-    if not passed:
-      exit(1)
+  # Verify the results of simulation
+
+  print
+  passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
+  print
+  if not passed:
+    exit(1)
 
   # Display stats
 

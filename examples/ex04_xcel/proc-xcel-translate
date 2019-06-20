@@ -10,6 +10,7 @@
 #  -h --help           Display this message
 #
 #  --xcel              Set the type of accelerator to be used
+#                      Options: null, cksum
 #  --output-dir        Set the output directory of translation
 #
 # Author : Peitian Pan, Shunning Jiang, Christopher Batten
@@ -65,7 +66,7 @@ def parse_cmdline():
 
   # Additional commane line arguments for the translator
 
-  p.add_argument( "--xcel", default="null", choices=["null", "cksum"] )
+  p.add_argument( "--xcel", choices=["null", "cksum"] )
   p.add_argument( "--output-dir", default="", type=valid_dir )
 
   opts = p.parse_args()

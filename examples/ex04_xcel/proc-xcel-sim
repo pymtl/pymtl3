@@ -8,10 +8,8 @@
 #  --proc-impl         {fl,cl,rtl}
 #  --xcel-impl         {fl,cl,rtl}
 #  --input <dataset>   {cksum-xcel-single}
-#  --verify            Verify results
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
-#  --stats             Output stats about execution
 #
 # Author : Shunning Jiang, Christopher Batten
 # Date   : June 10, 2019
@@ -40,6 +38,7 @@ from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_x
 from examples.ex03_proc.ProcFL import ProcFL
 from examples.ex03_proc.ProcCL import ProcCL
 from examples.ex03_proc.ProcRTL import ProcRTL
+from examples.ex03_proc.NullXcel import NullXcelRTL
 
 from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
 from examples.ex04_xcel.ChecksumXcelCL import ChecksumXcelCL
@@ -75,14 +74,12 @@ def parse_cmdline():
 
   # Additional commane line arguments for the simulator
 
-  p.add_argument( "--trace", action="store_true"      )
+  p.add_argument( "--trace", action="store_true" )
   p.add_argument( "--proc-impl",  default="rtl", choices=["fl", "cl", "rtl"] )
-  p.add_argument( "--xcel-impl",  default="rtl", choices=["fl", "cl", "rtl"] )
+  p.add_argument( "--xcel-impl",  default="rtl", choices=["fl", "cl", "rtl", "null"] )
   p.add_argument( "--input", default="cksum-xcel-single",
                              choices=["cksum-xcel-single", "cksum-xcel-loop", "cksum-xcel-roll"] )
   p.add_argument( "--limit",   default=1000000, type=int )
-  p.add_argument( "--stats",   action="store_true"      )
-  p.add_argument( "--verify",  action="store_true"    )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -94,9 +91,10 @@ proc_impl_dict = {
   "rtl": ProcRTL,
 }
 xcel_impl_dict = {
-  "fl" : ChecksumXcelFL,
-  "cl" : ChecksumXcelCL,
-  "rtl": ChecksumXcelRTL,
+  "fl"   : ChecksumXcelFL,
+  "cl"   : ChecksumXcelCL,
+  "rtl"  : ChecksumXcelRTL,
+  "null" : NullXcelRTL,
 }
 
 input_dict = {
@@ -117,7 +115,7 @@ class TestHarness(Component):
     s.commit_inst = OutPort( Bits1 )
     req, resp = mk_mem_msg( 8, 32, 32 )
 
-    s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
+    s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay   )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
 
     s.dut  = ProcXcel( proc_cls, xcel_cls )
@@ -239,12 +237,24 @@ def main():
 
   assert count < limit
 
-  if opts.verify:
-    print
+  # Verify the results of simulation
+
+  print
+
+  if opts.input == "cksum-xcel-single":
+    # cksum-xcel-single benckmark automatically verifies the output sent
+    # to manager. The fact that we are here implies the test source has
+    # verified the correctness of the result.
+    passed = True
+    print( " [ passed ]: cksum-xcel-single" )
+
+  elif opts.input == "cksum-xcel-roll":
     passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
-    print
-    if not passed:
-      exit(1)
+
+  print
+
+  if not passed:
+    exit(1)
 
   # Display stats
 
