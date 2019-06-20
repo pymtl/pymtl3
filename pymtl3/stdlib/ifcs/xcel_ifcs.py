@@ -278,14 +278,21 @@ class XcelIfcRTL2FLAdapter( Component ):
       if s.left.req.en and s.left.resp.rdy:
 
         if s.left.req.msg.type_ == XcelMsgType.READ:
+          print( "read "+str(s.left.req.msg.addr) )
           resp = RespType( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
 
         elif s.left.req.msg.type_ == XcelMsgType.WRITE:
           s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
           resp = RespType( s.left.req.msg.type_, 0 )
 
-        s.left.resp.en  = Bits1(1)
+        else:
+          raise AssertionError("WTF?")
+
+        s.left.resp.en  = b1(1)
         s.left.resp.msg = resp
+
+      else:
+        s.left.resp.en = b1(0)
 
     @s.update
     def up_xcelifc_rtl_fl_rdy():
