@@ -49,18 +49,18 @@ install:
 #------------------------------------------------------------------------
 
 script:
- - futurize --write --stage1 . &> /dev/null
+ - futurize --write --stage1 ./pymtl3 &> /dev/null
  # - futurize --write --stage2 .
- - autoflake --in-place --remove-duplicate-keys $(find . -name '*.py')
- - pyupgrade --keep-percent-format $(find . -name '*.py')
- - isort --apply --recursive .
+ - autoflake --in-place --remove-duplicate-keys $(find ./pymtl3 -name '*.py')
+ - pyupgrade --keep-percent-format $(find ./pymtl3 -name '*.py')
+ - isort --apply --recursive ./pymtl3
  # - black .
  # - flake8 .
  - git diff --exit-code
- - python --version | grep "Python 3" && futurize --write --stage2 . &> /dev/null || true
+ - python --version | grep "Python 3" && futurize --write --stage2 ./pymtl3 &> /dev/null || true
  - mkdir -p build
  - cd build
- - py.test --cov-report xml --cov=pymtl3 .. $CONFIG
+ - py.test --cov-report xml --cov=pymtl3 ../pymtl3 $CONFIG
 
 #-------------------------------------------------------------------------
 # after success
