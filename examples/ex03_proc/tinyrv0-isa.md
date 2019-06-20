@@ -13,13 +13,13 @@ the full RISC-V ISA manuals.
 
 ### Table of Contents
 
- 1. Architectural State
- 2. TinyRV0 Instruction Overview
- 3. TinyRV0 Instruction Encoding
- 4. TinyRV0 Instruction Details
- 5. TinyRV0 Privileged ISA
+ - Architectural State
+ - TinyRV0 Instruction Overview
+ - TinyRV0 Instruction Encoding
+ - TinyRV0 Instruction Details
+ - TinyRV0 Privileged ISA
 
-1. Architectural State
+Architectural State
 --------------------------------------------------------------------------
 
 ### Data Formats
@@ -50,7 +50,7 @@ destination register can either hold 0xABCD (big endian) or 0xDCBA
 (little endian). There is no significant benefit of one system over the
 other. TinyRV0 uses a little endian memory system.
 
-2. TinyRV0 ISA Overview
+TinyRV0 ISA Overview
 --------------------------------------------------------------------------
 
 Here is a brief list of the instructions which make the TinyRV0 ISA.
@@ -70,7 +70,7 @@ TinyRV0 and RV32IZicsr instructions:
     csrr rd, csr  == csrrs rd, csr, x0
     csrw csr, rs1 == csrrw x0, csr, rs1
 
-3. TinyRV0 Instruction and Immediate Encoding
+TinyRV0 Instruction and Immediate Encoding
 --------------------------------------------------------------------------
 
 The TinyRV0 ISA uses the same instruction encoding as RISC-V. There are
@@ -132,7 +132,7 @@ used to indicate a bit which is always set to zero.
     |                               <-- 31 |7 | 30:25     | 11:8  |z |
     +--------------------------------------+--+-----------+-------+--+
 
-4. TinyRV0 Instruction Details
+TinyRV0 Instruction Details
 --------------------------------------------------------------------------
 
 For each instruction we include a brief summary, assembly syntax,
@@ -299,7 +299,7 @@ of unaligned addresses is undefined.
     | imm        | rs2     | rs1     | 001  | imm     | 1100011     |
     +------------+---------+---------+------+---------+-------------+
 
-5. TinyRV0 Privileged ISA
+TinyRV0 Privileged ISA
 --------------------------------------------------------------------------
 
 TinyRV0 does not support any kind of distinction between user and
