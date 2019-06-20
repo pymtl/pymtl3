@@ -70,12 +70,16 @@ class ProcFL_Tests( object ):
     # Force a test failure if we timed out
     assert ncycles < max_cycles
 
+    th.tick()
+    print("{:3}: {}".format( ncycles, th.line_trace() ))
+    ncycles += 1
+
   #-----------------------------------------------------------------------
   # add
   #-----------------------------------------------------------------------
 
   @pytest.mark.parametrize( "name,test", [
-    asm_test( inst_add.gen_basic_test     ) ,
+    asm_test( inst_add.gen_add_basic_test ) ,
     asm_test( inst_add.gen_dest_dep_test  ) ,
     asm_test( inst_add.gen_src0_dep_test  ) ,
     asm_test( inst_add.gen_src1_dep_test  ) ,
@@ -89,7 +93,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_add_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_add.gen_random_test )
 
@@ -98,23 +102,11 @@ class ProcFL_Tests( object ):
   #-----------------------------------------------------------------------
 
   @pytest.mark.parametrize( "name,test", [
-    asm_test( inst_and.gen_basic_test     ) ,
-    asm_test( inst_and.gen_dest_dep_test  ) ,
-    asm_test( inst_and.gen_src0_dep_test  ) ,
-    asm_test( inst_and.gen_src1_dep_test  ) ,
-    asm_test( inst_and.gen_srcs_dep_test  ) ,
-    asm_test( inst_and.gen_srcs_dest_test ) ,
-    asm_test( inst_and.gen_value_test     ) ,
-    asm_test( inst_and.gen_random_test    ) ,
+    asm_test( inst_and.gen_and_basic_test     ) ,
   ])
   def test_and( s, name, test, dump_vcd ):
     th = TestHarness( s.ProcType )
     s.run_sim( th, test )
-
-  def test_and_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
-                      mem_stall_prob =0.5, mem_latency=3 )
-    s.run_sim( th, inst_and.gen_random_test )
 
   #-----------------------------------------------------------------------
   # sll
@@ -129,7 +121,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_sll_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_sll.gen_random_test )
 
@@ -146,7 +138,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_srl_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_srl.gen_random_test )
 
@@ -171,7 +163,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_bne_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_bne.gen_random_test )
 
@@ -192,7 +184,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_addi_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_addi.gen_random_test )
 
@@ -213,7 +205,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_lw_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_lw.gen_random_test )
 
@@ -231,7 +223,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_sw_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_sw.gen_random_test )
 
@@ -250,7 +242,7 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_csr_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_csr.gen_random_test )
 
@@ -267,6 +259,6 @@ class ProcFL_Tests( object ):
     s.run_sim( th, test )
 
   def test_xcel_rand_delays( s, dump_vcd ):
-    th = TestHarness( s.ProcType, src_delay=3, sink_delay=5,
+    th = TestHarness( s.ProcType, src_delay=3, sink_delay=14,
                       mem_stall_prob =0.5, mem_latency=3 )
     s.run_sim( th, inst_xcel.gen_multiple_test )

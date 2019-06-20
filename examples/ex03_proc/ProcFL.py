@@ -68,7 +68,7 @@ class ProcFL( Component ):
         # Implement instruction AND in FL processor
         # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
         #; Make an "elif" statement here to implement instruction AND
-        #; that applies bit-wise "and" operator to rs1 and rs2 and returns
+        #; that applies bit-wise "and" operator to rs1 and rs2 and stores
         #; the result to rd
 
         elif inst_name == "and":

@@ -337,7 +337,7 @@ class ProcCtrl( Component ):
       # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''
       # Implement instruction AND in RTL processor
       # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
-      #; Add a single line to set up signals for  AND instruction
+      #; Add a single line to set up control signals for AND instruction.
 
       elif inst == AND  : s.cs = concat( y, br_na,  y, imm_x, bm_rf,  y, alu_and, nr, wm_a, y,  n, n )
 

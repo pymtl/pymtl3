@@ -42,7 +42,17 @@ def gen_basic_test():
     nop
     nop
   """
+#-------------------------------------------------------------------------
+# gen_add_basic_test
+#-------------------------------------------------------------------------
 
+def gen_add_basic_test():
+  return """
+    csrr x1, mngr2proc < 5
+    csrr x2, mngr2proc < 4
+    add x3, x1, x2
+    csrw proc2mngr, x3 > 9
+  """
 #-------------------------------------------------------------------------
 # gen_dest_dep_test
 #-------------------------------------------------------------------------
@@ -145,7 +155,7 @@ def gen_value_test():
 
 def gen_random_test():
   asm_code = []
-  for i in xrange(100):
+  for i in xrange(50):
     src0 = Bits( 32, random.randint(0,0xffffffff) )
     src1 = Bits( 32, random.randint(0,0xffffffff) )
     dest = src0 + src1
