@@ -81,7 +81,7 @@ def parse_cmdline():
   p.add_argument( "--translate", action="store_true" )
   p.add_argument( "--input", default="cksum-xcel",
                              choices=["cksum-xcel-loop", "cksum-xcel"] )
-  p.add_argument( "--limit", default=1000000, type=int )
+  p.add_argument( "--limit", default=100000, type=int )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -244,7 +244,7 @@ def main():
 
   model.sim_reset()
 
-  limit = 10000
+  limit = opts.limit
 
   if opts.trace:
     print "{:3}: {}".format( count, model.line_trace() )
