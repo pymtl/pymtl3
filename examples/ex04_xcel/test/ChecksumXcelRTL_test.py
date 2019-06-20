@@ -20,7 +20,7 @@ from ..ChecksumXcelRTL import ChecksumXcelRTL
 # [checksum_xcel_rtl] creates an RTL checksum accelerator, feeds in the
 # input, ticks it, gets the response, and returns the result.
 
-def checksum_rtl( words ):
+def checksum_xcel_rtl( words ):
   assert len(words) == 8
 
   # Create a simulator using RTL accelerator
@@ -35,7 +35,7 @@ def checksum_rtl( words ):
 
     # Wait until xcel is ready to accept a request
     dut.xcel.resp.rdy = b1(1)
-    while not dut.req.rdy:
+    while not dut.xcel.req.rdy:
       dut.xcel.req.en   = b1(0)
       dut.tick()
     
@@ -45,15 +45,27 @@ def checksum_rtl( words ):
     dut.tick()
    
     # Wait for response
-    while not dut.resp.en:
-      dut.xcel.req.en   = b1(0)
+    while not dut.xcel.resp.en:
+      dut.xcel.req.en = b1(0)
       dut.tick()
-    
+
     # Get the response message
-    resp_msg = dut.resp.msg
+    resp_data = dut.xcel.resp.msg.data
     dut.tick()
 
-  return resp_msg.datas
+  return resp_data
+
+#-------------------------------------------------------------------------
+# Reuse ChecksumXcelCL_test
+#-------------------------------------------------------------------------
+# We reuse the function tests in ChecksumXcelFL_test.
+
+from .ChecksumXcelCL_test import ChecksumXcelCL_Tests as BaseTests
+
+class ChecksumXcelRTL_Tests( BaseTests ):
+
+  def cksum_func( s, words ):
+    return checksum_xcel_rtl( words )
 
 #-------------------------------------------------------------------------
 # Src/sink based tests

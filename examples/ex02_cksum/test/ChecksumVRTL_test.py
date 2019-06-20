@@ -41,7 +41,8 @@ def checksum_vrtl( words ):
   dut = ImportPass()( dut )
 
   # Create a simulator
-  dut.apply( DynamicSim )
+  dut.elaborate()
+  dut.apply( SimulationPass )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
