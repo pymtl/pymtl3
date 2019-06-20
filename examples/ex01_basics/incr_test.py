@@ -14,6 +14,10 @@ from pymtl3 import *
 # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Implement the incr_8bit function and a corresponding unit test
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+#; The incr_8bit function should take as input an 8-bit value, increment
+#; it by one, and return the result. Try writing two unit tests. The
+#; first unit test should verify basic functionality, and the second unit
+#; test should verify overflow.
 
 #-------------------------------------------------------------------------
 #  An 8-bit increment function

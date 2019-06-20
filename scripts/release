@@ -146,6 +146,7 @@ def generate( opts ):
   comment_pattern    = re.compile(r"^\s*(//|#).*$")
   end_pattern        = re.compile(r"^\s*(//|#).''''''+/\\$")
   insert_pattern     = re.compile(r"^(\s*)(//:|#:)\s?(.*)$")
+  insertx_pattern    = re.compile(r"^(\s*)(//|#);(\s?.*)$")
 
   patsubs = []
 
@@ -215,6 +216,7 @@ def generate( opts ):
       scan_until_end         = False
       skip_blank_line        = False
       any_insert             = False
+      any_insertx            = False
 
       vprint( " - copying to", dest_file_wdir )
       dest_file = open( dest_file_wdir, "w" )
@@ -231,6 +233,7 @@ def generate( opts ):
         match_begin      = begin_pattern.match(line)
         match_end        = end_pattern.match(line)
         match_insert     = insert_pattern.match(line)
+        match_insertx    = insertx_pattern.match(line)
 
         if skip_blank_line:
           skip_blank_line = False
@@ -239,9 +242,15 @@ def generate( opts ):
 
         elif scan_until_end:
 
-          if match_insert:
-            any_insert = True
-            insert_str = match_insert.group(1)+match_insert.group(3)
+          if match_insert or match_insertx:
+
+            if match_insert:
+              any_insert  = True
+              insert_str = match_insert.group(1)+match_insert.group(3)
+            else:
+              any_insertx = True
+              insert_str = match_insertx.group(1)+match_insertx.group(2)+match_insertx.group(3)
+
             if blank_line_pattern.match(insert_str):
               dest_file.write( '\n' )
             else:
@@ -256,6 +265,7 @@ def generate( opts ):
           dest_file.write(line[:-3]+"''\n")
           scan_until_end = True
           any_insert     = False
+          any_insertx    = False
 
         else:
           dest_file.write(line)

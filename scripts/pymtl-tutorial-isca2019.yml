@@ -47,5 +47,11 @@ KEEP:
 examples/ex01_basics:
 
  - incr_test.py
+ - IncrPyVars_test.py
+ - IncrWires_test.py
+ - IncrValueModular_test.py
+ - IncrPyObjs_test.py
+ - IncrMethodPorts_test.py
+ - IncrMethodModular_test.py
  - __init__.py
 
