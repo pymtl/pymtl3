@@ -56,10 +56,11 @@ def mk_xcel_transaction( words ):
 # response can be obtained by calling dequeue.
 
 class WrappedChecksumXcelCL( Component ):
+
   def construct( s ):
-    ReqType, RespType = mk_xcel_msg( 5, 32 )
-    s.recv = NonBlockingCalleeIfc( ReqType  )
-    s.give = NonBlockingCalleeIfc( RespType )
+
+    s.recv = NonBlockingCalleeIfc( Req  )
+    s.give = NonBlockingCalleeIfc( Resp )
 
     s.checksum_xcel = ChecksumXcelCL()
     s.out_q = BypassQueueCL( num_entries=1 )
@@ -81,8 +82,7 @@ class WrappedChecksumXcelCL( Component ):
 def checksum_xcel_cl( words ):
   assert len( words ) == 8
 
-  # Create a simulator
-
+  # Create a simulator using CL accelerator
   dut = WrappedChecksumXcelCL()
   dut.elaborate()
   dut.apply( SimulationPass )
@@ -109,9 +109,9 @@ def checksum_xcel_cl( words ):
   return resp_msg.data
 
 #-------------------------------------------------------------------------
-# Reuse ChecksumCL_test
+# Reuse ChecksumXcelFL_test
 #-------------------------------------------------------------------------
-# We reuse the extened FL tests in ex02_cksum.test.ChecksumCL_test.
+# We reuse the function tests in ChecksumXcelFL_test.
 
 from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
 
@@ -150,6 +150,7 @@ class TestHarness( Component ):
 #-------------------------------------------------------------------------
 # Src/sink based tests
 #-------------------------------------------------------------------------
+# More adavanced testsing that uses test source and test sink.
 
 class ChecksumXcelCLSrcSink_Tests( object ):
 

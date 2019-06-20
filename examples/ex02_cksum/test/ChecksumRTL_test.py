@@ -54,15 +54,17 @@ def checksum_rtl( words ):
   # Wait until the checksum unit is ready to receive input
   dut.send.rdy = b1(1)
   while not dut.recv.rdy:
+    dut.recv.en = b1(0)
     dut.tick()
   
   # Feed in the input
   dut.recv.en = b1(1)
   dut.recv.msg = bits_in
   dut.tick()
-  
+
   # Wait until the checksum unit is about to send the message
   while not dut.send.en:
+    dut.recv.en = b1(0)
     dut.tick()
 
   # Return the result
