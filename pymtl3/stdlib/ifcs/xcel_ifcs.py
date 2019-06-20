@@ -13,6 +13,8 @@ from greenlet import greenlet
 
 from pymtl3 import *
 
+from pymtl3.stdlib.rtl.queues import BypassQueueRTL, NormalQueueRTL
+
 from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
 
@@ -271,32 +273,31 @@ class XcelIfcRTL2FLAdapter( Component ):
   def construct( s, ReqType, RespType ):
     s.left  = XcelMinionIfcRTL( ReqType, RespType )
     s.right = XcelMasterIfcFL( ReqType, RespType )
+    
+    s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
+    s.connect( s.left.req, s.req_q.enq )
 
     @s.update
     def up_xcelifc_rtl_fl_blk():
 
-      if s.left.req.en and s.left.resp.rdy:
+      print( "HERE" )
+      if s.req_q.deq.rdy and s.left.resp.rdy:
 
-        if s.left.req.msg.type_ == XcelMsgType.READ:
-          print( "read "+str(s.left.req.msg.addr) )
-          resp = RespType( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
+        if s.req_q.deq.msg.type_ == XcelMsgType.READ:
+          print( "read "+str(s.req_q.deq.msg.addr) )
+          resp = RespType( s.req_q.deq.msg.type_, s.right.read( s.req_q.deq.msg.addr ) )
 
-        elif s.left.req.msg.type_ == XcelMsgType.WRITE:
-          s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
-          resp = RespType( s.left.req.msg.type_, 0 )
+        elif s.req_q.deq.msg.type_ == XcelMsgType.WRITE:
+          s.right.write( s.req_q.deq.msg.addr, s.req_q.deq.msg.data )
+          resp = RespType( s.req_q.deq.msg.type_, 0 )
 
-        else:
-          raise AssertionError("WTF?")
-
+        s.req_q.deq.en = b1(1)
         s.left.resp.en  = b1(1)
         s.left.resp.msg = resp
 
       else:
-        s.left.resp.en = b1(0)
-
-    @s.update
-    def up_xcelifc_rtl_fl_rdy():
-      s.left.req.rdy = s.left.resp.rdy
+        s.req_q.deq.en = b1(0)
+        s.left.resp.en  = b1(0)
 
 # Yanghui: directly adapting FL to RTL is tricky. I first convert FL to CL
 # then CL to RTL using the adapters we already have.
