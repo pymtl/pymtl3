@@ -7,6 +7,7 @@
 #
 #  --impl              {fl,cl,rtl}
 #  --input <dataset>   {vvadd-unopt,vvadd-opt,cksum-blk}
+#  --translate         Simulate translated and imported DUTs
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
 #  --delay             Add some delays
@@ -69,12 +70,13 @@ def parse_cmdline():
 
   # Additional commane line arguments for the simulator
 
-  p.add_argument( "--trace", action="store_true"      )
+  p.add_argument( "--trace", action="store_true" )
   p.add_argument( "--impl",  default="rtl", choices=["fl", "cl", "rtl"] )
+  p.add_argument( "--translate", action="store_true" )
   p.add_argument( "--input", default="vvadd-unopt",
                              choices=["vvadd-unopt", "vvadd-opt", "cksum-blk", "cksum-roll"] )
   p.add_argument( "--limit",   default=1000000, type=int )
-  p.add_argument( "--delay",   action="store_true"      )
+  p.add_argument( "--delay",   action="store_true" )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -100,6 +102,13 @@ input_dict = {
 def main():
   opts = parse_cmdline()
 
+  # Check if there are any conflicts in the given options
+
+  # --translate can only be used on RTL proc
+  if opts.translate:
+    assert opts.impl == "rtl", \
+      "--translate option can only be used with RTL processor implementation!"
+
   # Assemble the test program
 
   mem_image = input_dict[ opts.input ].gen_mem_image()
@@ -119,8 +128,18 @@ def main():
                         # src sink memstall memlat
                           0,  0,   0,       1 )
 
-  from pymtl3.passes import SimpleSim
-  model.apply( SimpleSim )
+  # Apply translation pass and import pass if required
+
+  if opts.translate:
+    from pymtl3.passes.yosys import TranslationPass, ImportPass
+    model.elaborate()
+    model.proc.yosys_translate = True
+    model.proc.yosys_import = True
+    model.apply( TranslationPass() )
+    model = ImportPass()( model )
+
+  from pymtl3.passes import DynamicSim
+  model.apply( DynamicSim )
 
   # Load the program into the model
 
