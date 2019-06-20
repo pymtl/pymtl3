@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 #=========================================================================
-# isa-sim [options]
+# proc-xcel-sim [options]
 #=========================================================================
 #
 #  -h --help           Display this message
 #
 #  --proc-impl         {fl,cl,rtl}
-#  --xcel-impl         {fl,cl,rtl}
+#  --xcel-impl         {fl,cl,rtl,null}
 #  --input <dataset>   {cksum-xcel-single}
+#  --translate         Simulate translated and imported DUTs
 #  --trace             Display line tracing
 #  --limit             Set max number of cycles, default=100000
 #
@@ -75,11 +76,12 @@ def parse_cmdline():
   # Additional commane line arguments for the simulator
 
   p.add_argument( "--trace", action="store_true" )
-  p.add_argument( "--proc-impl",  default="rtl", choices=["fl", "cl", "rtl"] )
-  p.add_argument( "--xcel-impl",  default="rtl", choices=["fl", "cl", "rtl", "null"] )
-  p.add_argument( "--input", default="cksum-xcel-single",
-                             choices=["cksum-xcel-single", "cksum-xcel-loop", "cksum-xcel-roll"] )
-  p.add_argument( "--limit",   default=1000000, type=int )
+  p.add_argument( "--proc-impl", default="rtl", choices=["fl", "cl", "rtl"] )
+  p.add_argument( "--xcel-impl", default="rtl", choices=["fl", "cl", "rtl", "null"] )
+  p.add_argument( "--translate", action="store_true" )
+  p.add_argument( "--input", default="cksum-xcel",
+                             choices=["cksum-xcel-loop", "cksum-xcel"] )
+  p.add_argument( "--limit", default=1000000, type=int )
 
   opts = p.parse_args()
   if opts.help: p.error()
@@ -98,8 +100,7 @@ xcel_impl_dict = {
 }
 
 input_dict = {
-  "cksum-xcel-single" : ubmark_cksum_xcel_single,
-  "cksum-xcel-roll"   : ubmark_cksum_xcel_roll,
+  "cksum-xcel" : ubmark_cksum_xcel_roll,
 }
 
 class TestHarness(Component):
@@ -189,6 +190,15 @@ class TestHarness(Component):
 def main():
   opts = parse_cmdline()
 
+  # Check if there are any conflicts in the given options
+
+  # --translate can only be used on RTL proc and RTL/Null xcel
+  if opts.translate:
+    assert opts.proc_impl == "rtl", \
+      "--translate option can only be used with RTL processor implementation!"
+    assert opts.xcel_impl == "rtl" or opts.xcel_impl == "null", \
+      "--translate option can only be used with NullXcel or RTL accelerator!"
+
   # Assemble the test program
 
   mem_image = input_dict[ opts.input ].gen_mem_image()
@@ -198,14 +208,25 @@ def main():
   #-----------------------------------------------------------------------
 
   # Create test harness and elaborate
+
   print
   print "----- Proc:", opts.proc_impl.upper(), "-"*50 , "Xcel:", opts.xcel_impl.upper(), "-----"
   print
 
   model = TestHarness( proc_impl_dict[ opts.proc_impl ],
                        xcel_impl_dict[ opts.xcel_impl ], 0,
-                      # src sink memstall memlat
-                        0,  0,   0,       1 )
+                       # src  sink  memstall  memlat
+                         0,   0,    0,        1 )
+
+  # Apply translation pass and import pass if required
+
+  if opts.translate:
+    from pymtl3.passes.yosys import TranslationPass, ImportPass
+    model.elaborate()
+    model.dut.yosys_translate = True
+    model.dut.yosys_import = True
+    model.apply( TranslationPass() )
+    model = ImportPass()( model )
 
   from pymtl3.passes import DynamicSim
   model.apply( DynamicSim )
@@ -240,17 +261,7 @@ def main():
   # Verify the results of simulation
 
   print
-
-  if opts.input == "cksum-xcel-single":
-    # cksum-xcel-single benckmark automatically verifies the output sent
-    # to manager. The fact that we are here implies the test source has
-    # verified the correctness of the result.
-    passed = True
-    print( " [ passed ]: cksum-xcel-single" )
-
-  elif opts.input == "cksum-xcel-roll":
-    passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
-
+  passed = input_dict[ opts.input ].verify( model.mem.mem.mem )
   print
 
   if not passed:
