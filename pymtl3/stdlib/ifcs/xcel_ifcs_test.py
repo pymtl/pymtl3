@@ -94,7 +94,7 @@ class SomeMinionFL( Component ):
 
   def construct( s, ReqType, RespType, nregs=16 ):
     s.xcel = XcelMinionIfcFL( ReqType, RespType, s.read_method, s.write_method )
-    s.reg_file = [ None for _ in range( nregs ) ]
+    s.reg_file = [ 0 for _ in range( nregs ) ]
 
   def line_trace( s ):
     return ""
