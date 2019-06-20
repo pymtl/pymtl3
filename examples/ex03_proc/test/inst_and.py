@@ -16,7 +16,6 @@ def gen_basic_test():
 # Implement your own test for AND instruction
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 #; Define a function named gen_basic_test that tests AND instruction
-#
 #:  return """
 #:  """
 
