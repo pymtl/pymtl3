@@ -33,7 +33,7 @@ while sim_dir:
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
 from examples.ex03_proc.tinyrv0_encoding import assemble
 
-from examples.ex04_xcel.ubmark.proc_ubmark_checksum_xcel_single import ubmark_cksum_xcel_single
+from examples.ex03_proc.ubmark.proc_ubmark_cksum_roll import ubmark_cksum_roll
 from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
 
 from examples.ex03_proc.ProcFL import ProcFL
@@ -80,7 +80,7 @@ def parse_cmdline():
   p.add_argument( "--xcel-impl", default="rtl", choices=["fl", "cl", "rtl", "null"] )
   p.add_argument( "--translate", action="store_true" )
   p.add_argument( "--input", default="cksum-xcel",
-                             choices=["cksum-xcel-loop", "cksum-xcel"] )
+                             choices=["cksum-null", "cksum-xcel"] )
   p.add_argument( "--limit", default=100000, type=int )
 
   opts = p.parse_args()
@@ -101,6 +101,7 @@ xcel_impl_dict = {
 
 input_dict = {
   "cksum-xcel" : ubmark_cksum_xcel_roll,
+  "cksum-null" : ubmark_cksum_roll
 }
 
 class TestHarness(Component):
@@ -198,6 +199,11 @@ def main():
       "--translate option can only be used with RTL processor implementation!"
     assert opts.xcel_impl == "rtl" or opts.xcel_impl == "null", \
       "--translate option can only be used with NullXcel or RTL accelerator!"
+
+  # If --xcel null is true, then only cksum-null is valid as input
+  if opts.xcel_impl == 'null':
+    assert opts.input == 'cksum-null', \
+      "--xcel-impl null option can only be used with cksum-null input!"
 
   # Assemble the test program
 
