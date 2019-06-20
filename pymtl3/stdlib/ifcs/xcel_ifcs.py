@@ -280,11 +280,9 @@ class XcelIfcRTL2FLAdapter( Component ):
     @s.update
     def up_xcelifc_rtl_fl_blk():
 
-      print( "HERE" )
       if s.req_q.deq.rdy and s.left.resp.rdy:
 
         if s.req_q.deq.msg.type_ == XcelMsgType.READ:
-          print( "read "+str(s.req_q.deq.msg.addr) )
           resp = RespType( s.req_q.deq.msg.type_, s.right.read( s.req_q.deq.msg.addr ) )
 
         elif s.req_q.deq.msg.type_ == XcelMsgType.WRITE:
