@@ -85,6 +85,11 @@ xcel_dict = {
 def main():
   opts = parse_cmdline()
 
+  # Check if the type of accelerator is specified
+
+  assert opts.xcel is not None, \
+    "--xcel is required to select null or RTL xcel"
+
   # If output directory was specified, change to that directory
 
   if opts.output_dir:
