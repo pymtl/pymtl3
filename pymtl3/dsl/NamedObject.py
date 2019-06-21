@@ -21,7 +21,6 @@ Date   : Nov 3, 2018
 from __future__ import absolute_import, division, print_function
 
 import re
-import warnings
 
 from .errors import NotElaboratedError
 
