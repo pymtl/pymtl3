@@ -143,10 +143,11 @@ def generate( opts ):
 
   blank_line_pattern = re.compile(r"^\s*$")
   begin_pattern      = re.compile(r"^\s*(//|#).''''''+\\/$")
+  beginx_pattern     = re.compile(r"^\s*(//|#).''''''+\\//$")
   comment_pattern    = re.compile(r"^\s*(//|#).*$")
   end_pattern        = re.compile(r"^\s*(//|#).''''''+/\\$")
   insert_pattern     = re.compile(r"^(\s*)(//:|#:)\s?(.*)$")
-  insertx_pattern    = re.compile(r"^(\s*)(//|#);(\s?.*)$")
+  insertx_pattern    = re.compile(r"^(\s*)(//|#);(.*)$")
 
   patsubs = []
 
@@ -231,6 +232,7 @@ def generate( opts ):
 
         match_blank_line = blank_line_pattern.match(line)
         match_begin      = begin_pattern.match(line)
+        match_beginx     = beginx_pattern.match(line)
         match_end        = end_pattern.match(line)
         match_insert     = insert_pattern.match(line)
         match_insertx    = insertx_pattern.match(line)
@@ -260,9 +262,10 @@ def generate( opts ):
             scan_until_end  = False
             skip_blank_line = any_insert
 
-        elif filter_en and match_begin:
+        elif filter_en and ( match_begin or match_beginx ):
           vprint( "    + found marked region" )
-          dest_file.write(line[:-3]+"''\n")
+          if match_begin:
+            dest_file.write(line[:-3]+"''\n")
           scan_until_end = True
           any_insert     = False
           any_insertx    = False

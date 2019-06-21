@@ -159,26 +159,33 @@ class TestHarness( Component ):
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace()
     )
 
-#-------------------------------------------------------------------------
+#=========================================================================
 # Src/sink based tests
-#-------------------------------------------------------------------------
+#=========================================================================
 # We use source/sink based tests to stress test the checksum unit.
 
 class ChecksumCLSrcSink_Tests( object ):
 
-  # [setup_class] will be called by pytest before running all the tests in
-  # the test class. Here we specify the type of the design under test
-  # that is used in all test cases. We can easily reuse all the tests in
-  # this class simply by creating a new test class that inherits from
-  # this class and overwrite the setup_class to provide a different DUT
-  # type.
+  #-----------------------------------------------------------------------
+  # setup_class
+  #-----------------------------------------------------------------------
+  # Will be called by pytest before running all the tests in the test
+  # class. Here we specify the type of the design under test that is used
+  # in all test cases. We can easily reuse all the tests in this class
+  # simply by creating a new test class that inherits from this class and
+  # overwrite the setup_class to provide a different DUT type.
+
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumCL
 
-  # [run_sim] is a helper function in the test suite that creates a
-  # simulator and runs test. We can overwrite this function when
-  # inheriting from the test class to apply different passes to the DUT.
+  #-----------------------------------------------------------------------
+  # run_sim
+  #-----------------------------------------------------------------------
+  # A helper function in the test suite that creates a simulator and
+  # runs test. We can overwrite this function when inheriting from the
+  # test class to apply different passes to the DUT.
+
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
@@ -198,7 +205,11 @@ class ChecksumCLSrcSink_Tests( object ):
     # Check timeout
     assert ncycles < max_cycles
 
-  # [test_simple] is a simple test case with only 1 input.
+  #-----------------------------------------------------------------------
+  # test_simple
+  #-----------------------------------------------------------------------
+  # is a simple test case with only 1 input.
+
   def test_srcsink_simple( s ):
     words = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     bits  = words_to_b128( words )
@@ -211,7 +222,11 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
 
-  # [test_pipeline] test the checksum unit with a sequence of inputs.
+  #-----------------------------------------------------------------------
+  # test_pipeline
+  #-----------------------------------------------------------------------
+  # test the checksum unit with a sequence of inputs.
+
   def test_srcsink_pipeline( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
@@ -227,7 +242,11 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
 
-  # [test_pipeline] test the checksum unit with a large sink delay.
+  #-----------------------------------------------------------------------
+  # test_backpressure
+  #-----------------------------------------------------------------------
+  # test the checksum unit with a large sink delay.
+
   def test_srcsink_backpressure( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
@@ -243,6 +262,11 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     th.set_param( "top.sink.construct", initial_delay=10 )
     s.run_sim( th )
+
+  # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\//
+  # Cutting out this hypothesis test since in the new flow we only want
+  # the attendees to write a single hypothesis test above ... and we
+  # don't want them to get confused by this additional hypothesis test.
 
   # This hypothesis test not only generates a sequence of input to the
   # the checksum unit but it also configure the test source and sink with
