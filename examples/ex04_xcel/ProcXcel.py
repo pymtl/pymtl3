@@ -1,8 +1,8 @@
 """
 ==========================================================================
- ProcRTL.py
+ ProcXcel.py
 ==========================================================================
-TinyRV0 RTL proc
+Processor-accelerator compostion.
 
 Author : Shunning Jiang
   Date : June 12, 2019

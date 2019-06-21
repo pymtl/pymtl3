@@ -2,6 +2,7 @@
 ==========================================================================
  ProcCtrlRTL.py
 ==========================================================================
+Control logic for the RTL TinyRV0 processor.
 
 Author : Shunning Jiang
   Date : June 13, 2019
