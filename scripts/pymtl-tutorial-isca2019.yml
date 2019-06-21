@@ -56,6 +56,26 @@ examples/ex01_basics:
  - __init__.py
 
 #-------------------------------------------------------------------------
+# Ex 02 Files
+#-------------------------------------------------------------------------
+
+examples/ex02_cksum:
+ - utils.py
+ - ChecksumFL.py
+ - ChecksumCL.py
+ - ChecksumRTL.py
+ - cksum-translate
+ - __init__.py
+
+examples/ex02_cksum/test:
+ - utils_test.py
+ - ChecksumFL_test.py
+ - ChecksumCL_test.py
+ - ChecksumRTL_test.py
+ - ChecksumVRTL_test.py
+ - __init__.py
+
+#-------------------------------------------------------------------------
 # Ex 03 Files
 #-------------------------------------------------------------------------
 

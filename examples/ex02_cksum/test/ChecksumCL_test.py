@@ -88,7 +88,10 @@ class ChecksumCL_Tests( BaseTests ):
   # Use Hypothesis to test Checksum CL
   # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
   #; Use Hypothesis to verify that ChecksumCL has the same behavior as
-  #; ChecksumFL. Simply uncomment the following code and rerun pytest.
+  #; ChecksumFL. Simply uncomment the following test_hypothesis method
+  #; and rerun pytest. Make sure that you fix the indentation so that
+  #; this new test_hypothesis method is correctly indented with respect
+  #; to the class ChecksumCL_Tests
   #;
   #;   @hypothesis.given(
   #;     words = st.lists( pm_st.bits(16), min_size=8, max_size=8 )
