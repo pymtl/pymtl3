@@ -121,10 +121,10 @@ class ChecksumCL_Tests( BaseTests ):
   #;     if s.send.rdy() and s.pipe.deq.rdy():
   #;       s.send( s.pipe.deq() )
 
+  @hypothesis.settings( deadline=None )
   @hypothesis.given(
     words = st.lists( pm_st.bits(16), min_size=8, max_size=8 )
   )
-  @hypothesis.settings( deadline=None )
   def test_hypothesis( s, words ):
     print( [ int(x) for x in words ] )
     assert s.cksum_func( words ) == checksum( words )

@@ -61,7 +61,7 @@ class ChecksumCL( Component ):
         # you can add the following to zero out the sixth word before
         # calculating the checksum.
         #
-        words[5] = b16(0)
+        #  words[5] = b16(0)
         #
 
         result = checksum( words )

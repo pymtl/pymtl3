@@ -17,15 +17,7 @@ from pymtl3 import *
 
 def words_to_b128( words ):
   assert len( words ) == 8
-
-  # Advanced implementation
-  # bits = reduce( lambda x, y: concat( y, x ), words )
-
-  # Basic implementation
-  bits = b128(0)
-  for i in range( 8 ):
-    #bits =  ( bits << 16 ) | words[7-i]
-    bits[i*16:(i+1)*16] = words[i]
+  bits = reduce( lambda x, y: concat( y, x ), words )
   return bits
 
 #-------------------------------------------------------------------------
@@ -36,3 +28,4 @@ def b128_to_words( bits ):
   assert bits.nbits == 128
   words = [ bits[i*16:(i+1)*16] for i in range( 8 ) ]
   return words
+

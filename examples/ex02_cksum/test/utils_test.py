@@ -26,12 +26,12 @@ import pymtl3.datatypes.strategies as pst
 
 def test_bits2words():
   bits = b128(0x00010002000300040005000600070008)
-  words = [ 8, 7, 6, 5, 4, 3, 2, 1 ]
+  words = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ]]
   assert b128_to_words( bits ) == words
 
 def test_words2bits():
   bits = b128(0x00010002000300040005000600070008)
-  words = [ 8, 7, 6, 5, 4, 3, 2, 1 ]
+  words = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ]]
   assert words_to_b128( words ) == bits
 
 #-------------------------------------------------------------------------
