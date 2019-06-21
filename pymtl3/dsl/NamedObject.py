@@ -320,8 +320,9 @@ class NamedObject(object):
   def _elaborate_construct( s ):
 
     if s._dsl.constructed:
-      warnings.warn( "Don't elaborate the same model twice. "
-                     "Use APIs to mutate the model." )
+      # Yanghui : Mute the warning for the isca tutorial.
+      # warnings.warn( "Don't elaborate the same model twice. "
+      #                "Use APIs to mutate the model." )
       return
 
     # Initialize the top level
