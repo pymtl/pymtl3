@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
-from pymtl3.stdlib.cl.queues import NormalQueueCL
+from pymtl3.stdlib.cl.queues import NormalQueueCL, PipeQueueCL
 
 from .ChecksumFL import checksum
 from .utils import b128_to_words
@@ -31,7 +31,7 @@ class ChecksumCL( Component ):
 
     # Component
 
-    s.in_q = NormalQueueCL( num_entries=2 )
+    s.in_q = PipeQueueCL( num_entries=2 )
     s.connect( s.recv, s.in_q.enq )
 
     @s.update
