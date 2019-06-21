@@ -106,7 +106,6 @@ class VcdGenerationPass( BasePass ):
     # FIXME handle the case where the top level signal is in a value net
     for writer, net in top.get_all_value_nets():
       new_net = []
-      print(writer)
       for x in net:
         if not isinstance(x, Const) and not x.is_sliced_signal():
           new_net.append( x )
@@ -257,6 +256,5 @@ def dump_vcd():
 """.format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
 
     s = top
-    print(src)
     exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()))
     return dump_vcd
