@@ -34,7 +34,7 @@ class WrappedChecksumCL( Component ):
   def construct( s, DutType=ChecksumCL ):
     s.recv = NonBlockingCalleeIfc( Bits128 )
     s.give = NonBlockingCalleeIfc( Bits32  )
-    
+
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )
 
@@ -50,20 +50,20 @@ class WrappedChecksumCL( Component ):
 # checksum unit until the output is ready to be taken.
 
 def checksum_cl( words ):
-  
+
   # Create a simulator
   dut = WrappedChecksumCL()
   dut.elaborate()
   dut.apply( SimulationPass )
-  
+
   # Wait until recv ready
   while not dut.recv.rdy():
     dut.tick()
-  
+
   # Call recv on dut
   dut.recv( words_to_b128( words ) )
   dut.tick()
-  
+
   # Wait until dut is ready to give result
   while not dut.give.rdy():
     dut.tick()
@@ -81,25 +81,59 @@ def checksum_cl( words ):
 from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 class ChecksumCL_Tests( BaseTests ):
-  
   def cksum_func( s, words ):
-    return checksum_cl( words )    
+    return checksum_cl( words )
 
-  # Use hypothesis to compare the wrapped CL function against FL
+  # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''
+  # Use Hypothesis to test Checksum CL
+  # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+  #; Use Hypothesis to verify that ChecksumCL has the same behavior as
+  #; ChecksumFL. Simply uncomment the following code and rerun pytest.
+  #;
+  #;   @hypothesis.given(
+  #;     words = st.lists( pm_st.bits(16), min_size=8, max_size=8 )
+  #;   )
+  #;   @hypothesis.settings( deadline=None )
+  #;   def test_hypothesis( s, words ):
+  #;     print( [ int(x) for x in words ] )
+  #;     assert s.cksum_func( words ) == checksum( words )
+  #;
+  #; This new test uses Hypothesis to generate random inputs, then uses
+  #; the checksum_cl to run a little simulation and compares the output to
+  #; the checksum function from ChecksumFL.
+  #;
+  #; To really see Hypothesis in action, go back to ChecksumCL and
+  #; corrupt one word of the input by forcing it to always be zero. For
+  #; example, change the update block in the CL implementation to be
+  #; something like this:
+  #;
+  #;   @s.update
+  #;   def up_checksum_cl():
+  #;     if s.pipe.enq.rdy() and s.in_q.deq.rdy():
+  #;       bits = s.in_q.deq()
+  #;       words = b128_to_words( bits )
+  #;       words[5] = b16(0) # <--- INJECT A BUG!
+  #;       result = checksum( words )
+  #;       s.pipe.enq( result ) !\vspace{0.07in}!
+  #;     if s.send.rdy() and s.pipe.deq.rdy():
+  #;       s.send( s.pipe.deq() )
+
   @hypothesis.given(
-    words = st.lists( pm_st.bits(16), min_size=8, max_size=8 ) 
+    words = st.lists( pm_st.bits(16), min_size=8, max_size=8 )
   )
   @hypothesis.settings( deadline=None )
   def test_hypothesis( s, words ):
     print( [ int(x) for x in words ] )
     assert s.cksum_func( words ) == checksum( words )
 
+  # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+
 #-------------------------------------------------------------------------
 # TestHarness
 #-------------------------------------------------------------------------
 # TestHarness is used for more advanced source/sink based testing. It
 # hooks a test source to the input of the design under test and a test
-# sink to the output of the DUT. Test source feeds data into the DUT 
+# sink to the output of the DUT. Test source feeds data into the DUT
 # while test sink drains data from the DUT and verifies it.
 
 class TestHarness( Component ):
@@ -128,7 +162,7 @@ class TestHarness( Component ):
 # We use source/sink based tests to stress test the checksum unit.
 
 class ChecksumCLSrcSink_Tests( object ):
-  
+
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test
   # that is used in all test cases. We can easily reuse all the tests in
@@ -138,7 +172,7 @@ class ChecksumCLSrcSink_Tests( object ):
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumCL
-  
+
   # [run_sim] is a helper function in the test suite that creates a
   # simulator and runs test. We can overwrite this function when
   # inheriting from the test class to apply different passes to the DUT.
@@ -150,7 +184,7 @@ class ChecksumCLSrcSink_Tests( object ):
     ncycles = 0
     th.sim_reset()
     print( "" )
-    
+
     # Tick the simulator
     print("{:3}: {}".format( ncycles, th.line_trace() ))
     while not th.done() and ncycles < max_cycles:
@@ -160,9 +194,9 @@ class ChecksumCLSrcSink_Tests( object ):
 
     # Check timeout
     assert ncycles < max_cycles
-  
+
   # [test_simple] is a simple test case with only 1 input.
-  def test_simple( s ):
+  def test_srcsink_simple( s ):
     words = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     bits  = words_to_b128( words )
 
@@ -173,9 +207,9 @@ class ChecksumCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
-  
+
   # [test_pipeline] test the checksum unit with a sequence of inputs.
-  def test_pipeline( s ):
+  def test_srcsink_pipeline( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
     bits0   = words_to_b128( words0 )
@@ -189,9 +223,9 @@ class ChecksumCLSrcSink_Tests( object ):
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
-  
-  # [test_pipeline] test the checksum unit with a large sink delay. 
-  def test_backpressure( s ):
+
+  # [test_pipeline] test the checksum unit with a large sink delay.
+  def test_srcsink_backpressure( s ):
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
     result0 = b32( 0x00780024 )
@@ -206,7 +240,7 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     th.set_param( "top.sink.construct", initial_delay=10 )
     s.run_sim( th )
-  
+
   # This hypothesis test not only generates a sequence of input to the
   # the checksum unit but it also configure the test source and sink with
   # different initial and interval delays.
@@ -218,7 +252,7 @@ class ChecksumCLSrcSink_Tests( object ):
     sink_intv  = st.integers( 0, 3  ),
   )
   @hypothesis.settings( deadline=None, max_examples=16 )
-  def test_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
+  def test_srcsink_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
     src_msgs  = [ words_to_b128( words ) for words in input_msgs ]
     sink_msgs = [ checksum( words ) for words in input_msgs ]
 
@@ -226,3 +260,4 @@ class ChecksumCLSrcSink_Tests( object ):
     th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
     th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
     s.run_sim( th )
+

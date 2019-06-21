@@ -2,8 +2,8 @@
 ==========================================================================
 ChecksumFL.py
 ==========================================================================
-Functional level implementation of a checksum unit which implements a
-simplified version of Fletcher's checksum. Here is a straightforward C
+Functional-level implementation of a checksum unit which implements a
+simplified version of Fletcher's algorithm. Here is a straightforward C
 implementation for the classic version:
 
   uint32_t Fletcher32( uint16_t* data, int count )
