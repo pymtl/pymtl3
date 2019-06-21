@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
-from pymtl3.stdlib.rtl.queues import NormalQueueRTL, PipeQueueRTL
+from pymtl3.stdlib.rtl.queues import PipeQueueRTL
 
 #-------------------------------------------------------------------------
 # Step unit

@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
-from pymtl3.stdlib.cl.queues import NormalQueueCL, PipeQueueCL
+from pymtl3.stdlib.cl.queues import PipeQueueCL
 
 from .ChecksumFL import checksum
 from .utils import b128_to_words
