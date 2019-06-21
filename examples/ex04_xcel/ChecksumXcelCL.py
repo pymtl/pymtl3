@@ -19,28 +19,7 @@ from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 from examples.ex02_cksum.utils import words_to_b128
 
 #-------------------------------------------------------------------------
-# A piece of CL logic that converts Bits32 to a response message
-#-------------------------------------------------------------------------
-
-class CombLogicCL( Component ):
-
-  def construct( s ):
-    _, Resp = mk_xcel_msg( 5, 32 )
-    s.Resp = Resp
-    s.data = None
-
-    s.add_constraints( M(s.write) < M(s.read) )
-
-  @method_port
-  def write( data ):
-    s.data = b32(data)
-
-  @method_port
-  def read( type_ ):
-    return s.Resp( b1(type_), s.data )
-
-#-------------------------------------------------------------------------
-# A piece of CL logic that converts Bits32 to a response message
+# ChecksumXcelCL
 #-------------------------------------------------------------------------
 
 class ChecksumXcelCL( Component ):
