@@ -27,9 +27,9 @@ def test_step_unit():
   step_unit.elaborate()
   step_unit.apply( SimulationPass )
 
-  step_unit.word_in  = b16(1)
-  step_unit.sum1_acc = b32(1)
-  step_unit.sum2_acc = b32(1)
+  step_unit.word_in = b16(1)
+  step_unit.sum1_in = b32(1)
+  step_unit.sum2_in = b32(1)
   step_unit.tick()
 
   assert step_unit.sum1_out == b32(2)
