@@ -52,8 +52,6 @@ class ChecksumXcelCL( Component ):
 
     s.state = s.XCFG
 
-
-    # TODO: replace out_q with a combinational adapter
     s.out_q = BypassQueueCL( num_entries=1 )
 
     s.connect( s.checksum_unit.send, s.out_q.enq )
@@ -90,7 +88,7 @@ class ChecksumXcelCL( Component ):
         if s.out_q.deq.rdy():
           s.reg_file[5] = s.out_q.deq()
           s.state = s.XCFG
-  
+  #-----------------------------------------------------------------------
   # [get_words] is a helper function that extracts the 128-bit input from
   # the register file.
   def get_words( s ):

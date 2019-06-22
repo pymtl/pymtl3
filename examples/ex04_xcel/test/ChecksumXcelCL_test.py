@@ -196,16 +196,24 @@ class ChecksumXcelCLSrcSink_Tests( object ):
     # Check timeout
     assert ncycles < max_cycles
 
-  # [test_xcel_simple] is a simple test case with only 1 xcel transaction.
-  def test_xcel_simple( s ):
+  #-----------------------------------------------------------------------
+  # test_xcel_srcsink_simple
+  #-----------------------------------------------------------------------
+  # A simple test case with only 1 xcel transaction.
+
+  def test_xcel_srcsink_simple( s ):
     words = [ 1, 2, 3, 4, 5, 6, 7, 8 ]
     src_msgs, sink_msgs = mk_xcel_transaction( words )
 
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
 
-  # [test_xcel_multi_msg] tests the xcel with multiple transactions.
-  def test_xcel_multi_msg( s ):
+  #-----------------------------------------------------------------------
+  # test_xcel_srcsink_multi_msg 
+  #-----------------------------------------------------------------------
+  # Test the xcel with multiple transactions.
+
+  def test_xcel_srcsink_multi_msg( s ):
     seq = [
       [ 1, 2, 3, 4, 5, 6, 7, 8 ],
       [ 8, 7, 6, 5, 4, 3, 2, 1 ],

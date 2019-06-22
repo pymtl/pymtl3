@@ -1,6 +1,6 @@
 """
 ==========================================================================
- ChecksumCL_test.py
+ChecksumCL_test.py
 ==========================================================================
 Test cases for CL checksum unit.
 
@@ -204,7 +204,7 @@ class ChecksumCLSrcSink_Tests( object ):
     assert ncycles < max_cycles
 
   #-----------------------------------------------------------------------
-  # test_simple
+  # test_srcsink_simple
   #-----------------------------------------------------------------------
   # is a simple test case with only 1 input.
 
@@ -221,7 +221,7 @@ class ChecksumCLSrcSink_Tests( object ):
     s.run_sim( th )
 
   #-----------------------------------------------------------------------
-  # test_pipeline
+  # test_srcsink_pipeline
   #-----------------------------------------------------------------------
   # test the checksum unit with a sequence of inputs.
 
@@ -241,7 +241,7 @@ class ChecksumCLSrcSink_Tests( object ):
     s.run_sim( th )
 
   #-----------------------------------------------------------------------
-  # test_backpressure
+  # test_srcsink_backpressure
   #-----------------------------------------------------------------------
   # test the checksum unit with a large sink delay.
 
