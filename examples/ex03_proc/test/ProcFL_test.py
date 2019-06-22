@@ -70,10 +70,6 @@ class ProcFL_Tests( object ):
     # Force a test failure if we timed out
     assert ncycles < max_cycles
 
-    th.tick()
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    ncycles += 1
-
   #-----------------------------------------------------------------------
   # add
   #-----------------------------------------------------------------------

@@ -110,30 +110,24 @@ class TestHarness(Component):
   # constructor
   #-----------------------------------------------------------------------
 
-  def construct( s, proc_cls, xcel_cls, dump_vcd,
+  def construct( s, ProcClass, XcelClass, dump_vcd,
                  src_delay, sink_delay,
                  mem_stall_prob, mem_latency ):
-
     s.commit_inst = OutPort( Bits1 )
-    req, resp = mk_mem_msg( 8, 32, 32 )
 
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay   )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
+    s.mem  = MemoryCL  ( 2, latency = mem_latency )
 
-    s.dut  = ProcXcel( proc_cls, xcel_cls )
+    s.dut  = ProcXcel  ( ProcClass, XcelClass )(
+      mngr2proc = s.src.send,
+      proc2mngr = s.sink.recv,
+      imem      = s.mem.ifc[0],
+      dmem      = s.mem.ifc[1],
 
-    s.mem  = MemoryCL(2, latency = mem_latency)
+      commit_inst = s.commit_inst,
+    )
 
-    # Processor <-> Proc/Mngr
-    s.connect( s.dut.commit_inst, s.commit_inst )
-
-    s.connect( s.src.send, s.dut.mngr2proc )
-    s.connect( s.dut.proc2mngr, s.sink.recv )
-
-    # Processor <-> Memory
-
-    s.connect( s.dut.imem,  s.mem.ifc[0] )
-    s.connect( s.dut.dmem,  s.mem.ifc[1] )
 
   #-----------------------------------------------------------------------
   # load
