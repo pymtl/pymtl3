@@ -1,8 +1,8 @@
 """
 =========================================================================
- ProcCL_test.py
+ProcCL_test.py
 =========================================================================
- Includes test cases for the cycle level TinyRV0 processor.
+Includes test cases for the cycle level TinyRV0 processor.
 
 Author : Shunning Jiang, Yanghui Ou
   Date : June 12, 2019

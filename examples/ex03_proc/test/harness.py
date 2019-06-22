@@ -1,9 +1,9 @@
 """
 =========================================================================
- harness.py
+harness.py
 =========================================================================
- Includes a test harness that composes a processor, src/sink, and test
- memory, and a run_test function.
+Includes a test harness that composes a processor, src/sink, and test
+memory, and a run_test function.
 
 Author : Shunning Jiang
   Date : June 15, 2019

@@ -1,17 +1,17 @@
 """
 =========================================================================
- tinyrv0_encoding
+tinyrv0_encoding
 =========================================================================
- This module encapsulates the encoding of the TinyRV0 instruction set and
- includes assembly/disassembly functions. We first define a TinyRV0
- encoding table which includes instruction templates and opcode
- mask/match bits. We then define assembly/dissassembly functions for
- each field. Finally, we use the encoding table and assembly/disassembly
- field functions to create the assembly/disassembly instructions for
- single instructions and as well as for small programs.
+This module encapsulates the encoding of the TinyRV0 instruction set and
+includes assembly/disassembly functions. We first define a TinyRV0
+encoding table which includes instruction templates and opcode
+mask/match bits. We then define assembly/dissassembly functions for
+each field. Finally, we use the encoding table and assembly/disassembly
+field functions to create the assembly/disassembly instructions for
+single instructions and as well as for small programs.
 
- Author : Christopher Batten, Shunning Jiang
- Date   : June 14, 2019
+Author : Christopher Batten, Shunning Jiang
+  Date : June 14, 2019
 """
 
 from __future__ import absolute_import, division, print_function

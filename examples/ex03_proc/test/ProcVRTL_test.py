@@ -1,8 +1,8 @@
 """
 =========================================================================
- ProcVRTL_test.py
+ProcVRTL_test.py
 =========================================================================
- Includes test cases for the translated TinyRV0 processor.
+Includes test cases for the translated TinyRV0 processor.
 
 Author : Shunning Jiang, Yanghui Ou
   Date : June 15, 2019
