@@ -16,7 +16,6 @@ DelayPipeDeqCL before sending it out the send interface.
 
 Author : Yanghui Ou
   Date : June 6, 2019
-
 """
 from __future__ import absolute_import, division, print_function
 

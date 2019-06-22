@@ -9,7 +9,6 @@ calculates both sum1 and sum2).
 
 Author : Yanghui Ou
   Date : June 6, 2019
-
 """
 from __future__ import absolute_import, division, print_function
 

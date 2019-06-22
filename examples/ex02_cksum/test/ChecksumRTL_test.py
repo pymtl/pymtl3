@@ -121,11 +121,7 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
   def run_sim( s, th, max_cycles=1000 ):
 
-    # Check command line arguments for vcd dumping
-    # if hasattr( sys, '_pymtl_dump_vcd' ):
-    #   if sys._pymtl_dump_vcd:
-    #     th.dump_vcd = True
-    #     th.vcd_file_name = "ChecksumRTL"
+    # Check for vcd dumping
     if s.vcd_file_name:
       th.dump_vcd = True
       th.vcd_file_name = s.vcd_file_name
