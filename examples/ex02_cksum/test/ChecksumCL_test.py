@@ -81,7 +81,7 @@ def checksum_cl( words ):
 from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 class ChecksumCL_Tests( BaseTests ):
-<<<<<<< HEAD
+
   def cksum_func( s, words ):
     return checksum_cl( words )
 
@@ -167,29 +167,16 @@ class TestHarness( Component ):
 
 class ChecksumCLSrcSink_Tests( object ):
 
-<<<<<<< HEAD
-  #-----------------------------------------------------------------------
-  # setup_class
-  #-----------------------------------------------------------------------
-  # Will be called by pytest before running all the tests in the test
-  # class. Here we specify the type of the design under test that is used
-  # in all test cases. We can easily reuse all the tests in this class
-  # simply by creating a new test class that inherits from this class and
-  # overwrite the setup_class to provide a different DUT type.
-
-=======
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test
   # that is used in all test cases. We can easily reuse all the tests in
   # this class simply by creating a new test class that inherits from
   # this class and overwrite the setup_class to provide a different DUT
   # type.
->>>>>>> master
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumCL
 
-<<<<<<< HEAD
   #-----------------------------------------------------------------------
   # run_sim
   #-----------------------------------------------------------------------
@@ -197,11 +184,6 @@ class ChecksumCLSrcSink_Tests( object ):
   # runs test. We can overwrite this function when inheriting from the
   # test class to apply different passes to the DUT.
 
-=======
-  # [run_sim] is a helper function in the test suite that creates a
-  # simulator and runs test. We can overwrite this function when
-  # inheriting from the test class to apply different passes to the DUT.
->>>>>>> master
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
@@ -221,17 +203,12 @@ class ChecksumCLSrcSink_Tests( object ):
     # Check timeout
     assert ncycles < max_cycles
 
-<<<<<<< HEAD
   #-----------------------------------------------------------------------
   # test_simple
   #-----------------------------------------------------------------------
   # is a simple test case with only 1 input.
 
   def test_srcsink_simple( s ):
-=======
-  # [test_simple] is a simple test case with only 1 input.
-  def test_simple( s ):
->>>>>>> master
     words = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     bits  = words_to_b128( words )
 
@@ -243,17 +220,12 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
 
-<<<<<<< HEAD
   #-----------------------------------------------------------------------
   # test_pipeline
   #-----------------------------------------------------------------------
   # test the checksum unit with a sequence of inputs.
 
   def test_srcsink_pipeline( s ):
-=======
-  # [test_pipeline] test the checksum unit with a sequence of inputs.
-  def test_pipeline( s ):
->>>>>>> master
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
     bits0   = words_to_b128( words0 )
@@ -268,17 +240,12 @@ class ChecksumCLSrcSink_Tests( object ):
     th = TestHarness( s.DutType, src_msgs, sink_msgs )
     s.run_sim( th )
 
-<<<<<<< HEAD
   #-----------------------------------------------------------------------
   # test_backpressure
   #-----------------------------------------------------------------------
   # test the checksum unit with a large sink delay.
 
   def test_srcsink_backpressure( s ):
-=======
-  # [test_pipeline] test the checksum unit with a large sink delay.
-  def test_backpressure( s ):
->>>>>>> master
     words0  = [ b16(x) for x in [ 1, 2, 3, 4, 5, 6, 7, 8 ] ]
     words1  = [ b16(x) for x in [ 8, 7, 6, 5, 4, 3, 2, 1 ] ]
     result0 = b32( 0x00780024 )
@@ -294,14 +261,11 @@ class ChecksumCLSrcSink_Tests( object ):
     th.set_param( "top.sink.construct", initial_delay=10 )
     s.run_sim( th )
 
-<<<<<<< HEAD
   # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\//
   # Cutting out this hypothesis test since in the new flow we only want
   # the attendees to write a single hypothesis test above ... and we
   # don't want them to get confused by this additional hypothesis test.
 
-=======
->>>>>>> master
   # This hypothesis test not only generates a sequence of input to the
   # the checksum unit but it also configure the test source and sink with
   # different initial and interval delays.
