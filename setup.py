@@ -73,7 +73,7 @@ setup(
   ],
 
   packages = find_packages(
-    exclude=['scripts']
+    exclude=['scripts', 'examples', 'examples.*', 'examples.*.*']
   ),
 
   package_data={
