@@ -33,8 +33,10 @@ class StepUnit( Component ):
 
     @s.update
     def up_step():
-      s.sum1_out = ( b32(s.word_in) + s.sum1_in ) & b32(0xffff)
-      s.sum2_out = ( s.sum1_out     + s.sum2_in ) & b32(0xffff)
+      temp1 = b32(s.word_in) + s.sum1_in
+      s.sum1_out = temp1 & b32(0xffff)
+      temp2 = s.sum1_out + s.sum2_in
+      s.sum2_out = temp2 & b32(0xffff)
 
 #-------------------------------------------------------------------------
 # ChecksumRTL

@@ -108,6 +108,7 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   # See pytest documetnation for more details.
   def setup_method( s, method ):
     s.vcd_file_name = ""
+
     import sys
     if hasattr( sys, '_pymtl_dump_vcd' ):
       if sys._pymtl_dump_vcd:
