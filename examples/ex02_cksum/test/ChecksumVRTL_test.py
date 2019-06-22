@@ -98,15 +98,22 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     if s.vcd_file_name:
       th.dump_vcd = True
       th.vcd_file_name = "translated."+s.vcd_file_name
+
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
     th.dut.yosys_translate = True
     th.dut.yosys_import = True
+
+    # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
+    # Apply the translation, import, and simulation passes
+    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
     th.apply( TranslationPass() )
     th = ImportPass()( th )
-
-    # Create a simulator
     th.apply( SimulationPass )
+
+    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
+
     ncycles = 0
     th.sim_reset()
     print( "" )

@@ -1,11 +1,15 @@
 """
 ==========================================================================
- ChecksumRTL.py
+ChecksumRTL.py
 ==========================================================================
-Register transfer level implementation of a single cycle checksum unit.
+Register-transfer-level implementation of a single-cycle checksum unit.
+The checksum unit is implemented by chaining together eight step units.
+Each step unit basically does one iteration of the algorithm (i.e.,
+calculates both sum1 and sum2).
 
 Author : Yanghui Ou
   Date : June 6, 2019
+
 """
 from __future__ import absolute_import, division, print_function
 
@@ -17,8 +21,11 @@ from pymtl3.stdlib.rtl.queues import PipeQueueRTL
 # Step unit
 #-------------------------------------------------------------------------
 
-class StepUnit( Component ):
+# ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# Implement the checksum RTL step component
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
+class StepUnit( Component ):
   def construct( s ):
 
     # Interface
@@ -37,6 +44,8 @@ class StepUnit( Component ):
       s.sum1_out = temp1 & b32(0xffff)
       temp2 = s.sum1_out + s.sum2_in
       s.sum2_out = temp2 & b32(0xffff)
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 #-------------------------------------------------------------------------
 # ChecksumRTL
@@ -93,3 +102,4 @@ class ChecksumRTL( Component ):
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
+
