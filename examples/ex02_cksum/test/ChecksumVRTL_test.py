@@ -28,7 +28,7 @@ def checksum_vrtl( words ):
 
   # Convert input words into bits
   bits_in = words_to_b128( words )
-  
+
   # Instantiate and elaborate the checksum unit
   dut = ChecksumRTL()
   dut.elaborate()
@@ -49,12 +49,12 @@ def checksum_vrtl( words ):
   dut.send.rdy = b1(1)
   while not dut.recv.rdy:
     dut.tick()
-  
+
   # Feed in the input
   dut.recv.en = b1(1)
   dut.recv.msg = bits_in
   dut.tick()
-  
+
   # Wait until the checksum unit is about to send the message
   while not dut.send.en:
     dut.tick()
@@ -72,7 +72,7 @@ def checksum_vrtl( words ):
 from .ChecksumRTL_test import ChecksumRTL_Tests as BaseTests
 
 class ChecksumVRTL_Tests( BaseTests ):
-  
+
   def cksum_func( s, words ):
     return checksum_vrtl( words )
 
@@ -80,8 +80,8 @@ class ChecksumVRTL_Tests( BaseTests ):
 # Reuse src/sink based tests from CL test suite to test translation
 #-------------------------------------------------------------------------
 # We reuse all source/sink based tests for CL again to test whether our
-# RTL code can be properly transalted into system verilog. We overwrite 
-# [run_sim] of the CL test suite so that we can apply the translation and 
+# RTL code can be properly transalted into system verilog. We overwrite
+# [run_sim] of the CL test suite so that we can apply the translation and
 # import pass to the DUT.
 
 from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
@@ -93,14 +93,11 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     cls.DutType = ChecksumRTL
 
   def run_sim( s, th, max_cycles=1000 ):
-    
-    
+
     # Check command line arguments for vcd dumping
-    import sys
-    if hasattr( sys, '_pymtl_dump_vcd' ):
-      if sys._pymtl_dump_vcd:
-        th.dump_vcd = True
-        th.vcd_file_name = "ChecksumVRTL"
+    if s.vcd_file_name:
+      th.dump_vcd = True
+      th.vcd_file_name = s.vcd_file_name+".translated"
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()

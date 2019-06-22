@@ -32,8 +32,8 @@ def test_step_unit():
   step_unit.sum2_acc = b32(1)
   step_unit.tick()
 
-  assert step_unit.sum1_out == b32(2) 
-  assert step_unit.sum2_out == b32(3) 
+  assert step_unit.sum1_out == b32(2)
+  assert step_unit.sum2_out == b32(3)
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
@@ -44,7 +44,7 @@ def test_step_unit():
 
 def checksum_rtl( words ):
   bits_in = words_to_b128( words )
-  
+
   # Create a simulator
   dut = ChecksumRTL()
   dut.elaborate()
@@ -56,7 +56,7 @@ def checksum_rtl( words ):
   while not dut.recv.rdy:
     dut.recv.en = b1(0)
     dut.tick()
-  
+
   # Feed in the input
   dut.recv.en = b1(1)
   dut.recv.msg = bits_in
@@ -80,7 +80,7 @@ def checksum_rtl( words ):
 from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
 
 class ChecksumRTL_Tests( BaseTests ):
-  
+
   def cksum_func( s, words ):
     return checksum_rtl( words )
 
@@ -94,18 +94,40 @@ from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
 
 class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
+  # [setup_class] will be called by pytest before running all the tests in
+  # the test class. Here we specify the type of the design under test
+  # that is used in all test cases. We can easily reuse all the tests in
+  # this class simply by creating a new test class that inherits from
+  # this class and overwrite the setup_class to provide a different DUT
+  # type.
   @classmethod
   def setup_class( cls ):
     cls.DutType = ChecksumRTL
 
-  def run_sim( s, th, max_cycles=1000 ):
-    
-    # Check command line arguments for vcd dumping
+  # [setup_method] will be called by pytest before executing each class method.
+  # See pytest documetnation for more details.
+  def setup_method( s, method ):
+    s.vcd_file_name = ""
     import sys
     if hasattr( sys, '_pymtl_dump_vcd' ):
       if sys._pymtl_dump_vcd:
-        th.dump_vcd = True
-        th.vcd_file_name = "ChecksumRTL"
+        s.vcd_file_name = "{}.{}".format( s.DutType.__name__, method.__name__ )
+
+  # [teardown_method] will be called by pytest after executing each class method.
+  # See pytest documetnation for more details.
+  def teardown_method( s, method ):
+      s.vcd_file_name = ""
+
+  def run_sim( s, th, max_cycles=1000 ):
+
+    # Check command line arguments for vcd dumping
+    # if hasattr( sys, '_pymtl_dump_vcd' ):
+    #   if sys._pymtl_dump_vcd:
+    #     th.dump_vcd = True
+    #     th.vcd_file_name = "ChecksumRTL"
+    if s.vcd_file_name:
+      th.dump_vcd = True
+      th.vcd_file_name = s.vcd_file_name
 
     # Create a simulator
     th.elaborate()
