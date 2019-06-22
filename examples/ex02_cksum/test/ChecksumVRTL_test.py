@@ -97,8 +97,7 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     # Check command line arguments for vcd dumping
     if s.vcd_file_name:
       th.dump_vcd = True
-      th.vcd_file_name = s.vcd_file_name+".translated"
-
+      th.vcd_file_name = "translated."+s.vcd_file_name
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
     th.dut.yosys_translate = True
