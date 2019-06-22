@@ -1,7 +1,8 @@
 """
 =========================================================================
- ProcCL_test.py
+harness.py
 =========================================================================
+This files contains helper stuff for xcel tests.
 
 Author : Shunning Jiang
   Date : June 15, 2019

@@ -1,6 +1,6 @@
 """
 ==========================================================================
- ChecksumXcelRTL_test.py
+ChecksumXcelRTL_test.py
 ==========================================================================
 Test cases for RTL checksum accelerator.
 
