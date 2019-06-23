@@ -359,13 +359,13 @@ class NamedObject(object):
   #-----------------------------------------------------------------------
 
   def is_component( s ):
-    raise NotImplemented
+    raise NotImplementedError
 
   def is_signal( s ):
-    raise NotImplemented
+    raise NotImplementedError
 
   def is_interface( s ):
-    raise NotImplemented
+    raise NotImplementedError
 
   # These two APIs are reused across Connectable and Component
 

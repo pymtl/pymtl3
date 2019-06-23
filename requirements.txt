@@ -8,6 +8,7 @@ graphviz
 
 # CI dependencies
 autoflake
+flake8
 future
 isort
 pytest-cov
