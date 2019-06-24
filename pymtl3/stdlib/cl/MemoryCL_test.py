@@ -17,6 +17,7 @@ from pymtl3.stdlib.test.test_sinks import TestSinkCL
 from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
 from .MemoryCL import MemoryCL
+from six.moves import range
 
 #-------------------------------------------------------------------------
 # TestHarness
@@ -30,10 +31,10 @@ class TestHarness( Component ):
                  arrival_time=None ):
     ReqType, RespType = mk_mem_msg(8,32,32)
     s.srcs = [ TestSrcCL( ReqType, src_msgs[i], src_initial, src_interval )
-                for i in xrange(nports) ]
+                for i in range(nports) ]
     s.mem  = cls( nports, [(ReqType, RespType)]*nports, mem_latency )
     s.sinks = [ TestSinkCL( RespType, sink_msgs[i], sink_initial, sink_interval,
-                            arrival_time ) for i in xrange(nports) ]
+                            arrival_time ) for i in range(nports) ]
 
     # Connections
     for i in range(nports):
@@ -278,7 +279,7 @@ def test_2port( test_params, dump_vcd ):
 
 @pytest.mark.parametrize( **test_case_table )
 def test_20port( test_params, dump_vcd ):
-  msgs = [ test_params.msg_func(0x1000*i) for i in xrange(20) ]
+  msgs = [ test_params.msg_func(0x1000*i) for i in range(20) ]
   run_sim( TestHarness( MemoryCL, 20,
                         [ x[::2]  for x in msgs ],
                         [ x[1::2] for x in msgs ],

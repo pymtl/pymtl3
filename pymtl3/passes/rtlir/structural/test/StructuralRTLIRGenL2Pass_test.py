@@ -17,6 +17,7 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
 from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 from .StructuralRTLIRGenL1Pass_test import gen_connections
+from six.moves import range
 
 
 def test_L2_struct_attr():

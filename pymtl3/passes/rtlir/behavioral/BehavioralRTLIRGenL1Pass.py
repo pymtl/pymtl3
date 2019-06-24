@@ -183,7 +183,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one argument should be given to concat!' )
-      values = map( lambda c: s.visit(c), node.args )
+      values = [s.visit(c) for c in node.args]
       ret = bir.Concat( values )
       ret.ast = node
       return ret

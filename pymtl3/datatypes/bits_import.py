@@ -16,6 +16,7 @@ from __future__ import absolute_import, division, print_function
 import os
 
 import py.code
+from six.moves import range
 
 # This __new__ approach has better performance
 # bits_template = """

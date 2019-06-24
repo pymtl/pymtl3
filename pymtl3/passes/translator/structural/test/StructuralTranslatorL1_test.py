@@ -17,6 +17,7 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
 )
 
 from .TestStructuralTranslator import mk_TestStructuralTranslator
+from six.moves import range
 
 
 def local_do_test( m ):
@@ -721,4 +722,4 @@ endcomponent
 """.format( a._ref_name )
   do_test( a )
 
-__all__ = list(filter(lambda s: s.startswith('test_'), dir()))
+__all__ = list([s for s in dir() if s.startswith('test_')])

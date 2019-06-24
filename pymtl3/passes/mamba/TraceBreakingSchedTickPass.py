@@ -18,6 +18,7 @@ from pymtl3.passes.errors import PassOrderError
 from pymtl3.passes.SimpleSchedulePass import check_schedule
 
 from .HeuristicTopoPass import CountBranches
+from six.moves import range
 
 
 class TraceBreakingSchedTickPass( BasePass ):
@@ -174,9 +175,9 @@ class TraceBreakingSchedTickPass( BasePass ):
     # The "comment" that will be used for update calls.
     schedule_names = {}
 
-    for i in xrange( len(metas) ):
+    for i in range( len(metas) ):
       meta = metas[i]
-      for j in xrange( len(meta) ):
+      for j in range( len(meta) ):
         blk = meta[j]
         schedule_names[ (i, j) ] = "[br: {}] {}" \
           .format( self.branchiness[ blk ], blk.__name__ )
@@ -184,14 +185,14 @@ class TraceBreakingSchedTickPass( BasePass ):
         # Copy the scheduled functions to update_blkX__Y
         gen_tick_src += "update_blk{0}__{1} = metas[{0}][{1}];".format( i, j )
 
-    for i in xrange( len(metas) ):
+    for i in range( len(metas) ):
       meta_blk = metas[i]
 
       gen_tick_src += "\n\ndef meta_blk{}():\n  ".format(i)
 
       gen_tick_src += "\n  ".join( [ "update_blk{}__{}() # {}" \
                                     .format( i, j, schedule_names[(i, j)] )
-                                    for j in xrange( len(meta_blk) )] )
+                                    for j in range( len(meta_blk) )] )
 
       if i < len(metas)-1:
         gen_tick_src += "\ntry:\n"
@@ -200,7 +201,7 @@ class TraceBreakingSchedTickPass( BasePass ):
         gen_tick_src += "  pass\n"
 
     gen_tick_src += "\ndef tick_top():\n  "
-    gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in xrange(len(metas)) ] )
+    gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in range(len(metas)) ] )
 
     exec(py.code.Source( gen_tick_src ).compile(), locals())
 

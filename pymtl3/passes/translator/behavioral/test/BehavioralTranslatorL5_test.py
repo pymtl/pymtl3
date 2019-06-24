@@ -15,19 +15,20 @@ from pymtl3.passes.translator.behavioral.BehavioralTranslatorL5 import (
 )
 
 from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+import six
 
 
 def local_do_test( m ):
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL5)(m)
   tr.clear( m )
   tr.translate_behavioral( m )
-  for component, _ref_upblk_repr in m._ref_upblk_repr.iteritems():
+  for component, _ref_upblk_repr in six.iteritems(m._ref_upblk_repr):
     upblk_src = tr.behavioral.upblk_srcs[component]
     assert upblk_src == _ref_upblk_repr
-  for component, _ref_freevar_repr in m._ref_freevar_repr.iteritems():
+  for component, _ref_freevar_repr in six.iteritems(m._ref_freevar_repr):
     decl_freevars = tr.behavioral.decl_freevars[component]
     assert decl_freevars == _ref_freevar_repr
-  for component, _ref_tmpvar_repr in m._ref_tmpvar_repr.iteritems():
+  for component, _ref_tmpvar_repr in six.iteritems(m._ref_tmpvar_repr):
     decl_tmpvars = tr.behavioral.decl_tmpvars[component]
     assert decl_tmpvars == _ref_tmpvar_repr
 

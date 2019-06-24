@@ -15,6 +15,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL2Pass import (
 )
 
 from .BehavioralTranslatorL1 import BehavioralTranslatorL1
+import six
 
 
 class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
@@ -62,7 +63,7 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
 
     # Generate temporary variable declarations
     tmpvars = []
-    for (id_, upblk_id), rtype in s.behavioral.tmpvars[m].iteritems():
+    for (id_, upblk_id), rtype in six.iteritems(s.behavioral.tmpvars[m]):
       assert isinstance(rtype, rt.Wire), \
         "temporary variable {} in upblk {} is not a signal!".format(id_, upblk_id)
       dtype = rtype.get_dtype()

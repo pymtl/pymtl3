@@ -35,6 +35,7 @@ from pymtl3.dsl.errors import (
 )
 from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.dsl.Placeholder import Placeholder
+import six
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
@@ -111,12 +112,12 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     write_upblks = defaultdict(set)
 
     for data in [ s._dsl.all_upblk_reads, gen_upblk_reads ]:
-      for blk, reads in data.iteritems():
+      for blk, reads in six.iteritems(data):
         for rd in reads:
           read_upblks[ rd ].add( blk )
 
     for data in [ s._dsl.all_upblk_writes, gen_upblk_writes ]:
-      for blk, writes in data.iteritems():
+      for blk, writes in six.iteritems(data):
         for wr in writes:
           write_upblks[ wr ].add( blk )
 
@@ -129,7 +130,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         equal_blks  = write_upblks
 
       # enumerate variable objects
-      for obj, constrained_blks in constraints.iteritems():
+      for obj, constrained_blks in six.iteritems(constraints):
 
         # enumerate upblks that has a constraint with x
         for (sign, co_blk) in constrained_blks:
@@ -160,7 +161,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     # 2) RD A.b[1:10] - WR A.b[1:10], A.b, A
     # 3) RD A.b[1:10] - WR A.b[0:5], A.b[6], A.b[8:11]
 
-    for obj, rd_blks in read_upblks.iteritems():
+    for obj, rd_blks in six.iteritems(read_upblks):
       writers = []
 
       # Check parents. Cover 1) and 2)
@@ -192,7 +193,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
     # "WR A.b[1:10] - RD A.b[0:5], A.b[6], A.b[8:11]" has been discovered
 
-    for obj, wr_blks in write_upblks.iteritems():
+    for obj, wr_blks in six.iteritems(write_upblks):
       readers = []
 
       # Check parents. Cover 2) and 3). 1) and 4) should be detected in elaboration
@@ -241,7 +242,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
     # Collect each CalleePort/method is called in which update block
     # We use bounded method of CalleePort to identify each call
-    for blk, calls in s._dsl.all_upblk_calls.iteritems():
+    for blk, calls in six.iteritems(s._dsl.all_upblk_calls):
       if verbose: print("--", blk, calls)
       for call in calls:
         if isinstance( call, MethodPort ):
@@ -290,7 +291,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         equiv[xx].add( yy )
         equiv[yy].add( xx )
 
-    for method, assoc_blks in method_blks.iteritems():
+    for method, assoc_blks in six.iteritems(method_blks):
       visited = {  (method, 0)  }
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
 
@@ -446,8 +447,8 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         else:                         cleanup_signals( o )
 
     elif isinstance( m, NamedObject ):
-      for name, obj in m.__dict__.iteritems():
-        if ( isinstance( name, basestring ) and not name.startswith("_") ) \
+      for name, obj in six.iteritems(m.__dict__):
+        if ( isinstance( name, six.string_types ) and not name.startswith("_") ) \
           or isinstance( name, tuple ):
           if   isinstance( obj, Signal ): setattr( m, name, obj.default_value() )
           elif isinstance( obj, Const ):  setattr( m, name, obj.const )

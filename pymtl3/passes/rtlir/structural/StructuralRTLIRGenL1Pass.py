@@ -48,8 +48,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       ns.consts.append( ( const_name, const_rtype, const_instance ) )
 
   def collect_connections( s, m ):
-    return map( lambda x: \
-      ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), s.c_ss[m] )
+    return [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_ss[m]]
 
   def sort_connections( s, m ):
     m_connections = s.collect_connections( m )
@@ -62,7 +61,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
            ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
           connections.append( ( wr, rd ) )
           m_connections[idx] = ( m_connections[idx][0], True )
-    connections += map(lambda x:x[0],filter(lambda x:not x[1],m_connections))
+    connections += [x[0] for x in [x for x in m_connections if not x[1]]]
     m._pass_structural_rtlir_gen.connections = connections
 
   def contains( s, obj, signal ):

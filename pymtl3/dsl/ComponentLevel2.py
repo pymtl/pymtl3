@@ -36,6 +36,7 @@ from .errors import (
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
+import six
 
 p = re.compile('( *(@|def))')
 
@@ -189,7 +190,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.func_reads  = {}
     s._dsl.func_writes = {}
     s._dsl.func_calls  = {}
-    for name, func in s._dsl.name_func.iteritems():
+    for name, func in six.iteritems(s._dsl.name_func):
       s._dsl.func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
       s._dsl.func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
       s._dsl.func_calls [ func ] = extract_obj_from_names( func, name_fc[ name ] )
@@ -197,7 +198,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_reads  = {}
     s._dsl.upblk_writes = {}
     s._dsl.upblk_calls  = {}
-    for name, blk in s._dsl.name_upblk.iteritems():
+    for name, blk in six.iteritems(s._dsl.name_upblk):
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
@@ -209,17 +210,17 @@ class ComponentLevel2( ComponentLevel1 ):
     if isinstance( m, ComponentLevel2 ):
       s._dsl.all_update_on_edge |= m._dsl.update_on_edge
 
-      for k, k_cons in m._dsl.RD_U_constraints.iteritems():
+      for k, k_cons in six.iteritems(m._dsl.RD_U_constraints):
         s._dsl.all_RD_U_constraints[k] |= k_cons
 
-      for k, k_cons in m._dsl.WR_U_constraints.iteritems():
+      for k, k_cons in six.iteritems(m._dsl.WR_U_constraints):
         s._dsl.all_WR_U_constraints[k] |= k_cons
 
       # I assume different update blocks will always have different ids
       s._dsl.all_upblk_reads.update( m._dsl.upblk_reads )
       s._dsl.all_upblk_writes.update( m._dsl.upblk_writes )
 
-      for blk, calls in m._dsl.upblk_calls.iteritems():
+      for blk, calls in six.iteritems(m._dsl.upblk_calls):
         s._dsl.all_upblk_calls[ blk ] = calls
 
         for call in calls:
@@ -279,11 +280,11 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_upblk_writes( s ):
 
     write_upblks = defaultdict(set)
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in six.iteritems(s._dsl.all_upblk_writes):
       for wr in writes:
         write_upblks[ wr ].add( blk )
 
-    for obj, wr_blks in write_upblks.iteritems():
+    for obj, wr_blks in six.iteritems(write_upblks):
       wr_blks = list(wr_blks)
 
       if len(wr_blks) > 1:
@@ -321,7 +322,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_port_in_upblk( s ):
 
     # Check read first
-    for blk, reads in s._dsl.all_upblk_reads.iteritems():
+    for blk, reads in six.iteritems(s._dsl.all_upblk_reads):
 
       blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
@@ -344,7 +345,7 @@ class ComponentLevel2( ComponentLevel1 ):
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
     # Then check write
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in six.iteritems(s._dsl.all_upblk_writes):
 
       blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 

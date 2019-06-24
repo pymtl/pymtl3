@@ -14,6 +14,7 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL4 import (
 )
 
 from .SVStructuralTranslatorL3 import SVStructuralTranslatorL3
+from six.moves import range
 
 
 class SVStructuralTranslatorL4(
@@ -24,8 +25,8 @@ class SVStructuralTranslatorL4(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_subcomp_port_decls( s, _port_decls ):
-    port_defs = map( lambda x: x['def'], _port_decls )
-    port_decls = map( lambda x: x['decl'], _port_decls )
+    port_defs = [x['def'] for x in _port_decls]
+    port_decls = [x['decl'] for x in _port_decls]
     make_indent( port_defs, 1 )
     make_indent( port_decls, 2 )
     return {
@@ -44,8 +45,8 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_ifc_port_decls( s, _ifc_port_decls ):
-    port_defs = map( lambda x: x['def'], _ifc_port_decls )
-    port_decls = map( lambda x: x['decl'], _ifc_port_decls )
+    port_defs = [x['def'] for x in _ifc_port_decls]
+    port_decls = [x['decl'] for x in _ifc_port_decls]
     make_indent( port_defs, 1 )
     make_indent( port_decls, 2 )
     return {
@@ -71,8 +72,8 @@ class SVStructuralTranslatorL4(
 
   def rtlir_tr_subcomp_ifc_decls( s, _ifc_decls ):
     _ifc_decls = reduce( lambda res,l: res+l, _ifc_decls, [] )
-    ifc_defs = map( lambda x: x['def'], _ifc_decls )
-    ifc_decls = map( lambda x: x['decl'], _ifc_decls )
+    ifc_defs = [x['def'] for x in _ifc_decls]
+    ifc_decls = [x['decl'] for x in _ifc_decls]
     return {
       'def' : '\n'.join( ifc_defs ),
       'decl' : ',\n'.join( ifc_decls )
@@ -90,10 +91,8 @@ class SVStructuralTranslatorL4(
           'decl' : ports['decl'].format( **locals() )
         } ]
       else:
-        return reduce( lambda res, l: res + l, map(
-          lambda idx: gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
-            c_n_dim+'$__'+str( idx ), ports ), range( n_dim[0] )
-        ), [] )
+        return reduce( lambda res, l: res + l, [gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
+            c_n_dim+'$__'+str( idx ), ports ) for idx in range( n_dim[0] )], [] )
 
     n_dim = ifc_array_type[ 'n_dim' ]
     return \
@@ -132,11 +131,8 @@ class SVStructuralTranslatorL4(
         return [ tplt.format( **locals() ) ]
 
       else:
-        return reduce( lambda res, l: res+l, map(
-          lambda idx: gen_subcomp_array_decl( c_id,
-            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ),
-          range( n_dim[0] )
-        ), [] )
+        return reduce( lambda res, l: res+l, [gen_subcomp_array_decl( c_id,
+            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ) for idx in range( n_dim[0] )], [] )
 
     # If `c_array_type` is not None we need to impelement an array of
     # components, each with their own connections for the ports.

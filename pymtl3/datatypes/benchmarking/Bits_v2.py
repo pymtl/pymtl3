@@ -63,7 +63,7 @@ class Bits( object ):
   #---------------------------------------------------------------------
   # Type conversion to a long.
   def __long__( self ):
-    return long( self._uint )
+    return int( self._uint )
 
   #---------------------------------------------------------------------
   # __index__

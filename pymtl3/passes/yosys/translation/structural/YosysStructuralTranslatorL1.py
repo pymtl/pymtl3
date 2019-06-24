@@ -16,6 +16,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 impo
     SVStructuralTranslatorL1,
 )
 from pymtl3.passes.sverilog.util.utility import make_indent
+from six.moves import range
 
 
 class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):

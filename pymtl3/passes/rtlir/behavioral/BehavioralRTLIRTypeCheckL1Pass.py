@@ -16,6 +16,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
+import six
 
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
@@ -95,7 +96,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     func = getattr( s, method, s.generic_visit )
 
     # First visit (type check) all child nodes
-    for field, value in vars(node).iteritems():
+    for field, value in six.iteritems(vars(node)):
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, bir.BaseBehavioralRTLIR ):
@@ -106,7 +107,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Then verify that all child nodes have desired types
     try:
       # Check the expected types of child nodes
-      for field, type_rule in s.type_expect[node_name].iteritems():
+      for field, type_rule in six.iteritems(s.type_expect[node_name]):
         value = vars(node)[field]
         target_type = type_rule[ 0 ]
         exception_msg = type_rule[ 1 ]
@@ -150,7 +151,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = None
 
   def visit_FreeVar( s, node ):
-    if node.name not in s.freevars.keys():
+    if node.name not in list(s.freevars.keys()):
       s.freevars[ node.name ] = node.obj
 
     try:

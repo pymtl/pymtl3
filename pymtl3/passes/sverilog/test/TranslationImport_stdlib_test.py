@@ -31,6 +31,7 @@ from pymtl3.stdlib.rtl.valrdy_queues_test import test_normal_int as _normal_int
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_int as _pipe_int
 from pymtl3.stdlib.test import TestVectorSimulator
+from six.moves import range
 
 
 def local_do_test( _m ):

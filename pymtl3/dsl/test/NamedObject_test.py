@@ -9,6 +9,7 @@ Date   : Dec 23, 2017
 from __future__ import absolute_import, division, print_function
 
 from pymtl3.dsl.NamedObject import NamedObject
+from six.moves import range
 
 
 class Chicken(NamedObject):
@@ -31,10 +32,10 @@ class Human(NamedObject):
   def construct( s, nlunch=1, ndinner=1 ):
 
     if nlunch == 1: s.lunch = Tiger()
-    else:           s.lunch = [ Tiger() for _ in xrange(nlunch) ]
+    else:           s.lunch = [ Tiger() for _ in range(nlunch) ]
 
     if ndinner == 1: s.dinner = Dog()
-    else:            s.dinner = [ Dog() for _ in xrange(ndinner) ]
+    else:            s.dinner = [ Dog() for _ in range(ndinner) ]
 
 def test_NamedObject_normal():
 

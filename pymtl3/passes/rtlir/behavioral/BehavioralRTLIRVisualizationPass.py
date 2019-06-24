@@ -17,6 +17,7 @@ from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
+import six
 
 
 class BehavioralRTLIRVisualizationPass( BasePass ):
@@ -50,7 +51,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     ret = ''
     if isinstance( node.Type, BaseRTLIRType ):
       ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in vars(node.Type).iteritems():
+      for name, obj in six.iteritems(vars(node.Type)):
         obj_str = s.get_str( obj )
         if not isinstance( obj, dict ):
           ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'

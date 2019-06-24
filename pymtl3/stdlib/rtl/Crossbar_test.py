@@ -9,6 +9,7 @@ from pymtl3 import *
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from .Crossbar import Crossbar
+from six.moves import range
 
 
 #-----------------------------------------------------------------------

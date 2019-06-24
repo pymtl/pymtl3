@@ -21,6 +21,7 @@ from .xcel_ifcs import (
     XcelMinionIfcFL,
     XcelMinionIfcRTL,
 )
+from six.moves import range
 
 #-------------------------------------------------------------------------
 # FL master/minion

@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import py.code
+from six.moves import range
 
 
 class Bits1( object ):
@@ -154,7 +155,7 @@ class Bits{nbits}(Bits1):
 _bits_types[{nbits}] = Bits{nbits}
 """
 
-_bitwidths     = range(2, 192) + [ 384, 512, 768, 1024 ]
+_bitwidths     = list(range(2, 192)) + [ 384, 512, 768, 1024 ]
 _bits_types    = dict()
 
 source_str = ""

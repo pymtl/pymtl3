@@ -15,6 +15,7 @@ under the same directory.
 """
 
 from __future__ import absolute_import, division, print_function
+from six.moves import zip
 
 
 class constructor( object ):
@@ -185,7 +186,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
       params_name = ', ' + ', '.join( s.field_list )
       params_assign = '\n    '.join(
-        map( lambda x: "s.{field} = {field}".format(field = x), s.field_list )
+        ["s.{field} = {field}".format(field = x) for x in s.field_list]
       )
       check_equal = '\n    '.join( eq )
       if check_equal:
@@ -271,7 +272,7 @@ def __eq__( s, other ):
               edge_label_trail = '.format(idx = i)'
             ) )
             indented.append( 's.visit( f )' )
-            indented = [indented[0]] + map( lambda x: '  '+x, indented[1:] )
+            indented = [indented[0]] + ['  '+x for x in indented[1:]]
             body = body + indented
           else:
             # A single customized type

@@ -11,6 +11,7 @@ from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
 
 from .SVTranslator_L1_cases_test import trim
+from six.moves import range
 
 
 def local_do_test( m ):

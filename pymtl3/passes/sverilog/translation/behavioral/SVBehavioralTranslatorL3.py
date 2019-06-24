@@ -17,6 +17,7 @@ from .SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
     SVBehavioralTranslatorL2,
 )
+from six.moves import map
 
 
 class SVBehavioralTranslatorL3(

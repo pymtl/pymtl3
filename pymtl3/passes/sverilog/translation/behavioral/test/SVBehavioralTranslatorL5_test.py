@@ -16,11 +16,13 @@ from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL5 impo
 )
 
 from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
+import six
+from six.moves import range
 
 
 def local_do_test( m ):
   visitor = BehavioralRTLIRToSVVisitorL5(is_sverilog_reserved)
-  for comp, _all_upblks in m._ref_upblk_srcs.iteritems():
+  for comp, _all_upblks in six.iteritems(m._ref_upblk_srcs):
     comp.apply( BehavioralRTLIRGenPass() )
     comp.apply( BehavioralRTLIRTypeCheckPass() )
     upblks = comp._pass_behavioral_rtlir_gen.rtlir_upblks

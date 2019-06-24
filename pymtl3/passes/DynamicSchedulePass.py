@@ -15,6 +15,7 @@ import py
 from .BasePass import BasePass, PassMetadata
 from .errors import PassOrderError
 from .SimpleSchedulePass import dump_dag
+from six.moves import range
 
 
 class DynamicSchedulePass( BasePass ):
@@ -59,7 +60,7 @@ class DynamicSchedulePass( BasePass ):
         post_order.append( u )
 
       import random
-      vertices = G.keys()
+      vertices = list(G.keys())
       random.shuffle(vertices)
       for u in vertices:
         if u not in visited:

@@ -15,6 +15,7 @@ from pymtl3.dsl.ConstraintTypes import U
 from pymtl3.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 def _test_model( cls ):
@@ -324,7 +325,7 @@ def test_2d_array_vars():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [0 for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [0 for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():

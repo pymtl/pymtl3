@@ -15,6 +15,8 @@ import py
 
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
+from six.moves import map
+from six.moves import range
 
 
 class UnrollTickPass( BasePass ):
@@ -26,15 +28,15 @@ class UnrollTickPass( BasePass ):
     schedule = top._sched.schedule
 
     # Berkin IlBeyi's recipe
-    strs = map( "  update_blk{}() # {}".format, xrange( len(schedule) ), \
-                                              [ x.__name__ for x in schedule ] )
+    strs = list(map( "  update_blk{}() # {}".format, range( len(schedule) ), \
+                                              [ x.__name__ for x in schedule ] ))
     gen_tick_src = """
         {}
         def tick_unroll():
           # The code below does the actual calling of update blocks.
           {}""".format( "; ".join( map(
                         "update_blk{0} = schedule[{0}]".format,
-                        xrange( len( schedule ) ) ) ),
+                        range( len( schedule ) ) ) ),
                         "\n          ".join( strs ) )
 
     exec(py.code.Source( gen_tick_src ).compile(), locals())

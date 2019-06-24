@@ -16,6 +16,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
 )
 
 from .BehavioralTranslatorL0 import BehavioralTranslatorL0
+import six
 
 
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
@@ -88,7 +89,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     # Generate free variable declarations
     freevars = []
-    for name, fvar in s.behavioral.freevars[m].iteritems():
+    for name, fvar in six.iteritems(s.behavioral.freevars[m]):
       rtype = rt.get_rtlir( fvar )
       if isinstance( rtype, rt.Array ):
         fvar_rtype = rtype.get_sub_type()

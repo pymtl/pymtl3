@@ -20,6 +20,7 @@ from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL4
 )
 
 from ..YosysBehavioralTranslatorL4 import YosysBehavioralRTLIRToSVVisitorL4
+from six.moves import range
 
 
 def local_do_test( m ):

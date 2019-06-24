@@ -224,4 +224,4 @@ endcomponent
 """
   do_test( a )
 
-__all__ = list(filter(lambda s: s.startswith('test_'), dir()))
+__all__ = list([s for s in dir() if s.startswith('test_')])

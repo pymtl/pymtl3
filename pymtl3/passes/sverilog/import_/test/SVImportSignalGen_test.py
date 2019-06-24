@@ -13,6 +13,7 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+from six.moves import range
 
 
 def local_do_test( m ):

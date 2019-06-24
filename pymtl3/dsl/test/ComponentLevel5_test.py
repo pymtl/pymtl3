@@ -15,6 +15,7 @@ from pymtl3.dsl.Connectable import CalleePort, CallerPort, Interface
 from pymtl3.dsl.ConstraintTypes import M, U
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 def _test_model( cls ):

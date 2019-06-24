@@ -452,7 +452,7 @@ def gen_signal_expr( cur_component, signal ):
 
   def get_cls_inst( func_list, cur_node, ops ):
     """Return an IR instance of the given signal operation."""
-    classes = map( lambda f: f( cur_node, *ops ), func_list )
+    classes = [f( cur_node, *ops ) for f in func_list]
     assert reduce( lambda r, c: r + (1 if c else 0), classes, 0 ) == 1, \
       'internal error: not unique class {}!'.format( classes )
     for cls in classes:

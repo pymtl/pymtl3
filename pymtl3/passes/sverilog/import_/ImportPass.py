@@ -23,6 +23,8 @@ from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.sverilog.errors import SVerilogImportError
 from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
+import six
+from six.moves import range
 
 try:
   # Python 2
@@ -757,7 +759,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         args = ifc.get_args()
         for idx, obj in enumerate(args[0]):
           arg_list.append( _get_arg_str( "_ifc_arg"+str(idx), obj ) )
-        for arg_name, arg_obj in args[1].iteritems():
+        for arg_name, arg_obj in six.iteritems(args[1]):
           arg_list.append( arg_name + " = " + _get_arg_str( arg_name, arg_obj ) )
         return name, ', '.join( arg_list )
 

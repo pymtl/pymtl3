@@ -17,6 +17,7 @@ from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
+from six.moves import range
 
 
 def gen_connections( top ):

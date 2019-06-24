@@ -51,7 +51,7 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
       if len(node.args) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one value should be provided to struct instantiation!' )
-      values = map(lambda arg: s.visit(arg), node.args)
+      values = [s.visit(arg) for arg in node.args]
       ret = bir.StructInst( obj, values )
       ret.ast = node
       return ret

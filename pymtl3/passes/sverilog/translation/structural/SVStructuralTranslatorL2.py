@@ -13,6 +13,7 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL2 import (
 )
 
 from .SVStructuralTranslatorL1 import SVStructuralTranslatorL1
+from six.moves import range
 
 
 class SVStructuralTranslatorL2(
@@ -112,7 +113,7 @@ typedef struct packed {{
           assert False, "unrecognized data type {}!".format( dtype )
       else:
         ret = []
-        for i in reversed( range( n_dim[0] ) ):
+        for i in reversed( list(range( n_dim[0])) ):
           ret.append( _gen_packed_array( dtype, n_dim[1:], array[i] ) )
         if n_dim[0] > 1:
           cat_str = "{" + ", ".join( ret ) + "}"

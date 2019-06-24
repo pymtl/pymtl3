@@ -18,7 +18,7 @@ from pymtl3.passes.errors import PassOrderError
 from pymtl3.passes.SimpleSchedulePass import check_schedule
 
 try:
-  from Queue import PriorityQueue
+  from six.moves.queue import PriorityQueue
 except ImportError:
   from queue import PriorityQueue
 

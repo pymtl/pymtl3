@@ -14,6 +14,7 @@ import timeit
 from Bits_gen import *
 from Bits_v2 import Bits as Bv2
 from Bits_v3 import Bits as Bv3
+from six.moves import range
 
 #=========================================================================
 # ARITH
@@ -21,7 +22,7 @@ from Bits_v3 import Bits as Bv3
 
 def ubmark_arith_v2():
   g = Bv2(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv2(32, 12938676)
     b = Bv2(32, i & 127)
     c = a >> b
@@ -34,7 +35,7 @@ def ubmark_arith_v2():
 
 def ubmark_arith_v3():
   g = Bv3(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv3(32, 12938676)
     b = Bv3(32, i & 127)
     c = a >> b
@@ -47,7 +48,7 @@ def ubmark_arith_v3():
 
 def ubmark_arith_fix():
   g = Bits32(0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bits32(12938676)
     b = Bits32(i & 127)
     c = a >> b
@@ -60,7 +61,7 @@ def ubmark_arith_fix():
 
 def ubmark_arith_int():
   g = 0
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = 12938676
     b = i & 127
     c = a >> b
@@ -77,7 +78,7 @@ def ubmark_arith_int():
 
 def ubmark_lshift_v2():
   g = Bv2(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv2(32, 12938676)
     b = Bv2(32, i & 255)
     g += (a << b)
@@ -86,7 +87,7 @@ def ubmark_lshift_v2():
 
 def ubmark_lshift_v3():
   g = Bv3(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv3(32, 12938676)
     b = Bv3(32, i & 255)
     g += (a << b)
@@ -95,7 +96,7 @@ def ubmark_lshift_v3():
 
 def ubmark_lshift_fix():
   g = Bits32(0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bits32(12938676)
     b = Bits32(i & 255)
     g += (a << b)
@@ -104,7 +105,7 @@ def ubmark_lshift_fix():
 
 def ubmark_lshift_int():
   g = 0
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = 12938676
     b = i & 255
     if b < 32:
@@ -120,7 +121,7 @@ def ubmark_lshift_int():
 
 def ubmark_idx_fix():
   g = Bits32(0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bits32(i)
     b = Bits32(i & 31)
     a[b] = a[b] ^ 1
@@ -130,7 +131,7 @@ def ubmark_idx_fix():
 
 def ubmark_idx_v2():
   g = Bv2(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv2(32, i)
     b = Bv2(32, i & 31)
     a[int(b)] = a[b] ^ 1 # pymtl v2 bits bug
@@ -140,7 +141,7 @@ def ubmark_idx_v2():
 
 def ubmark_idx_v3():
   g = Bv3(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv3(32, i)
     b = Bv3(32, i & 31)
     a[b] = a[b] ^ 1
@@ -154,7 +155,7 @@ def ubmark_idx_v3():
 
 def ubmark_slice_fix():
   g = Bits32(0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bits32(i)
     b = Bits6(i & 15)
     c = Bits6(32 - (i & 7))
@@ -165,7 +166,7 @@ def ubmark_slice_fix():
 
 def ubmark_slice_v2():
   g = Bv2(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv2(32, i)
     b = Bv2(6, i & 15)
     c = Bv2(6, 32 - (i & 7) )
@@ -176,7 +177,7 @@ def ubmark_slice_v2():
 
 def ubmark_slice_v3():
   g = Bv3(32, 0)
-  for i in xrange(10000000):
+  for i in range(10000000):
     a = Bv3(32, i)
     b = Bv3(6, i & 15)
     c = Bv3(6, 32 - (i & 7))

@@ -16,6 +16,7 @@ from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 def _test_model( cls ):
@@ -148,22 +149,22 @@ def test_nested_port_bundle():
   class SuperBundle( Interface ):
 
     def construct( s ):
-      s.req  = [ [ ValRdyBundle() for i in xrange(4) ] for j in xrange(4) ]
+      s.req  = [ [ ValRdyBundle() for i in range(4) ] for j in range(4) ]
 
   class Top( ComponentLevel3 ):
 
     def construct( s ):
 
-      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in xrange(4) ]
+      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in range(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
       s.sink = TestSinkValRdy  ( int, [ 24, 40, 56, 24, 40, 56] )
 
       s.sb = SuperBundle()
-      s.wire = [ [ Wire(int) for i in xrange(4) ] for j in xrange(4) ]
+      s.wire = [ [ Wire(int) for i in range(4) ] for j in range(4) ]
 
-      for i in xrange(4):
+      for i in range(4):
         s.connect( s.src[i].out.rdy, s.sink.in_.rdy )
-        for j in xrange(4):
+        for j in range(4):
           s.connect( s.sb.req[i][j].msg, s.src[i].out.msg )
           s.connect( s.wire[i][j],       s.sb.req[i][j].msg )
 
@@ -171,8 +172,8 @@ def test_nested_port_bundle():
       def up_from_req():
         s.sink.in_.val = 1
         s.sink.in_.msg = 0
-        for i in xrange(4):
-          for j in xrange(4):
+        for i in range(4):
+          for j in range(4):
             s.sink.in_.msg += s.wire[i][j]
 
     def done( s ):

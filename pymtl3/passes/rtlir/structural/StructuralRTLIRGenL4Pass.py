@@ -40,12 +40,8 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
   def collect_connections( s, m ):
     return \
       super( StructuralRTLIRGenL4Pass, s ).collect_connections( m ) + \
-      map( lambda x: \
-        ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), \
-          s.c_sc[m] ) + \
-      map( lambda x: \
-        ((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False), \
-          s.c_cc[m] )
+      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_sc[m]] + \
+      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_cc[m]]
 
   # Override
   def sort_connections( s, m ):

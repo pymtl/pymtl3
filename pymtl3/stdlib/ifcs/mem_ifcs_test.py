@@ -12,6 +12,7 @@ from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
 
 from .mem_ifcs import MemMasterIfcFL, MemMinionIfcCL
+from six.moves import range
 
 
 def test_mem_fl_cl_adapter():
@@ -66,7 +67,7 @@ def test_mem_fl_cl_adapter():
       ret, shamt = Bits( nbits, 0 ), Bits( nbits, 0 )
       addr = int(addr)
       end  = addr + nbytes
-      for j in xrange( addr, end ):
+      for j in range( addr, end ):
         ret += Bits( nbits, s.memory[j] ) << shamt
         shamt += Bits4(8)
       return ret
@@ -75,7 +76,7 @@ def test_mem_fl_cl_adapter():
       tmp  = int(data)
       addr = int(addr)
       end  = addr + int(nbytes)
-      for j in xrange( addr, end ):
+      for j in range( addr, end ):
         s.memory[j] = tmp & 255
         tmp >>= 8
 

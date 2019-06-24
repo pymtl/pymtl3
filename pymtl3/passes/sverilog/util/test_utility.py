@@ -21,6 +21,8 @@ from pymtl3.passes.sverilog import TranslationPass as SVTranslationPass
 from pymtl3.passes.yosys import ImportPass as YosysImportPass
 from pymtl3.passes.yosys import TranslationPass as YosysTranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
+import six
+from six.moves import range
 
 
 def flatten( _rtype ):
@@ -243,7 +245,7 @@ def DataStrategy( draw, dut ):
 
     # Toggle clock signal
     toggle_data = {}
-    for id_, signal in data.iteritems():
+    for id_, signal in six.iteritems(data):
       if id_ == "clk":
         toggle_data.update( { id_ : Bits1(1) } )
       else:
@@ -331,7 +333,7 @@ def closed_loop_component_test( dut, data, backend = "sverilog" ):
   """
   # Method to feed data into the DUT
   def tv_in( model, test_vector ):
-    for name, data in test_vector.iteritems():
+    for name, data in six.iteritems(test_vector):
       exec( "model." + name + " = data" )
   test_vector = data.draw( DataStrategy( dut ) )
   closed_loop_component_input_test( dut, test_vector, tv_in, backend )

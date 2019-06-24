@@ -15,6 +15,7 @@ from pymtl3 import *
 
 from .test_sinks import TestSinkCL, TestSinkRTL
 from .test_srcs import TestSrcCL, TestSrcRTL
+from six.moves import range
 
 #-------------------------------------------------------------------------
 # TestHarnessSimple

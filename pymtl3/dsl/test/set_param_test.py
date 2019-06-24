@@ -14,6 +14,7 @@ from pymtl3.dsl.Connectable import InPort, OutPort
 from pymtl3.dsl.NamedObject import NamedObject
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 class Animal( NamedObject ):

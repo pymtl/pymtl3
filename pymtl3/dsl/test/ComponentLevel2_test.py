@@ -22,6 +22,7 @@ from pymtl3.dsl.errors import (
 )
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 def _test_model( cls ):
@@ -194,7 +195,7 @@ def test_2d_array_vars():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():
@@ -213,10 +214,10 @@ def test_2d_array_vars():
 
       @s.update
       def upA():
-        for i in xrange(2):
+        for i in range(2):
           s.wire[1][i] = s.reg + i
 
-      for i in xrange(2):
+      for i in range(2):
         s.add_constraints(
           U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
         )
@@ -409,7 +410,7 @@ def test_2d_array_vars_impl():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():
@@ -424,7 +425,7 @@ def test_2d_array_vars_impl():
 
       @s.update
       def upA():
-        for i in xrange(2):
+        for i in range(2):
           s.wire[1][i] = s.reg + i
 
       @s.update

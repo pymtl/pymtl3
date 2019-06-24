@@ -15,6 +15,7 @@ from pymtl3.passes.translator.behavioral.BehavioralTranslatorL1 import (
 )
 
 from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+from six.moves import range
 
 
 def local_do_test( m ):

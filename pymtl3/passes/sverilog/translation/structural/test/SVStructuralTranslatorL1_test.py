@@ -14,6 +14,8 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 impo
     SVStructuralTranslatorL1,
 )
 from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
+from six.moves import range
+from six.moves import zip
 
 
 def is_sverilog_reserved( s, name ):

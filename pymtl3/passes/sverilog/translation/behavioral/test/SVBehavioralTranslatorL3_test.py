@@ -16,6 +16,7 @@ from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL3 impo
 )
 
 from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
+from six.moves import range
 
 
 def local_do_test( m ):

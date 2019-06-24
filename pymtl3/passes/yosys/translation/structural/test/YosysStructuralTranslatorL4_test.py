@@ -21,6 +21,7 @@ from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL4
 from pymtl3.passes.yosys.translation.structural.YosysStructuralTranslatorL4 import (
     YosysStructuralTranslatorL4,
 )
+from six.moves import range
 
 
 def local_do_test( m ):

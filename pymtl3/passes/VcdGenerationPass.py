@@ -18,6 +18,7 @@ from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .errors import PassOrderError
+from six.moves import range
 
 
 class VcdGenerationPass( BasePass ):

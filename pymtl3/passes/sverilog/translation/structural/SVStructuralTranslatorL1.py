@@ -14,6 +14,7 @@ from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_
 from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
+from six.moves import range
 
 
 class SVStructuralTranslatorL1( StructuralTranslatorL1 ):

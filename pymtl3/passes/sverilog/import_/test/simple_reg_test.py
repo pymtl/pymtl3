@@ -11,6 +11,7 @@ import pytest
 from pymtl3 import *
 from pymtl3.passes.PassGroups import *
 from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+from six.moves import range
 
 
 def get_dir():

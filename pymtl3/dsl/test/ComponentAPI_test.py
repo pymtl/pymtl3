@@ -15,6 +15,7 @@ from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire
 from pymtl3.dsl.errors import InvalidAPICallError
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 def test_api_not_elaborated():
@@ -123,7 +124,7 @@ def test_replace_component_list_of_foo_by_real():
   foo_wrap = Foo_shamt_list_wrap( 32 )
 
   foo_wrap.elaborate()
-  order = range(5)
+  order = list(range(5))
   random.shuffle( order )
   for i in order:
     foo_wrap.replace_component( foo_wrap.inner[i], Real_shamt )
@@ -143,7 +144,7 @@ def test_replace_component_list_of_real_by_real2():
 
   foo_wrap = Foo_shamt_list_wrap( 32 )
 
-  order = range(5)
+  order = list(range(5))
   random.shuffle( order )
 
   foo_wrap.elaborate()

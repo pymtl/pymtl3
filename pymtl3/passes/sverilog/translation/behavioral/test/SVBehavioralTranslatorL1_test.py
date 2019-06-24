@@ -16,6 +16,7 @@ from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL1 impo
     BehavioralRTLIRToSVVisitorL1,
 )
 from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
+from six.moves import range
 
 
 def is_sverilog_reserved( name ):

@@ -20,6 +20,8 @@ from pymtl3.datatypes import Bits, BitStruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
+import six
+from six.moves import zip
 
 
 class BaseRTLIRDataType( object ):
@@ -90,7 +92,7 @@ class Struct( BaseRTLIRDataType ):
     return s.packed_order
 
   def get_length( s ):
-    return reduce(lambda s, d: s+d.get_length(), s.properties.values(), 0)
+    return reduce(lambda s, d: s+d.get_length(), list(s.properties.values()), 0)
 
   def has_property( s, p ):
     return p in s.properties
@@ -100,7 +102,7 @@ class Struct( BaseRTLIRDataType ):
 
   def get_all_properties( s ):
     order = { key : i for i, key in enumerate(s.packed_order) }
-    return sorted(s.properties.iteritems(), key = lambda x: order[x[0]])
+    return sorted(six.iteritems(s.properties), key = lambda x: order[x[0]])
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
@@ -149,7 +151,7 @@ class PackedArray( BaseRTLIRDataType ):
   def __eq__( s, other ):
     if not isinstance(other, PackedArray): return False
     if len( s.dim_sizes ) != len( other.dim_sizes ): return False
-    zipped_sizes = zip( s.dim_sizes, other.dim_sizes )
+    zipped_sizes = list(zip( s.dim_sizes, other.dim_sizes ))
     if not reduce( lambda res, xy: res and (xy[0] == xy[1]), zipped_sizes ):
       return False
     return s.sub_dtype == other.sub_dtype
@@ -215,7 +217,7 @@ def _get_rtlir_dtype_struct( obj ):
         achieve this by adding default values to your arguments )!'.format(
           cls.__name__ )
     fields = collect_objs( type_instance, object )
-    static_member_names = map(lambda x: x[0], static_members)
+    static_member_names = [x[0] for x in static_members]
     for name, field in fields:
       # Exclude the static members of the type instance
       if name not in static_member_names:
@@ -224,7 +226,7 @@ def _get_rtlir_dtype_struct( obj ):
     # Use user-provided pack order
     pack_order = []
     if hasattr( cls, "fields" ) and cls.fields != []:
-      assert len(cls.fields) == len(all_properties.keys()), \
+      assert len(cls.fields) == len(list(all_properties.keys())), \
         "{}.fields does not match the attributes of its instance!". \
           format( cls.__name__ )
       for field_name, field in cls.fields:
@@ -234,7 +236,7 @@ def _get_rtlir_dtype_struct( obj ):
 
     # Generate default pack order ( sort by `repr` )
     else:
-      pack_order = sorted( all_properties.keys(), key = repr )
+      pack_order = sorted( list(all_properties.keys()), key = repr )
 
     # Generate the property list according to pack order
     properties = []

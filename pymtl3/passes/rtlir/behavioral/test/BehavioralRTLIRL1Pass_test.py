@@ -37,6 +37,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
 )
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
+from six.moves import range
 
 # TODO: fix all tests with this mark, including in other files (grep!).
 # (we use the mark instead of allowing failure more generally because this

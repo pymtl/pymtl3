@@ -15,6 +15,7 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (
 from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 from .StructuralRTLIRGenL1Pass_test import gen_connections
+from six.moves import range
 
 
 def test_L3_ifc_view_attr():

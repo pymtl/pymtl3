@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 from pymtl3.dsl import *
 
 from .BasePass import BasePass, PassMetadata
+import six
 
 
 class LineTraceParamPass( BasePass ):
@@ -29,7 +30,7 @@ class LineTraceParamPass( BasePass ):
               # TODO: figure out whether it is necessary to enforce no 
               # positional args.
               assert len( args ) == 0
-              more_args = self._dsl.param_tree.leaf['line_trace'].iteritems()
+              more_args = six.iteritems(self._dsl.param_tree.leaf['line_trace'])
               kwargs.update({ x:y for x, y in more_args })
         return self._ml_trace.line_trace( *args, **kwargs )
 

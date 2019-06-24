@@ -14,6 +14,7 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL3 import (
 )
 
 from .SVStructuralTranslatorL2 import SVStructuralTranslatorL2
+from six.moves import range
 
 
 class SVStructuralTranslatorL3(
@@ -70,12 +71,11 @@ class SVStructuralTranslatorL3(
       ret = []
       if not n_dim:
         id_ = ifc_id + c_n_dim
-        return map( lambda pdecl: pdecl.format( id_ = id_ ), port_decls )
+        return [pdecl.format( id_ = id_ ) for pdecl in port_decls]
       else:
-        return reduce( lambda res, l: res+l, map(
-          lambda idx: gen_interface_array_decl(
+        return reduce( lambda res, l: res+l, [gen_interface_array_decl(
             ifc_id, ifc_rtype, n_dim[1:0], c_n_dim+'$__'+str(idx), port_decls
-        ), range( n_dim[0] ) ), [] )
+        ) for idx in range( n_dim[0] )], [] )
     n_dim = array_type['n_dim']
     return gen_interface_array_decl( ifc_id, ifc_rtype, n_dim, '', port_decls )
 

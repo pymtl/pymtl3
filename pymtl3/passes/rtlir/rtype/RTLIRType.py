@@ -23,6 +23,8 @@ from pymtl3.datatypes import Bits, BitStruct
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
 from . import RTLIRDataType as rdt
+import six
+from six.moves import range
 
 
 class BaseRTLIRType( object ):
@@ -235,7 +237,7 @@ class InterfaceView( BaseRTLIRType ):
         assert False, "interface object {} is not constructed!".format( s.obj )
 
     # Sanity check
-    for name, rtype in properties.iteritems():
+    for name, rtype in six.iteritems(properties):
       assert isinstance(name, str) and _is_of_type(rtype, (Port, InterfaceView)), \
         "invalid attribute {} of interface {}: only ports and interfaces allowed!". \
           format( name, s.name )
@@ -268,16 +270,10 @@ class InterfaceView( BaseRTLIRType ):
       return ( [], {} )
 
   def get_input_ports( s ):
-    return sorted(filter(
-      lambda id__port: id__port[1].direction == 'input',
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__port for id__port in six.iteritems(s.properties) if id__port[1].direction == 'input'], key = lambda kv: kv[0])
 
   def get_output_ports( s ):
-    return sorted(filter(
-      lambda id__port1: id__port1[1].direction == 'output',
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__port1 for id__port1 in six.iteritems(s.properties) if id__port1[1].direction == 'output'], key = lambda kv: kv[0])
 
   def has_property( s, p ):
     return p in s.properties
@@ -286,25 +282,18 @@ class InterfaceView( BaseRTLIRType ):
     return s.properties[ p ]
 
   def get_all_ports( s ):
-    return sorted(filter(
-      lambda name_port: isinstance( name_port[1], Port ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([name_port for name_port in six.iteritems(s.properties) if isinstance( name_port[1], Port )], key = lambda kv: kv[0])
 
   def get_all_ports_packed( s ):
-    return sorted(filter(
-      lambda id__t2: \
-        ( isinstance( id__t2[1], Port ) and not id__t2[1]._is_unpacked() ) or \
+    return sorted([id__t2 for id__t2 in six.iteritems(s.properties) if ( isinstance( id__t2[1], Port ) and not id__t2[1]._is_unpacked() ) or \
         ( isinstance( id__t2[1], Array ) and isinstance( id__t2[1].get_sub_type(), Port ) \
-          and not id__t2[1]._is_unpacked() ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+          and not id__t2[1]._is_unpacked() )], key = lambda kv: kv[0])
 
   def get_all_properties( s ):
-    return sorted( s.properties.iteritems(), lambda kv: kv[0] )
+    return sorted( six.iteritems(s.properties), lambda kv: kv[0] )
 
   def get_all_properties_packed( s ):
-    return sorted( filter( lambda x: not x[1]._is_unpacked(), s.properties.iteritems() ),
+    return sorted( [x for x in six.iteritems(s.properties) if not x[1]._is_unpacked()],
         key = lambda kv: kv[0] )
 
 class Component( BaseRTLIRType ):
@@ -392,79 +381,44 @@ class Component( BaseRTLIRType ):
     return s.params
 
   def get_ports( s ):
-    return sorted(filter(
-      lambda id__port3: isinstance( id__port3[1], Port ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__port3 for id__port3 in six.iteritems(s.properties) if isinstance( id__port3[1], Port )], key = lambda kv: kv[0])
 
   def get_ports_packed( s ):
-    return sorted(filter(
-      lambda id__t4: \
-        ( isinstance( id__t4[1], Port ) and not id__t4[1]._is_unpacked() ) or \
+    return sorted([id__t4 for id__t4 in six.iteritems(s.properties) if ( isinstance( id__t4[1], Port ) and not id__t4[1]._is_unpacked() ) or \
         ( isinstance( id__t4[1], Array ) and isinstance( id__t4[1].get_sub_type(), Port ) \
-          and not id__t4[1]._is_unpacked() ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+          and not id__t4[1]._is_unpacked() )], key = lambda kv: kv[0])
 
   def get_wires( s ):
-    return sorted(filter(
-      lambda id__wire: isinstance( id__wire[1], Wire ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__wire for id__wire in six.iteritems(s.properties) if isinstance( id__wire[1], Wire )], key = lambda kv: kv[0])
 
   def get_wires_packed( s ):
-    return sorted(filter(
-      lambda id__t5: \
-        ( isinstance( id__t5[1], Wire ) and not id__t5[1]._is_unpacked() ) or \
+    return sorted([id__t5 for id__t5 in six.iteritems(s.properties) if ( isinstance( id__t5[1], Wire ) and not id__t5[1]._is_unpacked() ) or \
         ( isinstance( id__t5[1], Array ) and isinstance( id__t5[1].get_sub_type(), Wire ) \
-          and not id__t5[1]._is_unpacked() ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+          and not id__t5[1]._is_unpacked() )], key = lambda kv: kv[0])
 
   def get_consts( s ):
-    return sorted(filter(
-      lambda id__const: isinstance( id__const[1], Const ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__const for id__const in six.iteritems(s.properties) if isinstance( id__const[1], Const )], key = lambda kv: kv[0])
 
   def get_consts_packed( s ):
-    return sorted(filter(
-      lambda id__t6: \
-        ( isinstance( id__t6[1], Const ) and not id__t6[1]._is_unpacked() ) or \
+    return sorted([id__t6 for id__t6 in six.iteritems(s.properties) if ( isinstance( id__t6[1], Const ) and not id__t6[1]._is_unpacked() ) or \
         ( isinstance( id__t6[1], Array ) and isinstance( id__t6[1].get_sub_type(), Const ) \
-          and not id__t6[1]._is_unpacked() ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+          and not id__t6[1]._is_unpacked() )], key = lambda kv: kv[0])
 
   def get_ifc_views( s ):
-    return sorted(filter(
-      lambda id__ifc: isinstance( id__ifc[1], InterfaceView ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__ifc for id__ifc in six.iteritems(s.properties) if isinstance( id__ifc[1], InterfaceView )], key = lambda kv: kv[0])
 
   def get_ifc_views_packed( s ):
-    return sorted(filter(
-      lambda id__t7: \
-        ( isinstance( id__t7[1], InterfaceView ) and not id__t7[1]._is_unpacked() ) or \
+    return sorted([id__t7 for id__t7 in six.iteritems(s.properties) if ( isinstance( id__t7[1], InterfaceView ) and not id__t7[1]._is_unpacked() ) or \
         ( isinstance( id__t7[1], Array ) and isinstance( id__t7[1].get_sub_type(),InterfaceView ) \
-          and not id__t7[1]._is_unpacked() ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+          and not id__t7[1]._is_unpacked() )], key = lambda kv: kv[0])
 
   def get_subcomps( s ):
-    return sorted(filter(
-      lambda id__subcomp: isinstance( id__subcomp[1], Component ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+    return sorted([id__subcomp for id__subcomp in six.iteritems(s.properties) if isinstance( id__subcomp[1], Component )], key = lambda kv: kv[0])
 
   def get_subcomps_packed( s ):
-    return sorted(filter(
-      lambda id__t9: \
-        ( isinstance( id__t9[1], Component ) and not id__t9[1]._is_unpacked() ) or \
+    return sorted([id__t9 for id__t9 in six.iteritems(s.properties) if ( isinstance( id__t9[1], Component ) and not id__t9[1]._is_unpacked() ) or \
         ( isinstance( id__t9[1], Array ) and isinstance( id__t9[1].get_sub_type(), Component ) \
-          and not id__t9[1]._is_unpacked() ),
-      s.properties.iteritems()
-    ), key = lambda kv: kv[0])
+          and not id__t9[1]._is_unpacked() )], key = lambda kv: kv[0])
 
   def has_property( s, p ):
     return p in s.properties

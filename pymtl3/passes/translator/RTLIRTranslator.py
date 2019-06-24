@@ -12,6 +12,7 @@ from .BaseRTLIRTranslator import TranslatorMetadata
 from .behavioral import BehavioralTranslator
 from .errors import RTLIRTranslationError
 from .structural import StructuralTranslator
+import six
 
 
 def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
@@ -38,7 +39,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
       def get_component_nspace( namespace, m ):
         ns = TranslatorMetadata()
-        for name, metadata_d in vars(namespace).iteritems():
+        for name, metadata_d in six.iteritems(vars(namespace)):
           # Hierarchical metadata will not be added
           if m in metadata_d:
             setattr( ns, name, metadata_d[m] )

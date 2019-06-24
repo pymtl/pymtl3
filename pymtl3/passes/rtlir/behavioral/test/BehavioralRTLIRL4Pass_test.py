@@ -28,6 +28,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRVisualizationPass import (
 )
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
+from six.moves import range
 
 
 def local_do_test( m ):

@@ -31,6 +31,8 @@ from .errors import (
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
+import six
+from six.moves import range
 
 
 class ComponentLevel3( ComponentLevel2 ):
@@ -167,7 +169,7 @@ class ComponentLevel3( ComponentLevel2 ):
     def connect_by_name( this, other ):
       def recursive_connect( this_obj, other_obj ):
         if isinstance( this_obj, list ):
-          for i in xrange(len(this_obj)):
+          for i in range(len(this_obj)):
             # TODO add error message if other_obj is not a list
             recursive_connect( this_obj[i], other_obj[i] )
         else:
@@ -257,7 +259,7 @@ class ComponentLevel3( ComponentLevel2 ):
     try: # Catch AssertionError from _connect
 
       # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.iteritems():
+      for (kw, target) in six.iteritems(s._dsl.call_kwargs):
         try:
           obj = getattr( s, kw )
         except AttributeError:
@@ -268,7 +270,7 @@ class ComponentLevel3( ComponentLevel2 ):
           # Make sure the connection target is a dictionary {idx: obj}
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.iteritems():
+          for idx, item in six.iteritems(target):
             s._dsl.parent_obj._connect_objects( obj[idx], item )
 
         # Obj is a single signal
@@ -341,7 +343,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     writer_prop = {}
 
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in six.iteritems(s._dsl.all_upblk_writes):
       for obj in writes:
         writer_prop[ obj ] = True # propagatable
 
@@ -660,7 +662,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._connect_objects( o1, o2 )
 
     visited = set()
-    for u, vs in s._dsl.adjacency.iteritems():
+    for u, vs in six.iteritems(s._dsl.adjacency):
       for v in vs:
         if (u, v) not in visited:
           s._disconnect_signal_signal( u, v )
@@ -710,7 +712,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    for i in xrange(len(args)>>1) :
+    for i in range(len(args)>>1) :
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError:

@@ -14,6 +14,7 @@ from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 class SomeMsg( object ):
@@ -27,7 +28,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 # All situations when we allow nested data struct:
@@ -508,7 +509,7 @@ def test_struct_with_list_of_bits():
 
   class B( object ):
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in xrange(5) ]
+      s.foo = [ Bits32( foo ) for _ in range(5) ]
 
   class A( ComponentLevel3 ):
     def construct( s ):
@@ -529,7 +530,7 @@ def test_nested_struct_2d_array_index():
   class B( object ):
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
-      s.bar = [ [ C() for _ in xrange(5) ] for _ in xrange(5) ]
+      s.bar = [ [ C() for _ in range(5) ] for _ in range(5) ]
 
   class A( ComponentLevel3 ):
     def construct( s ):

@@ -24,6 +24,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
+from six.moves import range
 
 
 def local_do_test( m ):

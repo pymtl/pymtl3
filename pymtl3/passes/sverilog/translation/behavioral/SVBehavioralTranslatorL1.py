@@ -76,7 +76,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
     while upblk_py_src and not upblk_py_src[-1]:
       upblk_py_src = upblk_py_src[:-1]
     py_src = [ "PYMTL SOURCE:", "" ] + upblk_py_src
-    return map( lambda x: "// "+x, py_src )
+    return ["// "+x for x in py_src]
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
     make_indent( freevars, 1 )

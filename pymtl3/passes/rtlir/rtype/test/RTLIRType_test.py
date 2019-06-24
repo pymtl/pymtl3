@@ -15,6 +15,7 @@ from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
+from six.moves import range
 
 
 def test_pymtl3_list_ports():

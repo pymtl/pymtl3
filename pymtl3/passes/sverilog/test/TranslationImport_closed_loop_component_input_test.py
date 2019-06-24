@@ -17,6 +17,7 @@ from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..util.test_utility import closed_loop_component_input_test
+from six.moves import range
 
 seed( 0xdeadebeef )
 

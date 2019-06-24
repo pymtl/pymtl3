@@ -16,6 +16,7 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 impo
 )
 
 from .SVStructuralTranslatorL1_test import check_eq, is_sverilog_reserved
+from six.moves import range
 
 
 def local_do_test( m ):
@@ -31,8 +32,8 @@ def local_do_test( m ):
   conns = tr.structural.connections[m]
   check_eq( ports, m._ref_ports[m] )
   check_eq( wires, m._ref_wires[m] )
-  assert map(lambda x: x[0], structs) == map(lambda x: x[0], m._ref_structs)
-  check_eq( map(lambda x: x[1]['def'], structs), map(lambda x: x[1], m._ref_structs) )
+  assert [x[0] for x in structs] == [x[0] for x in m._ref_structs]
+  check_eq( [x[1]['def'] for x in structs], [x[1] for x in m._ref_structs] )
   check_eq( conns, m._ref_conns[m] )
 
 def test_struct_const_structural( do_test ):

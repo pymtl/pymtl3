@@ -23,6 +23,8 @@ from __future__ import absolute_import, division, print_function
 import re
 
 from .errors import NotElaboratedError
+import six
+from six.moves import range
 
 # from collections import OrderedDict as ord_dict
 
@@ -90,7 +92,7 @@ class ParamTreeNode(object):
       # Lazily create leaf
       if self.leaf is None:
         self.leaf = {}
-      for func_name, subdict in other.leaf.iteritems():
+      for func_name, subdict in six.iteritems(other.leaf):
         if func_name not in self.leaf:
           self.leaf[ func_name ] = {}
         self.leaf[ func_name ].update( subdict )
@@ -100,7 +102,7 @@ class ParamTreeNode(object):
       # Lazily create children
       if self.children is None:
         self.children = ord_dict()
-      for comp_name, node in other.children.iteritems():
+      for comp_name, node in six.iteritems(other.children):
         if comp_name in self.children:
           self.children[ comp_name ].merge( node )
         else:
@@ -124,7 +126,7 @@ class ParamTreeNode(object):
         if '*' in comp_name:
           new_node.compiled_re = re.compile( comp_name )
           # Recursively update exisiting nodes that matches the regex
-          for name, node in cur_node.children.iteritems():
+          for name, node in six.iteritems(cur_node.children):
             if node.compiled_re is None:
               if new_node.compiled_re.match( name ):
                 node.add_params( strs[idx:], func_name, **kwargs )
@@ -206,7 +208,7 @@ class NamedObject(object):
             # Iterate through the param_tree and update u
             if s._dsl.param_tree is not None:
               if s._dsl.param_tree.children is not None:
-                for comp_name, node in s._dsl.param_tree.children.iteritems():
+                for comp_name, node in six.iteritems(s._dsl.param_tree.children):
                   if comp_name == u_name:
                     # Lazily create the param tree
                     if u._dsl.param_tree is None:
@@ -255,12 +257,12 @@ class NamedObject(object):
           if filt[i]( u ): # Check if m satisfies the filter
             ret[i].add( u )
 
-        for name, obj in u.__dict__.iteritems():
+        for name, obj in six.iteritems(u.__dict__):
 
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice
 
-          if   isinstance( name, basestring ): # python2 specific
+          if   isinstance( name, six.string_types ): # python2 specific
             if not name.startswith("_"): # filter private variables
               stack.append( obj )
 

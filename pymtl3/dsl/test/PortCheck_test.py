@@ -14,6 +14,7 @@ from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import SignalTypeError
 
 from .sim_utils import simple_sim_pass
+from six.moves import range
 
 
 def _test_model( cls ):
@@ -21,7 +22,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 def test_illegal_inport_write():

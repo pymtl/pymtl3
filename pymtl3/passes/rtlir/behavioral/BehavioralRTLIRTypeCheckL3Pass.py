@@ -14,6 +14,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
+from six.moves import zip
 
 
 class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
@@ -97,7 +98,7 @@ adding default values to the arguments.
         "BitStruct {} has {} fields but only {} arguments are given!". \
             format(cls.__name__, len(all_properties), len(node.values)) )
 
-    all_types = zip( node.values, all_properties )
+    all_types = list(zip( node.values, all_properties ))
     for idx, ( value, ( name, field ) ) in enumerate( all_types ):
       s.visit( value )
       # Expect each argument to be a signal
