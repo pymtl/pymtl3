@@ -23,7 +23,7 @@ import six
 
 def local_do_test( m ):
   visitor = YosysBehavioralRTLIRToSVVisitorL5(is_sverilog_reserved)
-  for comp, _all_upblks in six.iteritems(m._ref_upblk_srcs_yosys):
+  for comp, _all_upblks in m._ref_upblk_srcs_yosys.items():
     comp.apply( BehavioralRTLIRGenPass() )
     comp.apply( BehavioralRTLIRTypeCheckPass() )
     upblks = comp._pass_behavioral_rtlir_gen.rtlir_upblks

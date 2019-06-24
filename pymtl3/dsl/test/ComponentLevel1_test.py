@@ -64,7 +64,7 @@ class TestSink( ComponentLevel1 ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.answer
@@ -219,7 +219,7 @@ def test_add_loopback():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+            "w0={} > r0={} > w1={}".format(s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
@@ -310,7 +310,7 @@ def test_lots_of_fan():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s" % (s.wire0,s.reg) + \
+            "w0={} > r0={}".format(s.wire0,s.reg) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )

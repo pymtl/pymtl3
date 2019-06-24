@@ -109,7 +109,7 @@ class YosysStructuralTranslatorL2(
       return s.packed_conn_gen( d, pid, wid, idx, dtype )
     else:
       return \
-        super(YosysStructuralTranslatorL2, s).dtype_conn_gen( d, pid, wid,
+        super().dtype_conn_gen( d, pid, wid,
                                                              idx, dtype )
 
   #-----------------------------------------------------------------------
@@ -156,7 +156,7 @@ class YosysStructuralTranslatorL2(
       return s.wire_packed_gen( id_, dtype, n_dim )
     else:
       return \
-        super(YosysStructuralTranslatorL2, s).wire_dtype_gen(id_, dtype, n_dim )
+        super().wire_dtype_gen(id_, dtype, n_dim )
 
   #-----------------------------------------------------------------------
   # Port declaration helper methods
@@ -191,7 +191,7 @@ class YosysStructuralTranslatorL2(
       s.check_decl( id_, "" )
       return s.packed_gen(d, id_, dtype)
     else:
-      return super(YosysStructuralTranslatorL2, s).dtype_gen(d, id_, dtype)
+      return super().dtype_gen(d, id_, dtype)
 
   #-----------------------------------------------------------------------
   # Signal operations

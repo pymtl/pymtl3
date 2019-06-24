@@ -22,7 +22,7 @@ from six.moves import range
 
 def local_do_test( m ):
   visitor = BehavioralRTLIRToSVVisitorL5(is_sverilog_reserved)
-  for comp, _all_upblks in six.iteritems(m._ref_upblk_srcs):
+  for comp, _all_upblks in m._ref_upblk_srcs.items():
     comp.apply( BehavioralRTLIRGenPass() )
     comp.apply( BehavioralRTLIRTypeCheckPass() )
     upblks = comp._pass_behavioral_rtlir_gen.rtlir_upblks

@@ -245,7 +245,7 @@ def DataStrategy( draw, dut ):
 
     # Toggle clock signal
     toggle_data = {}
-    for id_, signal in six.iteritems(data):
+    for id_, signal in data.items():
       if id_ == "clk":
         toggle_data.update( { id_ : Bits1(1) } )
       else:

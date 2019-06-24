@@ -20,10 +20,10 @@ import six
 
 class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
   def __init__( s, top ):
-    super( BehavioralTranslatorL2, s ).__init__( top )
+    super().__init__( top )
 
   def clear( s, tr_top ):
-    super( BehavioralTranslatorL2, s ).clear( tr_top )
+    super().clear( tr_top )
 
   #-----------------------------------------------------------------------
   # gen_behavioral_trans_metadata
@@ -33,7 +33,7 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
   def gen_behavioral_trans_metadata( s, tr_top ):
     s.behavioral.tmpvars = {}
     s.behavioral.decl_tmpvars = {}
-    super( BehavioralTranslatorL2, s ).gen_behavioral_trans_metadata( tr_top )
+    super().gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata
@@ -59,11 +59,11 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
 
     Support for translating temporary variables is added at level 2.
     """
-    super(BehavioralTranslatorL2, s).translate_behavioral(m)
+    super().translate_behavioral(m)
 
     # Generate temporary variable declarations
     tmpvars = []
-    for (id_, upblk_id), rtype in six.iteritems(s.behavioral.tmpvars[m]):
+    for (id_, upblk_id), rtype in s.behavioral.tmpvars[m].items():
       assert isinstance(rtype, rt.Wire), \
         "temporary variable {} in upblk {} is not a signal!".format(id_, upblk_id)
       dtype = rtype.get_dtype()

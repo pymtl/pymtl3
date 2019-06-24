@@ -27,11 +27,11 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
     # Override
     def __init__( s, top ):
-      super( _RTLIRTranslator, s ).__init__( top )
+      super().__init__( top )
 
     # Override
     def clear( s, tr_top ):
-      super( _RTLIRTranslator, s ).clear( tr_top )
+      super().clear( tr_top )
       s.hierarchy = TranslatorMetadata()
 
     # Override
@@ -39,7 +39,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
       def get_component_nspace( namespace, m ):
         ns = TranslatorMetadata()
-        for name, metadata_d in six.iteritems(vars(namespace)):
+        for name, metadata_d in vars(namespace).items():
           # Hierarchical metadata will not be added
           if m in metadata_d:
             setattr( ns, name, metadata_d[m] )

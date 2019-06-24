@@ -725,7 +725,7 @@ def test_Classdef( do_test ):
     def construct( s ):
       @s.update
       def upblk():
-        class c(object): pass
+        class c: pass
   with expected_failure( PyMTLSyntaxError, "invalid operation: classdef" ):
     do_test( A() )
 

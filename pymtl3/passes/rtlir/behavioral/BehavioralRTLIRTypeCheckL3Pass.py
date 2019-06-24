@@ -38,7 +38,7 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
-    super( BehavioralRTLIRTypeCheckVisitorL3, s ). \
+    super(). \
         __init__( component, freevars, accessed, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (rt.Component, rt.Signal),
@@ -76,7 +76,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       node.Type = rtype
 
     else:
-      super( BehavioralRTLIRTypeCheckVisitorL3, s ).visit_Attribute( node )
+      super().visit_Attribute( node )
 
   def visit_StructInst( s, node ):
     cls = node.struct

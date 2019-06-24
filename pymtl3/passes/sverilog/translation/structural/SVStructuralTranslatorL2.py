@@ -88,9 +88,9 @@ typedef struct packed {{
       if isinstance( dtype, rdt.Struct ):
         return s.rtlir_tr_struct_instance( dtype, array )
       else:
-        return super(SVStructuralTranslatorL2, s).gen_array_param( n_dim, dtype, array )
+        return super().gen_array_param( n_dim, dtype, array )
     else:
-      return super(SVStructuralTranslatorL2, s).gen_array_param( n_dim, dtype, array )
+      return super().gen_array_param( n_dim, dtype, array )
 
   #-----------------------------------------------------------------------
   # Signal oeprations

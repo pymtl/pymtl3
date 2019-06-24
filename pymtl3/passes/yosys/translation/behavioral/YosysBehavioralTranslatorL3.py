@@ -130,7 +130,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
         node.sexpr['attr'].append( attr )
         return s.signal_expr_epilogue(node, "{value}.{attr}".format(**locals()))
 
-    return super( YosysBehavioralRTLIRToSVVisitorL3, s ).visit_Attribute( node )
+    return super().visit_Attribute( node )
 
   #-----------------------------------------------------------------------
   # visit_StructInst
@@ -139,4 +139,4 @@ class YosysBehavioralRTLIRToSVVisitorL3(
   def visit_StructInst( s, node ):
     for value in node.values:
       value._top_expr = 1
-    return super(YosysBehavioralRTLIRToSVVisitorL3, s).visit_StructInst( node )
+    return super().visit_StructInst( node )

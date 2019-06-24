@@ -18,7 +18,7 @@ from .NamedObject import DSLMetadata, NamedObject
 import six
 
 
-class Connectable(object):
+class Connectable:
   # I've given up maintaining adjacency list or disjoint set locally since
   # we need to easily disconnect things
 
@@ -95,7 +95,7 @@ class Signal( NamedObject, Connectable ):
 
   def __getattr__( s, name ):
     if name.startswith("_"): # private variable
-      return super( Signal, s ).__getattribute__( name )
+      return super().__getattribute__( name )
 
     if name not in s.__dict__:
       # Shunning: we move this from __init__ to here for on-demand type
@@ -297,7 +297,7 @@ class Interface( NamedObject, Connectable ):
         inversed = s._dsl.inversed
 
       if inversed:
-        for name, obj in six.iteritems(s.__dict__):
+        for name, obj in s.__dict__.items():
           if not name.startswith("_"):
             if isinstance( obj, Signal ):
               setattr( s, name, obj.inverse() )

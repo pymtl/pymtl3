@@ -21,10 +21,10 @@ import six
 
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def __init__( s, top ):
-    super( BehavioralTranslatorL1, s ).__init__( top )
+    super().__init__( top )
 
   def clear( s, tr_top ):
-    super( BehavioralTranslatorL1, s ).clear( tr_top )
+    super().clear( tr_top )
     s.gen_behavioral_trans_metadata( tr_top )
 
   #-----------------------------------------------------------------------
@@ -89,7 +89,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     # Generate free variable declarations
     freevars = []
-    for name, fvar in six.iteritems(s.behavioral.freevars[m]):
+    for name, fvar in s.behavioral.freevars[m].items():
       rtype = rt.get_rtlir( fvar )
       if isinstance( rtype, rt.Array ):
         fvar_rtype = rtype.get_sub_type()

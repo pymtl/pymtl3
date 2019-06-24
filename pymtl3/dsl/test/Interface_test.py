@@ -108,7 +108,7 @@ class TestSinkValRdy( ComponentLevel3 ):
         ref = s.sink_msgs.popleft()
         ans = s.in_.msg
 
-        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans, "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.sink_msgs

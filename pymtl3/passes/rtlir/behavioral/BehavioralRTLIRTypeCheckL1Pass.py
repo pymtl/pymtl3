@@ -96,7 +96,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     func = getattr( s, method, s.generic_visit )
 
     # First visit (type check) all child nodes
-    for field, value in six.iteritems(vars(node)):
+    for field, value in vars(node).items():
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, bir.BaseBehavioralRTLIR ):
@@ -107,7 +107,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Then verify that all child nodes have desired types
     try:
       # Check the expected types of child nodes
-      for field, type_rule in six.iteritems(s.type_expect[node_name]):
+      for field, type_rule in s.type_expect[node_name].items():
         value = vars(node)[field]
         target_type = type_rule[ 0 ]
         exception_msg = type_rule[ 1 ]

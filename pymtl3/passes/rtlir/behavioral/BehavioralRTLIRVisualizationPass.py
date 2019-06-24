@@ -51,7 +51,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     ret = ''
     if isinstance( node.Type, BaseRTLIRType ):
       ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in six.iteritems(vars(node.Type)):
+      for name, obj in vars(node.Type).items():
         obj_str = s.get_str( obj )
         if not isinstance( obj, dict ):
           ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'

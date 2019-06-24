@@ -47,7 +47,7 @@ class ComponentLevel2( ComponentLevel1 ):
   #-----------------------------------------------------------------------
 
   def __new__( cls, *args, **kwargs ):
-    inst = super( ComponentLevel2, cls ).__new__( cls, *args, **kwargs )
+    inst = super().__new__( cls, *args, **kwargs )
 
     inst._dsl.update_on_edge = set()
 
@@ -190,7 +190,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.func_reads  = {}
     s._dsl.func_writes = {}
     s._dsl.func_calls  = {}
-    for name, func in six.iteritems(s._dsl.name_func):
+    for name, func in s._dsl.name_func.items():
       s._dsl.func_reads [ func ] = extract_obj_from_names( func, name_rd[ name ] )
       s._dsl.func_writes[ func ] = extract_obj_from_names( func, name_wr[ name ] )
       s._dsl.func_calls [ func ] = extract_obj_from_names( func, name_fc[ name ] )
@@ -198,29 +198,29 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_reads  = {}
     s._dsl.upblk_writes = {}
     s._dsl.upblk_calls  = {}
-    for name, blk in six.iteritems(s._dsl.name_upblk):
+    for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
   def _collect_vars( s, m ):
-    super( ComponentLevel2, s )._collect_vars( m )
+    super()._collect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
       s._dsl.all_update_on_edge |= m._dsl.update_on_edge
 
-      for k, k_cons in six.iteritems(m._dsl.RD_U_constraints):
+      for k, k_cons in m._dsl.RD_U_constraints.items():
         s._dsl.all_RD_U_constraints[k] |= k_cons
 
-      for k, k_cons in six.iteritems(m._dsl.WR_U_constraints):
+      for k, k_cons in m._dsl.WR_U_constraints.items():
         s._dsl.all_WR_U_constraints[k] |= k_cons
 
       # I assume different update blocks will always have different ids
       s._dsl.all_upblk_reads.update( m._dsl.upblk_reads )
       s._dsl.all_upblk_writes.update( m._dsl.upblk_writes )
 
-      for blk, calls in six.iteritems(m._dsl.upblk_calls):
+      for blk, calls in m._dsl.upblk_calls.items():
         s._dsl.all_upblk_calls[ blk ] = calls
 
         for call in calls:
@@ -262,7 +262,7 @@ class ComponentLevel2( ComponentLevel1 ):
           dfs( call, stk )
 
   def _uncollect_vars( s, m ):
-    super( ComponentLevel2, s )._uncollect_vars( m )
+    super()._uncollect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
       s._dsl.all_update_on_edge -= m._dsl.update_on_edge
@@ -280,11 +280,11 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_upblk_writes( s ):
 
     write_upblks = defaultdict(set)
-    for blk, writes in six.iteritems(s._dsl.all_upblk_writes):
+    for blk, writes in s._dsl.all_upblk_writes.items():
       for wr in writes:
         write_upblks[ wr ].add( blk )
 
-    for obj, wr_blks in six.iteritems(write_upblks):
+    for obj, wr_blks in write_upblks.items():
       wr_blks = list(wr_blks)
 
       if len(wr_blks) > 1:
@@ -322,7 +322,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def _check_port_in_upblk( s ):
 
     # Check read first
-    for blk, reads in six.iteritems(s._dsl.all_upblk_reads):
+    for blk, reads in s._dsl.all_upblk_reads.items():
 
       blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
@@ -345,7 +345,7 @@ class ComponentLevel2( ComponentLevel1 ):
                     blk.__name__, repr(blk_hostobj), type(blk_hostobj).__name__ ) )
 
     # Then check write
-    for blk, writes in six.iteritems(s._dsl.all_upblk_writes):
+    for blk, writes in s._dsl.all_upblk_writes.items():
 
       blk_hostobj = s._dsl.all_upblk_hostobj[ blk ]
 
@@ -423,7 +423,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def update( s, blk ):
-    super( ComponentLevel2, s ).update( blk )
+    super().update( blk )
     s._cache_func_meta( blk ) # add caching of src/ast
     return blk
 
@@ -470,7 +470,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
   # Override
   def _elaborate_declare_vars( s ):
-    super( ComponentLevel2, s )._elaborate_declare_vars()
+    super()._elaborate_declare_vars()
 
     s._dsl.all_update_on_edge = set()
 

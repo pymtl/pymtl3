@@ -22,13 +22,13 @@ def local_do_test( m ):
   tr = mk_TestBehavioralTranslator(BehavioralTranslatorL5)(m)
   tr.clear( m )
   tr.translate_behavioral( m )
-  for component, _ref_upblk_repr in six.iteritems(m._ref_upblk_repr):
+  for component, _ref_upblk_repr in m._ref_upblk_repr.items():
     upblk_src = tr.behavioral.upblk_srcs[component]
     assert upblk_src == _ref_upblk_repr
-  for component, _ref_freevar_repr in six.iteritems(m._ref_freevar_repr):
+  for component, _ref_freevar_repr in m._ref_freevar_repr.items():
     decl_freevars = tr.behavioral.decl_freevars[component]
     assert decl_freevars == _ref_freevar_repr
-  for component, _ref_tmpvar_repr in six.iteritems(m._ref_tmpvar_repr):
+  for component, _ref_tmpvar_repr in m._ref_tmpvar_repr.items():
     decl_tmpvars = tr.behavioral.decl_tmpvars[component]
     assert decl_tmpvars == _ref_tmpvar_repr
 

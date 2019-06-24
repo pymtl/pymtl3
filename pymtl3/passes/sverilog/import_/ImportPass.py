@@ -761,7 +761,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         args = ifc.get_args()
         for idx, obj in enumerate(args[0]):
           arg_list.append( _get_arg_str( "_ifc_arg"+str(idx), obj ) )
-        for arg_name, arg_obj in six.iteritems(args[1]):
+        for arg_name, arg_obj in args[1].items():
           arg_list.append( arg_name + " = " + _get_arg_str( arg_name, arg_obj ) )
         return name, ', '.join( arg_list )
 

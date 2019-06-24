@@ -24,7 +24,7 @@ import six
 from six.moves import zip
 
 
-class BaseRTLIRDataType( object ):
+class BaseRTLIRDataType:
   """Base abstract RTLIR data type class."""
   def __ne__( s, other ):
     return not s.__eq__( other )
@@ -102,7 +102,7 @@ class Struct( BaseRTLIRDataType ):
 
   def get_all_properties( s ):
     order = { key : i for i, key in enumerate(s.packed_order) }
-    return sorted(six.iteritems(s.properties), key = lambda x: order[x[0]])
+    return sorted(s.properties.items(), key = lambda x: order[x[0]])
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""

@@ -72,7 +72,7 @@ class TestSink( ComponentLevel3 ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.answer
@@ -330,7 +330,7 @@ def test_lots_of_fan_connect():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s" % (s.wire0,s.reg) + \
+            "w0={} > r0={}".format(s.wire0,s.reg) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
@@ -581,12 +581,12 @@ def test_multiple_slices_are_net_writers():
 
 def test_multiple_fields_are_net_writers():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)
 
-  class SomeMsg2( object ):
+  class SomeMsg2:
     def __init__( s, a=0 ):
       s.c = Bits8(a)
 
@@ -612,12 +612,12 @@ def test_multiple_fields_are_net_writers():
 
 def test_multiple_fields_are_assigned():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)
 
-  class SomeMsg2( object ):
+  class SomeMsg2:
     def __init__( s, a=0 ):
       s.c = Bits8(a)
 
@@ -645,7 +645,7 @@ def test_multiple_fields_are_assigned():
 
 def test_const_connect_struct_signal_to_int():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)
@@ -668,7 +668,7 @@ def test_const_connect_struct_signal_to_int():
 
 def test_const_connect_struct_signal_to_Bits():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)

@@ -32,7 +32,7 @@ class SVBehavioralTranslatorL3(
     if isinstance( rtype.get_dtype(), rdt.Struct ):
       return s.rtlir_tr_const_decl( '__const$'+id_, rtype, array_type, dtype, obj )
     else:
-      return super( SVBehavioralTranslatorL3, s ).rtlir_tr_behavioral_freevar(
+      return super().rtlir_tr_behavioral_freevar(
           id_, rtype, array_type, dtype, obj )
 
 #-------------------------------------------------------------------------
@@ -75,4 +75,4 @@ class BehavioralRTLIRToSVVisitorL3( BehavioralRTLIRToSVVisitorL2 ):
         s.check_res( node, attr )
         return '{value}.{attr}'.format( **locals() )
 
-    return super( BehavioralRTLIRToSVVisitorL3, s ).visit_Attribute( node )
+    return super().visit_Attribute( node )

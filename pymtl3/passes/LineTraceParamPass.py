@@ -30,7 +30,7 @@ class LineTraceParamPass( BasePass ):
               # TODO: figure out whether it is necessary to enforce no 
               # positional args.
               assert len( args ) == 0
-              more_args = six.iteritems(self._dsl.param_tree.leaf['line_trace'])
+              more_args = self._dsl.param_tree.leaf['line_trace'].items()
               kwargs.update({ x:y for x, y in more_args })
         return self._ml_trace.line_trace( *args, **kwargs )
 

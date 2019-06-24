@@ -73,7 +73,7 @@ class TestSink( ComponentLevel2 ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.answer
@@ -151,7 +151,7 @@ def test_invalid_dependency():
 
 def test_variable_not_declared():
 
-  class SomeMsg( object ):
+  class SomeMsg:
 
     def __init__( s, a=0, b=0 ):
       s.a = int( a )
@@ -297,7 +297,7 @@ def test_write_two_disjoint_slices():
 def test_wr_A_b_rd_A_impl():
 
 
-  class SomeMsg( object ):
+  class SomeMsg:
 
     def __init__( s, a=0, b=0 ):
       s.a = int(a)
@@ -358,7 +358,7 @@ def test_add_loopback():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+            "w0={} > r0={} > w1={}".format(s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
   _test_model( Top )
 
@@ -395,7 +395,7 @@ def test_add_loopback_on_edge():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+            "w0={} > r0={} > w1={}".format(s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )

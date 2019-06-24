@@ -22,8 +22,8 @@ def collect_objs( m, Type ):
     return False
 
   ret = []
-  for name, obj in six.iteritems(vars(m)):
-    if isinstance( name, six.string_types ) and not name.startswith( '_' ):
+  for name, obj in vars(m).items():
+    if isinstance( name, str ) and not name.startswith( '_' ):
       if _is_of_type( obj, Type ):
         ret.append( ( name, obj ) )
   return ret

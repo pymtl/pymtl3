@@ -29,7 +29,7 @@ from six.moves import range
 # from collections import OrderedDict as ord_dict
 
 
-class DSLMetadata(object):
+class DSLMetadata:
   pass
 
 # NOTE: We found that the built-in OrderedDict slows down the elaboration
@@ -38,7 +38,7 @@ class DSLMetadata(object):
 # to other primitive data structures such as list or dict. We have to
 # implement our own ordered dictionary to mitigate this overhead.
 # TODO: When we move to python3, we won't need this any more.
-class ord_dict( object ):
+class ord_dict:
   def __init__( self ):
     self.data = []
 
@@ -74,13 +74,12 @@ class ord_dict( object ):
     raise KeyError( "Key error:{}".format( key ) )
 
   def iteritems( self ):
-    for k, v in self.data:
-      yield k, v
+    yield from self.data
 
   items = iteritems
 
 # Special data structure for constructing the parameter tree.
-class ParamTreeNode(object):
+class ParamTreeNode:
   def __init__( self ):
     self.compiled_re = None
     self.children = None
@@ -92,7 +91,7 @@ class ParamTreeNode(object):
       # Lazily create leaf
       if self.leaf is None:
         self.leaf = {}
-      for func_name, subdict in six.iteritems(other.leaf):
+      for func_name, subdict in other.leaf.items():
         if func_name not in self.leaf:
           self.leaf[ func_name ] = {}
         self.leaf[ func_name ].update( subdict )
@@ -102,7 +101,7 @@ class ParamTreeNode(object):
       # Lazily create children
       if self.children is None:
         self.children = ord_dict()
-      for comp_name, node in six.iteritems(other.children):
+      for comp_name, node in other.children.items():
         if comp_name in self.children:
           self.children[ comp_name ].merge( node )
         else:
@@ -126,7 +125,7 @@ class ParamTreeNode(object):
         if '*' in comp_name:
           new_node.compiled_re = re.compile( comp_name )
           # Recursively update exisiting nodes that matches the regex
-          for name, node in six.iteritems(cur_node.children):
+          for name, node in cur_node.children.items():
             if node.compiled_re is None:
               if new_node.compiled_re.match( name ):
                 node.add_params( strs[idx:], func_name, **kwargs )
@@ -148,11 +147,11 @@ class ParamTreeNode(object):
   def __repr__( self ):
     return "\nleaf:{}\nchildren:{}".format( self.leaf, self.children )
 
-class NamedObject(object):
+class NamedObject:
 
   def __new__( cls, *args, **kwargs ):
 
-    inst = super( NamedObject, cls ).__new__( cls )
+    inst = super().__new__( cls )
     inst._dsl = DSLMetadata() # TODO an actual object?
 
     # Save parameters for elaborate
@@ -208,7 +207,7 @@ class NamedObject(object):
             # Iterate through the param_tree and update u
             if s._dsl.param_tree is not None:
               if s._dsl.param_tree.children is not None:
-                for comp_name, node in six.iteritems(s._dsl.param_tree.children):
+                for comp_name, node in s._dsl.param_tree.children.items():
                   if comp_name == u_name:
                     # Lazily create the param tree
                     if u._dsl.param_tree is None:
@@ -243,7 +242,7 @@ class NamedObject(object):
           for i, v in enumerate( u ):
             stack.append( (v, indices+[i]) )
 
-    super( NamedObject, s ).__setattr__( name, obj )
+    super().__setattr__( name, obj )
 
   # It is possible to take multiple filters
   def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
@@ -257,12 +256,12 @@ class NamedObject(object):
           if filt[i]( u ): # Check if m satisfies the filter
             ret[i].add( u )
 
-        for name, obj in six.iteritems(u.__dict__):
+        for name, obj in u.__dict__.items():
 
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice
 
-          if   isinstance( name, six.string_types ): # python2 specific
+          if   isinstance( name, str ): # python2 specific
             if not name.startswith("_"): # filter private variables
               stack.append( obj )
 
@@ -280,7 +279,7 @@ class NamedObject(object):
     try:
       return s._dsl.full_name
     except AttributeError:
-      return super( NamedObject, s ).__repr__()
+      return super().__repr__()
 
   #-----------------------------------------------------------------------
   # Construction time APIs

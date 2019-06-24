@@ -18,7 +18,7 @@ from __future__ import absolute_import, division, print_function
 from six.moves import zip
 
 
-class constructor( object ):
+class constructor:
   """Class of constructors that create the behavioral RTLIR AST node types."""
 
   impl_template = \

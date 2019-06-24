@@ -133,7 +133,7 @@ def {}():
       var.update( globals() )
       exec(( compile( src, filename=repr(s), mode="exec") ), var)
 
-    for hostobj, allsrc in six.iteritems(hostobj_allsrc):
+    for hostobj, allsrc in hostobj_allsrc.items():
       compile_upblks( hostobj, allsrc )
 
     # Get the final list of update blocks
@@ -168,12 +168,12 @@ def {}():
     constraint_objs = defaultdict(set)
 
     for data in [ upblk_reads, genblk_reads ]:
-      for blk, reads in six.iteritems(data):
+      for blk, reads in data.items():
         for rd in reads:
           read_upblks[ rd ].add( blk )
 
     for data in [ upblk_writes, genblk_writes ]:
-      for blk, writes in six.iteritems(data):
+      for blk, writes in data.items():
         for wr in writes:
           write_upblks[ wr ].add( blk )
 
@@ -186,7 +186,7 @@ def {}():
         equal_blks  = write_upblks
 
       # enumerate variable objects
-      for obj, constrained_blks in six.iteritems(constraints):
+      for obj, constrained_blks in constraints.items():
 
         # enumerate upblks that has a constraint with x
         for (sign, co_blk) in constrained_blks:
@@ -219,7 +219,7 @@ def {}():
     # 2) RD A.b[1:10] - WR A.b[1:10], A.b, A
     # 3) RD A.b[1:10] - WR A.b[0:5], A.b[6], A.b[8:11]
 
-    for obj, rd_blks in six.iteritems(read_upblks):
+    for obj, rd_blks in read_upblks.items():
       writers = []
 
       # Check parents. Cover 1) and 2)
@@ -253,7 +253,7 @@ def {}():
     # 4) WR A.b[1:10], A.b[0:5], A.b[6] (detect 2-writer conflict)
     # "WR A.b[1:10] - RD A.b[0:5], A.b[6], A.b[8:11]" has been discovered
 
-    for obj, wr_blks in six.iteritems(write_upblks):
+    for obj, wr_blks in write_upblks.items():
       readers = []
 
       # Check parents. Cover 2) and 3). 1) and 4) should be detected in elaboration
@@ -330,7 +330,7 @@ def {}():
 
     # Collect each CalleePort/method is called in which update block
     # We use the actual method of CalleePort to identify each call
-    for blk, calls in six.iteritems(top._dsl.all_upblk_calls):
+    for blk, calls in top._dsl.all_upblk_calls.items():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
@@ -434,7 +434,7 @@ def {}():
 
     all_upblks = top.get_all_update_blocks()
 
-    for method, assoc_blks in six.iteritems(method_blks):
+    for method, assoc_blks in method_blks.items():
       visited = {  (method, 0)  }
       Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
 

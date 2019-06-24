@@ -11,7 +11,7 @@ import six
 from six.moves import zip
 
 
-class BaseBehavioralRTLIR( object ):
+class BaseBehavioralRTLIR:
   """Base class for all behavioral RTLIR AST nodes."""
   def __eq__( s, other ):
     return type(s) is type(other)
@@ -329,7 +329,7 @@ class Gt( BaseBehavioralRTLIR ):
 class GtE( BaseBehavioralRTLIR ):
   pass
 
-class BehavioralRTLIRNodeVisitor( object ):
+class BehavioralRTLIRNodeVisitor:
   """Class for behavioral RTLIR AST visitors."""
   def visit( self, node, *args ):
     method = 'visit_' + node.__class__.__name__
@@ -337,7 +337,7 @@ class BehavioralRTLIRNodeVisitor( object ):
     return visitor( node, *args )
 
   def generic_visit( self, node, *args ):
-    for field, value in six.iteritems(vars(node)):
+    for field, value in vars(node).items():
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, BaseBehavioralRTLIR ):

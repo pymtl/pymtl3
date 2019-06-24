@@ -22,7 +22,7 @@ from six.moves import range
 class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
 
   def __init__( s, top ):
-    super( YosysStructuralTranslatorL1, s ).__init__( top )
+    super().__init__( top )
     s.deq = deque()
 
   #-----------------------------------------------------------------------
