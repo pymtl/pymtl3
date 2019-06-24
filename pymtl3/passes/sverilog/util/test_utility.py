@@ -333,7 +333,7 @@ def closed_loop_component_test( dut, data, backend = "sverilog" ):
   """
   # Method to feed data into the DUT
   def tv_in( model, test_vector ):
-    for name, data in six.iteritems(test_vector):
+    for name, data in test_vector.items():
       exec( "model." + name + " = data" )
   test_vector = data.draw( DataStrategy( dut ) )
   closed_loop_component_input_test( dut, test_vector, tv_in, backend )

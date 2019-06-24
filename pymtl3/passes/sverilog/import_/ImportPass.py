@@ -246,7 +246,8 @@ Fail to verilate model {} in file {}
         cmd = ['pkg-config', '--variable=includedir', 'verilator']
         try:
           verilator_include_dir = \
-            subprocess.check_output( cmd, stderr=subprocess.STDOUT ).strip()
+            subprocess.check_output( cmd, stderr=subprocess.STDOUT,
+                                     universal_newlines=True ).strip()
         except OSError:
           assert False, \
 """\
@@ -301,7 +302,8 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 
       # Try to call the C compiler
       try:
-        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
+        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True,
+                                 universal_newlines=True )
       except subprocess.CalledProcessError as e:
         assert False, \
 """\

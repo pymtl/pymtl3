@@ -17,7 +17,6 @@ Author : Christopher Batten, Shunning Jiang
 from __future__ import absolute_import, division, print_function
 
 import struct
-from string import maketrans, translate
 
 from pymtl3 import *
 
@@ -325,8 +324,8 @@ class IsaImpl (object):
       # translate non-whitespace deliminters into whitespace so that we
       # can use split.
 
-      translation_table = maketrans(",()","   ")
-      inst_field_tags = translate(inst_tmpl,translation_table).split()
+      translation_table = str.maketrans(",()","   ")
+      inst_field_tags = str.translate(inst_tmpl,translation_table).split()
 
       # Create the list of asm field functions
 

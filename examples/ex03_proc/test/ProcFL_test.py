@@ -12,7 +12,7 @@ import random
 random.seed(0xdeadbeef)
 
 from pymtl3  import *
-from harness import asm_test, assemble, TestHarness
+from .harness import asm_test, assemble, TestHarness
 from examples.ex03_proc.ProcFL import ProcFL
 import inst_add
 import inst_and

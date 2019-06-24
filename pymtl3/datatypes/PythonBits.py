@@ -146,7 +146,7 @@ class Bits( object ):
   def __ge__( self, other ):
     return Bits( 1, int(self.value) >= int(other) )
 
-  def __nonzero__( self ):
+  def __bool__( self ):
     return int(self.value) != 0
 
   def __int__( self ):
