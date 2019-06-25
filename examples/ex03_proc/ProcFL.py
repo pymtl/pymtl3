@@ -7,7 +7,6 @@ TinyRV0 FL proc.
 Author : Shunning Jiang
   Date : June 14, 2019
 """
-from collections import deque
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL

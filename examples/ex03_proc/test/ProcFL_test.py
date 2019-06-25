@@ -11,19 +11,21 @@ import random
 
 import pytest
 
-import inst_add
-import inst_addi
-import inst_and
-import inst_bne
-import inst_csr
-import inst_lw
-import inst_sll
-import inst_srl
-import inst_sw
-import inst_xcel
 from examples.ex03_proc.ProcFL import ProcFL
 from pymtl3 import *
 
+from . import (
+    inst_add,
+    inst_addi,
+    inst_and,
+    inst_bne,
+    inst_csr,
+    inst_lw,
+    inst_sll,
+    inst_srl,
+    inst_sw,
+    inst_xcel,
+)
 from .harness import TestHarness, asm_test, assemble
 
 random.seed(0xdeadbeef)

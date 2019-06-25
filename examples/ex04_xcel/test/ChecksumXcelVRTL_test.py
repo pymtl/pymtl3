@@ -91,6 +91,7 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
     th.dut.yosys_translate = True
+    print(type(th.dut))
     th.dut.yosys_import = True
     th.apply( TranslationPass() )
     th = ImportPass()( th )

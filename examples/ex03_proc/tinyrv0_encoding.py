@@ -234,7 +234,7 @@ def disassemble_field_s_imm( bits ):
 
 def assemble_field_b_imm( bits, sym, pc, field_str ):
 
-  if sym.has_key( field_str ):
+  if field_str in sym:
     # notice that we encode the branch target address (a lable) relative
     # to current PC
     btarg_byte_addr = sym[field_str] - pc
@@ -407,8 +407,8 @@ class IsaImpl (object):
     # we translate non-whitespace deliminters into whitespace so that
     # we can use split.
 
-    translation_table = maketrans(",()","   ")
-    asm_field_strs = translate(inst_str,translation_table).split()
+    translation_table = str.maketrans(",()","   ")
+    asm_field_strs = str.translate(inst_str,translation_table).split()
 
     # Retrieve the list of asm field functions for this instruction
 
@@ -444,7 +444,7 @@ class IsaImpl (object):
     # Apply these asm field functions to create the disasm string
 
     inst_str = inst_tmpl
-    for inst_field_tag,disasm_field_func in disasm_field_funcs.iteritems():
+    for inst_field_tag,disasm_field_func in disasm_field_funcs.items():
       field_str = disasm_field_func( inst_bits )
       inst_str = inst_str.replace( inst_field_tag, field_str )
 
@@ -544,7 +544,7 @@ def assemble( asm_code ):
 
     # duplicate the bytes and no more mngr2proc/proc2mngr
 
-    for i in xrange( num_cores ):
+    for i in range( num_cores ):
       mngrs2procs_bytes.append( bytearray() )
       mngrs2procs_bytes[i][:] = mngr2proc_bytes
 
@@ -589,7 +589,7 @@ def assemble( asm_code ):
               num_cores   = len(values)
               duplicate()
 
-            for i in xrange( num_cores ):
+            for i in range( num_cores ):
               mngrs2procs_bytes[i].extend(struct.pack("<I", Bits(32, values[i]) ))
 
           else:
@@ -619,7 +619,7 @@ def assemble( asm_code ):
               num_cores   = len(values)
               duplicate()
 
-            for i in xrange( num_cores ):
+            for i in range( num_cores ):
               procs2mngrs_bytes[i].extend(struct.pack("<I", Bits(32, values[i]) ))
 
           else:
@@ -697,14 +697,14 @@ def assemble( asm_code ):
 
   else:
 
-    for i in xrange( len(mngrs2procs_bytes) ):
+    for i in range( len(mngrs2procs_bytes) ):
       img = SparseMemoryImage.Section( ".mngr{}_2proc".format(i),
                                        0x15000+0x1000*i, mngrs2procs_bytes[i] )
 
       if len( img.data ) > 0:
         mem_image.add_section( img )
 
-    for i in xrange( len(procs2mngrs_bytes) ):
+    for i in range( len(procs2mngrs_bytes) ):
       img = SparseMemoryImage.Section( ".proc{}_2mngr".format(i),
                                        0x16000+0x2000*i, procs2mngrs_bytes[i] )
       if len( img.data ) > 0:
@@ -729,7 +729,7 @@ def disassemble( mem_image ):
 
   addr = text_section.addr
   asm_code = ""
-  for i in xrange(0,len(text_section.data),4):
+  for i in range(0,len(text_section.data),4):
     bits = struct.unpack_from("<I",buffer(text_section.data,i,4))[0]
     inst_str= disassemble_inst( Bits(32,bits) )
     disasm_line = " {:0>8x}  {:0>8x}  {}\n".format( addr+i, bits, inst_str )
@@ -846,7 +846,7 @@ class TinyRV0Inst (object):
 class RegisterFile(object):
 
   def __init__( self, nregs ):
-    self.regs = [ Bits32(0) for i in xrange(nregs) ]
+    self.regs = [ Bits32(0) for i in range(nregs) ]
 
   def __getitem__( self, idx ):
     return self.regs[idx]

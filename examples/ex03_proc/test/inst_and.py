@@ -2,10 +2,10 @@
 # and
 #=========================================================================
 
-import random
 
-from inst_utils import *
 from pymtl3 import *
+
+from .inst_utils import *
 
 #-------------------------------------------------------------------------
 # gen_and_basic_test

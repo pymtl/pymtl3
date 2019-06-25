@@ -7,7 +7,6 @@ TinyRV0 CL proc.
 Author : Shunning Jiang
   Date : June 14, 2019
 """
-from collections import deque
 from enum import Enum
 
 from pymtl3 import *

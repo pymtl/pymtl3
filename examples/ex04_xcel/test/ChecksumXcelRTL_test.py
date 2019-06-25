@@ -11,7 +11,7 @@ from pymtl3 import *
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import ChecksumXcelCL_Tests as BaseTests
-from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as BaseTests
+from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as SrcSinkBaseTests
 from .ChecksumXcelCL_test import mk_xcel_transaction
 
 #-------------------------------------------------------------------------
@@ -83,7 +83,7 @@ class ChecksumXcelRTL_Tests( BaseTests ):
 # need to provide a different DutType in the setup_class.
 
 
-class ChecksumXcelRTLSrcSink_Tests( BaseTests ):
+class ChecksumXcelRTLSrcSink_Tests( SrcSinkBaseTests ):
 
   @classmethod
   def setup_class( cls ):

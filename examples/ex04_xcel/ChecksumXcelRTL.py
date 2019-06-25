@@ -18,6 +18,8 @@ from pymtl3.stdlib.rtl.registers import Reg
 # TODO: add more comments.
 class ChecksumXcelRTL( Component ):
   def construct( s ):
+    # FIXME gc??
+    # s.x = bytearray(2**25)
 
     # Interface
 

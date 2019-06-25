@@ -119,7 +119,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
       def add_all( obj, obj_list, node_depth ):
         """ Already found, but it is an array of objects,
-            s.x = [ [ A() for _ in xrange(2) ] for _ in xrange(3) ].
+            s.x = [ [ A() for _ in range(2) ] for _ in range(3) ].
             Recursively collect all signals. """
         if   isinstance( obj, NamedObject ):
           obj_list.add( obj )

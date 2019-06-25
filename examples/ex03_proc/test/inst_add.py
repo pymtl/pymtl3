@@ -4,8 +4,9 @@
 
 import random
 
-from inst_utils import *
 from pymtl3 import *
+
+from .inst_utils import *
 
 #-------------------------------------------------------------------------
 # gen_basic_test
@@ -155,7 +156,7 @@ def gen_value_test():
 
 def gen_random_test():
   asm_code = []
-  for i in xrange(50):
+  for i in range(50):
     src0 = Bits( 32, random.randint(0,0xffffffff) )
     src1 = Bits( 32, random.randint(0,0xffffffff) )
     dest = src0 + src1

@@ -4,8 +4,9 @@
 
 import random
 
-from inst_utils import *
 from pymtl3 import *
+
+from .inst_utils import *
 
 #-------------------------------------------------------------------------
 # gen_basic_test
@@ -160,13 +161,13 @@ def gen_random_test():
   # Generate some random data
 
   data = []
-  for i in xrange(128):
+  for i in range(128):
     data.append( random.randint(0,0xffffffff) )
 
   # Generate random accesses to this data
 
   asm_code = []
-  for i in xrange(50):
+  for i in range(50):
 
     a = random.randint(0,127)
     b = random.randint(0,127)

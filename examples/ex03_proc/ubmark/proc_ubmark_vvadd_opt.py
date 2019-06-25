@@ -11,7 +11,6 @@
 # }
 
 import struct
-from string import maketrans, translate
 
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 from examples.ex03_proc.tinyrv0_encoding import assemble

@@ -12,9 +12,9 @@ import random
 import pytest
 
 from examples.ex03_proc.ProcRTL import ProcRTL
-from harness import asm_test, assemble
 from pymtl3 import *
 
+from .harness import asm_test, assemble
 from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
 random.seed(0xdeadbeef)

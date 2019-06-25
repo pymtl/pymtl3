@@ -64,7 +64,7 @@ class BehavioralRTLIRNodeVisitor( object ):
     return visitor( node, *args )
 
   def generic_visit( self, node, *args ):
-    for field, value in vars(node).iteritems():
+    for field, value in vars(node).items():
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, BaseBehavioralRTLIR ):
@@ -126,7 +126,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     ret = ''
     if isinstance( node.Type, BaseRTLIRType ):
       ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in vars(node.Type).iteritems():
+      for name, obj in vars(node.Type).items():
         obj_str = s.get_str( obj )
         if not isinstance( obj, dict ):
           ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'

@@ -8,6 +8,7 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 
+from functools import reduce
 
 from pymtl3 import *
 

@@ -98,7 +98,7 @@ class SparseMemoryImage (object):
   #-----------------------------------------------------------------------
 
   def print_symbol_table( self ):
-    for key,value in self.symbols.iteritems():
+    for key,value in self.symbols.items():
       print( " {:0>8x} {}".format( value, key ) )
 
 #-------------------------------------------------------------------------

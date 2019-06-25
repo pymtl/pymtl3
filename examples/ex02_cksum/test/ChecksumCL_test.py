@@ -7,6 +7,8 @@ Test cases for CL checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
+from functools import reduce
+
 import hypothesis
 from hypothesis import strategies as st
 

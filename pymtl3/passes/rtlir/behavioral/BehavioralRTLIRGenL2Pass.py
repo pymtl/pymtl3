@@ -126,30 +126,30 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     var = bir.LoopVarDecl( node.target.id )
     if not isinstance( node.iter, ast.Call ):
       raise PyMTLSyntaxError( s.blk, node,
-        "for loops can only use (x)range() after 'in'!" )
-    if not node.iter.func.id in [ 'xrange', 'range' ]:
+        "for loops can only use range() after 'in'!" )
+    if node.iter.func.id != 'range':
       raise PyMTLSyntaxError( s.blk, node,
-        "for loops can only use (x)range() after 'in'!" )
+        "for loops can only use range() after 'in'!" )
     args = node.iter.args
 
     if len( args ) == 1:
-      # xrange( end )
+      # range( end )
       start = bir.Number( 0 )
       end = s.visit( args[0] )
       step = bir.Number( 1 )
     elif len( args ) == 2:
-      # xrange( start, end )
+      # range( start, end )
       start = s.visit( args[0] )
       end = s.visit( args[1] )
       step = bir.Number( 1 )
     elif len( args ) == 3:
-      # xrange( start, end, step )
+      # range( start, end, step )
       start = s.visit( args[0] )
       end = s.visit( args[1] )
       step = s.visit( args[2] )
     else:
       raise PyMTLSyntaxError( s.blk, node,
-        "1~3 arguments should be given to (x)range!" )
+        "1~3 arguments should be given to range!" )
 
     # Then visit all statements inside the loop
     body = []
