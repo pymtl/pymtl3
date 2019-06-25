@@ -7,8 +7,6 @@ TinyRV0 FL proc.
 Author : Shunning Jiang
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3 import *

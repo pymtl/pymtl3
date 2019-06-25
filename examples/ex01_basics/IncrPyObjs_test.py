@@ -16,8 +16,6 @@ Author : Yanghui Ou
   Date : June 17, 2019
 
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 #-------------------------------------------------------------------------
@@ -108,4 +106,3 @@ def test_py_objs():
   for i in range( 6 ):
     incr.tick()
     print("{:2}: {}".format( i, incr.line_trace() ))
-

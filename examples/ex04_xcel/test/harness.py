@@ -10,15 +10,13 @@ Author : Shunning Jiang
 
 import struct
 
-from pymtl3 import *
-
-from pymtl3.passes import DynamicSim
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test  import TestSrcCL, TestSinkCL
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
+from pymtl3 import *
+from pymtl3.passes import DynamicSim
+from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 #=========================================================================
 # TestHarness
@@ -176,4 +174,3 @@ def run_test( ProcModel, XcelModel, gen_test, dump_vcd=None,
   th.tick()
   th.tick()
   th.tick()
-

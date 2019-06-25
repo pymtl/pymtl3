@@ -17,8 +17,6 @@ DelayPipeDeqCL before sending it out the send interface.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.cl.DelayPipeCL import DelayPipeDeqCL
 from pymtl3.stdlib.cl.queues import PipeQueueCL
@@ -70,4 +68,3 @@ class ChecksumCL( Component ):
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
-

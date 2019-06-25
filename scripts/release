@@ -46,14 +46,14 @@
 #
 
 import argparse
-import sys
-import re
-import os
-import shutil
-import yaml
 import collections
+import os
+import re
+import shutil
+import sys
 
 import common
+import yaml
 from common import *
 
 #-------------------------------------------------------------------------
@@ -463,4 +463,3 @@ def main():
   vprint("")
 
 main()
-

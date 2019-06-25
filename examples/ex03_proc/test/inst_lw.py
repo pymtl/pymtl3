@@ -4,8 +4,8 @@
 
 import random
 
-from pymtl3 import *
 from inst_utils import *
+from pymtl3 import *
 
 #-------------------------------------------------------------------------
 # gen_basic_test
@@ -181,4 +181,3 @@ def gen_random_test():
 
   asm_code.append( gen_word_data( data ) )
   return asm_code
-

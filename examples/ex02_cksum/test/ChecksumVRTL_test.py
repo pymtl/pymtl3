@@ -7,15 +7,15 @@ Test cases for translated checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationPass, ImportPass
+from pymtl3.passes.yosys import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
 from ..utils import b128_to_words, words_to_b128
+from .ChecksumRTL_test import ChecksumRTL_Tests as BaseTests
+from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
@@ -69,7 +69,6 @@ def checksum_vrtl( words ):
 # inherit from the CL test class and overwrite cksum_func to use the rtl
 # version instead.
 
-from .ChecksumRTL_test import ChecksumRTL_Tests as BaseTests
 
 class ChecksumVRTL_Tests( BaseTests ):
 
@@ -84,7 +83,6 @@ class ChecksumVRTL_Tests( BaseTests ):
 # [run_sim] of the CL test suite so that we can apply the translation and
 # import pass to the DUT.
 
-from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
 
 class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 

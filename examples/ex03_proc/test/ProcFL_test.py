@@ -7,23 +7,27 @@ Includes test cases for the functional level TinyRV0 processor.
 Author : Shunning Jiang, Yanghui Ou
   Date : June 12, 2019
 """
-import pytest
 import random
-random.seed(0xdeadbeef)
 
-from pymtl3  import *
-from .harness import asm_test, assemble, TestHarness
-from examples.ex03_proc.ProcFL import ProcFL
+import pytest
+
 import inst_add
+import inst_addi
 import inst_and
+import inst_bne
+import inst_csr
+import inst_lw
 import inst_sll
 import inst_srl
-import inst_bne
-import inst_addi
-import inst_lw
 import inst_sw
-import inst_csr
 import inst_xcel
+from examples.ex03_proc.ProcFL import ProcFL
+from pymtl3 import *
+
+from .harness import TestHarness, asm_test, assemble
+
+random.seed(0xdeadbeef)
+
 
 #-------------------------------------------------------------------------
 # ProcFL_Tests

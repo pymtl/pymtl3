@@ -9,8 +9,6 @@ Author : Shunning Jiang
   Date : June 15, 2019
 """
 
-from __future__ import absolute_import, division, print_function
-
 import struct
 
 from examples.ex03_proc.NullXcel import NullXcelRTL

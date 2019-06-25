@@ -20,6 +20,9 @@ import argparse
 import os
 import sys
 
+from examples.ex03_proc.ProcRTL import ProcRTL
+from pymtl3.passes.yosys import TranslationPass
+
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while cur_dir:
   if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):
@@ -29,11 +32,9 @@ while cur_dir:
 
 # Import the RTL processor
 
-from examples.ex03_proc.ProcRTL import ProcRTL
 
 # Import the translation pass from yosys backend
 
-from pymtl3.passes.yosys import TranslationPass
 
 #=========================================================================
 # Command line processing

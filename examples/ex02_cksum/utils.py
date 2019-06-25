@@ -7,7 +7,7 @@ Helper functions for the checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
+
 
 from pymtl3 import *
 
@@ -28,4 +28,3 @@ def b128_to_words( bits ):
   assert bits.nbits == 128
   words = [ bits[i*16:(i+1)*16] for i in range( 8 ) ]
   return words
-

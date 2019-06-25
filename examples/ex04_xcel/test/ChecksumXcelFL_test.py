@@ -7,8 +7,7 @@ Tests for the functional level checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
+from examples.ex02_cksum.test.ChecksumCL_test import ChecksumCL_Tests as BaseTests
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import mk_xcel_msg
 
@@ -44,7 +43,6 @@ def checksum_xcel_fl( words ):
 #-------------------------------------------------------------------------
 # We reuse the extened function tests in ex02_cksum.test.ChecksumCL_test.
 
-from examples.ex02_cksum.test.ChecksumCL_test import ChecksumCL_Tests as BaseTests
 
 # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Implement the tests for ChecksumXcelFL

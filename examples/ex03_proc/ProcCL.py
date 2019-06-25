@@ -7,8 +7,6 @@ TinyRV0 CL proc.
 Author : Shunning Jiang
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 from enum import Enum
 
@@ -20,7 +18,8 @@ from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcCL
 from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType, mk_xcel_msg
 
-from .tinyrv0_encoding import disassemble_inst, RegisterFile, TinyRV0Inst
+from .tinyrv0_encoding import RegisterFile, TinyRV0Inst, disassemble_inst
+
 
 class DXM_W(Enum):
   mem   = 1

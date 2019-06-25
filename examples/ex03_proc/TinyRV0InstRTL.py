@@ -21,8 +21,6 @@ Author : Shunning Jiang
   Date : June 14, 2019
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 #-------------------------------------------------------------------------

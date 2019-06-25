@@ -4,8 +4,8 @@
 
 import random
 
-from pymtl3 import *
 from inst_utils import *
+from pymtl3 import *
 
 #-------------------------------------------------------------------------
 # gen_basic_asm_test

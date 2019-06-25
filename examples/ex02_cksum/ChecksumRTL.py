@@ -10,8 +10,6 @@ calculates both sum1 and sum2).
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.rtl.queues import PipeQueueRTL
@@ -101,4 +99,3 @@ class ChecksumRTL( Component ):
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
-

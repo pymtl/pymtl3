@@ -7,13 +7,12 @@ Test cases for translated RTL checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationPass, ImportPass
+from pymtl3.passes.yosys import ImportPass, TranslationPass
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction
+from .ChecksumXcelRTL_test import ChecksumXcelRTL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # Wrap Xcel into a function
@@ -72,7 +71,6 @@ def checksum_xcel_vrtl( words ):
 #-------------------------------------------------------------------------
 # We reuse the function tests in ChecksumXcelFL_test.
 
-from .ChecksumXcelRTL_test import ChecksumXcelRTL_Tests as BaseTests
 
 class ChecksumXcelVRTL_Tests( BaseTests ):
 

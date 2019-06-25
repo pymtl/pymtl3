@@ -7,19 +7,18 @@ Test cases for CL checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import hypothesis
 from hypothesis import strategies as st
-from pymtl3.datatypes import strategies as pm_st
 
 from pymtl3 import *
+from pymtl3.datatypes import strategies as pm_st
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumCL import ChecksumCL
 from ..ChecksumFL import checksum
 from ..utils import b128_to_words, words_to_b128
+from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # WrappedChecksumCL
@@ -78,7 +77,6 @@ def checksum_cl( words ):
 # test cases. Here we also extend the test case by adding a hypothesis
 # test that compares the CL implementation against the FL as reference.
 
-from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 class ChecksumCL_Tests( BaseTests ):
 
@@ -285,4 +283,3 @@ class ChecksumCLSrcSink_Tests( object ):
     th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
     th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
     s.run_sim( th )
-
