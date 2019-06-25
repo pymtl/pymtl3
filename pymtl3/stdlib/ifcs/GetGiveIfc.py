@@ -7,8 +7,6 @@ RTL implementation of en/rdy micro-protocol.
 Author: Yanghui Ou
   Date: Mar 19, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import greenlet
 
 from pymtl3 import *

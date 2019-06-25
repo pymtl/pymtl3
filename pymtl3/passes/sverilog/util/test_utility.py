@@ -5,8 +5,6 @@
 # Date   : Jun 5, 2019
 """Provide utility methods for testing."""
 
-from __future__ import absolute_import, division, print_function
-
 import copy
 from collections import deque
 
@@ -21,8 +19,6 @@ from pymtl3.passes.sverilog import TranslationPass as SVTranslationPass
 from pymtl3.passes.yosys import ImportPass as YosysImportPass
 from pymtl3.passes.yosys import TranslationPass as YosysTranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
-import six
-from six.moves import range
 
 
 def flatten( _rtype ):
@@ -169,7 +165,7 @@ def InterfaceDataStrategy( draw, id_, ifc ):
       data.update(draw(InterfaceDataStrategy(id_+"."+prop_name, prop_rtype)))
   return data
 
-@st.composite 
+@st.composite
 def ArrayDataStrategy( draw, id_, n_dim, subtype ):
   if not n_dim:
     if isinstance( subtype, rt.Port ):
@@ -326,7 +322,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
 
 def closed_loop_component_test( dut, data, backend = "sverilog" ):
   """Test the DUT with the given test_vector.
-  
+
   User who wish to use this method should pass in the hypothesis data
   strategy instance as `data`. This method will reflect on the interfaces
   and ports of the given DUT and generate input vector.

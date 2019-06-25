@@ -15,8 +15,6 @@ We collect one type of explicit constraints at this level:
 Author : Shunning Jiang
 Date   : Nov 3, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import re
 
 from .ConstraintTypes import U

@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 import (
@@ -14,7 +12,6 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 impo
 )
 
 from .YosysStructuralTranslatorL1 import YosysStructuralTranslatorL1
-from six.moves import range
 
 
 class YosysStructuralTranslatorL2(
@@ -196,7 +193,7 @@ class YosysStructuralTranslatorL2(
   #-----------------------------------------------------------------------
   # Signal operations
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_packed_index( s, base_signal, index ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )

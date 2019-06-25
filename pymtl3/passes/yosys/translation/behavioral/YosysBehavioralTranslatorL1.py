@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L1 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits, BitStruct
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt

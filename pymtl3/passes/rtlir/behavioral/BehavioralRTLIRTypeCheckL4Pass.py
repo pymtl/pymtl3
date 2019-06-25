@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 30, 2019
 """Provide L4 behavioral RTLIR type check pass."""
-from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
 

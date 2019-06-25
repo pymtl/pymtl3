@@ -6,7 +6,6 @@ VcdGenerationPass.py
 Author : Shunning Jiang
 Date   : May 29, 2019
 """
-from __future__ import absolute_import, division, print_function
 
 import time
 from collections import defaultdict
@@ -18,7 +17,6 @@ from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .errors import PassOrderError
-from six.moves import range
 
 
 class VcdGenerationPass( BasePass ):

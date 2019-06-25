@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L4 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL4 import (
     BehavioralRTLIRToSVVisitorL4,
@@ -30,7 +28,7 @@ class YosysBehavioralRTLIRToSVVisitorL4(
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.
-    
+
     Add support for accessing interface attribute in L4.
     """
     if isinstance( node.value.Type, rt.InterfaceView ):

@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 5 SystemVerilog translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -38,7 +37,7 @@ class BehavioralRTLIRToSVVisitorL5( BehavioralRTLIRToSVVisitorL4 ):
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.
-    
+
     Add support for subcomponent attributes in L5.
     """
     # Generate subcomponent attribute

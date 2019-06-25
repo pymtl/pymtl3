@@ -8,10 +8,7 @@ Author : Shunning Jiang
 Date   : Jan 17, 2018
 """
 
-from __future__ import absolute_import, division, print_function
-
 import ast
-from six.moves import range
 
 
 class DetectVarNames( ast.NodeVisitor ):

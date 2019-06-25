@@ -5,10 +5,7 @@
 # Date   : Feb 13, 2019
 """Helper methods for RTLIR."""
 
-from __future__ import absolute_import, division, print_function
-
 from functools import reduce
-import six
 
 
 def collect_objs( m, Type ):

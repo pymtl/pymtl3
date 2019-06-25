@@ -7,8 +7,6 @@ Add method port decorator.
 Author : Yanghui Ou, Shunning Jiang
   Date : Feb 24, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel5 import ComponentLevel5
 from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
 

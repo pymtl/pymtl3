@@ -8,15 +8,10 @@ Author : Shunning Jiang
 Date   : Dec 26, 2018
 """
 
-
-from __future__ import absolute_import, division, print_function
-
 import py
 
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
-from six.moves import map
-from six.moves import range
 
 
 class UnrollTickPass( BasePass ):

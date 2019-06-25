@@ -6,8 +6,6 @@ XcelMsg_test
 Author : Yanghui Ou
   Date : June 3, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 from .XcelMsg import XcelMsgType, mk_xcel_msg, mk_xcel_req_msg, mk_xcel_resp_msg

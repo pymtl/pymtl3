@@ -12,8 +12,6 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.test.TranslationImport_stdlib_test import (
     test_2entry_normal_Bits,

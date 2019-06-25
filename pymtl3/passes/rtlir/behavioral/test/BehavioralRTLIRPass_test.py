@@ -9,8 +9,6 @@ The generation, type check, and visualization passes are invoked. The
 results of generation pass are verifed against a reference AST.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import *
@@ -24,7 +22,6 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl3.passes.rtlir.behavioral.test.BehavioralRTLIRL1Pass_test import XFAIL_ON_PY3
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
-from six.moves import range
 
 
 def local_do_test( m ):

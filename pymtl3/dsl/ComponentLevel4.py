@@ -8,8 +8,6 @@ we only need CalleePort that contains actual method
 Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel3 import ComponentLevel3
 from .Connectable import CalleePort, Signal
 from .ConstraintTypes import M, U

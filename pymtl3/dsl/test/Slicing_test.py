@@ -6,15 +6,12 @@ Slicing_test.py
 Author : Shunning Jiang
 Date   : Aug 23, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits2, Bits4, Bits14, Bits16, Bits24, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import Wire
 from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
 from .sim_utils import simple_sim_pass
-from six.moves import range
 
 
 def _test_model( cls ):

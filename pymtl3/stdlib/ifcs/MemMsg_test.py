@@ -6,8 +6,6 @@ MemMsg_test
 Author : Shunning Jiang
 Date   : Mar 10, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 from .MemMsg import MemMsgType, mk_mem_msg, mk_mem_req_msg, mk_mem_resp_msg

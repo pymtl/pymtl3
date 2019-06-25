@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 20, 2019
 """Provide L1 behavioral RTLIR type check pass."""
-from __future__ import absolute_import, division, print_function
 
 import copy
 from collections import OrderedDict
@@ -16,7 +15,6 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 from . import BehavioralRTLIR as bir
-import six
 
 
 class BehavioralRTLIRTypeCheckL1Pass( BasePass ):

@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the implementation of RTLIR types."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 import pymtl3.dsl as dsl
@@ -15,7 +13,6 @@ from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
-from six.moves import range
 
 
 def test_pymtl3_list_ports():

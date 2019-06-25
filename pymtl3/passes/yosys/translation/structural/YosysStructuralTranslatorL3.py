@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -17,7 +15,6 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 impo
 from pymtl3.passes.sverilog.util.utility import make_indent
 
 from .YosysStructuralTranslatorL2 import YosysStructuralTranslatorL2
-from six.moves import range
 
 
 class YosysStructuralTranslatorL3(
@@ -171,13 +168,13 @@ class YosysStructuralTranslatorL3(
   #-----------------------------------------------------------------------
   # Signal operations
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_interface_array_index( s, base_signal, index ):
     # Interface array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return '{base_signal}[{index}]'.format( **locals() )
-  
+
   def rtlir_tr_interface_attr( s, base_signal, attr ):
     # Interface attribute
     s.deq[-1]['s_attr'] += "${}"

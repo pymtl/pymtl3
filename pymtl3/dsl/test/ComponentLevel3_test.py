@@ -6,8 +6,6 @@ ComponentLevel3_test.py
 Author : Shunning Jiang
 Date   : Dec 25, 2017
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import Bits8, Bits10, Bits32
@@ -17,7 +15,6 @@ from pymtl3.dsl.ConstraintTypes import WR, U
 from pymtl3.dsl.errors import InvalidConnectionError, MultiWriterError
 
 from .sim_utils import simple_sim_pass
-from six.moves import range
 
 
 def _test_model( cls ):

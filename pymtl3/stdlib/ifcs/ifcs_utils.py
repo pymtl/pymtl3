@@ -7,9 +7,6 @@ Utility functions for ifcs.
 Author: Yanghui Ou
   Date: Feb 21, 2019
 """
-
-from __future__ import absolute_import, division, print_function
-
 #-------------------------------------------------------------------------
 # enrdy_to_str
 #-------------------------------------------------------------------------

@@ -7,8 +7,6 @@
 # Author : Yanghui Ou
 #   Date : May 24, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from copy import deepcopy
 
 from pymtl3.datatypes.bits_import import Bits4, Bits5, Bits8, b4, mk_bits

@@ -5,8 +5,6 @@
 # Date   : Jun 5, 2019
 """Closed-loop test with SystemVerilog translation and import."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.passes import DynamicSim
 from pymtl3.passes.rtlir.util.test_utility import do_test

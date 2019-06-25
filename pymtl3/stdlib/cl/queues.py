@@ -8,8 +8,6 @@ Author : Shunning Jiang, Yanghui Ou
 Date   : Mar 10, 2018
 """
 
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3 import *

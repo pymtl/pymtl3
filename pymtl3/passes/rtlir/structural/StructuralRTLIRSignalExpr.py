@@ -3,8 +3,6 @@
 #=========================================================================
 """RTLIR signal expression class definitions and generation method."""
 
-from __future__ import absolute_import, division, print_function
-
 from functools import reduce
 
 import pymtl3.dsl as dsl
@@ -39,7 +37,7 @@ class BaseSignalExpr( object ):
 
 class _Index( BaseSignalExpr ):
   """Base IR class for all index signal operations.
-  
+
   This class implements a series of static methods that is called to tell
   if the current index signal operation is indexing on a signal of packed
   data type array or a bit selection.
@@ -85,7 +83,7 @@ class _Index( BaseSignalExpr ):
 
 class _UnpackedIndex( _Index ):
   """Base IR class for all index signal operations on unpacked arrays.
-  
+
   Unpacked indexing operations include indexing on a port array, a wire
   array, a const array, an interface array, and a component array. This class
   implements a series of static methods to check if the given signal operation
@@ -148,7 +146,7 @@ class _UnpackedIndex( _Index ):
 
 class _Slice( BaseSignalExpr ):
   """Base IR class for all slicing signal operations.
-  
+
   This class implements a single static method which checks if the given
   signal operation is slicing a vector signal (a.k.a. a part selection).
   """
@@ -192,7 +190,7 @@ class _Slice( BaseSignalExpr ):
 
 class _Attribute( BaseSignalExpr ):
   """Base IR class for all attribute accessing signal operations.
-  
+
   This class implements a series of static methods to check if the given signal
   operation is accessing attribute of the current component, a subcompoennt,
   an interface, or a field in a struct signal.
@@ -263,7 +261,7 @@ class _Attribute( BaseSignalExpr ):
 
 class ConstInstance( BaseSignalExpr ):
   """IR class for a constant instance.
-  
+
   This class is for constants that appear in signal operations and is not
   an attribute of a component.
   """
@@ -283,7 +281,7 @@ class ConstInstance( BaseSignalExpr ):
 
 class CurComp( BaseSignalExpr ):
   """IR class for the current component.
-  
+
   This class is the base of most signal expressions because most signal
   expressions begin by accessing an attribute of the current component.
   This class implements a static method which checks if the given name
@@ -414,7 +412,7 @@ def gen_signal_expr( cur_component, signal ):
 
   def get_next_op( expr, cur_pos, my_name, full_name ):
     """Return the next signal operation in string `expr`.
-    
+
     Return value: ( op, *data )
     op is one of [ 'Attr', 'Slice', 'Index', 'Base', 'Done' ].
     *data is one to two variables that describes the next signal operation.

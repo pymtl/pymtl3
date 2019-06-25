@@ -7,8 +7,6 @@
 # Author : Yanghui Ou
 #   Date : Apr 8, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from functools import reduce
 
 import py
@@ -68,7 +66,7 @@ class BitStruct( object ):
     # TODO: figure out whether we should just compare each fields
     # recursively so that it supports types that cannot be converted to bits?
     return self.to_bits() == other.to_bits()
-  
+
   def __hash__( self ):
     return hash((self.__class__, self.to_bits()))
 

@@ -12,8 +12,6 @@ be revamped when adding method-based interfaces.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict, deque
 
 from pymtl3.datatypes import Bits
@@ -31,8 +29,6 @@ from .errors import (
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
-import six
-from six.moves import range
 
 
 class ComponentLevel3( ComponentLevel2 ):

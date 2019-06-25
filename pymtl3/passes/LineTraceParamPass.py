@@ -6,12 +6,9 @@
 # Author : Yanghui Ou
 #   Date : May 29, 2019
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.dsl import *
 
 from .BasePass import BasePass, PassMetadata
-import six
 
 
 class LineTraceParamPass( BasePass ):
@@ -27,7 +24,7 @@ class LineTraceParamPass( BasePass ):
         if self._dsl.param_tree is not None:
           if self._dsl.param_tree.leaf is not None:
             if 'line_trace' in self._dsl.param_tree.leaf:
-              # TODO: figure out whether it is necessary to enforce no 
+              # TODO: figure out whether it is necessary to enforce no
               # positional args.
               assert len( args ) == 0
               more_args = self._dsl.param_tree.leaf['line_trace'].items()

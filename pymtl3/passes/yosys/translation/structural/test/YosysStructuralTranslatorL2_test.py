@@ -5,8 +5,6 @@
 # Date   : June 13, 2019
 """Test the level 2 yosys-SystemVerilog structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,

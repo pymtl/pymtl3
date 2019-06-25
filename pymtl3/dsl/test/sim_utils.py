@@ -7,8 +7,6 @@ Simple util functions to bootstrap simulation without simulation passes.
 Author : Shunning Jiang
 Date   : Jan 1, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import random
 from collections import defaultdict, deque
 
@@ -35,7 +33,6 @@ from pymtl3.dsl.errors import (
 )
 from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.dsl.Placeholder import Placeholder
-import six
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):

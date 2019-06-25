@@ -5,8 +5,6 @@
 # Date   : Feb 21, 2019
 """Test utilities used by RTLIR tests."""
 
-from __future__ import absolute_import, division, print_function
-
 from contextlib import contextmanager
 
 import pytest

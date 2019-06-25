@@ -3,13 +3,10 @@
 Crossbar_test.py
 ======================================================================
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from .Crossbar import Crossbar
-from six.moves import range
 
 
 #-----------------------------------------------------------------------

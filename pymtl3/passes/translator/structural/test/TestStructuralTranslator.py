@@ -5,8 +5,6 @@
 # Date   : May 20, 2019
 """Provide a structural translator that fits testing purposes."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.translator.structural import StructuralTranslator
 
 

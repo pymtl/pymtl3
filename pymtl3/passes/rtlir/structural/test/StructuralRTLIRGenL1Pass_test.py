@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the generation of level 1 structural RTLIR."""
 
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict, deque
 
 import pymtl3.dsl as dsl
@@ -17,7 +15,6 @@ from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
-from six.moves import range
 
 
 def gen_connections( top ):

@@ -7,20 +7,14 @@ Author : Shunning Jiang
 Date   : Dec 26, 2018
 """
 
-from __future__ import absolute_import, division, print_function
-
 import ast
+from queue import PriorityQueue
 
 from graphviz import Digraph
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 from pymtl3.passes.SimpleSchedulePass import check_schedule
-
-try:
-  from six.moves.queue import PriorityQueue
-except ImportError:
-  from queue import PriorityQueue
 
 
 class CountBranches( ast.NodeVisitor ):

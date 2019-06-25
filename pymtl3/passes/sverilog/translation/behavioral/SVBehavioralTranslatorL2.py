@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 2 SystemVerilog translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt

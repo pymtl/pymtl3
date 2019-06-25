@@ -3,8 +3,6 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-from __future__ import absolute_import, division, print_function
-
 from functools import reduce
 
 from pymtl3.datatypes import Bits
@@ -14,7 +12,6 @@ from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_
 from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
-from six.moves import range
 
 
 class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
@@ -52,11 +49,11 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
   # Declarations
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_port_decls( s, port_decls ):
     make_indent( port_decls, 1 )
     return ',\n'.join( port_decls )
-  
+
   def rtlir_tr_port_decl( s, id_, Type, array_type, dtype ):
     _dtype = Type.get_dtype()
     if array_type:
@@ -67,11 +64,11 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     s.check_decl( id_, template.format( **locals() ) )
     return Type.get_direction() + ' ' + \
            dtype['decl'].format( **locals() ) + array_type['decl']
-  
+
   def rtlir_tr_wire_decls( s, wire_decls ):
     make_indent( wire_decls, 1 )
     return '\n'.join( wire_decls )
-  
+
   def rtlir_tr_wire_decl( s, id_, Type, array_type, dtype ):
     _dtype = Type.get_dtype()
     if array_type:
@@ -81,7 +78,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       template = "Note: {n_dim} array of wires {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
     return dtype['decl'].format( **locals() ) + array_type['decl'] + ';'
-  
+
   def rtlir_tr_const_decls( s, const_decls ):
     make_indent( const_decls, 1 )
     return '\n'.join( const_decls )
@@ -98,7 +95,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
         ret.append( s.gen_array_param( n_dim[1:], dtype, array[idx] ) )
       cat_str = ", ".join( ret )
       return "'{{ {cat_str} }}".format( **locals() )
-  
+
   def rtlir_tr_const_decl( s, id_, Type, array_type, dtype, value ):
     _dtype = Type.get_dtype()
     if array_type:
@@ -115,18 +112,18 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
   # Connections
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_connections( s, connections ):
     make_indent( connections, 1 )
     return '\n'.join( connections )
-  
+
   def rtlir_tr_connection( s, wr_signal, rd_signal ):
     return 'assign {rd_signal} = {wr_signal};'.format( **locals() )
 
   #-----------------------------------------------------------------------
   # Signal operations
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_bit_selection( s, base_signal, index ):
     # Bit selection
     return '{base_signal}[{index}]'.format( **locals() )

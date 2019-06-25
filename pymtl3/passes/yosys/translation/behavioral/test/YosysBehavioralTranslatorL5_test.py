@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Test the SystemVerilog translator implementation."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
@@ -18,7 +16,6 @@ from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL5
 )
 
 from ..YosysBehavioralTranslatorL5 import YosysBehavioralRTLIRToSVVisitorL5
-import six
 
 
 def local_do_test( m ):

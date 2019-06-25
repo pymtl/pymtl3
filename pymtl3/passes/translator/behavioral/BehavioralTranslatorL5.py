@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 22, 2019
 """Provide L5 behavioral translator."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL5Pass import (
     BehavioralRTLIRGenL5Pass,

@@ -3,8 +3,6 @@
 #=========================================================================
 """Test the yosys-SystemVerilog translator."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import do_test

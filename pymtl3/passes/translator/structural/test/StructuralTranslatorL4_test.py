@@ -5,8 +5,6 @@
 # Date   : May 21, 2019
 """Test the level 3 structural translators."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits32

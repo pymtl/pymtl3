@@ -2,7 +2,6 @@
 # SVStructuralTranslatorL2.py
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 from functools import reduce
 
@@ -13,7 +12,6 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL2 import (
 )
 
 from .SVStructuralTranslatorL1 import SVStructuralTranslatorL1
-from six.moves import range
 
 
 class SVStructuralTranslatorL2(

@@ -2,8 +2,6 @@
 # simple_reg_test.py
 #=======================================================================
 
-from __future__ import absolute_import, division, print_function
-
 import os
 
 import pytest
@@ -11,7 +9,6 @@ import pytest
 from pymtl3 import *
 from pymtl3.passes.PassGroups import *
 from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
-from six.moves import range
 
 
 def get_dir():

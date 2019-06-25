@@ -5,8 +5,6 @@
 # Date   : May 20, 2019
 """Test the level 5 ehavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits16
 from pymtl3.dsl import Component, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -15,7 +13,6 @@ from pymtl3.passes.translator.behavioral.BehavioralTranslatorL5 import (
 )
 
 from .TestBehavioralTranslator import mk_TestBehavioralTranslator
-import six
 
 
 def local_do_test( m ):

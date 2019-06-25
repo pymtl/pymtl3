@@ -9,8 +9,6 @@ The L4 generation, L4 type check, and visualization passes are invoked. The
 generation pass results are verified against a reference AST.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import Bits32
@@ -28,7 +26,6 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRVisualizationPass import (
 )
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError, PyMTLTypeError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
-from six.moves import range
 
 
 def local_do_test( m ):

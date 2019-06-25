@@ -7,8 +7,6 @@ Accelerator interface implementations at FL, CL, and RTL.
  Author: Yanghui Ou
    Date: June 3, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from greenlet import greenlet
 
 from pymtl3 import *
@@ -272,7 +270,7 @@ class XcelIfcRTL2FLAdapter( Component ):
   def construct( s, ReqType, RespType ):
     s.left  = XcelMinionIfcRTL( ReqType, RespType )
     s.right = XcelMasterIfcFL( ReqType, RespType )
-    
+
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     s.connect( s.left.req, s.req_q.enq )
 

@@ -7,8 +7,6 @@ Add functional-level blocking method decorator.
 Author : Shunning Jiang
 Date   : May 19, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel6 import ComponentLevel6
 
 #-------------------------------------------------------------------------

@@ -7,8 +7,6 @@ Tests for component level6.
 Author : Yanghui Ou
   Date : Feb 24, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import Bits16

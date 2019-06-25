@@ -7,7 +7,6 @@ Hypothesis strategies for built-in data types.
 Author : Yanghui Ou
   Date : June 16, 2019
 """
-from __future__ import absolute_import, division, print_function
 
 import hypothesis
 import pytest

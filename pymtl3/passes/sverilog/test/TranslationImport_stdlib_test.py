@@ -12,8 +12,6 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog import TranslationPass
@@ -31,7 +29,6 @@ from pymtl3.stdlib.rtl.valrdy_queues_test import test_normal_int as _normal_int
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_int as _pipe_int
 from pymtl3.stdlib.test import TestVectorSimulator
-from six.moves import range
 
 
 def local_do_test( _m ):

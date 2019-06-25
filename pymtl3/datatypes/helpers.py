@@ -8,8 +8,6 @@ should be implemented in RPython.
 Author : Shunning Jiang
 Date   : Nov 3, 2017
 """
-from __future__ import absolute_import, division, print_function
-
 import math
 
 from .bits_import import *

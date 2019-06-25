@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 15, 2019
 """Provide translators that convert RTLIR to backend representation."""
-from __future__ import absolute_import, division, print_function
 
 from functools import reduce
 
@@ -12,7 +11,6 @@ from .BaseRTLIRTranslator import TranslatorMetadata
 from .behavioral import BehavioralTranslator
 from .errors import RTLIRTranslationError
 from .structural import StructuralTranslator
-import six
 
 
 def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):

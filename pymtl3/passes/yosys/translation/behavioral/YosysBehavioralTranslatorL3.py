@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L3 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits, BitStruct
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -20,7 +18,6 @@ from .YosysBehavioralTranslatorL2 import (
     YosysBehavioralRTLIRToSVVisitorL2,
     YosysBehavioralTranslatorL2,
 )
-from six.moves import range
 
 
 class YosysBehavioralTranslatorL3(
@@ -32,7 +29,7 @@ class YosysBehavioralTranslatorL3(
 class YosysBehavioralRTLIRToSVVisitorL3(
     YosysBehavioralRTLIRToSVVisitorL2, BehavioralRTLIRToSVVisitorL3 ):
   """IR visitor that generates yosys-compatible SystemVerilog code.
-  
+
   This visitor differs from the canonical SystemVerilog visitor in that
   it name-mangles each struct signal into multiple signals for all fields
   in the struct. We don't use SystemVerilog struct here because yosys
@@ -88,7 +85,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.
-    
+
     Add support for accessing struct attribute in L3.
     """
     if isinstance( node.value.Type, rt.Signal ):

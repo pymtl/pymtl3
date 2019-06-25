@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Apr 4, 2019
 """Provide L4 structural translator."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp

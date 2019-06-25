@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L2 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
     SVBehavioralTranslatorL2,

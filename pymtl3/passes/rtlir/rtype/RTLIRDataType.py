@@ -10,8 +10,6 @@ these type objects. Each instance of the type class defined in this module
 is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
-from __future__ import absolute_import, division, print_function
-
 import inspect
 from functools import reduce
 
@@ -20,8 +18,6 @@ from pymtl3.datatypes import Bits, BitStruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
-import six
-from six.moves import zip
 
 
 class BaseRTLIRDataType:

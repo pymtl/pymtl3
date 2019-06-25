@@ -8,8 +8,6 @@ Author : Shunning Jiang
 Date   : Mar 9, 2018
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.SendRecvIfc import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegRst

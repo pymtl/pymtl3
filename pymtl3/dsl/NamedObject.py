@@ -18,13 +18,9 @@ namespaces to put their created metadata.
 Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import re
 
 from .errors import NotElaboratedError
-import six
-from six.moves import range
 
 # from collections import OrderedDict as ord_dict
 

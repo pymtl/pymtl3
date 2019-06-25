@@ -5,8 +5,6 @@
 # Date   : May 29, 2019
 """Test the level 1 SystemVerilog structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits4, Bits32
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -14,8 +12,6 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 impo
     SVStructuralTranslatorL1,
 )
 from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
-from six.moves import range
-from six.moves import zip
 
 
 def is_sverilog_reserved( s, name ):

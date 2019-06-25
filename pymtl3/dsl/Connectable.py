@@ -7,15 +7,12 @@ Wires, ports, and interfaces, all inherited from Connectable.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import Bits, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
-import six
 
 
 class Connectable:

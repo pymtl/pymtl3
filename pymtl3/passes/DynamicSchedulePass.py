@@ -5,8 +5,6 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-from __future__ import absolute_import, division, print_function
-
 import os
 from collections import deque
 
@@ -15,7 +13,6 @@ import py
 from .BasePass import BasePass, PassMetadata
 from .errors import PassOrderError
 from .SimpleSchedulePass import dump_dag
-from six.moves import range
 
 
 class DynamicSchedulePass( BasePass ):

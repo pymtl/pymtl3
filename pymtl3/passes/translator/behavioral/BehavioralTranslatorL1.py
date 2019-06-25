@@ -4,7 +4,7 @@
 # Author : Peitian Pan
 # Date   : March 22, 2019
 """Provide L1 behavioral translator."""
-from __future__ import absolute_import, division, print_function
+
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -16,7 +16,6 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
 )
 
 from .BehavioralTranslatorL0 import BehavioralTranslatorL0
-import six
 
 
 class BehavioralTranslatorL1( BehavioralTranslatorL0 ):

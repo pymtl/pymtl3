@@ -3,13 +3,10 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits4, Bits32, Bits64, concat, sext, zext
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
-from six.moves import range
 
 
 def trim( src ):
@@ -50,11 +47,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_
-  
+
   always_comb begin : upblk
     out = in_;
   end
@@ -84,11 +81,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update_on_edge
   // def upblk():
   //   s.out = s.in_
-  
+
   always_ff @(posedge clk) begin : upblk
     out <= in_;
   end
@@ -120,11 +117,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_1, s.in_2 )
-  
+
   always_comb begin : upblk
     out = { in_1, in_2 };
   end
@@ -152,11 +149,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( Bits32(42), Bits32(0) )
-  
+
   always_comb begin : upblk
     out = { 32'd42, 32'd0 };
   end
@@ -186,11 +183,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_, Bits32(0) )
-  
+
   always_comb begin : upblk
     out = { in_, 32'd0 };
   end
@@ -220,11 +217,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = sext( s.in_, 64 )
-  
+
   always_comb begin : upblk
     out = { { 32 { in_[31] } }, in_ };
   end
@@ -254,11 +251,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = zext( s.in_, 64 )
-  
+
   always_comb begin : upblk
     out = { { 32 { 1'b0 } }, in_ };
   end
@@ -290,11 +287,11 @@ module A
   localparam [31:0] __const$STATE_IDLE = 32'd42;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_, STATE_IDLE )
-  
+
   always_comb begin : upblk
     out = { in_, __const$STATE_IDLE };
   end
@@ -312,11 +309,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_, STATE_IDLE )
-  
+
   always_comb begin : upblk
     out = { in_, 32'd42 };
   end
@@ -345,11 +342,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_[0], s.in_[1] )
-  
+
   always_comb begin : upblk
     out = { in_[0], in_[1] };
   end
@@ -369,11 +366,11 @@ module A
   logic [31:0] in_ [0:1];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_[0], s.in_[1] )
-  
+
   always_comb begin : upblk
     out = { in_[0], in_[1] };
   end
@@ -405,11 +402,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[1]
-  
+
   always_comb begin : upblk
     out = in_[1];
   end
@@ -439,11 +436,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[4:36]
-  
+
   always_comb begin : upblk
     out = in_[35:4];
   end
@@ -553,11 +550,11 @@ module A
   localparam [31:0] STATE_IDLE = 32'd42;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out_2 = s.STATE_IDLE
-  
+
   always_comb begin : upblk
     out_2 = STATE_IDLE;
   end
@@ -577,11 +574,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out_2 = s.STATE_IDLE
-  
+
   always_comb begin : upblk
     out_2 = 32'd42;
   end
@@ -616,11 +613,11 @@ module A
   localparam [31:0] STATES [0:4] = '{ 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.tmp = s.STATES[0]
-  
+
   always_comb begin : upblk
     tmp = STATES[0];
   end
@@ -649,11 +646,11 @@ module A
   logic [31:0] out [0:4];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.tmp = s.STATES[0]
-  
+
   always_comb begin : upblk
     tmp = 32'd1;
   end

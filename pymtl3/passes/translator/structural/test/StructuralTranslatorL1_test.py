@@ -5,8 +5,6 @@
 # Date   : May 21, 2019
 """Test the level 1 structural translators."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits4, Bits16, Bits32
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -17,7 +15,6 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
 )
 
 from .TestStructuralTranslator import mk_TestStructuralTranslator
-from six.moves import range
 
 
 def local_do_test( m ):

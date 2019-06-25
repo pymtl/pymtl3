@@ -5,8 +5,6 @@
 # Date   : May 20, 2019
 """Test the level 4 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test

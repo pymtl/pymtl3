@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L2 behavioral RTLIR generation pass."""
-from __future__ import absolute_import, division, print_function
 
 import ast
 

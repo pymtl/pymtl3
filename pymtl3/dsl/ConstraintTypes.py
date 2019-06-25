@@ -7,8 +7,6 @@ Explicit constraint class types.
 Author : Shunning Jiang
 Date   : July 7, 2017
 """
-from __future__ import absolute_import, division, print_function
-
 
 class FuncConstraint(object):
   def __init__( self, func ): self.func = func

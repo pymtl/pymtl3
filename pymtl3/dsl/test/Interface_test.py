@@ -6,8 +6,6 @@ Interface_test.py
 Author : Shunning Jiang, Yanghui Ou
 Date   : Jan 1, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 from functools import reduce
 
@@ -16,7 +14,6 @@ from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 
 from .sim_utils import simple_sim_pass
-from six.moves import range
 
 
 def _test_model( cls ):

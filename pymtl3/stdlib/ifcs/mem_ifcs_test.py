@@ -6,13 +6,10 @@
 # Author: Shunning Jiang
 # Date  : May 19, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
 
 from .mem_ifcs import MemMasterIfcFL, MemMinionIfcCL
-from six.moves import range
 
 
 def test_mem_fl_cl_adapter():

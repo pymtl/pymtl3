@@ -5,8 +5,6 @@
 # Date   : March 22, 2019
 """Provide L0 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 

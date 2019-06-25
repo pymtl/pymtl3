@@ -6,15 +6,12 @@ DataStruct_test.py
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits16, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
 from .sim_utils import simple_sim_pass
-from six.moves import range
 
 
 class SomeMsg:

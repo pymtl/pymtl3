@@ -5,15 +5,12 @@
 # Date   : June 1, 2019
 """Test the SystemVerilog signal generation of imported component."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits32, BitStruct, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
-from six.moves import range
 
 
 def local_do_test( m ):

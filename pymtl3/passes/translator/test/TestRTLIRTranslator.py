@@ -5,8 +5,6 @@
 # Date   : May 23, 2019
 """Provide an RTLIR translator that fits testing purposes."""
 
-from __future__ import absolute_import, division, print_function
-
 from functools import reduce
 
 from ..behavioral.test.TestBehavioralTranslator import TestBehavioralTranslator

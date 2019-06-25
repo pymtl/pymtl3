@@ -8,8 +8,6 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from graphviz import Digraph
 
 from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
@@ -18,7 +16,6 @@ from pymtl3.dsl.errors import UpblkCyclicError
 from .BasePass import BasePass, PassMetadata
 from .CLLineTracePass import CLLineTracePass
 from .errors import PassOrderError
-from six.moves import range
 
 
 class OpenLoopCLPass( BasePass ):

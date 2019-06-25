@@ -5,8 +5,6 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.test.ImportedObject_test import test_adder, test_reg
 from pymtl3.passes.yosys.import_.ImportPass import ImportPass

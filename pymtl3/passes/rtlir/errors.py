@@ -5,8 +5,6 @@
 # Date   : Jan 4, 2019
 """Behavioral code errors."""
 
-from __future__ import absolute_import, division, print_function
-
 import inspect
 import os
 import sys

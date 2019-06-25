@@ -6,8 +6,6 @@ Tests for CL queues
 Author: Yanghui Ou
   Date: Mar 20, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3 import *
@@ -118,7 +116,7 @@ def test_delay( QType, qsize, src_init, src_intv,
   th = TestHarness( Bits16, QType, test_msgs, test_msgs )
   th.set_param( "top.src.construct",
     initial_delay  = src_init,
-    interval_delay = src_intv, 
+    interval_delay = src_intv,
   )
   th.set_param( "top.dut.construct", num_entries=qsize )
   th.set_param( "top.sink.construct",

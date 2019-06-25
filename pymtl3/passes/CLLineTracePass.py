@@ -6,8 +6,6 @@
 # Author : Yanghui Ou
 #   Date : May 21, 2019
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.dsl import *
 
 from .BasePass import BasePass, PassMetadata
@@ -66,7 +64,7 @@ class CLLineTracePass( BasePass ):
     # [mk_new_str] replaces [_str_hook] in a non-blocking interface with
     # a new to-string function that uses the metadata to compose line
     # trace.
-    # When the rdy is called and returns true, and the method gets called, 
+    # When the rdy is called and returns true, and the method gets called,
     # the line trace just prints out the actual message. Otherwise, it '
     # prints out some special characters under different circumstances:
     # - 'x' rdy not called but method called
@@ -120,7 +118,7 @@ class CLLineTracePass( BasePass ):
         # If rdy is not called
         elif self.method.called:
           return "x".ljust( self.trace_len )
-        
+
         else:
           return ".".ljust( self.trace_len )
 

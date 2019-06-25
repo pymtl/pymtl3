@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the implementation of RTLIR data types."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import *
@@ -14,7 +12,6 @@ from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
-from six.moves import range
 
 
 def test_py_int():

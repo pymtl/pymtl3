@@ -5,12 +5,9 @@ arbiters.py
 Collection of arbiter implementations based on vc-Arbiters.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 from .registers import RegEnRst
-from six.moves import range
 
 
 #-----------------------------------------------------------------------

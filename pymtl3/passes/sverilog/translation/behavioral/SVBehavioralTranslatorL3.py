@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 3 SystemVerilog translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -17,7 +16,6 @@ from .SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
     SVBehavioralTranslatorL2,
 )
-from six.moves import map
 
 
 class SVBehavioralTranslatorL3(
@@ -60,7 +58,7 @@ class BehavioralRTLIRToSVVisitorL3( BehavioralRTLIRToSVVisitorL2 ):
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.
-    
+
     Add support for accessing struct attribute in L3.
     """
     if isinstance( node.value.Type, rt.Signal ):

@@ -7,8 +7,6 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits1
@@ -19,8 +17,6 @@ from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, 
 from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
-import six
-from six.moves import range
 
 
 class Component( ComponentLevel7 ):

@@ -6,15 +6,12 @@ enrdy_queues_test.py
 Author : Shunning Jiang
 Date   : Mar 9, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3 import *
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from .enrdy_queues import *
-from six.moves import map
 
 #-------------------------------------------------------------------------
 # TestHarness

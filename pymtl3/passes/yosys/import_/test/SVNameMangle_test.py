@@ -5,8 +5,6 @@
 # Date   : June 15, 2019
 """Test the SystemVerilog name mangling."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.test.SVNameMangle_test import (

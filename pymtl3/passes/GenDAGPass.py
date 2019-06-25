@@ -8,8 +8,6 @@ a model.
 Author : Shunning Jiang
 Date   : Jan 18, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict, deque
 
 from pymtl3.datatypes import *
@@ -17,8 +15,6 @@ from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
 
 from .BasePass import BasePass, PassMetadata
-import six
-from six.moves import range
 
 
 class GenDAGPass( BasePass ):

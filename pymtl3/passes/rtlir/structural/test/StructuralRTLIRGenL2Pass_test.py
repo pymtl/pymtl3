@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the generation of level 2 structural RTLIR."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 import pymtl3.dsl as dsl
@@ -17,7 +15,6 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
 from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
 
 from .StructuralRTLIRGenL1Pass_test import gen_connections
-from six.moves import range
 
 
 def test_L2_struct_attr():

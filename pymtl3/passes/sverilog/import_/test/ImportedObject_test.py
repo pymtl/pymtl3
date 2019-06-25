@@ -5,8 +5,6 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
-from __future__ import absolute_import, division, print_function
-
 import os
 
 from pymtl3.datatypes import Bits1, Bits32, Bits64

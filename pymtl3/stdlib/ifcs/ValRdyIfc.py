@@ -7,8 +7,6 @@ RTL val/rdy interface.
 Author : Shunning Jiang
   Date : Apr 5, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 from .ifcs_utils import valrdy_to_str

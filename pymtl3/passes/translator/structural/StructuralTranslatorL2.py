@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 24, 2019
 """Provide L2 structural translator."""
-from __future__ import absolute_import, division, print_function
 
 from functools import reduce
 

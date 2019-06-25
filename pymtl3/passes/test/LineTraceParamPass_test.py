@@ -7,8 +7,6 @@
 # Author : Yanghui Ou
 #   Date : 29 May, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.dsl import *
 from pymtl3.passes.CLLineTracePass import CLLineTracePass
 from pymtl3.passes.GenDAGPass import GenDAGPass
@@ -23,7 +21,7 @@ def test_multi_level_trace():
   class Top( Component ):
     def construct( s ):
       s.simple_trace = 'simple'
-      s.verbose_trace = 'verbose' 
+      s.verbose_trace = 'verbose'
 
     def line_trace( s, level='simple' ):
       if level == 'simple':

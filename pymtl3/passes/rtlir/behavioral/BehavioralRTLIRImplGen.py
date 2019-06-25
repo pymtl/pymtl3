@@ -14,10 +14,6 @@ visualization pass is printed to BehavioralRTLIRVisualizationPass.py
 under the same directory.
 """
 
-from __future__ import absolute_import, division, print_function
-from six.moves import zip
-
-
 class constructor:
   """Class of constructors that create the behavioral RTLIR AST node types."""
 

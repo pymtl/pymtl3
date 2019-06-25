@@ -5,8 +5,6 @@
 # Date   : May 25, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-from __future__ import absolute_import, division, print_function
-
 import copy
 import importlib
 import linecache
@@ -23,8 +21,6 @@ from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.sverilog.errors import SVerilogImportError
 from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
-import six
-from six.moves import range
 
 try:
   # Python 2
@@ -52,7 +48,7 @@ class ImportPass( BasePass ):
   def __call__( s, top ):
     s.top = top
     if not top._dsl.constructed:
-      raise SVerilogImportError( top, 
+      raise SVerilogImportError( top,
         "please elaborate design {} before applying the import pass!". \
           format(top) )
     ret = s.traverse_hierarchy( top )
@@ -464,7 +460,7 @@ constraint_list = [
 
   def gen_packed_ports( s, rtype ):
     """Return a list of (name, rt.Port ) that has all ports of `rtype`.
-    
+
     This method performs SystemVerilog backend-specific name mangling and
     returns all ports that appear in the interface of component `rtype`.
     Each tuple contains a port or an array of port that has any data type

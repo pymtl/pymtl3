@@ -5,8 +5,6 @@
 # Date   : June 6, 2019
 """Closed-loop test cases for translation-import with component and input."""
 
-from __future__ import absolute_import, division, print_function
-
 from itertools import product
 from random import randint, seed
 
@@ -17,7 +15,6 @@ from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..util.test_utility import closed_loop_component_input_test
-from six.moves import range
 
 seed( 0xdeadebeef )
 

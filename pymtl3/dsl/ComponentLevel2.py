@@ -12,8 +12,6 @@ write/read variables in upA, upA < upX:
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import ast
 import gc
 import inspect
@@ -36,7 +34,6 @@ from .errors import (
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
-import six
 
 p = re.compile('( *(@|def))')
 

@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 22, 2019
 """Provide L2 behavioral translator."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
@@ -15,7 +14,6 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL2Pass import (
 )
 
 from .BehavioralTranslatorL1 import BehavioralTranslatorL1
-import six
 
 
 class BehavioralTranslatorL2( BehavioralTranslatorL1 ):

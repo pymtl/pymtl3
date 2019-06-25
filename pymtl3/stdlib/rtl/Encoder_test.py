@@ -7,8 +7,6 @@ Test for RTL priority encoder.
 Author : Yanghui Ou
   Date : Apr 5, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.test import TestVectorSimulator
 

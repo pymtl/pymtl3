@@ -5,8 +5,6 @@
 # Date   : May 21, 2019
 """Test the level 2 structural translators."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import Bits16, Bits32, BitStruct
@@ -19,7 +17,6 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL2 import (
 )
 
 from .TestStructuralTranslator import mk_TestStructuralTranslator
-from six.moves import range
 
 
 def local_do_test( m ):

@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 from functools import reduce
 
@@ -16,7 +14,6 @@ from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 impo
     SVStructuralTranslatorL1,
 )
 from pymtl3.passes.sverilog.util.utility import make_indent
-from six.moves import range
 
 
 class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
@@ -222,7 +219,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
   # Signal operations
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_bit_selection( s, base_signal, index ):
     # Bit selection
     s.deq[-1]['s_index'] += "[{}]"

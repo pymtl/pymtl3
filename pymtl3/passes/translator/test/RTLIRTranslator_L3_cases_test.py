@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : May 23, 2019
 """Test the RTLIR transaltor."""
-from __future__ import absolute_import, division, print_function
 
 from ..behavioral.test.BehavioralTranslatorL3_test import *
 from ..structural.test.StructuralTranslatorL3_test import *

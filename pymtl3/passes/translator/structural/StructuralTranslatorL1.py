@@ -5,8 +5,6 @@
 # Date   : March 24, 2019
 """Provide L1 structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict, deque
 from functools import reduce
 
@@ -22,7 +20,7 @@ from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 def gen_connections( top ):
   """Return a tuple of all connections in the hierarchy whose top is `top`.
-  
+
   Return a three element tuple ( ss, sc, cc ). `ss` is a dictionary indexed
   by component `m` and has a set of pairs of connected signals within component
   `m` ( and thus is called "self_self" ). `sc` is a dictionary indexed by

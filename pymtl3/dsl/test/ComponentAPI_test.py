@@ -6,8 +6,6 @@ ComponentAPI_test.py
 Author : Shunning Jiang
 Date   : June 2, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import random
 
 from pymtl3.datatypes import *
@@ -15,7 +13,6 @@ from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire
 from pymtl3.dsl.errors import InvalidAPICallError
 
 from .sim_utils import simple_sim_pass
-from six.moves import range
 
 
 def test_api_not_elaborated():

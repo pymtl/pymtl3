@@ -5,8 +5,6 @@
 # Date   : May 28, 2019
 """Test the SystemVerilog translator implementation."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits32, Bits64, concat, sext, zext
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
@@ -16,7 +14,6 @@ from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL1 impo
     BehavioralRTLIRToSVVisitorL1,
 )
 from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
-from six.moves import range
 
 
 def is_sverilog_reserved( name ):

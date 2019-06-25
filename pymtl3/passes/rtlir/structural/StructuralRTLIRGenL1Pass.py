@@ -4,7 +4,6 @@
 # Author : Shunning Jiang, Peitian Pan
 # Date   : Apr 3, 2019
 """Provide L1 structural RTLIR generation pass."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import RTLIRConversionError

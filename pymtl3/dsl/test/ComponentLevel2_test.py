@@ -6,8 +6,6 @@ ComponentLevel2_test.py
 Author : Shunning Jiang
 Date   : Nov 3, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import Bits32
@@ -22,7 +20,6 @@ from pymtl3.dsl.errors import (
 )
 
 from .sim_utils import simple_sim_pass
-from six.moves import range
 
 
 def _test_model( cls ):

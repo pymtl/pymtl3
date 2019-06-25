@@ -5,8 +5,6 @@
 # Date   : May 27, 2019
 """Exception classes for SystemVerilog backend."""
 
-from __future__ import absolute_import, division, print_function
-
 import inspect
 import os
 import sys

@@ -2,11 +2,8 @@
 # TestMemory_test.py
 #=========================================================================
 
-from __future__ import absolute_import, division, print_function
-
 import random
 import struct
-from functools import reduce
 
 import pytest
 
@@ -17,7 +14,6 @@ from pymtl3.stdlib.test.test_sinks import TestSinkCL
 from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
 from .MemoryCL import MemoryCL
-from six.moves import range
 
 #-------------------------------------------------------------------------
 # TestHarness

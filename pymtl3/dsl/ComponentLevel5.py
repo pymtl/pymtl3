@@ -7,8 +7,6 @@ We allow CallerPort to be connected to CalleePort
 Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .ComponentLevel4 import ComponentLevel4

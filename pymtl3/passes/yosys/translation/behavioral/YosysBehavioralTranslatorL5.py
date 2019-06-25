@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L5 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL5 import (
@@ -31,7 +29,7 @@ class YosysBehavioralRTLIRToSVVisitorL5(
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.
-    
+
     Add support for subcomponent attributes in L5.
     """
     # Generate subcomponent attribute
