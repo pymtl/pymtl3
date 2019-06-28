@@ -7,6 +7,8 @@ import struct
 
 import pytest
 
+from functools import reduce
+
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
 from pymtl3.stdlib.test import mk_test_case_table
@@ -38,8 +40,7 @@ class TestHarness( Component ):
       s.connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
 
   def done( s ):
-    done = True
-    done &= reduce( lambda x,y: x and y, [ x.done() for x in s.srcs ] )
+    done  = reduce( lambda x,y: x and y, [ x.done() for x in s.srcs ] )
     done &= reduce( lambda x,y: x and y, [ x.done() for x in s.sinks ] )
     return done
 
