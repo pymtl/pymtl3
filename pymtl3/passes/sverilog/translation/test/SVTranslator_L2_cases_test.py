@@ -6,16 +6,17 @@
 from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
+)
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
-
-from .SVTranslator_L1_cases_test import trim
 
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert trim( tr.hierarchy.src ) == m._ref_src
+  check_eq( tr.hierarchy.src, m._ref_src )
 
 #-------------------------------------------------------------------------
 # Behavioral
