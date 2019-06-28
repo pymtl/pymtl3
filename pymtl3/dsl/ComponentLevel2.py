@@ -175,6 +175,7 @@ class ComponentLevel2( ComponentLevel1 ):
           if update_ff:
             for x in objs:
               x._dsl.needs_double_buffer = True
+              assert x.is_top_level_signal(), "Cannot <<= to a non-top-level signal"
 
 
         # This is a function call without "s." prefix, check func list
