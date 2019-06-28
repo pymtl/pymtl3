@@ -150,6 +150,8 @@ class Signal( NamedObject, Connectable ):
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
 
+    s._dsl.needs_double_buffer = False
+
   def inverse( s ):
     pass
 
@@ -160,6 +162,12 @@ class Signal( NamedObject, Connectable ):
     if name not in s.__dict__:
       # Shunning: we move this from __init__ to here for on-demand type
       #           checking when the __getattr__ is indeed used.
+
+      if name == "next":
+        s._dsl.needs_double_buffer = True
+        assert s.is_top_level_signal(), "Cannot write to .next of a non-top-level signal"
+        return s
+
       if s._dsl.type_instance is None:
         # Yanghui: this would break if another Type indeed has an nbits
         #          attribute.

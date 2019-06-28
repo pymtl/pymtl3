@@ -10,6 +10,8 @@ Date   : Jan 17, 2018
 
 import ast
 
+from .errors import InvalidFFAssignError
+
 
 class DetectVarNames( ast.NodeVisitor ):
 
@@ -123,7 +125,10 @@ class DetectVarNames( ast.NodeVisitor ):
 
 class DetectReadsWritesCalls( DetectVarNames ):
 
-  def enter( self, node, read, write, calls ):
+  def enter( self, node, obj, is_update_ff, read, write, calls ):
+    self.is_update_ff = is_update_ff
+    self.obj = obj
+
     self.read = []
     self.write = []
     self.calls = []
@@ -131,6 +136,28 @@ class DetectReadsWritesCalls( DetectVarNames ):
     read.extend ( self.read )
     write.extend( self.write )
     calls.extend( self.calls )
+
+  def visit_Assign( self, node ):
+    if self.is_update_ff:
+      assert len( node.targets ) == 1
+      if isinstance( node.targets[0], (ast.Attribute, ast.Subscript) ):
+        raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+          "In update_ff, we only allow <<= to any fields for constructing "
+          "nonblocking assignments." )
+
+    for x in node.targets:
+      self.visit( x )
+    self.visit( node.value  )
+
+  def visit_AugAssign( self, node ):
+    if self.is_update_ff:
+      if isinstance( node.target, (ast.Attribute, ast.Subscript) ):
+        if not isinstance( node.op, ast.LShift ):
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+            "In update_ff, we only allow <<= to any fields.")
+
+    self.visit( node.target )
+    self.visit( node.value  )
 
   def visit_Attribute( self, node ): # s.a.b
     obj_name, nodelist = self._get_full_name( node )
@@ -187,7 +214,7 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-def extract_reads_writes_calls( f, tree, read, write, calls ):
+def extract_reads_writes_calls( hostobj, f, tree, is_update_ff, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
@@ -196,7 +223,7 @@ def extract_reads_writes_calls( f, tree, read, write, calls ):
   assert isinstance(tree, ast.FunctionDef)
 
   for stmt in tree.body:
-    DetectReadsWritesCalls( f ).enter( stmt, read, write, calls )
+    DetectReadsWritesCalls( f ).enter( stmt, hostobj, is_update_ff, read, write, calls )
 
 def get_method_calls( tree, upblk, methods ):
   DetectMethodCalls( upblk ).enter( tree, methods )

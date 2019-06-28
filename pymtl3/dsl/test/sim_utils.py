@@ -55,7 +55,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   gen_upblk_writes = {}
 
   if isinstance( s, ComponentLevel2 ):
-    all_update_on_edge = set( s._dsl.all_update_on_edge )
+    all_update_ff = set( s._dsl.all_update_ff )
 
     if isinstance( s, ComponentLevel3 ):
       nets = s.get_all_value_nets()
@@ -176,12 +176,11 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       # Add all constraints
       for writer in writers:
         for wr_blk in write_upblks[ writer ]:
-          for rd_blk in rd_blks:
-            if wr_blk != rd_blk:
-              if rd_blk in all_update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+          if wr_blk not in all_update_ff:
+            for rd_blk in rd_blks:
+              if wr_blk != rd_blk:
+                if rd_blk not in all_update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -202,13 +201,12 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
       # Add all constraints
       for wr_blk in wr_blks:
-        for reader in readers:
-          for rd_blk in read_upblks[ reader ]:
-            if wr_blk != rd_blk:
-              if rd_blk in all_update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+        if wr_blk not in all_update_ff:
+          for reader in readers:
+            for rd_blk in read_upblks[ reader ]:
+              if wr_blk != rd_blk:
+                if rd_blk not in all_update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
     all_constraints = expl_constraints.copy()
     for (x, y) in impl_constraints:
@@ -380,9 +378,29 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
-  # Construct the graph
+  def make_double_buffer_func( s ):
+
+    strs = []
+    for x in s._dsl.all_signals:
+      if x._dsl.needs_double_buffer:
+        strs.append( "{0} = {0}._next;".format( repr(x) ) )
+    if not strs:
+      return None
+
+    src = """
+    def double_buffer():
+      {}
+    """.format( "".join(strs) )
+
+    exec(py.code.Source( src ).compile(), locals(), globals())
+    return double_buffer
+
+  # Construct the graph for update blocks
 
   vs  = all_upblks
+  if isinstance( s, ComponentLevel2 ):
+    vs -= all_update_ff
+
   es  = defaultdict(list)
   InD = { v:0 for v in vs }
 
@@ -410,7 +428,17 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       '* Please consult update dependency graph for details.'
     )
 
-  assert serial_schedule, "No update block found in the model"
+
+  if isinstance( s, ComponentLevel2 ):
+    final_serial_schedule = list(all_update_ff)
+    dbf = make_double_buffer_func( s )
+    if dbf:
+      final_serial_schedule.append( dbf )
+    final_serial_schedule += serial_schedule
+  else:
+    final_serial_schedule = serial_schedule
+
+  assert final_serial_schedule, "No update block found in the model"
 
   if verbose:
     from graphviz import Digraph
@@ -429,10 +457,10 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     dot.render( "/tmp/upblk-dag.gv", view=True )
 
   def tick_normal():
-    for blk in serial_schedule:
+    for blk in final_serial_schedule:
       blk()
   s.tick = tick_normal
-  s._dsl.schedule = serial_schedule
+  s._dsl.schedule = final_serial_schedule
 
   # Clean up Signals
 

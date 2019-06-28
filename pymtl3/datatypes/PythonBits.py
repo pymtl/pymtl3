@@ -7,13 +7,19 @@ Pure-Python implementation of fixed-bitwidth data type.
 Author : Shunning Jiang
 Date   : Oct 31, 2017
 """
+from copy import deepcopy
 
 class Bits:
-  __slots__ = ( "nbits", "value" )
+  __slots__ = ( "nbits", "value", "_next" )
 
   def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
     self.value = int(value) & ((1 << nbits) - 1)
+    self._next  = None
+
+  def __ilshift__( self, x ):
+    self._next = deepcopy( x )
+    return self
 
   def __call__( self ):
     return Bits( self.nbits )

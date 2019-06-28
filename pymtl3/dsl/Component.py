@@ -526,9 +526,9 @@ class Component( ComponentLevel7 ):
     assert s._dsl.constructed
     return s._dsl.upblks
 
-  def get_update_on_edge( s ):
+  def get_update_ff( s ):
     assert s._dsl.constructed
-    return s._dsl.update_on_edge
+    return s._dsl.update_ff
 
   def get_upblk_metadata( s ):
     assert s._dsl.constructed
@@ -567,10 +567,10 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_update_on_edge( s ):
+  def get_all_update_ff( s ):
     try:
-      s._check_called_at_elaborate_top( "get_all_update_on_edge" )
-      return s._dsl.all_update_on_edge
+      s._check_called_at_elaborate_top( "get_all_update_ff" )
+      return s._dsl.all_update_ff
     except AttributeError:
       raise NotElaboratedError()
 
@@ -602,12 +602,6 @@ class Component( ComponentLevel7 ):
     try:
       s._check_called_at_elaborate_top( "get_update_block_host_component" )
       return s._dsl.all_upblk_hostobj[ blk ]
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_astnode_obj_mapping( s ):
-    try:
-      return s._dsl.astnode_objs
     except AttributeError:
       raise NotElaboratedError()
 
