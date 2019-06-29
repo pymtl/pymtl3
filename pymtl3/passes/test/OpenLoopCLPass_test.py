@@ -19,15 +19,14 @@ def test_top_level_method():
     def construct( s ):
       s.element = None
 
-      s.count = Wire(int)
-      s.count_next = Wire(int)
-      s.amp   = Wire(int)
+      s.count = Wire(Bits32)
+      s.amp   = Wire(Bits32)
 
-      s.value = Wire(int)
+      s.value = Wire(Bits32)
 
-      @s.update_on_edge
+      @s.update_ff
       def up_incr():
-        s.count = s.count_next
+        s.count <<= s.count + 1
 
       @s.update
       def up_amp():
@@ -40,10 +39,6 @@ def test_top_level_method():
           s.element = None
         else:
           s.value = -1
-
-      @s.update
-      def up_count_next():
-        s.count_next = s.count + 1
 
       s.add_constraints(
         M( s.push ) < U( up_compose_in ),
@@ -93,15 +88,14 @@ class TestModuleNonBlockingIfc(Component):
   def construct( s ):
     s.element = None
 
-    s.count = Wire(int)
-    s.count_next = Wire(int)
-    s.amp   = Wire(int)
+    s.count = Wire(Bits32)
+    s.amp   = Wire(Bits32)
 
-    s.value = Wire(int)
+    s.value = Wire(Bits32)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_incr():
-      s.count = s.count_next
+      s.count <<= s.count + 1
 
     @s.update
     def up_amp():
@@ -114,10 +108,6 @@ class TestModuleNonBlockingIfc(Component):
         s.element = None
       else:
         s.value = -1
-
-    @s.update
-    def up_count_next():
-      s.count_next = s.count + 1
 
     s.add_constraints(
       M( s.push ) < U( up_compose_in ),

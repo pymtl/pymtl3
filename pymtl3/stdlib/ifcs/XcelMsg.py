@@ -31,6 +31,7 @@ def mk_xcel_req_msg( addr, data ):
     ( 'addr',   AddrType ),
     ( 'data',   DataType ),
   ], req_to_str )
+  req_cls.addr_nbits = data
   req_cls.data_nbits = data
   return req_cls
 

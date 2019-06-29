@@ -98,20 +98,20 @@ class NormalQueueCtrlRTL( Component ):
       s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
       s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_reg():
 
       if s.reset:
-        s.head  = PtrType(0)
-        s.tail  = PtrType(0)
-        s.count = CountType(0)
+        s.head  <<= PtrType(0)
+        s.tail  <<= PtrType(0)
+        s.count <<= CountType(0)
 
       else:
-        s.head  = s.head_next if s.deq_xfer else s.head
-        s.tail  = s.tail_next if s.enq_xfer else s.tail
-        s.count = s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
-                  s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
-                  s.count
+        s.head  <<= s.head_next if s.deq_xfer else s.head
+        s.tail  <<= s.tail_next if s.enq_xfer else s.tail
+        s.count <<= s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
+                    s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
+                    s.count
 
 #-------------------------------------------------------------------------
 # NormalQueueRTL
@@ -230,20 +230,20 @@ class PipeQueueCtrlRTL( Component ):
       s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
       s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_reg():
 
       if s.reset:
-        s.head  = PtrType(0)
-        s.tail  = PtrType(0)
-        s.count = CountType(0)
+        s.head  <<= PtrType(0)
+        s.tail  <<= PtrType(0)
+        s.count <<= CountType(0)
 
       else:
-        s.head  = s.head_next if s.deq_xfer else s.head
-        s.tail  = s.tail_next if s.enq_xfer else s.tail
-        s.count = s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
-                  s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
-                  s.count
+        s.head  <<= s.head_next if s.deq_xfer else s.head
+        s.tail  <<= s.tail_next if s.enq_xfer else s.tail
+        s.count <<= s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
+                    s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
+                    s.count
 
 #-------------------------------------------------------------------------
 # PipeQueueRTL
@@ -395,20 +395,20 @@ class BypassQueueCtrlRTL( Component ):
       s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
       s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_reg():
 
       if s.reset:
-        s.head  = PtrType(0)
-        s.tail  = PtrType(0)
-        s.count = CountType(0)
+        s.head  <<= PtrType(0)
+        s.tail  <<= PtrType(0)
+        s.count <<= CountType(0)
 
       else:
-        s.head   = s.head_next if s.deq_xfer else s.head
-        s.tail   = s.tail_next if s.enq_xfer else s.tail
-        s.count  = s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
-                   s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
-                   s.count
+        s.head  <<= s.head_next if s.deq_xfer else s.head
+        s.tail  <<= s.tail_next if s.enq_xfer else s.tail
+        s.count <<= s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
+                    s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
+                    s.count
 
 #-------------------------------------------------------------------------
 # BypassQueueRTL
@@ -482,17 +482,17 @@ class NormalQueue1EntryRTL( Component ):
 
     # Logic
 
-    @s.update_on_edge
+    @s.update_ff
     def up_full():
       if s.reset:
-        s.full = b1(0)
+        s.full <<= b1(0)
       else:
-        s.full = ~s.deq.en & (s.enq.en | s.full)
+        s.full <<= ~s.deq.en & (s.enq.en | s.full)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_entry():
       if s.enq.en:
-        s.entry = s.enq.msg
+        s.entry <<= s.enq.msg
 
     @s.update
     def up_enq_rdy():
@@ -533,17 +533,17 @@ class PipeQueue1EntryRTL( Component ):
 
     # Logic
 
-    @s.update_on_edge
+    @s.update_ff
     def up_full():
       if s.reset:
-        s.full = b1(0)
+        s.full <<= b1(0)
       else:
-        s.full = s.enq.en | s.full & ~s.deq.en
+        s.full <<= s.enq.en | s.full & ~s.deq.en
 
-    @s.update_on_edge
+    @s.update_ff
     def up_entry():
       if s.enq.en:
-        s.entry = deepcopy( s.enq.msg )
+        s.entry <<= s.enq.msg
 
     @s.update
     def up_enq_rdy():
@@ -581,17 +581,17 @@ class BypassQueue1EntryRTL( Component ):
 
     # Logic
 
-    @s.update_on_edge
+    @s.update_ff
     def up_full():
       if s.reset:
-        s.full = b1(0)
+        s.full <<= b1(0)
       else:
-        s.full = ~s.deq.en & (s.enq.en | s.full)
+        s.full <<= ~s.deq.en & (s.enq.en | s.full)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_entry():
       if s.enq.en & ~s.deq.en:
-        s.entry = deepcopy( s.enq.msg )
+        s.entry <<= s.enq.msg
 
     @s.update
     def up_enq_rdy():

@@ -56,7 +56,7 @@ def test_cl_no_delay():
   th = TestHarnessSimple( Bits16, TestSrcCL, TestSinkCL, msgs, msgs )
   th.run_sim()
 
-int_msgs = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+# int_msgs = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
 bit_msgs = [ Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
              Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ),
              Bits16( 0 ), Bits16( 1 ), Bits16( 2 ), Bits16( 3 ) ]
@@ -72,7 +72,7 @@ arrival4 = [ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60 ]
    'sink_init', 'sink_intv', 'arrival_time' ),
   [
     ( Bits16, bit_msgs,  0,  0, 0, 0, arrival0 ),
-    ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
+    # ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
     ( Bits16, bit_msgs, 10,  1, 0, 0, arrival2 ),
     ( Bits16, bit_msgs, 10,  0, 0, 1, arrival3 ),
     ( Bits16, bit_msgs,  3,  4, 5, 3, arrival4 )
@@ -97,7 +97,7 @@ def test_src_sink_cl( Type, msgs, src_init,  src_intv,
    'sink_init', 'sink_intv', 'arrival_time' ),
   [
     ( Bits16, bit_msgs,  0,  0, 0, 0, arrival0 ),
-    ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
+    # ( int,    int_msgs, 10,  0, 0, 0, arrival1 ),
     ( Bits16, bit_msgs, 10,  1, 0, 0, arrival2 ),
     ( Bits16, bit_msgs, 10,  0, 0, 1, arrival3 ),
     ( Bits16, bit_msgs,  3,  4, 5, 3, arrival4 )
@@ -182,7 +182,7 @@ for src in ['cl', 'rtl']:
   for sink in ['cl', 'rtl']:
     test_case_table += [
       ( src, sink, bit_msgs,  0,  0, 0, 0, arrival0 ),
-      ( src, sink, int_msgs, 10,  0, 0, 0, arrival1 ),
+      # ( src, sink, int_msgs, 10,  0, 0, 0, arrival1 ),
       ( src, sink, bit_msgs, 10,  1, 0, 0, arrival2 ),
       ( src, sink, bit_msgs, 10,  0, 0, 1, arrival3 ),
       ( src, sink, bit_msgs,  3,  4, 5, 3, arrival4 ),

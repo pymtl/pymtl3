@@ -139,7 +139,7 @@ def {}():
 
     # Query update block metadata from top
 
-    update_on_edge               = top.get_all_update_on_edge()
+    update_ff                    = top.get_all_update_ff()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
     genblk_reads, genblk_writes  = top._dag.genblk_reads, top._dag.genblk_writes
     U_U, RD_U, WR_U, U_M         = top.get_all_explicit_constraints()
@@ -233,14 +233,12 @@ def {}():
       # Add all constraints
       for writer in writers:
         for wr_blk in write_upblks[ writer ]:
-          for rd_blk in rd_blks:
-            if wr_blk != rd_blk:
-              if rd_blk in update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
-                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
+          if wr_blk not in update_ff:
+            for rd_blk in rd_blks:
+              if wr_blk != rd_blk:
+                if rd_blk not in update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                  constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -261,15 +259,13 @@ def {}():
 
       # Add all constraints
       for wr_blk in wr_blks:
-        for reader in readers:
-          for rd_blk in read_upblks[ reader ]:
-            if wr_blk != rd_blk:
-              if rd_blk in update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
-                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
+        if wr_blk not in update_ff:
+          for reader in readers:
+              for rd_blk in read_upblks[ reader ]:
+                if wr_blk != rd_blk:
+                  if rd_blk not in update_ff:
+                    impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                    constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     top._dag.constraint_objs = constraint_objs
     top._dag.all_constraints = U_U.copy()

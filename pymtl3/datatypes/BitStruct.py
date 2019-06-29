@@ -7,6 +7,7 @@
 # Author : Yanghui Ou
 #   Date : Apr 8, 2019
 """
+from copy import deepcopy
 from functools import reduce
 
 import py
@@ -19,6 +20,10 @@ class BitStruct:
 
   fields = []
   nbits = 0
+
+  def __ilshift__( self, x ):
+    self._next = deepcopy( x )
+    return self
 
   def to_bits( self ):
     bits_lst = []

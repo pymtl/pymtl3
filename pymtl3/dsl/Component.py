@@ -473,8 +473,15 @@ class Component( ComponentLevel7 ):
 
         elif isinstance( obj, Signal ):
           try:
-            if is_list: current_obj[i] = obj.default_value()
-            else:       setattr( current_obj, i, obj.default_value() )
+            if is_list:
+              current_obj[i] = obj.default_value()
+              current_obj[i]._next = obj.default_value()
+            else:
+              value = obj.default_value()
+              value._next = obj.default_value()
+              setattr( current_obj, i, value )
+          except AttributeError:
+            pass
           except Exception as err:
             err.message = repr(obj) + " -- " + err.message
             err.args = (err.message,)

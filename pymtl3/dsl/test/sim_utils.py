@@ -467,16 +467,31 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   def cleanup_signals( m ):
     if isinstance( m, list ):
       for i, o in enumerate( m ):
-        if   isinstance( o, Signal ): m[i] = o.default_value()
-        elif isinstance( o, Const ):  m[i] = o.const
-        else:                         cleanup_signals( o )
+        if   isinstance( o, Signal ):
+          m[i] = o.default_value()
+          try:
+            m[i]._next = o.default_value()
+          except AttributeError:
+            pass
+        elif isinstance( o, Const ):
+          m[i] = o.const
+        else:
+          cleanup_signals( o )
 
     elif isinstance( m, NamedObject ):
       for name, obj in m.__dict__.items():
         if ( isinstance( name, str ) and not name.startswith("_") ) \
           or isinstance( name, tuple ):
-          if   isinstance( obj, Signal ): setattr( m, name, obj.default_value() )
-          elif isinstance( obj, Const ):  setattr( m, name, obj.const )
-          else:                           cleanup_signals( obj )
+          if   isinstance( obj, Signal ):
+            value = obj.default_value()
+            try:
+              value._next = obj.default_value()
+            except AttributeError:
+              pass
+            setattr( m, name, value )
+          elif isinstance( obj, Const ):
+            setattr( m, name, obj.const )
+          else:
+            cleanup_signals( obj )
 
   cleanup_signals( s )
