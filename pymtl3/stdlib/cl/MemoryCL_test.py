@@ -4,10 +4,9 @@
 
 import random
 import struct
+from functools import reduce
 
 import pytest
-
-from functools import reduce
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
