@@ -8,11 +8,15 @@ Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
 from collections import deque
+from typing import Generic, TypeVar
 
 from pymtl3.datatypes import Bits, mk_bits
+from pymtl3.dsl.errors import NotElaboratedError
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
+
+T = TypeVar('T')
 
 
 class Connectable:
@@ -76,7 +80,15 @@ class Const( Connectable ):
 
 class Signal( NamedObject, Connectable ):
 
-  def __init__( s, Type ):
+  def __init__( s, _Type = None ):
+    cls = s.__class__
+    if _Type is None:
+      if not hasattr(cls, "Type") or cls.Type is None:
+        raise TypeError("Data type of {} cannot be None!".format(cls))
+      Type = cls.Type
+      cls.Type = None
+    else:
+      Type = _Type
     # TODO
     if isinstance( Type, int ):
       raise Exception("Use actual type instead of int (it is deprecated).")
@@ -86,6 +98,12 @@ class Signal( NamedObject, Connectable ):
     s._dsl.slice  = None # None -- not a slice of some wire by default
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
+
+  def __class_getitem__( cls, Type ):
+    if isinstance( Type, tuple ):
+      raise TypeError("{} expects exactly one data type!".format(cls))
+    cls.Type = Type
+    return super(Signal, cls).__class_getitem__( Type )
 
   def inverse( s ):
     pass
@@ -253,17 +271,17 @@ class Signal( NamedObject, Connectable ):
     return _overlap( s._dsl.slice, other._dsl.slice )
 
 # These three subtypes are for type checking purpose
-class Wire( Signal ):
+class Wire( Signal, Generic[T] ):
   def inverse( s ):
     return Wire( s._dsl.Type )
 
-class InPort( Signal ):
+class InPort( Signal, Generic[T] ):
   def inverse( s ):
     return OutPort( s._dsl.Type )
   def is_input_value_port( s ):
     return True
 
-class OutPort( Signal ):
+class OutPort( Signal, Generic[T] ):
   def inverse( s ):
     return InPort( s._dsl.Type )
   def is_output_value_port( s ):
