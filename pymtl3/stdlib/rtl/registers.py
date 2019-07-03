@@ -1,7 +1,8 @@
 
 from copy import deepcopy
 
-from pymtl3 import *
+from pymtl3.datatypes import Bits1
+from pymtl3.dsl import Component, InPort, OutPort
 
 
 class Reg( Component ):

@@ -7,7 +7,7 @@ Accelerator message type implementation.
 Author : Yanghui Ou
 Date   : June 3, 2019
 """
-from pymtl3 import *
+from pymtl3.datatypes import Bits1, mk_bit_struct, mk_bits
 
 
 def mk_xcel_msg( addr, data ):

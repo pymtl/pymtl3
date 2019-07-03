@@ -5,7 +5,8 @@ arbiters.py
 Collection of arbiter implementations based on vc-Arbiters.
 """
 
-from pymtl3 import *
+from pymtl3.datatypes import Bits1, mk_bits
+from pymtl3.dsl import Component, InPort, OutPort, Wire
 
 from .registers import RegEnRst
 

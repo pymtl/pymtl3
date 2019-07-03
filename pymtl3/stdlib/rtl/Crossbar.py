@@ -4,7 +4,8 @@ Crossbar.py
 ======================================================================
 """
 
-from pymtl3 import *
+from pymtl3.datatypes import clog2, mk_bits
+from pymtl3.dsl import Component, InPort, OutPort
 
 
 class Crossbar( Component ):

@@ -9,7 +9,8 @@ Author : Yanghui Ou
 
 from copy import deepcopy
 
-from pymtl3 import *
+from pymtl3.datatypes import Bits1, b1, clog2, mk_bits
+from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
 from pymtl3.stdlib.rtl import Mux, RegisterFile
 

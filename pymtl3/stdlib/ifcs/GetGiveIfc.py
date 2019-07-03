@@ -9,7 +9,8 @@ Author: Yanghui Ou
 """
 import greenlet
 
-from pymtl3 import *
+from pymtl3.datatypes import Bits1
+from pymtl3.dsl import Component, InPort, Interface, OutPort, blocking, non_blocking
 
 from .ifcs_utils import enrdy_to_str
 

@@ -7,7 +7,8 @@ RTL val/rdy interface.
 Author : Shunning Jiang
   Date : Apr 5, 2019
 """
-from pymtl3 import *
+from pymtl3.datatypes import Bits1
+from pymtl3.dsl import InPort, Interface, OutPort
 
 from .ifcs_utils import valrdy_to_str
 

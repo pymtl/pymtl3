@@ -7,7 +7,8 @@ A priority encoder for arbitration
 Author : Yanghui Ou, Cheng Tan
   Date : Mar 1, 2019
 """
-from pymtl3 import *
+from pymtl3.datatypes import mk_bits
+from pymtl3.dsl import Component, InPort, OutPort
 
 
 class Encoder( Component ):

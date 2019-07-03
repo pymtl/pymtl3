@@ -8,7 +8,8 @@ Author : Shunning Jiang
 Date   : Mar 9, 2018
 """
 
-from pymtl3 import *
+from pymtl3.datatypes import Bits1, mk_bits
+from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.stdlib.ifcs.SendRecvIfc import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegRst
 
