@@ -22,57 +22,8 @@ import re
 
 from .errors import NotElaboratedError
 
-# from collections import OrderedDict as ord_dict
-
-
 class DSLMetadata:
   pass
-
-# NOTE: We found that the built-in OrderedDict slows down the elaboration
-# time because much time was spent calling OrderedDict.__init__.
-# The time for instantiating an OrderedDict is quite long compared
-# to other primitive data structures such as list or dict. We have to
-# implement our own ordered dictionary to mitigate this overhead.
-# TODO: When we move to python3, we won't need this any more.
-class ord_dict:
-  def __init__( self ):
-    self.data = []
-
-  def __getitem__( self, key ):
-    for k, v in self.data:
-      if key == k:
-        return v
-    raise KeyError( "Key error:{}".format( key ) )
-
-  def __setitem__( self, key, value ):
-    idx = 0
-    for k, v in self.data:
-      if key == k:
-        self.data[ idx ] = ( k, value )
-        return
-      idx += 1
-    self.data.append( ( key, value ) )
-
-  def __iter__( self ):
-    for k, _ in self.data:
-      yield k
-
-  def __str__( self ):
-    return str( self.data )
-
-  def pop( self, key ):
-    idx = 0
-    for k, v in self.data:
-      if key == k:
-        _, ret = self.data.pop( idx )
-        return ret
-      idx += 1
-    raise KeyError( "Key error:{}".format( key ) )
-
-  def iteritems( self ):
-    yield from self.data
-
-  items = iteritems
 
 # Special data structure for constructing the parameter tree.
 class ParamTreeNode:
@@ -96,7 +47,7 @@ class ParamTreeNode:
     if other.children is not None:
       # Lazily create children
       if self.children is None:
-        self.children = ord_dict()
+        self.children = {}
       for comp_name, node in other.children.items():
         if comp_name in self.children:
           self.children[ comp_name ].merge( node )
@@ -107,7 +58,7 @@ class ParamTreeNode:
 
     if self.leaf is None:
       self.leaf = {}
-      self.children = ord_dict()
+      self.children = {}
 
     # Traverse to the node
     cur_node = self
@@ -115,7 +66,7 @@ class ParamTreeNode:
     for comp_name in strs:
       # Lazily create children
       if cur_node.children is None:
-        cur_node.children = ord_dict()
+        cur_node.children = {}
       if comp_name not in cur_node.children:
         new_node = ParamTreeNode()
         if '*' in comp_name:
