@@ -27,4 +27,3 @@ class EnqIfcRTL( RecvIfcRTL ):
 
 class DeqIfcRTL( GiveIfcRTL ):
   pass
-

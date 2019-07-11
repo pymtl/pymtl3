@@ -9,13 +9,14 @@ Author: Yanghui Ou
 """
 from __future__ import absolute_import, division, print_function
 
+from copy import deepcopy
+
 from pymtl3 import *
 from pymtl3.dsl.errors import InvalidConnectionError
 from pymtl3.stdlib.rtl import And
 
-from copy import deepcopy
+from .ifcs_utils import MethodSpec, enrdy_to_str
 from .SendRecvIfc import RecvIfcRTL
-from .ifcs_utils import enrdy_to_str, MethodSpec
 
 #-------------------------------------------------------------------------
 # GetIfcRTL
