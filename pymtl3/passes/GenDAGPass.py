@@ -419,7 +419,7 @@ def {}():
         for zz in equiv[xx]:
           if zz in method_is_top_level_callee:
             top._dag.top_level_callee_constraints.add( (zz, yy) )
-
+      else:
         if xx in method_is_top_level_callee:
           top._dag.top_level_callee_constraints.add( (xx, yy) )
 
