@@ -315,7 +315,8 @@ def {}():
             # If the member is a top level callee, we add the writer's
             # actual method to the set
             if member.get_host_component() is top:
-              method_is_top_level_callee.add( writer.method )
+              if not writer.method.__name__.startswith('_binded_method'):
+                method_is_top_level_callee.add( writer.method )
 
     except AttributeError:
       pass
@@ -323,7 +324,8 @@ def {}():
     # Add those callee ports that are not part of a net
     for callee in top._dsl.top_level_callee_ports:
       if callee.method:
-        method_is_top_level_callee.add( callee.method )
+        if not callee.method.__name__.startswith('_binded_method'):
+          method_is_top_level_callee.add( callee.method )
 
     method_blks = defaultdict(set)
 
@@ -417,7 +419,7 @@ def {}():
         for zz in equiv[xx]:
           if zz in method_is_top_level_callee:
             top._dag.top_level_callee_constraints.add( (zz, yy) )
-      else:
+
         if xx in method_is_top_level_callee:
           top._dag.top_level_callee_constraints.add( (xx, yy) )
 
@@ -425,6 +427,7 @@ def {}():
         for zz in equiv[yy]:
           if zz in method_is_top_level_callee:
             top._dag.top_level_callee_constraints.add( (xx, zz) )
+
       else:
         if yy in method_is_top_level_callee:
           top._dag.top_level_callee_constraints.add( (xx, yy) )

@@ -34,9 +34,9 @@ class ComponentLevel6( ComponentLevel5 ):
 
     # The following code handles non-blocking methods
     def bind_method( method ):
-      def _method( *args, **kwargs ):
+      def _binded_method( *args, **kwargs ):
         return method( s, *args, **kwargs )
-      return _method
+      return _binded_method
 
     cls_dict = s.__class__.__dict__
     for x in cls_dict:

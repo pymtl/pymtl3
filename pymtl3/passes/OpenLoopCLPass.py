@@ -32,11 +32,9 @@ class OpenLoopCLPass( BasePass ):
   def schedule_with_top_level_callee( self, top ):
 
     # Construct the graph with top level callee port
-
     V = top.get_all_update_blocks() | top._dag.genblks
 
     # We collect all top level callee ports/nonblocking callee interfaces
-
     top_level_callee_ports = top.get_all_object_filter(
       lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
 
@@ -59,7 +57,6 @@ class OpenLoopCLPass( BasePass ):
 
     # Then deal with non-blocking callee interfaces. Map the method of the
     # interface to the actual method and set up method-rdy mapping
-
     for x in top_level_nb_ifcs:
       V.add( x.method )
       method_guard_mapping [x.method] = x.rdy
