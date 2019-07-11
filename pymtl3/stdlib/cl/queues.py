@@ -30,17 +30,12 @@ class PipeQueueCL( Component ):
     )
 
   @non_blocking( lambda s: len( s.queue ) < s.queue.maxlen )
-  def enq( s, v ):
-    s.enq_called = True
-    s.enq_msg    = v
-    s.queue.appendleft( s.enq_msg )
+  def enq( s, msg ):
+    s.queue.appendleft( msg )
 
   @non_blocking( lambda s: len( s.queue ) > 0 )
   def deq( s ):
-    s.deq_called = True
-    s.enq_rdy    = True
-    s.deq_msg    = s.queue.pop()
-    return s.deq_msg
+    return s.queue.pop()
 
   @non_blocking( lambda s: len( s.queue ) > 0 )
   def peek( s ):
@@ -64,8 +59,8 @@ class BypassQueueCL( Component ):
     )
 
   @non_blocking( lambda s: len( s.queue ) < s.queue.maxlen )
-  def enq( s, v ):
-    s.queue.appendleft( v )
+  def enq( s, msg ):
+    s.queue.appendleft( msg )
 
   @non_blocking( lambda s: len( s.queue ) > 0 )
   def deq( s ):
@@ -102,8 +97,8 @@ class NormalQueueCL( Component ):
     )
 
   @non_blocking( lambda s: s.enq_rdy )
-  def enq( s, v ):
-    s.queue.appendleft( v )
+  def enq( s, msg ):
+    s.queue.appendleft( msg )
 
   @non_blocking( lambda s: s.deq_rdy )
   def deq( s ):
