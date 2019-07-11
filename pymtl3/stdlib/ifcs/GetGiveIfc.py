@@ -191,7 +191,7 @@ class GetRTL2GiveCL( Component ):
     )
 
   @non_blocking( lambda s : s.entry is not None )
-  def give( s, msg ):
+  def give( s ):
     tmp = deepcopy( s.entry )
     s.entry = None
     return tmp
