@@ -6,6 +6,8 @@
 """Provide L5 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
+from collections import OrderedDict
+
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
@@ -18,8 +20,8 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
-    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
+    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = OrderedDict()
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
     visitor = BehavioralRTLIRTypeCheckVisitorL5( m,
@@ -43,12 +45,8 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
     """
     if isinstance( node.value.Type, rt.Array ) and \
        isinstance( node.value.Type.get_sub_type(), rt.Component ):
-      try:
-        idx = node.idx._value
-        node.Type = node.value.Type.get_sub_type()
-      except AttributeError:
-        raise PyMTLTypeError( s.blk, node.ast,
-          'index of component array must be a static constant expression!' )
+      node.Type = node.value.Type.get_sub_type()
+
     else:
       super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Index( node )
 

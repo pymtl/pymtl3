@@ -1,0 +1,157 @@
+#=========================================================================
+# Configuration file for generating a release
+#=========================================================================
+# This is a list of the files that should be included in a release. It is
+# a YAML file with the following syntax:
+#
+# dirname:
+#  - file0
+#  - file1
+#  - file2
+#
+# The special EXTRA prefix is used to refer to extra files that are
+# stored in the release subdirectory, and should be copied into the
+# release.
+#
+# The special KEEP prefix is used to refer to files which should
+# be grabbed from master and copied into the release when doing the
+# upstream commit. I think we can get rid of keep files if we actually
+# create an initial commit with no content that we use for the initial
+# upstream branch.
+#
+# The FULLDIR prefix is used to list entire directories that should be
+# copied over into the release without any kind of filtering. If you need
+# more advanced filtering, then you need to list out the files in the
+# "Regular Files" section.
+
+#-------------------------------------------------------------------------
+# Special Files
+#-------------------------------------------------------------------------
+
+KEEP:
+ - README.md
+
+#-------------------------------------------------------------------------
+# Basic Files
+#-------------------------------------------------------------------------
+
+.:
+ - .gitignore
+ - conftest.py
+ - pytest.ini
+
+examples:
+
+ - __init__.py
+
+#-------------------------------------------------------------------------
+# Ex 01 Files
+#-------------------------------------------------------------------------
+
+examples/ex01_basics:
+
+ - incr_test.py
+ - IncrPyVars_test.py
+ - IncrWires_test.py
+ - IncrValueModular_test.py
+ - IncrPyObjs_test.py
+ - IncrMethodPorts_test.py
+ - IncrMethodModular_test.py
+ - __init__.py
+
+#-------------------------------------------------------------------------
+# Ex 02 Files
+#-------------------------------------------------------------------------
+
+examples/ex02_cksum:
+ - utils.py
+ - ChecksumFL.py
+ - ChecksumCL.py
+ - ChecksumRTL.py
+ - cksum-translate
+ - __init__.py
+
+examples/ex02_cksum/test:
+ - utils_test.py
+ - ChecksumFL_test.py
+ - ChecksumCL_test.py
+ - ChecksumRTL_test.py
+ - ChecksumVRTL_test.py
+ - __init__.py
+
+#-------------------------------------------------------------------------
+# Ex 03 Files
+#-------------------------------------------------------------------------
+
+examples/ex03_proc:
+ - __init__.py
+ - MiscRTL.py
+ - NullXcel.py
+ - ProcCL.py
+ - ProcCtrlRTL.py
+ - ProcDpathRTL.py
+ - ProcFL.py
+ - ProcRTL.py
+ - proc-sim
+ - proc-translate
+ - SparseMemoryImage.py
+ - tinyrv0_encoding.py
+ - TinyRV0InstRTL.py
+ - tinyrv0-isa.md
+
+examples/ex03_proc/test:
+ - harness.py
+ - __init__.py
+ - inst_addi.py
+ - inst_add.py
+ - inst_and.py
+ - inst_bne.py
+ - inst_csr.py
+ - inst_lw.py
+ - inst_sll.py
+ - inst_srl.py
+ - inst_sw.py
+ - inst_utils.py
+ - inst_xcel.py
+ - ProcCL_test.py
+ - ProcFL_test.py
+ - ProcRTL_test.py
+ - ProcVRTL_test.py
+
+examples/ex03_proc/ubmark:
+
+ - __init__.py
+ - proc_ubmark_cksum_blk_data.py
+ - proc_ubmark_cksum_blk.py
+ - proc_ubmark_cksum_roll_data.py
+ - proc_ubmark_cksum_roll.py
+ - proc_ubmark_vvadd_data.py
+ - proc_ubmark_vvadd_opt.py
+ - proc_ubmark_vvadd_unopt.py
+
+#-------------------------------------------------------------------------
+# Ex 04 Files
+#-------------------------------------------------------------------------
+
+examples/ex04_xcel:
+ - ChecksumXcelCL.py
+ - ChecksumXcelFL.py
+ - ChecksumXcelRTL.py
+ - __init__.py
+ - ProcXcel.py
+ - proc-xcel-sim
+ - proc-xcel-translate
+
+examples/ex04_xcel/test:
+ - ChecksumXcelCL_test.py
+ - ChecksumXcelFL_test.py
+ - ChecksumXcelRTL_test.py
+ - ChecksumXcelVRTL_test.py
+ - harness.py
+ - __init__.py
+
+examples/ex04_xcel/ubmark:
+ - __init__.py
+ - proc_ubmark_checksum_xcel_single.py
+ - proc_ubmark_cksum_xcel_roll.py
+

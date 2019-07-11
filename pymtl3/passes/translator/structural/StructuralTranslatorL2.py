@@ -104,6 +104,15 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     elif isinstance( expr, sexp.StructAttr ):
       return s.rtlir_tr_struct_attr(
         s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr())
+    elif isinstance( expr, sexp.ConstInstance ):
+      rtype = expr.get_rtype()
+      value = expr.get_value()
+      dtype = rtype.get_dtype()
+      if isinstance( dtype, rdt.Struct ):
+        return s.rtlir_tr_struct_instance(dtype, value)
+      else:
+        return super( StructuralTranslatorL2, s ). \
+            rtlir_signal_expr_translation( expr, m )
     else:
       return super( StructuralTranslatorL2, s ). \
           rtlir_signal_expr_translation( expr, m )
@@ -121,4 +130,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     raise NotImplementedError()
 
   def rtlir_tr_struct_attr( s, base_signal, attr ):
+    raise NotImplementedError()
+
+  def rtlir_tr_struct_instance( s, dtype, struct ):
     raise NotImplementedError()

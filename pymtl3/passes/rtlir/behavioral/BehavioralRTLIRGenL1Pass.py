@@ -10,7 +10,7 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, sext, zext
+from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 
@@ -26,9 +26,12 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
     visitor = BehavioralRTLIRGeneratorL1( m )
     upblks = {
-      'CombUpblk' : m.get_update_blocks() - m.get_update_on_edge(),
-      'SeqUpblk'  : m.get_update_on_edge()
+      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
+      'SeqUpblk'  : list(m.get_update_on_edge())
     }
+    # Sort the upblks by their name
+    upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
+    upblks['SeqUpblk'].sort( key = lambda x: x.__name__ )
 
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
@@ -207,6 +210,23 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       ret.ast = node
       return ret
 
+    # reduce methods
+    elif obj is reduce_and or obj is reduce_or or obj is reduce_xor:
+      if obj is reduce_and:
+        op = bir.BitAnd()
+      elif obj is reduce_or:
+        op = bir.BitOr()
+      elif obj is reduce_xor:
+        op = bir.BitXor()
+      if len( node.args ) != 1:
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly two arguments should be given to reduce {} methods!'. \
+              format( op ) )
+      value = s.visit( node.args[0] )
+      ret = bir.Reduce( op, value )
+      ret.ast = node
+      return ret
+
     else:
       # Only Bits class instantiation is supported at L1
       raise PyMTLSyntaxError( s.blk, node,
@@ -259,12 +279,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return s.visit( node.value )
 
   def visit_Name( s, node ):
-    if node.id in s.globals:
-      # free var from the global name space
-      ret = bir.FreeVar( node.id, s.globals[ node.id ] )
-      ret.ast = node
-      return ret
-    elif node.id in s.closure:
+    if node.id in s.closure:
       # free var from closure
       obj = s.closure[ node.id ]
       if isinstance( obj, dsl.Component ):
@@ -275,6 +290,11 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         ret = bir.Base( obj )
       else:
         ret =  bir.FreeVar( node.id, obj )
+      ret.ast = node
+      return ret
+    elif node.id in s.globals:
+      # free var from the global name space
+      ret = bir.FreeVar( node.id, s.globals[ node.id ] )
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,

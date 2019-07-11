@@ -7,10 +7,11 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+from collections import OrderedDict
 
 from pymtl3.datatypes import Bits32, mk_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.rtlir.errors import PyMTLTypeError
+from pymtl3.passes.rtlir.errors import PyMTLTypeError, RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
@@ -22,7 +23,7 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
     visitor = BehavioralRTLIRTypeCheckVisitorL1(
       m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
@@ -36,8 +37,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.freevars = freevars
     s.accessed = accessed
     s.type_expect = {}
-    lhs_types = ( rt.Port, rt.Wire )
+    lhs_types = ( rt.Port, rt.Wire, rt.NetWire )
     index_types = ( rt.Port, rt.Wire, rt.Array )
+    slice_types = ( rt.Port, rt.Wire )
     s.type_expect[ 'Assign' ] = {
       'target' : ( lhs_types, 'lhs of assignment must be a signal!' ),
       'value' : ( rt.Signal, 'rhs of assignment should be signal or const!' )
@@ -48,6 +50,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.type_expect[ 'SignExt' ] = {
       'value':( rt.Signal, 'extension only applies to signals!' )
     }
+    s.type_expect[ 'Reduce' ] = {
+      'value':( rt.Signal, 'reduce only applies on a signal!' )
+    }
     s.type_expect[ 'SizeCast' ] = {
       'value':( rt.Signal, 'size casting only applies to signals/consts!' )
     }
@@ -55,11 +60,11 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       'value':( rt.Component, 'the base of an attribute must be a component!' )
     }
     s.type_expect[ 'Index' ] = {
-      'idx':(rt.Signal, 'index must be a signal or constant expression!'),
-      'value':(index_types, 'the base of an index must be an array or signal!')
+      'idx':( rt.Signal, 'index must be a signal or constant expression!' ),
+      'value':( index_types, 'the base of an index must be an array or signal!' )
     }
     s.type_expect[ 'Slice' ] = {
-      'value':( lhs_types, 'the base of a slice must be a signal!' ),
+      'value':( slice_types, 'the base of a slice must be a signal!' ),
       'lower':( rt.Signal, 'upper of slice must be a constant expression!' ),
       'upper':( rt.Signal, 'lower of slice must be a constant expression!' )
     }
@@ -145,9 +150,15 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = None
 
   def visit_FreeVar( s, node ):
-    if not node.name in s.freevars.keys():
+    if node.name not in s.freevars.keys():
       s.freevars[ node.name ] = node.obj
-    t = rt.get_rtlir( node.obj )
+
+    try:
+      t = rt.get_rtlir( node.obj )
+    except RTLIRConversionError as e:
+      raise PyMTLTypeError(s.blk, node.ast,
+        '{} cannot be converted into a valid RTLIR object!'.format(node.name))
+
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
       node._value = mk_bits( t.get_dtype().get_length() )( node.obj )
     node.Type = t
@@ -172,7 +183,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         raise PyMTLTypeError( s.blk, node.ast,
           '{} is not a signal!'.format( child ) )
       nbits += child.Type.get_dtype().get_length()
-    node.Type = rt.Wire( rdt.Vector( nbits ) )
+    node.Type = rt.NetWire( rdt.Vector( nbits ) )
 
   def visit_ZeroExt( s, node ):
     try:
@@ -201,6 +212,11 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         '{} is not greater than {}!'.format(new_nbits, old_nbits) )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
+
+  def visit_Reduce( s, node ):
+    child_type = node.value.Type
+    node.Type = copy.copy( child_type )
+    node.Type.dtype = rdt.Vector( 1 )
 
   def visit_SizeCast( s, node ):
     nbits = node.nbits
@@ -235,12 +251,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if isinstance( node.value.Type, rt.Array ):
       if idx is not None and not (0 <= idx < node.value.Type.get_dim_sizes()[0]):
         raise PyMTLTypeError( s.blk, node.ast, 'array index out of range!' )
-      # Unpacked array index must be a static constant integer!
-      subtype = node.value.Type.get_sub_type()
-      if idx is not None and not isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
-        raise PyMTLTypeError( s.blk, node.ast,
-'index of unpacked array {} must be a constant integer expression!'.format(node.value))
       node.Type = node.value.Type.get_next_dim_type()
+      obj = node.value.Type.get_obj()
+      if idx is not None and obj is not None:
+        if isinstance( node.Type, rt.Array ):
+          node.Type.obj = obj[ int( idx ) ]
+        else:
+          node._value = obj[ int( idx ) ]
 
     elif isinstance( node.value.Type, rt.Signal ):
       dtype = node.value.Type.get_dtype()
@@ -253,7 +270,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         if idx is not None and not(0 <= idx < dtype.get_length()):
           raise PyMTLTypeError( s.blk, node.ast,
             'bit selection index out of range!' )
-        node.Type = rt.Wire( rdt.Vector( 1 ) )
+        node.Type = rt.NetWire( rdt.Vector( 1 ) )
       else:
         raise PyMTLTypeError( s.blk, node.ast,
           'cannot perform index on {}!'.format(dtype))
@@ -282,7 +299,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if not ( 0 <= lower_val < upper_val <= signal_nbits ):
         raise PyMTLTypeError( s.blk, node.ast,
           'upper/lower bound of slice out of width of signal!' )
-      node.Type = rt.Wire( rdt.Vector( int( upper_val - lower_val ) ) )
+      node.Type = rt.NetWire( rdt.Vector( int( upper_val - lower_val ) ) )
 
     else:
       # Try to special case the constant-stride part selection
@@ -291,6 +308,6 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         assert isinstance( node.upper.op, bir.Add )
         nbits = node.upper.right
         assert s.is_same( node.lower, node.upper.left )
-        node.Type = rt.Wire( rdt.Vector( nbits ) )
+        node.Type = rt.NetWire( rdt.Vector( nbits ) )
       except Exception:
         raise PyMTLTypeError( s.blk, node.ast, 'slice bounds must be constant!' )

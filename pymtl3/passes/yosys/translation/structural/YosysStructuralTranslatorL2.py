@@ -1,0 +1,248 @@
+#=========================================================================
+# YosysStructuralTranslatorL2.py
+#=========================================================================
+# Author : Peitian Pan
+# Date   : June 9, 2019
+"""Provide the yosys-compatible SystemVerilog structural translator."""
+
+from __future__ import absolute_import, division, print_function
+
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 import (
+    SVStructuralTranslatorL2,
+)
+
+from .YosysStructuralTranslatorL1 import YosysStructuralTranslatorL1
+
+
+class YosysStructuralTranslatorL2(
+    YosysStructuralTranslatorL1, SVStructuralTranslatorL2 ):
+
+  #-----------------------------------------------------------------------
+  # Connection helper method
+  #-----------------------------------------------------------------------
+
+  def vec_conn_vector_gen( s, d, c_nbits, pid, wid, idx, dtype ):
+    nbits = dtype.get_length()
+    assert c_nbits - nbits >= 0
+    msb, lsb = c_nbits-1, c_nbits-nbits
+    return [ {
+      "direction" : d,
+      "pid" : pid,
+      "wid" : wid,
+      "idx" : idx + "[{msb}:{lsb}]".format( **locals() ),
+      "present" : True
+    } ]
+
+  def vec_conn_struct_gen( s, d, c_nbits, pid, wid, idx, dtype ):
+    all_properties = dtype.get_all_properties()
+    ret = []
+    for name, field in all_properties:
+      ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"$"+name, wid, idx, field )
+      c_nbits -= field.get_length()
+    return ret
+
+  def vec_conn_packed_gen( s, d, c_nbits, pid, wid, idx, _dtype ):
+
+    def _packed_gen( d, c_nbits, pid, wid, idx, n_dim, p_nbits, dtype ):
+      if not n_dim:
+        return s.vec_conn_dtype_gen( d, c_nbits, pid, wid, idx, dtype )
+      else:
+        ret = []
+        dec_nbits = p_nbits // n_dim[0]
+        for i in reversed( range( n_dim[0] ) ):
+          ret += \
+            _packed_gen(d, c_nbits, pid+"$__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
+          c_nbits -= dec_nbits
+          assert c_nbits >= 0
+        return ret
+
+    p_n_dim = _dtype.get_dim_sizes()
+    p_nbits = _dtype.get_length()
+    dtype = _dtype.get_sub_dtype()
+    return _packed_gen( d, c_nbits, pid, wid, idx, p_n_dim, p_nbits, dtype )
+
+  def vec_conn_dtype_gen( s, d, c_nbits, pid, wid, idx, dtype ):
+    if isinstance( dtype, rdt.Vector ):
+      return s.vec_conn_vector_gen( d, c_nbits, pid, wid, idx, dtype )
+    elif isinstance( dtype, rdt.Struct ):
+      return s.vec_conn_struct_gen( d, c_nbits, pid, wid, idx, dtype )
+    elif isinstance( dtype, rdt.PackedArray ):
+      return s.vec_conn_packed_gen( d, c_nbits, pid, wid, idx, dtype )
+    else:
+      assert False, "unrecognized data type {}!".format( dtype )
+
+  def struct_conn_gen( s, d, pid, wid, idx, dtype ):
+    all_properties = dtype.get_all_properties()
+    ret = []
+    for name, field in all_properties:
+      ret += s.dtype_conn_gen( d, pid+"$"+name, wid+"$"+name, idx, field )
+    cur_nbits = dtype.get_length()
+    for name, field in all_properties:
+      ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"$"+name, wid, idx, field )
+      cur_nbits -= field.get_length()
+    assert cur_nbits == 0
+    return ret
+
+  def _packed_conn_gen( s, d, pid, wid, idx, n_dim, dtype ):
+    if not n_dim:
+      return s.dtype_conn_gen( d, pid, wid, idx, dtype )
+    else:
+      ret = []
+      for i in range( n_dim[0] ):
+        _pid = pid + "$__{}".format(i)
+        _idx = idx + "[{}]".format(i)
+        ret += s._packed_conn_gen( d, _pid, wid, _idx, n_dim[1:], dtype )
+      return ret
+
+  def packed_conn_gen( s, d, pid, wid, idx, _dtype ):
+    n_dim = _dtype.get_dim_sizes()
+    dtype = _dtype.get_sub_dtype()
+    return s._packed_conn_gen( d, pid, wid, idx, n_dim, dtype )
+
+  def dtype_conn_gen( s, d, pid, wid, idx, dtype ):
+    if isinstance( dtype, rdt.Struct ):
+      return s.struct_conn_gen( d, pid, wid, idx, dtype )
+    elif isinstance( dtype, rdt.PackedArray ):
+      return s.packed_conn_gen( d, pid, wid, idx, dtype )
+    else:
+      return \
+        super(YosysStructuralTranslatorL2, s).dtype_conn_gen( d, pid, wid,
+                                                             idx, dtype )
+
+  #-----------------------------------------------------------------------
+  # Port wire declaration helper method
+  #-----------------------------------------------------------------------
+
+  def wire_struct_gen( s, id_, dtype, n_dim ):
+    all_properties = dtype.get_all_properties()
+    ret = []
+    # Generate wire for each field
+    for name, field in all_properties:
+      ret += s.wire_dtype_gen( id_+"$"+name, field, n_dim )
+    # Generate a long vector for this struct signal
+    ret.append( {
+      "msb" : dtype.get_length()-1,
+      "id_" : id_,
+      "n_dim" : n_dim,
+      "present" : True
+    } )
+    return ret
+
+  def wire_packed_gen( s, id_, _dtype, n_dim ):
+    _n_dim = _dtype.get_dim_sizes()
+    dtype = _dtype.get_sub_dtype()
+    ret = s.wire_dtype_gen( id_, dtype, n_dim + _n_dim )
+    # Rigth now don't generate dedicated wire for the whole packed array -
+    # we generate an unpacked array to group together all signals. Users
+    # should access each element of the array instead of manipulating
+    # this array as a whole.
+    # ret.append( {
+      # "msb" : _dtype.get_length()-1,
+      # "id_" : id_,
+      # "n_dim" : n_dim,
+      # "present" : True
+    # } )
+    return ret
+
+  def wire_dtype_gen( s, id_, dtype, n_dim ):
+    if isinstance( dtype, rdt.Struct ):
+      s.check_decl( id_, "" )
+      return s.wire_struct_gen( id_, dtype, n_dim )
+    elif isinstance( dtype, rdt.PackedArray ):
+      s.check_decl( id_, "" )
+      return s.wire_packed_gen( id_, dtype, n_dim )
+    else:
+      return \
+        super(YosysStructuralTranslatorL2, s).wire_dtype_gen(id_, dtype, n_dim )
+
+  #-----------------------------------------------------------------------
+  # Port declaration helper methods
+  #-----------------------------------------------------------------------
+
+  def _packed_gen( s, d, id_, n_dim, dtype ):
+    if not n_dim:
+      return s.dtype_gen( d, id_, dtype )
+    else:
+      ret = []
+      for i in range(n_dim[0]):
+        ret += s._packed_gen( d, id_+"$__{}".format(i), n_dim[1:], dtype )
+      return ret
+
+  def packed_gen( s, d, id_, _dtype ):
+    n_dim = _dtype.get_dim_sizes()
+    dtype = _dtype.get_sub_dtype()
+    return s._packed_gen( d, id_, n_dim, dtype )
+
+  def struct_gen( s, d, id_, dtype ):
+    all_properties = dtype.get_all_properties()
+    ret = []
+    for name, field in all_properties:
+      ret += s.dtype_gen( d, id_+"$"+name, field )
+    return ret
+
+  def dtype_gen( s, d, id_, dtype ):
+    if isinstance( dtype, rdt.Struct ):
+      s.check_decl( id_, "" )
+      return s.struct_gen(d, id_, dtype)
+    elif isinstance( dtype, rdt.PackedArray ):
+      s.check_decl( id_, "" )
+      return s.packed_gen(d, id_, dtype)
+    else:
+      return super(YosysStructuralTranslatorL2, s).dtype_gen(d, id_, dtype)
+
+  #-----------------------------------------------------------------------
+  # Signal operations
+  #-----------------------------------------------------------------------
+  
+  def rtlir_tr_packed_index( s, base_signal, index ):
+    s.deq[-1]['s_index'] += "[{}]"
+    s.deq[-1]['index'].append( int(index) )
+    return '{base_signal}[{index}]'.format( **locals() )
+
+  def rtlir_tr_struct_attr( s, base_signal, attr ):
+    s.deq[-1]['s_attr'] += "${}"
+    s.deq[-1]['attr'].append( attr )
+    return '{base_signal}.{attr}'.format( **locals() )
+
+  def rtlir_tr_struct_instance( s, dtype, struct ):
+    def _gen_packed_array( dtype, n_dim, array ):
+      if not n_dim:
+        if isinstance( dtype, rdt.Vector ):
+          return s.rtlir_tr_literal_number( dtype.nbits, array )
+        elif isinstance( dtype, rdt.Struct ):
+          return s.rtlir_tr_struct_instance( dtype, array )
+        else:
+          assert False, "unrecognized data type {}!".format( dtype )
+      else:
+        ret = []
+        for i in reversed( range( n_dim[0] ) ):
+          _ret = _gen_packed_array( dtype, n_dim[1:], array[i] )
+          ret.append( _ret["s_attr"] )
+        if n_dim[0] > 1:
+          cat_str = "{" + ", ".join( ret ) + "}"
+        else:
+          cat_str = ", ".join( ret )
+        return {'attr':[], 'index':[], 's_attr':cat_str, 's_index':""}
+    fields = []
+    all_properties = dtype.get_all_properties()
+    for name, Type in all_properties:
+      field = getattr( struct, name )
+      if isinstance( Type, rdt.Vector ):
+        _field = s.rtlir_tr_literal_number( Type.nbits, field )
+      elif isinstance( Type, rdt.Struct ):
+        _field = s.rtlir_tr_struct_instance( Type, field )
+      elif isinstance( Type, rdt.PackedArray ):
+        n_dim = Type.get_dim_sizes()
+        sub_dtype = Type.get_sub_dtype()
+        _field = _gen_packed_array( sub_dtype, n_dim, field )
+      else:
+        assert False, "unrecognized data type {}!".format( Type )
+      fields.append( _field["s_attr"] )
+    if len( fields ) == 1:
+      struct_str = fields[0]
+    else:
+      struct_str = "{" + ", ".join( fields ) + "}"
+    s.deq.append( {'attr':[], 'index':[], 's_attr':struct_str, 's_index':""} )
+    return struct_str

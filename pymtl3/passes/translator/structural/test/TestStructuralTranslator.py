@@ -79,7 +79,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
         decls.append( [ decl[0] ] )
       return decls
 
-    def rtlir_tr_interface_port_decl( s, id_, rtype, array_type, dtype ):
+    def rtlir_tr_interface_port_decl( s, m, id_, rtype, array_type ):
       rtype = repr(rtype) if not array_type else array_type
       return ['interface_port: {id_} {rtype}'.format(**locals())]
 
@@ -107,8 +107,8 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
           decls.append( [ decl[0] ] )
       return decls
 
-    def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id,
-        port_rtype, array_type ):
+    def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
+        port_rtype, port_dtype, array_type ):
       if port_id not in ["clk", "reset"]:
         port_rtype = repr(port_rtype) if not array_type else array_type
         return ['component_port: {port_id} {port_rtype}'.format(**locals())]
@@ -123,8 +123,9 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
           decls.append( [ decl[0] ] )
       return decls
 
-    def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
-        ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
+    def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
+        ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
+        port_array_type ):
       port_rtype = repr(port_rtype) if not port_array_type else port_array_type
       return ['component_ifc_port: {port_id} {port_rtype}'.format(**locals())]
 
@@ -137,7 +138,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
             decls.append( [ decl[0] ] )
       return decls
 
-    def rtlir_tr_subcomp_ifc_decl( s, c_id, c_rtype, c_array_type, ifc_id,
+    def rtlir_tr_subcomp_ifc_decl( s, m, c_id, c_rtype, c_array_type, ifc_id,
         ifc_rtype, ifc_array_type, ports ):
       ifc_rtype = repr(ifc_rtype) if not ifc_array_type else ifc_array_type
       decls = [['component_ifc: {ifc_id} {ifc_rtype}'.format(**locals())]]
@@ -154,7 +155,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
         decls += '\n' + '\n'.join( decl )
       return 'component_decls:{}\n'.format( decls )
 
-    def rtlir_tr_subcomp_decl( s, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+    def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
       c_rtype = repr(c_rtype) if not c_array_type else c_array_type
       ret = ['component_decl: {c_id} {c_rtype}'.format(**locals())]
       for port in port_conns:

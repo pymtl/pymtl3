@@ -24,6 +24,19 @@ def dump_vcd(request):
   else:
     return ''
 
+def pytest_configure(config):
+  import sys
+  sys._called_from_test = True
+  if config.option.dump_vcd:
+    sys._pymtl_dump_vcd = True
+  else:
+    sys._pymtl_dump_vcd = False
+
+def pytest_unconfigure(config):
+  import sys
+  del sys._called_from_test
+  del sys._pymtl_dump_vcd
+
 def pytest_cmdline_preparse(config, args):
   """Don't write *.pyc and __pycache__ files."""
   import sys

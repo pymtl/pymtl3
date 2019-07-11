@@ -94,8 +94,10 @@ def test_py_string():
     rt.get_rtlir( 'abc' )
 
 def test_py_empty_list():
-  with expected_failure( RTLIRConversionError, 'list [] is empty' ):
-    rt.get_rtlir( [] )
+  # This is no longer an error: empty lists will be dropped instead of
+  # triggering an error.
+  # with expected_failure( RTLIRConversionError, 'list [] is empty' ):
+  rt.get_rtlir( [] )
 
 def test_py_untyped_list():
   with expected_failure( RTLIRConversionError, 'must have the same type' ):

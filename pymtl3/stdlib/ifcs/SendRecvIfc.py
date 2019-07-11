@@ -11,6 +11,8 @@ from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
 
+import greenlet
+
 from pymtl3 import *
 from pymtl3.dsl.errors import InvalidConnectionError
 
@@ -148,6 +150,62 @@ class SendIfcRTL( Interface ):
       return True
 
     return False
+
+
+class SendIfcFL( Interface ):
+
+  def construct( s ):
+    s.method = CallerPort()
+
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+  def line_trace( s ):
+    return ''
+
+  def __str__( s ):
+    return s.line_trace()
+
+  def connect( s, other, parent ):
+
+    # We are doing SendFL (s) -> [ RecvFL -> SendCL ] -> RecvCL (s)
+    # SendCL is a caller interface
+    # FIXME direction
+    if isinstance( other, NonBlockingCallerIfc ) or \
+       isinstance( other, NonBlockingCalleeIfc ):
+      m = RecvFL2SendCL()
+
+      if hasattr( parent, "RecvFL2SendCL_count" ):
+        count = parent.RecvFL2SendCL_count
+        setattr( parent, "RecvFL2SendCL_" + str( count ), m )
+      else:
+        parent.RecvFL2SendCL_count = 0
+        parent.RecvFL2SendCL_0 = m
+
+      parent.connect_pairs(
+        s,      m.recv,
+        m.send, other,
+      )
+      parent.RecvFL2SendCL_count += 1
+      return True
+
+    return False
+
+class RecvIfcFL( Interface ):
+
+  def construct( s, method ):
+    s.method = CalleePort( method=method )
+
+  def line_trace( s ):
+    return ''
+
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+  def __str__( s ):
+    return s.line_trace()
+
+
 """
 ========================================================================
 Send/RecvIfc adapters
@@ -235,3 +293,28 @@ class RecvRTL2SendCL( Component ):
       s.recv.line_trace(),
       enrdy_to_str( s.sent_msg, s.sent_msg is not None, s.send_rdy )
     )
+
+#-------------------------------------------------------------------------
+# RecvFL2SendCL
+#-------------------------------------------------------------------------
+
+class RecvFL2SendCL( Component ):
+
+  @blocking
+  def recv( s, msg ):
+    while not s.send.rdy():
+      greenlet.getcurrent().parent.switch(0)
+    assert s.send.rdy()
+    s.send( msg )
+
+  def construct( s ):
+
+    # Interface
+
+    s.recv = RecvIfcFL( s.recv )
+    s.send = NonBlockingCallerIfc()
+
+    s.add_constraints( M( s.recv ) == M( s.send ) )
+
+  def line_trace( s ):
+    return "{}(){}".format( s.recv, s.send )

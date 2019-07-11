@@ -34,10 +34,11 @@ def full_vector( wire, signal ):
 #-------------------------------------------------------------------------
 # {component_name}
 #-------------------------------------------------------------------------
+
 class {component_name}( Component ):
   id_ = 0
 
-  def __init__( s ):
+  def __init__( s, *args, **kwargs ):
     s._finalization_count = 0
 
     # initialize FFI, define the exposed interface
@@ -53,7 +54,7 @@ class {component_name}( Component ):
 
       }} V{component_name}_t;
 
-      V{component_name}_t * create_model();
+      V{component_name}_t * create_model( const char * );
       void destroy_model( V{component_name}_t *);
       void eval( V{component_name}_t * );
 
@@ -104,9 +105,14 @@ class {component_name}( Component ):
       s.ffi = None
       s._ffi_inst = None
 
-  def construct( s ):
+  def construct( s, *args, **kwargs ):
+    # Set up the VCD file name
+    verilator_vcd_file = ""
+    if {dump_vcd}:
+      verilator_vcd_file = "{component_name}.verilator1.vcd"
+
     # Construct the model
-    s._ffi_m = s._ffi_inst.create_model()
+    s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", list(verilator_vcd_file)) )
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
@@ -131,6 +137,9 @@ class {component_name}( Component ):
       # Write all outputs
 {set_comb_output}
 
+    def set_output():
+{set_comb_output}
+
     @s.update_on_edge
     def seq_upblk():
       # Advance the clock
@@ -138,6 +147,9 @@ class {component_name}( Component ):
       _ffi_inst.eval( _ffi_m )
       _ffi_m.clk[0] = 1
       _ffi_inst.eval( _ffi_m )
+      set_output()
+
+    {constraint_str}
 
   def line_trace( s ):
 {line_trace}

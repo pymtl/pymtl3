@@ -14,13 +14,19 @@ import pytest
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..util.test_utility import closed_loop_component_input_test
 
 seed( 0xdeadebeef )
 
+def local_do_test( m ):
+  test_vector = m._test_vector
+  tv_in = m._tv_in
+  closed_loop_component_input_test( m, test_vector, tv_in )
+
 @pytest.mark.parametrize( "Type", [ Bits16, Bits32 ] )
-def test_adder( Type ):
+def test_adder( do_test, Type ):
   def tv_in( model, test_vector ):
     model.in_1 = Type( test_vector[0] )
     model.in_2 = Type( test_vector[1] )
@@ -33,11 +39,13 @@ def test_adder( Type ):
       def add_upblk():
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
-  test_vector = [ (randint(-255, 255), randint(-255, 255)) for _ in range(10) ]
-  closed_loop_component_input_test( A( Type ), test_vector, tv_in )
+  a = A( Type )
+  a._test_vector = [ (randint(-255, 255), randint(-255, 255)) for _ in range(10) ]
+  a._tv_in = tv_in
+  do_test( a )
 
 @pytest.mark.parametrize("Type, n_ports", product([Bits16, Bits32], [2, 3, 4]))
-def test_mux( Type, n_ports ):
+def test_mux( do_test, Type, n_ports ):
   def tv_in( model, test_vector ):
     for i in range(n_ports):
       model.in_[i] = Type( test_vector[i] )
@@ -58,4 +66,7 @@ def test_mux( Type, n_ports ):
       _tmp.append( randint(-255, 255) )
     _tmp.append( randint(0, n_ports-1) )
     test_vector.append( _tmp )
-  closed_loop_component_input_test( A( Type, n_ports ), test_vector, tv_in )
+  a = A( Type, n_ports )
+  a._test_vector = test_vector
+  a._tv_in = tv_in
+  do_test( a )

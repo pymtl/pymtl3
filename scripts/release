@@ -1,0 +1,466 @@
+#!/usr/bin/env python
+#=========================================================================
+# release [options] <cfg-file>
+#=========================================================================
+#
+#  -h --help         Display this message
+#  -v --verbose      Verbose mode
+#  -g --generate     Generate release
+#  -p --push         Push release to GitHub repository
+#  -c --clean        Clean corresponding directories in work
+#  -a --all          Do all three phases
+#  -y --dry-run      Do not do very final push to GitHub
+#  -i --ignore-dirty Override dirty check
+#
+#     --branch <branch> Target a branch other than master
+#     --repo   <repo>   Target a repo other than default
+#
+#     <cfg-file>     YAML configuration file
+#
+# This script will use the given configuration file to generate a release
+# suitable for distribution and then push this release to a repository on
+# GitHub. The script has three phases: generate, push, and clean. The
+# script creates all content in a work subdirectory which can be deleted
+# to start from scratch.
+#
+# During the generate phase, the script will extract just the explicitly
+# listed files, and preprocess files looking for comments that indicate
+# what content cut. If a <branch> is not defined, the script will use
+# master, and if a <repo> is not defined, the script will use the
+# basename of the <cfg-file> as the repository name. The script will
+# clone the given repository, checkout the upstream branch, delete all
+# content, copy the content from the generate phase into the cloned
+# repository, add all new content, create a commit using git describe
+# from the current repository, merge the upstream branch into the given
+# branch and push the commit back to the remote repository.
+#
+# During the clean phase, we simply delete the two temporary directories
+# in the work directory.
+#
+# If the user specifies --push without also specifying --generate, then
+# the script will use the previously generated content. If that content
+# does not exist, then the script reports an error.
+#
+# Author : Christopher Batten
+# Date   : June 19, 2019
+#
+
+import argparse
+import sys
+import re
+import os
+import shutil
+import yaml
+import collections
+
+import common
+from common import *
+
+#-------------------------------------------------------------------------
+# Command line processing
+#-------------------------------------------------------------------------
+
+class ArgumentParserWithCustomError(argparse.ArgumentParser):
+  def error( self, msg = "" ):
+    if ( msg ): print("\n ERROR: %s" % msg)
+    print("")
+    file = open( sys.argv[0] )
+    for ( lineno, line ) in enumerate( file ):
+      if ( line[0] != '#' ): sys.exit(msg != "")
+      if ( (lineno == 2) or (lineno >= 4) ): print( line[1:].rstrip("\n") )
+
+def parse_cmdline():
+  p = ArgumentParserWithCustomError( add_help=False )
+  p.add_argument( "-v", "--verbose",      action="store_true" )
+  p.add_argument( "-h", "--help",         action="store_true" )
+  p.add_argument( "-g", "--generate",     action="store_true" )
+  p.add_argument( "-p", "--push",         action="store_true" )
+  p.add_argument( "-c", "--clean",        action="store_true" )
+  p.add_argument( "-a", "--all",          action="store_true" )
+  p.add_argument( "-y", "--dry-run",      action="store_true" )
+  p.add_argument( "-i", "--ignore-dirty", action="store_true" )
+  p.add_argument(       "--branch"                            )
+  p.add_argument(       "--repo"                              )
+  p.add_argument( "cfg_file" )
+  opts = p.parse_args()
+  if opts.help: p.error()
+  return opts
+
+#-------------------------------------------------------------------------
+# Import YAML with ordering preserved
+#-------------------------------------------------------------------------
+# From here: http://stackoverflow.com/questions/5121931
+
+def ordered_load( stream,
+                  Loader = yaml.Loader,
+                  object_pairs_hook = collections.OrderedDict ):
+
+  class OrderedLoader(Loader):
+    pass
+
+  def construct_mapping(loader, node):
+    loader.flatten_mapping(node)
+    return object_pairs_hook(loader.construct_pairs(node))
+  OrderedLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    construct_mapping )
+  return yaml.load(stream, OrderedLoader)
+
+#-------------------------------------------------------------------------
+# Generate Phase
+#-------------------------------------------------------------------------
+
+def generate( opts ):
+
+  vprint( "" )
+  vprint( " *** Generate Phase ***" )
+  vprint( "" )
+
+  vprint( " - load config file :", opts.cfg_file )
+  cfg = ordered_load( file( opts.cfg_file, 'r' ) )
+
+  cfg_basename = os.path.splitext( os.path.basename(opts.cfg_file) )[0]
+  dest_prefix  = P( "work", cfg_basename )
+  src_prefix   = ".."
+
+  vprint( " - release prefix   :", dest_prefix )
+  vprint( " - src prefix       :", src_prefix  )
+
+  #-----------------------------------------------------------------------
+  # Create release directory
+  #-----------------------------------------------------------------------
+
+  if os.path.lexists( dest_prefix ):
+    vprint( " - removing", dest_prefix )
+    shutil.rmtree( dest_prefix )
+
+  vprint( " - making", dest_prefix )
+  os.makedirs( dest_prefix )
+
+  #-----------------------------------------------------------------------
+  # Copy files
+  #-----------------------------------------------------------------------
+
+  blank_line_pattern = re.compile(r"^\s*$")
+  begin_pattern      = re.compile(r"^\s*(//|#).''''''+\\/$")
+  beginx_pattern     = re.compile(r"^\s*(//|#).''''''+\\//$")
+  comment_pattern    = re.compile(r"^\s*(//|#).*$")
+  end_pattern        = re.compile(r"^\s*(//|#).''''''+/\\$")
+  insert_pattern     = re.compile(r"^(\s*)(//:|#:)\s?(.*)$")
+  insertx_pattern    = re.compile(r"^(\s*)(//|#);(.*)$")
+
+  patsubs = []
+
+  for src_dir,src_files in cfg.iteritems():
+
+    # Skip KEEP files
+
+    if src_dir.startswith('KEEP'):
+      continue
+
+    # Normal list of files
+
+    for src_file in src_files:
+
+      # Handle pattern substitutions
+
+      if src_dir == 'PATSUBST':
+        patsub_tmp = src_file.split('/')
+        patsubs.append( [ patsub_tmp[1], patsub_tmp[2] ] )
+        continue
+
+      # Handle full directory copies
+
+      if src_dir == 'FULLDIR':
+        srcx_dir = P( src_prefix,  src_file )
+        dest_dir = P( dest_prefix, src_file )
+        vprint( " - copying from", srcx_dir )
+        vprint( " - copying to", dest_dir )
+        shutil.copytree( srcx_dir, dest_dir )
+        continue
+
+      # Does this file need to be filtered?
+
+      filter_en = True
+      if src_file.endswith('(*)'):
+        filter_en = False
+        src_file = src_file[:-3].strip()
+
+      # Does this file need to be renamed?
+
+      dest_file = src_file
+      if ' -> ' in src_file:
+        src_dest_files = src_file.split(' -> ')
+        src_file  = src_dest_files[0].strip()
+        dest_file = src_dest_files[1].strip()
+
+      # Create source and destination file names
+
+      if src_dir.startswith('EXTRA'):
+        src_file_wdir  = P( cfg_basename, src_dir[5:], src_file  )
+        dest_file_wdir = P( dest_prefix,  src_dir[5:], dest_file )
+      else:
+        src_file_wdir  = P( src_prefix,  src_dir, src_file )
+        dest_file_wdir = P( dest_prefix, src_dir, dest_file )
+
+      # Make directory if required
+
+      dest_dir_to_make  = os.path.dirname( dest_file_wdir )
+      if not os.path.lexists( dest_dir_to_make ):
+        vprint( " - making", dest_dir_to_make )
+        os.makedirs( dest_dir_to_make )
+
+      # Handle filtering
+
+      scan_until_begin       = False
+      scan_until_comment_end = False
+      scan_until_end         = False
+      skip_blank_line        = False
+      any_insert             = False
+      any_insertx            = False
+
+      vprint( " - copying to", dest_file_wdir )
+      dest_file = open( dest_file_wdir, "w" )
+      for line in open( src_file_wdir ):
+
+        # First thing we do is pattern substitutions from yaml
+
+        for patsub in patsubs:
+          line = line.replace( patsub[0], patsub[1] )
+
+        # Now we do the filtering
+
+        match_blank_line = blank_line_pattern.match(line)
+        match_begin      = begin_pattern.match(line)
+        match_beginx     = beginx_pattern.match(line)
+        match_end        = end_pattern.match(line)
+        match_insert     = insert_pattern.match(line)
+        match_insertx    = insertx_pattern.match(line)
+
+        if skip_blank_line:
+          skip_blank_line = False
+          if not match_blank_line:
+            dest_file.write(line)
+
+        elif scan_until_end:
+
+          if match_insert or match_insertx:
+
+            if match_insert:
+              any_insert  = True
+              insert_str = match_insert.group(1)+match_insert.group(3)
+            else:
+              any_insertx = True
+              insert_str = match_insertx.group(1)+match_insertx.group(2)+match_insertx.group(3)
+
+            if blank_line_pattern.match(insert_str):
+              dest_file.write( '\n' )
+            else:
+              dest_file.write( insert_str + '\n' )
+
+          elif match_end:
+            scan_until_end  = False
+            skip_blank_line = any_insert
+
+        elif filter_en and ( match_begin or match_beginx ):
+          vprint( "    + found marked region" )
+          if match_begin:
+            dest_file.write(line[:-3]+"''\n")
+          scan_until_end = True
+          any_insert     = False
+          any_insertx    = False
+
+        else:
+          dest_file.write(line)
+
+      # If we are still cutting content, insert a final blank line
+
+      if not any_insert and scan_until_end:
+        dest_file.write( '\n' )
+
+      dest_file.close()
+
+      # Check to see if we should make the destination file executable
+
+      if os.access( src_file_wdir, os.X_OK ):
+        os.chmod( dest_file_wdir, 0755 )
+
+#-------------------------------------------------------------------------
+# push
+#-------------------------------------------------------------------------
+
+def push( opts ):
+
+  vprint( "" )
+  vprint( " *** Push Phase ***" )
+  vprint( "" )
+
+  vprint( " - load config file :", opts.cfg_file )
+  cfg = ordered_load( file( opts.cfg_file, 'r' ) )
+
+  release        = os.path.splitext( os.path.basename(opts.cfg_file) )[0]
+  release_dir    = P( "work", release )
+  release_gitdir = P( release_dir, ".git" )
+
+  repo_name = release
+  if opts.repo:
+    repo_name = opts.repo
+
+  vprint( " - target repo      :", repo_name )
+
+  branch_name = "master"
+  if opts.branch:
+    branch_name = opts.branch
+
+  vprint( " - target branch    :", branch_name )
+
+  repo_remote    = "git@github.com:cornell-brg/" + repo_name
+  repo_local     = P( "work", repo_name + "-repo" )
+  repo_gitdir    = P( repo_local, ".git" )
+  repo_arg       = "--git-dir=" + repo_gitdir
+
+  # Get keep files
+
+  keep_files = []
+  for src_dir,src_files in cfg.iteritems():
+    if src_dir.startswith('KEEP'):
+      for src_file in src_files:
+        keep_files.append( src_file )
+
+  # Determine version number of current repo
+
+  version = runq( "git describe --always --dirty" )
+  vprint( " - version number:", version )
+
+  # Is current repo dirty?
+
+  if not opts.ignore_dirty and version.endswith("-dirty"):
+    print "\n ERROR: Current repo is dirty, cannot push release! \n"
+    exit(1)
+
+  vprint( " - current repo is not dirty" )
+
+  # Check if release has been generated
+
+  if not os.path.lexists( release_dir ):
+    print "\n ERROR: Release has not been generated yet! \n"
+    exit(1)
+
+  vprint( " - release has been generated" )
+
+  # Remove local git repo if it exists
+
+  if os.path.lexists( repo_local ):
+    vprint( " - removing", repo_local )
+    shutil.rmtree( repo_local )
+
+  # Clone remote git repo
+
+  runq( "git clone ${repo_remote} ${repo_local}" )
+
+  # Check if upstream exists. If not create the branch, if it does
+  # exist then check it out.
+
+  cwd=os.getcwd()
+  os.chdir( repo_local )
+
+  runq( "git checkout --track origin/upstream" )
+
+  os.chdir( cwd )
+
+  # Move special .git directory
+
+  vprint( " - moving", repo_gitdir )
+  shutil.rmtree( release_gitdir, ignore_errors=True )
+  shutil.move( repo_gitdir, release_gitdir )
+
+  # Copy release dir name
+
+  vprint( " - moving", release_dir )
+  shutil.rmtree( repo_local, ignore_errors=True )
+  shutil.copytree( release_dir, repo_local )
+  shutil.rmtree( release_gitdir, ignore_errors=True )
+
+  # From here on work in git repo
+
+  cwd=os.getcwd()
+  os.chdir( repo_local )
+
+  # Handle keep files
+
+  for keep_file in keep_files:
+    runq( "git checkout ${branch_name} -- ${keep_file}" )
+    vprint( " - keep file:", keep_file )
+
+  # Commit release
+
+  vprint( " - commit release" )
+  runq( "git add ." )
+  run( "git commit -a -m 'staff update from: ${release}-${version} [ci skip]'" )
+
+  # Merge upstream
+
+  vprint( " - merge into branch:", branch_name )
+  runq( "git checkout ${branch_name}" )
+  run( "git merge -s recursive -X ours upstream -m \"merge branch \'upstream\'\"" )
+
+  os.chdir( cwd )
+
+  # Push to remote repository on GitHub
+
+  cwd=os.getcwd()
+  os.chdir( repo_local )
+
+  if not opts.dry_run:
+    vprint( " - push to GitHub" )
+    run( "git push --all" )
+
+  os.chdir( cwd )
+
+#-------------------------------------------------------------------------
+# Clean
+#-------------------------------------------------------------------------
+
+def clean( opts ):
+
+  vprint( "" )
+  vprint( " *** Clean Phase ***" )
+  vprint( "" )
+
+  release        = os.path.splitext( os.path.basename(opts.cfg_file) )[0]
+  release_dir    = P( "work", release )
+  repo_name      = release
+  repo_local     = P( "work", repo_name + "-repo" )
+
+  # Remove generated dir
+
+  vprint( " - remove generated dir", release_dir )
+  shutil.rmtree( release_dir, ignore_errors=True )
+
+  # Remove repo dir
+
+  vprint( " - remove repo dir", repo_local )
+  shutil.rmtree( repo_local, ignore_errors=True )
+
+#-------------------------------------------------------------------------
+# Main
+#-------------------------------------------------------------------------
+
+def main():
+
+  opts = parse_cmdline()
+  common.verbose = opts.verbose
+
+  if opts.all or opts.generate:
+    generate( opts )
+
+  if opts.all or opts.push:
+    push( opts )
+
+  if opts.all or opts.clean:
+    clean( opts )
+
+  vprint("")
+
+main()
+

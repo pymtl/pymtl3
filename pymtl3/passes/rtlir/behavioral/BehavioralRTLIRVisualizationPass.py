@@ -43,12 +43,15 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.blk_name = name
     s.cur = 0
 
+  def get_str( s, obj ):
+    return str(obj).replace('<', '&lt;').replace('>', '&gt;')
+
   def gen_table_opt( s, node ):
     ret = ''
     if isinstance( node.Type, BaseRTLIRType ):
       ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
       for name, obj in vars(node.Type).iteritems():
-        obj_str = str(obj).replace('<', '&lt;').replace('>', '&gt;')
+        obj_str = s.get_str( obj )
         if not isinstance( obj, dict ):
           ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
         else:
@@ -65,7 +68,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">CombUpblk</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=s.get_str(node.name))
     s.g.node( str( s.cur ), label = label )
     for i, f in enumerate(node.body):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'body[{idx}]'.format(idx = i) )
@@ -76,7 +79,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">SeqUpblk</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=s.get_str(node.name))
     s.g.node( str( s.cur ), label = label )
     for i, f in enumerate(node.body):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'body[{idx}]'.format(idx = i) )
@@ -134,7 +137,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">Number</TD></TR> <TR><TD>value</TD><TD>{value}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(value=node.value)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(value=s.get_str(node.value))
     s.g.node( str( s.cur ), label = label )
 
   def visit_Concat( s, node ):
@@ -153,7 +156,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">ZeroExt</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=node.nbits)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=s.get_str(node.nbits))
     s.g.node( str( s.cur ), label = label )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
     s.visit( node.value )
@@ -163,7 +166,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">SignExt</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=node.nbits)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=s.get_str(node.nbits))
     s.g.node( str( s.cur ), label = label )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
     s.visit( node.value )
@@ -185,7 +188,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">SizeCast</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=node.nbits)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=s.get_str(node.nbits))
     s.g.node( str( s.cur ), label = label )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
     s.visit( node.value )
@@ -195,7 +198,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">StructInst</TD></TR> <TR><TD>struct</TD><TD>{struct}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(struct=node.struct)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(struct=s.get_str(node.struct))
     s.g.node( str( s.cur ), label = label )
     for i, f in enumerate(node.values):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
@@ -273,7 +276,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">Attribute</TD></TR> <TR><TD>attr</TD><TD>{attr}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(attr=node.attr)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(attr=s.get_str(node.attr))
     s.g.node( str( s.cur ), label = label )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
     s.visit( node.value )
@@ -309,7 +312,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">Base</TD></TR> <TR><TD>base</TD><TD>{base}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(base=node.base)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(base=s.get_str(node.base))
     s.g.node( str( s.cur ), label = label )
 
   def visit_LoopVar( s, node ):
@@ -317,7 +320,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">LoopVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=s.get_str(node.name))
     s.g.node( str( s.cur ), label = label )
 
   def visit_FreeVar( s, node ):
@@ -325,7 +328,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">FreeVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR> <TR><TD>obj</TD><TD>{obj}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name, obj=node.obj)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=s.get_str(node.name), obj=s.get_str(node.obj))
     s.g.node( str( s.cur ), label = label )
 
   def visit_TmpVar( s, node ):
@@ -333,7 +336,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">TmpVar</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR> <TR><TD>upblk_name</TD><TD>{upblk_name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name, upblk_name=node.upblk_name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=s.get_str(node.name), upblk_name=s.get_str(node.upblk_name))
     s.g.node( str( s.cur ), label = label )
 
   def visit_LoopVarDecl( s, node ):
@@ -341,7 +344,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     local_cur = s.cur
     table_body = '<TR><TD COLSPAN="2">LoopVarDecl</TD></TR> <TR><TD>name</TD><TD>{name}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=node.name)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(name=s.get_str(node.name))
     s.g.node( str( s.cur ), label = label )
 
   def visit_Invert( s, node ):

@@ -72,8 +72,10 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
           port_rtype = _port_rtype
 
         port_conns.append( s.rtlir_tr_subcomp_port_decl(
+          m,
           c_id, c_rtype, s.rtlir_tr_unpacked_array_type( c_array_rtype ),
           port_id, port_rtype,
+          s.rtlir_data_type_translation( m, port_rtype.get_dtype() ),
           s.rtlir_tr_unpacked_array_type( port_array_rtype )
         ) )
 
@@ -87,7 +89,8 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
           ifc_port_rtype = _ifc_port_rtype
 
         ports = []
-        for port_id, p_rtype in ifc_port_rtype.get_all_ports_packed():
+        all_ifc_ports = ifc_port_rtype.get_all_properties_packed()
+        for port_id, p_rtype in all_ifc_ports:
           if isinstance( p_rtype, rt.Array ):
             port_array_rtype = p_rtype
             port_rtype = p_rtype.get_sub_type()
@@ -97,14 +100,17 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
 
           # Translate a single port of the current interface
           ports.append( s.rtlir_tr_subcomp_ifc_port_decl(
+            m,
             '{c_id}', c_rtype, s.rtlir_tr_unpacked_array_type( c_array_rtype ),
             ifc_port_id, ifc_port_rtype,
             s.rtlir_tr_unpacked_array_type( ifc_port_array_rtype ),
-            port_id, port_rtype, s.rtlir_tr_unpacked_array_type( port_array_rtype )
+            port_id, port_rtype,
+            s.rtlir_tr_unpacked_array_type( port_array_rtype )
           ) )
 
         # Assemble all ports of the current interface into a complete interface
         ifc_conns.append( s.rtlir_tr_subcomp_ifc_decl(
+          m,
           '{c_id}', c_rtype, s.rtlir_tr_unpacked_array_type( c_array_rtype ),
           ifc_port_id, ifc_port_rtype,
           s.rtlir_tr_unpacked_array_type( ifc_port_array_rtype ),
@@ -113,6 +119,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
 
       # Generate a list of ports and interfaces
       subcomp_decls.append( s.rtlir_tr_subcomp_decl(
+        m,
         c_id, c_rtype, s.rtlir_tr_unpacked_array_type( c_array_rtype ),
         s.rtlir_tr_subcomp_port_decls( port_conns ),
         s.rtlir_tr_subcomp_ifc_decls( ifc_conns )
@@ -150,28 +157,29 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
   def rtlir_tr_subcomp_port_decls( s, port_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_subcomp_port_decl( s, c_id, c_rtype, c_array_type, port_id, port_rtype,
-      port_array_type ):
+  def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id, port_rtype,
+      port_dtype, port_array_type ):
     raise NotImplementedError()
 
   def rtlir_tr_subcomp_ifc_decls( s, ifc_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_subcomp_ifc_decl( s, c_id, c_rtype, c_array_type, ifc_port_id,
+  def rtlir_tr_subcomp_ifc_decl( s, m, c_id, c_rtype, c_array_type, ifc_port_id,
       ifc_port_rtype, ifc_port_array_type, ports ):
     raise NotImplementedError()
 
   def rtlir_tr_subcomp_ifc_port_decls( s, ifc_port_decls ):
     raise NotImplementedError()
 
-  def rtlir_tr_subcomp_ifc_port_decl( s, c_id, c_rtype, c_array_type,
-      ifc_id, ifc_rtype, ifc_array_rtype, port_id, port_rtype, port_array_type ):
+  def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
+      ifc_id, ifc_rtype, ifc_array_rtype, port_id, port_rtype,
+      port_array_type ):
     raise NotImplementedError()
 
   def rtlir_tr_subcomp_decls( s, subcomps ):
     raise NotImplementedError()
 
-  def rtlir_tr_subcomp_decl( s, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
+  def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
     raise NotImplementedError()
 
   # Signal operations

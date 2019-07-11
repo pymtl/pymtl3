@@ -38,7 +38,7 @@ class Component( ComponentLevel7 ):
       elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
-        kwargs = s._dsl.kwargs.copy()
+        kwargs = s._dsl.kwargs
         if "construct" in s._dsl.param_tree.leaf:
           more_args = s._dsl.param_tree.leaf[ "construct" ]
           kwargs.update( more_args )
@@ -99,7 +99,9 @@ class Component( ComponentLevel7 ):
   # These internal functions are implemented in a more generic way. The
   # public APIs should wrap around these functions.
 
-  def _add_component( s, parent, name, indices, obj, provided_connections=[] ):
+  def _add_component( s, parent, name, indices, obj, provided_connections,
+                      provided_upblk_reads, provided_upblk_writes, provided_upblk_calls,
+                      provided_func_reads,  provided_func_writes, provided_func_calls ):
     try:
       top = s._dsl.elaborate_top
     except AttributeError:
@@ -162,8 +164,6 @@ class Component( ComponentLevel7 ):
       obj._construct()
       del NamedObject.__setattr__
 
-    top = s._dsl.elaborate_top
-
     added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
 
     # First elaborate all functions to spawn more named objects
@@ -199,13 +199,32 @@ class Component( ComponentLevel7 ):
     for (x, y) in provided_connections:
       connection_pairs.append( x )
       connection_pairs.append( eval(y) )
-
       if not top._dsl._has_pending_value_connections and isinstance( x, Signal ):
         top._dsl._has_pending_value_connections = True
       if not top._dsl._has_pending_method_connections and isinstance( x, MethodPort ):
         top._dsl._has_pending_method_connections = True
 
-    top.add_connections( *connection_pairs )
+    # WE NEED TO ADD CONNECTIONS AT PARENT INSTEAD OF TOP
+    parent.add_connections( *connection_pairs )
+
+    # Now we put back the provided upblk metadata to parent and top
+    for blk, obj_name in provided_upblk_reads:
+      parent._dsl.upblk_reads[blk].add( eval(obj_name) )
+
+    for blk, obj_name in provided_upblk_writes:
+      parent._dsl.upblk_writes[blk].add( eval(obj_name) )
+
+    for blk, obj_name in provided_upblk_calls:
+      parent._dsl.upblk_calls[blk].add( eval(obj_name) )
+
+    for func, obj_name in provided_func_reads:
+      parent._dsl.func_reads[func].add( eval(obj_name) )
+
+    for func, obj_name in provided_func_writes:
+      parent._dsl.func_writes[func].add( eval(obj_name) )
+
+    for func, obj_name in provided_func_calls:
+      parent._dsl.func_calls[func].add( eval(obj_name) )
 
   def _delete_component( top, obj ):
 
@@ -269,6 +288,70 @@ class Component( ComponentLevel7 ):
           # uncollect variables
           top._uncollect_vars( x )
 
+      saved_upblk_reads  = []
+      saved_upblk_writes = []
+      saved_upblk_calls  = []
+      saved_func_reads   = []
+      saved_func_writes  = []
+      saved_func_calls   = []
+
+      # If an update block/function in parent writes the inport or reads
+      # the outport or calls a callee method of the deleted component, we
+      # must save the information (upA reads B) to avoid bugs or
+      # explicitly re-elaborating the parent.
+
+      for blk, reads in parent._dsl.upblk_reads.items():
+        assert blk in top._dsl.all_upblk_reads
+        to_save = set()
+        for x in reads:
+          if x in removed_connectables:
+            to_save.add( x )
+            saved_upblk_reads.append( (blk, repr(x)) )
+        parent._dsl.upblk_reads[blk] -= to_save
+
+      for blk, writes in parent._dsl.upblk_writes.items():
+        assert blk in top._dsl.all_upblk_writes
+        to_save = set()
+        for x in writes:
+          if x in removed_connectables:
+            to_save.add( x )
+            saved_upblk_writes.append( (blk, repr(x)) )
+        parent._dsl.upblk_writes[blk] -= to_save
+
+      for blk, calls in parent._dsl.upblk_calls.items():
+        assert blk in top._dsl.all_upblk_calls
+        to_save = set()
+        for x in calls:
+          if x in removed_connectables:
+            to_save.add( x )
+            saved_upblk_calls.append( (blk, repr(x)) )
+        parent._dsl.upblk_calls[blk] -= to_save
+
+      # We need to save the information for funcs too
+      for func, reads in parent._dsl.func_reads.items():
+        to_save = set()
+        for x in reads:
+          if x in removed_connectables:
+            to_save.add( x )
+            saved_func_reads.append( (func, repr(x)) )
+        parent._dsl.func_reads[func] -= to_save
+
+      for func, writes in parent._dsl.func_writes.items():
+        to_save = set()
+        for x in writes:
+          if x in removed_connectables:
+            to_save.add( x )
+            saved_func_writes.append( (func, repr(x)) )
+        parent._dsl.func_writes[func] -= to_save
+
+      for func, calls in parent._dsl.func_calls.items():
+        to_save = set()
+        for x in calls:
+          if x in removed_connectables:
+            to_save.add( x )
+            saved_func_calls.append( (func, repr(x)) )
+        parent._dsl.func_calls[func] -= to_save
+
       saved_connections = []
 
       for x in removed_connectables:
@@ -296,6 +379,7 @@ class Component( ComponentLevel7 ):
         del x._dsl.parent_obj
       for x in removed_connectables:
         del x._dsl.parent_obj
+        x._dsl.full_name = "<deleted>"+x._dsl.full_name
       for y in removed_consts:
         del y._dsl.parent_obj
 
@@ -315,7 +399,8 @@ class Component( ComponentLevel7 ):
 
       parent._dsl.connect_order = new_connect_order
 
-      return saved_connections
+      return saved_connections, saved_upblk_reads, saved_upblk_writes, saved_upblk_calls, \
+             saved_func_reads, saved_func_writes, saved_func_calls
 
     return _delete_component_internal( top, obj )
     # import gc
@@ -343,7 +428,8 @@ class Component( ComponentLevel7 ):
     s._check_called_at_elaborate_top( "sim_reset" )
 
     s.reset = Bits1( 1 )
-    s.tick() # This tick propagates the reset signal
+    s.tick() # Tick twice to propagate the reset signal
+    s.tick()
     s.reset = Bits1( 0 )
 
   def check( s ):
@@ -551,14 +637,17 @@ class Component( ComponentLevel7 ):
     foo_name    = foo._dsl._my_name
     foo_indices = foo._dsl._my_indices
 
-    saved_connections = top._delete_component( foo )
+    saved_connections, saved_upblk_reads, saved_upblk_writes, saved_upblk_calls, \
+      saved_func_reads, saved_func_writes, saved_func_calls = top._delete_component( foo )
 
     new_obj = cls( *foo._dsl.args, **foo._dsl.kwargs )
 
     # We actually don't need to merge param tree here because when we call
     # _add_component, the parameters stored in parent will be pushed down
     # to new_obj
-    top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections )
+    top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections,
+                        saved_upblk_reads, saved_upblk_writes, saved_upblk_calls,
+                        saved_func_reads, saved_func_writes, saved_func_calls)
 
     top._flush_pending_value_connections()
     top._flush_pending_method_connections()
@@ -572,12 +661,15 @@ class Component( ComponentLevel7 ):
     foo_name    = foo._dsl._my_name
     foo_indices = foo._dsl._my_indices
 
-    saved_connections = top._delete_component( foo )
+    saved_connections, saved_upblk_reads, saved_upblk_writes, saved_upblk_calls, \
+      saved_func_reads, saved_func_writes, saved_func_calls = top._delete_component( foo )
 
     # We actually don't need to merge param tree here because when we call
     # _add_component, the parameters stored in parent will be pushed down
     # to new_obj
-    top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections )
+    top._add_component( parent, foo_name, foo_indices, new_obj, saved_connections,
+                        saved_upblk_reads, saved_upblk_writes, saved_upblk_calls,
+                        saved_func_reads, saved_func_writes, saved_func_calls)
 
     top._flush_pending_value_connections()
     top._flush_pending_method_connections()

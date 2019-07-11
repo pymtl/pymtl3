@@ -73,11 +73,13 @@ setup(
   ],
 
   packages = find_packages(
-    exclude=['scripts']
+    exclude=['scripts', 'examples', 'examples.*', 'examples.*.*']
   ),
 
   package_data={
     'pymtl3': [
+      'passes/sverilog/import_/verilator_wrapper.c.template',
+      'passes/sverilog/import_/verilator_wrapper.py.template',
     ],
   },
 

@@ -7,16 +7,100 @@
 
 from __future__ import absolute_import, division, print_function
 
+import copy
 from collections import deque
 
 import hypothesis.strategies as st
 
-from pymtl3.datatypes import mk_bits
+from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.dsl import OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog import ImportPass, TranslationPass
+from pymtl3.passes.sverilog import ImportPass as SVImportPass
+from pymtl3.passes.sverilog import TranslationPass as SVTranslationPass
+from pymtl3.passes.yosys import ImportPass as YosysImportPass
+from pymtl3.passes.yosys import TranslationPass as YosysTranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
+
+
+def flatten( _rtype ):
+  if isinstance( _rtype, rt.Array ):
+    n_dim = _rtype.get_dim_sizes()
+    rtype = _rtype.get_sub_type()
+  else:
+    n_dim = []
+    rtype = _rtype
+  return n_dim, rtype
+
+#-------------------------------------------------------------------------
+# Generate initialization data for a signal
+#-------------------------------------------------------------------------
+
+def VectorInitData( dtype ):
+  nbits = dtype.get_length()
+  min_val, max_val = -(2**(nbits-1)), 2**(nbits-1)-1
+  value = 0
+  return mk_bits( nbits )( value )
+
+def StructInitData( dtype ):
+  data = dtype.get_class()()
+  all_properties = dtype.get_all_properties()
+  for field_name, field in all_properties:
+    setattr( data, field_name, DataTypeInitData( field ) )
+  return data
+
+def PackedArrayInitData( n_dim, sub_dtype ):
+  if not n_dim:
+    return DataTypeInitData( sub_dtype )
+  else:
+    data = []
+    for i in range(n_dim[0]):
+      data += [ PackedArrayInitData( n_dim[1:], sub_dtype ) ]
+    return data
+
+def DataTypeInitData( dtype ):
+  if isinstance( dtype, rdt.Vector ):
+    return VectorInitData( dtype )
+  elif isinstance( dtype, rdt.Struct ):
+    return StructInitData( dtype )
+  elif isinstance( dtype, rdt.PackedArray ):
+    n_dim = dtype.get_dim_sizes()
+    sub_dtype = dtype.get_sub_dtype()
+    return PackedArrayInitData( n_dim, sub_dtype )
+  else:
+    assert False, "unrecognized data type {}!".format( sub_dtype )
+
+def InPortInitData( id_, port ):
+  return { id_ : DataTypeInitData( port.get_dtype() ) }
+
+def InterfaceInitData( id_, ifc ):
+  init = {}
+  all_properties = ifc.get_all_properties_packed()
+  for prop_name, prop_rtype in all_properties:
+    if isinstance( prop_rtype, rt.Array ):
+      n_dim = prop_rtype.get_dim_sizes()
+      sub_type = prop_rtype.get_sub_type()
+      if isinstance(sub_type, rt.Port) and sub_type.get_direction() != "input":
+        continue
+      init.update( ArrayInitData( id_+"."+prop_name, n_dim, sub_type ) )
+    elif isinstance( prop_rtype, rt.Port ):
+      if prop_rtype.get_direction() == "input":
+        init.update( InPortInitData( id_+"."+prop_name, prop_rtype ) )
+    elif isinstance( prop_rtype, rt.InterfaceView ):
+      init.update( InterfaceInitData( id_+"."+prop_name, prop_rtype ) )
+  return init
+
+def ArrayInitData( id_, n_dim, subtype ):
+  if not n_dim:
+    if isinstance( subtype, rt.Port ):
+      return InPortInitData( id_, subtype )
+    else:
+      return InterfaceInitData( id_, subtype )
+  else:
+    init = {}
+    for i in range(n_dim[0]):
+      init.update( ArrayInitData(id_+'[{}]'.format(i), n_dim[1:], subtype) )
+    return init
 
 #-------------------------------------------------------------------------
 # Hypothesis input data strategies
@@ -107,35 +191,80 @@ def DataStrategy( draw, dut ):
   rifc = rt.get_component_ifc_rtlir( dut )
   ports = rifc.get_ports_packed()
   ifcs = rifc.get_ifc_views_packed()
+
+  # Add reset cycle at the beginning
+  reset1, reset2 = {}, {}
+  for id_, port in ports:
+    if id_ == "clk":
+      reset1.update( { id_ : Bits1(0) } )
+      reset2.update( { id_ : Bits1(1) } )
+    elif id_ == "reset":
+      reset1.update( { id_ : Bits1(1) } )
+      reset2.update( { id_ : Bits1(1) } )
+    else:
+      n_dim, port_rtype = flatten( port )
+      if port_rtype.get_direction() == "input":
+        if n_dim:
+          reset1.update( ArrayInitData( id_, n_dim, port_rtype ) )
+          reset2.update( ArrayInitData( id_, n_dim, port_rtype ) )
+        else:
+          reset1.update( InPortInitData( id_, port_rtype ) )
+          reset2.update( InPortInitData( id_, port_rtype ) )
+  for id_, ifc in ifcs:
+    n_dim, ifc_rtype = flatten( ifc )
+    if n_dim:
+      reset1.update( ArrayDataStrategy( id_, n_dim, ifc_rtype ) )
+      reset2.update( ArrayDataStrategy( id_, n_dim, ifc_rtype ) )
+    else:
+      reset1.update( InterfaceInitData( id_, n_dim, ifc_rtype ) )
+      reset2.update( InterfaceInitData( id_, n_dim, ifc_rtype ) )
+
+  ret.append( reset1 )
+  ret.append( reset2 )
+
   for i in range(max_cycles):
     data = {}
     for id_, port in ports:
-      if isinstance( port, rt.Array ):
-        if port.get_sub_type().get_direction() == "input":
-          n_dim = port.get_dim_sizes()
-          port_rtype = port.get_sub_type()
-          data.update(draw( ArrayDataStrategy( id_, n_dim, port_rtype ) ))
-      elif port.get_direction() == "input":
-        data.update(draw( InPortDataStrategy( id_, port ) ))
+      if id_ in [ "clk", "reset" ]:
+        data.update( { id_ : Bits1(0) } )
+      else:
+        n_dim, port_rtype = flatten( port )
+        if n_dim:
+          if port_rtype.get_direction() == "input":
+            data.update(draw( ArrayDataStrategy( id_, n_dim, port_rtype ) ))
+        elif port_rtype.get_direction() == "input":
+          data.update(draw( InPortDataStrategy( id_, port_rtype ) ))
     for id_, ifc in ifcs:
-      if isinstance( ifc, rt.Array ):
-        n_dim = port.get_dim_sizes()
-        ifc_rtype = ifc.get_sub_type()
+      n_dim, ifc_rtype = flatten( ifc )
+      if n_dim:
         data.update(draw( ArrayDataStrategy( id_, n_dim, ifc_rtype ) ))
       else:
-        data.update(draw( InterfaceDataStrategy( id_, ifc ) ))
+        data.update(draw( InterfaceDataStrategy( id_, ifc_rtype ) ))
+
+    # Toggle clock signal
+    toggle_data = {}
+    for id_, signal in data.iteritems():
+      if id_ == "clk":
+        toggle_data.update( { id_ : Bits1(1) } )
+      else:
+        toggle_data.update( { id_ : copy.deepcopy( signal ) } )
+
     ret.append( data )
+    ret.append( toggle_data )
+
   return ret
 
 #-------------------------------------------------------------------------
 # closed_loop_component_input_test
 #-------------------------------------------------------------------------
 
-def closed_loop_component_input_test( dut, test_vector, tv_in ):
+def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sverilog" ):
 
   # Filter to collect all output ports of a component
   def outport_filter( obj ):
     return isinstance( obj, OutPort )
+
+  assert backend in [ "sverilog", "yosys" ], "invalid backend {}!".format(backend)
 
   dut.elaborate()
   reference_output = deque()
@@ -145,7 +274,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
   def ref_tv_out( model, test_vector ):
     dct = {}
     for out_port in all_output_ports:
-      dct[ out_port ] = getattr( model, out_port._dsl.my_name )
+      dct[ out_port ] = eval( "model." + out_port._dsl.my_name )
     reference_output.append( dct )
 
   # Method to compare the outputs of the imported model and the pure python one
@@ -154,7 +283,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
       "Reference runs for fewer cycles than the imported model!"
     for out_port in all_output_ports:
       ref = reference_output[0][out_port]
-      imp = getattr( model, out_port._dsl.my_name )
+      imp = eval( "model." + out_port._dsl.my_name )
       assert ref == imp, \
         "Value mismatch: reference: {}, imported: {}".format( ref, imp )
     reference_output.popleft()
@@ -167,10 +296,16 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
   try:
     # If it simulates correctly, translate it and import it back
     dut.elaborate()
-    dut.sverilog_translate = True
-    dut.sverilog_import = True
-    dut.apply( TranslationPass() )
-    imported_obj = ImportPass()( dut )
+    if backend == "sverilog":
+      dut.sverilog_translate = True
+      dut.sverilog_import = True
+      dut.apply( SVTranslationPass() )
+      imported_obj = SVImportPass()( dut )
+    elif backend == "yosys":
+      dut.yosys_translate = True
+      dut.yosys_import = True
+      dut.apply( YosysTranslationPass() )
+      imported_obj = YosysImportPass()( dut )
     # Run another vector simulator spin
     imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )
     imported_sim.run_test()
@@ -187,23 +322,25 @@ def closed_loop_component_input_test( dut, test_vector, tv_in ):
 # closed_loop_component_test
 #-------------------------------------------------------------------------
 
-def closed_loop_component_test( dut, test_vector ):
+def closed_loop_component_test( dut, data, backend = "sverilog" ):
   """Test the DUT with the given test_vector.
   
-  User who wish to use this method should generate the test vector from
-  data.draw( DataStrategy( dut ) ) ( `data` is a hypothesis strategy that 
-  allows you to draw examples in the body of a test ), which allows hypothesis
-  to shrink the generated test vector when the test fails.
+  User who wish to use this method should pass in the hypothesis data
+  strategy instance as `data`. This method will reflect on the interfaces
+  and ports of the given DUT and generate input vector.
   """
   # Method to feed data into the DUT
   def tv_in( model, test_vector ):
     for name, data in test_vector.iteritems():
-      setattr( model, name, data )
-  closed_loop_component_input_test( dut, test_vector, tv_in )
+      exec( "model." + name + " = data" )
+  test_vector = data.draw( DataStrategy( dut ) )
+  closed_loop_component_input_test( dut, test_vector, tv_in, backend )
 
 #-------------------------------------------------------------------------
 # closed_loop_test
 #-------------------------------------------------------------------------
 
+# TODO: A hypothesis test that works on generated test component AND
+# generated input data.
 def closed_loop_test():
   pass

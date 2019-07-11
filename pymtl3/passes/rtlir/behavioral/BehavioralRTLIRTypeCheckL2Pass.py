@@ -6,6 +6,8 @@
 """Provide L2 behavioral RTLIR type check pass."""
 from __future__ import absolute_import, division, print_function
 
+from collections import OrderedDict
+
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
@@ -20,8 +22,8 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
     """Perform type checking on all RTLIR in rtlir_upblks."""
     if not hasattr( m, '_pass_behavioral_rtlir_type_check' ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
-    m._pass_behavioral_rtlir_type_check.rtlir_freevars = {}
-    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = {}
+    m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
+    m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = OrderedDict()
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
     visitor = BehavioralRTLIRTypeCheckVisitorL2(
@@ -42,7 +44,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
                          bir.BitAnd, bir.BitOr, bir.BitXor)
     s.BinOp_left_nbits = ( bir.ShiftLeft, bir.ShiftRightLogic )
     s.type_expect = {}
-    lhs_types = ( rt.Port, rt.Wire, rt.NoneType )
+    lhs_types = ( rt.Port, rt.Wire, rt.NetWire, rt.NoneType )
 
     s.type_expect[ 'Assign' ] = {
       'target' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
@@ -96,6 +98,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
             rhs_type, node.target.name, lhs_type) )
 
       # Creating a temporaray variable
+      # Reminder that a temporary variable is essentially a wire. So we use
+      # rt.Wire here instead of rt.NetWire
       node.target.Type = rt.Wire( rhs_type.get_dtype() )
       s.tmpvars[ tmpvar_id ] = rt.Wire( rhs_type.get_dtype() )
       node.Type = None
@@ -125,7 +129,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     node.Type = None
 
   def visit_LoopVar( s, node ):
-    node.Type = rt.Const( rdt.Vector( 32 ) )
+    node.Type = rt.Const( rdt.Vector( 32 ), None )
 
   def visit_TmpVar( s, node ):
     tmpvar_id = (node.name, node.upblk_name)
@@ -159,7 +163,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       if dtype.get_length() != 1:
         raise PyMTLTypeError( s.blk, node.ast,
           'the operand of "Logic-not" is not a single bit!' )
-      node.Type = rt.Wire( rdt.Bool() )
+      node.Type = rt.NetWire( rdt.Bool() )
     else:
       node.Type = node.operand.Type
 
@@ -168,7 +172,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       if not isinstance(value.Type, rt.Signal) or not rdt.Bool()(value.Type.get_dtype()):
         raise PyMTLTypeError( s.blk, node.ast,
           "{} of {} cannot be cast into bool!".format( value, value.Type ))
-    node.Type = rt.Wire( rdt.Bool() )
+    node.Type = rt.NetWire( rdt.Bool() )
 
   def visit_BinOp( s, node ):
     op = node.op
@@ -205,11 +209,11 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     except AttributeError:
       # Both sides are constant but the value cannot be determined statically
       if isinstance(node.left.Type, rt.Const) and isinstance(node.right.Type, rt.Const):
-        node.Type = rt.Const( rdt.Vector( res_nbits ) )
+        node.Type = rt.Const( rdt.Vector( res_nbits ), None )
 
       # Variable
       else:
-        node.Type = rt.Wire( rdt.Vector( res_nbits ) )
+        node.Type = rt.NetWire( rdt.Vector( res_nbits ) )
 
   def visit_Compare( s, node ):
     l_type = node.left.Type.get_dtype()
@@ -218,4 +222,4 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       raise PyMTLTypeError( s.blk, node.ast,
         "LHS and RHS of {} have different types ({} vs {})!".format(
           node.op.__class__.__name__, l_type, r_type ))
-    node.Type = rt.Wire( rdt.Bool() )
+    node.Type = rt.NetWire( rdt.Bool() )

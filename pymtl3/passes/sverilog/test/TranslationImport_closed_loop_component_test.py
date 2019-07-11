@@ -15,10 +15,14 @@ from hypothesis import HealthCheck, given, reproduce_failure, settings
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, BitStruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
+from pymtl3.passes.rtlir.util.test_utility import do_test
 
-from ..util.test_utility import DataStrategy, closed_loop_component_test
+from ..util.test_utility import closed_loop_component_test
 
 too_slow = [ HealthCheck.too_slow ]
+
+def local_do_test( m ):
+  closed_loop_component_test( m, m._data )
 
 # Use @given(st.data()) to draw input vector inside the test function
 #  - also note that data should the rightmost argument of the test function
@@ -28,7 +32,7 @@ too_slow = [ HealthCheck.too_slow ]
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 @pytest.mark.parametrize("Type", [Bits16, Bits32])
-def test_adder( Type, data ):
+def test_adder( do_test, Type, data ):
   class A( Component ):
     def construct( s, Type ):
       s.in_1 = InPort( Type )
@@ -39,12 +43,13 @@ def test_adder( Type, data ):
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
   a = A( Type )
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  a._data = data
+  do_test( a )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 @pytest.mark.parametrize("Type, n_ports", product([Bits16, Bits32], [2, 4]))
-def test_mux( Type, n_ports, data ):
+def test_mux( do_test, Type, n_ports, data ):
   class A( Component ):
     def construct( s, Type, n_ports ):
       s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
@@ -55,11 +60,12 @@ def test_mux( Type, n_ports, data ):
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
   a = A( Type, n_ports )
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  a._data = data
+  do_test( a )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
-def test_struct( data ):
+def test_struct( do_test, data ):
   class strc( BitStruct ):
     def __init__( s, foo=42 ):
       s.foo = Bits32(foo)
@@ -70,11 +76,12 @@ def test_struct( data ):
       s.connect( s.out, s.in_.foo )
     def line_trace( s ): return "out = " + str( s.out )
   a = A()
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  a._data = data
+  do_test( a )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
-def test_nested_struct( data ):
+def test_nested_struct( do_test, data ):
   class inner_struct( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits32( bar )
@@ -99,11 +106,12 @@ def test_nested_struct( data ):
       s.connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  a._data = data
+  do_test( a )
 
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
-def test_subcomp( data ):
+def test_subcomp( do_test, data ):
   class inner_struct( BitStruct ):
     def __init__( s, bar=42 ):
       s.bar = Bits32( bar )
@@ -133,4 +141,31 @@ def test_subcomp( data ):
       s.connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
-  closed_loop_component_test( a, data.draw( DataStrategy( a ) ) )
+  a._data = data
+  do_test( a )
+
+# Test contributed by Cheng Tan
+@given( st.data() )
+@settings( deadline = None, max_examples = 5 )
+@pytest.mark.parametrize( "Type", [ Bits16, Bits32 ] )
+def test_index_static( do_test, Type, data ):
+  class A( Component ):
+    def construct( s, Type ):
+      s.in_ = [InPort ( Type ) for _ in range(2)]
+      s.out = [OutPort( Type ) for _ in range(2)]
+      @s.update
+      def index_upblk():
+        if s.in_[0] > s.in_[1]:
+          s.out[0] = Type(1)
+          s.out[1] = Type(0)
+        else:
+          s.out[0] = Type(0)
+          s.out[1] = Type(1)
+
+    def line_trace( s ): return "s.in0  = " + str( s.in_[0] ) +\
+                                "s.in1  = " + str( s.in_[1] ) +\
+                                "s.out0 = " + str( s.out[0] ) +\
+                                "s.out1 = " + str( s.out[1] )
+  a = A( Type )
+  a._data = data
+  do_test( a )

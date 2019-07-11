@@ -21,7 +21,6 @@ Date   : Nov 3, 2018
 from __future__ import absolute_import, division, print_function
 
 import re
-import warnings
 
 from .errors import NotElaboratedError
 
@@ -179,7 +178,7 @@ class NamedObject(object):
       elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
-        kwargs = s._dsl.kwargs.copy()
+        kwargs = s._dsl.kwargs
         if "construct" in s._dsl.param_tree.leaf:
           more_args = s._dsl.param_tree.leaf[ "construct" ]
           kwargs.update( more_args )
@@ -320,8 +319,9 @@ class NamedObject(object):
   def _elaborate_construct( s ):
 
     if s._dsl.constructed:
-      warnings.warn( "Don't elaborate the same model twice. "
-                     "Use APIs to mutate the model." )
+      # Yanghui : Mute the warning for the isca tutorial.
+      # warnings.warn( "Don't elaborate the same model twice. "
+      #                "Use APIs to mutate the model." )
       return
 
     # Initialize the top level
@@ -359,13 +359,13 @@ class NamedObject(object):
   #-----------------------------------------------------------------------
 
   def is_component( s ):
-    raise NotImplemented
+    raise NotImplementedError
 
   def is_signal( s ):
-    raise NotImplemented
+    raise NotImplementedError
 
   def is_interface( s ):
-    raise NotImplemented
+    raise NotImplementedError
 
   # These two APIs are reused across Connectable and Component
 

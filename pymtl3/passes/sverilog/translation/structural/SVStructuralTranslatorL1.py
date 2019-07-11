@@ -9,6 +9,7 @@ from functools import reduce
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.sverilog.errors import SVerilogReservedKeywordError
 from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
 from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
@@ -16,6 +17,10 @@ from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
 
 
 class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
+
+  def check_decl( s, name, msg ):
+    if s.is_sverilog_reserved( name ):
+      raise SVerilogReservedKeywordError( name, msg )
 
   #-----------------------------------------------------------------------
   # Data types
@@ -52,7 +57,14 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return ',\n'.join( port_decls )
   
   def rtlir_tr_port_decl( s, id_, Type, array_type, dtype ):
-    return Type.get_direction() + ' ' +\
+    _dtype = Type.get_dtype()
+    if array_type:
+      template = "Note: port {id_} has data type {_dtype}"
+    else:
+      n_dim = array_type['n_dim']
+      template = "Note: {n_dim} array of ports {id_} has data type {_dtype}"
+    s.check_decl( id_, template.format( **locals() ) )
+    return Type.get_direction() + ' ' + \
            dtype['decl'].format( **locals() ) + array_type['decl']
   
   def rtlir_tr_wire_decls( s, wire_decls ):
@@ -60,38 +72,42 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return '\n'.join( wire_decls )
   
   def rtlir_tr_wire_decl( s, id_, Type, array_type, dtype ):
+    _dtype = Type.get_dtype()
+    if array_type:
+      template = "Note: wire {id_} has data type {_dtype}"
+    else:
+      n_dim = array_type['n_dim']
+      template = "Note: {n_dim} array of wires {id_} has data type {_dtype}"
+    s.check_decl( id_, template.format( **locals() ) )
     return dtype['decl'].format( **locals() ) + array_type['decl'] + ';'
   
   def rtlir_tr_const_decls( s, const_decls ):
     make_indent( const_decls, 1 )
     return '\n'.join( const_decls )
+
+  def gen_array_param( s, n_dim, dtype, array ):
+    if not n_dim:
+      if isinstance( dtype, rdt.Vector ):
+        return s._literal_number( dtype.get_length(), array )
+      else:
+        assert False, '{} is not an integer or a BitStruct!'.format( array )
+    else:
+      ret = []
+      for _idx, idx in enumerate( range( n_dim[0] ) ):
+        ret.append( s.gen_array_param( n_dim[1:], dtype, array[idx] ) )
+      cat_str = ", ".join( ret )
+      return "'{{ {cat_str} }}".format( **locals() )
   
   def rtlir_tr_const_decl( s, id_, Type, array_type, dtype, value ):
-
-    def gen_array_param( n_dim, array ):
-      if not n_dim:
-        assert not isinstance( array, list )
-        if isinstance( array, Bits ):
-          return s.rtlir_tr_literal_number( array.nbits, array.value )
-        elif isinstance( array, int ):
-          return s.rtlir_tr_literal_number( 32, array )
-        else:
-          assert False, '{} is not an integer!'.format( array )
-      assert isinstance( array, list )
-
-      ret = "'{ "
-      for _idx, idx in enumerate( range( n_dim[0] ) ):
-        if _idx != 0: ret += ', '
-        ret += gen_array_param( n_dim[1:], array[idx] )
-      ret += " }"
-      return ret
-
-    assert isinstance( Type.get_dtype(), rdt.Vector ),\
-      '{} is not a vector constant!'.format( value )
-
-    nbits = dtype['nbits']
+    _dtype = Type.get_dtype()
+    if array_type:
+      template = "Note: constant {id_} has data type {_dtype}"
+    else:
+      n_dim = array_type['n_dim']
+      template = "Note: {n_dim} array of constants {id_} has data type {_dtype}"
+    s.check_decl( id_, template.format( **locals() ) )
     _dtype = dtype['const_decl'].format( **locals() ) + array_type['decl']
-    _value = gen_array_param( array_type['n_dim'], value )
+    _value = s.gen_array_param( array_type['n_dim'], dtype['raw_dtype'], value )
 
     return 'localparam {_dtype} = {_value};'.format( **locals() )
 
@@ -141,9 +157,12 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   def rtlir_tr_var_id( s, var_id ):
     return var_id.replace( '[', '_$' ).replace( ']', '' )
 
-  def rtlir_tr_literal_number( s, nbits, value ):
+  def _literal_number( s, nbits, value ):
     value = int( value )
     return "{nbits}'d{value}".format( **locals() )
+
+  def rtlir_tr_literal_number( s, nbits, value ):
+    return s._literal_number( nbits, value )
 
   def rtlir_tr_component_unique_name( s, c_rtype ):
     return get_component_unique_name( c_rtype )

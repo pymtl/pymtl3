@@ -15,14 +15,18 @@ from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL1 import (
     BehavioralRTLIRToSVVisitorL1,
 )
+from pymtl3.passes.sverilog.translation.SVTranslator import sverilog_reserved
 
+
+def is_sverilog_reserved( name ):
+  return name in sverilog_reserved
 
 def local_do_test( m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = BehavioralRTLIRToSVVisitorL1()
+  visitor = BehavioralRTLIRToSVVisitorL1(is_sverilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
   for blk in m_all_upblks:
@@ -58,6 +62,7 @@ end\
     [   -1,   -1 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_seq_assign( do_test ):
@@ -89,6 +94,7 @@ end\
     [   -1,    -2 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_concat( do_test ):
@@ -120,6 +126,7 @@ end\
     [   -1,   42,     concat(   Bits32(-1),    Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_concat_constants( do_test ):
@@ -145,6 +152,7 @@ end\
     [    concat(    Bits32(42),    Bits32(0) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_concat_mixed( do_test ):
@@ -174,6 +182,7 @@ end\
     [   2,  concat(     Bits32(2),    Bits32(0) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_sext( do_test ):
@@ -203,6 +212,7 @@ end\
     [   2,   sext(     Bits32(2),    64 ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_zext( do_test ):
@@ -232,6 +242,7 @@ end\
     [   2,  zext(     Bits32(2),    64 ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_sub_component_attr( do_test ):
@@ -264,7 +275,7 @@ def test_freevar( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_, _fvar_STATE_IDLE };
+  out = { in_, __const$STATE_IDLE };
 end\
 """ }
   # TestVectorSimulator properties
@@ -279,6 +290,13 @@ end\
     [   2,  concat(     Bits32(2),    Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  out = { in_, 32'd42 };
+end\
+"""
+}
   do_test( a )
 
 def test_unpacked_signal_index( do_test ):
@@ -309,6 +327,7 @@ end\
     [   2,  -2,  concat(     Bits32(2),    Bits32(-2) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_bit_selection( do_test ):
@@ -338,6 +357,7 @@ end\
     [   2,   1 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
 
 def test_part_selection( do_test ):
@@ -370,4 +390,16 @@ end\
     [  -64,   -4 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = a._ref_upblk_srcs
   do_test( a )
+
+def test_sverilog_reserved_keyword( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.buf = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.buf
+  with expected_failure( SVerilogTranslationError, "reserved keyword" ):
+    do_test( A() )

@@ -14,6 +14,7 @@ from copy import deepcopy
 
 import py
 
+from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .errors import PassOrderError
@@ -22,6 +23,13 @@ from .errors import PassOrderError
 class VcdGenerationPass( BasePass ):
 
   def __call__( self, top ):
+
+    # Check for dum_vcd flag
+    if not hasattr( top, "dump_vcd" ):
+      return
+    if not top.dump_vcd:
+      return
+
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
@@ -36,7 +44,10 @@ class VcdGenerationPass( BasePass ):
 
   def make_vcd_func( self, top, vcdmeta ):
 
-    vcdmeta.vcd_file_name = str(top.__class__) + ".vcd"
+    if hasattr( top, "vcd_file_name" ):
+      vcdmeta.vcd_file_name = str(top.vcd_file_name) + ".vcd"
+    else:
+      vcdmeta.vcd_file_name = str(top.__class__) + ".vcd"
     vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
 
     # Get vcd timescale
@@ -92,10 +103,11 @@ class VcdGenerationPass( BasePass ):
     trimmed_value_nets = []
     vcdmeta.clock_net_idx = None
 
+    # FIXME handle the case where the top level signal is in a value net
     for writer, net in top.get_all_value_nets():
       new_net = []
       for x in net:
-        if not x.is_sliced_signal():
+        if not isinstance(x, Const) and not x.is_sliced_signal():
           new_net.append( x )
           if repr(x) == "s.clk":
             # Hardcode clock net because it needs to go up and down
@@ -214,7 +226,7 @@ class VcdGenerationPass( BasePass ):
 
     # Give all ' and " characters a preceding backslash for .format
     for i, x in enumerate(net_symbol_mapping):
-      net_symbol_mapping[i] = x.replace('\'','\\\'').replace('\"','\\\"')
+      net_symbol_mapping[i] = x.replace('\\', '\\\\').replace('\'','\\\'').replace('\"','\\\"')
 
     vcd_srcs = []
     for i, net in enumerate( trimmed_value_nets ):
