@@ -109,6 +109,9 @@ class Component( ComponentLevel7 ):
     if not indices:
       # If we are adding field s.x, we simply reuse the setattr hook
       assert not hasattr( s, name )
+
+      obj._dsl.elaborate_top = top
+
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       setattr( parent, name, obj )
       del NamedObject.__setattr__
@@ -158,6 +161,8 @@ class Component( ComponentLevel7 ):
       obj._dsl._my_name     = name
       obj._dsl._my_indices  = indices
 
+      obj._dsl.elaborate_top = top
+
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       obj._construct()
       del NamedObject.__setattr__
@@ -166,7 +171,6 @@ class Component( ComponentLevel7 ):
 
     # First elaborate all functions to spawn more named objects
     for c in added_components:
-      c._dsl.elaborate_top = top
       c._elaborate_read_write_func()
 
     added_signals, added_method_ports = \
@@ -183,9 +187,6 @@ class Component( ComponentLevel7 ):
 
     for c in added_components:
       top._collect_vars( c )
-
-    for c in added_signals | added_method_ports:
-      c._dsl.elaborate_top = top
 
     # Lazy -- to avoid resolve_connection call which takes non-trivial
     # time upon adding any connect, I just mark pending here. Whenever you
@@ -375,8 +376,10 @@ class Component( ComponentLevel7 ):
 
       for x in removed_components:
         del x._dsl.parent_obj
+        del x._dsl.elaborate_top
       for x in removed_connectables:
         del x._dsl.parent_obj
+        del x._dsl.elaborate_top
         x._dsl.full_name = "<deleted>"+x._dsl.full_name
       for y in removed_consts:
         del y._dsl.parent_obj

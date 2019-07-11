@@ -136,6 +136,7 @@ class Signal( NamedObject, Connectable ):
           x._dsl.type_instance = u
           x._dsl.parent_obj = s
           x._dsl.top_level_signal = s._dsl.top_level_signal
+          x._dsl.elaborate_top = s._dsl.elaborate_top
 
           x._dsl.my_name   = name + "".join([ "[{}]".format(y) for y in indices ])
           x._dsl.full_name = s._dsl.full_name + "." + x._dsl.my_name
@@ -164,6 +165,7 @@ class Signal( NamedObject, Connectable ):
       x = s.__class__( mk_bits( sl.stop - sl.start) )
       x._dsl.parent_obj = s
       x._dsl.top_level_signal = s
+      x._dsl.elaborate_top = s._dsl.elaborate_top
 
       sl_str = "[{}:{}]".format( sl.start, sl.stop )
 

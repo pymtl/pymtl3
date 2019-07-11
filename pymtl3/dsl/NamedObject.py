@@ -32,6 +32,7 @@ class ParamTreeNode:
     self.children = None
     self.leaf = None
 
+  # TODO do we still need to lazily create leaf?
   def merge( self, other ):
     # Merge leaf
     if other.leaf is not None:
@@ -175,7 +176,12 @@ class NamedObject:
             u._dsl._my_name     = name
             u._dsl._my_indices  = indices
 
+            # Point u's top to my top
+
+            u._dsl.elaborate_top = s._dsl.elaborate_top
+
             u._construct()
+
           # except AttributeError as e:
           #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
           #                        "instead of __init__.)".format( s.__class__ ) )
@@ -274,10 +280,11 @@ class NamedObject:
 
     # Initialize the top level
 
-    s._dsl.parent_obj = None
-    s._dsl.level      = 0
-    s._dsl.my_name    = "s"
-    s._dsl.full_name  = "s"
+    s._dsl.parent_obj    = None
+    s._dsl.level         = 0
+    s._dsl.my_name       = "s"
+    s._dsl.full_name     = "s"
+    s._dsl.elaborate_top = s
 
     # Secret source for letting the child know the field name of itself
     # -- override setattr for elaboration, and remove it afterwards
@@ -293,14 +300,13 @@ class NamedObject:
 
     del NamedObject.__setattr__
 
-  def _elaborate_collect_and_mark_all_named_objects( s ):
+
+  def _elaborate_collect_all_named_objects( s ):
     s._dsl.all_named_objects = s._collect_all()[0]
-    for c in s._dsl.all_named_objects:
-      c._dsl.elaborate_top = s
 
   def elaborate( s ):
     s._elaborate_construct()
-    s._elaborate_collect_and_mark_all_named_objects()
+    s._elaborate_collect_all_named_objects()
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
