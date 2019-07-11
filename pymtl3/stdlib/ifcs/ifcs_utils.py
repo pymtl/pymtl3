@@ -11,6 +11,17 @@ Author: Yanghui Ou
 from __future__ import absolute_import, division, print_function
 
 #-------------------------------------------------------------------------
+# MethodSpec
+#-------------------------------------------------------------------------
+# Metadata for RTL method based interfaces.
+
+class MethodSpec( object ):
+
+  def __init__( s, arg = None, ret = None ):
+    s.arg = arg
+    s.ret = ret
+
+#-------------------------------------------------------------------------
 # enrdy_to_str
 #-------------------------------------------------------------------------
 
