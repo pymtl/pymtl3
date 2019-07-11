@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function
 
 from graphviz import Digraph
 
+from pymtl3.datatypes import Bits1
 from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
 from pymtl3.dsl.errors import UpblkCyclicError
 
@@ -229,5 +230,10 @@ class OpenLoopCLPass( BasePass ):
                                 schedule_no_method,
                                 i, next_method )
     top.num_cycles_executed = 0
+
+    def normal_tick():
+      for blk in schedule_no_method:
+        blk()
+    top.tick = normal_tick
 
     return schedule
