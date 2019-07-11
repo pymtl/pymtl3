@@ -25,7 +25,7 @@ from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from ..stateful.test_wrapper import Method
-from .utils import rename, kwarg_to_str, list_string
+from .utils import kwarg_to_str, list_string, rename
 
 #-------------------------------------------------------------------------
 # RTL2CLWrapper
