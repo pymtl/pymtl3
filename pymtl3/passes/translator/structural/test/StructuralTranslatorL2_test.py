@@ -8,7 +8,7 @@
 import pytest
 
 from pymtl3.datatypes import Bits16, Bits32, BitStruct
-from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.dsl import Component, connect, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure

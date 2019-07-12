@@ -6,7 +6,7 @@
 """Test the level 4 yosys-SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits32, BitStruct
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, connect, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,

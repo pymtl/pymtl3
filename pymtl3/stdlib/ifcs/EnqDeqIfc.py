@@ -34,7 +34,7 @@ class DeqIfcRTL( GiveIfcRTL ):
     # We are doing DeqIfcRTL (s) -> [ AND ] -> RecvIfcRTL (other)
     # Basically we AND the rdy of both sides for enable
     if isinstance( other, RecvIfcRTL ):
-      parent.connect( s.msg, other.msg )
+      connect( s.msg, other.msg )
 
       m = And( Bits1 )
 
