@@ -95,7 +95,7 @@ class ImportPass( BasePass ):
 
   def get_imported_object( s, m ):
     params = getattr( m, "sverilog_params", None )
-    if not params and len(params) == 0: params = None
+    if params and len(params) == 0: params = None
     if params:
       for key, val in params.items():
         assert isinstance(val, int), \
