@@ -17,20 +17,13 @@ from setuptools import find_packages, setup
 #-------------------------------------------------------------------------
 # get_version
 #-------------------------------------------------------------------------
-# We use the output of git describe to create a version number. Note that
-# this will fail without a release tag because git describe will fail.
-# Eventually when we actually have tarball releases we will need to
-# also support using a separate RELEASE-VERSION file, but for now we
-# always install using pip git+https from GitHub so this shoud work fine.
 
 def get_version():
-  cmd = "git describe --dirty"
-  try:
-    result = check_output( cmd.split(),  ).strip()
-    if not isinstance(result, str):
-      result = result.decode()
-  except:
-    result = "?"
+  result = "?"
+  with open("pymtl3/__init__.py") as f:
+    for line in f:
+      if line.startswith("__version__"):
+        _, result, _ = line.split('"')
   return result
 
 #-------------------------------------------------------------------------
@@ -68,11 +61,12 @@ setup(
 
   # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
   classifiers=[
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Python :: 2.7',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
+    'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
   ],
 
   packages = find_packages(
