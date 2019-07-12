@@ -79,6 +79,7 @@ def mk_rule( method_spec, arg_strat_dict ):
     return dut_rdy
 
   # Make a rule for the state machine.
+  # FIXME: now the CL arg must be the same as the corresponding RTL port name
   @precondition( lambda s: method_rdy( s ) )
   @rule( **arg_strat_dict )
   @rename( method_name )
@@ -231,8 +232,9 @@ class BaseStateMachine( RuleBasedStateMachine ):
 class TestStateful( BaseStateMachine ):
 
   def error_line_trace( self, error_msg="" ):
-    print( "="*30 + " warning " + "="*30 )
-    print( error_msg )
+    pass
+    # print( "="*30 + " warning " + "="*30 )
+    # print( error_msg )
     # raise ValueError( error_msg )
 
 #-------------------------------------------------------------------------
@@ -246,7 +248,7 @@ def wrap_method( method_spec, arguments ):
   def method_rdy( s ):
     dut_rdy = s.dut.__dict__[ method_name ].rdy()
     ref_rdy = s.ref.__dict__[ method_name ].rdy()
-
+    print( "dut: {}_rdy: {}   ref: {}_rdy: {}".format( method_name, dut_rdy, method_name, ref_rdy ) )
     if dut_rdy and not ref_rdy:
       error_msg = "Dut method is rdy but reference is not: " + method_name
       s.error_line_trace( error_msg )

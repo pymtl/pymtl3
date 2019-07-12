@@ -59,11 +59,17 @@ def test_wrapper_openloop():
 
   top.enq( b16(0xffff) )
   top.enq( b16(0x1111) )
-  print( top.enq.rdy() )
+  # print( top.enq.rdy() )
   top.enq( b16(0x2222) )
   top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
 
-  assert top.deq() == 0xffff
-  assert top.deq() == 0x1111
-  assert top.deq() == 0x2222
-  assert top.deq() == 0x3333
+  # assert top.deq() == 0xffff
+  # assert top.deq() == 0x1111
+  # assert top.deq() == 0x2222
+  # assert top.deq() == 0x3333
