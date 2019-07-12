@@ -52,6 +52,7 @@ setup(
   version          = get_version(),
   description      = 'PyMTL 3 (Mamba): Python-based hardware generation, simulation, and verification framework',
   long_description = get_long_description(),
+  long_description_content_type="text/markdown",
   url              = 'https://github.com/cornell-brg/pymtl3',
   author           = 'Batten Research Group',
   author_email     = 'brg-pymtl@csl.cornell.edu',
@@ -62,8 +63,10 @@ setup(
 
   license='BSD',
 
-  # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+  # Pip will block installation on unsupported versions of Python
+  python_requires=">=2.7",
 
+  # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
   classifiers=[
     'Development Status :: 3 - Alpha',
     'License :: OSI Approved :: BSD License',
