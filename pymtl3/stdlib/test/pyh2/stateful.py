@@ -184,8 +184,10 @@ class BaseStateMachine( RuleBasedStateMachine ):
       def new_str( self ):
         if self.method.called and self.rdy.called and self.rdy.saved_ret:
           kwargs_str = kwarg_to_str( self.method.saved_kwargs )
-          ret_str = ( "" if self.method.saved_ret is None else
-                      " -> " + str( self.method.saved_ret ) )
+          ret_str = (
+            "" if self.method.saved_ret is None else
+            " -> " + str( self.method.saved_ret )
+          )
           return "{name}({kwargs}){ret}  ".format(
               name=self._dsl.my_name, kwargs=kwargs_str, ret=ret_str )
         elif self.rdy.called:
@@ -200,10 +202,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
       func = top.line_trace
 
       def line_trace():
-        trace = func() + "  "
-        for ifc in top.top_level_nb_ifcs:
-          trace += new_str( ifc )
-        return trace
+        return "{} || {}".format( func(), " | ".join([ new_str(ifc) for ifc in top.top_level_nb_ifcs ]) )
 
       top.line_trace = line_trace
 
@@ -248,7 +247,7 @@ def wrap_method( method_spec, arguments ):
   def method_rdy( s ):
     dut_rdy = s.dut.__dict__[ method_name ].rdy()
     ref_rdy = s.ref.__dict__[ method_name ].rdy()
-    print( "dut: {}_rdy: {}   ref: {}_rdy: {}".format( method_name, dut_rdy, method_name, ref_rdy ) )
+    # print( "dut: {}_rdy: {}   ref: {}_rdy: {}".format( method_name, dut_rdy, method_name, ref_rdy ) )
     if dut_rdy and not ref_rdy:
       error_msg = "Dut method is rdy but reference is not: " + method_name
       s.error_line_trace( error_msg )
