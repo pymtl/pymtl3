@@ -207,17 +207,17 @@ def get_strategy_from_list( st_list ):
   # First go through all customized strategy,
   # Create a dict of ( field, [ ( subfield, strategy ) ] ) for non-leaf
   # Create a dict of ( field, strategy ) for leaf
-  for name, st in st_list:
+  for name, strat in st_list:
     field_name, subfield_name = name.split( ".", 1 )
     field_st = all_field_st.setdefault( field_name, {} )
     # leaf
     if not "." in subfield_name:
-      field_st[ subfield_name ] = st
+      field_st[ subfield_name ] = strat
 
     # non-leaf
     else:
       subfield_list = all_subfield_st.setdefault( field_name, [] )
-      subfield_list += [( subfield_name, st ) ]
+      subfield_list += [( subfield_name, strat ) ]
 
   # Recursively generate dict for subfields
   for field_name, subfield_list in all_subfield_st.items():

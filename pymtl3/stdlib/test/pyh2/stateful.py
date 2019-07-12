@@ -10,7 +10,7 @@ Author : Yanghui Ou, Yixiao Zhang
 from __future__ import absolute_import, division, print_function
 
 import inspect
-from copy import deepcopy, copy
+from copy import deepcopy
 
 from hypothesis import PrintSettings
 from hypothesis import reproduce_failure as rf
@@ -26,8 +26,8 @@ from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from ..stateful.test_wrapper import Method
-from .utils import kwarg_to_str, list_string, rename
 from .RTL2CLWrapper import RTL2CLWrapper
+from .utils import kwarg_to_str, list_string, rename
 
 #-------------------------------------------------------------------------
 # collect_mspecs

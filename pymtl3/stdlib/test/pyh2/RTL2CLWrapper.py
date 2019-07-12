@@ -11,6 +11,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 
+
 class RTL2CLWrapper( Component ):
 
   def __init__( s, rtl_model, method_specs ):

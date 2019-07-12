@@ -15,6 +15,7 @@ from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from .RTL2CLWrapper import RTL2CLWrapper
 
+
 def test_wrapper():
 
   top = RTL2CLWrapper(
