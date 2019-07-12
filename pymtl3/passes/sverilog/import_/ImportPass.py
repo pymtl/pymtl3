@@ -81,10 +81,19 @@ class ImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def get_imported_object( s, m ):
+    params = getattr( m, "sverilog_params", None )
+    if len(params) == 0: params = None
+    if params:
+      for key, val in params.items():
+        assert isinstance(val, int), \
+            "non-int param {} is not allowed!".format(key)
+
     rtype = get_component_ifc_rtlir( m )
-    full_name = get_component_unique_name( rtype )
+    _full_name = get_component_unique_name( rtype )
+    full_name = _full_name
     packed_ports = s.gen_packed_ports( rtype )
     dump_vcd = 1 if hasattr( m, "dump_vcd" ) else 0
+
     try:
       is_same = m._pass_sverilog_translation.is_same
     except AttributeError:
@@ -93,6 +102,12 @@ class ImportPass( BasePass ):
     try:
       sv_file_path = m.sverilog_import_path
     except AttributeError:
+      sv_file_path = full_name + '.sv'
+
+    if params:
+      for key, val in params.items():
+        full_name += "__" + key + "_" + str(val)
+      s.add_param_module( full_name, _full_name, params, packed_ports, sv_file_path )
       sv_file_path = full_name + '.sv'
 
     assert os.path.isfile( sv_file_path ), \
@@ -429,6 +444,50 @@ constraint_list = [
     imp.construct.__globals__.update( symbols )
 
     return imp
+
+  #-------------------------------------------------------------------------
+  # add_param_module
+  #-------------------------------------------------------------------------
+
+  def add_param_module( s, new_name, name, params, packed_ports, filename ):
+    for p_name, port in packed_ports:
+      assert isinstance(port, rt.Port), \
+        "non-port instance {} is not supported when customized params are provided!".\
+          format(p_name)
+      assert isinstance(port.get_dtype(), rdt.Vector), \
+        "non-vector port {} is not supported when customized params are provided!".\
+          format(p_name)
+    with open(new_name + '.sv', 'w') as new_sv, open(filename, 'r') as orig_sv:
+      shutil.copyfileobj( orig_sv, new_sv )
+      new_sv.close()
+      orig_sv.close()
+    with open(new_name + ".sv", "a+") as sv:
+      header = \
+"""
+\n// This is a dummy top module that instantiates a parametrized module to be imported.
+"""
+      sv.write( header )
+      sv.write( "module " + new_name + '\n' )
+      sv.write( "(\n" )
+      for idx, ( p_name, port ) in enumerate(packed_ports):
+        direc = port.get_direction()
+        nbits = port.get_dtype().get_length()
+        comma = "" if idx == len(packed_ports) - 1 else ","
+        sv.write( "  {direc} logic [ {nbits}-1 : 0 ] {p_name}{comma}\n".format(**locals()) )
+      sv.write( ");\n" )
+      sv.write( "  {name}\n".format(**locals()) )
+      sv.write( "  #(\n" )
+      for idx, ( param_name, param ) in enumerate(params.items()):
+        comma = "" if idx == len(params) - 1 else ","
+        sv.write( "    .{param_name}( {param} ){comma}\n".format(**locals()) )
+      sv.write( "  ) wrapped_module\n" )
+      sv.write( "  (\n" )
+      for idx, ( p_name, port ) in enumerate(packed_ports):
+        comma = "" if idx == len(packed_ports) - 1 else ","
+        sv.write( "    .{p_name}( {p_name} ){comma}\n".format(**locals()) )
+      sv.write( "  );\n" )
+      sv.write( "endmodule\n" )
+      sv.close()
 
   #-------------------------------------------------------------------------
   # gen_packed_ports
