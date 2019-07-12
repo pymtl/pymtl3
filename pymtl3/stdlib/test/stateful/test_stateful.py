@@ -1,11 +1,12 @@
-#=========================================================================
-# test_stateful
-#=========================================================================
-# Hypothesis stateful testing on RTL and CL model
-#
-# Author : Yixiao Zhang
-#   Date : May 22, 2019
+"""
+=========================================================================
+test_stateful
+=========================================================================
+Hypothesis stateful testing on RTL and CL model
 
+Author : Yixiao Zhang
+  Date : May 22, 2019
+"""
 from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
@@ -259,13 +260,13 @@ def create_test_state_machine( dut,
   # Store ( strategy, full_name )
   arg_st_with_full_name = []
   all_st_full_names = set()
-  for name, st in argument_strategy:
+  for name, strat in argument_strategy:
 
-    if not isinstance( st, SearchStrategy ):
+    if not isinstance( strat, SearchStrategy ):
       raise TypeError( "Only strategy is allowed! got {} for {}".format(
-          type( st ), name ) )
+          type( strat ), name ) )
 
-    arg_st_with_full_name += [( name, ( st, name ) ) ]
+    arg_st_with_full_name += [( name, ( strat, name ) ) ]
     all_st_full_names.add( name )
 
   # get nested dict of strategy
