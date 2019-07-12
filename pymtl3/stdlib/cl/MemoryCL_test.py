@@ -35,8 +35,8 @@ class TestHarness( Component ):
 
     # Connections
     for i in range(nports):
-      s.connect( s.srcs[i].send, s.mem.ifc[i].req )
-      s.connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
+      connect( s.srcs[i].send, s.mem.ifc[i].req )
+      connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
 
   def done( s ):
     done  = reduce( lambda x,y: x and y, [ x.done() for x in s.srcs ] )

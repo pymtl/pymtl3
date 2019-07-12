@@ -272,7 +272,7 @@ class XcelIfcRTL2FLAdapter( Component ):
     s.right = XcelMasterIfcFL( ReqType, RespType )
 
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
-    s.connect( s.left.req, s.req_q.enq )
+    connect( s.left.req, s.req_q.enq )
 
     @s.update
     def up_xcelifc_rtl_fl_blk():
@@ -305,7 +305,7 @@ class XcelIfcFL2RTLAdapter( Component ):
     s.fl2cl       = XcelIfcFL2CLAdapter( ReqType, RespType )
     s.req_cl2rtl  = RecvCL2SendRTL( ReqType )
     s.resp_rtl2cl = RecvRTL2SendCL( RespType)
-    s.connect( s.left, s.fl2cl.left )
+    connect( s.left, s.fl2cl.left )
     s.connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,
       s.req_cl2rtl.send, s.right.req,

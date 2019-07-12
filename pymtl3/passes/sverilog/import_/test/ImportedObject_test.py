@@ -8,7 +8,7 @@
 import os
 
 from pymtl3.datatypes import Bits1, Bits32, Bits64
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
 from pymtl3.stdlib.test import TestVectorSimulator

@@ -1160,7 +1160,7 @@ def test_struct_port( do_test ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out = OutPort( Bits32 )
-      s.connect( s.out, s.in_.foo )
+      connect( s.out, s.in_.foo )
   a = A()
   a._ref_src = \
 """
@@ -1211,8 +1211,8 @@ def test_nested_struct_port( do_test ):
       s.in_ = InPort( B )
       s.out_foo = OutPort( Bits32 )
       s.out_bar = OutPort( Bits32 )
-      s.connect( s.out_foo, s.in_.foo )
-      s.connect( s.out_bar, s.in_.c.bar )
+      connect( s.out_foo, s.in_.foo )
+      connect( s.out_bar, s.in_.c.bar )
   a = A()
   a._ref_src = \
 """
@@ -1271,8 +1271,8 @@ def test_packed_array( do_test ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
-      s.connect( s.out[0], s.in_.foo[0] )
-      s.connect( s.out[1], s.in_.foo[1] )
+      connect( s.out[0], s.in_.foo[0] )
+      connect( s.out[1], s.in_.foo[1] )
   a = A()
   a._ref_src = \
 """
@@ -1332,8 +1332,8 @@ def test_struct_packed_array( do_test ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
-      s.connect( s.out[0], s.in_.c[0].bar )
-      s.connect( s.out[1], s.in_.c[1].bar )
+      connect( s.out[0], s.in_.c[0].bar )
+      connect( s.out[1], s.in_.c[1].bar )
   a = A()
   a._ref_src = \
 """

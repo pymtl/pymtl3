@@ -287,7 +287,7 @@ def test_deep_pass_through_equal_m_constraint():
       s.pull = NonBlockingCalleeIfc()
       s.through = [ PassThroughPlus100() for _ in range(10) ]
       for i in range(10):
-        s.connect( s.through[i].push, s.push if i == 0 else \
+        connect( s.through[i].push, s.push if i == 0 else \
                                       s.through[i-1].real_push,
         )
 

@@ -306,7 +306,7 @@ class MemIfcFL2RTLAdapter( Component ):
     s.fl2cl       = MemIfcFL2CLAdapter( req_class, resp_class )
     s.req_cl2rtl  = RecvCL2SendRTL( req_class )
     s.resp_rtl2cl = RecvRTL2SendCL( resp_class)
-    s.connect( s.left, s.fl2cl.left )
+    connect( s.left, s.fl2cl.left )
     s.connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,
       s.req_cl2rtl.send, s.right.req,

@@ -6,7 +6,7 @@
 """Test the level 4 SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, connect, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import (
     SVStructuralTranslatorL4,
@@ -36,7 +36,7 @@ def test_subcomp_decl( do_test ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
       s.b = B()
-      s.connect( s.b.out_b, s.out_a )
+      connect( s.b.out_b, s.out_a )
   a = A()
   a._ref_subcomps = { a : \
 """\
@@ -78,16 +78,16 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
     def construct( s ):
       s.out_b = OutPort( Bits32 )
       s.ifc_b = OutIfc()
-      s.connect( s.out_b, 0 )
-      s.connect( s.ifc_b.msg, 0 )
-      s.connect( s.ifc_b.val, 1 )
+      connect( s.out_b, 0 )
+      connect( s.ifc_b.msg, 0 )
+      connect( s.ifc_b.val, 1 )
   class A( Component ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
       s.b = B()
       s.ifc_a = OutIfc()
-      s.connect( s.b.out_b, s.out_a )
-      s.connect( s.b.ifc_b, s.ifc_a )
+      connect( s.b.out_b, s.out_a )
+      connect( s.b.ifc_b, s.ifc_a )
   a = A()
   a._ref_subcomps = { a : \
 """\

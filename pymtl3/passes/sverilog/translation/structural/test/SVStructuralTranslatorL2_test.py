@@ -6,7 +6,7 @@
 """Test the level 2 SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits32, BitStruct
-from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.dsl import Component, connect, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 import (
@@ -42,7 +42,7 @@ def test_struct_const_structural( do_test ):
     def construct( s ):
       s.in_ = B()
       s.out = OutPort( Bits32 )
-      s.connect( s.out, s.in_.foo )
+      connect( s.out, s.in_.foo )
   a = A()
   a._ref_structs = [
     ( rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ), \
@@ -89,7 +89,7 @@ def test_struct_port( do_test ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out = OutPort( Bits32 )
-      s.connect( s.out, s.in_.foo )
+      connect( s.out, s.in_.foo )
   a = A()
   a._ref_structs = [
     ( rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ), \
@@ -162,8 +162,8 @@ def test_nested_struct_port( do_test ):
       s.in_ = InPort( B )
       s.out_foo = OutPort( Bits32 )
       s.out_bar = OutPort( Bits32 )
-      s.connect( s.out_foo, s.in_.foo )
-      s.connect( s.out_bar, s.in_.c.bar )
+      connect( s.out_foo, s.in_.foo )
+      connect( s.out_bar, s.in_.c.bar )
   a = A()
   _C = rdt.Struct( 'C', {'bar':rdt.Vector(32)}, ['bar'] )
   a._ref_structs = [ ( _C, \
@@ -247,8 +247,8 @@ def test_packed_array( do_test ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
-      s.connect( s.out[0], s.in_.foo[0] )
-      s.connect( s.out[1], s.in_.foo[1] )
+      connect( s.out[0], s.in_.foo[0] )
+      connect( s.out[1], s.in_.foo[1] )
   a = A()
   _foo = rdt.PackedArray( [2], rdt.Vector(32) )
   a._ref_structs = [
@@ -331,8 +331,8 @@ def test_struct_packed_array( do_test ):
     def construct( s ):
       s.in_ = InPort( B )
       s.out =  [ OutPort( Bits32 ) for _ in range(2) ]
-      s.connect( s.out[0], s.in_.c[0].bar )
-      s.connect( s.out[1], s.in_.c[1].bar )
+      connect( s.out[0], s.in_.c[0].bar )
+      connect( s.out[1], s.in_.c[1].bar )
   a = A()
   _C = rdt.Struct('C', {'bar':rdt.Vector(32)}, ['bar'])
   a._ref_structs = [

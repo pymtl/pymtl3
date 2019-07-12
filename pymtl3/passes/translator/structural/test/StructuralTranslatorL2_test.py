@@ -367,7 +367,7 @@ def test_nested_struct_packed_array_index( do_test ):
     def construct( s ):
       s.struct = InPort( B )
       s.out = OutPort( C )
-      s.connect( s.struct.bar[1], s.out )
+      connect( s.struct.bar[1], s.out )
   a = A()
   a._ref_name = "A"
   a._ref_ports = \

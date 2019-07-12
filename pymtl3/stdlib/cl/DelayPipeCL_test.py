@@ -30,7 +30,7 @@ class TestHarness( Component ):
 
     # Connect
 
-    s.connect( s.src.send,  s.dut.enq )
+    connect( s.src.send,  s.dut.enq )
 
     if   dut_class is DelayPipeDeqCL:
       @s.update
@@ -39,7 +39,7 @@ class TestHarness( Component ):
           s.sink.recv( s.dut.deq() )
 
     elif dut_class is DelayPipeSendCL:
-      s.connect( s.dut.send, s.sink.recv )
+      connect( s.dut.send, s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()

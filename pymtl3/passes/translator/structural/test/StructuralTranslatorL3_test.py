@@ -95,7 +95,7 @@ def test_multi_ifc_decls( do_test ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
   a = A()
   a._ref_ifcs = \
 """\
@@ -166,7 +166,7 @@ def test_ifc_array_idx( do_test ):
       s.in_ = [ InIfc() for _ in range(5) ]
       s.out = [ OutIfc() for _ in range(5) ]
       for i in range(5):
-        s.connect( s.out[i], s.in_[i] )
+        connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
 """\
@@ -273,7 +273,7 @@ def test_nested_ifc( do_test ):
       s.in_ = [ MemReqIfc() for _ in range(5) ]
       s.out = [ MemRespIfc() for _ in range(5) ]
       for i in range(5):
-        s.connect( s.out[i], s.in_[i] )
+        connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
 """\

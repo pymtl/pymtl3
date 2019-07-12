@@ -38,12 +38,12 @@ def test_comp_array( do_test ):
   class B( Component ):
     def construct( s ):
       s.foo = OutPort( Bits32 )
-      s.connect( s.foo, 0 )
+      connect( s.foo, 0 )
   class A( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
       s.b = [ B() for _ in range(2) ]
-      s.connect( s.out, s.b[1].foo )
+      connect( s.out, s.b[1].foo )
   a = A()
   a._ref_comps_port_yosys = { a : \
 """\
@@ -110,14 +110,14 @@ def test_comp_array_ifc_array_port_array_packed_array( do_test ):
     def construct( s ):
       s.ifc = [ Ifc() for _ in range(1) ]
       s.out = OutPort( Bits32 )
-      s.connect( s.out, s.ifc[0].foo[0].bar[0] )
+      connect( s.out, s.ifc[0].foo[0].bar[0] )
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.b = [ B() for _ in range(1) ]
       s.out = OutPort( Bits32 )
-      s.connect( s.in_, s.b[0].ifc[0].foo[0].bar[0] )
-      s.connect( s.out, s.b[0].out )
+      connect( s.in_, s.b[0].ifc[0].foo[0].bar[0] )
+      connect( s.out, s.b[0].out )
   a = A()
   a._ref_comps_port_yosys = { a : \
 """\

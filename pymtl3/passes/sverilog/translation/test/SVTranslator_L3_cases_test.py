@@ -154,9 +154,9 @@ def test_ifc_decls( do_test ):
     def construct( s ):
       s.ifc = Ifc()
       # This 42 will be converted to Bits32(42) by DSL
-      s.connect( s.ifc.msg, 42 )
+      connect( s.ifc.msg, 42 )
       # This 1 will be converted to Bits1(1) by DSL
-      s.connect( s.ifc.val, 1 )
+      connect( s.ifc.val, 1 )
   a = A()
   a._ref_src = \
 """\
@@ -193,7 +193,7 @@ def test_multi_ifc_decls( do_test ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
   a = A()
   a._ref_src = \
 """\
