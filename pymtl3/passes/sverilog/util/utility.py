@@ -26,5 +26,6 @@ def get_component_unique_name( c_rtype ):
   assert comp_name
   for arg_name, arg_value in comp_params:
     assert arg_name != ''
-    comp_name += '__' + arg_name + '_' + get_string(arg_value)
+    if arg_name != "import_params":
+      comp_name += '__' + arg_name + '_' + get_string(arg_value)
   return comp_name

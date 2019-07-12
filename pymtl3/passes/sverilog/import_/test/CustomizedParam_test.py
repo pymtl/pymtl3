@@ -21,8 +21,8 @@ def local_do_test( _m ):
 
 class VQueue( Placeholder, Component ):
 
-  def construct( s ):
-    count_nbits = clog2( s._num_entries + 1 )
+  def construct( s, import_params ):
+    count_nbits = clog2( import_params["num_entries"] + 1 )
     s.count   =  OutPort( mk_bits( count_nbits )  )
 
     s.deq_en  =  InPort( Bits1  )
@@ -46,8 +46,7 @@ def test_q_1( do_test ):
       assert m.deq_rdy == Bits1( tv[5] )
     if tv[5] != '*':
       assert m.deq_msg == Bits32( tv[4] )
-  q = VQueue()
-  q._num_entries = num_entries
+  q = VQueue( { "num_entries" : 1 } )
   q.sverilog_import = True
   q.sverilog_import_path = get_dir() + 'VQueue.sv'
   q.sverilog_params = {
