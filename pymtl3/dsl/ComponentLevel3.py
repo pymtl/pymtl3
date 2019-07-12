@@ -31,6 +31,13 @@ from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
 
+def connect( o1, o2 ):
+  host, o1_connectable, o2_connectable = ComponentLevel3._connect_check( o1, o2, internal=False )
+
+  assert host is not None, "???"
+
+  host._connect_dispatch( o1, o2, o1_connectable, o2_connectable )
+
 class ComponentLevel3( ComponentLevel2 ):
 
   #-----------------------------------------------------------------------
@@ -169,7 +176,7 @@ class ComponentLevel3( ComponentLevel2 ):
             # TODO add error message if other_obj is not a list
             recursive_connect( this_obj[i], other_obj[i] )
         else:
-          s._connect_objects( other_obj, this_obj, internal=True )
+          s._connect( other_obj, this_obj, internal=True )
 
       # Sort the keys to always connect in a unique order
       for name in sorted(this.__dict__):
@@ -205,45 +212,75 @@ class ComponentLevel3( ComponentLevel2 ):
       else:
         connect_by_name( o1, o2 ) # capture s
 
-  def _connect_objects( s, o1, o2, internal=False ):
-    """ Top level private method for connecting two objects. We do
-        the function dispatch based on type here. Note that internal=False
-        means we are just calling this API internally so that we don't
-        connect other unconnectable fields by name in the interface."""
+  @staticmethod
+  def _connect_check( o1, o2, internal ):
+    """ Note that internal=False means we are just calling this API
+        internally so that we don't connect other unconnectable fields by
+        name in the interface."""
 
-    o1_connectable = isinstance( o1, Connectable )
-    o2_connectable = isinstance( o2, Connectable )
+    o1_connectable = False
+    o2_connectable = False
+    top = None
+
+    if isinstance( o1, Connectable ):
+      o1_connectable = True
+      top = o1._dsl.elaborate_top
+
+    if isinstance( o2, Connectable ):
+      o2_connectable = True
+      o2_top = o2._dsl.elaborate_top
+
+      if o1_connectable: assert o2._dsl.elaborate_top is top, "???"
+      else:              top = o2_top
 
     if not o1_connectable and not o2_connectable:
-      if internal:
-        return
+      if internal:  return None, False, False
+
       raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
-          "  (when connecting {} to {})" \
-                .format( type(o1), type(o2), repr(o1), repr(o2)) )
+                                    "  (when connecting {} to {})" \
+          .format( type(o1), type(o2), repr(o1), repr(o2)) )
 
-    # Deal with Signal <-> const
-    # TODO implement connecting a signal to a struct
+    # print("{} //= {}, top is {} stack is {}".format(
+      # repr(o1), repr(o2), o1._dsl.elaborate_top, o1._dsl.elaborate_top._dsl.elaborate_stack) )
 
-    if isinstance( o1, (int, Bits) ) or isinstance( o2, (int, Bits)  ): # special case
-      if isinstance( o1, (int, Bits)  ):
-        o1, o2 = o2, o1 # o1 is signal, o2 is int
-      assert isinstance( o1, Signal )
-      s._connect_signal_const( o1, o2 )
+    host = top._dsl.elaborate_stack[-1]
 
-    # Deal with Signal <-> Signal
+    if isinstance( host, Placeholder ):
+      raise InvalidPlaceholderError( "Cannot call connect "
+            "in a placeholder component.".format( blk.__name__ ) )
 
-    elif isinstance( o1, Signal ) and isinstance( o2, Signal ):
-      s._connect_signal_signal( o1, o2 )
+    return host, o1_connectable, o2_connectable
 
-    # Deal with Interface <-> Interface
+  def _connect( s, o1, o2, internal ):
+    """ Top level private method for connecting two objects. """
+    host, o1_connectable, o2_connectable = s._connect_check( o1, o2, internal )
 
-    elif isinstance( o1, Interface ) and isinstance( o2, Interface ):
-      s._connect_interfaces( o1, o2 )
-      # s._dsl.connect_order.append( (o1, o2) )
+    if host is None:
+      # host is None only happens when internal = True
+      assert internal
 
     else:
-      raise InvalidConnectionError("{} cannot be connected to {}: {} != {}" \
+      assert s is host, "s:{} host:{}".format(s, host)
+      s._connect_dispatch( o1, o2, o1_connectable, o2_connectable )
+
+  def _connect_dispatch( s, o1, o2, o1_connectable, o2_connectable ):
+
+    if o1_connectable and o2_connectable:
+      # if both connectable, dispatch signal-signal and interface-interface
+      if isinstance( o1, Signal ) and isinstance( o2, Signal ):
+        s._connect_signal_signal( o1, o2 )
+      elif isinstance( o1, Interface ) and isinstance( o2, Interface ):
+        s._connect_interfaces( o1, o2 )
+      else:
+        raise InvalidConnectionError("{} cannot be connected to {}: {} != {}" \
               .format(repr(o1), repr(o2), type(o1), type(o2)) )
+    else:
+      # One is connectable, we make sure it's o1
+      if o2_connectable:
+        o1, o2 = o2, o1
+      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+
+      s._connect_signal_const( o1, o2 )
 
   def _continue_call_connect( s ):
     """ Here we continue to establish the connections from signals of the
@@ -251,6 +288,11 @@ class ComponentLevel3( ComponentLevel2 ):
     parent that connects a constant integer to a signal, we should point
     the Const object back to the parent object by setting _parent_obj to
     s._parent_obj."""
+
+    parent = s._dsl.parent_obj
+
+    top = s._dsl.elaborate_top
+    tmp = top._dsl.elaborate_stack.pop()
 
     try: # Catch AssertionError from _connect
 
@@ -262,24 +304,29 @@ class ComponentLevel3( ComponentLevel2 ):
           raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
 
         # Obj is a list of signals
+        # We assume the a dict of { index: obj } is provided.
         if   isinstance( obj, list ):
           # Make sure the connection target is a dictionary {idx: obj}
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
           for idx, item in target.items():
-            s._dsl.parent_obj._connect_objects( obj[idx], item )
+            parent._connect( obj[idx], item, internal=False )
 
         # Obj is a single signal
         # If the target is a list, it's fanout connection
         elif isinstance( target, (tuple, list) ):
           for item in target:
-            s._dsl.parent_obj._connect_objects( obj, item )
+            parent._connect( obj, item, internal=False )
+
         # Target is a single object
         else:
-          s._dsl.parent_obj._connect_objects( obj, target )
+          parent._connect( obj, target, internal=False )
 
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
+
+    top._dsl.elaborate_stack.append(tmp)
+
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
@@ -649,24 +696,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
         return
 
-  def _disconnect_interface_interface( s, o1, o2 ):
-
-    # Here we call connect to get the mock adjacency dictionary because
-    # o1 and o2 might be signal bundles and we need signal connections
-    last_adjacency = s._dsl.adjacency
-    s._dsl.adjacency = defaultdict(set)
-    s._connect_objects( o1, o2 )
-
-    visited = set()
-    for u, vs in s._dsl.adjacency.items():
-      for v in vs:
-        if (u, v) not in visited:
-          s._disconnect_signal_signal( u, v )
-          visited.add( (u, v) )
-          visited.add( (v, u) )
-
-    s._dsl.adjacency = last_adjancency
-
   # Override
   def _check_valid_dsl_code( s ):
     s._check_upblk_writes()
@@ -690,16 +719,14 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.call_kwargs = kwargs
     return s
 
-  def connect( s, o1, o2 ):
-    if isinstance( s, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot call connect "
-            "in a placeholder component.".format( blk.__name__ ) )
-    try:
-      s._connect_objects( o1, o2 )
-    except InvalidConnectionError:
-      raise
-    except Exception as e:
-      raise InvalidConnectionError( "\n{}".format(e) )
+  # def connect( s, o1, o2 ):
+    # s._connect( o1, o2, internal=False )
+    # try:
+    # s._connect_objects( o1, o2 )
+    # except InvalidConnectionError:
+      # raise
+    # except Exception as e:
+      # raise InvalidConnectionError( "\n{}".format(e) )
 
   def connect_pairs( s, *args ):
     if isinstance( s, Placeholder ):
@@ -710,7 +737,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     for i in range(len(args)>>1) :
       try:
-        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
+        s._connect( args[ i<<1 ], args[ (i<<1)+1 ], internal=False )
       except InvalidConnectionError:
         raise
       except Exception as e:

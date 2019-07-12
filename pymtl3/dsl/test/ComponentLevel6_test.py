@@ -10,6 +10,7 @@ Author : Yanghui Ou
 from collections import deque
 
 from pymtl3.datatypes import Bits16
+from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6, non_blocking
 from pymtl3.dsl.Connectable import NonBlockingCalleeIfc, NonBlockingCallerIfc
 from pymtl3.dsl.ConstraintTypes import M, U
@@ -96,8 +97,8 @@ class TestHarness( ComponentLevel6 ):
     s.dut     = DUT()
 
     # Connections
-    s.connect( s.src.send, s.dut.recv  )
-    s.connect( s.dut.send, s.sink.recv )
+    connect( s.src.send, s.dut.recv  )
+    connect( s.dut.send, s.sink.recv )
 
 
   def done( s ):
@@ -200,7 +201,7 @@ class QueueIncr( ComponentLevel6 ):
     s.send  = NonBlockingCallerIfc()
     s.queue = SimpleQueue()
 
-    s.connect( s.recv, s.queue.enq )
+    connect( s.recv, s.queue.enq )
 
     s.v = None
     @s.update
@@ -227,9 +228,9 @@ class QueueIncrChained( ComponentLevel6 ):
     s.q0 = QueueIncr()
     s.q1 = QueueIncr()
 
-    s.connect( s.recv,    s.q0.recv )
-    s.connect( s.q0.send, s.q1.recv )
-    s.connect( s.q1.send, s.send    )
+    connect( s.recv,    s.q0.recv )
+    connect( s.q0.send, s.q1.recv )
+    connect( s.q1.send, s.send    )
 
   def line_trace( s ):
     return "{} -> {}".format( s.q0.line_trace(), s.q1.line_trace() )

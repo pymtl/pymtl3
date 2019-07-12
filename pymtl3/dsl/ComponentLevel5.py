@@ -10,7 +10,7 @@ Date   : Dec 29, 2018
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .ComponentLevel4 import ComponentLevel4
-from .Connectable import CalleePort, CallerPort, MethodPort, Signal
+from .Connectable import CalleePort, CallerPort, Const, Interface, MethodPort, Signal
 from .errors import MultiWriterError
 from .NamedObject import NamedObject
 
@@ -66,18 +66,32 @@ class ComponentLevel5( ComponentLevel4 ):
       s._dsl.constructed = True
 
   def _connect_method_ports( s, o1, o2 ):
-    assert isinstance( o1, MethodPort ) and isinstance( o2, MethodPort )
-
     s._dsl.adjacency[o1].add( o2 )
     s._dsl.adjacency[o2].add( o1 )
     s._dsl.connect_order.append( (o1, o2) )
 
   # Override
-  def _connect_objects( s, o1, o2, internal=False ):
-    if isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ):
-      s._connect_method_ports( o1, o2 )
+  def _connect_dispatch( s, o1, o2, o1_connectable, o2_connectable ):
+
+    if o1_connectable and o2_connectable:
+      # if both connectable, dispatch signal-signal and interface-interface
+      if isinstance( o1, Signal ) and isinstance(o2, Signal ):
+        s._connect_signal_signal( o1, o2 )
+      elif isinstance( o1, Interface ) and isinstance( o2, Interface ):
+        s._connect_interfaces( o1, o2 )
+      # Methodport added here
+      elif isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ):
+        s._connect_method_ports( o1, o2 )
+      else:
+        raise InvalidConnectionError("{} cannot be connected to {}: {} != {}" \
+              .format(repr(o1), repr(o2), type(o1), type(o2)) )
     else:
-      super( ComponentLevel5, s )._connect_objects( o1, o2, internal )
+      # One is connectable, we make sure it's o1
+      if o2_connectable:
+        o1, o2 = o2, o1
+      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+
+      s._connect_signal_const( o1, o2 )
 
   def _resolve_method_connections( s ):
 

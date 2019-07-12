@@ -22,6 +22,7 @@ import re
 
 from .errors import NotElaboratedError
 
+
 class DSLMetadata:
   pass
 
@@ -177,10 +178,12 @@ class NamedObject:
             u._dsl._my_indices  = indices
 
             # Point u's top to my top
+            top = s._dsl.elaborate_top
+            u._dsl.elaborate_top = top
 
-            u._dsl.elaborate_top = s._dsl.elaborate_top
-
+            top._dsl.elaborate_stack.append( u )
             u._construct()
+            top._dsl.elaborate_stack.pop()
 
           # except AttributeError as e:
           #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
@@ -286,6 +289,8 @@ class NamedObject:
     s._dsl.full_name     = "s"
     s._dsl.elaborate_top = s
 
+    s._dsl.elaborate_stack = [ s ]
+
     # Secret source for letting the child know the field name of itself
     # -- override setattr for elaboration, and remove it afterwards
 
@@ -300,6 +305,7 @@ class NamedObject:
 
     del NamedObject.__setattr__
 
+    del s._dsl.elaborate_stack
 
   def _elaborate_collect_all_named_objects( s ):
     s._dsl.all_named_objects = s._collect_all()[0]

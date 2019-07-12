@@ -9,7 +9,7 @@ Date   : June 2, 2019
 import random
 
 from pymtl3.datatypes import *
-from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire
+from pymtl3.dsl import Component, InPort, OutPort, Placeholder, Wire, connect
 from pymtl3.dsl.errors import InvalidAPICallError
 
 from .sim_utils import simple_sim_pass
@@ -91,7 +91,7 @@ def test_real_replaced_by_real2():
       s.in_ = InPort ( mk_bits(nbits) )
       s.out = OutPort( mk_bits(nbits) )
       s.w   = Wire( mk_bits(nbits) )
-      s.connect( s.w, s.out )
+      connect( s.w, s.out )
 
       s.inner = Real_shamt( 5 )( in_ = s.in_, out = s.w )
 
@@ -175,7 +175,7 @@ def test_replace_component_upblk_rw_port():
       s.in_ = InPort ( mk_bits(nbits) )
       s.out = OutPort( mk_bits(nbits) )
       s.w   = Wire( mk_bits(nbits) )
-      s.connect( s.w, s.out )
+      connect( s.w, s.out )
 
       @s.update
       def up_in():
@@ -219,7 +219,7 @@ def test_replace_component_func_rw_port():
       s.in_ = InPort ( mk_bits(nbits) )
       s.out = OutPort( mk_bits(nbits) )
       s.w   = Wire( mk_bits(nbits) )
-      s.connect( s.w, s.out )
+      connect( s.w, s.out )
 
       @s.func
       def assign_in( x ):
@@ -268,7 +268,7 @@ def test_ctrl_dpath_connected_replaced_both():
       s.wire = Wire( Bits32 )
       s.out  = OutPort( Bits32 )
 
-      s.connect( s.in_, s.wire )
+      connect( s.in_, s.wire )
 
       @s.update
       def out():
@@ -280,7 +280,7 @@ def test_ctrl_dpath_connected_replaced_both():
       s.wire = Wire( Bits32 )
       s.out  = OutPort( Bits32 )
 
-      s.connect( s.in_, s.wire )
+      connect( s.in_, s.wire )
 
       @s.update
       def out():
@@ -293,9 +293,9 @@ def test_ctrl_dpath_connected_replaced_both():
       s.m2  = Module1()
       s.out = OutPort( Bits32 )
 
-      s.connect( s.in_, s.m1.in_ )
-      s.connect( s.m1.out, s.m2.in_ )
-      s.connect( s.m2.out, s.out )
+      connect( s.in_, s.m1.in_ )
+      connect( s.m1.out, s.m2.in_ )
+      connect( s.m2.out, s.out )
 
   class Top( Component ):
     def construct( s ):
@@ -303,8 +303,8 @@ def test_ctrl_dpath_connected_replaced_both():
       s.inner = Inner()
       s.out = OutPort( Bits32 )
 
-      s.connect( s.in_, s.inner.in_)
-      s.connect( s.inner.out, s.out )
+      connect( s.in_, s.inner.in_)
+      connect( s.inner.out, s.out )
 
     def line_trace( s ):
       return "{} > {}".format( s.in_, s.out )

@@ -273,12 +273,6 @@ class OutPort( Signal ):
 
 class Interface( NamedObject, Connectable ):
 
-  # FIXME: why are we doing this?
-  # Yanghui: I commented this out.
-  # @property
-  # def Type( s ):
-  #   return s._dsl.args
-
   def inverse( s ):
     s._dsl.inversed = True
     return s

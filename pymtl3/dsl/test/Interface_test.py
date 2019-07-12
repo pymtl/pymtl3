@@ -10,7 +10,7 @@ from collections import deque
 from functools import reduce
 
 from pymtl3.datatypes import Bits1, Bits8, Bits128
-from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
+from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 
 from .sim_utils import simple_sim_pass
@@ -160,10 +160,10 @@ def test_nested_port_bundle():
       s.wire = [ [ Wire(int) for i in range(4) ] for j in range(4) ]
 
       for i in range(4):
-        s.connect( s.src[i].out.rdy, s.sink.in_.rdy )
+        connect( s.src[i].out.rdy, s.sink.in_.rdy )
         for j in range(4):
-          s.connect( s.sb.req[i][j].msg, s.src[i].out.msg )
-          s.connect( s.wire[i][j],       s.sb.req[i][j].msg )
+          connect( s.sb.req[i][j].msg, s.src[i].out.msg )
+          connect( s.wire[i][j],       s.sb.req[i][j].msg )
 
       @s.update
       def up_from_req():
@@ -236,7 +236,7 @@ def test_customized_connect():
     def construct( s ):
       s.a = A()
       s.b = B()
-      s.connect( s.a.send, s.b.recv )
+      connect( s.a.send, s.b.recv )
 
     def done( s ):
       return False
@@ -331,7 +331,7 @@ def test_customized_connect_adapter():
       s.a = A()
       s.b = B()
       for i in range( 10 ):
-        s.connect( s.b.recv[i], s.a.send[i] )
+        connect( s.b.recv[i], s.a.send[i] )
 
     def done( s ):
       return False
