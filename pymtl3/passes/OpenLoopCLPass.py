@@ -122,6 +122,8 @@ class OpenLoopCLPass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
+    assert len( schedule ) == len( V )
+
     # Shunning: we call CL line trace pass here.
     cl_trace = CLLineTracePass()
     schedule.insert( 0, cl_trace.process_component( top ) )
