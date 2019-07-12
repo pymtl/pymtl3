@@ -171,9 +171,8 @@ class GetIfcFL( Interface ):
 class GetRTL2GiveCL( Component ):
 
   def construct( s, MsgType ):
-
+    print( "HERE")
     # Interface
-
     s.get  = GetIfcRTL( MsgType )
 
     s.entry = None
@@ -181,14 +180,20 @@ class GetRTL2GiveCL( Component ):
     @s.update
     def up_get_rtl():
       if s.entry is None and s.get.rdy:
-        s.get.en = Bits1(1)
-        s.entry  = deepcopy( s.get.msg )
+        s.get.en = b1(1)
       else:
-        s.get.en = Bits1(0)
+        s.get.en = b1(0)
+
+    @s.update
+    def up_entry():
+      if s.get.en:
+        s.entry = deepcopy( s.get.msg )
 
     s.add_constraints(
-      U( up_get_rtl )   < M( s.give ),
-      U( up_get_rtl )   < M( s.give.rdy ),
+      U( up_get_rtl ) < M( s.give     ),
+      U( up_get_rtl ) < M( s.give.rdy ),
+      U( up_entry   ) < M( s.give     ),
+      U( up_entry   ) < M( s.give.rdy ),
     )
 
   @non_blocking( lambda s : s.entry is not None )
