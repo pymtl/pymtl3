@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 import importlib
+import json
 import linecache
 import os
 import shutil
@@ -77,6 +78,18 @@ class ImportPass( BasePass ):
       raise SVerilogImportError( m, msg )
 
   #-----------------------------------------------------------------------
+  # is_cached
+  #-----------------------------------------------------------------------
+
+  def is_cached( s, filename, db_hash ):
+    filename = unicode(filename)
+    exists = os.path.exists( filename )
+    if not exists: return False
+    file_hash = hash( open(filename, "r").read() )
+    hash_eq = file_hash == db_hash
+    return exists and hash_eq
+
+  #-----------------------------------------------------------------------
   # get_imported_object
   #-----------------------------------------------------------------------
 
@@ -119,9 +132,24 @@ class ImportPass( BasePass ):
     c_wrapper = full_name + '_v.cpp'
     py_wrapper = full_name + '_v.py'
     shared_lib = 'lib{}_v.so'.format( full_name )
-    if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
-       os.path.exists(py_wrapper) and os.path.exists(shared_lib):
-      cached = True
+
+    try:
+      with open( "__pymtl_cache__", "r" ) as db_file:
+        db = json.loads( db_file.read() )
+        if full_name in db:
+          entry = db[full_name]
+          # import pdb
+          # pdb.set_trace()
+          if os.path.exists(obj_dir) and \
+             s.is_cached(sv_file_path, db[unicode(full_name)]["sv_file"]) and \
+             s.is_cached(c_wrapper, db[unicode(full_name)]["c_wrapper"]) and \
+             s.is_cached(py_wrapper, db[unicode(full_name)]["py_wrapper"]) and \
+             s.is_cached(shared_lib, db[unicode(full_name)]["shared_lib"]):
+            cached = True
+    except:
+      pass
+    
+    # print("cached = ", cached)
 
     s.create_verilator_model( sv_file_path, full_name, dump_vcd, cached )
 
@@ -136,6 +164,25 @@ class ImportPass( BasePass ):
                            lib_name, port_cdefs, dump_vcd, cached )
 
     imp = s.import_component( py_wrapper_name, full_name, symbols )
+
+    # Cache the imported design
+    try:
+      with open( "__pymtl_cache__", "r" ) as db_file:
+        db = json.loads( db_file.read() )
+        db_file.close()
+    except IOError:
+      db = {}
+
+    db[full_name] = {
+      "sv_file" : hash( open(sv_file_path, "r").read() ),
+      "c_wrapper" : hash( open(c_wrapper, "r").read() ),
+      "py_wrapper" : hash( open(py_wrapper, "r").read() ),
+      "shared_lib" : hash( open(shared_lib, "r").read() ),
+    }
+    db_string = json.dumps( db )
+
+    with open( "__pymtl_cache__", "w" ) as db_file:
+      db_file.write( db_string )
 
     return imp
 

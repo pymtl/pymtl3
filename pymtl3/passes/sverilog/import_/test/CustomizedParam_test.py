@@ -55,7 +55,7 @@ def test_q_1( do_test ):
     "num_entries" : num_entries,
     "count_width" : clog2(num_entries+1),
   }
-  q.dump_vcd = True
+  # q.dump_vcd = True
   test_vector = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy
