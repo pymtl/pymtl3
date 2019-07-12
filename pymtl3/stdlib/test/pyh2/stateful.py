@@ -2,16 +2,15 @@
 ==========================================================================
 test_stateful
 ==========================================================================
-TODO: better organize these stuff.
+PyH2 APIs for stateful testing.
 
 Author : Yanghui Ou, Yixiao Zhang
   Date : July 9, 2019
 """
-
 from __future__ import absolute_import, division, print_function
 
 import inspect
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from hypothesis import PrintSettings
 from hypothesis import reproduce_failure as rf
@@ -20,76 +19,15 @@ from hypothesis.searchstrategy import SearchStrategy
 from hypothesis.stateful import *
 
 from pymtl3 import *
+from pymtl3.datatypes import strategies as pst
 from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+from pymtl3.passes.sverilog import ImportPass
 from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from ..stateful.test_wrapper import Method
 from .utils import kwarg_to_str, list_string, rename
-
-#-------------------------------------------------------------------------
-# RTL2CLWrapper
-#-------------------------------------------------------------------------
-
-class RTL2CLWrapper( Component ):
-
-  def __init__( s, rtl_model, method_specs ):
-    super( RTL2CLWrapper, s ).__init__()
-
-    s.model_name = type( rtl_model ).__name__
-    s.method_specs = method_specs
-
-  def construct( s, rtl_model, method_specs ):
-
-    s.model = rtl_model
-
-    # Add adapters
-    for method_name, method_spec in s.method_specs.iteritems():
-      callee_ifc = NonBlockingCalleeIfc()
-      setattr( s, method_name, callee_ifc )
-      print( "[RTL2CLWrapper]: connecting method:", method_name, type( s.model.enq ) )
-      s.connect( callee_ifc, getattr( s.model, method_name ) )
-
-  def line_trace( s ):
-    return s.model.line_trace()
-
-def test_wrapper():
-
-  top = RTL2CLWrapper(
-    NormalQueueRTL( Bits16, num_entries=2 ),
-    { 'enq': None, 'deq': None }
-  )
-  top.elaborate()
-  top.apply( SimulationPass )
-  top.sim_reset()
-
-  while not top.enq.rdy():
-    print( top.line_trace() )
-    top.tick()
-
-  assert top.enq.rdy()
-  top.enq( b16(0xffff) )
-  print( top.line_trace() )
-  top.tick()
-
-  while not top.deq.rdy():
-    print( top.line_trace() )
-    top.tick()
-
-  assert top.deq.rdy()
-  ret = top.deq()
-  print( top.line_trace() )
-  assert ret == 0xffff
-
-def test_wrapper_openloop():
-  top = RTL2CLWrapper(
-    NormalQueueRTL( Bits16, num_entries=2 ),
-    { 'enq': None, 'deq': None }
-  )
-  top.elaborate()
-  top.apply( GenDAGPass() )
-  top.apply( OpenLoopCLPass() )
-  top.lock_in_simulation()
+from .RTL2CLWrapper import RTL2CLWrapper
 
 #-------------------------------------------------------------------------
 # collect_mspecs
@@ -211,6 +149,7 @@ def bits_struct_strategy( bits_struct_type,
 #-------------------------------------------------------------------------
 
 def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
+
   if isinstance( predefined, tuple ):
     assert isinstance( predefined[ 0 ], SearchStrategy )
     remaining_names.discard( predefined[ 1 ] )
@@ -218,9 +157,8 @@ def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
 
   if isinstance( dtype(), Bits ):
     if predefined:
-      raise TypeError( "Need strategy for Bits type {}".format(
-          repr( dtype ) ) )
-    return bitstype_strategy( dtype() )
+      raise TypeError( "Need strategy for Bits type {}".format( repr( dtype ) ) )
+    return pst.bits( dtype.nbits )
 
   if isinstance( dtype(), BitStruct ):
     return bits_struct_strategy( dtype, predefined, remaining_names )
@@ -272,6 +210,8 @@ class BaseStateMachine( RuleBasedStateMachine ):
 
     # elaborate dut
     s.dut.elaborate()
+    s.dut = ImportPass()( s.dut )
+    s.dut.elaborate()
     s.dut.apply( GenDAGPass() )
     s.dut.apply( OpenLoopCLPass() )
     s.dut.lock_in_simulation()
@@ -291,10 +231,9 @@ class BaseStateMachine( RuleBasedStateMachine ):
 class TestStateful( BaseStateMachine ):
 
   def error_line_trace( self, error_msg="" ):
-    print( "============================= error ========================" )
+    print( "="*30 + " warning " + "="*30 )
     print( error_msg )
     # raise ValueError( error_msg )
-
 
 #-------------------------------------------------------------------------
 # wrap_method
@@ -324,14 +263,14 @@ def wrap_method( method_spec, arguments ):
     dut_result = s.dut.__dict__[ method_name ]( **kwargs )
     ref_result = s.ref.__dict__[ method_name ]( **kwargs )
 
-    ret_type = method_spec.rets_type
-    if ret_type:
-      if len( ret_type.fields ) > 1:
-        ref_result = method_spec.rets_type(*ref_result )
-      else:
-        ref_result = method_spec.rets_type( ref_result )
+    # ret_type = method_spec.rets_type
+    # if ret_type:
+    #   if len( ret_type.fields ) > 1:
+    #     ref_result = method_spec.rets_type(*ref_result )
+    #   else:
+    #     ref_result = method_spec.rets_type( ref_result )
 
-    #compare results
+    # Compare results
     if dut_result != ref_result:
 
       error_msg = """mismatch found in method {method}:
