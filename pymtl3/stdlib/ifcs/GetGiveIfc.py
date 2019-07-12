@@ -171,7 +171,7 @@ class GetIfcFL( Interface ):
 class GetRTL2GiveCL( Component ):
 
   def construct( s, MsgType ):
-    print( "HERE")
+
     # Interface
     s.get  = GetIfcRTL( MsgType )
 
