@@ -85,7 +85,7 @@ class ImportPass( BasePass ):
     filename = unicode(filename)
     exists = os.path.exists( filename )
     if not exists: return False
-    file_hash = hash( open(filename, "r").read() )
+    file_hash = hash( open(filename, "rb").read() )
     hash_eq = file_hash == db_hash
     return exists and hash_eq
 
@@ -138,8 +138,6 @@ class ImportPass( BasePass ):
         db = json.loads( db_file.read() )
         if full_name in db:
           entry = db[full_name]
-          # import pdb
-          # pdb.set_trace()
           if os.path.exists(obj_dir) and \
              s.is_cached(sv_file_path, db[unicode(full_name)]["sv_file"]) and \
              s.is_cached(c_wrapper, db[unicode(full_name)]["c_wrapper"]) and \
@@ -174,10 +172,10 @@ class ImportPass( BasePass ):
       db = {}
 
     db[full_name] = {
-      "sv_file" : hash( open(sv_file_path, "r").read() ),
-      "c_wrapper" : hash( open(c_wrapper, "r").read() ),
-      "py_wrapper" : hash( open(py_wrapper, "r").read() ),
-      "shared_lib" : hash( open(shared_lib, "r").read() ),
+      "sv_file" : hash( open(sv_file_path, "rb").read() ),
+      "c_wrapper" : hash( open(c_wrapper, "rb").read() ),
+      "py_wrapper" : hash( open(py_wrapper, "rb").read() ),
+      "shared_lib" : hash( open(shared_lib, "rb").read() ),
     }
     db_string = json.dumps( db )
 
