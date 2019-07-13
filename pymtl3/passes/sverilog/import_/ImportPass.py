@@ -70,6 +70,7 @@ class ImportPass( BasePass ):
     try:
       imp = s.get_imported_object( m )
       if m is s.top:
+        imp.elaborate()
         return imp
       else:
         s.top.replace_component_with_obj( m, imp )
