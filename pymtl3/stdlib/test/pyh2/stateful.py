@@ -1,6 +1,6 @@
 """
 ==========================================================================
-test_stateful
+stateful.py
 ==========================================================================
 PyH2 APIs for stateful testing.
 
@@ -12,7 +12,7 @@ from __future__ import absolute_import, division, print_function
 import inspect
 from copy import deepcopy
 
-from hypothesis import PrintSettings
+from hypothesis import HealthCheck, PrintSettings
 from hypothesis import reproduce_failure as rf
 from hypothesis import settings
 from hypothesis.searchstrategy import SearchStrategy
@@ -28,6 +28,12 @@ from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 from ..stateful.test_wrapper import Method
 from .RTL2CLWrapper import RTL2CLWrapper
 from .utils import kwarg_to_str, list_string, rename
+
+try:
+  from termcolor import colored
+  termcolor_installed = True
+except:
+  termcolor_installed = False
 
 #-------------------------------------------------------------------------
 # collect_mspecs
@@ -69,14 +75,7 @@ def mk_rule( method_spec, arg_strat_dict ):
     dut_rdy = s.dut.__dict__[ method_name ].rdy()
     ref_rdy = s.ref.__dict__[ method_name ].rdy()
 
-    if dut_rdy and not ref_rdy:
-      error_msg = "Dut method is rdy but reference is not: " + method_name
-      s.error_line_trace( error_msg )
-
-    if not dut_rdy and ref_rdy:
-      error_msg = "Reference method is rdy but dut is not: " + method_name
-      s.error_line_trace( error_msg )
-    return dut_rdy
+    return dut_rdy and ref_rdy
 
   # Make a rule for the state machine.
   # FIXME: now the CL arg must be the same as the corresponding RTL port name
@@ -86,13 +85,6 @@ def mk_rule( method_spec, arg_strat_dict ):
   def method_rule( s, **kwargs ):
     dut_result = s.dut.__dict__[ method_name ]( **kwargs )
     ref_result = s.ref.__dict__[ method_name ]( **kwargs )
-
-    ret_type = method_spec.rets_type
-    if ret_type:
-      if len( ret_type.fields ) > 1:
-        ref_result = method_spec.rets_type(*ref_result )
-      else:
-        ref_result = method_spec.rets_type( ref_result )
 
     #compare results
     if dut_result != ref_result:
@@ -182,22 +174,27 @@ class BaseStateMachine( RuleBasedStateMachine ):
     def wrap_line_trace( top ):
 
       def new_str( self ):
+        # TODO : figure out trace len more smartly
+        trace_len = 20
         if self.method.called and self.rdy.called and self.rdy.saved_ret:
           kwargs_str = kwarg_to_str( self.method.saved_kwargs )
           ret_str = (
             "" if self.method.saved_ret is None else
             " -> " + str( self.method.saved_ret )
           )
-          return "{name}({kwargs}){ret}  ".format(
-              name=self._dsl.my_name, kwargs=kwargs_str, ret=ret_str )
+          return "{name}({kwargs}){ret}".format(
+            name=self._dsl.my_name,
+            kwargs=kwargs_str,
+            ret=ret_str
+          ).ljust( trace_len )
         elif self.rdy.called:
           if self.rdy.saved_ret:
-            return "-  "
+            return "-".ljust( trace_len )
           else:
-            return "#  "
+            return "#".ljust( trace_len )
         elif not self.rdy.called:
-          return ".  "
-        return "X  "
+          return ".".ljust( trace_len )
+        return "X".ljust( trace_len )
 
       func = top.line_trace
 
@@ -207,7 +204,9 @@ class BaseStateMachine( RuleBasedStateMachine ):
       top.line_trace = line_trace
 
     wrap_line_trace( s.dut )
-
+    print("\n"+"="*74)
+    print(" PyH2 testing...")
+    print("="*74)
     # elaborate dut
     s.dut.elaborate()
     s.dut = ImportPass()( s.dut )
@@ -219,75 +218,26 @@ class BaseStateMachine( RuleBasedStateMachine ):
 
     # elaborate ref
     s.ref.elaborate()
+    s.ref.hide_line_trace = True
     s.ref.apply( GenDAGPass() )
     s.ref.apply( OpenLoopCLPass() )
     s.ref.lock_in_simulation()
-    s.ref.hide_line_trace = True
 
 #-------------------------------------------------------------------------
 # TestStateful
 #-------------------------------------------------------------------------
 
 class TestStateful( BaseStateMachine ):
-
-  def error_line_trace( self, error_msg="" ):
-    pass
-    # print( "="*30 + " warning " + "="*30 )
-    # print( error_msg )
-    # raise ValueError( error_msg )
-
-#-------------------------------------------------------------------------
-# wrap_method
-#-------------------------------------------------------------------------
-
-def wrap_method( method_spec, arguments ):
-  method_name = method_spec.method_name
-
-  @rename( method_name + "_rdy" )
-  def method_rdy( s ):
-    dut_rdy = s.dut.__dict__[ method_name ].rdy()
-    ref_rdy = s.ref.__dict__[ method_name ].rdy()
-    # print( "dut: {}_rdy: {}   ref: {}_rdy: {}".format( method_name, dut_rdy, method_name, ref_rdy ) )
-    if dut_rdy and not ref_rdy:
-      error_msg = "Dut method is rdy but reference is not: " + method_name
-      s.error_line_trace( error_msg )
-
-    if not dut_rdy and ref_rdy:
-      error_msg = "Reference method is rdy but dut is not: " + method_name
-      s.error_line_trace( error_msg )
-    return dut_rdy and ref_rdy
-
-  @precondition( lambda s: method_rdy( s ) )
-  @rule(**arguments )
-  @rename( method_name )
-  def method_rule( s, **kwargs ):
-    dut_result = s.dut.__dict__[ method_name ]( **kwargs )
-    ref_result = s.ref.__dict__[ method_name ]( **kwargs )
-
-    # ret_type = method_spec.rets_type
-    # if ret_type:
-    #   if len( ret_type.fields ) > 1:
-    #     ref_result = method_spec.rets_type(*ref_result )
-    #   else:
-    #     ref_result = method_spec.rets_type( ref_result )
-
-    # Compare results
-    if dut_result != ref_result:
-
-      error_msg = """mismatch found in method {method}:
-  - args: {data}
-  - ref result: {ref_result}
-  - dut result: {dut_result}
-  """.format(
-          method=method_name,
-          data=kwarg_to_str( kwargs ),
-          ref_result=ref_result,
-          dut_result=dut_result )
-
-      s.error_line_trace( error_msg )
-
-  return method_rule, method_rdy
-
+  if termcolor_installed:
+    def error_line_trace( self, error_msg="" ):
+      print( colored("="*35 + " error " + "="*35, 'red') )
+      print( colored(error_msg, 'red') )
+      raise ValueError( error_msg )
+  else:
+    def error_line_trace( self, error_msg="" ):
+      print( "="*35 + " error " + "="*35 )
+      print( error_msg )
+      raise ValueError( error_msg )
 
 def get_strategy_from_list( st_list ):
   # Generate a nested dictionary for customized strategy
@@ -375,7 +325,7 @@ def create_test_state_machine( dut,
                                               all_st_full_names )
 
     # wrap method
-    method_rule, method_rdy = wrap_method( method_specs[ method_name ], arg_st )
+    method_rule, method_rdy = mk_rule( method_specs[ method_name ], arg_st )
     setattr( Test, method_name, method_rule )
     setattr( Test, method_name + "_rdy", method_rdy )
 
@@ -388,6 +338,7 @@ def create_test_state_machine( dut,
 # run_pyh2
 #-------------------------------------------------------------------------
 # Driver function for PyH2.
+# TODO: figure out a way to pass in settings
 
 def run_pyh2( dut, ref ):
   new_dut = deepcopy( dut )
@@ -396,11 +347,12 @@ def run_pyh2( dut, ref ):
   wrapped_dut = RTL2CLWrapper( dut, method_specs )
   machine = create_test_state_machine( wrapped_dut, ref, method_specs )
   machine.TestCase.settings = settings(
-    max_examples=50,
-    stateful_step_count=100,
+    max_examples=10,
+    stateful_step_count=10,
     deadline=None,
-    verbosity=Verbosity.verbose,
+    # verbosity=Verbosity.verbose,
     database=None,
+    suppress_health_check=[ HealthCheck.filter_too_much ],
   )
 
   run_state_machine_as_test( machine )
