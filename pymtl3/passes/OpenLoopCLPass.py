@@ -326,8 +326,12 @@ class OpenLoopCLPass( BasePass ):
     # the dictionary to look up the new index of functions.
 
     # The last element is always line trace
-    def print_line_trace():
-      print(top.line_trace())
+    if hasattr( top, 'hide_line_trace' ) and top.hide_line_trace:
+      def print_line_trace():
+        pass
+    else:
+      def print_line_trace():
+        print(top.line_trace())
 
     schedule.append( print_line_trace )
 
@@ -422,6 +426,7 @@ class OpenLoopCLPass( BasePass ):
                                 i, next_method )
     top.num_cycles_executed = 0
 
+    # Add a tick method for reset
     def normal_tick():
       for blk in schedule_no_method:
         blk()
