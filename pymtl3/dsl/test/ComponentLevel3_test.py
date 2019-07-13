@@ -116,6 +116,31 @@ def test_connect_list_const_idx():
 
   _test_model( Top )
 
+def test_connect_list_const_idx_ifloordiv_sugar():
+
+  class Top(ComponentLevel3):
+
+    def construct( s ):
+
+      s.src_in0 = TestSource( int, [4,3,2,1] )
+      s.src_in1 = TestSource( int, [8,7,6,5] )
+      s.src_sel = TestSource( int, [1,0,1,0] )
+      s.sink    = TestSink  ( int, [8,3,6,1] )
+
+      s.mux = Mux(int, 2)
+
+      s.mux.in_[MUX_SEL_0] //= s.src_in0.out
+      s.mux.in_[MUX_SEL_1] //= s.src_in1.out
+      s.mux.sel            //= s.src_sel.out
+      s.sink.in_           //= s.mux.out
+
+    def done( s ):
+      return s.src_in0.done() and s.sink.done()
+
+    def line_trace( s ):
+      return " >>> " + s.sink.line_trace()
+
+  _test_model( Top )
 def test_connect_list_idx_call():
 
   class Top(ComponentLevel3):

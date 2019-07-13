@@ -10,6 +10,7 @@ Author: Yanghui Ou
 import greenlet
 
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 
 from .ifcs_utils import enrdy_to_str
 
@@ -91,7 +92,7 @@ class GetIfcFL( Interface ):
         parent.RecvCL2GiveFL_count = 0
         parent.RecvCL2GiveFL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,  m.recv,
         m.give, s
       )

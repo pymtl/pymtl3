@@ -6,7 +6,7 @@
 """Test the level 1 structural translators."""
 
 from pymtl3.datatypes import Bits1, Bits4, Bits16, Bits32
-from pymtl3.dsl import Component, connect, InPort, OutPort, Wire
+from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure

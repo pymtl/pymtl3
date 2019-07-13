@@ -11,6 +11,7 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.rtl.queues import PipeQueueRTL
 
@@ -68,25 +69,26 @@ class ChecksumRTL( Component ):
 
     # Register input
 
-    s.connect( s.recv, s.in_q.enq )
+    connect( s.recv, s.in_q.enq )
 
     # Decompose input message into 8 words
 
     for i in range( 8 ):
-      s.connect( s.words[i], s.in_q.deq.msg[i*16:(i+1)*16] )
+      s.words[i] //= s.in_q.deq.msg[i*16:(i+1)*16]
 
     # Connect step units
 
     for i in range( 8 ):
-      s.connect( s.steps[i].word_in, s.words[i] )
+      s.steps[i].word_in //= s.words[i]
       if i == 0:
-        s.connect( s.steps[i].sum1_in, b32(0) )
-        s.connect( s.steps[i].sum2_in, b32(0) )
+        s.steps[i].sum1_in //= b32(0)
+        s.steps[i].sum2_in //= b32(0)
       else:
-        s.connect( s.steps[i].sum1_in, s.steps[i-1].sum1_out )
-        s.connect( s.steps[i].sum2_in, s.steps[i-1].sum2_out )
-    s.connect( s.sum1, s.steps[-1].sum1_out )
-    s.connect( s.sum2, s.steps[-1].sum2_out )
+        s.steps[i].sum1_in //= s.steps[i-1].sum1_out
+        s.steps[i].sum2_in //= s.steps[i-1].sum2_out
+
+    s.sum1 //= s.steps[-1].sum1_out
+    s.sum2 //= s.steps[-1].sum2_out
 
     @s.update
     def up_rtl_send():

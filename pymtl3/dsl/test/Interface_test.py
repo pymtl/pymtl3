@@ -191,10 +191,8 @@ def test_customized_connect():
 
     def connect( s, other, parent ):
       if isinstance( other, MockSendIfc ):
-        parent.connect_pairs(
-          s.recv_msg, other.send_msg,
-          s.recv_val, other.send_val,
-        )
+        s.recv_msg //= other.send_msg
+        s.recv_val //= other.send_val
         return True
 
       return False
@@ -206,10 +204,8 @@ def test_customized_connect():
 
     def connect( s, other, parent ):
       if isinstance( other, MockRecvIfc ):
-        parent.connect_pairs(
-          s.send_msg, other.recv_msg,
-          s.send_val, other.recv_val,
-        )
+        s.send_msg //= other.recv_msg
+        s.send_val //= other.recv_val
         return True
 
       return False
@@ -280,11 +276,9 @@ def test_customized_connect_adapter():
         m = MockAdapter( other.Type, s.Type )
         setattr( parent, "mock_adapter_" + str( MockAdapter.count ), m )
 
-        parent.connect_pairs(
-          other.send_msg, m.in_,
-          m.out,          s.recv_msg,
-          other.send_val, s.recv_val
-        )
+        other.send_msg //= m.in_
+        m.out          //= s.recv_msg
+        other.send_val //= s.recv_val
         return True
 
       return False
@@ -298,10 +292,8 @@ def test_customized_connect_adapter():
 
     def connect( s, other, parent ):
       if isinstance( other, MockRecvIfc ):
-        parent.connect_pairs(
-          s.send_msg, other.recv_msg,
-          s.send_val, other.recv_val,
-        )
+        s.send_msg //= other.recv_msg
+        s.send_val //= other.recv_val
         return True
 
       return False

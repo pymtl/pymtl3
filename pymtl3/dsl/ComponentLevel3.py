@@ -18,7 +18,16 @@ from pymtl3.datatypes import Bits
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
-from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
+from .Connectable import (
+    Connectable,
+    Const,
+    InPort,
+    Interface,
+    OutPort,
+    Signal,
+    Wire,
+    _connect_check,
+)
 from .errors import (
     InvalidConnectionError,
     InvalidPlaceholderError,
@@ -32,10 +41,8 @@ from .Placeholder import Placeholder
 
 
 def connect( o1, o2 ):
-  host, o1_connectable, o2_connectable = ComponentLevel3._connect_check( o1, o2, internal=False )
-
+  host, o1_connectable, o2_connectable = _connect_check( o1, o2, internal=False )
   assert host is not None, "???"
-
   host._connect_dispatch( o1, o2, o1_connectable, o2_connectable )
 
 class ComponentLevel3( ComponentLevel2 ):
@@ -212,48 +219,9 @@ class ComponentLevel3( ComponentLevel2 ):
       else:
         connect_by_name( o1, o2 ) # capture s
 
-  @staticmethod
-  def _connect_check( o1, o2, internal ):
-    """ Note that internal=False means we are just calling this API
-        internally so that we don't connect other unconnectable fields by
-        name in the interface."""
-
-    o1_connectable = False
-    o2_connectable = False
-    top = None
-
-    if isinstance( o1, Connectable ):
-      o1_connectable = True
-      top = o1._dsl.elaborate_top
-
-    if isinstance( o2, Connectable ):
-      o2_connectable = True
-      o2_top = o2._dsl.elaborate_top
-
-      if o1_connectable: assert o2._dsl.elaborate_top is top, "???"
-      else:              top = o2_top
-
-    if not o1_connectable and not o2_connectable:
-      if internal:  return None, False, False
-
-      raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
-                                    "  (when connecting {} to {})" \
-          .format( type(o1), type(o2), repr(o1), repr(o2)) )
-
-    # print("{} //= {}, top is {} stack is {}".format(
-      # repr(o1), repr(o2), o1._dsl.elaborate_top, o1._dsl.elaborate_top._dsl.elaborate_stack) )
-
-    host = top._dsl.elaborate_stack[-1]
-
-    if isinstance( host, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot call connect "
-            "in a placeholder component.".format( blk.__name__ ) )
-
-    return host, o1_connectable, o2_connectable
-
   def _connect( s, o1, o2, internal ):
     """ Top level private method for connecting two objects. """
-    host, o1_connectable, o2_connectable = s._connect_check( o1, o2, internal )
+    host, o1_connectable, o2_connectable = _connect_check( o1, o2, internal )
 
     if host is None:
       # host is None only happens when internal = True
@@ -718,31 +686,6 @@ class ComponentLevel3( ComponentLevel2 ):
                                    "after constructing s.x")
     s._dsl.call_kwargs = kwargs
     return s
-
-  # def connect( s, o1, o2 ):
-    # s._connect( o1, o2, internal=False )
-    # try:
-    # s._connect_objects( o1, o2 )
-    # except InvalidConnectionError:
-      # raise
-    # except Exception as e:
-      # raise InvalidConnectionError( "\n{}".format(e) )
-
-  def connect_pairs( s, *args ):
-    if isinstance( s, Placeholder ):
-      raise InvalidPlaceholderError( "Cannot call connect_pairs "
-            "in a placeholder component.".format( blk.__name__ ) )
-    if len(args) & 1 != 0:
-       raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
-
-    for i in range(len(args)>>1) :
-      try:
-        s._connect( args[ i<<1 ], args[ (i<<1)+1 ], internal=False )
-      except InvalidConnectionError:
-        raise
-      except Exception as e:
-        raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n\n{}\n " \
-              .format( (i<<1)+1, (i<<1)+2 , e ) )
 
   def get_all_value_nets( s ):
 

@@ -6,7 +6,7 @@
 """Test the level 1 SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits4, Bits32
-from pymtl3.dsl import Component, connect, InPort, OutPort, Wire
+from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL1 import (
     SVStructuralTranslatorL1,

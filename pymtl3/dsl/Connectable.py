@@ -13,6 +13,7 @@ from pymtl3.datatypes import Bits, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
+from .Placeholder import Placeholder
 
 
 class Connectable:
@@ -33,6 +34,50 @@ class Connectable:
         return s._dsl.host
       except AttributeError:
         raise NotElaboratedError()
+
+  def __ifloordiv__( s, other ):
+    host, s_connectable, o_connectable = _connect_check( s, other, internal=False )
+    assert host is not None, "???"
+    host._connect_dispatch( s, other, s_connectable, o_connectable )
+    return s
+
+def _connect_check( o1, o2, internal ):
+  """ Note that internal=False means we are just calling this API
+      internally so that we don't connect other unconnectable fields by
+      name in the interface."""
+
+  o1_connectable = False
+  o2_connectable = False
+  top = None
+
+  if isinstance( o1, Connectable ):
+    o1_connectable = True
+    top = o1._dsl.elaborate_top
+
+  if isinstance( o2, Connectable ):
+    o2_connectable = True
+    o2_top = o2._dsl.elaborate_top
+
+    if o1_connectable: assert o2._dsl.elaborate_top is top, "???"
+    else:              top = o2_top
+
+  if not o1_connectable and not o2_connectable:
+    if internal:  return None, False, False
+
+    raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
+                                  "  (when connecting {} to {})" \
+        .format( type(o1), type(o2), repr(o1), repr(o2)) )
+
+  # print("{} //= {}, top is {} stack is {}".format(
+    # repr(o1), repr(o2), o1._dsl.elaborate_top, o1._dsl.elaborate_top._dsl.elaborate_stack) )
+
+  host = top._dsl.elaborate_stack[-1]
+
+  if isinstance( host, Placeholder ):
+    raise InvalidPlaceholderError( "Cannot call connect "
+          "in a placeholder component.".format( blk.__name__ ) )
+
+  return host, o1_connectable, o2_connectable
 
 # Checking if two slices/indices overlap
 def _overlap( x, y ):

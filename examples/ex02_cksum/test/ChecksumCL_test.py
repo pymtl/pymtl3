@@ -14,6 +14,7 @@ from hypothesis import strategies as st
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pm_st
 from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumCL import ChecksumCL
@@ -38,9 +39,11 @@ class WrappedChecksumCL( Component ):
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )
 
-    s.connect( s.recv,               s.checksum_unit.recv )
-    s.connect( s.checksum_unit.send, s.out_q.enq          )
-    s.connect( s.out_q.deq,          s.give               )
+    connect_pairs(
+      s.recv,               s.checksum_unit.recv,
+      s.checksum_unit.send, s.out_q.enq,
+      s.out_q.deq,          s.give,
+    )
 
 #-------------------------------------------------------------------------
 # Wrap CL component into a function
@@ -146,7 +149,7 @@ class TestHarness( Component ):
     s.dut  = DutType()
     s.sink = TestSinkCL( Bits32, sink_msgs )
 
-    s.connect_pairs(
+    connect_pairs(
       s.src.send, s.dut.recv,
       s.dut.send, s.sink.recv,
     )

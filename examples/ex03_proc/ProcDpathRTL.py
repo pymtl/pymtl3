@@ -224,8 +224,8 @@ class ProcDpath( Component ):
     )
 
     # Send out xcelreq msg
-    s.connect( s.op1_reg_X.out,      s.xcelreq_data )
-    s.connect( s.op2_reg_X.out[0:5], s.xcelreq_addr )
+    s.xcelreq_data //= s.op1_reg_X.out
+    s.xcelreq_addr //= s.op2_reg_X.out[0:5]
 
     # store data reg
     # Since the op1 is the base address and op2 is the immediate so that
