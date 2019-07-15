@@ -27,7 +27,7 @@ from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from ..stateful.test_wrapper import Method
 from .RTL2CLWrapper import RTL2CLWrapper
-from .utils import kwarg_to_str, list_string, rename
+from .utils import kwarg_to_str, list_string, method_to_str, rename
 
 try:
   from termcolor import colored
@@ -47,6 +47,7 @@ def collect_mspecs( dut ):
     if isinstance( ifc, Interface ):
       assert hasattr( ifc, '_mspec' ), "Cannot wrap {}! Method spec is not specified!".format( ifc._dsl.my_name )
 
+      # Yanghui : do we need args and rets to be ordered?
       args = []
       if ifc._mspec.arg is not None:
         for port_name, port_type in ifc._mspec.arg.iteritems():
@@ -109,48 +110,14 @@ mismatch found in method {method}:
   return method_rule, method_rdy
 
 #-------------------------------------------------------------------------
-# bits_struct_strategy
-#-------------------------------------------------------------------------
-
-def bits_struct_strategy( bits_struct_type,
-                          predefined={},
-                          remaining_names=None ):
-
-  field_strategies = {}
-  for name, field_type in bits_struct_type.fields:
-    predefined_field = predefined.get( name, {} )
-    field_strategies[ name ] = get_strategy_from_type(
-        field_type, predefined_field, remaining_names )
-
-  @st.composite
-  def strategy( draw ):
-    new_bits_struct = bits_struct_type()
-    for name, field_type in bits_struct_type.fields:
-      # recursively draw st
-      data = draw( field_strategies[ name ] )
-      setattr( new_bits_struct, name, data )
-    return new_bits_struct
-
-  return strategy()
-
-#-------------------------------------------------------------------------
 # get_strategy_from_type
 #-------------------------------------------------------------------------
 
-def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
+def get_strategy_from_type( dtype ):
 
-  if isinstance( predefined, tuple ):
-    assert isinstance( predefined[ 0 ], SearchStrategy )
-    remaining_names.discard( predefined[ 1 ] )
-    return predefined[ 0 ]
-
+  # We only support Bits right now.
   if isinstance( dtype(), Bits ):
-    if predefined:
-      raise TypeError( "Need strategy for Bits type {}".format( repr( dtype ) ) )
     return pst.bits( dtype.nbits )
-
-  if isinstance( dtype(), BitStruct ):
-    return bits_struct_strategy( dtype, predefined, remaining_names )
 
   raise TypeError( "Argument strategy for {} not supported".format( dtype ) )
 
@@ -167,38 +134,13 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.ref = deepcopy( s.preconstruct_ref )
 
     def wrap_line_trace( top ):
-
-      def new_str( self ):
-        # TODO : figure out trace len more smartly
-        trace_len = 20
-        if self.method.called and self.rdy.called and self.rdy.saved_ret:
-          kwargs_str = kwarg_to_str( self.method.saved_kwargs )
-          ret_str = (
-            "" if self.method.saved_ret is None else
-            " -> " + str( self.method.saved_ret )
-          )
-          return "{name}({kwargs}){ret}".format(
-            name=self._dsl.my_name,
-            kwargs=kwargs_str,
-            ret=ret_str
-          ).ljust( trace_len )
-        elif self.rdy.called:
-          if self.rdy.saved_ret:
-            return " ".ljust( trace_len )
-          else:
-            return "#".ljust( trace_len )
-        elif not self.rdy.called:
-          return ".".ljust( trace_len )
-        return "X".ljust( trace_len )
-
       func = top.line_trace
 
       def line_trace():
         return "{} || {}".format(
           func(),
-          " | ".join([ new_str(ifc) for ifc in top.top_level_nb_ifcs ])
+          " | ".join([ method_to_str(ifc) for ifc in top.top_level_nb_ifcs ])
         )
-
       top.line_trace = line_trace
 
     wrap_line_trace( s.dut )
@@ -230,6 +172,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
 #-------------------------------------------------------------------------
 
 class TestStateful( BaseStateMachine ):
+
   if termcolor_installed:
     def error_line_trace( self, error_msg="" ):
       print( colored("="*35 + " error " + "="*35, 'red') )
@@ -298,12 +241,6 @@ def create_test_state_machine(
 
   dut.elaborate()
 
-  if not method_specs:
-    try:
-      method_specs = dut.method_specs
-    except Exception:
-      raise "No method specs specified"
-
   # Store ( strategy, full_name )
   arg_st_with_full_name = []
   all_st_full_names = set()
@@ -325,8 +262,7 @@ def create_test_state_machine(
 
     # create strategy based on types and predefined customization
     for arg, dtype in spec.args:
-      arg_st[ arg ] = get_strategy_from_type( dtype, arg_st.get( arg, {} ),
-                                              all_st_full_names )
+      arg_st[ arg ] = get_strategy_from_type( dtype )
 
     # wrap method
     method_rule, method_rdy = mk_rule( method_specs[ method_name ], arg_st )
@@ -343,6 +279,7 @@ def create_test_state_machine(
 #-------------------------------------------------------------------------
 # Driver function for PyH2.
 # TODO: figure out a way to pass in settings
+# TODO: figure out a way to pass in customized strategies
 
 def run_pyh2( dut, ref ):
   new_dut = deepcopy( dut )
@@ -351,8 +288,8 @@ def run_pyh2( dut, ref ):
   wrapped_dut = RTL2CLWrapper( dut, method_specs )
   machine = create_test_state_machine( wrapped_dut, ref, method_specs )
   machine.TestCase.settings = settings(
-    max_examples=10,
-    stateful_step_count=10,
+    max_examples=50,
+    stateful_step_count=100,
     deadline=None,
     # verbosity=Verbosity.verbose,
     database=None,
