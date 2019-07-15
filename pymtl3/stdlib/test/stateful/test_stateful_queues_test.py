@@ -46,7 +46,7 @@ class SingleEntryPipeQueue( Component ):
         s.queue = EntryType()
       elif s.enq.en:
         # s.queue = s.enq.args.msg
-        s.queue = s.enq.args.msg + 1
+        s.queue = s.enq.args.msg
       else:
         s.queue = s.queue
 
