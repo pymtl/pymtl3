@@ -10,8 +10,10 @@
 """
 from __future__ import absolute_import, division, print_function
 
-import os, py
+import os
 from collections import deque
+
+import py
 from graphviz import Digraph
 
 from pymtl3.datatypes import Bits1

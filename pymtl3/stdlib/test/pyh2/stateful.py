@@ -204,9 +204,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
       top.line_trace = line_trace
 
     wrap_line_trace( s.dut )
-    print("\n"+"="*74)
-    print(" PyH2 testing...")
-    print("="*74)
+
     # elaborate dut
     s.dut.elaborate()
     s.dut = ImportPass()( s.dut )
@@ -222,6 +220,16 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.ref.apply( GenDAGPass() )
     s.ref.apply( OpenLoopCLPass() )
     s.ref.lock_in_simulation()
+    s.ref.sim_reset()
+
+    # Yanghui : I added this just for the posh demo
+    # Print header
+    print("\n"+"="*74)
+    try:
+      print(" PyH2 testing... num_entries = {}".format( s.dut.model._dsl.args[1] ) )
+    except:
+      print(" PyH2 testing....")
+    print("="*74)
 
 #-------------------------------------------------------------------------
 # TestStateful
