@@ -70,15 +70,18 @@ def mk_rule( method_spec, arg_strat_dict ):
   method_name = method_spec.method_name
 
   # Make a ready method for the state machine.
+  # Now we only call methods when both rdy returns true. Thus we are only
+  # doing cycle-approximate or functional level testing.
   @rename( method_name + '_rdy' )
   def method_rdy( s ):
     dut_rdy = s.dut.__dict__[ method_name ].rdy()
     ref_rdy = s.ref.__dict__[ method_name ].rdy()
-
     return dut_rdy and ref_rdy
 
   # Make a rule for the state machine.
-  # FIXME: now the CL arg must be the same as the corresponding RTL port name
+  # FIXME: now the CL arg must be the same as the corresponding RTL port
+  # name. We should find a way to figure out the mapping between the RTL
+  # port and method arg.
   @precondition( lambda s: method_rdy( s ) )
   @rule( **arg_strat_dict )
   @rename( method_name )
@@ -89,27 +92,21 @@ def mk_rule( method_spec, arg_strat_dict ):
     #compare results
     if dut_result != ref_result:
 
-      error_msg = """mismatch found in method {method}:
-  - args: {data}
+      error_msg = """
+mismatch found in method {method}:
+  - args: {args}
   - ref result: {ref_result}
   - dut result: {dut_result}
-  """.format(
-          method=method_name,
-          data=kwarg_to_str( kwargs ),
-          ref_result=ref_result,
-          dut_result=dut_result )
+""".format(
+        method=method_name,
+        args=kwarg_to_str( kwargs ),
+        ref_result=ref_result,
+        dut_result=dut_result,
+      )
 
       s.error_line_trace( error_msg )
 
   return method_rule, method_rdy
-
-#-------------------------------------------------------------------------
-# bitstype_strategy
-#-------------------------------------------------------------------------
-
-def bitstype_strategy( bits ):
-  return st.integers( min_value=0, max_value=( 1 << bits.nbits ) - 1 )
-
 
 #-------------------------------------------------------------------------
 # bits_struct_strategy
@@ -136,7 +133,6 @@ def bits_struct_strategy( bits_struct_type,
 
   return strategy()
 
-
 #-------------------------------------------------------------------------
 # get_strategy_from_type
 #-------------------------------------------------------------------------
@@ -157,7 +153,6 @@ def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
     return bits_struct_strategy( dtype, predefined, remaining_names )
 
   raise TypeError( "Argument strategy for {} not supported".format( dtype ) )
-
 
 #-------------------------------------------------------------------------
 # BaseStateMachine
@@ -189,7 +184,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
           ).ljust( trace_len )
         elif self.rdy.called:
           if self.rdy.saved_ret:
-            return "-".ljust( trace_len )
+            return " ".ljust( trace_len )
           else:
             return "#".ljust( trace_len )
         elif not self.rdy.called:
@@ -199,7 +194,10 @@ class BaseStateMachine( RuleBasedStateMachine ):
       func = top.line_trace
 
       def line_trace():
-        return "{} || {}".format( func(), " | ".join([ new_str(ifc) for ifc in top.top_level_nb_ifcs ]) )
+        return "{} || {}".format(
+          func(),
+          " | ".join([ new_str(ifc) for ifc in top.top_level_nb_ifcs ])
+        )
 
       top.line_trace = line_trace
 
@@ -286,11 +284,13 @@ def get_strategy_from_list( st_list ):
 #-------------------------------------------------------------------------
 # create_test_state_machine
 #-------------------------------------------------------------------------
-def create_test_state_machine( dut,
-                               ref,
-                               method_specs=None,
-                               argument_strategy={} ):
-  Test = type( dut.model_name + "_TestStateful", TestStateful.__bases__,
+def create_test_state_machine(
+  dut,
+  ref,
+  method_specs=None,
+  argument_strategy={}
+):
+  Test = type( dut.model_name + "_StatefulPyH2", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
 
   Test.preconstruct_dut = deepcopy( dut )
@@ -307,13 +307,13 @@ def create_test_state_machine( dut,
   # Store ( strategy, full_name )
   arg_st_with_full_name = []
   all_st_full_names = set()
-  for name, st in argument_strategy:
+  for name, strat in argument_strategy:
 
-    if not isinstance( st, SearchStrategy ):
+    if not isinstance( strat, SearchStrategy ):
       raise TypeError( "Only strategy is allowed! got {} for {}".format(
-          type( st ), name ) )
+          type( strat ), name ) )
 
-    arg_st_with_full_name += [( name, ( st, name ) ) ]
+    arg_st_with_full_name += [( name, ( strat, name ) ) ]
     all_st_full_names.add( name )
 
   # get nested dict of strategy
