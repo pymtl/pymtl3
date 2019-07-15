@@ -222,13 +222,9 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.ref.lock_in_simulation()
     s.ref.sim_reset()
 
-    # Yanghui : I added this just for the posh demo
     # Print header
     print("\n"+"="*74)
-    try:
-      print(" PyH2 testing... num_entries = {}".format( s.dut.model._dsl.args[1] ) )
-    except:
-      print(" PyH2 testing....")
+    print(" PyH2 trying examples....")
     print("="*74)
 
 #-------------------------------------------------------------------------
