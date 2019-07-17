@@ -22,6 +22,7 @@ import re
 
 from .errors import NotElaboratedError
 
+
 class DSLMetadata:
   pass
 
