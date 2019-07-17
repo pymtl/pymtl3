@@ -31,11 +31,9 @@ class Method( object ):
 # A decorator that renames a function.
 
 def rename( name ):
-
   def wrap( f ):
     f.__name__ = name
     return f
-
   return wrap
 
 #-------------------------------------------------------------------------

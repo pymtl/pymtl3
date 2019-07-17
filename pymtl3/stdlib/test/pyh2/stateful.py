@@ -80,7 +80,7 @@ def mk_rule( method_spec, arg_strat_dict ):
     return dut_rdy and ref_rdy
 
   # Make a rule for the state machine.
-  # FIXME: now the CL arg must be the same as the corresponding RTL port
+  # NOTE: now the CL arg must be the same as the corresponding RTL port
   # name. We should find a way to figure out the mapping between the RTL
   # port and method arg.
   @precondition( lambda s: method_rdy( s ) )
@@ -90,7 +90,8 @@ def mk_rule( method_spec, arg_strat_dict ):
     dut_result = s.dut.__dict__[ method_name ]( **kwargs )
     ref_result = s.ref.__dict__[ method_name ]( **kwargs )
 
-    #compare results
+    # Compare results
+    # TODO: allow using customized comparison function?
     if dut_result != ref_result:
 
       error_msg = """
@@ -110,12 +111,12 @@ mismatch found in method {method}:
   return method_rule, method_rdy
 
 #-------------------------------------------------------------------------
-# get_strategy_from_type
+# infer_strategy_from_type
 #-------------------------------------------------------------------------
 
-def get_strategy_from_type( dtype ):
+def infer_strategy_from_type( dtype ):
 
-  # We only support Bits right now.
+  # We only support Bits at the moment.
   if isinstance( dtype(), Bits ):
     return pst.bits( dtype.nbits )
 
@@ -164,7 +165,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
 
     # Print header
     print("\n"+"="*74)
-    print(" PyH2 trying examples....")
+    print(" PyH2 trying examples...")
     print("="*74)
 
 #-------------------------------------------------------------------------
@@ -184,6 +185,7 @@ class TestStateful( BaseStateMachine ):
       print( error_msg )
       raise ValueError( error_msg )
 
+# TODO: clean this up
 def get_strategy_from_list( st_list ):
   # Generate a nested dictionary for customized strategy
   # e.g. [ ( 'enq.msg', st1 ), ('deq.msg.msg0', st2 ) ]
@@ -224,14 +226,34 @@ def get_strategy_from_list( st_list ):
     all_field_st[ field_name ].update( subfield_dict )
   return all_field_st
 
+# Helper function that converts arg_strat_mapping into something easier to
+# process. For example:
+# { 'enq.msg' : pst.bits(16) } -> { 'enq': { 'msg' : pst.bits(16) } }
+# For now, we don't support just specifying one field of a bit struct. A
+# strategy for bit struct must be passed in as whole.
+def parse_arg_strat_mapping( arg_strat_mapping ):
+
+  ret = {}
+  for name, strat in arg_strat_mapping.items():
+    method_name, arg_name = name.split( '.', 1 )
+    assert '.' not in arg_name
+    if method_name not in ret:
+      ret[ method_name ] = { arg_name : strat }
+    else:
+      ret[method_name][arg_name] = strat
+
+  return ret
+
+
 #-------------------------------------------------------------------------
 # create_test_state_machine
 #-------------------------------------------------------------------------
+
 def create_test_state_machine(
   dut,
   ref,
   method_specs=None,
-  argument_strategy={}
+  arg_strat_mapping={},
 ):
   Test = type( dut.model_name + "_StatefulPyH2", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
@@ -241,52 +263,48 @@ def create_test_state_machine(
 
   dut.elaborate()
 
-  # Store ( strategy, full_name )
-  arg_st_with_full_name = []
-  all_st_full_names = set()
-  for name, strat in argument_strategy:
-
+  for name, strat in arg_strat_mapping.items():
+    # Sanity check
     if not isinstance( strat, SearchStrategy ):
-      raise TypeError( "Only strategy is allowed! got {} for {}".format(
-          type( strat ), name ) )
+      raise TypeError(
+        "Only strategy is allowed! Got {} for {}".format( type( strat ), name )
+      )
 
-    arg_st_with_full_name += [( name, ( strat, name ) ) ]
-    all_st_full_names.add( name )
+  # Process the arg_strat_mapping
+  m_arg_strat_dict = parse_arg_strat_mapping( arg_strat_mapping )
 
-  # get nested dict of strategy
-  method_arg_st = get_strategy_from_list( arg_st_with_full_name )
-
-  # go through spec for each method
-  for method_name, spec in method_specs.iteritems():
-    arg_st = method_arg_st.get( method_name, {} )
+  # Go through spec for each method
+  for method_name, spec in method_specs.items():
+    if method_name not in m_arg_strat_dict:
+      arg_strat = {}
+    else:
+      arg_strat = m_arg_strat_dict[ method_name ]
 
     # create strategy based on types and predefined customization
-    for arg, dtype in spec.args:
-      arg_st[ arg ] = get_strategy_from_type( dtype )
+    for arg, Type in spec.args:
+      arg_strat[ arg ] = infer_strategy_from_type( Type )
 
     # wrap method
-    method_rule, method_rdy = mk_rule( method_specs[ method_name ], arg_st )
+    method_rule, method_rdy = mk_rule( spec, arg_strat )
     setattr( Test, method_name, method_rule )
     setattr( Test, method_name + "_rdy", method_rdy )
 
-  assert not all_st_full_names, "Got strategy for unrecognized field: {}".format(
-      list_string( all_st_full_names ) )
   return Test
-
 
 #-------------------------------------------------------------------------
 # run_pyh2
 #-------------------------------------------------------------------------
-# Driver function for PyH2.
+# Driver function for PyH2. By default the strategies for each arg is
+# inferred from the corresponding RTL port.
 # TODO: figure out a way to pass in settings
 # TODO: figure out a way to pass in customized strategies
 
-def run_pyh2( dut, ref ):
+def run_pyh2( dut, ref, arg_strat_mapping={} ):
   new_dut = deepcopy( dut )
   new_dut.elaborate()
   method_specs = collect_mspecs( new_dut )
   wrapped_dut = RTL2CLWrapper( dut, method_specs )
-  machine = create_test_state_machine( wrapped_dut, ref, method_specs )
+  machine = create_test_state_machine( wrapped_dut, ref, method_specs, arg_strat_mapping )
   machine.TestCase.settings = settings(
     max_examples=50,
     stateful_step_count=100,
@@ -299,4 +317,10 @@ def run_pyh2( dut, ref ):
   run_state_machine_as_test( machine )
 
 def test_pyh2():
-  run_pyh2( NormalQueueRTL( Bits16, num_entries=2 ), NormalQueueCL( num_entries=2 ) )
+  run_pyh2(
+    dut=NormalQueueRTL( Bits16, num_entries=2 ),
+    ref=NormalQueueCL( num_entries=2 ),
+    arg_strat_mapping = {
+      'enq.msg' : pst.bits(16, signed=True)
+    }
+  )
