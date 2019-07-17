@@ -71,7 +71,7 @@ def mk_rule( method_spec, arg_strat_dict ):
   method_name = method_spec.method_name
 
   # Make a ready method for the state machine.
-  # Now we only call methods when both rdy returns true. Thus we are only
+  # NOTE: we only call methods when both rdy returns true. Thus we are only
   # doing cycle-approximate or functional level testing.
   @rename( method_name + '_rdy' )
   def method_rdy( s ):
@@ -113,6 +113,7 @@ mismatch found in method {method}:
 #-------------------------------------------------------------------------
 # infer_strategy_from_type
 #-------------------------------------------------------------------------
+# TODO: added a default strategy for arbitrary bit struct as well?
 
 def infer_strategy_from_type( dtype ):
 
@@ -146,7 +147,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
 
     wrap_line_trace( s.dut )
 
-    # elaborate dut
+    # Elaborate dut
     s.dut.elaborate()
     s.dut = ImportPass()( s.dut )
     s.dut.elaborate()
@@ -155,7 +156,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.dut.lock_in_simulation()
     s.dut.sim_reset()
 
-    # elaborate ref
+    # Elaborate ref
     s.ref.elaborate()
     s.ref.hide_line_trace = True
     s.ref.apply( GenDAGPass() )
