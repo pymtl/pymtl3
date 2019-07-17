@@ -25,9 +25,8 @@ from pymtl3.passes.sverilog import ImportPass
 from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
-from ..stateful.test_wrapper import Method
 from .RTL2CLWrapper import RTL2CLWrapper
-from .utils import kwarg_to_str, list_string, method_to_str, rename
+from .utils import Method, kwarg_to_str, list_string, method_to_str, rename
 
 try:
   from termcolor import colored
@@ -174,7 +173,6 @@ class BaseStateMachine( RuleBasedStateMachine ):
 #-------------------------------------------------------------------------
 
 class TestStateful( BaseStateMachine ):
-
   if termcolor_installed:
     def error_line_trace( self, error_msg="" ):
       print( colored("="*35 + " error " + "="*35, 'red') )
@@ -186,54 +184,16 @@ class TestStateful( BaseStateMachine ):
       print( error_msg )
       raise ValueError( error_msg )
 
-# TODO: clean this up
-def get_strategy_from_list( st_list ):
-  # Generate a nested dictionary for customized strategy
-  # e.g. [ ( 'enq.msg', st1 ), ('deq.msg.msg0', st2 ) ]
-  # turns into {
-  #  'enq': { 'msg': st1 },
-  #  'deq': { 'msg': { 'msg0': st2 } }
-  # }
-  all_field_st = {}
-  all_subfield_st = {}
-
-  # First go through all customized strategy,
-  # Create a dict of ( field, [ ( subfield, strategy ) ] ) for non-leaf
-  # Create a dict of ( field, strategy ) for leaf
-  for name, st in st_list:
-    field_name, subfield_name = name.split( ".", 1 )
-    field_st = all_field_st.setdefault( field_name, {} )
-    # leaf
-    if not "." in subfield_name:
-      field_st[ subfield_name ] = st
-
-    # non-leaf
-    else:
-      subfield_list = all_subfield_st.setdefault( field_name, [] )
-      subfield_list += [( subfield_name, st ) ]
-
-  # Recursively generate dict for subfields
-  for field_name, subfield_list in all_subfield_st.items():
-    subfield_dict = get_strategy_from_list( subfield_list )
-    for subfield in subfield_dict.keys():
-      # If a field has a customized strategy, there should not be any
-      # strategy for its subfields. e.g. s.enq.msg and s.enq.msg.msg0 should
-      # not be in st_list simultaneously
-      field_st = all_field_st[ field_name ]
-      assert not subfield in field_st.keys(), (
-          "Found customized strategy for {}. "
-          "Separate strategy for its fields are not allowed".format(
-              field_st[ subfield ][ 1 ] ) )
-    all_field_st[ field_name ].update( subfield_dict )
-  return all_field_st
-
+#-------------------------------------------------------------------------
+# parse_arg_strat_mapping
+#-------------------------------------------------------------------------
 # Helper function that converts arg_strat_mapping into something easier to
 # process. For example:
 # { 'enq.msg' : pst.bits(16) } -> { 'enq': { 'msg' : pst.bits(16) } }
 # For now, we don't support just specifying one field of a bit struct. A
 # strategy for bit struct must be passed in as whole.
-def parse_arg_strat_mapping( arg_strat_mapping ):
 
+def parse_arg_strat_mapping( arg_strat_mapping ):
   ret = {}
   for name, strat in arg_strat_mapping.items():
     method_name, arg_name = name.split( '.', 1 )
@@ -244,7 +204,6 @@ def parse_arg_strat_mapping( arg_strat_mapping ):
       ret[method_name][arg_name] = strat
 
   return ret
-
 
 #-------------------------------------------------------------------------
 # create_test_state_machine
