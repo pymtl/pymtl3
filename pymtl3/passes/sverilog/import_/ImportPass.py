@@ -95,6 +95,7 @@ class ImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def get_imported_object( s, m ):
+    s.bp_import = hasattr(m, "bp_import")
     params = getattr( m, "sverilog_params", None )
     if params and len(params) == 0: params = None
     if params:
@@ -192,18 +193,29 @@ class ImportPass( BasePass ):
   def create_verilator_model( s, sv_file_path, top_name, dump_vcd, cached ):
     """Verilate module `top_name` in `sv_file_path`."""
     if not cached:
-      obj_dir = 'obj_dir_' + top_name
-      flags = [
-        '--unroll-count 1000000', '--unroll-stmts 1000000', '--assert',
-        '-Wno-UNOPTFLAT', '-Wno-UNSIGNED', ]
-      if dump_vcd:
-        flags.append( "--trace" )
-      flags = " ".join( flags )
-      cmd = \
+      if s.bp_import:
+        obj_dir = 'obj_dir_' + top_name
+        cmd = \
+"""\
+verilator --cc -Wno-unoptflat -O3 --Wno-fatal --Wno-lint --Wno-style --Wno-widthconcat \
+--exe -CFLAGS -std=c++11 -I/Users/peitianpan/.virtualenvs/pymtl3/share/verilator/include/vltstd \
+-LDFLAGS "-L/Users/peitianpan/Research/test/black-parrot/external/lib -ldramsim \
+-Wl,-install_name @rpath/Users/peitianpan/Research/test/black-parrot/external/lib" \
+--top-module testbench --Mdir {obj_dir} -f flist.verilator
+""".format( **locals() )
+      else:
+        obj_dir = 'obj_dir_' + top_name
+        flags = [
+          '--unroll-count 1000000', '--unroll-stmts 1000000', '--assert',
+          '-Wno-UNOPTFLAT', '-Wno-UNSIGNED', ]
+        if dump_vcd:
+          flags.append( "--trace" )
+        flags = " ".join( flags )
+        cmd = \
 """\
 verilator -cc {sv_file_path} -top-module {top_name} --Mdir {obj_dir} -O3 {flags}
 """
-      cmd = cmd.format( **locals() )
+        cmd = cmd.format( **locals() )
 
       # Remove obj_dir directory if it already exists.
       # obj_dir is where the verilator output ( C headers and sources ) is stored
@@ -314,6 +326,11 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 """
 
       include_dirs = [ verilator_include_dir, verilator_include_dir + '/vltstd' ]
+      if s.bp_import:
+        include_dirs += [
+            # "/Users/peitianpan/Research/test/black-parrot/external/include"
+            "/Users/peitianpan/Research/test/black-parrot/external/DRAMSim2"
+        ]
       obj_dir_prefix = 'obj_dir_{}/V{}'.format( full_name, full_name )
       cpp_sources_list = []
 
@@ -338,6 +355,17 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
         verilator_include_dir + '/verilated_dpi.cpp',
         wrapper_name,
       ]
+      if s.bp_import:
+        cpp_sources_list += [
+            obj_dir_prefix + '__Dpi.cpp',
+        ]
+
+      if s.bp_import:
+        dramsim_dir = "/Users/peitianpan/Research/test/black-parrot/bp_me/test/common"
+        cpp_sources_list += [
+            # dramsim_dir + "/dramsim2_wrapper.hpp",
+            dramsim_dir + "/dramsim2_wrapper.cpp",
+        ]
 
       if dump_vcd:
         cpp_sources_list += [
@@ -347,8 +375,15 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
         ]
 
       # Call compiler with generated flags & dirs
-      cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles}'.format(
+      cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles} {link}'.format(
         flags  = '-O0 -fPIC -shared',
+        link   = "" if not s.bp_import else \
+# -L/Users/peitianpan/Research/test/black-parrot/external/lib/libdramsim.so -ldramsim \
+"""\
+-L/Users/peitianpan/Research/test/black-parrot/external/lib -ldramsim \
+-rpath / \
+""",
+# -install_name @rpath/Users/peitianpan/Research/test/black-parrot/external/lib/libdramsim.so \
         idirs  = ' '.join( [ '-I' + d for d in include_dirs ] ),
         ofile  = lib_name,
         ifiles = ' '.join( cpp_sources_list )
@@ -372,6 +407,7 @@ Fail to compile Verilated model into a shared library:
   {}
 """.format( cmd, e.output )
 
+    print("Cpp compile command: " + cmd)
     return lib_name
 
   #-----------------------------------------------------------------------
@@ -444,6 +480,8 @@ constraint_list = [
             line_trace      = line_trace,
             in_line_trace   = in_line_trace,
             dump_vcd        = dump_vcd,
+            # load_dramsim    = "" if not s.bp_import else \
+# "s._ffi_inst_dramsim = s.ffi.dlopen('/Users/peitianpan/Research/test/black-parrot/external/lib/libdramsim.so')"
           )
           output.write( py_wrapper )
 
