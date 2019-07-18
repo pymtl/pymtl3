@@ -32,6 +32,7 @@ class ImportPass( SVerilogImportPass ):
   #-----------------------------------------------------------------------
 
   def get_imported_object( s, m ):
+    s.bp_import = hasattr( m, "bp_import" )
     rtype = get_component_ifc_rtlir( m )
     full_name = get_component_unique_name( rtype )
     packed_ports = s.gen_packed_ports( rtype )

@@ -70,6 +70,7 @@ class ImportPass( BasePass ):
     try:
       imp = s.get_imported_object( m )
       if m is s.top:
+        imp.elaborate()
         return imp
       else:
         s.top.replace_component_with_obj( m, imp )
@@ -85,7 +86,7 @@ class ImportPass( BasePass ):
     filename = unicode(filename)
     exists = os.path.exists( filename )
     if not exists: return False
-    file_hash = hash( open(filename, "r").read() )
+    file_hash = hash( open(filename, "rb").read() )
     hash_eq = file_hash == db_hash
     return exists and hash_eq
 
@@ -94,6 +95,7 @@ class ImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def get_imported_object( s, m ):
+    s.bp_import = hasattr(m, "bp_import")
     params = getattr( m, "sverilog_params", None )
     if params and len(params) == 0: params = None
     if params:
@@ -138,8 +140,7 @@ class ImportPass( BasePass ):
         db = json.loads( db_file.read() )
         if full_name in db:
           entry = db[full_name]
-          # import pdb
-          # pdb.set_trace()
+
           if os.path.exists(obj_dir) and \
              s.is_cached(sv_file_path, db[unicode(full_name)]["sv_file"]) and \
              s.is_cached(c_wrapper, db[unicode(full_name)]["c_wrapper"]) and \
@@ -174,10 +175,10 @@ class ImportPass( BasePass ):
       db = {}
 
     db[full_name] = {
-      "sv_file" : hash( open(sv_file_path, "r").read() ),
-      "c_wrapper" : hash( open(c_wrapper, "r").read() ),
-      "py_wrapper" : hash( open(py_wrapper, "r").read() ),
-      "shared_lib" : hash( open(shared_lib, "r").read() ),
+      "sv_file" : hash( open(sv_file_path, "rb").read() ),
+      "c_wrapper" : hash( open(c_wrapper, "rb").read() ),
+      "py_wrapper" : hash( open(py_wrapper, "rb").read() ),
+      "shared_lib" : hash( open(shared_lib, "rb").read() ),
     }
     db_string = json.dumps( db )
 
@@ -193,18 +194,30 @@ class ImportPass( BasePass ):
   def create_verilator_model( s, sv_file_path, top_name, dump_vcd, cached ):
     """Verilate module `top_name` in `sv_file_path`."""
     if not cached:
-      obj_dir = 'obj_dir_' + top_name
-      flags = [
-        '--unroll-count 1000000', '--unroll-stmts 1000000', '--assert',
-        '-Wno-UNOPTFLAT', '-Wno-UNSIGNED', ]
-      if dump_vcd:
-        flags.append( "--trace" )
-      flags = " ".join( flags )
-      cmd = \
+      if s.bp_import:
+        obj_dir = 'obj_dir_' + top_name
+        cmd = \
+"""\
+verilator --cc -Wno-unoptflat -O3 --Wno-fatal --Wno-lint --Wno-style --Wno-widthconcat \
+--exe -CFLAGS -std=c++11 \
+-I$BP_EXTERNAL_DIR/share/verilator/include/vltstd \
+-LDFLAGS "-L$BP_EXTERNAL_DIR/lib -ldramsim \
+-Wl,-rpath=$BP_EXTERNAL_DIR/lib" \
+--top-module testbench --Mdir {obj_dir} -f flist.verilator
+""".format( **locals() )
+      else:
+        obj_dir = 'obj_dir_' + top_name
+        flags = [
+          '--unroll-count 1000000', '--unroll-stmts 1000000', '--assert',
+          '-Wno-UNOPTFLAT', '-Wno-UNSIGNED', ]
+        if dump_vcd:
+          flags.append( "--trace" )
+        flags = " ".join( flags )
+        cmd = \
 """\
 verilator -cc {sv_file_path} -top-module {top_name} --Mdir {obj_dir} -O3 {flags}
 """
-      cmd = cmd.format( **locals() )
+        cmd = cmd.format( **locals() )
 
       # Remove obj_dir directory if it already exists.
       # obj_dir is where the verilator output ( C headers and sources ) is stored
@@ -296,7 +309,7 @@ Fail to verilate model {} in file {}
     # TODO: A better caching strategy is to attach some metadata
     # to the C wrapper so that we know the wrapper was generated with or
     # without dump_vcd enabled.
-    if dump_vcd or not cached:
+    if s.bp_import or dump_vcd or not cached:
       # Find out the include directory of Verilator
       # First look at $PYMTL_VERILATOR_INCLUDE_DIR environment variable
       verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
@@ -315,6 +328,10 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 """
 
       include_dirs = [ verilator_include_dir, verilator_include_dir + '/vltstd' ]
+      if s.bp_import:
+        include_dirs += [
+            "$BP_EXTERNAL_DIR/DRAMSim2"
+        ]
       obj_dir_prefix = 'obj_dir_{}/V{}'.format( full_name, full_name )
       cpp_sources_list = []
 
@@ -339,6 +356,16 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
         verilator_include_dir + '/verilated_dpi.cpp',
         wrapper_name,
       ]
+      if s.bp_import:
+        cpp_sources_list += [
+            obj_dir_prefix + '__Dpi.cpp',
+        ]
+
+      if s.bp_import:
+        dramsim_dir = "$BP_ME_DIR/test/common"
+        cpp_sources_list += [
+          dramsim_dir + "/dramsim2_wrapper.cpp",
+        ]
 
       if dump_vcd:
         cpp_sources_list += [
@@ -348,8 +375,12 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
         ]
 
       # Call compiler with generated flags & dirs
-      cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles}'.format(
-        flags  = '-O0 -fPIC -shared',
+      cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles} {link}'.format(
+        flags  = '-O0 -fPIC -shared -std=c++11',
+        link   = "" if not s.bp_import else \
+"""\
+-L$BP_EXTERNAL_DIR/lib -ldramsim -Wl,-rpath=$BP_EXTERNAL_DIR/lib \
+""",
         idirs  = ' '.join( [ '-I' + d for d in include_dirs ] ),
         ofile  = lib_name,
         ifiles = ' '.join( cpp_sources_list )
@@ -373,6 +404,7 @@ Fail to compile Verilated model into a shared library:
   {}
 """.format( cmd, e.output )
 
+      print("Cpp compile command: " + cmd)
     return lib_name
 
   #-----------------------------------------------------------------------
