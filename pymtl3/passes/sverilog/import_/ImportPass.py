@@ -198,9 +198,10 @@ class ImportPass( BasePass ):
         cmd = \
 """\
 verilator --cc -Wno-unoptflat -O3 --Wno-fatal --Wno-lint --Wno-style --Wno-widthconcat \
---exe -CFLAGS -std=c++11 -I/Users/peitianpan/.virtualenvs/pymtl3/share/verilator/include/vltstd \
--LDFLAGS "-L/Users/peitianpan/Research/test/black-parrot/external/lib -ldramsim \
--Wl,-install_name @rpath/Users/peitianpan/Research/test/black-parrot/external/lib" \
+--exe -CFLAGS -std=c++11 \
+-I$BP_EXTERNAL_DIR/share/verilator/include/vltstd \
+-LDFLAGS "-L$BP_EXTERNAL_DIR/lib -ldramsim \
+-Wl,-rpath=$BP_EXTERNAL_DIR/lib" \
 --top-module testbench --Mdir {obj_dir} -f flist.verilator
 """.format( **locals() )
       else:
@@ -307,7 +308,7 @@ Fail to verilate model {} in file {}
     # TODO: A better caching strategy is to attach some metadata
     # to the C wrapper so that we know the wrapper was generated with or
     # without dump_vcd enabled.
-    if dump_vcd or not cached:
+    if s.bp_import or dump_vcd or not cached:
       # Find out the include directory of Verilator
       # First look at $PYMTL_VERILATOR_INCLUDE_DIR environment variable
       verilator_include_dir = os.environ.get( 'PYMTL_VERILATOR_INCLUDE_DIR' )
@@ -328,8 +329,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
       include_dirs = [ verilator_include_dir, verilator_include_dir + '/vltstd' ]
       if s.bp_import:
         include_dirs += [
-            # "/Users/peitianpan/Research/test/black-parrot/external/include"
-            "/Users/peitianpan/Research/test/black-parrot/external/DRAMSim2"
+            "$BP_EXTERNAL_DIR/DRAMSim2"
         ]
       obj_dir_prefix = 'obj_dir_{}/V{}'.format( full_name, full_name )
       cpp_sources_list = []
@@ -361,10 +361,9 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
         ]
 
       if s.bp_import:
-        dramsim_dir = "/Users/peitianpan/Research/test/black-parrot/bp_me/test/common"
+        dramsim_dir = "$BP_ME_DIR/test/common"
         cpp_sources_list += [
-            # dramsim_dir + "/dramsim2_wrapper.hpp",
-            dramsim_dir + "/dramsim2_wrapper.cpp",
+          dramsim_dir + "/dramsim2_wrapper.cpp",
         ]
 
       if dump_vcd:
@@ -376,14 +375,11 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 
       # Call compiler with generated flags & dirs
       cmd = 'g++ {flags} {idirs} -o {ofile} {ifiles} {link}'.format(
-        flags  = '-O0 -fPIC -shared',
+        flags  = '-O0 -fPIC -shared -std=c++11',
         link   = "" if not s.bp_import else \
-# -L/Users/peitianpan/Research/test/black-parrot/external/lib/libdramsim.so -ldramsim \
 """\
--L/Users/peitianpan/Research/test/black-parrot/external/lib -ldramsim \
--rpath / \
+-L$BP_EXTERNAL_DIR/lib -ldramsim -Wl,-rpath=$BP_EXTERNAL_DIR/lib \
 """,
-# -install_name @rpath/Users/peitianpan/Research/test/black-parrot/external/lib/libdramsim.so \
         idirs  = ' '.join( [ '-I' + d for d in include_dirs ] ),
         ofile  = lib_name,
         ifiles = ' '.join( cpp_sources_list )
@@ -480,8 +476,6 @@ constraint_list = [
             line_trace      = line_trace,
             in_line_trace   = in_line_trace,
             dump_vcd        = dump_vcd,
-            # load_dramsim    = "" if not s.bp_import else \
-# "s._ffi_inst_dramsim = s.ffi.dlopen('/Users/peitianpan/Research/test/black-parrot/external/lib/libdramsim.so')"
           )
           output.write( py_wrapper )
 
