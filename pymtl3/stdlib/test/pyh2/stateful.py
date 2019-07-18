@@ -242,7 +242,8 @@ def create_test_state_machine(
 
     # create strategy based on types and predefined customization
     for arg, Type in spec.args:
-      arg_strat[ arg ] = infer_strategy_from_type( Type )
+      if arg not in arg_strat:
+        arg_strat[ arg ] = infer_strategy_from_type( Type )
 
     # wrap method
     method_rule, method_rdy = mk_rule( spec, arg_strat )
