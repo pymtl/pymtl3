@@ -403,7 +403,7 @@ Fail to compile Verilated model into a shared library:
   {}
 """.format( cmd, e.output )
 
-    print("Cpp compile command: " + cmd)
+      print("Cpp compile command: " + cmd)
     return lib_name
 
   #-----------------------------------------------------------------------
