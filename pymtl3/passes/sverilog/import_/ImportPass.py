@@ -203,8 +203,10 @@ verilator --cc -Wno-unoptflat -O3 --Wno-fatal --Wno-lint --Wno-style --Wno-width
 -I$BP_EXTERNAL_DIR/share/verilator/include/vltstd \
 -LDFLAGS "-L$BP_EXTERNAL_DIR/lib -ldramsim \
 -Wl,-rpath=$BP_EXTERNAL_DIR/lib" \
---top-module testbench --Mdir {obj_dir} -f flist.verilator
+--top-module testbench --Mdir {obj_dir} -f flist.verilator \
 """.format( **locals() )
+        if dump_vcd:
+          cmd += "--trace"
       else:
         obj_dir = 'obj_dir_' + top_name
         flags = [
