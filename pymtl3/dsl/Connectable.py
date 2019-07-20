@@ -36,8 +36,10 @@ class Connectable:
         raise NotElaboratedError()
 
   def __ifloordiv__( s, other ):
+    # Currently this basically implements connect( s, other ), but to
+    # avoid circular import, we replicate the implementation of connect.
+
     host, s_connectable, o_connectable = _connect_check( s, other, internal=False )
-    assert host is not None, "???"
     host._connect_dispatch( s, other, s_connectable, o_connectable )
     return s
 
@@ -50,6 +52,8 @@ def _connect_check( o1, o2, internal ):
   o2_connectable = False
   top = None
 
+  # Get access to the top level component by identifying a connectable
+
   if isinstance( o1, Connectable ):
     o1_connectable = True
     top = o1._dsl.elaborate_top
@@ -58,7 +62,7 @@ def _connect_check( o1, o2, internal ):
     o2_connectable = True
     o2_top = o2._dsl.elaborate_top
 
-    if o1_connectable: assert o2._dsl.elaborate_top is top, "???"
+    if o1_connectable: assert o2._dsl.elaborate_top is top
     else:              top = o2_top
 
   if not o1_connectable and not o2_connectable:
@@ -68,14 +72,21 @@ def _connect_check( o1, o2, internal ):
                                   "  (when connecting {} to {})" \
         .format( type(o1), type(o2), repr(o1), repr(o2)) )
 
-  # print("{} //= {}, top is {} stack is {}".format(
-    # repr(o1), repr(o2), o1._dsl.elaborate_top, o1._dsl.elaborate_top._dsl.elaborate_stack) )
+  # Get the component from elaborate_stack
 
-  host = top._dsl.elaborate_stack[-1]
+  try:
+    host = top._dsl.elaborate_stack[-1]
+  except AttributeError:
+    raise InvalidConnectionError("Cannot call connect after elaboration.\n"
+                                 "- Please use top.add_connection(...) API.")
 
   if isinstance( host, Placeholder ):
     raise InvalidPlaceholderError( "Cannot call connect "
           "in a placeholder component.".format( blk.__name__ ) )
+
+  # Not sure if there is any case where we cannot get the top plus it's
+  # not an internal connect call
+  assert host is not None, "Please contact pymtl3 developer about this error."
 
   return host, o1_connectable, o2_connectable
 

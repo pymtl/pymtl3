@@ -761,3 +761,18 @@ def test_const_connect_Bits_signal_to_mismatch_Bits():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_invalid_connect_outside_hierarchy():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = InPort(Bits32)
+
+  try:
+    x = Top()
+    x.elaborate()
+    connect( x.wire, Bits32(8) )
+  except InvalidConnectionError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")

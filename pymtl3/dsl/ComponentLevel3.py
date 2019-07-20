@@ -42,7 +42,6 @@ from .Placeholder import Placeholder
 
 def connect( o1, o2 ):
   host, o1_connectable, o2_connectable = _connect_check( o1, o2, internal=False )
-  assert host is not None, "???"
   host._connect_dispatch( o1, o2, o1_connectable, o2_connectable )
 
 class ComponentLevel3( ComponentLevel2 ):
@@ -228,7 +227,7 @@ class ComponentLevel3( ComponentLevel2 ):
       assert internal
 
     else:
-      assert s is host, "s:{} host:{}".format(s, host)
+      assert s is host, "Please contact pymtl3 developer -- s:{} host:{}".format(s, host)
       s._connect_dispatch( o1, o2, o1_connectable, o2_connectable )
 
   def _connect_dispatch( s, o1, o2, o1_connectable, o2_connectable ):
@@ -260,6 +259,12 @@ class ComponentLevel3( ComponentLevel2 ):
     parent = s._dsl.parent_obj
 
     top = s._dsl.elaborate_top
+
+    # _continue_call_connect is actually connecting stuff at parent level,
+    # but it currently happens before before we pop the child component.
+    # To make minimal modification, I temporarily pop it from
+    # elaborate_stack and append it back at the end of this method
+
     tmp = top._dsl.elaborate_stack.pop()
 
     try: # Catch AssertionError from _connect
@@ -293,8 +298,8 @@ class ComponentLevel3( ComponentLevel2 ):
     except AssertionError as e:
       raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
 
+    # Append tmp back to elaborate_stack
     top._dsl.elaborate_stack.append(tmp)
-
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
