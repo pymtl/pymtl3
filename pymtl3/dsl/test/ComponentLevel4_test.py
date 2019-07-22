@@ -87,7 +87,7 @@ class BaseQueue( ComponentLevel4 ):
 class PipeQueue( BaseQueue ):
 
   def construct( s, size ):
-    super( PipeQueue, s ).construct( size )
+    super().construct( size )
     s.add_constraints(
       M(s.deq_    ) < M(s.enq_    ), # pipe behavior
       M(s.deq_rdy_) < M(s.enq_rdy_),
@@ -99,7 +99,7 @@ class PipeQueue( BaseQueue ):
 class BypassQueue( BaseQueue ):
 
   def construct( s, size ):
-    super( BypassQueue, s ).construct( size )
+    super().construct( size )
     s.add_constraints(
       M(s.enq_    ) < M(s.deq_    ), # bypass behavior
       M(s.enq_rdy_) < M(s.deq_rdy_),

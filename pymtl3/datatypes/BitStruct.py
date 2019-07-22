@@ -15,7 +15,7 @@ from .bits_import import *
 from .helpers import concat
 
 
-class BitStruct( object ):
+class BitStruct:
 
   fields = []
   nbits = 0

@@ -30,7 +30,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       implementation.
       """
       if s.__class__.__name__ == 'TestRTLIRTranslator':
-        return super(TestBehavioralTranslator, s). \
+        return super(). \
           rtlir_data_type_translation( m, dtype )
       else:
         return str(dtype)

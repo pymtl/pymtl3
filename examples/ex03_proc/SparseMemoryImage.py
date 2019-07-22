@@ -13,13 +13,13 @@ import binascii
 import struct
 
 
-class SparseMemoryImage (object):
+class SparseMemoryImage :
 
   #-----------------------------------------------------------------------
   # Nested Class: Section
   #-----------------------------------------------------------------------
 
-  class Section (object):
+  class Section :
 
     def __init__( self, name="", addr=0x00000000, data=bytearray() ):
       self.name = name

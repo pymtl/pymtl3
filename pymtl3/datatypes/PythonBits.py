@@ -8,7 +8,7 @@ Author : Shunning Jiang
 Date   : Oct 31, 2017
 """
 
-class Bits( object ):
+class Bits:
   __slots__ = ( "nbits", "value" )
 
   def __init__( self, nbits=32, value=0 ):

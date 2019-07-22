@@ -222,4 +222,4 @@ endcomponent
 """
   do_test( a )
 
-__all__ = list([s for s in dir() if s.startswith('test_')])
+__all__ = [s for s in dir() if s.startswith('test_')]

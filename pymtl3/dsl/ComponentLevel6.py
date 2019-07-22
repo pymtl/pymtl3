@@ -28,7 +28,7 @@ def non_blocking( rdy, Type=None ):
 class ComponentLevel6( ComponentLevel5 ):
 
   def _handle_decorated_methods( s ):
-    super( ComponentLevel6, s )._handle_decorated_methods()
+    super()._handle_decorated_methods()
 
     # The following code handles non-blocking methods
     def bind_method( method ):

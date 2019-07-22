@@ -167,7 +167,7 @@ class TestHarness( Component ):
 #=========================================================================
 # We use source/sink based tests to stress test the checksum unit.
 
-class ChecksumCLSrcSink_Tests( object ):
+class ChecksumCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test

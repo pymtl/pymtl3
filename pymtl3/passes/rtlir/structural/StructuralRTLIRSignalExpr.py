@@ -12,7 +12,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
 
-class BaseSignalExpr( object ):
+class BaseSignalExpr:
   """Base abstract class of RTLIR signal expressions."""
   def __init__( s, rtype ):
     assert isinstance( rtype, rt.BaseRTLIRType ), \
@@ -43,7 +43,7 @@ class _Index( BaseSignalExpr ):
   data type array or a bit selection.
   """
   def __init__( s, index_base, index, rtype ):
-    super( _Index, s ).__init__( rtype )
+    super().__init__( rtype )
     s.index = index
     s.base = index_base
 
@@ -92,7 +92,7 @@ class _UnpackedIndex( _Index ):
   def __init__( s, index_base, index ):
     base_rtype = index_base.get_rtype()
     rtype = base_rtype.get_next_dim_type()
-    super( _UnpackedIndex, s ).__init__( index_base, index, rtype )
+    super().__init__( index_base, index, rtype )
 
   @staticmethod
   def is_port_index( index_base, index ):
@@ -160,7 +160,7 @@ class _Slice( BaseSignalExpr ):
     else:
       assert False, \
         "unrecognized signal type {} for slicing".format( base_rtype )
-    super( _Slice, s ).__init__( rtype )
+    super().__init__( rtype )
     s.base = slice_base
     s.slice = ( start, stop )
 
@@ -196,7 +196,7 @@ class _Attribute( BaseSignalExpr ):
   an interface, or a field in a struct signal.
   """
   def __init__( s, attr_base, attr, rtype ):
-    super( _Attribute, s ).__init__( rtype )
+    super().__init__( rtype )
     s.attr = attr
     s.base = attr_base
 
@@ -266,7 +266,7 @@ class ConstInstance( BaseSignalExpr ):
   an attribute of a component.
   """
   def __init__( s, obj, value ):
-    super( ConstInstance, s ).__init__(rt.Const(rdt.get_rtlir_dtype( obj )))
+    super().__init__(rt.Const(rdt.get_rtlir_dtype( obj )))
     s.value = value
 
   def __eq__( s, other ):
@@ -288,7 +288,7 @@ class CurComp( BaseSignalExpr ):
   is the same as the current component's name.
   """
   def __init__( s, comp, comp_id ):
-    super( CurComp, s ).__init__(comp._pass_structural_rtlir_gen.rtlir_type)
+    super().__init__(comp._pass_structural_rtlir_gen.rtlir_type)
     s.comp_id = comp_id
 
   def __eq__( s, other ):
@@ -337,7 +337,7 @@ class PackedIndex( _Index ):
     else:
       assert False, \
         "unrecognized signal type {} for indexing".format( base_rtype )
-    super( PackedIndex, s ).__init__( index_base, index, rtype )
+    super().__init__( index_base, index, rtype )
 
 class BitSelection( _Index ):
   """IR class for selecting a bit of a vector signal."""
@@ -351,7 +351,7 @@ class BitSelection( _Index ):
     else:
       assert False, \
         "unrecognized signal type {} for indexing".format( base_rtype )
-    super( BitSelection, s ).__init__( index_base, index, rtype )
+    super().__init__( index_base, index, rtype )
 
 class PartSelection( _Slice ):
   """IR class for selecting one or more bits of a vector signal."""
@@ -360,19 +360,19 @@ class CurCompAttr( _Attribute ):
   """IR class for accessing the attribute of the current component."""
   def __init__( s, attr_base, attr ):
     rtype = attr_base.get_rtype().get_property( attr )
-    super( CurCompAttr, s ).__init__( attr_base, attr, rtype )
+    super().__init__( attr_base, attr, rtype )
 
 class SubCompAttr( _Attribute ):
   """IR class for accessing the attribute of a sub-component."""
   def __init__( s, attr_base, attr ):
     rtype = attr_base.get_rtype().get_property( attr )
-    super( SubCompAttr, s ).__init__( attr_base, attr, rtype )
+    super().__init__( attr_base, attr, rtype )
 
 class InterfaceAttr( _Attribute ):
   """IR class for accessing the attribute of an interface."""
   def __init__( s, attr_base, attr ):
     rtype = attr_base.get_rtype().get_property( attr )
-    super( InterfaceAttr, s ).__init__( attr_base, attr, rtype )
+    super().__init__( attr_base, attr, rtype )
 
 class StructAttr( _Attribute ):
   """IR class for accessing the attribute of a struct signal."""
@@ -386,7 +386,7 @@ class StructAttr( _Attribute ):
     else:
       assert False, \
         "unrecognized signal type {} for field selection".format( base_rtype )
-    super( StructAttr, s ).__init__( attr_base, attr, rtype )
+    super().__init__( attr_base, attr, rtype )
 
 #-------------------------------------------------------------------------
 # Map string signal expression to IR object generation methods
@@ -450,14 +450,10 @@ def gen_signal_expr( cur_component, signal ):
 
   def get_cls_inst( func_list, cur_node, ops ):
     """Return an IR instance of the given signal operation."""
-    classes = [f( cur_node, *ops ) for f in func_list]
-    assert reduce( lambda r, c: r + (1 if c else 0), classes, 0 ) == 1, \
-      'internal error: not unique class {}!'.format( classes )
-    for cls in classes:
-      if cls:
-        return cls( cur_node, *ops )
-    assert False, \
-      'internal error: no available expression nodes for {}!'.format(cur_node)
+    classes = [ c for c in ( f( cur_node, *ops ) for f in func_list ) if c ]
+    assert len(classes) <= 1, f"internal error: not unique class {classes}!"
+    assert classes, f"internal error: no available expression nodes for {cur_node}!"
+    return classes[0]( cur_node, *ops )
 
   try:
 

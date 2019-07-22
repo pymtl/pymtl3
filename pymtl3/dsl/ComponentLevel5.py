@@ -135,7 +135,7 @@ class ComponentLevel5( ComponentLevel4 ):
 
   # Override
   def _elaborate_declare_vars( s ):
-    super( ComponentLevel5, s )._elaborate_declare_vars()
+    super()._elaborate_declare_vars()
 
     s._dsl.all_method_ports = set()
 

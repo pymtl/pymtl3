@@ -20,21 +20,19 @@ import argparse
 import os
 import sys
 
+# Import the RTL processor
 from examples.ex03_proc.ProcRTL import ProcRTL
+
+# Import the translation pass from yosys backend
 from pymtl3.passes.yosys import TranslationPass
 
+# Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while cur_dir:
   if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):
     sys.path.insert(0, cur_dir)
     break
   cur_dir = os.path.dirname(cur_dir)
-
-# Import the RTL processor
-
-
-# Import the translation pass from yosys backend
-
 
 #=========================================================================
 # Command line processing

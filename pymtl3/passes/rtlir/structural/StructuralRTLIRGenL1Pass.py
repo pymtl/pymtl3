@@ -60,7 +60,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
            ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
           connections.append( ( wr, rd ) )
           m_connections[idx] = ( m_connections[idx][0], True )
-    connections += [x[0] for x in [x for x in m_connections if not x[1]]]
+    connections.extend( x[0] for x in m_connections if not x[1] )
     m._pass_structural_rtlir_gen.connections = connections
 
   def contains( s, obj, signal ):

@@ -52,7 +52,7 @@ def mk_xcel_resp_msg( data ):
   resp_cls.data_nbits = data
   return resp_cls
 
-class XcelMsgType( object ):
+class XcelMsgType:
   # TODO: figure out whether we want to use Bits1 here.
   READ  = Bits1(0)
   WRITE = Bits1(1)

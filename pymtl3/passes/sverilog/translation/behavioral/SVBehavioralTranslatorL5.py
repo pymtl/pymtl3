@@ -49,7 +49,7 @@ class BehavioralRTLIRToSVVisitorL5( BehavioralRTLIRToSVVisitorL4 ):
       s.check_res( node, attr )
       return '{value}${attr}'.format( **locals() )
 
-    return super( BehavioralRTLIRToSVVisitorL5, s ).visit_Attribute( node )
+    return super().visit_Attribute( node )
 
   #-----------------------------------------------------------------------
   # visit_Index
@@ -68,4 +68,4 @@ class BehavioralRTLIRToSVVisitorL5( BehavioralRTLIRToSVVisitorL4 ):
       return "{value}$__{idx}".format( **locals() )
 
     else:
-      return super( BehavioralRTLIRToSVVisitorL5, s ).visit_Index( node )
+      return super().visit_Index( node )

@@ -3,8 +3,6 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-from functools import reduce
-
 from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.sverilog.errors import SVerilogReservedKeywordError
@@ -38,8 +36,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     if Type is None:
       return { 'def' : '', 'decl' : '', 'n_dim':[] }
     else:
-      array_dim = reduce(
-        lambda x,y: x+'[0:{}]'.format(y-1), Type.get_dim_sizes(), '' )
+      array_dim = "".join( f"[0:{size-1}]" for size in Type.get_dim_sizes() )
       return {
         'def'  : '',
         'decl' : ' ' + array_dim,

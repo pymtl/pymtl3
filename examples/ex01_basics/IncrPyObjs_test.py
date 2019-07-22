@@ -22,7 +22,7 @@ from pymtl3 import *
 # Buffer
 #-------------------------------------------------------------------------
 
-class Buffer( object ):
+class Buffer:
   def __init__( s ):
     s.data = b8(0)
 

@@ -182,7 +182,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
       params_name = ', ' + ', '.join( s.field_list )
       params_assign = '\n    '.join(
-        ["s.{field} = {field}".format(field = x) for x in s.field_list]
+        "s.{field} = {field}".format(field = x) for x in s.field_list
       )
       check_equal = '\n    '.join( eq )
       if check_equal:

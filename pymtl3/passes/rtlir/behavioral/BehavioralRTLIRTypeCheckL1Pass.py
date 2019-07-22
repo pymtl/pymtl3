@@ -149,7 +149,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = None
 
   def visit_FreeVar( s, node ):
-    if node.name not in list(s.freevars.keys()):
+    if node.name not in s.freevars:
       s.freevars[ node.name ] = node.obj
 
     try:

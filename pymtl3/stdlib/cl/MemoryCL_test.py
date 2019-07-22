@@ -39,9 +39,7 @@ class TestHarness( Component ):
       connect( s.mem.ifc[i].resp,  s.sinks[i].recv  )
 
   def done( s ):
-    done  = reduce( lambda x,y: x and y, [ x.done() for x in s.srcs ] )
-    done &= reduce( lambda x,y: x and y, [ x.done() for x in s.sinks ] )
-    return done
+    return all([x.done() for x in s.srcs] + [x.done() for x in s.sinks])
 
   def line_trace( s ):
     return "{} >>>  {}  >>> {}".format(

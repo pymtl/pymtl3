@@ -68,7 +68,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
           py_src[ idx ] = line[indent:]
     try:
       upblk_py_src = inspect.getsource( upblk )
-    except IOError:
+    except OSError:
       upblk_py_src = "IOError: cannot retrieve Python update block code!"
     upblk_py_src = upblk_py_src.split( '\n' )
     _trim( upblk_py_src )

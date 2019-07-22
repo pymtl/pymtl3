@@ -73,7 +73,7 @@ class Foo( Placeholder, Component ):
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
 
-class SomeMsg( object ):
+class SomeMsg:
   def __init__( s, a=0, b=0 ):
     s.a = Bits16(a)
     s.b = Bits32(b)

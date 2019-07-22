@@ -7,5 +7,5 @@ Author : Shunning Jiang
   Date : June 1, 2019
 """
 
-class Placeholder( object ):
+class Placeholder:
   pass

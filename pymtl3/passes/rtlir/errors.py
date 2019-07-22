@@ -19,7 +19,7 @@ class RTLIRConversionError( Exception ):
     traceback.print_tb(tb)
     tb_info = traceback.extract_tb(tb)
     fname, line, func, text = tb_info[-1]
-    return super( RTLIRConversionError, self ).__init__(
+    return super().__init__(
       "\nIn file {fname}, Line {line}, Method {func}:"
       "\nError trying to convert {obj} into RTLIR:\n- {msg}"
       "\n  {text}".format( **locals() ) )
@@ -40,7 +40,7 @@ class PyMTLSyntaxError( Exception ):
     except AttributeError:
       # The given AST node is neither expr nor stmt
       pass
-    return super( PyMTLSyntaxError, self ).__init__(
+    return super().__init__(
       "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() )
     )
@@ -61,7 +61,7 @@ class PyMTLTypeError( Exception ):
     except AttributeError:
       # The given AST node is neither expr nor stmt
       pass
-    return super( PyMTLTypeError, self ).__init__(
+    return super().__init__(
       "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
       format( **locals() )
     )

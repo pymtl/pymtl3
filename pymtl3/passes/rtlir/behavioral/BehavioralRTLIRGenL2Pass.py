@@ -39,7 +39,7 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
 
 class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL2, s ).__init__( component )
+    super().__init__( component )
     s.loop_var_env = set()
     s.tmp_var_env = set()
 
@@ -70,7 +70,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     if obj is rdt.Bool:
       raise PyMTLSyntaxError( s.blk, node,
         'bool values cannot be instantiated explicitly!' )
-    return super( BehavioralRTLIRGeneratorL2, s ).visit_Call( node )
+    return super().visit_Call( node )
 
   def visit_Name( s, node ):
     # temporary variable
@@ -92,7 +92,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       return ret
 
     else:
-      return super( BehavioralRTLIRGeneratorL2, s ).visit_Name( node )
+      return super().visit_Name( node )
 
   def visit_If( s, node ):
     cond = s.visit( node.test )

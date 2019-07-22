@@ -36,7 +36,7 @@ class Component( ComponentLevel7 ):
       elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
-        kwargs = s._dsl.kwargs.copy()
+        kwargs = s._dsl.kwargs
         if "construct" in s._dsl.param_tree.leaf:
           more_args = s._dsl.param_tree.leaf[ "construct" ]
           kwargs.update( more_args )
@@ -72,7 +72,7 @@ class Component( ComponentLevel7 ):
     ret = set()
     stack = []
     for (name, obj) in s.__dict__.items():
-      if   isinstance( name, str ): # python2 specific
+      if   isinstance( name, str ):
         if not name.startswith("_"): # filter private variables
           stack.append( obj )
     while stack:

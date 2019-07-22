@@ -6,7 +6,6 @@
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
 from collections import deque
-from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
@@ -57,7 +56,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   def _get_array_dim_str( s, n_dim ):
-    ret = reduce(lambda x, y: x+"[0:{}]".format(y-1), n_dim, "")
+    ret = "".join( f"[0:{size-1}]" for size in n_dim )
     if ret:
       ret = " " + ret
     return ret

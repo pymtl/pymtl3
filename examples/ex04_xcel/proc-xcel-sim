@@ -36,23 +36,19 @@ from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
 from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 from examples.ex04_xcel.ProcXcel import ProcXcel
 from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
+
 from pymtl3 import *
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
+# Hack to add project root to python path
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while sim_dir:
   if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
     sys.path.insert(0,sim_dir)
     break
   sim_dir = os.path.dirname(sim_dir)
-
-
-
-
-
-
 
 #=========================================================================
 # Command line processing
@@ -146,16 +142,16 @@ class TestHarness(Component):
       if section.name == ".mngr2proc":
         for i in range(0,len(section.data),4):
           bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.src.src.msgs.append( Bits(32,bits) )
-          self.src.msgs.append( Bits(32,bits) )
+          # self.src.src.msgs.append( Bits32(bits) )
+          self.src.msgs.append( Bits32(bits) )
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
         for i in range(0,len(section.data),4):
           bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.sink.sink.msgs.append( Bits(32,bits) )
-          self.sink.msgs.append( Bits(32,bits) )
+          # self.sink.sink.msgs.append( Bits32(bits) )
+          self.sink.msgs.append( Bits32(bits) )
 
       # For all other sections, simply copy them into the memory
 

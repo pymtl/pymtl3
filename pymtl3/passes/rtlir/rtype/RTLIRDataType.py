@@ -64,7 +64,7 @@ class Struct( BaseRTLIRDataType ):
         file_name = inspect.getsourcefile( cls )
         line_no = inspect.getsourcelines( cls )[1]
         s.file_info = "File: {file_name}, Line: {line_no}".format( **locals() )
-      except IOError:
+      except OSError:
         s.file_info = "Dynamically generated class " + cls.__name__
     else:
       s.file_info = "Not available"
@@ -88,7 +88,7 @@ class Struct( BaseRTLIRDataType ):
     return s.packed_order
 
   def get_length( s ):
-    return reduce(lambda s, d: s+d.get_length(), list(s.properties.values()), 0)
+    return sum( d.get_length() for d in s.properties.values() )
 
   def has_property( s, p ):
     return p in s.properties
@@ -139,16 +139,14 @@ class PackedArray( BaseRTLIRDataType ):
       'nested PackedArray is not allowed!'
     assert len( dim_sizes ) >= 1, \
       'PackedArray dimension count should be greater than 0!'
-    assert reduce( lambda s, i: s+i, dim_sizes, 0 ) > 0, \
-      'PackedArray should have at least one element!'
+    assert sum( dim_sizes ) > 0, 'PackedArray should have at least one element!'
     s.dim_sizes = dim_sizes
     s.sub_dtype = sub_dtype
 
   def __eq__( s, other ):
     if not isinstance(other, PackedArray): return False
     if len( s.dim_sizes ) != len( other.dim_sizes ): return False
-    zipped_sizes = list(zip( s.dim_sizes, other.dim_sizes ))
-    if not reduce( lambda res, xy: res and (xy[0] == xy[1]), zipped_sizes ):
+    if not all(a == b for a, b in zip(s.dim_sizes, other.dim_sizes)):
       return False
     return s.sub_dtype == other.sub_dtype
 
@@ -186,9 +184,8 @@ def _get_rtlir_dtype_struct( obj ):
   elif isinstance( obj, list ):
     assert len( obj ) > 0, 'list length should be greater than 0!'
     ref_type = _get_rtlir_dtype_struct( obj[0] )
-    assert \
-      reduce(lambda res,i:res and (_get_rtlir_dtype_struct(i)==ref_type),obj, True), \
-      'all elements of array {} must have the same type {}!'.format( obj, ref_type )
+    assert all( _get_rtlir_dtype_struct(i) == ref_type for i in obj ), \
+      f'all elements of array {obj} must have the same type {ref_type}!'
     dim_sizes = []
     while isinstance( obj, list ):
       assert len( obj ) > 0, 'list length should be greater than 0!'
@@ -222,7 +219,7 @@ def _get_rtlir_dtype_struct( obj ):
     # Use user-provided pack order
     pack_order = []
     if hasattr( cls, "fields" ) and cls.fields != []:
-      assert len(cls.fields) == len(list(all_properties.keys())), \
+      assert len(cls.fields) == len(all_properties.keys()), \
         "{}.fields does not match the attributes of its instance!". \
           format( cls.__name__ )
       for field_name, field in cls.fields:
@@ -232,7 +229,7 @@ def _get_rtlir_dtype_struct( obj ):
 
     # Generate default pack order ( sort by `repr` )
     else:
-      pack_order = sorted( list(all_properties.keys()), key = repr )
+      pack_order = sorted( all_properties, key = repr )
 
     # Generate the property list according to pack order
     properties = []

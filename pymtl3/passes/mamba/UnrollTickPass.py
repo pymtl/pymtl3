@@ -22,9 +22,9 @@ class UnrollTickPass( BasePass ):
 
     schedule = top._sched.schedule
 
-    # Berkin IlBeyi's recipe
-    strs = list(map( "  update_blk{}() # {}".format, range( len(schedule) ), \
-                                              [ x.__name__ for x in schedule ] ))
+    # Berkin IlBeyi's recipe ( updated using f-strings and enumerate )
+    strs = [f"  update_blk{idx}() # {sched}" for idx, sched in \
+        enumerate([ x.__name__ for x in schedule ])]
     gen_tick_src = """
         {}
         def tick_unroll():
