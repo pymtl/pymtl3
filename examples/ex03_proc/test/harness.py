@@ -99,12 +99,12 @@ class TestHarness(Component):
       # For .mngr2proc sections, copy section into mngr2proc src
 
       if section.name == ".mngr2proc":
-        self.src.msgs.extend(Bits(32, bits[0]) for bits in struct.iter_unpack("<I", section.data))
+        self.src.msgs.extend(Bits32(bits[0]) for bits in struct.iter_unpack("<I", section.data))
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
-        self.sink.msgs.extend(Bits(32, bits[0]) for bits in struct.iter_unpack("<I", section.data))
+        self.sink.msgs.extend(Bits32(bits[0]) for bits in struct.iter_unpack("<I", section.data))
 
       # For all other sections, simply copy them into the memory
 
