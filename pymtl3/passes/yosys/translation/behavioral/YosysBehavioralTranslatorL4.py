@@ -41,4 +41,4 @@ class YosysBehavioralRTLIRToSVVisitorL4(
       return s.signal_expr_epilogue(node, "{value}.{attr}".format(**locals()))
 
     else:
-      return super( YosysBehavioralRTLIRToSVVisitorL4, s ).visit_Attribute( node )
+      return super().visit_Attribute( node )

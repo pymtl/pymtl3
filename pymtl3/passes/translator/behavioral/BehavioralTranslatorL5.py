@@ -17,10 +17,10 @@ from .BehavioralTranslatorL4 import BehavioralTranslatorL4
 
 class BehavioralTranslatorL5( BehavioralTranslatorL4 ):
   def __init__( s, top ):
-    super( BehavioralTranslatorL5, s ).__init__( top )
+    super().__init__( top )
 
   def clear( s, tr_top ):
-    super( BehavioralTranslatorL5, s ).clear( tr_top )
+    super().clear( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata
@@ -46,6 +46,6 @@ class BehavioralTranslatorL5( BehavioralTranslatorL4 ):
 
   # Override
   def translate_behavioral( s, m ):
-    super( BehavioralTranslatorL5, s ).translate_behavioral( m )
+    super().translate_behavioral( m )
     for child in m.get_child_components():
       s.translate_behavioral( child )

@@ -48,7 +48,7 @@ install:
 
 script:
  - autoflake --in-place --remove-duplicate-keys .
- - pyupgrade --keep-percent-format $(find . -name '*.py')
+ - pyupgrade --py3-only --keep-percent-format $(find . -name '*.py')
  - isort --apply --recursive ./pymtl3
  - flake8 --select=F --ignore=F401,F405,F403,F811,F821,F841
  - git diff --exit-code

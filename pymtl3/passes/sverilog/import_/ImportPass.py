@@ -12,7 +12,6 @@ import os
 import shutil
 import subprocess
 import sys
-from functools import reduce
 
 from pymtl3.datatypes import Bits, BitStruct, mk_bits
 from pymtl3.passes.BasePass import BasePass
@@ -970,7 +969,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return []
 
   def _get_c_dim( s, port ):
-    return reduce(lambda s, i: s+"[{}]".format(i), s._get_c_n_dim(port), "")
+    return "".join( f"[{i}]" for i in s._get_c_n_dim(port) )
 
   def _get_c_nbits( s, port ):
     if isinstance( port, rt.Array ):

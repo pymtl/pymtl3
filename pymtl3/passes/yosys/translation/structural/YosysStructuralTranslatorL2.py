@@ -49,7 +49,7 @@ class YosysStructuralTranslatorL2(
       else:
         ret = []
         dec_nbits = p_nbits // n_dim[0]
-        for i in reversed( list(range( n_dim[0])) ):
+        for i in reversed( range( n_dim[0]) ):
           ret += \
             _packed_gen(d, c_nbits, pid+"$__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
           c_nbits -= dec_nbits
@@ -215,7 +215,7 @@ class YosysStructuralTranslatorL2(
           assert False, "unrecognized data type {}!".format( dtype )
       else:
         ret = []
-        for i in reversed( list(range( n_dim[0])) ):
+        for i in reversed( range( n_dim[0]) ):
           _ret = _gen_packed_array( dtype, n_dim[1:], array[i] )
           ret.append( _ret["s_attr"] )
         if n_dim[0] > 1:

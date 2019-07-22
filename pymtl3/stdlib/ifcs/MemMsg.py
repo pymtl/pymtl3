@@ -68,7 +68,7 @@ def mk_mem_resp_msg( opq, data ):
   resp_cls.data_nbits = data
   return resp_cls
 
-class MemMsgType( object ):
+class MemMsgType:
   READ       = 0
   WRITE      = 1
   # write no-refill

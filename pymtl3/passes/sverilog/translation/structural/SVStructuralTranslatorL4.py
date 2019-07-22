@@ -3,8 +3,6 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-from functools import reduce
-
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.util.utility import make_indent
@@ -69,7 +67,7 @@ class SVStructuralTranslatorL4(
     }
 
   def rtlir_tr_subcomp_ifc_decls( s, _ifc_decls ):
-    _ifc_decls = reduce( lambda res,l: res+l, _ifc_decls, [] )
+    _ifc_decls = sum( _ifc_decls, [] )
     ifc_defs = [x['def'] for x in _ifc_decls]
     ifc_decls = [x['decl'] for x in _ifc_decls]
     return {
@@ -89,7 +87,7 @@ class SVStructuralTranslatorL4(
           'decl' : ports['decl'].format( **locals() )
         } ]
       else:
-        return reduce( lambda res, l: res + l, [gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
+        return sum( [gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
             c_n_dim+'$__'+str( idx ), ports ) for idx in range( n_dim[0] )], [] )
 
     n_dim = ifc_array_type[ 'n_dim' ]
@@ -97,7 +95,7 @@ class SVStructuralTranslatorL4(
       gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim, "", ports )
 
   def rtlir_tr_subcomp_decls( s, subcomps ):
-    subcomp_decls = reduce( lambda res, l: res+l, subcomps, [] )
+    subcomp_decls = sum( subcomps, [] )
     return '\n\n'.join( subcomp_decls )
 
   def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
@@ -129,8 +127,9 @@ class SVStructuralTranslatorL4(
         return [ tplt.format( **locals() ) ]
 
       else:
-        return reduce( lambda res, l: res+l, [gen_subcomp_array_decl( c_id,
-            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ) for idx in range( n_dim[0] )], [] )
+        return sum( [gen_subcomp_array_decl( c_id,
+            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ) \
+                for idx in range( n_dim[0] )], [] )
 
     # If `c_array_type` is not None we need to impelement an array of
     # components, each with their own connections for the ports.

@@ -13,7 +13,6 @@ RTLIR data type module.
 """
 import copy
 import inspect
-from functools import reduce
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, BitStruct
@@ -50,8 +49,7 @@ class Array( BaseRTLIRType ):
     assert not isinstance( sub_type, Array ), \
       "array subtype {} should not be array RTLIR type!".format( sub_type )
     assert len( dim_sizes ) >= 1, "array should be non-empty!"
-    assert reduce( lambda s, i: s+i, dim_sizes, 0 ) > 0, \
-      "array should have at least one element!"
+    assert sum( dim_sizes ) > 0, "array should have at least one element!"
     s.dim_sizes = dim_sizes
     s.sub_type = sub_type
     s.unpacked = unpacked
@@ -304,7 +302,7 @@ class Component( BaseRTLIRType ):
       file_name = inspect.getsourcefile( cls )
       line_no = inspect.getsourcelines( cls )[1]
       s.file_info = "File: {file_name}, Line: {line_no}".format( **locals() )
-    except IOError:
+    except OSError:
       s.file_info = "Dynamically generated component " + cls.__name__
 
   def _gen_parameters( s, obj ):
@@ -471,10 +469,8 @@ def _handle_Array( _id, _obj ):
   if len( obj ) == 0:
     return None
   ref_type = get_rtlir( obj[0] )
-  assert \
-    reduce( lambda res,i: res and (get_rtlir(i)==ref_type), obj, True ), \
-    'all elements of array {} must have the same type {}!'.format(
-      obj, ref_type )
+  assert all( get_rtlir(i) == ref_type for i in obj ), \
+    f'all elements of array {obj} must have the same type {ref_type}!'
   dim_sizes = []
   while isinstance( obj, list ):
     if len( obj ) == 0:

@@ -37,7 +37,7 @@ class BehavioralRTLIRGenL3Pass( BasePass ):
 
 class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL3, s ).__init__( component )
+    super().__init__( component )
 
   def visit_Call( s, node ):
     """Return behavioral RTLIR of a method call.
@@ -56,4 +56,4 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
       return ret
 
     else:
-      return super( BehavioralRTLIRGeneratorL3, s ).visit_Call( node )
+      return super().visit_Call( node )

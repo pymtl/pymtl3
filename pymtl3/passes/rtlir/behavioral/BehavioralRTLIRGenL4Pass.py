@@ -39,4 +39,4 @@ class BehavioralRTLIRGeneratorL4( BehavioralRTLIRGeneratorL3 ):
   levels.
   """
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL4, s ).__init__( component )
+    super().__init__( component )

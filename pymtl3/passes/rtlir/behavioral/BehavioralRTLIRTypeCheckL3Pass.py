@@ -36,8 +36,7 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
-    super(). \
-        __init__( component, freevars, accessed, tmpvars )
+    super().__init__( component, freevars, accessed, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (rt.Component, rt.Signal),
         'the base of an attribute must be one of: component, signal!' )
@@ -96,7 +95,7 @@ adding default values to the arguments.
         "BitStruct {} has {} fields but only {} arguments are given!". \
             format(cls.__name__, len(all_properties), len(node.values)) )
 
-    all_types = list(zip( node.values, all_properties ))
+    all_types = zip( node.values, all_properties )
     for idx, ( value, ( name, field ) ) in enumerate( all_types ):
       s.visit( value )
       # Expect each argument to be a signal

@@ -72,7 +72,7 @@ class Component( ComponentLevel7 ):
     ret = set()
     stack = []
     for (name, obj) in s.__dict__.items():
-      if   isinstance( name, str ): # python2 specific
+      if   isinstance( name, str ):
         if not name.startswith("_"): # filter private variables
           stack.append( obj )
     while stack:

@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from functools import reduce
-
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 import (
@@ -59,7 +57,7 @@ class YosysStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_port_decls( s, _port_decls ):
-    port_decl_list = reduce(lambda x, y: x + y, _port_decls, [])
+    port_decl_list = sum( _port_decls, [] )
     port_decls, wire_decls, connections = [], [], []
     for dct in port_decl_list:
       port_decls.append( dct["port_decls"] )

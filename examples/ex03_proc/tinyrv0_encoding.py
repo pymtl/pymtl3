@@ -285,7 +285,7 @@ tinyrv0_fields = \
 # assembly/disassembly functions. I am not sure if we still want to
 # refactor this here, but it is good enough for now.
 
-class IsaImpl (object):
+class IsaImpl :
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -743,7 +743,7 @@ def disassemble( mem_image ):
 # This is a concrete instruction class for TinyRV0 with methods for
 # accessing the various instruction fields.
 
-class TinyRV0Inst (object):
+class TinyRV0Inst :
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -843,7 +843,7 @@ class TinyRV0Inst (object):
   def __str__( self ):
     return disassemble_inst( self.bits )
 
-class RegisterFile(object):
+class RegisterFile:
 
   def __init__( self, nregs ):
     self.regs = [ Bits32(0) for i in range(nregs) ]

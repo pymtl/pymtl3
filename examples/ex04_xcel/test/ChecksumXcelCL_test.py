@@ -160,7 +160,7 @@ class TestHarness( Component ):
 #-------------------------------------------------------------------------
 # More adavanced testsing that uses test source and test sink.
 
-class ChecksumXcelCLSrcSink_Tests( object ):
+class ChecksumXcelCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test

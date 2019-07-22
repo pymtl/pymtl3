@@ -40,7 +40,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   """Visitor that translates RTLIR to SystemVerilog for a single upblk."""
 
   def __init__( s, is_reserved ):
-    super( BehavioralRTLIRToSVVisitorL2, s ).__init__( is_reserved )
+    super().__init__( is_reserved )
 
     # The dictionary of operator-character pairs
     s.ops = {

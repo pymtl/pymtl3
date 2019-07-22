@@ -30,12 +30,6 @@ while cur_dir:
     break
   cur_dir = os.path.dirname(cur_dir)
 
-# Import the RTL checksum unit
-
-
-# Import the translation pass from yosys backend
-
-
 #=========================================================================
 # Command line processing
 #=========================================================================

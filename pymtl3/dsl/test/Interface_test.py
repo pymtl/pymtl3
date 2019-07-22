@@ -7,7 +7,6 @@ Author : Shunning Jiang, Yanghui Ou
 Date   : Jan 1, 2018
 """
 from collections import deque
-from functools import reduce
 
 from pymtl3.datatypes import Bits1, Bits8, Bits128
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
@@ -174,7 +173,7 @@ def test_nested_port_bundle():
             s.sink.in_.msg += s.wire[i][j]
 
     def done( s ):
-      return reduce( lambda x,y: x or y.done(), s.src ) and s.sink.done()
+      return s.sink.done() and any( src.done() for src in s.src )
 
     def line_trace( s ):
       return "|".join( [ x.line_trace() for x in s.src] ) + " >>> " + \

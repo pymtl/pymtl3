@@ -209,7 +209,7 @@ class NamedObject:
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice
 
-          if   isinstance( name, str ): # python2 specific
+          if   isinstance( name, str ):
             if not name.startswith("_"): # filter private variables
               stack.append( obj )
 

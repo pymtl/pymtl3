@@ -77,7 +77,7 @@ class ComponentLevel5( ComponentLevel4 ):
     if isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ):
       s._connect_method_ports( o1, o2 )
     else:
-      super( ComponentLevel5, s )._connect_objects( o1, o2, internal )
+      super()._connect_objects( o1, o2, internal )
 
   def _resolve_method_connections( s ):
 
@@ -121,7 +121,7 @@ class ComponentLevel5( ComponentLevel4 ):
 
   # Override
   def _elaborate_declare_vars( s ):
-    super( ComponentLevel5, s )._elaborate_declare_vars()
+    super()._elaborate_declare_vars()
 
     s._dsl.all_method_ports = set()
 
