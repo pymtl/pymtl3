@@ -330,6 +330,9 @@ def closed_loop_component_test( dut, data, backend = "sverilog" ):
   # Method to feed data into the DUT
   def tv_in( model, test_vector ):
     for name, data in test_vector.items():
+      # `setattr` fails to set the correct value of an array if indexed by
+      # a subscript. We use `exec` here to make sure the value of elements
+      # are assigned correctly.
       exec( "model." + name + " = data" )
   test_vector = data.draw( DataStrategy( dut ) )
   closed_loop_component_input_test( dut, test_vector, tv_in, backend )
