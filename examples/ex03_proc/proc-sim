@@ -33,20 +33,18 @@ from examples.ex03_proc.tinyrv0_encoding import assemble
 from examples.ex03_proc.ubmark.proc_ubmark_cksum_roll import ubmark_cksum_roll
 from examples.ex03_proc.ubmark.proc_ubmark_vvadd_opt import ubmark_vvadd_opt
 from examples.ex03_proc.ubmark.proc_ubmark_vvadd_unopt import ubmark_vvadd_unopt
+
 from pymtl3 import *
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
+# Hack to add project root to python path
 sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while sim_dir:
   if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
     sys.path.insert(0,sim_dir)
     break
   sim_dir = os.path.dirname(sim_dir)
-
-
-
-
 
 #=========================================================================
 # Command line processing

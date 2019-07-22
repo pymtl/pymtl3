@@ -14,15 +14,17 @@
 # Author : Peitian Pan, Shunning Jiang, Christopher Batten
 # Date   : June 19, 2019
 
-# Hack to add project root to python path
-
 import argparse
 import os
 import sys
 
+# Import the RTL checksum unit
 from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
+
+# Import the translation pass from yosys backend
 from pymtl3.passes.yosys import TranslationPass
 
+# Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while cur_dir:
   if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):

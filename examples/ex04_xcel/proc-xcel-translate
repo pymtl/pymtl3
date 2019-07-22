@@ -22,24 +22,22 @@ import argparse
 import os
 import sys
 
+# Import the RTL processor, accelerators, and their composition
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.ProcRTL import ProcRTL
 from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 from examples.ex04_xcel.ProcXcel import ProcXcel
+
+# Import the translation pass from yosys backend
 from pymtl3.passes.yosys import TranslationPass
 
+# Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while cur_dir:
   if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):
     sys.path.insert(0, cur_dir)
     break
   cur_dir = os.path.dirname(cur_dir)
-
-# Import the RTL processor, accelerators, and their composition
-
-
-# Import the translation pass from yosys backend
-
 
 #=========================================================================
 # Command line processing
