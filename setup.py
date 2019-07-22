@@ -16,24 +16,17 @@ from setuptools import find_packages, setup
 #-------------------------------------------------------------------------
 # get_version
 #-------------------------------------------------------------------------
-# We use the output of git describe to create a version number. Note that
-# this will fail without a release tag because git describe will fail.
-# Eventually when we actually have tarball releases we will need to
-# also support using a separate RELEASE-VERSION file, but for now we
-# always install using pip git+https from GitHub so this shoud work fine.
 
 def get_version():
   # Check Python version compatibility
   import sys
   assert sys.version_info[0] > 2, "Python 2 is no longer supported!"
 
-  cmd = "git describe --dirty"
-  try:
-    result = check_output( cmd.split(),  ).strip()
-    if not isinstance(result, str):
-      result = result.decode()
-  except:
-    result = "?"
+  result = "?"
+  with open("pymtl3/__init__.py") as f:
+    for line in f:
+      if line.startswith("__version__"):
+        _, result, _ = line.split('"')
   return result
 
 #-------------------------------------------------------------------------
@@ -55,6 +48,7 @@ setup(
   version          = get_version(),
   description      = 'PyMTL 3 (Mamba): Python-based hardware generation, simulation, and verification framework',
   long_description = get_long_description(),
+  long_description_content_type="text/markdown",
   url              = 'https://github.com/cornell-brg/pymtl3',
   author           = 'Batten Research Group',
   author_email     = 'brg-pymtl@csl.cornell.edu',
@@ -65,14 +59,17 @@ setup(
 
   license='BSD',
 
-  # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
+  # Pip will block installation on unsupported versions of Python
+  python_requires=">=2.7",
 
+  # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
   classifiers=[
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Python :: 3 :: Only',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
+    'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',
   ],
 
   packages = find_packages(

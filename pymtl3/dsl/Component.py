@@ -36,7 +36,7 @@ class Component( ComponentLevel7 ):
       elif s._dsl.param_tree.leaf is None:
         kwargs = s._dsl.kwargs
       else:
-        kwargs = s._dsl.kwargs.copy()
+        kwargs = s._dsl.kwargs
         if "construct" in s._dsl.param_tree.leaf:
           more_args = s._dsl.param_tree.leaf[ "construct" ]
           kwargs.update( more_args )
