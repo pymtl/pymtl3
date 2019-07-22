@@ -60,7 +60,7 @@ setup(
   license='BSD',
 
   # Pip will block installation on unsupported versions of Python
-  python_requires=">=2.7",
+  python_requires=">=3.6",
 
   # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
   classifiers=[
@@ -92,7 +92,5 @@ setup(
     'pyparsing',
     'graphviz'
   ],
-
-  python_requires=">=3.5",
 
 )
