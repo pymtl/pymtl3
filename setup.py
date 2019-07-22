@@ -8,7 +8,6 @@ https://github.com/pypa/sampleproject/blob/master/setup.py
 
 from __future__ import absolute_import, division, print_function
 
-from codecs import open  # To use a consistent encoding
 from os import path
 from subprocess import check_output
 
@@ -24,6 +23,10 @@ from setuptools import find_packages, setup
 # always install using pip git+https from GitHub so this shoud work fine.
 
 def get_version():
+  # Check Python version compatibility
+  import sys
+  assert sys.version_info[0] > 2, "Python 2 is no longer supported!"
+
   cmd = "git describe --dirty"
   try:
     result = check_output( cmd.split(),  ).strip()
@@ -67,7 +70,7 @@ setup(
   classifiers=[
     'Development Status :: 3 - Alpha',
     'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3 :: Only',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
   ],
@@ -92,5 +95,7 @@ setup(
     'pyparsing',
     'graphviz'
   ],
+
+  python_requires=">=3.5",
 
 )
