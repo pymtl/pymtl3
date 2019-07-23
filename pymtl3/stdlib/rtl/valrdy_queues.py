@@ -14,7 +14,7 @@ class PipeQueue1RTL( Component ):
 
     s.next_full = Wire( int if Type is int else Bits1 )
     s.full      = Wire( int if Type is int else Bits1 )
-    s.connect( s.full, s.deq.val )
+    connect( s.full, s.deq.val )
 
     @s.update_on_edge
     def up_full():
@@ -106,7 +106,7 @@ class NormalQueue1RTL( Component ):
 
     s.next_full = Wire( int if Type is int else Bits1 )
     s.full      = Wire( int if Type is int else Bits1 )
-    s.connect( s.full, s.deq.val )
+    connect( s.full, s.deq.val )
 
     @s.update_on_edge
     def up_full():
@@ -155,22 +155,22 @@ class NormalQueueRTL( Component ):
 
     # Ctrl unit connections
 
-    s.connect( s.ctrl.enq_val,          s.enq.val          )
-    s.connect( s.ctrl.enq_rdy,          s.enq.rdy          )
-    s.connect( s.ctrl.deq_val,          s.deq.val          )
-    s.connect( s.ctrl.deq_rdy,          s.deq.rdy          )
-    s.connect( s.ctrl.num_free_entries, s.num_free_entries )
+    connect( s.ctrl.enq_val,          s.enq.val          )
+    connect( s.ctrl.enq_rdy,          s.enq.rdy          )
+    connect( s.ctrl.deq_val,          s.deq.val          )
+    connect( s.ctrl.deq_rdy,          s.deq.rdy          )
+    connect( s.ctrl.num_free_entries, s.num_free_entries )
 
     # Dpath unit connections
 
-    s.connect( s.dpath.enq_bits, s.enq.msg    )
-    s.connect( s.dpath.deq_bits, s.deq.msg    )
+    connect( s.dpath.enq_bits, s.enq.msg    )
+    connect( s.dpath.deq_bits, s.deq.msg    )
 
     # Control Signal connections (ctrl -> dpath)
 
-    s.connect( s.dpath.wen,      s.ctrl.wen   )
-    s.connect( s.dpath.waddr,    s.ctrl.waddr )
-    s.connect( s.dpath.raddr,    s.ctrl.raddr )
+    connect( s.dpath.wen,      s.ctrl.wen   )
+    connect( s.dpath.waddr,    s.ctrl.waddr )
+    connect( s.dpath.raddr,    s.ctrl.raddr )
 
   def line_trace( s ):
     return "{} () {}".format( s.enq, s.deq )
@@ -198,11 +198,11 @@ class NormalQueueRTLDpath( Component ):
 
     # Connect queue storage
 
-    s.connect( s.queue.raddr[0], s.raddr    )
-    s.connect( s.queue.rdata[0], s.deq_bits )
-    s.connect( s.queue.wen[0],   s.wen      )
-    s.connect( s.queue.waddr[0], s.waddr    )
-    s.connect( s.queue.wdata[0], s.enq_bits )
+    connect( s.queue.raddr[0], s.raddr    )
+    connect( s.queue.rdata[0], s.deq_bits )
+    connect( s.queue.wen[0],   s.wen      )
+    connect( s.queue.waddr[0], s.waddr    )
+    connect( s.queue.wdata[0], s.enq_bits )
 
 #-----------------------------------------------------------------------
 # NormalQueueRTLCtrl

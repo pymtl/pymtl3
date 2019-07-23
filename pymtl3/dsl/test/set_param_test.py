@@ -8,6 +8,7 @@ Date   : May 28, 2019
 """
 from pymtl3.datatypes.bits_import import Bits4, Bits8
 from pymtl3.dsl.Component import Component
+from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.Connectable import InPort, OutPort
 from pymtl3.dsl.NamedObject import NamedObject
 
@@ -152,8 +153,8 @@ def test_component():
       s.incrs = [ Incr( DataType=DataType ) for _ in range( num_incrs ) ]
 
       for i in range( num_incrs ):
-        s.connect( s.in_[i], s.incrs[i].in_ )
-        s.connect( s.out[i], s.incrs[i].out )
+        connect( s.in_[i], s.incrs[i].in_ )
+        connect( s.out[i], s.incrs[i].out )
 
   A = Incr()
   A.set_param( "top.construct", DataType=Bits8, incr_value=2 )

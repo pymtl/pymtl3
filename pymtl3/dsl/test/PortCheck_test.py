@@ -7,7 +7,7 @@ Author : Shunning Jiang
 Date   : Dec 25, 2017
 """
 from pymtl3.datatypes import Bits32
-from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
+from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import SignalTypeError
 
@@ -251,7 +251,7 @@ def test_legal_port_connect():
     def construct( s ):
       s.i = InWrap()
       s.o = OutWrap()
-      s.connect( s.o.out, s.i.in_ )
+      connect( s.o.out, s.i.in_ )
 
   _test_model( Top )
 
@@ -271,7 +271,7 @@ def test_illegal_same_host():
 
       s.in_ = InPort(int)
 
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
 
   class Top( ComponentLevel3 ):
     def construct( s ):
@@ -334,7 +334,7 @@ def test_illegal_wrhost_is_rdhost_parent():
     def construct( s ):
       s.a = A()
       s.b = BWrap()
-      s.connect( s.a.out, s.b.in_ )
+      connect( s.a.out, s.b.in_ )
 
   try:
     _test_model( Top )
@@ -368,7 +368,7 @@ def test_illegal_hosts_same_parent():
     def construct( s ):
       s.a = A()
       s.b = BWrap()
-      s.connect( s.a.out, s.b.in_ )
+      connect( s.a.out, s.b.in_ )
 
   try:
     _test_model( Top )
@@ -396,7 +396,7 @@ def test_illegal_hosts_too_far():
       s.wire = Wire(int)
       s.A = AWrap()
 
-      s.connect( s.wire, s.A.A.out )
+      connect( s.wire, s.A.A.out )
 
   try:
     _test_model( Top )

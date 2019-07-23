@@ -7,7 +7,7 @@ Author : Shunning Jiang
 Date   : Aug 23, 2018
 """
 from pymtl3.datatypes import Bits2, Bits4, Bits14, Bits16, Bits24, Bits32
-from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
+from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import Wire
 from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
@@ -494,7 +494,7 @@ def test_connect_rd_As_wr_x_conn_A_impl():
       s.x  = Wire( Bits32 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.A, s.x )
+      connect( s.A, s.x )
 
       @s.update
       def up_wr_x():
@@ -515,7 +515,7 @@ def test_connect_rd_As_wr_x_conn_At_impl():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.A[0:24], s.x )
+      connect( s.A[0:24], s.x )
 
       @s.update
       def up_wr_x():
@@ -536,7 +536,7 @@ def test_connect_rd_As_wr_x_conn_At_disjoint():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.A[0:24], s.x )
+      connect( s.A[0:24], s.x )
 
       @s.update
       def up_wr_x():
@@ -565,7 +565,7 @@ def test_connect_wr_As_rd_x_conn_A_mark_writer():
       s.x  = Wire( Bits32 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.x, s.A )
+      connect( s.x, s.A )
 
       @s.update
       def up_wr_As():
@@ -582,7 +582,7 @@ def test_connect_wr_As_wr_x_conn_A_conflict():
       s.x  = Wire( Bits32 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.x, s.A )
+      connect( s.x, s.A )
 
       @s.update
       def up_wr_As():
@@ -608,7 +608,7 @@ def test_connect_wr_As_rd_x_conn_At_mark_writer():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.x, s.A[8:32] )
+      connect( s.x, s.A[8:32] )
 
       @s.update
       def up_wr_As():
@@ -625,7 +625,7 @@ def test_connect_wr_As_rd_x_conn_At_no_driver():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.x, s.A[8:32] )
+      connect( s.x, s.A[8:32] )
 
       @s.update
       def up_wr_As():
@@ -647,7 +647,7 @@ def test_connect_wr_As_wr_x_conn_At_conflict():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.x, s.A[8:32] )
+      connect( s.x, s.A[8:32] )
 
       @s.update
       def up_wr_As():
@@ -673,7 +673,7 @@ def test_connect_wr_As_wr_x_conn_At_disjoint():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.x, s.A[8:32] )
+      connect( s.x, s.A[8:32] )
 
       @s.update
       def up_wr_As():
@@ -698,7 +698,7 @@ def test_connect_wr_x_conn_As_rd_A_impl():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.A[8:32], s.x )
+      connect( s.A[8:32], s.x )
 
       @s.update
       def up_wr_x():
@@ -720,8 +720,8 @@ def test_connect_wr_x_conn_As_wr_A_conflict():
       s.y  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.x, s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.x, s.y )
 
       @s.update
       def up_wr_x():
@@ -747,7 +747,7 @@ def test_connect_rd_x_conn_As_wr_A_mark_writer():
       s.x  = Wire( Bits24 )
       s.A  = Wire( Bits32 )
 
-      s.connect( s.A[8:32], s.x )
+      connect( s.A[8:32], s.x )
 
       @s.update
       def up_wr_A():
@@ -769,8 +769,8 @@ def test_connect_wr_x_conn_As_wr_y_conn_A_conflict():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits32 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A      , s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A      , s.y )
 
       @s.update
       def up_wr_x():
@@ -797,8 +797,8 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_conflict():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits16 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A[0:16], s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A[0:16], s.y )
 
       @s.update
       def up_wr_x():
@@ -825,8 +825,8 @@ def test_connect_wr_x_conn_As_wr_y_conn_At_disjoint():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits4 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A[0:4],  s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A[0:4],  s.y )
 
       @s.update
       def up_wr_x():
@@ -852,8 +852,8 @@ def test_connect_wr_x_conn_As_rd_y_conn_A_mark_writer():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits32 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A,       s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A,       s.y )
 
       @s.update
       def up_wr_x():
@@ -875,8 +875,8 @@ def test_connect_rd_x_conn_As_wr_y_conn_A_mark_writer():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits32 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A,       s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A,       s.y )
 
       @s.update
       def up_rd_x():
@@ -898,8 +898,8 @@ def test_connect_rd_x_conn_As_wr_y_conn_At_mark_writer():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits16 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A[0:16], s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A[0:16], s.y )
 
       @s.update
       def up_rd_x():
@@ -921,8 +921,8 @@ def test_connect_rd_x_conn_As_wr_y_conn_no_driver():
       s.A  = Wire( Bits32 )
       s.y  = Wire( Bits4 )
 
-      s.connect( s.A[8:32], s.x )
-      s.connect( s.A[0:4 ], s.y )
+      connect( s.A[8:32], s.x )
+      connect( s.A[0:4 ], s.y )
 
       @s.update
       def up_rd_x():
@@ -949,9 +949,9 @@ def test_iterative_find_nets():
       s.y  = Wire( Bits32 )
       s.z  = Wire( Bits32 )
 
-      s.connect( s.w[0:16],  s.x[8:24] ) # net1
-      s.connect( s.x[16:32], s.y[0:16] ) # net2
-      s.connect( s.y[8:24],  s.z[0:16] ) # net3
+      connect( s.w[0:16],  s.x[8:24] ) # net1
+      connect( s.x[16:32], s.y[0:16] ) # net2
+      connect( s.y[8:24],  s.z[0:16] ) # net3
 
       @s.update
       def up_wr_s_w():
@@ -969,11 +969,11 @@ def test_multiple_sibling_slices():
       s.y  = Wire( Bits16 )
       s.z  = Wire( Bits16 )
 
-      s.connect( s.A[0:16], s.x ) # net1
+      connect( s.A[0:16], s.x ) # net1
 
-      s.connect( s.A[8:24], s.y ) # net2
+      connect( s.A[8:24], s.y ) # net2
 
-      s.connect( s.A[16:32], s.z ) # net3
+      connect( s.A[16:32], s.z ) # net3
 
       @s.update
       def up_wr_s_w():
@@ -992,7 +992,7 @@ def test_multiple_write_same_slice():
     def construct( s ):
       s.out = Wire( Bits32 )
       s.wire = Wire( Bits32 )
-      s.connect( s.out, s.wire[0:32] )
+      connect( s.out, s.wire[0:32] )
 
       @s.update
       def comb_upblk():
@@ -1008,10 +1008,10 @@ def test_multiple_write_same_slice_with_overlap():
     def construct( s ):
       s.out = Wire( Bits32 )
       s.wire = Wire( Bits32 )
-      s.connect( s.out, s.wire[0:32] )
+      connect( s.out, s.wire[0:32] )
 
       s.wire2 = Wire( Bits24 )
-      s.connect( s.wire2[0:24], s.wire[8:32] )
+      connect( s.wire2[0:24], s.wire[8:32] )
 
       @s.update
       def comb_upblk():

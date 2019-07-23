@@ -63,20 +63,19 @@ class TestHarness(Component):
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
 
-    s.dut  = ProcXcel( proc_cls, xcel_cls )
+    s.dut  = ProcXcel( proc_cls, xcel_cls )( commit_inst = s.commit_inst )
 
     s.mem  = MemoryCL(2, latency = mem_latency)
 
-    # Processor <-> Proc/Mngr
-    s.connect( s.dut.commit_inst, s.commit_inst )
+    connect_pairs(
+      # Processor <-> Proc/Mngr
+      s.src.send, s.dut.mngr2proc,
+      s.dut.proc2mngr, s.sink.recv,
 
-    s.connect( s.src.send, s.dut.mngr2proc )
-    s.connect( s.dut.proc2mngr, s.sink.recv )
-
-    # Processor <-> Memory
-
-    s.connect( s.proc.imem,  s.mem.ifc[0] )
-    s.connect( s.proc.dmem,  s.mem.ifc[1] )
+      # Processor <-> Memory
+      s.proc.imem,  s.mem.ifc[0],
+      s.proc.dmem,  s.mem.ifc[1],
+    )
 
   #-----------------------------------------------------------------------
   # load

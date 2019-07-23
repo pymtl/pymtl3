@@ -4,7 +4,7 @@
 """Test the SystemVerilog translator."""
 
 from pymtl3.datatypes import Bits1, Bits4, Bits32, Bits64, concat, sext, zext
-from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
@@ -455,8 +455,8 @@ def test_port_wire( do_test ):
       s.in_ = InPort( Bits32 )
       s.wire_ = Wire( Bits32 )
       s.out = OutPort( Bits32 )
-      s.connect( s.in_, s.wire_ )
-      s.connect( s.wire_, s.out )
+      connect( s.in_, s.wire_ )
+      connect( s.wire_, s.out )
   a = A()
   a._ref_src = \
 """
@@ -481,7 +481,7 @@ def test_connect_constant( do_test ):
   class A( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
-      s.connect( 42, s.out )
+      connect( 42, s.out )
   a = A()
   a._ref_src = \
 """
@@ -504,7 +504,7 @@ def test_port_const_unaccessed( do_test ):
     def construct( s ):
       s.STATE_IDLE = 42
       s.out = OutPort( Bits32 )
-      s.connect( s.STATE_IDLE, s.out )
+      connect( s.STATE_IDLE, s.out )
   a = A()
   a._ref_src = \
 """
@@ -528,7 +528,7 @@ def test_port_const_accessed( do_test ):
       s.STATE_IDLE = 42
       s.out_1 = OutPort( Bits32 )
       s.out_2 = OutPort( Bits32 )
-      s.connect( s.STATE_IDLE, s.out_1 )
+      connect( s.STATE_IDLE, s.out_1 )
       @s.update
       def upblk():
         s.out_2 = s.STATE_IDLE
@@ -591,7 +591,7 @@ def test_port_const_array( do_test ):
       s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       s.tmp = OutPort( Bits32 )
       for i in range(5):
-        s.connect( s.STATES[i], s.out[i] )
+        connect( s.STATES[i], s.out[i] )
       @s.update
       def upblk():
         s.tmp = s.STATES[0]
@@ -670,7 +670,7 @@ def test_port_bit_selection( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
-      s.connect( s.out, s.in_[2] )
+      connect( s.out, s.in_[2] )
   a = A()
   a._ref_src = \
 """
@@ -694,7 +694,7 @@ def test_port_part_selection( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits4 )
-      s.connect( s.out, s.in_[2:6] )
+      connect( s.out, s.in_[2:6] )
   a = A()
   a._ref_src = \
 """
@@ -719,8 +719,8 @@ def test_port_wire_array_index( do_test ):
       s.out = [ OutPort( Bits32 ) for _ in range(5) ]
       s.wire_ = [ Wire(Bits32) for _ in range(5) ]
       for i in range(5):
-        s.connect( s.wire_[i], s.out[i] )
-        s.connect( s.wire_[i], i )
+        connect( s.wire_[i], s.out[i] )
+        connect( s.wire_[i], i )
   a = A()
   a._ref_src = \
 """

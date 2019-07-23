@@ -116,8 +116,8 @@ class TestSinkRTL( Component ):
                             arrival_time )
     s.adapter = RecvRTL2SendCL( Type )
 
-    s.connect( s.recv,         s.adapter.recv )
-    s.connect( s.adapter.send, s.sink.recv    )
+    connect( s.recv,         s.adapter.recv )
+    connect( s.adapter.send, s.sink.recv    )
 
   def done( s ):
     return s.sink.done()

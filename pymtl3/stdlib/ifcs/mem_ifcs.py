@@ -9,6 +9,7 @@
 from greenlet import greenlet
 
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 
 from .MemMsg import MemMsgType, mk_mem_msg
 from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
@@ -31,7 +32,7 @@ class MemMasterIfcFL( Interface ):
         parent.MemIfcFL2CL_count = 0
         parent.MemIfcFL2CL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         s,       m.left,
         m.right, other,
       )
@@ -48,7 +49,7 @@ class MemMasterIfcFL( Interface ):
         parent.MemIfcFL2RTL_count = 0
         parent.MemIfcFL2RTL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         s,       m.left,
         m.right, other,
       )
@@ -74,7 +75,7 @@ class MemMinionIfcFL( Interface ):
         parent.MemIfcCL2FL_count = 0
         parent.MemIfcCL2FL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,   m.left,
         m.right, other,
       )
@@ -91,7 +92,7 @@ class MemMinionIfcFL( Interface ):
         parent.MemIfcRTL2FL_count = 0
         parent.MemIfcRTL2FL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,   m.left,
         m.right, s,
       )
@@ -306,7 +307,7 @@ class MemIfcFL2RTLAdapter( Component ):
     s.fl2cl       = MemIfcFL2CLAdapter( req_class, resp_class )
     s.req_cl2rtl  = RecvCL2SendRTL( req_class )
     s.resp_rtl2cl = RecvRTL2SendCL( resp_class)
-    s.connect( s.left, s.fl2cl.left )
+    connect( s.left, s.fl2cl.left )
     s.connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,
       s.req_cl2rtl.send, s.right.req,

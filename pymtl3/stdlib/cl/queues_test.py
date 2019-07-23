@@ -26,7 +26,7 @@ class TestHarness( Component ):
     s.dut     = DutType()
     s.sink    = TestSinkCL( MsgType, sink_msgs )
 
-    s.connect( s.src.send, s.dut.enq )
+    connect( s.src.send, s.dut.enq )
 
     @s.update
     def up_deq_send():

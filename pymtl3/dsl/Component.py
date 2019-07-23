@@ -51,8 +51,8 @@ class Component( ComponentLevel7 ):
       # correct connection.
       parent = s.get_parent_object()
       if parent is not None:
-        parent.connect( s.clk, parent.clk )
-        parent.connect( s.reset, parent.reset )
+        parent._connect_signal_signal( s.clk, parent.clk )
+        parent._connect_signal_signal( s.reset, parent.reset )
 
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()
@@ -105,10 +105,13 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
+    top._dsl.elaborate_stack = [ parent ]
+
     # Check if we are adding obj to a list of to a component
     if not indices:
       # If we are adding field s.x, we simply reuse the setattr hook
       assert not hasattr( s, name )
+
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       setattr( parent, name, obj )
       del NamedObject.__setattr__
@@ -158,15 +161,19 @@ class Component( ComponentLevel7 ):
       obj._dsl._my_name     = name
       obj._dsl._my_indices  = indices
 
+      obj._dsl.elaborate_top = top
+      top._dsl.elaborate_stack.append( obj )
+
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       obj._construct()
       del NamedObject.__setattr__
+
+      top._dsl.elaborate_stack.pop()
 
     added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
 
     # First elaborate all functions to spawn more named objects
     for c in added_components:
-      c._dsl.elaborate_top = top
       c._elaborate_read_write_func()
 
     added_signals, added_method_ports = \
@@ -183,9 +190,6 @@ class Component( ComponentLevel7 ):
 
     for c in added_components:
       top._collect_vars( c )
-
-    for c in added_signals | added_method_ports:
-      c._dsl.elaborate_top = top
 
     # Lazy -- to avoid resolve_connection call which takes non-trivial
     # time upon adding any connect, I just mark pending here. Whenever you
@@ -223,6 +227,8 @@ class Component( ComponentLevel7 ):
 
     for func, obj_name in provided_func_calls:
       parent._dsl.func_calls[func].add( eval(obj_name) )
+
+    del top._dsl.elaborate_stack
 
   def _delete_component( top, obj ):
 
@@ -375,8 +381,10 @@ class Component( ComponentLevel7 ):
 
       for x in removed_components:
         del x._dsl.parent_obj
+        del x._dsl.elaborate_top
       for x in removed_connectables:
         del x._dsl.parent_obj
+        del x._dsl.elaborate_top
         x._dsl.full_name = "<deleted>"+x._dsl.full_name
       for y in removed_consts:
         del y._dsl.parent_obj
@@ -681,7 +689,7 @@ class Component( ComponentLevel7 ):
       raise NotElaboratedError()
 
     try:
-      s._connect_objects( o1, o2 )
+      s._connect( o1, o2, internal=False )
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
@@ -699,7 +707,7 @@ class Component( ComponentLevel7 ):
 
     for i in range(len(args)>>1):
       try:
-        s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
+        s._connect( args[ i<<1 ], args[ (i<<1)+1 ], internal=False )
       except InvalidConnectionError as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )

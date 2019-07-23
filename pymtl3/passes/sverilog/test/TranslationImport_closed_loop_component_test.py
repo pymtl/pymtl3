@@ -12,7 +12,7 @@ import pytest
 from hypothesis import HealthCheck, given, reproduce_failure, settings
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, BitStruct, clog2, mk_bits
-from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire
+from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..util.test_utility import closed_loop_component_test
@@ -71,7 +71,7 @@ def test_struct( do_test, data ):
     def construct( s ):
       s.in_ = InPort( strc )
       s.out = OutPort( Bits32 )
-      s.connect( s.out, s.in_.foo )
+      connect( s.out, s.in_.foo )
     def line_trace( s ): return "out = " + str( s.out )
   a = A()
   a._data = data
@@ -100,8 +100,8 @@ def test_nested_struct( do_test, data ):
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
         s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
-      s.connect( s.out_foo, s.in_.foo )
-      s.connect( s.out_bar, s.in_.inner.bar )
+      connect( s.out_foo, s.in_.foo )
+      connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
   a._data = data
@@ -121,7 +121,7 @@ def test_subcomp( do_test, data ):
   class B( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
-      s.connect( s.out, 0 )
+      connect( s.out, 0 )
   class A( Component ):
     def construct( s ):
       s.b = B()
@@ -135,8 +135,8 @@ def test_subcomp( do_test, data ):
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
         s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
-      s.connect( s.out_foo, s.b.out )
-      s.connect( s.out_bar, s.in_.inner.bar )
+      connect( s.out_foo, s.b.out )
+      connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
   a = A()
   a._data = data

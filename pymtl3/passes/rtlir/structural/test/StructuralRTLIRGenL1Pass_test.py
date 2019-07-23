@@ -78,8 +78,8 @@ def test_L1_connection_order():
       s.in_2 = dsl.InPort( Bits32 )
       s.out1 = dsl.OutPort( Bits32 )
       s.out2 = dsl.OutPort( Bits32 )
-      s.connect( s.in_1, s.out1 )
-      s.connect( s.in_2, s.out2 )
+      dsl.connect( s.in_1, s.out1 )
+      dsl.connect( s.in_2, s.out2 )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -94,7 +94,7 @@ def test_L1_port_index():
     def construct( s ):
       s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.in_[2], s.out )
+      dsl.connect( s.in_[2], s.out )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -109,9 +109,9 @@ def test_L1_wire_index():
       s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
       s.wire = [ dsl.Wire( Bits32 ) for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.wire[2], s.out )
+      dsl.connect( s.wire[2], s.out )
       for i in range(5):
-        s.connect( s.wire[i], s.in_[i] )
+        dsl.connect( s.wire[i], s.in_[i] )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -125,7 +125,7 @@ def test_L1_const_index():
     def construct( s ):
       s.const = [ 42 for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.const[2], s.out )
+      dsl.connect( s.const[2], s.out )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -141,7 +141,7 @@ def test_L1_bit_selection():
     def construct( s ):
       s.in_ = dsl.InPort( Bits32 )
       s.out = dsl.OutPort( Bits1 )
-      s.connect( s.in_[0], s.out )
+      dsl.connect( s.in_[0], s.out )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -156,7 +156,7 @@ def test_L1_part_selection():
     def construct( s ):
       s.in_ = dsl.InPort( Bits32 )
       s.out = dsl.OutPort( Bits4 )
-      s.connect( s.in_[4:8], s.out )
+      dsl.connect( s.in_[4:8], s.out )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )
@@ -169,7 +169,7 @@ def test_L1_bits_connection():
   class A( dsl.Component ):
     def construct( s ):
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.out, Bits32(0) )
+      dsl.connect( s.out, Bits32(0) )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( *gen_connections( a ) ) )

@@ -77,8 +77,8 @@ class TestHarness( Component ):
     s.dut  = QType( MsgType )
     s.sink = TestSinkRTL( MsgType, sink_msgs )
 
-    s.connect( s.src.send, s.dut.enq   )
-    s.connect( s.dut.deq,  s.sink.recv )
+    connect( s.src.send, s.dut.enq   )
+    connect( s.dut.deq,  s.sink.recv )
 
   def done( s ):
     return s.src.done() and s.sink.done()

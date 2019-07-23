@@ -26,7 +26,7 @@ class TestHarnessSimple( Component ):
     s.src  = SrcType ( MsgType, src_msgs  )
     s.sink = SinkType( MsgType, sink_msgs )
 
-    s.connect( s.src.send, s.sink.recv  )
+    connect( s.src.send, s.sink.recv  )
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -152,7 +152,7 @@ class TestHarness( Component ):
 
     # Connections
     for i in range(s.num_pairs):
-      s.connect( s.srcs[i].send, s.sinks[i].recv )
+      connect( s.srcs[i].send, s.sinks[i].recv )
 
   def done( s ):
     for i in range(s.num_pairs):

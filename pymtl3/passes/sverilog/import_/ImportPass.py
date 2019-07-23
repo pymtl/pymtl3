@@ -549,7 +549,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     _lhs, _rhs = s._verilator_name(lhs), s._verilator_name(rhs)
-    ret = ["s.connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )".format(**locals())]
+    ret = ["connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )".format(**locals())]
     return ret, r
 
   def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):

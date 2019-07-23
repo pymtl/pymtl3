@@ -6,7 +6,7 @@
 """Test the level 3 yosys-SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits32, BitStruct
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
@@ -53,8 +53,8 @@ def test_ifc_array( do_test ):
       s.out = [ OutValRdy( Bits32 ) for _ in range(2) ]
       s.sel = InPort( Bits1 )
       s.out_sel = OutPort( Bits32 )
-      s.connect( s.out[0], s.in_[1] )
-      s.connect( s.out[1], s.in_[0] )
+      connect( s.out[0], s.in_[1] )
+      connect( s.out[1], s.in_[0] )
       @s.update
       def upblk():
         s.out_sel = s.in_[ s.sel ].msg
@@ -139,7 +139,7 @@ def test_struct_ifc( do_test ):
     def construct( s ):
       s.in_ = [ Ifc() for _ in range(2) ]
       s.out = OutPort( Bits32 )
-      s.connect( s.out, s.in_[1].foo.bar )
+      connect( s.out, s.in_[1].foo.bar )
   a = A()
   a._ref_ifcs_port_yosys = { a : \
 """\

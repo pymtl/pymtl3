@@ -2,6 +2,7 @@
 from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl.Component import Component
+from .dsl.ComponentLevel3 import connect
 from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
 from .dsl.ComponentLevel7 import blocking
@@ -23,7 +24,7 @@ __version__ = "0.1.1"
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
-  'method_port',
+  'connect', 'method_port',
   'non_blocking', 'NonBlockingCalleeIfc', 'NonBlockingCallerIfc', 'blocking',
 
   'SimpleSim', 'DynamicSim', 'SimulationPass',
