@@ -6,7 +6,7 @@
 """Test the level 1 structural translators."""
 
 from pymtl3.datatypes import Bits1, Bits4, Bits16, Bits32
-from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
@@ -453,7 +453,7 @@ def test_expr_bit_sel( do_test ):
     def construct( s ):
       s.foo = InPort( Bits32 )
       s.bar = OutPort( Bits1 )
-      s.connect( s.bar, s.foo[1] )
+      connect( s.bar, s.foo[1] )
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -496,7 +496,7 @@ def test_expr_part_sel( do_test ):
     def construct( s ):
       s.foo = InPort( Bits32 )
       s.bar = OutPort( Bits4 )
-      s.connect( s.bar, s.foo[0:4] )
+      connect( s.bar, s.foo[0:4] )
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -539,7 +539,7 @@ def test_expr_port_array_index( do_test ):
     def construct( s ):
       s.foo = [ InPort( Bits32 ) for _ in range(5) ]
       s.bar = OutPort( Bits32 )
-      s.connect( s.bar, s.foo[1] )
+      connect( s.bar, s.foo[1] )
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -582,7 +582,7 @@ def test_expr_wire_array_index( do_test ):
     def construct( s ):
       s.wire = [ Wire( Bits32 ) for _ in range(5) ]
       s.bar = OutPort( Bits32 )
-      s.connect( s.bar, s.wire[1] )
+      connect( s.bar, s.wire[1] )
       @s.update
       def upblk():
         for i in range(5):
@@ -636,7 +636,7 @@ def test_expr_const_array_index( do_test ):
     def construct( s ):
       s.const = [ 0 for _ in range(5) ]
       s.bar = OutPort( Bits32 )
-      s.connect( s.bar, s.const[1] )
+      connect( s.bar, s.const[1] )
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():

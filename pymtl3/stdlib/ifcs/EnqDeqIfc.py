@@ -8,6 +8,7 @@ Author: Yanghui Ou
   Date: Mar 21, 2019
 """
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.rtl import And
 
 from .GetGiveIfc import GiveIfcRTL
@@ -34,7 +35,7 @@ class DeqIfcRTL( GiveIfcRTL ):
     # We are doing DeqIfcRTL (s) -> [ AND ] -> RecvIfcRTL (other)
     # Basically we AND the rdy of both sides for enable
     if isinstance( other, RecvIfcRTL ):
-      parent.connect( s.msg, other.msg )
+      connect( s.msg, other.msg )
 
       m = And( Bits1 )
 
@@ -45,7 +46,7 @@ class DeqIfcRTL( GiveIfcRTL ):
         parent.deq_recv_ander_cnt = 0
         parent.deq_recv_ander_0   = m
 
-      parent.connect_pairs(
+      connect_pairs(
         m.in0, s.rdy,
         m.in1, other.rdy,
         m.out, s.en,

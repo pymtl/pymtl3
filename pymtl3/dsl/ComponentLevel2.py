@@ -505,7 +505,7 @@ class ComponentLevel2( ComponentLevel1 ):
     for c in s._collect_all( [ lambda s: isinstance( s, ComponentLevel2 ) ] )[0]:
       c._elaborate_read_write_func()
 
-    s._elaborate_collect_and_mark_all_named_objects()
+    s._elaborate_collect_all_named_objects()
 
     s._elaborate_declare_vars()
     s._elaborate_collect_all_vars()

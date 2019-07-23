@@ -45,8 +45,7 @@ class ChecksumCL( Component ):
     #; the checksum using the checksum function from ChecksumFL, and
     #; send the result through the send interface.
 
-    s.in_q = PipeQueueCL( num_entries=2 )
-    s.connect( s.recv, s.in_q.enq )
+    s.in_q = PipeQueueCL( num_entries=2 )( enq = s.recv )
 
     @s.update
     def up_checksum_cl():

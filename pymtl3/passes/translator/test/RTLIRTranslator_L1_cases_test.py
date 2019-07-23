@@ -6,7 +6,7 @@
 """Test the RTLIR transaltor."""
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.dsl import Component, InPort, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 
 from ..behavioral.test.BehavioralTranslatorL1_test import *
@@ -31,7 +31,7 @@ def test_bit_sel_over_bit_sel( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
-      s.connect( s.out, s.in_[1][0] )
+      connect( s.out, s.in_[1][0] )
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
     do_test( A() )
 
@@ -40,7 +40,7 @@ def test_bit_sel_over_part_sel( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
-      s.connect( s.out, s.in_[0:4][0] )
+      connect( s.out, s.in_[0:4][0] )
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
     do_test( A() )
 
@@ -49,7 +49,7 @@ def test_part_sel_over_bit_sel( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
-      s.connect( s.out, s.in_[1][0:1] )
+      connect( s.out, s.in_[1][0:1] )
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
     do_test( A() )
 
@@ -58,6 +58,6 @@ def test_part_sel_over_part_sel( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
-      s.connect( s.out, s.in_[0:4][0:1] )
+      connect( s.out, s.in_[0:4][0:1] )
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
     do_test( A() )

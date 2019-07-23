@@ -29,8 +29,8 @@ class TestHarness( Component ):
 
     # Connect
 
-    s.connect( s.src.send, s.q.enq )
-    s.connect( s.sink.recv, s.q.deq )
+    connect( s.src.send, s.q.enq )
+    connect( s.sink.recv, s.q.deq )
 
   def done( s ):
     return s.src.done() and s.sink.done()

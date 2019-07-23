@@ -13,6 +13,7 @@ from pymtl3.datatypes import Bits, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
+from .Placeholder import Placeholder
 
 
 class Connectable:
@@ -33,6 +34,61 @@ class Connectable:
         return s._dsl.host
       except AttributeError:
         raise NotElaboratedError()
+
+  def __ifloordiv__( s, other ):
+    # Currently this basically implements connect( s, other ), but to
+    # avoid circular import, we replicate the implementation of connect.
+
+    host, s_connectable, o_connectable = _connect_check( s, other, internal=False )
+    host._connect_dispatch( s, other, s_connectable, o_connectable )
+    return s
+
+def _connect_check( o1, o2, internal ):
+  """ Note that internal=False means we are just calling this API
+      internally so that we don't connect other unconnectable fields by
+      name in the interface."""
+
+  o1_connectable = False
+  o2_connectable = False
+  top = None
+
+  # Get access to the top level component by identifying a connectable
+
+  if isinstance( o1, Connectable ):
+    o1_connectable = True
+    top = o1._dsl.elaborate_top
+
+  if isinstance( o2, Connectable ):
+    o2_connectable = True
+    o2_top = o2._dsl.elaborate_top
+
+    if o1_connectable: assert o2._dsl.elaborate_top is top
+    else:              top = o2_top
+
+  if not o1_connectable and not o2_connectable:
+    if internal:  return None, False, False
+
+    raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
+                                  "  (when connecting {} to {})" \
+        .format( type(o1), type(o2), repr(o1), repr(o2)) )
+
+  # Get the component from elaborate_stack
+
+  try:
+    host = top._dsl.elaborate_stack[-1]
+  except AttributeError:
+    raise InvalidConnectionError("Cannot call connect after elaboration.\n"
+                                 "- Please use top.add_connection(...) API.")
+
+  if isinstance( host, Placeholder ):
+    raise InvalidPlaceholderError( "Cannot call connect "
+          "in a placeholder component.".format( blk.__name__ ) )
+
+  # Not sure if there is any case where we cannot get the top plus it's
+  # not an internal connect call
+  assert host is not None, "Please contact pymtl3 developer about this error."
+
+  return host, o1_connectable, o2_connectable
 
 # Checking if two slices/indices overlap
 def _overlap( x, y ):
@@ -136,6 +192,7 @@ class Signal( NamedObject, Connectable ):
           x._dsl.type_instance = u
           x._dsl.parent_obj = s
           x._dsl.top_level_signal = s._dsl.top_level_signal
+          x._dsl.elaborate_top = s._dsl.elaborate_top
 
           x._dsl.my_name   = name + "".join([ "[{}]".format(y) for y in indices ])
           x._dsl.full_name = s._dsl.full_name + "." + x._dsl.my_name
@@ -164,6 +221,7 @@ class Signal( NamedObject, Connectable ):
       x = s.__class__( mk_bits( sl.stop - sl.start) )
       x._dsl.parent_obj = s
       x._dsl.top_level_signal = s
+      x._dsl.elaborate_top = s._dsl.elaborate_top
 
       sl_str = "[{}:{}]".format( sl.start, sl.stop )
 
@@ -270,12 +328,6 @@ class OutPort( Signal ):
     return True
 
 class Interface( NamedObject, Connectable ):
-
-  # FIXME: why are we doing this?
-  # Yanghui: I commented this out.
-  # @property
-  # def Type( s ):
-  #   return s._dsl.args
 
   def inverse( s ):
     s._dsl.inversed = True

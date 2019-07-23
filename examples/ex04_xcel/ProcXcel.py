@@ -46,7 +46,7 @@ class ProcXcel( Component ):
       s.imem = MemMasterIfcFL()
       s.dmem = MemMasterIfcFL()
 
-    s.connect_pairs(
+    connect_pairs(
       s.mngr2proc, s.proc.mngr2proc,
       s.proc2mngr, s.proc.proc2mngr,
       s.imem,      s.proc.imem,

@@ -33,7 +33,8 @@ class DropUnitRTL( Component ):
     s.drop = InPort( Bits1 )
     s.in_  = RecvIfcRTL( Type )
     s.out  = SendIfcRTL( Type )
-    s.connect( s.in_.msg, s.out.msg )
+
+    s.in_.msg //= s.out.msg
 
     s.snoop_state = RegRst( Bits1, reset_value=0 )
 

@@ -10,6 +10,7 @@ Accelerator interface implementations at FL, CL, and RTL.
 from greenlet import greenlet
 
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.rtl.queues import BypassQueueRTL, NormalQueueRTL
 
 from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
@@ -39,7 +40,7 @@ class XcelMasterIfcFL( Interface ):
         parent.XcelIfcFL2RTL_count = 0
         parent.XcelIfcFL2RTL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         s,       m.left,
         m.right, other,
       )
@@ -56,7 +57,7 @@ class XcelMasterIfcFL( Interface ):
         parent.XcelIfcFL2CL_count = 0
         parent.XcelIfcFL2CL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         s,       m.left,
         m.right, other,
       )
@@ -84,7 +85,7 @@ class XcelMinionIfcFL( Interface ):
         parent.XcelIfcRTL2FL_count = 0
         parent.XcelIfcRTL2FL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,   m.left,
         m.right, s,
       )
@@ -101,7 +102,7 @@ class XcelMinionIfcFL( Interface ):
         parent.XcelIfcCL2FL_count = 0
         parent.XcelIfcCL2FL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,   m.left,
         m.right, s,
       )
@@ -272,7 +273,7 @@ class XcelIfcRTL2FLAdapter( Component ):
     s.right = XcelMasterIfcFL( ReqType, RespType )
 
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
-    s.connect( s.left.req, s.req_q.enq )
+    connect( s.left.req, s.req_q.enq )
 
     @s.update
     def up_xcelifc_rtl_fl_blk():
@@ -305,12 +306,12 @@ class XcelIfcFL2RTLAdapter( Component ):
     s.fl2cl       = XcelIfcFL2CLAdapter( ReqType, RespType )
     s.req_cl2rtl  = RecvCL2SendRTL( ReqType )
     s.resp_rtl2cl = RecvRTL2SendCL( RespType)
-    s.connect( s.left, s.fl2cl.left )
-    s.connect_pairs(
+    connect( s.left, s.fl2cl.left )
+    connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,
       s.req_cl2rtl.send, s.right.req,
     )
-    s.connect_pairs(
+    connect_pairs(
       s.fl2cl.right.resp, s.resp_rtl2cl.send,
       s.resp_rtl2cl.recv, s.right.resp,
     )

@@ -16,6 +16,7 @@ from examples.ex03_proc.tinyrv0_encoding import assemble
 from pymtl3 import *
 from pymtl3.passes import DynamicSim
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
@@ -68,22 +69,19 @@ class TestHarness(Component):
 
     s.mem  = MemoryCL(2, latency = mem_latency)
 
-    # Processor <-> Proc/Mngr
-    s.connect( s.proc.commit_inst, s.commit_inst )
+    connect_pairs(
+      s.proc.commit_inst, s.commit_inst,
 
-    s.connect( s.src.send, s.proc.mngr2proc )
-    s.connect( s.proc.proc2mngr, s.sink.recv )
+      # Processor <-> Proc/Mngr
+      s.src.send, s.proc.mngr2proc,
+      s.proc.proc2mngr, s.sink.recv,
 
-    # Processor <-> Memory
+      # Processor <-> Memory
+      s.proc.imem,  s.mem.ifc[0],
+      s.proc.dmem,  s.mem.ifc[1],
+    )
 
-    s.connect( s.proc.imem,  s.mem.ifc[0] )
-    s.connect( s.proc.dmem,  s.mem.ifc[1] )
-
-    s.connect( s.proc.xcel, s.xcel.xcel )
-
-    # s.connect( s.proc.xcel.resp.msg.data, 0 )
-    # s.connect( s.proc.xcel.req.rdy, 0 )
-    # s.connect( s.proc.xcel.resp.en, 0 )
+    connect( s.proc.xcel, s.xcel.xcel )
 
   #-----------------------------------------------------------------------
   # load

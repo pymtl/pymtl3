@@ -8,7 +8,7 @@
 import pytest
 
 from pymtl3.datatypes import Bits16, Bits32, BitStruct
-from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
@@ -367,7 +367,7 @@ def test_nested_struct_packed_array_index( do_test ):
     def construct( s ):
       s.struct = InPort( B )
       s.out = OutPort( C )
-      s.connect( s.struct.bar[1], s.out )
+      connect( s.struct.bar[1], s.out )
   a = A()
   a._ref_name = "A"
   a._ref_ports = \

@@ -21,6 +21,7 @@ from pymtl3.dsl import (
     Placeholder,
     U,
     Wire,
+    connect,
     method_port,
     non_blocking,
 )
@@ -103,7 +104,7 @@ class Foo_wrap( Component ):
     s.in_ = InPort ( mk_bits(nbits) )
     s.out = OutPort( mk_bits(nbits) )
     s.w   = Wire( mk_bits(nbits) )
-    s.connect( s.w, s.out )
+    connect( s.w, s.out )
 
     s.inner = Foo( 32 )( in_ = s.in_, out = s.w )
 
@@ -145,7 +146,7 @@ def test_foo_field_as_writer():
       s.out = OutPort( Bits32 )
 
       s.inner = FooStruct( 16 )( in_ = s.in_ )
-      s.connect( s.inner.out.b, s.out )
+      connect( s.inner.out.b, s.out )
 
     def line_trace( s ):
       return s.inner.line_trace()

@@ -4,7 +4,7 @@
 """Test the SystemVerilog translator."""
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
@@ -154,9 +154,9 @@ def test_ifc_decls( do_test ):
     def construct( s ):
       s.ifc = Ifc()
       # This 42 will be converted to Bits32(42) by DSL
-      s.connect( s.ifc.msg, 42 )
+      connect( s.ifc.msg, 42 )
       # This 1 will be converted to Bits1(1) by DSL
-      s.connect( s.ifc.val, 1 )
+      connect( s.ifc.val, 1 )
   a = A()
   a._ref_src = \
 """\
@@ -193,7 +193,7 @@ def test_multi_ifc_decls( do_test ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
   a = A()
   a._ref_src = \
 """\

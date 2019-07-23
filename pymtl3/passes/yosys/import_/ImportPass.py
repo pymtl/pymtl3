@@ -127,7 +127,7 @@ class ImportPass( SVerilogImportPass ):
   def gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
     nbits = dtype.get_length()
     _lhs, _rhs = s._verilator_name(lhs), s._verilator_name(rhs)
-    ret = ["s.connect( s.{_lhs}, s.mangled__{_rhs} )".format(**locals())]
+    ret = ["connect( s.{_lhs}, s.mangled__{_rhs} )".format(**locals())]
     return ret, pos + nbits
 
   def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):

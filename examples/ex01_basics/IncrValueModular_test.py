@@ -38,8 +38,8 @@ class IncrValueModular( Component ):
     s.buf1 = Wire( Bits8 )
     s.buf2 = Wire( Bits8 )
 
-    s.connect( s.in_, s.buf1 )
-    s.connect( s.out, s.buf2 )
+    connect( s.in_, s.buf1 )
+    s.out //= s.buf2
 
     @s.update
     def upB():

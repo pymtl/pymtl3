@@ -60,8 +60,8 @@ class IncrMethodModular( Component ):
     s.buf2  = Buffer()
 
     # Connect the callee ports to buf1/buf2 write/read method ports
-    s.connect( s.write, s.buf1.write )
-    s.connect( s.read,  s.buf2.read  )
+    connect( s.write, s.buf1.write )
+    connect( s.read,  s.buf2.read  )
 
     # upB reads from buf1, increments the value by 1, and writes to buf2
     @s.update

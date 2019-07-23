@@ -23,7 +23,7 @@ def test_L3_ifc_view_attr():
     def construct( s ):
       s.in_ = Ifc()
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.out, s.in_.msg )
+      dsl.connect( s.out, s.in_.msg )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
@@ -40,7 +40,7 @@ def test_L3_ifc_view_index():
     def construct( s ):
       s.in_ = [ Ifc() for _ in range(5) ]
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.in_[2].msg, s.out )
+      dsl.connect( s.in_[2].msg, s.out )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
@@ -67,7 +67,7 @@ def test_L3_ifc_view_connection():
       s.out = OutIfc()
       # This will be automatically extended to connect all signals in
       # this interface!
-      s.connect( s.out, s.in_ )
+      dsl.connect( s.out, s.in_ )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )

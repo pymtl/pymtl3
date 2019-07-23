@@ -25,7 +25,7 @@ def test_L2_struct_attr():
     def construct( s ):
       s.in_ = dsl.InPort( B )
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.out, s.in_.foo )
+      dsl.connect( s.out, s.in_.foo )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass( *gen_connections( a ) ) )
@@ -42,7 +42,7 @@ def test_L2_packed_index():
     def construct( s ):
       s.in_ = dsl.InPort( B )
       s.out = dsl.OutPort( Bits32 )
-      s.connect( s.out, s.in_.foo[1] )
+      dsl.connect( s.out, s.in_.foo[1] )
   a = A()
   a.elaborate()
   a.apply( StructuralRTLIRGenL2Pass( *gen_connections( a ) ) )
