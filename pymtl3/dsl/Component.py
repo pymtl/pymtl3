@@ -7,8 +7,6 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits1
@@ -73,8 +71,8 @@ class Component( ComponentLevel7 ):
     assert s._dsl.constructed
     ret = set()
     stack = []
-    for (name, obj) in s.__dict__.iteritems():
-      if   isinstance( name, basestring ): # python2 specific
+    for (name, obj) in s.__dict__.items():
+      if   isinstance( name, str ):
         if not name.startswith("_"): # filter private variables
           stack.append( obj )
     while stack:
@@ -140,7 +138,7 @@ class Component( ComponentLevel7 ):
       # Iterate through the param_tree and update u
       if parent._dsl.param_tree is not None:
         if parent._dsl.param_tree.children is not None:
-          for comp_name, node in parent._dsl.param_tree.children.iteritems():
+          for comp_name, node in parent._dsl.param_tree.children.items():
             if comp_name == u_name:
               # Lazily create the param tree
               if obj._dsl.param_tree is None:
@@ -450,7 +448,7 @@ class Component( ComponentLevel7 ):
         iterable = enumerate( current_obj )
         is_list = True
       elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.iteritems()
+        iterable = current_obj.__dict__.items()
         is_list = False
       else:
         return
@@ -485,7 +483,7 @@ class Component( ComponentLevel7 ):
     except:
       raise AttributeError("Cannot unlock an unlocked/never locked model.")
 
-    for component, records in s._dsl.swapped_signals.iteritems():
+    for component, records in s._dsl.swapped_signals.items():
       for current_obj, i, obj, is_list in records:
         if is_list:
           s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
@@ -687,7 +685,7 @@ class Component( ComponentLevel7 ):
     except AssertionError as e:
       raise InvalidConnectionError( "\n{}".format(e) )
 
-    for x, adjs in s._dsl.adjacency.iteritems():
+    for x, adjs in s._dsl.adjacency.items():
       top._dsl.all_adjacency[x].update( adjs )
 
   def add_connections( s, *args ):
@@ -699,14 +697,14 @@ class Component( ComponentLevel7 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    for i in xrange(len(args)>>1):
+    for i in range(len(args)>>1):
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError as e:
         raise InvalidConnectionError( "\n- In connect_pair, when connecting {}-th argument to {}-th argument\n{}\n " \
               .format( (i<<1)+1, (i<<1)+2 , e ) )
 
-    for x, adjs in s._dsl.adjacency.iteritems():
+    for x, adjs in s._dsl.adjacency.items():
       top._dsl.all_adjacency[x].update( adjs )
 
   # TODO implement everything below and test them

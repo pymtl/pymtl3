@@ -5,8 +5,6 @@
 # Date   : May 21, 2019
 """Test the level 1 structural translators."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits4, Bits16, Bits32
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -721,4 +719,4 @@ endcomponent
 """.format( a._ref_name )
   do_test( a )
 
-__all__ = list(filter(lambda s: s.startswith('test_'), dir()))
+__all__ = list([s for s in dir() if s.startswith('test_')])

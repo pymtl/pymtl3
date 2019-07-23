@@ -10,8 +10,6 @@ dist: xenial
 language: python
 # Use pypy3.6-7.0.0 to have 1.12.0 version of CFFI which has `dlclose`
 python:
- - "2.7"
- - "pypy"
  - "3.6"
  - "3.7"
  - "pypy3.6-7.0.0"
@@ -49,13 +47,11 @@ install:
 #------------------------------------------------------------------------
 
 script:
- - futurize --write --stage1 ./pymtl3 &> /dev/null
  - autoflake --in-place --remove-duplicate-keys .
- - pyupgrade --keep-percent-format $(find . -name '*.py')
+ - pyupgrade --py3-only --keep-percent-format $(find . -name '*.py')
  - isort --apply --recursive ./pymtl3
  - flake8 --select=F --ignore=F401,F405,F403,F811,F821,F841
  - git diff --exit-code
- - python --version | grep "Python 3" && futurize --write --stage2 ./pymtl3 &> /dev/null || true
  - mkdir -p build
  - cd build
  - py.test --cov-report xml --cov=pymtl3 ../pymtl3 $CONFIG

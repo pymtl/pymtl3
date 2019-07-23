@@ -6,8 +6,6 @@ set_param_test.py
 Author : Yanhui Ou, Cheng Tan
 Date   : May 28, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes.bits_import import Bits4, Bits8
 from pymtl3.dsl.Component import Component
 from pymtl3.dsl.Connectable import InPort, OutPort
@@ -18,7 +16,7 @@ from .sim_utils import simple_sim_pass
 
 class Animal( NamedObject ):
   def construct( s, lunch="dirt", dinner="dirt" ):
-    s.lunch  = lunch 
+    s.lunch  = lunch
     s.dinner = dinner
 
 class AnimalHouse( NamedObject ):
@@ -62,8 +60,8 @@ def test_simple():
   A.elaborate()
 
   print( A.lunch )
-  assert A.lunch  == "grass" 
-  assert A.dinner == "dirt" 
+  assert A.lunch  == "grass"
+  assert A.dinner == "dirt"
 
 def test_set_param_overwrite():
   Z = Zoo()
@@ -109,9 +107,9 @@ def test_multi_regex():
   Z.set_param( "top.houses[0].construct", AnimalTypes=[ Panda, Panda, Panda   ] )
   Z.set_param( "top.houses[1].construct", AnimalTypes=[ Tiger, BabyTiger      ] )
   Z.set_param( "top.houses[2].construct", AnimalTypes=[ Dromaius, HoneyBadger ] )
-  Z.set_param( "top.houses[0].animals[0].construct", lunch="potato", dinner="bamboo" )  
+  Z.set_param( "top.houses[0].animals[0].construct", lunch="potato", dinner="bamboo" )
   Z.set_param( "top.houses*.animals*.construct", lunch="onion" )
-  Z.set_param( "top.houses*.animals[0].construct", lunch="potato" )  
+  Z.set_param( "top.houses*.animals[0].construct", lunch="potato" )
   Z.elaborate()
 
   assert Z.houses[0].animals[0].lunch  == "onion"
@@ -145,7 +143,7 @@ def test_component():
       @s.update
       def up_incr():
         s.out = s.in_ + s.incr_value
-  
+
   class IncrArray( Component ):
     def construct( s, num_incrs=1, DataType=Bits4() ):
       s.in_ = [ InPort ( DataType ) for _ in range( num_incrs ) ]

@@ -5,8 +5,6 @@
 # Date   : June 8, 2019
 """Provide yosys-compatible SystemVerilog translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.sverilog.translation.SVTranslator import mk_SVTranslator
 from pymtl3.passes.translator import RTLIRTranslator
 

@@ -14,10 +14,7 @@ Author : Christopher Batten, Shunning Jiang
   Date : June 14, 2019
 """
 
-from __future__ import absolute_import, division, print_function
-
 import struct
-from string import maketrans, translate
 
 from pymtl3 import *
 
@@ -183,7 +180,7 @@ def assemble_field_i_imm( bits, sym, pc, field_str ):
 
   # Check to see if the immediate field derives from a label
   if field_str[0] == "%":
-    label_addr = Bits( 32, sym[ field_str[4:-1] ] )
+    label_addr = Bits32( sym[ field_str[4:-1] ] )
     if field_str.startswith( "%hi[" ):
       imm = label_addr[20:32]
     elif field_str.startswith( "%md[" ):
@@ -219,13 +216,13 @@ def disassemble_field_csrnum( bits ):
 
 def assemble_field_s_imm( bits, sym, pc, field_str ):
 
-  imm = Bits( 12, int(field_str,0) )
+  imm = Bits12( int(field_str,0) )
 
   bits[ tinyrv0_field_slice_s_imm0 ] = imm[0:5 ]
   bits[ tinyrv0_field_slice_s_imm1 ] = imm[5:12]
 
 def disassemble_field_s_imm( bits ):
-  imm = Bits( 12, 0 )
+  imm = Bits12( 0 )
   imm[0:5]  = bits[ tinyrv0_field_slice_s_imm0 ]
   imm[5:12] = bits[ tinyrv0_field_slice_s_imm1 ]
 
@@ -237,14 +234,14 @@ def disassemble_field_s_imm( bits ):
 
 def assemble_field_b_imm( bits, sym, pc, field_str ):
 
-  if sym.has_key( field_str ):
+  if field_str in sym:
     # notice that we encode the branch target address (a lable) relative
     # to current PC
     btarg_byte_addr = sym[field_str] - pc
   else:
     btarg_byte_addr = int(field_str,0)
 
-  imm = Bits( 13, btarg_byte_addr )
+  imm = Bits13( btarg_byte_addr )
 
   bits[ tinyrv0_field_slice_b_imm0 ] = imm[1:5]
   bits[ tinyrv0_field_slice_b_imm1 ] = imm[5:11]
@@ -253,7 +250,7 @@ def assemble_field_b_imm( bits, sym, pc, field_str ):
 
 def disassemble_field_b_imm( bits ):
 
-  imm = Bits( 13, 0 )
+  imm = Bits13( 0 )
   imm[1:5]   = bits[ tinyrv0_field_slice_b_imm0 ]
   imm[5:11]  = bits[ tinyrv0_field_slice_b_imm1 ]
   imm[11:12] = bits[ tinyrv0_field_slice_b_imm2 ]
@@ -288,7 +285,7 @@ tinyrv0_fields = \
 # assembly/disassembly functions. I am not sure if we still want to
 # refactor this here, but it is good enough for now.
 
-class IsaImpl (object):
+class IsaImpl :
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -325,8 +322,8 @@ class IsaImpl (object):
       # translate non-whitespace deliminters into whitespace so that we
       # can use split.
 
-      translation_table = maketrans(",()","   ")
-      inst_field_tags = translate(inst_tmpl,translation_table).split()
+      translation_table = str.maketrans(",()","   ")
+      inst_field_tags = str.translate(inst_tmpl,translation_table).split()
 
       # Create the list of asm field functions
 
@@ -404,14 +401,14 @@ class IsaImpl (object):
     # Use the instruction name to get the opcode match which we can
     # the use to initialize the instruction bits
 
-    inst_bits = Bits( self.nbits, self.opcode_match_dict[ inst_name ] )
+    inst_bits = mk_bits( self.nbits )( self.opcode_match_dict[ inst_name ] )
 
     # Split the remainder of the asm string into field strings. First
     # we translate non-whitespace deliminters into whitespace so that
     # we can use split.
 
-    translation_table = maketrans(",()","   ")
-    asm_field_strs = translate(inst_str,translation_table).split()
+    translation_table = str.maketrans(",()","   ")
+    asm_field_strs = str.translate(inst_str,translation_table).split()
 
     # Retrieve the list of asm field functions for this instruction
 
@@ -447,7 +444,7 @@ class IsaImpl (object):
     # Apply these asm field functions to create the disasm string
 
     inst_str = inst_tmpl
-    for inst_field_tag,disasm_field_func in disasm_field_funcs.iteritems():
+    for inst_field_tag,disasm_field_func in disasm_field_funcs.items():
       field_str = disasm_field_func( inst_bits )
       inst_str = inst_str.replace( inst_field_tag, field_str )
 
@@ -547,7 +544,7 @@ def assemble( asm_code ):
 
     # duplicate the bytes and no more mngr2proc/proc2mngr
 
-    for i in xrange( num_cores ):
+    for i in range( num_cores ):
       mngrs2procs_bytes.append( bytearray() )
       mngrs2procs_bytes[i][:] = mngr2proc_bytes
 
@@ -592,11 +589,11 @@ def assemble( asm_code ):
               num_cores   = len(values)
               duplicate()
 
-            for i in xrange( num_cores ):
-              mngrs2procs_bytes[i].extend(struct.pack("<I", Bits(32, values[i]) ))
+            for i in range( num_cores ):
+              mngrs2procs_bytes[i].extend(struct.pack("<I", Bits32(values[i]) ))
 
           else:
-            bits = Bits( 32, int(value,0) )
+            bits = Bits32( int(value,0) )
 
             if single_core:
               mngr2proc_bytes.extend(struct.pack("<I",bits))
@@ -622,11 +619,11 @@ def assemble( asm_code ):
               num_cores   = len(values)
               duplicate()
 
-            for i in xrange( num_cores ):
-              procs2mngrs_bytes[i].extend(struct.pack("<I", Bits(32, values[i]) ))
+            for i in range( num_cores ):
+              procs2mngrs_bytes[i].extend(struct.pack("<I", Bits32(values[i]) ))
 
           else:
-            bits = Bits( 32, int(value,0) )
+            bits = Bits32( int(value,0) )
 
             if single_core:
               proc2mngr_bytes.extend(struct.pack("<I",bits))
@@ -700,14 +697,14 @@ def assemble( asm_code ):
 
   else:
 
-    for i in xrange( len(mngrs2procs_bytes) ):
+    for i in range( len(mngrs2procs_bytes) ):
       img = SparseMemoryImage.Section( ".mngr{}_2proc".format(i),
                                        0x15000+0x1000*i, mngrs2procs_bytes[i] )
 
       if len( img.data ) > 0:
         mem_image.add_section( img )
 
-    for i in xrange( len(procs2mngrs_bytes) ):
+    for i in range( len(procs2mngrs_bytes) ):
       img = SparseMemoryImage.Section( ".proc{}_2mngr".format(i),
                                        0x16000+0x2000*i, procs2mngrs_bytes[i] )
       if len( img.data ) > 0:
@@ -732,9 +729,9 @@ def disassemble( mem_image ):
 
   addr = text_section.addr
   asm_code = ""
-  for i in xrange(0,len(text_section.data),4):
+  for i in range(0,len(text_section.data),4):
     bits = struct.unpack_from("<I",buffer(text_section.data,i,4))[0]
-    inst_str= disassemble_inst( Bits(32,bits) )
+    inst_str= disassemble_inst( Bits32(bits) )
     disasm_line = " {:0>8x}  {:0>8x}  {}\n".format( addr+i, bits, inst_str )
     asm_code += disasm_line
 
@@ -746,7 +743,7 @@ def disassemble( mem_image ):
 # This is a concrete instruction class for TinyRV0 with methods for
 # accessing the various instruction fields.
 
-class TinyRV0Inst (object):
+class TinyRV0Inst :
 
   #-----------------------------------------------------------------------
   # Constructor
@@ -846,10 +843,10 @@ class TinyRV0Inst (object):
   def __str__( self ):
     return disassemble_inst( self.bits )
 
-class RegisterFile(object):
+class RegisterFile:
 
   def __init__( self, nregs ):
-    self.regs = [ Bits32(0) for i in xrange(nregs) ]
+    self.regs = [ Bits32(0) for i in range(nregs) ]
 
   def __getitem__( self, idx ):
     return self.regs[idx]

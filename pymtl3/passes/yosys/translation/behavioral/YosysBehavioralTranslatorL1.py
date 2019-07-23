@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L1 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits, BitStruct
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -28,7 +26,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
   """IR visitor that generates yosys-compatible SystemVerilog code."""
 
   def __init__( s, is_reserved ):
-    super( YosysBehavioralRTLIRToSVVisitorL1, s ).__init__( is_reserved )
+    super().__init__( is_reserved )
     s.loopvars = set()
 
   def signal_expr_prologue( s, node ):
@@ -69,7 +67,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_CombUpblk( s, node ):
-    upblk = super(YosysBehavioralRTLIRToSVVisitorL1, s).visit_CombUpblk( node )
+    upblk = super().visit_CombUpblk( node )
     return s.get_loopvars() + upblk
 
   #-----------------------------------------------------------------------
@@ -77,7 +75,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_SeqUpblk( s, node ):
-    upblk = super(YosysBehavioralRTLIRToSVVisitorL1, s).visit_SeqUpblk( node )
+    upblk = super().visit_SeqUpblk( node )
     return s.get_loopvars() + upblk
 
   #-----------------------------------------------------------------------
@@ -87,7 +85,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
   def visit_Assign( s, node ):
     node.target._top_expr = 1
     node.value._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL1, s ).visit_Assign( node )
+    return super().visit_Assign( node )
 
   #-----------------------------------------------------------------------
   # visit_Concat
@@ -96,7 +94,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
   def visit_Concat( s, node ):
     for child in node.values:
       child._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL1, s ).visit_Concat( node )
+    return super().visit_Concat( node )
 
   #-----------------------------------------------------------------------
   # visit_ZeroExt
@@ -104,7 +102,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_ZeroExt( s, node ):
     node.value._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL1, s ).visit_ZeroExt( node )
+    return super().visit_ZeroExt( node )
 
   #-----------------------------------------------------------------------
   # visit_SignExt
@@ -112,7 +110,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_SignExt( s, node ):
     node.value._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL1, s ).visit_SignExt( node )
+    return super().visit_SignExt( node )
 
   #-----------------------------------------------------------------------
   # visit_Reduce
@@ -120,7 +118,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_Reduce( s, node ):
     node.value._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL1, s ).visit_Reduce( node )
+    return super().visit_Reduce( node )
 
   #-----------------------------------------------------------------------
   # visit_SizeCast
@@ -245,7 +243,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
     node.value._top_expr = 1
     node.lower._top_expr = 1
     node.upper._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL1, s ).visit_Slice( node )
+    return super().visit_Slice( node )
 
   #-----------------------------------------------------------------------
   # visit_FreeVar

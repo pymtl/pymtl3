@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL2 import (
@@ -51,7 +49,7 @@ class YosysStructuralTranslatorL2(
       else:
         ret = []
         dec_nbits = p_nbits // n_dim[0]
-        for i in reversed( range( n_dim[0] ) ):
+        for i in reversed( range( n_dim[0]) ):
           ret += \
             _packed_gen(d, c_nbits, pid+"$__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
           c_nbits -= dec_nbits
@@ -108,7 +106,7 @@ class YosysStructuralTranslatorL2(
       return s.packed_conn_gen( d, pid, wid, idx, dtype )
     else:
       return \
-        super(YosysStructuralTranslatorL2, s).dtype_conn_gen( d, pid, wid,
+        super().dtype_conn_gen( d, pid, wid,
                                                              idx, dtype )
 
   #-----------------------------------------------------------------------
@@ -155,7 +153,7 @@ class YosysStructuralTranslatorL2(
       return s.wire_packed_gen( id_, dtype, n_dim )
     else:
       return \
-        super(YosysStructuralTranslatorL2, s).wire_dtype_gen(id_, dtype, n_dim )
+        super().wire_dtype_gen(id_, dtype, n_dim )
 
   #-----------------------------------------------------------------------
   # Port declaration helper methods
@@ -190,12 +188,12 @@ class YosysStructuralTranslatorL2(
       s.check_decl( id_, "" )
       return s.packed_gen(d, id_, dtype)
     else:
-      return super(YosysStructuralTranslatorL2, s).dtype_gen(d, id_, dtype)
+      return super().dtype_gen(d, id_, dtype)
 
   #-----------------------------------------------------------------------
   # Signal operations
   #-----------------------------------------------------------------------
-  
+
   def rtlir_tr_packed_index( s, base_signal, index ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
@@ -217,7 +215,7 @@ class YosysStructuralTranslatorL2(
           assert False, "unrecognized data type {}!".format( dtype )
       else:
         ret = []
-        for i in reversed( range( n_dim[0] ) ):
+        for i in reversed( range( n_dim[0]) ):
           _ret = _gen_packed_array( dtype, n_dim[1:], array[i] )
           ret.append( _ret["s_attr"] )
         if n_dim[0] > 1:

@@ -5,10 +5,6 @@
 # Date   : May 23, 2019
 """Provide an RTLIR translator that fits testing purposes."""
 
-from __future__ import absolute_import, division, print_function
-
-from functools import reduce
-
 from ..behavioral.test.TestBehavioralTranslator import TestBehavioralTranslator
 from ..RTLIRTranslator import RTLIRTranslator
 from ..structural.test.TestStructuralTranslator import TestStructuralTranslator
@@ -32,8 +28,7 @@ class TestRTLIRTranslator( RTLIRTranslator,
   def rtlir_tr_src_layout( s, hierarchy ):
     # struct definitions
     struct_defs = \
-      reduce(lambda r, o: r+'struct {}\n'.format(o[1]),
-        hierarchy.decl_type_struct, "")
+      "".join( f"struct {x[1]}\n" for x in hierarchy.decl_type_struct )
     component_src = hierarchy.component_src
     return struct_defs + component_src
 

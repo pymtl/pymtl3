@@ -5,8 +5,6 @@ arbiters.py
 Collection of arbiter implementations based on vc-Arbiters.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 from .registers import RegEnRst
@@ -94,7 +92,7 @@ class RoundRobinArbiter( Component ):
 
       s.kills[0] = Bits1(1)
 
-      for i in xrange( nreqsX2 ):
+      for i in range( nreqsX2 ):
 
         if s.priority_int[i]:
           s.kills[i+1] = s.reqs_int[i]
@@ -109,7 +107,7 @@ class RoundRobinArbiter( Component ):
     @s.update
     def comb_grants_int():
 
-      for i in xrange( nreqsX2 ):
+      for i in range( nreqsX2 ):
 
         # Set internal grants
 
@@ -210,7 +208,7 @@ class RoundRobinArbiterEn( Component ):
 
       s.kills[0] = Bits1(1)
 
-      for i in xrange( nreqsX2 ):
+      for i in range( nreqsX2 ):
 
         if s.priority_int[i]:
           s.kills[i+1] = s.reqs_int[i]
@@ -225,7 +223,7 @@ class RoundRobinArbiterEn( Component ):
     @s.update
     def comb_grants_int():
 
-      for i in xrange( nreqsX2 ):
+      for i in range( nreqsX2 ):
 
         # Set internal grants
 

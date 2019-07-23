@@ -7,8 +7,6 @@ New memory message type implementation.
 Author : Shunning Jiang, Yanghui Ou
 Date   : Mar 12, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 
@@ -70,7 +68,7 @@ def mk_mem_resp_msg( opq, data ):
   resp_cls.data_nbits = data
   return resp_cls
 
-class MemMsgType( object ):
+class MemMsgType:
   READ       = 0
   WRITE      = 1
   # write no-refill

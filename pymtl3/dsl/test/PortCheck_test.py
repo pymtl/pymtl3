@@ -6,8 +6,6 @@ PortCheck_test.py
 Author : Shunning Jiang
 Date   : Dec 25, 2017
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
@@ -21,7 +19,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 def test_illegal_inport_write():

@@ -5,8 +5,6 @@
 # Date   : June 8, 2019
 """Translate a PyMTL component hierarhcy into yosys-sverilog source code."""
 
-from __future__ import absolute_import, division, print_function
-
 import filecmp
 import os
 

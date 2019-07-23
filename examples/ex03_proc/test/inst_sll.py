@@ -5,7 +5,8 @@
 import random
 
 from pymtl3 import *
-from inst_utils import *
+
+from .inst_utils import *
 
 #-------------------------------------------------------------------------
 # gen_basic_test
@@ -49,9 +50,9 @@ def gen_basic_test():
 
 def gen_random_test():
   asm_code = []
-  for i in xrange(50):
-    src0 = Bits( 32, random.randint(0,0xffffffff) )
-    src1 = Bits(  5, random.randint(0,31) )
+  for i in range(50):
+    src0 = Bits32( random.randint(0,0xffffffff) )
+    src1 = Bits5( random.randint(0,31) )
     dest = src0 << src1
     asm_code.append( gen_rr_value_test( "sll", src0.uint(), src1.uint(), dest.uint() ) )
   return asm_code

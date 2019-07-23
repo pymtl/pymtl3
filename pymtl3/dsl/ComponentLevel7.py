@@ -7,8 +7,6 @@ Add functional-level blocking method decorator.
 Author : Shunning Jiang
 Date   : May 19, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel6 import ComponentLevel6
 
 #-------------------------------------------------------------------------
@@ -27,7 +25,7 @@ class ComponentLevel7( ComponentLevel6 ):
 
   def __new__( cls, *args, **kwargs ):
 
-    inst = super( ComponentLevel7, cls ).__new__( cls, *args, **kwargs )
+    inst = super().__new__( cls, *args, **kwargs )
 
     inst._dsl.blocking_methods = set()
 
@@ -41,7 +39,7 @@ class ComponentLevel7( ComponentLevel6 ):
 
   # Override
   def _collect_vars( s, m ):
-    super( ComponentLevel7, s )._collect_vars( m )
+    super()._collect_vars( m )
     if isinstance( m, ComponentLevel7 ):
       s._dsl.all_blocking_methods |= m._dsl.blocking_methods
 
@@ -51,6 +49,6 @@ class ComponentLevel7( ComponentLevel6 ):
 
   # Override
   def _elaborate_declare_vars( s ):
-    super( ComponentLevel7, s )._elaborate_declare_vars()
+    super()._elaborate_declare_vars()
 
     s._dsl.all_blocking_methods = set()

@@ -5,8 +5,6 @@
 # Date   : May 20, 2019
 """Test the temporary variable generation of behavioral RTLIR passes."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 import pymtl3.dsl as dsl

@@ -5,8 +5,6 @@
 # Date   : Jun 5, 2019
 """Closed-loop test with SystemVerilog translation and import."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes import DynamicSim
 from pymtl3.passes.sverilog.test.TranslationImport_closed_loop_dircted_test import (
     test_bypass_queue as _bypass_queue,

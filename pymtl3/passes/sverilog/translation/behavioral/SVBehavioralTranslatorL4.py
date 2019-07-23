@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 4 SystemVerilog translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
@@ -37,7 +36,7 @@ class BehavioralRTLIRToSVVisitorL4( BehavioralRTLIRToSVVisitorL3 ):
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.
-    
+
     Add support for interface attributes in L4. We just name mangle every
     signal in an interface instead of constructing a SystemVerilog interface
     and instantiating new interfaces from it.
@@ -48,7 +47,7 @@ class BehavioralRTLIRToSVVisitorL4( BehavioralRTLIRToSVVisitorL3 ):
       s.check_res( node, attr )
       return '{value}${attr}'.format( **locals() )
     else:
-      return super( BehavioralRTLIRToSVVisitorL4, s ).visit_Attribute( node )
+      return super().visit_Attribute( node )
 
   #-----------------------------------------------------------------------
   # visit_Index
@@ -68,4 +67,4 @@ class BehavioralRTLIRToSVVisitorL4( BehavioralRTLIRToSVVisitorL3 ):
       return "{value}$__{idx}".format( **locals() )
 
     else:
-      return super( BehavioralRTLIRToSVVisitorL4, s ).visit_Index( node )
+      return super().visit_Index( node )

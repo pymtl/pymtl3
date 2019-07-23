@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 
@@ -7,7 +6,7 @@ from pymtl3 import *
 class Mux( Component ):
 
   def construct( s, Type, ninputs ):
-    s.in_ = [ InPort( Type ) for _ in xrange(ninputs) ]
+    s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
     s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
 

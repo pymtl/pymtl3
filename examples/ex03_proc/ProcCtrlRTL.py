@@ -7,8 +7,6 @@ Control logic for the RTL TinyRV0 processor.
 Author : Shunning Jiang
   Date : June 13, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.XcelMsg import XcelMsgType
 

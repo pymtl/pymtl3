@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L4 behavioral RTLIR generation pass."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
@@ -40,4 +39,4 @@ class BehavioralRTLIRGeneratorL4( BehavioralRTLIRGeneratorL3 ):
   levels.
   """
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL4, s ).__init__( component )
+    super().__init__( component )

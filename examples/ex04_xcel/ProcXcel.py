@@ -9,12 +9,11 @@ Author : Shunning Jiang
 """
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs.mem_ifcs  import MemMasterIfcRTL, MemMasterIfcCL, MemMasterIfcFL
-from pymtl3.stdlib.ifcs  import SendIfcRTL, RecvIfcRTL
-from pymtl3.stdlib.ifcs.GetGiveIfc  import GetIfcFL
-from pymtl3.stdlib.ifcs.SendRecvIfc  import SendIfcFL
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg
+from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL
+from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL, MemMasterIfcRTL
+from pymtl3.stdlib.ifcs.SendRecvIfc import SendIfcFL
 
-from pymtl3.stdlib.ifcs import mk_mem_msg
 
 class ProcXcel( Component ):
 

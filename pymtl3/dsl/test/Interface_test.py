@@ -6,10 +6,7 @@ Interface_test.py
 Author : Shunning Jiang, Yanghui Ou
 Date   : Jan 1, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
-from functools import reduce
 
 from pymtl3.datatypes import Bits1, Bits8, Bits128
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
@@ -107,7 +104,7 @@ class TestSinkValRdy( ComponentLevel3 ):
         ref = s.sink_msgs.popleft()
         ans = s.in_.msg
 
-        assert ref == ans, "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans, "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.sink_msgs
@@ -148,22 +145,22 @@ def test_nested_port_bundle():
   class SuperBundle( Interface ):
 
     def construct( s ):
-      s.req  = [ [ ValRdyBundle() for i in xrange(4) ] for j in xrange(4) ]
+      s.req  = [ [ ValRdyBundle() for i in range(4) ] for j in range(4) ]
 
   class Top( ComponentLevel3 ):
 
     def construct( s ):
 
-      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in xrange(4) ]
+      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in range(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
       s.sink = TestSinkValRdy  ( int, [ 24, 40, 56, 24, 40, 56] )
 
       s.sb = SuperBundle()
-      s.wire = [ [ Wire(int) for i in xrange(4) ] for j in xrange(4) ]
+      s.wire = [ [ Wire(int) for i in range(4) ] for j in range(4) ]
 
-      for i in xrange(4):
+      for i in range(4):
         s.connect( s.src[i].out.rdy, s.sink.in_.rdy )
-        for j in xrange(4):
+        for j in range(4):
           s.connect( s.sb.req[i][j].msg, s.src[i].out.msg )
           s.connect( s.wire[i][j],       s.sb.req[i][j].msg )
 
@@ -171,12 +168,12 @@ def test_nested_port_bundle():
       def up_from_req():
         s.sink.in_.val = 1
         s.sink.in_.msg = 0
-        for i in xrange(4):
-          for j in xrange(4):
+        for i in range(4):
+          for j in range(4):
             s.sink.in_.msg += s.wire[i][j]
 
     def done( s ):
-      return reduce( lambda x,y: x or y.done(), s.src ) and s.sink.done()
+      return s.sink.done() and any( src.done() for src in s.src )
 
     def line_trace( s ):
       return "|".join( [ x.line_trace() for x in s.src] ) + " >>> " + \

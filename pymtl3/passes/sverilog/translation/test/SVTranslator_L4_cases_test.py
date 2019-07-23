@@ -3,21 +3,20 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits32, Bits64, concat, sext, zext
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
+)
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
-
-from .SVTranslator_L1_cases_test import trim
 
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert trim( tr.hierarchy.src ) == m._ref_src
+  check_eq( tr.hierarchy.src, m._ref_src )
 
 def test_subcomponent( do_test ):
   class B( Component ):
@@ -44,11 +43,11 @@ module B
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.foo = Bits32(42)
-  
+
   always_comb begin : upblk
     foo = 32'd42;
   end
@@ -74,11 +73,11 @@ module A
   );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.b.foo
-  
+
   always_comb begin : upblk
     out = b$foo;
   end
@@ -116,11 +115,11 @@ module B
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out_b = Bits32(0)
-  
+
   always_comb begin : upblk
     out_b = 32'd0;
   end
@@ -146,11 +145,11 @@ module A
   );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = zext( s.b.out_b, 64 )
-  
+
   always_comb begin : upblk
     out = { { 32 { 1'b0 } }, b$out_b };
   end
@@ -216,11 +215,11 @@ module A
   );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.comp[1].out
-  
+
   always_comb begin : upblk
     out = comp$__1$out;
   end
@@ -282,11 +281,11 @@ module A
   assign comp$__1$reset = comp$reset[1];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.comp[1].out
-  
+
   always_comb begin : upblk
     out = comp$out[1];
   end

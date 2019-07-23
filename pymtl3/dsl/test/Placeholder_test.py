@@ -6,8 +6,6 @@ Placeholder_test.py
 Author : Shunning Jiang
 Date   : June 1, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import *
@@ -74,7 +72,7 @@ class Foo( Placeholder, Component ):
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
 
-class SomeMsg( object ):
+class SomeMsg:
   def __init__( s, a=0, b=0 ):
     s.a = Bits16(a)
     s.b = Bits32(b)

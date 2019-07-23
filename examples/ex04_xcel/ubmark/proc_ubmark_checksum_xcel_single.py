@@ -2,12 +2,11 @@
 # ubmark-checksum-xcel single iteration
 #========================================================================
 
-import struct
 
-from pymtl3 import *
-from string import translate, maketrans
-from examples.ex03_proc.tinyrv0_encoding import assemble
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
+from examples.ex03_proc.tinyrv0_encoding import assemble
+from pymtl3 import *
+
 
 class ubmark_cksum_xcel_single:
 

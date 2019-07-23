@@ -7,9 +7,6 @@ TinyRV0 RTL proc.
 Author : Shunning Jiang
   Date : June 12, 2019
 """
-
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg, mk_xcel_msg
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcRTL

@@ -7,16 +7,13 @@ Cycle level implementation of a checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
-from pymtl3 import *
-from pymtl3.stdlib.cl.queues import NormalQueueCL, BypassQueueCL
-from pymtl3.stdlib.ifcs import mk_xcel_msg, XcelMsgType
-from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcCL
-
 from examples.ex02_cksum.ChecksumCL import ChecksumCL
 from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 from examples.ex02_cksum.utils import words_to_b128
+from pymtl3 import *
+from pymtl3.stdlib.cl.queues import BypassQueueCL, NormalQueueCL
+from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
+from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcCL
 
 #-------------------------------------------------------------------------
 # ChecksumXcelCL

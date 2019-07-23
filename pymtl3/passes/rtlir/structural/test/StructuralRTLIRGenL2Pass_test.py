@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the generation of level 2 structural RTLIR."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 import pymtl3.dsl as dsl

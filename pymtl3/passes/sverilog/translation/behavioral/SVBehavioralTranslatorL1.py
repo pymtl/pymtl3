@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 1 SystemVerilog translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 import inspect
 
@@ -69,14 +68,14 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
           py_src[ idx ] = line[indent:]
     try:
       upblk_py_src = inspect.getsource( upblk )
-    except IOError:
+    except OSError:
       upblk_py_src = "IOError: cannot retrieve Python update block code!"
     upblk_py_src = upblk_py_src.split( '\n' )
     _trim( upblk_py_src )
     while upblk_py_src and not upblk_py_src[-1]:
       upblk_py_src = upblk_py_src[:-1]
     py_src = [ "PYMTL SOURCE:", "" ] + upblk_py_src
-    return map( lambda x: "// "+x, py_src )
+    return ["// "+x for x in py_src]
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
     make_indent( freevars, 1 )
@@ -120,16 +119,16 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.closure = {}
 
     for i, var in enumerate( blk.__code__.co_freevars ):
-      try: 
+      try:
         s.closure[ var ] = blk.__closure__[ i ].cell_contents
-      except ValueError: 
+      except ValueError:
         pass
 
     return s.visit( rtlir )
 
   def check_res( s, node, name ):
     if s.is_sverilog_reserved( name ):
-      raise SVerilogTranslationError( s.blk, node, 
+      raise SVerilogTranslationError( s.blk, node,
         "name {} is a SystemVerilog reserved keyword!".format( name ) )
 
   #-----------------------------------------------------------------------
@@ -147,7 +146,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
     # Add name of the upblk to this always block
     src.extend( [ 'always_comb begin : {blk_name}'.format( **locals() ) ] )
-    
+
     for stmt in node.body:
       body.extend( s.visit( stmt ) )
 
@@ -174,7 +173,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     src.extend( [
       'always_ff @(posedge clk) begin : {blk_name}'.format( **locals() )
     ] )
-    
+
     for stmt in node.body:
       body.extend( s.visit( stmt ) )
 
@@ -217,7 +216,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
   # Expressions
   #-----------------------------------------------------------------------
-  # All expression nodes return a single string.  
+  # All expression nodes return a single string.
 
   #-----------------------------------------------------------------------
   # visit_Number
@@ -245,7 +244,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     try:
       target_nbits = int(node.nbits._value)
     except AttributeError:
-      raise SVerilogTranslationError( s.blk, node, 
+      raise SVerilogTranslationError( s.blk, node,
         "new bitwidth of zero extension must be known at elaboration time!" )
     current_nbits = int(node.value.Type.get_dtype().get_length())
     padded_nbits = target_nbits - current_nbits
@@ -263,7 +262,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     try:
       target_nbits = int(node.nbits._value)
     except AttributeError:
-      raise SVerilogTranslationError( s.blk, node, 
+      raise SVerilogTranslationError( s.blk, node,
         "new bitwidth of sign extension must be known at elaboration time!" )
 
     current_nbits = int(node.value.Type.get_dtype().get_length())
@@ -394,7 +393,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       # assert node.value.base is s.component
       ret = attr
     else:
-      raise SVerilogTranslationError( s.blk, node, 
+      raise SVerilogTranslationError( s.blk, node,
           "sub-components are not supported at L1" )
 
     return ret
@@ -433,11 +432,11 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       elif isinstance( Type.get_dtype(), rdt.Vector ):
         return '{value}[{idx}]'.format( **locals() )
       else:
-        raise SVerilogTranslationError( s.blk, node, 
+        raise SVerilogTranslationError( s.blk, node,
             "internal error: unrecognized index" )
 
     else:
-      raise SVerilogTranslationError( s.blk, node, 
+      raise SVerilogTranslationError( s.blk, node,
           "internal error: unrecognized index" )
 
   #-----------------------------------------------------------------------

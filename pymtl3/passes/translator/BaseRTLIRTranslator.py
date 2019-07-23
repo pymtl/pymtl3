@@ -4,10 +4,9 @@
 # Author : Peitian Pan
 # Date   : March 11, 2019
 """Provide base class and metadata namespace for RTLIR translators."""
-from __future__ import absolute_import, division, print_function
 
 
-class BaseRTLIRTranslator( object ):
+class BaseRTLIRTranslator:
   """Base class of RTLIR translators."""
 
   def __init__( s, top ):
@@ -28,7 +27,7 @@ class BaseRTLIRTranslator( object ):
 # TranslatorMetadata
 #-------------------------------------------------------------------------
 
-class TranslatorMetadata( object ):
+class TranslatorMetadata:
   """Metadata namespace used by RTLIR translators."""
   def __init__( s ):
     pass

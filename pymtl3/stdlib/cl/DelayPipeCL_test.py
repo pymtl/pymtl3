@@ -5,8 +5,6 @@
 # Author : Shunning Jiang
 # Date   : May 7, 2018
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3 import *

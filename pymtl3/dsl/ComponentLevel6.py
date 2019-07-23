@@ -7,8 +7,6 @@ Add method port decorator.
 Author : Yanghui Ou, Shunning Jiang
   Date : Feb 24, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel5 import ComponentLevel5
 from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
 
@@ -30,7 +28,7 @@ def non_blocking( rdy, Type=None ):
 class ComponentLevel6( ComponentLevel5 ):
 
   def _handle_decorated_methods( s ):
-    super( ComponentLevel6, s )._handle_decorated_methods()
+    super()._handle_decorated_methods()
 
     # The following code handles non-blocking methods
     def bind_method( method ):

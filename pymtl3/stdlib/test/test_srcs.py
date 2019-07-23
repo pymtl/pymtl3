@@ -7,8 +7,6 @@ Test sources with CL or RTL interfaces.
 Author : Yanghui Ou
   Date : Mar 11, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3 import *

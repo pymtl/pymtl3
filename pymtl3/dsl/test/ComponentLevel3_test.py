@@ -6,8 +6,6 @@ ComponentLevel3_test.py
 Author : Shunning Jiang
 Date   : Dec 25, 2017
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import Bits8, Bits10, Bits32
@@ -71,7 +69,7 @@ class TestSink( ComponentLevel3 ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.answer
@@ -82,7 +80,7 @@ class TestSink( ComponentLevel3 ):
 class Mux( ComponentLevel3 ):
 
   def construct( s, Type, ninputs ):
-    s.in_ = [ InPort( Type ) for _ in xrange(ninputs) ]
+    s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
     s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
 
@@ -148,7 +146,7 @@ def test_connect_deep():
   class MuxWrap(ComponentLevel3):
 
     def construct( s ):
-      s.in_ = [ InPort(int) for _ in xrange(2) ]
+      s.in_ = [ InPort(int) for _ in range(2) ]
       s.sel = InPort(int)
       s.out = OutPort(int)
 
@@ -186,7 +184,7 @@ def test_deep_connect():
   class MuxWrap3(ComponentLevel3):
 
     def construct( s ):
-      s.in_ = [ InPort(int) for _ in xrange(2) ]
+      s.in_ = [ InPort(int) for _ in range(2) ]
       s.sel = InPort(int)
       s.out = OutPort(int)
 
@@ -237,7 +235,7 @@ def test_2d_array_vars_connect_impl():
       s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
                                  (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
       s.connect( s.wire[0][0], s.src.out )
 
       @s.update
@@ -329,7 +327,7 @@ def test_lots_of_fan_connect():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s" % (s.wire0,s.reg) + \
+            "w0={} > r0={}".format(s.wire0,s.reg) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
@@ -371,7 +369,7 @@ def test_2d_array_vars_connect():
       s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
                                      (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
       s.connect( s.wire[0][0], s.src.out )
 
       @s.update
@@ -385,7 +383,7 @@ def test_2d_array_vars_connect():
       def up_reg():
         s.reg = s.wire[0][0] + s.wire[0][1]
 
-      for i in xrange(2):
+      for i in range(2):
         s.add_constraints(
           U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
         )
@@ -580,12 +578,12 @@ def test_multiple_slices_are_net_writers():
 
 def test_multiple_fields_are_net_writers():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)
 
-  class SomeMsg2( object ):
+  class SomeMsg2:
     def __init__( s, a=0 ):
       s.c = Bits8(a)
 
@@ -611,12 +609,12 @@ def test_multiple_fields_are_net_writers():
 
 def test_multiple_fields_are_assigned():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)
 
-  class SomeMsg2( object ):
+  class SomeMsg2:
     def __init__( s, a=0 ):
       s.c = Bits8(a)
 
@@ -644,7 +642,7 @@ def test_multiple_fields_are_assigned():
 
 def test_const_connect_struct_signal_to_int():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)
@@ -667,7 +665,7 @@ def test_const_connect_struct_signal_to_int():
 
 def test_const_connect_struct_signal_to_Bits():
 
-  class SomeMsg1( object ):
+  class SomeMsg1:
     def __init__( s, a=0, b=0 ):
       s.a = Bits8(a)
       s.b = Bits32(b)

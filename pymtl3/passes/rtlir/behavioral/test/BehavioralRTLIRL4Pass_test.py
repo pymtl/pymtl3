@@ -9,8 +9,6 @@ The L4 generation, L4 type check, and visualization passes are invoked. The
 generation pass results are verified against a reference AST.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import Bits32

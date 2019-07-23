@@ -7,13 +7,17 @@ Includes test cases for the translated TinyRV0 processor.
 Author : Shunning Jiang, Yanghui Ou
   Date : June 15, 2019
 """
-import pytest
 import random
+
+import pytest
+
+from examples.ex03_proc.ProcRTL import ProcRTL
+from pymtl3 import *
+
+from .harness import asm_test, assemble
+
 random.seed(0xdeadbeef)
 
-from pymtl3  import *
-from harness import asm_test, assemble 
-from examples.ex03_proc.ProcRTL import ProcRTL
 
 #-------------------------------------------------------------------------
 # ProcVRTL_Tests
@@ -56,4 +60,3 @@ class ProcVRTL_Tests( BaseTests ):
 
     # Force a test failure if we timed out
     assert ncycles < max_cycles
-

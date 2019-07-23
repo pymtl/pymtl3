@@ -5,10 +5,7 @@
 # Date   : March 24, 2019
 """Provide L1 structural translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict, deque
-from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -22,7 +19,7 @@ from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 def gen_connections( top ):
   """Return a tuple of all connections in the hierarchy whose top is `top`.
-  
+
   Return a three element tuple ( ss, sc, cc ). `ss` is a dictionary indexed
   by component `m` and has a set of pairs of connected signals within component
   `m` ( and thus is called "self_self" ). `sc` is a dictionary indexed by
@@ -76,7 +73,7 @@ def gen_connections( top ):
 
 class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def __init__( s, top ):
-    super( StructuralTranslatorL1, s ).__init__( top )
+    super().__init__( top )
     # To avoid doing redundant computation, we generate the connections of
     # the entire hierarchy once and only once here.
     # c_ss: self-self connections
@@ -85,7 +82,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.c_ss, s.c_sc, s.c_cc = gen_connections( top )
 
   def clear( s, tr_top ):
-    super( StructuralTranslatorL1, s ).clear( tr_top )
+    super().clear( tr_top )
     # Metadata namespace for RTLIR structural translator and the backend
     # structural translator
     s.structural = TranslatorMetadata()
@@ -244,8 +241,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     """Translate an RTLIR data type into its backend representation."""
     if isinstance( dtype, rdt.Vector ):
       ret = s.rtlir_tr_vector_dtype( dtype )
-      if reduce( lambda r, x: r and dtype != x[0],
-          s.structural.decl_type_vector, True ):
+      if all( dtype != x[0] for x in s.structural.decl_type_vector ):
         s.structural.decl_type_vector.append( ( dtype, ret ) )
       return ret
 

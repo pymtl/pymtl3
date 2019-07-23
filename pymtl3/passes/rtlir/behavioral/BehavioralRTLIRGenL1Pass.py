@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L1 behavioral RTLIR generation pass."""
-from __future__ import absolute_import, division, print_function
 
 import ast
 import copy
@@ -183,7 +182,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one argument should be given to concat!' )
-      values = map( lambda c: s.visit(c), node.args )
+      values = [s.visit(c) for c in node.args]
       ret = bir.Concat( values )
       ret.ast = node
       return ret
@@ -261,7 +260,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         assert isinstance( slice_obj.start, int ) and \
                isinstance( slice_obj.stop, int ), \
             "start and stop of slice object {} must be integers!".format( slice_obj )
-        ret = bir.Slice( value, 
+        ret = bir.Slice( value,
               bir.Number(slice_obj.start), bir.Number(slice_obj.stop) )
       # Else this is a real index
       else:

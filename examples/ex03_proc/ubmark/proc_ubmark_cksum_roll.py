@@ -28,12 +28,10 @@ Author : Yanghui Ou
 
 import struct
 
-from pymtl3 import *
-from string import translate, maketrans
-from examples.ex03_proc.tinyrv0_encoding  import assemble
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
-
-from proc_ubmark_cksum_roll_data import src, ref, mask, dataset_size
+from examples.ex03_proc.tinyrv0_encoding import assemble
+from proc_ubmark_cksum_roll_data import dataset_size, mask, ref, src
+from pymtl3 import *
 
 c_cksum_src_ptr = 0x2000;
 c_cksum_msk_ptr = 0x3000;

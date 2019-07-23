@@ -8,7 +8,6 @@ https://github.com/pypa/sampleproject/blob/master/setup.py
 
 from __future__ import absolute_import, division, print_function
 
-from codecs import open  # To use a consistent encoding
 from os import path
 from subprocess import check_output
 
@@ -19,6 +18,10 @@ from setuptools import find_packages, setup
 #-------------------------------------------------------------------------
 
 def get_version():
+  # Check Python version compatibility
+  import sys
+  assert sys.version_info[0] > 2, "Python 2 is no longer supported!"
+
   result = "?"
   with open("pymtl3/__init__.py") as f:
     for line in f:
@@ -57,13 +60,13 @@ setup(
   license='BSD',
 
   # Pip will block installation on unsupported versions of Python
-  python_requires=">=2.7",
+  python_requires=">=3.6",
 
   # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
   classifiers=[
     'Development Status :: 4 - Beta',
     'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3 :: Only',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX :: Linux',
     'Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)',

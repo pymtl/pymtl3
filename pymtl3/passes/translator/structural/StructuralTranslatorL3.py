@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Apr 4, 2019
 """Provide L3 structural translator."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
@@ -35,7 +34,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
   # Override
   def translate_structural( s, tr_top ):
     s.structural.decl_ifcs = {}
-    super( StructuralTranslatorL3, s ).translate_structural( tr_top )
+    super().translate_structural( tr_top )
 
   #-----------------------------------------------------------------------
   # translate_decls
@@ -81,7 +80,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
       ) )
     s.structural.decl_ifcs[m] = s.rtlir_tr_interface_decls( ifc_decls )
 
-    super( StructuralTranslatorL3, s ).translate_decls( m )
+    super().translate_decls( m )
 
   #-----------------------------------------------------------------------
   # rtlir_signal_expr_translation
@@ -102,7 +101,7 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
         s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index())
 
     else:
-      return super(StructuralTranslatorL3, s).rtlir_signal_expr_translation(expr, m)
+      return super().rtlir_signal_expr_translation(expr, m)
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator

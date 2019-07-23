@@ -5,8 +5,6 @@
 # Date   : Jun 5, 2019
 """Test ad-hoc components with SystemVerilog translation and import."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator

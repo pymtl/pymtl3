@@ -10,15 +10,13 @@ Author : Shunning Jiang
 
 import struct
 
-from pymtl3 import *
-
-from pymtl3.passes import DynamicSim
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test  import TestSrcCL, TestSinkCL
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
+from pymtl3 import *
+from pymtl3.passes import DynamicSim
+from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 #=========================================================================
 # TestHarness
@@ -94,18 +92,18 @@ class TestHarness(Component):
       # For .mngr2proc sections, copy section into mngr2proc src
 
       if section.name == ".mngr2proc":
-        for i in xrange(0,len(section.data),4):
+        for i in range(0,len(section.data),4):
           bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.src.src.msgs.append( Bits(32,bits) )
-          self.src.msgs.append( Bits(32,bits) )
+          # self.src.src.msgs.append( Bits32(bits) )
+          self.src.msgs.append( Bits32(bits) )
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
-        for i in xrange(0,len(section.data),4):
+        for i in range(0,len(section.data),4):
           bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.sink.sink.msgs.append( Bits(32,bits) )
-          self.sink.msgs.append( Bits(32,bits) )
+          # self.sink.sink.msgs.append( Bits32(bits) )
+          self.sink.msgs.append( Bits32(bits) )
 
       # For all other sections, simply copy them into the memory
 
@@ -176,4 +174,3 @@ def run_test( ProcModel, XcelModel, gen_test, dump_vcd=None,
   th.tick()
   th.tick()
   th.tick()
-

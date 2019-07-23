@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 22, 2019
 """Provide L3 behavioral translator."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL3Pass import (
     BehavioralRTLIRGenL3Pass,
@@ -18,10 +17,10 @@ from .BehavioralTranslatorL2 import BehavioralTranslatorL2
 
 class BehavioralTranslatorL3( BehavioralTranslatorL2 ):
   def __init__( s, top ):
-    super( BehavioralTranslatorL3, s ).__init__( top )
+    super().__init__( top )
 
   def clear( s, tr_top ):
-    super( BehavioralTranslatorL3, s ).clear( tr_top )
+    super().clear( tr_top )
 
   #-----------------------------------------------------------------------
   # _gen_behavioral_trans_metadata

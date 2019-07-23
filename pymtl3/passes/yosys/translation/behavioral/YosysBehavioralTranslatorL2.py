@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L2 behavioral translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
     SVBehavioralTranslatorL2,
@@ -41,7 +39,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
 
   def visit_If( s, node ):
     node.cond._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_If( node )
+    return super().visit_If( node )
 
   #-----------------------------------------------------------------------
   # visit_For
@@ -98,7 +96,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
     node.cond._top_expr = 1
     node.body._top_expr = 1
     node.orelse._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_IfExp( node )
+    return super().visit_IfExp( node )
 
   #-----------------------------------------------------------------------
   # visit_UnaryOp
@@ -106,7 +104,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
 
   def visit_UnaryOp( s, node ):
     node.operand._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_UnaryOp( node )
+    return super().visit_UnaryOp( node )
 
   #-----------------------------------------------------------------------
   # visit_BoolOp
@@ -115,7 +113,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
   def visit_BoolOp( s, node ):
     for child in node.values:
       child._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_BoolOp( node )
+    return super().visit_BoolOp( node )
 
   #-----------------------------------------------------------------------
   # visit_BinOp
@@ -124,7 +122,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
   def visit_BinOp( s, node ):
     node.left._top_expr = 1
     node.right._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_BinOp( node )
+    return super().visit_BinOp( node )
 
   #-----------------------------------------------------------------------
   # visit_Compare
@@ -133,7 +131,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
   def visit_Compare( s, node ):
     node.left._top_expr = 1
     node.right._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_Compare( node )
+    return super().visit_Compare( node )
 
   #-----------------------------------------------------------------------
   # visit_LoopVar

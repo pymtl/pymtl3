@@ -7,8 +7,6 @@ Test cases for functional level checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import hypothesis
 from hypothesis import strategies as st
 
@@ -22,7 +20,7 @@ from ..ChecksumFL import checksum
 # We manage all our test cases into a class so that these tests can be
 # easily reused across modeling levels through inheritance.
 
-class ChecksumFL_Tests( object ):
+class ChecksumFL_Tests:
 
   #-----------------------------------------------------------------------
   # cksum_func
@@ -74,4 +72,3 @@ class ChecksumFL_Tests( object ):
     assert s.cksum_func( words0 ) != s.cksum_func( words1 )
     assert s.cksum_func( words0 ) == b32( 0x00780024 )
     assert s.cksum_func( words1 ) == b32( 0x00820024 )
-

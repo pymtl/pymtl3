@@ -3,21 +3,20 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits32
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
+)
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
-
-from .SVTranslator_L1_cases_test import trim
 
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert trim( tr.hierarchy.src ) == m._ref_src
+  check_eq( tr.hierarchy.src, m._ref_src )
 
 #-------------------------------------------------------------------------
 # Behavioral
@@ -59,13 +58,13 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out.val = s.in_.val
   //   s.out.msg = s.in_.msg
   //   s.in_.rdy = s.out.rdy
-  
+
   always_comb begin : upblk
     out$val = in_$val;
     out$msg = in_$msg;
@@ -101,11 +100,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[1].foo
-  
+
   always_comb begin : upblk
     out = in_$__1$foo;
   end
@@ -125,11 +124,11 @@ module A
   logic [31:0] in_$foo [0:1];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[1].foo
-  
+
   always_comb begin : upblk
     out = in_$foo[1];
   end

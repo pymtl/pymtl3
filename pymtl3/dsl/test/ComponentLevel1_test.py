@@ -6,8 +6,6 @@ ComponentLevel1_test.py
 Author : Shunning Jiang
 Date   : Dec 23, 2017
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
@@ -63,7 +61,7 @@ class TestSink( ComponentLevel1 ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.answer
@@ -218,7 +216,7 @@ def test_add_loopback():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+            "w0={} > r0={} > w1={}".format(s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
@@ -309,7 +307,7 @@ def test_lots_of_fan():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s" % (s.wire0,s.reg) + \
+            "w0={} > r0={}".format(s.wire0,s.reg) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
@@ -324,7 +322,7 @@ def test_2d_array_vars():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [0 for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [0 for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():

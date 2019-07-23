@@ -11,8 +11,6 @@ Author : Shunning Jiang
 Date   : Mar 12, 2018
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.fl import MemoryFL
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg

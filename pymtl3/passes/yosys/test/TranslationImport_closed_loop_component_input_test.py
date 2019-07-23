@@ -5,8 +5,6 @@
 # Date   : June 6, 2019
 """Closed-loop test cases for translation-import with component and input."""
 
-from __future__ import absolute_import, division, print_function
-
 from random import seed
 
 from pymtl3.passes.rtlir.util.test_utility import do_test

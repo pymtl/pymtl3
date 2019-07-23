@@ -9,8 +9,6 @@ The generation, type check, and visualization passes are invoked. The
 results of generation pass are verifed against a reference AST.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import *

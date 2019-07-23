@@ -6,8 +6,6 @@ ComponentAPI_test.py
 Author : Shunning Jiang
 Date   : June 2, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import random
 
 from pymtl3.datatypes import *
@@ -123,7 +121,7 @@ def test_replace_component_list_of_foo_by_real():
   foo_wrap = Foo_shamt_list_wrap( 32 )
 
   foo_wrap.elaborate()
-  order = range(5)
+  order = list(range(5))
   random.shuffle( order )
   for i in order:
     foo_wrap.replace_component( foo_wrap.inner[i], Real_shamt )
@@ -143,7 +141,7 @@ def test_replace_component_list_of_real_by_real2():
 
   foo_wrap = Foo_shamt_list_wrap( 32 )
 
-  order = range(5)
+  order = list(range(5))
   random.shuffle( order )
 
   foo_wrap.elaborate()

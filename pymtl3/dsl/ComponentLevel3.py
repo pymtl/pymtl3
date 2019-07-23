@@ -12,8 +12,6 @@ be revamped when adding method-based interfaces.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict, deque
 
 from pymtl3.datatypes import Bits
@@ -40,7 +38,7 @@ class ComponentLevel3( ComponentLevel2 ):
   #-----------------------------------------------------------------------
 
   def __new__( cls, *args, **kwargs ):
-    inst = super( ComponentLevel3, cls ).__new__( cls, *args, **kwargs )
+    inst = super().__new__( cls, *args, **kwargs )
     inst._dsl.call_kwargs   = None
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
@@ -49,7 +47,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def _collect_vars( s, m ):
-    super( ComponentLevel3, s )._collect_vars( m )
+    super()._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
       all_ajd = s._dsl.all_adjacency
       for k, v in m._dsl.adjacency.items():
@@ -167,7 +165,7 @@ class ComponentLevel3( ComponentLevel2 ):
     def connect_by_name( this, other ):
       def recursive_connect( this_obj, other_obj ):
         if isinstance( this_obj, list ):
-          for i in xrange(len(this_obj)):
+          for i in range(len(this_obj)):
             # TODO add error message if other_obj is not a list
             recursive_connect( this_obj[i], other_obj[i] )
         else:
@@ -257,7 +255,7 @@ class ComponentLevel3( ComponentLevel2 ):
     try: # Catch AssertionError from _connect
 
       # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.iteritems():
+      for (kw, target) in s._dsl.call_kwargs.items():
         try:
           obj = getattr( s, kw )
         except AttributeError:
@@ -268,7 +266,7 @@ class ComponentLevel3( ComponentLevel2 ):
           # Make sure the connection target is a dictionary {idx: obj}
           if not isinstance( target, dict ):
             raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.iteritems():
+          for idx, item in target.items():
             s._dsl.parent_obj._connect_objects( obj[idx], item )
 
         # Obj is a single signal
@@ -341,7 +339,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     writer_prop = {}
 
-    for blk, writes in s._dsl.all_upblk_writes.iteritems():
+    for blk, writes in s._dsl.all_upblk_writes.items():
       for obj in writes:
         writer_prop[ obj ] = True # propagatable
 
@@ -660,7 +658,7 @@ class ComponentLevel3( ComponentLevel2 ):
     s._connect_objects( o1, o2 )
 
     visited = set()
-    for u, vs in s._dsl.adjacency.iteritems():
+    for u, vs in s._dsl.adjacency.items():
       for v in vs:
         if (u, v) not in visited:
           s._disconnect_signal_signal( u, v )
@@ -710,7 +708,7 @@ class ComponentLevel3( ComponentLevel2 ):
     if len(args) & 1 != 0:
        raise InvalidConnectionError( "Odd number ({}) of objects provided.".format( len(args) ) )
 
-    for i in xrange(len(args)>>1) :
+    for i in range(len(args)>>1) :
       try:
         s._connect_objects( args[ i<<1 ], args[ (i<<1)+1 ] )
       except InvalidConnectionError:
@@ -736,12 +734,12 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # Override
   def _elaborate_declare_vars( s ):
-    super( ComponentLevel3, s )._elaborate_declare_vars()
+    super()._elaborate_declare_vars()
     s._dsl.all_adjacency = defaultdict(set)
 
   # Override
   def _elaborate_collect_all_vars( s ):
-    super( ComponentLevel3, s )._elaborate_collect_all_vars()
+    super()._elaborate_collect_all_vars()
     s._dsl.all_value_nets = s._resolve_value_connections()
     s._dsl._has_pending_value_connections = False
 

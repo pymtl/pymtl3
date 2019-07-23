@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 29, 2019
 """Provide L2 behavioral RTLIR type check pass."""
-from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
 
@@ -38,7 +37,7 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
-    super(BehavioralRTLIRTypeCheckVisitorL2, s).__init__(component, freevars, accessed)
+    super().__init__(component, freevars, accessed)
     s.tmpvars = tmpvars
     s.BinOp_max_nbits = (bir.Add, bir.Sub, bir.Mult, bir.Div, bir.Mod, bir.Pow,
                          bir.BitAnd, bir.BitOr, bir.BitXor)
@@ -106,7 +105,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     else:
       # non-temporary assignment is an L1 thing
-      super( BehavioralRTLIRTypeCheckVisitorL2, s ).visit_Assign( node )
+      super().visit_Assign( node )
 
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?

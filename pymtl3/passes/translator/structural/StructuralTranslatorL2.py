@@ -4,9 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 24, 2019
 """Provide L2 structural translator."""
-from __future__ import absolute_import, division, print_function
-
-from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
@@ -20,10 +17,10 @@ from .StructuralTranslatorL1 import StructuralTranslatorL1
 class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   def __init__( s, top ):
-    super( StructuralTranslatorL2, s ).__init__( top )
+    super().__init__( top )
 
   def clear( s, tr_top ):
-    super( StructuralTranslatorL2, s ).clear( tr_top )
+    super().clear( tr_top )
     # Declarations
     s.structural.decl_type_struct = []
 
@@ -44,7 +41,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   # Override
   def translate_structural( s, tr_top ):
-    super( StructuralTranslatorL2, s ).translate_structural( tr_top )
+    super().translate_structural( tr_top )
 
   #-----------------------------------------------------------------------
   # _translate_structural
@@ -52,7 +49,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   # Override
   def _translate_structural( s, m ):
-    super( StructuralTranslatorL2, s )._translate_structural( m )
+    super()._translate_structural( m )
 
   #-----------------------------------------------------------------------
   # translate_decls
@@ -60,7 +57,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   # Override
   def translate_decls( s, m ):
-    super( StructuralTranslatorL2, s ).translate_decls( m )
+    super().translate_decls( m )
 
   #-----------------------------------------------------------------------
   # rtlir_data_type_translation
@@ -80,12 +77,12 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     if isinstance( dtype, rdt.Struct ):
       ret = s.rtlir_tr_struct_dtype( dtype )
       ns_struct = s.structural.decl_type_struct
-      if reduce(lambda r, x: r and dtype != x[0], ns_struct, True):
+      if all( dtype != x[0] for x in ns_struct ):
         recurse_struct_dtype_translation( dtype )
         s.structural.decl_type_struct.append( ( dtype, ret ) )
       return ret
     else:
-      return super( StructuralTranslatorL2, s ). \
+      return super(). \
           rtlir_data_type_translation( m, dtype )
 
   #-----------------------------------------------------------------------
@@ -111,10 +108,10 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
       if isinstance( dtype, rdt.Struct ):
         return s.rtlir_tr_struct_instance(dtype, value)
       else:
-        return super( StructuralTranslatorL2, s ). \
+        return super(). \
             rtlir_signal_expr_translation( expr, m )
     else:
-      return super( StructuralTranslatorL2, s ). \
+      return super(). \
           rtlir_signal_expr_translation( expr, m )
 
   #-----------------------------------------------------------------------

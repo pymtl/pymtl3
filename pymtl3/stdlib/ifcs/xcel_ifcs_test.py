@@ -6,7 +6,6 @@
 Author : Yanghui Ou
   Date : June 4, 2019
 """
-from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg

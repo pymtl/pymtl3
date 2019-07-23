@@ -2,9 +2,6 @@
 # SVStructuralTranslatorL2.py
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
-from __future__ import absolute_import, division, print_function
-
-from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.sverilog.util.utility import make_indent
@@ -30,7 +27,7 @@ class SVStructuralTranslatorL2(
       sub_dtype_template = s.rtlir_tr_struct_dtype( sub_dtype )
     else:
       assert False, "unsupported data type {} in packed array!".format(sub_dtype)
-    dim_str = reduce(lambda x,y: x+'[{}:0]'.format(y-1), dtype.get_dim_sizes(), '')
+    dim_str = "".join( f"[{size-1}:0]" for size in dtype.get_dim_sizes() )
     str_list = sub_dtype_template['decl'].split()
     if '[' in str_list[-2]:
       str_list[-2] = dim_str + str_list[-2]
@@ -87,9 +84,9 @@ typedef struct packed {{
       if isinstance( dtype, rdt.Struct ):
         return s.rtlir_tr_struct_instance( dtype, array )
       else:
-        return super(SVStructuralTranslatorL2, s).gen_array_param( n_dim, dtype, array )
+        return super().gen_array_param( n_dim, dtype, array )
     else:
-      return super(SVStructuralTranslatorL2, s).gen_array_param( n_dim, dtype, array )
+      return super().gen_array_param( n_dim, dtype, array )
 
   #-----------------------------------------------------------------------
   # Signal oeprations
@@ -112,7 +109,7 @@ typedef struct packed {{
           assert False, "unrecognized data type {}!".format( dtype )
       else:
         ret = []
-        for i in reversed( range( n_dim[0] ) ):
+        for i in reversed( range( n_dim[0]) ):
           ret.append( _gen_packed_array( dtype, n_dim[1:], array[i] ) )
         if n_dim[0] > 1:
           cat_str = "{" + ", ".join( ret ) + "}"

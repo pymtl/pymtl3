@@ -3,21 +3,20 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire
 from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+    check_eq,
+)
 from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
-
-from .SVTranslator_L1_cases_test import trim
 
 
 def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  assert trim( tr.hierarchy.src ) == m._ref_src
+  check_eq( tr.hierarchy.src, m._ref_src )
 
 #-------------------------------------------------------------------------
 # Behavioral
@@ -48,14 +47,14 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
   //     s.out = s.in_1
   //   else:
   //     s.out = s.in_2
-  
+
   always_comb begin : upblk
     if ( 1'd1 ) begin
       out = in_1;
@@ -95,7 +94,7 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -103,7 +102,7 @@ module A
   //       s.out = s.in_1
   //     else:
   //       s.out = s.in_2
-  
+
   always_comb begin : upblk
     if ( 1'd1 ) begin
       if ( 1'd0 ) begin
@@ -145,7 +144,7 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -153,7 +152,7 @@ module A
   //       s.out = s.in_1
   //   else:
   //     s.out = s.in_2
-  
+
   always_comb begin : upblk
     if ( 1'd1 ) begin
       if ( 1'd0 ) begin
@@ -198,7 +197,7 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -207,7 +206,7 @@ module A
   //     s.out = s.in_2
   //   else:
   //     s.out = s.in_3
-  
+
   always_comb begin : upblk
     if ( 1'd1 ) begin
       out = in_1;
@@ -262,7 +261,7 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -280,7 +279,7 @@ module A
   //       s.out = s.in_3
   //     else:
   //       s.out = s.in_1
-  
+
   always_comb begin : upblk
     if ( 1'd1 ) begin
       if ( 1'd0 ) begin
@@ -329,12 +328,12 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(2):
   //     s.out[i] = s.in_[i]
-  
+
   always_comb begin : upblk
     for ( int i = 0; i < 2; i += 1 )
       out[i] = in_[i];
@@ -357,14 +356,14 @@ module A
   logic [31:0] out [0:1];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(2):
   //     s.out[i] = s.in_[i]
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
       out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
@@ -401,13 +400,13 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(1, 2):
   //     s.out[i] = s.in_[i]
   //   s.out[0] = s.in_[0]
-  
+
   always_comb begin : upblk
     for ( int i = 1; i < 2; i += 1 )
       out[i] = in_[i];
@@ -431,15 +430,15 @@ module A
   logic [31:0] out [0:1];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(1, 2):
   //     s.out[i] = s.in_[i]
   //   s.out[0] = s.in_[0]
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
       out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
@@ -478,14 +477,14 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(0, 5, 2):
   //     s.out[i] = s.in_[i]
   //   for i in range(1, 5, 2):
   //     s.out[i] = s.in_[i]
-  
+
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 2 )
       out[i] = in_[i];
@@ -516,16 +515,16 @@ module A
   logic [31:0] out [0:4];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(0, 5, 2):
   //     s.out[i] = s.in_[i]
   //   for i in range(1, 5, 2):
   //     s.out[i] = s.in_[i]
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
       out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
@@ -569,12 +568,12 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
   //     s.out[i] = s.in_[i] if i == 1 else s.in_[0]
-  
+
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 )
       out[i] = ( i == 1 ) ? in_[i] : in_[0];
@@ -603,14 +602,14 @@ module A
   logic [31:0] out [0:4];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
   //     s.out[i] = s.in_[i] if i == 1 else s.in_[0]
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
       out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? in_[__loopvar_upblk$i] : in_[0];
@@ -652,12 +651,12 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
   //     s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
-  
+
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 )
       out[i] = ( i == 1 ) ? ~in_[i] : in_[0];
@@ -686,14 +685,14 @@ module A
   logic [31:0] out [0:4];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
   //     s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
       out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? ~in_[__loopvar_upblk$i] : in_[0];
@@ -738,7 +737,7 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -746,7 +745,7 @@ module A
   //       s.out[i] = s.in_[i]
   //     else:
   //       s.out[i] = Bits32(0)
-  
+
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 )
       if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
@@ -779,7 +778,7 @@ module A
   logic [31:0] out [0:4];
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -787,9 +786,9 @@ module A
   //       s.out[i] = s.in_[i]
   //     else:
   //       s.out[i] = Bits32(0)
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
       if ( in_[__loopvar_upblk$i] && ( ( __loopvar_upblk$i < 5 ) ? in_[__loopvar_upblk$i + 1] : in_[4] ) ) begin
@@ -840,7 +839,7 @@ module A
   logic [31:0] __tmpvar_upblk$tmpvar;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -849,7 +848,7 @@ module A
   //     else:
   //       tmpvar = Bits32(0)
   //     s.out[i] = tmpvar
-  
+
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 ) begin
       if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
@@ -885,7 +884,7 @@ module A
   logic [31:0] __tmpvar_upblk$tmpvar;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -894,9 +893,9 @@ module A
   //     else:
   //       tmpvar = Bits32(0)
   //     s.out[i] = tmpvar
-  
+
   integer __loopvar_upblk$i;
-  
+
   always_comb begin : upblk
     for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 ) begin
       if ( in_[__loopvar_upblk$i] && ( ( __loopvar_upblk$i < 5 ) ? in_[__loopvar_upblk$i + 1] : in_[4] ) ) begin
@@ -950,11 +949,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_.foo
-  
+
   always_comb begin : upblk
     out = in_.foo;
   end
@@ -973,11 +972,11 @@ module A
   logic [31:0] in_;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = s.in_.foo
-  
+
   always_comb begin : upblk
     out = in_$foo;
   end
@@ -1017,11 +1016,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.bar[1], s.in_.foo )
-  
+
   always_comb begin : upblk
     out = { in_.bar[0], in_.bar[1], in_.foo };
   end
@@ -1043,11 +1042,11 @@ module A
   logic [95:0] in_;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.bar[1], s.in_.foo )
-  
+
   always_comb begin : upblk
     out = { in_$bar[0], in_$bar[1], in_$foo };
   end
@@ -1100,11 +1099,11 @@ module A
 );
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.c.woof, s.in_.foo )
-  
+
   always_comb begin : upblk
     out = { in_.bar[0], in_.c.woof, in_.foo };
   end
@@ -1128,11 +1127,11 @@ module A
   logic [127:0] in_;
 
   // PYMTL SOURCE:
-  // 
+  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.c.woof, s.in_.foo )
-  
+
   always_comb begin : upblk
     out = { in_$bar[0], in_$c$woof, in_$foo };
   end

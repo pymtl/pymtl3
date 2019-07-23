@@ -5,8 +5,6 @@
 # Date   : June 14, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-from __future__ import absolute_import, division, print_function
-
 import os
 
 from pymtl3.passes.BasePass import BasePass
@@ -112,7 +110,7 @@ class ImportPass( SVerilogImportPass ):
       return s.mangle_packed_array( d, id_, dtype )
     else:
       assert False, "unrecognized data type {}!".format( dtype )
-  
+
   def mangle_port( s, id_, port, n_dim ):
     if not n_dim:
       return s.mangle_dtype( port.get_direction(), id_, port.get_dtype() )

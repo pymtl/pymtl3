@@ -2,9 +2,6 @@
 # SVStructuralTranslatorL3.py
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
-from __future__ import absolute_import, division, print_function
-
-from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -24,7 +21,7 @@ class SVStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_port_decls( s, port_decls ):
-    return reduce( lambda x, y: x+y, port_decls, [] )
+    return sum( port_decls, [] )
 
   def rtlir_tr_interface_port_decl( s, m, port_id, port_rtype, port_array_type ):
     def _gen_ifc( id_, ifc, n_dim ):
@@ -58,7 +55,7 @@ class SVStructuralTranslatorL3(
       return _gen_ifc( port_id, port_rtype, n_dim )
 
   def rtlir_tr_interface_decls( s, ifc_decls ):
-    all_decls = reduce( lambda res, l: res + l, ifc_decls, [] )
+    all_decls = sum( ifc_decls, [] )
     make_indent( all_decls, 1 )
     return ',\n'.join( all_decls )
 
@@ -70,12 +67,11 @@ class SVStructuralTranslatorL3(
       ret = []
       if not n_dim:
         id_ = ifc_id + c_n_dim
-        return map( lambda pdecl: pdecl.format( id_ = id_ ), port_decls )
+        return [pdecl.format( id_ = id_ ) for pdecl in port_decls]
       else:
-        return reduce( lambda res, l: res+l, map(
-          lambda idx: gen_interface_array_decl(
-            ifc_id, ifc_rtype, n_dim[1:0], c_n_dim+'$__'+str(idx), port_decls
-        ), range( n_dim[0] ) ), [] )
+        return sum( [ gen_interface_array_decl(
+          ifc_id, ifc_rtype, n_dim[1:], c_n_dim+"$__"+str(idx), port_decls,
+        ) for idx in range( n_dim[0] ) ], [] )
     n_dim = array_type['n_dim']
     return gen_interface_array_decl( ifc_id, ifc_rtype, n_dim, '', port_decls )
 

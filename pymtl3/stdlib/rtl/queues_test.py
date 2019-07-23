@@ -6,8 +6,6 @@ Tests for CL queues
 Author: Yanghui Ou
   Date: Mar 24, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from itertools import product
 
 import pytest
@@ -176,7 +174,7 @@ def test_bypass2_sparse():
   run_sim( th )
 
 @pytest.mark.parametrize(
-  'QType, num_entries', 
+  'QType, num_entries',
   product( [ NormalQueueRTL, PipeQueueRTL, BypassQueueRTL ], [ 8, 10, 12, 16 ] )
 )
 def test_large_backpressure( QType, num_entries ):

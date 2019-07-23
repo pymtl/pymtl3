@@ -18,67 +18,16 @@ namespaces to put their created metadata.
 Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import re
 
 from .errors import NotElaboratedError
 
-# from collections import OrderedDict as ord_dict
 
-
-class DSLMetadata(object):
+class DSLMetadata:
   pass
 
-# NOTE: We found that the built-in OrderedDict slows down the elaboration
-# time because much time was spent calling OrderedDict.__init__.
-# The time for instantiating an OrderedDict is quite long compared
-# to other primitive data structures such as list or dict. We have to
-# implement our own ordered dictionary to mitigate this overhead.
-# TODO: When we move to python3, we won't need this any more.
-class ord_dict( object ):
-  def __init__( self ):
-    self.data = []
-
-  def __getitem__( self, key ):
-    for k, v in self.data:
-      if key == k:
-        return v
-    raise KeyError( "Key error:{}".format( key ) )
-
-  def __setitem__( self, key, value ):
-    idx = 0
-    for k, v in self.data:
-      if key == k:
-        self.data[ idx ] = ( k, value )
-        return
-      idx += 1
-    self.data.append( ( key, value ) )
-
-  def __iter__( self ):
-    for k, _ in self.data:
-      yield k
-
-  def __str__( self ):
-    return str( self.data )
-
-  def pop( self, key ):
-    idx = 0
-    for k, v in self.data:
-      if key == k:
-        _, ret = self.data.pop( idx )
-        return ret
-      idx += 1
-    raise KeyError( "Key error:{}".format( key ) )
-
-  def iteritems( self ):
-    for k, v in self.data:
-      yield k, v
-
-  items = iteritems
-
 # Special data structure for constructing the parameter tree.
-class ParamTreeNode(object):
+class ParamTreeNode:
   def __init__( self ):
     self.compiled_re = None
     self.children = None
@@ -90,7 +39,7 @@ class ParamTreeNode(object):
       # Lazily create leaf
       if self.leaf is None:
         self.leaf = {}
-      for func_name, subdict in other.leaf.iteritems():
+      for func_name, subdict in other.leaf.items():
         if func_name not in self.leaf:
           self.leaf[ func_name ] = {}
         self.leaf[ func_name ].update( subdict )
@@ -99,8 +48,8 @@ class ParamTreeNode(object):
     if other.children is not None:
       # Lazily create children
       if self.children is None:
-        self.children = ord_dict()
-      for comp_name, node in other.children.iteritems():
+        self.children = {}
+      for comp_name, node in other.children.items():
         if comp_name in self.children:
           self.children[ comp_name ].merge( node )
         else:
@@ -110,7 +59,7 @@ class ParamTreeNode(object):
 
     if self.leaf is None:
       self.leaf = {}
-      self.children = ord_dict()
+      self.children = {}
 
     # Traverse to the node
     cur_node = self
@@ -118,13 +67,13 @@ class ParamTreeNode(object):
     for comp_name in strs:
       # Lazily create children
       if cur_node.children is None:
-        cur_node.children = ord_dict()
+        cur_node.children = {}
       if comp_name not in cur_node.children:
         new_node = ParamTreeNode()
         if '*' in comp_name:
           new_node.compiled_re = re.compile( comp_name )
           # Recursively update exisiting nodes that matches the regex
-          for name, node in cur_node.children.iteritems():
+          for name, node in cur_node.children.items():
             if node.compiled_re is None:
               if new_node.compiled_re.match( name ):
                 node.add_params( strs[idx:], func_name, **kwargs )
@@ -146,11 +95,11 @@ class ParamTreeNode(object):
   def __repr__( self ):
     return "\nleaf:{}\nchildren:{}".format( self.leaf, self.children )
 
-class NamedObject(object):
+class NamedObject:
 
   def __new__( cls, *args, **kwargs ):
 
-    inst = super( NamedObject, cls ).__new__( cls )
+    inst = super().__new__( cls )
     inst._dsl = DSLMetadata() # TODO an actual object?
 
     # Save parameters for elaborate
@@ -206,7 +155,7 @@ class NamedObject(object):
             # Iterate through the param_tree and update u
             if s._dsl.param_tree is not None:
               if s._dsl.param_tree.children is not None:
-                for comp_name, node in s._dsl.param_tree.children.iteritems():
+                for comp_name, node in s._dsl.param_tree.children.items():
                   if comp_name == u_name:
                     # Lazily create the param tree
                     if u._dsl.param_tree is None:
@@ -241,7 +190,7 @@ class NamedObject(object):
           for i, v in enumerate( u ):
             stack.append( (v, indices+[i]) )
 
-    super( NamedObject, s ).__setattr__( name, obj )
+    super().__setattr__( name, obj )
 
   # It is possible to take multiple filters
   def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
@@ -255,12 +204,12 @@ class NamedObject(object):
           if filt[i]( u ): # Check if m satisfies the filter
             ret[i].add( u )
 
-        for name, obj in u.__dict__.iteritems():
+        for name, obj in u.__dict__.items():
 
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice
 
-          if   isinstance( name, basestring ): # python2 specific
+          if   isinstance( name, str ):
             if not name.startswith("_"): # filter private variables
               stack.append( obj )
 
@@ -278,7 +227,7 @@ class NamedObject(object):
     try:
       return s._dsl.full_name
     except AttributeError:
-      return super( NamedObject, s ).__repr__()
+      return super().__repr__()
 
   #-----------------------------------------------------------------------
   # Construction time APIs

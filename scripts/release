@@ -46,14 +46,14 @@
 #
 
 import argparse
-import sys
-import re
-import os
-import shutil
-import yaml
 import collections
+import os
+import re
+import shutil
+import sys
 
 import common
+import yaml
 from common import *
 
 #-------------------------------------------------------------------------
@@ -151,7 +151,7 @@ def generate( opts ):
 
   patsubs = []
 
-  for src_dir,src_files in cfg.iteritems():
+  for src_dir,src_files in cfg.items():
 
     # Skip KEEP files
 
@@ -322,7 +322,7 @@ def push( opts ):
   # Get keep files
 
   keep_files = []
-  for src_dir,src_files in cfg.iteritems():
+  for src_dir,src_files in cfg.items():
     if src_dir.startswith('KEEP'):
       for src_file in src_files:
         keep_files.append( src_file )
@@ -463,4 +463,3 @@ def main():
   vprint("")
 
 main()
-

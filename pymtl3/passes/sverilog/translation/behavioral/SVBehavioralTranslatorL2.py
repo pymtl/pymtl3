@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 18, 2019
 """Provide the level 2 SystemVerilog translator implementation."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -41,7 +40,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   """Visitor that translates RTLIR to SystemVerilog for a single upblk."""
 
   def __init__( s, is_reserved ):
-    super( BehavioralRTLIRToSVVisitorL2, s ).__init__( is_reserved )
+    super().__init__( is_reserved )
 
     # The dictionary of operator-character pairs
     s.ops = {

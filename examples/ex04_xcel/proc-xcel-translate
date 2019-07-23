@@ -16,12 +16,11 @@
 # Author : Peitian Pan, Shunning Jiang, Christopher Batten
 # Date   : June 19, 2019
 
-# Hack to add project root to python path
-
 import argparse
 import os
 import sys
 
+# Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while cur_dir:
   if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):
@@ -30,14 +29,12 @@ while cur_dir:
   cur_dir = os.path.dirname(cur_dir)
 
 # Import the RTL processor, accelerators, and their composition
-
-from examples.ex03_proc.ProcRTL         import ProcRTL
-from examples.ex03_proc.NullXcel        import NullXcelRTL
+from examples.ex03_proc.NullXcel import NullXcelRTL
+from examples.ex03_proc.ProcRTL import ProcRTL
 from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
-from examples.ex04_xcel.ProcXcel        import ProcXcel
+from examples.ex04_xcel.ProcXcel import ProcXcel
 
 # Import the translation pass from yosys backend
-
 from pymtl3.passes.yosys import TranslationPass
 
 #=========================================================================

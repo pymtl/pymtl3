@@ -7,10 +7,8 @@ Test cases for translated RTL checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationPass, ImportPass
+from pymtl3.passes.yosys import ImportPass, TranslationPass
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction

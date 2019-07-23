@@ -7,12 +7,10 @@ Test cases for RTL checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
-from .ChecksumXcelCL_test import mk_xcel_transaction
 from ..ChecksumXcelRTL import ChecksumXcelRTL
+from .ChecksumXcelCL_test import mk_xcel_transaction
 
 #-------------------------------------------------------------------------
 # Wrap Xcel into a function
@@ -83,9 +81,9 @@ class ChecksumXcelRTL_Tests( BaseTests ):
 # Here we directly reuse all test cases in ChecksumXcelCL_test. We only
 # need to provide a different DutType in the setup_class.
 
-from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as BaseTests
+from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as SrcSinkBaseTests
 
-class ChecksumXcelRTLSrcSink_Tests( BaseTests ):
+class ChecksumXcelRTLSrcSink_Tests( SrcSinkBaseTests ):
 
   @classmethod
   def setup_class( cls ):

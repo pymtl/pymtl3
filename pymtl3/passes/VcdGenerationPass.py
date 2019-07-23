@@ -6,7 +6,6 @@ VcdGenerationPass.py
 Author : Shunning Jiang
 Date   : May 29, 2019
 """
-from __future__ import absolute_import, division, print_function
 
 import time
 from collections import defaultdict

@@ -5,8 +5,6 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-from __future__ import absolute_import, division, print_function
-
 import os
 from collections import deque
 
@@ -59,7 +57,7 @@ class DynamicSchedulePass( BasePass ):
         post_order.append( u )
 
       import random
-      vertices = G.keys()
+      vertices = list(G.keys())
       random.shuffle(vertices)
       for u in vertices:
         if u not in visited:

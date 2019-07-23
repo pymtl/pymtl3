@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the implementation of RTLIR data types."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import *

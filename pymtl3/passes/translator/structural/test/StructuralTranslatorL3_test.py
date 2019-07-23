@@ -5,8 +5,6 @@
 # Date   : May 21, 2019
 """Test the level 3 structural translators."""
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits32
@@ -318,4 +316,4 @@ endcomponent
 """
   do_test( a )
 
-__all__ = list(filter(lambda s: s.startswith('test_'), dir()))
+__all__ = [s for s in dir() if s.startswith('test_')]

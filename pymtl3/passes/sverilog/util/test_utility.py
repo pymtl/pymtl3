@@ -5,8 +5,6 @@
 # Date   : Jun 5, 2019
 """Provide utility methods for testing."""
 
-from __future__ import absolute_import, division, print_function
-
 import copy
 from collections import deque
 
@@ -167,7 +165,7 @@ def InterfaceDataStrategy( draw, id_, ifc ):
       data.update(draw(InterfaceDataStrategy(id_+"."+prop_name, prop_rtype)))
   return data
 
-@st.composite 
+@st.composite
 def ArrayDataStrategy( draw, id_, n_dim, subtype ):
   if not n_dim:
     if isinstance( subtype, rt.Port ):
@@ -243,7 +241,7 @@ def DataStrategy( draw, dut ):
 
     # Toggle clock signal
     toggle_data = {}
-    for id_, signal in data.iteritems():
+    for id_, signal in data.items():
       if id_ == "clk":
         toggle_data.update( { id_ : Bits1(1) } )
       else:
@@ -324,14 +322,17 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
 
 def closed_loop_component_test( dut, data, backend = "sverilog" ):
   """Test the DUT with the given test_vector.
-  
+
   User who wish to use this method should pass in the hypothesis data
   strategy instance as `data`. This method will reflect on the interfaces
   and ports of the given DUT and generate input vector.
   """
   # Method to feed data into the DUT
   def tv_in( model, test_vector ):
-    for name, data in test_vector.iteritems():
+    for name, data in test_vector.items():
+      # `setattr` fails to set the correct value of an array if indexed by
+      # a subscript. We use `exec` here to make sure the value of elements
+      # are assigned correctly.
       exec( "model." + name + " = data" )
   test_vector = data.draw( DataStrategy( dut ) )
   closed_loop_component_input_test( dut, test_vector, tv_in, backend )

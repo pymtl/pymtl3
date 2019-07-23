@@ -10,15 +10,13 @@ Author : Yanghui Ou
   Date : June 6, 2019
 
 """
-from __future__ import absolute_import, division, print_function
-
 import hypothesis
 from hypothesis import strategies as st
 
+import pymtl3.datatypes.strategies as pst
 from pymtl3 import *
 
 from ..utils import b128_to_words, words_to_b128
-import pymtl3.datatypes.strategies as pst
 
 #-------------------------------------------------------------------------
 # Directed Tests
@@ -48,4 +46,3 @@ def test_words2bits():
 def test_hypothesis( words ):
   print(words)
   assert b128_to_words( words_to_b128( words ) ) == words
-

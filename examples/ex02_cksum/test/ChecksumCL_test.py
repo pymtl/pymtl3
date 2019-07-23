@@ -7,13 +7,12 @@ Test cases for CL checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
 
 import hypothesis
 from hypothesis import strategies as st
-from pymtl3.datatypes import strategies as pm_st
 
 from pymtl3 import *
+from pymtl3.datatypes import strategies as pm_st
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
@@ -165,7 +164,7 @@ class TestHarness( Component ):
 #=========================================================================
 # We use source/sink based tests to stress test the checksum unit.
 
-class ChecksumCLSrcSink_Tests( object ):
+class ChecksumCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test
@@ -285,4 +284,3 @@ class ChecksumCLSrcSink_Tests( object ):
     th.set_param( "top.src.construct", initial_delay = src_init, interval_delay = src_intv )
     th.set_param( "top.sink.construct", initial_delay = sink_init, interval_delay = sink_intv )
     s.run_sim( th )
-

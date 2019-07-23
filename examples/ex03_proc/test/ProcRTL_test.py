@@ -7,12 +7,15 @@ Includes test cases for the register transfer level TinyRV0 processor.
 Author : Shunning Jiang, Yanghui Ou
   Date : June 15, 2019
 """
-import pytest
 import random
+
+import pytest
+
+from examples.ex03_proc.ProcRTL import ProcRTL
+from pymtl3 import *
+
 random.seed(0xdeadbeef)
 
-from pymtl3  import *
-from examples.ex03_proc.ProcRTL import ProcRTL
 
 #-------------------------------------------------------------------------
 # ProcRTL_Tests

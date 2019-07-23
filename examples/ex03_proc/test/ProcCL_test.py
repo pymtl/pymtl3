@@ -7,12 +7,15 @@ Includes test cases for the cycle level TinyRV0 processor.
 Author : Shunning Jiang, Yanghui Ou
   Date : June 12, 2019
 """
-import pytest
 import random
+
+import pytest
+
+from examples.ex03_proc.ProcCL import ProcCL
+from pymtl3 import *
+
 random.seed(0xdeadbeef)
 
-from pymtl3  import *
-from examples.ex03_proc.ProcCL import ProcCL
 
 #-------------------------------------------------------------------------
 # ProcCL_Tests
@@ -27,4 +30,3 @@ class ProcCL_Tests( BaseTests ):
   @classmethod
   def setup_class( cls ):
     cls.ProcType = ProcCL
-

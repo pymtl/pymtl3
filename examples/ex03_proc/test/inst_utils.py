@@ -31,11 +31,11 @@ def print_asm( asm_code ):
   for asm in asm_list:
     if asm.strip() == "":
       if not prev_blank_line:
-        print asm
+        print(asm)
         prev_blank_line = True
     else:
       prev_blank_line = False
-      print asm
+      print(asm)
 
 #-------------------------------------------------------------------------
 # gen_nops

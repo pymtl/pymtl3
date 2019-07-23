@@ -7,12 +7,10 @@ Functional level implementation of a checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
+from examples.ex02_cksum.ChecksumFL import checksum
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import mk_xcel_msg
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMinionIfcFL
-from examples.ex02_cksum.ChecksumFL import checksum
 
 
 # Address space: 0~3: checksum input, 4: go bit, 5: result

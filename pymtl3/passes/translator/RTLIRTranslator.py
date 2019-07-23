@@ -4,9 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 15, 2019
 """Provide translators that convert RTLIR to backend representation."""
-from __future__ import absolute_import, division, print_function
-
-from functools import reduce
 
 from .BaseRTLIRTranslator import TranslatorMetadata
 from .behavioral import BehavioralTranslator
@@ -26,11 +23,11 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
     # Override
     def __init__( s, top ):
-      super( _RTLIRTranslator, s ).__init__( top )
+      super().__init__( top )
 
     # Override
     def clear( s, tr_top ):
-      super( _RTLIRTranslator, s ).clear( tr_top )
+      super().clear( tr_top )
       s.hierarchy = TranslatorMetadata()
 
     # Override
@@ -38,7 +35,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
       def get_component_nspace( namespace, m ):
         ns = TranslatorMetadata()
-        for name, metadata_d in vars(namespace).iteritems():
+        for name, metadata_d in vars(namespace).items():
           # Hierarchical metadata will not be added
           if m in metadata_d:
             setattr( ns, name, metadata_d[m] )
@@ -90,7 +87,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
           List.append( ( Type, data ) )
 
     def in_list( s, dtype, List ):
-      return reduce( lambda r, x: r or x[0] == dtype, List, False )
+      return any( x[0] == dtype for x in List )
 
     #---------------------------------------------------------------------
     # Methods to be implemented by the backend translator

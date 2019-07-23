@@ -7,8 +7,6 @@ Hypothesis strategies for built-in data types.
 Author : Yanghui Ou
   Date : June 16, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import hypothesis
 from hypothesis import strategies as st
 
@@ -30,6 +28,6 @@ def bits( draw, nbits, signed=False ):
     min_value = - ( 2 ** (nbits-1) )
     max_value = 2**(nbits-1) - 1
     value = draw( st.integers(min_value, max_value) )
-  
+
   BitsN = mk_bits( nbits )
   return BitsN( value )

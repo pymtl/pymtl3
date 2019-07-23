@@ -6,8 +6,6 @@
 # Author: Shunning Jiang
 # Date  : May 18, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from greenlet import greenlet
 
 from pymtl3 import *

@@ -25,8 +25,6 @@ we can implement the modulus with a mask.
 Author : Yanghui Ou, Christopher Batten
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 #-------------------------------------------------------------------------
@@ -49,4 +47,3 @@ def checksum( words ):
     sum2 = ( sum2 + sum1 ) & 0xffff
 
   return ( sum2 << 16 ) | sum1
-

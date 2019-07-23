@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : March 30, 2019
 """Provide L3 behavioral RTLIR type check pass."""
-from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
 
@@ -37,8 +36,7 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
-    super( BehavioralRTLIRTypeCheckVisitorL3, s ). \
-        __init__( component, freevars, accessed, tmpvars )
+    super().__init__( component, freevars, accessed, tmpvars )
     s.type_expect[ 'Attribute' ] = {
       'value':( (rt.Component, rt.Signal),
         'the base of an attribute must be one of: component, signal!' )
@@ -75,7 +73,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       node.Type = rtype
 
     else:
-      super( BehavioralRTLIRTypeCheckVisitorL3, s ).visit_Attribute( node )
+      super().visit_Attribute( node )
 
   def visit_StructInst( s, node ):
     cls = node.struct

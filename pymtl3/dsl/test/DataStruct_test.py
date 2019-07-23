@@ -6,8 +6,6 @@ DataStruct_test.py
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits16, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
@@ -16,7 +14,7 @@ from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 from .sim_utils import simple_sim_pass
 
 
-class SomeMsg( object ):
+class SomeMsg:
 
   def __init__( s, a=0, b=0 ):
     s.a = int(a)
@@ -27,7 +25,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
 
-  for i in xrange(10):
+  for i in range(10):
     A.tick()
 
 # All situations when we allow nested data struct:
@@ -455,17 +453,17 @@ def test_iterative_find_nets():
 
 def test_deep_connections():
 
-  class Msg1( object ):
+  class Msg1:
     def __init__( s, a=0, b=0 ):
       s.a = int( a )
       s.b = Bits32( b )
 
-  class Msg2( object ):
+  class Msg2:
     def __init__( s, a=Msg1(), b=Msg1() ):
       s.p = a
       s.q = b
 
-  class Msg3( object ):
+  class Msg3:
     def __init__( s, a=Msg1(), b=Msg2(), c=0 ):
       s.x = a
       s.y = b
@@ -506,9 +504,9 @@ def test_deep_connections():
 
 def test_struct_with_list_of_bits():
 
-  class B( object ):
+  class B:
     def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in xrange(5) ]
+      s.foo = [ Bits32( foo ) for _ in range(5) ]
 
   class A( ComponentLevel3 ):
     def construct( s ):
@@ -522,14 +520,14 @@ def test_struct_with_list_of_bits():
 
 def test_nested_struct_2d_array_index():
 
-  class C( object ):
+  class C:
     def __init__( s, bar=42 ):
       s.bar = Bits16(bar)
 
-  class B( object ):
+  class B:
     def __init__( s, foo=0, bar=42 ):
       s.foo = Bits32(foo)
-      s.bar = [ [ C() for _ in xrange(5) ] for _ in xrange(5) ]
+      s.bar = [ [ C() for _ in range(5) ] for _ in range(5) ]
 
   class A( ComponentLevel3 ):
     def construct( s ):

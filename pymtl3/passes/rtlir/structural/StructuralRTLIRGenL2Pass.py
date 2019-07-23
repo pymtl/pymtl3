@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Apr 3, 2019
 """Provide L2 structural RTLIR generation pass."""
-from __future__ import absolute_import, division, print_function
 
 from .StructuralRTLIRGenL1Pass import StructuralRTLIRGenL1Pass
 

@@ -9,19 +9,17 @@
 # Author : Christopher Batten
 # Date   : May 20, 2014
 
-from __future__ import absolute_import, division, print_function
-
 import binascii
 import struct
 
 
-class SparseMemoryImage (object):
+class SparseMemoryImage :
 
   #-----------------------------------------------------------------------
   # Nested Class: Section
   #-----------------------------------------------------------------------
 
-  class Section (object):
+  class Section :
 
     def __init__( self, name="", addr=0x00000000, data=bytearray() ):
       self.name = name
@@ -100,7 +98,7 @@ class SparseMemoryImage (object):
   #-----------------------------------------------------------------------
 
   def print_symbol_table( self ):
-    for key,value in self.symbols.iteritems():
+    for key,value in self.symbols.items():
       print( " {:0>8x} {}".format( value, key ) )
 
 #-------------------------------------------------------------------------

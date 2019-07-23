@@ -9,8 +9,6 @@ The L2 generation, L2 type check, and visualization passes are invoked. The
 generation pass results are verified against a reference AST.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits32, BitStruct
@@ -321,7 +319,7 @@ def test_L2_for_iter_name( do_test ):
       def upblk():
         for i in s.in_:
           s.out = Bits4( 1 )
-  with expected_failure( PyMTLSyntaxError, "only use (x)range() after 'in'" ):
+  with expected_failure( PyMTLSyntaxError, "only use range() after 'in'" ):
     do_test( A() )
 
 def test_L2_for_iter_call_non_range( do_test ):
@@ -333,7 +331,7 @@ def test_L2_for_iter_call_non_range( do_test ):
       def upblk():
         for i in foo():
           s.out = Bits4( 1 )
-  with expected_failure( PyMTLSyntaxError, "only use (x)range() after 'in'" ):
+  with expected_failure( PyMTLSyntaxError, "only use range() after 'in'" ):
     do_test( A() )
 
 def test_L2_for_iter_range_arg_0( do_test ):
@@ -344,7 +342,7 @@ def test_L2_for_iter_range_arg_0( do_test ):
       def upblk():
         for i in range():
           s.out = Bits4( 1 )
-  with expected_failure( PyMTLSyntaxError, "1~3 arguments should be given to (x)range" ):
+  with expected_failure( PyMTLSyntaxError, "1~3 arguments should be given to range" ):
     do_test( A() )
 
 def test_L2_for_iter_range_arg_4( do_test ):
@@ -355,7 +353,7 @@ def test_L2_for_iter_range_arg_4( do_test ):
       def upblk():
         for i in range( 0, 4, 1, 1 ):
           s.out = Bits4( 1 )
-  with expected_failure( PyMTLSyntaxError, "1~3 arguments should be given to (x)range" ):
+  with expected_failure( PyMTLSyntaxError, "1~3 arguments should be given to range" ):
     do_test( A() )
 
 def test_L2_invalid_op_is( do_test ):

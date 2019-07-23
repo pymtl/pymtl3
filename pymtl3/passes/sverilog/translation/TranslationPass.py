@@ -5,8 +5,6 @@
 # Date   : March 12, 2019
 """Translate a PyMTL component hierarhcy into SystemVerilog source code."""
 
-from __future__ import absolute_import, division, print_function
-
 import filecmp
 import os
 

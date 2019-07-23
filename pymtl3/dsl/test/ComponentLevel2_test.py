@@ -6,8 +6,6 @@ ComponentLevel2_test.py
 Author : Shunning Jiang
 Date   : Nov 3, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.datatypes import Bits32
@@ -72,7 +70,7 @@ class TestSink( ComponentLevel2 ):
         ref = s.answer.popleft()
         ans = s.in_
 
-        assert ref == ans or ref == "*", "Expect %s, get %s instead" % (ref, ans)
+        assert ref == ans or ref == "*", "Expect {}, get {} instead".format(ref, ans)
 
   def done( s ):
     return not s.answer
@@ -150,7 +148,7 @@ def test_invalid_dependency():
 
 def test_variable_not_declared():
 
-  class SomeMsg( object ):
+  class SomeMsg:
 
     def __init__( s, a=0, b=0 ):
       s.a = int( a )
@@ -194,7 +192,7 @@ def test_2d_array_vars():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():
@@ -213,10 +211,10 @@ def test_2d_array_vars():
 
       @s.update
       def upA():
-        for i in xrange(2):
+        for i in range(2):
           s.wire[1][i] = s.reg + i
 
-      for i in xrange(2):
+      for i in range(2):
         s.add_constraints(
           U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
         )
@@ -296,7 +294,7 @@ def test_write_two_disjoint_slices():
 def test_wr_A_b_rd_A_impl():
 
 
-  class SomeMsg( object ):
+  class SomeMsg:
 
     def __init__( s, a=0, b=0 ):
       s.a = int(a)
@@ -357,7 +355,7 @@ def test_add_loopback():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+            "w0={} > r0={} > w1={}".format(s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
   _test_model( Top )
 
@@ -394,7 +392,7 @@ def test_add_loopback_on_edge():
 
     def line_trace( s ):
       return s.src.line_trace() + " >>> " + \
-            "w0=%s > r0=%s > w1=%s" % (s.wire0,s.reg0,s.wire1) + \
+            "w0={} > r0={} > w1={}".format(s.wire0,s.reg0,s.wire1) + \
              " >>> " + s.sink.line_trace()
 
   _test_model( Top )
@@ -409,7 +407,7 @@ def test_2d_array_vars_impl():
       s.sink = TestSink  ( ["*",(5+6),(3+4),(1+2),
                                 (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in xrange(2)] for _ in xrange(2) ]
+      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
 
       @s.update
       def up_from_src():
@@ -424,7 +422,7 @@ def test_2d_array_vars_impl():
 
       @s.update
       def upA():
-        for i in xrange(2):
+        for i in range(2):
           s.wire[1][i] = s.reg + i
 
       @s.update

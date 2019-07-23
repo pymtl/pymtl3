@@ -7,8 +7,6 @@ Tests for test sources and test sinks.
 Author : Yanghui Ou
   Date : Mar 11, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
 from pymtl3 import *
@@ -45,7 +43,7 @@ class TestHarnessSimple( Component ):
       s.tick()
       ncycles += 1
       print("{:2}:{}".format( ncycles, s.line_trace() ))
-    
+
     # Check timeout
     assert ncycles < max_cycles
 
@@ -84,13 +82,13 @@ def test_src_sink_cl( Type, msgs, src_init,  src_intv,
                       sink_init, sink_intv, arrival_time ):
   th = TestHarnessSimple( Type, TestSrcCL, TestSinkCL, msgs, msgs )
   th.set_param( "top.src.construct",
-    initial_delay  = src_init, 
+    initial_delay  = src_init,
     interval_delay = src_intv,
   )
   th.set_param( "top.sink.construct",
     initial_delay  = sink_init,
     interval_delay = sink_intv,
-    arrival_time   = arrival_time, 
+    arrival_time   = arrival_time,
   )
   th.run_sim()
 
@@ -109,13 +107,13 @@ def test_src_sink_rtl( Type, msgs, src_init,  src_intv,
                        sink_init, sink_intv, arrival_time ):
   th = TestHarnessSimple( Type, TestSrcRTL, TestSinkRTL, msgs, msgs )
   th.set_param( "top.src.construct",
-    initial_delay  = src_init, 
+    initial_delay  = src_init,
     interval_delay = src_intv,
   )
   th.set_param( "top.sink.construct",
     initial_delay  = sink_init,
     interval_delay = sink_intv,
-    arrival_time   = arrival_time, 
+    arrival_time   = arrival_time,
   )
   th.run_sim()
 
@@ -175,7 +173,7 @@ class TestHarness( Component ):
       s.tick()
       ncycles += 1
       print("{:2}:{}".format( ncycles, s.line_trace() ))
-    
+
     # Check timeout
     assert ncycles < max_cycles
 

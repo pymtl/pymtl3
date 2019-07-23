@@ -5,8 +5,6 @@
 # Date   : May 28, 2019
 """Test the SystemVerilog translator implementation."""
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3.datatypes import Bits32, Bits96, BitStruct, concat
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass

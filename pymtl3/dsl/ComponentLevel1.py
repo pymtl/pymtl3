@@ -15,8 +15,6 @@ We collect one type of explicit constraints at this level:
 Author : Shunning Jiang
 Date   : Nov 3, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 import re
 
 from .ConstraintTypes import U
@@ -35,7 +33,7 @@ class ComponentLevel1( NamedObject ):
   def __new__( cls, *args, **kwargs ):
     """ Convention: variables local to the object is created in __new__ """
 
-    inst = super( ComponentLevel1, cls ).__new__( cls, *args, **kwargs )
+    inst = super().__new__( cls, *args, **kwargs )
 
     inst._dsl.name_upblk = {}
     inst._dsl.upblks     = set()

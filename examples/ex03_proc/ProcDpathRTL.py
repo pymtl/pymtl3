@@ -8,8 +8,6 @@ Author : Shunning Jiang
   Date : June 12, 2019
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.rtl import Adder, Incrementer, Mux, RegEn, RegEnRst, RegisterFile

@@ -5,8 +5,6 @@
 # Date   : May 25, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-from __future__ import absolute_import, division, print_function
-
 import copy
 import importlib
 import linecache
@@ -14,7 +12,6 @@ import os
 import shutil
 import subprocess
 import sys
-from functools import reduce
 
 from pymtl3.datatypes import Bits, BitStruct, mk_bits
 from pymtl3.passes.BasePass import BasePass
@@ -50,7 +47,7 @@ class ImportPass( BasePass ):
   def __call__( s, top ):
     s.top = top
     if not top._dsl.constructed:
-      raise SVerilogImportError( top, 
+      raise SVerilogImportError( top,
         "please elaborate design {} before applying the import pass!". \
           format(top) )
     ret = s.traverse_hierarchy( top )
@@ -244,7 +241,8 @@ Fail to verilate model {} in file {}
         cmd = ['pkg-config', '--variable=includedir', 'verilator']
         try:
           verilator_include_dir = \
-            subprocess.check_output( cmd, stderr=subprocess.STDOUT ).strip()
+            subprocess.check_output( cmd, stderr=subprocess.STDOUT,
+                                     universal_newlines=True ).strip()
         except OSError:
           assert False, \
 """\
@@ -299,7 +297,8 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or pkg-config has been configured properly!
 
       # Try to call the C compiler
       try:
-        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
+        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True,
+                                 universal_newlines=True )
       except subprocess.CalledProcessError as e:
         assert False, \
 """\
@@ -460,7 +459,7 @@ constraint_list = [
 
   def gen_packed_ports( s, rtype ):
     """Return a list of (name, rt.Port ) that has all ports of `rtype`.
-    
+
     This method performs SystemVerilog backend-specific name mangling and
     returns all ports that appear in the interface of component `rtype`.
     Each tuple contains a port or an array of port that has any data type
@@ -757,7 +756,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         args = ifc.get_args()
         for idx, obj in enumerate(args[0]):
           arg_list.append( _get_arg_str( "_ifc_arg"+str(idx), obj ) )
-        for arg_name, arg_obj in args[1].iteritems():
+        for arg_name, arg_obj in args[1].items():
           arg_list.append( arg_name + " = " + _get_arg_str( arg_name, arg_obj ) )
         return name, ', '.join( arg_list )
 
@@ -970,7 +969,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return []
 
   def _get_c_dim( s, port ):
-    return reduce(lambda s, i: s+"[{}]".format(i), s._get_c_n_dim(port), "")
+    return "".join( f"[{i}]" for i in s._get_c_n_dim(port) )
 
   def _get_c_nbits( s, port ):
     if isinstance( port, rt.Array ):

@@ -5,8 +5,6 @@
 # Date   : June 6, 2019
 """Closed-loop test cases for translation-import with component."""
 
-from __future__ import absolute_import, division, print_function
-
 from itertools import product
 
 import hypothesis.strategies as st

@@ -7,10 +7,8 @@ Test cases for RTL checksum unit.
 Author : Yanghui Ou
   Date : June 6, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationPass, ImportPass
+from pymtl3.passes.yosys import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum

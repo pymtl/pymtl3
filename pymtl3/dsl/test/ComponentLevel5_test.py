@@ -6,8 +6,6 @@ ComponentLevel5_test.py
 Author : Shunning Jiang
 Date   : Jan 4, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from collections import deque
 
 from pymtl3.dsl.ComponentLevel5 import ComponentLevel5, method_port

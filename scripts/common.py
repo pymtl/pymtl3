@@ -2,10 +2,10 @@
 # common
 #=========================================================================
 
-import sys
 import os
-import subprocess
 import string
+import subprocess
+import sys
 
 #-------------------------------------------------------------------------
 # String interpolation
@@ -89,4 +89,3 @@ def vprint( msg, value=None ):
       print msg, value
     else:
       print msg
-

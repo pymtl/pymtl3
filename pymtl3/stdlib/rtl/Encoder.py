@@ -7,9 +7,6 @@ A priority encoder for arbitration
 Author : Yanghui Ou, Cheng Tan
   Date : Mar 1, 2019
 """
-
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
 

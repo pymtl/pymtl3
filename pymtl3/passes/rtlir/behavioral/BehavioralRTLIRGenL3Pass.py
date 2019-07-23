@@ -4,7 +4,6 @@
 # Author : Peitian Pan
 # Date   : Oct 20, 2018
 """Provide L3 behavioral RTLIR generation pass."""
-from __future__ import absolute_import, division, print_function
 
 from pymtl3.datatypes import Bits, BitStruct
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -38,7 +37,7 @@ class BehavioralRTLIRGenL3Pass( BasePass ):
 
 class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL3, s ).__init__( component )
+    super().__init__( component )
 
   def visit_Call( s, node ):
     """Return behavioral RTLIR of a method call.
@@ -51,10 +50,10 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
       if len(node.args) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one value should be provided to struct instantiation!' )
-      values = map(lambda arg: s.visit(arg), node.args)
+      values = [s.visit(arg) for arg in node.args]
       ret = bir.StructInst( obj, values )
       ret.ast = node
       return ret
 
     else:
-      return super( BehavioralRTLIRGeneratorL3, s ).visit_Call( node )
+      return super().visit_Call( node )

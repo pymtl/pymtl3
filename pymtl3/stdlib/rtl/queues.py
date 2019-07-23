@@ -7,8 +7,6 @@ Author : Yanghui Ou
   Date : Mar 23, 2019
 """
 
-from __future__ import absolute_import, division, print_function
-
 from copy import deepcopy
 
 from pymtl3 import *
@@ -382,7 +380,7 @@ class BypassQueueCtrlRTL( Component ):
         s.deq_rdy = b1(0)
       else:
         s.deq_rdy = ( s.count > CountType(0) ) | s.enq_en
-    
+
     @s.update
     def up_mux_sel():
       s.mux_sel = s.count == CountType(0)

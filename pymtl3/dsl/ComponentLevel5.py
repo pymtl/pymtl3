@@ -7,8 +7,6 @@ We allow CallerPort to be connected to CalleePort
 Author : Shunning Jiang
 Date   : Dec 29, 2018
 """
-from __future__ import absolute_import, division, print_function
-
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .ComponentLevel4 import ComponentLevel4
@@ -79,7 +77,7 @@ class ComponentLevel5( ComponentLevel4 ):
     if isinstance( o1, MethodPort ) and isinstance( o2, MethodPort ):
       s._connect_method_ports( o1, o2 )
     else:
-      super( ComponentLevel5, s )._connect_objects( o1, o2, internal )
+      super()._connect_objects( o1, o2, internal )
 
   def _resolve_method_connections( s ):
 
@@ -123,7 +121,7 @@ class ComponentLevel5( ComponentLevel4 ):
 
   # Override
   def _elaborate_declare_vars( s ):
-    super( ComponentLevel5, s )._elaborate_declare_vars()
+    super()._elaborate_declare_vars()
 
     s._dsl.all_method_ports = set()
 

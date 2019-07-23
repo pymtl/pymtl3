@@ -9,8 +9,6 @@ The L1 generation, L1 type check, and visualization passes are invoked. The
 generation pass results are verified against a reference AST.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import sys
 from copy import copy, deepcopy
 
@@ -724,7 +722,7 @@ def test_Classdef( do_test ):
     def construct( s ):
       @s.update
       def upblk():
-        class c(object): pass
+        class c: pass
   with expected_failure( PyMTLSyntaxError, "invalid operation: classdef" ):
     do_test( A() )
 

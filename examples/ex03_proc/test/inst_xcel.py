@@ -2,10 +2,10 @@
 # xcel
 #=========================================================================
 
-import random
 
 from pymtl3 import *
-from inst_utils import *
+
+from .inst_utils import *
 
 #-------------------------------------------------------------------------
 # gen_basic_test

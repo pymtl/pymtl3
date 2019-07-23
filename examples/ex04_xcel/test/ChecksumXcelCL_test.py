@@ -7,16 +7,14 @@ Tests for cycle level checksum accelerator.
 Author : Yanghui Ou
   Date : June 14, 2019
 """
-from __future__ import absolute_import, division, print_function
-
+from examples.ex02_cksum.ChecksumFL import checksum
+from examples.ex02_cksum.utils import words_to_b128
 from pymtl3 import *
 from pymtl3.passes.PassGroups import DynamicSim
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
-from pymtl3.stdlib.test import TestSrcCL, TestSinkCL
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
-from examples.ex02_cksum.ChecksumFL import checksum
-from examples.ex02_cksum.utils import words_to_b128
 from ..ChecksumXcelCL import ChecksumXcelCL
 
 #-------------------------------------------------------------------------
@@ -162,7 +160,7 @@ class TestHarness( Component ):
 #-------------------------------------------------------------------------
 # More adavanced testsing that uses test source and test sink.
 
-class ChecksumXcelCLSrcSink_Tests( object ):
+class ChecksumXcelCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test
@@ -209,7 +207,7 @@ class ChecksumXcelCLSrcSink_Tests( object ):
     s.run_sim( th )
 
   #-----------------------------------------------------------------------
-  # test_xcel_srcsink_multi_msg 
+  # test_xcel_srcsink_multi_msg
   #-----------------------------------------------------------------------
   # Test the xcel with multiple transactions.
 

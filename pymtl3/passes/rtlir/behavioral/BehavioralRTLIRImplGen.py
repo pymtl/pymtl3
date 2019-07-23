@@ -14,10 +14,7 @@ visualization pass is printed to BehavioralRTLIRVisualizationPass.py
 under the same directory.
 """
 
-from __future__ import absolute_import, division, print_function
-
-
-class constructor( object ):
+class constructor:
   """Class of constructors that create the behavioral RTLIR AST node types."""
 
   impl_template = \
@@ -67,7 +64,7 @@ class BehavioralRTLIRNodeVisitor( object ):
     return visitor( node, *args )
 
   def generic_visit( self, node, *args ):
-    for field, value in vars(node).iteritems():
+    for field, value in vars(node).items():
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, BaseBehavioralRTLIR ):
@@ -129,7 +126,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     ret = ''
     if isinstance( node.Type, BaseRTLIRType ):
       ret = ' <TR><TD COLSPAN="2">Type: ' + node.Type.__class__.__name__ + '</TD></TR>'
-      for name, obj in vars(node.Type).iteritems():
+      for name, obj in vars(node.Type).items():
         obj_str = s.get_str( obj )
         if not isinstance( obj, dict ):
           ret += ' <TR><TD>' + name + '</TD><TD>' + obj_str + '</TD></TR>'
@@ -185,7 +182,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
 
       params_name = ', ' + ', '.join( s.field_list )
       params_assign = '\n    '.join(
-        map( lambda x: "s.{field} = {field}".format(field = x), s.field_list )
+        "s.{field} = {field}".format(field = x) for x in s.field_list
       )
       check_equal = '\n    '.join( eq )
       if check_equal:
@@ -271,7 +268,7 @@ def __eq__( s, other ):
               edge_label_trail = '.format(idx = i)'
             ) )
             indented.append( 's.visit( f )' )
-            indented = [indented[0]] + map( lambda x: '  '+x, indented[1:] )
+            indented = [indented[0]] + ['  '+x for x in indented[1:]]
             body = body + indented
           else:
             # A single customized type

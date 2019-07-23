@@ -7,23 +7,29 @@ Includes test cases for the functional level TinyRV0 processor.
 Author : Shunning Jiang, Yanghui Ou
   Date : June 12, 2019
 """
-import pytest
 import random
+
+import pytest
+
+from examples.ex03_proc.ProcFL import ProcFL
+from pymtl3 import *
+
+from . import (
+    inst_add,
+    inst_addi,
+    inst_and,
+    inst_bne,
+    inst_csr,
+    inst_lw,
+    inst_sll,
+    inst_srl,
+    inst_sw,
+    inst_xcel,
+)
+from .harness import TestHarness, asm_test, assemble
+
 random.seed(0xdeadbeef)
 
-from pymtl3  import *
-from harness import asm_test, assemble, TestHarness
-from examples.ex03_proc.ProcFL import ProcFL
-import inst_add
-import inst_and
-import inst_sll
-import inst_srl
-import inst_bne
-import inst_addi
-import inst_lw
-import inst_sw
-import inst_csr
-import inst_xcel
 
 #-------------------------------------------------------------------------
 # ProcFL_Tests
@@ -32,7 +38,7 @@ import inst_xcel
 # these test cases in our CL and RTL tests. We can simply inherit from
 # this test class and overwrite the ProcType of the test class.
 
-class ProcFL_Tests( object ):
+class ProcFL_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the processor that is used

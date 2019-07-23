@@ -5,8 +5,6 @@
 # Date   : May 19, 2019
 """Test the generation of level 1 structural RTLIR."""
 
-from __future__ import absolute_import, division, print_function
-
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits1, Bits32
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL3Pass import (

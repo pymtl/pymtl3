@@ -9,8 +9,6 @@ Author : Shunning Jiang
   Date : June 15, 2019
 """
 
-from __future__ import absolute_import, division, print_function
-
 import struct
 
 from examples.ex03_proc.NullXcel import NullXcelRTL
@@ -101,18 +99,12 @@ class TestHarness(Component):
       # For .mngr2proc sections, copy section into mngr2proc src
 
       if section.name == ".mngr2proc":
-        for i in xrange(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.src.src.msgs.append( Bits(32,bits) )
-          self.src.msgs.append( Bits(32,bits) )
+        self.src.msgs.extend(Bits32(bits[0]) for bits in struct.iter_unpack("<I", section.data))
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
-        for i in xrange(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.sink.sink.msgs.append( Bits(32,bits) )
-          self.sink.msgs.append( Bits(32,bits) )
+        self.sink.msgs.extend(Bits32(bits[0]) for bits in struct.iter_unpack("<I", section.data))
 
       # For all other sections, simply copy them into the memory
 
