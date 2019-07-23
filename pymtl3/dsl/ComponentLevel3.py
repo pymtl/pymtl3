@@ -133,33 +133,28 @@ class ComponentLevel3( ComponentLevel2 ):
       for i, var in enumerate( lamb.__code__.co_freevars )
     }
 
-    closure_srcs = [ "{0} = closure[\"{0}\"]".format(name) for name in closure ]
-    print(closure_srcs)
+    closure.update( lamb.__globals__ )
+    dict_local = {}
+    exec( compile( new_root, blk_name, "exec"), closure, dict_local )
 
-    tmp = 123
-    # new_src = """
-# def create_lambda_blk( closure ):
-  # {}
-  # def {}():
-    # {}
-  # return {}
-# print(create_lambda_blk)""".format
-
-    new_src = "def {}():\n {}\n".format( blk_name,
-      src.replace("//=", "=").replace("lambda: ", "") )
-
-    var = locals()
-    var.update( closure )
-    var.update( lamb.__globals__ )
-    exec( compile( new_root, blk_name, "exec"), var, locals() )
-
-
+    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=").replace("lambda: ", "") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name )
-    # tmp = eval(blk_name)
-    tmp()
+
+    blk = dict_local[ blk_name ]
 
     ComponentLevel1.update( s, blk )
-    s._cache_func_meta( blk, new_src, new_root ) # add caching of src/ast
+
+    # This caching here does no caching because the block name contains
+    # the signal name intentionally to avoid conflicts. With //= it is
+    # more possible than normal update block to have conflicts:
+    # if param == 1:  s.out //= s.in_ + 1
+    # else:           s.out //= s.out + 100
+    # Here these two blocks will implicity have the same name but they
+    # have different contents based on different param.
+    # So the cache call here is just to reuse the existing interface to
+    # register the AST/src of the generated block for elaborate or passes
+    # to use.
+    s._cache_func_meta( blk, new_src, new_root )
     return blk
 
   def _connect_signal_const( s, o1, o2 ):

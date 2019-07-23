@@ -55,7 +55,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return inst
 
-  def _cache_func_meta( s, func, src=None, ast=None ):
+  def _cache_func_meta( s, func, given_src=None, given_ast=None ):
     """ Convention: the source of a function/update block across different
     instances should be the same. You can construct different functions
     based on the condition, but please use different names. This not only
@@ -79,14 +79,14 @@ class ComponentLevel2( ComponentLevel1 ):
 
     name = func.__name__
     if name not in name_src:
-      if src is None:
-        assert ast is None
+      if given_src is None:
+        assert given_ast is None
         name_src[ name ] = _src  = compiled_re.sub( r'\2', inspect.getsource(func) )
         name_ast[ name ] = _tree = ast.parse( _src )
       else:
-        assert ast is not None
-        name_src[ name ] = src
-        name_ast[ name ] = _tree = ast
+        assert given_ast is not None
+        name_src[ name ] = given_src
+        name_ast[ name ] = _tree = given_ast
 
       name_rd[ name ]  = _rd   = []
       name_wr[ name ]  = _wr   = []

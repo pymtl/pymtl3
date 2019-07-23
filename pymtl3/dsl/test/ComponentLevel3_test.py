@@ -777,7 +777,7 @@ def test_invalid_connect_outside_hierarchy():
     return
   raise Exception("Should've thrown InvalidConnectionError.")
 
-y = 2
+globalvar = 2
 def test_connect_lambda():
 
   class Top( ComponentLevel3 ):
@@ -786,7 +786,18 @@ def test_connect_lambda():
       s.out = OutPort(Bits32)
 
       x = 1
-      s.out //= lambda: s.in_ + x + y
+      s.out //= lambda: s.in_ + x + globalvar
 
   x = Top()
   x.elaborate()
+  simple_sim_pass(x)
+  x.in_ = 10
+  x.tick()
+  assert x.out == 10 + 1 + 2
+
+  y = Top()
+  y.elaborate()
+  simple_sim_pass(y)
+  y.in_ = 100
+  y.tick()
+  assert y.out == 100 + 1 + 2
