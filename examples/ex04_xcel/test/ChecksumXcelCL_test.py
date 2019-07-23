@@ -16,7 +16,6 @@ from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumXcelCL import ChecksumXcelCL
-from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # Helper functions to create a sequence of req/resp msg
@@ -112,6 +111,7 @@ def checksum_xcel_cl( words ):
 #-------------------------------------------------------------------------
 # We reuse the function tests in ChecksumXcelFL_test.
 
+from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
 
 # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Implement the tests for ChecksumXcelCL

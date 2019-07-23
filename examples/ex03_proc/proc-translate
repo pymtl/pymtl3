@@ -20,9 +20,6 @@ import argparse
 import os
 import sys
 
-# Import the RTL processor
-from examples.ex03_proc.ProcRTL import ProcRTL
-
 # Import the translation pass from yosys backend
 from pymtl3.passes.yosys import TranslationPass
 
@@ -33,6 +30,9 @@ while cur_dir:
     sys.path.insert(0, cur_dir)
     break
   cur_dir = os.path.dirname(cur_dir)
+
+# Import the RTL processor
+from examples.ex03_proc.ProcRTL import ProcRTL
 
 #=========================================================================
 # Command line processing

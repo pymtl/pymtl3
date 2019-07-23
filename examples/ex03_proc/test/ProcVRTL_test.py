@@ -15,7 +15,6 @@ from examples.ex03_proc.ProcRTL import ProcRTL
 from pymtl3 import *
 
 from .harness import asm_test, assemble
-from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
 random.seed(0xdeadbeef)
 
@@ -26,6 +25,7 @@ random.seed(0xdeadbeef)
 # It is as simple as inheriting from RTL tests and overwrite [run_sim]
 # function to apply the translation and import pass.
 
+from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
 class ProcVRTL_Tests( BaseTests ):
 

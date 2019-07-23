@@ -23,6 +23,19 @@ import re
 import struct
 import sys
 
+from pymtl3 import *
+from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+
+# Hack to add project root to python path
+sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
+while sim_dir:
+  if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
+    sys.path.insert(0,sim_dir)
+    break
+  sim_dir = os.path.dirname(sim_dir)
+
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.ProcCL import ProcCL
 from examples.ex03_proc.ProcFL import ProcFL
@@ -36,19 +49,6 @@ from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
 from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 from examples.ex04_xcel.ProcXcel import ProcXcel
 from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
-
-from pymtl3 import *
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
-
-# Hack to add project root to python path
-sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
-while sim_dir:
-  if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
-    sys.path.insert(0,sim_dir)
-    break
-  sim_dir = os.path.dirname(sim_dir)
 
 #=========================================================================
 # Command line processing

@@ -14,8 +14,6 @@ from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
-from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
 
 #-------------------------------------------------------------------------
 # Unit test the step unit
@@ -77,6 +75,7 @@ def checksum_rtl( words ):
 # inherit from the CL test class and overwrite cksum_func to use the rtl
 # version instead.
 
+from .ChecksumCL_test import ChecksumCL_Tests as BaseTests
 
 class ChecksumRTL_Tests( BaseTests ):
 
@@ -89,6 +88,7 @@ class ChecksumRTL_Tests( BaseTests ):
 # Again, we reuse all source/sink based tests for CL by simply inheriting
 # from the test class and providing a different DUT type in [setup_class].
 
+from .ChecksumCL_test import ChecksumCLSrcSink_Tests as BaseSrcSinkTests
 
 class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 

@@ -18,9 +18,6 @@ import argparse
 import os
 import sys
 
-# Import the RTL checksum unit
-from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
-
 # Import the translation pass from yosys backend
 from pymtl3.passes.yosys import TranslationPass
 
@@ -31,6 +28,9 @@ while cur_dir:
     sys.path.insert(0, cur_dir)
     break
   cur_dir = os.path.dirname(cur_dir)
+
+# Import the RTL checksum unit
+from examples.ex02_cksum.ChecksumRTL import ChecksumRTL
 
 #=========================================================================
 # Command line processing
