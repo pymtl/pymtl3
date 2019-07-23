@@ -12,12 +12,13 @@ be revamped when adding method-based interfaces.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
+import ast, inspect, linecache
 from collections import defaultdict, deque
 
 from pymtl3.datatypes import Bits
 
 from .ComponentLevel1 import ComponentLevel1
-from .ComponentLevel2 import ComponentLevel2
+from .ComponentLevel2 import ComponentLevel2, compiled_re
 from .Connectable import (
     Connectable,
     Const,
@@ -97,6 +98,69 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # The following three methods should only be called when types are
   # already checked
+  def _create_assign_lambda( s, o, lamb ):
+
+    assert isinstance( o, Signal )
+    srcs, line = inspect.getsourcelines( lamb )
+    assert len(srcs) == 1, "We can only handle single-line lambda connect right now."
+    src = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
+
+    blk_name = "lambda_blk_{}".format( repr(o).replace(".","_") )
+
+    root = ast.parse(src)
+    assert isinstance( root, ast.Module ) and len(root.body) == 1
+    root = root.body[0]
+    assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
+    lhs, rhs = root.target, root.value
+
+    # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
+    assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None
+    rhs = rhs.body
+
+    new_root = ast.Module( body=[
+      ast.FunctionDef( name=blk_name,
+                       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+                       body=[ast.Assign(targets=[lhs],value=rhs,lineno=2,col_offset=0)],
+                       decorator_list=[],
+                       returns=None,
+                       lineno=1,
+                       col_offset=0,
+                      )
+      ]
+    )
+
+    closure = { var: lamb.__closure__[ i ].cell_contents
+      for i, var in enumerate( lamb.__code__.co_freevars )
+    }
+
+    closure_srcs = [ "{0} = closure[\"{0}\"]".format(name) for name in closure ]
+    print(closure_srcs)
+
+    tmp = 123
+    # new_src = """
+# def create_lambda_blk( closure ):
+  # {}
+  # def {}():
+    # {}
+  # return {}
+# print(create_lambda_blk)""".format
+
+    new_src = "def {}():\n {}\n".format( blk_name,
+      src.replace("//=", "=").replace("lambda: ", "") )
+
+    var = locals()
+    var.update( closure )
+    var.update( lamb.__globals__ )
+    exec( compile( new_root, blk_name, "exec"), var, locals() )
+
+
+    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name )
+    # tmp = eval(blk_name)
+    tmp()
+
+    ComponentLevel1.update( s, blk )
+    s._cache_func_meta( blk, new_src, new_root ) # add caching of src/ast
+    return blk
 
   def _connect_signal_const( s, o1, o2 ):
     if isinstance( o2, int ):

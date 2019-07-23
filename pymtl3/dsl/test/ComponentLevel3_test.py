@@ -776,3 +776,17 @@ def test_invalid_connect_outside_hierarchy():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidConnectionError.")
+
+y = 2
+def test_connect_lambda():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.in_ = InPort(Bits32)
+      s.out = OutPort(Bits32)
+
+      x = 1
+      s.out //= lambda: s.in_ + x + y
+
+  x = Top()
+  x.elaborate()
