@@ -781,23 +781,22 @@ globalvar = 2
 def test_connect_lambda():
 
   class Top( ComponentLevel3 ):
-    def construct( s ):
+    def construct( s, x ):
       s.in_ = InPort(Bits32)
       s.out = OutPort(Bits32)
 
-      x = 1
       s.out //= lambda: s.in_ + x + globalvar
 
-  x = Top()
+  x = Top(3)
   x.elaborate()
   simple_sim_pass(x)
   x.in_ = 10
   x.tick()
-  assert x.out == 10 + 1 + 2
+  assert x.out == 10 + 3 + 2
 
-  y = Top()
+  y = Top(33)
   y.elaborate()
   simple_sim_pass(y)
   y.in_ = 100
   y.tick()
-  assert y.out == 100 + 1 + 2
+  assert y.out == 100 + 33 + 2
