@@ -57,12 +57,16 @@ class ComponentLevel3( ComponentLevel2 ):
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
+    inst._dsl.lambda_upblks = set()
+
     return inst
 
   # Override
   def _collect_vars( s, m ):
     super()._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
+      s._dsl.all_lambda_upblks |= m._dsl.lambda_upblks
+
       all_ajd = s._dsl.all_adjacency
       for k, v in m._dsl.adjacency.items():
         all_ajd[k] |= v
@@ -143,6 +147,7 @@ class ComponentLevel3( ComponentLevel2 ):
     blk = dict_local[ blk_name ]
 
     ComponentLevel1.update( s, blk )
+    s._dsl.lambda_upblks.add( blk )
 
     # This caching here does no caching because the block name contains
     # the signal name intentionally to avoid conflicts. With //= it is
@@ -770,6 +775,7 @@ class ComponentLevel3( ComponentLevel2 ):
   def _elaborate_declare_vars( s ):
     super()._elaborate_declare_vars()
     s._dsl.all_adjacency = defaultdict(set)
+    s._dsl.all_lambda_upblks = set()
 
   # Override
   def _elaborate_collect_all_vars( s ):
