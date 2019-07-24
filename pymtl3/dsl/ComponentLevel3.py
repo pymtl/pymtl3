@@ -104,23 +104,25 @@ class ComponentLevel3( ComponentLevel2 ):
   # already checked
   def _create_assign_lambda( s, o, lamb ):
 
-    assert isinstance( o, Signal )
+    assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
     srcs, line = inspect.getsourcelines( lamb )
     assert len(srcs) == 1, "We can only handle single-line lambda connect right now."
-    src = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
 
-    blk_name = "lambda_blk_{}".format( repr(o).replace(".","_") )
-
+    src  = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
     root = ast.parse(src)
-    assert isinstance( root, ast.Module ) and len(root.body) == 1
+    assert isinstance( root, ast.Module ) and len(root.body) == 1, "Invalid lambda (contact pymtl3 developer)"
     root = root.body[0]
     assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
     lhs, rhs = root.target, root.value
 
     # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
-    assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None
+    assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None, \
+      "The lambda shouldn't contain any argument."
     rhs = rhs.body
 
+    # Compose a new and valid function based on the lambda's lhs and rhs
+
+    blk_name = "lambda_blk_{}".format( repr(o).replace(".","_") )
     new_root = ast.Module( body=[
       ast.FunctionDef( name=blk_name,
                        args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
@@ -133,18 +135,25 @@ class ComponentLevel3( ComponentLevel2 ):
       ]
     )
 
+    # Collect all closure variables and global variables of the original
+    # lambda in order to correctly recompile the function
+
     closure = { var: lamb.__closure__[ i ].cell_contents
       for i, var in enumerate( lamb.__code__.co_freevars )
     }
-
     closure.update( lamb.__globals__ )
+
+    # In Python 3 we need to supply a dict as local to get the newly
+    # compiled function from closure.
+
     dict_local = {}
     exec( compile( new_root, blk_name, "exec"), closure, dict_local )
-
-    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=").replace("lambda: ", "") )
-    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name )
-
     blk = dict_local[ blk_name ]
+
+    # Add the source code to linecache for the compiled function
+
+    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
+    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name )
 
     ComponentLevel1.update( s, blk )
     s._dsl.lambda_upblks.add( blk )
