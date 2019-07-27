@@ -111,8 +111,11 @@ class {component_name}( Component ):
     if {dump_vcd}:
       verilator_vcd_file = "{component_name}.verilator1.vcd"
 
+    # Convert string to `bytes` which is required by CFFI on python 3
+    verilator_vcd_file = verilator_vcd_file.encode('ascii')
+
     # Construct the model
-    s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", list(verilator_vcd_file)) )
+    s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", verilator_vcd_file) )
 
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
