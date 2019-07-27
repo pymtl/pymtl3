@@ -14,8 +14,7 @@ finishing each test (no matter it fails or passes).
 
 from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog import TranslationPass
-from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+from pymtl3.passes.sverilog import ImportConfigs, ImportPass, TranslationPass
 from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_4 as _rr_arb_4
 from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
 from pymtl3.stdlib.rtl.Crossbar_test import test_crossbar3 as _crossbar3
@@ -36,7 +35,7 @@ def local_do_test( _m ):
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
     _m.sverilog_translate = True
-    _m.sverilog_import = True
+    _m.sverilog_import = ImportConfigs()
     _m.apply( TranslationPass() )
     # We are importing the top component and therefore should expect a new top
     # as the return value.

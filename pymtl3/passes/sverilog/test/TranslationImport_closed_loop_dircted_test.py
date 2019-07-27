@@ -8,7 +8,7 @@
 from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.passes import DynamicSim
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog import ImportPass, TranslationPass
+from pymtl3.passes.sverilog import ImportConfigs, ImportPass, TranslationPass
 from pymtl3.passes.sverilog.util.test_utility import closed_loop_component_input_test
 from pymtl3.stdlib.rtl.enrdy_queues_test import test_bypass_queue as _bypass_queue
 from pymtl3.stdlib.rtl.enrdy_queues_test import (
@@ -31,7 +31,7 @@ def run_sim( _th ):
   try:
     _th.elaborate()
     _th.q.sverilog_translate = True
-    _th.q.sverilog_import = True
+    _th.q.sverilog_import = ImportConfigs()
     _th.apply( TranslationPass() )
     th = ImportPass()( _th )
     th.apply( DynamicSim )

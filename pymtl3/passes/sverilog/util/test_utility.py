@@ -14,6 +14,7 @@ from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.dsl import OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.sverilog import ImportConfigs
 from pymtl3.passes.sverilog import ImportPass as SVImportPass
 from pymtl3.passes.sverilog import TranslationPass as SVTranslationPass
 from pymtl3.passes.yosys import ImportPass as YosysImportPass
@@ -296,7 +297,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
     dut.elaborate()
     if backend == "sverilog":
       dut.sverilog_translate = True
-      dut.sverilog_import = True
+      dut.sverilog_import = ImportConfigs()
       dut.apply( SVTranslationPass() )
       imported_obj = SVImportPass()( dut )
     elif backend == "yosys":
