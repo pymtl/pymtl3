@@ -262,7 +262,7 @@ class ImportConfigs( BasePassConfigs ):
 
   def create_cc_cmd( s ):
     c_flags = "-O0 -fPIC -shared" + \
-             "" if s.is_default("c_flags") else f" {s.get_option('c_flags')}"
+             ("" if s.is_default("c_flags") else f" {s.get_option('c_flags')}")
     c_include_path = " ".join("-I"+p for p in s.get_all_includes() if p)
     out_file = s.get_shared_lib_path()
     c_src_files = " ".join(s.get_c_src_files())
