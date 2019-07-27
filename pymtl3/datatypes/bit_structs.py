@@ -150,11 +150,10 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
 #
 # Notes:
 #
-# We store the default value and type annotations in dictionaries by
-# adding a _deflt_ or _type_ prefix to the field name.
-# This seems dangerous as our Bits and bit structs objects are all
-# mutable. Another idea is to use repr to re-construct a new instance but
-# that requirement might be too strict.
+# We store the default value in _globals by adding a _deflt_ prefix to the
+# field name. This seems dangerous as our Bits and bit structs objects are
+# all mutable. Another idea is to use repr to re-construct a new instance
+# but that seems to be too much to ask.
 
 def _mk_init_arg( f ):
 
@@ -326,7 +325,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   cls_fields = [ _get_field( cls, a_name, a_type )
                  for a_name, a_type in cls_annotations.items() ]
 
-  # Set fields to class
+  # Create a dictionary of fields
   for f in cls_fields:
     fields[ f.name ] = f
 
