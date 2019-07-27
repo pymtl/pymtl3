@@ -37,82 +37,64 @@ class ImportConfigs( BasePassConfigs ):
     s.setup_configs()
     super().__init__( **kwargs )
 
-    def check_bool(val):
-      assert isinstance(val, bool)
-      return True
+    def expand(v):
+      return os.path.expanduser(os.path.expandvars(v))
 
-    def check_str(val):
-      assert isinstance(val, str)
-      return True
-
-    def check_non_neg(val):
-      assert isinstance(val, int) or value >= 0
-      return True
-
-    def check_file(val):
-      assert isinstance(val, str)
-      if not value: return True
-      assert os.path.isfile(os.path.expanduser(os.path.expandvars(val)))
-      return True
-
-    def check_top(val):
-      assert isinstance(val, str) and val
-      return True
-
-    def check_wno_list(val):
-      assert isinstance(val, list)
-      for warning in val:
-        assert warning in s.Warnings
-      return True
-
-    def check_vl_include(val):
-      assert isinstance(val, list)
-      for path in val:
-        assert os.path.isdir(os.path.expanduser(os.path.expandvars(path)))
-      return True
-
-    def check_vl_timescale(val):
-      assert isinstance(val, str) and len(val) > 2
-      assert val[-1] == 's' and val[-2] in ['p', 'n', 'u', 'm']
-      assert all(c.isdigit() for c in val[:-2])
-      return True
-
-    def check_vl_mk_dir(val):
-      assert isinstance(val, str)
-      if not val: return True
-      assert os.path.dirname(os.path.expanduser(os.path.expandvars(val)))
-      return True
-
-    def check_c_include(val):
-      assert isinstance(val, list)
-      for path in val:
-        assert os.path.isdir(os.path.expanduser(os.path.expandvars(path)))
-      return True
-
-    def check_c_srcs(val):
-      assert isinstance(val, list)
-      for path in val:
-        assert os.path.isfile(os.path.expanduser(os.path.expandvars(path)))
-      return True
-
-    bool_opts = [
-      'import_', 'enable_assert',
-      'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_trace' ]
-    str_opts = ['c_flags', 'ld_flags', 'ld_libs']
-    non_neg_opts = ['vl_unroll_count', 'vl_unroll_stmts']
-    file_opts = ['vl_flist', 'vl_src']
-
-    s.set_checkers( bool_opts, check_bool, "expects a boolean" )
-    s.set_checkers( str_opts, check_str, "expects a string" )
-    s.set_checkers( non_neg_opts, check_non_neg, "expects an integer >= 0" )
-    s.set_checkers( file_opts, check_file, "expects a file" )
-    s.set_checker("top_module", check_top, "expects a non-empty string")
-    s.set_checker("vl_Wno_list", check_wno_list, "expects a list of warnings")
-    s.set_checker("vl_include", check_vl_include, "expects a path to directory")
-    s.set_checker("vl_trace_timescale", check_vl_timescale, "expects a timescale string")
-    s.set_checker("vl_mk_dir", check_vl_mk_dir, "expects a path to directory")
-    s.set_checker("c_include_path", check_c_include, "expects a list of paths to directories")
-    s.set_checker("c_srcs", check_c_srcs, "expects a list of paths to files")
+    s.set_checkers(
+        ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
+         'vl_trace'],
+        lambda v: isinstance(v, bool),
+        "expects a boolean")
+    s.set_checkers(
+        ['c_flags', 'ld_flags', 'ld_libs'],
+        lambda v: isinstance(v, str),
+        "expects a string")
+    s.set_checkers(
+        ['vl_unroll_count', 'vl_unroll_stmts'],
+        lambda v: isinstance(v, int) and v >= 0,
+        "expects an integer >= 0")
+    s.set_checker(
+        "top_module",
+        lambda v: isinstance(v, str) and v,
+        "expects a non-empty string")
+    s.set_checker(
+        "vl_src",
+        lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or \
+                  s.get_option("vl_flist"),
+        "vl_src should be a path to a file when vl_flist is empty")
+    s.set_checker(
+        "vl_flist",
+        lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
+        "expects a path to a file")
+    s.set_checker(
+        "vl_Wno_list",
+        lambda v: isinstance(v, list) and all(w in s.Warnings for w in v),
+        "expects a list of warnings")
+    s.set_checker(
+        "vl_include",
+        lambda v: isinstance(v, list) and \
+                  all(os.path.isdir(expand(p)) for p in v),
+        "expects a path to directory")
+    s.set_checker(
+        "vl_trace_timescale",
+        lambda v: isinstance(v, str) and len(v) > 2 and v[-1] == 's' and \
+                  v[-2] in ['p', 'n', 'u', 'm'] and \
+                  all(c.isdigit() for c in v[:-2]),
+        "expects a timescale string")
+    s.set_checker(
+        "vl_mk_dir",
+        lambda v: isinstance(v, str) and os.path.isdir(expand(v)) or v == "",
+        "expects a path to directory")
+    s.set_checker(
+        "c_include_path",
+        lambda v: isinstance(v, list) and \
+                  all(os.path.isdir(expand(p)) for p in v),
+        "expects a list of paths to directories")
+    s.set_checker(
+        "c_srcs",
+        lambda v: isinstance(v, list) and \
+                  all(os.path.isfile(expand(p)) for p in v),
+        "expects a list of paths to files")
 
   def setup_configs( s ):
     s.Warnings = [

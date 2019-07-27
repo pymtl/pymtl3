@@ -49,10 +49,10 @@ class BasePassConfigs:
 
   def gen_checker( s, opt, func, msg ):
     def _check( s, value ):
-      try:
-        return func(value)
-      except AssertionError as e:
-        raise InvalidPassOptionValue(opt, value, s.PassName, msg) from e
+      if not func(value):
+        raise InvalidPassOptionValue(opt, value, s.PassName, msg)
+      else:
+        return True
     return _check
 
   def set_checkers( s, opts, func, msg ):
@@ -60,4 +60,4 @@ class BasePassConfigs:
       s.set_checker(opt, func, msg)
 
   def set_checker( s, opt, func, msg ):
-    setattr(s, "checke_"+opt, s.gen_checker(opt, func, msg))
+    setattr(s, "check_"+opt, s.gen_checker(opt, func, msg))
