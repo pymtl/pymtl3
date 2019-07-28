@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+from textwrap import fill, indent
 
 from pymtl3.datatypes import Bits, BitStruct, mk_bits
 from pymtl3.passes.BasePass import BasePass
@@ -42,7 +43,7 @@ class ImportConfigs( BasePassConfigs ):
 
     s.set_checkers(
         ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
-         'vl_trace'],
+         'vl_trace', 'verbose'],
         lambda v: isinstance(v, bool),
         "expects a boolean")
     s.set_checkers(
@@ -83,7 +84,7 @@ class ImportConfigs( BasePassConfigs ):
         "expects a timescale string")
     s.set_checker(
         "vl_mk_dir",
-        lambda v: isinstance(v, str) and os.path.isdir(expand(v)) or v == "",
+        lambda v: isinstance(v, str),
         "expects a path to directory")
     s.set_checker(
         "c_include_path",
@@ -116,6 +117,9 @@ class ImportConfigs( BasePassConfigs ):
     s.Options = {
       # Import enable switch
       "import_" : True,
+
+      # Enable verbose mode?
+      "verbose" : False,
 
       # Verilator code generation options
       # These options will be passed to verilator to generate the C simulator.
@@ -294,14 +298,19 @@ class ImportConfigs( BasePassConfigs ):
   def get_vl_mk_dir( s ):
     return s.get_option( "vl_mk_dir" )
 
+  def vprint( s, msg, nspaces = 0, use_fill = False ):
+    if s.get_option("verbose"):
+      if use_fill:
+        print(indent(fill(msg), " "*nspaces))
+      else:
+        print(indent(msg, " "*nspaces))
+
   #-----------------------------------------------------------------------
   # Internal helper methods
   #-----------------------------------------------------------------------
 
   def get_all_includes( s ):
     includes = s.get_option("c_include_path")
-
-    # Add verilator include path
 
     # Try to obtain verilator include path either from environment variable
     # or from `pkg-config`
@@ -314,13 +323,15 @@ class ImportConfigs( BasePassConfigs ):
       except OSError as e:
         vl_include_dir_msg = \
 """\
-Cannot locate the include directory of verilator. Please make sure either
+Cannot locate the include directory of verilator. Please make sure either \
 $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly!
 """
-        raise OSError(vl_include_dir_msg) from e
+        raise OSError(fill(vl_include_dir_msg)) from e
 
+    # Add verilator include path
     s.vl_include_dir = vl_include_dir
     includes += [vl_include_dir, vl_include_dir + "/vltstd"]
+
     return includes
 
   def get_c_src_files( s ):
@@ -464,6 +475,7 @@ class ImportPass( BasePass ):
   def create_verilator_model( s, m, cached ):
     """Verilate module `top_name` in `sv_file_path`."""
     config = m.sverilog_import
+    config.vprint("\n=====Verilate model=====")
     if not cached:
       # Generate verilator command
       cmd = config.create_vl_cmd()
@@ -476,15 +488,21 @@ class ImportPass( BasePass ):
 
       # Try to call verilator
       try:
+        config.vprint(f"Verilating {config.get_top_module()} with command:", 2)
+        config.vprint(f"{cmd}", 4)
         subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
       except subprocess.CalledProcessError as e:
         err_msg = e.output if not isinstance(e.output, bytes) else \
                   e.output.decode('utf-8')
         import_err_msg = \
             f"Fail to verilate model {config.get_option('top_module')}\n"\
-            f"  Verilator command:\n  {cmd}\n\n"\
-            f"  Verilator output:\n{err_msg}\n"
+            f"  Verilator command:\n{indent(cmd, '  ')}\n\n"\
+            f"  Verilator output:\n{indent(fill(err_msg), '  ')}\n"
         raise SVerilogImportError(m, import_err_msg) from e
+      config.vprint(f"Successfully verilated the given model!", 2)
+
+    else:
+      config.vprint(f"{config.get_top_module()} not verilated because it's cached!", 2)
 
   #-----------------------------------------------------------------------
   # create_verilator_c_wrapper
@@ -501,6 +519,7 @@ class ImportPass( BasePass ):
     dump_vcd = config.is_vl_trace_enabled()
     vcd_timescale = config.get_vl_trace_timescale()
     wrapper_name = config.get_c_wrapper_path()
+    config.vprint("\n=====Generate C wrapper=====")
 
     # The wrapper template should be in the same directory as this file
     template_name = \
@@ -535,6 +554,7 @@ class ImportPass( BasePass ):
         c_wrapper = c_wrapper.format( **locals() )
         output.write( c_wrapper )
 
+    config.vprint(f"Successfully generated C wrapper {wrapper_name}!", 2)
     return port_cdefs
 
   #-----------------------------------------------------------------------
@@ -546,6 +566,7 @@ class ImportPass( BasePass ):
     config = m.sverilog_import
     full_name = config.get_top_module()
     dump_vcd = config.is_vl_trace_enabled()
+    config.vprint("\n=====Compile shared library=====")
 
     # Since we may run import with or without dump_vcd enabled, we need
     # to compile C wrapper regardless of whether the verilated model is
@@ -558,6 +579,8 @@ class ImportPass( BasePass ):
 
       # Try to call the C compiler
       try:
+        config.vprint("Compiling shared library with command:", 2)
+        config.vprint(f"{cmd}", 4)
         subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True,
                                  universal_newlines=True )
       except subprocess.CalledProcessError as e:
@@ -565,9 +588,14 @@ class ImportPass( BasePass ):
                   e.output.decode('utf-8')
         import_err_msg = \
             f"Failed to compile Verilated model into a shared library:\n"\
-            f"  C compiler command:\n  {cmd}\n\n"\
-            f"  C compiler output:\n{err_msg}\n"
+            f"  C compiler command:\n{indent(cmd, '  ')}\n\n"\
+            f"  C compiler output:\n{indent(fill(err_msg), '  ')}\n"
         raise SVerilogImportError(m, import_err_msg) from e
+      config.vprint(f"Successfully compiled shared library "\
+                    f"{config.get_shared_lib_path()}!", 2)
+
+    else:
+      config.vprint(f"Didn't compile shared library because it's cached!", 2)
 
   #-----------------------------------------------------------------------
   # create_py_wrapper
@@ -576,6 +604,7 @@ class ImportPass( BasePass ):
   def create_py_wrapper( s, m, rtype, packed_ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
     config = m.sverilog_import
+    config.vprint("\n=====Generate PyMTL wrapper=====")
 
     # Load the wrapper template
     template_name = \
@@ -641,6 +670,7 @@ constraint_list = [
           )
           output.write( py_wrapper )
 
+    config.vprint(f"Successfully generated PyMTL wrapper {wrapper_name}!", 2)
     return symbols
 
   #-----------------------------------------------------------------------
