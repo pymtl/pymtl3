@@ -15,6 +15,7 @@ import sys
 from textwrap import fill, indent
 
 from pymtl3.datatypes import Bits, BitStruct, mk_bits
+from pymtl3.dsl import Component, Placeholder
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs
@@ -22,7 +23,11 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.sverilog.errors import SVerilogImportError
-from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
+from pymtl3.passes.sverilog.util.utility import (
+    get_component_unique_name,
+    make_indent,
+    wrap,
+)
 
 try:
   # Python 2
@@ -258,10 +263,36 @@ class ImportConfigs( BasePassConfigs ):
            f" -o {out_file} {c_src_files} {ld_libs}"
 
   def fill_missing( s, m ):
+    rtype = get_component_ifc_rtlir(m)
+    s.v_param = rtype.get_params()
+    s.is_param_wrapper = isinstance(m, Placeholder) and s.v_param
+    top_module = s.get_top_module()
+
     # Fill in the top module if unspecified
-    full_name = get_component_unique_name( get_component_ifc_rtlir( m ) )
-    if not s.get_top_module():
-      s.set_option("top_module", full_name)
+    # If the top-level module is not a wrapper
+    if not s.is_param_wrapper:
+      full_name = get_component_unique_name( rtype )
+      if not top_module:
+        # Default top_module is the name of component concatenated
+        # with parameters
+        s.set_option("top_module", full_name)
+
+    # If the top-level module is a wrapper
+    else:
+      # Check if all parameters are integers
+      assert all(isinstance(v[1], int) for v in s.v_param), \
+          "Only support integers as parameters of Verilog modules!"
+
+      # wrapped_module is the name of the module to be parametrized
+      # top_module is the name of the new top-level module
+      if top_module:
+        s.wrapped_module = top_module
+        s.set_option("top_module", f"{top_module}_w_params")
+      else:
+        # Default top_module is the name of component
+        s.wrapped_module = rtype.get_name()
+        s.set_option("top_module", f"{s.wrapped_module}_w_params")
+
     top_module = s.get_top_module()
 
     # Only try to infer the name of Verilog source file if both
@@ -272,10 +303,22 @@ class ImportConfigs( BasePassConfigs ):
     if not s.get_option("vl_mk_dir"):
       s.set_option("vl_mk_dir", f"obj_dir_{top_module}")
 
-    s.check_options()
+    if s.is_param_wrapper:
+      # If toplevel module is a param-wrapper, `vl_src` has to be specified
+      # because the file containing the wrapper will include `vl_src` for
+      # the module to be parametrized.
+      if not s.get_option("vl_src"):
+        raise InvalidPassOptionValue(
+            "vl_src", s.get_option("vl_src"), s.PassName,
+            "vl_src must be specified when Placeholder is to be imported!")
+      s.v_module2param = s.get_option("vl_src")
+      s.set_option("vl_src", top_module+".sv")
 
   def is_import_enabled( s ):
     return s.get_option( "import_" )
+
+  def is_top_wrapper( s ):
+    return s.is_param_wrapper
 
   def is_vl_trace_enabled( s ):
     return s.get_option( "vl_trace" )
@@ -285,6 +328,15 @@ class ImportConfigs( BasePassConfigs ):
 
   def get_top_module( s ):
     return s.get_option( "top_module" )
+
+  def get_module_to_parametrize( s ):
+    return s.wrapped_module
+
+  def get_param_include( s ):
+    return s.v_module2param
+
+  def get_v_param( s ):
+    return s.v_param
 
   def get_c_wrapper_path( s ):
     return f"{s.get_top_module()}_v.cpp"
@@ -455,6 +507,10 @@ class ImportPass( BasePass ):
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
 
+    # Create a new Verilog source file if a new top-level wrapper is needed
+    if m.sverilog_import.is_top_wrapper():
+      s.add_param_wrapper( m, rtype, packed_ports )
+
     s.create_verilator_model( m, cached )
 
     port_cdefs = \
@@ -473,8 +529,9 @@ class ImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_verilator_model( s, m, cached ):
-    """Verilate module `top_name` in `sv_file_path`."""
+    """Verilate module `m`."""
     config = m.sverilog_import
+    config.check_options()
     config.vprint("\n=====Verilate model=====")
     if not cached:
       # Generate verilator command
@@ -497,7 +554,7 @@ class ImportPass( BasePass ):
         import_err_msg = \
             f"Fail to verilate model {config.get_option('top_module')}\n"\
             f"  Verilator command:\n{indent(cmd, '  ')}\n\n"\
-            f"  Verilator output:\n{indent(fill(err_msg), '  ')}\n"
+            f"  Verilator output:\n{indent(wrap(err_msg), '  ')}\n"
         raise SVerilogImportError(m, import_err_msg) from e
       config.vprint(f"Successfully verilated the given model!", 2)
 
@@ -589,7 +646,7 @@ class ImportPass( BasePass ):
         import_err_msg = \
             f"Failed to compile Verilated model into a shared library:\n"\
             f"  C compiler command:\n{indent(cmd, '  ')}\n\n"\
-            f"  C compiler output:\n{indent(fill(err_msg), '  ')}\n"
+            f"  C compiler output:\n{indent(wrap(err_msg), '  ')}\n"
         raise SVerilogImportError(m, import_err_msg) from e
       config.vprint(f"Successfully compiled shared library "\
                     f"{config.get_shared_lib_path()}!", 2)
@@ -717,6 +774,52 @@ constraint_list = [
     imp.construct.__globals__.update( symbols )
 
     return imp
+
+  #-------------------------------------------------------------------------
+  # add_param_wrapper
+  #-------------------------------------------------------------------------
+
+  def add_param_wrapper( s, m, rtype, packed_ports ):
+    config = m.sverilog_import
+    outfile = f"{config.get_top_module()}.sv"
+    parameters = config.get_v_param()
+
+    with open(outfile, "w") as top_wrapper:
+      # Port definitions of top-level wrapper
+      ports = [
+        f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
+        f" {name}{'' if idx == len(packed_ports)-1 else ','}" \
+        for idx, (name, p) in enumerate(packed_ports)
+      ]
+      # Parameters passed to the module to be parametrized
+      params = [
+        f"    .{param}( {val} ){'' if idx == len(parameters)-1 else ','}"\
+        for idx, (param, val) in enumerate(parameters)
+      ]
+      # Connections between top module and inner module
+      connect_ports = [
+        f"    .{name}( {name} ){'' if idx == len(packed_ports)-1 else ','}"\
+        for idx, (name, _) in enumerate(packed_ports)
+      ]
+      lines = [
+        "// This is a top-level module that wraps a parametrized module",
+        "// This file is generated by PyMTL SystemVerilog import pass",
+        f'`include "{config.get_param_include()}"',
+        f"module {config.get_top_module()}",
+        "(",
+      ] + ports + [
+        ");",
+        f"  {config.get_module_to_parametrize()}",
+        "  #(",
+      ] + params + [
+        "  ) wrapped_module",
+        "  (",
+      ] + connect_ports + [
+        "  );",
+        "endmodule",
+      ]
+      top_wrapper.write("\n".join(line for line in lines))
+      top_wrapper.close()
 
   #-------------------------------------------------------------------------
   # gen_packed_ports
