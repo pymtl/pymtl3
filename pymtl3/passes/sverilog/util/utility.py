@@ -32,4 +32,4 @@ def get_component_unique_name( c_rtype ):
 
 def wrap( s ):
   col = shutil.get_terminal_size().columns
-  return "\n".join(sum([textwrap.wrap(line, col) for line in s.split("\n")], []))
+  return "\n".join(sum((textwrap.wrap(line, col) for line in s.split("\n")), []))

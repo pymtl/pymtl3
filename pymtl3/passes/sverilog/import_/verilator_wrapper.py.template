@@ -17,7 +17,7 @@ from pymtl3.dsl import Component, connect, InPort, OutPort, Wire, M, U, RD, WR
 def full_vector( wire, signal ):
 
   def to_string( num, nbits ):
-    ndigits = (nbits-1)/4+1
+    ndigits = (nbits-1)//4+1
     return "{{0:#0{{1}}x}}".format( num, ndigits+2 )
 
   nbits = wire.nbits
@@ -25,7 +25,7 @@ def full_vector( wire, signal ):
     return to_string( signal[0], nbits )
   else:
     ret = ""
-    num_elements = (nbits-1)/32+1
+    num_elements = (nbits-1)//32+1
     for idx in range(num_elements):
       _nbits = 32 if idx != num_elements-1 else nbits%32
       ret = to_string( signal[idx], _nbits )[2:] + ret
@@ -57,6 +57,7 @@ class {component_name}( Component ):
       V{component_name}_t * create_model( const char * );
       void destroy_model( V{component_name}_t *);
       void eval( V{component_name}_t * );
+      void assert_en( bool en );
 
     """)
 
@@ -153,6 +154,10 @@ class {component_name}( Component ):
       set_output()
 
     {constraint_str}
+
+  def assert_en( s, en ):
+    assert isinstance( en, bool )
+    s._ffi_inst.assert_en( en )
 
   def line_trace( s ):
 {line_trace}
