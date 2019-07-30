@@ -27,6 +27,8 @@ from pymtl3.passes.sverilog.util.utility import (
     wrap,
 )
 
+from .ImportConfigs import ImportConfigs
+
 try:
   # Python 2
   reload
