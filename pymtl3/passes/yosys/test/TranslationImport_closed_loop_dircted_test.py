@@ -24,7 +24,7 @@ from pymtl3.passes.sverilog.test.TranslationImport_closed_loop_dircted_test impo
 from pymtl3.passes.sverilog.test.TranslationImport_closed_loop_dircted_test import (
     test_pipe_queue_stall as _pipe_queue_stall,
 )
-from pymtl3.passes.yosys import ImportPass, TranslationPass
+from pymtl3.passes.yosys import ImportConfigs, ImportPass, TranslationPass
 
 #-------------------------------------------------------------------------
 # Valrdy queue tests
@@ -34,7 +34,7 @@ def run_sim( _th ):
   try:
     _th.elaborate()
     _th.q.yosys_translate = True
-    _th.q.yosys_import = True
+    _th.q.yosys_import = ImportConfigs()
     _th.apply( TranslationPass() )
     th = ImportPass()( _th )
     th.apply( DynamicSim )

@@ -302,7 +302,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
       imported_obj = SVImportPass()( dut )
     elif backend == "yosys":
       dut.yosys_translate = True
-      dut.yosys_import = True
+      dut.yosys_import = ImportConfigs()
       dut.apply( YosysTranslationPass() )
       imported_obj = YosysImportPass()( dut )
     # Run another vector simulator spin

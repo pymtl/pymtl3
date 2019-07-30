@@ -5,12 +5,12 @@
 # Date   : June 14, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-import os
 
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
+from pymtl3.passes.sverilog import ImportConfigs
 from pymtl3.passes.sverilog import ImportPass as SVerilogImportPass
 from pymtl3.passes.sverilog.errors import SVerilogImportError
 from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
@@ -18,60 +18,18 @@ from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_
 
 class ImportPass( SVerilogImportPass ):
 
-  def traverse_hierarchy( s, m ):
-    if hasattr(m, "yosys_import") and m.yosys_import:
-      return s.do_import( m )
-    else:
-      for child in m.get_child_components():
-        s.traverse_hierarchy( child )
-
   #-----------------------------------------------------------------------
-  # get_imported_object
+  # Backend-specific methods
   #-----------------------------------------------------------------------
 
-  def get_imported_object( s, m ):
-    rtype = get_component_ifc_rtlir( m )
-    full_name = get_component_unique_name( rtype )
-    packed_ports = s.gen_packed_ports( rtype )
-    dump_vcd = 1 if hasattr( m, "dump_vcd" ) else 0
-    try:
-      is_same = m._pass_yosys_translation.is_same
-    except AttributeError:
-      is_same = False
+  def get_backend_name( s ):
+    return "yosys"
 
-    try:
-      sv_file_path = m.yosys_import_path
-    except AttributeError:
-      sv_file_path = full_name + '.sv'
+  def get_config( s, m ):
+    return m.yosys_import
 
-    # Check if the verilated model is cached
-    cached = False
-    obj_dir = 'obj_dir_' + full_name
-    c_wrapper = full_name + '_v.cpp'
-    py_wrapper = full_name + '_v.py'
-    shared_lib = 'lib{}_v.so'.format( full_name )
-    if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
-       os.path.exists(py_wrapper) and os.path.exists(shared_lib):
-      cached = True
-
-    assert os.path.isfile( sv_file_path ), \
-      "Cannot import {}: {} is not a file!".format( m, sv_file_path )
-
-    s.create_verilator_model( sv_file_path, full_name, dump_vcd, cached )
-
-    c_wrapper_name, port_cdefs = \
-        s.create_verilator_c_wrapper( m, full_name, packed_ports, dump_vcd, cached )
-
-    lib_name = \
-        s.create_shared_lib( c_wrapper_name, full_name, dump_vcd, cached )
-
-    py_wrapper_name, symbols = \
-        s.create_py_wrapper( full_name, rtype, packed_ports,
-                           lib_name, port_cdefs, dump_vcd, cached)
-
-    imp = s.import_component( py_wrapper_name, full_name, symbols )
-
-    return imp
+  def get_translation_namespace( s, m ):
+    return m._pass_yosys_translation
 
   #-------------------------------------------------------------------------
   # Name mangling functions

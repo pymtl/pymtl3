@@ -24,7 +24,7 @@ from pymtl3.passes.sverilog.test.TranslationImport_stdlib_test import (
     test_normal_Bits,
     test_pipe_Bits,
 )
-from pymtl3.passes.yosys import ImportPass, TranslationPass
+from pymtl3.passes.yosys import ImportConfigs, ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 
@@ -33,7 +33,7 @@ def local_do_test( _m ):
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
     _m.yosys_translate = True
-    _m.yosys_import = True
+    _m.yosys_import = ImportConfigs()
     _m.apply( TranslationPass() )
     # We are importing the top component and therefore should expect a new top
     # as the return value.

@@ -63,10 +63,10 @@ class ImportPass( BasePass ):
     return ret
 
   def traverse_hierarchy( s, m ):
-    if hasattr(m, "sverilog_import") and \
-       isinstance(m.sverilog_import, ImportConfigs) and \
-       m.sverilog_import.is_import_enabled():
-      m.sverilog_import.fill_missing( m )
+    if hasattr(m, f"{s.get_backend_name()}_import") and \
+       isinstance(s.get_config(m), ImportConfigs) and \
+       s.get_config(m).is_import_enabled():
+      s.get_config(m).fill_missing( m )
       return s.do_import( m )
     else:
       for child in m.get_child_components():
@@ -84,15 +84,28 @@ class ImportPass( BasePass ):
       raise SVerilogImportError( m, msg )
 
   #-----------------------------------------------------------------------
-  # get_imported_object
+  # Backend-specific methods
   #-----------------------------------------------------------------------
 
-  def get_imported_object( s, m ):
-    rtype = get_component_ifc_rtlir( m )
-    full_name = get_component_unique_name( rtype )
-    packed_ports = s.gen_packed_ports( rtype )
+  def get_backend_name( s ):
+    return "sverilog"
+
+  def get_config( s, m ):
+    return m.sverilog_import
+
+  def get_translation_namespace( s, m ):
+    return m._pass_sverilog_translation
+
+  #-----------------------------------------------------------------------
+  # is_cached
+  #-----------------------------------------------------------------------
+
+  def is_cached( s, m, full_name ):
+    cached = False
+
+    # Only components translated by pymtl translation passes will be cached
     try:
-      is_same = m._pass_sverilog_translation.is_same
+      is_same = s.get_translation_namespace(m).is_same
     except AttributeError:
       is_same = False
 
@@ -106,20 +119,35 @@ class ImportPass( BasePass ):
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
 
-    # Create a new Verilog source file if a new top-level wrapper is needed
-    if m.sverilog_import.is_top_wrapper():
-      s.add_param_wrapper( m, rtype, packed_ports )
+    return cached
 
-    s.create_verilator_model( m, cached )
+  #-----------------------------------------------------------------------
+  # get_imported_object
+  #-----------------------------------------------------------------------
+
+  def get_imported_object( s, m ):
+    config = s.get_config( m )
+    rtype = get_component_ifc_rtlir( m )
+    full_name = get_component_unique_name( rtype )
+    packed_ports = s.gen_packed_ports( rtype )
+
+    cached = s.is_cached( m, full_name )
+
+    # Create a new Verilog source file if a new top-level wrapper is needed
+    if config.is_top_wrapper():
+      s.add_param_wrapper( m, config, rtype, packed_ports )
+
+    s.create_verilator_model( m, config, cached )
 
     port_cdefs = \
-        s.create_verilator_c_wrapper( m, packed_ports, cached )
+        s.create_verilator_c_wrapper( m, config, packed_ports, cached )
 
-    s.create_shared_lib( m, cached )
+    s.create_shared_lib( m, config, cached )
 
-    symbols = s.create_py_wrapper( m, rtype, packed_ports, port_cdefs, cached )
+    symbols = \
+        s.create_py_wrapper( m, config, rtype, packed_ports, port_cdefs, cached )
 
-    imp = s.import_component( m, symbols )
+    imp = s.import_component( m, config, symbols )
 
     return imp
 
@@ -127,9 +155,8 @@ class ImportPass( BasePass ):
   # create_verilator_model
   #-----------------------------------------------------------------------
 
-  def create_verilator_model( s, m, cached ):
+  def create_verilator_model( s, m, config, cached ):
     """Verilate module `m`."""
-    config = m.sverilog_import
     config.check_options()
     config.vprint("\n=====Verilate model=====")
     if not cached:
@@ -164,13 +191,12 @@ class ImportPass( BasePass ):
   # create_verilator_c_wrapper
   #-----------------------------------------------------------------------
 
-  def create_verilator_c_wrapper( s, m, packed_ports, cached ):
+  def create_verilator_c_wrapper( s, m, config, packed_ports, cached ):
     """Return the file name of generated C component wrapper.
 
     Create a C wrapper that calls verilator C API and provides interfaces
     that can be later called through CFFI.
     """
-    config = m.sverilog_import
     p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     component_name = config.get_top_module()
     dump_vcd = config.is_vl_trace_enabled()
@@ -218,9 +244,8 @@ class ImportPass( BasePass ):
   # create_shared_lib
   #-----------------------------------------------------------------------
 
-  def create_shared_lib( s, m, cached ):
+  def create_shared_lib( s, m, config, cached ):
     """Return the name of compiled shared lib."""
-    config = m.sverilog_import
     full_name = config.get_top_module()
     dump_vcd = config.is_vl_trace_enabled()
     config.vprint("\n=====Compile shared library=====")
@@ -258,9 +283,8 @@ class ImportPass( BasePass ):
   # create_py_wrapper
   #-----------------------------------------------------------------------
 
-  def create_py_wrapper( s, m, rtype, packed_ports, port_cdefs, cached ):
+  def create_py_wrapper( s, m, config, rtype, packed_ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
-    config = m.sverilog_import
     p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     config.vprint("\n=====Generate PyMTL wrapper=====")
 
@@ -336,9 +360,8 @@ constraint_list = [
   # import_component
   #-----------------------------------------------------------------------
 
-  def import_component( s, m, symbols ):
+  def import_component( s, m, config, symbols ):
     """Return the PyMTL component imported from `wrapper_name`.sv."""
-    config = m.sverilog_import
     config.vprint("=====Create python object=====")
 
     component_name = config.get_top_module()
@@ -384,8 +407,7 @@ constraint_list = [
   # add_param_wrapper
   #-------------------------------------------------------------------------
 
-  def add_param_wrapper( s, m, rtype, packed_ports ):
-    config = m.sverilog_import
+  def add_param_wrapper( s, m, config, rtype, packed_ports ):
     outfile = f"{config.get_top_module()}.sv"
     parameters = config.get_v_param()
 

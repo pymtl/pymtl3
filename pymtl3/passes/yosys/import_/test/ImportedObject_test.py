@@ -13,8 +13,9 @@ from pymtl3.stdlib.test import TestVectorSimulator
 
 def local_do_test( _m ):
   _m.elaborate()
-  _m.yosys_import_path = _m.sverilog_import_path
+  _m.yosys_import = _m.sverilog_import
   ipass = ImportPass()
+  _m.yosys_import.fill_missing( _m )
   m = ipass.get_imported_object( _m )
   sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
   sim.run_test()
