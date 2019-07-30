@@ -12,13 +12,11 @@ import os
 import shutil
 import subprocess
 import sys
-from textwrap import fill, indent
+from textwrap import indent
 
 from pymtl3.datatypes import Bits, BitStruct, mk_bits
-from pymtl3.dsl import Component, Placeholder
+from pymtl3.dsl import Component
 from pymtl3.passes.BasePass import BasePass
-from pymtl3.passes.errors import InvalidPassOptionValue
-from pymtl3.passes.PassConfigs import BasePassConfigs
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
@@ -35,407 +33,6 @@ try:
 except NameError:
   # Python 3
   from importlib import reload
-
-
-class ImportConfigs( BasePassConfigs ):
-
-  def __init__( s, **kwargs ):
-    s.setup_configs()
-    super().__init__( **kwargs )
-
-    def expand(v):
-      return os.path.expanduser(os.path.expandvars(v))
-
-    s.set_checkers(
-        ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
-         'vl_trace', 'verbose'],
-        lambda v: isinstance(v, bool),
-        "expects a boolean")
-    s.set_checkers(
-        ['c_flags', 'ld_flags', 'ld_libs'],
-        lambda v: isinstance(v, str),
-        "expects a string")
-    s.set_checkers(
-        ['vl_unroll_count', 'vl_unroll_stmts'],
-        lambda v: isinstance(v, int) and v >= 0,
-        "expects an integer >= 0")
-    s.set_checker(
-        "top_module",
-        lambda v: isinstance(v, str) and v,
-        "expects a non-empty string")
-    s.set_checker(
-        "vl_src",
-        lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or \
-                  s.get_option("vl_flist"),
-        "vl_src should be a path to a file when vl_flist is empty")
-    s.set_checker(
-        "vl_flist",
-        lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
-        "expects a path to a file")
-    s.set_checker(
-        "vl_Wno_list",
-        lambda v: isinstance(v, list) and all(w in s.Warnings for w in v),
-        "expects a list of warnings")
-    s.set_checker(
-        "vl_include",
-        lambda v: isinstance(v, list) and \
-                  all(os.path.isdir(expand(p)) for p in v),
-        "expects a path to directory")
-    s.set_checker(
-        "vl_trace_timescale",
-        lambda v: isinstance(v, str) and len(v) > 2 and v[-1] == 's' and \
-                  v[-2] in ['p', 'n', 'u', 'm'] and \
-                  all(c.isdigit() for c in v[:-2]),
-        "expects a timescale string")
-    s.set_checker(
-        "vl_mk_dir",
-        lambda v: isinstance(v, str),
-        "expects a path to directory")
-    s.set_checker(
-        "c_include_path",
-        lambda v: isinstance(v, list) and \
-                  all(os.path.isdir(expand(p)) for p in v),
-        "expects a list of paths to directories")
-    s.set_checker(
-        "c_srcs",
-        lambda v: isinstance(v, list) and \
-                  all(os.path.isfile(expand(p)) for p in v),
-        "expects a list of paths to files")
-
-  def setup_configs( s ):
-    s.Warnings = [
-      'ALWCOMBORDER', 'ASSIGNIN', 'ASSIGNDLY', 'BLKANDNBLK', 'BLKSEQ',
-      'BLKLOOPINIT', 'BSSPACE', 'CASEINCOMPLETE', 'CASEOVERLAP',
-      'CASEX', 'CASEWITHX', 'CDCRSTLOGIC', 'CLKDATA', 'CMPCONST',
-      'COLONPLUS', 'COMBDLY', 'CONTASSREG', 'DECLFILENAME', 'DEFPARAM',
-      'DETECTARRAY', 'ENDLABEL', 'GENCLK', 'IFDEPTH', 'IGNOREDRETURN',
-      'IMPERFECTSCH', 'IMPLICIT', 'IMPORTSTAR', 'IMPURE', 'INCABSPATH',
-      'INFINITELOOP', 'INITIALDLY', 'LITENDIAN', 'MODDUP', 'MULTIDRIVEN',
-      'MULTITOP', 'PINCONNECTEMPTY', 'PINMISSING', 'PINNOCONNECT',
-      'PROCASSWIRE', 'REALCVT', 'REDEFMACRO', 'SELRANGE', 'STMTDLY',
-      'SYMRSVDWORD', 'SYNCASYNCNET', 'TASKNSVAR', 'TICKCOUNT', 'UNDRIVEN',
-      'UNOPT', 'UNOPTFLAT', 'UNOPTTHREADS', 'UNPACKED', 'UNSIGNED', 'UNUSED',
-      'USERINFO', 'USERWARN', 'USERERROR', 'USERFATAL', 'VARHIDDEN', 'WIDTH',
-      'WIDTHCONCAT'
-    ]
-
-    s.Options = {
-      # Import enable switch
-      "import_" : True,
-
-      # Enable verbose mode?
-      "verbose" : False,
-
-      # Verilator code generation options
-      # These options will be passed to verilator to generate the C simulator.
-      # By default, verilator is called with `--cc`.
-
-      # --top-module
-      # Expects the name of the top component;
-      # "" to use name of the current component to be imported
-      "top_module" : "",
-
-      # Expects path of the file to be verilated
-      # "" to use "<top_module>.sv"
-      "vl_src" : "",
-
-      # --Mdir
-      # Expects the path of Makefile output directory;
-      # "" to use `obj_dir_<top_module>`
-      "vl_mk_dir" : "",
-
-      # -f
-      # Expects the path to the flist file; "" to disable this option
-      "vl_flist" : "",
-
-      # -I ( alias of -y and +incdir+ )
-      # Expects a list of include paths; [] to disable this option
-      "vl_include" : [],
-
-      # --assert
-      # Expects a boolean value
-      "enable_assert" : True,
-
-      # Verilator optimization options
-
-      # -O0/3
-      # Expects a non-negative integer
-      # Currently only support 0 (disable opt) and 3 (highest effort opt)
-      "vl_opt_level" : 3,
-
-      # --unroll-count
-      # Expects a non-negative integer
-      # 0 to disable this option
-      "vl_unroll_count" : 1000000,
-
-      # --unroll-stmts
-      # Expects a non-negative integer
-      # 0 to disable this option
-      "vl_unroll_stmts" : 1000000,
-
-      # Verilator warning-related options
-
-      # False to disable the warnings, True to enable
-      "vl_W_lint" : True,
-      "vl_W_style" : True,
-      "vl_W_fatal" : True,
-
-      # Un-warn all warnings in the given list; [] to disable this option
-      # The given list should only include strings that appear in `Warnings`
-      "vl_Wno_list" : [],
-
-      # Verilator misc options
-
-      # --trace
-      # Expects a boolean value
-      "vl_trace" : False,
-
-      # Passed to verilator tracing function
-      "vl_trace_timescale" : "10ps",
-
-      # C-compilation options
-      # These options will be passed to the C compiler to create a shared lib.
-
-      # Additional flags to be passed to the C compiler.
-      # By default, CC is called with `-O0 -fPIC -shared`.
-      # "" to disable this option
-      "c_flags" : "",
-
-      # Additional include search path of the C compiler.
-      # [] to disable this option
-      "c_include_path" : [],
-
-      # Additional C source files passed to the C compiler.
-      # [] to compile verilator generated files only.
-      "c_srcs" : [],
-
-      # `LDLIBS` will be listed after the primary target file whereas
-      # `LDFLAGS` will be listed before.
-
-      # We enforce the GNU makefile implicit rule that `LDFLAGS` should only
-      # include non-library linker flags such as `-L`.
-      "ld_flags" : "",
-
-      # We enforce the GNU makefile implicit rule that `LDLIBS` should only
-      # include library linker flags/names such as `-lfoo`.
-      "ld_libs" : "",
-    }
-
-    s.PassName = 'sverilog::ImportPass'
-
-  #-----------------------------------------------------------------------
-  # Public APIs
-  #-----------------------------------------------------------------------
-
-  def create_vl_cmd( s ):
-    top_module  =  f"--top-module {s.get_top_module()}"
-    src         = s.get_option("vl_src")
-    mk_dir      = f"--Mdir {s.get_option('vl_mk_dir')}"
-    flist       = "" if s.is_default("vl_flist") else \
-                  f"-f {s.get_option('vl_flist')}"
-    include     = "" if s.is_default("vl_include") else \
-                  " ".join("-I" + path for path in s.get_option("vl_include"))
-    en_assert   = "--assert" if s.is_default("enable_assert") else ""
-    opt_level   = "-O3" if s.is_default("vl_opt_level") else "-O0"
-    loop_unroll = "" if s.get_option("vl_unroll_count") == 0 else \
-                  f"--unroll-count {s.get_option('vl_unroll_count')}"
-    stmt_unroll = "" if s.get_option("vl_unroll_stmts") == 0 else \
-                  f"--unroll-stmts {s.get_option('vl_unroll_stmts')}"
-    trace       = "" if s.is_default("vl_trace") else "--trace"
-    warnings    = s.create_vl_warning_cmd()
-
-    all_opts = [
-      top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
-      stmt_unroll, trace, warnings, src, flist
-    ]
-
-    return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
-
-  def create_cc_cmd( s ):
-    c_flags = "-O0 -fPIC -shared" + \
-             ("" if s.is_default("c_flags") else f" {s.get_option('c_flags')}")
-    c_include_path = " ".join("-I"+p for p in s.get_all_includes() if p)
-    out_file = s.get_shared_lib_path()
-    c_src_files = " ".join(s.get_c_src_files())
-    ld_flags = s.get_option("ld_flags")
-    ld_libs = s.get_option("ld_libs")
-    return f"g++ {c_flags} {c_include_path} {ld_flags}"\
-           f" -o {out_file} {c_src_files} {ld_libs}"
-
-  def fill_missing( s, m ):
-    rtype = get_component_ifc_rtlir(m)
-    s.v_param = rtype.get_params()
-    s.is_param_wrapper = isinstance(m, Placeholder) and s.v_param
-    top_module = s.get_top_module()
-
-    # Fill in the top module if unspecified
-    # If the top-level module is not a wrapper
-    if not s.is_param_wrapper:
-      full_name = get_component_unique_name( rtype )
-      if not top_module:
-        # Default top_module is the name of component concatenated
-        # with parameters
-        s.set_option("top_module", full_name)
-
-    # If the top-level module is a wrapper
-    else:
-      # Check if all parameters are integers
-      assert all(isinstance(v[1], int) for v in s.v_param), \
-          "Only support integers as parameters of Verilog modules!"
-
-      # wrapped_module is the name of the module to be parametrized
-      # top_module is the name of the new top-level module
-      if top_module:
-        s.wrapped_module = top_module
-        s.set_option("top_module", f"{top_module}_w_params")
-      else:
-        # Default top_module is the name of component
-        s.wrapped_module = rtype.get_name()
-        s.set_option("top_module", f"{s.wrapped_module}_w_params")
-
-    top_module = s.get_top_module()
-
-    # Only try to infer the name of Verilog source file if both
-    # flist and the source file are not specified.
-    if not s.get_option("vl_src") and not s.get_option("vl_flist"):
-      s.set_option("vl_src", f"{top_module}.sv")
-
-    if not s.get_option("vl_mk_dir"):
-      s.set_option("vl_mk_dir", f"obj_dir_{top_module}")
-
-    if s.is_param_wrapper:
-      # If toplevel module is a param-wrapper, `vl_src` has to be specified
-      # because the file containing the wrapper will include `vl_src` for
-      # the module to be parametrized.
-      if not s.get_option("vl_src"):
-        raise InvalidPassOptionValue(
-            "vl_src", s.get_option("vl_src"), s.PassName,
-            "vl_src must be specified when Placeholder is to be imported!")
-      s.v_module2param = s.get_option("vl_src")
-      s.set_option("vl_src", top_module+".sv")
-
-  def is_import_enabled( s ):
-    return s.get_option( "import_" )
-
-  def is_top_wrapper( s ):
-    return s.is_param_wrapper
-
-  def is_vl_trace_enabled( s ):
-    return s.get_option( "vl_trace" )
-
-  def get_vl_trace_timescale( s ):
-    return s.get_option( "vl_trace_timescale" )
-
-  def get_top_module( s ):
-    return s.get_option( "top_module" )
-
-  def get_module_to_parametrize( s ):
-    return s.wrapped_module
-
-  def get_param_include( s ):
-    return s.v_module2param
-
-  def get_v_param( s ):
-    return s.v_param
-
-  def get_c_wrapper_path( s ):
-    return f"{s.get_top_module()}_v.cpp"
-
-  def get_py_wrapper_path( s ):
-    return f"{s.get_top_module()}_v.py"
-
-  def get_shared_lib_path( s ):
-    return f"lib{s.get_top_module()}_v.so"
-
-  def get_vl_mk_dir( s ):
-    return s.get_option( "vl_mk_dir" )
-
-  def vprint( s, msg, nspaces = 0, use_fill = False ):
-    if s.get_option("verbose"):
-      if use_fill:
-        print(indent(fill(msg), " "*nspaces))
-      else:
-        print(indent(msg, " "*nspaces))
-
-  #-----------------------------------------------------------------------
-  # Internal helper methods
-  #-----------------------------------------------------------------------
-
-  def get_all_includes( s ):
-    includes = s.get_option("c_include_path")
-
-    # Try to obtain verilator include path either from environment variable
-    # or from `pkg-config`
-    vl_include_dir = os.environ.get("PYMTL_VERILATOR_INCLUDE_DIR")
-    if vl_include_dir is None:
-      get_dir_cmd = ["pkg-config", "--variable=includedir", "verilator"]
-      try:
-        vl_include_dir = \
-            subprocess.check_output(get_dir_cmd, stderr = subprocess.STDOUT).strip()
-      except OSError as e:
-        vl_include_dir_msg = \
-"""\
-Cannot locate the include directory of verilator. Please make sure either \
-$PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly!
-"""
-        raise OSError(fill(vl_include_dir_msg)) from e
-
-    # Add verilator include path
-    s.vl_include_dir = vl_include_dir
-    includes += [vl_include_dir, vl_include_dir + "/vltstd"]
-
-    return includes
-
-  def get_c_src_files( s ):
-    srcs = s.get_option("c_srcs")
-    top_module = s.get_top_module()
-    vl_mk_dir = s.get_option("vl_mk_dir")
-    vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
-
-    # Add C wrapper
-    srcs.append(s.get_c_wrapper_path())
-
-    # Add files listed in class makefile
-    with open(vl_class_mk, "r") as class_mk:
-      srcs += s.get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_CLASSES_FAST")
-      srcs += s.get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_CLASSES_SLOW")
-      srcs += s.get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_SUPPORT_FAST")
-      srcs += s.get_srcs_from_vl_class_mk(
-          class_mk, vl_mk_dir, "VM_SUPPORT_SLOW")
-      srcs += s.get_srcs_from_vl_class_mk(
-          class_mk, s.vl_include_dir, "VM_GLOBAL_FAST")
-      srcs += s.get_srcs_from_vl_class_mk(
-          class_mk, s.vl_include_dir, "VM_GLOBAL_SLOW")
-
-    return srcs
-
-  def get_srcs_from_vl_class_mk( s, mk, path, label ):
-    """Return all files under `path` directory in `label` section of `mk`."""
-    srcs, found = [], False
-    mk.seek(0)
-    for line in mk:
-      if line.startswith(label):
-        found = True
-      elif found:
-        if line.strip() == "":
-          found = False
-        else:
-          file_name = line.strip()[:-2]
-          srcs.append( path + "/" + file_name + ".cpp" )
-    return srcs
-
-  def create_vl_warning_cmd( s ):
-    lint = "" if s.is_default("vl_W_lint") else "--Wno-lint"
-    style = "" if s.is_default("vl_W_style") else "--Wno-style"
-    fatal = "" if s.is_default("vl_W_fatal") else "--Wno-fatal"
-    wno = " ".join(f"--Wno-{w}" for w in s.get_option("vl_Wno_list"))
-    return " ".join(w for w in [lint, style, fatal, wno] if w)
-
-  def is_default( s, opt ):
-    return s.options[opt] == s.Options[opt]
 
 class ImportPass( BasePass ):
   """Import an arbitrary SystemVerilog module as a PyMTL component.
@@ -572,6 +169,7 @@ class ImportPass( BasePass ):
     that can be later called through CFFI.
     """
     config = m.sverilog_import
+    p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     component_name = config.get_top_module()
     dump_vcd = config.is_vl_trace_enabled()
     vcd_timescale = config.get_vl_trace_timescale()
@@ -586,7 +184,7 @@ class ImportPass( BasePass ):
     # Generate port declarations for the verilated model in C
     port_defs = []
     for name, port in packed_ports:
-      port_defs.append( s.gen_signal_decl_c( name, port ) )
+      port_defs.append( s.gen_signal_decl_c( p_map(name), port ) )
     port_cdefs = copy.copy( port_defs )
     make_indent( port_defs, 2 )
     port_defs = '\n'.join( port_defs )
@@ -594,7 +192,7 @@ class ImportPass( BasePass ):
     # Generate initialization statements for in/out ports
     port_inits = []
     for name, port in packed_ports:
-      port_inits.extend( s.gen_signal_init_c( name, port ) )
+      port_inits.extend( s.gen_signal_init_c( p_map(name), port ) )
     make_indent( port_inits, 1 )
     port_inits = '\n'.join( port_inits )
 
@@ -661,6 +259,7 @@ class ImportPass( BasePass ):
   def create_py_wrapper( s, m, rtype, packed_ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
     config = m.sverilog_import
+    p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     config.vprint("\n=====Generate PyMTL wrapper=====")
 
     # Load the wrapper template
@@ -683,8 +282,8 @@ class ImportPass( BasePass ):
     make_indent( wire_defs, 2 )
 
     # Set upblk inputs and outputs
-    set_comb_input = s.gen_comb_input( packed_ports )
-    set_comb_output = s.gen_comb_output( packed_ports )
+    set_comb_input = s.gen_comb_input( packed_ports, p_map )
+    set_comb_output = s.gen_comb_output( packed_ports, p_map )
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
@@ -704,7 +303,7 @@ constraint_list = [
     line_trace = s.gen_line_trace_py( packed_ports )
 
     # Internal line trace
-    in_line_trace = s.gen_internal_line_trace_py( packed_ports )
+    in_line_trace = s.gen_internal_line_trace_py( packed_ports, p_map )
 
     # Fill in the python wrapper template
     if not cached:
@@ -713,6 +312,7 @@ constraint_list = [
           py_wrapper = template.read()
           py_wrapper = py_wrapper.format(
             component_name  = config.get_top_module(),
+            clk             = p_map('clk'),
             lib_file        = config.get_shared_lib_path(),
             port_cdefs      = ('  '*4+'\n').join( port_cdefs ),
             port_defs       = '\n'.join( port_defs ),
@@ -737,6 +337,7 @@ constraint_list = [
   def import_component( s, m, symbols ):
     """Return the PyMTL component imported from `wrapper_name`.sv."""
     config = m.sverilog_import
+    config.vprint("=====Create python object=====")
 
     component_name = config.get_top_module()
     # Get the name of the wrapper Python module
@@ -768,11 +369,13 @@ constraint_list = [
           f"top component {component_name}!") from e
 
     imp = imp_class()
+    config.vprint(f"Successfully created python object of {component_name}!", 2)
 
     # Update the global namespace of `construct` so that the struct and interface
     # classes defined previously can still be used in the imported model.
     imp.construct.__globals__.update( symbols )
 
+    config.vprint("Import succeeds!")
     return imp
 
   #-------------------------------------------------------------------------
@@ -1229,7 +832,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret += s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
-  def gen_comb_input( s, packed_ports ):
+  def gen_comb_input( s, packed_ports, p_map ):
     ret = []
     # Read all input ports ( except for 'clk' ) from component ports into
     # the verilated model. We do NOT want `clk` signal to be read into
@@ -1239,8 +842,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk':
         dtype = p_rtype.get_dtype()
-        v_name = s._verilator_name( py_name )
-        lhs = "_ffi_m."+v_name
+        v_name = s._verilator_name(py_name)
+        v_name_map = s._verilator_name(p_map(py_name))
+        lhs = "_ffi_m."+v_name_map
         rhs = "s.mangled__"+v_name
         ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim )
     return ret
@@ -1261,15 +865,16 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
-  def gen_comb_output( s, packed_ports ):
+  def gen_comb_output( s, packed_ports, p_map ):
     ret = []
     for py_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
-        v_name = s._verilator_name( py_name )
+        v_name = s._verilator_name(py_name)
+        v_name_map = s._verilator_name(p_map(py_name))
         lhs = "s.mangled__" + v_name
-        rhs = "_ffi_m." + v_name
+        rhs = "_ffi_m." + v_name_map
         ret += s.gen_port_array_output( lhs, rhs, dtype, p_n_dim )
     return ret
 
@@ -1321,13 +926,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_internal_line_trace_py
   #-------------------------------------------------------------------------
 
-  def gen_internal_line_trace_py( s, packed_ports ):
+  def gen_internal_line_trace_py( s, packed_ports, p_map ):
     """Return the line trace method body that shows all CFFI ports."""
     ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
     template = \
-      "lt += '{my_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, _ffi_m.{my_name}))"
+      "lt += '{v_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, _ffi_m.{v_name}))"
     for my_name, port in packed_ports:
-      my_name = s._verilator_name( my_name )
+      my_name = s._verilator_name(my_name)
+      v_name = s._verilator_name(p_map(my_name))
       ret.append( template.format(**locals()) )
     ret.append( 'return lt' )
     make_indent( ret, 2 )

@@ -10,7 +10,7 @@ import os
 from pymtl3.datatypes import Bits1, Bits32, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.import_.ImportPass import ImportConfigs, ImportPass
+from pymtl3.passes.sverilog import ImportConfigs, ImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 
@@ -27,15 +27,23 @@ def local_do_test( _m ):
 
 def test_reg( do_test ):
   def tv_in( m, test_vector ):
-    m.d = Bits32( test_vector[0] )
+    m.in_ = Bits32( test_vector[0] )
   def tv_out( m, test_vector ):
     if test_vector[1] != '*':
-      assert m.q == Bits32( test_vector[1] )
+      assert m.out == Bits32( test_vector[1] )
   class VReg( Component ):
     def construct( s ):
-      s.q = OutPort( Bits32 )
-      s.d = InPort( Bits32 )
-      s.sverilog_import = ImportConfigs(vl_src = get_dir()+'VReg.sv')
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.sverilog_import = ImportConfigs(
+          vl_src = get_dir()+'VReg.sv',
+          port_map = {
+            "clk" : "clk",
+            "reset" : "reset",
+            "in_" : "d",
+            "out" : "q",
+          }
+      )
   a = VReg()
   a._test_vectors = [
     [    1,    '*' ],
