@@ -5,7 +5,7 @@
 # Date   : Jul 26, 2019
 """Base class of customized pass configuration classes."""
 
-from copy import copy
+from copy import deepcopy
 
 from .errors import InvalidPassOption, InvalidPassOptionValue
 
@@ -24,6 +24,16 @@ class BasePassConfigs:
     # s.PassName = "<base_pass>"
     s.options = s._gen_options( kwargs )
 
+  @property
+  def Options( s ):
+    raise NotImplementedError(
+        "PassConfigs must provide options and their default values to 'Options'!")
+
+  @property
+  def PassName( s ):
+    raise NotImplementedError(
+        "PassConfigs must provide the name of the pass to 'PassName'!")
+
   def check_options( s ):
     """Return whether the given options are all valid."""
     for opt, value in s.options.items():
@@ -40,7 +50,7 @@ class BasePassConfigs:
     s.options[opt] = value
 
   def _gen_options( s, _opts ):
-    opts = copy( s.Options )
+    opts = deepcopy( s.Options )
     for opt, value in _opts.items():
       if opt not in s.Options:
         raise InvalidPassOption( opt, s.PassName )

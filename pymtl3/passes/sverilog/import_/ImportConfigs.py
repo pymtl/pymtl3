@@ -20,7 +20,6 @@ from pymtl3.passes.sverilog.util.utility import get_component_unique_name
 class ImportConfigs( BasePassConfigs ):
 
   def __init__( s, **kwargs ):
-    s.setup_configs()
     super().__init__( **kwargs )
 
     def expand(v):
@@ -83,8 +82,7 @@ class ImportConfigs( BasePassConfigs ):
                   all(os.path.isfile(expand(p)) for p in v),
         "expects a list of paths to files")
 
-  def setup_configs( s ):
-    s.Warnings = [
+  Warnings = [
       'ALWCOMBORDER', 'ASSIGNIN', 'ASSIGNDLY', 'BLKANDNBLK', 'BLKSEQ',
       'BLKLOOPINIT', 'BSSPACE', 'CASEINCOMPLETE', 'CASEOVERLAP',
       'CASEX', 'CASEWITHX', 'CDCRSTLOGIC', 'CLKDATA', 'CMPCONST',
@@ -100,7 +98,7 @@ class ImportConfigs( BasePassConfigs ):
       'WIDTHCONCAT'
     ]
 
-    s.Options = {
+  Options = {
       # Import enable switch
       "import_" : True,
 
@@ -206,7 +204,7 @@ class ImportConfigs( BasePassConfigs ):
       "ld_libs" : "",
     }
 
-    s.PassName = 'sverilog::ImportPass'
+  PassName = 'sverilog.ImportPass'
 
   #-----------------------------------------------------------------------
   # Public APIs
@@ -366,7 +364,7 @@ class ImportConfigs( BasePassConfigs ):
     assert all(isinstance(p, rt.Port) and \
                isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
         f"Port map option currently requires all ports of {rtype.get_name()}"\
-        f" must be a single vector port."
+        f" to be a single vector port."
     for name, port in all_ports:
       if name not in pm:
         raise InvalidPassOptionValue("port_map", pm, s.PassName,
