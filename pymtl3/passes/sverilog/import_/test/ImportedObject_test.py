@@ -5,17 +5,14 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
-import os
 
 from pymtl3.datatypes import Bits1, Bits32, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog import ImportConfigs, ImportPass
+from pymtl3.passes.sverilog.util.utility import get_dir
 from pymtl3.stdlib.test import TestVectorSimulator
 
-
-def get_dir():
-  return os.path.dirname(os.path.abspath(__file__))+os.path.sep
 
 def local_do_test( _m ):
   _m.elaborate()
@@ -36,7 +33,7 @@ def test_reg( do_test ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.sverilog_import = ImportConfigs(
-          vl_src = get_dir()+'VReg.sv',
+          vl_src = get_dir(__file__)+'VReg.sv',
           port_map = {
             "clk" : "clk",
             "reset" : "reset",
@@ -74,7 +71,7 @@ def test_adder( do_test ):
       s.cin = InPort( Bits1 )
       s.out = OutPort( Bits32 )
       s.cout = OutPort( Bits1 )
-      s.sverilog_import = ImportConfigs(vl_src = get_dir()+'VAdder.sv')
+      s.sverilog_import = ImportConfigs(vl_src = get_dir(__file__)+'VAdder.sv')
   a = VAdder()
   a._test_vectors = [
     [    1,      1,     1,     3, 0 ],
@@ -107,7 +104,7 @@ def test_normal_queue( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
-      s.sverilog_import = ImportConfigs(vl_src = get_dir()+'VQueue.sv', verbose=True)
+      s.sverilog_import = ImportConfigs(vl_src = get_dir(__file__)+'VQueue.sv')
   num_entries = 1
   q = VQueue(
       data_width = 32,

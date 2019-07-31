@@ -14,7 +14,7 @@ from pymtl3.passes.PassConfigs import BasePassConfigs
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
-from pymtl3.passes.sverilog.util.utility import get_component_unique_name
+from pymtl3.passes.sverilog.util.utility import expand, get_component_unique_name
 
 
 class ImportConfigs( BasePassConfigs ):
@@ -22,12 +22,9 @@ class ImportConfigs( BasePassConfigs ):
   def __init__( s, **kwargs ):
     super().__init__( **kwargs )
 
-    def expand(v):
-      return os.path.expanduser(os.path.expandvars(v))
-
     s.set_checkers(
         ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
-         'vl_trace', 'verbose'],
+         'vl_trace', 'verbose', 'has_clk', 'has_reset'],
         lambda v: isinstance(v, bool),
         "expects a boolean")
     s.set_checkers(
@@ -118,7 +115,13 @@ class ImportConfigs( BasePassConfigs ):
       # "" to use name of the current component to be imported
       "top_module" : "",
 
-      # Expects path of the file to be verilated
+      # Does the module to be imported has `clk` port?
+      "has_clk" : True,
+
+      # Does the module to be imported has `reset` port?
+      "has_reset" : True,
+
+      # Expects path of the file that contains the top module to be verilated
       # "" to use "<top_module>.sv"
       "vl_src" : "",
 
@@ -229,7 +232,7 @@ class ImportConfigs( BasePassConfigs ):
 
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
-      stmt_unroll, trace, warnings, src, flist
+      stmt_unroll, trace, warnings, flist, src
     ]
 
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
@@ -302,6 +305,12 @@ class ImportConfigs( BasePassConfigs ):
             "vl_src must be specified when Placeholder is to be imported!")
       s.v_module2param = s.get_option("vl_src")
       s.set_option("vl_src", top_module+".sv")
+
+  def has_clk( s ):
+    return s.get_option( "has_clk" )
+
+  def has_reset( s ):
+    return s.get_option( "has_reset" )
 
   def is_import_enabled( s ):
     return s.get_option( "import_" )

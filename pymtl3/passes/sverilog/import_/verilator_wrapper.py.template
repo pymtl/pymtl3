@@ -144,16 +144,17 @@ class {component_name}( Component ):
     def set_output():
 {set_comb_output}
 
-    @s.update_on_edge
-    def seq_upblk():
-      # Advance the clock
-      _ffi_m.{clk}[0] = 0
-      _ffi_inst.eval( _ffi_m )
-      _ffi_m.{clk}[0] = 1
-      _ffi_inst.eval( _ffi_m )
-      set_output()
+    if {has_clk}:
+      @s.update_on_edge
+      def seq_upblk():
+        # Advance the clock
+        _ffi_m.{clk}[0] = 0
+        _ffi_inst.eval( _ffi_m )
+        _ffi_m.{clk}[0] = 1
+        _ffi_inst.eval( _ffi_m )
+        set_output()
 
-    {constraint_str}
+      {constraint_str}
 
   def assert_en( s, en ):
     assert isinstance( en, bool )

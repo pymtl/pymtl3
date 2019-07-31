@@ -22,6 +22,7 @@ from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.sverilog.errors import SVerilogImportError
 from pymtl3.passes.sverilog.util.utility import (
+    expand,
     get_component_unique_name,
     make_indent,
     wrap,
@@ -129,7 +130,16 @@ class ImportPass( BasePass ):
     config = s.get_config( m )
     rtype = get_component_ifc_rtlir( m )
     full_name = get_component_unique_name( rtype )
-    packed_ports = s.gen_packed_ports( rtype )
+    p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
+    no_clk, no_reset = not config.has_clk(), not config.has_reset()
+    _packed_ports = s.gen_packed_ports( rtype )
+    clk = next(filter(lambda x: x[0]=='clk', _packed_ports))[1]
+    reset = next(filter(lambda x: x[0]=='reset', _packed_ports))[1]
+    packed_ports = \
+        [('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else [] + \
+        [('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else [] + \
+        [ (n, p_map(n), p) for n, p in _packed_ports \
+          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
 
     cached = s.is_cached( m, full_name )
 
@@ -197,7 +207,6 @@ class ImportPass( BasePass ):
     Create a C wrapper that calls verilator C API and provides interfaces
     that can be later called through CFFI.
     """
-    p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     component_name = config.get_top_module()
     dump_vcd = config.is_vl_trace_enabled()
     vcd_timescale = config.get_vl_trace_timescale()
@@ -211,16 +220,18 @@ class ImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for name, port in packed_ports:
-      port_defs.append( s.gen_signal_decl_c( p_map(name), port ) )
+    for name, v_name, port in packed_ports:
+      if v_name:
+        port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
     make_indent( port_defs, 2 )
     port_defs = '\n'.join( port_defs )
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for name, port in packed_ports:
-      port_inits.extend( s.gen_signal_init_c( p_map(name), port ) )
+    for name, v_name, port in packed_ports:
+      if v_name:
+        port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
     port_inits = '\n'.join( port_inits )
 
@@ -285,7 +296,6 @@ class ImportPass( BasePass ):
 
   def create_py_wrapper( s, m, config, rtype, packed_ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
-    p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     config.vprint("\n=====Generate PyMTL wrapper=====")
 
     # Load the wrapper template
@@ -303,33 +313,33 @@ class ImportPass( BasePass ):
     make_indent( connections, 2 )
     # Wire definition in PyMTL style
     wire_defs = []
-    for name, port in packed_ports:
+    for name, v_name, port in packed_ports:
       wire_defs.append( s.gen_wire_decl_py( name, port ) )
     make_indent( wire_defs, 2 )
 
     # Set upblk inputs and outputs
-    set_comb_input = s.gen_comb_input( packed_ports, p_map )
-    set_comb_output = s.gen_comb_output( packed_ports, p_map )
+    set_comb_input = s.gen_comb_input( packed_ports )
+    set_comb_output = s.gen_comb_output( packed_ports )
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
     # Generate constraints for sequential block
     constraints = s.gen_constraints( packed_ports )
-    make_indent( constraints, 3 )
+    make_indent( constraints, 4 )
     constraint_str = '' if not constraints else \
 """\
 constraint_list = [
 {}
-    ]
+      ]
 
-    s.add_constraints( *constraint_list )
+      s.add_constraints( *constraint_list )
 """.format( '\n'.join( constraints ) )
 
     # Line trace
     line_trace = s.gen_line_trace_py( packed_ports )
 
     # Internal line trace
-    in_line_trace = s.gen_internal_line_trace_py( packed_ports, p_map )
+    in_line_trace = s.gen_internal_line_trace_py( packed_ports )
 
     # Fill in the python wrapper template
     if not cached:
@@ -338,7 +348,9 @@ constraint_list = [
           py_wrapper = template.read()
           py_wrapper = py_wrapper.format(
             component_name  = config.get_top_module(),
-            clk             = p_map('clk'),
+            has_clk         = int(config.has_clk()),
+            clk             = 'inv_clk' if not config.has_clk() else \
+                              next(filter(lambda x: x[0]=='clk', packed_ports))[1],
             lib_file        = config.get_shared_lib_path(),
             port_cdefs      = ('  '*4+'\n').join( port_cdefs ),
             port_defs       = '\n'.join( port_defs ),
@@ -416,7 +428,7 @@ constraint_list = [
       ports = [
         f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
         f" {name}{'' if idx == len(packed_ports)-1 else ','}" \
-        for idx, (name, p) in enumerate(packed_ports)
+        for idx, (_, name, p) in enumerate(packed_ports) if name
       ]
       # Parameters passed to the module to be parametrized
       params = [
@@ -426,12 +438,12 @@ constraint_list = [
       # Connections between top module and inner module
       connect_ports = [
         f"    .{name}( {name} ){'' if idx == len(packed_ports)-1 else ','}"\
-        for idx, (name, _) in enumerate(packed_ports)
+        for idx, (_, name, p) in enumerate(packed_ports) if name
       ]
       lines = [
         "// This is a top-level module that wraps a parametrized module",
         "// This file is generated by PyMTL SystemVerilog import pass",
-        f'`include "{config.get_param_include()}"',
+        f'`include "{expand(config.get_param_include())}"',
         f"module {config.get_top_module()}",
         "(",
       ] + ports + [
@@ -856,20 +868,18 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret += s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
-  def gen_comb_input( s, packed_ports, p_map ):
+  def gen_comb_input( s, packed_ports ):
     ret = []
     # Read all input ports ( except for 'clk' ) from component ports into
     # the verilated model. We do NOT want `clk` signal to be read into
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
-    for py_name, rtype in packed_ports:
+    for py_name, v_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
-      if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk':
+      if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk' and v_name:
         dtype = p_rtype.get_dtype()
-        v_name = s._verilator_name(py_name)
-        v_name_map = s._verilator_name(p_map(py_name))
-        lhs = "_ffi_m."+v_name_map
-        rhs = "s.mangled__"+v_name
+        lhs = "_ffi_m."+s._verilator_name(v_name)
+        rhs = "s.mangled__"+s._verilator_name(py_name)
         ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim )
     return ret
 
@@ -889,16 +899,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
-  def gen_comb_output( s, packed_ports, p_map ):
+  def gen_comb_output( s, packed_ports ):
     ret = []
-    for py_name, rtype in packed_ports:
+    for py_name, v_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
-        v_name = s._verilator_name(py_name)
-        v_name_map = s._verilator_name(p_map(py_name))
-        lhs = "s.mangled__" + v_name
-        rhs = "_ffi_m." + v_name_map
+        lhs = "s.mangled__" + s._verilator_name(py_name)
+        rhs = "_ffi_m." + s._verilator_name(v_name)
         ret += s.gen_port_array_output( lhs, rhs, dtype, p_n_dim )
     return ret
 
@@ -917,15 +925,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_constraints( s, packed_ports ):
     ret = []
-    for py_name, rtype in packed_ports:
+    for py_name, v_name, rtype in packed_ports:
       if s._get_direction( rtype ) == 'OutPort':
         if isinstance( rtype, rt.Array ):
           n_dim = rtype.get_dim_sizes()
           sub_type = rtype.get_sub_type()
           ret += s._gen_constraints( py_name, n_dim, sub_type )
         else:
-          v_name = s._verilator_name( py_name )
-          wire_name = "s.mangled__" + v_name
+          wire_name = "s.mangled__" + s._verilator_name(py_name)
           ret.append( "U( seq_upblk ) < RD( {} ),".format( wire_name ) )
     ret.append( "U( seq_upblk ) < U( comb_upblk )," )
     return ret
@@ -938,7 +945,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     """Return the line trace method body that shows all interface ports."""
     ret = [ 'lt = ""' ]
     template = 'lt += "{my_name} = {{}}, ".format({full_name})'
-    for name, port in packed_ports:
+    for name, v_name, port in packed_ports:
       my_name = name
       full_name = 's.mangled__'+s._verilator_name(name)
       ret.append( template.format( **locals() ) )
@@ -950,15 +957,16 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_internal_line_trace_py
   #-------------------------------------------------------------------------
 
-  def gen_internal_line_trace_py( s, packed_ports, p_map ):
+  def gen_internal_line_trace_py( s, packed_ports ):
     """Return the line trace method body that shows all CFFI ports."""
     ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
     template = \
       "lt += '{v_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, _ffi_m.{v_name}))"
-    for my_name, port in packed_ports:
-      my_name = s._verilator_name(my_name)
-      v_name = s._verilator_name(p_map(my_name))
-      ret.append( template.format(**locals()) )
+    for my_name, v_name, port in packed_ports:
+      if v_name:
+        my_name = s._verilator_name(my_name)
+        v_name = s._verilator_name(v_name)
+        ret.append( template.format(**locals()) )
     ret.append( 'return lt' )
     make_indent( ret, 2 )
     return '\n'.join( ret )
