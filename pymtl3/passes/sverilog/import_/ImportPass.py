@@ -136,8 +136,8 @@ class ImportPass( BasePass ):
     clk = next(filter(lambda x: x[0]=='clk', _packed_ports))[1]
     reset = next(filter(lambda x: x[0]=='reset', _packed_ports))[1]
     packed_ports = \
-        [('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else [] + \
-        [('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else [] + \
+        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
+        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
         [ (n, p_map(n), p) for n, p in _packed_ports \
           if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
 
