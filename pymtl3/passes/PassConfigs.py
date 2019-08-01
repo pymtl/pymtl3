@@ -20,8 +20,6 @@ class BasePassConfigs:
   option is valid.
   """
   def __init__( s, **kwargs ):
-    # s.Options = {}
-    # s.PassName = "<base_pass>"
     s.options = s._gen_options( kwargs )
 
   @property
