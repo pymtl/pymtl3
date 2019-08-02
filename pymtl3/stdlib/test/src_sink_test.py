@@ -241,8 +241,8 @@ def test_error_late_msg():
       src_msgs  = [ b16(0xface), b16(0xface) ],
       sink_msgs = [ b16(0xface), b16(0xdead) ],
     )
-    th.set_param('top.src.construct', initial_delay=5 )
-    th.set_param('top.sink.construct', arrival_time=[1,2] )
+    th.set_param( 'top.src.construct', initial_delay=5 )
+    th.set_param( 'top.sink.construct', arrival_time=[1,2] )
     th.run_sim()
     errored = False
   except Exception as e:
@@ -250,3 +250,16 @@ def test_error_late_msg():
     errored = True
 
   assert errored
+
+#-------------------------------------------------------------------------
+# Customized compare function test
+#-------------------------------------------------------------------------
+
+def test_customized_cmp():
+  th = TestHarnessSimple(
+    Bits4, TestSrcCL, TestSinkCL,
+    src_msgs  = [ b4(0b1110), b4(0b1111) ],
+    sink_msgs = [ b4(0b0010), b4(0b0011) ],
+  )
+  th.set_param( 'top.sink.construct', cmp_fn=lambda a, b: a[0:2] == b[0:2] )
+  th.run_sim()
