@@ -36,6 +36,8 @@ class TestSinkCL( Component ):
     s.perf_regr = True if arrival_time is not None else False
     s.cmp_fn    = cmp_fn
     s.error_msg = ''
+    s.all_msg_recved = False
+    s.done_flag      = False
 
     s.count = initial_delay
     s.intv  = interval_delay
@@ -48,6 +50,14 @@ class TestSinkCL( Component ):
       # line trace gets printed out
       if s.error_msg:
         raise Exception( s.error_msg )
+
+      # Tick one more cycle after all message is received so that the
+      # exception gets thrown
+      if s.all_msg_recved:
+        s.done_flag = True
+
+      if s.idx >= len( s.msgs ):
+        s.all_msg_recved = True
 
       if not s.reset:
         s.cycle_count += 1
@@ -81,7 +91,7 @@ class TestSinkCL( Component ):
 
     # Check correctness first
     # if msg != s.msgs[ s.idx ]:
-    if not s.cmp_fn( msg, s.msgs[ s.idx ] ):
+    elif not s.cmp_fn( msg, s.msgs[ s.idx ] ):
 #       raise Exception( """
 # Test Sink received WRONG msg!
 # Expected : {}
@@ -114,7 +124,8 @@ class TestSinkCL( Component ):
       s.recv_called = True
 
   def done( s ):
-    return s.idx >= len( s.msgs )
+    # return s.idx >= len( s.msgs )
+    return s.done_flag
 
   # Line trace
   def line_trace( s ):
@@ -127,7 +138,7 @@ class TestSinkCL( Component ):
 class TestSinkRTL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
-                 arrival_time=None ):
+                 arrival_time=None, cmp_fn=lambda a, b : a == b ):
 
     # Interface
 
@@ -136,7 +147,7 @@ class TestSinkRTL( Component ):
     # Components
 
     s.sink    = TestSinkCL( Type, msgs, initial_delay, interval_delay,
-                            arrival_time )
+                            arrival_time, cmp_fn )
     s.adapter = RecvRTL2SendCL( Type )
 
     connect( s.recv,         s.adapter.recv )
