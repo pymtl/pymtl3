@@ -212,6 +212,41 @@ def test_error_more_msg():
       sink_msgs = [ b16(0xface) ],
     )
     th.run_sim()
+    errored = False
   except Exception as e:
-    print( 'errored!')
+    errored = True
     print( e )
+
+  assert errored
+
+def test_error_wrong_msg():
+  try:
+    th = TestHarnessSimple(
+      Bits16, TestSrcCL, TestSinkCL,
+      src_msgs  = [ b16(0xface), b16(0xface) ],
+      sink_msgs = [ b16(0xface), b16(0xdead) ],
+    )
+    th.run_sim()
+    errored = False
+  except Exception as e:
+    print( e )
+    errored = True
+
+  assert errored
+
+def test_error_late_msg():
+  try:
+    th = TestHarnessSimple(
+      Bits16, TestSrcCL, TestSinkCL,
+      src_msgs  = [ b16(0xface), b16(0xface) ],
+      sink_msgs = [ b16(0xface), b16(0xdead) ],
+    )
+    th.set_param('top.src.construct', initial_delay=5 )
+    th.set_param('top.sink.construct', arrival_time=[1,2] )
+    th.run_sim()
+    errored = False
+  except Exception as e:
+    print( e )
+    errored = True
+
+  assert errored
