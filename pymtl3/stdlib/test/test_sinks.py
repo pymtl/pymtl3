@@ -90,12 +90,7 @@ class TestSinkCL( Component ):
                       f'Received : {msg}\n' )
 
     # Check correctness first
-    # if msg != s.msgs[ s.idx ]:
     elif not s.cmp_fn( msg, s.msgs[ s.idx ] ):
-#       raise Exception( """
-# Test Sink received WRONG msg!
-# Expected : {}
-# Received : {}""".format( s.msgs[ s.idx ], msg ) )
       s.error_msg = (
         f'Test sink {s} received WRONG message!\n'
         f'Expected : { s.msgs[ s.idx ] }\n'
@@ -103,15 +98,6 @@ class TestSinkCL( Component ):
       )
 
     elif s.perf_regr and s.cycle_count > s.arrival_time[ s.idx ]:
-#       raise Exception( """
-# Test Sink received msg LATER than expected!
-# Expected msg   : {}
-# Expected cycles: {}
-# Received at    : {}""".format(
-#         s.msgs[ s.idx ],
-#         s.arrival_time[ s.idx ],
-#         s.cycle_count
-#       ) )
       s.error_msg = (
         f'Test sink {s} received message LATER than expected!\n'
         f'Expected msg : {s.msgs[ s.idx ]}\n'
@@ -124,7 +110,6 @@ class TestSinkCL( Component ):
       s.recv_called = True
 
   def done( s ):
-    # return s.idx >= len( s.msgs )
     return s.done_flag
 
   # Line trace
