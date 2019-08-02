@@ -87,14 +87,14 @@ class TestSinkCL( Component ):
     if s.idx >= len( s.msgs ):
       # raise Exception( "Test Sink received more msgs than expected" )
       s.error_msg = ( 'Test Sink received more msgs than expected!\n'
-                      f'Received : {msg}\n' )
+                      f'Received : {msg}' )
 
     # Check correctness first
     elif not s.cmp_fn( msg, s.msgs[ s.idx ] ):
       s.error_msg = (
         f'Test sink {s} received WRONG message!\n'
         f'Expected : { s.msgs[ s.idx ] }\n'
-        f'Received : { msg }\n'
+        f'Received : { msg }'
       )
 
     elif s.perf_regr and s.cycle_count > s.arrival_time[ s.idx ]:
@@ -103,7 +103,7 @@ class TestSinkCL( Component ):
         f'Expected msg : {s.msgs[ s.idx ]}\n'
         f'Expected at  : {s.arrival_time[ s.idx ]}\n'
         f'Received msg : {msg}\n'
-        f'Received at  : {s.cycle_count}\n'
+        f'Received at  : {s.cycle_count}'
       )
     else:
       s.idx += 1
