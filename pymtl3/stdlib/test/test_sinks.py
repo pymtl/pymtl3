@@ -85,7 +85,6 @@ class TestSinkCL( Component ):
 
     # Sanity check
     if s.idx >= len( s.msgs ):
-      # raise Exception( "Test Sink received more msgs than expected" )
       s.error_msg = ( 'Test Sink received more msgs than expected!\n'
                       f'Received : {msg}' )
 
@@ -97,6 +96,7 @@ class TestSinkCL( Component ):
         f'Received : { msg }'
       )
 
+    # Check timing if performance regeression is turned on
     elif s.perf_regr and s.cycle_count > s.arrival_time[ s.idx ]:
       s.error_msg = (
         f'Test sink {s} received message LATER than expected!\n'
@@ -105,6 +105,7 @@ class TestSinkCL( Component ):
         f'Received msg : {msg}\n'
         f'Received at  : {s.cycle_count}'
       )
+
     else:
       s.idx += 1
       s.recv_called = True
