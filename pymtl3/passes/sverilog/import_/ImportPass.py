@@ -208,7 +208,7 @@ class ImportPass( BasePass ):
     that can be later called through CFFI.
     """
     component_name = config.get_top_module()
-    dump_vcd = config.is_vl_trace_enabled()
+    dump_vcd = int(config.is_vl_trace_enabled())
     vcd_timescale = config.get_vl_trace_timescale()
     wrapper_name = config.get_c_wrapper_path()
     config.vprint("\n=====Generate C wrapper=====")
