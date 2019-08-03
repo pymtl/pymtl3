@@ -254,6 +254,6 @@ def dump_vcd():
   vcdmeta.sim_ncycles += 1
 """.format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
 
-    s = top
-    exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()))
-    return dump_vcd
+    s, l_dict = top, {}
+    exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()), l_dict)
+    return l_dict['dump_vcd']
