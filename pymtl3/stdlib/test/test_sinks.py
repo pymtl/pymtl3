@@ -29,13 +29,10 @@ class TestSinkCL( Component ):
     s.idx          = 0
     s.cycle_count  = 0
     s.msgs         = list( msgs )
-    s.arrival_time = (
-      None if arrival_time is None else
-      list( arrival_time )
-    )
-    s.perf_regr = True if arrival_time is not None else False
-    s.cmp_fn    = cmp_fn
-    s.error_msg = ''
+    s.arrival_time = None if not arrival_time else list( arrival_time )
+    s.cmp_fn       = cmp_fn
+    s.error_msg    = ''
+
     s.all_msg_recved = False
     s.done_flag      = False
 
@@ -97,7 +94,7 @@ class TestSinkCL( Component ):
       )
 
     # Check timing if performance regeression is turned on
-    elif s.perf_regr and s.cycle_count > s.arrival_time[ s.idx ]:
+    elif s.arrival_time and s.cycle_count > s.arrival_time[ s.idx ]:
       s.error_msg = (
         f'Test sink {s} received message LATER than expected!\n'
         f'Expected msg : {s.msgs[ s.idx ]}\n'
