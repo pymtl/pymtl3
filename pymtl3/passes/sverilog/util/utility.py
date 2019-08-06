@@ -35,8 +35,8 @@ def wrap( s ):
   col = shutil.get_terminal_size().columns
   return "\n".join(sum((textwrap.wrap(line, col) for line in s.split("\n")), []))
 
-def expand(v):
+def expand( v ):
   return os.path.expanduser(os.path.expandvars(v))
 
-def get_dir(cur_file):
+def get_dir( cur_file ):
   return os.path.dirname(os.path.abspath(cur_file))+os.path.sep
