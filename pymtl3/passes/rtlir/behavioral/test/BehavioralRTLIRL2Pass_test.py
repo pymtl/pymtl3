@@ -13,6 +13,7 @@ import pytest
 
 from pymtl3.datatypes import Bits1, Bits2, Bits4, Bits32, BitStruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL2Pass import (
     BehavioralRTLIRGenL2Pass,
 )
@@ -37,6 +38,23 @@ def local_do_test( m ):
       assert upblk == ref[ blk.__name__ ]
   except AttributeError:
     pass
+
+#-------------------------------------------------------------------------
+# Correct test cases
+#-------------------------------------------------------------------------
+
+def test_L2_lambda_connect( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.out //= lambda: s.in_ + Bits32(42)
+  a = A()
+  a._rtlir_test_ref = { 'lambda_blk_s_out' : CombUpblk( 'lambda_blk_s_out', [
+    Assign( Attribute( Base( a ), 'out' ),
+            BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42)))
+        ) ] ) }
+  do_test( a )
 
 #-------------------------------------------------------------------------
 # PyMTL type errors

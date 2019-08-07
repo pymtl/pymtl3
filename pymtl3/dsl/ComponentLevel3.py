@@ -12,7 +12,9 @@ be revamped when adding method-based interfaces.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-import ast, inspect, linecache
+import ast
+import inspect
+import linecache
 from collections import defaultdict, deque
 
 from pymtl3.datatypes import Bits
@@ -123,37 +125,85 @@ class ComponentLevel3( ComponentLevel2 ):
     # Compose a new and valid function based on the lambda's lhs and rhs
 
     blk_name = "lambda_blk_{}".format( repr(o).replace(".","_") )
+    lambda_upblk = ast.FunctionDef(
+                        name=blk_name,
+                        args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+                        body=[ast.Assign(targets=[lhs],value=rhs,lineno=3+len(lamb.__code__.co_freevars),col_offset=6)],
+                        decorator_list=[],
+                        returns=None,
+                        lineno=2+len(lamb.__code__.co_freevars),
+                        col_offset=4,
+                     )
+    lambda_upblk_module = ast.Module(body=[ lambda_upblk ])
+
+    # Manually wrap the lambda upblk with a closure function that adds the desired
+    # variables to the closure of `lambda_blk_*`
+
     new_root = ast.Module( body=[
-      ast.FunctionDef( name=blk_name,
-                       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
-                       body=[ast.Assign(targets=[lhs],value=rhs,lineno=2,col_offset=0)],
-                       decorator_list=[],
-                       returns=None,
-                       lineno=1,
-                       col_offset=0,
-                      )
-      ]
-    )
-
-    # Collect all closure variables and global variables of the original
-    # lambda in order to correctly recompile the function
-
-    closure = { var: lamb.__closure__[ i ].cell_contents
-      for i, var in enumerate( lamb.__code__.co_freevars )
-    }
-    closure.update( lamb.__globals__ )
+      ast.FunctionDef(
+          name="closure",
+          args=ast.arguments(args=[ast.arg(arg="lambda_closure", annotation=None, lineno=1, col_offset=12)],
+                             vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+          body=[
+            ast.Assign(
+              targets=[ast.Name(id=var, ctx=ast.Store(), lineno=1+idx, col_offset=2)],
+              value=ast.Attribute(
+                value=ast.Subscript(
+                  value=ast.Name(
+                    id='lambda_closure',
+                    ctx=ast.Load(),
+                    lineno=1+idx,
+                    col_offset=5+len(var),
+                  ),
+                  slice=ast.Index(
+                    value=ast.Num(
+                      n=idx,
+                      lineno=1+idx,
+                      col_offset=19+len(var),
+                    ),
+                  ),
+                  ctx=ast.Load(),
+                  lineno=1+idx,
+                  col_offset=5+len(var),
+                ),
+                attr='cell_contents',
+                ctx=ast.Load(),
+                lineno=1+idx,
+                col_offset=5+len(var),
+              ),
+              lineno=1+idx,
+              col_offset=2,
+            ) for idx, var in enumerate(lamb.__code__.co_freevars)
+            ] + [ lambda_upblk ] + [
+            ast.Return(
+              value=ast.Name(
+                id=blk_name,
+                ctx=ast.Load(),
+                lineno=4+len(lamb.__code__.co_freevars),
+                col_offset=9
+              ),
+              lineno=4+len(lamb.__code__.co_freevars),
+              col_offset=2,
+            )
+          ],
+          decorator_list=[],
+          returns=None,
+          lineno=1,
+          col_offset=0,
+        )
+    ] )
 
     # In Python 3 we need to supply a dict as local to get the newly
     # compiled function from closure.
 
     dict_local = {}
-    exec( compile( new_root, blk_name, "exec"), closure, dict_local )
-    blk = dict_local[ blk_name ]
+    exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
+    blk = dict_local[ 'closure' ](lamb.__closure__)
 
     # Add the source code to linecache for the compiled function
 
     new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
-    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name )
+    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
     ComponentLevel1.update( s, blk )
     s._dsl.lambda_upblks.add( blk )
@@ -168,7 +218,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # So the cache call here is just to reuse the existing interface to
     # register the AST/src of the generated block for elaborate or passes
     # to use.
-    s._cache_func_meta( blk, new_src, new_root )
+    s._cache_func_meta( blk, new_src, lambda_upblk_module )
     return blk
 
   def _connect_signal_const( s, o1, o2 ):
