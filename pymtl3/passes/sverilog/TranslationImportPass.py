@@ -47,4 +47,4 @@ class TranslationImportPass( BasePass ):
     return True
 
   def get_import_configs( s ):
-    return ImportConfigs()
+    return ImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED'])
