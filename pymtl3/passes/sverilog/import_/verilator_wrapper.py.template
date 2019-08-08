@@ -157,6 +157,14 @@ class {component_name}( Component ):
       {constraint_str}
 
   def assert_en( s, en ):
+    # TODO: for verilator, any assertion failure will cause the C simulator
+    # to abort, which results in a Python internal error. A better approach
+    # is to throw a Python exception at the time of assertion failure.
+    # Verilator allows user-defined `stop` function which is called when
+    # the simulation is expected to stop due to various reasons. We might
+    # be able to raise a Python exception through Python C API (although
+    # at this moment I'm not sure if the C API's are compatible between
+    # PyPy and CPython).
     assert isinstance( en, bool )
     s._ffi_inst.assert_en( en )
 
