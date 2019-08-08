@@ -136,8 +136,23 @@ class ComponentLevel3( ComponentLevel2 ):
                      )
     lambda_upblk_module = ast.Module(body=[ lambda_upblk ])
 
-    # Manually wrap the lambda upblk with a closure function that adds the desired
-    # variables to the closure of `lambda_blk_*`
+    # Manually wrap the lambda upblk with a closure function that adds the
+    # desired variables to the closure of `lambda_blk_*`
+    # We construct AST for the following function to add free variables in the
+    # closure of the lambda function to the closure of the generated lambda
+    # update block.
+    #
+    # def closure( lambda_closure ):
+    #   <FreeVarName1> = lambda_closure[<Idx1>].cell_contents
+    #   <FreeVarName2> = lambda_closure[<Idx2>].cell_contents
+    #   ...
+    #   <FreeVarNameN> = lambda_closure[<IdxN>].cell_contents
+    #   def lambda_blk_<lambda_blk_name>():
+    #     # the assignment statement appears here
+    #   return lambda_blk_<lambda_blk_name>
+    # 
+    # Then `closure(lamb.__closure__)` returns the lambda update block with
+    # the correct free variables in its closure.
 
     new_root = ast.Module( body=[
       ast.FunctionDef(
