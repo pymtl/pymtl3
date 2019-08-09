@@ -3,7 +3,6 @@
 #=========================================================================
 """RTLIR signal expression class definitions and generation method."""
 
-from functools import reduce
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, BitStruct

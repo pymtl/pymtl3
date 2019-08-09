@@ -730,7 +730,7 @@ def disassemble( mem_image ):
   addr = text_section.addr
   asm_code = ""
   for i in range(0,len(text_section.data),4):
-    bits = struct.unpack_from("<I",buffer(text_section.data,i,4))[0]
+    bits = struct.unpack_from("<I",memoryview(text_section.data)[i:i+4])[0]
     inst_str= disassemble_inst( Bits32(bits) )
     disasm_line = " {:0>8x}  {:0>8x}  {}\n".format( addr+i, bits, inst_str )
     asm_code += disasm_line

@@ -43,12 +43,12 @@ from pymtl3.passes.yosys import TranslationPass
 
 class ArgumentParserWithCustomError(argparse.ArgumentParser):
   def error( self, msg = "" ):
-    if ( msg ): print "\n ERROR: %s" % msg
-    print ""
+    if ( msg ): print("\n"+f" ERROR: {msg}")
+    print("")
     file = open( sys.argv[0] )
     for ( lineno, line ) in enumerate( file ):
       if ( line[0] != '#' ): sys.exit(msg != "")
-      if ( (lineno == 2) or (lineno >= 4) ): print line[1:].rstrip("\n")
+      if ( (lineno == 2) or (lineno >= 4) ): print(line[1:].rstrip("\n"))
 
 def parse_cmdline():
   def valid_dir(string):

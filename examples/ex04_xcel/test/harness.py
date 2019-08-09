@@ -92,7 +92,7 @@ class TestHarness(Component):
 
       if section.name == ".mngr2proc":
         for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
+          bits = struct.unpack_from("<I",memoryview(section.data)[i:i+4])[0]
           # self.src.src.msgs.append( Bits32(bits) )
           self.src.msgs.append( Bits32(bits) )
 
@@ -100,7 +100,7 @@ class TestHarness(Component):
 
       elif section.name == ".proc2mngr":
         for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
+          bits = struct.unpack_from("<I",memoryview(section.data)[i:i+4])[0]
           # self.sink.sink.msgs.append( Bits32(bits) )
           self.sink.msgs.append( Bits32(bits) )
 

@@ -5,6 +5,11 @@
 # Date   : May 27, 2019
 """Provide helper methods that might be useful to sverilog passes."""
 
+import os
+import shutil
+import textwrap
+
+
 def make_indent( src, nindent ):
   """Add nindent indention to every line in src."""
   indent = '  '
@@ -25,3 +30,13 @@ def get_component_unique_name( c_rtype ):
     assert arg_name != ''
     comp_name += '__' + arg_name + '_' + get_string(arg_value)
   return comp_name
+
+def wrap( s ):
+  col = shutil.get_terminal_size().columns
+  return "\n".join(sum((textwrap.wrap(line, col) for line in s.split("\n")), []))
+
+def expand( v ):
+  return os.path.expanduser(os.path.expandvars(v))
+
+def get_dir( cur_file ):
+  return os.path.dirname(os.path.abspath(cur_file))+os.path.sep
