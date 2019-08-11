@@ -368,8 +368,9 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
     if not '__eq__' in cls.__dict__:
       cls.__eq__ = _mk_eq_fn( fields.values() )
     else:
-      w_msg = ( 'Overwriting __eq__ may cause the translated verilog '
-                'behaves differently from PyMTL simulation.')
+      w_msg = ( f'Overwriting {cls.__qualname__}\'s __eq__ may cause the '
+                'translated verilog behaves differently from PyMTL '
+                'simulation.')
       warnings.warn( w_msg )
 
   # Create __hash__.
@@ -426,9 +427,12 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
       raise TypeError( f'Field name {name!r} is not a valid identifier!' )
     if keyword.iskeyword( name ):
       raise TypeError( f'Field name {name!r} is a keyword!' )
+
+    # TODO: support cases that it's just a type
     if not isinstance( f, Field ):
       raise TypeError( f'Value for {name} is not a valid Field object. '
                        'Use field( type_ ) instead!')
+
     annos[ name ] = f.type_
     if f.default is not MISSING:
       namespace[ name ] = f.default
