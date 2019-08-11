@@ -24,8 +24,8 @@ class Pixel:
   nbits = 24
 
 MadePixel = mk_bit_struct( 'MadePixel',{
-    'r' : field( Bits8 ),
-    'g' : field( Bits8 ),
+    'r' : Bits8,
+    'g' : Bits8,
     'b' : field( Bits8, default=b8(4) )
   },
   namespace = {
@@ -76,8 +76,8 @@ class Point:
     return self.x == other.x and self.y == other.y
 
 MadePoint = mk_bit_struct( 'MadePoint', {
-    'x' : field( Bits8 ),
-    'y' : field( Bits8 ),
+    'x' : Bits8,
+    'y' : Bits8,
   },
   namespace = {
     '__str__' : lambda self : f'({int(self.x)},{int(self.y)})',
@@ -101,8 +101,8 @@ class TwoPoint:
   pt1 : MadePoint
 
 MadeTwoPoint = mk_bit_struct( 'MadeTwoPoint', {
-  'pt0' : field( Point ),
-  'pt1' : field( MadePoint ),
+  'pt0' : Point,
+  'pt1' : MadePoint,
 })
 
 def test_nested():

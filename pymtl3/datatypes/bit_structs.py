@@ -428,14 +428,12 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
     if keyword.iskeyword( name ):
       raise TypeError( f'Field name {name!r} is a keyword!' )
 
-    # TODO: support cases that it's just a type
     if not isinstance( f, Field ):
-      raise TypeError( f'Value for {name} is not a valid Field object. '
-                       'Use field( type_ ) instead!')
-
-    annos[ name ] = f.type_
-    if f.default is not MISSING:
-      namespace[ name ] = f.default
+      annos[ name ] = f
+    else:
+      annos[ name ] = f.type_
+      if f.default is not MISSING:
+        namespace[ name ] = f.default
 
   namespace['__annotations__'] = annos
 
