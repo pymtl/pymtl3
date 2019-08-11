@@ -90,3 +90,49 @@ def test_overwrite():
 
   assert pt == mpt
   assert str(pt) == str(mpt)
+
+#-------------------------------------------------------------------------
+# Nested bit struct test
+#-------------------------------------------------------------------------
+
+@bit_struct
+class TwoPoint:
+  pt0 : Point
+  pt1 : MadePoint
+
+MadeTwoPoint = mk_bit_struct( 'MadeTwoPoint', {
+  'pt0' : field( Point ),
+  'pt1' : field( MadePoint ),
+})
+
+def test_nested():
+  a = TwoPoint( pt0=Point( b8(1), b8(2) ) )
+  b = MadeTwoPoint( pt1=MadePoint( b8(3), b8(4) ) )
+  assert a.pt0.x == 1
+  assert a.pt0.y == 2
+  assert a.pt1.x == 0
+  assert a.pt1.y == 0
+  assert b.pt0.x == 0
+  assert b.pt0.y == 0
+  assert b.pt1.x == 3
+  assert b.pt1.y == 4
+
+#-------------------------------------------------------------------------
+# Bit struct instance test
+#-------------------------------------------------------------------------
+
+def is_bit_struct( bs ):
+  return hasattr( bs, _IS_BIT_STRUCT )
+
+def test_is_bit_struct():
+  class A:
+    x : Bits4
+    y : Bits4
+
+  @bit_struct
+  class B:
+    x : Bits4
+    y : Bits4
+
+  assert not is_bit_struct( A() )
+  assert is_bit_struct( B() )
