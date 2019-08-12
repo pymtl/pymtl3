@@ -6,6 +6,7 @@
 """Configuration class of SystemVerilog import pass."""
 
 import os
+import subprocess
 from textwrap import fill, indent
 
 from pymtl3.dsl import Placeholder
