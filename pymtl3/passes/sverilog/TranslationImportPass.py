@@ -23,8 +23,10 @@ class TranslationImportPass( BasePass ):
 
   def traverse_hierarchy( s, m ):
     if hasattr(m, s.get_flag_name()):
-      setattr(m, s.get_translation_flag_name(), s.get_translation_configs())
-      setattr(m, s.get_import_flag_name(), s.get_import_configs())
+      if not hasattr(m, s.get_translation_flag_name()):
+        setattr(m, s.get_translation_flag_name(), s.get_translation_configs())
+      if not hasattr(m, s.get_import_flag_name()):
+        setattr(m, s.get_import_flag_name(), s.get_import_configs())
     for child in m.get_child_components():
       s.traverse_hierarchy( child )
 
