@@ -26,10 +26,6 @@ class Component( ComponentLevel7 ):
 
     if not s._dsl.constructed:
 
-      # clk and reset signals are added here.
-      s.clk   = InPort( Bits1 )
-      s.reset = InPort( Bits1 )
-
       # Merge the actual keyword args and those args set by set_parameter
       if s._dsl.param_tree is None:
         kwargs = s._dsl.kwargs
@@ -45,14 +41,6 @@ class Component( ComponentLevel7 ):
 
       # Same as parent class _construct
       s.construct( *s._dsl.args, **kwargs )
-
-      # We hook up the added clk and reset signals here. NOTE THAT if the
-      # user overwrites clk/reset inside the component, we still get the
-      # correct connection.
-      parent = s.get_parent_object()
-      if parent is not None:
-        parent._connect_signal_signal( s.clk, parent.clk )
-        parent._connect_signal_signal( s.reset, parent.reset )
 
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()

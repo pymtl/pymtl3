@@ -233,6 +233,9 @@ class RecvRTL2SendCL( Component ):
 
   def construct( s, MsgType ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     # Interface
 
     s.recv = RecvIfcRTL( MsgType )

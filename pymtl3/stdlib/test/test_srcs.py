@@ -20,6 +20,9 @@ class TestSrcCL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     s.send = NonBlockingCallerIfc( Type )
     s.msgs = deque( msgs )
 

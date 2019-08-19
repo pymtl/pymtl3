@@ -10,6 +10,7 @@
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.sverilog.import_.ImportConfigs import ImportConfigs
 from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+from pymtl3.passes.sverilog.translation.TranslationConfigs import TranslationConfigs
 from pymtl3.passes.sverilog.translation.TranslationPass import TranslationPass
 
 
@@ -46,7 +47,7 @@ class TranslationImportPass( BasePass ):
     return "sverilog_import"
 
   def get_translation_configs( s ):
-    return True
+    return TranslationConfigs()
 
   def get_import_configs( s ):
     return ImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED'])

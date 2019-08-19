@@ -21,6 +21,9 @@ class NormalQueueDpathRTL( Component ):
 
   def construct( s, EntryType, num_entries=2 ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     # Interface
 
     s.enq_msg =  InPort( EntryType )
@@ -33,6 +36,8 @@ class NormalQueueDpathRTL( Component ):
     # Component
 
     s.queue = RegisterFile( EntryType, num_entries )(
+      clk   = s.clk,
+      reset = s.reset,
       raddr = { 0: s.raddr   },
       rdata = { 0: s.deq_msg },
       wen   = { 0: s.wen     },
@@ -43,6 +48,9 @@ class NormalQueueDpathRTL( Component ):
 class NormalQueueCtrlRTL( Component ):
 
   def construct( s, num_entries=2 ):
+
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
 
     # Constants
 
@@ -121,6 +129,9 @@ class NormalQueueRTL( Component ):
 
   def construct( s, EntryType, num_entries=2 ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     # Interface
 
     s.enq   = EnqIfcRTL( EntryType )
@@ -139,6 +150,11 @@ class NormalQueueRTL( Component ):
     else:
       s.ctrl  = NormalQueueCtrlRTL ( num_entries )
       s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
+
+      s.clk //= s.ctrl.clk
+      s.clk //= s.dpath.clk
+      s.reset //= s.ctrl.reset
+      s.reset //= s.dpath.reset
 
       # Connect ctrl to data path
 
@@ -168,6 +184,9 @@ class NormalQueueRTL( Component ):
 class PipeQueueCtrlRTL( Component ):
 
   def construct( s, num_entries=2 ):
+
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
 
     # Constants
 
@@ -253,6 +272,9 @@ class PipeQueueRTL( Component ):
 
   def construct( s, EntryType, num_entries=2 ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     # Interface
 
     s.enq   = EnqIfcRTL( EntryType )
@@ -264,6 +286,8 @@ class PipeQueueRTL( Component ):
     assert num_entries > 0
     if num_entries == 1:
       s.q = PipeQueue1EntryRTL( EntryType )
+      s.q.clk //= s.clk
+      s.q.reset //= s.reset
       connect( s.enq,   s.q.enq )
       connect( s.deq,   s.q.deq )
       connect( s.count, s.q.count )
@@ -271,6 +295,12 @@ class PipeQueueRTL( Component ):
     else:
       s.ctrl  = PipeQueueCtrlRTL ( num_entries )
       s.dpath = NormalQueueDpathRTL( EntryType, num_entries )
+
+      s.ctrl.clk //= s.clk
+      s.ctrl.reset //= s.reset
+
+      s.dpath.clk //= s.clk
+      s.dpath.reset //= s.reset
 
       # Connect ctrl to data path
 
@@ -467,6 +497,9 @@ class NormalQueue1EntryRTL( Component ):
 
   def construct( s, EntryType ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     # Interface
 
     s.enq   = EnqIfcRTL( EntryType )
@@ -517,6 +550,9 @@ class NormalQueue1EntryRTL( Component ):
 class PipeQueue1EntryRTL( Component ):
 
   def construct( s, EntryType ):
+
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
 
     # Interface
 

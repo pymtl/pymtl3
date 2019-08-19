@@ -9,6 +9,9 @@ class RegisterFile( Component ):
   def construct( s, Type, nregs=32, rd_ports=1, wr_ports=1,
                 const_zero=False ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     addr_type = mk_bits( clog2( nregs ) )
 
     s.raddr = [ InPort( addr_type ) for i in range( rd_ports ) ]

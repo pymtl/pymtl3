@@ -36,10 +36,15 @@ class YosysTranslator( SVTranslator ):
 
   def rtlir_tr_component( s, behavioral, structural ):
 
+    if hasattr(s.cur_component, "yosys_translate") and \
+       s.cur_component.yosys_translate.get_v_src():
+      return s.generate_sv_blackbox(behavioral, structural)
+
     template =\
 """\
 // Definition of PyMTL Component {component_name}
 // {file_info}
+// Full name: {full_name}
 module {module_name}
 (
 {ports});
@@ -49,6 +54,7 @@ endmodule
     component_name = getattr( structural, "component_name" )
     file_info = getattr( structural, "component_file_info" )
     ports_template = "{port_decls}{ifc_decls}"
+    full_name = getattr( structural, "component_full_name" )
     module_name = getattr( structural, "component_unique_name" )
 
     port_dct = getattr( structural, "decl_ports" )

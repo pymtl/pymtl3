@@ -21,6 +21,7 @@ class Reg( Component ):
 class RegEn( Component ):
 
   def construct( s, Type ):
+    s.clk = InPort( Bits1 )
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
 

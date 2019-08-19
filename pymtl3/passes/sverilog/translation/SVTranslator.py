@@ -5,6 +5,7 @@
 # Date   : March 15, 2019
 """Provide SystemVerilog translator."""
 
+from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.translator import RTLIRTranslator
 
 from .behavioral import SVBehavioralTranslator as SV_BTranslator
@@ -101,12 +102,82 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
     def rtlir_tr_components( s, components ):
       return "\n\n".join( components )
 
+    def generate_sv_blackbox( s, behavioral, structural ):
+      comp = s.cur_component
+      path = comp.sverilog_translate.get_v_src()
+      rtype = comp._pass_structural_rtlir_gen.rtlir_type
+      all_params = rtype.get_params()
+      component_name = structural.component_name
+
+      with open(path, "r") as v_src:
+        src = f"// This file is copied from {path}" + '\n' + \
+              f"{''.join(v_src.readlines())}" + '\n' + \
+              f"// End of copied file {path}" + '\n' + \
+              "//====================================\n"
+
+      # If this component has no parameters, just return the file source
+      if not all_params:
+        s.black_box_components[component_name] = src
+        return src
+
+      # Else we need to create a wrapper that instantiates the module with
+      # correct parameters
+      # TODO: currently no name mangle is performed; need to have a clean way
+      # to perform consistent name mangling across all passes in one backend.
+      # Also this only supports individual ports.
+      all_ports = rtype.get_ports_packed()
+      assert not rtype.get_ifc_views_packed(), "No support for interfaces yet"
+      for id_, port in all_ports:
+        assert isinstance(port, rt.Port), "No support for arrays yet"
+      # Ports
+      ports = [
+        f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
+        f" {name}{'' if idx == len(all_ports)-1 else ','}" \
+        for idx, (name, p) in enumerate(all_ports)]
+      # Parameters
+      params = [
+        f"    .{param}( {val} ){'' if idx == len(all_params)-1 else ','}"\
+        for idx, (param, val) in enumerate(all_params)]
+      # Connections
+      connect_ports = [
+        f"    .{name}( {name} ){'' if idx == len(all_ports)-1 else ','}"\
+        for idx, (name, p) in enumerate(all_ports)]
+      # Wrapper
+      wrapper_lines = [
+        f"// This is a wrapper that instantiates {component_name} with parameters.",
+        f"module {structural.component_unique_name}",
+        "(",
+      ] + ports + [
+        ");",
+        f"  {component_name}",
+        "  #(",
+      ] + params + [
+        "  ) wrapped_module",
+        "  (",
+      ] + connect_ports + [
+        "  );",
+        "endmodule",
+      ]
+
+      if component_name in s.black_box_components:
+        # If v_src has been included, only include the wrapper
+        return "\n".join(line for line in wrapper_lines)
+      else:
+        # Include v_src if it's the first time we see this component
+        s.black_box_components[component_name] = src
+        return src + "\n" + "\n".join(line for line in wrapper_lines)
+
     def rtlir_tr_component( s, behavioral, structural ):
+
+      if hasattr(s.cur_component, "sverilog_translate") and \
+         s.cur_component.sverilog_translate.get_v_src():
+        return s.generate_sv_blackbox(behavioral, structural)
 
       template =\
 """\
 // Definition of PyMTL Component {component_name}
 // {file_info}
+// Full name: {full_name}
 module {module_name}
 (
 {ports});
@@ -116,6 +187,7 @@ endmodule
       component_name = getattr( structural, "component_name" )
       file_info = getattr( structural, "component_file_info" )
       ports_template = "{port_decls}{ifc_decls}"
+      full_name = getattr( structural, "component_full_name" )
       module_name = getattr( structural, "component_unique_name" )
 
       port_decls = s.get_pretty(structural, 'decl_ports', False)

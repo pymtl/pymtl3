@@ -123,6 +123,8 @@ class {component_name}( Component ):
     _ffi_inst = s._ffi_inst
 
     # declare the port interface
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
 {port_defs}
 
     # declare the wires

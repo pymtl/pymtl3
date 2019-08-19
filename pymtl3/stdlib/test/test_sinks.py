@@ -20,6 +20,9 @@ class TestSinkCL( Component ):
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0,
                  arrival_time=None, cmp_fn=lambda a, b : a == b ):
 
+    s.clk = InPort( Bits1 )
+    s.reset = InPort( Bits1 )
+
     s.recv.Type = Type
 
     # [msgs] and [arrival_time] must have the same length.

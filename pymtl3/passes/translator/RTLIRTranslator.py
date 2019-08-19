@@ -45,10 +45,11 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
         for child in sorted(m.get_child_components(), key = lambda x: x._dsl.my_name):
           translate_component( child, components, translated )
         if not s.structural.component_unique_name[m] in translated:
+          s.cur_component = m
           components.append(
             s.rtlir_tr_component(
               get_component_nspace( s.behavioral, m ),
-              get_component_nspace( s.structural, m )
+              get_component_nspace( s.structural, m ),
           ) )
           translated.append( s.structural.component_unique_name[m] )
         s.gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
@@ -59,6 +60,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
       s.clear( tr_top )
 
       s.component = {}
+      s.black_box_components = {}
       # Generate backend representation for each component
       s.hierarchy.components = []
       s.hierarchy.decl_type_vector = []

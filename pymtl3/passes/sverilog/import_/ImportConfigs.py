@@ -201,7 +201,7 @@ class ImportConfigs( BasePassConfigs ):
       # [] to disable this option
       "c_include_path" : [],
 
-      # Additional C source files passed to the C compiler.
+    # Additional C source files passed to the C compiler.
       # [] to compile verilator generated files only.
       "c_srcs" : [],
 

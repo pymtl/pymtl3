@@ -490,7 +490,7 @@ constraint_list = [
     return ret
 
   def gen_packed_ports( s, rtype ):
-    """Return a list of (name, rt.Port ) that has all ports of `rtype`.
+    """Return a list of (name, rt.Port) that has all ports of `rtype`.
 
     This method performs SystemVerilog backend-specific name mangling and
     returns all ports that appear in the interface of component `rtype`.
