@@ -59,7 +59,6 @@ class ComponentLevel3( ComponentLevel2 ):
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
-    inst._dsl.lambda_upblks = set()
 
     return inst
 
@@ -67,8 +66,6 @@ class ComponentLevel3( ComponentLevel2 ):
   def _collect_vars( s, m ):
     super()._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
-      s._dsl.all_lambda_upblks |= m._dsl.lambda_upblks
-
       all_ajd = s._dsl.all_adjacency
       for k, v in m._dsl.adjacency.items():
         all_ajd[k] |= v
@@ -150,7 +147,7 @@ class ComponentLevel3( ComponentLevel2 ):
     #   def lambda_blk_<lambda_blk_name>():
     #     # the assignment statement appears here
     #   return lambda_blk_<lambda_blk_name>
-    # 
+    #
     # Then `closure(lamb.__closure__)` returns the lambda update block with
     # the correct free variables in its closure.
 
@@ -221,7 +218,6 @@ class ComponentLevel3( ComponentLevel2 ):
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
     ComponentLevel1.update( s, blk )
-    s._dsl.lambda_upblks.add( blk )
 
     # This caching here does no caching because the block name contains
     # the signal name intentionally to avoid conflicts. With //= it is
