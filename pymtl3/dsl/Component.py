@@ -574,6 +574,13 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
+  def get_all_lambda_upblks( s ):
+    try:
+      s._check_called_at_elaborate_top( "get_all_lambda_upblks" )
+      return s._dsl.all_lambda_upblks
+    except AttributeError:
+      raise NotElaboratedError()
+
   def get_all_upblk_metadata( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_upblk_metadata" )
