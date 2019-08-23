@@ -102,39 +102,44 @@ class ComponentLevel3( ComponentLevel2 ):
   # The following three methods should only be called when types are
   # already checked
   def _create_assign_lambda( s, o, lamb ):
-
     assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
+
     srcs, line = inspect.getsourcelines( lamb )
     assert len(srcs) == 1, "We can only handle single-line lambda connect right now."
 
     src  = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
     root = ast.parse(src)
     assert isinstance( root, ast.Module ) and len(root.body) == 1, "Invalid lambda (contact pymtl3 developer)"
+
     root = root.body[0]
     assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
-    lhs, rhs = root.target, root.value
 
+    lhs, rhs = root.target, root.value
+    # We expect the lambda to have no argument:
     # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
     assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None, \
       "The lambda shouldn't contain any argument."
+
     rhs = rhs.body
 
     # Compose a new and valid function based on the lambda's lhs and rhs
+    # Note that we don't need to add those source code of closure var
+    # assignment to linecache. To get the matching line number in the
+    # error message, we set the line number of update block
 
-    blk_name = "lambda_blk_{}".format( repr(o).replace(".","_") )
+    blk_name = "_lambda__{}".format( repr(o).replace(".","_") )
     lambda_upblk = ast.FunctionDef(
-                        name=blk_name,
-                        args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
-                        body=[ast.Assign(targets=[lhs],value=rhs,lineno=3+len(lamb.__code__.co_freevars),col_offset=6)],
-                        decorator_list=[],
-                        returns=None,
-                        lineno=2+len(lamb.__code__.co_freevars),
-                        col_offset=4,
-                     )
+      name=blk_name,
+      args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+      body=[ast.Assign(targets=[lhs], value=rhs, lineno=2, col_offset=6)],
+      decorator_list=[],
+      returns=None,
+      lineno=1, col_offset=4,
+    )
     lambda_upblk_module = ast.Module(body=[ lambda_upblk ])
 
     # Manually wrap the lambda upblk with a closure function that adds the
-    # desired variables to the closure of `lambda_blk_*`
+    # desired variables to the closure of `_lambda__*`
     # We construct AST for the following function to add free variables in the
     # closure of the lambda function to the closure of the generated lambda
     # update block.
@@ -144,12 +149,9 @@ class ComponentLevel3( ComponentLevel2 ):
     #   <FreeVarName2> = lambda_closure[<Idx2>].cell_contents
     #   ...
     #   <FreeVarNameN> = lambda_closure[<IdxN>].cell_contents
-    #   def lambda_blk_<lambda_blk_name>():
+    #   def _lambda__<lambda_blk_name>():
     #     # the assignment statement appears here
-    #   return lambda_blk_<lambda_blk_name>
-    #
-    # Then `closure(lamb.__closure__)` returns the lambda update block with
-    # the correct free variables in its closure.
+    #   return _lambda__<lambda_blk_name>
 
     new_root = ast.Module( body=[
       ast.FunctionDef(
@@ -164,53 +166,47 @@ class ComponentLevel3( ComponentLevel2 ):
                   value=ast.Name(
                     id='lambda_closure',
                     ctx=ast.Load(),
-                    lineno=1+idx,
-                    col_offset=5+len(var),
+                    lineno=1+idx, col_offset=5+len(var),
                   ),
                   slice=ast.Index(
                     value=ast.Num(
                       n=idx,
-                      lineno=1+idx,
-                      col_offset=19+len(var),
+                      lineno=1+idx, col_offset=19+len(var),
                     ),
                   ),
                   ctx=ast.Load(),
-                  lineno=1+idx,
-                  col_offset=5+len(var),
+                  lineno=1+idx, col_offset=5+len(var),
                 ),
                 attr='cell_contents',
                 ctx=ast.Load(),
-                lineno=1+idx,
-                col_offset=5+len(var),
+                lineno=1+idx, col_offset=5+len(var),
               ),
-              lineno=1+idx,
-              col_offset=2,
+              lineno=1+idx, col_offset=2,
             ) for idx, var in enumerate(lamb.__code__.co_freevars)
-            ] + [ lambda_upblk ] + [
+          ] + [ lambda_upblk ] + [
             ast.Return(
               value=ast.Name(
                 id=blk_name,
                 ctx=ast.Load(),
-                lineno=4+len(lamb.__code__.co_freevars),
-                col_offset=9
+                lineno=4+len(lamb.__code__.co_freevars), col_offset=9,
               ),
-              lineno=4+len(lamb.__code__.co_freevars),
-              col_offset=2,
+              lineno=4+len(lamb.__code__.co_freevars), col_offset=2,
             )
           ],
           decorator_list=[],
           returns=None,
-          lineno=1,
-          col_offset=0,
+          lineno=1, col_offset=0,
         )
     ] )
 
     # In Python 3 we need to supply a dict as local to get the newly
     # compiled function from closure.
+    # Then `closure(lamb.__closure__)` returns the lambda update block with
+    # the correct free variables in its closure.
 
     dict_local = {}
     exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
-    blk = dict_local[ 'closure' ](lamb.__closure__)
+    blk = dict_local[ 'closure' ]( lamb.__closure__ )
 
     # Add the source code to linecache for the compiled function
 
@@ -247,7 +243,7 @@ class ComponentLevel3( ComponentLevel2 ):
                                       "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
       o2 = Const( o1._dsl.Type, o2, s )
 
-  # TODO implement connecting a const struct
+    # TODO implement connecting a const struct
 
     host = o1.get_host_component()
 

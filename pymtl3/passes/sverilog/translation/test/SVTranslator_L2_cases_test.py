@@ -1167,10 +1167,10 @@ module A
 
   // PYMTL SOURCE:
   //
-  // def lambda_blk_s_out():
+  // def _lambda__s_out():
   //   s.out = s.in_ + Bits32(42)
 
-  always_comb begin : lambda_blk_s_out
+  always_comb begin : _lambda__s_out
     out = in_ + 32'd42;
   end
 

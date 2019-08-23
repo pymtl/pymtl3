@@ -12,7 +12,7 @@ from pymtl3.datatypes import Bits8, Bits10, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import WR, U
-from pymtl3.dsl.errors import InvalidConnectionError, MultiWriterError
+from pymtl3.dsl.errors import InvalidConnectionError, MultiWriterError, UpblkFuncSameNameError
 
 from .sim_utils import simple_sim_pass
 
@@ -800,3 +800,26 @@ def test_connect_lambda():
   y.in_ = 100
   y.tick()
   assert y.out == 100 + 33 + 2
+
+def test_lambda_name_conflict():
+
+  class Top( ComponentLevel3 ):
+    def construct( s, x ):
+      s.in_ = InPort(Bits32)
+      s.out = OutPort(Bits32)
+      s.out2 = OutPort(Bits32)
+
+      s.out //= lambda: s.in_ + x
+
+      # We should throw some better error message when we
+      @s.update
+      def _lambda__s_out():
+        s.out2 = Bits32(2)
+
+  try:
+    x = Top(3)
+    x.elaborate()
+  except UpblkFuncSameNameError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpblkFuncSameNameError.")
