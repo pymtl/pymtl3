@@ -574,10 +574,10 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_lambda_upblks( s ):
+  def get_all_lambda_upblk_src( s ):
     try:
-      s._check_called_at_elaborate_top( "get_all_lambda_upblks" )
-      return s._dsl.all_lambda_upblks
+      s._check_called_at_elaborate_top( "get_all_lambda_upblk_src" )
+      return s._dsl.all_lambda_upblk_src
     except AttributeError:
       raise NotElaboratedError()
 

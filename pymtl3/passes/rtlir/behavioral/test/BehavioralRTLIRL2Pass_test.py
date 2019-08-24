@@ -50,7 +50,7 @@ def test_L2_lambda_connect( do_test ):
       s.out = OutPort( Bits32 )
       s.out //= lambda: s.in_ + Bits32(42)
   a = A()
-  a._rtlir_test_ref = { 'lambda_blk_s_out' : CombUpblk( 'lambda_blk_s_out', [
+  a._rtlir_test_ref = { '_lambda__s_out' : CombUpblk( '_lambda__s_out', [
     Assign( Attribute( Base( a ), 'out' ),
             BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42)))
         ) ] ) }
