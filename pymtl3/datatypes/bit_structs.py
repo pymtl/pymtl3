@@ -129,7 +129,8 @@ def field( type_, default=MISSING ):
 
 def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
 
-  # Lazily construct empty dictionary
+  # Lazily construct empty dictionary. We don't pass None to exec because
+  # if locals is None, then exec will mutate the current locals().
   if _locals is None:
     _locals = {}
 
