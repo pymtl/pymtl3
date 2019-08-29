@@ -160,7 +160,6 @@ def _mk_init_arg( f ):
 
   # Call the default constructor if no default value specified
   if f.default is MISSING:
-    # default = f'{f.type_.__name__}()'
     default = f'_type_{f.name}()'
 
   # Use the default value if it is specified by user
@@ -168,7 +167,6 @@ def _mk_init_arg( f ):
     default = f'_deflt_{f.name}'
 
   return f'{f.name} : _type_{f.name} = {default}'
-  # return f'{f.name} : {f.type_.__name__} = {default}'
 
 #-------------------------------------------------------------------------
 # _mk_init_body
