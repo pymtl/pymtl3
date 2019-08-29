@@ -25,7 +25,7 @@ class ImportConfigs( BasePassConfigs ):
 
     s.set_checkers(
         ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
-         'vl_trace', 'verbose', 'has_clk', 'has_reset'],
+         'vl_trace', 'verbose', 'has_clk', 'has_reset', 'vl_debug'],
         lambda v: isinstance(v, bool),
         "expects a boolean")
     s.set_checkers(
@@ -146,6 +146,10 @@ class ImportConfigs( BasePassConfigs ):
       # --assert
       # Expects a boolean value
       "enable_assert" : True,
+
+      # --debug
+      # Enable verilator debug mode
+      "vl_debug" : False,
 
       # Verilator optimization options
 
@@ -293,7 +297,8 @@ class ImportConfigs( BasePassConfigs ):
       else:
         # Default top_module is the name of component
         s.wrapped_module = rtype.get_name()
-        s.set_option("top_module", f"{s.wrapped_module}_w_params")
+        full_name = get_component_unique_name( rtype )
+        s.set_option("top_module", f"{full_name}_w_params")
 
     top_module = s.get_top_module()
 

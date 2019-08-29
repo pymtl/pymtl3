@@ -57,6 +57,7 @@ class TestSrcRTL( Component ):
 
     # Interface
 
+    s.reset = InPort( Bits1 )
     s.send = SendIfcRTL( Type )
 
     # Components
@@ -66,6 +67,7 @@ class TestSrcRTL( Component ):
 
     connect( s.src.send,     s.adapter.recv )
     connect( s.adapter.send, s.send         )
+    connect( s.src.reset,    s.reset        )
 
   def done( s ):
     return s.src.done()

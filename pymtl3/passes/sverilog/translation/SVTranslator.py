@@ -108,6 +108,7 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       rtype = comp._pass_structural_rtlir_gen.rtlir_type
       all_params = rtype.get_params()
       component_name = structural.component_name
+      s._top_module_full_name = structural.component_unique_name + "_blackbox"
 
       with open(path, "r") as v_src:
         src = f"// This file is copied from {path}" + '\n' + \

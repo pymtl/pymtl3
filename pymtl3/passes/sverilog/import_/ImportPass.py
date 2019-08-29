@@ -133,13 +133,16 @@ class ImportPass( BasePass ):
     p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     no_clk, no_reset = not config.has_clk(), not config.has_reset()
     _packed_ports = s.gen_packed_ports( rtype )
-    clk = next(filter(lambda x: x[0]=='clk', _packed_ports))[1]
-    reset = next(filter(lambda x: x[0]=='reset', _packed_ports))[1]
-    packed_ports = \
-        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
-        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
-        [ (n, p_map(n), p) for n, p in _packed_ports \
-          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
+    packed_ports = []
+    # if not no_clk:
+      # clk = next(filter(lambda x: x[0]=='clk', _packed_ports))[1]
+      # packed_ports += [('clk', p_map('clk'), clk)]
+    # if not no_reset:
+      # reset = next(filter(lambda x: x[0]=='reset', _packed_ports))[1]
+      # packed_ports += [('reset', p_map('reset'), reset)]
+    packed_ports += \
+        [ (n, p_map(n), p) for n, p in _packed_ports ]#\
+          # if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
 
     cached = s.is_cached( m, full_name )
 
