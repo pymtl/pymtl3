@@ -160,14 +160,15 @@ def _mk_init_arg( f ):
 
   # Call the default constructor if no default value specified
   if f.default is MISSING:
-    default = f'{f.type_.__name__}()'
+    # default = f'{f.type_.__name__}()'
+    default = f'_type_{f.name}()'
 
   # Use the default value if it is specified by user
   else:
     default = f'_deflt_{f.name}'
 
-  # return f'{f.name} : _type_{f.name} = {default}'
-  return f'{f.name} : {f.type_.__name__} = {default}'
+  return f'{f.name} : _type_{f.name} = {default}'
+  # return f'{f.name} : {f.type_.__name__} = {default}'
 
 #-------------------------------------------------------------------------
 # _mk_init_body
@@ -214,7 +215,7 @@ def _mk_init_fn( self_name, fields ):
       _globals[f'_deflt_{f.name}'] = f.default
 
   # Register types in _locals
-  _locals = { f'{f.type_.__name__}' : f.type_ for f in fields }
+  _locals = { f'_type_{f.name}' : f.type_ for f in fields }
 
   return _create_fn(
     '__init__',
