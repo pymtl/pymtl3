@@ -193,7 +193,18 @@ def _mk_tuple_str( self_name, fields ):
 #-------------------------------------------------------------------------
 # _mk_init_fn
 #-------------------------------------------------------------------------
-# Creates a __init__ function based on fields.
+# Creates a __init__ function based on fields. For example, if fields
+# contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
+# function that looks like the following:
+#
+# def __init__( s, x=_type_x(), y=_type_y() ):
+#   s.x = x
+#   s.y = y
+#
+# NOTE:
+# _mk_init_fn also takes as argument the name of self in case there is a
+# field with name 's' or 'self'.
+#
 # TODO: should we provide a __post_init__ function like dataclass does?
 
 def _mk_init_fn( self_name, fields ):
@@ -228,7 +239,12 @@ def _mk_init_fn( self_name, fields ):
 #-------------------------------------------------------------------------
 # _mk_str_fn
 #-------------------------------------------------------------------------
-# Creates a __str__ function based on fields.
+# Creates a __str__ function based on fields. For example, if fields
+# contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
+# function that looks like the following:
+#
+# def __str__( self ):
+#   return f'{self.x}:{self.y}'
 
 def _mk_str_fn( fields ):
   return _create_fn(
@@ -241,7 +257,12 @@ def _mk_str_fn( fields ):
 #-------------------------------------------------------------------------
 # _mk_repr_fn
 #-------------------------------------------------------------------------
-# Creates a __repr__ function based on fields.
+# Creates a __repr__ function based on fields. For example, if fields
+# contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
+# function that looks like the following:
+#
+# def __repr__( self ):
+#  return self.__class__.qualname__ + f'(x={self.x!r}, y={self.y!r})'
 
 def _mk_repr_fn( fields ):
   return _create_fn(
@@ -256,7 +277,15 @@ def _mk_repr_fn( fields ):
 # _mk_eq_fn
 #-------------------------------------------------------------------------
 # Creates a __eq__ function based on fields. By default it just compares
-# each field.
+# each field. For example, if fields contains two field x (Bits4) and y
+# (Bits4), _mk_init_fn will return a function that looks like the
+# following:
+#
+# def __eq__( self, other ):
+#   if other.__class__ is self.__class__:
+#     return (self.x,self.y,) == (other.x,other.y,)
+#   else:
+#     raise NotImplemented
 
 def _mk_eq_fn( fields ):
   self_tuple  = _mk_tuple_str( 'self', fields )
@@ -274,7 +303,12 @@ def _mk_eq_fn( fields ):
 # _mk_hash_fn
 #-------------------------------------------------------------------------
 # Creates a __hash__ function based on fields. By default it just hashes
-# all fields.
+# all fields. For example, if fields contains two field x (Bits4) and y
+# (Bits4), _mk_init_fn will return a function that looks like the
+# following:
+#
+# def __hash__( self ):
+#   return hash((self.x,self.y,))
 
 def _mk_hash_fn( fields ):
     self_tuple = _mk_tuple_str( 'self', fields )
