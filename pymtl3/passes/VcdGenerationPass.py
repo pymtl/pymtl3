@@ -3,7 +3,7 @@
 VcdGenerationPass.py
 ========================================================================
 
-Author : Shunning Jiang
+Author : Shunning Jiang, Yanghui Ou, Peitian Pan
 Date   : May 29, 2019
 """
 
@@ -11,8 +11,7 @@ import time
 from collections import defaultdict
 from copy import deepcopy
 
-import py
-
+from pymtl3.datatypes.BitStruct import BitStruct
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
@@ -80,6 +79,54 @@ class VcdGenerationPass( BasePass ):
           code = _codechars[r] + code
         yield code
         n += 1
+
+    # The actual dump_vcd function to be appended to _sched.
+    # The framework will call this function without arguments, and therefore
+    # I chose to monkey patch the data structure objects to the global
+    # namespace of `dump_vcd`. This might be hacky but probably better than
+    # compiling a million lines of code to a Python function (you will almost
+    # certainly get a segfault from that).
+    # TODO: make this less hacky? type check?
+
+    def dump_vcd():
+      s             = top
+      vcd_file      = vcdmeta.vcd_file
+      clock_net_idx = vcdmeta.clock_net_idx
+      clock_symbol  = net_symbol_mapping[vcdmeta.clock_net_idx]
+      next_neg_edge = 100*vcdmeta.sim_ncycles+50
+      next_pos_edge = 100*vcdmeta.sim_ncycles+100
+
+      try:
+        # Dump VCD
+        for i, _net in enumerate( trimmed_value_nets ):
+          net = eval(str(_net[0]))
+          if i != clock_net_idx:
+            symbol = net_symbol_mapping[i]
+            if '{' in symbol:
+              symbol = symbol.replace('{', '{{')
+            if '}' in symbol:
+              symbol = symbol.replace('}', '}}')
+
+            # If we encounter a BitStruct then dump it as a concatenation of
+            # all fields.
+            # TODO: treat each field in a BitStruct as a separate signal?
+
+            net_bits = net.to_bits() if isinstance(net, BitStruct) else net
+            try:
+              if getattr( vcdmeta, f"last_{i}" ) != net_bits:
+                value_str = net_bits.bin()
+                print( f'b{value_str} {symbol}', file=vcd_file )
+                setattr( vcdmeta, f"last_{i}", deepcopy( net_bits ) )
+            except AttributeError as e:
+              raise AttributeError('{}\n - {} becomes another type. Please check your code.'.format(e, net))
+      except Exception:
+        raise
+
+      # Flop clock at the end of cycle
+      print( '\n#{}\nb0b0 {}'.format(next_neg_edge, clock_symbol), file=vcd_file )
+      # Flip clock of the next cycle
+      print( '#{}\nb0b1 {}\n'.format(next_pos_edge, clock_symbol), file=vcd_file )
+      vcdmeta.sim_ncycles += 1
 
     vcd_symbols = _gen_vcd_symbol()
 
@@ -195,12 +242,19 @@ class VcdGenerationPass( BasePass ):
     print( "$enddefinitions $end\n", file=vcdmeta.vcd_file )
 
     for i, net in enumerate(trimmed_value_nets):
+      net_type_inst = net[0]._dsl.Type()
+
+      # Convert bit struct to bits to get around lack of bit struct
+      # support.
+      if isinstance( net_type_inst, BitStruct ):
+        net_type_inst = net_type_inst.to_bits()
+
       print( "b{value} {symbol}".format(
-          value=net[0]._dsl.Type().bin(), symbol=net_symbol_mapping[i],
+          value=net_type_inst.bin(), symbol=net_symbol_mapping[i],
       ), file=vcdmeta.vcd_file )
 
       # Set this to be the last cycle value
-      setattr( vcdmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
+      setattr( vcdmeta, "last_{}".format(i), net_type_inst.bin() )
 
     # Now we create per-cycle signal value collect functions
 
@@ -210,50 +264,16 @@ class VcdGenerationPass( BasePass ):
     print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
            file=vcdmeta.vcd_file )
 
-    dump_vcd_per_signal = """
-    if vcdmeta.last_{0} != {1}:
-      try:
-        value_str = {1}.bin()
-      except AttributeError as e:
-        raise AttributeError( '{{}}\\n - {1} becomes another type. Please check your code.'.format(e) )
-      print( 'b{{}} {2}'.format( value_str ), file=vcdmeta.vcd_file )
-      vcdmeta.last_{0} = deepcopy({1})"""
-
-    # TODO type check
-
-    # Concatenate the strings for all signals
-
     # Give all ' and " characters a preceding backslash for .format
     for i, x in enumerate(net_symbol_mapping):
       net_symbol_mapping[i] = x.replace('\\', '\\\\').replace('\'','\\\'').replace('\"','\\\"')
 
-    vcd_srcs = []
-    for i, net in enumerate( trimmed_value_nets ):
-      if i != vcdmeta.clock_net_idx:
-        symbol = net_symbol_mapping[i]
-        vcd_srcs.append( dump_vcd_per_signal.format( i, net[0], symbol ) )
+    # Monkey-patch `top`, `net_symbol_mapping`, and `trimmed_value_nets`
+    # to the global namespace of `dump_vcd`
+    dump_vcd.__globals__.update({
+      'top'                : top,
+      'net_symbol_mapping' : net_symbol_mapping,
+      'trimmed_value_nets' : trimmed_value_nets,
+    })
 
-    deepcopy # I have to do this to circumvent the tools
-
-    src =  """
-def dump_vcd():
-
-  try:
-    # Type check
-    {1}
-    # Dump VCD
-    {2}
-  except Exception:
-    raise
-
-  # Flop clock at the end of cycle
-  print( '\\n#{{}}\\nb0b0 {0}'.format(100*vcdmeta.sim_ncycles+50 ),
-        file=vcdmeta.vcd_file )
-  # Flip clock of the next cycle
-  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles+100 ), file=vcdmeta.vcd_file )
-  vcdmeta.sim_ncycles += 1
-""".format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
-
-    s, l_dict = top, {}
-    exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()), l_dict)
-    return l_dict['dump_vcd']
+    return dump_vcd
