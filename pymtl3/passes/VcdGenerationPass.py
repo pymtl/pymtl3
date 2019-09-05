@@ -102,10 +102,6 @@ class VcdGenerationPass( BasePass ):
           net = eval(str(_net[0]))
           if i != clock_net_idx:
             symbol = net_symbol_mapping[i]
-            if '{' in symbol:
-              symbol = symbol.replace('{', '{{')
-            if '}' in symbol:
-              symbol = symbol.replace('}', '}}')
 
             # If we encounter a BitStruct then dump it as a concatenation of
             # all fields.
@@ -263,10 +259,6 @@ class VcdGenerationPass( BasePass ):
     # Flip clock for the first cycle
     print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
            file=vcdmeta.vcd_file )
-
-    # Give all ' and " characters a preceding backslash for .format
-    for i, x in enumerate(net_symbol_mapping):
-      net_symbol_mapping[i] = x.replace('\\', '\\\\').replace('\'','\\\'').replace('\"','\\\"')
 
     # Monkey-patch `top`, `net_symbol_mapping`, and `trimmed_value_nets`
     # to the global namespace of `dump_vcd`
