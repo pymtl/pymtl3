@@ -9,9 +9,8 @@ Date   : May 29, 2019
 
 import time
 from collections import defaultdict
-from copy import deepcopy
 
-from pymtl3.datatypes.BitStruct import BitStruct
+from pymtl3.datatypes.BitStruct import Bits, BitStruct
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
@@ -109,10 +108,17 @@ class VcdGenerationPass( BasePass ):
 
             net_bits = net.to_bits() if isinstance(net, BitStruct) else net
             try:
-              if getattr( vcdmeta, f"last_{i}" ) != net_bits:
+              # `last_value` is the string form of a Bits object in binary
+              # e.g. '0b000' == Bits3(0).bin()
+              last_value = getattr( vcdmeta, f"last_{i}" )
+              if last_value != net_bits:
+                if not hasattr(net_bits, "bin"):
+                  # Probably an integer instead of a Bits. Try to infer its
+                  # bitwidth from its last occurrence...
+                  net_bits = Bits(len(last_value)-2, net_bits)
                 value_str = net_bits.bin()
                 print( f'b{value_str} {symbol}', file=vcd_file )
-                setattr( vcdmeta, f"last_{i}", deepcopy( net_bits ) )
+                setattr( vcdmeta, f"last_{i}", value_str )
             except AttributeError as e:
               raise AttributeError('{}\n - {} becomes another type. Please check your code.'.format(e, net))
       except Exception:
@@ -135,9 +141,15 @@ class VcdGenerationPass( BasePass ):
     # We only collect non-sliced leaf signals
     # TODO only collect leaf signals and for nested structs
     for x in top._dsl.all_signals:
-      for y in x.get_leaf_signals():
-        host = y.get_host_component()
-        component_signals[ host ].add(y)
+      if x.is_leaf_signal():
+        for y in x.get_leaf_signals():
+          host = y.get_host_component()
+          component_signals[ host ].add(y)
+      else:
+        # BitStruct signals are not leaf signals. We just add the whole vector
+        # to the component_signals dict instead of adding all fields
+        host = x.get_host_component()
+        component_signals[ host ].add(x)
 
     # We pre-process all nets in order to remove all sliced wires because
     # they belong to a top level wire and we count that wire
@@ -173,7 +185,8 @@ class VcdGenerationPass( BasePass ):
 
     # Vcd file takes a(0) instead of a[0]
     def vcd_mangle_name( name ):
-      return name.replace('[','(').replace(']',')')
+      # signal names with colons in it silently fail gtkwave
+      return name.replace('[','(').replace(']',')').replace(':', '_$_')
 
     def recurse_models( m, level ):
 
@@ -207,6 +220,11 @@ class VcdGenerationPass( BasePass ):
           if repr(signal) == "s.clk":
             assert vcdmeta.clock_net_idx is None
             vcdmeta.clock_net_idx = len(trimmed_value_nets)
+
+          # This is a signal whose connection is not captured by the
+          # global net data structure. This might be a sliced signal or
+          # a signal updated in an upblk. Creating a new net for it does
+          # not hurt functionality.
 
           trimmed_value_nets.append( [ signal ] )
           signal_net_mapping[signal] = len(signal_net_mapping)
