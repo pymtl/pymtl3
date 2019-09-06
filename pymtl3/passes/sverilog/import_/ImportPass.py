@@ -210,6 +210,7 @@ class ImportPass( BasePass ):
     component_name = config.get_top_module()
     dump_vcd = int(config.is_vl_trace_enabled())
     vcd_timescale = config.get_vl_trace_timescale()
+    half_cycle_time = config.get_vl_trace_half_cycle_time()
     wrapper_name = config.get_c_wrapper_path()
     config.vprint("\n=====Generate C wrapper=====")
 
