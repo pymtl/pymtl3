@@ -44,14 +44,14 @@ def test_ifc_decls( do_test ):
   a = A()
   a._ref_ifcs = { a : \
 """\
-  output logic [31:0] ifc$msg,
-  input logic [0:0] ifc$rdy,
-  output logic [0:0] ifc$val\
+  output logic [31:0] ifc__msg,
+  input logic [0:0] ifc__rdy,
+  output logic [0:0] ifc__val\
 """ }
   a._ref_conns = { a : \
 """\
-  assign ifc$msg = 32'd42;
-  assign ifc$val = 1'd1;\
+  assign ifc__msg = 32'd42;
+  assign ifc__val = 1'd1;\
 """ }
 
   # Yosys backend test reference output
@@ -89,18 +89,18 @@ def test_multi_ifc_decls( do_test ):
   a = A()
   a._ref_ifcs = { a : \
 """\
-  input logic [31:0] in_$msg,
-  output logic [0:0] in_$rdy,
-  input logic [0:0] in_$val,
-  output logic [31:0] out$msg,
-  input logic [0:0] out$rdy,
-  output logic [0:0] out$val\
+  input logic [31:0] in___msg,
+  output logic [0:0] in___rdy,
+  input logic [0:0] in___val,
+  output logic [31:0] out__msg,
+  input logic [0:0] out__rdy,
+  output logic [0:0] out__val\
 """ }
   a._ref_conns = { a : \
 """\
-  assign out$msg = in_$msg;
-  assign in_$rdy = out$rdy;
-  assign out$val = in_$val;\
+  assign out__msg = in___msg;
+  assign in___rdy = out__rdy;
+  assign out__val = in___val;\
 """ }
 
   # Yosys backend test reference output

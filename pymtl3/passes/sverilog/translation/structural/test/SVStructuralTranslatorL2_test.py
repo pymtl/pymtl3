@@ -115,7 +115,7 @@ typedef struct packed {
   a._ref_ports_port_yosys = { a : \
 """\
   input logic [0:0] clk,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___foo,
   output logic [31:0] out,
   input logic [0:0] reset\
 """ }
@@ -125,13 +125,13 @@ typedef struct packed {
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
-  assign in_[31:0] = in_$foo;\
+  assign in_[31:0] = in___foo;\
 """
 }
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = { a : \
 """\
-  assign out = in_$foo;\
+  assign out = in___foo;\
 """ }
 
   # TestVectorSimulator properties
@@ -198,29 +198,29 @@ typedef struct packed {
   a._ref_ports_port_yosys = { a : \
 """\
   input logic [0:0] clk,
-  input logic [31:0] in_$c$bar,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___c__bar,
+  input logic [31:0] in___foo,
   output logic [31:0] out_bar,
   output logic [31:0] out_foo,
   input logic [0:0] reset\
 """ }
   a._ref_ports_wire_yosys = { a : \
 """\
-  logic [31:0] in_$c;
+  logic [31:0] in___c;
   logic [63:0] in_;\
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
-  assign in_$c[31:0] = in_$c$bar;
-  assign in_[63:32] = in_$c$bar;
-  assign in_[31:0] = in_$foo;\
+  assign in___c[31:0] = in___c__bar;
+  assign in_[63:32] = in___c__bar;
+  assign in_[31:0] = in___foo;\
 """
 }
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = { a : \
 """\
-  assign out_foo = in_$foo;
-  assign out_bar = in_$c$bar;\
+  assign out_foo = in___foo;
+  assign out_bar = in___c__bar;\
 """ }
 
   # TestVectorSimulator properties
@@ -276,32 +276,32 @@ typedef struct packed {
   a._ref_ports_port_yosys = { a : \
 """\
   input logic [0:0] clk,
-  input logic [31:0] in_$foo$__0,
-  input logic [31:0] in_$foo$__1,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
+  input logic [31:0] in___foo__0,
+  input logic [31:0] in___foo__1,
+  output logic [31:0] out____0,
+  output logic [31:0] out____1,
   input logic [0:0] reset\
 """ }
   a._ref_ports_wire_yosys = { a : \
 """\
-  logic [31:0] in_$foo [0:1];
+  logic [31:0] in___foo [0:1];
   logic [63:0] in_;
   logic [31:0] out [0:1];\
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
-  assign in_$foo[0] = in_$foo$__0;
-  assign in_$foo[1] = in_$foo$__1;
-  assign in_[63:32] = in_$foo$__1;
-  assign in_[31:0] = in_$foo$__0;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];\
+  assign in___foo[0] = in___foo__0;
+  assign in___foo[1] = in___foo__1;
+  assign in_[63:32] = in___foo__1;
+  assign in_[31:0] = in___foo__0;
+  assign out__0 = out[0];
+  assign out__1 = out[1];\
 """ }
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = { a : \
 """\
-  assign out[0] = in_$foo[0];
-  assign out[1] = in_$foo[1];\
+  assign out[0] = in___foo[0];
+  assign out[1] = in___foo[1];\
 """ }
 
   # TestVectorSimulator properties
@@ -366,35 +366,35 @@ typedef struct packed {
   a._ref_ports_port_yosys = { a : \
 """\
   input logic [0:0] clk,
-  input logic [31:0] in_$c$__0$bar,
-  input logic [31:0] in_$c$__1$bar,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
+  input logic [31:0] in___c__0__bar,
+  input logic [31:0] in___c__1__bar,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
   input logic [0:0] reset\
 """ }
   a._ref_ports_wire_yosys = { a : \
 """\
-  logic [31:0] in_$c$bar [0:1];
-  logic [31:0] in_$c [0:1];
+  logic [31:0] in___c__bar [0:1];
+  logic [31:0] in___c [0:1];
   logic [63:0] in_;
   logic [31:0] out [0:1];\
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
-  assign in_$c$bar[0] = in_$c$__0$bar;
-  assign in_$c[0][31:0] = in_$c$__0$bar;
-  assign in_$c$bar[1] = in_$c$__1$bar;
-  assign in_$c[1][31:0] = in_$c$__1$bar;
-  assign in_[63:32] = in_$c$__1$bar;
-  assign in_[31:0] = in_$c$__0$bar;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];\
+  assign in___c__bar[0] = in___c__0__bar;
+  assign in___c[0][31:0] = in___c__0__bar;
+  assign in___c__bar[1] = in___c__1__bar;
+  assign in___c[1][31:0] = in___c__1__bar;
+  assign in_[63:32] = in___c__1__bar;
+  assign in_[31:0] = in___c__0__bar;
+  assign out__0 = out[0];
+  assign out__1 = out[1];\
 """ }
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = { a : \
 """\
-  assign out[0] = in_$c$bar[0];
-  assign out[1] = in_$c$bar[1];\
+  assign out[0] = in___c__bar[0];
+  assign out[1] = in___c__bar[1];\
 """ }
 
   # TestVectorSimulator properties

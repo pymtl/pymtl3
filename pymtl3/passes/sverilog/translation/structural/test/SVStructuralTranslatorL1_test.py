@@ -220,11 +220,11 @@ def test_port_const_array( do_test ):
   a._ref_ports_port_yosys = { a : \
 """\
   input logic [0:0] clk,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset\
 """ }
   a._ref_ports_wire_yosys = { a : \
@@ -233,11 +233,11 @@ def test_port_const_array( do_test ):
 """ }
   a._ref_ports_conn_yosys = { a : \
 """\
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];\
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];\
 """ }
   a._ref_wires_yosys = a._ref_wires
   a._ref_conns_yosys = a._ref_conns
@@ -393,11 +393,11 @@ def test_port_wire_array_index( do_test ):
   a._ref_ports_port_yosys = { a : \
 """\
   input logic [0:0] clk,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset\
 """
 }
@@ -408,11 +408,11 @@ def test_port_wire_array_index( do_test ):
 }
   a._ref_ports_conn_yosys = { a : \
 """\
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];\
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];\
 """
 }
   a._ref_wires_yosys = a._ref_wires

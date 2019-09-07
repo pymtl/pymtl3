@@ -42,7 +42,7 @@ class ImportPass( SVerilogImportPass ):
     ret = []
     all_properties = dtype.get_all_properties()
     for name, field in all_properties:
-      ret += s.mangle_dtype( d, id_+"$"+name, field )
+      ret += s.mangle_dtype( d, id_+"__"+name, field )
     return ret
 
   def mangle_packed_array( s, d, id_, dtype ):
@@ -53,7 +53,7 @@ class ImportPass( SVerilogImportPass ):
       else:
         ret = []
         for i in range( n_dim[0] ):
-          ret += _mangle_packed_array( d, id_+"$__"+str(i), dtype, n_dim[1:] )
+          ret += _mangle_packed_array( d, id_+"__"+str(i), dtype, n_dim[1:] )
         return ret
 
     n_dim, sub_dtype = dtype.get_dim_sizes(), dtype.get_sub_dtype()
@@ -75,7 +75,7 @@ class ImportPass( SVerilogImportPass ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s.mangle_port( id_+"$__"+str(i), port, n_dim[1:] )
+        ret += s.mangle_port( id_+"__"+str(i), port, n_dim[1:] )
       return ret
 
   #-------------------------------------------------------------------------
@@ -101,7 +101,7 @@ class ImportPass( SVerilogImportPass ):
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
       # Use upblk to generate assignment to a struct port
-      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs+"$"+name, field, pos )
+      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs+"__"+name, field, pos )
       body += _ret
     return ret + body, pos
 
@@ -119,7 +119,7 @@ class ImportPass( SVerilogImportPass ):
     ret = []
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
-      _ret, pos = s._gen_dtype_conns(d, lhs+"."+name, rhs+"$"+name, field, pos)
+      _ret, pos = s._gen_dtype_conns(d, lhs+"."+name, rhs+"__"+name, field, pos)
       ret += _ret
     return ret, pos
 
@@ -130,7 +130,7 @@ class ImportPass( SVerilogImportPass ):
       ret = []
       for idx in range(n_dim[0]):
         _lhs = lhs + "[{idx}]".format( **locals() )
-        _rhs = rhs + "$__{idx}".format( **locals() )
+        _rhs = rhs + "__{idx}".format( **locals() )
         _ret, pos = \
           s._gen_packed_array_conns( d, _lhs, _rhs, dtype, n_dim[1:], pos )
         ret += _ret
@@ -149,7 +149,7 @@ class ImportPass( SVerilogImportPass ):
       ret = []
       for idx in range(n_dim[0]):
         _id_py = id_py + "[{idx}]".format( **locals() )
-        _id_v = id_v + "$__{idx}".format( **locals() )
+        _id_v = id_v + "__{idx}".format( **locals() )
         ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:] )
       return ret
 
@@ -166,11 +166,11 @@ class ImportPass( SVerilogImportPass ):
         ret = []
         for i in range( n_dim[0] ):
           if is_input:
-            _lhs = lhs + "$__" + str(i)
+            _lhs = lhs + "__" + str(i)
             _rhs = rhs + "[{i}]".format( **locals() )
           else:
             _lhs = lhs + "[{i}]".format( **loacls() )
-            _rhs = rhs + "$__" + str(i)
+            _rhs = rhs + "__" + str(i)
           ret += _gen_packed_comb( _lhs, _rhs, dtype, n_dim[1:] )
         return ret
 
@@ -185,11 +185,11 @@ class ImportPass( SVerilogImportPass ):
       all_properties = dtype.get_all_properties()
       for name, field in all_properties:
         if is_input:
-          _lhs = lhs + "$" + name
+          _lhs = lhs + "__" + name
           _rhs = rhs + "." + name
         else:
           _lhs = lhs + "." + name
-          _rhs = rhs + "$" + name
+          _rhs = rhs + "__" + name
         ret += s.gen_dtype_comb( _lhs, _rhs, field )
       return ret
     elif isinstance( dtype, rdt.PackedArray ):
@@ -205,7 +205,7 @@ class ImportPass( SVerilogImportPass ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _lhs = lhs + "$__{i}".format( **locals() )
+        _lhs = lhs + "__{i}".format( **locals() )
         _rhs = rhs + "[{i}]".format( **locals() )
         ret += s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
@@ -217,7 +217,7 @@ class ImportPass( SVerilogImportPass ):
       ret = []
       for i in range( n_dim[0] ):
         _lhs = lhs + "[{i}]".format( **locals() )
-        _rhs = rhs + "$__{i}".format( **locals() )
+        _rhs = rhs + "__{i}".format( **locals() )
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
@@ -231,5 +231,5 @@ class ImportPass( SVerilogImportPass ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s._gen_constraints( name+"$__"+str(i), n_dim[1:], rtype )
+        ret += s._gen_constraints( name+"__"+str(i), n_dim[1:], rtype )
       return ret

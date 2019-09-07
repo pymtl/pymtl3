@@ -273,7 +273,7 @@ def test_freevar( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_, __const$STATE_IDLE };
+  out = { in_, __const__STATE_IDLE };
 end\
 """ }
   # TestVectorSimulator properties

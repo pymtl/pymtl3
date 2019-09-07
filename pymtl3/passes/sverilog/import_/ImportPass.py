@@ -478,15 +478,15 @@ constraint_list = [
       for name, rtype in all_properties:
         _n_dim, _rtype = s._get_rtype( rtype )
         if isinstance( _rtype, rt.Port ):
-          ret += s.mangle_port( id_+"$"+name, _rtype, _n_dim )
+          ret += s.mangle_port( id_+"__"+name, _rtype, _n_dim )
         elif isinstance( _rtype, rt.InterfaceView ):
-          ret += s.mangle_interface( id_+"$"+name, _rtype, _n_dim )
+          ret += s.mangle_interface( id_+"__"+name, _rtype, _n_dim )
         else:
           assert False, "{} is not interface(s) or port(s)!".format(name)
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s.mangle_interface( id_+"$__"+str(i), ifc, n_dim[1:] )
+        ret += s.mangle_interface( id_+"__"+str(i), ifc, n_dim[1:] )
     return ret
 
   def gen_packed_ports( s, rtype ):
@@ -674,7 +674,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for name, rtype in all_properties:
         _n_dim, _rtype = s._get_rtype( rtype )
         _id_py = id_py + ".{name}".format( **locals() )
-        _id_v = id_v + "${name}".format( **locals() )
+        _id_v = id_v + "__{name}".format( **locals() )
         if isinstance( _rtype, rt.Port ):
           ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim )
         else:
@@ -684,7 +684,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       ret = []
       for idx in range( n_dim[0] ):
         _id_py = id_py + "[{idx}]".format( **locals() )
-        _id_v = id_v + "$__{idx}".format( **locals() )
+        _id_v = id_v + "__{idx}".format( **locals() )
         ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:] )
       return ret
 
@@ -977,6 +977,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #=========================================================================
 
   def _verilator_name( s, name ):
+    # TODO: PyMTL translation should generate dollar-sign-free Verilog source
+    # code. Verify that this replacement rule here is not necessary.
     return name.replace('__', '___05F').replace('$', '__024')
 
   def _get_direction( s, port ):

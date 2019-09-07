@@ -86,7 +86,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
       '{} freevar should be a constant!'.format( id_ )
     assert isinstance( rtype.get_dtype(), rdt.Vector ), \
       '{} freevar should be a (list of) integer/BitStruct!'.format( id_ )
-    return s.rtlir_tr_const_decl( '__const$'+id_, rtype, array_type, dtype, obj )
+    return s.rtlir_tr_const_decl( '__const__'+id_, rtype, array_type, dtype, obj )
 
 #-------------------------------------------------------------------------
 # BehavioralRTLIRToSVVisitorL1
@@ -420,7 +420,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
         return '{value}[{idx}]'.format( **locals() )
       else:
-        return '{value}$__{idx}'.format( **locals() )
+        return '{value}__{idx}'.format( **locals() )
 
     # Index on a signal
     elif isinstance( Type, rt.Signal ):
@@ -474,7 +474,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_FreeVar( s, node ):
-    return '__const$'+node.name
+    return '__const__'+node.name
 
   #-----------------------------------------------------------------------
   # visit_TmpVar

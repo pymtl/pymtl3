@@ -150,7 +150,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   def rtlir_tr_var_id( s, var_id ):
-    return var_id.replace( '[', '_$' ).replace( ']', '' )
+    return var_id.replace( '[', '__' ).replace( ']', '' )
 
   def _literal_number( s, nbits, value ):
     value = int( value )
