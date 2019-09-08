@@ -278,8 +278,8 @@ typedef struct packed {
   input logic [0:0] clk,
   input logic [31:0] in___foo__0,
   input logic [31:0] in___foo__1,
-  output logic [31:0] out____0,
-  output logic [31:0] out____1,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
   input logic [0:0] reset\
 """ }
   a._ref_ports_wire_yosys = { a : \

@@ -1244,7 +1244,7 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  __nput logic [31:0] in___c__bar,
+  input logic [31:0] in___c__bar,
   input logic [31:0] in___foo,
   output logic [31:0] out_bar,
   output logic [31:0] out_foo,

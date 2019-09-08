@@ -165,7 +165,7 @@ module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  __utput logic [31:0] ifc__msg,
+  output logic [31:0] ifc__msg,
   input logic [0:0] ifc__rdy,
   output logic [0:0] ifc__val
 );

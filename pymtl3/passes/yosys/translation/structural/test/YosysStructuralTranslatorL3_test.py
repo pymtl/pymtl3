@@ -61,7 +61,7 @@ def test_ifc_array( do_test ):
   a = A()
   a._ref_ifcs_port_yosys = { a : \
 """\
-  __nput logic [31:0] in___0__msg,
+  input logic [31:0] in___0__msg,
   input logic [31:0] in___1__msg,
   output logic [0:0] in___0__rdy,
   output logic [0:0] in___1__rdy,

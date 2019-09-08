@@ -45,11 +45,10 @@ class SVStructuralTranslatorL3(
         return ret
     # Port id is appended after the template of interface id:
     #   > `{id_}__msg` where `msg` is an attribute of the interface.
-    # TODO: verify it's a space not a dollar sign here
     if isinstance( port_rtype, rt.Port ):
       port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
       decl_tmplt = port_rtype.get_direction() + ' ' + \
-                   port_dtype['decl'] + ' ' + port_id + port_array_type['decl']
+                   port_dtype['decl'] + '__' + port_id + port_array_type['decl']
       return [ decl_tmplt ]
     else:
       n_dim = port_array_type["n_dim"]
