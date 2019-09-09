@@ -4,7 +4,7 @@ VcdGenerationPass.py
 ========================================================================
 
 Author : Shunning Jiang, Yanghui Ou, Peitian Pan
-Date   : May 29, 2019
+Date   : Sep 8, 2019
 """
 
 import time
