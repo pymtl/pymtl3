@@ -337,11 +337,11 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+    out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
 end\
 """ }
   do_test( a )
@@ -382,11 +382,11 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  for ( __loopvar__upblk_i = 1; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+    out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
   out[0] = in_[0];
 end\
 """ }
@@ -436,13 +436,13 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
-    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
-  for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
-    out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
+    out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
+  for ( __loopvar__upblk_i = 1; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
+    out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
 end\
 """ }
   do_test( a )
@@ -487,11 +487,11 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-    out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? in_[__loopvar_upblk$i] : in_[0];
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+    out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? in_[__loopvar__upblk_i] : in_[0];
 end\
 """ }
   do_test( a )
@@ -536,11 +536,11 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-    out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? ~in_[__loopvar_upblk$i] : in_[0];
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+    out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? ~in_[__loopvar__upblk_i] : in_[0];
 end\
 """ }
   do_test( a )
@@ -592,15 +592,15 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-    if ( ( in_[__loopvar_upblk$i] != 32'd0 ) && ( ( __loopvar_upblk$i < 4 ) ? in_[__loopvar_upblk$i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+    if ( ( in_[__loopvar__upblk_i] != 32'd0 ) && ( ( __loopvar__upblk_i < 4 ) ? in_[__loopvar__upblk_i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
+      out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
     end
     else
-      out[__loopvar_upblk$i] = 32'd0;
+      out[__loopvar__upblk_i] = 32'd0;
 end\
 """ }
   do_test( a )
@@ -624,11 +624,11 @@ def test_tmpvar( do_test ):
 always_comb begin : upblk
   for ( int i = 0; i < 5; i += 1 ) begin
     if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-      __tmpvar_upblk$tmpvar = in_[i];
+      __tmpvar__upblk_tmpvar = in_[i];
     end
     else
-      __tmpvar_upblk$tmpvar = 32'd0;
-    out[i] = __tmpvar_upblk$tmpvar;
+      __tmpvar__upblk_tmpvar = 32'd0;
+    out[i] = __tmpvar__upblk_tmpvar;
   end
 end\
 """ }
@@ -655,16 +655,16 @@ end\
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
-integer __loopvar_upblk$i;
+integer __loopvar__upblk_i;
 
 always_comb begin : upblk
-  for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 ) begin
-    if ( ( in_[__loopvar_upblk$i] != 32'd0 ) && ( ( __loopvar_upblk$i < 4 ) ? in_[__loopvar_upblk$i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-      __tmpvar_upblk$tmpvar = in_[__loopvar_upblk$i];
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 ) begin
+    if ( ( in_[__loopvar__upblk_i] != 32'd0 ) && ( ( __loopvar__upblk_i < 4 ) ? in_[__loopvar__upblk_i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
+      __tmpvar__upblk_tmpvar = in_[__loopvar__upblk_i];
     end
     else
-      __tmpvar_upblk$tmpvar = 32'd0;
-    out[__loopvar_upblk$i] = __tmpvar_upblk$tmpvar;
+      __tmpvar__upblk_tmpvar = 32'd0;
+    out[__loopvar__upblk_i] = __tmpvar__upblk_tmpvar;
   end
 end\
 """ }

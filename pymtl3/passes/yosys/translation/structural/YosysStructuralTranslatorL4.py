@@ -55,23 +55,23 @@ class YosysStructuralTranslatorL4(
 
     def _subcomp_ifc_port_gen( d, msb, ifc_id, id_, n_dim ):
       if not n_dim:
-        return [ { "direction" : d, "msb" : msb, "id_" : ifc_id + "$" + id_ } ]
+        return [ { "direction" : d, "msb" : msb, "id_" : ifc_id + "__" + id_ } ]
       else:
         ret = []
         for i in range( n_dim[0] ):
           ret += \
-            _subcomp_ifc_port_gen( d, msb, ifc_id+"$__"+str(i), id_, n_dim[1:] )
+            _subcomp_ifc_port_gen( d, msb, ifc_id+"__"+str(i), id_, n_dim[1:] )
         return ret
 
     def _subcomp_ifc_conn_gen( d, cpid, _pid, cwid, _wid, idx, n_dim ):
       if not n_dim:
-        pid = cpid + "$" + _pid
-        wid = cwid + "$" + _wid
+        pid = cpid + "__" + _pid
+        wid = cwid + "__" + _wid
         return [ { "direction" : d, "pid" : pid, "wid" : wid, "idx" : idx } ]
       else:
         ret = []
         for i in range( n_dim[0] ):
-          _cpid = cpid + "$__" + str(i)
+          _cpid = cpid + "__" + str(i)
           _idx = "[{}]".format( i ) + idx
           ret += \
             _subcomp_ifc_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
@@ -92,7 +92,7 @@ class YosysStructuralTranslatorL4(
       for _wire in wire:
         present = "present" in _wire
         msb, _id, n_dim = _wire["msb"], _wire["id_"], _wire["n_dim"]
-        id_ = ifc_id + "$" + _id
+        id_ = ifc_id + "__" + _id
         dct = { "msb" : msb, "id_" : id_, "n_dim" : ifc_n_dim+n_dim }
         if present:
           dct["present"] = True
@@ -149,9 +149,9 @@ class YosysStructuralTranslatorL4(
         p_wires, p_conns = [], []
         for port in port_decls:
           msb, _id = port["msb"], port["id_"]
-          id_ = c_id + "$" + _id
+          id_ = c_id + "__" + _id
           port_id = _id
-          port_wire_id = ( c_id + "$" + _id ).center( 25 )
+          port_wire_id = ( c_id + "__" + _id ).center( 25 )
           packed_type = "[{msb}:0]".format( **locals() )
           p_wires.append( p_wire_tplt.format( **locals() ) )
           p_conns.append( p_conn_tplt.format( **locals() ) )
@@ -163,7 +163,7 @@ class YosysStructuralTranslatorL4(
       else:
         ret = []
         for i in range( n_dim[0] ):
-          ret += _subcomp_port_gen( c_name, c_id+"$__"+str(i), n_dim[1:], port_decls )
+          ret += _subcomp_port_gen( c_name, c_id+"__"+str(i), n_dim[1:], port_decls )
         return ret
 
     def _subcomp_conn_gen( d, cpid, _pid, cwid, _wid, idx, n_dim ):
@@ -172,13 +172,13 @@ class YosysStructuralTranslatorL4(
       else:
         template = "assign {wid}{idx} = {pid};"
       if not n_dim:
-        pid = cpid + "$" + _pid
-        wid = cwid + "$" + _wid
+        pid = cpid + "__" + _pid
+        wid = cwid + "__" + _wid
         return [ template.format( **locals() ) ]
       else:
         ret = []
         for i in range( n_dim[0] ):
-          _cpid = cpid + "$__" + str(i)
+          _cpid = cpid + "__" + str(i)
           _idx = "[{}]".format( i ) + idx
           ret += _subcomp_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
         return ret
@@ -209,7 +209,7 @@ class YosysStructuralTranslatorL4(
     # Add sub-component info to wire declarations and generate declarations
     for wire in _wire_decls:
       msb, _id, n_dim = wire["msb"], wire["id_"], wire["n_dim"]
-      id_ = c_id + "$" + _id
+      id_ = c_id + "__" + _id
       array_dim_str = s._get_array_dim_str( c_n_dim + n_dim )
       packed_type = "[{msb}:0]".format( **locals() )
       if c_n_dim or n_dim or "present" in wire:
@@ -239,6 +239,6 @@ class YosysStructuralTranslatorL4(
 
   def rtlir_tr_subcomp_attr( s, base_signal, attr ):
     # Sub-component attribute
-    s.deq[-1]['s_attr'] += "${}"
+    s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
     return '{base_signal}.{attr}'.format( **locals() )

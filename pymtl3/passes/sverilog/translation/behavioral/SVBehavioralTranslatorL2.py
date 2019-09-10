@@ -29,7 +29,7 @@ class SVBehavioralTranslatorL2( SVBehavioralTranslatorL1, BehavioralTranslatorL2
 
   def rtlir_tr_behavioral_tmpvar( s, id_, upblk_id, dtype ):
     return s.rtlir_tr_wire_decl(
-        "__tmpvar_"+upblk_id+'$'+id_, rt.Wire(dtype['raw_dtype']),
+        "__tmpvar__"+upblk_id+'_'+id_, rt.Wire(dtype['raw_dtype']),
         s.rtlir_tr_unpacked_array_type(None), dtype )
 
 #-------------------------------------------------------------------------
@@ -232,7 +232,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
-    return "__tmpvar_" + node.upblk_name + '$' + node.name
+    return "__tmpvar__" + node.upblk_name + '_' + node.name
 
   #-----------------------------------------------------------------------
   # visit_LoopVarDecl

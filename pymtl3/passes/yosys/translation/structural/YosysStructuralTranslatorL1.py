@@ -43,7 +43,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _pid = pid + "$__{}".format(i)
+        _pid = pid + "__{}".format(i)
         _idx = idx + "[{}]".format(i)
         ret += s._port_conn_gen( d, _pid, wid, _idx, n_dim[1:], dtype )
       return ret
@@ -102,7 +102,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     else:
       ret = []
       for idx in range(n_dim[0]):
-        ret += s.port_gen(d, id_+"$__{}".format(idx), n_dim[1:], dtype)
+        ret += s.port_gen(d, id_+"__{}".format(idx), n_dim[1:], dtype)
       return ret
 
   #---------------------------------------------------------------------

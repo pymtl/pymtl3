@@ -37,7 +37,7 @@ class YosysStructuralTranslatorL2(
     all_properties = dtype.get_all_properties()
     ret = []
     for name, field in all_properties:
-      ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"$"+name, wid, idx, field )
+      ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"__"+name, wid, idx, field )
       c_nbits -= field.get_length()
     return ret
 
@@ -51,7 +51,7 @@ class YosysStructuralTranslatorL2(
         dec_nbits = p_nbits // n_dim[0]
         for i in reversed( range( n_dim[0]) ):
           ret += \
-            _packed_gen(d, c_nbits, pid+"$__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
+            _packed_gen(d, c_nbits, pid+"__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
           c_nbits -= dec_nbits
           assert c_nbits >= 0
         return ret
@@ -75,10 +75,10 @@ class YosysStructuralTranslatorL2(
     all_properties = dtype.get_all_properties()
     ret = []
     for name, field in all_properties:
-      ret += s.dtype_conn_gen( d, pid+"$"+name, wid+"$"+name, idx, field )
+      ret += s.dtype_conn_gen( d, pid+"__"+name, wid+"__"+name, idx, field )
     cur_nbits = dtype.get_length()
     for name, field in all_properties:
-      ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"$"+name, wid, idx, field )
+      ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"__"+name, wid, idx, field )
       cur_nbits -= field.get_length()
     assert cur_nbits == 0
     return ret
@@ -89,7 +89,7 @@ class YosysStructuralTranslatorL2(
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _pid = pid + "$__{}".format(i)
+        _pid = pid + "__{}".format(i)
         _idx = idx + "[{}]".format(i)
         ret += s._packed_conn_gen( d, _pid, wid, _idx, n_dim[1:], dtype )
       return ret
@@ -118,7 +118,7 @@ class YosysStructuralTranslatorL2(
     ret = []
     # Generate wire for each field
     for name, field in all_properties:
-      ret += s.wire_dtype_gen( id_+"$"+name, field, n_dim )
+      ret += s.wire_dtype_gen( id_+"__"+name, field, n_dim )
     # Generate a long vector for this struct signal
     ret.append( {
       "msb" : dtype.get_length()-1,
@@ -165,7 +165,7 @@ class YosysStructuralTranslatorL2(
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += s._packed_gen( d, id_+"$__{}".format(i), n_dim[1:], dtype )
+        ret += s._packed_gen( d, id_+"__{}".format(i), n_dim[1:], dtype )
       return ret
 
   def packed_gen( s, d, id_, _dtype ):
@@ -177,7 +177,7 @@ class YosysStructuralTranslatorL2(
     all_properties = dtype.get_all_properties()
     ret = []
     for name, field in all_properties:
-      ret += s.dtype_gen( d, id_+"$"+name, field )
+      ret += s.dtype_gen( d, id_+"__"+name, field )
     return ret
 
   def dtype_gen( s, d, id_, dtype ):
@@ -200,7 +200,7 @@ class YosysStructuralTranslatorL2(
     return '{base_signal}[{index}]'.format( **locals() )
 
   def rtlir_tr_struct_attr( s, base_signal, attr ):
-    s.deq[-1]['s_attr'] += "${}"
+    s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
     return '{base_signal}.{attr}'.format( **locals() )
 

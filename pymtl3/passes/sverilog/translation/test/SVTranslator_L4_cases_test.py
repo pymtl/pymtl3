@@ -61,15 +61,15 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-  logic [0:0] b$clk;
-  logic [31:0] b$foo;
-  logic [0:0] b$reset;
+  logic [0:0] b__clk;
+  logic [31:0] b__foo;
+  logic [0:0] b__reset;
 
   B b
   (
-    .clk( b$clk ),
-    .foo( b$foo ),
-    .reset( b$reset )
+    .clk( b__clk ),
+    .foo( b__foo ),
+    .reset( b__reset )
   );
 
   // PYMTL SOURCE:
@@ -79,11 +79,11 @@ module A
   //   s.out = s.b.foo
 
   always_comb begin : upblk
-    out = b$foo;
+    out = b__foo;
   end
 
-  assign b$clk = clk;
-  assign b$reset = reset;
+  assign b__clk = clk;
+  assign b__reset = reset;
 
 endmodule
 """
@@ -133,15 +133,15 @@ module A
   output logic [63:0] out,
   input logic [0:0] reset
 );
-  logic [0:0] b$clk;
-  logic [31:0] b$out_b;
-  logic [0:0] b$reset;
+  logic [0:0] b__clk;
+  logic [31:0] b__out_b;
+  logic [0:0] b__reset;
 
   B b
   (
-    .clk( b$clk ),
-    .out_b( b$out_b ),
-    .reset( b$reset )
+    .clk( b__clk ),
+    .out_b( b__out_b ),
+    .reset( b__reset )
   );
 
   // PYMTL SOURCE:
@@ -151,11 +151,11 @@ module A
   //   s.out = zext( s.b.out_b, 64 )
 
   always_comb begin : upblk
-    out = { { 32 { 1'b0 } }, b$out_b };
+    out = { { 32 { 1'b0 } }, b__out_b };
   end
 
-  assign b$clk = clk;
-  assign b$reset = reset;
+  assign b__clk = clk;
+  assign b__reset = reset;
 
 endmodule
 """
@@ -192,26 +192,26 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-  logic [0:0] comp$__0$clk;
-  logic [31:0] comp$__0$out;
-  logic [0:0] comp$__0$reset;
+  logic [0:0] comp__0__clk;
+  logic [31:0] comp__0__out;
+  logic [0:0] comp__0__reset;
 
-  B comp$__0
+  B comp__0
   (
-    .clk( comp$__0$clk ),
-    .out( comp$__0$out ),
-    .reset( comp$__0$reset )
+    .clk( comp__0__clk ),
+    .out( comp__0__out ),
+    .reset( comp__0__reset )
   );
 
-  logic [0:0] comp$__1$clk;
-  logic [31:0] comp$__1$out;
-  logic [0:0] comp$__1$reset;
+  logic [0:0] comp__1__clk;
+  logic [31:0] comp__1__out;
+  logic [0:0] comp__1__reset;
 
-  B comp$__1
+  B comp__1
   (
-    .clk( comp$__1$clk ),
-    .out( comp$__1$out ),
-    .reset( comp$__1$reset )
+    .clk( comp__1__clk ),
+    .out( comp__1__out ),
+    .reset( comp__1__reset )
   );
 
   // PYMTL SOURCE:
@@ -221,13 +221,13 @@ module A
   //   s.out = s.comp[1].out
 
   always_comb begin : upblk
-    out = comp$__1$out;
+    out = comp__1__out;
   end
 
-  assign comp$__1$clk = clk;
-  assign comp$__1$reset = reset;
-  assign comp$__0$clk = clk;
-  assign comp$__0$reset = reset;
+  assign comp__1__clk = clk;
+  assign comp__1__reset = reset;
+  assign comp__0__clk = clk;
+  assign comp__0__reset = reset;
 
 endmodule
 """
@@ -249,36 +249,36 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-  logic [0:0] comp$clk [0:1];
-  logic [31:0] comp$out [0:1];
-  logic [0:0] comp$reset [0:1];
-  logic [0:0] comp$__0$clk;
-  logic [31:0] comp$__0$out;
-  logic [0:0] comp$__0$reset;
+  logic [0:0] comp__clk [0:1];
+  logic [31:0] comp__out [0:1];
+  logic [0:0] comp__reset [0:1];
+  logic [0:0] comp__0__clk;
+  logic [31:0] comp__0__out;
+  logic [0:0] comp__0__reset;
 
-  B comp$__0
+  B comp__0
   (
-    .clk( comp$__0$clk ),
-    .out( comp$__0$out ),
-    .reset( comp$__0$reset )
+    .clk( comp__0__clk ),
+    .out( comp__0__out ),
+    .reset( comp__0__reset )
   );
 
-  logic [0:0] comp$__1$clk;
-  logic [31:0] comp$__1$out;
-  logic [0:0] comp$__1$reset;
+  logic [0:0] comp__1__clk;
+  logic [31:0] comp__1__out;
+  logic [0:0] comp__1__reset;
 
-  B comp$__1
+  B comp__1
   (
-    .clk( comp$__1$clk ),
-    .out( comp$__1$out ),
-    .reset( comp$__1$reset )
+    .clk( comp__1__clk ),
+    .out( comp__1__out ),
+    .reset( comp__1__reset )
   );
-  assign comp$__0$clk = comp$clk[0];
-  assign comp$__1$clk = comp$clk[1];
-  assign comp$out[0] = comp$__0$out;
-  assign comp$out[1] = comp$__1$out;
-  assign comp$__0$reset = comp$reset[0];
-  assign comp$__1$reset = comp$reset[1];
+  assign comp__0__clk = comp__clk[0];
+  assign comp__1__clk = comp__clk[1];
+  assign comp__out[0] = comp__0__out;
+  assign comp__out[1] = comp__1__out;
+  assign comp__0__reset = comp__reset[0];
+  assign comp__1__reset = comp__reset[1];
 
   // PYMTL SOURCE:
   //
@@ -287,13 +287,13 @@ module A
   //   s.out = s.comp[1].out
 
   always_comb begin : upblk
-    out = comp$out[1];
+    out = comp__out[1];
   end
 
-  assign comp$clk[1] = clk;
-  assign comp$reset[1] = reset;
-  assign comp$clk[0] = clk;
-  assign comp$reset[0] = reset;
+  assign comp__clk[1] = clk;
+  assign comp__reset[1] = reset;
+  assign comp__clk[0] = clk;
+  assign comp__reset[0] = reset;
 
 endmodule
 """
