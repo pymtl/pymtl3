@@ -517,7 +517,38 @@ class ComponentLevel3( ComponentLevel2 ):
               valid = isinstance( u, (Signal, Const) ) and \
                       isinstance( v, (OutPort, Wire) )
               if not valid:
-                raise SignalTypeError( \
+                # Check if it's an outport driving inport. If it is
+                # connected at parent level, we permit this loopback from
+                # parent level.
+                if isinstance( u, OutPort ) and isinstance( v, InPort ):
+                  u_connected_in_whost = v in whost._dsl.adjacency and u in whost._dsl.adjacency[v]
+                  v_connected_in_whost = u in whost._dsl.adjacency and v in whost._dsl.adjacency[u]
+                  assert u_connected_in_whost == v_connected_in_whost, "Please contact pymtl3 developers."
+
+                  parent = whost.get_parent_object()
+                  u_connected_in_parent = v in parent._dsl.adjacency and u in parent._dsl.adjacency[v]
+                  v_connected_in_parent = u in parent._dsl.adjacency and v in parent._dsl.adjacency[u]
+                  assert u_connected_in_parent == v_connected_in_parent, "Please contact pymtl3 developers."
+
+                  assert u_connected_in_whost != u_connected_in_parent, "Please contact pymtl3 developers."
+
+                  # We permit this loopback from parent level. Otherwise
+                  # we throw an error
+                  if not u_connected_in_parent:
+                    raise InvalidConnectionError( \
+"""InPort and OutPort loopback connection is only allowed at parent level:
+
+- Unless the connection is fulfilled in parent "{}",
+  {} "{}" of {} (class {}) cannot be driven by {} "{}" of {} (class {}).
+
+  Note: Looks like the connection is fulfilled in "{}".""" \
+          .format(  parent,
+                    type(v).__name__, repr(v), repr(rhost), type(rhost).__name__,
+                    type(u).__name__, repr(u), repr(whost), type(whost).__name__,
+                    repr(whost) ) )
+
+                else:
+                  raise SignalTypeError( \
 """[Type 5] Invalid port type detected at the same host component "{}" (class {})
 
 - {} "{}" cannot be driven by {} "{}".

@@ -776,3 +776,46 @@ def test_invalid_connect_outside_hierarchy():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_invalid_in_out_loopback_at_self():
+
+  class Comp( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits32 )
+      s.z = OutPort( Bits32 )
+      s.x = InPort( Bits32 )
+
+      s.y //= Bits32(1)
+      s.x //= s.y
+      s.z //= s.x
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.comp = Comp()
+
+  try:
+    a = Top()
+    a.elaborate()
+  except InvalidConnectionError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_in_out_loopback_at_parent():
+
+  class Comp( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits32 )
+      s.z = OutPort( Bits32 )
+      s.x = InPort( Bits32 )
+
+      s.y //= Bits32(1)
+      s.z //= s.x
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.comp = Comp()
+      s.comp.x //= s.comp.y
+
+  a = Top()
+  a.elaborate()
