@@ -9,7 +9,7 @@ Date   : Dec 25, 2017
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import SignalTypeError, InvalidConnectionError
+from pymtl3.dsl.errors import InvalidConnectionError, SignalTypeError
 
 from .sim_utils import simple_sim_pass
 
