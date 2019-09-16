@@ -265,5 +265,4 @@ class DynamicSchedulePass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
-    print(schedule)
     return schedule
