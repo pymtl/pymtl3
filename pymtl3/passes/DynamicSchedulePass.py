@@ -6,6 +6,7 @@
 # Date   : Apr 19, 2019
 
 import os
+import random
 from collections import deque
 
 import py
@@ -45,28 +46,34 @@ class DynamicSchedulePass( BasePass ):
     # (SCCs) into super nodes
     #---------------------------------------------------------------------
 
-    def get_reverse_post_order( G ):
-      visited = set()
-      post_order = []
-
-      def dfs_post_order( u ):
-        visited.add( u )
-        for v in G[u]:
-          if v not in visited:
-            dfs_post_order( v )
-        post_order.append( u )
-
-      import random
-      vertices = list(G.keys())
-      random.shuffle(vertices)
-      for u in vertices:
-        if u not in visited:
-          dfs_post_order( u )
-      return post_order[::-1]
-
     # First dfs on G to generate reverse post-order (RPO)
+    # Shunning: we emulate the system stack to implement non-recursive
+    # post-order DFS algorithm. At the beginning, I implemented a more
+    # succinct recursive DFS but it turned out that a 1500-depth chain in
+    # the graph will reach the CPython max recursion depth.
+    # https://docs.python.org/3/library/sys.html#sys.getrecursionlimit
 
-    RPO = get_reverse_post_order( G )
+    PO = []
+
+    vertices = list(G.keys())
+    random.shuffle(vertices)
+
+    visited = set()
+    for u in vertices:
+      if u not in visited:
+        stack = [ (u, False) ]
+        while stack:
+          u, done = stack.pop()
+          visited.add( u )
+          if done:
+            PO.append( u )
+          else:
+            stack.append( (u, True) )
+            for v in G[u]:
+              if v not in visited:
+                stack.append( (v, False) )
+
+    RPO = PO[::-1]
 
     # Second bfs on G_T to generate SCCs
 

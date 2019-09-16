@@ -122,3 +122,33 @@ def test_combinational_loop():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown UpblkCyclicError.")
+
+def test_very_deep_dag():
+
+  class Inner(Component):
+    def construct( s ):
+      s.in_ = InPort(int)
+      s.out = OutPort(int)
+
+      @s.update
+      def up():
+        s.out = s.in_ + 1
+
+    def done( s ):
+      return True
+
+    def line_trace( s ):
+      return "{} > {}".format( s.a, s.b, s.c, s.d )
+
+  class Top(Component):
+    def construct( s, N=2000 ):
+      s.inners = [ Inner() for i in range(N) ]
+      for i in range(N-1):
+        s.inners[i].out //= s.inners[i+1].in_
+
+    def done( s ):
+      return True
+    def line_trace( s ):
+      return ""
+
+  _test_model( Top )
