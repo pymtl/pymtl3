@@ -57,24 +57,47 @@ class DynamicSchedulePass( BasePass ):
 
     vertices = list(G.keys())
     random.shuffle(vertices)
-
     visited = set()
+
+    # The commented algorithm loyally emulates the system stack by storing
+    # the loop index in each stack element and push only one new element
+    # to stack in every iteration. This is basically what recursive dfs
+    # does.
+    #
+    # for u in vertices:
+    #   if u not in visited:
+    #     stack = [ (u, False) ]
+    #     while stack:
+    #       u, idx = stack.pop()
+    #       visited.add( u )
+    #       if idx == len(G[u]):
+    #         PO.append( u )
+    #       else:
+    #         while idx < len(G[u]) and G[u][-idx] in visited:
+    #           idx += 1
+    #         if idx < len(G[u]):
+    #           stack.append( (u, idx) )
+    #           stack.append( (G[u][-idx], 0) )
+    #         else:
+    #           PO.append( u )
+
+    # The following algorithm push all adjacent elements to the stack at
+    # once and later check visited set to avoid redundant visit (instead
+    # of checking visited set when pushing element to the stack). I added
+    # a second_visit flag to add the node to post-order.
+
     for u in vertices:
-      if u not in visited:
-        stack = [ (u, False) ]
-        while stack:
-          u, idx = stack.pop()
+      stack = [ (u, False) ]
+      while stack:
+        u, second_visit = stack.pop()
+
+        if second_visit:
+          PO.append( u )
+        elif u not in visited:
           visited.add( u )
-          if idx == len(G[u]):
-            PO.append( u )
-          else:
-            while idx < len(G[u]) and G[u][-idx] in visited:
-              idx += 1
-            if idx < len(G[u]):
-              stack.append( (u, idx) )
-              stack.append( (G[u][-idx], 0) )
-            else:
-              PO.append( u )
+          stack.append( (u, True) )
+          for v in reversed(G[u]):
+            stack.append( (v, False) )
 
     RPO = PO[::-1]
 
