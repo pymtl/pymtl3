@@ -63,15 +63,18 @@ class DynamicSchedulePass( BasePass ):
       if u not in visited:
         stack = [ (u, False) ]
         while stack:
-          u, done = stack.pop()
+          u, idx = stack.pop()
           visited.add( u )
-          if done:
+          if idx == len(G[u]):
             PO.append( u )
           else:
-            stack.append( (u, True) )
-            for v in G[u]:
-              if v not in visited:
-                stack.append( (v, False) )
+            while idx < len(G[u]) and G[u][-idx] in visited:
+              idx += 1
+            if idx < len(G[u]):
+              stack.append( (u, idx) )
+              stack.append( (G[u][-idx], 0) )
+            else:
+              PO.append( u )
 
     RPO = PO[::-1]
 
@@ -239,4 +242,5 @@ class DynamicSchedulePass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
+    print(schedule)
     return schedule
