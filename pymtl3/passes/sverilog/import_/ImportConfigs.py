@@ -415,6 +415,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
         raise OSError(fill(vl_include_dir_msg)) from e
 
     # Add verilator include path
+    vl_include_dir = vl_include_dir.decode('ascii')
     s.vl_include_dir = vl_include_dir
     includes += [vl_include_dir, vl_include_dir + "/vltstd"]
 
