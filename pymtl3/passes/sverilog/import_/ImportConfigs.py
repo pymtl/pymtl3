@@ -406,6 +406,7 @@ class ImportConfigs( BasePassConfigs ):
       try:
         vl_include_dir = \
             subprocess.check_output(get_dir_cmd, stderr = subprocess.STDOUT).strip()
+        vl_include_dir = vl_include_dir.decode('ascii')
       except OSError as e:
         vl_include_dir_msg = \
 """\
