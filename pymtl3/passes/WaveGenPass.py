@@ -5,7 +5,7 @@ from collections import defaultdict
 from copy import deepcopy
 
 import py
-
+import sys
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
@@ -20,48 +20,18 @@ class WaveGenPass( BasePass ):
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
-    top.gen_wav = PassMetadata()
+    if hasattr( top, "_cl_trace" ):
+      schedule = top._cl_trace.schedule
+    else:
+      schedule = top._sched.schedule
 
-    schedule = top._sched.schedule
-    schedule.append( self.make_wav_gen_func(top, top.gen_wav) )
+    top._vcd = PassMetadata()
 
-    # top.sched.schedule = self.make_wav_gen_func( top )
-
+    schedule.append( self.make_wav_gen_func( top, top._vcd ) )
   def make_wav_gen_func( self, top, vcdmeta ):
+ 
 
-    try:                    vcd_timescale = top.vcd_timescale
-    except AttributeError:  vcd_timescale = "10ps"
-
-    # Print vcd header
-
-    print( "$date\n    {}\n$end\n$version\n    PyMTL 3 (Mamba)\n$end\n"
-           "$timescale {}\n$end\n".format( time.asctime(), vcd_timescale ),
-           file=vcdmeta.vcd_file )
-
-    # Utility generator to create new symbols for each VCD signal.
-    # Code inspired by MyHDL 0.7.
-    # Shunning: I just reuse it from pymtl v2
-
-    def _gen_vcd_symbol():
-
-      # Generate a string containing all valid vcd symbol characters
-      _codechars = ''.join([chr(i) for i in range(33, 127)])
-      _mod       = len(_codechars)
-
-      # Generator logic
-      n = 0
-      while True:
-        q, r = divmod(n, _mod)
-        code = _codechars[r]
-        while q > 0:
-          q, r = divmod(q, _mod)
-          code = _codechars[r] + code
-        yield code
-        n += 1
-
-    vcd_symbols = _gen_vcd_symbol()
-
-    # Preprocess some metadata
+        # Preprocess some metadata
 
     component_signals = defaultdict(set)
 
@@ -94,21 +64,8 @@ class WaveGenPass( BasePass ):
       if new_net:
         trimmed_value_nets.append( new_net )
 
-    # Generate symbol for existing nets
-
-    net_symbol_mapping = [ next(vcd_symbols) for x in trimmed_value_nets ]
-    signal_net_mapping = {}
-
-    for i in range(len(trimmed_value_nets)):
-      for x in trimmed_value_nets[i]:
-        signal_net_mapping[x] = i
-
     # Inner utility function to perform recursive descent of the model.
     # Shunning: I mostly follow v2's implementation
-
-    # Vcd file takes a(0) instead of a[0]
-    def vcd_mangle_name( name ):
-      return name.replace('[','(').replace(']',')')
 
     def recurse_models( m, level ):
 
@@ -118,64 +75,23 @@ class WaveGenPass( BasePass ):
       if my_name == "s":
         my_name = "top"
 
-      # Create a new scope for this module
-      print( "{}$scope module {} $end".format( "    "*level,
-              vcd_mangle_name( my_name ) ),
-              file=vcdmeta.vcd_file )
-
       m_name = repr(m)
 
       # Define all signals for this model.
       for signal in component_signals[m]:
+        trimmed_value_nets.append( [ signal ] )
 
-        # Multiple signals may be collapsed into a single net in the
-        # simulator if they are connected. Generate new vcd symbols per
-        # net, not per signal as an optimization.
-
-        if signal in signal_net_mapping:
-          net_id = signal_net_mapping[signal]
-          symbol = net_symbol_mapping[net_id]
-        else:
-          # We treat this as a new net
-
-          # Check if it's clock. Hardcode clock net
-          if repr(signal) == "s.clk":
-            assert vcdmeta.clock_net_idx is None
-            vcdmeta.clock_net_idx = len(trimmed_value_nets)
-
-          trimmed_value_nets.append( [ signal ] )
-          signal_net_mapping[signal] = len(signal_net_mapping)
-          symbol = next(vcd_symbols)
-          net_symbol_mapping.append( symbol )
-
-        # This signal can be a part of an interface so we have to
-        # "subtract" host component's name from signal's full name
-        # to get the actual name like enq.rdy
-        # TODO struct
-        signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
-        print( "{}$var {type} {nbits} {symbol} {name} $end".format( "    "*(level+1),
-                type='reg', nbits=signal._dsl.Type.nbits, symbol=symbol, name= signal_name),
-              file=vcdmeta.vcd_file )
 
       # Recursively visit all submodels.
       for child in m.get_child_components():
         recurse_models( child, level+1 )
 
-      print( "{}$upscope $end".format("    "*level),
-              file=vcdmeta.vcd_file )
-
     # Begin recursive descent from the top-level model.
     recurse_models( top, 0 )
 
-    # Once all models and their signals have been defined, end the
-    # definition section of the vcd and print the initial values of all
-    # nets in the design.
-    print( "$enddefinitions $end\n", file=vcdmeta.vcd_file )
+
 
     for i, net in enumerate(trimmed_value_nets):
-      print( "b{value} {symbol}".format(
-          value=net[0]._dsl.Type().bin(), symbol=net_symbol_mapping[i],
-      ), file=vcdmeta.vcd_file )
 
       # Set this to be the last cycle value
       setattr( vcdmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
@@ -184,37 +100,36 @@ class WaveGenPass( BasePass ):
 
     vcdmeta.sim_ncycles = 0
 
-    # Flip clock for the first cycle
-    print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
-           file=vcdmeta.vcd_file )
-
     dump_vcd_per_signal = """
-    if vcdmeta.last_{0} != {1}:
-      try:
-        value_str = {1}.bin()
-      except AttributeError as e:
-        raise AttributeError( '{{}}\\n - {1} becomes another type. Please check your code.'.format(e) )
-      print( 'b{{}} {2}'.format( value_str ), file=vcdmeta.vcd_file )
-      vcdmeta.last_{0} = deepcopy({1})"""
+      value_str = {1}.bin()
+      if "{1}" in vcdmeta.sigs:
+        sig_val_lst = vcdmeta.sigs["{1}"]
+        sig_val_lst.append((value_str, vcdmeta.sim_ncycles))
+        vcdmeta.sigs["{1}"] = sig_val_lst
+      else:
+        vcdmeta.sigs["{1}"] = [(value_str, vcdmeta.sim_ncycles)]"""
 
     # TODO type check
 
     # Concatenate the strings for all signals
 
     # Give all ' and " characters a preceding backslash for .format
-    for i, x in enumerate(net_symbol_mapping):
-      net_symbol_mapping[i] = x.replace('\\', '\\\\').replace('\'','\\\'').replace('\"','\\\"')
-
     vcd_srcs = []
     for i, net in enumerate( trimmed_value_nets ):
       if i != vcdmeta.clock_net_idx:
-        symbol = net_symbol_mapping[i]
-        vcd_srcs.append( dump_vcd_per_signal.format( i, net[0], symbol ) )
+        vcd_srcs.append( dump_vcd_per_signal.format( i, net[0]) )
 
     deepcopy # I have to do this to circumvent the tools
 
+    vcdmeta.sigs = {}
+    char_length = 5
+
     src =  """
 def dump_vcd():
+  _tick = u'\u258f'
+  _up, _down = u'\u2571', u'\u2572'
+  _x, _low, _high = u'\u2573', u'\u005f', u'\u203e'
+  _revstart, _revstop = '\x1B[7m', '\x1B[0m'
 
   try:
     # Type check
@@ -224,13 +139,47 @@ def dump_vcd():
   except Exception:
     raise
 
-  # Flop clock at the end of cycle
-  print( '\\n#{{}}\\nb0b0 {0}'.format(100*vcdmeta.sim_ncycles+50 ))
-  # Flip clock of the next cycle
-  print( '#{{}}\\nb0b1 {0}\\n'.format( 100*vcdmeta.sim_ncycles+100 ))
+  if True:
+    # print(sigs)
+    print(\n)
+    print(\n)
+    print("cycle num:" + str(vcdmeta.sim_ncycles))
+    for sig in vcdmeta.sigs:
+      if sig != "s.clk" and sig != "s.reset":
+        print(\n)
+        print("")
+        sys.stdout.write(sig)
+
+        next_char_length = char_length
+        
+        prev_val = None
+
+        for val in vcdmeta.sigs[sig]:
+          if prev_val is not None:
+            if prev_val[0] == '0b0':
+              for i in range(0,next_char_length): sys.stdout.write(_low)
+              if val[1]%5 == 0:
+                sys.stdout.write(" ")
+              if val[0] == '0b1':
+                sys.stdout.write(_up)
+                next_char_length = char_length - 1
+              else:
+                next_char_length = char_length
+            elif prev_val[0] == '0b1':
+              for i in range(0,next_char_length): sys.stdout.write(_high)
+              if val[1]%5== 0:
+                sys.stdout.write(" ")
+              if val[0] == '0b0':
+                sys.stdout.write(_down)
+                next_char_length = char_length - 1
+              else:
+                next_char_length = char_length
+          prev_val = val
+
   vcdmeta.sim_ncycles += 1
-""".format( net_symbol_mapping[ vcdmeta.clock_net_idx ], "", "".join(vcd_srcs) )
+""".format("", "", "".join(vcd_srcs) )
 
     s, l_dict = top, {}
-    exec(compile( src, filename="vcd_generation", mode="exec"), globals().update(locals()), l_dict)
+
+    exec(compile( src, filename="temp", mode="exec"), globals().update(locals()), l_dict)
     return l_dict['dump_vcd']
