@@ -79,20 +79,21 @@ class VcdGenerationPass( BasePass ):
         yield code
         n += 1
 
-    # Given top, net_symbol_mapping, trimmed_value_nets, `make_dump_vcd`
+    # Given top, net_symbol_mapping, trimmed_value_nets, last_values, `make_dump_vcd`
     # returns a dump_vcd function that is ready to be appended to _sched.
     # TODO: type check?
 
-    def make_dump_vcd( top, net_symbol_mapping, trimmed_value_nets ):
+    def make_dump_vcd( top, net_symbol_mapping, trimmed_value_nets, last_values ):
 
       def dump_vcd():
         s             = top
         vcd_file      = vcdmeta.vcd_file
         clock_net_idx = vcdmeta.clock_net_idx
-        clock_symbol  = net_symbol_mapping[vcdmeta.clock_net_idx]
+        clock_symbol  = net_symbol_mapping[clock_net_idx]
         next_neg_edge = 100*vcdmeta.sim_ncycles+50
         next_pos_edge = 100*vcdmeta.sim_ncycles+100
-        evaled_nets   = [eval(str(net[0])) for net in trimmed_value_nets]
+        gd, ld        = globals(), locals()
+        evaled_nets   = [eval(str(net[0]), gd, ld) for net in trimmed_value_nets]
 
         try:
           # Dump VCD
@@ -108,7 +109,7 @@ class VcdGenerationPass( BasePass ):
               try:
                 # `last_value` is the string form of a Bits object in binary
                 # e.g. '0b000' == Bits3(0).bin()
-                last_value = getattr( vcdmeta, f"last_{i}" )
+                last_value = last_values[i]
                 if last_value != net_bits:
                   if not hasattr(net_bits, "bin"):
                     # Probably an integer instead of a Bits. Try to infer its
@@ -116,7 +117,7 @@ class VcdGenerationPass( BasePass ):
                     net_bits = Bits(len(last_value)-2, net_bits)
                   value_str = net_bits.bin()
                   print( f'b{value_str} {symbol}', file=vcd_file )
-                  setattr( vcdmeta, f"last_{i}", value_str )
+                  last_values[i] = value_str
               except AttributeError as e:
                 raise AttributeError('{}\n - {} becomes another type. Please check your code.'.format(e, net))
         except Exception:
@@ -125,7 +126,7 @@ class VcdGenerationPass( BasePass ):
         # Flop clock at the end of cycle
         print( '\n#{}\nb0b0 {}'.format(next_neg_edge, clock_symbol), file=vcd_file )
         # Flip clock of the next cycle
-        print( '#{}\nb0b1 {}\n'.format(next_pos_edge, clock_symbol), file=vcd_file )
+        print( '#{}\nb0b1 {}\n'.format(next_pos_edge, clock_symbol), file=vcd_file, flush=True )
         vcdmeta.sim_ncycles += 1
 
       return dump_vcd
@@ -280,6 +281,6 @@ class VcdGenerationPass( BasePass ):
 
     # Flip clock for the first cycle
     print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
-           file=vcdmeta.vcd_file )
+           file=vcdmeta.vcd_file, flush=True )
 
-    return make_dump_vcd(top, net_symbol_mapping, trimmed_value_nets)
+    return make_dump_vcd(top, net_symbol_mapping, trimmed_value_nets, last_values)
