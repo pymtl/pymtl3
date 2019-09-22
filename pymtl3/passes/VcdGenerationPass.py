@@ -79,7 +79,7 @@ class VcdGenerationPass( BasePass ):
         yield code
         n += 1
 
-    # Given top, net_symbol_mapping, trimmed_value_nets, make_dump_vcd()
+    # Given top, net_symbol_mapping, trimmed_value_nets, `make_dump_vcd`
     # returns a dump_vcd function that is ready to be appended to _sched.
     # TODO: type check?
 
@@ -186,7 +186,7 @@ class VcdGenerationPass( BasePass ):
     # Vcd file takes a(0) instead of a[0]
     def vcd_mangle_name( name ):
       # signal names with colons in it silently fail gtkwave
-      return name.replace('[','(').replace(']',')').replace(':', '_$_')
+      return name.replace('[','(').replace(']',')').replace(':', '__')
 
     def recurse_models( m, level ):
 
