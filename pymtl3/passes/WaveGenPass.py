@@ -25,10 +25,10 @@ class WaveGenPass( BasePass ):
     else:
       schedule = top._sched.schedule
 
-    top._vcd = PassMetadata()
+    top._wav = PassMetadata()
 
-    schedule.append( self.make_wav_gen_func( top, top._vcd ) )
-  def make_wav_gen_func( self, top, vcdmeta ):
+    schedule.append( self.make_wav_gen_func( top, top._wav ) )
+  def make_wav_gen_func( self, top, wavmeta ):
  
 
         # Preprocess some metadata
@@ -48,7 +48,7 @@ class WaveGenPass( BasePass ):
     # they belong to a top level wire and we count that wire
 
     trimmed_value_nets = []
-    vcdmeta.clock_net_idx = None
+    wavmeta.clock_net_idx = None
 
     # FIXME handle the case where the top level signal is in a value net
     for writer, net in top.get_all_value_nets():
@@ -58,8 +58,8 @@ class WaveGenPass( BasePass ):
           new_net.append( x )
           if repr(x) == "s.clk":
             # Hardcode clock net because it needs to go up and down
-            assert vcdmeta.clock_net_idx is None
-            vcdmeta.clock_net_idx = len(trimmed_value_nets)
+            assert wavmeta.clock_net_idx is None
+            wavmeta.clock_net_idx = len(trimmed_value_nets)
 
       if new_net:
         trimmed_value_nets.append( new_net )
@@ -94,38 +94,38 @@ class WaveGenPass( BasePass ):
     for i, net in enumerate(trimmed_value_nets):
 
       # Set this to be the last cycle value
-      setattr( vcdmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
+      setattr( wavmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
 
     # Now we create per-cycle signal value collect functions
 
-    vcdmeta.sim_ncycles = 0
+    wavmeta.sim_ncycles = 0
 
-    dump_vcd_per_signal = """
+    dump_wav_per_signal = """
       value_str = {1}.bin()
-      if "{1}" in vcdmeta.sigs:
-        sig_val_lst = vcdmeta.sigs["{1}"]
-        sig_val_lst.append((value_str, vcdmeta.sim_ncycles))
-        vcdmeta.sigs["{1}"] = sig_val_lst
+      if "{1}" in wavmeta.sigs:
+        sig_val_lst = wavmeta.sigs["{1}"]
+        sig_val_lst.append((value_str, wavmeta.sim_ncycles))
+        wavmeta.sigs["{1}"] = sig_val_lst
       else:
-        vcdmeta.sigs["{1}"] = [(value_str, vcdmeta.sim_ncycles)]"""
+        wavmeta.sigs["{1}"] = [(value_str, wavmeta.sim_ncycles)]"""
 
     # TODO type check
 
     # Concatenate the strings for all signals
 
     # Give all ' and " characters a preceding backslash for .format
-    vcd_srcs = []
+    wav_srcs = []
     for i, net in enumerate( trimmed_value_nets ):
-      if i != vcdmeta.clock_net_idx:
-        vcd_srcs.append( dump_vcd_per_signal.format( i, net[0]) )
+      if i != wavmeta.clock_net_idx:
+        wav_srcs.append( dump_wav_per_signal.format( i, net[0]) )
 
     deepcopy # I have to do this to circumvent the tools
 
-    vcdmeta.sigs = {}
+    wavmeta.sigs = {}
     char_length = 5
 
     src =  """
-def dump_vcd():
+def dump_wav():
   _tick = u'\u258f'
   _up, _down = u'\u2571', u'\u2572'
   _x, _low, _high = u'\u2573', u'\u005f', u'\u203e'
@@ -134,7 +134,6 @@ def dump_vcd():
   try:
     # Type check
     {1}
-    # Dump VCD
     {2}
   except Exception:
     raise
@@ -143,8 +142,8 @@ def dump_vcd():
     # print(sigs)
     print(\n)
     print(\n)
-    print("cycle num:" + str(vcdmeta.sim_ncycles))
-    for sig in vcdmeta.sigs:
+    print("cycle num:" + str(wavmeta.sim_ncycles))
+    for sig in wavmeta.sigs:
       if sig != "s.clk" and sig != "s.reset":
         print(\n)
         print("")
@@ -154,7 +153,7 @@ def dump_vcd():
         
         prev_val = None
 
-        for val in vcdmeta.sigs[sig]:
+        for val in wavmeta.sigs[sig]:
           if prev_val is not None:
             if prev_val[0] == '0b0':
               for i in range(0,next_char_length): sys.stdout.write(_low)
@@ -176,10 +175,10 @@ def dump_vcd():
                 next_char_length = char_length
           prev_val = val
 
-  vcdmeta.sim_ncycles += 1
-""".format("", "", "".join(vcd_srcs) )
+  wavmeta.sim_ncycles += 1
+""".format("", "", "".join(wav_srcs) )
 
     s, l_dict = top, {}
 
     exec(compile( src, filename="temp", mode="exec"), globals().update(locals()), l_dict)
-    return l_dict['dump_vcd']
+    return l_dict['dump_wav']
