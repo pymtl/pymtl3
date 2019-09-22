@@ -212,6 +212,15 @@ class ComponentLevel3( ComponentLevel2 ):
     exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
     blk = dict_local[ 'closure' ]( lamb.__closure__ )
 
+    # Add an attribute that provides info of the original lambda function.
+    # Might be useful for translation.
+
+    blk._pymtl_lambda_connection_info = {
+      "file_name" : inspect.getsourcefile( lamb ),
+      "line_no"   : line,
+      "line"      : srcs[0],
+    }
+
     # Add the source code to linecache for the compiled function
 
     new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )

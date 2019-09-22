@@ -77,7 +77,20 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
     _trim( upblk_py_src )
     while upblk_py_src and not upblk_py_src[-1]:
       upblk_py_src = upblk_py_src[:-1]
-    py_src = [ "PYMTL SOURCE:", "" ] + upblk_py_src
+
+    # Add comments to the generated block
+    py_src = [ "PYMTL SOURCE:", "" ]
+    try:
+      # Only lambda connection upblks come with this attribute
+      info = upblk._pymtl_lambda_connection_info
+      py_src += [
+        f"This upblk was generated from a lambda function defined in file {info['file_name']}, line {info['line_no']}:",
+        f"{info['line']}"
+      ]
+    except AttributeError:
+      pass
+    py_src += upblk_py_src
+
     return ["// "+x for x in py_src]
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
