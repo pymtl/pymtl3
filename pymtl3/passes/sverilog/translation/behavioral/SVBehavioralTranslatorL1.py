@@ -80,15 +80,17 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
 
     # Add comments to the generated block
     py_src = [ "PYMTL SOURCE:", "" ]
-    try:
-      # Only lambda connection upblks come with this attribute
-      info = upblk._pymtl_lambda_connection_info
+
+    if upblk.is_lambda:
       py_src += [
-        f"This upblk was generated from a lambda function defined in file {info['file_name']}, line {info['line_no']}:",
-        f"{info['line']}"
+        f"This upblk was generated from a lambda function defined in file {upblk.filename}, line {upblk.lino}:",
+        f"{upblk.src}",
       ]
-    except AttributeError:
-      pass
+    else:
+      py_src += [
+        f"This upblk was generated from an upblk defined in file {upblk.filename}, line {upblk.lino}",
+      ]
+
     py_src += upblk_py_src
 
     return ["// "+x for x in py_src]

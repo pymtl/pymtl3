@@ -75,9 +75,14 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
+        upblk_ir = s.behavioral.rtlir[ m ][ blk ]
         upblk_srcs.append( s.rtlir_tr_upblk_src(
-          blk, s.behavioral.rtlir[ m ][ blk ]
+          blk, upblk_ir
         ) )
+        blk.is_lambda = upblk_ir.is_lambda
+        blk.src       = upblk_ir.src
+        blk.lino      = upblk_ir.lino
+        blk.filename  = upblk_ir.filename
         upblk_py_srcs.append( s.rtlir_tr_upblk_py_src( blk ) )
         upblk_decls.append( s.rtlir_tr_upblk_decl(
           blk, upblk_srcs[-1], upblk_py_srcs[-1]
