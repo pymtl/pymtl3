@@ -1,4 +1,3 @@
-
 from .bits_import import *
 from .bits_import import _bitwidths
 from .BitStruct import BitStruct, mk_bit_struct

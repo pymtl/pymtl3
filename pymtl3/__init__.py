@@ -1,4 +1,3 @@
-
 from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl.Component import Component
