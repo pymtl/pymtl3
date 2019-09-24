@@ -12,7 +12,11 @@ from pymtl3.datatypes import Bits8, Bits10, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import WR, U
-from pymtl3.dsl.errors import InvalidConnectionError, MultiWriterError, UpblkFuncSameNameError
+from pymtl3.dsl.errors import (
+    InvalidConnectionError,
+    MultiWriterError,
+    UpblkFuncSameNameError,
+)
 
 from .sim_utils import simple_sim_pass
 
