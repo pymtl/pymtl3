@@ -16,6 +16,7 @@ def local_do_test( m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
+  print(tr.hierarchy.src)
   check_eq( tr.hierarchy.src, m._ref_src )
 
 #-------------------------------------------------------------------------
@@ -1167,8 +1168,11 @@ module A
 
   // PYMTL SOURCE:
   //
-  // def _lambda__s_out():
-  //   s.out = s.in_ + Bits32(42)
+  // This upblk was generated from a lambda function defined in file \
+  //    .../pymtl3/passes/sverilog/translation/test/SVTranslator_L2_cases_test.py, line 1157:
+  //       s.out //= lambda: s.in_ + Bits32(42)
+
+  // def _lambda__s_out(): s.out = s.in_ + Bits32(42)
 
   always_comb begin : _lambda__s_out
     out = in_ + 32'd42;
