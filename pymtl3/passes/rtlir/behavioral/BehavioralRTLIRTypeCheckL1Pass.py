@@ -246,7 +246,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = node.value.Type.get_property( node.attr )
 
   def visit_Index( s, node ):
-    idx = getattr( node.idx, '_value', None )
+    idx = None if not hasattr(node.idx, "_value") else node.idx._value
     if isinstance( node.value.Type, rt.Array ):
       if idx is not None and not (0 <= idx < node.value.Type.get_dim_sizes()[0]):
         raise PyMTLTypeError( s.blk, node.ast, 'array index out of range!' )
@@ -280,8 +280,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         'cannot perform index on {}!'.format(node.value.Type))
 
   def visit_Slice( s, node ):
-    lower_val = getattr( node.lower, '_value', None )
-    upper_val  = getattr( node.upper, '_value', None )
+    lower_val = None if not hasattr(node.lower, "_value") else node.lower._value
+    upper_val = None if not hasattr(node.upper, "_value") else node.upper._value
     dtype = node.value.Type.get_dtype()
 
     if not isinstance( dtype, rdt.Vector ):
