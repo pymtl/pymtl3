@@ -1,4 +1,3 @@
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMinionIfcFL
