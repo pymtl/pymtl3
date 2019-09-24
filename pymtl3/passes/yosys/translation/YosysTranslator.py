@@ -39,8 +39,7 @@ class YosysTranslator( SVTranslator ):
     template =\
 """\
 // Definition of PyMTL Component {component_name}
-// {file_info}
-// Full name: {full_name}
+// {file_info}{optional_full_name}
 module {module_name}
 (
 {ports});
@@ -52,6 +51,11 @@ endmodule
     ports_template = "{port_decls}{ifc_decls}"
     full_name = getattr( structural, "component_full_name" )
     module_name = getattr( structural, "component_unique_name" )
+
+    if full_name != module_name:
+      optional_full_name = "\n// Full name: {}".format(full_name)
+    else:
+      optional_full_name = ""
 
     port_dct = getattr( structural, "decl_ports" )
     structural.p_port_decls = port_dct["port_decls"]
