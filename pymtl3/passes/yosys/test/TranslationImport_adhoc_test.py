@@ -58,17 +58,15 @@ from pymtl3.passes.sverilog.test.TranslationImport_adhoc_test import (
     test_unpacked_signal_index,
     test_zext,
 )
-from pymtl3.passes.yosys import ImportPass, TranslationPass
+from pymtl3.passes.yosys import ImportPass, TranslationImportPass, TranslationPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 
 def local_do_test( _m ):
   try:
     _m.elaborate()
-    _m.yosys_translate = True
-    _m.yosys_import = True
-    _m.apply( TranslationPass() )
-    m = ImportPass()( _m )
+    _m.yosys_translate_import = True
+    m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:

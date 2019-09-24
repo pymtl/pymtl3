@@ -5,12 +5,12 @@
 # Date   : June 14, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-import os
 
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
+from pymtl3.passes.sverilog import ImportConfigs
 from pymtl3.passes.sverilog import ImportPass as SVerilogImportPass
 from pymtl3.passes.sverilog.errors import SVerilogImportError
 from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
@@ -18,60 +18,18 @@ from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_
 
 class ImportPass( SVerilogImportPass ):
 
-  def traverse_hierarchy( s, m ):
-    if hasattr(m, "yosys_import") and m.yosys_import:
-      return s.do_import( m )
-    else:
-      for child in m.get_child_components():
-        s.traverse_hierarchy( child )
-
   #-----------------------------------------------------------------------
-  # get_imported_object
+  # Backend-specific methods
   #-----------------------------------------------------------------------
 
-  def get_imported_object( s, m ):
-    rtype = get_component_ifc_rtlir( m )
-    full_name = get_component_unique_name( rtype )
-    packed_ports = s.gen_packed_ports( rtype )
-    dump_vcd = 1 if hasattr( m, "dump_vcd" ) else 0
-    try:
-      is_same = m._pass_yosys_translation.is_same
-    except AttributeError:
-      is_same = False
+  def get_backend_name( s ):
+    return "yosys"
 
-    try:
-      sv_file_path = m.yosys_import_path
-    except AttributeError:
-      sv_file_path = full_name + '.sv'
+  def get_config( s, m ):
+    return m.yosys_import
 
-    # Check if the verilated model is cached
-    cached = False
-    obj_dir = 'obj_dir_' + full_name
-    c_wrapper = full_name + '_v.cpp'
-    py_wrapper = full_name + '_v.py'
-    shared_lib = 'lib{}_v.so'.format( full_name )
-    if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
-       os.path.exists(py_wrapper) and os.path.exists(shared_lib):
-      cached = True
-
-    assert os.path.isfile( sv_file_path ), \
-      "Cannot import {}: {} is not a file!".format( m, sv_file_path )
-
-    s.create_verilator_model( sv_file_path, full_name, dump_vcd, cached )
-
-    c_wrapper_name, port_cdefs = \
-        s.create_verilator_c_wrapper( m, full_name, packed_ports, dump_vcd, cached )
-
-    lib_name = \
-        s.create_shared_lib( c_wrapper_name, full_name, dump_vcd, cached )
-
-    py_wrapper_name, symbols = \
-        s.create_py_wrapper( full_name, rtype, packed_ports,
-                           lib_name, port_cdefs, dump_vcd, cached)
-
-    imp = s.import_component( py_wrapper_name, full_name, symbols )
-
-    return imp
+  def get_translation_namespace( s, m ):
+    return m._pass_yosys_translation
 
   #-------------------------------------------------------------------------
   # Name mangling functions
@@ -84,7 +42,7 @@ class ImportPass( SVerilogImportPass ):
     ret = []
     all_properties = dtype.get_all_properties()
     for name, field in all_properties:
-      ret += s.mangle_dtype( d, id_+"$"+name, field )
+      ret += s.mangle_dtype( d, id_+"__"+name, field )
     return ret
 
   def mangle_packed_array( s, d, id_, dtype ):
@@ -95,7 +53,7 @@ class ImportPass( SVerilogImportPass ):
       else:
         ret = []
         for i in range( n_dim[0] ):
-          ret += _mangle_packed_array( d, id_+"$__"+str(i), dtype, n_dim[1:] )
+          ret += _mangle_packed_array( d, id_+"__"+str(i), dtype, n_dim[1:] )
         return ret
 
     n_dim, sub_dtype = dtype.get_dim_sizes(), dtype.get_sub_dtype()
@@ -117,7 +75,7 @@ class ImportPass( SVerilogImportPass ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s.mangle_port( id_+"$__"+str(i), port, n_dim[1:] )
+        ret += s.mangle_port( id_+"__"+str(i), port, n_dim[1:] )
       return ret
 
   #-------------------------------------------------------------------------
@@ -143,7 +101,7 @@ class ImportPass( SVerilogImportPass ):
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
       # Use upblk to generate assignment to a struct port
-      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs+"$"+name, field, pos )
+      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs+"__"+name, field, pos )
       body += _ret
     return ret + body, pos
 
@@ -161,7 +119,7 @@ class ImportPass( SVerilogImportPass ):
     ret = []
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
-      _ret, pos = s._gen_dtype_conns(d, lhs+"."+name, rhs+"$"+name, field, pos)
+      _ret, pos = s._gen_dtype_conns(d, lhs+"."+name, rhs+"__"+name, field, pos)
       ret += _ret
     return ret, pos
 
@@ -172,7 +130,7 @@ class ImportPass( SVerilogImportPass ):
       ret = []
       for idx in range(n_dim[0]):
         _lhs = lhs + "[{idx}]".format( **locals() )
-        _rhs = rhs + "$__{idx}".format( **locals() )
+        _rhs = rhs + "__{idx}".format( **locals() )
         _ret, pos = \
           s._gen_packed_array_conns( d, _lhs, _rhs, dtype, n_dim[1:], pos )
         ret += _ret
@@ -191,7 +149,7 @@ class ImportPass( SVerilogImportPass ):
       ret = []
       for idx in range(n_dim[0]):
         _id_py = id_py + "[{idx}]".format( **locals() )
-        _id_v = id_v + "$__{idx}".format( **locals() )
+        _id_v = id_v + "__{idx}".format( **locals() )
         ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:] )
       return ret
 
@@ -208,11 +166,11 @@ class ImportPass( SVerilogImportPass ):
         ret = []
         for i in range( n_dim[0] ):
           if is_input:
-            _lhs = lhs + "$__" + str(i)
+            _lhs = lhs + "__" + str(i)
             _rhs = rhs + "[{i}]".format( **locals() )
           else:
             _lhs = lhs + "[{i}]".format( **loacls() )
-            _rhs = rhs + "$__" + str(i)
+            _rhs = rhs + "__" + str(i)
           ret += _gen_packed_comb( _lhs, _rhs, dtype, n_dim[1:] )
         return ret
 
@@ -227,11 +185,11 @@ class ImportPass( SVerilogImportPass ):
       all_properties = dtype.get_all_properties()
       for name, field in all_properties:
         if is_input:
-          _lhs = lhs + "$" + name
+          _lhs = lhs + "__" + name
           _rhs = rhs + "." + name
         else:
           _lhs = lhs + "." + name
-          _rhs = rhs + "$" + name
+          _rhs = rhs + "__" + name
         ret += s.gen_dtype_comb( _lhs, _rhs, field )
       return ret
     elif isinstance( dtype, rdt.PackedArray ):
@@ -247,7 +205,7 @@ class ImportPass( SVerilogImportPass ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _lhs = lhs + "$__{i}".format( **locals() )
+        _lhs = lhs + "__{i}".format( **locals() )
         _rhs = rhs + "[{i}]".format( **locals() )
         ret += s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
@@ -259,7 +217,7 @@ class ImportPass( SVerilogImportPass ):
       ret = []
       for i in range( n_dim[0] ):
         _lhs = lhs + "[{i}]".format( **locals() )
-        _rhs = rhs + "$__{i}".format( **locals() )
+        _rhs = rhs + "__{i}".format( **locals() )
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
@@ -273,5 +231,5 @@ class ImportPass( SVerilogImportPass ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s._gen_constraints( name+"$__"+str(i), n_dim[1:], rtype )
+        ret += s._gen_constraints( name+"__"+str(i), n_dim[1:], rtype )
       return ret

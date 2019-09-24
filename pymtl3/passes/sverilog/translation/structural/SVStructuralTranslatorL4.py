@@ -35,9 +35,9 @@ class SVStructuralTranslatorL4(
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {
-      'def' : s.rtlir_tr_wire_decl('{c_id}$'+port_id, port_def_rtype,
+      'def' : s.rtlir_tr_wire_decl('{c_id}__'+port_id, port_def_rtype,
                 port_array_type, port_dtype),
-      'decl' : '.{port_id}( {{c_id}}${port_id} )'.format(**locals())
+      'decl' : '.{port_id}( {{c_id}}__{port_id} )'.format(**locals())
     }
 
   def rtlir_tr_subcomp_ifc_port_decls( s, _ifc_port_decls ):
@@ -60,9 +60,9 @@ class SVStructuralTranslatorL4(
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {
-      'def' : s.rtlir_tr_wire_decl('{c_id}${ifc_id}$'+port_id, port_def_rtype,
+      'def' : s.rtlir_tr_wire_decl('{c_id}__{ifc_id}__'+port_id, port_def_rtype,
                 port_array_type, port_dtype),
-      'decl' : '.{{ifc_id}}${port_id}( {{c_id}}${{ifc_id}}${port_id} )'. \
+      'decl' : '.{{ifc_id}}__{port_id}( {{c_id}}__{{ifc_id}}__{port_id} )'. \
                 format(**locals())
     }
 
@@ -88,7 +88,7 @@ class SVStructuralTranslatorL4(
         } ]
       else:
         return sum( [gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
-            c_n_dim+'$__'+str( idx ), ports ) for idx in range( n_dim[0] )], [] )
+            c_n_dim+'__'+str( idx ), ports ) for idx in range( n_dim[0] )], [] )
 
     n_dim = ifc_array_type[ 'n_dim' ]
     return \
@@ -128,7 +128,7 @@ class SVStructuralTranslatorL4(
 
       else:
         return sum( [gen_subcomp_array_decl( c_id,
-            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ) \
+            port_conns, ifc_conns, n_dim[1:], c_n_dim+'__'+str(idx) ) \
                 for idx in range( n_dim[0] )], [] )
 
     # If `c_array_type` is not None we need to impelement an array of
@@ -146,7 +146,7 @@ class SVStructuralTranslatorL4(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_component_array_index( s, base_signal, index ):
-    return '{base_signal}$__{index}'.format(**locals())
+    return '{base_signal}__{index}'.format(**locals())
 
   def rtlir_tr_subcomp_attr( s, base_signal, attr ):
-    return '{base_signal}${attr}'.format(**locals())
+    return '{base_signal}__{attr}'.format(**locals())

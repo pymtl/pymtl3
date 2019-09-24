@@ -65,7 +65,7 @@ end\
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in_$foo;
+  out = in___foo;
 end\
 """ }
   do_test( a )
@@ -147,7 +147,7 @@ end\
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_$bar[0], in_$bar[1], in_$foo };
+  out = { in___bar[0], in___bar[1], in___foo };
 end\
 """ }
   do_test( a )
@@ -192,7 +192,7 @@ end\
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_$bar[0], in_$c$woof, in_$foo };
+  out = { in___bar[0], in___c__woof, in___foo };
 end\
 """ }
   do_test( a )

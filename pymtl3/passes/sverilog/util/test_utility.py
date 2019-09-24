@@ -14,10 +14,8 @@ from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.dsl import OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog import ImportPass as SVImportPass
-from pymtl3.passes.sverilog import TranslationPass as SVTranslationPass
-from pymtl3.passes.yosys import ImportPass as YosysImportPass
-from pymtl3.passes.yosys import TranslationPass as YosysTranslationPass
+from pymtl3.passes.sverilog import TranslationImportPass as SVTransImportPass
+from pymtl3.passes.yosys import TranslationImportPass as YosysTransImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 
@@ -295,15 +293,11 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
     # If it simulates correctly, translate it and import it back
     dut.elaborate()
     if backend == "sverilog":
-      dut.sverilog_translate = True
-      dut.sverilog_import = True
-      dut.apply( SVTranslationPass() )
-      imported_obj = SVImportPass()( dut )
+      dut.sverilog_translate_import = True
+      imported_obj = SVTransImportPass()( dut )
     elif backend == "yosys":
-      dut.yosys_translate = True
-      dut.yosys_import = True
-      dut.apply( YosysTranslationPass() )
-      imported_obj = YosysImportPass()( dut )
+      dut.yosys_translate_import = True
+      imported_obj = YosysTransImportPass()( dut )
     # Run another vector simulator spin
     imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )
     imported_sim.run_test()

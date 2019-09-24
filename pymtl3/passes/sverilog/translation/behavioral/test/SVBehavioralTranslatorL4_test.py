@@ -54,9 +54,9 @@ def test_interface( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out$val = in_$val;
-  out$msg = in_$msg;
-  in_$rdy = out$rdy;
+  out__val = in___val;
+  out__msg = in___msg;
+  in___rdy = out__rdy;
 end\
 """ }
   # TestVectorSimulator properties
@@ -94,7 +94,7 @@ def test_interface_index( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in_$__1$foo;
+  out = in___1__foo;
 end\
 """ }
   # TestVectorSimulator properties
@@ -114,7 +114,7 @@ end\
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in_$foo[1];
+  out = in___foo[1];
 end\
 """ }
   do_test( a )

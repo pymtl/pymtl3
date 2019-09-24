@@ -28,7 +28,7 @@ class SVBehavioralTranslatorL3(
     assert isinstance( rtype, rt.Const ), \
       '{} freevar should be a constant!'.format( id_ )
     if isinstance( rtype.get_dtype(), rdt.Struct ):
-      return s.rtlir_tr_const_decl( '__const$'+id_, rtype, array_type, dtype, obj )
+      return s.rtlir_tr_const_decl( '__const__'+id_, rtype, array_type, dtype, obj )
     else:
       return super().rtlir_tr_behavioral_freevar(
           id_, rtype, array_type, dtype, obj )
