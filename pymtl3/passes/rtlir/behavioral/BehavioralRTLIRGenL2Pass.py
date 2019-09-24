@@ -35,7 +35,7 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
         m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
-          visitor.enter( blk, m.get_update_block_ast( blk ) )
+          visitor.enter( blk, m.get_update_block_info( blk )[-1] )
 
 class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
   def __init__( s, component ):

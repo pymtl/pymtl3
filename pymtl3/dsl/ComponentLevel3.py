@@ -59,8 +59,6 @@ class ComponentLevel3( ComponentLevel2 ):
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
-    # lambda_upblk_src stores the original source code
-    inst._dsl.lambda_upblk_src = {}
 
     return inst
 
@@ -68,8 +66,6 @@ class ComponentLevel3( ComponentLevel2 ):
   def _collect_vars( s, m ):
     super()._collect_vars( m )
     if isinstance( m, ComponentLevel3 ):
-      s._dsl.all_lambda_upblk_src.update( m._dsl.lambda_upblk_src )
-
       all_ajd = s._dsl.all_adjacency
       for k, v in m._dsl.adjacency.items():
         all_ajd[k] |= v
@@ -212,22 +208,12 @@ class ComponentLevel3( ComponentLevel2 ):
     exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
     blk = dict_local[ 'closure' ]( lamb.__closure__ )
 
-    # Add an attribute that provides info of the original lambda function.
-    # Might be useful for translation.
-
-    blk._pymtl_lambda_connection_info = {
-      "file_name" : inspect.getsourcefile( lamb ),
-      "line_no"   : line,
-      "line"      : srcs[0],
-    }
-
     # Add the source code to linecache for the compiled function
 
     new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
     ComponentLevel1.update( s, blk )
-    s._dsl.lambda_upblk_src[ blk ] = src
 
     # This caching here does no caching because the block name contains
     # the signal name intentionally to avoid conflicts. With //= it is
@@ -239,7 +225,8 @@ class ComponentLevel3( ComponentLevel2 ):
     # So the cache call here is just to reuse the existing interface to
     # register the AST/src of the generated block for elaborate or passes
     # to use.
-    s._cache_func_meta( blk, new_src, lambda_upblk_module )
+    s._cache_func_meta( blk,
+      ("".join(srcs), lambda_upblk_module, line, inspect.getsourcefile( lamb )) )
     return blk
 
   def _connect_signal_const( s, o1, o2 ):
@@ -855,7 +842,6 @@ class ComponentLevel3( ComponentLevel2 ):
   def _elaborate_declare_vars( s ):
     super()._elaborate_declare_vars()
     s._dsl.all_adjacency = defaultdict(set)
-    s._dsl.all_lambda_upblk_src = {}
 
   # Override
   def _elaborate_collect_all_vars( s ):

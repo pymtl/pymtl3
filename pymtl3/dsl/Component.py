@@ -574,13 +574,6 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_lambda_upblk_src( s ):
-    try:
-      s._check_called_at_elaborate_top( "get_all_lambda_upblk_src" )
-      return s._dsl.all_lambda_upblk_src
-    except AttributeError:
-      raise NotElaboratedError()
-
   def get_all_upblk_metadata( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_upblk_metadata" )
@@ -596,13 +589,14 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_update_block_ast( s, blk ):
+  # is_lambda?, src, line, filename, ast
+  def get_update_block_info( s, blk ):
     try:
-      name_ast = s.__class__._name_ast
+      name_info = s.__class__._name_info
     except AttributeError: # This component doesn't have update block
       return None
 
-    return name_ast[blk.__name__]
+    return name_info[blk.__name__]
 
   def get_update_block_host_component( s, blk ):
     try:

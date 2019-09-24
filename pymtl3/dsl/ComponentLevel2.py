@@ -55,7 +55,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return inst
 
-  def _cache_func_meta( s, func, given_src=None, given_ast=None ):
+  def _cache_func_meta( s, func, given=None ):
     """ Convention: the source of a function/update block across different
     instances should be the same. You can construct different functions
     based on the condition, but please use different names. This not only
@@ -65,33 +65,34 @@ class ComponentLevel2( ComponentLevel1 ):
     function in the *class object* to avoid redundant parsing. """
     cls = type(s)
     try:
-      name_src = cls._name_src
-      name_ast = cls._name_ast
-      name_rd  = cls._name_rd
-      name_wr  = cls._name_wr
-      name_fc  = cls._name_fc
+      name_info = cls._name_info
+      name_rd   = cls._name_rd
+      name_wr   = cls._name_wr
+      name_fc   = cls._name_fc
     except:
-      name_src = cls._name_src = {}
-      name_ast = cls._name_ast = {}
-      name_rd  = cls._name_rd  = {}
-      name_wr  = cls._name_wr  = {}
-      name_fc  = cls._name_fc  = {}
+      name_info = cls._name_info = {}
+      name_rd   = cls._name_rd  = {}
+      name_wr   = cls._name_wr  = {}
+      name_fc   = cls._name_fc  = {}
 
     name = func.__name__
-    if name not in name_src:
-      if given_src is None:
-        assert given_ast is None
-        name_src[ name ] = _src  = compiled_re.sub( r'\2', inspect.getsource(func) )
-        name_ast[ name ] = _tree = ast.parse( _src )
+
+    if name not in name_info:
+      if given is None:
+        _src, _line = inspect.getsourcelines( func )
+        _src = "".join( _src )
+        _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
+
+        name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
       else:
-        assert given_ast is not None
-        name_src[ name ] = given_src
-        name_ast[ name ] = _tree = given_ast
+        _src, _ast, _line, _file = given
+
+        name_info[ name ] = ( True, _src, _line, _file, _ast )
 
       name_rd[ name ]  = _rd   = []
       name_wr[ name ]  = _wr   = []
       name_fc[ name ]  = _fc   = []
-      AstHelper.extract_reads_writes_calls( func, _tree, _rd, _wr, _fc )
+      AstHelper.extract_reads_writes_calls( func, _ast, _rd, _wr, _fc )
 
   def _elaborate_read_write_func( s ):
 
