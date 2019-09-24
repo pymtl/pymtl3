@@ -107,6 +107,7 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 """\
 // Definition of PyMTL Component {component_name}
 // {file_info}
+// Full name: {full_name}
 module {module_name}
 (
 {ports});
@@ -116,6 +117,7 @@ endmodule
       component_name = getattr( structural, "component_name" )
       file_info = getattr( structural, "component_file_info" )
       ports_template = "{port_decls}{ifc_decls}"
+      full_name = getattr( structural, "component_full_name" )
       module_name = getattr( structural, "component_unique_name" )
 
       port_decls = s.get_pretty(structural, 'decl_ports', False)

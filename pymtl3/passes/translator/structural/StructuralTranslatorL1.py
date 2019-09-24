@@ -13,6 +13,7 @@ from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
+from pymtl3.passes.rtlir.util.utility import get_component_full_name
 
 from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
@@ -118,6 +119,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     # Component metadata
     s.structural.component_name = {}
     s.structural.component_file_info = {}
+    s.structural.component_full_name = {}
     s.structural.component_unique_name = {}
 
     # Declarations
@@ -142,6 +144,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
     s.structural.component_file_info[m] = m_rtype.get_file_info()
     s.structural.component_name[m] = m_rtype.get_name()
+    s.structural.component_full_name[m] = get_component_full_name(m_rtype)
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
 
