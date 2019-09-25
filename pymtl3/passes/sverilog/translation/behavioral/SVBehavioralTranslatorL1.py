@@ -5,7 +5,6 @@
 # Date   : March 18, 2019
 """Provide the level 1 SystemVerilog translator implementation."""
 
-import inspect
 
 from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
