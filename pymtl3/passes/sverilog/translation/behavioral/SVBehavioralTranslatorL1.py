@@ -67,13 +67,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
         if line:
           py_src[ idx ] = line[indent:]
 
-    # TODO get rid of inspect here and use the original lambda source
-    # for those update blocks generated from lambda functions.
-    try:
-      upblk_py_src = inspect.getsource( upblk )
-    except OSError:
-      upblk_py_src = "IOError: cannot retrieve Python update block code!"
-    upblk_py_src = upblk_py_src.split( '\n' )
+    upblk_py_src = src.split( '\n' )
     _trim( upblk_py_src )
     while upblk_py_src and not upblk_py_src[-1]:
       upblk_py_src = upblk_py_src[:-1]
