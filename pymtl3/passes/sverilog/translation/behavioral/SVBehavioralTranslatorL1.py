@@ -55,7 +55,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
       ret += '\n' + '\n'.join( upblk_py_src )
     return ret
 
-  def rtlir_tr_upblk_py_src( s, upblk ):
+  def rtlir_tr_upblk_py_src( s, upblk, is_lambda, src, lino, filename ):
     def _trim( py_src ):
       indent = 100
       for line in py_src:
@@ -81,14 +81,14 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
     # Add comments to the generated block
     py_src = [ "PYMTL SOURCE:", "" ]
 
-    if upblk.is_lambda:
+    if is_lambda:
       py_src += [
-        f"This upblk was generated from a lambda function defined in file {upblk.filename}, line {upblk.lino}:",
-        f"{upblk.src}",
+        f"This upblk was generated from a lambda function defined in file {filename}, line {lino}:",
+        f"{src}",
       ]
     else:
       py_src += [
-        f"This upblk was generated from an upblk defined in file {upblk.filename}, line {upblk.lino}",
+        f"This upblk was generated from an upblk defined in file {filename}, line {lino}",
       ]
 
     py_src += upblk_py_src

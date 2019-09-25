@@ -79,11 +79,13 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
         upblk_srcs.append( s.rtlir_tr_upblk_src(
           blk, upblk_ir
         ) )
-        blk.is_lambda = upblk_ir.is_lambda
-        blk.src       = upblk_ir.src
-        blk.lino      = upblk_ir.lino
-        blk.filename  = upblk_ir.filename
-        upblk_py_srcs.append( s.rtlir_tr_upblk_py_src( blk ) )
+        upblk_py_srcs.append( s.rtlir_tr_upblk_py_src(
+          blk,
+          upblk_ir.is_lambda,
+          upblk_ir.src,
+          upblk_ir.lino,
+          upblk_ir.filename
+        ) )
         upblk_decls.append( s.rtlir_tr_upblk_decl(
           blk, upblk_srcs[-1], upblk_py_srcs[-1]
         ) )
@@ -132,7 +134,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
     raise NotImplementedError()
 
-  def rtlir_tr_upblk_py_src( s, upblk ):
+  def rtlir_tr_upblk_py_src( s, upblk, is_lambda, src, lino, filename ):
     raise NotImplementedError()
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
