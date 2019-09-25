@@ -126,7 +126,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_SizeCast( s, node ):
     nbits = node.nbits
-    value = getattr( node.value, "_value", None )
+    value = None if not hasattr(node.value, "_value") else node.value._value
 
     if value is None:
       value_str = s.visit( node.value )

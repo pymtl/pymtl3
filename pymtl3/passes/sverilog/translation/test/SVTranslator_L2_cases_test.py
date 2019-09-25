@@ -1422,3 +1422,35 @@ module A
 endmodule
 """
   do_test( a )
+
+def test_long_component_name( do_test ):
+  class ThisIsABitStructWithSuperLongName( BitStruct ):
+    def __init__( s, bar=1 ):
+      s.bar = Bits32(bar)
+  class A( Component ):
+    def construct( s, T1, T2, T3, T4, T5, T6, T7 ):
+      s.in_ = InPort( Bits32 )
+      s.wire_ = Wire( Bits32 )
+      s.out = OutPort( Bits32 )
+      connect( s.in_, s.wire_ )
+      connect( s.wire_, s.out )
+  args = [ThisIsABitStructWithSuperLongName]*7
+  a = A(*args)
+  a._ref_src = \
+"""
+module A__a840bd1c84c05ea2
+(
+  input logic [0:0] clk,
+  input logic [31:0] in_,
+  output logic [31:0] out,
+  input logic [0:0] reset
+);
+  logic [31:0] wire_;
+
+  assign wire_ = in_;
+  assign out = wire_;
+
+endmodule
+"""
+  a._ref_src_yosys = a._ref_src
+  do_test( a )

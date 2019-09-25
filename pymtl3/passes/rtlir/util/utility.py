@@ -21,3 +21,18 @@ def collect_objs( m, Type ):
       if _is_of_type( obj, Type ):
         ret.append( ( name, obj ) )
   return ret
+
+def get_component_full_name( c_rtype ):
+
+  def get_string( obj ):
+    """Return the string that identifies `obj`"""
+    if isinstance(obj, type): return obj.__name__
+    return str( obj )
+
+  comp_name = c_rtype.get_name()
+  comp_params = c_rtype.get_params()
+  assert comp_name
+  for arg_name, arg_value in comp_params:
+    assert arg_name != ''
+    comp_name += '__' + arg_name + '_' + get_string(arg_value)
+  return comp_name

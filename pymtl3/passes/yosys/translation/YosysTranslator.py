@@ -39,29 +39,35 @@ class YosysTranslator( SVTranslator ):
     template =\
 """\
 // Definition of PyMTL Component {component_name}
-// {file_info}
+// {file_info}{optional_full_name}
 module {module_name}
 (
 {ports});
 {body}
 endmodule
 """
-    component_name = getattr( structural, "component_name" )
-    file_info = getattr( structural, "component_file_info" )
+    component_name = structural.component_name
+    file_info = structural.component_file_info
     ports_template = "{port_decls}{ifc_decls}"
-    module_name = getattr( structural, "component_unique_name" )
+    full_name = structural.component_full_name
+    module_name = structural.component_unique_name
 
-    port_dct = getattr( structural, "decl_ports" )
+    if full_name != module_name:
+      optional_full_name = "\n// Full name: {}".format(full_name)
+    else:
+      optional_full_name = ""
+
+    port_dct = structural.decl_ports
     structural.p_port_decls = port_dct["port_decls"]
     structural.p_wire_decls = port_dct["wire_decls"]
     structural.p_connections = port_dct["connections"]
 
-    ifc_dct = getattr( structural, "decl_ifcs" )
+    ifc_dct = structural.decl_ifcs
     structural.i_port_decls = ifc_dct["port_decls"]
     structural.i_wire_decls = ifc_dct["wire_decls"]
     structural.i_connections = ifc_dct["connections"]
 
-    subcomp_dct = getattr( structural, "decl_subcomps" )
+    subcomp_dct = structural.decl_subcomps
     structural.c_port_decls = subcomp_dct["port_decls"]
     structural.c_wire_decls = subcomp_dct["wire_decls"]
     structural.c_connections = subcomp_dct["connections"]
@@ -157,7 +163,7 @@ endmodule
       connections = '\n' + connections
     body += connections
 
-    s._top_module_name = getattr( structural, "component_name", module_name )
+    s._top_module_name = structural.component_name
     s._top_module_full_name = module_name
 
     # Fill in the template and return
