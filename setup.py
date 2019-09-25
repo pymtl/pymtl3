@@ -6,10 +6,8 @@ setup.py inspired by the PyPA sample project:
 https://github.com/pypa/sampleproject/blob/master/setup.py
 """
 
-from __future__ import absolute_import, division, print_function
 
 from os import path
-from subprocess import check_output
 
 from setuptools import find_packages, setup
 
