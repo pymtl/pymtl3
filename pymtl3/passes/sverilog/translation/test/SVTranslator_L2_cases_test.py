@@ -1148,6 +1148,40 @@ endmodule
 """
   do_test( a )
 
+def test_lambda_connect( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.out //= lambda: s.in_ + Bits32(42)
+  a = A()
+  a._ref_src = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  input logic [31:0] in_,
+  output logic [31:0] out,
+  input logic [0:0] reset
+);
+
+  // PYMTL SOURCE:
+  //
+  // This upblk was generated from a lambda function defined in file \
+  //    .../pymtl3/passes/sverilog/translation/test/SVTranslator_L2_cases_test.py, line 1157:
+  //       s.out //= lambda: s.in_ + Bits32(42)
+
+  // def _lambda__s_out(): s.out = s.in_ + Bits32(42)
+
+  always_comb begin : _lambda__s_out
+    out = in_ + 32'd42;
+  end
+
+endmodule
+"""
+  a._ref_src_yosys = a._ref_src
+  do_test( a )
+
 #-------------------------------------------------------------------------
 # Structural
 #-------------------------------------------------------------------------

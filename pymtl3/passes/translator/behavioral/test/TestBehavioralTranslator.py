@@ -52,7 +52,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
         py_srcs += '\n' + '\n'.join( upblk_py_src )
       return 'upblk_py_srcs:{}\n'.format( py_srcs )
 
-    def rtlir_tr_upblk_py_src( s, upblk ):
+    def rtlir_tr_upblk_py_src( s, upblk, is_lambda, src, lino, filename ):
       return ['upblk_py_src: {}'.format( upblk.__name__ )]
 
     def rtlir_tr_upblk_srcs( s, upblk_srcs ):

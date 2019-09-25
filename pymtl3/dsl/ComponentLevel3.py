@@ -12,12 +12,15 @@ be revamped when adding method-based interfaces.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
+import ast
+import inspect
+import linecache
 from collections import defaultdict, deque
 
 from pymtl3.datatypes import Bits
 
 from .ComponentLevel1 import ComponentLevel1
-from .ComponentLevel2 import ComponentLevel2
+from .ComponentLevel2 import ComponentLevel2, compiled_re
 from .Connectable import (
     Connectable,
     Const,
@@ -56,6 +59,7 @@ class ComponentLevel3( ComponentLevel2 ):
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
+
     return inst
 
   # Override
@@ -97,6 +101,133 @@ class ComponentLevel3( ComponentLevel2 ):
 
   # The following three methods should only be called when types are
   # already checked
+  def _create_assign_lambda( s, o, lamb ):
+    assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
+
+    srcs, line = inspect.getsourcelines( lamb )
+    assert len(srcs) == 1, "We can only handle single-line lambda connect right now."
+
+    src  = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
+    root = ast.parse(src)
+    assert isinstance( root, ast.Module ) and len(root.body) == 1, "Invalid lambda (contact pymtl3 developer)"
+
+    root = root.body[0]
+    assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
+
+    lhs, rhs = root.target, root.value
+    # We expect the lambda to have no argument:
+    # {'args': [], 'vararg': None, 'kwonlyargs': [], 'kw_defaults': [], 'kwarg': None, 'defaults': []}
+    assert isinstance( rhs, ast.Lambda ) and not rhs.args.args and rhs.args.vararg is None, \
+      "The lambda shouldn't contain any argument."
+
+    rhs = rhs.body
+
+    # Compose a new and valid function based on the lambda's lhs and rhs
+    # Note that we don't need to add those source code of closure var
+    # assignment to linecache. To get the matching line number in the
+    # error message, we set the line number of update block
+
+    blk_name = "_lambda__{}".format( repr(o).replace(".","_") )
+    lambda_upblk = ast.FunctionDef(
+      name=blk_name,
+      args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+      body=[ast.Assign(targets=[lhs], value=rhs, lineno=2, col_offset=6)],
+      decorator_list=[],
+      returns=None,
+      lineno=1, col_offset=4,
+    )
+    lambda_upblk_module = ast.Module(body=[ lambda_upblk ])
+
+    # Manually wrap the lambda upblk with a closure function that adds the
+    # desired variables to the closure of `_lambda__*`
+    # We construct AST for the following function to add free variables in the
+    # closure of the lambda function to the closure of the generated lambda
+    # update block.
+    #
+    # def closure( lambda_closure ):
+    #   <FreeVarName1> = lambda_closure[<Idx1>].cell_contents
+    #   <FreeVarName2> = lambda_closure[<Idx2>].cell_contents
+    #   ...
+    #   <FreeVarNameN> = lambda_closure[<IdxN>].cell_contents
+    #   def _lambda__<lambda_blk_name>():
+    #     # the assignment statement appears here
+    #   return _lambda__<lambda_blk_name>
+
+    new_root = ast.Module( body=[
+      ast.FunctionDef(
+          name="closure",
+          args=ast.arguments(args=[ast.arg(arg="lambda_closure", annotation=None, lineno=1, col_offset=12)],
+                             vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
+          body=[
+            ast.Assign(
+              targets=[ast.Name(id=var, ctx=ast.Store(), lineno=1+idx, col_offset=2)],
+              value=ast.Attribute(
+                value=ast.Subscript(
+                  value=ast.Name(
+                    id='lambda_closure',
+                    ctx=ast.Load(),
+                    lineno=1+idx, col_offset=5+len(var),
+                  ),
+                  slice=ast.Index(
+                    value=ast.Num(
+                      n=idx,
+                      lineno=1+idx, col_offset=19+len(var),
+                    ),
+                  ),
+                  ctx=ast.Load(),
+                  lineno=1+idx, col_offset=5+len(var),
+                ),
+                attr='cell_contents',
+                ctx=ast.Load(),
+                lineno=1+idx, col_offset=5+len(var),
+              ),
+              lineno=1+idx, col_offset=2,
+            ) for idx, var in enumerate(lamb.__code__.co_freevars)
+          ] + [ lambda_upblk ] + [
+            ast.Return(
+              value=ast.Name(
+                id=blk_name,
+                ctx=ast.Load(),
+                lineno=4+len(lamb.__code__.co_freevars), col_offset=9,
+              ),
+              lineno=4+len(lamb.__code__.co_freevars), col_offset=2,
+            )
+          ],
+          decorator_list=[],
+          returns=None,
+          lineno=1, col_offset=0,
+        )
+    ] )
+
+    # In Python 3 we need to supply a dict as local to get the newly
+    # compiled function from closure.
+    # Then `closure(lamb.__closure__)` returns the lambda update block with
+    # the correct free variables in its closure.
+
+    dict_local = {}
+    exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
+    blk = dict_local[ 'closure' ]( lamb.__closure__ )
+
+    # Add the source code to linecache for the compiled function
+
+    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
+    linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
+
+    ComponentLevel1.update( s, blk )
+
+    # This caching here does no caching because the block name contains
+    # the signal name intentionally to avoid conflicts. With //= it is
+    # more possible than normal update block to have conflicts:
+    # if param == 1:  s.out //= s.in_ + 1
+    # else:           s.out //= s.out + 100
+    # Here these two blocks will implicity have the same name but they
+    # have different contents based on different param.
+    # So the cache call here is just to reuse the existing interface to
+    # register the AST/src of the generated block for elaborate or passes
+    # to use.
+    s._cache_func_meta( blk,
+      ("".join(srcs), lambda_upblk_module, line, inspect.getsourcefile( lamb )) )
+    return blk
 
   def _connect_signal_const( s, o1, o2 ):
     if isinstance( o2, int ):
@@ -113,7 +244,7 @@ class ComponentLevel3( ComponentLevel2 ):
                                       "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
       o2 = Const( o1._dsl.Type, o2, s )
 
-  # TODO implement connecting a const struct
+    # TODO implement connecting a const struct
 
     host = o1.get_host_component()
 

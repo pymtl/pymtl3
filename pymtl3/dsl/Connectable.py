@@ -7,6 +7,7 @@ Wires, ports, and interfaces, all inherited from Connectable.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
+import types
 from collections import deque
 
 from pymtl3.datatypes import Bits, mk_bits
@@ -40,7 +41,13 @@ class Connectable:
     # avoid circular import, we replicate the implementation of connect.
 
     host, s_connectable, o_connectable = _connect_check( s, other, internal=False )
-    host._connect_dispatch( s, other, s_connectable, o_connectable )
+
+    # ifloordiv is the only entry point for connecting lambda
+    if isinstance( other, types.LambdaType ):
+      host._create_assign_lambda( s, other )
+    else:
+      host._connect_dispatch( s, other, s_connectable, o_connectable )
+
     return s
 
 def _connect_check( o1, o2, internal ):

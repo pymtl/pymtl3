@@ -5,7 +5,6 @@
 # Date   : March 18, 2019
 """Provide the level 1 SystemVerilog translator implementation."""
 
-import inspect
 
 from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
@@ -55,7 +54,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
       ret += '\n' + '\n'.join( upblk_py_src )
     return ret
 
-  def rtlir_tr_upblk_py_src( s, upblk ):
+  def rtlir_tr_upblk_py_src( s, upblk, is_lambda, src, lino, filename ):
     def _trim( py_src ):
       indent = 100
       for line in py_src:
@@ -66,15 +65,27 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
       for idx, line in enumerate( py_src ):
         if line:
           py_src[ idx ] = line[indent:]
-    try:
-      upblk_py_src = inspect.getsource( upblk )
-    except OSError:
-      upblk_py_src = "IOError: cannot retrieve Python update block code!"
-    upblk_py_src = upblk_py_src.split( '\n' )
+
+    upblk_py_src = src.split( '\n' )
     _trim( upblk_py_src )
     while upblk_py_src and not upblk_py_src[-1]:
       upblk_py_src = upblk_py_src[:-1]
-    py_src = [ "PYMTL SOURCE:", "" ] + upblk_py_src
+
+    # Add comments to the generated block
+    py_src = [ "PYMTL SOURCE:", "" ]
+
+    if is_lambda:
+      py_src += [
+        f"This upblk was generated from a lambda function defined in file {filename}, line {lino}:",
+        f"{src}",
+      ]
+    else:
+      py_src += [
+        f"This upblk was generated from an upblk defined in file {filename}, line {lino}",
+      ]
+
+    py_src += upblk_py_src
+
     return ["// "+x for x in py_src]
 
   def rtlir_tr_behavioral_freevars( s, freevars ):
