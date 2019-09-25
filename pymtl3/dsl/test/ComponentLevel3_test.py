@@ -815,7 +815,10 @@ def test_lambda_name_conflict():
 
       s.out //= lambda: s.in_ + x
 
-      # We should throw some better error message when we
+      # TODO throw some better error message when
+      # the implicit name of a lambda function conflicts
+      # with the explicit name of an update block
+
       @s.update
       def _lambda__s_out():
         s.out2 = Bits32(2)
