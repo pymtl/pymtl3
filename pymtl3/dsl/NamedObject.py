@@ -94,7 +94,7 @@ class ParamTreeNode:
     cur_node.leaf[ func_name].update( kwargs )
 
   def __repr__( self ):
-    return "\nleaf:{}\nchildren:{}".format( self.leaf, self.children )
+    return f"\nleaf:{self.leaf}\nchildren:{self.children}"
 
 class NamedObject:
 
@@ -150,8 +150,7 @@ class NamedObject:
           # try:
             u._dsl.parent_obj = s
             u._dsl.level      = s._dsl.level + 1
-            u._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
-                                                           for x in indices ] )
+            u._dsl.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
 
             # Iterate through the param_tree and update u
             if s._dsl.param_tree is not None:

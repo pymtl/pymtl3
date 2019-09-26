@@ -117,7 +117,7 @@ class Const( Connectable ):
     s._dsl.parent_obj = parent
 
   def __repr__( s ):
-    return "{}({})".format( str(s._dsl.Type.__name__), s._dsl.const )
+    return f"{str(s._dsl.Type.__name__)}({s._dsl.const})"
 
   def get_parent_object( s ):
     try:
@@ -201,7 +201,7 @@ class Signal( NamedObject, Connectable ):
           x._dsl.top_level_signal = s._dsl.top_level_signal
           x._dsl.elaborate_top = s._dsl.elaborate_top
 
-          x._dsl.my_name   = name + "".join([ "[{}]".format(y) for y in indices ])
+          x._dsl.my_name   = name + "".join([ f"[{y}]" for y in indices ])
           x._dsl.full_name = s._dsl.full_name + "." + x._dsl.my_name
 
         if parent_is_list:
@@ -230,7 +230,7 @@ class Signal( NamedObject, Connectable ):
       x._dsl.top_level_signal = s
       x._dsl.elaborate_top = s._dsl.elaborate_top
 
-      sl_str = "[{}:{}]".format( sl.start, sl.stop )
+      sl_str = f"[{sl.start}:{sl.stop}]"
 
       x._dsl.my_name   = s._dsl.my_name + sl_str
       x._dsl.full_name = s._dsl.full_name + sl_str
@@ -440,7 +440,7 @@ class NonBlockingInterface( Interface ):
     return s._str_hook()
 
   def _str_hook( s ):
-    return "{}".format( s._dsl.my_name )
+    return f"{s._dsl.my_name}"
 
 class NonBlockingCalleeIfc( NonBlockingInterface ):
   def construct( s, Type=None, method=None, rdy=None ):
