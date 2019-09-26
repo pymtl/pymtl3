@@ -24,8 +24,8 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
     visitor = BehavioralRTLIRGeneratorL2( m )
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
+      'CombUpblk' : list(m.get_update_blocks() - m.get_update_ff()),
+      'SeqUpblk'  : list(m.get_update_ff())
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )

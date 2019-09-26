@@ -138,23 +138,28 @@ class DetectReadsWritesCalls( DetectVarNames ):
     calls.extend( self.calls )
 
   def visit_Assign( self, node ):
+
     if self.is_update_ff:
       assert len( node.targets ) == 1
-      if isinstance( node.targets[0], (ast.Attribute, ast.Subscript) ):
-        raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
-          "In update_ff, we only allow <<= to any fields for constructing "
-          "nonblocking assignments." )
+      target = node.targets[0]
+
+      if isinstance( target, (ast.Attribute, ast.Subscript) ):
+        while isinstance( target, (ast.Attribute, ast.Subscript) ):
+          target = target.value
+        assert isinstance( target, ast.Name ), "Please call pymtl3 developers"
+
+        if target.id == "s":
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno )
 
     for x in node.targets:
       self.visit( x )
-    self.visit( node.value  )
+    self.visit( node.value )
 
   def visit_AugAssign( self, node ):
     if self.is_update_ff:
       if isinstance( node.target, (ast.Attribute, ast.Subscript) ):
         if not isinstance( node.op, ast.LShift ):
-          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
-            "In update_ff, we only allow <<= to any fields.")
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno )
 
     self.visit( node.target )
     self.visit( node.value  )

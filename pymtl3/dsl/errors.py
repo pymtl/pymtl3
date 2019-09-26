@@ -26,7 +26,7 @@ class NoWriterError( Exception ):
 
 class InvalidFFAssignError( Exception ):
   """ In update_ff, raise when signal is not <<= -ed, or temp is not = -ed """
-  def __init__( self, hostobj, blk, lineno, msg ):
+  def __init__( self, hostobj, blk, lineno ):
 
     filepath = inspect.getfile( hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -39,15 +39,15 @@ class InvalidFFAssignError( Exception ):
     return super( InvalidFFAssignError, self ).__init__( \
 """
 In file {}:{} in {}
-When constructing instance {} of class \"{}\" in the hierarchy:
 
 {} {}
 ^^^ In update_ff, we only allow <<= to fields for constructing nonblocking assignments.
+(when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: fix the assignment operator at line {}.""".format( \
       filepath, error_lineno, blk.__name__,
-      repr(hostobj), hostobj.__class__.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(hostobj), hostobj.__class__.__name__,
 
       error_lineno)
     )
@@ -70,18 +70,19 @@ class VarNotDeclaredError( Exception ):
     return super().__init__( \
 """
 In file {}:{} in {}
-When constructing instance {} of class \"{}\" in the hierarchy:
 
 {} {}
 ^^^ Field \"{}\" of object \"{}\" (class \"{}\") is accessed in block \"{}\",
     but {} does not have field \"{}\".
+(when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
       filepath, error_lineno, blk.__name__,
-      repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
       field, repr(obj), obj.__class__.__name__, blk.__name__,
-      repr(obj), field, error_lineno ) )
+      repr(obj), field,
+      repr(blk_hostobj), blk_hostobj.__class__.__name__,
+      error_lineno ) )
 
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """

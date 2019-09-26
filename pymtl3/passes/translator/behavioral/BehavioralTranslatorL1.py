@@ -66,8 +66,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     upblk_srcs = []
     upblk_py_srcs = []
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
+      'CombUpblk' : list(m.get_update_blocks() - m.get_update_ff()),
+      'SeqUpblk'  : list(m.get_update_ff())
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
