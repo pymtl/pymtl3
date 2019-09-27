@@ -6,6 +6,7 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 """
+from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.GenDAGPass import GenDAGPass

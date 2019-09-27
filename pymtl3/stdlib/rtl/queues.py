@@ -7,7 +7,6 @@ Author : Yanghui Ou
   Date : Mar 23, 2019
 """
 
-from copy import deepcopy
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL

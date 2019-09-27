@@ -9,6 +9,7 @@ Date   : Oct 31, 2017
 """
 from copy import deepcopy
 
+
 class Bits:
   __slots__ = ( "nbits", "value", "_next" )
 

@@ -63,7 +63,7 @@ def test_seq_assign( do_test ):
       s.out = OutPort( Bits32 )
       @s.update_ff
       def upblk():
-        s.out = s.in_
+        s.out <<= s.in_
   a = A()
   a._ref_src = \
 """
@@ -79,7 +79,7 @@ module A
   //
   // @s.update_ff
   // def upblk():
-  //   s.out = s.in_
+  //   s.out <<= s.in_
 
   always_ff @(posedge clk) begin : upblk
     out <= in_;

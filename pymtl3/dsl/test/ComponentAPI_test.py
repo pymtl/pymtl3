@@ -331,7 +331,6 @@ def test_garbage_collection():
       @s.update
       def up_x():
         s.out = s.in_ + 1
-  import time
   for i in range(100):
     x = X()
     x = X()

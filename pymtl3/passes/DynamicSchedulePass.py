@@ -13,7 +13,8 @@ import py
 
 from .BasePass import BasePass, PassMetadata
 from .errors import PassOrderError
-from .SimpleSchedulePass import dump_dag
+from .SimpleSchedulePass import dump_dag, make_double_buffer_func
+from .SimpleTickPass import SimpleTickPass
 
 
 class DynamicSchedulePass( BasePass ):
@@ -162,6 +163,14 @@ class DynamicSchedulePass( BasePass ):
 
     schedule = []
 
+    # First execute all update_ff blocks and then all the double buffering
+    # functions
+
+    schedule.extend( list(top._dsl.all_update_ff) )
+    func = make_double_buffer_func( top )
+    if func is not None:
+      schedule.append( func )
+
     scc_id = 0
     for i in scc_schedule:
       scc = SCCs[i]
@@ -217,6 +226,10 @@ class DynamicSchedulePass( BasePass ):
           if u in scc and v in scc:
             variables.update( constraint_objs[ (u, v) ] )
 
+        if len(variables) == 0:
+          raise Exception("There is a cyclic dependency without involving variables."
+                          "Probably a loop that involves update_once:\n{}".format(", ".join( [ x.__name__ for x in scc] )))
+
         # generate a loop for scc
         # Shunning: we just simply loop over the whole SCC block
         # TODO performance optimizations using Mamba techniques within a SCC block
@@ -224,39 +237,38 @@ class DynamicSchedulePass( BasePass ):
         def gen_wrapped_SCCblk( s, scc, src ):
           from pymtl3.dsl.errors import UpblkCyclicError
 
+          # TODO mamba?
+          scc_tick_func = SimpleTickPass.gen_tick_function( scc )
+          # print src
           namespace = {}
           namespace.update( locals() )
-          # print src
-          exec(py.code.Source( src ).compile(), namespace)
 
+          exec(py.code.Source( src ).compile(), namespace)
           return namespace['generated_block']
 
-        # FIXME when there is nothing in {2} ..
         template = """
           from copy import deepcopy
           def wrapped_SCC_{0}():
-            num_iters = 0
+            N = 0
             while True:
-              num_iters += 1
+              N += 1
+              if N > 100: raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
               {1}
-              for blk in scc: # TODO Mamba
-                blk()
+              scc_tick_func()
               if {2}:
                 break
-              if num_iters > 100:
-                raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}}!")
             # print "SCC block{0} is executed", num_iters, "times"
           generated_block = wrapped_SCC_{0}
         """
 
         copy_srcs  = []
         check_srcs = []
-        print_srcs = []
+        # print_srcs = []
 
         for j, var in enumerate(variables):
-          copy_srcs .append( "_____tmp_{} = deepcopy({})".format( j, var ) )
-          check_srcs.append( "{} == _____tmp_{}".format( var, j ) )
-          print_srcs.append( "print '{}', {}, _____tmp_{}".format( var, var, j ) )
+          copy_srcs .append( "t{} = deepcopy({})".format( j, var ) )
+          check_srcs.append( "{} == t{}".format( var, j ) )
+          # print_srcs.append( "print '{}', {}, _____tmp_{}".format( var, var, j ) )
 
         scc_block_src = template.format( scc_id,
                                          "; ".join( copy_srcs ),

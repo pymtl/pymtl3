@@ -592,4 +592,3 @@ def test_update_ff_swap():
     T += 1
     assert A.wire0 == T
     assert A.wire1 == T
-
