@@ -4,7 +4,9 @@ from typing import *
 # Bits
 #-------------------------------------------------
 
-T_Bits = TypeVar( "T_Bits" )
+# T_Bits is covariant because we want BitsN to be
+# the top in the Bits data type hierarchy
+T_Bits = TypeVar( "T_Bits", covariant=True )
 
 class Bits( Generic[T_Bits] ): ...
 
@@ -12,23 +14,26 @@ class Bits( Generic[T_Bits] ): ...
 # BitsN
 #-------------------------------------------------
 
-T_Bits1 = TypeVar( "T_Bits1" )
-Bits1 = Bits[T_Bits1]
+class _BitsN: ...
+BitsN = Bits[_BitsN]
 
-T_Bits2 = TypeVar( "T_Bits2" )
-Bits2 = Bits[T_Bits2]
+class _Bits1(_BitsN): ...
+Bits1 = Bits[_Bits1]
 
-T_Bits4 = TypeVar( "T_Bits4" )
-Bits4 = Bits[T_Bits4]
+class _Bits2(_BitsN): ...
+Bits2 = Bits[_Bits2]
 
-T_Bits5 = TypeVar( "T_Bits5" )
-Bits5 = Bits[T_Bits5]
+class _Bits4(_BitsN): ...
+Bits4 = Bits[_Bits4]
 
-T_Bits8 = TypeVar( "T_Bits8" )
-Bits8 = Bits[T_Bits8]
+class _Bits5(_BitsN): ...
+Bits5 = Bits[_Bits5]
 
-T_Bits16 = TypeVar( "T_Bits16" )
-Bits16 = Bits[T_Bits16]
+class _Bits8(_BitsN): ...
+Bits8 = Bits[_Bits8]
 
-T_Bits32 = TypeVar( "T_Bits32" )
-Bits32 = Bits[T_Bits32]
+class _Bits16(_BitsN): ...
+Bits16 = Bits[_Bits16]
+
+class _Bits32(_BitsN): ...
+Bits32 = Bits[_Bits32]

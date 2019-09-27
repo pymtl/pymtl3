@@ -1,4 +1,4 @@
-from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.dsl import Component, InPort, OutPort, RList
 from pymtl3.datatypes import Bits1
 
 from typing import *
@@ -39,7 +39,7 @@ T_MuxSelType  = TypeVar( "T_MuxSelType"  )
 
 class Mux( Component, Generic[T_MuxDataType, T_MuxSelType] ):
 
-  in_: List[InPort[T_MuxDataType]]
+  in_: RList[InPort[T_MuxDataType], T_MuxDataType]
   sel: InPort [T_MuxSelType]
   out: OutPort[T_MuxDataType]
 
