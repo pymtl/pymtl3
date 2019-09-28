@@ -143,7 +143,7 @@ class Const( Connectable, Generic[T_ConstDataType] ):
     return super(Const, cls).__class_getitem__( Type )
 
   def __repr__( s ):
-    return "{}({})".format( str(s._dsl.Type.__name__), s._dsl.const )
+    return "{}({})".format( str(s._dsl.Type.__name__), s.value )
 
   def get_parent_object( s ):
     try:
@@ -237,6 +237,27 @@ class Const( Connectable, Generic[T_ConstDataType] ):
   def __invert__( self ):
     return Bits( self.nbits, ~int(self.value) )
 
+  def __ne__( self, other ):
+    try:
+      other = int(other)
+    except (ValueError, TypeError):
+      # PyMTL implementation uses __ne__ to check if a constant is different from
+      # some signals
+      return True
+    return Bits( 1, int(self.value) != other )
+
+  def __lt__( self, other ):
+    return Bits( 1, int(self.value) < int(other) )
+
+  def __le__( self, other ):
+    return Bits( 1, int(self.value) <= int(other) )
+
+  def __gt__( self, other ):
+    return Bits( 1, int(self.value) > int(other) )
+
+  def __ge__( self, other ):
+    return Bits( 1, int(self.value) >= int(other) )
+
   def __getitem__( self, idx ):
     sv = int(self.value)
 
@@ -269,6 +290,9 @@ class Const( Connectable, Generic[T_ConstDataType] ):
 
   def __index__( self ):
     return int(self.value)
+
+  def __bool__( self ):
+    return int(self.value) != 0
 
 class Signal( NamedObject, Connectable ):
 
