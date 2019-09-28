@@ -32,15 +32,16 @@ class Component( ComponentLevel7 ):
     return super(Component, cls).__class_getitem__( Types )
 
   def __init__( s, *args, **kwargs ):
-    # Hack the global namespace of s.construct so that the names of type vars
-    # point to the concrete type instances
-    names     = list(map(lambda x: str(x)[1:], s.__class__.__parameters__))
-    instances = s.__class__._rt_types
-    assert len(names) == len(instances)
-    print(f"{names}, {instances}")
-    s.construct.__globals__.update(
-        {name:inst for name, inst in zip(names, instances)} )
-    s.__class__._rt_types = None
+    if hasattr( s.__class__, "__parameters__" ):
+      # Hack the global namespace of s.construct so that the names of type vars
+      # point to the concrete type instances
+      names     = list(map(lambda x: str(x)[1:], s.__class__.__parameters__))
+      instances = s.__class__._rt_types
+      assert len(names) == len(instances)
+      # print(f"{names}, {instances}")
+      s.construct.__globals__.update(
+          {name:inst for name, inst in zip(names, instances)} )
+      s.__class__._rt_types = None
     super(Component, s).__init__()
 
   # Override

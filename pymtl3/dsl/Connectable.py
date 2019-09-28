@@ -10,7 +10,7 @@ Date   : Apr 16, 2018
 from collections import deque
 from typing import Generic, TypeVar
 
-from pymtl3.datatypes import Bits, mk_bits
+from pymtl3.datatypes import Bits, mk_bits, BitStruct
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
@@ -126,6 +126,11 @@ class Const( Connectable, Generic[T_ConstDataType] ):
       s._dsl.parent_obj = None
       cls.Type = None
 
+      # Add simulation support because Const[BitsN](value) might appear
+      # in an upblk
+      s.nbits = s._dsl.Type.nbits
+      s.value = s._dsl.Type( s._dsl.const )
+
     else:
       assert False
 
@@ -157,6 +162,113 @@ class Const( Connectable, Generic[T_ConstDataType] ):
 
   def is_interface( s ):
     return False
+
+  #--------------------------------------------------------
+  # The same arithmetics as Bits
+  #--------------------------------------------------------
+
+  def __add__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) + int(other) )
+    except: return Bits( self.nbits, int(self.value) + int(other) )
+
+  def __radd__( self, other ):
+    return self.__add__( other )
+
+  def __sub__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) - int(other) )
+    except: return Bits( self.nbits, int(self.value) - int(other) )
+
+  def __rsub__( self, other ):
+    return Bits( self.nbits, other ) - self
+
+  def __mul__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) * int(other) )
+    except: return Bits( self.nbits, int(self.value) * int(other) )
+
+  def __rmul__( self, other ):
+    return self.__mul__( other )
+
+  def __and__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) & int(other) )
+    except: return Bits( self.nbits, int(self.value) & int(other) )
+
+  def __rand__( self, other ):
+    return self.__and__( other )
+
+  def __or__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) | int(other) )
+    except: return Bits( self.nbits, int(self.value) | int(other) )
+
+  def __ror__( self, other ):
+    return self.__or__( other )
+
+  def __xor__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) ^ int(other) )
+    except: return Bits( self.nbits, int(self.value) ^ int(other) )
+
+  def __rxor__( self, other ):
+    return self.__xor__( other )
+
+  def __div__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) / int(other) )
+    except: return Bits( self.nbits, int(self.value) / int(other) )
+
+  def __floordiv__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) / int(other) )
+    except: return Bits( self.nbits, int(self.value) / int(other) )
+
+  def __mod__( self, other ):
+    try:    return Bits( max(self.nbits, other.nbits), int(self.value) % int(other) )
+    except: return Bits( self.nbits, int(self.value) / int(other) )
+
+  def __lshift__( self, other ):
+    nb = int(self.nbits)
+    # TODO this doesn't work perfectly. We need a really smart
+    # optimization that avoids the guard totally
+    if int(other) >= nb: return Bits( nb )
+    return Bits( nb, int(self.value) << int(other) )
+
+  def __rshift__( self, other ):
+    return Bits( self.nbits, int(self.value) >> int(other) )
+
+  def __int__( s ):
+    return int(s.value)
+
+  def __invert__( self ):
+    return Bits( self.nbits, ~int(self.value) )
+
+  def __getitem__( self, idx ):
+    sv = int(self.value)
+
+    if isinstance( idx, slice ):
+      start, stop = int(idx.start), int(idx.stop)
+      assert not idx.step and start < stop and start >= 0 and stop <= self.nbits, \
+            "Invalid access: [{}:{}] in a Bits{} instance".format( start, stop, self.nbits )
+      return Bits( stop-start, (sv & ((1 << stop) - 1)) >> start )
+
+    i = int(idx)
+    assert 0 <= i < self.nbits
+    return Bits( 1, (sv >> i) & 1 )
+
+  # Const values are mutable in upblks
+  def __setitem__( self, idx, v ):
+    sv = int(self.value)
+
+    if isinstance( idx, slice ):
+      start, stop = int(idx.start), int(idx.stop)
+      assert not idx.step and start < stop and start >= 0 and stop <= self.nbits, \
+            "Invalid access: [{}:{}] in a Bits{} instance".format( start, stop, self.nbits )
+
+      self.value = (sv & (~((1 << stop) - (1 << start)))) | \
+                   ((int(v) & ((1 << (stop - start)) - 1)) << start)
+      return
+
+    i = int(idx)
+    assert 0 <= i < self.nbits
+    self.value = (sv & ~(1 << i)) | ((int(v) & 1) << i)
+
+  def __index__( self ):
+    return int(self.value)
 
 class Signal( NamedObject, Connectable ):
 
@@ -386,34 +498,33 @@ class OutPort( Signal, Generic[T_OutPortDataType] ):
 
 class Interface( NamedObject, Connectable ):
 
-  def __init__( s, _Type = None ):
-    # If necessary, extract the real type from __class_getitem__ aka []
-    cls = s.__class__
-    if _Type is None:
-      if not hasattr(cls, "Type") or cls.Type is None:
-        raise TypeError(f"Data type of {cls} cannot be None!")
-      Type = cls.Type
-
-      # Different signals might be parametrized with different types, so
-      # we need to unset the Type field of the current class so that if
-      # there were any unassigned data types, we will catch that instead
-      # of using stale data types.
-      cls.Type = None
+  def __init__( s, *args, **kwargs ):
+    if hasattr( s.__class__, "__parameters__" ):
+      # If necessary, extract the real type from __class_getitem__ aka []
+      names     = list(map(lambda x: str(x)[1:], s.__class__.__parameters__))
+      instances = s.__class__._rt_types
+      assert len(names) == len(instances)
+      # print(f"{names}, {instances}")
+      s.construct.__globals__.update(
+          {name:inst for name, inst in zip(names, instances)} )
+      s.__class__._rt_types = None
+      super(Interface, s).__init__()
 
     else:
-      Type = _Type
+      # super(Interface, s).__init__(*args, **kwargs)
+      super(Interface, s).__init__()
+      # try:
+      # except TypeError:
+      #   super(Interface, s).__init__()
 
-    if isinstance( Type, int ):
-      raise Exception("Use actual type instead of int (it is deprecated).")
-    s._dsl.Type = Type
-
-  def __class_getitem__( cls, Type ):
-    if isinstance( Type, tuple ):
-      raise TypeError(f"{cls} expects exactly one data type!")
-    cls.Type = Type
-
-    # Call the [] method of parent class (i.e. Generic)
-    return super(Interface, cls).__class_getitem__( Type )
+  def __class_getitem__( cls, Types ):
+    # Check if all the type instances are valid PyMTL types
+    if not isinstance( Types, tuple ):
+      Types = (Types,)
+    assert all(issubclass(Type, (Bits, BitStruct)) for Type in Types)
+    assert not hasattr(cls, "_rt_types") or cls._rt_types is None
+    cls._rt_types = Types
+    return super(Interface, cls).__class_getitem__( Types )
 
   def inverse( s ):
     s._dsl.inversed = True
@@ -425,8 +536,8 @@ class Interface( NamedObject, Connectable ):
 
   def _construct( s ):
     if not s._dsl.constructed:
-      # s.construct( *s._dsl.args, **s._dsl.kwargs )
-      s.construct( s._dsl.Type )
+      s.construct( *s._dsl.args, **s._dsl.kwargs )
+      # s.construct( s._dsl.Type )
 
       inversed = False
       if hasattr( s._dsl, "inversed" ):
