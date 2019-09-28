@@ -63,7 +63,7 @@ class BehavioralTranslatorL2( BehavioralTranslatorL1 ):
     tmpvars = []
     for (id_, upblk_id), rtype in s.behavioral.tmpvars[m].items():
       assert isinstance(rtype, rt.Wire), \
-        "temporary variable {} in upblk {} is not a signal!".format(id_, upblk_id)
+        f"temporary variable {id_} in upblk {upblk_id} is not a signal!"
       dtype = rtype.get_dtype()
       tmpvars.append( s.rtlir_tr_behavioral_tmpvar(
         id_,

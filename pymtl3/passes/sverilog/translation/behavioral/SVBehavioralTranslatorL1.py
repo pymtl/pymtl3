@@ -94,9 +94,9 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
 
   def rtlir_tr_behavioral_freevar( s, id_, rtype, array_type, dtype, obj ):
     assert isinstance( rtype, rt.Const ), \
-      '{} freevar should be a constant!'.format( id_ )
+      f'{id_} freevar should be a constant!'
     assert isinstance( rtype.get_dtype(), rdt.Vector ), \
-      '{} freevar should be a (list of) integer/BitStruct!'.format( id_ )
+      f'{id_} freevar should be a (list of) integer/BitStruct!'
     return s.rtlir_tr_const_decl( '__const__'+id_, rtype, array_type, dtype, obj )
 
 #-------------------------------------------------------------------------
@@ -140,7 +140,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def check_res( s, node, name ):
     if s.is_sverilog_reserved( name ):
       raise SVerilogTranslationError( s.blk, node,
-        "name {} is a SystemVerilog reserved keyword!".format( name ) )
+        f"name {name} is a SystemVerilog reserved keyword!" )
 
   #-----------------------------------------------------------------------
   # visit_CombUpblk
@@ -156,14 +156,14 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.check_res( node, blk_name )
 
     # Add name of the upblk to this always block
-    src.extend( [ 'always_comb begin : {blk_name}'.format( **locals() ) ] )
+    src.append( f'always_comb begin : {blk_name}' )
 
     for stmt in node.body:
       body.extend( s.visit( stmt ) )
 
     make_indent( body, 1 )
     src.extend( body )
-    src.extend( [ 'end' ] )
+    src.append( 'end' )
     s.upblk_type = s.NONE
     return src
 
@@ -181,16 +181,14 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.check_res( node, blk_name )
 
     # Add name of the upblk to this always block
-    src.extend( [
-      'always_ff @(posedge clk) begin : {blk_name}'.format( **locals() )
-    ] )
+    src.append( f'always_ff @(posedge clk) begin : {blk_name}' )
 
     for stmt in node.body:
       body.extend( s.visit( stmt ) )
 
     make_indent( body, 1 )
     src.extend( body )
-    src.extend( [ 'end' ] )
+    src.append( 'end' )
     s.upblk_type = s.NONE
     return src
 
@@ -207,7 +205,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     target        = s.visit( node.target )
     value         = s.visit( node.value )
     assignment_op = '<=' if s.upblk_type == s.SEQUENTIAL else '='
-    ret = '{target} {assignment_op} {value};'.format( **locals() )
+    ret = f'{target} {assignment_op} {value};'
     return [ ret ]
 
   #-----------------------------------------------------------------------
@@ -244,7 +242,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_Concat( s, node ):
     values = [ s.visit(v) for v in node.values ]
     signals = ', '.join( values )
-    return '{{ {signals} }}'.format( **locals() )
+    return f'{{ {signals} }}'
 
   #-----------------------------------------------------------------------
   # visit_ZeroExt
@@ -259,7 +257,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         "new bitwidth of zero extension must be known at elaboration time!" )
     current_nbits = int(node.value.Type.get_dtype().get_length())
     padded_nbits = target_nbits - current_nbits
-    return "{{ {{ {padded_nbits} {{ 1'b0 }} }}, {value} }}".format( **locals() )
+    return f"{{ {{ {padded_nbits} {{ 1'b0 }} }}, {value} }}"
 
   #-----------------------------------------------------------------------
   # visit_SignExt
@@ -323,10 +321,10 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     reduce_ops = { bir.BitAnd : '&', bir.BitOr : '|', bir.BitXor : '^' }
     if op_t not in reduce_ops:
       raise SVerilogTranslationError( s.blk, node,
-          "unrecognized operator {} for reduce method!".format(op_t) )
+          f"unrecognized operator {op_t} for reduce method!" )
     value = s.visit( node.value )
     op = reduce_ops[ op_t ]
-    return "( {op} {value} )".format( **locals() )
+    return f"( {op} {value} )"
 
   #-----------------------------------------------------------------------
   # visit_SizeCast
@@ -336,14 +334,13 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     nbits = node.nbits
     value = s.visit( node.value )
     if hasattr( node, "_value" ):
-      template = "{nbits}'d{value}"
       if isinstance( node._value, Bits ):
         value = node._value.value
       else:
         value = node._value
-    else:
-      template = "{nbits}'( {value} )"
-    return template.format( **locals() )
+      return f"{nbits}'d{value}"
+
+    return f"{nbits}'( {value} )"
 
   #-----------------------------------------------------------------------
   # visit_StructInst
@@ -429,19 +426,19 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
             # format(node.value) )
 
       if isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
-        return '{value}[{idx}]'.format( **locals() )
+        return f'{value}[{idx}]'
       else:
-        return '{value}__{idx}'.format( **locals() )
+        return f'{value}__{idx}'
 
     # Index on a signal
     elif isinstance( Type, rt.Signal ):
 
       # Packed index
       if Type.is_packed_indexable():
-        return '{value}[{idx}]'.format( **locals() )
+        return f'{value}[{idx}]'
       # Bit selection
       elif isinstance( Type.get_dtype(), rdt.Vector ):
-        return '{value}[{idx}]'.format( **locals() )
+        return f'{value}[{idx}]'
       else:
         raise SVerilogTranslationError( s.blk, node,
             "internal error: unrecognized index" )
@@ -464,7 +461,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     else:
       upper = s.visit( node.upper ) + '-1'
 
-    return '{value}[{upper}:{lower}]'.format( **locals() )
+    return f'{value}[{upper}:{lower}]'
 
   #-----------------------------------------------------------------------
   # visit_Base
@@ -485,7 +482,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_FreeVar( s, node ):
-    return '__const__'+node.name
+    return f'__const__{node.name}'
 
   #-----------------------------------------------------------------------
   # visit_TmpVar

@@ -105,7 +105,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
         array_rtype = None
       dtype = fvar_rtype.get_dtype()
       assert isinstance( dtype, rdt.Vector ), \
-        '{} freevar should be an integer or a list of integers!'.format( name )
+        f'{name} freevar should be an integer or a list of integers!'
       freevars.append( s.rtlir_tr_behavioral_freevar(
         name,
         fvar_rtype,

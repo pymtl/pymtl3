@@ -26,9 +26,9 @@ class SVBehavioralTranslatorL3(
 
   def rtlir_tr_behavioral_freevar( s, id_, rtype, array_type, dtype, obj ):
     assert isinstance( rtype, rt.Const ), \
-      '{} freevar should be a constant!'.format( id_ )
+      f'{id_} freevar should be a constant!'
     if isinstance( rtype.get_dtype(), rdt.Struct ):
-      return s.rtlir_tr_const_decl( '__const__'+id_, rtype, array_type, dtype, obj )
+      return s.rtlir_tr_const_decl( f'__const__{id_}', rtype, array_type, dtype, obj )
     else:
       return super().rtlir_tr_behavioral_freevar(
           id_, rtype, array_type, dtype, obj )
@@ -50,7 +50,7 @@ class BehavioralRTLIRToSVVisitorL3( BehavioralRTLIRToSVVisitorL2 ):
       return values[0]
     else:
       cat_value = ", ".join( values )
-      return "{{ {cat_value} }}".format( **locals() )
+      return f"{{ {cat_value} }}"
 
   #-----------------------------------------------------------------------
   # visit_Attribute
@@ -71,6 +71,6 @@ class BehavioralRTLIRToSVVisitorL3( BehavioralRTLIRToSVVisitorL2 ):
         value = s.visit( node.value )
         attr = node.attr
         s.check_res( node, attr )
-        return '{value}.{attr}'.format( **locals() )
+        return f'{value}.{attr}'
 
     return super().visit_Attribute( node )

@@ -45,7 +45,7 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
     if isinstance( node.value.Type, rt.InterfaceView ):
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
-          '{} does not have field {}!'.format( dtype.get_name(), node.attr))
+          f'{dtype.get_name()} does not have field {node.attr}!' )
       node.Type = node.value.Type.get_property( node.attr )
     else:
       super().visit_Attribute( node )

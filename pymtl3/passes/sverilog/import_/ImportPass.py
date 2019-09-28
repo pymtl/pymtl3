@@ -56,8 +56,7 @@ class ImportPass( BasePass ):
     s.top = top
     if not top._dsl.constructed:
       raise SVerilogImportError( top,
-        "please elaborate design {} before applying the import pass!". \
-          format(top) )
+        f"please elaborate design {top} before applying the import pass!" )
     ret = s.traverse_hierarchy( top )
     if ret is None:
       ret = top
@@ -115,7 +114,7 @@ class ImportPass( BasePass ):
     obj_dir = 'obj_dir_' + full_name
     c_wrapper = full_name + '_v.cpp'
     py_wrapper = full_name + '_v.py'
-    shared_lib = 'lib{}_v.so'.format( full_name )
+    shared_lib = f'lib{full_name}_v.so'
     if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
@@ -482,7 +481,7 @@ constraint_list = [
         elif isinstance( _rtype, rt.InterfaceView ):
           ret += s.mangle_interface( id_+"__"+name, _rtype, _n_dim )
         else:
-          assert False, "{} is not interface(s) or port(s)!".format(name)
+          assert False, f"{name} is not interface(s) or port(s)!"
     else:
       ret = []
       for i in range( n_dim[0] ):
@@ -529,7 +528,7 @@ constraint_list = [
     elif  nbits <= 64: data_type = UNSIGNED_64
     else:              data_type = UNSIGNED_32
     name = s._verilator_name( name )
-    return '{data_type} * {name}{c_dim};'.format( **locals() )
+    return f'{data_type} * {name}{c_dim};'
 
   #-------------------------------------------------------------------------
   # gen_signal_init_c
@@ -557,7 +556,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
       for idx, dim_size in enumerate( n_dim_size ):
         ret.append( for_template.format( **locals() ) )
-        sub += "[i_{idx}]".format( **locals() )
+        sub += f"[i_{idx}]"
 
       ret.append( assign_template.format( **locals() ) )
 
@@ -567,7 +566,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
           ret[ idx ] = "  " + ret[ idx ]
 
     else:
-      ret.append('m->{name} = {deference}model->{name};'.format(**locals()))
+      ret.append(f'm->{name} = {deference}model->{name};')
 
     return ret
 
@@ -581,7 +580,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     _lhs, _rhs = s._verilator_name(lhs), s._verilator_name(rhs)
-    ret = ["connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )".format(**locals())]
+    ret = [f"connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )"]
     return ret, r
 
   def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
@@ -589,10 +588,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
     upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
     ret = [
       "@s.update",
-      "def " + upblk_name + "():",
+      f"def {upblk_name}():",
     ]
     if d == "output":
-      ret.append( "  s.{lhs} = {dtype_name}()".format( **locals() ) )
+      ret.append( f"  s.{lhs} = {dtype_name}()" )
     body = []
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
@@ -605,9 +604,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     l, r = pos, pos+nbits
     _lhs, _rhs = s._verilator_name( lhs ), s._verilator_name( rhs )
     if d == "input":
-      ret = ["  s.mangled__{_rhs}[{l}:{r}] = s.{_lhs}".format(**locals())]
+      ret = [f"  s.mangled__{_rhs}[{l}:{r}] = s.{_lhs}"]
     else:
-      ret = ["  s.{_lhs} = s.mangled__{_rhs}[{l}:{r}]".format(**locals())]
+      ret = [f"  s.{_lhs} = s.mangled__{_rhs}[{l}:{r}]"]
     return ret, r
 
   def _gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
@@ -624,7 +623,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       ret = []
       for idx in range(n_dim[0]):
-        _lhs = lhs + "[{idx}]".format( **locals() )
+        _lhs = lhs + f"[{idx}]"
         _ret, pos = \
           s._gen_packed_array_conns( d, _lhs, rhs, dtype, n_dim[1:], pos )
         ret += _ret
@@ -640,7 +639,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       sub_dtype = dtype.get_sub_dtype()
       return s._gen_packed_array_conns( d, lhs, rhs, sub_dtype, n_dim, pos )
     else:
-      assert False, "unrecognized data type {}!".format( dtype )
+      assert False, f"unrecognized data type {dtype}!"
 
   def gen_dtype_conns( s, d, lhs, rhs, dtype, pos ):
     if isinstance( dtype, rdt.Vector ):
@@ -648,7 +647,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     elif isinstance( dtype, rdt.Struct ):
       return s.gen_struct_conns( d, lhs, rhs, dtype, pos )
     else:
-      assert False, "unrecognized data type {}!".format( dtype )
+      assert False, f"unrecognized data type {dtype}!"
 
   def gen_port_conns( s, id_py, id_v, port, n_dim ):
     if not n_dim:
@@ -657,13 +656,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
       nbits = dtype.get_length()
       ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0 )
       assert pos == nbits, \
-        "internal error: {} wire length mismatch!".format( id_py )
+        f"internal error: {id_py} wire length mismatch!"
       return ret
     else:
       ret = []
       for idx in range(n_dim[0]):
-        _id_py = id_py + "[{idx}]".format( **locals() )
-        _id_v = id_v + "[{idx}]".format( **locals() )
+        _id_py = id_py + f"[{idx}]"
+        _id_v = id_v + f"[{idx}]"
         ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:] )
       return ret
 
@@ -673,8 +672,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
       all_properties = ifc.get_all_properties_packed()
       for name, rtype in all_properties:
         _n_dim, _rtype = s._get_rtype( rtype )
-        _id_py = id_py + ".{name}".format( **locals() )
-        _id_v = id_v + "__{name}".format( **locals() )
+        _id_py = id_py + f".{name}"
+        _id_v = id_v + f"__{name}"
         if isinstance( _rtype, rt.Port ):
           ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim )
         else:
@@ -683,8 +682,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       ret = []
       for idx in range( n_dim[0] ):
-        _id_py = id_py + "[{idx}]".format( **locals() )
-        _id_v = id_v + "__{idx}".format( **locals() )
+        _id_py = id_py + f"[{idx}]"
+        _id_v = id_v + f"__{idx}"
         ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:] )
       return ret
 
@@ -702,11 +701,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
     def gen_dtype_str( symbols, dtype ):
       if isinstance( dtype, rdt.Vector ):
         nbits = dtype.get_length()
-        Bits_name = "Bits{nbits}".format( **locals() )
+        Bits_name = f"Bits{nbits}"
         if Bits_name not in symbols and nbits >= 256:
           Bits_class = mk_bits( nbits )
           symbols.update( { Bits_name : Bits_class } )
-        return 'Bits{}'.format( dtype.get_length() )
+        return f'Bits{dtype.get_length()}'
       elif isinstance( dtype, rdt.Struct ):
         # It is possible to reuse the existing struct class because its __init__
         # can be called without arguments.
@@ -715,7 +714,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
           symbols.update( { name : cls } )
         return name
       else:
-        assert False, "unrecognized data type {}!".format( dtype )
+        assert False, f"unrecognized data type {dtype}!"
 
     def gen_port_decl_py( ports ):
       symbols, decls = {}, []
@@ -728,14 +727,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
             _n_dim = copy.copy( n_dim )
             _n_dim.reverse()
             for length in _n_dim:
-              rhs = "[ " + rhs + (" for _ in range({length}) ]".format(**locals()))
+              rhs = f"[ {rhs} for _ in range({length}) ]"
           else:
             rhs = "{direction}( {dtype} )"
             port = _port
           direction = s._get_direction( port )
           dtype = gen_dtype_str( symbols, port.get_dtype() )
           rhs = rhs.format( **locals() )
-          decls.append("s.{id_} = {rhs}".format(**locals()))
+          decls.append(f"s.{id_} = {rhs}")
       return symbols, decls
 
     def gen_ifc_decl_py( ifcs ):
@@ -748,8 +747,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
           elif isinstance( obj, Bits ):
             nbits = obj.nbits
             value = obj.value
-            Bits_name = "Bits{nbits}".format( **locals() )
-            Bits_arg_str = "{Bits_name}( {value} )".format( **locals() )
+            Bits_name = f"Bits{nbits}"
+            Bits_arg_str = f"{Bits_name}( {value} )"
             if Bits_name not in symbols and nbits >= 256:
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
@@ -766,7 +765,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
             return bs_name
           elif isinstance( obj, type ) and issubclass( obj, Bits ):
             nbits = obj.nbits
-            Bits_name = "Bits{nbits}".format( **locals() )
+            Bits_name = f"Bits{nbits}"
             if Bits_name not in symbols and nbits >= 256:
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
@@ -778,8 +777,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
             return BitStruct_name
           else:
             assert False, \
-              "Interface constructor argument {} is not an int/Bits/BitStruct!". \
-                format( obj )
+              f"Interface constructor argument {obj} is not an int/Bits/BitStruct!"
 
         name, cls = ifc.get_name(), ifc.get_class()
         if name not in symbols:
@@ -787,9 +785,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
         arg_list = []
         args = ifc.get_args()
         for idx, obj in enumerate(args[0]):
-          arg_list.append( _get_arg_str( "_ifc_arg"+str(idx), obj ) )
+          arg_list.append( _get_arg_str( f"_ifc_arg{idx}", obj ) )
         for arg_name, arg_obj in args[1].items():
-          arg_list.append( arg_name + " = " + _get_arg_str( arg_name, arg_obj ) )
+          arg_list.append( f"{arg_name} = {_get_arg_str( arg_name, arg_obj )}" )
         return name, ', '.join( arg_list )
 
       symbols, decls = {}, []
@@ -801,7 +799,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
           _n_dim = copy.copy( n_dim )
           _n_dim.reverse()
           for length in _n_dim:
-            rhs = "[ " + rhs + (" for _ in range({length}) ]".format(**locals()))
+            rhs = f"[ {rhs} for _ in range({length}) ]"
         else:
           rhs = "{ifc_class}({ifc_params})"
           _ifc = ifc
@@ -809,7 +807,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         if ifc_params:
           ifc_params = " " + ifc_params + " "
         rhs = rhs.format( **locals() )
-        decls.append("s.{id_} = {rhs}".format(**locals()))
+        decls.append(f"s.{id_} = {rhs}")
       return symbols, decls
 
     #-----------------------------------------------------------------------
@@ -849,7 +847,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     dtype = rtype.get_dtype()
     nbits = dtype.get_length()
     for idx in reversed(n_dim):
-      rhs = "[ " + rhs + ( " for _ in range({idx}) ]".format( **locals() ) )
+      rhs = f"[ {rhs} for _ in range({idx}) ]"
     rhs = rhs.format( **locals() )
     return template.format( **locals() )
 
@@ -864,8 +862,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       ret = []
       for idx in range( n_dim[0] ):
-        _lhs = lhs+"[{idx}]".format(**locals())
-        _rhs = rhs+"[{idx}]".format(**locals())
+        _lhs = f"{lhs}[{idx}]"
+        _rhs = f"{rhs}[{idx}]"
         ret += s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
@@ -895,8 +893,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       ret = []
       for idx in range( n_dim[0] ):
-        _lhs = lhs+"[{idx}]".format(**locals())
-        _rhs = rhs+"[{idx}]".format(**locals())
+        _lhs = f"{lhs}[{idx}]"
+        _rhs = f"{rhs}[{idx}]"
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
@@ -917,11 +915,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def _gen_constraints( s, name, n_dim, rtype ):
     if not n_dim:
-      return ["U( seq_upblk ) < RD( {} ),".format("s.mangled__"+name)]
+      return [f"U( seq_upblk ) < RD( s.mangled__{name} ),"]
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s._gen_constraints( name+"[{}]".format(i), n_dim[1:], rtype )
+        ret += s._gen_constraints( f"{name}[{i}]", n_dim[1:], rtype )
       return ret
 
   def gen_constraints( s, packed_ports ):
@@ -934,7 +932,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
           ret += s._gen_constraints( py_name, n_dim, sub_type )
         else:
           wire_name = "s.mangled__" + s._verilator_name(py_name)
-          ret.append( "U( seq_upblk ) < RD( {} ),".format( wire_name ) )
+          ret.append( f"U( seq_upblk ) < RD( {wire_name} )," )
     ret.append( "U( seq_upblk ) < U( comb_upblk )," )
     return ret
 
@@ -987,13 +985,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
     elif isinstance( port, rt.Array ):
       d = port.get_sub_type().get_direction()
     else:
-      assert False, "{} is not a port or array of ports!".format( port )
+      assert False, f"{port} is not a port or array of ports!"
     if d == 'input':
       return 'InPort'
     elif d == 'output':
       return 'OutPort'
     else:
-      assert False, "unrecognized direction {}!".format( d )
+      assert False, f"unrecognized direction {d}!"
 
   def _get_c_n_dim( s, port ):
     if isinstance( port, rt.Array ):
@@ -1013,7 +1011,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def _gen_ref_write( s, lhs, rhs, nbits ):
     if nbits <= 64:
-      return [ "{lhs}[0] = int({rhs})".format( **locals() ) ]
+      return [ f"{lhs}[0] = int({rhs})" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -1021,12 +1019,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range(num_assigns):
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
-        ret.append("{lhs}[{idx}] = int({rhs}[{l}:{r}])".format(**locals()))
+        ret.append( f"{lhs}[{idx}] = int({rhs}[{l}:{r}])" )
       return ret
 
   def _gen_ref_read( s, lhs, rhs, nbits ):
     if nbits <= 64:
-      return [ "{lhs} = Bits{nbits}({rhs}[0])".format( **locals() ) ]
+      return [ f"{lhs} = Bits{nbits}({rhs}[0])" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -1035,7 +1033,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
         _nbits = r - l
-        ret.append("{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])".format(**locals()))
+        ret.append( f"{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])" )
       return ret
 
   def _get_rtype( s, _rtype ):

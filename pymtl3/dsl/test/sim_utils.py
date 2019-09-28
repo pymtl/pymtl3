@@ -66,16 +66,16 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
         fanout  = len( readers )
 
-        upblk_name = f"{repr(writer)}__{fanout}" \
+        upblk_name = f"{writer!r}__{fanout}" \
                         .replace( ".", "_" ).replace( ":", "_" ) \
                         .replace( "[", "_" ).replace( "]", "" ) \
                         .replace( "(", "_" ).replace( ")", "" )
 
-        rstrs   = [ f"{repr(x)} = _w" for x in readers ]
+        rstrs   = [ f"{x!r} = _w" for x in readers ]
 
         src = f"""
         def {upblk_name}():
-          _w = {repr(writer)}
+          _w = {writer!r}
           {"; ".join(rstrs)}
         _recent_blk = {upblk_name}
         """

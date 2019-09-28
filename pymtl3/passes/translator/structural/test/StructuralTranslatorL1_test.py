@@ -46,8 +46,8 @@ def test_component_args( do_test ):
   a = A( Bits4(0), Bits16(42) )
   a._ref_name = 'A__foo_0__bar_002a'
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -61,7 +61,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_component_dfefault_args( do_test ):
@@ -72,8 +72,8 @@ def test_component_dfefault_args( do_test ):
   a = A( Bits4(0) )
   a._ref_name = 'A__foo_0__bar_002a'
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -87,7 +87,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_component_kw_args( do_test ):
@@ -98,8 +98,8 @@ def test_component_kw_args( do_test ):
   a = A( foo = Bits4(0), bar = Bits16(42) )
   a._ref_name = 'A__foo_0__bar_002a'
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -113,7 +113,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_component_star_args( do_test ):
@@ -135,8 +135,8 @@ def test_component_star_args_ungroup( do_test ):
   a = A( *args )
   a._ref_name = 'A__foo_0__bar_002a'
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -150,7 +150,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_component_double_star_args( do_test ):
@@ -172,8 +172,8 @@ def test_component_double_star_args_ungroup( do_test ):
   a = A( **kwargs )
   a._ref_name = 'A__foo_0__bar_002a'
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -187,7 +187,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_component_mixed_kw_args( do_test ):
@@ -197,8 +197,8 @@ def test_component_mixed_kw_args( do_test ):
   a = A( Bits4(0), bar = Bits16(42) )
   a._ref_name = 'A__foo_0__bar_002a__woo_00000000'
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -212,7 +212,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_port_decls( do_test ):
@@ -229,8 +229,8 @@ port_decls:
   port_decl: foo Port of Vector32
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: bar Port of Vector4
@@ -246,7 +246,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_array_port_decl( do_test ):
@@ -261,8 +261,8 @@ port_decls:
   port_decl: foo Array[5] of Port
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: foo Array[5] of Port
@@ -277,7 +277,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_wire_decls( do_test ):
@@ -299,8 +299,8 @@ wire_decls:
   wire_decl: foo Wire of Vector32
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -317,7 +317,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_array_wire_decl( do_test ):
@@ -337,8 +337,8 @@ wire_decls:
   wire_decl: foo Array[5] of Wire
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
 interface_decls:
@@ -354,7 +354,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_const_decls( do_test ):
@@ -382,8 +382,8 @@ const_decls:
   const_decl: foo Const of Vector32
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: out Port of Vector32
@@ -401,7 +401,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_array_const_decl( do_test ):
@@ -426,8 +426,8 @@ const_decls:
   const_decl: foo Array[5] of Const
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: out Port of Vector32
@@ -444,7 +444,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_expr_bit_sel( do_test ):
@@ -470,8 +470,8 @@ connections:
   connection: PartSel CurCompAttr foo 1 2 -> CurCompAttr bar
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: bar Port of Vector1
@@ -488,7 +488,7 @@ connections:
   connection: PartSel CurCompAttr foo 1 2 -> CurCompAttr bar
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_expr_part_sel( do_test ):
@@ -513,8 +513,8 @@ connections:
   connection: PartSel CurCompAttr foo 0 4 -> CurCompAttr bar
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: bar Port of Vector4
@@ -531,7 +531,7 @@ connections:
   connection: PartSel CurCompAttr foo 0 4 -> CurCompAttr bar
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_expr_port_array_index( do_test ):
@@ -556,8 +556,8 @@ connections:
   connection: PortArrayIdx CurCompAttr foo 1 -> CurCompAttr bar
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: bar Port of Vector32
@@ -574,7 +574,7 @@ connections:
   connection: PortArrayIdx CurCompAttr foo 1 -> CurCompAttr bar
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_expr_wire_array_index( do_test ):
@@ -606,8 +606,8 @@ connections:
   connection: WireArrayIdx CurCompAttr wire 1 -> CurCompAttr bar
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: bar Port of Vector32
@@ -625,7 +625,7 @@ connections:
   connection: WireArrayIdx CurCompAttr wire 1 -> CurCompAttr bar
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_expr_const_array_index( do_test ):
@@ -661,8 +661,8 @@ connections:
   connection: Bits32(0) -> CurCompAttr bar
 """
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: bar Port of Vector32
@@ -681,7 +681,7 @@ connections:
   connection: Bits32(0) -> CurCompAttr bar
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 def test_dtype_vector( do_test ):
@@ -700,8 +700,8 @@ port_decls:
   a._ref_conns = "connections:\n"
   a._ref_vectors = [ (rdt.Vector(1), "Vector1"), (rdt.Vector(32), "Vector32") ]
   a._ref_src = \
-"""\
-component {}
+f"""\
+component {a._ref_name}
 (
 port_decls:
   port_decl: foo Port of Vector32
@@ -716,7 +716,7 @@ upblk_srcs:
 connections:
 
 endcomponent
-""".format( a._ref_name )
+"""
   do_test( a )
 
 __all__ = list([s for s in dir() if s.startswith('test_')])

@@ -49,7 +49,7 @@ class Vector( BaseRTLIRDataType ):
     return isinstance( obj, ( Vector, Bool ) )
 
   def __str__( s ):
-    return 'Vector{}'.format( s.nbits )
+    return f'Vector{s.nbits}'
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
@@ -63,9 +63,9 @@ class Struct( BaseRTLIRDataType ):
       try:
         file_name = inspect.getsourcefile( cls )
         line_no = inspect.getsourcelines( cls )[1]
-        s.file_info = "File: {file_name}, Line: {line_no}".format( **locals() )
+        s.file_info = f"File: {file_name}, Line: {line_no}"
       except OSError:
-        s.file_info = "Dynamically generated class " + cls.__name__
+        s.file_info = f"Dynamically generated class {cls.__name__}"
     else:
       s.file_info = "Not available"
 
@@ -105,7 +105,7 @@ class Struct( BaseRTLIRDataType ):
     return s == obj
 
   def __str__( s ):
-    return 'Struct {}'.format( s.name )
+    return f'Struct {s.name}'
 
 class Bool( BaseRTLIRDataType ):
   """RTLIR data type class for struct type.
@@ -134,7 +134,7 @@ class PackedArray( BaseRTLIRDataType ):
   """RTLIR data type class for packed array type."""
   def __init__( s, dim_sizes, sub_dtype ):
     assert isinstance( sub_dtype, BaseRTLIRDataType ), \
-      'non-RTLIR data type {} as sub type of array.'.format(sub_dtype)
+      f'non-RTLIR data type {sub_dtype} as sub type of array.'
     assert not isinstance( sub_dtype, PackedArray ), \
       'nested PackedArray is not allowed!'
     assert len( dim_sizes ) >= 1, \
@@ -172,7 +172,7 @@ class PackedArray( BaseRTLIRDataType ):
     return s == obj
 
   def __str__( s ):
-    return 'PackedArray{} of {}'.format( s.dim_sizes, s.sub_dtype )
+    return f'PackedArray{s.dim_sizes} of {s.sub_dtype}'
 
 def _get_rtlir_dtype_struct( obj ):
 
@@ -206,9 +206,8 @@ def _get_rtlir_dtype_struct( obj ):
       type_instance = cls()
     except TypeError:
       assert False, \
-        '__init__() of supposed struct {} should take 0 argument ( you can \
-        achieve this by adding default values to your arguments )!'.format(
-          cls.__name__ )
+        f'__init__() of supposed struct {cls.__name__} should take 0 argument ( you can \
+        achieve this by adding default values to your arguments )!'
     fields = collect_objs( type_instance, object )
     static_member_names = [x[0] for x in static_members]
     for name, field in fields:
@@ -220,8 +219,7 @@ def _get_rtlir_dtype_struct( obj ):
     pack_order = []
     if hasattr( cls, "fields" ) and cls.fields != []:
       assert len(cls.fields) == len(all_properties.keys()), \
-        "{}.fields does not match the attributes of its instance!". \
-          format( cls.__name__ )
+        "{cls.__name__}.fields does not match the attributes of its instance!"
       for field_name, field in cls.fields:
         assert field_name in all_properties, \
           field_name + ' is not an attribute of struct ' + cls.__name__ + '!'
@@ -236,7 +234,7 @@ def _get_rtlir_dtype_struct( obj ):
     packed_order = []
     for field_name in pack_order:
       assert field_name in all_properties, \
-        '{} is not an attirubte of struct {}!'.format( field_name, cls.__name__ )
+        f'{field_name} is not an attirubte of struct {cls.__name__}!'
       properties.append( ( field_name, all_properties[ field_name ] ) )
       packed_order.append( field_name )
     return Struct(cls.__name__, dict(properties), packed_order, cls)
@@ -268,12 +266,11 @@ def get_rtlir_dtype( obj ):
           return _get_rtlir_dtype_struct( Type() )
         except TypeError:
           assert False, \
-            '__init__() of supposed struct {} should take 0 argument ( you can \
-            achieve this by adding default values to your arguments )!'.format(
-              Type.__name__ )
+            f'__init__() of supposed struct {Type.__name__} should take 0 argument ( you can \
+            achieve this by adding default values to your arguments )!'
 
       else:
-        assert False, 'cannot convert object of type {} into RTLIR!'.format(Type)
+        assert False, f'cannot convert object of type {Type} into RTLIR!'
 
     # Python integer objects
     elif isinstance( obj, int ):

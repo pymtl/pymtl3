@@ -27,8 +27,8 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return {
       'def'  : '',
       'nbits' : dtype.get_length(),
-      'const_decl' : '[{msb}:0] {{id_}}'.format( **locals() ),
-      'decl' : 'logic [{msb}:0] {{id_}}'.format( **locals() ),
+      'const_decl' : f'[{msb}:0] {{id_}}',
+      'decl' : f'logic [{msb}:0] {{id_}}',
       'raw_dtype' : dtype
     }
 
@@ -85,13 +85,13 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       if isinstance( dtype, rdt.Vector ):
         return s._literal_number( dtype.get_length(), array )
       else:
-        assert False, '{} is not an integer or a BitStruct!'.format( array )
+        assert False, f'{array} is not an integer or a BitStruct!'
     else:
       ret = []
       for _idx, idx in enumerate( range( n_dim[0] ) ):
         ret.append( s.gen_array_param( n_dim[1:], dtype, array[idx] ) )
       cat_str = ", ".join( ret )
-      return "'{{ {cat_str} }}".format( **locals() )
+      return f"'{{ {cat_str} }}"
 
   def rtlir_tr_const_decl( s, id_, Type, array_type, dtype, value ):
     _dtype = Type.get_dtype()
@@ -104,7 +104,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     _dtype = dtype['const_decl'].format( **locals() ) + array_type['decl']
     _value = s.gen_array_param( array_type['n_dim'], dtype['raw_dtype'], value )
 
-    return 'localparam {_dtype} = {_value};'.format( **locals() )
+    return f'localparam {_dtype} = {_value};'
 
   #-----------------------------------------------------------------------
   # Connections
@@ -115,7 +115,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
     return '\n'.join( connections )
 
   def rtlir_tr_connection( s, wr_signal, rd_signal ):
-    return 'assign {rd_signal} = {wr_signal};'.format( **locals() )
+    return f'assign {rd_signal} = {wr_signal};'
 
   #-----------------------------------------------------------------------
   # Signal operations
@@ -123,24 +123,24 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
 
   def rtlir_tr_bit_selection( s, base_signal, index ):
     # Bit selection
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_part_selection( s, base_signal, start, stop ):
     # Part selection
     _stop = stop-1
-    return '{base_signal}[{_stop}:{start}]'.format( **locals() )
+    return f'{base_signal}[{_stop}:{start}]'
 
   def rtlir_tr_port_array_index( s, base_signal, index ):
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_wire_array_index( s, base_signal, index ):
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_const_array_index( s, base_signal, index ):
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_current_comp_attr( s, base_signal, attr ):
-    return '{attr}'.format( **locals() )
+    return f'{attr}'
 
   def rtlir_tr_current_comp( s, comp_id, comp_rtype ):
     return ''
@@ -154,7 +154,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
 
   def _literal_number( s, nbits, value ):
     value = int( value )
-    return "{nbits}'d{value}".format( **locals() )
+    return f"{nbits}'d{value}"
 
   def rtlir_tr_literal_number( s, nbits, value ):
     return s._literal_number( nbits, value )
