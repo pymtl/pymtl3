@@ -1,14 +1,19 @@
 
+from typing import Generic, TypeVar
 from pymtl3 import *
 
 # N-input Mux
 
-class Mux( Component ):
+T_MuxDataType = TypeVar("T_MuxDataType")
+T_MuxSelType  = TypeVar("T_MuxSelType")
 
-  def construct( s, Type, ninputs ):
-    s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
-    s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
-    s.out = OutPort( Type )
+class Mux( Component, Generic[T_MuxDataType, T_MuxSelType] ):
+
+  def construct( s, ninputs ):
+    s.in_ = [ InPort[T_MuxDataType]() for _ in range(ninputs) ]
+    # s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
+    s.sel = InPort[T_MuxSelType]()
+    s.out = OutPort[T_MuxDataType]()
 
     @s.update
     def up_mux():
@@ -16,12 +21,16 @@ class Mux( Component ):
 
 # Rshifter
 
-class RShifter( Component ):
+T_RShifterDataType  = TypeVar("T_RShifterDataType")
+T_RShifterShamtType = TypeVar("T_RShifterShamtType")
 
-  def construct( s, Type, shamt_nbits = 1 ):
-    s.in_   = InPort( Type )
-    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
-    s.out   = OutPort( Type )
+class RShifter( Component, Generic[T_RShifterDataType, T_RShifterShamtType] ):
+
+  def construct( s ):
+    s.in_   = InPort[T_RShifterDataType]()
+    # s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.shamt = InPort[T_RShifterShamtType]()
+    s.out   = OutPort[T_RShifterDataType]()
 
     @s.update
     def up_rshifter():
@@ -29,12 +38,16 @@ class RShifter( Component ):
 
 # Lshifter
 
-class LShifter( Component ):
+T_LShifterDataType  = TypeVar("T_LShifterDataType")
+T_LShifterShamtType = TypeVar("T_LShifterShamtType")
 
-  def construct( s, Type, shamt_nbits = 1 ):
-    s.in_   = InPort( Type )
-    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
-    s.out   = OutPort( Type )
+class LShifter( Component, Generic[T_LShifterDataType, T_LShifterShamtType] ):
+
+  def construct( s ):
+    s.in_   = InPort[T_LShifterDataType]()
+    # s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.shamt = InPort[T_LShifterShamtType]()
+    s.out   = OutPort[T_LShifterDataType]()
 
     @s.update
     def up_lshifter():
@@ -80,12 +93,14 @@ class And( Component ):
 
 # Subtractor
 
-class Subtractor( Component ):
+T_SubtractorDataType = TypeVar("T_SubtractorDataType")
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
-    s.out = OutPort( Type )
+class Subtractor( Component, Generic[T_SubtractorDataType] ):
+
+  def construct( s ):
+    s.in0 = InPort[T_SubtractorDataType]()
+    s.in1 = InPort[T_SubtractorDataType]()
+    s.out = OutPort[T_SubtractorDataType]()
 
     @s.update
     def up_subtractor():

@@ -100,7 +100,11 @@ class NamedObject:
 
   def __new__( cls, *args, **kwargs ):
 
-    inst = super().__new__( cls )
+    # Generic[] requires all arguments to construct the class instance
+    try:
+      inst = super().__new__( cls, *args, **kwargs )
+    except TypeError:
+      inst = super().__new__( cls )
     inst._dsl = DSLMetadata() # TODO an actual object?
 
     # Save parameters for elaborate

@@ -8,6 +8,7 @@ Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
 from collections import deque
+from typing import Generic, TypeVar
 
 from pymtl3.datatypes import Bits, mk_bits
 
@@ -54,11 +55,11 @@ def _connect_check( o1, o2, internal ):
 
   # Get access to the top level component by identifying a connectable
 
-  if isinstance( o1, Connectable ):
+  if isinstance( o1, Connectable ) and not isinstance( o1, Const ):
     o1_connectable = True
     top = o1._dsl.elaborate_top
 
-  if isinstance( o2, Connectable ):
+  if isinstance( o2, Connectable ) and not isinstance( o2, Const ):
     o2_connectable = True
     o2_top = o2._dsl.elaborate_top
 
@@ -102,12 +103,39 @@ def _overlap( x, y ):
       else:                   return x.start < y.stop
 
 # internal class for connecting signals and constants, not named object
-class Const( Connectable ):
-  def __init__( s, Type, v, parent ):
+
+T_ConstDataType = TypeVar("T_ConstDataType")
+
+class Const( Connectable, Generic[T_ConstDataType] ):
+  # def __init__( s, Type, v, parent ):
+  def __init__( s, *args ):
     s._dsl = DSLMetadata()
-    s._dsl.Type = Type
-    s._dsl.const = v
-    s._dsl.parent_obj = parent
+    if len(args) == 3:
+      s._dsl.Type = args[0]
+      s._dsl.const = args[1]
+      s._dsl.parent_obj = args[2]
+
+    elif len(args) <= 1:
+      cls = s.__class__
+      assert cls.Type is not None
+      s._dsl.Type = cls.Type
+      if len(args) == 0:
+        s._dsl.const = 0
+      else:
+        s._dsl.const = args[0]
+      s._dsl.parent_obj = None
+      cls.Type = None
+
+    else:
+      assert False
+
+  def __class_getitem__( cls, Type ):
+    if isinstance( Type, tuple ):
+      raise TypeError(f"{cls} expects exactly one data type!")
+    cls.Type = Type
+
+    # Call the [] method of parent class (i.e. Generic)
+    return super(Const, cls).__class_getitem__( Type )
 
   def __repr__( s ):
     return "{}({})".format( str(s._dsl.Type.__name__), s._dsl.const )
@@ -132,8 +160,23 @@ class Const( Connectable ):
 
 class Signal( NamedObject, Connectable ):
 
-  def __init__( s, Type ):
-    # TODO
+  def __init__( s, _Type = None ):
+    # If necessary, extract the real type from __class_getitem__ aka []
+    cls = s.__class__
+    if _Type is None:
+      if not hasattr(cls, "Type") or cls.Type is None:
+        raise TypeError(f"Data type of {cls} cannot be None!")
+      Type = cls.Type
+
+      # Different signals might be parametrized with different types, so
+      # we need to unset the Type field of the current class so that if
+      # there were any unassigned data types, we will catch that instead
+      # of using stale data types.
+      cls.Type = None
+
+    else:
+      Type = _Type
+
     if isinstance( Type, int ):
       raise Exception("Use actual type instead of int (it is deprecated).")
     s._dsl.Type = Type
@@ -142,6 +185,14 @@ class Signal( NamedObject, Connectable ):
     s._dsl.slice  = None # None -- not a slice of some wire by default
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
+
+  def __class_getitem__( cls, Type ):
+    if isinstance( Type, tuple ):
+      raise TypeError(f"{cls} expects exactly one data type!")
+    cls.Type = Type
+
+    # Call the [] method of parent class (i.e. Generic)
+    return super(Signal, cls).__class_getitem__( Type )
 
   def inverse( s ):
     pass
@@ -310,24 +361,59 @@ class Signal( NamedObject, Connectable ):
       "You are only allowed to pass in a sibling signal."
     return _overlap( s._dsl.slice, other._dsl.slice )
 
+T_WireDataType = TypeVar("T_WireDataType")
+
 # These three subtypes are for type checking purpose
-class Wire( Signal ):
+class Wire( Signal, Generic[T_WireDataType] ):
   def inverse( s ):
     return Wire( s._dsl.Type )
 
-class InPort( Signal ):
+T_InPortDataType = TypeVar("T_InPortDataType")
+
+class InPort( Signal, Generic[T_InPortDataType] ):
   def inverse( s ):
     return OutPort( s._dsl.Type )
   def is_input_value_port( s ):
     return True
 
-class OutPort( Signal ):
+T_OutPortDataType = TypeVar("T_OutPortDataType")
+
+class OutPort( Signal, Generic[T_OutPortDataType] ):
   def inverse( s ):
     return InPort( s._dsl.Type )
   def is_output_value_port( s ):
     return True
 
 class Interface( NamedObject, Connectable ):
+
+  def __init__( s, _Type = None ):
+    # If necessary, extract the real type from __class_getitem__ aka []
+    cls = s.__class__
+    if _Type is None:
+      if not hasattr(cls, "Type") or cls.Type is None:
+        raise TypeError(f"Data type of {cls} cannot be None!")
+      Type = cls.Type
+
+      # Different signals might be parametrized with different types, so
+      # we need to unset the Type field of the current class so that if
+      # there were any unassigned data types, we will catch that instead
+      # of using stale data types.
+      cls.Type = None
+
+    else:
+      Type = _Type
+
+    if isinstance( Type, int ):
+      raise Exception("Use actual type instead of int (it is deprecated).")
+    s._dsl.Type = Type
+
+  def __class_getitem__( cls, Type ):
+    if isinstance( Type, tuple ):
+      raise TypeError(f"{cls} expects exactly one data type!")
+    cls.Type = Type
+
+    # Call the [] method of parent class (i.e. Generic)
+    return super(Interface, cls).__class_getitem__( Type )
 
   def inverse( s ):
     s._dsl.inversed = True
@@ -339,7 +425,8 @@ class Interface( NamedObject, Connectable ):
 
   def _construct( s ):
     if not s._dsl.constructed:
-      s.construct( *s._dsl.args, **s._dsl.kwargs )
+      # s.construct( *s._dsl.args, **s._dsl.kwargs )
+      s.construct( s._dsl.Type )
 
       inversed = False
       if hasattr( s._dsl, "inversed" ):

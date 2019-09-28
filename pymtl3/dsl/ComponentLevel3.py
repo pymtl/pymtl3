@@ -112,6 +112,15 @@ class ComponentLevel3( ComponentLevel2 ):
         raise InvalidConnectionError( "Bitwidth mismatch when connecting a Bits{} constant "
                                       "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
       o2 = Const( o1._dsl.Type, o2, s )
+    elif isinstance( o2, Const ):
+      if not issubclass( o1._dsl.Type, Bits ):
+        raise InvalidConnectionError( "We don't support connecting a Const[{}] constant "
+                                      "to non-Bits type {}".format( o2._dsl.Type.nbits, o1._dsl.Type ) )
+      if o1._dsl.Type.nbits != o2._dsl.Type.nbits:
+        raise InvalidConnectionError( "Bitwidth mismatch when connecting a Const[{}] constant "
+                                      "to signal {} with type Bits{}.".format( o2._dsl.Type.nbits, o1, o1._dsl.Type.nbits ) )
+      assert o2._dsl.parent_obj == None
+      o2._dsl.parent_obj = s
 
   # TODO implement connecting a const struct
 

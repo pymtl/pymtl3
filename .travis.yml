@@ -8,16 +8,12 @@
 
 dist: xenial
 language: python
-# Use pypy3.6-7.0.0 to have 1.12.0 version of CFFI which has `dlclose`
+# Only Python3.7 and above support __class_getitem__
 python:
- - "3.6"
  - "3.7"
- - "pypy3.6-7.0.0"
 
 env:
  - CONFIG=""
- #- CONFIG="--test-verilog"
- # - CONFIG="--dump-vcd"
 
 #------------------------------------------------------------------------
 # install dependencies

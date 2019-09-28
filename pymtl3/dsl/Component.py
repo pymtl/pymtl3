@@ -9,7 +9,7 @@ Author : Yanghui Ou
 """
 from collections import defaultdict
 
-from pymtl3.datatypes import Bits1
+from pymtl3.datatypes import Bits1, Bits, BitStruct
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
@@ -21,14 +21,36 @@ from .Placeholder import Placeholder
 
 class Component( ComponentLevel7 ):
 
+  # Hack the [] of Component to extract the run-time concrete type instances
+  def __class_getitem__( cls, Types ):
+    # Check if all the type instances are valid PyMTL types
+    if not isinstance( Types, tuple ):
+      Types = (Types,)
+    assert all(issubclass(Type, (Bits, BitStruct)) for Type in Types)
+    assert not hasattr(cls, "_rt_types") or cls._rt_types is None
+    cls._rt_types = Types
+    return super(Component, cls).__class_getitem__( Types )
+
+  def __init__( s, *args, **kwargs ):
+    # Hack the global namespace of s.construct so that the names of type vars
+    # point to the concrete type instances
+    names     = list(map(lambda x: str(x)[1:], s.__class__.__parameters__))
+    instances = s.__class__._rt_types
+    assert len(names) == len(instances)
+    print(f"{names}, {instances}")
+    s.construct.__globals__.update(
+        {name:inst for name, inst in zip(names, instances)} )
+    s.__class__._rt_types = None
+    super(Component, s).__init__()
+
   # Override
   def _construct( s ):
 
     if not s._dsl.constructed:
 
       # clk and reset signals are added here.
-      s.clk   = InPort( Bits1 )
-      s.reset = InPort( Bits1 )
+      s.clk   = InPort[Bits1]()
+      s.reset = InPort[Bits1]()
 
       # Merge the actual keyword args and those args set by set_parameter
       if s._dsl.param_tree is None:

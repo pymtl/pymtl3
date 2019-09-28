@@ -1,14 +1,17 @@
 
 from copy import deepcopy
+from typing import Generic, TypeVar
 
 from pymtl3 import *
 
 
-class Reg( Component ):
+T_RegDataType = TypeVar("T_RegDataType")
 
-  def construct( s, Type ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+class Reg( Component, Generic[T_RegDataType] ):
+
+  def construct( s ):
+    s.out = OutPort[T_RegDataType]()
+    s.in_ = InPort[T_RegDataType]()
 
     @s.update_on_edge
     def up_reg():
@@ -18,13 +21,16 @@ class Reg( Component ):
   def line_trace( s ):
     return "[{} > {}]".format(s.in_, s.out)
 
-class RegEn( Component ):
+T_RegEnDataType = TypeVar("T_RegEnDataType")
 
-  def construct( s, Type ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+class RegEn( Component, Generic[T_RegEnDataType] ):
 
-    s.en  = InPort( int if Type is int else Bits1 )
+  def construct( s ):
+    s.out = OutPort[T_RegEnDataType]()
+    s.in_ = InPort[T_RegEnDataType]()
+
+    # s.en  = InPort( int if Type is int else Bits1 )
+    s.en  = InPort[Bits1]()
 
     @s.update_on_edge
     def up_regen():
