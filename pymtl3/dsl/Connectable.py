@@ -114,6 +114,10 @@ class Const( Connectable, Generic[T_ConstDataType] ):
       s._dsl.Type = args[0]
       s._dsl.const = args[1]
       s._dsl.parent_obj = args[2]
+      # Patch mypyc Const
+      # print("PyMTL Const: patching mypyc const")
+      s.nbits = s._dsl.Type.nbits
+      s.value = s._dsl.Type( s._dsl.const )
 
     elif len(args) <= 1:
       cls = s.__class__

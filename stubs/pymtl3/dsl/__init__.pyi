@@ -104,6 +104,9 @@ class Const(Signal[T_ConstDataType]):
   @overload
   def __init__( s, value: Signal[BitsN] ) -> None: ...
 
+  @overload
+  def __init__( s, Type: Any, value: int, parent: Any ) -> None: ...
+
 #-------------------------------------------------------------------------
 # connect
 #-------------------------------------------------------------------------

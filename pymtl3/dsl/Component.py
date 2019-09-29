@@ -38,9 +38,10 @@ class Component( ComponentLevel7 ):
       names     = list(map(lambda x: str(x)[1:], s.__class__.__parameters__))
       instances = s.__class__._rt_types
       assert len(names) == len(instances)
-      # print(f"{names}, {instances}")
-      s.construct.__globals__.update(
-          {name:inst for name, inst in zip(names, instances)} )
+      if hasattr(s.construct, "__globals__"):
+        # Mypyc-compiled function does not allow monkey-patching
+        s.construct.__globals__.update(
+            {name:inst for name, inst in zip(names, instances)} )
       s.__class__._rt_types = None
     super(Component, s).__init__()
 
