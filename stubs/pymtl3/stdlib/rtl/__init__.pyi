@@ -43,7 +43,11 @@ class Mux( Component, Generic[T_MuxDataType, T_MuxSelType] ):
   sel: InPort [T_MuxSelType]
   out: OutPort[T_MuxDataType]
 
+  @overload
   def __init__( s, ninputs: int ) -> None: ...
+
+  @overload
+  def __init__( s, Type: Any, SelType: Any, ninputs: int ) -> None: ...
 
   def construct( s, ninputs: int ) -> None: ...
 
