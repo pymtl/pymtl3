@@ -29,7 +29,7 @@ class WaveGenPass( BasePass ):
 
     schedule.append( self.make_wav_gen_func( top, top._wav ) )
   def make_wav_gen_func( self, top, wavmeta ):
- 
+
 
         # Preprocess some metadata
 
@@ -126,59 +126,64 @@ class WaveGenPass( BasePass ):
 
     src =  """
 def dump_wav():
+  time.sleep(0.5)
   _tick = u'\u258f'
   _up, _down = u'\u2571', u'\u2572'
   _x, _low, _high = u'\u2573', u'\u005f', u'\u203e'
   _revstart, _revstop = '\x1B[7m', '\x1B[0m'
-
+  _back = '\033[F'
   try:
     # Type check
     {1}
     {2}
   except Exception:
     raise
-
   if True:
-    # print(sigs)
-    print(\n)
-    print(\n)
-    print("cycle num:" + str(wavmeta.sim_ncycles))
+    print("")
+    for i in range(wavmeta.sim_ncycles):
+        print(" "*(char_length-1) + str(i),end="")
+    print("")
+    
+    size=len(wavmeta.sigs)+1
+
+
     for sig in wavmeta.sigs:
       if sig != "s.clk" and sig != "s.reset":
-        print(\n)
+
         print("")
-        sys.stdout.write(sig)
-
+        print(sig,end="")
         next_char_length = char_length
-        
-        prev_val = None
 
+        prev_val = None
         for val in wavmeta.sigs[sig]:
+
           if prev_val is not None:
-            if prev_val[0] == '0b0':
-              for i in range(0,next_char_length): sys.stdout.write(_low)
+
+            if prev_val[0][:3] == '0b0':
+              print(_low*char_length,end="")
               if val[1]%5 == 0:
-                sys.stdout.write(" ")
-              if val[0] == '0b1':
-                sys.stdout.write(_up)
+                print(" ",end = "")
+              if val[0][:3] == '0b1':
+                print(_up,end="")
                 next_char_length = char_length - 1
               else:
                 next_char_length = char_length
-            elif prev_val[0] == '0b1':
-              for i in range(0,next_char_length): sys.stdout.write(_high)
+            elif prev_val[0][:3] == '0b1':
+              print(_high*char_length,end="")
               if val[1]%5== 0:
-                sys.stdout.write(" ")
-              if val[0] == '0b0':
-                sys.stdout.write(_down)
+                print(" ",end="")
+              if val[0][:3] == '0b0':
+                print(_down,end = "")
                 next_char_length = char_length - 1
               else:
                 next_char_length = char_length
           prev_val = val
-
   wavmeta.sim_ncycles += 1
+  print(size*_back)
 """.format("", "", "".join(wav_srcs) )
 
     s, l_dict = top, {}
 
     exec(compile( src, filename="temp", mode="exec"), globals().update(locals()), l_dict)
+    
     return l_dict['dump_wav']
