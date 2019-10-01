@@ -81,7 +81,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       type_instance = cls()
     except TypeError:
       raise PyMTLTypeError( s.blk, node.ast,
-f""""\
+f"""\
 __init__ of BitStruct {cls.__name__} should take 0 arguments! You can achieve this by
 adding default values to the arguments.
 """ )
