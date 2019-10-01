@@ -135,15 +135,15 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         return value_str
       elif cur_nbits > nbits:
         msb = nbits-1
-        return value_str + "[{msb}:0]".format( **locals() )
+        return f"{value_str}[{msb}:0]"
       else:
         # Zero-extend the value
         n_zero = nbits - cur_nbits
-        return "{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}".format( **locals() )
+        return f"{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}"
 
     if isinstance( value, Bits ):
       value = value.uint()
-    return "{nbits}'d{value}".format( **locals() )
+    return f"{nbits}'d{value}"
 
   #-----------------------------------------------------------------------
   # visit_Attribute
@@ -158,19 +158,19 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
     if isinstance(Type, rt.Const):
       obj = Type.get_object()
       if isinstance( obj, int ):
-        node.sexpr['s_attr'] = "32'd{}".format( obj )
+        node.sexpr['s_attr'] = f"32'd{obj}"
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
         nbits = obj.nbits
         value = int( obj.value )
-        node.sexpr['s_attr'] = "{nbits}'d{value}".format( **locals() )
+        node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""
       elif isinstance( obj, BitStruct ):
         node.sexpr['s_attr'] = s._struct_instance( node.Type.get_dtype(), obj )
         node.sexpr['s_index'] = ""
       else:
         raise SVerilogTranslationError( s.blk, node,
-          "{} {} is not an integer!".format( node.attr, obj ) )
+          f"{node.attr} {obj} is not an integer!" )
 
     elif isinstance( node.value, bir.Base ):
       # The base of this attribute node is the component 's'.
@@ -209,8 +209,8 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
           const_value = node._value
         except AttributeError:
           raise SVerilogTranslationError( s.blk, node,
-            "{} is not an array of constants!". format( value ) )
-        node.sexpr['s_index'] = "{nbits}'d{const_value}".format( **locals() )
+            f"{value} is not an array of constants!" )
+        node.sexpr['s_index'] = f"{nbits}'d{const_value}"
         node.sexpr['index'] = []
         node.sexpr['s_attr'] = ""
         node.sexpr['attr'] = []
@@ -233,7 +233,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       raise SVerilogTranslationError( s.blk, node,
           "internal error: unrecognized index" )
 
-    return s.signal_expr_epilogue( node, value+'[{}]'.format( idx ) )
+    return s.signal_expr_epilogue( node, f'{value}[{idx}]' )
 
   #-----------------------------------------------------------------------
   # visit_Slice
@@ -251,11 +251,11 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_FreeVar( s, node ):
     if isinstance( node.obj, int ):
-      return "32'd{}".format( node.obj )
+      return f"32'd{node.obj}"
     elif isinstance( node.obj, Bits ):
       nbits = node.obj.nbits
       value = int( node.obj.value )
-      return "{nbits}'d{value}".format( **locals() )
+      return f"{nbits}'d{value}"
     else:
       raise SVerilogTranslationError( s.blk, node,
-        "{} {} is not an integer!".format( node.name, node.obj ) )
+      f"{node.name} {node.obj} is not an integer!" )

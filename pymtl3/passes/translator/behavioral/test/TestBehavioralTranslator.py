@@ -40,50 +40,50 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       for upblk_decl in sorted(upblk_decls, key=lambda x: x[0]):
         make_indent( upblk_decl, 1 )
         decls += '\n' + '\n'.join( upblk_decl )
-      return 'upblk_decls:{}\n'.format( decls )
+      return f'upblk_decls:{decls}\n'
 
     def rtlir_tr_upblk_decl( s, upblk, src, py_src ):
-      return ['upblk_decl: {}'.format( upblk.__name__ )]
+      return [f'upblk_decl: {upblk.__name__}']
 
     def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
       py_srcs = ''
       for upblk_py_src in sorted(upblk_py_srcs, key=lambda x: x[0]):
         make_indent( upblk_py_src, 1 )
         py_srcs += '\n' + '\n'.join( upblk_py_src )
-      return 'upblk_py_srcs:{}\n'.format( py_srcs )
+      return f'upblk_py_srcs:{py_srcs}\n'
 
     def rtlir_tr_upblk_py_src( s, upblk, is_lambda, src, lino, filename ):
-      return ['upblk_py_src: {}'.format( upblk.__name__ )]
+      return [f'upblk_py_src: {upblk.__name__}']
 
     def rtlir_tr_upblk_srcs( s, upblk_srcs ):
       srcs = ''
       for upblk_src in sorted(upblk_srcs, key=lambda x: x[0]):
         make_indent( upblk_src, 1 )
         srcs += '\n' + '\n'.join( upblk_src )
-      return 'upblk_srcs:{}\n'.format( srcs )
+      return f'upblk_srcs:{srcs}\n'
 
     def rtlir_tr_upblk_src( m, upblk, rtlir_upblk ):
-      return ['upblk_src: {}'.format( rtlir_upblk.name )]
+      return [f'upblk_src: {rtlir_upblk.name}']
 
     def rtlir_tr_behavioral_freevars( s, freevars ):
       srcs = ''
       for freevar in sorted(freevars, key=lambda x: x[0]):
         make_indent( freevar, 1 )
         srcs += '\n' + '\n'.join( freevar )
-      return 'freevars:{}\n'.format( srcs )
+      return f'freevars:{srcs}\n'
 
     def rtlir_tr_behavioral_freevar( s, id_, rtype, array_type, dtype, obj ):
-      return ['freevar: {id_}'.format( **locals() )]
+      return [f'freevar: {id_}']
 
     def rtlir_tr_behavioral_tmpvars( s, tmpvars ):
       srcs = ''
       for tmpvar in sorted(tmpvars, key=lambda x: x[0]):
         make_indent( tmpvar, 1 )
         srcs += '\n' + '\n'.join( tmpvar )
-      return 'tmpvars:{}\n'.format( srcs )
+      return f'tmpvars:{srcs}\n'
 
     def rtlir_tr_behavioral_tmpvar( s, id_, upblk_id, dtype ):
-      return ['tmpvar: {id_} in {upblk_id} of {dtype}'.format( **locals() )]
+      return [f'tmpvar: {id_} in {upblk_id} of {dtype}']
 
     def rtlir_tr_unpacked_array_type( s, array_rtype ):
       """Translate unpacked array type.
@@ -98,7 +98,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       if s.__class__.__name__ == 'TestRTLIRTranslator':
         return "" if array_rtype is None else repr(array_rtype)
       else:
-        return 'unpacked_array: {}'.format( array_rtype )
+        return f'unpacked_array: {array_rtype}'
 
     def rtlir_tr_vector_dtype( s, dtype ):
       """Translate vector data type.
@@ -113,7 +113,7 @@ def mk_TestBehavioralTranslator( _BehavioralTranslator ):
       if s.__class__.__name__ == 'TestRTLIRTranslator':
         return str( dtype )
       else:
-        return 'vector: {}'.format( dtype )
+        return f'vector: {dtype}'
 
   return TestBehavioralTranslator
 

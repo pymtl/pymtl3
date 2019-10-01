@@ -80,7 +80,7 @@ class SVStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_array_index( s, base_signal, index ):
-    return '{base_signal}__{index}'.format( **locals() )
+    return f'{base_signal}__{index}'
 
   def rtlir_tr_interface_attr( s, base_signal, attr ):
-    return '{base_signal}__{attr}'.format( **locals() )
+    return f'{base_signal}__{attr}'

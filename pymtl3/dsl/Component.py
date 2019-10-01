@@ -135,8 +135,7 @@ class Component( ComponentLevel7 ):
 
       obj._dsl.parent_obj = parent
       obj._dsl.level      = parent._dsl.level + 1
-      obj._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
-                                                     for x in indices ] )
+      obj._dsl.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
 
       # Iterate through the param_tree and update u
       if parent._dsl.param_tree is not None:

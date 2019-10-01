@@ -25,9 +25,9 @@ def test_multi_level_trace():
 
     def line_trace( s, level='simple' ):
       if level == 'simple':
-        return "{}".format( s.simple_trace )
+        return f"{s.simple_trace}"
       elif level == 'verbose':
-        return "{}".format( s.verbose_trace )
+        return f"{s.verbose_trace}"
       else:
         return "default"
 

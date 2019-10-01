@@ -51,8 +51,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
         )
       if not dtype.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
-          '{} does not have field {}!'.format(
-            dtype.get_name(), node.attr ) )
+          f'{dtype.get_name()} does not have field {node.attr}!' )
       dtype = dtype.get_property( node.attr )
       if isinstance( node.value.Type, rt.Port ):
         rtype = rt.Port( node.value.Type.get_direction(), dtype )
@@ -69,7 +68,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
             rtype = rt.Const( dtype )
       else:
         raise PyMTLTypeError( s.blk, node.ast,
-          'unrecognized signal type {}!'.format( node.value.Type ) )
+          f'unrecognized signal type {node.value.Type}!' )
       node.Type = rtype
 
     else:
@@ -82,18 +81,17 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       type_instance = cls()
     except TypeError:
       raise PyMTLTypeError( s.blk, node.ast,
-""""\
-__init__ of BitStruct {} should take 0 arguments! You can achieve this by
+f"""\
+__init__ of BitStruct {cls.__name__} should take 0 arguments! You can achieve this by
 adding default values to the arguments.
-""".format( cls.__name__ ) )
+""" )
 
     dtype = rdt.get_rtlir_dtype( cls() )
     all_properties = dtype.get_all_properties()
 
     if len( all_properties ) != len( node.values ):
       raise PyMTLTypeError( s.blk, node.ast,
-        "BitStruct {} has {} fields but only {} arguments are given!". \
-            format(cls.__name__, len(all_properties), len(node.values)) )
+        f"BitStruct {cls.__name__} has {len(all_properties)} fields but only {len(node.values)} arguments are given!" )
 
     all_types = zip( node.values, all_properties )
     for idx, ( value, ( name, field ) ) in enumerate( all_types ):
@@ -101,13 +99,11 @@ adding default values to the arguments.
       # Expect each argument to be a signal
       if not isinstance( value.Type, rt.Signal ):
         raise PyMTLTypeError( s.blk, node.ast,
-          "argument #{} has type {} but not a signal!". \
-              format( idx, value.Type ) )
+          f"argument #{idx} has type {value.Type} but not a signal!" )
       v_dtype = value.Type.get_dtype()
       # Expect each argument to have data type which corresponds to the field
       if v_dtype != field:
         raise PyMTLTypeError( s.blk, node.ast,
-          "Expected argument#{} ( field {} ) to have type {}, but got {}.". \
-              format( idx, name, field, v_dtype ) )
+          f"Expected argument#{idx} ( field {name} ) to have type {field}, but got {v_dtype}." )
 
     node.Type = rt.Const( dtype )

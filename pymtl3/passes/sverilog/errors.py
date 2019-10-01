@@ -20,9 +20,9 @@ class SVerilogImportError( Exception ):
     tb_info = traceback.extract_tb(tb)
     fname, line, func, text = tb_info[-1]
     return super().__init__(
-      "\nIn file {fname}, Line {line}, Method {func}:"
-      "\nError trying to perform import on {obj}:\n- {msg}"
-      "\n  {text}".format( **locals() ) )
+      f"\nIn file {fname}, Line {line}, Method {func}:"
+      f"\nError trying to perform import on {obj}:\n- {msg}"
+      f"\n  {text}" )
 
 class SVerilogTranslationError( Exception ):
   """SystemVerilog translation error."""
@@ -42,19 +42,16 @@ class SVerilogTranslationError( Exception ):
       # The given AST node is neither expr nor stmt
       pass
     return super().__init__(
-      "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
-      format( **locals() ) )
+      f"\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}" )
 
 class SVerilogReservedKeywordError( Exception ):
   """SystemVerilog reserved keyword error."""
   def __init__( self, name, msg ):
     return super().__init__(
-      "- {name} is a SystemVerilog reserved keyword!\n- {msg}". \
-          format( **locals() ) )
+      f"- {name} is a SystemVerilog reserved keyword!\n- {msg}" )
 
 class SVerilogCloseLoopPurePythonSimError( Exception ):
   """SystemVerilog closed loop test error during pure python simulation."""
   def __init__( self, obj, msg ):
     return super().__init__(
-      "\nCalling closed-loop test method with component {obj}:\n- {msg}". \
-          format( **locals() ) )
+      f"\nCalling closed-loop test method with component {obj}:\n- {msg}" )

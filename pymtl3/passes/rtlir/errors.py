@@ -20,9 +20,9 @@ class RTLIRConversionError( Exception ):
     tb_info = traceback.extract_tb(tb)
     fname, line, func, text = tb_info[-1]
     return super().__init__(
-      "\nIn file {fname}, Line {line}, Method {func}:"
-      "\nError trying to convert {obj} into RTLIR:\n- {msg}"
-      "\n  {text}".format( **locals() ) )
+      f"\nIn file {fname}, Line {line}, Method {func}:"
+      f"\nError trying to convert {obj} into RTLIR:\n- {msg}"
+      f"\n  {text}" )
 
 class PyMTLSyntaxError( Exception ):
   """Behavioral RTLIR syntax error."""
@@ -41,9 +41,7 @@ class PyMTLSyntaxError( Exception ):
       # The given AST node is neither expr nor stmt
       pass
     return super().__init__(
-      "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
-      format( **locals() )
-    )
+      f"\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}" )
 
 class PyMTLTypeError( Exception ):
   """Behavioral RTLIR type error."""
@@ -62,6 +60,4 @@ class PyMTLTypeError( Exception ):
       # The given AST node is neither expr nor stmt
       pass
     return super().__init__(
-      "\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}". \
-      format( **locals() )
-    )
+      f"\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}" )

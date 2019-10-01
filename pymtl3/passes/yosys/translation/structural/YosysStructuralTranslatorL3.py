@@ -25,13 +25,13 @@ class YosysStructuralTranslatorL3(
   def ifc_port_gen( s, d, msb, ifc_id, _id, n_dim ):
     template = "{d: <7}logic {packed_type: <8} {id_}"
     if not n_dim:
-      id_ = ifc_id + "__" + _id
-      packed_type = "[{msb}:0]".format( **locals() )
+      id_ = f"{ifc_id}__{_id}"
+      packed_type = f"[{msb}:0]"
       return [ template.format( **locals() ) ]
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s.ifc_port_gen( d, msb, ifc_id+"__"+str(i), _id, n_dim[1:] )
+        ret += s.ifc_port_gen( d, msb, f"{ifc_id}__{i}", _id, n_dim[1:] )
       return ret
 
   def ifc_conn_gen( s, d, cpid, _pid, cwid, _wid, idx, n_dim ):
@@ -41,14 +41,14 @@ class YosysStructuralTranslatorL3(
       template = "assign {pid} = {wid}{idx};"
 
     if not n_dim:
-      pid = cpid + "__" + _pid
-      wid = cwid + "__" + _wid
+      pid = f"{cpid}__{_pid}"
+      wid = f"{cwid}__{_wid}"
       return [ template.format( **locals() ) ]
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _cpid = cpid + "__" + str(i)
-        _idx = "[{}]".format(i) + idx
+        _cpid = f"{cpid}__{i}"
+        _idx  = f"[{i}]{idx}"
         ret += s.ifc_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
       return ret
 
@@ -142,7 +142,7 @@ class YosysStructuralTranslatorL3(
         msb, _id, n_dim = wire_decl["msb"], wire_decl["id_"], wire_decl["n_dim"]
         id_ = ifc_id + "__" + _id
         array_dim_str = s._get_array_dim_str( ifc_ndim + n_dim )
-        packed_type = "[{msb}:0]".format( **locals() )
+        packed_type = f"[{msb}:0]"
         if n_dim or ifc_ndim or "present" in wire_decl:
           ret_wire.append( wire_template.format( **locals() ) )
 
@@ -171,10 +171,10 @@ class YosysStructuralTranslatorL3(
     # Interface array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f"{base_signal}[{index}]"
 
   def rtlir_tr_interface_attr( s, base_signal, attr ):
     # Interface attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
-    return '{base_signal}.{attr}'.format( **locals() )
+    return f"{base_signal}.{attr}"

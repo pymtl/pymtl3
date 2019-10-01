@@ -18,6 +18,6 @@ class RTLIRTranslationError( Exception ):
     tb_info = traceback.extract_tb(tb)
     fname, line, func, text = tb_info[-1]
     return super().__init__(
-      "\nIn file {fname}, Line {line}, Method {func}:"
-      "\nError trying to translate top component {obj}:\n- {msg}"
-      "\n  {text}".format( **locals() ) )
+      f"\nIn file {fname}, Line {line}, Method {func}:"
+      f"\nError trying to translate top component {obj}:\n- {msg}"
+      f"\n  {text}" )

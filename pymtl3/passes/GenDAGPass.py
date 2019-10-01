@@ -100,7 +100,7 @@ class GenDAGPass( BasePass ):
       wstr    = repr(writer) if isinstance( writer, Const ) \
                 else ( "s." + repr(writer)[lca_len+1:] )
       rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
-      upblk_name = "{}__{}".format(repr(writer), fanout) \
+      upblk_name = f"{writer!r}__{fanout}"\
                     .replace( ".", "_" ).replace( ":", "_" ) \
                     .replace( "[", "_" ).replace( "]", "" ) \
                     .replace( "(", "_" ).replace( ")", "" )
