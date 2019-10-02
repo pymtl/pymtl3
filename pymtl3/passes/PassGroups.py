@@ -14,7 +14,8 @@ from .SimpleTickPass import SimpleTickPass
 from .VcdGenerationPass import VcdGenerationPass
 from .WaveGenPass import WaveGenPass
 from .WrapGreenletPass import WrapGreenletPass
-
+from .PrintWavePass import PrintWavePass
+from .SignalTracePass import SignalTracePass
 SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
@@ -44,7 +45,9 @@ SimulationPass = [
   DynamicSchedulePass(),
   CLLineTracePass(),
   VcdGenerationPass(),
-  WaveGenPass(),
+  #WaveGenPass(),
+  SignalTracePass(),
+  PrintWavePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
