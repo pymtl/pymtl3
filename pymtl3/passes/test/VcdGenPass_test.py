@@ -8,6 +8,7 @@
 # Date   : Aug 28, 2019
 
 from pymtl3 import *
+import pdb
 
 class Toy( Component ):
   """Toy adder component"""
@@ -35,7 +36,10 @@ def test_toy():
   dut.vcd_file_name = "toy_vcd"
 
   # Setup the simulation
+  pdb.set_trace()
   dut.apply( SimulationPass )
+  print(dut._signals)
+  pdb.set_trace()
   dut.sim_reset()
 
   # Test vector
@@ -54,3 +58,5 @@ def test_toy():
     dut.in1 = in1
     dut.tick()
     assert dut.out == out
+
+test_toy()
