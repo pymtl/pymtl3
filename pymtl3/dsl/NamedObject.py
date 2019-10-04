@@ -171,8 +171,7 @@ class NamedObject:
                         ud.param_tree = ParamTreeNode()
                       ud.param_tree.merge( node )
 
-            s_name = sd.full_name
-            ud.full_name = ( s_name + "." + u_name )
+            ud.full_name = f"{sd.full_name}.{u_name}"
 
             # store the name/indices
             ud._my_name     = name
