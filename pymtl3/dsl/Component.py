@@ -73,7 +73,7 @@ class Component( ComponentLevel7 ):
     stack = []
     for (name, obj) in s.__dict__.items():
       if   isinstance( name, str ):
-        if not name.startswith("_"): # filter private variables
+        if name[0] != '_': # filter private variables
           stack.append( obj )
     while stack:
       u = stack.pop()
@@ -169,7 +169,7 @@ class Component( ComponentLevel7 ):
 
       top._dsl.elaborate_stack.pop()
 
-    added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
+    added_components = obj._collect_all_single( lambda x: isinstance( x, Component ) )
 
     # First elaborate all functions to spawn more named objects
     for c in added_components:
@@ -418,15 +418,35 @@ class Component( ComponentLevel7 ):
   """ Convenience/utility APIs """
 
   def apply( s, *args ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
 
+    import timeit
     if isinstance(args[0], list):
       assert len(args) == 1
       for step in args[0]:
+        t0 = timeit.default_timer()
         step( s )
+        t1 = timeit.default_timer()
+        print(f"time: {t1-t0:3f} {step}")
 
     elif len(args) == 1:
       assert callable( args[0] )
+      t0 = timeit.default_timer()
       args[0]( s )
+      t1 = timeit.default_timer()
+      print(f"time: {t1-t0:3f} {args[0]}")
+
+    try:
+      pypyjit.set_param("default")
+      pypyjit.set_param("trace_limit=100000000")
+    except:
+      pass
+    import sys
+    sys.exit(0)
 
   # Simulation related APIs
   def sim_reset( s ):
@@ -461,7 +481,7 @@ class Component( ComponentLevel7 ):
         return
 
       for i, obj in iterable:
-        if not is_list and i.startswith("_"): # impossible to have tuple
+        if not is_list and i[0] == '_': # impossible to have tuple
           continue
 
         if   isinstance( obj, Component ):
@@ -546,7 +566,7 @@ class Component( ComponentLevel7 ):
     try:
       return { x for x in s._dsl.all_named_objects if filt(x) }
     except AttributeError:
-      return s._collect_all( [ filt ] )[0]
+      return s._collect_all_single( filt )
 
   def get_local_object_filter( s, filt ):
     assert callable( filt )

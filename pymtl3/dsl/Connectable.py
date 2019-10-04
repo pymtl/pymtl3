@@ -154,7 +154,7 @@ class Signal( NamedObject, Connectable ):
     pass
 
   def __getattr__( s, name ):
-    if name.startswith("_"): # private variable
+    if name[0] == '_': # private variables directly exit here
       return super().__getattribute__( name )
 
     if name not in s.__dict__:
@@ -354,7 +354,7 @@ class Interface( NamedObject, Connectable ):
 
       if inversed:
         for name, obj in s.__dict__.items():
-          if not name.startswith("_"):
+          if name[0] != '_': # filter private variables
             if isinstance( obj, Signal ):
               setattr( s, name, obj.inverse() )
             else:

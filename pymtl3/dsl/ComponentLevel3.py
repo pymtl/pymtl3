@@ -317,7 +317,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
       # Sort the keys to always connect in a unique order
       for name in sorted(this.__dict__):
-        if not name.startswith("_"):
+        if name[0] != '_': # filter private variables
           obj = this.__dict__[ name ]
           if hasattr( other, name ):
             # other has the corresponding field, connect recursively

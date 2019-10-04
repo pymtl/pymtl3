@@ -141,7 +141,7 @@ class NamedObject:
 
     # I use non-recursive traversal to reduce error message depth
 
-    if not name.startswith("_"):
+    if name[0] != '_': # filter private variables
       stack = [ (obj, []) ]
       while stack:
         u, indices = stack.pop()
@@ -199,6 +199,33 @@ class NamedObject:
 
     super().__setattr__( name, obj )
 
+  def _collect_all_single( s, filt=lambda x: isinstance( x, NamedObject ) ):
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+
+      if   isinstance( u, NamedObject ):
+        if filt( u ): # Check if m satisfies the filter
+          ret.add( u )
+
+        for name, obj in u.__dict__.items():
+
+          # If the id is string, it is a normal children field. Otherwise it
+          # should be an tuple that represents a slice
+
+          if   isinstance( name, str ):
+            if name[0] != '_': # filter private variables
+              stack.append( obj )
+
+          elif isinstance( name, tuple ): # name = [1:3]
+            stack.append( obj )
+
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
+
   # It is possible to take multiple filters
   def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
     ret = [ set() for _ in filt ]
@@ -217,7 +244,7 @@ class NamedObject:
           # should be an tuple that represents a slice
 
           if   isinstance( name, str ):
-            if not name.startswith("_"): # filter private variables
+            if name[0] != '_': # filter private variables
               stack.append( obj )
 
           elif isinstance( name, tuple ): # name = [1:3]
@@ -307,7 +334,7 @@ class NamedObject:
     del s._dsl.elaborate_stack
 
   def _elaborate_collect_all_named_objects( s ):
-    s._dsl.all_named_objects = s._collect_all()[0]
+    s._dsl.all_named_objects = s._collect_all_single()
 
   def elaborate( s ):
     s._elaborate_construct()

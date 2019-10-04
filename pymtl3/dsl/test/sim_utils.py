@@ -445,7 +445,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
     elif isinstance( m, NamedObject ):
       for name, obj in m.__dict__.items():
-        if ( isinstance( name, str ) and not name.startswith("_") ) \
+        if ( isinstance( name, str ) and name[0] != '_' ) \
           or isinstance( name, tuple ):
           if   isinstance( obj, Signal ): setattr( m, name, obj.default_value() )
           elif isinstance( obj, Const ):  setattr( m, name, obj.const )

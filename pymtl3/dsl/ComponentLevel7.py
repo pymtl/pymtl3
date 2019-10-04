@@ -30,7 +30,7 @@ class ComponentLevel7( ComponentLevel6 ):
     inst._dsl.blocking_methods = set()
 
     for name in cls.__dict__:
-      if not name.startswith("_"):
+      if name[0] != '_': # filter private variables
         method = getattr( inst, name )
         if hasattr( method, "_blocking" ):
           inst._dsl.blocking_methods.add( method )

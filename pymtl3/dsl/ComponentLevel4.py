@@ -40,7 +40,7 @@ class ComponentLevel4( ComponentLevel3 ):
     # Update: we should use cls.__dict__ to get all added methods!
 
     for name in cls.__dict__:
-      if not name.startswith("_"):
+      if name[0] != '_': # filter private variables
         field = getattr( inst, name )
         if callable( field ):
           setattr( inst, name, field )

@@ -39,26 +39,20 @@ class GenDAGPass( BasePass ):
       >>> s.net_reader1 = s.net_writer
       >>> s.net_reader2 = s.net_writer """
 
-    nets = top.get_all_value_nets()
-
     top._dag.genblks = set()
     top._dag.genblk_hostobj = {}
     top._dag.genblk_reads   = {}
     top._dag.genblk_writes  = {}
     top._dag.genblk_src     = {}
 
-    # To reduce the time to compile update blocks, I first group the list
-    # of update blocks that have the same host object together and fire
-    # them in a single compile command.
+    # Compile each net into an update block
 
-    hostobj_allsrc = defaultdict(str)
-    blkname_meta   = {}
-
-    for i, (writer, signals) in enumerate( nets ):
+    for writer, signals in top.get_all_value_nets():
       if len(signals) == 1:
         continue
 
-      readers = sorted( [ x for x in signals if x is not writer ], key=repr )
+      readers = [ x for x in signals if x is not writer ]
+      fanout  = len( readers )
 
       wr_lca  = writer.get_host_component()
       rd_lcas = [ x.get_host_component() for x in readers ]
@@ -91,46 +85,30 @@ class GenDAGPass( BasePass ):
 
         # Bring up all objects for another level
         wr_lca = wr_lca.get_parent_object()
-        for i in range( len(rd_lcas) ):
+        for i in range( fanout ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
-      lca     = wr_lca # this is the object we want to insert the block to
-      lca_len = len( repr(lca) )
-      fanout  = len( readers )
-      wstr    = repr(writer) if isinstance( writer, Const ) \
-                else ( "s." + repr(writer)[lca_len+1:] )
-      rstrs   = [ "s." + repr(x)[lca_len+1:] for x in readers]
-      upblk_name = f"{writer!r}__{fanout}"\
+      lca_str = repr( wr_lca )
+      lca_len = len( lca_str )
+      wstr    = repr(writer) if isinstance( writer, Const ) else ( f"s.{repr(writer)[lca_len+1:]}" )
+      rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
+      upblk_name = f"{writer!r}__{fanout}" \
                     .replace( ".", "_" ).replace( ":", "_" ) \
-                    .replace( "[", "_" ).replace( "]", "" ) \
-                    .replace( "(", "_" ).replace( ")", "" )
+                    .replace( "[", "_" ).replace( "]", "_" ) \
+                    .replace( "(", "_" ).replace( ")", "_" )
       gen_src = """
-@update
 def {}():
-  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+  {}={}""".format( upblk_name, "=".join( rstrs ), wstr )
 
-      hostobj_allsrc[ lca ] += gen_src
-      blkname_meta[ upblk_name ] = (gen_src, writer, readers)
+      local = locals()
+      exec(( compile( gen_src, filename=lca_str, mode="exec") ), globals(), local)
 
-    # Borrow the closure of hostobj to compile the block
-    # To reduce the code needed, use a fake @update to collect metadata
-    def compile_upblks( s, src ):
-
-      def update( blk ):
-        top._dag.genblks.add( blk )
-        gen_src, writer, readers = blkname_meta[ blk.__name__ ]
-        if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = readers
-        top._dag.genblk_src   [ blk ] = ( gen_src, None )
-        # TODO None -- I remove the ast parsing since it is slow
-
-      var = locals()
-      var.update( globals() )
-      exec(( compile( src, filename=repr(s), mode="exec") ), var)
-
-    for hostobj, allsrc in hostobj_allsrc.items():
-      compile_upblks( hostobj, allsrc )
+      blk = local[ upblk_name ]
+      top._dag.genblks.add( blk )
+      if writer.is_signal():
+        top._dag.genblk_reads[ blk ] = [ writer ]
+      top._dag.genblk_writes[ blk ] = readers
+      top._dag.genblk_src   [ blk ] = ( gen_src, None )
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
