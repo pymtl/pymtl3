@@ -7,7 +7,7 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from pymtl3.datatypes import Bits1
 
@@ -445,8 +445,8 @@ class Component( ComponentLevel7 ):
       pypyjit.set_param("trace_limit=100000000")
     except:
       pass
-    import sys
-    sys.exit(0)
+    # import sys
+    # sys.exit(0)
 
   # Simulation related APIs
   def sim_reset( s ):
@@ -465,42 +465,47 @@ class Component( ComponentLevel7 ):
   def lock_in_simulation( s ):
     s._check_called_at_elaborate_top( "lock_in_simulation" )
 
-    s._dsl.swapped_signals = defaultdict(list)
-    s._dsl.swapped_values  = defaultdict(list)
+    swapped_signals = defaultdict(list)
 
-    def cleanup_connectables( current_obj, host_component ):
+    # Swap all Signal objects with actual data
 
-      # Deduplicate code. Choose operation based on type of current_obj
+    Q = deque( [ (s, s) ] )
+    while Q:
+      current_obj, host = Q.popleft()
       if isinstance( current_obj, list ):
-        iterable = enumerate( current_obj )
-        is_list = True
+        for i, obj in enumerate( current_obj ):
+          if isinstance( obj, Signal ):
+            try:
+              current_obj[i] = obj.default_value()
+            except Exception as err:
+              err.message = repr(obj) + " -- " + err.message
+              err.args = (err.message,)
+              raise err
+            swapped_signals[ host ].append( (current_obj, i, obj, True) )
+
+          elif isinstance( obj, Component ):
+            Q.append( (obj, obj) )
+          elif isinstance( obj, (Interface, list) ):
+            Q.append( (obj, host) )
+
       elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.items()
-        is_list = False
-      else:
-        return
+        for i, obj in current_obj.__dict__.items():
+          if i[0] != '_': # impossible to have tuple
+            if isinstance( obj, Signal ):
+              try:
+                setattr( current_obj, i, obj.default_value() )
+              except Exception as err:
+                err.message = repr(obj) + " -- " + err.message
+                err.args = (err.message,)
+                raise err
+              swapped_signals[ host ].append( (current_obj, i, obj, False) )
 
-      for i, obj in iterable:
-        if not is_list and i[0] == '_': # impossible to have tuple
-          continue
+            elif isinstance( obj, Component ):
+              Q.append( (obj, obj) )
+            elif isinstance( obj, (Interface, list) ):
+              Q.append( (obj, host) )
 
-        if   isinstance( obj, Component ):
-          cleanup_connectables( obj, obj )
-
-        elif isinstance( obj, (Interface, list) ):
-          cleanup_connectables( obj, host_component )
-
-        elif isinstance( obj, Signal ):
-          try:
-            if is_list: current_obj[i] = obj.default_value()
-            else:       setattr( current_obj, i, obj.default_value() )
-          except Exception as err:
-            err.message = repr(obj) + " -- " + err.message
-            err.args = (err.message,)
-            raise err
-          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
-
-    cleanup_connectables( s, s )
+    s._dsl.swapped_signals = swapped_signals
     s._dsl.locked_simulation = True
 
   def unlock_simulation( s ):
@@ -510,15 +515,17 @@ class Component( ComponentLevel7 ):
     except:
       raise AttributeError("Cannot unlock an unlocked/never locked model.")
 
+    swapped_values  = defaultdict(list)
     for component, records in s._dsl.swapped_signals.items():
       for current_obj, i, obj, is_list in records:
         if is_list:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
           current_obj[i] = obj
         else:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
           setattr( current_obj, i, obj )
 
+    s._dsl.swapped_values = swapped_values
     s._dsl.locked_simulation = False
 
   """ APIs that provide local metadata of a component """

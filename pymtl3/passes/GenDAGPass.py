@@ -43,9 +43,14 @@ class GenDAGPass( BasePass ):
     top._dag.genblk_hostobj = {}
     top._dag.genblk_reads   = {}
     top._dag.genblk_writes  = {}
-    top._dag.genblk_src     = {}
+    # top._dag.genblk_src     = {}
 
-    # Compile each net into an update block
+    # To reduce the time to compile update blocks, I first group the list
+    # of update blocks that have the same host object together and fire
+    # them in a single compile command.
+
+    hostobj_allsrc = defaultdict(str)
+    blkname_meta   = {}
 
     for writer, signals in top.get_all_value_nets():
       if len(signals) == 1:
@@ -88,11 +93,11 @@ class GenDAGPass( BasePass ):
         for i in range( fanout ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
-      lca_str = repr( wr_lca )
-      lca_len = len( lca_str )
-      wstr    = repr(writer) if isinstance( writer, Const ) else ( f"s.{repr(writer)[lca_len+1:]}" )
+      lca_len = len( repr(wr_lca) )
+      wstr    = repr(writer) if isinstance( writer, Const ) \
+                else ( f"s.{repr(writer)[lca_len+1:]}" )
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
-      upblk_name = f"{writer!r}__{fanout}" \
+      upblk_name = f"{writer!r}__{fanout}"\
                     .replace( ".", "_" ).replace( ":", "_" ) \
                     .replace( "[", "_" ).replace( "]", "_" ) \
                     .replace( "(", "_" ).replace( ")", "_" )
@@ -100,15 +105,27 @@ class GenDAGPass( BasePass ):
 def {}():
   {}={}""".format( upblk_name, "=".join( rstrs ), wstr )
 
-      local = locals()
-      exec(( compile( gen_src, filename=lca_str, mode="exec") ), globals(), local)
+      hostobj_allsrc[ wr_lca ] += gen_src
+      # blkname_meta[ upblk_name ] = (gen_src, writer, readers)
+      blkname_meta[ upblk_name ] = (writer, readers)
 
-      blk = local[ upblk_name ]
-      top._dag.genblks.add( blk )
-      if writer.is_signal():
-        top._dag.genblk_reads[ blk ] = [ writer ]
-      top._dag.genblk_writes[ blk ] = readers
-      top._dag.genblk_src   [ blk ] = ( gen_src, None )
+    # Borrow the closure of hostobj to compile the block
+    def compile_upblks( s, src ):
+      var = locals()
+      var.update( globals() )
+      local = {}
+      exec( compile( src, filename=repr(s), mode="exec"), var, local )
+
+      for name, blk in local.items():
+        top._dag.genblks.add( blk )
+        writer, readers = blkname_meta[ name ]
+        if writer.is_signal():
+          top._dag.genblk_reads[ blk ] = [ writer ]
+        top._dag.genblk_writes[ blk ] = readers
+        # top._dag.genblk_src   [ blk ] = ( gen_src, None )
+
+    for hostobj, allsrc in hostobj_allsrc.items():
+      compile_upblks( hostobj, allsrc )
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
