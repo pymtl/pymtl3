@@ -7,7 +7,7 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
-from collections import defaultdict, deque
+from collections import defaultdict
 
 from pymtl3.datatypes import Bits1
 
@@ -469,9 +469,9 @@ class Component( ComponentLevel7 ):
 
     # Swap all Signal objects with actual data
 
-    Q = deque( [ (s, s) ] )
+    Q = [ (s, s) ]
     while Q:
-      current_obj, host = Q.popleft()
+      current_obj, host = Q.pop()
       if isinstance( current_obj, list ):
         for i, obj in enumerate( current_obj ):
           if isinstance( obj, Signal ):

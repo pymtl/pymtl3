@@ -15,7 +15,7 @@ Date   : Apr 16, 2018
 import ast
 import inspect
 import linecache
-from collections import defaultdict, deque
+from collections import defaultdict
 
 from pymtl3.datatypes import Bits
 
@@ -443,9 +443,9 @@ class ComponentLevel3( ComponentLevel2 ):
       # If obj has adjacent signals
       if obj in adjacency and obj not in visited:
         net = set()
-        Q   = deque( [ obj ] )
+        Q   = [ obj ]
         while Q:
-          u = Q.popleft()
+          u = Q.pop()
           visited.add( u )
           net.add( u )
           for v in adjacency[u]:
@@ -629,8 +629,8 @@ class ComponentLevel3( ComponentLevel2 ):
       # We need to do DFS to check all connected port types
       # Each node is a writer when we expand it to other nodes
 
-      S = deque( [ writer ] )
-      visited = {  writer  }
+      S = [ writer ]
+      visited = { writer }
 
       while S:
         u = S.pop() # u is the writer
