@@ -424,29 +424,20 @@ class Component( ComponentLevel7 ):
     except:
       pass
 
-    import timeit
     if isinstance(args[0], list):
       assert len(args) == 1
       for step in args[0]:
-        t0 = timeit.default_timer()
         step( s )
-        t1 = timeit.default_timer()
-        print(f"time: {t1-t0:3f} {step}")
 
     elif len(args) == 1:
       assert callable( args[0] )
-      t0 = timeit.default_timer()
       args[0]( s )
-      t1 = timeit.default_timer()
-      print(f"time: {t1-t0:3f} {args[0]}")
 
     try:
       pypyjit.set_param("default")
-      pypyjit.set_param("trace_limit=100000000")
+      pypyjit.set_param("trace_limit=100000")
     except:
       pass
-    # import sys
-    # sys.exit(0)
 
   # Simulation related APIs
   def sim_reset( s ):
