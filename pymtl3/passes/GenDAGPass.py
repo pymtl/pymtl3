@@ -158,8 +158,8 @@ def {}():
     # constraint WR(x) > U1 & U2 writes x --> U1 <  WR(x) == U2
     # Doesn't work for nested data struct and slice:
 
-    read_upblks = defaultdict(set)
-    write_upblks = defaultdict(set)
+    top._dag.read_upblks  = read_upblks = defaultdict(set)
+    top._dag.write_upblks = write_upblks = defaultdict(set)
 
     constraint_objs = defaultdict(set)
 
