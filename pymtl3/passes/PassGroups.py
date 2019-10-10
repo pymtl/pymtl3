@@ -1,6 +1,7 @@
 from pymtl3.dsl import Component
 
 from .CLLineTracePass import CLLineTracePass
+from .mambapp.EventDrivenPass import EventDrivenPass
 from .DynamicSchedulePass import DynamicSchedulePass
 from .GenDAGPass import GenDAGPass
 from .LineTraceParamPass import LineTraceParamPass
@@ -29,20 +30,23 @@ DynamicSim = [
   Component.elaborate,
   GenDAGPass(),
   WrapGreenletPass(),
-  DynamicSchedulePass(),
-  CLLineTracePass(),
-  SimpleTickPass(),
+  EventDrivenPass(),
+  # DynamicSchedulePass(),
+  # CLLineTracePass(),
+  # SimpleTickPass(),
   Component.lock_in_simulation
 ]
 
 # This pass is created to be used for 2019 isca tutorial.
 SimulationPass = [
+  Component.elaborate,
   GenDAGPass(),
   WrapGreenletPass(),
-  DynamicSchedulePass(),
-  CLLineTracePass(),
-  VcdGenerationPass(),
-  SimpleTickPass(),
+  EventDrivenPass(),
+  # DynamicSchedulePass(),
+  # CLLineTracePass(),
+  # VcdGenerationPass(),
+  # SimpleTickPass(),
   Component.lock_in_simulation
 ]
 

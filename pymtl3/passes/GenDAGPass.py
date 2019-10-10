@@ -237,7 +237,7 @@ def {}():
             if wr_blk != rd_blk:
               if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
+                # constraint_objs[ (rd_blk, wr_blk) ].add( obj )
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
                 constraint_objs[ (wr_blk, rd_blk) ].add( obj )
@@ -266,7 +266,7 @@ def {}():
             if wr_blk != rd_blk:
               if rd_blk in update_on_edge:
                 impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
+                # constraint_objs[ (rd_blk, wr_blk) ].add( obj )
               else:
                 impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
                 constraint_objs[ (wr_blk, rd_blk) ].add( obj )
