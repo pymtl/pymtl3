@@ -1,22 +1,26 @@
-from __future__ import absolute_import, division, print_function
+"""
+========================================================================
+CollectSignalPass.py
+========================================================================
+#collects signals and stored it as _collectsignals attribute of top.
 
+Author : Kaishuo Cheng
+Date   : Oct 4, 2019
+"""
+
+from __future__ import absolute_import, division, print_function
 import time
 from collections import defaultdict
 from copy import deepcopy
-
 import py
 import sys
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-
 from .errors import PassOrderError
 
 
-
-class SignalTracePass( BasePass ):
-
+class CollectSignalPass( BasePass ):
   def __call__( self, top ):
-
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
@@ -27,18 +31,10 @@ class SignalTracePass( BasePass ):
 
     top._wav = PassMetadata()
 
-    schedule.append( self.make_wav_gen_func( top, top._wav ) )
-  def make_wav_gen_func( self, top, wavmeta ):
-
-
-        # Preprocess some metadata
-
+    schedule.append( self.collect_sig_func( top, top._wav ) )
+  def collect_sig_func( self, top, wavmeta ):
     component_signals = defaultdict(set)
-
     all_components = set()
-
-    # We only collect non-sliced leaf signals
-    # TODO only collect leaf signals and for nested structs
     for x in top._dsl.all_signals:
       for y in x.get_leaf_signals():
         host = y.get_host_component()
@@ -81,7 +77,6 @@ class SignalTracePass( BasePass ):
       for signal in component_signals[m]:
         trimmed_value_nets.append( [ signal ] )
 
-
       # Recursively visit all submodels.
       for child in m.get_child_components():
         recurse_models( child, level+1 )
@@ -89,10 +84,7 @@ class SignalTracePass( BasePass ):
     # Begin recursive descent from the top-level model.
     recurse_models( top, 0 )
 
-
-
     for i, net in enumerate(trimmed_value_nets):
-
 
       # Set this to be the last cycle value
       setattr( wavmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
@@ -131,8 +123,7 @@ def dump_wav():
     {1}
   except Exception:
     raise
-
-  setattr(s, "_signals", deepcopy(wavmeta.sigs) )
+  setattr(s, "_collectsignals", deepcopy(wavmeta.sigs) )
   wavmeta.sim_ncycles += 1
 """.format("", "".join(wav_srcs) )
     s, l_dict = top, {}
