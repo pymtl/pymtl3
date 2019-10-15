@@ -15,7 +15,7 @@ from .VcdGenerationPass import VcdGenerationPass
 from .WaveGenPass import WaveGenPass
 from .WrapGreenletPass import WrapGreenletPass
 from .PrintWavePass import PrintWavePass
-from .SignalTracePass import SignalTracePass
+from .CollectSignalPass import CollectSignalPass
 SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
@@ -46,10 +46,10 @@ SimulationPass = [
   CLLineTracePass(),
   VcdGenerationPass(),
   #WaveGenPass(),
-  SignalTracePass(),
+  CollectSignalPass(),
   PrintWavePass(),
   SimpleTickPass(),
-  Component.lock_in_simulation
+Component.lock_in_simulation
 ]
 
 OpenLoopCLSim = [
@@ -61,6 +61,7 @@ OpenLoopCLSim = [
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
+
 
 UnrollSim = [
   Component.elaborate,
