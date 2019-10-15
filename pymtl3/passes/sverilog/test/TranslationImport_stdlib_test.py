@@ -19,14 +19,11 @@ from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_4 as _rr_arb_4
 from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
 from pymtl3.stdlib.rtl.Crossbar_test import test_crossbar3 as _crossbar3
 from pymtl3.stdlib.rtl.Encoder_test import test_encoder_5_directed as _encoder5
-# from pymtl3.stdlib.rtl.valrdy_queues_test import test_normal_int as _normal_int
-# from pymtl3.stdlib.rtl.valrdy_queues_test import test_bypass_int as _bypass_int
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_2entry_normal_Bits as _n2
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_3entry_normal_Bits as _n3
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_bypass_Bits as _bypass_Bits
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_normal_Bits as _normal_Bits
 from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
-# from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_int as _pipe_int
 from pymtl3.stdlib.test import TestVectorSimulator
 
 

@@ -59,7 +59,7 @@ def test_L5_component_attr( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), Attribute(
-        Attribute( Base( a ), 'comp' ), 'out' ) ) ] ) }
+        Attribute( Base( a ), 'comp' ), 'out' ), True ) ] ) }
   do_test( a )
 
 def test_L5_component_array_index( do_test ):
@@ -76,7 +76,7 @@ def test_L5_component_array_index( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), Attribute( Index(
-        Attribute( Base( a ), 'comp' ), Number(2) ), 'out' ) ) ] ) }
+        Attribute( Base( a ), 'comp' ), Number(2) ), 'out' ), True ) ] ) }
   do_test( a )
 
 #-------------------------------------------------------------------------

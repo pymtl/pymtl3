@@ -16,7 +16,6 @@ from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 
-
 class BehavioralRTLIRVisualizationPass( BasePass ):
   def __call__( s, model ):
     visitor = BehavioralRTLIRVisualizationVisitor()
@@ -86,9 +85,9 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
   def visit_Assign( s, node ):
     s.cur += 1
     local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">Assign</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">Assign</TD></TR> <TR><TD>blocking</TD><TD>{blocking}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(blocking=s.get_str(node.blocking))
     s.g.node( str( s.cur ), label = label )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'target' )
     s.visit( node.target )

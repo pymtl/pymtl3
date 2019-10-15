@@ -61,7 +61,7 @@ def test_L4_interface_attr( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), Attribute(
-        Attribute( Base( a ), 'in_' ), 'foo' ) ) ] ) }
+        Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
   do_test( a )
 
 def test_L4_interface_array_index( do_test ):
@@ -78,7 +78,7 @@ def test_L4_interface_array_index( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), Attribute( Index(
-        Attribute( Base( a ), 'in_' ), Number(2) ), 'foo' ) ) ] ) }
+        Attribute( Base( a ), 'in_' ), Number(2) ), 'foo' ), True ) ] ) }
   do_test( a )
 
 #-------------------------------------------------------------------------
