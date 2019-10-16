@@ -224,10 +224,10 @@ module A
     out = comp__1__out;
   end
 
-  assign comp__1__clk = clk;
-  assign comp__1__reset = reset;
   assign comp__0__clk = clk;
   assign comp__0__reset = reset;
+  assign comp__1__clk = clk;
+  assign comp__1__reset = reset;
 
 endmodule
 """
@@ -290,10 +290,10 @@ module A
     out = comp__out[1];
   end
 
-  assign comp__clk[1] = clk;
-  assign comp__reset[1] = reset;
   assign comp__clk[0] = clk;
   assign comp__reset[0] = reset;
+  assign comp__clk[1] = clk;
+  assign comp__reset[1] = reset;
 
 endmodule
 """
