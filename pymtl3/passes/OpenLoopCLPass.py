@@ -93,7 +93,7 @@ class OpenLoopCLPass( BasePass ):
 
     schedule = []
 
-    Q = list( [ v for v in V if not InD[v] ] )
+    Q = [ v for v in V if not InD[v] ]
 
     while Q:
       import random

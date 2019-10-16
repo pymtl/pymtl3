@@ -8,6 +8,7 @@ Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
 import types
+from collections import deque
 
 from pymtl3.datatypes import Bits, mk_bits
 
@@ -182,10 +183,11 @@ class Signal( NamedObject, Connectable ):
       # 3. Otherwise we just go for obj.__class__
       # Note that BitsN is a type now. 2 and 3 are actually unified.
 
-      Q = [ (obj, [], s, False) ]
+      # Use deque to ensure BFS to ensure a[0] is accessed before a[1]
+      Q = deque([ (obj, [], s, False) ])
 
       while Q:
-        u, indices, parent, parent_is_list = Q.pop()
+        u, indices, parent, parent_is_list = Q.popleft()
         cls = u.__class__
 
         if cls is list:

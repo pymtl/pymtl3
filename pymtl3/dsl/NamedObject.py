@@ -19,6 +19,7 @@ Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
 import re
+from collections import deque
 
 from .errors import NotElaboratedError
 
@@ -139,12 +140,12 @@ class NamedObject:
 
   def __setattr_for_elaborate__( s, name, obj ):
 
-    # I use non-recursive traversal to reduce error message depth
+    # I use non-recursive BFS to reduce error message depth
 
     if name[0] != '_': # filter private variables
-      stack = [ (obj, []) ]
+      stack = deque( [ (obj, []) ] )
       while stack:
-        u, indices = stack.pop()
+        u, indices = stack.popleft()
 
         if isinstance( u, NamedObject ):
             sd = s._dsl
