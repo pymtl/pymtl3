@@ -34,6 +34,7 @@ class UnrollTickPass( BasePass ):
                         range( len( schedule ) ) ) ),
                         "\n          ".join( strs ) )
 
-    exec(py.code.Source( gen_tick_src ).compile(), locals())
+    local = locals()
+    exec(py.code.Source( gen_tick_src ).compile(), local)
 
-    top.tick = tick_unroll
+    top.tick = local['tick_unroll']

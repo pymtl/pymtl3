@@ -71,8 +71,8 @@ class YosysStructuralTranslatorL4(
       else:
         ret = []
         for i in range( n_dim[0] ):
-          _cpid = cpid + "__" + str(i)
-          _idx = "[{}]".format( i ) + idx
+          _cpid = f"{cpid}__{i}"
+          _idx = f"[{i}]{idx}"
           ret += \
             _subcomp_ifc_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
         return ret
@@ -151,8 +151,8 @@ class YosysStructuralTranslatorL4(
           msb, _id = port["msb"], port["id_"]
           id_ = c_id + "__" + _id
           port_id = _id
-          port_wire_id = ( c_id + "__" + _id ).center( 25 )
-          packed_type = "[{msb}:0]".format( **locals() )
+          port_wire_id = ( f"{c_id}__{_id}" ).center( 25 )
+          packed_type = f"[{msb}:0]"
           p_wires.append( p_wire_tplt.format( **locals() ) )
           p_conns.append( p_conn_tplt.format( **locals() ) )
         make_indent( p_wires, 1 )
@@ -172,14 +172,14 @@ class YosysStructuralTranslatorL4(
       else:
         template = "assign {wid}{idx} = {pid};"
       if not n_dim:
-        pid = cpid + "__" + _pid
-        wid = cwid + "__" + _wid
+        pid = f"{cpid}__{_pid}"
+        wid = f"{cwid}__{_wid}"
         return [ template.format( **locals() ) ]
       else:
         ret = []
         for i in range( n_dim[0] ):
-          _cpid = cpid + "__" + str(i)
-          _idx = "[{}]".format( i ) + idx
+          _cpid = f"{cpid}__{i}"
+          _idx = f"[{i}]{idx}"
           ret += _subcomp_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
         return ret
 
@@ -211,7 +211,7 @@ class YosysStructuralTranslatorL4(
       msb, _id, n_dim = wire["msb"], wire["id_"], wire["n_dim"]
       id_ = c_id + "__" + _id
       array_dim_str = s._get_array_dim_str( c_n_dim + n_dim )
-      packed_type = "[{msb}:0]".format( **locals() )
+      packed_type = f"[{msb}:0]"
       if c_n_dim or n_dim or "present" in wire:
         wire_decls.append( wire_template.format( **locals() ) )
 
@@ -235,10 +235,10 @@ class YosysStructuralTranslatorL4(
     # Component array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_subcomp_attr( s, base_signal, attr ):
     # Sub-component attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
-    return '{base_signal}.{attr}'.format( **locals() )
+    return f'{base_signal}.{attr}'

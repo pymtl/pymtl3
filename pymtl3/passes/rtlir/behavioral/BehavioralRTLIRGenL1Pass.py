@@ -80,7 +80,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
     if not isinstance( node.func, ast.Name ):
       raise PyMTLSyntaxError( s.blk, node,
-        '{} is called but is not a name!'.format(node.func))
+        f'{node.func} is called but is not a name!')
     func = node.func
 
     # Find the corresponding object of node.func field
@@ -170,7 +170,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if ( obj == copy.copy ) or ( obj == copy.deepcopy ):
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'copy method {} takes exactly 1 argument!'.format(obj))
+          f'copy method {obj} takes exactly 1 argument!')
       ret = s.visit( node.args[0] )
       ret.ast = node
       return ret
@@ -238,8 +238,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         op = bir.BitXor()
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
-          'exactly two arguments should be given to reduce {} methods!'. \
-              format( op ) )
+          f'exactly two arguments should be given to reduce {op} methods!' )
       value = s.visit( node.args[0] )
       ret = bir.Reduce( op, value )
       ret.ast = node
@@ -248,7 +247,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     else:
       # Only Bits class instantiation is supported at L1
       raise PyMTLSyntaxError( s.blk, node,
-        'Unrecognized method call {}!' + obj.__name__ )
+        f'Unrecognized method call {obj.__name__}!' )
 
   def visit_Attribute( s, node ):
     ret = bir.Attribute( s.visit( node.value ), node.attr )
@@ -278,7 +277,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
             'Slice with steps is not supported!' )
         assert isinstance( slice_obj.start, int ) and \
                isinstance( slice_obj.stop, int ), \
-            "start and stop of slice object {} must be integers!".format( slice_obj )
+            f"start and stop of slice object {slice_obj} must be integers!"
         ret = bir.Slice( value,
               bir.Number(slice_obj.start), bir.Number(slice_obj.stop) )
       # Else this is a real index
@@ -304,7 +303,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         # Component freevars are an L1 thing.
         if obj is not s.component:
           raise PyMTLSyntaxError( s.blk, node,
-            'Component {} is not a sub-component of {}!'.format(obj, s.component))
+            f'Component {obj} is not a sub-component of {s.component}!' )
         ret = bir.Base( obj )
       else:
         ret =  bir.FreeVar( node.id, obj )
@@ -316,7 +315,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
-      'Temporary variable {} is not supported at L1!'.format(node.id))
+      f'Temporary variable {node.id} is not supported at L1!' )
 
   def visit_Num( s, node ):
     ret = bir.Number( node.n )

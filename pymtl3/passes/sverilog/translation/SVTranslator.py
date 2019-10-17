@@ -120,7 +120,7 @@ endmodule
       module_name = structural.component_unique_name
 
       if full_name != module_name:
-        optional_full_name = "\n// Full name: {}".format(full_name)
+        optional_full_name = f"\n// Full name: {full_name}"
       else:
         optional_full_name = ""
 

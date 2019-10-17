@@ -64,7 +64,7 @@ def DataTypeInitData( dtype ):
     sub_dtype = dtype.get_sub_dtype()
     return PackedArrayInitData( n_dim, sub_dtype )
   else:
-    assert False, "unrecognized data type {}!".format( sub_dtype )
+    assert False, f"unrecognized data type {sub_dtype}!"
 
 def InPortInitData( id_, port ):
   return { id_ : DataTypeInitData( port.get_dtype() ) }
@@ -95,7 +95,7 @@ def ArrayInitData( id_, n_dim, subtype ):
   else:
     init = {}
     for i in range(n_dim[0]):
-      init.update( ArrayInitData(id_+'[{}]'.format(i), n_dim[1:], subtype) )
+      init.update( ArrayInitData(f'{id_}[{i}]', n_dim[1:], subtype) )
     return init
 
 #-------------------------------------------------------------------------
@@ -139,7 +139,7 @@ def DataTypeDataStrategy( draw, dtype ):
     sub_dtype = dtype.get_sub_dtype()
     return draw( PackedArrayDataStrategy( n_dim, sub_dtype ) )
   else:
-    assert False, "unrecognized data type {}!".format( sub_dtype )
+    assert False, f"unrecognized data type {sub_dtype}!"
 
 @st.composite
 def InPortDataStrategy( draw, id_, port ):
@@ -174,7 +174,7 @@ def ArrayDataStrategy( draw, id_, n_dim, subtype ):
     data = {}
     for i in range(n_dim[0]):
       data.update(draw(
-        ArrayDataStrategy(id_+'[{}]'.format(i), n_dim[1:], subtype)))
+        ArrayDataStrategy(f'{id_}[{i}]', n_dim[1:], subtype)))
     return data
 
 @st.composite
@@ -260,7 +260,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
   def outport_filter( obj ):
     return isinstance( obj, OutPort )
 
-  assert backend in [ "sverilog", "yosys" ], "invalid backend {}!".format(backend)
+  assert backend in [ "sverilog", "yosys" ], f"invalid backend {backend}!"
 
   dut.elaborate()
   reference_output = deque()
@@ -280,8 +280,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
     for out_port in all_output_ports:
       ref = reference_output[0][out_port]
       imp = eval( "model." + out_port._dsl.my_name )
-      assert ref == imp, \
-        "Value mismatch: reference: {}, imported: {}".format( ref, imp )
+      assert ref == imp, f"Value mismatch: reference: {ref}, imported: {imp}"
     reference_output.popleft()
 
   # First simulate the pure python component to see if it has sane behavior

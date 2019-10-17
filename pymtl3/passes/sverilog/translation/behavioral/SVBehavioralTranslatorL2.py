@@ -62,7 +62,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
     """Return expressions selectively wrapped with brackets."""
     if isinstance( node,
         ( bir.IfExp, bir.UnaryOp, bir.BoolOp, bir.BinOp, bir.Compare ) ):
-      return '( {} )'.format( s.visit( node ) )
+      return f"( {s.visit(node)} )"
     else:
       return s.visit( node )
 
@@ -89,7 +89,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
       orelse.extend( s.visit( stmt ) )
 
     # Assemble the statement, starting with if-body
-    if_begin   = 'if ( {} )'.format(cond) + ' begin'
+    if_begin   = f'if ( {cond} ) begin'
     src.extend( [ if_begin ] )
     src.extend( body )
 
@@ -102,7 +102,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
       # If an if statement is the only statement in the orelse-body
       if len( node.orelse ) == 1 and isinstance( node.orelse[ 0 ], bir.If ):
         # No indent will be added, also append if-begin to else-begin
-        else_begin = 'else ' + orelse[ 0 ]
+        else_begin = f'else {orelse[0]}'
         orelse = orelse[ 1 : ]
 
       # Else indent orelse-body
@@ -169,9 +169,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
     true  = s.visit( node.body )
     false = s.visit( node.orelse )
 
-    return '{cond} ? {true} : {false}'.format(
-      cond = cond, true = true, false = false
-    )
+    return f'{cond} ? {true} : {false}'
 
   #-----------------------------------------------------------------------
   # visit_UnaryOp
@@ -181,7 +179,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
     op      = s.ops[ type( node.op ) ]
     operand = s.visit_expr_wrap( node.operand )
 
-    return '{op}{operand}'.format( op = op, operand = operand )
+    return f'{op}{operand}'
 
   #-----------------------------------------------------------------------
   # visit_BoolOp
@@ -193,7 +191,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
 
     for value in node.values:
       values.append( s.visit_expr_wrap( value ) )
-    src = ( ' {op} '.format( op = op ) ).join( values )
+    src = f' {op} '.join( values )
 
     return src
 
@@ -206,7 +204,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
     lhs = s.visit_expr_wrap( node.left )
     rhs = s.visit_expr_wrap( node.right )
 
-    return '{lhs} {op} {rhs}'.format( lhs = lhs, op = op, rhs = rhs )
+    return f'{lhs} {op} {rhs}'
 
   #-----------------------------------------------------------------------
   # visit_Compare
@@ -217,7 +215,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
     lhs = s.visit_expr_wrap( node.left )
     rhs = s.visit_expr_wrap( node.right )
 
-    return '{lhs} {op} {rhs}'.format( lhs = lhs, op = op, rhs = rhs )
+    return f'{lhs} {op} {rhs}'
 
   #-----------------------------------------------------------------------
   # visit_LoopVar
@@ -232,7 +230,7 @@ class BehavioralRTLIRToSVVisitorL2( BehavioralRTLIRToSVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
-    return "__tmpvar__" + node.upblk_name + '_' + node.name
+    return f"__tmpvar__{node.upblk_name}_{node.name}"
 
   #-----------------------------------------------------------------------
   # visit_LoopVarDecl
