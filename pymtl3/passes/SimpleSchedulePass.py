@@ -54,6 +54,9 @@ class SimpleSchedulePass( BasePass ):
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
 
+    if 'MAMBA_DAG' in os.environ:
+      dump_dag( top, V, E )
+
     for (u, v) in E: # u -> v
       InD[v] += 1
       Es [u].append( v )
@@ -77,9 +80,6 @@ class SimpleSchedulePass( BasePass ):
     import os
 
     check_schedule( top, update_schedule, V, E, InD )
-
-    if 'MAMBA_DAG' in os.environ:
-      dump_dag( top, V, E )
 
     schedule = list(top._dsl.all_update_ff)
     func = make_double_buffer_func( top )

@@ -30,8 +30,8 @@ class DynamicSchedulePass( BasePass ):
 
     # Construct the graph
 
-    V  = top._dag.final_upblks
-    E  = top._dag.all_constraints
+    V   = top._dag.final_upblks - top.get_all_update_ff()
+    E   = top._dag.all_constraints
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V } # transpose graph
 
@@ -239,7 +239,6 @@ class DynamicSchedulePass( BasePass ):
 
           # TODO mamba?
           scc_tick_func = SimpleTickPass.gen_tick_function( scc )
-          # print src
           namespace = {}
           namespace.update( locals() )
 
@@ -277,4 +276,5 @@ class DynamicSchedulePass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
+    print(schedule)
     return schedule
