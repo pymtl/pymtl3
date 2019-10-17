@@ -10,9 +10,6 @@ Date   : Dec 26, 2018
 """
 from collections import deque
 
-import py
-from graphviz import Digraph
-
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
@@ -33,6 +30,7 @@ def make_double_buffer_func( s ):
     {}
   """.format( "\n    ".join(strs) )
 
+  import py
   exec(py.code.Source( src ).compile(), locals(), globals())
   return double_buffer
 
@@ -54,6 +52,7 @@ class SimpleSchedulePass( BasePass ):
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
 
+    import os
     if 'MAMBA_DAG' in os.environ:
       dump_dag( top, V, E )
 
@@ -77,7 +76,6 @@ class SimpleSchedulePass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
-    import os
 
     check_schedule( top, update_schedule, V, E, InD )
 

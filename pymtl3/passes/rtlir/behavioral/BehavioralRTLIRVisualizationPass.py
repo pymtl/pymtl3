@@ -16,6 +16,7 @@ from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 
+
 class BehavioralRTLIRVisualizationPass( BasePass ):
   def __call__( s, model ):
     visitor = BehavioralRTLIRVisualizationVisitor()
