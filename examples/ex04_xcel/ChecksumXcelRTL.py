@@ -81,12 +81,12 @@ class ChecksumXcelRTL( Component ):
       else: # s.state == s.BUSY
         s.state_next = s.XCFG if s.checksum_unit.send.en else s.BUSY
 
-    @s.update_on_edge
+    @s.update_ff
     def up_state():
       if s.reset:
-        s.state = s.XCFG
+        s.state <<= s.XCFG
       else:
-        s.state = s.state_next
+        s.state <<= s.state_next
 
     @s.update
     def up_fsm_output():
