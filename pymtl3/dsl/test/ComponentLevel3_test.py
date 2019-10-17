@@ -892,6 +892,6 @@ def test_connect_slice_int():
   try:
     a.tick() # expect to get int error
   except TypeError as e:
-    assert str(e) == "'int' object is not subscriptable"
+    assert str(e).startswith( "'int' object is not subscriptable" )
     return
   raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
