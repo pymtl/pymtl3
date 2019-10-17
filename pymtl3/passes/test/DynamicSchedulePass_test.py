@@ -152,3 +152,24 @@ def test_very_deep_dag():
       return ""
 
   _test_model( Top )
+
+def test_connect_slice_int():
+
+  class Top( Component ):
+    def construct( s ):
+      from pymtl3.datatypes import Bits8, Bits32
+      s.y = OutPort( Bits8 )
+      s.x = Wire( Bits32 )
+
+      s.y //= s.x[0:8]
+      @s.update
+      def sx():
+        s.x = 10 # Except
+
+  try:
+    _test_model( Top )
+  except TypeError as e:
+    assert str(e) == "'int' object is not subscriptable"
+    return
+  raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
+

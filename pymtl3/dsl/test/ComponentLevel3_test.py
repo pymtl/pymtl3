@@ -873,3 +873,27 @@ def test_in_out_loopback_at_parent():
 
   a = Top()
   a.elaborate()
+
+def test_connect_slice_int():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits8 )
+      s.x = Wire( Bits32 )
+
+      s.y //= s.x[0:8]
+      @s.update
+      def sx():
+        s.x = 10 # Except
+
+  a = Top()
+  a.elaborate()
+  simple_sim_pass( a )
+  try:
+    a.tick() # expect to get int error
+  except TypeError as e:
+    assert str(e) == "'int' object is not subscriptable"
+    return
+  raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
+
+

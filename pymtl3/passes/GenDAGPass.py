@@ -16,6 +16,7 @@ from pymtl3.dsl.errors import LeftoverPlaceholderError
 
 from .BasePass import BasePass, PassMetadata
 
+from linecache import cache as line_cache
 
 class GenDAGPass( BasePass ):
 
@@ -103,18 +104,22 @@ class GenDAGPass( BasePass ):
                     .replace( "(", "_" ).replace( ")", "_" )
       gen_src = """
 def {}():
-  {}={}""".format( upblk_name, "=".join( rstrs ), wstr )
-
+  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
       hostobj_allsrc[ wr_lca ] += gen_src
-      # blkname_meta[ upblk_name ] = (gen_src, writer, readers)
+
+      # TODO see if directly compiling AST instead of source can be faster
+
       blkname_meta[ upblk_name ] = (writer, readers)
 
-    # Borrow the closure of hostobj to compile the block
+    # Borrow the closure of hostobj to compile the block. Add to linecache
     def compile_upblks( s, src ):
       var = locals()
       var.update( globals() )
       local = {}
-      exec( compile( src, filename=repr(s), mode="exec"), var, local )
+
+      fname = f"Generated net"
+      exec( compile( src, filename=fname, mode="exec"), var, local )
+      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
 
       for name, blk in local.items():
         top._dag.genblks.add( blk )
@@ -122,7 +127,6 @@ def {}():
         if writer.is_signal():
           top._dag.genblk_reads[ blk ] = [ writer ]
         top._dag.genblk_writes[ blk ] = readers
-        # top._dag.genblk_src   [ blk ] = ( gen_src, None )
 
     for hostobj, allsrc in hostobj_allsrc.items():
       compile_upblks( hostobj, allsrc )
