@@ -36,7 +36,7 @@ class InvalidFFAssignError( Exception ):
     lineno -= 1
     error_lineno = base_lineno + lineno
 
-    return super( InvalidFFAssignError, self ).__init__( \
+    return super().__init__( \
 """
 In file {}:{} in {}
 
