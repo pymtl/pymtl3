@@ -172,4 +172,3 @@ def test_connect_slice_int():
     assert str(e) == "'int' object is not subscriptable"
     return
   raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
-

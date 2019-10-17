@@ -9,6 +9,7 @@ Author : Shunning Jiang
 Date   : Jan 18, 2018
 """
 from collections import defaultdict, deque
+from linecache import cache as line_cache
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
@@ -16,7 +17,6 @@ from pymtl3.dsl.errors import LeftoverPlaceholderError
 
 from .BasePass import BasePass, PassMetadata
 
-from linecache import cache as line_cache
 
 class GenDAGPass( BasePass ):
 
