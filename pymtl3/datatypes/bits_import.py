@@ -26,48 +26,49 @@ if os.getenv("PYMTL_BITS") == "1":
   from .PythonBits import Bits
   # print "[env: PYMTL_BITS=1] Use Python Bits"
   bits_template = """
-class Bits{nbits}(Bits):
-  nbits = {nbits}
+class Bits{0}(Bits):
+  nbits = {0}
   def __init__( s, value=0 ):
-    return super( Bits{nbits}, s ).__init__( {nbits}, value )
-
-_bits_types[{nbits}] = Bits{nbits}
-b{nbits} = Bits{nbits}
+    return super( Bits{0}, s ).__init__( {0}, value )
 """
 else:
   try:
     from mamba import Bits
     # print "[default w/  Mamba] Use Mamba Bits"
     bits_template = """
-class Bits{nbits}(Bits):
-  nbits = {nbits}
+class Bits{0}(Bits):
+  nbits = {0}
   def __new__( cls, value=0 ):
-    return Bits.__new__( cls, {nbits}, value )
-
-_bits_types[{nbits}] = Bits{nbits}
-b{nbits} = Bits{nbits}
+    return Bits.__new__( cls, {0}, value )
 """
   except ImportError:
     from .PythonBits import Bits
     # print "[default w/o Mamba] Use Python Bits"
     bits_template = """
-class Bits{nbits}(Bits):
-  nbits = {nbits}
+class Bits{0}(Bits):
+  nbits = {0}
   def __init__( s, value=0 ):
-    return super( Bits{nbits}, s ).__init__( {nbits}, value )
-
-_bits_types[{nbits}] = Bits{nbits}
-b{nbits} = Bits{nbits}
+    return super( Bits{0}, s ).__init__( {0}, value )
 """
 
-_bitwidths     = list(range(1, 256)) + [ 384, 512, 768, 1024, 1536, 2048, 4096 ]
-_bits_types    = dict()
+_bitwidths  = list(range(1, 256)) + [ 384, 512 ]
+_bits_types = dict()
+gs = globals()
 
-exec(py.code.Source( "".join([ bits_template.format( **vars() ) \
-                        for nbits in _bitwidths ]) ).compile())
+local = {}
+exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
+              filename="bits_import.py", mode="exec"),
+     gs, local)
+
+for name, cls in local.items():
+  nbits = int(name[4:])
+  _bits_types[nbits] = cls
+  gs[f"b{nbits}"] = cls
+
+gs.update(local)
 
 def mk_bits( nbits ):
-  assert nbits < 16384, "We don't allow bitwidth to exceed 16384."
+  assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits in _bits_types:  return _bits_types[ nbits ]
 
   exec((py.code.Source( bits_template.format( **vars() ) ).compile()), globals())
