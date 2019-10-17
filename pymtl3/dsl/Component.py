@@ -468,6 +468,10 @@ class Component( ComponentLevel7 ):
           if isinstance( obj, Signal ):
             try:
               current_obj[i] = obj.default_value()
+              try:
+                current_obj[i]._next = obj.default_value()
+              except AttributeError:
+                pass
             except Exception as err:
               err.message = repr(obj) + " -- " + err.message
               err.args = (err.message,)
@@ -479,39 +483,17 @@ class Component( ComponentLevel7 ):
           elif isinstance( obj, (Interface, list) ):
             Q.append( (obj, host) )
 
-<<<<<<< HEAD
-        elif isinstance( obj, (Interface, list) ):
-          cleanup_connectables( obj, host_component )
-
-        elif isinstance( obj, Signal ):
-          try:
-            if is_list:
-              current_obj[i] = obj.default_value()
-              try:
-                current_obj[i]._next = obj.default_value()
-              except AttributeError:
-                pass
-            else:
-              value = obj.default_value()
-              try:
-                value._next = obj.default_value()
-              except AttributeError:
-                pass
-              setattr( current_obj, i, value )
-          except Exception as err:
-            err.message = repr(obj) + " -- " + err.message
-            err.args = (err.message,)
-            raise err
-          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
-
-    cleanup_connectables( s, s )
-=======
       elif isinstance( current_obj, NamedObject ):
         for i, obj in current_obj.__dict__.items():
           if i[0] != '_': # impossible to have tuple
             if isinstance( obj, Signal ):
               try:
-                setattr( current_obj, i, obj.default_value() )
+                value = obj.default_value()
+                try:
+                  value._next = obj.default_value()
+                except AttributeError:
+                  pass
+                setattr( current_obj, i, value )
               except Exception as err:
                 err.message = repr(obj) + " -- " + err.message
                 err.args = (err.message,)
@@ -524,7 +506,6 @@ class Component( ComponentLevel7 ):
               Q.append( (obj, host) )
 
     s._dsl.swapped_signals = swapped_signals
->>>>>>> master
     s._dsl.locked_simulation = True
 
   def unlock_simulation( s ):

@@ -110,7 +110,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
           if isinstance( obj, NamedObject ): # Signal[*] is the signal itself
-            all_objs.add( obj )
+            objs.add( obj )
           else:
             for i, child in enumerate( obj ):
               expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
@@ -132,13 +132,13 @@ class ComponentLevel2( ComponentLevel1 ):
 
         if name_depth >= len(obj_name): # exhausted
           if   isinstance( obj, NamedObject ):
-            all_objs.add( obj )
+            objs.add( obj )
           elif isinstance( obj, list ): # Exhaust all the elements in the high-d array
             Q = [ obj ]
             while Q:
               m = Q.pop()
               if isinstance( Q, NamedObject ):
-                all_objs.add( m )
+                objs.add( m )
               elif isinstance( m, list ):
                 Q.extend( m )
           return
@@ -165,7 +165,9 @@ class ComponentLevel2( ComponentLevel1 ):
       for obj_name, nodelist in names:
         if obj_name[0][0] == "s":
           # s._dsl.astnode_objs[ nodelist[0] ].append( s )
+          objs = set()
           lookup_variable( s, 1, 1 )
+          all_objs |= objs
 
           # Check <<= in update_ff
           if update_ff:
