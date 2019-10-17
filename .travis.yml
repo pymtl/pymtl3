@@ -38,7 +38,7 @@ install:
 
  # Install Python requirements
  - pip install --upgrade pip setuptools twine
- - pip install --requirement requirements.txt
+ - pip install --requirement requirements.txt --constraint constraints.txt
  - pip install .
  - pip list
 

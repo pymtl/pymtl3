@@ -17,7 +17,7 @@ def collect_objs( m, Type ):
 
   ret = []
   for name, obj in vars(m).items():
-    if isinstance( name, str ) and not name.startswith( '_' ):
+    if isinstance( name, str ) and name[0] != '_':
       if _is_of_type( obj, Type ):
         ret.append( ( name, obj ) )
   return ret

@@ -19,6 +19,7 @@ Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
 import re
+from collections import deque
 
 from .errors import NotElaboratedError
 
@@ -139,46 +140,47 @@ class NamedObject:
 
   def __setattr_for_elaborate__( s, name, obj ):
 
-    # I use non-recursive traversal to reduce error message depth
+    # I use non-recursive BFS to reduce error message depth
 
-    if not name.startswith("_"):
-      stack = [ (obj, []) ]
+    if name[0] != '_': # filter private variables
+      stack = deque( [ (obj, []) ] )
       while stack:
-        u, indices = stack.pop()
+        u, indices = stack.popleft()
 
         if isinstance( u, NamedObject ):
+            sd = s._dsl
+            ud = u._dsl
           # try:
-            u._dsl.parent_obj = s
-            u._dsl.level      = s._dsl.level + 1
-            u._dsl.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
+            ud.parent_obj = s
+            ud.level      = sd.level + 1
+            ud.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
 
             # Iterate through the param_tree and update u
-            if s._dsl.param_tree is not None:
-              if s._dsl.param_tree.children is not None:
-                for comp_name, node in s._dsl.param_tree.children.items():
+            if sd.param_tree is not None:
+              if sd.param_tree.children is not None:
+                for comp_name, node in sd.param_tree.children.items():
                   if comp_name == u_name:
                     # Lazily create the param tree
-                    if u._dsl.param_tree is None:
-                      u._dsl.param_tree = ParamTreeNode()
-                    u._dsl.param_tree.merge( node )
+                    if ud.param_tree is None:
+                      ud.param_tree = ParamTreeNode()
+                    ud.param_tree.merge( node )
 
                   elif node.compiled_re is not None:
                     if node.compiled_re.match( u_name ):
                       # Lazily create the param tree
-                      if u._dsl.param_tree is None:
-                        u._dsl.param_tree = ParamTreeNode()
-                      u._dsl.param_tree.merge( node )
+                      if ud.param_tree is None:
+                        ud.param_tree = ParamTreeNode()
+                      ud.param_tree.merge( node )
 
-            s_name = s._dsl.full_name
-            u._dsl.full_name = ( s_name + "." + u_name )
+            ud.full_name = f"{sd.full_name}.{u_name}"
 
             # store the name/indices
-            u._dsl._my_name     = name
-            u._dsl._my_indices  = indices
+            ud._my_name     = name
+            ud._my_indices  = indices
 
             # Point u's top to my top
-            top = s._dsl.elaborate_top
-            u._dsl.elaborate_top = top
+            top = sd.elaborate_top
+            ud.elaborate_top = top
 
             top._dsl.elaborate_stack.append( u )
             u._construct()
@@ -199,6 +201,33 @@ class NamedObject:
 
     super().__setattr__( name, obj )
 
+  def _collect_all_single( s, filt=lambda x: isinstance( x, NamedObject ) ):
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+
+      if   isinstance( u, NamedObject ):
+        if filt( u ): # Check if m satisfies the filter
+          ret.add( u )
+
+        for name, obj in u.__dict__.items():
+
+          # If the id is string, it is a normal children field. Otherwise it
+          # should be an tuple that represents a slice
+
+          if   isinstance( name, str ):
+            if name[0] != '_': # filter private variables
+              stack.append( obj )
+
+          elif isinstance( name, tuple ): # name = [1:3]
+            stack.append( obj )
+
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
+
   # It is possible to take multiple filters
   def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
     ret = [ set() for _ in filt ]
@@ -217,7 +246,7 @@ class NamedObject:
           # should be an tuple that represents a slice
 
           if   isinstance( name, str ):
-            if not name.startswith("_"): # filter private variables
+            if name[0] != '_': # filter private variables
               stack.append( obj )
 
           elif isinstance( name, tuple ): # name = [1:3]
@@ -307,7 +336,7 @@ class NamedObject:
     del s._dsl.elaborate_stack
 
   def _elaborate_collect_all_named_objects( s ):
-    s._dsl.all_named_objects = s._collect_all()[0]
+    s._dsl.all_named_objects = s._collect_all_single()
 
   def elaborate( s ):
     s._elaborate_construct()
