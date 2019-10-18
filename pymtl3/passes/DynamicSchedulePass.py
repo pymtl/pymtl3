@@ -167,9 +167,7 @@ class DynamicSchedulePass( BasePass ):
     # functions
 
     schedule.extend( list(top._dsl.all_update_ff) )
-    func = make_double_buffer_func( top )
-    if func is not None:
-      schedule.append( func )
+    schedule.append( make_double_buffer_func( top ) )
 
     scc_id = 0
     for i in scc_schedule:
@@ -276,5 +274,5 @@ class DynamicSchedulePass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
-    print(schedule)
+    # print(schedule)
     return schedule

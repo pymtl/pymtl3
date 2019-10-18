@@ -378,22 +378,25 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
+
   def make_double_buffer_func( s ):
 
-    strs = []
-    for x in s._dsl.all_signals:
-      if x._dsl.needs_double_buffer:
-        strs.append( "{0} = {0}._next;".format( repr(x) ) )
+    strs = [ f"{repr(x)}._flip()" for x in s._dsl.all_signals if x._dsl.needs_double_buffer ]
+
     if not strs:
-      return None
+      def no_double_buffer():
+        pass
+      return no_double_buffer
+
 
     src = """
     def double_buffer():
       {}
-    """.format( "".join(strs) )
+    """.format( "\n      ".join(strs) )
 
-    exec(py.code.Source( src ).compile(), locals(), globals())
-    return double_buffer
+    local = locals()
+    exec(py.code.Source( src ).compile(), local)
+    return local['double_buffer']
 
   # Construct the graph for update blocks
 

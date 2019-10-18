@@ -17,12 +17,12 @@ from .errors import PassOrderError
 
 def make_double_buffer_func( s ):
 
-  strs = []
-  for x in s._dsl.all_signals:
-    if x._dsl.needs_double_buffer:
-      strs.append( "x={0}._next;{0}=x._next=x;".format( repr(x) ) )
+  strs = [ f"{repr(x)}._flip()" for x in s._dsl.all_signals if x._dsl.needs_double_buffer ]
+
   if not strs:
-    return None
+    def no_double_buffer():
+      pass
+    return no_double_buffer
 
   src = """
   def double_buffer():
@@ -30,8 +30,10 @@ def make_double_buffer_func( s ):
   """.format( "\n    ".join(strs) )
 
   import py
-  exec(py.code.Source( src ).compile(), locals(), globals())
-  return double_buffer
+  # print(src)
+  local = locals()
+  exec(py.code.Source( src ).compile(), local)
+  return local['double_buffer']
 
 class SimpleSchedulePass( BasePass ):
   def __call__( self, top ):
@@ -75,13 +77,10 @@ class SimpleSchedulePass( BasePass ):
         if not InD[v]:
           Q.append( v )
 
-
     check_schedule( top, update_schedule, V, E, InD )
 
     schedule = list(top._dsl.all_update_ff)
-    func = make_double_buffer_func( top )
-    if func is not None:
-      schedule.append( func )
+    schedule.append( make_double_buffer_func( top ) )
     schedule.extend( update_schedule )
 
     return schedule

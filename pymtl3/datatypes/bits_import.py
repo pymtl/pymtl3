@@ -13,8 +13,6 @@ Date   : Aug 23, 2018
 """
 import os
 
-import py.code
-
 # This __new__ approach has better performance
 # bits_template = """
 # class Bits{nbits}(object):
@@ -70,6 +68,8 @@ gs.update(local)
 def mk_bits( nbits ):
   assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits in _bits_types:  return _bits_types[ nbits ]
-
-  exec((py.code.Source( bits_template.format( **vars() ) ).compile()), globals())
-  return _bits_types[ nbits ]
+  local = {}
+  exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ), globals(), local)
+  cls = list(local.values())[0]
+  _bits_types[ nbits ] = cls
+  return cls
