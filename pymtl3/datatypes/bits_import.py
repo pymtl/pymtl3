@@ -27,7 +27,7 @@ if os.getenv("PYMTL_BITS") == "1":
 class Bits{0}(Bits):
   nbits = {0}
   def __init__( s, value=0 ):
-    return super( Bits{0}, s ).__init__( {0}, value )
+    return super().__init__( {0}, value )
 """
 else:
   try:
@@ -46,7 +46,7 @@ class Bits{0}(Bits):
 class Bits{0}(Bits):
   nbits = {0}
   def __init__( s, value=0 ):
-    return super( Bits{0}, s ).__init__( {0}, value )
+    return super().__init__( {0}, value )
 """
 
 _bitwidths  = list(range(1, 256)) + [ 384, 512 ]
