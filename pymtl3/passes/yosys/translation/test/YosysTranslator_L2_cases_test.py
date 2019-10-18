@@ -20,6 +20,7 @@ from pymtl3.passes.sverilog.translation.test.SVTranslator_L2_cases_test import (
     test_if_dangling_else_outter,
     test_if_exp_for,
     test_if_exp_unary_op,
+    test_lambda_connect,
     test_nested_if,
     test_nested_struct,
     test_nested_struct_port,

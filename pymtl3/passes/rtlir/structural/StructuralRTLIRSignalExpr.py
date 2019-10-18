@@ -3,7 +3,6 @@
 #=========================================================================
 """RTLIR signal expression class definitions and generation method."""
 
-from functools import reduce
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, BitStruct
@@ -15,8 +14,7 @@ from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 class BaseSignalExpr:
   """Base abstract class of RTLIR signal expressions."""
   def __init__( s, rtype ):
-    assert isinstance( rtype, rt.BaseRTLIRType ), \
-      "non-RTLIR type {} encountered!".format( rtype )
+    assert isinstance( rtype, rt.BaseRTLIRType ), f"non-RTLIR type {rtype} encountered!"
     s.rtype = rtype
 
   def get_rtype( s ):
@@ -158,8 +156,7 @@ class _Slice( BaseSignalExpr ):
     elif isinstance( base_rtype, rt.Wire ):
       rtype = rt.Wire( rdt.Vector( stop-start ) )
     else:
-      assert False, \
-        "unrecognized signal type {} for slicing".format( base_rtype )
+      assert False, f"unrecognized signal type {base_rtype} for slicing"
     super().__init__( rtype )
     s.base = slice_base
     s.slice = ( start, stop )
@@ -335,8 +332,7 @@ class PackedIndex( _Index ):
     elif isinstance( base_rtype, rt.Wire ):
       rtype = rt.Wire( dtype.get_next_dim_type() )
     else:
-      assert False, \
-        "unrecognized signal type {} for indexing".format( base_rtype )
+      assert False, f"unrecognized signal type {base_rtype} for indexing"
     super().__init__( index_base, index, rtype )
 
 class BitSelection( _Index ):
@@ -349,8 +345,7 @@ class BitSelection( _Index ):
     elif isinstance( base_rtype, rt.Wire ):
       rtype = rt.Wire( rdt.Vector( 1 ) )
     else:
-      assert False, \
-        "unrecognized signal type {} for indexing".format( base_rtype )
+      assert False, f"unrecognized signal type {base_rtype} for indexing"
     super().__init__( index_base, index, rtype )
 
 class PartSelection( _Slice ):
@@ -384,8 +379,7 @@ class StructAttr( _Attribute ):
     elif isinstance( base_rtype, rt.Wire ):
       rtype = rt.Wire( dtype.get_property( attr ) )
     else:
-      assert False, \
-        "unrecognized signal type {} for field selection".format( base_rtype )
+      assert False, f"unrecognized signal type {base_rtype} for field selection"
     super().__init__( attr_base, attr, rtype )
 
 #-------------------------------------------------------------------------
@@ -432,7 +426,7 @@ def gen_signal_expr( cur_component, signal ):
       rb_pos = expr.find( ']', cur_pos )
       colon_pos = expr.find( ':', cur_pos )
       assert rb_pos != -1 and pos == rb_pos+1, \
-        "unrecognized expression {}".format( expr )
+        f"unrecognized expression {expr}"
 
       if cur_pos < colon_pos < rb_pos:
         start = int( expr[cur_pos+1:colon_pos] )
@@ -445,7 +439,7 @@ def gen_signal_expr( cur_component, signal ):
     else:
       base_pos = expr.find( full_name )
       assert base_pos >= 0, \
-        "cannot find the base of attribute {} in {}".format( full_name, expr )
+        f"cannot find the base of attribute {full_name} in {expr}"
       return ( 'Base', my_name ), base_pos + len( full_name )
 
   def get_cls_inst( func_list, cur_node, ops ):
@@ -462,9 +456,9 @@ def gen_signal_expr( cur_component, signal ):
       base_comp = signal
     except AttributeError:
       # Special case for a ConstInstance because it has no name
-      assert hasattr( signal._dsl, 'const' ), '{} is not supported!'.format(signal)
+      assert hasattr( signal._dsl, 'const' ), f'{signal} is not supported!'
       assert isinstance( signal._dsl.const, ( int, Bits, BitStruct ) ), \
-          '{} is not an integer/BitStruct const!'.format( signal._dsl.const )
+          f'{signal._dsl.const} is not an integer/BitStruct const!'
       return ConstInstance( signal, signal._dsl.const )
 
     # Get the base component
@@ -472,7 +466,7 @@ def gen_signal_expr( cur_component, signal ):
     full_name = base_comp._dsl.full_name
     my_name = base_comp._dsl.my_name
     assert expr.find( full_name ) >= 0, \
-      "cannot find the base of attribute {} in {}".format( full_name, expr )
+      f"cannot find the base of attribute {full_name} in {expr}"
 
     # Start from the base component and process one operation per iteration
     cur_pos, cur_node = 0, base_comp

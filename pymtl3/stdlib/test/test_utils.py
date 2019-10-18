@@ -1,4 +1,3 @@
-
 import collections
 
 from pymtl3 import *

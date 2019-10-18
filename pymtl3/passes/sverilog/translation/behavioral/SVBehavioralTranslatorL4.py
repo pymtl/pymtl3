@@ -45,7 +45,7 @@ class BehavioralRTLIRToSVVisitorL4( BehavioralRTLIRToSVVisitorL3 ):
       value = s.visit( node.value )
       attr = node.attr
       s.check_res( node, attr )
-      return '{value}${attr}'.format( **locals() )
+      return f'{value}__{attr}'
     else:
       return super().visit_Attribute( node )
 
@@ -60,11 +60,10 @@ class BehavioralRTLIRToSVVisitorL4( BehavioralRTLIRToSVVisitorL3 ):
         nbits = node.idx._value
       except AttributeError:
         raise SVerilogTranslationError( s.blk, node,
-          'index of interface array {} must be a static constant expression!'. \
-              format( node.idx ) )
+          f'index of interface array {node.idx} must be a static constant expression!' )
       idx = int( nbits )
       value = s.visit( node.value )
-      return "{value}$__{idx}".format( **locals() )
+      return f'{value}__{idx}'
 
     else:
       return super().visit_Index( node )

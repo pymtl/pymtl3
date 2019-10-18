@@ -100,7 +100,7 @@ class Bits:
 
   def __mod__( self, other ):
     try:    return Bits( max(self.nbits, other.nbits), int(self.value) % int(other) )
-    except: return Bits( self.nbits, int(self.value) / int(other) )
+    except: return Bits( self.nbits, int(self.value) % int(other) )
 
   def __invert__( self ):
     return Bits( self.nbits, ~int(self.value) )

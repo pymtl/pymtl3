@@ -12,7 +12,11 @@ from pymtl3.datatypes import Bits8, Bits10, Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import WR, U
-from pymtl3.dsl.errors import InvalidConnectionError, MultiWriterError
+from pymtl3.dsl.errors import (
+    InvalidConnectionError,
+    MultiWriterError,
+    UpblkFuncSameNameError,
+)
 
 from .sim_utils import simple_sim_pass
 
@@ -776,3 +780,118 @@ def test_invalid_connect_outside_hierarchy():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidConnectionError.")
+
+globalvar = 2
+def test_connect_lambda():
+
+  class Top( ComponentLevel3 ):
+    def construct( s, x ):
+      s.in_ = InPort(Bits32)
+      s.out = OutPort(Bits32)
+
+      s.out //= lambda: s.in_ + x + globalvar
+
+  x = Top(3)
+  x.elaborate()
+  simple_sim_pass(x)
+  x.in_ = 10
+  x.tick()
+  assert x.out == 10 + 3 + 2
+
+  y = Top(33)
+  y.elaborate()
+  simple_sim_pass(y)
+  y.in_ = 100
+  y.tick()
+  assert y.out == 100 + 33 + 2
+
+def test_lambda_name_conflict():
+
+  class Top( ComponentLevel3 ):
+    def construct( s, x ):
+      s.in_ = InPort(Bits32)
+      s.out = OutPort(Bits32)
+      s.out2 = OutPort(Bits32)
+
+      s.out //= lambda: s.in_ + x
+
+      # TODO throw some better error message when
+      # the implicit name of a lambda function conflicts
+      # with the explicit name of an update block
+
+      @s.update
+      def _lambda__s_out():
+        s.out2 = Bits32(2)
+
+  try:
+    x = Top(3)
+    x.elaborate()
+  except UpblkFuncSameNameError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown UpblkFuncSameNameError.")
+
+def test_invalid_in_out_loopback_at_self():
+
+  class Comp( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits32 )
+      s.z = OutPort( Bits32 )
+      s.x = InPort( Bits32 )
+
+      s.y //= Bits32(1)
+      s.x //= s.y
+      s.z //= s.x
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.comp = Comp()
+
+  try:
+    a = Top()
+    a.elaborate()
+  except InvalidConnectionError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_in_out_loopback_at_parent():
+
+  class Comp( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits32 )
+      s.z = OutPort( Bits32 )
+      s.x = InPort( Bits32 )
+
+      s.y //= Bits32(1)
+      s.z //= s.x
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.comp = Comp()
+      s.comp.x //= s.comp.y
+
+  a = Top()
+  a.elaborate()
+
+def test_connect_slice_int():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits8 )
+      s.x = Wire( Bits32 )
+
+      s.y //= s.x[0:8]
+      @s.update
+      def sx():
+        s.x = 10 # Except
+
+  a = Top()
+  a.elaborate()
+  simple_sim_pass( a )
+  try:
+    a.tick() # expect to get int error
+  except TypeError as e:
+    assert str(e).startswith( "'int' object is not subscriptable" )
+    return
+  raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")

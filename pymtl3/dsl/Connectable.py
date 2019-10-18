@@ -7,6 +7,7 @@ Wires, ports, and interfaces, all inherited from Connectable.
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
+import types
 from collections import deque
 
 from pymtl3.datatypes import Bits, mk_bits
@@ -40,7 +41,13 @@ class Connectable:
     # avoid circular import, we replicate the implementation of connect.
 
     host, s_connectable, o_connectable = _connect_check( s, other, internal=False )
-    host._connect_dispatch( s, other, s_connectable, o_connectable )
+
+    # ifloordiv is the only entry point for connecting lambda
+    if isinstance( other, types.LambdaType ):
+      host._create_assign_lambda( s, other )
+    else:
+      host._connect_dispatch( s, other, s_connectable, o_connectable )
+
     return s
 
 def _connect_check( o1, o2, internal ):
@@ -110,7 +117,7 @@ class Const( Connectable ):
     s._dsl.parent_obj = parent
 
   def __repr__( s ):
-    return "{}({})".format( str(s._dsl.Type.__name__), s._dsl.const )
+    return f"{s._dsl.Type.__name__}({s._dsl.const})"
 
   def get_parent_object( s ):
     try:
@@ -147,7 +154,7 @@ class Signal( NamedObject, Connectable ):
     pass
 
   def __getattr__( s, name ):
-    if name.startswith("_"): # private variable
+    if name[0] == '_': # private variables directly exit here
       return super().__getattribute__( name )
 
     if name not in s.__dict__:
@@ -176,7 +183,8 @@ class Signal( NamedObject, Connectable ):
       # 3. Otherwise we just go for obj.__class__
       # Note that BitsN is a type now. 2 and 3 are actually unified.
 
-      Q = deque( [ (obj, [], s, False) ] )
+      # Use deque to ensure BFS to ensure a[0] is accessed before a[1]
+      Q = deque([ (obj, [], s, False) ])
 
       while Q:
         u, indices, parent, parent_is_list = Q.popleft()
@@ -189,13 +197,16 @@ class Signal( NamedObject, Connectable ):
 
         else:
           x = s.__class__( cls )
-          x._dsl.type_instance = u
-          x._dsl.parent_obj = s
-          x._dsl.top_level_signal = s._dsl.top_level_signal
-          x._dsl.elaborate_top = s._dsl.elaborate_top
+          sd = s._dsl
+          xd = x._dsl
 
-          x._dsl.my_name   = name + "".join([ "[{}]".format(y) for y in indices ])
-          x._dsl.full_name = s._dsl.full_name + "." + x._dsl.my_name
+          xd.type_instance = u
+          xd.parent_obj = s
+          xd.top_level_signal = sd.top_level_signal
+          xd.elaborate_top = sd.elaborate_top
+
+          xd.my_name   = name + "".join([ f"[{y}]" for y in indices ])
+          xd.full_name = f"{sd.full_name}.{xd.my_name}"
 
         if parent_is_list:
           parent.append( x )
@@ -219,17 +230,19 @@ class Signal( NamedObject, Connectable ):
 
     if sl_tuple not in s.__dict__:
       x = s.__class__( mk_bits( sl.stop - sl.start) )
-      x._dsl.parent_obj = s
-      x._dsl.top_level_signal = s
-      x._dsl.elaborate_top = s._dsl.elaborate_top
+      sd = s._dsl
+      xd = x._dsl
+      xd.parent_obj = s
+      xd.top_level_signal = s
+      xd.elaborate_top = sd.elaborate_top
 
-      sl_str = "[{}:{}]".format( sl.start, sl.stop )
+      sl_str = f"[{sl.start}:{sl.stop}]"
 
-      x._dsl.my_name   = s._dsl.my_name + sl_str
-      x._dsl.full_name = s._dsl.full_name + sl_str
+      xd.my_name   = f"{sd.my_name}{sl_str}"
+      xd.full_name = f"{sd.full_name}{sl_str}"
 
-      x._dsl.slice       = sl
-      s.__dict__[ sl_tuple ] = s._dsl.slices[ sl_tuple ] = x
+      xd.slice       = sl
+      s.__dict__[ sl_tuple ] = sd.slices[ sl_tuple ] = x
 
     return s.__dict__[ sl_tuple ]
 
@@ -347,7 +360,7 @@ class Interface( NamedObject, Connectable ):
 
       if inversed:
         for name, obj in s.__dict__.items():
-          if not name.startswith("_"):
+          if name[0] != '_': # filter private variables
             if isinstance( obj, Signal ):
               setattr( s, name, obj.inverse() )
             else:
@@ -433,7 +446,7 @@ class NonBlockingInterface( Interface ):
     return s._str_hook()
 
   def _str_hook( s ):
-    return "{}".format( s._dsl.my_name )
+    return f"{s._dsl.my_name}"
 
 class NonBlockingCalleeIfc( NonBlockingInterface ):
   def construct( s, Type=None, method=None, rdy=None ):

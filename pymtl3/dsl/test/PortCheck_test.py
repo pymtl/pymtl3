@@ -9,7 +9,7 @@ Date   : Dec 25, 2017
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import SignalTypeError
+from pymtl3.dsl.errors import InvalidConnectionError, SignalTypeError
 
 from .sim_utils import simple_sim_pass
 
@@ -279,10 +279,10 @@ def test_illegal_same_host():
 
   try:
     _test_model( Top )
-  except SignalTypeError as e:
+  except InvalidConnectionError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown invalid port type SignalTypeError.")
+  raise Exception("Should've thrown InvalidConnectionError.")
 
 def test_illegal_rdhost_is_wrhost_parent():
 

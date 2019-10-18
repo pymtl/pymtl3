@@ -35,7 +35,7 @@ from .errors import (
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
-p = re.compile('( *(@|def))')
+compiled_re = re.compile('( *(@|def))')
 
 class ComponentLevel2( ComponentLevel1 ):
 
@@ -55,7 +55,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return inst
 
-  def _cache_func_meta( s, func ):
+  def _cache_func_meta( s, func, given=None ):
     """ Convention: the source of a function/update block across different
     instances should be the same. You can construct different functions
     based on the condition, but please use different names. This not only
@@ -63,28 +63,36 @@ class ComponentLevel2( ComponentLevel1 ):
 
     According to the convention, we can cache the information of a
     function in the *class object* to avoid redundant parsing. """
-    cls = type(s)
+    cls = s.__class__
     try:
-      name_src = cls._name_src
-      name_ast = cls._name_ast
-      name_rd  = cls._name_rd
-      name_wr  = cls._name_wr
-      name_fc  = cls._name_fc
-    except:
-      name_src = cls._name_src = {}
-      name_ast = cls._name_ast = {}
-      name_rd  = cls._name_rd  = {}
-      name_wr  = cls._name_wr  = {}
-      name_fc  = cls._name_fc  = {}
+      name_info = cls._name_info
+      name_rd   = cls._name_rd
+      name_wr   = cls._name_wr
+      name_fc   = cls._name_fc
+    except Exception:
+      name_info = cls._name_info = {}
+      name_rd   = cls._name_rd  = {}
+      name_wr   = cls._name_wr  = {}
+      name_fc   = cls._name_fc  = {}
 
     name = func.__name__
-    if name not in name_src:
-      name_src[ name ] = src  = p.sub( r'\2', inspect.getsource(func) )
-      name_ast[ name ] = tree = ast.parse( src )
-      name_rd[ name ]  = rd   = []
-      name_wr[ name ]  = wr   = []
-      name_fc[ name ]  = fc   = []
-      AstHelper.extract_reads_writes_calls( func, tree, rd, wr, fc )
+
+    if name not in name_info:
+      if given is None:
+        _src, _line = inspect.getsourcelines( func )
+        _src = "".join( _src )
+        _ast = ast.parse( compiled_re.sub( r'\2', _src ) )
+
+        name_info[ name ] = (False, _src, _line, inspect.getsourcefile( func ), _ast )
+      else:
+        _src, _ast, _line, _file = given
+
+        name_info[ name ] = ( True, _src, _line, _file, _ast )
+
+      name_rd[ name ]  = _rd = []
+      name_wr[ name ]  = _wr = []
+      name_fc[ name ]  = _fc = []
+      AstHelper.extract_reads_writes_calls( func, _ast, _rd, _wr, _fc )
 
   def _elaborate_read_write_func( s ):
 
@@ -94,18 +102,18 @@ class ComponentLevel2( ComponentLevel1 ):
 
     def extract_obj_from_names( func, names ):
 
-      def expand_array_index( obj, name_depth, node_depth, idx_depth, idx, obj_list ):
+      def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
 
         if idx_depth >= len(idx): # exhausted, go to next level of name
-          lookup_variable( obj, name_depth+1, node_depth+1, obj_list )
+          lookup_variable( obj, name_depth+1, node_depth+1 )
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
           if isinstance( obj, NamedObject ): # Signal[*] is the signal itself
-            add_all( obj, obj_list, node_depth )
+            all_objs.add( obj )
           else:
             for i, child in enumerate( obj ):
-              expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
+              expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
         else:
           try:
             child = obj[ idx[ idx_depth ] ]
@@ -114,26 +122,25 @@ class ComponentLevel2( ComponentLevel1 ):
           except IndexError:
             return
 
-          s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
-          expand_array_index( child, name_depth, node_depth, idx_depth+1, idx, obj_list )
+          # s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
+          expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
 
-      def add_all( obj, obj_list, node_depth ):
-        """ Already found, but it is an array of objects,
-            s.x = [ [ A() for _ in range(2) ] for _ in range(3) ].
-            Recursively collect all signals. """
-        if   isinstance( obj, NamedObject ):
-          obj_list.add( obj )
-        elif isinstance( obj, list ): # SORRY
-          for i, child in enumerate( obj ):
-            add_all( child, obj_list, node_depth+1 )
-
-      def lookup_variable( obj, name_depth, node_depth, obj_list ):
+      def lookup_variable( obj, name_depth, node_depth ):
         """ Look up the object s.a.b.c in s. Jump to expand_array_index if c[] """
         if obj is None:
           return
 
         if name_depth >= len(obj_name): # exhausted
-          add_all( obj, obj_list, node_depth ) # if this object is a list/array again...
+          if   isinstance( obj, NamedObject ):
+            all_objs.add( obj )
+          elif isinstance( obj, list ): # Exhaust all the elements in the high-d array
+            Q = [ obj ]
+            while Q:
+              m = Q.pop()
+              if isinstance( Q, NamedObject ):
+                all_objs.add( m )
+              elif isinstance( m, list ):
+                Q.extend( m )
           return
 
         # still have names
@@ -144,10 +151,10 @@ class ComponentLevel2( ComponentLevel1 ):
           print(e)
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-        s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
+        # s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
 
-        if not idx: lookup_variable   ( child, name_depth+1, node_depth+1, obj_list )
-        else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx, obj_list )
+        if not idx: lookup_variable   ( child, name_depth+1, node_depth+1 )
+        else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx )
 
       """ extract_obj_from_names:
       Here we enumerate names and use the above functions to turn names
@@ -156,12 +163,9 @@ class ComponentLevel2( ComponentLevel1 ):
       all_objs = set()
 
       for obj_name, nodelist in names:
-        objs = set()
-
         if obj_name[0][0] == "s":
-          s._dsl.astnode_objs[ nodelist[0] ].append( s )
-          lookup_variable( s, 1, 1, objs )
-          all_objs |= objs
+          # s._dsl.astnode_objs[ nodelist[0] ].append( s )
+          lookup_variable( s, 1, 1 )
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:
@@ -502,7 +506,7 @@ class ComponentLevel2( ComponentLevel1 ):
     s._elaborate_construct()
 
     # First elaborate all functions to spawn more named objects
-    for c in s._collect_all( [ lambda s: isinstance( s, ComponentLevel2 ) ] )[0]:
+    for c in s._collect_all_single( lambda s: isinstance( s, ComponentLevel2 ) ):
       c._elaborate_read_write_func()
 
     s._elaborate_collect_all_named_objects()

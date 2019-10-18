@@ -26,7 +26,7 @@ class SVStructuralTranslatorL2(
     elif isinstance( sub_dtype, rdt.Struct ):
       sub_dtype_template = s.rtlir_tr_struct_dtype( sub_dtype )
     else:
-      assert False, "unsupported data type {} in packed array!".format(sub_dtype)
+      raise Exception(f"unsupported data type {sub_dtype} in packed array!")
     dim_str = "".join( f"[{size-1}:0]" for size in dtype.get_dim_sizes() )
     str_list = sub_dtype_template['decl'].split()
     if '[' in str_list[-2]:
@@ -55,7 +55,7 @@ class SVStructuralTranslatorL2(
         decl = s.rtlir_tr_struct_dtype( _dtype )['decl'].format(**locals())
       else:
         assert False, \
-          'unrecoganized field type {} of struct {}!'.format( _dtype, dtype_name )
+          f'unrecoganized field type {_dtype} of struct {dtype_name}!'
       field_decls.append( decl + ';' )
 
     make_indent( field_decls, 1 )
@@ -65,13 +65,13 @@ class SVStructuralTranslatorL2(
 
     return {
       'def' : \
-"""\
+f"""\
 typedef struct packed {{
 {field_decl}
 }} {dtype_name};
-""".format( **locals() ),
-      'const_decl' : '{dtype_name} {{id_}}'.format( **locals() ),
-      'decl' : '{dtype_name} {{id_}}'.format( **locals() ),
+""",
+      'const_decl' : f'{dtype_name} {{id_}}',
+      'decl' : f'{dtype_name} {{id_}}',
       'raw_dtype' : dtype
     }
 
@@ -93,10 +93,10 @@ typedef struct packed {{
   #-----------------------------------------------------------------------
 
   def rtlir_tr_packed_index( s, base_signal, index ):
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_struct_attr( s, base_signal, attr ):
-    return '{base_signal}.{attr}'.format( **locals() )
+    return f'{base_signal}.{attr}'
 
   def rtlir_tr_struct_instance( s, dtype, struct ):
     def _gen_packed_array( dtype, n_dim, array ):
@@ -106,7 +106,7 @@ typedef struct packed {{
         elif isinstance( dtype, rdt.Struct ):
           return s.rtlir_tr_struct_instance( dtype, array )
         else:
-          assert False, "unrecognized data type {}!".format( dtype )
+          raise Exception(f"unrecognized data type {dtype}!")
       else:
         ret = []
         for i in reversed( range( n_dim[0]) ):
@@ -115,7 +115,7 @@ typedef struct packed {{
           cat_str = "{" + ", ".join( ret ) + "}"
         else:
           cat_str = ", ".join( ret )
-        return "{{ {cat_str} }}".format( **locals() )
+        return f"{{ {cat_str} }}"
     ret = []
     all_properties = dtype.get_all_properties()
     for name, Type in all_properties:
@@ -129,7 +129,7 @@ typedef struct packed {{
         sub_dtype = Type.get_sub_dtype()
         _ret = _gen_packed_array( sub_dtype, n_dim, field )
       else:
-        assert False, "unrecognized data type {}!".format( Type )
+        assert False, f"unrecognized data type {Type}!"
       ret.append( _ret )
     cat_str = ", ".join( ret )
-    return "{{ {cat_str} }}".format( **locals() )
+    return f"{{ {cat_str} }}"

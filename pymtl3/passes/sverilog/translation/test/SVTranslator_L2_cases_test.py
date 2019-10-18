@@ -346,10 +346,10 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:1];
@@ -362,17 +362,17 @@ module A
   //   for i in range(2):
   //     s.out[i] = s.in_[i]
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+      out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
 
 endmodule
 """
@@ -420,10 +420,10 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:1];
@@ -437,18 +437,18 @@ module A
   //     s.out[i] = s.in_[i]
   //   s.out[0] = s.in_[0]
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 2; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    for ( __loopvar__upblk_i = 1; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+      out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
     out[0] = in_[0];
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
 
 endmodule
 """
@@ -499,16 +499,16 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  input logic [31:0] in_$__2,
-  input logic [31:0] in_$__3,
-  input logic [31:0] in_$__4,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  input logic [31:0] in___2,
+  input logic [31:0] in___3,
+  input logic [31:0] in___4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:4];
@@ -523,25 +523,25 @@ module A
   //   for i in range(1, 5, 2):
   //     s.out[i] = s.in_[i]
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
-      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
-    for ( __loopvar_upblk$i = 1; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 2 )
-      out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
+      out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
+    for ( __loopvar__upblk_i = 1; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
+      out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign in_[2] = in_$__2;
-  assign in_[3] = in_$__3;
-  assign in_[4] = in_$__4;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign in_[2] = in___2;
+  assign in_[3] = in___3;
+  assign in_[4] = in___4;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
 
 endmodule
 """
@@ -586,16 +586,16 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  input logic [31:0] in_$__2,
-  input logic [31:0] in_$__3,
-  input logic [31:0] in_$__4,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  input logic [31:0] in___2,
+  input logic [31:0] in___3,
+  input logic [31:0] in___4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:4];
@@ -608,23 +608,23 @@ module A
   //   for i in range(5):
   //     s.out[i] = s.in_[i] if i == 1 else s.in_[0]
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-      out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? in_[__loopvar_upblk$i] : in_[0];
+    for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+      out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? in_[__loopvar__upblk_i] : in_[0];
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign in_[2] = in_$__2;
-  assign in_[3] = in_$__3;
-  assign in_[4] = in_$__4;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign in_[2] = in___2;
+  assign in_[3] = in___3;
+  assign in_[4] = in___4;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
 
 endmodule
 """
@@ -669,16 +669,16 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  input logic [31:0] in_$__2,
-  input logic [31:0] in_$__3,
-  input logic [31:0] in_$__4,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  input logic [31:0] in___2,
+  input logic [31:0] in___3,
+  input logic [31:0] in___4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:4];
@@ -691,23 +691,23 @@ module A
   //   for i in range(5):
   //     s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-      out[__loopvar_upblk$i] = ( __loopvar_upblk$i == 1 ) ? ~in_[__loopvar_upblk$i] : in_[0];
+    for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+      out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? ~in_[__loopvar__upblk_i] : in_[0];
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign in_[2] = in_$__2;
-  assign in_[3] = in_$__3;
-  assign in_[4] = in_$__4;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign in_[2] = in___2;
+  assign in_[3] = in___3;
+  assign in_[4] = in___4;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
 
 endmodule
 """
@@ -762,16 +762,16 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  input logic [31:0] in_$__2,
-  input logic [31:0] in_$__3,
-  input logic [31:0] in_$__4,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  input logic [31:0] in___2,
+  input logic [31:0] in___3,
+  input logic [31:0] in___4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:4];
@@ -787,27 +787,27 @@ module A
   //     else:
   //       s.out[i] = Bits32(0)
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 )
-      if ( in_[__loopvar_upblk$i] && ( ( __loopvar_upblk$i < 5 ) ? in_[__loopvar_upblk$i + 1] : in_[4] ) ) begin
-        out[__loopvar_upblk$i] = in_[__loopvar_upblk$i];
+    for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+      if ( in_[__loopvar__upblk_i] && ( ( __loopvar__upblk_i < 5 ) ? in_[__loopvar__upblk_i + 1] : in_[4] ) ) begin
+        out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
       end
       else
-        out[__loopvar_upblk$i] = 32'd0;
+        out[__loopvar__upblk_i] = 32'd0;
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign in_[2] = in_$__2;
-  assign in_[3] = in_$__3;
-  assign in_[4] = in_$__4;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign in_[2] = in___2;
+  assign in_[3] = in___3;
+  assign in_[4] = in___4;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
 
 endmodule
 """
@@ -836,7 +836,7 @@ module A
   output logic [31:0] out [0:4],
   input logic [0:0] reset
 );
-  logic [31:0] __tmpvar_upblk$tmpvar;
+  logic [31:0] __tmpvar__upblk_tmpvar;
 
   // PYMTL SOURCE:
   //
@@ -852,11 +852,11 @@ module A
   always_comb begin : upblk
     for ( int i = 0; i < 5; i += 1 ) begin
       if ( in_[i] && ( ( i < 5 ) ? in_[i + 1] : in_[4] ) ) begin
-        __tmpvar_upblk$tmpvar = in_[i];
+        __tmpvar__upblk_tmpvar = in_[i];
       end
       else
-        __tmpvar_upblk$tmpvar = 32'd0;
-      out[i] = __tmpvar_upblk$tmpvar;
+        __tmpvar__upblk_tmpvar = 32'd0;
+      out[i] = __tmpvar__upblk_tmpvar;
     end
   end
 
@@ -867,21 +867,21 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
-  input logic [31:0] in_$__2,
-  input logic [31:0] in_$__3,
-  input logic [31:0] in_$__4,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
+  input logic [31:0] in___2,
+  input logic [31:0] in___3,
+  input logic [31:0] in___4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset
 );
   logic [31:0] in_ [0:4];
   logic [31:0] out [0:4];
-  logic [31:0] __tmpvar_upblk$tmpvar;
+  logic [31:0] __tmpvar__upblk_tmpvar;
 
   // PYMTL SOURCE:
   //
@@ -894,29 +894,29 @@ module A
   //       tmpvar = Bits32(0)
   //     s.out[i] = tmpvar
 
-  integer __loopvar_upblk$i;
+  integer __loopvar__upblk_i;
 
   always_comb begin : upblk
-    for ( __loopvar_upblk$i = 0; __loopvar_upblk$i < 5; __loopvar_upblk$i = __loopvar_upblk$i + 1 ) begin
-      if ( in_[__loopvar_upblk$i] && ( ( __loopvar_upblk$i < 5 ) ? in_[__loopvar_upblk$i + 1] : in_[4] ) ) begin
-        __tmpvar_upblk$tmpvar = in_[__loopvar_upblk$i];
+    for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 ) begin
+      if ( in_[__loopvar__upblk_i] && ( ( __loopvar__upblk_i < 5 ) ? in_[__loopvar__upblk_i + 1] : in_[4] ) ) begin
+        __tmpvar__upblk_tmpvar = in_[__loopvar__upblk_i];
       end
       else
-        __tmpvar_upblk$tmpvar = 32'd0;
-      out[__loopvar_upblk$i] = __tmpvar_upblk$tmpvar;
+        __tmpvar__upblk_tmpvar = 32'd0;
+      out[__loopvar__upblk_i] = __tmpvar__upblk_tmpvar;
     end
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
-  assign in_[2] = in_$__2;
-  assign in_[3] = in_$__3;
-  assign in_[4] = in_$__4;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
+  assign in_[2] = in___2;
+  assign in_[3] = in___3;
+  assign in_[4] = in___4;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
 
 endmodule
 """
@@ -965,7 +965,7 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___foo,
   output logic [31:0] out,
   input logic [0:0] reset
 );
@@ -978,10 +978,10 @@ module A
   //   s.out = s.in_.foo
 
   always_comb begin : upblk
-    out = in_$foo;
+    out = in___foo;
   end
 
-  assign in_[31:0] = in_$foo;
+  assign in_[31:0] = in___foo;
 
 endmodule
 """
@@ -1032,13 +1032,13 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$bar$__0,
-  input logic [31:0] in_$bar$__1,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___bar__0,
+  input logic [31:0] in___bar__1,
+  input logic [31:0] in___foo,
   output logic [95:0] out,
   input logic [0:0] reset
 );
-  logic [31:0] in_$bar [0:1];
+  logic [31:0] in___bar [0:1];
   logic [95:0] in_;
 
   // PYMTL SOURCE:
@@ -1048,14 +1048,14 @@ module A
   //   s.out = concat( s.in_.bar[0], s.in_.bar[1], s.in_.foo )
 
   always_comb begin : upblk
-    out = { in_$bar[0], in_$bar[1], in_$foo };
+    out = { in___bar[0], in___bar[1], in___foo };
   end
 
-  assign in_$bar[0] = in_$bar$__0;
-  assign in_$bar[1] = in_$bar$__1;
-  assign in_[95:64] = in_$bar$__1;
-  assign in_[63:32] = in_$bar$__0;
-  assign in_[31:0] = in_$foo;
+  assign in___bar[0] = in___bar__0;
+  assign in___bar[1] = in___bar__1;
+  assign in_[95:64] = in___bar__1;
+  assign in_[63:32] = in___bar__0;
+  assign in_[31:0] = in___foo;
 
 endmodule
 """
@@ -1115,15 +1115,15 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$bar$__0,
-  input logic [31:0] in_$bar$__1,
-  input logic [31:0] in_$c$woof,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___bar__0,
+  input logic [31:0] in___bar__1,
+  input logic [31:0] in___c__woof,
+  input logic [31:0] in___foo,
   output logic [95:0] out,
   input logic [0:0] reset
 );
-  logic [31:0] in_$bar [0:1];
-  logic [31:0] in_$c;
+  logic [31:0] in___bar [0:1];
+  logic [31:0] in___c;
   logic [127:0] in_;
 
   // PYMTL SOURCE:
@@ -1133,19 +1133,53 @@ module A
   //   s.out = concat( s.in_.bar[0], s.in_.c.woof, s.in_.foo )
 
   always_comb begin : upblk
-    out = { in_$bar[0], in_$c$woof, in_$foo };
+    out = { in___bar[0], in___c__woof, in___foo };
   end
 
-  assign in_$bar[0] = in_$bar$__0;
-  assign in_$bar[1] = in_$bar$__1;
-  assign in_$c[31:0] = in_$c$woof;
-  assign in_[127:96] = in_$bar$__1;
-  assign in_[95:64] = in_$bar$__0;
-  assign in_[63:32] = in_$c$woof;
-  assign in_[31:0] = in_$foo;
+  assign in___bar[0] = in___bar__0;
+  assign in___bar[1] = in___bar__1;
+  assign in___c[31:0] = in___c__woof;
+  assign in_[127:96] = in___bar__1;
+  assign in_[95:64] = in___bar__0;
+  assign in_[63:32] = in___c__woof;
+  assign in_[31:0] = in___foo;
 
 endmodule
 """
+  do_test( a )
+
+def test_lambda_connect( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.out //= lambda: s.in_ + Bits32(42)
+  a = A()
+  a._ref_src = \
+"""
+module A
+(
+  input logic [0:0] clk,
+  input logic [31:0] in_,
+  output logic [31:0] out,
+  input logic [0:0] reset
+);
+
+  // PYMTL SOURCE:
+  //
+  // This upblk was generated from a lambda function defined in file \
+  //    .../pymtl3/passes/sverilog/translation/test/SVTranslator_L2_cases_test.py, line 1157:
+  //       s.out //= lambda: s.in_ + Bits32(42)
+
+  // def _lambda__s_out(): s.out = s.in_ + Bits32(42)
+
+  always_comb begin : _lambda__s_out
+    out = in_ + 32'd42;
+  end
+
+endmodule
+"""
+  a._ref_src_yosys = a._ref_src
   do_test( a )
 
 #-------------------------------------------------------------------------
@@ -1185,14 +1219,14 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___foo,
   output logic [31:0] out,
   input logic [0:0] reset
 );
   logic [31:0] in_;
 
-  assign in_[31:0] = in_$foo;
-  assign out = in_$foo;
+  assign in_[31:0] = in___foo;
+  assign out = in___foo;
 
 endmodule
 """
@@ -1244,20 +1278,20 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$c$bar,
-  input logic [31:0] in_$foo,
+  input logic [31:0] in___c__bar,
+  input logic [31:0] in___foo,
   output logic [31:0] out_bar,
   output logic [31:0] out_foo,
   input logic [0:0] reset
 );
-  logic [31:0] in_$c;
+  logic [31:0] in___c;
   logic [63:0] in_;
 
-  assign in_$c[31:0] = in_$c$bar;
-  assign in_[63:32] = in_$c$bar;
-  assign in_[31:0] = in_$foo;
-  assign out_foo = in_$foo;
-  assign out_bar = in_$c$bar;
+  assign in___c[31:0] = in___c__bar;
+  assign in_[63:32] = in___c__bar;
+  assign in_[31:0] = in___foo;
+  assign out_foo = in___foo;
+  assign out_bar = in___c__bar;
 
 endmodule
 """
@@ -1298,24 +1332,24 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$foo$__0,
-  input logic [31:0] in_$foo$__1,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
+  input logic [31:0] in___foo__0,
+  input logic [31:0] in___foo__1,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
   input logic [0:0] reset
 );
-  logic [31:0] in_$foo [0:1];
+  logic [31:0] in___foo [0:1];
   logic [63:0] in_;
   logic [31:0] out [0:1];
 
-  assign in_$foo[0] = in_$foo$__0;
-  assign in_$foo[1] = in_$foo$__1;
-  assign in_[63:32] = in_$foo$__1;
-  assign in_[31:0] = in_$foo$__0;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out[0] = in_$foo[0];
-  assign out[1] = in_$foo[1];
+  assign in___foo[0] = in___foo__0;
+  assign in___foo[1] = in___foo__1;
+  assign in_[63:32] = in___foo__1;
+  assign in_[31:0] = in___foo__0;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out[0] = in___foo[0];
+  assign out[1] = in___foo[1];
 
 endmodule
 """
@@ -1363,28 +1397,60 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$c$__0$bar,
-  input logic [31:0] in_$c$__1$bar,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
+  input logic [31:0] in___c__0__bar,
+  input logic [31:0] in___c__1__bar,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
   input logic [0:0] reset
 );
-  logic [31:0] in_$c$bar [0:1];
-  logic [31:0] in_$c [0:1];
+  logic [31:0] in___c__bar [0:1];
+  logic [31:0] in___c [0:1];
   logic [63:0] in_;
   logic [31:0] out [0:1];
 
-  assign in_$c$bar[0] = in_$c$__0$bar;
-  assign in_$c[0][31:0] = in_$c$__0$bar;
-  assign in_$c$bar[1] = in_$c$__1$bar;
-  assign in_$c[1][31:0] = in_$c$__1$bar;
-  assign in_[63:32] = in_$c$__1$bar;
-  assign in_[31:0] = in_$c$__0$bar;
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out[0] = in_$c$bar[0];
-  assign out[1] = in_$c$bar[1];
+  assign in___c__bar[0] = in___c__0__bar;
+  assign in___c[0][31:0] = in___c__0__bar;
+  assign in___c__bar[1] = in___c__1__bar;
+  assign in___c[1][31:0] = in___c__1__bar;
+  assign in_[63:32] = in___c__1__bar;
+  assign in_[31:0] = in___c__0__bar;
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out[0] = in___c__bar[0];
+  assign out[1] = in___c__bar[1];
 
 endmodule
 """
+  do_test( a )
+
+def test_long_component_name( do_test ):
+  class ThisIsABitStructWithSuperLongName( BitStruct ):
+    def __init__( s, bar=1 ):
+      s.bar = Bits32(bar)
+  class A( Component ):
+    def construct( s, T1, T2, T3, T4, T5, T6, T7 ):
+      s.in_ = InPort( Bits32 )
+      s.wire_ = Wire( Bits32 )
+      s.out = OutPort( Bits32 )
+      connect( s.in_, s.wire_ )
+      connect( s.wire_, s.out )
+  args = [ThisIsABitStructWithSuperLongName]*7
+  a = A(*args)
+  a._ref_src = \
+"""
+module A__a840bd1c84c05ea2
+(
+  input logic [0:0] clk,
+  input logic [31:0] in_,
+  output logic [31:0] out,
+  input logic [0:0] reset
+);
+  logic [31:0] wire_;
+
+  assign wire_ = in_;
+  assign out = wire_;
+
+endmodule
+"""
+  a._ref_src_yosys = a._ref_src
   do_test( a )

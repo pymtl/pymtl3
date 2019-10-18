@@ -4,7 +4,6 @@
 
 import random
 import struct
-from functools import reduce
 
 import pytest
 

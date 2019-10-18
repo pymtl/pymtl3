@@ -8,7 +8,7 @@ Author : Shunning Jiang
 Date   : Jan 1, 2018
 """
 import random
-from collections import defaultdict, deque
+from collections import defaultdict
 
 import py.code
 
@@ -65,21 +65,21 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         readers = [ x for x in signals if x is not writer ]
 
         fanout  = len( readers )
-        wstr    = repr(writer)
-        rstrs   = [ repr(x) for x in readers ]
 
-        upblk_name = "{}__{}".format(repr(writer), fanout)\
+        upblk_name = f"{writer!r}__{fanout}" \
                         .replace( ".", "_" ).replace( ":", "_" ) \
                         .replace( "[", "_" ).replace( "]", "" ) \
                         .replace( "(", "_" ).replace( ")", "" )
 
-        src = """
-        def {0}():
-          common_writer = {1}
-          {2}
-        _recent_blk = {0}
-        """.format( upblk_name, wstr, "; ".join(
-                    [ "{} = common_writer".format( x ) for x in rstrs ] ) )
+        rstrs   = [ f"{x!r} = _w" for x in readers ]
+
+        src = f"""
+        def {upblk_name}():
+          _w = {writer!r}
+          {"; ".join(rstrs)}
+        _recent_blk = {upblk_name}
+        """
+
         exec(py.code.Source( src ).compile(), locals(), globals())
 
         all_upblks.add( _recent_blk )
@@ -290,7 +290,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
     for method, assoc_blks in method_blks.items():
       visited = {  (method, 0)  }
-      Q = deque( [ (method, 0) ] ) # -1: pred, 0: don't know, 1: succ
+      Q = [ (method, 0) ] # -1: pred, 0: don't know, 1: succ
 
       if verbose: print()
       while Q:
@@ -393,7 +393,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   # Perform topological sort for a serial schedule.
 
   serial_schedule = []
-  Q = deque( [ v for v in vs if not InD[v] ] )
+  Q = [ v for v in vs if not InD[v] ]
   while Q:
     random.shuffle(Q)
     #  print Q
@@ -445,7 +445,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
     elif isinstance( m, NamedObject ):
       for name, obj in m.__dict__.items():
-        if ( isinstance( name, str ) and not name.startswith("_") ) \
+        if ( isinstance( name, str ) and name[0] != '_' ) \
           or isinstance( name, tuple ):
           if   isinstance( obj, Signal ): setattr( m, name, obj.default_value() )
           elif isinstance( obj, Const ):  setattr( m, name, obj.const )

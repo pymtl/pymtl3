@@ -199,3 +199,58 @@ def test_adaptive( src_level, sink_level, msgs, src_init,  src_intv,
                     src_init,  src_intv, sink_init,
                     sink_intv, arrival_time )
   th.run_sim()
+
+#-------------------------------------------------------------------------
+# Error message test
+#-------------------------------------------------------------------------
+
+def test_error_more_msg():
+  try:
+    th = TestHarnessSimple(
+      Bits16, TestSrcCL, TestSinkCL,
+      src_msgs  = [ b16(0xface), b16(0xface) ],
+      sink_msgs = [ b16(0xface) ],
+    )
+    th.run_sim()
+  except Exception as e:
+    return
+  raise Exception( 'Failed to detect error!' )
+
+def test_error_wrong_msg():
+  try:
+    th = TestHarnessSimple(
+      Bits16, TestSrcCL, TestSinkCL,
+      src_msgs  = [ b16(0xface), b16(0xface) ],
+      sink_msgs = [ b16(0xface), b16(0xdead) ],
+    )
+    th.run_sim()
+  except Exception as e:
+    return
+  raise Exception( 'Fail to detect error!' )
+
+def test_error_late_msg():
+  try:
+    th = TestHarnessSimple(
+      Bits16, TestSrcCL, TestSinkCL,
+      src_msgs  = [ b16(0xface), b16(0xface) ],
+      sink_msgs = [ b16(0xface), b16(0xdead) ],
+    )
+    th.set_param( 'top.src.construct', initial_delay=5 )
+    th.set_param( 'top.sink.construct', arrival_time=[1,2] )
+    th.run_sim()
+  except Exception as e:
+    return
+  raise Exception( 'Fail to detect error!')
+
+#-------------------------------------------------------------------------
+# Customized compare function test
+#-------------------------------------------------------------------------
+
+def test_customized_cmp():
+  th = TestHarnessSimple(
+    Bits4, TestSrcCL, TestSinkCL,
+    src_msgs  = [ b4(0b1110), b4(0b1111) ],
+    sink_msgs = [ b4(0b0010), b4(0b0011) ],
+  )
+  th.set_param( 'top.sink.construct', cmp_fn=lambda a, b: a[0:2] == b[0:2] )
+  th.run_sim()

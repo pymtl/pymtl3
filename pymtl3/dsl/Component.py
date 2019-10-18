@@ -73,7 +73,7 @@ class Component( ComponentLevel7 ):
     stack = []
     for (name, obj) in s.__dict__.items():
       if   isinstance( name, str ):
-        if not name.startswith("_"): # filter private variables
+        if name[0] != '_': # filter private variables
           stack.append( obj )
     while stack:
       u = stack.pop()
@@ -135,8 +135,7 @@ class Component( ComponentLevel7 ):
 
       obj._dsl.parent_obj = parent
       obj._dsl.level      = parent._dsl.level + 1
-      obj._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
-                                                     for x in indices ] )
+      obj._dsl.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
 
       # Iterate through the param_tree and update u
       if parent._dsl.param_tree is not None:
@@ -170,7 +169,7 @@ class Component( ComponentLevel7 ):
 
       top._dsl.elaborate_stack.pop()
 
-    added_components = obj._collect_all( [ lambda x: isinstance( x, Component ) ] )[0]
+    added_components = obj._collect_all_single( lambda x: isinstance( x, Component ) )
 
     # First elaborate all functions to spawn more named objects
     for c in added_components:
@@ -419,6 +418,11 @@ class Component( ComponentLevel7 ):
   """ Convenience/utility APIs """
 
   def apply( s, *args ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
 
     if isinstance(args[0], list):
       assert len(args) == 1
@@ -428,6 +432,12 @@ class Component( ComponentLevel7 ):
     elif len(args) == 1:
       assert callable( args[0] )
       args[0]( s )
+
+    try:
+      pypyjit.set_param("default")
+      pypyjit.set_param("trace_limit=100000")
+    except:
+      pass
 
   # Simulation related APIs
   def sim_reset( s ):
@@ -446,42 +456,47 @@ class Component( ComponentLevel7 ):
   def lock_in_simulation( s ):
     s._check_called_at_elaborate_top( "lock_in_simulation" )
 
-    s._dsl.swapped_signals = defaultdict(list)
-    s._dsl.swapped_values  = defaultdict(list)
+    swapped_signals = defaultdict(list)
 
-    def cleanup_connectables( current_obj, host_component ):
+    # Swap all Signal objects with actual data
 
-      # Deduplicate code. Choose operation based on type of current_obj
+    Q = [ (s, s) ]
+    while Q:
+      current_obj, host = Q.pop()
       if isinstance( current_obj, list ):
-        iterable = enumerate( current_obj )
-        is_list = True
+        for i, obj in enumerate( current_obj ):
+          if isinstance( obj, Signal ):
+            try:
+              current_obj[i] = obj.default_value()
+            except Exception as err:
+              err.message = repr(obj) + " -- " + err.message
+              err.args = (err.message,)
+              raise err
+            swapped_signals[ host ].append( (current_obj, i, obj, True) )
+
+          elif isinstance( obj, Component ):
+            Q.append( (obj, obj) )
+          elif isinstance( obj, (Interface, list) ):
+            Q.append( (obj, host) )
+
       elif isinstance( current_obj, NamedObject ):
-        iterable = current_obj.__dict__.items()
-        is_list = False
-      else:
-        return
+        for i, obj in current_obj.__dict__.items():
+          if i[0] != '_': # impossible to have tuple
+            if isinstance( obj, Signal ):
+              try:
+                setattr( current_obj, i, obj.default_value() )
+              except Exception as err:
+                err.message = repr(obj) + " -- " + err.message
+                err.args = (err.message,)
+                raise err
+              swapped_signals[ host ].append( (current_obj, i, obj, False) )
 
-      for i, obj in iterable:
-        if not is_list and i.startswith("_"): # impossible to have tuple
-          continue
+            elif isinstance( obj, Component ):
+              Q.append( (obj, obj) )
+            elif isinstance( obj, (Interface, list) ):
+              Q.append( (obj, host) )
 
-        if   isinstance( obj, Component ):
-          cleanup_connectables( obj, obj )
-
-        elif isinstance( obj, (Interface, list) ):
-          cleanup_connectables( obj, host_component )
-
-        elif isinstance( obj, Signal ):
-          try:
-            if is_list: current_obj[i] = obj.default_value()
-            else:       setattr( current_obj, i, obj.default_value() )
-          except Exception as err:
-            err.message = repr(obj) + " -- " + err.message
-            err.args = (err.message,)
-            raise err
-          s._dsl.swapped_signals[ host_component ].append( (current_obj, i, obj, is_list) )
-
-    cleanup_connectables( s, s )
+    s._dsl.swapped_signals = swapped_signals
     s._dsl.locked_simulation = True
 
   def unlock_simulation( s ):
@@ -491,15 +506,17 @@ class Component( ComponentLevel7 ):
     except:
       raise AttributeError("Cannot unlock an unlocked/never locked model.")
 
+    swapped_values  = defaultdict(list)
     for component, records in s._dsl.swapped_signals.items():
       for current_obj, i, obj, is_list in records:
         if is_list:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
           current_obj[i] = obj
         else:
-          s._dsl.swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
           setattr( current_obj, i, obj )
 
+    s._dsl.swapped_values = swapped_values
     s._dsl.locked_simulation = False
 
   """ APIs that provide local metadata of a component """
@@ -547,7 +564,7 @@ class Component( ComponentLevel7 ):
     try:
       return { x for x in s._dsl.all_named_objects if filt(x) }
     except AttributeError:
-      return s._collect_all( [ filt ] )[0]
+      return s._collect_all_single( filt )
 
   def get_local_object_filter( s, filt ):
     assert callable( filt )
@@ -589,13 +606,14 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_update_block_ast( s, blk ):
+  # is_lambda?, src, line, filename, ast
+  def get_update_block_info( s, blk ):
     try:
-      name_ast = s.__class__._name_ast
+      name_info = s.__class__._name_info
     except AttributeError: # This component doesn't have update block
       return None
 
-    return name_ast[blk.__name__]
+    return name_info[blk.__name__]
 
   def get_update_block_host_component( s, blk ):
     try:

@@ -48,7 +48,7 @@ def test_interface_array_non_static_index( do_test ):
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in_$foo[in_$foo[0]];
+  out = in___foo[in___foo[0]];
 end\
 """ }
   do_test( a )

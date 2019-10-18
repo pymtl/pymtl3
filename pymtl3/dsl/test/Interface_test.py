@@ -29,7 +29,7 @@ def _test_model( cls ):
 
 def valrdy_to_str( msg, val, rdy ):
 
-  str_   = "{}".format( msg )
+  str_   = f"{msg}"
   nchars = max( len( str_ ), 15 )
 
   if       val and not rdy:

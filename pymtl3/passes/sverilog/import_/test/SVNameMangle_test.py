@@ -45,9 +45,9 @@ def test_port_array( do_test ):
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
-    ( 'in_$__0', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__1', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__2', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___2', rt.Port('input', rdt.Vector(32)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -64,12 +64,12 @@ def test_port_2d_array( do_test ):
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
-    ( 'in_$__0$__0', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__0$__1', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__1$__0', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__1$__1', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__2$__0', rt.Port('input', rdt.Vector(32)) ),
-    ( 'in_$__2$__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___0__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___0__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___1__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___1__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___2__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'in___2__1', rt.Port('input', rdt.Vector(32)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -92,8 +92,8 @@ def test_struct_port_single( do_test ):
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
-    ( 'in_$bar', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___foo', rt.Port('input', rdt.Vector(32) ) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -116,10 +116,10 @@ def test_struct_port_array( do_test ):
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
-    ( 'in_$__0$bar', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$__0$foo', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$__1$bar', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$__1$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___0__bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___0__foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___1__bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___1__foo', rt.Port('input', rdt.Vector(32) ) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -143,20 +143,20 @@ def test_packed_array_port_array( do_test ):
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
-    ( 'in_$__0$bar', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__0$foo$__0$__0', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__0$foo$__0$__1', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__0$foo$__1$__0', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__0$foo$__1$__1', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__0$foo$__2$__0', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__0$foo$__2$__1', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$bar', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$foo$__0$__0', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$foo$__0$__1', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$foo$__1$__0', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$foo$__1$__1', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$foo$__2$__0', rt.Port('input', rdt.Vector(32) )),
-    ( 'in_$__1$foo$__2$__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__bar', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__foo__0__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__foo__0__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__foo__1__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__foo__1__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__foo__2__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___0__foo__2__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__bar', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__foo__0__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__foo__0__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__foo__1__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__foo__1__1', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__foo__2__0', rt.Port('input', rdt.Vector(32) )),
+    ( 'in___1__foo__2__1', rt.Port('input', rdt.Vector(32) )),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -182,10 +182,10 @@ def test_nested_struct( do_test ):
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
-    ( 'in_$__0$bar', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$__0$inner$foo', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$__1$bar', rt.Port('input', rdt.Vector(32) ) ),
-    ( 'in_$__1$inner$foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___0__bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___0__inner__foo', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___1__bar', rt.Port('input', rdt.Vector(32) ) ),
+    ( 'in___1__inner__foo', rt.Port('input', rdt.Vector(32) ) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )
@@ -203,9 +203,9 @@ def test_interface( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$msg', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$val', rt.Port('input', rdt.Vector(1)) )
+    ( 'ifc__msg', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__val', rt.Port('input', rdt.Vector(1)) )
   ]
   a._ref_ports_yosys = a._ref_ports
   do_test( a )
@@ -223,12 +223,12 @@ def test_interface_array( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__0$msg', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__0$val', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__1$msg', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__1$val', rt.Port('input', rdt.Vector(1)) )
+    ( 'ifc__0__msg', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__0__val', rt.Port('input', rdt.Vector(1)) ),
+    ( 'ifc__1__msg', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__1__val', rt.Port('input', rdt.Vector(1)) )
   ]
   a._ref_ports_yosys = a._ref_ports
   do_test( a )
@@ -251,16 +251,16 @@ def test_nested_interface( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__0$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
-    ( 'ifc$__0$valrdy_ifc$msg', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__0$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__1$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
-    ( 'ifc$__1$valrdy_ifc$msg', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__1$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) )
+    ( 'ifc__0__ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc__0__valrdy_ifc__msg', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__valrdy_ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__0__valrdy_ifc__val', rt.Port('input', rdt.Vector(1)) ),
+    ( 'ifc__1__ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc__1__valrdy_ifc__msg', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__valrdy_ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__1__valrdy_ifc__val', rt.Port('input', rdt.Vector(1)) )
   ]
   a._ref_ports_yosys = a._ref_ports
   do_test( a )
@@ -283,31 +283,31 @@ def test_nested_interface_port_array( do_test ):
   a._ref_ports = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__0$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
-    ( 'ifc$__0$valrdy_ifc$msg', rt.Array([2], rt.Port('input', rdt.Vector(32))) ),
-    ( 'ifc$__0$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__0$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__1$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
-    ( 'ifc$__1$valrdy_ifc$msg', rt.Array([2], rt.Port('input', rdt.Vector(32))) ),
-    ( 'ifc$__1$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__1$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) )
+    ( 'ifc__0__ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc__0__valrdy_ifc__msg', rt.Array([2], rt.Port('input', rdt.Vector(32))) ),
+    ( 'ifc__0__valrdy_ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__0__valrdy_ifc__val', rt.Port('input', rdt.Vector(1)) ),
+    ( 'ifc__1__ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc__1__valrdy_ifc__msg', rt.Array([2], rt.Port('input', rdt.Vector(32))) ),
+    ( 'ifc__1__valrdy_ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__1__valrdy_ifc__val', rt.Port('input', rdt.Vector(1)) )
   ]
   a._ref_ports_yosys = [
     ( 'clk', rt.Port('input', rdt.Vector(1)) ),
     ( 'reset', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__0$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
-    ( 'ifc$__0$valrdy_ifc$msg$__0', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$valrdy_ifc$msg$__1', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__0$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__0$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) ),
-    ( 'ifc$__1$ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
-    ( 'ifc$__1$valrdy_ifc$msg$__0', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$valrdy_ifc$msg$__1', rt.Port('input', rdt.Vector(32)) ),
-    ( 'ifc$__1$valrdy_ifc$rdy', rt.Port('output', rdt.Vector(1)) ),
-    ( 'ifc$__1$valrdy_ifc$val', rt.Port('input', rdt.Vector(1)) )
+    ( 'ifc__0__ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc__0__valrdy_ifc__msg__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__valrdy_ifc__msg__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__0__valrdy_ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__0__valrdy_ifc__val', rt.Port('input', rdt.Vector(1)) ),
+    ( 'ifc__1__ctrl_bar', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__ctrl_foo', rt.Port('output', rdt.Vector(32)) ),
+    ( 'ifc__1__valrdy_ifc__msg__0', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__valrdy_ifc__msg__1', rt.Port('input', rdt.Vector(32)) ),
+    ( 'ifc__1__valrdy_ifc__rdy', rt.Port('output', rdt.Vector(1)) ),
+    ( 'ifc__1__valrdy_ifc__val', rt.Port('input', rdt.Vector(1)) )
   ]
   do_test( a )

@@ -57,7 +57,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
     start    = s.visit( node.start )
     end      = s.visit( node.end )
 
-    loop_var = "__loopvar_" + s.blk.__name__ + "$" + loop_var
+    loop_var = "__loopvar__" + s.blk.__name__ + "_" + loop_var
     if loop_var not in s.loopvars:
       s.loopvars.add( loop_var )
 
@@ -139,4 +139,4 @@ class YosysBehavioralRTLIRToSVVisitorL2(
 
   def visit_LoopVar( s, node ):
     s.check_res( node, node.name )
-    return "__loopvar_" + s.blk.__name__ + "$" + node.name
+    return "__loopvar__" + s.blk.__name__ + "_" + node.name

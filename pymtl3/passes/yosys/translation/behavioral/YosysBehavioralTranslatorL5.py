@@ -40,8 +40,8 @@ class YosysBehavioralRTLIRToSVVisitorL5(
       s.signal_expr_prologue( node )
       attr = node.attr
       s.check_res( node, attr )
-      node.sexpr['s_attr'] += "${}"
+      node.sexpr['s_attr'] += "__{}"
       node.sexpr['attr'].append( attr )
-      return s.signal_expr_epilogue(node, "{value}.{attr}".format(**locals()))
+      return s.signal_expr_epilogue(node, f"{value}.{attr}")
 
     return super().visit_Attribute( node )

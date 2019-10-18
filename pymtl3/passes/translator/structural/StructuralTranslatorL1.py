@@ -13,6 +13,7 @@ from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
+from pymtl3.passes.rtlir.util.utility import get_component_full_name
 
 from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
@@ -118,6 +119,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     # Component metadata
     s.structural.component_name = {}
     s.structural.component_file_info = {}
+    s.structural.component_full_name = {}
     s.structural.component_unique_name = {}
 
     # Declarations
@@ -142,6 +144,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
     s.structural.component_file_info[m] = m_rtype.get_file_info()
     s.structural.component_name[m] = m_rtype.get_name()
+    s.structural.component_full_name[m] = get_component_full_name(m_rtype)
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
 
@@ -246,7 +249,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
       return ret
 
     else:
-      assert False, "unsupported RTLIR dtype {} at L1!".format( dtype )
+      assert False, f"unsupported RTLIR dtype {dtype} at L1!"
 
   #-----------------------------------------------------------------------
   # rtlir_signal_expr_translation
@@ -286,14 +289,14 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     elif isinstance( expr, sexp.BitSelection ):
       base = expr.get_base()
       assert not isinstance(base, (sexp.PartSelection, sexp.BitSelection)), \
-        'bit selection {} over bit/part selection {} is not allowed!'.format(expr, base)
+        f'bit selection {expr} over bit/part selection {base} is not allowed!'
       return s.rtlir_tr_bit_selection(
         s.rtlir_signal_expr_translation( expr.get_base(), m ), expr.get_index() )
 
     elif isinstance( expr, sexp.PartSelection ):
       base = expr.get_base()
       assert not isinstance(base, (sexp.PartSelection, sexp.BitSelection)), \
-        'part selection {} over bit/part selection {} is not allowed!'.format(expr, base)
+        f'part selection {expr} over bit/part selection {base} is not allowed!'
       start, stop = expr.get_slice()[0], expr.get_slice()[1]
       return s.rtlir_tr_part_selection(
         s.rtlir_signal_expr_translation( expr.get_base(), m ), start, stop )
@@ -301,12 +304,12 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     elif isinstance( expr, sexp.ConstInstance ):
       dtype = expr.get_rtype().get_dtype()
       assert isinstance( dtype, rdt.Vector ), \
-          '{} is not supported at L1!'.format( dtype )
+          f'{dtype} is not supported at L1!'
       return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value() )
 
     # Other operations are not supported at L1
     else:
-      assert False, '{} is not supported at L1!'.format( expr )
+      assert False, f'{expr} is not supported at L1!'
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator

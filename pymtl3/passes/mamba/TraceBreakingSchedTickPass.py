@@ -44,12 +44,12 @@ class TraceBreakingSchedTickPass( BasePass ):
     # Extract branchiness
 
     # Initialize all generated net block to 0 branchiness
-    branchiness = { x: 0 for x in net_blks }
+    branchiness = { x: 0 for x in top._dag.genblks }
 
     visitor = CountBranches()
-    for blk in normal_blks:
+    for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
-      branchiness[ blk ] = visitor.enter( hostobj.get_update_block_ast( blk ) )
+      branchiness[ blk ] = visitor.enter( hostobj.get_update_block_info( blk )[-1] )
 
     # Shunning: now we make the scheduling aware of meta blocks
     # Basically we enhance the topological sort to choose
@@ -200,7 +200,8 @@ class TraceBreakingSchedTickPass( BasePass ):
     gen_tick_src += "\ndef tick_top():\n  "
     gen_tick_src += "; ".join( [ "meta_blk{}()".format(i) for i in range(len(metas)) ] )
 
-    exec(py.code.Source( gen_tick_src ).compile(), locals())
+    local = locals()
+    exec(py.code.Source( gen_tick_src ).compile(), local )
 
     #  print gen_tick_src
-    top.tick = tick_top
+    top.tick = local["tick_top"]

@@ -76,12 +76,12 @@ class HeuristicTopoPass( BasePass ):
     # Extract branchiness
 
     # Initialize all generated net block to 0 branchiness
-    branchiness = { x: 0 for x in net_blks }
+    branchiness = { x: 0 for x in top._dag.genblks }
 
     visitor = CountBranches()
-    for blk in normal_blks:
+    for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
-      branchiness[ blk ] = visitor.enter( hostobj.get_update_block_ast( blk ) )
+      branchiness[ blk ] = visitor.enter( hostobj.get_update_block_info( blk )[-1] )
 
     # Perform topological sort for a serial schedule.
     # Note that here we use a priority queue to get the blocks with small
@@ -89,18 +89,21 @@ class HeuristicTopoPass( BasePass ):
 
     schedule = []
 
+    # Python3 doesn't have hash for functions
+    id_v = { id(v): v for v in V}
+
     Q = PriorityQueue(0)
     for v in V:
       if not InD[v]:
-        Q.put( (branchiness[ v ], v) )
+        Q.put( (branchiness[ v ], id(v)) )
 
     while not Q.empty():
       br, u = Q.get()
-      schedule.append( u )
-      for v in Es[u]:
+      schedule.append( id_v[u] )
+      for v in Es[id_v[u]]:
         InD[v] -= 1
         if not InD[v]:
-          Q.put( (branchiness[ v ], v) )
+          Q.put( (branchiness[ v ], id(v)) )
 
     check_schedule( top, schedule, V, E, InD )
 

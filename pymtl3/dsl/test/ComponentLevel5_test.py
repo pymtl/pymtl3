@@ -129,7 +129,7 @@ class TestSinkUp( ComponentLevel5 ):
       s.v = None
 
       if s.queue:
-        msg = s.queue.pop()
+        msg = s.queue.popleft()
         s.v = msg
 
         if s.idx >= len(s.msgs):

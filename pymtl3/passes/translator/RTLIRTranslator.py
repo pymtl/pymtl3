@@ -48,7 +48,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
           components.append(
             s.rtlir_tr_component(
               get_component_nspace( s.behavioral, m ),
-              get_component_nspace( s.structural, m )
+              get_component_nspace( s.structural, m ),
           ) )
           translated.append( s.structural.component_unique_name[m] )
         s.gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
