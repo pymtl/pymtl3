@@ -7,7 +7,6 @@
 # Author : Yanghui Ou
 #   Date : Apr 8, 2019
 """
-from copy import deepcopy
 from functools import reduce
 
 import py

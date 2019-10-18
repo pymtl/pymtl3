@@ -7,7 +7,6 @@ Pure-Python implementation of fixed-bitwidth data type.
 Author : Shunning Jiang
 Date   : Oct 31, 2017
 """
-from copy import deepcopy
 
 
 class Bits:
