@@ -1,10 +1,16 @@
 """
 ==========================================================================
-bit_structs.py
+bit_struct.py
 ==========================================================================
-APIs to generate a bit struct type. This is much inspired by python3
-dataclass implementation.The syntax of creating bit struct is very similar
-to that of python3 dataclass. For example,
+APIs to generate a bit struct type. Using decorators and type annotations
+to create bit struct is much inspired by python3 dataclass implementation.
+Note that the implementation (such as the _CAPITAL constants to add some
+private metadata) in this file is very similar to the **original python3
+dataclass implementation**.
+https://github.com/python/cpython/blob/master/Lib/dataclasses.py
+
+The syntax of creating bit struct is very similar to that of python3
+dataclass. For example,
 
 @bit_struct
 class Point:
@@ -61,14 +67,26 @@ class NoFieldDeclaredError( AttributeError ):
 # only the bit_struct decorator will stamp this attribute to a class. This
 # attribute also stores the field information and can be used for
 # translation.
-_IS_BIT_STRUCT = '__bit_struct_fields__'
+#
+# The original dataclass use hasattr( cls, _FIELDS ) to check dataclass.
+# We do this here as well
+_FIELDS = '__bit_struct_fields__'
+
+def _is_bit_struct_instance(obj):
+  """Returns True if obj is an instance of a dataclass."""
+  return hasattr(type(obj), _FIELDS)
+
+def is_bit_struct(obj):
+  """Returns True if obj is a dataclass or an instance of a
+  dataclass."""
+  cls = obj if isinstance(obj, type) else type(obj)
+  return hasattr(cls, _FIELDS)
 
 _DEFAULT_SELF_NAME = 's'
 _ANTI_CONFLICT_SELF_NAME = '__bit_struct_self__'
 
-
-# A sentinel object to detect whether a parameter is present or not. Here
-# we use a class to give a better repr.
+# A sentinel object to detect if a parameter is supplied or not.  Use
+# a class to give it a better repr.
 class _MISSING_TYPE:
   ...
 MISSING = _MISSING_TYPE()
@@ -127,6 +145,9 @@ def field( type_, default=MISSING ):
 # Note: this function mutates _locals and should only be called internally
 # to this module.
 
+# Also note that this whole _create_fn thing is similar to the original
+# dataclass implementation!
+
 def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
 
   # Lazily construct empty dictionary. We don't pass None to exec because
@@ -136,10 +157,11 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
 
   # Assemble argument string and body string
   args = ', '.join(args_lst)
-  body = '\n'.join(f' {statement}' for statement in body_lst)
+  body = '\n'.join(f'  {statement}' for statement in body_lst)
 
   # Assemble the source code and execute it
   src  = f'def {fn_name}({args}):\n{body}'
+  # print(src)
   exec( src, _globals, _locals )
 
   return _locals[fn_name]
@@ -352,8 +374,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # Get annotations of the class
   cls_annotations = cls.__dict__.get('__annotations__', {})
   if not cls_annotations:
-    raise NoFieldDeclaredError(
-      'No field is delacred in the bit struct definition' )
+    raise NoFieldDeclaredError('No field is declared in the bit struct definition' )
 
   # Get field information from the annotation
   cls_fields = [ _get_field( cls, a_name, a_type )
@@ -365,7 +386,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
 
   # Stamp the special attribute so that translation pass can identify it
   # as bit struct.
-  setattr( cls, _IS_BIT_STRUCT, fields )
+  setattr( cls, _FIELDS, fields )
 
   # Sanity check: is there any Field instance that doesn't have an
   # annotation?
@@ -439,7 +460,7 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
 # mk_bit_struct
 #-------------------------------------------------------------------------
 # Dynamically generate a bit struct class.
-# TODO: should we add a base parameters to support inheritence?
+# TODO: should we add base parameters to support inheritence?
 
 def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
