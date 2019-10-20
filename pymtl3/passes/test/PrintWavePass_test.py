@@ -18,15 +18,15 @@ class Toy( Component ):
     s.i = InPort( Bits32 )
     s.inlong = InPort( Bits32 )
     s.out = OutPort( Bits32 )
-    s.state = Wire(Bits2)
+    s.state = Wire(Bits1)
     @s.update
     def add_upblk():
       # This update block models the behavior of a 32-bit adder
       s.out = s.i + s.inlong
       if s.out[3] == "1":
-          s.state = s.state +b2(1)
+          s.state = s.state +b1(1)
       else:
-          s.state = b2(0)
+          s.state = b1(0)
 
 def test_toy():
   # Create a toy component and elaborate it
@@ -41,15 +41,15 @@ def test_toy():
   vector = [
     #  i        inlong       out
     b32(1),    b32(2),    b32(3),
-    b32(-1),   b32(2),    b32(1),
-    b32(42),   b32(2),    b32(44),
+    b32(0),   b32(2),    b32(2),
+    b32(0),   b32(2),    b32(2),
     b32(1),    b32(-2),   b32(-1),
-    b32(42),   b32(-42),  b32(0),
-    b32(5),   b32(-4),  b32(1),
+    b32(1),   b32(-42),  b32(-41),
+    b32(1),   b32(-4),  b32(-3),
     b32(1),   b32(2),  b32(3),
-    b32(5),   b32(2),  b32(7),
-    b32(9),   b32(2),  b32(11),
-    b32(-2),   b32(-5),  b32(-7),
+    b32(0),   b32(2),  b32(2),
+    b32(1),   b32(2),  b32(3),
+    b32(0),   b32(-5),  b32(-5),
   ]
 
   # Begin simulation
