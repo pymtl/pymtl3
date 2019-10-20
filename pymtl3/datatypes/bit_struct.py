@@ -517,24 +517,8 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
 # Dynamically generate a bit struct class.
 # TODO: should we add base parameters to support inheritence?
 
-# The use of this struct cache is different from dataclass. Basically we
-# want different classes constructed with the same fields to have unique
-# class object so that the comparison of two structs can return True. This
-# is not guaranteed in dataclass.
-
-# _struct_dict = {}
-# _fields_dict = {}
-
 def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
-
-  # if cls_name in _struct_dict:
-    # if _fields_dict[ cls_name ] == fields:
-      # return _struct_dict[ cls_name ]
-    # else:
-      # raise AssertionError(
-        # "BitStruct {} has already been created!".format( name )
-      # )
 
   # Lazily construct empty dictionary
   if namespace is None:
@@ -560,6 +544,4 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
   ret = bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
                     add_hash=True )
 
-  # _struct_dict[ cls_name ] = ret
-  # _fields_dict[ cls_name ] = fields
   return ret
