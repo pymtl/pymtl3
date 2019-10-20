@@ -8,7 +8,7 @@
 import pytest
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits32, BitStruct
+from pymtl3.datatypes import Bits32, bit_struct
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL2Pass import (
     StructuralRTLIRGenL2Pass,
 )
@@ -18,9 +18,10 @@ from .StructuralRTLIRGenL1Pass_test import gen_connections
 
 
 def test_L2_struct_attr():
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bit_struct
+  class B:
+    foo: Bits32
+
   class A( dsl.Component ):
     def construct( s ):
       s.in_ = dsl.InPort( B )
@@ -35,9 +36,9 @@ def test_L2_struct_attr():
     [(StructAttr(CurCompAttr(comp, 'in_'), 'foo'), CurCompAttr(comp, 'out'))]
 
 def test_L2_packed_index():
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in range(5) ]
+  @bit_struct
+  class B:
+    foo: list = [ Bits32 ] * 5
   class A( dsl.Component ):
     def construct( s ):
       s.in_ = dsl.InPort( B )

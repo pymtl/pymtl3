@@ -5,7 +5,7 @@
 # Date   : May 29, 2019
 """Test the level 2 SystemVerilog structural translator."""
 
-from pymtl3.datatypes import Bits1, Bits32, BitStruct
+from pymtl3.datatypes import Bits1, Bits32, bit_struct
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -34,18 +34,17 @@ def local_do_test( m ):
   check_eq( conns, m._ref_conns[m] )
 
 def test_struct_const_structural( do_test ):
-  class B( BitStruct ):
-    fields = [ ( 'foo', Bits32 ) ]
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bit_struct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
-      s.in_ = B()
+      s.in_ = B( Bits32(42) )
       s.out = OutPort( Bits32 )
       connect( s.out, s.in_.foo )
   a = A()
   a._ref_structs = [
-    ( rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ), \
+    ( rdt.Struct( 'B', {'foo':rdt.Vector(32)} ), \
 """\
 typedef struct packed {
   logic [31:0] foo;
@@ -82,9 +81,9 @@ typedef struct packed {
   do_test( a )
 
 def test_struct_port( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bit_struct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -92,7 +91,7 @@ def test_struct_port( do_test ):
       connect( s.out, s.in_.foo )
   a = A()
   a._ref_structs = [
-    ( rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ), \
+    ( rdt.Struct( 'B', {'foo':rdt.Vector(32)} ), \
 """\
 typedef struct packed {
   logic [31:0] foo;
@@ -140,23 +139,23 @@ typedef struct packed {
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   a._test_vectors = [
-    [       B(),   42 ],
-    [    B( 0 ),    0 ],
-    [   B( -1 ),   -1 ],
-    [   B( -2 ),   -2 ],
-    [   B( 24 ),   24 ],
+    [       B(),          0 ],
+    [   B(Bits32( 0)),    0 ],
+    [   B(Bits32(-1)),   -1 ],
+    [   B(Bits32(-2)),   -2 ],
+    [   B(Bits32(24)),   24 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=1 ):
-      s.bar = Bits32(bar)
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
-      s.c = C()
+  @bit_struct
+  class C:
+    bar: Bits32
+  @bit_struct
+  class B:
+    c: C
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -165,14 +164,14 @@ def test_nested_struct_port( do_test ):
       connect( s.out_foo, s.in_.foo )
       connect( s.out_bar, s.in_.c.bar )
   a = A()
-  _C = rdt.Struct( 'C', {'bar':rdt.Vector(32)}, ['bar'] )
+  _C = rdt.Struct( 'C', {'bar':rdt.Vector(32)} )
   a._ref_structs = [ ( _C, \
 """\
 typedef struct packed {
   logic [31:0] bar;
 } C;
 """ ),
-    ( rdt.Struct( 'B', {'c':_C, 'foo':rdt.Vector(32)}, ['c', 'foo'] ), \
+    ( rdt.Struct( 'B', {'c':_C, 'foo':rdt.Vector(32)} ), \
 """\
 typedef struct packed {
   C c;
@@ -230,19 +229,19 @@ typedef struct packed {
     assert m.out_foo == Bits32(tv[1])
     assert m.out_bar == Bits32(tv[2])
   a._test_vectors = [
-    [       B(),    42,    1 ],
-    [    B( 1 ),     1,    1 ],
-    [   B( -1 ),    -1,    1 ],
-    [   B( -2 ),    -2,    1 ],
-    [   B( 24 ),    24,    1 ],
+    [       B(),                    0,    0 ],
+    [     B( C(Bits32(2)), Bits32(1) ),     1,    2 ],
+    [   B( C(Bits32(-2)), Bits32(-1) ),    -1,   -2 ],
+    [   B( C(Bits32(-3)), Bits32(-2) ),    -2,   -3 ],
+    [   B( C(Bits32(25)), Bits32(24) ),    24,   25 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_packed_array( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = [ Bits32(foo) for _ in range(2) ]
+  @bit_struct
+  class B:
+    foo: list = [Bits32] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -252,7 +251,7 @@ def test_packed_array( do_test ):
   a = A()
   _foo = rdt.PackedArray( [2], rdt.Vector(32) )
   a._ref_structs = [
-    ( rdt.Struct( 'B', {'foo':_foo}, ['foo'] ), \
+    ( rdt.Struct( 'B', {'foo':_foo} ), \
 """\
 typedef struct packed {
   logic [1:0][31:0] foo;
@@ -311,22 +310,22 @@ typedef struct packed {
     assert m.out[0] == Bits32(tv[1])
     assert m.out[1] == Bits32(tv[2])
   a._test_vectors = [
-    [       B(),    42,   42 ],
-    [    B( 1 ),     1,    1 ],
-    [   B( -1 ),    -1,   -1 ],
-    [   B( -2 ),    -2,   -2 ],
-    [   B( 24 ),    24,   24 ],
+    [       B(),                           0,    0 ],
+    [    B(  [Bits32(1), Bits32(2)] ),     1,    2 ],
+    [   B( [Bits32(-1), Bits32(-2)] ),    -1,   -2 ],
+    [   B( [Bits32(-2), Bits32(-3)] ),    -2,   -3 ],
+    [   B( [Bits32(24), Bits32(25)] ),    24,   25 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=1 ):
-      s.bar = Bits32(bar)
-  class B( BitStruct ):
-    def __init__( s ):
-      s.c = [ C() for _ in range(2) ]
+  @bit_struct
+  class C:
+    bar: Bits32
+  @bit_struct
+  class B:
+    c: list = [ C ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -334,7 +333,7 @@ def test_struct_packed_array( do_test ):
       connect( s.out[0], s.in_.c[0].bar )
       connect( s.out[1], s.in_.c[1].bar )
   a = A()
-  _C = rdt.Struct('C', {'bar':rdt.Vector(32)}, ['bar'])
+  _C = rdt.Struct('C', {'bar':rdt.Vector(32)})
   a._ref_structs = [
     ( _C, \
 """\
@@ -342,7 +341,7 @@ typedef struct packed {
   logic [31:0] bar;
 } C;
 """ ),
-    ( rdt.Struct( 'B', {'c':rdt.PackedArray([2], _C)}, ['c'] ), \
+    ( rdt.Struct( 'B', {'c':rdt.PackedArray([2], _C)} ), \
 """\
 typedef struct packed {
   C [1:0] c;
@@ -404,7 +403,7 @@ typedef struct packed {
     assert m.out[0] == Bits32(tv[1])
     assert m.out[1] == Bits32(tv[2])
   a._test_vectors = [
-    [       B(),     1,    1 ],
+    [       B(),     0,    0 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

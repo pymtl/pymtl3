@@ -5,7 +5,7 @@
 # Date   : June 13, 2019
 """Test the level 3 yosys-SystemVerilog structural translator."""
 
-from pymtl3.datatypes import Bits1, Bits32, BitStruct
+from pymtl3.datatypes import Bits1, Bits32, bit_struct
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
@@ -129,9 +129,9 @@ def test_ifc_array( do_test ):
   do_test( a )
 
 def test_struct_ifc( do_test ):
-  class bstruct( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits32(bar)
+  @bit_struct
+  class bstruct:
+    bar: Bits32
   class Ifc( Interface ):
     def construct( s ):
       s.foo = InPort( bstruct )

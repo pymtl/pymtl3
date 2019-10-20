@@ -3,7 +3,7 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from pymtl3.datatypes import Bits1, Bits32, Bits96, BitStruct, concat
+from pymtl3.datatypes import Bits1, Bits32, Bits96, bit_struct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
@@ -923,9 +923,9 @@ endmodule
   do_test( a )
 
 def test_struct( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(42)
+  @bit_struct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -988,10 +988,10 @@ endmodule
   do_test( a )
 
 def test_packed_array_concat( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42, bar=1 ):
-      s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in range(2) ]
+  @bit_struct
+  class B:
+    bar: list = [ Bits32 ] * 2
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -1062,10 +1062,14 @@ endmodule
   do_test( a )
 
 def test_nested_struct( do_test ):
-  class C( BitStruct ):
-    def __init__( s, woof=2 ):
-      s.woof = Bits32(woof)
-  class B( BitStruct ):
+  @bit_struct
+  class C:
+    woof: Bits32
+  @bit_struct
+  class B:
+    bar: list = [ Bits32 ]*2
+    c: C
+    foo: Bits32
     def __init__( s, foo=42, bar=1 ):
       s.foo = Bits32(foo)
       s.bar = [ Bits32(bar) for _ in range(2) ]
@@ -1187,9 +1191,9 @@ endmodule
 #-------------------------------------------------------------------------
 
 def test_struct_port( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bit_struct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -1233,13 +1237,13 @@ endmodule
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=1 ):
-      s.bar = Bits32(bar)
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
-      s.c = C()
+  @bit_struct
+  class C:
+    bar: Bits32
+  @bit_struct
+  class B:
+    foo: Bits32
+    c: C
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -1255,8 +1259,8 @@ typedef struct packed {
 } C;
 
 typedef struct packed {
-  C c;
   logic [31:0] foo;
+  C c;
 } B;
 
 module A
@@ -1278,8 +1282,8 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in___c__bar,
   input logic [31:0] in___foo,
+  input logic [31:0] in___c__bar,
   output logic [31:0] out_bar,
   output logic [31:0] out_foo,
   input logic [0:0] reset
@@ -1288,8 +1292,8 @@ module A
   logic [63:0] in_;
 
   assign in___c[31:0] = in___c__bar;
-  assign in_[63:32] = in___c__bar;
-  assign in_[31:0] = in___foo;
+  assign in_[63:32] = in___foo;
+  assign in_[31:0] = in___c__bar;
   assign out_foo = in___foo;
   assign out_bar = in___c__bar;
 
@@ -1298,9 +1302,9 @@ endmodule
   do_test( a )
 
 def test_packed_array( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = [ Bits32(foo) for _ in range(2) ]
+  @bit_struct
+  class B:
+    foo: list = [ Bits32 ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -1356,12 +1360,12 @@ endmodule
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=1 ):
-      s.bar = Bits32(bar)
-  class B( BitStruct ):
-    def __init__( s ):
-      s.c = [ C() for _ in range(2) ]
+  @bit_struct
+  class C:
+    bar: Bits32
+  @bit_struct
+  class B:
+    c: list = [ C ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -1424,9 +1428,9 @@ endmodule
   do_test( a )
 
 def test_long_component_name( do_test ):
-  class ThisIsABitStructWithSuperLongName( BitStruct ):
-    def __init__( s, bar=1 ):
-      s.bar = Bits32(bar)
+  @bit_struct
+  class ThisIsABitStructWithSuperLongName:
+    bar: Bits32
   class A( Component ):
     def construct( s, T1, T2, T3, T4, T5, T6, T7 ):
       s.in_ = InPort( Bits32 )

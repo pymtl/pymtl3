@@ -29,28 +29,16 @@ def test_py_list():
   with expected_failure( RTLIRConversionError, 'should be a field of some struct' ):
     rdt.get_rtlir_dtype( [ 1, 2, 3 ] )
 
-def test_py_struct_arg_no_default_value():
-  class B( BitStruct ):
-    def __init__( s, foo ):
-      s.foo = Bits32( foo )
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( B )
-  a = A()
-  with expected_failure( RTLIRConversionError, 'struct B should take 0 argument' ):
-    a.elaborate()
-    rdt.get_rtlir_dtype( a.in_ )
-
 def test_py_struct():
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bit_struct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
   a = A()
   a.elaborate()
-  assert rdt.Struct( 'B', {'foo':rdt.Vector(32)}, ['foo'] ) == rdt.get_rtlir_dtype( a.in_ )
+  assert rdt.Struct( 'B', {'foo':rdt.Vector(32)} ) == rdt.get_rtlir_dtype( a.in_ )
 
 def test_pymtl_Bits():
   assert rdt.Vector(1) == rdt.get_rtlir_dtype( Bits1(0) )
@@ -68,13 +56,13 @@ def test_pymtl_signal():
   assert rdt.Vector(32) == rdt.get_rtlir_dtype( a.in_ )
 
 def test_pymtl_packed_array():
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = [ Bits32( foo ) for _ in range(5) ]
+  @bit_struct
+  class B:
+    foo: list = [ Bits32 ] * 5
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
   a = A()
   a.elaborate()
-  assert rdt.Struct( 'B', {'foo':rdt.PackedArray([5], rdt.Vector(32))}, ['foo'] ) == \
+  assert rdt.Struct( 'B', {'foo':rdt.PackedArray([5], rdt.Vector(32))} ) == \
          rdt.get_rtlir_dtype( a.in_ )

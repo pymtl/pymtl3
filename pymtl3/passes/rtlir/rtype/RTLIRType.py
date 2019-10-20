@@ -15,7 +15,7 @@ import copy
 import inspect
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bit_struct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -556,7 +556,7 @@ _RTLIR_handlers = [
   ( dsl.InPort,               _handle_InPort ),
   ( dsl.OutPort,              _handle_OutPort ),
   ( dsl.Wire,                 _handle_Wire ),
-  ( ( int, Bits, BitStruct ), _handle_Const ),
+  ( ( int, Bits ),          _handle_Const ),
   ( dsl.Interface,            _handle_Interface ),
   ( dsl.Component,            _handle_Component ),
 ]
@@ -607,7 +607,7 @@ def is_rtlir_convertible( obj ):
   """Return if `obj` can be converted into an RTLIR instance."""
   pymtl_constructs = (
     dsl.InPort, dsl.OutPort, dsl.Wire,
-    Bits, BitStruct, dsl.Interface, dsl.Component,
+    Bits, dsl.Interface, dsl.Component,
   )
   # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
@@ -618,6 +618,8 @@ def is_rtlir_convertible( obj ):
       obj = obj[0]
     return is_rtlir_convertible( obj )
   elif isinstance( obj, pymtl_constructs ):
+    return True
+  elif is_bit_struct(obj):
     return True
   elif isinstance( obj, int ):
     return True
@@ -635,8 +637,12 @@ def get_rtlir( _obj ):
     try:
       for Type, handler in _RTLIR_handlers:
         if isinstance( _obj, Type ):
-          __rtlir_cache[ obj ] = handler( "<name not available>", _obj )
-          return __rtlir_cache[ obj ]
+          ret = __rtlir_cache[ obj ] = handler( "<name not available>", _obj )
+          return ret
+      if is_bit_struct( _obj ):
+        ret = __rtlir_cache[ obj ] = _handle_Const( "<name not available>", _obj )
+        return ret
+
       # Cannot convert `obj` into RTLIR representation
       assert False, f'unrecognized object {_obj}!'
     except AssertionError as e:

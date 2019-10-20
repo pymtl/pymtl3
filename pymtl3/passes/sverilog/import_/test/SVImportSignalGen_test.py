@@ -5,7 +5,7 @@
 # Date   : June 1, 2019
 """Test the SystemVerilog signal generation of imported component."""
 
-from pymtl3.datatypes import Bits1, Bits32, BitStruct, mk_bits
+from pymtl3.datatypes import Bits1, Bits32, bit_struct, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -100,10 +100,10 @@ def test_port_2d_array( do_test ):
   do_test( a )
 
 def test_struct_port_single( do_test ):
-  class struct( BitStruct ):
-    def __init__( s, bar=1, foo=42 ):
-      s.bar = Bits32(bar)
-      s.foo = Bits32(foo)
+  @bit_struct
+  class struct:
+    bar: Bits32
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( struct )
@@ -131,10 +131,10 @@ def test_struct_port_single( do_test ):
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  class struct( BitStruct ):
-    def __init__( s, bar=1, foo=42 ):
-      s.bar = Bits32(bar)
-      s.foo = Bits32(foo)
+  @bit_struct
+  class struct:
+    bar: Bits32
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
@@ -170,10 +170,10 @@ def test_struct_port_array( do_test ):
   do_test( a )
 
 def test_packed_array_port_array( do_test ):
-  class struct( BitStruct ):
-    def __init__( s, bar=1, foo=42 ):
-      s.bar = Bits32(bar)
-      s.foo = [ [ Bits32(foo) for _ in range(2) ] for _ in range(3) ]
+  @bit_struct
+  class struct:
+    bar: Bits32
+    foo: list = [ [ Bits32 for _ in range(2) ] for _ in range(3) ]
   class A( Component ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
@@ -229,13 +229,13 @@ def test_packed_array_port_array( do_test ):
   do_test( a )
 
 def test_nested_struct( do_test ):
-  class inner_struct( BitStruct ):
-    def __init__( s, foo = 42 ):
-      s.foo = Bits32(foo)
-  class struct( BitStruct ):
-    def __init__( s, bar=1 ):
-      s.bar = Bits32(bar)
-      s.inner = inner_struct()
+  @bit_struct
+  class inner_struct:
+    foo: Bits32
+  @bit_struct
+  class struct:
+    bar: Bits32
+    inner: inner_struct
   class A( Component ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]
