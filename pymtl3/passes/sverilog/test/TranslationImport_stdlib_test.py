@@ -12,7 +12,7 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from pymtl3.datatypes import Bits1, mk_bits, clog2
+from pymtl3.datatypes import Bits1, clog2, mk_bits
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog import TranslationImportPass
 from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_4 as _rr_arb_4

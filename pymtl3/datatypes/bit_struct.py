@@ -140,7 +140,6 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src = '@classmethod\n' if class_method else ''
   src += f'def {fn_name}({args}):\n{body}'
   _locals = {}
-  print(src)
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -313,6 +312,10 @@ def _mk_hash_fn( fields ):
 # __init__ doesn't perform casting and is usually used for constructing an
 # empty message. mk_msg does casting for Bits fields and preserve
 # list/BitStruct field, and is a class method
+#
+# @classmethod
+# def mk_msg(cls, x, y, some_struct_inst):
+#   return cls(Bits4(x), Bits8(y), some_struct_inst)
 
 def _mk_mk_msg( fields ):
 
