@@ -142,7 +142,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         return f"{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}"
 
     if isinstance( value, Bits ):
-      value = value.uint()
+      value = int(value)
     return f"{nbits}'d{value}"
 
   #-----------------------------------------------------------------------
@@ -162,7 +162,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
         nbits = obj.nbits
-        value = int( obj.value )
+        value = int( obj )
         node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""
       elif is_bit_struct( obj ):
@@ -254,7 +254,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       return f"32'd{node.obj}"
     elif isinstance( node.obj, Bits ):
       nbits = node.obj.nbits
-      value = int( node.obj.value )
+      value = int( node.obj )
       return f"{nbits}'d{value}"
     else:
       raise SVerilogTranslationError( s.blk, node,

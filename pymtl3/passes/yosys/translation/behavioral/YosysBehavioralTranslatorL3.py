@@ -100,7 +100,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
           if isinstance( obj, Bits ):
             s.signal_expr_prologue( node )
             node.sexpr['s_attr'] = \
-                s._literal_number(obj.nbits, int(obj.value))
+                s._literal_number(obj.nbits, int(obj))
             node.sexpr["s_index"] = ""
             attr = node.attr
             return s.signal_expr_epilogue(node, f"{attr}")

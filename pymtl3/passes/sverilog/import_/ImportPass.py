@@ -746,7 +746,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
             return str(obj)
           elif isinstance( obj, Bits ):
             nbits = obj.nbits
-            value = obj.value
+            value = int(obj)
             Bits_name = f"Bits{nbits}"
             Bits_arg_str = f"{Bits_name}( {value} )"
             if Bits_name not in symbols and nbits >= 256:
