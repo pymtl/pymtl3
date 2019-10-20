@@ -9,10 +9,11 @@ Author : Yanghui Ou
 """
 from copy import deepcopy
 
-from ..bit_struct  import is_bit_struct, bit_struct, mk_bit_struct, NoFieldDeclaredError
-from ..bits_import import *
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
+
+from ..bit_struct import NoFieldDeclaredError, bit_struct, is_bit_struct, mk_bit_struct
+from ..bits_import import *
 
 #-------------------------------------------------------------------------
 # Basic test to test error messages and exceptions
@@ -36,7 +37,7 @@ def test_field_no_default():
       b : Bits8 = b8(4)
   except TypeError as e:
     print(e)
-    assert str(e).startswith( "We don't allow Bits/BitStruct field to have default value:\n- Field " )
+    assert str(e).startswith( "We don't allow subfields to have default value:\n- Field " )
 
 def test_field_wrong_type():
   try:
@@ -52,7 +53,7 @@ def test_field_not_type():
     @bit_struct
     class A:
       x: 1
-  except AssertionError as e:
+  except TypeError as e:
     print(e)
 
 @bit_struct
@@ -277,11 +278,11 @@ def test_is_bit_struct():
 # bit struct with array test
 #-------------------------------------------------------------------------
 
-def test_list_not_same_class():
+def test_list_same_class():
   @bit_struct
   class A:
     x: Bits4
-    y: list = [ Bits4, Bits4 ]
+    y: [ Bits4, Bits4 ]
   a = A()
   assert a.x == Bits4(0)
   assert a.y == [ Bits4(0), Bits4(0) ]
@@ -294,16 +295,16 @@ def test_crazy_list_not_same_class():
     @bit_struct
     class B:
       x: Bits4
-      y: list = [[[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, Bits1]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
-                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]]]
+      y: [[[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, Bits1]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+          [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]]]
   except TypeError as e:
     print(e)
     assert str(e) == "The provided list spec should be a strict multidimensional ARRAY with no varying sizes or types. "\
@@ -313,7 +314,16 @@ def test_high_d_list_inside():
   @bit_struct
   class A:
     x: Bits4
-    y: list = [ [ [ [Bits4, Bits4, Bits4] ] ] * 6 ] * 10
+    y:[ [ [ [Bits4, Bits4, Bits4] ] ] * 6 ] * 10
+  a = A()
+  assert a.x == Bits4(0)
+  assert a.y == [ [ [ [ Bits4(), Bits4(), Bits4()] ] for _ in range(6) ] for _ in range(10) ]
+
+def test_mk_high_d_list_inside():
+  A = mk_bit_struct( "A", {
+    'x': Bits4,
+    'y': [ [ [ [Bits4, Bits4, Bits4] ] ] * 6 ] * 10,
+  })
   a = A()
   assert a.x == Bits4(0)
   assert a.y == [ [ [ [ Bits4(), Bits4(), Bits4()] ] for _ in range(6) ] for _ in range(10) ]
@@ -325,7 +335,19 @@ def test_high_d_list_struct_inside():
   @bit_struct
   class B:
     x: Bits4
-    y: list = [ [ [ [A, A, A] ] ] * 6 ] * 10
+    y: [ [ [ [A, A, A] ] ] * 6 ] * 10
+  b = B()
+  assert b.x == Bits4(0)
+  assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]
+
+def test_mk_high_d_list_struct_inside():
+  @bit_struct
+  class A:
+    x: Bits4
+  B = mk_bit_struct( "B", {
+    'x': Bits4,
+    'y': [ [ [ [A, A, A] ] ] * 6 ] * 10,
+  })
   b = B()
   assert b.x == Bits4(0)
   assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]

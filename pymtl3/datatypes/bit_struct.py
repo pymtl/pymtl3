@@ -6,11 +6,11 @@ APIs to generate a bit struct type. Using decorators and type annotations
 to create bit struct is much inspired by python3 dataclass implementation.
 Note that the implementation (such as the _CAPITAL constants to add some
 private metadata) in this file is very similar to the **original python3
-dataclass implementation**.
+dataclass implementation**. The syntax of creating bit struct is very
+similar to that of python3 dataclass.
 https://github.com/python/cpython/blob/master/Lib/dataclasses.py
 
-The syntax of creating bit struct is very similar to that of python3
-dataclass. For example,
+For example,
 
 @bit_struct
 class Point:
@@ -49,9 +49,10 @@ Author : Yanghui Ou, Shunning Jiang
   Date : Oct 19, 2019
 """
 import keyword
-import py
 import types
 import warnings
+
+import py
 
 from .bits_import import *
 
@@ -88,19 +89,13 @@ def is_bit_struct(obj):
 _DEFAULT_SELF_NAME = 's'
 _ANTI_CONFLICT_SELF_NAME = '__bit_struct_self__'
 
-# A sentinel object to detect if a parameter is supplied or not.  Use
-# a class to give it a better repr.
-class _MISSING_TYPE:
-  ...
-MISSING = _MISSING_TYPE()
-
 #-------------------------------------------------------------------------
 # Field
 #-------------------------------------------------------------------------
 # Field instances are used for holding the name and type of each field of
 # the bit struct. Since we only accept Bits, BitStruct and list, and
-# Bits/BitStruct don't allow default, and list must have a default value,
-# we can just reuse type_ for list's default
+# all of them don't allow default, we just need two fields, while type_
+# can be a list _object_.
 
 class Field:
   # Here we use __slots__ to declare date members to potentially save
@@ -143,7 +138,6 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None ):
 
   # Assemble the source code and execute it
   src  = f'def {fn_name}({args}):\n{body}'
-  # print(src)
   _locals = {}
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
@@ -312,15 +306,16 @@ def _mk_hash_fn( fields ):
   )
 
 #-------------------------------------------------------------------------
-# _check_field
+# _check_valid_array
 #-------------------------------------------------------------------------
 
 def _recursive_check_array_types( current ):
   x = current[0]
   if isinstance( x, list ):
+    x_len  = len(x)
     x_type = _recursive_check_array_types( x )
     for y in current[1:]:
-      assert isinstance( y, list ) and len(y) == len(x)
+      assert isinstance( y, list ) and len(y) == x_len
       y_type = _recursive_check_array_types( y )
       assert y_type is x_type
     return x_type
@@ -338,36 +333,36 @@ def _check_valid_array_of_types( arr ):
     print(e)
     return None
 
-def _check_field( name, type_, default, cls ):
-  assert isinstance(type_, type ), f"{type_} is not a type\n"\
-                      f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}."
-
-  if issubclass( type_, Bits ) or is_bit_struct( type_ ):
-    if default is not MISSING:
-      raise TypeError( "We don't allow Bits/BitStruct field to have default value:\n"
-                      f"- Field '{name}' of BitStruct {cls.__name__} has default value {default!r}." )
-    return Field( name, type_ )
-
-  elif type_ is list:
-    if default is MISSING:
-      raise TypeError( "List field needs to have default value like [ BitsN ] * length:\n"
-                      f"- Field '{name}' of BitStruct {cls.__name__} has no value." )
-    elif _check_valid_array_of_types( default ) is None:
-      raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
-                      f"with no varying sizes or types. All non-list elements should be VALID types." )
-    return Field( name, default ) # use default as type
-
-  raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
-                  f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
 #-------------------------------------------------------------------------
 # _get_field
 #-------------------------------------------------------------------------
 # Extract field information from cls based on annotations.
 
 def _get_field( cls, name, type_ ):
-  default = getattr( cls, name, MISSING )
-  f = _check_field( name, type_, default, cls )
-  return f
+  # Make sure not default is annotated
+  if hasattr( cls, name ):
+    default = getattr( cls, name )
+    raise TypeError( "We don't allow subfields to have default value:\n"
+                    f"- Field '{name}' of BitStruct {cls.__name__} has default value {default!r}." )
+
+  # Special case if the type is an instance of list
+  if isinstance( type_, list ):
+    if _check_valid_array_of_types( type_ ) is None:
+      raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
+                      f"with no varying sizes or types. All non-list elements should be VALID types." )
+    return Field( name, type_ )
+
+  # Now we work with types
+  if not isinstance( type_, type ):
+    raise TypeError(f"{type_} is not a type\n"\
+                    f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}.")
+
+  # More specifically, Bits and BitStruct
+  if not issubclass( type_, Bits ) and not is_bit_struct( type_ ):
+    raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
+                    f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
+
+  return Field( name, type_ )
 
 #-------------------------------------------------------------------------
 # _get_self_name
@@ -418,10 +413,9 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # did not define their own init.
   if add_init:
     if not '__init__' in cls.__dict__:
-      self_name = _get_self_name( fields )
-      cls.__init__ = _mk_init_fn( self_name, fields.values() )
+      cls.__init__ = _mk_init_fn( _get_self_name(fields), fields.values() )
 
-  # Create __str
+  # Create __str__
   if add_str:
     if not '__str__' in cls.__dict__:
       cls.__str__ = _mk_str_fn( fields.values() )
@@ -479,13 +473,18 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
 # Dynamically generate a bit struct class.
 # TODO: should we add base parameters to support inheritence?
 
+# The use of this struct cache is different from dataclass. Basically we
+# want different classes constructed with the same fields to have unique
+# class object so that the comparison of two structs can return True. This
+# is not guaranteed in dataclass.
+
 _struct_dict = {}
 _fields_dict = {}
+
 def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
 
   if cls_name in _struct_dict:
-    print( _fields_dict[ cls_name ], fields )
     if _fields_dict[ cls_name ] == fields:
       return _struct_dict[ cls_name ]
     else:
@@ -516,6 +515,7 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
   cls = types.new_class( cls_name, (), {}, lambda ns: ns.update( namespace ) )
   ret = bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
                     add_hash=True )
+
   _struct_dict[ cls_name ] = ret
   _fields_dict[ cls_name ] = fields
   return ret
