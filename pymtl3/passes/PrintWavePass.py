@@ -23,9 +23,9 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 class PrintWavePass( BasePass ):
 
   def __call__( self, top ):
-    setattr(top,"printwave",helpprint)
+    setattr(top,"_print_wave",_help_print)
 
-def helpprint(self):
+def _help_print(self):
     char_length = 5
     _tick = u'\u258f'
     _up, _down = u'\u2571', u'\u2572'

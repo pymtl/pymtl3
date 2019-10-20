@@ -12,7 +12,6 @@ from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
 from .VcdGenerationPass import VcdGenerationPass
-from .WaveGenPass import WaveGenPass
 from .WrapGreenletPass import WrapGreenletPass
 from .PrintWavePass import PrintWavePass
 from .CollectSignalPass import CollectSignalPass
@@ -45,11 +44,10 @@ SimulationPass = [
   DynamicSchedulePass(),
   CLLineTracePass(),
   VcdGenerationPass(),
-  #WaveGenPass(),
   CollectSignalPass(),
   PrintWavePass(),
   SimpleTickPass(),
-Component.lock_in_simulation
+  Component.lock_in_simulation
 ]
 
 OpenLoopCLSim = [

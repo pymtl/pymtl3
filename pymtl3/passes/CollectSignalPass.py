@@ -2,7 +2,7 @@
 ========================================================================
 CollectSignalPass.py
 ========================================================================
-#collects signals and stored it as _collectsignals attribute of top.
+collects signals and stored it as _collectsignals attribute of top.
 
 Author : Kaishuo Cheng
 Date   : Oct 4, 2019
@@ -32,6 +32,7 @@ class CollectSignalPass( BasePass ):
     top._wav = PassMetadata()
 
     schedule.append( self.collect_sig_func( top, top._wav ) )
+
   def collect_sig_func( self, top, wavmeta ):
     component_signals = defaultdict(set)
     all_components = set()
@@ -114,7 +115,7 @@ class CollectSignalPass( BasePass ):
     deepcopy # I have to do this to circumvent the tools
     wavmeta.sigs = {}
     char_length = 5
-#signals are stored in top.signals
+
     src =  """
 def dump_wav():
   try:

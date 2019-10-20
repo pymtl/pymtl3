@@ -60,5 +60,5 @@ def test_toy():
     assert dut.out == out
 
   #print
-  dut.printwave(dut)
+  dut._print_wave(dut)
 test_toy()
