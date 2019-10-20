@@ -21,15 +21,14 @@ from .MemoryCL import MemoryCL
 
 class TestHarness( Component ):
 
-  def construct( s, cls, nports, src_msgs, sink_msgs,
-                 stall_prob, mem_latency,
-                 src_initial,  src_interval, sink_initial, sink_interval,
+  def construct( s, cls, nports, PortTypes, src_msgs, sink_msgs,
+                 stall_prob, mem_latency, src_initial,  src_interval, sink_initial, sink_interval,
                  arrival_time=None ):
-    ReqType, RespType = mk_mem_msg(8,32,32)
-    s.srcs = [ TestSrcCL( ReqType, src_msgs[i], src_initial, src_interval )
+    assert len(PortTypes) == nports
+    s.srcs = [ TestSrcCL( PortTypes[i][0], src_msgs[i], src_initial, src_interval )
                 for i in range(nports) ]
-    s.mem  = cls( nports, [(ReqType, RespType)]*nports, mem_latency )
-    s.sinks = [ TestSinkCL( RespType, sink_msgs[i], sink_initial, sink_interval,
+    s.mem  = cls( nports, PortTypes, mem_latency )
+    s.sinks = [ TestSinkCL( PortTypes[i][1], sink_msgs[i], sink_initial, sink_interval,
                             arrival_time ) for i in range(nports) ]
 
     # Connections
@@ -74,10 +73,10 @@ req_cls, resp_cls = mk_mem_msg( 8, 32, 32 )
 b32 = Bits32
 
 def req( type_, opaque, addr, len, data ):
-  return req_cls( req_type_dict[type_], opaque, addr, len, b32(data) )
+  return req_cls.mk_msg( req_type_dict[type_], opaque, addr, len, b32(data) )
 
 def resp( type_, opaque, len, data ):
-  return resp_cls( resp_type_dict[type_], opaque, 0, len, b32(data) )
+  return resp_cls.mk_msg( resp_type_dict[type_], opaque, 0, len, b32(data) )
 
 #----------------------------------------------------------------------
 # Test Case: basic
@@ -263,7 +262,7 @@ test_case_table = mk_test_case_table([
 def test_2port( test_params, dump_vcd ):
   msgs0 = test_params.msg_func(0x1000)
   msgs1 = test_params.msg_func(0x2000)
-  run_sim( TestHarness( MemoryCL, 2,
+  run_sim( TestHarness( MemoryCL, 2, [(req_cls, resp_cls)]*2,
                         [ msgs0[::2],  msgs1[::2]  ],
                         [ msgs0[1::2], msgs1[1::2] ],
                         test_params.stall, test_params.lat,
@@ -273,7 +272,7 @@ def test_2port( test_params, dump_vcd ):
 @pytest.mark.parametrize( **test_case_table )
 def test_20port( test_params, dump_vcd ):
   msgs = [ test_params.msg_func(0x1000*i) for i in range(20) ]
-  run_sim( TestHarness( MemoryCL, 20,
+  run_sim( TestHarness( MemoryCL, 20, [(req_cls, resp_cls)]*20,
                         [ x[::2]  for x in msgs ],
                         [ x[1::2] for x in msgs ],
                         test_params.stall, test_params.lat,
@@ -306,7 +305,7 @@ def test_read_write_mem( dump_vcd ):
 
   # Create test harness with above memory messages
 
-  th = TestHarness( MemoryCL, 2, [msgs[::2], []], [msgs[1::2], []],
+  th = TestHarness( MemoryCL, 2, [(req_cls, resp_cls)]*2, [msgs[::2], []], [msgs[1::2], []],
                     0, 0, 0, 0, 0, 0 )
   th.elaborate()
 

@@ -20,7 +20,7 @@ def test_req_fields():
 
   ReqType = mk_mem_req_msg(8,16,40)
 
-  msg = ReqType( MemMsgType.READ, 7, 0x1000, 3 )
+  msg = ReqType.mk_msg( MemMsgType.READ, 7, 0x1000, 3, 0 )
 
   # Verify msg
 
@@ -31,7 +31,7 @@ def test_req_fields():
 
   # Create msg
 
-  msg = ReqType( MemMsgType.WRITE, 9, 0x2000, 0, 0xdeadbeef )
+  msg = ReqType.mk_msg( MemMsgType.WRITE, 9, 0x2000, 0, 0xdeadbeef )
 
   # Verify msg
 
@@ -51,7 +51,7 @@ def test_req_str():
 
   # Create msg
 
-  msg = ReqType( MemMsgType.READ, 7, 0x1000, 3, 0 )
+  msg = ReqType.mk_msg( MemMsgType.READ, 7, 0x1000, 3, 0 )
 
   # Verify string
 
@@ -61,7 +61,7 @@ def test_req_str():
 
   # Create msg
 
-  msg = ReqType( MemMsgType.WRITE, 9, 0x2000, 4, 0xdeadbeef )
+  msg = ReqType.mk_msg( MemMsgType.WRITE, 9, 0x2000, 4, 0xdeadbeef )
 
   # Verify string
 
@@ -77,7 +77,7 @@ def test_resp_fields():
 
   # Create msg
 
-  msg = RespType( MemMsgType.READ, 7, 2, 3, 0xf000adbeef )
+  msg = RespType.mk_msg( MemMsgType.READ, 7, 2, 3, 0xf000adbeef )
 
   # Verify msg
 
@@ -89,7 +89,7 @@ def test_resp_fields():
 
   # Create msg
 
-  msg = RespType( MemMsgType.WRITE, 9, 1, 0, 0 )
+  msg = RespType.mk_msg( MemMsgType.WRITE, 9, 1, 0, 0 )
 
   # Verify msg
 
@@ -109,7 +109,7 @@ def test_resp_str():
 
   # Create msg
 
-  msg = RespType( MemMsgType.READ, 7, 2, 3, 0x0000adbeef )
+  msg = RespType.mk_msg( MemMsgType.READ, 7, 2, 3, 0x0000adbeef )
 
   # Verify string
 
@@ -119,7 +119,7 @@ def test_resp_str():
 
   # Create msg
 
-  msg = RespType( MemMsgType.WRITE, 9, 1, 0, 0 )
+  msg = RespType.mk_msg( MemMsgType.WRITE, 9, 1, 0, 0 )
 
   # Verify string
 

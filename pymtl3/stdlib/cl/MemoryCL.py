@@ -90,17 +90,17 @@ class MemoryCL( Component ):
           if not len_: len_ = req_classes[i].data_nbits >> 3
 
           if   req.type_ == MemMsgType.READ:
-            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-                                    s.mem.read( req.addr, len_ ) )
+            resp = resp_classes[i].mk_msg( req.type_, req.opaque, 0, req.len,
+                                           s.mem.read( req.addr, len_ ) )
 
           elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
             # FIXME do we really set len=0 in response when doing subword wr?
             # resp = resp_classes[i]( req.type_, req.opaque, 0, req.len, 0 )
-            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+            resp = resp_classes[i].mk_msg( req.type_, req.opaque, 0, 0, 0 )
 
           else: # AMOS
-            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
+            resp = resp_classes[i].mk_msg( req.type_, req.opaque, 0, req.len,
                s.mem.amo( req.type_, req.addr, len_, req.data ) )
 
           s.resp_qs[i].enq( resp )
