@@ -990,7 +990,7 @@ endmodule
 def test_packed_array_concat( do_test ):
   @bit_struct
   class B:
-    bar: list = [ Bits32 ] * 2
+    bar: [ Bits32 ] * 2
     foo: Bits32
   class A( Component ):
     def construct( s ):
@@ -1067,7 +1067,7 @@ def test_nested_struct( do_test ):
     woof: Bits32
   @bit_struct
   class B:
-    bar: list = [ Bits32 ]*2
+    bar: [ Bits32 ]*2
     c: C
     foo: Bits32
     def __init__( s, foo=42, bar=1 ):
@@ -1304,7 +1304,7 @@ endmodule
 def test_packed_array( do_test ):
   @bit_struct
   class B:
-    foo: list = [ Bits32 ] * 2
+    foo: [ Bits32 ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -1365,7 +1365,7 @@ def test_struct_packed_array( do_test ):
     bar: Bits32
   @bit_struct
   class B:
-    c: list = [ C ] * 2
+    c: [ C ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )

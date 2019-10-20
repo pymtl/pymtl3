@@ -38,7 +38,7 @@ def test_L2_struct_attr():
 def test_L2_packed_index():
   @bit_struct
   class B:
-    foo: list = [ Bits32 ] * 5
+    foo: [ Bits32 ] * 5
   class A( dsl.Component ):
     def construct( s ):
       s.in_ = dsl.InPort( B )

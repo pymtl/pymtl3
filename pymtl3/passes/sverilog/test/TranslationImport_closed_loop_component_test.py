@@ -87,7 +87,7 @@ def test_nested_struct( do_test, data ):
   class strc:
     foo: Bits32
     inner: inner_struct
-    packed_array: list = [ [ Bits16 ]*2 ] *3
+    packed_array: [ [ Bits16 ]*2 ] *3
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( strc )
@@ -117,7 +117,7 @@ def test_subcomp( do_test, data ):
   class strc:
     foo: Bits32
     inner: inner_struct
-    packed_array: list = [ [ Bits16 ]*2 ] *3
+    packed_array: [ [ Bits16 ]*2 ] *3
   class B( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )

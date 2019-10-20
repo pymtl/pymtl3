@@ -102,7 +102,7 @@ def test_comp_array( do_test ):
 def test_comp_array_ifc_array_port_array_packed_array( do_test ):
   @bit_struct
   class bstruct:
-    bar: list = [ Bits32 ]
+    bar: [ Bits32 ]
   class Ifc( Interface ):
     def construct( s ):
       s.foo = [ InPort( bstruct ) for _ in range(1) ]

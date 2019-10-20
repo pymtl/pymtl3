@@ -173,7 +173,7 @@ def test_packed_array_port_array( do_test ):
   @bit_struct
   class struct:
     bar: Bits32
-    foo: list = [ [ Bits32 for _ in range(2) ] for _ in range(3) ]
+    foo: [ [ Bits32 for _ in range(2) ] for _ in range(3) ]
   class A( Component ):
     def construct( s ):
       s.in_ = [ InPort( struct ) for _ in range(2) ]

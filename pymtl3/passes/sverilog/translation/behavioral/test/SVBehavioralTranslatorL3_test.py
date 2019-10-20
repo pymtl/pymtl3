@@ -114,7 +114,7 @@ def test_packed_array_behavioral( do_test ):
   @bit_struct
   class B:
     foo: Bits32
-    bar: list = [ Bits32 ] * 2
+    bar: [ Bits32 ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -158,7 +158,7 @@ def test_nested_struct( do_test ):
   @bit_struct
   class B:
     foo: Bits32
-    bar: list = [Bits32]*2
+    bar: [Bits32]*2
     c: C
   class A( Component ):
     def construct( s ):

@@ -241,7 +241,7 @@ typedef struct packed {
 def test_packed_array( do_test ):
   @bit_struct
   class B:
-    foo: list = [Bits32] * 2
+    foo: [Bits32] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -325,7 +325,7 @@ def test_struct_packed_array( do_test ):
     bar: Bits32
   @bit_struct
   class B:
-    c: list = [ C ] * 2
+    c: [ C ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )

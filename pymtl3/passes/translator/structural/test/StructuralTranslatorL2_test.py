@@ -264,7 +264,7 @@ endcomponent
 def test_struct_packed_array_port_decl( do_test ):
   @bit_struct
   class B:
-    foo: list = [Bits32] * 5
+    foo: [Bits32] * 5
     bar: Bits16
   class A( Component ):
     def construct( s ):
@@ -312,7 +312,7 @@ def test_nested_struct_packed_array_port_decl( do_test ):
   @bit_struct
   class B:
     foo: Bits32
-    bar: list = [ C ] * 5
+    bar: [ C ] * 5
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -361,7 +361,7 @@ def test_nested_struct_packed_array_index( do_test ):
   @bit_struct
   class B:
     foo: Bits32
-    bar: list = [ C ] * 5
+    bar: [ C ] * 5
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )

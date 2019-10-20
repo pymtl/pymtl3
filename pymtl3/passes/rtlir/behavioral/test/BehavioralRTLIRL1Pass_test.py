@@ -185,7 +185,7 @@ def test_L1_bit_sel_index_out_of_range( do_test ):
 def test_L1_index_on_struct( do_test ):
   @bit_struct
   class B:
-    foo: list = [ Bits4 ] * 4
+    foo: [ Bits4 ] * 4
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -199,7 +199,7 @@ def test_L1_index_on_struct( do_test ):
 def test_L1_slice_on_struct( do_test ):
   @bit_struct
   class B:
-    foo: list = [ Bits4 ] * 4
+    foo: [ Bits4 ] * 4
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )

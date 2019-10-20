@@ -58,7 +58,7 @@ def test_pymtl_signal():
 def test_pymtl_packed_array():
   @bit_struct
   class B:
-    foo: list = [ Bits32 ] * 5
+    foo: [ Bits32 ] * 5
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
