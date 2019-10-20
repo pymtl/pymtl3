@@ -289,7 +289,7 @@ def _mk_eq_fn( fields ):
   return _create_fn(
     '__eq__',
     [ 'self', 'other' ],
-    [ f'return other.__class__ is self.__class__ and {self_tuple} == {other_tuple}' ]
+    [ f'print(other.__class__, self.__class__);ret = (other.__class__ is self.__class__) and {self_tuple} == {other_tuple};print(ret);return ret' ]
   )
 
 #-------------------------------------------------------------------------
@@ -304,12 +304,12 @@ def _mk_eq_fn( fields ):
 #   return hash((self.x,self.y,))
 
 def _mk_hash_fn( fields ):
-    self_tuple = _mk_tuple_str( 'self', fields )
-    return _create_fn(
-      '__hash__',
-      [ 'self' ],
-      [ f'return hash({self_tuple})' ]
-    )
+  self_tuple = _mk_tuple_str( 'self', fields )
+  return _create_fn(
+    '__hash__',
+    [ 'self' ],
+    [ f'return hash({self_tuple})' ]
+  )
 
 #-------------------------------------------------------------------------
 # _check_field
@@ -479,8 +479,19 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
 # Dynamically generate a bit struct class.
 # TODO: should we add base parameters to support inheritence?
 
+_struct_dict = {}
+_fields_dict = {}
 def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
+
+  if cls_name in _struct_dict:
+    print( _fields_dict[ cls_name ], fields )
+    if _fields_dict[ cls_name ] == fields:
+      return _struct_dict[ cls_name ]
+    else:
+      raise AssertionError(
+        "BitStruct {} has already been created!".format( name )
+      )
 
   # Lazily construct empty dictionary
   if namespace is None:
@@ -503,5 +514,8 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
 
   namespace['__annotations__'] = annos
   cls = types.new_class( cls_name, (), {}, lambda ns: ns.update( namespace ) )
-  return bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
-                     add_hash=True )
+  ret = bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
+                    add_hash=True )
+  _struct_dict[ cls_name ] = ret
+  _fields_dict[ cls_name ] = fields
+  return ret
