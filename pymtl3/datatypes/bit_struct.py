@@ -131,14 +131,16 @@ class Field:
 # Also note that this whole _create_fn thing is similar to the original
 # dataclass implementation!
 
-def _create_fn( fn_name, args_lst, body_lst, _globals=None ):
+def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False ):
   # Assemble argument string and body string
   args = ', '.join(args_lst)
   body = '\n'.join(f'  {statement}' for statement in body_lst)
 
   # Assemble the source code and execute it
-  src  = f'def {fn_name}({args}):\n{body}'
+  src = '@classmethod\n' if class_method else ''
+  src += f'def {fn_name}({args}):\n{body}'
   _locals = {}
+  print(src)
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -283,7 +285,7 @@ def _mk_eq_fn( fields ):
   return _create_fn(
     '__eq__',
     [ 'self', 'other' ],
-    [ f'print(other.__class__, self.__class__);ret = (other.__class__ is self.__class__) and {self_tuple} == {other_tuple};print(ret);return ret' ]
+    [ f'return (other.__class__ is self.__class__) and {self_tuple} == {other_tuple}' ]
   )
 
 #-------------------------------------------------------------------------
@@ -303,6 +305,41 @@ def _mk_hash_fn( fields ):
     '__hash__',
     [ 'self' ],
     [ f'return hash({self_tuple})' ]
+  )
+
+#-------------------------------------------------------------------------
+# _mk_mk_msg
+#-------------------------------------------------------------------------
+# __init__ doesn't perform casting and is usually used for constructing an
+# empty message. mk_msg does casting for Bits fields and preserve
+# list/BitStruct field, and is a class method
+
+def _mk_mk_msg( fields ):
+
+  def _mk_assign( f ):
+    type_ = f.type_
+    if isinstance( type_, list ) or is_bit_struct( type_ ):
+      return f'{f.name}'
+
+    assert issubclass( type_, Bits )
+    return f'{type_.__name__}({f.name})'
+
+  # Register necessary types in _globals
+  _globals = {}
+
+  for f in fields:
+    if isinstance( f.type_, list ) or is_bit_struct( f.type_ ):
+      continue
+    else:
+      assert issubclass( f.type_, Bits )
+      _globals[ f.type_.__name__ ] = f.type_
+
+  return _create_fn(
+    'mk_msg',
+    [ "cls" ] + [ f.name for f in fields ],
+    [ f"return cls({', '.join( [ _mk_assign( f ) for f in fields ] )})" ],
+    _globals = _globals,
+    class_method = True,
   )
 
 #-------------------------------------------------------------------------
@@ -444,6 +481,10 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
     if not '__hash__' in cls.__dict__:
       cls.__hash__ = _mk_hash_fn( fields.values() )
 
+  # Create mk_msg.
+  assert not 'mk_msg' in cls.__dict__
+  cls.mk_msg = _mk_mk_msg( fields.values() )
+
   # TODO: maybe add a to_bits and from bits function.
 
   return cls
@@ -478,19 +519,19 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
 # class object so that the comparison of two structs can return True. This
 # is not guaranteed in dataclass.
 
-_struct_dict = {}
-_fields_dict = {}
+# _struct_dict = {}
+# _fields_dict = {}
 
 def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
 
-  if cls_name in _struct_dict:
-    if _fields_dict[ cls_name ] == fields:
-      return _struct_dict[ cls_name ]
-    else:
-      raise AssertionError(
-        "BitStruct {} has already been created!".format( name )
-      )
+  # if cls_name in _struct_dict:
+    # if _fields_dict[ cls_name ] == fields:
+      # return _struct_dict[ cls_name ]
+    # else:
+      # raise AssertionError(
+        # "BitStruct {} has already been created!".format( name )
+      # )
 
   # Lazily construct empty dictionary
   if namespace is None:
@@ -516,6 +557,6 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
   ret = bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
                     add_hash=True )
 
-  _struct_dict[ cls_name ] = ret
-  _fields_dict[ cls_name ] = fields
+  # _struct_dict[ cls_name ] = ret
+  # _fields_dict[ cls_name ] = fields
   return ret

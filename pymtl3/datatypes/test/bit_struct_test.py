@@ -100,6 +100,9 @@ def test_simple():
   assert px != px1
   assert px == px2
 
+  px = Pixel.mk_msg( 1, 2, 3 )
+  assert type(px.r) is Bits8 and type(px.g) is Bits8 and type(px.b) is Bits8
+
 # FIXME: The following inherited bit struct cannot be used for construct
 # nested struct as the newly made class is not captured in the scope of
 # mk_bit_struct. Manually created structs cannot be used by mk_bit_struct
