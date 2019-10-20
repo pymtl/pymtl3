@@ -12,7 +12,7 @@ from copy import deepcopy
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
-from ..bit_struct import NoFieldDeclaredError, bit_struct, is_bit_struct, mk_bit_struct
+from ..bit_struct import bit_struct, is_bit_struct, mk_bit_struct
 from ..bits_import import *
 
 #-------------------------------------------------------------------------
@@ -24,7 +24,7 @@ def test_no_field():
     @bit_struct
     class Pixel:
       b = Bits8
-  except NoFieldDeclaredError as e:
+  except AttributeError as e:
     print(e)
     assert str(e).startswith( "No field is declared in the bit struct definition." )
 

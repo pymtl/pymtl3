@@ -57,13 +57,6 @@ import py
 from .bits_import import *
 
 #-------------------------------------------------------------------------
-# Errors
-#-------------------------------------------------------------------------
-
-class NoFieldDeclaredError( AttributeError ):
-  ...
-
-#-------------------------------------------------------------------------
 # Constants
 #-------------------------------------------------------------------------
 
@@ -319,28 +312,23 @@ def _mk_hash_fn( fields ):
 
 def _mk_mk_msg( fields ):
 
-  def _mk_assign( f ):
-    type_ = f.type_
-    if isinstance( type_, list ) or is_bit_struct( type_ ):
-      return f'{f.name}'
-
-    assert issubclass( type_, Bits )
-    return f'{type_.__name__}({f.name})'
-
   # Register necessary types in _globals
   _globals = {}
 
+  assign_strs = []
   for f in fields:
-    if isinstance( f.type_, list ) or is_bit_struct( f.type_ ):
-      continue
+    type_ = f.type_
+    if isinstance( type_, list ) or is_bit_struct( type_ ):
+      assign_strs.append( f'{f.name}' )
     else:
-      assert issubclass( f.type_, Bits )
-      _globals[ f.type_.__name__ ] = f.type_
+      assert issubclass( type_, Bits )
+      _globals[ type_.__name__ ] = type_
+      assign_strs.append( f'{type_.__name__}({f.name})' )
 
   return _create_fn(
     'mk_msg',
     [ "cls" ] + [ f.name for f in fields ],
-    [ f"return cls({', '.join( [ _mk_assign( f ) for f in fields ] )})" ],
+    [ f"return cls({ ', '.join(assign_strs) })" ],
     _globals = _globals,
     class_method = True,
   )
@@ -427,9 +415,9 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # Get annotations of the class
   cls_annotations = cls.__dict__.get('__annotations__', {})
   if not cls_annotations:
-    raise NoFieldDeclaredError( "No field is declared in the bit struct definition.\n"
-                               f"Suggestion: check the definition of {cls.__name__} to"
-                                " make sure it only contains 'field_name(string): Type(type).'" )
+    raise AttributeError( "No field is declared in the bit struct definition.\n"
+                         f"Suggestion: check the definition of {cls.__name__} to"
+                          " make sure it only contains 'field_name(string): Type(type).'" )
 
   # Get field information from the annotation
   for a_name, a_type in cls_annotations.items():
