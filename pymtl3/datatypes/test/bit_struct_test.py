@@ -9,26 +9,63 @@ Author : Yanghui Ou
 """
 from copy import deepcopy
 
-from ..bit_struct  import is_bit_struct, bit_struct, field, mk_bit_struct
+from ..bit_struct  import is_bit_struct, bit_struct, mk_bit_struct, NoFieldDeclaredError
 from ..bits_import import *
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
 #-------------------------------------------------------------------------
-# Basic test
+# Basic test to test error messages and exceptions
 #-------------------------------------------------------------------------
+
+def test_no_field():
+  try:
+    @bit_struct
+    class Pixel:
+      b = Bits8
+  except NoFieldDeclaredError as e:
+    print(e)
+    assert str(e).startswith( "No field is declared in the bit struct definition." )
+
+def test_field_no_default():
+  try:
+    @bit_struct
+    class Pixel:
+      r : Bits8
+      g : Bits8
+      b : Bits8 = b8(4)
+  except TypeError as e:
+    print(e)
+    assert str(e).startswith( "We don't allow Bits/BitStruct field to have default value:\n- Field " )
+
+def test_field_wrong_type():
+  try:
+    @bit_struct
+    class A:
+      x: int
+  except TypeError as e:
+    print(e)
+    assert str(e).startswith( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n- Field " )
+
+def test_field_not_type():
+  try:
+    @bit_struct
+    class A:
+      x: 1
+  except AssertionError as e:
+    print(e)
 
 @bit_struct
 class Pixel:
   r : Bits8
   g : Bits8
-  b : Bits8 = b8(4)
+  b : Bits8
   nbits = 24
 
 MadePixel = mk_bit_struct( 'MadePixel',{
     'r' : Bits8,
     'g' : Bits8,
-    'b' : field( Bits8, default=b8(4) )
+    'b' : Bits8,
   },
   namespace = {
     'nbits' : 24
@@ -41,13 +78,13 @@ def test_simple():
   # Test basic
   px = Pixel()
   assert px.r == px.g == 0
-  assert px.b == 4
+  assert px.b == 0
   assert px.nbits == 24
 
   # Test dynamic basic
   mpx = MadePixel()
   assert mpx.r == mpx.g == 0
-  assert mpx.b == 4
+  assert mpx.b == 0
   assert mpx.nbits == 24
 
   # Test str
@@ -58,7 +95,7 @@ def test_simple():
 
   # test equality
   px1 = Pixel( b4(1), b4(2), b4(3) )
-  px2 = Pixel( b4(0), b4(0), b4(4) )
+  px2 = Pixel( b4(0), b4(0), b4(0) )
   assert px != px1
   assert px == px2
 
@@ -120,7 +157,7 @@ def test_struct():
     YType = mk_bits( ynbits )
 
     return mk_bit_struct(
-      "Point_{}_{}".format( xnbits, ynbits ), {
+      f"Point_{xnbits}_{ynbits}", {
         'x': XType,
         'y': YType,
       },
@@ -235,3 +272,60 @@ def test_is_bit_struct():
 
   assert not is_bit_struct( A() )
   assert is_bit_struct( B() )
+
+#-------------------------------------------------------------------------
+# bit struct with array test
+#-------------------------------------------------------------------------
+
+def test_list_not_same_class():
+  @bit_struct
+  class A:
+    x: Bits4
+    y: list = [ Bits4, Bits4 ]
+  a = A()
+  assert a.x == Bits4(0)
+  assert a.y == [ Bits4(0), Bits4(0) ]
+
+def test_crazy_list_not_same_class():
+  @bit_struct
+  class A:
+    x: Bits4
+  try:
+    @bit_struct
+    class B:
+      x: Bits4
+      y: list = [[[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, Bits1]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
+                [[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]]]
+  except TypeError as e:
+    print(e)
+    assert str(e) == "The provided list spec should be a strict multidimensional ARRAY with no varying sizes or types. "\
+                     "All non-list elements should be VALID types."
+
+def test_high_d_list_inside():
+  @bit_struct
+  class A:
+    x: Bits4
+    y: list = [ [ [ [Bits4, Bits4, Bits4] ] ] * 6 ] * 10
+  a = A()
+  assert a.x == Bits4(0)
+  assert a.y == [ [ [ [ Bits4(), Bits4(), Bits4()] ] for _ in range(6) ] for _ in range(10) ]
+
+def test_high_d_list_struct_inside():
+  @bit_struct
+  class A:
+    x: Bits4
+  @bit_struct
+  class B:
+    x: Bits4
+    y: list = [ [ [ [A, A, A] ] ] * 6 ] * 10
+  b = B()
+  assert b.x == Bits4(0)
+  assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]

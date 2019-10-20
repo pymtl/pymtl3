@@ -25,9 +25,9 @@ mk_bit_struct function for user to dynamically generate bit struct types.
 For example,
 
 mk_bit_struct( 'Pixel',{
-    'r' : field( Bits4 )
-    'g' : field( Bits4 )
-    'b' : field( Bits4, default=b4(5) )
+    'r' : Bits4,
+    'g' : Bits4,
+    'b' : Bits4,
   },
   name_space = {
     '__str__' : lambda self: f'({self.r},{self.g},{self.b})'
@@ -40,17 +40,20 @@ is equivalent to:
 class Pixel:
   r : Bits4
   g : Bits4
-  b : Bits4 = b4(5)
+  b : Bits4
 
   def __str__( self ):
     return f'({self.r},{self.g},{self.b})'
 
-Author : Yanghui Ou
-  Date : July 25, 2019
+Author : Yanghui Ou, Shunning Jiang
+  Date : Oct 19, 2019
 """
 import keyword
+import py
 import types
 import warnings
+
+from .bits_import import *
 
 #-------------------------------------------------------------------------
 # Errors
@@ -94,31 +97,22 @@ MISSING = _MISSING_TYPE()
 #-------------------------------------------------------------------------
 # Field
 #-------------------------------------------------------------------------
-# Field instances are used for holding the name, type, and default value
-# of each field of the bit struct.
+# Field instances are used for holding the name and type of each field of
+# the bit struct. Since we only accept Bits, BitStruct and list, and
+# Bits/BitStruct don't allow default, and list must have a default value,
+# we can just reuse type_ for list's default
 
 class Field:
   # Here we use __slots__ to declare date members to potentially save
   # space and improve look up time.
-  __slots__ = (
-    'name',
-    'type_',
-    'default',
-  )
+  __slots__ = ( 'name', 'type_' )
 
-  def __init__( self, name=None, type_=None, default=MISSING ):
-    self.name    = name
-    self.type_   = type_
-    self.default = default
+  def __init__( self, name=None, type_=None ):
+    self.name  = name
+    self.type_ = type_
 
   def __repr__( self ):
-    return (
-      'Field('
-      f'name={self.name!r},'
-      f'type_={self.type_!r},'
-      f'default={self.default!r}'
-      ')'
-    )
+    return f'(Field(name={self.name!r},type_={self.type_!r})'
 
 #-------------------------------------------------------------------------
 # field
@@ -127,12 +121,9 @@ class Field:
 # dictionary-like syntax for mk_bit_struct like
 #
 # mk_bit_struct( 'Point',{
-#   'x' : field( Bits4 )
-#   'y' : field( Bits4, default=b4(f) )
+#   'x' : Bits4,
+#   'y' : Bits4,
 # }
-
-def field( type_, default=MISSING ):
-  return Field( None, type_, default )
 
 #-------------------------------------------------------------------------
 # _create_fn
@@ -141,20 +132,11 @@ def field( type_, default=MISSING ):
 # - fn_name : name of the function
 # - args_lst : a list of arguments in string
 # - body_lst : a list of statement of the function body in string
-#
-# Note: this function mutates _locals and should only be called internally
-# to this module.
 
 # Also note that this whole _create_fn thing is similar to the original
 # dataclass implementation!
 
-def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
-
-  # Lazily construct empty dictionary. We don't pass None to exec because
-  # if locals is None, then exec will mutate the current locals().
-  if _locals is None:
-    _locals = {}
-
+def _create_fn( fn_name, args_lst, body_lst, _globals=None ):
   # Assemble argument string and body string
   args = ', '.join(args_lst)
   body = '\n'.join(f'  {statement}' for statement in body_lst)
@@ -162,8 +144,8 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
   # Assemble the source code and execute it
   src  = f'def {fn_name}({args}):\n{body}'
   # print(src)
-  exec( src, _globals, _locals )
-
+  _locals = {}
+  exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
 #-------------------------------------------------------------------------
@@ -171,24 +153,15 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, _locals=None ):
 #-------------------------------------------------------------------------
 # Creates a init argument string from a field.
 #
-# Notes:
+# Shunning: I revamped the whole thing because they are indeed mutable
+# objects.
 #
-# We store the default value in _globals by adding a _deflt_ prefix to the
-# field name. This seems dangerous as our Bits and bit structs objects are
-# all mutable. Another idea is to use repr to re-construct a new instance
-# but that seems to be too much to ask.
+# x: Bits4 = None
 
 def _mk_init_arg( f ):
-
-  # Call the default constructor if no default value specified
-  if f.default is MISSING:
-    default = f'_type_{f.name}()'
-
-  # Use the default value if it is specified by user
-  else:
-    default = f'_deflt_{f.name}'
-
-  return f'{f.name} : _type_{f.name} = {default}'
+  # default is always None
+  if isinstance( f.type_, list ): return f'{f.name}: list = None'
+  return f'{f.name}: {f.type_.__name__} = None'
 
 #-------------------------------------------------------------------------
 # _mk_init_body
@@ -196,8 +169,18 @@ def _mk_init_arg( f ):
 # Creates one line of __init__ body from a field and add its default value
 # to globals.
 
+def _recursive_generate_init( current ):
+  if isinstance( current, list ):
+    return f"[{', '.join( [ _recursive_generate_init(x) for x in current ] )}]"
+  return f"{current.__name__}()"
+
 def _mk_init_body( self_name, f ):
-  return f'{self_name}.{f.name} = {f.name}'
+  type_ = f.type_
+  if isinstance( type_, list ):
+    return f'{self_name}.{f.name} = {f.name} or {_recursive_generate_init(f.type_)}'
+
+  assert issubclass( type_, Bits ) or is_bit_struct( type_ )
+  return f'{self_name}.{f.name} = {f.name} or {type_.__name__}()'
 
 #-------------------------------------------------------------------------
 # _mk_tuple_str
@@ -217,9 +200,9 @@ def _mk_tuple_str( self_name, fields ):
 # contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
 # function that looks like the following:
 #
-# def __init__( s, x=_type_x(), y=_type_y() ):
-#   s.x = x
-#   s.y = y
+# def __init__( s, x: Bits4 = None, y: Bits4 = None ):
+#   s.x = x or Bits4()
+#   s.y = y or Bits4()
 #
 # NOTE:
 # _mk_init_fn also takes as argument the name of self in case there is a
@@ -229,30 +212,23 @@ def _mk_tuple_str( self_name, fields ):
 
 def _mk_init_fn( self_name, fields ):
 
-  # Sanity check: make sure no postional argument after keyword argument
-  seen_kwarg = False
+  # Register necessary types in _globals
+  _globals = {}
+
   for f in fields:
-    if not f.default is MISSING:
-      seen_kwarg = True
-    elif seen_kwarg:
-      raise TypeError( f'Non keyword argument {f.name} '
-                       'follows keyword argument' )
-
-  _globals = { 'MISSING' : MISSING }
-
-  # Register default values to _globals
-  for f in fields:
-    if not (f.default is MISSING):
-      _globals[f'_deflt_{f.name}'] = f.default
-
-  # Register types in _locals
-  _locals = { f'_type_{f.name}' : f.type_ for f in fields }
+    if isinstance( f.type_, list ):
+      x = f.type_[0]
+      while isinstance( x, list ):
+        x = x[0]
+      _globals[ x.__name__ ] = x
+    else:
+      assert issubclass( f.type_, Bits ) or is_bit_struct( f.type_ )
+      _globals[ f.type_.__name__ ] = f.type_
 
   return _create_fn(
     '__init__',
     [ self_name ] + [ _mk_init_arg( f ) for f in fields ],
     [ _mk_init_body( self_name, f ) for f in fields ],
-    _locals  = _locals,
     _globals = _globals,
   )
 
@@ -313,10 +289,7 @@ def _mk_eq_fn( fields ):
   return _create_fn(
     '__eq__',
     [ 'self', 'other' ],
-    [ 'if other.__class__ is self.__class__:',
-      f'  return {self_tuple} == {other_tuple}',
-      'else:',
-      '  raise NotImplemented']
+    [ f'return other.__class__ is self.__class__ and {self_tuple} == {other_tuple}' ]
   )
 
 #-------------------------------------------------------------------------
@@ -339,16 +312,61 @@ def _mk_hash_fn( fields ):
     )
 
 #-------------------------------------------------------------------------
+# _check_field
+#-------------------------------------------------------------------------
+
+def _recursive_check_array_types( current ):
+  x = current[0]
+  if isinstance( x, list ):
+    x_type = _recursive_check_array_types( x )
+    for y in current[1:]:
+      assert isinstance( y, list ) and len(y) == len(x)
+      y_type = _recursive_check_array_types( y )
+      assert y_type is x_type
+    return x_type
+
+  assert issubclass( x, Bits ) or is_bit_struct( x )
+  for y in current[1:]:
+    assert y is x
+  return x
+
+def _check_valid_array_of_types( arr ):
+  # Check if the provided list is a strict multidimensional array
+  try:
+    return _recursive_check_array_types( arr )
+  except Exception as e:
+    print(e)
+    return None
+
+def _check_field( name, type_, default, cls ):
+  assert isinstance(type_, type ), f"{type_} is not a type\n"\
+                      f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}."
+
+  if issubclass( type_, Bits ) or is_bit_struct( type_ ):
+    if default is not MISSING:
+      raise TypeError( "We don't allow Bits/BitStruct field to have default value:\n"
+                      f"- Field '{name}' of BitStruct {cls.__name__} has default value {default!r}." )
+    return Field( name, type_ )
+
+  elif type_ is list:
+    if default is MISSING:
+      raise TypeError( "List field needs to have default value like [ BitsN ] * length:\n"
+                      f"- Field '{name}' of BitStruct {cls.__name__} has no value." )
+    elif _check_valid_array_of_types( default ) is None:
+      raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
+                      f"with no varying sizes or types. All non-list elements should be VALID types." )
+    return Field( name, default ) # use default as type
+
+  raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
+                  f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
+#-------------------------------------------------------------------------
 # _get_field
 #-------------------------------------------------------------------------
 # Extract field information from cls based on annotations.
 
-def _get_field( cls, a_name, a_type ):
-  default = getattr( cls, a_name, MISSING )
-  f = field( a_type, default=default )
-  f.name = a_name
-  # Yanghui: Should we check default must be instances of Bits or bit
-  # struct here?
+def _get_field( cls, name, type_ ):
+  default = getattr( cls, name, MISSING )
+  f = _check_field( name, type_, default, cls )
   return f
 
 #-------------------------------------------------------------------------
@@ -374,14 +392,13 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # Get annotations of the class
   cls_annotations = cls.__dict__.get('__annotations__', {})
   if not cls_annotations:
-    raise NoFieldDeclaredError('No field is declared in the bit struct definition' )
+    raise NoFieldDeclaredError( "No field is declared in the bit struct definition.\n"
+                               f"Suggestion: check the definition of {cls.__name__} to"
+                                " make sure it only contains 'field_name(string): Type(type).'" )
 
   # Get field information from the annotation
-  cls_fields = [ _get_field( cls, a_name, a_type )
-                 for a_name, a_type in cls_annotations.items() ]
-
-  # Create a dictionary of fields
-  for f in cls_fields:
+  for a_name, a_type in cls_annotations.items():
+    f = _get_field( cls, a_name, a_type )
     fields[ f.name ] = f
 
   # Stamp the special attribute so that translation pass can identify it
@@ -449,11 +466,11 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
   def wrap( cls ):
     return _process_class( cls, add_init, add_str, add_repr )
 
-  # Called as @bitstruct(...)
+  # Called as @bit_struct(...)
   if _cls is None:
     return wrap
 
-  # Called as @dataclass without parens.
+  # Called as @bit_struct without parens.
   return wrap( _cls )
 
 #-------------------------------------------------------------------------
@@ -482,16 +499,9 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
       raise TypeError( f'Field name {name!r} is not a valid identifier!' )
     if keyword.iskeyword( name ):
       raise TypeError( f'Field name {name!r} is a keyword!' )
-
-    if not isinstance( f, Field ):
-      annos[ name ] = f
-    else:
-      annos[ name ] = f.type_
-      if f.default is not MISSING:
-        namespace[ name ] = f.default
+    annos[ name ] = f
 
   namespace['__annotations__'] = annos
-
   cls = types.new_class( cls_name, (), {}, lambda ns: ns.update( namespace ) )
   return bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
                      add_hash=True )
