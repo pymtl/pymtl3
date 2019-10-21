@@ -83,37 +83,6 @@ _DEFAULT_SELF_NAME = 's'
 _ANTI_CONFLICT_SELF_NAME = '__bit_struct_self__'
 
 #-------------------------------------------------------------------------
-# Field
-#-------------------------------------------------------------------------
-# Field instances are used for holding the name and type of each field of
-# the bit struct. Since we only accept Bits, BitStruct and list, and
-# all of them don't allow default, we just need two fields, while type_
-# can be a list _object_.
-
-class Field:
-  # Here we use __slots__ to declare date members to potentially save
-  # space and improve look up time.
-  __slots__ = ( 'name', 'type_' )
-
-  def __init__( self, name=None, type_=None ):
-    self.name  = name
-    self.type_ = type_
-
-  def __repr__( self ):
-    return f'(Field(name={self.name!r},type_={self.type_!r})'
-
-#-------------------------------------------------------------------------
-# field
-#-------------------------------------------------------------------------
-# Public APIs for creating a Field object. This is used for supporting
-# dictionary-like syntax for mk_bit_struct like
-#
-# mk_bit_struct( 'Point',{
-#   'x' : Bits4,
-#   'y' : Bits4,
-# }
-
-#-------------------------------------------------------------------------
 # _create_fn
 #-------------------------------------------------------------------------
 # A helper function that creates a function based on
@@ -133,7 +102,6 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src = '@classmethod\n' if class_method else ''
   src += f'def {fn_name}({args}):\n{body}'
   _locals = {}
-  print(src)
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -147,10 +115,10 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
 #
 # x: Bits4 = None
 
-def _mk_init_arg( f ):
+def _mk_init_arg( name, type_ ):
   # default is always None
-  if isinstance( f.type_, list ): return f'{f.name}: list = None'
-  return f'{f.name}: _type_{f.name} = None'
+  if isinstance( type_, list ): return f'{name}: list = None'
+  return f'{name}: _type_{name} = None'
 
 #-------------------------------------------------------------------------
 # _mk_init_body
@@ -158,18 +126,17 @@ def _mk_init_arg( f ):
 # Creates one line of __init__ body from a field and add its default value
 # to globals.
 
-def _mk_init_body( self_name, f ):
+def _mk_init_body( self_name, name, type_ ):
   def _recursive_generate_init( x ):
     if isinstance( x, list ):
       return f"[{', '.join( [ _recursive_generate_init(x[0]) ] * len(x) )}]"
-    return f"_type_{f.name}()"
+    return f"_type_{name}()"
 
-  type_ = f.type_
   if isinstance( type_, list ):
-    return f'{self_name}.{f.name} = {f.name} or {_recursive_generate_init(f.type_)}'
+    return f'{self_name}.{name} = {name} or {_recursive_generate_init(type_)}'
 
   assert issubclass( type_, Bits ) or is_bit_struct( type_ )
-  return f'{self_name}.{f.name} = {f.name} or _type_{f.name}()'
+  return f'{self_name}.{name} = {name} or _type_{name}()'
 
 #-------------------------------------------------------------------------
 # _mk_tuple_str
@@ -180,7 +147,7 @@ def _mk_init_body( self_name, f ):
 # __hash__ function.
 
 def _mk_tuple_str( self_name, fields ):
-  return f'({",".join([f"{self_name}.{f.name}" for f in fields])},)'
+  return f'({",".join([f"{self_name}.{name}" for name in fields])},)'
 
 #-------------------------------------------------------------------------
 # _mk_init_fn
@@ -204,20 +171,20 @@ def _mk_init_fn( self_name, fields ):
   # Register necessary types in _globals
   _globals = {}
 
-  for f in fields:
-    if isinstance( f.type_, list ):
-      x = f.type_[0]
+  for name, type_ in fields.items():
+    if isinstance( type_, list ):
+      x = type_[0]
       while isinstance( x, list ):
         x = x[0]
-      _globals[ f"_type_{f.name}" ] = x
+      _globals[ f"_type_{name}" ] = x
     else:
-      assert issubclass( f.type_, Bits ) or is_bit_struct( f.type_ )
-      _globals[ f"_type_{f.name}" ] = f.type_
+      assert issubclass( type_, Bits ) or is_bit_struct( type_ )
+      _globals[ f"_type_{name}" ] = type_
 
   return _create_fn(
     '__init__',
-    [ self_name ] + [ _mk_init_arg( f ) for f in fields ],
-    [ _mk_init_body( self_name, f ) for f in fields ],
+    [ self_name ] + [ _mk_init_arg( *field ) for field in fields.items() ],
+    [ _mk_init_body( self_name, *field ) for field in fields.items() ],
     _globals = _globals,
   )
 
@@ -236,7 +203,7 @@ def _mk_str_fn( fields ):
     '__str__',
     [ 'self' ],
     [ 'return f"' +
-      ':'.join([ f'{{self.{f.name}}}' for f in fields ]) + '"']
+      ':'.join([ f'{{self.{name}}}' for name in fields ]) + '"']
   )
 
 #-------------------------------------------------------------------------
@@ -254,7 +221,7 @@ def _mk_repr_fn( fields ):
     '__repr__',
     [ 'self' ],
     [ 'return self.__class__.__qualname__ + f"(' +
-      ', '.join([ f'{f.name}={{self.{f.name}!r}}' for f in fields ]) +
+      ', '.join([ f'{name}={{self.{name}!r}}' for name in fields ]) +
       ')"']
   )
 
@@ -317,18 +284,18 @@ def _mk_mk_msg( fields ):
   _globals = {}
 
   assign_strs = []
-  for f in fields:
-    type_ = f.type_
+  for name, type_ in fields.items():
+    type_
     if isinstance( type_, list ) or is_bit_struct( type_ ):
-      assign_strs.append( f'{f.name}' )
+      assign_strs.append( f'{name}' )
     else:
       assert issubclass( type_, Bits )
       _globals[ type_.__name__ ] = type_
-      assign_strs.append( f'{type_.__name__}({f.name})' )
+      assign_strs.append( f'{type_.__name__}({name})' )
 
   return _create_fn(
     'mk_msg',
-    [ "cls" ] + [ f.name for f in fields ],
+    [ "cls" ] + [ name for name in fields ],
     [ f"return cls({ ', '.join(assign_strs) })" ],
     _globals = _globals,
     class_method = True,
@@ -363,11 +330,10 @@ def _check_valid_array_of_types( arr ):
     return None
 
 #-------------------------------------------------------------------------
-# _get_field
+# _check_field_annotation
 #-------------------------------------------------------------------------
-# Extract field information from cls based on annotations.
 
-def _get_field( cls, name, type_ ):
+def _check_field_annotation( cls, name, type_ ):
   # Make sure not default is annotated
   if hasattr( cls, name ):
     default = getattr( cls, name )
@@ -379,19 +345,16 @@ def _get_field( cls, name, type_ ):
     if _check_valid_array_of_types( type_ ) is None:
       raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
                       f"with no varying sizes or types. All non-list elements should be VALID types." )
-    return Field( name, type_ )
+  else:
+    # Now we work with types
+    if not isinstance( type_, type ):
+      raise TypeError(f"{type_} is not a type\n"\
+                      f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}.")
 
-  # Now we work with types
-  if not isinstance( type_, type ):
-    raise TypeError(f"{type_} is not a type\n"\
-                    f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}.")
-
-  # More specifically, Bits and BitStruct
-  if not issubclass( type_, Bits ) and not is_bit_struct( type_ ):
-    raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
-                    f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
-
-  return Field( name, type_ )
+    # More specifically, Bits and BitStruct
+    if not issubclass( type_, Bits ) and not is_bit_struct( type_ ):
+      raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
+                      f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
 
 #-------------------------------------------------------------------------
 # _get_self_name
@@ -422,18 +385,12 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
 
   # Get field information from the annotation
   for a_name, a_type in cls_annotations.items():
-    f = _get_field( cls, a_name, a_type )
-    fields[ f.name ] = f
+    _check_field_annotation( cls, a_name, a_type )
+    fields[ a_name ] = a_type
 
   # Stamp the special attribute so that translation pass can identify it
   # as bit struct.
   setattr( cls, _FIELDS, fields )
-
-  # Sanity check: is there any Field instance that doesn't have an
-  # annotation?
-  for name, value in cls.__dict__.items():
-    if isinstance( value, Field ) and not name in cls_annotations:
-      raise TypeError(f'{name} is a field but has no type annotation!')
 
   # Add methods to the class
 
@@ -442,17 +399,17 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # did not define their own init.
   if add_init:
     if not '__init__' in cls.__dict__:
-      cls.__init__ = _mk_init_fn( _get_self_name(fields), fields.values() )
+      cls.__init__ = _mk_init_fn( _get_self_name(fields), fields )
 
   # Create __str__
   if add_str:
     if not '__str__' in cls.__dict__:
-      cls.__str__ = _mk_str_fn( fields.values() )
+      cls.__str__ = _mk_str_fn( fields )
 
   # Create __repr__
   if add_repr:
     if not '__repr__' in cls.__dict__:
-      cls.__repr__ = _mk_repr_fn( fields.values() )
+      cls.__repr__ = _mk_repr_fn( fields )
 
   # Create __eq__. There is no need for a __ne__ method as python will
   # call __eq__ and negate it.
@@ -461,7 +418,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # equal only if all the fields are equal.
   if add_eq:
     if not '__eq__' in cls.__dict__:
-      cls.__eq__ = _mk_eq_fn( fields.values() )
+      cls.__eq__ = _mk_eq_fn( fields )
     else:
       w_msg = ( f'Overwriting {cls.__qualname__}\'s __eq__ may cause the '
                 'translated verilog behaves differently from PyMTL '
@@ -471,11 +428,11 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # Create __hash__.
   if add_hash:
     if not '__hash__' in cls.__dict__:
-      cls.__hash__ = _mk_hash_fn( fields.values() )
+      cls.__hash__ = _mk_hash_fn( fields )
 
   # Create mk_msg.
   assert not 'mk_msg' in cls.__dict__
-  cls.mk_msg = _mk_mk_msg( fields.values() )
+  cls.mk_msg = _mk_mk_msg( fields )
 
   # TODO: maybe add a to_bits and from bits function.
 
