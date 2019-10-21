@@ -246,7 +246,7 @@ class ImportConfigs( BasePassConfigs ):
 
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
-      stmt_unroll, trace, warnings, flist, src
+      stmt_unroll, trace, warnings, flist, src, coverage,
     ]
 
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
