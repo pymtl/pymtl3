@@ -46,5 +46,4 @@ def local_do_test( m ):
   m.elaborate()
   tr = YosysTranslator( m )
   tr.translate( m )
-  print(tr.hierarchy.src)
   check_eq( tr.hierarchy.src, m._ref_src_yosys )

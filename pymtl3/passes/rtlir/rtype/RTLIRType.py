@@ -552,13 +552,13 @@ _RTLIR_ifc_handlers = [
 ]
 
 _RTLIR_handlers = [
-  ( list,                     _handle_Array ),
-  ( dsl.InPort,               _handle_InPort ),
-  ( dsl.OutPort,              _handle_OutPort ),
-  ( dsl.Wire,                 _handle_Wire ),
-  ( ( int, Bits ),          _handle_Const ),
-  ( dsl.Interface,            _handle_Interface ),
-  ( dsl.Component,            _handle_Component ),
+  ( list,          _handle_Array ),
+  ( dsl.InPort,    _handle_InPort ),
+  ( dsl.OutPort,   _handle_OutPort ),
+  ( dsl.Wire,      _handle_Wire ),
+  ( ( int, Bits ), _handle_Const ),
+  ( dsl.Interface, _handle_Interface ),
+  ( dsl.Component, _handle_Component ),
 ]
 
 #-------------------------------------------------------------------------
