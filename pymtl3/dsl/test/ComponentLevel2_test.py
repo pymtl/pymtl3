@@ -16,6 +16,7 @@ from pymtl3.dsl.errors import (
     InvalidConstraintError,
     InvalidFFAssignError,
     InvalidFuncCallError,
+    MultiWriterError,
     UpblkCyclicError,
     VarNotDeclaredError,
 )
@@ -572,7 +573,7 @@ def test_update_ff_swap():
       s.wire1 = Wire(Bits32)
 
       @s.update_ff
-      def up_from_src():
+      def up():
         temp = s.wire1 + 1
         s.wire0 <<= temp
         s.wire1 <<= s.wire0 + 1
@@ -592,3 +593,32 @@ def test_update_ff_swap():
     T += 1
     assert A.wire0 == T
     assert A.wire1 == T
+
+def test_var_written_in_both_ff_and_up():
+
+  class Top(ComponentLevel2):
+
+    def construct( s ):
+
+      s.wire0 = Wire(Bits32)
+      s.wire1 = Wire(Bits32)
+
+      @s.update_ff
+      def up_src():
+        s.wire0 <<= s.wire1 + 1
+        s.wire1 <<= s.wire0 + 1
+
+      @s.update
+      def comb():
+        s.wire1 = 1
+
+    def line_trace( s ):
+      return "wire0={} , wire1={}".format(s.wire0, s.wire1)
+
+  A = Top()
+  try:
+    A.elaborate()
+  except MultiWriterError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown MultiWriterError.")
