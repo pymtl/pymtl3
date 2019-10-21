@@ -2,7 +2,7 @@
 ========================================================================
 CollectSignalPass.py
 ========================================================================
-collects signals and stored it as _collectsignals attribute of top.
+collects signals and stored it as _collect_signals attribute of top.
 
 Author : Kaishuo Cheng
 Date   : Oct 4, 2019
@@ -124,7 +124,7 @@ def dump_wav():
     {1}
   except Exception:
     raise
-  setattr(s, "_collectsignals", deepcopy(wavmeta.sigs) )
+  setattr(s, "_collect_signals", deepcopy(wavmeta.sigs) )
   wavmeta.sim_ncycles += 1
 """.format("", "".join(wav_srcs) )
     s, l_dict = top, {}

@@ -36,7 +36,6 @@ def test_toy():
   # Setup the simulation
   dut.apply( SimulationPass )
   dut.sim_reset()
-
   # Test vector
   vector = [
     #  i        inlong       out

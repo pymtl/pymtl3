@@ -73,7 +73,7 @@ def test_toy():
     assert dut.out == out
 
   #test
-  sig = dut._collectsignals
+  sig = dut._collect_signals
   siglist = ["s.in0","s.in1","s.out","s.clk","s.reset"]
   for i in siglist:
     assert sig.__contains__(i),"signals not captured"
