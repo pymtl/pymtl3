@@ -133,6 +133,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src = '@classmethod\n' if class_method else ''
   src += f'def {fn_name}({args}):\n{body}'
   _locals = {}
+  print(src)
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -149,7 +150,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
 def _mk_init_arg( f ):
   # default is always None
   if isinstance( f.type_, list ): return f'{f.name}: list = None'
-  return f'{f.name}: {f.type_.__name__} = None'
+  return f'{f.name}: _type_{f.name} = None'
 
 #-------------------------------------------------------------------------
 # _mk_init_body
@@ -157,18 +158,18 @@ def _mk_init_arg( f ):
 # Creates one line of __init__ body from a field and add its default value
 # to globals.
 
-def _recursive_generate_init( current ):
-  if isinstance( current, list ):
-    return f"[{', '.join( [ _recursive_generate_init(x) for x in current ] )}]"
-  return f"{current.__name__}()"
-
 def _mk_init_body( self_name, f ):
+  def _recursive_generate_init( x ):
+    if isinstance( x, list ):
+      return f"[{', '.join( [ _recursive_generate_init(x[0]) ] * len(x) )}]"
+    return f"_type_{f.name}()"
+
   type_ = f.type_
   if isinstance( type_, list ):
     return f'{self_name}.{f.name} = {f.name} or {_recursive_generate_init(f.type_)}'
 
   assert issubclass( type_, Bits ) or is_bit_struct( type_ )
-  return f'{self_name}.{f.name} = {f.name} or {type_.__name__}()'
+  return f'{self_name}.{f.name} = {f.name} or _type_{f.name}()'
 
 #-------------------------------------------------------------------------
 # _mk_tuple_str
@@ -208,10 +209,10 @@ def _mk_init_fn( self_name, fields ):
       x = f.type_[0]
       while isinstance( x, list ):
         x = x[0]
-      _globals[ x.__name__ ] = x
+      _globals[ f"_type_{f.name}" ] = x
     else:
       assert issubclass( f.type_, Bits ) or is_bit_struct( f.type_ )
-      _globals[ f.type_.__name__ ] = f.type_
+      _globals[ f"_type_{f.name}" ] = f.type_
 
   return _create_fn(
     '__init__',

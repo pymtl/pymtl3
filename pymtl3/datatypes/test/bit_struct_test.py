@@ -260,6 +260,33 @@ def test_nested():
   assert b.pt1.x == 3
   assert b.pt1.y == 4
 
+def test_nested_two_struct_with_same_name():
+
+  class A:
+    @bit_struct
+    class S:
+      z: Bits2
+
+  class B:
+    @bit_struct
+    class S:
+      x: Bits8
+      y: Bits8
+
+  SS = mk_bit_struct( 'SS', {
+    'a' : A.S,
+    'b' : B.S,
+  })
+  ss = SS()
+  assert isinstance( ss.a.z, Bits2 )
+  assert isinstance( ss.b.x, Bits8 )
+  assert isinstance( ss.b.y, Bits8 )
+
+  ss = SS.mk_msg( A.S.mk_msg(2), B.S.mk_msg(3,3) )
+  assert ss.a.z == 2
+  assert ss.b.x == 3
+  assert ss.b.y == 3
+
 #-------------------------------------------------------------------------
 # Bit struct instance test
 #-------------------------------------------------------------------------
