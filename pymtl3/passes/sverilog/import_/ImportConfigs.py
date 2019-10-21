@@ -25,7 +25,7 @@ class ImportConfigs( BasePassConfigs ):
 
     s.set_checkers(
         ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
-         'vl_trace', 'verbose', 'has_clk', 'has_reset'],
+         'vl_trace', 'verbose', 'has_clk', 'has_reset', 'coverage'],
         lambda v: isinstance(v, bool),
         "expects a boolean")
     s.set_checkers(
@@ -215,6 +215,9 @@ class ImportConfigs( BasePassConfigs ):
       # We enforce the GNU makefile implicit rule that `LDLIBS` should only
       # include library linker flags/names such as `-lfoo`.
       "ld_libs" : "",
+
+      # Enable verilator coverage
+      "coverage" : False,
     }
 
   PassName = 'sverilog.ImportPass'
@@ -238,6 +241,7 @@ class ImportConfigs( BasePassConfigs ):
     stmt_unroll = "" if s.get_option("vl_unroll_stmts") == 0 else \
                   f"--unroll-stmts {s.get_option('vl_unroll_stmts')}"
     trace       = "" if s.is_default("vl_trace") else "--trace"
+    coverage    = "--coverage" if s.get_option("coverage") else ""
     warnings    = s.create_vl_warning_cmd()
 
     all_opts = [
