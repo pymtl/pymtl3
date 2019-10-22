@@ -89,10 +89,11 @@ class ComponentLevel2( ComponentLevel1 ):
 
         name_info[ name ] = ( True, _src, _line, _file, _ast )
 
-      name_rd[ name ]  = _rd = []
-      name_wr[ name ]  = _wr = []
-      name_fc[ name ]  = _fc = []
+      _rd, _wr, _fc = [], [], []
       AstHelper.extract_reads_writes_calls( func, _ast, _rd, _wr, _fc )
+      name_rd[ name ]  = tuple(_rd)
+      name_wr[ name ]  = tuple(_wr)
+      name_fc[ name ]  = tuple(_fc)
 
   def _elaborate_read_write_func( s ):
 

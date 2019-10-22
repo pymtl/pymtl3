@@ -15,6 +15,7 @@ class DetectVarNames( ast.NodeVisitor ):
 
   def __init__( self, upblk ):
     self.upblk   = upblk
+    self.globals = upblk.__globals__
     self.closure = {}
     for i, var in enumerate( upblk.__code__.co_freevars ):
       try:  self.closure[ var ] = upblk.__closure__[i].cell_contents
@@ -44,19 +45,19 @@ class DetectVarNames( ast.NodeVisitor ):
         low = node.slice.lower.n
       elif isinstance( lower, ast.Name ):
         x = lower.id
-        if   x in self.upblk.__globals__:
-          low = self.upblk.__globals__[ x ] # TODO check low is int
-        elif x in self.closure:
+        if   x in self.closure:
           low = self.closure[ x ]
+        elif x in self.globals:
+          low = self.globals[ x ] # TODO check low is int
 
       if isinstance( upper, ast.Num ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
         x = upper.id
-        if   x in self.upblk.__globals__:
-          up = self.upblk.__globals__[ x ] # TODO check low is int
-        elif x in self.closure:
+        if   x in self.closure:
           up = self.closure[ x ]
+        elif x in self.globals:
+          up = self.globals[ x ] # TODO check low is int
 
       if low is not None and up is not None:
         slices.append( slice(low, up) )
@@ -78,10 +79,10 @@ class DetectVarNames( ast.NodeVisitor ):
           n = v.n
         elif isinstance( v, ast.Name ):
           x = v.id
-          if   x in self.upblk.__globals__: # Only support global const indexing for now
-            n = self.upblk.__globals__[ x ]
-          elif x in self.closure:
+          if   x in self.closure:
             n = self.closure[ x ]
+          elif x in self.globals: # Only support global const indexing for now
+            n = self.globals[ x ]
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant
           self.visit( v )
         elif isinstance( v, ast.Call ): # int(x)
@@ -94,9 +95,9 @@ class DetectVarNames( ast.NodeVisitor ):
         node = node.value
 
       if   isinstance( node, ast.Attribute ):
-        obj_name.append( (node.attr, num[::-1]) )
+        obj_name.append( (node.attr, tuple(num[::-1])) )
       elif isinstance( node, ast.Name ):
-        obj_name.append( (node.id, num[::-1]) )
+        obj_name.append( (node.id, tuple(num[::-1])) )
       elif isinstance( node, ast.Call ): # a.b().c()
         # FIXME?
         return None, None
@@ -114,78 +115,69 @@ class DetectVarNames( ast.NodeVisitor ):
       assert len(slices) == 1, "Multiple slices at the end of s.%s in update block %s" % \
         ( ".".join( [ obj_name[i][0] + "".join(["[%s]" % x for x in obj_name[i][1]]) for i in range(len(obj_name)) ] ) \
         +  "[%d:%d]" % (x[0], x[1]), self.upblk.__name__ )
+      obj_name[0] = ( obj_name[0][0], obj_name[0][1] + tuple(slices) )
 
-      obj_name[0][1].append( slices[0] )
-
-    obj_name = obj_name[::-1]
-    nodelist = nodelist[::-1]
-    return obj_name, nodelist
+    return tuple(obj_name[::-1]), tuple(nodelist[::-1])
 
 class DetectReadsWritesCalls( DetectVarNames ):
 
-  def enter( self, node, read, write, calls ):
-    self.read = []
-    self.write = []
-    self.calls = []
+  def __init__( self, upblk, read, write, calls ):
+    super().__init__( upblk )
+    self.read  = read
+    self.write = write
+    self.calls = calls
+
+  def enter( self, node ):
     self.visit( node )
-    read.extend ( self.read )
-    write.extend( self.write )
-    calls.extend( self.calls )
 
   def visit_Attribute( self, node ): # s.a.b
     obj_name, nodelist = self._get_full_name( node )
-    if not obj_name:  return
 
-    pair = (obj_name, nodelist)
-
-    if   isinstance( node.ctx, ast.Load ):
-      self.read.append( pair )
-    elif isinstance( node.ctx, ast.Store ):
-      self.write.append( pair )
-    else:
-      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
+    if obj_name:
+      if   isinstance( node.ctx, ast.Load ):
+        self.read.append( (obj_name, nodelist) )
+      elif isinstance( node.ctx, ast.Store ):
+        self.write.append( (obj_name, nodelist) )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
     obj_name, nodelist = self._get_full_name( node )
-    if not obj_name:  return
 
-    pair = (obj_name, nodelist)
+    if obj_name:
+      if   isinstance( node.ctx, ast.Load ):
+        self.read.append( (obj_name, nodelist) )
+      elif isinstance( node.ctx, ast.Store ):
+        self.write.append( (obj_name, nodelist) )
+      else:
+        raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
-    if   isinstance( node.ctx, ast.Load ):
-      self.read.append( pair )
-    elif isinstance( node.ctx, ast.Store ):
-      self.write.append( pair )
-    else:
-      assert False, type( node.ctx )
-
-    self.visit( node.slice )
+      self.visit( node.slice )
 
   def visit_Call( self, node ):
     obj_name, nodelist = self._get_full_name( node.func )
-    if not obj_name:  return
 
-    self.calls.append( (obj_name, nodelist) )
+    if obj_name:
+      self.calls.append( (obj_name, nodelist) )
 
-    for x in node.args:
-      self.visit( x )
+      for x in node.args:
+        self.visit( x )
 
 class DetectMethodCalls( DetectVarNames ):
 
-  def enter( self, node, methods ):
-    self.methods = []
+  def __init__( self, upblk, methods ):
+    super().__init__( upblk )
+    self.methods = methods
+
+  def enter( self, node ):
     self.visit( node )
-    methods.extend( self.methods )
 
   def visit_Call( self, node ):
-    obj_name = self.get_full_name( node.func )
-    if not obj_name: return # to check node.func.id
+    obj_name = self._get_full_name( node.func )
 
-    pair = (obj_name, node)
+    if obj_name: # to check node.func.id
+      self.methods.append( (obj_name, node) )
 
-    self.methods.append( pair )
-
-    for x in node.args:
-      self.visit( x )
+      for x in node.args:
+        self.visit( x )
 
 def extract_reads_writes_calls( f, tree, read, write, calls ):
 
@@ -195,9 +187,9 @@ def extract_reads_writes_calls( f, tree, read, write, calls ):
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
-  visitor = DetectReadsWritesCalls( f )
+  visitor = DetectReadsWritesCalls( f, read, write, calls )
   for stmt in tree.body:
-    visitor.enter( stmt, read, write, calls )
+    visitor.enter( stmt )
 
 def get_method_calls( tree, upblk, methods ):
-  DetectMethodCalls( upblk ).enter( tree, methods )
+  DetectMethodCalls( upblk, methods ).enter( tree )
