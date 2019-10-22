@@ -102,7 +102,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src = '@classmethod\n' if class_method else ''
   src += f'def {fn_name}({args}):\n{body}'
   _locals = {}
-
+  print(src)
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -113,13 +113,12 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
 #
 # Shunning: I revamped the whole thing because they are indeed mutable
 # objects.
-#
-# x: Bits4 = None
 
 def _mk_init_arg( name, type_ ):
   # default is always None
-  if isinstance( type_, list ): return f'{name}: list = None'
-  return f'{name}: _type_{name} = None'
+  if isinstance( type_, list ) or is_bit_struct( type_ ):
+    return f'{name} = None'
+  return f'{name} = 0'
 
 #-------------------------------------------------------------------------
 # _mk_init_body
@@ -133,11 +132,11 @@ def _mk_init_body( self_name, name, type_ ):
       return f"[{', '.join( [ _recursive_generate_init(x[0]) ] * len(x) )}]"
     return f"_type_{name}()"
 
-  if isinstance( type_, list ):
+  if isinstance( type_, list ) or is_bit_struct( type_ ):
     return f'{self_name}.{name} = {name} or {_recursive_generate_init(type_)}'
 
-  assert issubclass( type_, Bits ) or is_bit_struct( type_ )
-  return f'{self_name}.{name} = {name} or _type_{name}()'
+  assert issubclass( type_, Bits )
+  return f'{self_name}.{name} = _type_{name}({name})'
 
 #-------------------------------------------------------------------------
 # _mk_tuple_str
@@ -157,9 +156,11 @@ def _mk_tuple_str( self_name, fields ):
 # contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
 # function that looks like the following:
 #
-# def __init__( s, x: Bits4 = None, y: Bits4 = None ):
-#   s.x = x or Bits4()
-#   s.y = y or Bits4()
+# def __init__( s, x = 0, y = 0, z = None, p = None ):
+#   s.x = _type_x(x)
+#   s.y = _type_y(y)
+#   s.z = z or _type_z()
+#   s.p = p or [ _type_p(), _type_p() ]
 #
 # NOTE:
 # _mk_init_fn also takes as argument the name of self in case there is a
@@ -266,39 +267,6 @@ def _mk_hash_fn( fields ):
     '__hash__',
     [ 'self' ],
     [ f'return hash({self_tuple})' ]
-  )
-
-#-------------------------------------------------------------------------
-# _mk_mk_msg
-#-------------------------------------------------------------------------
-# __init__ doesn't perform casting and is usually used for constructing an
-# empty message. mk_msg does casting for Bits fields and preserve
-# list/BitStruct field, and is a class method
-#
-# @classmethod
-# def mk_msg(cls, x, y, some_struct_inst):
-#   return cls(Bits4(x), Bits8(y), some_struct_inst)
-
-def _mk_mk_msg( fields ):
-
-  # Register necessary types in _globals
-  _globals = {}
-
-  assign_strs = []
-  for name, type_ in fields.items():
-    if isinstance( type_, list ) or is_bit_struct( type_ ):
-      assign_strs.append( f'{name}' )
-    else:
-      assert issubclass( type_, Bits )
-      _globals[ type_.__name__ ] = type_
-      assign_strs.append( f'{type_.__name__}({name})' )
-
-  return _create_fn(
-    'mk_msg',
-    [ "cls" ] + [ name for name in fields ],
-    [ f"return cls({ ', '.join(assign_strs) })" ],
-    _globals = _globals,
-    class_method = True,
   )
 
 #-------------------------------------------------------------------------
@@ -445,10 +413,6 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   if add_hash:
     if not '__hash__' in cls.__dict__:
       cls.__hash__ = _mk_hash_fn( fields )
-
-  # Create mk_msg.
-  assert not 'mk_msg' in cls.__dict__
-  cls.mk_msg = _mk_mk_msg( fields )
 
   # TODO: maybe add a to_bits and from bits function.
 

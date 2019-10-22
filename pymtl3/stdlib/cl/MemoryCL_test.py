@@ -73,10 +73,10 @@ req_cls, resp_cls = mk_mem_msg( 8, 32, 32 )
 b32 = Bits32
 
 def req( type_, opaque, addr, len, data ):
-  return req_cls.mk_msg( req_type_dict[type_], opaque, addr, len, b32(data) )
+  return req_cls( req_type_dict[type_], opaque, addr, len, b32(data) )
 
 def resp( type_, opaque, len, data ):
-  return resp_cls.mk_msg( resp_type_dict[type_], opaque, 0, len, b32(data) )
+  return resp_cls( resp_type_dict[type_], opaque, 0, len, b32(data) )
 
 #----------------------------------------------------------------------
 # Test Case: basic

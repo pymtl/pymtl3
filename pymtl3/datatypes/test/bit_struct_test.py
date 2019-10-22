@@ -153,17 +153,27 @@ def test_structs_caching_metadata_undefined():
   assert B.S is A.S
   assert B.S.nbits == 2 # From get cache B.S is A.S ... so no nbits=2
 
+#-------------------------------------------------------------------------
+# Test the functionalities
+#-------------------------------------------------------------------------
+
 def test_simple():
   print()
 
   # Test basic
   px = Pixel()
+  assert isinstance( px.r, Bits8 )
+  assert isinstance( px.g, Bits8 )
+  assert isinstance( px.b, Bits8 )
   assert px.r == px.g == 0
   assert px.b == 0
   assert px.nbits == 24
 
   # Test dynamic basic
   mpx = MadePixel()
+  assert isinstance( mpx.r, Bits8 )
+  assert isinstance( mpx.g, Bits8 )
+  assert isinstance( mpx.b, Bits8 )
   assert mpx.r == mpx.g == 0
   assert mpx.b == 0
   assert mpx.nbits == 24
@@ -175,13 +185,13 @@ def test_simple():
   print(( repr(px), repr(mpx) ))
 
   # test equality
-  px1 = Pixel( b4(1), b4(2), b4(3) )
+  px1 = Pixel(1, 2, 3)
+  assert isinstance( px1.r, Bits8 )
+  assert isinstance( px1.g, Bits8 )
+  assert isinstance( px1.b, Bits8 )
   px2 = Pixel( b4(0), b4(0), b4(0) )
   assert px != px1
   assert px == px2
-
-  px = Pixel.mk_msg( 1, 2, 3 )
-  assert type(px.r) is Bits8 and type(px.g) is Bits8 and type(px.b) is Bits8
 
 # FIXME: The following inherited bit struct cannot be used for construct
 # nested struct as the newly made class is not captured in the scope of
@@ -354,7 +364,11 @@ def test_nested_two_struct_with_same_name():
   assert isinstance( ss.b.x, Bits8 )
   assert isinstance( ss.b.y, Bits8 )
 
-  ss = SS.mk_msg( A.S.mk_msg(2), B.S.mk_msg(3,3) )
+  ss = SS( A.S(2), B.S(3,3) )
+  assert isinstance( ss.a.z, Bits2 )
+  assert isinstance( ss.b.x, Bits8 )
+  assert isinstance( ss.b.y, Bits8 )
+
   assert ss.a.z == 2
   assert ss.b.x == 3
   assert ss.b.y == 3
