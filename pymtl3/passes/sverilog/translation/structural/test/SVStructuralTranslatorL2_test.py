@@ -139,11 +139,11 @@ typedef struct packed {
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   a._test_vectors = [
-    [       B(),          0 ],
-    [   B(Bits32( 0)),    0 ],
-    [   B(Bits32(-1)),   -1 ],
-    [   B(Bits32(-2)),   -2 ],
-    [   B(Bits32(24)),   24 ],
+    [   B(),      0 ],
+    [   B( 0),    0 ],
+    [   B(-1),   -1 ],
+    [   B(-2),   -2 ],
+    [   B(24),   24 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )
@@ -229,11 +229,11 @@ typedef struct packed {
     assert m.out_foo == Bits32(tv[1])
     assert m.out_bar == Bits32(tv[2])
   a._test_vectors = [
-    [       B(),                    0,    0 ],
-    [     B( C(Bits32(2)), Bits32(1) ),     1,    2 ],
-    [   B( C(Bits32(-2)), Bits32(-1) ),    -1,   -2 ],
-    [   B( C(Bits32(-3)), Bits32(-2) ),    -2,   -3 ],
-    [   B( C(Bits32(25)), Bits32(24) ),    24,   25 ],
+    [       B(),            0,    0 ],
+    [    B( C(2),  1 ),     1,    2 ],
+    [   B( C(-2), -1 ),    -1,   -2 ],
+    [   B( C(-3), -2 ),    -2,   -3 ],
+    [   B( C(25), 24 ),    24,   25 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   do_test( a )

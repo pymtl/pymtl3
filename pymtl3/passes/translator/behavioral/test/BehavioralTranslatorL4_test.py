@@ -60,8 +60,6 @@ def test_tmp_ifc_port_struct( do_test ):
   @bitstruct
   class B:
     foo: Bits32
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
   class Ifc( Interface ):
     def construct( s ):
       s.foo = InPort( B )

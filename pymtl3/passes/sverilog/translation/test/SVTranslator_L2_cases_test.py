@@ -1070,10 +1070,6 @@ def test_nested_struct( do_test ):
     bar: [ Bits32 ]*2
     c: C
     foo: Bits32
-    def __init__( s, foo=42, bar=1 ):
-      s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in range(2) ]
-      s.c = C()
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )

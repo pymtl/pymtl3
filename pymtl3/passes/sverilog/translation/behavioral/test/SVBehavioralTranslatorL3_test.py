@@ -53,13 +53,13 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   a._test_vectors = [
-    [     B()         , Bits32(  0) ],
-    [    B(Bits32( 0)), Bits32(  0) ],
-    [   B( Bits32(-1)), Bits32( -1) ],
-    [   B( Bits32(42)), Bits32( 42) ],
-    [   B( Bits32(-2)), Bits32( -2) ],
-    [   B( Bits32(10)), Bits32( 10) ],
-    [  B( Bits32(256)), Bits32(256) ],
+    [     B(),   0 ],
+    [    B(0),   0 ],
+    [   B(-1),  -1 ],
+    [   B(42),  42 ],
+    [   B(-2),  -2 ],
+    [   B(10),  10 ],
+    [  B(256), 256 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
@@ -135,12 +135,12 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits96(tv[1])
   a._test_vectors = [
-    [            B(),                              concat(  Bits32(0),   Bits32(0),   Bits32(0) ) ],
-    [    B(Bits32(0), [ Bits32(0) ,Bits32(0)  ] ), concat(  Bits32(0),   Bits32(0),   Bits32(0) ) ],
-    [  B(Bits32(-1),  [ Bits32(-1),Bits32(-1) ] ), concat( Bits32(-1),  Bits32(-1),  Bits32(-1) ) ],
-    [  B(Bits32(-1),  [ Bits32(42),Bits32(42) ] ), concat( Bits32(42),  Bits32(42),  Bits32(-1) ) ],
-    [  B(Bits32(42),  [ Bits32(42),Bits32(42) ] ), concat( Bits32(42),  Bits32(42),  Bits32(42) ) ],
-    [  B(Bits32(42),  [ Bits32(-1),Bits32(-1) ] ), concat( Bits32(-1),  Bits32(-1),  Bits32(42) ) ],
+    [   B(),                              concat(  Bits32(0),   Bits32(0),   Bits32(0) ) ],
+    [   B(0, [ Bits32(0) ,Bits32(0)  ] ), concat(  Bits32(0),   Bits32(0),   Bits32(0) ) ],
+    [  B(-1, [ Bits32(-1),Bits32(-1) ] ), concat( Bits32(-1),  Bits32(-1),  Bits32(-1) ) ],
+    [  B(-1, [ Bits32(42),Bits32(42) ] ), concat( Bits32(42),  Bits32(42),  Bits32(-1) ) ],
+    [  B(42, [ Bits32(42),Bits32(42) ] ), concat( Bits32(42),  Bits32(42),  Bits32(42) ) ],
+    [  B(42, [ Bits32(-1),Bits32(-1) ] ), concat( Bits32(-1),  Bits32(-1),  Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
@@ -180,12 +180,12 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits96(tv[1])
   a._test_vectors = [
-    [           B(),                                               concat(   Bits32(0), Bits32(0),   Bits32(0) ) ],
-    [   B(Bits32(0), [ Bits32(0) , Bits32(0)  ], C( Bits32(5) ) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
-    [  B(Bits32(-1), [ Bits32(-1), Bits32(-2) ], C( Bits32(6) ) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
-    [  B(Bits32(-1), [ Bits32(42), Bits32(43) ], C( Bits32(7) ) ), concat(  Bits32(42), Bits32(7),  Bits32(-1) ) ],
-    [  B(Bits32(42), [ Bits32(42), Bits32(43) ], C( Bits32(8) ) ), concat(  Bits32(42), Bits32(8),  Bits32(42) ) ],
-    [  B(Bits32(42), [ Bits32(-1), Bits32(-2) ], C( Bits32(9) ) ), concat(  Bits32(-1), Bits32(9),  Bits32(42) ) ],
+    [   B(),                                     concat(   Bits32(0), Bits32(0),   Bits32(0) ) ],
+    [   B(0, [ Bits32(0) , Bits32(0)  ], C(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
+    [  B(-1, [ Bits32(-1), Bits32(-2) ], C(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
+    [  B(-1, [ Bits32(42), Bits32(43) ], C(7) ), concat(  Bits32(42), Bits32(7),  Bits32(-1) ) ],
+    [  B(42, [ Bits32(42), Bits32(43) ], C(8) ), concat(  Bits32(42), Bits32(8),  Bits32(42) ) ],
+    [  B(42, [ Bits32(-1), Bits32(-2) ], C(9) ), concat(  Bits32(-1), Bits32(9),  Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \

@@ -86,9 +86,6 @@ def test_struct_wire_decl( do_test ):
   class B:
     foo: Bits32
     bar: Bits16
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = Bits16(bar)
   class A( Component ):
     def construct( s ):
       s.struct = Wire( B )
