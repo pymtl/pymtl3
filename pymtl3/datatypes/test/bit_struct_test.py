@@ -9,6 +9,8 @@ Author : Yanghui Ou
 """
 from copy import deepcopy
 
+import pytest
+
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
@@ -61,12 +63,14 @@ class Pixel:
   r : Bits8
   g : Bits8
   b : Bits8
+  nbits = 24
 
 MadePixel = mk_bit_struct( 'MadePixel',{
     'r' : Bits8,
     'g' : Bits8,
     'b' : Bits8,
-  }
+  },
+  namespace = { 'nbits' : 24 }
 )
 
 #-------------------------------------------------------------------------
@@ -123,6 +127,32 @@ def test_structs_caching():
   })
   assert SS3 is not A.S
 
+# Shunning: As of now, since we still want metadata fields in the struct
+# definition, we have to mark this as xfail until we find a better
+# solution. In terms of the test, B.S gets cached because A.S and B.S have
+# the same annotated fields. However, the nbits field of B is different
+# from A, which is an underfined behavior ...
+
+@pytest.mark.xfail
+def test_structs_caching_metadata_undefined():
+
+  class A:
+    @bit_struct
+    class S:
+      x: Bits8
+      y: Bits8
+      nbits = 1
+
+  class B:
+    @bit_struct
+    class S:
+      x: Bits8
+      y: Bits8
+      nbits = 2
+
+  assert B.S is A.S
+  assert B.S.nbits == 2 # From get cache B.S is A.S ... so no nbits=2
+
 def test_simple():
   print()
 
@@ -130,11 +160,13 @@ def test_simple():
   px = Pixel()
   assert px.r == px.g == 0
   assert px.b == 0
+  assert px.nbits == 24
 
   # Test dynamic basic
   mpx = MadePixel()
   assert mpx.r == mpx.g == 0
   assert mpx.b == 0
+  assert mpx.nbits == 24
 
   # Test str
   assert str(px) == str(mpx)
@@ -213,7 +245,6 @@ def test_struct():
   dp = DPoint( 1, 2 )
   print( DPoint )
   print( dp     )
-  # assert DPoint.nbits == 12
   assert dp.x == 1
   assert dp.y == 2
 

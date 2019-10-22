@@ -382,11 +382,6 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
                          f"Suggestion: check the definition of {cls.__name__} to"
                           " make sure it only contains 'field_name(string): Type(type).'" )
 
-  # Sanity check: is there any variable that doesn't have any annotation?
-  for name in cls.__dict__:
-    if name[0] != '_' and name not in cls_annotations:
-      raise TypeError(f"'{name}' field has no type annotation!")
-
   # Get field information from the annotation and prepare for hashing
   fields = {}
   hashable_fields = {}
