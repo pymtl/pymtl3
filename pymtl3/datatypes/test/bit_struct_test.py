@@ -61,17 +61,67 @@ class Pixel:
   r : Bits8
   g : Bits8
   b : Bits8
-  nbits = 24
 
 MadePixel = mk_bit_struct( 'MadePixel',{
     'r' : Bits8,
     'g' : Bits8,
     'b' : Bits8,
-  },
-  namespace = {
-    'nbits' : 24
   }
 )
+
+#-------------------------------------------------------------------------
+# Caching test
+#-------------------------------------------------------------------------
+
+def test_structs_caching():
+
+  class A:
+    @bit_struct
+    class S:
+      x: Bits8
+      y: Bits8
+      z:  [ [ Bits32, Bits32 ] ] * 2
+
+  class B:
+    @bit_struct
+    class S:
+      x: Bits8
+      y: Bits8
+      z:  [ [ Bits32, Bits32 ] ] * 2
+
+  SS = mk_bit_struct( 'S', {
+    'x' : Bits8,
+    'y' : Bits8,
+    'z' : [ [ Bits32, Bits32 ], [ Bits32, Bits32 ] ]
+  })
+
+  assert B.S is A.S
+  assert SS is B.S
+  assert SS is A.S
+
+  class C:
+    @bit_struct
+    class S:
+      x: Bits8
+      y: Bits8
+      w:  [ [ Bits32, Bits32 ] ] * 2
+
+  assert C.S is not A.S
+
+  SS2 = mk_bit_struct( 'S', {
+    'x' : Bits8,
+    'y' : Bits7,
+    'z' : [ [ Bits32, Bits32 ], [ Bits32, Bits32 ] ]
+  })
+
+  assert SS2 is not A.S
+
+  SS3 = mk_bit_struct( 's', {
+    'x' : Bits8,
+    'y' : Bits8,
+    'z' : [ [ Bits32, Bits32 ], [ Bits32, Bits32 ] ]
+  })
+  assert SS3 is not A.S
 
 def test_simple():
   print()
@@ -80,13 +130,11 @@ def test_simple():
   px = Pixel()
   assert px.r == px.g == 0
   assert px.b == 0
-  assert px.nbits == 24
 
   # Test dynamic basic
   mpx = MadePixel()
   assert mpx.r == mpx.g == 0
   assert mpx.b == 0
-  assert mpx.nbits == 24
 
   # Test str
   assert str(px) == str(mpx)
@@ -135,9 +183,6 @@ def test_struct():
     StaticPoint.__dict__[ 'haha' ]
   except KeyError as e:
     assert str( e ) == "'haha'"
-  # assert StaticPoint.nbits == 8
-  # assert StaticPoint.field_nbits( 'x' ) == 4
-  # assert StaticPoint.field_nbits( 'y' ) == 4
   # assert pt.to_bits() == 0x24
   assert pt.x == 2
   assert pt.y == 4
@@ -145,10 +190,6 @@ def test_struct():
   np = NestedSimple( StaticPoint(1,2), StaticPoint(3,4) )
   print( NestedSimple )
   print( np           )
-  # print( np.to_bits() )
-  # assert NestedSimple.nbits == 16
-  # assert NestedSimple.field_nbits( 'pt0' ) == 8
-  # assert NestedSimple.field_nbits( 'pt1' ) == 8
   assert np.pt0 == StaticPoint(1,2)
   assert np.pt0 != StaticPoint(1,1)
   assert np.pt0.x == 1

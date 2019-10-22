@@ -102,6 +102,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src = '@classmethod\n' if class_method else ''
   src += f'def {fn_name}({args}):\n{body}'
   _locals = {}
+
   exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -285,7 +286,6 @@ def _mk_mk_msg( fields ):
 
   assign_strs = []
   for name, type_ in fields.items():
-    type_
     if isinstance( type_, list ) or is_bit_struct( type_ ):
       assign_strs.append( f'{name}' )
     else:
@@ -370,11 +370,10 @@ def _get_self_name( fields ):
 #-------------------------------------------------------------------------
 # Process the input cls and add methods to it.
 
+_bit_struct_hash_cache = {}
+
 def _process_class( cls, add_init=True, add_str=True, add_repr=True,
                     add_hash=True ):
-
-  fields = {}
-  add_eq = True
 
   # Get annotations of the class
   cls_annotations = cls.__dict__.get('__annotations__', {})
@@ -383,10 +382,32 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
                          f"Suggestion: check the definition of {cls.__name__} to"
                           " make sure it only contains 'field_name(string): Type(type).'" )
 
-  # Get field information from the annotation
+  # Sanity check: is there any variable that doesn't have any annotation?
+  for name in cls.__dict__:
+    if name[0] != '_' and name not in cls_annotations:
+      raise TypeError(f"'{name}' field has no type annotation!")
+
+  # Get field information from the annotation and prepare for hashing
+  fields = {}
+  hashable_fields = {}
+
+  def _convert_list_to_tuple( x ):
+    if isinstance( x, list ):
+      return tuple( [ _convert_list_to_tuple( y ) for y in x ] )
+    return x
+
   for a_name, a_type in cls_annotations.items():
     _check_field_annotation( cls, a_name, a_type )
     fields[ a_name ] = a_type
+    hashable_fields[ a_name ] = _convert_list_to_tuple( a_type )
+
+  cls._hash = _hash = hash( (cls.__name__, *tuple(hashable_fields.items()),
+                             add_init, add_str, add_repr, add_hash) )
+
+  if _hash in _bit_struct_hash_cache:
+    return _bit_struct_hash_cache[ _hash ]
+
+  _bit_struct_hash_cache[ _hash ] = cls
 
   # Stamp the special attribute so that translation pass can identify it
   # as bit struct.
@@ -415,15 +436,15 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   # call __eq__ and negate it.
   # NOTE: if user overwrites __eq__ it may lead to different behavior for
   # the translated verilog as in the verilog world two bit structs are
-  # equal only if all the fields are equal.
-  if add_eq:
-    if not '__eq__' in cls.__dict__:
-      cls.__eq__ = _mk_eq_fn( fields )
-    else:
-      w_msg = ( f'Overwriting {cls.__qualname__}\'s __eq__ may cause the '
-                'translated verilog behaves differently from PyMTL '
-                'simulation.')
-      warnings.warn( w_msg )
+  # equal only if all the fields are equal. We always try to add __eq__
+
+  if not '__eq__' in cls.__dict__:
+    cls.__eq__ = _mk_eq_fn( fields )
+  else:
+    w_msg = ( f'Overwriting {cls.__qualname__}\'s __eq__ may cause the '
+              'translated verilog behaves differently from PyMTL '
+              'simulation.')
+    warnings.warn( w_msg )
 
   # Create __hash__.
   if add_hash:
@@ -444,8 +465,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
 # The actual class decorator. We add a * in the argument list so that the
 # following argument can only be used as keyword arguments.
 
-def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
-                add_hash=True ):
+def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True, add_hash=True ):
 
   def wrap( cls ):
     return _process_class( cls, add_init, add_str, add_repr )
@@ -466,13 +486,8 @@ def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True,
 def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
 
-  # Lazily construct empty dictionary
-  if namespace is None:
-    namespace = {}
-
-  # Copy namespace since we are going to mutate it
-  else:
-    namespace = namespace.copy()
+  # copy namespace since  will mutate it
+  namespace = {} if namespace is None else namespace.copy()
 
   # We assume fields is a dictionary and thus there won't be duplicate
   # field names. So we only check if the field names are indeed strings
@@ -487,7 +502,5 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
 
   namespace['__annotations__'] = annos
   cls = types.new_class( cls_name, (), {}, lambda ns: ns.update( namespace ) )
-  ret = bit_struct( cls, add_init=add_init, add_str=add_str, add_repr=add_repr,
-                    add_hash=True )
-
-  return ret
+  return bit_struct( cls, add_init=add_init, add_str=add_str,
+                          add_repr=add_repr, add_hash=add_hash )
