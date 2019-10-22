@@ -51,25 +51,22 @@ class Bits{0}(Bits):
 
 _bitwidths  = list(range(1, 256)) + [ 384, 512 ]
 _bits_types = dict()
-gs = globals()
 
 local = {}
 exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
-              filename="bits_import.py", mode="exec"),
-     gs, local)
+              filename="bits_import.py", mode="exec"), {'Bits': Bits}, local)
 
-for name, cls in local.items():
-  nbits = int(name[4:])
-  _bits_types[nbits] = cls
-  gs[f"b{nbits}"] = cls
-
-gs.update(local)
+gs = globals()
+for cls in local.values():
+  nbits = cls.nbits
+  _bits_types[nbits] = gs[f"Bits{nbits}"] = gs[f"b{nbits}"] = cls
 
 def mk_bits( nbits ):
   assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits in _bits_types:  return _bits_types[ nbits ]
-  local = {}
-  exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ), globals(), local)
+  _locals  = {}
+  exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ),
+                {'Bits': Bits }, _locals)
   cls = list(local.values())[0]
   _bits_types[ nbits ] = cls
   return cls
