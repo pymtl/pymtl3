@@ -15,8 +15,11 @@ from .errors import InvalidFFAssignError
 
 class DetectVarNames( ast.NodeVisitor ):
 
-  def __init__( self, upblk ):
-    self.upblk   = upblk
+  def __init__( self, upblk, obj, is_update_ff ):
+    self.upblk = upblk
+    self.obj = obj
+    self.is_update_ff = is_update_ff
+
     self.closure = {}
     for i, var in enumerate( upblk.__code__.co_freevars ):
       try:  self.closure[ var ] = upblk.__closure__[i].cell_contents
@@ -126,16 +129,11 @@ class DetectVarNames( ast.NodeVisitor ):
 class DetectReadsWritesCalls( DetectVarNames ):
 
   def enter( self, node, obj, is_update_ff, read, write, calls ):
-    self.is_update_ff = is_update_ff
-    self.obj = obj
 
-    self.read = []
-    self.write = []
-    self.calls = []
+    self.read = read
+    self.write = write
+    self.calls = calls
     self.visit( node )
-    read.extend ( self.read )
-    write.extend( self.write )
-    calls.extend( self.calls )
 
   def visit_Assign( self, node ):
 
@@ -175,7 +173,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
     obj_name, nodelist = self._get_full_name( node )
@@ -204,9 +202,8 @@ class DetectReadsWritesCalls( DetectVarNames ):
 class DetectMethodCalls( DetectVarNames ):
 
   def enter( self, node, methods ):
-    self.methods = []
+    self.methods = methods
     self.visit( node )
-    methods.extend( self.methods )
 
   def visit_Call( self, node ):
     obj_name = self.get_full_name( node.func )
@@ -227,8 +224,9 @@ def extract_reads_writes_calls( hostobj, f, tree, is_update_ff, read, write, cal
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
+  visitor = DetectReadsWritesCalls( f, hostobj, is_update_ff )
   for stmt in tree.body:
-    DetectReadsWritesCalls( f ).enter( stmt, hostobj, is_update_ff, read, write, calls )
+    visitor.enter( stmt, read, write, calls )
 
 def get_method_calls( tree, upblk, methods ):
-  DetectMethodCalls( upblk ).enter( tree, methods )
+  DetectMethodCalls( upblk, hostobj, is_update_ff ).enter( tree, methods )
