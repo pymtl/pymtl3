@@ -1,6 +1,6 @@
 """
 ==========================================================================
-bit_struct.py
+bitstruct.py
 ==========================================================================
 APIs to generate a bit struct type. Using decorators and type annotations
 to create bit struct is much inspired by python3 dataclass implementation.
@@ -12,7 +12,7 @@ https://github.com/python/cpython/blob/master/Lib/dataclasses.py
 
 For example,
 
-@bit_struct
+@bitstruct
 class Point:
   x : Bits4
   y : Bits4
@@ -21,10 +21,10 @@ will automatically generate some methods, such as __init__, __str__,
 __repr__, for the Point class.
 
 Similar to the built-in dataclasses module, we also provide a
-mk_bit_struct function for user to dynamically generate bit struct types.
+mk_bitstruct function for user to dynamically generate bit struct types.
 For example,
 
-mk_bit_struct( 'Pixel',{
+mk_bitstruct( 'Pixel',{
     'r' : Bits4,
     'g' : Bits4,
     'b' : Bits4,
@@ -36,7 +36,7 @@ mk_bit_struct( 'Pixel',{
 
 is equivalent to:
 
-@bit_struct
+@bitstruct
 class Pixel:
   r : Bits4
   g : Bits4
@@ -61,26 +61,26 @@ from .bits_import import *
 #-------------------------------------------------------------------------
 
 # Object with this attribute is considered as bit struct, as we assume
-# only the bit_struct decorator will stamp this attribute to a class. This
+# only the bitstruct decorator will stamp this attribute to a class. This
 # attribute also stores the field information and can be used for
 # translation.
 #
 # The original dataclass use hasattr( cls, _FIELDS ) to check dataclass.
 # We do this here as well
-_FIELDS = '__bit_struct_fields__'
+_FIELDS = '__bitstruct_fields__'
 
-def _is_bit_struct_instance(obj):
+def _is_bitstruct_instance(obj):
   """Returns True if obj is an instance of a dataclass."""
   return hasattr(type(obj), _FIELDS)
 
-def is_bit_struct(obj):
+def is_bitstruct(obj):
   """Returns True if obj is a dataclass or an instance of a
   dataclass."""
   cls = obj if isinstance(obj, type) else type(obj)
   return hasattr(cls, _FIELDS)
 
 _DEFAULT_SELF_NAME = 's'
-_ANTI_CONFLICT_SELF_NAME = '__bit_struct_self__'
+_ANTI_CONFLICT_SELF_NAME = '__bitstruct_self__'
 
 #-------------------------------------------------------------------------
 # _create_fn
@@ -116,7 +116,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
 
 def _mk_init_arg( name, type_ ):
   # default is always None
-  if isinstance( type_, list ) or is_bit_struct( type_ ):
+  if isinstance( type_, list ) or is_bitstruct( type_ ):
     return f'{name} = None'
   return f'{name} = 0'
 
@@ -132,7 +132,7 @@ def _mk_init_body( self_name, name, type_ ):
       return f"[{', '.join( [ _recursive_generate_init(x[0]) ] * len(x) )}]"
     return f"_type_{name}()"
 
-  if isinstance( type_, list ) or is_bit_struct( type_ ):
+  if isinstance( type_, list ) or is_bitstruct( type_ ):
     return f'{self_name}.{name} = {name} or {_recursive_generate_init(type_)}'
 
   assert issubclass( type_, Bits )
@@ -180,7 +180,7 @@ def _mk_init_fn( self_name, fields ):
         x = x[0]
       _globals[ f"_type_{name}" ] = x
     else:
-      assert issubclass( type_, Bits ) or is_bit_struct( type_ )
+      assert issubclass( type_, Bits ) or is_bitstruct( type_ )
       _globals[ f"_type_{name}" ] = type_
 
   return _create_fn(
@@ -284,7 +284,7 @@ def _recursive_check_array_types( current ):
       assert y_type is x_type
     return x_type
 
-  assert issubclass( x, Bits ) or is_bit_struct( x )
+  assert issubclass( x, Bits ) or is_bitstruct( x )
   for y in current[1:]:
     assert y is x
   return x
@@ -320,7 +320,7 @@ def _check_field_annotation( cls, name, type_ ):
                       f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}.")
 
     # More specifically, Bits and BitStruct
-    if not issubclass( type_, Bits ) and not is_bit_struct( type_ ):
+    if not issubclass( type_, Bits ) and not is_bitstruct( type_ ):
       raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
                       f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
 
@@ -338,7 +338,7 @@ def _get_self_name( fields ):
 #-------------------------------------------------------------------------
 # Process the input cls and add methods to it.
 
-_bit_struct_hash_cache = {}
+_bitstruct_hash_cache = {}
 
 def _process_class( cls, add_init=True, add_str=True, add_repr=True,
                     add_hash=True ):
@@ -367,10 +367,10 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   cls._hash = _hash = hash( (cls.__name__, *tuple(hashable_fields.items()),
                              add_init, add_str, add_repr, add_hash) )
 
-  if _hash in _bit_struct_hash_cache:
-    return _bit_struct_hash_cache[ _hash ]
+  if _hash in _bitstruct_hash_cache:
+    return _bitstruct_hash_cache[ _hash ]
 
-  _bit_struct_hash_cache[ _hash ] = cls
+  _bitstruct_hash_cache[ _hash ] = cls
 
   # Stamp the special attribute so that translation pass can identify it
   # as bit struct.
@@ -419,30 +419,30 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   return cls
 
 #-------------------------------------------------------------------------
-# bit_struct
+# bitstruct
 #-------------------------------------------------------------------------
 # The actual class decorator. We add a * in the argument list so that the
 # following argument can only be used as keyword arguments.
 
-def bit_struct( _cls=None, *, add_init=True, add_str=True, add_repr=True, add_hash=True ):
+def bitstruct( _cls=None, *, add_init=True, add_str=True, add_repr=True, add_hash=True ):
 
   def wrap( cls ):
     return _process_class( cls, add_init, add_str, add_repr )
 
-  # Called as @bit_struct(...)
+  # Called as @bitstruct(...)
   if _cls is None:
     return wrap
 
-  # Called as @bit_struct without parens.
+  # Called as @bitstruct without parens.
   return wrap( _cls )
 
 #-------------------------------------------------------------------------
-# mk_bit_struct
+# mk_bitstruct
 #-------------------------------------------------------------------------
 # Dynamically generate a bit struct class.
 # TODO: should we add base parameters to support inheritence?
 
-def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
+def mk_bitstruct( cls_name, fields, *, namespace=None, add_init=True,
                    add_str=True, add_repr=True, add_hash=True ):
 
   # copy namespace since  will mutate it
@@ -461,5 +461,5 @@ def mk_bit_struct( cls_name, fields, *, namespace=None, add_init=True,
 
   namespace['__annotations__'] = annos
   cls = types.new_class( cls_name, (), {}, lambda ns: ns.update( namespace ) )
-  return bit_struct( cls, add_init=add_init, add_str=add_str,
+  return bitstruct( cls, add_init=add_init, add_str=add_str,
                           add_repr=add_repr, add_hash=add_hash )

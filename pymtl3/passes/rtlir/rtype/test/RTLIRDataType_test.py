@@ -30,7 +30,7 @@ def test_py_list():
     rdt.get_rtlir_dtype( [ 1, 2, 3 ] )
 
 def test_py_struct():
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -56,7 +56,7 @@ def test_pymtl_signal():
   assert rdt.Vector(32) == rdt.get_rtlir_dtype( a.in_ )
 
 def test_pymtl_packed_array():
-  @bit_struct
+  @bitstruct
   class B:
     foo: [ Bits32 ] * 5
   class A( Component ):

@@ -31,6 +31,6 @@ __all__ = [
 
   'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
   'mk_bits', 'Bits',
-  'mk_bit_struct', 'bit_struct',
+  'mk_bitstruct', 'bitstruct',
 ] + [ "Bits{}".format(x) for x in _bitwidths ] \
   + [ "b{}".format(x) for x in _bitwidths ]

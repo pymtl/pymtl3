@@ -3,7 +3,7 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from pymtl3.datatypes import Bits1, Bits32, Bits96, bit_struct, concat
+from pymtl3.datatypes import Bits1, Bits32, Bits96, bitstruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
@@ -923,7 +923,7 @@ endmodule
   do_test( a )
 
 def test_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -988,7 +988,7 @@ endmodule
   do_test( a )
 
 def test_packed_array_concat( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     bar: [ Bits32 ] * 2
     foo: Bits32
@@ -1062,10 +1062,10 @@ endmodule
   do_test( a )
 
 def test_nested_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     woof: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     bar: [ Bits32 ]*2
     c: C
@@ -1191,7 +1191,7 @@ endmodule
 #-------------------------------------------------------------------------
 
 def test_struct_port( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -1237,10 +1237,10 @@ endmodule
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     c: C
@@ -1302,7 +1302,7 @@ endmodule
   do_test( a )
 
 def test_packed_array( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: [ Bits32 ] * 2
   class A( Component ):
@@ -1360,10 +1360,10 @@ endmodule
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     c: [ C ] * 2
   class A( Component ):
@@ -1428,7 +1428,7 @@ endmodule
   do_test( a )
 
 def test_long_component_name( do_test ):
-  @bit_struct
+  @bitstruct
   class ThisIsABitStructWithSuperLongName:
     bar: Bits32
   class A( Component ):

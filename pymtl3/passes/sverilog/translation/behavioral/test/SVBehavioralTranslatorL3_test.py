@@ -5,7 +5,7 @@
 # Date   : May 28, 2019
 """Test the SystemVerilog translator implementation."""
 
-from pymtl3.datatypes import Bits32, Bits96, bit_struct, concat
+from pymtl3.datatypes import Bits32, Bits96, bitstruct, concat
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -30,7 +30,7 @@ def local_do_test( m ):
     assert upblk_src == m._ref_upblk_srcs[blk.__name__]
 
 def test_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -71,7 +71,7 @@ end\
   do_test( a )
 
 def test_struct_const( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -111,7 +111,7 @@ end\
   do_test( a )
 
 def test_packed_array_behavioral( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: [ Bits32 ] * 2
@@ -152,10 +152,10 @@ end\
   do_test( a )
 
 def test_nested_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     woof: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: [Bits32]*2

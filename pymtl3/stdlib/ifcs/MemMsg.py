@@ -30,7 +30,7 @@ def mk_mem_req_msg( opq, addr, data ):
       " " * ( data//4 ),
     )
 
-  req_cls = mk_bit_struct( cls_name, {
+  req_cls = mk_bitstruct( cls_name, {
     'type_':  Bits4,
     'opaque': OpqType,
     'addr':   AddrType,
@@ -60,7 +60,7 @@ def mk_mem_resp_msg( opq, data ):
       " " * ( data//4 ),
     )
 
-  resp_cls = mk_bit_struct( cls_name, {
+  resp_cls = mk_bitstruct( cls_name, {
     'type_':  Bits4,
     'opaque': OpqType,
     'test':   Bits2,

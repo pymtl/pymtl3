@@ -1,8 +1,8 @@
 """
 ==========================================================================
-bit_structs_test.py
+bitstruct_test.py
 ==========================================================================
-Test cases for bit_structs.
+Test cases for bitstructs.
 
 Author : Yanghui Ou
   Date : July 27, 2019
@@ -14,7 +14,7 @@ import pytest
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
-from ..bit_struct import bit_struct, is_bit_struct, mk_bit_struct
+from ..bitstructs import bitstruct, is_bitstruct, mk_bitstruct
 from ..bits_import import *
 
 #-------------------------------------------------------------------------
@@ -23,7 +23,7 @@ from ..bits_import import *
 
 def test_no_field():
   try:
-    @bit_struct
+    @bitstruct
     class Pixel:
       b = Bits8
   except AttributeError as e:
@@ -32,7 +32,7 @@ def test_no_field():
 
 def test_field_no_default():
   try:
-    @bit_struct
+    @bitstruct
     class Pixel:
       r : Bits8
       g : Bits8
@@ -43,7 +43,7 @@ def test_field_no_default():
 
 def test_field_wrong_type():
   try:
-    @bit_struct
+    @bitstruct
     class A:
       x: int
   except TypeError as e:
@@ -52,20 +52,20 @@ def test_field_wrong_type():
 
 def test_field_not_type():
   try:
-    @bit_struct
+    @bitstruct
     class A:
       x: 1
   except TypeError as e:
     print(e)
 
-@bit_struct
+@bitstruct
 class Pixel:
   r : Bits8
   g : Bits8
   b : Bits8
   nbits = 24
 
-MadePixel = mk_bit_struct( 'MadePixel',{
+MadePixel = mk_bitstruct( 'MadePixel',{
     'r' : Bits8,
     'g' : Bits8,
     'b' : Bits8,
@@ -80,20 +80,20 @@ MadePixel = mk_bit_struct( 'MadePixel',{
 def test_structs_caching():
 
   class A:
-    @bit_struct
+    @bitstruct
     class S:
       x: Bits8
       y: Bits8
       z:  [ [ Bits32, Bits32 ] ] * 2
 
   class B:
-    @bit_struct
+    @bitstruct
     class S:
       x: Bits8
       y: Bits8
       z:  [ [ Bits32, Bits32 ] ] * 2
 
-  SS = mk_bit_struct( 'S', {
+  SS = mk_bitstruct( 'S', {
     'x' : Bits8,
     'y' : Bits8,
     'z' : [ [ Bits32, Bits32 ], [ Bits32, Bits32 ] ]
@@ -104,7 +104,7 @@ def test_structs_caching():
   assert SS is A.S
 
   class C:
-    @bit_struct
+    @bitstruct
     class S:
       x: Bits8
       y: Bits8
@@ -112,7 +112,7 @@ def test_structs_caching():
 
   assert C.S is not A.S
 
-  SS2 = mk_bit_struct( 'S', {
+  SS2 = mk_bitstruct( 'S', {
     'x' : Bits8,
     'y' : Bits7,
     'z' : [ [ Bits32, Bits32 ], [ Bits32, Bits32 ] ]
@@ -120,7 +120,7 @@ def test_structs_caching():
 
   assert SS2 is not A.S
 
-  SS3 = mk_bit_struct( 's', {
+  SS3 = mk_bitstruct( 's', {
     'x' : Bits8,
     'y' : Bits8,
     'z' : [ [ Bits32, Bits32 ], [ Bits32, Bits32 ] ]
@@ -137,14 +137,14 @@ def test_structs_caching():
 def test_structs_caching_metadata_undefined():
 
   class A:
-    @bit_struct
+    @bitstruct
     class S:
       x: Bits8
       y: Bits8
       nbits = 1
 
   class B:
-    @bit_struct
+    @bitstruct
     class S:
       x: Bits8
       y: Bits8
@@ -195,10 +195,10 @@ def test_simple():
 
 # FIXME: The following inherited bit struct cannot be used for construct
 # nested struct as the newly made class is not captured in the scope of
-# mk_bit_struct. Manually created structs cannot be used by mk_bit_struct
+# mk_bitstruct. Manually created structs cannot be used by mk_bitstruct
 # to create nested structs.
 # class StaticPoint(
-#   mk_bit_struct( "BasePoint", [
+#   mk_bitstruct( "BasePoint", [
 #     ( 'x', Bits4 ),
 #     ( 'y', Bits4 ),
 #   ]) ):
@@ -206,13 +206,13 @@ def test_simple():
 #   def __str__( s ):
 #     return "({},{})".format( int(s.x), int(s.y) )
 
-# Create bit struct using syntax sugar (mk_bit_struct):
-StaticPoint = mk_bit_struct( "StaticPoint", {
+# Create bit struct using syntax sugar (mk_bitstruct):
+StaticPoint = mk_bitstruct( "StaticPoint", {
     'x': Bits4,
     'y': Bits4,
   })
-# Create nested struct using mk_bit_struct
-NestedSimple = mk_bit_struct( "NestedSimple", {
+# Create nested struct using mk_bitstruct
+NestedSimple = mk_bitstruct( "NestedSimple", {
     'pt0': StaticPoint,
     'pt1': StaticPoint,
   })
@@ -243,7 +243,7 @@ def test_struct():
     XType = mk_bits( xnbits )
     YType = mk_bits( ynbits )
 
-    return mk_bit_struct(
+    return mk_bitstruct(
       f"Point_{xnbits}_{ynbits}", {
         'x': XType,
         'y': YType,
@@ -266,7 +266,7 @@ def test_component():
       s.out_pt = OutPort( StaticPoint  )
 
       @s.update
-      def up_bit_struct():
+      def up_bitstruct():
         # TODO:We have to use deepcopy here as a temporary workaround
         # to prevent s.in_ being mutated by the following operations.
         s.out = deepcopy( s.in_ )
@@ -289,7 +289,7 @@ def test_component():
 # Overwrite test
 #-------------------------------------------------------------------------
 
-@bit_struct
+@bitstruct
 class Point:
   x : Bits8
   y : Bits8
@@ -300,7 +300,7 @@ class Point:
   def __eq__( self, other ):
     return self.x == other.x and self.y == other.y
 
-MadePoint = mk_bit_struct( 'MadePoint', {
+MadePoint = mk_bitstruct( 'MadePoint', {
     'x' : Bits8,
     'y' : Bits8,
   },
@@ -320,12 +320,12 @@ def test_overwrite():
 # Nested bit struct test
 #-------------------------------------------------------------------------
 
-@bit_struct
+@bitstruct
 class TwoPoint:
   pt0 : Point
   pt1 : MadePoint
 
-MadeTwoPoint = mk_bit_struct( 'MadeTwoPoint', {
+MadeTwoPoint = mk_bitstruct( 'MadeTwoPoint', {
   'pt0' : Point,
   'pt1' : MadePoint,
 })
@@ -345,17 +345,17 @@ def test_nested():
 def test_nested_two_struct_with_same_name():
 
   class A:
-    @bit_struct
+    @bitstruct
     class S:
       z: Bits2
 
   class B:
-    @bit_struct
+    @bitstruct
     class S:
       x: Bits8
       y: Bits8
 
-  SS = mk_bit_struct( 'SS', {
+  SS = mk_bitstruct( 'SS', {
     'a' : A.S,
     'b' : B.S,
   })
@@ -377,25 +377,25 @@ def test_nested_two_struct_with_same_name():
 # Bit struct instance test
 #-------------------------------------------------------------------------
 
-def test_is_bit_struct():
+def test_is_bitstruct():
   class A:
     x : Bits4
     y : Bits4
 
-  @bit_struct
+  @bitstruct
   class B:
     x : Bits4
     y : Bits4
 
-  assert not is_bit_struct( A() )
-  assert is_bit_struct( B() )
+  assert not is_bitstruct( A() )
+  assert is_bitstruct( B() )
 
 #-------------------------------------------------------------------------
 # bit struct with array test
 #-------------------------------------------------------------------------
 
 def test_list_same_class():
-  @bit_struct
+  @bitstruct
   class A:
     x: Bits4
     y: [ Bits4, Bits4 ]
@@ -404,11 +404,11 @@ def test_list_same_class():
   assert a.y == [ Bits4(0), Bits4(0) ]
 
 def test_crazy_list_not_same_class():
-  @bit_struct
+  @bitstruct
   class A:
     x: Bits4
   try:
-    @bit_struct
+    @bitstruct
     class B:
       x: Bits4
       y: [[[[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]], [[A, A, A]]],
@@ -427,7 +427,7 @@ def test_crazy_list_not_same_class():
                      "All non-list elements should be VALID types."
 
 def test_high_d_list_inside():
-  @bit_struct
+  @bitstruct
   class A:
     x: Bits4
     y:[ [ [ [Bits4, Bits4, Bits4] ] ] * 6 ] * 10
@@ -436,7 +436,7 @@ def test_high_d_list_inside():
   assert a.y == [ [ [ [ Bits4(), Bits4(), Bits4()] ] for _ in range(6) ] for _ in range(10) ]
 
 def test_mk_high_d_list_inside():
-  A = mk_bit_struct( "A", {
+  A = mk_bitstruct( "A", {
     'x': Bits4,
     'y': [ [ [ [Bits4, Bits4, Bits4] ] ] * 6 ] * 10,
   })
@@ -445,10 +445,10 @@ def test_mk_high_d_list_inside():
   assert a.y == [ [ [ [ Bits4(), Bits4(), Bits4()] ] for _ in range(6) ] for _ in range(10) ]
 
 def test_high_d_list_struct_inside():
-  @bit_struct
+  @bitstruct
   class A:
     x: Bits4
-  @bit_struct
+  @bitstruct
   class B:
     x: Bits4
     y: [ [ [ [A, A, A] ] ] * 6 ] * 10
@@ -457,10 +457,10 @@ def test_high_d_list_struct_inside():
   assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]
 
 def test_mk_high_d_list_struct_inside():
-  @bit_struct
+  @bitstruct
   class A:
     x: Bits4
-  B = mk_bit_struct( "B", {
+  B = mk_bitstruct( "B", {
     'x': Bits4,
     'y': [ [ [ [A, A, A] ] ] * 6 ] * 10,
   })

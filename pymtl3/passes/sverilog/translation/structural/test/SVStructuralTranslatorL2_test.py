@@ -5,7 +5,7 @@
 # Date   : May 29, 2019
 """Test the level 2 SystemVerilog structural translator."""
 
-from pymtl3.datatypes import Bits1, Bits32, bit_struct
+from pymtl3.datatypes import Bits1, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -34,7 +34,7 @@ def local_do_test( m ):
   check_eq( conns, m._ref_conns[m] )
 
 def test_struct_const_structural( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -81,7 +81,7 @@ typedef struct packed {
   do_test( a )
 
 def test_struct_port( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -149,10 +149,10 @@ typedef struct packed {
   do_test( a )
 
 def test_nested_struct_port( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     c: C
     foo: Bits32
@@ -239,7 +239,7 @@ typedef struct packed {
   do_test( a )
 
 def test_packed_array( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: [Bits32] * 2
   class A( Component ):
@@ -320,10 +320,10 @@ typedef struct packed {
   do_test( a )
 
 def test_struct_packed_array( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     c: [ C ] * 2
   class A( Component ):

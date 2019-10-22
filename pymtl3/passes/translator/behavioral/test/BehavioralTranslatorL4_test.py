@@ -5,7 +5,7 @@
 # Date   : May 20, 2019
 """Test the level 4 behavioral translator."""
 
-from pymtl3.datatypes import Bits32, bit_struct
+from pymtl3.datatypes import Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.translator.behavioral.BehavioralTranslatorL4 import (
@@ -54,10 +54,10 @@ tmpvars:
   do_test( a )
 
 def test_tmp_ifc_port_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     def __init__( s, foo=42 ):

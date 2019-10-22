@@ -8,7 +8,7 @@
 import pytest
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits16, Bits32, bit_struct
+from pymtl3.datatypes import Bits16, Bits32, bitstruct
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
@@ -47,7 +47,7 @@ def test_tmp_wire( do_test ):
   do_test( a )
 
 def test_tmp_wire_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( dsl.Component ):

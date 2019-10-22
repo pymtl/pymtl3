@@ -15,7 +15,7 @@ import copy
 import inspect
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, is_bit_struct
+from pymtl3.datatypes import Bits, is_bitstruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -619,7 +619,7 @@ def is_rtlir_convertible( obj ):
     return is_rtlir_convertible( obj )
   elif isinstance( obj, pymtl_constructs ):
     return True
-  elif is_bit_struct(obj):
+  elif is_bitstruct(obj):
     return True
   elif isinstance( obj, int ):
     return True
@@ -639,7 +639,7 @@ def get_rtlir( _obj ):
         if isinstance( _obj, Type ):
           ret = __rtlir_cache[ obj ] = handler( "<name not available>", _obj )
           return ret
-      if is_bit_struct( _obj ):
+      if is_bitstruct( _obj ):
         ret = __rtlir_cache[ obj ] = _handle_Const( "<name not available>", _obj )
         return ret
 

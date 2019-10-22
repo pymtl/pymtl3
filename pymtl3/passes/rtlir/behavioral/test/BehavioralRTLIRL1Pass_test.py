@@ -21,7 +21,7 @@ from pymtl3.datatypes import (
     Bits8,
     Bits16,
     Bits32,
-    bit_struct,
+    bitstruct,
     concat,
     sext,
     zext,
@@ -65,7 +65,7 @@ def local_do_test( m ):
 #-------------------------------------------------------------------------
 
 def test_L1_assign_unagreeable( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foobar: Bits32
   class A( Component ):
@@ -183,7 +183,7 @@ def test_L1_bit_sel_index_out_of_range( do_test ):
     do_test( A() )
 
 def test_L1_index_on_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: [ Bits4 ] * 4
   class A( Component ):
@@ -197,7 +197,7 @@ def test_L1_index_on_struct( do_test ):
     do_test( A() )
 
 def test_L1_slice_on_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: [ Bits4 ] * 4
   class A( Component ):
@@ -315,7 +315,7 @@ def test_L1_size_cast_component( do_test ):
     do_test( A() )
 
 def test_L1_attr_signal( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     """Struct class used to trigger certain exception.
 

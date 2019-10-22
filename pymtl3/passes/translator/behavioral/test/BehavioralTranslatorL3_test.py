@@ -5,7 +5,7 @@
 # Date   : May 20, 2019
 """Test the level 3 behavioral translator."""
 
-from pymtl3.datatypes import Bits32, bit_struct
+from pymtl3.datatypes import Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.translator.behavioral.BehavioralTranslatorL3 import (
@@ -28,7 +28,7 @@ def local_do_test( m ):
   assert decl_tmpvars == m._ref_tmpvar_repr
 
 def test_tmp_wire_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -54,10 +54,10 @@ tmpvars:
   do_test( a )
 
 def test_multi_tmp_wire_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):

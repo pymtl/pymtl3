@@ -5,7 +5,7 @@
 # Date   : May 30, 2019
 """Test the SystemVerilog name mangling."""
 
-from pymtl3.datatypes import Bits1, Bits32, bit_struct
+from pymtl3.datatypes import Bits1, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -75,7 +75,7 @@ def test_port_2d_array( do_test ):
   do_test( a )
 
 def test_struct_port_single( do_test ):
-  @bit_struct
+  @bitstruct
   class struct:
     bar: Bits32
     foo: Bits32
@@ -98,7 +98,7 @@ def test_struct_port_single( do_test ):
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  @bit_struct
+  @bitstruct
   class struct:
     bar: Bits32
     foo: Bits32
@@ -123,7 +123,7 @@ def test_struct_port_array( do_test ):
   do_test( a )
 
 def test_packed_array_port_array( do_test ):
-  @bit_struct
+  @bitstruct
   class struct:
     bar: Bits32
     foo: [ [ Bits32 ] * 2 ] * 3
@@ -159,10 +159,10 @@ def test_packed_array_port_array( do_test ):
   do_test( a )
 
 def test_nested_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class inner_struct:
     foo: Bits32
-  @bit_struct
+  @bitstruct
   class struct:
     bar: Bits32
     inner: inner_struct

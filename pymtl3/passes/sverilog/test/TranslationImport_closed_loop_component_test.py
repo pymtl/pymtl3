@@ -11,7 +11,7 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, reproduce_failure, settings
 
-from pymtl3.datatypes import Bits1, Bits16, Bits32, bit_struct, clog2, mk_bits
+from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
@@ -64,7 +64,7 @@ def test_mux( do_test, Type, n_ports, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 def test_struct( do_test, data ):
-  @bit_struct
+  @bitstruct
   class strc:
     foo: Bits32
   class A( Component ):
@@ -80,10 +80,10 @@ def test_struct( do_test, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
 def test_nested_struct( do_test, data ):
-  @bit_struct
+  @bitstruct
   class inner_struct:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class strc:
     foo: Bits32
     inner: inner_struct
@@ -110,10 +110,10 @@ def test_nested_struct( do_test, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
 def test_subcomp( do_test, data ):
-  @bit_struct
+  @bitstruct
   class inner_struct:
     bar: Bits32
-  @bit_struct
+  @bitstruct
   class strc:
     foo: Bits32
     inner: inner_struct

@@ -7,7 +7,7 @@
 
 import pytest
 
-from pymtl3.datatypes import Bits16, Bits32, bit_struct
+from pymtl3.datatypes import Bits16, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
@@ -41,7 +41,7 @@ def local_do_test( m ):
     pass
 
 def test_struct_port_decl( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: Bits16
@@ -82,7 +82,7 @@ endcomponent
   do_test( a )
 
 def test_struct_wire_decl( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: Bits16
@@ -132,7 +132,7 @@ endcomponent
 
 @pytest.mark.xfail( reason = "RTLIR not support const struct instance yet" )
 def test_struct_const_decl( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: Bits16
@@ -173,7 +173,7 @@ endcomponent
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: Bits16
@@ -214,10 +214,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_port_decl( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits16
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: C
@@ -262,7 +262,7 @@ endcomponent
   do_test( a )
 
 def test_struct_packed_array_port_decl( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: [Bits32] * 5
     bar: Bits16
@@ -306,10 +306,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_port_decl( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits16
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: [ C ] * 5
@@ -355,10 +355,10 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_index( do_test ):
-  @bit_struct
+  @bitstruct
   class C:
     bar: Bits16
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
     bar: [ C ] * 5

@@ -11,7 +11,7 @@ generation pass results are verified against a reference AST.
 
 import pytest
 
-from pymtl3.datatypes import Bits1, Bits32, bit_struct
+from pymtl3.datatypes import Bits1, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.errors import VarNotDeclaredError
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
@@ -48,7 +48,7 @@ def local_do_test( m ):
 #-------------------------------------------------------------------------
 
 def test_L3_struct_attr( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -65,7 +65,7 @@ def test_L3_struct_attr( do_test ):
   do_test( a )
 
 def test_L3_struct_inst_kwargs( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -82,7 +82,7 @@ def test_L3_struct_inst_kwargs( do_test ):
     do_test( a )
 
 def test_L3_struct_inst( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -113,7 +113,7 @@ def test_L3_vector_attr( do_test ):
     do_test( A() )
 
 def test_L3_struct_no_field( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -127,7 +127,7 @@ def test_L3_struct_no_field( do_test ):
     do_test( A() )
 
 def test_L3_const_struct( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):
@@ -144,7 +144,7 @@ def test_L3_const_struct( do_test ):
 #-------------------------------------------------------------------------
 
 def test_L3_call_struct_inst( do_test ):
-  @bit_struct
+  @bitstruct
   class B:
     foo: Bits32
   class A( Component ):

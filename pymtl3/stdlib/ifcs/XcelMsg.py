@@ -26,7 +26,7 @@ def mk_xcel_req_msg( addr, data ):
       " " * ( data//4 ),
     )
 
-  req_cls = mk_bit_struct( cls_name, {
+  req_cls = mk_bitstruct( cls_name, {
     'type_': Bits1,
     'addr':  AddrType,
     'data':  DataType,
@@ -48,7 +48,7 @@ def mk_xcel_resp_msg( data ):
       " " * ( data//4 ),
     )
 
-  resp_cls = mk_bit_struct( cls_name, {
+  resp_cls = mk_bitstruct( cls_name, {
     'type_': Bits1,
     'data':  DataType,
   },
