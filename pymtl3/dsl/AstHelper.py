@@ -143,7 +143,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
     obj_name, nodelist = self._get_full_name( node )
@@ -195,8 +195,9 @@ def extract_reads_writes_calls( f, tree, read, write, calls ):
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
+  visitor = DetectReadsWritesCalls( f )
   for stmt in tree.body:
-    DetectReadsWritesCalls( f ).enter( stmt, read, write, calls )
+    visitor.enter( stmt, read, write, calls )
 
 def get_method_calls( tree, upblk, methods ):
   DetectMethodCalls( upblk ).enter( tree, methods )
