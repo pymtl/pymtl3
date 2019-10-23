@@ -364,7 +364,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
     fields[ a_name ] = a_type
     hashable_fields[ a_name ] = _convert_list_to_tuple( a_type )
 
-  cls._hash = _hash = hash( (cls.__qualname__, *tuple(hashable_fields.items()),
+  cls._hash = _hash = hash( (cls.__name__, *tuple(hashable_fields.items()),
                              add_init, add_str, add_repr, add_hash) )
 
   if _hash in _bitstruct_hash_cache:
