@@ -270,6 +270,27 @@ def _mk_hash_fn( fields ):
   )
 
 #-------------------------------------------------------------------------
+# _mk_ff_fn
+#-------------------------------------------------------------------------
+#
+# def __ilshift__( self, other ):
+#   return hash((self.x,self.y,))
+
+def _mk_ff_fn( fields ):
+  self_tuple = _mk_tuple_str( 'self', fields )
+  return _create_fn(
+    '__ilshift__',
+    [ 'self', 'o' ],
+    [ f'self.{name} <<= o.{name}' for name in fields ] + \
+    [ 'return self' ],
+  ),_create_fn(
+    '_flip',
+    [ 'self' ],
+    [ f'self.{name}._flip()' for name in fields ] + \
+    [ 'return self' ],
+  ),
+
+#-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------
 
@@ -413,6 +434,11 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   if add_hash:
     if not '__hash__' in cls.__dict__:
       cls.__hash__ = _mk_hash_fn( fields )
+
+  # Shunning: add __ilshift__ and _flip for update_ff
+  assert not '__ilshift__' in cls.__dict__ and not '_flip' in cls.__dict__
+
+  cls.__ilshift__, cls._flip = _mk_ff_fn( fields )
 
   # TODO: maybe add a to_bits and from bits function.
 

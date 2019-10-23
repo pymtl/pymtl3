@@ -469,14 +469,10 @@ class Component( ComponentLevel7 ):
             try:
               default_value  = obj.default_value()
               current_obj[i] = default_value
-              try:
-                current_obj[i] <<= default_value
-              except AttributeError:
-                pass
-            except Exception as err:
-              err.message = repr(obj) + " -- " + err.message
-              err.args = (err.message,)
-              raise err
+              current_obj[i] <<= default_value
+            except Exception as e:
+              print("For object", repr(obj))
+              raise e
             swapped_signals[ host ].append( (current_obj, i, obj, True) )
 
           elif isinstance( obj, Component ):
@@ -491,10 +487,7 @@ class Component( ComponentLevel7 ):
               try:
                 default_value = obj.default_value()
                 value = default_value
-                try:
-                  value <<= default_value
-                except AttributeError:
-                  pass
+                value <<= default_value
                 setattr( current_obj, i, value )
               except Exception as err:
                 err.message = repr(obj) + " -- " + err.message
