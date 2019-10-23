@@ -128,7 +128,7 @@ class DetectVarNames( ast.NodeVisitor ):
 
 class DetectReadsWritesCalls( DetectVarNames ):
 
-  def enter( self, node, obj, is_update_ff, read, write, calls ):
+  def enter( self, node, read, write, calls ):
 
     self.read = read
     self.write = write
@@ -186,7 +186,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
     self.visit( node.slice )
 
