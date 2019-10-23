@@ -143,17 +143,68 @@ class NamedObject:
     # I use non-recursive BFS to reduce error message depth
 
     if name[0] != '_': # filter private variables
-      stack = deque( [ (obj, []) ] )
-      while stack:
-        u, indices = stack.popleft()
+      sd = s._dsl
 
-        if isinstance( u, NamedObject ):
-            sd = s._dsl
+      if isinstance( obj, NamedObject ):
+        ud = obj._dsl
+
+        ud.parent_obj = s
+        ud.level      = sd.level + 1
+
+        ud._my_name  = ud.my_name = name
+        ud.full_name = f"{sd.full_name}.{name}"
+
+        ud._my_indices = None
+
+        # Iterate through the param_tree and update u
+        if sd.param_tree is not None:
+          if sd.param_tree.children is not None:
+            for comp_name, node in sd.param_tree.children.items():
+              if comp_name == name:
+                # Lazily create the param tree
+                if ud.param_tree is None:
+                  ud.param_tree = ParamTreeNode()
+                ud.param_tree.merge( node )
+
+              elif node.compiled_re is not None:
+                if node.compiled_re.match( name ):
+                  # Lazily create the param tree
+                  if ud.param_tree is None:
+                    ud.param_tree = ParamTreeNode()
+                  ud.param_tree.merge( node )
+
+        # Point u's top to my top
+        top = sd.elaborate_top
+        ud.elaborate_top = top
+
+        top._dsl.elaborate_stack.append( obj )
+        obj._construct()
+        top._dsl.elaborate_stack.pop()
+
+      # ONLY LIST IS SUPPORTED, SORRY.
+      # I don't want to support any iterable object because later "Wire"
+      # can be infinitely iterated and cause infinite loop. Special
+      # casing Wire will be a mess around everywhere.
+
+      elif isinstance( obj, list ) and obj and isinstance( obj[0], (NamedObject, list) ):
+        sd = s._dsl
+
+        Q = deque( (u, (i,)) for i, u in enumerate(obj) )
+
+        while Q:
+          u, indices = Q.popleft()
+
+          if isinstance( u, NamedObject ):
             ud = u._dsl
-          # try:
+
             ud.parent_obj = s
             ud.level      = sd.level + 1
-            ud.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
+
+            ud._my_name  = name
+            ud.my_name   = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
+            ud.full_name = f"{sd.full_name}.{u_name}"
+
+            ud._my_indices = indices
 
             # Iterate through the param_tree and update u
             if sd.param_tree is not None:
@@ -172,12 +223,6 @@ class NamedObject:
                         ud.param_tree = ParamTreeNode()
                       ud.param_tree.merge( node )
 
-            ud.full_name = f"{sd.full_name}.{u_name}"
-
-            # store the name/indices
-            ud._my_name     = name
-            ud._my_indices  = indices
-
             # Point u's top to my top
             top = sd.elaborate_top
             ud.elaborate_top = top
@@ -186,18 +231,8 @@ class NamedObject:
             u._construct()
             top._dsl.elaborate_stack.pop()
 
-          # except AttributeError as e:
-          #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
-          #                        "instead of __init__.)".format( s.__class__ ) )
-
-        # ONLY LIST IS SUPPORTED, SORRY.
-        # I don't want to support any iterable object because later "Wire"
-        # can be infinitely iterated and cause infinite loop. Special
-        # casing Wire will be a mess around everywhere.
-
-        elif isinstance( u, list ):
-          for i, v in enumerate( u ):
-            stack.append( (v, indices+[i]) )
+          elif isinstance( u, list ):
+            Q.extend( (v, indices+(i,)) for i, v in enumerate(u) )
 
     super().__setattr__( name, obj )
 

@@ -133,8 +133,8 @@ class ComponentLevel2( ComponentLevel1 ):
         if name_depth >= len(obj_name): # exhausted
           if   isinstance( obj, NamedObject ):
             objs.add( obj )
-          elif isinstance( obj, list ): # Exhaust all the elements in the high-d array
-            Q = [ obj ]
+          elif isinstance( obj, list ) and obj: # Exhaust all the elements in the high-d array
+            Q = [ *obj ] # PEP 448 -- see https://stackoverflow.com/a/43220129/6470797
             while Q:
               m = Q.pop()
               if isinstance( Q, NamedObject ):

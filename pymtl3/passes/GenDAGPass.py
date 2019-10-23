@@ -267,7 +267,7 @@ def {}():
                     constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     top._dag.constraint_objs = constraint_objs
-    top._dag.all_constraints = U_U.copy()
+    top._dag.all_constraints = { *U_U }
     for (x, y) in impl_constraints:
       if (y, x) not in U_U: # no conflicting expl
         top._dag.all_constraints.add( (x, y) )

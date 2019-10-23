@@ -208,12 +208,12 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                 if rd_blk not in all_update_ff:
                   impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    all_constraints = expl_constraints.copy()
+    all_constraints = { *expl_constraints }
     for (x, y) in impl_constraints:
       if (y, x) not in expl_constraints: # no conflicting expl
         all_constraints.add( (x, y) )
   else:
-    all_constraints = expl_constraints.copy()
+    all_constraints = { *expl_constraints }
 
   #-----------------------------------------------------------------------
   # Process method constraints
