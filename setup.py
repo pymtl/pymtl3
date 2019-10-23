@@ -84,11 +84,8 @@ setup(
   install_requires = [
     'pytest',
     'hypothesis >= 4.18.1',
-    'pytest-xdist',
     'cffi',
     'greenlet',
-    'pyparsing',
-    'graphviz'
   ],
 
 )

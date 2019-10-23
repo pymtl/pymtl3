@@ -1,0 +1,4 @@
+-r release.txt
+
+# Extra development dependencies
+graphviz
