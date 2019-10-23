@@ -67,6 +67,7 @@ from .bits_import import *
 #
 # The original dataclass use hasattr( cls, _FIELDS ) to check dataclass.
 # We do this here as well
+
 _FIELDS = '__bitstruct_fields__'
 
 def _is_bitstruct_instance(obj):
@@ -122,7 +123,7 @@ def _mk_init_arg( name, type_ ):
 #-------------------------------------------------------------------------
 # _mk_init_body
 #-------------------------------------------------------------------------
-# Creates one line of __init__ body from a field and add its default value
+# Creates one line of __init__ body from a field
 # to globals.
 
 def _mk_init_body( self_name, name, type_ ):
@@ -193,7 +194,7 @@ def _mk_init_fn( self_name, fields ):
 # _mk_str_fn
 #-------------------------------------------------------------------------
 # Creates a __str__ function based on fields. For example, if fields
-# contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
+# contains two field x (Bits4) and y (Bits4), _mk_str_fn will return a
 # function that looks like the following:
 #
 # def __str__( self ):
@@ -211,7 +212,7 @@ def _mk_str_fn( fields ):
 # _mk_repr_fn
 #-------------------------------------------------------------------------
 # Creates a __repr__ function based on fields. For example, if fields
-# contains two field x (Bits4) and y (Bits4), _mk_init_fn will return a
+# contains two field x (Bits4) and y (Bits4), _mk_repr_fn will return a
 # function that looks like the following:
 #
 # def __repr__( self ):
@@ -231,7 +232,7 @@ def _mk_repr_fn( fields ):
 #-------------------------------------------------------------------------
 # Creates a __eq__ function based on fields. By default it just compares
 # each field. For example, if fields contains two field x (Bits4) and y
-# (Bits4), _mk_init_fn will return a function that looks like the
+# (Bits4), _mk_eq_fn will return a function that looks like the
 # following:
 #
 # def __eq__( self, other ):
@@ -254,7 +255,7 @@ def _mk_eq_fn( fields ):
 #-------------------------------------------------------------------------
 # Creates a __hash__ function based on fields. By default it just hashes
 # all fields. For example, if fields contains two field x (Bits4) and y
-# (Bits4), _mk_init_fn will return a function that looks like the
+# (Bits4), _mk_hash_fn will return a function that looks like the
 # following:
 #
 # def __hash__( self ):
@@ -305,13 +306,13 @@ def _check_field_annotation( cls, name, type_ ):
   if hasattr( cls, name ):
     default = getattr( cls, name )
     raise TypeError( "We don't allow subfields to have default value:\n"
-                    f"- Field '{name}' of BitStruct {cls.__name__} has default value {default!r}." )
+                     f"- Field '{name}' of BitStruct {cls.__name__} has default value {default!r}." )
 
   # Special case if the type is an instance of list
   if isinstance( type_, list ):
     if _check_valid_array_of_types( type_ ) is None:
       raise TypeError( "The provided list spec should be a strict multidimensional ARRAY "
-                      f"with no varying sizes or types. All non-list elements should be VALID types." )
+                       f"with no varying sizes or types. All non-list elements should be VALID types." )
   else:
     # Now we work with types
     if not isinstance( type_, type ):
