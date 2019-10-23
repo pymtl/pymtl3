@@ -583,7 +583,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     ret = [f"connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )"]
     return ret, r
 
-  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols = None ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols ):
     dtype_name = dtype.get_class().__name__
     upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
     ret = [
@@ -644,7 +644,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       assert False, f"unrecognized data type {dtype}!"
 
-  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos, symbols = None ):
+  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos, symbols ):
     if isinstance( dtype, rdt.Vector ):
       return s.gen_vector_conns( d, lhs, rhs, dtype, pos )
     elif isinstance( dtype, rdt.Struct ):
@@ -652,7 +652,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       assert False, f"unrecognized data type {dtype}!"
 
-  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols = None ):
+  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols ):
     if not n_dim:
       d = port.get_direction()
       dtype = port.get_dtype()
@@ -669,7 +669,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols )
       return ret
 
-  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols = None ):
+  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols ):
     if not n_dim:
       ret = []
       all_properties = ifc.get_all_properties_packed()

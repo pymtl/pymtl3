@@ -88,7 +88,7 @@ class ImportPass( SVerilogImportPass ):
     ret = [f"connect( s.{_lhs}, s.mangled__{_rhs} )"]
     return ret, pos + nbits
 
-  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols = None ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols ):
     dtype_name = dtype.get_class().__name__
     upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
     ret = [
@@ -139,7 +139,7 @@ class ImportPass( SVerilogImportPass ):
         ret += _ret
       return ret, pos
 
-  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols = None ):
+  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols ):
     if not n_dim:
       d = port.get_direction()
       dtype = port.get_dtype()
