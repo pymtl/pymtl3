@@ -67,6 +67,5 @@ def mk_bits( nbits ):
   _locals = {}
   exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ),
                 {'Bits': Bits }, _locals)
-
   _bits_types[ nbits ] = ret = list(_locals.values())[0]
-  return cls
+  return ret
