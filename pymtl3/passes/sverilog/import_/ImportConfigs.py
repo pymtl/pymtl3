@@ -25,7 +25,7 @@ class ImportConfigs( BasePassConfigs ):
 
     s.set_checkers(
         ['import_', 'enable_assert', 'vl_W_lint', 'vl_W_style', 'vl_W_fatal',
-         'vl_trace', 'verbose', 'has_clk', 'has_reset'],
+         'vl_trace', 'verbose', 'has_clk', 'has_reset', 'coverage'],
         lambda v: isinstance(v, bool),
         "expects a boolean")
     s.set_checkers(
@@ -215,6 +215,15 @@ class ImportConfigs( BasePassConfigs ):
       # We enforce the GNU makefile implicit rule that `LDLIBS` should only
       # include library linker flags/names such as `-lfoo`.
       "ld_libs" : "",
+
+      # Enable all verilator coverage
+      "coverage" : False,
+
+      # Enable all verilator coverage
+      "line_coverage" : False,
+
+      # Enable all verilator coverage
+      "toggle_coverage" : False,
     }
 
   PassName = 'sverilog.ImportPass'
@@ -238,13 +247,18 @@ class ImportConfigs( BasePassConfigs ):
     stmt_unroll = "" if s.get_option("vl_unroll_stmts") == 0 else \
                   f"--unroll-stmts {s.get_option('vl_unroll_stmts')}"
     trace       = "" if s.is_default("vl_trace") else "--trace"
+    coverage    = "--coverage" if s.get_option("coverage") else ""
+    line_cov    = "--coverage-line" if s.get_option("line_coverage") else ""
+    toggle_cov  = "--coverage-toggle" if s.get_option("toggle_coverage") else ""
     warnings    = s.create_vl_warning_cmd()
 
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
-      stmt_unroll, trace, warnings, flist, src
+      stmt_unroll, trace, warnings, flist, src, coverage, 
+      line_cov, toggle_cov,
     ]
 
+    print( f"verilator --cc {' '.join(opt for opt in all_opts if opt)}" )
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
 
   def create_cc_cmd( s ):
@@ -255,8 +269,13 @@ class ImportConfigs( BasePassConfigs ):
     c_src_files = " ".join(s.get_c_src_files())
     ld_flags = s.get_option("ld_flags")
     ld_libs = s.get_option("ld_libs")
+    coverage = "-DVM_COVERAGE" if s.get_option("coverage") or \
+                                  s.get_option("line_coverage") or \
+                                  s.get_option("toggle_coverage") else ""
+    print( f"g++ {c_flags} {c_include_path} {ld_flags}"
+           f" -o {out_file} {c_src_files} {ld_libs} {coverage}" )
     return f"g++ {c_flags} {c_include_path} {ld_flags}"\
-           f" -o {out_file} {c_src_files} {ld_libs}"
+           f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
 
   def fill_missing( s, m ):
     rtype = get_component_ifc_rtlir(m)

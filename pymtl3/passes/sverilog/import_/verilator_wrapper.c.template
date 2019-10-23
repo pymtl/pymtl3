@@ -114,6 +114,10 @@ V{component_name}_t * create_model( const char *vcd_filename ) {{
 
 void destroy_model( V{component_name}_t * m ) {{
 
+  #if VM_COVERAGE
+    VerilatedCov::write( "coverage.dat" );
+  #endif
+
   V{component_name} * model = (V{component_name} *) m->model;
 
   // finalize verilator simulation
