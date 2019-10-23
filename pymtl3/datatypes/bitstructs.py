@@ -2,7 +2,7 @@
 ==========================================================================
 bitstruct.py
 ==========================================================================
-APIs to generate a bit struct type. Using decorators and type annotations
+APIs to generate a bitstruct type. Using decorators and type annotations
 to create bit struct is much inspired by python3 dataclass implementation.
 Note that the implementation (such as the _CAPITAL constants to add some
 private metadata) in this file is very similar to the **original python3
@@ -364,7 +364,7 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
     fields[ a_name ] = a_type
     hashable_fields[ a_name ] = _convert_list_to_tuple( a_type )
 
-  cls._hash = _hash = hash( (cls.__name__, *tuple(hashable_fields.items()),
+  cls._hash = _hash = hash( (cls.__qual_name__, *tuple(hashable_fields.items()),
                              add_init, add_str, add_repr, add_hash) )
 
   if _hash in _bitstruct_hash_cache:
@@ -462,4 +462,4 @@ def mk_bitstruct( cls_name, fields, *, namespace=None, add_init=True,
   namespace['__annotations__'] = annos
   cls = types.new_class( cls_name, (), {}, lambda ns: ns.update( namespace ) )
   return bitstruct( cls, add_init=add_init, add_str=add_str,
-                          add_repr=add_repr, add_hash=add_hash )
+                    add_repr=add_repr, add_hash=add_hash )
