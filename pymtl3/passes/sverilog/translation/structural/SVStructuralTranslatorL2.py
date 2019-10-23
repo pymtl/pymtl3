@@ -45,7 +45,7 @@ class SVStructuralTranslatorL2(
     dtype_name = dtype.get_name()
     field_decls = []
 
-    for id_, _dtype in dtype.get_all_properties():
+    for id_, _dtype in dtype.get_all_properties().items():
 
       if isinstance( _dtype, rdt.Vector ):
         decl = s.rtlir_tr_vector_dtype( _dtype )['decl'].format(**locals())
@@ -117,8 +117,7 @@ typedef struct packed {{
           cat_str = ", ".join( ret )
         return f"{{ {cat_str} }}"
     ret = []
-    all_properties = dtype.get_all_properties()
-    for name, Type in all_properties:
+    for name, Type in dtype.get_all_properties().items():
       field = getattr( struct, name )
       if isinstance( Type, rdt.Vector ):
         _ret = s.rtlir_tr_literal_number( Type.nbits, field )

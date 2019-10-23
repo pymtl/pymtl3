@@ -11,7 +11,7 @@ import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, reproduce_failure, settings
 
-from pymtl3.datatypes import Bits1, Bits16, Bits32, BitStruct, clog2, mk_bits
+from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
@@ -64,9 +64,9 @@ def test_mux( do_test, Type, n_ports, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 def test_struct( do_test, data ):
-  class strc( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bitstruct
+  class strc:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( strc )
@@ -80,14 +80,14 @@ def test_struct( do_test, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
 def test_nested_struct( do_test, data ):
-  class inner_struct( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits32( bar )
-  class strc( BitStruct ):
-    def __init__( s, foo=42, bar=42, arr=1 ):
-      s.foo = Bits32( foo )
-      s.inner = inner_struct(bar)
-      s.packed_array = [[ Bits16(arr) for _ in range(2) ] for _ in range(3)]
+  @bitstruct
+  class inner_struct:
+    bar: Bits32
+  @bitstruct
+  class strc:
+    foo: Bits32
+    inner: inner_struct
+    packed_array: [ [ Bits16 ]*2 ] *3
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( strc )
@@ -110,14 +110,14 @@ def test_nested_struct( do_test, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 10, suppress_health_check = too_slow)
 def test_subcomp( do_test, data ):
-  class inner_struct( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits32( bar )
-  class strc( BitStruct ):
-    def __init__( s, foo=42, bar=42, arr=1 ):
-      s.foo = Bits32( foo )
-      s.inner = inner_struct(bar)
-      s.packed_array = [[ Bits16(arr) for _ in range(2) ] for _ in range(3)]
+  @bitstruct
+  class inner_struct:
+    bar: Bits32
+  @bitstruct
+  class strc:
+    foo: Bits32
+    inner: inner_struct
+    packed_array: [ [ Bits16 ]*2 ] *3
   class B( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )

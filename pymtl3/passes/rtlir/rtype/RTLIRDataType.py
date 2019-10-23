@@ -14,7 +14,7 @@ import inspect
 from functools import reduce
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bitstruct
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -53,11 +53,11 @@ class Vector( BaseRTLIRDataType ):
 
 class Struct( BaseRTLIRDataType ):
   """RTLIR data type class for struct type."""
-  def __init__( s, name, properties, packed_order, cls = None ):
-    assert len( packed_order ) > 0, 'packed_order is empty!'
+  def __init__( s, name, properties, cls = None ):
+    # As of Python 3.7, dict always preserves insertion order
+    assert len(properties) > 0, 'struct has no fields!'
     s.name = name
     s.properties = properties
-    s.packed_order = packed_order
     s.cls = cls
     if cls is not None:
       try:
@@ -84,9 +84,6 @@ class Struct( BaseRTLIRDataType ):
   def get_class( s ):
     return s.cls
 
-  def get_pack_order( s ):
-    return s.packed_order
-
   def get_length( s ):
     return sum( d.get_length() for d in s.properties.values() )
 
@@ -97,8 +94,7 @@ class Struct( BaseRTLIRDataType ):
     return s.properties[ p ]
 
   def get_all_properties( s ):
-    order = { key : i for i, key in enumerate(s.packed_order) }
-    return sorted(s.properties.items(), key = lambda x: order[x[0]])
+    return s.properties
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
@@ -194,50 +190,13 @@ def _get_rtlir_dtype_struct( obj ):
     return PackedArray( dim_sizes, _get_rtlir_dtype_struct( obj ) )
 
   # Struct field
-  elif isinstance( obj, BitStruct ):
+  elif is_bitstruct( obj ):
     cls = obj.__class__
-    all_properties = {}
 
-    # Collect all fields of the struct object
-    static_members = collect_objs( cls, object )
+    properties = { name: _get_rtlir_dtype_struct( getattr(obj, name) )
+                    for name in cls.__bitstruct_fields__ }
 
-    # Infer the type of each field from the type instance
-    try:
-      type_instance = cls()
-    except TypeError:
-      assert False, \
-        f'__init__() of supposed struct {cls.__name__} should take 0 argument ( you can \
-        achieve this by adding default values to your arguments )!'
-    fields = collect_objs( type_instance, object )
-    static_member_names = [x[0] for x in static_members]
-    for name, field in fields:
-      # Exclude the static members of the type instance
-      if name not in static_member_names:
-        all_properties[ name ] = _get_rtlir_dtype_struct( field )
-
-    # Use user-provided pack order
-    pack_order = []
-    if hasattr( cls, "fields" ) and cls.fields != []:
-      assert len(cls.fields) == len(all_properties.keys()), \
-        "{cls.__name__}.fields does not match the attributes of its instance!"
-      for field_name, field in cls.fields:
-        assert field_name in all_properties, \
-          field_name + ' is not an attribute of struct ' + cls.__name__ + '!'
-        pack_order.append( field_name )
-
-    # Generate default pack order ( sort by `repr` )
-    else:
-      pack_order = sorted( all_properties, key = repr )
-
-    # Generate the property list according to pack order
-    properties = []
-    packed_order = []
-    for field_name in pack_order:
-      assert field_name in all_properties, \
-        f'{field_name} is not an attirubte of struct {cls.__name__}!'
-      properties.append( ( field_name, all_properties[ field_name ] ) )
-      packed_order.append( field_name )
-    return Struct(cls.__name__, dict(properties), packed_order, cls)
+    return Struct(cls.__name__, properties, cls)
 
   else:
     assert False, str(obj) + ' is not allowed as a field of struct!'
@@ -261,7 +220,7 @@ def get_rtlir_dtype( obj ):
         return Vector( 32 )
 
       # Struct data type
-      elif issubclass( Type, BitStruct ):
+      elif is_bitstruct( Type ):
         try:
           return _get_rtlir_dtype_struct( Type() )
         except TypeError:
@@ -283,7 +242,7 @@ def get_rtlir_dtype( obj ):
       return Vector( obj.nbits )
 
     # PyMTL BitStruct objects
-    elif isinstance( obj, BitStruct ):
+    elif is_bitstruct( obj ):
       return _get_rtlir_dtype_struct( obj )
 
     else:
