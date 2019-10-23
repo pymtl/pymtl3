@@ -335,7 +335,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     value = s.visit( node.value )
     if hasattr( node, "_value" ):
       if isinstance( node._value, Bits ):
-        value = node._value.value
+        value = int(node._value)
       else:
         value = node._value
       return f"{nbits}'d{value}"

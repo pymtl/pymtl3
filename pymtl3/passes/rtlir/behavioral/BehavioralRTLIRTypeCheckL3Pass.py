@@ -77,15 +77,6 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def visit_StructInst( s, node ):
     cls = node.struct
 
-    try:
-      type_instance = cls()
-    except TypeError:
-      raise PyMTLTypeError( s.blk, node.ast,
-f"""\
-__init__ of BitStruct {cls.__name__} should take 0 arguments! You can achieve this by
-adding default values to the arguments.
-""" )
-
     dtype = rdt.get_rtlir_dtype( cls() )
     all_properties = dtype.get_all_properties()
 
@@ -93,7 +84,8 @@ adding default values to the arguments.
       raise PyMTLTypeError( s.blk, node.ast,
         f"BitStruct {cls.__name__} has {len(all_properties)} fields but only {len(node.values)} arguments are given!" )
 
-    all_types = zip( node.values, all_properties )
+    all_types = zip( node.values, list(all_properties.items()) )
+
     for idx, ( value, ( name, field ) ) in enumerate( all_types ):
       s.visit( value )
       # Expect each argument to be a signal

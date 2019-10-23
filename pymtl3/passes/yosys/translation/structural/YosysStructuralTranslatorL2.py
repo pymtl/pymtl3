@@ -34,9 +34,8 @@ class YosysStructuralTranslatorL2(
     } ]
 
   def vec_conn_struct_gen( s, d, c_nbits, pid, wid, idx, dtype ):
-    all_properties = dtype.get_all_properties()
     ret = []
-    for name, field in all_properties:
+    for name, field in dtype.get_all_properties().items():
       ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"__"+name, wid, idx, field )
       c_nbits -= field.get_length()
     return ret
@@ -68,16 +67,15 @@ class YosysStructuralTranslatorL2(
       return s.vec_conn_struct_gen( d, c_nbits, pid, wid, idx, dtype )
     elif isinstance( dtype, rdt.PackedArray ):
       return s.vec_conn_packed_gen( d, c_nbits, pid, wid, idx, dtype )
-    else:
-      assert False, f"unrecognized data type {dtype}!"
+
+    raise TypeError( f"unrecognized data type {dtype}!" )
 
   def struct_conn_gen( s, d, pid, wid, idx, dtype ):
-    all_properties = dtype.get_all_properties()
     ret = []
-    for name, field in all_properties:
+    for name, field in dtype.get_all_properties().items():
       ret += s.dtype_conn_gen( d, pid+"__"+name, wid+"__"+name, idx, field )
     cur_nbits = dtype.get_length()
-    for name, field in all_properties:
+    for name, field in dtype.get_all_properties().items():
       ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"__"+name, wid, idx, field )
       cur_nbits -= field.get_length()
     assert cur_nbits == 0
@@ -105,19 +103,16 @@ class YosysStructuralTranslatorL2(
     elif isinstance( dtype, rdt.PackedArray ):
       return s.packed_conn_gen( d, pid, wid, idx, dtype )
     else:
-      return \
-        super().dtype_conn_gen( d, pid, wid,
-                                                             idx, dtype )
+      return super().dtype_conn_gen( d, pid, wid, idx, dtype )
 
   #-----------------------------------------------------------------------
   # Port wire declaration helper method
   #-----------------------------------------------------------------------
 
   def wire_struct_gen( s, id_, dtype, n_dim ):
-    all_properties = dtype.get_all_properties()
     ret = []
     # Generate wire for each field
-    for name, field in all_properties:
+    for name, field in dtype.get_all_properties().items():
       ret += s.wire_dtype_gen( id_+"__"+name, field, n_dim )
     # Generate a long vector for this struct signal
     ret.append( {
@@ -174,9 +169,8 @@ class YosysStructuralTranslatorL2(
     return s._packed_gen( d, id_, n_dim, dtype )
 
   def struct_gen( s, d, id_, dtype ):
-    all_properties = dtype.get_all_properties()
     ret = []
-    for name, field in all_properties:
+    for name, field in dtype.get_all_properties().items():
       ret += s.dtype_gen( d, id_+"__"+name, field )
     return ret
 
@@ -224,8 +218,7 @@ class YosysStructuralTranslatorL2(
           cat_str = ", ".join( ret )
         return {'attr':[], 'index':[], 's_attr':cat_str, 's_index':""}
     fields = []
-    all_properties = dtype.get_all_properties()
-    for name, Type in all_properties:
+    for name, Type in dtype.get_all_properties().items():
       field = getattr( struct, name )
       if isinstance( Type, rdt.Vector ):
         _field = s.rtlir_tr_literal_number( Type.nbits, field )

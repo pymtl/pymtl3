@@ -91,7 +91,7 @@ class MemoryCL( Component ):
 
           if   req.type_ == MemMsgType.READ:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-                                    s.mem.read( req.addr, len_ ) )
+                                           s.mem.read( req.addr, len_ ) )
 
           elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
