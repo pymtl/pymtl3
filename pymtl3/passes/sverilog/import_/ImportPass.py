@@ -583,7 +583,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     ret = [f"connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )"]
     return ret, r
 
-  def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols = None ):
     dtype_name = dtype.get_class().__name__
     upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
     ret = [
@@ -592,6 +592,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     ]
     if d == "output":
       ret.append( f"  s.{lhs} = {dtype_name}()" )
+    # Patch `dtype_name` into the symbol dictionary
+    if dtype_name not in symbols:
+      symbols[dtype_name] = dtype.get_class()
     body = []
     all_properties = reversed(dtype.get_all_properties())
     for name, field in all_properties:
@@ -641,20 +644,20 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       assert False, f"unrecognized data type {dtype}!"
 
-  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos ):
+  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos, symbols = None ):
     if isinstance( dtype, rdt.Vector ):
       return s.gen_vector_conns( d, lhs, rhs, dtype, pos )
     elif isinstance( dtype, rdt.Struct ):
-      return s.gen_struct_conns( d, lhs, rhs, dtype, pos )
+      return s.gen_struct_conns( d, lhs, rhs, dtype, pos, symbols )
     else:
       assert False, f"unrecognized data type {dtype}!"
 
-  def gen_port_conns( s, id_py, id_v, port, n_dim ):
+  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols = None ):
     if not n_dim:
       d = port.get_direction()
       dtype = port.get_dtype()
       nbits = dtype.get_length()
-      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0 )
+      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0, symbols )
       assert pos == nbits, \
         f"internal error: {id_py} wire length mismatch!"
       return ret
@@ -663,10 +666,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range(n_dim[0]):
         _id_py = id_py + f"[{idx}]"
         _id_v = id_v + f"[{idx}]"
-        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:] )
+        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols )
       return ret
 
-  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim ):
+  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols = None ):
     if not n_dim:
       ret = []
       all_properties = ifc.get_all_properties_packed()
@@ -675,16 +678,16 @@ m->{name}{sub} = {deference}model->{name}{sub};
         _id_py = id_py + f".{name}"
         _id_v = id_v + f"__{name}"
         if isinstance( _rtype, rt.Port ):
-          ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim )
+          ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
         else:
-          ret += s.gen_ifc_conns( _id_py, _id_v, _rtype, _n_dim )
+          ret += s.gen_ifc_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
       return ret
     else:
       ret = []
       for idx in range( n_dim[0] ):
         _id_py = id_py + f"[{idx}]"
         _id_v = id_v + f"__{idx}"
-        ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:] )
+        ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:], symbols )
       return ret
 
   #-------------------------------------------------------------------------
@@ -759,7 +762,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
             # add `obj` to the namespace of `construct` everything works fine
             # but the user cannot tell what object is passed to the constructor
             # just from the code.
-            bs_name = "_"+name+"_obj"
+            # Do not use a double underscore prefix because that will be
+            # interpreted differently by the Python interpreter
+            bs_name = ("_" if name[0] != "_" else "") + name + "_obj"
             if bs_name not in symbols:
               symbols.update( { bs_name : obj } )
             return bs_name
@@ -821,14 +826,16 @@ m->{name}{sub} = {deference}model->{name}{sub};
     i_symbols, i_decls = gen_ifc_decl_py( ifcs )
 
     p_conns, i_conns = [], []
+    struct_conn_symbols = {}
     for id_, port in ports:
       p_n_dim, p_rtype = s._get_rtype( port )
-      p_conns += s.gen_port_conns( id_, id_, p_rtype, p_n_dim )
+      p_conns += s.gen_port_conns( id_, id_, p_rtype, p_n_dim, struct_conn_symbols )
     for id_, ifc in ifcs:
       i_n_dim, i_rtype = s._get_rtype( ifc )
-      i_conns += s.gen_ifc_conns( id_, id_, i_rtype, i_n_dim )
+      i_conns += s.gen_ifc_conns( id_, id_, i_rtype, i_n_dim, struct_conn_symbols )
 
     p_symbols.update( i_symbols )
+    p_symbols.update( struct_conn_symbols )
     decls = p_decls + i_decls
     conns = p_conns + i_conns
 
