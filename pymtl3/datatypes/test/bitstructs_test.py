@@ -14,8 +14,8 @@ import pytest
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
-from ..bitstructs import bitstruct, is_bitstruct, mk_bitstruct
 from ..bits_import import *
+from ..bitstructs import bitstruct, is_bitstruct, mk_bitstruct
 
 #-------------------------------------------------------------------------
 # Basic test to test error messages and exceptions
