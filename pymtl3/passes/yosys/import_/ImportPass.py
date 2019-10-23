@@ -40,8 +40,7 @@ class ImportPass( SVerilogImportPass ):
 
   def mangle_struct( s, d, id_, dtype ):
     ret = []
-    all_properties = dtype.get_all_properties()
-    for name, field in all_properties:
+    for name, field in dtype.get_all_properties().items():
       ret += s.mangle_dtype( d, id_+"__"+name, field )
     return ret
 
@@ -66,8 +65,8 @@ class ImportPass( SVerilogImportPass ):
       return s.mangle_struct( d, id_, dtype )
     elif isinstance( dtype, rdt.PackedArray ):
       return s.mangle_packed_array( d, id_, dtype )
-    else:
-      assert False, f"unrecognized data type {dtype}!"
+
+    raise TypeError(f"unrecognized data type {dtype}!")
 
   def mangle_port( s, id_, port, n_dim ):
     if not n_dim:
@@ -98,7 +97,7 @@ class ImportPass( SVerilogImportPass ):
     if d == "output":
       ret.append( f"  s.{lhs} = {dtype_name}()" )
     body = []
-    all_properties = reversed(dtype.get_all_properties())
+    all_properties = reversed(list(dtype.get_all_properties().items()))
     for name, field in all_properties:
       # Use upblk to generate assignment to a struct port
       _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs+"__"+name, field, pos )
@@ -117,7 +116,7 @@ class ImportPass( SVerilogImportPass ):
 
   def _gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
     ret = []
-    all_properties = reversed(dtype.get_all_properties())
+    all_properties = reversed(list(dtype.get_all_properties().items()))
     for name, field in all_properties:
       _ret, pos = s._gen_dtype_conns(d, lhs+"."+name, rhs+"__"+name, field, pos)
       ret += _ret
@@ -182,8 +181,7 @@ class ImportPass( SVerilogImportPass ):
         return s._gen_ref_read( lhs, rhs, nbits )
     elif isinstance( dtype, rdt.Struct ):
       ret = []
-      all_properties = dtype.get_all_properties()
-      for name, field in all_properties:
+      for name, field in dtype.get_all_properties().items():
         if is_input:
           _lhs = f"{lhs}__{name}"
           _rhs = f"{rhs}.{name}"

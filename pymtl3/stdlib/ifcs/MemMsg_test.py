@@ -20,7 +20,7 @@ def test_req_fields():
 
   ReqType = mk_mem_req_msg(8,16,40)
 
-  msg = ReqType( MemMsgType.READ, 7, 0x1000, 3 )
+  msg = ReqType( MemMsgType.READ, 7, 0x1000, 3, 0 )
 
   # Verify msg
 

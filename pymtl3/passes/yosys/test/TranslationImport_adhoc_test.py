@@ -5,8 +5,6 @@
 # Date   : Jun 15, 2019
 """Test ad-hoc components with yosys-SystemVerilog translation and import."""
 
-from pymtl3.datatypes import Bits32, BitStruct
-from pymtl3.dsl import Component, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.test.TranslationImport_adhoc_test import (
     test_bit_selection,

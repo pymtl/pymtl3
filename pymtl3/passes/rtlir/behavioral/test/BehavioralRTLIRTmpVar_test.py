@@ -8,7 +8,7 @@
 import pytest
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits16, Bits32, BitStruct
+from pymtl3.datatypes import Bits16, Bits32, bitstruct
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
@@ -47,9 +47,9 @@ def test_tmp_wire( do_test ):
   do_test( a )
 
 def test_tmp_wire_struct( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( dsl.Component ):
     def construct( s ):
       s.in_ = dsl.InPort( B )
@@ -61,7 +61,7 @@ def test_tmp_wire_struct( do_test ):
   a = A()
   a.elaborate()
   a._rtlir_tmpvar_ref = \
-    {('u', 'upblk') : rt.Wire(rdt.Struct('B', {'foo':rdt.Vector(32)}, ['foo']))}
+    {('u', 'upblk') : rt.Wire(rdt.Struct('B', {'foo':rdt.Vector(32)}))}
   do_test( a )
 
 def test_tmp_wire_overwrite_conflict_type( do_test ):
