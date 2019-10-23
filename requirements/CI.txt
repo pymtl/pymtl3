@@ -2,10 +2,5 @@
 -c constraints.txt
 
 # CI dependencies
-autoflake
-flake8
-future
-isort
 pytest-cov
-pyupgrade
 codecov
