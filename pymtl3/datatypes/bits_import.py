@@ -64,9 +64,9 @@ for cls in local.values():
 def mk_bits( nbits ):
   assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits in _bits_types:  return _bits_types[ nbits ]
-  _locals  = {}
+  _locals = {}
   exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ),
                 {'Bits': Bits }, _locals)
-  cls = list(local.values())[0]
-  _bits_types[ nbits ] = cls
+
+  _bits_types[ nbits ] = ret = list(_locals.values())[0]
   return cls
