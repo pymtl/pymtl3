@@ -471,6 +471,13 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
 
   cls.__ilshift__, cls._flip = _mk_ff_fn( fields )
 
+  def get_field_type( cls, name ):
+    if name in cls.__bitstruct_fields__:
+      return cls.__bitstruct_fields__[ name ]
+    raise AttributeError( f"{cls} has no field '{name}'" )
+
+  cls.get_field_type = classmethod(get_field_type)
+
   # TODO: maybe add a to_bits and from bits function.
 
   return cls

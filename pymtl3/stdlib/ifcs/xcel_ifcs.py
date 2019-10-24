@@ -186,8 +186,6 @@ class XcelIfcCL2FLAdapter( Component ):
     s.right = XcelMasterIfcFL( ReqType, RespType )
     s.entry = None
 
-    DataType = mk_bits( ReqType.data_nbits )
-
     @s.update
     def up_xcelifc_cl_fl_blk():
 
@@ -198,11 +196,11 @@ class XcelIfcCL2FLAdapter( Component ):
         s.entry = None
 
         if req.type_ == XcelMsgType.READ:
-          resp = RespType( req.type_, DataType( s.right.read(req.addr) ) )
+          resp = RespType( req.type_, s.right.read(req.addr) )
 
         elif req.type_ == XcelMsgType.WRITE:
           s.right.write( req.addr, req.data )
-          resp = RespType( req.type_, DataType( 0 ) )
+          resp = RespType( req.type_, 0 )
 
         s.left.resp( resp )
 
@@ -219,7 +217,7 @@ class XcelIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( XcelMsgType.READ, s.DataType(addr) ) )
+    s.right.req( s.ReqType( XcelMsgType.READ, addr ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -234,7 +232,7 @@ class XcelIfcFL2CLAdapter( Component ):
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.ReqType( XcelMsgType.WRITE, s.AddrType(addr), s.DataType(data) ) )
+    s.right.req( s.ReqType( XcelMsgType.WRITE, addr, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -252,9 +250,6 @@ class XcelIfcFL2CLAdapter( Component ):
     s.entry = None # store response
 
     s.ReqType  = ReqType
-
-    s.DataType = mk_bits( ReqType.data_nbits )
-    s.AddrType = mk_bits( ReqType.addr_nbits )
 
     s.left  = XcelMinionIfcFL( ReqType, RespType, s.read, s.write )
     s.right = XcelMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
@@ -279,8 +274,6 @@ class XcelIfcRTL2FLAdapter( Component ):
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     connect( s.left.req, s.req_q.enq )
 
-    DataType = mk_bits( RespType.data_nbits )
-
     @s.update
     def up_xcelifc_rtl_fl_blk():
 
@@ -288,11 +281,11 @@ class XcelIfcRTL2FLAdapter( Component ):
 
         if s.req_q.deq.msg.type_ == XcelMsgType.READ:
           resp = RespType( s.req_q.deq.msg.type_,
-                           DataType( s.right.read( s.req_q.deq.msg.addr ) ) )
+                           s.right.read( s.req_q.deq.msg.addr ) )
 
         elif s.req_q.deq.msg.type_ == XcelMsgType.WRITE:
           s.right.write( s.req_q.deq.msg.addr, s.req_q.deq.msg.data )
-          resp = RespType( s.req_q.deq.msg.type_, DataType(0) )
+          resp = RespType( s.req_q.deq.msg.type_, 0 )
 
         s.req_q.deq.en = b1(1)
         s.left.resp.en  = b1(1)

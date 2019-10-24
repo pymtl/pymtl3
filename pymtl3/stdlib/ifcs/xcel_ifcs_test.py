@@ -119,8 +119,9 @@ class SomeMasterCL( Component ):
     s.nregs = nregs
     s.flag = True
 
-    DataType = mk_bits( ReqType.data_nbits )
-    AddrType = mk_bits( clog2(nregs) )
+    DataType = ReqType.get_field_type( 'data' )
+    assert DataType is RespType.get_field_type( 'data' )
+    AddrType = ReqType.get_field_type( 'addr' )
 
     @s.update
     def up_master_req():
@@ -199,11 +200,11 @@ class SomeMasterRTL( Component ):
 
     # Local parameters
 
-    assert ReqType.data_nbits == RespType.data_nbits
-    s.data_nbits = ReqType.data_nbits
-    DataType     = mk_bits( s.data_nbits )
-    AddrType     = mk_bits( clog2(nregs) )
-    s.nregs      = nregs
+    DataType = ReqType.get_field_type( 'data' )
+    assert DataType is RespType.get_field_type( 'data' )
+    AddrType = ReqType.get_field_type( 'addr' )
+
+    s.nregs = nregs
 
     # Components
 
@@ -259,8 +260,9 @@ class SomeMinionRTL( Component ):
 
     # Local parameters
 
-    s.data_nbits = max( ReqType.data_nbits, RespType.data_nbits )
-    DataType     = mk_bits( s.data_nbits )
+    DataType = ReqType.get_field_type( 'data' )
+    assert DataType is RespType.get_field_type( 'data' )
+
     s.nregs      = nregs
 
     # Components

@@ -34,7 +34,6 @@ def mk_xcel_req_msg( addr, data ):
   namespace = {
     '__str__' : req_to_str
   })
-  req_cls.data_nbits = data
   return req_cls
 
 def mk_xcel_resp_msg( data ):
@@ -55,7 +54,6 @@ def mk_xcel_resp_msg( data ):
   namespace = {
     '__str__' : resp_to_str
   })
-  resp_cls.data_nbits = data
   return resp_cls
 
 class XcelMsgType:
