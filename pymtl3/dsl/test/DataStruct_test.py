@@ -6,7 +6,7 @@ DataStruct_test.py
 Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
-from pymtl3.datatypes import Bits16, Bits32
+from pymtl3.datatypes import Bits16, Bits32, bitstruct
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import MultiWriterError, NoWriterError
@@ -520,14 +520,14 @@ def test_struct_with_list_of_bits():
 
 def test_nested_struct_2d_array_index():
 
+  @bitstruct
   class C:
-    def __init__( s, bar=42 ):
-      s.bar = Bits16(bar)
+    bar: Bits16
 
+  @bitstruct
   class B:
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = [ [ C() for _ in range(5) ] for _ in range(5) ]
+    foo: Bits32
+    bar: [ [C]*5 ] * 5
 
   class A( ComponentLevel3 ):
     def construct( s ):
@@ -537,8 +537,39 @@ def test_nested_struct_2d_array_index():
       connect( s.struct.bar[1][4], s.out )
       connect( s.struct.bar[1][4].bar, s.out2 )
 
+      s.wire = Wire( B )
+      @s.update_ff
+      def ffs():
+        s.wire.bar <<= 1
+
   a = A()
   a.elaborate()
   print(a.struct.__dict__)
   print(a.struct.bar[1][4].__dict__)
   print(a.struct.bar[1][4].bar._dsl.__dict__)
+
+# TODO better error message?
+def test_ff_cannot_write_to_struct_field():
+
+  @bitstruct
+  class C:
+    bar: Bits16
+
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: [ [C]*5 ] * 5
+
+  class A( ComponentLevel3 ):
+    def construct( s ):
+      s.wire = Wire( B )
+      @s.update_ff
+      def ffs():
+        s.wire.bar <<= 1
+
+  try:
+    _test_model( A )
+  except TypeError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown TypeError.")
