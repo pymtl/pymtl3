@@ -1,7 +1,7 @@
 import os
 import pytest
 
-if os.environ['CI']:
+if 'CI' in os.environ:
   # Set up the CI hypothesis profile which limits the max number of tries
   # The 'CI' profile will be specified through the testing command of the
   # CI script.
