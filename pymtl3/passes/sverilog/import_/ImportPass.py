@@ -14,7 +14,7 @@ import subprocess
 import sys
 from textwrap import indent
 
-from pymtl3.datatypes import Bits, bitstruct, is_bitstruct, mk_bits
+from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst, mk_bits
 from pymtl3.dsl import Component
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
