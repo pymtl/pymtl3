@@ -393,7 +393,6 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     def double_buffer():
       {}
     """.format( "\n      ".join(strs) )
-
     local = locals()
     exec(py.code.Source( src ).compile(), local)
     return local['double_buffer']
@@ -433,11 +432,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
 
   if isinstance( s, ComponentLevel2 ):
-    final_serial_schedule = list(all_update_ff)
-    dbf = make_double_buffer_func( s )
-    if dbf:
-      final_serial_schedule.append( dbf )
-    final_serial_schedule += serial_schedule
+    final_serial_schedule = [ make_double_buffer_func( s ) ]
+    final_serial_schedule.extend( serial_schedule )
+    final_serial_schedule.extend( all_update_ff )
   else:
     final_serial_schedule = serial_schedule
 

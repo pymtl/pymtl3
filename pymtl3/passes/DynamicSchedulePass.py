@@ -161,13 +161,10 @@ class DynamicSchedulePass( BasePass ):
 
     constraint_objs = top._dag.constraint_objs
 
-    schedule = []
+    # From now on, we put the schedule in the order of
+    # [ flip, normal upblks, update_ffs ]
 
-    # First execute all update_ff blocks and then all the double buffering
-    # functions
-
-    schedule.extend( list(top._dsl.all_update_ff) )
-    schedule.append( make_double_buffer_func( top ) )
+    schedule = [ make_double_buffer_func( top ) ]
 
     scc_id = 0
     for i in scc_schedule:
@@ -274,5 +271,6 @@ class DynamicSchedulePass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
-    # print(schedule)
+    schedule.extend( list(top._dsl.all_update_ff) )
+
     return schedule

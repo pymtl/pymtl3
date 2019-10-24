@@ -588,11 +588,9 @@ def test_update_ff_swap():
   T, time = 0, 20
   while T < time:
     A.tick()
-    print(A.line_trace())
-
-    T += 1
     assert A.wire0 == T
     assert A.wire1 == T
+    T += 1
 
 def test_var_written_in_both_ff_and_up():
 

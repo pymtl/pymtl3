@@ -79,9 +79,12 @@ class SimpleSchedulePass( BasePass ):
 
     check_schedule( top, update_schedule, V, E, InD )
 
-    schedule = list(top._dsl.all_update_ff)
-    schedule.append( make_double_buffer_func( top ) )
+    # From now on, we put the schedule in the order of
+    # [ flip, normal upblks, update_ffs ]
+
+    schedule = [ make_double_buffer_func( top ) ]
     schedule.extend( update_schedule )
+    schedule.extend( top._dsl.all_update_ff )
 
     return schedule
 
