@@ -14,11 +14,10 @@ from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 from .sim_utils import simple_sim_pass
 
 
+@bitstruct
 class SomeMsg:
-
-  def __init__( s, a=0, b=0 ):
-    s.a = int(a)
-    s.b = Bits32(b)
+  a: Bits32
+  b: Bits32
 
 def _test_model( cls ):
   A = cls()

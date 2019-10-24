@@ -8,7 +8,7 @@ Date   : Nov 3, 2018
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits32
+from pymtl3.datatypes import Bits32, bitstruct
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import RD, WR, U
@@ -331,20 +331,18 @@ def test_write_two_disjoint_slices():
 # WR A.b - RD A
 def test_wr_A_b_rd_A_impl():
 
-
+  @bitstruct
   class SomeMsg:
-
-    def __init__( s, a=0, b=0 ):
-      s.a = int(a)
-      s.b = Bits32(b)
+    a: Bits32
+    b: Bits32
 
   class Top(ComponentLevel2):
     def construct( s ):
-      s.A  = Wire( SomeMsg )
+      s.A = Wire( SomeMsg )
 
       @s.update
       def up_wr_A_b():
-        s.A.b = 123
+        s.A.b = Bits32(123)
 
       @s.update
       def up_rd_A():

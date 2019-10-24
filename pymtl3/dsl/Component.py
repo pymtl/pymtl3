@@ -467,9 +467,8 @@ class Component( ComponentLevel7 ):
         for i, obj in enumerate( current_obj ):
           if isinstance( obj, Signal ):
             try:
-              default_value  = obj.default_value()
-              current_obj[i] = default_value
-              current_obj[i] <<= default_value
+              current_obj[i] = obj.default_value()
+              current_obj[i] <<= obj.default_value()
             except Exception as e:
               print("For object", repr(obj))
               raise e
@@ -485,9 +484,8 @@ class Component( ComponentLevel7 ):
           if i[0] != '_': # impossible to have tuple
             if isinstance( obj, Signal ):
               try:
-                default_value = obj.default_value()
-                value = default_value
-                value <<= default_value
+                value = obj.default_value()
+                value <<= obj.default_value()
                 setattr( current_obj, i, value )
               except Exception as e:
                 print("For object", repr(obj))
