@@ -30,6 +30,12 @@ class Component( ComponentLevel7 ):
       s.clk   = InPort( Bits1 )
       s.reset = InPort( Bits1 )
 
+      # physical dimension
+      s.dim_x = 0
+      s.dim_y = 0
+      s.dim_w = 0
+      s.dim_h = 0
+
       # Merge the actual keyword args and those args set by set_parameter
       if s._dsl.param_tree is None:
         kwargs = s._dsl.kwargs
