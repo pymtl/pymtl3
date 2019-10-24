@@ -16,6 +16,7 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
 
+
 def gen_connections( top ):
   _inst_conns = defaultdict( set )
 
