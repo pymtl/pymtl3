@@ -489,10 +489,9 @@ class Component( ComponentLevel7 ):
                 value = default_value
                 value <<= default_value
                 setattr( current_obj, i, value )
-              except Exception as err:
-                err.message = repr(obj) + " -- " + err.message
-                err.args = (err.message,)
-                raise err
+              except Exception as e:
+                print("For object", repr(obj))
+                raise e
               swapped_signals[ host ].append( (current_obj, i, obj, False) )
 
             elif isinstance( obj, Component ):
@@ -514,10 +513,10 @@ class Component( ComponentLevel7 ):
     for component, records in s._dsl.swapped_signals.items():
       for current_obj, i, obj, is_list in records:
         if is_list:
-          swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          swapped_values[ component ].append( (current_obj, i, current_obj[i], is_list) )
           current_obj[i] = obj
         else:
-          swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          swapped_values[ component ].append( (current_obj, i, getattr(current_obj, i), is_list) )
           setattr( current_obj, i, obj )
 
     s._dsl.swapped_values = swapped_values
