@@ -14,7 +14,7 @@ import subprocess
 import sys
 from textwrap import indent
 
-from pymtl3.datatypes import Bits, BitStruct, mk_bits
+from pymtl3.datatypes import Bits, bitstruct, is_bitstruct, mk_bits
 from pymtl3.dsl import Component
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -596,7 +596,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
     body = []
-    all_properties = reversed(dtype.get_all_properties())
+    all_properties = reversed(list(dtype.get_all_properties().items()))
     for name, field in all_properties:
       _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs, field, pos )
       body += _ret
@@ -614,7 +614,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def _gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
     ret = []
-    all_properties = reversed(dtype.get_all_properties())
+    all_properties = reversed(list(dtype.get_all_properties().items()))
     for field_name, field in all_properties:
       _ret, pos = s._gen_dtype_conns(d, lhs+"."+field_name, rhs, field, pos)
       ret += _ret
@@ -749,14 +749,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
             return str(obj)
           elif isinstance( obj, Bits ):
             nbits = obj.nbits
-            value = obj.value
+            value = int(obj)
             Bits_name = f"Bits{nbits}"
             Bits_arg_str = f"{Bits_name}( {value} )"
             if Bits_name not in symbols and nbits >= 256:
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
             return Bits_arg_str
-          elif isinstance( obj, BitStruct ):
+          elif is_bitstruct(obj):
             # This is hacky: we don't know how to construct an object that
             # is the same as `obj`, but we do have the object itself. If we
             # add `obj` to the namespace of `construct` everything works fine
@@ -775,14 +775,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
             return Bits_name
-          elif isinstance( obj, type ) and issubclass( obj, BitStruct ):
+          elif isinstance( obj, type ) and is_bitstruct(obj):
             BitStruct_name = obj.__name__
             if BitStruct_name not in symbols:
               symbols.update( { BitStruct_name : obj } )
             return BitStruct_name
-          else:
-            assert False, \
-              f"Interface constructor argument {obj} is not an int/Bits/BitStruct!"
+
+          raise TypeError( f"Interface constructor argument {obj} is not an int/Bits/BitStruct!" )
 
         name, cls = ifc.get_name(), ifc.get_class()
         if name not in symbols:

@@ -5,7 +5,7 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L1 behavioral translator."""
 
-from pymtl3.datatypes import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bitstruct
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -142,7 +142,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         return f"{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}"
 
     if isinstance( value, Bits ):
-      value = value.uint()
+      value = int(value)
     return f"{nbits}'d{value}"
 
   #-----------------------------------------------------------------------
@@ -162,10 +162,10 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
         nbits = obj.nbits
-        value = int( obj.value )
+        value = int( obj )
         node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""
-      elif isinstance( obj, BitStruct ):
+      elif is_bitstruct( obj ):
         node.sexpr['s_attr'] = s._struct_instance( node.Type.get_dtype(), obj )
         node.sexpr['s_index'] = ""
       else:
@@ -254,7 +254,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       return f"32'd{node.obj}"
     elif isinstance( node.obj, Bits ):
       nbits = node.obj.nbits
-      value = int( node.obj.value )
+      value = int( node.obj )
       return f"{nbits}'d{value}"
     else:
       raise SVerilogTranslationError( s.blk, node,

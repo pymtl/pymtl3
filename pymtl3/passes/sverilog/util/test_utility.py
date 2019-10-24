@@ -40,8 +40,7 @@ def VectorInitData( dtype ):
 
 def StructInitData( dtype ):
   data = dtype.get_class()()
-  all_properties = dtype.get_all_properties()
-  for field_name, field in all_properties:
+  for field_name, field in dtype.get_all_properties().items():
     setattr( data, field_name, DataTypeInitData( field ) )
   return data
 
@@ -71,8 +70,7 @@ def InPortInitData( id_, port ):
 
 def InterfaceInitData( id_, ifc ):
   init = {}
-  all_properties = ifc.get_all_properties_packed()
-  for prop_name, prop_rtype in all_properties:
+  for prop_name, prop_rtype in ifc.get_all_properties_packed():
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()
@@ -112,10 +110,8 @@ def VectorDataStrategy( draw, dtype ):
 @st.composite
 def StructDataStrategy( draw, dtype ):
   data = dtype.get_class()()
-  all_properties = dtype.get_all_properties()
-  for field_name, field in all_properties:
-    setattr( data, field_name, draw(
-      DataTypeDataStrategy( field ) ) )
+  for field_name, field in dtype.get_all_properties().items():
+    setattr( data, field_name, draw( DataTypeDataStrategy( field ) ) )
   return data
 
 @st.composite
@@ -148,8 +144,7 @@ def InPortDataStrategy( draw, id_, port ):
 @st.composite
 def InterfaceDataStrategy( draw, id_, ifc ):
   data = {}
-  all_properties = ifc.get_all_properties_packed()
-  for prop_name, prop_rtype in all_properties:
+  for prop_name, prop_rtype in ifc.get_all_properties_packed():
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()

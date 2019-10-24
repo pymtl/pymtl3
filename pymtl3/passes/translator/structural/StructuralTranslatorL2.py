@@ -66,7 +66,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   # Override
   def rtlir_data_type_translation( s, m, dtype ):
     def recurse_struct_dtype_translation( dtype ):
-      for key, value in dtype.get_all_properties():
+      for key, value in dtype.get_all_properties().items():
         if isinstance( value, rdt.PackedArray ):
           value = value.get_sub_dtype()
         if not isinstance(value, rdt.Struct):

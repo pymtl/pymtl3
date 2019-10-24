@@ -17,6 +17,7 @@ def run_test_crossbar( cls, args, test_vectors ):
   model = cls( *args )
 
   n, T = args
+  Tsel = mk_bits( clog2( n ) )
 
   # Define functions mapping the test vector to ports in model
 
@@ -25,7 +26,7 @@ def run_test_crossbar( cls, args, test_vectors ):
 
     for i in range(n):
       model.in_[i] = T(test_vector[i])
-      model.sel[i] = T(test_vector[n+i])
+      model.sel[i] = Tsel(test_vector[n+i])
 
   def tv_out( model, test_vector ):
     n = len( model.in_ )
