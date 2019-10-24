@@ -5,7 +5,7 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L1 behavioral translator."""
 
-from pymtl3.datatypes import Bits, is_bitstruct
+from pymtl3.datatypes import Bits, is_bitstruct_inst
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -165,7 +165,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         value = int( obj )
         node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""
-      elif is_bitstruct( obj ):
+      elif is_bitstruct_inst( obj ):
         node.sexpr['s_attr'] = s._struct_instance( node.Type.get_dtype(), obj )
         node.sexpr['s_index'] = ""
       else:

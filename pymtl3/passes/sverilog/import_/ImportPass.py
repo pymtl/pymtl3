@@ -756,7 +756,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
             return Bits_arg_str
-          elif is_bitstruct(obj):
+          elif is_bitstruct_inst( obj ):
+            raise TypeError("Do you really want to pass in an instance of "
+                            "a BitStruct? Contact PyMTL developers!")
             # This is hacky: we don't know how to construct an object that
             # is the same as `obj`, but we do have the object itself. If we
             # add `obj` to the namespace of `construct` everything works fine
@@ -764,10 +766,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
             # just from the code.
             # Do not use a double underscore prefix because that will be
             # interpreted differently by the Python interpreter
-            bs_name = ("_" if name[0] != "_" else "") + name + "_obj"
-            if bs_name not in symbols:
-              symbols.update( { bs_name : obj } )
-            return bs_name
+            # bs_name = ("_" if name[0] != "_" else "") + name + "_obj"
+            # if bs_name not in symbols:
+              # symbols.update( { bs_name : obj } )
+            # return bs_name
           elif isinstance( obj, type ) and issubclass( obj, Bits ):
             nbits = obj.nbits
             Bits_name = f"Bits{nbits}"
@@ -775,7 +777,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
               Bits_class = mk_bits( nbits )
               symbols.update( { Bits_name : Bits_class } )
             return Bits_name
-          elif isinstance( obj, type ) and is_bitstruct(obj):
+          elif is_bitstruct_class(obj):
             BitStruct_name = obj.__name__
             if BitStruct_name not in symbols:
               symbols.update( { BitStruct_name : obj } )
