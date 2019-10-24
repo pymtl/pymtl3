@@ -15,7 +15,7 @@ from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
 from ..bits_import import *
-from ..bitstructs import bitstruct, is_bitstruct, mk_bitstruct
+from ..bitstructs import bitstruct, is_bitstruct_class, is_bitstruct_inst, mk_bitstruct
 
 #-------------------------------------------------------------------------
 # Basic test to test error messages and exceptions
@@ -377,7 +377,7 @@ def test_nested_two_struct_with_same_name():
 # Bit struct instance test
 #-------------------------------------------------------------------------
 
-def test_is_bitstruct():
+def test_is_bitstruct_inst_class():
   class A:
     x : Bits4
     y : Bits4
@@ -387,8 +387,15 @@ def test_is_bitstruct():
     x : Bits4
     y : Bits4
 
-  assert not is_bitstruct( A() )
-  assert is_bitstruct( B() )
+  assert not is_bitstruct_class( A )
+  assert not is_bitstruct_inst( A )
+  assert not is_bitstruct_class( A() )
+  assert not is_bitstruct_inst( A() )
+
+  assert is_bitstruct_class( B )
+  assert not is_bitstruct_inst( B )
+  assert not is_bitstruct_class( B() )
+  assert is_bitstruct_inst( B() )
 
 #-------------------------------------------------------------------------
 # bit struct with array test
