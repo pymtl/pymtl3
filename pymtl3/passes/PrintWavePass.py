@@ -24,7 +24,7 @@ class PrintWavePass( BasePass ):
   def __call__( self, top ):
     top._print_wave = _help_print
 
-def _process_binary(sig,base):
+def _process_binary(sig,base,max):
     """
     Returns int value from a signal in 32b form. Used for testing.
 
@@ -44,11 +44,11 @@ def _process_binary(sig,base):
     else:
         temp_hex = hex(int(sig,2))[2:]
         l = len(temp_hex)
-        if l > 4:
-            temp_hex = temp_hex[l-4:]
+        if l > max:
+            temp_hex = temp_hex[:max]
 
-        if l < 4:
-            temp_hex = '0'*(4-l) + temp_hex
+        if l < max:
+            temp_hex = '0'*(max-l) + temp_hex
         return temp_hex
 
 def _help_print(self):
@@ -73,9 +73,15 @@ def _help_print(self):
 
     print(" "*(max_length+1),end = "")
 
-    for i in range(0,len(all_signals["s.clk"]),5):
-          print(_tick + str(i)+ " "*(5*char_length-1) ,end="")
+    for i in range(0,len(all_signals["s.clk"])):
+          if i % 5 == 0:
+              print(_tick + str(i)+ " "*(char_length-2) ,end="")
+          else:
+              print(_tick + " "*(char_length-1) ,end="")
+          if i % 5 == 1:
+              print(" ",end ="")
 
+    print("")
     #signals
     for sig in all_signals:
 
@@ -114,19 +120,47 @@ def _help_print(self):
           print("")
         #multiple bits
         else:
-            for val in all_signals[sig]:
-              if val[1]%5 == 0:
+            next = 0
+            val_list = all_signals[sig]
+            for i in range(len(val_list)):
+              if next > 0:
+                  next -=1
+                  continue
+
+              val = val_list[i]
+              for j in range(i,len(val_list)):
+                  if (j%5==4):
+                      break
+                  if (val_list[j][0] != val[0]):
+                      j = j-1
+                      break
+
+              if i%5 == 0:
                 print(_back +" ",end = "")
 
-              current = _process_binary(val[0],16)
-              if prev_sig is None:
+              #first is reserved for X or " ". Rest is 5 char length.
+              length = 4+ 5*(j-i)
+              next = j-i
+              if length >= bit_length//4:
+                  length = bit_length//4
+                  if bit_length %4 != 0:
+                      length+=1
+                  plus = False
+              else:
+                  #reverse a place for +
+                  length = length -1
+                  plus = True
+
+              current = _process_binary(val[0],16,length)
+              if i==0:
                     print(_light_gray + " " +'\033[30m'+ current,end = "")
               else:
-                  if prev_sig[0] == val[0]:
-                      print(_light_gray + " "*(char_length),end = "")
-                  else:
-                      print(_light_gray + '\033[30m'+_x + current,end = "")
-              prev_sig = val
+                    print(_light_gray + '\033[30m'+_x + current,end = "")
+              if(plus):
+                  print("+",end="")
+              else:
+                  print(" "*(4+5*(j-i)-length),end = "")
+
             print(_back + "")
 
     print("")
