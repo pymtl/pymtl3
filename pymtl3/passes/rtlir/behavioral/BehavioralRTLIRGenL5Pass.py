@@ -6,7 +6,10 @@
 """Provide L5 behavioral RTLIR generation pass."""
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_on_edge
+from pymtl3.passes.rtlir.util.utility import (
+    get_ordered_upblks,
+    get_ordered_update_on_edge,
+)
 
 from .BehavioralRTLIRGenL4Pass import BehavioralRTLIRGeneratorL4
 

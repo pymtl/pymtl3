@@ -14,7 +14,10 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
     BehavioralRTLIRTypeCheckL1Pass,
 )
-from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_on_edge
+from pymtl3.passes.rtlir.util.utility import (
+    get_ordered_upblks,
+    get_ordered_update_on_edge,
+)
 
 from .BehavioralTranslatorL0 import BehavioralTranslatorL0
 
