@@ -19,19 +19,10 @@ from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 
 def gen_connections( top ):
-  """Return a tuple of all connections in the hierarchy whose top is `top`.
-
-  Return a three element tuple ( ss, sc, cc ). `ss` is a dictionary indexed
-  by component `m` and has a set of pairs of connected signals within component
-  `m` ( and thus is called "self_self" ). `sc` is a dictionary indexed by
-  component `m` and has a set of pairs of connected signals between component
-  `m` and its child components ( "self_child" ). `cc` is a dictionary indexed
-  by component `m` and has a set of pairs of connected signals between two
-  child components of `m` ( "child_child" ).
+  """Return a collections of all connections of each instance in the
+     hierarchy whose top is `top`.
   """
-  _top_conns_self_self = defaultdict( set )
-  _top_conns_self_child = defaultdict( set )
-  _top_conns_child_child = defaultdict( set )
+  _inst_conns = defaultdict( set )
 
   nets = top.get_all_value_nets()
   adjs = top.get_signal_adjacency_dict()
@@ -59,28 +50,24 @@ def gen_connections( top ):
           #       Both need to be added to the parent component.
 
           if writer_host is reader_host:
-            _top_conns_self_self[writer_host].add( ( u, v ) )
+            _inst_conns[writer_host].add( ( u, v ) )
           elif writer_host_parent is reader_host:
-            _top_conns_self_child[reader_host].add( ( u, v ) )
+            _inst_conns[reader_host].add( ( u, v ) )
           elif writer_host is reader_host_parent:
-            _top_conns_self_child[writer_host].add( ( u, v ) )
+            _inst_conns[writer_host].add( ( u, v ) )
           elif writer_host_parent == reader_host_parent:
-            _top_conns_child_child[writer_host_parent].add( ( u, v ) )
+            _inst_conns[writer_host_parent].add( ( u, v ) )
           else:
-            assert False, "unexpected connection type!"
+            raise TypeError( "unexpected connection type!" )
 
-  return \
-    _top_conns_self_self, _top_conns_self_child, _top_conns_child_child
+  return _inst_conns
 
 class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def __init__( s, top ):
     super().__init__( top )
     # To avoid doing redundant computation, we generate the connections of
     # the entire hierarchy once and only once here.
-    # c_ss: self-self connections
-    # c_sc: self-child connections
-    # c_cc: child-child connections
-    s.c_ss, s.c_sc, s.c_cc = gen_connections( top )
+    s.inst_conns = gen_connections( top )
 
   def clear( s, tr_top ):
     super().clear( tr_top )
@@ -101,10 +88,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
 
   def gen_structural_trans_metadata( s, tr_top ):
-    # c_ss: self-self connections
-    # c_sc: self-child connections
-    # c_cc: child-child connections
-    tr_top.apply( StructuralRTLIRGenL1Pass( s.c_ss, s.c_sc, s.c_cc ) )
+    tr_top.apply( StructuralRTLIRGenL1Pass( s.inst_conns ) )
 
   #-----------------------------------------------------------------------
   # translate_structural

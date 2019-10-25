@@ -87,7 +87,7 @@ class ImportPass( SVerilogImportPass ):
     ret = [f"connect( s.{_lhs}, s.mangled__{_rhs} )"]
     return ret, pos + nbits
 
-  def gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols ):
     dtype_name = dtype.get_class().__name__
     upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
     ret = [
@@ -96,6 +96,9 @@ class ImportPass( SVerilogImportPass ):
     ]
     if d == "output":
       ret.append( f"  s.{lhs} = {dtype_name}()" )
+    # Patch `dtype_name` into the symbol dictionary
+    if dtype_name not in symbols:
+      symbols[dtype_name] = dtype.get_class()
     body = []
     all_properties = reversed(list(dtype.get_all_properties().items()))
     for name, field in all_properties:
@@ -135,12 +138,12 @@ class ImportPass( SVerilogImportPass ):
         ret += _ret
       return ret, pos
 
-  def gen_port_conns( s, id_py, id_v, port, n_dim ):
+  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols ):
     if not n_dim:
       d = port.get_direction()
       dtype = port.get_dtype()
       nbits = dtype.get_length()
-      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0 )
+      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0, symbols )
       assert pos == nbits, \
         "internal error: {} wire length mismatch!".format( id_py )
       return ret
@@ -149,7 +152,7 @@ class ImportPass( SVerilogImportPass ):
       for idx in range(n_dim[0]):
         _id_py = id_py + f"[{idx}]"
         _id_v = id_v + f"__{idx}"
-        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:] )
+        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols )
       return ret
 
   #-------------------------------------------------------------------------

@@ -1,0 +1,8 @@
+-r release.txt
+
+# Extra development dependencies
+autoflake
+flake8
+isort
+pyupgrade
+graphviz

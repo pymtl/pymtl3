@@ -27,7 +27,7 @@ def test_L4_subcomp_attr():
       dsl.connect( s.out, s.b.msg )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL4Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL4Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   # The first two signals are clk and reset
@@ -46,7 +46,7 @@ def test_L4_subcomp_index():
       dsl.connect( s.out, s.b[1].msg )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL4Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL4Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   # The first ten signals are clks and resets
