@@ -361,4 +361,3 @@ def test_connect_upblk_orders():
   assert u[0].__name__ == "up_out"
   assert u[1].__name__ == "up_ff"
   assert u[2].__name__ == "up_out2"
-

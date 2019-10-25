@@ -10,6 +10,7 @@ from collections import OrderedDict
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
+from pymtl3.passes.rtlir.util.utility import get_ordered_all_upblks
 
 from .BehavioralRTLIRTypeCheckL4Pass import BehavioralRTLIRTypeCheckVisitorL4
 
@@ -29,7 +30,7 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
-    for blk in m.get_update_blocks():
+    for blk in get_ordered_all_upblks(m):
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):

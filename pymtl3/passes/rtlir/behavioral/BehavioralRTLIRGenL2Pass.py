@@ -10,6 +10,7 @@ import ast
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_on_edge
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
@@ -24,8 +25,8 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
     visitor = BehavioralRTLIRGeneratorL2( m )
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
+      'CombUpblk' : get_ordered_upblks(m),
+      'SeqUpblk'  : get_ordered_update_on_edge(m),
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
