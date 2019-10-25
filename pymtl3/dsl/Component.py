@@ -551,9 +551,18 @@ class Component( ComponentLevel7 ):
     assert s._dsl.constructed
     return s._dsl.upblk_reads, s._dsl.upblk_writes, s._dsl.upblk_calls
 
+  # These xxx_order APIs should be used when some pass wants to process
+  # connections/upblks in the order that they are created
+
   def get_connect_order( s ):
     try:
       return s._dsl.connect_order
+    except AttributeError:
+      raise NotElaboratedError()
+
+  def get_update_block_order( s ):
+    try:
+      return s._dsl.upblk_order
     except AttributeError:
       raise NotElaboratedError()
 
