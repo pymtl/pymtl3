@@ -70,15 +70,13 @@ from .bits_import import *
 
 _FIELDS = '__bitstruct_fields__'
 
-def _is_bitstruct_instance(obj):
+def is_bitstruct_inst( obj ):
   """Returns True if obj is an instance of a dataclass."""
   return hasattr(type(obj), _FIELDS)
 
-def is_bitstruct(obj):
-  """Returns True if obj is a dataclass or an instance of a
-  dataclass."""
-  cls = obj if isinstance(obj, type) else type(obj)
-  return hasattr(cls, _FIELDS)
+def is_bitstruct_class(cls):
+  """Returns True if obj is a dataclass ."""
+  return isinstance(cls, type) and hasattr(cls, _FIELDS)
 
 _DEFAULT_SELF_NAME = 's'
 _ANTI_CONFLICT_SELF_NAME = '__bitstruct_self__'
@@ -116,7 +114,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
 
 def _mk_init_arg( name, type_ ):
   # default is always None
-  if isinstance( type_, list ) or is_bitstruct( type_ ):
+  if isinstance( type_, list ) or is_bitstruct_class( type_ ):
     return f'{name} = None'
   return f'{name} = 0'
 
@@ -132,7 +130,7 @@ def _mk_init_body( self_name, name, type_ ):
       return f"[{', '.join( [ _recursive_generate_init(x[0]) ] * len(x) )}]"
     return f"_type_{name}()"
 
-  if isinstance( type_, list ) or is_bitstruct( type_ ):
+  if isinstance( type_, list ) or is_bitstruct_class( type_ ):
     return f'{self_name}.{name} = {name} or {_recursive_generate_init(type_)}'
 
   assert issubclass( type_, Bits )
@@ -180,7 +178,7 @@ def _mk_init_fn( self_name, fields ):
         x = x[0]
       _globals[ f"_type_{name}" ] = x
     else:
-      assert issubclass( type_, Bits ) or is_bitstruct( type_ )
+      assert issubclass( type_, Bits ) or is_bitstruct_class( type_ )
       _globals[ f"_type_{name}" ] = type_
 
   return _create_fn(
@@ -336,7 +334,7 @@ def _recursive_check_array_types( current ):
       assert y_type is x_type
     return x_type
 
-  assert issubclass( x, Bits ) or is_bitstruct( x )
+  assert issubclass( x, Bits ) or is_bitstruct_class( x )
   for y in current[1:]:
     assert y is x
   return x
@@ -372,7 +370,7 @@ def _check_field_annotation( cls, name, type_ ):
                       f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}.")
 
     # More specifically, Bits and BitStruct
-    if not issubclass( type_, Bits ) and not is_bitstruct( type_ ):
+    if not issubclass( type_, Bits ) and not is_bitstruct_class( type_ ):
       raise TypeError( "We currently only support BitsN, list, or another BitStruct as BitStruct field:\n"
                       f"- Field '{name}' of BitStruct {cls.__name__} is annotated as {type_}." )
 

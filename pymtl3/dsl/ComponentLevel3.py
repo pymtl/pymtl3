@@ -263,37 +263,8 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.connect_order.append( (o1, o2) )
 
   def _connect_signal_signal( s, o1, o2 ):
-    o1_type = None
-    o2_type = None
-
-    try:  o1_type = o1._dsl.Type
-    except AttributeError:  pass
-    try:  o2_type = o2._dsl.Type
-    except AttributeError:  pass
-
-    if o1_type is None:
-      if o2_type is None:
-        if o1 not in s._dsl.adjacency[o2]:
-          assert o2 not in s._dsl.adjacency[o1]
-          s._dsl.adjacency[o1].add( o2 )
-          s._dsl.adjacency[o2].add( o1 )
-          s._dsl.connect_order.append( (o1, o2) )
-          return
-      else: # o2_type is not None
-        raise TypeError( "lhs has no Type, but rhs has Type {}".format( o2_type ) )
-    else: # o1_type is not None
-      if o2_type is None:
-        raise TypeError( "lhs has Type {}, but rhs has no Type".format( o1_type ) )
-
-    # Here o1/o2 both have Type
-
-    try:
-      o1_nbits = o1_type.nbits
-      o2_nbits = o2_type.nbits
-      assert o1_nbits == o2_nbits, "Bitwidth mismatch {} != {} " \
-      "({}-bit {} <> {}-bit {})".format( o1_nbits, o2_nbits, o1_nbits, repr(o1), o2_nbits, repr(o2) )
-    except AttributeError: # at least one of them is not Bits
-      assert o1_type == o2_type, "Type mismatch {} != {}".format( o1_type, o2_type )
+    if not (o1._dsl.Type is o2._dsl.Type):
+      raise InvalidConnectionError( f"Type mismatch {o1._dsl.Type} != {o2._dsl.Type} during {o1}<->{o2}." )
 
     if o1 not in s._dsl.adjacency[o2]:
       assert o2 not in s._dsl.adjacency[o1]

@@ -1,5 +1,12 @@
+import os
 import pytest
 
+if 'CI' in os.environ:
+  # Set up the CI hypothesis profile which limits the max number of tries
+  # The 'CI' profile will be specified through the testing command of the
+  # CI script.
+  from hypothesis import settings
+  settings.register_profile("CI", max_examples=10)
 
 def pytest_addoption(parser):
   parser.addoption( "--test-verilog", action="store", default='', nargs='?', const='zeros', choices=[ '', 'zeros', 'ones', 'rand' ],
