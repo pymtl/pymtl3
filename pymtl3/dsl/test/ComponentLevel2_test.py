@@ -80,6 +80,19 @@ class TestSink( ComponentLevel2 ):
   def line_trace( s ):
     return "%s" % s.in_
 
+def test_signal_require_type():
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.a = Wire(1)
+
+  a = Top()
+  try:
+    a.elaborate()
+  except AssertionError as e:
+    print(e)
+    assert str(e).startswith( "Use actual type instead of instance!" )
+
 def test_simple():
 
   class Top(ComponentLevel2):
@@ -212,6 +225,40 @@ def test_invalid_ff_assignment2():
       def up_from_src():
         temp **= s.wire0 + 1
         s.wire0 += temp
+
+  try:
+    _test_model( Top )
+  except InvalidFFAssignError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidFFAssignError.")
+
+def test_invalid_ff_assignment_int():
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.wire0 = Wire(int)
+
+      @s.update_ff
+      def upup():
+        s.wire0 <<= s.wire0 + 1
+
+  try:
+    _test_model( Top )
+  except InvalidFFAssignError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidFFAssignError.")
+
+def test_invalid_ff_assignment_slice():
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.wire0 = Wire(Bits32)
+
+      @s.update_ff
+      def upup():
+        s.wire0[0:16] <<= s.wire0[16:32] + 1
 
   try:
     _test_model( Top )

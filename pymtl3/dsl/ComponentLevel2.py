@@ -19,12 +19,14 @@ import re
 from collections import defaultdict
 
 from . import AstHelper
+from pymtl3.datatypes import Bits, is_bitstruct_class
 from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
     InvalidFuncCallError,
+    InvalidFFAssignError,
     InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
@@ -173,8 +175,13 @@ class ComponentLevel2( ComponentLevel1 ):
           if update_ff:
             for x in objs:
               x._dsl.needs_double_buffer = True
-              assert x.is_top_level_signal(), "Cannot <<= to a non-top-level signal"
-
+              if not x.is_top_level_signal():
+                raise InvalidFFAssignError( s, func, nodelist[0].lineno,
+                  "has an invalid left value. It needs to be a top level signal, not a slice or a subfield.")
+              if not issubclass( x._dsl.Type, Bits ) and not is_bitstruct_class( x._dsl.Type ):
+                raise InvalidFFAssignError( s, func, nodelist[0].lineno,
+                  "has a wrong type on the left value. "
+                  "We only allow <<= on Bits/BitStruct type signals, not {x._dsl.Type}")
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:

@@ -140,9 +140,7 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type ):
-    # TODO
-    if isinstance( Type, int ):
-      raise Exception("Use actual type instead of int (it is deprecated).")
+    assert isinstance( Type, type ), "Use actual type instead of instance!"
     s._dsl.Type = Type
     s._dsl.type_instance = None
 

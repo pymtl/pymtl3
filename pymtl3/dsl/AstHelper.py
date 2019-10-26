@@ -147,7 +147,8 @@ class DetectReadsWritesCalls( DetectVarNames ):
         assert isinstance( target, ast.Name ), "Please call pymtl3 developers"
 
         if target.id == "s":
-          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno )
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+                "has a wrong assign operator. Change it to <<=." )
 
     for x in node.targets:
       self.visit( x )
@@ -157,7 +158,8 @@ class DetectReadsWritesCalls( DetectVarNames ):
     if self.is_update_ff:
       if isinstance( node.target, (ast.Attribute, ast.Subscript) ):
         if not isinstance( node.op, ast.LShift ):
-          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno )
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+                "has a wrong assign operator. Change it to <<=." )
 
     self.visit( node.target )
     self.visit( node.value  )
