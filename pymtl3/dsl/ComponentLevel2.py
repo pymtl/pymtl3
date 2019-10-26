@@ -18,15 +18,16 @@ import inspect
 import re
 from collections import defaultdict
 
-from . import AstHelper
 from pymtl3.datatypes import Bits, is_bitstruct_class
+
+from . import AstHelper
 from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
-    InvalidFuncCallError,
     InvalidFFAssignError,
+    InvalidFuncCallError,
     InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
