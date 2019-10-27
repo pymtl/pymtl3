@@ -9,6 +9,7 @@ Author : Shunning Jiang
 Date   : Dec 26, 2018
 """
 
+from collections import defaultdict
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
@@ -17,13 +18,55 @@ from .errors import PassOrderError
 
 def make_double_buffer_func( s ):
 
-  strs = [ f"{repr(x)}._flip()" for x in s._dsl.all_signals if x._dsl.needs_double_buffer ]
+  # To reduce the time to compile the code and the amount of bytecode, I
+  # use a heuristic to group signals that belong to
+  #   s.x.y.z._flip()
+  #   s.x.y.zz._flip()
+  # becomes
+  #   x = s.x.y
+  #   x.z._flip()
+  #   x.zz._flip()
+
+  hostobj_signals = defaultdict(list)
+  for x in reversed(sorted( s._dsl.all_signals, \
+      key=lambda x: x.get_host_component().get_component_level() )):
+    if x._dsl.needs_double_buffer:
+      hostobj_signals[ x.get_host_component() ].append( x )
+
+  done = False
+  while not done:
+    next_hostobj_signals = defaultdict(list)
+    done = True
+
+    for x, y in hostobj_signals.items():
+      if len(y) > 1:
+        next_hostobj_signals[x].extend( y )
+      elif x is s:
+        next_hostobj_signals[x].extend( y )
+      else:
+        x = x.get_parent_object()
+        next_hostobj_signals[x].append( y[0] )
+        done = False
+    hostobj_signals = next_hostobj_signals
+
+  strs = []
+  for x,y in hostobj_signals.items():
+    if len(y) == 1:
+      strs.append( f"{repr(y[0])}._flip()" )
+    elif x is s:
+      for z in sorted(y, key=repr):
+        strs.append(f"{repr(z)}._flip()")
+    else:
+      pos = len(repr(x)) + 1
+      strs.append( f"x = {repr(x)}" )
+
+      for z in sorted(y, key=repr):
+        strs.append(f"x.{repr(z)[pos:]}._flip()")
 
   if not strs:
     def no_double_buffer():
       pass
     return no_double_buffer
-
   src = """
   def double_buffer():
     {}
