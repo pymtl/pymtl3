@@ -50,8 +50,15 @@ class GenDAGPass( BasePass ):
     # of update blocks that have the same host object together and fire
     # them in a single compile command.
 
-    hostobj_allsrc = defaultdict(str)
+    # Note that it introduced problems with multiple update blocks having
+    # the same const writer at the same hostobj. As a result, I add a
+    # suffix to each block like Bits1_xxx_no_12, Bits1_xxx_no_13 to
+    # disambiguate the blocks
+
+    hostobj_allsrc  = defaultdict(str)
+    hostobj_globals = defaultdict(dict)
     blkname_meta   = {}
+    blkname_suffix = {}
 
     for writer, signals in top.get_all_value_nets():
       if len(signals) == 1:
@@ -95,33 +102,50 @@ class GenDAGPass( BasePass ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
       lca_len = len( repr(wr_lca) )
-      wstr    = repr(writer) if isinstance( writer, Const ) \
-                else ( f"s.{repr(writer)[lca_len+1:]}" )
+
+      # hostobj_globals is used to only keep useful variables in the
+      # closure instead of getting all those garbage in "globals()"
+
+      if isinstance( writer, Const ):
+        wstr = repr(writer)
+        hostobj_globals[ wr_lca ][ writer._dsl.Type.__name__ ] = writer._dsl.Type
+      else:
+        wstr = f"s.{repr(writer)[lca_len+1:]}"
+
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
       upblk_name = f"{writer!r}__{fanout}"\
                     .replace( ".", "_" ).replace( ":", "_" ) \
                     .replace( "[", "_" ).replace( "]", "_" ) \
                     .replace( "(", "_" ).replace( ")", "_" )
+
+      # NAME DISAMBIGUATION
+      # There are cases where the same const drives multiple nets. We
+      # basically add a suffix to name each of them differently.
+
+      if upblk_name in blkname_meta:
+        if upblk_name in blkname_suffix:
+          current = blkname_suffix[ upblk_name ]
+        else:
+          current = 1
+        blkname_suffix[ upblk_name ] = current + 1
+        upblk_name += f"_no_{current}"
+
       gen_src = """
 def {}():
   {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
       hostobj_allsrc[ wr_lca ] += gen_src
-
-      # TODO see if directly compiling AST instead of source can be faster
-
       blkname_meta[ upblk_name ] = (writer, readers)
 
-    # Borrow the closure of hostobj to compile the block. Add to linecache
-    def compile_upblks( s, src ):
-      var = locals()
-      var.update( globals() )
-      local = {}
+    # TODO see if directly compiling AST instead of source can be faster
 
-      fname = f"Generated net"
-      exec( compile( src, filename=fname, mode="exec"), var, local )
+    # Use the minimal closure to compile the block. Add to linecache
+    def compile_upblks( s, src, _globals ):
+      _locals = {}
+      fname   = f"Generated net at {s!r}"
+      exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
       line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
 
-      for name, blk in local.items():
+      for name, blk in _locals.items():
         top._dag.genblks.add( blk )
         writer, readers = blkname_meta[ name ]
         if writer.is_signal():
@@ -129,7 +153,9 @@ def {}():
         top._dag.genblk_writes[ blk ] = readers
 
     for hostobj, allsrc in hostobj_allsrc.items():
-      compile_upblks( hostobj, allsrc )
+      _globals = hostobj_globals[ hostobj ]
+      _globals[ 's' ] = hostobj
+      compile_upblks( hostobj, allsrc, _globals )
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
