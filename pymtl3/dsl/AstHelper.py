@@ -19,6 +19,7 @@ class DetectVarNames( ast.NodeVisitor ):
     self.upblk = upblk
     self.obj = obj
     self.is_update_ff = is_update_ff
+    self.globals = upblk.__globals__
 
     self.closure = {}
     for i, var in enumerate( upblk.__code__.co_freevars ):
@@ -49,8 +50,8 @@ class DetectVarNames( ast.NodeVisitor ):
         low = node.slice.lower.n
       elif isinstance( lower, ast.Name ):
         x = lower.id
-        if   x in self.upblk.__globals__:
-          low = self.upblk.__globals__[ x ] # TODO check low is int
+        if   x in self.globals:
+          low = self.globals[ x ] # TODO check low is int
         elif x in self.closure:
           low = self.closure[ x ]
 
@@ -58,8 +59,8 @@ class DetectVarNames( ast.NodeVisitor ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
         x = upper.id
-        if   x in self.upblk.__globals__:
-          up = self.upblk.__globals__[ x ] # TODO check low is int
+        if   x in self.globals:
+          up = self.globals[ x ] # TODO check low is int
         elif x in self.closure:
           up = self.closure[ x ]
 
@@ -83,8 +84,8 @@ class DetectVarNames( ast.NodeVisitor ):
           n = v.n
         elif isinstance( v, ast.Name ):
           x = v.id
-          if   x in self.upblk.__globals__: # Only support global const indexing for now
-            n = self.upblk.__globals__[ x ]
+          if   x in self.globals: # Only support global const indexing for now
+            n = self.globals[ x ]
           elif x in self.closure:
             n = self.closure[ x ]
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant
