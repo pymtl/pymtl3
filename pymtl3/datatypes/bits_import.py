@@ -15,7 +15,7 @@ import os
 
 # This __new__ approach has better performance
 # bits_template = """
-# class Bits{nbits}(object):
+# class Bits{nbits}:
   # nbits = {nbits}
   # def __new__( cls, value = 0 ):
     # return Bits( {nbits}, value )
@@ -28,6 +28,7 @@ class Bits{0}(Bits):
   nbits = {0}
   def __init__( s, value=0 ):
     return super().__init__( {0}, value )
+_bits_types[{nbits}] = b{nbits} = Bits{nbits}
 """
 else:
   try:
@@ -38,6 +39,7 @@ class Bits{0}(Bits):
   nbits = {0}
   def __new__( cls, value=0 ):
     return Bits.__new__( cls, {0}, value )
+_bits_types[{0}] = b{0} = Bits{0}
 """
   except ImportError:
     from .PythonBits import Bits
@@ -47,25 +49,18 @@ class Bits{0}(Bits):
   nbits = {0}
   def __init__( s, value=0 ):
     return super().__init__( {0}, value )
+_bits_types[{0}] = b{0} = Bits{0}
 """
 
 _bitwidths  = list(range(1, 256)) + [ 384, 512 ]
 _bits_types = dict()
 
-local = {}
 exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
-              filename="bits_import.py", mode="exec"), {'Bits': Bits}, local)
-
-gs = globals()
-for cls in local.values():
-  nbits = cls.nbits
-  _bits_types[nbits] = gs[f"Bits{nbits}"] = gs[f"b{nbits}"] = cls
+              filename="bits_import.py", mode="exec") )
 
 def mk_bits( nbits ):
   assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits in _bits_types:  return _bits_types[ nbits ]
   _locals = {}
-  exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ),
-                {'Bits': Bits }, _locals)
-  _bits_types[ nbits ] = ret = list(_locals.values())[0]
-  return ret
+  exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ))
+  return _bits_types[nbits]
