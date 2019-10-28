@@ -55,8 +55,8 @@ class GenDAGPass( BasePass ):
     # suffix to each block like Bits1_xxx_no_12, Bits1_xxx_no_13 to
     # disambiguate the blocks
 
-    hostobj_allsrc  = defaultdict(str)
-    hostobj_globals = defaultdict(dict)
+    hostobj_allsrc = defaultdict(str)
+    hostobj_bits   = defaultdict(set)
     blkname_meta   = {}
     blkname_suffix = {}
 
@@ -103,12 +103,12 @@ class GenDAGPass( BasePass ):
 
       lca_len = len( repr(wr_lca) )
 
-      # hostobj_globals is used to only keep useful variables in the
+      # hostobj_bits is used to only keep useful Bits in the
       # closure instead of getting all those garbage in "globals()"
 
       if isinstance( writer, Const ):
         wstr = repr(writer)
-        hostobj_globals[ wr_lca ][ writer._dsl.Type.__name__ ] = writer._dsl.Type
+        hostobj_bits[ wr_lca ].add( writer._dsl.Type.__name__ )
       else:
         wstr = f"s.{repr(writer)[lca_len+1:]}"
 
@@ -131,31 +131,39 @@ class GenDAGPass( BasePass ):
         upblk_name += f"_no_{current}"
 
       gen_src = """
-def {}():
-  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+  def {}():
+    {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
       hostobj_allsrc[ wr_lca ] += gen_src
       blkname_meta[ upblk_name ] = (writer, readers)
 
     # TODO see if directly compiling AST instead of source can be faster
 
-    # Use the minimal closure to compile the block. Add to linecache
-    def compile_upblks( s, src, _globals ):
-      _locals = {}
-      fname   = f"Generated net at {s!r}"
-      exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
+    for hostobj, allsrc in hostobj_allsrc.items():
+      if hostobj in hostobj_bits:
+        bits_import_src = f"from pymtl3.datatypes import {','.join( hostobj_bits[hostobj] )}"
+      else:
+        bits_import_src = ""
+      src = """
+{}
+def compile_upblks( s ):
+  {}
+  return locals()
+""".format( bits_import_src, allsrc )
+
+      fname = f"Generated net at {hostobj!r}"
+      l = {}
+      exec( compile( src, filename=fname, mode="exec"), l )
       line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
 
-      for name, blk in _locals.items():
-        top._dag.genblks.add( blk )
-        writer, readers = blkname_meta[ name ]
-        if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = readers
+      ret = l[f'compile_upblks']( hostobj )
 
-    for hostobj, allsrc in hostobj_allsrc.items():
-      _globals = hostobj_globals[ hostobj ]
-      _globals[ 's' ] = hostobj
-      compile_upblks( hostobj, allsrc, _globals )
+      for name, blk in ret.items():
+        if name != 's':
+          top._dag.genblks.add( blk )
+          writer, readers = blkname_meta[ name ]
+          if writer.is_signal():
+            top._dag.genblk_reads[ blk ] = [ writer ]
+          top._dag.genblk_writes[ blk ] = readers
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks

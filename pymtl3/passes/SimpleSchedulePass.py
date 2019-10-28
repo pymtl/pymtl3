@@ -67,16 +67,19 @@ def make_double_buffer_func( s ):
     def no_double_buffer():
       pass
     return no_double_buffer
+
   src = """
-  def double_buffer():
-    {}
-  """.format( "\n    ".join(strs) )
+  def compile_double_buffer( s ):
+    def double_buffer():
+      {}
+    return double_buffer
+  """.format( "\n      ".join(strs) )
 
   import py
   # print(src)
-  local = locals()
-  exec(py.code.Source( src ).compile(), local)
-  return local['double_buffer']
+  l = locals()
+  exec(py.code.Source( src ).compile(), l)
+  return l['compile_double_buffer']( s )
 
 class SimpleSchedulePass( BasePass ):
   def __call__( self, top ):
