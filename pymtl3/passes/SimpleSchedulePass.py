@@ -108,15 +108,18 @@ class SimpleSchedulePass( BasePass ):
       InD[v] += 1
       Es [u].append( v )
 
+    for u in Es:
+      Es[u] = sorted( Es[u], key=lambda x:x.__name__ )
+
     # Perform topological sort for a serial schedule.
 
     update_schedule = []
 
-    Q = [ v for v in V if not InD[v] ]
+    Q = sorted( [ v for v in V if not InD[v] ], key = lambda x:x.__name__)[::-1]
 
     import random
     while Q:
-      random.shuffle(Q)
+      # random.shuffle(Q)
       u = Q.pop()
       update_schedule.append( u )
       for v in Es[u]:

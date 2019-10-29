@@ -131,39 +131,38 @@ class GenDAGPass( BasePass ):
         upblk_name += f"_no_{current}"
 
       gen_src = """
-  def {}():
-    {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+@update
+def {}():
+  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
       hostobj_allsrc[ wr_lca ] += gen_src
       blkname_meta[ upblk_name ] = (writer, readers)
 
     # TODO see if directly compiling AST instead of source can be faster
+    def compile_upblks( s, src ):
+
+      def update( blk ):
+        top._dag.genblks.add( blk )
+        writer, readers = blkname_meta[ blk.__name__ ]
+        if writer.is_signal():
+          top._dag.genblk_reads[ blk ] = [ writer ]
+        top._dag.genblk_writes[ blk ] = readers
+
+      fname = f"Generated net at {hostobj!r}"
+      import __pypy__
+      local = __pypy__.newdict("module")
+      local['s'] = s
+      local['update'] = update
+      exec( compile( src, filename=fname, mode="exec"), local )
+      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
 
     for hostobj, allsrc in hostobj_allsrc.items():
       if hostobj in hostobj_bits:
         bits_import_src = f"from pymtl3.datatypes import {','.join( hostobj_bits[hostobj] )}"
       else:
         bits_import_src = ""
-      src = """
-{}
-def compile_upblks( s ):
-  {}
-  return locals()
-""".format( bits_import_src, allsrc )
-
-      fname = f"Generated net at {hostobj!r}"
-      l = {}
-      exec( compile( src, filename=fname, mode="exec"), l )
-      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
-
-      ret = l[f'compile_upblks']( hostobj )
-
-      for name, blk in ret.items():
-        if name != 's':
-          top._dag.genblks.add( blk )
-          writer, readers = blkname_meta[ name ]
-          if writer.is_signal():
-            top._dag.genblk_reads[ blk ] = [ writer ]
-          top._dag.genblk_writes[ blk ] = readers
+      src = """{}\n{}\n""".format( bits_import_src, allsrc )
+      print(src)
+      compile_upblks( hostobj, src )
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
