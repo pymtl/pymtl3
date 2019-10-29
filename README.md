@@ -112,14 +112,14 @@ integrating SystemVerilog blackbox. Install
 `pkg-config` and verify that it is setup correctly as follows:
 
 ```
- % sudo apt-get install pkg-config
- % pkg-config --print-variables verilator
+ $ sudo apt-get install pkg-config
+ $ pkg-config --print-variables verilator
 ```
 
 If `pkg-config` cannot find information about verilator, then you can
 also explicitly set the following special environment variable:
 
 ```
- % export PYMTL_VERILATOR_INCLUDE_DIR="/usr/local/share/verilator/include"
+ $ export PYMTL_VERILATOR_INCLUDE_DIR="/usr/local/share/verilator/include"
 ```
 
