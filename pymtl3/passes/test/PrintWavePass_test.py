@@ -8,7 +8,8 @@
 # Date   : Oct 8th, 2019
 
 from pymtl3 import *
-
+import io
+from contextlib import redirect_stdout
 
 class Toy( Component ):
   """Toy adder component"""
@@ -40,15 +41,15 @@ def test_toy():
   vector = [
     #  i        inlong       out
     b32(1),    b32(2),    b32(3),
-    b32(0),   b32(2),    b32(2),
-    b32(0),   b32(2),    b32(2),
+    b32(0),    b32(2),    b32(2),
+    b32(0),    b32(2),    b32(2),
     b32(1),    b32(-2),   b32(-1),
-    b32(1),   b32(-42),  b32(-41),
-    b32(1),   b32(-4),  b32(-3),
-    b32(1),   b32(2),  b32(3),
-    b32(0),   b32(2),  b32(2),
-    b32(1),   b32(2),  b32(3),
-    b32(0),   b32(-5),  b32(-5),
+    b32(1),    b32(-42),  b32(-41),
+    b32(1),    b32(-4),   b32(-3),
+    b32(1),    b32(2),    b32(3),
+    b32(0),    b32(2),    b32(2),
+    b32(1),    b32(2),    b32(3),
+    b32(0),    b32(-5),   b32(-5),
   ]
 
   # Begin simulation
@@ -59,5 +60,15 @@ def test_toy():
     assert dut.out == out
 
   #print
-  dut._print_wave(dut)
+  f = io.StringIO()
+  with redirect_stdout(f):
+    dut._print_wave(dut)
+  out = f.getvalue()
+  print(out)
+  for i in dut._collect_signals:
+      dot = i.find(".")
+      sliced = i[dot+1:]
+      if sliced != "reset" and sliced != "clk":
+        assert i[dot+1:] in out
+
 test_toy()

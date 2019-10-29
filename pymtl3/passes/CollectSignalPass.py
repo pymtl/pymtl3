@@ -8,7 +8,6 @@ Author : Kaishuo Cheng
 Date   : Oct 4, 2019
 """
 
-from __future__ import absolute_import, division, print_function
 import time
 from collections import defaultdict
 from copy import deepcopy
@@ -124,7 +123,7 @@ def dump_wav():
     {1}
   except Exception:
     raise
-  setattr(s, "_collect_signals", deepcopy(wavmeta.sigs) )
+  s._collect_signals = deepcopy(wavmeta.sigs) 
   wavmeta.sim_ncycles += 1
 """.format("", "".join(wav_srcs) )
     s, l_dict = top, {}

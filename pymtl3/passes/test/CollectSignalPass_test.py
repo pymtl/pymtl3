@@ -31,8 +31,10 @@ def processbinary(sig):
     """
     tempint = int(sig[2:],2)
     if sig[2] == '1':
-        return tempint -2 **32      #taking 2's complement.
-                                    #leading 1 indicates a negative number
+         #taking 2's complement.
+         #leading 1 indicates a negative number
+        return tempint -2 **32     
+
     else:
         return tempint
 
