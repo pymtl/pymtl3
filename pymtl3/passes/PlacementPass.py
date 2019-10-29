@@ -8,6 +8,7 @@
 
 from pymtl3.passes.BasePass import BasePass
 from collections            import deque
+from pymtl3.passes.Grid     import Grid
 
 class PlacementPass( BasePass ):
 
@@ -18,9 +19,10 @@ class PlacementPass( BasePass ):
       return
 
     all_components = sorted( top.get_all_components(), key=repr )
-    all_components.reverse()
-    for c in all_components:
-      if hasattr( c, "place" ):
-        c.place()
-    top.place()
+#    all_components.reverse()
+#    for c in all_components:
+#      if hasattr( c, "place" ):
+#        c.place()
+    top_grid  = Grid( row_id=0, col_id=0 )
+    top.place( top_grid )
 
