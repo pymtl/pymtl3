@@ -9,6 +9,7 @@ Author : Shunning Jiang
 """
 
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg
 from pymtl3.stdlib.ifcs.GetGiveIfc import GetIfcFL
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcCL, MemMasterIfcFL, MemMasterIfcRTL
@@ -46,7 +47,7 @@ class ProcXcel( Component ):
       s.imem = MemMasterIfcFL()
       s.dmem = MemMasterIfcFL()
 
-    s.connect_pairs(
+    connect_pairs(
       s.mngr2proc, s.proc.mngr2proc,
       s.proc2mngr, s.proc.proc2mngr,
       s.imem,      s.proc.imem,

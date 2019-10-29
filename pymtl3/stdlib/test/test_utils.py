@@ -1,4 +1,3 @@
-
 import collections
 
 from pymtl3 import *
@@ -34,7 +33,7 @@ def mk_test_case_table( raw_test_case_table ):
 # TestVectorSimulator
 #------------------------------------------------------------------------------
 
-class TestVectorSimulator( object ):
+class TestVectorSimulator:
 
   def __init__( self, model, test_vectors,
                 set_inputs_func, verify_outputs_func, wait_cycles = 0 ):

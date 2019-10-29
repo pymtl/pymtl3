@@ -6,7 +6,7 @@
 """Test the level 4 SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import (
     SVStructuralTranslatorL4,
@@ -36,19 +36,19 @@ def test_subcomp_decl( do_test ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
       s.b = B()
-      s.connect( s.b.out_b, s.out_a )
+      connect( s.b.out_b, s.out_a )
   a = A()
   a._ref_subcomps = { a : \
 """\
-  logic [0:0] b$clk;
-  logic [31:0] b$out_b;
-  logic [0:0] b$reset;
+  logic [0:0] b__clk;
+  logic [31:0] b__out_b;
+  logic [0:0] b__reset;
 
   B b
   (
-    .clk( b$clk ),
-    .out_b( b$out_b ),
-    .reset( b$reset )
+    .clk( b__clk ),
+    .out_b( b__out_b ),
+    .reset( b__reset )
   );\
 """
 }
@@ -78,34 +78,34 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
     def construct( s ):
       s.out_b = OutPort( Bits32 )
       s.ifc_b = OutIfc()
-      s.connect( s.out_b, 0 )
-      s.connect( s.ifc_b.msg, 0 )
-      s.connect( s.ifc_b.val, 1 )
+      connect( s.out_b, 0 )
+      connect( s.ifc_b.msg, 0 )
+      connect( s.ifc_b.val, 1 )
   class A( Component ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
       s.b = B()
       s.ifc_a = OutIfc()
-      s.connect( s.b.out_b, s.out_a )
-      s.connect( s.b.ifc_b, s.ifc_a )
+      connect( s.b.out_b, s.out_a )
+      connect( s.b.ifc_b, s.ifc_a )
   a = A()
   a._ref_subcomps = { a : \
 """\
-  logic [0:0] b$clk;
-  logic [31:0] b$out_b;
-  logic [0:0] b$reset;
-  logic [31:0] b$ifc_b$msg;
-  logic [0:0] b$ifc_b$rdy;
-  logic [0:0] b$ifc_b$val;
+  logic [0:0] b__clk;
+  logic [31:0] b__out_b;
+  logic [0:0] b__reset;
+  logic [31:0] b__ifc_b__msg;
+  logic [0:0] b__ifc_b__rdy;
+  logic [0:0] b__ifc_b__val;
 
   B b
   (
-    .clk( b$clk ),
-    .out_b( b$out_b ),
-    .reset( b$reset ),
-    .ifc_b$msg( b$ifc_b$msg ),
-    .ifc_b$rdy( b$ifc_b$rdy ),
-    .ifc_b$val( b$ifc_b$val )
+    .clk( b__clk ),
+    .out_b( b__out_b ),
+    .reset( b__reset ),
+    .ifc_b__msg( b__ifc_b__msg ),
+    .ifc_b__rdy( b__ifc_b__rdy ),
+    .ifc_b__val( b__ifc_b__val )
   );\
 """
 }

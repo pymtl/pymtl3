@@ -15,7 +15,6 @@ from examples.ex03_proc.ProcRTL import ProcRTL
 from pymtl3 import *
 
 from .harness import asm_test, assemble
-from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
 random.seed(0xdeadbeef)
 
@@ -26,6 +25,7 @@ random.seed(0xdeadbeef)
 # It is as simple as inheriting from RTL tests and overwrite [run_sim]
 # function to apply the translation and import pass.
 
+from .ProcRTL_test import ProcRTL_Tests as BaseTests
 
 class ProcVRTL_Tests( BaseTests ):
 
@@ -40,12 +40,10 @@ class ProcVRTL_Tests( BaseTests ):
     th.load( mem_image )
 
     # Translate the processor and import it back in
-    from pymtl3.passes.yosys import TranslationPass, ImportPass
+    from pymtl3.passes.yosys import TranslationImportPass
 
-    th.proc.yosys_translate = True
-    th.proc.yosys_import = True
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
+    th.proc.yosys_translate_import = True
+    th = TranslationImportPass()( th )
 
     # Create a simulator and run simulation
     th.apply( SimulationPass )

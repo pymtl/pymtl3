@@ -5,7 +5,7 @@
 # Date   : May 28, 2019
 """Test the SystemVerilog translator implementation."""
 
-from pymtl3.datatypes import Bits32, Bits96, BitStruct, concat
+from pymtl3.datatypes import Bits32, Bits96, bitstruct, concat
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -30,9 +30,9 @@ def local_do_test( m ):
     assert upblk_src == m._ref_upblk_srcs[blk.__name__]
 
 def test_struct( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -53,7 +53,7 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   a._test_vectors = [
-    [     B(),  42 ],
+    [     B(),   0 ],
     [    B(0),   0 ],
     [   B(-1),  -1 ],
     [   B(42),  42 ],
@@ -65,16 +65,15 @@ end\
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = in_$foo;
+  out = in___foo;
 end\
 """ }
   do_test( a )
 
 def test_struct_const( do_test ):
-  class B( BitStruct ):
-    fields = [ ( 'foo', Bits32 ) ]
-    def __init__( s, foo=42 ):
-      s.foo = Bits32(foo)
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = B()
@@ -99,7 +98,7 @@ end\
     assert m.out_b == tv[0]
     assert m.out == Bits32(tv[1])
   a._test_vectors = [
-    [       B(),   42 ],
+    [       B(),   0 ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
@@ -112,10 +111,10 @@ end\
   do_test( a )
 
 def test_packed_array_behavioral( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42, bar=1 ):
-      s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in range(2) ]
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: [ Bits32 ] * 2
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -136,31 +135,31 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits96(tv[1])
   a._test_vectors = [
-    [        B(),   concat(   Bits32(1),   Bits32(1),  Bits32(42) ) ],
-    [    B(0, 0),   concat(   Bits32(0),   Bits32(0),   Bits32(0) ) ],
-    [  B(-1, -1),   concat(  Bits32(-1),  Bits32(-1),  Bits32(-1) ) ],
-    [  B(-1, 42),   concat(  Bits32(42),  Bits32(42),  Bits32(-1) ) ],
-    [  B(42, 42),   concat(  Bits32(42),  Bits32(42),  Bits32(42) ) ],
-    [  B(42, -1),   concat(  Bits32(-1),  Bits32(-1),  Bits32(42) ) ],
+    [   B(),                              concat(  Bits32(0),   Bits32(0),   Bits32(0) ) ],
+    [   B(0, [ Bits32(0) ,Bits32(0)  ] ), concat(  Bits32(0),   Bits32(0),   Bits32(0) ) ],
+    [  B(-1, [ Bits32(-1),Bits32(-1) ] ), concat( Bits32(-1),  Bits32(-1),  Bits32(-1) ) ],
+    [  B(-1, [ Bits32(42),Bits32(42) ] ), concat( Bits32(42),  Bits32(42),  Bits32(-1) ) ],
+    [  B(42, [ Bits32(42),Bits32(42) ] ), concat( Bits32(42),  Bits32(42),  Bits32(42) ) ],
+    [  B(42, [ Bits32(-1),Bits32(-1) ] ), concat( Bits32(-1),  Bits32(-1),  Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_$bar[0], in_$bar[1], in_$foo };
+  out = { in___bar[0], in___bar[1], in___foo };
 end\
 """ }
   do_test( a )
 
 def test_nested_struct( do_test ):
-  class C( BitStruct ):
-    def __init__( s, woof=2 ):
-      s.woof = Bits32(woof)
-  class B( BitStruct ):
-    def __init__( s, foo=42, bar=1 ):
-      s.foo = Bits32(foo)
-      s.bar = [ Bits32(bar) for _ in range(2) ]
-      s.c = C()
+  @bitstruct
+  class C:
+    woof: Bits32
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: [Bits32]*2
+    c: C
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -181,18 +180,18 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits96(tv[1])
   a._test_vectors = [
-    [        B(),   concat(   Bits32(1),   Bits32(2),  Bits32(42) ) ],
-    [    B(0, 0),   concat(   Bits32(0),   Bits32(2),   Bits32(0) ) ],
-    [  B(-1, -1),   concat(  Bits32(-1),   Bits32(2),  Bits32(-1) ) ],
-    [  B(-1, 42),   concat(  Bits32(42),   Bits32(2),  Bits32(-1) ) ],
-    [  B(42, 42),   concat(  Bits32(42),   Bits32(2),  Bits32(42) ) ],
-    [  B(42, -1),   concat(  Bits32(-1),   Bits32(2),  Bits32(42) ) ],
+    [   B(),                                     concat(   Bits32(0), Bits32(0),   Bits32(0) ) ],
+    [   B(0, [ Bits32(0) , Bits32(0)  ], C(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
+    [  B(-1, [ Bits32(-1), Bits32(-2) ], C(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
+    [  B(-1, [ Bits32(42), Bits32(43) ], C(7) ), concat(  Bits32(42), Bits32(7),  Bits32(-1) ) ],
+    [  B(42, [ Bits32(42), Bits32(43) ], C(8) ), concat(  Bits32(42), Bits32(8),  Bits32(42) ) ],
+    [  B(42, [ Bits32(-1), Bits32(-2) ], C(9) ), concat(  Bits32(-1), Bits32(9),  Bits32(42) ) ],
   ]
   a._tv_in, a._tv_out = tv_in, tv_out
   a._ref_upblk_srcs_yosys = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_$bar[0], in_$c$woof, in_$foo };
+  out = { in___bar[0], in___c__woof, in___foo };
 end\
 """ }
   do_test( a )

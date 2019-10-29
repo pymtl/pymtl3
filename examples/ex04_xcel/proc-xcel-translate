@@ -16,18 +16,11 @@
 # Author : Peitian Pan, Shunning Jiang, Christopher Batten
 # Date   : June 19, 2019
 
-# Hack to add project root to python path
-
 import argparse
 import os
 import sys
 
-from examples.ex03_proc.NullXcel import NullXcelRTL
-from examples.ex03_proc.ProcRTL import ProcRTL
-from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
-from examples.ex04_xcel.ProcXcel import ProcXcel
-from pymtl3.passes.yosys import TranslationPass
-
+# Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )
 while cur_dir:
   if os.path.exists( cur_dir + os.path.sep + "pytest.ini" ):
@@ -36,10 +29,13 @@ while cur_dir:
   cur_dir = os.path.dirname(cur_dir)
 
 # Import the RTL processor, accelerators, and their composition
-
+from examples.ex03_proc.NullXcel import NullXcelRTL
+from examples.ex03_proc.ProcRTL import ProcRTL
+from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
+from examples.ex04_xcel.ProcXcel import ProcXcel
 
 # Import the translation pass from yosys backend
-
+from pymtl3.passes.yosys import TranslationPass
 
 #=========================================================================
 # Command line processing
@@ -47,12 +43,12 @@ while cur_dir:
 
 class ArgumentParserWithCustomError(argparse.ArgumentParser):
   def error( self, msg = "" ):
-    if ( msg ): print "\n ERROR: %s" % msg
-    print ""
+    if ( msg ): print("\n"+f" ERROR: {msg}")
+    print("")
     file = open( sys.argv[0] )
     for ( lineno, line ) in enumerate( file ):
       if ( line[0] != '#' ): sys.exit(msg != "")
-      if ( (lineno == 2) or (lineno >= 4) ): print line[1:].rstrip("\n")
+      if ( (lineno == 2) or (lineno >= 4) ): print(line[1:].rstrip("\n"))
 
 def parse_cmdline():
   def valid_dir(string):

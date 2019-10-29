@@ -14,12 +14,12 @@ from hypothesis import strategies as st
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pm_st
 from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumCL import ChecksumCL
 from ..ChecksumFL import checksum
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # WrappedChecksumCL
@@ -38,9 +38,11 @@ class WrappedChecksumCL( Component ):
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )
 
-    s.connect( s.recv,               s.checksum_unit.recv )
-    s.connect( s.checksum_unit.send, s.out_q.enq          )
-    s.connect( s.out_q.deq,          s.give               )
+    connect_pairs(
+      s.recv,               s.checksum_unit.recv,
+      s.checksum_unit.send, s.out_q.enq,
+      s.out_q.deq,          s.give,
+    )
 
 #-------------------------------------------------------------------------
 # Wrap CL component into a function
@@ -78,6 +80,7 @@ def checksum_cl( words ):
 # test cases. Here we also extend the test case by adding a hypothesis
 # test that compares the CL implementation against the FL as reference.
 
+from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 class ChecksumCL_Tests( BaseTests ):
 
@@ -146,7 +149,7 @@ class TestHarness( Component ):
     s.dut  = DutType()
     s.sink = TestSinkCL( Bits32, sink_msgs )
 
-    s.connect_pairs(
+    connect_pairs(
       s.src.send, s.dut.recv,
       s.dut.send, s.sink.recv,
     )
@@ -164,7 +167,7 @@ class TestHarness( Component ):
 #=========================================================================
 # We use source/sink based tests to stress test the checksum unit.
 
-class ChecksumCLSrcSink_Tests( object ):
+class ChecksumCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test

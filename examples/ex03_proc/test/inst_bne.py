@@ -233,10 +233,10 @@ def gen_random_test():
   asm_code = []
   for i in range(25):
     taken = random.choice([True, False])
-    src0  = Bits( 32, random.randint(0,0xffffffff) )
+    src0  = Bits32( random.randint(0,0xffffffff) )
     if taken:
       # Branch taken, operands are unequal
-      src1 = Bits( 32, random.randint(0,0xffffffff) )
+      src1 = Bits32( random.randint(0,0xffffffff) )
       # Rare case, but could happen
       if src0 == src1:
         src1 = src0 + 1

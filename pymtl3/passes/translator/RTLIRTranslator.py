@@ -5,8 +5,6 @@
 # Date   : March 15, 2019
 """Provide translators that convert RTLIR to backend representation."""
 
-from functools import reduce
-
 from .BaseRTLIRTranslator import TranslatorMetadata
 from .behavioral import BehavioralTranslator
 from .errors import RTLIRTranslationError
@@ -50,7 +48,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
           components.append(
             s.rtlir_tr_component(
               get_component_nspace( s.behavioral, m ),
-              get_component_nspace( s.structural, m )
+              get_component_nspace( s.structural, m ),
           ) )
           translated.append( s.structural.component_unique_name[m] )
         s.gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
@@ -89,7 +87,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
           List.append( ( Type, data ) )
 
     def in_list( s, dtype, List ):
-      return reduce( lambda r, x: r or x[0] == dtype, List, False )
+      return any( x[0] == dtype for x in List )
 
     #---------------------------------------------------------------------
     # Methods to be implemented by the backend translator

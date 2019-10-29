@@ -21,10 +21,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
 
   # Override
   def gen_structural_trans_metadata( s, tr_top ):
-    # c_ss: self-self connections
-    # c_sc: self-child connections
-    # c_cc: child-child connections
-    tr_top.apply( StructuralRTLIRGenL4Pass( s.c_ss, s.c_sc, s.c_cc ) )
+    tr_top.apply( StructuralRTLIRGenL4Pass( s.inst_conns ) )
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -33,7 +30,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
   # Override
   def translate_structural( s, tr_top ):
     s.structural.decl_subcomps = {}
-    super( StructuralTranslatorL4, s ).translate_structural( tr_top )
+    super().translate_structural( tr_top )
 
   #-----------------------------------------------------------------------
   # _translate_structural
@@ -41,13 +38,13 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
 
   # Override
   def _translate_structural( s, m ):
-    super( StructuralTranslatorL4, s )._translate_structural( m )
+    super()._translate_structural( m )
     for child in m.get_child_components():
       s._translate_structural( child )
 
   # Override
   def translate_decls( s, m ):
-    super( StructuralTranslatorL4, s ).translate_decls( m )
+    super().translate_decls( m )
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
 
     # Translate subcomponent declarations
@@ -145,7 +142,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
         expr.get_index() )
 
     else:
-      return super( StructuralTranslatorL4, s ). \
+      return super(). \
               rtlir_signal_expr_translation( expr, m )
 
   #-----------------------------------------------------------------------

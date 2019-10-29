@@ -15,7 +15,7 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
   # Override
   def __call__( s, tr_top ):
     s.gen_metadata( tr_top )
-    super( StructuralRTLIRGenL4Pass, s ).__call__( tr_top )
+    super().__call__( tr_top )
 
   def gen_metadata( s, m ):
     if not hasattr( m, '_pass_structural_rtlir_gen' ):
@@ -25,22 +25,15 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
 
   # Override
   def gen_rtlir_types( s, m ):
-    super( StructuralRTLIRGenL4Pass, s ).gen_rtlir_types( m )
+    super().gen_rtlir_types( m )
     for child in m.get_child_components():
       s.gen_rtlir_types( child )
 
   # Override
   def gen_constants( s, m ):
-    super( StructuralRTLIRGenL4Pass, s ).gen_constants( m )
+    super().gen_constants( m )
     for child in m.get_child_components():
       s.gen_constants( child )
-
-  # Override
-  def collect_connections( s, m ):
-    return \
-      super( StructuralRTLIRGenL4Pass, s ).collect_connections( m ) + \
-      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_sc[m]] + \
-      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_cc[m]]
 
   # Override
   def sort_connections( s, m ):
@@ -48,6 +41,7 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
 
     At L4 we need to recursively generate connections for every component.
     """
-    super( StructuralRTLIRGenL4Pass, s ).sort_connections( m )
+    super().sort_connections( m )
+
     for child in m.get_child_components():
       s.sort_connections( child )

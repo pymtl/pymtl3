@@ -4,7 +4,7 @@
 """Test the SystemVerilog translator."""
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
@@ -49,12 +49,12 @@ module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  input logic [31:0] in_$msg,
-  output logic [0:0] in_$rdy,
-  input logic [0:0] in_$val,
-  output logic [31:0] out$msg,
-  input logic [0:0] out$rdy,
-  output logic [0:0] out$val
+  input logic [31:0] in___msg,
+  output logic [0:0] in___rdy,
+  input logic [0:0] in___val,
+  output logic [31:0] out__msg,
+  input logic [0:0] out__rdy,
+  output logic [0:0] out__val
 );
 
   // PYMTL SOURCE:
@@ -66,9 +66,9 @@ module A
   //   s.in_.rdy = s.out.rdy
 
   always_comb begin : upblk
-    out$val = in_$val;
-    out$msg = in_$msg;
-    in_$rdy = out$rdy;
+    out__val = in___val;
+    out__msg = in___msg;
+    in___rdy = out__rdy;
   end
 
 endmodule
@@ -95,8 +95,8 @@ module A
   input logic [0:0] clk,
   output logic [31:0] out,
   input logic [0:0] reset,
-  output logic [31:0] in_$__0$foo,
-  output logic [31:0] in_$__1$foo
+  output logic [31:0] in___0__foo,
+  output logic [31:0] in___1__foo
 );
 
   // PYMTL SOURCE:
@@ -106,7 +106,7 @@ module A
   //   s.out = s.in_[1].foo
 
   always_comb begin : upblk
-    out = in_$__1$foo;
+    out = in___1__foo;
   end
 
 endmodule
@@ -118,10 +118,10 @@ module A
   input logic [0:0] clk,
   output logic [31:0] out,
   input logic [0:0] reset,
-  output logic [31:0] in_$__0$foo,
-  output logic [31:0] in_$__1$foo
+  output logic [31:0] in___0__foo,
+  output logic [31:0] in___1__foo
 );
-  logic [31:0] in_$foo [0:1];
+  logic [31:0] in___foo [0:1];
 
   // PYMTL SOURCE:
   //
@@ -130,11 +130,11 @@ module A
   //   s.out = s.in_[1].foo
 
   always_comb begin : upblk
-    out = in_$foo[1];
+    out = in___foo[1];
   end
 
-  assign in_$__0$foo = in_$foo[0];
-  assign in_$__1$foo = in_$foo[1];
+  assign in___0__foo = in___foo[0];
+  assign in___1__foo = in___foo[1];
 
 endmodule
 """
@@ -154,9 +154,9 @@ def test_ifc_decls( do_test ):
     def construct( s ):
       s.ifc = Ifc()
       # This 42 will be converted to Bits32(42) by DSL
-      s.connect( s.ifc.msg, 42 )
+      connect( s.ifc.msg, 42 )
       # This 1 will be converted to Bits1(1) by DSL
-      s.connect( s.ifc.val, 1 )
+      connect( s.ifc.val, 1 )
   a = A()
   a._ref_src = \
 """\
@@ -165,13 +165,13 @@ module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  output logic [31:0] ifc$msg,
-  input logic [0:0] ifc$rdy,
-  output logic [0:0] ifc$val
+  output logic [31:0] ifc__msg,
+  input logic [0:0] ifc__rdy,
+  output logic [0:0] ifc__val
 );
 
-  assign ifc$msg = 32'd42;
-  assign ifc$val = 1'd1;
+  assign ifc__msg = 32'd42;
+  assign ifc__val = 1'd1;
 
 endmodule
 """
@@ -193,7 +193,7 @@ def test_multi_ifc_decls( do_test ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
   a = A()
   a._ref_src = \
 """\
@@ -202,17 +202,17 @@ module A
 (
   input logic [0:0] clk,
   input logic [0:0] reset,
-  input logic [31:0] in_$msg,
-  output logic [0:0] in_$rdy,
-  input logic [0:0] in_$val,
-  output logic [31:0] out$msg,
-  input logic [0:0] out$rdy,
-  output logic [0:0] out$val
+  input logic [31:0] in___msg,
+  output logic [0:0] in___rdy,
+  input logic [0:0] in___val,
+  output logic [31:0] out__msg,
+  input logic [0:0] out__rdy,
+  output logic [0:0] out__val
 );
 
-  assign out$msg = in_$msg;
-  assign in_$rdy = out$rdy;
-  assign out$val = in_$val;
+  assign out__msg = in___msg;
+  assign in___rdy = out__rdy;
+  assign out__val = in___val;
 
 endmodule
 """

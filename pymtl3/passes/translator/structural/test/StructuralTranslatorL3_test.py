@@ -8,7 +8,7 @@
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.translator.structural.StructuralTranslatorL3 import (
@@ -95,7 +95,7 @@ def test_multi_ifc_decls( do_test ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
   a = A()
   a._ref_ifcs = \
 """\
@@ -166,7 +166,7 @@ def test_ifc_array_idx( do_test ):
       s.in_ = [ InIfc() for _ in range(5) ]
       s.out = [ OutIfc() for _ in range(5) ]
       for i in range(5):
-        s.connect( s.out[i], s.in_[i] )
+        connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
 """\
@@ -273,7 +273,7 @@ def test_nested_ifc( do_test ):
       s.in_ = [ MemReqIfc() for _ in range(5) ]
       s.out = [ MemRespIfc() for _ in range(5) ]
       for i in range(5):
-        s.connect( s.out[i], s.in_[i] )
+        connect( s.out[i], s.in_[i] )
   a = A()
   a._ref_ifcs = \
 """\
@@ -316,4 +316,4 @@ endcomponent
 """
   do_test( a )
 
-__all__ = list([s for s in dir() if s.startswith('test_')])
+__all__ = [s for s in dir() if s.startswith('test_')]

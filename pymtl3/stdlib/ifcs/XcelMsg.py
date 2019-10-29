@@ -26,11 +26,14 @@ def mk_xcel_req_msg( addr, data ):
       " " * ( data//4 ),
     )
 
-  req_cls = mk_bit_struct( cls_name, [
-    ( 'type_',  Bits1    ),
-    ( 'addr',   AddrType ),
-    ( 'data',   DataType ),
-  ], req_to_str )
+  req_cls = mk_bitstruct( cls_name, {
+    'type_': Bits1,
+    'addr':  AddrType,
+    'data':  DataType,
+  },
+  namespace = {
+    '__str__' : req_to_str
+  })
   req_cls.data_nbits = data
   return req_cls
 
@@ -45,14 +48,17 @@ def mk_xcel_resp_msg( data ):
       " " * ( data//4 ),
     )
 
-  resp_cls = mk_bit_struct( cls_name, [
-    ( 'type_',  Bits1    ),
-    ( 'data',   DataType ),
-  ], resp_to_str )
+  resp_cls = mk_bitstruct( cls_name, {
+    'type_': Bits1,
+    'data':  DataType,
+  },
+  namespace = {
+    '__str__' : resp_to_str
+  })
   resp_cls.data_nbits = data
   return resp_cls
 
-class XcelMsgType( object ):
+class XcelMsgType:
   # TODO: figure out whether we want to use Bits1 here.
   READ  = Bits1(0)
   WRITE = Bits1(1)

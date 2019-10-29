@@ -63,20 +63,19 @@ class TestHarness(Component):
     s.src  = TestSrcCL ( Bits32, [], src_delay, src_delay  )
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
 
-    s.dut  = ProcXcel( proc_cls, xcel_cls )
+    s.dut  = ProcXcel( proc_cls, xcel_cls )( commit_inst = s.commit_inst )
 
     s.mem  = MemoryCL(2, latency = mem_latency)
 
-    # Processor <-> Proc/Mngr
-    s.connect( s.dut.commit_inst, s.commit_inst )
+    connect_pairs(
+      # Processor <-> Proc/Mngr
+      s.src.send, s.dut.mngr2proc,
+      s.dut.proc2mngr, s.sink.recv,
 
-    s.connect( s.src.send, s.dut.mngr2proc )
-    s.connect( s.dut.proc2mngr, s.sink.recv )
-
-    # Processor <-> Memory
-
-    s.connect( s.proc.imem,  s.mem.ifc[0] )
-    s.connect( s.proc.dmem,  s.mem.ifc[1] )
+      # Processor <-> Memory
+      s.proc.imem,  s.mem.ifc[0],
+      s.proc.dmem,  s.mem.ifc[1],
+    )
 
   #-----------------------------------------------------------------------
   # load
@@ -93,17 +92,17 @@ class TestHarness(Component):
 
       if section.name == ".mngr2proc":
         for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.src.src.msgs.append( Bits(32,bits) )
-          self.src.msgs.append( Bits(32,bits) )
+          bits = struct.unpack_from("<I",memoryview(section.data)[i:i+4])[0]
+          # self.src.src.msgs.append( Bits32(bits) )
+          self.src.msgs.append( Bits32(bits) )
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
         for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.sink.sink.msgs.append( Bits(32,bits) )
-          self.sink.msgs.append( Bits(32,bits) )
+          bits = struct.unpack_from("<I",memoryview(section.data)[i:i+4])[0]
+          # self.sink.sink.msgs.append( Bits32(bits) )
+          self.sink.msgs.append( Bits32(bits) )
 
       # For all other sections, simply copy them into the memory
 

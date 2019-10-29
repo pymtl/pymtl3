@@ -8,6 +8,7 @@ Date   : Jan 4, 2019
 """
 from collections import deque
 
+from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.ComponentLevel5 import ComponentLevel5, method_port
 from pymtl3.dsl.Connectable import CalleePort, CallerPort, Interface
 from pymtl3.dsl.ConstraintTypes import M, U
@@ -93,10 +94,8 @@ def test_simple_src_dumb_sink():
       s.src  = SimpleTestSource( [1,2,3,4] )
       s.sink = SimpleTestSink( [1,2,3,4] )
 
-      s.connect_pairs(
-        s.src.req,     s.sink.resp,
-        s.src.req_rdy, s.sink.resp_rdy,
-      )
+      s.src.req //= s.sink.resp
+      connect( s.src.req_rdy, s.sink.resp_rdy )
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -130,7 +129,7 @@ class TestSinkUp( ComponentLevel5 ):
       s.v = None
 
       if s.queue:
-        msg = s.queue.pop()
+        msg = s.queue.popleft()
         s.v = msg
 
         if s.idx >= len(s.msgs):
@@ -174,10 +173,8 @@ def test_simple_src_up_sink():
       s.src  = SimpleTestSource( [1,2,3,4] )
       s.sink = TestSinkUp( [1,2,3,4] )
 
-      s.connect_pairs(
-        s.src.req,     s.sink.resp,
-        s.src.req_rdy, s.sink.resp_rdy,
-      )
+      connect( s.src.req,     s.sink.resp )
+      connect( s.src.req_rdy, s.sink.resp_rdy )
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -214,15 +211,9 @@ def test_constraint_equal_pass_through():
 
     def construct( s ):
       s.src  = SimpleTestSource( [1,2,3,4] )
-      s.mid  = PassThrough()
-      s.sink = TestSinkUp( [1,2,3,4] )
-
-      s.connect_pairs(
-        s.src.req,     s.mid.req,
-        s.src.req_rdy, s.mid.req_rdy,
-        s.mid.resp,    s.sink.resp,
-        s.mid.resp_rdy, s.sink.resp_rdy,
-      )
+      s.mid  = PassThrough()( req = s.src.req, req_rdy = s.src.req_rdy )
+      s.sink = TestSinkUp( [1,2,3,4] )( resp = s.mid.resp,
+                                        resp_rdy = s.mid.resp_rdy )
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -241,21 +232,16 @@ def test_constraint_equal_pass_way_through():
       s.mid  = [ PassThrough() for _ in range(5) ]
       s.sink = TestSinkUp( [1,2,3,4] )
 
-      s.connect_pairs(
-        s.src.req,     s.mid[0].req,
-        s.src.req_rdy, s.mid[0].req_rdy,
-      )
+
+      connect( s.src.req,     s.mid[0].req )
+      connect( s.src.req_rdy, s.mid[0].req_rdy )
 
       for i in range(4):
-        s.connect_pairs(
-          s.mid[i].resp, s.mid[i+1].req,
-          s.mid[i].resp_rdy, s.mid[i+1].resp_rdy,
-        )
+        s.mid[i].resp     //= s.mid[i+1].req
+        s.mid[i].resp_rdy //= s.mid[i+1].resp_rdy
 
-      s.connect_pairs(
-        s.mid[4].resp,    s.sink.resp,
-        s.mid[4].resp_rdy, s.sink.resp_rdy,
-      )
+      s.mid[4].resp     //=  s.sink.resp
+      s.mid[4].resp_rdy //= s.sink.resp_rdy
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -275,10 +261,8 @@ def test_method_interface():
     # Here we customize method interface connections
     def connect( s, other, parent ):
       if isinstance( other, SendIfcCL ):
-        parent.connect_pairs(
-          s.recv, other.send,
-          s.rdy, other.rdy,
-        )
+        connect( s.recv, other.send )
+        connect( s.rdy,  other.rdy )
         return True
 
       return False
@@ -290,10 +274,8 @@ def test_method_interface():
 
     def connect( s, other, parent ):
       if isinstance( other, RecvIfcCL ):
-        parent.connect_pairs(
-          s.send, other.recv,
-          s.rdy, other.rdy,
-        )
+        connect( s.send, other.recv )
+        connect( s.rdy,  other.rdy )
         return True
 
       return False
@@ -356,9 +338,7 @@ def test_method_interface():
       s.src  = SimpleTestSourceIfc( [1,2,3,4] )
       s.sink = SimpleTestSinkIfc( [1,2,3,4] )
 
-      s.connect_pairs(
-        s.src.req,     s.sink.resp,
-      )
+      connect( s.src.req, s.sink.resp )
 
     def done( s ):
       return s.src.done() and s.sink.done()

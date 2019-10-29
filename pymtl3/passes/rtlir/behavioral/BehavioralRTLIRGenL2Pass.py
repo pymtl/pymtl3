@@ -34,12 +34,17 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
-          visitor.enter( blk, m.get_update_block_ast( blk ) )
+        upblk_info = m.get_update_block_info( blk )
+        upblk = visitor.enter( blk, upblk_info[-1] )
+        upblk.is_lambda = upblk_info[0]
+        upblk.src       = upblk_info[1]
+        upblk.lino      = upblk_info[2]
+        upblk.filename  = upblk_info[3]
+        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = upblk
 
 class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL2, s ).__init__( component )
+    super().__init__( component )
     s.loop_var_env = set()
     s.tmp_var_env = set()
 
@@ -70,7 +75,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
     if obj is rdt.Bool:
       raise PyMTLSyntaxError( s.blk, node,
         'bool values cannot be instantiated explicitly!' )
-    return super( BehavioralRTLIRGeneratorL2, s ).visit_Call( node )
+    return super().visit_Call( node )
 
   def visit_Name( s, node ):
     # temporary variable
@@ -92,7 +97,7 @@ class BehavioralRTLIRGeneratorL2( BehavioralRTLIRGeneratorL1 ):
       return ret
 
     else:
-      return super( BehavioralRTLIRGeneratorL2, s ).visit_Name( node )
+      return super().visit_Name( node )
 
   def visit_If( s, node ):
     cond = s.visit( node.test )

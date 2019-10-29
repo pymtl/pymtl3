@@ -61,8 +61,8 @@ class TestSrcRTL( Component ):
     s.src     = TestSrcCL( Type, msgs, initial_delay, interval_delay )
     s.adapter = RecvCL2SendRTL( Type )
 
-    s.connect( s.src.send,     s.adapter.recv )
-    s.connect( s.adapter.send, s.send         )
+    connect( s.src.send,     s.adapter.recv )
+    connect( s.adapter.send, s.send         )
 
   def done( s ):
     return s.src.done()

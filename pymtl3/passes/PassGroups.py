@@ -1,4 +1,3 @@
-
 from pymtl3.dsl import Component
 
 from .CLLineTracePass import CLLineTracePass

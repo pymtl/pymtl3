@@ -16,6 +16,7 @@ from examples.ex03_proc.tinyrv0_encoding import assemble
 from pymtl3 import *
 from pymtl3.passes import DynamicSim
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
@@ -68,22 +69,19 @@ class TestHarness(Component):
 
     s.mem  = MemoryCL(2, latency = mem_latency)
 
-    # Processor <-> Proc/Mngr
-    s.connect( s.proc.commit_inst, s.commit_inst )
+    connect_pairs(
+      s.proc.commit_inst, s.commit_inst,
 
-    s.connect( s.src.send, s.proc.mngr2proc )
-    s.connect( s.proc.proc2mngr, s.sink.recv )
+      # Processor <-> Proc/Mngr
+      s.src.send, s.proc.mngr2proc,
+      s.proc.proc2mngr, s.sink.recv,
 
-    # Processor <-> Memory
+      # Processor <-> Memory
+      s.proc.imem,  s.mem.ifc[0],
+      s.proc.dmem,  s.mem.ifc[1],
+    )
 
-    s.connect( s.proc.imem,  s.mem.ifc[0] )
-    s.connect( s.proc.dmem,  s.mem.ifc[1] )
-
-    s.connect( s.proc.xcel, s.xcel.xcel )
-
-    # s.connect( s.proc.xcel.resp.msg.data, 0 )
-    # s.connect( s.proc.xcel.req.rdy, 0 )
-    # s.connect( s.proc.xcel.resp.en, 0 )
+    connect( s.proc.xcel, s.xcel.xcel )
 
   #-----------------------------------------------------------------------
   # load
@@ -99,18 +97,12 @@ class TestHarness(Component):
       # For .mngr2proc sections, copy section into mngr2proc src
 
       if section.name == ".mngr2proc":
-        for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",section.data[i:i+4])[0]
-          # self.src.src.msgs.append( Bits(32,bits) )
-          self.src.msgs.append( Bits(32,bits) )
+        self.src.msgs.extend(Bits32(bits[0]) for bits in struct.iter_unpack("<I", section.data))
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
-        for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",section.data[i:i+4])[0]
-          # self.sink.sink.msgs.append( Bits(32,bits) )
-          self.sink.msgs.append( Bits(32,bits) )
+        self.sink.msgs.extend(Bits32(bits[0]) for bits in struct.iter_unpack("<I", section.data))
 
       # For all other sections, simply copy them into the memory
 

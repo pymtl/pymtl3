@@ -38,7 +38,7 @@ random.seed(0xdeadbeef)
 # these test cases in our CL and RTL tests. We can simply inherit from
 # this test class and overwrite the ProcType of the test class.
 
-class ProcFL_Tests( object ):
+class ProcFL_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the processor that is used

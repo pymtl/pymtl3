@@ -12,11 +12,11 @@ from examples.ex02_cksum.utils import words_to_b128
 from pymtl3 import *
 from pymtl3.passes.PassGroups import DynamicSim
 from pymtl3.stdlib.cl.queues import BypassQueueCL
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumXcelCL import ChecksumXcelCL
-from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # Helper functions to create a sequence of req/resp msg
@@ -63,7 +63,7 @@ class WrappedChecksumXcelCL( Component ):
 
     s.checksum_xcel = ChecksumXcelCL()
     s.out_q = BypassQueueCL( num_entries=1 )
-    s.connect_pairs(
+    connect_pairs(
       s.recv,                    s.checksum_xcel.xcel.req,
       s.checksum_xcel.xcel.resp, s.out_q.enq,
       s.out_q.deq,               s.give,
@@ -112,6 +112,7 @@ def checksum_xcel_cl( words ):
 #-------------------------------------------------------------------------
 # We reuse the function tests in ChecksumXcelFL_test.
 
+from .ChecksumXcelFL_test import ChecksumXcelFL_Tests as BaseTests
 
 # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Implement the tests for ChecksumXcelCL
@@ -144,8 +145,8 @@ class TestHarness( Component ):
     s.dut  = DutType()
     s.sink = TestSinkCL( ReqType, sink_msgs )
 
-    s.connect( s.src.send,      s.dut.xcel.req )
-    s.connect( s.dut.xcel.resp, s.sink.recv    )
+    connect( s.src.send,      s.dut.xcel.req )
+    connect( s.dut.xcel.resp, s.sink.recv    )
 
   def done( s ):
     return s.src.done() and s.sink.done()
@@ -160,7 +161,7 @@ class TestHarness( Component ):
 #-------------------------------------------------------------------------
 # More adavanced testsing that uses test source and test sink.
 
-class ChecksumXcelCLSrcSink_Tests( object ):
+class ChecksumXcelCLSrcSink_Tests:
 
   # [setup_class] will be called by pytest before running all the tests in
   # the test class. Here we specify the type of the design under test

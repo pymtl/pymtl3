@@ -6,7 +6,7 @@
 """Test the level 3 SystemVerilog structural translator."""
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 import (
@@ -38,20 +38,20 @@ def test_ifc_decls( do_test ):
     def construct( s ):
       s.ifc = Ifc()
       # This 42 will be converted to Bits32(42) by DSL
-      s.connect( s.ifc.msg, 42 )
+      connect( s.ifc.msg, 42 )
       # This 1 will be converted to Bits1(1) by DSL
-      s.connect( s.ifc.val, 1 )
+      connect( s.ifc.val, 1 )
   a = A()
   a._ref_ifcs = { a : \
 """\
-  output logic [31:0] ifc$msg,
-  input logic [0:0] ifc$rdy,
-  output logic [0:0] ifc$val\
+  output logic [31:0] ifc__msg,
+  input logic [0:0] ifc__rdy,
+  output logic [0:0] ifc__val\
 """ }
   a._ref_conns = { a : \
 """\
-  assign ifc$msg = 32'd42;
-  assign ifc$val = 1'd1;\
+  assign ifc__msg = 32'd42;
+  assign ifc__val = 1'd1;\
 """ }
 
   # Yosys backend test reference output
@@ -85,22 +85,22 @@ def test_multi_ifc_decls( do_test ):
     def construct( s ):
       s.in_ = InIfc()
       s.out = OutIfc()
-      s.connect( s.out, s.in_ )
+      connect( s.out, s.in_ )
   a = A()
   a._ref_ifcs = { a : \
 """\
-  input logic [31:0] in_$msg,
-  output logic [0:0] in_$rdy,
-  input logic [0:0] in_$val,
-  output logic [31:0] out$msg,
-  input logic [0:0] out$rdy,
-  output logic [0:0] out$val\
+  input logic [31:0] in___msg,
+  output logic [0:0] in___rdy,
+  input logic [0:0] in___val,
+  output logic [31:0] out__msg,
+  input logic [0:0] out__rdy,
+  output logic [0:0] out__val\
 """ }
   a._ref_conns = { a : \
 """\
-  assign out$msg = in_$msg;
-  assign in_$rdy = out$rdy;
-  assign out$val = in_$val;\
+  assign out__msg = in___msg;
+  assign in___rdy = out__rdy;
+  assign out__val = in___val;\
 """ }
 
   # Yosys backend test reference output

@@ -6,7 +6,6 @@
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
 from collections import deque
-from functools import reduce
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
@@ -44,8 +43,8 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _pid = pid + "$__{}".format(i)
-        _idx = idx + "[{}]".format(i)
+        _pid = f"{pid}__{i}"
+        _idx = f"{idx}[{i}]"
         ret += s._port_conn_gen( d, _pid, wid, _idx, n_dim[1:], dtype )
       return ret
 
@@ -57,7 +56,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   def _get_array_dim_str( s, n_dim ):
-    ret = reduce(lambda x, y: x+"[0:{}]".format(y-1), n_dim, "")
+    ret = "".join( f"[0:{size-1}]" for size in n_dim )
     if ret:
       ret = " " + ret
     return ret
@@ -92,8 +91,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     } ]
 
   def dtype_gen( s, d, id_, dtype ):
-    assert isinstance( dtype, rdt.Vector ), \
-        "unrecognized data type {}".format(dtype)
+    assert isinstance( dtype, rdt.Vector ), f"unrecognized data type {dtype}"
     s.check_decl( id_, "" )
     return s.vector_gen( d, id_, dtype )
 
@@ -103,7 +101,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     else:
       ret = []
       for idx in range(n_dim[0]):
-        ret += s.port_gen(d, id_+"$__{}".format(idx), n_dim[1:], dtype)
+        ret += s.port_gen(d, f"{id_}__{idx}", n_dim[1:], dtype)
       return ret
 
   #---------------------------------------------------------------------
@@ -140,7 +138,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       direction = dct["direction"]
       msb, id_ = dct["msb"], dct["id_"]
-      packed_type = "[{msb}:0]".format( **locals() )
+      packed_type = f"[{msb}:0]"
       port_decl.append( port_template.format( **locals() ) )
 
     # Assemble wire declarations
@@ -148,7 +146,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       msb, id_, n_dim = dct["msb"], dct["id_"], dct["n_dim"]
       array_dim_str = s._get_array_dim_str( n_dim )
-      packed_type = "[{msb}:0]".format( **locals() )
+      packed_type = f"[{msb}:0]"
       if n_dim or "present" in dct:
         wire_decl.append( wire_template.format( **locals() ) )
 
@@ -188,7 +186,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     for dct in decl_list:
       msb, id_ = dct["msb"], dct["id_"]
       array_dim_str = s._get_array_dim_str( dct["n_dim"] )
-      packed_type = "[{msb}:0]".format( **locals() )
+      packed_type = f"[{msb}:0]"
       wire_decl.append( wire_template.format( **locals() ) )
 
     return wire_decl
@@ -214,7 +212,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     all_terms = sexp['attr'] + sexp['index']
     template = sexp['s_attr'] + sexp['s_index']
     rd = template.format( *all_terms )
-    return "assign {rd} = {wr};".format( **locals() )
+    return f"assign {rd} = {wr};"
 
   #-----------------------------------------------------------------------
   # Signal operations
@@ -224,7 +222,7 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     # Bit selection
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_part_selection( s, base_signal, start, stop ):
     # Part selection
@@ -232,25 +230,24 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     s.deq[-1]['s_index'] += "[{}:{}]"
     s.deq[-1]['index'].append( int(_stop) )
     s.deq[-1]['index'].append( int(start) )
-    return '{base_signal}[{_stop}:{start}]'.format( **locals() )
+    return f'{base_signal}[{_stop}:{start}]'
 
   def rtlir_tr_port_array_index( s, base_signal, index ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_wire_array_index( s, base_signal, index ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_const_array_index( s, base_signal, index ):
-    assert False, \
-        "constant array {base_signal} is not allowed!".format(**locals())
+    assert False, f"constant array {base_signal} is not allowed!"
 
   def rtlir_tr_current_comp_attr( s, base_signal, attr ):
     s.deq[-1]['s_attr'] = attr
-    return '{attr}'.format( **locals() )
+    return f'{attr}'
 
   def rtlir_tr_current_comp( s, comp_id, comp_rtype ):
     s.deq.append( {'attr':[], 'index':[], 's_attr':"", 's_index':""} )

@@ -278,8 +278,8 @@ class SomeMinionRTL( Component ):
       waddr = { 0: s.req_q.deq.msg.addr },
       wdata = { 0: s.req_q.deq.msg.data },
     )
-    s.connect( s.xcel.req,            s.req_q.enq           )
-    s.connect( s.xcel.resp.msg.type_, s.req_q.deq.msg.type_ )
+    connect( s.xcel.req,            s.req_q.enq           )
+    connect( s.xcel.resp.msg.type_, s.req_q.deq.msg.type_ )
 
     @s.update
     def up_wen():
@@ -307,7 +307,7 @@ class TestHarness( Component ):
     s.master = MasterType( ReqType, RespType, nregs=nregs )
     s.minion = MinionType( ReqType, RespType, nregs=nregs )
 
-    s.connect( s.master.xcel, s.minion.xcel )
+    connect( s.master.xcel, s.minion.xcel )
 
   def line_trace( s ):
     return "{} > {}".format( s.master.line_trace(), s.minion.line_trace() )

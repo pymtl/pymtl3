@@ -12,6 +12,7 @@ from copy import deepcopy
 import greenlet
 
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 
 from .ifcs_utils import enrdy_to_str
 
@@ -55,7 +56,7 @@ class RecvIfcRTL( Interface ):
         parent.RecvCL2SendRTL_count = 0
         parent.RecvCL2SendRTL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,  m.recv,
         m.send.msg, s.msg,
         m.send.en,  s.en,
@@ -106,7 +107,7 @@ class SendIfcRTL( Interface ):
         parent.RecvRTL2SendCL_count = 0
         parent.RecvRTL2SendCL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         m.send, other,
         s.msg, m.recv.msg,
         s.en,  m.recv.en,
@@ -148,7 +149,7 @@ class SendIfcFL( Interface ):
         parent.RecvFL2SendCL_count = 0
         parent.RecvFL2SendCL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         s,      m.recv,
         m.send, other,
       )

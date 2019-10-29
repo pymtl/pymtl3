@@ -7,8 +7,8 @@
 
 import pytest
 
-from pymtl3.datatypes import Bits16, Bits32, BitStruct
-from pymtl3.dsl import Component, InPort, OutPort, Wire
+from pymtl3.datatypes import Bits16, Bits32, bitstruct
+from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
@@ -41,10 +41,10 @@ def local_do_test( m ):
     pass
 
 def test_struct_port_decl( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = Bits16(bar)
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: Bits16
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -59,7 +59,7 @@ port_decls:
   a._ref_consts = "const_decls:\n"
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
-    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}), 'B')]
   a._ref_src = \
 """\
 struct B
@@ -82,10 +82,10 @@ endcomponent
   do_test( a )
 
 def test_struct_wire_decl( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = Bits16(bar)
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: Bits16
   class A( Component ):
     def construct( s ):
       s.struct = Wire( B )
@@ -104,7 +104,7 @@ wire_decls:
   a._ref_consts = "const_decls:\n"
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
-    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}), 'B')]
   a._ref_src = \
 """\
 struct B
@@ -129,10 +129,10 @@ endcomponent
 
 @pytest.mark.xfail( reason = "RTLIR not support const struct instance yet" )
 def test_struct_const_decl( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = Bits16(bar)
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: Bits16
   class A( Component ):
     def construct( s ):
       s.struct = B()
@@ -147,7 +147,7 @@ const_decls:
 """
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
-    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}), 'B')]
   a._ref_src = \
 """\
 struct B
@@ -170,10 +170,10 @@ endcomponent
   do_test( a )
 
 def test_struct_port_array( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = Bits16(bar)
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: Bits16
   class A( Component ):
     def construct( s ):
       s.struct = [ InPort( B ) for _ in range(5) ]
@@ -188,7 +188,7 @@ port_decls:
   a._ref_consts = "const_decls:\n"
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
-    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}, ['bar', 'foo']), 'B')]
+    {'foo':rdt.Vector(32), 'bar':rdt.Vector(16)}), 'B')]
   a._ref_src = \
 """\
 struct B
@@ -211,13 +211,13 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_port_decl( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits16(bar)
-  class B( BitStruct ):
-    def __init__( s, foo=0 ):
-      s.foo = Bits32(foo)
-      s.bar = C()
+  @bitstruct
+  class C:
+    bar: Bits16
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: C
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -232,11 +232,9 @@ port_decls:
   a._ref_consts = "const_decls:\n"
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
-    {'foo':rdt.Vector(32),
-      'bar':rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar'])},
-    ['bar', 'foo']),
-    'B'),
-    (rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']), 'C')
+    {'foo':rdt.Vector(32), 'bar':rdt.Struct('C', {'bar':rdt.Vector(16)})},
+    ), 'B'),
+    (rdt.Struct('C', {'bar':rdt.Vector(16)}), 'C')
   ]
   a._ref_src = \
 """\
@@ -261,10 +259,10 @@ endcomponent
   do_test( a )
 
 def test_struct_packed_array_port_decl( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = [ Bits32(foo) for _ in range( 5 ) ]
-      s.bar = Bits16(bar)
+  @bitstruct
+  class B:
+    foo: [Bits32] * 5
+    bar: Bits16
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -280,8 +278,7 @@ port_decls:
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
     {'foo':rdt.PackedArray([5], rdt.Vector(32)),
-     'bar':rdt.Vector(16) },
-    ['bar', 'foo']),
+     'bar':rdt.Vector(16) }),
     'B')
   ]
   a._ref_src = \
@@ -306,13 +303,13 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_port_decl( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits16(bar)
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = [ C() for _ in range(5) ]
+  @bitstruct
+  class C:
+    bar: Bits16
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: [ C ] * 5
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
@@ -328,10 +325,9 @@ port_decls:
   a._ref_conns = "connections:\n"
   a._ref_structs = [(rdt.Struct('B',
     {'foo':rdt.Vector(32),
-     'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']))},
-    ['bar', 'foo']),
+     'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}))}),
     'B'),
-    (rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']), 'C')
+    (rdt.Struct('C', {'bar':rdt.Vector(16)}), 'C')
   ]
   a._ref_src = \
 """\
@@ -356,18 +352,18 @@ endcomponent
   do_test( a )
 
 def test_nested_struct_packed_array_index( do_test ):
-  class C( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits16(bar)
-  class B( BitStruct ):
-    def __init__( s, foo=0, bar=42 ):
-      s.foo = Bits32(foo)
-      s.bar = [ C() for _ in range(5) ]
+  @bitstruct
+  class C:
+    bar: Bits16
+  @bitstruct
+  class B:
+    foo: Bits32
+    bar: [ C ] * 5
   class A( Component ):
     def construct( s ):
       s.struct = InPort( B )
       s.out = OutPort( C )
-      s.connect( s.struct.bar[1], s.out )
+      connect( s.struct.bar[1], s.out )
   a = A()
   a._ref_name = "A"
   a._ref_ports = \
@@ -385,10 +381,9 @@ connections:
 """
   a._ref_structs = [(rdt.Struct('B',
     {'foo':rdt.Vector(32),
-     'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']))},
-    ['bar', 'foo']),
+     'bar':rdt.PackedArray([5], rdt.Struct('C', {'bar':rdt.Vector(16)}))}),
     'B'),
-    (rdt.Struct('C', {'bar':rdt.Vector(16)}, ['bar']), 'C')
+    (rdt.Struct('C', {'bar':rdt.Vector(16)}), 'C')
   ]
   a._ref_src = \
 """\

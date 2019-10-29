@@ -8,7 +8,7 @@ Author : Shunning Jiang
 Date   : Oct 31, 2017
 """
 
-class Bits( object ):
+class Bits:
   __slots__ = ( "nbits", "value" )
 
   def __init__( self, nbits=32, value=0 ):
@@ -100,7 +100,7 @@ class Bits( object ):
 
   def __mod__( self, other ):
     try:    return Bits( max(self.nbits, other.nbits), int(self.value) % int(other) )
-    except: return Bits( self.nbits, int(self.value) / int(other) )
+    except: return Bits( self.nbits, int(self.value) % int(other) )
 
   def __invert__( self ):
     return Bits( self.nbits, ~int(self.value) )

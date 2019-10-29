@@ -60,8 +60,8 @@ def gen_random_test():
     a = random.randint(0,127)
     b = random.randint(0,127)
 
-    base   = Bits( 32, 0x2000 + (4*b) )
-    offset = Bits( 16, (4*(a - b)) )
+    base   = Bits32( 0x2000 + (4*b) )
+    offset = Bits16( 4*(a - b) )
     result = data[a]
 
     asm_code.append( """

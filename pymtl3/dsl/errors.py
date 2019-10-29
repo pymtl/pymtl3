@@ -19,7 +19,7 @@ class MultiWriterError( Exception ):
 class NoWriterError( Exception ):
   """ Raise when a net has no writer (driver) """
   def __init__( self, nets ):
-    return super( NoWriterError, self ).__init__( \
+    return super().__init__( \
     "The following nets need drivers.\nNet:\n - {} ".format(
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
@@ -32,7 +32,7 @@ class VarNotDeclaredError( Exception ):
     self.blk    = blk
 
     if not self.blk:
-      return super( VarNotDeclaredError, self ).__init__() # this is just temporary message
+      return super().__init__() # this is just temporary message
 
     filepath = inspect.getfile( blk_hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -42,7 +42,7 @@ class VarNotDeclaredError( Exception ):
     lineno -= 1
     error_lineno = base_lineno + lineno
 
-    return super( VarNotDeclaredError, self ).__init__( \
+    return super().__init__( \
 """
 In file {}:{} in {}
 When constructing instance {} of class \"{}\" in the hierarchy:
@@ -61,7 +61,7 @@ Suggestion: fix incorrect field access at line {}, or fix the declaration somewh
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """
   def __init__( self, name ):
-    return super( UpblkFuncSameNameError, self ).__init__( \
+    return super().__init__( \
       " Cannot declare two update blocks/functions with the same name {}".format( name ) )
 
 class UpblkCyclicError( Exception ):
@@ -70,7 +70,7 @@ class UpblkCyclicError( Exception ):
 class InvalidConstraintError( Exception ):
   """ Raise when a defined constraint is of wrong format """
   def __init__( self ):
-    return super( InvalidConstraintError, self ).__init__( \
+    return super().__init__( \
       "Constraints between two variables are not allowed!" )
 
 class InvalidConnectionError( Exception ):
@@ -85,13 +85,13 @@ class InvalidPlaceholderError( Exception ):
 class NotElaboratedError( Exception ):
   """ Raise when processing a model that hasn't been elaborated yet """
   def __init__( self ):
-    return super( NotElaboratedError, self ).__init__( \
+    return super().__init__( \
     "Please elaborate the model first." )
 
 class InvalidAPICallError( Exception ):
   """ Raise when processing a model that hasn't been elaborated yet """
   def __init__( self, api_name, obj, top ):
-    return super( InvalidAPICallError, self ).__init__( \
+    return super().__init__( \
     "{} is only allowed to be called at the top module that .elaborate() "
     "was called on (an instance of {}), but this API call is on {}." \
     .format( api_name, top.__class__, "top."+repr(obj)[2:] ) )
@@ -99,7 +99,7 @@ class InvalidAPICallError( Exception ):
 class LeftoverPlaceholderError( Exception ):
   """ Raise upon declaring an update block in a placeholder component. """
   def __init__( self, placeholders ):
-    return super( LeftoverPlaceholderError, self ).__init__( \
+    return super().__init__( \
     "Please replace all placeholders with valid components:\n - {}".format(
       "\n - ".join( [ "top.{} (instance of {})".format( repr(x)[2:], x.__class__ ) \
                      for x in placeholders ] ) ) )

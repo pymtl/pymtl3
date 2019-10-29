@@ -28,8 +28,13 @@ class BehavioralRTLIRGenL5Pass( BasePass ):
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
         visitor._upblk_type = upblk_type
-        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = \
-          visitor.enter( blk, m.get_update_block_ast( blk ) )
+        upblk_info = m.get_update_block_info( blk )
+        upblk = visitor.enter( blk, upblk_info[-1] )
+        upblk.is_lambda = upblk_info[0]
+        upblk.src       = upblk_info[1]
+        upblk.lino      = upblk_info[2]
+        upblk.filename  = upblk_info[3]
+        m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] = upblk
 
 class BehavioralRTLIRGeneratorL5( BehavioralRTLIRGeneratorL4 ):
   """Behavioral RTLIR generator level 5.
@@ -38,4 +43,4 @@ class BehavioralRTLIRGeneratorL5( BehavioralRTLIRGeneratorL4 ):
   levels.
   """
   def __init__( s, component ):
-    super( BehavioralRTLIRGeneratorL5, s ).__init__( component )
+    super().__init__( component )

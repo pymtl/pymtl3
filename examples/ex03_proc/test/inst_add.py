@@ -157,8 +157,8 @@ def gen_value_test():
 def gen_random_test():
   asm_code = []
   for i in range(50):
-    src0 = Bits( 32, random.randint(0,0xffffffff) )
-    src1 = Bits( 32, random.randint(0,0xffffffff) )
+    src0 = Bits32( random.randint(0,0xffffffff) )
+    src1 = Bits32( random.randint(0,0xffffffff) )
     dest = src0 + src1
     asm_code.append( gen_rr_value_test( "add", src0.uint(), src1.uint(), dest.uint() ) )
   return asm_code

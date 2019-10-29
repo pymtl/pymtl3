@@ -31,9 +31,9 @@ class RoundRobinArbiter( Component ):
 
     s.priority_reg = m = RegEnRst( Type, reset_value = 1 )
 
-    s.connect( m.en,           s.priority_en )
-    s.connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
-    s.connect( m.in_[0],       s.grants[nreqs-1] )
+    connect( m.en,           s.priority_en )
+    connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
+    connect( m.in_[0],       s.grants[nreqs-1] )
 
     s.kills        = Wire( mk_bits( 2*nreqs + 1 ) )
     s.priority_int = Wire( mk_bits( 2*nreqs ) )
@@ -147,9 +147,9 @@ class RoundRobinArbiterEn( Component ):
 
     s.priority_reg = m = RegEnRst( mk_bits( nreqs ), reset_value = 1 )
 
-    s.connect( m.en,           s.priority_en )
-    s.connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
-    s.connect( m.in_[0],       s.grants[nreqs-1] )
+    connect( m.en,           s.priority_en )
+    connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
+    connect( m.in_[0],       s.grants[nreqs-1] )
 
     s.kills        = Wire( mk_bits( 2*nreqs + 1 ) )
     s.priority_int = Wire( mk_bits( 2*nreqs ) )

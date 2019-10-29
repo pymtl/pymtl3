@@ -51,8 +51,8 @@ class ChecksumXcelCL( Component ):
 
     s.out_q = BypassQueueCL( num_entries=1 )
 
-    s.connect( s.checksum_unit.send, s.out_q.enq )
-    s.connect( s.xcel.req, s.in_q.enq )
+    connect( s.checksum_unit.send, s.out_q.enq )
+    connect( s.xcel.req, s.in_q.enq )
 
     @s.update
     def up_tick():

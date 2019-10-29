@@ -3,8 +3,6 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-from functools import reduce
-
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.util.utility import make_indent
@@ -37,9 +35,9 @@ class SVStructuralTranslatorL4(
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {
-      'def' : s.rtlir_tr_wire_decl('{c_id}$'+port_id, port_def_rtype,
+      'def' : s.rtlir_tr_wire_decl('{c_id}__'+port_id, port_def_rtype,
                 port_array_type, port_dtype),
-      'decl' : '.{port_id}( {{c_id}}${port_id} )'.format(**locals())
+      'decl' : f'.{port_id}( {{c_id}}__{port_id} )'
     }
 
   def rtlir_tr_subcomp_ifc_port_decls( s, _ifc_port_decls ):
@@ -56,20 +54,18 @@ class SVStructuralTranslatorL4(
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
       port_array_type ):
     assert isinstance( port_rtype, rt.Port ), \
-      "SystemVerilog backend does not support nested interface {} yet!".format(
-          port_id )
+      f"SystemVerilog backend does not support nested interface {port_id} yet!"
     port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
     port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
 
     return {
-      'def' : s.rtlir_tr_wire_decl('{c_id}${ifc_id}$'+port_id, port_def_rtype,
+      'def' : s.rtlir_tr_wire_decl('{c_id}__{ifc_id}__'+port_id, port_def_rtype,
                 port_array_type, port_dtype),
-      'decl' : '.{{ifc_id}}${port_id}( {{c_id}}${{ifc_id}}${port_id} )'. \
-                format(**locals())
+      'decl' : f'.{{ifc_id}}__{port_id}( {{c_id}}__{{ifc_id}}__{port_id} )'
     }
 
   def rtlir_tr_subcomp_ifc_decls( s, _ifc_decls ):
-    _ifc_decls = reduce( lambda res,l: res+l, _ifc_decls, [] )
+    _ifc_decls = sum( _ifc_decls, [] )
     ifc_defs = [x['def'] for x in _ifc_decls]
     ifc_decls = [x['decl'] for x in _ifc_decls]
     return {
@@ -89,15 +85,15 @@ class SVStructuralTranslatorL4(
           'decl' : ports['decl'].format( **locals() )
         } ]
       else:
-        return reduce( lambda res, l: res + l, [gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
-            c_n_dim+'$__'+str( idx ), ports ) for idx in range( n_dim[0] )], [] )
+        return sum( [gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim[1:],
+            c_n_dim+'__'+str( idx ), ports ) for idx in range( n_dim[0] )], [] )
 
     n_dim = ifc_array_type[ 'n_dim' ]
     return \
       gen_subcomp_ifc_decl( ifc_id, ifc_rtype, n_dim, "", ports )
 
   def rtlir_tr_subcomp_decls( s, subcomps ):
-    subcomp_decls = reduce( lambda res, l: res+l, subcomps, [] )
+    subcomp_decls = sum( subcomps, [] )
     return '\n\n'.join( subcomp_decls )
 
   def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
@@ -129,8 +125,9 @@ class SVStructuralTranslatorL4(
         return [ tplt.format( **locals() ) ]
 
       else:
-        return reduce( lambda res, l: res+l, [gen_subcomp_array_decl( c_id,
-            port_conns, ifc_conns, n_dim[1:], c_n_dim+'$__'+str(idx) ) for idx in range( n_dim[0] )], [] )
+        return sum( [gen_subcomp_array_decl( c_id,
+            port_conns, ifc_conns, n_dim[1:], c_n_dim+'__'+str(idx) ) \
+                for idx in range( n_dim[0] )], [] )
 
     # If `c_array_type` is not None we need to impelement an array of
     # components, each with their own connections for the ports.
@@ -147,7 +144,7 @@ class SVStructuralTranslatorL4(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_component_array_index( s, base_signal, index ):
-    return '{base_signal}$__{index}'.format(**locals())
+    return f'{base_signal}__{index}'
 
   def rtlir_tr_subcomp_attr( s, base_signal, attr ):
-    return '{base_signal}${attr}'.format(**locals())
+    return f'{base_signal}__{attr}'

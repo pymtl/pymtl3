@@ -47,7 +47,7 @@ def test_subcomponent( do_test ):
   a._ref_upblk_srcs = { a : { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = b$foo;
+  out = b__foo;
 end\
 """ }, a.b : { 'upblk' : \
 """\
@@ -84,7 +84,7 @@ def test_subcomponent_index( do_test ):
   a._ref_upblk_srcs = { a : { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = comp$__2$out;
+  out = comp__2__out;
 end\
 """ } }
   # TestVectorSimulator properties
@@ -99,7 +99,7 @@ end\
   a._ref_upblk_srcs_yosys = { a : { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = comp$out[2];
+  out = comp__out[2];
 end\
 """ } }
   do_test( a )

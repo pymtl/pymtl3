@@ -13,11 +13,8 @@ from .StructuralRTLIRSignalExpr import gen_signal_expr
 
 
 class StructuralRTLIRGenL1Pass( BasePass ):
-  def __init__( s, conns_self_self, conns_self_child, conns_child_child ):
-    # connections_self_self, connections_self_child, connections_child_child
-    s.c_ss = conns_self_self
-    s.c_sc = conns_self_child
-    s.c_cc = conns_child_child
+  def __init__( s, inst_conns ):
+    s.inst_conns = inst_conns
 
   def __call__( s, tr_top ):
     """ generate structural RTLIR for component `tr_top` """
@@ -29,7 +26,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
       s.gen_constants( tr_top )
       s.sort_connections( tr_top )
     except AssertionError as e:
-      msg = '' if e.args[0] is None else e.args[0]
+      msg = '' if not e.args is None else e.args[0]
       raise RTLIRConversionError( tr_top, msg )
 
   def gen_rtlir_types( s, tr_top ):
@@ -42,31 +39,21 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     const_types = rtype.get_consts_packed()
     for const_name, const_rtype in const_types:
       assert hasattr(m, const_name), \
-        "Internal error: {} is not a member of {}".format( const_name, m )
+        f"Internal error: {const_name} is not a member of {m}"
       const_instance = getattr(m, const_name)
       ns.consts.append( ( const_name, const_rtype, const_instance ) )
 
-  def collect_connections( s, m ):
-    return [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_ss[m]]
-
   def sort_connections( s, m ):
-    m_connections = s.collect_connections( m )
-    connections = []
-    for u, v in m.get_connect_order():
-      _u, _v = gen_signal_expr( m, u ), gen_signal_expr( m, v )
-      for idx, ( ( wr, rd ), visited ) in enumerate( m_connections ):
+    m_conns_set   = s.inst_conns[m]
+    ordered_conns = [ *m.get_connect_order() ]
+    assert len(ordered_conns) == len(m_conns_set)
 
-        if not visited and ( ( s.contains( _u, wr ) and s.contains( _v, rd ) ) or \
-           ( s.contains( _u, rd ) and s.contains( _v, wr ) ) ):
-          connections.append( ( wr, rd ) )
-          m_connections[idx] = ( m_connections[idx][0], True )
-    connections += [x[0] for x in [x for x in m_connections if not x[1]]]
-    m._pass_structural_rtlir_gen.connections = connections
+    for i, x in enumerate(ordered_conns):
+      if x not in m_conns_set:
+        x = (x[1], x[0])
+        assert x in m_conns_set, "There is a connection missing from "\
+                                 "connect_order. Please contact PyMTL developers!"
+        ordered_conns[i] = x
 
-  def contains( s, obj, signal ):
-    """Return if obj contains signal.
-
-    At level 1 all signals have their corresponding object in `s.connect`.
-    Therefore just checking whether obj is equal to signal is enough at level 1.
-    """
-    return obj == signal
+    m._pass_structural_rtlir_gen.connections = \
+      [ (gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])) for x in ordered_conns ]

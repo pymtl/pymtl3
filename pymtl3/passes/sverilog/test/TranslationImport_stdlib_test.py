@@ -12,10 +12,9 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from pymtl3.datatypes import Bits1, mk_bits
+from pymtl3.datatypes import Bits1, clog2, mk_bits
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog import TranslationPass
-from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
+from pymtl3.passes.sverilog import TranslationImportPass
 from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_4 as _rr_arb_4
 from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
 from pymtl3.stdlib.rtl.Crossbar_test import test_crossbar3 as _crossbar3
@@ -35,12 +34,8 @@ def local_do_test( _m ):
   try:
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
-    _m.sverilog_translate = True
-    _m.sverilog_import = True
-    _m.apply( TranslationPass() )
-    # We are importing the top component and therefore should expect a new top
-    # as the return value.
-    m = ImportPass()( _m )
+    _m.sverilog_translate_import = True
+    m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:
@@ -99,11 +94,13 @@ def test_crossbar3( do_test ):
   def run_test( cls, args, test_vectors ):
     m = cls( *args )
     T = args[1]
+    Tsel = mk_bits( clog2( args[0] ) )
+
     def tv_in( model, test_vector ):
       n = len( model.in_ )
       for i in range(n):
         model.in_[i] = T(test_vector[i])
-        model.sel[i] = T(test_vector[n+i])
+        model.sel[i] = Tsel(test_vector[n+i])
     def tv_out( model, test_vector ):
       n = len( model.in_ )
       for i in range(n):

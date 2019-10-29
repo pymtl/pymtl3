@@ -47,9 +47,9 @@ class BehavioralRTLIRToSVVisitorL5( BehavioralRTLIRToSVVisitorL4 ):
       value = s.visit( node.value )
       attr = node.attr
       s.check_res( node, attr )
-      return '{value}${attr}'.format( **locals() )
+      return f'{value}__{attr}'
 
-    return super( BehavioralRTLIRToSVVisitorL5, s ).visit_Attribute( node )
+    return super().visit_Attribute( node )
 
   #-----------------------------------------------------------------------
   # visit_Index
@@ -65,7 +65,7 @@ class BehavioralRTLIRToSVVisitorL5( BehavioralRTLIRToSVVisitorL4 ):
           'index of component array must be a static constant expression!' )
       idx = int( idx )
       value = s.visit( node.value )
-      return "{value}$__{idx}".format( **locals() )
+      return f"{value}__{idx}"
 
     else:
-      return super( BehavioralRTLIRToSVVisitorL5, s ).visit_Index( node )
+      return super().visit_Index( node )

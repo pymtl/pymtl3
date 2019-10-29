@@ -12,7 +12,7 @@ results of generation pass are verifed against a reference AST.
 import pytest
 
 from pymtl3.datatypes import *
-from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.dsl import Component, InPort, OutPort, connect
 from pymtl3.passes.rtlir.behavioral import (
     BehavioralRTLIRGenPass,
     BehavioralRTLIRTypeCheckPass,
@@ -270,7 +270,7 @@ def test_multi_components( do_test ):
       s.b = multi_components_B()
 
       # There should be a way to check module connections?
-      s.connect( s.in_, s.b.in_ )
+      connect( s.in_, s.b.in_ )
 
       @s.update
       def multi_components_A():

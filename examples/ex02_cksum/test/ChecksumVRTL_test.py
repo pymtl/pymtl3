@@ -8,14 +8,12 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.yosys import ImportPass, TranslationPass
+from pymtl3.passes.yosys import TranslationImportPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
 from ..ChecksumRTL import ChecksumRTL, StepUnit
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumRTL_test import ChecksumRTL_Tests as BaseTests
-from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
@@ -35,10 +33,8 @@ def checksum_vrtl( words ):
 
   # Translate the checksum unit and import it back in using the yosys
   # backend
-  dut.yosys_translate = True
-  dut.yosys_import = True
-  dut.apply( TranslationPass() )
-  dut = ImportPass()( dut )
+  dut.yosys_translate_import = True
+  dut = TranslationImportPass()( dut )
 
   # Create a simulator
   dut.elaborate()
@@ -69,6 +65,7 @@ def checksum_vrtl( words ):
 # inherit from the CL test class and overwrite cksum_func to use the rtl
 # version instead.
 
+from .ChecksumRTL_test import ChecksumRTL_Tests as BaseTests
 
 class ChecksumVRTL_Tests( BaseTests ):
 
@@ -83,6 +80,7 @@ class ChecksumVRTL_Tests( BaseTests ):
 # [run_sim] of the CL test suite so that we can apply the translation and
 # import pass to the DUT.
 
+from .ChecksumRTL_test import ChecksumRTLSrcSink_Tests as BaseSrcSinkTests
 
 class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
@@ -99,15 +97,13 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
-    th.dut.yosys_translate = True
-    th.dut.yosys_import = True
+    th.dut.yosys_translate_import = True
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
-    # Apply the translation, import, and simulation passes
+    # Apply the translation-import and simulation passes
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
+    th = TranslationImportPass()( th )
     th.apply( SimulationPass )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\

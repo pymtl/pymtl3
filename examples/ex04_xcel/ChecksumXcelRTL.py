@@ -50,11 +50,11 @@ class ChecksumXcelRTL( Component ):
 
     # Connections
 
-    s.connect( s.xcel.req, s.in_q.enq )
-    s.connect( s.checksum_unit.recv.msg[0 :32 ], s.reg_file[0].out )
-    s.connect( s.checksum_unit.recv.msg[32:64 ], s.reg_file[1].out )
-    s.connect( s.checksum_unit.recv.msg[64:96 ], s.reg_file[2].out )
-    s.connect( s.checksum_unit.recv.msg[96:128], s.reg_file[3].out )
+    connect( s.xcel.req, s.in_q.enq )
+    connect( s.checksum_unit.recv.msg[0 :32 ], s.reg_file[0].out )
+    connect( s.checksum_unit.recv.msg[32:64 ], s.reg_file[1].out )
+    connect( s.checksum_unit.recv.msg[64:96 ], s.reg_file[2].out )
+    connect( s.checksum_unit.recv.msg[96:128], s.reg_file[3].out )
 
     # Logic
 

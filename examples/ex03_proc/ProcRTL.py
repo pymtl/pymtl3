@@ -8,6 +8,7 @@ Author : Shunning Jiang
   Date : June 12, 2019
 """
 from pymtl3 import *
+from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, mk_mem_msg, mk_xcel_msg
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMasterIfcRTL
 from pymtl3.stdlib.ifcs.xcel_ifcs import XcelMasterIfcRTL
@@ -53,7 +54,7 @@ class ProcRTL( Component ):
     # imem drop unit
 
     s.imemresp_drop = m = DropUnitRTL( Bits32 )
-    s.connect_pairs(
+    connect_pairs(
       m.in_.en,  s.imem.resp.en,
       m.in_.rdy, s.imem.resp.rdy,
       m.in_.msg, s.imem.resp.msg.data,
@@ -135,7 +136,7 @@ class ProcRTL( Component ):
 
     # Ctrl <-> Dpath
 
-    s.connect_pairs(
+    connect_pairs(
       s.ctrl.reg_en_F       , s.dpath.reg_en_F,
       s.ctrl.pc_sel_F       , s.dpath.pc_sel_F,
 

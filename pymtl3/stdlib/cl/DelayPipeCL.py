@@ -87,7 +87,7 @@ class DelayPipeSendCL( Component ):
 
     if delay == 0: # combinational behavior
       s.enq = NonBlockingCalleeIfc()
-      s.connect( s.enq, s.send )
+      connect( s.enq, s.send )
 
     else: # delay >= 1, pipe behavior
       s.enq = NonBlockingCalleeIfc( None, s.enq_pipe, s.enq_rdy_pipe )

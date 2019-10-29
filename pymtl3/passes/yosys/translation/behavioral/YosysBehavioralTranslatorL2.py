@@ -39,7 +39,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
 
   def visit_If( s, node ):
     node.cond._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_If( node )
+    return super().visit_If( node )
 
   #-----------------------------------------------------------------------
   # visit_For
@@ -57,7 +57,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
     start    = s.visit( node.start )
     end      = s.visit( node.end )
 
-    loop_var = "__loopvar_" + s.blk.__name__ + "$" + loop_var
+    loop_var = "__loopvar__" + s.blk.__name__ + "_" + loop_var
     if loop_var not in s.loopvars:
       s.loopvars.add( loop_var )
 
@@ -96,7 +96,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
     node.cond._top_expr = 1
     node.body._top_expr = 1
     node.orelse._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_IfExp( node )
+    return super().visit_IfExp( node )
 
   #-----------------------------------------------------------------------
   # visit_UnaryOp
@@ -104,7 +104,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
 
   def visit_UnaryOp( s, node ):
     node.operand._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_UnaryOp( node )
+    return super().visit_UnaryOp( node )
 
   #-----------------------------------------------------------------------
   # visit_BoolOp
@@ -113,7 +113,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
   def visit_BoolOp( s, node ):
     for child in node.values:
       child._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_BoolOp( node )
+    return super().visit_BoolOp( node )
 
   #-----------------------------------------------------------------------
   # visit_BinOp
@@ -122,7 +122,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
   def visit_BinOp( s, node ):
     node.left._top_expr = 1
     node.right._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_BinOp( node )
+    return super().visit_BinOp( node )
 
   #-----------------------------------------------------------------------
   # visit_Compare
@@ -131,7 +131,7 @@ class YosysBehavioralRTLIRToSVVisitorL2(
   def visit_Compare( s, node ):
     node.left._top_expr = 1
     node.right._top_expr = 1
-    return super( YosysBehavioralRTLIRToSVVisitorL2, s ).visit_Compare( node )
+    return super().visit_Compare( node )
 
   #-----------------------------------------------------------------------
   # visit_LoopVar
@@ -139,4 +139,4 @@ class YosysBehavioralRTLIRToSVVisitorL2(
 
   def visit_LoopVar( s, node ):
     s.check_res( node, node.name )
-    return "__loopvar_" + s.blk.__name__ + "$" + node.name
+    return "__loopvar__" + s.blk.__name__ + "_" + node.name

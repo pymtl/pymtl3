@@ -45,6 +45,7 @@ extern "C" {{
   V{component_name}_t * create_model( const char * );
   void destroy_model( V{component_name}_t *);
   void eval( V{component_name}_t * );
+  void assert_en( bool en );
 
 }}
 
@@ -149,8 +150,8 @@ void eval( V{component_name}_t * m ) {{
 
     // update simulation time only on clock toggle
     if (m->prev_clk != model->clk) {{
-      m->trace_time += 50;
-      g_main_time += 50;
+      m->trace_time += {half_cycle_time};
+      g_main_time += {half_cycle_time};
     }}
     m->prev_clk = model->clk;
 
@@ -161,5 +162,16 @@ void eval( V{component_name}_t * m ) {{
 
   }}
   #endif
+
+}}
+
+//------------------------------------------------------------------------
+// assert_en()
+//------------------------------------------------------------------------
+// Enable or disable assertions controlled by --assert
+
+void assert_en( bool en ) {{
+
+  Verilated::assertOn(en);
 
 }}

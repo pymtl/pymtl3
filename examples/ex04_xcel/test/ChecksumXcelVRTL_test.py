@@ -8,11 +8,10 @@ Author : Yanghui Ou
   Date : June 14, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.yosys import ImportPass, TranslationPass
+from pymtl3.passes.yosys import TranslationImportPass
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction
-from .ChecksumXcelRTL_test import ChecksumXcelRTL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # Wrap Xcel into a function
@@ -30,10 +29,8 @@ def checksum_xcel_vrtl( words ):
 
   # Translate the checksum unit and import it back in using the yosys
   # backend
-  dut.yosys_translate = True
-  dut.yosys_import = True
-  dut.apply( TranslationPass() )
-  dut = ImportPass()( dut )
+  dut.yosys_translate_import = True
+  dut = TranslationImportPass()( dut )
 
   # Create a simulator
   dut.elaborate()
@@ -71,6 +68,7 @@ def checksum_xcel_vrtl( words ):
 #-------------------------------------------------------------------------
 # We reuse the function tests in ChecksumXcelFL_test.
 
+from .ChecksumXcelRTL_test import ChecksumXcelRTL_Tests as BaseTests
 
 class ChecksumXcelVRTL_Tests( BaseTests ):
 
@@ -90,11 +88,8 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
-    th.dut.yosys_translate = True
-    print(type(th.dut))
-    th.dut.yosys_import = True
-    th.apply( TranslationPass() )
-    th = ImportPass()( th )
+    th.dut.yosys_translate_import = True
+    th = TranslationImportPass()( th )
 
     # Create a simulator
     th.apply( SimulationPass )

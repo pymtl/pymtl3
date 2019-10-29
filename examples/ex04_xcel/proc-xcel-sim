@@ -19,9 +19,21 @@
 
 import argparse
 import os
-import re
 import struct
 import sys
+
+from pymtl3 import *
+from pymtl3.stdlib.cl.MemoryCL import MemoryCL
+from pymtl3.stdlib.ifcs import mk_mem_msg
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+
+# Hack to add project root to python path
+sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
+while sim_dir:
+  if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
+    sys.path.insert(0,sim_dir)
+    break
+  sim_dir = os.path.dirname(sim_dir)
 
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.ProcCL import ProcCL
@@ -36,23 +48,6 @@ from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
 from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
 from examples.ex04_xcel.ProcXcel import ProcXcel
 from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
-from pymtl3 import *
-from pymtl3.stdlib.cl.MemoryCL import MemoryCL
-from pymtl3.stdlib.ifcs import mk_mem_msg
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
-
-sim_dir = os.path.dirname( os.path.abspath( __file__ ) )
-while sim_dir:
-  if os.path.exists( sim_dir + os.path.sep + "pytest.ini" ):
-    sys.path.insert(0,sim_dir)
-    break
-  sim_dir = os.path.dirname(sim_dir)
-
-
-
-
-
-
 
 #=========================================================================
 # Command line processing
@@ -60,12 +55,12 @@ while sim_dir:
 
 class ArgumentParserWithCustomError(argparse.ArgumentParser):
   def error( self, msg = "" ):
-    if ( msg ): print "\n ERROR: %s" % msg
-    print ""
+    if ( msg ): print("\n"+f" ERROR: {msg}")
+    print("")
     file = open( sys.argv[0] )
     for ( lineno, line ) in enumerate( file ):
       if ( line[0] != '#' ): sys.exit(msg != "")
-      if ( (lineno == 2) or (lineno >= 4) ): print line[1:].rstrip("\n")
+      if ( (lineno == 2) or (lineno >= 4) ): print(line[1:].rstrip("\n"))
 
 def parse_cmdline():
   p = ArgumentParserWithCustomError( add_help=False )
@@ -145,17 +140,17 @@ class TestHarness(Component):
 
       if section.name == ".mngr2proc":
         for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.src.src.msgs.append( Bits(32,bits) )
-          self.src.msgs.append( Bits(32,bits) )
+          bits = struct.unpack_from("<I",memoryview(section.data)[i:i+4])[0]
+          # self.src.src.msgs.append( Bits32(bits) )
+          self.src.msgs.append( Bits32(bits) )
 
       # For .proc2mngr sections, copy section into proc2mngr_ref src
 
       elif section.name == ".proc2mngr":
         for i in range(0,len(section.data),4):
-          bits = struct.unpack_from("<I",buffer(section.data,i,4))[0]
-          # self.sink.sink.msgs.append( Bits(32,bits) )
-          self.sink.msgs.append( Bits(32,bits) )
+          bits = struct.unpack_from("<I",memoryview(section.data)[i:i+4])[0]
+          # self.sink.sink.msgs.append( Bits32(bits) )
+          self.sink.msgs.append( Bits32(bits) )
 
       # For all other sections, simply copy them into the memory
 
@@ -210,9 +205,9 @@ def main():
 
   # Create test harness and elaborate
 
-  print
-  print "----- Proc:", opts.proc_impl.upper(), "-"*50 , "Xcel:", opts.xcel_impl.upper(), "-----"
-  print
+  print()
+  print("----- Proc:", opts.proc_impl.upper(), "-"*50 , "Xcel:", opts.xcel_impl.upper(), "-----")
+  print()
 
   model = TestHarness( proc_impl_dict[ opts.proc_impl ],
                        xcel_impl_dict[ opts.xcel_impl ], 0,
@@ -222,12 +217,10 @@ def main():
   # Apply translation pass and import pass if required
 
   if opts.translate:
-    from pymtl3.passes.yosys import TranslationPass, ImportPass
+    from pymtl3.passes.yosys import TranslationImportPass
     model.elaborate()
-    model.dut.yosys_translate = True
-    model.dut.yosys_import = True
-    model.apply( TranslationPass() )
-    model = ImportPass()( model )
+    model.dut.yosys_translate_import = True
+    model = TranslationImportPass()( model )
 
   from pymtl3.passes import DynamicSim
   model.apply( DynamicSim )
@@ -248,22 +241,22 @@ def main():
   limit = opts.limit
 
   if opts.trace:
-    print "{:3}: {}".format( count, model.line_trace() )
+    print("{:3}: {}".format( count, model.line_trace() ))
 
   while not model.done() and count < limit:
     model.tick()
     commit_inst += int(model.commit_inst)
     count = count + 1
     if opts.trace:
-      print "{:3}: {}".format( count, model.line_trace() )
+      print("{:3}: {}".format( count, model.line_trace() ))
 
   assert count < limit
 
   # Verify the results of simulation
 
-  print
+  print()
   passed = bmark_dict[ opts.bmark ].verify( model.mem.mem.mem )
-  print
+  print()
 
   if not passed:
     exit(1)
@@ -273,7 +266,7 @@ def main():
   print( "  total_num_cycles      = {}".format( count ) )
   print( "  total_committed_insts = {}".format( commit_inst ) )
   print( "  CPI                   = {:1.2f}".format( count/float(commit_inst) ) )
-  print
+  print()
 
   exit(0)
 

@@ -37,7 +37,7 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
-    super(BehavioralRTLIRTypeCheckVisitorL2, s).__init__(component, freevars, accessed)
+    super().__init__(component, freevars, accessed)
     s.tmpvars = tmpvars
     s.BinOp_max_nbits = (bir.Add, bir.Sub, bir.Mult, bir.Div, bir.Mod, bir.Pow,
                          bir.BitAnd, bir.BitOr, bir.BitXor)
@@ -82,7 +82,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       bir.BitAnd    : '&',   bir.BitOr : '|',  bir.BitXor : '^',
     }
     _op = op_dict[ type( op ) ]
-    return eval( 'l{_op}r'.format( **locals() ) )
+    return eval( f'l{_op}r' )
 
   def visit_Assign( s, node ):
     # RHS should have the same type as LHS
@@ -93,8 +93,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       tmpvar_id = (node.target.name, node.target.upblk_name)
       if lhs_type != rt.NoneType() and lhs_type.get_dtype() != rhs_type.get_dtype():
         raise PyMTLTypeError( s.blk, node.ast,
-          'conflicting type {} for temporary variable {}({})!'.format(
-            rhs_type, node.target.name, lhs_type) )
+          f'conflicting type {rhs_type} for temporary variable {node.target.name}({lhs_type})!' )
 
       # Creating a temporaray variable
       # Reminder that a temporary variable is essentially a wire. So we use
@@ -105,7 +104,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
 
     else:
       # non-temporary assignment is an L1 thing
-      super( BehavioralRTLIRTypeCheckVisitorL2, s ).visit_Assign( node )
+      super().visit_Assign( node )
 
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?
@@ -170,7 +169,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     for value in node.values:
       if not isinstance(value.Type, rt.Signal) or not rdt.Bool()(value.Type.get_dtype()):
         raise PyMTLTypeError( s.blk, node.ast,
-          "{} of {} cannot be cast into bool!".format( value, value.Type ))
+          f"{value} of {value.Type} cannot be cast into bool!")
     node.Type = rt.NetWire( rdt.Bool() )
 
   def visit_BinOp( s, node ):
@@ -179,13 +178,11 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     r_type = node.right.Type.get_dtype()
     if not( rdt.Vector(1)( l_type ) and rdt.Vector(1)( r_type ) ):
       raise PyMTLTypeError( s.blk, node.ast,
-        "both sides of {} should be of vector type!".format(
-            op.__class__.__name__) )
+        f"both sides of {op.__class__.__name__} should be of vector type!" )
 
     if not isinstance( op, s.BinOp_left_nbits ) and l_type != r_type:
       raise PyMTLTypeError( s.blk, node.ast,
-        "LHS and RHS of {} should have the same type ({} vs {})!".format(
-            op.__class__.__name__, l_type, r_type ) )
+        f"LHS and RHS of {op.__class__.__name__} should have the same type ({l_type} vs {r_type})!" )
 
     l_nbits = l_type.get_length()
     r_nbits = r_type.get_length()
@@ -219,6 +216,5 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     r_type = node.right.Type.get_dtype()
     if l_type != r_type:
       raise PyMTLTypeError( s.blk, node.ast,
-        "LHS and RHS of {} have different types ({} vs {})!".format(
-          node.op.__class__.__name__, l_type, r_type ))
+        f"LHS and RHS of {node.op.__class__.__name__} have different types ({l_type} vs {r_type})!" )
     node.Type = rt.NetWire( rdt.Bool() )

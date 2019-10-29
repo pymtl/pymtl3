@@ -20,7 +20,7 @@ from ..ChecksumFL import checksum
 # We manage all our test cases into a class so that these tests can be
 # easily reused across modeling levels through inheritance.
 
-class ChecksumFL_Tests( object ):
+class ChecksumFL_Tests:
 
   #-----------------------------------------------------------------------
   # cksum_func

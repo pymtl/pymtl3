@@ -34,7 +34,7 @@ class BehavioralRTLIRTypeCheckL5Pass( BasePass ):
 
 class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
-    super( BehavioralRTLIRTypeCheckVisitorL5, s ). \
+    super(). \
         __init__( component, freevars, accessed, tmpvars )
 
   def visit_Index( s, node ):
@@ -47,7 +47,7 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
       node.Type = node.value.Type.get_sub_type()
 
     else:
-      super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Index( node )
+      super().visit_Index( node )
 
   def visit_Attribute( s, node ):
     """Type check an attribute.
@@ -60,13 +60,11 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
        node.value.Type.get_name() != s.component.__class__.__name__:
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
-          'rt.Component {} does not have attribute {}!'.format(
-            node.value.Type.get_name(), node.attr ) )
+          f'rt.Component {node.value.Type.get_name()} does not have attribute {node.attr}!' )
       prop = node.value.Type.get_property( node.attr )
       if not rt._is_of_type( prop, ( rt.Port, rt.InterfaceView ) ):
         raise PyMTLTypeError( s.blk, node.ast,
-          '{} is not a port of {} subcomponent!'.format(
-            node.attr, node.value.Type.get_name() ) )
+          f'{node.attr} is not a port of {node.value.Type.get_name()} subcomponent!' )
       node.Type = prop
     else:
-      super( BehavioralRTLIRTypeCheckVisitorL5, s ).visit_Attribute( node )
+      super().visit_Attribute( node )

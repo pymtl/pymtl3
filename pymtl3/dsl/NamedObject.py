@@ -19,60 +19,13 @@ Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
 import re
+from collections import deque
 
 from .errors import NotElaboratedError
-
-# from collections import OrderedDict as ord_dict
 
 
 class DSLMetadata:
   pass
-
-# NOTE: We found that the built-in OrderedDict slows down the elaboration
-# time because much time was spent calling OrderedDict.__init__.
-# The time for instantiating an OrderedDict is quite long compared
-# to other primitive data structures such as list or dict. We have to
-# implement our own ordered dictionary to mitigate this overhead.
-# TODO: When we move to python3, we won't need this any more.
-class ord_dict:
-  def __init__( self ):
-    self.data = []
-
-  def __getitem__( self, key ):
-    for k, v in self.data:
-      if key == k:
-        return v
-    raise KeyError( "Key error:{}".format( key ) )
-
-  def __setitem__( self, key, value ):
-    idx = 0
-    for k, v in self.data:
-      if key == k:
-        self.data[ idx ] = ( k, value )
-        return
-      idx += 1
-    self.data.append( ( key, value ) )
-
-  def __iter__( self ):
-    for k, _ in self.data:
-      yield k
-
-  def __str__( self ):
-    return str( self.data )
-
-  def pop( self, key ):
-    idx = 0
-    for k, v in self.data:
-      if key == k:
-        _, ret = self.data.pop( idx )
-        return ret
-      idx += 1
-    raise KeyError( "Key error:{}".format( key ) )
-
-  def iteritems( self ):
-    yield from self.data
-
-  items = iteritems
 
 # Special data structure for constructing the parameter tree.
 class ParamTreeNode:
@@ -81,6 +34,7 @@ class ParamTreeNode:
     self.children = None
     self.leaf = None
 
+  # TODO do we still need to lazily create leaf?
   def merge( self, other ):
     # Merge leaf
     if other.leaf is not None:
@@ -96,7 +50,7 @@ class ParamTreeNode:
     if other.children is not None:
       # Lazily create children
       if self.children is None:
-        self.children = ord_dict()
+        self.children = {}
       for comp_name, node in other.children.items():
         if comp_name in self.children:
           self.children[ comp_name ].merge( node )
@@ -107,7 +61,7 @@ class ParamTreeNode:
 
     if self.leaf is None:
       self.leaf = {}
-      self.children = ord_dict()
+      self.children = {}
 
     # Traverse to the node
     cur_node = self
@@ -115,7 +69,7 @@ class ParamTreeNode:
     for comp_name in strs:
       # Lazily create children
       if cur_node.children is None:
-        cur_node.children = ord_dict()
+        cur_node.children = {}
       if comp_name not in cur_node.children:
         new_node = ParamTreeNode()
         if '*' in comp_name:
@@ -141,7 +95,7 @@ class ParamTreeNode:
     cur_node.leaf[ func_name].update( kwargs )
 
   def __repr__( self ):
-    return "\nleaf:{}\nchildren:{}".format( self.leaf, self.children )
+    return f"\nleaf:{self.leaf}\nchildren:{self.children}"
 
 class NamedObject:
 
@@ -186,45 +140,52 @@ class NamedObject:
 
   def __setattr_for_elaborate__( s, name, obj ):
 
-    # I use non-recursive traversal to reduce error message depth
+    # I use non-recursive BFS to reduce error message depth
 
-    if not name.startswith("_"):
-      stack = [ (obj, []) ]
+    if name[0] != '_': # filter private variables
+      stack = deque( [ (obj, []) ] )
       while stack:
-        u, indices = stack.pop()
+        u, indices = stack.popleft()
 
         if isinstance( u, NamedObject ):
+            sd = s._dsl
+            ud = u._dsl
           # try:
-            u._dsl.parent_obj = s
-            u._dsl.level      = s._dsl.level + 1
-            u._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
-                                                           for x in indices ] )
+            ud.parent_obj = s
+            ud.level      = sd.level + 1
+            ud.my_name    = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
 
             # Iterate through the param_tree and update u
-            if s._dsl.param_tree is not None:
-              if s._dsl.param_tree.children is not None:
-                for comp_name, node in s._dsl.param_tree.children.items():
+            if sd.param_tree is not None:
+              if sd.param_tree.children is not None:
+                for comp_name, node in sd.param_tree.children.items():
                   if comp_name == u_name:
                     # Lazily create the param tree
-                    if u._dsl.param_tree is None:
-                      u._dsl.param_tree = ParamTreeNode()
-                    u._dsl.param_tree.merge( node )
+                    if ud.param_tree is None:
+                      ud.param_tree = ParamTreeNode()
+                    ud.param_tree.merge( node )
 
                   elif node.compiled_re is not None:
                     if node.compiled_re.match( u_name ):
                       # Lazily create the param tree
-                      if u._dsl.param_tree is None:
-                        u._dsl.param_tree = ParamTreeNode()
-                      u._dsl.param_tree.merge( node )
+                      if ud.param_tree is None:
+                        ud.param_tree = ParamTreeNode()
+                      ud.param_tree.merge( node )
 
-            s_name = s._dsl.full_name
-            u._dsl.full_name = ( s_name + "." + u_name )
+            ud.full_name = f"{sd.full_name}.{u_name}"
 
             # store the name/indices
-            u._dsl._my_name     = name
-            u._dsl._my_indices  = indices
+            ud._my_name     = name
+            ud._my_indices  = indices
 
+            # Point u's top to my top
+            top = sd.elaborate_top
+            ud.elaborate_top = top
+
+            top._dsl.elaborate_stack.append( u )
             u._construct()
+            top._dsl.elaborate_stack.pop()
+
           # except AttributeError as e:
           #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
           #                        "instead of __init__.)".format( s.__class__ ) )
@@ -239,6 +200,33 @@ class NamedObject:
             stack.append( (v, indices+[i]) )
 
     super().__setattr__( name, obj )
+
+  def _collect_all_single( s, filt=lambda x: isinstance( x, NamedObject ) ):
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+
+      if   isinstance( u, NamedObject ):
+        if filt( u ): # Check if m satisfies the filter
+          ret.add( u )
+
+        for name, obj in u.__dict__.items():
+
+          # If the id is string, it is a normal children field. Otherwise it
+          # should be an tuple that represents a slice
+
+          if   isinstance( name, str ):
+            if name[0] != '_': # filter private variables
+              stack.append( obj )
+
+          elif isinstance( name, tuple ): # name = [1:3]
+            stack.append( obj )
+
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
 
   # It is possible to take multiple filters
   def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
@@ -257,8 +245,8 @@ class NamedObject:
           # If the id is string, it is a normal children field. Otherwise it
           # should be an tuple that represents a slice
 
-          if   isinstance( name, str ): # python2 specific
-            if not name.startswith("_"): # filter private variables
+          if   isinstance( name, str ):
+            if name[0] != '_': # filter private variables
               stack.append( obj )
 
           elif isinstance( name, tuple ): # name = [1:3]
@@ -323,10 +311,13 @@ class NamedObject:
 
     # Initialize the top level
 
-    s._dsl.parent_obj = None
-    s._dsl.level      = 0
-    s._dsl.my_name    = "s"
-    s._dsl.full_name  = "s"
+    s._dsl.parent_obj    = None
+    s._dsl.level         = 0
+    s._dsl.my_name       = "s"
+    s._dsl.full_name     = "s"
+    s._dsl.elaborate_top = s
+
+    s._dsl.elaborate_stack = [ s ]
 
     # Secret source for letting the child know the field name of itself
     # -- override setattr for elaboration, and remove it afterwards
@@ -342,14 +333,14 @@ class NamedObject:
 
     del NamedObject.__setattr__
 
-  def _elaborate_collect_and_mark_all_named_objects( s ):
-    s._dsl.all_named_objects = s._collect_all()[0]
-    for c in s._dsl.all_named_objects:
-      c._dsl.elaborate_top = s
+    del s._dsl.elaborate_stack
+
+  def _elaborate_collect_all_named_objects( s ):
+    s._dsl.all_named_objects = s._collect_all_single()
 
   def elaborate( s ):
     s._elaborate_construct()
-    s._elaborate_collect_and_mark_all_named_objects()
+    s._elaborate_collect_all_named_objects()
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)

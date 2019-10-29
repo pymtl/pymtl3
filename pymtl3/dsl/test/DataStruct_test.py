@@ -7,7 +7,7 @@ Author : Shunning Jiang
 Date   : Apr 16, 2018
 """
 from pymtl3.datatypes import Bits16, Bits32
-from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
+from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
@@ -212,7 +212,7 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
       s.x  = Wire( SomeMsg )
       s.A  = Wire( SomeMsg )
 
-      s.connect( s.x, s.A )
+      connect( s.x, s.A )
 
       @s.update
       def up_wr_x():
@@ -233,7 +233,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
       s.x  = Wire( SomeMsg )
       s.A  = Wire( SomeMsg )
 
-      s.connect( s.x, s.A )
+      connect( s.x, s.A )
 
       @s.update
       def up_wr_A_b():
@@ -272,7 +272,7 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
       s.x  = Wire( SomeMsg )
       s.A  = Wire( SomeMsg )
 
-      s.connect( s.x, s.A )
+      connect( s.x, s.A )
 
       @s.update
       def up_wr_A_b():
@@ -298,7 +298,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
 
-      s.connect( s.A.b, s.x )
+      connect( s.A.b, s.x )
 
       @s.update
       def up_wr_x():
@@ -319,7 +319,7 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
 
-      s.connect( s.A.b, s.x )
+      connect( s.A.b, s.x )
 
       @s.update
       def up_wr_x():
@@ -345,7 +345,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
       s.x  = Wire( Bits32 )
       s.A  = Wire( SomeMsg )
 
-      s.connect( s.A.b, s.x )
+      connect( s.A.b, s.x )
 
       @s.update
       def up_wr_A():
@@ -367,8 +367,8 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
       s.A  = Wire( SomeMsg )
       s.y  = Wire( SomeMsg )
 
-      s.connect( s.A.b, s.x )
-      s.connect( s.A,   s.y )
+      connect( s.A.b, s.x )
+      connect( s.A,   s.y )
 
       @s.update
       def up_wr_x():
@@ -395,8 +395,8 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
       s.A  = Wire( SomeMsg )
       s.y  = Wire( SomeMsg )
 
-      s.connect( s.A.b, s.x )
-      s.connect( s.A,   s.y )
+      connect( s.A.b, s.x )
+      connect( s.A,   s.y )
 
       @s.update
       def up_wr_x():
@@ -418,8 +418,8 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
       s.A  = Wire( SomeMsg )
       s.y  = Wire( SomeMsg )
 
-      s.connect( s.A.b, s.x )
-      s.connect( s.A,   s.y )
+      connect( s.A.b, s.x )
+      connect( s.A,   s.y )
 
       @s.update
       def up_rd_x():
@@ -441,9 +441,9 @@ def test_iterative_find_nets():
       s.y  = Wire( SomeMsg )
       s.z  = Wire( SomeMsg )
 
-      s.connect( s.w, s.x ) # net1
-      s.connect( s.x.a, s.y.a ) # net2
-      s.connect( s.y, s.z ) # net3
+      connect( s.w, s.x ) # net1
+      connect( s.x.a, s.y.a ) # net2
+      connect( s.y, s.z ) # net3
 
       @s.update
       def up_wr_s_w():
@@ -479,9 +479,9 @@ def test_deep_connections():
 
       s.w  = Wire( int )
 
-      s.connect( s.A.y.p, s.x )
-      s.connect( s.A.z,   s.w )
-      s.connect( s.A,     s.z )
+      connect( s.A.y.p, s.x )
+      connect( s.A.z,   s.w )
+      connect( s.A,     s.z )
 
       @s.update
       def up_z():
@@ -513,7 +513,7 @@ def test_struct_with_list_of_bits():
       s.in_ = InPort( B )
       s.out = OutPort( Bits32 )
       # PyMTL mistakenly takes s.in_.foo[1] as a single bit!
-      s.connect( s.out, s.in_.foo[1] )
+      connect( s.out, s.in_.foo[1] )
 
   a = A()
   a.elaborate()
@@ -534,8 +534,8 @@ def test_nested_struct_2d_array_index():
       s.struct = InPort( B )
       s.out    = OutPort( C )
       s.out2   = OutPort( Bits16 )
-      s.connect( s.struct.bar[1][4], s.out )
-      s.connect( s.struct.bar[1][4].bar, s.out2 )
+      connect( s.struct.bar[1][4], s.out )
+      connect( s.struct.bar[1][4].bar, s.out2 )
 
   a = A()
   a.elaborate()

@@ -6,7 +6,7 @@
 """Test ad-hoc components with SystemVerilog translation and import."""
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog import ImportPass, TranslationPass
+from pymtl3.passes.sverilog import TranslationImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import (
@@ -80,10 +80,8 @@ from ..translation.structural.test.SVStructuralTranslatorL4_test import (
 def local_do_test( _m ):
   try:
     _m.elaborate()
-    _m.sverilog_translate = True
-    _m.sverilog_import = True
-    _m.apply( TranslationPass() )
-    m = ImportPass()( _m )
+    _m.sverilog_translate_import = True
+    m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:

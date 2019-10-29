@@ -8,7 +8,7 @@
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.translator.structural.StructuralTranslatorL4 import (
@@ -40,7 +40,7 @@ def test_multi_components( do_test ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
       s.b = B()
-      s.connect( s.b.out_b, s.out_a )
+      connect( s.b.out_b, s.out_a )
   a = A()
   a.elaborate()
   a._ref_comps = {
@@ -116,16 +116,16 @@ def test_multi_components_ifc_hierarchy_connect( do_test ):
     def construct( s ):
       s.out_b = OutPort( Bits32 )
       s.ifc_b = OutIfc()
-      s.connect( s.out_b, 0 )
-      s.connect( s.ifc_b.msg, 0 )
-      s.connect( s.ifc_b.val, 1 )
+      connect( s.out_b, 0 )
+      connect( s.ifc_b.msg, 0 )
+      connect( s.ifc_b.val, 1 )
   class A( Component ):
     def construct( s ):
       s.out_a = OutPort( Bits32 )
       s.b = B()
       s.ifc_a = OutIfc()
-      s.connect( s.b.out_b, s.out_a )
-      s.connect( s.b.ifc_b, s.ifc_a )
+      connect( s.b.out_b, s.out_a )
+      connect( s.b.ifc_b, s.ifc_a )
   a = A()
   a.elaborate()
   a._ref_comps = {
@@ -222,4 +222,4 @@ endcomponent
 """
   do_test( a )
 
-__all__ = list([s for s in dir() if s.startswith('test_')])
+__all__ = [s for s in dir() if s.startswith('test_')]

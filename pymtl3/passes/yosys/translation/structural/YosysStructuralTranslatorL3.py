@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from functools import reduce
-
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 import (
@@ -27,13 +25,13 @@ class YosysStructuralTranslatorL3(
   def ifc_port_gen( s, d, msb, ifc_id, _id, n_dim ):
     template = "{d: <7}logic {packed_type: <8} {id_}"
     if not n_dim:
-      id_ = ifc_id + "$" + _id
-      packed_type = "[{msb}:0]".format( **locals() )
+      id_ = f"{ifc_id}__{_id}"
+      packed_type = f"[{msb}:0]"
       return [ template.format( **locals() ) ]
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s.ifc_port_gen( d, msb, ifc_id+"$__"+str(i), _id, n_dim[1:] )
+        ret += s.ifc_port_gen( d, msb, f"{ifc_id}__{i}", _id, n_dim[1:] )
       return ret
 
   def ifc_conn_gen( s, d, cpid, _pid, cwid, _wid, idx, n_dim ):
@@ -43,14 +41,14 @@ class YosysStructuralTranslatorL3(
       template = "assign {pid} = {wid}{idx};"
 
     if not n_dim:
-      pid = cpid + "$" + _pid
-      wid = cwid + "$" + _wid
+      pid = f"{cpid}__{_pid}"
+      wid = f"{cwid}__{_wid}"
       return [ template.format( **locals() ) ]
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _cpid = cpid + "$__" + str(i)
-        _idx = "[{}]".format(i) + idx
+        _cpid = f"{cpid}__{i}"
+        _idx  = f"[{i}]{idx}"
         ret += s.ifc_conn_gen( d, _cpid, _pid, cwid, _wid, _idx, n_dim[1:] )
       return ret
 
@@ -59,7 +57,7 @@ class YosysStructuralTranslatorL3(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_interface_port_decls( s, _port_decls ):
-    port_decl_list = reduce(lambda x, y: x + y, _port_decls, [])
+    port_decl_list = sum( _port_decls, [] )
     port_decls, wire_decls, connections = [], [], []
     for dct in port_decl_list:
       port_decls.append( dct["port_decls"] )
@@ -84,12 +82,12 @@ class YosysStructuralTranslatorL3(
             array_type = None
             rtype = _rtype
           ret += s.rtlir_tr_interface_port_decl(
-            m, id_+"$"+name, rtype, s.rtlir_tr_unpacked_array_type( array_type ) )
+            m, id_+"__"+name, rtype, s.rtlir_tr_unpacked_array_type( array_type ) )
         return ret
       else:
         ret = []
         for i in range( n_dim[0] ):
-          ret += _gen_ifc( id_+"$__"+str(i), ifc, n_dim[1:] )
+          ret += _gen_ifc( id_+"__"+str(i), ifc, n_dim[1:] )
         return ret
     if isinstance( port_rtype, rt.Port ):
       _port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
@@ -142,9 +140,9 @@ class YosysStructuralTranslatorL3(
     for wire_decls in _wire_decls:
       for wire_decl in wire_decls:
         msb, _id, n_dim = wire_decl["msb"], wire_decl["id_"], wire_decl["n_dim"]
-        id_ = ifc_id + "$" + _id
+        id_ = ifc_id + "__" + _id
         array_dim_str = s._get_array_dim_str( ifc_ndim + n_dim )
-        packed_type = "[{msb}:0]".format( **locals() )
+        packed_type = f"[{msb}:0]"
         if n_dim or ifc_ndim or "present" in wire_decl:
           ret_wire.append( wire_template.format( **locals() ) )
 
@@ -173,10 +171,10 @@ class YosysStructuralTranslatorL3(
     # Interface array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f"{base_signal}[{index}]"
 
   def rtlir_tr_interface_attr( s, base_signal, attr ):
     # Interface attribute
-    s.deq[-1]['s_attr'] += "${}"
+    s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
-    return '{base_signal}.{attr}'.format( **locals() )
+    return f"{base_signal}.{attr}"
