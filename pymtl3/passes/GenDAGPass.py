@@ -161,7 +161,6 @@ def {}():
       else:
         bits_import_src = ""
       src = """{}\n{}\n""".format( bits_import_src, allsrc )
-      print(src)
       compile_upblks( hostobj, src )
 
     # Get the final list of update blocks

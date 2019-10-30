@@ -14,7 +14,7 @@ from graphviz import Digraph
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
-from pymtl3.passes.SimpleSchedulePass import check_schedule
+from pymtl3.passes.SimpleSchedulePass import check_schedule, make_double_buffer_func
 
 
 class CountBranches( ast.NodeVisitor ):
@@ -64,7 +64,7 @@ class HeuristicTopoPass( BasePass ):
 
     # Construct the graph
 
-    V   = top._dag.final_upblks
+    V   = top._dag.final_upblks - top.get_all_update_ff()
     E   = top._dag.all_constraints
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
@@ -87,7 +87,7 @@ class HeuristicTopoPass( BasePass ):
     # Note that here we use a priority queue to get the blocks with small
     # branchiness as early as possible
 
-    schedule = []
+    update_schedule = []
 
     # Python3 doesn't have hash for functions
     id_v = { id(v): v for v in V}
@@ -99,12 +99,17 @@ class HeuristicTopoPass( BasePass ):
 
     while not Q.empty():
       br, u = Q.get()
-      schedule.append( id_v[u] )
+      print(br, id_v[u])
+      update_schedule.append( id_v[u] )
       for v in Es[id_v[u]]:
         InD[v] -= 1
         if not InD[v]:
           Q.put( (branchiness[ v ], id(v)) )
 
-    check_schedule( top, schedule, V, E, InD )
+    check_schedule( top, update_schedule, V, E, InD )
+
+    schedule = [ make_double_buffer_func( top ) ]
+    schedule.extend( update_schedule )
+    schedule.extend( sorted( top._dsl.all_update_ff, key=lambda x: branchiness[x] ) )
 
     return schedule
