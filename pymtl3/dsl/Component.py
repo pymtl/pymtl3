@@ -468,10 +468,14 @@ class Component( ComponentLevel7 ):
           if isinstance( obj, Signal ):
             try:
               current_obj[i] = obj.default_value()
-              current_obj[i] <<= obj.default_value()
             except Exception as e:
-              print("For object", repr(obj))
-              raise e
+              raise type(e)(str(e) + f' happens at {obj!r}')
+
+            try:
+              current_obj[i] <<= obj.default_value()
+            except Exception:
+              pass
+
             swapped_signals[ host ].append( (current_obj, i, obj, True) )
 
           elif isinstance( obj, Component ):
@@ -485,11 +489,16 @@ class Component( ComponentLevel7 ):
             if isinstance( obj, Signal ):
               try:
                 value = obj.default_value()
-                value <<= obj.default_value()
-                setattr( current_obj, i, value )
               except Exception as e:
-                print("For object", repr(obj))
-                raise e
+                raise type(e)(str(e) + f' happens at {obj!r}')
+
+              try:
+                value <<= obj.default_value()
+              except Exception:
+                pass
+
+              setattr( current_obj, i, value )
+
               swapped_signals[ host ].append( (current_obj, i, obj, False) )
 
             elif isinstance( obj, Component ):

@@ -270,6 +270,7 @@ def _mk_hash_fn( fields ):
 #-------------------------------------------------------------------------
 # _mk_ff_fn
 #-------------------------------------------------------------------------
+# Creates __ilshift__ and _flip functions that looks like the follwoing:
 #
 # def __ilshift__( self, other ):
 #   self.x <<= other.x
@@ -468,6 +469,8 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   assert not '__ilshift__' in cls.__dict__ and not '_flip' in cls.__dict__
 
   cls.__ilshift__, cls._flip = _mk_ff_fn( fields )
+
+  assert not 'get_field_type' in cls.__dict__
 
   def get_field_type( cls, name ):
     if name in cls.__bitstruct_fields__:

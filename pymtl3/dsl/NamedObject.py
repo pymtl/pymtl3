@@ -145,6 +145,10 @@ class NamedObject:
     if name[0] != '_': # filter private variables
       sd = s._dsl
 
+      # Shunning: here I optimize for common cases where the object is a NamedObject.
+      # I used to push the object directly to a stack to reuse the code across
+      # both NamedObject and list cases. Now I basically avoid the stack overheads
+      # for common cases.
       if isinstance( obj, NamedObject ):
         ud = obj._dsl
 

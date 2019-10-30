@@ -46,7 +46,6 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def __init__( s, component ):
     s.component = component
-    # s.mapping   = component.get_astnode_obj_mapping()
 
   def enter( s, blk, ast ):
     """Entry point of RTLIR generation."""
@@ -147,7 +146,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of a non-blocking assignment
-    
+
     If the given AugAssign is not non-blocking assignment, throw PyMTLSyntaxError
     """
     if isinstance( node.op, ast.LShift ):

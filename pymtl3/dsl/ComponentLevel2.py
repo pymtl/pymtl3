@@ -125,7 +125,6 @@ class ComponentLevel2( ComponentLevel1 ):
           except IndexError:
             return
 
-          # s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
           expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
 
       def lookup_variable( obj, name_depth, node_depth ):
@@ -154,8 +153,6 @@ class ComponentLevel2( ComponentLevel1 ):
           print(e)
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-        # s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
-
         if not idx: lookup_variable   ( child, name_depth+1, node_depth+1 )
         else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx )
 
@@ -167,7 +164,6 @@ class ComponentLevel2( ComponentLevel1 ):
 
       for obj_name, nodelist in names:
         if obj_name[0][0] == "s":
-          # s._dsl.astnode_objs[ nodelist[0] ].append( s )
           objs = set()
           lookup_variable( s, 1, 1 )
           all_objs |= objs
@@ -188,7 +184,6 @@ class ComponentLevel2( ComponentLevel1 ):
         elif obj_name[0][0] in s._dsl.name_func:
           call = s._dsl.name_func[ obj_name[0][0] ]
           all_objs.add( call )
-          # s._dsl.astnode_objs[ nodelist[0] ].append( call )
 
       return all_objs
 
@@ -204,7 +199,6 @@ class ComponentLevel2( ComponentLevel1 ):
 
     # what object each astnode corresponds to. You can't have two update
     # blocks in one component that have the same ast.
-    # s._dsl.astnode_objs = defaultdict(list)
     s._dsl.func_reads  = {}
     s._dsl.func_writes = {}
     s._dsl.func_calls  = {}

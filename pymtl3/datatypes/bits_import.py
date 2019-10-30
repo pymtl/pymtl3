@@ -60,7 +60,6 @@ exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
 
 def mk_bits( nbits ):
   assert nbits < 512, "We don't allow bitwidth to exceed 512."
-  if nbits in _bits_types:  return _bits_types[ nbits ]
-  _locals = {}
-  exec(compile( bits_template.format(nbits), filename="Generated Bits", mode="exec" ))
+  if nbits not in _bits_types:
+    exec(compile( bits_template.format(nbits), filename=f"Bits{nbits}", mode="exec" ))
   return _bits_types[nbits]

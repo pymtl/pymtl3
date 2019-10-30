@@ -10,6 +10,7 @@ Date   : Dec 26, 2018
 """
 
 from collections import defaultdict
+
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata

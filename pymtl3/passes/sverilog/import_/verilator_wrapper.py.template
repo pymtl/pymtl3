@@ -141,9 +141,6 @@ class {component_name}( Component ):
       # Write all outputs
 {set_comb_output}
 
-    def set_output():
-{set_comb_output}
-
     if {has_clk}:
       @s.update_ff
       def seq_upblk():
@@ -152,7 +149,6 @@ class {component_name}( Component ):
         _ffi_inst.eval( _ffi_m )
         _ffi_m.{clk}[0] = 1
         _ffi_inst.eval( _ffi_m )
-        set_output()
 
   def assert_en( s, en ):
     # TODO: for verilator, any assertion failure will cause the C simulator
