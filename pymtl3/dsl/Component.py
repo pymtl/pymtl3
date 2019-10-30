@@ -468,10 +468,14 @@ class Component( ComponentLevel7 ):
           if isinstance( obj, Signal ):
             try:
               current_obj[i] = obj.default_value()
-            except Exception as err:
-              err.message = repr(obj) + " -- " + err.message
-              err.args = (err.message,)
-              raise err
+            except Exception as e:
+              raise type(e)(str(e) + f' happens at {obj!r}')
+
+            try:
+              current_obj[i] <<= obj.default_value()
+            except Exception:
+              pass
+
             swapped_signals[ host ].append( (current_obj, i, obj, True) )
 
           elif isinstance( obj, Component ):
@@ -484,11 +488,17 @@ class Component( ComponentLevel7 ):
           if i[0] != '_': # impossible to have tuple
             if isinstance( obj, Signal ):
               try:
-                setattr( current_obj, i, obj.default_value() )
-              except Exception as err:
-                err.message = repr(obj) + " -- " + err.message
-                err.args = (err.message,)
-                raise err
+                value = obj.default_value()
+              except Exception as e:
+                raise type(e)(str(e) + f' happens at {obj!r}')
+
+              try:
+                value <<= obj.default_value()
+              except Exception:
+                pass
+
+              setattr( current_obj, i, value )
+
               swapped_signals[ host ].append( (current_obj, i, obj, False) )
 
             elif isinstance( obj, Component ):
@@ -510,10 +520,10 @@ class Component( ComponentLevel7 ):
     for component, records in s._dsl.swapped_signals.items():
       for current_obj, i, obj, is_list in records:
         if is_list:
-          swapped_values[ component ] = ( current_obj, i, current_obj[i], is_list )
+          swapped_values[ component ].append( (current_obj, i, current_obj[i], is_list) )
           current_obj[i] = obj
         else:
-          swapped_values[ component ] = ( current_obj, i, getattr(current_obj, i), is_list )
+          swapped_values[ component ].append( (current_obj, i, getattr(current_obj, i), is_list) )
           setattr( current_obj, i, obj )
 
     s._dsl.swapped_values = swapped_values
@@ -543,9 +553,9 @@ class Component( ComponentLevel7 ):
     assert s._dsl.constructed
     return s._dsl.upblks
 
-  def get_update_on_edge( s ):
+  def get_update_ff( s ):
     assert s._dsl.constructed
-    return s._dsl.update_on_edge
+    return s._dsl.update_ff
 
   def get_upblk_metadata( s ):
     assert s._dsl.constructed
@@ -584,10 +594,10 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_all_update_on_edge( s ):
+  def get_all_update_ff( s ):
     try:
-      s._check_called_at_elaborate_top( "get_all_update_on_edge" )
-      return s._dsl.all_update_on_edge
+      s._check_called_at_elaborate_top( "get_all_update_ff" )
+      return s._dsl.all_update_ff
     except AttributeError:
       raise NotElaboratedError()
 
@@ -619,12 +629,6 @@ class Component( ComponentLevel7 ):
     try:
       s._check_called_at_elaborate_top( "get_update_block_host_component" )
       return s._dsl.all_upblk_hostobj[ blk ]
-    except AttributeError:
-      raise NotElaboratedError()
-
-  def get_astnode_obj_mapping( s ):
-    try:
-      return s._dsl.astnode_objs
     except AttributeError:
       raise NotElaboratedError()
 

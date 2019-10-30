@@ -58,7 +58,7 @@ def test_reduce( do_test ):
     Assign( out, BinOp(
       BinOp( Reduce( BitAnd(), in_1 ), BitAnd(), Reduce( BitOr(), in_2 ) ),
       BitOr(), Reduce( BitXor(), in_3 ),
-    ) )
+    ), True )
   ] ) }
 
   a._test_vector = [
@@ -88,10 +88,10 @@ def test_index_basic( do_test ):
   a._rtlir_test_ref = { 'index_basic' : CombUpblk( 'index_basic', [
     Assign( Index( Attribute( Base( a ), 'out' ), Number( 0 ) ),
       BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 0 ) ), Add(),
-             Index( Attribute( Base( a ), 'in_' ), Number( 1 ) ) ) ),
+             Index( Attribute( Base( a ), 'in_' ), Number( 1 ) ) ), True ),
     Assign( Index( Attribute( Base( a ), 'out' ), Number( 1 ) ),
       BinOp( Index( Attribute( Base( a ), 'in_' ), Number( 2 ) ), Add(),
-             Index( Attribute( Base( a ), 'in_' ), Number( 3 ) ) ) )
+             Index( Attribute( Base( a ), 'in_' ), Number( 3 ) ) ), True )
   ] ) }
 
   a._test_vector = [
@@ -119,7 +119,7 @@ def test_mismatch_width_assign( do_test ):
 
   a._rtlir_test_ref = { 'mismatch_width_assign' : CombUpblk(
     'mismatch_width_assign', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute( Base( a ), 'in_' )
+      Attribute( Base( a ), 'out' ), Attribute( Base( a ), 'in_' ), True
     )
   ] ) }
 
@@ -152,9 +152,9 @@ def test_slicing_basic( do_test ):
 
   a._rtlir_test_ref = { 'slicing_basic' : CombUpblk( 'slicing_basic', [
     Assign( Slice( Attribute( Base( a ), 'out' ), Number( 0 ), Number( 16 ) ),
-      Slice( Attribute( Base( a ), 'in_' ), Number( 16 ), Number( 32 ) ) ),
+      Slice( Attribute( Base( a ), 'in_' ), Number( 16 ), Number( 32 ) ), True ),
     Assign( Slice( Attribute( Base( a ), 'out' ), Number( 16 ), Number( 32 ) ),
-      Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 16 ) ) )
+      Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 16 ) ), True )
   ] ) }
 
   a._test_vector = [
@@ -184,7 +184,7 @@ def test_bits_basic( do_test ):
 
   a._rtlir_test_ref = { 'bits_basic' : CombUpblk( 'bits_basic', [
     Assign( Attribute( Base( a ), 'out' ),
-      BinOp( Attribute( Base( a ), 'in_' ), Add(), SizeCast( 16, Number( 10 ) ) ) )
+      BinOp( Attribute( Base( a ), 'in_' ), Add(), SizeCast( 16, Number( 10 ) ) ), True )
   ] ) }
 
   a._test_vector = [
@@ -225,7 +225,8 @@ def test_index_bits_slicing( do_test ):
         ),
         Add(),
         SizeCast( 8, Number( 10 ) )
-      )
+      ),
+      True
     ),
     Assign(
       Index( Attribute( Base( a ), 'out' ), Number( 1 ) ),
@@ -237,7 +238,8 @@ def test_index_bits_slicing( do_test ):
         ),
         Add(),
         SizeCast( 16, Number( 1 ) )
-      )
+      ),
+      True
     ),
   ] ) }
 
@@ -284,7 +286,8 @@ def test_multi_components( do_test ):
         Attribute( Base( a ), 'in_' ),
         Add(),
         Attribute( Attribute( Base( a ), 'b' ), 'out' )
-      )
+      ),
+      True
     )
   ] ) }
 
@@ -318,8 +321,8 @@ def test_if_basic( do_test ):
   a._rtlir_test_ref = {
     'if_basic' : CombUpblk( 'if_basic', [ If(
       Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), SizeCast( 8, Number( 255 ) ) ),
-      [ Assign( Attribute( Base( a ), 'out' ), Slice( Attribute( Base( a ), 'in_' ), Number( 8 ), Number( 16 ) ) ) ],
-      [ Assign( Attribute( Base( a ), 'out' ), SizeCast( 8, Number( 0 ) ) ) ]
+      [ Assign( Attribute( Base( a ), 'out' ), Slice( Attribute( Base( a ), 'in_' ), Number( 8 ), Number( 16 ) ), True ) ],
+      [ Assign( Attribute( Base( a ), 'out' ), SizeCast( 8, Number( 0 ) ), True ) ]
     )
   ] ) }
 
@@ -361,9 +364,10 @@ def test_for_basic( do_test ):
               BinOp( twice_i, Add(), Number( 1 ) ),
               BinOp( BinOp( twice_i, Add(), Number( 1 ) ), Add(), Number( 1 ) )
             )
-          )
-      )
-    ]
+          ),
+          True
+        )
+      ]
     ) ] )
   }
 
@@ -388,10 +392,10 @@ def test_multi_upblks( do_test ):
   a = multi_upblks()
 
   a._rtlir_test_ref = { 'multi_upblks_1' : CombUpblk( 'multi_upblks_1', [
-      Assign( Slice( Attribute( Base( a ), 'out' ), Number(0), Number(4) ), Attribute( Base( a ), 'in_' ) ),
+      Assign( Slice( Attribute( Base( a ), 'out' ), Number(0), Number(4) ), Attribute( Base( a ), 'in_' ), True ),
     ] ),
     'multi_upblks_2' : CombUpblk( 'multi_upblks_2', [
-      Assign( Slice( Attribute( Base( a ), 'out' ), Number(4), Number(8) ), Attribute( Base( a ), 'in_' ) ),
+      Assign( Slice( Attribute( Base( a ), 'out' ), Number(4), Number(8) ), Attribute( Base( a ), 'in_' ), True ),
     ] )
   }
 
@@ -404,4 +408,21 @@ def test_multi_upblks( do_test ):
     [      Bits4(7),      Bits8(0x77) ],
   ]
 
+  do_test( a )
+
+def test_ff_upblk( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in0 = InPort( Bits32 )
+      s.in1 = InPort( Bits32 )
+      s.out0 = OutPort( Bits32 )
+      @s.update_ff
+      def update_ff_upblk():
+        s.out0 <<= s.in0 + s.in1
+  a = A()
+  a._rtlir_test_ref = {
+      'update_ff_upblk' : SeqUpblk( 'update_ff_upblk', [
+        Assign( Attribute( Base( a ), 'out0' ), BinOp( Attribute( Base( a ), 'in0' ), Add(), Attribute( Base( a ), 'in1' ) ), False ),
+        ] )
+  }
   do_test( a )

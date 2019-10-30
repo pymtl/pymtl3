@@ -320,3 +320,17 @@ def test_ctrl_dpath_connected_replaced_both():
   a.in_ = Bits32(10)
   a.tick()
   assert a.out == 10 + 444 * 2
+
+# def test_garbage_collection():
+
+  # class X( Component ):
+    # def construct( s, nbits=0 ):
+      # s.leak = bytearray(1<<30)
+      # s.in_ = InPort ( mk_bits(nbits) )
+      # s.out = OutPort( mk_bits(nbits) )
+      # @s.update
+      # def up_x():
+        # s.out = s.in_ + 1
+  # for i in range(100):
+    # x = X()
+    # x = X()

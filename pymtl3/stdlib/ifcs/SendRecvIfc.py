@@ -197,9 +197,9 @@ class RecvCL2SendRTL( Component ):
 
     s.entry = None
 
-    @s.update_on_edge
+    @s.update
     def up_clear():
-      if s.send.en: # update_on_edge reverse this
+      if s.send.en: # constraints reverse this
         s.entry = None
 
     @s.update
@@ -212,6 +212,7 @@ class RecvCL2SendRTL( Component ):
         s.send.msg = s.entry
 
     s.add_constraints(
+      U( up_clear )   < WR( s.send.en ),
       U( up_clear )   < M( s.recv ),
       U( up_clear )   < M( s.recv.rdy ),
       M( s.recv )     < U( up_send_rtl ),

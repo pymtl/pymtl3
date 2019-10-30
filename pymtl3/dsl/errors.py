@@ -24,14 +24,38 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
+class InvalidFFAssignError( Exception ):
+  """ In update_ff, raise when signal is not <<= -ed, or temp is not = -ed """
+  def __init__( self, hostobj, blk, lineno, suggestion ):
+
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ In update_ff, we only allow <<= to valid fields for constructing nonblocking assignments.
+(when constructing instance {} of class \"{}\" in the hierarchy)
+
+Suggestion: Line {} {}""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(hostobj), hostobj.__class__.__name__,
+      error_lineno, suggestion )
+    )
+
 class VarNotDeclaredError( Exception ):
   """ Raise when a variable in an update block is not declared """
   def __init__( self, obj, field, blk=None, blk_hostobj=None, lineno=0 ):
-    self.obj    = obj
-    self.field  = field
-    self.blk    = blk
 
-    if not self.blk:
+    if not blk:
       return super().__init__() # this is just temporary message
 
     filepath = inspect.getfile( blk_hostobj.__class__ )
@@ -45,18 +69,19 @@ class VarNotDeclaredError( Exception ):
     return super().__init__( \
 """
 In file {}:{} in {}
-When constructing instance {} of class \"{}\" in the hierarchy:
 
 {} {}
 ^^^ Field \"{}\" of object \"{}\" (class \"{}\") is accessed in block \"{}\",
     but {} does not have field \"{}\".
+(when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
       filepath, error_lineno, blk.__name__,
-      repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
       field, repr(obj), obj.__class__.__name__, blk.__name__,
-      repr(obj), field, error_lineno ) )
+      repr(obj), field,
+      repr(blk_hostobj), blk_hostobj.__class__.__name__,
+      error_lineno ) )
 
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """

@@ -119,14 +119,20 @@ class SomeMasterCL( Component ):
     s.nregs = nregs
     s.flag = True
 
+    DataType = ReqType.get_field_type( 'data' )
+    assert DataType is RespType.get_field_type( 'data' )
+    AddrType = ReqType.get_field_type( 'addr' )
+
     @s.update
     def up_master_req():
       if s.xcel.req.rdy():
         if s.flag:
-          s.xcel.req( ReqType( XcelMsgType.WRITE, s.addr, 0xface0000 | s.addr ) )
+          s.xcel.req( ReqType( XcelMsgType.WRITE, AddrType(s.addr),
+                               DataType(0xface0000 | s.addr) ) )
           s.flag = not s.flag
         else:
-          s.xcel.req( ReqType( XcelMsgType.READ, s.addr, 0 ) )
+          s.xcel.req( ReqType( XcelMsgType.READ, AddrType(s.addr),
+                               DataType(0) ) )
           s.addr += 1
           s.flag = not s.flag
 
@@ -194,11 +200,11 @@ class SomeMasterRTL( Component ):
 
     # Local parameters
 
-    assert ReqType.data_nbits == RespType.data_nbits
-    s.data_nbits = ReqType.data_nbits
-    DataType     = mk_bits( s.data_nbits )
-    AddrType     = mk_bits( clog2(nregs) )
-    s.nregs      = nregs
+    DataType = ReqType.get_field_type( 'data' )
+    assert DataType is RespType.get_field_type( 'data' )
+    AddrType = ReqType.get_field_type( 'addr' )
+
+    s.nregs = nregs
 
     # Components
 
@@ -206,40 +212,31 @@ class SomeMasterRTL( Component ):
     s.count = Wire( Bits16   )
     s.flag  = Wire( Bits1    )
 
-    @s.update_on_edge
+    @s.update_ff
     def up_rtl_addr():
       if s.reset:
-        s.addr = AddrType(0)
+        s.addr <<= AddrType(0)
       elif s.xcel.req.en and not s.flag:
-        s.addr += AddrType(1)
-      else:
-        s.addr = s.addr
+        s.addr <<= s.addr + AddrType(1)
 
-    @s.update_on_edge
+    @s.update_ff
     def up_rtl_flag():
       if s.reset:
-        s.flag = Bits1(1)
+        s.flag <<= Bits1(1)
       elif s.xcel.req.en:
-        s.flag = ~s.flag
-      else:
-        s.flag = s.flag
+        s.flag <<= ~s.flag
 
-    @s.update_on_edge
+    @s.update_ff
     def up_rtl_count():
       if s.reset:
-        s.count = Bits16(0)
+        s.count <<= Bits16(0)
       elif s.xcel.resp.en and s.xcel.resp.msg.type_ == XcelMsgType.READ:
-        s.count += Bits16(1)
-      else:
-        s.count = s.count
+        s.count <<= s.count + Bits16(1)
 
     @s.update
     def up_req():
       s.xcel.req.en = s.xcel.req.rdy if ~s.reset else Bits1(0)
-      s.xcel.req.msg.type_ = (
-        XcelMsgType.WRITE if s.flag else
-        XcelMsgType.READ
-      )
+      s.xcel.req.msg.type_ = XcelMsgType.WRITE if s.flag else XcelMsgType.READ
       s.xcel.req.msg.addr = s.addr
       s.xcel.req.msg.data = DataType( 0xface0000 | int(s.addr) )
 
@@ -263,8 +260,9 @@ class SomeMinionRTL( Component ):
 
     # Local parameters
 
-    s.data_nbits = max( ReqType.data_nbits, RespType.data_nbits )
-    DataType     = mk_bits( s.data_nbits )
+    DataType = ReqType.get_field_type( 'data' )
+    assert DataType is RespType.get_field_type( 'data' )
+
     s.nregs      = nregs
 
     # Components

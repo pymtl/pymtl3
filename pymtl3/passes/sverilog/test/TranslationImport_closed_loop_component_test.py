@@ -5,8 +5,6 @@
 # Date   : June 6, 2019
 """Closed-loop test cases for translation-import with component."""
 
-from itertools import product
-
 import hypothesis.strategies as st
 import pytest
 from hypothesis import HealthCheck, given, reproduce_failure, settings
@@ -46,7 +44,9 @@ def test_adder( do_test, Type, data ):
 
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
-@pytest.mark.parametrize("Type, n_ports", product([Bits16, Bits32], [2, 4]))
+@pytest.mark.parametrize(
+  "Type, n_ports", [ (Bits16, 2), (Bits16, 4), (Bits32, 2), (Bits32, 4) ]
+)
 def test_mux( do_test, Type, n_ports, data ):
   class A( Component ):
     def construct( s, Type, n_ports ):
