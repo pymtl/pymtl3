@@ -25,6 +25,7 @@ class Grid( object ):
     s.dim_y = 0
     s.dim_w = 0
     s.dim_h = 0
+    s.isLeaf = False
 
   def divide( s, rows, cols ):
     s.sub_grids = [ [ Grid(i,j,s) for j in range(cols) ]
@@ -39,6 +40,14 @@ class Grid( object ):
         s.sub_grids[r][c].y_ratio = s.y_ratio + r*h_ratio
     return s.sub_grids
 
+  def updateChildDim( s, child_dim_w, child_dim_h ):
+    rows = len( s.sub_grids )
+    cols = len( s.sub_grids[0] )
+    if s.dim_w < child_dim_w * cols:
+      s.dim_w = child_dim_w * cols
+    if s.dim_h < child_dim_h * rows:
+      s.dim_h = child_dim_h * rows
+
   def setComponent( s, component ):
     s.component = component
     max_w = 0
@@ -50,30 +59,24 @@ class Grid( object ):
     print( "now in ", component.component_name )
     if hasattr( component, "sub_grids" ):
       print( "there is sub_grids..." )
-      for r in range( len( component.sub_grids ) ):
-        for c in range( len( component.sub_grids[r] ) ):
-          temp_w = component.sub_grids[r][c].dim_w
-          temp_h = component.sub_grids[r][c].dim_h
-          if temp_w > max_w:
-            max_w = temp_w
-          if temp_h > max_h:
-            max_h = temp_h
-      sub_grids_rows = len( component.sub_grids    )
-      sub_grids_cols = len( component.sub_grids[0] )
-      component.dim_w = sub_grids_cols * max_w
-      component.dim_h = sub_grids_rows * max_h
-      s.dim_w = component.dim_w
-      s.dim_h = component.dim_h
-      print( "see w: ", component.dim_w, "; cols: ", sub_grids_cols, "; max_w: ", max_w )
-      print( "see h: ", component.dim_h, "; rows: ", sub_grids_rows, "; max_h: ", max_h )
+#      for r in range( len( component.sub_grids ) ):
+#        for c in range( len( component.sub_grids[r] ) ):
+#          temp_w = component.sub_grids[r][c].dim_w
+#          temp_h = component.sub_grids[r][c].dim_h
+#          if temp_w > max_w:
+#            max_w = temp_w
+#          if temp_h > max_h:
+#            max_h = temp_h
+#      sub_grids_rows = len( component.sub_grids    )
+#      sub_grids_cols = len( component.sub_grids[0] )
+#      component.dim_w = sub_grids_cols * max_w
+#      component.dim_h = sub_grids_rows * max_h
+#      s.dim_w = component.dim_w
+#      s.dim_h = component.dim_h
+#      print( "see w: ", component.dim_w, "; cols: ", sub_grids_cols, "; max_w: ", max_w )
+#      print( "see h: ", component.dim_h, "; rows: ", sub_grids_rows, "; max_h: ", max_h )
     else:
       s.dim_w = component.dim_w
       s.dim_h = component.dim_h
       print( "no sub_grids..." )
-
-  def calculateAbsoluteDimInfo( s ):
-    # ...
-    pass
-
-
 

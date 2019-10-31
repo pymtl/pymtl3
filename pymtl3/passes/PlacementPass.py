@@ -10,6 +10,15 @@ from pymtl3.passes.BasePass import BasePass
 from collections            import deque
 from pymtl3.passes.Grid     import Grid
 
+def calculateDFS( grid ):
+  for r in range( len( grid.sub_grids ) ):
+    for c in range( len( grid.sub_grids[r] ) ):
+      if not grid.sub_grids[r][c].isLeaf:
+        calculateDFS( grid.sub_grids[r][c] )
+      grid.sub_grids[r][c].parent.updateChildDim(
+          grid.sub_grids[r][c].dim_w,
+          grid.sub_grids[r][c].dim_h )
+
 class PlacementPass( BasePass ):
 
   def __call__( self, top ):
@@ -25,4 +34,12 @@ class PlacementPass( BasePass ):
 #        c.place()
     top_grid  = Grid( row_id=0, col_id=0 )
     top.place( top_grid )
+
+    calculateDFS( top_grid )
+
+    print( "============= top =============" )
+    print( "[top] house x: ", top_grid.dim_x )
+    print( "[top] house y: ", top_grid.dim_y )
+    print( "[top] house w: ", top_grid.dim_w )
+    print( "[top] house h: ", top_grid.dim_h )
 

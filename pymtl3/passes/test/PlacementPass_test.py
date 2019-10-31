@@ -23,6 +23,7 @@ class Wall( Component ):
     s.dim_w = 40
     s.dim_h = 20
     grid.setComponent( s )
+    grid.isLeaf = True
 
 class SmallRoom( Component ):
   def construct( s, room_id ):
@@ -36,6 +37,7 @@ class SmallRoom( Component ):
     s.dim_w = 10
     s.dim_h = 10
     grid.setComponent( s )
+    grid.isLeaf = True
 
 class BigRoom( Component ):
   def construct( s, room_id ):
@@ -49,6 +51,7 @@ class BigRoom( Component ):
     s.dim_w = 20
     s.dim_h = 20
     grid.setComponent( s )
+    grid.isLeaf = True
 
 class House( Component ):
   def construct( s, big_room_count, wall_count, small_room_count):
@@ -125,12 +128,6 @@ class House( Component ):
       print( "--------------------------" )
 
     grid.setComponent( s )
-
-    print( "============= top =============" )
-    print( "[top] house x: ", grid.dim_x )
-    print( "[top] house y: ", grid.dim_y )
-    print( "[top] house w: ", grid.dim_w )
-    print( "[top] house h: ", grid.dim_h )
 
 def test_place():
   model = House( 4, 1, 4 )
