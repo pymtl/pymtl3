@@ -11,7 +11,6 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
-from pymtl3.passes.rtlir.util.utility import get_ordered_all_upblks
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRTypeCheckL1Pass import BehavioralRTLIRTypeCheckVisitorL1
@@ -33,7 +32,7 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
-    for blk in get_ordered_all_upblks(m):
+    for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):

@@ -47,8 +47,3 @@ def get_ordered_update_ff( m ):
   """Return a list of update-ff update blocks that have deterministic order"""
 
   return [ x for x in m.get_update_block_order() if x in m.get_update_ff() ]
-
-def get_ordered_all_upblks( m ):
-  """Return a list of update blocks that have deterministic order"""
-
-  return  get_ordered_upblks( m ) + get_ordered_update_ff( m )
