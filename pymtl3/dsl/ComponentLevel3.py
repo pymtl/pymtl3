@@ -230,19 +230,21 @@ class ComponentLevel3( ComponentLevel2 ):
     return blk
 
   def _connect_signal_const( s, o1, o2 ):
+    Type = o1._dsl.Type
     if isinstance( o2, int ):
-      if not issubclass( o1._dsl.Type, (int, Bits) ):
-        raise InvalidConnectionError( "We don't support connecting an integer constant "
-                                       "to non-int/Bits type {}".format( o1._dsl.Type ) )
-      o2 = Const( o1._dsl.Type, o2, s )
+      if not issubclass( Type, (int, Bits) ):
+        raise InvalidConnectionError( f"We don't support connecting an integer constant "
+                                      f"to non-int/Bits type {Type}" )
+      o2 = Const( Type, Type(o2), s )
     elif isinstance( o2, Bits ):
-      if not issubclass( o1._dsl.Type, Bits ):
-        raise InvalidConnectionError( "We don't support connecting a Bits{} constant "
-                                      "to non-Bits type {}".format( o2.nbits, o1._dsl.Type ) )
-      if o1._dsl.Type.nbits != o2.nbits:
-        raise InvalidConnectionError( "Bitwidth mismatch when connecting a Bits{} constant "
-                                      "to signal {} with type Bits{}.".format( o2.nbits, o1, o1._dsl.Type.nbits ) )
-      o2 = Const( o1._dsl.Type, o2, s )
+      Type2 = type(o2)
+      if not issubclass( Type, Bits ):
+        raise InvalidConnectionError( f"We don't support connecting a {Type2} constant "
+                                      f"to non-Bits type {Type}" )
+      if Type is not Type2:
+        raise InvalidConnectionError( f"Bitwidth mismatch when connecting a {Type2} constant "
+                                      f"to signal {o1} with type {Type}." )
+      o2 = Const( Type, o2, s )
 
     # TODO implement connecting a const struct
 

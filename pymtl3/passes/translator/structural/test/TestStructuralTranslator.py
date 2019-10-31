@@ -219,7 +219,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
       return var_id
 
     def rtlir_tr_literal_number( s, nbits, value ):
-      return f'Bits{nbits}({value})'
+      return f'Bits{nbits}({int(value)})'
 
     def rtlir_tr_component_unique_name( s, c_rtype ):
       comp_name = c_rtype.get_name()

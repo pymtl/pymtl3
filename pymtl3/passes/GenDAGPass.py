@@ -113,10 +113,10 @@ class GenDAGPass( BasePass ):
         wstr = f"s.{repr(writer)[lca_len+1:]}"
 
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
-      upblk_name = f"{writer!r}__{fanout}"\
-                    .replace( ".", "_" ).replace( ":", "_" ) \
-                    .replace( "[", "_" ).replace( "]", "_" ) \
-                    .replace( "(", "_" ).replace( ")", "_" )
+      upblk_name = f"{writer!r}__{fanout}".replace( " ", "" ) \
+                      .replace( ".", "_" ).replace( ":", "_" ) \
+                      .replace( "[", "_" ).replace( "]", "_" ) \
+                      .replace( "(", "_" ).replace( ")", "_" )
 
       # NAME DISAMBIGUATION
       # There are cases where the same const drives multiple nets. We
