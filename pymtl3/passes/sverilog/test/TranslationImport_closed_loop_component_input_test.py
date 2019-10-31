@@ -5,7 +5,6 @@
 # Date   : June 6, 2019
 """Closed-loop test cases for translation-import with component and input."""
 
-from itertools import product
 from random import randint, seed
 
 import pytest
@@ -42,7 +41,10 @@ def test_adder( do_test, Type ):
   a._tv_in = tv_in
   do_test( a )
 
-@pytest.mark.parametrize("Type, n_ports", product([Bits16, Bits32], [2, 3, 4]))
+@pytest.mark.parametrize("Type, n_ports",
+  [ (Bits16, 2), (Bits16, 3), (Bits16, 4),
+    (Bits32, 2), (Bits32, 3), (Bits32, 4) ]
+)
 def test_mux( do_test, Type, n_ports ):
   def tv_in( model, test_vector ):
     for i in range(n_ports):

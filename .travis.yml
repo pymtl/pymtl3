@@ -10,14 +10,12 @@ dist: xenial
 language: python
 # Use pypy3.6-7.0.0+ to have 1.12.0 version of CFFI which has `dlclose`
 python:
+ - "pypy3.6-7.1.1"
  - "3.6"
  - "3.7"
- - "pypy3.6-7.1.1"
 
 env:
  - CONFIG=""
- #- CONFIG="--test-verilog"
- # - CONFIG="--dump-vcd"
 
 #------------------------------------------------------------------------
 # install dependencies
@@ -38,13 +36,14 @@ install:
 
  # Install Python requirements
  - pip install --upgrade pip setuptools twine
- - pip install --requirement requirements.txt --constraint constraints.txt
+ - pip install --requirement requirements/CI.txt
  - pip install .
  - pip list
 
 #------------------------------------------------------------------------
 # test runner
 #------------------------------------------------------------------------
+# We only report code coverage for non-PyPy runs
 
 script:
  - autoflake --recursive --in-place --remove-duplicate-keys .
@@ -54,11 +53,12 @@ script:
  - git diff --exit-code
  - mkdir -p build
  - cd build
- - py.test --cov-report xml --cov=pymtl3 ../pymtl3 $CONFIG
+ - export NOT_USING_PYPY=$(python -V | grep -q "PyPy"; echo $?)
+ - py.test `if [ $NOT_USING_PYPY -eq 1 ]; then echo "--cov-report xml --cov=pymtl3"; else echo ""; fi` .. $CONFIG --hypothesis-profile CI
 
 #-------------------------------------------------------------------------
 # after success
 #-------------------------------------------------------------------------
 
 after_success:
-  - codecov
+  - if [ $NOT_USING_PYPY -eq 1 ]; then codecov; fi

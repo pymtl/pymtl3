@@ -5,7 +5,7 @@ ComponentLevel2.py
 At level two we introduce implicit variable constraints.
 By default we assume combinational semantics:
 - upA reads Wire x while upB writes Wire x ==> upB = WR(x) < RD(x) = upA
-When upA is marked as update_on_edge ==> for all upblks upX that
+When upA is marked as update_ff ==> for all upblks upX that
 write/read variables in upA, upA < upX:
 - upA = RD(x) < WR(x) = upB and upA = WR(x) < RD(x) = upB
 
@@ -18,12 +18,15 @@ import inspect
 import re
 from collections import defaultdict
 
+from pymtl3.datatypes import Bits, is_bitstruct_class
+
 from . import AstHelper
 from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
+    InvalidFFAssignError,
     InvalidFuncCallError,
     InvalidPlaceholderError,
     MultiWriterError,
@@ -46,7 +49,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
 
-    inst._dsl.update_on_edge = set()
+    inst._dsl.update_ff = set()
 
     # constraint[var] = (sign, func)
     inst._dsl.RD_U_constraints = defaultdict(set)
@@ -55,7 +58,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
     return inst
 
-  def _cache_func_meta( s, func, given=None ):
+  def _cache_func_meta( s, func, is_update_ff, given=None ):
     """ Convention: the source of a function/update block across different
     instances should be the same. You can construct different functions
     based on the condition, but please use different names. This not only
@@ -89,10 +92,10 @@ class ComponentLevel2( ComponentLevel1 ):
 
         name_info[ name ] = ( True, _src, _line, _file, _ast )
 
-      name_rd[ name ]  = _rd = []
-      name_wr[ name ]  = _wr = []
-      name_fc[ name ]  = _fc = []
-      AstHelper.extract_reads_writes_calls( func, _ast, _rd, _wr, _fc )
+      name_rd[ name ]  = _rd   = []
+      name_wr[ name ]  = _wr   = []
+      name_fc[ name ]  = _fc   = []
+      AstHelper.extract_reads_writes_calls( s, func, _ast, is_update_ff, _rd, _wr, _fc )
 
   def _elaborate_read_write_func( s ):
 
@@ -100,7 +103,7 @@ class ComponentLevel2( ComponentLevel1 ):
     # I refactor the process of materializing objects in this function
     # Pass in the func as well for error message
 
-    def extract_obj_from_names( func, names ):
+    def extract_obj_from_names( func, names, update_ff=False ):
 
       def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
@@ -110,7 +113,7 @@ class ComponentLevel2( ComponentLevel1 ):
 
         elif idx[ idx_depth ] == "*": # special case, materialize all objects
           if isinstance( obj, NamedObject ): # Signal[*] is the signal itself
-            all_objs.add( obj )
+            objs.add( obj )
           else:
             for i, child in enumerate( obj ):
               expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
@@ -122,7 +125,6 @@ class ComponentLevel2( ComponentLevel1 ):
           except IndexError:
             return
 
-          # s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
           expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
 
       def lookup_variable( obj, name_depth, node_depth ):
@@ -132,13 +134,13 @@ class ComponentLevel2( ComponentLevel1 ):
 
         if name_depth >= len(obj_name): # exhausted
           if   isinstance( obj, NamedObject ):
-            all_objs.add( obj )
-          elif isinstance( obj, list ): # Exhaust all the elements in the high-d array
-            Q = [ obj ]
+            objs.add( obj )
+          elif isinstance( obj, list ) and obj: # Exhaust all the elements in the high-d array
+            Q = [ *obj ] # PEP 448 -- see https://stackoverflow.com/a/43220129/6470797
             while Q:
               m = Q.pop()
               if isinstance( Q, NamedObject ):
-                all_objs.add( m )
+                objs.add( m )
               elif isinstance( m, list ):
                 Q.extend( m )
           return
@@ -151,8 +153,6 @@ class ComponentLevel2( ComponentLevel1 ):
           print(e)
           raise VarNotDeclaredError( obj, field, func, s, nodelist[node_depth].lineno )
 
-        # s._dsl.astnode_objs[ nodelist[node_depth] ].append( child )
-
         if not idx: lookup_variable   ( child, name_depth+1, node_depth+1 )
         else:       expand_array_index( child, name_depth,   node_depth+1, 0, idx )
 
@@ -164,14 +164,26 @@ class ComponentLevel2( ComponentLevel1 ):
 
       for obj_name, nodelist in names:
         if obj_name[0][0] == "s":
-          # s._dsl.astnode_objs[ nodelist[0] ].append( s )
+          objs = set()
           lookup_variable( s, 1, 1 )
+          all_objs |= objs
+
+          # Check <<= in update_ff
+          if update_ff:
+            for x in objs:
+              x._dsl.needs_double_buffer = True
+              if not x.is_top_level_signal():
+                raise InvalidFFAssignError( s, func, nodelist[0].lineno,
+                  "has an invalid left value. It needs to be a top level signal, not a slice or a subfield.")
+              if not issubclass( x._dsl.Type, Bits ) and not is_bitstruct_class( x._dsl.Type ):
+                raise InvalidFFAssignError( s, func, nodelist[0].lineno,
+                  "has a wrong type on the left value. "
+                  "We only allow <<= on Bits/BitStruct type signals, not {x._dsl.Type}")
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:
           call = s._dsl.name_func[ obj_name[0][0] ]
           all_objs.add( call )
-          s._dsl.astnode_objs[ nodelist[0] ].append( call )
 
       return all_objs
 
@@ -187,7 +199,6 @@ class ComponentLevel2( ComponentLevel1 ):
 
     # what object each astnode corresponds to. You can't have two update
     # blocks in one component that have the same ast.
-    s._dsl.astnode_objs = defaultdict(list)
     s._dsl.func_reads  = {}
     s._dsl.func_writes = {}
     s._dsl.func_calls  = {}
@@ -201,7 +212,8 @@ class ComponentLevel2( ComponentLevel1 ):
     s._dsl.upblk_calls  = {}
     for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
-      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ] )
+      s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ],
+                                    update_ff = blk in s._dsl.update_ff )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
@@ -209,7 +221,7 @@ class ComponentLevel2( ComponentLevel1 ):
     super()._collect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._dsl.all_update_on_edge |= m._dsl.update_on_edge
+      s._dsl.all_update_ff |= m._dsl.update_ff
 
       for k, k_cons in m._dsl.RD_U_constraints.items():
         s._dsl.all_RD_U_constraints[k] |= k_cons
@@ -266,7 +278,7 @@ class ComponentLevel2( ComponentLevel1 ):
     super()._uncollect_vars( m )
 
     if isinstance( m, ComponentLevel2 ):
-      s._dsl.all_update_on_edge -= m._dsl.update_on_edge
+      s._dsl.all_update_ff -= m._dsl.update_ff
 
       for k in m._dsl.RD_U_constraints:
         s._dsl.all_RD_U_constraints[k] -= m._dsl.RD_U_constraints[k]
@@ -419,18 +431,22 @@ class ComponentLevel2( ComponentLevel1 ):
       raise UpblkFuncSameNameError( name )
 
     s._dsl.name_func[ name ] = func
-    s._cache_func_meta( func )
+    s._cache_func_meta( func, is_update_ff=False )
     return func
 
   # Override
   def update( s, blk ):
     super().update( blk )
-    s._cache_func_meta( blk ) # add caching of src/ast
+
+    s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
     return blk
 
-  def update_on_edge( s, blk ):
-    s._dsl.update_on_edge.add( blk )
-    return s.update( blk )
+  def update_ff( s, blk ):
+    super().update( blk )
+
+    s._dsl.update_ff.add( blk )
+    s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
+    return blk
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints
@@ -473,7 +489,7 @@ class ComponentLevel2( ComponentLevel1 ):
   def _elaborate_declare_vars( s ):
     super()._elaborate_declare_vars()
 
-    s._dsl.all_update_on_edge = set()
+    s._dsl.all_update_ff = set()
 
     s._dsl.all_RD_U_constraints = defaultdict(set)
     s._dsl.all_WR_U_constraints = defaultdict(set)

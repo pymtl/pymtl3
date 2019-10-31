@@ -29,7 +29,7 @@ def test_L2_struct_attr():
       dsl.connect( s.out, s.in_.foo )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL2Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL2Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
@@ -46,7 +46,7 @@ def test_L2_packed_index():
       dsl.connect( s.out, s.in_.foo[1] )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL2Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL2Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \

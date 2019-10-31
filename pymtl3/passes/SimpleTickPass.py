@@ -17,6 +17,13 @@ from .errors import PassOrderError
 
 class SimpleTickPass( BasePass ):
 
+  @staticmethod
+  def gen_tick_function( schedule ):
+    def iterative():
+      for blk in schedule:
+        blk()
+    return iterative
+
   def __call__( self, top ):
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
@@ -26,8 +33,5 @@ class SimpleTickPass( BasePass ):
     else:
       schedule = top._sched.schedule
 
-    def tick_normal():
-      for blk in schedule:
-        blk()
 
-    top.tick = tick_normal
+    top.tick = SimpleTickPass.gen_tick_function( schedule )

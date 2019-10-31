@@ -5,7 +5,7 @@
 # Date   : Oct 20, 2018
 """Provide L3 behavioral RTLIR generation pass."""
 
-from pymtl3.datatypes import Bits, is_bitstruct
+from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.util.utility import (
@@ -55,7 +55,7 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
     This is achieved by function calls like `struct( 1, 2, 0 )`.
     """
     obj = s.get_call_obj( node )
-    if isinstance( obj, type ) and is_bitstruct( obj ):
+    if is_bitstruct_class( obj ):
       if len(node.args) < 1:
         raise PyMTLSyntaxError( s.blk, node,
           'at least one value should be provided to struct instantiation!' )

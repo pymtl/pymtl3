@@ -361,3 +361,17 @@ def test_connect_upblk_orders():
   assert u[0].__name__ == "up_out"
   assert u[1].__name__ == "up_ff"
   assert u[2].__name__ == "up_out2"
+
+# def test_garbage_collection():
+
+  # class X( Component ):
+    # def construct( s, nbits=0 ):
+      # s.leak = bytearray(1<<30)
+      # s.in_ = InPort ( mk_bits(nbits) )
+      # s.out = OutPort( mk_bits(nbits) )
+      # @s.update
+      # def up_x():
+        # s.out = s.in_ + 1
+  # for i in range(100):
+    # x = X()
+    # x = X()

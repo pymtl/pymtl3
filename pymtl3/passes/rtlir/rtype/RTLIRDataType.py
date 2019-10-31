@@ -14,7 +14,7 @@ import inspect
 from functools import reduce
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, is_bitstruct
+from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -190,7 +190,7 @@ def _get_rtlir_dtype_struct( obj ):
     return PackedArray( dim_sizes, _get_rtlir_dtype_struct( obj ) )
 
   # Struct field
-  elif is_bitstruct( obj ):
+  elif is_bitstruct_inst( obj ):
     cls = obj.__class__
 
     properties = { name: _get_rtlir_dtype_struct( getattr(obj, name) )
@@ -210,6 +210,7 @@ def get_rtlir_dtype( obj ):
     # Signals might be parameterized with different data types
     if isinstance( obj, ( dsl.Signal, dsl.Const ) ):
       Type = obj._dsl.Type
+      assert isinstance( Type, type )
 
       # Vector data type
       if issubclass( Type, Bits ):
@@ -220,7 +221,7 @@ def get_rtlir_dtype( obj ):
         return Vector( 32 )
 
       # Struct data type
-      elif is_bitstruct( Type ):
+      elif is_bitstruct_class( Type ):
         try:
           return _get_rtlir_dtype_struct( Type() )
         except TypeError:
@@ -242,7 +243,7 @@ def get_rtlir_dtype( obj ):
       return Vector( obj.nbits )
 
     # PyMTL BitStruct objects
-    elif is_bitstruct( obj ):
+    elif is_bitstruct_inst( obj ):
       return _get_rtlir_dtype_struct( obj )
 
     else:

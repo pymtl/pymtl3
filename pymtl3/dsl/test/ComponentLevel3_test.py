@@ -8,7 +8,7 @@ Date   : Dec 25, 2017
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits8, Bits10, Bits32
+from pymtl3.datatypes import Bits8, Bits10, Bits32, bitstruct
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import WR, U
@@ -39,15 +39,14 @@ class TestSource( ComponentLevel3 ):
 
   def construct( s, Type, input_ ):
     assert type(input_) == list, "TestSrc only accepts a list of inputs!"
+    s.input_ = deque([ Type(x) for x in input_ ]) # deque.popleft() is faster
 
-    s.Type = Type
-    s.input_ = deque( input_ ) # deque.popleft() is faster
-    s.out = OutPort( Type )
+    s.out = OutPort(Type)
 
     @s.update
     def up_src():
       if not s.input_:
-        s.out = s.Type()
+        s.out = Type()
       else:
         s.out = s.input_.popleft()
 
@@ -62,8 +61,8 @@ class TestSink( ComponentLevel3 ):
   def construct( s, Type, answer ):
     assert type(answer) == list, "TestSink only accepts a list of outputs!"
 
-    s.answer = deque( answer )
-    s.in_ = InPort( Type )
+    s.answer = deque( [ x if x == "*" else Type(x) for x in answer ] )
+    s.in_ = InPort(Type)
 
     @s.update
     def up_sink():
@@ -260,23 +259,23 @@ def test_2d_array_vars_connect_impl():
 
     def construct( s ):
 
-      s.src  = TestSource( int, [2,1,0,2,1,0] )
-      s.sink = TestSink  ( int, ["*",(5+6),(3+4),(1+2),
+      s.src  = TestSource( Bits32, [2,1,0,2,1,0] )
+      s.sink = TestSink  ( Bits32, ["*",(5+6),(3+4),(1+2),
                                  (5+6),(3+4),(1+2)] )
 
-      s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
+      s.wire = [ [ Wire(Bits32) for _ in range(2)] for _ in range(2) ]
       connect( s.wire[0][0], s.src.out )
 
       @s.update
       def up_from_src():
         s.wire[0][1] = s.src.out + 1
 
-      s.reg = Wire(int)
+      s.reg = Wire(Bits32)
       connect( s.wire[1][0], s.reg )
 
-      @s.update_on_edge
+      @s.update_ff
       def up_reg():
-        s.reg = s.wire[0][0] + s.wire[0][1]
+        s.reg <<= s.wire[0][0] + s.wire[0][1]
 
       @s.update
       def upA():
@@ -302,24 +301,24 @@ def test_lots_of_fan_connect():
 
     def construct( s ):
 
-      s.src  = TestSource( int, [4,3,2,1,4,3,2,1] )
-      s.sink = TestSink  ( int, ["*",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
+      s.src  = TestSource( Bits32, [4,3,2,1,4,3,2,1] )
+      s.sink = TestSink  ( Bits32, ["*",(5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3),
                                      (5+5+6+6),(4+4+5+5),(3+3+4+4),(2+2+3+3)] )
 
-      s.wire0 = Wire(int)
+      s.wire0 = Wire(Bits32)
 
       @s.update
       def up_from_src():
         s.wire0 = s.src.out + 1
 
-      s.reg = Wire(int)
+      s.reg = Wire(Bits32)
 
-      @s.update_on_edge
+      @s.update_ff
       def up_reg():
-        s.reg = s.wire0
+        s.reg <<= s.wire0
 
-      s.wire1 = Wire(int)
-      s.wire2 = Wire(int)
+      s.wire1 = Wire(Bits32)
+      s.wire2 = Wire(Bits32)
 
       connect( s.wire1, s.reg )
 
@@ -327,20 +326,20 @@ def test_lots_of_fan_connect():
       def upA():
         s.wire2 = s.reg + 1
 
-      s.wire3 = Wire(int)
-      s.wire4 = Wire(int)
+      s.wire3 = Wire(Bits32)
+      s.wire4 = Wire(Bits32)
 
       connect( s.wire3, s.wire1 )
       connect( s.wire4, s.wire1 )
 
-      s.wire5 = Wire(int)
-      s.wire6 = Wire(int)
+      s.wire5 = Wire(Bits32)
+      s.wire6 = Wire(Bits32)
 
       connect( s.wire5, s.wire2 )
       connect( s.wire6, s.wire2 )
 
-      s.wire7 = Wire(int)
-      s.wire8 = Wire(int)
+      s.wire7 = Wire(Bits32)
+      s.wire8 = Wire(Bits32)
 
       @s.update
       def upD():
@@ -607,14 +606,14 @@ def test_multiple_slices_are_net_writers():
 
 def test_multiple_fields_are_net_writers():
 
+  @bitstruct
   class SomeMsg1:
-    def __init__( s, a=0, b=0 ):
-      s.a = Bits8(a)
-      s.b = Bits32(b)
+    a: Bits8
+    b: Bits32
 
+  @bitstruct
   class SomeMsg2:
-    def __init__( s, a=0 ):
-      s.c = Bits8(a)
+    c: Bits8
 
   class A( ComponentLevel3 ):
 
@@ -638,14 +637,14 @@ def test_multiple_fields_are_net_writers():
 
 def test_multiple_fields_are_assigned():
 
+  @bitstruct
   class SomeMsg1:
-    def __init__( s, a=0, b=0 ):
-      s.a = Bits8(a)
-      s.b = Bits32(b)
+    a: Bits8
+    b: Bits32
 
+  @bitstruct
   class SomeMsg2:
-    def __init__( s, a=0 ):
-      s.c = Bits8(a)
+    c: Bits8
 
   class A( ComponentLevel3 ):
 

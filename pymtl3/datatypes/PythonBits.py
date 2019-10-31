@@ -8,12 +8,24 @@ Author : Shunning Jiang
 Date   : Oct 31, 2017
 """
 
+
 class Bits:
   __slots__ = ( "nbits", "value" )
 
   def __init__( self, nbits=32, value=0 ):
     self.nbits = nbits
     self.value = int(value) & ((1 << nbits) - 1)
+
+  def __ilshift__( self, x ):
+    try:
+      assert x.nbits == self.nbits, "Bitwidth mismatch during <<="
+    except AttributeError:
+      raise TypeError(f"Assign {type(x)} to Bits")
+    self._next = x.value
+    return self
+
+  def _flip( self ):
+    self.value = self._next
 
   def __call__( self ):
     return Bits( self.nbits )

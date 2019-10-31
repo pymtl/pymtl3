@@ -204,7 +204,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_Assign( s, node ):
     target        = s.visit( node.target )
     value         = s.visit( node.value )
-    assignment_op = '<=' if s.upblk_type == s.SEQUENTIAL else '='
+    assignment_op = '<=' if not node.blocking else '='
     ret = f'{target} {assignment_op} {value};'
     return [ ret ]
 

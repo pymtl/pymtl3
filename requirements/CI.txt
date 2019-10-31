@@ -1,0 +1,6 @@
+-r dev.txt
+-c constraints.txt
+
+# CI dependencies
+pytest-cov
+codecov

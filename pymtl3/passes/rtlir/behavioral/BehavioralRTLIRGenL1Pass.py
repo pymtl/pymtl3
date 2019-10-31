@@ -50,7 +50,6 @@ class BehavioralRTLIRGenL1Pass( BasePass ):
 class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
   def __init__( s, component ):
     s.component = component
-    s.mapping   = component.get_astnode_obj_mapping()
 
   def enter( s, blk, ast ):
     """Entry point of RTLIR generation."""
@@ -89,22 +88,22 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     # Find the corresponding object of node.func field
     # TODO: Support Verilog task?
-    if func in s.mapping:
+    # if func in s.mapping:
       # The node.func field corresponds to a member of this class
-      obj = s.mapping[ func ][ 0 ]
-    else:
-      try:
-        # An object in global namespace is used
-        if func.id in s.globals:
-          obj = s.globals[ func.id ]
-        # An object in closure is used
-        elif func.id in s.closure:
-          obj = s.closure[ func.id ]
-        else:
-          raise NameError
-      except NameError:
-        raise PyMTLSyntaxError( s.blk, node,
-          node.func.id + ' function is not found!' )
+      # obj = s.mapping[ func ][ 0 ]
+    # else:
+    try:
+      # An object in global namespace is used
+      if func.id in s.globals:
+        obj = s.globals[ func.id ]
+      # An object in closure is used
+      elif func.id in s.closure:
+        obj = s.closure[ func.id ]
+      else:
+        raise NameError
+    except NameError:
+      raise PyMTLSyntaxError( s.blk, node,
+        node.func.id + ' function is not found!' )
     return obj
 
   def visit_Module( s, node ):
@@ -145,9 +144,23 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     value = s.visit( node.value )
     target = s.visit( node.targets[0] )
-    ret = bir.Assign( target, value )
+    ret = bir.Assign( target, value, blocking = True )
     ret.ast = node
     return ret
+
+  def visit_AugAssign( s, node ):
+    """Return the behavioral RTLIR of a non-blocking assignment
+
+    If the given AugAssign is not non-blocking assignment, throw PyMTLSyntaxError
+    """
+    if isinstance( node.op, ast.LShift ):
+      value = s.visit( node.value )
+      target = s.visit( node.target )
+      ret = bir.Assign( target, value, blocking = False )
+      ret.ast = node
+      return ret
+    raise PyMTLSyntaxError( s.blk, node,
+        'invalid operation: augmented assignment is not non-blocking assignment!' )
 
   def visit_Call( s, node ):
     """Return the behavioral RTLIR of method calls.
@@ -344,9 +357,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     raise PyMTLSyntaxError(
       s.blk, node, 'Stand-alone expression is not supported yet!'
     )
-
-  def visit_AugAssign( s, node ):
-    raise PyMTLSyntaxError( s.blk, node, 'invalid operation: augmented assignment' )
 
   def visit_Lambda( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )
