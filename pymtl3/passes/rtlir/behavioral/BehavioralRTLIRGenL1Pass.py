@@ -12,10 +12,7 @@ import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
-from pymtl3.passes.rtlir.util.utility import (
-    get_ordered_upblks,
-    get_ordered_update_ff,
-)
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from . import BehavioralRTLIR as bir
 

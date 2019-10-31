@@ -10,10 +10,7 @@ import ast
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
-from pymtl3.passes.rtlir.util.utility import (
-    get_ordered_upblks,
-    get_ordered_update_ff,
-)
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL1Pass import BehavioralRTLIRGeneratorL1
