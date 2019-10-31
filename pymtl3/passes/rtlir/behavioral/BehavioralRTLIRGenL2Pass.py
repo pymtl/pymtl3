@@ -12,7 +12,7 @@ from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.utility import (
     get_ordered_upblks,
-    get_ordered_update_on_edge,
+    get_ordered_update_ff,
 )
 
 from . import BehavioralRTLIR as bir
@@ -29,7 +29,7 @@ class BehavioralRTLIRGenL2Pass( BasePass ):
     visitor = BehavioralRTLIRGeneratorL2( m )
     upblks = {
       'CombUpblk' : get_ordered_upblks(m),
-      'SeqUpblk'  : get_ordered_update_on_edge(m),
+      'SeqUpblk'  : get_ordered_update_ff(m),
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
