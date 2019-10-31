@@ -149,7 +149,6 @@ def compile_upblks( s ):
   {}
   return locals()
 """.format( bits_import_src, allsrc )
-      # print(src)
 
       fname = f"Generated net at {hostobj!r}"
       l = {}
