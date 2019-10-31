@@ -117,7 +117,9 @@ class Const( Connectable ):
     s._dsl.parent_obj = parent
 
   def __repr__( s ):
-    return f"{s._dsl.Type.__name__}({s._dsl.const})"
+    if s._dsl.Type is int:
+      return f"int({s._dsl.const})"
+    return f"{repr(s._dsl.const)}"
 
   def get_parent_object( s ):
     try:
