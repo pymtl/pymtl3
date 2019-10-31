@@ -60,6 +60,22 @@ class GenDAGPass( BasePass ):
     blkname_meta   = {}
     blkname_suffix = {}
 
+    # TODO see if directly compiling AST instead of source can be faster
+    def compile_net_blk( s, writer_type, src ):
+
+      from __pypy__ import newdict
+      _globals = newdict("module")
+      _globals['s'] = s
+      if writer_type is not None:
+        _globals[ writer_type.__name__ ] = writer_type
+
+      _locals  = newdict("module")
+
+      fname = f"Net at {s!r}"
+      exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
+      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
+      return list(_locals.values())[0]
+
     for writer, signals in top.get_all_value_nets():
       if len(signals) == 1:
         continue
@@ -108,9 +124,10 @@ class GenDAGPass( BasePass ):
 
       if isinstance( writer, Const ):
         wstr = repr(writer)
-        hostobj_bits[ wr_lca ].add( writer._dsl.Type.__name__ )
+        writer_type = writer._dsl.Type
       else:
         wstr = f"s.{repr(writer)[lca_len+1:]}"
+        writer_type = None
 
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
       upblk_name = f"{writer!r}__{fanout}".replace( " ", "" ) \
@@ -118,50 +135,16 @@ class GenDAGPass( BasePass ):
                       .replace( "[", "_" ).replace( "]", "_" ) \
                       .replace( "(", "_" ).replace( ")", "_" )
 
-      # NAME DISAMBIGUATION
-      # There are cases where the same const drives multiple nets. We
-      # basically add a suffix to name each of them differently.
-
-      if upblk_name in blkname_meta:
-        if upblk_name in blkname_suffix:
-          current = blkname_suffix[ upblk_name ]
-        else:
-          current = 1
-        blkname_suffix[ upblk_name ] = current + 1
-        upblk_name += f"_no_{current}"
-
       gen_src = """
-@update
 def {}():
   {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
-      hostobj_allsrc[ wr_lca ] += gen_src
-      blkname_meta[ upblk_name ] = (writer, readers)
 
-    # TODO see if directly compiling AST instead of source can be faster
-    def compile_upblks( s, src ):
+      blk = compile_net_blk( wr_lca, writer_type, gen_src )
 
-      def update( blk ):
-        top._dag.genblks.add( blk )
-        writer, readers = blkname_meta[ blk.__name__ ]
-        if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = readers
-
-      fname = f"Generated net at {hostobj!r}"
-      import __pypy__
-      local = __pypy__.newdict("module")
-      local['s'] = s
-      local['update'] = update
-      exec( compile( src, filename=fname, mode="exec"), local )
-      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
-
-    for hostobj, allsrc in hostobj_allsrc.items():
-      if hostobj in hostobj_bits:
-        bits_import_src = f"from pymtl3.datatypes import {','.join( hostobj_bits[hostobj] )}"
-      else:
-        bits_import_src = ""
-      src = """{}\n{}\n""".format( bits_import_src, allsrc )
-      compile_upblks( hostobj, src )
+      top._dag.genblks.add( blk )
+      if writer.is_signal():
+        top._dag.genblk_reads[ blk ] = [ writer ]
+      top._dag.genblk_writes[ blk ] = readers
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks

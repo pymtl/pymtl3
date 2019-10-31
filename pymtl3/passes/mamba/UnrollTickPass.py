@@ -20,24 +20,23 @@ class UnrollTickPass( BasePass ):
   def gen_tick_function( schedule ):
 
     # Berkin IlBeyi's recipe ( updated using f-strings and enumerate )
-    strs = [f"update_blk{idx}() # {sched}" for idx, sched in \
+    strs = [f"f{idx}() # {sched}" for idx, sched in \
         enumerate([ x.__name__ for x in schedule ])]
 
     gen_tick_src = """
+      def tick_unroll():
+        # The code below does the actual calling of update blocks.
         {}
-        def tick_unroll():
-          # The code below does the actual calling of update blocks.
-          {}
-        """.format( ";".join( map(
-                        "update_blk{0}=schedule[{0}]".format,
-                        range( len(strs) ) ) ),
-                        "\n          ".join( strs ) )
+      """.format( "\n        ".join( strs ) )
 
-    import __pypy__
-    local = __pypy__.newdict("module")
-    local['schedule'] = schedule
-    exec(py.code.Source( gen_tick_src ).compile(), local)
-    return local['tick_unroll']
+    from __pypy__ import newdict
+    _globals = newdict("module")
+    for i, x in enumerate(schedule):
+      _globals[f"f{i}"] = x
+
+    _locals  = newdict("module")
+    exec(py.code.Source( gen_tick_src ).compile(), _globals, _locals)
+    return _locals['tick_unroll']
 
   def __call__( self, top ):
     if not hasattr( top._sched, "schedule" ):

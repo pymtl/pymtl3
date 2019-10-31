@@ -42,6 +42,12 @@ from .errors import (
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
+try:
+  import __pypy__
+  def exec_dict():
+    return __pypy__.newdict("module")
+except ModuleNotFoundError:
+  exec_dict = dict
 
 def connect( o1, o2 ):
   host, o1_connectable, o2_connectable = _connect_check( o1, o2, internal=False )
@@ -204,9 +210,11 @@ class ComponentLevel3( ComponentLevel2 ):
     # Then `closure(lamb.__closure__)` returns the lambda update block with
     # the correct free variables in its closure.
 
-    dict_local = {}
-    exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
-    blk = dict_local[ 'closure' ]( lamb.__closure__ )
+    _local  = exec_dict()
+    _global = exec_dict()
+    _global.update( lamb.__globals__ )
+    exec( compile(new_root, blk_name, "exec"), _global, _local )
+    blk = _local[ 'closure' ]( lamb.__closure__ )
 
     # Add the source code to linecache for the compiled function
 

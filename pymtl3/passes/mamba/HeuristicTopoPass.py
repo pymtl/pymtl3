@@ -109,7 +109,7 @@ class HeuristicTopoPass( BasePass ):
     check_schedule( top, update_schedule, V, E, InD )
 
     schedule = [ make_double_buffer_func( top ) ]
-    schedule.extend( update_schedule )
-    schedule.extend( sorted( top._dsl.all_update_ff, key=lambda x: branchiness[x] ) )
+    # schedule.extend( update_schedule )
+    # schedule.extend( sorted( top._dsl.all_update_ff, key=lambda x: branchiness[x] ) )
 
     return schedule
