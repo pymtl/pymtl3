@@ -258,7 +258,6 @@ class ImportConfigs( BasePassConfigs ):
       line_cov, toggle_cov,
     ]
 
-    print( f"verilator --cc {' '.join(opt for opt in all_opts if opt)}" )
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
 
   def create_cc_cmd( s ):
@@ -272,8 +271,6 @@ class ImportConfigs( BasePassConfigs ):
     coverage = "-DVM_COVERAGE" if s.get_option("coverage") or \
                                   s.get_option("line_coverage") or \
                                   s.get_option("toggle_coverage") else ""
-    print( f"g++ {c_flags} {c_include_path} {ld_flags}"
-           f" -o {out_file} {c_src_files} {ld_libs} {coverage}" )
     return f"g++ {c_flags} {c_include_path} {ld_flags}"\
            f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
 
