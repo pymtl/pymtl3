@@ -335,9 +335,9 @@ def test_connect_upblk_orders():
         s.out = Bits32(0)
 
       s.wire = Wire(Bits32)
-      @s.update_on_edge
+      @s.update_ff
       def up_ff():
-        s.wire = s.wire + 1
+        s.wire <<= s.wire + 1
 
       @s.update
       def up_out2():
