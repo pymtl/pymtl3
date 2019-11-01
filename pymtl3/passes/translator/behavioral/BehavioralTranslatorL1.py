@@ -66,8 +66,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     upblk_srcs = []
     upblk_py_srcs = []
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
+      'CombUpblk' : list(m.get_update_blocks() - m.get_update_ff()),
+      'SeqUpblk'  : list(m.get_update_ff())
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )
@@ -75,10 +75,17 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
 
     for upblk_type in ( 'CombUpblk', 'SeqUpblk' ):
       for blk in upblks[ upblk_type ]:
+        upblk_ir = s.behavioral.rtlir[ m ][ blk ]
         upblk_srcs.append( s.rtlir_tr_upblk_src(
-          blk, s.behavioral.rtlir[ m ][ blk ]
+          blk, upblk_ir
         ) )
-        upblk_py_srcs.append( s.rtlir_tr_upblk_py_src( blk ) )
+        upblk_py_srcs.append( s.rtlir_tr_upblk_py_src(
+          blk,
+          upblk_ir.is_lambda,
+          upblk_ir.src,
+          upblk_ir.lino,
+          upblk_ir.filename
+        ) )
         upblk_decls.append( s.rtlir_tr_upblk_decl(
           blk, upblk_srcs[-1], upblk_py_srcs[-1]
         ) )
@@ -98,7 +105,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
         array_rtype = None
       dtype = fvar_rtype.get_dtype()
       assert isinstance( dtype, rdt.Vector ), \
-        '{} freevar should be an integer or a list of integers!'.format( name )
+        f'{name} freevar should be an integer or a list of integers!'
       freevars.append( s.rtlir_tr_behavioral_freevar(
         name,
         fvar_rtype,
@@ -127,7 +134,7 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
   def rtlir_tr_upblk_py_srcs( s, upblk_py_srcs ):
     raise NotImplementedError()
 
-  def rtlir_tr_upblk_py_src( s, upblk ):
+  def rtlir_tr_upblk_py_src( s, upblk, is_lambda, src, lino, filename ):
     raise NotImplementedError()
 
   def rtlir_tr_behavioral_freevars( s, freevars ):

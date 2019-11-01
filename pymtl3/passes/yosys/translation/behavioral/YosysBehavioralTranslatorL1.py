@@ -5,7 +5,7 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L1 behavioral translator."""
 
-from pymtl3.datatypes import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bitstruct_inst
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -126,7 +126,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_SizeCast( s, node ):
     nbits = node.nbits
-    value = getattr( node.value, "_value", None )
+    value = None if not hasattr(node.value, "_value") else node.value._value
 
     if value is None:
       value_str = s.visit( node.value )
@@ -135,15 +135,15 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         return value_str
       elif cur_nbits > nbits:
         msb = nbits-1
-        return value_str + "[{msb}:0]".format( **locals() )
+        return f"{value_str}[{msb}:0]"
       else:
         # Zero-extend the value
         n_zero = nbits - cur_nbits
-        return "{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}".format( **locals() )
+        return f"{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}"
 
     if isinstance( value, Bits ):
-      value = value.uint()
-    return "{nbits}'d{value}".format( **locals() )
+      value = int(value)
+    return f"{nbits}'d{value}"
 
   #-----------------------------------------------------------------------
   # visit_Attribute
@@ -158,19 +158,19 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
     if isinstance(Type, rt.Const):
       obj = Type.get_object()
       if isinstance( obj, int ):
-        node.sexpr['s_attr'] = "32'd{}".format( obj )
+        node.sexpr['s_attr'] = f"32'd{obj}"
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
         nbits = obj.nbits
-        value = int( obj.value )
-        node.sexpr['s_attr'] = "{nbits}'d{value}".format( **locals() )
+        value = int( obj )
+        node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""
-      elif isinstance( obj, BitStruct ):
+      elif is_bitstruct_inst( obj ):
         node.sexpr['s_attr'] = s._struct_instance( node.Type.get_dtype(), obj )
         node.sexpr['s_index'] = ""
       else:
         raise SVerilogTranslationError( s.blk, node,
-          "{} {} is not an integer!".format( node.attr, obj ) )
+          f"{node.attr} {obj} is not an integer!" )
 
     elif isinstance( node.value, bir.Base ):
       # The base of this attribute node is the component 's'.
@@ -209,8 +209,8 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
           const_value = node._value
         except AttributeError:
           raise SVerilogTranslationError( s.blk, node,
-            "{} is not an array of constants!". format( value ) )
-        node.sexpr['s_index'] = "{nbits}'d{const_value}".format( **locals() )
+            f"{value} is not an array of constants!" )
+        node.sexpr['s_index'] = f"{nbits}'d{const_value}"
         node.sexpr['index'] = []
         node.sexpr['s_attr'] = ""
         node.sexpr['attr'] = []
@@ -233,7 +233,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       raise SVerilogTranslationError( s.blk, node,
           "internal error: unrecognized index" )
 
-    return s.signal_expr_epilogue( node, value+'[{}]'.format( idx ) )
+    return s.signal_expr_epilogue( node, f'{value}[{idx}]' )
 
   #-----------------------------------------------------------------------
   # visit_Slice
@@ -251,11 +251,11 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
 
   def visit_FreeVar( s, node ):
     if isinstance( node.obj, int ):
-      return "32'd{}".format( node.obj )
+      return f"32'd{node.obj}"
     elif isinstance( node.obj, Bits ):
       nbits = node.obj.nbits
-      value = int( node.obj.value )
-      return "{nbits}'d{value}".format( **locals() )
+      value = int( node.obj )
+      return f"{nbits}'d{value}"
     else:
       raise SVerilogTranslationError( s.blk, node,
-        "{} {} is not an integer!".format( node.name, node.obj ) )
+      f"{node.name} {node.obj} is not an integer!" )

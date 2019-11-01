@@ -10,11 +10,17 @@ Date   : Jan 17, 2018
 
 import ast
 
+from .errors import InvalidFFAssignError
+
 
 class DetectVarNames( ast.NodeVisitor ):
 
-  def __init__( self, upblk ):
-    self.upblk   = upblk
+  def __init__( self, upblk, obj, is_update_ff ):
+    self.upblk = upblk
+    self.obj = obj
+    self.is_update_ff = is_update_ff
+    self.globals = upblk.__globals__
+
     self.closure = {}
     for i, var in enumerate( upblk.__code__.co_freevars ):
       try:  self.closure[ var ] = upblk.__closure__[i].cell_contents
@@ -44,8 +50,8 @@ class DetectVarNames( ast.NodeVisitor ):
         low = node.slice.lower.n
       elif isinstance( lower, ast.Name ):
         x = lower.id
-        if   x in self.upblk.__globals__:
-          low = self.upblk.__globals__[ x ] # TODO check low is int
+        if   x in self.globals:
+          low = self.globals[ x ] # TODO check low is int
         elif x in self.closure:
           low = self.closure[ x ]
 
@@ -53,8 +59,8 @@ class DetectVarNames( ast.NodeVisitor ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
         x = upper.id
-        if   x in self.upblk.__globals__:
-          up = self.upblk.__globals__[ x ] # TODO check low is int
+        if   x in self.globals:
+          up = self.globals[ x ] # TODO check low is int
         elif x in self.closure:
           up = self.closure[ x ]
 
@@ -78,8 +84,8 @@ class DetectVarNames( ast.NodeVisitor ):
           n = v.n
         elif isinstance( v, ast.Name ):
           x = v.id
-          if   x in self.upblk.__globals__: # Only support global const indexing for now
-            n = self.upblk.__globals__[ x ]
+          if   x in self.globals: # Only support global const indexing for now
+            n = self.globals[ x ]
           elif x in self.closure:
             n = self.closure[ x ]
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant
@@ -124,13 +130,40 @@ class DetectVarNames( ast.NodeVisitor ):
 class DetectReadsWritesCalls( DetectVarNames ):
 
   def enter( self, node, read, write, calls ):
-    self.read = []
-    self.write = []
-    self.calls = []
+
+    self.read = read
+    self.write = write
+    self.calls = calls
     self.visit( node )
-    read.extend ( self.read )
-    write.extend( self.write )
-    calls.extend( self.calls )
+
+  def visit_Assign( self, node ):
+
+    if self.is_update_ff:
+      assert len( node.targets ) == 1
+      target = node.targets[0]
+
+      if isinstance( target, (ast.Attribute, ast.Subscript) ):
+        while isinstance( target, (ast.Attribute, ast.Subscript) ):
+          target = target.value
+        assert isinstance( target, ast.Name ), "Please call pymtl3 developers"
+
+        if target.id == "s":
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+                "has a wrong assign operator. Change it to <<=." )
+
+    for x in node.targets:
+      self.visit( x )
+    self.visit( node.value )
+
+  def visit_AugAssign( self, node ):
+    if self.is_update_ff:
+      if isinstance( node.target, (ast.Attribute, ast.Subscript) ):
+        if not isinstance( node.op, ast.LShift ):
+          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+                "has a wrong assign operator. Change it to <<=." )
+
+    self.visit( node.target )
+    self.visit( node.value  )
 
   def visit_Attribute( self, node ): # s.a.b
     obj_name, nodelist = self._get_full_name( node )
@@ -143,7 +176,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
   def visit_Subscript( self, node ): # s.a.b[0:3] or s.a.b[0]
     obj_name, nodelist = self._get_full_name( node )
@@ -156,7 +189,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     elif isinstance( node.ctx, ast.Store ):
       self.write.append( pair )
     else:
-      assert False, type( node.ctx )
+      raise TypeError( f"Wrong ast node context {type( node.ctx )}" )
 
     self.visit( node.slice )
 
@@ -172,9 +205,8 @@ class DetectReadsWritesCalls( DetectVarNames ):
 class DetectMethodCalls( DetectVarNames ):
 
   def enter( self, node, methods ):
-    self.methods = []
+    self.methods = methods
     self.visit( node )
-    methods.extend( self.methods )
 
   def visit_Call( self, node ):
     obj_name = self.get_full_name( node.func )
@@ -187,7 +219,7 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-def extract_reads_writes_calls( f, tree, read, write, calls ):
+def extract_reads_writes_calls( hostobj, f, tree, is_update_ff, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
@@ -195,8 +227,9 @@ def extract_reads_writes_calls( f, tree, read, write, calls ):
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
+  visitor = DetectReadsWritesCalls( f, hostobj, is_update_ff )
   for stmt in tree.body:
-    DetectReadsWritesCalls( f ).enter( stmt, read, write, calls )
+    visitor.enter( stmt, read, write, calls )
 
 def get_method_calls( tree, upblk, methods ):
-  DetectMethodCalls( upblk ).enter( tree, methods )
+  DetectMethodCalls( upblk, hostobj, is_update_ff ).enter( tree, methods )

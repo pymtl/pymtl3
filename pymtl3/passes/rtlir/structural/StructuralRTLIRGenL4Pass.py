@@ -36,18 +36,12 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
       s.gen_constants( child )
 
   # Override
-  def collect_connections( s, m ):
-    return \
-      super().collect_connections( m ) + \
-      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_sc[m]] + \
-      [((gen_signal_expr(m, x[0]), gen_signal_expr(m, x[1])), False) for x in s.c_cc[m]]
-
-  # Override
   def sort_connections( s, m ):
     """Sort connections by the order `s.connect` is called.
 
     At L4 we need to recursively generate connections for every component.
     """
     super().sort_connections( m )
+
     for child in m.get_child_components():
       s.sort_connections( child )

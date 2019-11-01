@@ -11,7 +11,7 @@ generation pass results are verified against a reference AST.
 
 import pytest
 
-from pymtl3.datatypes import Bits1, Bits32, BitStruct
+from pymtl3.datatypes import Bits1, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.dsl.errors import VarNotDeclaredError
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIR import *
@@ -48,9 +48,9 @@ def local_do_test( m ):
 #-------------------------------------------------------------------------
 
 def test_L3_struct_attr( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -61,13 +61,13 @@ def test_L3_struct_attr( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), Attribute(
-        Attribute( Base( a ), 'in_' ), 'foo' ) ) ] ) }
+        Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
   do_test( a )
 
 def test_L3_struct_inst_kwargs( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
@@ -77,14 +77,14 @@ def test_L3_struct_inst_kwargs( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), StructInst(
-        B, [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
+        B, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
   with expected_failure( PyMTLSyntaxError, 'keyword argument is not supported' ):
     do_test( a )
 
 def test_L3_struct_inst( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.out = OutPort( B )
@@ -94,7 +94,7 @@ def test_L3_struct_inst( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), StructInst(
-        B, [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
+        B, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
   do_test( a )
 
 #-------------------------------------------------------------------------
@@ -113,9 +113,9 @@ def test_L3_vector_attr( do_test ):
     do_test( A() )
 
 def test_L3_struct_no_field( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = InPort( B )
@@ -127,10 +127,9 @@ def test_L3_struct_no_field( do_test ):
     do_test( A() )
 
 def test_L3_const_struct( do_test ):
-  class B( BitStruct ):
-    fields = [ ( 'foo', Bits32 ) ]
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.in_ = B()
@@ -145,9 +144,9 @@ def test_L3_const_struct( do_test ):
 #-------------------------------------------------------------------------
 
 def test_L3_call_struct_inst( do_test ):
-  class B( BitStruct ):
-    def __init__( s, foo=42 ):
-      s.foo = Bits32( foo )
+  @bitstruct
+  class B:
+    foo: Bits32
   class A( Component ):
     def construct( s ):
       s.out = OutPort( B )

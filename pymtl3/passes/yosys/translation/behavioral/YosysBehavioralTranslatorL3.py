@@ -5,7 +5,7 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L3 behavioral translator."""
 
-from pymtl3.datatypes import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bitstruct_inst
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.sverilog.errors import SVerilogTranslationError
@@ -38,7 +38,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
 
   def _literal_number( s, nbits, value ):
     value = int( value )
-    return "{nbits}'d{value}".format( **locals() )
+    return f"{nbits}'d{value}"
 
   def _struct_instance( s, dtype, struct ):
     def _gen_packed_array( dtype, n_dim, array ):
@@ -48,7 +48,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
         elif isinstance( dtype, rdt.Struct ):
           return s._struct_instance( dtype, array )
         else:
-          assert False, "unrecognized data type {}!".format( dtype )
+          assert False, f"unrecognized data type {Type}!"
       else:
         ret = []
         for i in reversed( range( n_dim[0]) ):
@@ -59,8 +59,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
           cat_str = ", ".join( ret )
         return cat_str
     fields = []
-    all_properties = dtype.get_all_properties()
-    for name, Type in all_properties:
+    for name, Type in dtype.get_all_properties().items():
       field = getattr( struct, name )
       if isinstance( Type, rdt.Vector ):
         _field = s._literal_number( Type.nbits, field )
@@ -71,7 +70,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
         sub_dtype = Type.get_sub_dtype()
         _field = _gen_packed_array( sub_dtype, n_dim, field )
       else:
-        assert False, "unrecognized data type {}!".format( Type )
+        assert False, f"unrecognized data type {Type}!"
       fields.append( _field )
     if len( fields ) == 1:
       struct_str = fields[0]
@@ -96,36 +95,34 @@ class YosysBehavioralRTLIRToSVVisitorL3(
           obj = None
         if obj is None:
           raise SVerilogTranslationError( s.blk, node,
-            "attribute ({}) of constant struct instance ({}) is not supported!". \
-              format( node.attr, node.value ) )
+            f"attribute ({node.attr}) of constant struct instance ({node.value}) is not supported!" )
         else:
           if isinstance( obj, Bits ):
             s.signal_expr_prologue( node )
             node.sexpr['s_attr'] = \
-                s._literal_number(obj.nbits, int(obj.value))
+                s._literal_number(obj.nbits, int(obj))
             node.sexpr["s_index"] = ""
             attr = node.attr
-            return s.signal_expr_epilogue(node, "{attr}".format(**locals()))
-          elif isinstance( obj, BitStruct ):
+            return s.signal_expr_epilogue(node, f"{attr}")
+          elif is_bitstruct_inst( obj ):
             s.signal_expr_prologue( node )
             node.sexpr['s_attr'] = \
                 s._struct_instance(node.Type.get_dtype(), obj)
             node.sexpr["s_index"] = ""
             attr = node.attr
-            return s.signal_expr_epilogue(node, "{attr}".format(**locals()))
+            return s.signal_expr_epilogue(node, f"{attr}")
           else:
             raise SVerilogTranslationError( s.blk, node,
-              "attribute ({}) of constant struct instance ({}) is not supported!". \
-                format( node.attr, node.value ) )
+              f"attribute ({node.attr}) of constant struct instance ({node.value}) is not supported!" )
 
       elif isinstance( node.value.Type.get_dtype(), rdt.Struct ):
         value = s.visit( node.value )
         s.signal_expr_prologue( node )
         attr = node.attr
         s.check_res( node, attr )
-        node.sexpr['s_attr'] += "${}"
+        node.sexpr['s_attr'] += "__{}"
         node.sexpr['attr'].append( attr )
-        return s.signal_expr_epilogue(node, "{value}.{attr}".format(**locals()))
+        return s.signal_expr_epilogue(node, f"{value}.{attr}")
 
     return super().visit_Attribute( node )
 

@@ -30,10 +30,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
 
   # Override
   def gen_structural_trans_metadata( s, tr_top ):
-    # c_ss: self-self connections
-    # c_sc: self-child connections
-    # c_cc: child-child connections
-    tr_top.apply( StructuralRTLIRGenL2Pass( s.c_ss, s.c_sc, s.c_cc ) )
+    tr_top.apply( StructuralRTLIRGenL2Pass( s.inst_conns ) )
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -66,7 +63,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   # Override
   def rtlir_data_type_translation( s, m, dtype ):
     def recurse_struct_dtype_translation( dtype ):
-      for key, value in dtype.get_all_properties():
+      for key, value in dtype.get_all_properties().items():
         if isinstance( value, rdt.PackedArray ):
           value = value.get_sub_dtype()
         if not isinstance(value, rdt.Struct):

@@ -68,9 +68,9 @@ def test_seq_assign( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      @s.update_on_edge
+      @s.update_ff
       def upblk():
-        s.out = s.in_
+        s.out <<= s.in_
   a = A()
   a._ref_upblk_srcs = { 'upblk' : \
 """\
@@ -273,7 +273,7 @@ def test_freevar( do_test ):
   a._ref_upblk_srcs = { 'upblk' : \
 """\
 always_comb begin : upblk
-  out = { in_, __const$STATE_IDLE };
+  out = { in_, __const__STATE_IDLE };
 end\
 """ }
   # TestVectorSimulator properties

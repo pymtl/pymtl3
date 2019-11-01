@@ -1,4 +1,3 @@
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import InValRdyIfc, OutValRdyIfc
 from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegisterFile
@@ -12,33 +11,22 @@ class PipeQueue1RTL( Component ):
 
     s.buffer  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
 
-    s.next_full = Wire( int if Type is int else Bits1 )
-    s.full      = Wire( int if Type is int else Bits1 )
+    s.next_full = Wire( Bits1 )
+    s.full      = Wire( Bits1 )
     connect( s.full, s.deq.val )
 
-    @s.update_on_edge
+    @s.update_ff
     def up_full():
-      s.full = s.next_full
+      s.full <<= s.next_full
 
-    if Type is int:
-      @s.update
-      def up_pipeq_set_enq_rdy():
-        s.enq.rdy = (not s.full) | s.deq.rdy
+    @s.update
+    def up_pipeq_set_enq_rdy():
+      s.enq.rdy = ~s.full | s.deq.rdy
 
-      @s.update
-      def up_pipeq_full():
-        s.buffer.en    = s.enq.val & s.enq.rdy
-        s.next_full = s.enq.val | (s.full & (not s.deq.rdy))
-
-    else:
-      @s.update
-      def up_pipeq_set_enq_rdy():
-        s.enq.rdy = ~s.full | s.deq.rdy
-
-      @s.update
-      def up_pipeq_full():
-        s.buffer.en    = s.enq.val & s.enq.rdy
-        s.next_full = s.enq.val | (s.full & ~s.deq.rdy)
+    @s.update
+    def up_pipeq_full():
+      s.buffer.en = s.enq.val & s.enq.rdy
+      s.next_full = s.enq.val | (s.full & ~s.deq.rdy)
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
@@ -53,8 +41,8 @@ class BypassQueue1RTL( Component ):
 
     s.buffer = RegEn( Type )( in_ = s.enq.msg )
 
-    s.next_full = Wire( int if Type is int else Bits1 )
-    s.full      = Wire( int if Type is int else Bits1 )
+    s.next_full = Wire( Bits1 )
+    s.full      = Wire( Bits1 )
 
     s.byp_mux = Mux( Type, 2 )(
       out = s.deq.msg,
@@ -63,28 +51,18 @@ class BypassQueue1RTL( Component ):
       sel = s.full, # full -- buffer.out, empty -- bypass
     )
 
-    @s.update_on_edge
+    @s.update_ff
     def up_full():
-      s.full = s.next_full
+      s.full <<= s.next_full
 
-    if Type is int:
-      @s.update
-      def up_bypq_set_enq_rdy():
-        s.enq.rdy = not s.full
+    @s.update
+    def up_bypq_set_enq_rdy():
+      s.enq.rdy = ~s.full
 
-      @s.update
-      def up_bypq_internal():
-        s.buffer.en    = (not s.deq.rdy) & (s.enq.val & s.enq.rdy)
-        s.next_full = (not s.deq.rdy) & s.deq.val
-    else:
-      @s.update
-      def up_bypq_set_enq_rdy():
-        s.enq.rdy = ~s.full
-
-      @s.update
-      def up_bypq_internal():
-        s.buffer.en    = (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
-        s.next_full = (~s.deq.rdy) & s.deq.val
+    @s.update
+    def up_bypq_internal():
+      s.buffer.en = (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
+      s.next_full = (~s.deq.rdy) & s.deq.val
 
     # this enables the sender to make enq.val depend on enq.rdy
     @s.update
@@ -104,38 +82,27 @@ class NormalQueue1RTL( Component ):
 
     s.buffer  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
 
-    s.next_full = Wire( int if Type is int else Bits1 )
-    s.full      = Wire( int if Type is int else Bits1 )
+    s.next_full = Wire( Bits1 )
+    s.full      = Wire( Bits1 )
     connect( s.full, s.deq.val )
 
-    @s.update_on_edge
+    @s.update_ff
     def up_full():
-      s.full = s.next_full
+      s.full <<= s.next_full
 
-    if Type is int:
-      @s.update
-      def up_normq_set_enq_rdy():
-        s.enq.rdy = not s.full
+    @s.update
+    def up_normq_set_enq_rdy():
+      s.enq.rdy = ~s.full
 
-      @s.update
-      def up_normq_internal():
-        s.buffer.en    = s.enq.val & s.enq.rdy
-        s.next_full = (s.full & (not s.deq.rdy)) | s.buffer.en
-    else:
-      @s.update
-      def up_normq_set_enq_rdy():
-        s.enq.rdy = ~s.full
-
-      @s.update
-      def up_normq_internal():
-        s.buffer.en    = s.enq.val & s.enq.rdy
-        s.next_full = (s.full & ~s.deq.rdy) | s.buffer.en
+    @s.update
+    def up_normq_internal():
+      s.buffer.en = s.enq.val & s.enq.rdy
+      s.next_full = (s.full & ~s.deq.rdy) | s.buffer.en
 
   def line_trace( s ):
     return s.enq.line_trace() + " > " + \
             ("*" if s.full else " ") + " > " + \
             s.deq.line_trace()
-
 
 #-----------------------------------------------------------------------
 # NormalQueueRTL
@@ -306,16 +273,17 @@ class NormalQueueRTLCtrl( Component ):
       s.waddr   = s.enq_ptr
       s.raddr   = s.deq_ptr
 
-    @s.update_on_edge
+    @s.update_ff
     def seq():
 
-      if s.reset: s.deq_ptr = AddrType( 0 )
-      else:       s.deq_ptr = s.deq_ptr_next
+      if s.reset:
+        s.deq_ptr <<= AddrType( 0 )
+        s.enq_ptr <<= AddrType( 0 )
+      else:
+        s.deq_ptr <<= s.deq_ptr_next
+        s.enq_ptr <<= s.enq_ptr_next
 
-      if s.reset: s.enq_ptr = AddrType( 0 )
-      else:       s.enq_ptr = s.enq_ptr_next
-
-      if   s.reset:               s.full = Bits1(0)
-      elif s.full_next_cycle:     s.full = Bits1(1)
-      elif (s.do_deq and s.full): s.full = Bits1(0)
-      else:                       s.full = s.full
+      if   s.reset:               s.full <<= Bits1(0)
+      elif s.full_next_cycle:     s.full <<= Bits1(1)
+      elif (s.do_deq and s.full): s.full <<= Bits1(0)
+      else:                       s.full <<= s.full

@@ -61,9 +61,9 @@ def test_seq_assign( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      @s.update_on_edge
+      @s.update_ff
       def upblk():
-        s.out = s.in_
+        s.out <<= s.in_
   a = A()
   a._ref_src = \
 """
@@ -77,9 +77,9 @@ module A
 
   // PYMTL SOURCE:
   //
-  // @s.update_on_edge
+  // @s.update_ff
   // def upblk():
-  //   s.out = s.in_
+  //   s.out <<= s.in_
 
   always_ff @(posedge clk) begin : upblk
     out <= in_;
@@ -279,7 +279,7 @@ module A
   output logic [63:0] out,
   input logic [0:0] reset
 );
-  localparam [31:0] __const$STATE_IDLE = 32'd42;
+  localparam [31:0] __const__STATE_IDLE = 32'd42;
 
   // PYMTL SOURCE:
   //
@@ -288,7 +288,7 @@ module A
   //   s.out = concat( s.in_, STATE_IDLE )
 
   always_comb begin : upblk
-    out = { in_, __const$STATE_IDLE };
+    out = { in_, __const__STATE_IDLE };
   end
 
 endmodule
@@ -353,8 +353,8 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  input logic [31:0] in_$__0,
-  input logic [31:0] in_$__1,
+  input logic [31:0] in___0,
+  input logic [31:0] in___1,
   output logic [63:0] out,
   input logic [0:0] reset
 );
@@ -370,8 +370,8 @@ module A
     out = { in_[0], in_[1] };
   end
 
-  assign in_[0] = in_$__0;
-  assign in_[1] = in_$__1;
+  assign in_[0] = in___0;
+  assign in_[1] = in___1;
 
 endmodule
 """
@@ -630,11 +630,11 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset,
   output logic [31:0] tmp
 );
@@ -650,11 +650,11 @@ module A
     tmp = 32'd1;
   end
 
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
   assign out[0] = 32'd1;
   assign out[1] = 32'd2;
   assign out[2] = 32'd3;
@@ -750,21 +750,21 @@ endmodule
 module A
 (
   input logic [0:0] clk,
-  output logic [31:0] out$__0,
-  output logic [31:0] out$__1,
-  output logic [31:0] out$__2,
-  output logic [31:0] out$__3,
-  output logic [31:0] out$__4,
+  output logic [31:0] out__0,
+  output logic [31:0] out__1,
+  output logic [31:0] out__2,
+  output logic [31:0] out__3,
+  output logic [31:0] out__4,
   input logic [0:0] reset
 );
   logic [31:0] out [0:4];
   logic [31:0] wire_ [0:4];
 
-  assign out$__0 = out[0];
-  assign out$__1 = out[1];
-  assign out$__2 = out[2];
-  assign out$__3 = out[3];
-  assign out$__4 = out[4];
+  assign out__0 = out[0];
+  assign out__1 = out[1];
+  assign out__2 = out[2];
+  assign out__3 = out[3];
+  assign out__4 = out[4];
   assign out[0] = wire_[0];
   assign wire_[0] = 32'd0;
   assign out[1] = wire_[1];

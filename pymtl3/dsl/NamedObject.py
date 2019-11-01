@@ -19,6 +19,7 @@ Author : Shunning Jiang, Yanghui Ou
 Date   : Nov 3, 2018
 """
 import re
+from collections import deque
 
 from .errors import NotElaboratedError
 
@@ -94,7 +95,7 @@ class ParamTreeNode:
     cur_node.leaf[ func_name].update( kwargs )
 
   def __repr__( self ):
-    return "\nleaf:{}\nchildren:{}".format( self.leaf, self.children )
+    return f"\nleaf:{self.leaf}\nchildren:{self.children}"
 
 class NamedObject:
 
@@ -139,66 +140,132 @@ class NamedObject:
 
   def __setattr_for_elaborate__( s, name, obj ):
 
-    # I use non-recursive traversal to reduce error message depth
+    # I use non-recursive BFS to reduce error message depth
 
-    if not name.startswith("_"):
-      stack = [ (obj, []) ]
-      while stack:
-        u, indices = stack.pop()
+    if name[0] != '_': # filter private variables
+      sd = s._dsl
 
-        if isinstance( u, NamedObject ):
-          # try:
-            u._dsl.parent_obj = s
-            u._dsl.level      = s._dsl.level + 1
-            u._dsl.my_name    = u_name = name + "".join( [ "[{}]".format(x)
-                                                           for x in indices ] )
+      # Shunning: here I optimize for common cases where the object is a NamedObject.
+      # I used to push the object directly to a stack to reuse the code across
+      # both NamedObject and list cases. Now I basically avoid the stack overheads
+      # for common cases.
+      if isinstance( obj, NamedObject ):
+        ud = obj._dsl
+
+        ud.parent_obj = s
+        ud.level      = sd.level + 1
+
+        ud._my_name  = ud.my_name = name
+        ud.full_name = f"{sd.full_name}.{name}"
+
+        ud._my_indices = None
+
+        # Iterate through the param_tree and update u
+        if sd.param_tree is not None:
+          if sd.param_tree.children is not None:
+            for comp_name, node in sd.param_tree.children.items():
+              if comp_name == name:
+                # Lazily create the param tree
+                if ud.param_tree is None:
+                  ud.param_tree = ParamTreeNode()
+                ud.param_tree.merge( node )
+
+              elif node.compiled_re is not None:
+                if node.compiled_re.match( name ):
+                  # Lazily create the param tree
+                  if ud.param_tree is None:
+                    ud.param_tree = ParamTreeNode()
+                  ud.param_tree.merge( node )
+
+        # Point u's top to my top
+        top = sd.elaborate_top
+        ud.elaborate_top = top
+
+        top._dsl.elaborate_stack.append( obj )
+        obj._construct()
+        top._dsl.elaborate_stack.pop()
+
+      # ONLY LIST IS SUPPORTED, SORRY.
+      # I don't want to support any iterable object because later "Wire"
+      # can be infinitely iterated and cause infinite loop. Special
+      # casing Wire will be a mess around everywhere.
+
+      elif isinstance( obj, list ) and obj and isinstance( obj[0], (NamedObject, list) ):
+        sd = s._dsl
+
+        Q = deque( (u, (i,)) for i, u in enumerate(obj) )
+
+        while Q:
+          u, indices = Q.popleft()
+
+          if isinstance( u, NamedObject ):
+            ud = u._dsl
+
+            ud.parent_obj = s
+            ud.level      = sd.level + 1
+
+            ud._my_name  = name
+            ud.my_name   = u_name = name + "".join( [ f"[{x}]" for x in indices ] )
+            ud.full_name = f"{sd.full_name}.{u_name}"
+
+            ud._my_indices = indices
 
             # Iterate through the param_tree and update u
-            if s._dsl.param_tree is not None:
-              if s._dsl.param_tree.children is not None:
-                for comp_name, node in s._dsl.param_tree.children.items():
+            if sd.param_tree is not None:
+              if sd.param_tree.children is not None:
+                for comp_name, node in sd.param_tree.children.items():
                   if comp_name == u_name:
                     # Lazily create the param tree
-                    if u._dsl.param_tree is None:
-                      u._dsl.param_tree = ParamTreeNode()
-                    u._dsl.param_tree.merge( node )
+                    if ud.param_tree is None:
+                      ud.param_tree = ParamTreeNode()
+                    ud.param_tree.merge( node )
 
                   elif node.compiled_re is not None:
                     if node.compiled_re.match( u_name ):
                       # Lazily create the param tree
-                      if u._dsl.param_tree is None:
-                        u._dsl.param_tree = ParamTreeNode()
-                      u._dsl.param_tree.merge( node )
-
-            s_name = s._dsl.full_name
-            u._dsl.full_name = ( s_name + "." + u_name )
-
-            # store the name/indices
-            u._dsl._my_name     = name
-            u._dsl._my_indices  = indices
+                      if ud.param_tree is None:
+                        ud.param_tree = ParamTreeNode()
+                      ud.param_tree.merge( node )
 
             # Point u's top to my top
-            top = s._dsl.elaborate_top
-            u._dsl.elaborate_top = top
+            top = sd.elaborate_top
+            ud.elaborate_top = top
 
             top._dsl.elaborate_stack.append( u )
             u._construct()
             top._dsl.elaborate_stack.pop()
 
-          # except AttributeError as e:
-          #   raise AttributeError(e.message+"\n"+"(Suggestion: in {}:\n   Please put all logic in construct " \
-          #                        "instead of __init__.)".format( s.__class__ ) )
-
-        # ONLY LIST IS SUPPORTED, SORRY.
-        # I don't want to support any iterable object because later "Wire"
-        # can be infinitely iterated and cause infinite loop. Special
-        # casing Wire will be a mess around everywhere.
-
-        elif isinstance( u, list ):
-          for i, v in enumerate( u ):
-            stack.append( (v, indices+[i]) )
+          elif isinstance( u, list ):
+            Q.extend( (v, indices+(i,)) for i, v in enumerate(u) )
 
     super().__setattr__( name, obj )
+
+  def _collect_all_single( s, filt=lambda x: isinstance( x, NamedObject ) ):
+    ret = set()
+    stack = [s]
+    while stack:
+      u = stack.pop()
+
+      if   isinstance( u, NamedObject ):
+        if filt( u ): # Check if m satisfies the filter
+          ret.add( u )
+
+        for name, obj in u.__dict__.items():
+
+          # If the id is string, it is a normal children field. Otherwise it
+          # should be an tuple that represents a slice
+
+          if   isinstance( name, str ):
+            if name[0] != '_': # filter private variables
+              stack.append( obj )
+
+          elif isinstance( name, tuple ): # name = [1:3]
+            stack.append( obj )
+
+      # ONLY LIST IS SUPPORTED
+      elif isinstance( u, list ):
+        stack.extend( u )
+    return ret
 
   # It is possible to take multiple filters
   def _collect_all( s, filt=[ lambda x: isinstance( x, NamedObject ) ] ):
@@ -218,7 +285,7 @@ class NamedObject:
           # should be an tuple that represents a slice
 
           if   isinstance( name, str ):
-            if not name.startswith("_"): # filter private variables
+            if name[0] != '_': # filter private variables
               stack.append( obj )
 
           elif isinstance( name, tuple ): # name = [1:3]
@@ -308,7 +375,7 @@ class NamedObject:
     del s._dsl.elaborate_stack
 
   def _elaborate_collect_all_named_objects( s ):
-    s._dsl.all_named_objects = s._collect_all()[0]
+    s._dsl.all_named_objects = s._collect_all_single()
 
   def elaborate( s ):
     s._elaborate_construct()

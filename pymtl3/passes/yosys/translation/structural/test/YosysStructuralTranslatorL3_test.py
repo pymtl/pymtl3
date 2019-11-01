@@ -5,7 +5,7 @@
 # Date   : June 13, 2019
 """Test the level 3 yosys-SystemVerilog structural translator."""
 
-from pymtl3.datatypes import Bits1, Bits32, BitStruct
+from pymtl3.datatypes import Bits1, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
@@ -61,52 +61,52 @@ def test_ifc_array( do_test ):
   a = A()
   a._ref_ifcs_port_yosys = { a : \
 """\
-  input logic [31:0] in_$__0$msg,
-  input logic [31:0] in_$__1$msg,
-  output logic [0:0] in_$__0$rdy,
-  output logic [0:0] in_$__1$rdy,
-  input logic [0:0] in_$__0$val,
-  input logic [0:0] in_$__1$val,
-  output logic [31:0] out$__0$msg,
-  output logic [31:0] out$__1$msg,
-  input logic [0:0] out$__0$rdy,
-  input logic [0:0] out$__1$rdy,
-  output logic [0:0] out$__0$val,
-  output logic [0:0] out$__1$val\
+  input logic [31:0] in___0__msg,
+  input logic [31:0] in___1__msg,
+  output logic [0:0] in___0__rdy,
+  output logic [0:0] in___1__rdy,
+  input logic [0:0] in___0__val,
+  input logic [0:0] in___1__val,
+  output logic [31:0] out__0__msg,
+  output logic [31:0] out__1__msg,
+  input logic [0:0] out__0__rdy,
+  input logic [0:0] out__1__rdy,
+  output logic [0:0] out__0__val,
+  output logic [0:0] out__1__val\
 """ }
   a._ref_ifcs_wire_yosys = { a : \
 """\
-  logic [31:0] in_$msg [0:1];
-  logic [0:0] in_$rdy [0:1];
-  logic [0:0] in_$val [0:1];
-  logic [31:0] out$msg [0:1];
-  logic [0:0] out$rdy [0:1];
-  logic [0:0] out$val [0:1];\
+  logic [31:0] in___msg [0:1];
+  logic [0:0] in___rdy [0:1];
+  logic [0:0] in___val [0:1];
+  logic [31:0] out__msg [0:1];
+  logic [0:0] out__rdy [0:1];
+  logic [0:0] out__val [0:1];\
 """ }
   a._ref_ifcs_conn_yosys = { a : \
 """\
-  assign in_$msg[0] = in_$__0$msg;
-  assign in_$msg[1] = in_$__1$msg;
-  assign in_$__0$rdy = in_$rdy[0];
-  assign in_$__1$rdy = in_$rdy[1];
-  assign in_$val[0] = in_$__0$val;
-  assign in_$val[1] = in_$__1$val;
-  assign out$__0$msg = out$msg[0];
-  assign out$__1$msg = out$msg[1];
-  assign out$rdy[0] = out$__0$rdy;
-  assign out$rdy[1] = out$__1$rdy;
-  assign out$__0$val = out$val[0];
-  assign out$__1$val = out$val[1];\
+  assign in___msg[0] = in___0__msg;
+  assign in___msg[1] = in___1__msg;
+  assign in___0__rdy = in___rdy[0];
+  assign in___1__rdy = in___rdy[1];
+  assign in___val[0] = in___0__val;
+  assign in___val[1] = in___1__val;
+  assign out__0__msg = out__msg[0];
+  assign out__1__msg = out__msg[1];
+  assign out__rdy[0] = out__0__rdy;
+  assign out__rdy[1] = out__1__rdy;
+  assign out__0__val = out__val[0];
+  assign out__1__val = out__val[1];\
 """
 }
   a._ref_conns_yosys = { a : \
 """\
-  assign out$msg[0] = in_$msg[1];
-  assign in_$rdy[1] = out$rdy[0];
-  assign out$val[0] = in_$val[1];
-  assign out$msg[1] = in_$msg[0];
-  assign in_$rdy[0] = out$rdy[1];
-  assign out$val[1] = in_$val[0];\
+  assign out__msg[0] = in___msg[1];
+  assign in___rdy[1] = out__rdy[0];
+  assign out__val[0] = in___val[1];
+  assign out__msg[1] = in___msg[0];
+  assign in___rdy[0] = out__rdy[1];
+  assign out__val[1] = in___val[0];\
 """ }
 
   # TestVectorSimulator properties
@@ -129,9 +129,9 @@ def test_ifc_array( do_test ):
   do_test( a )
 
 def test_struct_ifc( do_test ):
-  class bstruct( BitStruct ):
-    def __init__( s, bar=42 ):
-      s.bar = Bits32(bar)
+  @bitstruct
+  class bstruct:
+    bar: Bits32
   class Ifc( Interface ):
     def construct( s ):
       s.foo = InPort( bstruct )
@@ -143,25 +143,25 @@ def test_struct_ifc( do_test ):
   a = A()
   a._ref_ifcs_port_yosys = { a : \
 """\
-  input logic [31:0] in_$__0$foo$bar,
-  input logic [31:0] in_$__1$foo$bar\
+  input logic [31:0] in___0__foo__bar,
+  input logic [31:0] in___1__foo__bar\
 """ }
   a._ref_ifcs_wire_yosys = { a : \
 """\
-  logic [31:0] in_$foo$bar [0:1];
-  logic [31:0] in_$foo [0:1];\
+  logic [31:0] in___foo__bar [0:1];
+  logic [31:0] in___foo [0:1];\
 """ }
   a._ref_ifcs_conn_yosys = { a : \
 """\
-  assign in_$foo$bar[0] = in_$__0$foo$bar;
-  assign in_$foo$bar[1] = in_$__1$foo$bar;
-  assign in_$foo[0][31:0] = in_$__0$foo$bar;
-  assign in_$foo[1][31:0] = in_$__1$foo$bar;\
+  assign in___foo__bar[0] = in___0__foo__bar;
+  assign in___foo__bar[1] = in___1__foo__bar;
+  assign in___foo[0][31:0] = in___0__foo__bar;
+  assign in___foo[1][31:0] = in___1__foo__bar;\
 """
 }
   a._ref_conns_yosys = { a : \
 """\
-  assign out = in_$foo$bar[1];\
+  assign out = in___foo__bar[1];\
 """ }
 
   # TestVectorSimulator properties

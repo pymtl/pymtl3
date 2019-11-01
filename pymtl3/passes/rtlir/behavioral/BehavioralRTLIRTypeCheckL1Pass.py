@@ -138,13 +138,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Weak type checking (agreeable types)
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError( s.blk, node.ast,
-        'Unagreeable types {} and {}!'.format( lhs_type, rhs_type ) )
+        f'Unagreeable types {lhs_type} and {rhs_type}!' )
 
     # Strong type checking (same type)
     if rhs_type != lhs_type:
       raise PyMTLTypeError( s.blk, node.ast,
-        'LHS and RHS of assignment should have the same type ({} vs {})!'. \
-            format( lhs_type, rhs_type ) )
+        f'LHS and RHS of assignment should have the same type ({lhs_type} vs {rhs_type})!' )
 
     node.Type = None
 
@@ -156,7 +155,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       t = rt.get_rtlir( node.obj )
     except RTLIRConversionError as e:
       raise PyMTLTypeError(s.blk, node.ast,
-        '{} cannot be converted into a valid RTLIR object!'.format(node.name))
+        f'{node.name} cannot be converted into a valid RTLIR object!' )
 
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
       node._value = mk_bits( t.get_dtype().get_length() )( node.obj )
@@ -168,7 +167,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node.Type = rt.get_rtlir( node.base )
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
-        '{} is not a rt.Component!'.format( node ) )
+        f'{node} is not a rt.Component!' )
 
   def visit_Number( s, node ):
     # By default, number literals have bitwidth of 32
@@ -180,7 +179,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     for child in node.values:
       if not isinstance(child.Type, rt.Signal):
         raise PyMTLTypeError( s.blk, node.ast,
-          '{} is not a signal!'.format( child ) )
+          f'{child} is not a signal!' )
       nbits += child.Type.get_dtype().get_length()
     node.Type = rt.NetWire( rdt.Vector( nbits ) )
 
@@ -189,12 +188,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       new_nbits = node.nbits._value
     except AttributeError:
       raise PyMTLTypeError( s.blk, node.ast,
-        '{} is not a constant number!'.format( node.nbits ) )
+        f'{node.nbits} is not a constant number!' )
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits <= old_nbits:
       raise PyMTLTypeError( s.blk, node.ast,
-        '{} is not greater than {}!'.format(new_nbits, old_nbits) )
+        f'{new_nbits} is not greater than {old_nbits}!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
 
@@ -203,12 +202,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       new_nbits = node.nbits._value
     except AttributeError:
       raise PyMTLTypeError( s.blk, node.ast,
-        '{} is not a constant number!'.format( node.nbits ) )
+        f'{node.nbits} is not a constant number!' )
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits <= old_nbits:
       raise PyMTLTypeError( s.blk, node.ast,
-        '{} is not greater than {}!'.format(new_nbits, old_nbits) )
+        f'{new_nbits} is not greater than {old_nbits}!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
 
@@ -236,17 +235,17 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if isinstance( node.value, bir.Base ):
       if not node.value.Type.has_property( node.attr ):
         raise PyMTLTypeError( s.blk, node.ast,
-          'type {} does not have attribute {}!'.format(node.value.Type, node.attr))
+          f'type {node.value.Type} does not have attribute {node.attr}!' )
       s.accessed.add( node.attr )
 
     else:
       raise PyMTLTypeError( s.blk, node.ast,
-        'non-component attribute is not supported at L1!'.format(node.attr, node.value.Type))
+        f'non-component attribute {node.attr} of type {node.value.Type} is not supported at L1!' )
     # value.attr has the type that is specified by the base
     node.Type = node.value.Type.get_property( node.attr )
 
   def visit_Index( s, node ):
-    idx = getattr( node.idx, '_value', None )
+    idx = None if not hasattr(node.idx, "_value") else node.idx._value
     if isinstance( node.value.Type, rt.Array ):
       if idx is not None and not (0 <= idx < node.value.Type.get_dim_sizes()[0]):
         raise PyMTLTypeError( s.blk, node.ast, 'array index out of range!' )
@@ -272,21 +271,20 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         node.Type = rt.NetWire( rdt.Vector( 1 ) )
       else:
         raise PyMTLTypeError( s.blk, node.ast,
-          'cannot perform index on {}!'.format(dtype))
+          f'cannot perform index on {dtype}!')
 
     else:
       # Should be unreachable
       raise PyMTLTypeError( s.blk, node.ast,
-        'cannot perform index on {}!'.format(node.value.Type))
+        f'cannot perform index on {node.value.Type}!')
 
   def visit_Slice( s, node ):
-    lower_val = getattr( node.lower, '_value', None )
-    upper_val  = getattr( node.upper, '_value', None )
+    lower_val = None if not hasattr(node.lower, "_value") else node.lower._value
+    upper_val = None if not hasattr(node.upper, "_value") else node.upper._value
     dtype = node.value.Type.get_dtype()
 
     if not isinstance( dtype, rdt.Vector ):
-      raise PyMTLTypeError( s.blk, node.ast,
-        'cannot perform slicing on type {}!'.format(dtype))
+      raise PyMTLTypeError( s.blk, node.ast, f'cannot perform slicing on type {dtype}!')
 
     if not lower_val is None and not upper_val is None:
       signal_nbits = dtype.get_length()

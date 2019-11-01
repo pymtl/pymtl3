@@ -29,15 +29,14 @@ class YosysStructuralTranslatorL2(
       "direction" : d,
       "pid" : pid,
       "wid" : wid,
-      "idx" : idx + "[{msb}:{lsb}]".format( **locals() ),
+      "idx" : idx + f"[{msb}:{lsb}]",
       "present" : True
     } ]
 
   def vec_conn_struct_gen( s, d, c_nbits, pid, wid, idx, dtype ):
-    all_properties = dtype.get_all_properties()
     ret = []
-    for name, field in all_properties:
-      ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"$"+name, wid, idx, field )
+    for name, field in dtype.get_all_properties().items():
+      ret += s.vec_conn_dtype_gen( d, c_nbits, pid+"__"+name, wid, idx, field )
       c_nbits -= field.get_length()
     return ret
 
@@ -51,7 +50,7 @@ class YosysStructuralTranslatorL2(
         dec_nbits = p_nbits // n_dim[0]
         for i in reversed( range( n_dim[0]) ):
           ret += \
-            _packed_gen(d, c_nbits, pid+"$__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
+            _packed_gen(d, c_nbits, pid+"__"+str(i), wid, idx, n_dim[1:], dec_nbits, dtype)
           c_nbits -= dec_nbits
           assert c_nbits >= 0
         return ret
@@ -68,17 +67,16 @@ class YosysStructuralTranslatorL2(
       return s.vec_conn_struct_gen( d, c_nbits, pid, wid, idx, dtype )
     elif isinstance( dtype, rdt.PackedArray ):
       return s.vec_conn_packed_gen( d, c_nbits, pid, wid, idx, dtype )
-    else:
-      assert False, "unrecognized data type {}!".format( dtype )
+
+    raise TypeError( f"unrecognized data type {dtype}!" )
 
   def struct_conn_gen( s, d, pid, wid, idx, dtype ):
-    all_properties = dtype.get_all_properties()
     ret = []
-    for name, field in all_properties:
-      ret += s.dtype_conn_gen( d, pid+"$"+name, wid+"$"+name, idx, field )
+    for name, field in dtype.get_all_properties().items():
+      ret += s.dtype_conn_gen( d, pid+"__"+name, wid+"__"+name, idx, field )
     cur_nbits = dtype.get_length()
-    for name, field in all_properties:
-      ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"$"+name, wid, idx, field )
+    for name, field in dtype.get_all_properties().items():
+      ret += s.vec_conn_dtype_gen( d, cur_nbits, pid+"__"+name, wid, idx, field )
       cur_nbits -= field.get_length()
     assert cur_nbits == 0
     return ret
@@ -89,8 +87,8 @@ class YosysStructuralTranslatorL2(
     else:
       ret = []
       for i in range( n_dim[0] ):
-        _pid = pid + "$__{}".format(i)
-        _idx = idx + "[{}]".format(i)
+        _pid = f"{pid}__{i}"
+        _idx = f"{idx}[{i}]"
         ret += s._packed_conn_gen( d, _pid, wid, _idx, n_dim[1:], dtype )
       return ret
 
@@ -105,20 +103,17 @@ class YosysStructuralTranslatorL2(
     elif isinstance( dtype, rdt.PackedArray ):
       return s.packed_conn_gen( d, pid, wid, idx, dtype )
     else:
-      return \
-        super().dtype_conn_gen( d, pid, wid,
-                                                             idx, dtype )
+      return super().dtype_conn_gen( d, pid, wid, idx, dtype )
 
   #-----------------------------------------------------------------------
   # Port wire declaration helper method
   #-----------------------------------------------------------------------
 
   def wire_struct_gen( s, id_, dtype, n_dim ):
-    all_properties = dtype.get_all_properties()
     ret = []
     # Generate wire for each field
-    for name, field in all_properties:
-      ret += s.wire_dtype_gen( id_+"$"+name, field, n_dim )
+    for name, field in dtype.get_all_properties().items():
+      ret += s.wire_dtype_gen( id_+"__"+name, field, n_dim )
     # Generate a long vector for this struct signal
     ret.append( {
       "msb" : dtype.get_length()-1,
@@ -165,7 +160,7 @@ class YosysStructuralTranslatorL2(
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += s._packed_gen( d, id_+"$__{}".format(i), n_dim[1:], dtype )
+        ret += s._packed_gen( d, f"{id_}__{i}", n_dim[1:], dtype )
       return ret
 
   def packed_gen( s, d, id_, _dtype ):
@@ -174,10 +169,9 @@ class YosysStructuralTranslatorL2(
     return s._packed_gen( d, id_, n_dim, dtype )
 
   def struct_gen( s, d, id_, dtype ):
-    all_properties = dtype.get_all_properties()
     ret = []
-    for name, field in all_properties:
-      ret += s.dtype_gen( d, id_+"$"+name, field )
+    for name, field in dtype.get_all_properties().items():
+      ret += s.dtype_gen( d, id_+"__"+name, field )
     return ret
 
   def dtype_gen( s, d, id_, dtype ):
@@ -197,12 +191,12 @@ class YosysStructuralTranslatorL2(
   def rtlir_tr_packed_index( s, base_signal, index ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
-    return '{base_signal}[{index}]'.format( **locals() )
+    return f'{base_signal}[{index}]'
 
   def rtlir_tr_struct_attr( s, base_signal, attr ):
-    s.deq[-1]['s_attr'] += "${}"
+    s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
-    return '{base_signal}.{attr}'.format( **locals() )
+    return f'{base_signal}.{attr}'
 
   def rtlir_tr_struct_instance( s, dtype, struct ):
     def _gen_packed_array( dtype, n_dim, array ):
@@ -212,7 +206,7 @@ class YosysStructuralTranslatorL2(
         elif isinstance( dtype, rdt.Struct ):
           return s.rtlir_tr_struct_instance( dtype, array )
         else:
-          assert False, "unrecognized data type {}!".format( dtype )
+          assert False, f"unrecognized data type {dtype}!"
       else:
         ret = []
         for i in reversed( range( n_dim[0]) ):
@@ -224,8 +218,7 @@ class YosysStructuralTranslatorL2(
           cat_str = ", ".join( ret )
         return {'attr':[], 'index':[], 's_attr':cat_str, 's_index':""}
     fields = []
-    all_properties = dtype.get_all_properties()
-    for name, Type in all_properties:
+    for name, Type in dtype.get_all_properties().items():
       field = getattr( struct, name )
       if isinstance( Type, rdt.Vector ):
         _field = s.rtlir_tr_literal_number( Type.nbits, field )
@@ -236,7 +229,7 @@ class YosysStructuralTranslatorL2(
         sub_dtype = Type.get_sub_dtype()
         _field = _gen_packed_array( sub_dtype, n_dim, field )
       else:
-        assert False, "unrecognized data type {}!".format( Type )
+        assert False, f"unrecognized data type {Type}!"
       fields.append( _field["s_attr"] )
     if len( fields ) == 1:
       struct_str = fields[0]

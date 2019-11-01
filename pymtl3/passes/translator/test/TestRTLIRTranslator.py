@@ -45,7 +45,7 @@ component {component_name}
 endcomponent
 """
     ports_template = "{port_decls}{ifc_decls}"
-    component_name = getattr(structural, "component_unique_name", "")
+    component_name = structural.component_unique_name
 
     port_decls = get_pretty(structural, "decl_ports", False)
     ifc_decls = get_pretty(structural, "decl_ifcs", False)

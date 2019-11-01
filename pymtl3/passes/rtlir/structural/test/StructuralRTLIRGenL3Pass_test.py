@@ -26,7 +26,7 @@ def test_L3_ifc_view_attr():
       dsl.connect( s.out, s.in_.msg )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL3Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
@@ -43,7 +43,7 @@ def test_L3_ifc_view_index():
       dsl.connect( s.in_[2].msg, s.out )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL3Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
@@ -70,7 +70,7 @@ def test_L3_ifc_view_connection():
       dsl.connect( s.out, s.in_ )
   a = A()
   a.elaborate()
-  a.apply( StructuralRTLIRGenL3Pass( *gen_connections( a ) ) )
+  a.apply( StructuralRTLIRGenL3Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   ref = \

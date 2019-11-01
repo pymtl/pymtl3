@@ -1,4 +1,3 @@
-
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import InValRdyIfc, OutValRdyIfc
 from pymtl3.stdlib.test import TestVectorSimulator
@@ -25,19 +24,6 @@ def run_test_queue( model, test_vectors ):
   sim = TestVectorSimulator( model, test_vectors, tv_in, tv_out )
   sim.run_test()
 
-def test_bypass_int():
-
-  run_test_queue( BypassQueue1RTL( int ), [
-    # enq.val enq.rdy enq.msg deq.val deq.rdy deq.msg
-    [    1   ,   1   ,  123  ,   1   ,   1   ,  123  ],
-    [    1   ,   1   ,  345  ,   1   ,   0   ,  345  ],
-    [    1   ,   0   ,  567  ,   1   ,   0   ,  345  ],
-    [    1   ,   0   ,  567  ,   1   ,   1   ,  345  ],
-    [    1   ,   1   ,  567  ,   1   ,   1   ,  567  ],
-    [    0   ,   1   ,  0    ,   0   ,   1   ,  '?'  ],
-    [    0   ,   1   ,  0    ,   0   ,   0   ,  '?'  ],
-  ] )
-
 def test_bypass_Bits():
 
   B1  = mk_bits(1)
@@ -53,19 +39,6 @@ def test_bypass_Bits():
     [  B1(0) , B1(1) ,B32(0  ), B1(0) , B1(0) ,  '?'    ],
   ] )
 
-def test_pipe_int():
-
-  run_test_queue( PipeQueue1RTL( int ), [
-    # enq.val enq.rdy enq.msg deq.val deq.rdy deq.msg
-    [    1   ,   1   ,  123  ,   0   ,   1   ,  '?'  ],
-    [    1   ,   0   ,  345  ,   1   ,   0   ,  123  ],
-    [    1   ,   0   ,  567  ,   1   ,   0   ,  123  ],
-    [    1   ,   1   ,  567  ,   1   ,   1   ,  123  ],
-    [    1   ,   1   ,  789  ,   1   ,   1   ,  567  ],
-    [    0   ,   1   ,  0    ,   1   ,   1   ,  789  ],
-    [    0   ,   1   ,  0    ,   0   ,   0   ,  '?'  ],
-  ] )
-
 def test_pipe_Bits():
 
   B1  = mk_bits(1)
@@ -79,20 +52,6 @@ def test_pipe_Bits():
     [  B1(1) , B1(1) ,B32(789), B1(1) , B1(1) ,B32(567) ],
     [  B1(0) , B1(1) ,B32(0  ), B1(1) , B1(1) ,B32(789) ],
     [  B1(0) , B1(1) ,B32(0  ), B1(0) , B1(0) ,  '?'    ],
-  ] )
-
-
-def test_normal_int():
-
-  run_test_queue( NormalQueue1RTL( int ), [
-    # enq.val enq.rdy enq.msg deq.val deq.rdy deq.msg
-    [    1   ,   1   ,  123  ,   0   ,   1   ,  '?'  ],
-    [    1   ,   0   ,  345  ,   1   ,   0   ,  123  ],
-    [    1   ,   0   ,  567  ,   1   ,   0   ,  123  ],
-    [    1   ,   0   ,  567  ,   1   ,   1   ,  123  ],
-    [    1   ,   1   ,  567  ,   0   ,   1   ,  123  ],
-    [    0   ,   0   ,  0    ,   1   ,   1   ,  567  ],
-    [    0   ,   1   ,  0    ,   0   ,   0   ,  '?'  ],
   ] )
 
 def test_normal_Bits():

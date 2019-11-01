@@ -1,4 +1,3 @@
-
 from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl.Component import Component
@@ -19,7 +18,7 @@ from .dsl.Connectable import (
 from .dsl.ConstraintTypes import RD, WR, M, U
 from .passes.PassGroups import DynamicSim, SimpleSim, SimulationPass
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
   'U','M','RD','WR',
@@ -32,6 +31,6 @@ __all__ = [
 
   'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
   'mk_bits', 'Bits',
-  'mk_bit_struct', 'BitStruct',
+  'mk_bitstruct', 'bitstruct',
 ] + [ "Bits{}".format(x) for x in _bitwidths ] \
   + [ "b{}".format(x) for x in _bitwidths ]

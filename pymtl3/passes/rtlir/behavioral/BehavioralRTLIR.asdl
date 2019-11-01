@@ -9,7 +9,7 @@ module BehavioralRTLIR
   upblk = CombUpblk( string name, stmt* body )
         | SeqUpblk( string name, stmt* body )
 
-  stmt = Assign( expr target, expr value )
+  stmt = Assign( expr target, expr value, bool blocking )
        | If( expr cond, stmt* body, stmt* orelse )
        | For( loopvar_decl var, expr start, expr end, expr step, stmt* body )
 

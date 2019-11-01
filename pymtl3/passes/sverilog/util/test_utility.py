@@ -40,8 +40,7 @@ def VectorInitData( dtype ):
 
 def StructInitData( dtype ):
   data = dtype.get_class()()
-  all_properties = dtype.get_all_properties()
-  for field_name, field in all_properties:
+  for field_name, field in dtype.get_all_properties().items():
     setattr( data, field_name, DataTypeInitData( field ) )
   return data
 
@@ -64,15 +63,14 @@ def DataTypeInitData( dtype ):
     sub_dtype = dtype.get_sub_dtype()
     return PackedArrayInitData( n_dim, sub_dtype )
   else:
-    assert False, "unrecognized data type {}!".format( sub_dtype )
+    assert False, f"unrecognized data type {sub_dtype}!"
 
 def InPortInitData( id_, port ):
   return { id_ : DataTypeInitData( port.get_dtype() ) }
 
 def InterfaceInitData( id_, ifc ):
   init = {}
-  all_properties = ifc.get_all_properties_packed()
-  for prop_name, prop_rtype in all_properties:
+  for prop_name, prop_rtype in ifc.get_all_properties_packed():
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()
@@ -95,7 +93,7 @@ def ArrayInitData( id_, n_dim, subtype ):
   else:
     init = {}
     for i in range(n_dim[0]):
-      init.update( ArrayInitData(id_+'[{}]'.format(i), n_dim[1:], subtype) )
+      init.update( ArrayInitData(f'{id_}[{i}]', n_dim[1:], subtype) )
     return init
 
 #-------------------------------------------------------------------------
@@ -112,10 +110,8 @@ def VectorDataStrategy( draw, dtype ):
 @st.composite
 def StructDataStrategy( draw, dtype ):
   data = dtype.get_class()()
-  all_properties = dtype.get_all_properties()
-  for field_name, field in all_properties:
-    setattr( data, field_name, draw(
-      DataTypeDataStrategy( field ) ) )
+  for field_name, field in dtype.get_all_properties().items():
+    setattr( data, field_name, draw( DataTypeDataStrategy( field ) ) )
   return data
 
 @st.composite
@@ -139,7 +135,7 @@ def DataTypeDataStrategy( draw, dtype ):
     sub_dtype = dtype.get_sub_dtype()
     return draw( PackedArrayDataStrategy( n_dim, sub_dtype ) )
   else:
-    assert False, "unrecognized data type {}!".format( sub_dtype )
+    assert False, f"unrecognized data type {sub_dtype}!"
 
 @st.composite
 def InPortDataStrategy( draw, id_, port ):
@@ -148,8 +144,7 @@ def InPortDataStrategy( draw, id_, port ):
 @st.composite
 def InterfaceDataStrategy( draw, id_, ifc ):
   data = {}
-  all_properties = ifc.get_all_properties_packed()
-  for prop_name, prop_rtype in all_properties:
+  for prop_name, prop_rtype in ifc.get_all_properties_packed():
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()
@@ -174,7 +169,7 @@ def ArrayDataStrategy( draw, id_, n_dim, subtype ):
     data = {}
     for i in range(n_dim[0]):
       data.update(draw(
-        ArrayDataStrategy(id_+'[{}]'.format(i), n_dim[1:], subtype)))
+        ArrayDataStrategy(f'{id_}[{i}]', n_dim[1:], subtype)))
     return data
 
 @st.composite
@@ -260,7 +255,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
   def outport_filter( obj ):
     return isinstance( obj, OutPort )
 
-  assert backend in [ "sverilog", "yosys" ], "invalid backend {}!".format(backend)
+  assert backend in [ "sverilog", "yosys" ], f"invalid backend {backend}!"
 
   dut.elaborate()
   reference_output = deque()
@@ -280,8 +275,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "sveril
     for out_port in all_output_ports:
       ref = reference_output[0][out_port]
       imp = eval( "model." + out_port._dsl.my_name )
-      assert ref == imp, \
-        "Value mismatch: reference: {}, imported: {}".format( ref, imp )
+      assert ref == imp, f"Value mismatch: reference: {ref}, imported: {imp}"
     reference_output.popleft()
 
   # First simulate the pure python component to see if it has sane behavior

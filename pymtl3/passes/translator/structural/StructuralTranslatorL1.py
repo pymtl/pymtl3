@@ -13,24 +13,16 @@ from pymtl3.passes.rtlir import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
+from pymtl3.passes.rtlir.util.utility import get_component_full_name
 
 from ..BaseRTLIRTranslator import BaseRTLIRTranslator, TranslatorMetadata
 
 
 def gen_connections( top ):
-  """Return a tuple of all connections in the hierarchy whose top is `top`.
-
-  Return a three element tuple ( ss, sc, cc ). `ss` is a dictionary indexed
-  by component `m` and has a set of pairs of connected signals within component
-  `m` ( and thus is called "self_self" ). `sc` is a dictionary indexed by
-  component `m` and has a set of pairs of connected signals between component
-  `m` and its child components ( "self_child" ). `cc` is a dictionary indexed
-  by component `m` and has a set of pairs of connected signals between two
-  child components of `m` ( "child_child" ).
+  """Return a collections of all connections of each instance in the
+     hierarchy whose top is `top`.
   """
-  _top_conns_self_self = defaultdict( set )
-  _top_conns_self_child = defaultdict( set )
-  _top_conns_child_child = defaultdict( set )
+  _inst_conns = defaultdict( set )
 
   nets = top.get_all_value_nets()
   adjs = top.get_signal_adjacency_dict()
@@ -58,28 +50,24 @@ def gen_connections( top ):
           #       Both need to be added to the parent component.
 
           if writer_host is reader_host:
-            _top_conns_self_self[writer_host].add( ( u, v ) )
+            _inst_conns[writer_host].add( ( u, v ) )
           elif writer_host_parent is reader_host:
-            _top_conns_self_child[reader_host].add( ( u, v ) )
+            _inst_conns[reader_host].add( ( u, v ) )
           elif writer_host is reader_host_parent:
-            _top_conns_self_child[writer_host].add( ( u, v ) )
+            _inst_conns[writer_host].add( ( u, v ) )
           elif writer_host_parent == reader_host_parent:
-            _top_conns_child_child[writer_host_parent].add( ( u, v ) )
+            _inst_conns[writer_host_parent].add( ( u, v ) )
           else:
-            assert False, "unexpected connection type!"
+            raise TypeError( "unexpected connection type!" )
 
-  return \
-    _top_conns_self_self, _top_conns_self_child, _top_conns_child_child
+  return _inst_conns
 
 class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def __init__( s, top ):
     super().__init__( top )
     # To avoid doing redundant computation, we generate the connections of
     # the entire hierarchy once and only once here.
-    # c_ss: self-self connections
-    # c_sc: self-child connections
-    # c_cc: child-child connections
-    s.c_ss, s.c_sc, s.c_cc = gen_connections( top )
+    s.inst_conns = gen_connections( top )
 
   def clear( s, tr_top ):
     super().clear( tr_top )
@@ -100,10 +88,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
 
   def gen_structural_trans_metadata( s, tr_top ):
-    # c_ss: self-self connections
-    # c_sc: self-child connections
-    # c_cc: child-child connections
-    tr_top.apply( StructuralRTLIRGenL1Pass( s.c_ss, s.c_sc, s.c_cc ) )
+    tr_top.apply( StructuralRTLIRGenL1Pass( s.inst_conns ) )
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -118,6 +103,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     # Component metadata
     s.structural.component_name = {}
     s.structural.component_file_info = {}
+    s.structural.component_full_name = {}
     s.structural.component_unique_name = {}
 
     # Declarations
@@ -142,6 +128,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
     s.structural.component_file_info[m] = m_rtype.get_file_info()
     s.structural.component_name[m] = m_rtype.get_name()
+    s.structural.component_full_name[m] = get_component_full_name(m_rtype)
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
 
@@ -246,7 +233,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
       return ret
 
     else:
-      assert False, "unsupported RTLIR dtype {} at L1!".format( dtype )
+      assert False, f"unsupported RTLIR dtype {dtype} at L1!"
 
   #-----------------------------------------------------------------------
   # rtlir_signal_expr_translation
@@ -286,14 +273,14 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     elif isinstance( expr, sexp.BitSelection ):
       base = expr.get_base()
       assert not isinstance(base, (sexp.PartSelection, sexp.BitSelection)), \
-        'bit selection {} over bit/part selection {} is not allowed!'.format(expr, base)
+        f'bit selection {expr} over bit/part selection {base} is not allowed!'
       return s.rtlir_tr_bit_selection(
         s.rtlir_signal_expr_translation( expr.get_base(), m ), expr.get_index() )
 
     elif isinstance( expr, sexp.PartSelection ):
       base = expr.get_base()
       assert not isinstance(base, (sexp.PartSelection, sexp.BitSelection)), \
-        'part selection {} over bit/part selection {} is not allowed!'.format(expr, base)
+        f'part selection {expr} over bit/part selection {base} is not allowed!'
       start, stop = expr.get_slice()[0], expr.get_slice()[1]
       return s.rtlir_tr_part_selection(
         s.rtlir_signal_expr_translation( expr.get_base(), m ), start, stop )
@@ -301,12 +288,12 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     elif isinstance( expr, sexp.ConstInstance ):
       dtype = expr.get_rtype().get_dtype()
       assert isinstance( dtype, rdt.Vector ), \
-          '{} is not supported at L1!'.format( dtype )
+          f'{dtype} is not supported at L1!'
       return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value() )
 
     # Other operations are not supported at L1
     else:
-      assert False, '{} is not supported at L1!'.format( expr )
+      assert False, f'{expr} is not supported at L1!'
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator

@@ -29,7 +29,7 @@ def _test_model( cls ):
 
 def valrdy_to_str( msg, val, rdy ):
 
-  str_   = "{}".format( msg )
+  str_   = f"{msg}"
   nchars = max( len( str_ ), 15 )
 
   if       val and not rdy:
@@ -73,12 +73,12 @@ class TestSourceValRdy( ComponentLevel3 ):
     s.default = Type()
     s.out     = OutValRdyIfc( Type )
 
-    @s.update_on_edge
+    @s.update_ff
     def up_src():
       if (s.out.rdy & s.out.val) and s.src_msgs:
         s.src_msgs.popleft()
-      s.out.val = Bits1( len(s.src_msgs) > 0 )
-      s.out.msg = s.default if not s.src_msgs else s.src_msgs[0]
+      s.out.val <<= Bits1( len(s.src_msgs) > 0 )
+      s.out.msg <<= s.default if not s.src_msgs else Type(s.src_msgs[0])
 
   def done( s ):
     return not s.src_msgs
@@ -96,9 +96,9 @@ class TestSinkValRdy( ComponentLevel3 ):
 
     s.in_ = InValRdyIfc( Type )
 
-    @s.update_on_edge
+    @s.update_ff
     def up_sink():
-      s.in_.rdy = Bits1( len(s.sink_msgs) > 0 )
+      s.in_.rdy <<= Bits1( len(s.sink_msgs) > 0 )
 
       if s.in_.val and s.in_.rdy:
         ref = s.sink_msgs.popleft()
@@ -118,8 +118,8 @@ def test_simple():
 
     def construct( s ):
 
-      s.src  = TestSourceValRdy( int, [ 0, 1, 2 ] )
-      s.sink = TestSinkValRdy  ( int, [ 0, 1, 2 ] )( in_ = s.src.out )
+      s.src  = TestSourceValRdy( Bits8, [ 0, 1, 2 ] )
+      s.sink = TestSinkValRdy  ( Bits8, [ 0, 1, 2 ] )( in_ = s.src.out )
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -144,19 +144,19 @@ def test_nested_port_bundle():
 
   class SuperBundle( Interface ):
 
-    def construct( s ):
-      s.req  = [ [ ValRdyBundle() for i in range(4) ] for j in range(4) ]
+    def construct( s, Type ):
+      s.req  = [ [ ValRdyBundle(Type) for i in range(4) ] for j in range(4) ]
 
   class Top( ComponentLevel3 ):
 
     def construct( s ):
 
-      s.src  = [ TestSourceValRdy( int, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in range(4) ]
+      s.src  = [ TestSourceValRdy( Bits8, [ i,i+1,i+2,i,i+1,i+2 ] ) for i in range(4) ]
       # (0+1+2+3)*4=24, (1+2+3+4)*4=40, (2+3+4+5)*5=56
-      s.sink = TestSinkValRdy  ( int, [ 24, 40, 56, 24, 40, 56] )
+      s.sink = TestSinkValRdy  ( Bits8, [ 24, 40, 56, 24, 40, 56] )
 
-      s.sb = SuperBundle()
-      s.wire = [ [ Wire(int) for i in range(4) ] for j in range(4) ]
+      s.sb = SuperBundle( Bits8 )
+      s.wire = [ [ Wire(Bits8) for i in range(4) ] for j in range(4) ]
 
       for i in range(4):
         connect( s.src[i].out.rdy, s.sink.in_.rdy )

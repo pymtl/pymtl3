@@ -15,7 +15,7 @@ import copy
 import inspect
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bitstruct_inst
 
 from ..errors import RTLIRConversionError
 from ..util.utility import collect_objs
@@ -45,9 +45,9 @@ class Array( BaseRTLIRType ):
   """Unpacked RTLIR array type."""
   def __init__( s, dim_sizes, sub_type, obj = None, unpacked = False ):
     assert isinstance( sub_type, BaseRTLIRType ), \
-      "array subtype {} is not RTLIR type!".format( sub_type )
+      f"array subtype {sub_type} is not RTLIR type!"
     assert not isinstance( sub_type, Array ), \
-      "array subtype {} should not be array RTLIR type!".format( sub_type )
+      f"array subtype {sub_type} should not be array RTLIR type!"
     assert len( dim_sizes ) >= 1, "array should be non-empty!"
     assert sum( dim_sizes ) > 0, "array should have at least one element!"
     s.dim_sizes = dim_sizes
@@ -89,7 +89,7 @@ class Array( BaseRTLIRType ):
     return 'Array'
 
   def __repr__( s ):
-    return 'Array{} of {}'.format( s.dim_sizes, s.sub_type )
+    return f'Array{s.dim_sizes} of {s.sub_type}'
 
 class Signal( BaseRTLIRType ):
   """Signal abstract RTLIR instance type.
@@ -98,7 +98,7 @@ class Signal( BaseRTLIRType ):
   """
   def __init__( s, dtype, unpacked = False ):
     assert isinstance( dtype, rdt.BaseRTLIRDataType ), \
-      "signal parameterized by non-RTLIR data type {}!".format( dtype )
+      f"signal parameterized by non-RTLIR data type {dtype}!"
     s.dtype = dtype
     s.unpacked = unpacked
 
@@ -131,7 +131,7 @@ class Port( Signal ):
     return 'Port'
 
   def __repr__( s ):
-    return 'Port of {}'.format( s.dtype )
+    return f'Port of {s.dtype}'
 
   def get_direction( s ):
     return s.direction
@@ -155,7 +155,7 @@ class Wire( Signal ):
     return 'Wire'
 
   def __repr__( s ):
-    return 'Wire of {}'.format( s.dtype )
+    return f'Wire of {s.dtype}'
 
   def get_next_dim_type( s ):
     assert s.is_packed_indexable(), "cannot index on unindexable wire!"
@@ -183,7 +183,7 @@ class NetWire( Signal ):
     return 'NetWire'
 
   def __repr__( s ):
-    return 'NetWire of {}'.format( s.dtype )
+    return f'NetWire of {s.dtype}'
 
   def get_next_dim_type( s ):
     assert s.is_packed_indexable(), "cannot index on unindexable net wire!"
@@ -205,7 +205,7 @@ class Const( Signal ):
     return 'Const'
 
   def __repr__( s ):
-    return 'Const of {}'.format( s.dtype )
+    return f'Const of {s.dtype}'
 
   def get_object( s ):
     return s.obj
@@ -228,19 +228,18 @@ class InterfaceView( BaseRTLIRType ):
         s.args = obj._dsl.args
         s.kwargs = obj._dsl.kwargs
       except AttributeError:
-        assert False, "interface object {} is not constructed!".format( s.obj )
+        assert False, f"interface object {s.obj} is not constructed!"
 
     # Sanity check
     for name, rtype in properties.items():
       assert isinstance(name, str) and _is_of_type(rtype, (Port, InterfaceView)), \
-        "invalid attribute {} of interface {}: only ports and interfaces allowed!". \
-          format( name, s.name )
+        f"invalid attribute {name} of interface {s.name}: only ports and interfaces allowed!"
 
   def __str__( s ):
-    return 'InterfaceView ' + s.name
+    return f'InterfaceView {s.name}'
 
   def __repr__( s ):
-    return 'InterfaceView {}'.format( s.name )
+    return f'InterfaceView {s.name}'
 
   def _is_unpacked( s ):
     return s.unpacked
@@ -301,20 +300,20 @@ class Component( BaseRTLIRType ):
     try:
       file_name = inspect.getsourcefile( cls )
       line_no = inspect.getsourcelines( cls )[1]
-      s.file_info = "File: {file_name}, Line: {line_no}".format( **locals() )
+      s.file_info = f"File: {file_name}, Line: {line_no}"
     except OSError:
-      s.file_info = "Dynamically generated component " + cls.__name__
+      s.file_info = f"Dynamically generated component {cls.__name__}"
 
   def _gen_parameters( s, obj ):
     # s.argspec: static code reflection results
     # _dsl.args: all unnamed arguments supplied to construct()
     # _dsl.kwargs: all named arguments supplied to construct()
     try:
-      argspec = inspect.getfullargspec( getattr( obj, 'construct' ) )
+      argspec = inspect.getfullargspec( obj.construct )
       assert not argspec.varkw, "keyword args are not allowed for construct!"
       assert not argspec.kwonlyargs, "keyword args are not allowed for construct!"
     except AttributeError:
-      argspec = inspect.getargspec( getattr( obj, 'construct' ) )
+      argspec = inspect.getargspec( obj.construct )
       assert not argspec.keywords, "keyword args are not allowed for construct!"
     assert not argspec.varargs, "varargs are not allowed for construct!"
     arg_names = argspec.args[1:]
@@ -363,7 +362,7 @@ class Component( BaseRTLIRType ):
     return 'Component'
 
   def __repr__( s ):
-    return 'Component {}'.format( s.name )
+    return f'Component {s.name}'
 
   def get_name( s ):
     return s.name
@@ -434,7 +433,7 @@ def _is_rtlir_ifc_convertible( obj ):
       # Empty lists will be dropped
       if len( obj ) == 0:
         return True
-      # assert len( obj ) > 0, "one dimension of {} is 0!".format( obj )
+      # assert len( obj ) > 0, f"one dimension of {obj} is 0!"
       obj = obj[0]
     return _is_rtlir_ifc_convertible( obj )
   elif isinstance( obj, valid_ifc_attributes ):
@@ -452,15 +451,14 @@ def _unpack( id_, Type ):
   if not isinstance( Type, Array ): return [ ( id_, Type ) ]
   ret = []
   for idx in range( Type.get_dim_sizes()[0] ):
-    ret.append( ( id_+'[{}]'.format(idx), Type.get_next_dim_type() ) )
-    ret.extend(_unpack(id_+'[{}]'.format( idx ), Type.get_next_dim_type()))
+    ret.append( ( f'{id_}[{idx}]', Type.get_next_dim_type() ) )
+    ret.extend(_unpack(f'{id_}[{idx}]', Type.get_next_dim_type()))
   return ret
 
 def _add_packed_instances( id_, Type, properties ):
-  assert isinstance( Type, Array ), "{} is not an array type!".format( Type )
+  assert isinstance( Type, Array ), f"{Type} is not an array type!"
   for _id, _Type in _unpack( id_, Type ):
-    assert hasattr( _Type, 'unpacked' ), \
-      "{} {} is not unpacked!".format( _Type, _id )
+    assert hasattr( _Type, 'unpacked' ), f"{_Type} {_id} is not unpacked!"
     _Type.unpacked = True
     properties[ _id ] = _Type
 
@@ -554,13 +552,13 @@ _RTLIR_ifc_handlers = [
 ]
 
 _RTLIR_handlers = [
-  ( list,                     _handle_Array ),
-  ( dsl.InPort,               _handle_InPort ),
-  ( dsl.OutPort,              _handle_OutPort ),
-  ( dsl.Wire,                 _handle_Wire ),
-  ( ( int, Bits, BitStruct ), _handle_Const ),
-  ( dsl.Interface,            _handle_Interface ),
-  ( dsl.Component,            _handle_Component ),
+  ( list,          _handle_Array ),
+  ( dsl.InPort,    _handle_InPort ),
+  ( dsl.OutPort,   _handle_OutPort ),
+  ( dsl.Wire,      _handle_Wire ),
+  ( ( int, Bits ), _handle_Const ),
+  ( dsl.Interface, _handle_Interface ),
+  ( dsl.Component, _handle_Component ),
 ]
 
 #-------------------------------------------------------------------------
@@ -578,7 +576,7 @@ def get_component_ifc_rtlir( obj ):
     if not isinstance( obj, list ):
       return False
     while isinstance( obj, list ):
-      assert len( obj ) > 0, "{} is an empty list!".format( id_ )
+      assert len( obj ) > 0, f"{id_} is an empty list!"
       obj = obj[0]
     return isinstance( obj, primitive_types )
 
@@ -609,7 +607,7 @@ def is_rtlir_convertible( obj ):
   """Return if `obj` can be converted into an RTLIR instance."""
   pymtl_constructs = (
     dsl.InPort, dsl.OutPort, dsl.Wire,
-    Bits, BitStruct, dsl.Interface, dsl.Component,
+    Bits, dsl.Interface, dsl.Component,
   )
   # TODO: improve this long list of isinstance check
   if isinstance( obj, list ):
@@ -621,26 +619,32 @@ def is_rtlir_convertible( obj ):
     return is_rtlir_convertible( obj )
   elif isinstance( obj, pymtl_constructs ):
     return True
+  elif is_bitstruct_inst(obj):
+    return True
   elif isinstance( obj, int ):
     return True
   else:
     return False
 
-__rtlir_cache = {}
+_rtlir_cache = {}
 
 def get_rtlir( _obj ):
   """Return an RTLIR instance corresponding to `obj`."""
   obj = _freeze( _obj )
-  if obj in __rtlir_cache:
-    return __rtlir_cache[ obj ]
+  if obj in _rtlir_cache:
+    return _rtlir_cache[ obj ]
   else:
     try:
       for Type, handler in _RTLIR_handlers:
         if isinstance( _obj, Type ):
-          __rtlir_cache[ obj ] = handler( "<name not available>", _obj )
-          return __rtlir_cache[ obj ]
+          ret = _rtlir_cache[ obj ] = handler( "<name not available>", _obj )
+          return ret
+      if is_bitstruct_inst( _obj ):
+        ret = _rtlir_cache[ obj ] = _handle_Const( "<name not available>", _obj )
+        return ret
+
       # Cannot convert `obj` into RTLIR representation
-      assert False, 'unrecognized object {}!'.format( _obj )
+      assert False, f'unrecognized object {_obj}!'
     except AssertionError as e:
       msg = '' if e.args[0] is None else e.args[0]
       raise RTLIRConversionError( _obj, msg )

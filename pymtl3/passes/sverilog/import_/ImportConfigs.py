@@ -66,6 +66,10 @@ class ImportConfigs( BasePassConfigs ):
                   all(c.isdigit() for c in v[:-2]),
         "expects a timescale string")
     s.set_checker(
+        "vl_trace_cycle_time",
+        lambda v: isinstance(v, int) and (v % 2) == 0,
+        "expects an integer `n` such that `n`*`vl_trace_timescale` is the cycle time")
+    s.set_checker(
         "vl_mk_dir",
         lambda v: isinstance(v, str),
         "expects a path to directory")
@@ -179,6 +183,11 @@ class ImportConfigs( BasePassConfigs ):
 
       # Passed to verilator tracing function
       "vl_trace_timescale" : "10ps",
+
+      # `vl_trace_cycle_time`*`vl_trace_timescale` is the cycle time of the
+      # PyMTL clock that appears in the generated VCD
+      # With the default options, the frequency of PyMTL clock is 1GHz
+      "vl_trace_cycle_time" : 100,
 
       # C-compilation options
       # These options will be passed to the C compiler to create a shared lib.
@@ -335,6 +344,9 @@ class ImportConfigs( BasePassConfigs ):
   def get_vl_trace_timescale( s ):
     return s.get_option( "vl_trace_timescale" )
 
+  def get_vl_trace_half_cycle_time( s ):
+    return s.get_option( "vl_trace_cycle_time" ) // 2
+
   def get_module_to_parametrize( s ):
     return s.wrapped_module
 
@@ -394,6 +406,7 @@ class ImportConfigs( BasePassConfigs ):
       try:
         vl_include_dir = \
             subprocess.check_output(get_dir_cmd, stderr = subprocess.STDOUT).strip()
+        vl_include_dir = vl_include_dir.decode('ascii')
       except OSError as e:
         vl_include_dir_msg = \
 """\
