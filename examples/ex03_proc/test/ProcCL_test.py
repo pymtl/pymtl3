@@ -14,6 +14,8 @@ import pytest
 from examples.ex03_proc.ProcCL import ProcCL
 from pymtl3 import *
 
+from .ProcFL_test import ProcFL_Tests as BaseTests
+
 random.seed(0xdeadbeef)
 
 
@@ -23,7 +25,6 @@ random.seed(0xdeadbeef)
 # It is as simple as inheriting from FL tests and change the ProcType to
 # ProcCL.
 
-from .ProcFL_test import ProcFL_Tests as BaseTests
 
 class ProcCL_Tests( BaseTests ):
 

@@ -14,8 +14,9 @@ import struct
 
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 from examples.ex03_proc.tinyrv0_encoding import assemble
-from .proc_ubmark_vvadd_data import ref, src0, src1
 from pymtl3 import *
+
+from .proc_ubmark_vvadd_data import ref, src0, src1
 
 c_vvadd_src0_ptr = 0x2000;
 c_vvadd_src1_ptr = 0x3000;

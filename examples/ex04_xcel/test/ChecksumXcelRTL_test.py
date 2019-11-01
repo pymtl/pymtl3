@@ -10,6 +10,8 @@ Author : Yanghui Ou
 from pymtl3 import *
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
+from .ChecksumXcelCL_test import ChecksumXcelCL_Tests as BaseTests
+from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as SrcSinkBaseTests
 from .ChecksumXcelCL_test import mk_xcel_transaction
 
 #-------------------------------------------------------------------------
@@ -58,7 +60,6 @@ def checksum_xcel_rtl( words ):
 #-------------------------------------------------------------------------
 # We reuse the function tests in ChecksumXcelFL_test.
 
-from .ChecksumXcelCL_test import ChecksumXcelCL_Tests as BaseTests
 
 # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Implement the tests for ChecksumXcelRTL
@@ -81,7 +82,6 @@ class ChecksumXcelRTL_Tests( BaseTests ):
 # Here we directly reuse all test cases in ChecksumXcelCL_test. We only
 # need to provide a different DutType in the setup_class.
 
-from .ChecksumXcelCL_test import ChecksumXcelCLSrcSink_Tests as SrcSinkBaseTests
 
 class ChecksumXcelRTLSrcSink_Tests( SrcSinkBaseTests ):
 

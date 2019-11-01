@@ -30,8 +30,9 @@ import struct
 
 from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage, mk_section
 from examples.ex03_proc.tinyrv0_encoding import assemble
-from .proc_ubmark_cksum_roll_data import dataset_size, mask, ref, src
 from pymtl3 import *
+
+from .proc_ubmark_cksum_roll_data import dataset_size, mask, ref, src
 
 c_cksum_src_ptr = 0x2000;
 c_cksum_msk_ptr = 0x3000;

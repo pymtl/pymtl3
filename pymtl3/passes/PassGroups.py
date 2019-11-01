@@ -1,6 +1,7 @@
 from pymtl3.dsl import Component
 
 from .CLLineTracePass import CLLineTracePass
+from .CollectSignalPass import CollectSignalPass
 from .DynamicSchedulePass import DynamicSchedulePass
 from .GenDAGPass import GenDAGPass
 from .LineTraceParamPass import LineTraceParamPass
@@ -8,12 +9,12 @@ from .mamba.HeuristicTopoPass import HeuristicTopoPass
 from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .mamba.UnrollTickPass import UnrollTickPass
 from .OpenLoopCLPass import OpenLoopCLPass
+from .PrintWavePass import PrintWavePass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
 from .VcdGenerationPass import VcdGenerationPass
 from .WrapGreenletPass import WrapGreenletPass
-from .PrintWavePass import PrintWavePass
-from .CollectSignalPass import CollectSignalPass
+
 SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
