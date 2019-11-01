@@ -10,7 +10,7 @@ Date   : Sep 8, 2019
 import time
 from collections import defaultdict
 
-from pymtl3.datatypes.BitStruct import Bits, BitStruct
+from pymtl3.datatypes import Bits, is_bitstruct_inst, is_bitstruct_class
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
@@ -105,7 +105,7 @@ class VcdGenerationPass( BasePass ):
               # all fields.
               # TODO: treat each field in a BitStruct as a separate signal?
 
-              net_bits = net.to_bits() if isinstance(net, BitStruct) else net
+              net_bits = to_bits(net) if is_bitstruct_inst( net ) else net
               try:
                 # `last_value` is the string form of a Bits object in binary
                 # e.g. '0b000' == Bits3(0).bin()
@@ -119,14 +119,14 @@ class VcdGenerationPass( BasePass ):
                   print( f'b{value_str} {symbol}', file=vcd_file )
                   last_values[i] = value_str
               except AttributeError as e:
-                raise AttributeError('{}\n - {} becomes another type. Please check your code.'.format(e, net))
+                raise AttributeError(f'{e}\n - {net} becomes another type. Please check your code.')
         except Exception:
           raise
 
         # Flop clock at the end of cycle
-        print( '\n#{}\nb0b0 {}'.format(next_neg_edge, clock_symbol), file=vcd_file )
+        print( f'\n#{next_neg_edge}\nb0b0 {clock_symbol}', file=vcd_file )
         # Flip clock of the next cycle
-        print( '#{}\nb0b1 {}\n'.format(next_pos_edge, clock_symbol), file=vcd_file, flush=True )
+        print( f'#{next_pos_edge}\nb0b1 {clock_symbol}\n', file=vcd_file, flush=True )
         vcdmeta.sim_ncycles += 1
 
       return dump_vcd
@@ -189,6 +189,23 @@ class VcdGenerationPass( BasePass ):
       # signal names with colons in it silently fail gtkwave
       return name.replace('[','(').replace(']',')').replace(':', '__')
 
+    def get_nbits( Type ):
+      try:
+        return Type.nbits
+      except AttributeError:
+        assert is_bitstruct_class( Type ), f"{Type} is not a valid PyMTL type!"
+        return sum(get_nbits(v) for v in Type.__bitstruct_fields__.values())
+
+    def to_bits( obj ):
+      # BitsN
+      if isinstance( obj, Bits ):
+        return obj
+      # BitStruct
+      bits = [to_bits(getattr(obj, v)) for v in obj.__bitstruct_fields__.keys()]
+      for _bits in bits[1:]:
+        bits[0] = (bits[0] << _bits.nbits) | _bits
+      return bits[0]
+
     def recurse_models( m, level ):
 
       # Special case the top level "s" to "top"
@@ -198,9 +215,8 @@ class VcdGenerationPass( BasePass ):
         my_name = "top"
 
       # Create a new scope for this module
-      print( "{}$scope module {} $end".format( "    "*level,
-              vcd_mangle_name( my_name ) ),
-              file=vcdmeta.vcd_file )
+      print( f"{'    '*level}$scope module {vcd_mangle_name(my_name)} $end",
+             file=vcdmeta.vcd_file )
 
       m_name = repr(m)
 
@@ -237,16 +253,14 @@ class VcdGenerationPass( BasePass ):
         # to get the actual name like enq.rdy
         # TODO struct
         signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
-        print( "{}$var {type} {nbits} {symbol} {name} $end".format( "    "*(level+1),
-                type='reg', nbits=signal._dsl.Type.nbits, symbol=symbol, name= signal_name),
-              file=vcdmeta.vcd_file )
+        print( f"{'    '*(level+1)}$var 'reg' {get_nbits(signal._dsl.Type)} {symbol} {signal_name} $end",
+               file=vcdmeta.vcd_file )
 
       # Recursively visit all submodels.
       for child in m.get_child_components():
         recurse_models( child, level+1 )
 
-      print( "{}$upscope $end".format("    "*level),
-              file=vcdmeta.vcd_file )
+      print( f"{'    '*level}$upscope $end", file=vcdmeta.vcd_file )
 
     # Begin recursive descent from the top-level model.
     recurse_models( top, 0 )
@@ -265,12 +279,10 @@ class VcdGenerationPass( BasePass ):
 
       # Convert bit struct to bits to get around lack of bit struct
       # support.
-      if isinstance( net_type_inst, BitStruct ):
-        net_type_inst = net_type_inst.to_bits()
+      if is_bitstruct_inst( net_type_inst ):
+        net_type_inst = to_bits( net_type_inst )
 
-      print( "b{value} {symbol}".format(
-          value=net_type_inst.bin(), symbol=net_symbol_mapping[i],
-      ), file=vcdmeta.vcd_file )
+      print( f"b{net_type_inst.bin()} {net_symbol_mapping[i]}", file=vcdmeta.vcd_file )
 
       # Set this to be the last cycle value
       last_values[i] = net_type_inst.bin()
