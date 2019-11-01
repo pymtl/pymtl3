@@ -2,8 +2,28 @@
 ========================================================================
 PrintWavePass.py
 ========================================================================
-Print the most sigficant number of signals in wave form.
-top object uses top._print_wave(top) to print.
+Print single bit signal in wave form and multi-bit signal by showing
+least significant bits.
+
+Example:
+
+         ▏0   ▏     ▏    ▏    ▏    ▏5   ▏     ▏    ▏    ▏    ▏10   ▏
+
+       i  00000000 ╳+001╳00000000  ╳00000001                 ╳+001╳+000
+
+   state _________________________ ╱‾‾‾‾╲____╱‾‾‾‾╲_________ _____╱‾‾‾‾
+
+  inlong  00000000 ╳00000002       ╳+ffe╳+fd6╳+ffc╳00000002  ╳+002╳+ffb
+
+     out  00000000 ╳+003╳00000002  ╳+fff╳+fd7╳+ffd╳00000003  ╳+003╳+ffb
+
+
+To use, call top._print_wave(top)
+
+Inspired by PyRTL's state machine screenshot, which shows the change of signal
+values along ticks of the clock.
+
+Link: https://ucsbarchlab.github.io/PyRTL/
 
 Author : Kaishuo Cheng
 Date   : Oct 4, 2019
@@ -52,12 +72,12 @@ def _process_binary(sig,base,max):
 
 def _help_print(self):
   char_length = 5
-  _tick = u'\u258f'
-  _up, _down = u'\u2571', u'\u2572'
-  _x, _low, _high = u'\u2573', u'\u005f', u'\u203e'
-  _revstart, _revstop = '\x1B[7m', '\x1B[0m'
-  _light_gray = '\033[47m'
-  _back='\033[0m'  #back to normal printing
+  tick = u'\u258f'
+  up, down = u'\u2571', u'\u2572'
+  x, low, high = u'\u2573', u'\u005f', u'\u203e'
+  revstart, revstop = '\x1B[7m', '\x1B[0m'
+  light_gray = '\033[47m'
+  back='\033[0m'  #back to normal printing
   all_signals = self._collect_signals
 
   #spaces before cycle number
@@ -74,22 +94,25 @@ def _help_print(self):
 
   print(" "*(max_length+1),end = "")
 
+  #handles clock tick symbol
   for i in range(0,len(all_signals["s.clk"])):
+    #insert a space every 5 cycles
     if i % 5 == 0:
-      print(_tick + str(i)+ " "*(char_length-2) ,end="")
+      print(tick + str(i)+ " "*(char_length-2) ,end="")
     else:
-      print(_tick + " "*(char_length-1) ,end="")
+      print(tick + " "*(char_length-1) ,end="")
     if i % 5 == 1:
       print(" ",end ="")
 
   print("")
-    #signals
+  #signals
   for sig in all_signals:
     if sig != "s.clk" and sig != "s.reset":
       print("")
       bit_length = len(all_signals[sig][0][0])-2
       pos = sig.find('.')
-      suffix = ""   # once used for (32b) 
+      suffix = ""   # once used for (32b)
+      #print suffix
       print((sig[pos+1:]+suffix).rjust(max_length),end="")
       prev_sig = None
       # one bit
@@ -100,16 +123,19 @@ def _help_print(self):
           if val[1]%5 == 0:
             print(" ",end = "")
           if val[0][2] == '1':
-            current_sig = _high
+            current_sig = high
           else:
-            current_sig = _low
+            current_sig = low
+          # detecting if first cycle
           if prev_sig is not None:
-            if prev_sig == _low and current_sig == _high:
-              print(_up+current_sig*(char_length-1),end = "")
-            elif prev_sig == _high and current_sig == _low:
-              print(_down+current_sig*(char_length-1),end = "")
+            if prev_sig == low and current_sig == high:
+              print(up+current_sig*(char_length-1),end = "")
+            elif prev_sig == high and current_sig == low:
+              print(down+current_sig*(char_length-1),end = "")
+            # prev and current signal agree
             else:
               print(current_sig*char_length,end = "")
+          # first cycle
           else:
             print(current_sig*char_length,end = "")
           prev_sig = current_sig
@@ -120,12 +146,14 @@ def _help_print(self):
         next = 0
         val_list = all_signals[sig]
         for i in range(len(val_list)):
+          # signals in this cycle is still the same as before
           if next > 0:
             next -=1
             continue
 
           val = val_list[i]
           for j in range(i,len(val_list)):
+            # a space every 5 cycles
             if (j%5==4):
               break
             if (val_list[j][0] != val[0]):
@@ -133,9 +161,9 @@ def _help_print(self):
               break
 
           if i%5 == 0:
-            print(_back +" ",end = "")
+            print(back +" ",end = "")
 
-              #first is reserved for X or " ". Rest is 5 char length.
+          #first is reserved for X or " ". Rest is 5 char length.
           length = 4+ 5*(j-i)
           next = j-i
           if length >= bit_length//4:
@@ -149,19 +177,20 @@ def _help_print(self):
             plus = True
 
           current = _process_binary(val[0],16,length)
+          # print a +, with one less space for signal number
           if(plus):
             if i==0:
-              print(_light_gray + " " +'\033[30m'+"+"+ current,end = "")
+              print(light_gray + " " +'\033[30m'+"+"+ current,end = "")
             else:
-              print(_light_gray + '\033[30m'+_x + "+" +current,end = "")
-
+              print(light_gray + '\033[30m'+x + "+" +current,end = "")
+          # no +, more spaces for signal number
           else:
             if i==0:
-              print(_light_gray + " " +'\033[30m'+ current,end = "")
+              print(light_gray + " " +'\033[30m'+ current,end = "")
             else:
-              print(_light_gray + '\033[30m'+_x +current,end = "")
+              print(light_gray + '\033[30m'+x +current,end = "")
             print(" "*(4+5*(j-i)-length),end = "")
 
-        print(_back + "")
+        print(back + "")
 
   print("")
