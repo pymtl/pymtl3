@@ -5,19 +5,6 @@ PrintWavePass.py
 Print single bit signal in wave form and multi-bit signal by showing
 least significant bits.
 
-Example:
-
-         ▏0   ▏     ▏    ▏    ▏    ▏5   ▏     ▏    ▏    ▏    ▏10   ▏
-
-       i  00000000 ╳+001╳00000000  ╳00000001                 ╳+001╳+000
-
-   state _________________________ ╱‾‾‾‾╲____╱‾‾‾‾╲_________ _____╱‾‾‾‾
-
-  inlong  00000000 ╳00000002       ╳+ffe╳+fd6╳+ffc╳00000002  ╳+002╳+ffb
-
-     out  00000000 ╳+003╳00000002  ╳+fff╳+fd7╳+ffd╳00000003  ╳+003╳+ffb
-
-
 To use, call top._print_wave(top)
 
 Inspired by PyRTL's state machine screenshot, which shows the change of signal
@@ -29,17 +16,14 @@ Author : Kaishuo Cheng
 Date   : Oct 4, 2019
 """
 
-import random
-import sys
 import time
 from collections import defaultdict
 from copy import deepcopy
-
 import py
-
+import sys
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-
+import random
 
 class PrintWavePass( BasePass ):
 
@@ -75,9 +59,9 @@ def _process_binary(sig,base,max):
 
 def _help_print(self):
   char_length = 5
-  tick = '\u258f'
-  up, down = '\u2571', '\u2572'
-  x, low, high = '\u2573', '\u005f', '\u203e'
+  tick = u'\u258f'
+  up, down = u'\u2571', u'\u2572'
+  x, low, high = u'\u2573', u'\u005f', u'\u203e'
   revstart, revstop = '\x1B[7m', '\x1B[0m'
   light_gray = '\033[47m'
   back='\033[0m'  #back to normal printing
