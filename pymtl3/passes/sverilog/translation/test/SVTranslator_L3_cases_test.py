@@ -57,8 +57,6 @@ module A
   output logic [0:0] out__val
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out.val = s.in_.val
@@ -99,8 +97,6 @@ module A
   output logic [31:0] in___1__foo
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[1].foo
@@ -123,8 +119,6 @@ module A
 );
   logic [31:0] in___foo [0:1];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[1].foo

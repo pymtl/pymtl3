@@ -85,8 +85,8 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       for struct_dtype, tplt in hierarchy.decl_type_struct:
         template = \
 """\
-// Definition of PyMTL BitStruct {dtype_name}
-// {file_info}
+// PyMTL BitStruct {dtype_name} Definition
+// At {file_info}
 {struct_def}\
 """
         dtype_name = struct_dtype.get_name()
@@ -105,8 +105,8 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 
       template =\
 """\
-// Definition of PyMTL Component {component_name}
-// {file_info}{optional_full_name}
+// PyMTL Component {component_name} Definition
+// {optional_full_name}At {file_info}
 module {module_name}
 (
 {ports});
@@ -120,7 +120,7 @@ endmodule
       module_name = structural.component_unique_name
 
       if full_name != module_name:
-        optional_full_name = f"\n// Full name: {full_name}"
+        optional_full_name = f"Full name: {full_name}\n// "
       else:
         optional_full_name = ""
 
