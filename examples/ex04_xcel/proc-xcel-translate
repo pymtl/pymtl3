@@ -118,7 +118,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
   finally:
     if success:
       path = os.getcwd() + \
-             "/{}.sv".format(proc_xcel._translator._top_module_full_name)
+             "/{}.sv".format(proc_xcel.translated_top_module_name)
 
       if opts.output_dir:
         # Upon success, symlink the file to outputs/design.v which is the
@@ -132,7 +132,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
         os.symlink( path, design_v )
 
       print("\nTranslation finished successfully!")
-      print("You can find the generated SystemVerilog file at {}.".format(path))
+      print(f"You can find the generated SystemVerilog file at {path}.")
     else:
       print()
       print("\nTranslation failed!")
