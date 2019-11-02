@@ -10,7 +10,7 @@ Date   : Sep 8, 2019
 import time
 from collections import defaultdict
 
-from pymtl3.datatypes import Bits, is_bitstruct_inst, is_bitstruct_class
+from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 

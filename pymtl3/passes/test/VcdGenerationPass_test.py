@@ -13,6 +13,7 @@
 
 from pymtl3 import *
 
+
 def run_test( dut, tv, tv_in, tv_out ):
   VCD_FILE_NAME = "test_component"
   dut.dump_vcd = True
