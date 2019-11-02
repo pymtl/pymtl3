@@ -194,7 +194,7 @@ def _get_rtlir_dtype_struct( obj ):
     cls = obj.__class__
 
     properties = { name: _get_rtlir_dtype_struct( getattr(obj, name) )
-                    for name in cls.__bitstruct_fields__ }
+                    for name in cls.__bitstruct_fields__.keys() }
 
     return Struct(cls.__name__, properties, cls)
 
