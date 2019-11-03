@@ -27,7 +27,7 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
     visitor = BehavioralRTLIRTypeCheckVisitorL1(
       m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_accessed )
-    for blk in m.get_update_blocks():
+    for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):

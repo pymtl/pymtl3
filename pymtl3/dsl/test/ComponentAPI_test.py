@@ -321,6 +321,47 @@ def test_ctrl_dpath_connected_replaced_both():
   a.tick()
   assert a.out == 10 + 444 * 2
 
+# Test orders
+
+def test_connect_upblk_orders():
+
+  class Inner( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.out2 = OutPort( Bits32 )
+      @s.update
+      def up_out():
+        s.out = Bits32(0)
+
+      s.wire = Wire(Bits32)
+      @s.update_ff
+      def up_ff():
+        s.wire <<= s.wire + 1
+
+      @s.update
+      def up_out2():
+        s.out2 = Bits32(0)
+
+  class Top( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.inner = Inner()
+      s.out = OutPort( Bits32 )
+      connect( s.inner.out, s.out )
+      connect( s.in_, s.inner.in_)
+
+  a = Top()
+  a.elaborate()
+  assert a.get_connect_order() == [ (a.inner.clk, a.clk), (a.inner.reset, a.reset),
+                                    (a.inner.out, a.out), (a.in_, a.inner.in_) ]
+
+  assert not a.get_update_block_order()
+  u = a.inner.get_update_block_order()
+  assert u[0].__name__ == "up_out"
+  assert u[1].__name__ == "up_ff"
+  assert u[2].__name__ == "up_out2"
+
 # def test_garbage_collection():
 
   # class X( Component ):

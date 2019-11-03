@@ -8,6 +8,7 @@
 from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from . import BehavioralRTLIR as bir
 from .BehavioralRTLIRGenL2Pass import BehavioralRTLIRGeneratorL2
@@ -22,8 +23,8 @@ class BehavioralRTLIRGenL3Pass( BasePass ):
     visitor = BehavioralRTLIRGeneratorL3( m )
 
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_ff()),
-      'SeqUpblk'  : list(m.get_update_ff())
+      'CombUpblk' : get_ordered_upblks(m),
+      'SeqUpblk'  : get_ordered_update_ff(m),
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )

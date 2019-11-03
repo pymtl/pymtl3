@@ -6,6 +6,7 @@
 """Provide L5 behavioral RTLIR generation pass."""
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from .BehavioralRTLIRGenL4Pass import BehavioralRTLIRGeneratorL4
 
@@ -18,8 +19,8 @@ class BehavioralRTLIRGenL5Pass( BasePass ):
     m._pass_behavioral_rtlir_gen.rtlir_upblks = {}
     visitor = BehavioralRTLIRGeneratorL5( m )
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_ff()),
-      'SeqUpblk'  : list(m.get_update_ff())
+      'CombUpblk' : get_ordered_upblks(m),
+      'SeqUpblk'  : get_ordered_update_ff(m),
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )

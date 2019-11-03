@@ -36,3 +36,14 @@ def get_component_full_name( c_rtype ):
     assert arg_name != ''
     comp_name += '__' + arg_name + '_' + get_string(arg_value)
   return comp_name
+
+def get_ordered_upblks( m ):
+  """Return a list of non-update-ff update blocks that have deterministic order"""
+
+  upblks = m.get_update_blocks() - m.get_update_ff()
+  return [ x for x in m.get_update_block_order() if x in upblks ]
+
+def get_ordered_update_ff( m ):
+  """Return a list of update-ff update blocks that have deterministic order"""
+
+  return [ x for x in m.get_update_block_order() if x in m.get_update_ff() ]
