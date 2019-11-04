@@ -13,16 +13,16 @@ class Mux( Component, Generic[T_MuxDataType, T_MuxSelType] ):
   # Patch mypyc
   #----------------------------------------------
 
-  def __init__( s, Type, SelType, ninputs ):
-    s.in_ = [ InPort[T_MuxDataType](Type) for _ in range(ninputs) ]
-    s.sel = InPort[T_MuxSelType](SelType)
-    s.out = OutPort[T_MuxDataType](Type)
+  # def __init__( s, Type, SelType, ninputs ):
+  #   s.in_ = [ InPort[T_MuxDataType](Type) for _ in range(ninputs) ]
+  #   s.sel = InPort[T_MuxSelType](SelType)
+  #   s.out = OutPort[T_MuxDataType](Type)
 
-  def mux_upblk( s ):
-    s.out = s.in_[s.sel]
+  # def mux_upblk( s ):
+  #   s.out = s.in_[s.sel]
 
-  def c_tick( s ):
-    s.mux_upblk()
+  # def c_tick( s ):
+  #   s.mux_upblk()
 
   #----------------------------------------------
   # End mypyc patch
@@ -48,16 +48,16 @@ class RShifter( Component, Generic[T_RShifterDataType, T_RShifterShamtType] ):
   # Patch mypyc
   #----------------------------------------------
 
-  def __init__( s, Type, ShamtType ):
-    s.in_ = InPort[T_RShifterDataType](Type)
-    s.shamt = InPort[T_RShifterShamtType](ShamtType)
-    s.out = OutPort[T_RShifterDataType](Type)
+  # def __init__( s, Type, ShamtType ):
+  #   s.in_ = InPort[T_RShifterDataType](Type)
+  #   s.shamt = InPort[T_RShifterShamtType](ShamtType)
+  #   s.out = OutPort[T_RShifterDataType](Type)
 
-  def rshift_upblk( s ):
-    s.out = s.in_ >> s.shamt
+  # def rshift_upblk( s ):
+  #   s.out = s.in_ >> s.shamt
 
-  def c_tick( s ):
-    s.rshift_upblk()
+  # def c_tick( s ):
+  #   s.rshift_upblk()
 
   #----------------------------------------------
   # End mypyc patch
@@ -84,16 +84,16 @@ class LShifter( Component, Generic[T_LShifterDataType, T_LShifterShamtType] ):
   # Patch mypyc
   #----------------------------------------------
 
-  def __init__( s, Type, ShamtType ):
-    s.in_ = InPort[T_LShifterDataType](Type)
-    s.shamt = InPort[T_LShifterShamtType](ShamtType)
-    s.out = OutPort[T_LShifterDataType](Type)
+  # def __init__( s, Type, ShamtType ):
+  #   s.in_ = InPort[T_LShifterDataType](Type)
+  #   s.shamt = InPort[T_LShifterShamtType](ShamtType)
+  #   s.out = OutPort[T_LShifterDataType](Type)
 
-  def rshift_upblk( s ):
-    s.out = s.in_ << s.shamt
+  # def rshift_upblk( s ):
+  #   s.out = s.in_ << s.shamt
 
-  def c_tick( s ):
-    s.lshift_upblk()
+  # def c_tick( s ):
+  #   s.lshift_upblk()
 
   #----------------------------------------------
   # End mypyc patch
@@ -157,16 +157,16 @@ class Subtractor( Component, Generic[T_SubtractorDataType] ):
   # Patch mypyc
   #----------------------------------------------
 
-  def __init__( s, Type ):
-    s.in0 = InPort[T_SubtractorDataType](Type)
-    s.in1 = InPort[T_SubtractorDataType](Type)
-    s.out = OutPort[T_SubtractorDataType](Type)
+  # def __init__( s, Type ):
+  #   s.in0 = InPort[T_SubtractorDataType](Type)
+  #   s.in1 = InPort[T_SubtractorDataType](Type)
+  #   s.out = OutPort[T_SubtractorDataType](Type)
 
-  def subtract_upblk( s ):
-    s.out = s.in0 - s.in1
+  # def subtract_upblk( s ):
+  #   s.out = s.in0 - s.in1
 
-  def c_tick( s ):
-    s.subtract_upblk()
+  # def c_tick( s ):
+  #   s.subtract_upblk()
 
   #----------------------------------------------
   # End mypyc patch

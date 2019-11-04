@@ -72,3 +72,6 @@ def mk_bits( nbits ):
 
   exec((py.code.Source( bits_template.format( **vars() ) ).compile()), globals())
   return _bits_types[ nbits ]
+
+def get_nbits( nbits_cls ):
+  return nbits_cls.nbits

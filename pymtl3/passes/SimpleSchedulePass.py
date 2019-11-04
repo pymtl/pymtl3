@@ -97,7 +97,8 @@ def dump_dag( top, V, E ):
       y_host = ""
 
     dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
-  dot.render( "/tmp/upblk-dag.gv", view=True )
+  # dot.render( "/tmp/upblk-dag.gv", view=True )
+  dot.render( "upblk_dag.gv", view=True )
 
 def check_schedule( top, schedule, V, E, in_degree ):
 
