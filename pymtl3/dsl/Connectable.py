@@ -314,8 +314,17 @@ class Signal( NamedObject, Connectable ):
       # of using stale data types.
       cls.Type = None
 
+      # Mark this signal as statically typed because it took type from the
+      # type bracket
+      s.is_static = True
+      s.static_type = Type
+
     else:
       Type = _Type
+
+      # Mark this signal as dynamically typed because it took type from the
+      # argument
+      s.is_static = False
 
     if isinstance( Type, int ):
       raise Exception("Use actual type instead of int (it is deprecated).")

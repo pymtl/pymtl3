@@ -104,11 +104,51 @@ class GenDAGPass( BasePass ):
                     .replace( ".", "_" ).replace( ":", "_" ) \
                     .replace( "[", "_" ).replace( "]", "" ) \
                     .replace( "(", "_" ).replace( ")", "" )
+      r_is_static = [ x.is_static for x in readers ]
+      w_is_static = hasattr(writer, "is_static") and writer.is_static
+      if '[' in repr(writer):
+        _w = writer.get_parent_object()
+        w_is_static = hasattr(_w, "is_static") and _w.is_static
+      is_boundary = not isinstance(writer, Const) and not w_is_static and any(r_is_static)
+      # Check if this generated block is at the boundary
+      if is_boundary:
+        # find out the type of the statically typed signal
+        static_type = None
+        static_signal = None
+        for x in readers:
+          if x.is_static:
+            assert static_type is None or static_type == x.static_type
+            static_type = x.static_type
+            static_signal = x
+        # rt_type_check = "assert s.{} == s.{}.static_type".format(
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+        rt_type_check = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
+            repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
+            repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+        # rt_type_check += "assert isinstance(s.{}, type(s.{})) or \
+        #                   s.{}._dsl.Type == type(s.{})".format(
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+        rt_type_check += "assert s.{}.nbits == s.{}.nbits".format(
+            repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+      else:
+        rt_type_check = ""
       gen_src = """
 @update
-def {}():
-  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+def {upblk_name}():
+  {rt_type_check}
+  {rstrs} = {wstr}
+  
+{upblk_name}.is_boundary = {is_boundary}""".format(
+        rt_type_check = rt_type_check,
+        upblk_name = upblk_name,
+        rstrs = " = ".join( rstrs ),
+        wstr = wstr,
+        is_boundary = is_boundary,
+      )
 
+      print(f"upblk_name={upblk_name}, rstrs={rstrs}, wstr={wstr}")
+      print(f"is_boundary={is_boundary}, type_check={rt_type_check}")
       hostobj_allsrc[ lca ] += gen_src
       blkname_meta[ upblk_name ] = (gen_src, writer, readers)
 
@@ -124,9 +164,11 @@ def {}():
         top._dag.genblk_writes[ blk ] = readers
         top._dag.genblk_src   [ blk ] = ( gen_src, None )
         # TODO None -- I remove the ast parsing since it is slow
+        return blk
 
       var = locals()
       var.update( globals() )
+      print(src)
       exec(( compile( src, filename=repr(s), mode="exec") ), var)
 
     for hostobj, allsrc in hostobj_allsrc.items():

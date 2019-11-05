@@ -80,7 +80,8 @@ def dump_dag( top, V, E ):
                     else top.get_update_block_host_component(x))
     except:
       x_host = ""
-    dot.node( x_name +"\\n@" + x_host, shape="box")
+    typing = "#boundary" if hasattr(x, "is_boundary") and x.is_boundary else ""
+    dot.node( x_name +"\\n@" + x_host + typing, shape="box")
 
   for (x, y) in E:
     x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
@@ -96,7 +97,9 @@ def dump_dag( top, V, E ):
     except:
       y_host = ""
 
-    dot.edge( x_name+"\\n@"+x_host, y_name+"\\n@"+y_host )
+    x_typing = "#boundary" if hasattr(x, "is_boundary") and x.is_boundary else ""
+    y_typing = "#boundary" if hasattr(y, "is_boundary") and y.is_boundary else ""
+    dot.edge( x_name+"\\n@"+x_host+x_typing, y_name+"\\n@"+y_host+y_typing )
   # dot.render( "/tmp/upblk-dag.gv", view=True )
   dot.render( "upblk_dag.gv", view=True )
 
