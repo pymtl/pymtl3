@@ -11,7 +11,7 @@ from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .ComponentLevel4 import ComponentLevel4
 from .Connectable import CalleePort, CallerPort, Const, Interface, MethodPort, Signal
-from .errors import MultiWriterError
+from .errors import InvalidConnectionError, MultiWriterError
 from .NamedObject import NamedObject
 
 
