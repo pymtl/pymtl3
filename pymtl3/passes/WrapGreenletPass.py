@@ -8,7 +8,6 @@ greenlet.
 Author : Shunning Jiang
 Date   : May 20, 2019
 """
-from graphviz import Digraph
 from greenlet import greenlet
 
 from pymtl3.dsl.errors import UpblkCyclicError

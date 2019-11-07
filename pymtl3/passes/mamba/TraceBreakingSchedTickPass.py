@@ -8,8 +8,6 @@ Author : Shunning Jiang
 Date   : Dec 26, 2018
 """
 import py
-from graphviz import Digraph
-
 from pymtl3.dsl import *
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError

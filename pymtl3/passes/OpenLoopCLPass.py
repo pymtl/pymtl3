@@ -8,8 +8,6 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 """
-from graphviz import Digraph
-
 from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
 from pymtl3.dsl.errors import UpblkCyclicError
 
