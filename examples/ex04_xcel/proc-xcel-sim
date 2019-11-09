@@ -22,19 +22,6 @@ import os
 import struct
 import sys
 
-from examples.ex03_proc.NullXcel import NullXcelRTL
-from examples.ex03_proc.ProcCL import ProcCL
-from examples.ex03_proc.ProcFL import ProcFL
-from examples.ex03_proc.ProcRTL import ProcRTL
-from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
-from examples.ex03_proc.test.harness import TestHarness
-from examples.ex03_proc.tinyrv0_encoding import assemble
-from examples.ex03_proc.ubmark.proc_ubmark_cksum_roll import ubmark_cksum_roll
-from examples.ex04_xcel.ChecksumXcelCL import ChecksumXcelCL
-from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
-from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
-from examples.ex04_xcel.ProcXcel import ProcXcel
-from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
 from pymtl3 import *
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 from pymtl3.stdlib.ifcs import mk_mem_msg
@@ -48,6 +35,19 @@ while sim_dir:
     break
   sim_dir = os.path.dirname(sim_dir)
 
+from examples.ex03_proc.NullXcel import NullXcelRTL
+from examples.ex03_proc.ProcCL import ProcCL
+from examples.ex03_proc.ProcFL import ProcFL
+from examples.ex03_proc.ProcRTL import ProcRTL
+from examples.ex03_proc.SparseMemoryImage import SparseMemoryImage
+from examples.ex03_proc.test.harness import TestHarness
+from examples.ex03_proc.tinyrv0_encoding import assemble
+from examples.ex03_proc.ubmark.proc_ubmark_cksum_roll import ubmark_cksum_roll
+from examples.ex04_xcel.ChecksumXcelCL import ChecksumXcelCL
+from examples.ex04_xcel.ChecksumXcelFL import ChecksumXcelFL
+from examples.ex04_xcel.ChecksumXcelRTL import ChecksumXcelRTL
+from examples.ex04_xcel.ProcXcel import ProcXcel
+from examples.ex04_xcel.ubmark.proc_ubmark_cksum_xcel_roll import ubmark_cksum_xcel_roll
 
 #=========================================================================
 # Command line processing

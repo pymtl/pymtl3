@@ -12,7 +12,6 @@ from pymtl3.passes.yosys import TranslationImportPass
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction
-from .ChecksumXcelRTL_test import ChecksumXcelRTL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # Wrap Xcel into a function
@@ -69,6 +68,7 @@ def checksum_xcel_vrtl( words ):
 #-------------------------------------------------------------------------
 # We reuse the function tests in ChecksumXcelFL_test.
 
+from .ChecksumXcelRTL_test import ChecksumXcelRTL_Tests as BaseTests
 
 class ChecksumXcelVRTL_Tests( BaseTests ):
 

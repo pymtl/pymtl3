@@ -1,5 +1,4 @@
 import os
-
 import pytest
 
 if 'CI' in os.environ:

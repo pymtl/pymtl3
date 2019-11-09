@@ -20,7 +20,6 @@ from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 from ..ChecksumCL import ChecksumCL
 from ..ChecksumFL import checksum
 from ..utils import b128_to_words, words_to_b128
-from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 #-------------------------------------------------------------------------
 # WrappedChecksumCL
@@ -81,6 +80,7 @@ def checksum_cl( words ):
 # test cases. Here we also extend the test case by adding a hypothesis
 # test that compares the CL implementation against the FL as reference.
 
+from .ChecksumFL_test import ChecksumFL_Tests as BaseTests
 
 class ChecksumCL_Tests( BaseTests ):
 

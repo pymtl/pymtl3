@@ -7,11 +7,9 @@
 # Author : Kaishuo Cheng
 # Date   : Oct 8th, 2019
 
+from pymtl3 import *
 import io
 from contextlib import redirect_stdout
-
-from pymtl3 import *
-
 
 class Toy( Component ):
   """Toy adder component"""

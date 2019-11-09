@@ -52,9 +52,8 @@ import re
 import shutil
 import sys
 
-import yaml
-
 import common
+import yaml
 from common import *
 
 #-------------------------------------------------------------------------
