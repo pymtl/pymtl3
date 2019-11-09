@@ -51,6 +51,8 @@ class TranslationPass( BasePass ):
       # Rename the temporary file to the output file
       os.rename( temporary_file, output_file )
 
+      # Expose some attributes about the translation process
+      m.translated_top_module_name = module_name
       m._translator = s.translator
       m._pass_yosys_translation.translated = True
 

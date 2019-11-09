@@ -52,7 +52,7 @@ def test_L2_lambda_connect( do_test ):
   a = A()
   a._rtlir_test_ref = { '_lambda__s_out' : CombUpblk( '_lambda__s_out', [
     Assign( Attribute( Base( a ), 'out' ),
-            BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42)))
+            BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42))), True
         ) ] ) }
   do_test( a )
 

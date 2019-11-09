@@ -14,6 +14,7 @@ from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRGenL1Pass import (
 from pymtl3.passes.rtlir.behavioral.BehavioralRTLIRTypeCheckL1Pass import (
     BehavioralRTLIRTypeCheckL1Pass,
 )
+from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
 
 from .BehavioralTranslatorL0 import BehavioralTranslatorL0
 
@@ -66,8 +67,8 @@ class BehavioralTranslatorL1( BehavioralTranslatorL0 ):
     upblk_srcs = []
     upblk_py_srcs = []
     upblks = {
-      'CombUpblk' : list(m.get_update_blocks() - m.get_update_on_edge()),
-      'SeqUpblk'  : list(m.get_update_on_edge())
+      'CombUpblk' : get_ordered_upblks(m),
+      'SeqUpblk'  : get_ordered_update_ff(m),
     }
     # Sort the upblks by their name
     upblks['CombUpblk'].sort( key = lambda x: x.__name__ )

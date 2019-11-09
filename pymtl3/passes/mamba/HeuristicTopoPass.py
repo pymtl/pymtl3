@@ -10,8 +10,6 @@ Date   : Dec 26, 2018
 import ast
 from queue import PriorityQueue
 
-from graphviz import Digraph
-
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 from pymtl3.passes.SimpleSchedulePass import check_schedule

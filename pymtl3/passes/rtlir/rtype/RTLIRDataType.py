@@ -63,7 +63,7 @@ class Struct( BaseRTLIRDataType ):
       try:
         file_name = inspect.getsourcefile( cls )
         line_no = inspect.getsourcelines( cls )[1]
-        s.file_info = f"File: {file_name}, Line: {line_no}"
+        s.file_info = f"{file_name}:{line_no}"
       except OSError:
         s.file_info = f"Dynamically generated class {cls.__name__}"
     else:
@@ -194,7 +194,7 @@ def _get_rtlir_dtype_struct( obj ):
     cls = obj.__class__
 
     properties = { name: _get_rtlir_dtype_struct( getattr(obj, name) )
-                    for name in cls.__bitstruct_fields__ }
+                    for name in cls.__bitstruct_fields__.keys() }
 
     return Struct(cls.__name__, properties, cls)
 

@@ -97,9 +97,9 @@ def main():
   finally:
     if success:
       path = os.getcwd() + \
-             "/{}.sv".format(proc._translator._top_module_full_name)
+             "/{}.sv".format(proc.translated_top_module_name)
       print("\nTranslation finished successfully!")
-      print("You can find the generated SystemVerilog file at {}.".format(path))
+      print(f"You can find the generated SystemVerilog file at {path}.")
     else:
       print()
       print("\nTranslation failed!")

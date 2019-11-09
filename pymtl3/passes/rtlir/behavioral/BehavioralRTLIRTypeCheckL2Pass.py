@@ -32,7 +32,7 @@ class BehavioralRTLIRTypeCheckL2Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
 
-    for blk in m.get_update_blocks():
+    for blk in m.get_update_block_order():
       visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):

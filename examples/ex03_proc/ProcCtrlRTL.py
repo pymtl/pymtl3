@@ -165,12 +165,12 @@ class ProcCtrl( Component ):
     def comb_reg_en_F():
       s.reg_en_F = ~s.stall_F | s.squash_F
 
-    @s.update_on_edge
+    @s.update_ff
     def reg_F():
       if s.reset:
-        s.val_F = b1( 0 )
+        s.val_F <<= b1( 0 )
       elif s.reg_en_F:
-        s.val_F = b1( 1 )
+        s.val_F <<= b1( 1 )
 
     # forward declaration of branch (no jump) logic
 
@@ -224,12 +224,12 @@ class ProcCtrl( Component ):
     def comb_reg_en_D():
       s.reg_en_D = ~s.stall_D | s.squash_D
 
-    @s.update_on_edge
+    @s.update_ff
     def reg_D():
       if s.reset:
-        s.val_D = Bits1(0)
+        s.val_D <<= Bits1(0)
       elif s.reg_en_D:
-        s.val_D = s.next_val_F
+        s.val_D <<= s.next_val_F
 
     # Decoder, translate 32-bit instructions to symbols
 
@@ -495,22 +495,22 @@ class ProcCtrl( Component ):
     s.xcelreq_X        = Wire( Bits1 )
     s.xcelreq_type_X   = Wire( Bits1 )
 
-    @s.update_on_edge
+    @s.update_ff
     def reg_X():
       if s.reset:
-        s.val_X = b1( 0 )
+        s.val_X <<= b1( 0 )
       elif s.reg_en_X:
-        s.val_X            = s.next_val_D
-        s.rf_wen_pending_X = s.rf_wen_pending_D
-        s.inst_type_X      = s.inst_type_decoder_D.out
-        s.alu_fn_X         = s.alu_fn_D
-        s.rf_waddr_X       = s.rf_waddr_D
-        s.proc2mngr_en_X   = s.proc2mngr_en_D
-        s.dmemreq_type_X   = s.dmemreq_type_D
-        s.wb_result_sel_X  = s.wb_result_sel_D
-        s.br_type_X        = s.br_type_D
-        s.xcelreq_X        = s.xcelreq_D
-        s.xcelreq_type_X   = s.xcelreq_type_D
+        s.val_X            <<= s.next_val_D
+        s.rf_wen_pending_X <<= s.rf_wen_pending_D
+        s.inst_type_X      <<= s.inst_type_decoder_D.out
+        s.alu_fn_X         <<= s.alu_fn_D
+        s.rf_waddr_X       <<= s.rf_waddr_D
+        s.proc2mngr_en_X   <<= s.proc2mngr_en_D
+        s.dmemreq_type_X   <<= s.dmemreq_type_D
+        s.wb_result_sel_X  <<= s.wb_result_sel_D
+        s.br_type_X        <<= s.br_type_D
+        s.xcelreq_X        <<= s.xcelreq_D
+        s.xcelreq_type_X   <<= s.xcelreq_type_D
 
     # Branch logic
 
@@ -575,19 +575,19 @@ class ProcCtrl( Component ):
     s.dmemreq_type_M   = Wire( Bits2 )
     s.xcelreq_M        = Wire( Bits1 )
 
-    @s.update_on_edge
+    @s.update_ff
     def reg_M():
       if s.reset:
-        s.val_M            = b1( 0 )
+        s.val_M            <<= b1( 0 )
       elif s.reg_en_M:
-        s.val_M            = s.next_val_X
-        s.rf_wen_pending_M = s.rf_wen_pending_X
-        s.inst_type_M      = s.inst_type_X
-        s.rf_waddr_M       = s.rf_waddr_X
-        s.proc2mngr_en_M   = s.proc2mngr_en_X
-        s.dmemreq_type_M   = s.dmemreq_type_X
-        s.wb_result_sel_M  = s.wb_result_sel_X
-        s.xcelreq_M        = s.xcelreq_X
+        s.val_M            <<= s.next_val_X
+        s.rf_wen_pending_M <<= s.rf_wen_pending_X
+        s.inst_type_M      <<= s.inst_type_X
+        s.rf_waddr_M       <<= s.rf_waddr_X
+        s.proc2mngr_en_M   <<= s.proc2mngr_en_X
+        s.dmemreq_type_M   <<= s.dmemreq_type_X
+        s.wb_result_sel_M  <<= s.wb_result_sel_X
+        s.xcelreq_M        <<= s.xcelreq_X
 
     s.ostall_xcel_M = Wire( Bits1 )
     s.ostall_dmem_M = Wire( Bits1 )
@@ -628,16 +628,16 @@ class ProcCtrl( Component ):
     s.proc2mngr_en_W   = Wire( Bits1 )
     s.rf_wen_pending_W = Wire( Bits1 )
 
-    @s.update_on_edge
+    @s.update_ff
     def reg_W():
       if s.reset:
-        s.val_W = b1( 0 )
+        s.val_W <<= b1( 0 )
       elif s.reg_en_W:
-        s.val_W            = s.next_val_M
-        s.rf_wen_pending_W = s.rf_wen_pending_M
-        s.inst_type_W      = s.inst_type_M
-        s.rf_waddr_W       = s.rf_waddr_M
-        s.proc2mngr_en_W   = s.proc2mngr_en_M
+        s.val_W            <<= s.next_val_M
+        s.rf_wen_pending_W <<= s.rf_wen_pending_M
+        s.inst_type_W      <<= s.inst_type_M
+        s.rf_waddr_W       <<= s.rf_waddr_M
+        s.proc2mngr_en_W   <<= s.proc2mngr_en_M
 
     s.ostall_proc2mngr_W = Wire( Bits1 )
 

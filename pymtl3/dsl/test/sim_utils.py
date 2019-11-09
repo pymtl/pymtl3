@@ -55,7 +55,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
   gen_upblk_writes = {}
 
   if isinstance( s, ComponentLevel2 ):
-    all_update_on_edge = set( s._dsl.all_update_on_edge )
+    all_update_ff = set( s._dsl.all_update_ff )
 
     if isinstance( s, ComponentLevel3 ):
       nets = s.get_all_value_nets()
@@ -176,12 +176,11 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       # Add all constraints
       for writer in writers:
         for wr_blk in write_upblks[ writer ]:
-          for rd_blk in rd_blks:
-            if wr_blk != rd_blk:
-              if rd_blk in all_update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+          if wr_blk not in all_update_ff:
+            for rd_blk in rd_blks:
+              if wr_blk != rd_blk:
+                if rd_blk not in all_update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -202,20 +201,19 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
       # Add all constraints
       for wr_blk in wr_blks:
-        for reader in readers:
-          for rd_blk in read_upblks[ reader ]:
-            if wr_blk != rd_blk:
-              if rd_blk in all_update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+        if wr_blk not in all_update_ff:
+          for reader in readers:
+            for rd_blk in read_upblks[ reader ]:
+              if wr_blk != rd_blk:
+                if rd_blk not in all_update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
 
-    all_constraints = expl_constraints.copy()
+    all_constraints = { *expl_constraints }
     for (x, y) in impl_constraints:
       if (y, x) not in expl_constraints: # no conflicting expl
         all_constraints.add( (x, y) )
   else:
-    all_constraints = expl_constraints.copy()
+    all_constraints = { *expl_constraints }
 
   #-----------------------------------------------------------------------
   # Process method constraints
@@ -380,9 +378,31 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
-  # Construct the graph
+
+  def make_double_buffer_func( s ):
+
+    strs = [ f"{repr(x)}._flip()" for x in s._dsl.all_signals if x._dsl.needs_double_buffer ]
+
+    if not strs:
+      def no_double_buffer():
+        pass
+      return no_double_buffer
+
+
+    src = """
+    def double_buffer():
+      {}
+    """.format( "\n      ".join(strs) )
+    local = locals()
+    exec(py.code.Source( src ).compile(), local)
+    return local['double_buffer']
+
+  # Construct the graph for update blocks
 
   vs  = all_upblks
+  if isinstance( s, ComponentLevel2 ):
+    vs -= all_update_ff
+
   es  = defaultdict(list)
   InD = { v:0 for v in vs }
 
@@ -410,7 +430,15 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       '* Please consult update dependency graph for details.'
     )
 
-  assert serial_schedule, "No update block found in the model"
+
+  if isinstance( s, ComponentLevel2 ):
+    final_serial_schedule = [ make_double_buffer_func( s ) ]
+    final_serial_schedule.extend( serial_schedule )
+    final_serial_schedule.extend( all_update_ff )
+  else:
+    final_serial_schedule = serial_schedule
+
+  assert final_serial_schedule, "No update block found in the model"
 
   if verbose:
     from graphviz import Digraph
@@ -429,26 +457,30 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
     dot.render( "/tmp/upblk-dag.gv", view=True )
 
   def tick_normal():
-    for blk in serial_schedule:
+    for blk in final_serial_schedule:
       blk()
   s.tick = tick_normal
-  s._dsl.schedule = serial_schedule
+  s._dsl.schedule = final_serial_schedule
 
   # Clean up Signals
 
   def cleanup_signals( m ):
     if isinstance( m, list ):
       for i, o in enumerate( m ):
-        if   isinstance( o, Signal ): m[i] = o.default_value()
-        elif isinstance( o, Const ):  m[i] = o.const
-        else:                         cleanup_signals( o )
+        if isinstance( o, Signal ):
+          m[i] = o.default_value()
+          m[i] <<= o.default_value()
+        else:
+          cleanup_signals( o )
 
     elif isinstance( m, NamedObject ):
       for name, obj in m.__dict__.items():
-        if ( isinstance( name, str ) and name[0] != '_' ) \
-          or isinstance( name, tuple ):
-          if   isinstance( obj, Signal ): setattr( m, name, obj.default_value() )
-          elif isinstance( obj, Const ):  setattr( m, name, obj.const )
-          else:                           cleanup_signals( obj )
+        if isinstance( name, str ) and name[0] != '_':
+          if   isinstance( obj, Signal ):
+            value = obj.default_value()
+            value <<= obj.default_value()
+            setattr( m, name, value )
+          else:
+            cleanup_signals( obj )
 
   cleanup_signals( s )

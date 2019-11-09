@@ -117,7 +117,9 @@ class Const( Connectable ):
     s._dsl.parent_obj = parent
 
   def __repr__( s ):
-    return f"{s._dsl.Type.__name__}({s._dsl.const})"
+    if s._dsl.Type is int:
+      return f"int({s._dsl.const})"
+    return f"{repr(s._dsl.const)}"
 
   def get_parent_object( s ):
     try:
@@ -140,15 +142,15 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type ):
-    # TODO
-    if isinstance( Type, int ):
-      raise Exception("Use actual type instead of int (it is deprecated).")
+    assert isinstance( Type, type ), "Use actual type instead of instance!"
     s._dsl.Type = Type
     s._dsl.type_instance = None
 
     s._dsl.slice  = None # None -- not a slice of some wire by default
     s._dsl.slices = {}
     s._dsl.top_level_signal = None
+
+    s._dsl.needs_double_buffer = False
 
   def inverse( s ):
     pass
@@ -160,6 +162,7 @@ class Signal( NamedObject, Connectable ):
     if name not in s.__dict__:
       # Shunning: we move this from __init__ to here for on-demand type
       #           checking when the __getattr__ is indeed used.
+
       if s._dsl.type_instance is None:
         # Yanghui: this would break if another Type indeed has an nbits
         #          attribute.

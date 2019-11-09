@@ -8,14 +8,13 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 """
-from graphviz import Digraph
-
 from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
 from .CLLineTracePass import CLLineTracePass
 from .errors import PassOrderError
+from .SimpleSchedulePass import make_double_buffer_func
 
 
 class OpenLoopCLPass( BasePass ):
@@ -31,7 +30,7 @@ class OpenLoopCLPass( BasePass ):
 
     # Construct the graph with top level callee port
 
-    V = top.get_all_update_blocks() | top._dag.genblks
+    V = top._dag.final_upblks - top.get_all_update_ff()
 
     # We collect all top level callee ports/nonblocking callee interfaces
 
@@ -122,6 +121,12 @@ class OpenLoopCLPass( BasePass ):
     # Shunning: we call CL line trace pass here.
     cl_trace = CLLineTracePass()
     schedule.insert( 0, cl_trace.process_component( top ) )
+
+    # Sequential blocks and double buffering
+    schedule.extend( list(top._dsl.all_update_ff) )
+    func = make_double_buffer_func( top )
+    if func is not None:
+      schedule.append( func )
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0

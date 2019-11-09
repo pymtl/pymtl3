@@ -72,17 +72,17 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
       upblk_py_src = upblk_py_src[:-1]
 
     # Add comments to the generated block
-    py_src = [ "PYMTL SOURCE:", "" ]
+    py_src = []
 
     if is_lambda:
       py_src += [
-        f"This upblk was generated from a lambda function defined in file {filename}, line {lino}:",
-        f"{src}",
+        "PyMTL Lambda Block Source",
+        "{src}",
       ]
     else:
-      py_src += [
-        f"This upblk was generated from an upblk defined in file {filename}, line {lino}",
-      ]
+      py_src += [ "PyMTL Update Block Source" ]
+
+    py_src += [ f"At {filename}:{lino}" ]
 
     py_src += upblk_py_src
 
@@ -204,7 +204,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_Assign( s, node ):
     target        = s.visit( node.target )
     value         = s.visit( node.value )
-    assignment_op = '<=' if s.upblk_type == s.SEQUENTIAL else '='
+    assignment_op = '<=' if not node.blocking else '='
     ret = f'{target} {assignment_op} {value};'
     return [ ret ]
 

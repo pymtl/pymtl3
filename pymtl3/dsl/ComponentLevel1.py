@@ -35,8 +35,9 @@ class ComponentLevel1( NamedObject ):
 
     inst = super().__new__( cls, *args, **kwargs )
 
-    inst._dsl.name_upblk = {}
-    inst._dsl.upblks     = set()
+    inst._dsl.name_upblk  = {}
+    inst._dsl.upblks      = set()
+    inst._dsl.upblk_order = []
     inst._dsl.U_U_constraints = set() # contains ( id(func), id(func) )s
 
     return inst
@@ -73,6 +74,7 @@ class ComponentLevel1( NamedObject ):
 
     s._dsl.name_upblk[ name ] = blk
     s._dsl.upblks.add( blk )
+    s._dsl.upblk_order.append( blk )
     return blk
 
   def get_update_block( s, name ):

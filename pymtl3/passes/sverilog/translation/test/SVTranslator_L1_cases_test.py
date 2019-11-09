@@ -41,8 +41,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_
@@ -61,9 +59,9 @@ def test_seq_assign( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      @s.update_on_edge
+      @s.update_ff
       def upblk():
-        s.out = s.in_
+        s.out <<= s.in_
   a = A()
   a._ref_src = \
 """
@@ -75,11 +73,9 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
-  // @s.update_on_edge
+  // @s.update_ff
   // def upblk():
-  //   s.out = s.in_
+  //   s.out <<= s.in_
 
   always_ff @(posedge clk) begin : upblk
     out <= in_;
@@ -111,8 +107,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_1, s.in_2 )
@@ -143,8 +137,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( Bits32(42), Bits32(0) )
@@ -177,8 +169,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_, Bits32(0) )
@@ -211,8 +201,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = sext( s.in_, 64 )
@@ -245,8 +233,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = zext( s.in_, 64 )
@@ -281,8 +267,6 @@ module A
 );
   localparam [31:0] __const__STATE_IDLE = 32'd42;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_, STATE_IDLE )
@@ -303,8 +287,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_, STATE_IDLE )
@@ -336,8 +318,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_[0], s.in_[1] )
@@ -360,8 +340,6 @@ module A
 );
   logic [31:0] in_ [0:1];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_[0], s.in_[1] )
@@ -396,8 +374,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[1]
@@ -430,8 +406,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_[4:36]
@@ -544,8 +518,6 @@ module A
 );
   localparam [31:0] STATE_IDLE = 32'd42;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out_2 = s.STATE_IDLE
@@ -568,8 +540,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out_2 = s.STATE_IDLE
@@ -607,8 +577,6 @@ module A
 );
   localparam [31:0] STATES [0:4] = '{ 32'd1, 32'd2, 32'd3, 32'd4, 32'd5 };
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.tmp = s.STATES[0]
@@ -640,8 +608,6 @@ module A
 );
   logic [31:0] out [0:4];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.tmp = s.STATES[0]

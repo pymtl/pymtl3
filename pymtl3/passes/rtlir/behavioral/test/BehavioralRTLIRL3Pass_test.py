@@ -61,7 +61,7 @@ def test_L3_struct_attr( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), Attribute(
-        Attribute( Base( a ), 'in_' ), 'foo' ) ) ] ) }
+        Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
   do_test( a )
 
 def test_L3_struct_inst_kwargs( do_test ):
@@ -77,7 +77,7 @@ def test_L3_struct_inst_kwargs( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), StructInst(
-        B, [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
+        B, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
   with expected_failure( PyMTLSyntaxError, 'keyword argument is not supported' ):
     do_test( a )
 
@@ -94,7 +94,7 @@ def test_L3_struct_inst( do_test ):
   a = A()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
       Attribute( Base( a ), 'out' ), StructInst(
-        B, [ SizeCast( 32, Number( 42 ) ) ] ) ) ] ) }
+        B, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
   do_test( a )
 
 #-------------------------------------------------------------------------

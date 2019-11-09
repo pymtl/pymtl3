@@ -42,8 +42,6 @@ module B
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.foo = Bits32(42)
@@ -72,8 +70,6 @@ module A
     .reset( b__reset )
   );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.b.foo
@@ -114,8 +110,6 @@ module B
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out_b = Bits32(0)
@@ -144,8 +138,6 @@ module A
     .reset( b__reset )
   );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = zext( s.b.out_b, 64 )
@@ -214,8 +206,6 @@ module A
     .reset( comp__1__reset )
   );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.comp[1].out
@@ -280,8 +270,6 @@ module A
   assign comp__0__reset = comp__reset[0];
   assign comp__1__reset = comp__reset[1];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.comp[1].out

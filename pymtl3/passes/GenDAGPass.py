@@ -50,8 +50,15 @@ class GenDAGPass( BasePass ):
     # of update blocks that have the same host object together and fire
     # them in a single compile command.
 
+    # Note that it introduced problems with multiple update blocks having
+    # the same const writer at the same hostobj. As a result, I add a
+    # suffix to each block like Bits1_xxx_no_12, Bits1_xxx_no_13 to
+    # disambiguate the blocks
+
     hostobj_allsrc = defaultdict(str)
+    hostobj_bits   = defaultdict(set)
     blkname_meta   = {}
+    blkname_suffix = {}
 
     for writer, signals in top.get_all_value_nets():
       if len(signals) == 1:
@@ -95,41 +102,68 @@ class GenDAGPass( BasePass ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
       lca_len = len( repr(wr_lca) )
-      wstr    = repr(writer) if isinstance( writer, Const ) \
-                else ( f"s.{repr(writer)[lca_len+1:]}" )
+
+      # hostobj_bits is used to only keep useful Bits in the
+      # closure instead of getting all those garbage in "globals()"
+
+      if isinstance( writer, Const ):
+        wstr = repr(writer)
+        hostobj_bits[ wr_lca ].add( writer._dsl.Type.__name__ )
+      else:
+        wstr = f"s.{repr(writer)[lca_len+1:]}"
+
       rstrs   = [ f"s.{repr(x)[lca_len+1:]}" for x in readers ]
-      upblk_name = f"{writer!r}__{fanout}"\
-                    .replace( ".", "_" ).replace( ":", "_" ) \
-                    .replace( "[", "_" ).replace( "]", "_" ) \
-                    .replace( "(", "_" ).replace( ")", "_" )
+      upblk_name = f"{writer!r}__{fanout}".replace( " ", "" ) \
+                      .replace( ".", "_" ).replace( ":", "_" ) \
+                      .replace( "[", "_" ).replace( "]", "_" ) \
+                      .replace( "(", "_" ).replace( ")", "_" )
+
+      # NAME DISAMBIGUATION
+      # There are cases where the same const drives multiple nets. We
+      # basically add a suffix to name each of them differently.
+
+      if upblk_name in blkname_meta:
+        if upblk_name in blkname_suffix:
+          current = blkname_suffix[ upblk_name ]
+        else:
+          current = 1
+        blkname_suffix[ upblk_name ] = current + 1
+        upblk_name += f"_no_{current}"
+
       gen_src = """
-def {}():
-  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+  def {}():
+    {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
       hostobj_allsrc[ wr_lca ] += gen_src
-
-      # TODO see if directly compiling AST instead of source can be faster
-
       blkname_meta[ upblk_name ] = (writer, readers)
 
-    # Borrow the closure of hostobj to compile the block. Add to linecache
-    def compile_upblks( s, src ):
-      var = locals()
-      var.update( globals() )
-      local = {}
-
-      fname = f"Generated net"
-      exec( compile( src, filename=fname, mode="exec"), var, local )
-      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
-
-      for name, blk in local.items():
-        top._dag.genblks.add( blk )
-        writer, readers = blkname_meta[ name ]
-        if writer.is_signal():
-          top._dag.genblk_reads[ blk ] = [ writer ]
-        top._dag.genblk_writes[ blk ] = readers
+    # TODO see if directly compiling AST instead of source can be faster
 
     for hostobj, allsrc in hostobj_allsrc.items():
-      compile_upblks( hostobj, allsrc )
+      if hostobj in hostobj_bits:
+        bits_import_src = f"from pymtl3.datatypes import {','.join( hostobj_bits[hostobj] )}"
+      else:
+        bits_import_src = ""
+      src = """
+{}
+def compile_upblks( s ):
+  {}
+  return locals()
+""".format( bits_import_src, allsrc )
+
+      fname = f"Generated net at {hostobj!r}"
+      l = {}
+      exec( compile( src, filename=fname, mode="exec"), l )
+      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
+
+      ret = l[f'compile_upblks']( hostobj )
+
+      for name, blk in ret.items():
+        if name != 's':
+          top._dag.genblks.add( blk )
+          writer, readers = blkname_meta[ name ]
+          if writer.is_signal():
+            top._dag.genblk_reads[ blk ] = [ writer ]
+          top._dag.genblk_writes[ blk ] = readers
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks
@@ -138,7 +172,7 @@ def {}():
 
     # Query update block metadata from top
 
-    update_on_edge               = top.get_all_update_on_edge()
+    update_ff                    = top.get_all_update_ff()
     upblk_reads, upblk_writes, _ = top.get_all_upblk_metadata()
     genblk_reads, genblk_writes  = top._dag.genblk_reads, top._dag.genblk_writes
     U_U, RD_U, WR_U, U_M         = top.get_all_explicit_constraints()
@@ -232,14 +266,12 @@ def {}():
       # Add all constraints
       for writer in writers:
         for wr_blk in write_upblks[ writer ]:
-          for rd_blk in rd_blks:
-            if wr_blk != rd_blk:
-              if rd_blk in update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
-                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
+          if wr_blk not in update_ff:
+            for rd_blk in rd_blks:
+              if wr_blk != rd_blk:
+                if rd_blk not in update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                  constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -260,18 +292,16 @@ def {}():
 
       # Add all constraints
       for wr_blk in wr_blks:
-        for reader in readers:
-          for rd_blk in read_upblks[ reader ]:
-            if wr_blk != rd_blk:
-              if rd_blk in update_on_edge:
-                impl_constraints.add( (rd_blk, wr_blk) ) # rd < wr
-                constraint_objs[ (rd_blk, wr_blk) ].add( obj )
-              else:
-                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
-                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
+        if wr_blk not in update_ff:
+          for reader in readers:
+              for rd_blk in read_upblks[ reader ]:
+                if wr_blk != rd_blk:
+                  if rd_blk not in update_ff:
+                    impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                    constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     top._dag.constraint_objs = constraint_objs
-    top._dag.all_constraints = U_U.copy()
+    top._dag.all_constraints = { *U_U }
     for (x, y) in impl_constraints:
       if (y, x) not in U_U: # no conflicting expl
         top._dag.all_constraints.add( (x, y) )

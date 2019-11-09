@@ -46,8 +46,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -93,8 +91,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -143,8 +139,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -196,8 +190,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -260,8 +252,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   if Bits1(1):
@@ -327,8 +317,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(2):
@@ -355,8 +343,6 @@ module A
   logic [31:0] in_ [0:1];
   logic [31:0] out [0:1];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(2):
@@ -399,8 +385,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(1, 2):
@@ -429,8 +413,6 @@ module A
   logic [31:0] in_ [0:1];
   logic [31:0] out [0:1];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(1, 2):
@@ -476,8 +458,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(0, 5, 2):
@@ -514,8 +494,6 @@ module A
   logic [31:0] in_ [0:4];
   logic [31:0] out [0:4];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(0, 5, 2):
@@ -567,8 +545,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -601,8 +577,6 @@ module A
   logic [31:0] in_ [0:4];
   logic [31:0] out [0:4];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -650,8 +624,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -684,8 +656,6 @@ module A
   logic [31:0] in_ [0:4];
   logic [31:0] out [0:4];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -736,8 +706,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -777,8 +745,6 @@ module A
   logic [31:0] in_ [0:4];
   logic [31:0] out [0:4];
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -838,8 +804,6 @@ module A
 );
   logic [31:0] __tmpvar__upblk_tmpvar;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -883,8 +847,6 @@ module A
   logic [31:0] out [0:4];
   logic [31:0] __tmpvar__upblk_tmpvar;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   for i in range(5):
@@ -948,8 +910,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_.foo
@@ -971,8 +931,6 @@ module A
 );
   logic [31:0] in_;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = s.in_.foo
@@ -1015,8 +973,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.bar[1], s.in_.foo )
@@ -1041,8 +997,6 @@ module A
   logic [31:0] in___bar [0:1];
   logic [95:0] in_;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.bar[1], s.in_.foo )
@@ -1098,8 +1052,6 @@ module A
   input logic [0:0] reset
 );
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.c.woof, s.in_.foo )
@@ -1126,8 +1078,6 @@ module A
   logic [31:0] in___c;
   logic [127:0] in_;
 
-  // PYMTL SOURCE:
-  //
   // @s.update
   // def upblk():
   //   s.out = concat( s.in_.bar[0], s.in_.c.woof, s.in_.foo )
@@ -1164,12 +1114,6 @@ module A
   output logic [31:0] out,
   input logic [0:0] reset
 );
-
-  // PYMTL SOURCE:
-  //
-  // This upblk was generated from a lambda function defined in file \
-  //    .../pymtl3/passes/sverilog/translation/test/SVTranslator_L2_cases_test.py, line 1157:
-  //       s.out //= lambda: s.in_ + Bits32(42)
 
   // def _lambda__s_out(): s.out = s.in_ + Bits32(42)
 
