@@ -8,13 +8,14 @@ Author : Kaishuo Cheng
 Date   : Oct 4, 2019
 """
 
-import time
 from collections import defaultdict
 from copy import deepcopy
+
 import py
-import sys
+
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+
 from .errors import PassOrderError
 
 

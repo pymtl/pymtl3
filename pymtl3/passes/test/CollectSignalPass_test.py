@@ -9,6 +9,7 @@
 
 from pymtl3 import *
 
+
 class Toy( Component ):
   """Toy adder component"""
 
