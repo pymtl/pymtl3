@@ -12,6 +12,7 @@ from contextlib import redirect_stdout
 
 from pymtl3 import *
 
+
 def test_toy():
   class Toy( Component ):
     """Toy adder component"""
