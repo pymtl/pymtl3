@@ -124,7 +124,7 @@ def dump_wav():
     {1}
   except Exception:
     raise
-  s._collect_signals = deepcopy(wavmeta.sigs) 
+  s._collect_signals = deepcopy(wavmeta.sigs)
   wavmeta.sim_ncycles += 1
 """.format("", "".join(wav_srcs) )
     s, l_dict = top, {}

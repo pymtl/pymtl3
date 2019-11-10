@@ -27,7 +27,7 @@ class PrintWavePass( BasePass ):
   def __call__( self, top ):
     top._print_wave = _help_print
 
-def _process_binary(sig,base,max):
+def _process_binary( sig, base, max ):
   """
   Returns int value from a signal in 32b form. Used for testing.
 
@@ -39,8 +39,8 @@ def _process_binary(sig,base,max):
   if base == 10:
     temp_int = int(sig,2)
     if sig[0] == '1':
-      return temp_int -2 **32      #taking 2's complement.
-                                    #leading 1 indicates a negative number
+      return temp_int -2 **32     # taking 2's complement.
+                                  # leading 1 indicates a negative number
     else:
       return temp_int
     #hex number
@@ -162,7 +162,7 @@ def _help_print(self):
 
           current = _process_binary(val[0],16,length)
           # print a +, with one less space for signal number
-          if(plus):
+          if plus:
             if i==0:
               print(light_gray + " " +'\033[30m'+"+"+ current,end = "")
             else:

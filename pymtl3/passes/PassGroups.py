@@ -1,7 +1,8 @@
 from pymtl3.dsl import Component
 
 from .CLLineTracePass import CLLineTracePass
-from .CollectSignalPass import CollectSignalPass
+from .text_wave.CollectSignalPass import CollectSignalPass
+from .text_wave.PrintWavePass import PrintWavePass
 from .DynamicSchedulePass import DynamicSchedulePass
 from .GenDAGPass import GenDAGPass
 from .LineTraceParamPass import LineTraceParamPass
@@ -9,7 +10,6 @@ from .mamba.HeuristicTopoPass import HeuristicTopoPass
 from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .mamba.UnrollTickPass import UnrollTickPass
 from .OpenLoopCLPass import OpenLoopCLPass
-from .PrintWavePass import PrintWavePass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
 from .VcdGenerationPass import VcdGenerationPass
