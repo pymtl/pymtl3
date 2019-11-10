@@ -54,7 +54,7 @@ def _process_binary( sig, base, max ):
       temp_hex = '0'*(max-l) + temp_hex
     return temp_hex
 
-def _help_print(self):
+def _help_print( self ):
   char_length = 5
   tick = u'\u258f'
   up, down = u'\u2571', u'\u2572'
@@ -62,7 +62,7 @@ def _help_print(self):
   revstart, revstop = '\x1B[7m', '\x1B[0m'
   light_gray = '\033[47m'
   back='\033[0m'  #back to normal printing
-  all_signals = self._collect_signals
+  all_signals = self._textwave.sigs
 
   #spaces before cycle number
   max_length = 0
@@ -76,6 +76,8 @@ def _help_print(self):
        if sig != "s.clk" and sig != "s.reset":
           max_length = this_length
 
+  print()
+  print()
   print(" "*(max_length+1),end = "")
 
   #handles clock tick symbol
@@ -90,10 +92,10 @@ def _help_print(self):
 
   print("")
   #signals
-  for sig in all_signals:
+  for sig in sorted(all_signals.keys()):
     if sig != "s.clk" and sig != "s.reset":
       print("")
-      bit_length = len(all_signals[sig][0][0])-2
+      bit_length = len(all_signals[sig][0])-2
       pos = sig.find('.')
       suffix = ""   # once used for (32b)
       #print suffix
@@ -101,12 +103,12 @@ def _help_print(self):
       prev_sig = None
       # one bit
       if bit_length==1:
-        for val in all_signals[sig]:
+        for i, val in enumerate( all_signals[sig] ):
 
           #every 5 cycles add a space
-          if val[1]%5 == 0:
+          if i%5 == 0:
             print(" ",end = "")
-          if val[0][2] == '1':
+          if val[2] == '1':
             current_sig = high
           else:
             current_sig = low
@@ -138,9 +140,9 @@ def _help_print(self):
           val = val_list[i]
           for j in range(i,len(val_list)):
             # a space every 5 cycles
-            if (j%5==4):
+            if j % 5 == 4:
               break
-            if (val_list[j][0] != val[0]):
+            if val_list[j] != val:
               j = j-1
               break
 
@@ -152,7 +154,7 @@ def _help_print(self):
           next = j-i
           if length >= bit_length//4:
             length = bit_length//4
-            if bit_length %4 != 0:
+            if bit_length % 4 != 0:
               length+=1
             plus = False
           else:
@@ -160,7 +162,7 @@ def _help_print(self):
             length = length -1
             plus = True
 
-          current = _process_binary(val[0],16,length)
+          current = _process_binary(val,16,length)
           # print a +, with one less space for signal number
           if plus:
             if i==0:

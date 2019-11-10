@@ -34,7 +34,7 @@ def processbinary(sig):
     if sig[2] == '1':
          #taking 2's complement.
          #leading 1 indicates a negative number
-        return tempint -2 **32     
+        return tempint -2 **32
 
     else:
         return tempint
@@ -76,18 +76,15 @@ def test_toy():
     assert dut.out == out
 
   #test
-  sig = dut._collect_signals
+  sig = dut._textwave.sigs
   siglist = ["s.in0","s.in1","s.out","s.clk","s.reset"]
   for i in siglist:
-    assert sig.__contains__(i),"signals not captured"
+    assert i in sig,"signals not captured"
 
   for i in range(3): # in0, in1, and out
-      partsig = sig.get(siglist[i])
-      signallength = len(partsig)
-      assert signallength >= 5,"missing some cycles of signals"
+      partsig = sig[ siglist[i] ]
+      signal_length = len(partsig)
+      assert signal_length >= 5,"missing some cycles of signals"
 
-      for j in range(signallength):
-         assert testlist[i][j] == processbinary(partsig[j][0]),"collected wrong signals"
-
-
-test_toy()
+      for j in range(signal_length):
+         assert testlist[i][j] == processbinary(partsig[j]),"collected wrong signals"

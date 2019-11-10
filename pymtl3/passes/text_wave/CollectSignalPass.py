@@ -4,8 +4,8 @@ CollectSignalPass.py
 ========================================================================
 collects signals and stored it as _collect_signals attribute of top.
 
-Author : Kaishuo Cheng
-Date   : Oct 4, 2019
+Author : Kaishuo Cheng, Shunning Jiang
+Date   : Nov 9, 2019
 """
 
 from collections import defaultdict
@@ -16,7 +16,7 @@ import py
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
-from .errors import PassOrderError
+from ..errors import PassOrderError
 
 
 class CollectSignalPass( BasePass ):
@@ -29,9 +29,9 @@ class CollectSignalPass( BasePass ):
     else:
       schedule = top._sched.schedule
 
-    top._wav = PassMetadata()
+    top._textwave = PassMetadata()
 
-    schedule.append( self.collect_sig_func( top, top._wav ) )
+    schedule.append( self.collect_sig_func( top, top._textwave ) )
 
   def collect_sig_func( self, top, wavmeta ):
     component_signals = defaultdict(set)
@@ -39,7 +39,7 @@ class CollectSignalPass( BasePass ):
     for x in top._dsl.all_signals:
       for y in x.get_leaf_signals():
         host = y.get_host_component()
-        component_signals[ host ].add(y)
+        component_signals[ host ].add( y )
 
     # We pre-process all nets in order to remove all sliced wires because
     # they belong to a top level wire and we count that wire
@@ -83,27 +83,12 @@ class CollectSignalPass( BasePass ):
         recurse_models( child, level+1 )
 
     # Begin recursive descent from the top-level model.
+
     recurse_models( top, 0 )
-
-    for i, net in enumerate(trimmed_value_nets):
-
-      # Set this to be the last cycle value
-      setattr( wavmeta, "last_{}".format(i), net[0]._dsl.Type().bin() )
 
     # Now we create per-cycle signal value collect functions
 
-    wavmeta.sim_ncycles = 0
-
-    dump_wav_per_signal = """
-      value_str = {1}.bin()
-      if "{1}" in wavmeta.sigs:
-        sig_val_lst = wavmeta.sigs["{1}"]
-        sig_val_lst.append((value_str, wavmeta.sim_ncycles))
-        wavmeta.sigs["{1}"] = sig_val_lst
-      else:
-        wavmeta.sigs["{1}"] = [(value_str, wavmeta.sim_ncycles)]"""
-
-    # TODO type check
+    dump_wav_per_signal = "wavmeta.sigs['{0}'].append( {0}.bin() )"
 
     # Concatenate the strings for all signals
 
@@ -111,22 +96,15 @@ class CollectSignalPass( BasePass ):
     wav_srcs = []
     for i, net in enumerate( trimmed_value_nets ):
       if i != wavmeta.clock_net_idx:
-        wav_srcs.append( dump_wav_per_signal.format( i, net[0]) )
+        wav_srcs.append( dump_wav_per_signal.format( net[0]) )
     deepcopy # I have to do this to circumvent the tools
-    wavmeta.sigs = {}
-    char_length = 5
+    wavmeta.sigs = defaultdict(list)
 
+    # TODO use integer index instead of dict, should be easy
     src =  """
 def dump_wav():
-  try:
-    # Type check
-    {0}
-    {1}
-  except Exception:
-    raise
-  s._collect_signals = deepcopy(wavmeta.sigs)
-  wavmeta.sim_ncycles += 1
-""".format("", "".join(wav_srcs) )
+  {}
+""".format( "\n  ".join(wav_srcs) )
     s, l_dict = top, {}
     exec(compile( src, filename="temp", mode="exec"), globals().update(locals()), l_dict)
     return l_dict['dump_wav']

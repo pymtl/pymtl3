@@ -67,10 +67,8 @@ def test_toy():
     dut._print_wave(dut)
   out = f.getvalue()
   print(out)
-  for i in dut._collect_signals:
+  for i in dut._textwave.sigs:
       dot = i.find(".")
       sliced = i[dot+1:]
       if sliced != "reset" and sliced != "clk":
         assert i[dot+1:] in out
-
-test_toy()
