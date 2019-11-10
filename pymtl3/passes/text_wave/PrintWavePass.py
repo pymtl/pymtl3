@@ -12,8 +12,8 @@ values along ticks of the clock.
 
 Link: https://ucsbarchlab.github.io/PyRTL/
 
-Author : Kaishuo Cheng
-Date   : Oct 4, 2019
+Author : Kaishuo Cheng, Shunning Jiang
+Date   : Nov 9, 2019
 """
 
 import py
@@ -56,9 +56,9 @@ def _process_binary( sig, base, max ):
 
 def _help_print( self ):
   char_length = 5
-  tick = u'\u258f'
-  up, down = u'\u2571', u'\u2572'
-  x, low, high = u'\u2573', u'\u005f', u'\u203e'
+  tick = '\u258f'
+  up, down = '\u2571', '\u2572'
+  x, low, high = '\u2573', '\u005f', '\u203e'
   revstart, revstop = '\x1B[7m', '\x1B[0m'
   light_gray = '\033[47m'
   back='\033[0m'  #back to normal printing
