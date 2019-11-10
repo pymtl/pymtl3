@@ -42,6 +42,10 @@ def processbinary(sig):
 def test_toy():
   # Create a toy component and elaborate it
   dut = Toy()
+
+  # Turn on textwave
+  dut.text_wave = True
+
   dut.elaborate()
 
   # Setup the simulation

@@ -29,9 +29,14 @@ class CollectSignalPass( BasePass ):
     else:
       schedule = top._sched.schedule
 
-    top._textwave = PassMetadata()
+    try:
+      en = top.text_wave
+    except AttributeError:
+      return
 
-    schedule.append( self.collect_sig_func( top, top._textwave ) )
+    if en:
+      top._textwave = PassMetadata()
+      schedule.append( self.collect_sig_func( top, top._textwave ) )
 
   def collect_sig_func( self, top, wavmeta ):
     component_signals = defaultdict(set)

@@ -5,7 +5,7 @@ PrintWavePass.py
 Print single bit signal in wave form and multi-bit signal by showing
 least significant bits.
 
-To use, call top._print_wave(top)
+To use, call top.print_wave(top)
 
 Inspired by PyRTL's state machine screenshot, which shows the change of signal
 values along ticks of the clock.
@@ -25,7 +25,14 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 class PrintWavePass( BasePass ):
 
   def __call__( self, top ):
-    top._print_wave = _help_print
+
+    try:
+      en = top.text_wave
+    except AttributeError:
+      return
+
+    if en:
+      top.print_wave = _help_print
 
 def _process_binary( sig, base, max ):
   """

@@ -34,6 +34,9 @@ class Toy( Component ):
 def test_toy():
   # Create a toy component and elaborate it
   dut = Toy()
+
+  dut.text_wave = True
+
   dut.elaborate()
 
   # Setup the simulation
@@ -64,11 +67,10 @@ def test_toy():
   #print
   f = io.StringIO()
   with redirect_stdout(f):
-    dut._print_wave(dut)
+    dut.print_wave(dut)
   out = f.getvalue()
-  print(out)
   for i in dut._textwave.sigs:
-      dot = i.find(".")
-      sliced = i[dot+1:]
-      if sliced != "reset" and sliced != "clk":
-        assert i[dot+1:] in out
+    dot = i.find(".")
+    sliced = i[dot+1:]
+    if sliced != "reset" and sliced != "clk":
+      assert i[dot+1:] in out
