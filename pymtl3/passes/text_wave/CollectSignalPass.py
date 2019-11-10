@@ -46,7 +46,7 @@ class CollectSignalPass( BasePass ):
 
     # Now we create per-cycle signal value collect functions
     for x in top._dsl.all_signals:
-      if x.is_top_level_signal() and not repr(x).endswith('.clk'):
+      if x.is_top_level_signal() and ( not repr(x).endswith('.clk') or x is top.clk ):
         wav_srcs.append( "wavmeta.sigs['{0}'].append( {0}.bin() )".format(x) )
 
     wavmeta.sigs = defaultdict(list)
