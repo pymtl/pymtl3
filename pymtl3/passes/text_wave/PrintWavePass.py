@@ -95,11 +95,12 @@ def _help_print( self ):
   for i in range(0,len(all_signals["s.clk"])):
     #insert a space every 5 cycles
     if i % 5 == 0:
-      print(tick + str(i)+ " "*(char_length-2) ,end="")
+      if i != 0:
+        print(" ",end ="")
+      print(tick + str(i)+ " "*(char_length-1-len(str(i))) ,end="")
     else:
       print(tick + " "*(char_length-1) ,end="")
-    if i % 5 == 1:
-      print(" ",end ="")
+
 
   print("")
   #signals
