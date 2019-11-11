@@ -75,7 +75,6 @@ def _help_print( self ):
   light_gray = '\033[47m'
   back='\033[0m'  #back to normal printing
   all_signals = self._textwave.sigs
-
   #spaces before cycle number
   max_length = 0
   for sig in all_signals:
@@ -152,18 +151,21 @@ def _help_print( self ):
           val = val_list[i]
           for j in range(i,len(val_list)):
             # a space every 5 cycles
-            if j % 5 == 4:
-              break
+
             if val_list[j] != val:
               j = j-1
               break
-
+            if j % 5 == 4:
+              break
           if i%5 == 0:
             print(back +" ",end = "")
 
           #first is reserved for X or " ". Rest is 5 char length.
           length = 4+ 5*(j-i)
           next = j-i
+          # print(sig,end = " ")
+          # print(j, end = " ")
+          # print(i)
           if length >= bit_length//4:
             length = bit_length//4
             if bit_length % 4 != 0:

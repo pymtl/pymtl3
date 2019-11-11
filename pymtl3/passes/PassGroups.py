@@ -22,6 +22,8 @@ SimpleSim = [
   SimpleSchedulePass(),
   CLLineTracePass(),
   # VcdGenerationPass(),
+  CollectSignalPass(),
+  PrintWavePass(),
   SimpleTickPass(),
   LineTraceParamPass(),
   Component.lock_in_simulation
