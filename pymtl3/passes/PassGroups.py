@@ -10,6 +10,8 @@ from .mamba.UnrollTickPass import UnrollTickPass
 from .OpenLoopCLPass import OpenLoopCLPass
 from .SimpleSchedulePass import SimpleSchedulePass
 from .SimpleTickPass import SimpleTickPass
+from .text_wave.CollectSignalPass import CollectSignalPass
+from .text_wave.PrintWavePass import PrintWavePass
 from .VcdGenerationPass import VcdGenerationPass
 from .WrapGreenletPass import WrapGreenletPass
 
@@ -20,6 +22,8 @@ SimpleSim = [
   SimpleSchedulePass(),
   CLLineTracePass(),
   # VcdGenerationPass(),
+  CollectSignalPass(),
+  PrintWavePass(),
   SimpleTickPass(),
   LineTraceParamPass(),
   Component.lock_in_simulation
@@ -42,6 +46,8 @@ SimulationPass = [
   DynamicSchedulePass(),
   CLLineTracePass(),
   VcdGenerationPass(),
+  CollectSignalPass(),
+  PrintWavePass(),
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
@@ -55,6 +61,7 @@ OpenLoopCLSim = [
   SimpleTickPass(),
   Component.lock_in_simulation
 ]
+
 
 UnrollSim = [
   Component.elaborate,

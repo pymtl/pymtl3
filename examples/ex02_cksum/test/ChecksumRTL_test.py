@@ -124,6 +124,7 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
       th.dump_vcd = True
       th.vcd_file_name = s.vcd_file_name
 
+    th.text_wave = True
     # Create a simulator
     th.elaborate()
     th.apply( SimulationPass )
@@ -138,5 +139,6 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
       ncycles += 1
       print("{:3}: {}".format( ncycles, th.line_trace() ))
 
+    th.print_wave()
     # Check timeout
     assert ncycles < max_cycles
