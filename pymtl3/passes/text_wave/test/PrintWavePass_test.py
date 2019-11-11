@@ -11,6 +11,7 @@ import io
 from contextlib import redirect_stdout
 
 from pymtl3 import *
+from pymtl3.passes.errors import ModelTypeError
 
 
 def test_toy():
@@ -90,9 +91,9 @@ def test_widetoy():
         # This update block models the behavior of a 32-bit adder
         s.out = s.i + s.inlong
         if s.out[3] == "1":
-            s.state = s.state +b1(1)
+          s.state = s.state +b1(1)
         else:
-            s.state = b1(0)
+          s.state = b1(0)
 
   # Create a toy component and elaborate it
   dut = Toy()
@@ -117,6 +118,81 @@ def test_widetoy():
     b128(0x1000000000000+0),    b128(2),    b128(0x1000000000000+2),
     b128(0x1000000000000+1),    b128(2),    b128(0x1000000000000+3),
     b128(0x1000000000000+0),    b128(-5),   b128(0x1000000000000+-5),
+  ]
+
+  # Begin simulation
+  for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
+    dut.i = i
+    dut.inlong = inlong
+    dut.tick()
+    assert dut.out == out
+
+  #print
+  f = io.StringIO()
+  dut.print_wave()
+  with redirect_stdout(f):
+    dut.print_wave()
+  out = f.getvalue()
+  for i in dut._textwave.sigs:
+    dot = i.find(".")
+    sliced = i[dot+1:]
+    if sliced != "reset" and sliced != "clk":
+      assert i[dot+1:] in out
+
+def test_bitstruct():
+
+  @bitstruct
+  class XX:
+    x: Bits32
+    y: Bits32
+
+  class Toy( Component ):
+    def construct( s ):
+      # Interfaces
+      s.i = InPort( XX )
+      s.inlong = InPort( Bits32 )
+      s.out = OutPort( XX )
+      s.state = Wire(Bits1)
+      @s.update
+      def add_upblk():
+        # This update block models the behavior of a 32-bit adder
+        s.out.x = s.i.x + s.inlong
+        s.out.y = s.i.y + s.inlong
+        if s.out.x[3] == "1":
+          s.state = s.state +b1(1)
+        else:
+          s.state = b1(0)
+
+  # Create a toy component and elaborate it
+  dut = Toy()
+
+  dut.text_wave = True
+
+  dut.elaborate()
+
+  # Setup the simulation
+  try:
+    dut.apply( SimulationPass )
+  except ModelTypeError:
+    return
+
+  # TODO when we support bitstruct, fix this text
+  raise
+
+  dut.sim_reset()
+  # Test vector
+  vector = [
+    #  i        inlong       out
+    XX(1,1),    b32(2),    XX(3,3),
+    XX(0,0),    b32(2),    XX(2,2),
+    XX(0,0),    b32(2),    XX(2,2),
+    XX(1,1),    b32(-2),   XX(-1,-1),
+    XX(1,1),    b32(-42),  XX(-41,-41),
+    XX(1,1),    b32(-4),   XX(-3,-3),
+    XX(1,1),    b32(2),    XX(3,3),
+    XX(0,0),    b32(2),    XX(2,2),
+    XX(1,1),    b32(2),    XX(3,3),
+    XX(0,0),    b32(-5),   XX(-5,-5),
   ]
 
   # Begin simulation
