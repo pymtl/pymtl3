@@ -20,11 +20,7 @@ class DetectVarNames( ast.NodeVisitor ):
     self.obj = obj
     self.is_update_ff = is_update_ff
     self.globals = upblk.__globals__
-
-    self.closure = {}
-    for i, var in enumerate( upblk.__code__.co_freevars ):
-      try:  self.closure[ var ] = upblk.__closure__[i].cell_contents
-      except ValueError: pass
+    self.closure = { *upblk.__code__.co_freevars }
 
   # Helper function to get the full name containing "s"
 
@@ -44,6 +40,9 @@ class DetectVarNames( ast.NodeVisitor ):
       # If the slice looks like a[i:i+1] where i is variable, I assume it
       # would access the whole variable
 
+      # Shunning: since the closure/global variables can vary across
+      # different instances of the same class, we need to cache the name.
+
       low = up = None
 
       if isinstance( lower, ast.Num ):
@@ -51,18 +50,18 @@ class DetectVarNames( ast.NodeVisitor ):
       elif isinstance( lower, ast.Name ):
         x = lower.id
         if   x in self.globals:
-          low = self.globals[ x ] # TODO check low is int
+          low = (False, x)
         elif x in self.closure:
-          low = self.closure[ x ]
+          low = (True, x)
 
       if isinstance( upper, ast.Num ):
         up = node.slice.upper.n
       elif isinstance( upper, ast.Name ):
         x = upper.id
         if   x in self.globals:
-          up = self.globals[ x ] # TODO check low is int
+          up = (False, x)
         elif x in self.closure:
-          up = self.closure[ x ]
+          up = (True, x)
 
       if low is not None and up is not None:
         slices.append( slice(low, up) )
@@ -85,9 +84,9 @@ class DetectVarNames( ast.NodeVisitor ):
         elif isinstance( v, ast.Name ):
           x = v.id
           if   x in self.globals: # Only support global const indexing for now
-            n = self.globals[ x ]
+            n = (False, x)
           elif x in self.closure:
-            n = self.closure[ x ]
+            n = (True, x)
         elif isinstance( v, ast.Attribute ): # s.sel, may be constant
           self.visit( v )
         elif isinstance( v, ast.Call ): # int(x)

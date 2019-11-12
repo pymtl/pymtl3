@@ -232,6 +232,7 @@ class Signal( NamedObject, Connectable ):
     sl_tuple = (sl.start, sl.stop)
 
     if sl_tuple not in s.__dict__:
+      assert 0 <= sl.start < sl.stop <= s._dsl.Type.nbits
       x = s.__class__( mk_bits( sl.stop - sl.start) )
       sd = s._dsl
       xd = x._dsl
