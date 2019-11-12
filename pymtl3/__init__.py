@@ -18,7 +18,7 @@ from .dsl.Connectable import (
 from .dsl.ConstraintTypes import RD, WR, M, U
 from .passes.PassGroups import DynamicSim, SimpleSim, SimulationPass
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 
 __all__ = [
   'U','M','RD','WR',
