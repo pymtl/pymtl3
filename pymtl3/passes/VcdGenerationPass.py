@@ -146,7 +146,7 @@ class VcdGenerationPass( BasePass ):
         for y in x.get_leaf_signals():
           host = y.get_host_component()
           component_signals[ host ].add(y)
-      else:
+      elif is_bitstruct_class( x._dsl.Type ):
         # BitStruct signals are not leaf signals. We just add the whole vector
         # to the component_signals dict instead of adding all fields
         host = x.get_host_component()
