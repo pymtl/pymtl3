@@ -11,7 +11,7 @@ Date   : Nov 3, 2017
 import math
 
 from .bits_import import *
-from .bitstructs import is_bitstruct_inst, is_bitstruct_class
+from .bitstructs import is_bitstruct_class, is_bitstruct_inst
 
 
 def concat( *args ):
