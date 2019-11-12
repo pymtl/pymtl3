@@ -11,6 +11,7 @@ Date   : Nov 3, 2017
 import math
 
 from .bits_import import *
+from .bitstructs import is_bitstruct_class, is_bitstruct_inst
 
 
 def concat( *args ):
@@ -59,3 +60,19 @@ def reduce_xor( value ):
 
   except AttributeError:
     raise TypeError("Cannot call reduce_xor on int")
+
+def get_nbits( Type ):
+  assert isinstance( Type, type )
+  if issubclass( Type, Bits ):
+    return Type.nbits
+
+  assert is_bitstruct_class( Type ), f"{Type} is not a valid PyMTL data type!"
+  return sum(get_nbits(v) for v in Type.__bitstruct_fields__.values())
+
+def to_bits( obj ):
+  # BitsN
+  if isinstance( obj, Bits ):
+    return obj
+  # BitStruct
+  assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
+  return concat( *[ to_bits(getattr(obj, v)) for v in obj.__bitstruct_fields__.keys() ] )

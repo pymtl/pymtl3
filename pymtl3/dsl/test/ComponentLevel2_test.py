@@ -8,7 +8,7 @@ Date   : Nov 3, 2018
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits32, bitstruct
+from pymtl3.datatypes import Bits32, bitstruct, mk_bits
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import RD, WR, U
@@ -92,6 +92,26 @@ def test_signal_require_type():
   except AssertionError as e:
     print(e)
     assert str(e).startswith( "Use actual type instead of instance!" )
+
+
+def test_ast_caching_closure():
+
+  class Parametrized(ComponentLevel2):
+    def construct( s, nbits ):
+      nbitsX2 = nbits*2
+      s.x = Wire( mk_bits(nbits*2) )
+      @s.update
+      def upA():
+        print(s.x[nbits])
+        print(s.x[0:nbits])
+        print(s.x[nbits:nbitsX2])
+
+  p1 = Parametrized( 100 )
+  p2 = Parametrized( 1 )
+  p1.elaborate()
+  print(p1._dsl.all_upblk_reads)
+  p2.elaborate()
+  print(p2._dsl.all_upblk_reads)
 
 def test_simple():
 

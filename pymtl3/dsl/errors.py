@@ -83,6 +83,38 @@ Suggestion: fix incorrect field access at line {}, or fix the declaration somewh
       repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno ) )
 
+class InvalidIndexError( Exception ):
+  """ Raise when a variable in an update block is not declared """
+  def __init__( self, obj, idx, blk=None, blk_hostobj=None, lineno=0 ):
+
+    if not blk:
+      return super().__init__() # this is just temporary message
+
+    filepath = inspect.getfile( blk_hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ Slice [{}:{}] of object \"{}\" (class \"{}\") is accessed in block \"{}\",
+    but {} has a narrower \"{}\" type.
+(when constructing instance {} of class \"{}\" in the hierarchy)
+
+Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      idx.start, idx.stop, repr(obj), obj.__class__.__name__, blk.__name__,
+      repr(obj), obj._dsl.Type.__name__,
+      repr(blk_hostobj), blk_hostobj.__class__.__name__,
+      error_lineno ) )
+
 class UpblkFuncSameNameError( Exception ):
   """ Raise when two update block/function are declared with the same name """
   def __init__( self, name ):

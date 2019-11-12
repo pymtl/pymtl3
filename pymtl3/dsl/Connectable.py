@@ -148,7 +148,7 @@ class Signal( NamedObject, Connectable ):
 
     s._dsl.slice  = None # None -- not a slice of some wire by default
     s._dsl.slices = {}
-    s._dsl.top_level_signal = None
+    s._dsl.top_level_signal = s
 
     s._dsl.needs_double_buffer = False
 
@@ -232,11 +232,12 @@ class Signal( NamedObject, Connectable ):
     sl_tuple = (sl.start, sl.stop)
 
     if sl_tuple not in s.__dict__:
+      assert 0 <= sl.start < sl.stop <= s._dsl.Type.nbits
       x = s.__class__( mk_bits( sl.stop - sl.start) )
       sd = s._dsl
       xd = x._dsl
       xd.parent_obj = s
-      xd.top_level_signal = s
+      xd.top_level_signal = sd.top_level_signal
       xd.elaborate_top = sd.elaborate_top
 
       sl_str = f"[{sl.start}:{sl.stop}]"
@@ -307,7 +308,7 @@ class Signal( NamedObject, Connectable ):
     return not s._dsl.slice is None
 
   def is_top_level_signal( s ):
-    return s._dsl.top_level_signal is None
+    return s._dsl.top_level_signal is s
 
   def get_top_level_signal( s ):
     top = s._dsl.top_level_signal

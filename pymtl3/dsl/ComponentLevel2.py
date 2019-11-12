@@ -28,6 +28,7 @@ from .errors import (
     InvalidConstraintError,
     InvalidFFAssignError,
     InvalidFuncCallError,
+    InvalidIndexError,
     InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
@@ -110,20 +111,45 @@ class ComponentLevel2( ComponentLevel1 ):
 
         if idx_depth >= len(idx): # exhausted, go to next level of name
           lookup_variable( obj, name_depth+1, node_depth+1 )
+          return
 
-        elif idx[ idx_depth ] == "*": # special case, materialize all objects
+        current_idx = idx[ idx_depth ]
+
+        if current_idx == "*": # special case, materialize all objects
           if isinstance( obj, NamedObject ): # Signal[*] is the signal itself
             objs.add( obj )
           else:
             for i, child in enumerate( obj ):
               expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
+
+        # Here we try to find the value of free variables in the current
+        # component scope.
+        # tuple: [x] where x is a closure/global variable
+        # slice: [x:y] where x and y are either normal integers or
+        #        closure/global variable.
         else:
+          if isinstance( current_idx, tuple ):
+            is_closure, name = current_idx
+            current_idx = _closure[ name ] if is_closure else _globals[ name ]
+          elif isinstance( current_idx, slice ):
+            start = current_idx.start
+            if isinstance( start, tuple ):
+              is_closure, name = start
+              start = _closure[ name ] if is_closure else _globals[ name ]
+            stop  = current_idx.stop
+            if isinstance( stop, tuple ):
+              is_closure, name = stop
+              stop = _closure[ name ] if is_closure else _globals[ name ]
+            current_idx = slice(start, stop)
+
           try:
-            child = obj[ idx[ idx_depth ] ]
+            child = obj[ current_idx ]
           except TypeError: # cannot convert to integer
-            raise VarNotDeclaredError( obj, idx[idx_depth], func, s, nodelist[node_depth].lineno )
+            raise VarNotDeclaredError( obj, current_idx, func, s, nodelist[node_depth].lineno )
           except IndexError:
             return
+          except AssertionError:
+            raise InvalidIndexError( obj, current_idx, func, s, nodelist[node_depth].lineno )
 
           expand_array_index( child, name_depth, node_depth, idx_depth+1, idx )
 
@@ -160,10 +186,18 @@ class ComponentLevel2( ComponentLevel1 ):
       Here we enumerate names and use the above functions to turn names
       into objects """
 
+      _globals = func.__globals__
+
+      _closure = {}
+      for i, var in enumerate( func.__code__.co_freevars ):
+        try:  _closure[ var ] = func.__closure__[i].cell_contents
+        except ValueError: pass
+
       all_objs = set()
 
       for obj_name, nodelist in names:
         if obj_name[0][0] == "s":
+
           objs = set()
           lookup_variable( s, 1, 1 )
           all_objs |= objs
