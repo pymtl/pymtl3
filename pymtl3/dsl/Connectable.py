@@ -179,7 +179,6 @@ class Signal( NamedObject, Connectable ):
       else:
         obj = getattr( s._dsl.type_instance, name )
 
-
       # We handle three cases here:
       # 1. If the object is list, we recursively generate lists of signals
       # 2. If the object is Bits, we use the Bits type
@@ -222,6 +221,7 @@ class Signal( NamedObject, Connectable ):
     pass # I have to override this to support a[0:1] |= b
 
   def __getitem__( s, idx ):
+    assert issubclass( s._dsl.Type, Bits )
     # Turn index into a slice
     if isinstance( idx, int ):
       sl = slice( idx, idx+1 )

@@ -98,20 +98,26 @@ class InvalidIndexError( Exception ):
     lineno -= 1
     error_lineno = base_lineno + lineno
 
+    if isinstance( idx, tuple ):
+      idx_str = f"[{idx.start}:{idx.stop}]"
+    else:
+      idx_str = f"[{idx}]"
+
+    from pymtl3.datatypes import Bits
     return super().__init__( \
 """
 In file {}:{} in {}
 
 {} {}
-^^^ Slice [{}:{}] of object \"{}\" (class \"{}\") is accessed in block \"{}\",
-    but {} has a narrower \"{}\" type.
+^^^ Slice {} of object \"{}\" (class \"{}\") is accessed in block \"{}\",
+    but {} has \"{}\" type{}.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
       filepath, error_lineno, blk.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
-      idx.start, idx.stop, repr(obj), obj.__class__.__name__, blk.__name__,
-      repr(obj), obj._dsl.Type.__name__,
+      idx_str, repr(obj), obj.__class__.__name__, blk.__name__,
+      repr(obj), obj._dsl.Type.__name__, "" if issubclass( obj._dsl.Type, Bits ) else ", not BitsN type",
       repr(blk_hostobj), blk_hostobj.__class__.__name__,
       error_lineno ) )
 

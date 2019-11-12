@@ -171,6 +171,7 @@ def test_L1_array_index_out_of_range( do_test ):
   with expected_failure( PyMTLTypeError, "array index out of range" ):
     do_test( A() )
 
+@pytest.mark.xfail( reason = "PyMTL DSL already threw InvalidIndexError" )
 def test_L1_bit_sel_index_out_of_range( do_test ):
   class A( Component ):
     def construct( s ):
@@ -182,6 +183,7 @@ def test_L1_bit_sel_index_out_of_range( do_test ):
   with expected_failure( PyMTLTypeError, "bit selection index out of range" ):
     do_test( A() )
 
+@pytest.mark.xfail( reason = "PyMTL DSL already threw InvalidIndexError" )
 def test_L1_index_on_struct( do_test ):
   @bitstruct
   class B:
@@ -196,6 +198,7 @@ def test_L1_index_on_struct( do_test ):
   with expected_failure( PyMTLTypeError, "cannot perform index on Struct" ):
     do_test( A() )
 
+@pytest.mark.xfail( reason = "PyMTL DSL already threw InvalidIndexError" )
 def test_L1_slice_on_struct( do_test ):
   @bitstruct
   class B:
@@ -210,7 +213,7 @@ def test_L1_slice_on_struct( do_test ):
   with expected_failure( PyMTLTypeError, "cannot perform slicing on type Struct" ):
     do_test( A() )
 
-@pytest.mark.xfail( reason = "PyMTL DSL AST parsing failed" )
+@pytest.mark.xfail( reason = "PyMTL DSL already threw InvalidIndexError" )
 def test_L1_slice_l_ngt_r( do_test ):
   class A( Component ):
     def construct( s ):
@@ -235,6 +238,7 @@ def test_L1_slice_variable_bound( do_test ):
   with expected_failure( PyMTLTypeError, "slice bounds must be constant" ):
     do_test( A() )
 
+@pytest.mark.xfail( reason = "PyMTL DSL already threw InvalidIndexError" )
 def test_L1_slice_out_of_range( do_test ):
   class A( Component ):
     def construct( s ):
