@@ -10,7 +10,7 @@ Date   : Sep 8, 2019
 import time
 from collections import defaultdict
 
-from pymtl3.datatypes import Bits, concat, is_bitstruct_class, is_bitstruct_inst
+from pymtl3.datatypes import Bits, concat, get_nbits, to_bits
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
@@ -87,8 +87,8 @@ class VcdGenerationPass( BasePass ):
 
     all_components = set()
 
-    # We only collect top level signals, and squash bitstruct into a
-    # TODO only collect leaf signals and for nested structs
+    # We only collect top level signals, and squash bitstruct into a long
+    # bits object
     for x in top._dsl.all_signals:
       if x.is_top_level_signal():
         host = x.get_host_component()
@@ -130,20 +130,6 @@ class VcdGenerationPass( BasePass ):
     def vcd_mangle_name( name ):
       # signal names with colons in it silently fail gtkwave
       return name.replace('[','(').replace(']',')').replace(':', '__')
-
-    def get_nbits( Type ):
-      try:
-        return Type.nbits
-      except AttributeError:
-        assert is_bitstruct_class( Type ), f"{Type} is not a valid PyMTL type!"
-        return sum(get_nbits(v) for v in Type.__bitstruct_fields__.values())
-
-    def to_bits( obj ):
-      # BitsN
-      if isinstance( obj, Bits ):
-        return obj
-      # BitStruct
-      return concat( *[ to_bits(getattr(obj, v)) for v in obj.__bitstruct_fields__.keys() ] )
 
     def recurse_models( m, spaces ):
 
@@ -214,17 +200,14 @@ class VcdGenerationPass( BasePass ):
     last_values = vcdmeta.last_values = [0 for _ in range(len(trimmed_value_nets))]
 
     for i, net in enumerate(trimmed_value_nets):
-      net_type_inst = net[0]._dsl.Type()
+      # Convert everything to Bits to get around lack of bit struct support.
+      # The first cycle VCD contains the default value
+      bin_str = to_bits( net[0]._dsl.Type() ).bin()
 
-      # Convert bit struct to bits to get around lack of bit struct
-      # support.
-      if is_bitstruct_inst( net_type_inst ):
-        net_type_inst = to_bits( net_type_inst )
+      print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcdmeta.vcd_file )
 
-      print( f"b{net_type_inst.bin()} {net_symbol_mapping[i]}", file=vcdmeta.vcd_file )
-
-      # Set this to be the last cycle value
-      last_values[i] = net_type_inst.bin()
+      # Set this to be the last cycle value str
+      last_values[i] = bin_str
 
     # Now we create per-cycle signal value collect functions
 
@@ -234,8 +217,7 @@ class VcdGenerationPass( BasePass ):
     print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
            file=vcdmeta.vcd_file, flush=True )
 
-    # Given top, net_symbol_mapping, trimmed_value_nets, last_values, `make_dump_vcd`
-    # returns a dump_vcd function that is ready to be appended to _sched.
+    # Returns a dump_vcd function that is ready to be appended to _sched.
     # TODO: type check?
 
     # Separate clock net from normal nets ahead of time
@@ -251,26 +233,25 @@ class VcdGenerationPass( BasePass ):
     def dump_vcd_inner( s ):
       vcd_file = vcdmeta.vcd_file
 
-      # Dump VCD
       for i, signal in enumerate( net_elements ):
-        net = eval(repr(signal))
         symbol = net_symbol_mapping[i]
 
         # If we encounter a BitStruct then dump it as a concatenation of
         # all fields.
         # TODO: treat each field in a BitStruct as a separate signal?
 
-        net_bits = to_bits(net)
         try:
-          # `last_value` is the string form of a Bits object in binary
-          # e.g. '0b000' == Bits3(0).bin()
-          last_value = last_values[i]
-          if last_value != net_bits:
-            value_str = net_bits.bin()
-            print( f'b{value_str} {symbol}', file=vcd_file )
-            last_values[i] = value_str
+          net_bits_bin = to_bits( eval(repr(signal)) )
         except AttributeError as e:
           raise AttributeError(f'{e}\n - {net} becomes another type. Please check your code.')
+
+        net_bits_bin_str = net_bits_bin.bin()
+        # `last_value` is the string form of a Bits object in binary
+        # e.g. '0b000' == Bits3(0).bin()
+        # We store strings instead of values ...
+        if last_values[i] != net_bits_bin_str:
+          last_values[i] = net_bits_bin_str
+          print( f'b{net_bits_bin_str} {symbol}', file=vcd_file )
 
       # Flop clock at the end of cycle
       next_neg_edge = 100 * vcdmeta.sim_ncycles + 50

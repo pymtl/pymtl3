@@ -15,7 +15,7 @@ from pymtl3 import *
 
 
 def run_test( dut, tv, tv_in, tv_out ):
-  VCD_FILE_NAME = "test_component"
+  VCD_FILE_NAME = dut.__class__.__name__
   dut.dump_vcd = True
   dut.vcd_file_name = VCD_FILE_NAME
   dut.elaborate()
@@ -53,6 +53,9 @@ def test_vector_signals():
     [  b32(0), b32(-1), b32(-1), ],
     [  b32(1),  b32(1),  b32(2), ],
     [ b32(-1),  b32(0), b32(-1), ],
+    [ b32(-1),  b32(0), b32(-1), ],
+    [ b32(-1),  b32(0), b32(-1), ],
+    [ b32(-1),  b32(0), b32(-1), ],
     [ b32(42), b32(42), b32(84), ],
   ], tv_in, tv_out )
 
@@ -62,7 +65,7 @@ def test_bitstruct_signals():
     'bar' : Bits32,
   } )
 
-  class A( Component ):
+  class A2( Component ):
     def construct( s ):
       s.in0 = InPort( bs )
       s.in1 = InPort( Bits32 )
@@ -77,7 +80,7 @@ def test_bitstruct_signals():
   def tv_out( m, tv ):
     assert m.out == tv[2]
 
-  run_test( A(), [
+  run_test( A2(), [
     #     in0                 in1      out
     [  bs(b1(0), b32(0)), b32(-1), b32(-1), ],
     [  bs(b1(0), b32(1)),  b32(1),  b32(2), ],
