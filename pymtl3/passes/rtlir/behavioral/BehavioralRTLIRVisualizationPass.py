@@ -14,7 +14,6 @@ from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
 from .BehavioralRTLIR import BehavioralRTLIRNodeVisitor
 
-
 class BehavioralRTLIRVisualizationPass( BasePass ):
   def __call__( s, model ):
     visitor = BehavioralRTLIRVisualizationVisitor()
@@ -293,9 +292,9 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
   def visit_Slice( s, node ):
     s.cur += 1
     local_cur = s.cur
-    table_body = '<TR><TD COLSPAN="2">Slice</TD></TR>'
+    table_body = '<TR><TD COLSPAN="2">Slice</TD></TR> <TR><TD>size</TD><TD>{size}</TD></TR>'
     table_opt = s.gen_table_opt( node )
-    label = (s.table_header + table_body + table_opt + s.table_trail)
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(size=s.get_str(node.size))
     s.g.node( str( s.cur ), label = label )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
     s.visit( node.value )
@@ -303,6 +302,9 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.visit( node.lower )
     s.g.edge( str(local_cur), str(s.cur+1), label = 'upper' )
     s.visit( node.upper )
+    if node.base is not None:
+      s.g.edge( str(local_cur), str(s.cur+1), label = 'base' )
+      s.visit( node.base )
 
   def visit_Base( s, node ):
     s.cur += 1

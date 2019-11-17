@@ -211,13 +211,15 @@ class Index( BaseBehavioralRTLIR ):
     return isinstance(other, Index) and s.value == other.value and s.idx == other.idx
 
 class Slice( BaseBehavioralRTLIR ):
-  def __init__( s, value, lower, upper ):
+  def __init__( s, value, lower, upper, base = None, size = None ):
     s.value = value
     s.lower = lower
     s.upper = upper
+    s.base = base
+    s.size = size
 
   def __eq__( s, other ):
-    return isinstance(other, Slice) and s.value == other.value and s.lower == other.lower and s.upper == other.upper
+    return isinstance(other, Slice) and s.value == other.value and s.lower == other.lower and s.upper == other.upper and s.base == other.base and s.size == other.size
 
 class Base( BaseBehavioralRTLIR ):
   def __init__( s, base ):

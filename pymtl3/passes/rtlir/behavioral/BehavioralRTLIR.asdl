@@ -30,7 +30,10 @@ module BehavioralRTLIR
        -- an assignment
        | Attribute( expr value, identifier attr )
        | Index( expr value, expr idx )
-       | Slice( expr value, expr lower, expr upper )
+       -- Slice nodes might have `slice_size` and `slice_base` attributes
+       -- annotated by the type checking pass. These fields indicate this
+       -- slice object is a constant size slicing (i.e. [base +: size]).
+       | Slice( expr value, expr lower, expr upper, expr? base, int? size )
        | Base( object base )
        | LoopVar( string name )
        | FreeVar( string name, object obj )
