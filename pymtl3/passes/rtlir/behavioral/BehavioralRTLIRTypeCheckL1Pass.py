@@ -305,6 +305,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         assert isinstance( node.upper.op, bir.Add )
         nbits = node.upper.right
         assert s.is_same( node.lower, node.upper.left )
-        node.Type = rt.NetWire( rdt.Vector( nbits ) )
+        node.Type = rt.NetWire( rdt.Vector( nbits.value ) )
+        # Add new fields that might help translation
+        node.size = nbits.value
+        node.base = node.lower
       except Exception:
         raise PyMTLTypeError( s.blk, node.ast, 'slice bounds must be constant!' )

@@ -426,3 +426,29 @@ def test_ff_upblk( do_test ):
         ] )
   }
   do_test( a )
+
+def test_fixed_size_slice( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits16 )
+      s.out = [ OutPort( Bits8 ) for _ in range(2) ]
+      @s.update
+      def upblk():
+        for i in range(2):
+          s.out[i] = s.in_[i*8 : i*8 + 8]
+  a = A()
+  a._rtlir_test_ref = {
+      'upblk' : CombUpblk( 'upblk', [
+        For( LoopVarDecl('i'), Number(0), Number(2), Number(1), [
+          Assign(
+            Index(Attribute(Base(a), 'out'), LoopVar('i')),
+            Slice(Attribute(Base(a), 'in_'),
+                  BinOp(LoopVar('i'), Mult(), Number(8)),
+                  BinOp(BinOp(LoopVar('i'), Mult(), Number(8)), Add(), Number(8)),
+                  BinOp(LoopVar('i'), Mult(), Number(8)),
+                  8,
+            ), True)]
+        )
+      ])
+  }
+  do_test( a )
