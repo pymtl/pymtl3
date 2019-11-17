@@ -5,7 +5,15 @@
 # Date   : May 28, 2019
 """Test the SystemVerilog translator implementation."""
 
-from pymtl3.datatypes import Bits1, Bits32, reduce_and, reduce_or, reduce_xor
+from pymtl3.datatypes import (
+    Bits1,
+    Bits8,
+    Bits16,
+    Bits32,
+    reduce_and,
+    reduce_or,
+    reduce_xor,
+)
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -666,6 +674,49 @@ always_comb begin : upblk
       __tmpvar__upblk_tmpvar = 32'd0;
     out[__loopvar__upblk_i] = __tmpvar__upblk_tmpvar;
   end
+end\
+""" }
+  do_test( a )
+
+def test_fixed_size_slice( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits16 )
+      s.out = [ OutPort( Bits8 ) for _ in range(2) ]
+      @s.update
+      def upblk():
+        for i in range(2):
+          s.out[i] = s.in_[i*8 : i*8 + 8]
+  a = A()
+  a._ref_upblk_srcs = { 'upblk' : \
+"""\
+always_comb begin : upblk
+  for ( int i = 0; i < 2; i += 1 )
+    out[i] = in_[i * 8 +: 8];
+end\
+""" }
+  # TestVectorSimulator properties
+  def tv_in( m, tv ):
+    m.in_ = Bits16(tv[0])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits8(tv[1])
+    assert m.out[1] == Bits8(tv[2])
+  a._test_vectors = [
+    [     -1, 0xff, 0xff ],
+    [      1, 0x01, 0x00 ],
+    [      7, 0x07, 0x00 ],
+    [ 0xff00, 0x00, 0xff ],
+    [ 0x3412, 0x12, 0x34 ],
+    [ 0x9876, 0x76, 0x98 ],
+  ]
+  a._tv_in, a._tv_out = tv_in, tv_out
+  a._ref_upblk_srcs_yosys = { 'upblk' : \
+"""\
+integer __loopvar__upblk_i;
+
+always_comb begin : upblk
+  for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
+    out[__loopvar__upblk_i] = in_[__loopvar__upblk_i * 8 +: 8];
 end\
 """ }
   do_test( a )

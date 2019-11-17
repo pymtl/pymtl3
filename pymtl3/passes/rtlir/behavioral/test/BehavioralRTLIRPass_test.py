@@ -425,6 +425,15 @@ def test_ff_upblk( do_test ):
         Assign( Attribute( Base( a ), 'out0' ), BinOp( Attribute( Base( a ), 'in0' ), Add(), Attribute( Base( a ), 'in1' ) ), False ),
         ] )
   }
+  a._test_vector = [
+                'in0                in1              *out',
+    [         Bits32,            Bits32,            Bits32 ],
+
+    [     Bits32(-1),       Bits32(0xff),     Bits32(0xfe) ],
+    [     Bits32(1),        Bits32(0x11),     Bits32(0x12) ],
+    [     Bits32(7),        Bits32(0x77),     Bits32(0x7d) ],
+  ]
+
   do_test( a )
 
 def test_fixed_size_slice( do_test ):
@@ -451,4 +460,16 @@ def test_fixed_size_slice( do_test ):
         )
       ])
   }
+  a._test_vector = [
+                'in_              *out[0]          *out[1]',
+    [         Bits16,               Bits8,            Bits8 ],
+
+    [     Bits16(-1),         Bits8(0xff),      Bits8(0xff) ],
+    [      Bits16(1),         Bits8(0x01),      Bits8(0x00) ],
+    [      Bits16(7),         Bits8(0x07),      Bits8(0x00) ],
+    [ Bits16(0xff00),         Bits8(0x00),      Bits8(0xff) ],
+    [ Bits16(0x3412),         Bits8(0x12),      Bits8(0x34) ],
+    [ Bits16(0x9876),         Bits8(0x76),      Bits8(0x98) ],
+  ]
+
   do_test( a )
