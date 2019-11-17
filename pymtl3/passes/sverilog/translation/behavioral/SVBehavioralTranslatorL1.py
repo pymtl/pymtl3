@@ -457,7 +457,7 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     value = s.visit( node.value )
 
     # Check for +: syntax
-    if hasattr( node, 'base' ) and hasattr( node, 'size' ):
+    if node.base and node.size:
       size = int( node.size )
       base = s.visit( node.base )
 
