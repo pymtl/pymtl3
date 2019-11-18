@@ -28,9 +28,8 @@ BUG_COMP_ATTR = 1
 BUG_PORT_DIR  = 2
 BUG_NAME_EXPR = 3
 BUG_ATTR_BASE = 4
-BUG_CONST     = 5
-BUG_OPERATOR  = 6
-BUG_SENTINEL  = 7
+BUG_FUNCT     = 5
+BUG_SENTINEL  = 6
 BUGS = range(BUG_SENTINEL)
 BUG_STR = {
     BUG_BITWIDTH  : 'bit width mutation',
@@ -38,14 +37,24 @@ BUG_STR = {
     BUG_PORT_DIR  : 'port direction mutation',
     BUG_NAME_EXPR : 'name expression mutation',
     BUG_ATTR_BASE : 'attribute base mutation',
-    BUG_CONST     : 'constant number mutation',
-    BUG_OPERATOR  : 'operator mutation',
+    BUG_FUNCT     : 'functional behavior mutation',
 }
 
 
 #-------------------------------------------------------------------------
 # Helper functions and classes
 #-------------------------------------------------------------------------
+
+def parse_cmdline():
+  p = argparse.ArgumentParser()
+  p.add_argument( "--input-spec" )
+  p.add_argument( "--no-overwrite", action = 'store_true', default = False )
+  p.add_argument( "--no-astdump",   action = 'store_true', default = False )
+  p.add_argument( "--functional",   action = 'store_true', default = False )
+
+  opts = p.parse_args()
+  return opts
+
 
 class TargetExtractor( ast.NodeVisitor ):
 
@@ -116,16 +125,6 @@ def enter_ctxt( ctxt, node ):
   ctxt.push(node)
   yield ctxt
   ctxt.pop()
-
-
-def parse_cmdline():
-  p = argparse.ArgumentParser()
-  p.add_argument( "--input-spec" )
-  p.add_argument( "--no-overwrite", action = 'store_true', default = False )
-  p.add_argument( "--no-astdump",   action = 'store_true', default = False )
-
-  opts = p.parse_args()
-  return opts
 
 
 #-------------------------------------------------------------------------
@@ -359,12 +358,101 @@ def mutate_attr_base(r):
   return True, target.lineno, target.col_offset
 
 
+#-------------------------------------------------------------------------
+# Functional mutation
+#-------------------------------------------------------------------------
+# Randomly find and mutate a constant number or operator
+
+class FunctionalTargetExtractor( TargetExtractor ):
+
+  def is_target( s, node ):
+    if not s.ctxt.is_cur_upblk(): return False
+    if isinstance( node, ast.Num ) or isinstance( node, ast.BoolOp ) or \
+       isinstance( node, ast.BinOp ) or isinstance( node, ast.Compare ):
+      return True
+    return False
+
+  def visit_Num( s, node ):
+    if s.is_target( node ):
+      s.mutation_targets.append((node, 'number'))
+
+  def visit_BoolOp( s, node ):
+    if s.is_target( node ):
+      s.mutation_targets.append((node, 'bool'))
+    for value in node.values:
+      s.visit(value)
+
+  def visit_BinOp( s, node ):
+    if s.is_target( node ):
+      s.mutation_targets.append((node, 'bin'))
+    s.visit(node.left)
+    s.visit(node.right)
+
+  def visit_Compare( s, node ):
+    if s.is_target( node ):
+      s.mutation_targets.append((node, 'cmp'))
+    s.visit(node.left)
+    s.visit(node.comparators[0])
+
+def new_bool_op( op ):
+  m = { ast.And : ast.Or, ast.Or : ast.And }
+  return m[op.__class__]
+
+def new_bin_op( op ):
+  m = { ast.Add : ast.Sub, ast.Sub : ast.Add,
+        ast.Mult : ast.Add, ast.Div : ast.Sub,
+        ast.LShift : ast.RShift, ast.RShift : ast.LShift,
+        ast.BitOr : ast.BitAnd, ast.BitAnd : ast.BitOr,
+        ast.BitXor : ast.BitOr,
+      }
+  return m[op.__class__]
+
+def new_cmp_op( op ):
+  m = { ast.Eq : ast.NotEq, ast.NotEq : ast.Eq,
+        ast.Lt : ast.Gt, ast.LtE : ast.GtE,
+        ast.Gt : ast.Lt, ast.GtE : ast.LtE,
+      }
+  return m[op.__class__]
+
+def mutate_funct(r):
+  extractor = FunctionalTargetExtractor()
+  extractor.visit(r)
+
+  if not extractor.mutation_targets:
+    return False, 0, 0
+
+  # Randomly pick one target
+  target, kind = extractor.mutation_targets[randint(0, len(extractor.mutation_targets)-1)]
+
+  # Mutate
+  if kind == 'number':
+    print(f"{target.n} -> {target.n + 1}")
+    target.n = target.n + 1
+  elif kind == 'bool':
+    res = new_bool_op(target.op) 
+    print(f"{target.op.__class__} -> {res}")
+    target.op = res()
+  elif kind == 'bin':
+    res = new_bin_op(target.op)
+    print(f"{target.op.__class__} -> {res}")
+    target.op = res()
+  elif kind == 'cmp':
+    res = new_cmp_op(target.ops[0])
+    print(f"{target.ops[0].__class__} -> {res}")
+    target.ops[0] = res()
+  else:
+    raise AssertionError
+
+  return True, target.lineno, target.col_offset
+
+
 BUG_HANDLERS =  {
     BUG_BITWIDTH  : mutate_bitwidth,
     BUG_COMP_ATTR : mutate_comp_attr,
     BUG_PORT_DIR  : mutate_port_dir,
     BUG_NAME_EXPR : mutate_name_expr,
     BUG_ATTR_BASE : mutate_attr_base,
+    BUG_FUNCT     : mutate_funct,
 }
 
 
@@ -400,14 +488,17 @@ if __name__ == "__main__":
         fd.write(astunparse.dump(tree))
 
     # Randomly pick a bug
-    bug = randint(0, BUG_SENTINEL-1)
+    if not opts.functional:
+      bug = randint(0, BUG_SENTINEL-1)
+    else:
+      bug = BUG_FUNCT
+
     # bug = BUG_BITWIDTH
     # bug = BUG_COMP_ATTR
     # bug = BUG_PORT_DIR
     # bug = BUG_NAME_EXPR
     # bug = BUG_ATTR_BASE
-    # bug = BUG_CONST
-    # bug = BUG_OPERATOR
+    # bug = BUG_FUNCT
 
     # Mutation here
     done, lineno, col = mutate(tree, bug)
@@ -426,7 +517,7 @@ if __name__ == "__main__":
       with open( target + ".tmp", "w" ) as fd:
         fd.write(astunparse.unparse(tree))
 
-      # Rename the tmp file to the overwrite the target
+      # Rename the tmp file to overwrite the target
       if not opts.no_overwrite:
         os.rename( target + ".tmp", target )
 
