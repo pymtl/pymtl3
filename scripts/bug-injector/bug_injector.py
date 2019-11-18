@@ -28,7 +28,9 @@ BUG_COMP_ATTR = 1
 BUG_PORT_DIR  = 2
 BUG_NAME_EXPR = 3
 BUG_ATTR_BASE = 4
-BUG_SENTINEL  = 5
+BUG_CONST     = 5
+BUG_OPERATOR  = 6
+BUG_SENTINEL  = 7
 BUGS = range(BUG_SENTINEL)
 BUG_STR = {
     BUG_BITWIDTH  : 'bit width mutation',
@@ -36,6 +38,8 @@ BUG_STR = {
     BUG_PORT_DIR  : 'port direction mutation',
     BUG_NAME_EXPR : 'name expression mutation',
     BUG_ATTR_BASE : 'attribute base mutation',
+    BUG_CONST     : 'constant number mutation',
+    BUG_OPERATOR  : 'operator mutation',
 }
 
 
@@ -402,6 +406,8 @@ if __name__ == "__main__":
     # bug = BUG_PORT_DIR
     # bug = BUG_NAME_EXPR
     # bug = BUG_ATTR_BASE
+    # bug = BUG_CONST
+    # bug = BUG_OPERATOR
 
     # Mutation here
     done, lineno, col = mutate(tree, bug)
