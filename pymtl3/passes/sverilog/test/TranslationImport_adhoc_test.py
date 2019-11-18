@@ -23,6 +23,7 @@ from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import (
     test_zext,
 )
 from ..translation.behavioral.test.SVBehavioralTranslatorL2_test import (
+    test_fixed_size_slice,
     test_for_range_lower_upper,
     test_for_range_lower_upper_step,
     test_for_range_upper,

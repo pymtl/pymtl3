@@ -425,4 +425,51 @@ def test_ff_upblk( do_test ):
         Assign( Attribute( Base( a ), 'out0' ), BinOp( Attribute( Base( a ), 'in0' ), Add(), Attribute( Base( a ), 'in1' ) ), False ),
         ] )
   }
+  a._test_vector = [
+                'in0                in1              *out',
+    [         Bits32,            Bits32,            Bits32 ],
+
+    [     Bits32(-1),       Bits32(0xff),     Bits32(0xfe) ],
+    [     Bits32(1),        Bits32(0x11),     Bits32(0x12) ],
+    [     Bits32(7),        Bits32(0x77),     Bits32(0x7d) ],
+  ]
+
+  do_test( a )
+
+def test_fixed_size_slice( do_test ):
+  class A( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits16 )
+      s.out = [ OutPort( Bits8 ) for _ in range(2) ]
+      @s.update
+      def upblk():
+        for i in range(2):
+          s.out[i] = s.in_[i*8 : i*8 + 8]
+  a = A()
+  a._rtlir_test_ref = {
+      'upblk' : CombUpblk( 'upblk', [
+        For( LoopVarDecl('i'), Number(0), Number(2), Number(1), [
+          Assign(
+            Index(Attribute(Base(a), 'out'), LoopVar('i')),
+            Slice(Attribute(Base(a), 'in_'),
+                  BinOp(LoopVar('i'), Mult(), Number(8)),
+                  BinOp(BinOp(LoopVar('i'), Mult(), Number(8)), Add(), Number(8)),
+                  BinOp(LoopVar('i'), Mult(), Number(8)),
+                  8,
+            ), True)]
+        )
+      ])
+  }
+  a._test_vector = [
+                'in_              *out[0]          *out[1]',
+    [         Bits16,               Bits8,            Bits8 ],
+
+    [     Bits16(-1),         Bits8(0xff),      Bits8(0xff) ],
+    [      Bits16(1),         Bits8(0x01),      Bits8(0x00) ],
+    [      Bits16(7),         Bits8(0x07),      Bits8(0x00) ],
+    [ Bits16(0xff00),         Bits8(0x00),      Bits8(0xff) ],
+    [ Bits16(0x3412),         Bits8(0x12),      Bits8(0x34) ],
+    [ Bits16(0x9876),         Bits8(0x76),      Bits8(0x98) ],
+  ]
+
   do_test( a )

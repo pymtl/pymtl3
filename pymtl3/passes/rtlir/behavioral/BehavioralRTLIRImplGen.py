@@ -82,8 +82,6 @@ class BehavioralRTLIRNodeVisitor:
 
 import os
 
-from graphviz import Digraph
-
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir.rtype.RTLIRType import BaseRTLIRType
 
@@ -112,6 +110,7 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
     s.table_trail = ' </TABLE>>'
 
   def init( s, name ):
+    from graphviz import Digraph
     s.g = Digraph(
       comment = 'BehavioralRTLIR Visualization of ' + name,
       node_attr = { 'shape' : 'plaintext' }
@@ -180,7 +179,11 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
           single_term += ' or s.{field} != other.{field}'.format( field = f )
           not_single_term += ' and s.{field} == other.{field}'.format( field = f )
 
-      params_name = ', ' + ', '.join( s.field_list )
+      init_args = []
+      for Type, field in zip( s.type_list, s.field_list ):
+        init_args.append( field if not s.is_optional( Type ) else f'{field} = None' )
+
+      params_name = ', ' + ', '.join( init_args )
       params_assign = '\n    '.join(
         "s.{field} = {field}".format(field = x) for x in s.field_list
       )
@@ -269,16 +272,20 @@ def __eq__( s, other ):
             ) )
             indented.append( 's.visit( f )' )
             indented = [indented[0]] + ['  '+x for x in indented[1:]]
+            indented = s.check_optional( indented, t, f )
             body = body + indented
           else:
             # A single customized type
-            body.append( customized_str.format(
+            indented = []
+            indented.append( customized_str.format(
               s = 'local_cur',
               t = 's.cur+1',
               edge_label = f,
               edge_label_trail = ''
             ) )
-            body.append( 's.visit( node.{field} )'.format( field = f ) )
+            indented.append( 's.visit( node.{field} )'.format( field = f ) )
+            indented = s.check_optional( indented, t, f )
+            body = body + indented
       if built_in_trail_body == []:
         label_trail = ''
       else:
@@ -294,10 +301,23 @@ def __eq__( s, other ):
     )
 
   def is_built_in( s, type_name ):
+    if type_name[-1] in ('*', '?'):
+      type_name = type_name[:-1]
     return type_name in [ 'identifier', 'int', 'object', 'bool', 'string' ]
 
   def is_sequence( s, type_name ):
     return type_name[-1] == '*'
+
+  def is_optional( s, type_name ):
+    return type_name[-1] == '?'
+
+  def check_optional( s, strs, Type, f ):
+    ret = strs
+    if s.is_optional( Type ):
+      for i, string in enumerate(strs):
+        ret[i] = '  ' + string
+      ret = [ f'if node.{f} is not None:' ] + ret
+    return ret
 
   def __eq__( s, other ):
     return isinstance(other, constructor) and s.name == other.name

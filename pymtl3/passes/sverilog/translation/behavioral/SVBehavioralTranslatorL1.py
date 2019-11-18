@@ -456,12 +456,21 @@ class BehavioralRTLIRToSVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     lower = s.visit( node.lower )
     value = s.visit( node.value )
 
-    if hasattr( node.upper, '_value' ):
-      upper = str( int( node.upper._value - Bits32(1) ) )
-    else:
-      upper = s.visit( node.upper ) + '-1'
+    # Check for +: syntax
+    if node.base and node.size:
+      size = int( node.size )
+      base = s.visit( node.base )
 
-    return f'{value}[{upper}:{lower}]'
+      return f'{value}[{base} +: {size}]'
+
+    # Reguarl [ lower : upper ] syntax
+    else:
+      if hasattr( node.upper, '_value' ):
+        upper = str( int( node.upper._value - Bits32(1) ) )
+      else:
+        upper = s.visit( node.upper ) + '-1'
+
+      return f'{value}[{upper}:{lower}]'
 
   #-----------------------------------------------------------------------
   # visit_Base
