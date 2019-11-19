@@ -59,10 +59,11 @@ class Signal(Generic[T_SignalDataType]):
 
   # getting a slice from a vector
   @overload
-  def __getitem__( s, index: int ) -> Any: ...
+  def __getitem__( s, index: int ) -> Signal[Bits1]: ...
 
+  # This Bits1 will be overwritten at run-time
   @overload
-  def __getitem__( s, index: slice ) -> Any: ...
+  def __getitem__( s, index: slice ) -> Signal[Bits1]: ...
 
   # setting a slice of a vector
   @overload
