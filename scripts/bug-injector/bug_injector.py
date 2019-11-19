@@ -223,7 +223,7 @@ def mutate_comp_attr(r):
 
 
 #-------------------------------------------------------------------------
-# Component attribute mutation
+# Port direction mutation
 #-------------------------------------------------------------------------
 # Randomly find and mutate an InPort or OutPort to have a different
 # direction.
