@@ -64,6 +64,7 @@ class Signal(Generic[T_SignalDataType]):
   # This Bits1 will be overwritten at run-time
   @overload
   def __getitem__( s, index: slice ) -> Signal[Bits1]: ...
+  # def __getitem__( s, index: slice ) -> Signal[BitsN]: ...
 
   # setting a slice of a vector
   @overload
@@ -124,6 +125,7 @@ class Const(Signal[T_ConstDataType]):
 # connect
 #-------------------------------------------------------------------------
 
+# T_connect = TypeVar( "T_connect", covariant=True, bound=BitsN)
 T_connect = TypeVar( "T_connect" )
 
 def connect( u: Signal[T_connect], v: Signal[T_connect] ) -> None: ...
