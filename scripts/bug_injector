@@ -42,7 +42,7 @@ BUG_STR = {
     BUG_FUNCT     : 'functional behavior mutation',
 }
 
-SAMPLE_THRESHOLD = 200
+SAMPLE_THRESHOLD = 100
 
 
 #-------------------------------------------------------------------------
@@ -115,6 +115,9 @@ class BugInjectionContext:
            isinstance(s.all_ctxt[-1].bases[0], ast.Name) and \
            s.all_ctxt[-1].bases[0].id == 'Component'
 
+  def is_cur_inside_construct( s ):
+    return s.is_cur_construct() or s.is_cur_upblk()
+
   def is_cur_construct( s ):
     return len(s.all_ctxt) > 0 and \
            isinstance(s.all_ctxt[-1], ast.FunctionDef) and \
@@ -149,7 +152,7 @@ class BitwidthTargetExtractor( TargetExtractor ):
       return False
 
   def is_target( s, name ):
-    if not s.ctxt.is_cur_construct():
+    if not s.ctxt.is_cur_inside_construct():
       return False
     if name.startswith('Bits') and s.is_int(name[4:]):
       return True
@@ -208,7 +211,7 @@ def mutate_bitwidth(r, mode, status):
 class CompAttrTargetExtractor( TargetExtractor ):
 
   def is_target( s, node ):
-    if not s.ctxt.is_cur_construct():
+    if not s.ctxt.is_cur_inside_construct():
       return False
     # check for s.
     base = node.value
@@ -352,7 +355,7 @@ class NameExprTargetExtractor( TargetExtractor ):
     return name in s.pymtl_keywords
 
   def is_target( s, name ):
-    if not s.ctxt.is_cur_construct():
+    if not s.ctxt.is_cur_inside_construct():
       return False
     return name[0].isupper() and not s.is_reserved(name)
 
@@ -377,6 +380,12 @@ def mutate_name_expr(r, mode, status):
     target, to = sample(targets, 2)
   elif mode == 'precise':
     l, r = status['current_primary_candidate_bug_index'], status['current_secondary_candidate_bug_index']
+    if r == l:
+      r += 1
+      if r == len(targets):
+        l += 1
+        r = 0
+        print("bug injector: name expression bug injection out of bound!")
     target, to = targets[l], targets[r]
     r += 1
     if r == len(targets):
@@ -401,7 +410,7 @@ def mutate_name_expr(r, mode, status):
 class AttrBaseTargetExtractor( TargetExtractor ):
 
   def is_target( s, node ):
-    if not s.ctxt.is_cur_construct() or not isinstance(node, ast.Attribute):
+    if not s.ctxt.is_cur_inside_construct() or not isinstance(node, ast.Attribute):
       return False
     # check for s.
     base = node.value
