@@ -42,6 +42,8 @@ BUG_STR = {
     BUG_FUNCT     : 'functional behavior mutation',
 }
 
+SAMPLE_THRESHOLD = 200
+
 
 #-------------------------------------------------------------------------
 # Helper functions and classes
@@ -51,9 +53,9 @@ def parse_cmdline():
   p = argparse.ArgumentParser()
   p.add_argument( "--input-spec" )
   p.add_argument( "--verbose",      action = 'store_true', default = False )
-  p.add_argument( "--profile",      action = 'store_true', default = False )
+  p.add_argument( "--mode",         choices = ['random', 'profile', 'precise'], default = 'random' )
+  p.add_argument( "--candidate-dir" )
   p.add_argument( "--no-overwrite", action = 'store_true', default = False )
-  p.add_argument( "--no-astdump",   action = 'store_true', default = False )
   p.add_argument( "--functional",   action = 'store_true', default = False )
 
   opts = p.parse_args()
@@ -161,18 +163,26 @@ class BitwidthTargetExtractor( TargetExtractor ):
       s.mutation_targets.append(node)
 
 
-def mutate_bitwidth(r, profile):
+def mutate_bitwidth(r, mode, status):
   extractor = BitwidthTargetExtractor()
   extractor.visit(r)
+  targets = extractor.mutation_targets
 
-  if profile:
-    return extractor.mutation_targets
+  if mode == 'profile':
+    return targets
 
-  if not extractor.mutation_targets:
+  if not targets:
+    assert mode != 'precise', 'Wrong bug kind generated!'
     return False, 0, 0
 
   # Randomly pick one target to mutate
-  target = extractor.mutation_targets[randint(0, len(extractor.mutation_targets)-1)]
+  if mode == 'random' or (mode == 'precise' and len(targets) > SAMPLE_THRESHOLD):
+    target = targets[randint(0, len(targets)-1)]
+  # Use the chosen bug
+  elif mode == 'precise':
+    index = status['current_primary_candidate_bug_index']
+    target = targets[index]
+    status['current_primary_candidate_bug_index'] += 1
 
   # Get new BitsN
   if target.id.startswith('Bits'):
@@ -211,18 +221,52 @@ class CompAttrTargetExtractor( TargetExtractor ):
     if s.is_target(node):
       s.mutation_targets.append(node)
 
-def mutate_comp_attr(r, profile):
+def mutate_comp_attr(r, mode, status):
+
+  def num_candidate_bugs(targets):
+    ret = 0
+    for t in targets:
+      for s in targets:
+        if t.attr != s.attr:
+          ret += 1
+    return ret
+
   extractor = CompAttrTargetExtractor()
   extractor.visit(r)
+  targets = extractor.mutation_targets
 
-  if profile:
-    return extractor.mutation_targets
+  if mode == 'profile':
+    return targets
 
-  if len(extractor.mutation_targets) < 2:
+  if len(targets) < 2:
+    assert mode != 'precise', 'Wrong bug kind generated!'
     return False, 0, 0
 
   # Sample two targets; change the attr of first target to attr of the second
-  target, to = sample(extractor.mutation_targets, 2)
+  if mode == 'random' or (mode == 'precise' and num_candidate_bugs(targets) > SAMPLE_THRESHOLD):
+    while True:
+      target, to = sample(targets, 2)
+      # If we accidentally ran into two attributes of the same name, re-roll the dice
+      # and hope we get different attributes
+      if target.attr != to.attr:
+        break
+
+  elif mode == 'precise':
+    # Use the chosen bug
+    l, r = status['current_primary_candidate_bug_index'], status['current_secondary_candidate_bug_index']
+    target, to = targets[l], targets[r]
+    while l != len(targets):
+      found = False
+      for _r in range(r+1, len(targets)):
+        if targets[l].attr != targets[_r].attr:
+          found = True
+          break
+      if found:
+        status['current_primary_candidate_bug_index'] = l
+        status['current_secondary_candidate_bug_index'] = _r
+        break
+      else:
+        l += 1
 
   print(f"s.{target.attr} -> s.{to.attr}")
 
@@ -249,18 +293,25 @@ class PortDirTargetExtractor( TargetExtractor ):
     if s.is_target(node.id):
       s.mutation_targets.append(node)
 
-def mutate_port_dir(r, profile):
+def mutate_port_dir(r, mode, status):
   extractor = PortDirTargetExtractor()
   extractor.visit(r)
+  targets = extractor.mutation_targets
 
-  if profile:
-    return extractor.mutation_targets
+  if mode == 'profile':
+    return targets
 
-  if not extractor.mutation_targets:
+  if not targets:
+    assert mode != 'precise', 'Wrong bug kind generated!'
     return False, 0, 0
 
   # Randomly select a target
-  target = extractor.mutation_targets[randint(0, len(extractor.mutation_targets)-1)]
+  if mode == 'random' or (mode == 'precise' and len(targets) > SAMPLE_THRESHOLD):
+    target = targets[randint(0, len(targets)-1)]
+  elif mode == 'precise':
+    index = status['current_primary_candidate_bug_index']
+    target = targets[index]
+    status['current_primary_candidate_bug_index'] += 1
 
   print(f"{target.id} will be flipped")
 
@@ -309,18 +360,30 @@ class NameExprTargetExtractor( TargetExtractor ):
     if s.is_target(node.id) and node.id not in [node.id for node in s.mutation_targets]:
       s.mutation_targets.append(node)
 
-def mutate_name_expr(r, profile):
+def mutate_name_expr(r, mode, status):
   extractor = NameExprTargetExtractor()
   extractor.visit(r)
+  targets = extractor.mutation_targets
 
-  if profile:
-    return extractor.mutation_targets
+  if mode == 'profile':
+    return targets
 
-  if len(extractor.mutation_targets) < 2:
+  if len(targets) < 2:
+    assert mode != 'precise', 'Wrong bug kind generated!'
     return False, 0, 0
 
   # Sample two targets and change the name of the first to name of the second
-  target, to = sample(extractor.mutation_targets, 2)
+  if mode == 'random' or (mode == 'precise' and len(targets)*(len(targets)-1) > SAMPLE_THRESHOLD):
+    target, to = sample(targets, 2)
+  elif mode == 'precise':
+    l, r = status['current_primary_candidate_bug_index'], status['current_secondary_candidate_bug_index']
+    target, to = targets[l], targets[r]
+    r += 1
+    if r == len(targets):
+      r = 0
+      l += 1
+    status['current_primary_candidate_bug_index']   = l
+    status['current_secondary_candidate_bug_index'] = r
 
   print(f"{target.id} -> {to.id}")
 
@@ -353,18 +416,25 @@ class AttrBaseTargetExtractor( TargetExtractor ):
       if s.is_target(node.value):
         s.mutation_targets.append((node, 'R'))
 
-def mutate_attr_base(r, profile):
+def mutate_attr_base(r, mode, status):
   extractor = AttrBaseTargetExtractor()
   extractor.visit(r)
+  targets = extractor.mutation_targets
 
-  if profile:
-    return extractor.mutation_targets
+  if mode == 'profile':
+    return targets
 
-  if not extractor.mutation_targets:
+  if not targets:
+    assert mode != 'precise', 'Wrong bug kind generated!'
     return False, 0, 0
 
   # Randomly pick one target
-  target, side = extractor.mutation_targets[randint(0, len(extractor.mutation_targets)-1)]
+  if mode == 'random' or (mode == 'precise' and len(targets) > SAMPLE_THRESHOLD):
+    target, side = targets[randint(0, len(targets)-1)]
+  elif mode == 'precise':
+    index = status['current_primary_candidate_bug_index']
+    target, side = targets[index]
+    status['current_primary_candidate_bug_index'] += 1
 
   # Mutate
   if side == 'L':
@@ -433,18 +503,25 @@ def new_cmp_op( op ):
       }
   return m[op.__class__]
 
-def mutate_funct(r, profile):
+def mutate_funct(r, mode, status):
   extractor = FunctionalTargetExtractor()
   extractor.visit(r)
+  targets = extractor.mutation_targets
 
-  if profile:
-    return extractor.mutation_targets
+  if mode == 'profile':
+    return targets
 
-  if not extractor.mutation_targets:
+  if not targets:
+    assert mode != 'precise', 'Wrong bug kind generated!'
     return False, 0, 0
 
   # Randomly pick one target
-  target, kind = extractor.mutation_targets[randint(0, len(extractor.mutation_targets)-1)]
+  if mode == 'random' or (mode == 'precise' and len(targets) > SAMPLE_THRESHOLD):
+    target, kind = targets[randint(0, len(targets)-1)]
+  elif mode == 'precise':
+    index = status['current_primary_candidate_bug_index']
+    target, kind = targets[index]
+    status['current_primary_candidate_bug_index'] += 1
 
   # Mutate
   if kind == 'number':
@@ -479,11 +556,39 @@ BUG_HANDLERS =  {
 
 
 # Mutate the AST located in r
-def mutate(r, bug, profile = False):
+def mutate(r, bug, mode = 'random', status = None):
   assert bug in BUG_HANDLERS
   # import pdb
   # pdb.set_trace()
-  return BUG_HANDLERS[bug](r, profile)
+  return BUG_HANDLERS[bug](r, mode, status)
+
+
+def print_mutation(bug, target, targets, tree, lineno, col, opts):
+  print(f"Chose to mutate {target} out of {len(targets)} targets")
+  print(f"Bug chosen: {BUG_STR[bug]}")
+  print(f"Mutation happened on line {lineno}, col {col}. Original line:")
+  print(f"{target_lines[lineno-1]}")
+  print()
+
+  # Write mutated source code to a temporary file
+  with open( target + ".tmp", "w" ) as fd:
+    fd.write(astunparse.unparse(tree))
+
+  # Rename the tmp file to overwrite the target
+  if not opts.no_overwrite:
+    os.rename( target + ".tmp", target )
+
+
+def read_target(target):
+  with open(target, 'r') as fd:
+    tree = ast.parse(fd.read())
+    fd.seek(0, 0)
+    target_lines = fd.readlines()
+  return tree, target_lines
+
+
+def has_no_bugs(bug_count):
+  return sum(bug_count.values()) == 0
 
 
 if __name__ == "__main__":
@@ -496,30 +601,50 @@ if __name__ == "__main__":
     targets = json.load(fd)
 
   # Profiling mode
-  if opts.profile:
+  if opts.mode == 'profile':
     bug_count = {val : 0 for val in BUG_STR.keys()}
+    bug_file_count = {filename : {bug : 0 for bug in BUG_STR.keys()} for filename in targets}
     for target in targets:
       # For each target, count the number of unique bugs the injector
       # is able to introduce
-      with open( target, "r" ) as fd:
-        tree = ast.parse(fd.read())
-        fd.seek(0, 0)
-        target_lines = fd.readlines()
+      tree, target_lines = read_target(target)
 
       for bug in BUG_STR.keys():
-        candidate_bugs = mutate(tree, bug, True)
+        candidate_bugs = mutate(tree, bug, opts.mode)
         # if opts.verbose:
         if bug in (BUG_BITWIDTH, BUG_PORT_DIR, BUG_ATTR_BASE, BUG_FUNCT):
           n = len(candidate_bugs)
-        else:
+        elif bug == BUG_NAME_EXPR:
           n = len(candidate_bugs) * (len(candidate_bugs) - 1)
+        elif bug == BUG_COMP_ATTR:
+          n = 0
+          for c in candidate_bugs:
+            for _c in candidate_bugs:
+              if c.attr != _c.attr:
+                n += 1
         print(f"Bug `{BUG_STR[bug]}` on file `{target}` has {len(candidate_bugs)} candidates, {n} candidate bugs")
         bug_count[bug] += n
+        bug_file_count[target][bug] = n
     print()
     for bug in BUG_STR.keys():
       print(f"Bug `{BUG_STR[bug]}` has {bug_count[bug]} candidate bugs")
 
-  else:
+    # Create an initial status under --candidate-dir
+    status = {
+        'current_file_index' : 0,
+        'current_bug_kind' : BUG_BITWIDTH,
+        'current_primary_candidate_bug_index' : 0,
+        'current_secondary_candidate_bug_index' : 0,
+        'current_finished_bugs' : 0,
+        'current_file_finished_bugs' : 0,
+        'design_bug_count' : bug_file_count,
+    }
+    status_path = opts.candidate_dir+'/injector_status'
+    with open(status_path, 'w') as fd:
+      json.dump(status, fd, indent=4)
+
+  # Random mode
+  elif opts.mode == 'random':
     # Loop until a valid bug is generated
     while True:
       if n_tried > 100:
@@ -527,22 +652,13 @@ if __name__ == "__main__":
         break
 
       target = targets[randint(0, len(targets)-1)]
+      tree, target_lines = read_target(target)
 
-      with open( target, "r" ) as fd:
-        tree = ast.parse(fd.read())
-        fd.seek(0, 0)
-        target_lines = fd.readlines()
-
-      # Pre-mutation AST dump
-      if not opts.no_astdump:
-        with open( target + ".pre-ast", "w" ) as fd:
-          fd.write(astunparse.dump(tree))
-
-      # Randomly pick a bug
-      if not opts.functional:
-        bug = randint(0, BUG_SENTINEL-1)
-      else:
+      if opts.functional:
         bug = BUG_FUNCT
+      else:
+        # Randomly pick a bug
+        bug = randint(0, BUG_SENTINEL-1)
 
       # bug = BUG_BITWIDTH
       # bug = BUG_COMP_ATTR
@@ -555,25 +671,74 @@ if __name__ == "__main__":
       done, lineno, col = mutate(tree, bug)
 
       if done:
-        print(f"Chose to mutate {target} out of {len(targets)} targets")
-        print(f"Bug chosen: {BUG_STR[bug]}")
-        print(f"Mutation happened on line {lineno}, col {col}. Original line:")
-        print(f"{target_lines[lineno-1]}")
-
-        # Post-mutation AST dump
-        if not opts.no_astdump:
-          with open( target + ".post-ast", "w" ) as fd:
-            fd.write(astunparse.dump(tree))
-
-        # Write mutated source code to a temporary file
-        with open( target + ".tmp", "w" ) as fd:
-          fd.write(astunparse.unparse(tree))
-
-        # Rename the tmp file to overwrite the target
-        if not opts.no_overwrite:
-          os.rename( target + ".tmp", target )
-
-        print()
+        print_mutation(bug, target, targets, tree, lineno, col, opts)
         break
 
       n_tried += 1
+
+  # Precise mode
+  elif opts.mode == 'precise':
+    # Load status from injector status file
+    status_path = opts.candidate_dir+'/injector_status'
+    with open(status_path, 'r') as fd:
+      status = json.load(fd)
+
+    # Load the correct file
+    cur_file_index = status['current_file_index']
+    target = targets[cur_file_index]
+    tree, target_lines = read_target(target)
+
+    # Mutate
+    done, lineno, col = mutate(tree, status['current_bug_kind'], 'precise', status)
+    print_mutation(status['current_bug_kind'], target, targets, tree, lineno, col, opts)
+
+    # Prepare status for the next bug injection
+    status['current_finished_bugs'] += 1
+    bug = status['current_bug_kind']
+    cur_file_bug_count = status['design_bug_count'][target][str(bug)]
+    cur_file_finished_bugs = status['current_file_finished_bugs']
+    cur_file_finished_bugs += 1
+
+    # All bugs for the current kind have finished
+    if cur_file_finished_bugs == cur_file_bug_count or \
+       (cur_file_bug_count > SAMPLE_THRESHOLD and cur_file_finished_bugs == SAMPLE_THRESHOLD):
+      # Move to the next kind of bugs
+      bug = bug + 1
+      while bug != BUG_SENTINEL and status['design_bug_count'][target][str(bug)] == 0:
+        bug = bug + 1
+
+      # All kinds of bugs for the current file have finished
+      if bug == BUG_SENTINEL:
+        # Move to the next file
+        cur_file_index += 1
+        while cur_file_index != len(targets) and has_no_bugs(status['design_bug_count'][targets[cur_file_index]]):
+          cur_file_index += 1
+
+        if cur_file_index == len(targets):
+          # All files finished
+          print('==================Bug injection finished==================')
+        else:
+          # Move to the next file
+          status['current_file_index'] = cur_file_index
+          status['current_bug_kind'] = int(next(filter(lambda x: x[1] != 0,
+                                              status['design_bug_count'][targets[cur_file_index]].items())))
+          status['current_primary_candidate_bug_index'] = 0
+          status['current_secondary_candidate_bug_index'] = 0
+          status['current_file_finished_bugs'] = 0
+
+      else:
+        # Move to the next kind of bugs
+        status['current_bug_kind'] = bug
+        status['current_primary_candidate_bug_index'] = 0
+        status['current_secondary_candidate_bug_index'] = 0
+        status['current_file_finished_bugs'] = 0
+    else:
+      # Move to the next bug in the current kind
+      status['current_file_finished_bugs'] += 1
+
+    # Dump out the current status
+    with open(status_path, 'w') as fd:
+      json.dump(status, fd, indent=4)
+
+  else:
+    raise AssertionError
