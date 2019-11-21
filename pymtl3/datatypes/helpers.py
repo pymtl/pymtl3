@@ -12,6 +12,8 @@ import math
 
 from .bits_import import *
 
+def get_nbits( Type ):
+  return Type.nbits
 
 def concat( *args ):
   nbits = sum( [ x.nbits for x in args ] )
