@@ -245,6 +245,10 @@ class ComponentLevel3( ComponentLevel2 ):
         raise InvalidConnectionError( f"Bitwidth mismatch when connecting a {Type2} constant "
                                       f"to signal {o1} with type {Type}." )
       o2 = Const( Type, o2, s )
+    else:
+      raise InvalidConnectionError(f"\n>>> {o2} of type {type(o2)} is not a const! \n"
+                                   f">>> It cannot be connected to signal {o1} of type {o1._dsl.Type}!\n"
+                                   f"Suggestion: fix the RHS of connection to be an instance of {o1._dsl.Type}.")
 
     # TODO implement connecting a const struct
 

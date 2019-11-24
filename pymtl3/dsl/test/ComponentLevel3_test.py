@@ -894,3 +894,19 @@ def test_connect_slice_int():
     assert str(e).startswith( "'int' object is not subscriptable" )
     return
   raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
+
+def test_misconnect_component_to_signal():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits8 )
+      s.x = Wire( Bits32 )
+      s.y //= s # this is garbage
+
+  a = Top()
+  try:
+    a.elaborate()
+  except InvalidConnectionError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown InvalidConnectionError")
