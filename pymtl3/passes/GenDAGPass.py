@@ -9,6 +9,7 @@ Author : Shunning Jiang
 Date   : Jan 18, 2018
 """
 from collections import defaultdict, deque
+import time
 
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
@@ -29,6 +30,7 @@ class GenDAGPass( BasePass ):
     if placeholders:
       raise LeftoverPlaceholderError( placeholders )
 
+    top.rt_check_time = [0.0]
     self._generate_net_blocks( top )
     self._process_value_constraints( top )
     self._process_methods( top )
@@ -136,7 +138,11 @@ class GenDAGPass( BasePass ):
       gen_src = """
 @update
 def {upblk_name}():
+  # global _upblk_total_rt_check_time
+  _upblk_start_time = time.time()
   {rt_type_check}
+  # print(f'sim_time: rt_check: {{time.time() - _upblk_start_time}}')
+  _upblk_total_rt_check_time[0] += time.time() - _upblk_start_time
   {rstrs} = {wstr}
   
 {upblk_name}.is_boundary = {is_boundary}""".format(
@@ -166,6 +172,7 @@ def {upblk_name}():
         # TODO None -- I remove the ast parsing since it is slow
         return blk
 
+      _upblk_total_rt_check_time = top.rt_check_time
       var = locals()
       var.update( globals() )
       print(src)
