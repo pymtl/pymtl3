@@ -42,7 +42,8 @@ BUG_STR = {
     BUG_FUNCT     : 'functional behavior mutation',
 }
 
-SAMPLE_THRESHOLD = 100
+SAMPLE_THRESHOLD = 30
+# SAMPLE_THRESHOLD = 100
 
 
 #-------------------------------------------------------------------------
@@ -349,6 +350,22 @@ class NameExprTargetExtractor( TargetExtractor ):
       'RecvCL2SendRTL', 'RecvIfcRTL', 'RecvRTL2SendCL', 'SendIfcRTL',
   ]
 
+  def __init__( s ):
+    s.name_mapping = {}
+    super().__init__()
+
+  def has_mapping( s, name ):
+    return name in s.name_mapping
+
+  def get_mapping( s, name ):
+    return s.name_mapping[name]
+
+  def update_mapping( s, name, value ):
+    s.name_mapping[name] = value
+
+  def get_all_mapping_values( s ):
+    return list(s.name_mapping.values())
+
   def is_reserved( s, name ):
     if name.startswith('Bits'):
       return True
@@ -357,7 +374,16 @@ class NameExprTargetExtractor( TargetExtractor ):
   def is_target( s, name ):
     if not s.ctxt.is_cur_inside_construct():
       return False
-    return name[0].isupper() and not s.is_reserved(name)
+    return name[0].isupper() and not s.is_reserved(name) and \
+           (not s.has_mapping(name) or s.get_mapping(name) not in s.get_all_mapping_values())
+
+  def visit_Assign( s, node ):
+    if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name) and \
+       isinstance(node.value, ast.Num):
+      s.update_mapping(node.targets[0].id, node.value.n)
+    for target in node.targets:
+      s.visit(target)
+    s.visit(node.value)
 
   def visit_Name( s, node ):
     if s.is_target(node.id) and node.id not in [node.id for node in s.mutation_targets]:
