@@ -143,10 +143,10 @@ class GenDAGPass( BasePass ):
 @update
 def {upblk_name}():
   # global _upblk_total_rt_check_time
-  _upblk_start_time = time.time()
+  # _upblk_start_time = time.time()
   {rt_type_check}
   # print(f'sim_time: rt_check: {{time.time() - _upblk_start_time}}')
-  _upblk_total_rt_check_time[0] += time.time() - _upblk_start_time
+  # _upblk_total_rt_check_time[0] += time.time() - _upblk_start_time
   {rstrs} = {wstr}
   
 {upblk_name}.is_boundary = {is_boundary}""".format(
