@@ -122,16 +122,20 @@ class GenDAGPass( BasePass ):
             assert static_type is None or static_type == x.static_type
             static_type = x.static_type
             static_signal = x
+
         # rt_type_check = "assert s.{} == s.{}.static_type".format(
         #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
-        rt_type_check = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
-            repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
-            repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+
+        # rt_type_check = "print('wr:s.{} = {{}}, rd:s.{} = {{}}'.format(s.{}, s.{}))\n  ".format(
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
+        #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
+
         # rt_type_check += "assert isinstance(s.{}, type(s.{})) or \
         #                   s.{}._dsl.Type == type(s.{})".format(
         #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:],
         #     repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
-        rt_type_check += "assert s.{}.nbits == s.{}.nbits".format(
+
+        rt_type_check = "assert s.{}.nbits == s.{}.nbits".format(
             repr(writer)[lca_len+1:], repr(static_signal)[lca_len+1:] )
       else:
         rt_type_check = ""
@@ -153,8 +157,8 @@ def {upblk_name}():
         is_boundary = is_boundary,
       )
 
-      print(f"upblk_name={upblk_name}, rstrs={rstrs}, wstr={wstr}")
-      print(f"is_boundary={is_boundary}, type_check={rt_type_check}")
+      # print(f"upblk_name={upblk_name}, rstrs={rstrs}, wstr={wstr}")
+      # print(f"is_boundary={is_boundary}, type_check={rt_type_check}")
       hostobj_allsrc[ lca ] += gen_src
       blkname_meta[ upblk_name ] = (gen_src, writer, readers)
 
@@ -175,7 +179,7 @@ def {upblk_name}():
       _upblk_total_rt_check_time = top.rt_check_time
       var = locals()
       var.update( globals() )
-      print(src)
+      # print(src)
       exec(( compile( src, filename=repr(s), mode="exec") ), var)
 
     for hostobj, allsrc in hostobj_allsrc.items():
