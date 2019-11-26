@@ -138,6 +138,16 @@ class Const( Connectable, Generic[T_ConstDataType] ):
     else:
       assert False
 
+  def __int__( s ):
+    import pdb
+    pdb.set_trace()
+    return int(s.value.value)
+
+  def __index__( s ):
+    import pdb
+    pdb.set_trace()
+    return int(s.value.value)
+
   def __class_getitem__( cls, Type ):
     if isinstance( Type, tuple ):
       raise TypeError(f"{cls} expects exactly one data type!")

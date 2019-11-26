@@ -89,7 +89,7 @@ class RegRst( Component, Generic[T_RegRstDataType] ):
 
     @s.update_on_edge
     def up_regrst():
-      if s.reset: s.out = Const[T_RegRstDataType]( reset_value )
+      if s.reset: s.out = T_RegRstDataType( reset_value )
       else:       s.out = s.in_
 
   def line_trace( s ):
@@ -108,7 +108,7 @@ class RegEnRst( Component, Generic[T_RegEnRstDataType] ):
 
     @s.update_on_edge
     def up_regenrst():
-      if s.reset: s.out = Const[T_RegEnRstDataType]( reset_value )
+      if s.reset: s.out = T_RegEnRstDataType( reset_value )
       elif s.en:  s.out = deepcopy( s.in_ )
 
   def line_trace( s ):
