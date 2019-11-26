@@ -10,7 +10,7 @@ Date   : Apr 16, 2018
 from collections import deque
 from typing import Generic, TypeVar
 
-from pymtl3.datatypes import Bits, mk_bits, BitStruct
+from pymtl3.datatypes import Bits, mk_bits, BitStruct, sext
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
@@ -108,9 +108,9 @@ T_ConstDataType = TypeVar("T_ConstDataType")
 
 class Const( Connectable, Generic[T_ConstDataType] ):
   # def __init__( s, Type, v, parent ):
-  def __init__( s, *args ):
-    s._dsl = DSLMetadata()
+  def __init__( s, *args, **kwargs ):
     if len(args) == 3:
+      s._dsl = DSLMetadata()
       s._dsl.Type = args[0]
       s._dsl.const = args[1]
       s._dsl.parent_obj = args[2]
@@ -118,34 +118,25 @@ class Const( Connectable, Generic[T_ConstDataType] ):
       # print("PyMTL Const: patching mypyc const")
       s.nbits = s._dsl.Type.nbits
       s.value = s._dsl.Type( s._dsl.const )
+      return
 
-    elif len(args) <= 1:
-      cls = s.__class__
-      assert cls.Type is not None
-      s._dsl.Type = cls.Type
-      if len(args) == 0:
-        s._dsl.const = 0
-      else:
-        s._dsl.const = args[0]
-      s._dsl.parent_obj = None
-      cls.Type = None
+    # Runtime execution uses this
 
-      # Add simulation support because Const[BitsN](value) might appear
-      # in an upblk
-      s.nbits = s._dsl.Type.nbits
-      s.value = s._dsl.Type( s._dsl.const )
+    assert len(args) == 1
+    cls = s.__class__
+    Type =  cls.Type
+    assert Type is not None
+    cls.Type = None
 
-    else:
-      assert False
+    # Add simulation support because Const[BitsN](value) might appear
+    # in an upblk
+    s.nbits = Type.nbits
+    s.value = Type( sext( args[0], s.nbits ) if kwargs.get( 'sext', False ) else args[0] )
 
   def __int__( s ):
-    import pdb
-    pdb.set_trace()
     return int(s.value.value)
 
   def __index__( s ):
-    import pdb
-    pdb.set_trace()
     return int(s.value.value)
 
   def __class_getitem__( cls, Type ):
@@ -157,7 +148,11 @@ class Const( Connectable, Generic[T_ConstDataType] ):
     return super(Const, cls).__class_getitem__( Type )
 
   def __repr__( s ):
-    return "{}({})".format( str(s._dsl.Type.__name__), s.value )
+    try:
+      return "{}({})".format( str(s._dsl.Type.__name__), s.value )
+    except AttributeError:
+      return "CB{}({})".format( s.nbits, s.value )
+
 
   def get_parent_object( s ):
     try:
@@ -250,6 +245,13 @@ class Const( Connectable, Generic[T_ConstDataType] ):
 
   def __invert__( self ):
     return Bits( self.nbits, ~int(self.value) )
+
+  def __eq__( self, other ):
+    try:
+      other = int(other)
+    except ValueError:
+      return False
+    return Bits( 1, int(self.value) == other )
 
   def __ne__( self, other ):
     try:
