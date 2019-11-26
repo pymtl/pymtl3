@@ -7,6 +7,8 @@ RTL implementation of deq and enq interface.
 Author: Yanghui Ou
   Date: Mar 21, 2019
 """
+from typing import TypeVar, Generic
+
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.rtl import And
@@ -19,14 +21,31 @@ from .SendRecvIfc import RecvIfcRTL
 # EnqIfcRTL
 #-------------------------------------------------------------------------
 
-class EnqIfcRTL( RecvIfcRTL ):
-  pass
+T_EnqIfcDataType = TypeVar('T_EnqIfcDataType')
+
+class EnqIfcRTL( RecvIfcRTL, Generic[T_EnqIfcDataType] ):
+
+  def construct( s ):
+    s.msg =  InPort[T_EnqIfcDataType]()
+    s.en  =  InPort[Bits1]()
+    s.rdy = OutPort[Bits1]()
+
+    s.MsgType = T_EnqIfcDataType
 
 #-------------------------------------------------------------------------
 # DeqIfcRTL
 #-------------------------------------------------------------------------
 
-class DeqIfcRTL( GiveIfcRTL ):
+T_DeqIfcDataType = TypeVar('T_DeqIfcDataType')
+
+class DeqIfcRTL( GiveIfcRTL, Generic[T_DeqIfcDataType] ):
+
+  def construct( s ):
+    s.MsgType = T_DeqIfcDataType
+
+    s.msg = OutPort[T_DeqIfcDataType]()
+    s.en  = InPort [Bits1]()
+    s.rdy = OutPort[Bits1]()
 
   # Interfaces are the same as GiveIfc. We just need to add custom connect
 

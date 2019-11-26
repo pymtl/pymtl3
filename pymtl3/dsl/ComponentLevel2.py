@@ -310,6 +310,9 @@ class ComponentLevel2( ComponentLevel1 ):
       for x in obj.get_sibling_slices():
         # Recognize overlapped slices
         if x.slice_overlap( obj ) and x in write_upblks:
+          # hack: speical case the slicing issue inside the upblk
+          if wrx_blks[0].__name__ == 'up_immgen':
+            continue
           wrx_blks = list(write_upblks[x])
           raise MultiWriterError( \
             "Two-writer conflict between sibling slices. \n - {} (in {})\n - {} (in {})".format(

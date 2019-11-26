@@ -1,6 +1,7 @@
 
 from typing import Generic, TypeVar
 from pymtl3 import *
+from pymtl3.dsl import Const
 
 # N-input Mux
 
@@ -111,24 +112,28 @@ class LShifter( Component, Generic[T_LShifterDataType, T_LShifterShamtType] ):
 
 # Incrementer
 
-class Incrementer( Component ):
+T_IncrementerDataType = TypeVar("T_IncrementerDataType")
 
-  def construct( s, Type, amount=1 ):
-    s.in_ = InPort( Type )
-    s.out = OutPort( Type )
+class Incrementer( Component, Generic[T_IncrementerDataType] ):
+
+  def construct( s, amount=1 ):
+    s.in_ = InPort [T_IncrementerDataType]()
+    s.out = OutPort[T_IncrementerDataType]()
 
     @s.update
     def up_incrementer():
-      s.out = s.in_ + Type(amount)
+      s.out = s.in_ + Const[T_IncrementerDataType](amount)
 
 # Adder
 
-class Adder( Component ):
+T_AdderDataType = TypeVar("T_AdderDataType")
 
-  def construct( s, Type ):
-    s.in0 = InPort( Type )
-    s.in1 = InPort( Type )
-    s.out = OutPort( Type )
+class Adder( Component, Generic[T_AdderDataType] ):
+
+  def construct( s ):
+    s.in0 = InPort [T_AdderDataType]()
+    s.in1 = InPort [T_AdderDataType]()
+    s.out = OutPort[T_AdderDataType]()
 
     @s.update
     def up_adder():

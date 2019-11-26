@@ -7,6 +7,7 @@
 # Date  : May 18, 2019
 """
 from greenlet import greenlet
+from typing import Generic, TypeVar
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
@@ -126,13 +127,16 @@ class MemMinionIfcCL( Interface ):
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )
 
-class MemMasterIfcRTL( Interface ):
+T_MemMasterIfcReqType  = TypeVar('T_MemMasterIfcReqType')
+T_MemMasterIfcRespType = TypeVar('T_MemMasterIfcRespType')
 
-  def construct( s, req_class, resp_class ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = SendIfcRTL( req_class  )
-    s.resp = RecvIfcRTL( resp_class )
+class MemMasterIfcRTL( Interface, Generic[T_MemMasterIfcReqType, T_MemMasterIfcRespType] ):
+
+  def construct( s ):
+    s.req_class  = T_MemMasterIfcReqType
+    s.resp_class = T_MemMasterIfcRespType
+    s.req  = SendIfcRTL[T_MemMasterIfcReqType]()
+    s.resp = RecvIfcRTL[T_MemMasterIfcRespType]()
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )

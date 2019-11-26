@@ -1,6 +1,8 @@
 from pymtl3.dsl import Component, InPort, OutPort, RList
 from pymtl3.datatypes import Bits1
 
+from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL, EnqIfcRTL, DeqIfcRTL
+
 from typing import *
 
 #-------------------------------------------------
@@ -29,6 +31,52 @@ class RegEn( Component, Generic[T_RegEnDataType] ):
   def __init__( s ) -> None: ...
 
   def construct( s ) -> None: ...
+
+T_RegRstDataType = TypeVar( "T_RegRstDataType" )
+
+class RegRst( Component, Generic[T_RegRstDataType] ):
+
+  reset : InPort [Bits1]
+  in_   : InPort [T_RegRstDataType]
+  out   : OutPort[T_RegRstDataType]
+
+  def __init__( s, reset_value : int = 0 ) -> None: ...
+
+  def construct( s, reset_value : int = 0 ) -> None: ...
+
+T_RegEnRstDataType = TypeVar( "T_RegEnRstDataType" )
+
+class RegEnRst( Component, Generic[T_RegEnRstDataType] ):
+
+  en    : InPort [Bits1]
+  reset : InPort [Bits1]
+  in_   : InPort [T_RegEnRstDataType]
+  out   : OutPort[T_RegEnRstDataType]
+
+  def __init__( s, reset_value : int = 0 ) -> None: ...
+
+  def construct( s, reset_value : int = 0 ) -> None: ...
+
+#-------------------------------------------------
+# RegisterFile
+#-------------------------------------------------
+
+T_RFDpath = TypeVar('T_RFDpath')
+T_RFAddr  = TypeVar('T_RFAddr')
+
+class RegisterFile( Component, Generic[T_RFDpath, T_RFAddr] ):
+
+  raddr     : RList[InPort[T_RFAddr], T_RFAddr]
+  rdata     : RList[OutPort[T_RFDpath], T_RFDpath]
+  waddr     : RList[InPort[T_RFAddr], T_RFAddr]
+  wdata     : RList[InPort[T_RFDpath], T_RFDpath]
+  wen       : RList[InPort[Bits1], Bits1]
+  # regs      : RList[Wire[T_RFDpath], T_RFDpath]
+  # next_regs : RList[Wire[T_RFDpath], T_RFDpath]
+
+  def __init__( s, nregs : int = 32, rd_ports : int = 1, wr_ports : int = 1, const_zero : bool = False) -> None: ...
+
+  def construct( s, nregs : int = 32, rd_ports : int = 1, wr_ports : int = 1, const_zero : bool = False) -> None: ...
 
 #-------------------------------------------------
 # Arithmetics
@@ -88,3 +136,26 @@ class Subtractor( Component, Generic[T_SubtractorDataType] ):
   def __init__( s ) -> None: ...
 
   def construct( s ) -> None: ...
+
+T_AdderDataType = TypeVar( "T_AdderDataType" )
+
+class Adder( Component, Generic[T_AdderDataType] ):
+
+  in0: InPort [T_AdderDataType]
+  in1: InPort [T_AdderDataType]
+  out: OutPort[T_AdderDataType]
+
+  def __init__( s ) -> None: ...
+
+  def construct( s ) -> None: ...
+
+T_IncrementerDataType = TypeVar( "T_IncrementerDataType" )
+
+class Incrementer( Component, Generic[T_IncrementerDataType] ):
+
+  in_: InPort [T_IncrementerDataType]
+  out: OutPort[T_IncrementerDataType]
+
+  def __init__( s, amount : int = 1 ) -> None: ...
+
+  def construct( s, amount : int = 1 ) -> None: ...

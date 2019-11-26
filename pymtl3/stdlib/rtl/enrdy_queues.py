@@ -8,6 +8,8 @@ Author : Shunning Jiang
 Date   : Mar 9, 2018
 """
 
+from typing import TypeVar, Generic
+
 from pymtl3 import *
 from pymtl3.stdlib.ifcs.SendRecvIfc import RecvIfcRTL, SendIfcRTL
 from pymtl3.stdlib.rtl import Mux, Reg, RegEn, RegRst
@@ -34,17 +36,19 @@ class PipeQueue1RTL( Component ):
   def line_trace( s ):
     return s.buffer.line_trace()
 
-class BypassQueue1RTL( Component ):
+T_BpsQ1RTLDataType = TypeVar('T_BpsQ1RTLDataType')
 
-  def construct( s, Type ):
-    s.enq = RecvIfcRTL( Type )
-    s.deq = SendIfcRTL( Type )
+class BypassQueue1RTL( Component, Generic[T_BpsQ1RTLDataType] ):
 
-    s.buffer  = RegEn( Type )( in_ = s.enq.msg )
+  def construct( s ):
+    s.enq = RecvIfcRTL[T_BpsQ1RTLDataType]()
+    s.deq = SendIfcRTL[T_BpsQ1RTLDataType]()
 
-    s.full = RegRst( Bits1, reset_value = 0 )
+    s.buffer = RegEn[T_BpsQ1RTLDataType]()( in_ = s.enq.msg )
 
-    s.byp_mux = Mux( Type, 2 )(
+    s.full = RegRst[Bits1]( reset_value = 0 )
+
+    s.byp_mux = Mux[T_BpsQ1RTLDataType, Bits1]( 2 )(
       out = s.deq.msg,
       in_ = { 0: s.enq.msg,
               1: s.buffer.out, },
@@ -64,14 +68,15 @@ class BypassQueue1RTL( Component ):
   def line_trace( s ):
     return s.buffer.line_trace()
 
-class BypassQueue2RTL( Component ):
+T_BpsQ2RTLDataType = TypeVar('T_BpsQ2RTLDataType')
 
-  def construct( s, MsgType, queue_size=2 ):
-    assert queue_size == 2
-    s.enq = RecvIfcRTL( MsgType )
-    s.deq = SendIfcRTL( MsgType )
-    s.q1 = BypassQueue1RTL( MsgType )( enq = s.enq )
-    s.q2 = BypassQueue1RTL( MsgType )( enq = s.q1.deq, deq = s.deq )
+class BypassQueue2RTL( Component, Generic[T_BpsQ2RTLDataType] ):
+
+  def construct( s ):
+    s.enq = RecvIfcRTL[T_BpsQ2RTLDataType]()
+    s.deq = SendIfcRTL[T_BpsQ2RTLDataType]()
+    s.q1 = BypassQueue1RTL[T_BpsQ2RTLDataType]()( enq = s.enq )
+    s.q2 = BypassQueue1RTL[T_BpsQ2RTLDataType]()( enq = s.q1.deq, deq = s.deq )
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.q1.deq, s.deq )

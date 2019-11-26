@@ -8,6 +8,7 @@ Author: Yanghui Ou
   Date: Mar 19, 2019
 """
 import greenlet
+from typing import TypeVar, Generic
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
@@ -43,14 +44,16 @@ class GetIfcRTL( Interface ):
 # GiveIfcRTL
 #-------------------------------------------------------------------------
 
-class GiveIfcRTL( Interface ):
+T_GiveIfcDataType = TypeVar('T_GiveIfcDataType')
 
-  def construct( s, Type ):
-    s.MsgType = Type
+class GiveIfcRTL( Interface, Generic[T_GiveIfcDataType] ):
 
-    s.msg = OutPort( Type )
-    s.en  = InPort ( int if Type is int else Bits1 )
-    s.rdy = OutPort( int if Type is int else Bits1 )
+  def construct( s ):
+    s.MsgType = T_GiveIfcDataType
+
+    s.msg = OutPort[T_GiveIfcDataType]()
+    s.en  = InPort [Bits1]()
+    s.rdy = OutPort[Bits1]()
 
   def line_trace( s ):
     try:

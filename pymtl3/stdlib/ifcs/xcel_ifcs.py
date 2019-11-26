@@ -8,6 +8,7 @@ Accelerator interface implementations at FL, CL, and RTL.
    Date: June 3, 2019
 """
 from greenlet import greenlet
+from typing import Generic, TypeVar
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
@@ -151,19 +152,22 @@ class XcelMinionIfcCL( Interface ):
 # to connect by name and leverage the custom connect method of the nested
 # Send/RecvIfc. The RTL-FL and FL-RTL has been implemented in the FL ifc.
 
-class XcelMasterIfcRTL( Interface ):
+T_XcelMasterIfcReqType  = TypeVar('T_XcelMasterIfcReqType')
+T_XcelMasterIfcRespType = TypeVar('T_XcelMasterIfcRespType')
 
-  def construct( s, ReqType, RespType ):
-    s.req  = SendIfcRTL( ReqType  )
-    s.resp = RecvIfcRTL( RespType )
+class XcelMasterIfcRTL( Interface, Generic[T_XcelMasterIfcReqType, T_XcelMasterIfcRespType] ):
+
+  def construct( s ):
+    s.req  = SendIfcRTL[T_XcelMasterIfcReqType]()
+    s.resp = RecvIfcRTL[T_XcelMasterIfcRespType]()
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
 class XcelMinionIfcRTL( Interface ):
   def construct( s, ReqType, RespType ):
-    s.req  = RecvIfcRTL( ReqType  )
-    s.resp = SendIfcRTL( RespType )
+    s.req  = RecvIfcRTL[ReqType]()
+    s.resp = SendIfcRTL[RespType]()
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )

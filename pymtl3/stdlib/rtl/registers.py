@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import Generic, TypeVar
 
 from pymtl3 import *
+from pymtl3.dsl import Const
 
 
 T_RegDataType = TypeVar("T_RegDataType")
@@ -76,34 +77,38 @@ class RegEn( Component, Generic[T_RegEnDataType] ):
   def line_trace( s ):
     return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
 
-class RegRst( Component ):
+T_RegRstDataType = TypeVar("T_RegRstDataType")
 
-  def construct( s, Type, reset_value=0 ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+class RegRst( Component, Generic[T_RegRstDataType] ):
 
-    s.reset = InPort( int if Type is int else Bits1 )
+  def construct( s, reset_value=0 ):
+    s.out = OutPort[T_RegRstDataType]()
+    s.in_ = InPort [T_RegRstDataType]()
+
+    s.reset = InPort[Bits1]()
 
     @s.update_on_edge
     def up_regrst():
-      if s.reset: s.out = Type( reset_value )
+      if s.reset: s.out = Const[T_RegRstDataType]( reset_value )
       else:       s.out = s.in_
 
   def line_trace( s ):
     return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
 
-class RegEnRst( Component ):
+T_RegEnRstDataType = TypeVar("T_RegEnRstDataType")
 
-  def construct( s, Type, reset_value=0 ):
-    s.out = OutPort( Type )
-    s.in_ = InPort( Type )
+class RegEnRst( Component, Generic[T_RegEnRstDataType] ):
 
-    s.reset = InPort( int if Type is int else Bits1 )
-    s.en    = InPort( int if Type is int else Bits1 )
+  def construct( s, reset_value=0 ):
+    s.out = OutPort[T_RegEnRstDataType]()
+    s.in_ = InPort [T_RegEnRstDataType]()
+
+    s.reset = InPort[Bits1]()
+    s.en    = InPort[Bits1]()
 
     @s.update_on_edge
     def up_regenrst():
-      if s.reset: s.out = Type( reset_value )
+      if s.reset: s.out = Const[T_RegEnRstDataType]( reset_value )
       elif s.en:  s.out = deepcopy( s.in_ )
 
   def line_trace( s ):
