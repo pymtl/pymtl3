@@ -43,7 +43,6 @@ BUG_STR = {
 }
 
 SAMPLE_THRESHOLD = 30
-# SAMPLE_THRESHOLD = 100
 
 
 #-------------------------------------------------------------------------
@@ -55,6 +54,7 @@ def parse_cmdline():
   p.add_argument( "--input-spec" )
   p.add_argument( "--verbose",      action = 'store_true', default = False )
   p.add_argument( "--mode",         choices = ['random', 'profile', 'precise'], default = 'random' )
+  p.add_argument( "--threshold",    type=int, default=30 )
   p.add_argument( "--candidate-dir" )
   p.add_argument( "--no-overwrite", action = 'store_true', default = False )
   p.add_argument( "--functional",   action = 'store_true', default = False )
@@ -630,6 +630,8 @@ if __name__ == "__main__":
   n_tried = 0
   opts = parse_cmdline()
   print("===============================")
+
+  SAMPLE_THRESHOLD = opts.threshold
 
   # Load the target files
   with open( opts.input_spec, "r" ) as fd:
