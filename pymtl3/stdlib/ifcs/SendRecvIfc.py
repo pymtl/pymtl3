@@ -8,6 +8,7 @@ Author: Yanghui Ou, Shunning Jiang
   Date: May 5, 2019
 """
 from copy import deepcopy
+from typing import TypeVar, Generic
 
 import greenlet
 
@@ -20,15 +21,17 @@ from .ifcs_utils import enrdy_to_str
 # RecvIfcRTL
 #-------------------------------------------------------------------------
 
-class RecvIfcRTL( Interface ):
+T_RecvIfcDataType = TypeVar('T_RecvIfcDataType')
+
+class RecvIfcRTL( Interface, Generic[T_RecvIfcDataType] ):
 
   def construct( s, Type ):
 
-    s.msg =  InPort( Type )
-    s.en  =  InPort( int if Type is int else Bits1 )
-    s.rdy = OutPort( int if Type is int else Bits1 )
+    s.msg =  InPort[T_RecvIfcDataType]()
+    s.en  =  InPort[Bits1]()
+    s.rdy = OutPort[Bits1]()
 
-    s.MsgType = Type
+    s.MsgType = T_RecvIfcDataType
 
   def line_trace( s ):
     try:
@@ -71,15 +74,17 @@ class RecvIfcRTL( Interface ):
 # SendIfcRTL
 #-------------------------------------------------------------------------
 
-class SendIfcRTL( Interface ):
+T_SendIfcDataType = TypeVar('T_SendIfcDataType')
+
+class SendIfcRTL( Interface, Generic[T_SendIfcDataType] ):
 
   def construct( s, Type ):
 
-    s.msg = OutPort( Type )
-    s.en  = OutPort( int if Type is int else Bits1 )
-    s.rdy =  InPort( int if Type is int else Bits1 )
+    s.msg = OutPort[T_SendIfcDataType]()
+    s.en  = OutPort[Bits1]()
+    s.rdy =  InPort[Bits1]()
 
-    s.MsgType = Type
+    s.MsgType = T_SendIfcDataType
 
   def line_trace( s ):
     try:
@@ -193,7 +198,7 @@ class RecvCL2SendRTL( Component ):
 
     # Interface
 
-    s.send = SendIfcRTL( MsgType )
+    s.send = SendIfcRTL[MsgType]()
 
     s.entry = None
 
@@ -235,7 +240,7 @@ class RecvRTL2SendCL( Component ):
 
     # Interface
 
-    s.recv = RecvIfcRTL( MsgType )
+    s.recv = RecvIfcRTL[MsgType]()
     s.send = NonBlockingCallerIfc()
 
     s.sent_msg = None

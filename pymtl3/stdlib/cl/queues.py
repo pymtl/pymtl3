@@ -11,7 +11,6 @@ Date   : Mar 10, 2018
 from collections import deque
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs.SendRecvIfc import enrdy_to_str
 
 #-------------------------------------------------------------------------
 # PipeQueueCL

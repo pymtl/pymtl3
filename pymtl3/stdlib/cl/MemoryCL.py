@@ -55,13 +55,18 @@ class MemoryCL( Component ):
     return s.mem.write_mem( addr, data )
 
   # Actual stuff
+  # def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], latency=1, mem_nbytes=2**20 ):
   def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], latency=1, mem_nbytes=2**20 ):
 
     # Local constants
 
+    # s.nports = nports
+    # req_classes  = [ x for (x,y) in mem_ifc_dtypes ]
+    # resp_classes = [ y for (x,y) in mem_ifc_dtypes ]
+    nports = 2
     s.nports = nports
-    req_classes  = [ x for (x,y) in mem_ifc_dtypes ]
-    resp_classes = [ y for (x,y) in mem_ifc_dtypes ]
+    req_classes  = [ Bits78, Bits78 ]
+    resp_classes = [ Bits48, Bits48 ]
 
     s.mem = MemoryFL( mem_nbytes )
 
@@ -86,22 +91,35 @@ class MemoryCL( Component ):
           # Dequeue memory request message
 
           req = s.req_qs[i].deq()
-          len_ = int(req.len)
-          if not len_: len_ = req_classes[i].data_nbits >> 3
+          len_ = int(req[32:34])
+          if not len_: len_ = 4
 
-          if   req.type_ == MemMsgType.READ:
-            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-                                    s.mem.read( req.addr, len_ ) )
+          if   req[74:78] == MemMsgType.READ:
+            resp = resp_classes[i](0)
+            resp[44:48] = req[74:78]
+            resp[36:44] = req[66:74]
+            resp[34:36] = Bits2(0)
+            resp[32:34] = req[32:34]
+            resp[0:32]  = s.mem.read(req[34:66], len_)
 
-          elif req.type_ == MemMsgType.WRITE:
-            s.mem.write( req.addr, len_, req.data )
+          elif req[74:78] == MemMsgType.WRITE:
+            s.mem.write( req[34:66], len_, req[0:32] )
             # FIXME do we really set len=0 in response when doing subword wr?
             # resp = resp_classes[i]( req.type_, req.opaque, 0, req.len, 0 )
-            resp = resp_classes[i]( req.type_, req.opaque, 0, 0, 0 )
+            resp = resp_classes[i](0)
+            resp[44:48] = req[74:78]
+            resp[36:44] = req[66:74]
+            resp[34:36] = Bits2(0)
+            resp[32:34] = Bits2(0)
+            resp[0:32]  = Bits32(0)
 
           else: # AMOS
-            resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-               s.mem.amo( req.type_, req.addr, len_, req.data ) )
+            resp = resp_classes[i](0)
+            resp[44:48] = req[74:78]
+            resp[36:44] = req[66:74]
+            resp[34:36] = Bits2(0)
+            resp[32:34] = Bits2(req[32:34])
+            resp[0:32]  = Bits32(s.mem.amo(req[74:78], req[34:66], len_, req[0:32]))
 
           s.resp_qs[i].enq( resp )
 
@@ -111,4 +129,4 @@ class MemoryCL( Component ):
   # TODO: better line trace.
 
   def line_trace( s ):
-    return "|".join( [ x[0].line_trace() + x[1].line_trace() for x in zip(s.req_qs, s.resp_qs) ] )
+    eturn "|".join( [ x[0].line_trace() + x[1].line_trace() for x in zip(s.req_qs, s.resp_qs) ] )

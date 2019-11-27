@@ -29,6 +29,7 @@ class GenDAGPass( BasePass ):
     if placeholders:
       raise LeftoverPlaceholderError( placeholders )
 
+    top.rt_check_time = [0.0]
     self._generate_net_blocks( top )
     self._process_value_constraints( top )
     self._process_methods( top )

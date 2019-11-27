@@ -8,10 +8,11 @@ Author : Yanghui Ou
 """
 
 from copy import deepcopy
+from typing import Generic, TypeVar
 
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
-from pymtl3.stdlib.rtl import Mux, RegisterFile
+from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL, SendIfcRTL, RecvIfcRTL
+from pymtl3.stdlib.rtl import Mux, RegisterFile, RegEn, RegRst
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL
@@ -32,7 +33,7 @@ class NormalQueueDpathRTL( Component ):
 
     # Component
 
-    s.queue = RegisterFile( EntryType, num_entries )(
+    s.queue = RegisterFile[EntryType, mk_bits(clog2(num_entries))]( num_entries )(
       raddr = { 0: s.raddr   },
       rdata = { 0: s.deq_msg },
       wen   = { 0: s.wen     },
@@ -123,8 +124,8 @@ class NormalQueueRTL( Component ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( EntryType )
-    s.deq   = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL[EntryType]()
+    s.deq   = DeqIfcRTL[EntryType]()
     s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
 
     # Components
@@ -255,8 +256,8 @@ class PipeQueueRTL( Component ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( EntryType )
-    s.deq   = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL[EntryType]()
+    s.deq   = DeqIfcRTL[EntryType]()
     s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
 
     # Components
@@ -414,28 +415,30 @@ class BypassQueueCtrlRTL( Component ):
 # BypassQueueRTL
 #-------------------------------------------------------------------------
 
-class BypassQueueRTL( Component ):
+T_BpsQRTLDataType = TypeVar('T_BpsQRTLDataType')
 
-  def construct( s, EntryType, num_entries=2 ):
+class BypassQueueRTL( Component, Generic[T_BpsQRTLDataType] ):
+
+  def construct( s, num_entries=2 ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( EntryType )
-    s.deq   = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL[T_BpsQRTLDataType]()
+    s.deq   = DeqIfcRTL[T_BpsQRTLDataType]()
     s.count = OutPort( mk_bits( clog2( num_entries+1 ) ) )
 
     # Components
 
     assert num_entries > 0
     if num_entries == 1:
-      s.q = BypassQueue1EntryRTL( EntryType )
+      s.q = BypassQueue1EntryRTL[T_BpsQRTLDataType]()
       connect( s.enq,   s.q.enq )
       connect( s.deq,   s.q.deq )
       connect( s.count, s.q.count )
 
     else:
       s.ctrl  = BypassQueueCtrlRTL ( num_entries )
-      s.dpath = BypassQueueDpathRTL( EntryType, num_entries )
+      s.dpath = BypassQueueDpathRTL( T_BpsQRTLDataType, num_entries )
 
       # Connect ctrl to data path
 
@@ -469,8 +472,8 @@ class NormalQueue1EntryRTL( Component ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( EntryType )
-    s.deq   = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL[EntryType]()
+    s.deq   = DeqIfcRTL[EntryType]()
     s.count = OutPort  ( Bits1     )
 
     # Components
@@ -520,8 +523,8 @@ class PipeQueue1EntryRTL( Component ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( EntryType )
-    s.deq   = DeqIfcRTL( EntryType )
+    s.enq   = EnqIfcRTL[EntryType]()
+    s.deq   = DeqIfcRTL[EntryType]()
     s.count = OutPort  ( Bits1     )
 
     # Components
@@ -568,9 +571,9 @@ class BypassQueue1EntryRTL( Component ):
 
     # Interface
 
-    s.enq   = EnqIfcRTL( EntryType )
-    s.deq   = DeqIfcRTL( EntryType )
-    s.count = OutPort  ( Bits1     )
+    s.enq   = EnqIfcRTL[EntryType]()
+    s.deq   = DeqIfcRTL[EntryType]()
+    s.count = OutPort  [ Bits1     ]()
 
     # Components
 
@@ -607,3 +610,52 @@ class BypassQueue1EntryRTL( Component ):
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.full, s.deq )
+
+#=========================================================================
+# Added BypassQueue2RTL here from enrdy_queues.py
+#=========================================================================
+
+T_BpsQ1RTLDataType = TypeVar('T_BpsQ1RTLDataType')
+
+class BypassQueue1RTL( Component, Generic[T_BpsQ1RTLDataType] ):
+
+  def construct( s ):
+    s.enq = RecvIfcRTL[T_BpsQ1RTLDataType]()
+    s.deq = SendIfcRTL[T_BpsQ1RTLDataType]()
+
+    s.buffer = RegEn[T_BpsQ1RTLDataType]()( in_ = s.enq.msg )
+
+    s.full = RegRst[Bits1]( reset_value = 0 )
+
+    s.byp_mux = Mux[T_BpsQ1RTLDataType, Bits1]( 2 )(
+      out = s.deq.msg,
+      in_ = { 0: s.enq.msg,
+              1: s.buffer.out, },
+      sel = s.full.out, # full -- buffer.out, empty -- bypass
+    )
+
+    @s.update
+    def up_bypq_set_enq_rdy():
+      s.enq.rdy = ~s.full.out
+
+    @s.update
+    def up_bypq_use_enq_en():
+      s.deq.en   = (s.enq.en | s.full.out) & s.deq.rdy
+      s.buffer.en   =  s.enq.en & ~s.deq.en
+      s.full.in_ = (s.enq.en | s.full.out) & ~s.deq.en
+
+  def line_trace( s ):
+    return s.buffer.line_trace()
+
+T_BpsQ2RTLDataType = TypeVar('T_BpsQ2RTLDataType')
+
+class BypassQueue2RTL( Component, Generic[T_BpsQ2RTLDataType] ):
+
+  def construct( s ):
+    s.enq = RecvIfcRTL[T_BpsQ2RTLDataType]()
+    s.deq = SendIfcRTL[T_BpsQ2RTLDataType]()
+    s.q1 = BypassQueue1RTL[T_BpsQ2RTLDataType]()( enq = s.enq )
+    s.q2 = BypassQueue1RTL[T_BpsQ2RTLDataType]()( enq = s.q1.deq, deq = s.deq )
+
+  def line_trace( s ):
+    return "{}({}){}".format( s.enq, s.q1.deq, s.deq )
