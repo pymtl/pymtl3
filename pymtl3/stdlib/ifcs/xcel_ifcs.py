@@ -12,7 +12,6 @@ from typing import Generic, TypeVar
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.rtl.queues import BypassQueueRTL, NormalQueueRTL
 
 from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 from .XcelMsg import XcelMsgType, mk_xcel_msg
@@ -276,6 +275,7 @@ class XcelIfcRTL2FLAdapter( Component ):
     s.left  = XcelMinionIfcRTL( ReqType, RespType )
     s.right = XcelMasterIfcFL( ReqType, RespType )
 
+    from pymtl3.stdlib.rtl.queues import NormalQueueRTL
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     connect( s.left.req, s.req_q.enq )
 

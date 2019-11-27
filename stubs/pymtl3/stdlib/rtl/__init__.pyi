@@ -24,6 +24,7 @@ T_RegEnDataType = TypeVar( "T_RegEnDataType" )
 
 class RegEn( Component, Generic[T_RegEnDataType] ):
 
+  clk: InPort [Bits1]
   en : InPort [Bits1]
   in_: InPort [T_RegEnDataType]
   out: OutPort[T_RegEnDataType]
