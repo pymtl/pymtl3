@@ -116,7 +116,7 @@ T_IncrementerDataType = TypeVar('T_IncrementerDataType')
 
 class Incrementer( Component, Generic[T_IncrementerDataType] ):
 
-  def construct( s, Type, amount=1 ):
+  def construct( s, amount=1 ):
     s.in_ = InPort [T_IncrementerDataType]()
     s.out = OutPort[T_IncrementerDataType]()
 
@@ -130,7 +130,7 @@ T_AdderDataType = TypeVar('T_AdderDataType')
 
 class Adder( Component, Generic[T_AdderDataType] ):
 
-  def construct( s, Type ):
+  def construct( s ):
     s.in0 = InPort [T_AdderDataType]()
     s.in1 = InPort [T_AdderDataType]()
     s.out = OutPort[T_AdderDataType]()

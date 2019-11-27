@@ -48,7 +48,7 @@ T_GiveIfcDataType = TypeVar('T_GiveIfcDataType')
 
 class GiveIfcRTL( Interface, Generic[T_GiveIfcDataType] ):
 
-  def construct( s, Type ):
+  def construct( s ):
     s.MsgType = T_GiveIfcDataType
 
     s.msg = OutPort[T_GiveIfcDataType]()

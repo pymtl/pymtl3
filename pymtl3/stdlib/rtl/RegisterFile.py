@@ -7,7 +7,7 @@ from pymtl3.dsl import Const
 
 
 T_RFDpath = TypeVar('T_RFDpath')
-T_RFAddr  = TypeVar('T_RFAddr ')
+T_RFAddr  = TypeVar('T_RFAddr')
 
 class RegisterFile( Component, Generic[T_RFDpath, T_RFAddr] ):
 

@@ -40,7 +40,7 @@ T_BpsQ1RTLDataType = TypeVar('T_BpsQ1RTLDataType')
 
 class BypassQueue1RTL( Component, Generic[T_BpsQ1RTLDataType] ):
 
-  def construct( s, Type ):
+  def construct( s ):
     s.enq = RecvIfcRTL[T_BpsQ1RTLDataType]()
     s.deq = SendIfcRTL[T_BpsQ1RTLDataType]()
 
@@ -72,7 +72,7 @@ T_BpsQ2RTLDataType = TypeVar('T_BpsQ2RTLDataType')
 
 class BypassQueue2RTL( Component, Generic[T_BpsQ2RTLDataType] ):
 
-  def construct( s, MsgType, queue_size=2 ):
+  def construct( s ):
     s.enq = RecvIfcRTL[T_BpsQ2RTLDataType]()
     s.deq = SendIfcRTL[T_BpsQ2RTLDataType]()
     s.q1 = BypassQueue1RTL[T_BpsQ2RTLDataType]()( enq = s.enq )
