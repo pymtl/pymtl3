@@ -25,7 +25,7 @@ T_RecvIfcDataType = TypeVar('T_RecvIfcDataType')
 
 class RecvIfcRTL( Interface, Generic[T_RecvIfcDataType] ):
 
-  def construct( s, Type ):
+  def construct( s ):
 
     s.msg =  InPort[T_RecvIfcDataType]()
     s.en  =  InPort[Bits1]()
@@ -78,7 +78,7 @@ T_SendIfcDataType = TypeVar('T_SendIfcDataType')
 
 class SendIfcRTL( Interface, Generic[T_SendIfcDataType] ):
 
-  def construct( s, Type ):
+  def construct( s ):
 
     s.msg = OutPort[T_SendIfcDataType]()
     s.en  = OutPort[Bits1]()

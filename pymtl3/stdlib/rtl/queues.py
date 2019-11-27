@@ -431,7 +431,7 @@ class BypassQueueRTL( Component, Generic[T_BpsQRTLDataType] ):
 
     assert num_entries > 0
     if num_entries == 1:
-      s.q = BypassQueue1EntryRTL[T_BpsQRTLDataType]()
+      s.q = BypassQueue1EntryRTL(T_BpsQRTLDataType)
       connect( s.enq,   s.q.enq )
       connect( s.deq,   s.q.deq )
       connect( s.count, s.q.count )

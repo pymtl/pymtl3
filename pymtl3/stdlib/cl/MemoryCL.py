@@ -129,4 +129,4 @@ class MemoryCL( Component ):
   # TODO: better line trace.
 
   def line_trace( s ):
-    eturn "|".join( [ x[0].line_trace() + x[1].line_trace() for x in zip(s.req_qs, s.resp_qs) ] )
+    return "|".join( [ x[0].line_trace() + x[1].line_trace() for x in zip(s.req_qs, s.resp_qs) ] )

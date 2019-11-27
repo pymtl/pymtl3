@@ -99,7 +99,7 @@ T_RegEnRstDataType = TypeVar('T_RegEnRstDataType')
 
 class RegEnRst( Component, Generic[T_RegEnRstDataType] ):
 
-  def construct( s, Type, reset_value=0 ):
+  def construct( s, reset_value=0 ):
     s.out = OutPort[T_RegEnRstDataType]()
     s.in_ = InPort [T_RegEnRstDataType]()
 
