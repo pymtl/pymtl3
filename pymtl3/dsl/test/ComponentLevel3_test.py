@@ -15,6 +15,7 @@ from pymtl3.dsl.ConstraintTypes import WR, U
 from pymtl3.dsl.errors import (
     InvalidConnectionError,
     MultiWriterError,
+    PyMTLDeprecationError,
     UpblkFuncSameNameError,
 )
 
@@ -907,6 +908,22 @@ def test_misconnect_component_to_signal():
   try:
     a.elaborate()
   except InvalidConnectionError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown InvalidConnectionError")
+
+def test_s_connect_deprecated():
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.y = OutPort( Bits8 )
+      s.x = Wire( Bits32 )
+      s.connect(s.x, s.y)
+
+  a = Top()
+  try:
+    a.elaborate()
+  except PyMTLDeprecationError as e:
     print(e)
     return
   raise Exception("Should've thrown InvalidConnectionError")

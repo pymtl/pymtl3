@@ -32,6 +32,7 @@ from .errors import (
     InvalidPlaceholderError,
     MultiWriterError,
     NotElaboratedError,
+    PyMTLDeprecationError,
     SignalTypeError,
     UpblkFuncSameNameError,
     VarNotDeclaredError,
@@ -474,6 +475,10 @@ class ComponentLevel2( ComponentLevel1 ):
 
     s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
     return blk
+
+  def update_on_edge( s, blk ):
+    raise PyMTLDeprecationError("\ns.update_on_edge decorator has been deprecated! "
+                                "\n- Please use @s.update_ff instead.")
 
   def update_ff( s, blk ):
     super().update( blk )

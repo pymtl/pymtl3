@@ -9,6 +9,8 @@ Date   : Dec 27, 2018
 """
 import inspect
 
+class PyMTLDeprecationError( Exception ):
+  """ Raise when a deprecated API is called"""
 
 class SignalTypeError( Exception ):
   """ Raise when a declared signal is of wrong type """

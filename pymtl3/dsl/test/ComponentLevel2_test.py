@@ -18,6 +18,7 @@ from pymtl3.dsl.errors import (
     InvalidFuncCallError,
     MultiWriterError,
     UpblkCyclicError,
+    PyMTLDeprecationError,
     VarNotDeclaredError,
 )
 
@@ -216,6 +217,22 @@ def test_variable_not_declared():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown VarNotDeclaredError.")
+
+def test_s_update_on_edge_deprecated():
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+
+      @s.update_on_edge
+      def up():
+        pass
+
+  try:
+    Top().elaborate()
+  except PyMTLDeprecationError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown PyMTLDeprecationError.")
 
 def test_invalid_ff_assignment1():
 

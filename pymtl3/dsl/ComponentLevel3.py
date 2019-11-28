@@ -37,6 +37,7 @@ from .errors import (
     MultiWriterError,
     NotElaboratedError,
     NoWriterError,
+    PyMTLDeprecationError,
     SignalTypeError,
 )
 from .NamedObject import NamedObject
@@ -831,13 +832,10 @@ class ComponentLevel3( ComponentLevel2 ):
     s._dsl.call_kwargs = kwargs
     return s
 
-  def get_all_value_nets( s ):
-
-    if s._dsl._has_pending_value_connections:
-      s._dsl.all_value_nets = s._resolve_value_connections()
-      s._dsl._has_pending_value_connections = False
-
-    return s._dsl.all_value_nets
+  def connect( s, *args, **kwargs ):
+    raise PyMTLDeprecationError("\ns.connect method has been deprecated! "
+                                "\n- Please use free function connect(s.x,s.y) or "
+                                "syntactic sugar s.x//=s.y instead.")
 
   #-----------------------------------------------------------------------
   # elaborate
@@ -864,3 +862,11 @@ class ComponentLevel3( ComponentLevel2 ):
   #-----------------------------------------------------------------------
   # We have moved these implementations to Component.py because the
   # outside world should only use Component.py
+
+  def get_all_value_nets( s ):
+
+    if s._dsl._has_pending_value_connections:
+      s._dsl.all_value_nets = s._resolve_value_connections()
+      s._dsl._has_pending_value_connections = False
+
+    return s._dsl.all_value_nets
