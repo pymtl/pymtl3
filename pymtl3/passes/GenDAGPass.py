@@ -259,7 +259,7 @@ def compile_upblks( s ):
         x = x.get_parent_object()
 
       # Check the sibling slices. Cover 3)
-      if x.is_signal():
+      if obj.is_signal():
         for x in obj.get_sibling_slices():
           if x.slice_overlap( obj ) and x in write_upblks:
             writers.append( x )
