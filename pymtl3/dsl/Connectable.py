@@ -127,9 +127,6 @@ class Const( Connectable ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_sibling_slices( s ):
-    return []
-
   def is_component( s ):
     return False
 

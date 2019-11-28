@@ -727,6 +727,9 @@ def test_const_connect_Bits_signal_to_int():
   print(x._dsl.consts)
   assert len(x._dsl.consts) == 1
 
+  simple_sim_pass(x)
+  x.tick()
+
 def test_const_connect_int_signal_to_int():
 
   class Top( ComponentLevel3 ):
@@ -739,6 +742,9 @@ def test_const_connect_int_signal_to_int():
   print(x._dsl.consts)
   assert len(x._dsl.consts) == 1
 
+  simple_sim_pass(x)
+  x.tick()
+
 def test_const_connect_Bits_signal_to_Bits():
 
   class Top( ComponentLevel3 ):
@@ -750,6 +756,9 @@ def test_const_connect_Bits_signal_to_Bits():
   x.elaborate()
   print(x._dsl.consts)
   assert len(x._dsl.consts) == 1
+
+  simple_sim_pass(x)
+  x.tick()
 
 def test_const_connect_Bits_signal_to_mismatch_Bits():
 
@@ -765,6 +774,51 @@ def test_const_connect_Bits_signal_to_mismatch_Bits():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown InvalidConnectionError.")
+
+def test_const_connect_struct_signal_to_struct():
+
+  @bitstruct
+  class SomeMsg1:
+    a: Bits8
+    b: Bits32
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.out = OutPort(SomeMsg1)
+      connect( s.out, SomeMsg1(1,3) )
+
+  x = Top()
+  x.elaborate()
+  simple_sim_pass(x)
+  x.tick()
+  assert x.out == SomeMsg1(1,3)
+
+def test_const_connect_diffrent_structs_same_name():
+
+  class A:
+    @bitstruct
+    class SomeMsg1:
+      a: Bits8
+      b: Bits32
+  class B:
+    @bitstruct
+    class SomeMsg1:
+      c: Bits8
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.out = OutPort(A.SomeMsg1)
+      connect( s.out, A.SomeMsg1(1,3) )
+
+      s.out2 = OutPort(B.SomeMsg1)
+      connect( s.out2, B.SomeMsg1(4) )
+
+  x = Top()
+  x.elaborate()
+  simple_sim_pass(x)
+  x.tick()
+  assert x.out == A.SomeMsg1(1,3)
+  assert x.out2 == B.SomeMsg1(4)
 
 def test_invalid_connect_outside_hierarchy():
 
