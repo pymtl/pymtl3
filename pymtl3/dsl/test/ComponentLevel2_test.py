@@ -17,8 +17,8 @@ from pymtl3.dsl.errors import (
     InvalidFFAssignError,
     InvalidFuncCallError,
     MultiWriterError,
-    UpblkCyclicError,
     PyMTLDeprecationError,
+    UpblkCyclicError,
     VarNotDeclaredError,
 )
 
