@@ -270,18 +270,18 @@ class SomeMinionRTL( Component ):
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     s.wen   = Wire( Bits1 )
     s.reg_file = RegisterFile( DataType, nregs )(
-      raddr = { 0: s.req_q.deq.msg.addr },
+      raddr = { 0: s.req_q.deq.ret.addr },
       rdata = { 0: s.xcel.resp.msg.data },
       wen   = { 0: s.wen                },
-      waddr = { 0: s.req_q.deq.msg.addr },
-      wdata = { 0: s.req_q.deq.msg.data },
+      waddr = { 0: s.req_q.deq.ret.addr },
+      wdata = { 0: s.req_q.deq.ret.data },
     )
     connect( s.xcel.req,            s.req_q.enq           )
-    connect( s.xcel.resp.msg.type_, s.req_q.deq.msg.type_ )
+    connect( s.xcel.resp.msg.type_, s.req_q.deq.ret.type_ )
 
     @s.update
     def up_wen():
-      s.wen = s.req_q.deq.rdy and s.req_q.deq.msg.type_ == XcelMsgType.WRITE
+      s.wen = s.req_q.deq.rdy and s.req_q.deq.ret.type_ == XcelMsgType.WRITE
 
     @s.update
     def up_resp():

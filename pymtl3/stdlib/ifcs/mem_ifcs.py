@@ -105,8 +105,8 @@ class MemMasterIfcCL( Interface ):
   def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
     s.req_class  = req_class
     s.resp_class = resp_class
-    s.req  = NonBlockingCallerIfc( req_class )
-    s.resp = NonBlockingCalleeIfc( resp_class, resp, resp_rdy )
+    s.req  = CallerIfcCL( req_class )
+    s.resp = CalleeIfcCL( resp_class, resp, resp_rdy )
 
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )
@@ -120,8 +120,8 @@ class MemMinionIfcCL( Interface ):
   def construct( s, req_class, resp_class, req=None, req_rdy=None ):
     s.req_class  = req_class
     s.resp_class = resp_class
-    s.req  = NonBlockingCalleeIfc( req_class, req, req_rdy )
-    s.resp = NonBlockingCallerIfc( resp_class )
+    s.req  = CalleeIfcCL( req_class, req, req_rdy )
+    s.resp = CallerIfcCL( resp_class )
 
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )

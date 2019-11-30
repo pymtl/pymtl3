@@ -125,8 +125,8 @@ class XcelMasterIfcCL( Interface ):
   def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.req  = NonBlockingCallerIfc( ReqType )
-    s.resp = NonBlockingCalleeIfc( RespType, resp, resp_rdy )
+    s.req  = CallerIfcCL( ReqType )
+    s.resp = CalleeIfcCL( RespType, resp, resp_rdy )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
@@ -136,8 +136,8 @@ class XcelMinionIfcCL( Interface ):
   def construct( s, ReqType, RespType, req=None, req_rdy=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.req  = NonBlockingCalleeIfc( ReqType, req, req_rdy )
-    s.resp = NonBlockingCallerIfc( RespType )
+    s.req  = CalleeIfcCL( ReqType, req, req_rdy )
+    s.resp = CallerIfcCL( RespType )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
@@ -279,13 +279,13 @@ class XcelIfcRTL2FLAdapter( Component ):
 
       if s.req_q.deq.rdy and s.left.resp.rdy:
 
-        if s.req_q.deq.msg.type_ == XcelMsgType.READ:
-          resp = RespType( s.req_q.deq.msg.type_,
-                           s.right.read( s.req_q.deq.msg.addr ) )
+        if s.req_q.deq.ret.type_ == XcelMsgType.READ:
+          resp = RespType( s.req_q.deq.ret.type_,
+                           s.right.read( s.req_q.deq.ret.addr ) )
 
-        elif s.req_q.deq.msg.type_ == XcelMsgType.WRITE:
-          s.right.write( s.req_q.deq.msg.addr, s.req_q.deq.msg.data )
-          resp = RespType( s.req_q.deq.msg.type_, 0 )
+        elif s.req_q.deq.ret.type_ == XcelMsgType.WRITE:
+          s.right.write( s.req_q.deq.ret.addr, s.req_q.deq.ret.data )
+          resp = RespType( s.req_q.deq.ret.type_, 0 )
 
         s.req_q.deq.en = b1(1)
         s.left.resp.en  = b1(1)
