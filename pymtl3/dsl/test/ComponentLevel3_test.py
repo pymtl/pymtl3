@@ -850,7 +850,6 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     return
   raise Exception("Should've thrown AssertionError")
 
-
 def test_const_connect_diffrent_structs_same_name():
 
   class A:

@@ -5,7 +5,7 @@
 # Author : Shunning Jiang
 # Date   : Apr 19, 2019
 
-from pymtl3.datatypes import Bits32
+from pymtl3.datatypes import Bits32, bitstruct, Bits8
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.DynamicSchedulePass import DynamicSchedulePass
@@ -202,3 +202,63 @@ def test_connect_slice_int():
     assert str(e).startswith( "'int' object is not subscriptable" )
     return
   raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
+
+def test_const_connect_nested_struct_signal_to_struct():
+
+  @bitstruct
+  class SomeMsg1:
+    a: Bits8
+    b: Bits32
+
+  @bitstruct
+  class SomeMsg2:
+    a: SomeMsg1
+    b: Bits32
+
+  class Top( Component ):
+    def construct( s ):
+      s.out = OutPort(SomeMsg2)
+      connect( s.out, SomeMsg2(SomeMsg1(1,2),3) )
+
+  x = Top()
+  x.elaborate()
+  x.apply( GenDAGPass() )
+  x.apply( DynamicSchedulePass() )
+  x.apply( SimpleTickPass() )
+  x.lock_in_simulation()
+  x.tick()
+  assert x.out == SomeMsg2(SomeMsg1(1,2),3)
+
+def test_const_connect_cannot_handle_same_name_nested_struct():
+
+  class A:
+    @bitstruct
+    class SomeMsg1:
+      a: Bits8
+      b: Bits32
+
+  class B:
+    @bitstruct
+    class SomeMsg1:
+      c: Bits8
+      d: Bits32
+
+  @bitstruct
+  class SomeMsg2:
+    a: A.SomeMsg1
+    b: B.SomeMsg1
+
+  class Top( Component ):
+    def construct( s ):
+      s.out = OutPort(SomeMsg2)
+      connect( s.out, SomeMsg2(A.SomeMsg1(1,2),B.SomeMsg1(3,4)) )
+
+  x = Top()
+  x.elaborate()
+  try:
+    x.apply( GenDAGPass() )
+  except AssertionError as e:
+    print(e)
+    assert str(e) == "Cannot handle two subfields with the same struct name but different structs"
+    return
+  raise Exception("Should've thrown AssertionError")
