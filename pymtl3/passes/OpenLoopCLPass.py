@@ -8,7 +8,7 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 """
-from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
+from pymtl3.dsl import CalleeIfcCL, CalleePort
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
@@ -38,7 +38,7 @@ class OpenLoopCLPass( BasePass ):
       lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
 
     top_level_nb_ifcs = top.get_all_object_filter(
-      lambda x: isinstance(x, NonBlockingCalleeIfc) and x.get_host_component() is top )
+      lambda x: isinstance(x, CalleeIfcCL) and x.get_host_component() is top )
 
     # We still tell the top level
     method_callee_mapping = {}

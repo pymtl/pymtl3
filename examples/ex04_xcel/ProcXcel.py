@@ -36,8 +36,8 @@ class ProcXcel( Component ):
       s.dmem = MemMasterIfcRTL( req_class, resp_class )
 
     elif isinstance( s.proc.imem, MemMasterIfcCL ): # CL proc
-      s.mngr2proc = NonBlockingCalleeIfc( Bits32 )
-      s.proc2mngr = NonBlockingCallerIfc( Bits32 )
+      s.mngr2proc = CalleeIfcCL( Bits32 )
+      s.proc2mngr = CallerIfcCL( Bits32 )
       s.imem = MemMasterIfcCL( req_class, resp_class )
       s.dmem = MemMasterIfcCL( req_class, resp_class )
 

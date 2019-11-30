@@ -74,7 +74,7 @@ class ChecksumRTL( Component ):
     # Decompose input message into 8 words
 
     for i in range( 8 ):
-      s.words[i] //= s.in_q.deq.msg[i*16:(i+1)*16]
+      s.words[i] //= s.in_q.deq.ret[i*16:(i+1)*16]
 
     # Connect step units
 

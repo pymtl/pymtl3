@@ -10,7 +10,6 @@ Author : Yanghui Ou
 from examples.ex02_cksum.ChecksumFL import checksum
 from examples.ex02_cksum.utils import words_to_b128
 from pymtl3 import *
-from pymtl3.passes.PassGroups import DynamicSim
 from pymtl3.stdlib.cl.queues import BypassQueueCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
@@ -58,8 +57,8 @@ class WrappedChecksumXcelCL( Component ):
 
   def construct( s ):
 
-    s.recv = NonBlockingCalleeIfc( Req  )
-    s.give = NonBlockingCalleeIfc( Resp )
+    s.recv = CalleeIfcCL( Req  )
+    s.give = CalleeIfcCL( Resp )
 
     s.checksum_xcel = ChecksumXcelCL()
     s.out_q = BypassQueueCL( num_entries=1 )

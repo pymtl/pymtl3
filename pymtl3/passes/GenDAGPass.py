@@ -360,7 +360,7 @@ def compile_upblks( s ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, NonBlockingInterface ):
+        elif isinstance( call, NonBlockingIfc ):
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -382,14 +382,14 @@ def compile_upblks( s ):
 
         if   isinstance( x, MethodPort ):
           xx = x.method
-        elif isinstance( x, NonBlockingInterface ):
+        elif isinstance( x, NonBlockingIfc ):
           xx = x.method.method
         else:
           xx = x
 
         if   isinstance( y, MethodPort ):
           yy = y.method
-        elif isinstance( y, NonBlockingInterface ):
+        elif isinstance( y, NonBlockingIfc ):
           yy = y.method.method
         else:
           yy = y
@@ -425,14 +425,14 @@ def compile_upblks( s ):
 
       if   isinstance( x, MethodPort ):
         xx = x.method
-      elif isinstance( x, NonBlockingInterface ):
+      elif isinstance( x, NonBlockingIfc ):
         xx = x.method.method
       else:
         xx = x
 
       if   isinstance( y, MethodPort ):
         yy = y.method
-      elif isinstance( y, NonBlockingInterface ):
+      elif isinstance( y, NonBlockingIfc ):
         yy = y.method.method
       else:
         yy = y

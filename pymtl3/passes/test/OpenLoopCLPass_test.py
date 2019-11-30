@@ -202,8 +202,8 @@ def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
       s.inner = Top_less_less_inner()( push = s.push, pull = s.pull )
     def line_trace( s ):
       return s.inner.line_trace()
@@ -213,8 +213,8 @@ def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top_less_less_inner(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
       s.inner = Top_less_inner()( push = s.push, pull = s.pull )
     def line_trace( s ):
       return s.inner.line_trace()
@@ -224,8 +224,8 @@ def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top_less_inner(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
       s.inner = TestModuleNonBlockingIfc()( push = s.push, pull = s.pull )
 
     def line_trace( s ):
@@ -245,7 +245,7 @@ class PassThroughPlus100( Component ):
     s.real_push( msg )
 
   def construct( s ):
-    s.real_push = NonBlockingCallerIfc()
+    s.real_push = CallerIfcCL()
 
     s.add_constraints(
       M(s.push) == M(s.real_push),
@@ -255,8 +255,8 @@ def test_pass_through_equal_m_constraint():
 
   class Top(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
       s.pass1 = PassThroughPlus100()( push = s.push )
       s.inner = TestModuleNonBlockingIfc()( push = s.pass1.real_push, pull = s.pull )
 
@@ -274,8 +274,8 @@ def test_deep_pass_through_equal_m_constraint():
 
   class Top(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
       s.through = [ PassThroughPlus100() for _ in range(10) ]
       for i in range(10):
         connect( s.through[i].push, s.push if i == 0 else \

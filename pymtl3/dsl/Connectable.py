@@ -580,8 +580,7 @@ class CallerIfcCL( NonBlockingIfc ):
 class CalleeIfcFL( BlockingIfc ):
 
   def construct( s, method=None ):
-    print(">>"*10, method)
-    s.method = CalleePort( method )
+    s.method = CalleePort( method=method )
 
   def __call__( s, *args, **kwargs ):
     return s.method( *args, **kwargs )
