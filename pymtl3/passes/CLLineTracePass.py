@@ -57,7 +57,6 @@ class CLLineTracePass( BasePass ):
         self.saved_args = args
         self.saved_kwargs = kwargs
         self.called = True
-        print(mport,driver)
         self.saved_ret = driver( *args, **kwargs )
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
@@ -142,7 +141,6 @@ class CLLineTracePass( BasePass ):
     all_drivers = set()
     all_method_nets = top.get_all_method_nets()
     for driver, net in all_method_nets:
-      print(driver, net)
       if driver is not None:
         wrap_callee_method( driver, net )
         all_drivers.add( driver )

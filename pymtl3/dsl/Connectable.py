@@ -388,12 +388,6 @@ class Interface( NamedObject, Connectable ):
   def is_interface( s ):
     return True
 
-  def line_trace( s ):
-    raise NotImplementedError
-
-  def __str__( s ):
-    return s.line_trace()
-
 # CallerPort is connected an exterior method, called by the component's
 # update block
 # CalleePort exposes the method in the component to outside world
@@ -449,7 +443,7 @@ class CallIfcRTL( Interface ):
   def construct( s, *args, **kwargs ):
     raise NotImplementedError("You can only instantiate CallerIfcRTL/CalleeIfcRTL.")
 
-  def line_trace( s ):
+  def __str__( s ):
     try:
       trace_len = s.trace_len
       trace_fmt = s.trace_fmt
