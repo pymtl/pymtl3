@@ -11,6 +11,7 @@ Author : Shunning Jiang
 from pymtl3.datatypes import *
 from pymtl3.datatypes.helpers import _get_bitstruct_inst_all_classes
 
+
 def test_concat():
   x = concat( Bits128(0x1234567890abcdef1234567890abcdef),
               Bits252(0xffffffffff22222222222222222444441234567890abcdef1234567890abcdef) )
