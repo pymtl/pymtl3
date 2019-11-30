@@ -6,12 +6,16 @@ from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
 from .dsl.ComponentLevel7 import blocking
 from .dsl.Connectable import (
+    CalleeIfcCL,
+    CalleeIfcFL,
+    CalleeIfcRTL,
     CalleePort,
+    CallerIfcCL,
+    CallerIfcFL,
+    CallerIfcRTL,
     CallerPort,
     InPort,
     Interface,
-    NonBlockingCalleeIfc,
-    NonBlockingCallerIfc,
     OutPort,
     Wire,
 )
@@ -24,7 +28,9 @@ __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
   'connect', 'method_port',
-  'non_blocking', 'NonBlockingCalleeIfc', 'NonBlockingCallerIfc', 'blocking',
+  'CalleeIfcRTL', 'CallerIfcRTL',
+  'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
+  'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
   'SimpleSim', 'DynamicSim', 'SimulationPass',
   'Component',
