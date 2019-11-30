@@ -8,7 +8,6 @@ Author: Yanghui Ou
   Date: Mar 21, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.connects import connect_pairs
 
 from .GetGiveIfc import GiveIfcRTL
 from .SendRecvIfc import RecvIfcRTL

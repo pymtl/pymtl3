@@ -13,7 +13,7 @@ from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.rtl import And
 
-from .ifcs_utils import enrdy_to_str
+from pymtl3.dsl.errors import InvalidConnectionError
 from .SendRecvIfc import RecvIfcRTL
 
 #-------------------------------------------------------------------------
@@ -33,7 +33,6 @@ class GiveIfcRTL( CalleeIfcRTL ):
     super().construct( en=True, rdy=True, MsgType=None, RetType=Type )
 
   def connect( s, other, parent ):
-
     # We are doing GiveIfcRTL (s) -> [ AND ] -> RecvIfcRTL (other)
     # Basically we AND the rdy of both sides for enable
     if isinstance( other, RecvIfcRTL ):
@@ -41,14 +40,14 @@ class GiveIfcRTL( CalleeIfcRTL ):
 
       m = And( Bits1 )
 
-      if hasattr( parent, "deq_recv_ander_cnt" ):
+      if hasattr( parent, "give_recv_ander_cnt" ):
         cnt = parent.give_recv_ander_cnt
-        setattr( parent, "deq_recv_ander_" + str( cnt ), m )
+        setattr( parent, "give_recv_ander_" + str( cnt ), m )
       else:
         parent.give_recv_ander_cnt = 0
         parent.give_recv_ander_0   = m
 
-      connect_pairs(
+      parent.connect_pairs(
         m.in0, s.rdy,
         m.in1, other.rdy,
         m.out, s.en,
@@ -57,8 +56,33 @@ class GiveIfcRTL( CalleeIfcRTL ):
       parent.give_recv_ander_cnt += 1
       return True
 
-    return False
+    elif isinstance( other, NonBlockingCalleeIfc ):
+      if s._dsl.level <= other._dsl.level:
+        raise InvalidConnectionError(
+            "CL2RTL connection is not supported between RecvIfcRTL"
+            " and NonBlockingCalleeIfc.\n"
+            "          - level {}: {} (class {})\n"
+            "          - level {}: {} (class {})".format(
+                s._dsl.level, repr( s ), type( s ), other._dsl.level,
+                repr( other ), type( other ) ) )
 
+      m = GetRTL2GiveCL( s.MsgType )
+
+      if hasattr( parent, "GetRTL2GiveCL_count" ):
+        count = parent.GetRTL2GiveCL_count
+        setattr( parent, "GetRTL2GiveCL_" + str( count ), m )
+      else:
+        parent.GetRTL2GiveCL_count = 0
+        parent.GetRTL2GiveCL_0 = m
+
+      parent.connect_pairs(
+        s,      m.get,
+        m.give, other,
+      )
+      parent.GetRTL2GiveCL_count += 1
+      return True
+
+    return False
 
 class GetIfcFL( CallerIfcFL ):
 
@@ -87,6 +111,47 @@ class GetIfcFL( CallerIfcFL ):
 
 class GiveIfcFL( CalleeIfcFL ):
   pass
+
+#-------------------------------------------------------------------------
+# GetRTL2GiveCL
+#-------------------------------------------------------------------------
+
+class GetRTL2GiveCL( Component ):
+
+  def construct( s, MsgType ):
+    print( "HERE")
+    # Interface
+    s.get  = GetIfcRTL( MsgType )
+
+    s.entry = None
+
+    @s.update
+    def up_get_rtl():
+      if s.entry is None and s.get.rdy:
+        s.get.en = b1(1)
+      else:
+        s.get.en = b1(0)
+
+    @s.update
+    def up_entry():
+      if s.get.en:
+        s.entry = deepcopy( s.get.msg )
+
+    s.add_constraints(
+      U( up_get_rtl ) < M( s.give     ),
+      U( up_get_rtl ) < M( s.give.rdy ),
+      U( up_entry   ) < M( s.give     ),
+      U( up_entry   ) < M( s.give.rdy ),
+    )
+
+  @non_blocking( lambda s : s.entry is not None )
+  def give( s ):
+    tmp = deepcopy( s.entry )
+    s.entry = None
+    return tmp
+
+  def line_trace( s ):
+    return "{}(){}".format( s.get, s.give )
 
 #-------------------------------------------------------------------------
 # RecvCL2SendRTL

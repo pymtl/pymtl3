@@ -13,8 +13,7 @@ import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-
-from .ifcs_utils import enrdy_to_str
+from pymtl3.dsl.errors import InvalidConnectionError
 
 #-------------------------------------------------------------------------
 # RecvIfcRTL
@@ -40,6 +39,34 @@ class RecvIfcRTL( CalleeIfcRTL ):
         parent.RecvCL2SendRTL_0 = m
 
       connect_pairs(
+        other,  m.recv,
+        m.send.msg, s.msg,
+        m.send.en,  s.en,
+        m.send.rdy, s.rdy
+      )
+      parent.RecvCL2SendRTL_count += 1
+      return True
+
+    elif isinstance( other, NonBlockingCalleeIfc ):
+      if s._dsl.level <= other._dsl.level:
+        raise InvalidConnectionError(
+            "CL2RTL connection is not supported between RecvIfcRTL"
+            " and NonBlockingCalleeIfc.\n"
+            "          - level {}: {} (class {})\n"
+            "          - level {}: {} (class {})".format(
+                s._dsl.level, repr( s ), type( s ), other._dsl.level,
+                repr( other ), type( other ) ) )
+
+      m = RecvCL2SendRTL( s.MsgType )
+
+      if hasattr( parent, "RecvCL2SendRTL_count" ):
+        count = parent.RecvCL2SendRTL_count
+        setattr( parent, "RecvCL2SendRTL_" + str( count ), m )
+      else:
+        parent.RecvCL2SendRTL_count = 0
+        parent.RecvCL2SendRTL_0 = m
+
+      parent.connect_pairs(
         other,  m.recv,
         m.send.msg, s.msg,
         m.send.en,  s.en,
