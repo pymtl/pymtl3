@@ -10,6 +10,7 @@ Date   : Dec 29, 2018
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2
 from .ComponentLevel4 import ComponentLevel4
+from .Placeholder import Placeholder
 from .Connectable import CalleePort, CallerPort, Const, Interface, MethodPort, Signal
 from .errors import InvalidConnectionError, MultiWriterError
 from .NamedObject import NamedObject
@@ -109,7 +110,8 @@ class ComponentLevel5( ComponentLevel4 ):
       for member in net:
 
         if isinstance( member, CalleePort ):
-          if member.method is not None:
+          if member.method is not None or \
+             isinstance( member.get_host_component(), Placeholder ):
             if writer is None:
               writer = member
             else:
@@ -121,6 +123,8 @@ class ComponentLevel5( ComponentLevel4 ):
         else:
           assert isinstance( member, CallerPort ), "We don't allow connecting method " \
                                                    "port to other ports of {} type".format( member.__class__ )
+      assert writer is not None, "This method net has no actual method to call.\n- {}" \
+                                  .format( '\n- '.join([ repr(x) for x in net]) )
       ret.append( (writer, net) )
 
     return ret

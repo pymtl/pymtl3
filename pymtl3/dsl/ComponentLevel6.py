@@ -8,7 +8,7 @@ Author : Yanghui Ou, Shunning Jiang
   Date : Feb 24, 2019
 """
 from .ComponentLevel5 import ComponentLevel5
-from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
+from .Connectable import CalleeIfcCL
 
 #-------------------------------------------------------------------------
 # non blocking decorator
@@ -32,9 +32,9 @@ class ComponentLevel6( ComponentLevel5 ):
 
     # The following code handles non-blocking methods
     def bind_method( method ):
-      def _method( *args, **kwargs ):
+      def _bound_method( *args, **kwargs ):
         return method( s, *args, **kwargs )
-      return _method
+      return _bound_method
 
     cls_dict = s.__class__.__dict__
     for x in cls_dict:
@@ -43,4 +43,4 @@ class ComponentLevel6( ComponentLevel5 ):
       if hasattr( method, "_non_blocking_rdy" ):
         rdy  = method._non_blocking_rdy
         Type = method._non_blocking_type
-        setattr( s, x, NonBlockingCalleeIfc( Type, method, bind_method( rdy ) ) )
+        setattr( s, x, CalleeIfcCL( Type, method, bind_method( rdy ) ) )
