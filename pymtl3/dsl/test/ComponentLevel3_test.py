@@ -793,6 +793,64 @@ def test_const_connect_struct_signal_to_struct():
   x.tick()
   assert x.out == SomeMsg1(1,3)
 
+def test_const_connect_nested_struct_signal_to_struct():
+
+  @bitstruct
+  class SomeMsg1:
+    a: Bits8
+    b: Bits32
+
+  @bitstruct
+  class SomeMsg2:
+    a: SomeMsg1
+    b: Bits32
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.out = OutPort(SomeMsg2)
+      connect( s.out, SomeMsg2(SomeMsg1(1,2),3) )
+
+  x = Top()
+  x.elaborate()
+  simple_sim_pass(x)
+  x.tick()
+  assert x.out == SomeMsg2(SomeMsg1(1,2),3)
+
+def test_const_connect_cannot_handle_same_name_nested_struct():
+
+  class A:
+    @bitstruct
+    class SomeMsg1:
+      a: Bits8
+      b: Bits32
+
+  class B:
+    @bitstruct
+    class SomeMsg1:
+      c: Bits8
+      d: Bits32
+
+  @bitstruct
+  class SomeMsg2:
+    a: A.SomeMsg1
+    b: B.SomeMsg1
+
+  class Top( ComponentLevel3 ):
+    def construct( s ):
+      s.out = OutPort(SomeMsg2)
+      connect( s.out, SomeMsg2(A.SomeMsg1(1,2),B.SomeMsg1(3,4)) )
+
+  x = Top()
+  x.elaborate()
+  try:
+    simple_sim_pass(x)
+  except AssertionError as e:
+    print(e)
+    assert str(e) == "Cannot handle two subfields with the same struct name but different structs"
+    return
+  raise Exception("Should've thrown AssertionError")
+
+
 def test_const_connect_diffrent_structs_same_name():
 
   class A:

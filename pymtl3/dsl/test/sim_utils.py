@@ -12,7 +12,7 @@ from collections import defaultdict
 
 import py.code
 
-from pymtl3.datatypes import is_bitstruct_class
+from pymtl3.datatypes.helpers import _get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
@@ -71,27 +71,22 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                         .replace( ".", "_" ).replace( ":", "_" ) \
                         .replace( "[", "_" ).replace( "]", "" ) \
                         .replace( "(", "_" ).replace( ")", "" ) \
-                        .replace( ",", "" )
+                        .replace( ",", "_" )
 
-        rstrs   = [ f"{x!r} = _w" for x in readers ]
-        wstr    = repr(writer)
-        comment = ''
-        import copy
-        _globals = { 's': s, 'deepcopy': copy.deepcopy }
+        rstrs    = [ f"{x!r} = _w" for x in readers ]
+        _globals = { 's': s }
 
-        # TODO get rid of deepcopy by implementing __copy__ on bitstruct
-        if isinstance( writer, Const ):
-          if is_bitstruct_class( writer._dsl.Type ):
-            _globals['writer_bitstruct'] = writer._dsl.const
-            wstr = 'deepcopy(writer_bitstruct)'
-            comment = f'# {writer!r}'
-          else:
-            # Bits or int
-            _globals[writer._dsl.Type.__name__] = writer._dsl.Type
+        if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
+          types = _get_bitstruct_inst_all_classes( writer._dsl.const )
+
+          for t in types:
+            if t.__name__ in _globals:
+              assert t is _globals[ t.__name__ ], "Cannot handle two subfields with the same struct name but different structs"
+            _globals[ t.__name__ ] = t
 
         src = f"""
         def {upblk_name}():
-          _w = {wstr} {comment}
+          _w = {writer!r}
           {"; ".join(rstrs)}
         """
         _locals = {}

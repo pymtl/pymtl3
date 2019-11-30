@@ -89,10 +89,9 @@ def _get_bitstruct_inst_all_classes( obj ):
   # list: put all types together
   if isinstance( obj, list ):
     return functools.reduce( operator.or_, [ _get_bitstruct_inst_all_classes(x) for x in obj ] )
-
   ret = { obj.__class__ }
-  # BitsN
-  if isinstance( obj, Bits ):
+  # BitsN or int
+  if isinstance( obj, (Bits, int) ):
     return ret
   # BitStruct
   assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
