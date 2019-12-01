@@ -7,7 +7,6 @@ Hypothesis stateful testing on RTL and CL model
 Author : Yixiao Zhang
   Date : May 22, 2019
 """
-from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
 

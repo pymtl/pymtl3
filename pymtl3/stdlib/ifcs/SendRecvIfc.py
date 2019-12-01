@@ -47,11 +47,11 @@ class RecvIfcRTL( CalleeIfcRTL ):
       parent.RecvCL2SendRTL_count += 1
       return True
 
-    elif isinstance( other, NonBlockingCalleeIfc ):
+    elif isinstance( other, CalleeIfcCL ):
       if s._dsl.level <= other._dsl.level:
         raise InvalidConnectionError(
             "CL2RTL connection is not supported between RecvIfcRTL"
-            " and NonBlockingCalleeIfc.\n"
+            " and CalleeIfcCL.\n"
             "          - level {}: {} (class {})\n"
             "          - level {}: {} (class {})".format(
                 s._dsl.level, repr( s ), type( s ), other._dsl.level,

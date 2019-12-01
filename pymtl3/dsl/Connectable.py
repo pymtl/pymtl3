@@ -440,6 +440,7 @@ class CalleePort( MethodPort ):
     return False
 
 class CallIfcRTL( Interface ):
+
   def construct( s, *args, **kwargs ):
     raise NotImplementedError("You can only instantiate CallerIfcRTL/CalleeIfcRTL.")
 
@@ -520,9 +521,6 @@ class CalleeIfcRTL( CallIfcRTL ):
       s.ret = OutPort( RetType )
       s.RetType = RetType
 
-  def connect( s ):
-    raise NotImplementedError
-
 class CallerIfcRTL( CallIfcRTL ):
 
   def construct( s, en=None, rdy=None, MsgType=None, RetType=None ):
@@ -541,9 +539,6 @@ class CallerIfcRTL( CallIfcRTL ):
     if RetType is not None:
       s.ret = InPort( RetType )
       s.RetType = RetType
-
-  def connect( s ):
-    raise NotImplementedError
 
 class CalleeIfcCL( NonBlockingIfc ):
   def construct( s, Type=None, method=None, rdy=None ):

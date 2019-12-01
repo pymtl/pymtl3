@@ -6,8 +6,6 @@
 # Author : Yixiao Zhang
 #   Date : June 10, 2019
 
-from __future__ import absolute_import, division, print_function
-
 import inspect
 
 import attr
@@ -15,7 +13,6 @@ import hypothesis.strategies as st
 
 from pymtl3 import *
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
-from pymtl3.stdlib.ifcs import CalleeIfcRTL, callee_ifc_rtl
 
 
 #-------------------------------------------------------------------------
@@ -23,7 +20,6 @@ from pymtl3.stdlib.ifcs import CalleeIfcRTL, callee_ifc_rtl
 #-------------------------------------------------------------------------
 def list_string( lst ):
   return ", ".join([ str( x ) for x in lst ] )
-
 
 #-------------------------------------------------------------------------
 # Method
@@ -33,7 +29,6 @@ class Method( object ):
   method_name = attr.ib()
   args = attr.ib( default={} )
   rets_type = attr.ib( default={} )
-
 
 #-------------------------------------------------------------------------
 # rename
@@ -46,28 +41,85 @@ def rename( name ):
 
   return wrap
 
-
-#-------------------------------------------------------------------------
-# inspect_rtl
-#-------------------------------------------------------------------------
-def inspect_rtl( rtl ):
-  method_specs = {}
-
-  for method, ifc in inspect.getmembers( rtl ):
-    if isinstance( ifc, CalleeIfcRTL ):
-      args = ifc.ArgType.fields if ifc.args else []
-      rets_type = ifc.RetType if ifc.rets else None
-      ifc.method_spec = Method(
-          method_name=method, args=args, rets_type=rets_type )
-      method_specs[ method ] = ifc.method_spec
-
-  return method_specs
-
-
 def kwarg_to_str( kwargs ):
   return list_string(
       [ "{k}={v}".format( k=k, v=v ) for k, v in kwargs.items() ] )
 
+#-------------------------------------------------------------------------
+# CalleeRTL2CL
+#-------------------------------------------------------------------------
+class CalleeRTL2CL( Component ):
+
+  def construct( s, MsgType, RetType ):
+
+    s.rtl_caller = CallerIfcRTL( MsgType=MsgType, RetType=RetType )
+
+    s.MsgType = MsgType
+    s.RetType = RetType
+
+    s.rdy = False
+    s.called = False
+
+    # generate upblk depending on args
+
+    if MsgType:
+      s.msg = ArgType()
+
+      # update args & en
+      @s.update
+      def up_en_args():
+        s.rtl_caller.en  = Bits1( s.called )
+        s.rtl_caller.msg = s.msg
+
+      s.cl_callee = CalleeIfcCL( method=s.cl_callee_method, rdy=lambda: s.rdy )
+
+      # add constraints between callee method and upblk to model combinational behavior
+      s.add_constraints( M( s.cl_method ) < U( up_en_args ) )
+
+    else:
+      # no args, update en
+      @s.update
+      def up_en():
+        s.ifc_rtl_caller.en = Bits1( 1 ) if s.called else Bits1( 0 )
+
+      s.cl_method = NonBlockingCalleeIfc(
+          method=s.cl_callee_method_no_arg, rdy=lambda: s.rdy )
+
+      # add constraints between callee method and upblk
+      s.add_constraints( M( s.cl_method ) < U( up_en ) )
+
+    # generate upblk depending on rets
+    if RetType:
+      # create tmp var for rets
+      s.rets = RetType()
+
+      # generate upblk for rets
+      @s.update
+      def up_rets():
+        s.rets = s.ifc_rtl_caller.rets
+
+      s.add_constraints( U( up_rets ) < M( s.cl_method ) )
+
+    else:
+      # return None if no ret
+      s.rets = None
+
+    # Generate upblk and add constraints for rdy
+    @s.update
+    def up_rdy():
+      s.rdy = bool(s.rtl_caller.rdy)
+
+    s.add_constraints( U( up_rdy ) < M( s.cl_method ) )
+
+  def cl_callee_method( s, msg ):
+    s.args = s.ArgType()
+    s.args.__dict__.update( kwargs )
+    s.called = True
+    return s.rets
+
+  def cl_callee_method_no_arg( s ):
+    s.called = True
+    return s.rets
 
 #-------------------------------------------------------------------------
 # RTL2CLWrapper
@@ -85,13 +137,12 @@ class RTL2CLWrapper( Component ):
 
     s.model = rtl_model
 
-    s.method_specs = inspect_rtl( s.model )
-
-    # Add adapters
-    for method_name, method_spec in s.method_specs.iteritems():
-      callee_ifc = NonBlockingCalleeIfc()
-      setattr( s, method_name, callee_ifc )
-      s.connect( callee_ifc, getattr( s.model, method_name ) )
+    for name, obj in rtl_model.__dict__.items():
+      if isinstance( obj, CalleeIfcRTL ):
+        added_ifc = CalleeIfcCL()
+        setattr( s, name, added_ifc )
+        print(added_ifc.__dict__)
+        connect( added_ifc, obj )
 
   def line_trace( s ):
     return s.model.line_trace()

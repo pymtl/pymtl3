@@ -11,7 +11,6 @@ import greenlet
 
 from pymtl3 import *
 from pymtl3.stdlib.connects import connect_pairs
-from pymtl3.stdlib.rtl import And
 
 from pymtl3.dsl.errors import InvalidConnectionError
 from .SendRecvIfc import RecvIfcRTL
@@ -27,6 +26,17 @@ class GetIfcRTL( CallerIfcRTL ):
 #-------------------------------------------------------------------------
 # GiveIfcRTL
 #-------------------------------------------------------------------------
+
+class And( Component ):
+
+  def construct( s, Type ):
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( Type )
+
+    @s.update
+    def up_and():
+      s.out = s.in0 & s.in1
 
 class GiveIfcRTL( CalleeIfcRTL ):
   def construct( s, Type ):
@@ -56,11 +66,11 @@ class GiveIfcRTL( CalleeIfcRTL ):
       parent.give_recv_ander_cnt += 1
       return True
 
-    elif isinstance( other, NonBlockingCalleeIfc ):
+    elif isinstance( other, CalleeIfcCL ):
       if s._dsl.level <= other._dsl.level:
         raise InvalidConnectionError(
             "CL2RTL connection is not supported between RecvIfcRTL"
-            " and NonBlockingCalleeIfc.\n"
+            " and CalleeIfcCL.\n"
             "          - level {}: {} (class {})\n"
             "          - level {}: {} (class {})".format(
                 s._dsl.level, repr( s ), type( s ), other._dsl.level,

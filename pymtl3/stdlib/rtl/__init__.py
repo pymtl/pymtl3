@@ -14,7 +14,7 @@ from .arithmetics import (
 from .Crossbar import Crossbar
 from .RegisterFile import RegisterFile
 from .registers import Reg, RegEn, RegEnRst, RegRst
-
+from .queues import BypassQueueRTL, PipeQueueRTL
 #  from .enrdy_queues import BypassQueue1RTL, NormalQueue1RTL, PipeQueue1RTL
 #  from .valrdy_queues import (
     #  BypassQueue1RTL,
