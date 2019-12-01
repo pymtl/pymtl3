@@ -7,16 +7,6 @@ Utility functions for ifcs.
 Author: Yanghui Ou
   Date: Feb 21, 2019
 """
-#-------------------------------------------------------------------------
-# MethodSpec
-#-------------------------------------------------------------------------
-# Metadata for RTL method based interfaces.
-
-class MethodSpec( object ):
-
-  def __init__( s, arg = None, ret = None ):
-    s.arg = arg
-    s.ret = ret
 
 #-------------------------------------------------------------------------
 # enrdy_to_str

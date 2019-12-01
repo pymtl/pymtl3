@@ -66,7 +66,7 @@ class RecvIfcRTL( CalleeIfcRTL ):
         parent.RecvCL2SendRTL_count = 0
         parent.RecvCL2SendRTL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         other,  m.recv,
         m.send.msg, s.msg,
         m.send.en,  s.en,

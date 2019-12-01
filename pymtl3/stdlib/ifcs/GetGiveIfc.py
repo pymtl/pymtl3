@@ -47,7 +47,7 @@ class GiveIfcRTL( CalleeIfcRTL ):
         parent.give_recv_ander_cnt = 0
         parent.give_recv_ander_0   = m
 
-      parent.connect_pairs(
+      connect_pairs(
         m.in0, s.rdy,
         m.in1, other.rdy,
         m.out, s.en,
@@ -75,7 +75,7 @@ class GiveIfcRTL( CalleeIfcRTL ):
         parent.GetRTL2GiveCL_count = 0
         parent.GetRTL2GiveCL_0 = m
 
-      parent.connect_pairs(
+      connect_pairs(
         s,      m.get,
         m.give, other,
       )
@@ -119,9 +119,8 @@ class GiveIfcFL( CalleeIfcFL ):
 class GetRTL2GiveCL( Component ):
 
   def construct( s, MsgType ):
-    print( "HERE")
     # Interface
-    s.get  = GetIfcRTL( MsgType )
+    s.get = GetIfcRTL( MsgType )
 
     s.entry = None
 
