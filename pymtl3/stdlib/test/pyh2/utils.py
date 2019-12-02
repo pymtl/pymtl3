@@ -7,12 +7,6 @@ Utilities for PyH2.
 Author : Yanghui Ou, Yixiao Zhang
   Date : July 10, 2019
 """
-from __future__ import absolute_import, division, print_function
-
-import attr
-import hypothesis.strategies as st
-
-from pymtl3 import *
 
 #-------------------------------------------------------------------------
 # rename

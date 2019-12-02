@@ -1,8 +1,8 @@
 """
 ==========================================================================
-stateful.py
+pyh2s.py
 ==========================================================================
-PyH2 APIs for stateful testing.
+PyH2S APIs for testing hardware as software.
 
 Author : Yanghui Ou, Yixiao Zhang
   Date : July 9, 2019
@@ -34,10 +34,10 @@ except:
 #-------------------------------------------------------------------------
 # mk_rule
 #-------------------------------------------------------------------------
-# make a rule from a method and its spec
+# make a rule from a method and its argument msg
 
-def mk_rule( method_spec, arg_strat_dict ):
-  method_name = method_spec.method_name
+def mk_rule( name, ifc, MsgType, RetType ):
+  method_name = method_name
 
   # Make a ready method for the state machine.
   # NOTE: we only call methods when both rdy returns true. Thus we are only
@@ -57,6 +57,7 @@ def mk_rule( method_spec, arg_strat_dict ):
   def method_rule( s, msg ):
     dut_result = s.dut.__dict__[ method_name ]( msg )
     ref_result = s.ref.__dict__[ method_name ]( msg )
+    assert isinstance( ref_result, RetType ), f"ref is wrong; it didn't return {RetType} type of ret, but {ref_result} instead."
 
     # Compare results
     # TODO: allow using customized comparison function?
@@ -233,7 +234,7 @@ def create_test_state_machine( dut, ref ):
 # TODO: figure out a way to pass in settings
 # TODO: figure out a way to pass in customized strategies
 
-def run_pyh2( dut, ref ):
+def run_pyh2s( dut, ref ):
   wrapped_dut = RTL2CLWrapper( dut )
   machine = create_test_state_machine( wrapped_dut, ref )
   machine.TestCase.settings = settings(
@@ -246,7 +247,3 @@ def run_pyh2( dut, ref ):
   )
 
   run_state_machine_as_test( machine )
-
-def test_pyh2():
-  run_pyh2( dut=NormalQueueRTL( Bits16, num_entries=2 ),
-            ref=NormalQueueCL( num_entries=2 ) )

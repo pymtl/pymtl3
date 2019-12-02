@@ -18,14 +18,9 @@ from .test_wrapper import *
 from pymtl3.stdlib.cl  import PipeQueueCL, BypassQueueCL
 from pymtl3.stdlib.rtl import PipeQueueRTL, BypassQueueRTL
 
-def test_pyh2_directed():
-  run_pyh2( dut=NormalQueueRTL( Bits16, num_entries=2 ),
-            ref=NormalQueueCL( num_entries=2 ) )
-
 #-------------------------------------------------------------------------
 # test_stateful_simple
 #-------------------------------------------------------------------------
-
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
                           [( BypassQueueCL, BypassQueueRTL ),
                            ( PipeQueueCL, PipeQueueRTL ) ] )
