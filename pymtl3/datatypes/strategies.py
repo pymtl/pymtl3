@@ -10,27 +10,28 @@ Author : Yanghui Ou
 import hypothesis
 from hypothesis import strategies as st
 
-from .bits_import import mk_bits
+from .bits_import import Bits
 
 #-------------------------------------------------------------------------
 # A generic bits strategy.
 #-------------------------------------------------------------------------
 
 @st.composite
-def bits( draw, nbits, signed=False ):
+def bits( draw, nbits, signed=False, min_value=None, max_value=None ):
   if nbits == 1:
     value = draw( st.booleans() )
   elif not signed:
-    min_value = 0
-    max_value = 2**nbits - 1
+    if min_value is None: min_value = 0
+    if max_value is None: max_value = 2**nbits - 1
+    assert min_value < max_value
     value = draw( st.integers(min_value, max_value) )
   else:
-    min_value = - ( 2 ** (nbits-1) )
-    max_value = 2**(nbits-1) - 1
+    if min_value is None: min_value = - ( 2 ** (nbits-1) )
+    if max_value is None: max_value = 2**(nbits-1) - 1
+    assert min_value < max_value
     value = draw( st.integers(min_value, max_value) )
 
-  BitsN = mk_bits( nbits )
-  return BitsN( value )
+  return Bits( nbits, value )
 
 @st.composite
 def bitstruct( draw, Type ):
@@ -47,13 +48,6 @@ def bitstruct( draw, Type ):
 
   BitsN = mk_bits( nbits )
   return BitsN( value )
-
-#-------------------------------------------------------------------------
-# bitstype_strategy
-#-------------------------------------------------------------------------
-def bitstype_strategy( bits ):
-  return st.integers( min_value=0, max_value=( 1 << bits.nbits ) - 1 )
-
 
 #-------------------------------------------------------------------------
 # bits_struct_strategy

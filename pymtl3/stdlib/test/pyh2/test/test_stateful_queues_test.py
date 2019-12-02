@@ -10,16 +10,16 @@
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.cl import BypassQueueCL, PipeQueueCL
-from pymtl3.stdlib.rtl import BypassQueueRTL, PipeQueueRTL
+from pymtl3.stdlib.cl import BypassQueueCL, PipeQueueCL, NormalQueueCL
+from pymtl3.stdlib.rtl import BypassQueueRTL, PipeQueueRTL, NormalQueueRTL
 
-from .test_stateful import get_strategy_from_type, run_test_state_machine
-from .test_wrapper import *
+from pymtl3.stdlib.test.pyh2.pyh2s import run_pyh2s
+from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
 
 
 def test_pyh2_directed():
-  run_pyh2( dut=NormalQueueRTL( Bits16, num_entries=2 ),
-            ref=NormalQueueCL( num_entries=2 ) )
+  run_pyh2s( dut=NormalQueueRTL( Bits16, num_entries=2 ),
+             ref=NormalQueueCL( num_entries=2 ) )
 
 #-------------------------------------------------------------------------
 # test_stateful_simple
@@ -29,7 +29,7 @@ def test_pyh2_directed():
                           [( BypassQueueCL, BypassQueueRTL ),
                            ( PipeQueueCL, PipeQueueRTL ) ] )
 def test_stateful_simple( QueueCL, QueueRTL ):
-  run_test_state_machine( RTL2CLWrapper( QueueRTL( Bits16, 1 ) ), QueueCL( 1 ) )
+  run_pyh2s( RTL2CLWrapper( QueueRTL( Bits16, 1 ) ), QueueCL( 1 ) )
 
 
 #-------------------------------------------------------------------------
@@ -39,28 +39,38 @@ def test_stateful_simple( QueueCL, QueueRTL ):
                           [( BypassQueueCL, BypassQueueRTL ),
                            ( PipeQueueCL, PipeQueueRTL ) ] )
 def test_stateful_bits_struct( QueueCL, QueueRTL ):
-  Msg1Type = mk_bitstruct( "Msg1Type", [( 'msg0', Bits8 ),
-                                         ( 'msg1', Bits8 ) ] )
-  run_test_state_machine(
-      RTL2CLWrapper(
-          QueueRTL(
-              mk_bitstruct( "MsgType", [( 'msg0', Bits8 ),
-                                         ( 'msg1', Msg1Type ) ] ) ) ),
-      QueueCL( 1 ) )
-
+  MsgType = mk_bitstruct( "MsgType", {
+    'msg0' : Bits8,
+    'msg1' : Bits8,
+  })
+  run_pyh2s( RTL2CLWrapper( QueueRTL( MsgType, 1 ) ), QueueCL( 1 ) )
 
 #-------------------------------------------------------------------------
-# test_stateful_overwrite_simple
+# test_stateful_nested_bitstruct
 #-------------------------------------------------------------------------
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
                           [( BypassQueueCL, BypassQueueRTL ),
                            ( PipeQueueCL, PipeQueueRTL ) ] )
+def test_stateful_nested_struct( QueueCL, QueueRTL ):
+  Msg1Type = mk_bitstruct( "Msg1Type", {
+    'msg0': Bits8,
+    'msg1': Bits8,
+  })
+  Msg2Type = mk_bitstruct( "MsgType", {
+    'msg0': Bits8,
+    'msg1': Msg1Type,
+  })
+
+  run_pyh2s( RTL2CLWrapper( QueueRTL( Msg2Type ) ), QueueCL( 1 ) )
+
+#-------------------------------------------------------------------------
+# test_stateful_overwrite_simple
+#-------------------------------------------------------------------------
+
 def test_stateful_overwrite_simple( QueueCL, QueueRTL ):
-  run_test_state_machine(
-      RTL2CLWrapper( QueueRTL( Bits32 ) ),
-      QueueCL( 1 ),
-      argument_strategy=[( 'enq.msg', st.integers( min_value=0,
-                                                   max_value=11 ) ) ] )
+  run_pyh2s( RTL2CLWrapper( QueueRTL( Bits32 ) ), QueueCL( 1 ),
+      custom_strategy=[ ( 'enq.msg', st.integers( min_value=0, max_value=11 ) ) ] )
+
   # must be strategy
   try:
     run_test_state_machine(
@@ -81,7 +91,6 @@ def test_stateful_overwrite_simple( QueueCL, QueueRTL ):
     assert False
   except AssertionError as e:
     print( e )
-
 
 #-------------------------------------------------------------------------
 # test_stateful_overwrite_nested

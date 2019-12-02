@@ -17,59 +17,13 @@ from hypothesis.stateful import *
 
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pst
-from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+from pymtl3.passes import OpenLoopCLSim
 from pymtl3.passes.sverilog import ImportPass
 from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from .RTL2CLWrapper import RTL2CLWrapper
 from .utils import list_string, rename
-
-try:
-  from termcolor import colored
-  termcolor_installed = True
-except:
-  termcolor_installed = False
-
-#-------------------------------------------------------------------------
-# mk_rule
-#-------------------------------------------------------------------------
-# make a rule from a method and its argument msg
-
-def mk_rule( name, ifc, MsgType, RetType ):
-  method_name = method_name
-
-  # Make a ready method for the state machine.
-  # NOTE: we only call methods when both rdy returns true. Thus we are only
-  # doing cycle-approximate or functional level testing.
-
-  @rename( method_name + '_rdy' )
-  def method_rdy( s ):
-    dut_rdy = s.dut.__dict__[ method_name ].rdy()
-    ref_rdy = s.ref.__dict__[ method_name ].rdy()
-    return dut_rdy and ref_rdy
-
-  # Make a rule for the state machine.
-  # Now the arguments are passed in as a bitstruct
-  @precondition( lambda s: method_rdy( s ) )
-  @rule( **arg_strat_dict ) # FIXME
-  @rename( method_name )
-  def method_rule( s, msg ):
-    dut_result = s.dut.__dict__[ method_name ]( msg )
-    ref_result = s.ref.__dict__[ method_name ]( msg )
-    assert isinstance( ref_result, RetType ), f"ref is wrong; it didn't return {RetType} type of ret, but {ref_result} instead."
-
-    # Compare results
-    # TODO: allow using customized comparison function?
-    if dut_result != ref_result:
-      s.error_line_trace( f"""
-mismatch found in method {method_name}:
-  - argument msg: {args}
-  - ref returned: {ref_result}
-  - dut returned: {dut_result}
-""" )
-
-  return method_rule, method_rdy
 
 #-------------------------------------------------------------------------
 # infer_strategy_from_type
@@ -102,27 +56,18 @@ class BaseStateMachine( RuleBasedStateMachine ):
       def line_trace():
         return "{} || {}".format(
           func(),
-          " | ".join([ method_to_str(ifc) for ifc in top.top_level_nb_ifcs ])
+          " | ".join([ str(ifc) for ifc in top.top_level_nb_ifcs ])
         )
       top.line_trace = line_trace
 
     wrap_line_trace( s.dut )
 
     # Elaborate dut
-    s.dut.elaborate()
-    s.dut = ImportPass()( s.dut )
-    s.dut.elaborate()
-    s.dut.apply( GenDAGPass() )
-    s.dut.apply( OpenLoopCLPass() )
-    s.dut.lock_in_simulation()
+    s.dut.apply( OpenLoopCLSim )
     s.dut.sim_reset()
 
     # Elaborate ref
-    s.ref.elaborate()
-    s.ref.hide_line_trace = True
-    s.ref.apply( GenDAGPass() )
-    s.ref.apply( OpenLoopCLPass() )
-    s.ref.lock_in_simulation()
+    s.ref.apply( OpenLoopCLSim )
     s.ref.sim_reset()
 
     # Print header
@@ -133,6 +78,12 @@ class BaseStateMachine( RuleBasedStateMachine ):
 #-------------------------------------------------------------------------
 # TestStateful
 #-------------------------------------------------------------------------
+
+try:
+  from termcolor import colored
+  termcolor_installed = True
+except:
+  termcolor_installed = False
 
 class TestStateful( BaseStateMachine ):
   if termcolor_installed:
@@ -155,20 +106,158 @@ class TestStateful( BaseStateMachine ):
 # For now, we don't support just specifying one field of a bit struct. A
 # strategy for bit struct must be passed in as whole.
 
-def parse_arg_strat_mapping( arg_strat_mapping ):
+def build_strategy_tree( custom_strategies ):
   ret = {}
-  for name, strat in arg_strat_mapping.items():
-    method_name, arg_name = name.split( '.', 1 )
-    assert '.' not in arg_name
-    if method_name not in ret:
-      ret[ method_name ] = { arg_name : strat }
+  if custom_strategies is None:
+    return ret
+  for name, strat in custom_strategies.items():
+    name = name.split( '.' )
+    cur = ret
+    for x in name[:-1]:
+      if x not in cur:
+        tmp = {}
+        cur[x] = tmp
+        cur = tmp
+    last_name = name[-1]
+    assert last_name not in cur, "Strategy for a field and its subfield is not allowed."
+    cur[ last_name ] = last_name
+  return ret
 
+#-------------------------------------------------------------------------
+# mk_rule
+#-------------------------------------------------------------------------
+# make a rule from a method and its argument msg
+
+ref_unwanted_ret_template = """
+ref model has some problems in method '{name}':
+  - ref didn't return None for method '{name}' without no return type
+  - Instead, ref returned {ref_result}
+"""
+
+ref_invalid_ret_template = """
+ref model has some problems in method '{name}':
+  - ref didn't return '{RetType}' type of return value
+  - Instead, ref returned {ref_result}
+"""
+
+dut_invalid_ret_template = """
+dut has some problems in method '{name}':
+  - dut didn't return '{RetType}' type of return value
+  - Instead, dut returned {dut_result}
+"""
+
+mismatch_template = """
+mismatch found in method {method_name}:
+  - argument msg: {args}
+  - ref returned: {ref_result}
+  - dut returned: {dut_result}
+"""
+
+def mk_rule( name, MsgType, RetType, custom_strategy_tree, cycle_accurate ):
+
+  # Make a ready method for the state machine.
+
+  if cycle_accurate:
+    @rename( name + '_rdy' )
+    def method_rdy( s ):
+      dut_rdy = s.dut.__dict__[ name ].rdy()
+      ref_rdy = s.ref.__dict__[ name ].rdy()
+
+      if dut_rdy != ref_rdy:
+        s.error_line_trace( f"""
+mismatch found in method '{name}_rdy':
+  - ref rdy: {ref_rdy}
+  - dut rdy: {dut_rdy}
+""" )
+      return dut_rdy and ref_rdy
+  else:
+    # NOTE: Here we only call methods when both rdy returns true. Thus we
+    # are only doing cycle-approximate or functional level testing.
+    @rename( name + '_rdy' )
+    def method_rdy( s ):
+      dut_rdy = s.dut.__dict__[ name ].rdy()
+      ref_rdy = s.ref.__dict__[ name ].rdy()
+      return dut_rdy and ref_rdy
+
+  # Make a rule for the state machine.
+  # Now the arguments are passed in as a bitstruct
+
+  if MsgType is None:
+    if RetType is None:
+      @precondition( lambda s: method_rdy( s ) )
+      @rule() # FIXME
+      @rename( name )
+      def method_rule( s ):
+        dut_result = s.dut.__dict__[ name ]()
+        ref_result = s.ref.__dict__[ name ]()
+
+        if ref_result is not None:
+          s.error_line_trace( ref_unwanted_ret_template.format( **locals() ) )
+
+        # TODO: allow using customized comparison function?
+        if dut_result != ref_result:
+          s.error_line_trace( mismatch_template.format( **vars() ) )
+    else:
+      @precondition( lambda s: method_rdy( s ) )
+      @rule() # FIXME
+      @rename( name )
+      def method_rule( s ):
+        dut_result = s.dut.__dict__[ name ]()
+        ref_result = s.ref.__dict__[ name ]()
+
+        if not isinstance( ref_result, RetType ):
+          s.error_line_trace( ref_invalid_ret_template.format( **locals() ) )
+
+        if not isinstance( dut_result, RetType ):
+          s.error_line_trace( dut_invalid_ret_template.format( **locals() ) )
+
+        # TODO: allow using customized comparison function?
+        if dut_result != ref_result:
+          s.error_line_trace( mismatch_template.format( **vars() ) )
+  else:
+    # generate a bitstruct strategy including overwritten subtrees
+    # TODO implement bitstruct
+    strategy = pst.bits( MsgType.nbits )
+
+    if RetType is None:
+      @precondition( lambda s: method_rdy( s ) )
+      @rule( msg = strategy ) # FIXME
+      @rename( name )
+      def method_rule( s, msg ):
+        dut_result = s.dut.__dict__[ name ]( msg )
+        ref_result = s.ref.__dict__[ name ]( msg )
+
+        if ref_result is not None:
+          s.error_line_trace( ref_unwanted_ret_template.format( **locals() ) )
+
+        # TODO: allow using customized comparison function?
+        if dut_result != ref_result:
+          s.error_line_trace( mismatch_template.format( **vars() ) )
+    else:
+      @precondition( lambda s: method_rdy( s ) )
+      @rule( msg = strategy )
+      @rename( name )
+      def method_rule( s, msg ):
+        dut_result = s.dut.__dict__[ name ]( msg )
+        ref_result = s.ref.__dict__[ name ]( msg )
+
+        if not isinstance( ref_result, RetType ):
+          s.error_line_trace( ref_invalid_ret_template.format( **locals() ) )
+
+        if not isinstance( dut_result, RetType ):
+          s.error_line_trace( dut_invalid_ret_template.format( **locals() ) )
+
+        # TODO: allow using customized comparison function?
+        if dut_result != ref_result:
+          s.error_line_trace( mismatch_template.format( **vars() ) )
+
+  return method_rule, method_rdy
 
 #-------------------------------------------------------------------------
 # create_test_state_machine
 #-------------------------------------------------------------------------
 
-def create_test_state_machine( dut, ref ):
+def create_test_state_machine( dut, ref, custom_strategy=None, cycle_accurate=False ):
   Test = type( dut.model_name + "_StatefulPyH2", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
 
@@ -177,59 +266,41 @@ def create_test_state_machine( dut, ref ):
 
   dut.elaborate()
 
-  for name, strat in arg_strat_mapping.items():
-    # Sanity check
-    if not isinstance( strat, SearchStrategy ):
-      raise TypeError(
-        "Only strategy is allowed! Got {} for {}".format( type( strat ), name )
-      )
+  if custom_strategy is not None:
+    for name, strat in custom_strategy.items():
+      # Sanity check
+      if not isinstance( strat, SearchStrategy ):
+        raise TypeError(
+          "Only strategy is allowed! Got {} for {}".format( type( strat ), name )
+        )
 
   try:
     method_specs = dut.method_specs
   except Exception:
     raise "No method specs specified. Did you wrap the RTL model?"
 
-  # Store ( strategy, full_name )
-  arg_st_with_full_name = []
-  all_st_full_names = set()
-  for name, st in argument_strategy:
+  # Process the custom strategy mapping and check the interface names
+  custom_strategy_tree = build_strategy_tree( custom_strategy )
+  for x in custom_strategy_tree:
+    assert x in method_specs, f"{x} is not a method-based interface for DUT."
 
-    if not isinstance( st, SearchStrategy ):
-      raise TypeError( "Only strategy is allowed! got {} for {}".format(
-          type( st ), name ) )
+  for name, (MsgType, RetType) in method_specs.items():
+    ifc_tree = custom_strategy_tree.get( name ) # None if doesn't exit
 
-  # Process the arg_strat_mapping
-  m_arg_strat_dict = parse_arg_strat_mapping( arg_strat_mapping )
+    if MsgType is None:
+      if ifc_tree is not None:
+        raise f"Custom strategy cannot be applied to method {name} that doesn't take any argument."
 
-  # Go through spec for each method
-  for method_name, spec in method_specs.items():
-    if method_name not in m_arg_strat_dict:
-      arg_strat = {}
-    else:
-      arg_strat = m_arg_strat_dict[ method_name ]
-
-  # go through spec for each method
-  for method_name, (MsgType, RetType) in method_specs.iteritems():
-    if MsgType is not None:
-
-    arg_st = method_arg_st.get( method_name, {} )
-
-    # create strategy based on types and predefined customization
-    for arg, Type in spec.args:
-      if arg not in arg_strat:
-        arg_strat[ arg ] = infer_strategy_from_type( Type )
-
-    # wrap method
-    method_rule, method_rdy = mk_rule( spec, arg_strat )
-    setattr( Test, method_name, method_rule )
-    setattr( Test, method_name + "_rdy", method_rdy )
+    method_rule, method_rdy = mk_rule( name, MsgType, RetType, ifc_tree, cycle_accurate )
+    setattr( Test, name, method_rule )
+    setattr( Test, name + "_rdy", method_rdy )
 
   return Test
 
 #-------------------------------------------------------------------------
-# run_pyh2
+# run_pyh2s
 #-------------------------------------------------------------------------
-# Driver function for PyH2. By default the strategies for each arg is
+# Driver function for PyH2S. By default the strategies for each arg is
 # inferred from the corresponding RTL port.
 # TODO: figure out a way to pass in settings
 # TODO: figure out a way to pass in customized strategies

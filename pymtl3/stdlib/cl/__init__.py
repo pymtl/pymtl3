@@ -1,1 +1,1 @@
-from .queues import BypassQueueCL, PipeQueueCL
+from .queues import BypassQueueCL, PipeQueueCL, NormalQueueCL

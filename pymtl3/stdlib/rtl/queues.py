@@ -10,7 +10,8 @@ Author : Yanghui Ou
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
-from pymtl3.stdlib.rtl import Mux, RegisterFile
+from .arithmetics import Mux
+from .RegisterFile import RegisterFile
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL
