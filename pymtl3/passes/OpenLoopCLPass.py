@@ -12,6 +12,8 @@ from pymtl3.dsl import CalleeIfcCL, CalleePort
 
 import os, py, random
 from collections import deque
+
+import py
 from graphviz import Digraph
 
 from pymtl3.datatypes import Bits1
@@ -464,6 +466,7 @@ class OpenLoopCLPass( BasePass ):
                                 i, next_method )
     top.num_cycles_executed = 0
 
+    # Add a tick method for reset
     def normal_tick():
       for blk in schedule_no_method:
         blk()
