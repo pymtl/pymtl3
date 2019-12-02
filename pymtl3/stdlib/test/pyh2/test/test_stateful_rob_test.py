@@ -6,12 +6,12 @@
 # Author: Yixiao Zhang
 #   Date: May 1, 2019
 
-import math
 
 from pymtl3 import *
+from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
 
 from .test_stateful import run_test_state_machine
-from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
+
 
 #-------------------------------------------------------------------------
 # ReorderBufferCL

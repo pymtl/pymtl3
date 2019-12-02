@@ -7,16 +7,12 @@ Test cases for RTL2CLWrapper.
 Author : Yanghui Ou
   Date : July 10, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 from pymtl3.passes import CLLineTracePass, GenDAGPass, OpenLoopCLPass
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
-
+from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
 from pymtl3.stdlib.test.test_sinks import TestSinkCL
-from pymtl3.stdlib.test.test_srcs  import TestSrcCL
-
-from .RTL2CLWrapper import RTL2CLWrapper
+from pymtl3.stdlib.test.test_srcs import TestSrcCL
 
 
 class TestHarness(Component):

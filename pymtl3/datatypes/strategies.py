@@ -99,4 +99,3 @@ def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
     return bits_struct_strategy( dtype, predefined, remaining_names )
 
   raise TypeError( "Argument strategy for {} not supported".format( dtype ) )
-

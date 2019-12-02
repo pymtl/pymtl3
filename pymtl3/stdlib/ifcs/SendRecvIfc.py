@@ -12,8 +12,8 @@ from copy import deepcopy
 import greenlet
 
 from pymtl3 import *
-from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.dsl.errors import InvalidConnectionError
+from pymtl3.stdlib.connects import connect_pairs
 
 #-------------------------------------------------------------------------
 # RecvIfcRTL

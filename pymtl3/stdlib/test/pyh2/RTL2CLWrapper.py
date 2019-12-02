@@ -9,6 +9,7 @@ Author : Yanghui Ou, Yixiao Zhang, Shunning Jiang
 """
 from pymtl3 import *
 
+
 #-------------------------------------------------------------------------
 # RTL2CLWrapper
 #-------------------------------------------------------------------------
@@ -124,4 +125,3 @@ class CalleeRTL2CL( Component ):
 
   def cl_callee_method_no_arg_no_ret( s ):
     s.called = True
-

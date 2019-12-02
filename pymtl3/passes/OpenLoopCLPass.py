@@ -8,16 +8,15 @@
 # Author : Shunning Jiang
 # Date   : Apr 20, 2019
 """
-from pymtl3.dsl import CalleeIfcCL, CalleePort
-
-import os, py, random
+import os
+import random
 from collections import deque
 
 import py
 from graphviz import Digraph
 
 from pymtl3.datatypes import Bits1
-from pymtl3.dsl import CalleePort, CalleeIfcCL
+from pymtl3.dsl import CalleeIfcCL, CalleePort
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata

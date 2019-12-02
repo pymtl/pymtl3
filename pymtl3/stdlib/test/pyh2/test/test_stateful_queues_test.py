@@ -6,17 +6,16 @@
 # Author: Yixiao Zhang
 #   Date: June 10, 2019
 
-from collections import deque
 
 import pytest
 
 from pymtl3 import *
+from pymtl3.stdlib.cl import BypassQueueCL, PipeQueueCL
+from pymtl3.stdlib.rtl import BypassQueueRTL, PipeQueueRTL
 
 from .test_stateful import get_strategy_from_type, run_test_state_machine
 from .test_wrapper import *
 
-from pymtl3.stdlib.cl  import PipeQueueCL, BypassQueueCL
-from pymtl3.stdlib.rtl import PipeQueueRTL, BypassQueueRTL
 
 def test_pyh2_directed():
   run_pyh2( dut=NormalQueueRTL( Bits16, num_entries=2 ),
