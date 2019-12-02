@@ -8,7 +8,7 @@ Date   : Nov 3, 2018
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits32, bitstruct, mk_bits
+from pymtl3.datatypes import Bits1, Bits32, bitstruct, mk_bits
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import RD, WR, U
@@ -702,3 +702,18 @@ def test_var_written_in_both_ff_and_up():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
+
+def test_signal_default_Bits1():
+
+  class Top(ComponentLevel2):
+
+    def construct( s ):
+      s.x0 = Wire()
+      s.x1 = InPort()
+      s.x2 = OutPort()
+      assert s.x0._dsl.Type == Bits1
+      assert s.x1._dsl.Type == Bits1
+      assert s.x2._dsl.Type == Bits1
+
+  A = Top()
+  A.elaborate()

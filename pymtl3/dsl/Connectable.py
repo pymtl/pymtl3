@@ -10,7 +10,7 @@ Date   : Apr 16, 2018
 import types
 from collections import deque
 
-from pymtl3.datatypes import Bits, mk_bits
+from pymtl3.datatypes import Bits, Bits1, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
@@ -141,7 +141,7 @@ class Const( Connectable ):
 
 class Signal( NamedObject, Connectable ):
 
-  def __init__( s, Type ):
+  def __init__( s, Type=Bits1 ):
     assert isinstance( Type, type ), "Use actual type instead of instance!"
     s._dsl.Type = Type
     s._dsl.type_instance = None
