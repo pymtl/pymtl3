@@ -10,6 +10,36 @@ Author : Yanghui Ou, Yixiao Zhang, Shunning Jiang
 from pymtl3 import *
 
 #-------------------------------------------------------------------------
+# RTL2CLWrapper
+#-------------------------------------------------------------------------
+class RTL2CLWrapper( Component ):
+
+  def __init__( s, rtl_model ):
+    super( RTL2CLWrapper, s ).__init__()
+
+    s.model_name = type( rtl_model ).__name__
+
+  def construct( s, rtl_model ):
+
+    s.model = rtl_model
+    s.method_specs = {}
+
+    for name, obj in rtl_model.__dict__.items():
+      if isinstance( obj, CalleeIfcRTL ):
+        added_ifc     = CalleeIfcCL()
+        added_adapter = CalleeRTL2CL( obj.MsgType, obj.RetType )
+        setattr( s, name, added_ifc )
+        setattr( s, name+"_adapter", added_adapter )
+
+        connect( added_ifc, added_adapter.cl_callee )
+        connect( added_adapter.rtl_caller, obj )
+
+        s.method_specs[ name ] = (obj.MsgType, obj.RetType)
+
+  def line_trace( s ):
+    return s.model.line_trace()
+
+#-------------------------------------------------------------------------
 # CalleeRTL2CL
 #-------------------------------------------------------------------------
 class CalleeRTL2CL( Component ):
@@ -95,32 +125,3 @@ class CalleeRTL2CL( Component ):
   def cl_callee_method_no_arg_no_ret( s ):
     s.called = True
 
-#-------------------------------------------------------------------------
-# RTL2CLWrapper
-#-------------------------------------------------------------------------
-class RTL2CLWrapper( Component ):
-
-  def __init__( s, rtl_model ):
-    super( RTL2CLWrapper, s ).__init__()
-
-    s.model_name = type( rtl_model ).__name__
-
-  def construct( s, rtl_model ):
-
-    s.model = rtl_model
-    s.method_specs = {}
-
-    for name, obj in rtl_model.__dict__.items():
-      if isinstance( obj, CalleeIfcRTL ):
-        added_ifc     = CalleeIfcCL()
-        added_adapter = CalleeRTL2CL( obj.MsgType, obj.RetType )
-        setattr( s, name, added_ifc )
-        setattr( s, name+"_adapter", added_adapter )
-
-        connect( added_ifc, added_adapter.cl_callee )
-        connect( added_adapter.rtl_caller, obj )
-
-        s.method_specs[ name ] = (obj.MsgType, obj.RetType)
-
-  def line_trace( s ):
-    return s.model.line_trace()

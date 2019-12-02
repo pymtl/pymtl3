@@ -11,7 +11,7 @@ import math
 from pymtl3 import *
 
 from .test_stateful import run_test_state_machine
-from .test_wrapper import *
+from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
 
 #-------------------------------------------------------------------------
 # ReorderBufferCL

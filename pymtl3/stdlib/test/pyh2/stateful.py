@@ -7,9 +7,6 @@ PyH2 APIs for stateful testing.
 Author : Yanghui Ou, Yixiao Zhang
   Date : July 9, 2019
 """
-from __future__ import absolute_import, division, print_function
-
-import inspect
 from copy import deepcopy
 
 from hypothesis import HealthCheck, PrintSettings
@@ -26,40 +23,13 @@ from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from .RTL2CLWrapper import RTL2CLWrapper
-from .utils import Method, kwarg_to_str, list_string, method_to_str, rename
+from .utils import list_string, rename
 
 try:
   from termcolor import colored
   termcolor_installed = True
 except:
   termcolor_installed = False
-
-#-------------------------------------------------------------------------
-# collect_mspecs
-#-------------------------------------------------------------------------
-# TODO: organize these into a pass?
-
-def collect_mspecs( dut ):
-  method_specs = {}
-
-  for method_name, ifc in inspect.getmembers( dut ):
-    if isinstance( ifc, Interface ):
-      assert hasattr( ifc, '_mspec' ), "Cannot wrap {}! Method spec is not specified!".format( ifc._dsl.my_name )
-
-      # Yanghui : do we need args and rets to be ordered?
-      args = []
-      if ifc._mspec.arg is not None:
-        for port_name, port_type in ifc._mspec.arg.iteritems():
-          args.append( (port_name, port_type) )
-
-      rets = []
-      if ifc._mspec.ret is not None:
-        for port_name, port_type in ifc._mspec.ret.iteritems():
-          rets.append( (port_name, port_type) )
-
-      method_specs[ method_name ] = Method( method_name, args, rets )
-
-  return method_specs
 
 #-------------------------------------------------------------------------
 # mk_rule
@@ -72,6 +42,7 @@ def mk_rule( method_spec, arg_strat_dict ):
   # Make a ready method for the state machine.
   # NOTE: we only call methods when both rdy returns true. Thus we are only
   # doing cycle-approximate or functional level testing.
+
   @rename( method_name + '_rdy' )
   def method_rdy( s ):
     dut_rdy = s.dut.__dict__[ method_name ].rdy()
@@ -79,33 +50,23 @@ def mk_rule( method_spec, arg_strat_dict ):
     return dut_rdy and ref_rdy
 
   # Make a rule for the state machine.
-  # NOTE: now the CL arg must be the same as the corresponding RTL port
-  # name. We should find a way to figure out the mapping between the RTL
-  # port and method arg.
+  # Now the arguments are passed in as a bitstruct
   @precondition( lambda s: method_rdy( s ) )
-  @rule( **arg_strat_dict )
+  @rule( **arg_strat_dict ) # FIXME
   @rename( method_name )
-  def method_rule( s, **kwargs ):
-    dut_result = s.dut.__dict__[ method_name ]( **kwargs )
-    ref_result = s.ref.__dict__[ method_name ]( **kwargs )
+  def method_rule( s, msg ):
+    dut_result = s.dut.__dict__[ method_name ]( msg )
+    ref_result = s.ref.__dict__[ method_name ]( msg )
 
     # Compare results
     # TODO: allow using customized comparison function?
     if dut_result != ref_result:
-
-      error_msg = """
-mismatch found in method {method}:
-  - args: {args}
-  - ref result: {ref_result}
-  - dut result: {dut_result}
-""".format(
-        method=method_name,
-        args=kwarg_to_str( kwargs ),
-        ref_result=ref_result,
-        dut_result=dut_result,
-      )
-
-      s.error_line_trace( error_msg )
+      s.error_line_trace( f"""
+mismatch found in method {method_name}:
+  - argument msg: {args}
+  - ref returned: {ref_result}
+  - dut returned: {dut_result}
+""" )
 
   return method_rule, method_rdy
 
@@ -200,21 +161,13 @@ def parse_arg_strat_mapping( arg_strat_mapping ):
     assert '.' not in arg_name
     if method_name not in ret:
       ret[ method_name ] = { arg_name : strat }
-    else:
-      ret[method_name][arg_name] = strat
 
-  return ret
 
 #-------------------------------------------------------------------------
 # create_test_state_machine
 #-------------------------------------------------------------------------
 
-def create_test_state_machine(
-  dut,
-  ref,
-  method_specs=None,
-  arg_strat_mapping={},
-):
+def create_test_state_machine( dut, ref ):
   Test = type( dut.model_name + "_StatefulPyH2", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
 
@@ -230,6 +183,20 @@ def create_test_state_machine(
         "Only strategy is allowed! Got {} for {}".format( type( strat ), name )
       )
 
+  try:
+    method_specs = dut.method_specs
+  except Exception:
+    raise "No method specs specified. Did you wrap the RTL model?"
+
+  # Store ( strategy, full_name )
+  arg_st_with_full_name = []
+  all_st_full_names = set()
+  for name, st in argument_strategy:
+
+    if not isinstance( st, SearchStrategy ):
+      raise TypeError( "Only strategy is allowed! got {} for {}".format(
+          type( st ), name ) )
+
   # Process the arg_strat_mapping
   m_arg_strat_dict = parse_arg_strat_mapping( arg_strat_mapping )
 
@@ -239,6 +206,12 @@ def create_test_state_machine(
       arg_strat = {}
     else:
       arg_strat = m_arg_strat_dict[ method_name ]
+
+  # go through spec for each method
+  for method_name, (MsgType, RetType) in method_specs.iteritems():
+    if MsgType is not None:
+
+    arg_st = method_arg_st.get( method_name, {} )
 
     # create strategy based on types and predefined customization
     for arg, Type in spec.args:
@@ -260,12 +233,9 @@ def create_test_state_machine(
 # TODO: figure out a way to pass in settings
 # TODO: figure out a way to pass in customized strategies
 
-def run_pyh2( dut, ref, arg_strat_mapping={} ):
-  new_dut = deepcopy( dut )
-  new_dut.elaborate()
-  method_specs = collect_mspecs( new_dut )
-  wrapped_dut = RTL2CLWrapper( dut, method_specs )
-  machine = create_test_state_machine( wrapped_dut, ref, method_specs, arg_strat_mapping )
+def run_pyh2( dut, ref ):
+  wrapped_dut = RTL2CLWrapper( dut )
+  machine = create_test_state_machine( wrapped_dut, ref )
   machine.TestCase.settings = settings(
     max_examples=50,
     stateful_step_count=100,
@@ -278,10 +248,5 @@ def run_pyh2( dut, ref, arg_strat_mapping={} ):
   run_state_machine_as_test( machine )
 
 def test_pyh2():
-  run_pyh2(
-    dut=NormalQueueRTL( Bits16, num_entries=2 ),
-    ref=NormalQueueCL( num_entries=2 ),
-    arg_strat_mapping = {
-      'enq.msg' : pst.bits(16, signed=True)
-    }
-  )
+  run_pyh2( dut=NormalQueueRTL( Bits16, num_entries=2 ),
+            ref=NormalQueueCL( num_entries=2 ) )
