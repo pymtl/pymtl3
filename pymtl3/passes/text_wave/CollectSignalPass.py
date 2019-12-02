@@ -24,11 +24,6 @@ class CollectSignalPass( BasePass ):
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
-    if hasattr( top, "_cl_trace" ):
-      schedule = top._cl_trace.schedule
-    else:
-      schedule = top._sched.schedule
-
     try:
       en = top.text_wave
     except AttributeError:
@@ -36,7 +31,7 @@ class CollectSignalPass( BasePass ):
 
     if en:
       top._textwave = PassMetadata()
-      schedule.append( self.collect_sig_func( top, top._textwave ) )
+      top._sched.schedule.append( self.collect_sig_func( top, top._textwave ) )
 
   def collect_sig_func( self, top, wavmeta ):
 

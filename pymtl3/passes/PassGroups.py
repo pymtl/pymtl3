@@ -19,8 +19,8 @@ SimpleSim = [
   Component.elaborate,
   GenDAGPass(),
   WrapGreenletPass(),
-  SimpleSchedulePass(),
   CLLineTracePass(),
+  SimpleSchedulePass(),
   # VcdGenerationPass(),
   CollectSignalPass(),
   PrintWavePass(),
@@ -33,6 +33,7 @@ DynamicSim = [
   Component.elaborate,
   GenDAGPass(),
   WrapGreenletPass(),
+  CLLineTracePass(),
   DynamicSchedulePass(),
   CLLineTracePass(),
   SimpleTickPass(),
@@ -43,8 +44,8 @@ DynamicSim = [
 SimulationPass = [
   GenDAGPass(),
   WrapGreenletPass(),
-  DynamicSchedulePass(),
   CLLineTracePass(),
+  DynamicSchedulePass(),
   VcdGenerationPass(),
   CollectSignalPass(),
   PrintWavePass(),
@@ -55,10 +56,9 @@ SimulationPass = [
 OpenLoopCLSim = [
   Component.elaborate,
   GenDAGPass(),
+  WrapGreenletPass(),
+  CLLineTracePass(),
   OpenLoopCLPass(), # Inject this pass to build infrastructure
-  SimpleSchedulePass(), # Still generate schedule and tick
-  # TODO: make OpenLoopCLPass work with CLLineTracePass
-  SimpleTickPass(),
   Component.lock_in_simulation
 ]
 

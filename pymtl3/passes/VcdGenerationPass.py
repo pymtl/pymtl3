@@ -28,14 +28,8 @@ class VcdGenerationPass( BasePass ):
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
-    if hasattr( top, "_cl_trace" ):
-      schedule = top._cl_trace.schedule
-    else:
-      schedule = top._sched.schedule
-
     top._vcd = PassMetadata()
-
-    schedule.append( self.make_vcd_func( top ) )
+    top._sched.schedule.append( self.make_vcd_func( top ) )
 
   def make_vcd_func( self, top ):
 

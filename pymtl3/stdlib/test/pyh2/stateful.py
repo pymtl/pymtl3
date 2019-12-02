@@ -166,7 +166,6 @@ def get_strategy_from_type( dtype, predefined={}, remaining_names=None ):
 
   raise TypeError( "Argument strategy for {} not supported".format( dtype ) )
 
-
 #-------------------------------------------------------------------------
 # BaseStateMachine
 #-------------------------------------------------------------------------

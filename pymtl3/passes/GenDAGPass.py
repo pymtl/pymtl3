@@ -331,29 +331,25 @@ def compile_upblks( s ):
 
     method_is_top_level_callee = set()
 
-    try:
-      all_method_nets = top.get_all_method_nets()
-      for writer, net in all_method_nets:
-        if writer is not None:
-          for member in net:
-            if member is not writer:
-              assert member.method is None
-              member.method = writer.method
+    all_method_nets = top.get_all_method_nets()
+    for writer, net in all_method_nets:
+      if writer is not None:
+        for member in net:
+          if member is not writer:
+            assert member.method is None
+            member.method = writer.method
 
-            # If the member is a top level callee, we add the writer's
-            # actual method to the set
-            if member.get_host_component() is top:
-              if not writer.method.__name__.startswith('_binded_method'):
-                method_is_top_level_callee.add( writer.method )
-
-    except AttributeError:
-      pass
+          # If the member is a top level callee, we add the writer's
+          # actual method to the set
+          if member.get_host_component() is top:
+            # if not writer.method.__name__.startswith('_binded_method'):
+            method_is_top_level_callee.add( writer.method )
 
     # Add those callee ports that are not part of a net
     for callee in top._dsl.top_level_callee_ports:
       if callee.method:
-        if not callee.method.__name__.startswith('_binded_method'):
-          method_is_top_level_callee.add( callee.method )
+        # if not callee.method.__name__.startswith('_binded_method'):
+        method_is_top_level_callee.add( callee.method )
 
     method_blks = defaultdict(set)
 

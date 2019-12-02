@@ -26,10 +26,4 @@ class SimpleTickPass( BasePass ):
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
-    if hasattr( top, "_cl_trace" ):
-      schedule = top._cl_trace.schedule
-    else:
-      schedule = top._sched.schedule
-
-
-    top.tick = SimpleTickPass.gen_tick_function( schedule )
+    top.tick = SimpleTickPass.gen_tick_function( top._sched.schedule )

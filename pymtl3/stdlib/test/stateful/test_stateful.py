@@ -253,7 +253,7 @@ def create_test_state_machine( dut,
   if not method_specs:
     try:
       method_specs = dut.method_specs
-    except Exception:
+    except AttributeError:
       raise "No method specs specified"
 
   # Store ( strategy, full_name )
@@ -272,7 +272,7 @@ def create_test_state_machine( dut,
   method_arg_st = get_strategy_from_list( arg_st_with_full_name )
 
   # go through spec for each method
-  for method_name, spec in method_specs.iteritems():
+  for method_name, spec in method_specs.items():
     arg_st = method_arg_st.get( method_name, {} )
 
     # create strategy based on types and predefined customization
@@ -295,17 +295,17 @@ def create_test_state_machine( dut,
 #-------------------------------------------------------------------------
 def run_test_state_machine( dut,
                             ref,
-                            argument_strategy={},
+                            arg_strategy={},
                             reproduce_failure=None ):
 
-  machine = create_test_state_machine(
-      dut, ref, argument_strategy=argument_strategy )
+  machine = create_test_state_machine( dut, ref, argument_strategy=arg_strategy )
   machine.TestCase.settings = settings(
-      max_examples=50,
-      stateful_step_count=100,
-      deadline=None,
-      verbosity=Verbosity.verbose,
-      database=None )
+    max_examples=50,
+    stateful_step_count=100,
+    deadline=None,
+    verbosity=Verbosity.verbose,
+    database=None
+  )
 
   if reproduce_failure:
     rf(*reproduce_failure )( machine )

@@ -10,47 +10,54 @@ Author : Yanghui Ou
 from __future__ import absolute_import, division, print_function
 
 from pymtl3 import *
-from pymtl3.passes import GenDAGPass, OpenLoopCLPass
+from pymtl3.passes import CLLineTracePass, GenDAGPass, OpenLoopCLPass
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
+
+from pymtl3.stdlib.test.test_sinks import TestSinkCL
+from pymtl3.stdlib.test.test_srcs  import TestSrcCL
 
 from .RTL2CLWrapper import RTL2CLWrapper
 
 
-def test_wrapper():
+class TestHarness(Component):
+  def construct( s, model ):
+    s.src = TestSrcCL( Bits16, [b16(4),b16(3),b16(2),b16(1),b16(7),b16(6),b16(5)],
+                       interval_delay=3, initial_delay=4 )
 
-  top = RTL2CLWrapper(
-    NormalQueueRTL( Bits16, num_entries=2 ),
-    { 'enq': None, 'deq': None }
-  )
+    s.dut = model( enq = s.src.send )
+
+    s.sink = TestSinkCL( Bits16, [b16(4),b16(3),b16(2),b16(1),b16(7),b16(6),b16(5)],
+                       interval_delay=4, initial_delay=5 )
+
+    @s.update
+    def up_adapt():
+      if s.dut.deq.rdy() and s.sink.recv.rdy():
+        s.sink.recv( s.dut.deq() )
+
+  def done( s ):
+    return s.src.done() and s.sink.done()
+
+  def line_trace( s ):
+    return f"{s.src.line_trace()} >>> {s.dut.line_trace()} >>> {s.sink.line_trace()}"
+
+def test_wrapper_normalqueue():
+  top = TestHarness( RTL2CLWrapper( NormalQueueRTL( Bits16, num_entries=2 ) ) )
   top.elaborate()
   top.apply( SimulationPass )
   top.sim_reset()
 
-  while not top.enq.rdy():
-    print( top.line_trace() )
+  cycles = 0
+  while not top.done() and cycles < 100:
     top.tick()
+    print(cycles, top.line_trace())
 
-  assert top.enq.rdy()
-  top.enq( b16(0xffff) )
-  print( top.line_trace() )
-  top.tick()
-
-  while not top.deq.rdy():
-    print( top.line_trace() )
-    top.tick()
-
-  assert top.deq.rdy()
-  ret = top.deq()
-  print( top.line_trace() )
-  assert ret == 0xffff
+  assert cycles < 100
 
 def test_wrapper_openloop():
-  top = RTL2CLWrapper(
-    NormalQueueRTL( Bits16, num_entries=2 ),
-    { 'enq': None, 'deq': None }
-  )
+  top = RTL2CLWrapper( NormalQueueRTL( Bits16, num_entries=2 ) )
   top.elaborate()
   top.apply( GenDAGPass() )
+  top.apply( CLLineTracePass() )
   top.apply( OpenLoopCLPass() )
   top.lock_in_simulation()
 
@@ -69,7 +76,6 @@ def test_wrapper_openloop():
   top.enq( b16(0x3333) )
   top.enq( b16(0x3333) )
 
-  # assert top.deq() == 0xffff
-  # assert top.deq() == 0x1111
-  # assert top.deq() == 0x2222
-  # assert top.deq() == 0x3333
+  assert top.deq() == 0xffff
+  assert top.deq() == 0x1111
+  assert not top.deq.rdy()

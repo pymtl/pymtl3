@@ -166,6 +166,10 @@ class DynamicSchedulePass( BasePass ):
 
     schedule = [ make_double_buffer_func( top ) ]
 
+    # Clear CL trace variables at the beginning of cycle
+    if hasattr( top, "_cl_trace" ):
+      schedule.append( top._cl_trace.clear_cl_trace )
+
     scc_id = 0
     for i in scc_schedule:
       scc = SCCs[i]

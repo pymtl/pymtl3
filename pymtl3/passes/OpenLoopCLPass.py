@@ -10,7 +10,7 @@
 """
 from pymtl3.dsl import CalleeIfcCL, CalleePort
 
-import os, py
+import os, py, random
 from collections import deque
 from graphviz import Digraph
 
@@ -19,7 +19,6 @@ from pymtl3.dsl import CalleePort, CalleeIfcCL
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from .BasePass import BasePass, PassMetadata
-from .CLLineTracePass import CLLineTracePass
 from .errors import PassOrderError
 from .SimpleSchedulePass import dump_dag, make_double_buffer_func
 
@@ -42,6 +41,11 @@ class OpenLoopCLPass( BasePass ):
     top_level_callee_ports = top.get_all_object_filter(
       lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
 
+    # Now we need to check if cl_trace has been applied. If so, we need to
+    # use raw_method
+    if hasattr( top, "_cl_trace" ): get_raw_method = lambda x: x.raw_method
+    else:                           get_raw_method = lambda x: x.method
+
     top_level_nb_ifcs = top.get_all_object_filter(
       lambda x: isinstance(x, CalleeIfcCL) and x.get_host_component() is top )
 
@@ -56,16 +60,18 @@ class OpenLoopCLPass( BasePass ):
     for x in top_level_callee_ports:
       if not x.in_non_blocking_interface(): # Normal callee port
         V.add(x)
-        assert x.method not in method_callee_mapping
-        method_callee_mapping[x.method] = x
+        m = get_raw_method( x )
+        assert m not in method_callee_mapping
+        method_callee_mapping[m] = x
 
     # Then deal with non-blocking callee interfaces. Map the method of the
     # interface to the actual method and set up method-rdy mapping
     for x in top_level_nb_ifcs:
       V.add( x.method )
       method_guard_mapping [x.method] = x.rdy
-      assert x.method.method not in method_callee_mapping
-      method_callee_mapping[x.method.method] = x.method
+      m = get_raw_method( x.method )
+      assert m not in method_callee_mapping
+      method_callee_mapping[m] = x.method
 
     E   = top._dag.all_constraints
     G   = { v: [] for v in V }
@@ -102,28 +108,60 @@ class OpenLoopCLPass( BasePass ):
     # (SCCs) into super nodes
     #---------------------------------------------------------------------
 
-    def get_reverse_post_order( G ):
-      visited = set()
-      post_order = []
-
-      def dfs_post_order( u ):
-        visited.add( u )
-        for v in G[u]:
-          if v not in visited:
-            dfs_post_order( v )
-        post_order.append( u )
-
-      import random
-      vertices = G.keys()
-      random.shuffle(vertices)
-      for u in vertices:
-        if u not in visited:
-          dfs_post_order( u )
-      return post_order[::-1]
-
     # First dfs on G to generate reverse post-order (RPO)
+    # Shunning: we emulate the system stack to implement non-recursive
+    # post-order DFS algorithm. At the beginning, I implemented a more
+    # succinct recursive DFS but it turned out that a 1500-depth chain in
+    # the graph will reach the CPython max recursion depth.
+    # https://docs.python.org/3/library/sys.html#sys.getrecursionlimit
 
-    RPO = get_reverse_post_order( G )
+    PO = []
+
+    vertices = list(G.keys())
+    random.shuffle(vertices)
+    visited = set()
+
+    # The commented algorithm loyally emulates the system stack by storing
+    # the loop index in each stack element and push only one new element
+    # to stack in every iteration. This is basically what recursive dfs
+    # does.
+    #
+    # for u in vertices:
+    #   if u not in visited:
+    #     stack = [ (u, False) ]
+    #     while stack:
+    #       u, idx = stack.pop()
+    #       visited.add( u )
+    #       if idx == len(G[u]):
+    #         PO.append( u )
+    #       else:
+    #         while idx < len(G[u]) and G[u][-idx] in visited:
+    #           idx += 1
+    #         if idx < len(G[u]):
+    #           stack.append( (u, idx) )
+    #           stack.append( (G[u][-idx], 0) )
+    #         else:
+    #           PO.append( u )
+
+    # The following algorithm push all adjacent elements to the stack at
+    # once and later check visited set to avoid redundant visit (instead
+    # of checking visited set when pushing element to the stack). I added
+    # a second_visit flag to add the node to post-order.
+
+    for u in vertices:
+      stack = [ (u, False) ]
+      while stack:
+        u, second_visit = stack.pop()
+
+        if second_visit:
+          PO.append( u )
+        elif u not in visited:
+          visited.add( u )
+          stack.append( (u, True) )
+          for v in reversed(G[u]):
+            stack.append( (v, False) )
+
+    RPO = PO[::-1]
 
     # Second bfs on G_T to generate SCCs
 
@@ -169,7 +207,6 @@ class OpenLoopCLPass( BasePass ):
 
     list_version_of_SCCs = [ list(x) for x in SCCs ]
     while Q:
-      import random
       random.shuffle(Q)
 
       # Prioritize update blocks instead of method
@@ -313,15 +350,20 @@ class OpenLoopCLPass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
-    # Shunning: we call CL line trace pass here.
-    cl_trace = CLLineTracePass()
-    schedule.insert( 0, cl_trace.process_component( top ) )
+    # The last element is always line trace
+    def print_line_trace():
+      print(top.line_trace())
+
+    schedule.append( print_line_trace )
 
     # Sequential blocks and double buffering
     schedule.extend( list(top._dsl.all_update_ff) )
     func = make_double_buffer_func( top )
     if func is not None:
       schedule.append( func )
+
+    if hasattr( top, "_cl_trace" ):
+      schedule.append( top._cl_trace.clear_cl_trace )
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
@@ -330,12 +372,6 @@ class OpenLoopCLPass( BasePass ):
     # contains methods because we will need isinstance in that case.
     # As a result we created a preprocessed list for execution and use
     # the dictionary to look up the new index of functions.
-
-    # The last element is always line trace
-    def print_line_trace():
-      print(top.line_trace())
-
-    schedule.append( print_line_trace )
 
     schedule_no_method = [ x for x in schedule if not isinstance(x, CalleePort) ]
     mapping = { x : i for i, x in enumerate( schedule_no_method ) }

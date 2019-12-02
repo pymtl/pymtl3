@@ -4,32 +4,123 @@ RTL2CLWrapper
 ==========================================================================
 Generic wrapper that wraps RTL model into CL.
 
-Author : Yanghui Ou, Yixiao Zhang
-  Date : July 9, 2019
+Author : Yanghui Ou, Yixiao Zhang, Shunning Jiang
+  Date : Dec 2, 2019
 """
-from __future__ import absolute_import, division, print_function
-
 from pymtl3 import *
 
+#-------------------------------------------------------------------------
+# CalleeRTL2CL
+#-------------------------------------------------------------------------
+class CalleeRTL2CL( Component ):
 
+  def construct( s, MsgType, RetType ):
+    s.MsgType = MsgType
+    s.RetType = RetType
+
+    # These variable are set by the method
+    s.rdy    = False
+    s.called = False
+
+    s.rtl_caller = CallerIfcRTL( en=True, rdy=True, MsgType=MsgType, RetType=RetType )
+
+    if MsgType is None:
+      if RetType is None: cl_callee = s.cl_callee_method_no_arg_no_ret
+      else:               cl_callee = s.cl_callee_method_no_arg_yes_ret
+    else:
+      if RetType is None: cl_callee = s.cl_callee_method_yes_arg_no_ret
+      else:               cl_callee = s.cl_callee_method_yes_arg_yes_ret
+
+    s.cl_callee  = CalleeIfcCL( method=cl_callee, rdy=lambda: s.rdy )
+
+    # This adapter always has ready and called block
+    @s.update
+    def up_rdy():
+      s.rdy = bool(s.rtl_caller.rdy)
+
+    s.add_constraints( U( up_rdy ) < M( s.cl_callee ) )
+
+    # We clear called flag before any method call
+    @s.update
+    def up_called():
+      s.called = False
+
+    s.add_constraints( U( up_called ) < M( s.cl_callee ) )
+
+    # Add upblk depending on args (msg)
+
+    if MsgType:
+      s.msg = MsgType()
+      @s.update
+      def up_en_args():
+        s.rtl_caller.en  = Bits1( s.called )
+        s.rtl_caller.msg = s.msg
+
+      # add constraints between callee method and upblk to model combinational behavior
+      s.add_constraints( M( s.cl_callee ) < U( up_en_args ) )
+    else:
+      # no args, update en
+      @s.update
+      def up_en():
+        s.rtl_caller.en = Bits1( s.called )
+
+      # add constraints between callee method and upblk
+      s.add_constraints( M( s.cl_callee ) < U( up_en ) )
+
+    # Add upblk depending on ret
+    if RetType:
+      s.ret = RetType()
+
+      @s.update
+      def up_ret():
+        s.ret = s.rtl_caller.ret
+
+      s.add_constraints( U( up_ret ) < M( s.cl_callee ) )
+
+  def cl_callee_method_yes_arg_yes_ret( s, msg ):
+    assert isinstance( msg, s.MsgType )
+    s.called = True
+    s.msg = msg
+    return s.ret
+
+  def cl_callee_method_yes_arg_no_ret( s, msg ):
+    assert isinstance( msg, s.MsgType )
+    s.called = True
+    s.msg = msg
+
+  def cl_callee_method_no_arg_yes_ret( s ):
+    s.called = True
+    return s.ret
+
+  def cl_callee_method_no_arg_no_ret( s ):
+    s.called = True
+
+#-------------------------------------------------------------------------
+# RTL2CLWrapper
+#-------------------------------------------------------------------------
 class RTL2CLWrapper( Component ):
 
-  def __init__( s, rtl_model, method_specs ):
+  def __init__( s, rtl_model ):
     super( RTL2CLWrapper, s ).__init__()
 
     s.model_name = type( rtl_model ).__name__
-    s.method_specs = method_specs
 
-  def construct( s, rtl_model, method_specs ):
+  def construct( s, rtl_model ):
 
     s.model = rtl_model
+    s.method_specs = {}
 
-    # Add adapters
-    for method_name, method_spec in s.method_specs.iteritems():
-      callee_ifc = NonBlockingCalleeIfc()
-      setattr( s, method_name, callee_ifc )
-      # print( "[RTL2CLWrapper]: connecting method:", method_name, type( s.model.enq ) )
-      s.connect( callee_ifc, getattr( s.model, method_name ) )
+    for name, obj in rtl_model.__dict__.items():
+      if isinstance( obj, CalleeIfcRTL ):
+        added_ifc     = CalleeIfcCL()
+        added_adapter = CalleeRTL2CL( obj.MsgType, obj.RetType )
+        setattr( s, name, added_ifc )
+        setattr( s, name+"_adapter", added_adapter )
+
+        connect( added_ifc, added_adapter.cl_callee )
+        connect( added_adapter.rtl_caller, obj )
+
+        s.method_specs[ name ] = (obj.MsgType, obj.RetType)
 
   def line_trace( s ):
     return s.model.line_trace()
