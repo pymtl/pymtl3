@@ -9,6 +9,13 @@ Author : Yanghui Ou, Yixiao Zhang, Shunning Jiang
 """
 from pymtl3 import *
 
+"""
+notes:
+  Basically we hit the same circumstance when CL source sends a message to
+  an RTL design that has rdy depend on enable which is technically not
+  correct but for imported verilog design it is the case.
+"""
+
 
 #-------------------------------------------------------------------------
 # RTL2CLWrapper
@@ -25,7 +32,9 @@ class RTL2CLWrapper( Component ):
     s.model = rtl_model
     s.method_specs = {}
 
-    for name, obj in rtl_model.__dict__.items():
+    keys = sorted( rtl_model.__dict__.keys() )
+    for name in keys:
+      obj = rtl_model.__dict__[ name ]
       if isinstance( obj, CalleeIfcRTL ):
         added_ifc     = CalleeIfcCL()
         added_adapter = CalleeRTL2CL( obj.MsgType, obj.RetType )
@@ -65,11 +74,12 @@ class CalleeRTL2CL( Component ):
     s.cl_callee  = CalleeIfcCL( method=cl_callee, rdy=lambda: s.rdy )
 
     # This adapter always has ready and called block
+    # Set rdy before any rdy call
     @s.update
     def up_rdy():
       s.rdy = bool(s.rtl_caller.rdy)
 
-    s.add_constraints( U( up_rdy ) < M( s.cl_callee ) )
+    s.add_constraints( U( up_rdy ) < M( s.cl_callee.rdy ) )
 
     # We clear called flag before any method call
     @s.update

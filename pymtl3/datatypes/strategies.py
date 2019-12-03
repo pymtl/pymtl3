@@ -10,7 +10,7 @@ Author : Yanghui Ou
 import hypothesis
 from hypothesis import strategies as st
 
-from .bits_import import Bits
+from .bits_import import mk_bits
 
 #-------------------------------------------------------------------------
 # A generic bits strategy.
@@ -31,7 +31,7 @@ def bits( draw, nbits, signed=False, min_value=None, max_value=None ):
     assert min_value < max_value
     value = draw( st.integers(min_value, max_value) )
 
-  return Bits( nbits, value )
+  return mk_bits(nbits)( value )
 
 @st.composite
 def bitstruct( draw, Type ):

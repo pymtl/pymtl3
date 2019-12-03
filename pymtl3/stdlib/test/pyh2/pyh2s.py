@@ -47,8 +47,12 @@ class BaseStateMachine( RuleBasedStateMachine ):
   def __init__( s ):
     super( BaseStateMachine, s ).__init__()
 
-    s.dut = deepcopy( s.preconstruct_dut )
     s.ref = deepcopy( s.preconstruct_ref )
+    s.dut = deepcopy( s.preconstruct_dut )
+
+    # Elaborate ref
+    s.ref.apply( OpenLoopCLSim )
+    s.ref.sim_reset()
 
     def wrap_line_trace( top ):
       func = top.line_trace
@@ -66,9 +70,6 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.dut.apply( OpenLoopCLSim )
     s.dut.sim_reset()
 
-    # Elaborate ref
-    s.ref.apply( OpenLoopCLSim )
-    s.ref.sim_reset()
 
     # Print header
     print("\n"+"="*74)
@@ -102,16 +103,25 @@ class TestStateful( BaseStateMachine ):
 #-------------------------------------------------------------------------
 # Helper function that converts arg_strat_mapping into something easier to
 # process. For example:
-# { 'enq.msg' : pst.bits(16) } -> { 'enq': { 'msg' : pst.bits(16) } }
+# { ('enq') : pst.bits(16) } -> { 'enq': { 'msg' : pst.bits(16) } }
 # For now, we don't support just specifying one field of a bit struct. A
 # strategy for bit struct must be passed in as whole.
 
 def build_strategy_tree( custom_strategies ):
   ret = {}
+
   if custom_strategies is None:
     return ret
-  for name, strat in custom_strategies.items():
-    name = name.split( '.' )
+
+  for full_name, strat in custom_strategies.items():
+    if not isinstance( strat, SearchStrategy ):
+      raise TypeError( "Only strategy is allowed! Got {} for {}".format( type( strat ), name ) )
+
+    name = full_name.split( '.' )
+
+    assert len(name) > 2
+    assert name[1] == 'msg', "We only accept <method>.msg.xxx"
+
     cur = ret
     for x in name[:-1]:
       if x not in cur:
@@ -120,7 +130,7 @@ def build_strategy_tree( custom_strategies ):
         cur = tmp
     last_name = name[-1]
     assert last_name not in cur, "Strategy for a field and its subfield is not allowed."
-    cur[ last_name ] = last_name
+    cur[ last_name ] = strat
   return ret
 
 #-------------------------------------------------------------------------
@@ -147,8 +157,8 @@ dut has some problems in method '{name}':
 """
 
 mismatch_template = """
-mismatch found in method {method_name}:
-  - argument msg: {args}
+mismatch found in method {name}:
+  - argument msg: {msg}
   - ref returned: {ref_result}
   - dut returned: {dut_result}
 """
@@ -188,6 +198,7 @@ mismatch found in method '{name}_rdy':
       @rule() # FIXME
       @rename( name )
       def method_rule( s ):
+        msg = None
         dut_result = s.dut.__dict__[ name ]()
         ref_result = s.ref.__dict__[ name ]()
 
@@ -202,6 +213,7 @@ mismatch found in method '{name}_rdy':
       @rule() # FIXME
       @rename( name )
       def method_rule( s ):
+        msg = None
         dut_result = s.dut.__dict__[ name ]()
         ref_result = s.ref.__dict__[ name ]()
 
@@ -266,30 +278,23 @@ def create_test_state_machine( dut, ref, custom_strategy=None, cycle_accurate=Fa
 
   dut.elaborate()
 
-  if custom_strategy is not None:
-    for name, strat in custom_strategy.items():
-      # Sanity check
-      if not isinstance( strat, SearchStrategy ):
-        raise TypeError(
-          "Only strategy is allowed! Got {} for {}".format( type( strat ), name )
-        )
-
   try:
     method_specs = dut.method_specs
   except Exception:
     raise "No method specs specified. Did you wrap the RTL model?"
 
-  # Process the custom strategy mapping and check the interface names
+  # Process the custom strategy mapping and perform checks
+
   custom_strategy_tree = build_strategy_tree( custom_strategy )
-  for x in custom_strategy_tree:
-    assert x in method_specs, f"{x} is not a method-based interface for DUT."
+
+  for name in custom_strategy_tree:
+    assert name in method_specs, f"{name} is not a method-based interface for DUT."
+    MsgType, _ = method_specs[ name ]
+    if MsgType is None:
+      raise f"Custom strategy cannot be applied to method {name} that doesn't take any argument."
 
   for name, (MsgType, RetType) in method_specs.items():
-    ifc_tree = custom_strategy_tree.get( name ) # None if doesn't exit
-
-    if MsgType is None:
-      if ifc_tree is not None:
-        raise f"Custom strategy cannot be applied to method {name} that doesn't take any argument."
+    ifc_tree = custom_strategy_tree.get( name ) # None if no custom
 
     method_rule, method_rdy = mk_rule( name, MsgType, RetType, ifc_tree, cycle_accurate )
     setattr( Test, name, method_rule )

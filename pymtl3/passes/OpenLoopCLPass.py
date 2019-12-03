@@ -69,10 +69,14 @@ class OpenLoopCLPass( BasePass ):
     # interface to the actual method and set up method-rdy mapping
     for x in top_level_nb_ifcs:
       V.add( x.method )
+      V.add( x.rdy )
       method_guard_mapping [x.method] = x.rdy
       m = get_raw_method( x.method )
+      r = get_raw_method( x.rdy )
+
       assert m not in method_callee_mapping
       method_callee_mapping[m] = x.method
+      method_callee_mapping[r] = x.rdy
 
     E   = top._dag.all_constraints
     G   = { v: [] for v in V }
@@ -216,7 +220,7 @@ class OpenLoopCLPass( BasePass ):
       u = None
       for i in range(len(Q)):
         if len(SCCs[Q[i]]) == 1:
-          if list_version_of_SCCs[Q[i]][0] not in method_guard_mapping:
+          if list_version_of_SCCs[Q[i]][0] not in method_callee_mapping:
             u = Q.pop(i)
             break
 
@@ -249,7 +253,6 @@ class OpenLoopCLPass( BasePass ):
         # We add the corresponding rdy before the method
 
         if u in method_guard_mapping:
-          schedule.append( method_guard_mapping[ u ] )
           top.top_level_nb_ifcs.append( u.get_parent_object() )
 
         schedule.append( u )
@@ -471,4 +474,6 @@ class OpenLoopCLPass( BasePass ):
         blk()
     top.tick = normal_tick
 
+    for x in schedule:
+      print(x)
     return schedule
