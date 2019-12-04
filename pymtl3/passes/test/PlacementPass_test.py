@@ -55,28 +55,32 @@ class BigRoom( Component ):
 
 class House( Component ):
   def construct( s, big_room_count, wall_count, small_room_count):
-    s.big_room_count = big_room_count
-    s.wall_count = wall_count
+    s.big_room_count   = big_room_count
+    s.wall_count       = wall_count
     s.small_room_count = small_room_count
-    s.big_rooms   = [ BigRoom( i )   for i in range( big_room_count ) ]
-    s.walls       = [ Wall( i )      for i in range( wall_count ) ]
+
+    s.big_rooms   = [ BigRoom  ( i ) for i in range( big_room_count   ) ]
+    s.walls       = [ Wall     ( i ) for i in range( wall_count       ) ]
     s.small_rooms = [ SmallRoom( i ) for i in range( small_room_count ) ]
 
   def place( s, grid ):
     s.component_name = "house"
-    s.sub_grids = grid.divide( rows = 3, cols = 1 )
-
-    big_room_grids   = s.sub_grids[0][0].divide( rows = 1,
-                       cols = s.big_room_count )
+    s.sub_grids      = grid.divide( rows = 3, cols = 1 )
+    big_room_grids   = s.sub_grids[0][0].divide\
+                       ( 
+                         rows = 1,
+                         cols = s.big_room_count 
+                       )
     wall_grids       = s.sub_grids[1]
-    small_room_grids = s.sub_grids[2][0].divide( rows = 1,
-                       cols = s.small_room_count )
+    small_room_grids = s.sub_grids[2][0].divide\
+                       ( 
+                         rows = 1,
+                         cols = s.small_room_count 
+                       )
 
     for i in range( s.big_room_count ):
       s.big_rooms[i].place( big_room_grids[0][i] )
-
     s.walls[0].place( wall_grids[0] )
-
     for i in range( s.small_room_count ):
       s.small_rooms[i].place( small_room_grids[0][i] )
 

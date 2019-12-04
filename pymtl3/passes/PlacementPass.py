@@ -10,11 +10,11 @@ from pymtl3.passes.BasePass import BasePass
 from collections            import deque
 from pymtl3.passes.Grid     import Grid
 
-def calculateDFS( grid ):
+def updateDim( grid ):
   for r in range( len( grid.sub_grids ) ):
     for c in range( len( grid.sub_grids[r] ) ):
       if not grid.sub_grids[r][c].isLeaf:
-        calculateDFS( grid.sub_grids[r][c] )
+        updateDim( grid.sub_grids[r][c] )
       grid.sub_grids[r][c].parent.updateChildDim(
           grid.sub_grids[r][c].dim_w,
           grid.sub_grids[r][c].dim_h )
@@ -28,6 +28,13 @@ class PlacementPass( BasePass ):
       return
 
     all_components = sorted( top.get_all_components(), key=repr )
+    print( top.get_child_components() )
+    print( "*************" )
+    for comp in top.get_child_components():
+      print( "see my_name: ", comp._dsl.my_name )
+      print( "see full_name: ", comp._dsl.full_name )
+      print( "see _my_name: ", comp._dsl._my_name )
+      print( "see _my_indices: ", comp._dsl._my_indices )
 #    all_components.reverse()
 #    for c in all_components:
 #      if hasattr( c, "place" ):
@@ -35,7 +42,7 @@ class PlacementPass( BasePass ):
     top_grid  = Grid( row_id=0, col_id=0 )
     top.place( top_grid )
 
-    calculateDFS( top_grid )
+    updateDim( top_grid )
 
     print( "============= top =============" )
     print( "[top] house x: ", top_grid.dim_x )
