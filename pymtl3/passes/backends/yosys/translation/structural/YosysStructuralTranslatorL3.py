@@ -6,11 +6,11 @@
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL3 import (
+from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL3 import (
     SVStructuralTranslatorL3,
 )
-from pymtl3.passes.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.sverilog.util.utility import make_indent
 
 from .YosysStructuralTranslatorL2 import YosysStructuralTranslatorL2
 

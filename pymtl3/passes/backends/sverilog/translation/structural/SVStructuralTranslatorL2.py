@@ -4,8 +4,8 @@
 """Provide SystemVerilog structural translator implementation."""
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.sverilog.util.utility import make_indent
-from pymtl3.passes.translator.structural.StructuralTranslatorL2 import (
+from ...util.utility import make_indent
+from pymtl3.passes.backends.generic.structural.StructuralTranslatorL2 import (
     StructuralTranslatorL2,
 )
 

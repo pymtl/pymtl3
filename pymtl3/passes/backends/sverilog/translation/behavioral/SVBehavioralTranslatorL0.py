@@ -5,7 +5,7 @@
 # Date   : March 18, 2019
 """Provide the level 0 SystemVerilog translator implementation."""
 
-from pymtl3.passes.translator.behavioral.BehavioralTranslatorL0 import (
+from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL0 import (
     BehavioralTranslatorL0,
 )
 

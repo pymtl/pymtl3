@@ -6,10 +6,10 @@
 from pymtl3.datatypes import Bits1, Bits32, Bits96, bitstruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+from ..structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
 )
-from pymtl3.passes.sverilog.translation.SVTranslator import SVTranslator
+from ..SVTranslator import SVTranslator
 
 
 def local_do_test( m ):

@@ -9,10 +9,10 @@ from pymtl3.datatypes import Bits32
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
+from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
     is_sverilog_reserved,
 )
-from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL4_test import (
+from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL4_test import (
     test_interface,
     test_interface_index,
 )

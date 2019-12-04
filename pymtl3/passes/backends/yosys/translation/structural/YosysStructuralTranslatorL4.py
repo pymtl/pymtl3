@@ -5,11 +5,11 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.sverilog.translation.structural.SVStructuralTranslatorL4 import (
+from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL4 import (
     SVStructuralTranslatorL4,
 )
-from pymtl3.passes.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.sverilog.util.utility import make_indent
 
 from .YosysStructuralTranslatorL3 import YosysStructuralTranslatorL3
 

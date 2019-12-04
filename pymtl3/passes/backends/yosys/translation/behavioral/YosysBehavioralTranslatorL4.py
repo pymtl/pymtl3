@@ -6,7 +6,7 @@
 """Provide the yosys-compatible SystemVerilog L4 behavioral translator."""
 
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL4 import (
+from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL4 import (
     BehavioralRTLIRToSVVisitorL4,
     SVBehavioralTranslatorL4,
 )

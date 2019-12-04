@@ -7,7 +7,7 @@
 
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.import_.test.SVNameMangle_test import (
+from pymtl3.passes.backends.sverilog.import_.test.SVNameMangle_test import (
     test_interface,
     test_interface_array,
     test_nested_interface,
@@ -20,7 +20,7 @@ from pymtl3.passes.sverilog.import_.test.SVNameMangle_test import (
     test_struct_port_array,
     test_struct_port_single,
 )
-from pymtl3.passes.yosys.import_.ImportPass import ImportPass
+from ..ImportPass import ImportPass
 
 
 def local_do_test( m ):

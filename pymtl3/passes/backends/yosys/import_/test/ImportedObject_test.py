@@ -6,8 +6,8 @@
 """Test if the imported object works correctly."""
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.import_.test.ImportedObject_test import test_adder, test_reg
-from pymtl3.passes.yosys.import_.ImportPass import ImportPass
+from pymtl3.passes.backends.sverilog.import_.test.ImportedObject_test import test_adder, test_reg
+from ..ImportPass import ImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 

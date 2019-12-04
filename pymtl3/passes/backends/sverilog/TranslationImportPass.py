@@ -3,14 +3,14 @@
 #=========================================================================
 # Translate and import components having the `sverilog_translate_import`
 # attribute.
-# 
+#
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
 from pymtl3.passes.BasePass import BasePass
-from pymtl3.passes.sverilog.import_.ImportConfigs import ImportConfigs
-from pymtl3.passes.sverilog.import_.ImportPass import ImportPass
-from pymtl3.passes.sverilog.translation.TranslationPass import TranslationPass
+from .import_.ImportConfigs import ImportConfigs
+from .import_.ImportPass import ImportPass
+from .translation.TranslationPass import TranslationPass
 
 
 class TranslationImportPass( BasePass ):

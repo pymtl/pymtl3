@@ -15,7 +15,7 @@ from pymtl3.passes.PassConfigs import BasePassConfigs
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
-from pymtl3.passes.sverilog.util.utility import expand, get_component_unique_name
+from ..util.utility import expand, get_component_unique_name
 
 
 class ImportConfigs( BasePassConfigs ):
@@ -254,7 +254,7 @@ class ImportConfigs( BasePassConfigs ):
 
     all_opts = [
       top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
-      stmt_unroll, trace, warnings, flist, src, coverage, 
+      stmt_unroll, trace, warnings, flist, src, coverage,
       line_cov, toggle_cov,
     ]
 
@@ -282,7 +282,7 @@ class ImportConfigs( BasePassConfigs ):
 
     # Check if the keys of `port_map` are port names of `m`
     # Note that the keys can be expressions such as `ifc[0].foo` and
-    # therefore we do not check if a port name of `m` is in the keys. 
+    # therefore we do not check if a port name of `m` is in the keys.
     if s.get_option("port_map"):
       s.check_p_map( rtype )
 

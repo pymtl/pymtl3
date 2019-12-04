@@ -46,7 +46,7 @@ class TestVectorSimulator:
 
   def run_test( self ):
 
-    self.model.apply( SimpleSim )
+    self.model.apply( SimulationPass() )
 
     self.model.sim_reset()
 

@@ -5,7 +5,7 @@
 # Date   : March 15, 2019
 """Provide SystemVerilog translator."""
 
-from pymtl3.passes.translator import RTLIRTranslator
+from pymtl3.passes.backends.generic import RTLIRTranslator
 
 from .behavioral import SVBehavioralTranslator as SV_BTranslator
 from .structural import SVStructuralTranslator as SV_STranslator

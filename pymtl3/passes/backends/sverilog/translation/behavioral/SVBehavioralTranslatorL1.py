@@ -10,9 +10,9 @@ from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.sverilog.util.utility import make_indent
-from pymtl3.passes.translator.behavioral.BehavioralTranslatorL1 import (
+from ...errors import SVerilogTranslationError
+from ...util.utility import make_indent
+from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL1 import (
     BehavioralTranslatorL1,
 )
 

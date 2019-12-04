@@ -10,10 +10,10 @@ from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
-from pymtl3.passes.sverilog import ImportConfigs
-from pymtl3.passes.sverilog import ImportPass as SVerilogImportPass
-from pymtl3.passes.sverilog.errors import SVerilogImportError
-from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
+from pymtl3.passes.backends.sverilog import ImportConfigs
+from pymtl3.passes.backends.sverilog import ImportPass as SVerilogImportPass
+from pymtl3.passes.backends.sverilog.errors import SVerilogImportError
+from pymtl3.passes.backends.sverilog.util.utility import get_component_unique_name, make_indent
 
 
 class ImportPass( SVerilogImportPass ):

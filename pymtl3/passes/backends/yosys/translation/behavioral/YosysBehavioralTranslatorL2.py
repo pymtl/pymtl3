@@ -5,11 +5,11 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L2 behavioral translator."""
 
-from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
+from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
     SVBehavioralTranslatorL2,
 )
-from pymtl3.passes.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.sverilog.util.utility import make_indent
 
 from .YosysBehavioralTranslatorL1 import (
     YosysBehavioralRTLIRToSVVisitorL1,

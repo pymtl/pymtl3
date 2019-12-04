@@ -5,9 +5,9 @@
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.sverilog.errors import SVerilogReservedKeywordError
-from pymtl3.passes.sverilog.util.utility import get_component_unique_name, make_indent
-from pymtl3.passes.translator.structural.StructuralTranslatorL1 import (
+from ...errors import SVerilogReservedKeywordError
+from ...util.utility import get_component_unique_name, make_indent
+from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
 

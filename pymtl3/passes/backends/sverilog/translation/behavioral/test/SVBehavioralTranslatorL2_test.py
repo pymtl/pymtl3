@@ -17,9 +17,7 @@ from pymtl3.datatypes import (
 from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
-    BehavioralRTLIRToSVVisitorL2,
-)
+from ..SVBehavioralTranslatorL2 import BehavioralRTLIRToSVVisitorL2
 
 from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
 

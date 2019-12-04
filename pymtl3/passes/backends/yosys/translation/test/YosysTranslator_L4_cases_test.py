@@ -6,15 +6,15 @@
 import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
 )
-from pymtl3.passes.sverilog.translation.test.SVTranslator_L4_cases_test import (
+from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L4_cases_test import (
     test_sub_component_attr,
     test_subcomponent,
     test_subcomponent_index,
 )
-from pymtl3.passes.yosys.translation.YosysTranslator import YosysTranslator
+from ..YosysTranslator import YosysTranslator
 
 
 def trim( src ):

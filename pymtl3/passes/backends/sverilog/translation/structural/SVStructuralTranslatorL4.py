@@ -5,8 +5,8 @@
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.util.utility import make_indent
-from pymtl3.passes.translator.structural.StructuralTranslatorL4 import (
+from ...util.utility import make_indent
+from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
 

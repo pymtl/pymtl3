@@ -14,8 +14,8 @@ from pymtl3.datatypes import Bits1, mk_bits
 from pymtl3.dsl import OutPort
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog import TranslationImportPass as SVTransImportPass
-from pymtl3.passes.yosys import TranslationImportPass as YosysTransImportPass
+from .. import TranslationImportPass as SVTransImportPass
+from ...yosys import TranslationImportPass as YosysTransImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 

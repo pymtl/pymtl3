@@ -7,11 +7,11 @@
 
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
+from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
     is_sverilog_reserved,
 )
-from pymtl3.passes.sverilog.translation.behavioral.test.SVBehavioralTranslatorL3_test import (
+from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL3_test import (
     test_nested_struct,
     test_packed_array_behavioral,
     test_struct,

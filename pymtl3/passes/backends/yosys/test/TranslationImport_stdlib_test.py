@@ -13,7 +13,7 @@ finishing each test (no matter it fails or passes).
 """
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.test.TranslationImport_stdlib_test import (
+from pymtl3.passes.backends.sverilog.test.TranslationImport_stdlib_test import (
     test_2entry_normal_Bits,
     test_3entry_normal_Bits,
     test_arbiter_rr_arb_4,
@@ -24,7 +24,7 @@ from pymtl3.passes.sverilog.test.TranslationImport_stdlib_test import (
     test_normal_Bits,
     test_pipe_Bits,
 )
-from pymtl3.passes.yosys import TranslationImportPass
+from ..TranslationImportPass import TranslationImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
 

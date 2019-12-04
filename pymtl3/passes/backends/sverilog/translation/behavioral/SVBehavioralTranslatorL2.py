@@ -7,8 +7,8 @@
 
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.util.utility import make_indent
-from pymtl3.passes.translator.behavioral.BehavioralTranslatorL2 import (
+from ...util.utility import make_indent
+from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL2 import (
     BehavioralTranslatorL2,
 )
 

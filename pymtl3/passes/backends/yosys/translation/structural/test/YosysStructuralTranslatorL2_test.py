@@ -6,18 +6,18 @@
 """Test the level 2 yosys-SystemVerilog structural translator."""
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
+from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
     is_sverilog_reserved,
 )
-from pymtl3.passes.sverilog.translation.structural.test.SVStructuralTranslatorL2_test import (
+from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL2_test import (
     test_nested_struct_port,
     test_packed_array,
     test_struct_const_structural,
     test_struct_packed_array,
     test_struct_port,
 )
-from pymtl3.passes.yosys.translation.structural.YosysStructuralTranslatorL2 import (
+from ..YosysStructuralTranslatorL2 import (
     YosysStructuralTranslatorL2,
 )
 

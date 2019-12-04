@@ -6,7 +6,7 @@
 """Closed-loop test cases for translation-import with component."""
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.sverilog.test.TranslationImport_closed_loop_component_test import (
+from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_component_test import (
     test_adder,
     test_index_static,
     test_mux,
@@ -14,7 +14,7 @@ from pymtl3.passes.sverilog.test.TranslationImport_closed_loop_component_test im
     test_struct,
     test_subcomp,
 )
-from pymtl3.passes.sverilog.util.test_utility import closed_loop_component_test
+from pymtl3.passes.backends.sverilog.util.test_utility import closed_loop_component_test
 
 
 def local_do_test( m ):

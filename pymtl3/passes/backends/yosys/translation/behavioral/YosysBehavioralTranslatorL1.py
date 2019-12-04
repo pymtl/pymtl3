@@ -9,12 +9,12 @@ from pymtl3.datatypes import Bits, is_bitstruct_inst
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL1 import (
+from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL1 import (
     BehavioralRTLIRToSVVisitorL1,
     SVBehavioralTranslatorL1,
 )
-from pymtl3.passes.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.sverilog.util.utility import make_indent
 
 
 class YosysBehavioralTranslatorL1( SVBehavioralTranslatorL1 ):

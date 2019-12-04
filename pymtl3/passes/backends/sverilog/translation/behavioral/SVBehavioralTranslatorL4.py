@@ -6,8 +6,8 @@
 """Provide the level 4 SystemVerilog translator implementation."""
 
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.translator.behavioral.BehavioralTranslatorL4 import (
+from ...errors import SVerilogTranslationError
+from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL4 import (
     BehavioralTranslatorL4,
 )
 

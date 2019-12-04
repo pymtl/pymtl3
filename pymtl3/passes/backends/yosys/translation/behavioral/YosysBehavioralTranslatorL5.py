@@ -7,7 +7,7 @@
 
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.sverilog.translation.behavioral.SVBehavioralTranslatorL5 import (
+from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL5 import (
     BehavioralRTLIRToSVVisitorL5,
     SVBehavioralTranslatorL5,
 )

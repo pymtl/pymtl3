@@ -3,15 +3,15 @@
 #=========================================================================
 # Translate and import components having the `yosys_translate_import`
 # attribute.
-# 
+#
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
-from pymtl3.passes.sverilog.TranslationImportPass import (
+from pymtl3.passes.backends.sverilog.TranslationImportPass import (
     TranslationImportPass as SVerilogTranslationImportPass,
 )
-from pymtl3.passes.yosys.import_.ImportPass import ImportPass
-from pymtl3.passes.yosys.translation.TranslationPass import TranslationPass
+from .import_.ImportPass import ImportPass
+from .translation.TranslationPass import TranslationPass
 
 
 class TranslationImportPass( SVerilogTranslationImportPass ):
