@@ -9,7 +9,6 @@ Date   : Dec 26, 2018
 """
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.BasePass import BasePass
-
 from pymtl3.passes.errors import PassOrderError
 
 

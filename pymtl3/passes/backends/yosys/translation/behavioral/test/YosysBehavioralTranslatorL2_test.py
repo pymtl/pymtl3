@@ -5,8 +5,6 @@
 # Date   : June 9, 2019
 """Test the SystemVerilog translator implementation."""
 
-from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
     is_sverilog_reserved,
 )
@@ -25,6 +23,8 @@ from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTra
     test_reduce,
     test_tmpvar,
 )
+from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
+from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..YosysBehavioralTranslatorL2 import YosysBehavioralRTLIRToSVVisitorL2
 

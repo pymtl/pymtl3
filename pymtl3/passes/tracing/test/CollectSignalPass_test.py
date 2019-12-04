@@ -7,7 +7,7 @@
 # Author : Kaishuo Cheng
 # Date   : Oct 8th, 2019
 
-from pymtl3.datatypes import b32, Bits32
+from pymtl3.datatypes import Bits32, b32
 from pymtl3.dsl import *
 from pymtl3.passes.PassGroups import SimulationPass
 

@@ -8,6 +8,7 @@
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
+
 from ..DynamicSchedulePass import DynamicSchedulePass
 from ..GenDAGPass import GenDAGPass
 from ..SimpleSchedulePass import SimpleSchedulePass

@@ -5,8 +5,6 @@
 # Date   : June 15, 2019
 """Test the SystemVerilog name mangling."""
 
-from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.sverilog.import_.test.SVNameMangle_test import (
     test_interface,
     test_interface_array,
@@ -20,6 +18,9 @@ from pymtl3.passes.backends.sverilog.import_.test.SVNameMangle_test import (
     test_struct_port_array,
     test_struct_port_single,
 )
+from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir.util.test_utility import do_test
+
 from ..ImportPass import ImportPass
 
 

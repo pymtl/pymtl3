@@ -5,7 +5,6 @@
 
 import pytest
 
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
 )
@@ -15,6 +14,8 @@ from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L3_cases_test
     test_interface_index,
     test_multi_ifc_decls,
 )
+from pymtl3.passes.rtlir.util.test_utility import do_test
+
 from ..YosysTranslator import YosysTranslator
 
 

@@ -5,7 +5,6 @@
 # Date   : Jun 15, 2019
 """Test ad-hoc components with yosys-SystemVerilog translation and import."""
 
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.sverilog.test.TranslationImport_adhoc_test import (
     test_bit_selection,
     test_comb_assign,
@@ -56,8 +55,10 @@ from pymtl3.passes.backends.sverilog.test.TranslationImport_adhoc_test import (
     test_unpacked_signal_index,
     test_zext,
 )
-from ..TranslationImportPass import TranslationImportPass
+from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
+
+from ..TranslationImportPass import TranslationImportPass
 
 
 def local_do_test( _m ):

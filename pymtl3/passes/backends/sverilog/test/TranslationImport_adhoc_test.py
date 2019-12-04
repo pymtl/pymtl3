@@ -6,9 +6,9 @@
 """Test ad-hoc components with SystemVerilog translation and import."""
 
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from .. import TranslationImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
 
+from .. import TranslationImportPass
 from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import (
     test_bit_selection,
     test_comb_assign,

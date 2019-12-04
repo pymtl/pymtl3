@@ -12,8 +12,8 @@ from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
-from ..StructuralTranslatorL2 import StructuralTranslatorL2
 
+from ..StructuralTranslatorL2 import StructuralTranslatorL2
 from .TestStructuralTranslator import mk_TestStructuralTranslator
 
 

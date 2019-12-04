@@ -11,7 +11,6 @@ Date   : May 20, 2019
 from greenlet import greenlet
 
 from pymtl3.dsl.errors import UpblkCyclicError
-
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
 

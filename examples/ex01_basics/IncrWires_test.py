@@ -64,7 +64,7 @@ class IncrWires( Component ):
 
 def test_wires():
   incr = IncrWires()
-  incr.apply( SimpleSim )
+  incr.apply( SimulationPass() )
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )

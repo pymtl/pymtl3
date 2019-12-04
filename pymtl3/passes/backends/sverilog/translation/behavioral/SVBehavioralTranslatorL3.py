@@ -5,13 +5,13 @@
 # Date   : March 18, 2019
 """Provide the level 3 SystemVerilog translator implementation."""
 
-from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.rtlir import RTLIRType as rt
-from ...errors import SVerilogTranslationError
 from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL3 import (
     BehavioralTranslatorL3,
 )
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
 
+from ...errors import SVerilogTranslationError
 from .SVBehavioralTranslatorL2 import (
     BehavioralRTLIRToSVVisitorL2,
     SVBehavioralTranslatorL2,

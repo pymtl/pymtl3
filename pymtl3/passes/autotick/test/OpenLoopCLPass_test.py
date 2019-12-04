@@ -10,6 +10,7 @@ from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.sim.GenDAGPass import GenDAGPass
+
 from ..OpenLoopCLPass import OpenLoopCLPass
 
 

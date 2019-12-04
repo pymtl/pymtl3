@@ -14,12 +14,18 @@ finishing each test (no matter it fails or passes).
 
 from pymtl3.datatypes import Bits1, clog2, mk_bits
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from ..TranslationImportPass import TranslationImportPass
-from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_4 as _rr_arb_4, test_rr_arb_en_4 as _rr_arb_en_4
+from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_4 as _rr_arb_4
+from pymtl3.stdlib.rtl.arbiters_test import test_rr_arb_en_4 as _rr_arb_en_4
 from pymtl3.stdlib.rtl.Crossbar_test import test_crossbar3 as _crossbar3
 from pymtl3.stdlib.rtl.Encoder_test import test_encoder_5_directed as _encoder5
-from pymtl3.stdlib.rtl.valrdy_queues_test import test_2entry_normal_Bits as _n2, test_3entry_normal_Bits as _n3, test_bypass_Bits as _bypass_Bits, test_normal_Bits as _normal_Bits, test_pipe_Bits as _pipe_Bits
+from pymtl3.stdlib.rtl.valrdy_queues_test import test_2entry_normal_Bits as _n2
+from pymtl3.stdlib.rtl.valrdy_queues_test import test_3entry_normal_Bits as _n3
+from pymtl3.stdlib.rtl.valrdy_queues_test import test_bypass_Bits as _bypass_Bits
+from pymtl3.stdlib.rtl.valrdy_queues_test import test_normal_Bits as _normal_Bits
+from pymtl3.stdlib.rtl.valrdy_queues_test import test_pipe_Bits as _pipe_Bits
 from pymtl3.stdlib.test import TestVectorSimulator
+
+from ..TranslationImportPass import TranslationImportPass
 
 
 def local_do_test( _m ):

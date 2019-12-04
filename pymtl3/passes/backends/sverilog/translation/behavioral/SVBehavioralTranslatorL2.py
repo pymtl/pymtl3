@@ -5,13 +5,13 @@
 # Date   : March 18, 2019
 """Provide the level 2 SystemVerilog translator implementation."""
 
-from pymtl3.passes.rtlir import BehavioralRTLIR as bir
-from pymtl3.passes.rtlir import RTLIRType as rt
-from ...util.utility import make_indent
 from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL2 import (
     BehavioralTranslatorL2,
 )
+from pymtl3.passes.rtlir import BehavioralRTLIR as bir
+from pymtl3.passes.rtlir import RTLIRType as rt
 
+from ...util.utility import make_indent
 from .SVBehavioralTranslatorL1 import (
     BehavioralRTLIRToSVVisitorL1,
     SVBehavioralTranslatorL1,

@@ -15,7 +15,6 @@ import py
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-
 from pymtl3.passes.errors import ModelTypeError, PassOrderError
 
 

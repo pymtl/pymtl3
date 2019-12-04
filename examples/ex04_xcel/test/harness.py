@@ -153,7 +153,7 @@ def run_test( ProcModel, XcelModel, gen_test, dump_vcd=None,
 
   # Run the simulation
 
-  th.apply( SimpleSim[1:] )
+  th.apply( SimulationPass() )
   th.sim_reset()
 
   print()

@@ -8,6 +8,7 @@
 #   Date : 29 May, 2019
 """
 from pymtl3.dsl import *
+
 from ..LineTraceParamPass import LineTraceParamPass
 
 

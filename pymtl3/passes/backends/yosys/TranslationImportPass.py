@@ -10,6 +10,7 @@
 from pymtl3.passes.backends.sverilog.TranslationImportPass import (
     TranslationImportPass as SVerilogTranslationImportPass,
 )
+
 from .import_.ImportPass import ImportPass
 from .translation.TranslationPass import TranslationPass
 

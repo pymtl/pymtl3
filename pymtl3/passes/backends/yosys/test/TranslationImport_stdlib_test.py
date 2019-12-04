@@ -12,7 +12,6 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.sverilog.test.TranslationImport_stdlib_test import (
     test_2entry_normal_Bits,
     test_3entry_normal_Bits,
@@ -24,8 +23,10 @@ from pymtl3.passes.backends.sverilog.test.TranslationImport_stdlib_test import (
     test_normal_Bits,
     test_pipe_Bits,
 )
-from ..TranslationImportPass import TranslationImportPass
+from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
+
+from ..TranslationImportPass import TranslationImportPass
 
 
 def local_do_test( _m ):

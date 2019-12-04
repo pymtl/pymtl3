@@ -1,7 +1,6 @@
 from .HeuristicTopoPass import HeuristicTopoPass
 from .TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .UnrollTickPass import UnrollTickPass
-from pymtl3.passes.basic import
 
 UnrollSim = [
   Component.elaborate,

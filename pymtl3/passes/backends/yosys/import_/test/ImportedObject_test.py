@@ -5,10 +5,14 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
+from pymtl3.passes.backends.sverilog.import_.test.ImportedObject_test import (
+    test_adder,
+    test_reg,
+)
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from pymtl3.passes.backends.sverilog.import_.test.ImportedObject_test import test_adder, test_reg
-from ..ImportPass import ImportPass
 from pymtl3.stdlib.test import TestVectorSimulator
+
+from ..ImportPass import ImportPass
 
 
 def local_do_test( _m ):

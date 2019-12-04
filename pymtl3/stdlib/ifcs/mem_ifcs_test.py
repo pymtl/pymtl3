@@ -128,7 +128,7 @@ def test_mem_fl_cl_adapter():
 
   # Create a simulator
 
-  th.apply( SimpleSim )
+  th.apply( SimulationPass() )
 
   # Run simulation
 

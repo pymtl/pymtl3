@@ -5,8 +5,8 @@
 # Date   : June 8, 2019
 """Provide yosys-compatible SystemVerilog translator."""
 
-from pymtl3.passes.backends.sverilog.translation.SVTranslator import mk_SVTranslator
 from pymtl3.passes.backends.generic import RTLIRTranslator
+from pymtl3.passes.backends.sverilog.translation.SVTranslator import mk_SVTranslator
 
 from .behavioral import YosysBehavioralTranslator as Yosys_BTranslator
 from .structural import YosysStructuralTranslator as Yosys_STranslator

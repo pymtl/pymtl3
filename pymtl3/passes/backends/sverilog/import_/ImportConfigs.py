@@ -15,6 +15,7 @@ from pymtl3.passes.PassConfigs import BasePassConfigs
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
+
 from ..util.utility import expand, get_component_unique_name
 
 

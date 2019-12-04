@@ -5,11 +5,11 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL2 import (
     SVStructuralTranslatorL2,
 )
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
 from .YosysStructuralTranslatorL1 import YosysStructuralTranslatorL1
 

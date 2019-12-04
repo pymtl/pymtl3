@@ -7,7 +7,6 @@
 #   Date : May 29, 2019
 
 from pymtl3.dsl import *
-
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 

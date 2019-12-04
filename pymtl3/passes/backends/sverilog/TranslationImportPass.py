@@ -8,6 +8,7 @@
 # Date   : Aug 6, 2019
 
 from pymtl3.passes.BasePass import BasePass
+
 from .import_.ImportConfigs import ImportConfigs
 from .import_.ImportPass import ImportPass
 from .translation.TranslationPass import TranslationPass

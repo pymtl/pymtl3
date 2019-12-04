@@ -14,7 +14,6 @@ from linecache import cache as line_cache
 from pymtl3.datatypes import *
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
-
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 

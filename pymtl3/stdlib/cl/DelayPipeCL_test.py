@@ -52,12 +52,11 @@ def run_cl_sim( th, max_cycles=5000 ):
 
   # Create a simulator
 
-  th.apply( SimpleSim )
+  th.apply( SimulationPass() )
 
   # Reset model
 
-  #  sim.reset()
-  #  print()
+  th.reset()
 
   # Run simulation
 

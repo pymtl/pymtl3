@@ -8,8 +8,8 @@
 from pymtl3.datatypes import Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from ..BehavioralTranslatorL4 import BehavioralTranslatorL4
 
+from ..BehavioralTranslatorL4 import BehavioralTranslatorL4
 from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 

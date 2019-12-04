@@ -8,10 +8,9 @@
 from pymtl3.datatypes import Bits1, Bits4, Bits32
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
-from ..SVStructuralTranslatorL1 import (
-    SVStructuralTranslatorL1,
-)
+
 from ...SVTranslator import sverilog_reserved
+from ..SVStructuralTranslatorL1 import SVStructuralTranslatorL1
 
 
 def is_sverilog_reserved( s, name ):

@@ -13,7 +13,6 @@ from collections import defaultdict
 from pymtl3.datatypes import Bits, concat, get_nbits, to_bits
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-
 from pymtl3.passes.errors import PassOrderError
 
 

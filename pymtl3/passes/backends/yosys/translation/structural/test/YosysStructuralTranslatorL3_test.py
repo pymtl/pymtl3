@@ -7,7 +7,6 @@
 
 from pymtl3.datatypes import Bits1, Bits32, bitstruct
 from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
     check_eq,
     is_sverilog_reserved,
@@ -16,9 +15,9 @@ from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTra
     test_ifc_decls,
     test_multi_ifc_decls,
 )
-from ..YosysStructuralTranslatorL3 import (
-    YosysStructuralTranslatorL3,
-)
+from pymtl3.passes.rtlir.util.test_utility import do_test
+
+from ..YosysStructuralTranslatorL3 import YosysStructuralTranslatorL3
 
 
 def local_do_test( m ):

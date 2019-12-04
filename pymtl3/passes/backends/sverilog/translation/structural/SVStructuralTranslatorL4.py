@@ -3,13 +3,13 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.rtlir import RTLIRType as rt
-from ...util.utility import make_indent
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
 
+from ...util.utility import make_indent
 from .SVStructuralTranslatorL3 import SVStructuralTranslatorL3
 
 
