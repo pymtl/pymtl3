@@ -31,6 +31,7 @@ from pymtl3.passes.sverilog.translation.test.SVTranslator_L2_cases_test import (
     test_struct,
     test_struct_packed_array,
     test_struct_port,
+    test_struct_uniqueness,
     test_tmpvar,
 )
 from pymtl3.passes.yosys.translation.YosysTranslator import YosysTranslator

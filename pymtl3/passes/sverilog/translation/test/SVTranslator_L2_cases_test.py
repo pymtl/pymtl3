@@ -3,6 +3,8 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
+import pytest
+
 from pymtl3.datatypes import Bits1, Bits16, Bits32, Bits96, bitstruct, concat
 from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -1414,6 +1416,82 @@ def test_const_struct( do_test ):
     def construct( s ):
       s.out = OutPort( COMB )
       connect( s.out, COMB(ST(1, 2), ST(3, 4)) )
+  a = Top()
+  a._ref_src = \
+"""
+typedef struct packed {
+  logic [15:0] foo;
+  logic [31:0] bar;
+} ST;
+
+typedef struct packed {
+  ST fst;
+  ST snd;
+} COMB;
+
+module Top
+(
+  input logic [0:0] clk,
+  output COMB out,
+  input logic [0:0] reset
+);
+
+  assign out = { { 16'd1, 32'd2 }, { 16'd3, 32'd4 } };
+
+endmodule
+"""
+  a._ref_src_yosys = \
+"""
+module Top
+(
+  input logic [0:0] clk,
+  output logic [15:0] out__fst__foo,
+  output logic [31:0] out__fst__bar,
+  output logic [15:0] out__snd__foo,
+  output logic [31:0] out__snd__bar,
+  input logic [0:0] reset
+);
+  logic [47:0]  out__fst;
+  logic [47:0]  out__snd;
+  logic [95:0]  out;
+
+  assign out__fst__foo = out__fst[47:32];
+  assign out__fst__bar = out__fst[31:0];
+  assign out__snd__foo = out__snd[47:32];
+  assign out__snd__bar = out__snd[31:0];
+  assign out__fst__foo = out[95:80];
+  assign out__fst__bar = out[79:48];
+  assign out__snd__foo = out[47:32];
+  assign out__snd__bar = out[31:0];
+  assign out = { { 16'd1, 32'd2 }, { 16'd3, 32'd4 } };
+
+endmodule
+"""
+  do_test( a )
+
+@pytest.mark.xfail(run=False, reason="TODO: resolving BitStructs according to name AND fields")
+def test_struct_uniqueness( do_test ):
+  class A:
+    @bitstruct
+    class ST:
+      a_foo: Bits16
+      a_bar: Bits32
+
+  class B:
+    @bitstruct
+    class ST:
+      b_foo: Bits16
+      b_bar: Bits32
+
+  @bitstruct
+  class COMB:
+    fst: A.ST
+    snd: B.ST
+
+  class Top( Component ):
+    def construct( s ):
+      s.out = OutPort( COMB )
+      connect( s.out, COMB(A.ST(1, 2), B.ST(3, 4)) )
   a = Top()
   a._ref_src = \
 """
