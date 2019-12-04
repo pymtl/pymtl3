@@ -3,7 +3,6 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Jul 26, 2019
-"""Base class of customized pass configuration classes."""
 
 from copy import deepcopy
 

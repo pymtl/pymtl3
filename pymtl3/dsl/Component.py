@@ -417,21 +417,17 @@ class Component( ComponentLevel7 ):
 
   """ Convenience/utility APIs """
 
-  def apply( s, *args ):
+  def apply( s, pass_instance ):
     try:
       import pypyjit
       pypyjit.set_param("off")
     except:
       pass
 
-    if isinstance(args[0], list):
-      assert len(args) == 1
-      for step in args[0]:
-        step( s )
-
-    elif len(args) == 1:
-      assert callable( args[0] )
-      args[0]( s )
+    assert type(pass_instance) is not type, f"Should pass in a pass instance like " \
+                                            f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
+    assert callable( pass_instance ), f"Should override __call__ of {pass_instance.__name__} for a valid pass"
+    pass_instance( s )
 
     try:
       pypyjit.set_param("default")

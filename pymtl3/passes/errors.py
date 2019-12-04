@@ -18,7 +18,7 @@ class ModelTypeError( Exception ):
     return super().__init__( f"This pass can only be applied to {typename}" )
 
 class TranslationError( Exception ):
-  """ Raise translation goes wrong """
+  """ Raise when translation goes wrong """
   def __init__( self, blk, x ):
     return super().__init__( f"{blk.__name__} {x}" )
 
