@@ -33,7 +33,7 @@ def run_sim( _th ):
     _th.elaborate()
     _th.q.sverilog_translate_import = True
     th = TranslationImportPass()( _th )
-    th.apply( DynamicSim )
+    th.apply( SimulationPass() )
 
     print()
     cycle = 0

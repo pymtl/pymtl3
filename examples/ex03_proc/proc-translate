@@ -21,7 +21,7 @@ import os
 import sys
 
 # Import the translation pass from yosys backend
-from pymtl3.passes.yosys import TranslationPass
+from pymtl3.passes.backends.yosys import TranslationPass
 
 # Hack to add project root to python path
 cur_dir = os.path.dirname( os.path.abspath( __file__ ) )

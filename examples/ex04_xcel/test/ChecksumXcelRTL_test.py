@@ -24,7 +24,7 @@ def checksum_xcel_rtl( words ):
   # Create a simulator using RTL accelerator
   dut = ChecksumXcelRTL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( SimulationPass() )
   dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )

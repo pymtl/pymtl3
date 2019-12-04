@@ -8,7 +8,7 @@ Author : Yanghui Ou
   Date : June 14, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationImportPass
+from pymtl3.passes.backends.yosys import TranslationImportPass
 
 from ..ChecksumXcelRTL import ChecksumXcelRTL
 from .ChecksumXcelCL_test import mk_xcel_transaction
@@ -34,7 +34,7 @@ def checksum_xcel_vrtl( words ):
 
   # Create a simulator
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( SimulationPass() )
   dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )

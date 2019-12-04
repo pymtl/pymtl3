@@ -13,7 +13,6 @@ import struct
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
 from pymtl3 import *
-from pymtl3.passes import DynamicSim
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 from pymtl3.stdlib.ifcs import mk_mem_msg
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL

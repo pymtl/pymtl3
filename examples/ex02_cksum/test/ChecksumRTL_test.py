@@ -8,7 +8,7 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.yosys import ImportPass, TranslationPass
+from pymtl3.passes.backends.yosys import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
@@ -23,7 +23,7 @@ from ..utils import b128_to_words, words_to_b128
 def test_step_unit():
   step_unit = StepUnit()
   step_unit.elaborate()
-  step_unit.apply( SimulationPass )
+  step_unit.apply( SimulationPass() )
 
   step_unit.word_in = b16(1)
   step_unit.sum1_in = b32(1)
@@ -46,7 +46,7 @@ def checksum_rtl( words ):
   # Create a simulator
   dut = ChecksumRTL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( SimulationPass() )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
@@ -127,7 +127,7 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
     th.text_wave = True
     # Create a simulator
     th.elaborate()
-    th.apply( SimulationPass )
+    th.apply( SimulationPass() )
     ncycles = 0
     th.sim_reset()
     print( "" )
