@@ -15,10 +15,6 @@ class Checker:
     s.condition = condition
     s.error_msg = error_msg
 
-  def check( s, opt, value, pass_name ):
-    if not s.condition( value ):
-      raise InvalidPassOptionValue( opt, value, pass_name, s.error_msg )
-
 class BasePassConfigs:
   """Base class of customized pass configrations.
 
@@ -51,6 +47,8 @@ class BasePassConfigs:
         raise InvalidPassOption( opt, inst.PassName )
       opts[opt] = value
 
+    cls.opts = opts.keys()
+
     # Preprocess checkers
     cls._Checkers = {}
     for opt, chk in cls.Checkers.items():
@@ -63,21 +61,25 @@ class BasePassConfigs:
 
       elif isinstance( opt, str ):
         assert opt in opts, f"'{op}' is not a valid operation so we cannot set Checker for it."
-        cls._Checkers[ op ] = chk
+        cls._Checkers[ opt ] = chk
 
       else:
         raise InvalidPassOption(f"Option name can only be a tuple of strings (a,b,c) or string a, not '{op}'")
-    # Check each option and its value
 
     trivial_checker = Checker( lambda x: True, "" )
-
     for opt, value in opts.items():
-      chk = cls.Checkers.get( opt, trivial_checker )
-      if not chk.condition( value ):
-        raise InvalidPassOptionValue( opt, value, cls.PassName, chk.error_msg )
-      assert not hasattr( inst, opt ), "Cannot declare two options with the same name"
+      if opt not in cls._Checkers:
+        cls._Checkers[opt] = trivial_checker
+      assert not hasattr( inst, opt ), f"There is already a field in config called '{opt}'. What happened?"
       setattr( inst, opt, value )
 
     return inst
 
-  def fill_missing( cls,
+  def check_options( s ):
+    """Return whether the given options are valid by calling checkers."""
+    for opt in s.opts:
+      chk   = s._Checkers[opt]
+      value = getattr( s, opt )
+      if not chk.condition( value ):
+        raise InvalidPassOptionValue( opt, value, s.PassName, chk.error_msg )
+

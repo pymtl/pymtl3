@@ -214,7 +214,7 @@ class ImportConfigs( BasePassConfigs ):
   #-----------------------------------------------------------------------
 
   def create_vl_cmd( s ):
-    top_module  =  f"--top-module {s.get_top_module()}"
+    top_module  =  f"--top-module {s.top_module}"
     src         = s.vl_src
     mk_dir      = f"--Mdir {s.vl_mk_dir}"
     flist       = "" if s.is_default("vl_flist") else \
@@ -274,7 +274,7 @@ class ImportConfigs( BasePassConfigs ):
       if not top_module:
         # Default top_module is the name of component concatenated
         # with parameters
-        s.set_option("top_module", full_name)
+        s.top_module = full_name
 
     # If the top-level module is a wrapper
     else:
@@ -319,14 +319,15 @@ class ImportConfigs( BasePassConfigs ):
   def is_port_mapped( s ):
     return bool(len(s.port_map) > 0)
 
+  def get_port_map( s ):
+    pmap = s.port_map
+    return lambda name: pmap[name]
+
   def get_module_to_parametrize( s ):
     return s.wrapped_module
 
   def get_param_include( s ):
     return s.v_module2param
-
-  def get_v_param( s ):
-    return s.v_param
 
   def get_c_wrapper_path( s ):
     return f"{s.top_module}_v.cpp"
@@ -338,7 +339,7 @@ class ImportConfigs( BasePassConfigs ):
     return f"lib{s.top_module}_v.so"
 
   def vprint( s, msg, nspaces = 0, use_fill = False ):
-    if s.get_option("verbose"):
+    if s.verbose:
       if use_fill:
         print(indent(fill(msg), " "*nspaces))
       else:
@@ -365,7 +366,7 @@ class ImportConfigs( BasePassConfigs ):
         f"All ports of {rtype.get_name()} should be mapped to a new name!")
 
   def get_all_includes( s ):
-    includes = s.get_option("c_include_path")
+    includes = s.c_include_path
 
     # Try to obtain verilator include path either from environment variable
     # or from `pkg-config`
@@ -391,9 +392,9 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def get_c_src_files( s ):
-    srcs = s.get_option("c_srcs")
-    top_module = s.get_top_module()
-    vl_mk_dir = s.get_option("vl_mk_dir")
+    srcs = s.c_srcs
+    top_module = s.top_module
+    vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
 
     # Add C wrapper
@@ -435,8 +436,8 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     lint = "" if s.is_default("vl_W_lint") else "--Wno-lint"
     style = "" if s.is_default("vl_W_style") else "--Wno-style"
     fatal = "" if s.is_default("vl_W_fatal") else "--Wno-fatal"
-    wno = " ".join(f"--Wno-{w}" for w in s.get_option("vl_Wno_list"))
+    wno = " ".join(f"--Wno-{w}" for w in s.vl_Wno_list)
     return " ".join(w for w in [lint, style, fatal, wno] if w)
 
   def is_default( s, opt ):
-    return s.options[opt] == s.Options[opt]
+    return getattr( s, opt ) == s.Options[opt]

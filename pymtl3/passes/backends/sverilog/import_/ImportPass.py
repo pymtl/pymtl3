@@ -60,7 +60,7 @@ class ImportPass( BasePass ):
   def traverse_hierarchy( s, m ):
     if hasattr(m, f"{s.get_backend_name()}_import") and \
        isinstance(s.get_config(m), ImportConfigs) and \
-       s.get_config(m).is_import_enabled():
+       s.get_config(m).import_:
       s.get_config(m).fill_missing( m )
       return s.do_import( m )
     else:
@@ -125,7 +125,7 @@ class ImportPass( BasePass ):
     rtype = get_component_ifc_rtlir( m )
     full_name = get_component_unique_name( rtype )
     p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
-    no_clk, no_reset = not config.has_clk(), not config.has_reset()
+    no_clk, no_reset = not config.has_clk, not config.has_reset
     _packed_ports = s.gen_packed_ports( rtype )
     clk = next(filter(lambda x: x[0]=='clk', _packed_ports))[1]
     reset = next(filter(lambda x: x[0]=='reset', _packed_ports))[1]
@@ -169,27 +169,27 @@ class ImportPass( BasePass ):
 
       # Remove obj_dir directory if it already exists.
       # obj_dir is where the verilator output ( C headers and sources ) is stored
-      obj_dir = config.get_vl_mk_dir()
+      obj_dir = config.vl_mk_dir
       if os.path.exists( obj_dir ):
         shutil.rmtree( obj_dir )
 
       # Try to call verilator
       try:
-        config.vprint(f"Verilating {config.get_top_module()} with command:", 2)
+        config.vprint(f"Verilating {config.top_module} with command:", 2)
         config.vprint(f"{cmd}", 4)
         subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
       except subprocess.CalledProcessError as e:
         err_msg = e.output if not isinstance(e.output, bytes) else \
                   e.output.decode('utf-8')
         import_err_msg = \
-            f"Fail to verilate model {config.get_option('top_module')}\n"\
+            f"Fail to verilate model {config.top_module}\n"\
             f"  Verilator command:\n{indent(cmd, '  ')}\n\n"\
             f"  Verilator output:\n{indent(wrap(err_msg), '  ')}\n"
         raise SVerilogImportError(m, import_err_msg) from e
       config.vprint(f"Successfully verilated the given model!", 2)
 
     else:
-      config.vprint(f"{config.get_top_module()} not verilated because it's cached!", 2)
+      config.vprint(f"{config.top_module} not verilated because it's cached!", 2)
 
   #-----------------------------------------------------------------------
   # create_verilator_c_wrapper
@@ -201,10 +201,10 @@ class ImportPass( BasePass ):
     Create a C wrapper that calls verilator C API and provides interfaces
     that can be later called through CFFI.
     """
-    component_name = config.get_top_module()
-    dump_vcd = int(config.is_vl_trace_enabled())
-    vcd_timescale = config.get_vl_trace_timescale()
-    half_cycle_time = config.get_vl_trace_half_cycle_time()
+    component_name = config.top_module
+    dump_vcd = int(config.vl_trace)
+    vcd_timescale = config.vl_trace_timescale
+    half_cycle_time = config.vl_trace_cycle_time // 2
     wrapper_name = config.get_c_wrapper_path()
     config.vprint("\n=====Generate C wrapper=====")
 
@@ -252,8 +252,8 @@ class ImportPass( BasePass ):
 
   def create_shared_lib( s, m, config, cached ):
     """Return the name of compiled shared lib."""
-    full_name = config.get_top_module()
-    dump_vcd = config.is_vl_trace_enabled()
+    full_name = config.top_module
+    dump_vcd = config.vl_trace
     config.vprint("\n=====Compile shared library=====")
 
     # Since we may run import with or without dump_vcd enabled, we need
@@ -342,9 +342,9 @@ constraint_list = [
         with open( wrapper_name, 'w' ) as output:
           py_wrapper = template.read()
           py_wrapper = py_wrapper.format(
-            component_name  = config.get_top_module(),
-            has_clk         = int(config.has_clk()),
-            clk             = 'inv_clk' if not config.has_clk() else \
+            component_name  = config.top_module,
+            has_clk         = int(config.has_clk),
+            clk             = 'inv_clk' if not config.has_clk else \
                               next(filter(lambda x: x[0]=='clk', packed_ports))[1],
             lib_file        = config.get_shared_lib_path(),
             port_cdefs      = ('  '*4+'\n').join( port_cdefs ),
@@ -356,7 +356,7 @@ constraint_list = [
             constraint_str  = constraint_str,
             line_trace      = line_trace,
             in_line_trace   = in_line_trace,
-            dump_vcd        = int(config.is_vl_trace_enabled())
+            dump_vcd        = int(config.vl_trace)
           )
           output.write( py_wrapper )
 
@@ -371,7 +371,7 @@ constraint_list = [
     """Return the PyMTL component imported from `wrapper_name`.sv."""
     config.vprint("=====Create python object=====")
 
-    component_name = config.get_top_module()
+    component_name = config.top_module
     # Get the name of the wrapper Python module
     wrapper_name = config.get_py_wrapper_path()
     wrapper = wrapper_name.split('.')[0]
@@ -415,8 +415,8 @@ constraint_list = [
   #-------------------------------------------------------------------------
 
   def add_param_wrapper( s, m, config, rtype, packed_ports ):
-    outfile = f"{config.get_top_module()}.sv"
-    parameters = config.get_v_param()
+    outfile = f"{config.top_module}.sv"
+    parameters = config.v_param
 
     with open(outfile, "w") as top_wrapper:
       # Port definitions of top-level wrapper
@@ -439,7 +439,7 @@ constraint_list = [
         "// This is a top-level module that wraps a parametrized module",
         "// This file is generated by PyMTL SystemVerilog import pass",
         f'`include "{expand(config.get_param_include())}"',
-        f"module {config.get_top_module()}",
+        f"module {config.top_module}",
         "(",
       ] + ports + [
         ");",
