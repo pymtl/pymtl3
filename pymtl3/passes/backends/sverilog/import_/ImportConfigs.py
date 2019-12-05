@@ -168,7 +168,7 @@ class ImportConfigs( BasePassConfigs ):
     "vl_flist": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
                          "expects a path to a file" ),
 
-    "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in s.Warnings for w in v),
+    "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in ImportConfigs.Warnings for w in v),
                             "expects a list of warnings" ),
 
     "vl_include": Checker( lambda v: isinstance(v, list) and all(os.path.isdir(expand(p)) for p in v),

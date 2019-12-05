@@ -11,10 +11,11 @@
 # Author: Peitian Pan
 # Date:   Nov 1, 2019
 
-from pymtl3.dsl import *
 from pymtl3.datatypes import *
-from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.dsl import *
 from pymtl3.passes import TracingConfigs
+from pymtl3.passes.PassGroups import SimulationPass
+
 
 def run_test( dut, tv, tv_in, tv_out ):
   vcd_file_name = dut.__class__.__name__ + "_funky"

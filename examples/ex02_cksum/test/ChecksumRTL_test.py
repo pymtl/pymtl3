@@ -8,6 +8,7 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
+from pymtl3.passes import TracingConfigs
 from pymtl3.passes.backends.yosys import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
@@ -115,18 +116,15 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
   # [teardown_method] will be called by pytest after executing each class method.
   # See pytest documetnation for more details.
   def teardown_method( s, method ):
-      s.vcd_file_name = ""
+    s.vcd_file_name = ""
 
   def run_sim( s, th, max_cycles=1000 ):
 
     # Check for vcd dumping
     if s.vcd_file_name:
-      th.dump_vcd = True
-      th.vcd_file_name = s.vcd_file_name
+      th.config_tracing = TracingConfigs(tracing='text_fancy', vcd_file_name=s.vcd_file_name)
 
-    th.text_wave = True
     # Create a simulator
-    th.elaborate()
     th.apply( SimulationPass() )
     ncycles = 0
     th.sim_reset()
@@ -139,6 +137,8 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
       ncycles += 1
       print("{:3}: {}".format( ncycles, th.line_trace() ))
 
-    th.print_wave()
+    if s.vcd_file_name:
+      th.print_textwave()
+
     # Check timeout
     assert ncycles < max_cycles

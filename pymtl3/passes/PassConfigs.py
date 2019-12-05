@@ -82,4 +82,3 @@ class BasePassConfigs:
       value = getattr( s, opt )
       if not chk.condition( value ):
         raise InvalidPassOptionValue( opt, value, s.PassName, chk.error_msg )
-

@@ -10,11 +10,21 @@
 import io
 from contextlib import redirect_stdout
 
-from pymtl3.datatypes import Bits1, Bits16, Bits32, Bits128, b1, b16, b32, b128, bitstruct
+from pymtl3.datatypes import (
+    Bits1,
+    Bits16,
+    Bits32,
+    Bits128,
+    b1,
+    b16,
+    b32,
+    b128,
+    bitstruct,
+)
 from pymtl3.dsl import *
+from pymtl3.passes import TracingConfigs
 from pymtl3.passes.errors import ModelTypeError
 from pymtl3.passes.PassGroups import SimulationPass
-from pymtl3.passes import TracingConfigs
 
 
 def test_toy():

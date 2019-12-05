@@ -44,7 +44,7 @@ class TranslationImportPass( BasePass ):
     return "sverilog_translate"
 
   def get_import_flag_name( s ):
-    return "sverilog_import"
+    return "config_sverilog_import"
 
   def get_translation_configs( s ):
     return True

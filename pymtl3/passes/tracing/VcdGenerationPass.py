@@ -7,7 +7,8 @@ Author : Shunning Jiang, Yanghui Ou, Peitian Pan
 Date   : Sep 8, 2019
 """
 
-import os, time
+import os
+import time
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, concat, get_nbits, to_bits

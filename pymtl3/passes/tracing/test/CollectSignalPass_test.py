@@ -9,8 +9,8 @@
 
 from pymtl3.datatypes import Bits32, b32
 from pymtl3.dsl import *
-from pymtl3.passes.PassGroups import SimulationPass
 from pymtl3.passes import SimulationPass, TracingConfigs
+from pymtl3.passes.PassGroups import SimulationPass
 
 
 class Toy( Component ):

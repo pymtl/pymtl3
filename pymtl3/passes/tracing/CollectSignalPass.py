@@ -12,7 +12,7 @@ from collections import defaultdict
 
 import py
 
-from pymtl3.datatypes import is_bitstruct_class, Bits, to_bits
+from pymtl3.datatypes import Bits, is_bitstruct_class, to_bits
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import ModelTypeError, PassOrderError
