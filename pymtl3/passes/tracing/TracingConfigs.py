@@ -5,29 +5,34 @@
 # Date   : Dec 4, 2019
 """Configuration class of tracing passes"""
 
+import time
 
-from pymtl3.dsl import Placeholder
-from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
-from ..util.utility import expand, get_component_unique_name
 
 
 class TracingConfigs( BasePassConfigs ):
 
   Options = {
     "tracing" : 'none',
+    "vcd_file_name" : "",
     "method_trace" : True,
   }
 
   Checkers = {
+    'tracing': Checker(
+      lambda v: v in ['none', 'vcd', 'text_ascii', 'text_fancy' ],
+      "expects a string in ['none', 'vcd', 'text_ascii', 'text_fancy']"
+    ),
+
+    'vcd_file_name': Checker(
+      condition = lambda v: isinstance(v, str),
+      error_msg = "expects a string"
+    ),
+
     'method_trace': Checker(
       condition = lambda v: isinstance(v, bool),
       error_msg = "expects a boolean"
     ),
-
-    'tracing': (
-      lambda v: v in ['none', 'vcd', 'text_ascii', 'text_fancy'],
-      "expects a string in ['none', 'vcd', 'text_ascii', 'text_fancy']"
-    ),
+  }
 
   PassName = 'passes.tracing.*'

@@ -11,20 +11,21 @@
 # Author: Peitian Pan
 # Date:   Nov 1, 2019
 
-from pymtl3 import *
-
+from pymtl3.dsl import *
+from pymtl3.datatypes import *
+from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes import TracingConfigs
 
 def run_test( dut, tv, tv_in, tv_out ):
-  VCD_FILE_NAME = dut.__class__.__name__
-  dut.dump_vcd = True
-  dut.vcd_file_name = VCD_FILE_NAME
+  vcd_file_name = dut.__class__.__name__ + "_funky"
+  dut.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=vcd_file_name )
   dut.elaborate()
   dut.apply( SimulationPass() )
   for v in tv:
     tv_in( dut, v )
     dut.tick()
     tv_out( dut, v )
-  with open( VCD_FILE_NAME+".vcd", "r" ) as fd:
+  with open( vcd_file_name+".vcd", "r" ) as fd:
     file_str = ''.join( fd.readlines() )
     all_signals = dut.get_input_value_ports() | \
                   dut.get_output_value_ports() | \

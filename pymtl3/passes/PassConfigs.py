@@ -75,7 +75,7 @@ class BasePassConfigs:
 
     return inst
 
-  def check_options( s ):
+  def check( s ):
     """Return whether the given options are valid by calling checkers."""
     for opt in s.opts:
       chk   = s._Checkers[opt]

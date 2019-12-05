@@ -28,14 +28,15 @@ class CollectSignalPass( BasePass ):
     else:
       schedule = top._sched.schedule
 
-    try:
-      en = top.text_wave
-    except AttributeError:
-      return
+    if hasattr( top, "config_tracing" ):
+      top.config_tracing.check()
 
-    if en:
-      top._textwave = PassMetadata()
-      schedule.append( self.collect_sig_func( top, top._textwave ) )
+      if top.config_tracing.tracing in [ 'text_ascii', 'text_fancy' ]:
+        # TODO remove this check when we are able to handle text_ascii
+        if top.config_tracing.tracing == 'text_ascii':
+          raise Exception("Current we don't support text_ascii. Only 'text_fancy' is supported now.")
+        top._textwave = PassMetadata()
+        schedule.append( self.collect_sig_func( top, top._textwave ) )
 
   def collect_sig_func( self, top, wavmeta ):
 

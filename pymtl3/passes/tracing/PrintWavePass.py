@@ -26,18 +26,20 @@ class PrintWavePass( BasePass ):
 
   def __call__( self, top ):
 
-    try:
-      en = top.text_wave
-    except AttributeError:
-      return
+    if hasattr( top, "config_tracing" ):
+      top.config_tracing.check()
 
-    if en:
-      def gen_print_wave( top ):
-        def print_wave():
-          _help_print( top )
-        return print_wave
+      if top.config_tracing.tracing in [ 'text_ascii', 'text_fancy' ]:
+        # TODO remove this check when we are able to handle text_ascii
+        if top.config_tracing.tracing == 'text_ascii':
+          raise Exception("Current we don't support text_ascii. Only 'text_fancy' is supported now.")
 
-      top.print_wave = gen_print_wave(top)
+        def gen_print_wave( top ):
+          def print_wave():
+            _help_print( top )
+          return print_wave
+
+        top.print_textwave = gen_print_wave(top)
 
 def _process_binary( sig, base, max ):
   """

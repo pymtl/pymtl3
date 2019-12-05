@@ -14,6 +14,7 @@ from pymtl3.datatypes import Bits1, Bits32, Bits128, b1, b32, b128, bitstruct
 from pymtl3.dsl import *
 from pymtl3.passes.errors import ModelTypeError
 from pymtl3.passes.PassGroups import SimulationPass
+from pymtl3.passes import TracingConfigs
 
 
 def test_toy():
@@ -31,16 +32,13 @@ def test_toy():
         # This update block models the behavior of a 32-bit adder
         s.out = s.i + s.inlong
         if s.out[3] == "1":
-            s.state = s.state +b1(1)
+          s.state = s.state +b1(1)
         else:
-            s.state = b1(0)
+          s.state = b1(0)
 
   # Create a toy component and elaborate it
   dut = Toy()
-
-  dut.text_wave = True
-
-  dut.elaborate()
+  dut.config_tracing = TracingConfigs( tracing='text_fancy' )
 
   # Setup the simulation
   dut.apply( SimulationPass() )
@@ -69,9 +67,9 @@ def test_toy():
 
   #print
   f = io.StringIO()
-  dut.print_wave()
+  dut.print_textwave()
   with redirect_stdout(f):
-    dut.print_wave()
+    dut.print_textwave()
   out = f.getvalue()
   for i in dut._textwave.sigs:
     dot = i.find(".")
@@ -100,7 +98,7 @@ def test_widetoy():
   # Create a toy component and elaborate it
   dut = Toy()
 
-  dut.text_wave = True
+  dut.config_tracing = TracingConfigs( tracing='text_fancy' )
 
   dut.elaborate()
 
@@ -131,9 +129,9 @@ def test_widetoy():
 
   #print
   f = io.StringIO()
-  dut.print_wave()
+  dut.print_textwave()
   with redirect_stdout(f):
-    dut.print_wave()
+    dut.print_textwave()
   out = f.getvalue()
   for i in dut._textwave.sigs:
     dot = i.find(".")
@@ -168,7 +166,7 @@ def test_bitstruct():
   # Create a toy component and elaborate it
   dut = Toy()
 
-  dut.text_wave = True
+  dut.config_tracing = TracingConfigs( tracing='text_fancy' )
 
   dut.elaborate()
 
@@ -206,7 +204,7 @@ def test_bitstruct():
 
   #print
   f = io.StringIO()
-  dut.print_wave()
+  dut.print_textwave()
   with redirect_stdout(f):
     dut.print_wave()
   out = f.getvalue()

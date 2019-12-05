@@ -58,10 +58,11 @@ class ImportPass( BasePass ):
     return ret
 
   def traverse_hierarchy( s, m ):
-    if hasattr(m, f"{s.get_backend_name()}_import") and \
+    if hasattr(m, f"config_{s.get_backend_name()}_import") and \
        isinstance(s.get_config(m), ImportConfigs) and \
        s.get_config(m).import_:
       s.get_config(m).fill_missing( m )
+      s.get_config(m).check()
       return s.do_import( m )
     else:
       for child in m.get_child_components():
@@ -161,7 +162,6 @@ class ImportPass( BasePass ):
 
   def create_verilator_model( s, m, config, cached ):
     """Verilate module `m`."""
-    config.check_options()
     config.vprint("\n=====Verilate model=====")
     if not cached:
       # Generate verilator command

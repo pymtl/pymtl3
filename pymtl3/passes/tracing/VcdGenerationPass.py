@@ -7,7 +7,7 @@ Author : Shunning Jiang, Yanghui Ou, Peitian Pan
 Date   : Sep 8, 2019
 """
 
-import time
+import os, time
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, concat, get_nbits, to_bits
@@ -20,10 +20,6 @@ class VcdGenerationPass( BasePass ):
 
   def __call__( self, top ):
 
-    # Check for dum_vcd flag
-    if not hasattr( top, "dump_vcd" ) or not top.dump_vcd:
-      return
-
     if not hasattr( top._sched, "schedule" ):
       raise PassOrderError( "schedule" )
 
@@ -32,19 +28,26 @@ class VcdGenerationPass( BasePass ):
     else:
       schedule = top._sched.schedule
 
-    top._vcd = PassMetadata()
+    if hasattr( top, "config_tracing" ):
+      top.config_tracing.check()
 
-    schedule.append( self.make_vcd_func( top ) )
+      if top.config_tracing.tracing != 'none':
+        top._vcd = PassMetadata()
+        schedule.append( self.make_vcd_func( top ) )
 
   def make_vcd_func( self, top ):
 
     vcdmeta = top._vcd
+    vcd_file_name = top.config_tracing.vcd_file_name
 
-    if hasattr( top, "vcd_file_name" ):
-      vcdmeta.vcd_file_name = str(top.vcd_file_name) + ".vcd"
+    if vcd_file_name != "":
+      vcdmeta.vcd_file_name = str(vcd_file_name) + ".vcd"
     else:
-      vcdmeta.vcd_file_name = str(top.__class__) + ".vcd"
+      vcdmeta.vcd_file_name = str(top.__class__.__name__) + ".vcd"
+
     vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
+    print(f"[Tracing mode = {top.config_tracing.tracing}] "
+          f"Writing value change dump (VCD) to {os.getcwd()}/{(vcdmeta.vcd_file_name)}")
 
     # Get vcd timescale
 
