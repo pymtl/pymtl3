@@ -26,8 +26,8 @@ class Cell( object ):
     s.dim_w = 0
     s.dim_h = 0
     s.isLeaf = False
-    s.total_rows = rows
-    s.total_cols = cols
+    s.rows = 0
+    s.cols = 0
 
   def bond( s, components ):
     if type(components) != list:
@@ -38,10 +38,12 @@ class Cell( object ):
         s.sub_cells[0][i].setComponent( components[i] )
 
   def divide( s, rows, cols ):
-    s.sub_cells = [ [ Cell(i,j,rows,cols) for j in range(cols) ]
+    s.rows = rows
+    s.cols = cols
+    s.sub_cells = [ [ Cell(i,j) for j in range(cols) ]
                       for i in range(rows) ]
     w_ratio = s.w_ratio/cols
-    h_ratio = s.h_ratio/cols
+    h_ratio = s.h_ratio/rows
     for r in range( rows ):
       for c in range( cols ):
         s.sub_cells[r][c].w_ratio = w_ratio
@@ -51,13 +53,43 @@ class Cell( object ):
         s.sub_cells[r][c].parent = s
     return s.sub_cells
 
-  def updateChildDim( s, child_dim_w, child_dim_h ):
-    rows = len( s.sub_cells )
-    cols = len( s.sub_cells[0] )
-    if s.dim_w < child_dim_w * cols:
-      s.dim_w = child_dim_w * cols
-    if s.dim_h < child_dim_h * rows:
-      s.dim_h = child_dim_h * rows
+  def updateParentDim( s, child_dim_w, child_dim_h ):
+    if s.dim_w < child_dim_w * s.cols:
+      s.dim_w = child_dim_w * s.cols
+      if hasattr( s.component, "dim_w" ):
+        if s.component.dim_w == 0:
+          s.component.dim_w = s.dim_w
+    if s.dim_h < child_dim_h * s.rows:
+      s.dim_h = child_dim_h * s.rows
+      if hasattr( s.component, "dim_h" ):
+        if s.component.dim_h == 0:
+          s.component.dim_h = s.dim_h
+#    max_dim_w = s.sub_cells[0][0].dim_w
+#    max_dim_h = s.sub_cells[0][0].dim_h
+#    for i in range( s.rows ):
+#      for j in range( s.cols ):
+#        if s.sub_cells[i][j].dim_w > max_dim_w:
+#          max_dim_w = s.sub_cells[i][j].dim_w
+#        elif s.sub_cells[i][j].dim_h > max_dim_h:
+#          max_dim_h = s.sub_cells[i][j].dim_h
+#    for i in range( s.rows ):
+#      for j in range( s.cols ):
+#        s.sub_cells[i][j].dim_w = max_dim_w
+#        s.sub_cells[i][j].dim_h = max_dim_h
+
+  def updateChildrenDim( s ):
+    if s.sub_cells == None:
+      return
+    for i in range( s.rows ):
+      for j in range( s.cols ):
+        s.sub_cells[i][j].dim_x = j * s.dim_w * s.sub_cells[i][j].w_ratio
+        s.sub_cells[i][j].dim_y = i * s.dim_w * s.sub_cells[i][j].w_ratio
+        if s.sub_cells[i][j].component != None:
+          s.sub_cells[i][j].component.dim_x = s.sub_cells[i][j].dim_x
+          s.sub_cells[i][j].component.dim_y = s.sub_cells[i][j].dim_y
+        s.sub_cells[i][j].dim_w = s.dim_w * s.sub_cells[i][j].w_ratio
+        s.sub_cells[i][j].dim_h = s.dim_h * s.sub_cells[i][j].h_ratio
+        s.sub_cells[i][j].updateChildrenDim()
 
   def setComponent( s, component ):
     s.component = component
