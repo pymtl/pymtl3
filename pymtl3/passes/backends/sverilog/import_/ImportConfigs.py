@@ -221,13 +221,13 @@ class ImportConfigs( BasePassConfigs ):
                   f"-f {s.vl_flist}"
     include     = "" if s.is_default("vl_include") else \
                   " ".join("-I" + path for path in s.vl_include)
-    en_assert   = "--assert" if s.is_default("enable_assert") else ""
-    opt_level   = "-O3" if s.vl_opt_level else "-O0"
+    en_assert   = "--assert" if s.enable_assert else ""
+    opt_level   = "-O3" if s.is_default( 'vl_opt_level' ) else "-O0"
     loop_unroll = "" if s.vl_unroll_count == 0 else \
                   f"--unroll-count {s.vl_unroll_count}"
     stmt_unroll = "" if s.vl_unroll_stmts == 0 else \
                   f"--unroll-stmts {s.vl_unroll_stmts}"
-    trace       = "" if s.vl_trace else "--trace"
+    trace       = "--trace" if s.vl_trace else ""
     coverage    = "--coverage" if s.coverage else ""
     line_cov    = "--coverage-line" if s.line_coverage else ""
     toggle_cov  = "--coverage-toggle" if s.toggle_coverage else ""
