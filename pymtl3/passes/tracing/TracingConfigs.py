@@ -5,7 +5,6 @@
 # Date   : Dec 4, 2019
 """Configuration class of tracing passes"""
 
-import time
 
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 
