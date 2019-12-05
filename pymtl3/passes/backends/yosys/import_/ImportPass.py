@@ -29,7 +29,7 @@ class ImportPass( SVerilogImportPass ):
     return "yosys"
 
   def get_config( s, m ):
-    return m.yosys_import
+    return m.config_yosys_import
 
   def get_translation_namespace( s, m ):
     return m._pass_yosys_translation

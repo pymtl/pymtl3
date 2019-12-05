@@ -30,4 +30,4 @@ class TranslationImportPass( SVerilogTranslationImportPass ):
     return "yosys_translate"
 
   def get_import_flag_name( s ):
-    return "yosys_import"
+    return "config_yosys_import"
