@@ -9,6 +9,16 @@ from copy import deepcopy
 from .errors import InvalidPassOption, InvalidPassOptionValue
 
 
+class Checker:
+
+  def __init__( s, condition=lambda x: True, error_msg="" ):
+    s.condition = condition
+    s.error_msg = error_msg
+
+  def check( s, opt, value, pass_name ):
+    if not s.condition( value ):
+      raise InvalidPassOptionValue( opt, value, pass_name, s.error_msg )
+
 class BasePassConfigs:
   """Base class of customized pass configrations.
 
@@ -27,68 +37,47 @@ class BasePassConfigs:
   will call that method to determine whether the value of option `<option_name>`
   is valid.
   """
-  def __init__( s, **kwargs ):
-    opts = deepcopy( s.Options )
+  def __new__( cls, *args, **kwargs ):
+    assert len(args) == 0, "We only accept keyword arguments here."
+    assert hasattr( cls, "Options"  )
+    assert hasattr( cls, "PassName" )
+    assert hasattr( cls, "Checkers" )
+
+    inst = super().__new__( cls )
+
+    opts = deepcopy( cls.Options )
     for opt, value in kwargs.items():
-      if opt not in s.Options:
-        raise InvalidPassOption( opt, s.PassName )
+      if opt not in cls.Options:
+        raise InvalidPassOption( opt, inst.PassName )
       opts[opt] = value
-    s.options = opts
 
-  @property
-  def Options( s ):
-    """Config classes extending 'BasePassConfigs' should define class attribute
-    'Options', which is a dict of option names and their default values."""
-    raise NotImplementedError(
-        "PassConfigs must provide options and their default values to 'Options'!")
+    # Preprocess checkers
+    cls._Checkers = {}
+    for opt, chk in cls.Checkers.items():
+      assert isinstance( chk, Checker ), f'Checker for "{opt}" can only be an instance of Checker, not {chk}.'
 
-  @property
-  def PassName( s ):
-    """Config classes extending 'BasePassConfigs' should define class attribute
-    'PassName', which is the name of the pass that accepts this config."""
-    raise NotImplementedError(
-        "PassConfigs must provide the name of the pass to 'PassName'!")
+      if isinstance( opt, tuple ):
+        for op in opt:
+          assert op in opts, f"'{op}' is not a valid operation so we cannot set Checker for it."
+          cls._Checkers[ op ] = chk
 
-  def check_options( s ):
-    """Return whether the given options are valid by calling checkers."""
-    for opt, value in s.options.items():
-      func = getattr( s, "check_"+opt, lambda self, val: True )
-      # check_* methods will throw exceptions if the check fails
-      func(s, value)
-    return True
+      elif isinstance( opt, str ):
+        assert opt in opts, f"'{op}' is not a valid operation so we cannot set Checker for it."
+        cls._Checkers[ op ] = chk
 
-  def get_option( s, opt ):
-    """Return the value of option `opt`."""
-    return s.options[opt]
-
-  def set_option( s, opt, value ):
-    """Set the value of option `opt` to `value`."""
-    s.options[opt] = value
-
-  def set_checkers( s, opts, func, msg ):
-    """Set checker for all options in `opts` using `func`; throw an exception
-    with message `msg`.
-
-    `opts` is a list of option names whose checking functions are to be set.
-    `func` is a checking function that takes the value of an option and returns
-    whether that is a valid value. Whenever `func` returns False, an
-    `InvalidPassOptionValue` exception will be raised with message `msg`.
-    """
-    for opt in opts:
-      s.set_checker(opt, func, msg)
-
-  def set_checker( s, opt, func, msg ):
-    """Set checker for option `opt` using `func`; throw an exception
-    with message `msg`.
-
-    `opt` is an option whose checking function is to be set. `func` is a checking
-    function that takes the value of an option and returns whether that is a valid
-    value. Whenever `func` returns False, an `InvalidPassOptionValue` exception
-    will be raised with message `msg`.
-    """
-    def _check( s, value ):
-      if not func(value):
-        raise InvalidPassOptionValue(opt, value, s.PassName, msg)
       else:
-        return True
-    setattr(s, "check_"+opt, _check)
+        raise InvalidPassOption(f"Option name can only be a tuple of strings (a,b,c) or string a, not '{op}'")
+    # Check each option and its value
+
+    trivial_checker = Checker( lambda x: True, "" )
+
+    for opt, value in opts.items():
+      chk = cls.Checkers.get( opt, trivial_checker )
+      if not chk.condition( value ):
+        raise InvalidPassOptionValue( opt, value, cls.PassName, chk.error_msg )
+      assert not hasattr( inst, opt ), "Cannot declare two options with the same name"
+      setattr( inst, opt, value )
+
+    return inst
+
+  def fill_missing( cls,

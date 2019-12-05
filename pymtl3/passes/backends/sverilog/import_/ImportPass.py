@@ -86,7 +86,7 @@ class ImportPass( BasePass ):
     return "sverilog"
 
   def get_config( s, m ):
-    return m.sverilog_import
+    return m.config_sverilog_import
 
   def get_translation_namespace( s, m ):
     return m._pass_sverilog_translation
