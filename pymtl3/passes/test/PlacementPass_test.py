@@ -9,44 +9,36 @@
 """
 from pymtl3                      import *
 from pymtl3.passes.PlacementPass import PlacementPass
-from pymtl3.passes.Grid          import Grid
+from pymtl3.passes.Cell          import Cell
 
 class Wall( Component ):
   def construct( s, wall_id ):
     s.wall_id = wall_id
 
-  def place( s, grid = None, width = 40, height = 20 ):
-#    # assume this is the most fine-granularity component
-    s.component_name = "wall"
+  def place( s, width = 40, height = 20 ):
+    # assume this is the most fine-granularity component
     s.dim_x = 0
     s.dim_y = 0
     s.dim_w = 40
     s.dim_h = 20
-#    grid.isLeaf = True
 
 class SmallRoom( Component ):
   def construct( s, room_id ):
     s.room_id = room_id
 
-  def place( s, grid = None, width = 10, height = 10 ):
+  def place( s, width = 10, height = 10 ):
     # assume this is the most fine-granularity component
-    s.dim_x = 0
-    s.dim_y = 0
     s.dim_w = 10
     s.dim_h = 10
-#    grid.isLeaf = True
 
 class BigRoom( Component ):
   def construct( s, room_id ):
     s.room_id = room_id
 
-  def place( s, grid = None, width = 20, height = 20 ):
+  def place( s, width = 20, height = 20 ):
     # assume this is the most fine-granularity component
-    s.dim_x = 0
-    s.dim_y = 0
     s.dim_w = width
     s.dim_h = height
-#    grid.isLeaf = True
 
 class House( Component ):
   def construct( s, big_room_count, wall_count, small_room_count):
@@ -58,67 +50,14 @@ class House( Component ):
     s.walls       = [ Wall     ( i ) for i in range( wall_count       ) ]
     s.small_rooms = [ SmallRoom( i ) for i in range( small_room_count ) ]
 
-  def place( s, grid = None, width = 0, height = 0 ):
-    s.sub_grids = grid.divide( rows = 3, cols = 1 )
-    s.sub_grids[0][0].bond( s.big_rooms   )
-    s.sub_grids[1][0].bond( s.walls       )
-    s.sub_grids[2][0].bond( s.small_rooms )
+  def place( s, width = 100, height = 0 ):
+    s.dim_w = width
+    s.dim_h = height
 
-#    grid.setComponent( s )
-#    for i in range( s.big_room_count ):
-#      big_room_grids[0][i].setComponent( s.big_rooms[i] )
-#    wall_grids[0].setComponent( s.walls[0] )
-#    for i in range( s.small_room_count ):
-#      small_room_grids[0][i].setComponent( s.small_rooms[i] )
-
-#    print()
-#    print( "============ grid ratio ==============" )
-#    for j in range( s.big_room_count ):
-#      print( "[grid] big room x[", j, "]: ", big_room_grids[0][j].x_ratio )
-#      print( "[grid] big room y[", j, "]: ", big_room_grids[0][j].y_ratio )
-#      print( "[grid] big room w[", j, "]: ", big_room_grids[0][j].w_ratio )
-#      print( "[grid] big room h[", j, "]: ", big_room_grids[0][j].h_ratio )
-#      print( "--------------------------" )
-#
-#    for j in range( s.wall_count ):
-#      print( "[grid] wall x[", j, "]: ", wall_grids[j].x_ratio )
-#      print( "[grid] wall y[", j, "]: ", wall_grids[j].y_ratio )
-#      print( "[grid] wall w[", j, "]: ", wall_grids[j].w_ratio )
-#      print( "[grid] wall h[", j, "]: ", wall_grids[j].h_ratio )
-#
-#    print( "--------------------------" )
-#
-#    for j in range( s.small_room_count ):
-#      print( "[grid] small room x[", j, "]: ", small_room_grids[0][j].x_ratio )
-#      print( "[grid] small room y[", j, "]: ", small_room_grids[0][j].y_ratio )
-#      print( "[grid] small room w[", j, "]: ", small_room_grids[0][j].w_ratio )
-#      print( "[grid] small room h[", j, "]: ", small_room_grids[0][j].h_ratio )
-#      print( "--------------------------" )
-#
-#    print( "============ component dim ==============" )
-#    for j in range( s.big_room_count ):
-#      print( "[dim] big room x[", j, "]: ", s.big_rooms[j].dim_x )
-#      print( "[dim] big room y[", j, "]: ", s.big_rooms[j].dim_y )
-#      print( "[dim] big room w[", j, "]: ", s.big_rooms[j].dim_w )
-#      print( "[dim] big room h[", j, "]: ", s.big_rooms[j].dim_h )
-#      print( "--------------------------" )
-#
-#    for j in range( s.wall_count ):
-#      print( "[dim] wall x[", j, "]: ", s.walls[j].dim_x )
-#      print( "[dim] wall y[", j, "]: ", s.walls[j].dim_y )
-#      print( "[dim] wall w[", j, "]: ", s.walls[j].dim_w )
-#      print( "[dim] wall h[", j, "]: ", s.walls[j].dim_h )
-#
-#    print( "--------------------------" )
-#
-#    for j in range( s.small_room_count ):
-#      print( "[dim] small room x[", j, "]: ", s.small_rooms[j].dim_x )
-#      print( "[dim] small room y[", j, "]: ", s.small_rooms[j].dim_y )
-#      print( "[dim] small room w[", j, "]: ", s.small_rooms[j].dim_w )
-#      print( "[dim] small room h[", j, "]: ", s.small_rooms[j].dim_h )
-#      print( "--------------------------" )
-#
-#    grid.setComponent( s )
+    s.sub_cells = s.cell.divide( rows = 3, cols = 1 )
+    s.sub_cells[0][0].bond( s.big_rooms   )
+    s.sub_cells[1][0].bond( s.walls       )
+    s.sub_cells[2][0].bond( s.small_rooms )
 
 def test_place():
   model = House( 4, 1, 4 )
