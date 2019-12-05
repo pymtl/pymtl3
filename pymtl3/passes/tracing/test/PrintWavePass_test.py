@@ -10,7 +10,7 @@
 import io
 from contextlib import redirect_stdout
 
-from pymtl3.datatypes import Bits1, Bits32, Bits128, b1, b32, b128, bitstruct
+from pymtl3.datatypes import Bits1, Bits16, Bits32, Bits128, b1, b16, b32, b128, bitstruct
 from pymtl3.dsl import *
 from pymtl3.passes.errors import ModelTypeError
 from pymtl3.passes.PassGroups import SimulationPass
@@ -143,14 +143,14 @@ def test_bitstruct():
 
   @bitstruct
   class XX:
-    x: Bits32
-    y: Bits32
+    x: Bits16
+    y: Bits16
 
   class Toy( Component ):
     def construct( s ):
       # Interfaces
       s.i = InPort( XX )
-      s.inlong = InPort( Bits32 )
+      s.inlong = InPort( Bits16 )
       s.out = OutPort( XX )
       s.state = Wire(Bits1)
       @s.update
@@ -171,28 +171,22 @@ def test_bitstruct():
   dut.elaborate()
 
   # Setup the simulation
-  try:
-    dut.apply( SimulationPass() )
-  except ModelTypeError:
-    return
-
-  # TODO when we support bitstruct, fix this text
-  raise
+  dut.apply( SimulationPass() )
 
   dut.sim_reset()
   # Test vector
   vector = [
     #  i        inlong       out
-    XX(1,1),    b32(2),    XX(3,3),
-    XX(0,0),    b32(2),    XX(2,2),
-    XX(0,0),    b32(2),    XX(2,2),
-    XX(1,1),    b32(-2),   XX(-1,-1),
-    XX(1,1),    b32(-42),  XX(-41,-41),
-    XX(1,1),    b32(-4),   XX(-3,-3),
-    XX(1,1),    b32(2),    XX(3,3),
-    XX(0,0),    b32(2),    XX(2,2),
-    XX(1,1),    b32(2),    XX(3,3),
-    XX(0,0),    b32(-5),   XX(-5,-5),
+    XX(1,1),    b16(2),    XX(3,3),
+    XX(0,0),    b16(2),    XX(2,2),
+    XX(0,0),    b16(2),    XX(2,2),
+    XX(1,1),    b16(-2),   XX(-1,-1),
+    XX(1,1),    b16(-42),  XX(-41,-41),
+    XX(1,1),    b16(-4),   XX(-3,-3),
+    XX(1,1),    b16(2),    XX(3,3),
+    XX(0,0),    b16(2),    XX(2,2),
+    XX(1,1),    b16(2),    XX(3,3),
+    XX(0,0),    b16(-5),   XX(-5,-5),
   ]
 
   # Begin simulation
@@ -206,7 +200,7 @@ def test_bitstruct():
   f = io.StringIO()
   dut.print_textwave()
   with redirect_stdout(f):
-    dut.print_wave()
+    dut.print_textwave()
   out = f.getvalue()
   for i in dut._textwave.sigs:
     dot = i.find(".")

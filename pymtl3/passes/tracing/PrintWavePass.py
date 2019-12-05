@@ -69,6 +69,9 @@ def _process_binary( sig, base, max ):
     return temp_hex
 
 def _help_print( self ):
+  # TODO print different textwave based on this flag
+  assert self.config_tracing.tracing == 'text_fancy'
+
   char_length = 5
   tick = '\u258f'
   up, down = '\u2571', '\u2572'
