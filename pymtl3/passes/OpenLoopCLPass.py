@@ -10,6 +10,7 @@
 """
 import os
 import random
+random.seed(0xdeadbeef)
 from collections import deque
 
 import py
@@ -356,7 +357,7 @@ class OpenLoopCLPass( BasePass ):
 
     # The last element is always line trace
     def print_line_trace():
-      print(top.line_trace())
+      print(top.__class__.__name__, ':', top.line_trace())
 
     schedule.append( print_line_trace )
 

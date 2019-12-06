@@ -8,9 +8,9 @@
 
 
 from pymtl3 import *
-from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
+from ..RTL2CLWrapper import RTL2CLWrapper
 
-from .test_stateful import run_test_state_machine
+from ..pyh2s import run_pyh2s
 
 
 #-------------------------------------------------------------------------
@@ -85,15 +85,16 @@ class ReorderBuffer( Component ):
     CapType   = mk_bits( idx_nbits+1 )
 
     ROBMsgType = mk_bitstruct( 'ROBMsg', {
-      'index':123,
+      'index': IndexType,
+      'value': DataType,
     })
 
     # These are the methods that can be performed
     # This order has to be consistent with CL
 
-    s.alloc        = CalleeIfcRTL( RetType=IndexType )
-    s.update_entry = CalleeIfcRTL( MsgType=DataType )
-    s.remove       = CalleeIfcRTL( RetType=ROBMsgType )
+    s.alloc        = CalleeIfcRTL( en=True, rdy=True, RetType=IndexType )
+    s.update_entry = CalleeIfcRTL( en=True, rdy=True, MsgType=ROBMsgType )
+    s.remove       = CalleeIfcRTL( en=True, rdy=True, RetType=ROBMsgType )
 
     # Dealloc from head, add onto tail
     s.head = Wire( IndexType )
@@ -117,10 +118,10 @@ class ReorderBuffer( Component ):
     @s.update
     def update_en():
       if s.update_entry.en and s.update_entry.msg.index == s.head:
-        s.remove.rets.value = s.update_entry.msg.value
+        s.remove.ret.value = s.update_entry.msg.value
       else:
-        s.remove.rets.value = s.data[ s.head ]
-      s.remove.rets.index = s.head
+        s.remove.ret.value = s.data[ s.head ]
+      s.remove.ret.index = s.head
 
     @s.update_ff
     def up_pointers():
@@ -149,8 +150,8 @@ class ReorderBuffer( Component ):
       # Handle update
       if s.update_entry.en:
         if s.allocated[ s.update_entry.msg ]:
-          s.data[ s.update_entry.args.index ] <<= s.update_entry.args.value
-          s.valid[ s.update_entry.args.index ] <<= 1
+          s.data[ s.update_entry.msg.index ] <<= s.update_entry.msg.value
+          s.valid[ s.update_entry.msg.index ] <<= 1
 
       if s.remove.en:
         s.valid[ s.head ] <<= IndexType(0)
@@ -171,5 +172,4 @@ class ReorderBuffer( Component ):
 # test_state_machine
 #-------------------------------------------------------------------------
 def test_state_machine():
-  test = run_test_state_machine(
-      RTL2CLWrapper( ReorderBuffer( Bits16, 4 ) ), ReorderBufferCL( 4 ) )
+  test = run_pyh2s( ReorderBuffer( Bits16, 4 ), ReorderBufferCL( 4 ) )

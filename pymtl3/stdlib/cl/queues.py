@@ -39,7 +39,7 @@ class PipeQueueCL( Component ):
     return s.queue[-1]
 
   def line_trace( s ):
-    return "{}(){}".format( s.enq, s.deq )
+    return "{}( ){}".format( s.enq, s.deq )
 
 #-------------------------------------------------------------------------
 # BypassQueueCL
@@ -68,7 +68,7 @@ class BypassQueueCL( Component ):
     return s.queue[-1]
 
   def line_trace( s ):
-    return "{}(){}".format( s.enq, s.deq )
+    return "{}( ){}".format( s.enq, s.deq )
 
 #-------------------------------------------------------------------------
 # NormalQueueCL
@@ -106,4 +106,4 @@ class NormalQueueCL( Component ):
     return s.queue[-1]
 
   def line_trace( s ):
-    return "{}(){}".format( s.enq, s.deq )
+    return "{}( ){}".format( s.enq, s.deq )

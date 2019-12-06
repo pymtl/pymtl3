@@ -283,6 +283,8 @@ def create_test_state_machine( dut, ref, custom_strategy=None, cycle_accurate=Fa
   except Exception:
     raise "No method specs specified. Did you wrap the RTL model?"
 
+  assert method_specs, "No top level CalleeIfcRTL found in this design."
+
   # Process the custom strategy mapping and perform checks
 
   custom_strategy_tree = build_strategy_tree( custom_strategy )

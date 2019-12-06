@@ -13,7 +13,7 @@ from .BasePass import BasePass, PassMetadata
 
 class CLLineTracePass( BasePass ):
 
-  def __init__( self, trace_len=16 ):
+  def __init__( self, trace_len=6 ):
     self.default_trace_len = trace_len
 
   def __call__( self, top ):
@@ -87,22 +87,17 @@ class CLLineTracePass( BasePass ):
 
             # If rdy and method called - return actuall message
             if self.method.called:
-              args_str = ",".join(
-                [ str( arg ) for arg in self.method.saved_args ]
-              )
-              kwargs_str = ",".join(
-                [ str( arg ) for _, arg in self.method.saved_kwargs.items() ]
-              )
-              ret_str = (
-                "" if self.method.saved_ret is None else
-                str( self.method.saved_ret )
-              )
-              trace = []
-              if len( args_str ) > 0: trace.append( args_str )
-              if len( kwargs_str ) > 0: trace.append( kwargs_str )
-              if len( ret_str ) > 0 : trace.append( ret_str )
-              trace_str = ",".join( trace )
-              return trace_str.ljust( self.trace_len )
+              args_strs = [ str( arg ) for arg in self.method.saved_args ] + \
+                          [ str( arg ) for _, arg in self.method.saved_kwargs.items() ]
+
+              ret_str = "" if self.method.saved_ret is None else str( self.method.saved_ret )
+
+              trace = ""
+              if args_strs:
+                trace += f"({','.join(args_strs)})"
+              if ret_str:
+                trace += f"={ret_str}"
+              return trace.ljust( self.trace_len )
 
             # If rdy and method not called
             else:

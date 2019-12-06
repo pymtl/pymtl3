@@ -36,6 +36,8 @@ class RTL2CLWrapper( Component ):
     for name in keys:
       obj = rtl_model.__dict__[ name ]
       if isinstance( obj, CalleeIfcRTL ):
+        assert obj.MsgType is None or obj.RetType is None, \
+          f"Currently we cannot wrap callee interfaces with both arguments and return values like '{obj}' of class '{obj.__class__}'."
         added_ifc     = CalleeIfcCL()
         added_adapter = CalleeRTL2CL( obj.MsgType, obj.RetType )
         setattr( s, name, added_ifc )
