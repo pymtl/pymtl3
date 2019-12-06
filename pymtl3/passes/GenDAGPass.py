@@ -48,6 +48,10 @@ class GenDAGPass( BasePass ):
     # top._dag.genblk_src     = {}
 
     # Fall back to compiling one block at a time
+    # This is currently because there might be different structs with
+    # the same name but essentially different type. It requires name
+    # disambiguation to let them co-exist in closure. With block-by-block
+    # compilation, we minimize the effect.
 
     # TODO see if directly compiling AST instead of source can be faster
     def compile_net_blk( _globals, src ):
