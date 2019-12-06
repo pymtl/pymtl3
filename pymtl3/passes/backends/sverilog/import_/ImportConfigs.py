@@ -242,7 +242,7 @@ class ImportConfigs( BasePassConfigs ):
     return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
 
   def create_cc_cmd( s ):
-    c_flags = "-O0 -fPIC -shared" + \
+    c_flags = "-O0 -fPIC -fno-gnu-unique -shared" + \
              ("" if s.is_default("c_flags") else f" {s.c_flags}")
     c_include_path = " ".join("-I"+p for p in s.get_all_includes() if p)
     out_file = s.get_shared_lib_path()

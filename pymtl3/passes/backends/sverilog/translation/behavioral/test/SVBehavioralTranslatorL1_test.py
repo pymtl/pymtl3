@@ -52,7 +52,7 @@ end\
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   a._test_vectors = [
-    [    0,   0 ],
+    [    0,   0  ],
     [   42,   42 ],
     [   24,   24 ],
     [   -2,   -2 ],
@@ -85,7 +85,7 @@ end\
       assert m.out == Bits32(tv[1])
   a._test_vectors = [
     [    0,   '*' ],
-    [   42,    0 ],
+    [   42,    0  ],
     [   24,    42 ],
     [   -2,    24 ],
     [   -1,    -2 ],

@@ -45,3 +45,10 @@ def expand( v ):
 
 def get_dir( cur_file ):
   return os.path.dirname(os.path.abspath(cur_file))+os.path.sep
+
+def get_file_hash( file_path ):
+  with open( file_path, 'r' ) as fd:
+    hash_inst = blake2b()
+    string = ''.join( fd.readlines() ).encode( 'ascii' )
+    hash_inst.update(string)
+    return hash_inst.hexdigest()
