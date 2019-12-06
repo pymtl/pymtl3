@@ -253,7 +253,8 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     s.deq.append( {'attr':[], 'index':[], 's_attr':"", 's_index':""} )
     return ''
 
-  def rtlir_tr_literal_number( s, nbits, value ):
+  def rtlir_tr_literal_number( s, nbits, value, first_called = True ):
     num_str = s._literal_number( nbits, value )
-    s.deq.append( {'attr':[], 'index':[], 's_attr':num_str, 's_index':""} )
+    if first_called:
+      s.deq.append( {'attr':[], 'index':[], 's_attr':num_str, 's_index':""} )
     return num_str

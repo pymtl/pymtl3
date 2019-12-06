@@ -12,6 +12,7 @@ from collections import defaultdict, deque
 from linecache import cache as line_cache
 
 from pymtl3.datatypes import *
+from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -45,19 +46,19 @@ class GenDAGPass( BasePass ):
     top._dag.genblk_writes  = {}
     # top._dag.genblk_src     = {}
 
-    # To reduce the time to compile update blocks, I first group the list
-    # of update blocks that have the same host object together and fire
-    # them in a single compile command.
+    # Fall back to compiling one block at a time
+    # This is currently because there might be different structs with
+    # the same name but essentially different type. It requires name
+    # disambiguation to let them co-exist in closure. With block-by-block
+    # compilation, we minimize the effect.
 
-    # Note that it introduced problems with multiple update blocks having
-    # the same const writer at the same hostobj. As a result, I add a
-    # suffix to each block like Bits1_xxx_no_12, Bits1_xxx_no_13 to
-    # disambiguate the blocks
-
-    hostobj_allsrc = defaultdict(str)
-    hostobj_bits   = defaultdict(set)
-    blkname_meta   = {}
-    blkname_suffix = {}
+    # TODO see if directly compiling AST instead of source can be faster
+    def compile_net_blk( _globals, src ):
+      _locals = {}
+      fname = f"Net at {_globals['s']!r}"
+      exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
+      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
+      return list(_locals.values())[0]
 
     for writer, signals in top.get_all_value_nets():
       if len(signals) == 1:
@@ -101,13 +102,17 @@ class GenDAGPass( BasePass ):
           rd_lcas[i] = rd_lcas[i].get_parent_object()
 
       lca_len = len( repr(wr_lca) )
+      _globals = {'s': wr_lca }
 
-      # hostobj_bits is used to only keep useful Bits in the
-      # closure instead of getting all those garbage in "globals()"
+      if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
+        types = get_bitstruct_inst_all_classes( writer._dsl.const )
 
-      if isinstance( writer, Const ):
+        for t in types:
+          if t.__name__ in _globals:
+            assert t is _globals[ t.__name__ ], "Cannot handle two subfields with the same struct name but different structs"
+          _globals[ t.__name__ ] = t
         wstr = repr(writer)
-        hostobj_bits[ wr_lca ].add( writer._dsl.Type.__name__ )
+
       else:
         wstr = f"s.{repr(writer)[lca_len+1:]}"
 
@@ -115,54 +120,19 @@ class GenDAGPass( BasePass ):
       upblk_name = f"{writer!r}__{fanout}".replace( " ", "" ) \
                       .replace( ".", "_" ).replace( ":", "_" ) \
                       .replace( "[", "_" ).replace( "]", "_" ) \
-                      .replace( "(", "_" ).replace( ")", "_" )
-
-      # NAME DISAMBIGUATION
-      # There are cases where the same const drives multiple nets. We
-      # basically add a suffix to name each of them differently.
-
-      if upblk_name in blkname_meta:
-        if upblk_name in blkname_suffix:
-          current = blkname_suffix[ upblk_name ]
-        else:
-          current = 1
-        blkname_suffix[ upblk_name ] = current + 1
-        upblk_name += f"_no_{current}"
+                      .replace( "(", "_" ).replace( ")", "_" ) \
+                      .replace( ",", "_" )
 
       gen_src = """
-  def {}():
-    {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
-      hostobj_allsrc[ wr_lca ] += gen_src
-      blkname_meta[ upblk_name ] = (writer, readers)
+def {}():
+  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
 
-    # TODO see if directly compiling AST instead of source can be faster
+      blk = compile_net_blk( _globals, gen_src )
 
-    for hostobj, allsrc in hostobj_allsrc.items():
-      if hostobj in hostobj_bits:
-        bits_import_src = f"from pymtl3.datatypes import {','.join( hostobj_bits[hostobj] )}"
-      else:
-        bits_import_src = ""
-      src = """
-{}
-def compile_upblks( s ):
-  {}
-  return locals()
-""".format( bits_import_src, allsrc )
-
-      fname = f"Generated net at {hostobj!r}"
-      l = {}
-      exec( compile( src, filename=fname, mode="exec"), l )
-      line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
-
-      ret = l[f'compile_upblks']( hostobj )
-
-      for name, blk in ret.items():
-        if name != 's':
-          top._dag.genblks.add( blk )
-          writer, readers = blkname_meta[ name ]
-          if writer.is_signal():
-            top._dag.genblk_reads[ blk ] = [ writer ]
-          top._dag.genblk_writes[ blk ] = readers
+      top._dag.genblks.add( blk )
+      if writer.is_signal():
+        top._dag.genblk_reads[ blk ] = [ writer ]
+      top._dag.genblk_writes[ blk ] = readers
 
     # Get the final list of update blocks
     top._dag.final_upblks = top.get_all_update_blocks() | top._dag.genblks

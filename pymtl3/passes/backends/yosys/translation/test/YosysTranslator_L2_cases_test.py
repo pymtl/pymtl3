@@ -9,6 +9,7 @@ from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTra
     check_eq,
 )
 from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L2_cases_test import (
+    test_const_struct,
     test_for_range_lower_upper,
     test_for_range_lower_upper_step,
     test_for_range_upper,
@@ -20,6 +21,7 @@ from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L2_cases_test
     test_if_exp_for,
     test_if_exp_unary_op,
     test_lambda_connect,
+    test_long_component_name,
     test_nested_if,
     test_nested_struct,
     test_nested_struct_port,
@@ -28,6 +30,7 @@ from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L2_cases_test
     test_struct,
     test_struct_packed_array,
     test_struct_port,
+    test_struct_uniqueness,
     test_tmpvar,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
