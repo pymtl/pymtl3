@@ -176,7 +176,7 @@ class Bits:
   # Print
 
   def __repr__(self):
-    return "Bits{}( {} )".format( self.nbits, self.hex() )
+    return "Bits{}({})".format( self.nbits, int(self.value) )
 
   def __str__(self):
     str = "{:x}".format(int(self.value)).zfill(((self.nbits-1)>>2)+1)

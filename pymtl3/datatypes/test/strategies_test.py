@@ -16,7 +16,7 @@ from pymtl3.datatypes.bits_import import *
 
 
 @pytest.mark.parametrize( 'nbits', [1, 3, 4, 8, 16, 32] )
-def test_unsiged( nbits ):
+def test_unsigned( nbits ):
   print("")
   @hypothesis.given(
     bits = pst.bits(nbits)
