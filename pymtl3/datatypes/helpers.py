@@ -85,15 +85,15 @@ def to_bits( obj ):
   assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
   return concat( *[ to_bits(getattr(obj, v)) for v in obj.__bitstruct_fields__.keys() ] )
 
-def _get_bitstruct_inst_all_classes( obj ):
+def get_bitstruct_inst_all_classes( obj ):
   # list: put all types together
   if isinstance( obj, list ):
-    return functools.reduce( operator.or_, [ _get_bitstruct_inst_all_classes(x) for x in obj ] )
+    return functools.reduce( operator.or_, [ get_bitstruct_inst_all_classes(x) for x in obj ] )
   ret = { obj.__class__ }
   # BitsN or int
   if isinstance( obj, (Bits, int) ):
     return ret
   # BitStruct
   assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
-  return ret | functools.reduce( operator.or_, [ _get_bitstruct_inst_all_classes(getattr(obj, v))
+  return ret | functools.reduce( operator.or_, [ get_bitstruct_inst_all_classes(getattr(obj, v))
                                                 for v in obj.__bitstruct_fields__.keys() ] )

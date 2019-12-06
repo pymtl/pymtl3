@@ -12,7 +12,7 @@ from collections import defaultdict
 
 import py.code
 
-from pymtl3.datatypes.helpers import _get_bitstruct_inst_all_classes
+from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
@@ -77,7 +77,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         _globals = { 's': s }
 
         if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
-          types = _get_bitstruct_inst_all_classes( writer._dsl.const )
+          types = get_bitstruct_inst_all_classes( writer._dsl.const )
 
           for t in types:
             if t.__name__ in _globals:

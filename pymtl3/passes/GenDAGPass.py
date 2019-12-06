@@ -12,7 +12,7 @@ from collections import defaultdict, deque
 from linecache import cache as line_cache
 
 from pymtl3.datatypes import *
-from pymtl3.datatypes.helpers import _get_bitstruct_inst_all_classes
+from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
 
@@ -102,7 +102,7 @@ class GenDAGPass( BasePass ):
       _globals = {'s': wr_lca }
 
       if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
-        types = _get_bitstruct_inst_all_classes( writer._dsl.const )
+        types = get_bitstruct_inst_all_classes( writer._dsl.const )
 
         for t in types:
           if t.__name__ in _globals:

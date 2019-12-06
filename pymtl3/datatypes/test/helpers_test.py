@@ -9,7 +9,7 @@ Author : Shunning Jiang
 """
 
 from pymtl3.datatypes import *
-from pymtl3.datatypes.helpers import _get_bitstruct_inst_all_classes
+from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 
 
 def test_concat():
@@ -77,6 +77,6 @@ def test_get_bitstruct_inst_all_classes():
 
   a = SomeMsg2()
   print()
-  print(_get_bitstruct_inst_all_classes( a ))
+  print(get_bitstruct_inst_all_classes( a ))
   print({Bits4, Bits8, SomeMsg1, Bits6, SomeMsg2})
-  assert _get_bitstruct_inst_all_classes( a ) == {Bits4, Bits8, SomeMsg1, Bits6, SomeMsg2}
+  assert get_bitstruct_inst_all_classes( a ) == {Bits4, Bits8, SomeMsg1, Bits6, SomeMsg2}
