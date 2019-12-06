@@ -8,27 +8,7 @@
 
 from pymtl3.passes.BasePass import BasePass
 from collections            import deque
-from pymtl3.passes.Cell     import Cell
-
-def updateRelDim( cell ):
-  if cell.sub_cells == None:
-    return
-  for r in range( len( cell.sub_cells ) ):
-    for c in range( len( cell.sub_cells[r] ) ):
-      updateRelDim( cell.sub_cells[r][c] )
-      cell.sub_cells[r][c].parent.updateParentDim(
-          cell.sub_cells[r][c].dim_w,
-          cell.sub_cells[r][c].dim_h )
-
-def updateAbsDim( cell ):
-  if cell.sub_cells == None:
-    return
-  if cell.component != None:
-    cell.component.dim_x = cell.dim_x
-    cell.component.dim_y = cell.dim_y
-  for r in range( len( cell.sub_cells ) ):
-    for c in range( len( cell.sub_cells[r] ) ):
-      updateAbsDim( cell.sub_cells[r][c] )
+from pymtl3.passes.Cell     import *
 
 class PlacementPass( BasePass ):
 
@@ -40,18 +20,15 @@ class PlacementPass( BasePass ):
 
     all_components = sorted( top.get_all_components(), key=repr )
     all_components.reverse()
-    top_cell = Cell()
+    top_cell = Cell( component = top )
     top.cell = top_cell
     for c in all_components:
       if hasattr( c, "place" ):
         # can also give customized width/height parameters
         # for specific component
         c.place()
-    top_cell.setComponent( top )
 
-    updateRelDim( top_cell )
-    updateAbsDim( top_cell )
-    top_cell.updateChildrenDim()
+    updateDim( top_cell )
 
     print()
     print( "============ cell ratio ==============" )
