@@ -1,5 +1,7 @@
 from pymtl3.dsl import *
+
 from ..PassGroups import HeuTopoUnrollSim
+
 
 def test_very_deep_dag():
 

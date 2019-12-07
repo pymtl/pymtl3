@@ -6,6 +6,7 @@ from .HeuristicTopoPass import HeuristicTopoPass
 from .TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .UnrollTickPass import UnrollTickPass
 
+
 class UnrollSim( BasePass ):
   def __call__( s, top ):
     top.elaborate()
