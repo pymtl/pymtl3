@@ -1,27 +1,33 @@
+from ..BasePass import BasePass
+from ..sim.GenDAGPass import GenDAGPass
+from ..sim.SimpleSchedulePass import SimpleSchedulePass
+from ..sim.WrapGreenletPass import WrapGreenletPass
 from .HeuristicTopoPass import HeuristicTopoPass
 from .TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
 from .UnrollTickPass import UnrollTickPass
 
-UnrollSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  SimpleSchedulePass(),
-  UnrollTickPass(),
-  Component.lock_in_simulation
-]
+class UnrollSim( BasePass ):
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    SimpleSchedulePass()( top )
+    UnrollTickPass()( top )
+    top.lock_in_simulation()
 
-HeuTopoUnrollSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  HeuristicTopoPass(),
-  UnrollTickPass(),
-  Component.lock_in_simulation
-]
+class HeuTopoUnrollSim( BasePass ):
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    HeuristicTopoPass()( top )
+    UnrollTickPass()( top )
+    top.lock_in_simulation()
 
-TraceBreakingSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  TraceBreakingSchedTickPass(),
-  Component.lock_in_simulation
-]
+class TraceBreakingSim( BasePass ):
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    TraceBreakingSchedTickPass()( top )
+    top.lock_in_simulation()

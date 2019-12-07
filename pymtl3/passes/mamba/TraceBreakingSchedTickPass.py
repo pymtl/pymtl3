@@ -10,9 +10,9 @@ Date   : Dec 26, 2018
 import py
 
 from pymtl3.dsl import *
-from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.errors import PassOrderError
-from pymtl3.passes.SimpleSchedulePass import check_schedule
+from ..BasePass import BasePass, PassMetadata
+from ..errors import PassOrderError
+from ..sim.SimpleSchedulePass import check_schedule
 
 from .HeuristicTopoPass import CountBranches
 
