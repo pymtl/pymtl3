@@ -56,7 +56,8 @@ def checksum_cl( words ):
   # Create a simulator
   dut = WrappedChecksumCL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( SimulationPass() )
+  dut.sim_reset()
 
   # Wait until recv ready
   while not dut.recv.rdy():
@@ -189,8 +190,7 @@ class ChecksumCLSrcSink_Tests:
   def run_sim( s, th, max_cycles=1000 ):
 
     # Create a simulator
-    th.elaborate()
-    th.apply( SimulationPass )
+    th.apply( SimulationPass() )
     ncycles = 0
     th.sim_reset()
     print( "" )

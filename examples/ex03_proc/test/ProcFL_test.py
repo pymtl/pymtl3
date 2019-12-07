@@ -63,7 +63,7 @@ class ProcFL_Tests:
     th.load( mem_image )
 
     # Create a simulator and run simulation
-    th.apply( SimulationPass )
+    th.apply( SimulationPass() )
     th.sim_reset()
 
     print()

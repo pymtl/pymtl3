@@ -95,7 +95,7 @@ def run_sim( th, max_cycles=100 ):
 
   # Create a simulator
 
-  th.apply( SimpleSim )
+  th.apply( SimulationPass() )
   th.sim_reset()
 
   print("")

@@ -35,7 +35,7 @@ class TestHarnessSimple( Component ):
     return "{} > {}".format( s.src.line_trace(), s.sink.line_trace() )
 
   def run_sim( s, max_cycles=100 ):
-    s.apply( SimpleSim )
+    s.apply( SimulationPass() )
     ncycles = 0
     print("")
     print("{:2}:{}".format( ncycles, s.line_trace() ))
@@ -165,7 +165,7 @@ class TestHarness( Component ):
                                "|".join( [ x.line_trace() for x in s.sinks ] ) )
 
   def run_sim( s, max_cycles=100 ):
-    s.apply( SimpleSim )
+    s.apply( SimulationPass() )
     ncycles = 0
     print("")
     print("{:2}:{}".format( ncycles, s.line_trace() ))

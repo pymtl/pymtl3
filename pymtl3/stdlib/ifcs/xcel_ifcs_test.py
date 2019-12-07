@@ -314,6 +314,7 @@ class TestHarness( Component ):
     return s.master.done()
 
   def run_sim( s, max_cycles=1000 ):
+    s.apply( SimulationPass() )
     # Run simulation
     print("")
     ncycles = 0
@@ -338,7 +339,6 @@ def test_xcel_fl_fl_blocking():
     MinionType = SomeMinionFL,
     nregs      = 16,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 def test_xcel_fl_fl_nonblocking():
@@ -348,7 +348,6 @@ def test_xcel_fl_fl_nonblocking():
     MinionType = SomeMinionFL,
     nregs      = 16,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -362,7 +361,6 @@ def test_xcel_fl_cl_blocking():
     MinionType = SomeMinionCL,
     nregs      = 16,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 def test_xcel_fl_cl_nonblocking():
@@ -372,7 +370,6 @@ def test_xcel_fl_cl_nonblocking():
     MinionType = SomeMinionCL,
     nregs      = 16,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -386,7 +383,6 @@ def test_xcel_fl_rtl_blocking():
     MinionType = SomeMinionRTL,
     nregs      = 16,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 def test_xcel_fl_rtl_nonblocking():
@@ -396,7 +392,6 @@ def test_xcel_fl_rtl_nonblocking():
     MinionType = SomeMinionRTL,
     nregs      = 16,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -410,7 +405,6 @@ def test_xcel_cl_cl():
     MinionType = SomeMinionCL,
     nregs      = 8,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -424,7 +418,6 @@ def test_xcel_cl_rtl():
     MinionType = SomeMinionRTL,
     nregs      = 8,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -438,7 +431,6 @@ def test_xcel_cl_fl():
     MinionType = SomeMinionFL,
     nregs      = 8,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -452,7 +444,6 @@ def test_xcel_rtl_rtl():
     MinionType = SomeMinionRTL,
     nregs      = 8,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -466,7 +457,6 @@ def test_xcel_rtl_cl():
     MinionType = SomeMinionCL,
     nregs      = 8,
   )
-  th.apply( SimpleSim )
   th.run_sim()
 
 #-------------------------------------------------------------------------
@@ -480,5 +470,4 @@ def test_xcel_rtl_fl():
     MinionType = SomeMinionFL,
     nregs      = 8,
   )
-  th.apply( SimpleSim )
   th.run_sim()
