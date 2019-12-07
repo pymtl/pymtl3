@@ -27,7 +27,7 @@ class Toy( Component ):
       # This update block models the behavior of a 32-bit adder
       s.out = s.in0 + s.in1
 
-def processbinary(sig):
+def process_binary(sig):
   """
   Returns int value from a signal in 32b form. Used for testing.
   Example: input: 0b00000000000000000000000000000000
@@ -94,6 +94,6 @@ def test_toy():
     assert signal_length >= 5,"missing some cycles of signals"
 
     for j in range(signal_length):
-      assert testlist[i][j] == processbinary(partsig[j]),"collected wrong signals"
+      assert testlist[i][j] == process_binary(partsig[j]),"collected wrong signals"
 
   print("All signals captured in s._textwave!")
