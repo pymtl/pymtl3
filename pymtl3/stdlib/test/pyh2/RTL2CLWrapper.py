@@ -90,6 +90,9 @@ class CalleeRTL2CL( Component ):
 
     s.add_constraints( U( up_called ) < M( s.cl_callee ) )
 
+
+    s.add_constraints( M( s.cl_callee.rdy ) < M( s.cl_callee ) )
+
     # Add upblk depending on args (msg)
 
     if MsgType:

@@ -20,8 +20,8 @@ class SimpleSimPass( BasePass ):
     top.elaborate()
     GenDAGPass()( top )
     WrapGreenletPass()( top )
-    CLLineTracePass()( top )
     SimpleSchedulePass()( top )
+    CLLineTracePass()( top )
     VcdGenerationPass()( top )
     CollectSignalPass()( top )
     PrintWavePass()( top )
@@ -48,9 +48,9 @@ class SimulationPass( BasePass ):
 class AutoTickSimPass( BasePass ):
   def __call__( s, top ):
     top.elaborate()
-    GenDAGPass(),
+    GenDAGPass()( top )
     WrapGreenletPass()( top )
     CLLineTracePass()( top )
-    OpenLoopCLPass(), # Inject this pass to build infrastructure
+    OpenLoopCLPass()( top )
     top.lock_in_simulation()
 

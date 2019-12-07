@@ -20,6 +20,7 @@ from .dsl.Connectable import (
     Wire,
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
+from .dsl.Placeholder import Placeholder
 from .passes.PassGroups import SimulationPass
 
 __version__ = "0.5.2"

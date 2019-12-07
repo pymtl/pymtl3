@@ -8,8 +8,8 @@ Author : Yanghui Ou
   Date : July 10, 2019
 """
 from pymtl3 import *
-from pymtl3.passes import CLLineTracePass, GenDAGPass, OpenLoopCLPass
-from pymtl3.stdlib.rtl.queues import NormalQueueRTL
+from pymtl3.passes import AutoTickSimPass
+from pymtl3.stdlib.rtl.queues import NormalQueueRTL, PipeQueueRTL
 from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
 from pymtl3.stdlib.test.test_sinks import TestSinkCL
 from pymtl3.stdlib.test.test_srcs import TestSrcCL
@@ -38,8 +38,7 @@ class TestHarness(Component):
 
 def test_wrapper_normalqueue():
   top = TestHarness( RTL2CLWrapper( NormalQueueRTL( Bits16, num_entries=2 ) ) )
-  top.elaborate()
-  top.apply( SimulationPass )
+  top.apply( SimulationPass() )
   top.sim_reset()
 
   cycles = 0
@@ -50,12 +49,8 @@ def test_wrapper_normalqueue():
   assert cycles < 100
 
 def test_wrapper_openloop():
-  top = RTL2CLWrapper( NormalQueueRTL( Bits16, num_entries=2 ) )
-  top.elaborate()
-  top.apply( GenDAGPass() )
-  top.apply( CLLineTracePass() )
-  top.apply( OpenLoopCLPass() )
-  top.lock_in_simulation()
+  top = RTL2CLWrapper( PipeQueueRTL( Bits16, num_entries=2 ) )
+  top.apply( AutoTickSimPass() )
 
   while not top.enq.rdy():
     pass
