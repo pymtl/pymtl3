@@ -8,7 +8,7 @@ Author : Yanghui Ou
   Date : June 6, 2019
 """
 from pymtl3 import *
-from pymtl3.passes.yosys import TranslationImportPass
+from pymtl3.passes.backends.yosys import TranslationImportPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum
@@ -38,7 +38,7 @@ def checksum_vrtl( words ):
 
   # Create a simulator
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( SimulationPass() )
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
@@ -104,7 +104,7 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
     th = TranslationImportPass()( th )
-    th.apply( SimulationPass )
+    th.apply( SimulationPass() )
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 

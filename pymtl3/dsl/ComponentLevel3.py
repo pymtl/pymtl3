@@ -17,7 +17,7 @@ import inspect
 import linecache
 from collections import defaultdict
 
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, is_bitstruct_inst
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2, compiled_re
@@ -245,6 +245,12 @@ class ComponentLevel3( ComponentLevel2 ):
       if Type is not Type2:
         raise InvalidConnectionError( f"Bitwidth mismatch when connecting a {Type2} constant "
                                       f"to signal {o1} with type {Type}." )
+      o2 = Const( Type, o2, s )
+    elif is_bitstruct_inst( o2 ):
+      Type2 = type(o2)
+      if Type is not Type2:
+        raise InvalidConnectionError( f"We don't support connecting a {Type2} constant bitstruct"
+                                      f"to non-bitstruct type {Type}" )
       o2 = Const( Type, o2, s )
     else:
       raise InvalidConnectionError(f"\n>>> {o2} of type {type(o2)} is not a const! \n"

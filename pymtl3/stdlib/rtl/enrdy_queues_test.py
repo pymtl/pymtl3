@@ -39,7 +39,7 @@ class TestHarness( Component ):
     return s.src.line_trace() + " " + s.q.line_trace() + " " + s.sink.line_trace()
 
 def run_sim( model ):
-  model.apply( SimpleSim )
+  model.apply( SimulationPass() )
 
   print()
   cycle = 0

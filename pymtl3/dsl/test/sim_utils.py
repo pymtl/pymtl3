@@ -12,6 +12,7 @@ from collections import defaultdict
 
 import py.code
 
+from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3
@@ -63,23 +64,33 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         upblk_name = f"{writer!r}__{fanout}" \
                         .replace( ".", "_" ).replace( ":", "_" ) \
                         .replace( "[", "_" ).replace( "]", "" ) \
-                        .replace( "(", "_" ).replace( ")", "" )
+                        .replace( "(", "_" ).replace( ")", "" ) \
+                        .replace( ",", "_" )
 
-        rstrs   = [ f"{x!r} = _w" for x in readers ]
+        rstrs    = [ f"{x!r} = _w" for x in readers ]
+        _globals = { 's': s }
+
+        if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
+          types = get_bitstruct_inst_all_classes( writer._dsl.const )
+
+          for t in types:
+            if t.__name__ in _globals:
+              assert t is _globals[ t.__name__ ], "Cannot handle two subfields with the same struct name but different structs"
+            _globals[ t.__name__ ] = t
 
         src = f"""
         def {upblk_name}():
           _w = {writer!r}
           {"; ".join(rstrs)}
-        _recent_blk = {upblk_name}
         """
+        _locals = {}
+        exec(py.code.Source( src ).compile(), _globals, _locals)
 
-        exec(py.code.Source( src ).compile(), locals(), globals())
-
-        all_upblks.add( _recent_blk )
+        _recent_blk = _locals[upblk_name]
 
         # Collect read/writer metadata, directly insert them into _all_X
 
+        all_upblks.add( _recent_blk )
         gen_upblk_reads [ _recent_blk ] = [ writer ]
         gen_upblk_writes[ _recent_blk ] = readers
 
@@ -163,9 +174,10 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
         x = x.get_parent_object()
 
       # Check the sibling slices. Cover 3)
-      for x in obj.get_sibling_slices():
-        if x.slice_overlap( obj ) and x in write_upblks:
-          writers.append( x )
+      if obj.is_signal():
+        for x in obj.get_sibling_slices():
+          if x.slice_overlap( obj ) and x in write_upblks:
+            writers.append( x )
 
       # Add all constraints
       for writer in writers:

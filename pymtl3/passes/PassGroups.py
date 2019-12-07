@@ -1,88 +1,56 @@
 from pymtl3.dsl import Component
 
-from .CLLineTracePass import CLLineTracePass
-from .DynamicSchedulePass import DynamicSchedulePass
-from .GenDAGPass import GenDAGPass
-from .LineTraceParamPass import LineTraceParamPass
-from .mamba.HeuristicTopoPass import HeuristicTopoPass
-from .mamba.TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
-from .mamba.UnrollTickPass import UnrollTickPass
-from .OpenLoopCLPass import OpenLoopCLPass
-from .SimpleSchedulePass import SimpleSchedulePass
-from .SimpleTickPass import SimpleTickPass
-from .text_wave.CollectSignalPass import CollectSignalPass
-from .text_wave.PrintWavePass import PrintWavePass
-from .VcdGenerationPass import VcdGenerationPass
-from .WrapGreenletPass import WrapGreenletPass
+from .autotick.OpenLoopCLPass import OpenLoopCLPass
+from .BasePass import BasePass
+from .sim.DynamicSchedulePass import DynamicSchedulePass
+from .sim.GenDAGPass import GenDAGPass
+from .sim.SimpleSchedulePass import SimpleSchedulePass
+from .sim.SimpleTickPass import SimpleTickPass
+from .sim.WrapGreenletPass import WrapGreenletPass
+from .tracing.CLLineTracePass import CLLineTracePass
+from .tracing.CollectSignalPass import CollectSignalPass
+from .tracing.LineTraceParamPass import LineTraceParamPass
+from .tracing.PrintWavePass import PrintWavePass
+from .tracing.VcdGenerationPass import VcdGenerationPass
 
-SimpleSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  CLLineTracePass(),
-  SimpleSchedulePass(),
-  # VcdGenerationPass(),
-  CollectSignalPass(),
-  PrintWavePass(),
-  SimpleTickPass(),
-  LineTraceParamPass(),
-  Component.lock_in_simulation
-]
 
-DynamicSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  CLLineTracePass(),
-  DynamicSchedulePass(),
-  CLLineTracePass(),
-  SimpleTickPass(),
-  Component.lock_in_simulation
-]
+# SimpleSim can be used when the UDG is a DAG
+class SimpleSimPass( BasePass ):
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    CLLineTracePass()( top )
+    SimpleSchedulePass()( top )
+    VcdGenerationPass()( top )
+    CollectSignalPass()( top )
+    PrintWavePass()( top )
+    SimpleTickPass()( top )
+    LineTraceParamPass()( top )
+    top.lock_in_simulation()
 
 # This pass is created to be used for 2019 isca tutorial.
-SimulationPass = [
-  GenDAGPass(),
-  WrapGreenletPass(),
-  CLLineTracePass(),
-  DynamicSchedulePass(),
-  VcdGenerationPass(),
-  CollectSignalPass(),
-  PrintWavePass(),
-  SimpleTickPass(),
-  Component.lock_in_simulation
-]
+# Now we can always use this
+class SimulationPass( BasePass ):
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass()( top )
+    WrapGreenletPass()( top )
+    CLLineTracePass()( top )
+    DynamicSchedulePass()( top )
+    VcdGenerationPass()( top )
+    CollectSignalPass()( top )
+    PrintWavePass()( top )
+    SimpleTickPass()( top )
+    LineTraceParamPass()( top )
+    top.lock_in_simulation()
 
-OpenLoopCLSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  CLLineTracePass(),
-  OpenLoopCLPass(), # Inject this pass to build infrastructure
-  Component.lock_in_simulation
-]
+class AutoTickSimPass( BasePass ):
+  def __call__( s, top ):
+    top.elaborate()
+    GenDAGPass(),
+    WrapGreenletPass()( top )
+    CLLineTracePass()( top )
+    OpenLoopCLPass(), # Inject this pass to build infrastructure
+    top.lock_in_simulation()
 
-
-UnrollSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  WrapGreenletPass(),
-  SimpleSchedulePass(),
-  UnrollTickPass(),
-  Component.lock_in_simulation
-]
-
-HeuTopoUnrollSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  HeuristicTopoPass(),
-  UnrollTickPass(),
-  Component.lock_in_simulation
-]
-
-TraceBreakingSim = [
-  Component.elaborate,
-  GenDAGPass(),
-  TraceBreakingSchedTickPass(),
-  Component.lock_in_simulation
-]

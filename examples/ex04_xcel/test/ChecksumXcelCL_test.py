@@ -83,7 +83,7 @@ def checksum_xcel_cl( words ):
   # Create a simulator using CL accelerator
   dut = WrappedChecksumXcelCL()
   dut.elaborate()
-  dut.apply( SimulationPass )
+  dut.apply( SimulationPass() )
 
   reqs, _ = mk_xcel_transaction( words )
 
@@ -179,7 +179,7 @@ class ChecksumXcelCLSrcSink_Tests:
 
     # Create a simulator
     th.elaborate()
-    th.apply( SimulationPass )
+    th.apply( SimulationPass() )
     ncycles = 0
     th.sim_reset()
     print( "" )

@@ -127,9 +127,6 @@ class Const( Connectable ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_sibling_slices( s ):
-    return []
-
   def is_component( s ):
     return False
 
@@ -141,7 +138,7 @@ class Const( Connectable ):
 
 class Signal( NamedObject, Connectable ):
 
-  def __init__( s, Type ):
+  def __init__( s, Type=Bits1 ):
     assert isinstance( Type, type ), "Use actual type instead of instance!"
     s._dsl.Type = Type
     s._dsl.type_instance = None

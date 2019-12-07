@@ -20,7 +20,7 @@ from .dsl.Connectable import (
     Wire,
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
-from .passes.PassGroups import DynamicSim, SimpleSim, SimulationPass
+from .passes.PassGroups import SimulationPass
 
 __version__ = "0.5.2"
 
@@ -32,8 +32,8 @@ __all__ = [
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
-  'SimpleSim', 'DynamicSim', 'SimulationPass',
-  'Component',
+  'SimulationPass',
+  'Component', 'Placeholder',
 
   'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
   'mk_bits', 'Bits',

@@ -214,14 +214,14 @@ def _mk_str_fn( fields ):
 # function that looks like the following:
 #
 # def __repr__( self ):
-#  return self.__class__.qualname__ + f'(x={self.x!r}, y={self.y!r})'
+#  return self.__class__.__name__ + f'(x={self.x!r}, y={self.y!r})'
 
 def _mk_repr_fn( fields ):
   return _create_fn(
     '__repr__',
     [ 'self' ],
-    [ 'return self.__class__.__qualname__ + f"(' +
-      ', '.join([ f'{name}={{self.{name}!r}}' for name in fields ]) +
+    [ 'return self.__class__.__name__ + f"(' +
+      ','.join([ f'{{self.{name}!r}}' for name in fields ]) +
       ')"']
   )
 

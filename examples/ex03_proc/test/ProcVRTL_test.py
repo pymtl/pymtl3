@@ -40,13 +40,13 @@ class ProcVRTL_Tests( BaseTests ):
     th.load( mem_image )
 
     # Translate the processor and import it back in
-    from pymtl3.passes.yosys import TranslationImportPass
+    from pymtl3.passes.backends.yosys import TranslationImportPass
 
     th.proc.yosys_translate_import = True
     th = TranslationImportPass()( th )
 
     # Create a simulator and run simulation
-    th.apply( SimulationPass )
+    th.apply( SimulationPass() )
     th.sim_reset()
 
     print()

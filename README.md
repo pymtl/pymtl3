@@ -52,7 +52,10 @@ distribution are shown below. They have been tested with Ubuntu Xenial 18.04.
 
 ### Install PyMTL 3
 
-PyMTL 3 is available on pypi.org. As a result, you are able to just call ```pip install pymtl3``` to install PyMTL 3.
+
+**tl; dr** ```pip install pymtl3```
+
+----
 
 PyMTL 3 requires Python 3.6+. We highly recommend you work inside a **virtual environment** instead of calling ```sudo pip install```. Starting from Python 3.5, the use of venv is now recommended for creating virtual environments.
 
@@ -60,7 +63,16 @@ PyMTL 3 requires Python 3.6+. We highly recommend you work inside a **virtual en
  $ cd <path to where venvs are stored>
  $ python3 -m venv pymtl3 # you can use whatever Python 3.6+ binary you have
  $ source pymtl3/bin/activate
+```
+PyMTL 3 needs to use cffi, so install these packages first.
 
+```
+ $ sudo apt-get install git python-dev libffi-dev
+```
+
+PyMTL 3 is available on pypi.org. As a result, you are able to just call ```pip install pymtl3``` to install PyMTL 3.
+
+```
  $ pip install pymtl3
 ```
 

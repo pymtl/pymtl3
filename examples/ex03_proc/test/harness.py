@@ -14,7 +14,6 @@ import struct
 from examples.ex03_proc.NullXcel import NullXcelRTL
 from examples.ex03_proc.tinyrv0_encoding import assemble
 from pymtl3 import *
-from pymtl3.passes import DynamicSim
 from pymtl3.stdlib.cl.MemoryCL import MemoryCL
 from pymtl3.stdlib.connects import connect_pairs
 from pymtl3.stdlib.ifcs import mk_mem_msg
@@ -152,14 +151,14 @@ def run_test( ProcModel, gen_test, dump_vcd=None,
 
   # Run the simulation
 
-  # from pymtl3.passes.yosys import TranslationPass, ImportPass
+  # from pymtl3.passes.backends.yosys import TranslationPass, ImportPass
 
   # th.elaborate()
   # th.proc.yosys_translate = True
   # th.proc.yosys_import = True
   # th.apply( TranslationPass() )
   # th = ImportPass()( th )
-  th.apply( DynamicSim )
+  th.apply( SimulationPass() )
   th.sim_reset()
 
   print()
