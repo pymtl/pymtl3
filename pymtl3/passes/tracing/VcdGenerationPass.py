@@ -21,24 +21,16 @@ class VcdGenerationPass( BasePass ):
 
   def __call__( self, top ):
 
-    if not hasattr( top._sched, "schedule" ):
-      raise PassOrderError( "schedule" )
-
-    if hasattr( top, "_cl_trace" ):
-      schedule = top._cl_trace.schedule
-    else:
-      schedule = top._sched.schedule
-
     if hasattr( top, "config_tracing" ):
       top.config_tracing.check()
 
       if top.config_tracing.tracing != 'none':
-        top._vcd = PassMetadata()
-        schedule.append( self.make_vcd_func( top ) )
+        if not hasattr( top, "_tracing" ):
+          top._tracing = PassMetadata()
+        top._tracing.vcd_func = self.make_vcd_func( top, top._tracing )
 
-  def make_vcd_func( self, top ):
+  def make_vcd_func( self, top, vcdmeta ):
 
-    vcdmeta = top._vcd
     vcd_file_name = top.config_tracing.vcd_file_name
 
     if vcd_file_name != "":
@@ -101,7 +93,7 @@ class VcdGenerationPass( BasePass ):
     # they belong to a top level wire and we count that wire
 
     trimmed_value_nets = []
-    vcdmeta.clock_net_idx = None
+    vcdmeta.vcd_clock_net_idx = None
 
     # FIXME handle the case where the top level signal is in a value net
     for writer, net in top.get_all_value_nets():
@@ -111,8 +103,8 @@ class VcdGenerationPass( BasePass ):
           new_net.append( x )
           if repr(x) == "s.clk":
             # Hardcode clock net because it needs to go up and down
-            assert vcdmeta.clock_net_idx is None
-            vcdmeta.clock_net_idx = len(trimmed_value_nets)
+            assert vcdmeta.vcd_clock_net_idx is None
+            vcdmeta.vcd_clock_net_idx = len(trimmed_value_nets)
 
       if new_net:
         trimmed_value_nets.append( new_net )
@@ -163,8 +155,8 @@ class VcdGenerationPass( BasePass ):
 
           # Check if it's clock. Hardcode clock net
           if repr(signal) == "s.clk":
-            assert vcdmeta.clock_net_idx is None
-            vcdmeta.clock_net_idx = len(trimmed_value_nets)
+            assert vcdmeta.vcd_clock_net_idx is None
+            vcdmeta.vcd_clock_net_idx = len(trimmed_value_nets)
 
           # This is a signal whose connection is not captured by the
           # global net data structure. This might be a sliced signal or
@@ -214,10 +206,10 @@ class VcdGenerationPass( BasePass ):
 
     # Now we create per-cycle signal value collect functions
 
-    vcdmeta.sim_ncycles = 0
+    vcdmeta.vcd_sim_ncycles = 0
 
     # Flip clock for the first cycle
-    print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.clock_net_idx ] ),
+    print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.vcd_clock_net_idx ] ),
            file=vcdmeta.vcd_file, flush=True )
 
     # Returns a dump_vcd function that is ready to be appended to _sched.
@@ -225,9 +217,9 @@ class VcdGenerationPass( BasePass ):
 
     # Separate clock net from normal nets ahead of time
     net_elements = [ net[0] for i, net in enumerate(trimmed_value_nets)
-                      if i != vcdmeta.clock_net_idx ]
+                      if i != vcdmeta.vcd_clock_net_idx ]
 
-    clock_symbol = net_symbol_mapping[ vcdmeta.clock_net_idx ]
+    clock_symbol = net_symbol_mapping[ vcdmeta.vcd_clock_net_idx ]
     vcd_file = vcdmeta.vcd_file
 
     # Adding this 's' argument is for eval to correctly evaluate 's.x'...
@@ -257,13 +249,13 @@ class VcdGenerationPass( BasePass ):
           print( f'b{net_bits_bin_str} {symbol}', file=vcd_file )
 
       # Flop clock at the end of cycle
-      next_neg_edge = 100 * vcdmeta.sim_ncycles + 50
+      next_neg_edge = 100 * vcdmeta.vcd_sim_ncycles + 50
       print( f'\n#{next_neg_edge}\nb0b0 {clock_symbol}', file=vcd_file )
 
       # Flip clock of the next cycle
       next_pos_edge = next_neg_edge + 50
       print( f'#{next_pos_edge}\nb0b1 {clock_symbol}\n', file=vcd_file, flush=True )
-      vcdmeta.sim_ncycles += 1
+      vcdmeta.vcd_sim_ncycles += 1
 
     def gen_dump_vcd( s ):
       def dump_vcd():

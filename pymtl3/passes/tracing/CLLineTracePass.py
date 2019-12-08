@@ -16,12 +16,9 @@ class CLLineTracePass( BasePass ):
     self.default_trace_len = trace_len
 
   def __call__( self, top ):
-
-    # Create a new schedule
-
-    if hasattr( top, "_sched" ):
-      top._cl_trace = PassMetadata()
-      top._cl_trace.schedule = [ self.process_component( top ) ] + top._sched.schedule
+    if not hasattr( top, "_tracing" ):
+      top._tracing = PassMetadata()
+    top._tracing.clear_cl_trace = self.process_component( top )
 
   def process_component( self, top ):
 

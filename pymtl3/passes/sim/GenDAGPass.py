@@ -239,9 +239,9 @@ def {}():
           if wr_blk not in update_ff:
             for rd_blk in rd_blks:
               if wr_blk != rd_blk:
-                if rd_blk not in update_ff:
-                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
-                  constraint_objs[ (wr_blk, rd_blk) ].add( obj )
+                # if rd_blk not in update_ff:
+                impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     # Collect all objs that read the variable whose id is "write"
     # 1) WR A.b.b.b, A.b.b, A.b, A (detect 2-writer conflict)
@@ -266,9 +266,9 @@ def {}():
           for reader in readers:
               for rd_blk in read_upblks[ reader ]:
                 if wr_blk != rd_blk:
-                  if rd_blk not in update_ff:
-                    impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
-                    constraint_objs[ (wr_blk, rd_blk) ].add( obj )
+                  # if rd_blk not in update_ff:
+                  impl_constraints.add( (wr_blk, rd_blk) ) # wr < rd default
+                  constraint_objs[ (wr_blk, rd_blk) ].add( obj )
 
     top._dag.constraint_objs = constraint_objs
     top._dag.all_constraints = { *U_U }

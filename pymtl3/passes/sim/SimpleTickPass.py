@@ -22,13 +22,33 @@ class SimpleTickPass( BasePass ):
     return iterative
 
   def __call__( self, top ):
-    if not hasattr( top._sched, "schedule" ):
-      raise PassOrderError( "schedule" )
+    if not hasattr( top._sched, "update_schedule" ):
+      raise PassOrderError( "update_schedule" )
 
-    if hasattr( top, "_cl_trace" ):
-      schedule = top._cl_trace.schedule
-    else:
-      schedule = top._sched.schedule
+    # We assemble the final schedule from multiple sources of required
+    # work to generate a tick function for simulation
 
+    # Currently the tick order is:
+    # [ ff, tracing, posedge, clear_cl_trace, update ]
 
-    top.tick = SimpleTickPass.gen_tick_function( schedule )
+    final_schedule = []
+    # call ff blocks first
+    final_schedule.extend( top._sched.schedule_ff )
+
+    # append tracing related work
+
+    if hasattr( top._tracing, "vcd_func" ):
+      final_schedule.append( top._tracing.vcd_func )
+    if hasattr( top._tracing, "collect_text_sigs" ):
+      final_schedule.append( top._tracing.collect_text_sigs )
+
+    # posedge flip
+    final_schedule.extend( top._sched.schedule_posedge_flip )
+
+    # execute all update blocks
+    final_schedule.extend( top._sched.update_schedule )
+
+    # Generate tick
+    top.tick = SimpleTickPass.gen_tick_function( final_schedule )
+    # FIXME update_once?
+    top.eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
