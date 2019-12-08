@@ -10,11 +10,12 @@ from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.sim.GenDAGPass import GenDAGPass
+from pymtl3.passes import TracingConfigs
 
 from ..OpenLoopCLPass import OpenLoopCLPass
 
 
-def test_top_level_method():
+def test_top_level_method_tracing():
 
   class Top(Component):
 
@@ -40,7 +41,7 @@ def test_top_level_method():
           s.value = s.amp + s.element
           s.element = None
         else:
-          s.value = -1
+          s.value = Bits32( -1 )
 
       s.add_constraints(
         M( s.push ) < U( up_compose_in ),
@@ -64,6 +65,10 @@ def test_top_level_method():
 
   A = Top()
   A.elaborate()
+
+  # Turn on textwave
+  A.config_tracing = TracingConfigs( tracing='text_fancy' )
+
   A.apply( GenDAGPass() )
   A.apply( OpenLoopCLPass() )
   A.lock_in_simulation()
@@ -84,6 +89,7 @@ def test_top_level_method():
   print(A.pull())
 
   print("num_cycles_executed: ", A.num_cycles_executed)
+  A.print_textwave()
 
 class TestModuleNonBlockingIfc(Component):
 

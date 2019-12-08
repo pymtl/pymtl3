@@ -38,7 +38,8 @@ class VcdGenerationPass( BasePass ):
     else:
       vcdmeta.vcd_file_name = str(top.__class__.__name__) + ".vcd"
 
-    vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
+    vcd_file = vcdmeta.vcd_file = open( vcdmeta.vcd_file_name, "w" )
+
     print(f"[Tracing mode = {top.config_tracing.tracing}] "
           f"Writing value change dump (VCD) to {os.getcwd()}/{(vcdmeta.vcd_file_name)}")
 
@@ -51,7 +52,7 @@ class VcdGenerationPass( BasePass ):
 
     print( "$date\n  {}\n$end\n$version\n  PyMTL 3 (Mamba)\n$end\n"
            "$timescale\n {}\n$end\n".format( time.asctime(), vcd_timescale ),
-           file=vcdmeta.vcd_file )
+           file=vcd_file )
 
     # Utility generator to create new symbols for each VCD signal.
     # Code inspired by MyHDL 0.7.
@@ -136,7 +137,7 @@ class VcdGenerationPass( BasePass ):
 
       # Create a new scope for this module
       print( f"{spaces}$scope module {vcd_mangle_name(my_name)} $end",
-             file=vcdmeta.vcd_file )
+             file=vcd_file )
 
       m_name = repr(m)
 
@@ -174,13 +175,13 @@ class VcdGenerationPass( BasePass ):
         # TODO struct
         signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
         print( f"{spaces}  $var reg {get_nbits(signal._dsl.Type)} {symbol} {signal_name} $end",
-               file=vcdmeta.vcd_file )
+               file=vcd_file )
 
       # Recursively visit all submodels.
       for child in m.get_child_components():
         recurse_models( child, spaces+'  ' )
 
-      print( f"{spaces}$upscope $end", file=vcdmeta.vcd_file )
+      print( f"{spaces}$upscope $end", file=vcd_file )
 
     # Begin recursive descent from the top-level model.
     recurse_models( top, '' )
@@ -188,7 +189,7 @@ class VcdGenerationPass( BasePass ):
     # Once all models and their signals have been defined, end the
     # definition section of the vcd and print the initial values of all
     # nets in the design.
-    print( "$enddefinitions $end\n", file=vcdmeta.vcd_file )
+    print( "$enddefinitions $end\n", file=vcd_file )
 
     # vcdmeta.last_values is an array of values from the previous cycle
 
@@ -199,7 +200,7 @@ class VcdGenerationPass( BasePass ):
       # The first cycle VCD contains the default value
       bin_str = to_bits( net[0]._dsl.Type() ).bin()
 
-      print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcdmeta.vcd_file )
+      print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcd_file )
 
       # Set this to be the last cycle value str
       last_values[i] = bin_str
@@ -208,28 +209,25 @@ class VcdGenerationPass( BasePass ):
 
     vcdmeta.vcd_sim_ncycles = 0
 
+    # Separate clock net from normal nets ahead of time
+    clock_symbol = net_symbol_mapping[ vcdmeta.vcd_clock_net_idx ]
+
+    net_details = [ ( trimmed_value_nets[i][0], net_symbol_mapping[i] )
+                    for i in range(len(trimmed_value_nets))
+                      if i != vcdmeta.vcd_clock_net_idx ]
+
     # Flip clock for the first cycle
-    print( '\n#0\nb0b1 {}\n'.format( net_symbol_mapping[ vcdmeta.vcd_clock_net_idx ] ),
-           file=vcdmeta.vcd_file, flush=True )
+    print( '\n#0\nb0b1 {}\n'.format( clock_symbol ), file=vcd_file, flush=True )
 
     # Returns a dump_vcd function that is ready to be appended to _sched.
     # TODO: type check?
-
-    # Separate clock net from normal nets ahead of time
-    net_elements = [ net[0] for i, net in enumerate(trimmed_value_nets)
-                      if i != vcdmeta.vcd_clock_net_idx ]
-
-    clock_symbol = net_symbol_mapping[ vcdmeta.vcd_clock_net_idx ]
-    vcd_file = vcdmeta.vcd_file
 
     # Adding this 's' argument is for eval to correctly evaluate 's.x'...
     # Python 3 destroys a lot of our hacks .. sigh
 
     def dump_vcd_inner( s ):
-      vcd_file = vcdmeta.vcd_file
 
-      for i, signal in enumerate( net_elements ):
-        symbol = net_symbol_mapping[i]
+      for i, (signal, symbol) in enumerate( net_details ):
 
         # If we encounter a BitStruct then dump it as a concatenation of
         # all fields.
@@ -237,8 +235,8 @@ class VcdGenerationPass( BasePass ):
 
         try:
           net_bits_bin = to_bits( eval(repr(signal)) )
-        except AttributeError as e:
-          raise AttributeError(f'{e}\n - {net} becomes another type. Please check your code.')
+        except Exception as e:
+          raise TypeError(f'{e}\n - {signal} becomes another type. Please check your code.')
 
         net_bits_bin_str = net_bits_bin.bin()
         # `last_value` is the string form of a Bits object in binary

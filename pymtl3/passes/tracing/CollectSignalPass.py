@@ -30,7 +30,7 @@ class CollectSignalPass( BasePass ):
 
         if not hasattr( top, "_tracing" ):
           top._tracing = PassMetadata()
-          top._tracing.collect_text_sigs = self.collect_sig_func( top, top._tracing )
+        top._tracing.collect_text_sigs = self.collect_sig_func( top, top._tracing )
 
   def collect_sig_func( self, top, wavmeta ):
 

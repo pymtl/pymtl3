@@ -10,10 +10,13 @@
 """
 from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
 from pymtl3.dsl.errors import UpblkCyclicError
-from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.errors import PassOrderError
-from pymtl3.passes.sim.SimpleSchedulePass import SimpleSchedulePass
-from pymtl3.passes.tracing.CLLineTracePass import CLLineTracePass
+from ..BasePass import BasePass, PassMetadata
+from ..errors import PassOrderError
+from ..sim.SimpleSchedulePass import SimpleSchedulePass
+from ..tracing.CLLineTracePass import CLLineTracePass
+from ..tracing.CollectSignalPass import CollectSignalPass
+from ..tracing.PrintWavePass import PrintWavePass
+from ..tracing.VcdGenerationPass import VcdGenerationPass
 
 
 class OpenLoopCLPass( BasePass ):

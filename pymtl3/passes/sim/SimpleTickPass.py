@@ -7,6 +7,7 @@ Generate a simple tick function (no Mamba techniques here)
 Author : Shunning Jiang
 Date   : Dec 26, 2018
 """
+from pymtl3.dsl import MethodPort
 from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
@@ -37,10 +38,11 @@ class SimpleTickPass( BasePass ):
 
     # append tracing related work
 
-    if hasattr( top._tracing, "vcd_func" ):
-      final_schedule.append( top._tracing.vcd_func )
-    if hasattr( top._tracing, "collect_text_sigs" ):
-      final_schedule.append( top._tracing.collect_text_sigs )
+    if hasattr( top, "_tracing" ):
+      if hasattr( top._tracing, "vcd_func" ):
+        final_schedule.append( top._tracing.vcd_func )
+      if hasattr( top._tracing, "collect_text_sigs" ):
+        final_schedule.append( top._tracing.collect_text_sigs )
 
     # posedge flip
     final_schedule.extend( top._sched.schedule_posedge_flip )
@@ -51,4 +53,14 @@ class SimpleTickPass( BasePass ):
     # Generate tick
     top.tick = SimpleTickPass.gen_tick_function( final_schedule )
     # FIXME update_once?
-    top.eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
+    # check if the design has method_port
+    method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
+
+    if len(method_ports) == 0:
+      # Pure RTL design, add eval_combinational
+      top.eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
+    else:
+      tmp = list(method_ports)[0]
+      def eval_combinational():
+        raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(tmp)[1:]} is a method port.")
+      top.eval_combinational = eval_combinational

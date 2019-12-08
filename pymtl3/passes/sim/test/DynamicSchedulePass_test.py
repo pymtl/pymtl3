@@ -22,6 +22,7 @@ def _test_model( cls ):
   A.apply( DynamicSchedulePass() )
   A.apply( SimpleTickPass() )
   A.lock_in_simulation()
+  A.eval_combinational()
 
   T = 0
   while T < 5:

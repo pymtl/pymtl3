@@ -79,15 +79,17 @@ def test_toy():
   for in0, in1, out in zip(vector[0::3], vector[1::3], vector[2::3]):
     dut.in0 = in0
     dut.in1 = in1
+    dut.eval_combinational()
     dut.tick()
     assert dut.out == out
 
   #test
-  sig = dut._textwave.sigs
+  sig = dut._tracing.text_sigs
   siglist = ["s.in0","s.in1","s.out","s.clk","s.reset"]
   for i in siglist:
     assert i in sig,"signals not captured"
 
+  print(sig)
   for i in range(3): # in0, in1, and out
     partsig = sig[ siglist[i] ]
     signal_length = len(partsig)
@@ -96,4 +98,4 @@ def test_toy():
     for j in range(signal_length):
       assert testlist[i][j] == process_binary(partsig[j]),"collected wrong signals"
 
-  print("All signals captured in s._textwave!")
+  print("All signals captured in top._tracing.text_sigs!")

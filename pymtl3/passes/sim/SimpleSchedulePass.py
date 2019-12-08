@@ -124,21 +124,22 @@ class SimpleSchedulePass( BasePass ):
     if not strs:
       def no_double_buffer():
         pass
-      return no_double_buffer
+      top._sched.schedule_posedge_flip = [ no_double_buffer ]
 
-    src = """
-    def compile_double_buffer( s ):
-      def double_buffer():
-        {}
-      return double_buffer
-    """.format( "\n        ".join(strs) )
+    else:
+      src = """
+      def compile_double_buffer( s ):
+        def double_buffer():
+          {}
+        return double_buffer
+      """.format( "\n        ".join(strs) )
 
-    import py
-    # print(src)
-    l = locals()
-    exec(py.code.Source( src ).compile(), l)
+      import py
+      # print(src)
+      l = locals()
+      exec(py.code.Source( src ).compile(), l)
 
-    top._sched.schedule_posedge_flip = [ l['compile_double_buffer']( top ) ]
+      top._sched.schedule_posedge_flip = [ l['compile_double_buffer']( top ) ]
 
 def dump_dag( top, V, E ):
   from graphviz import Digraph
