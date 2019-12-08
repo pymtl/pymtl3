@@ -132,7 +132,7 @@ class SimpleSchedulePass( BasePass ):
         def double_buffer():
           {}
         return double_buffer
-      """.format( "\n        ".join(strs) )
+      """.format( "\n          ".join(strs) )
 
       import py
       # print(src)
