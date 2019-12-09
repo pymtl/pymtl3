@@ -57,6 +57,54 @@ def test_bits16_limited():
 
   print("-"*10,16,'limited',"-"*10)
   actual_test()
+
+@pytest.mark.parametrize( 'length', [5,10,15,20] )
+def test_bitslist( length ):
+  print("")
+  @hypothesis.given(
+    blist = pst.bitslist([mk_bits(i+10) for i in range(length)])
+  )
+  @hypothesis.settings( max_examples=16 )
+  def actual_test( blist ):
+    for i in range(length):
+      assert blist[i].nbits == 10+i
+    # print out the fraction of generated random value versus the full range
+    print( blist, [ f'{(int(blist[i])/(2**(10+i))*100):.2f}%' for i in range(length)] )
+
+  print("-"*10,f'[{length}]',"-"*10)
+  actual_test()
+
+def test_bitslist_nested_limit():
+  type_ = [ [Bits10, Bits11, Bits12], [Bits13, Bits14] ]
+  limit_dict = {
+    0: {
+      0: (0xa0,0xaf),
+      2: (0xb0,0xbf),
+    },
+    1: {
+      1: (0xc0,0xcf),
+    },
+  }
+  print("")
+  @hypothesis.given(
+    blist = pst.bitslist(type_, limit_dict)
+  )
+  @hypothesis.settings( max_examples=16 )
+  def actual_test( blist ):
+    assert blist[0][0].nbits == 10
+    assert blist[0][1].nbits == 11
+    assert blist[0][2].nbits == 12
+    assert blist[1][0].nbits == 13
+    assert blist[1][1].nbits == 14
+    assert 0xa0 <= blist[0][0] <= 0xaf
+    assert 0xb0 <= blist[0][2] <= 0xbf
+    assert 0xc0 <= blist[1][1] <= 0xcf
+    print(blist)
+
+  print("-"*10,'list_nested_limit!',"-"*10)
+  actual_test()
+
+
 @bitstruct
 class Point1D:
   x: Bits12
@@ -102,4 +150,62 @@ def test_bitstruct( T ):
     print( bs )
 
   print("-"*10,T,"-"*10)
+  actual_test()
+
+def test_nested_point_limited():
+  limit_dict = {
+    'p1': {
+      'x': (0xe0,0xef),
+    },
+    'p2': {
+      'y': (0xf0,0xff),
+    }
+  }
+
+  print("")
+  @hypothesis.given(
+    bs = pst.bitstruct(NestedPoint, limit_dict)
+  )
+  @hypothesis.settings( max_examples=16 )
+  def actual_test( bs ):
+    assert isinstance( bs, NestedPoint )
+    assert 0xe0 <= bs.p1.x <= 0xef
+    assert 0xf0 <= bs.p2.y <= 0xff
+    print( bs )
+
+  print("-"*10,NestedPoint,"-"*10)
+  actual_test()
+
+def test_nnested_point_limited():
+  limit_dict = {
+    'p1': {
+      'x': (0xe0,0xef),
+    },
+    'p2': {
+      'y': (0xf0,0xff),
+    },
+    'p3': {
+      0: {
+        'z': {
+          0: (0xa0, 0xaf),
+          1: (0xb0, 0xbf),
+        }
+      }
+    }
+  }
+
+  print("")
+  @hypothesis.given(
+    bs = pst.bitstruct(NNestedPoint, limit_dict)
+  )
+  @hypothesis.settings( max_examples=16 )
+  def actual_test( bs ):
+    assert isinstance( bs, NNestedPoint )
+    assert 0xe0 <= bs.p1.x <= 0xef
+    assert 0xf0 <= bs.p2.y <= 0xff
+    assert 0xa0 <= bs.p3[0].z[0] <= 0xaf
+    assert 0xb0 <= bs.p3[0].z[1] <= 0xbf
+    print( bs )
+
+  print("-"*10,NNestedPoint,"-"*10)
   actual_test()
