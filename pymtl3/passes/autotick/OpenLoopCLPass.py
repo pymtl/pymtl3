@@ -10,6 +10,7 @@
 """
 from pymtl3.dsl import CalleePort, NonBlockingCalleeIfc
 from pymtl3.dsl.errors import UpblkCyclicError
+
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
 from ..sim.SimpleSchedulePass import SimpleSchedulePass

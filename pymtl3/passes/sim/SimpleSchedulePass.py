@@ -32,20 +32,22 @@ class SimpleSchedulePass( BasePass ):
     if not hasattr( top, "_sched" ):
       raise Exception( "Please create top._sched pass metadata namespace first!" )
 
-    # Construct the graph
+    # Construct the intra-cycle graph based on normal update blocks
 
-    V   = top._dag.final_upblks - top._dag.all_update_ff
-    E   = top._dag.all_constraints
+    V   = top._dag.final_upblks - top.get_all_update_ff()
+    E   = set()
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
+
+    for (u, v) in top._dag.all_constraints: # u -> v
+      if u in V and v in V:
+        InD[v] += 1
+        Es[u].append( v )
+        E.add( (u, v) )
 
     import os
     if 'MAMBA_DAG' in os.environ:
       dump_dag( top, V, E )
-
-    for (u, v) in E: # u -> v
-      InD[v] += 1
-      Es [u].append( v )
 
     # Perform topological sort for a serial schedule.
 
@@ -69,7 +71,7 @@ class SimpleSchedulePass( BasePass ):
 
     if not hasattr( top, "_sched" ):
       raise Exception( "Please create top._sched pass metadata namespace first!" )
-    top._sched.schedule_ff = top.get_all_update_ff().copy()
+    top._sched.schedule_ff = list( top.get_all_update_ff().copy() )
 
   def schedule_posedge_flip( self, top ):
 
@@ -191,5 +193,5 @@ def check_schedule( top, schedule, V, E, in_degree ):
 
     raise UpblkCyclicError( """
 Update blocks have cyclic dependencies.
-* Please consult update dependency graph for details."
+* Please consult update dependency graph for details.
     """)

@@ -14,7 +14,7 @@ import py
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
-from .SimpleSchedulePass import dump_dag, SimpleSchedulePass
+from .SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from .SimpleTickPass import SimpleTickPass
 
 

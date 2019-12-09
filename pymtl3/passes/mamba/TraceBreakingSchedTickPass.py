@@ -13,9 +13,10 @@ from pymtl3.dsl import *
 
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
-from ..sim.SimpleSchedulePass import check_schedule
+from ..sim.SimpleSchedulePass import SimpleSchedulePass, check_schedule
 from .HeuristicTopoPass import CountBranches
 
+# FIXME also apply branchiness to all update_ff blocks
 
 class TraceBreakingSchedTickPass( BasePass ):
   def __call__( self, top ):
@@ -25,20 +26,27 @@ class TraceBreakingSchedTickPass( BasePass ):
     top._sched = PassMetadata()
 
     self.meta_schedule( top )
+    # Reuse simple's ff and flip schedule
+    simple = SimpleSchedulePass()
+    simple.schedule_ff( top )
+    simple.schedule_posedge_flip( top )
+
     self.trace_breaking_tick( top )
 
   def meta_schedule( self, top ):
 
-    # Construct the graph
+    # Construct the intra-cycle graph based on normal update blocks
 
-    V   = top._dag.final_upblks
-    E   = top._dag.all_constraints
+    V   = top._dag.final_upblks - top.get_all_update_ff()
+    E   = set()
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
 
-    for (u, v) in E: # u -> v
-      InD[v] += 1
-      Es [u].append( v )
+    for (u, v) in top._dag.all_constraints: # u -> v
+      if u in V and v in V:
+        InD[v] += 1
+        Es[u].append( v )
+        E.add( (u, v) )
 
     # Extract branchiness
 
@@ -159,7 +167,8 @@ class TraceBreakingSchedTickPass( BasePass ):
     check_schedule( top, schedule, V, E, InD )
 
   def trace_breaking_tick( self, top ):
-    metas = top._sched.meta_schedule
+
+    metas = [ top._sched.schedule_ff + top._sched.schedule_posedge_flip ] + top._sched.meta_schedule
 
     # We will use pypyjit.dont_trace_here to disable tracing across
     # intermediate update blocks.
@@ -176,7 +185,8 @@ class TraceBreakingSchedTickPass( BasePass ):
       for j in range( len(meta) ):
         blk = meta[j]
         schedule_names[ (i, j) ] = "[br: {}] {}" \
-          .format( self.branchiness[ blk ], blk.__name__ )
+          .format( self.branchiness[ blk ] if blk in self.branchiness else "???",
+                   blk.__name__ )
 
         # Copy the scheduled functions to update_blkX__Y
         gen_tick_src += "update_blk{0}__{1} = metas[{0}][{1}];".format( i, j )
