@@ -253,3 +253,18 @@ def test_nested_point_user_strategy():
 
   print("-"*10,NestedPoint,"-"*10)
   actual_test()
+
+def test_nested_point_user_strategy_wrong_type():
+  limit_dict = {
+    'p1': {
+      'x': range(0xe0,0xf0),
+    },
+    'p2': 123
+  }
+
+  try:
+    bs = pst.bitstructs(NestedPoint, limit_dict)
+  except AssertionError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown AssertionError")
