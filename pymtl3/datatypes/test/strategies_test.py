@@ -62,7 +62,7 @@ def test_bits16_limited():
 def test_bitslist( length ):
   print("")
   @hypothesis.given(
-    blist = pst.bitslist([mk_bits(i+10) for i in range(length)])
+    blist = pst.bitslists([mk_bits(i+10) for i in range(length)])
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( blist ):
@@ -78,16 +78,16 @@ def test_bitslist_nested_limit():
   type_ = [ [Bits10, Bits11, Bits12], [Bits13, Bits14] ]
   limit_dict = {
     0: {
-      0: (0xa0,0xaf),
-      2: (0xb0,0xbf),
+      0: range(0xa0,0xb0),
+      2: range(0xb0,0xc0),
     },
     1: {
-      1: (0xc0,0xcf),
+      1: range(0xc0,0xd0),
     },
   }
   print("")
   @hypothesis.given(
-    blist = pst.bitslist(type_, limit_dict)
+    blist = pst.bitslists(type_, limit_dict)
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( blist ):
@@ -142,7 +142,7 @@ class NNestedPoint:
 def test_bitstruct( T ):
   print("")
   @hypothesis.given(
-    bs = pst.bitstruct(T)
+    bs = pst.bitstructs(T)
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( bs ):
@@ -155,16 +155,16 @@ def test_bitstruct( T ):
 def test_nested_point_limited():
   limit_dict = {
     'p1': {
-      'x': (0xe0,0xef),
+      'x': range(0xe0,0xf0),
     },
     'p2': {
-      'y': (0xf0,0xff),
+      'y': range(0xf0,0x100),
     }
   }
 
   print("")
   @hypothesis.given(
-    bs = pst.bitstruct(NestedPoint, limit_dict)
+    bs = pst.bitstructs(NestedPoint, limit_dict)
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( bs ):
@@ -179,16 +179,16 @@ def test_nested_point_limited():
 def test_nnested_point_limited():
   limit_dict = {
     'p1': {
-      'x': (0xe0,0xef),
+      'x': range(0xe0,0xef),
     },
     'p2': {
-      'y': (0xf0,0xff),
+      'y': range(0xf0,0xff),
     },
     'p3': {
       0: {
         'z': {
-          0: (0xa0, 0xaf),
-          1: (0xb0, 0xbf),
+          0: range(0xa0, 0xaf),
+          1: range(0xb0, 0xbf),
         }
       }
     }
@@ -196,15 +196,15 @@ def test_nnested_point_limited():
 
   print("")
   @hypothesis.given(
-    bs = pst.bitstruct(NNestedPoint, limit_dict)
+    bs = pst.bitstructs(NNestedPoint, limit_dict)
   )
   @hypothesis.settings( max_examples=16 )
   def actual_test( bs ):
     assert isinstance( bs, NNestedPoint )
-    assert 0xe0 <= bs.p1.x <= 0xef
-    assert 0xf0 <= bs.p2.y <= 0xff
-    assert 0xa0 <= bs.p3[0].z[0] <= 0xaf
-    assert 0xb0 <= bs.p3[0].z[1] <= 0xbf
+    assert 0xe0 <= bs.p1.x < 0xef
+    assert 0xf0 <= bs.p2.y < 0xff
+    assert 0xa0 <= bs.p3[0].z[0] < 0xaf
+    assert 0xb0 <= bs.p3[0].z[1] < 0xbf
     print( bs )
 
   print("-"*10,NNestedPoint,"-"*10)

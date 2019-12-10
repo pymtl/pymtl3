@@ -40,15 +40,15 @@ def bits( nbits, signed=False, min_value=None, max_value=None ):
   return strategy_bits() # RETURN A STRATEGY INSTEAD OF FUNCTION
 
 #-------------------------------------------------------------------------
-# strategies.bitslist
+# strategies.bitslists
 #-------------------------------------------------------------------------
 # Return the SearchStrategy for a list of Bits with the support of
 # dictionary based min/max value limit
 
-def bitslist( types, limit_dict=None ):
+def bitslists( types, limit_dict=None ):
   # Make sure limit_dict becomes a dict, not None
   limit_dict = limit_dict or {}
-  assert isinstance( limit_dict, dict ), "bitslist only takes a dictionary " \
+  assert isinstance( limit_dict, dict ), "bitslists only takes a dictionary " \
                                          "e.g. { 0:(1,2), 1:(3,4) } to specify min/max limit"
 
   # We capture the strategies inside a list inside closure of the
@@ -65,12 +65,12 @@ def bitslist( types, limit_dict=None ):
   return strategy_list() # RETURN A STRATEGY INSTEAD OF FUNCTION
 
 #-------------------------------------------------------------------------
-# strategies.bitstruct
+# strategies.bitstructs
 #-------------------------------------------------------------------------
 # Return the SearchStrategy for bitstruct type T with the support of
 # dictionary-based min/max value limit
 
-def bitstruct( T, limit_dict=None ):
+def bitstructs( T, limit_dict=None ):
   # Make sure limit_dict becomes a dict, not None
   limit_dict = limit_dict or {}
   assert isinstance( limit_dict, dict ), "bitstruct only takes a dictionary " \
@@ -97,21 +97,26 @@ def bitstruct( T, limit_dict=None ):
 # function to construct the strategy
 def _strategy_dispatch( T, limit ):
 
+  # User-specified search strategy, early exit
+  if isinstance( limit, st.SearchStrategy ):
+    return limit
+
   # a list of types
   if isinstance( T, list ):
-    return bitslist( T, limit )
+    return bitslists( T, limit )
 
   # nested bitstruct
   if is_bitstruct_class( T ):
-    return bitstruct( T, limit )
+    return bitstructs( T, limit )
 
   # bits field, "leaf node", directly use bits strategy
   assert issubclass( T, Bits )
   if limit is None:
     return bits( T.nbits )
 
-  # bits field with limit
-  assert isinstance( limit, tuple )
-  min_value, max_value = limit
-  assert min_value < max_value
-  return bits( T.nbits, False, min_value, max_value )
+  # bits field with range limit
+  assert isinstance( limit, range ), f"We only accept range as min/max value specifier, not {type(limit)}"
+  assert limit.step == 1, f"We only accept step=1 range, not {limit}."
+  assert limit.start < limit.stop, f"We only accept start < stop range, not {limit}"
+
+  return bits( T.nbits, False, limit.start, limit.stop-1 )
