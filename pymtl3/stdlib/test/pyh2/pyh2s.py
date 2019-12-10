@@ -23,20 +23,7 @@ from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
 
 from .RTL2CLWrapper import RTL2CLWrapper
-from .utils import list_string, rename
-
-#-------------------------------------------------------------------------
-# infer_strategy_from_type
-#-------------------------------------------------------------------------
-# TODO: added a default strategy for arbitrary bit struct as well?
-
-def infer_strategy_from_type( dtype ):
-
-  # We only support Bits at the moment.
-  if isinstance( dtype(), Bits ):
-    return pst.bits( dtype.nbits )
-
-  raise TypeError( "Argument strategy for {} not supported".format( dtype ) )
+from .utils import rename
 
 #-------------------------------------------------------------------------
 # BaseStateMachine
@@ -58,8 +45,7 @@ class BaseStateMachine( RuleBasedStateMachine ):
       func = top.line_trace
 
       def line_trace():
-        return "{} || {}".format(
-          func(),
+        return "{} || {}".format( func(),
           " | ".join([ str(ifc) for ifc in top.top_level_nb_ifcs ])
         )
       top.line_trace = line_trace
@@ -69,7 +55,6 @@ class BaseStateMachine( RuleBasedStateMachine ):
     # Elaborate dut
     s.dut.apply( OpenLoopCLSim )
     s.dut.sim_reset()
-
 
     # Print header
     print("\n"+"="*74)

@@ -18,10 +18,3 @@ def rename( name ):
     f.__name__ = name
     return f
   return wrap
-
-#-------------------------------------------------------------------------
-# list_string
-#-------------------------------------------------------------------------
-
-def list_string( lst ):
-  return ", ".join([ str( x ) for x in lst ] )
