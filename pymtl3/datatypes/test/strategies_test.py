@@ -105,6 +105,27 @@ def test_bitslist_nested_limit():
   actual_test()
 
 
+def test_bitslist_nested_user_strategy():
+  type_ = [ [Bits10, Bits11, Bits12], Bits13 ]
+  limit_dict = {
+    1: pst.bits(13, min_value=0, max_value=10)
+  }
+  print("")
+  @hypothesis.given(
+    blist = pst.bitslists(type_, limit_dict)
+  )
+  @hypothesis.settings( max_examples=16 )
+  def actual_test( blist ):
+    assert blist[0][0].nbits == 10
+    assert blist[0][1].nbits == 11
+    assert blist[0][2].nbits == 12
+    assert blist[1].nbits == 13
+    assert 0 <= blist[1] <= 10
+    print(blist)
+
+  print("-"*10,'list_user_strategy!',"-"*10)
+  actual_test()
+
 @bitstruct
 class Point1D:
   x: Bits12
@@ -208,4 +229,27 @@ def test_nnested_point_limited():
     print( bs )
 
   print("-"*10,NNestedPoint,"-"*10)
+  actual_test()
+
+def test_nested_point_user_strategy():
+  limit_dict = {
+    'p1': {
+      'x': range(0xe0,0xf0),
+    },
+    'p2': pst.bitstructs( Point2D, {'x':range(0,2),'y':range(2,4)} )
+  }
+
+  print("")
+  @hypothesis.given(
+    bs = pst.bitstructs(NestedPoint, limit_dict)
+  )
+  @hypothesis.settings( max_examples=16 )
+  def actual_test( bs ):
+    assert isinstance( bs, NestedPoint )
+    assert 0xe0 <= bs.p1.x <= 0xef
+    assert 0 <= bs.p2.x < 2
+    assert 2 <= bs.p2.y < 4
+    print( bs )
+
+  print("-"*10,NestedPoint,"-"*10)
   actual_test()
