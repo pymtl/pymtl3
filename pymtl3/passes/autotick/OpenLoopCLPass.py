@@ -42,7 +42,7 @@ class OpenLoopCLPass( BasePass ):
 
     # Construct the graph with top level callee port
     V = top._dag.final_upblks - top.get_all_update_ff()
-    E = top._dag.all_constraints
+    E = set()
 
     # We collect all top level callee ports/nonblocking callee interfaces
     top_level_callee_ports = top.get_all_object_filter(
@@ -88,9 +88,11 @@ class OpenLoopCLPass( BasePass ):
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V }
 
-    for (u, v) in E: # u -> v
-      G  [u].append( v )
-      G_T[v].append( u )
+    for (u, v) in top._dag.all_constraints:
+      if u in V and v in V:
+        E.add( (u, v) )
+        G  [u].append( v )
+        G_T[v].append( u )
 
     # In addition to existing constraints, we process the constraints that
     # involve top level callee ports. NOTE THAT we assume the user never
@@ -107,9 +109,10 @@ class OpenLoopCLPass( BasePass ):
       if yy in method_callee_mapping:
         yy = method_callee_mapping[ yy ]
 
-      E.add( (xx, yy) )
-      G  [xx].append( yy )
-      G_T[yy].append( xx )
+      if xx in V and yy in V:
+        E.add( (xx, yy) )
+        G  [xx].append( yy )
+        G_T[yy].append( xx )
 
     if 'MAMBA_DAG' in os.environ:
       dump_dag( top, V, E )
@@ -248,7 +251,7 @@ class OpenLoopCLPass( BasePass ):
 
     constraint_objs = top._dag.constraint_objs
 
-    schedule = []
+    update_schedule = []
 
     scc_id = 0
     for i in scc_schedule:
@@ -259,11 +262,11 @@ class OpenLoopCLPass( BasePass ):
         # We add the corresponding rdy before the method
 
         if u in method_guard_mapping:
-          # FIXME
-          schedule.append( method_guard_mapping[u] )
+          # FIXME how do we control
+          update_schedule.append( method_guard_mapping[u] )
           top.top_level_nb_ifcs.append( u.get_parent_object() )
 
-        schedule.append( u )
+        update_schedule.append( u )
       else:
 
         # For each non-trivial SCC, we need to figure out a intra-SCC
@@ -360,41 +363,54 @@ class OpenLoopCLPass( BasePass ):
                                          " and ".join( check_srcs ),
                                          ", ".join( [ x.__name__ for x in scc] ) )
                                          # "; ".join( print_srcs ) )
-        schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
+        update_schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
     # Shunning: we call line trace related pass here.
     CLLineTracePass()( top )
     CollectSignalPass()( top )
     VcdGenerationPass()( top )
     PrintWavePass()( top )
+
     # Shunning: we reuse ff and posedge schedules from SimpleSchedulePass
     simple = SimpleSchedulePass()
     simple.schedule_ff( top )
     simple.schedule_posedge_flip( top )
 
-    # clear trace before any update block
-    schedule.insert( 0, top._tracing.clear_cl_trace )
+    # Currently the tick order is:
+    # [ clear_cl_trace, update, ff, tracing, posedge ]
+    # in order to avoid ticking for the first cycle.
 
-    # call ff blocks after normal schedule
-    schedule.extend( top._sched.schedule_ff )
+    schedule = []
 
-    # work on tracing
-    if hasattr( top._tracing, "vcd_func" ):
-      schedule.append( top._tracing.vcd_func )
-    if hasattr( top._tracing, "collect_text_sigs" ):
-      schedule.append( top._tracing.collect_text_sigs )
+    # clear cl method flag
+    schedule.append( top._tracing.clear_cl_trace )
 
-    # The last element is always line trace
+    # execute all update blocks
+    schedule.extend( update_schedule )
+
+    # print trace after all update blocks
     def print_line_trace():
       print(top.__class__.__name__, ':', top.line_trace())
 
     schedule.append( print_line_trace )
 
-    # flip at the end
+    # call ff blocks first
+    schedule.extend( top._sched.schedule_ff )
+
+    # append tracing related work
+
+    if hasattr( top, "_tracing" ):
+      if hasattr( top._tracing, "vcd_func" ):
+        schedule.append( top._tracing.vcd_func )
+      if hasattr( top._tracing, "collect_text_sigs" ):
+        schedule.append( top._tracing.collect_text_sigs )
+
+    # posedge flip
     schedule.extend( top._sched.schedule_posedge_flip )
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
+
 
     # Here we are trying to avoid scanning the original schedule that
     # contains methods because we will need isinstance in that case.
@@ -405,8 +421,8 @@ class OpenLoopCLPass( BasePass ):
     mapping = { x : i for i, x in enumerate( schedule_no_method ) }
 
     def wrap_method( top, method,
-                     my_idx_new, next_idx_new, schedule_no_method,
-                     my_idx_orig, next_idx_orig ):
+                     my_idx_new, schedule_no_method,
+                     my_idx_orig ):
 
       def actual_method( *args, **kwargs ):
         i = top._sched.new_schedule_index
@@ -428,20 +444,10 @@ class OpenLoopCLPass( BasePass ):
         while i < my_idx_new:
           schedule_no_method[i]()
           i += 1
+        j = my_idx_orig + 1
 
         # Execute the method
         ret = method( *args, **kwargs )
-
-        # Execute all update blocks before the next method. Note that if
-        # there are several consecutive methods, my_idx_new is equal to next_idx_new
-        while i < next_idx_new:
-          schedule_no_method[i]()
-          i += 1
-        j = next_idx_orig
-
-        if i == len(schedule_no_method):
-          i = j = 0
-          top.num_cycles_executed += 1
 
         top._sched.new_schedule_index = i
         top._sched.orig_schedule_index = j
@@ -465,29 +471,8 @@ class OpenLoopCLPass( BasePass ):
         # This always exists because we append a line trace at the end
         map_next_func = mapping[ schedule[next_func] ]
 
-        # Get the index of the next method in the schedule without method
-        next_method = i + 1
-        while next_method < len(schedule):
-          if isinstance( schedule[next_method], CalleePort ):
-            break
-          next_method += 1
-
-        # If there is another method after me, I calculate the range of
-        # blocks that I need to call and then stop before the user calls
-        # the next method.
-        if next_method < len(schedule):
-          next_func = next_method
-          while next_func < len(schedule):
-            if not isinstance( schedule[next_func], CalleePort ):
-              break
-            next_func += 1
-          # Get the index in the compacted schedule
-          map_next_func_of_next_method = mapping[ schedule[next_func] ]
-        else:
-          map_next_func_of_next_method = len(schedule_no_method)
-
         x.method = wrap_method( top, x.method,
-                                map_next_func, map_next_func_of_next_method,
+                                map_next_func,
                                 schedule_no_method,
-                                i, next_method )
+                                i )
     top.num_cycles_executed = 0

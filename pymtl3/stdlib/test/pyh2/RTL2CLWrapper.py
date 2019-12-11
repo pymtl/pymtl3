@@ -81,7 +81,7 @@ class CalleeRTL2CL( Component ):
     def up_rdy():
       s.rdy = bool(s.rtl_caller.rdy)
 
-    s.add_constraints( U( up_rdy ) < M( s.cl_callee.rdy ) )
+    s.add_constraints( U( up_rdy ) < M( s.cl_callee ) )
 
     # We clear called flag before any method call
     @s.update
@@ -89,9 +89,7 @@ class CalleeRTL2CL( Component ):
       s.called = False
 
     s.add_constraints( U( up_called ) < M( s.cl_callee ) )
-
-
-    s.add_constraints( M( s.cl_callee.rdy ) < M( s.cl_callee ) )
+    # s.add_constraints( M( s.cl_callee.rdy ) < M( s.cl_callee ) )
 
     # Add upblk depending on args (msg)
 
