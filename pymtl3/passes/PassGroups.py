@@ -50,7 +50,5 @@ class AutoTickSimPass( BasePass ):
     top.elaborate()
     GenDAGPass(),
     WrapGreenletPass()( top )
-    CLLineTracePass()( top )
-    VcdGenerationPass()( top )
     OpenLoopCLPass(), # Inject this pass to build infrastructure
     top.lock_in_simulation()

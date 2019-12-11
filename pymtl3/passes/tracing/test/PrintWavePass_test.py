@@ -72,6 +72,7 @@ def test_toy():
   for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
     dut.i = i
     dut.inlong = inlong
+    dut.eval_combinational()
     dut.tick()
     assert dut.out == out
 
@@ -81,7 +82,7 @@ def test_toy():
   with redirect_stdout(f):
     dut.print_textwave()
   out = f.getvalue()
-  for i in dut._textwave.sigs:
+  for i in dut._tracing.text_sigs:
     dot = i.find(".")
     sliced = i[dot+1:]
     if sliced != "reset" and sliced != "clk":
@@ -134,6 +135,7 @@ def test_widetoy():
   for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
     dut.i = i
     dut.inlong = inlong
+    dut.eval_combinational()
     dut.tick()
     assert dut.out == out
 
@@ -143,7 +145,7 @@ def test_widetoy():
   with redirect_stdout(f):
     dut.print_textwave()
   out = f.getvalue()
-  for i in dut._textwave.sigs:
+  for i in dut._tracing.text_sigs:
     dot = i.find(".")
     sliced = i[dot+1:]
     if sliced != "reset" and sliced != "clk":
@@ -203,6 +205,7 @@ def test_bitstruct():
   for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
     dut.i = i
     dut.inlong = inlong
+    dut.eval_combinational()
     dut.tick()
     assert dut.out == out
 
@@ -212,7 +215,7 @@ def test_bitstruct():
   with redirect_stdout(f):
     dut.print_textwave()
   out = f.getvalue()
-  for i in dut._textwave.sigs:
+  for i in dut._tracing.text_sigs:
     dot = i.find(".")
     sliced = i[dot+1:]
     if sliced != "reset" and sliced != "clk":

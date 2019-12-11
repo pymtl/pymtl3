@@ -68,7 +68,7 @@ def test_wires():
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )
-  for blk in incr._sched.schedule:
+  for blk in incr._sched.update_schedule:
     if not blk.__name__.startswith('s'):
       print( blk.__name__ )
 

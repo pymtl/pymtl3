@@ -20,16 +20,19 @@ import py
 
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.errors import PassOrderError
 
 
 class PrintWavePass( BasePass ):
 
   def __call__( self, top ):
-
     if hasattr( top, "config_tracing" ):
       top.config_tracing.check()
 
       if top.config_tracing.tracing in [ 'text_ascii', 'text_fancy' ]:
+        if not hasattr( top._tracing, "text_sigs" ):
+          raise PassOrderError( "text_sigs" )
+
         # TODO remove this check when we are able to handle text_ascii
         if top.config_tracing.tracing == 'text_ascii':
           raise Exception("Current we don't support text_ascii. Only 'text_fancy' is supported now.")
@@ -79,7 +82,7 @@ def _help_print( self ):
   revstart, revstop = '\x1B[7m', '\x1B[0m'
   light_gray = '\033[47m'
   back='\033[0m'  #back to normal printing
-  all_signals = self._textwave.sigs
+  all_signals = self._tracing.text_sigs
   #spaces before cycle number
   max_length = 0
   for sig in all_signals:

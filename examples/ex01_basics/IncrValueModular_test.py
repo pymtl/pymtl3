@@ -91,7 +91,7 @@ def test_value_modular():
 
   # Print out the update block schedule.
   print( "\n==== Schedule ====" )
-  for blk in tb._sched.schedule:
+  for blk in tb._sched.update_schedule:
     if not blk.__name__.startswith('s'):
       print( blk.__name__ )
 

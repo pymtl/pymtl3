@@ -32,6 +32,8 @@ def mk_test_case_table( raw_test_case_table ):
 #------------------------------------------------------------------------------
 # TestVectorSimulator
 #------------------------------------------------------------------------------
+# Now we have the same test vector simulator as pymtl2
+# https://github.com/cornell-brg/pymtl/blob/master/pclib/test/TestVectorSimulator.py
 
 class TestVectorSimulator:
 
@@ -55,10 +57,13 @@ class TestVectorSimulator:
 
       # Set inputs
       self.set_inputs_func( self.model, test_vector )
-      self.model.tick()
+
+      self.model.eval_combinational()
 
       # Print the line trace
       print(self.model.line_trace())
 
       # Verify outputs
       self.verify_outputs_func( self.model, test_vector )
+
+      self.model.tick()

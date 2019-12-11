@@ -20,14 +20,6 @@ from pymtl3.passes.errors import ModelTypeError, PassOrderError
 
 class CollectSignalPass( BasePass ):
   def __call__( self, top ):
-    if not hasattr( top._sched, "schedule" ):
-      raise PassOrderError( "schedule" )
-
-    if hasattr( top, "_cl_trace" ):
-      schedule = top._cl_trace.schedule
-    else:
-      schedule = top._sched.schedule
-
     if hasattr( top, "config_tracing" ):
       top.config_tracing.check()
 
@@ -35,8 +27,10 @@ class CollectSignalPass( BasePass ):
         # TODO remove this check when we are able to handle text_ascii
         if top.config_tracing.tracing == 'text_ascii':
           raise Exception("Current we don't support text_ascii. Only 'text_fancy' is supported now.")
-        top._textwave = PassMetadata()
-        schedule.append( self.collect_sig_func( top, top._textwave ) )
+
+        if not hasattr( top, "_tracing" ):
+          top._tracing = PassMetadata()
+        top._tracing.collect_text_sigs = self.collect_sig_func( top, top._tracing )
 
   def collect_sig_func( self, top, wavmeta ):
 
@@ -49,11 +43,11 @@ class CollectSignalPass( BasePass ):
     for x in top._dsl.all_signals:
       if x.is_top_level_signal() and ( not repr(x).endswith('.clk') or x is top.clk ):
         if is_bitstruct_class( x._dsl.Type ):
-          wav_srcs.append( "wavmeta.sigs['{0}'].append( to_bits({0}).bin() )".format(x) )
+          wav_srcs.append( "wavmeta.text_sigs['{0}'].append( to_bits({0}).bin() )".format(x) )
         elif issubclass( x._dsl.Type, Bits ):
-          wav_srcs.append( "wavmeta.sigs['{0}'].append( {0}.bin() )".format(x) )
+          wav_srcs.append( "wavmeta.text_sigs['{0}'].append( {0}.bin() )".format(x) )
 
-    wavmeta.sigs = defaultdict(list)
+    wavmeta.text_sigs = defaultdict(list)
 
     # TODO use integer index instead of dict, should be easy
     src =  """

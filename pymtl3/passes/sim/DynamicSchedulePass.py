@@ -14,7 +14,7 @@ import py
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
-from .SimpleSchedulePass import dump_dag, make_double_buffer_func
+from .SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from .SimpleTickPass import SimpleTickPass
 
 
@@ -23,25 +23,36 @@ class DynamicSchedulePass( BasePass ):
     if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
 
+    if hasattr( top, "_sched" ):
+      raise Exception("Some schedule pass has already been applied!")
+
     top._sched = PassMetadata()
 
-    top._sched.schedule = self.schedule( top )
+    self.schedule_intra_cycle( top )
 
-  def schedule( self, top ):
+    # Reuse simple's ff and flip schedule
+    simple = SimpleSchedulePass()
+    simple.schedule_ff( top )
+    simple.schedule_posedge_flip( top )
 
-    # Construct the graph
+  def schedule_intra_cycle( self, top ):
+
+    # Construct the intra-cycle graph based on normal update blocks
 
     V   = top._dag.final_upblks - top.get_all_update_ff()
-    E   = top._dag.all_constraints
+
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V } # transpose graph
 
+    E = set()
+    for (u, v) in top._dag.all_constraints: # u -> v
+      if u in V and v in V:
+        G  [u].append( v )
+        G_T[v].append( u )
+        E.add( (u, v) )
+
     if 'MAMBA_DAG' in os.environ:
       dump_dag( top, V, E )
-
-    for (u, v) in E: # u -> v
-      G  [u].append( v )
-      G_T[v].append( u )
 
     #---------------------------------------------------------------------
     # Run Kosaraju's algorithm to shrink all strongly connected components
@@ -162,10 +173,8 @@ class DynamicSchedulePass( BasePass ):
 
     constraint_objs = top._dag.constraint_objs
 
-    # From now on, we put the schedule in the order of
-    # [ flip, normal upblks, update_ffs ]
-
-    schedule = [ make_double_buffer_func( top ) ]
+    # Put the graph schedule to _sched
+    top._sched.update_schedule = schedule = []
 
     scc_id = 0
     for i in scc_schedule:
@@ -271,7 +280,3 @@ class DynamicSchedulePass( BasePass ):
                                          ", ".join( [ x.__name__ for x in scc] ) )
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
-
-    schedule.extend( list(top._dsl.all_update_ff) )
-
-    return schedule
