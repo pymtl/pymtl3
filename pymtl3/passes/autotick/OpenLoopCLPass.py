@@ -42,6 +42,7 @@ class OpenLoopCLPass( BasePass ):
 
     # Construct the graph with top level callee port
     V = top._dag.final_upblks - top.get_all_update_ff()
+    E = top._dag.all_constraints
 
     # We collect all top level callee ports/nonblocking callee interfaces
     top_level_callee_ports = top.get_all_object_filter(
@@ -74,7 +75,8 @@ class OpenLoopCLPass( BasePass ):
     # interface to the actual method and set up method-rdy mapping
     for x in top_level_nb_ifcs:
       V.add( x.method )
-      V.add( x.rdy )
+      # V.add( x.rdy )
+      # E.add( (x.rdy, x.method) )
       method_guard_mapping [x.method] = x.rdy
       m = get_raw_method( x.method )
       r = get_raw_method( x.rdy )
@@ -83,7 +85,6 @@ class OpenLoopCLPass( BasePass ):
       method_callee_mapping[m] = x.method
       method_callee_mapping[r] = x.rdy
 
-    E   = top._dag.all_constraints
     G   = { v: [] for v in V }
     G_T = { v: [] for v in V }
 
@@ -258,6 +259,8 @@ class OpenLoopCLPass( BasePass ):
         # We add the corresponding rdy before the method
 
         if u in method_guard_mapping:
+          # FIXME
+          schedule.append( method_guard_mapping[u] )
           top.top_level_nb_ifcs.append( u.get_parent_object() )
 
         schedule.append( u )
