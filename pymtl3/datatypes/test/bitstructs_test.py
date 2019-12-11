@@ -451,6 +451,8 @@ def test_mk_high_d_list_inside():
   assert a.x == Bits4(0)
   assert a.y == [ [ [ [ Bits4(), Bits4(), Bits4()] ] for _ in range(6) ] for _ in range(10) ]
 
+  print(a)
+
 def test_high_d_list_struct_inside():
   @bitstruct
   class A:
@@ -474,3 +476,5 @@ def test_mk_high_d_list_struct_inside():
   b = B()
   assert b.x == Bits4(0)
   assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]
+
+  print(b)
