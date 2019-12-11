@@ -27,7 +27,6 @@ def test_bits_unsigned( nbits ):
     assert bits.nbits == nbits
     print( bits, bits.uint() )
 
-  print("-"*10,nbits,"-"*10)
   actual_test()
 
 @pytest.mark.parametrize( 'nbits', [1, 3, 4, 8, 16, 32] )
@@ -41,7 +40,6 @@ def test_bits_signed( nbits ):
     assert bits.nbits == nbits
     print( bits, bits.int() )
 
-  print("-"*10,nbits,"-"*10)
   actual_test()
 
 def test_bits16_limited():
@@ -55,7 +53,6 @@ def test_bits16_limited():
     assert 2 <= bits.uint() <= 11
     print( bits, bits.uint() )
 
-  print("-"*10,16,'limited',"-"*10)
   actual_test()
 
 @pytest.mark.parametrize( 'length', [5,10,15,20] )
@@ -71,7 +68,6 @@ def test_bitslist( length ):
     # print out the fraction of generated random value versus the full range
     print( blist, [ f'{(int(blist[i])/(2**(10+i))*100):.2f}%' for i in range(length)] )
 
-  print("-"*10,f'[{length}]',"-"*10)
   actual_test()
 
 def test_bitslist_nested_limit():
@@ -101,9 +97,7 @@ def test_bitslist_nested_limit():
     assert 0xc0 <= blist[1][1] <= 0xcf
     print(blist)
 
-  print("-"*10,'list_nested_limit!',"-"*10)
   actual_test()
-
 
 def test_bitslist_nested_user_strategy():
   type_ = [ [Bits10, Bits11, Bits12], Bits13 ]
@@ -123,8 +117,20 @@ def test_bitslist_nested_user_strategy():
     assert 0 <= blist[1] <= 10
     print(blist)
 
-  print("-"*10,'list_user_strategy!',"-"*10)
   actual_test()
+
+def test_bitslist_nested_user_strategy_wrong_type():
+  type_ = [ [Bits10, Bits11, Bits12], Bits13 ]
+  limit_dict = {
+    0: 123,
+  }
+
+  try:
+    bs = pst.bitslists( type_, limit_dict )
+  except TypeError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown TypeError")
 
 @bitstruct
 class Point1D:
@@ -170,7 +176,6 @@ def test_bitstruct( T ):
     assert isinstance( bs, T )
     print( bs )
 
-  print("-"*10,T,"-"*10)
   actual_test()
 
 def test_nested_point_limited():
@@ -194,7 +199,6 @@ def test_nested_point_limited():
     assert 0xf0 <= bs.p2.y <= 0xff
     print( bs )
 
-  print("-"*10,NestedPoint,"-"*10)
   actual_test()
 
 def test_nnested_point_limited():
@@ -228,7 +232,6 @@ def test_nnested_point_limited():
     assert 0xb0 <= bs.p3[0].z[1] < 0xbf
     print( bs )
 
-  print("-"*10,NNestedPoint,"-"*10)
   actual_test()
 
 def test_nested_point_user_strategy():
@@ -251,7 +254,6 @@ def test_nested_point_user_strategy():
     assert 2 <= bs.p2.y < 4
     print( bs )
 
-  print("-"*10,NestedPoint,"-"*10)
   actual_test()
 
 def test_nested_point_user_strategy_wrong_type():
@@ -264,7 +266,7 @@ def test_nested_point_user_strategy_wrong_type():
 
   try:
     bs = pst.bitstructs(NestedPoint, limit_dict)
-  except AssertionError as e:
+  except TypeError as e:
     print(e)
     return
-  raise Exception("Should've thrown AssertionError")
+  raise Exception("Should've thrown TypeError")

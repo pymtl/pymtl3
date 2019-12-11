@@ -48,8 +48,10 @@ def bits( nbits, signed=False, min_value=None, max_value=None ):
 def bitslists( types, limit_dict=None ):
   # Make sure limit_dict becomes a dict, not None
   limit_dict = limit_dict or {}
-  assert isinstance( limit_dict, dict ), "bitslists only takes a dictionary " \
-                                         "e.g. { 0:(1,2), 1:(3,4) } to specify min/max limit"
+  if not isinstance( limit_dict, dict ):
+    raise TypeError( f"bitlist '{types}' doesn't not take '{limit_dict}' " \
+                      "to specify min/max limit. Here only a dictionary " \
+                      "like { 0:range(1,2), 1:range(3,4) } is accepted. " )
 
   # We capture the strategies inside a list inside closure of the
   # strategy. For each element, we recursively compose a strategy based on
@@ -73,8 +75,10 @@ def bitslists( types, limit_dict=None ):
 def bitstructs( T, limit_dict=None ):
   # Make sure limit_dict becomes a dict, not None
   limit_dict = limit_dict or {}
-  assert isinstance( limit_dict, dict ), "bitstruct only takes a dictionary " \
-                                         "e.g. { 'x':(1,2), 'y':(3,4) } to specify min/max limit"
+  if not isinstance( limit_dict, dict ):
+    raise TypeError( f"bitstruct '{T}' doesn't not take '{limit_dict}' " \
+                      "to specify min/max limit. Here only a dictionary " \
+                      "like { 'x':range(1,2), 'y':range(3,4), 'z': { ... } } is accepted. " )
 
   # We capture the fields of T inside a list inside closure of the
   # strategy. For each field, we recursively compose a strategy based on
