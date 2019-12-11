@@ -53,6 +53,9 @@ class SimpleTickPass( BasePass ):
     # posedge flip
     final_schedule.extend( top._sched.schedule_posedge_flip )
 
+    # clear cl method flag
+    final_schedule.append( top._tracing.clear_cl_trace )
+
     # execute all update blocks
     final_schedule.extend( top._sched.update_schedule )
 
