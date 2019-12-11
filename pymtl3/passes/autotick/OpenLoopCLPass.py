@@ -19,9 +19,14 @@ from graphviz import Digraph
 from pymtl3.datatypes import Bits1
 from pymtl3.dsl import CalleeIfcCL, CalleePort
 from pymtl3.dsl.errors import UpblkCyclicError
-from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.errors import PassOrderError
-from pymtl3.passes.sim.SimpleSchedulePass import dump_dag, make_double_buffer_func
+
+from ..BasePass import BasePass, PassMetadata
+from ..errors import PassOrderError
+from ..sim.SimpleSchedulePass import dump_dag, SimpleSchedulePass
+from ..tracing.CLLineTracePass import CLLineTracePass
+from ..tracing.CollectSignalPass import CollectSignalPass
+from ..tracing.PrintWavePass import PrintWavePass
+from ..tracing.VcdGenerationPass import VcdGenerationPass
 
 
 class OpenLoopCLPass( BasePass ):
@@ -354,20 +359,36 @@ class OpenLoopCLPass( BasePass ):
                                          # "; ".join( print_srcs ) )
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
+    # Shunning: we call line trace related pass here.
+    CLLineTracePass()( top )
+    CollectSignalPass()( top )
+    VcdGenerationPass()( top )
+    PrintWavePass()( top )
+    # Shunning: we reuse ff and posedge schedules from SimpleSchedulePass
+    simple = SimpleSchedulePass()
+    simple.schedule_ff( top )
+    simple.schedule_posedge_flip( top )
+
+    # clear trace before any update block
+    schedule.insert( 0, top._tracing.clear_cl_trace )
+
+    # call ff blocks after normal schedule
+    schedule.extend( top._sched.schedule_ff )
+
+    # work on tracing
+    if hasattr( top._tracing, "vcd_func" ):
+      schedule.append( top._tracing.vcd_func )
+    if hasattr( top._tracing, "collect_text_sigs" ):
+      schedule.append( top._tracing.collect_text_sigs )
+
     # The last element is always line trace
     def print_line_trace():
       print(top.__class__.__name__, ':', top.line_trace())
 
     schedule.append( print_line_trace )
 
-    # Sequential blocks and double buffering
-    schedule.extend( list(top._dsl.all_update_ff) )
-    func = make_double_buffer_func( top )
-    if func is not None:
-      schedule.append( func )
-
-    if hasattr( top, "_cl_trace" ):
-      schedule.append( top._cl_trace.clear_cl_trace )
+    # flip at the end
+    schedule.extend( top._sched.schedule_posedge_flip )
 
     top._sched.new_schedule_index  = 0
     top._sched.orig_schedule_index = 0
@@ -467,13 +488,3 @@ class OpenLoopCLPass( BasePass ):
                                 schedule_no_method,
                                 i, next_method )
     top.num_cycles_executed = 0
-
-    # Add a tick method for reset
-    def normal_tick():
-      for blk in schedule_no_method:
-        blk()
-    top.tick = normal_tick
-
-    for x in schedule:
-      print(x)
-    return schedule

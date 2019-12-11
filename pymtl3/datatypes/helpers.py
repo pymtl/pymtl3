@@ -81,6 +81,8 @@ def to_bits( obj ):
   # BitsN
   if isinstance( obj, Bits ):
     return obj
+
+  assert not isinstance( obj, int ), f"{obj} is an integer, not Bits or Bitstruct."
   # BitStruct
   assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
   return concat( *[ to_bits(getattr(obj, v)) for v in obj.__bitstruct_fields__.keys() ] )

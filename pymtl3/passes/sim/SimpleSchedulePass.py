@@ -16,71 +16,6 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
 
-def make_double_buffer_func( s ):
-
-  # To reduce the time to compile the code and the amount of bytecode, I
-  # use a heuristic to group signals that belong to
-  #   s.x.y.z._flip()
-  #   s.x.y.zz._flip()
-  # becomes
-  #   x = s.x.y
-  #   x.z._flip()
-  #   x.zz._flip()
-
-  hostobj_signals = defaultdict(list)
-  for x in reversed(sorted( s._dsl.all_signals, \
-      key=lambda x: x.get_host_component().get_component_level() )):
-    if x._dsl.needs_double_buffer:
-      hostobj_signals[ x.get_host_component() ].append( x )
-
-  done = False
-  while not done:
-    next_hostobj_signals = defaultdict(list)
-    done = True
-
-    for x, y in hostobj_signals.items():
-      if len(y) > 1:
-        next_hostobj_signals[x].extend( y )
-      elif x is s:
-        next_hostobj_signals[x].extend( y )
-      else:
-        x = x.get_parent_object()
-        next_hostobj_signals[x].append( y[0] )
-        done = False
-    hostobj_signals = next_hostobj_signals
-
-  strs = []
-  for x,y in hostobj_signals.items():
-    if len(y) == 1:
-      strs.append( f"{repr(y[0])}._flip()" )
-    elif x is s:
-      for z in sorted(y, key=repr):
-        strs.append(f"{repr(z)}._flip()")
-    else:
-      pos = len(repr(x)) + 1
-      strs.append( f"x = {repr(x)}" )
-
-      for z in sorted(y, key=repr):
-        strs.append(f"x.{repr(z)[pos:]}._flip()")
-
-  if not strs:
-    def no_double_buffer():
-      pass
-    return no_double_buffer
-
-  src = """
-  def compile_double_buffer( s ):
-    def double_buffer():
-      {}
-    return double_buffer
-  """.format( "\n      ".join(strs) )
-
-  import py
-  # print(src)
-  l = locals()
-  exec(py.code.Source( src ).compile(), l)
-  return l['compile_double_buffer']( s )
-
 class SimpleSchedulePass( BasePass ):
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
@@ -88,28 +23,35 @@ class SimpleSchedulePass( BasePass ):
 
     top._sched = PassMetadata()
 
-    top._sched.schedule = self.schedule( top )
+    self.schedule_intra_cycle( top )
+    self.schedule_ff( top )
+    self.schedule_posedge_flip( top )
 
-  def schedule( self, top ):
+  def schedule_intra_cycle( self, top ):
 
-    # Construct the graph
+    if not hasattr( top, "_sched" ):
+      raise Exception( "Please create top._sched pass metadata namespace first!" )
+
+    # Construct the intra-cycle graph based on normal update blocks
 
     V   = top._dag.final_upblks - top.get_all_update_ff()
-    E   = top._dag.all_constraints
+    E   = set()
     Es  = { v: [] for v in V }
     InD = { v: 0  for v in V }
+
+    for (u, v) in top._dag.all_constraints: # u -> v
+      if u in V and v in V:
+        InD[v] += 1
+        Es[u].append( v )
+        E.add( (u, v) )
 
     import os
     if 'MAMBA_DAG' in os.environ:
       dump_dag( top, V, E )
 
-    for (u, v) in E: # u -> v
-      InD[v] += 1
-      Es [u].append( v )
-
     # Perform topological sort for a serial schedule.
 
-    update_schedule = []
+    top._sched.update_schedule = update_schedule = []
 
     Q = [ v for v in V if not InD[v] ]
 
@@ -125,14 +67,81 @@ class SimpleSchedulePass( BasePass ):
 
     check_schedule( top, update_schedule, V, E, InD )
 
-    # From now on, we put the schedule in the order of
-    # [ flip, normal upblks, update_ffs ]
+  def schedule_ff( self, top ):
 
-    schedule = [ make_double_buffer_func( top ) ]
-    schedule.extend( update_schedule )
-    schedule.extend( top._dsl.all_update_ff )
+    if not hasattr( top, "_sched" ):
+      raise Exception( "Please create top._sched pass metadata namespace first!" )
+    top._sched.schedule_ff = list( top.get_all_update_ff().copy() )
 
-    return schedule
+  def schedule_posedge_flip( self, top ):
+
+    if not hasattr( top, "_sched" ):
+      raise Exception( "Please create top._sched pass metadata namespace first!" )
+
+    # To reduce the time to compile the code and the amount of bytecode, I
+    # use a heuristic to group signals that belong to
+    #   s.x.y.z._flip()
+    #   s.x.y.zz._flip()
+    # becomes
+    #   x = s.x.y
+    #   x.z._flip()
+    #   x.zz._flip()
+
+    hostobj_signals = defaultdict(list)
+    for x in reversed(sorted( top._dsl.all_signals, \
+        key=lambda x: x.get_host_component().get_component_level() )):
+      if x._dsl.needs_double_buffer:
+        hostobj_signals[ x.get_host_component() ].append( x )
+
+    done = False
+    while not done:
+      next_hostobj_signals = defaultdict(list)
+      done = True
+
+      for x, y in hostobj_signals.items():
+        if len(y) > 1:
+          next_hostobj_signals[x].extend( y )
+        elif x is top:
+          next_hostobj_signals[x].extend( y )
+        else:
+          x = x.get_parent_object()
+          next_hostobj_signals[x].append( y[0] )
+          done = False
+      hostobj_signals = next_hostobj_signals
+
+    strs = []
+    for x,y in hostobj_signals.items():
+      if len(y) == 1:
+        strs.append( f"{repr(y[0])}._flip()" )
+      elif x is top:
+        for z in sorted(y, key=repr):
+          strs.append(f"{repr(z)}._flip()")
+      else:
+        pos = len(repr(x)) + 1
+        strs.append( f"x = {repr(x)}" )
+
+        for z in sorted(y, key=repr):
+          strs.append(f"x.{repr(z)[pos:]}._flip()")
+
+    if not strs:
+      def no_double_buffer():
+        pass
+      top._sched.schedule_posedge_flip = [ no_double_buffer ]
+
+    else:
+      src = """
+      def compile_double_buffer( s ):
+        def double_buffer():
+          {}
+        return double_buffer
+      """.format( "\n          ".join(strs) )
+
+      import py
+      # print(src)
+      l = locals()
+      exec(py.code.Source( src ).compile(), l)
+
+      top._sched.schedule_posedge_flip = [ l['compile_double_buffer']( top ) ]
 
 def dump_dag( top, V, E ):
   from graphviz import Digraph
@@ -144,6 +153,8 @@ def dump_dag( top, V, E ):
 
   for x in V:
     x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+    if x in top._dsl.all_update_ff:
+      x_name += "_FF"
     try:
       x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
                     else top.get_update_block_host_component(x))
@@ -153,12 +164,16 @@ def dump_dag( top, V, E ):
 
   for (x, y) in E:
     x_name = repr(x) if isinstance( x, CalleePort ) else x.__name__
+    if x in top._dsl.all_update_ff:
+      x_name += "_FF"
     try:
       x_host = repr(x.get_parent_object() if isinstance( x, CalleePort )
                     else top.get_update_block_host_component(x))
     except:
       x_host = ""
     y_name = repr(y) if isinstance( y, CalleePort ) else y.__name__
+    if y in top._dsl.all_update_ff:
+      y_name += "_FF"
     try:
       y_host = repr(y.get_parent_object() if isinstance( y, CalleePort )
                     else top.get_update_block_host_component(y))
@@ -178,5 +193,5 @@ def check_schedule( top, schedule, V, E, in_degree ):
 
     raise UpblkCyclicError( """
 Update blocks have cyclic dependencies.
-* Please consult update dependency graph for details."
+* Please consult update dependency graph for details.
     """)

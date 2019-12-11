@@ -12,6 +12,7 @@ import py
 
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
+from pymtl3.passes.sim.SimpleTickPass import SimpleTickPass
 
 
 class UnrollTickPass( BasePass ):
@@ -40,7 +41,31 @@ class UnrollTickPass( BasePass ):
     return l['compile_unroll']( schedule )
 
   def __call__( self, top ):
-    if not hasattr( top._sched, "schedule" ):
-      raise PassOrderError( "schedule" )
+    if not hasattr( top, "_sched" ):
+      raise PassOrderError( "_sched" )
+    if not hasattr( top._sched, "update_schedule" ):
+      raise PassOrderError( "update_schedule" )
+    if not hasattr( top._sched, "schedule_ff" ):
+      raise PassOrderError( "schedule_ff" )
+    if not hasattr( top._sched, "schedule_posedge_flip" ):
+      raise PassOrderError( "schedule_posedge_flip" )
 
-    top.tick = UnrollTickPass.gen_tick_function( top._sched.schedule )
+    # We assemble the final schedule from multiple sources of required
+    # work to generate a tick function for simulation
+
+    # Currently the tick order is:
+    # [ ff, tracing, posedge, clear_cl_trace, update ]
+
+    final_schedule = []
+    # call ff blocks first
+    final_schedule.extend( top._sched.schedule_ff )
+
+    # no tracing
+
+    # posedge flip
+    final_schedule.extend( top._sched.schedule_posedge_flip )
+
+    # execute all update blocks
+    final_schedule.extend( top._sched.update_schedule )
+
+    top.tick = UnrollTickPass.gen_tick_function( final_schedule )

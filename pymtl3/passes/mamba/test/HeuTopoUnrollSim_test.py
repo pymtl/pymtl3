@@ -1,3 +1,4 @@
+from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 
 from ..PassGroups import HeuTopoUnrollSim
@@ -7,8 +8,8 @@ def test_very_deep_dag():
 
   class Inner(Component):
     def construct( s ):
-      s.in_ = InPort(int)
-      s.out = OutPort(int)
+      s.in_ = InPort(Bits32)
+      s.out = OutPort(Bits32)
 
       @s.update
       def up():
@@ -26,10 +27,19 @@ def test_very_deep_dag():
       for i in range(N-1):
         s.inners[i].out //= s.inners[i+1].in_
 
-    def line_trace( s ):
-      return str(s.inners[-1].out)
+      s.out = OutPort(Bits32)
+      @s.update_ff
+      def ff():
+        if s.reset:
+          s.out <<= 0
+        else:
+          s.out <<= s.out + s.inners[N-1].out
 
-  A = Top()
+    def line_trace( s ):
+      return str(s.inners[-1].out) + " " + str(s.out)
+
+  N = 2000
+  A = Top( N )
 
   A.apply( HeuTopoUnrollSim() )
 
@@ -37,5 +47,6 @@ def test_very_deep_dag():
   while T < 5:
     A.tick()
     print(A.line_trace())
+    assert A.out == T * N
     T += 1
   return A
