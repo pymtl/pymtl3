@@ -29,19 +29,40 @@ class Cell( object ):
     s.rows = 0
     s.cols = 0
 
-  def bond( s, components ):
-    if type(components) != list:
-      s.setComponent( comonents )
-    else:
-      s.sub_cells = s.divide( 1, len(components) )
-      for i in range( len(components) ):
-        s.sub_cells[0][i].setComponent( components[i] )
+  #-----------------------------------------------------------------------
+  # bond specific component with cell
+  #-----------------------------------------------------------------------
 
-  def divide( s, rows, cols ):
+  def bond( s, components ):
+
+    if type(components) != list:
+      s.component = components
+      # update the width and height of the cell
+      if s.dim_w < components.dim_w:
+       s.dim_w = components.dim_w
+      if s.dim_h < components.dim_h:
+        s.dim_h = components.dim_h
+    else:
+      # by default, we automatically split the cell in horizontal
+      s.sub_cells = s.split( 1, len(components) )
+      for i in range( len(components) ):
+        s.sub_cells[0][i].component = components[i]
+        # update the width and height of the cell
+        if s.sub_cells[0][i].dim_w < components[i].dim_w:
+         s.sub_cells[0][i].dim_w = components[i].dim_w
+        if s.sub_cells[0][i].dim_h < components[i].dim_h:
+          s.sub_cells[0][i].dim_h = components[i].dim_h
+
+
+  #-----------------------------------------------------------------------
+  # split the cell into sub-cells
+  #-----------------------------------------------------------------------
+
+  def split( s, rows, cols ):
     s.rows = rows
     s.cols = cols
-    s.sub_cells = [ [ Cell(i,j) for j in range(cols) ]
-                      for i in range(rows) ]
+    s.sub_cells = [[ Cell(i,j) for j in range(cols) ]
+                     for i in range(rows) ]
     w_ratio = s.w_ratio/cols
     h_ratio = s.h_ratio/rows
     for r in range( rows ):
@@ -53,19 +74,53 @@ class Cell( object ):
         s.sub_cells[r][c].parent = s
     return s.sub_cells
 
-  def updateParent( s, child_dim_w, child_dim_h ):
-    if s.dim_w < child_dim_w * s.cols:
-      s.dim_w = child_dim_w * s.cols
-      if hasattr( s.component, "dim_w" ):
-        if s.component.dim_w == 0:
-          s.component.dim_w = s.dim_w
-    if s.dim_h < child_dim_h * s.rows:
-      s.dim_h = child_dim_h * s.rows
-      if hasattr( s.component, "dim_h" ):
-        if s.component.dim_h == 0:
-          s.component.dim_h = s.dim_h
+  #-----------------------------------------------------------------------
+  # hierarchically (upwards/downwards) update the
+  # dimension information of cells and components.
+  #-----------------------------------------------------------------------
 
-  def updateChildren( s ):
+  def update_dim_info( s ):
+    s.update_size_upwards()
+    s.update_size_downwards()
+
+  #-----------------------------------------------------------------------
+  # update the dimension information of the parent cell
+  #-----------------------------------------------------------------------
+
+  def update_parent( s ):
+    if s.parent.dim_w < s.dim_w * s.parent.cols:
+      s.parent.dim_w = s.dim_w * s.parent.cols
+      if hasattr( s.parent.component, "dim_w" ):
+        if s.parent.component.dim_w == 0:
+          s.parent.component.dim_w = s.parent.dim_w
+    if s.parent.dim_h < s.dim_h * s.parent.rows:
+      s.parent.dim_h = s.dim_h * s.parent.rows
+      if hasattr( s.parent.component, "dim_h" ):
+        if s.parent.component.dim_h == 0:
+          s.parent.component.dim_h = s.parent.dim_h
+
+  #-----------------------------------------------------------------------
+  # hierarchically update the cell's dimension information
+  # from bottom to top
+  #-----------------------------------------------------------------------
+
+  def update_size_upwards( s ):
+    if s.component != None:
+      s.bond( s.component )
+    if s.sub_cells == None:
+      return
+    for r in range( len( s.sub_cells ) ):
+      for c in range( len( s.sub_cells[r] ) ):
+        s.sub_cells[r][c].update_size_upwards()
+        s.sub_cells[r][c].update_parent()
+
+
+  #-----------------------------------------------------------------------
+  # hierarchically update the cell's size and the component's coordinate
+  # information from top to bottom
+  #-----------------------------------------------------------------------
+
+  def update_size_downwards( s ):
     if s.sub_cells == None:
       return
     for i in range( s.rows ):
@@ -77,43 +132,5 @@ class Cell( object ):
           s.sub_cells[i][j].component.dim_y = s.sub_cells[i][j].dim_y
         s.sub_cells[i][j].dim_w = s.dim_w * s.sub_cells[i][j].w_ratio
         s.sub_cells[i][j].dim_h = s.dim_h * s.sub_cells[i][j].h_ratio
-        s.sub_cells[i][j].updateChildren()
+        s.sub_cells[i][j].update_size_downwards()
 
-  def setComponent( s, component ):
-    s.component = component
-    if s.dim_w < component.dim_w:
-      s.dim_w = component.dim_w
-    if s.dim_h < component.dim_h:
-      s.dim_h = component.dim_h
-
-#=========================================================================
-# Global function to hierarchically update the dimension information of
-# cells and components.
-#=========================================================================
-
-def updateCellSize( cell ):
-  if cell.component != None:
-    cell.setComponent( cell.component )
-  if cell.sub_cells == None:
-    return
-  for r in range( len( cell.sub_cells ) ):
-    for c in range( len( cell.sub_cells[r] ) ):
-      updateCellSize( cell.sub_cells[r][c] )
-      cell.sub_cells[r][c].parent.updateParent(
-          cell.sub_cells[r][c].dim_w,
-          cell.sub_cells[r][c].dim_h )
-
-def updateComponentXY( cell ):
-  if cell.sub_cells == None:
-    return
-  if cell.component != None:
-    cell.component.dim_x = cell.dim_x
-    cell.component.dim_y = cell.dim_y
-  for r in range( len( cell.sub_cells ) ):
-    for c in range( len( cell.sub_cells[r] ) ):
-      updateComponentXY( cell.sub_cells[r][c] )
-
-def updateDim( cell ):
-  updateCellSize( cell )
-#  updateComponentXY( cell )
-  cell.updateChildren()
