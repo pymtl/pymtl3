@@ -12,7 +12,7 @@ from copy import deepcopy
 from hypothesis import HealthCheck, PrintSettings
 from hypothesis import reproduce_failure as rf
 from hypothesis import settings
-from hypothesis.searchstrategy import SearchStrategy
+from hypothesis.strategies import SearchStrategy
 from hypothesis.stateful import *
 
 from pymtl3 import *
@@ -106,7 +106,7 @@ def build_strategy_tree( custom_strategies ):
     return ret
 
   for full_name, strat in custom_strategies.items():
-    if not isinstance( strat, (range, SearchStrategy) ):
+    if not isinstance( strat, (range, st.SearchStrategy) ):
       raise TypeError( f"Only strategy is allowed! Got {type(strat)} for {full_name}" )
 
     name = full_name.split( '.' )
