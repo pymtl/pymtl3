@@ -15,6 +15,16 @@ from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
+from pymtl3.testcases import (
+    CaseConnectBitsConstToOutComp,
+    CaseConnectBitSelToOutComp,
+    CaseConnectConstToOutComp,
+    CaseConnectInToWireComp,
+    CaseConnectPortIndexComp,
+    CaseConnectSliceToOutComp,
+    CaseConstBits32AttrComp,
+    CaseInx2Outx2ConnectComp,
+)
 
 
 def gen_connections( top ):
@@ -60,25 +70,14 @@ def gen_connections( top ):
   return _inst_conns
 
 def test_L1_const_numbers():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.const = [ Bits32(42) for _ in range(5) ]
-  a = A()
+  a = CaseConstBits32AttrComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
   assert ns.consts == [('const', rt.Array([5], rt.Const(rdt.Vector(32))), a.const)]
 
 def test_L1_connection_order():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.in_1 = dsl.InPort( Bits32 )
-      s.in_2 = dsl.InPort( Bits32 )
-      s.out1 = dsl.OutPort( Bits32 )
-      s.out2 = dsl.OutPort( Bits32 )
-      dsl.connect( s.in_1, s.out1 )
-      dsl.connect( s.in_2, s.out2 )
-  a = A()
+  a = CaseInx2Outx2ConnectComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
@@ -88,12 +87,7 @@ def test_L1_connection_order():
      (sexp.CurCompAttr(comp, 'in_2'), sexp.CurCompAttr(comp, 'out2'))]
 
 def test_L1_port_index():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
-      s.out = dsl.OutPort( Bits32 )
-      dsl.connect( s.in_[2], s.out )
-  a = A()
+  a = CaseConnectPortIndexComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
@@ -102,15 +96,7 @@ def test_L1_port_index():
     [(sexp.PortIndex(sexp.CurCompAttr(comp, 'in_'), 2), sexp.CurCompAttr(comp, 'out'))]
 
 def test_L1_wire_index():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.in_ = [ dsl.InPort( Bits32 ) for _ in range(5) ]
-      s.wire = [ dsl.Wire( Bits32 ) for _ in range(5) ]
-      s.out = dsl.OutPort( Bits32 )
-      dsl.connect( s.wire[2], s.out )
-      for i in range(5):
-        dsl.connect( s.wire[i], s.in_[i] )
-  a = A()
+  a = CaseConnectInToWireComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
@@ -119,12 +105,7 @@ def test_L1_wire_index():
     (sexp.WireIndex(sexp.CurCompAttr(comp, 'wire'), 2), sexp.CurCompAttr(comp, 'out'))
 
 def test_L1_const_index():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.const = [ 42 for _ in range(5) ]
-      s.out = dsl.OutPort( Bits32 )
-      dsl.connect( s.const[2], s.out )
-  a = A()
+  a = CaseConnectConstToOutComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
@@ -135,12 +116,7 @@ def test_L1_const_index():
     [(sexp.ConstInstance(a.const[2], 42), sexp.CurCompAttr(comp, 'out'))]
 
 def test_L1_bit_selection():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.in_ = dsl.InPort( Bits32 )
-      s.out = dsl.OutPort( Bits1 )
-      dsl.connect( s.in_[0], s.out )
-  a = A()
+  a = CaseConnectBitSelToOutComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
@@ -150,12 +126,7 @@ def test_L1_bit_selection():
     [(sexp.PartSelection(sexp.CurCompAttr(comp, 'in_'), 0, 1), sexp.CurCompAttr(comp, 'out'))]
 
 def test_L1_part_selection():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.in_ = dsl.InPort( Bits32 )
-      s.out = dsl.OutPort( Bits4 )
-      dsl.connect( s.in_[4:8], s.out )
-  a = A()
+  a = CaseConnectSliceToOutComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen
@@ -164,11 +135,7 @@ def test_L1_part_selection():
     [(sexp.PartSelection(sexp.CurCompAttr(comp, 'in_'), 4, 8), sexp.CurCompAttr(comp, 'out'))]
 
 def test_L1_bits_connection():
-  class A( dsl.Component ):
-    def construct( s ):
-      s.out = dsl.OutPort( Bits32 )
-      dsl.connect( s.out, Bits32(0) )
-  a = A()
+  a = CaseConnectBitsConstToOutComp.DUT()
   a.elaborate()
   a.apply( StructuralRTLIRGenL1Pass( gen_connections( a ) ) )
   ns = a._pass_structural_rtlir_gen

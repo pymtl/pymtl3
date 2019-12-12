@@ -19,10 +19,5 @@ class AliasOf:
     return getattr( owner, s.alias_name )
 
   def __set__( s, instance, value ):
-    s.alias_name = value
-
-class TestCase:
-  DUT    = AliasOf( 'A' )
-  TV_IN  = AliasOf( 'tv_in' )
-  TV_OUT = AliasOf( 'tv_out' )
-  TV     = AliasOf( 'test_vector' )
+    # Overwriting an existing alias is not supported yet
+    raise NotImplementedError
