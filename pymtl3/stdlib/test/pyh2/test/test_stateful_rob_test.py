@@ -8,9 +8,9 @@
 
 
 from pymtl3 import *
-from ..RTL2CLWrapper import RTL2CLWrapper
 
 from ..pyh2s import run_pyh2s
+from ..RTL2CLWrapper import RTL2CLWrapper
 
 
 #-------------------------------------------------------------------------

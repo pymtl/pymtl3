@@ -52,4 +52,3 @@ class AutoTickSimPass( BasePass ):
     WrapGreenletPass()( top )
     OpenLoopCLPass()( top )
     top.lock_in_simulation()
-

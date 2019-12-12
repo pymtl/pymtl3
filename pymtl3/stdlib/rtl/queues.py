@@ -10,6 +10,7 @@ Author : Yanghui Ou
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
+
 from .arithmetics import Mux
 from .RegisterFile import RegisterFile
 

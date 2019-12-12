@@ -11,9 +11,8 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.datatypes import strategies as pst
-from pymtl3.stdlib.cl import BypassQueueCL, PipeQueueCL, NormalQueueCL
-from pymtl3.stdlib.rtl import BypassQueueRTL, PipeQueueRTL, NormalQueueRTL
-
+from pymtl3.stdlib.cl import BypassQueueCL, NormalQueueCL, PipeQueueCL
+from pymtl3.stdlib.rtl import BypassQueueRTL, NormalQueueRTL, PipeQueueRTL
 from pymtl3.stdlib.test.pyh2.pyh2s import run_pyh2s
 from pymtl3.stdlib.test.pyh2.RTL2CLWrapper import RTL2CLWrapper
 

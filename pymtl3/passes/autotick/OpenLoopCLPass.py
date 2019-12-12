@@ -10,7 +10,6 @@
 """
 import os
 import random
-random.seed(0xdeadbeef)
 from collections import deque
 
 import py
@@ -22,12 +21,17 @@ from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
-from ..sim.SimpleSchedulePass import dump_dag, SimpleSchedulePass
+from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from ..sim.SimpleTickPass import SimpleTickPass
 from ..tracing.CLLineTracePass import CLLineTracePass
 from ..tracing.CollectSignalPass import CollectSignalPass
 from ..tracing.PrintWavePass import PrintWavePass
 from ..tracing.VcdGenerationPass import VcdGenerationPass
+
+random.seed(0xdeadbeef)
+
+
+
 
 
 class OpenLoopCLPass( BasePass ):

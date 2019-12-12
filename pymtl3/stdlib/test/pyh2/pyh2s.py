@@ -16,7 +16,8 @@ from hypothesis.searchstrategy import SearchStrategy
 from hypothesis.stateful import *
 
 from pymtl3 import *
-from pymtl3.datatypes import strategies as pst, is_bitstruct_class
+from pymtl3.datatypes import is_bitstruct_class
+from pymtl3.datatypes import strategies as pst
 from pymtl3.passes import AutoTickSimPass
 from pymtl3.stdlib.cl.queues import NormalQueueCL
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL

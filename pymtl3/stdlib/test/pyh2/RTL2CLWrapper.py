@@ -9,6 +9,7 @@ Author : Yanghui Ou, Yixiao Zhang, Shunning Jiang
 """
 from pymtl3 import *
 
+
 """
 notes:
   Basically we hit the same circumstance when CL source sends a message to

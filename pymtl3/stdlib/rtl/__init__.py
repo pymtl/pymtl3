@@ -12,7 +12,7 @@ from .arithmetics import (
     ZeroComp,
 )
 from .Crossbar import Crossbar
-from .queues import BypassQueueRTL, PipeQueueRTL, NormalQueueRTL
+from .queues import BypassQueueRTL, NormalQueueRTL, PipeQueueRTL
 from .RegisterFile import RegisterFile
 from .registers import Reg, RegEn, RegEnRst, RegRst
 
