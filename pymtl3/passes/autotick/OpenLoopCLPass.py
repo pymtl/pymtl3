@@ -23,6 +23,7 @@ from pymtl3.dsl.errors import UpblkCyclicError
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
 from ..sim.SimpleSchedulePass import dump_dag, SimpleSchedulePass
+from ..sim.SimpleTickPass import SimpleTickPass
 from ..tracing.CLLineTracePass import CLLineTracePass
 from ..tracing.CollectSignalPass import CollectSignalPass
 from ..tracing.PrintWavePass import PrintWavePass
@@ -48,19 +49,17 @@ class OpenLoopCLPass( BasePass ):
     top_level_callee_ports = top.get_all_object_filter(
       lambda x: isinstance(x, CalleePort) and x.get_host_component() is top )
 
-    # Now we need to check if cl_trace has been applied. If so, we need to
-    # use raw_method
-    if hasattr( top, "_cl_trace" ): get_raw_method = lambda x: x.raw_method
-    else:                           get_raw_method = lambda x: x.method
-
     top_level_nb_ifcs = top.get_all_object_filter(
       lambda x: isinstance(x, CalleeIfcCL) and x.get_host_component() is top )
 
-    # We still tell the top level
     method_callee_mapping = {}
     method_guard_mapping  = {}
+    guard_method_mapping  = {}
+    guards = {}
 
-    top.top_level_nb_ifcs = []
+    def get_raw_method( x ):
+      assert isinstance( x, CalleePort )
+      return x.method
 
     # First deal with normal calleeports. We map the actual method to the
     # callee port, and add the port to the vertex set
@@ -75,9 +74,11 @@ class OpenLoopCLPass( BasePass ):
     # interface to the actual method and set up method-rdy mapping
     for x in top_level_nb_ifcs:
       V.add( x.method )
-      # V.add( x.rdy )
-      # E.add( (x.rdy, x.method) )
-      method_guard_mapping [x.method] = x.rdy
+      V.add( x.rdy )
+      E.add( (x.rdy, x.method) )
+
+      method_guard_mapping[x.method] = x.rdy
+      guard_method_mapping[x.rdy] = x.method
       m = get_raw_method( x.method )
       r = get_raw_method( x.rdy )
 
@@ -121,46 +122,14 @@ class OpenLoopCLPass( BasePass ):
     # Run Kosaraju's algorithm to shrink all strongly connected components
     # (SCCs) into super nodes
     #---------------------------------------------------------------------
-
-    # First dfs on G to generate reverse post-order (RPO)
-    # Shunning: we emulate the system stack to implement non-recursive
-    # post-order DFS algorithm. At the beginning, I implemented a more
-    # succinct recursive DFS but it turned out that a 1500-depth chain in
-    # the graph will reach the CPython max recursion depth.
-    # https://docs.python.org/3/library/sys.html#sys.getrecursionlimit
+    # See passes/sim/DynamicSchedulePass.py
+    # TODO refactor this
 
     PO = []
 
     vertices = list(G.keys())
     random.shuffle(vertices)
     visited = set()
-
-    # The commented algorithm loyally emulates the system stack by storing
-    # the loop index in each stack element and push only one new element
-    # to stack in every iteration. This is basically what recursive dfs
-    # does.
-    #
-    # for u in vertices:
-    #   if u not in visited:
-    #     stack = [ (u, False) ]
-    #     while stack:
-    #       u, idx = stack.pop()
-    #       visited.add( u )
-    #       if idx == len(G[u]):
-    #         PO.append( u )
-    #       else:
-    #         while idx < len(G[u]) and G[u][-idx] in visited:
-    #           idx += 1
-    #         if idx < len(G[u]):
-    #           stack.append( (u, idx) )
-    #           stack.append( (G[u][-idx], 0) )
-    #         else:
-    #           PO.append( u )
-
-    # The following algorithm push all adjacent elements to the stack at
-    # once and later check visited set to avoid redundant visit (instead
-    # of checking visited set when pushing element to the stack). I added
-    # a second_visit flag to add the node to post-order.
 
     for u in vertices:
       stack = [ (u, False) ]
@@ -221,25 +190,31 @@ class OpenLoopCLPass( BasePass ):
 
     list_version_of_SCCs = [ list(x) for x in SCCs ]
     while Q:
-      random.shuffle(Q)
-
-      # Prioritize update blocks instead of method
-      # TODO make it O(logn) by balanced BST if needed ...
-
-      u = None
-      for i in range(len(Q)):
-        if len(SCCs[Q[i]]) == 1:
-          if list_version_of_SCCs[Q[i]][0] not in method_callee_mapping:
-            u = Q.pop(i)
-            break
-
-      if u is None:
-        u = Q.pop()
+      # random.shuffle(Q)
+      u = Q.pop()
 
       scc_schedule.append( u )
+
+      is_guard = False
+      if len(SCCs[u]) == 1:
+        guard  = list(SCCs[u])[0]
+        method = guard_method_mapping.get( guard )
+        if method is not None:
+          is_guard = True
+
       for v in G_new[u]:
         InD[v] -= 1
         if not InD[v]:
+          if is_guard and len(SCCs[v]) == 1 and list(SCCs[v])[0] is method:
+            scc_schedule.append( v )
+            scc_pred[ v ] = u
+            for w in G_new[v]:
+              InD[w] -= 1
+              if not InD[w]:
+                # cannot be guard now
+                Q.append( w )
+                scc_pred[ w ] = v
+            continue
           Q.append( v )
           scc_pred[ v ] = u
 
@@ -261,10 +236,8 @@ class OpenLoopCLPass( BasePass ):
 
         # We add the corresponding rdy before the method
 
-        if u in method_guard_mapping:
-          # FIXME how do we control
-          update_schedule.append( method_guard_mapping[u] )
-          top.top_level_nb_ifcs.append( u.get_parent_object() )
+        # if u in method_guard_mapping:
+          # update_schedule.append( method_guard_mapping[u] )
 
         update_schedule.append( u )
       else:
@@ -390,7 +363,7 @@ class OpenLoopCLPass( BasePass ):
 
     # print trace after all update blocks
     def print_line_trace():
-      print(top.__class__.__name__, ':', top.line_trace())
+      print(top.__class__.__name__.ljust(15), ':', top.line_trace())
 
     schedule.append( print_line_trace )
 
@@ -476,3 +449,8 @@ class OpenLoopCLPass( BasePass ):
                                 schedule_no_method,
                                 i )
     top.num_cycles_executed = 0
+
+    # This is for reset to work correctly
+    top.tick = SimpleTickPass.gen_tick_function( schedule_no_method )
+    # for x in schedule:
+      # print(x)

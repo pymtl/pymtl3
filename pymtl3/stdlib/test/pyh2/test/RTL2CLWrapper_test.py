@@ -48,8 +48,31 @@ def test_wrapper_normalqueue():
 
   assert cycles < 100
 
-def test_wrapper_openloop():
+def test_wrapper_openloop_pipequeue():
   top = RTL2CLWrapper( PipeQueueRTL( Bits16, num_entries=2 ) )
+  top.apply( AutoTickSimPass() )
+
+  while not top.enq.rdy():
+    pass
+
+  top.enq( b16(0xffff) )
+  top.enq( b16(0x1111) )
+  # print( top.enq.rdy() )
+  top.enq( b16(0x2222) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+  top.enq( b16(0x3333) )
+
+  assert top.deq() == 0xffff
+  assert top.deq() == 0x1111
+  assert not top.deq.rdy()
+
+def test_wrapper_openloop_normalqueue():
+  top = RTL2CLWrapper( NormalQueueRTL( Bits16, num_entries=2 ) )
   top.apply( AutoTickSimPass() )
 
   while not top.enq.rdy():

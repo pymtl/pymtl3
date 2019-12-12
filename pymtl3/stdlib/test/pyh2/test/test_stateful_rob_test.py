@@ -18,11 +18,19 @@ from ..pyh2s import run_pyh2s
 #-------------------------------------------------------------------------
 class ReorderBufferCL( Component ):
 
-  def construct( s, num_entries ):
+  def construct( s, DataType, num_entries ):
     # We want to be a power of two so mod arithmetic is efficient
     idx_nbits = clog2( num_entries )
     assert 2**idx_nbits == num_entries
     s.num_entries = num_entries
+
+    IndexType = mk_bits( idx_nbits )
+    CapType   = mk_bits( idx_nbits+1 )
+
+    s.ROBMsgType = mk_bitstruct( 'ROBMsg', {
+      'index': IndexType,
+      'value': DataType,
+    })
 
     s.data = [ None ] * s.num_entries
     s.allocated = [ 0 ] * s.num_entries
@@ -44,13 +52,13 @@ class ReorderBufferCL( Component ):
     return index
 
   @non_blocking( lambda s: not s.empty() )
-  def update_entry( s, index, value ):
-    assert index >= 0 and index < s.num_entries
-    if s.allocated[ index ]:
-      s.data[ index ] = value
+  def update_entry( s, args ):
+    assert args.index >= 0 and args.index < s.num_entries
+    if s.allocated[ args.index ]:
+      s.data[ args.index ] = args.value
 
   # testing returning multiple fields
-  @non_blocking( lambda s: s.data[ s.head ] != None )
+  @non_blocking( lambda s: s.data[ s.head ] is not None )
   def remove( s ):
     head = s.head
     data = s.data[ s.head ]
@@ -58,7 +66,7 @@ class ReorderBufferCL( Component ):
     s.allocated[ s.head ] = False
     s.head = ( s.head + 1 ) % s.num_entries
     s.num -= 1
-    return head, data
+    return s.ROBMsgType( head, data )
 
   def empty( s ):
     return s.num == 0
@@ -106,10 +114,16 @@ class ReorderBuffer( Component ):
     s.allocated = [ Wire( Bits1 ) for _ in range( num_entries ) ]
 
     @s.update
+    def alloc_rdy():
+      s.alloc.rdy = s.size < num_entries or s.remove.en
+
+    @s.update
     def update_rdy():
-      s.alloc.rdy        = s.size < num_entries or s.remove.en
       s.update_entry.rdy = (s.size != 0)
-      s.remove.rdy       = s.valid[ s.head ] or (s.update_entry.en and s.update_entry.msg.index == s.head)
+
+    @s.update
+    def remove_rdy():
+      s.remove.rdy = s.valid[ s.head ] or (s.update_entry.en and s.update_entry.msg.index == s.head)
 
     @s.update
     def update_ret_alloc():
@@ -149,16 +163,16 @@ class ReorderBuffer( Component ):
 
       # Handle update
       if s.update_entry.en:
-        if s.allocated[ s.update_entry.msg ]:
+        if s.allocated[ s.update_entry.msg.index ]:
           s.data[ s.update_entry.msg.index ] <<= s.update_entry.msg.value
-          s.valid[ s.update_entry.msg.index ] <<= 1
+          s.valid[ s.update_entry.msg.index ] <<= b1(1)
 
       if s.remove.en:
-        s.valid[ s.head ] <<= IndexType(0)
-        s.allocated[ s.head ] <<= IndexType(0)
+        s.valid[ s.head ] <<= b1(0)
+        s.allocated[ s.head ] <<= b1(0)
 
       if s.alloc.en:
-        s.allocated[ s.tail ] <<= IndexType(1)
+        s.allocated[ s.tail ] <<= b1(1)
 
   def line_trace( s ):
     return ":".join([
@@ -172,4 +186,4 @@ class ReorderBuffer( Component ):
 # test_state_machine
 #-------------------------------------------------------------------------
 def test_state_machine():
-  test = run_pyh2s( ReorderBuffer( Bits16, 4 ), ReorderBufferCL( 4 ) )
+  test = run_pyh2s( ReorderBuffer( Bits16, 4 ), ReorderBufferCL( Bits16, 4 ) )

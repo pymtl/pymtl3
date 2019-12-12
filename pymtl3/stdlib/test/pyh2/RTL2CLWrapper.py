@@ -81,13 +81,15 @@ class CalleeRTL2CL( Component ):
     def up_rdy():
       s.rdy = bool(s.rtl_caller.rdy)
 
-    s.add_constraints( U( up_rdy ) < M( s.cl_callee ) )
+    s.add_constraints( U( up_rdy ) < M( s.cl_callee.rdy ) )
 
     # We clear called flag before any method call
     @s.update
     def up_called():
       s.called = False
 
+    # These two constarints make sure called flag is cleared before the
+    # callee method and the ready method is called before callee
     s.add_constraints( U( up_called ) < M( s.cl_callee ) )
     # s.add_constraints( M( s.cl_callee.rdy ) < M( s.cl_callee ) )
 

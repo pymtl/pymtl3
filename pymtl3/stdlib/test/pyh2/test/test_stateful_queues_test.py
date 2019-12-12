@@ -10,6 +10,7 @@
 import pytest
 
 from pymtl3 import *
+from pymtl3.datatypes import strategies as pst
 from pymtl3.stdlib.cl import BypassQueueCL, PipeQueueCL, NormalQueueCL
 from pymtl3.stdlib.rtl import BypassQueueRTL, PipeQueueRTL, NormalQueueRTL
 
@@ -29,7 +30,7 @@ def test_pyh2_directed():
                           [( BypassQueueCL, BypassQueueRTL ),
                            ( PipeQueueCL, PipeQueueRTL ) ] )
 def test_stateful_simple( QueueCL, QueueRTL ):
-  run_pyh2s( RTL2CLWrapper( QueueRTL( Bits16, 1 ) ), QueueCL( 1 ) )
+  run_pyh2s( QueueRTL( Bits16, 1 ), QueueCL( 1 ) )
 
 
 #-------------------------------------------------------------------------
@@ -43,7 +44,7 @@ def test_stateful_bits_struct( QueueCL, QueueRTL ):
     'msg0' : Bits8,
     'msg1' : Bits8,
   })
-  run_pyh2s( RTL2CLWrapper( QueueRTL( MsgType, 1 ) ), QueueCL( 1 ) )
+  run_pyh2s( QueueRTL( MsgType, 1 ), QueueCL( 1 ) )
 
 #-------------------------------------------------------------------------
 # test_stateful_nested_bitstruct
@@ -61,36 +62,41 @@ def test_stateful_nested_struct( QueueCL, QueueRTL ):
     'msg1': Msg1Type,
   })
 
-  run_pyh2s( RTL2CLWrapper( QueueRTL( Msg2Type ) ), QueueCL( 1 ) )
+  run_pyh2s( QueueRTL( Msg2Type, 1 ), QueueCL( 1 ) )
 
 #-------------------------------------------------------------------------
 # test_stateful_overwrite_simple
 #-------------------------------------------------------------------------
+def test_stateful_overwrite_simple():
+  run_pyh2s( BypassQueueRTL( Bits32, 1 ), BypassQueueCL( 1 ),
+             custom_strategy={ 'enq.msg': range(0, 12) } )
 
-def test_stateful_overwrite_simple( QueueCL, QueueRTL ):
-  run_pyh2s( RTL2CLWrapper( QueueRTL( Bits32 ) ), QueueCL( 1 ),
-      custom_strategy=[ ( 'enq.msg', st.integers( min_value=0, max_value=11 ) ) ] )
-
-  # must be strategy
+def test_stateful_overwrite_wrong_strat():
   try:
-    run_test_state_machine(
-        RTL2CLWrapper( QueueRTL( Bits32 ) ),
-        QueueCL( 1 ),
-        argument_strategy=[( 'enq.msg', 1 ) ] )
-    assert False
+    run_pyh2s( BypassQueueRTL( Bits32, 1 ), BypassQueueCL( 1 ),
+               custom_strategy={ 'enq.msg': (0, 12) } )
   except TypeError as e:
-    print( e )
+    print(e)
+    return
+  raise Exception("Should've thrown TypeError")
 
-  # unknown field
+def test_stateful_overwrite_wrong_name():
   try:
-    run_test_state_machine(
-        RTL2CLWrapper( QueueRTL( Bits32 ) ),
-        QueueCL( 1 ),
-        argument_strategy=[( 'enq.msg2', st.integers(
-            min_value=0, max_value=11 ) ) ] )
-    assert False
-  except AssertionError as e:
-    print( e )
+    run_pyh2s( BypassQueueRTL( Bits32, 1 ), BypassQueueCL( 1 ),
+               custom_strategy={ 'enq.ms': range(0, 12) } )
+  except ValueError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown ValueError")
+
+def test_stateful_overwrite_wrong_field():
+  try:
+    run_pyh2s( BypassQueueRTL( Bits32, 1 ), BypassQueueCL( 1 ),
+               custom_strategy={ 'enq.msg.sb': range(0, 12) } )
+  except TypeError as e:
+    print(e)
+    return
+  raise Exception("Should've thrown TypeError")
 
 #-------------------------------------------------------------------------
 # test_stateful_overwrite_nested
@@ -98,46 +104,89 @@ def test_stateful_overwrite_simple( QueueCL, QueueRTL ):
 @pytest.mark.parametrize( "QueueCL, QueueRTL",
                           [( BypassQueueCL, BypassQueueRTL ),
                            ( PipeQueueCL, PipeQueueRTL ) ] )
-def test_stateful_overwrite_nested( QueueCL, QueueRTL ):
-  Msg1Type = mk_bit_struct( "Msg1Type", [( 'msg0', Bits8 ),
-                                         ( 'msg1', Bits8 ) ] )
-  MsgType = mk_bit_struct( "MsgType", [( 'msg0', Bits8 ),
-                                       ( 'msg1', Msg1Type ) ] )
+def test_stateful_overwrite_nested_correct( QueueCL, QueueRTL ):
+  Msg1Type = mk_bitstruct( "Msg1Type", {
+    'msg0': Bits32,
+    'msg1': Bits8,
+  })
+  MsgType = mk_bitstruct( "MsgType", {
+    'msg0': Bits8,
+    'msg1': Msg1Type,
+  })
 
-  run_test_state_machine(
-      RTL2CLWrapper( QueueRTL( MsgType ) ),
-      QueueCL( 1 ),
-      argument_strategy=[( 'enq.msg.msg0',
-                           st.integers( min_value=100, max_value=100 ) ),
-                         ( 'enq.msg.msg1.msg1',
-                           st.integers( min_value=200, max_value=200 ) ) ] )
+  run_pyh2s( QueueRTL( MsgType, 1 ), QueueCL( 1 ),
+      custom_strategy={'enq.msg.msg0': pst.bits( 8, min_value=0, max_value=5 ),
+                       'enq.msg.msg1.msg1': pst.bits( 8, min_value=0xf0, max_value=0xff )
+      })
 
   # specify composite strategy directly
-  run_test_state_machine(
-      RTL2CLWrapper( QueueRTL( MsgType ) ),
-      QueueCL( 1 ),
-      argument_strategy=[( 'enq.msg.msg1',
-                           get_strategy_from_type( Msg1Type ) ) ] )
+  run_pyh2s( QueueRTL( MsgType, 1 ), QueueCL( 1 ),
+      custom_strategy={'enq.msg.msg1': pst.bitstructs( Msg1Type )} )
 
-  # Strategy for a field and its subfield are not allowed
-  try:
-    run_test_state_machine(
-        RTL2CLWrapper( QueueRTL( MsgType ) ),
-        QueueCL( 1 ),
-        argument_strategy=[( 'enq.msg.msg1',
-                             get_strategy_from_type( Msg1Type ) ),
-                           ( 'enq.msg.msg1.msg1',
-                             st.integers( min_value=200, max_value=200 ) ) ] )
-    assert False
-  except AssertionError as e:
-    print( e )
+# Strategy for a field and its subfield are not allowed
+def test_stateful_overwrite_nested_multi_writer():
+  Msg1Type = mk_bitstruct( "Msg1Type", {
+    'msg0': Bits32,
+    'msg1': Bits8,
+  })
+  MsgType = mk_bitstruct( "MsgType", {
+    'msg0': Bits8,
+    'msg1': Msg1Type,
+  })
 
-  # must be strategy
   try:
-    run_test_state_machine(
-        RTL2CLWrapper( QueueRTL( MsgType ) ),
-        QueueCL( 1 ),
-        argument_strategy=[( 'enq.msg.msg1', 1 ) ] )
-    assert False
+    run_pyh2s( BypassQueueRTL( MsgType, 1 ), BypassQueueCL( 1 ),
+        custom_strategy={
+          'enq.msg.msg1.msg1': pst.bits( 8, min_value=100, max_value=200 ),
+          'enq.msg.msg1': pst.bitstructs( MsgType ),
+        })
+    raise Exception("Should've thrown TypeError")
+  except TypeError as e:
+    print(e)
+
+  try:
+    run_pyh2s( BypassQueueRTL( MsgType, 1 ), BypassQueueCL( 1 ),
+        custom_strategy={
+          'enq.msg.msg1': pst.bitstructs( MsgType ),
+          'enq.msg.msg1.msg1': pst.bits( 8, min_value=100, max_value=200 ),
+        })
+    raise Exception("Should've thrown TypeError")
+  except TypeError as e:
+    print(e)
+
+  try:
+    run_pyh2s( BypassQueueRTL( MsgType, 1 ), BypassQueueCL( 1 ),
+        custom_strategy={
+          'enq.msg.msg1.msg1': pst.bits( 8, min_value=100, max_value=200 ),
+          'enq.msg': pst.bitstructs( MsgType ),
+        })
+    raise Exception("Should've thrown TypeError")
+  except TypeError as e:
+    print(e)
+
+  try:
+    run_pyh2s( BypassQueueRTL( MsgType, 1 ), BypassQueueCL( 1 ),
+        custom_strategy={
+          'enq.msg': pst.bitstructs( MsgType ),
+          'enq.msg.msg1.msg1': pst.bits( 8, min_value=100, max_value=200 ),
+        })
+    raise Exception("Should've thrown AssertionError")
+  except TypeError as e:
+    print(e)
+
+# must be strategy
+def test_stateful_overwrite_nested_wrong_type():
+  Msg1Type = mk_bitstruct( "Msg1Type", {
+    'msg0': Bits8,
+    'msg1': Bits8,
+  })
+  MsgType = mk_bitstruct( "MsgType", {
+    'msg0': Bits8,
+    'msg1': Msg1Type,
+  })
+  try:
+    run_pyh2s( BypassQueueRTL( MsgType, 1 ), BypassQueueCL( 1 ), custom_strategy={ 'enq.msg.msg1': 1 } )
   except TypeError as e:
     print( e )
+    return
+  raise Exception("Should've thrown AssertionError")

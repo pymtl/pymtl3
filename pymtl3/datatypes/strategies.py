@@ -57,7 +57,7 @@ def bitslists( types, limit_dict=None ):
   # strategy. For each element, we recursively compose a strategy based on
   # the type and the field limit.
 
-  strats = [ _strategy_dispatch( type_, limit_dict.get( i, None ) )
+  strats = [ _strategy_dispatch( type_, limit_dict.get(i) )
               for i, type_ in enumerate(types) ]
 
   @st.composite
@@ -84,7 +84,7 @@ def bitstructs( T, limit_dict=None ):
   # strategy. For each field, we recursively compose a strategy based on
   # the type and the field limit.
 
-  strats = [ _strategy_dispatch( type_, limit_dict.get( name, None ) )
+  strats = [ _strategy_dispatch( type_, limit_dict.get(name) )
               for name, type_ in T.__bitstruct_fields__.items() ]
 
   @st.composite

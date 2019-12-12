@@ -89,8 +89,8 @@ class NormalQueueCL( Component ):
     s.add_constraints(
       U( up_pulse ) < M( s.enq.rdy ),
       U( up_pulse ) < M( s.deq.rdy ),
-      M( s.peek   ) < M( s.deq  ),
-      M( s.peek   ) < M( s.enq  )
+      M( s.peek   ) < M( s.deq.rdy  ),
+      M( s.peek   ) < M( s.enq.rdy  )
     )
 
   @non_blocking( lambda s: s.enq_rdy )
