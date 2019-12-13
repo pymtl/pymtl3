@@ -332,8 +332,8 @@ class CaseTwoUpblksSliceComp:
 class CaseTwoUpblksFreevarsComp:
   class DUT( Component ):
     def construct( s ):
-      STATE_IDLE = Bits2(0)
-      STATE_WORK = Bits2(1)
+      # STATE_IDLE = Bits2(0)
+      # STATE_WORK = Bits2(1)
       s.out = [ OutPort( Bits2 ) for _ in range(2) ]
       @s.update
       def multi_upblks_1():
@@ -403,7 +403,7 @@ class CaseBits32MultiTmpWireComp:
 class CaseBits32FreeVarToTmpVarComp:
   class DUT( Component ):
     def construct( s ):
-      STATE_IDLE = Bits32(0)
+      # STATE_IDLE = Bits32(0)
       s.out = OutPort( Bits32 )
       @s.update
       def upblk():
@@ -614,6 +614,25 @@ class CaseConnectInToWireComp:
       for i in range(5):
         connect( s.wire[i], s.in_[i] )
 
+class CaseWiresDrivenComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.foo = Wire( Bits32 )
+      s.bar = Wire( Bits4 )
+      @s.update
+      def upblk():
+        s.foo = Bits32(42)
+        s.bar = Bits4(0)
+
+class CaseBits32Wirex5DrivenComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.foo = [ Wire( Bits32 ) for _ in range(5) ]
+      @s.update
+      def upblk():
+        for i in range(5):
+          s.foo[i] = Bits32(0)
+
 class CaseConnectConstToOutComp:
   class DUT( Component ):
     def construct( s ):
@@ -711,6 +730,21 @@ class CaseBits32ArrayConnectSubCompAttrComp:
       s.b = [ Bits32OutDrivenComp() for _ in range(5) ]
       s.out = OutPort( Bits32 )
       connect( s.out, s.b[1].out )
+
+class CaseComponentArgsComp:
+  class DUT( Component ):
+    def construct( s, foo, bar ):
+      pass
+
+class CaseComponentDefaultArgsComp:
+  class DUT( Component ):
+    def construct( s, foo, bar = Bits16(42) ):
+      pass
+
+class CaseMixedDefaultArgsComp:
+  class DUT( Component ):
+    def construct( s, foo, bar, woo = Bits32(0) ):
+      pass
 
 #-------------------------------------------------------------------------
 # Test cases that contain errors
@@ -1635,3 +1669,13 @@ class CaseCrossHierarchyAccessComp:
       @s.update
       def upblk():
         s.a_out = s.comp.comp.out
+
+class CaseStarArgComp:
+  class DUT( Component ):
+    def construct( s, *args ):
+      pass
+
+class CaseDoubleStarArgComp:
+  class DUT( Component ):
+    def construct( s, **kwargs ):
+      pass
