@@ -30,6 +30,13 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
       super().clear( tr_top )
       s.hierarchy = TranslatorMetadata()
 
+    def _gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
+      metadata = getattr( s.structural, structural_ns, [] )
+      List = getattr( s.hierarchy, hierarchy_ns )
+      for Type, data in metadata:
+        if not any( x[0] == Type for x in List ):
+          List.append( ( Type, data ) )
+
     # Override
     def translate( s, tr_top ):
 
@@ -41,16 +48,6 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
             setattr( ns, name, metadata_d[m] )
         return ns
 
-      def in_list( s, dtype, List ):
-        return any( x[0] == dtype for x in List )
-
-      def gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
-        metadata = getattr( s.structural, structural_ns, [] )
-        List = getattr( s.hierarchy, hierarchy_ns )
-        for Type, data in metadata:
-          if not in_list( Type, List ):
-            List.append( ( Type, data ) )
-
       def translate_component( m, components, translated ):
         for child in sorted(m.get_child_components(), key = lambda x: x._dsl.my_name):
           translate_component( child, components, translated )
@@ -61,9 +58,9 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
               get_component_nspace( s.structural, m ),
           ) )
           translated.append( s.structural.component_unique_name[m] )
-        gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
-        gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array' )
-        gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
+        s._gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
+        s._gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array'   )
+        s._gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
 
       # Clear all translator metadata
       s.clear( tr_top )
