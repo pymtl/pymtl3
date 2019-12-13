@@ -19,6 +19,8 @@ from .TestCase import AliasOf
 # Commonly used global variables
 #-------------------------------------------------------------------------
 
+STATE_IDLE = 0
+STATE_WORK = 0
 pymtl_Bits_global_freevar = Bits32( 42 )
 
 #-------------------------------------------------------------------------
@@ -28,6 +30,10 @@ pymtl_Bits_global_freevar = Bits32( 42 )
 @bitstruct
 class Bits32Foo:
   foo: Bits32
+
+@bitstruct
+class Bits32Bar:
+  bar: Bits32
 
 @bitstruct
 class Bits32x5Foo:
@@ -44,6 +50,14 @@ class Bits32OutIfc( Interface ):
 class Bits32InIfc( Interface ):
   def construct( s ):
     s.foo = InPort( Bits32 )
+
+class Bits32FooOutIfc( Interface ):
+  def construct( s ):
+    s.foo = OutPort( Bits32Foo )
+
+class Bits32FooInIfc( Interface ):
+  def construct( s ):
+    s.foo = InPort( Bits32Foo )
 
 class Bits32InValRdyIfc( Interface ):
   def construct( s ):
@@ -100,6 +114,24 @@ class Bits32OutDrivenComp( Component ):
 class WrappedBits32OutComp( Component ):
   def construct( s ):
     s.comp = Bits32OutComp()
+
+class Bits32OutTmpDrivenComp( Component ):
+  def construct( s ):
+    s.out = OutPort( Bits32 )
+    @s.update
+    def upblk():
+      u = Bits32(0)
+      s.out = u
+
+class Bits32OutFreeVarDrivenComp( Component ):
+  def construct( s ):
+    s.out = OutPort( Bits32 )
+    @s.update
+    def upblk():
+      if 1:
+        s.out = Bits32(STATE_IDLE)
+      else:
+        s.out = Bits32(STATE_WORK)
 
 #-------------------------------------------------------------------------
 # Test Components
@@ -164,6 +196,15 @@ class CaseBits32ClosureConstruct:
       @s.update
       def upblk():
         s.out = foo
+
+class CaseBits32ArrayClosureConstruct:
+  class DUT( Component ):
+    def construct( s ):
+      foo = [ Bits32(42) for _ in range(5) ]
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = foo[2]
 
 class CaseBits32ClosureGlobal:
   class DUT( Component ):
@@ -288,6 +329,35 @@ class CaseTwoUpblksSliceComp:
       def multi_upblks_2():
         s.out[ 4:8 ] = s.in_
 
+class CaseTwoUpblksFreevarsComp:
+  class DUT( Component ):
+    def construct( s ):
+      STATE_IDLE = Bits2(0)
+      STATE_WORK = Bits2(1)
+      s.out = [ OutPort( Bits2 ) for _ in range(2) ]
+      @s.update
+      def multi_upblks_1():
+        s.out[0] = STATE_IDLE
+      @s.update
+      def multi_upblks_2():
+        s.out[1] = STATE_WORK
+
+class CaseTwoUpblksStructTmpWireComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_foo = InPort( Bits32Foo )
+      s.in_bar = InPort( Bits32Bar )
+      s.out_foo = OutPort( Bits32 )
+      s.out_bar = OutPort( Bits32 )
+      @s.update
+      def multi_upblks_1():
+        u = s.in_foo
+        s.out_foo = u.foo
+      @s.update
+      def multi_upblks_2():
+        u = s.in_bar
+        s.out_bar = u.bar
+
 class CaseFlipFlopAdder:
   class DUT( Component ):
     def construct( s ):
@@ -317,6 +387,60 @@ class CaseBits32TmpWireComp:
       def upblk():
         u = s.in_ + Bits32(42)
         s.out = u
+
+class CaseBits32MultiTmpWireComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        u = s.in_ + Bits32(42)
+        v = s.in_ + Bits32(40)
+        s.out = u
+        s.out = v
+
+class CaseBits32FreeVarToTmpVarComp:
+  class DUT( Component ):
+    def construct( s ):
+      STATE_IDLE = Bits32(0)
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        u = STATE_IDLE
+        s.out = u
+
+class CaseBits32ConstBitsToTmpVarComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        u = Bits32(0)
+        s.out = u
+
+class CaseBits32ConstIntToTmpVarComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        u = 1
+        s.out = u
+
+class CaseBits32TmpWireAliasComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      @s.update
+      def multi_upblks_1():
+        u = s.in_ + Bits32(42)
+        s.out[0] = u
+      @s.update
+      def multi_upblks_2():
+        u = s.in_ + Bits32(42)
+        s.out[1] = u
 
 class CaseStructTmpWireComp:
   class DUT( Component ):
@@ -436,6 +560,28 @@ class CaseArrayBits32SubCompPassThroughComp:
       def upblk():
         s.out = s.comp[2].out
 
+class CaseSubCompTmpDrivenComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.subcomp = Bits32OutTmpDrivenComp()
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        u = s.subcomp.out
+        s.out = u
+
+class CaseSubCompFreeVarDrivenComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.subcomp = Bits32OutFreeVarDrivenComp()
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        if 1:
+          s.out = s.subcomp.out
+        else:
+          s.out = Bits32(STATE_IDLE)
+
 class CaseConstBits32AttrComp:
   class DUT( Component ):
     def construct( s ):
@@ -531,6 +677,26 @@ class CaseConnectValRdyIfcComp:
       # This will be automatically extended to connect all signals in
       # this interface!
       connect( s.out, s.in_ )
+
+class CaseBits32IfcTmpVarOutComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      s.ifc = Bits32OutIfc()
+      @s.update
+      def upblk():
+        u = s.ifc.foo
+        s.out = u
+
+class CaseStructIfcTmpVarOutComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      s.ifc = Bits32FooInIfc()
+      @s.update
+      def upblk():
+        u = s.ifc.foo
+        s.out = u.foo
 
 class CaseBits32ConnectSubCompAttrComp:
   class DUT( Component ):

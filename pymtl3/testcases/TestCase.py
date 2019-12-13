@@ -8,8 +8,8 @@ Author : Peitian Pan
 Date   : Dec 12, 2019
 """
 
-from pymtl3 import Component
-
+from copy import copy
+from textwrap import dedent
 
 class AliasOf:
   def __init__( s, alias_name = 'A' ):
@@ -21,3 +21,10 @@ class AliasOf:
   def __set__( s, instance, value ):
     # Overwriting an existing alias is not supported yet
     raise NotImplementedError
+
+def add_attributes( _cls, *args ):
+  assert len( args ) % 2 == 0
+  cls = copy( _cls )
+  for attr, obj in zip( args[::2], args[1::2] ):
+    setattr( cls, attr, dedent(obj) )
+  return cls
