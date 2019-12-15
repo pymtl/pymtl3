@@ -64,6 +64,7 @@ def test_wrapped_comb_adder():
   a.apply( SimpleTickPass() )
   a.apply( AutoEvalPass() )
   a.lock_in_simulation()
+  a.tick()
 
   assert not a._autoeval.need_eval_comb
 

@@ -30,41 +30,45 @@ class AutoEvalPass( BasePass ):
     def gen_outport_property( name ):
 
       def gen_getter( top ):
-        # if not elaborated, we don't do anything
-        if not hasattr( top._dsl, "elaborate_top" ):
+        # if no eval_comb, we don't do anything
+        if not hasattr( top, "eval_combinational" ) or \
+           top is not top._dsl.elaborate_top:
           try:
             return getattr( top._dsl, "_"+name )
           except AttributeError:
             return None
 
-        if top is top._dsl.elaborate_top:
-          if top._autoeval.need_eval_comb:
-            top.eval_combinational()
-            top._autoeval.need_eval_comb = False
+        if top._autoeval.need_eval_comb:
+          top.eval_combinational()
+          top._autoeval.need_eval_comb = False
         return getattr( top._autoeval, name )
 
       def gen_setter( top, v ):
-        if not hasattr( top._dsl, "elaborate_top" ):
+        if not hasattr( top, "eval_combinational" ) or \
+           top is not top._dsl.elaborate_top:
           setattr( top._dsl, "_"+name, v )
-        setattr( top._autoeval, name, v )
+        else:
+          setattr( top._autoeval, name, v )
 
       return property(gen_getter).setter(gen_setter)
 
     def gen_inport_property( name ):
 
       def gen_getter( top ):
-        if not hasattr( top._dsl, "elaborate_top" ):
+        if not hasattr( top, "eval_combinational" ) or \
+           top is not top._dsl.elaborate_top:
           try:
             return getattr( top._dsl, "_"+name )
           except AttributeError:
             return None
+
         return getattr( top._autoeval, name )
 
       def gen_setter( top, v ):
-        if not hasattr( top._dsl, "elaborate_top" ):
+        if not hasattr( top, "eval_combinational" ) or \
+           top is not top._dsl.elaborate_top:
           setattr( top._dsl, "_"+name, v )
-
-        if top is top._dsl.elaborate_top:
+        else:
           setattr( top._autoeval, name, v )
           top._autoeval.need_eval_comb = True
 
