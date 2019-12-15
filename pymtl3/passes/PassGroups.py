@@ -17,7 +17,6 @@ from .tracing.VcdGenerationPass import VcdGenerationPass
 # SimpleSim can be used when the UDG is a DAG
 class SimpleSimPass( BasePass ):
   def __call__( s, top ):
-    top.elaborate()
     GenDAGPass()( top )
     WrapGreenletPass()( top )
     SimpleSchedulePass()( top )
@@ -33,7 +32,6 @@ class SimpleSimPass( BasePass ):
 # Now we can always use this
 class SimulationPass( BasePass ):
   def __call__( s, top ):
-    top.elaborate()
     GenDAGPass()( top )
     WrapGreenletPass()( top )
     DynamicSchedulePass()( top )
@@ -47,8 +45,7 @@ class SimulationPass( BasePass ):
 
 class AutoTickSimPass( BasePass ):
   def __call__( s, top ):
-    top.elaborate()
-    GenDAGPass(),
+    GenDAGPass()( top )
     WrapGreenletPass()( top )
     OpenLoopCLPass(), # Inject this pass to build infrastructure
     top.lock_in_simulation()

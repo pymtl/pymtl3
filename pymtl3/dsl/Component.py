@@ -427,6 +427,15 @@ class Component( ComponentLevel7 ):
     assert type(pass_instance) is not type, f"Should pass in a pass instance like " \
                                             f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
     assert callable( pass_instance ), f"Should override __call__ of {pass_instance.__name__} for a valid pass"
+
+    # Now applying a pass on an unelaborated component will automatically
+    # elaborate the component
+    try:
+      if s._dsl.elaborate_top is not s:
+        raise InvalidAPICallError( "apply", s, s._dsl.elaborate_top )
+    except AttributeError:
+      s.elaborate()
+
     pass_instance( s )
 
     try:
