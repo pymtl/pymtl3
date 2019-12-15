@@ -13,6 +13,7 @@ from pymtl3.dsl.errors import UpblkCyclicError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
+
 class AutoEvalPass( BasePass ):
 
   def __call__( self, top ):

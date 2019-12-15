@@ -14,6 +14,7 @@ from ..GenDAGPass import GenDAGPass
 from ..SimpleSchedulePass import SimpleSchedulePass
 from ..SimpleTickPass import SimpleTickPass
 
+
 class Adder(Component):
   def construct( s ):
     s.in0 = InPort( Bits32 )
