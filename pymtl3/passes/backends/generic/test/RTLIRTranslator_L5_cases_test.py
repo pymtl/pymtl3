@@ -5,17 +5,25 @@
 # Date   : May 23, 2019
 """Test the RTLIR transaltor."""
 
-from ..behavioral.test.BehavioralTranslatorL5_test import *
+import pytest
+
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
+
 from .TestRTLIRTranslator import TestRTLIRTranslator
+from ..behavioral.test.BehavioralTranslatorL5_test import \
+    test_generic_behavioral_L5 as behavioral
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   if not m._dsl.constructed:
     m.elaborate()
   tr = TestRTLIRTranslator(m)
   tr.translate( m )
   src = tr.hierarchy.src
-  try:
-    assert src == m._ref_src
-  except AttributeError:
-    pass
+  assert src == case.REF_SRC
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral)
+)
+def test_generic_L5( case ):
+  run_test( case, case.DUT() )

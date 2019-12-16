@@ -139,6 +139,27 @@ CaseBits32TmpWireComp = add_attributes( CaseBits32TmpWireComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Vector32
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -156,6 +177,29 @@ CaseBits32TmpWireAliasComp = add_attributes( CaseBits32TmpWireAliasComp,
         tmpvars:
           tmpvar: u in multi_upblks_1 of Vector32
           tmpvar: u in multi_upblks_2 of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Vector32
+          port_decl: out Array[5] of Port
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in multi_upblks_1 of Vector32
+          tmpvar: u in multi_upblks_2 of Vector32
+        upblk_srcs:
+          upblk_src: multi_upblks_1
+          upblk_src: multi_upblks_2
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -172,6 +216,28 @@ CaseBits32MultiTmpWireComp = add_attributes( CaseBits32MultiTmpWireComp,
         tmpvars:
           tmpvar: u in upblk of Vector32
           tmpvar: v in upblk of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Vector32
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+          tmpvar: v in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -190,6 +256,27 @@ CaseBits32FreeVarToTmpVarComp = add_attributes( CaseBits32FreeVarToTmpVarComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+          freevar: STATE_IDLE
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -205,6 +292,26 @@ CaseBits32ConstBitsToTmpVarComp = add_attributes( CaseBits32ConstBitsToTmpVarCom
     '''\
         tmpvars:
           tmpvar: u in upblk of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -220,6 +327,26 @@ CaseBits32ConstIntToTmpVarComp = add_attributes( CaseBits32ConstIntToTmpVarComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -235,6 +362,28 @@ CaseStructTmpWireComp = add_attributes( CaseStructTmpWireComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Struct Bits32Foo
+    ''',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Struct Bits32Foo
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Bits32Foo
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -252,6 +401,33 @@ CaseTwoUpblksStructTmpWireComp = add_attributes( CaseTwoUpblksStructTmpWireComp,
         tmpvars:
           tmpvar: u in multi_upblks_1 of Struct Bits32Foo
           tmpvar: u in multi_upblks_2 of Struct Bits32Bar
+    ''',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        struct Bits32Bar
+        component DUT
+        (
+        port_decls:
+          port_decl: in_bar Port of Struct Bits32Bar
+          port_decl: in_foo Port of Struct Bits32Foo
+          port_decl: out_bar Port of Vector32
+          port_decl: out_foo Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in multi_upblks_1 of Bits32Foo
+          tmpvar: u in multi_upblks_2 of Bits32Bar
+        upblk_srcs:
+          upblk_src: multi_upblks_1
+          upblk_src: multi_upblks_2
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -267,6 +443,29 @@ CaseBits32IfcTmpVarOutComp = add_attributes( CaseBits32IfcTmpVarOutComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Vector32
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+          interface_decl: ifc InterfaceView Bits32OutIfc
+            interface_ports:
+              interface_port: foo Port of Vector32
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -282,6 +481,30 @@ CaseStructIfcTmpVarOutComp = add_attributes( CaseStructIfcTmpVarOutComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Struct Bits32Foo
+    ''',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+          interface_decl: ifc InterfaceView Bits32FooInIfc
+            interface_ports:
+              interface_port: foo Port of Struct Bits32Foo
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Bits32Foo
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -297,7 +520,49 @@ CaseSubCompTmpDrivenComp = add_attributes( CaseSubCompTmpDrivenComp,
     '''\
         tmpvars:
           tmpvar: u in upblk of Vector32
-    '''
+    ''',
+    'REF_SRC',
+    '''\
+        component Bits32OutTmpDrivenComp
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
+
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+          component_decl: subcomp Component Bits32OutTmpDrivenComp
+            component_ports:
+              component_port: out Port of Vector32
+            component_ifcs:
+        tmpvars:
+          tmpvar: u in upblk of Vector32
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
+'''
 )
 
 CaseSubCompFreeVarDrivenComp = add_attributes( CaseSubCompFreeVarDrivenComp,
@@ -313,7 +578,50 @@ CaseSubCompFreeVarDrivenComp = add_attributes( CaseSubCompFreeVarDrivenComp,
           freevar: STATE_WORK
     ''',
     'REF_TMPVAR',
-    'tmpvars:\n'
+    'tmpvars:\n',
+    'REF_SRC',
+    '''\
+        component Bits32OutFreeVarDrivenComp
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+          freevar: STATE_IDLE
+          freevar: STATE_WORK
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
+
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+          freevar: STATE_IDLE
+        wire_decls:
+        component_decls:
+          component_decl: subcomp Component Bits32OutFreeVarDrivenComp
+            component_ports:
+              component_port: out Port of Vector32
+            component_ifcs:
+        tmpvars:
+        upblk_srcs:
+          upblk_src: upblk
+        connections:
+
+        endcomponent
+    '''
 )
 
 CaseComponentArgsComp = add_attributes( CaseComponentArgsComp,
@@ -884,7 +1192,7 @@ CaseStructWireDrivenComp = add_attributes( CaseStructWireDrivenComp,
         component_decls:
         tmpvars:
         upblk_srcs:
-          upblk
+          upblk_src: upblk
         connections:
 
         endcomponent
@@ -909,14 +1217,12 @@ CaseStructConstComp = add_attributes( CaseStructConstComp,
     'connections:\n',
     'REF_SRC',
     '''\
-        struct Bits32Foo
         component DUT
         (
         port_decls:
         interface_decls:
         );
         const_decls:
-          const_decl: struct_const Const of Struct Bits32Foo
         freevars:
         wire_decls:
         component_decls:
@@ -1131,7 +1437,7 @@ CaseArrayBits32IfcInComp = add_attributes( CaseArrayBits32IfcInComp,
         component DUT
         (
         port_decls:
-          port_decl: out Port of Bits32
+          port_decl: out Port of Vector32
         interface_decls:
           interface_decl: in_ Array[5] of InterfaceView Bits32InIfc
             interface_ports:
@@ -1264,7 +1570,7 @@ CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrC
         tmpvars:
         upblk_srcs:
         connections:
-          SubCompAttr CurCompAttr b out -> CurCompAttr out
+          connection: SubCompAttr CurCompAttr b out -> CurCompAttr out
 
         endcomponent
     ''',

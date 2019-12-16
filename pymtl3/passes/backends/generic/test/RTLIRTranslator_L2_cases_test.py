@@ -7,18 +7,25 @@
 
 import pytest
 
-from ..behavioral.test.BehavioralTranslatorL2_test import *
-from ..structural.test.StructuralTranslatorL2_test import *
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
+
 from .TestRTLIRTranslator import TestRTLIRTranslator
+from ..behavioral.test.BehavioralTranslatorL2_test import \
+    test_generic_behavioral_L2 as behavioral
+from ..structural.test.StructuralTranslatorL2_test import \
+    test_generic_structural_L2 as structural
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   if not m._dsl.constructed:
     m.elaborate()
   tr = TestRTLIRTranslator(m)
   tr.translate( m )
   src = tr.hierarchy.src
-  try:
-    assert src == m._ref_src
-  except AttributeError:
-    pass
+  assert src == case.REF_SRC
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+)
+def test_generic_L2( case ):
+  run_test( case, case.DUT() )

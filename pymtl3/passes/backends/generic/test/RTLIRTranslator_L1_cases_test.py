@@ -25,10 +25,6 @@ def run_test( case, m ):
   tr.translate( m )
   src = tr.hierarchy.src
   assert src == case.REF_SRC
-  # try:
-  #   assert src == m._ref_src
-  # except AttributeError:
-  #   pass
 
 @pytest.mark.parametrize(
   'case', get_parameter('case', behavioral) + get_parameter('case', structural)

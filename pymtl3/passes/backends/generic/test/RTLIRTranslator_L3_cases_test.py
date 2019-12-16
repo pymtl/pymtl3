@@ -5,18 +5,27 @@
 # Date   : May 23, 2019
 """Test the RTLIR transaltor."""
 
-from ..behavioral.test.BehavioralTranslatorL3_test import *
-from ..structural.test.StructuralTranslatorL3_test import *
+import pytest
+
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
+
 from .TestRTLIRTranslator import TestRTLIRTranslator
+from ..behavioral.test.BehavioralTranslatorL3_test import \
+    test_generic_behavioral_L3 as behavioral
+from ..structural.test.StructuralTranslatorL3_test import \
+    test_generic_structural_L3 as structural
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   if not m._dsl.constructed:
     m.elaborate()
   tr = TestRTLIRTranslator(m)
   tr.translate( m )
   src = tr.hierarchy.src
-  try:
-    assert src == m._ref_src
-  except AttributeError:
-    pass
+  assert src == case.REF_SRC
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+)
+def test_generic_L3( case ):
+  run_test( case, case.DUT() )
