@@ -39,6 +39,14 @@ class Bits32Bar:
 class Bits32x5Foo:
   foo: [ Bits32 ] * 5
 
+@bitstruct
+class NestedBits32Foo:
+  foo: Bits32Foo
+
+@bitstruct
+class NestedStructPackedArray:
+  foo: [ Bits32x5Foo ] * 5
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -80,6 +88,30 @@ class Bits32FooWireBarInIfc( Interface ):
   def construct( s ):
     s.foo = Wire( Bits32 )
     s.bar = InPort( Bits32 )
+
+# Nested interfaces
+
+class ReqIfc( Interface ):
+  def construct( s ):
+    s.msg = InPort( Bits32 )
+    s.val = InPort( Bits1 )
+    s.rdy = OutPort( Bits1 )
+
+class MemReqIfc( Interface ):
+  def construct( s ):
+    s.memifc = ReqIfc()
+    s.ctrl_foo = InPort( Bits1 )
+
+class RespIfc( Interface ):
+  def construct( s ):
+    s.msg = OutPort( Bits32 )
+    s.val = OutPort( Bits1 )
+    s.rdy = InPort( Bits1 )
+
+class MemRespIfc( Interface ):
+  def construct( s ):
+    s.memifc = RespIfc()
+    s.ctrl_foo = OutPort( Bits1 )
 
 #-------------------------------------------------------------------------
 # Commonly used Components
@@ -133,6 +165,14 @@ class Bits32OutFreeVarDrivenComp( Component ):
       else:
         s.out = Bits32(STATE_WORK)
 
+class Bits32OutDrivenSubComp( Component ):
+  def construct( s ):
+    s.out = OutPort( Bits32 )
+    s.ifc = Bits32OutValRdyIfc()
+    connect( s.out, Bits32(42) )
+    connect( s.ifc.msg, Bits32(42) )
+    connect( s.ifc.val, Bits1(1) )
+
 #-------------------------------------------------------------------------
 # Test Components
 #-------------------------------------------------------------------------
@@ -146,6 +186,11 @@ class CaseStructPortOnly:
   class DUT( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32Foo )
+
+class CaseNestedStructPortOnly:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( NestedBits32Foo )
 
 class CasePackedArrayStructPortOnly:
   class DUT( Component ):
@@ -161,6 +206,11 @@ class CaseBits32x5WireOnly:
   class DUT( Component ):
     def construct( s ):
       s.in_ = [ Wire( Bits32 ) for _ in range(5) ]
+
+class CaseStructx5PortOnly:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32Foo ) for _ in range(5) ]
 
 class CaseBits32x5ConstOnly:
   class DUT( Component ):
@@ -633,6 +683,26 @@ class CaseBits32Wirex5DrivenComp:
         for i in range(5):
           s.foo[i] = Bits32(0)
 
+class CaseStructWireDrivenComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.foo = Wire( Bits32Foo )
+      @s.update
+      def upblk():
+        s.foo.foo = Bits32(42)
+
+class CaseStructConstComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.struct_const = Bits32Foo()
+
+class CaseNestedPackedArrayStructComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( NestedStructPackedArray )
+      s.out = OutPort( Bits32x5Foo )
+      connect( s.in_.foo[1], s.out )
+
 class CaseConnectConstToOutComp:
   class DUT( Component ):
     def construct( s ):
@@ -697,6 +767,14 @@ class CaseConnectValRdyIfcComp:
       # this interface!
       connect( s.out, s.in_ )
 
+class CaseConnectArrayNestedIfcComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ MemReqIfc() for _ in range(2) ]
+      s.out = [ MemRespIfc() for _ in range(2) ]
+      for i in range(2):
+        connect( s.out[i], s.in_[i] )
+
 class CaseBits32IfcTmpVarOutComp:
   class DUT( Component ):
     def construct( s ):
@@ -724,6 +802,15 @@ class CaseBits32ConnectSubCompAttrComp:
       s.out = OutPort( Bits32 )
       connect( s.out, s.b.out )
 
+class CaseConnectSubCompIfcHierarchyComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits32 )
+      s.ifc = Bits32OutValRdyIfc()
+      s.subcomp = Bits32OutDrivenSubComp()
+      connect( s.subcomp.out, s.out )
+      connect( s.subcomp.ifc, s.ifc )
+
 class CaseBits32ArrayConnectSubCompAttrComp:
   class DUT( Component ):
     def construct( s ):
@@ -745,6 +832,38 @@ class CaseMixedDefaultArgsComp:
   class DUT( Component ):
     def construct( s, foo, bar, woo = Bits32(0) ):
       pass
+
+#-------------------------------------------------------------------------
+# Test cases that contain generic translator errors
+#-------------------------------------------------------------------------
+
+class CaseBitSelOverBitSelComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      connect( s.out, s.in_[1][0] )
+
+class CaseBitSelOverPartSelComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      connect( s.out, s.in_[0:4][0] )
+
+class CasePartSelOverBitSelComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      connect( s.out, s.in_[1][0:1] )
+
+class CasePartSelOverPartSelComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      connect( s.out, s.in_[0:4][0:1] )
 
 #-------------------------------------------------------------------------
 # Test cases that contain errors

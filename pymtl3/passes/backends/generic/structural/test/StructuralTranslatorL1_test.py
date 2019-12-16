@@ -109,5 +109,3 @@ def test_component_mixed_kw_args():
 )
 def test_generic_structural_L1( case ):
   run_test( case, case.DUT() )
-
-__all__ = list([s for s in dir() if s.startswith('test_')])

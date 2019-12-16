@@ -41,6 +41,21 @@ from pymtl3.testcases import (
     CaseTwoUpblksStructTmpWireComp,
     CaseWiresDrivenComp,
     add_attributes,
+    CaseStructPortOnly,
+    CaseStructWireDrivenComp,
+    CaseStructx5PortOnly,
+    CaseNestedStructPortOnly,
+    CaseNestedPackedArrayStructComp,
+    CaseStructConstComp,
+    CaseConnectValRdyIfcComp,
+    CaseArrayBits32IfcInComp,
+    CaseConnectArrayNestedIfcComp,
+    CaseBits32ConnectSubCompAttrComp,
+    CaseConnectSubCompIfcHierarchyComp,
+    CaseBitSelOverBitSelComp,
+    CaseBitSelOverPartSelComp,
+    CasePartSelOverBitSelComp,
+    CasePartSelOverPartSelComp,
 )
 
 CaseTwoUpblksSliceComp = add_attributes( CaseTwoUpblksSliceComp,
@@ -51,7 +66,28 @@ CaseTwoUpblksSliceComp = add_attributes( CaseTwoUpblksSliceComp,
           upblk_src: multi_upblks_2
     ''',
     'REF_FREEVAR',
-    'freevars:\n'
+    'freevars:\n',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Vector4
+          port_decl: out Port of Vector8
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+          upblk_src: multi_upblks_1
+          upblk_src: multi_upblks_2
+        connections:
+
+        endcomponent
+    '''
 )
 
 CaseTwoUpblksFreevarsComp = add_attributes( CaseTwoUpblksFreevarsComp,
@@ -66,6 +102,28 @@ CaseTwoUpblksFreevarsComp = add_attributes( CaseTwoUpblksFreevarsComp,
         freevars:
           freevar: STATE_IDLE
           freevar: STATE_WORK
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: out Array[2] of Port
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+          freevar: STATE_IDLE
+          freevar: STATE_WORK
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+          upblk_src: multi_upblks_1
+          upblk_src: multi_upblks_2
+        connections:
+
+        endcomponent
     '''
 )
 
@@ -468,6 +526,8 @@ CaseBits32ClosureConstruct = add_attributes( CaseBits32ClosureConstruct,
           const_decl: fvar_ref Const of Vector32
     ''',
     'REF_SRC',
+    # Note that const_decls become emtpy because the constant s.fvar_ref
+    # was not used in any upblks!
     '''\
         component DUT
         (
@@ -476,8 +536,8 @@ CaseBits32ClosureConstruct = add_attributes( CaseBits32ClosureConstruct,
         interface_decls:
         );
         const_decls:
-          const_decl: fvar_ref Const of Vector32
         freevars:
+          freevar: foo
         wire_decls:
         component_decls:
         tmpvars:
@@ -521,6 +581,7 @@ CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruc
         );
         const_decls:
         freevars:
+          freevar: foo
         wire_decls:
         component_decls:
         tmpvars:
@@ -745,7 +806,6 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
         interface_decls:
         );
         const_decls:
-          const_decl: const Array[5] of Const
         freevars:
         wire_decls:
         component_decls:
@@ -756,4 +816,542 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
 
         endcomponent
     '''
+)
+
+CaseStructPortOnly = add_attributes( CaseStructPortOnly,
+    'REF_NAME',
+    'DUT',
+    'REF_PORT',
+    '''\
+        port_decls:
+          port_decl: in_ Port of Struct Bits32Foo
+    ''',
+    'REF_WIRE',
+    'wire_decls:\n',
+    'REF_CONST',
+    'const_decls:\n',
+    'REF_CONN',
+    'connections:\n',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Struct Bits32Foo
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+
+        endcomponent
+    ''',
+    'REF_STRUCT',
+    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
+)
+
+CaseStructWireDrivenComp = add_attributes( CaseStructWireDrivenComp,
+    'REF_NAME',
+    'DUT',
+    'REF_PORT',
+    'port_decls:\n',
+    'REF_WIRE',
+    '''\
+        wire_decls:
+          wire_decl: foo Wire of Struct Bits32Foo
+    ''',
+    'REF_CONST',
+    'const_decls:\n',
+    'REF_CONN',
+    'connections:\n',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        component DUT
+        (
+        port_decls:
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+          wire_decl: foo Wire of Struct Bits32Foo
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+          upblk
+        connections:
+
+        endcomponent
+    ''',
+    'REF_STRUCT',
+    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
+)
+
+CaseStructConstComp = add_attributes( CaseStructConstComp,
+    'REF_NAME',
+    'DUT',
+    'REF_PORT',
+    'port_decls:\n',
+    'REF_WIRE',
+    'wire_decls:\n',
+    'REF_CONST',
+    '''\
+        const_decls:
+          const_decl: struct_const Const of Struct Bits32Foo
+    ''',
+    'REF_CONN',
+    'connections:\n',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        component DUT
+        (
+        port_decls:
+        interface_decls:
+        );
+        const_decls:
+          const_decl: struct_const Const of Struct Bits32Foo
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+
+        endcomponent
+    ''',
+    'REF_STRUCT',
+    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
+)
+
+CaseStructx5PortOnly = add_attributes( CaseStructx5PortOnly,
+    'REF_NAME',
+    'DUT',
+    'REF_PORT',
+    '''\
+        port_decls:
+          port_decl: in_ Array[5] of Port
+    ''',
+    'REF_WIRE',
+    'wire_decls:\n',
+    'REF_CONST',
+    'const_decls:\n',
+    'REF_CONN',
+    'connections:\n',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Array[5] of Port
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+
+        endcomponent
+    ''',
+    'REF_STRUCT',
+    [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
+)
+
+CaseNestedStructPortOnly = add_attributes( CaseNestedStructPortOnly,
+    'REF_NAME',
+    'DUT',
+    'REF_PORT',
+    '''\
+        port_decls:
+          port_decl: in_ Port of Struct NestedBits32Foo
+    ''',
+    'REF_WIRE',
+    'wire_decls:\n',
+    'REF_CONST',
+    'const_decls:\n',
+    'REF_CONN',
+    'connections:\n',
+    'REF_SRC',
+    '''\
+        struct Bits32Foo
+        struct NestedBits32Foo
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Struct NestedBits32Foo
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+
+        endcomponent
+    ''',
+    'REF_STRUCT',
+    [
+      (rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo'),
+      (rdt.Struct('NestedBits32Foo', {'foo':rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)})}), 'NestedBits32Foo'),
+    ]
+)
+
+CaseNestedPackedArrayStructComp = add_attributes( CaseNestedPackedArrayStructComp,
+    'REF_NAME',
+    'DUT',
+    'REF_PORT',
+    '''\
+        port_decls:
+          port_decl: in_ Port of Struct NestedStructPackedArray
+          port_decl: out Port of Struct Bits32x5Foo
+    ''',
+    'REF_WIRE',
+    'wire_decls:\n',
+    'REF_CONST',
+    'const_decls:\n',
+    'REF_CONN',
+    '''\
+        connections:
+          connection: PackedIndex StructAttr CurCompAttr in_ foo 1 -> CurCompAttr out
+    ''',
+    'REF_SRC',
+    '''\
+        struct Bits32x5Foo
+        struct NestedStructPackedArray
+        component DUT
+        (
+        port_decls:
+          port_decl: in_ Port of Struct NestedStructPackedArray
+          port_decl: out Port of Struct Bits32x5Foo
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: PackedIndex StructAttr CurCompAttr in_ foo 1 -> CurCompAttr out
+
+        endcomponent
+    ''',
+    'REF_STRUCT',
+    [
+      (rdt.Struct('Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))}), 'Bits32x5Foo'),
+      (rdt.Struct('NestedStructPackedArray', {'foo':rdt.Struct('Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))})}), 'NestedStructPackedArray'),
+    ]
+)
+
+CaseConnectValRdyIfcComp = add_attributes( CaseConnectValRdyIfcComp,
+    'REF_NAME',
+    'DUT',
+    'REF_IFC',
+    '''\
+        interface_decls:
+          interface_decl: in_ InterfaceView Bits32InValRdyIfc
+            interface_ports:
+              interface_port: msg Port of Vector32
+              interface_port: rdy Port of Vector1
+              interface_port: val Port of Vector1
+          interface_decl: out InterfaceView Bits32OutValRdyIfc
+            interface_ports:
+              interface_port: msg Port of Vector32
+              interface_port: rdy Port of Vector1
+              interface_port: val Port of Vector1
+    ''',
+    'REF_CONN',
+    '''\
+        connections:
+          connection: IfcAttr CurCompAttr in_ msg -> IfcAttr CurCompAttr out msg
+          connection: IfcAttr CurCompAttr out rdy -> IfcAttr CurCompAttr in_ rdy
+          connection: IfcAttr CurCompAttr in_ val -> IfcAttr CurCompAttr out val
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+        interface_decls:
+          interface_decl: in_ InterfaceView Bits32InValRdyIfc
+            interface_ports:
+              interface_port: msg Port of Vector32
+              interface_port: rdy Port of Vector1
+              interface_port: val Port of Vector1
+          interface_decl: out InterfaceView Bits32OutValRdyIfc
+            interface_ports:
+              interface_port: msg Port of Vector32
+              interface_port: rdy Port of Vector1
+              interface_port: val Port of Vector1
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: IfcAttr CurCompAttr in_ msg -> IfcAttr CurCompAttr out msg
+          connection: IfcAttr CurCompAttr out rdy -> IfcAttr CurCompAttr in_ rdy
+          connection: IfcAttr CurCompAttr in_ val -> IfcAttr CurCompAttr out val
+
+        endcomponent
+    ''',
+)
+
+CaseArrayBits32IfcInComp = add_attributes( CaseArrayBits32IfcInComp,
+    'REF_NAME',
+    'DUT',
+    'REF_IFC',
+    '''\
+        interface_decls:
+          interface_decl: in_ Array[5] of InterfaceView Bits32InIfc
+            interface_ports:
+              interface_port: foo Port of Vector32
+    ''',
+    'REF_CONN',
+    '''\
+        connections:
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 2 foo -> CurCompAttr out
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Bits32
+        interface_decls:
+          interface_decl: in_ Array[5] of InterfaceView Bits32InIfc
+            interface_ports:
+              interface_port: foo Port of Vector32
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 2 foo -> CurCompAttr out
+
+        endcomponent
+    ''',
+)
+
+CaseConnectArrayNestedIfcComp = add_attributes( CaseConnectArrayNestedIfcComp,
+    'REF_NAME',
+    'DUT',
+    'REF_IFC',
+    '''\
+        interface_decls:
+          interface_decl: in_ Array[2] of InterfaceView MemReqIfc
+            interface_ports:
+              interface_port: ctrl_foo Port of Vector1
+              interface_port: memifc InterfaceView ReqIfc
+          interface_decl: out Array[2] of InterfaceView MemRespIfc
+            interface_ports:
+              interface_port: ctrl_foo Port of Vector1
+              interface_port: memifc InterfaceView RespIfc
+    ''',
+    'REF_CONN',
+    '''\
+        connections:
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 ctrl_foo -> IfcAttr IfcArrayIdx CurCompAttr out 0 ctrl_foo
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 0 memifc msg -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 0 memifc msg
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 0 memifc rdy -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 0 memifc rdy
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 0 memifc val -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 0 memifc val
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 1 ctrl_foo -> IfcAttr IfcArrayIdx CurCompAttr out 1 ctrl_foo
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 1 memifc msg -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 1 memifc msg
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 1 memifc rdy -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 1 memifc rdy
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 1 memifc val -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 1 memifc val
+    ''',
+    'REF_SRC',
+    '''\
+        component DUT
+        (
+        port_decls:
+        interface_decls:
+          interface_decl: in_ Array[2] of InterfaceView MemReqIfc
+            interface_ports:
+              interface_port: ctrl_foo Port of Vector1
+              interface_port: memifc InterfaceView ReqIfc
+          interface_decl: out Array[2] of InterfaceView MemRespIfc
+            interface_ports:
+              interface_port: ctrl_foo Port of Vector1
+              interface_port: memifc InterfaceView RespIfc
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 0 ctrl_foo -> IfcAttr IfcArrayIdx CurCompAttr out 0 ctrl_foo
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 0 memifc msg -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 0 memifc msg
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 0 memifc rdy -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 0 memifc rdy
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 0 memifc val -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 0 memifc val
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 1 ctrl_foo -> IfcAttr IfcArrayIdx CurCompAttr out 1 ctrl_foo
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 1 memifc msg -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 1 memifc msg
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 1 memifc rdy -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 1 memifc rdy
+          connection: IfcAttr IfcAttr IfcArrayIdx CurCompAttr in_ 1 memifc val -> IfcAttr IfcAttr IfcArrayIdx CurCompAttr out 1 memifc val
+
+        endcomponent
+    ''',
+)
+
+CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrComp,
+    'REF_NAME',
+    'DUT',
+    'REF_CONN',
+    '''\
+        connections:
+          connection: SubCompAttr CurCompAttr b out -> CurCompAttr out
+    ''',
+    'REF_COMP',
+    '''\
+        component_decls:
+          component_decl: b Component Bits32OutDrivenComp
+            component_ports:
+              component_port: out Port of Vector32
+            component_ifcs:
+    ''',
+    'REF_SRC',
+    '''\
+        component Bits32OutDrivenComp
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: Bits32(42) -> CurCompAttr out
+
+        endcomponent
+
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+          component_decl: b Component Bits32OutDrivenComp
+            component_ports:
+              component_port: out Port of Vector32
+            component_ifcs:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          SubCompAttr CurCompAttr b out -> CurCompAttr out
+
+        endcomponent
+    ''',
+)
+
+CaseConnectSubCompIfcHierarchyComp = add_attributes( CaseConnectSubCompIfcHierarchyComp,
+    'REF_NAME',
+    'DUT',
+    'REF_CONN',
+    '''\
+        connections:
+          connection: SubCompAttr CurCompAttr subcomp out -> CurCompAttr out
+          connection: IfcAttr SubCompAttr CurCompAttr subcomp ifc msg -> IfcAttr CurCompAttr ifc msg
+          connection: IfcAttr CurCompAttr ifc rdy -> IfcAttr SubCompAttr CurCompAttr subcomp ifc rdy
+          connection: IfcAttr SubCompAttr CurCompAttr subcomp ifc val -> IfcAttr CurCompAttr ifc val
+    ''',
+    'REF_COMP',
+    '''\
+        component_decls:
+          component_decl: subcomp Component Bits32OutDrivenSubComp
+            component_ports:
+              component_port: out Port of Vector32
+            component_ifcs:
+              component_ifc: ifc InterfaceView Bits32OutValRdyIfc
+                component_ifc_ports:
+                  component_ifc_port: msg Port of Vector32
+                  component_ifc_port: rdy Port of Vector1
+                  component_ifc_port: val Port of Vector1
+    ''',
+    'REF_SRC',
+    '''\
+        component Bits32OutDrivenSubComp
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+          interface_decl: ifc InterfaceView Bits32OutValRdyIfc
+            interface_ports:
+              interface_port: msg Port of Vector32
+              interface_port: rdy Port of Vector1
+              interface_port: val Port of Vector1
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: Bits32(42) -> CurCompAttr out
+          connection: Bits32(42) -> IfcAttr CurCompAttr ifc msg
+          connection: Bits1(1) -> IfcAttr CurCompAttr ifc val
+
+        endcomponent
+
+        component DUT
+        (
+        port_decls:
+          port_decl: out Port of Vector32
+        interface_decls:
+          interface_decl: ifc InterfaceView Bits32OutValRdyIfc
+            interface_ports:
+              interface_port: msg Port of Vector32
+              interface_port: rdy Port of Vector1
+              interface_port: val Port of Vector1
+        );
+        const_decls:
+        freevars:
+        wire_decls:
+        component_decls:
+          component_decl: subcomp Component Bits32OutDrivenSubComp
+            component_ports:
+              component_port: out Port of Vector32
+            component_ifcs:
+              component_ifc: ifc InterfaceView Bits32OutValRdyIfc
+                component_ifc_ports:
+                  component_ifc_port: msg Port of Vector32
+                  component_ifc_port: rdy Port of Vector1
+                  component_ifc_port: val Port of Vector1
+        tmpvars:
+        upblk_srcs:
+        connections:
+          connection: SubCompAttr CurCompAttr subcomp out -> CurCompAttr out
+          connection: IfcAttr SubCompAttr CurCompAttr subcomp ifc msg -> IfcAttr CurCompAttr ifc msg
+          connection: IfcAttr CurCompAttr ifc rdy -> IfcAttr SubCompAttr CurCompAttr subcomp ifc rdy
+          connection: IfcAttr SubCompAttr CurCompAttr subcomp ifc val -> IfcAttr CurCompAttr ifc val
+
+        endcomponent
+    ''',
 )

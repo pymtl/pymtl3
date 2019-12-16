@@ -31,3 +31,22 @@ def expected_failure( exception = Exception, msg = None ):
     else:
       raise
   raise Exception( 'expected-to-fail test unexpectedly passed!' )
+
+def get_parameter( name, func ):
+  """Return the parameter for `name` arg of `func`"""
+  try:
+    for mark in func.pytestmark:
+      if mark.name == 'parametrize':
+        # Find the position of the given name
+        pos = -1
+        for i, arg in enumerate( mark.args[0].split() ):
+          if arg == name:
+            pos = i
+            break
+        if pos == -1:
+          raise Exception( f'{func} does not have parameter named {name}!' )
+        if len(mark.args[0].split()) == 1:
+          return mark.args[1]
+        return list(map(lambda x: x[pos], mark.args[1]))
+  except AttributeError:
+    raise Exception( f'given function {func} does not have pytest marks!' )
