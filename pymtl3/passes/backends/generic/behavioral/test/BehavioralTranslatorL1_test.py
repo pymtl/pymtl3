@@ -7,11 +7,15 @@
 
 import pytest
 
-from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+from ...testcases import (
+    CaseBits32ArrayClosureConstruct,
+    CaseBits32ClosureConstruct,
+    CaseTwoUpblksFreevarsComp,
+    CaseTwoUpblksSliceComp,
+)
 from ..BehavioralTranslatorL1 import BehavioralTranslatorL1
-from ...testcases import CaseBits32ClosureConstruct, \
-    CaseBits32ArrayClosureConstruct, CaseTwoUpblksSliceComp, \
-    CaseTwoUpblksFreevarsComp
+from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+
 
 @pytest.mark.parametrize(
   'case', [

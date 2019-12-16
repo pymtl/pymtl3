@@ -11,6 +11,7 @@ Date   : Dec 12, 2019
 from copy import copy
 from textwrap import dedent
 
+
 class AliasOf:
   def __init__( s, alias_name = 'A' ):
     s.alias_name = alias_name
@@ -26,5 +27,5 @@ def add_attributes( _cls, *args ):
   assert len( args ) % 2 == 0
   cls = copy( _cls )
   for attr, obj in zip( args[::2], args[1::2] ):
-    setattr( cls, attr, dedent(obj) )
+    setattr( cls, attr, dedent(obj) if isinstance(obj, str) else obj )
   return cls

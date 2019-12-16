@@ -8,46 +8,39 @@ Author : Peitian Pan
 Date   : Dec 12, 2019
 """
 
-from pymtl3.testcases import add_attributes
-from pymtl3.testcases import CaseBits32ClosureConstruct, \
-    CaseBits32ArrayClosureConstruct, CaseTwoUpblksSliceComp, \
-    CaseTwoUpblksFreevarsComp, CaseBits32TmpWireComp, \
-    CaseBits32TmpWireAliasComp, CaseBits32MultiTmpWireComp, \
-    CaseBits32FreeVarToTmpVarComp, CaseBits32ConstBitsToTmpVarComp, \
-    CaseBits32ConstIntToTmpVarComp, CaseStructTmpWireComp, \
-    CaseTwoUpblksStructTmpWireComp, CaseBits32IfcTmpVarOutComp, \
-    CaseStructIfcTmpVarOutComp, CaseSubCompTmpDrivenComp, \
-    CaseSubCompFreeVarDrivenComp, CaseBits32PortOnly, \
-    CaseBits32x5PortOnly, CaseWiresDrivenComp, \
-    CaseBits32Wirex5DrivenComp, CaseBits32ClosureConstruct, \
-    CaseBits32ArrayClosureConstruct, CaseConnectBitSelToOutComp, \
-    CaseConnectSliceToOutComp, CaseConnectPortIndexComp, \
-    CaseConnectInToWireComp, CaseConnectConstToOutComp
-
-CaseBits32ClosureConstruct = add_attributes( CaseBits32ClosureConstruct,
-    'REF_UPBLK',
-    '''\
-        upblk_srcs:
-          upblk_src: upblk
-    ''',
-    'REF_FREEVAR',
-    '''\
-        freevars:
-          freevar: foo
-    '''
-)
-
-CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruct,
-    'REF_UPBLK',
-    '''\
-        upblk_srcs:
-          upblk_src: upblk
-    ''',
-    'REF_FREEVAR',
-    '''\
-        freevars:
-          freevar: foo
-    '''
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.testcases import (
+    CaseBits32ArrayClosureConstruct,
+    CaseBits32ClosureConstruct,
+    CaseBits32ConstBitsToTmpVarComp,
+    CaseBits32ConstIntToTmpVarComp,
+    CaseBits32FreeVarToTmpVarComp,
+    CaseBits32IfcTmpVarOutComp,
+    CaseBits32MultiTmpWireComp,
+    CaseBits32PortOnly,
+    CaseBits32TmpWireAliasComp,
+    CaseBits32TmpWireComp,
+    CaseBits32Wirex5DrivenComp,
+    CaseBits32x5PortOnly,
+    CaseComponentArgsComp,
+    CaseComponentDefaultArgsComp,
+    CaseConnectBitSelToOutComp,
+    CaseConnectConstToOutComp,
+    CaseConnectInToWireComp,
+    CaseConnectPortIndexComp,
+    CaseConnectSliceToOutComp,
+    CaseDoubleStarArgComp,
+    CaseMixedDefaultArgsComp,
+    CaseStarArgComp,
+    CaseStructIfcTmpVarOutComp,
+    CaseStructTmpWireComp,
+    CaseSubCompFreeVarDrivenComp,
+    CaseSubCompTmpDrivenComp,
+    CaseTwoUpblksFreevarsComp,
+    CaseTwoUpblksSliceComp,
+    CaseTwoUpblksStructTmpWireComp,
+    CaseWiresDrivenComp,
+    add_attributes,
 )
 
 CaseTwoUpblksSliceComp = add_attributes( CaseTwoUpblksSliceComp,
@@ -373,7 +366,7 @@ CaseBits32x5PortOnly = add_attributes( CaseBits32x5PortOnly,
     'REF_PORT',
     '''\
         port_decls:
-          port_decl: foo Array[5] of Port
+          port_decl: in_ Array[5] of Port
     ''',
     'REF_SRC',
     '''\
@@ -404,8 +397,8 @@ CaseWiresDrivenComp = add_attributes( CaseWiresDrivenComp,
     '''\
         wire_decls:
           wire_decl: bar Wire of Vector4
-          wire_decl: foo Wire foo Vector32
-    '''
+          wire_decl: foo Wire of Vector32
+    ''',
     'REF_SRC',
     '''\
         component DUT
@@ -417,7 +410,7 @@ CaseWiresDrivenComp = add_attributes( CaseWiresDrivenComp,
         freevars:
         wire_decls:
           wire_decl: bar Wire of Vector4
-          wire_decl: foo Wire foo Vector32
+          wire_decl: foo Wire of Vector32
         component_decls:
         tmpvars:
         upblk_srcs:
@@ -493,6 +486,16 @@ CaseBits32ClosureConstruct = add_attributes( CaseBits32ClosureConstruct,
         connections:
 
         endcomponent
+    ''',
+    'REF_UPBLK',
+    '''\
+        upblk_srcs:
+          upblk_src: upblk
+    ''',
+    'REF_FREEVAR',
+    '''\
+        freevars:
+          freevar: foo
     '''
 )
 
@@ -507,10 +510,7 @@ CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruc
     'REF_WIRE',
     'wire_decls:\n',
     'REF_CONST',
-    '''\
-        const_decls:
-          const_decl: foo Array[5] of Const
-    ''',
+    'const_decls:\n',
     'REF_SRC',
     '''\
         component DUT
@@ -520,7 +520,6 @@ CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruc
         interface_decls:
         );
         const_decls:
-          const_decl: foo Array[5] of Const
         freevars:
         wire_decls:
         component_decls:
@@ -530,6 +529,16 @@ CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruc
         connections:
 
         endcomponent
+    ''',
+    'REF_UPBLK',
+    '''\
+        upblk_srcs:
+          upblk_src: upblk
+    ''',
+    'REF_FREEVAR',
+    '''\
+        freevars:
+          freevar: foo
     '''
 )
 
@@ -549,7 +558,7 @@ CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
     'REF_CONN',
     '''\
         connections:
-          connection: PartSel CurCompAttr in_ 1 2 -> CurCompAttr out
+          connection: PartSel CurCompAttr in_ 0 1 -> CurCompAttr out
     ''',
     'REF_SRC',
     '''\
@@ -567,7 +576,7 @@ CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
         tmpvars:
         upblk_srcs:
         connections:
-          connection: PartSel CurCompAttr in_ 1 2 -> CurCompAttr out
+          connection: PartSel CurCompAttr in_ 0 1 -> CurCompAttr out
 
         endcomponent
     '''
@@ -589,7 +598,7 @@ CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
     'REF_CONN',
     '''\
         connections:
-          connection: PartSel CurCompAttr in_ 0 4 -> CurCompAttr out
+          connection: PartSel CurCompAttr in_ 4 8 -> CurCompAttr out
     ''',
     'REF_SRC',
     '''\
@@ -607,7 +616,7 @@ CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
         tmpvars:
         upblk_srcs:
         connections:
-          connection: PartSel CurCompAttr in_ 0 4 -> CurCompAttr out
+          connection: PartSel CurCompAttr in_ 4 8 -> CurCompAttr out
 
         endcomponent
     '''
@@ -725,7 +734,7 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
     'REF_CONN',
     '''\
         connections:
-          connection: Bits32(0) -> CurCompAttr out
+          connection: Bits32(42) -> CurCompAttr out
     ''',
     'REF_SRC',
     '''\
@@ -743,7 +752,7 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
         tmpvars:
         upblk_srcs:
         connections:
-          connection: Bits32(0) -> CurCompAttr out
+          connection: Bits32(42) -> CurCompAttr out
 
         endcomponent
     '''

@@ -7,9 +7,10 @@
 
 import pytest
 
-from .TestBehavioralTranslator import mk_TestBehavioralTranslator
-from ..BehavioralTranslatorL3 import BehavioralTranslatorL3
 from ...testcases import CaseStructTmpWireComp, CaseTwoUpblksStructTmpWireComp
+from ..BehavioralTranslatorL3 import BehavioralTranslatorL3
+from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+
 
 @pytest.mark.parametrize(
   'case', [

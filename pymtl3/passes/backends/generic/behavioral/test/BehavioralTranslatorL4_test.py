@@ -7,9 +7,9 @@
 
 import pytest
 
-from .TestBehavioralTranslator import mk_TestBehavioralTranslator
-from ..BehavioralTranslatorL4 import BehavioralTranslatorL4
 from ...testcases import CaseBits32IfcTmpVarOutComp, CaseStructIfcTmpVarOutComp
+from ..BehavioralTranslatorL4 import BehavioralTranslatorL4
+from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 
 @pytest.mark.parametrize(

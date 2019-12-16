@@ -7,9 +7,9 @@
 
 import pytest
 
-from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+from ...testcases import CaseSubCompFreeVarDrivenComp, CaseSubCompTmpDrivenComp
 from ..BehavioralTranslatorL5 import BehavioralTranslatorL5
-from ...testcases import CaseSubCompTmpDrivenComp, CaseSubCompFreeVarDrivenComp
+from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 
 @pytest.mark.parametrize(

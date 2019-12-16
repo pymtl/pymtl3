@@ -332,8 +332,8 @@ class CaseTwoUpblksSliceComp:
 class CaseTwoUpblksFreevarsComp:
   class DUT( Component ):
     def construct( s ):
-      # STATE_IDLE = Bits2(0)
-      # STATE_WORK = Bits2(1)
+      STATE_IDLE = Bits2(0)
+      STATE_WORK = Bits2(1)
       s.out = [ OutPort( Bits2 ) for _ in range(2) ]
       @s.update
       def multi_upblks_1():

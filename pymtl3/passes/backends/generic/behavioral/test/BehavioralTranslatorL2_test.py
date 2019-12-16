@@ -7,12 +7,16 @@
 
 import pytest
 
-from .TestBehavioralTranslator import mk_TestBehavioralTranslator
+from ...testcases import (
+    CaseBits32ConstBitsToTmpVarComp,
+    CaseBits32ConstIntToTmpVarComp,
+    CaseBits32FreeVarToTmpVarComp,
+    CaseBits32MultiTmpWireComp,
+    CaseBits32TmpWireAliasComp,
+    CaseBits32TmpWireComp,
+)
 from ..BehavioralTranslatorL2 import BehavioralTranslatorL2
-from ...testcases import CaseBits32TmpWireComp, \
-    CaseBits32TmpWireAliasComp, CaseBits32MultiTmpWireComp , \
-    CaseBits32FreeVarToTmpVarComp, CaseBits32ConstBitsToTmpVarComp, \
-    CaseBits32ConstIntToTmpVarComp
+from .TestBehavioralTranslator import mk_TestBehavioralTranslator
 
 
 @pytest.mark.parametrize(
