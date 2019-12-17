@@ -16,8 +16,8 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.stdlib.test import TestVectorSimulator
 
-from ...yosys import TranslationImportPass as YosysTransImportPass
 from .. import TranslationImportPass as SVTransImportPass
+from ...yosys import TranslationImportPass as YosysTransImportPass
 
 
 def flatten( _rtype ):

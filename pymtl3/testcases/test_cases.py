@@ -47,6 +47,12 @@ class NestedBits32Foo:
 class NestedStructPackedArray:
   foo: [ Bits32x5Foo ] * 5
 
+@bitstruct
+class NestedStructPackedPlusScalar:
+  foo: Bits32
+  bar: [Bits32]*2
+  woo: Bits32Foo
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -357,6 +363,75 @@ class CaseIfBasicComp:
         else:
           s.out = Bits8( 0 )
 
+class CaseIfDanglingElseInnerComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        if Bits1(1):
+          if Bits1(0):
+            s.out = s.in_1
+          else:
+            s.out = s.in_2
+
+class CaseIfDanglingElseOutterComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        if Bits1(1):
+          if Bits1(0):
+            s.out = s.in_1
+        else:
+          s.out = s.in_2
+
+class CaseElifBranchComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.in_3 = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        if Bits1(1):
+          s.out = s.in_1
+        elif Bits1(0):
+          s.out = s.in_2
+        else:
+          s.out = s.in_3
+
+class CaseNestedIfComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.in_3 = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        if Bits1(1):
+          if Bits1(0):
+            s.out = s.in_1
+          else:
+            s.out = s.in_2
+        elif Bits1(0):
+          if Bits1(1):
+            s.out = s.in_2
+          else:
+            s.out = s.in_3
+        else:
+          if Bits1(1):
+            s.out = s.in_3
+          else:
+            s.out = s.in_1
+
 class CaseForBasicComp:
   class DUT( Component ):
     def construct( s ):
@@ -366,6 +441,75 @@ class CaseForBasicComp:
       def for_basic():
         for i in range( 8 ):
           s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
+
+class CaseForRangeLowerUpperStepPassThroughComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      @s.update
+      def upblk():
+        for i in range(0, 5, 2):
+          s.out[i] = s.in_[i]
+        for i in range(1, 5, 2):
+          s.out[i] = s.in_[i]
+
+class CaseIfExpInForStmtComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      @s.update
+      def upblk():
+        for i in range(5):
+          s.out[i] = s.in_[i] if i == 1 else s.in_[0]
+
+class CaseIfExpUnaryOpInForStmtComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      @s.update
+      def upblk():
+        for i in range(5):
+          s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
+
+class CaseIfBoolOpInForStmtComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      @s.update
+      def upblk():
+        for i in range(5):
+          if ( s.in_[i] != Bits32(0) ) and ( ( s.in_[i+1] != Bits32(0) ) if i<4 else ( s.in_[4] != Bits32(0) )):
+            s.out[i] = s.in_[i]
+          else:
+            s.out[i] = Bits32(0)
+
+class CaseIfTmpVarInForStmtComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
+      s.out = [ OutPort( Bits32 ) for _ in range(5) ]
+      @s.update
+      def upblk():
+        for i in range(5):
+          if ( s.in_[i]  != Bits32(0) ) and ( ( s.in_[i+1] != Bits32(0) ) if i<4 else ( s.in_[4] != Bits32(0) ) ):
+            tmpvar = s.in_[i]
+          else:
+            tmpvar = Bits32(0)
+          s.out[i] = tmpvar
+
+class CaseFixedSizeSliceComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits16 )
+      s.out = [ OutPort( Bits8 ) for _ in range(2) ]
+      @s.update
+      def upblk():
+        for i in range(2):
+          s.out[i] = s.in_[i*8 : i*8 + 8]
 
 class CaseTwoUpblksSliceComp:
   class DUT( Component ):
@@ -533,6 +677,105 @@ class CaseScopeTmpWireOverwriteConflictComp:
 # Test cases without errors
 #-------------------------------------------------------------------------
 
+class CaseBits32x2ConcatComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = concat( s.in_1, s.in_2 )
+
+class CaseBits32x2ConcatConstComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = concat( Bits32(42), Bits32(0) )
+
+class CaseBits32x2ConcatMixedComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = concat( s.in_, Bits32(0) )
+
+class CaseBits32x2ConcatFreeVarComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = concat( s.in_, STATE_IDLE )
+
+class CaseBits32x2ConcatUnpackedSignalComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ InPort( Bits32 ) for _ in range(2) ]
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = concat( s.in_[0], s.in_[1] )
+
+class CaseBits64SextInComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = sext( s.in_, 64 )
+
+class CaseBits64ZextInComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = zext( s.in_, 64 )
+
+class CaseBits32BitSelUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits1 )
+      @s.update
+      def upblk():
+        s.out = s.in_[1]
+
+class CaseBits64PartSelUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits64 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.in_[4:36]
+
+class CasePassThroughComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.in_
+
+class CaseSequentialPassThroughComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update_ff
+      def upblk():
+        s.out <<= s.in_
+
 class CaseLambdaConnectComp:
   class DUT( Component ):
     def construct( s ):
@@ -573,6 +816,24 @@ class CaseConstStructInstComp:
       @s.update
       def upblk():
         s.out = s.in_.foo
+
+class CaseStructPackedArrayUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32x5Foo )
+      s.out = OutPort( Bits96 )
+      @s.update
+      def upblk():
+        s.out = concat( s.in_.foo[0], s.in_.foo[1], s.in_.foo[2] )
+
+class CaseNestedStructPackedArrayUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( NestedStructPackedPlusScalar )
+      s.out = OutPort( Bits96 )
+      @s.update
+      def upblk():
+        s.out = concat( s.in_.bar[0], s.in_.woo.foo, s.in_.foo )
 
 class CaseInterfaceAttributeComp:
   class DUT( Component ):
@@ -754,9 +1015,18 @@ class CaseBits32IfcInComp:
 class CaseArrayBits32IfcInComp:
   class DUT( Component ):
     def construct( s ):
+      s.in_ = [ Bits32InIfc() for _ in range(2) ]
+      s.out = OutPort( Bits32 )
+      connect( s.in_[1].foo, s.out )
+
+class CaseArrayBits32IfcInUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
       s.in_ = [ Bits32InIfc() for _ in range(5) ]
       s.out = OutPort( Bits32 )
-      connect( s.in_[2].foo, s.out )
+      @s.update
+      def upblk():
+        s.out = s.in_[1].foo
 
 class CaseConnectValRdyIfcComp:
   class DUT( Component ):
@@ -766,6 +1036,17 @@ class CaseConnectValRdyIfcComp:
       # This will be automatically extended to connect all signals in
       # this interface!
       connect( s.out, s.in_ )
+
+class CaseConnectValRdyIfcUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = Bits32InValRdyIfc()
+      s.out = Bits32OutValRdyIfc()
+      @s.update
+      def upblk():
+        s.out.val = s.in_.val
+        s.out.msg = s.in_.msg
+        s.in_.rdy = s.out.rdy
 
 class CaseConnectArrayNestedIfcComp:
   class DUT( Component ):
@@ -802,6 +1083,15 @@ class CaseBits32ConnectSubCompAttrComp:
       s.out = OutPort( Bits32 )
       connect( s.out, s.b.out )
 
+class CaseBits32SubCompAttrUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.b = Bits32OutDrivenComp()
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.b.out
+
 class CaseConnectSubCompIfcHierarchyComp:
   class DUT( Component ):
     def construct( s ):
@@ -817,6 +1107,15 @@ class CaseBits32ArrayConnectSubCompAttrComp:
       s.b = [ Bits32OutDrivenComp() for _ in range(5) ]
       s.out = OutPort( Bits32 )
       connect( s.out, s.b[1].out )
+
+class CaseBits32ArraySubCompAttrUpblkComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.b = [ Bits32OutDrivenComp() for _ in range(5) ]
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.b[1].out
 
 class CaseComponentArgsComp:
   class DUT( Component ):
@@ -864,6 +1163,28 @@ class CasePartSelOverPartSelComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
       connect( s.out, s.in_[0:4][0:1] )
+
+#-------------------------------------------------------------------------
+# Test cases that contain SystemVerilog translator errors
+#-------------------------------------------------------------------------
+
+class CaseSVerilogReservedComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.buf = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.buf
+
+class CaseInterfaceArrayNonStaticIndexComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ Bits32InIfc() for _ in range(2) ]
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out = s.in_[s.in_[0].foo].foo
 
 #-------------------------------------------------------------------------
 # Test cases that contain errors
