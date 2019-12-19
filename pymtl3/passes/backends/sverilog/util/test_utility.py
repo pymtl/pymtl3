@@ -20,6 +20,31 @@ from .. import TranslationImportPass as SVTransImportPass
 from ...yosys import TranslationImportPass as YosysTransImportPass
 
 
+#=========================================================================
+# test utility functions
+#=========================================================================
+
+def trim( s ):
+  string = []
+  lines = s.split( '\n' )
+  for line in lines:
+    _line = line.split()
+    _string = "".join( _line )
+    if _string and not _string.startswith( '//' ):
+      string.append( "".join( line.split() ) )
+  return "\n".join( string )
+
+def check_eq( s, t ):
+  if isinstance( s, list ) and isinstance( t, list ):
+    for _s, _t in zip( s, t ):
+      assert trim(_s) == trim(_t)
+  else:
+    assert trim(s) == trim(t)
+
+#=========================================================================
+# Hypothesis strategies for testing
+#=========================================================================
+
 def flatten( _rtype ):
   if isinstance( _rtype, rt.Array ):
     n_dim = _rtype.get_dim_sizes()

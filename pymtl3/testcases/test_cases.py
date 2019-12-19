@@ -13,7 +13,7 @@ from copy import copy, deepcopy
 from pymtl3 import *
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
-from .TestCase import AliasOf
+from .TestCase import AliasOf, _set, _check
 
 #-------------------------------------------------------------------------
 # Commonly used global variables
@@ -290,6 +290,21 @@ class CaseReducesInx3OutComp:
       @s.update
       def v_reduce():
         s.out = reduce_and( s.in_1 ) & reduce_or( s.in_2 ) | reduce_xor( s.in_3 )
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+      'in_3', Bits32, 2,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits1, 3 ),
+  TEST_VECTOR = \
+  [
+      [  0,   1,    2,  1   ],
+      [ -1,   1,   -1,  1   ],
+      [  9,   8,    7,  1   ],
+      [  9,   8,    0,  0   ],
+  ]
 
 class CaseBits16IndexBasicComp:
   class DUT( Component ):
@@ -362,6 +377,19 @@ class CaseIfBasicComp:
           s.out = s.in_[ 8:16 ]
         else:
           s.out = Bits8( 0 )
+  TV_IN = \
+  _set( 'in_', Bits16, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits8, 1 ),
+  TEST_VECTOR = \
+  [
+      [ 255,   0, ],
+      [  -1, 255, ],
+      [ 511,   1, ],
+      [ 254,   0, ],
+      [  42,   0, ],
+      [   0,   0, ],
+  ]
 
 class CaseIfDanglingElseInnerComp:
   class DUT( Component ):
@@ -376,6 +404,21 @@ class CaseIfDanglingElseInnerComp:
             s.out = s.in_1
           else:
             s.out = s.in_2
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits32, 2 ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,  -1 ],
+      [   42,     0,   0 ],
+      [   24,    42,  42 ],
+      [   -2,    24,  24 ],
+      [   -1,    -2,  -2 ],
+  ]
 
 class CaseIfDanglingElseOutterComp:
   class DUT( Component ):
@@ -390,6 +433,21 @@ class CaseIfDanglingElseOutterComp:
             s.out = s.in_1
         else:
           s.out = s.in_2
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits32, 2 ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0 ],
+      [   42,     0,   0 ],
+      [   24,    42,   0 ],
+      [   -2,    24,   0 ],
+      [   -1,    -2,   0 ],
+  ]
 
 class CaseElifBranchComp:
   class DUT( Component ):
@@ -406,6 +464,22 @@ class CaseElifBranchComp:
           s.out = s.in_2
         else:
           s.out = s.in_3
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+      'in_3', Bits32, 2,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits32, 3 ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0,  0 ],
+      [   42,     0,  42, 42 ],
+      [   24,    42,  24, 24 ],
+      [   -2,    24,  -2, -2 ],
+      [   -1,    -2,  -1, -1 ],
+  ]
 
 class CaseNestedIfComp:
   class DUT( Component ):
@@ -431,6 +505,22 @@ class CaseNestedIfComp:
             s.out = s.in_3
           else:
             s.out = s.in_1
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+      'in_3', Bits32, 2,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits32, 3 ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0,  -1 ],
+      [   42,     0,  42,   0 ],
+      [   24,    42,  24,  42 ],
+      [   -2,    24,  -2,  24 ],
+      [   -1,    -2,  -1,  -2 ],
+  ]
 
 class CaseForBasicComp:
   class DUT( Component ):
@@ -453,6 +543,30 @@ class CaseForRangeLowerUpperStepPassThroughComp:
           s.out[i] = s.in_[i]
         for i in range(1, 5, 2):
           s.out[i] = s.in_[i]
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+      'in_[2]', Bits32, 2,
+      'in_[3]', Bits32, 3,
+      'in_[4]', Bits32, 4,
+  ),
+  TV_OUT = \
+  _check(
+      'out[0]', Bits32, 5,
+      'out[1]', Bits32, 6,
+      'out[2]', Bits32, 7,
+      'out[3]', Bits32, 8,
+      'out[4]', Bits32, 9,
+  ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0,  -1,   0,    0,    -1,   0,  -1,   0, ],
+      [   42,     0,  42,   0,  42,   42,     0,  42,   0,  42, ],
+      [   24,    42,  24,  42,  24,   24,    42,  24,  42,  24, ],
+      [   -2,    24,  -2,  24,  -2,   -2,    24,  -2,  24,  -2, ],
+      [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -2,  -1, ],
+  ]
 
 class CaseIfExpInForStmtComp:
   class DUT( Component ):
@@ -463,6 +577,30 @@ class CaseIfExpInForStmtComp:
       def upblk():
         for i in range(5):
           s.out[i] = s.in_[i] if i == 1 else s.in_[0]
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+      'in_[2]', Bits32, 2,
+      'in_[3]', Bits32, 3,
+      'in_[4]', Bits32, 4,
+  ),
+  TV_OUT = \
+  _check(
+      'out[0]', Bits32, 5,
+      'out[1]', Bits32, 6,
+      'out[2]', Bits32, 7,
+      'out[3]', Bits32, 8,
+      'out[4]', Bits32, 9,
+  ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0,  -1,   0,    0,    -1,   0,   0,   0, ],
+      [   42,     0,  42,   0,  42,   42,     0,  42,  42,  42, ],
+      [   24,    42,  24,  42,  24,   24,    42,  24,  24,  24, ],
+      [   -2,    24,  -2,  24,  -2,   -2,    24,  -2,  -2,  -2, ],
+      [   -1,    -2,  -1,  -2,  -1,   -1,    -2,  -1,  -1,  -1, ],
+  ]
 
 class CaseIfExpUnaryOpInForStmtComp:
   class DUT( Component ):
@@ -473,6 +611,30 @@ class CaseIfExpUnaryOpInForStmtComp:
       def upblk():
         for i in range(5):
           s.out[i] = (~s.in_[i]) if i == 1 else s.in_[0]
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+      'in_[2]', Bits32, 2,
+      'in_[3]', Bits32, 3,
+      'in_[4]', Bits32, 4,
+  ),
+  TV_OUT = \
+  _check(
+      'out[0]', Bits32, 5,
+      'out[1]', Bits32, 6,
+      'out[2]', Bits32, 7,
+      'out[3]', Bits32, 8,
+      'out[4]', Bits32, 9,
+  ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0,  -1,   0,    0,    ~-1,   0,   0,   0, ],
+      [   42,     0,  42,   0,  42,   42,     ~0,  42,  42,  42, ],
+      [   24,    42,  24,  42,  24,   24,    ~42,  24,  24,  24, ],
+      [   -2,    24,  -2,  24,  -2,   -2,    ~24,  -2,  -2,  -2, ],
+      [   -1,    -2,  -1,  -2,  -1,   -1,    ~-2,  -1,  -1,  -1, ],
+  ]
 
 class CaseIfBoolOpInForStmtComp:
   class DUT( Component ):
@@ -486,6 +648,30 @@ class CaseIfBoolOpInForStmtComp:
             s.out[i] = s.in_[i]
           else:
             s.out[i] = Bits32(0)
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+      'in_[2]', Bits32, 2,
+      'in_[3]', Bits32, 3,
+      'in_[4]', Bits32, 4,
+  ),
+  TV_OUT = \
+  _check(
+      'out[0]', Bits32, 5,
+      'out[1]', Bits32, 6,
+      'out[2]', Bits32, 7,
+      'out[3]', Bits32, 8,
+      'out[4]', Bits32, 9,
+  ),
+  TEST_VECTOR = \
+  [
+      [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
+      [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
+      [   24,    42,  24,  42,  24,    24,    42,   24,   42,   24, ],
+      [   -2,    24,  -2,  24,  -2,    -2,    24,   -2,   24,   -2, ],
+      [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
+  ]
 
 class CaseIfTmpVarInForStmtComp:
   class DUT( Component ):
@@ -500,6 +686,30 @@ class CaseIfTmpVarInForStmtComp:
           else:
             tmpvar = Bits32(0)
           s.out[i] = tmpvar
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+      'in_[2]', Bits32, 2,
+      'in_[3]', Bits32, 3,
+      'in_[4]', Bits32, 4,
+  ),
+  TV_OUT = \
+  _check(
+      'out[0]', Bits32, 5,
+      'out[1]', Bits32, 6,
+      'out[2]', Bits32, 7,
+      'out[3]', Bits32, 8,
+      'out[4]', Bits32, 9,
+  ),
+  TEST_VECTOR = \
+  [
+    [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
+    [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
+    [   24,    42,  24,  42,  24,    24,    42,   24,   42,   24, ],
+    [   -2,    24,  -2,  24,  -2,    -2,    24,   -2,   24,   -2, ],
+    [   -1,    -2,  -1,  -2,  -1,    -1,    -2,   -1,   -2,   -1, ],
+  ]
 
 class CaseFixedSizeSliceComp:
   class DUT( Component ):
@@ -510,6 +720,22 @@ class CaseFixedSizeSliceComp:
       def upblk():
         for i in range(2):
           s.out[i] = s.in_[i*8 : i*8 + 8]
+  TV_IN = \
+  _set( 'in_', Bits16, 0 ),
+  TV_OUT = \
+  _check(
+      'out[0]', Bits8, 1,
+      'out[1]', Bits8, 2,
+  ),
+  TEST_VECTOR = \
+  [
+      [     -1, 0xff, 0xff ],
+      [      1, 0x01, 0x00 ],
+      [      7, 0x07, 0x00 ],
+      [ 0xff00, 0x00, 0xff ],
+      [ 0x3412, 0x12, 0x34 ],
+      [ 0x9876, 0x76, 0x98 ],
+  ]
 
 class CaseTwoUpblksSliceComp:
   class DUT( Component ):
@@ -686,6 +912,20 @@ class CaseBits32x2ConcatComp:
       @s.update
       def upblk():
         s.out = concat( s.in_1, s.in_2 )
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits64, 2 ),
+  TEST_VECTOR = \
+  [
+      [    0,    0,     concat(    Bits32(0),     Bits32(0) ) ],
+      [   42,    0,     concat(   Bits32(42),     Bits32(0) ) ],
+      [   42,   42,     concat(   Bits32(42),    Bits32(42) ) ],
+      [   -1,   42,     concat(   Bits32(-1),    Bits32(42) ) ],
+  ]
 
 class CaseBits32x2ConcatConstComp:
   class DUT( Component ):
@@ -694,6 +934,14 @@ class CaseBits32x2ConcatConstComp:
       @s.update
       def upblk():
         s.out = concat( Bits32(42), Bits32(0) )
+  TV_IN = \
+  _set(),
+  TV_OUT = \
+  _check( 'out', Bits64, 0 ),
+  TEST_VECTOR = \
+  [
+      [    concat(    Bits32(42),    Bits32(0) ) ],
+  ]
 
 class CaseBits32x2ConcatMixedComp:
   class DUT( Component ):
@@ -703,6 +951,17 @@ class CaseBits32x2ConcatMixedComp:
       @s.update
       def upblk():
         s.out = concat( s.in_, Bits32(0) )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits64, 1 ),
+  TEST_VECTOR = \
+  [
+      [  42,  concat(    Bits32(42),    Bits32(0) ) ],
+      [  -1,  concat(    Bits32(-1),    Bits32(0) ) ],
+      [  -2,  concat(    Bits32(-2),    Bits32(0) ) ],
+      [   2,  concat(     Bits32(2),    Bits32(0) ) ],
+  ]
 
 class CaseBits32x2ConcatFreeVarComp:
   class DUT( Component ):
@@ -712,6 +971,17 @@ class CaseBits32x2ConcatFreeVarComp:
       @s.update
       def upblk():
         s.out = concat( s.in_, STATE_IDLE )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits64, 1 ),
+  TEST_VECTOR = \
+  [
+      [  42,  concat(    Bits32(42),    Bits32(42) ) ],
+      [  -1,  concat(    Bits32(-1),    Bits32(42) ) ],
+      [  -2,  concat(    Bits32(-2),    Bits32(42) ) ],
+      [   2,  concat(     Bits32(2),    Bits32(42) ) ],
+  ]
 
 class CaseBits32x2ConcatUnpackedSignalComp:
   class DUT( Component ):
@@ -721,6 +991,20 @@ class CaseBits32x2ConcatUnpackedSignalComp:
       @s.update
       def upblk():
         s.out = concat( s.in_[0], s.in_[1] )
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits64, 2 ),
+  TEST_VECTOR = \
+  [
+      [  42,   2,  concat(    Bits32(42),     Bits32(2) ) ],
+      [  -1,  42,  concat(    Bits32(-1),    Bits32(42) ) ],
+      [  -2,  -1,  concat(    Bits32(-2),    Bits32(-1) ) ],
+      [   2,  -2,  concat(     Bits32(2),    Bits32(-2) ) ],
+  ]
 
 class CaseBits64SextInComp:
   class DUT( Component ):
@@ -730,6 +1014,17 @@ class CaseBits64SextInComp:
       @s.update
       def upblk():
         s.out = sext( s.in_, 64 )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits64, 1 ),
+  TEST_VECTOR = \
+  [
+      [  42,   sext(    Bits32(42),    64 ) ],
+      [  -2,   sext(    Bits32(-2),    64 ) ],
+      [  -1,   sext(    Bits32(-1),    64 ) ],
+      [   2,   sext(     Bits32(2),    64 ) ],
+  ]
 
 class CaseBits64ZextInComp:
   class DUT( Component ):
@@ -739,6 +1034,17 @@ class CaseBits64ZextInComp:
       @s.update
       def upblk():
         s.out = zext( s.in_, 64 )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits64, 1 ),
+  TEST_VECTOR = \
+  [
+      [  42,   zext(    Bits32(42),    64 ) ],
+      [  -2,   zext(    Bits32(-2),    64 ) ],
+      [  -1,   zext(    Bits32(-1),    64 ) ],
+      [   2,   zext(     Bits32(2),    64 ) ],
+  ]
 
 class CaseBits32BitSelUpblkComp:
   class DUT( Component ):
@@ -748,6 +1054,17 @@ class CaseBits32BitSelUpblkComp:
       @s.update
       def upblk():
         s.out = s.in_[1]
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits1, 1 ),
+  TEST_VECTOR = \
+  [
+      [   0,   0 ],
+      [  -1,   1 ],
+      [  -2,   1 ],
+      [   2,   1 ],
+  ]
 
 class CaseBits64PartSelUpblkComp:
   class DUT( Component ):
@@ -757,6 +1074,20 @@ class CaseBits64PartSelUpblkComp:
       @s.update
       def upblk():
         s.out = s.in_[4:36]
+  TV_IN = \
+  _set( 'in_', Bits64, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits32, 1 ),
+  TEST_VECTOR = \
+  [
+      [   -1,   -1 ],
+      [   -2,   -1 ],
+      [   -4,   -1 ],
+      [   -8,   -1 ],
+      [  -16,   -1 ],
+      [  -32,   -2 ],
+      [  -64,   -4 ],
+  ]
 
 class CasePassThroughComp:
   class DUT( Component ):
@@ -766,6 +1097,18 @@ class CasePassThroughComp:
       @s.update
       def upblk():
         s.out = s.in_
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits32, 1 ),
+  TEST_VECTOR = \
+  [
+      [    0,    0 ],
+      [   42,   42 ],
+      [   24,   24 ],
+      [   -2,   -2 ],
+      [   -1,   -1 ],
+  ]
 
 class CaseSequentialPassThroughComp:
   class DUT( Component ):
@@ -775,6 +1118,18 @@ class CaseSequentialPassThroughComp:
       @s.update_ff
       def upblk():
         s.out <<= s.in_
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits32, 1 ),
+  TEST_VECTOR = \
+  [
+      [    0,     0 ],
+      [   42,     0 ],
+      [   24,    42 ],
+      [   -2,    24 ],
+      [   -1,    -2 ],
+  ]
 
 class CaseLambdaConnectComp:
   class DUT( Component ):
@@ -791,6 +1146,20 @@ class CaseBits32FooInBits32OutComp:
       @s.update
       def upblk():
         s.out = s.in_.foo
+  TV_IN = \
+  _set( 'in_', Bits32Foo, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits32, 1 ),
+  TEST_VECTOR = \
+  [
+      [     Bits32Foo(),   0 ],
+      [    Bits32Foo(0),   0 ],
+      [   Bits32Foo(-1),  -1 ],
+      [   Bits32Foo(42),  42 ],
+      [   Bits32Foo(-2),  -2 ],
+      [   Bits32Foo(10),  10 ],
+      [  Bits32Foo(256), 256 ],
+  ]
 
 class CaseBits32FooKwargComp:
   class DUT( Component ):
@@ -816,6 +1185,14 @@ class CaseConstStructInstComp:
       @s.update
       def upblk():
         s.out = s.in_.foo
+  TV_IN = \
+  _set(),
+  TV_OUT = \
+  _check( 'out', Bits32, 0 ),
+  TEST_VECTOR = \
+  [
+      [ 0 ],
+  ]
 
 class CaseStructPackedArrayUpblkComp:
   class DUT( Component ):
@@ -825,6 +1202,18 @@ class CaseStructPackedArrayUpblkComp:
       @s.update
       def upblk():
         s.out = concat( s.in_.foo[0], s.in_.foo[1], s.in_.foo[2] )
+  TV_IN = \
+  _set( 'in_', Bits32x5Foo, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits96, 1 ),
+  TEST_VECTOR = \
+  [
+      [  Bits32x5Foo([ b32(0), b32(0), b32(0), b32(0),b32(0) ] ), concat( b32(0),   b32(0),   b32(0)  ) ],
+      [  Bits32x5Foo([ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ] ), concat( b32(-1),  b32(-1),  b32(-1) ) ],
+      [  Bits32x5Foo([ b32(42),b32(42),b32(-1),b32(0),b32(0) ] ), concat( b32(42),  b32(42),  b32(-1) ) ],
+      [  Bits32x5Foo([ b32(42),b32(42),b32(42),b32(0),b32(0) ] ), concat( b32(42),  b32(42),  b32(42) ) ],
+      [  Bits32x5Foo([ b32(-1),b32(-1),b32(42),b32(0),b32(0) ] ), concat( b32(-1),  b32(-1),  b32(42) ) ],
+  ]
 
 class CaseNestedStructPackedArrayUpblkComp:
   class DUT( Component ):
@@ -834,6 +1223,18 @@ class CaseNestedStructPackedArrayUpblkComp:
       @s.update
       def upblk():
         s.out = concat( s.in_.bar[0], s.in_.woo.foo, s.in_.foo )
+  TV_IN = \
+  _set( 'in_', NestedStructPackedPlusScalar, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits96, 1 ),
+  TEST_VECTOR = \
+  [
+      [   NestedStructPackedPlusScalar(0, [ Bits32(0) , Bits32(0)  ], Bits32Foo(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
+      [  NestedStructPackedPlusScalar(-1, [ Bits32(-1), Bits32(-2) ], Bits32Foo(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
+      [  NestedStructPackedPlusScalar(-1, [ Bits32(42), Bits32(43) ], Bits32Foo(7) ), concat(  Bits32(42), Bits32(7),  Bits32(-1) ) ],
+      [  NestedStructPackedPlusScalar(42, [ Bits32(42), Bits32(43) ], Bits32Foo(8) ), concat(  Bits32(42), Bits32(8),  Bits32(42) ) ],
+      [  NestedStructPackedPlusScalar(42, [ Bits32(-1), Bits32(-2) ], Bits32Foo(9) ), concat(  Bits32(-1), Bits32(9),  Bits32(42) ) ],
+  ]
 
 class CaseInterfaceAttributeComp:
   class DUT( Component ):
@@ -1027,6 +1428,21 @@ class CaseArrayBits32IfcInUpblkComp:
       @s.update
       def upblk():
         s.out = s.in_[1].foo
+  TV_IN = \
+  _set(
+      'in_[0].foo', Bits32, 0,
+      'in_[1].foo', Bits32, 1,
+  ),
+  TV_OUT = \
+  _check( 'out', Bits32, 2 ),
+  TEST_VECTOR = \
+  [
+      [    0,    0,      0 ],
+      [    0,   42,     42 ],
+      [   24,   42,     42 ],
+      [   -2,   -1,     -1 ],
+      [   -1,   -2,     -2 ],
+  ]
 
 class CaseConnectValRdyIfcComp:
   class DUT( Component ):
@@ -1047,6 +1463,25 @@ class CaseConnectValRdyIfcUpblkComp:
         s.out.val = s.in_.val
         s.out.msg = s.in_.msg
         s.in_.rdy = s.out.rdy
+  TV_IN = \
+  _set(
+      'in_.val', Bits1, 0,
+      'in_.msg', Bits32, 1,
+  ),
+  TV_OUT = \
+  _check(
+      'in_.rdy', Bits1, 0,
+      'out.val', Bits1, 2,
+      'out.msg', Bits32, 3,
+  ),
+  TEST_VECTOR = \
+  [
+      [   1,      0,   1,      0 ],
+      [   0,     42,   0,     42 ],
+      [   1,     42,   1,     42 ],
+      [   1,     -1,   1,     -1 ],
+      [   1,     -2,   1,     -2 ],
+  ]
 
 class CaseConnectArrayNestedIfcComp:
   class DUT( Component ):
@@ -1091,6 +1526,14 @@ class CaseBits32SubCompAttrUpblkComp:
       @s.update
       def upblk():
         s.out = s.b.out
+  TV_IN = \
+  _set(),
+  TV_OUT = \
+  _check( 'out', Bits32, 0 ),
+  TEST_VECTOR = \
+  [
+      [ 42 ],
+  ]
 
 class CaseConnectSubCompIfcHierarchyComp:
   class DUT( Component ):
@@ -1116,6 +1559,14 @@ class CaseBits32ArraySubCompAttrUpblkComp:
       @s.update
       def upblk():
         s.out = s.b[1].out
+  TV_IN = \
+  _set(),
+  TV_OUT = \
+  _check( 'out', Bits32, 0 ),
+  TEST_VECTOR = \
+  [
+      [ 42 ],
+  ]
 
 class CaseComponentArgsComp:
   class DUT( Component ):

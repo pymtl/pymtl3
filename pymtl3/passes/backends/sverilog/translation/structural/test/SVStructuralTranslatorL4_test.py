@@ -5,17 +5,17 @@
 # Date   : May 29, 2019
 """Test the level 4 SystemVerilog structural translator."""
 
-from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort, connect
-from pymtl3.passes.rtlir.util.test_utility import do_test
+import pytest
+
+from pymtl3.passes.backends.sverilog.util.utility import check_eq
+from pymtl3.passes.backends.sverilog.util.test_utility import sverilog_reserved
 
 from ..SVStructuralTranslatorL4 import SVStructuralTranslatorL4
-from .SVStructuralTranslatorL1_test import check_eq, is_sverilog_reserved
 
 
 def local_do_test( m ):
   m.elaborate()
-  SVStructuralTranslatorL4.is_sverilog_reserved = is_sverilog_reserved
+  SVStructuralTranslatorL4.is_sverilog_reserved = lambda x: x in sverilog_reserved
   tr = SVStructuralTranslatorL4( m )
   tr.clear( m )
   tr.translate_structural( m )

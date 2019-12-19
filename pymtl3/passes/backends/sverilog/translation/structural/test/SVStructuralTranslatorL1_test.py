@@ -5,37 +5,17 @@
 # Date   : May 29, 2019
 """Test the level 1 SystemVerilog structural translator."""
 
-from pymtl3.datatypes import Bits1, Bits4, Bits32
-from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
-from pymtl3.passes.rtlir.util.test_utility import do_test
+import pytest
 
-from ...SVTranslator import sverilog_reserved
+from pymtl3.passes.backends.sverilog.util.utility import check_eq
+from pymtl3.passes.backends.sverilog.util.test_utility import sverilog_reserved
+
 from ..SVStructuralTranslatorL1 import SVStructuralTranslatorL1
 
 
-def is_sverilog_reserved( s, name ):
-  return name in sverilog_reserved
-
-def trim( s ):
-  string = []
-  lines = s.split( '\n' )
-  for line in lines:
-    _line = line.split()
-    _string = "".join( _line )
-    if _string and not _string.startswith( '//' ):
-      string.append( "".join( line.split() ) )
-  return "\n".join( string )
-
-def check_eq( s, t ):
-  if isinstance( s, list ) and isinstance( t, list ):
-    for _s, _t in zip( s, t ):
-      assert trim(_s) == trim(_t)
-  else:
-    assert trim(s) == trim(t)
-
 def local_do_test( m ):
   m.elaborate()
-  SVStructuralTranslatorL1.is_sverilog_reserved = is_sverilog_reserved
+  SVStructuralTranslatorL1.is_sverilog_reserved = lambda x: x in sverilog_reserved
   tr = SVStructuralTranslatorL1( m )
   tr.clear( m )
   tr.translate_structural( m )
