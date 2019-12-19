@@ -162,8 +162,8 @@ class ImportConfigs( BasePassConfigs ):
 
     "port_map": Checker( lambda v: isinstance(v, dict), "expects a dict"),
 
-    "vl_src": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or \
-                s.vl_flist, "vl_src should be a path to a file when vl_flist is empty" ),
+    "vl_src": Checker( lambda v: isinstance(v, str) and (os.path.isfile(expand(v)) or not v),
+                "vl_src should be a path to a file when vl_flist is empty" ),
 
     "vl_flist": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
                          "expects a path to a file" ),
@@ -212,6 +212,14 @@ class ImportConfigs( BasePassConfigs ):
   #-----------------------------------------------------------------------
   # Public APIs
   #-----------------------------------------------------------------------
+
+  # Override
+  def check( s ):
+    super().check()
+    # if vl_flist is empty, vl_src should be a path to a file
+    if s.vl_flist == [] and not (isinstance(s.vl_src, str) and os.path.isfile(expand(v))):
+      raise InvalidPassOptionValue( 'vl_src', s.vl_src, s.PassName,
+          'vl_src should be a path to a file when vl_flist is empty' )
 
   def create_vl_cmd( s ):
     top_module  =  f"--top-module {s.top_module}"
