@@ -8,8 +8,8 @@
 import pytest
 
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
+from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
-from .SVBehavioralTranslatorL1_test import is_sverilog_reserved
 from ..SVBehavioralTranslatorL5 import BehavioralRTLIRToSVVisitorL5
 from ....testcases import \
       CaseBits32SubCompAttrUpblkComp, CaseBits32ArraySubCompAttrUpblkComp
@@ -17,7 +17,7 @@ from ....testcases import \
 
 def run_test( case, m ):
   m.elaborate()
-  visitor = BehavioralRTLIRToSVVisitorL5(is_sverilog_reserved)
+  visitor = BehavioralRTLIRToSVVisitorL5(lambda x: x in sverilog_reserved)
 
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )

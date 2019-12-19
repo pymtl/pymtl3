@@ -9,9 +9,9 @@ import pytest
 
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
+from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
 from ..SVBehavioralTranslatorL1 import BehavioralRTLIRToSVVisitorL1
-from ...SVTranslator import sverilog_reserved
 from ....errors import SVerilogTranslationError
 from ....testcases import CasePassThroughComp, CaseSequentialPassThroughComp, \
     CaseBits32x2ConcatComp, CaseBits32x2ConcatConstComp, CaseBits32x2ConcatMixedComp, \
@@ -20,15 +20,12 @@ from ....testcases import CasePassThroughComp, CaseSequentialPassThroughComp, \
     CaseBits64PartSelUpblkComp, CaseSVerilogReservedComp
 
 
-def is_sverilog_reserved( name ):
-  return name in sverilog_reserved
-
 def run_test( case, m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = BehavioralRTLIRToSVVisitorL1(is_sverilog_reserved)
+  visitor = BehavioralRTLIRToSVVisitorL1(lambda x: x in sverilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
   assert len(m_all_upblks) == 1

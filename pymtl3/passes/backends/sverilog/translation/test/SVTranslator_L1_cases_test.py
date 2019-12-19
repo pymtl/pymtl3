@@ -3,55 +3,33 @@
 #=========================================================================
 """Test the SystemVerilog translator."""
 
-from pymtl3.datatypes import Bits1, Bits4, Bits32, Bits64, concat, sext, zext
-from pymtl3.dsl import Component, InPort, OutPort, Wire, connect
-from pymtl3.passes.rtlir.util.test_utility import do_test
+import pytest
 
-from ..structural.test.SVStructuralTranslatorL1_test import check_eq
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
+from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
+
 from ..SVTranslator import SVTranslator
+from ..behavioral.test.SVBehavioralTranslatorL1_test import \
+    test_sverilog_behavioral_L1 as behavioral
+from ..structural.test.SVStructuralTranslatorL1_test import \
+    test_sverilog_structural_L1 as structural
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   m.elaborate()
   tr = SVTranslator( m )
   tr.translate( m )
-  check_eq( tr.hierarchy.src, m._ref_src )
+  check_eq( tr.hierarchy.src, case.REF_SRC )
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+)
+def test_sverilog_L1( case ):
+  run_test( case, case.DUT() )
 
 #-------------------------------------------------------------------------
 # Behavioral
 #-------------------------------------------------------------------------
-
-def test_comb_assign( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits32 )
-      @s.update
-      def upblk():
-        s.out = s.in_
-  a = A()
-  a._ref_src = \
-"""
-module A
-(
-  input logic [0:0] clk,
-  input logic [31:0] in_,
-  output logic [31:0] out,
-  input logic [0:0] reset
-);
-
-  // @s.update
-  // def upblk():
-  //   s.out = s.in_
-
-  always_comb begin : upblk
-    out = in_;
-  end
-
-endmodule
-"""
-  a._ref_src_yosys = a._ref_src
-  do_test( a )
 
 def test_seq_assign( do_test ):
   class A( Component ):

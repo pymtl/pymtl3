@@ -44,6 +44,22 @@ CasePassThroughComp = add_attributes( CasePassThroughComp,
           out = in_;
         end
     ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = in_;
+          end
+
+        endmodule
+    '''
 )
 
 CaseSequentialPassThroughComp = add_attributes( CaseSequentialPassThroughComp,
@@ -53,6 +69,22 @@ CaseSequentialPassThroughComp = add_attributes( CaseSequentialPassThroughComp,
           out <= in_;
         end
     ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          always_ff @(posedge clk) begin : upblk
+            out <= in_;
+          end
+
+        endmodule
+    '''
 )
 
 CaseBits32x2ConcatComp = add_attributes( CaseBits32x2ConcatComp,
