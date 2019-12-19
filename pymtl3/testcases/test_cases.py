@@ -1236,6 +1236,27 @@ class CaseNestedStructPackedArrayUpblkComp:
       [  NestedStructPackedPlusScalar(42, [ Bits32(-1), Bits32(-2) ], Bits32Foo(9) ), concat(  Bits32(-1), Bits32(9),  Bits32(42) ) ],
   ]
 
+class CaseConnectNestedStructPackedArrayComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( NestedStructPackedPlusScalar )
+      s.out = OutPort( Bits96 )
+      connect( s.out[0:32], s.in_.foo )
+      connect( s.out[32:64], s.in_.woo.foo )
+      connect( s.out[64:96], s.in_.bar[0] )
+  TV_IN = \
+  _set( 'in_', NestedStructPackedPlusScalar, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits96, 1 ),
+  TEST_VECTOR = \
+  [
+      [   NestedStructPackedPlusScalar(0, [ Bits32(0) , Bits32(0)  ], Bits32Foo(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
+      [  NestedStructPackedPlusScalar(-1, [ Bits32(-1), Bits32(-2) ], Bits32Foo(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
+      [  NestedStructPackedPlusScalar(-1, [ Bits32(42), Bits32(43) ], Bits32Foo(7) ), concat(  Bits32(42), Bits32(7),  Bits32(-1) ) ],
+      [  NestedStructPackedPlusScalar(42, [ Bits32(42), Bits32(43) ], Bits32Foo(8) ), concat(  Bits32(42), Bits32(8),  Bits32(42) ) ],
+      [  NestedStructPackedPlusScalar(42, [ Bits32(-1), Bits32(-2) ], Bits32Foo(9) ), concat(  Bits32(-1), Bits32(9),  Bits32(42) ) ],
+  ]
+
 class CaseInterfaceAttributeComp:
   class DUT( Component ):
     def construct( s ):
@@ -1320,11 +1341,29 @@ class CaseConnectInToWireComp:
   class DUT( Component ):
     def construct( s ):
       s.in_ = [ InPort( Bits32 ) for _ in range(5) ]
-      s.wire = [ Wire( Bits32 ) for _ in range(5) ]
+      s.wire_ = [ Wire( Bits32 ) for _ in range(5) ]
       s.out = OutPort( Bits32 )
-      connect( s.wire[2], s.out )
+      connect( s.wire_[2], s.out )
       for i in range(5):
-        connect( s.wire[i], s.in_[i] )
+        connect( s.wire_[i], s.in_[i] )
+  TV_IN = \
+  _set(
+      'in_[0]', Bits32, 0,
+      'in_[1]', Bits32, 1,
+      'in_[2]', Bits32, 2,
+      'in_[3]', Bits32, 3,
+      'in_[4]', Bits32, 4,
+  )
+  TV_OUT = \
+  _check( 'out', Bits32, 5 )
+  TEST_VECTOR = \
+  [
+      [ 0,   0,    0,  0,  0,   0 ],
+      [ 0,   0,   42,  0,  0,  42 ],
+      [ 0,   0,   24,  0,  0,  24 ],
+      [ 0,   0,   -2,  0,  0,  -2 ],
+      [ 0,   0,   -1,  0,  0,  -1 ],
+  ]
 
 class CaseWiresDrivenComp:
   class DUT( Component ):
@@ -1368,9 +1407,17 @@ class CaseNestedPackedArrayStructComp:
 class CaseConnectConstToOutComp:
   class DUT( Component ):
     def construct( s ):
-      s.const = [ 42 for _ in range(5) ]
+      s.const_ = [ 42 for _ in range(5) ]
       s.out = OutPort( Bits32 )
-      connect( s.const[2], s.out )
+      connect( s.const_[2], s.out )
+  TV_IN = \
+  _set()
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [ 42 ],
+  ]
 
 class CaseConnectBitSelToOutComp:
   class DUT( Component ):
@@ -1378,6 +1425,19 @@ class CaseConnectBitSelToOutComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits1 )
       connect( s.in_[0], s.out )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits1, 1 )
+  TEST_VECTOR = \
+  [
+      [    0,   0, ],
+      [    1,   1, ],
+      [    2,   0, ],
+      [    3,   1, ],
+      [   -1,   1, ],
+      [   -2,   1, ],
+  ]
 
 class CaseConnectSliceToOutComp:
   class DUT( Component ):
@@ -1385,12 +1445,33 @@ class CaseConnectSliceToOutComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits4 )
       connect( s.in_[4:8], s.out )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits4, 1 )
+  TEST_VECTOR = \
+  [
+      [    0,   0, ],
+      [    1,   0, ],
+      [    2,   0, ],
+      [    3,   0, ],
+      [   -1,  -1, ],
+      [   -2,  -1, ],
+  ]
 
 class CaseConnectBitsConstToOutComp:
   class DUT( Component ):
     def construct( s ):
       s.out = OutPort( Bits32 )
       connect( s.out, Bits32(0) )
+  TV_IN = \
+  _set()
+  TV_OUT = \
+  _check( 'out', Bits32, 0 )
+  TEST_VECTOR = \
+  [
+      [ 0 ],
+  ]
 
 class CaseConnectStructAttrToOutComp:
   class DUT( Component ):
@@ -1405,6 +1486,18 @@ class CaseConnectArrayStructAttrToOutComp:
       s.in_ = InPort( Bits32x5Foo )
       s.out = OutPort( Bits32 )
       connect( s.out, s.in_.foo[1] )
+
+class CaseConnectConstStructAttrToOutComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = Bits32Foo( 42 )
+      s.out = OutPort( Bits32 )
+      connect( s.out, s.in_.foo )
+  TV_IN = \
+  _set()
+  TV_OUT = \
+  _check( 'out', Bits32, 0 )
+  TEST_VECTOR = [ [ 42 ] ]
 
 class CaseBits32IfcInComp:
   class DUT( Component ):
@@ -1452,6 +1545,26 @@ class CaseConnectValRdyIfcComp:
       # This will be automatically extended to connect all signals in
       # this interface!
       connect( s.out, s.in_ )
+  TV_IN = \
+  _set(
+      'in_.val', Bits1, 0,
+      'in_.msg', Bits32, 1,
+      'out.rdy', Bits1, 2,
+  )
+  TV_OUT = \
+  _check(
+      'out.val', Bits1, 3,
+      'out.msg', Bits32, 4,
+      'in_.rdy', Bits1, 5,
+  )
+  TEST_VECTOR = \
+  [
+      [    0,    42,   1,    0,    42,    1 ],
+      [    1,    -1,   1,    1,    -1,    1 ],
+      [    1,    -2,   0,    1,    -2,    0 ],
+      [    0,     2,   0,    0,     2,    0 ],
+      [    1,    24,   1,    1,    24,    1 ],
+  ]
 
 class CaseConnectValRdyIfcUpblkComp:
   class DUT( Component ):
@@ -1490,6 +1603,36 @@ class CaseConnectArrayNestedIfcComp:
       s.out = [ MemRespIfc() for _ in range(2) ]
       for i in range(2):
         connect( s.out[i], s.in_[i] )
+  TV_IN = \
+  _set(
+      'in_[0].ctrl_foo',   Bits1,  0,
+      'in_[0].memifc.val', Bits1,  1,
+      'in_[0].memifc.msg', Bits32, 2,
+      'out[0].memifc.rdy', Bits1,  3,
+      'in_[1].ctrl_foo',   Bits1,  4,
+      'in_[1].memifc.val', Bits1,  5,
+      'in_[1].memifc.msg', Bits32, 6,
+      'out[1].memifc.rdy', Bits1,  7,
+  ),
+  TV_OUT = \
+  _check(
+      'out[0].ctrl_foo',   Bits1,  8,
+      'out[0].memifc.val', Bits1,  9,
+      'out[0].memifc.msg', Bits32, 10,
+      'in_[0].memifc.rdy', Bits1,  11,
+      'out[1].ctrl_foo',   Bits1,  12,
+      'out[1].memifc.val', Bits1,  13,
+      'out[1].memifc.msg', Bits32, 14,
+      'in_[1].memifc.rdy', Bits1,  15,
+  ),
+  TEST_VECTOR = \
+  [
+      [ 1,  1,      0,    0,    1,  1,      0,    0,  1,  1,      0,    0,    1,  1,      0,    0, ], 
+      [ 1,  0,     42,    1,    1,  0,     42,    1,  1,  0,     42,    1,    1,  0,     42,    1, ],
+      [ 1,  1,     42,    0,    1,  1,     42,    0,  1,  1,     42,    0,    1,  1,     42,    0, ],
+      [ 1,  1,     -1,    1,    1,  1,     -1,    1,  1,  1,     -1,    1,    1,  1,     -1,    1, ],
+      [ 1,  1,     -2,    0,    1,  1,     -2,    0,  1,  1,     -2,    0,    1,  1,     -2,    0, ],
+  ]
 
 class CaseBits32IfcTmpVarOutComp:
   class DUT( Component ):
@@ -1517,6 +1660,11 @@ class CaseBits32ConnectSubCompAttrComp:
       s.b = Bits32OutDrivenComp()
       s.out = OutPort( Bits32 )
       connect( s.out, s.b.out )
+  TV_IN = \
+  _set()
+  TV_OUT = \
+  _check( 'out', Bits32, 0 )
+  TEST_VECTOR = [ [ 42 ] ]
 
 class CaseBits32SubCompAttrUpblkComp:
   class DUT( Component ):
@@ -1543,6 +1691,15 @@ class CaseConnectSubCompIfcHierarchyComp:
       s.subcomp = Bits32OutDrivenSubComp()
       connect( s.subcomp.out, s.out )
       connect( s.subcomp.ifc, s.ifc )
+  TV_IN = \
+  _set()
+  TV_OUT = \
+  _check(
+      'out',     Bits32, 0,
+      'ifc.msg', Bits32, 1,
+      'ifc.val', Bits1,  2,
+  )
+  TEST_VECTOR = [ [ 42, 42, 1 ] ]
 
 class CaseBits32ArrayConnectSubCompAttrComp:
   class DUT( Component ):
@@ -1550,6 +1707,13 @@ class CaseBits32ArrayConnectSubCompAttrComp:
       s.b = [ Bits32OutDrivenComp() for _ in range(5) ]
       s.out = OutPort( Bits32 )
       connect( s.out, s.b[1].out )
+  TV_IN = \
+  _set()
+  TV_OUT = \
+  _check(
+      'out',     Bits32, 0,
+  )
+  TEST_VECTOR = [ [ 42 ] ]
 
 class CaseBits32ArraySubCompAttrUpblkComp:
   class DUT( Component ):

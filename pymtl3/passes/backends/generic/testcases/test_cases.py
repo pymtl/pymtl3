@@ -1043,19 +1043,19 @@ CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
     'REF_WIRE',
     '''\
         wire_decls:
-          wire_decl: wire Array[5] of Wire
+          wire_decl: wire_ Array[5] of Wire
     ''',
     'REF_CONST',
     'const_decls:\n',
     'REF_CONN',
     '''\
         connections:
-          connection: WireArrayIdx CurCompAttr wire 2 -> CurCompAttr out
-          connection: PortArrayIdx CurCompAttr in_ 0 -> WireArrayIdx CurCompAttr wire 0
-          connection: PortArrayIdx CurCompAttr in_ 1 -> WireArrayIdx CurCompAttr wire 1
-          connection: PortArrayIdx CurCompAttr in_ 2 -> WireArrayIdx CurCompAttr wire 2
-          connection: PortArrayIdx CurCompAttr in_ 3 -> WireArrayIdx CurCompAttr wire 3
-          connection: PortArrayIdx CurCompAttr in_ 4 -> WireArrayIdx CurCompAttr wire 4
+          connection: WireArrayIdx CurCompAttr wire_ 2 -> CurCompAttr out
+          connection: PortArrayIdx CurCompAttr in_ 0 -> WireArrayIdx CurCompAttr wire_ 0
+          connection: PortArrayIdx CurCompAttr in_ 1 -> WireArrayIdx CurCompAttr wire_ 1
+          connection: PortArrayIdx CurCompAttr in_ 2 -> WireArrayIdx CurCompAttr wire_ 2
+          connection: PortArrayIdx CurCompAttr in_ 3 -> WireArrayIdx CurCompAttr wire_ 3
+          connection: PortArrayIdx CurCompAttr in_ 4 -> WireArrayIdx CurCompAttr wire_ 4
     ''',
     'REF_SRC',
     '''\
@@ -1069,17 +1069,17 @@ CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
         const_decls:
         freevars:
         wire_decls:
-          wire_decl: wire Array[5] of Wire
+          wire_decl: wire_ Array[5] of Wire
         component_decls:
         tmpvars:
         upblk_srcs:
         connections:
-          connection: WireArrayIdx CurCompAttr wire 2 -> CurCompAttr out
-          connection: PortArrayIdx CurCompAttr in_ 0 -> WireArrayIdx CurCompAttr wire 0
-          connection: PortArrayIdx CurCompAttr in_ 1 -> WireArrayIdx CurCompAttr wire 1
-          connection: PortArrayIdx CurCompAttr in_ 2 -> WireArrayIdx CurCompAttr wire 2
-          connection: PortArrayIdx CurCompAttr in_ 3 -> WireArrayIdx CurCompAttr wire 3
-          connection: PortArrayIdx CurCompAttr in_ 4 -> WireArrayIdx CurCompAttr wire 4
+          connection: WireArrayIdx CurCompAttr wire_ 2 -> CurCompAttr out
+          connection: PortArrayIdx CurCompAttr in_ 0 -> WireArrayIdx CurCompAttr wire_ 0
+          connection: PortArrayIdx CurCompAttr in_ 1 -> WireArrayIdx CurCompAttr wire_ 1
+          connection: PortArrayIdx CurCompAttr in_ 2 -> WireArrayIdx CurCompAttr wire_ 2
+          connection: PortArrayIdx CurCompAttr in_ 3 -> WireArrayIdx CurCompAttr wire_ 3
+          connection: PortArrayIdx CurCompAttr in_ 4 -> WireArrayIdx CurCompAttr wire_ 4
 
         endcomponent
     '''
@@ -1098,7 +1098,7 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
     'REF_CONST',
     '''\
         const_decls:
-          const_decl: const Array[5] of Const
+          const_decl: const_ Array[5] of Const
     ''',
     'REF_CONN',
     '''\

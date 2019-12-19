@@ -27,7 +27,15 @@ from pymtl3.testcases import add_attributes, \
       CaseStructPackedArrayUpblkComp, CaseNestedStructPackedArrayUpblkComp, \
       Bits32x5Foo, CaseConnectValRdyIfcUpblkComp, CaseArrayBits32IfcInUpblkComp, \
       CaseInterfaceArrayNonStaticIndexComp, \
-      CaseBits32SubCompAttrUpblkComp, CaseBits32ArraySubCompAttrUpblkComp
+      CaseBits32SubCompAttrUpblkComp, CaseBits32ArraySubCompAttrUpblkComp, \
+      CaseConnectInToWireComp, CaseConnectBitsConstToOutComp, \
+      CaseConnectConstToOutComp, CaseConnectBitSelToOutComp, \
+      CaseConnectSliceToOutComp, CaseConnectConstStructAttrToOutComp, \
+      CaseConnectArrayStructAttrToOutComp, CaseConnectNestedStructPackedArrayComp, \
+      CaseConnectValRdyIfcComp, CaseConnectArrayNestedIfcComp, \
+      CaseBits32ConnectSubCompAttrComp, CaseBits32ArrayConnectSubCompAttrComp
+
+import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
 
 CasePassThroughComp = add_attributes( CasePassThroughComp,
     'REF_UPBLK',
@@ -366,5 +374,312 @@ CaseBits32ArraySubCompAttrUpblkComp = add_attributes( CaseBits32ArraySubCompAttr
         always_comb begin : upblk
           out = b__1__out;
         end
+    ''',
+)
+
+CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_ [0:4],
+        output logic [31:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '''\
+        logic [31:0] wire_ [0:4];
+    ''',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = wire_[2];
+        assign wire_[0] = in_[0];
+        assign wire_[1] = in_[1];
+        assign wire_[2] = in_[2];
+        assign wire_[3] = in_[3];
+        assign wire_[4] = in_[4];
+    '''
+)
+
+CaseConnectBitsConstToOutComp = add_attributes( CaseConnectBitsConstToOutComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        output logic [31:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = 32'd0;
+    '''
+)
+
+CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        output logic [31:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '''\
+        localparam [31:0] const_ [0:4] = '{ 32'd42, 32'd42, 32'd42, 32'd42, 32'd42 };
+    ''',
+    'REF_CONN',
+    '''\
+        assign out = 32'd42;
+    '''
+)
+
+CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [0:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_[0:0];
+    '''
+)
+
+CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [3:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONST',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_[7:4];
+    '''
+)
+
+CaseConnectConstStructAttrToOutComp = add_attributes( CaseConnectConstStructAttrToOutComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        output logic [31:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = 32'd42;
+    ''',
+    'REF_STRUCT',
+    (
+        rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}),
+        dedent('''\
+                  typedef struct packed {
+                    logic [31:0] foo;
+                  } Bits32Foo;
+               ''')
+    )
+)
+
+CaseConnectArrayStructAttrToOutComp = add_attributes( CaseConnectArrayStructAttrToOutComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input Bits32x5Foo in_,
+        output logic [31:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONN',
+    '''\
+        assign out = in_.foo[1];
+    ''',
+    'REF_STRUCT',
+    (
+        rdt.Struct('Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))}),
+        dedent('''\
+                  typedef struct packed {
+                    logic [4:0][31:0] foo;
+                  } Bits32x5Foo;
+               ''')
+    )
+)
+
+CaseConnectNestedStructPackedArrayComp = add_attributes( CaseConnectNestedStructPackedArrayComp,
+    'REF_PORT',
+    '''\
+        input logic [0:0] clk,
+        input NestedStructPackedPlusScalar in_,
+        output logic [95:0] out,
+        input logic [0:0] reset
+    ''',
+    'REF_WIRE',
+    '',
+    'REF_CONN',
+    '''\
+        assign out[31:0] = in_.foo;
+        assign out[63:32] = in_.woo.foo;
+        assign out[95:64] = in_.bar[0];
+    ''',
+    'REF_STRUCT',
+    (
+        rdt.Struct('NestedStructPackedPlusScalar', {
+          'foo':rdt.Vector(32),
+          'bar':rdt.PackedArray([2], rdt.Vector(32)),
+          'woo':rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}),
+        }),
+        dedent('''\
+                  typedef struct packed {
+                    logic [31:0] foo;
+                    logic [1:0][31:0] bar;
+                    Bits32Foo woo;
+                  } NestedStructPackedPlusScalar;
+               ''')
+    )
+)
+
+CaseConnectValRdyIfcComp = add_attributes( CaseConnectValRdyIfcComp,
+    'REF_IFC',
+    '''\
+        input  logic [31:0] in___msg,
+        output logic [0:0]  in___rdy,
+        input  logic [0:0]  in___val,
+        output logic [31:0] out__msg,
+        input  logic [0:0]  out__rdy,
+        output logic [0:0]  out__val
+    ''',
+    'REF_CONN',
+    '''\
+        assign out__msg = in___msg;
+        assign in___rdy = out__rdy;
+        assign out__val = in___val;
+    ''',
+)
+
+CaseConnectArrayNestedIfcComp = add_attributes( CaseConnectArrayNestedIfcComp,
+    'REF_IFC',
+    '''\
+        input  logic [0:0]  in___0__ctrl_foo,
+        input  logic [31:0] in___0__memifc__msg,
+        output logic [0:0]  in___0__memifc__rdy,
+        input  logic [0:0]  in___0__memifc__val,
+        input  logic [0:0]  in___1__ctrl_foo,
+        input  logic [31:0] in___1__memifc__msg,
+        output logic [0:0]  in___1__memifc__rdy,
+        input  logic [0:0]  in___1__memifc__val,
+
+        output  logic [0:0]  out__0__ctrl_foo,
+        output  logic [31:0] out__0__memifc__msg,
+        input   logic [0:0]  out__0__memifc__rdy,
+        output  logic [0:0]  out__0__memifc__val,
+        output  logic [0:0]  out__1__ctrl_foo,
+        output  logic [31:0] out__1__memifc__msg,
+        input   logic [0:0]  out__1__memifc__rdy,
+        output  logic [0:0]  out__1__memifc__val
+    ''',
+    'REF_CONN',
+    '''\
+        assign out__0__ctrl_foo = in___0__ctrl_foo;
+        assign out__0__memifc__msg = in___0__memifc__msg;
+        assign in___0__memifc__rdy = out__0__memifc__rdy;
+        assign out__0__memifc__val = in___0__memifc__val;
+        assign out__1__ctrl_foo = in___1__ctrl_foo;
+        assign out__1__memifc__msg = in___1__memifc__msg;
+        assign in___1__memifc__rdy = out__1__memifc__rdy;
+        assign out__1__memifc__val = in___1__memifc__val;
+    ''',
+)
+
+CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrComp,
+    'REF_COMP',
+    '''\
+        logic [0:0] b__clk;
+        logic [31:0] b__out;
+        logic [0:0] b__reset;
+
+        Bits32OutDrivenComp b
+        (
+          .clk( b__clk ),
+          .out( b__out ),
+          .reset( b__reset )
+        );
+    ''',
+)
+
+CaseBits32ArrayConnectSubCompAttrComp = add_attributes( CaseBits32ArrayConnectSubCompAttrComp,
+    'REF_COMP',
+    '''\
+        logic [0:0] b__0__clk;
+        logic [31:0] b__0__out;
+        logic [0:0] b__0__reset;
+
+        Bits32OutDrivenComp b__0
+        (
+          .clk( b__0__clk ),
+          .out( b__0__out ),
+          .reset( b__0__reset )
+        );
+
+        logic [0:0] b__1__clk;
+        logic [31:0] b__1__out;
+        logic [0:0] b__1__reset;
+
+        Bits32OutDrivenComp b__1
+        (
+          .clk( b__1__clk ),
+          .out( b__1__out ),
+          .reset( b__1__reset )
+        );
+
+        logic [0:0] b__2__clk;
+        logic [31:0] b__2__out;
+        logic [0:0] b__2__reset;
+
+        Bits32OutDrivenComp b__2
+        (
+          .clk( b__2__clk ),
+          .out( b__2__out ),
+          .reset( b__2__reset )
+        );
+
+        logic [0:0] b__3__clk;
+        logic [31:0] b__3__out;
+        logic [0:0] b__3__reset;
+
+        Bits32OutDrivenComp b__3
+        (
+          .clk( b__3__clk ),
+          .out( b__3__out ),
+          .reset( b__3__reset )
+        );
+
+        logic [0:0] b__4__clk;
+        logic [31:0] b__4__out;
+        logic [0:0] b__4__reset;
+
+        Bits32OutDrivenComp b__4
+        (
+          .clk( b__4__clk ),
+          .out( b__4__out ),
+          .reset( b__4__reset )
+        );
     ''',
 )
