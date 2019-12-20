@@ -8,6 +8,8 @@
 RTL implementation of Linear-feedback shift register (LFSR)
 """
 
+from pymtl3 import *
+
 LFSR_table = {
   32: (31,29,26,25),
   60: (59,58),
@@ -40,7 +42,7 @@ class LFSR( Component ):
     if xor_mask == 0:
       assert width in LFSR_table, f"FIXME: {width}-bit xor_mask is not given and not available in LFSR_table"
       for k in LFSR_table[ width ]:
-        xor_mask |= 1 << width
+        xor_mask |= 1 << k
 
     xor_mask = DType( xor_mask )
 
@@ -56,10 +58,22 @@ class LFSR( Component ):
     def seq_lfsr():
 
       if s.reset:
-        s.o_r <<= DType( init_val )
+        s.o_r <<= DType( init_value )
 
       elif s.yumi_i:
-        s.o_r <<= (s.o_r >> 1) ^ DType( sext( width, s.o_r[0] ) & xor_mask )
+        s.o_r <<= (s.o_r >> 1) ^ DType( sext( s.o_r[0], width ) & xor_mask )
 
   def line_trace( s ):
     return f"[{s.o_r}]"
+
+x = LFSR(32)
+x.elaborate()
+x.apply( SimulationPass() )
+
+x.sim_reset()
+
+for i in range(10):
+  x.yumi_i = b1(1)
+  x.eval_combinational()
+  print(x.o)
+  x.tick()
