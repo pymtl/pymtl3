@@ -13,7 +13,41 @@ from copy import copy, deepcopy
 from pymtl3 import *
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
-from .TestCase import AliasOf, _set, _check
+from .TestCase import AliasOf
+
+#-------------------------------------------------------------------------
+# Helper functions that create tv_in and tv_out
+#-------------------------------------------------------------------------
+
+# args: [attr, Bits, idx]
+def _set( *args ):
+  local_dict = {}
+  assert len(args) % 3 == 0
+  _tv_in_str = 'def tv_in( m, tv ):  \n'
+  if len(args) == 0:
+    _tv_in_str += '  pass'
+  for attr, Bits, idx in zip( args[0::3], args[1::3], args[2::3] ):
+    if isinstance(Bits, str):
+      _tv_in_str += f'  m.{attr} = {Bits}( tv[{idx}] )\n'
+    else:
+      _tv_in_str += f'  m.{attr} = {Bits.__name__}( tv[{idx}] )\n'
+  exec( _tv_in_str, globals(), local_dict )
+  return local_dict['tv_in']
+
+# args: [attr, Bits, idx]
+def _check( *args ):
+  local_dict = {}
+  assert len(args) % 3 == 0
+  _tv_out_str = 'def tv_out( m, tv ):  \n'
+  if len(args) == 0:
+    _tv_out_str += '  pass'
+  for attr, Bits, idx in zip( args[0::3], args[1::3], args[2::3] ):
+    if isinstance(Bits, str):
+      _tv_out_str += f'  assert m.{attr} == {Bits}( tv[{idx}] )\n'
+    else:
+      _tv_out_str += f'  assert m.{attr} == {Bits.__name__}( tv[{idx}] )\n'
+  exec( _tv_out_str, globals(), local_dict )
+  return local_dict['tv_out']
 
 #-------------------------------------------------------------------------
 # Commonly used global variables
@@ -981,10 +1015,10 @@ class CaseBits32x2ConcatFreeVarComp:
   _check( 'out', Bits64, 1 )
   TEST_VECTOR = \
   [
-      [  42,  concat(    Bits32(42),    Bits32(42) ) ],
-      [  -1,  concat(    Bits32(-1),    Bits32(42) ) ],
-      [  -2,  concat(    Bits32(-2),    Bits32(42) ) ],
-      [   2,  concat(     Bits32(2),    Bits32(42) ) ],
+      [  42,  concat(    Bits32(42),    Bits32(0) ) ],
+      [  -1,  concat(    Bits32(-1),    Bits32(0) ) ],
+      [  -2,  concat(    Bits32(-2),    Bits32(0) ) ],
+      [   2,  concat(     Bits32(2),    Bits32(0) ) ],
   ]
 
 class CaseBits32x2ConcatUnpackedSignalComp:
@@ -1189,13 +1223,12 @@ class CaseBits32FooInBits32OutComp:
   _check( 'out', Bits32, 1 )
   TEST_VECTOR = \
   [
-      [     Bits32Foo(),   0 ],
-      [    Bits32Foo(0),   0 ],
-      [   Bits32Foo(-1),  -1 ],
-      [   Bits32Foo(42),  42 ],
-      [   Bits32Foo(-2),  -2 ],
-      [   Bits32Foo(10),  10 ],
-      [  Bits32Foo(256), 256 ],
+      [    0,   0 ],
+      [   -1,  -1 ],
+      [   42,  42 ],
+      [   -2,  -2 ],
+      [   10,  10 ],
+      [  256, 256 ],
   ]
 
 class CaseBits32FooKwargComp:
@@ -1245,11 +1278,11 @@ class CaseStructPackedArrayUpblkComp:
   _check( 'out', Bits96, 1 )
   TEST_VECTOR = \
   [
-      [  Bits32x5Foo([ b32(0), b32(0), b32(0), b32(0),b32(0) ] ), concat( b32(0),   b32(0),   b32(0)  ) ],
-      [  Bits32x5Foo([ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ] ), concat( b32(-1),  b32(-1),  b32(-1) ) ],
-      [  Bits32x5Foo([ b32(42),b32(42),b32(-1),b32(0),b32(0) ] ), concat( b32(42),  b32(42),  b32(-1) ) ],
-      [  Bits32x5Foo([ b32(42),b32(42),b32(42),b32(0),b32(0) ] ), concat( b32(42),  b32(42),  b32(42) ) ],
-      [  Bits32x5Foo([ b32(-1),b32(-1),b32(42),b32(0),b32(0) ] ), concat( b32(-1),  b32(-1),  b32(42) ) ],
+      [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], concat( b32(0),   b32(0),   b32(0)  ) ],
+      [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], concat( b32(-1),  b32(-1),  b32(-1) ) ],
+      [  [ b32(42),b32(42),b32(-1),b32(0),b32(0) ], concat( b32(42),  b32(42),  b32(-1) ) ],
+      [  [ b32(42),b32(42),b32(42),b32(0),b32(0) ], concat( b32(42),  b32(42),  b32(42) ) ],
+      [  [ b32(-1),b32(-1),b32(42),b32(0),b32(0) ], concat( b32(-1),  b32(-1),  b32(42) ) ],
   ]
 
 class CaseConnectLiteralStructComp:
@@ -1275,7 +1308,7 @@ class CaseNestedStructPackedArrayUpblkComp:
       def upblk():
         s.out = concat( s.in_.bar[0], s.in_.woo.foo, s.in_.foo )
   TV_IN = \
-  _set( 'in_', NestedStructPackedPlusScalar, 0 )
+  _set( 'in_', '(lambda x: x)', 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
   TEST_VECTOR = \
@@ -1296,7 +1329,7 @@ class CaseConnectNestedStructPackedArrayComp:
       connect( s.out[32:64], s.in_.woo.foo )
       connect( s.out[64:96], s.in_.bar[0] )
   TV_IN = \
-  _set( 'in_', NestedStructPackedPlusScalar, 0 )
+  _set( 'in_', '(lambda x: x)', 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
   TEST_VECTOR = \
@@ -1464,7 +1497,7 @@ class CaseConnectConstToOutComp:
   TV_IN = \
   _set()
   TV_OUT = \
-  _check( 'out', Bits32, 1 )
+  _check( 'out', Bits32, 0 )
   TEST_VECTOR = \
   [
       [ 42 ],
@@ -1487,7 +1520,7 @@ class CaseConnectBitSelToOutComp:
       [    2,   0, ],
       [    3,   1, ],
       [   -1,   1, ],
-      [   -2,   1, ],
+      [   -2,   0, ],
   ]
 
 class CaseConnectSliceToOutComp:
@@ -1537,6 +1570,18 @@ class CaseConnectArrayStructAttrToOutComp:
       s.in_ = InPort( Bits32x5Foo )
       s.out = OutPort( Bits32 )
       connect( s.out, s.in_.foo[1] )
+  TV_IN = \
+  _set( 'in_', Bits32x5Foo, 0 )
+  TV_OUT = \
+  _check( 'out', Bits96, 1 )
+  TEST_VECTOR = \
+  [
+      [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], b32(0),  ],
+      [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], b32(-1), ],
+      [  [ b32(42),b32(42),b32(-1),b32(0),b32(0) ], b32(42), ],
+      [  [ b32(42),b32(42),b32(42),b32(0),b32(0) ], b32(42), ],
+      [  [ b32(-1),b32(-1),b32(42),b32(0),b32(0) ], b32(-1), ],
+  ]
 
 class CaseConnectConstStructAttrToOutComp:
   class DUT( Component ):
@@ -1631,20 +1676,21 @@ class CaseConnectValRdyIfcUpblkComp:
   _set(
       'in_.val', Bits1, 0,
       'in_.msg', Bits32, 1,
+      'out.rdy', Bits1, 2,
   )
   TV_OUT = \
   _check(
-      'in_.rdy', Bits1, 0,
-      'out.val', Bits1, 2,
-      'out.msg', Bits32, 3,
+      'out.val', Bits1, 3,
+      'out.msg', Bits32, 4,
+      'in_.rdy', Bits1, 5,
   )
   TEST_VECTOR = \
   [
-      [   1,      0,   1,      0 ],
-      [   0,     42,   0,     42 ],
-      [   1,     42,   1,     42 ],
-      [   1,     -1,   1,     -1 ],
-      [   1,     -2,   1,     -2 ],
+      [    0,    42,   1,    0,    42,    1 ],
+      [    1,    -1,   1,    1,    -1,    1 ],
+      [    1,    -2,   0,    1,    -2,    0 ],
+      [    0,     2,   0,    0,     2,    0 ],
+      [    1,    24,   1,    1,    24,    1 ],
   ]
 
 class CaseConnectArrayNestedIfcComp:
