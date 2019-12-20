@@ -9,14 +9,21 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import expected_failure, get_parameter
 
-from .TestRTLIRTranslator import TestRTLIRTranslator
+from ..behavioral.test.BehavioralTranslatorL1_test import (
+    test_generic_behavioral_L1 as behavioral,
+)
 from ..errors import RTLIRTranslationError
-from ..behavioral.test.BehavioralTranslatorL1_test import \
-    test_generic_behavioral_L1 as behavioral
-from ..structural.test.StructuralTranslatorL1_test import \
-    test_generic_structural_L1 as structural
-from ..testcases import CaseBitSelOverBitSelComp, CaseBitSelOverPartSelComp, \
-    CasePartSelOverBitSelComp, CasePartSelOverPartSelComp
+from ..structural.test.StructuralTranslatorL1_test import (
+    test_generic_structural_L1 as structural,
+)
+from ..testcases import (
+    CaseBitSelOverBitSelComp,
+    CaseBitSelOverPartSelComp,
+    CasePartSelOverBitSelComp,
+    CasePartSelOverPartSelComp,
+)
+from .TestRTLIRTranslator import TestRTLIRTranslator
+
 
 def run_test( case, m ):
   if not m._dsl.constructed:

@@ -5,17 +5,23 @@
 
 import pytest
 
-from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
+from ...testcases import (
+    CaseConnectPassThroughLongNameComp,
+    ThisIsABitStructWithSuperLongName,
+)
+from ..behavioral.test.SVBehavioralTranslatorL2_test import (
+    test_sverilog_behavioral_L2 as behavioral2,
+)
+from ..behavioral.test.SVBehavioralTranslatorL3_test import (
+    test_sverilog_behavioral_L3 as behavioral3,
+)
+from ..structural.test.SVStructuralTranslatorL2_test import (
+    test_sverilog_structural_L2 as structural,
+)
 from ..SVTranslator import SVTranslator
-from ..behavioral.test.SVBehavioralTranslatorL2_test import \
-    test_sverilog_behavioral_L2 as behavioral2
-from ..behavioral.test.SVBehavioralTranslatorL3_test import \
-    test_sverilog_behavioral_L3 as behavioral3
-from ..structural.test.SVStructuralTranslatorL2_test import \
-    test_sverilog_structural_L2 as structural
-from ...testcases import CaseConnectPassThroughLongNameComp, ThisIsABitStructWithSuperLongName
 
 
 def run_test( case, m ):

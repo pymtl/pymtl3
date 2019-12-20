@@ -7,11 +7,16 @@
 
 import pytest
 
-from .TestStructuralTranslator import mk_TestStructuralTranslator
+from ...testcases import (
+    CaseNestedPackedArrayStructComp,
+    CaseNestedStructPortOnly,
+    CaseStructConstComp,
+    CaseStructPortOnly,
+    CaseStructWireDrivenComp,
+    CaseStructx5PortOnly,
+)
 from ..StructuralTranslatorL2 import StructuralTranslatorL2
-from ...testcases import CaseStructPortOnly, CaseStructWireDrivenComp, \
-    CaseStructx5PortOnly, CaseNestedStructPortOnly, CaseNestedPackedArrayStructComp, \
-    CaseStructConstComp
+from .TestStructuralTranslator import mk_TestStructuralTranslator
 
 
 def run_test( case, m ):

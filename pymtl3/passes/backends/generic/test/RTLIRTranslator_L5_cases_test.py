@@ -9,9 +9,10 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
+from ..behavioral.test.BehavioralTranslatorL5_test import (
+    test_generic_behavioral_L5 as behavioral,
+)
 from .TestRTLIRTranslator import TestRTLIRTranslator
-from ..behavioral.test.BehavioralTranslatorL5_test import \
-    test_generic_behavioral_L5 as behavioral
 
 
 def run_test( case, m ):

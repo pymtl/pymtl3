@@ -7,10 +7,12 @@
 
 import pytest
 
-from .TestStructuralTranslator import mk_TestStructuralTranslator
+from ...testcases import (
+    CaseBits32ConnectSubCompAttrComp,
+    CaseConnectSubCompIfcHierarchyComp,
+)
 from ..StructuralTranslatorL4 import StructuralTranslatorL4
-from ...testcases import CaseBits32ConnectSubCompAttrComp, \
-    CaseConnectSubCompIfcHierarchyComp
+from .TestStructuralTranslator import mk_TestStructuralTranslator
 
 
 def run_test( case, m ):

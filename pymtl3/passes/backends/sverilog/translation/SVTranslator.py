@@ -11,6 +11,7 @@ from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from .behavioral import SVBehavioralTranslator as SV_BTranslator
 from .structural import SVStructuralTranslator as SV_STranslator
 
+
 def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 
   class _SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):

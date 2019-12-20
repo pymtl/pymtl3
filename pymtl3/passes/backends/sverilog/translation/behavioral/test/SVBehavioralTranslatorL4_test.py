@@ -7,15 +7,17 @@
 
 import pytest
 
+from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
-from ..SVBehavioralTranslatorL4 import BehavioralRTLIRToSVVisitorL4
 from ....errors import SVerilogTranslationError
-from ....testcases import \
-      CaseConnectValRdyIfcUpblkComp, CaseArrayBits32IfcInUpblkComp, \
-      CaseInterfaceArrayNonStaticIndexComp
+from ....testcases import (
+    CaseArrayBits32IfcInUpblkComp,
+    CaseConnectValRdyIfcUpblkComp,
+    CaseInterfaceArrayNonStaticIndexComp,
+)
+from ..SVBehavioralTranslatorL4 import BehavioralRTLIRToSVVisitorL4
 
 
 def run_test( case, m ):

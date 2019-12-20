@@ -5,14 +5,16 @@
 
 import pytest
 
-from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
+from ..behavioral.test.SVBehavioralTranslatorL5_test import (
+    test_sverilog_behavioral_L5 as behavioral,
+)
+from ..structural.test.SVStructuralTranslatorL4_test import (
+    test_sverilog_structural_L4 as structural,
+)
 from ..SVTranslator import SVTranslator
-from ..behavioral.test.SVBehavioralTranslatorL5_test import \
-    test_sverilog_behavioral_L5 as behavioral
-from ..structural.test.SVStructuralTranslatorL4_test import \
-    test_sverilog_structural_L4 as structural
 
 
 def run_test( case, m ):

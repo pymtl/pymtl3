@@ -9,11 +9,13 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
+from ..behavioral.test.BehavioralTranslatorL2_test import (
+    test_generic_behavioral_L2 as behavioral,
+)
+from ..structural.test.StructuralTranslatorL2_test import (
+    test_generic_structural_L2 as structural,
+)
 from .TestRTLIRTranslator import TestRTLIRTranslator
-from ..behavioral.test.BehavioralTranslatorL2_test import \
-    test_generic_behavioral_L2 as behavioral
-from ..structural.test.StructuralTranslatorL2_test import \
-    test_generic_structural_L2 as structural
 
 
 def run_test( case, m ):

@@ -7,11 +7,11 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
+from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
+from ....testcases import CaseConnectArrayNestedIfcComp, CaseConnectValRdyIfcComp
 from ..SVStructuralTranslatorL3 import SVStructuralTranslatorL3
-from ....testcases import CaseConnectValRdyIfcComp, CaseConnectArrayNestedIfcComp
 
 
 def run_test( case, m ):

@@ -7,16 +7,25 @@
 
 import pytest
 
-from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
+from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
+from ....testcases import (
+    CaseElifBranchComp,
+    CaseFixedSizeSliceComp,
+    CaseForRangeLowerUpperStepPassThroughComp,
+    CaseIfBasicComp,
+    CaseIfBoolOpInForStmtComp,
+    CaseIfDanglingElseInnerComp,
+    CaseIfDanglingElseOutterComp,
+    CaseIfExpInForStmtComp,
+    CaseIfExpUnaryOpInForStmtComp,
+    CaseIfTmpVarInForStmtComp,
+    CaseLambdaConnectComp,
+    CaseNestedIfComp,
+    CaseReducesInx3OutComp,
+)
 from ..SVBehavioralTranslatorL2 import BehavioralRTLIRToSVVisitorL2
-from ....testcases import \
-      CaseReducesInx3OutComp, CaseIfBasicComp, CaseIfDanglingElseInnerComp, \
-      CaseIfDanglingElseOutterComp, CaseElifBranchComp, CaseNestedIfComp, \
-      CaseForRangeLowerUpperStepPassThroughComp, CaseIfExpInForStmtComp, \
-      CaseIfBoolOpInForStmtComp, CaseIfTmpVarInForStmtComp, CaseFixedSizeSliceComp, \
-      CaseIfExpUnaryOpInForStmtComp, CaseLambdaConnectComp
 
 
 def run_test( case, m ):

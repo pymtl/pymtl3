@@ -10,34 +10,63 @@ Date   : Dec 16, 2019
 
 from textwrap import dedent
 
-from pymtl3 import *
-from pymtl3.testcases import add_attributes, \
-      CasePassThroughComp, CaseSequentialPassThroughComp, \
-      CaseBits32x2ConcatComp, CaseBits32x2ConcatConstComp, \
-      CaseBits32x2ConcatMixedComp, CaseBits64SextInComp, \
-      CaseBits64ZextInComp, CaseBits32x2ConcatFreeVarComp, \
-      CaseBits32x2ConcatUnpackedSignalComp, CaseBits32BitSelUpblkComp, \
-      CaseBits64PartSelUpblkComp, CaseSVerilogReservedComp, \
-      CaseReducesInx3OutComp, CaseIfBasicComp, CaseIfDanglingElseInnerComp, \
-      CaseIfDanglingElseOutterComp, CaseElifBranchComp, CaseNestedIfComp, \
-      CaseForRangeLowerUpperStepPassThroughComp, CaseIfExpInForStmtComp, \
-      CaseIfBoolOpInForStmtComp, CaseIfTmpVarInForStmtComp, CaseFixedSizeSliceComp, \
-      CaseIfExpUnaryOpInForStmtComp, Bits32Foo, NestedStructPackedPlusScalar, \
-      CaseBits32FooInBits32OutComp, CaseConstStructInstComp, \
-      CaseStructPackedArrayUpblkComp, CaseNestedStructPackedArrayUpblkComp, \
-      Bits32x5Foo, CaseConnectValRdyIfcUpblkComp, CaseArrayBits32IfcInUpblkComp, \
-      CaseInterfaceArrayNonStaticIndexComp, \
-      CaseBits32SubCompAttrUpblkComp, CaseBits32ArraySubCompAttrUpblkComp, \
-      CaseConnectInToWireComp, CaseConnectBitsConstToOutComp, \
-      CaseConnectConstToOutComp, CaseConnectBitSelToOutComp, \
-      CaseConnectSliceToOutComp, CaseConnectConstStructAttrToOutComp, \
-      CaseConnectArrayStructAttrToOutComp, CaseConnectNestedStructPackedArrayComp, \
-      CaseConnectValRdyIfcComp, CaseConnectArrayNestedIfcComp, \
-      CaseBits32ConnectSubCompAttrComp, CaseBits32ArrayConnectSubCompAttrComp, \
-      CaseConnectLiteralStructComp, CaseConnectPassThroughLongNameComp, \
-      CaseLambdaConnectComp, ThisIsABitStructWithSuperLongName
-
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
+from pymtl3 import *
+from pymtl3.testcases import (
+    Bits32Foo,
+    Bits32x5Foo,
+    CaseArrayBits32IfcInUpblkComp,
+    CaseBits32ArrayConnectSubCompAttrComp,
+    CaseBits32ArraySubCompAttrUpblkComp,
+    CaseBits32BitSelUpblkComp,
+    CaseBits32ConnectSubCompAttrComp,
+    CaseBits32FooInBits32OutComp,
+    CaseBits32SubCompAttrUpblkComp,
+    CaseBits32x2ConcatComp,
+    CaseBits32x2ConcatConstComp,
+    CaseBits32x2ConcatFreeVarComp,
+    CaseBits32x2ConcatMixedComp,
+    CaseBits32x2ConcatUnpackedSignalComp,
+    CaseBits64PartSelUpblkComp,
+    CaseBits64SextInComp,
+    CaseBits64ZextInComp,
+    CaseConnectArrayNestedIfcComp,
+    CaseConnectArrayStructAttrToOutComp,
+    CaseConnectBitsConstToOutComp,
+    CaseConnectBitSelToOutComp,
+    CaseConnectConstStructAttrToOutComp,
+    CaseConnectConstToOutComp,
+    CaseConnectInToWireComp,
+    CaseConnectLiteralStructComp,
+    CaseConnectNestedStructPackedArrayComp,
+    CaseConnectPassThroughLongNameComp,
+    CaseConnectSliceToOutComp,
+    CaseConnectValRdyIfcComp,
+    CaseConnectValRdyIfcUpblkComp,
+    CaseConstStructInstComp,
+    CaseElifBranchComp,
+    CaseFixedSizeSliceComp,
+    CaseForRangeLowerUpperStepPassThroughComp,
+    CaseIfBasicComp,
+    CaseIfBoolOpInForStmtComp,
+    CaseIfDanglingElseInnerComp,
+    CaseIfDanglingElseOutterComp,
+    CaseIfExpInForStmtComp,
+    CaseIfExpUnaryOpInForStmtComp,
+    CaseIfTmpVarInForStmtComp,
+    CaseInterfaceArrayNonStaticIndexComp,
+    CaseLambdaConnectComp,
+    CaseNestedIfComp,
+    CaseNestedStructPackedArrayUpblkComp,
+    CasePassThroughComp,
+    CaseReducesInx3OutComp,
+    CaseSequentialPassThroughComp,
+    CaseStructPackedArrayUpblkComp,
+    CaseSVerilogReservedComp,
+    NestedStructPackedPlusScalar,
+    ThisIsABitStructWithSuperLongName,
+    add_attributes,
+)
 
 CasePassThroughComp = add_attributes( CasePassThroughComp,
     'REF_UPBLK',
@@ -1359,7 +1388,7 @@ CaseConnectLiteralStructComp = add_attributes( CaseConnectLiteralStructComp,
     '',
     'REF_CONN',
     '''\
-        assign out = { 32'd42, { 32'd1, 32'd2 }, { 32'd3 } };
+        assign out = { 32'd42, { { 32'd2, 32'd1 } }, { 32'd3 } };
     ''',
     'REF_STRUCT',
     (
