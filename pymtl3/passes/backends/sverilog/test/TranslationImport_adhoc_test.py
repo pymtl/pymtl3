@@ -5,85 +5,39 @@
 # Date   : Jun 5, 2019
 """Test ad-hoc components with SystemVerilog translation and import."""
 
-from pymtl3.passes.rtlir.util.test_utility import do_test
+import pytest
+
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from .. import TranslationImportPass
-from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import (
-    test_bit_selection,
-    test_comb_assign,
-    test_concat,
-    test_concat_constants,
-    test_concat_mixed,
-    test_freevar,
-    test_part_selection,
-    test_seq_assign,
-    test_sext,
-    test_unpacked_signal_index,
-    test_zext,
-)
-from ..translation.behavioral.test.SVBehavioralTranslatorL2_test import (
-    test_fixed_size_slice,
-    test_for_range_lower_upper,
-    test_for_range_lower_upper_step,
-    test_for_range_upper,
-    test_if,
-    test_if_bool_op,
-    test_if_branches,
-    test_if_dangling_else_inner,
-    test_if_dangling_else_outter,
-    test_if_exp_for,
-    test_if_exp_unary_op,
-    test_nested_if,
-    test_reduce,
-    test_tmpvar,
-)
-from ..translation.behavioral.test.SVBehavioralTranslatorL3_test import (
-    test_nested_struct,
-    test_packed_array_behavioral,
-    test_struct,
-    test_struct_const,
-)
-from ..translation.behavioral.test.SVBehavioralTranslatorL4_test import (
-    test_interface,
-    test_interface_index,
-)
-from ..translation.behavioral.test.SVBehavioralTranslatorL5_test import (
-    test_subcomponent,
-    test_subcomponent_index,
-)
-from ..translation.structural.test.SVStructuralTranslatorL1_test import (
-    test_connect_constant,
-    test_port_bit_selection,
-    test_port_const,
-    test_port_const_array,
-    test_port_part_selection,
-    test_port_wire,
-    test_port_wire_array_index,
-)
-from ..translation.structural.test.SVStructuralTranslatorL2_test import (
-    test_nested_struct_port,
-    test_packed_array,
-    test_struct_const_structural,
-    test_struct_packed_array,
-    test_struct_port,
-)
-from ..translation.structural.test.SVStructuralTranslatorL3_test import (
-    test_ifc_decls,
-    test_multi_ifc_decls,
-)
-from ..translation.structural.test.SVStructuralTranslatorL4_test import (
-    test_multi_components_ifc_hierarchy_connect,
-    test_subcomp_decl,
-)
+from ..translation.behavioral.test.SVBehavioralTranslatorL1_test import \
+    test_sverilog_behavioral_L1 as behavioral1
+from ..translation.behavioral.test.SVBehavioralTranslatorL2_test import \
+    test_sverilog_behavioral_L2 as behavioral2
+from ..translation.behavioral.test.SVBehavioralTranslatorL3_test import \
+    test_sverilog_behavioral_L3 as behavioral3
+from ..translation.behavioral.test.SVBehavioralTranslatorL4_test import \
+    test_sverilog_behavioral_L4 as behavioral4
+from ..translation.behavioral.test.SVBehavioralTranslatorL5_test import \
+    test_sverilog_behavioral_L5 as behavioral5
+from ..translation.structural.test.SVStructuralTranslatorL1_test import \
+    test_sverilog_structural_L1 as structural1
+from ..translation.structural.test.SVStructuralTranslatorL2_test import \
+    test_sverilog_structural_L2 as structural2
+from ..translation.structural.test.SVStructuralTranslatorL3_test import \
+    test_sverilog_structural_L3 as structural3
+from ..translation.structural.test.SVStructuralTranslatorL4_test import \
+    test_sverilog_structural_L4 as structural4
 
 
-def local_do_test( _m ):
+def run_test( case ):
   try:
+    _m = case.DUT()
     _m.elaborate()
     _m.sverilog_translate_import = True
     m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+    sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
     sim.run_test()
   finally:
     try:
@@ -91,3 +45,17 @@ def local_do_test( _m ):
     except UnboundLocalError:
       # This test fails due to translation errors
       pass
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral1) + \
+          get_parameter('case', behavioral2) + \
+          get_parameter('case', behavioral3) + \
+          get_parameter('case', behavioral4) + \
+          get_parameter('case', behavioral5) + \
+          get_parameter('case', structural1) + \
+          get_parameter('case', structural2) + \
+          get_parameter('case', structural3) + \
+          get_parameter('case', structural4)
+)
+def test_sverilog_translation_import_adhoc( case ):
+  run_test( case )
