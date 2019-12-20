@@ -54,6 +54,9 @@ def _check( *args ):
   if len(args) == 0:
     _tv_out_str += '  pass'
   for attr, Bits, idx in zip( args[0::3], args[1::3], args[2::3] ):
-    _tv_out_str += f'  assert m.{attr} == {Bits.__name__}( tv[{idx}] )\n'
+    if isinstance(Bits, str):
+      _tv_out_str += f'  assert m.{attr} == {Bits}( tv[{idx}] )\n'
+    else:
+      _tv_out_str += f'  assert m.{attr} == {Bits.__name__}( tv[{idx}] )\n'
   exec( _tv_out_str, globals(), local_dict )
   return local_dict['tv_out']

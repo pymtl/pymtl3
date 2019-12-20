@@ -39,7 +39,7 @@ def run_test( case, m ):
       CaseArrayBits32IfcInUpblkComp,
     ]
 )
-def test_sv_behavioral_L4( case ):
+def test_sverilog_behavioral_L4( case ):
   run_test( case, case.DUT() )
 
 def test_interface_array_non_static_index():

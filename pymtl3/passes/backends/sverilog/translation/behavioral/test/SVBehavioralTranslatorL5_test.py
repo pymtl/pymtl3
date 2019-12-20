@@ -36,5 +36,5 @@ def run_test( case, m ):
       CaseBits32ArraySubCompAttrUpblkComp,
     ]
 )
-def test_sv_behavioral_L5( case ):
+def test_sverilog_behavioral_L5( case ):
   run_test( case, case.DUT() )

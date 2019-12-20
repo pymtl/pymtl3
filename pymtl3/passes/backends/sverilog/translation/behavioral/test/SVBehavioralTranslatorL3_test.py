@@ -39,5 +39,5 @@ def run_test( case, m ):
       CaseNestedStructPackedArrayUpblkComp,
     ]
 )
-def test_sv_behavioral_L3( case ):
+def test_sverilog_behavioral_L3( case ):
   run_test( case, case.DUT() )

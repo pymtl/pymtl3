@@ -53,6 +53,10 @@ class NestedStructPackedPlusScalar:
   bar: [Bits32]*2
   woo: Bits32Foo
 
+@bitstruct
+class ThisIsABitStructWithSuperLongName:
+  foo: Bits32
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -1131,12 +1135,45 @@ class CaseSequentialPassThroughComp:
       [   -1,    -2 ],
   ]
 
+class CaseConnectPassThroughLongNameComp:
+  class DUT( Component ):
+    def construct( s, T1, T2, T3, T4, T5, T6, T7 ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      connect( s.out, s.in_ )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits32, 1 ),
+  TEST_VECTOR = \
+  [
+      [    0,    0 ],
+      [   42,   42 ],
+      [   24,   24 ],
+      [   -2,   -2 ],
+      [   -1,   -1 ],
+  ]
+
 class CaseLambdaConnectComp:
   class DUT( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.out //= lambda: s.in_ + Bits32(42)
+  TV_IN = \
+  _set( 'in_', Bits32, 0 ),
+  TV_OUT = \
+  _check( 'out', Bits32, 1 ),
+  TEST_VECTOR = \
+  [
+      [    0,   42 ],
+      [   -1,   41 ],
+      [    2,   44 ],
+      [    1,   43 ],
+      [   42,   84 ],
+      [  -42,    0 ],
+      [  -41,    1 ],
+  ]
 
 class CaseBits32FooInBits32OutComp:
   class DUT( Component ):
@@ -1213,6 +1250,20 @@ class CaseStructPackedArrayUpblkComp:
       [  Bits32x5Foo([ b32(42),b32(42),b32(-1),b32(0),b32(0) ] ), concat( b32(42),  b32(42),  b32(-1) ) ],
       [  Bits32x5Foo([ b32(42),b32(42),b32(42),b32(0),b32(0) ] ), concat( b32(42),  b32(42),  b32(42) ) ],
       [  Bits32x5Foo([ b32(-1),b32(-1),b32(42),b32(0),b32(0) ] ), concat( b32(-1),  b32(-1),  b32(42) ) ],
+  ]
+
+class CaseConnectLiteralStructComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.out = OutPort( NestedStructPackedPlusScalar )
+      connect( s.out, NestedStructPackedPlusScalar( 42, [ b32(1), b32(2) ], Bits32Foo(3) ) )
+  TV_IN = \
+  _set(),
+  TV_OUT = \
+  _check( 'out', "(lambda x: x)", 0 ),
+  TEST_VECTOR = \
+  [
+      [   NestedStructPackedPlusScalar(42, [ Bits32(1) , Bits32(2)  ], Bits32Foo(3) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
   ]
 
 class CaseNestedStructPackedArrayUpblkComp:

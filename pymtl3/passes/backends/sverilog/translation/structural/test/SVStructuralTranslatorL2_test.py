@@ -12,7 +12,8 @@ from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
 
 from ..SVStructuralTranslatorL2 import SVStructuralTranslatorL2
 from ....testcases import CaseConnectConstStructAttrToOutComp, \
-    CaseConnectArrayStructAttrToOutComp, CaseConnectNestedStructPackedArrayComp
+    CaseConnectArrayStructAttrToOutComp, CaseConnectNestedStructPackedArrayComp, \
+    CaseConnectLiteralStructComp
 
 
 def run_test( case, m ):
@@ -36,6 +37,7 @@ def run_test( case, m ):
 @pytest.mark.parametrize(
   'case', [
     CaseConnectConstStructAttrToOutComp,
+    CaseConnectLiteralStructComp,
     CaseConnectArrayStructAttrToOutComp,
     CaseConnectNestedStructPackedArrayComp,
   ]

@@ -50,7 +50,7 @@ def run_test( case, m ):
       CaseBits64PartSelUpblkComp,
     ]
 )
-def test_sv_behavioral_L1( case ):
+def test_sverilog_behavioral_L1( case ):
   run_test( case, case.DUT() )
 
 def test_sverilog_reserved_keyword():
