@@ -55,10 +55,10 @@ from pymtl3.testcases import (
     CaseTwoUpblksSliceComp,
     CaseTwoUpblksStructTmpWireComp,
     CaseWiresDrivenComp,
-    add_attributes,
+    set_attributes,
 )
 
-CaseTwoUpblksSliceComp = add_attributes( CaseTwoUpblksSliceComp,
+CaseTwoUpblksSliceComp = set_attributes( CaseTwoUpblksSliceComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -90,7 +90,7 @@ CaseTwoUpblksSliceComp = add_attributes( CaseTwoUpblksSliceComp,
     '''
 )
 
-CaseTwoUpblksFreevarsComp = add_attributes( CaseTwoUpblksFreevarsComp,
+CaseTwoUpblksFreevarsComp = set_attributes( CaseTwoUpblksFreevarsComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -127,7 +127,7 @@ CaseTwoUpblksFreevarsComp = add_attributes( CaseTwoUpblksFreevarsComp,
     '''
 )
 
-CaseBits32TmpWireComp = add_attributes( CaseBits32TmpWireComp,
+CaseBits32TmpWireComp = set_attributes( CaseBits32TmpWireComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -163,7 +163,7 @@ CaseBits32TmpWireComp = add_attributes( CaseBits32TmpWireComp,
     '''
 )
 
-CaseBits32TmpWireAliasComp = add_attributes( CaseBits32TmpWireAliasComp,
+CaseBits32TmpWireAliasComp = set_attributes( CaseBits32TmpWireAliasComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -203,7 +203,7 @@ CaseBits32TmpWireAliasComp = add_attributes( CaseBits32TmpWireAliasComp,
     '''
 )
 
-CaseBits32MultiTmpWireComp = add_attributes( CaseBits32MultiTmpWireComp,
+CaseBits32MultiTmpWireComp = set_attributes( CaseBits32MultiTmpWireComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -241,7 +241,7 @@ CaseBits32MultiTmpWireComp = add_attributes( CaseBits32MultiTmpWireComp,
     '''
 )
 
-CaseBits32FreeVarToTmpVarComp = add_attributes( CaseBits32FreeVarToTmpVarComp,
+CaseBits32FreeVarToTmpVarComp = set_attributes( CaseBits32FreeVarToTmpVarComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -280,7 +280,7 @@ CaseBits32FreeVarToTmpVarComp = add_attributes( CaseBits32FreeVarToTmpVarComp,
     '''
 )
 
-CaseBits32ConstBitsToTmpVarComp = add_attributes( CaseBits32ConstBitsToTmpVarComp,
+CaseBits32ConstBitsToTmpVarComp = set_attributes( CaseBits32ConstBitsToTmpVarComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -315,7 +315,7 @@ CaseBits32ConstBitsToTmpVarComp = add_attributes( CaseBits32ConstBitsToTmpVarCom
     '''
 )
 
-CaseBits32ConstIntToTmpVarComp = add_attributes( CaseBits32ConstIntToTmpVarComp,
+CaseBits32ConstIntToTmpVarComp = set_attributes( CaseBits32ConstIntToTmpVarComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -350,7 +350,7 @@ CaseBits32ConstIntToTmpVarComp = add_attributes( CaseBits32ConstIntToTmpVarComp,
     '''
 )
 
-CaseStructTmpWireComp = add_attributes( CaseStructTmpWireComp,
+CaseStructTmpWireComp = set_attributes( CaseStructTmpWireComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -387,7 +387,7 @@ CaseStructTmpWireComp = add_attributes( CaseStructTmpWireComp,
     '''
 )
 
-CaseTwoUpblksStructTmpWireComp = add_attributes( CaseTwoUpblksStructTmpWireComp,
+CaseTwoUpblksStructTmpWireComp = set_attributes( CaseTwoUpblksStructTmpWireComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -431,7 +431,7 @@ CaseTwoUpblksStructTmpWireComp = add_attributes( CaseTwoUpblksStructTmpWireComp,
     '''
 )
 
-CaseBits32IfcTmpVarOutComp = add_attributes( CaseBits32IfcTmpVarOutComp,
+CaseBits32IfcTmpVarOutComp = set_attributes( CaseBits32IfcTmpVarOutComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -469,7 +469,7 @@ CaseBits32IfcTmpVarOutComp = add_attributes( CaseBits32IfcTmpVarOutComp,
     '''
 )
 
-CaseStructIfcTmpVarOutComp = add_attributes( CaseStructIfcTmpVarOutComp,
+CaseStructIfcTmpVarOutComp = set_attributes( CaseStructIfcTmpVarOutComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -508,7 +508,7 @@ CaseStructIfcTmpVarOutComp = add_attributes( CaseStructIfcTmpVarOutComp,
     '''
 )
 
-CaseSubCompTmpDrivenComp = add_attributes( CaseSubCompTmpDrivenComp,
+CaseSubCompTmpDrivenComp = set_attributes( CaseSubCompTmpDrivenComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -565,7 +565,7 @@ CaseSubCompTmpDrivenComp = add_attributes( CaseSubCompTmpDrivenComp,
 '''
 )
 
-CaseSubCompFreeVarDrivenComp = add_attributes( CaseSubCompFreeVarDrivenComp,
+CaseSubCompFreeVarDrivenComp = set_attributes( CaseSubCompFreeVarDrivenComp,
     'REF_UPBLK',
     '''\
         upblk_srcs:
@@ -624,7 +624,7 @@ CaseSubCompFreeVarDrivenComp = add_attributes( CaseSubCompFreeVarDrivenComp,
     '''
 )
 
-CaseComponentArgsComp = add_attributes( CaseComponentArgsComp,
+CaseComponentArgsComp = set_attributes( CaseComponentArgsComp,
     'REF_NAME',
     'DUT__foo_0__bar_002a',
     'REF_SRC',
@@ -646,7 +646,7 @@ CaseComponentArgsComp = add_attributes( CaseComponentArgsComp,
     '''
 )
 
-CaseComponentDefaultArgsComp = add_attributes( CaseComponentDefaultArgsComp,
+CaseComponentDefaultArgsComp = set_attributes( CaseComponentDefaultArgsComp,
     'REF_NAME',
     'DUT__foo_0__bar_002a',
     'REF_SRC',
@@ -668,7 +668,7 @@ CaseComponentDefaultArgsComp = add_attributes( CaseComponentDefaultArgsComp,
     '''
 )
 
-CaseMixedDefaultArgsComp = add_attributes( CaseMixedDefaultArgsComp,
+CaseMixedDefaultArgsComp = set_attributes( CaseMixedDefaultArgsComp,
     'REF_NAME',
     'DUT__foo_0__bar_002a__woo_00000000',
     'REF_SRC',
@@ -690,7 +690,7 @@ CaseMixedDefaultArgsComp = add_attributes( CaseMixedDefaultArgsComp,
     '''
 )
 
-CaseBits32PortOnly = add_attributes( CaseBits32PortOnly,
+CaseBits32PortOnly = set_attributes( CaseBits32PortOnly,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -726,7 +726,7 @@ CaseBits32PortOnly = add_attributes( CaseBits32PortOnly,
     '''
 )
 
-CaseBits32x5PortOnly = add_attributes( CaseBits32x5PortOnly,
+CaseBits32x5PortOnly = set_attributes( CaseBits32x5PortOnly,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -754,7 +754,7 @@ CaseBits32x5PortOnly = add_attributes( CaseBits32x5PortOnly,
     '''
 )
 
-CaseWiresDrivenComp = add_attributes( CaseWiresDrivenComp,
+CaseWiresDrivenComp = set_attributes( CaseWiresDrivenComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -787,7 +787,7 @@ CaseWiresDrivenComp = add_attributes( CaseWiresDrivenComp,
     '''
 )
 
-CaseBits32Wirex5DrivenComp = add_attributes( CaseBits32Wirex5DrivenComp,
+CaseBits32Wirex5DrivenComp = set_attributes( CaseBits32Wirex5DrivenComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -818,7 +818,7 @@ CaseBits32Wirex5DrivenComp = add_attributes( CaseBits32Wirex5DrivenComp,
     '''
 )
 
-CaseBits32ClosureConstruct = add_attributes( CaseBits32ClosureConstruct,
+CaseBits32ClosureConstruct = set_attributes( CaseBits32ClosureConstruct,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -867,7 +867,7 @@ CaseBits32ClosureConstruct = add_attributes( CaseBits32ClosureConstruct,
     '''
 )
 
-CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruct,
+CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruct,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -911,7 +911,7 @@ CaseBits32ArrayClosureConstruct = add_attributes( CaseBits32ArrayClosureConstruc
     '''
 )
 
-CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
+CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -951,7 +951,7 @@ CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
     '''
 )
 
-CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
+CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -991,7 +991,7 @@ CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
     '''
 )
 
-CaseConnectPortIndexComp = add_attributes( CaseConnectPortIndexComp,
+CaseConnectPortIndexComp = set_attributes( CaseConnectPortIndexComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1031,7 +1031,7 @@ CaseConnectPortIndexComp = add_attributes( CaseConnectPortIndexComp,
     '''
 )
 
-CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
+CaseConnectInToWireComp = set_attributes( CaseConnectInToWireComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1085,7 +1085,7 @@ CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
     '''
 )
 
-CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
+CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1126,7 +1126,7 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
     '''
 )
 
-CaseStructPortOnly = add_attributes( CaseStructPortOnly,
+CaseStructPortOnly = set_attributes( CaseStructPortOnly,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1163,7 +1163,7 @@ CaseStructPortOnly = add_attributes( CaseStructPortOnly,
     [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
 )
 
-CaseStructWireDrivenComp = add_attributes( CaseStructWireDrivenComp,
+CaseStructWireDrivenComp = set_attributes( CaseStructWireDrivenComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1201,7 +1201,7 @@ CaseStructWireDrivenComp = add_attributes( CaseStructWireDrivenComp,
     [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
 )
 
-CaseStructConstComp = add_attributes( CaseStructConstComp,
+CaseStructConstComp = set_attributes( CaseStructConstComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1236,7 +1236,7 @@ CaseStructConstComp = add_attributes( CaseStructConstComp,
     [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
 )
 
-CaseStructx5PortOnly = add_attributes( CaseStructx5PortOnly,
+CaseStructx5PortOnly = set_attributes( CaseStructx5PortOnly,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1273,7 +1273,7 @@ CaseStructx5PortOnly = add_attributes( CaseStructx5PortOnly,
     [(rdt.Struct('Bits32Foo', {'foo':rdt.Vector(32)}), 'Bits32Foo')]
 )
 
-CaseNestedStructPortOnly = add_attributes( CaseNestedStructPortOnly,
+CaseNestedStructPortOnly = set_attributes( CaseNestedStructPortOnly,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1314,7 +1314,7 @@ CaseNestedStructPortOnly = add_attributes( CaseNestedStructPortOnly,
     ]
 )
 
-CaseNestedPackedArrayStructComp = add_attributes( CaseNestedPackedArrayStructComp,
+CaseNestedPackedArrayStructComp = set_attributes( CaseNestedPackedArrayStructComp,
     'REF_NAME',
     'DUT',
     'REF_PORT',
@@ -1361,7 +1361,7 @@ CaseNestedPackedArrayStructComp = add_attributes( CaseNestedPackedArrayStructCom
     ]
 )
 
-CaseConnectValRdyIfcComp = add_attributes( CaseConnectValRdyIfcComp,
+CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
     'REF_NAME',
     'DUT',
     'REF_IFC',
@@ -1417,7 +1417,7 @@ CaseConnectValRdyIfcComp = add_attributes( CaseConnectValRdyIfcComp,
     ''',
 )
 
-CaseArrayBits32IfcInComp = add_attributes( CaseArrayBits32IfcInComp,
+CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
     'REF_NAME',
     'DUT',
     'REF_IFC',
@@ -1456,7 +1456,7 @@ CaseArrayBits32IfcInComp = add_attributes( CaseArrayBits32IfcInComp,
     ''',
 )
 
-CaseConnectArrayNestedIfcComp = add_attributes( CaseConnectArrayNestedIfcComp,
+CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     'REF_NAME',
     'DUT',
     'REF_IFC',
@@ -1518,7 +1518,7 @@ CaseConnectArrayNestedIfcComp = add_attributes( CaseConnectArrayNestedIfcComp,
     ''',
 )
 
-CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrComp,
+CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrComp,
     'REF_NAME',
     'DUT',
     'REF_CONN',
@@ -1576,7 +1576,7 @@ CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrC
     ''',
 )
 
-CaseConnectSubCompIfcHierarchyComp = add_attributes( CaseConnectSubCompIfcHierarchyComp,
+CaseConnectSubCompIfcHierarchyComp = set_attributes( CaseConnectSubCompIfcHierarchyComp,
     'REF_NAME',
     'DUT',
     'REF_CONN',

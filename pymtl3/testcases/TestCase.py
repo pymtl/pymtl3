@@ -23,7 +23,7 @@ class AliasOf:
     # Overwriting an existing alias is not supported yet
     raise NotImplementedError
 
-def add_attributes( _cls, *args ):
+def set_attributes( _cls, *args ):
   assert len( args ) % 2 == 0
   cls = copy( _cls )
   for attr, obj in zip( args[::2], args[1::2] ):

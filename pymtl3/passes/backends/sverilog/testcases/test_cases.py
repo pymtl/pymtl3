@@ -65,10 +65,10 @@ from pymtl3.testcases import (
     CaseSVerilogReservedComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
-    add_attributes,
+    set_attributes,
 )
 
-CasePassThroughComp = add_attributes( CasePassThroughComp,
+CasePassThroughComp = set_attributes( CasePassThroughComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -93,7 +93,7 @@ CasePassThroughComp = add_attributes( CasePassThroughComp,
     '''
 )
 
-CaseSequentialPassThroughComp = add_attributes( CaseSequentialPassThroughComp,
+CaseSequentialPassThroughComp = set_attributes( CaseSequentialPassThroughComp,
     'REF_UPBLK',
     '''\
         always_ff @(posedge clk) begin : upblk
@@ -118,7 +118,7 @@ CaseSequentialPassThroughComp = add_attributes( CaseSequentialPassThroughComp,
     '''
 )
 
-CaseConnectPassThroughLongNameComp = add_attributes( CaseConnectPassThroughLongNameComp,
+CaseConnectPassThroughLongNameComp = set_attributes( CaseConnectPassThroughLongNameComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -152,7 +152,7 @@ CaseConnectPassThroughLongNameComp = add_attributes( CaseConnectPassThroughLongN
     ''',
 )
 
-CaseLambdaConnectComp = add_attributes( CaseLambdaConnectComp,
+CaseLambdaConnectComp = set_attributes( CaseLambdaConnectComp,
     'REF_UPBLK',
     '''\
         always_comb begin : _lambda__s_out
@@ -177,7 +177,7 @@ CaseLambdaConnectComp = add_attributes( CaseLambdaConnectComp,
     '''
 )
 
-CaseBits32x2ConcatComp = add_attributes( CaseBits32x2ConcatComp,
+CaseBits32x2ConcatComp = set_attributes( CaseBits32x2ConcatComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -203,7 +203,7 @@ CaseBits32x2ConcatComp = add_attributes( CaseBits32x2ConcatComp,
     '''
 )
 
-CaseBits32x2ConcatConstComp = add_attributes( CaseBits32x2ConcatConstComp,
+CaseBits32x2ConcatConstComp = set_attributes( CaseBits32x2ConcatConstComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -227,7 +227,7 @@ CaseBits32x2ConcatConstComp = add_attributes( CaseBits32x2ConcatConstComp,
     '''
 )
 
-CaseBits32x2ConcatMixedComp = add_attributes( CaseBits32x2ConcatMixedComp,
+CaseBits32x2ConcatMixedComp = set_attributes( CaseBits32x2ConcatMixedComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -252,7 +252,7 @@ CaseBits32x2ConcatMixedComp = add_attributes( CaseBits32x2ConcatMixedComp,
     '''
 )
 
-CaseBits64SextInComp = add_attributes( CaseBits64SextInComp,
+CaseBits64SextInComp = set_attributes( CaseBits64SextInComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -277,7 +277,7 @@ CaseBits64SextInComp = add_attributes( CaseBits64SextInComp,
     '''
 )
 
-CaseBits64ZextInComp = add_attributes( CaseBits64ZextInComp,
+CaseBits64ZextInComp = set_attributes( CaseBits64ZextInComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -306,7 +306,7 @@ CaseBits64ZextInComp = add_attributes( CaseBits64ZextInComp,
     '''
 )
 
-CaseBits32x2ConcatFreeVarComp = add_attributes( CaseBits32x2ConcatFreeVarComp,
+CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -332,7 +332,7 @@ CaseBits32x2ConcatFreeVarComp = add_attributes( CaseBits32x2ConcatFreeVarComp,
     '''
 )
 
-CaseBits32x2ConcatUnpackedSignalComp = add_attributes( CaseBits32x2ConcatUnpackedSignalComp,
+CaseBits32x2ConcatUnpackedSignalComp = set_attributes( CaseBits32x2ConcatUnpackedSignalComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -357,7 +357,7 @@ CaseBits32x2ConcatUnpackedSignalComp = add_attributes( CaseBits32x2ConcatUnpacke
     '''
 )
 
-CaseBits32BitSelUpblkComp = add_attributes( CaseBits32BitSelUpblkComp,
+CaseBits32BitSelUpblkComp = set_attributes( CaseBits32BitSelUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -382,7 +382,7 @@ CaseBits32BitSelUpblkComp = add_attributes( CaseBits32BitSelUpblkComp,
     '''
 )
 
-CaseBits64PartSelUpblkComp = add_attributes( CaseBits64PartSelUpblkComp,
+CaseBits64PartSelUpblkComp = set_attributes( CaseBits64PartSelUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -407,7 +407,7 @@ CaseBits64PartSelUpblkComp = add_attributes( CaseBits64PartSelUpblkComp,
     '''
 )
 
-CaseReducesInx3OutComp = add_attributes( CaseReducesInx3OutComp,
+CaseReducesInx3OutComp = set_attributes( CaseReducesInx3OutComp,
     'REF_UPBLK',
     '''\
         always_comb begin : v_reduce
@@ -434,7 +434,7 @@ CaseReducesInx3OutComp = add_attributes( CaseReducesInx3OutComp,
     '''
 )
 
-CaseIfBasicComp = add_attributes( CaseIfBasicComp,
+CaseIfBasicComp = set_attributes( CaseIfBasicComp,
     'REF_UPBLK',
     '''\
         always_comb begin : if_basic
@@ -467,7 +467,7 @@ CaseIfBasicComp = add_attributes( CaseIfBasicComp,
     '''
 )
 
-CaseIfDanglingElseInnerComp = add_attributes( CaseIfDanglingElseInnerComp,
+CaseIfDanglingElseInnerComp = set_attributes( CaseIfDanglingElseInnerComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -505,7 +505,7 @@ CaseIfDanglingElseInnerComp = add_attributes( CaseIfDanglingElseInnerComp,
     '''
 )
 
-CaseIfDanglingElseOutterComp = add_attributes( CaseIfDanglingElseOutterComp,
+CaseIfDanglingElseOutterComp = set_attributes( CaseIfDanglingElseOutterComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -543,7 +543,7 @@ CaseIfDanglingElseOutterComp = add_attributes( CaseIfDanglingElseOutterComp,
     '''
 )
 
-CaseElifBranchComp = add_attributes( CaseElifBranchComp,
+CaseElifBranchComp = set_attributes( CaseElifBranchComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -584,7 +584,7 @@ CaseElifBranchComp = add_attributes( CaseElifBranchComp,
     '''
 )
 
-CaseNestedIfComp = add_attributes( CaseNestedIfComp,
+CaseNestedIfComp = set_attributes( CaseNestedIfComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -647,7 +647,7 @@ CaseNestedIfComp = add_attributes( CaseNestedIfComp,
     '''
 )
 
-CaseForRangeLowerUpperStepPassThroughComp = add_attributes( CaseForRangeLowerUpperStepPassThroughComp,
+CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpperStepPassThroughComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -678,7 +678,7 @@ CaseForRangeLowerUpperStepPassThroughComp = add_attributes( CaseForRangeLowerUpp
     '''
 )
 
-CaseIfExpInForStmtComp = add_attributes( CaseIfExpInForStmtComp,
+CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -705,7 +705,7 @@ CaseIfExpInForStmtComp = add_attributes( CaseIfExpInForStmtComp,
     '''
 )
 
-CaseIfExpUnaryOpInForStmtComp = add_attributes( CaseIfExpUnaryOpInForStmtComp,
+CaseIfExpUnaryOpInForStmtComp = set_attributes( CaseIfExpUnaryOpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -732,7 +732,7 @@ CaseIfExpUnaryOpInForStmtComp = add_attributes( CaseIfExpUnaryOpInForStmtComp,
     '''
 )
 
-CaseIfBoolOpInForStmtComp = add_attributes( CaseIfBoolOpInForStmtComp,
+CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -767,7 +767,7 @@ CaseIfBoolOpInForStmtComp = add_attributes( CaseIfBoolOpInForStmtComp,
     '''
 )
 
-CaseIfTmpVarInForStmtComp = add_attributes( CaseIfTmpVarInForStmtComp,
+CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -807,7 +807,7 @@ CaseIfTmpVarInForStmtComp = add_attributes( CaseIfTmpVarInForStmtComp,
     '''
 )
 
-CaseFixedSizeSliceComp = add_attributes( CaseFixedSizeSliceComp,
+CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -834,7 +834,7 @@ CaseFixedSizeSliceComp = add_attributes( CaseFixedSizeSliceComp,
     '''
 )
 
-CaseBits32FooInBits32OutComp = add_attributes( CaseBits32FooInBits32OutComp,
+CaseBits32FooInBits32OutComp = set_attributes( CaseBits32FooInBits32OutComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -863,7 +863,7 @@ CaseBits32FooInBits32OutComp = add_attributes( CaseBits32FooInBits32OutComp,
     '''
 )
 
-CaseConstStructInstComp = add_attributes( CaseConstStructInstComp,
+CaseConstStructInstComp = set_attributes( CaseConstStructInstComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -892,7 +892,7 @@ CaseConstStructInstComp = add_attributes( CaseConstStructInstComp,
     '''
 )
 
-CaseStructPackedArrayUpblkComp = add_attributes( CaseStructPackedArrayUpblkComp,
+CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -921,7 +921,7 @@ CaseStructPackedArrayUpblkComp = add_attributes( CaseStructPackedArrayUpblkComp,
     '''
 )
 
-CaseNestedStructPackedArrayUpblkComp = add_attributes( CaseNestedStructPackedArrayUpblkComp,
+CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArrayUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -956,7 +956,7 @@ CaseNestedStructPackedArrayUpblkComp = add_attributes( CaseNestedStructPackedArr
     '''
 )
 
-CaseConnectValRdyIfcUpblkComp = add_attributes( CaseConnectValRdyIfcUpblkComp,
+CaseConnectValRdyIfcUpblkComp = set_attributes( CaseConnectValRdyIfcUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -989,7 +989,7 @@ CaseConnectValRdyIfcUpblkComp = add_attributes( CaseConnectValRdyIfcUpblkComp,
     '''
 )
 
-CaseArrayBits32IfcInUpblkComp = add_attributes( CaseArrayBits32IfcInUpblkComp,
+CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -1018,7 +1018,7 @@ CaseArrayBits32IfcInUpblkComp = add_attributes( CaseArrayBits32IfcInUpblkComp,
     '''
 )
 
-CaseBits32SubCompAttrUpblkComp = add_attributes( CaseBits32SubCompAttrUpblkComp,
+CaseBits32SubCompAttrUpblkComp = set_attributes( CaseBits32SubCompAttrUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -1066,7 +1066,7 @@ CaseBits32SubCompAttrUpblkComp = add_attributes( CaseBits32SubCompAttrUpblkComp,
     '''
 )
 
-CaseBits32ArraySubCompAttrUpblkComp = add_attributes( CaseBits32ArraySubCompAttrUpblkComp,
+CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttrUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
@@ -1166,7 +1166,7 @@ CaseBits32ArraySubCompAttrUpblkComp = add_attributes( CaseBits32ArraySubCompAttr
     '''
 )
 
-CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
+CaseConnectInToWireComp = set_attributes( CaseConnectInToWireComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1211,7 +1211,7 @@ CaseConnectInToWireComp = add_attributes( CaseConnectInToWireComp,
     '''
 )
 
-CaseConnectBitsConstToOutComp = add_attributes( CaseConnectBitsConstToOutComp,
+CaseConnectBitsConstToOutComp = set_attributes( CaseConnectBitsConstToOutComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1241,7 +1241,7 @@ CaseConnectBitsConstToOutComp = add_attributes( CaseConnectBitsConstToOutComp,
     '''
 )
 
-CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
+CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1274,7 +1274,7 @@ CaseConnectConstToOutComp = add_attributes( CaseConnectConstToOutComp,
     '''
 )
 
-CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
+CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1306,7 +1306,7 @@ CaseConnectBitSelToOutComp = add_attributes( CaseConnectBitSelToOutComp,
     '''
 )
 
-CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
+CaseConnectSliceToOutComp = set_attributes( CaseConnectSliceToOutComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1338,7 +1338,7 @@ CaseConnectSliceToOutComp = add_attributes( CaseConnectSliceToOutComp,
     '''
 )
 
-CaseConnectConstStructAttrToOutComp = add_attributes( CaseConnectConstStructAttrToOutComp,
+CaseConnectConstStructAttrToOutComp = set_attributes( CaseConnectConstStructAttrToOutComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1377,7 +1377,7 @@ CaseConnectConstStructAttrToOutComp = add_attributes( CaseConnectConstStructAttr
     '''
 )
 
-CaseConnectLiteralStructComp = add_attributes( CaseConnectLiteralStructComp,
+CaseConnectLiteralStructComp = set_attributes( CaseConnectLiteralStructComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1430,7 +1430,7 @@ CaseConnectLiteralStructComp = add_attributes( CaseConnectLiteralStructComp,
     '''
 )
 
-CaseConnectArrayStructAttrToOutComp = add_attributes( CaseConnectArrayStructAttrToOutComp,
+CaseConnectArrayStructAttrToOutComp = set_attributes( CaseConnectArrayStructAttrToOutComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1473,7 +1473,7 @@ CaseConnectArrayStructAttrToOutComp = add_attributes( CaseConnectArrayStructAttr
     '''
 )
 
-CaseConnectNestedStructPackedArrayComp = add_attributes( CaseConnectNestedStructPackedArrayComp,
+CaseConnectNestedStructPackedArrayComp = set_attributes( CaseConnectNestedStructPackedArrayComp,
     'REF_PORT',
     '''\
         input logic [0:0] clk,
@@ -1532,7 +1532,7 @@ CaseConnectNestedStructPackedArrayComp = add_attributes( CaseConnectNestedStruct
     '''
 )
 
-CaseConnectValRdyIfcComp = add_attributes( CaseConnectValRdyIfcComp,
+CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
     'REF_IFC',
     '''\
         input  logic [31:0] in___msg,
@@ -1570,7 +1570,7 @@ CaseConnectValRdyIfcComp = add_attributes( CaseConnectValRdyIfcComp,
     '''
 )
 
-CaseConnectArrayNestedIfcComp = add_attributes( CaseConnectArrayNestedIfcComp,
+CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     'REF_IFC',
     '''\
         input  logic [0:0]  in___0__ctrl_foo,
@@ -1639,7 +1639,7 @@ CaseConnectArrayNestedIfcComp = add_attributes( CaseConnectArrayNestedIfcComp,
     '''
 )
 
-CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrComp,
+CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrComp,
     'REF_COMP',
     '''\
         logic [0:0] b__clk;
@@ -1691,7 +1691,7 @@ CaseBits32ConnectSubCompAttrComp = add_attributes( CaseBits32ConnectSubCompAttrC
     '''
 )
 
-CaseBits32ArrayConnectSubCompAttrComp = add_attributes( CaseBits32ArrayConnectSubCompAttrComp,
+CaseBits32ArrayConnectSubCompAttrComp = set_attributes( CaseBits32ArrayConnectSubCompAttrComp,
     'REF_COMP',
     '''\
         logic [0:0] b__0__clk;

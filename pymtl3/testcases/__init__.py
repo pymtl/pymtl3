@@ -1,2 +1,2 @@
 from .test_cases import *
-from .TestCase import add_attributes
+from .TestCase import set_attributes
