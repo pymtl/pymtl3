@@ -8,7 +8,6 @@ Author : Peitian Pan
 Date   : Dec 12, 2019
 """
 
-from copy import copy
 from textwrap import dedent
 
 
@@ -25,7 +24,9 @@ class AliasOf:
 
 def set_attributes( _cls, *args ):
   assert len( args ) % 2 == 0
-  cls = copy( _cls )
+  # Correctly "copy" a Python class
+  # https://stackoverflow.com/questions/9541025/how-to-copy-a-python-class
+  cls = type(_cls.__name__, (_cls,), dict(_cls.__dict__))
   for attr, obj in zip( args[::2], args[1::2] ):
     setattr( cls, attr, dedent(obj) if isinstance(obj, str) else obj )
   return cls
