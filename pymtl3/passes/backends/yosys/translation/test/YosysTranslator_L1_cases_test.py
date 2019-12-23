@@ -5,37 +5,26 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
-    check_eq,
-)
-from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L1_cases_test import (
-    test_bit_selection,
-    test_comb_assign,
-    test_concat,
-    test_concat_constants,
-    test_concat_mixed,
-    test_connect_constant,
-    test_freevar,
-    test_part_selection,
-    test_port_bit_selection,
-    test_port_const_accessed,
-    test_port_const_array,
-    test_port_const_unaccessed,
-    test_port_part_selection,
-    test_port_wire,
-    test_port_wire_array_index,
-    test_seq_assign,
-    test_sext,
-    test_unpacked_signal_index,
-    test_zext,
-)
-from pymtl3.passes.rtlir.util.test_utility import do_test
+from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
+from ..behavioral.test.YosysBehavioralTranslatorL1_test import (
+    test_yosys_behavioral_L1 as behavioral,
+)
+from ..structural.test.YosysStructuralTranslatorL1_test import (
+    test_yosys_structural_L1 as structural,
+)
 from ..YosysTranslator import YosysTranslator
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   m.elaborate()
   tr = YosysTranslator( m )
   tr.translate( m )
-  check_eq( tr.hierarchy.src, m._ref_src_yosys )
+  check_eq( tr.hierarchy.src, case.REF_SRC )
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+)
+def test_yosys_L1( case ):
+  run_test( case, case.DUT() )

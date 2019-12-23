@@ -109,31 +109,4 @@ module Top
 
 endmodule
 """
-  a.YOSYS_REF_SRC = \
-"""
-module Top
-(
-  input logic [0:0] clk,
-  output logic [15:0] out__fst__foo,
-  output logic [31:0] out__fst__bar,
-  output logic [15:0] out__snd__foo,
-  output logic [31:0] out__snd__bar,
-  input logic [0:0] reset
-);
-  logic [47:0]  out__fst;
-  logic [47:0]  out__snd;
-  logic [95:0]  out;
-
-  assign out__fst__foo = out__fst[47:32];
-  assign out__fst__bar = out__fst[31:0];
-  assign out__snd__foo = out__snd[47:32];
-  assign out__snd__bar = out__snd[31:0];
-  assign out__fst__foo = out[95:80];
-  assign out__fst__bar = out[79:48];
-  assign out__snd__foo = out[47:32];
-  assign out__snd__bar = out[31:0];
-  assign out = { { 16'd1, 32'd2 }, { 16'd3, 32'd4 } };
-
-endmodule
-"""
   run_test( a, Top() )

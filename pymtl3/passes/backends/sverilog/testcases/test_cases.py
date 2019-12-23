@@ -63,9 +63,11 @@ from pymtl3.testcases import (
     CaseSequentialPassThroughComp,
     CaseStructPackedArrayUpblkComp,
     CaseSVerilogReservedComp,
+    CaseConnectArrayBits32FooIfcComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
+    CaseConnectArraySubCompArrayStructIfcComp,
 )
 
 CasePassThroughComp = set_attributes( CasePassThroughComp,
@@ -1570,6 +1572,38 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
     '''
 )
 
+CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcComp,
+    'REF_IFC',
+    '''\
+        input  logic [0:0]  in___0__foo,
+        input  logic [0:0]  in___1__foo,
+        output  logic [0:0]  out__0__foo,
+        output  logic [0:0]  out__1__foo,
+    ''',
+    'REF_CONN',
+    '''\
+        assign out__0__foo = in___0__foo;
+        assign out__1__foo = in___1__foo;
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [0:0] reset,
+          input logic [0:0] in___0__foo,
+          input logic [0:0] in___1__foo,
+          output logic [0:0] out__0__foo,
+          output logic [0:0] out__1__foo,
+        );
+
+          assign out__0__foo = in___0__foo;
+          assign out__1__foo = in___1__foo;
+
+        endmodule
+    '''
+)
+
 CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     'REF_IFC',
     '''\
@@ -1688,6 +1722,69 @@ CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrC
           assign out = b__out;
 
         endmodule
+    '''
+)
+
+CaseConnectArraySubCompArrayStructIfcComp = set_attributes( CaseConnectArraySubCompArrayStructIfcComp,
+    'REF_COMP',
+    '''\
+        logic [0:0] b__0__clk;
+        logic [31:0] b__0__out;
+        logic [0:0] b__0__reset;
+        Bits32Foo b__0__ifc__0__foo [0:0];
+
+        Bits32ArrayStructIfcComp b__0
+        (
+          .clk( b__0__clk ),
+          .out( b__0__out ),
+          .reset( b__0__reset ),
+          .ifc__0__foo( b__0__ifc__0__foo )
+        );
+    ''',
+    'REF_SRC',
+    '''\
+      typedef struct packed {
+        logic [31:0] foo;
+      } Bits32Foo;
+
+      module Bits32ArrayStructIfcComp
+      (
+        input logic [0:0] clk,
+        output logic [31:0] out,
+        input logic [0:0] reset,
+        input Bits32Foo ifc__0__foo [0:0]
+      );
+
+        assign out = ifc__0__foo[0].foo;
+
+      endmodule
+
+      module DUT
+      (
+        input logic [0:0] clk,
+        input logic [31:0] in_,
+        output logic [31:0] out,
+        input logic [0:0] reset
+      );
+        logic [0:0] b__0__clk;
+        logic [31:0] b__0__out;
+        logic [0:0] b__0__reset;
+        Bits32Foo b__0__ifc__0__foo [0:0];
+
+        Bits32ArrayStructIfcComp b__0
+        (
+          .clk( b__0__clk ),
+          .out( b__0__out ),
+          .reset( b__0__reset ),
+          .ifc__0__foo( b__0__ifc__0__foo )
+        );
+
+        assign b__0__clk = clk;
+        assign b__0__reset = reset;
+        assign b__0__ifc__0__foo[0].foo = in_;
+        assign out = b__0__out;
+
+      endmodule
     '''
 )
 

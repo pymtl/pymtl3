@@ -133,6 +133,10 @@ class Bits32FooWireBarInIfc( Interface ):
     s.foo = Wire( Bits32 )
     s.bar = InPort( Bits32 )
 
+class Bits32ArrayStructInIfc( Interface ):
+  def construct( s ):
+    s.foo = [ InPort( Bits32Foo ) for _ in range(1) ]
+
 # Nested interfaces
 
 class ReqIfc( Interface ):
@@ -216,6 +220,12 @@ class Bits32OutDrivenSubComp( Component ):
     connect( s.out, Bits32(42) )
     connect( s.ifc.msg, Bits32(42) )
     connect( s.ifc.val, Bits1(1) )
+
+class Bits32ArrayStructIfcComp( Component ):
+  def construct( s ):
+    s.out = OutPort( Bits32 )
+    s.ifc = [ Bits32ArrayStructInIfc() for _ in range(1) ]
+    connect( s.out, s.ifc[0].foo[0].foo )
 
 #-------------------------------------------------------------------------
 # Test Components
@@ -1296,7 +1306,7 @@ class CaseConnectLiteralStructComp:
   _check( 'out', "(lambda x: x)", 0 )
   TEST_VECTOR = \
   [
-      [   NestedStructPackedPlusScalar(42, [ Bits32(1) , Bits32(2)  ], Bits32Foo(3) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
+      [   NestedStructPackedPlusScalar(42, [ Bits32(1) , Bits32(2)  ], Bits32Foo(3) ) ],
   ]
 
 class CaseNestedStructPackedArrayUpblkComp:
@@ -1693,6 +1703,32 @@ class CaseConnectValRdyIfcUpblkComp:
       [    1,    24,   1,    1,    24,    1 ],
   ]
 
+class CaseConnectArrayBits32FooIfcComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = [ Bits32FooInIfc() for _ in range(2) ]
+      s.out = [ Bits32FooOutIfc() for _ in range(2) ]
+      for i in range(2):
+        connect( s.out[i], s.in_[i] )
+  TV_IN = \
+  _set(
+      'in_[0].foo.foo',   Bits32,  0,
+      'in_[1].foo.foo',   Bits32,  1,
+  )
+  TV_OUT = \
+  _check(
+      'out[0].foo.foo',   Bits32,  2,
+      'out[1].foo.foo',   Bits32,  3,
+  )
+  TEST_VECTOR = \
+  [
+      [ 1,      0,    1,      0, ], 
+      [ 0,     42,    0,     42, ],
+      [ 1,     42,    1,     42, ],
+      [ 1,     -1,    1,     -1, ],
+      [ 1,     -2,    1,     -2, ],
+  ]
+
 class CaseConnectArrayNestedIfcComp:
   class DUT( Component ):
     def construct( s ):
@@ -1798,6 +1834,26 @@ class CaseConnectSubCompIfcHierarchyComp:
   )
   TEST_VECTOR = [ [ 42, 42, 1 ] ]
 
+class CaseConnectArraySubCompArrayStructIfcComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.b = [ Bits32ArrayStructIfcComp() for _ in range(1) ]
+      connect( s.in_, s.b[0].ifc[0].foo[0].foo )
+      connect( s.out, s.b[0].out )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [ 42, 42 ],
+      [  1,  1 ],
+      [ -1, -1 ],
+      [ -2, -2 ],
+  ]
+
 class CaseBits32ArrayConnectSubCompAttrComp:
   class DUT( Component ):
     def construct( s ):
@@ -1897,6 +1953,21 @@ class CaseInterfaceArrayNonStaticIndexComp:
       @s.update
       def upblk():
         s.out = s.in_[s.in_[0].foo].foo
+  TV_IN = \
+  _set(
+      'in_[0].foo', Bits32, 0,
+      'in_[1].foo', Bits32, 1,
+  )
+  TV_OUT = \
+  _check( 'out', Bits32, 2 )
+  TEST_VECTOR = \
+  [
+      [  0,   0,    0 ],
+      [  1,   0,    0 ],
+      [  1,   1,    1 ],
+      [  1,  -1,   -1 ],
+      [  1,  42,   42 ],
+  ]
 
 #-------------------------------------------------------------------------
 # Test cases that contain errors

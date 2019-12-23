@@ -5,29 +5,27 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.translation.structural.test.SVStructuralTranslatorL1_test import (
-    check_eq,
+from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
+from pymtl3.passes.rtlir.util.test_utility import get_parameter
+
+from ..behavioral.test.YosysBehavioralTranslatorL5_test import (
+    test_yosys_behavioral_L5 as behavioral,
 )
-from pymtl3.passes.backends.sverilog.translation.test.SVTranslator_L4_cases_test import (
-    test_sub_component_attr,
-    test_subcomponent,
-    test_subcomponent_index,
+from ..structural.test.YosysStructuralTranslatorL4_test import (
+    test_yosys_structural_L4 as structural,
 )
-from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..YosysTranslator import YosysTranslator
 
 
-def trim( src ):
-  lines = src.split( "\n" )
-  ret = []
-  for line in lines:
-    if not line.startswith( "//" ):
-      ret.append( line )
-  return "\n".join( ret )
-
-def local_do_test( m ):
+def run_test( case, m ):
   m.elaborate()
   tr = YosysTranslator( m )
   tr.translate( m )
-  check_eq( tr.hierarchy.src, m._ref_src_yosys )
+  check_eq( tr.hierarchy.src, case.REF_SRC )
+
+@pytest.mark.parametrize(
+  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+)
+def test_yosys_L4( case ):
+  run_test( case, case.DUT() )

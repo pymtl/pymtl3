@@ -10,7 +10,8 @@ import pytest
 from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
 from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
-from ....testcases import CaseConnectArrayNestedIfcComp, CaseConnectValRdyIfcComp
+from ....testcases import CaseConnectArrayNestedIfcComp, CaseConnectValRdyIfcComp, \
+    CaseConnectArrayNestedIfcComp
 from ..SVStructuralTranslatorL3 import SVStructuralTranslatorL3
 
 
@@ -30,6 +31,7 @@ def run_test( case, m ):
 @pytest.mark.parametrize(
   'case', [
     CaseConnectValRdyIfcComp,
+    CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
   ]
 )

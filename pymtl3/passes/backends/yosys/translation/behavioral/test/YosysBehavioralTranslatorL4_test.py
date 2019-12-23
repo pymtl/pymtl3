@@ -5,50 +5,42 @@
 # Date   : June 9, 2019
 """Test the SystemVerilog translator implementation."""
 
-from pymtl3.datatypes import Bits32
-from pymtl3.dsl import Component, InPort, Interface, OutPort
-from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL1_test import (
-    is_sverilog_reserved,
-)
-from pymtl3.passes.backends.sverilog.translation.behavioral.test.SVBehavioralTranslatorL4_test import (
-    test_interface,
-    test_interface_index,
-)
+import pytest
+
+from pymtl3.passes.rtlir.util.test_utility import expected_failure
+from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
+from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
-from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..YosysBehavioralTranslatorL4 import YosysBehavioralRTLIRToSVVisitorL4
+from ....testcases import (
+    CaseArrayBits32IfcInUpblkComp,
+    CaseConnectValRdyIfcUpblkComp,
+    CaseInterfaceArrayNonStaticIndexComp,
+)
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   m.elaborate()
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = YosysBehavioralRTLIRToSVVisitorL4(is_sverilog_reserved)
+  visitor = YosysBehavioralRTLIRToSVVisitorL4(lambda x: x in sverilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
+  assert len(m_all_upblks) == 1
+
   for blk in m_all_upblks:
     upblk_src = visitor.enter( blk, upblks[blk] )
     upblk_src = "\n".join( upblk_src )
-    assert upblk_src == m._ref_upblk_srcs_yosys[blk.__name__]
+    assert upblk_src + '\n' == case.REF_UPBLK
 
-def test_interface_array_non_static_index( do_test ):
-  class Ifc( Interface ):
-    def construct( s ):
-      s.foo = InPort( Bits32 )
-  class A( Component ):
-    def construct( s ):
-      s.in_ = [ Ifc() for _ in range(2) ]
-      s.out = OutPort( Bits32 )
-      @s.update
-      def upblk():
-        s.out = s.in_[s.in_[0].foo].foo
-  a = A()
-  a._ref_upblk_srcs_yosys = { 'upblk' : \
-"""\
-always_comb begin : upblk
-  out = in___foo[in___foo[0]];
-end\
-""" }
-  do_test( a )
+@pytest.mark.parametrize(
+    'case', [
+      CaseConnectValRdyIfcUpblkComp,
+      CaseArrayBits32IfcInUpblkComp,
+      CaseInterfaceArrayNonStaticIndexComp,
+    ]
+)
+def test_yosys_behavioral_L4( case ):
+  run_test( case, case.DUT() )
