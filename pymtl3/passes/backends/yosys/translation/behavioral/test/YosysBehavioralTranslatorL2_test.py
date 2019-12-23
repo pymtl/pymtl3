@@ -10,7 +10,6 @@ import pytest
 from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
-from ..YosysBehavioralTranslatorL2 import YosysBehavioralRTLIRToSVVisitorL2
 from ....testcases import (
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
@@ -26,6 +25,7 @@ from ....testcases import (
     CaseNestedIfComp,
     CaseReducesInx3OutComp,
 )
+from ..YosysBehavioralTranslatorL2 import YosysBehavioralRTLIRToSVVisitorL2
 
 
 def run_test( case, m ):

@@ -14,7 +14,6 @@ from ..behavioral.test.YosysBehavioralTranslatorL5_test import (
 from ..structural.test.YosysStructuralTranslatorL4_test import (
     test_yosys_structural_L4 as structural,
 )
-
 from ..YosysTranslator import YosysTranslator
 
 

@@ -26,8 +26,10 @@ from pymtl3.passes.backends.sverilog.testcases import (
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
     CaseBits64ZextInComp,
+    CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
+    CaseConnectArraySubCompArrayStructIfcComp,
     CaseConnectBitsConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectConstStructAttrToOutComp,
@@ -59,11 +61,9 @@ from pymtl3.passes.backends.sverilog.testcases import (
     CaseSequentialPassThroughComp,
     CaseStructPackedArrayUpblkComp,
     CaseSVerilogReservedComp,
-    CaseConnectArrayBits32FooIfcComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
-    CaseConnectArraySubCompArrayStructIfcComp,
 )
 
 CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,

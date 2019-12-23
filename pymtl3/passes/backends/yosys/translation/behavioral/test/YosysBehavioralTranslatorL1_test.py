@@ -7,13 +7,11 @@
 
 import pytest
 
-from pymtl3.passes.rtlir.util.test_utility import expected_failure
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-
+from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
+from pymtl3.passes.rtlir.util.test_utility import expected_failure
 
-from ..YosysBehavioralTranslatorL1 import YosysBehavioralRTLIRToSVVisitorL1
 from ....testcases import (
     CaseBits32BitSelUpblkComp,
     CaseBits32x2ConcatComp,
@@ -28,6 +26,7 @@ from ....testcases import (
     CaseSequentialPassThroughComp,
     CaseSVerilogReservedComp,
 )
+from ..YosysBehavioralTranslatorL1 import YosysBehavioralRTLIRToSVVisitorL1
 
 
 def run_test( case, m ):

@@ -10,7 +10,6 @@ import pytest
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.stdlib.test import TestVectorSimulator
 
-from ..TranslationImportPass import TranslationImportPass
 from ..translation.behavioral.test.YosysBehavioralTranslatorL1_test import (
     test_yosys_behavioral_L1 as behavioral1,
 )
@@ -38,7 +37,7 @@ from ..translation.structural.test.YosysStructuralTranslatorL3_test import (
 from ..translation.structural.test.YosysStructuralTranslatorL4_test import (
     test_yosys_structural_L4 as structural4,
 )
-
+from ..TranslationImportPass import TranslationImportPass
 
 XFAILED_TESTS = [
     # incoherent translation result of Yosys backend

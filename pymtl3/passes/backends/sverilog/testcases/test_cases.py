@@ -30,8 +30,10 @@ from pymtl3.testcases import (
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
     CaseBits64ZextInComp,
+    CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
+    CaseConnectArraySubCompArrayStructIfcComp,
     CaseConnectBitsConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectConstStructAttrToOutComp,
@@ -63,11 +65,9 @@ from pymtl3.testcases import (
     CaseSequentialPassThroughComp,
     CaseStructPackedArrayUpblkComp,
     CaseSVerilogReservedComp,
-    CaseConnectArrayBits32FooIfcComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
-    CaseConnectArraySubCompArrayStructIfcComp,
 )
 
 CasePassThroughComp = set_attributes( CasePassThroughComp,

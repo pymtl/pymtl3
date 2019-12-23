@@ -10,7 +10,6 @@ import pytest
 from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
 from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
-from ..YosysStructuralTranslatorL1 import YosysStructuralTranslatorL1
 from ....testcases import (
     CaseConnectBitsConstToOutComp,
     CaseConnectBitSelToOutComp,
@@ -18,6 +17,7 @@ from ....testcases import (
     CaseConnectInToWireComp,
     CaseConnectSliceToOutComp,
 )
+from ..YosysStructuralTranslatorL1 import YosysStructuralTranslatorL1
 
 
 def run_test( case, m ):

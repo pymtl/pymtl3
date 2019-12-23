@@ -11,13 +11,13 @@ from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
 from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
-from ..YosysBehavioralTranslatorL3 import YosysBehavioralRTLIRToSVVisitorL3
 from ....testcases import (
     CaseBits32FooInBits32OutComp,
     CaseConstStructInstComp,
     CaseNestedStructPackedArrayUpblkComp,
     CaseStructPackedArrayUpblkComp,
 )
+from ..YosysBehavioralTranslatorL3 import YosysBehavioralRTLIRToSVVisitorL3
 
 
 def run_test( case, m ):

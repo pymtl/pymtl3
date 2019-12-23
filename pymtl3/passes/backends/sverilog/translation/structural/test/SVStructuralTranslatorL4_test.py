@@ -10,12 +10,12 @@ import pytest
 from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
 from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
 
-from ..SVStructuralTranslatorL4 import SVStructuralTranslatorL4
 from ....testcases import (
     CaseBits32ArrayConnectSubCompAttrComp,
     CaseBits32ConnectSubCompAttrComp,
     CaseConnectArraySubCompArrayStructIfcComp,
 )
+from ..SVStructuralTranslatorL4 import SVStructuralTranslatorL4
 
 
 def run_test( case, m ):
