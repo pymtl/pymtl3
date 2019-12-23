@@ -14,7 +14,7 @@ from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     CaseBits32TmpWireComp,
     CaseScopeTmpWireOverwriteConflictComp,
     CaseStructTmpWireComp,

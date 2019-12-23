@@ -15,7 +15,7 @@ from pymtl3.passes.rtlir.structural import StructuralRTLIRSignalExpr as sexp
 from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL1Pass import (
     StructuralRTLIRGenL1Pass,
 )
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     CaseConnectBitsConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectConstToOutComp,

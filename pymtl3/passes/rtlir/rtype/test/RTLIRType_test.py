@@ -10,7 +10,7 @@ from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     CaseBits32InOutx5CompOnly,
     CaseBits32MsgRdyIfcOnly,
     CaseBits32Outx3x2x1PortOnly,

@@ -9,7 +9,7 @@ from pymtl3.passes.rtlir.structural.StructuralRTLIRGenL4Pass import (
     StructuralRTLIRGenL4Pass,
 )
 from pymtl3.passes.rtlir.structural.StructuralRTLIRSignalExpr import *
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     CaseBits32ArrayConnectSubCompAttrComp,
     CaseBits32ConnectSubCompAttrComp,
 )

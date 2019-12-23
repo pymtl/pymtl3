@@ -12,7 +12,7 @@ from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     CaseBits32PortOnly,
     CasePackedArrayStructPortOnly,
     CaseStructPortOnly,

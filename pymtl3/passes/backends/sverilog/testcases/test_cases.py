@@ -12,7 +12,7 @@ from textwrap import dedent
 
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
 from pymtl3 import *
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,
     CaseArrayBits32IfcInUpblkComp,

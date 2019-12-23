@@ -9,7 +9,7 @@ Date   : Dec 12, 2019
 """
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.testcases import (
+from pymtl3.passes.testcases import (
     CaseArrayBits32IfcInComp,
     CaseBits32ArrayClosureConstruct,
     CaseBits32ClosureConstruct,
