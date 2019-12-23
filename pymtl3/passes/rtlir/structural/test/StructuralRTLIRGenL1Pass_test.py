@@ -102,7 +102,7 @@ def test_L1_wire_index():
   ns = a._pass_structural_rtlir_gen
   comp = sexp.CurComp(a, 's')
   assert ns.connections[0] == \
-    (sexp.WireIndex(sexp.CurCompAttr(comp, 'wire'), 2), sexp.CurCompAttr(comp, 'out'))
+    (sexp.WireIndex(sexp.CurCompAttr(comp, 'wire_'), 2), sexp.CurCompAttr(comp, 'out'))
 
 def test_L1_const_index():
   a = CaseConnectConstToOutComp.DUT()
@@ -113,7 +113,7 @@ def test_L1_const_index():
   # The expression structure is removed and only the constant value
   # is left in this node.
   assert ns.connections == \
-    [(sexp.ConstInstance(a.const[2], 42), sexp.CurCompAttr(comp, 'out'))]
+    [(sexp.ConstInstance(a.const_[2], 42), sexp.CurCompAttr(comp, 'out'))]
 
 def test_L1_bit_selection():
   a = CaseConnectBitSelToOutComp.DUT()

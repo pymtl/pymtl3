@@ -34,7 +34,7 @@ def test_L3_ifc_view_index():
   ns = a._pass_structural_rtlir_gen
   comp = CurComp(a, 's')
   assert ns.connections == \
-    [(InterfaceAttr(InterfaceViewIndex(CurCompAttr(comp, 'in_'), 2), 'foo'),
+    [(InterfaceAttr(InterfaceViewIndex(CurCompAttr(comp, 'in_'), 1), 'foo'),
      CurCompAttr(comp, 'out'))]
 
 def test_L3_ifc_view_connection():

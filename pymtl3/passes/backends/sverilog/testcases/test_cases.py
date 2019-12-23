@@ -1575,10 +1575,10 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
 CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcComp,
     'REF_IFC',
     '''\
-        input  logic [0:0]  in___0__foo,
-        input  logic [0:0]  in___1__foo,
-        output  logic [0:0]  out__0__foo,
-        output  logic [0:0]  out__1__foo,
+        input Bits32Foo  in___0__foo,
+        input Bits32Foo  in___1__foo,
+        output Bits32Foo  out__0__foo,
+        output Bits32Foo  out__1__foo
     ''',
     'REF_CONN',
     '''\
@@ -1587,14 +1587,18 @@ CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcC
     ''',
     'REF_SRC',
     '''\
+        typedef struct packed {
+          logic [31:0] foo;
+        } Bits32Foo;
+
         module DUT
         (
           input logic [0:0] clk,
           input logic [0:0] reset,
-          input logic [0:0] in___0__foo,
-          input logic [0:0] in___1__foo,
-          output logic [0:0] out__0__foo,
-          output logic [0:0] out__1__foo,
+          input Bits32Foo in___0__foo,
+          input Bits32Foo in___1__foo,
+          output Bits32Foo out__0__foo,
+          output Bits32Foo out__1__foo
         );
 
           assign out__0__foo = in___0__foo;

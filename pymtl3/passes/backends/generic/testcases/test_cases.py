@@ -1423,14 +1423,14 @@ CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
     'REF_IFC',
     '''\
         interface_decls:
-          interface_decl: in_ Array[5] of InterfaceView Bits32InIfc
+          interface_decl: in_ Array[2] of InterfaceView Bits32InIfc
             interface_ports:
               interface_port: foo Port of Vector32
     ''',
     'REF_CONN',
     '''\
         connections:
-          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 2 foo -> CurCompAttr out
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 1 foo -> CurCompAttr out
     ''',
     'REF_SRC',
     '''\
@@ -1439,7 +1439,7 @@ CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
         port_decls:
           port_decl: out Port of Vector32
         interface_decls:
-          interface_decl: in_ Array[5] of InterfaceView Bits32InIfc
+          interface_decl: in_ Array[2] of InterfaceView Bits32InIfc
             interface_ports:
               interface_port: foo Port of Vector32
         );
@@ -1450,7 +1450,7 @@ CaseArrayBits32IfcInComp = set_attributes( CaseArrayBits32IfcInComp,
         tmpvars:
         upblk_srcs:
         connections:
-          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 2 foo -> CurCompAttr out
+          connection: IfcAttr IfcArrayIdx CurCompAttr in_ 1 foo -> CurCompAttr out
 
         endcomponent
     ''',
