@@ -12,15 +12,9 @@ from ...testcases import (
     CaseConnectPassThroughLongNameComp,
     ThisIsABitStructWithSuperLongName,
 )
-from ..behavioral.test.SVBehavioralTranslatorL2_test import (
-    test_sverilog_behavioral_L2 as behavioral2,
-)
-from ..behavioral.test.SVBehavioralTranslatorL3_test import (
-    test_sverilog_behavioral_L3 as behavioral3,
-)
-from ..structural.test.SVStructuralTranslatorL2_test import (
-    test_sverilog_structural_L2 as structural,
-)
+from ..behavioral.test.SVBehavioralTranslatorL2_test import test_sverilog_behavioral_L2
+from ..behavioral.test.SVBehavioralTranslatorL3_test import test_sverilog_behavioral_L3
+from ..structural.test.SVStructuralTranslatorL2_test import test_sverilog_structural_L2
 from ..SVTranslator import SVTranslator
 
 
@@ -31,8 +25,9 @@ def run_test( case, m ):
   check_eq( tr.hierarchy.src, case.REF_SRC )
 
 @pytest.mark.parametrize(
-  'case', get_parameter('case', behavioral2) + get_parameter('case', behavioral3) + \
-          get_parameter('case', structural)
+  'case', get_parameter('case', test_sverilog_behavioral_L2) + \
+          get_parameter('case', test_sverilog_behavioral_L3) + \
+          get_parameter('case', test_sverilog_structural_L2)
 )
 def test_sverilog_L2( case ):
   run_test( case, case.DUT() )

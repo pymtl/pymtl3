@@ -9,13 +9,9 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import expected_failure, get_parameter
 
-from ..behavioral.test.BehavioralTranslatorL1_test import (
-    test_generic_behavioral_L1 as behavioral,
-)
+from ..behavioral.test.BehavioralTranslatorL1_test import test_generic_behavioral_L1
 from ..errors import RTLIRTranslationError
-from ..structural.test.StructuralTranslatorL1_test import (
-    test_generic_structural_L1 as structural,
-)
+from ..structural.test.StructuralTranslatorL1_test import test_generic_structural_L1
 from ..testcases import (
     CaseBitSelOverBitSelComp,
     CaseBitSelOverPartSelComp,
@@ -34,7 +30,8 @@ def run_test( case, m ):
   assert src == case.REF_SRC
 
 @pytest.mark.parametrize(
-  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+  'case', get_parameter('case', test_generic_behavioral_L1) + \
+          get_parameter('case', test_generic_structural_L1)
 )
 def test_generic_L1( case ):
   run_test( case, case.DUT() )

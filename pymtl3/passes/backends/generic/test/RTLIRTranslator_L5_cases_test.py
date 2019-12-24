@@ -9,9 +9,7 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
-from ..behavioral.test.BehavioralTranslatorL5_test import (
-    test_generic_behavioral_L5 as behavioral,
-)
+from ..behavioral.test.BehavioralTranslatorL5_test import test_generic_behavioral_L5
 from .TestRTLIRTranslator import TestRTLIRTranslator
 
 
@@ -24,7 +22,7 @@ def run_test( case, m ):
   assert src == case.REF_SRC
 
 @pytest.mark.parametrize(
-  'case', get_parameter('case', behavioral)
+  'case', get_parameter('case', test_generic_behavioral_L5)
 )
 def test_generic_L5( case ):
   run_test( case, case.DUT() )

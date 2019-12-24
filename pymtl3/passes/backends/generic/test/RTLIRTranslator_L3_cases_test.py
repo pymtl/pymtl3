@@ -9,12 +9,8 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 
-from ..behavioral.test.BehavioralTranslatorL3_test import (
-    test_generic_behavioral_L3 as behavioral,
-)
-from ..structural.test.StructuralTranslatorL3_test import (
-    test_generic_structural_L3 as structural,
-)
+from ..behavioral.test.BehavioralTranslatorL3_test import test_generic_behavioral_L3
+from ..structural.test.StructuralTranslatorL3_test import test_generic_structural_L3
 from .TestRTLIRTranslator import TestRTLIRTranslator
 
 
@@ -27,7 +23,8 @@ def run_test( case, m ):
   assert src == case.REF_SRC
 
 @pytest.mark.parametrize(
-  'case', get_parameter('case', behavioral) + get_parameter('case', structural)
+  'case', get_parameter('case', test_generic_behavioral_L3) + \
+          get_parameter('case', test_generic_structural_L3)
 )
 def test_generic_L3( case ):
   run_test( case, case.DUT() )
