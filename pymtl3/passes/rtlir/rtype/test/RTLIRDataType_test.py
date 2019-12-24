@@ -12,10 +12,15 @@ from pymtl3.dsl import Component, InPort, OutPort
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
+from pymtl3.passes.testcases import (
+    CaseBits32PortOnly,
+    CasePackedArrayStructPortOnly,
+    CaseStructPortOnly,
+)
 
 
 def test_py_int():
-  assert rdt.Vector(32) == rdt.get_rtlir_dtype( 42 )
+  assert rdt.get_rtlir_dtype( 42 ) == rdt.Vector(32) 
 
 def test_py_float():
   with expected_failure( RTLIRConversionError ):
@@ -30,39 +35,24 @@ def test_py_list():
     rdt.get_rtlir_dtype( [ 1, 2, 3 ] )
 
 def test_py_struct():
-  @bitstruct
-  class B:
-    foo: Bits32
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( B )
-  a = A()
+  a = CaseStructPortOnly.DUT()
   a.elaborate()
-  assert rdt.Struct( 'B', {'foo':rdt.Vector(32)} ) == rdt.get_rtlir_dtype( a.in_ )
+  assert rdt.get_rtlir_dtype( a.in_ ) == rdt.Struct( 'Bits32Foo', {'foo':rdt.Vector(32)} )
 
 def test_pymtl_Bits():
-  assert rdt.Vector(1) == rdt.get_rtlir_dtype( Bits1(0) )
-  assert rdt.Vector(2) == rdt.get_rtlir_dtype( Bits2(0) )
-  assert rdt.Vector(8) == rdt.get_rtlir_dtype( Bits8(0) )
-  assert rdt.Vector(32) == rdt.get_rtlir_dtype( Bits32(0) )
-  assert rdt.Vector(255) == rdt.get_rtlir_dtype( Bits255(0) )
+  assert rdt.get_rtlir_dtype( Bits1(0) ) == rdt.Vector(1)
+  assert rdt.get_rtlir_dtype( Bits2(0) ) == rdt.Vector(2)
+  assert rdt.get_rtlir_dtype( Bits8(0) ) == rdt.Vector(8)
+  assert rdt.get_rtlir_dtype( Bits32(0) ) == rdt.Vector(32)
+  assert rdt.get_rtlir_dtype( Bits255(0) ) == rdt.Vector(255)
 
 def test_pymtl_signal():
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( Bits32 )
-  a = A()
+  a = CaseBits32PortOnly.DUT()
   a.elaborate()
-  assert rdt.Vector(32) == rdt.get_rtlir_dtype( a.in_ )
+  assert rdt.get_rtlir_dtype( a.in_ ) == rdt.Vector(32)
 
 def test_pymtl_packed_array():
-  @bitstruct
-  class B:
-    foo: [ Bits32 ] * 5
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( B )
-  a = A()
+  a = CasePackedArrayStructPortOnly.DUT()
   a.elaborate()
-  assert rdt.Struct( 'B', {'foo':rdt.PackedArray([5], rdt.Vector(32))} ) == \
-         rdt.get_rtlir_dtype( a.in_ )
+  assert rdt.get_rtlir_dtype( a.in_ ) == \
+      rdt.Struct( 'Bits32x5Foo', {'foo':rdt.PackedArray([5], rdt.Vector(32))} )

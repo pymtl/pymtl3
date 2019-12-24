@@ -76,7 +76,7 @@ class ChecksumVRTL_Tests( BaseTests ):
 # Reuse src/sink based tests from CL test suite to test translation
 #-------------------------------------------------------------------------
 # We reuse all source/sink based tests for CL again to test whether our
-# RTL code can be properly transalted into system verilog. We overwrite
+# RTL code can be properly translated into system verilog. We overwrite
 # [run_sim] of the CL test suite so that we can apply the translation and
 # import pass to the DUT.
 
