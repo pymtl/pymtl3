@@ -3,7 +3,7 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : May 23, 2019
-"""Test the RTLIR transaltor."""
+"""Test the RTLIR translator."""
 
 import pytest
 
