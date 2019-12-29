@@ -590,6 +590,13 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
+  def get_all_signals( s ):
+    try:
+      s._check_called_at_elaborate_top( "get_all_signals" )
+      return s._dsl.all_signals
+    except AttributeError:
+      raise NotElaboratedError()
+
   def get_all_update_blocks( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_update_blocks" )
