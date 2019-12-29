@@ -593,7 +593,7 @@ class Component( ComponentLevel7 ):
   def get_all_signals( s ):
     try:
       s._check_called_at_elaborate_top( "get_all_signals" )
-      return s._dsl.all_signals
+      return set( x for x in s._dsl.all_signals if x.is_top_level_signal() )
     except AttributeError:
       raise NotElaboratedError()
 

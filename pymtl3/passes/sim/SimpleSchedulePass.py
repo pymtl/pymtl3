@@ -90,7 +90,7 @@ class SimpleSchedulePass( BasePass ):
     #   x.zz._flip()
 
     hostobj_signals = defaultdict(list)
-    for x in reversed(sorted( top._dsl.all_signals, \
+    for x in reversed(sorted( top._dsl.get_all_signals(), \
         key=lambda x: x.get_host_component().get_component_level() )):
       if x._dsl.needs_double_buffer:
         hostobj_signals[ x.get_host_component() ].append( x )

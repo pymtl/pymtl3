@@ -88,10 +88,9 @@ class VcdGenerationPass( BasePass ):
 
     # We only collect top level signals, and squash bitstruct into a long
     # bits object
-    for x in top._dsl.all_signals:
-      if x.is_top_level_signal():
-        host = x.get_host_component()
-        component_signals[ host ].add( x )
+    for x in top._dsl.get_all_signals():
+      host = x.get_host_component()
+      component_signals[ host ].add( x )
 
     # We pre-process all nets in order to remove all sliced wires because
     # they belong to a top level wire and we count that wire

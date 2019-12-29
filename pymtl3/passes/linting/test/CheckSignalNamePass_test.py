@@ -1,6 +1,6 @@
 """
 ========================================================================
-CheckSignalNamePass.py
+CheckSignalNamePass_test.py
 ========================================================================
 
 Author : Shunning Jiang
@@ -19,13 +19,13 @@ class Inner(Component):
       s.Out = OutPort(Bits1)
       @s.update
       def up_bad():
-        s.Out = s.in_ + 1
+        s.Out[0:1] = s.in_ + 1
 
     else:
       s.out = OutPort(Bits1)
       @s.update
       def up_good():
-        s.out = s.in_ + 1
+        s.out[0:1] = s.in_ + 1
 
 def test_signal_name_default_function():
 
@@ -36,7 +36,7 @@ def test_signal_name_default_function():
   top = Top()
   top.elaborate()
   top.apply( CheckSignalNamePass() )
-  assert top._linting.violated_signals == [ top.inners[0].Out, top.inners[5].Out ]
+  assert top._linting.name_violated_signals == [ top.inners[0].Out, top.inners[5].Out ]
 
 def test_signal_name_custom_function():
 
@@ -48,10 +48,10 @@ def test_signal_name_custom_function():
   a.elaborate()
   a.apply( CheckSignalNamePass(lambda x: x.get_field_name().isupper()) )
   # Every signal violated this UPPER check ...
-  assert len(a._linting.violated_signals) == 42 # 2 + 10 * (2+2)
+  assert len(a._linting.name_violated_signals) == 42 # 2 + 10 * (2+2)
 
   # Every signal instantiated in the inners array will have [] in its
   # full name.
   a.apply( CheckSignalNamePass(lambda x: '[' not in repr(x)) )
-  assert len(a._linting.violated_signals) == 40
+  assert len(a._linting.name_violated_signals) == 40
 

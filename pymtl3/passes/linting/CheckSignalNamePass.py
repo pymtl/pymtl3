@@ -26,6 +26,6 @@ class CheckSignalNamePass( BasePass ):
         violated.append( obj )
 
     violated = sorted(violated, key=repr)
-    top._linting.violated_signals = violated
-    print("\nIn CheckSignalNamePass, these signals violate the provided signal name rule: \n  - ",end="")
+    top._linting.name_violated_signals = violated
+    print("\n[CheckSignalNamePass] These signals violate the provided signal name rule: \n  - ",end="")
     print("\n  - ".join( [ f"{x!r} of class {x.__class__.__name__}" for x in violated ] ) )
