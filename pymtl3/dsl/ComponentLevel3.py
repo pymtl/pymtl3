@@ -211,7 +211,7 @@ class ComponentLevel3( ComponentLevel2 ):
 
     # Add the source code to linecache for the compiled function
 
-    new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
+    new_src = "{}\n".format( src.replace("//=", "=") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
     ComponentLevel1.update( s, blk )

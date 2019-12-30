@@ -116,7 +116,8 @@ In file {}:{} in {}
     but {} has \"{}\" type{}.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
-Suggestion: fix incorrect field access at line {}, or fix the declaration somewhere.""".format( \
+Suggestion: Fix incorrect field access at line {}, or fix the declaration somewhere.
+            Also check if the slice is [small:large] (e.g., [0:15] is correct / [15:0] is wrong). """.format( \
       filepath, error_lineno, blk.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
       idx_str, repr(obj), obj.__class__.__name__, blk.__name__,

@@ -7,6 +7,7 @@ Add clk/reset signals.
 Author : Yanghui Ou
   Date : Apr 6, 2019
 """
+import warnings
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits1
@@ -27,8 +28,8 @@ class Component( ComponentLevel7 ):
     if not s._dsl.constructed:
 
       # clk and reset signals are added here.
-      s.clk   = InPort( Bits1 )
-      s.reset = InPort( Bits1 )
+      s.clk   = my_clk   = InPort( Bits1 )
+      s.reset = my_reset = InPort( Bits1 )
 
       # Merge the actual keyword args and those args set by set_parameter
       if s._dsl.param_tree is None:
@@ -51,8 +52,16 @@ class Component( ComponentLevel7 ):
       # correct connection.
       parent = s.get_parent_object()
       if parent is not None:
-        parent._connect_signal_signal( s.clk, parent.clk )
-        parent._connect_signal_signal( s.reset, parent.reset )
+        if s.clk is my_clk:
+          parent._connect_signal_signal( s.clk, parent.clk )
+        else:
+          warnings.warn( f"{s.clk} has overwritten the implicit reset. "
+                          "You need to connect the reset by yourself.")
+        if s.reset is my_reset:
+          parent._connect_signal_signal( s.reset, parent.reset )
+        else:
+          warnings.warn( f"{s.reset} has overwritten the implicit reset. "
+                          "You need to connect the reset by yourself.")
 
       if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
         s._continue_call_connect()

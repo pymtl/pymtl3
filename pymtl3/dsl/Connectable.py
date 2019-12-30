@@ -157,6 +157,8 @@ class Signal( NamedObject, Connectable ):
       return super().__getattribute__( name )
 
     if name not in s.__dict__:
+      if name == "int":
+        return s
       # Shunning: we move this from __init__ to here for on-demand type
       #           checking when the __getattr__ is indeed used.
 
