@@ -88,7 +88,7 @@ class VcdGenerationPass( BasePass ):
 
     # We only collect top level signals, and squash bitstruct into a long
     # bits object
-    for x in top._dsl.get_all_signals():
+    for x in top.get_all_signals():
       host = x.get_host_component()
       component_signals[ host ].add( x )
 
