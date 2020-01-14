@@ -353,7 +353,7 @@ class ImportConfigs( BasePassConfigs ):
     """Check if each port name in the port map exists in component `rtype`."""
     pm = s.port_map
     all_ports = rtype.get_ports_packed()
-    all_port_names = map(lambda x: x[0], rtype.get_ports_packed())
+    all_port_names = list(map(lambda x: x[0], rtype.get_ports_packed()))
     assert all(isinstance(p, rt.Port) and \
                isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
         f"Port map option currently requires all ports of {rtype.get_name()}"\

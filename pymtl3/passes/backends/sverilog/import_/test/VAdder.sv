@@ -1,12 +1,12 @@
 module VAdder #( parameter nbits = 32 )
 (
-  input clk,
-  input reset,
-  input [nbits-1:0] in0,
-  input [nbits-1:0] in1,
-  input cin,
-  output [nbits-1:0] out,
-  output cout
+  input  logic clk,
+  input  logic reset,
+  input  logic [nbits-1:0] in0,
+  input  logic [nbits-1:0] in1,
+  input  logic cin,
+  output logic [nbits-1:0] out,
+  output logic cout
 );
 
   logic [nbits:0] temp;
