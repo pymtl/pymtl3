@@ -213,6 +213,14 @@ class ImportConfigs( BasePassConfigs ):
   # Public APIs
   #-----------------------------------------------------------------------
 
+  # Override
+  def check( s ):
+    super().check()
+    
+    if not s.vl_flist and not os.path.isfile(expand(s.vl_src)):
+      raise InvalidPassOptionValue( 'vl_src', s.vl_src, s.PassName,
+                'vl_src should be a path to a file when vl_flist is empty!' )
+
   def create_vl_cmd( s ):
     top_module  =  f"--top-module {s.top_module}"
     src         = s.vl_src
@@ -358,7 +366,7 @@ class ImportConfigs( BasePassConfigs ):
                isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
         f"Port map option currently requires all ports of {rtype.get_name()}"\
         f" to be a single vector port."
-    for name, _ in pm.items():
+    for name in pm.keys():
       if name not in all_port_names:
         raise InvalidPassOptionValue("port_map", pm, s.PassName,
           f"Port {name} does not exist in component {rtype.get_name()}!")
