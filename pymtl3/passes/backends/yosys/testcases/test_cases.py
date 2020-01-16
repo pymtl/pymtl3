@@ -79,14 +79,17 @@ CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
         module DUT
         (
           input logic [0:0] clk,
-          input logic [31:0] in_,
+          input logic [31:0] in___foo,
           output logic [63:0] out,
           input logic [0:0] reset
         );
+          logic [31:0] in_;
 
           always_comb begin : upblk
             out = { { 32 { 1'b0 } }, in_ };
           end
+
+          assign in_[31:0] = in___foo;
 
         endmodule
     '''

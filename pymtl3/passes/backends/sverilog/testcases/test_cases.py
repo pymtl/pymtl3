@@ -80,11 +80,15 @@ CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
     ''',
     'REF_SRC',
     '''\
+        typedef struct packed {
+          logic [31:0] foo;
+        } Bits32Foo;
+
         module DUT
         (
           input logic [0:0] clk,
-          input logic [31:0] in_,
-          output logic [31:0] out,
+          input Bits32Foo in_,
+          output logic [63:0] out,
           input logic [0:0] reset
         );
 
