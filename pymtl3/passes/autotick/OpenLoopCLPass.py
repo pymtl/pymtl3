@@ -30,11 +30,10 @@ from ..tracing.VcdGenerationPass import VcdGenerationPass
 
 random.seed(0xdeadbeef)
 
-
-
-
-
 class OpenLoopCLPass( BasePass ):
+  def __init__( self, print_line_trace=True ):
+    self.line_trace_on = print_line_trace
+
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
@@ -59,7 +58,6 @@ class OpenLoopCLPass( BasePass ):
     method_callee_mapping = {}
     method_guard_mapping  = {}
     guard_method_mapping  = {}
-    guards = {}
 
     def get_raw_method( x ):
       assert isinstance( x, CalleePort )
@@ -113,6 +111,10 @@ class OpenLoopCLPass( BasePass ):
 
       if yy in method_callee_mapping:
         yy = method_callee_mapping[ yy ]
+
+      # if there is a constraint A<B, it means M(A.method) < B.rdy or means U(A) < B.rdy
+      if yy in method_guard_mapping:
+        yy = method_guard_mapping[ yy ]
 
       if xx in V and yy in V:
         E.add( (xx, yy) )
@@ -195,30 +197,23 @@ class OpenLoopCLPass( BasePass ):
     list_version_of_SCCs = [ list(x) for x in SCCs ]
     while Q:
       # random.shuffle(Q)
-      u = Q.pop()
 
-      scc_schedule.append( u )
+      # Prioritize update blocks instead of method
+      # TODO make it O(logn) by balanced BST if needed ...
+      found = False
+      for i in range(len(Q)):
+        m = Q[i]
+        if m not in method_guard_mapping or m not in guard_method_mapping:
+          u = Q.pop(i)
+          found = True
+          break
 
-      is_guard = False
-      if len(SCCs[u]) == 1:
-        guard  = list(SCCs[u])[0]
-        method = guard_method_mapping.get( guard )
-        if method is not None:
-          is_guard = True
+      if found:
+        scc_schedule.append( u )
 
       for v in G_new[u]:
         InD[v] -= 1
         if not InD[v]:
-          if is_guard and len(SCCs[v]) == 1 and list(SCCs[v])[0] is method:
-            scc_schedule.append( v )
-            scc_pred[ v ] = u
-            for w in G_new[v]:
-              InD[w] -= 1
-              if not InD[w]:
-                # cannot be guard now
-                Q.append( w )
-                scc_pred[ w ] = v
-            continue
           Q.append( v )
           scc_pred[ v ] = u
 
@@ -237,12 +232,6 @@ class OpenLoopCLPass( BasePass ):
       scc = SCCs[i]
       if len(scc) == 1:
         u = list(scc)[0]
-
-        # We add the corresponding rdy before the method
-
-        # if u in method_guard_mapping:
-          # update_schedule.append( method_guard_mapping[u] )
-
         update_schedule.append( u )
       else:
 
@@ -367,9 +356,10 @@ class OpenLoopCLPass( BasePass ):
 
     # print trace after all update blocks
     def print_line_trace():
-      print(top.__class__.__name__.ljust(15), ':', top.line_trace())
+      print(top.num_cycles_executed, top.__class__.__name__.ljust(15), ':', top.line_trace())
 
-    schedule.append( print_line_trace )
+    if self.line_trace_on:
+      schedule.append( print_line_trace )
 
     # call ff blocks first
     schedule.extend( top._sched.schedule_ff )
@@ -456,5 +446,3 @@ class OpenLoopCLPass( BasePass ):
 
     # This is for reset to work correctly
     top.tick = SimpleTickPass.gen_tick_function( schedule_no_method )
-    # for x in schedule:
-      # print(x)

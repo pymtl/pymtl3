@@ -37,32 +37,31 @@ class BaseStateMachine( RuleBasedStateMachine ):
     s.ref = deepcopy( s.preconstruct_ref )
     s.dut = deepcopy( s.preconstruct_dut )
 
-    # Elaborate ref
-    s.ref.apply( AutoTickSimPass() )
-    s.ref.sim_reset()
-
     def wrap_line_trace( top ):
       func = top.line_trace
 
-      top_level_callee_cl = top.get_all_object_filter(
-        lambda x: isinstance(x, CalleeIfcCL) and x.get_host_component() is top )
+      top_level_callee_cl = sorted( top.get_all_object_filter(
+        lambda x: isinstance(x, CalleeIfcCL) and x.get_host_component() is top ), key=repr )
 
       def line_trace():
-        return "{} || {}".format( func(),
-          " | ".join([ str(ifc) for ifc in top_level_callee_cl ])
-        )
+        return " | ".join([ f"{ifc.get_field_name()}{ifc}" for ifc in top_level_callee_cl ]) + f"|| {func()}"
+
       top.line_trace = line_trace
 
-    wrap_line_trace( s.dut )
+    # Elaborate ref
+    s.ref.apply( AutoTickSimPass(s.line_trace) )
+    wrap_line_trace( s.ref )
+    s.ref.sim_reset()
 
     # Elaborate dut
-    s.dut.apply( AutoTickSimPass() )
+    s.dut.apply( AutoTickSimPass(s.line_trace) )
+    wrap_line_trace( s.dut )
     s.dut.sim_reset()
 
     # Print header
-    print("\n"+"="*74)
-    print(" PyH2 trying examples...")
-    print("="*74)
+    # print("\n"+"="*74)
+    # print(" PyH2 trying examples...")
+    # print("="*74)
 
 #-------------------------------------------------------------------------
 # TestStateful
@@ -284,8 +283,9 @@ mismatch found in method '{name}_rdy':
 #-------------------------------------------------------------------------
 
 def create_test_state_machine( dut, ref, custom_strategy=None, cycle_accurate=False ):
-  Test = type( dut.model_name + "_StatefulPyH2", TestStateful.__bases__,
+  Test = type( dut.model_name + "_PyH2O", TestStateful.__bases__,
                dict( TestStateful.__dict__ ) )
+
 
   Test.preconstruct_dut = deepcopy( dut )
   Test.preconstruct_ref = deepcopy( ref )
@@ -325,14 +325,16 @@ def create_test_state_machine( dut, ref, custom_strategy=None, cycle_accurate=Fa
 # inferred from the corresponding RTL port.
 # TODO: figure out a way to pass in settings
 
-def run_pyh2s( dut, ref, custom_strategy=None ):
+def run_pyh2s( dut, ref, custom_strategy=None, line_trace=True ):
   wrapped_dut = RTL2CLWrapper( dut )
-  machine = create_test_state_machine( wrapped_dut, ref, custom_strategy )
+  machine = create_test_state_machine( wrapped_dut, ref, custom_strategy, cycle_accurate=True )
+
+  machine.line_trace = line_trace
   machine.TestCase.settings = settings(
-    max_examples=50,
+    max_examples=100,
     stateful_step_count=100,
     deadline=None,
-    # verbosity=Verbosity.verbose,
+    verbosity=Verbosity.verbose,
     database=None,
     suppress_health_check=[ HealthCheck.filter_too_much ],
   )

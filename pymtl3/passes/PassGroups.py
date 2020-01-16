@@ -46,9 +46,12 @@ class SimulationPass( BasePass ):
     top.lock_in_simulation()
 
 class AutoTickSimPass( BasePass ):
+  def __init__( s, print_line_trace=True ):
+    s.print_line_trace = print_line_trace
+
   def __call__( s, top ):
     top.elaborate()
     GenDAGPass()( top )
     WrapGreenletPass()( top )
-    OpenLoopCLPass()( top )
+    OpenLoopCLPass( s.print_line_trace )( top )
     top.lock_in_simulation()

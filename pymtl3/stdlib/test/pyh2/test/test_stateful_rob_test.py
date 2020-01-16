@@ -8,6 +8,7 @@
 
 
 from pymtl3 import *
+from pymtl3.passes import AutoTickSimPass
 
 from ..pyh2s import run_pyh2s
 from ..RTL2CLWrapper import RTL2CLWrapper
@@ -33,7 +34,7 @@ class ReorderBufferCL( Component ):
     })
 
     s.data = [ None ] * s.num_entries
-    s.allocated = [ 0 ] * s.num_entries
+    s.allocated = [ False ] * s.num_entries
 
     s.head = 0
     s.num = 0
@@ -72,7 +73,12 @@ class ReorderBufferCL( Component ):
     return s.num == 0
 
   def line_trace( s ):
-    return f"[{''.join( ['+' if x else ' ' for x in s.allocated ] )}]"
+    trace = ""
+    for x, y in zip(s.allocated, s.data):
+      if not x:       trace += " "
+      elif y is None: trace += "-"
+      else:           trace += "+"
+    return f"[{trace}]"
 
 #-------------------------------------------------------------------------
 # ReorderBuffer
@@ -152,7 +158,7 @@ class ReorderBuffer( Component ):
           s.size <<= s.size + 1
 
       elif s.remove.en: # alloc.en == False
-        s.head <<= s.head + 1
+        s.head <<= s.head
         s.size <<= s.size - 1
 
     @s.update_ff
@@ -175,15 +181,74 @@ class ReorderBuffer( Component ):
         s.allocated[ s.tail ] <<= b1(1)
 
   def line_trace( s ):
-    return ":".join([
-        "{}".format( s.data[ i ] if s.valid[ i ] else "......" if s
-                     .allocated[ i ] else "-" ).ljust( 8 )
-        for i in range( len( s.data ) )
-    ] )
+    trace = ""
+    for x, y, z in zip(s.allocated, s.valid, s.data):
+      if not x:   trace += " "
+      elif not y: trace += "-"
+      else:       trace += "+"
+    return f"[{trace}]"
 
+
+def test_directed_concurrent_methods():
+
+  def wrap_line_trace( top ):
+    func = top.line_trace
+
+    top_level_callee_cl = sorted( top.get_all_object_filter(
+      lambda x: isinstance(x, CalleeIfcCL) and x.get_host_component() is top ), key=repr )
+
+    def line_trace():
+      return " | ".join([ f"{ifc.get_field_name()}{ifc}" for ifc in top_level_callee_cl ]) + f"|| {func()}"
+
+    top.line_trace = line_trace
+
+  ref = ReorderBufferCL( Bits16, 4 )
+  ref.apply( AutoTickSimPass() )
+  wrap_line_trace( ref )
+  ref.sim_reset()
+
+  dut = ReorderBuffer( Bits16, 4 )
+  dut = RTL2CLWrapper( dut )
+  dut.apply( AutoTickSimPass() )
+  wrap_line_trace( dut )
+  dut.sim_reset()
+
+  MsgType = dut.method_specs['update_entry'][0]
+
+  for i in range(4):
+    dut_alloc_rdy = dut.alloc.rdy()
+    ref_alloc_rdy = ref.alloc.rdy()
+    # print("dut_alloc_rdy:", dut_alloc_rdy)
+    # print("ref_alloc_rdy:", ref_alloc_rdy)
+    assert dut_alloc_rdy
+    assert ref_alloc_rdy
+    dut.alloc()
+    ref.alloc()
+
+    dut_update_rdy = dut.update_entry.rdy()
+    ref_update_rdy = ref.update_entry.rdy()
+    # print("dut_update_rdy:", dut_update_rdy)
+    # print("ref_update_rdy:", ref_update_rdy)
+    assert dut_update_rdy
+    assert ref_update_rdy
+
+    dut.update_entry( MsgType(i,12) )
+    ref.update_entry( MsgType(i,12) )
+
+    dut_remove_rdy = dut.remove.rdy()
+    ref_remove_rdy = ref.remove.rdy()
+    # print("dut_remove_rdy:", dut_remove_rdy)
+    # print("ref_remove_rdy:", ref_remove_rdy)
+    assert dut_remove_rdy
+    assert ref_remove_rdy
+
+    assert dut.remove() == ref.remove()
+
+  assert dut.num_cycles_executed == 4
+  assert ref.num_cycles_executed == 4
 
 #-------------------------------------------------------------------------
 # test_state_machine
 #-------------------------------------------------------------------------
 def test_state_machine():
-  test = run_pyh2s( ReorderBuffer( Bits16, 4 ), ReorderBufferCL( Bits16, 4 ) )
+  test = run_pyh2s( ReorderBuffer( Bits16, 4 ), ReorderBufferCL( Bits16, 4 ), line_trace=False )
