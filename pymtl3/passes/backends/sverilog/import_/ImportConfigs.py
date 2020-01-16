@@ -162,8 +162,8 @@ class ImportConfigs( BasePassConfigs ):
 
     "port_map": Checker( lambda v: isinstance(v, dict), "expects a dict"),
 
-    "vl_src": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or \
-                s.vl_flist, "vl_src should be a path to a file when vl_flist is empty" ),
+    "vl_src": Checker( lambda v: isinstance(v, str) and (os.path.isfile(expand(v)) or not v),
+                "vl_src should be a path to a file or an empty string!" ),
 
     "vl_flist": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
                          "expects a path to a file" ),
@@ -204,7 +204,7 @@ class ImportConfigs( BasePassConfigs ):
     'SYMRSVDWORD', 'SYNCASYNCNET', 'TASKNSVAR', 'TICKCOUNT', 'UNDRIVEN',
     'UNOPT', 'UNOPTFLAT', 'UNOPTTHREADS', 'UNPACKED', 'UNSIGNED', 'UNUSED',
     'USERINFO', 'USERWARN', 'USERERROR', 'USERFATAL', 'VARHIDDEN', 'WIDTH',
-    'WIDTHCONCAT'
+    'WIDTHCONCAT',
   ]
 
   PassName = 'sverilog.ImportPass'
@@ -212,6 +212,14 @@ class ImportConfigs( BasePassConfigs ):
   #-----------------------------------------------------------------------
   # Public APIs
   #-----------------------------------------------------------------------
+
+  # Override
+  def check( s ):
+    super().check()
+    
+    if not s.vl_flist and not os.path.isfile(expand(s.vl_src)):
+      raise InvalidPassOptionValue( 'vl_src', s.vl_src, s.PassName,
+                'vl_src should be a path to a file when vl_flist is empty!' )
 
   def create_vl_cmd( s ):
     top_module  =  f"--top-module {s.top_module}"
@@ -243,11 +251,11 @@ class ImportConfigs( BasePassConfigs ):
 
   def create_cc_cmd( s ):
     c_flags = "-O0 -fPIC -fno-gnu-unique -shared" + \
-             ("" if s.is_default("c_flags") else f" {s.c_flags}")
+             ("" if s.is_default("c_flags") else f" {expand(s.c_flags)}")
     c_include_path = " ".join("-I"+p for p in s.get_all_includes() if p)
     out_file = s.get_shared_lib_path()
     c_src_files = " ".join(s.get_c_src_files())
-    ld_flags = s.ld_flags
+    ld_flags = expand(s.ld_flags)
     ld_libs = s.ld_libs
     coverage = "-DVM_COVERAGE" if s.coverage or \
                                   s.line_coverage or \
@@ -321,7 +329,7 @@ class ImportConfigs( BasePassConfigs ):
 
   def get_port_map( s ):
     pmap = s.port_map
-    return lambda name: pmap[name]
+    return lambda name: pmap[name] if name in pmap else name
 
   def get_module_to_parametrize( s ):
     return s.wrapped_module
@@ -350,20 +358,18 @@ class ImportConfigs( BasePassConfigs ):
   #-----------------------------------------------------------------------
 
   def check_p_map( s, rtype ):
-    """Check if each port name of `rtype` is in port map."""
+    """Check if each port name in the port map exists in component `rtype`."""
     pm = s.port_map
     all_ports = rtype.get_ports_packed()
+    all_port_names = list(map(lambda x: x[0], rtype.get_ports_packed()))
     assert all(isinstance(p, rt.Port) and \
                isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
         f"Port map option currently requires all ports of {rtype.get_name()}"\
         f" to be a single vector port."
-    for name, port in all_ports:
-      if name not in pm:
+    for name in pm.keys():
+      if name not in all_port_names:
         raise InvalidPassOptionValue("port_map", pm, s.PassName,
-          f"Port {name} of {rtype.get_name()} should be mapped to a new name!")
-    if len(all_ports) != len(pm):
-      raise InvalidPassOptionValue("port_map", pm, s.PassName,
-        f"All ports of {rtype.get_name()} should be mapped to a new name!")
+          f"Port {name} does not exist in component {rtype.get_name()}!")
 
   def get_all_includes( s ):
     includes = s.c_include_path

@@ -55,6 +55,36 @@ def test_reg( do_test ):
   a._tv_out = tv_out
   do_test( a )
 
+def test_reg_incomplete_portmap( do_test ):
+  def tv_in( m, test_vector ):
+    m.in_ = Bits32( test_vector[0] )
+  def tv_out( m, test_vector ):
+    if test_vector[1] != '*':
+      assert m.out == Bits32( test_vector[1] )
+  class VReg( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.config_sverilog_import = ImportConfigs(
+          vl_src = get_dir(__file__)+'VReg.sv',
+          port_map = {
+            "in_" : "d",
+            "out" : "q",
+          }
+      )
+  a = VReg()
+  a._test_vectors = [
+    [    1,    '*' ],
+    [    2,      1 ],
+    [   -1,      2 ],
+    [   -2,     -1 ],
+    [   42,     -2 ],
+    [  -42,     42 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
+
 def test_adder( do_test ):
   def tv_in( m, test_vector ):
     m.in0 = Bits32( test_vector[0] )
