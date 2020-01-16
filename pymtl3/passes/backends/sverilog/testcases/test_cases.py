@@ -63,11 +63,37 @@ from pymtl3.passes.testcases import (
     CasePassThroughComp,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
+    CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
     CaseSVerilogReservedComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
+)
+
+CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = 64'( in_ );
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = 64'( in_ );
+          end
+
+        endmodule
+    '''
 )
 
 CasePassThroughComp = set_attributes( CasePassThroughComp,
