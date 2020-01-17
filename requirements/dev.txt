@@ -8,6 +8,6 @@ pyupgrade
 graphviz
 
 # Documentation
-sphnix
+sphinx
 sphinx-prompt
 sphinx-rtd-theme
