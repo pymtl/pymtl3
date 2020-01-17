@@ -6,3 +6,8 @@ flake8
 isort
 pyupgrade
 graphviz
+
+# Documentation
+sphnix
+sphinx-prompt
+sphinx-rtd-theme

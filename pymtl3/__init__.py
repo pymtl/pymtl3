@@ -3,8 +3,6 @@ from .datatypes import _bitwidths
 from .dsl import *
 from .passes.PassGroups import SimulationPass
 
-__version__ = "0.5.4"
-
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
