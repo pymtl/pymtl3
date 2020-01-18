@@ -22,7 +22,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project   = 'PyMTL3'
-copyright = f'2020-{datetime.datetime.utcnow().year}, Batten Research Group'
+copyright = f'2017-{datetime.datetime.utcnow().year}, Batten Research Group'
 author    = 'Batten Research Group'
 
 _d = {}
