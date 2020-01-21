@@ -14,6 +14,7 @@ from ....testcases import (
     CaseBits32FooInBits32OutComp,
     CaseConstStructInstComp,
     CaseNestedStructPackedArrayUpblkComp,
+    CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
 )
 from ..SVBehavioralTranslatorL3 import BehavioralRTLIRToSVVisitorL3
@@ -40,6 +41,7 @@ def run_test( case, m ):
       CaseConstStructInstComp,
       CaseStructPackedArrayUpblkComp,
       CaseNestedStructPackedArrayUpblkComp,
+      CaseSizeCastPaddingStructPort,
     ]
 )
 def test_sverilog_behavioral_L3( case ):

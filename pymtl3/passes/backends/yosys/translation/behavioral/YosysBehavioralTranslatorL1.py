@@ -129,6 +129,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
     value = None if not hasattr(node.value, "_value") else node.value._value
 
     if value is None:
+      node.value._top_expr = 1
       value_str = s.visit( node.value )
       cur_nbits = node.value.Type.get_dtype().get_length()
       if cur_nbits == nbits:

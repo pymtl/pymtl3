@@ -59,11 +59,40 @@ from pymtl3.passes.backends.sverilog.testcases import (
     CasePassThroughComp,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
+    CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
     CaseSVerilogReservedComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
+)
+
+CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = { { 32 { 1'b0 } }, in_ };
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in___foo,
+          output logic [63:0] out,
+          input logic [0:0] reset
+        );
+          logic [31:0] in_;
+
+          always_comb begin : upblk
+            out = { { 32 { 1'b0 } }, in_ };
+          end
+
+          assign in_[31:0] = in___foo;
+
+        endmodule
+    '''
 )
 
 CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,

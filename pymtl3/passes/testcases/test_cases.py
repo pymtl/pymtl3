@@ -951,6 +951,27 @@ class CaseScopeTmpWireOverwriteConflictComp:
 # Test cases without errors
 #-------------------------------------------------------------------------
 
+class CaseSizeCastPaddingStructPort:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32Foo )
+      s.out = OutPort( Bits64 )
+      @s.update
+      def upblk():
+        s.out = Bits64( s.in_ )
+  TV_IN = \
+  _set(
+      'in_', Bits32Foo, 0,
+  )
+  TV_OUT = \
+  _check( 'out', Bits64, 1 )
+  TEST_VECTOR = \
+  [
+      [    0,     concat(   Bits32(0),     Bits32(0)  ) ],
+      [   42,     concat(   Bits32(0),     Bits32(42) ) ],
+      [   -1,     concat(   Bits32(0),     Bits32(-1) ) ],
+  ]
+
 class CaseBits32x2ConcatComp:
   class DUT( Component ):
     def construct( s ):
