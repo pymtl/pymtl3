@@ -79,16 +79,16 @@ def test_reg_external_trace( do_test ):
 
   a.in_ = Bits32(1)
   a.tick()
-  assert a.line_trace().replace(' ', '') == 'q=0'
+  assert a.line_trace() == 'q =          0'
   a.in_ = Bits32(2)
   a.tick()
-  assert a.line_trace().replace(' ', '') == 'q=1'
+  assert a.line_trace() == 'q =          1'
   a.in_ = Bits32(-1)
   a.tick()
-  assert a.line_trace().replace(' ', '') == 'q=2'
+  assert a.line_trace() == 'q =          2'
   a.tick()
   # 0xFFFFFFFF unsigned
-  assert a.line_trace().replace(' ', '') == 'q=4294967295'
+  assert a.line_trace() == 'q = 4294967295'
 
 def test_reg_incomplete_portmap( do_test ):
   def tv_in( m, test_vector ):
