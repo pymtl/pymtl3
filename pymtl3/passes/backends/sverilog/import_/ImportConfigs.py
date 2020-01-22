@@ -98,6 +98,10 @@ class ImportConfigs( BasePassConfigs ):
 
     # Verilator misc options
 
+    # What is the inital value of signals?
+    # Should be one of ['zeros', 'ones', 'rand']
+    "vl_xinit" : "zeros",
+
     # --trace
     # Expects a boolean value
     "vl_trace" : False,
@@ -173,6 +177,9 @@ class ImportConfigs( BasePassConfigs ):
 
     "vl_include": Checker( lambda v: isinstance(v, list) and all(os.path.isdir(expand(p)) for p in v),
                             "expects a path to directory"),
+
+    "vl_xinit": Checker( lambda v: v in ['zeros', 'ones', 'rand'],
+                  "vl_xinit should be one of ['zeros', 'ones', 'rand']" ),
 
     "vl_trace_timescale": Checker( lambda v: isinstance(v, str) and len(v) > 2 and v[-1] == 's' and \
                                     v[-2] in ['p', 'n', 'u', 'm'] and \
@@ -336,6 +343,16 @@ class ImportConfigs( BasePassConfigs ):
 
   def get_param_include( s ):
     return s.v_module2param
+
+  def get_vl_xinit_value( s ):
+    if s.vl_xinit == 'zeros':
+      return 0
+    elif s.vl_xinit == 'ones':
+      return 1
+    elif s.vl_xinit == 'rand':
+      return 2
+    else:
+      raise InvalidPassOptionValue("vl_xinit should be one of 'zeros', 'ones', or 'rand'!")
 
   def get_c_wrapper_path( s ):
     return f"{s.top_module}_v.cpp"
