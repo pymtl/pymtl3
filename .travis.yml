@@ -27,8 +27,8 @@ install:
  - sudo apt-get install -y graphviz
 
  # Install verilator
- - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.008.tar.gz
- - tar -C ${HOME} -xzf verilator-travis-4.008.tar.gz
+ - wget https://github.com/cornell-brg/verilator-travisci-cache/raw/master/verilator-travis-4.026.tar.gz
+ - tar -C ${HOME} -xzf verilator-travis-4.026.tar.gz
  - export VERILATOR_ROOT=${HOME}/verilator
  - export PATH=${VERILATOR_ROOT}/bin:${PATH}
  - export PYMTL_VERILATOR_INCLUDE_DIR=${VERILATOR_ROOT}/share/verilator/include
