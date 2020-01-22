@@ -57,12 +57,12 @@ def test_reg( do_test ):
   do_test( a )
 
 def test_reg_external_trace( do_test ):
-  class VReg( Component ):
+  class VRegTrace( Component ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.config_sverilog_import = ImportConfigs(
-          vl_src = get_dir(__file__)+'VReg.sv',
+          vl_src = get_dir(__file__)+'VRegTrace.sv',
           vl_include = [ get_dir(__file__) ],
           port_map = {
             "in_" : "d",
@@ -70,7 +70,7 @@ def test_reg_external_trace( do_test ):
           },
           external_trace = True,
       )
-  a = VReg()
+  a = VRegTrace()
   a.elaborate()
   ipass = ImportPass()
   a.config_sverilog_import.fill_missing( a )
