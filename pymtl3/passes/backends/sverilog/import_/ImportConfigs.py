@@ -32,6 +32,14 @@ class ImportConfigs( BasePassConfigs ):
     # Map pymtl names to Verilog names
     "port_map" : {},
 
+    # Enable external line trace?
+    # Once enabled, the `line_trace()` method of the imported component
+    # will return a string read from the external `line_trace()` function.
+    # This means your Verilog module has to have a `line_trace` function
+    # that provides the line trace string which has less than 512 characters.
+    # Default to False
+    "external_trace" : False,
+
     # Verilator code generation options
     # These options will be passed to verilator to generate the C simulator.
     # By default, verilator is called with `--cc`.
@@ -148,8 +156,8 @@ class ImportConfigs( BasePassConfigs ):
   }
 
   Checkers = {
-    ("import_", "enable_assert", "vl_W_lint", "vl_W_style", "vl_W_fatal",
-     "vl_trace", "verbose", "has_clk", "has_reset", "coverage") :
+    ("import_", "enable_assert", "external_trace", "vl_W_lint", "vl_W_style",
+     "vl_W_fatal", "vl_trace", "verbose", "has_clk", "has_reset", "coverage") :
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
     ("c_flags", "ld_flags", "ld_libs") :
