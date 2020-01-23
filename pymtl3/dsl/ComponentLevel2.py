@@ -25,6 +25,7 @@ from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
+    InvalidComponentAccessError,
     InvalidConstraintError,
     InvalidFFAssignError,
     InvalidFuncCallError,
@@ -166,7 +167,7 @@ class ComponentLevel2( ComponentLevel1 ):
             Q = [ *obj ] # PEP 448 -- see https://stackoverflow.com/a/43220129/6470797
             while Q:
               m = Q.pop()
-              if isinstance( Q, NamedObject ):
+              if isinstance( m, NamedObject ):
                 objs.add( m )
               elif isinstance( m, list ):
                 Q.extend( m )
@@ -201,7 +202,11 @@ class ComponentLevel2( ComponentLevel1 ):
 
           objs = set()
           lookup_variable( s, 1, 1 )
-          all_objs |= objs
+          for obj in objs:
+            if isinstance( obj, ComponentLevel1 ):
+              #  if isinstance( nodelist[0].ctx, ast.Store ):
+              raise InvalidComponentAccessError( s, func, nodelist[0].lineno )
+            all_objs.add( obj )
 
           # Check <<= in update_ff
           if update_ff:
