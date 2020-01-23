@@ -56,6 +56,35 @@ def test_reg( do_test ):
   a._tv_out = tv_out
   do_test( a )
 
+def test_vl_uninit( do_test ):
+  # Use a latch to test if verilator has correctly set up
+  # the inital signal values
+  def tv_in( m, test_vector ):
+    m.in_ = Bits32( test_vector[0] )
+  def tv_out( m, test_vector ):
+    assert m.out == Bits32( test_vector[1] )
+  class VUninit( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.config_sverilog_import = ImportConfigs(
+          vl_src = get_dir(__file__)+'VUninit.sv',
+          port_map = {
+            "in_" : "d",
+            "out" : "q",
+          },
+          vl_xinit = 'ones',
+      )
+  a = VUninit()
+  a._test_vectors = [
+    [    0, 4294967295 ],
+    [    2, 4294967295 ],
+    [   42,         42 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
+
 def test_reg_external_trace( do_test ):
   class VRegTrace( Component ):
     def construct( s ):

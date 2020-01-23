@@ -207,6 +207,7 @@ class ImportPass( BasePass ):
     half_cycle_time = config.vl_trace_cycle_time // 2
     external_trace = int(config.external_trace)
     wrapper_name = config.get_c_wrapper_path()
+    verilator_xinit_value = config.get_vl_xinit_value()
     config.vprint("\n=====Generate C wrapper=====")
 
     # The wrapper template should be in the same directory as this file
