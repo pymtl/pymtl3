@@ -1,7 +1,19 @@
+"""
+========================================================================
+test_utils
+========================================================================
+Helper functions for running unit tests
+
+Author : Shunning Jiang
+  Date : Jan 23, 2020
+"""
+
 import collections
+import re
 
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
+from pymtl3.passes.backends.sverilog import ImportPass, TranslationImportPass
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -76,8 +88,10 @@ def run_sim( model, dump_vcd=None, test_verilog=False, max_cycles=5000 ):
   if dump_vcd:
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
+  model.elaborate()
+
   if test_verilog:
-    model = TranslationTool( model )
+    model = TranslationImportPass()( model )
 
   # Create a simulator
 
@@ -106,6 +120,8 @@ def run_sim( model, dump_vcd=None, test_verilog=False, max_cycles=5000 ):
   model.tick()
   model.tick()
 
+class RunTestVectorSimError( Exception ):
+  pass
 
 def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False ):
 
@@ -124,8 +140,14 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
   if dump_vcd:
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+
+  model.elaborate()
+
+  model = ImportPass()( model )
+
   if test_verilog:
-    model = TranslationTool( model )
+    model.sverilog_translate_import = True
+    model = TranslationImportPass()( model )
 
   # Create a simulator
 
@@ -169,11 +191,10 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
         raise Exception(f"Could not parse port name: {port_name}. "
                         f"Currently we don't support interface or high-D array.")
 
-      groups[i] = g = ( True, m.group(1), m.group(2) )
+      groups[i] = g = ( True, m.group(1), int(m.group(2)) )
 
       # Get type of all the ports
-
-      t = type( getattr( model, g[1] )[ g[2] ] )
+      t = type( getattr( model, g[1] )[ int(g[2]) ] )
       types[i] = None if is_bitstruct_class( t ) else t
 
     else:
@@ -205,7 +226,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
     # Display line trace output
 
-    print(f"{ncycles}: {model.line_trace()}")
+    print(f"{ncycles:3}: {model.line_trace()}")
 
     # Check test outputs
 
