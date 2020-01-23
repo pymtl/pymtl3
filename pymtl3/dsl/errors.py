@@ -47,7 +47,7 @@ In file {}:{} in {}
 ^^^ In update block, we forbid value reads/writes of a component.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
-Suggestion: check the declaration of the left hand side variable, or fix this assignment.""".format( \
+Suggestion: check the declaration of the variables, or fix this assignment.""".format( \
       filepath, error_lineno, blk.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
       repr(hostobj), hostobj.__class__.__name__ )
