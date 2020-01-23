@@ -205,6 +205,7 @@ class ImportPass( BasePass ):
     dump_vcd = int(config.vl_trace)
     vcd_timescale = config.vl_trace_timescale
     half_cycle_time = config.vl_trace_cycle_time // 2
+    external_trace = int(config.external_trace)
     wrapper_name = config.get_c_wrapper_path()
     verilator_xinit_value = config.get_vl_xinit_value()
     config.vprint("\n=====Generate C wrapper=====")
@@ -337,6 +338,12 @@ constraint_list = [
     # Internal line trace
     in_line_trace = s.gen_internal_line_trace_py( packed_ports )
 
+    # External trace function definition
+    if config.external_trace:
+      external_trace_c_def = f'void trace( V{config.top_module}_t *, char * );'
+    else:
+      external_trace_c_def = ''
+
     # Fill in the python wrapper template
     if not cached:
       with open( template_name, 'r' ) as template:
@@ -357,7 +364,9 @@ constraint_list = [
             constraint_str  = constraint_str,
             line_trace      = line_trace,
             in_line_trace   = in_line_trace,
-            dump_vcd        = int(config.vl_trace)
+            dump_vcd        = int(config.vl_trace),
+            external_trace  = int(config.external_trace),
+            trace_c_def     = external_trace_c_def,
           )
           output.write( py_wrapper )
 
@@ -953,7 +962,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       full_name = 's.mangled__'+s._verilator_name(name)
       ret.append( template.format( **locals() ) )
     ret.append( 'return lt' )
-    make_indent( ret, 2 )
+    make_indent( ret, 3 )
     return '\n'.join( ret )
 
   #-------------------------------------------------------------------------
