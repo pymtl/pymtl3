@@ -25,7 +25,7 @@ from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
-    InvalidComponentAccessError,
+    InvalidUpblkWriteError,
     InvalidConstraintError,
     InvalidFFAssignError,
     InvalidFuncCallError,
@@ -106,7 +106,7 @@ class ComponentLevel2( ComponentLevel1 ):
     # I refactor the process of materializing objects in this function
     # Pass in the func as well for error message
 
-    def extract_obj_from_names( func, names, update_ff=False ):
+    def extract_obj_from_names( func, names, update_ff=False, is_write=False ):
 
       def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
@@ -203,9 +203,8 @@ class ComponentLevel2( ComponentLevel1 ):
           objs = set()
           lookup_variable( s, 1, 1 )
           for obj in objs:
-            if isinstance( obj, ComponentLevel1 ):
-              #  if isinstance( nodelist[0].ctx, ast.Store ):
-              raise InvalidComponentAccessError( s, func, nodelist[0].lineno )
+            if not isinstance( obj, Signal ) and is_write:
+              raise InvalidUpblkWriteError( s, func, nodelist[0].lineno, obj )
             all_objs.add( obj )
 
           # Check <<= in update_ff
@@ -253,7 +252,7 @@ class ComponentLevel2( ComponentLevel1 ):
     for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ],
-                                    update_ff = blk in s._dsl.update_ff )
+                                    update_ff = blk in s._dsl.update_ff, is_write=True )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override

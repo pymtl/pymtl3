@@ -27,9 +27,9 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
-class InvalidComponentAccessError( Exception ):
+class InvalidUpblkWriteError( Exception ):
   """ In update/update_ff, raise when a component is assigned """
-  def __init__( self, hostobj, blk, lineno ):
+  def __init__( self, hostobj, blk, lineno, obj ):
 
     filepath = inspect.getfile( hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -44,12 +44,14 @@ class InvalidComponentAccessError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update block, we forbid value reads/writes of a component.
+^^^ Cannot Assign to {} of type {}.
+In update block, assigning values to components/interfaces/method ports is forbidden.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: check the declaration of the variables, or fix this assignment.""".format( \
       filepath, error_lineno, blk.__name__,
       error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(obj), obj.__class__.__name__,
       repr(hostobj), hostobj.__class__.__name__ )
     )
 
