@@ -152,13 +152,8 @@ class NamedObject:
       if isinstance( obj, NamedObject ):
         ud = obj._dsl
 
-        try:
-          ud.level      = sd.level + 1
-        except AttributeError:
-          raise PyMTLDeprecationError("\n- Some component in the hierarchy implements __init__ "
-                                      "instead of construct(). Please FIX them!")
-
         ud.parent_obj = s
+        ud.level      = sd.level + 1
 
         ud._my_name  = ud.my_name = name
         ud.full_name = f"{sd.full_name}.{name}"
