@@ -27,6 +27,34 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
+class InvalidUpblkWriteError( Exception ):
+  """ In update/update_ff, raise when a component is assigned """
+  def __init__( self, hostobj, blk, lineno, obj ):
+
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ Cannot Assign to {} of type {}.
+In update block, assigning values to components/interfaces/method ports is forbidden.
+(when constructing instance {} of class \"{}\" in the hierarchy)
+
+Suggestion: check the declaration of the variables, or fix this assignment.""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(obj), obj.__class__.__name__,
+      repr(hostobj), hostobj.__class__.__name__ )
+    )
+
 class InvalidFFAssignError( Exception ):
   """ In update_ff, raise when signal is not <<= -ed, or temp is not = -ed """
   def __init__( self, hostobj, blk, lineno, suggestion ):

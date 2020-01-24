@@ -9,7 +9,7 @@ Date   : Apr 16, 2018
 from pymtl3.datatypes import Bits16, Bits32, bitstruct
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import MultiWriterError, NoWriterError
+from pymtl3.dsl.errors import InvalidFFAssignError, MultiWriterError, NoWriterError
 
 from .sim_utils import simple_sim_pass
 
@@ -542,10 +542,12 @@ def test_nested_struct_2d_array_index():
         s.wire.bar <<= 1
 
   a = A()
-  a.elaborate()
-  print(a.struct.__dict__)
-  print(a.struct.bar[1][4].__dict__)
-  print(a.struct.bar[1][4].bar._dsl.__dict__)
+  try:
+    a.elaborate()
+  except InvalidFFAssignError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidFFAssignError.")
 
 # TODO better error message?
 def test_ff_cannot_write_to_struct_field():
@@ -568,7 +570,7 @@ def test_ff_cannot_write_to_struct_field():
 
   try:
     _test_model( A )
-  except TypeError as e:
+  except InvalidFFAssignError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown TypeError.")
+  raise Exception("Should've thrown InvalidFFAssignError.")

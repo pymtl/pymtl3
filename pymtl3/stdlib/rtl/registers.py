@@ -12,7 +12,7 @@ class Reg( Component ):
       s.out <<= s.in_
 
   def line_trace( s ):
-    return "[{} > {}]".format(s.in_, s.out)
+    return f"[{s.in_} > {s.out}]"
 
 class RegEn( Component ):
 
@@ -28,7 +28,7 @@ class RegEn( Component ):
         s.out <<= s.in_
 
   def line_trace( s ):
-    return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
+    return f"[{'en' if s.en else '  '}|{s.in_} > {s.out}]"
 
 class RegRst( Component ):
 
@@ -44,7 +44,7 @@ class RegRst( Component ):
       else:       s.out <<= s.in_
 
   def line_trace( s ):
-    return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
+    return f"[{'rst' if s.reset else '   '}|{s.in_} > {s.out}]"
 
 class RegEnRst( Component ):
 
@@ -61,4 +61,4 @@ class RegEnRst( Component ):
       elif s.en:  s.out <<= s.in_
 
   def line_trace( s ):
-    return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
+    return f"[{'en' if s.en else '  '}|{s.in_} > {s.out}]"
