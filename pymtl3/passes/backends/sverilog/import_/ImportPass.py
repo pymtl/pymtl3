@@ -62,7 +62,6 @@ class ImportPass( BasePass ):
        isinstance(s.get_config(m), ImportConfigs) and \
        s.get_config(m).import_:
       s.get_config(m).fill_missing( m )
-      s.get_config(m).check()
       return s.do_import( m )
     else:
       for child in m.get_child_components():
@@ -115,7 +114,10 @@ class ImportPass( BasePass ):
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
 
-    return cached
+    # return cached
+    # Temporarily disable caching because changing import configs may lead
+    # to compilation errors.
+    return False
 
   #-----------------------------------------------------------------------
   # get_imported_object
@@ -163,6 +165,7 @@ class ImportPass( BasePass ):
   def create_verilator_model( s, m, config, cached ):
     """Verilate module `m`."""
     config.vprint("\n=====Verilate model=====")
+    s.get_config(m).check()
     if not cached:
       # Generate verilator command
       cmd = config.create_vl_cmd()

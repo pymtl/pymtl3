@@ -152,14 +152,29 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   model.elaborate()
 
+  # NOTE: this needs to be fixed later!
+  # Current we only look at the top level component. If it is a
+  # place holder, we add the default import config so that is can be
+  # imported. Ideally we should have a translation mechanism that
+  # generates a pickled source file even if some of them are place 
+  # holders to be imported from external Verilog sources.
+
+  require_import = test_verilog or isinstance( model, Placeholder )
+
+  if require_import and not hasattr( model, 'config_sverilog_import' ):
+    model.config_sverilog_import = ImportConfigs()
+
   if dump_vcd:
-    model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    if not require_import:
+      model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    else:
+      model.config_sverilog_import.vl_trace = True
 
   if test_verilog:
-    model.config_sverilog_import = ImportConfigs(
-      vl_xinit = test_verilog,
-    )
-    model.sverilog_translate_import = True
+    if isinstance( model, Placeholder ):
+      model.config_sverilog_import.vl_xinit = test_verilog
+    else:
+      model.sverilog_translate_import = True
 
   model = TranslationImportPass()( model )
 
@@ -283,3 +298,9 @@ run_test_vector_sim received an incorrect value!
   model.tick()
   model.tick()
   model.tick()
+
+  # NOTE: this will destory the imported component!
+  try:
+    model.finalize()
+  except:
+    pass
