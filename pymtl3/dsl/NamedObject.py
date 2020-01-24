@@ -21,7 +21,7 @@ Date   : Nov 3, 2018
 import re
 from collections import deque
 
-from .errors import NotElaboratedError, PyMTLDeprecationError
+from .errors import NotElaboratedError
 
 
 class DSLMetadata:
