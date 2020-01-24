@@ -13,7 +13,12 @@ import re
 
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
-from pymtl3.passes.backends.sverilog import ImportConfigs, ImportPass, TranslationImportPass
+from pymtl3.passes import TracingConfigs
+from pymtl3.passes.backends.sverilog import (
+    ImportConfigs,
+    ImportPass,
+    TranslationImportPass,
+)
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -81,7 +86,7 @@ class TestVectorSimulator:
 
       self.model.tick()
 
-def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=False, max_cycles=5000 ):
+def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycles=5000 ):
 
   # Setup the model
 
@@ -130,7 +135,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=False, max_cyc
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, line_trace=False ):
+def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, line_trace=True ):
 
   # First row in test vectors contains port names
 
