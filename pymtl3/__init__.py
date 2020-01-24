@@ -1,9 +1,9 @@
 from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl import *
+from .passes import ImportConfigs, TracingConfigs
+from .passes.backends.sverilog import ImportPass, TranslationImportPass
 from .passes.PassGroups import SimulationPass
-from .passes.backends.sverilog import TranslationImportPass, ImportPass
-from .passes import TracingConfigs, ImportConfigs
 
 __version__ = "0.5.4"
 
