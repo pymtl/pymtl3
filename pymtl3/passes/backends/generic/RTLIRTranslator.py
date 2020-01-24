@@ -30,6 +30,13 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
       super().clear( tr_top )
       s.hierarchy = TranslatorMetadata()
 
+    def _gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
+      metadata = getattr( s.structural, structural_ns, [] )
+      List = getattr( s.hierarchy, hierarchy_ns )
+      for Type, data in metadata:
+        if not any( x[0] == Type for x in List ):
+          List.append( ( Type, data ) )
+
     # Override
     def translate( s, tr_top ):
 
@@ -51,9 +58,9 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
               get_component_nspace( s.structural, m ),
           ) )
           translated.append( s.structural.component_unique_name[m] )
-        s.gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
-        s.gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array' )
-        s.gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
+        s._gen_hierarchy_metadata( 'decl_type_vector', 'decl_type_vector' )
+        s._gen_hierarchy_metadata( 'decl_type_array', 'decl_type_array'   )
+        s._gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
 
       # Clear all translator metadata
       s.clear( tr_top )
@@ -78,16 +85,6 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
 
       # Generate the final backend code layout
       s.hierarchy.src = s.rtlir_tr_src_layout( s.hierarchy )
-
-    def gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
-      metadata = getattr( s.structural, structural_ns, [] )
-      List = getattr( s.hierarchy, hierarchy_ns )
-      for Type, data in metadata:
-        if not s.in_list( Type, List ):
-          List.append( ( Type, data ) )
-
-    def in_list( s, dtype, List ):
-      return any( x[0] == dtype for x in List )
 
     #---------------------------------------------------------------------
     # Methods to be implemented by the backend translator

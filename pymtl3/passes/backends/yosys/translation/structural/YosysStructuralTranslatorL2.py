@@ -202,9 +202,11 @@ class YosysStructuralTranslatorL2(
     def _gen_packed_array( dtype, n_dim, array ):
       if not n_dim:
         if isinstance( dtype, rdt.Vector ):
-          return s.rtlir_tr_literal_number( dtype.nbits, array )
+          s_attr = s.rtlir_tr_literal_number( dtype.nbits, array, False )
+          return {'attr':[], 'index':[], 's_attr':s_attr, 's_index':""}
         elif isinstance( dtype, rdt.Struct ):
-          return s.rtlir_tr_struct_instance( dtype, array, False )
+          s_attr = s.rtlir_tr_struct_instance( dtype, array, False )
+          return {'attr':[], 'index':[], 's_attr':s_attr, 's_index':""}
         else:
           assert False, f"unrecognized data type {dtype}!"
       else:
@@ -213,7 +215,7 @@ class YosysStructuralTranslatorL2(
           _ret = _gen_packed_array( dtype, n_dim[1:], array[i] )
           ret.append( _ret["s_attr"] )
         if n_dim[0] > 1:
-          cat_str = "{" + ", ".join( ret ) + "}"
+          cat_str = "{{ " + ", ".join( ret ) + " }}"
         else:
           cat_str = ", ".join( ret )
         return {'attr':[], 'index':[], 's_attr':cat_str, 's_index':""}
@@ -227,7 +229,7 @@ class YosysStructuralTranslatorL2(
       elif isinstance( Type, rdt.PackedArray ):
         n_dim = Type.get_dim_sizes()
         sub_dtype = Type.get_sub_dtype()
-        _field = _gen_packed_array( sub_dtype, n_dim, field )
+        _field = _gen_packed_array( sub_dtype, n_dim, field )['s_attr']
       else:
         assert False, f"unrecognized data type {Type}!"
       fields.append( _field )

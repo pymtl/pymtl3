@@ -6,6 +6,7 @@
 """Test if the imported object works correctly."""
 
 
+from pymtl3 import SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.rtlir.util.test_utility import do_test
@@ -38,6 +39,99 @@ def test_reg( do_test ):
           port_map = {
             "clk" : "clk",
             "reset" : "reset",
+            "in_" : "d",
+            "out" : "q",
+          }
+      )
+  a = VReg()
+  a._test_vectors = [
+    [    1,    '*' ],
+    [    2,      1 ],
+    [   -1,      2 ],
+    [   -2,     -1 ],
+    [   42,     -2 ],
+    [  -42,     42 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
+
+def test_vl_uninit( do_test ):
+  # Use a latch to test if verilator has correctly set up
+  # the inital signal values
+  def tv_in( m, test_vector ):
+    m.in_ = Bits32( test_vector[0] )
+  def tv_out( m, test_vector ):
+    assert m.out == Bits32( test_vector[1] )
+  class VUninit( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.config_sverilog_import = ImportConfigs(
+          vl_src = get_dir(__file__)+'VUninit.sv',
+          port_map = {
+            "in_" : "d",
+            "out" : "q",
+          },
+          vl_xinit = 'ones',
+      )
+  a = VUninit()
+  a._test_vectors = [
+    [    0, 4294967295 ],
+    [    2, 4294967295 ],
+    [   42,         42 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
+
+def test_reg_external_trace( do_test ):
+  class VRegTrace( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.config_sverilog_import = ImportConfigs(
+          vl_src = get_dir(__file__)+'VRegTrace.sv',
+          vl_include = [ get_dir(__file__) ],
+          port_map = {
+            "in_" : "d",
+            "out" : "q",
+          },
+          external_trace = True,
+      )
+  a = VRegTrace()
+  a.elaborate()
+  ipass = ImportPass()
+  a.config_sverilog_import.fill_missing( a )
+  a = ipass.get_imported_object( a )
+  a.apply( SimulationPass() )
+
+  a.in_ = Bits32(1)
+  a.tick()
+  assert a.line_trace() == 'q =          0'
+  a.in_ = Bits32(2)
+  a.tick()
+  assert a.line_trace() == 'q =          1'
+  a.in_ = Bits32(-1)
+  a.tick()
+  assert a.line_trace() == 'q =          2'
+  a.tick()
+  # 0xFFFFFFFF unsigned
+  assert a.line_trace() == 'q = 4294967295'
+
+def test_reg_incomplete_portmap( do_test ):
+  def tv_in( m, test_vector ):
+    m.in_ = Bits32( test_vector[0] )
+  def tv_out( m, test_vector ):
+    if test_vector[1] != '*':
+      assert m.out == Bits32( test_vector[1] )
+  class VReg( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.config_sverilog_import = ImportConfigs(
+          vl_src = get_dir(__file__)+'VReg.sv',
+          port_map = {
             "in_" : "d",
             "out" : "q",
           }

@@ -15,7 +15,7 @@ class Mux( Component ):
 
 # Rshifter
 
-class RShifter( Component ):
+class RightLogicalShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
@@ -28,7 +28,7 @@ class RShifter( Component ):
 
 # Lshifter
 
-class LShifter( Component ):
+class LeftLogicalShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
@@ -92,7 +92,7 @@ class Subtractor( Component ):
 
 # ZeroComparator
 
-class ZeroComp( Component ):
+class ZeroComparator( Component ):
 
   def construct( s, Type ):
     s.in_ = InPort( Type )
@@ -105,7 +105,7 @@ class ZeroComp( Component ):
 
 # LeftThanComparator
 
-class LTComp( Component ):
+class LTComparator( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )
@@ -118,7 +118,7 @@ class LTComp( Component ):
 
 # LeftThanOrEqualToComparator
 
-class LEComp( Component ):
+class LEComparator( Component ):
 
   def construct( s, Type ):
     s.in0 = InPort( Type )

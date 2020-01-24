@@ -58,6 +58,7 @@ class {component_name}( Component ):
       void destroy_model( V{component_name}_t *);
       void eval( V{component_name}_t * );
       void assert_en( bool en );
+      {trace_c_def}
 
     """)
 
@@ -118,6 +119,10 @@ class {component_name}( Component ):
     # Construct the model
     s._ffi_m = s._ffi_inst.create_model( s.ffi.new("char[]", verilator_vcd_file) )
 
+    # Buffer for line tracing
+    s._line_trace_str = s.ffi.new('char[512]')
+    s._convert_string = s.ffi.string
+
     # Use non-attribute varialbe to reduce CPython bytecode count
     _ffi_m = s._ffi_m
     _ffi_inst = s._ffi_inst
@@ -163,6 +168,10 @@ class {component_name}( Component ):
     s._ffi_inst.assert_en( en )
 
   def line_trace( s ):
+    if {external_trace}:
+      s._ffi_inst.trace( s._ffi_m, s._line_trace_str )
+      return s._convert_string( s._line_trace_str ).decode('ascii')
+    else:
 {line_trace}
 
   def internal_line_trace( s ):

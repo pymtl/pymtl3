@@ -3,61 +3,51 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : May 23, 2019
-"""Test the RTLIR transaltor."""
+"""Test the RTLIR translator."""
 
-from pymtl3.datatypes import Bits1, Bits32
-from pymtl3.dsl import Component, InPort, OutPort, connect
-from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
+import pytest
 
-from ..behavioral.test.BehavioralTranslatorL1_test import *
+from pymtl3.passes.rtlir.util.test_utility import expected_failure, get_parameter
+
+from ..behavioral.test.BehavioralTranslatorL1_test import test_generic_behavioral_L1
 from ..errors import RTLIRTranslationError
-from ..structural.test.StructuralTranslatorL1_test import *
+from ..structural.test.StructuralTranslatorL1_test import test_generic_structural_L1
+from ..testcases import (
+    CaseBitSelOverBitSelComp,
+    CaseBitSelOverPartSelComp,
+    CasePartSelOverBitSelComp,
+    CasePartSelOverPartSelComp,
+)
 from .TestRTLIRTranslator import TestRTLIRTranslator
 
 
-def local_do_test( m ):
+def run_test( case, m ):
   if not m._dsl.constructed:
     m.elaborate()
   tr = TestRTLIRTranslator(m)
   tr.translate( m )
   src = tr.hierarchy.src
-  try:
-    assert src == m._ref_src
-  except AttributeError:
-    pass
+  assert src == case.REF_SRC
 
-def test_bit_sel_over_bit_sel( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits1 )
-      connect( s.out, s.in_[1][0] )
-  with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
-    do_test( A() )
+@pytest.mark.parametrize(
+  'case', get_parameter('case', test_generic_behavioral_L1) + \
+          get_parameter('case', test_generic_structural_L1)
+)
+def test_generic_L1( case ):
+  run_test( case, case.DUT() )
 
-def test_bit_sel_over_part_sel( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits1 )
-      connect( s.out, s.in_[0:4][0] )
+def test_bit_sel_over_bit_sel():
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
-    do_test( A() )
+    run_test( CaseBitSelOverBitSelComp, CaseBitSelOverBitSelComp.DUT() )
 
-def test_part_sel_over_bit_sel( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits1 )
-      connect( s.out, s.in_[1][0:1] )
+def test_bit_sel_over_part_sel():
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
-    do_test( A() )
+    run_test( CaseBitSelOverPartSelComp, CaseBitSelOverPartSelComp.DUT() )
 
-def test_part_sel_over_part_sel( do_test ):
-  class A( Component ):
-    def construct( s ):
-      s.in_ = InPort( Bits32 )
-      s.out = OutPort( Bits1 )
-      connect( s.out, s.in_[0:4][0:1] )
+def test_part_sel_over_bit_sel():
   with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
-    do_test( A() )
+    run_test( CasePartSelOverBitSelComp, CasePartSelOverBitSelComp.DUT() )
+
+def test_part_sel_over_part_sel():
+  with expected_failure( RTLIRTranslationError, "over bit/part selection" ):
+    run_test( CasePartSelOverPartSelComp, CasePartSelOverPartSelComp.DUT() )

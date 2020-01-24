@@ -3,13 +3,13 @@ from .arithmetics import (
     Adder,
     And,
     Incrementer,
-    LEComp,
-    LShifter,
-    LTComp,
+    LEComparator,
+    LeftLogicalShifter,
+    LTComparator,
     Mux,
-    RShifter,
+    RightLogicalShifter,
     Subtractor,
-    ZeroComp,
+    ZeroComparator,
 )
 from .Crossbar import Crossbar
 from .queues import BypassQueueRTL, NormalQueueRTL, PipeQueueRTL

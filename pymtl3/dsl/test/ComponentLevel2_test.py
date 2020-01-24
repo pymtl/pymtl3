@@ -10,12 +10,13 @@ from collections import deque
 
 from pymtl3.datatypes import Bits1, Bits32, bitstruct, mk_bits
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
-from pymtl3.dsl.Connectable import InPort, OutPort, Wire
+from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import RD, WR, U
 from pymtl3.dsl.errors import (
     InvalidConstraintError,
     InvalidFFAssignError,
     InvalidFuncCallError,
+    InvalidUpblkWriteError,
     MultiWriterError,
     PyMTLDeprecationError,
     UpblkCyclicError,
@@ -717,3 +718,69 @@ def test_signal_default_Bits1():
 
   A = Top()
   A.elaborate()
+
+def test_write_component_update():
+
+  class A(ComponentLevel2):
+    def construct( s ):
+      s.x = Wire(Bits32)
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.a = A()
+
+      @s.update
+      def up():
+        s.a = Bits32(12)
+
+  x = Top()
+  try:
+    x.elaborate()
+  except InvalidUpblkWriteError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidUpblkWriteError.")
+
+def test_write_component_update_ff():
+
+  class A(ComponentLevel2):
+    def construct( s ):
+      s.x = Wire(Bits32)
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.a = A()
+
+      @s.update_ff
+      def up():
+        s.a <<= Bits32(12)
+
+  x = Top()
+  try:
+    x.elaborate()
+  except InvalidUpblkWriteError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidUpblkWriteError.")
+
+def test_write_interface_update_ff():
+
+  class A(Interface):
+    def construct( s ):
+      s.x = InPort(Bits32)
+
+  class Top(ComponentLevel2):
+    def construct( s ):
+      s.a = A()
+
+      @s.update_ff
+      def up():
+        s.a <<= Bits32(12)
+
+  x = Top()
+  try:
+    x.elaborate()
+  except InvalidUpblkWriteError as e:
+    print("{} is thrown\n{}".format( e.__class__.__name__, e ))
+    return
+  raise Exception("Should've thrown InvalidUpblkWriteError.")
