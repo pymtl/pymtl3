@@ -13,7 +13,7 @@ import re
 
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
-from pymtl3.passes.backends.sverilog import ImportPass, TranslationImportPass
+from pymtl3.passes.backends.sverilog import ImportConfigs, ImportPass, TranslationImportPass
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -81,17 +81,22 @@ class TestVectorSimulator:
 
       self.model.tick()
 
-def run_sim( model, dump_vcd=None, test_verilog=False, max_cycles=5000 ):
+def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=False, max_cycles=5000 ):
 
   # Setup the model
+
+  model.elaborate()
 
   if dump_vcd:
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
-  model.elaborate()
-
   if test_verilog:
-    model = TranslationImportPass()( model )
+    model.config_sverilog_import = ImportConfigs(
+      vl_xinit = test_verilog,
+    )
+    model.sverilog_translate_import = True
+
+  model = TranslationImportPass()( model )
 
   # Create a simulator
 
@@ -100,15 +105,17 @@ def run_sim( model, dump_vcd=None, test_verilog=False, max_cycles=5000 ):
   # Reset model
 
   model.sim_reset()
-  print()
+  if line_trace:
+    print()
 
   # Run simulation
 
   ncycles = 0
   while not model.done() and ncycles < max_cycles:
-    print( f"{ncycles:3}: {model.line_trace()}" )
-    model.tick()
     ncycles += 1
+    if line_trace:
+      print( f"{ncycles:3}: {model.line_trace()}" )
+    model.tick()
 
   # Force a test failure if we timed out
 
@@ -123,7 +130,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False, max_cycles=5000 ):
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False ):
+def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, line_trace=False ):
 
   # First row in test vectors contains port names
 
@@ -138,16 +145,18 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
   # Setup the model
 
+  model.elaborate()
+
   if dump_vcd:
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
-  model.elaborate()
-
-  model = ImportPass()( model )
-
   if test_verilog:
+    model.config_sverilog_import = ImportConfigs(
+      vl_xinit = test_verilog,
+    )
     model.sverilog_translate_import = True
-    model = TranslationImportPass()( model )
+
+  model = TranslationImportPass()( model )
 
   # Create a simulator
 
@@ -156,7 +165,6 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
   # Reset model
 
   model.sim_reset()
-  print("")
 
   # Run the simulation
 
@@ -202,6 +210,8 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
       t = type( getattr( model, port_name ) )
       types[i] = None if is_bitstruct_class( t ) else t
 
+  if line_trace:
+    print()
   for row in test_vectors:
     row_num += 1
 
@@ -226,7 +236,8 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False 
 
     # Display line trace output
 
-    print(f"{ncycles:3}: {model.line_trace()}")
+    if line_trace:
+      print(f"{ncycles:3}: {model.line_trace()}")
 
     # Check test outputs
 
