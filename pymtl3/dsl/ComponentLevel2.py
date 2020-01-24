@@ -25,12 +25,12 @@ from .ComponentLevel1 import ComponentLevel1
 from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal, Wire
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
-    InvalidUpblkWriteError,
     InvalidConstraintError,
     InvalidFFAssignError,
     InvalidFuncCallError,
     InvalidIndexError,
     InvalidPlaceholderError,
+    InvalidUpblkWriteError,
     MultiWriterError,
     NotElaboratedError,
     PyMTLDeprecationError,
