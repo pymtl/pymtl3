@@ -263,7 +263,7 @@ class SomeMinionRTL( Component ):
     DataType = ReqType.get_field_type( 'data' )
     assert DataType is RespType.get_field_type( 'data' )
 
-    s.nregs      = nregs
+    s.nregs = nregs
 
     # Components
 

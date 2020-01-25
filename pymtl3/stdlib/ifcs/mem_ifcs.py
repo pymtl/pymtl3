@@ -60,9 +60,9 @@ class MemMasterIfcFL( Interface ):
 
 class MemMinionIfcFL( Interface ):
   def construct( s, read=None, write=None, amo=None ):
-    s.read  = read
-    s.write = write
-    s.amo   = amo
+    s.read  = CalleeIfcFL(read)
+    s.write = CalleeIfcFL(write)
+    s.amo   = CalleeIfcFL(amo)
 
   def connect( s, other, parent ):
     if isinstance( other, MemMasterIfcCL ):
@@ -196,7 +196,6 @@ class MemIfcCL2FLAdapter( Component ):
 
 class MemIfcFL2CLAdapter( Component ):
 
-  @blocking
   def read( s, addr, nbytes ):
 
     # TODO refactor this greenlet stuff into some utility API
@@ -212,7 +211,6 @@ class MemIfcFL2CLAdapter( Component ):
     s.entry = None
     return ret
 
-  @blocking
   def write( s, addr, nbytes, data ):
 
     while not s.right.req.rdy():
@@ -225,7 +223,6 @@ class MemIfcFL2CLAdapter( Component ):
 
     s.entry = None
 
-  @blocking
   def amo( s, amo, addr, nbytes, data ):
 
     while not s.right.req.rdy():

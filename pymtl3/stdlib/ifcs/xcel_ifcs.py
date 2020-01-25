@@ -26,8 +26,8 @@ class XcelMasterIfcFL( Interface ):
   def construct( s, ReqType, RespType ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.read  = CallerPort()
-    s.write = CallerPort()
+    s.read  = CallerIfcFL()
+    s.write = CallerIfcFL()
 
   def connect( s, other, parent ):
     if isinstance( other, XcelMinionIfcRTL ):
@@ -71,8 +71,8 @@ class XcelMinionIfcFL( Interface ):
   def construct( s, ReqType, RespType, read=None, write=None ):
     s.ReqType  = ReqType
     s.RespType = RespType
-    s.read  = CalleePort( method=read )
-    s.write = CalleePort( method=write )
+    s.read  = CalleeIfcFL( read )
+    s.write = CalleeIfcFL( write )
 
   def connect( s, other, parent ):
     if isinstance( other, XcelMasterIfcRTL ):
@@ -210,7 +210,6 @@ class XcelIfcCL2FLAdapter( Component ):
 
 class XcelIfcFL2CLAdapter( Component ):
 
-  @blocking
   def read( s, addr ):
 
     # TODO: refactor this greenlet stuff into some utility API
@@ -226,7 +225,6 @@ class XcelIfcFL2CLAdapter( Component ):
     s.entry = None
     return ret
 
-  @blocking
   def write( s, addr, data ):
 
     while not s.right.req.rdy():
