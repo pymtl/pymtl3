@@ -9,8 +9,8 @@ Author: Yanghui Ou
 """
 from pymtl3 import *
 
-from .GetGiveIfc import GiveIfcRTL
-from .SendRecvIfc import RecvIfcRTL
+from .GetGiveIfc import GiveIfcFL, GiveIfcRTL
+from .SendRecvIfc import RecvIfcFL, RecvIfcRTL
 
 #-------------------------------------------------------------------------
 # EnqIfcRTL
@@ -24,4 +24,10 @@ class EnqIfcRTL( RecvIfcRTL ):
 #-------------------------------------------------------------------------
 
 class DeqIfcRTL( GiveIfcRTL ):
+  pass
+
+class EnqIfcFL( RecvIfcFL ):
+  pass
+
+class DeqIfcFL( GiveIfcFL ):
   pass

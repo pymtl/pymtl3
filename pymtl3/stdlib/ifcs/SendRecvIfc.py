@@ -143,7 +143,6 @@ class SendIfcFL( CallerIfcFL ):
 class RecvIfcFL( CalleeIfcFL ):
   pass
 
-
 """
 ========================================================================
 Send/RecvIfc adapters
