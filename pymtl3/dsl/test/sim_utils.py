@@ -20,7 +20,7 @@ from pymtl3.dsl.ComponentLevel4 import ComponentLevel4
 from pymtl3.dsl.ComponentLevel5 import ComponentLevel5
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 from pymtl3.dsl.ComponentLevel7 import ComponentLevel7
-from pymtl3.dsl.Connectable import Const, Interface, MethodPort, NonBlockingIfc, Signal
+from pymtl3.dsl.Connectable import BlockingIfc, Const, Interface, MethodPort, NonBlockingIfc, Signal
 from pymtl3.dsl.errors import (
     LeftoverPlaceholderError,
     NotElaboratedError,
@@ -248,7 +248,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, NonBlockingIfc ):
+        elif isinstance( call, (NonBlockingIfc, BlockingIfc) ):
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -270,7 +270,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       # We allow the user to call the interface directly in a non-blocking
       # interface, so if they do call it, we use the actual method within
       # the method field
-      elif isinstance( x, NonBlockingIfc ):
+      elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
         xx = x.method.method
 
       else:
@@ -279,7 +279,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       if   isinstance( y, MethodPort ):
         yy = y.method
 
-      elif isinstance( y, NonBlockingIfc ):
+      elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
         yy = y.method.method
 
       else:

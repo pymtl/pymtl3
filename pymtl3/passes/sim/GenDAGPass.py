@@ -328,7 +328,7 @@ def {}():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, NonBlockingIfc ):
+        elif isinstance( call, (NonBlockingIfc, BlockingIfc) ):
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -342,6 +342,8 @@ def {}():
     # We pre-process M(x) == M(y) constraints into per-method equivalence
     # sets. We have to do it here for potential open-loop constraints
 
+    for x in all_M_constraints:
+      print(x)
     equiv = defaultdict(set)
     for (x, y, is_equal) in all_M_constraints:
 
@@ -350,14 +352,14 @@ def {}():
 
         if   isinstance( x, MethodPort ):
           xx = x.method
-        elif isinstance( x, NonBlockingIfc ):
+        elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
           xx = x.method.method
         else:
           xx = x
 
         if   isinstance( y, MethodPort ):
           yy = y.method
-        elif isinstance( y, NonBlockingIfc ):
+        elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
           yy = y.method.method
         else:
           yy = y
@@ -393,14 +395,14 @@ def {}():
 
       if   isinstance( x, MethodPort ):
         xx = x.method
-      elif isinstance( x, NonBlockingIfc ):
+      elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
         xx = x.method.method
       else:
         xx = x
 
       if   isinstance( y, MethodPort ):
         yy = y.method
-      elif isinstance( y, NonBlockingIfc ):
+      elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
         yy = y.method.method
       else:
         yy = y
@@ -521,10 +523,16 @@ def {}():
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
-    # Mark update blocks that call blocking methods for greenlet wrapping
+    # Mark update blocks that call blocking methods
+    # (CalleeIfcFL/CallerIfcFL) for greenlet wrapping
+
+    blocking_ifcs = top.get_all_object_filter( lambda x: isinstance( x, (CalleeIfcFL, CallerIfcFL) ) )
+    for x in blocking_ifcs:
+      print(repr(x))
 
     top._dag.greenlet_upblks = set()
 
-    for blocking_method in top._dsl.all_blocking_methods:
-      for blk in method_blks[ blocking_method ]:
+    for blocking_method in blocking_ifcs:
+      for blk in method_blks[ blocking_method.method.method ]:
         top._dag.greenlet_upblks.add( blk )
+    print(top._dag.greenlet_upblks)

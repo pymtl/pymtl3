@@ -30,8 +30,7 @@ class ComponentLevel5( ComponentLevel4 ):
 
   def _handle_decorated_methods( s ):
 
-    cls_dict = s.__class__.__dict__
-    for x in cls_dict:
+    for x in s.__class__.__dict__:
       method = getattr( s, x )
       # We identify decorated method port here
       if hasattr( method, "_callee_port" ):
