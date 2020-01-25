@@ -342,8 +342,6 @@ def {}():
     # We pre-process M(x) == M(y) constraints into per-method equivalence
     # sets. We have to do it here for potential open-loop constraints
 
-    for x in all_M_constraints:
-      print(x)
     equiv = defaultdict(set)
     for (x, y, is_equal) in all_M_constraints:
 
@@ -527,12 +525,9 @@ def {}():
     # (CalleeIfcFL/CallerIfcFL) for greenlet wrapping
 
     blocking_ifcs = top.get_all_object_filter( lambda x: isinstance( x, (CalleeIfcFL, CallerIfcFL) ) )
-    for x in blocking_ifcs:
-      print(repr(x))
 
     top._dag.greenlet_upblks = set()
 
     for blocking_method in blocking_ifcs:
       for blk in method_blks[ blocking_method.method.method ]:
         top._dag.greenlet_upblks.add( blk )
-    print(top._dag.greenlet_upblks)

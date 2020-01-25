@@ -568,25 +568,8 @@ class CalleeIfcFL( BlockingIfc ):
   def construct( s, method=None ):
     s.method = CalleePort( method=method )
 
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-  def line_trace( s ):
-    return ''
-
-  def __str__( s ):
-    return s.line_trace()
 
 class CallerIfcFL( BlockingIfc ):
 
   def construct( s ):
     s.method = CallerPort()
-
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-  def line_trace( s ):
-    return ''
-
-  def __str__( s ):
-    return s.line_trace()

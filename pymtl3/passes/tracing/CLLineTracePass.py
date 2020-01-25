@@ -57,6 +57,35 @@ class CLLineTracePass( BasePass ):
         return self.saved_ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
+    # Collect all method ports and add some stamps
+    all_callees = set()
+    all_method_ports = top.get_all_object_filter(
+      lambda s: isinstance( s, MethodPort )
+    )
+    for mport in all_method_ports:
+      mport.called = False
+      mport.saved_args = None
+      mport.saved_kwargs = None
+      mport.saved_ret = None
+      if isinstance( mport, CalleePort ):
+        all_callees.add( mport )
+
+    # Collect all method nets and wrap the actual driving method
+    all_drivers = set()
+    all_method_nets = top.get_all_method_nets()
+    for driver, net in all_method_nets:
+      if driver is not None:
+        wrap_callee_method( driver, net )
+        all_drivers.add( driver )
+      for member in net:
+        if isinstance( member, CallerPort ):
+          assert member is not driver
+          wrap_caller_method( member, driver )
+
+    # Handle other callee that is not driving anything
+    for mport in ( all_callees - all_drivers ):
+      wrap_callee_method( mport, set() )
+
     # [mk_new_str] replaces [_str_hook] in a non-blocking interface with
     # a new to-string function that uses the metadata to compose line
     # trace.
@@ -75,9 +104,8 @@ class CLLineTracePass( BasePass ):
     #  2:( #    () 0000 ) - enq is not ready, deq() gets called
     #  3:( 0001 () #    ) - enq(0001) called, deq is not ready again
 
-    def mk_new_str( ifc ):
+    def mk_new_str_non_blocking( ifc ):
       def new_str():
-
         # If rdy is called
         if ifc.rdy.called:
           # If rdy is called and returns true
@@ -114,48 +142,54 @@ class CLLineTracePass( BasePass ):
 
         else:
           return ".".ljust( ifc.trace_len )
-
-      ifc._str_hook = new_str
-
-    # Collect all method ports and add some stamps
-    all_callees = set()
-    all_method_ports = top.get_all_object_filter(
-      lambda s: isinstance( s, MethodPort )
-    )
-    for mport in all_method_ports:
-      mport.called = False
-      mport.saved_args = None
-      mport.saved_kwargs = None
-      mport.saved_ret = None
-      if isinstance( mport, CalleePort ):
-        all_callees.add( mport )
-
-    # Collect all method nets and wrap the actual driving method
-    all_drivers = set()
-    all_method_nets = top.get_all_method_nets()
-    for driver, net in all_method_nets:
-      if driver is not None:
-        wrap_callee_method( driver, net )
-        all_drivers.add( driver )
-      for member in net:
-        if isinstance( member, CallerPort ):
-          assert member is not driver
-          wrap_caller_method( member, driver )
-
-    # Handle other callee that is not driving anything
-    for mport in ( all_callees - all_drivers ):
-      wrap_callee_method( mport, set() )
+      return new_str
 
     # Collecting all non blocking interfaces and replace the str hook
-    all_nblk_ifcs = top.get_all_object_filter(
-      lambda s: isinstance( s, NonBlockingIfc )
-    )
-    for ifc in all_nblk_ifcs:
+    for ifc in top.get_all_object_filter( lambda s: isinstance( s, NonBlockingIfc ) ):
       if ifc.method.Type is not None:
         ifc.trace_len = len( str( ifc.method.Type() ) )
       else:
         ifc.trace_len = self.default_trace_len
-      mk_new_str( ifc )
+      ifc._str_hook = mk_new_str_non_blocking( ifc )
+
+    # [mk_new_str] replaces [_str_hook] in a blocking interface with
+    # a new to-string function that uses the metadata to compose line
+    # trace. The case for blocking interfaces is simpler than
+    # non-blocking interfaces as we only have two possibilities
+    # called/not called.
+    # - " " method not called
+    # - msg method called
+    def mk_new_str_blocking( ifc ):
+      def new_str():
+        # If method called - return actual message
+        if ifc.method.called:
+          args_strs = [ str( arg ) for arg in ifc.method.saved_args ] + \
+                      [ str( arg ) for _, arg in ifc.method.saved_kwargs.items() ]
+
+          ret_str = "" if ifc.method.saved_ret is None else str( ifc.method.saved_ret )
+
+          trace = ""
+          if args_strs:
+            trace += f"({','.join(args_strs)})"
+          if ret_str:
+            trace += f"={ret_str}"
+
+          ifc.trace_len = len(trace)
+          return trace
+
+        # If method not called
+        else:
+          return " ".ljust( ifc.trace_len )
+      return new_str
+
+    # Collecting all blocking interfaces and replace the str hook
+    for ifc in top.get_all_object_filter( lambda s: isinstance( s, BlockingIfc ) ):
+      if ifc.method.Type is not None:
+        ifc.trace_len = len( str( ifc.method.Type() ) )
+      else:
+        ifc.trace_len = self.default_trace_len
+
+      ifc._str_hook = mk_new_str_blocking( ifc )
 
     # An update block that resets all method ports to not called
     def reset_method_ports():
