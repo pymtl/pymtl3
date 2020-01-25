@@ -10,7 +10,9 @@ Author : Yanghui Ou
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import DeqIfcRTL, EnqIfcRTL
-from pymtl3.stdlib.rtl import Mux, RegisterFile
+
+from .arithmetics import Mux
+from .RegisterFile import RegisterFile
 
 #-------------------------------------------------------------------------
 # Dpath and Ctrl for NormalQueueRTL
@@ -23,7 +25,7 @@ class NormalQueueDpathRTL( Component ):
     # Interface
 
     s.enq_msg =  InPort( EntryType )
-    s.deq_msg = OutPort( EntryType )
+    s.deq_ret = OutPort( EntryType )
 
     s.wen   = InPort( Bits1 )
     s.waddr = InPort( mk_bits( clog2( num_entries ) ) )
@@ -33,7 +35,7 @@ class NormalQueueDpathRTL( Component ):
 
     s.queue = RegisterFile( EntryType, num_entries )(
       raddr = { 0: s.raddr   },
-      rdata = { 0: s.deq_msg },
+      rdata = { 0: s.deq_ret },
       wen   = { 0: s.wen     },
       waddr = { 0: s.waddr   },
       wdata = { 0: s.enq_msg },
@@ -153,7 +155,7 @@ class NormalQueueRTL( Component ):
       connect( s.deq.rdy, s.ctrl.deq_rdy  )
       connect( s.count,   s.ctrl.count    )
       connect( s.enq.msg, s.dpath.enq_msg )
-      connect( s.deq.msg, s.dpath.deq_msg )
+      connect( s.deq.ret, s.dpath.deq_ret )
 
   # Line trace
 
@@ -285,7 +287,7 @@ class PipeQueueRTL( Component ):
       connect( s.deq.rdy, s.ctrl.deq_rdy  )
       connect( s.count,   s.ctrl.count    )
       connect( s.enq.msg, s.dpath.enq_msg )
-      connect( s.deq.msg, s.dpath.deq_msg )
+      connect( s.deq.ret, s.dpath.deq_ret )
 
   # Line trace
 
@@ -303,7 +305,7 @@ class BypassQueueDpathRTL( Component ):
     # Interface
 
     s.enq_msg =  InPort( EntryType )
-    s.deq_msg = OutPort( EntryType )
+    s.deq_ret = OutPort( EntryType )
 
     s.wen     = InPort( Bits1 )
     s.waddr   = InPort( mk_bits( clog2( num_entries ) ) )
@@ -322,7 +324,7 @@ class BypassQueueDpathRTL( Component ):
     s.mux = Mux( EntryType, 2 )(
       sel = s.mux_sel,
       in_ = { 0: s.queue.rdata[0], 1: s.enq_msg },
-      out = s.deq_msg,
+      out = s.deq_ret,
     )
 
 class BypassQueueCtrlRTL( Component ):
@@ -451,7 +453,7 @@ class BypassQueueRTL( Component ):
       connect( s.deq.rdy, s.ctrl.deq_rdy  )
       connect( s.count,   s.ctrl.count    )
       connect( s.enq.msg, s.dpath.enq_msg )
-      connect( s.deq.msg, s.dpath.deq_msg )
+      connect( s.deq.ret, s.dpath.deq_ret )
 
   # Line trace
 
@@ -504,7 +506,7 @@ class NormalQueue1EntryRTL( Component ):
     def up_deq_rdy():
       s.deq.rdy = s.full & ~s.reset
 
-    connect( s.entry, s.deq.msg )
+    connect( s.entry, s.deq.ret )
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.full, s.deq )
@@ -552,7 +554,7 @@ class PipeQueue1EntryRTL( Component ):
     def up_deq_rdy():
       s.deq.rdy = s.full & ~s.reset
 
-    connect( s.entry, s.deq.msg )
+    connect( s.entry, s.deq.ret )
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.full, s.deq )
@@ -601,8 +603,8 @@ class BypassQueue1EntryRTL( Component ):
       s.deq.rdy = ( s.full | s.enq.en ) & ~s.reset
 
     @s.update
-    def up_deq_msg():
-      s.deq.msg = s.entry if s.full else s.enq.msg
+    def up_deq_ret():
+      s.deq.ret = s.entry if s.full else s.enq.msg
 
   def line_trace( s ):
     return "{}({}){}".format( s.enq, s.full, s.deq )

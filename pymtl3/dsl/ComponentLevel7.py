@@ -5,9 +5,10 @@ ComponentLevel7.py
 Add functional-level blocking method decorator.
 
 Author : Shunning Jiang
-Date   : May 19, 2019
+Date   : Jan 23, 2020
 """
 from .ComponentLevel6 import ComponentLevel6
+from .Connectable import CalleePort, CalleeIfcCL, CalleeIfcFL
 
 #-------------------------------------------------------------------------
 # method_port decorator
@@ -23,32 +24,28 @@ def blocking( method ):
 
 class ComponentLevel7( ComponentLevel6 ):
 
-  def __new__( cls, *args, **kwargs ):
+  # override
+  def _handle_decorated_methods( s ):
 
-    inst = super().__new__( cls, *args, **kwargs )
+    # The following code handles non-blocking methods
+    def bind_method( method ):
+      def _bound_method( *args, **kwargs ):
+        return method( s, *args, **kwargs )
+      return _bound_method
 
-    inst._dsl.blocking_methods = set()
+    for x in s.__class__.__dict__:
+      method = getattr( s, x )
 
-    for name in cls.__dict__:
-      if name[0] != '_': # filter private variables
-        method = getattr( inst, name )
-        if hasattr( method, "_blocking" ):
-          inst._dsl.blocking_methods.add( method )
+      # We identify decorated method port here
+      if   hasattr( method, "_callee_port" ):
+        setattr( s, x, CalleePort( method = method ) )
 
-    return inst
+      # We identify non_blocking methods here
+      elif hasattr( method, "_non_blocking_rdy" ):
+        rdy  = method._non_blocking_rdy
+        Type = method._non_blocking_type
+        setattr( s, x, CalleeIfcCL( Type, method, bind_method( rdy ) ) )
 
-  # Override
-  def _collect_vars( s, m ):
-    super()._collect_vars( m )
-    if isinstance( m, ComponentLevel7 ):
-      s._dsl.all_blocking_methods |= m._dsl.blocking_methods
-
-  #-----------------------------------------------------------------------
-  # elaborate
-  #-----------------------------------------------------------------------
-
-  # Override
-  def _elaborate_declare_vars( s ):
-    super()._elaborate_declare_vars()
-
-    s._dsl.all_blocking_methods = set()
+      # We identify blocking methods here
+      elif hasattr( method, "_blocking" ):
+        setattr( s, x, CalleeIfcFL( method ) )

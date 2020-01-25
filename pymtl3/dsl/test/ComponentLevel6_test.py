@@ -12,7 +12,7 @@ from collections import deque
 from pymtl3.datatypes import Bits16
 from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6, non_blocking
-from pymtl3.dsl.Connectable import NonBlockingCalleeIfc, NonBlockingCallerIfc
+from pymtl3.dsl.Connectable import CalleeIfcCL, CallerIfcCL
 from pymtl3.dsl.ConstraintTypes import M, U
 
 from .sim_utils import simple_sim_pass
@@ -25,7 +25,7 @@ class TestSrc( ComponentLevel6 ):
 
   def construct( s, msgs ):
 
-    s.send = NonBlockingCallerIfc()
+    s.send = CallerIfcCL()
 
     s.msgs = deque( msgs )
     s.head = None
@@ -197,8 +197,8 @@ def test_queue_sw():
 class QueueIncr( ComponentLevel6 ):
 
   def construct( s ):
-    s.recv  = NonBlockingCalleeIfc()
-    s.send  = NonBlockingCallerIfc()
+    s.recv  = CalleeIfcCL()
+    s.send  = CallerIfcCL()
     s.queue = SimpleQueue()
 
     connect( s.recv, s.queue.enq )
@@ -222,8 +222,8 @@ class QueueIncrChained( ComponentLevel6 ):
 
   def construct( s ):
 
-    s.recv = NonBlockingCalleeIfc()
-    s.send = NonBlockingCallerIfc()
+    s.recv = CalleeIfcCL()
+    s.send = CallerIfcCL()
 
     s.q0 = QueueIncr()
     s.q1 = QueueIncr()

@@ -12,8 +12,8 @@ from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 class CLLineTracePass( BasePass ):
 
-  def __init__( self, trace_len=16 ):
-    self.default_trace_len = trace_len
+  def __init__( self, default_trace_len=8 ):
+    self.default_trace_len = default_trace_len
 
   def __call__( self, top ):
     if not hasattr( top, "_tracing" ):
@@ -74,51 +74,48 @@ class CLLineTracePass( BasePass ):
     #  1:( 0000 () #    ) - enq(0000) called, deq is not ready
     #  2:( #    () 0000 ) - enq is not ready, deq() gets called
     #  3:( 0001 () #    ) - enq(0001) called, deq is not ready again
+
     def mk_new_str( ifc ):
-      def new_str( self ):
+      def new_str():
+
         # If rdy is called
-        if self.rdy.called:
-
+        if ifc.rdy.called:
           # If rdy is called and returns true
-          if self.rdy.saved_ret:
+          if ifc.rdy.saved_ret:
+            # If rdy and method called - return actual message
+            if ifc.method.called:
+              args_strs = [ str( arg ) for arg in ifc.method.saved_args ] + \
+                          [ str( arg ) for _, arg in ifc.method.saved_kwargs.items() ]
 
-            # If rdy and method called - return actuall message
-            if self.method.called:
-              args_str = ",".join(
-                [ str( arg ) for arg in self.method.saved_args ]
-              )
-              kwargs_str = ",".join(
-                [ str( arg ) for _, arg in self.method.saved_kwargs.items() ]
-              )
-              ret_str = (
-                "" if self.method.saved_ret is None else
-                str( self.method.saved_ret )
-              )
-              trace = []
-              if len( args_str ) > 0: trace.append( args_str )
-              if len( kwargs_str ) > 0: trace.append( kwargs_str )
-              if len( ret_str ) > 0 : trace.append( ret_str )
-              trace_str = ",".join( trace )
-              return trace_str.ljust( self.trace_len )
+              ret_str = "" if ifc.method.saved_ret is None else str( ifc.method.saved_ret )
+
+              trace = ""
+              if args_strs:
+                trace += f"({','.join(args_strs)})"
+              if ret_str:
+                trace += f"={ret_str}"
+
+              ifc.trace_len = len(trace)
+              return trace
 
             # If rdy and method not called
             else:
-              return " ".ljust( self.trace_len )
+              return " ".ljust( ifc.trace_len )
 
           # If rdy is called and returns false
-          elif self.method.called:
-            return "X".ljust( self.trace_len )
+          elif ifc.method.called:
+            return "X".ljust( ifc.trace_len )
           else:
-            return "#".ljust( self.trace_len )
+            return "#".ljust( ifc.trace_len )
 
         # If rdy is not called
-        elif self.method.called:
-          return "x".ljust( self.trace_len )
+        elif ifc.method.called:
+          return "x".ljust( ifc.trace_len )
 
         else:
-          return ".".ljust( self.trace_len )
+          return ".".ljust( ifc.trace_len )
 
-      ifc._str_hook = lambda : new_str( ifc )
+      ifc._str_hook = new_str
 
     # Collect all method ports and add some stamps
     all_callees = set()
@@ -151,14 +148,13 @@ class CLLineTracePass( BasePass ):
 
     # Collecting all non blocking interfaces and replace the str hook
     all_nblk_ifcs = top.get_all_object_filter(
-      lambda s: isinstance( s, NonBlockingInterface )
+      lambda s: isinstance( s, NonBlockingIfc )
     )
     for ifc in all_nblk_ifcs:
       if ifc.method.Type is not None:
-        trace_len = len( str( ifc.method.Type() ) )
+        ifc.trace_len = len( str( ifc.method.Type() ) )
       else:
-        trace_len = self.default_trace_len
-      ifc.trace_len = trace_len
+        ifc.trace_len = self.default_trace_len
       mk_new_str( ifc )
 
     # An update block that resets all method ports to not called

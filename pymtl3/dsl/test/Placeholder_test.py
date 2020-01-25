@@ -11,12 +11,12 @@ from collections import deque
 from pymtl3.datatypes import *
 from pymtl3.dsl import (
     WR,
+    CalleeIfcCL,
     CalleePort,
     CallerPort,
     Component,
     InPort,
     M,
-    NonBlockingCalleeIfc,
     OutPort,
     Placeholder,
     U,
@@ -233,13 +233,13 @@ def test_cl_interface_placeholder():
 
   class FooCL( Placeholder, Component ):
     def construct( s, queue_type="none" ):
-      s.enq = NonBlockingCalleeIfc()
-      s.deq = NonBlockingCalleeIfc()
+      s.enq = CalleeIfcCL()
+      s.deq = CalleeIfcCL()
 
   class FooCL_wrap( Component ):
     def construct( s ):
-      s.enq = NonBlockingCalleeIfc()
-      s.deq = NonBlockingCalleeIfc()
+      s.enq = CalleeIfcCL()
+      s.deq = CalleeIfcCL()
       s.foo = FooCL()( enq = s.enq, deq = s.deq )
 
   class FooCL_top( Component ):

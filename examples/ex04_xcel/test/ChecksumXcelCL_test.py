@@ -57,8 +57,8 @@ class WrappedChecksumXcelCL( Component ):
 
   def construct( s ):
 
-    s.recv = NonBlockingCalleeIfc( Req  )
-    s.give = NonBlockingCalleeIfc( Resp )
+    s.recv = CalleeIfcCL( Req  )
+    s.give = CalleeIfcCL( Resp )
 
     s.checksum_xcel = ChecksumXcelCL()
     s.out_q = BypassQueueCL( num_entries=1 )

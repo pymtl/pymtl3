@@ -17,9 +17,9 @@ from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 
 class MemMasterIfcFL( Interface ):
   def construct( s ):
-    s.read  = CallerPort()
-    s.write = CallerPort()
-    s.amo   = CallerPort()
+    s.read  = CallerIfcFL()
+    s.write = CallerIfcFL()
+    s.amo   = CallerIfcFL()
 
   def connect( s, other, parent ):
     if isinstance( other, MemMinionIfcCL ):
@@ -60,9 +60,9 @@ class MemMasterIfcFL( Interface ):
 
 class MemMinionIfcFL( Interface ):
   def construct( s, read=None, write=None, amo=None ):
-    s.read  = CalleePort( method=read )
-    s.write = CalleePort( method=write )
-    s.amo   = CalleePort( method=amo )
+    s.read  = read
+    s.write = write
+    s.amo   = amo
 
   def connect( s, other, parent ):
     if isinstance( other, MemMasterIfcCL ):
@@ -105,8 +105,8 @@ class MemMasterIfcCL( Interface ):
   def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
     s.req_class  = req_class
     s.resp_class = resp_class
-    s.req  = NonBlockingCallerIfc( req_class )
-    s.resp = NonBlockingCalleeIfc( resp_class, resp, resp_rdy )
+    s.req  = CallerIfcCL( req_class )
+    s.resp = CalleeIfcCL( resp_class, resp, resp_rdy )
 
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )
@@ -120,8 +120,8 @@ class MemMinionIfcCL( Interface ):
   def construct( s, req_class, resp_class, req=None, req_rdy=None ):
     s.req_class  = req_class
     s.resp_class = resp_class
-    s.req  = NonBlockingCalleeIfc( req_class, req, req_rdy )
-    s.resp = NonBlockingCallerIfc( resp_class )
+    s.req  = CalleeIfcCL( req_class, req, req_rdy )
+    s.resp = CallerIfcCL( resp_class )
 
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )
@@ -308,11 +308,11 @@ class MemIfcFL2RTLAdapter( Component ):
     s.req_cl2rtl  = RecvCL2SendRTL( req_class )
     s.resp_rtl2cl = RecvRTL2SendCL( resp_class)
     connect( s.left, s.fl2cl.left )
-    s.connect_pairs(
+    connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,
       s.req_cl2rtl.send, s.right.req,
     )
-    s.connect_pairs(
+    connect_pairs(
       s.fl2cl.right.resp, s.resp_rtl2cl.send,
       s.resp_rtl2cl.recv, s.right.resp,
     )

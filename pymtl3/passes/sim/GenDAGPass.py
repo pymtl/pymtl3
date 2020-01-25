@@ -164,6 +164,7 @@ def {}():
     write_upblks = defaultdict(set)
 
     constraint_objs = defaultdict(set)
+    expl_constraints = set( top._dsl.all_U_U_constraints )
 
     for data in [ upblk_reads, genblk_reads ]:
       for blk, reads in data.items():
@@ -299,26 +300,24 @@ def {}():
 
     method_is_top_level_callee = set()
 
-    try:
-      all_method_nets = top.get_all_method_nets()
-      for writer, net in all_method_nets:
-        if writer is not None:
-          for member in net:
-            if member is not writer:
-              assert member.method is None
-              member.method = writer.method
+    all_method_nets = top.get_all_method_nets()
+    for writer, net in all_method_nets:
+      if writer is not None:
+        for member in net:
+          if member is not writer:
+            assert member.method is None
+            member.method = writer.method
 
-            # If the member is a top level callee, we add the writer's
-            # actual method to the set
-            if member.get_host_component() is top:
-              method_is_top_level_callee.add( writer.method )
-
-    except AttributeError:
-      pass
+          # If the member is a top level callee, we add the writer's
+          # actual method to the set
+          if member.get_host_component() is top:
+            # if not writer.method.__name__.startswith('_binded_method'):
+            method_is_top_level_callee.add( writer.method )
 
     # Add those callee ports that are not part of a net
     for callee in top._dsl.top_level_callee_ports:
       if callee.method:
+        # if not callee.method.__name__.startswith('_binded_method'):
         method_is_top_level_callee.add( callee.method )
 
     method_blks = defaultdict(set)
@@ -329,7 +328,7 @@ def {}():
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, NonBlockingInterface ):
+        elif isinstance( call, (NonBlockingIfc, BlockingIfc) ):
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -343,6 +342,8 @@ def {}():
     # We pre-process M(x) == M(y) constraints into per-method equivalence
     # sets. We have to do it here for potential open-loop constraints
 
+    for x in all_M_constraints:
+      print(x)
     equiv = defaultdict(set)
     for (x, y, is_equal) in all_M_constraints:
 
@@ -351,14 +352,14 @@ def {}():
 
         if   isinstance( x, MethodPort ):
           xx = x.method
-        elif isinstance( x, NonBlockingInterface ):
+        elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
           xx = x.method.method
         else:
           xx = x
 
         if   isinstance( y, MethodPort ):
           yy = y.method
-        elif isinstance( y, NonBlockingInterface ):
+        elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
           yy = y.method.method
         else:
           yy = y
@@ -394,14 +395,14 @@ def {}():
 
       if   isinstance( x, MethodPort ):
         xx = x.method
-      elif isinstance( x, NonBlockingInterface ):
+      elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
         xx = x.method.method
       else:
         xx = x
 
       if   isinstance( y, MethodPort ):
         yy = y.method
-      elif isinstance( y, NonBlockingInterface ):
+      elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
         yy = y.method.method
       else:
         yy = y
@@ -421,6 +422,7 @@ def {}():
         for zz in equiv[yy]:
           if zz in method_is_top_level_callee:
             top._dag.top_level_callee_constraints.add( (xx, zz) )
+
       else:
         if yy in method_is_top_level_callee:
           top._dag.top_level_callee_constraints.add( (xx, yy) )
@@ -521,10 +523,16 @@ def {}():
                 visited.add( (v, 1) )
                 Q.append( (v, 1) ) # blk_id < method < ... < u < v < ?
 
-    # Mark update blocks that call blocking methods for greenlet wrapping
+    # Mark update blocks that call blocking methods
+    # (CalleeIfcFL/CallerIfcFL) for greenlet wrapping
+
+    blocking_ifcs = top.get_all_object_filter( lambda x: isinstance( x, (CalleeIfcFL, CallerIfcFL) ) )
+    for x in blocking_ifcs:
+      print(repr(x))
 
     top._dag.greenlet_upblks = set()
 
-    for blocking_method in top._dsl.all_blocking_methods:
-      for blk in method_blks[ blocking_method ]:
+    for blocking_method in blocking_ifcs:
+      for blk in method_blks[ blocking_method.method.method ]:
         top._dag.greenlet_upblks.add( blk )
+    print(top._dag.greenlet_upblks)

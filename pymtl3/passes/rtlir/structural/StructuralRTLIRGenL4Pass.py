@@ -37,7 +37,7 @@ class StructuralRTLIRGenL4Pass( StructuralRTLIRGenL3Pass ):
 
   # Override
   def sort_connections( s, m ):
-    """Sort connections by the order `s.connect` is called.
+    """Sort connections by the order `connect` is called.
 
     At L4 we need to recursively generate connections for every component.
     """

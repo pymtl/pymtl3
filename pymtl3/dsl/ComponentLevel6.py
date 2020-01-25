@@ -5,10 +5,10 @@ ComponentLevel6.py
 Add method port decorator.
 
 Author : Yanghui Ou, Shunning Jiang
-  Date : Feb 24, 2019
+  Date : Jan 24, 2020
 """
 from .ComponentLevel5 import ComponentLevel5
-from .Connectable import CalleePort, CallerPort, NonBlockingCalleeIfc
+from .Connectable import CalleePort, CalleeIfcCL
 
 #-------------------------------------------------------------------------
 # non blocking decorator
@@ -27,20 +27,24 @@ def non_blocking( rdy, Type=None ):
 
 class ComponentLevel6( ComponentLevel5 ):
 
+  # Override
   def _handle_decorated_methods( s ):
-    super()._handle_decorated_methods()
 
     # The following code handles non-blocking methods
     def bind_method( method ):
-      def _method( *args, **kwargs ):
+      def _bound_method( *args, **kwargs ):
         return method( s, *args, **kwargs )
-      return _method
+      return _bound_method
 
-    cls_dict = s.__class__.__dict__
-    for x in cls_dict:
+    for x in s.__class__.__dict__:
       method = getattr( s, x )
+
+      # We identify decorated method port here
+      if   hasattr( method, "_callee_port" ):
+        setattr( s, x, CalleePort( method = method ) )
+
       # We identify non_blocking methods here
-      if hasattr( method, "_non_blocking_rdy" ):
+      elif hasattr( method, "_non_blocking_rdy" ):
         rdy  = method._non_blocking_rdy
         Type = method._non_blocking_type
-        setattr( s, x, NonBlockingCalleeIfc( Type, method, bind_method( rdy ) ) )
+        setattr( s, x, CalleeIfcCL( Type, method, bind_method( rdy ) ) )

@@ -40,7 +40,7 @@ def run_tv_test( dut, test_vectors ):
   def tv_out( dut, tv ):
     if tv[1] != '?': assert dut.enq.rdy == tv[1]
     if tv[4] != '?': assert dut.deq.rdy == tv[4]
-    if tv[5] != '?': assert dut.deq.msg == tv[5]
+    if tv[5] != '?': assert dut.deq.ret == tv[5]
 
   # Run the test
 
@@ -52,7 +52,7 @@ def test_pipe_Bits():
   B1  = mk_bits(1)
   B32 = mk_bits(32)
   run_tv_test( NormalQueueRTL( Bits32, 2 ), [
-    #  enq.en  enq.rdy enq.msg   deq.en  deq.rdy deq.msg
+    #  enq.en  enq.rdy enq.msg   deq.en  deq.rdy deq.ret
     [  B1(1),  B1(1),  B32(123), B1(0),  B1(0),    '?'    ],
     [  B1(1),  B1(1),  B32(345), B1(0),  B1(1),  B32(123) ],
     [  B1(0),  B1(0),  B32(567), B1(0),  B1(1),  B32(123) ],
