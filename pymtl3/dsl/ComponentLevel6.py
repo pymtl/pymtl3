@@ -8,7 +8,7 @@ Author : Yanghui Ou, Shunning Jiang
   Date : Jan 24, 2020
 """
 from .ComponentLevel5 import ComponentLevel5
-from .Connectable import CalleePort, CalleeIfcCL
+from .Connectable import CalleeIfcCL, CalleePort
 
 #-------------------------------------------------------------------------
 # non blocking decorator

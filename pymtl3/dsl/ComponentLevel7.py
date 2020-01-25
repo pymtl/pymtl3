@@ -8,7 +8,7 @@ Author : Shunning Jiang
 Date   : Jan 23, 2020
 """
 from .ComponentLevel6 import ComponentLevel6
-from .Connectable import CalleePort, CalleeIfcCL, CalleeIfcFL
+from .Connectable import CalleeIfcCL, CalleeIfcFL, CalleePort
 
 #-------------------------------------------------------------------------
 # method_port decorator
