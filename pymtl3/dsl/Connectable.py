@@ -413,7 +413,7 @@ class MethodPort( NamedObject, Connectable ):
     return s._dsl.in_non_blocking_ifc
 
 class CallerPort( MethodPort ):
-  def construct( self, Type=None ):
+  def construct( self, *, Type=None ): # keyword only!
     self.Type = Type
     self.method = None
     self._dsl.in_non_blocking_ifc = False
@@ -425,7 +425,7 @@ class CallerPort( MethodPort ):
     return True
 
 class CalleePort( MethodPort ):
-  def construct( self, Type=None, method=None ):
+  def construct( self, *, Type=None, method=None ): # keyword only!
     self.Type = Type
     self.method = method
     self._dsl.in_non_blocking_ifc = False
@@ -501,7 +501,7 @@ class BlockingIfc( Interface ):
 
 class CalleeIfcRTL( CallIfcRTL ):
 
-  def construct( s, en=None, rdy=None, MsgType=None, RetType=None ):
+  def construct( s, *, en=None, rdy=None, MsgType=None, RetType=None ): # keyword only!
     s.MsgType = s.RetType = None
 
     if en is not None:
@@ -520,7 +520,7 @@ class CalleeIfcRTL( CallIfcRTL ):
 
 class CallerIfcRTL( CallIfcRTL ):
 
-  def construct( s, en=None, rdy=None, MsgType=None, RetType=None ):
+  def construct( s, *, en=None, rdy=None, MsgType=None, RetType=None ): # keyword only!
     s.MsgType = s.RetType = None
 
     if en is not None:
@@ -538,10 +538,10 @@ class CallerIfcRTL( CallIfcRTL ):
       s.RetType = RetType
 
 class CalleeIfcCL( NonBlockingIfc ):
-  def construct( s, Type=None, method=None, rdy=None ):
+  def construct( s, *, Type=None, method=None, rdy=None ): # keyword only!
     s.Type = Type
-    s.method = CalleePort( Type, method )
-    s.rdy    = CalleePort( None, rdy )
+    s.method = CalleePort( Type=Type, method=method )
+    s.rdy    = CalleePort( method=rdy )
 
     s.method._dsl.in_non_blocking_ifc = True
     s.rdy._dsl.in_non_blocking_ifc    = True
@@ -551,10 +551,10 @@ class CalleeIfcCL( NonBlockingIfc ):
 
 class CallerIfcCL( NonBlockingIfc ):
 
-  def construct( s, Type=None ):
+  def construct( s, *, Type=None ): # keyword only!
     s.Type = Type
 
-    s.method = CallerPort( Type )
+    s.method = CallerPort( Type=Type )
     s.rdy    = CallerPort()
 
     s.method._dsl.in_non_blocking_ifc = True
@@ -565,11 +565,12 @@ class CallerIfcCL( NonBlockingIfc ):
 
 class CalleeIfcFL( BlockingIfc ):
 
-  def construct( s, method=None ):
-    s.method = CalleePort( method=method )
-
+  def construct( s, *, Type=None, method=None ):
+    s.Type = Type
+    s.method = CalleePort( method=method, Type=Type )
 
 class CallerIfcFL( BlockingIfc ):
 
-  def construct( s ):
-    s.method = CallerPort()
+  def construct( s, *, Type=None ):
+    s.Type = Type
+    s.method = CallerPort( Type=Type )

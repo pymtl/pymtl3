@@ -90,7 +90,7 @@ class DelayPipeSendCL( Component ):
       connect( s.enq, s.send )
 
     else: # delay >= 1, pipe behavior
-      s.enq = CalleeIfcCL( None, s.enq_pipe, s.enq_rdy_pipe )
+      s.enq = CalleeIfcCL( Type=None, method=s.enq_pipe, rdy=s.enq_rdy_pipe )
       s.pipeline = deque( [None]*delay, maxlen=delay )
 
       @s.update

@@ -38,14 +38,14 @@ class ComponentLevel7( ComponentLevel6 ):
 
       # We identify decorated method port here
       if   hasattr( method, "_callee_port" ):
-        setattr( s, x, CalleePort( method = method ) )
+        setattr( s, x, CalleePort( method=method ) )
 
       # We identify non_blocking methods here
       elif hasattr( method, "_non_blocking_rdy" ):
         rdy  = method._non_blocking_rdy
         Type = method._non_blocking_type
-        setattr( s, x, CalleeIfcCL( Type, method, bind_method( rdy ) ) )
+        setattr( s, x, CalleeIfcCL( Type=Type, method=method, rdy=bind_method( rdy ) ) )
 
       # We identify blocking methods here
       elif hasattr( method, "_blocking" ):
-        setattr( s, x, CalleeIfcFL( method ) )
+        setattr( s, x, CalleeIfcFL( method=method ) )

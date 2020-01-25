@@ -28,33 +28,27 @@ class CLLineTracePass( BasePass ):
     # which can be used for composing the line trace.
     # The wrapped method also need to update the saved arguments and
     # return value of all the methods this callee port is driving.
-    def wrap_callee_method( mport, drived_methods ):
+    def wrap_callee_method( mport, net ):
       mport.raw_method = mport.method
       def wrapped_method( self, *args, **kwargs ):
-        self.saved_args = args
-        self.saved_kwargs = kwargs
-        self.called = True
-        self.saved_ret = self.raw_method( *args, **kwargs )
-        for m in drived_methods:
+        # If it has greenlet i.e. blocking ... we need to make sure
+        # we record everything after the method is successfully invoked
+        ret = self.raw_method( *args, **kwargs )
+        for m in net:
           m.called = True
-          m.saved_args = self.saved_args
-          m.saved_kwargs = self.saved_kwargs
-          m.saved_ret = self.saved_ret
-        return self.saved_ret
+          m.saved_args = args
+          m.saved_kwargs = kwargs
+          m.saved_ret = ret
+        return ret
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
     # [wrap_caller_method] wraps the original method in a caller port
     # into a new method that calls its driver instead of the actual
     # method, which will trigger the actual driver to update all other
     # method ports connected to this net.
-    def wrap_caller_method( mport, driver ):
-      mport.raw_method = mport.method
+    def wrap_caller_method( mport, driver_method ):
       def wrapped_method( self, *args, **kwargs ):
-        self.saved_args = args
-        self.saved_kwargs = kwargs
-        self.called = True
-        self.saved_ret = driver( *args, **kwargs )
-        return self.saved_ret
+        return driver_method( *args, **kwargs )
       mport.method = lambda *args, **kwargs : wrapped_method( mport, *args, **kwargs )
 
     # Collect all method ports and add some stamps

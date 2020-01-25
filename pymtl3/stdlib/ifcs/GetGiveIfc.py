@@ -184,7 +184,7 @@ class RecvCL2GiveFL( Component ):
 
     # Interface
 
-    s.give = GiveIfcFL( s.give )
+    s.give = GiveIfcFL( method=s.give )
 
     s.entry = None
 

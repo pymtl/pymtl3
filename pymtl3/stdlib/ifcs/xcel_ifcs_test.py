@@ -27,8 +27,11 @@ from .xcel_ifcs import (
 
 class SomeMasterNonBlockingFL( Component ):
 
+  # Actually we don't need ReqType and RespType for FL models. It's just
+  # for polymorphic instantiation in the test harness, since CL/RTL models
+  # have these two parameters.
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcFL( ReqType, RespType )
+    s.xcel = XcelMasterIfcFL()
 
     s.addr = 0
     s.nregs = nregs
@@ -57,7 +60,7 @@ class SomeMasterNonBlockingFL( Component ):
 class SomeMasterBlockingFL( Component ):
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcFL( ReqType, RespType )
+    s.xcel = XcelMasterIfcFL()
 
     s.addr = 0
     s.nregs = nregs
@@ -92,7 +95,7 @@ class SomeMinionFL( Component ):
     s.reg_file[ int(addr) ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMinionIfcFL( ReqType, RespType, s.read_method, s.write_method )
+    s.xcel = XcelMinionIfcFL( read=s.read_method, write=s.write_method )
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
   def line_trace( s ):
@@ -113,7 +116,7 @@ class SomeMasterCL( Component ):
     return True
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.xcel = XcelMasterIfcCL( ReqType, RespType, resp=s.recv, resp_rdy=s.recv_rdy )
     s.addr = 0
     s.count = 0
     s.nregs = nregs
@@ -160,7 +163,7 @@ class SomeMinionCL( Component ):
     s.reg_file[ addr ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMinionIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.xcel = XcelMinionIfcCL( ReqType, RespType, req=s.recv, req_rdy=s.recv_rdy )
     s.entry = None
     s.reg_file = [ 0 for _ in range( nregs ) ]
 

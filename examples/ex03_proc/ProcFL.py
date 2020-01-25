@@ -28,7 +28,7 @@ class ProcFL( Component ):
 
     s.imem = MemMasterIfcFL()
     s.dmem = MemMasterIfcFL()
-    s.xcel = XcelMasterIfcFL( *mk_xcel_msg( 5, 32 ) )
+    s.xcel = XcelMasterIfcFL()
 
     s.proc2mngr = SendIfcFL()
     s.mngr2proc = GetIfcFL()

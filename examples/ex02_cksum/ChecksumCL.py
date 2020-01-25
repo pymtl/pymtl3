@@ -32,8 +32,8 @@ class ChecksumCL( Component ):
 
   def construct( s ):
 
-    s.recv = CalleeIfcCL( Bits128 )
-    s.send = CallerIfcCL( Bits32  )
+    s.recv = CalleeIfcCL( Type=Bits128 )
+    s.send = CallerIfcCL( Type=Bits32  )
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
     # Implement the checksum CL component

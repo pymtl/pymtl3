@@ -249,7 +249,7 @@ class RecvFL2SendCL( Component ):
 
     # Interface
 
-    s.recv = RecvIfcFL( s.recv )
+    s.recv = RecvIfcFL( method=s.recv )
     s.send = CallerIfcCL()
 
     s.add_constraints( M( s.recv ) == M( s.send ) )
