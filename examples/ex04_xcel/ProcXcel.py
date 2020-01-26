@@ -36,14 +36,14 @@ class ProcXcel( Component ):
       s.dmem = MemMasterIfcRTL( req_class, resp_class )
 
     elif isinstance( s.proc.imem, MemMasterIfcCL ): # CL proc
-      s.mngr2proc = CalleeIfcCL( Bits32 )
-      s.proc2mngr = CallerIfcCL( Bits32 )
+      s.mngr2proc = CalleeIfcCL( Type=Bits32 )
+      s.proc2mngr = CallerIfcCL( Type=Bits32 )
       s.imem = MemMasterIfcCL( req_class, resp_class )
       s.dmem = MemMasterIfcCL( req_class, resp_class )
 
     elif isinstance( s.proc.imem, MemMasterIfcFL ): # FL proc
-      s.mngr2proc = GetIfcFL()
-      s.proc2mngr = SendIfcFL()
+      s.mngr2proc = GetIfcFL( Type=Bits32 )
+      s.proc2mngr = SendIfcFL( Type=Bits32 )
       s.imem = MemMasterIfcFL()
       s.dmem = MemMasterIfcFL()
 

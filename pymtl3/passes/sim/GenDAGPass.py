@@ -527,8 +527,6 @@ def {}():
     # (CalleeIfcFL/CallerIfcFL) for greenlet wrapping
 
     blocking_ifcs = top.get_all_object_filter( lambda x: isinstance( x, (CalleeIfcFL, CallerIfcFL) ) )
-    for x in blocking_ifcs:
-      print(repr(x))
 
     top._dag.greenlet_upblks = set()
 

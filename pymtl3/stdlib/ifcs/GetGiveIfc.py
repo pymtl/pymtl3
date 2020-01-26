@@ -184,11 +184,11 @@ class RecvCL2GiveFL( Component ):
 
     # Interface
 
-    s.give = GiveIfcFL( s.give )
+    s.give = GiveIfcFL( method=s.give )
 
     s.entry = None
 
-    s.add_constraints( M( s.recv ) == M( s.give ) )
+    s.add_constraints( M( s.recv ) > M( s.give ) ) # pipe behavior
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.give )

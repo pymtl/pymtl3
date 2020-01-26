@@ -360,7 +360,7 @@ class ComponentLevel3( ComponentLevel2 ):
       # One is connectable, we make sure it's o1
       if o2_connectable:
         o1, o2 = o2, o1
-      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+      assert isinstance( o1, Signal ), f"Cannot connect {o1!r} to {o2!r}."
 
       s._connect_signal_const( o1, o2 )
 

@@ -20,7 +20,7 @@ class TestSrcCL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
-    s.send = CallerIfcCL( Type )
+    s.send = CallerIfcCL( Type=Type )
     s.msgs = deque( msgs )
 
     s.count  = initial_delay

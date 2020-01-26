@@ -32,8 +32,8 @@ from ..utils import b128_to_words, words_to_b128
 class WrappedChecksumCL( Component ):
 
   def construct( s, DutType=ChecksumCL ):
-    s.recv = CalleeIfcCL( Bits128 )
-    s.give = CalleeIfcCL( Bits32  )
+    s.recv = CalleeIfcCL( Type=Bits128 )
+    s.give = CalleeIfcCL( Type=Bits32  )
 
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )

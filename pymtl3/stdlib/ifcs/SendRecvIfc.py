@@ -25,7 +25,6 @@ class RecvIfcRTL( CalleeIfcRTL ):
     super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
 
   def connect( s, other, parent ):
-
     # We are doing SendCL (other) -> [ RecvCL -> SendRTL ] -> RecvRTL (s)
     # SendCL is a caller interface
     if isinstance( other, CallerIfcCL ):
@@ -250,7 +249,7 @@ class RecvFL2SendCL( Component ):
 
     # Interface
 
-    s.recv = RecvIfcFL( s.recv )
+    s.recv = RecvIfcFL( method=s.recv )
     s.send = CallerIfcCL()
 
     s.add_constraints( M( s.recv ) == M( s.send ) )

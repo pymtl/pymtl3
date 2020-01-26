@@ -23,7 +23,7 @@ class MemMasterIfcFL( Interface ):
 
   def connect( s, other, parent ):
     if isinstance( other, MemMinionIfcCL ):
-      m = MemIfcFL2CLAdapter( other.req_class, other.resp_class )
+      m = MemIfcFL2CLAdapter( other.ReqType, other.RespType )
 
       if hasattr( parent, "MemIfcFL2CL_count" ):
         count = parent.MemIfcFL2CL_count
@@ -40,7 +40,7 @@ class MemMasterIfcFL( Interface ):
       return True
 
     elif isinstance( other, MemMinionIfcRTL ):
-      m = MemIfcFL2RTLAdapter( other.req_class, other.resp_class )
+      m = MemIfcFL2RTLAdapter( other.ReqType, other.RespType )
 
       if hasattr( parent, "MemIfcFL2RTL_count" ):
         count = parent.MemIfcFL2RTL_count
@@ -60,13 +60,13 @@ class MemMasterIfcFL( Interface ):
 
 class MemMinionIfcFL( Interface ):
   def construct( s, read=None, write=None, amo=None ):
-    s.read  = read
-    s.write = write
-    s.amo   = amo
+    s.read  = CalleeIfcFL( method=read )
+    s.write = CalleeIfcFL( method=write )
+    s.amo   = CalleeIfcFL( method=amo )
 
   def connect( s, other, parent ):
     if isinstance( other, MemMasterIfcCL ):
-      m = MemIfcCL2FLAdapter( other.req_class, other.resp_class )
+      m = MemIfcCL2FLAdapter( other.ReqType, other.RespType )
 
       if hasattr( parent, "MemIfcCL2FL_count" ):
         count = parent.MemIfcCL2FL_count
@@ -83,7 +83,7 @@ class MemMinionIfcFL( Interface ):
       return True
 
     elif isinstance( other, MemMasterIfcRTL ):
-      m = MemIfcRTL2FLAdapter( other.req_class, other.resp_class )
+      m = MemIfcRTL2FLAdapter( other.ReqType, other.RespType )
 
       if hasattr( parent, "MemIfcRTL2FL_count" ):
         count = parent.MemIfcRTL2FL_count
@@ -102,47 +102,49 @@ class MemMinionIfcFL( Interface ):
     return False
 
 class MemMasterIfcCL( Interface ):
-  def construct( s, req_class, resp_class, resp=None, resp_rdy=None ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = CallerIfcCL( req_class )
-    s.resp = CalleeIfcCL( resp_class, resp, resp_rdy )
+
+  def construct( s, ReqType, RespType, resp=None, resp_rdy=None ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = CallerIfcCL( Type=ReqType )
+    s.resp = CalleeIfcCL( Type=RespType, method=resp, rdy=resp_rdy )
 
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )
 
   def connect( s, other, parent ):
     if isinstance( other, MemMinionIfcCL ):
-      assert s.req_class is other.req_class and s.resp_class is other.resp_class
+      assert s.ReqType is other.ReqType and s.RespType is other.RespType
     return False
 
 class MemMinionIfcCL( Interface ):
-  def construct( s, req_class, resp_class, req=None, req_rdy=None ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = CalleeIfcCL( req_class, req, req_rdy )
-    s.resp = CallerIfcCL( resp_class )
+
+  def construct( s, ReqType, RespType, req=None, req_rdy=None ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = CalleeIfcCL( Type=ReqType, method=req, rdy=req_rdy )
+    s.resp = CallerIfcCL( Type=RespType )
 
   def line_trace( s ):
     return "{} > {}".format( s.req, s.resp )
 
 class MemMasterIfcRTL( Interface ):
 
-  def construct( s, req_class, resp_class ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = SendIfcRTL( req_class  )
-    s.resp = RecvIfcRTL( resp_class )
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = SendIfcRTL( ReqType  )
+    s.resp = RecvIfcRTL( RespType )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
 
 class MemMinionIfcRTL( Interface ):
-  def construct( s, req_class, resp_class ):
-    s.req_class  = req_class
-    s.resp_class = resp_class
-    s.req  = RecvIfcRTL( req_class  )
-    s.resp = SendIfcRTL( resp_class )
+  def construct( s, ReqType, RespType ):
+    s.ReqType  = ReqType
+    s.RespType = RespType
+    s.req  = RecvIfcRTL( ReqType  )
+    s.resp = SendIfcRTL( RespType )
 
   def __str__( s ):
     return "{},{}".format( s.req, s.resp )
@@ -156,8 +158,8 @@ class MemIfcCL2FLAdapter( Component ):
     assert s.entry is None
     s.entry = msg
 
-  def construct( s, req_class, resp_class ):
-    s.left  = MemMinionIfcCL( req_class, resp_class, s.recv, s.recv_rdy )
+  def construct( s, ReqType, RespType ):
+    s.left  = MemMinionIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
     s.right = MemMasterIfcFL()
     s.entry = None
 
@@ -172,20 +174,20 @@ class MemIfcCL2FLAdapter( Component ):
         s.entry = None
 
         len_ = int(req.len)
-        if not len_: len_ = req_class.data_nbits >> 3
+        if not len_: len_ = ReqType.data_nbits >> 3
 
         if   req.type_ == MemMsgType.READ:
-          resp = resp_class( req.type_, req.opaque, 0, req.len,
+          resp = RespType( req.type_, req.opaque, 0, req.len,
                              s.right.read( req.addr, len_ ) )
 
         elif req.type_ == MemMsgType.WRITE:
           s.right.write( req.addr, len_, req.data )
           # FIXME do we really set len=0 in response when doing subword wr?
-          # resp = resp_classes( req.type_, req.opaque, 0, req.len, 0 )
-          resp = resp_class( req.type_, req.opaque, 0, 0, 0 )
+          # resp = RespTypees( req.type_, req.opaque, 0, req.len, 0 )
+          resp = RespType( req.type_, req.opaque, 0, 0, 0 )
 
         else: # AMOS
-          resp = resp_class( req.type_, req.opaque, 0, req.len,
+          resp = RespType( req.type_, req.opaque, 0, req.len,
              s.right.amo( req.type_, req.addr, len_, req.data ) )
 
         s.left.resp( resp )
@@ -196,14 +198,13 @@ class MemIfcCL2FLAdapter( Component ):
 
 class MemIfcFL2CLAdapter( Component ):
 
-  @blocking
   def read( s, addr, nbytes ):
 
     # TODO refactor this greenlet stuff into some utility API
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class( MemMsgType.READ, 0, addr, nbytes ) )
+    s.right.req( s.ReqType( MemMsgType.READ, 0, addr, nbytes ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -212,26 +213,24 @@ class MemIfcFL2CLAdapter( Component ):
     s.entry = None
     return ret
 
-  @blocking
   def write( s, addr, nbytes, data ):
 
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class( MemMsgType.WRITE, 0, addr, nbytes, data ) )
+    s.right.req( s.ReqType( MemMsgType.WRITE, 0, addr, nbytes, data ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
 
     s.entry = None
 
-  @blocking
   def amo( s, amo, addr, nbytes, data ):
 
     while not s.right.req.rdy():
       greenlet.getcurrent().parent.switch(0)
 
-    s.right.req( s.req_class( amo, 0, addr, nbytes ) )
+    s.right.req( s.ReqType( amo, 0, addr, nbytes ) )
 
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
@@ -247,14 +246,14 @@ class MemIfcFL2CLAdapter( Component ):
     assert s.entry is None
     s.entry = msg
 
-  def construct( s, req_class, resp_class ):
+  def construct( s, ReqType, RespType ):
     s.entry = None # store response
 
-    s.req_class  = req_class
-    s.resp_class = resp_class
+    s.ReqType  = ReqType
+    s.RespType = RespType
 
-    s.left  = MemMinionIfcFL( s.read, s.write, s.amo )
-    s.right = MemMasterIfcCL( req_class, resp_class, s.recv, s.recv_rdy )
+    s.left  = MemMinionIfcFL( read=s.read, write=s.write, amo=s.amo )
+    s.right = MemMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
 
     s.add_constraints(
       M(s.left.read)  == M(s.right.req),
@@ -271,8 +270,8 @@ class MemIfcFL2CLAdapter( Component ):
 
 class MemIfcRTL2FLAdapter( Component ):
 
-  def construct( s, req_class, resp_class ):
-    s.left  = MemMinionIfcRTL( req_class, resp_class )
+  def construct( s, ReqType, RespType ):
+    s.left  = MemMinionIfcRTL( ReqType, RespType )
     s.right = MemMasterIfcFL()
 
     @s.update
@@ -281,14 +280,14 @@ class MemIfcRTL2FLAdapter( Component ):
       if s.left.req.en and s.left.resp.rdy:
 
         if s.left.req.msg.type_ == MemMsgType.READ:
-          resp = resp_class( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
+          resp = RespType( s.left.req.msg.type_, s.right.read( s.left.req.msg.addr ) )
 
         elif s.left.req.msg.type_ == MemMsgType.WRITE:
           s.right.write( s.left.req.msg.addr, s.left.req.msg.data )
-          resp = resp_class( s.left.req.msg.type_, 0 )
+          resp = RespType( s.left.req.msg.type_, 0 )
 
         else: # AMOs
-          resp = resp_class( req.type_, req.opaque, 0, req.len,
+          resp = RespType( req.type_, req.opaque, 0, req.len,
              s.right.amo( req.type_, req.addr, len_, req.data ) )
 
         s.left.resp.en  = Bits1(1)
@@ -300,13 +299,13 @@ class MemIfcRTL2FLAdapter( Component ):
 
 class MemIfcFL2RTLAdapter( Component ):
 
-  def construct( s, req_class, resp_class ):
+  def construct( s, ReqType, RespType ):
     s.left  = MemMinionIfcFL ()
-    s.right = MemMasterIfcRTL( req_class, resp_class )
+    s.right = MemMasterIfcRTL( ReqType, RespType )
 
-    s.fl2cl       = MemIfcFL2CLAdapter( req_class, resp_class )
-    s.req_cl2rtl  = RecvCL2SendRTL( req_class )
-    s.resp_rtl2cl = RecvRTL2SendCL( resp_class)
+    s.fl2cl       = MemIfcFL2CLAdapter( ReqType, RespType )
+    s.req_cl2rtl  = RecvCL2SendRTL( ReqType )
+    s.resp_rtl2cl = RecvRTL2SendCL( RespType)
     connect( s.left, s.fl2cl.left )
     connect_pairs(
       s.fl2cl.right.req, s.req_cl2rtl.recv,

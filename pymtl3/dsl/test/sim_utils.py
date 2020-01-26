@@ -20,7 +20,14 @@ from pymtl3.dsl.ComponentLevel4 import ComponentLevel4
 from pymtl3.dsl.ComponentLevel5 import ComponentLevel5
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 from pymtl3.dsl.ComponentLevel7 import ComponentLevel7
-from pymtl3.dsl.Connectable import BlockingIfc, Const, Interface, MethodPort, NonBlockingIfc, Signal
+from pymtl3.dsl.Connectable import (
+    BlockingIfc,
+    Const,
+    Interface,
+    MethodPort,
+    NonBlockingIfc,
+    Signal,
+)
 from pymtl3.dsl.errors import (
     LeftoverPlaceholderError,
     NotElaboratedError,
