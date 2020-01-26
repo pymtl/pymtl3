@@ -182,7 +182,6 @@ class CLLineTracePass( BasePass ):
         ifc.trace_len = len( str( ifc.method.Type() ) )
       else:
         ifc.trace_len = self.default_trace_len
-
       ifc._str_hook = mk_new_str_blocking( ifc )
 
     # An update block that resets all method ports to not called

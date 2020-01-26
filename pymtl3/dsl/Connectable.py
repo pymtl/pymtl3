@@ -566,11 +566,11 @@ class CallerIfcCL( NonBlockingIfc ):
 class CalleeIfcFL( BlockingIfc ):
 
   def construct( s, *, Type=None, method=None ):
-    s.Type = Type
+    s.Type   = Type
     s.method = CalleePort( method=method, Type=Type )
 
 class CallerIfcFL( BlockingIfc ):
 
   def construct( s, *, Type=None ):
-    s.Type = Type
+    s.Type   = Type
     s.method = CallerPort( Type=Type )

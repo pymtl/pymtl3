@@ -107,6 +107,9 @@ class XcelMinionIfcFL( Interface ):
 
     return False
 
+  def line_trace( s ):
+    return f"[r]{s.read}[w]{s.write}"
+
 #-------------------------------------------------------------------------
 # CL interfaces
 #-------------------------------------------------------------------------

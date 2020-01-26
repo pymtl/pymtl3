@@ -99,7 +99,7 @@ class SomeMinionFL( Component ):
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
   def line_trace( s ):
-    return ""
+    return s.xcel.line_trace()
 
 #-------------------------------------------------------------------------
 # CL master/minion
