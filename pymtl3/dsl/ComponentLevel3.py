@@ -360,7 +360,7 @@ class ComponentLevel3( ComponentLevel2 ):
       # One is connectable, we make sure it's o1
       if o2_connectable:
         o1, o2 = o2, o1
-      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+      assert isinstance( o1, Signal ), f"Cannot connect {o1!r} to {o2!r}."
 
       s._connect_signal_const( o1, o2 )
 
@@ -488,16 +488,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
     for net in nets:
       for member in net:
-        host = member
-        while not isinstance( host, ComponentLevel3 ):
-          host = host.get_parent_object() # go to the component
-        member._dsl.host = host
+        host = member.get_host_component()
 
         # Specialize two cases:
         # 1. A top-level input port is writer.
         # 2. An output port of a placeholder module is a writer
-        if ( isinstance( member, InPort ) and member._dsl.host == s ) or \
-           ( isinstance( member, OutPort ) and isinstance( member._dsl.host, Placeholder ) ):
+        if ( isinstance( member, InPort ) and host == s ) or \
+           ( isinstance( member, OutPort ) and isinstance( host, Placeholder ) ):
           writer_prop[ member ] = True
 
     headless = nets
@@ -618,13 +615,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
       while S:
         u = S.pop() # u is the writer
-        whost = u._dsl.host
+        whost = u.get_host_component()
 
         for v in s._dsl.all_adjacency[u]: # v is the reader
           if v not in visited:
             visited.add( v )
             S.append( v )
-            rhost = v._dsl.host
+            rhost = v.get_host_component()
 
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport

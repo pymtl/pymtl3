@@ -111,18 +111,18 @@ class ProcRTL( Component ):
 
       # imem ports
       imemreq_addr  = s.imemreq_q.enq.msg.addr,
-      imemresp_data = s.imemresp_q.deq.msg,
+      imemresp_data = s.imemresp_q.deq.ret,
 
       # dmem ports
       dmemreq_addr  = s.dmem.req.msg.addr,
       dmemreq_data  = s.dmem.req.msg.data,
-      dmemresp_data = s.dmemresp_q.deq.msg.data,
+      dmemresp_data = s.dmemresp_q.deq.ret.data,
 
       # xcel ports
-      xcelresp_data = s.xcelresp_q.deq.msg.data,
+      xcelresp_data = s.xcelresp_q.deq.ret.data,
 
       # mngr
-      mngr2proc_data = s.mngr2proc_q.deq.msg,
+      mngr2proc_data = s.mngr2proc_q.deq.ret,
       proc2mngr_data = s.proc2mngr.msg,
 
     )

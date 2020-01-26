@@ -27,8 +27,11 @@ from .xcel_ifcs import (
 
 class SomeMasterNonBlockingFL( Component ):
 
+  # Actually we don't need ReqType and RespType for FL models. It's just
+  # for polymorphic instantiation in the test harness, since CL/RTL models
+  # have these two parameters.
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcFL( ReqType, RespType )
+    s.xcel = XcelMasterIfcFL()
 
     s.addr = 0
     s.nregs = nregs
@@ -57,7 +60,7 @@ class SomeMasterNonBlockingFL( Component ):
 class SomeMasterBlockingFL( Component ):
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcFL( ReqType, RespType )
+    s.xcel = XcelMasterIfcFL()
 
     s.addr = 0
     s.nregs = nregs
@@ -92,11 +95,11 @@ class SomeMinionFL( Component ):
     s.reg_file[ int(addr) ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMinionIfcFL( ReqType, RespType, s.read_method, s.write_method )
+    s.xcel = XcelMinionIfcFL( read=s.read_method, write=s.write_method )
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
   def line_trace( s ):
-    return ""
+    return s.xcel.line_trace()
 
 #-------------------------------------------------------------------------
 # CL master/minion
@@ -113,7 +116,7 @@ class SomeMasterCL( Component ):
     return True
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.xcel = XcelMasterIfcCL( ReqType, RespType, resp=s.recv, resp_rdy=s.recv_rdy )
     s.addr = 0
     s.count = 0
     s.nregs = nregs
@@ -160,7 +163,7 @@ class SomeMinionCL( Component ):
     s.reg_file[ addr ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMinionIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.xcel = XcelMinionIfcCL( ReqType, RespType, req=s.recv, req_rdy=s.recv_rdy )
     s.entry = None
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
@@ -263,25 +266,25 @@ class SomeMinionRTL( Component ):
     DataType = ReqType.get_field_type( 'data' )
     assert DataType is RespType.get_field_type( 'data' )
 
-    s.nregs      = nregs
+    s.nregs = nregs
 
     # Components
 
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     s.wen   = Wire( Bits1 )
     s.reg_file = RegisterFile( DataType, nregs )(
-      raddr = { 0: s.req_q.deq.msg.addr },
+      raddr = { 0: s.req_q.deq.ret.addr },
       rdata = { 0: s.xcel.resp.msg.data },
       wen   = { 0: s.wen                },
-      waddr = { 0: s.req_q.deq.msg.addr },
-      wdata = { 0: s.req_q.deq.msg.data },
+      waddr = { 0: s.req_q.deq.ret.addr },
+      wdata = { 0: s.req_q.deq.ret.data },
     )
     connect( s.xcel.req,            s.req_q.enq           )
-    connect( s.xcel.resp.msg.type_, s.req_q.deq.msg.type_ )
+    connect( s.xcel.resp.msg.type_, s.req_q.deq.ret.type_ )
 
     @s.update
     def up_wen():
-      s.wen = s.req_q.deq.rdy and s.req_q.deq.msg.type_ == XcelMsgType.WRITE
+      s.wen = s.req_q.deq.rdy and s.req_q.deq.ret.type_ == XcelMsgType.WRITE
 
     @s.update
     def up_resp():

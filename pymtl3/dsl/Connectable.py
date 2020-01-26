@@ -413,7 +413,7 @@ class MethodPort( NamedObject, Connectable ):
     return s._dsl.in_non_blocking_ifc
 
 class CallerPort( MethodPort ):
-  def construct( self, Type=None ):
+  def construct( self, *, Type=None ): # keyword only!
     self.Type = Type
     self.method = None
     self._dsl.in_non_blocking_ifc = False
@@ -425,7 +425,7 @@ class CallerPort( MethodPort ):
     return True
 
 class CalleePort( MethodPort ):
-  def construct( self, Type=None, method=None ):
+  def construct( self, *, Type=None, method=None ): # keyword only!
     self.Type = Type
     self.method = method
     self._dsl.in_non_blocking_ifc = False
@@ -436,9 +436,42 @@ class CalleePort( MethodPort ):
   def is_caller_port( s ):
     return False
 
-class NonBlockingInterface( Interface ):
+class CallIfcRTL( Interface ):
+
   def construct( s, *args, **kwargs ):
-    raise NotImplementedError("You can only instantiate NonBlockingCaller/NonBlockingCalleeIfc.")
+    raise NotImplementedError("You can only instantiate CallerIfcRTL/CalleeIfcRTL.")
+
+  def __str__( s ):
+    try:
+      trace_len = s.trace_len
+      trace_fmt = s.trace_fmt
+    except AttributeError:
+      trace_len = 0
+      trace_fmt = ''
+
+      if s.MsgType is not None:
+        trace_len += len( f'{s.MsgType()}' ) + 2
+        trace_fmt += f"({{s.msg}})"
+
+      if s.RetType is not None:
+        trace_len += 1 + len( f'{s.RetType()}' )
+        trace_fmt += f"={{s.ret}}"
+
+      if trace_len == 0:
+        trace_len = 1
+        trace_fmt = ' '
+
+      s.trace_len = trace_len
+      s.trace_fmt = trace_fmt
+
+    if       s.en and not s.rdy:  return "X".ljust( trace_len ) # Not allowed
+    elif not s.en and     s.rdy:  return " ".ljust( trace_len ) # Idle
+    elif not s.en and not s.rdy:  return "#".ljust( trace_len ) # Stall
+    return trace_fmt.format( **vars() ).ljust( trace_len )
+
+class NonBlockingIfc( Interface ):
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate CallerIfcCL/CalleeIfcCL.")
 
   def __call__( s, *args, **kwargs ):
     return s.method( *args, **kwargs )
@@ -449,11 +482,66 @@ class NonBlockingInterface( Interface ):
   def _str_hook( s ):
     return f"{s._dsl.my_name}"
 
-class NonBlockingCalleeIfc( NonBlockingInterface ):
-  def construct( s, Type=None, method=None, rdy=None ):
+class BlockingIfc( Interface ):
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate CallerIfcFL/CalleeIfcFL.")
+
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+  def __str__( s ):
+    return s._str_hook()
+
+  def _str_hook( s ):
+    return f"{s._dsl.my_name}"
+
+#-------------------------------------------------------------------------
+# First-class method-based interfaces
+#-------------------------------------------------------------------------
+
+class CalleeIfcRTL( CallIfcRTL ):
+
+  def construct( s, *, en=None, rdy=None, MsgType=None, RetType=None ): # keyword only!
+    s.MsgType = s.RetType = None
+
+    if en is not None:
+      s.en  = InPort ( Bits1 )
+
+    if rdy is not None:
+      s.rdy = OutPort( Bits1 )
+
+    if MsgType is not None:
+      s.msg = InPort ( MsgType )
+      s.MsgType = MsgType
+
+    if RetType is not None:
+      s.ret = OutPort( RetType )
+      s.RetType = RetType
+
+class CallerIfcRTL( CallIfcRTL ):
+
+  def construct( s, *, en=None, rdy=None, MsgType=None, RetType=None ): # keyword only!
+    s.MsgType = s.RetType = None
+
+    if en is not None:
+      s.en  = OutPort( Bits1 )
+
+    if rdy is not None:
+      s.rdy = InPort( Bits1 )
+
+    if MsgType is not None:
+      s.msg = OutPort( MsgType )
+      s.MsgType = MsgType
+
+    if RetType is not None:
+      s.ret = InPort( RetType )
+      s.RetType = RetType
+
+class CalleeIfcCL( NonBlockingIfc ):
+  def construct( s, *, Type=None, method=None, rdy=None ): # keyword only!
     s.Type = Type
-    s.method = CalleePort( Type, method )
-    s.rdy    = CalleePort( None, rdy )
+    s.method = CalleePort( Type=Type, method=method )
+    s.rdy    = CalleePort( method=rdy )
 
     s.method._dsl.in_non_blocking_ifc = True
     s.rdy._dsl.in_non_blocking_ifc    = True
@@ -461,12 +549,12 @@ class NonBlockingCalleeIfc( NonBlockingInterface ):
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
 
-class NonBlockingCallerIfc( NonBlockingInterface ):
+class CallerIfcCL( NonBlockingIfc ):
 
-  def construct( s, Type=None ):
+  def construct( s, *, Type=None ): # keyword only!
     s.Type = Type
 
-    s.method = CallerPort( Type )
+    s.method = CallerPort( Type=Type )
     s.rdy    = CallerPort()
 
     s.method._dsl.in_non_blocking_ifc = True
@@ -474,3 +562,15 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
+
+class CalleeIfcFL( BlockingIfc ):
+
+  def construct( s, *, Type=None, method=None ):
+    s.Type   = Type
+    s.method = CalleePort( method=method, Type=Type )
+
+class CallerIfcFL( BlockingIfc ):
+
+  def construct( s, *, Type=None ):
+    s.Type   = Type
+    s.method = CallerPort( Type=Type )

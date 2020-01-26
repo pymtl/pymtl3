@@ -47,8 +47,8 @@ class ProcCL( Component ):
 
     s.xcel = XcelMasterIfcCL( xreq_class, xresp_class )
 
-    s.proc2mngr = NonBlockingCallerIfc()
-    s.mngr2proc = NonBlockingCalleeIfc()
+    s.proc2mngr = CallerIfcCL()
+    s.mngr2proc = CalleeIfcCL()
 
     # Buffers to hold input messages
 

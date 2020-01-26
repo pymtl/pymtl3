@@ -25,7 +25,7 @@ class NullXcelRTL(Component):
 
     s.xcelreq_q = NormalQueueRTL( xreq_class, 2 )( enq = s.xcel.req )
 
-    s.xr0 = RegEn( dtype )( in_ = s.xcelreq_q.deq.msg.data )
+    s.xr0 = RegEn( dtype )( in_ = s.xcelreq_q.deq.ret.data )
 
     @s.update
     def up_null_xcel():
@@ -33,9 +33,9 @@ class NullXcelRTL(Component):
       if s.xcelreq_q.deq.rdy & s.xcel.resp.rdy:
         s.xcelreq_q.deq.en = b1(1)
         s.xcel.resp.en     = b1(1)
-        s.xcel.resp.msg.type_ = s.xcelreq_q.deq.msg.type_
+        s.xcel.resp.msg.type_ = s.xcelreq_q.deq.ret.type_
 
-        if s.xcelreq_q.deq.msg.type_ == XcelMsgType_WRITE:
+        if s.xcelreq_q.deq.ret.type_ == XcelMsgType_WRITE:
           s.xr0.en             = b1(1)
           s.xcel.resp.msg.data = dtype(0)
         else:
