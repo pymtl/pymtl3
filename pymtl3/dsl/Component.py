@@ -435,15 +435,6 @@ class Component( ComponentLevel7 ):
     except:
       pass
 
-  # Simulation related APIs
-  def sim_reset( s ):
-    s._check_called_at_elaborate_top( "sim_reset" )
-
-    s.reset = Bits1( 1 )
-    s.tick() # Tick twice to propagate the reset signal
-    s.tick()
-    s.reset = Bits1( 0 )
-
   def check( s ):
     s._check_valid_dsl_code()
 

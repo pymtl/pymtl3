@@ -2,6 +2,7 @@ from pymtl3.dsl import Component
 
 from .autotick.OpenLoopCLPass import OpenLoopCLPass
 from .BasePass import BasePass
+from .sim.AddSimUtilFuncsPass import AddSimUtilFuncsPass
 from .sim.DynamicSchedulePass import DynamicSchedulePass
 from .sim.GenDAGPass import GenDAGPass
 from .sim.SimpleSchedulePass import SimpleSchedulePass
@@ -26,6 +27,7 @@ class SimpleSimPass( BasePass ):
     CollectSignalPass()( top )
     PrintWavePass()( top )
     SimpleTickPass()( top )
+    AddSimUtilFuncsPass()( top )
     LineTraceParamPass()( top )
     top.lock_in_simulation()
 
@@ -42,6 +44,7 @@ class SimulationPass( BasePass ):
     CollectSignalPass()( top )
     PrintWavePass()( top )
     SimpleTickPass()( top )
+    AddSimUtilFuncsPass()( top )
     LineTraceParamPass()( top )
     top.lock_in_simulation()
 

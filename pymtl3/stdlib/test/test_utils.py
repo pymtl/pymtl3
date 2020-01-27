@@ -109,22 +109,18 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
 
   # Reset model
 
-  model.sim_reset()
-  if line_trace:
-    print()
+  model.sim_reset( print_line_trace=line_trace )
 
   # Run simulation
 
-  ncycles = 0
-  while not model.done() and ncycles < max_cycles:
-    ncycles += 1
+  while not model.done() and model.simulated_cycles < max_cycles:
     if line_trace:
-      print( f"{ncycles:3}: {model.line_trace()}" )
+      model.print_line_trace()
     model.tick()
 
   # Force a test failure if we timed out
 
-  assert ncycles < max_cycles
+  assert model.simulated_cycles < max_cycles
 
   # Extra ticks to make VCD easier to read
 
@@ -169,11 +165,10 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   # Reset model
 
-  model.sim_reset()
+  model.sim_reset( print_line_trace=line_trace )
 
   # Run the simulation
 
-  ncycles = 0
   row_num = 0
 
   in_ids  = []
@@ -215,8 +210,6 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
       t = type( getattr( model, port_name ) )
       types[i] = None if is_bitstruct_class( t ) else t
 
-  if line_trace:
-    print()
   for row in test_vectors:
     row_num += 1
 
@@ -242,7 +235,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
     # Display line trace output
 
     if line_trace:
-      print(f"{ncycles:3}: {model.line_trace()}")
+      model.print_line_trace()
 
     # Check test outputs
 
@@ -276,7 +269,6 @@ run_test_vector_sim received an incorrect value!
     # Tick the simulation
 
     model.tick()
-    ncycles += 1
 
   # Extra ticks to make VCD easier to read
 
