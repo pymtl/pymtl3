@@ -177,7 +177,8 @@ class ImportPass( BasePass ):
       try:
         config.vprint(f"Verilating {config.top_module} with command:", 2)
         config.vprint(f"{cmd}", 4)
-        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True )
+        subprocess.check_output(
+            cmd, stderr = subprocess.STDOUT, shell = True )
       except subprocess.CalledProcessError as e:
         err_msg = e.output if not isinstance(e.output, bytes) else \
                   e.output.decode('utf-8')
@@ -271,8 +272,12 @@ class ImportPass( BasePass ):
       try:
         config.vprint("Compiling shared library with command:", 2)
         config.vprint(f"{cmd}", 4)
-        subprocess.check_output( cmd, stderr = subprocess.STDOUT, shell = True,
-                                 universal_newlines=True )
+        subprocess.check_output(
+            cmd,
+            stderr = subprocess.STDOUT,
+            shell = True,
+            universal_newlines = True
+        )
       except subprocess.CalledProcessError as e:
         err_msg = e.output if not isinstance(e.output, bytes) else \
                   e.output.decode('utf-8')

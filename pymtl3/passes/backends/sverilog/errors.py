@@ -16,13 +16,11 @@ class SVerilogImportError( Exception ):
   def __init__( self, obj, msg ):
     obj = str(obj)
     _, _, tb = sys.exc_info()
-    traceback.print_tb(tb)
     tb_info = traceback.extract_tb(tb)
-    fname, line, func, text = tb_info[-1]
+    fname, line, func, _ = tb_info[-1]
     return super().__init__(
       f"\nIn file {fname}, Line {line}, Method {func}:"
-      f"\nError trying to perform import on {obj}:\n- {msg}"
-      f"\n  {text}" )
+      f"\nError trying to perform import on {obj}:\n- {msg}")
 
 class SVerilogTranslationError( Exception ):
   """SystemVerilog translation error."""
