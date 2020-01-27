@@ -111,6 +111,10 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.decl_wires  = {}
     s.structural.decl_consts = {}
 
+    # Placeholder
+    s.structural.placeholder_wrapper    = {}
+    s.structural.placeholder_dependency = {}
+
     # Connections
     s.structural.connections = {}
     s._translate_structural( tr_top )
@@ -126,6 +130,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     hierarchy.
     """
     m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    placeholder_cfg = m._pass_structural_rtlir_gen.placeholder_config
     s.structural.component_file_info[m] = m_rtype.get_file_info()
     s.structural.component_name[m] = m_rtype.get_name()
     s.structural.component_full_name[m] = get_component_full_name(m_rtype)
@@ -137,6 +142,34 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
     # Translate connections
     s.translate_connections( m )
+
+    if placeholder_cfg:
+      # Generate a wrapper for this placeholder.
+      # The wrapper should have the same interface as the placeholder.
+      # The wrapper module instantiates the external module with desired
+      # parameters and all dependent modules are pickled into the same
+      # piece of text.
+      s.translate_placeholder_wrapper( m )
+      s.translate_pickle_placeholder( m )
+
+  #-----------------------------------------------------------------------
+  # translate_placeholder_wrapper
+  #-----------------------------------------------------------------------
+
+  def translate_placeholder_wrapper( s, m ):
+    m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    placeholder_cfg = m._pass_structural_rtlir_gen.placeholder_config
+    s.structural.placeholder_wrapper[m] = \
+        s.rtlir_tr_placeholder_wrapper( m_rtype, placeholder_cfg )
+
+  #-----------------------------------------------------------------------
+  # translate_pickle_placeholder
+  #-----------------------------------------------------------------------
+
+  def translate_pickle_placeholder( s, m ):
+    placeholder_cfg = m._pass_structural_rtlir_gen.placeholder_config
+    s.structural.placeholder_dependency[m] = \
+        s.rtlir_tr_placeholder_dependency( m, placeholder_cfg )
 
   #-----------------------------------------------------------------------
   # translate_decls
@@ -298,6 +331,13 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator
   #-----------------------------------------------------------------------
+
+  # Placeholder
+  def rtlir_tr_placeholder_wrapper( s, ports, cfg ):
+    raise NotImplementedError()
+
+  def rtlir_tr_placeholder_dependency( s, m, placeholder_cfg ):
+    raise NotImplementedError()
 
   # Data types
   def rtlir_tr_vector_dtype( s, Type ):

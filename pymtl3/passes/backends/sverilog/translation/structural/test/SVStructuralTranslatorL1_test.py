@@ -16,6 +16,7 @@ from ....testcases import (
     CaseConnectConstToOutComp,
     CaseConnectInToWireComp,
     CaseConnectSliceToOutComp,
+    CasePlaceholderTranslationVReg,
 )
 from ..SVStructuralTranslatorL1 import SVStructuralTranslatorL1
 
@@ -37,6 +38,15 @@ def run_test( case, m ):
   check_eq( consts, case.REF_CONST )
   check_eq( conns,  case.REF_CONN  )
 
+  try:
+    placeholder_wrapper = tr.structural.placeholder_wrapper[m]
+    check_eq( placeholder_wrapper, case.REF_PLACEHOLDER_WRAPPER )
+
+    placeholder_dependency = tr.structural.placeholder_dependency[m]
+    check_eq( placeholder_dependency, case.REF_PLACEHOLDER_DEPENDENCY )
+  except AttributeError:
+    pass
+
 @pytest.mark.parametrize(
   'case', [
     CaseConnectInToWireComp,
@@ -44,6 +54,7 @@ def run_test( case, m ):
     CaseConnectConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectSliceToOutComp,
+    CasePlaceholderTranslationVReg,
   ]
 )
 def test_sverilog_structural_L1( case ):

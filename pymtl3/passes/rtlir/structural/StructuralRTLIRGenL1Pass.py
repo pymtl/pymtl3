@@ -8,6 +8,7 @@
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir
+from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs
 
 from .StructuralRTLIRSignalExpr import gen_signal_expr
 
@@ -23,6 +24,7 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     s.tr_top = tr_top
     try:
       s.gen_rtlir_types( tr_top )
+      s.gen_placeholder_info( tr_top )
       s.gen_constants( tr_top )
       s.sort_connections( tr_top )
     except AssertionError as e:
@@ -31,6 +33,10 @@ class StructuralRTLIRGenL1Pass( BasePass ):
 
   def gen_rtlir_types( s, tr_top ):
     tr_top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( tr_top )
+
+  def gen_placeholder_info( s, tr_top ):
+    tr_top._pass_structural_rtlir_gen.placeholder_config = \
+        PlaceholderConfigs( tr_top )
 
   def gen_constants( s, m ):
     ns = m._pass_structural_rtlir_gen
