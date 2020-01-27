@@ -114,10 +114,7 @@ class ImportPass( BasePass ):
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
       cached = True
 
-    # return cached
-    # Temporarily disable caching because changing import configs may lead
-    # to compilation errors.
-    return False
+    return cached
 
   #-----------------------------------------------------------------------
   # get_imported_object
