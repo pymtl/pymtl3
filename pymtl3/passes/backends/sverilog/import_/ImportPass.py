@@ -173,6 +173,8 @@ class ImportPass( BasePass ):
       if os.path.exists( obj_dir ):
         shutil.rmtree( obj_dir )
 
+      succeeds = True
+
       # Try to call verilator
       try:
         config.vprint(f"Verilating {config.top_module} with command:", 2)
@@ -180,13 +182,17 @@ class ImportPass( BasePass ):
         subprocess.check_output(
             cmd, stderr = subprocess.STDOUT, shell = True )
       except subprocess.CalledProcessError as e:
+        succeeds = False
         err_msg = e.output if not isinstance(e.output, bytes) else \
                   e.output.decode('utf-8')
         import_err_msg = \
             f"Fail to verilate model {config.top_module}\n"\
             f"  Verilator command:\n{indent(cmd, '  ')}\n\n"\
             f"  Verilator output:\n{indent(wrap(err_msg), '  ')}\n"
-        raise SVerilogImportError(m, import_err_msg) from e
+
+      if not succeeds:
+        raise SVerilogImportError(m, import_err_msg)
+
       config.vprint(f"Successfully verilated the given model!", 2)
 
     else:
@@ -268,6 +274,8 @@ class ImportPass( BasePass ):
     if dump_vcd or not cached:
       cmd = config.create_cc_cmd()
 
+      succeeds = True
+
       # Try to call the C compiler
       try:
         config.vprint("Compiling shared library with command:", 2)
@@ -279,13 +287,17 @@ class ImportPass( BasePass ):
             universal_newlines = True
         )
       except subprocess.CalledProcessError as e:
+        succeeds = False
         err_msg = e.output if not isinstance(e.output, bytes) else \
                   e.output.decode('utf-8')
         import_err_msg = \
             f"Failed to compile Verilated model into a shared library:\n"\
             f"  C compiler command:\n{indent(cmd, '  ')}\n\n"\
             f"  C compiler output:\n{indent(wrap(err_msg), '  ')}\n"
-        raise SVerilogImportError(m, import_err_msg) from e
+
+      if not succeeds:
+        raise SVerilogImportError(m, import_err_msg)
+
       config.vprint(f"Successfully compiled shared library "\
                     f"{config.get_shared_lib_path()}!", 2)
 
