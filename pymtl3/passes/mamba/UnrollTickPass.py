@@ -65,7 +65,16 @@ class UnrollTickPass( BasePass ):
     # posedge flip
     final_schedule.extend( top._sched.schedule_posedge_flip )
 
+    # advance cycle after posedge
+    def generate_advance_sim_cycle( top ):
+      def advance_sim_cycle():
+        top.simulated_cycles += 1
+      return advance_sim_cycle
+    final_schedule.append( generate_advance_sim_cycle(top) )
+
     # execute all update blocks
     final_schedule.extend( top._sched.update_schedule )
 
     top.tick = UnrollTickPass.gen_tick_function( final_schedule )
+    # reset sim_cycles
+    top.simulated_cycles = 0
