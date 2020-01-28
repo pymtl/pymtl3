@@ -12,6 +12,7 @@ from collections import defaultdict
 
 import py.code
 
+from pymtl3.datatypes import Bits1
 from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
@@ -497,3 +498,14 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
             cleanup_signals( obj )
 
   cleanup_signals( s )
+
+  def create_reset( top ):
+    def reset():
+      print()
+      top.reset = Bits1(1)
+      top.tick()
+      top.tick()
+      top.reset = Bits1(0)
+    return reset
+
+  s.sim_reset = create_reset( s )
