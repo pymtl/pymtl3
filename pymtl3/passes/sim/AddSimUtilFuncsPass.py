@@ -13,6 +13,9 @@ from pymtl3.passes.errors import PassOrderError
 
 
 class AddSimUtilFuncsPass( BasePass ):
+  def __init__( self, active_high=True ):
+    assert active_high in [ True, False ]
+    self.active_high = active_high
 
   def __call__( self, top ):
     if not hasattr( top, "tick" ):
@@ -25,21 +28,21 @@ class AddSimUtilFuncsPass( BasePass ):
       raise AttributeError( "Please modify the attribute top.print_line_trace to "
                             "a different name.")
 
-    top.sim_reset = self.create_reset( top, reset_value=1 )
+    top.sim_reset = self.create_reset( top, self.active_high )
     top.print_line_trace = self.create_print_line_trace( top )
 
   @staticmethod
   # Simulation related APIs
-  def create_reset( top, reset_value ):
-    assert reset_value in [0,1]
-    def reset(print_line_trace=False):
-      print()
-      top.reset = b1( reset_value )
+  def create_reset( top, active_high ):
+    def reset( print_line_trace=False ):
+      if print_line_trace:
+        print()
+      top.reset = b1( active_high )
       top.tick() # Tick twice to propagate the reset signal
       if print_line_trace:
         print( f"{top.simulated_cycles:3}r {top.line_trace()}" )
       top.tick()
-      top.reset = b1( reset_value ^ 1 )
+      top.reset = b1( not active_high )
     return reset
 
   @staticmethod

@@ -501,7 +501,6 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
   def create_reset( top ):
     def reset():
-      print()
       top.reset = Bits1(1)
       top.tick()
       top.tick()
