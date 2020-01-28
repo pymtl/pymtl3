@@ -14,6 +14,7 @@ import subprocess
 import sys
 from textwrap import indent
 
+from pymtl3 import Placeholder
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst, mk_bits
 from pymtl3.dsl import Component
 from pymtl3.passes.BasePass import BasePass
@@ -58,9 +59,11 @@ class ImportPass( BasePass ):
     return ret
 
   def traverse_hierarchy( s, m ):
-    if hasattr(m, f"config_{s.get_backend_name()}_import") and \
-       isinstance(s.get_config(m), ImportConfigs) and \
-       s.get_config(m).import_:
+    # Import can only be performed on Placeholders
+    if isinstance(m, Placeholder) and \
+       hasattr(m, f"config_placeholder") and \
+       isinstance(s.get_config(m), PlaceholderConfigs) and \
+       s.get_config(m).is_valid:
       s.get_config(m).fill_missing( m )
       return s.do_import( m )
     else:
@@ -86,7 +89,7 @@ class ImportPass( BasePass ):
     return "sverilog"
 
   def get_config( s, m ):
-    return m.config_sverilog_import
+    return m.config_placeholder
 
   def get_translation_namespace( s, m ):
     return m._pass_sverilog_translation

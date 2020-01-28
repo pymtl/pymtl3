@@ -233,8 +233,10 @@ class Bits32VRegComp( Placeholder, Component ):
     s.q = InPort( Bits32 )
     s.d = OutPort( Bits32 )
 
-    s.placeholder_src_file = dirname(__file__) + '/VReg.sv'
-    s.placeholder_top_module = 'VReg'
+    s.config_placeholder = PlaceholderConfigs(
+        vl_src = dirname(__file__) + '/VReg.sv',
+        top_module = 'VReg',
+    )
 
 # class Bits32VQueuePortmapComp( Placeholder, Component ):
 #   def construct( s ):

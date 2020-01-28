@@ -2,52 +2,80 @@
 # PlaceholderConfigs.py
 #=========================================================================
 # Author : Peitian Pan
-# Date   : Jan 26, 2020
+# Date   : Jul 28, 2019
+"""Configuration of Placeholders."""
 
-from copy import copy
+import os
+from textwrap import fill, indent
 
-from pymtl3 import Placeholder
+from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 
 
-class PlaceholderConfigs:
+def expand( v ):
+  return os.path.expanduser(os.path.expandvars(v))
 
-  Configs = {
-      'is_valid'     : True,
-      'top_module'   : '',
-      'verilog_name' : '',
-      'params'       : {},
-      'portmap'      : {},
-      'src_file'     : '',
-      'pickled_file' : '',
-      'file_type'    : 'SVerilog',
-      'include_path' : [],
-      'has_clk'      : True,
-      'has_reset'    : True,
+class PlaceholderConfigs( BasePassConfigs ):
+
+  Options = {
+    # Enable?
+    "is_valid" : True,
+
+    # Enable verbose mode?
+    "verbose" : False,
+
+    # Parameters
+    # Map the names of parameters to their values
+    # If {} is provided, use the parameters inferred from `construct` instead
+    "params" : {},
+
+    # Port name mapping
+    # Map PyMTL port names to external port names
+    "port_map" : {},
+
+    # Expects the name of the top component in external source files
+    # "" to use name of the current component to be imported
+    "top_module" : "",
+
+    # Expects path of the file that contains the top module
+    "src_file" : "",
+
+    # Does the module to be imported has `clk` port?
+    "has_clk" : True,
+
+    # Does the module to be imported has `reset` port?
+    "has_reset" : True,
+
+    # Give an explicit name to the wrapper module
+    # Use {top_module}_wrapper by default
+    "explicit_module_name" : "",
   }
 
-  def __init__( s, m ):
-    if isinstance( m, Placeholder ):
-      s.fill_missing( m )
-      s.check( m )
-    else:
-      s.is_valid = False
+  Checkers = {
+    ("is_valid", "verbose", "has_clk", "has_reset") :
+      Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
-  def fill_missing( s, m ):
-    for config, value in PlaceholderConfigs.Configs.items():
-      if hasattr( m, f'placeholder_{config}' ):
-        setattr( s, config, getattr( m, f'placeholder_{config}' ) )
+    ("params", "port_map") : Checker( lambda v: isinstance(v, dict), "expects a dict"),
+
+    "top_module": Checker( lambda v: isinstance(v, str) and v, "expects a non-empty string"),
+
+    "src_file": Checker( lambda v: isinstance(v, str) and (os.path.isfile(expand(v)) or not v),
+                "src_file should be a path to a file or an empty string!" ),
+
+    "explicit_module_name": Checker( lambda v: isinstance(v, str), "expects a string" ),
+  }
+
+  PassName = 'PlaceholderConfigs'
+
+  def get_port_map( s ):
+    pmap = s.port_map
+    return lambda name: pmap[name] if name in pmap else name
+
+  def vprint( s, msg, nspaces = 0, use_fill = False ):
+    if s.verbose:
+      if use_fill:
+        print(indent(fill(msg), " "*nspaces))
       else:
-        setattr( s, config, value )
+        print(indent(msg, " "*nspaces))
 
-    if not s.top_module:
-      s.top_module = get_component_unique_name( m )
-    if not s.verilog_name:
-      s.verilog_name = f'placeholder_{s.top_module}'
-    if not s.src_file:
-      s.src_file = f'{s.top_module}.v'
-    if not s.pickled_file:
-      s.pickled_file = f'placeholder_{s.top_module}.v'
-
-  def check( s, m ):
-    assert s.file_type == 'SVerilog', \
-        'only Verilog/SystemVerilog external files are currently supported!'
+  def is_default( s, opt ):
+    return getattr( s, opt ) == s.Options[opt]

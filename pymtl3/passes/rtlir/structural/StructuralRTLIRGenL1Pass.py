@@ -34,10 +34,6 @@ class StructuralRTLIRGenL1Pass( BasePass ):
   def gen_rtlir_types( s, tr_top ):
     tr_top._pass_structural_rtlir_gen.rtlir_type = get_rtlir( tr_top )
 
-  def gen_placeholder_info( s, tr_top ):
-    tr_top._pass_structural_rtlir_gen.placeholder_config = \
-        PlaceholderConfigs( tr_top )
-
   def gen_constants( s, m ):
     ns = m._pass_structural_rtlir_gen
     ns.consts = []

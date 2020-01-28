@@ -33,18 +33,17 @@ class BasePassConfigs:
   will call that method to determine whether the value of option `<option_name>`
   is valid.
   """
-  def __new__( cls, *args, **kwargs ):
+  def __init__( s, *args, **kwargs ):
     assert len(args) == 0, "We only accept keyword arguments here."
+    cls = s.__class__
     assert hasattr( cls, "Options"  )
     assert hasattr( cls, "PassName" )
     assert hasattr( cls, "Checkers" )
 
-    inst = super().__new__( cls )
-
     opts = deepcopy( cls.Options )
     for opt, value in kwargs.items():
       if opt not in cls.Options:
-        raise InvalidPassOption( opt, inst.PassName )
+        raise InvalidPassOption( opt, s.PassName )
       opts[opt] = value
 
     cls.opts = opts.keys()
@@ -70,10 +69,8 @@ class BasePassConfigs:
     for opt, value in opts.items():
       if opt not in cls._Checkers:
         cls._Checkers[opt] = trivial_checker
-      assert not hasattr( inst, opt ), f"There is already a field in config called '{opt}'. What happened?"
-      setattr( inst, opt, value )
-
-    return inst
+      assert not hasattr( s, opt ), f"There is already a field in config called '{opt}'. What happened?"
+      setattr( s, opt, value )
 
   def check( s ):
     """Check whether the given options are valid by calling checkers."""
