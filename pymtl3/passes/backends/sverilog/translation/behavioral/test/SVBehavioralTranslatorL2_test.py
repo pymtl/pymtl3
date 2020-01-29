@@ -22,6 +22,7 @@ from ....testcases import (
     CaseIfExpUnaryOpInForStmtComp,
     CaseIfTmpVarInForStmtComp,
     CaseLambdaConnectComp,
+    CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseReducesInx3OutComp,
 )
@@ -57,6 +58,7 @@ def run_test( case, m ):
       CaseIfTmpVarInForStmtComp,
       CaseFixedSizeSliceComp,
       CaseLambdaConnectComp,
+      CaseLambdaConnectWithListComp,
     ]
 )
 def test_sverilog_behavioral_L2( case ):

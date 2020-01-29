@@ -10,7 +10,7 @@ readers. Interface connections are handled separately, and they should
 be revamped when adding method-based interfaces.
 
 Author : Shunning Jiang
-Date   : Apr 16, 2018
+Date   : Jan 29, 2020
 """
 import ast
 import inspect
@@ -127,8 +127,9 @@ class ComponentLevel3( ComponentLevel2 ):
     # Note that we don't need to add those source code of closure var
     # assignment to linecache. To get the matching line number in the
     # error message, we set the line number of update block
+    # Shunning: bugfix:
 
-    blk_name = "_lambda__{}".format( repr(o).replace(".","_") )
+    blk_name = "_lambda__{}".format( repr(o).replace(".","_").replace("[", "_").replace("]", "_") )
     lambda_upblk = ast.FunctionDef(
       name=blk_name,
       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
