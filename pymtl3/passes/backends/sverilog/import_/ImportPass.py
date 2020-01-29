@@ -787,8 +787,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
             if BitStruct_name not in symbols:
               symbols.update( { BitStruct_name : obj } )
             return BitStruct_name
-
-          raise TypeError( f"Interface constructor argument {obj} is not an int/Bits/BitStruct!" )
+          # FIXME formalize this
+          elif isinstance( obj, type ) and hasattr( obj, 'req' ) and hasattr( obj, 'resp' ):
+            symbols.update( { obj.__name__ : obj } )
+            return obj.__name__
+          raise TypeError( f"Interface constructor argument {obj} is not an int/Bits/BitStruct/TypeTuple!" )
 
         name, cls = ifc.get_name(), ifc.get_class()
         if name not in symbols:
