@@ -75,10 +75,7 @@ class SVBehavioralTranslatorL1( SVBehavioralTranslatorL0, BehavioralTranslatorL1
     py_src = []
 
     if is_lambda:
-      py_src += [
-        "PyMTL Lambda Block Source",
-        "{src}",
-      ]
+      py_src += [ "PyMTL Lambda Block Source" ]
     else:
       py_src += [ "PyMTL Update Block Source" ]
 

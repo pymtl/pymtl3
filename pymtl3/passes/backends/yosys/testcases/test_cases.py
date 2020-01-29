@@ -54,6 +54,7 @@ from pymtl3.passes.backends.sverilog.testcases import (
     CaseIfTmpVarInForStmtComp,
     CaseInterfaceArrayNonStaticIndexComp,
     CaseLambdaConnectComp,
+    CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
@@ -90,6 +91,36 @@ CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
           end
 
           assign in_[31:0] = in___foo;
+
+        endmodule
+    '''
+)
+
+CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : _lambda__s_out_1_
+          out[1] = in_ + 32'd42;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out__0,
+          output logic [31:0] out__1,
+          input logic [0:0] reset
+        );
+          logic [31:0] out [0:1];
+
+          always_comb begin : _lambda__s_out_1_
+            out[1] = in_ + 32'd42;
+          end
+
+          assign out__0 = out[0];
+          assign out__1 = out[1];
 
         endmodule
     '''

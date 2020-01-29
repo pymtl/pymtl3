@@ -58,6 +58,7 @@ from pymtl3.passes.testcases import (
     CaseIfTmpVarInForStmtComp,
     CaseInterfaceArrayNonStaticIndexComp,
     CaseLambdaConnectComp,
+    CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
@@ -203,6 +204,31 @@ CaseLambdaConnectComp = set_attributes( CaseLambdaConnectComp,
 
           always_comb begin : _lambda__s_out
             out = in_ + 32'd42;
+          end
+
+        endmodule
+    '''
+)
+
+CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : _lambda__s_out_1_
+          out[1] = in_ + 32'd42;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out [0:1],
+          input logic [0:0] reset
+        );
+
+          always_comb begin : _lambda__s_out_1_
+            out[1] = in_ + 32'd42;
           end
 
         endmodule
@@ -1393,7 +1419,7 @@ CaseConnectConstStructAttrToOutComp = set_attributes( CaseConnectConstStructAttr
                ''')
     ),
     'REF_SRC',
-    # struct definition will be eliminated because it's not used 
+    # struct definition will be eliminated because it's not used
     # in an upblk
     '''\
         module DUT
