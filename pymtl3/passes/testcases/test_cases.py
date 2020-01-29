@@ -1240,6 +1240,28 @@ class CaseLambdaConnectComp:
       [  -41,    1 ],
   ]
 
+class CaseLambdaConnectWithListComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = [ OutPort( Bits32 ) for _ in range(2) ]
+      s.out[1] //= lambda: s.in_ + Bits32(42)
+
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out[1]', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [    0,   42 ],
+      [   -1,   41 ],
+      [    2,   44 ],
+      [    1,   43 ],
+      [   42,   84 ],
+      [  -42,    0 ],
+      [  -41,    1 ],
+  ]
+
 class CaseBits32FooInBits32OutComp:
   class DUT( Component ):
     def construct( s ):

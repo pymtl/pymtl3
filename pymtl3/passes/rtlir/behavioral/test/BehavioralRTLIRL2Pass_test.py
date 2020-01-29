@@ -43,6 +43,7 @@ from pymtl3.passes.testcases import (
     CaseInvalidNotInComp,
     CaseInvComponentComp,
     CaseLambdaConnectComp,
+    CaseLambdaConnectWithListComp,
     CaseMultiOpComparisonComp,
     CaseNoArgsToRangeComp,
     CaseNotStructComp,
@@ -82,6 +83,14 @@ def test_L2_lambda_connect( do_test ):
   a = CaseLambdaConnectComp.DUT()
   a._rtlir_test_ref = { '_lambda__s_out' : CombUpblk( '_lambda__s_out', [
     Assign( Attribute( Base( a ), 'out' ),
+            BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42))), True
+        ) ] ) }
+  do_test( a )
+
+def test_L2_lambda_connect_with_list( do_test ):
+  a = CaseLambdaConnectWithListComp.DUT()
+  a._rtlir_test_ref = { '_lambda__s_out_1_' : CombUpblk( '_lambda__s_out_1_', [
+    Assign( Index( Attribute( Base( a ), 'out' ), Number(1) ),
             BinOp(Attribute(Base(a), 'in_'), Add(), SizeCast(32, Number(42))), True
         ) ] ) }
   do_test( a )
