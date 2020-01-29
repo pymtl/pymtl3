@@ -13,7 +13,6 @@ import random
 from collections import deque
 
 import py
-from graphviz import Digraph
 
 from pymtl3.datatypes import Bits1
 from pymtl3.dsl import CalleeIfcCL, CalleePort
