@@ -8,7 +8,8 @@ Master/minion send/recv interface implementations at CL and RTL.
    Date: Jan 28, 2020
 """
 from pymtl3 import *
-from .SendRecvIfc import SendIfcRTL, RecvIfcRTL
+
+from .SendRecvIfc import RecvIfcRTL, SendIfcRTL
 
 #-------------------------------------------------------------------------
 # CL interfaces

@@ -9,8 +9,10 @@ Master/minion send/recv interface implementations at CL and RTL.
 """
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MasterIfcCL
-from .test_srcs import TestSrcCL
+
 from .test_sinks import TestSinkCL
+from .test_srcs import TestSrcCL
+
 
 class TestMasterCL( Component ):
 
