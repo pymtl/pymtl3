@@ -1,24 +1,26 @@
 #=========================================================================
-# VerilatorPlaceholderConfigs.py
+# VerilatorImportConfigs.py
 #=========================================================================
 # Author : Peitian Pan
 # Date   : Jul 28, 2019
-"""Configuration of Verilator placeholders."""
+"""Configuration of Verilator import pass."""
 
 import os
 import subprocess
 from textwrap import fill, indent
 
 from pymtl3.passes.errors import InvalidPassOptionValue
-from pymtl3.passes.PassConfigs import Checker
+from pymtl3.passes.PassConfigs import Checker, BasePassConfigs
 
 from pymtl3.passes.PlaceholderConfigs import expand
-from pymtl3.passes.backends.sverilog.VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 
 
-class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
+class VerilatorImportConfigs( BasePassConfigs ):
 
-  VerilatorOptions = {
+  Options = {
+    # Enable verbose mode?
+    "verbose" : True,
+
     # Enable external line trace?
     # Once enabled, the `line_trace()` method of the imported component
     # will return a string read from the external `line_trace()` function.
@@ -42,7 +44,7 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
 
     # --Mdir
     # Expects the path of Makefile output directory;
-    # "" to use `obj_dir_<top_module>`
+    # "" to use `obj_dir_<translated_top_module>`
     "vl_mk_dir" : "",
 
     # --assert
@@ -123,8 +125,8 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
     "ld_libs" : "",
   }
 
-  VerilatorCheckers = {
-    ("vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
+  Checkers = {
+    ("verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
      "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
@@ -157,7 +159,7 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
                        "expects a list of paths to files" )
   }
 
-  VerilatorWarnings = [
+  Warnings = [
     'ALWCOMBORDER', 'ASSIGNIN', 'ASSIGNDLY', 'BLKANDNBLK', 'BLKSEQ',
     'BLKLOOPINIT', 'BSSPACE', 'CASEINCOMPLETE', 'CASEOVERLAP',
     'CASEX', 'CASEWITHX', 'CDCRSTLOGIC', 'CLKDATA', 'CMPCONST',
@@ -173,32 +175,25 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
     'WIDTHCONCAT',
   ]
 
-  PassName = 'VerilatorPlaceholderConfigs'
-
-  def __new__( cls, *args, **kwargs ):
-    inst = super().__new__( cls, args, kwargs )
-    assert len(args) == 0, "We only accept keyword arguments here."
-
-    cls.Options  = deepcopy( cls.Options )
-    cls.Checkers = deepcopy( cls.Checkers )
-
-    for key, val in cls.VerilatorOptions:
-      assert key not in cls.Options,\
-        f'config {key} is duplicated between VerilogPlaceholderConfigs and VerilatorPlaceholderConfigs'
-      cls.Options[key] = val
-
-    all_checkers = s._get_all_checker_configs( cls )
-
-    for cfgs, chk in cls.VerilatorCheckers:
-      if isinstance( cfgs, tuple ):
-        for cfg in cfgs:
-          s._add_to_checkers( cls.Checkers, cfg, chk )
-      elif isinstance( cfgs, str ):
-        s._add_to_checkers( cls.Checkers, cfgs, chk )
+  PassName = 'VerilatorImportConfigs'
 
   #---------------------------------------------------
   # Public APIs
   #---------------------------------------------------
+
+  def setup_configs( s, m ):
+    # VerilatorImportConfigs alone does not have the complete information about
+    # the module to be imported. For example, we need to read from the placeholder
+    # configuration to figure out the pickled file name and the top module name.
+    # This method is meant to be called before calling other public APIs.
+
+    s.translated_top_module = m._pass_sverilog_translation.translated_top_module
+    s.translated_source_file = m._pass_sverilog_translation.translated_filename
+    s.v_include = m.config_placeholder.v_include
+    # s.src_file = m.config_placeholder.src_file
+
+    if not s.vl_mk_dir:
+      s.vl_mk_dir = f'obj_dir_{s.translated_top_module}'
 
   def get_vl_xinit_value( s ):
     if s.vl_xinit == 'zeros':
@@ -211,25 +206,25 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
       raise InvalidPassOptionValue("vl_xinit should be one of 'zeros', 'ones', or 'rand'!")
 
   def get_c_wrapper_path( s ):
-    return f'{s.pickled_top_module}_v.cpp'
+    return f'{s.translated_top_module}_v.cpp'
 
   def get_py_wrapper_path( s ):
-    return f'{s.pickled_top_module}_v.py'
+    return f'{s.translated_top_module}_v.py'
 
   def get_shared_lib_path( s ):
-    return f'{s.pickled_top_module}_v.so'
+    return f'lib{s.translated_top_module}_v.so'
 
   #---------------------
   # Command generation
   #---------------------
 
   def create_vl_cmd( s ):
-    top_module  = f"--top-module {s.pickled_top_module}"
-    src         = s.pickled_source_file
+    top_module  = f"--top-module {s.translated_top_module}"
+    src         = s.translated_source_file
     mk_dir      = f"--Mdir {s.vl_mk_dir}"
     # flist       = "" if s.is_default("v_flist") else \
     #               f"-f {s.v_flist}"
-    include     = "" if s.is_default("v_include") else \
+    include     = "" if not s.v_include else \
                   " ".join("-I" + path for path in s.v_include)
     en_assert   = "--assert" if s.vl_enable_assert else ""
     opt_level   = "-O3" if s.is_default( 'vl_opt_level' ) else "-O0"
@@ -260,11 +255,18 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
     c_src_files = " ".join(s._get_c_src_files())
     ld_flags = expand(s.ld_flags)
     ld_libs = s.ld_libs
-    coverage = "-DVM_COVERAGE" if s.coverage or \
-                                  s.line_coverage or \
-                                  s.toggle_coverage else ""
+    coverage = "-DVM_COVERAGE" if s.vl_coverage or \
+                                  s.vl_line_coverage or \
+                                  s.vl_toggle_coverage else ""
     return f"g++ {c_flags} {c_include_path} {ld_flags}"\
            f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
+
+  def vprint( s, msg, nspaces = 0, use_fill = False ):
+    if s.verbose:
+      if use_fill:
+        print(indent(fill(msg), " "*nspaces))
+      else:
+        print(indent(msg, " "*nspaces))
 
   #---------------------
   # Internal helpers
@@ -305,7 +307,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
 
   def _get_c_src_files( s ):
     srcs = s.c_srcs
-    top_module = s.pickled_top_module
+    top_module = s.translated_top_module
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
 

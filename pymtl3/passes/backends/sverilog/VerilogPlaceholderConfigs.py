@@ -8,12 +8,29 @@
 from copy import deepcopy
 import os
 
+from pymtl3.passes.PassConfigs import Checker
 from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs, expand
 
 
 class VerilogPlaceholderConfigs( PlaceholderConfigs ):
 
   VerilogOptions = {
+    # Parameters
+    # Map the names of parameters to their values
+    # If {} is provided, use the parameters inferred from `construct` instead
+    "params" : {},
+
+    # Port name mapping
+    # Map PyMTL port names to external port names
+    "port_map" : {},
+
+    # Expects the name of the top component in external source files
+    # "" to use name of the current component to be imported
+    "top_module" : "",
+
+    # Expects path of the file that contains the top module
+    "src_file" : "",
+
     # -f
     # Expects the path to the flist file; "" to disable this option
     "v_flist" : "",
@@ -24,6 +41,13 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
   }
 
   VerilogCheckers = {
+    ("params", "port_map") : Checker( lambda v: isinstance(v, dict), "expects a dict"),
+
+    "top_module": Checker( lambda v: isinstance(v, str) and v, "expects a non-empty string"),
+
+    "src_file": Checker( lambda v: isinstance(v, str) and (os.path.isfile(expand(v)) or not v),
+                "src_file should be a path to a file or an empty string!" ),
+
     "v_flist": Checker( lambda v: isinstance(v, str) and os.path.isfile(expand(v)) or v == "",
                          "expects a path to a file" ),
 
@@ -34,25 +58,25 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
   PassName = 'VerilogPlaceholderConfigs'
 
   def __new__( cls, *args, **kwargs ):
-    inst = super( cls ).__new__( args, kwargs )
+    inst = super().__new__( cls )
     assert len(args) == 0, "We only accept keyword arguments here."
 
-    cls.Options  = deepcopy( cls.Options )
-    cls.Checkers = deepcopy( cls.Checkers )
+    cls.Options  = deepcopy( PlaceholderConfigs.Options )
+    cls.Checkers = deepcopy( PlaceholderConfigs.Checkers )
 
-    for key, val in cls.VerilogOptions:
+    for key, val in cls.VerilogOptions.items():
       assert key not in cls.Options,\
         f'config {key} is duplicated between PlaceholderConfigs and VerilogPlaceholderConfigs'
       cls.Options[key] = val
 
-    all_checkers = s._get_all_checker_configs( cls )
+    all_checkers = inst._get_all_checker_configs( cls )
 
-    for cfgs, chk in cls.VerilogCheckers:
+    for cfgs, chk in cls.VerilogCheckers.items():
       if isinstance( cfgs, tuple ):
         for cfg in cfgs:
-          s._add_to_checkers( cls.Checkers, cfg, chk )
+          inst._add_to_checkers( cls.Checkers, cfg, chk )
       elif isinstance( cfgs, str ):
-        s._add_to_checkers( cls.Checkers, cfgs, chk )
+        inst._add_to_checkers( cls.Checkers, cfgs, chk )
 
     return inst
 
@@ -65,6 +89,10 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
        (not s.v_flist and not os.path.isfile(expand(s.src_file))):
       raise InvalidPassOptionValue( 'src_file', s.src_file, s.PassName,
           'exactly one of src_file and v_flist should be non-emtpy!' )
+
+  def get_port_map( s ):
+    pmap = s.port_map
+    return lambda name: pmap[name] if name in pmap else name
 
   def _get_all_checker_configs( s, cls ):
     ret = []

@@ -25,12 +25,18 @@ def mk_TranslationPass( _SVTranslator ):
 
     def traverse_hierarchy( s, m ):
 
-      if hasattr(m, "config_sverilog_translate") and m.config_sverilog_translate:
+      if hasattr(m, "config_sverilog_translate") and m.config_sverilog_translate and \
+         m.config_sverilog_translate.translate:
 
         if not hasattr( m, '_pass_sverilog_translation' ):
           m._pass_sverilog_translation = PassMetadata()
 
-        s.translator.translate( m )
+        if isinstance(m.config_sverilog_translate, bool):
+          tr_cfg = TranslationConfigs()
+        else:
+          tr_cfg = m.config_sverilog_translate
+
+        s.translator.translate( m, tr_cfg )
 
         module_name = s.translator._top_module_full_name
 
@@ -41,7 +47,7 @@ def mk_TranslationPass( _SVTranslator ):
           elif '.sv' in fname:
             filename = fname.split('.sv')[0]
           else:
-            filename = f'{fname}.sv.tmp'
+            filename = fname
         else:
           filename = module_name
 

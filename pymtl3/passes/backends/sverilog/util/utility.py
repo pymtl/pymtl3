@@ -101,17 +101,6 @@ sverilog_keyword = [
 sverilog_reserved = set( sverilog_keyword )
 
 #-----------------------------------------------------------------------
-# Name mangling functions
-#-----------------------------------------------------------------------
-
-    _packed_ports = s._gen_packed_ports( irepr )
-    packed_ports = \
-        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
-        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
-        [ (n, p_map(n), p) for n, p in _packed_ports \
-          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
-
-#-----------------------------------------------------------------------
 # gen_packed_ports
 #-----------------------------------------------------------------------
 
@@ -171,7 +160,7 @@ def gen_packed_ports( irepr ):
 # gen_mapped_packed_ports
 #-----------------------------------------------------------------------
 
-def gen_mapped_packed_ports( m, p_map, has_clk = True, has_clk = True ):
+def gen_mapped_packed_ports( m, p_map, has_clk = True, has_reset = True ):
   irepr = get_component_ifc_rtlir( m )
   no_clk, no_reset = not has_clk, not has_reset
 

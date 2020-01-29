@@ -24,7 +24,6 @@ class StructuralRTLIRGenL1Pass( BasePass ):
     s.tr_top = tr_top
     try:
       s.gen_rtlir_types( tr_top )
-      s.gen_placeholder_info( tr_top )
       s.gen_constants( tr_top )
       s.sort_connections( tr_top )
     except AssertionError as e:

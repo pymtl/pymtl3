@@ -79,3 +79,7 @@ class BasePassConfigs:
       value = getattr( s, opt )
       if not chk.condition( value ):
         raise InvalidPassOptionValue( opt, value, s.PassName, chk.error_msg )
+
+  def is_default( s, opt ):
+    """Return True if `opt` has the default value."""
+    return getattr( s, opt ) == s.Options[opt]
