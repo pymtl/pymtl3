@@ -10,7 +10,10 @@ import shutil
 import textwrap
 from hashlib import blake2b
 
+from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.rtlir.util.utility import get_component_full_name
+from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
 
 
 def make_indent( src, nindent ):
@@ -96,3 +99,87 @@ sverilog_keyword = [
 ]
 
 sverilog_reserved = set( sverilog_keyword )
+
+#-----------------------------------------------------------------------
+# Name mangling functions
+#-----------------------------------------------------------------------
+
+    _packed_ports = s._gen_packed_ports( irepr )
+    packed_ports = \
+        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
+        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
+        [ (n, p_map(n), p) for n, p in _packed_ports \
+          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
+
+#-----------------------------------------------------------------------
+# gen_packed_ports
+#-----------------------------------------------------------------------
+
+def _get_rtype( _rtype ):
+  if isinstance( _rtype, rt.Array ):
+    n_dim = _rtype.get_dim_sizes()
+    rtype = _rtype.get_sub_type()
+  else:
+    n_dim = []
+    rtype = _rtype
+  return n_dim, rtype
+
+def _mangle_port( id_, port, n_dim ):
+  if not n_dim:
+    return [ ( id_, port ) ]
+  else:
+    return [ ( id_, rt.Array( n_dim, port ) ) ]
+
+def _mangle_interface( id_, ifc, n_dim ):
+  if not n_dim:
+    ret = []
+    all_properties = ifc.get_all_properties_packed()
+    for name, rtype in all_properties:
+      _n_dim, _rtype = _get_rtype( rtype )
+      if isinstance( _rtype, rt.Port ):
+        ret += _mangle_port( id_+"__"+name, _rtype, _n_dim )
+      elif isinstance( _rtype, rt.InterfaceView ):
+        ret += _mangle_interface( id_+"__"+name, _rtype, _n_dim )
+      else:
+        assert False, f"{name} is not interface(s) or port(s)!"
+  else:
+    ret = []
+    for i in range( n_dim[0] ):
+      ret += _mangle_interface( id_+"__"+str(i), ifc, n_dim[1:] )
+  return ret
+
+def gen_packed_ports( irepr ):
+  """Return a list of (name, rt.Port) that has all ports of `irepr`.
+
+  This method performs SystemVerilog backend-specific name mangling and
+  returns all ports that appear in the interface of component `irepr`.
+  Each tuple contains a port or an array of port that has any data type
+  allowed in RTLIRDataType.
+  """
+  packed_ports = []
+  ports = irepr.get_ports_packed()
+  ifcs = irepr.get_ifc_views_packed()
+  for id_, port in ports:
+    p_n_dim, p_rtype = _get_rtype( port )
+    packed_ports += _mangle_port( id_, p_rtype, p_n_dim )
+  for id_, ifc in ifcs:
+    i_n_dim, i_rtype = _get_rtype( ifc )
+    packed_ports += _mangle_interface( id_, i_rtype, i_n_dim )
+  return packed_ports
+
+#-----------------------------------------------------------------------
+# gen_mapped_packed_ports
+#-----------------------------------------------------------------------
+
+def gen_mapped_packed_ports( m, p_map, has_clk = True, has_clk = True ):
+  irepr = get_component_ifc_rtlir( m )
+  no_clk, no_reset = not has_clk, not has_reset
+
+  _packed_ports = gen_packed_ports( irepr )
+  packed_ports = \
+      ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
+      ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
+      [ (n, p_map(n), p) for n, p in _packed_ports \
+        if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
+
+  return packed_ports

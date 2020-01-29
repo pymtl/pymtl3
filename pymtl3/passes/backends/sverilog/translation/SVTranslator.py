@@ -64,7 +64,12 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       component_name = structural.component_name
       file_info = structural.component_file_info
       full_name = structural.component_full_name
-      module_name = structural.component_unique_name
+
+      if structural.component_explicit_module_name:
+        module_name = \
+            structural.component_explicit_module_name
+      else:
+        module_name = structural.component_unique_name
 
       s._top_module_name = structural.component_name
       s._top_module_full_name = module_name
@@ -74,21 +79,15 @@ def mk_SVTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       else:
         optional_full_name = ""
 
-      if structural.placeholder_wrapper:
+      if structural.placeholder_src:
         # This is a placeholder
-        placeholder_dependency = structural.placeholder_dependency
-        placeholder_wrapper = structural.placeholder_wrapper
+        placeholder_src = structural.placeholder_src
         template = \
 """\
 // PyMTL Placeholder {component_name} Definition
 // {optional_full_name}At {file_info}
 
-// Here are the modules that {component_name} depends on
-{placeholder_dependency}
-
-// Here is the wrapper of the Verilog module backing the
-// placeholder
-{placeholder_wrapper}
+{placeholder_src}
 """
         return template.format( **locals() )
 

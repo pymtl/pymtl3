@@ -12,6 +12,7 @@ from pymtl3.passes.BasePass import BasePass
 from .import_.ImportConfigs import ImportConfigs
 from .import_.ImportPass import ImportPass
 from .translation.TranslationPass import TranslationPass
+from .translation.TranslationConfigs import TranslationConfigs
 
 
 class TranslationImportPass( BasePass ):
@@ -20,6 +21,7 @@ class TranslationImportPass( BasePass ):
     s.top = top
     s.traverse_hierarchy( top )
     top.apply( s.get_translation_pass() )
+    s.add_placeholder_marks( top )
     return s.get_import_pass()( top )
 
   def traverse_hierarchy( s, m ):
@@ -28,8 +30,22 @@ class TranslationImportPass( BasePass ):
         setattr(m, s.get_translation_flag_name(), s.get_translation_configs())
       if not hasattr(m, s.get_import_flag_name()):
         setattr(m, s.get_import_flag_name(), s.get_import_configs())
+
     for child in m.get_child_components():
       s.traverse_hierarchy( child )
+
+  def add_placeholder_marks( s, m ):
+    if hasattr( m, s.get_translation_flag_name() ):
+      if not hasattr( m, 'config_placeholder' ):
+        m.config_placeholder = VerilatorPlaceholderConfigs()
+      m.config_placeholder.pickled_source_file = \
+          getattr(m, s.get_translation_pass_namespace()).translated_filename
+      m.config_placeholder.pickled_top_module = \
+          getattr(m, s.get_translation_pass_namespace()).translated_top_module
+
+    else:
+      for child in m.get_child_components():
+        s.traverse_hierarchy( child )
 
   def get_translation_pass( s ):
     return TranslationPass()
@@ -41,13 +57,16 @@ class TranslationImportPass( BasePass ):
     return "sverilog_translate_import"
 
   def get_translation_flag_name( s ):
-    return "sverilog_translate"
+    return "config_sverilog_translate"
+
+  def get_translation_pass_namespace( s ):
+    return "_pass_sverilog_translation"
 
   def get_import_flag_name( s ):
     return "config_sverilog_import"
 
   def get_translation_configs( s ):
-    return True
+    return TranslationConfigs()
 
   def get_import_configs( s ):
     return ImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED'])

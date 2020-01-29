@@ -32,7 +32,6 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       with open(m._placeholder_meta.pickled_source_file, 'r') as fd:
         return fd.read()
     except AttributeError as e:
-      import pdb;pdb.set_trace()
       # Forgot to apply VerilogPlaceholderPass?
       raise
 

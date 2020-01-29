@@ -47,7 +47,7 @@ class PlaceholderConfigs( BasePassConfigs ):
 
     # Give an explicit name to the wrapper module
     # Use {top_module}_wrapper by default
-    "explicit_module_name" : "",
+    # "explicit_module_name" : "",
   }
 
   Checkers = {
@@ -61,7 +61,7 @@ class PlaceholderConfigs( BasePassConfigs ):
     "src_file": Checker( lambda v: isinstance(v, str) and (os.path.isfile(expand(v)) or not v),
                 "src_file should be a path to a file or an empty string!" ),
 
-    "explicit_module_name": Checker( lambda v: isinstance(v, str), "expects a string" ),
+    # "explicit_module_name": Checker( lambda v: isinstance(v, str), "expects a string" ),
   }
 
   PassName = 'PlaceholderConfigs'

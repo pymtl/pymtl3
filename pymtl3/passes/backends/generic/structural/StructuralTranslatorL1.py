@@ -106,6 +106,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.component_file_info = {}
     s.structural.component_full_name = {}
     s.structural.component_unique_name = {}
+    s.structural.component_explicit_module_name = {}
 
     # Declarations
     s.structural.decl_ports  = {}
@@ -135,6 +136,8 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.component_full_name[m] = get_component_full_name(m_rtype)
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
+    s.structural.component_explicit_module_name[m] = \
+        getattr(m, 'explicit_module_name', '')
 
     # Translate declarations of signals
     s.translate_decls( m )

@@ -16,10 +16,8 @@ from pymtl3.passes.PlaceholderPass import PlaceholderPass
 from pymtl3.passes.PlaceholderConfigs import expand
 from pymtl3.passes.backends.sverilog.VerilogPlaceholderConfigs import \
     VerilogPlaceholderConfigs
-from pymtl3.passes.backends.sverilog.util.utility import get_component_unique_name
-from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
+from pymtl3.passes.backends.sverilog.util.utility import \
+    get_component_unique_name, gen_mapped_packed_ports
 
 class VerilogPlaceholderPass( PlaceholderPass ):
 
@@ -92,18 +90,20 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         assert os.path.isdir(expand(cfg.v_include)), 'v_include should be an array of dir paths!'
 
   def pickle( s, m, cfg, irepr ):
-    # In the namespace m._placeholder_meta:
+    # In the namespace cfg:
     #   pickled_source_file: path to the pickled Verilog source file
     #   pickled_top_module:  name of the top module in the pickled Verilog
 
     pickled_source_file = f'{cfg.top_module}_pickled.sv'
-    if cfg.explicit_module_name:
-      pickled_top_module = cfg.explicit_module_name
+    if hasattr( m, 'explicit_module_name' ):
+      pickled_top_module = m.explicit_module_name
+    # if cfg.explicit_module_name:
+    #   pickled_top_module = cfg.explicit_module_name
     else:
       pickled_top_module = f'{cfg.top_module}_wrapper'
 
-    m._placeholder_meta.pickled_source_file = pickled_source_file
-    m._placeholder_meta.pickled_top_module  = pickled_top_module
+    cfg.pickled_source_file = pickled_source_file
+    cfg.pickled_top_module  = pickled_top_module
 
     orig_comp_name    = get_component_unique_name( irepr )
     pickle_dependency = s._get_dependent_verilog_modules( m, cfg, irepr )
@@ -130,16 +130,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     return s._import_sources( [cfg.src_file] )
 
   def _gen_verilog_wrapper( s, m, cfg, irepr, pickled_top_module ):
-    p_map = cfg.get_port_map()
-    no_clk = not cfg.has_clk
-    no_reset = not cfg.has_reset
-
-    _packed_ports = s._gen_packed_ports( irepr )
     packed_ports = \
-        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
-        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
-        [ (n, p_map(n), p) for n, p in _packed_ports \
-          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
+        gen_mapped_packed_ports( m, cfg.get_port_map(), cfg.has_clk, cfg.has_reset )
 
     if not cfg.params:
       parameters = irepr.get_params()
@@ -262,59 +254,3 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       code += s._output_verilog_file( include_path, source )
 
     return code
-
-  #-----------------------------------------------------------------------
-  # _gen_packed_ports
-  #-----------------------------------------------------------------------
-
-  def _get_rtype( s, _rtype ):
-    if isinstance( _rtype, rt.Array ):
-      n_dim = _rtype.get_dim_sizes()
-      rtype = _rtype.get_sub_type()
-    else:
-      n_dim = []
-      rtype = _rtype
-    return n_dim, rtype
-
-  def _mangle_port( s, id_, port, n_dim ):
-    if not n_dim:
-      return [ ( id_, port ) ]
-    else:
-      return [ ( id_, rt.Array( n_dim, port ) ) ]
-
-  def _mangle_interface( s, id_, ifc, n_dim ):
-    if not n_dim:
-      ret = []
-      all_properties = ifc.get_all_properties_packed()
-      for name, rtype in all_properties:
-        _n_dim, _rtype = s._get_rtype( rtype )
-        if isinstance( _rtype, rt.Port ):
-          ret += s._mangle_port( id_+"__"+name, _rtype, _n_dim )
-        elif isinstance( _rtype, rt.InterfaceView ):
-          ret += s._mangle_interface( id_+"__"+name, _rtype, _n_dim )
-        else:
-          assert False, f"{name} is not interface(s) or port(s)!"
-    else:
-      ret = []
-      for i in range( n_dim[0] ):
-        ret += s._mangle_interface( id_+"__"+str(i), ifc, n_dim[1:] )
-    return ret
-
-  def _gen_packed_ports( s, irepr ):
-    """Return a list of (name, rt.Port) that has all ports of `irepr`.
-
-    This method performs SystemVerilog backend-specific name mangling and
-    returns all ports that appear in the interface of component `irepr`.
-    Each tuple contains a port or an array of port that has any data type
-    allowed in RTLIRDataType.
-    """
-    packed_ports = []
-    ports = irepr.get_ports_packed()
-    ifcs = irepr.get_ifc_views_packed()
-    for id_, port in ports:
-      p_n_dim, p_rtype = s._get_rtype( port )
-      packed_ports += s._mangle_port( id_, p_rtype, p_n_dim )
-    for id_, ifc in ifcs:
-      i_n_dim, i_rtype = s._get_rtype( ifc )
-      packed_ports += s._mangle_interface( id_, i_rtype, i_n_dim )
-    return packed_ports

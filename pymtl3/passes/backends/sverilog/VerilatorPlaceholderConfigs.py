@@ -6,6 +6,8 @@
 """Configuration of Verilator placeholders."""
 
 import os
+import subprocess
+from textwrap import fill, indent
 
 from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import Checker
@@ -194,6 +196,10 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
       elif isinstance( cfgs, str ):
         s._add_to_checkers( cls.Checkers, cfgs, chk )
 
+  #---------------------------------------------------
+  # Public APIs
+  #---------------------------------------------------
+
   def get_vl_xinit_value( s ):
     if s.vl_xinit == 'zeros':
       return 0
@@ -203,3 +209,137 @@ class VerilatorPlaceholderConfigs( VerilogPlaceholderConfigs ):
       return 2
     else:
       raise InvalidPassOptionValue("vl_xinit should be one of 'zeros', 'ones', or 'rand'!")
+
+  def get_c_wrapper_path( s ):
+    return f'{s.pickled_top_module}_v.cpp'
+
+  def get_py_wrapper_path( s ):
+    return f'{s.pickled_top_module}_v.py'
+
+  def get_shared_lib_path( s ):
+    return f'{s.pickled_top_module}_v.so'
+
+  #---------------------
+  # Command generation
+  #---------------------
+
+  def create_vl_cmd( s ):
+    top_module  = f"--top-module {s.pickled_top_module}"
+    src         = s.pickled_source_file
+    mk_dir      = f"--Mdir {s.vl_mk_dir}"
+    # flist       = "" if s.is_default("v_flist") else \
+    #               f"-f {s.v_flist}"
+    include     = "" if s.is_default("v_include") else \
+                  " ".join("-I" + path for path in s.v_include)
+    en_assert   = "--assert" if s.vl_enable_assert else ""
+    opt_level   = "-O3" if s.is_default( 'vl_opt_level' ) else "-O0"
+    loop_unroll = "" if s.vl_unroll_count == 0 else \
+                  f"--unroll-count {s.vl_unroll_count}"
+    stmt_unroll = "" if s.vl_unroll_stmts == 0 else \
+                  f"--unroll-stmts {s.vl_unroll_stmts}"
+    trace       = "--trace" if s.vl_trace else ""
+    coverage    = "--coverage" if s.vl_coverage else ""
+    line_cov    = "--coverage-line" if s.vl_line_coverage else ""
+    toggle_cov  = "--coverage-toggle" if s.vl_toggle_coverage else ""
+    warnings    = s._create_vl_warning_cmd()
+
+    all_opts = [
+      top_module, mk_dir, include, en_assert, opt_level, loop_unroll,
+      # stmt_unroll, trace, warnings, flist, src, coverage,
+      stmt_unroll, trace, warnings, src, coverage,
+      line_cov, toggle_cov,
+    ]
+
+    return f"verilator --cc {' '.join(opt for opt in all_opts if opt)}"
+
+  def create_cc_cmd( s ):
+    c_flags = "-O0 -fPIC -fno-gnu-unique -shared" + \
+             ("" if s.is_default("c_flags") else f" {expand(s.c_flags)}")
+    c_include_path = " ".join("-I"+p for p in s._get_all_includes() if p)
+    out_file = s.get_shared_lib_path()
+    c_src_files = " ".join(s._get_c_src_files())
+    ld_flags = expand(s.ld_flags)
+    ld_libs = s.ld_libs
+    coverage = "-DVM_COVERAGE" if s.coverage or \
+                                  s.line_coverage or \
+                                  s.toggle_coverage else ""
+    return f"g++ {c_flags} {c_include_path} {ld_flags}"\
+           f" -o {out_file} {c_src_files} {ld_libs} {coverage}"
+
+  #---------------------
+  # Internal helpers
+  #---------------------
+
+  def _create_vl_warning_cmd( s ):
+    lint = "" if s.is_default("vl_W_lint") else "--Wno-lint"
+    style = "" if s.is_default("vl_W_style") else "--Wno-style"
+    fatal = "" if s.is_default("vl_W_fatal") else "--Wno-fatal"
+    wno = " ".join(f"--Wno-{w}" for w in s.vl_Wno_list)
+    return " ".join(w for w in [lint, style, fatal, wno] if w)
+
+  def _get_all_includes( s ):
+    includes = s.c_include_path
+
+    # Try to obtain verilator include path either from environment variable
+    # or from `pkg-config`
+    vl_include_dir = os.environ.get("PYMTL_VERILATOR_INCLUDE_DIR")
+    if vl_include_dir is None:
+      get_dir_cmd = ["pkg-config", "--variable=includedir", "verilator"]
+      try:
+        vl_include_dir = \
+            subprocess.check_output(get_dir_cmd, stderr = subprocess.STDOUT).strip()
+        vl_include_dir = vl_include_dir.decode('ascii')
+      except OSError as e:
+        vl_include_dir_msg = \
+"""\
+Cannot locate the include directory of verilator. Please make sure either \
+$PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly!
+"""
+        raise OSError(fill(vl_include_dir_msg)) from e
+
+    # Add verilator include path
+    s.vl_include_dir = vl_include_dir
+    includes += [vl_include_dir, vl_include_dir + "/vltstd"]
+
+    return includes
+
+  def _get_c_src_files( s ):
+    srcs = s.c_srcs
+    top_module = s.pickled_top_module
+    vl_mk_dir = s.vl_mk_dir
+    vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
+
+    # Add C wrapper
+    srcs.append(s.get_c_wrapper_path())
+
+    # Add files listed in class makefile
+    with open(vl_class_mk, "r") as class_mk:
+      srcs += s._get_srcs_from_vl_class_mk(
+          class_mk, vl_mk_dir, "VM_CLASSES_FAST")
+      srcs += s._get_srcs_from_vl_class_mk(
+          class_mk, vl_mk_dir, "VM_CLASSES_SLOW")
+      srcs += s._get_srcs_from_vl_class_mk(
+          class_mk, vl_mk_dir, "VM_SUPPORT_FAST")
+      srcs += s._get_srcs_from_vl_class_mk(
+          class_mk, vl_mk_dir, "VM_SUPPORT_SLOW")
+      srcs += s._get_srcs_from_vl_class_mk(
+          class_mk, s.vl_include_dir, "VM_GLOBAL_FAST")
+      srcs += s._get_srcs_from_vl_class_mk(
+          class_mk, s.vl_include_dir, "VM_GLOBAL_SLOW")
+
+    return srcs
+
+  def _get_srcs_from_vl_class_mk( s, mk, path, label ):
+    """Return all files under `path` directory in `label` section of `mk`."""
+    srcs, found = [], False
+    mk.seek(0)
+    for line in mk:
+      if line.startswith(label):
+        found = True
+      elif found:
+        if line.strip() == "":
+          found = False
+        else:
+          file_name = line.strip()[:-2]
+          srcs.append( path + "/" + file_name + ".cpp" )
+    return srcs
