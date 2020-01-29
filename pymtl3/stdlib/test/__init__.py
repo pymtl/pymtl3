@@ -1,3 +1,4 @@
+from .TestMaster import TestMasterCL
 from .test_sinks import TestSinkCL
 from .test_srcs import TestSrcCL
 from .test_utils import (
