@@ -234,7 +234,11 @@ void trace( V{component_name}_t * m, char* str ) {{
   // So now we need to explicitly use the model name instead of
   // Vscope_v__verilog_module.
 
-  svSetScope( &model->__VlSymsp->__Vscope_{component_name} );
+  // PP: also note that since we add a wrapper around the external Verilog
+  // module, the scope we are trying to set is actually the _wrapped_ module
+  // which is called `wrapped_verilog_module`.
+
+  svSetScope( &model->__VlSymsp->__Vscope_{component_name}__wrapped_verilog_module );
   model->line_trace( words );
 
   // Note that the way the line tracing works, the line tracing function
