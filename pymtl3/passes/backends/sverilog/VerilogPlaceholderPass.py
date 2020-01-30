@@ -13,12 +13,13 @@ import re
 import sys
 from textwrap import dedent
 
+from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PlaceholderPass import PlaceholderPass
 from pymtl3.passes.PlaceholderConfigs import expand
 from pymtl3.passes.backends.sverilog.VerilogPlaceholderConfigs import \
     VerilogPlaceholderConfigs
 from pymtl3.passes.backends.sverilog.util.utility import \
-    get_component_unique_name, gen_mapped_packed_ports
+    get_component_unique_name, gen_mapped_packed_ports, gen_packed_ports
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -68,16 +69,19 @@ class VerilogPlaceholderPass( PlaceholderPass ):
           f'non-integer parameter {param_name} is not supported yet!'
 
     # Check port map
-    all_ports = irepr.get_ports_packed()
-    all_port_names = list(map(lambda x: x[0], irepr.get_ports_packed()))
-    assert all(isinstance(p, rt.Port) and \
-               isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
-        f"Port map option currently requires all ports of {irepr.get_name()}"\
-        f" to be a non-array vector port."
+    unmapped_packed_ports = gen_packed_ports( irepr )
+    unmapped_port_names = list(map(lambda x: x[0], list(unmapped_packed_ports)))
     for name in pmap.keys():
-      if name not in all_port_names:
+      if name not in unmapped_port_names:
         raise InvalidPassOptionValue("port_map", pmap, cfg.PassName,
           f"Port {name} does not exist in component {irepr.get_name()}!")
+
+    # all_ports = irepr.get_ports_packed()
+    # all_port_names = list(map(lambda x: x[0], irepr.get_ports_packed()))
+    # assert all(isinstance(p, rt.Port) and \
+    #            isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
+    #     f"Port map option currently requires all ports of {irepr.get_name()}"\
+    #     f" to be a non-array vector port."
 
     # Check src_file
     if cfg.src_file:
@@ -128,12 +132,16 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     cfg.pickled_source_file      = pickled_source_file
     cfg.pickled_top_module       = pickled_top_module
-    cfg.pickled_wrapper_template = pickle_template.format(
-        orig_comp_name = orig_comp_name,
-        def_symbol = def_symbol,
-        pickle_dependency = pickle_dependency,
-        pickle_wrapper = tplt,
-    )
+    # cfg.pickled_wrapper_template = pickle_template.format(
+    #     orig_comp_name = orig_comp_name,
+    #     def_symbol = def_symbol,
+    #     pickle_dependency = pickle_dependency,
+    #     pickle_wrapper = tplt,
+    # )
+    cfg.pickled_wrapper_template = tplt
+    cfg.def_symbol = def_symbol
+    cfg.orig_comp_name = orig_comp_name
+    cfg.pickle_dependency = pickle_dependency
 
     with open( pickled_source_file, 'w' ) as fd:
       fd.write( pickle_template.format( **locals() ) )
@@ -185,7 +193,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     ]
 
     template_lines = [
-      "module {}",
+      "module {top_module_name}",
       "(",
     ] + ports + [
       ");",

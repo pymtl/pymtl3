@@ -94,14 +94,20 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
   model.elaborate()
 
   if dump_vcd:
-    model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    if not isinstance( model, Placeholder ) and not test_verilog:
+      model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    else:
+      _set_config(
+        model, 'config_sverilog_import', VerilatorImportConfigs(),
+        'vl_trace', True, )
 
   if test_verilog:
-    model.config_sverilog_import = ImportConfigs(
-      vl_xinit = test_verilog,
-    )
     model.sverilog_translate_import = True
+    _set_config(
+        model, 'config_sverilog_import', VerilatorImportConfigs(),
+        'vl_xinit', test_verilog )
 
+  model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
   # Create a simulator
