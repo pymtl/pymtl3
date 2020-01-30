@@ -8,6 +8,7 @@
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir
+from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs
 
 from .StructuralRTLIRSignalExpr import gen_signal_expr
 

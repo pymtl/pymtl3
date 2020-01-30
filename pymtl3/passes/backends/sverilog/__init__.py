@@ -1,4 +1,10 @@
-from .import_.ImportConfigs import ImportConfigs
-from .import_.ImportPass import ImportPass
+from .import_.VerilatorImportConfigs import VerilatorImportConfigs
+from .import_.VerilatorImportPass import VerilatorImportPass
+
 from .translation.TranslationPass import TranslationPass
+from .translation.TranslationConfigs import TranslationConfigs
+
 from .TranslationImportPass import TranslationImportPass
+
+from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
+from .VerilogPlaceholderPass import VerilogPlaceholderPass

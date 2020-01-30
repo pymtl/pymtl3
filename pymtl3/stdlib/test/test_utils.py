@@ -15,9 +15,10 @@ from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
 from pymtl3.passes.backends.sverilog import (
-    ImportConfigs,
-    ImportPass,
+    VerilatorImportConfigs,
+    VerilatorImportPass,
     TranslationImportPass,
+    VerilogPlaceholderPass,
 )
 
 #-------------------------------------------------------------------------
@@ -148,15 +149,28 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   model.elaborate()
 
+  # NOTE: this needs to be fixed later!
+  # Current we only look at the top level component. If it is a
+  # place holder, we add the default import config so that is can be
+  # imported. Ideally we should have a translation mechanism that
+  # generates a pickled source file even if some of them are place 
+  # holders to be imported from external Verilog sources.
+
   if dump_vcd:
-    model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    if not isinstance( model, Placeholder ) and not test_verilog:
+      model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+    else:
+      _set_config(
+        model, 'config_sverilog_import', VerilatorImportConfigs(),
+        'vl_trace', True, )
 
   if test_verilog:
-    model.config_sverilog_import = ImportConfigs(
-      vl_xinit = test_verilog,
-    )
     model.sverilog_translate_import = True
+    _set_config(
+        model, 'config_sverilog_import', VerilatorImportConfigs(),
+        'vl_xinit', test_verilog )
 
+  model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
   # Create a simulator
@@ -275,3 +289,18 @@ run_test_vector_sim received an incorrect value!
   model.tick()
   model.tick()
   model.tick()
+
+  # NOTE: this will destory the imported component!
+  try:
+    model.finalize()
+  except:
+    pass
+
+#-------------------------------------------------------------------------
+# Helper functions
+#-------------------------------------------------------------------------
+
+def _set_config( m, config_attr, default_config, config, value ):
+  if not hasattr( m, config_attr ):
+    setattr( m, config_attr, default_config )
+  setattr( getattr( m, config_attr ), config, value )

@@ -28,10 +28,6 @@ class ImportConfigs( BasePassConfigs ):
     # Enable verbose mode?
     "verbose" : False,
 
-    # Port name mapping
-    # Map pymtl names to Verilog names
-    "port_map" : {},
-
     # Enable external line trace?
     # Once enabled, the `line_trace()` method of the imported component
     # will return a string read from the external `line_trace()` function.

@@ -3,10 +3,14 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
+import re
+import os
+
 from pymtl3.datatypes import Bits
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
+from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
 from ...errors import SVerilogReservedKeywordError
@@ -18,6 +22,30 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
   def check_decl( s, name, msg ):
     if s.is_sverilog_reserved( name ):
       raise SVerilogReservedKeywordError( name, msg )
+
+  #-----------------------------------------------------------------------
+  # Placeholder
+  #-----------------------------------------------------------------------
+
+  def rtlir_tr_placeholder_src( s, m ):
+    try:
+      if m is s.tr_top:
+        # If this placeholder is a top level module, use the wrapper
+        # template to support explicit module name.
+        if s.tr_cfg.explicit_module_name:
+          module_name = s.tr_cfg.explicit_module_name
+        else:
+          # Use the name of wrapper generated in the placeholder pass
+          module_name = f'{m.config_placeholder.top_module}_wrapper'
+        template = m.config_placeholder.pickled_wrapper_template
+        return template.format( module_name )
+      else:
+        # Otherwise always use the pickled source file
+        with open(m.config_placeholder.pickled_source_file, 'r') as fd:
+          return fd.read()
+    except AttributeError as e:
+      # Forgot to apply VerilogPlaceholderPass?
+      raise
 
   #-----------------------------------------------------------------------
   # Data types
