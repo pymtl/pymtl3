@@ -165,6 +165,9 @@ def gen_mapped_packed_ports( m, p_map, has_clk = True, has_reset = True ):
   no_clk, no_reset = not has_clk, not has_reset
 
   _packed_ports = gen_packed_ports( irepr )
+  clk   = next(filter(lambda x: x[0] == 'clk',   _packed_ports))[1]
+  reset = next(filter(lambda x: x[0] == 'reset', _packed_ports))[1]
+
   packed_ports = \
       ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
       ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \

@@ -153,6 +153,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     packed_ports = \
         gen_mapped_packed_ports( m, cfg.get_port_map(), cfg.has_clk, cfg.has_reset )
 
+    all_port_names = list(map(lambda x: x[1], packed_ports))
+
     if not cfg.params:
       parameters = irepr.get_params()
     else:
@@ -164,6 +166,11 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       f" {name}{'' if idx == len(packed_ports)-1 else ','}" \
       for idx, (_, name, p) in enumerate(packed_ports) if name
     ]
+
+    # The wrapper has to have an unused clk port to make verilator
+    # VCD tracing work.
+    if 'clk' not in all_port_names:
+      ports.insert( 0, '  input logic clk,' )
 
     # Parameters passed to the module to be parametrized
     params = [
