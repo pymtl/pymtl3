@@ -19,7 +19,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
 
   Options = {
     # Enable verbose mode?
-    "verbose" : True,
+    "verbose" : False,
 
     # Enable external line trace?
     # Once enabled, the `line_trace()` method of the imported component
