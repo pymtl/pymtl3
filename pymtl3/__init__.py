@@ -21,8 +21,8 @@ from .dsl.Connectable import (
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
 from .dsl.Placeholder import Placeholder
-from .passes import ImportConfigs, TracingConfigs
-from .passes.backends.sverilog import ImportPass, TranslationImportPass
+from .passes import VerilatorImportConfigs, TracingConfigs
+from .passes.backends.sverilog import VerilatorImportPass, TranslationImportPass
 from .passes.PassGroups import SimulationPass
 
 __version__ = "0.5.4"
@@ -35,7 +35,8 @@ __all__ = [
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
-  'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'ImportPass',
+  'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'VerilatorImportPass',
+  'VerilatorImportConfigs',
   'Component', 'Placeholder',
 
   'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
