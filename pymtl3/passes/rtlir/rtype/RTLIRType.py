@@ -576,7 +576,8 @@ def get_component_ifc_rtlir( obj ):
     if not isinstance( obj, list ):
       return False
     while isinstance( obj, list ):
-      assert len( obj ) > 0, f"{id_} is an empty list!"
+      if len( obj ) == 0:
+        return False
       obj = obj[0]
     return isinstance( obj, primitive_types )
 

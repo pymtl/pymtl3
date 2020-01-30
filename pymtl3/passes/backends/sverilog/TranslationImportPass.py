@@ -65,7 +65,7 @@ class TranslationImportPass( BasePass ):
 
     else:
       for child in m.get_child_components():
-        s.traverse_hierarchy( child )
+        s.add_placeholder_marks( child )
 
   def get_translation_pass( s ):
     return TranslationPass()
