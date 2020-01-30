@@ -7,6 +7,7 @@
 
 import copy
 import importlib
+import json
 import linecache
 import os
 import shutil
@@ -99,10 +100,7 @@ class VerilatorImportPass( BasePass ):
   # is_cached
   #-----------------------------------------------------------------------
 
-  def is_cached( s, m, full_name ):
-    # TODO: correct caching
-    cached = False
-
+  def is_cached( s, m, ip_cfg ):
     # Only components translated by pymtl translation passes will be cached
     try:
       is_same = s.get_translation_namespace(m).is_same
@@ -110,16 +108,29 @@ class VerilatorImportPass( BasePass ):
       is_same = False
 
     # Check if the verilated model is cached
-    cached = False
-    obj_dir = 'obj_dir_' + full_name
-    c_wrapper = full_name + '_v.cpp'
-    py_wrapper = full_name + '_v.py'
-    shared_lib = f'lib{full_name}_v.so'
+    is_source_cached = False
+    obj_dir = ip_cfg.vl_mk_dir
+    c_wrapper = ip_cfg.get_c_wrapper_path()
+    py_wrapper = ip_cfg.get_py_wrapper_path()
+    shared_lib = ip_cfg.get_shared_lib_path()
     if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
        os.path.exists(py_wrapper) and os.path.exists(shared_lib):
-      cached = True
+      is_source_cached = True
 
-    return cached
+    # Check if the configurations from the last run are the same
+    is_config_cached = False
+    config_file = 'pymtl_import_conifg.json'
+    new_cfg = s.serialize_cfg( ip_cfg )
+    if os.path.exists(config_file):
+      with open( config_file, 'r' ) as fd:
+        if s.is_same_cfg( json.load( fd ), new_cfg ):
+          is_config_cached = True
+
+    # Write the current configuration to the config file
+    with open( config_file, 'w' ) as fd:
+      json.dump( new_cfg, fd, indent = 4 )
+
+    return is_source_cached and is_config_cached
 
   #-----------------------------------------------------------------------
   # get_imported_object
@@ -131,12 +142,11 @@ class VerilatorImportPass( BasePass ):
     ip_cfg.setup_configs( m )
 
     rtype = get_component_ifc_rtlir( m )
-    full_name = get_component_unique_name( rtype )
 
     packed_ports = \
         gen_mapped_packed_ports( m, ph_cfg.get_port_map(), ph_cfg.has_clk, ph_cfg.has_reset )
 
-    cached = s.is_cached( m, full_name )
+    cached = s.is_cached( m, ip_cfg )
 
     s.create_verilator_model( m, ph_cfg, ip_cfg, cached )
 
@@ -256,13 +266,7 @@ class VerilatorImportPass( BasePass ):
     dump_vcd = ip_cfg.vl_trace
     ip_cfg.vprint("\n=====Compile shared library=====")
 
-    # Since we may run import with or without dump_vcd enabled, we need
-    # to compile C wrapper regardless of whether the verilated model is
-    # cached or not.
-    # TODO: A better caching strategy is to attach some metadata
-    # to the C wrapper so that we know the wrapper was generated with or
-    # without dump_vcd enabled.
-    if dump_vcd or not cached:
+    if not cached:
       cmd = ip_cfg.create_cc_cmd()
 
       succeeds = True
@@ -427,6 +431,32 @@ constraint_list = [
 
     ip_cfg.vprint("Import succeeds!")
     return imp
+
+  #-------------------------------------------------------------------------
+  # Serialize and compare configurations
+  #-------------------------------------------------------------------------
+
+  def serialize_cfg( s, ip_cfg ):
+    d = {}
+    s._volatile_configs = [
+      'vl_line_trace', 'vl_coverage', 'vl_line_coverage', 'vl_toggle_coverage',
+      'vl_mk_dir', 'vl_enable_assert', 'vl_opt_level',
+      'vl_unroll_count', 'vl_unroll_stmts',
+      'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
+      'vl_xinit', 'vl_trace', 'vl_trace_timescale', 'vl_trace_cycle_time',
+      'c_flags', 'c_include_path', 'c_srcs',
+      'ld_flags', 'ld_libs',
+    ]
+    d['ImportPassName'] = 'VerilatorImportPass'
+    for cfg in s._volatile_configs:
+      d[cfg] = getattr( ip_cfg, cfg )
+
+    return d
+
+  def is_same_cfg( s, prev, new ):
+    _volatile_configs = copy.copy(s._volatile_configs)
+    _volatile_configs.append('ImportPassName')
+    return all(prev[cfg] == new[cfg] for cfg in _volatile_configs)
 
   #-------------------------------------------------------------------------
   # gen_signal_decl_c
