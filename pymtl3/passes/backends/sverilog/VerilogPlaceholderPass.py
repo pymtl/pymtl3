@@ -172,6 +172,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     if 'clk' not in all_port_names:
       ports.insert( 0, '  input logic clk,' )
 
+    if 'reset' not in all_port_names:
+      ports.insert( 0, '  input logic reset,' )
+
     # Parameters passed to the module to be parametrized
     params = [
       f"    .{param}( {val} ){'' if idx == len(parameters)-1 else ','}"\

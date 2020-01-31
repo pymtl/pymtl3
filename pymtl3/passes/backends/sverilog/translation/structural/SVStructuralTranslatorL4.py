@@ -3,6 +3,7 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
+from pymtl3 import Placeholder
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
 )
@@ -101,6 +102,8 @@ class SVStructuralTranslatorL4(
     _c_name = s.rtlir_tr_component_unique_name( c_rtype )
 
     def gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, c_n_dim ):
+      nonlocal _c_name
+      nonlocal m
       tplt = \
 """\
 {port_wire_defs}{ifc_inst_defs}
@@ -112,8 +115,18 @@ class SVStructuralTranslatorL4(
 """
       if not n_dim:
         # Add the component dimension to the defs/decls
+
+        # Get the object from the hierarchy
+        _n_dim = list(int(num_str) for num_str in c_n_dim.split('__') if num_str)
+        attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
+        obj = eval(f'm.{attr}')
+
+        if isinstance(obj, Placeholder):
+          c_name = obj.config_placeholder.pickled_top_module
+        else:
+          c_name = _c_name
+
         c_id = c_id + c_n_dim
-        c_name = _c_name
         port_wire_defs = port_conns['def'].format( **locals() )
         ifc_inst_defs = ifc_conns['def'].format( **locals() )
         if port_wire_defs and ifc_inst_defs:
