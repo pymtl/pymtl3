@@ -5,5 +5,6 @@ from .test_utils import (
     mk_test_case_table,
     run_sim,
     run_test_vector_sim,
+    config_model,
 )
 from .TestMaster import TestMasterCL

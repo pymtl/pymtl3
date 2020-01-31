@@ -22,6 +22,53 @@ from pymtl3.passes.backends.sverilog import (
 )
 
 #-------------------------------------------------------------------------
+# config_model
+#-------------------------------------------------------------------------
+
+def config_model( m, dump_vcd, test_verilog, duts = [] ):
+
+  def traverse_translate_import( module ):
+    if isinstance( module, Placeholder ):
+      module.sverilog_translate_import = True
+    else:
+      for child in module.get_child_components():
+        traverse_translate_import( child )
+
+  # try:
+  m.elaborate()
+  # except:
+  #   pass
+
+  # For each placeholder in the hierarchy, set them as to be translated
+  # and imported
+  traverse_translate_import( m )
+
+  if not duts:
+    duts.append( '' )
+
+  # Set --dump-vcd and --test-verilog related configs
+  for dut_attr in duts:
+    if dut_attr == '':
+      dut = m
+    else:
+      dut = eval(f'm.{dut_attr}')
+
+    # If --test-verilog is on, tag the target module
+    if test_verilog:
+      dut.sverilog_translate_import = True
+
+    if dump_vcd:
+      # Only use PyMTL VCD tracing if --test-verilog is off and there is at
+      # least one PyMTL component
+      if not isinstance( dut, Placeholder ) and not test_verilog:
+        m.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+      # Otherwise use Verilator VCD tracing
+      else:
+        if not hasattr( dut, 'config_sverilog_import' ):
+          dut.config_sverilog_import = VerilatorImportConfigs()
+        dut.config_sverilog_import.vl_trace = True
+
+#-------------------------------------------------------------------------
 # mk_test_case_table
 #-------------------------------------------------------------------------
 
