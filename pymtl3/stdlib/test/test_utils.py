@@ -34,10 +34,16 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
       for child in module.get_child_components():
         traverse_translate_import( child )
 
-  # try:
+  def traverse_import_vl_trace( module ):
+    if isinstance( module, Placeholder ):
+      if not hasattr( module, 'config_sverilog_import' ):
+        module.config_sverilog_import = VerilatorImportConfigs()
+      module.config_sverilog_import.vl_trace = True
+    else:
+      for child in module.get_child_components():
+        traverse_import_vl_trace( child )
+
   m.elaborate()
-  # except:
-  #   pass
 
   # For each placeholder in the hierarchy, set them as to be translated
   # and imported
@@ -58,10 +64,13 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
       dut.sverilog_translate_import = True
 
     if dump_vcd:
-      # Only use PyMTL VCD tracing if --test-verilog is off and there is at
+      # Use PyMTL VCD tracing if --test-verilog is off and there is at
       # least one PyMTL component
       if not isinstance( dut, Placeholder ) and not test_verilog:
         m.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
+        # We also need to mark every placeholder in the hierarchy to 
+        # use Verilator tracing
+        traverse_import_vl_trace( m )
       # Otherwise use Verilator VCD tracing
       else:
         if not hasattr( dut, 'config_sverilog_import' ):
