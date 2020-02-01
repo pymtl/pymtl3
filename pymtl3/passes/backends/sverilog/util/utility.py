@@ -10,10 +10,10 @@ import shutil
 import textwrap
 from hashlib import blake2b
 
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
-from pymtl3.passes.rtlir.util.utility import get_component_full_name
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir import get_component_ifc_rtlir
+from pymtl3.passes.rtlir.util.utility import get_component_full_name
 
 
 def make_indent( src, nindent ):

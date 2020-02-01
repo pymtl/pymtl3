@@ -11,8 +11,8 @@ from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
 from .import_.VerilatorImportPass import VerilatorImportPass
-from .translation.TranslationPass import TranslationPass
 from .translation.TranslationConfigs import TranslationConfigs
+from .translation.TranslationPass import TranslationPass
 from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 
 

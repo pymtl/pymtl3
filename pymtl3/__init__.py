@@ -21,8 +21,8 @@ from .dsl.Connectable import (
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
 from .dsl.Placeholder import Placeholder
-from .passes import VerilatorImportConfigs, TracingConfigs
-from .passes.backends.sverilog import VerilatorImportPass, TranslationImportPass
+from .passes import TracingConfigs, VerilatorImportConfigs
+from .passes.backends.sverilog import TranslationImportPass, VerilatorImportPass
 from .passes.PassGroups import SimulationPass
 
 __version__ = "0.5.4"

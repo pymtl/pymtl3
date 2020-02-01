@@ -5,8 +5,8 @@
 # Date   : Jul 28, 2019
 """Configuration of Verilog placeholders."""
 
-from copy import deepcopy
 import os
+from copy import deepcopy
 
 from pymtl3.passes.PassConfigs import Checker
 from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs, expand

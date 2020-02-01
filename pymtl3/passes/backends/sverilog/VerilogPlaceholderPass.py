@@ -13,16 +13,21 @@ import re
 import sys
 from textwrap import dedent
 
+from pymtl3.passes.backends.sverilog.util.utility import (
+    gen_mapped_packed_ports,
+    gen_packed_ports,
+    get_component_unique_name,
+)
+from pymtl3.passes.backends.sverilog.VerilogPlaceholderConfigs import (
+    VerilogPlaceholderConfigs,
+)
 from pymtl3.passes.errors import InvalidPassOptionValue
-from pymtl3.passes.PlaceholderPass import PlaceholderPass
 from pymtl3.passes.PlaceholderConfigs import expand
-from pymtl3.passes.backends.sverilog.VerilogPlaceholderConfigs import \
-    VerilogPlaceholderConfigs
-from pymtl3.passes.backends.sverilog.util.utility import \
-    get_component_unique_name, gen_mapped_packed_ports, gen_packed_ports
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
+from pymtl3.passes.PlaceholderPass import PlaceholderPass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir import get_component_ifc_rtlir
+
 
 class VerilogPlaceholderPass( PlaceholderPass ):
 

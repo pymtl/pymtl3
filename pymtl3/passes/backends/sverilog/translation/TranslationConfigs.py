@@ -6,6 +6,7 @@
 
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 
+
 class TranslationConfigs( BasePassConfigs ):
 
   Options = {

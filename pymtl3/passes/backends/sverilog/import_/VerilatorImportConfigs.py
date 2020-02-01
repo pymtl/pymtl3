@@ -10,8 +10,7 @@ import subprocess
 from textwrap import fill, indent
 
 from pymtl3.passes.errors import InvalidPassOptionValue
-from pymtl3.passes.PassConfigs import Checker, BasePassConfigs
-
+from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
 

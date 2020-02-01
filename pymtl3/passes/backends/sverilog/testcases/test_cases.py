@@ -62,6 +62,8 @@ from pymtl3.passes.testcases import (
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
+    CasePlaceholderTranslationRegIncr,
+    CasePlaceholderTranslationVReg,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
@@ -70,8 +72,6 @@ from pymtl3.passes.testcases import (
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
-    CasePlaceholderTranslationRegIncr,
-    CasePlaceholderTranslationVReg,
 )
 
 CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,

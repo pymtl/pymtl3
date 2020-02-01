@@ -3,16 +3,14 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-import re
-import os
 from textwrap import dedent
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
     StructuralTranslatorL1,
 )
-from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
+from pymtl3.passes.rtlir import RTLIRType as rt
 
 from ...errors import SVerilogReservedKeywordError
 from ...util.utility import get_component_unique_name, make_indent

@@ -24,10 +24,15 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
-from .VerilatorImportConfigs import VerilatorImportConfigs
 from ..errors import SVerilogImportError
-from ..util.utility import expand, get_component_unique_name, make_indent, wrap, \
-    gen_mapped_packed_ports
+from ..util.utility import (
+    expand,
+    gen_mapped_packed_ports,
+    get_component_unique_name,
+    make_indent,
+    wrap,
+)
+from .VerilatorImportConfigs import VerilatorImportConfigs
 
 
 class VerilatorImportPass( BasePass ):

@@ -7,6 +7,7 @@
 from pymtl3 import Placeholder
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 
+
 class PlaceholderPass( BasePass ):
 
   def __call__( s, m ):
