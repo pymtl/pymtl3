@@ -109,15 +109,15 @@ class Component( ComponentLevel7 ):
 
     # Check if we are adding obj to a list of to a component
     if not indices:
-      # If we are adding field s.x, we simply reuse the setattr hook
-      assert not hasattr( s, name )
+      # If we are adding field parent.x, we simply reuse the setattr hook
+      assert not hasattr( parent, name ), f"Invalid add_component call: {parent} already has field {name}!"
 
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       setattr( parent, name, obj )
       del NamedObject.__setattr__
 
     else:
-      assert hasattr( s, name )
+      assert hasattr( parent, name ), f"Invalid add_component call: Field '{name}' of {parent} should exist and be a list, but doesn't exist!"
 
       # We use the indices to get the list parent and set the element
 
@@ -126,6 +126,8 @@ class Component( ComponentLevel7 ):
       while i < len(indices) - 1:
         list_parent = list_parent[ indices[i] ]
         i += 1
+
+      assert list_parent[ indices[i] ] is None, f"Invalid add_component call: {parent} already has field '{name}!'"
       list_parent[ indices[i] ] = obj
 
       # NOTE THAT we cannot use setattr hook for the top level metadata
