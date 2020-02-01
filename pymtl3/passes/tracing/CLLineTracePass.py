@@ -141,7 +141,7 @@ class CLLineTracePass( BasePass ):
     # Collecting all non blocking interfaces and replace the str hook
     for ifc in top.get_all_object_filter( lambda s: isinstance( s, NonBlockingIfc ) ):
       if ifc.method.Type is not None:
-        ifc.trace_len = len( str( ifc.method.Type() ) )
+        ifc.trace_len = len( str( ifc.method.Type() ) )+2
       else:
         ifc.trace_len = self.default_trace_len
       ifc._str_hook = mk_new_str_non_blocking( ifc )
