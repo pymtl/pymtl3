@@ -165,6 +165,32 @@ def test_replace_component_list_of_real_by_real2():
   foo_wrap.tick()
   print(foo_wrap.line_trace())
 
+def test_replace_deep_list_of_foo_by_real():
+
+  class TopWrap( Component ):
+    def construct( s ):
+      s.in_    = InPort( Bits32 )
+      s.foobar = Foo_shamt_list_wrap( 32 )( in_ = s.in_ )
+
+  foo_wrap = TopWrap()
+
+  foo_wrap.elaborate()
+  order = list(range(5))
+  random.shuffle( order )
+  for i in order:
+    foo_wrap.replace_component( foo_wrap.foobar.inner[i], Real_shamt )
+
+  simple_sim_pass( foo_wrap )
+
+  print()
+  foo_wrap.in_ = Bits32(16)
+  foo_wrap.tick()
+  print(foo_wrap.foobar.line_trace())
+
+  foo_wrap.in_ = Bits32(4)
+  foo_wrap.tick()
+  print(foo_wrap.foobar.line_trace())
+
 # This test is to test if we save the fact that up_in writes the inport
 # of the inner module and recover it when we put in the new component
 
