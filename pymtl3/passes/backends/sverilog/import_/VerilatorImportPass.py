@@ -124,7 +124,7 @@ class VerilatorImportPass( BasePass ):
 
     # Check if the configurations from the last run are the same
     is_config_cached = False
-    config_file = 'pymtl_import_conifg.json'
+    config_file = f'pymtl_import_config_{ip_cfg.translated_top_module}.json'
     new_cfg = s.serialize_cfg( ip_cfg )
     if os.path.exists(config_file):
       with open( config_file, 'r' ) as fd:
