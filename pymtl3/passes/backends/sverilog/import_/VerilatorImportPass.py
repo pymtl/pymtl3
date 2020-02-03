@@ -148,20 +148,47 @@ class VerilatorImportPass( BasePass ):
 
     rtype = get_component_ifc_rtlir( m )
 
-    packed_ports = \
-        gen_mapped_packed_ports( m, ph_cfg.get_port_map(), ph_cfg.has_clk, ph_cfg.has_reset )
+    packed_ports = gen_mapped_packed_ports(
+        m,
+        ph_cfg.port_map,
+        ph_cfg.has_clk,
+        ph_cfg.has_reset,
+        packed_to_unpacked = False,
+    )
+
+    packed_unpacked_ports = gen_mapped_packed_ports(
+        m,
+        ph_cfg.port_map,
+        ph_cfg.has_clk,
+        ph_cfg.has_reset,
+        packed_to_unpacked = True,
+    )
 
     cached = s.is_cached( m, ip_cfg )
 
     s.create_verilator_model( m, ph_cfg, ip_cfg, cached )
 
-    port_cdefs = \
-        s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, packed_ports, cached )
+    port_cdefs = s.create_verilator_c_wrapper(
+        m,
+        ph_cfg,
+        ip_cfg,
+        packed_ports,
+        packed_unpacked_ports,
+        cached
+    )
 
     s.create_shared_lib( m, ph_cfg, ip_cfg, cached )
 
-    symbols = \
-        s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, packed_ports, port_cdefs, cached )
+    symbols = s.create_py_wrapper(
+        m,
+        ph_cfg,
+        ip_cfg,
+        rtype,
+        packed_ports,
+        packed_unpacked_ports,
+        port_cdefs,
+        cached
+    )
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
@@ -214,7 +241,8 @@ class VerilatorImportPass( BasePass ):
   # create_verilator_c_wrapper
   #-----------------------------------------------------------------------
 
-  def create_verilator_c_wrapper( s, m, ph_cfg, ip_cfg, packed_ports, cached ):
+  def create_verilator_c_wrapper(
+      s, m, ph_cfg, ip_cfg, packed_ports, packed_unpacked_ports, cached ):
     """Return the file name of generated C component wrapper.
 
     Create a C wrapper that calls verilator C API and provides interfaces
@@ -236,7 +264,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for name, v_name, port in packed_ports:
+    for name, v_name, port in packed_unpacked_ports:
       if v_name:
         port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
@@ -245,7 +273,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for name, v_name, port in packed_ports:
+    for name, v_name, port in packed_unpacked_ports:
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
@@ -308,7 +336,8 @@ class VerilatorImportPass( BasePass ):
   # create_py_wrapper
   #-----------------------------------------------------------------------
 
-  def create_py_wrapper( s, m, ph_cfg, ip_cfg, rtype, packed_ports, port_cdefs, cached ):
+  def create_py_wrapper(
+      s, m, ph_cfg, ip_cfg, rtype, packed_ports, packed_unpacked_ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
@@ -322,23 +351,30 @@ class VerilatorImportPass( BasePass ):
     make_indent( port_cdefs, 4 )
 
     # Port definition in PyMTL style
-    symbols, port_defs, connections = s.gen_signal_decl_py( rtype )
+    symbols, port_defs, connections = s.gen_signal_decl_py( rtype, ip_cfg.port_map )
     make_indent( port_defs, 2 )
     make_indent( connections, 2 )
+
     # Wire definition in PyMTL style
     wire_defs = []
-    for name, v_name, port in packed_ports:
-      wire_defs.append( s.gen_wire_decl_py( name, port ) )
+    # for name, v_name, port in packed_ports:
+    for name, v_name, port in packed_unpacked_ports:
+      if not v_name and name in ('clk', 'reset'):
+        v_name = name
+      wire_defs.append( s.gen_wire_decl_py( v_name, port ) )
     make_indent( wire_defs, 2 )
 
     # Set upblk inputs and outputs
-    set_comb_input = s.gen_comb_input( packed_ports )
-    set_comb_output = s.gen_comb_output( packed_ports )
+    # set_comb_input = s.gen_comb_input( packed_ports )
+    # set_comb_output = s.gen_comb_output( packed_ports )
+    set_comb_input = s.gen_comb_input( packed_unpacked_ports )
+    set_comb_output = s.gen_comb_output( packed_unpacked_ports )
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
     # Generate constraints for sequential block
-    constraints = s.gen_constraints( packed_ports )
+    # constraints = s.gen_constraints( packed_ports )
+    constraints = s.gen_constraints( packed_unpacked_ports )
     make_indent( constraints, 4 )
     constraint_str = '' if not constraints else \
 """\
@@ -350,10 +386,12 @@ constraint_list = [
 """.format( '\n'.join( constraints ) )
 
     # Line trace
-    line_trace = s.gen_line_trace_py( packed_ports )
+    # line_trace = s.gen_line_trace_py( packed_ports )
+    line_trace = s.gen_line_trace_py( packed_unpacked_ports )
 
     # Internal line trace
-    in_line_trace = s.gen_internal_line_trace_py( packed_ports )
+    # in_line_trace = s.gen_internal_line_trace_py( packed_ports )
+    in_line_trace = s.gen_internal_line_trace_py( packed_unpacked_ports )
 
     # External trace function definition
     if ip_cfg.vl_line_trace:
@@ -532,14 +570,18 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # Ports and interfaces will have the same name; their name-mangled
   # counterparts will have a mangled name starting with 'mangled__'.
 
-  def gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
+  def gen_vector_conns( s, d, lhs, rhs, dtype, pos, p_map ):
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     _lhs, _rhs = s._verilator_name(lhs), s._verilator_name(rhs)
+
+    if lhs in p_map.keys():
+      _rhs = p_map[lhs]
+
     ret = [f"connect( s.{_lhs}, s.mangled__{_rhs}[{l}:{r}] )"]
     return ret, r
 
-  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols ):
+  def gen_struct_conns( s, d, lhs, rhs, dtype, pos, symbols, p_map ):
     dtype_name = dtype.get_class().__name__
     upblk_name = lhs.replace('.', '_DOT_').replace('[', '_LBR_').replace(']', '_RBR_')
     ret = [
@@ -552,68 +594,82 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
     body = []
-    all_properties = reversed(list(dtype.get_all_properties().items()))
+    all_properties = list(reversed(list(dtype.get_all_properties().items())))
+
+    if lhs in p_map.keys():
+      # All sub-fields should be in the port map
+      new_pmap = copy.copy( p_map )
+      for name, _ in all_properties:
+        new_name = f"{lhs}.{name}"
+        if new_name not in new_pmap:
+          new_pmap[new_name] = f"{p_map[lhs]}"
+      p_map = new_pmap
+
     for name, field in all_properties:
-      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs, field, pos )
+      _ret, pos = s._gen_dtype_conns( d, lhs+"."+name, rhs, field, pos, p_map )
       body += _ret
     return ret + body, pos
 
-  def _gen_vector_conns( s, d, lhs, rhs, dtype, pos ):
+  def _gen_vector_conns( s, d, lhs, rhs, dtype, pos, p_map ):
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     _lhs, _rhs = s._verilator_name( lhs ), s._verilator_name( rhs )
+
+    if lhs in p_map.keys():
+      _rhs = p_map[lhs]
+
     if d == "input":
       ret = [f"  s.mangled__{_rhs}[{l}:{r}] = s.{_lhs}"]
     else:
       ret = [f"  s.{_lhs} = s.mangled__{_rhs}[{l}:{r}]"]
     return ret, r
 
-  def _gen_struct_conns( s, d, lhs, rhs, dtype, pos ):
+  def _gen_struct_conns( s, d, lhs, rhs, dtype, pos, p_map ):
     ret = []
     all_properties = reversed(list(dtype.get_all_properties().items()))
     for field_name, field in all_properties:
-      _ret, pos = s._gen_dtype_conns(d, lhs+"."+field_name, rhs, field, pos)
+      _ret, pos = s._gen_dtype_conns(d, lhs+"."+field_name, rhs, field, pos, p_map)
       ret += _ret
     return ret, pos
 
-  def _gen_packed_array_conns( s, d, lhs, rhs, dtype, n_dim, pos ):
+  def _gen_packed_array_conns( s, d, lhs, rhs, dtype, n_dim, pos, p_map ):
     if not n_dim:
-      return s._gen_dtype_conns( d, lhs, rhs, dtype, pos )
+      return s._gen_dtype_conns( d, lhs, rhs, dtype, pos, p_map )
     else:
       ret = []
       for idx in range(n_dim[0]):
         _lhs = lhs + f"[{idx}]"
         _ret, pos = \
-          s._gen_packed_array_conns( d, _lhs, rhs, dtype, n_dim[1:], pos )
+          s._gen_packed_array_conns( d, _lhs, rhs, dtype, n_dim[1:], pos, p_map )
         ret += _ret
       return ret, pos
 
-  def _gen_dtype_conns( s, d, lhs, rhs, dtype, pos ):
+  def _gen_dtype_conns( s, d, lhs, rhs, dtype, pos, p_map ):
     if isinstance( dtype, rdt.Vector ):
-      return s._gen_vector_conns( d, lhs, rhs, dtype, pos )
+      return s._gen_vector_conns( d, lhs, rhs, dtype, pos, p_map )
     elif isinstance( dtype, rdt.Struct ):
-      return s._gen_struct_conns( d, lhs, rhs, dtype, pos )
+      return s._gen_struct_conns( d, lhs, rhs, dtype, pos, p_map )
     elif isinstance( dtype, rdt.PackedArray ):
       n_dim = dtype.get_dim_sizes()
       sub_dtype = dtype.get_sub_dtype()
-      return s._gen_packed_array_conns( d, lhs, rhs, sub_dtype, n_dim, pos )
+      return s._gen_packed_array_conns( d, lhs, rhs, sub_dtype, n_dim, pos, p_map )
     else:
       assert False, f"unrecognized data type {dtype}!"
 
-  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos, symbols ):
+  def gen_dtype_conns( s, d, lhs, rhs, dtype, pos, symbols, p_map ):
     if isinstance( dtype, rdt.Vector ):
-      return s.gen_vector_conns( d, lhs, rhs, dtype, pos )
+      return s.gen_vector_conns( d, lhs, rhs, dtype, pos, p_map )
     elif isinstance( dtype, rdt.Struct ):
-      return s.gen_struct_conns( d, lhs, rhs, dtype, pos, symbols )
+      return s.gen_struct_conns( d, lhs, rhs, dtype, pos, symbols, p_map )
     else:
       assert False, f"unrecognized data type {dtype}!"
 
-  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols ):
+  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols, p_map ):
     if not n_dim:
       d = port.get_direction()
       dtype = port.get_dtype()
       nbits = dtype.get_length()
-      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0, symbols )
+      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0, symbols, p_map )
       assert pos == nbits, \
         f"internal error: {id_py} wire length mismatch!"
       return ret
@@ -622,10 +678,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range(n_dim[0]):
         _id_py = id_py + f"[{idx}]"
         _id_v = id_v + f"[{idx}]"
-        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols )
+        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols, p_map )
       return ret
 
-  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols ):
+  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols, p_map ):
     if not n_dim:
       ret = []
       all_properties = ifc.get_all_properties_packed()
@@ -634,23 +690,23 @@ m->{name}{sub} = {deference}model->{name}{sub};
         _id_py = id_py + f".{name}"
         _id_v = id_v + f"__{name}"
         if isinstance( _rtype, rt.Port ):
-          ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
+          ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim, symbols, p_map )
         else:
-          ret += s.gen_ifc_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
+          ret += s.gen_ifc_conns( _id_py, _id_v, _rtype, _n_dim, symbols, p_map )
       return ret
     else:
       ret = []
       for idx in range( n_dim[0] ):
         _id_py = id_py + f"[{idx}]"
         _id_v = id_v + f"__{idx}"
-        ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:], symbols )
+        ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:], symbols, p_map )
       return ret
 
   #-------------------------------------------------------------------------
   # gen_signal_decl_py
   #-------------------------------------------------------------------------
 
-  def gen_signal_decl_py( s, rtype ):
+  def gen_signal_decl_py( s, rtype, p_map ):
     """Return the PyMTL definition of all interface ports of `rtype`."""
 
     #-----------------------------------------------------------------------
@@ -789,10 +845,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
     struct_conn_symbols = {}
     for id_, port in ports:
       p_n_dim, p_rtype = s._get_rtype( port )
-      p_conns += s.gen_port_conns( id_, id_, p_rtype, p_n_dim, struct_conn_symbols )
+      p_conns += s.gen_port_conns( id_, id_, p_rtype, p_n_dim, struct_conn_symbols, p_map )
     for id_, ifc in ifcs:
       i_n_dim, i_rtype = s._get_rtype( ifc )
-      i_conns += s.gen_ifc_conns( id_, id_, i_rtype, i_n_dim, struct_conn_symbols )
+      i_conns += s.gen_ifc_conns( id_, id_, i_rtype, i_n_dim, struct_conn_symbols, p_map )
 
     p_symbols.update( i_symbols )
     p_symbols.update( struct_conn_symbols )
@@ -845,7 +901,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
       if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk' and v_name:
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(v_name)
-        rhs = "s.mangled__"+s._verilator_name(py_name)
+        # rhs = "s.mangled__"+s._verilator_name(py_name)
+        rhs = "s.mangled__"+s._verilator_name(v_name)
         ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim )
     return ret
 
@@ -871,7 +928,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
-        lhs = "s.mangled__" + s._verilator_name(py_name)
+        # lhs = "s.mangled__" + s._verilator_name(py_name)
+        lhs = "s.mangled__" + s._verilator_name(v_name)
         rhs = "_ffi_m." + s._verilator_name(v_name)
         ret += s.gen_port_array_output( lhs, rhs, dtype, p_n_dim )
     return ret
@@ -896,9 +954,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
         if isinstance( rtype, rt.Array ):
           n_dim = rtype.get_dim_sizes()
           sub_type = rtype.get_sub_type()
-          ret += s._gen_constraints( py_name, n_dim, sub_type )
+          # ret += s._gen_constraints( py_name, n_dim, sub_type )
+          ret += s._gen_constraints( v_name, n_dim, sub_type )
         else:
-          wire_name = "s.mangled__" + s._verilator_name(py_name)
+          # wire_name = "s.mangled__" + s._verilator_name(py_name)
+          wire_name = "s.mangled__" + s._verilator_name(v_name)
           ret.append( f"U( seq_upblk ) < RD( {wire_name} )," )
     ret.append( "U( seq_upblk ) < U( comb_upblk )," )
     return ret
@@ -912,9 +972,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
     ret = [ 'lt = ""' ]
     template = 'lt += "{my_name} = {{}}, ".format({full_name})'
     for name, v_name, port in packed_ports:
-      my_name = name
-      full_name = 's.mangled__'+s._verilator_name(name)
-      ret.append( template.format( **locals() ) )
+      if v_name:
+        my_name = name
+        # full_name = 's.mangled__'+s._verilator_name(name)
+        full_name = 's.mangled__'+s._verilator_name(v_name)
+        ret.append( template.format( **locals() ) )
     ret.append( 'return lt' )
     make_indent( ret, 3 )
     return '\n'.join( ret )
@@ -930,7 +992,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       "lt += '{v_name} = {{}}, '.format(full_vector(s.mangled__{my_name}, _ffi_m.{v_name}))"
     for my_name, v_name, port in packed_ports:
       if v_name:
-        my_name = s._verilator_name(my_name)
+        my_name = s._verilator_name(v_name)
         v_name = s._verilator_name(v_name)
         ret.append( template.format(**locals()) )
     ret.append( 'return lt' )

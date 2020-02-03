@@ -5,6 +5,7 @@
 # Date   : May 27, 2019
 """Provide helper methods that might be useful to sverilog passes."""
 
+import copy
 import os
 import shutil
 import textwrap
@@ -156,22 +157,114 @@ def gen_packed_ports( irepr ):
     packed_ports += _mangle_interface( id_, i_rtype, i_n_dim )
   return packed_ports
 
+def gen_unpacked_ports( irepr ):
+  """Return a list of (name, rt.Port) that has all ports of `irepr`.
+
+  This method performs SystemVerilog backend-specific name mangling and
+  returns all ports that appear in the interface of component `irepr`.
+  Each tuple contains a port or an array of port that has any data type
+  allowed in RTLIRDataType.
+  """
+  unpacked_ports = []
+  ports = irepr.get_ports()
+  ifcs = irepr.get_ifc_views()
+  for id_, port in ports:
+    p_n_dim, p_rtype = _get_rtype( port )
+    unpacked_ports += _mangle_port( id_, p_rtype, p_n_dim )
+  for id_, ifc in ifcs:
+    i_n_dim, i_rtype = _get_rtype( ifc )
+    unpacked_ports += _mangle_interface( id_, i_rtype, i_n_dim )
+  return unpacked_ports
+
 #-----------------------------------------------------------------------
 # gen_mapped_packed_ports
 #-----------------------------------------------------------------------
 
-def gen_mapped_packed_ports( m, p_map, has_clk = True, has_reset = True ):
+def gen_mapped_packed_ports(
+    m, _p_map, has_clk = True, has_reset = True, packed_to_unpacked = False ):
+
+  is_packed_to_unpacked = packed_to_unpacked and ( '[' in ''.join(list(_p_map.keys())) )
+
+  # Create a new _p_map based on Verilog name mangling rules
+  new_pmap = {}
+  for name, v_name in _p_map.items():
+    new_pmap[name.replace('.', '__')] = v_name
+  _p_map = new_pmap
+
+  def _array_port_mangle( name, alias, port, n_dim ):
+    if not n_dim:
+      return [ ( name, alias, port ) ]
+    else:
+      ret = []
+      for i in range(n_dim[0]):
+        ret += _array_port_mangle( f'{name}__{i}', f'{name}[{i}]', port, n_dim[1:] )
+      return ret
+
   irepr = get_component_ifc_rtlir( m )
   no_clk, no_reset = not has_clk, not has_reset
-
+  p_map = lambda k: _p_map[k] if k in _p_map else k
   _packed_ports = gen_packed_ports( irepr )
+
   clk   = next(filter(lambda x: x[0] == 'clk',   _packed_ports))[1]
   reset = next(filter(lambda x: x[0] == 'reset', _packed_ports))[1]
 
-  packed_ports = \
+  if not is_packed_to_unpacked:
+    packed_ports = \
+        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
+        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
+        [ (n, p_map(n), p) for n, p in _packed_ports \
+          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
+
+    return packed_ports
+
+  else:
+    packed_ports = \
+      ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
+      ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else [])
+
+    array_ports_to_be_mapped = \
+        { name.split('[')[0] for name in _p_map.keys() if '[' in name }
+
+    for name, port in _packed_ports:
+      use_orig = True
+      if not (name == 'clk' and no_clk or name == 'reset' and no_reset):
+        # If this is an array of ports and will be mapped to different names
+        if isinstance(port, rt.Array) and name in array_ports_to_be_mapped:
+          use_orig = False
+          unpacked_ports = \
+              _array_port_mangle( name, name, port.get_sub_type(), port.get_dim_sizes() )
+          for unpacked_name, unpacked_alias, unpacked_port in unpacked_ports:
+            assert unpacked_alias in _p_map, \
+                f"You must provide a name for all ports in {name} through port_map!"
+            packed_ports.append(
+                ( unpacked_name, p_map( unpacked_alias ), unpacked_port ) )
+      if use_orig:
+        packed_ports.append(( name, p_map(name), port ))
+    return packed_ports
+
+#-----------------------------------------------------------------------
+# gen_mapped_unpacked_ports
+#-----------------------------------------------------------------------
+
+def gen_mapped_unpacked_ports( m, _p_map, has_clk = True, has_reset = True ):
+  # Create a new _p_map based on Verilog name mangling rules
+  new_pmap = {}
+  for name, v_name in _p_map.items():
+    new_pmap[name.replace('.', '__')] = v_name
+  _p_map = new_pmap
+
+  irepr = get_component_ifc_rtlir( m )
+  no_clk, no_reset = not has_clk, not has_reset
+  p_map = lambda k: _p_map[k] if k in _p_map else k
+
+  _unpacked_ports = gen_unpacked_ports( irepr )
+  clk   = next(filter(lambda x: x[0] == 'clk',   _unpacked_ports))[1]
+  reset = next(filter(lambda x: x[0] == 'reset', _unpacked_ports))[1]
+
+  unpacked_ports = \
       ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
       ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
-      [ (n, p_map(n), p) for n, p in _packed_ports \
+      [ (n, p_map(n), p) for n, p in _unpacked_ports \
         if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
 
-  return packed_ports
+  return unpacked_ports

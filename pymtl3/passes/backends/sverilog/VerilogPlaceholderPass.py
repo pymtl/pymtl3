@@ -14,9 +14,10 @@ import sys
 from textwrap import dedent
 
 from pymtl3.passes.backends.sverilog.util.utility import (
-    gen_mapped_packed_ports,
+    gen_mapped_unpacked_ports,
     gen_packed_ports,
     get_component_unique_name,
+    gen_unpacked_ports,
 )
 from pymtl3.passes.backends.sverilog.VerilogPlaceholderConfigs import (
     VerilogPlaceholderConfigs,
@@ -74,19 +75,21 @@ class VerilogPlaceholderPass( PlaceholderPass ):
           f'non-integer parameter {param_name} is not supported yet!'
 
     # Check port map
-    unmapped_packed_ports = gen_packed_ports( irepr )
-    unmapped_port_names = list(map(lambda x: x[0], list(unmapped_packed_ports)))
+
+    # TODO: this should be based on RTLIR
+    # unmapped_unpacked_ports = gen_unpacked_ports( irepr )
+    # unmapped_port_names = list(map(lambda x: x[0], list(unmapped_unpacked_ports)))
+    # for name in pmap.keys():
+    #   if name not in unmapped_port_names:
+    #     raise InvalidPassOptionValue("port_map", pmap, cfg.PassName,
+    #       f"Port {name} does not exist in component {irepr.get_name()}!")
+
     for name in pmap.keys():
-      if name not in unmapped_port_names:
+      try:
+        eval(f'm.{name}')
+      except:
         raise InvalidPassOptionValue("port_map", pmap, cfg.PassName,
           f"Port {name} does not exist in component {irepr.get_name()}!")
-
-    # all_ports = irepr.get_ports_packed()
-    # all_port_names = list(map(lambda x: x[0], irepr.get_ports_packed()))
-    # assert all(isinstance(p, rt.Port) and \
-    #            isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
-    #     f"Port map option currently requires all ports of {irepr.get_name()}"\
-    #     f" to be a non-array vector port."
 
     # Check src_file
     if cfg.src_file:
@@ -137,12 +140,6 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     cfg.pickled_source_file      = pickled_source_file
     cfg.pickled_top_module       = pickled_top_module
-    # cfg.pickled_wrapper_template = pickle_template.format(
-    #     orig_comp_name = orig_comp_name,
-    #     def_symbol = def_symbol,
-    #     pickle_dependency = pickle_dependency,
-    #     pickle_wrapper = tplt,
-    # )
     cfg.pickled_wrapper_template = tplt
     cfg.def_symbol = def_symbol
     cfg.orig_comp_name = orig_comp_name
@@ -155,10 +152,10 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     return s._import_sources( cfg, [cfg.src_file] )
 
   def _gen_verilog_wrapper( s, m, cfg, irepr, pickled_top_module ):
-    packed_ports = \
-        gen_mapped_packed_ports( m, cfg.get_port_map(), cfg.has_clk, cfg.has_reset )
+    unpacked_ports = \
+        gen_mapped_unpacked_ports( m, cfg.port_map, cfg.has_clk, cfg.has_reset )
 
-    all_port_names = list(map(lambda x: x[1], packed_ports))
+    all_port_names = list(map(lambda x: x[1], unpacked_ports))
 
     if not cfg.params:
       parameters = irepr.get_params()
@@ -168,8 +165,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # Port definitions of wrapper
     ports = [
       f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
-      f" {name}{'' if idx == len(packed_ports)-1 else ','}" \
-      for idx, (_, name, p) in enumerate(packed_ports) if name
+      f" {name}{'' if idx == len(unpacked_ports)-1 else ','}" \
+      for idx, (_, name, p) in enumerate(unpacked_ports) if name
     ]
 
     # The wrapper has to have an unused clk port to make verilator
@@ -188,8 +185,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     # Connections between top module and inner module
     connect_ports = [
-      f"    .{name}( {name} ){'' if idx == len(packed_ports)-1 else ','}"\
-      for idx, (_, name, p) in enumerate(packed_ports) if name
+      f"    .{name}( {name} ){'' if idx == len(unpacked_ports)-1 else ','}"\
+      for idx, (_, name, p) in enumerate(unpacked_ports) if name
     ]
 
     lines = [

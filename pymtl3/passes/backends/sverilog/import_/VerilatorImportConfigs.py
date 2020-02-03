@@ -190,6 +190,8 @@ class VerilatorImportConfigs( BasePassConfigs ):
     s.translated_source_file = m._pass_sverilog_translation.translated_filename
     s.v_include = m.config_placeholder.v_include
     # s.src_file = m.config_placeholder.src_file
+    s.port_map = m.config_placeholder.port_map
+    s.params = m.config_placeholder.params
 
     if not s.vl_mk_dir:
       s.vl_mk_dir = f'obj_dir_{s.translated_top_module}'
