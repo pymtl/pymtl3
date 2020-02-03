@@ -149,20 +149,6 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
 
   model.elaborate()
 
-  # if dump_vcd:
-  #   if not isinstance( model, Placeholder ) and not test_verilog:
-  #     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
-  #   else:
-  #     _set_config(
-  #       model, 'config_sverilog_import', VerilatorImportConfigs(),
-  #       'vl_trace', True, )
-
-  # if test_verilog:
-  #   model.sverilog_translate_import = True
-  #   _set_config(
-  #       model, 'config_sverilog_import', VerilatorImportConfigs(),
-  #       'vl_xinit', test_verilog )
-
   model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
@@ -207,30 +193,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   test_vectors = test_vectors[1:]
 
-  # Setup the model
-
-  model.elaborate()
-
-  # NOTE: this needs to be fixed later!
-  # Current we only look at the top level component. If it is a
-  # place holder, we add the default import config so that is can be
-  # imported. Ideally we should have a translation mechanism that
-  # generates a pickled source file even if some of them are place 
-  # holders to be imported from external Verilog sources.
-
-  if dump_vcd:
-    if not isinstance( model, Placeholder ) and not test_verilog:
-      model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
-    else:
-      _set_config(
-        model, 'config_sverilog_import', VerilatorImportConfigs(),
-        'vl_trace', True, )
-
-  if test_verilog:
-    model.sverilog_translate_import = True
-    _set_config(
-        model, 'config_sverilog_import', VerilatorImportConfigs(),
-        'vl_xinit', test_verilog )
+  config_model( model, dump_vcd, test_verilog )
 
   model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
