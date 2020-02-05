@@ -7,15 +7,15 @@
 
 from collections import deque
 
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL1 import (
-    SVStructuralTranslatorL1,
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.translation.structural.VStructuralTranslatorL1 import (
+    VStructuralTranslatorL1,
 )
-from pymtl3.passes.backends.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.verilog.util.utility import make_indent
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
 
-class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
+class YosysStructuralTranslatorL1( VStructuralTranslatorL1 ):
 
   def __init__( s, top ):
     super().__init__( top )

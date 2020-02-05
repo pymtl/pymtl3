@@ -6,23 +6,23 @@
 """Provide the yosys-compatible SystemVerilog L1 behavioral translator."""
 
 from pymtl3.datatypes import Bits, is_bitstruct_inst
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL1 import (
-    BehavioralRTLIRToSVVisitorL1,
-    SVBehavioralTranslatorL1,
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.translation.behavioral.VBehavioralTranslatorL1 import (
+    BehavioralRTLIRToVVisitorL1,
+    VBehavioralTranslatorL1,
 )
-from pymtl3.passes.backends.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.verilog.util.utility import make_indent
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
 
-class YosysBehavioralTranslatorL1( SVBehavioralTranslatorL1 ):
+class YosysBehavioralTranslatorL1( VBehavioralTranslatorL1 ):
 
-  def _get_rtlir2sv_visitor( s ):
-    return YosysBehavioralRTLIRToSVVisitorL1
+  def _get_rtlir2v_visitor( s ):
+    return YosysBehavioralRTLIRToVVisitorL1
 
-class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
+class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
   """IR visitor that generates yosys-compatible SystemVerilog code."""
 
   def __init__( s, is_reserved ):
@@ -170,7 +170,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         node.sexpr['s_attr'] = s._struct_instance( node.Type.get_dtype(), obj )
         node.sexpr['s_index'] = ""
       else:
-        raise SVerilogTranslationError( s.blk, node,
+        raise VerilogTranslationError( s.blk, node,
           f"{node.attr} {obj} is not an integer!" )
 
     elif isinstance( node.value, bir.Base ):
@@ -182,7 +182,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       node.sexpr['attr'].append( node.attr )
 
     else:
-      raise SVerilogTranslationError( s.blk, node,
+      raise VerilogTranslationError( s.blk, node,
           "sub-components are not supported at L1" )
 
     return s.signal_expr_epilogue( node, node.attr )
@@ -209,7 +209,7 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         try:
           const_value = node._value
         except AttributeError:
-          raise SVerilogTranslationError( s.blk, node,
+          raise VerilogTranslationError( s.blk, node,
             f"{value} is not an array of constants!" )
         node.sexpr['s_index'] = f"{nbits}'d{const_value}"
         node.sexpr['index'] = []
@@ -227,11 +227,11 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
         node.sexpr['s_index'] += '[{}]'
         node.sexpr['index'].append( idx )
       else:
-        raise SVerilogTranslationError( s.blk, node,
+        raise VerilogTranslationError( s.blk, node,
             "internal error: unrecognized index" )
 
     else:
-      raise SVerilogTranslationError( s.blk, node,
+      raise VerilogTranslationError( s.blk, node,
           "internal error: unrecognized index" )
 
     return s.signal_expr_epilogue( node, f'{value}[{idx}]' )
@@ -258,5 +258,5 @@ class YosysBehavioralRTLIRToSVVisitorL1( BehavioralRTLIRToSVVisitorL1 ):
       value = int( node.obj )
       return f"{nbits}'d{value}"
     else:
-      raise SVerilogTranslationError( s.blk, node,
+      raise VerilogTranslationError( s.blk, node,
       f"{node.name} {node.obj} is not an integer!" )

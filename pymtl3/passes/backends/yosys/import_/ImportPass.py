@@ -6,10 +6,10 @@
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
 
-from pymtl3.passes.backends.sverilog import ImportConfigs
-from pymtl3.passes.backends.sverilog import ImportPass as SVerilogImportPass
-from pymtl3.passes.backends.sverilog.errors import SVerilogImportError
-from pymtl3.passes.backends.sverilog.util.utility import (
+from pymtl3.passes.backends.verilog import ImportConfigs
+from pymtl3.passes.backends.verilog import ImportPass as VerilogImportPass
+from pymtl3.passes.backends.verilog.errors import VerilogImportError
+from pymtl3.passes.backends.verilog.util.utility import (
     get_component_unique_name,
     make_indent,
 )
@@ -19,7 +19,7 @@ from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 
-class ImportPass( SVerilogImportPass ):
+class ImportPass( VerilogImportPass ):
 
   #-----------------------------------------------------------------------
   # Backend-specific methods

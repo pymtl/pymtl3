@@ -234,7 +234,7 @@ class Bits32VRegComp( Placeholder, Component ):
     s.d = OutPort( Bits32 )
 
     s.config_placeholder = PlaceholderConfigs(
-        vl_src = dirname(__file__) + '/VReg.sv',
+        vl_src = dirname(__file__) + '/VReg.v',
         top_module = 'VReg',
     )
 
@@ -2028,7 +2028,7 @@ class CasePartSelOverPartSelComp:
 # Test cases that contain SystemVerilog translator errors
 #-------------------------------------------------------------------------
 
-class CaseSVerilogReservedComp:
+class CaseVerilogReservedComp:
   class DUT( Component ):
     def construct( s ):
       s.buf = InPort( Bits32 )

@@ -14,7 +14,7 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
-from pymtl3.passes.backends.sverilog import (
+from pymtl3.passes.backends.verilog import (
     TranslationImportPass,
     VerilatorImportConfigs,
     VerilatorImportPass,
@@ -29,16 +29,16 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
 
   def traverse_translate_import( module ):
     if isinstance( module, Placeholder ):
-      module.sverilog_translate_import = True
+      module.verilog_translate_import = True
     else:
       for child in module.get_child_components():
         traverse_translate_import( child )
 
   def traverse_import_vl_trace( module ):
     if isinstance( module, Placeholder ):
-      if not hasattr( module, 'config_sverilog_import' ):
-        module.config_sverilog_import = VerilatorImportConfigs()
-      module.config_sverilog_import.vl_trace = True
+      if not hasattr( module, 'config_verilog_import' ):
+        module.config_verilog_import = VerilatorImportConfigs()
+      module.config_verilog_import.vl_trace = True
     else:
       for child in module.get_child_components():
         traverse_import_vl_trace( child )
@@ -61,7 +61,7 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
 
     # If --test-verilog is on, tag the target module
     if test_verilog:
-      dut.sverilog_translate_import = True
+      dut.verilog_translate_import = True
 
     if dump_vcd:
       # Use PyMTL VCD tracing if --test-verilog is off and there is at
@@ -73,9 +73,9 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
         traverse_import_vl_trace( m )
       # Otherwise use Verilator VCD tracing
       else:
-        if not hasattr( dut, 'config_sverilog_import' ):
-          dut.config_sverilog_import = VerilatorImportConfigs()
-        dut.config_sverilog_import.vl_trace = True
+        if not hasattr( dut, 'config_verilog_import' ):
+          dut.config_verilog_import = VerilatorImportConfigs()
+        dut.config_verilog_import.vl_trace = True
 
 #-------------------------------------------------------------------------
 # mk_test_case_table

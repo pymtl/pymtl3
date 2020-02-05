@@ -76,8 +76,8 @@ setup(
 
   package_data={
     'pymtl3': [
-      'passes/backends/sverilog/import_/verilator_wrapper.c.template',
-      'passes/backends/sverilog/import_/verilator_wrapper.py.template',
+      'passes/backends/verilog/import_/verilator_wrapper.c.template',
+      'passes/backends/verilog/import_/verilator_wrapper.py.template',
     ],
   },
 

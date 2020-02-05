@@ -3,7 +3,7 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : June 8, 2019
-"""Translate a PyMTL component hierarhcy into yosys-sverilog source code."""
+"""Translate a PyMTL component hierarhcy into yosys-verilog source code."""
 
 import filecmp
 import os
@@ -31,8 +31,8 @@ class TranslationPass( BasePass ):
       s.translator.translate( m )
 
       module_name = s.translator._top_module_full_name
-      output_file = module_name + '.sv'
-      temporary_file = module_name + '.sv.tmp'
+      output_file = module_name + '.v'
+      temporary_file = module_name + '.v.tmp'
 
       # First write the file to a temporary file
       m._pass_yosys_translation.is_same = False
