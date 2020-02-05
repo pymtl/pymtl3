@@ -21,6 +21,9 @@ class MemMasterIfcFL( Interface ):
     s.write = CallerIfcFL()
     s.amo   = CallerIfcFL()
 
+  def __str__( s ):
+    return f"r{s.read}|w{s.write}|a{s.amo}"
+
   def connect( s, other, parent ):
     if isinstance( other, MemMinionIfcCL ):
       m = MemIfcFL2CLAdapter( other.ReqType, other.RespType )
@@ -63,6 +66,9 @@ class MemMinionIfcFL( Interface ):
     s.read  = CalleeIfcFL( method=read )
     s.write = CalleeIfcFL( method=write )
     s.amo   = CalleeIfcFL( method=amo )
+
+  def __str__( s ):
+    return f"r{s.read}|w{s.write}|a{s.amo}"
 
   def connect( s, other, parent ):
     if isinstance( other, MemMasterIfcCL ):
@@ -188,6 +194,8 @@ class MemIfcCL2FLAdapter( Component ):
           resp = RespType( req.type_, req.opaque, 0, req.len,
              s.right.amo( req.type_, req.addr, len_, req.data ) )
 
+        # Make line trace look better since s.right might get blocked
+        assert s.left.resp.rdy()
         s.left.resp( resp )
 
     s.add_constraints(
