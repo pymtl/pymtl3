@@ -27,6 +27,9 @@ class XcelMasterIfcFL( Interface ):
     s.read  = CallerIfcFL()
     s.write = CallerIfcFL()
 
+  def __str__( s ):
+    return f"r{s.read}|w{s.write}"
+
   def connect( s, other, parent ):
     if isinstance( other, XcelMinionIfcRTL ):
       m = XcelIfcFL2RTLAdapter( other.ReqType, other.RespType )
@@ -69,6 +72,9 @@ class XcelMinionIfcFL( Interface ):
   def construct( s, *, read=None, write=None ):
     s.read  = CalleeIfcFL( method=read )
     s.write = CalleeIfcFL( method=write )
+
+  def __str__( s ):
+    return f"r{s.read}|w{s.write}"
 
   def connect( s, other, parent ):
     if isinstance( other, XcelMasterIfcRTL ):
@@ -204,6 +210,8 @@ class XcelIfcCL2FLAdapter( Component ):
           s.right.write( req.addr, req.data )
           resp = RespType( req.type_, 0 )
 
+        # Make line trace look better since s.right might get blocked
+        assert s.left.resp.rdy()
         s.left.resp( resp )
 
     s.add_constraints(
