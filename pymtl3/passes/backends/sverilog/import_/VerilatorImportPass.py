@@ -131,11 +131,7 @@ class VerilatorImportPass( BasePass ):
         if s.is_same_cfg( json.load( fd ), new_cfg ):
           is_config_cached = True
 
-    # Write the current configuration to the config file
-    with open( config_file, 'w' ) as fd:
-      json.dump( new_cfg, fd, indent = 4 )
-
-    return is_source_cached and is_config_cached
+    return is_source_cached and is_config_cached, config_file, new_cfg
 
   #-----------------------------------------------------------------------
   # get_imported_object
@@ -164,7 +160,7 @@ class VerilatorImportPass( BasePass ):
         packed_to_unpacked = True,
     )
 
-    cached = s.is_cached( m, ip_cfg )
+    cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 
     s.create_verilator_model( m, ph_cfg, ip_cfg, cached )
 
@@ -191,6 +187,10 @@ class VerilatorImportPass( BasePass ):
     )
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
+
+    # Dump configuration dict to config_file
+    with open( config_file, 'w' ) as fd:
+      json.dump( cfg_d, fd, indent = 4 )
 
     return imp
 
@@ -492,7 +492,7 @@ constraint_list = [
     ]
     d['ImportPassName'] = 'VerilatorImportPass'
     for cfg in s._volatile_configs:
-      d[cfg] = getattr( ip_cfg, cfg )
+      d[cfg] = copy.deepcopy(getattr( ip_cfg, cfg ))
 
     return d
 
