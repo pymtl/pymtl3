@@ -16,10 +16,10 @@ from .test_srcs import TestSrcCL
 
 class TestMasterCL( Component ):
 
-  def construct( s, Types ):
-    s.master = MasterIfcCL( Types )
-    s.src  = TestSrcCL( Types.req )( send=s.master.req )
-    s.sink = TestSinkCL( Types.resp )( recv=s.master.resp )
+  def construct( s, ReqType, RespType, MasterIfc=MasterIfcCL ):
+    s.master = MasterIfc( ReqType, RespType )
+    s.src  = TestSrcCL( ReqType )( send=s.master.req )
+    s.sink = TestSinkCL( RespType )( recv=s.master.resp )
 
   def done( s ):
     return s.src.done() and s.sink.done()
