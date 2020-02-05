@@ -108,7 +108,7 @@ class SVStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of ports {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-    return direction + ' ' if direction == 'output' else '  ' + \
+    return direction + (' ' if direction == 'output' else '  ') + \
            dtype['decl'].format( **locals() ) + array_type['decl']
 
   def rtlir_tr_wire_decls( s, wire_decls ):
