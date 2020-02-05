@@ -11,6 +11,7 @@ from collections import deque
 
 import py
 
+from pymtl3.datatypes import Bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
@@ -274,7 +275,10 @@ class DynamicSchedulePass( BasePass ):
         # print_srcs = []
 
         for j, var in enumerate(variables):
-          copy_srcs .append( "t{} = deepcopy({})".format( j, var ) )
+          if issubclass( var._dsl.Type, Bits ):
+            copy_srcs.append( "t{} = {}.value".format( j, var ) )
+          else:
+            copy_srcs.append( "t{} = deepcopy({})".format( j, var ) )
           check_srcs.append( "{} == t{}".format( var, j ) )
           # print_srcs.append( "print '{}', {}, _____tmp_{}".format( var, var, j ) )
 

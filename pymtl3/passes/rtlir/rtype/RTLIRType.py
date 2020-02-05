@@ -299,8 +299,9 @@ class Component( BaseRTLIRType ):
     cls = obj.__class__
     try:
       file_name = inspect.getsourcefile( cls )
-      line_no = inspect.getsourcelines( cls )[1]
-      s.file_info = f"{file_name}:{line_no}"
+      s.file_info = f"{file_name}"
+      # line_no = inspect.getsourcelines( cls )[1]
+      # s.file_info = f"{file_name}:{line_no}"
     except OSError:
       s.file_info = f"Dynamically generated component {cls.__name__}"
 
