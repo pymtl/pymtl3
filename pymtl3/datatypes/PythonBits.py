@@ -27,6 +27,12 @@ class Bits:
   def _flip( self ):
     self.value = self._next
 
+  def clone( self ):
+    return Bits( self.nbits, self.value )
+
+  def __deepcopy__( self, memo ):
+    return Bits( self.nbits, self.value )
+
   def __call__( self ):
     return Bits( self.nbits )
 
