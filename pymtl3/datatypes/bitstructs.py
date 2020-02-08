@@ -330,7 +330,6 @@ def _mk_ff_fn( fields ):
 # def clone( self ):
 #   return self.__class__( self.x.clone(), [ self.y[0].clone(), self.y[1].clone() ]  )
 
-
 def _gen_list_clone_strs( type_, prefix='' ):
   if isinstance( type_, list ):
     return "[" + ",".join( [ _gen_list_clone_strs( type_[0], f"{prefix}[{i}]" )
@@ -350,6 +349,22 @@ def _mk_clone_fn( fields ):
     clone_strs + [ ')' ],
   )
 
+def _mk_deepcopy_fn():
+  clone_strs = [ 'return self.__class__(' ]
+
+  for name, type_ in fields.items():
+    clone_strs.append( "  " + _gen_list_clone_strs( type_, f'self.{name}' ) + "," )
+
+  return _create_fn(
+    'clone',
+    [ 'self' ],
+    clone_strs + [ ')' ],
+  )
+  return _create_fn(
+    '__deepcopy__',
+    [ 'self', 'memo' ],
+    clone_strs + [ ')' ],
+  )
 #-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------
@@ -501,11 +516,12 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   cls.__ilshift__, cls._flip = _mk_ff_fn( fields )
 
   # Shunning: add clone
-  assert not 'clone' in cls.__dict__
+  assert not 'clone' in cls.__dict__ and not '__deepcopy__' in cls.__dict__
 
   cls.clone = _mk_clone_fn( fields )
 
   assert not 'get_field_type' in cls.__dict__
+  cls.__deepcopy__ = _mk_deepcopy_fn()
 
   def get_field_type( cls, name ):
     if name in cls.__bitstruct_fields__:
