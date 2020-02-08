@@ -349,17 +349,12 @@ def _mk_clone_fn( fields ):
     clone_strs + [ ')' ],
   )
 
-def _mk_deepcopy_fn():
+def _mk_deepcopy_fn( fields ):
   clone_strs = [ 'return self.__class__(' ]
 
   for name, type_ in fields.items():
     clone_strs.append( "  " + _gen_list_clone_strs( type_, f'self.{name}' ) + "," )
 
-  return _create_fn(
-    'clone',
-    [ 'self' ],
-    clone_strs + [ ')' ],
-  )
   return _create_fn(
     '__deepcopy__',
     [ 'self', 'memo' ],
@@ -520,8 +515,9 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
 
   cls.clone = _mk_clone_fn( fields )
 
+  cls.__deepcopy__ = _mk_deepcopy_fn( fields )
+
   assert not 'get_field_type' in cls.__dict__
-  cls.__deepcopy__ = _mk_deepcopy_fn()
 
   def get_field_type( cls, name ):
     if name in cls.__bitstruct_fields__:
