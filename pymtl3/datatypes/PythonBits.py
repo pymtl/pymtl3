@@ -27,6 +27,9 @@ class Bits:
   def _flip( self ):
     self.value = self._next
 
+  def clone( self ):
+    return Bits( self.nbits, self.value )
+
   def __call__( self ):
     return Bits( self.nbits )
 

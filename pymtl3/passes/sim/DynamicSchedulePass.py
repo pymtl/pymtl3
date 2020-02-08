@@ -11,7 +11,7 @@ from collections import deque
 
 import py
 
-from pymtl3.datatypes import Bits
+from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 
@@ -261,7 +261,8 @@ class DynamicSchedulePass( BasePass ):
             N = 0
             while True:
               N += 1
-              if N > 100: raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
+              if N > 100:
+                raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
               {1}
               scc_tick_func()
               if {2}:
@@ -277,8 +278,11 @@ class DynamicSchedulePass( BasePass ):
         for j, var in enumerate(variables):
           if issubclass( var._dsl.Type, Bits ):
             copy_srcs.append( "t{} = {}.value".format( j, var ) )
+          elif is_bitstruct_class( var._dsl.Type ):
+            copy_srcs.append( "t{} = {}.clone()".format( j, var ) )
           else:
             copy_srcs.append( "t{} = deepcopy({})".format( j, var ) )
+
           check_srcs.append( "{} == t{}".format( var, j ) )
           # print_srcs.append( "print '{}', {}, _____tmp_{}".format( var, var, j ) )
 
@@ -287,4 +291,5 @@ class DynamicSchedulePass( BasePass ):
                                          " and ".join( check_srcs ),
                                          ", ".join( [ x.__name__ for x in scc] ) )
                                          # "; ".join( print_srcs ) )
+
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )

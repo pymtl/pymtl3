@@ -270,7 +270,7 @@ def _mk_hash_fn( fields ):
 #-------------------------------------------------------------------------
 # _mk_ff_fn
 #-------------------------------------------------------------------------
-# Creates __ilshift__ and _flip functions that looks like the follwoing:
+# Creates __ilshift__ and _flip functions that looks like the following:
 #
 # def __ilshift__( self, other ):
 #   self.x <<= other.x
@@ -319,6 +319,36 @@ def _mk_ff_fn( fields ):
     [ 'self' ],
     flip_strs,
   ),
+
+#-------------------------------------------------------------------------
+# _mk_clone_fn
+#-------------------------------------------------------------------------
+# Creates clone function that looks like the following:
+# Use this clone function in any place that you need to perform a
+# deepcopy on a bitstruct.
+#
+# def clone( self ):
+#   return self.__class__( self.x.clone(), [ self.y[0].clone(), self.y[1].clone() ]  )
+
+
+def _gen_list_clone_strs( type_, prefix='' ):
+  if isinstance( type_, list ):
+    return "[" + ",".join( [ _gen_list_clone_strs( type_[0], f"{prefix}[{i}]" )
+                        for i in range(len(type_)) ] ) + "]"
+  else:
+    return f"{prefix}.clone()"
+
+def _mk_clone_fn( fields ):
+  clone_strs = [ 'return self.__class__(' ]
+
+  for name, type_ in fields.items():
+    clone_strs.append( "  " + _gen_list_clone_strs( type_, f'self.{name}' ) + "," )
+
+  return _create_fn(
+    'clone',
+    [ 'self' ],
+    clone_strs + [ ')' ],
+  )
 
 #-------------------------------------------------------------------------
 # _check_valid_array
@@ -469,6 +499,11 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   assert not '__ilshift__' in cls.__dict__ and not '_flip' in cls.__dict__
 
   cls.__ilshift__, cls._flip = _mk_ff_fn( fields )
+
+  # Shunning: add clone
+  assert not 'clone' in cls.__dict__
+
+  cls.clone = _mk_clone_fn( fields )
 
   assert not 'get_field_type' in cls.__dict__
 
