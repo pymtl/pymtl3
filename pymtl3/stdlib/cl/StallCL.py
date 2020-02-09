@@ -28,10 +28,10 @@ class StallCL( Component ):
     s.stall_prob = stall_prob
     s.stall_rgen = Random( stall_seed ) # Separate randgen for each injector
 
-    s.add_constraints(
-      M(s.recv) == M(s.send),  # pass_through
+    s.add_constraints( # pass_through
+      M(s.recv) == M(s.send),
+      M(s.recv.rdy) == M(s.send.rdy),
     )
-
 
   def line_trace( s ):
     return f"{s.recv}"
