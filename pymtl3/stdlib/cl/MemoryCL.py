@@ -74,9 +74,12 @@ class MemoryCL( Component ):
     req_latency = min(1, latency)
     resp_latency = latency - req_latency
 
-    s.req_stalls = [ StallCL( stall_prob, i )( recv = s.ifc[i].req ) for i in range(nports) ]
-    s.req_qs  = [ DelayPipeDeqCL( req_latency )( enq = s.req_stalls[i].send ) for i in range(nports) ]
-    s.resp_qs = [ DelayPipeSendCL( resp_latency )( send = s.ifc[i].resp ) for i in range(nports) ]
+    s.req_stalls = [ StallCL( Type=req_classes[i], stall_prob=stall_prob, stall_seed=i )( recv = s.ifc[i].req )
+                      for i in range(nports) ]
+    s.req_qs  = [ DelayPipeDeqCL( Type=req_classes[i], delay=req_latency )( enq = s.req_stalls[i].send )
+                    for i in range(nports) ]
+    s.resp_qs = [ DelayPipeSendCL( Type=resp_classes[i], delay=resp_latency )( send = s.ifc[i].resp )
+                    for i in range(nports) ]
 
     @s.update
     def up_mem():
@@ -113,4 +116,5 @@ class MemoryCL( Component ):
   # TODO: better line trace.
 
   def line_trace( s ):
-    return "|".join( [ x[0].line_trace() + x[1].line_trace() + x[2].line_trace() for x in zip(s.req_stalls, s.req_qs, s.resp_qs) ] )
+    # return "|".join( [ x[0].line_trace() + x[1].line_trace() + x[2].line_trace() for x in zip(s.req_stalls, s.req_qs, s.resp_qs) ] )
+    return "|".join( [ x.line_trace() for x in s.ifc ] )

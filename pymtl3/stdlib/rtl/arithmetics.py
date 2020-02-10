@@ -114,7 +114,7 @@ class LTComparator( Component ):
 
     @s.update
     def up_ltcomp():
-      s.out = Bits1(s.in0 < s.in1)
+      s.out = s.in0 < s.in1
 
 # LeftThanOrEqualToComparator
 
@@ -127,4 +127,17 @@ class LEComparator( Component ):
 
     @s.update
     def up_lecomp():
-      s.out = Bits1(s.in0 <= s.in1)
+      s.out = s.in0 <= s.in1
+
+# ZeroComparator
+
+class EqComparator( Component ):
+
+  def construct( s, Type ):
+    s.in0 = InPort( Type )
+    s.in1 = InPort( Type )
+    s.out = OutPort( bool if Type is int else Bits1 )
+
+    @s.update
+    def up_zerocomp():
+      s.out = s.in0 == s.in1

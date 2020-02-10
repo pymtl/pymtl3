@@ -21,9 +21,10 @@ class StallCL( Component ):
   def recv( s, msg ):
     s.send( msg )
 
-  def construct( s, stall_prob=0.5, stall_seed=0x1 ):
+  def construct( s, *, Type=None, stall_prob=0.5, stall_seed=0x1 ):
+    s.recv.Type = Type
 
-    s.send = CallerIfcCL()
+    s.send = CallerIfcCL( Type=Type )
 
     s.stall_prob = stall_prob
     s.stall_rgen = Random( stall_seed ) # Separate randgen for each injector

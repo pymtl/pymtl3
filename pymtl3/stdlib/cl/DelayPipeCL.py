@@ -31,11 +31,10 @@ class DelayPipeDeqCL( Component ):
     assert s.pipeline[-1] is not None
     return s.pipeline[-1]
 
-  def construct( s, delay=5, trace_len=0 ):
+  def construct( s, *, Type=None, delay=5 ):
+    s.enq.Type = s.deq.Type = Type
 
     s.delay = delay
-
-    s.trace_len = trace_len
 
     if delay == 0: # This is essentially a bypass queue
       s.pipeline = [ None ]
@@ -79,18 +78,17 @@ class DelayPipeSendCL( Component ):
   def enq_rdy_pipe( s ):
     return s.pipeline[0] is None
 
-  def construct( s, delay=5 ):
-
-    s.send = CallerIfcCL()
+  def construct( s, *, Type=None, delay=5 ):
+    s.send = CallerIfcCL(Type=Type)
 
     s.delay = delay
 
     if delay == 0: # combinational behavior
-      s.enq = CalleeIfcCL()
+      s.enq = CallerIfcCL(Type=Type)
       connect( s.enq, s.send )
 
     else: # delay >= 1, pipe behavior
-      s.enq = CalleeIfcCL( Type=None, method=s.enq_pipe, rdy=s.enq_rdy_pipe )
+      s.enq = CalleeIfcCL( Type=Type, method=s.enq_pipe, rdy=s.enq_rdy_pipe )
       s.pipeline = deque( [None]*delay, maxlen=delay )
 
       @s.update
