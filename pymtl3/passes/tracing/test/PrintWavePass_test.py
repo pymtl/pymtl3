@@ -48,7 +48,7 @@ def test_toy():
 
   # Create a toy component and elaborate it
   dut = Toy()
-  dut.config_tracing = TracingConfigs( tracing='text_fancy' )
+  dut.config_tracing = TracingConfigs( tracing='text_ascii' )
 
   # Setup the simulation
   dut.apply( SimulationPass() )
