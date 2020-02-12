@@ -51,25 +51,25 @@ class ProcRTL( Component ):
 
     s.commit_inst = OutPort( Bits1 )
 
-    # imem drop unit
-
-    s.imemresp_drop = m = DropUnitRTL( Bits32 )
-    connect_pairs(
-      m.in_.en,  s.imem.resp.en,
-      m.in_.rdy, s.imem.resp.rdy,
-      m.in_.msg, s.imem.resp.msg.data,
-    )
-
     # Bypass queues
 
     s.imemreq_q   = BypassQueue2RTL( req_class, 2 )( deq = s.imem.req )
 
     # We have to turn input receive interface into get interface
 
-    s.imemresp_q  = BypassQueueRTL( Bits32, 1 )( enq = s.imemresp_drop.out )
+    s.imemresp_q  = BypassQueueRTL( resp_class, 1 )( enq = s.imem.resp )
     s.dmemresp_q  = BypassQueueRTL( resp_class, 1 )( enq = s.dmem.resp )
     s.mngr2proc_q = BypassQueueRTL( Bits32, 1 )( enq = s.mngr2proc )
     s.xcelresp_q  = BypassQueueRTL( xresp_class, 1 )( enq = s.xcel.resp )
+
+    # imem drop unit
+
+    s.imemresp_drop = m = DropUnitRTL( Bits32 )
+    connect_pairs(
+      m.in_.en,  s.imemresp_q.deq.en,
+      m.in_.rdy, s.imemresp_q.deq.rdy,
+      m.in_.ret, s.imemresp_q.deq.ret.data,
+    )
 
     # Control
 
@@ -79,8 +79,8 @@ class ProcRTL( Component ):
       imemresp_drop = s.imemresp_drop.drop,
       imemreq_en    = s.imemreq_q.enq.en,
       imemreq_rdy   = s.imemreq_q.enq.rdy,
-      imemresp_en   = s.imemresp_q.deq.en,
-      imemresp_rdy  = s.imemresp_q.deq.rdy,
+      imemresp_en   = s.imemresp_drop.out.en,
+      imemresp_rdy  = s.imemresp_drop.out.rdy,
 
       # dmem port
       dmemreq_en    = s.dmem.req.en,
@@ -111,7 +111,7 @@ class ProcRTL( Component ):
 
       # imem ports
       imemreq_addr  = s.imemreq_q.enq.msg.addr,
-      imemresp_data = s.imemresp_q.deq.ret,
+      imemresp_data = s.imemresp_drop.out.ret,
 
       # dmem ports
       dmemreq_addr  = s.dmem.req.msg.addr,
