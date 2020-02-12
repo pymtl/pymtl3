@@ -410,6 +410,30 @@ def test_list_same_class():
   assert a.x == Bits4(0)
   assert a.y == [ Bits4(0), Bits4(0) ]
 
+  b = a.clone()
+  assert a == b
+
+  b.x = Bits4(3)
+
+  assert a.x != b.x
+  assert a.y[0] == b.y[0]
+  assert a.y[1] == b.y[1]
+  assert a != b
+
+  b.y[0] = Bits4(4)
+
+  assert a.x != b.x
+  assert a.y[0] != b.y[0]
+  assert a.y[1] == b.y[1]
+  assert a != b
+
+  b.y[1] = Bits4(4)
+
+  assert a.x != b.x
+  assert a.y[0] != b.y[0]
+  assert a.y[1] != b.y[1]
+  assert a != b
+
 def test_crazy_list_not_same_class():
   @bitstruct
   class A:
@@ -478,3 +502,7 @@ def test_mk_high_d_list_struct_inside():
   assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]
 
   print(b)
+  c = b.clone()
+  c.y[9][2][0][2].x = Bits4(3)
+  print(c.y[9][2][0][2])
+  assert b != c
