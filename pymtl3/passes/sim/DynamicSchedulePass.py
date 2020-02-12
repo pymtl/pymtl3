@@ -277,14 +277,14 @@ class DynamicSchedulePass( BasePass ):
 
         for j, var in enumerate(variables):
           if issubclass( var._dsl.Type, Bits ):
-            copy_srcs.append( "t{j} = {var}.value" )
+            copy_srcs.append( f"t{j} = {var}.value" )
           elif is_bitstruct_class( var._dsl.Type ):
-            copy_srcs.append( "t{j} = {var}.clone()" )
+            copy_srcs.append( f"t{j} = {var}.clone()" )
           else:
-            copy_srcs.append( "t{j} = deepcopy({var})" )
+            copy_srcs.append( f"t{j} = deepcopy({var})" )
 
-          check_srcs.append( "{var} == t{j}" )
-          # print_srcs.append( "print '{var}', {var}, _____tmp_{j}" )
+          check_srcs.append( f"{var} == t{j}" )
+          # print_srcs.append( f"print '{var}', {var}, _____tmp_{j}" )
 
         scc_block_src = template.format( scc_id,
                                          "; ".join( copy_srcs ),
