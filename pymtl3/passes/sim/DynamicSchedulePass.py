@@ -14,6 +14,7 @@ import py
 from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
+from pymtl3.utils import custom_exec
 
 from .SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from .SimpleTickPass import SimpleTickPass
@@ -249,11 +250,11 @@ class DynamicSchedulePass( BasePass ):
 
           # TODO mamba?
           scc_tick_func = SimpleTickPass.gen_tick_function( scc )
-          namespace = {}
-          namespace.update( locals() )
+          _globals = { 's': s, 'scc_tick_func': scc_tick_func }
+          _locals  = {}
 
-          exec(py.code.Source( src ).compile(), namespace)
-          return namespace['generated_block']
+          custom_exec(py.code.Source( src ).compile(), _globals, _locals)
+          return _locals[ 'generated_block' ]
 
         template = """
           from copy import deepcopy
@@ -277,7 +278,7 @@ class DynamicSchedulePass( BasePass ):
 
         for j, var in enumerate(variables):
           if issubclass( var._dsl.Type, Bits ):
-            copy_srcs.append( f"t{j} = {var}.value" )
+            copy_srcs.append( f"t{j} = {var}.clone()" )
           elif is_bitstruct_class( var._dsl.Type ):
             copy_srcs.append( f"t{j} = {var}.clone()" )
           else:

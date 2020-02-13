@@ -55,6 +55,7 @@ import warnings
 import py
 
 from .bits_import import *
+from pymtl3.utils import custom_exec
 
 #-------------------------------------------------------------------------
 # Constants
@@ -100,8 +101,9 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   # Assemble the source code and execute it
   src = '@classmethod\n' if class_method else ''
   src += f'def {fn_name}({args}):\n{body}'
+  if _globals is None: _globals = {}
   _locals = {}
-  exec( py.code.Source(src).compile(), _globals, _locals )
+  custom_exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
 #-------------------------------------------------------------------------
