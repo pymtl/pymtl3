@@ -157,6 +157,9 @@ def run_sim( model, *, pytestconfig=None, line_trace=None, max_cycles=5000 ):
   if line_trace is None:
     line_trace = True
 
+  # True for now
+  line_trace = True
+
   # global Tcompile, Trun
 
   # Setup the model
@@ -201,11 +204,18 @@ def run_sim( model, *, pytestconfig=None, line_trace=None, max_cycles=5000 ):
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, pytestconfig=None ):
+def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, pytestconfig=None, line_trace=None ):
 
-  line_trace_en = False
+  assert pytestconfig is None or line_trace is None, "Cannot pass in pytestconfig and line_trace at the same time."
+
   if pytestconfig is not None:
-    line_trace_en = pytestconfig.getoption("capture") == "no"
+    line_trace = pytestconfig.getoption("capture") == "no"
+
+  if line_trace is None:
+    line_trace = True
+
+  # True for now
+  line_trace = True
 
   # First row in test vectors contains port names
 
