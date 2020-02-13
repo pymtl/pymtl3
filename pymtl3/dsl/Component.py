@@ -413,6 +413,22 @@ class Component( ComponentLevel7 ):
     # import gc
     # gc.collect() # this takes 0.1 seconds
 
+  # Override, add pypy hooks
+  def elaborate( s ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
+
+    super().elaborate()
+
+    try:
+      import pypyjit
+      pypyjit.set_param("default")
+    except:
+      pass
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
@@ -433,7 +449,7 @@ class Component( ComponentLevel7 ):
 
     try:
       pypyjit.set_param("default")
-      pypyjit.set_param("trace_limit=100000")
+      pypyjit.set_param("trace_limit=100000000")
     except:
       pass
 

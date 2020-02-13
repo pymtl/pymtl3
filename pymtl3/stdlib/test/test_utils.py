@@ -68,7 +68,7 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
       # least one PyMTL component
       if not isinstance( dut, Placeholder ) and not test_verilog:
         m.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
-        # We also need to mark every placeholder in the hierarchy to 
+        # We also need to mark every placeholder in the hierarchy to
         # use Verilator tracing
         traverse_import_vl_trace( m )
       # Otherwise use Verilator VCD tracing
@@ -143,9 +143,26 @@ class TestVectorSimulator:
 
       self.model.tick()
 
-def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycles=5000 ):
+# import time, sys
+# Tcompile=0
+# Trun=0
+
+def run_sim( model, *, pytestconfig=None, line_trace=None, max_cycles=5000 ):
+
+  assert pytestconfig is None or line_trace is None, "Cannot pass in pytestconfig and line_trace at the same time."
+
+  if pytestconfig is not None:
+    line_trace = pytestconfig.getoption("capture") == "no"
+
+  if line_trace is None:
+    line_trace = True
+
+  line_trace=False
+
+  # global Tcompile, Trun
 
   # Setup the model
+  # t0 = time.time()
 
   model.elaborate()
 
@@ -159,6 +176,8 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
   # Reset model
 
   model.sim_reset( print_line_trace=line_trace )
+
+  # t1 = time.time()
 
   # Run simulation
 
@@ -176,11 +195,19 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
   model.tick()
   model.tick()
   model.tick()
+  # t2 = time.time()
+  # Tcompile+=t1-t0
+  # Trun+=t2-t1
+  # print("Tcompile:",Tcompile,"Trun:", Trun, file=sys.stderr)
 
 class RunTestVectorSimError( Exception ):
   pass
 
-def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, line_trace=True ):
+def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False, pytestconfig=None ):
+
+  line_trace_en = False
+  if pytestconfig is not None:
+    line_trace_en = pytestconfig.getoption("capture") == "no"
 
   # First row in test vectors contains port names
 
@@ -198,15 +225,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
   model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
-  # Create a simulator
-
-  model.apply( SimulationPass() )
-
-  # Reset model
-
-  model.sim_reset( print_line_trace=line_trace )
-
-  # Run the simulation
+  # Preprocess rows
 
   row_num = 0
 
@@ -241,13 +260,26 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
       groups[i] = g = ( True, m.group(1), int(m.group(2)) )
 
       # Get type of all the ports
-      t = type( getattr( model, g[1] )[ int(g[2]) ] )
-      types[i] = None if is_bitstruct_class( t ) else t
+      t = getattr( model, g[1] )[ int(g[2]) ]
 
     else:
       groups[i] = ( False, port_name )
-      t = type( getattr( model, port_name ) )
-      types[i] = None if is_bitstruct_class( t ) else t
+      t = getattr( model, port_name )
+
+    assert isinstance( t, (InPort, OutPort) )
+
+    types[i] = None if is_bitstruct_class( t ) else t._dsl.Type
+
+
+  # Create a simulator
+
+  model.apply( SimulationPass() )
+
+  # Reset model
+
+  model.sim_reset( print_line_trace=line_trace )
+
+  # Run the simulation
 
   for row in test_vectors:
     row_num += 1

@@ -149,6 +149,9 @@ class Signal( NamedObject, Connectable ):
 
     s._dsl.needs_double_buffer = False
 
+  def clone( s ):
+    assert False
+
   def inverse( s ):
     pass
 

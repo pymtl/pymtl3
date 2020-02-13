@@ -71,7 +71,7 @@ class DynamicSchedulePass( BasePass ):
     PO = []
 
     vertices = list(G.keys())
-    random.shuffle(vertices)
+    # random.shuffle(vertices)
     visited = set()
 
     # The commented algorithm loyally emulates the system stack by storing

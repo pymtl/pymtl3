@@ -144,7 +144,8 @@ class GetRTL2GiveCL( Component ):
     @s.update
     def up_entry():
       if s.get.en:
-        s.entry = deepcopy( s.get.msg )
+        tmp = s.get.msg
+        s.entry = tmp.clone()
 
     s.add_constraints(
       U( up_get_rtl ) < M( s.give     ),
@@ -155,7 +156,7 @@ class GetRTL2GiveCL( Component ):
 
   @non_blocking( lambda s : s.entry is not None )
   def give( s ):
-    tmp = deepcopy( s.entry )
+    tmp = s.entry.clone()
     s.entry = None
     return tmp
 

@@ -18,7 +18,7 @@ class DelayPipeDeqCL( Component ):
   @non_blocking( lambda s: s.pipeline[0] is None )
   def enq( s, msg ):
     assert s.pipeline[0] is None
-    s.pipeline[0] = deepcopy(msg)
+    s.pipeline[0] = msg.clone()
 
   @non_blocking( lambda s: s.pipeline[-1] is not None )
   def deq( s ):
@@ -73,7 +73,7 @@ class DelayPipeSendCL( Component ):
 
   def enq_pipe( s, msg ):
     assert s.pipeline[0] is None
-    s.pipeline[0] = deepcopy(msg)
+    s.pipeline[0] = msg.clone()
 
   def enq_rdy_pipe( s ):
     return s.pipeline[0] is None

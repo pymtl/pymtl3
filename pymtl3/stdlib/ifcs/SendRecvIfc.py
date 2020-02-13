@@ -179,7 +179,7 @@ class RecvCL2SendRTL( Component ):
         s.send.msg = MsgType()
       else:
         s.send.en  = b1( s.send.rdy )
-        s.send.msg = s.entry
+        s.send.msg = s.entry.clone()
 
     s.add_constraints(
       U( up_clear )   < WR( s.send.en ),
@@ -191,7 +191,7 @@ class RecvCL2SendRTL( Component ):
 
   @non_blocking( lambda s : s.entry is None )
   def recv( s, msg ):
-    s.entry = deepcopy(msg)
+    s.entry = msg.clone()
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
@@ -210,27 +210,22 @@ class RecvRTL2SendCL( Component ):
     s.send = CallerIfcCL()
 
     s.sent_msg = None
-    s.send_rdy = False
 
     @s.update
     def up_recv_rtl_rdy():
-      s.send_rdy = s.send.rdy() and not s.reset
-      s.recv.rdy = b1( 1 ) if s.send.rdy() and not s.reset else b1( 0 )
+      s.recv.rdy = b1( s.send.rdy() and not s.reset )
 
     @s.update
     def up_send_cl():
       s.sent_msg = None
       if s.recv.en:
-        s.send( s.recv.msg )
         s.sent_msg = s.recv.msg
+        s.send( s.sent_msg.clone() )
 
     s.add_constraints( U( up_recv_rtl_rdy ) < U( up_send_cl ) )
 
   def line_trace( s ):
-    return "{}(){}".format(
-      s.recv.line_trace(),
-      enrdy_to_str( s.sent_msg, s.sent_msg is not None, s.send_rdy )
-    )
+    return "{}(){}".format( s.recv, s.send )
 
 #-------------------------------------------------------------------------
 # RecvFL2SendCL
