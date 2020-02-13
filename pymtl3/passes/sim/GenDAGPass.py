@@ -16,7 +16,7 @@ from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl import *
 from pymtl3.dsl.errors import LeftoverPlaceholderError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-
+from pymtl3.utils import custom_exec
 
 class GenDAGPass( BasePass ):
 
@@ -56,7 +56,7 @@ class GenDAGPass( BasePass ):
     def compile_net_blk( _globals, src ):
       _locals = {}
       fname = f"Net at {_globals['s']!r}"
-      exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
+      custom_exec( compile( src, filename=fname, mode="exec"), _globals, _locals )
       line_cache[ fname ] = (len(src), None, src.splitlines(), fname )
       return list(_locals.values())[0]
 

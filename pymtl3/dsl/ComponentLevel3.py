@@ -18,6 +18,7 @@ import linecache
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, is_bitstruct_inst
+from pymtl3.utils import custom_exec
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2, compiled_re
@@ -207,7 +208,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # the correct free variables in its closure.
 
     dict_local = {}
-    exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
+    custom_exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
     blk = dict_local[ 'closure' ]( lamb.__closure__ )
 
     # Add the source code to linecache for the compiled function
