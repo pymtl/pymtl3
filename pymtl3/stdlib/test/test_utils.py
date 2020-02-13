@@ -157,8 +157,6 @@ def run_sim( model, *, pytestconfig=None, line_trace=None, max_cycles=5000 ):
   if line_trace is None:
     line_trace = True
 
-  line_trace=False
-
   # global Tcompile, Trun
 
   # Setup the model
