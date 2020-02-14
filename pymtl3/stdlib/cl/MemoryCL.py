@@ -92,11 +92,11 @@ class MemoryCL( Component ):
 
           req = s.req_qs[i].deq()
           len_ = int(req.len)
-          if not len_: len_ = req_classes[i].data_nbits >> 3
+          if len_ == 0: len_ = req_classes[i].data_nbits >> 3
 
           if   req.type_ == MemMsgType.READ:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-                                           s.mem.read( req.addr, len_ ) )
+                                    s.mem.read( req.addr, len_ ) )
 
           elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
