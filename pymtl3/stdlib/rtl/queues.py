@@ -75,8 +75,6 @@ class NormalQueueCtrlRTL( Component ):
 
     s.enq_xfer  = Wire( Bits1   )
     s.deq_xfer  = Wire( Bits1   )
-    s.head_next = Wire( PtrType )
-    s.tail_next = Wire( PtrType )
 
     # Connections
 
@@ -84,20 +82,11 @@ class NormalQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    @s.update
-    def up_rdy_signals():
-        s.enq_rdy = ( s.count < s.num_entries ) & ~s.reset
-        s.deq_rdy = ( s.count > CountType(0) ) & ~s.reset
+    s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
+    s.deq_rdy //= lambda: ~s.reset & ( s.count > CountType(0) )
 
-    @s.update
-    def up_xfer_signals():
-      s.enq_xfer = s.enq_en & s.enq_rdy
-      s.deq_xfer = s.deq_en & s.deq_rdy
-
-    @s.update
-    def up_next():
-      s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
-      s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+    s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
+    s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
 
     @s.update_ff
     def up_reg():
@@ -108,11 +97,16 @@ class NormalQueueCtrlRTL( Component ):
         s.count <<= CountType(0)
 
       else:
-        s.head  <<= s.head_next if s.deq_xfer else s.head
-        s.tail  <<= s.tail_next if s.enq_xfer else s.tail
-        s.count <<= s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
-                    s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
-                    s.count
+        if s.deq_xfer:
+          s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+
+        if s.enq_xfer:
+          s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+
+        if s.enq_xfer & ~s.deq_xfer:
+          s.count <<= s.count + CountType(1)
+        if ~s.enq_xfer & s.deq_xfer:
+          s.count <<= s.count - CountType(1)
 
 #-------------------------------------------------------------------------
 # NormalQueueRTL
@@ -160,7 +154,7 @@ class NormalQueueRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.count, s.deq )
+    return f"{s.enq}({s.count}){s.deq}"
 
 #-------------------------------------------------------------------------
 # Ctrl for PipeQueue
@@ -200,8 +194,6 @@ class PipeQueueCtrlRTL( Component ):
 
     s.enq_xfer  = Wire( Bits1   )
     s.deq_xfer  = Wire( Bits1   )
-    s.head_next = Wire( PtrType )
-    s.tail_next = Wire( PtrType )
 
     # Connections
 
@@ -209,27 +201,11 @@ class PipeQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    @s.update
-    def up_rdy_signals():
-      s.deq_rdy = ( s.count > CountType(0) ) & ~s.reset
+    s.deq_rdy //= lambda: ~s.reset & ( s.count > CountType(0) )
+    s.enq_rdy //= lambda: ~s.reset & ( ( s.count < s.num_entries ) | s.deq_en )
 
-    @s.update
-    def up_enq_rdy():
-      if s.reset:
-        s.enq_rdy = b1(0)
-      else:
-        s.enq_rdy = ( s.count < s.num_entries ) | s.deq_en
-
-
-    @s.update
-    def up_xfer_signals():
-      s.enq_xfer  = s.enq_en & s.enq_rdy
-      s.deq_xfer  = s.deq_en & s.deq_rdy
-
-    @s.update
-    def up_next():
-      s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
-      s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+    s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
+    s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
 
     @s.update_ff
     def up_reg():
@@ -240,11 +216,16 @@ class PipeQueueCtrlRTL( Component ):
         s.count <<= CountType(0)
 
       else:
-        s.head  <<= s.head_next if s.deq_xfer else s.head
-        s.tail  <<= s.tail_next if s.enq_xfer else s.tail
-        s.count <<= s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
-                    s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
-                    s.count
+        if s.deq_xfer:
+          s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+
+        if s.enq_xfer:
+          s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+
+        if s.enq_xfer & ~s.deq_xfer:
+          s.count <<= s.count + CountType(1)
+        if ~s.enq_xfer & s.deq_xfer:
+          s.count <<= s.count - CountType(1)
 
 #-------------------------------------------------------------------------
 # PipeQueueRTL
@@ -362,8 +343,6 @@ class BypassQueueCtrlRTL( Component ):
 
     s.enq_xfer  = Wire( Bits1   )
     s.deq_xfer  = Wire( Bits1   )
-    s.head_next = Wire( PtrType )
-    s.tail_next = Wire( PtrType )
 
     # Connections
 
@@ -371,30 +350,13 @@ class BypassQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    @s.update
-    def up_enq_rdy():
-      s.enq_rdy = ( s.count < s.num_entries ) & ~s.reset
+    s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
+    s.deq_rdy //= lambda: ~s.reset & ( (s.count > CountType(0) ) | s.enq_en )
 
-    @s.update
-    def up_deq_rdy():
-      if s.reset:
-        s.deq_rdy = b1(0)
-      else:
-        s.deq_rdy = ( s.count > CountType(0) ) | s.enq_en
+    s.mux_sel //= lambda: s.count == CountType(0)
 
-    @s.update
-    def up_mux_sel():
-      s.mux_sel = s.count == CountType(0)
-
-    @s.update
-    def up_xfer_signals():
-      s.enq_xfer  = s.enq_en & s.enq_rdy
-      s.deq_xfer  = s.deq_en & s.deq_rdy
-
-    @s.update
-    def up_next():
-      s.head_next = s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
-      s.tail_next = s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+    s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
+    s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
 
     @s.update_ff
     def up_reg():
@@ -405,11 +367,16 @@ class BypassQueueCtrlRTL( Component ):
         s.count <<= CountType(0)
 
       else:
-        s.head  <<= s.head_next if s.deq_xfer else s.head
-        s.tail  <<= s.tail_next if s.enq_xfer else s.tail
-        s.count <<= s.count + CountType(1) if s.enq_xfer & ~s.deq_xfer else \
-                    s.count - CountType(1) if s.deq_xfer & ~s.enq_xfer else \
-                    s.count
+        if s.deq_xfer:
+          s.head <<= s.head + PtrType(1) if s.head < s.last_idx else PtrType(0)
+
+        if s.enq_xfer:
+          s.tail <<= s.tail + PtrType(1) if s.tail < s.last_idx else PtrType(0)
+
+        if s.enq_xfer & ~s.deq_xfer:
+          s.count <<= s.count + CountType(1)
+        if ~s.enq_xfer & s.deq_xfer:
+          s.count <<= s.count - CountType(1)
 
 #-------------------------------------------------------------------------
 # BypassQueueRTL
@@ -458,7 +425,7 @@ class BypassQueueRTL( Component ):
   # Line trace
 
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.count, s.deq )
+    return f"{s.enq}({s.count}){s.deq}"
 
 #-------------------------------------------------------------------------
 # NormalQueue1EntryRTL
@@ -479,37 +446,23 @@ class NormalQueue1EntryRTL( Component ):
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
 
-    connect( s.count, s.full )
-
     # Logic
 
-    @s.update_ff
-    def up_full():
-      if s.reset:
-        s.full <<= b1(0)
-      else:
-        s.full <<= ~s.deq.en & (s.enq.en | s.full)
+    s.count //= s.full
+
+    s.deq.ret //= s.entry
+
+    s.enq.rdy //= lambda: ~s.reset & ~s.full
+    s.deq.rdy //= lambda: ~s.reset & s.full
 
     @s.update_ff
-    def up_entry():
+    def ff_normal1():
+      s.full <<= ~s.reset & ( ~s.deq.en & (s.enq.en | s.full) )
       if s.enq.en:
         s.entry <<= s.enq.msg
 
-    @s.update
-    def up_enq_rdy():
-      if s.reset:
-        s.enq.rdy = b1(0)
-      else:
-        s.enq.rdy = ~s.full
-
-    @s.update
-    def up_deq_rdy():
-      s.deq.rdy = s.full & ~s.reset
-
-    connect( s.entry, s.deq.ret )
-
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.full, s.deq )
+    return f"{s.enq}({s.full}){s.deq}"
 
 #-------------------------------------------------------------------------
 # PipeQueue1EntryRTL
@@ -530,34 +483,24 @@ class PipeQueue1EntryRTL( Component ):
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
 
-    connect( s.count, s.full )
-
     # Logic
 
-    @s.update_ff
-    def up_full():
-      if s.reset:
-        s.full <<= b1(0)
-      else:
-        s.full <<= s.enq.en | s.full & ~s.deq.en
+    s.count //= s.full
+
+    s.deq.ret //= s.entry
+
+    s.enq.rdy //= lambda: ~s.reset & ( ~s.full | s.deq.en )
+    s.deq.rdy //= lambda: s.full & ~s.reset
 
     @s.update_ff
-    def up_entry():
+    def ff_pipe1():
+      s.full <<= ~s.reset & ( s.enq.en | s.full & ~s.deq.en )
+
       if s.enq.en:
         s.entry <<= s.enq.msg
 
-    @s.update
-    def up_enq_rdy():
-      s.enq.rdy = ( ~s.full | s.deq.en ) & ~s.reset
-
-    @s.update
-    def up_deq_rdy():
-      s.deq.rdy = s.full & ~s.reset
-
-    connect( s.entry, s.deq.ret )
-
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.full, s.deq )
+    return f"{s.enq}({s.full}){s.deq}"
 
 #-------------------------------------------------------------------------
 # BypassQueue1EntryRTL
@@ -578,33 +521,25 @@ class BypassQueue1EntryRTL( Component ):
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
 
-    connect( s.count, s.full )
+    s.bypass_mux = Mux( EntryType, 2 )(
+      in_ = { 0: s.enq.msg, 1: s.entry },
+      out = s.deq.ret,
+      sel = s.full,
+    )
 
     # Logic
 
-    @s.update_ff
-    def up_full():
-      if s.reset:
-        s.full <<= b1(0)
-      else:
-        s.full <<= ~s.deq.en & (s.enq.en | s.full)
+    s.count //= s.full
+
+    s.enq.rdy //= lambda: ~s.reset & ~s.full
+    s.deq.rdy //= lambda: ~s.reset & ( s.full | s.enq.en )
 
     @s.update_ff
-    def up_entry():
+    def ff_bypass1():
+      s.full <<= ~s.reset & ( ~s.deq.en & (s.enq.en | s.full) )
+
       if s.enq.en & ~s.deq.en:
         s.entry <<= s.enq.msg
 
-    @s.update
-    def up_enq_rdy():
-        s.enq.rdy = ~s.full & ~s.reset
-
-    @s.update
-    def up_deq_rdy():
-      s.deq.rdy = ( s.full | s.enq.en ) & ~s.reset
-
-    @s.update
-    def up_deq_ret():
-      s.deq.ret = s.entry if s.full else s.enq.msg
-
   def line_trace( s ):
-    return "{}({}){}".format( s.enq, s.full, s.deq )
+    return f"{s.enq}({s.full}){s.deq}"
