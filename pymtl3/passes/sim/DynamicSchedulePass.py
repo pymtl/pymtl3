@@ -6,7 +6,6 @@
 # Date   : Apr 19, 2019
 
 import os
-import random
 from collections import deque
 
 import py
