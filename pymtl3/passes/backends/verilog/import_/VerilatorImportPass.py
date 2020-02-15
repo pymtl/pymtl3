@@ -58,6 +58,8 @@ class VerilatorImportPass( BasePass ):
     ret = s.traverse_hierarchy( top )
     if ret is None:
       ret = top
+    else:
+      ret.elaborate()
     return ret
 
   def traverse_hierarchy( s, m ):
