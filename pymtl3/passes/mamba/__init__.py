@@ -1,1 +1,1 @@
-from .PassGroups import HeuTopoUnrollSim, TraceBreakingSim, UnrollSim
+from .PassGroups import HeuTopoUnrollSim, Mamba2020, TraceBreakingSim, UnrollSim

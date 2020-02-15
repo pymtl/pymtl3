@@ -14,7 +14,7 @@ from pymtl3.dsl import *
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, check_schedule
-from .HeuristicTopoPass import CountBranches
+from .HeuristicTopoPass import CountBranchesLoops
 
 # FIXME also apply branchiness to all update_ff blocks
 
@@ -53,10 +53,10 @@ class TraceBreakingSchedTickPass( BasePass ):
     # Initialize all generated net block to 0 branchiness
     branchiness = { x: 0 for x in top._dag.genblks }
 
-    visitor = CountBranches()
+    visitor = CountBranchesLoops()
     for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
-      branchiness[ blk ] = visitor.enter( hostobj.get_update_block_info( blk )[-1] )
+      branchiness[ blk ], _ = visitor.enter( hostobj.get_update_block_info( blk )[-1] )
 
     # Shunning: now we make the scheduling aware of meta blocks
     # Basically we enhance the topological sort to choose
