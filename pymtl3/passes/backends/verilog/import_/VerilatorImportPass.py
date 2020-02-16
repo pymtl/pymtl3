@@ -490,7 +490,9 @@ constraint_list = [
       'vl_mk_dir', 'vl_enable_assert', 'vl_opt_level',
       'vl_unroll_count', 'vl_unroll_stmts',
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
-      'vl_xinit', 'vl_trace', 'vl_trace_timescale', 'vl_trace_cycle_time',
+      'vl_xinit',
+      'vl_trace', 'vl_trace_filename',
+      'vl_trace_timescale', 'vl_trace_cycle_time',
       'c_flags', 'c_include_path', 'c_srcs',
       'ld_flags', 'ld_libs',
     ]
