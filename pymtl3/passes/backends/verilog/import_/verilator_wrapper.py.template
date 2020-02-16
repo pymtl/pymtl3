@@ -111,7 +111,10 @@ class {component_name}( Component ):
     # Set up the VCD file name
     verilator_vcd_file = ""
     if {dump_vcd}:
-      verilator_vcd_file = "{component_name}.verilator1.vcd"
+      if {has_vl_trace_filename}:
+        verilator_vcd_file = "{vl_trace_filename}.vcd"
+      else:
+        verilator_vcd_file = "{component_name}.verilator1.vcd"
 
     # Convert string to `bytes` which is required by CFFI on python 3
     verilator_vcd_file = verilator_vcd_file.encode('ascii')

@@ -76,6 +76,8 @@ def config_model( m, dump_vcd, test_verilog, duts = [] ):
         if not hasattr( dut, 'config_verilog_import' ):
           dut.config_verilog_import = VerilatorImportConfigs()
         dut.config_verilog_import.vl_trace = True
+        # Set up customized Verilator VCD filename
+        dut.config_verilog_import.vl_trace_filename = dump_vcd
 
 #-------------------------------------------------------------------------
 # mk_test_case_table

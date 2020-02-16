@@ -88,6 +88,10 @@ class VerilatorImportConfigs( BasePassConfigs ):
     # Expects a boolean value
     "vl_trace" : False,
 
+    # The output filename of Verilator VCD tracing
+    # default is {component_name}.verilator1
+    "vl_trace_filename" : "",
+
     # Passed to verilator tracing function
     "vl_trace_timescale" : "10ps",
 
@@ -129,7 +133,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
      "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
-    ("c_flags", "ld_flags", "ld_libs"):
+    ("c_flags", "ld_flags", "ld_libs", "vl_trace_filename"):
       Checker( lambda v: isinstance(v, str),  "expects a string" ),
 
     ("vl_opt_level", "vl_unroll_count", "vl_unroll_stmts"):
