@@ -25,7 +25,7 @@ from .passes import ImportConfigs, TracingConfigs
 from .passes.backends.sverilog import ImportPass, TranslationImportPass
 from .passes.PassGroups import SimulationPass
 
-__version__ = "0.5.4"
+__version__ = "0.5.5"
 
 __all__ = [
   'U','M','RD','WR',
