@@ -2028,7 +2028,7 @@ CasePlaceholderTranslationVReg = set_attributes( CasePlaceholderTranslationVReg,
         );
           VReg
           #(
-          ) wrapped_verilog_module
+          ) v
           (
             .clk( clk ),
             .d( d ),
@@ -2081,7 +2081,7 @@ CasePlaceholderTranslationVReg = set_attributes( CasePlaceholderTranslationVReg,
         );
           VReg
           #(
-          ) wrapped_verilog_module
+          ) v
           (
             .clk( clk ),
             .d( d ),

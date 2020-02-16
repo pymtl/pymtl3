@@ -197,7 +197,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       f"  {cfg.top_module}",
       "  #(",
     ] + params + [
-      "  ) wrapped_verilog_module",
+      "  ) v",
       "  (",
     ] + connect_ports + [
       "  );",
@@ -212,7 +212,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       f"  {cfg.top_module}",
       "  #(",
     ] + params + [
-      "  ) wrapped_verilog_module",
+      "  ) v",
       "  (",
     ] + connect_ports + [
       "  );",
