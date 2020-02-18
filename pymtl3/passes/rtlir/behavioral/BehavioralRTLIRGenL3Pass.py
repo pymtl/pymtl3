@@ -91,5 +91,5 @@ class BehavioralRTLIRGeneratorL3( BehavioralRTLIRGeneratorL2 ):
 
   def _bits_to_bir( s, instance ):
     nbits = instance.nbits
-    value = instance.value
+    value = int(instance)
     return bir.SizeCast( nbits, bir.Number( value ) )
