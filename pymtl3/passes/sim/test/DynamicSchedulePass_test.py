@@ -121,10 +121,10 @@ def test_combinational_loop():
 
   try:
     _test_model( Top )
-  except UpblkCyclicError as e:
+  except Exception as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown UpblkCyclicError.")
+  raise Exception("Should've thrown Exception.")
 
 def test_very_deep_dag():
 

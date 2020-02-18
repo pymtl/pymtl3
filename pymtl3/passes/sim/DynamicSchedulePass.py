@@ -6,7 +6,7 @@
 # Date   : Apr 19, 2019
 
 import os
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 
 import py
 
