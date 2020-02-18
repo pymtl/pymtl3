@@ -6,7 +6,7 @@
 # Date   : Apr 19, 2019
 
 import os
-from collections import deque
+from collections import deque, defaultdict
 
 import py
 
@@ -167,42 +167,78 @@ class DynamicSchedulePass( BasePass ):
           return namespace['generated_block']
 
         template = """
-          from copy import deepcopy
-          def wrapped_SCC_{0}():
-            N = 0
-            while True:
-              N += 1
-              if N > 100:
-                raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
-              {1}
-              scc_tick_func()
-              if {2}:
-                break
-            # print "SCC block{0} is executed", num_iters, "times"
-          generated_block = wrapped_SCC_{0}
-        """
+from copy import deepcopy
+def wrapped_SCC_{0}():
+  N = 0
+  while True:
+    N += 1
+    if N > 100:
+      raise Exception("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
+    {1}
+    scc_tick_func()
+    {2}
+    # print( "SCC block{0} is executed", num_iters, "times" )
+    break
+generated_block = wrapped_SCC_{0}
+          """
 
         copy_srcs  = []
         check_srcs = []
         # print_srcs = []
 
-        for j, var in enumerate(variables):
-          if issubclass( var._dsl.Type, Bits ):
-            copy_srcs.append( f"t{j} = {var}.value" )
-          elif is_bitstruct_class( var._dsl.Type ):
-            copy_srcs.append( f"t{j} = {var}.clone()" )
+        # clean up non-top variables if top is there. remove slices
+
+        final_variables = set()
+
+        for x in sorted( variables, key=repr ):
+          w = x.get_top_level_signal()
+          if w is x:
+            final_variables.add( x )
+            continue
+
+          # w is not x
+          if issubclass( w._dsl.Type, Bits ):
+            if w not in final_variables:
+              final_variables.add( w )
+          elif is_bitstruct_class( w._dsl.Type ):
+            if w not in final_variables:
+              final_variables.add( x )
           else:
-            copy_srcs.append( f"t{j} = deepcopy({var})" )
+            final_variables.add( x )
 
-          check_srcs.append( f"{var} == t{j}" )
-          # print_srcs.append( f"print '{var}', {var}, _____tmp_{j}" )
+        # group them by host component so that we create less bytecode
 
-        scc_block_src = template.format( scc_id,
-                                         "; ".join( copy_srcs ),
-                                         " and ".join( check_srcs ),
+        final_var_host = defaultdict(list)
+        for x in variables:
+          final_var_host[ x.get_host_component() ].append( x )
+
+        # create a block of copy/check code for each host component. Need
+        # to allocate global var_id across different host components.
+
+        var_id = 0
+        for host, var_list in final_var_host.items():
+
+          copy_srcs .append( f"host={host!r}" )
+          check_srcs.append( f"host={host!r}" )
+
+          sub_check_srcs = []
+
+          hostlen = len(repr(host))
+          for var in var_list:
+            var_id += 1
+            subname = repr(var)[hostlen+1:]
+            if issubclass( var._dsl.Type, Bits ):     copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+            elif is_bitstruct_class( var._dsl.Type ): copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+            else:                                     copy_srcs.append( f"t{var_id}=deepcopy(host.{subname})" )
+
+            sub_check_srcs.append( f"host.{subname} != t{var_id}" )
+
+          check_srcs.append( f"if { ' or '.join(sub_check_srcs)}: continue" )
+
+        scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
                                          ", ".join( [ x.__name__ for x in scc] ) )
-                                         # "; ".join( print_srcs ) )
 
+        # print(scc_block_src)
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
 
 def kosaraju_scc( G, G_T ):
