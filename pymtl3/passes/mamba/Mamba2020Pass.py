@@ -23,6 +23,9 @@ from ..sim.DynamicSchedulePass import kosaraju_scc
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from ..sim.SimpleTickPass import SimpleTickPass
 
+_DEBUG = True
+# _DEBUG = False
+
 class Mamba2020Pass( BasePass ):
 
   def __init__( self ):
@@ -87,7 +90,7 @@ class Mamba2020Pass( BasePass ):
     _locals = {}
     custom_exec( py.code.Source( gen_src ).compile(), _globals, _locals )
     ret = _locals[ f'meta_block{meta_id}' ]
-    print(gen_src)
+    if _DEBUG: print(gen_src)
 
     # We will use pypyjit.dont_trace_here to compile standalone traces for
     # each meta block
@@ -119,11 +122,11 @@ class Mamba2020Pass( BasePass ):
     # Divide all blks into meta blocks
 
     # Branchiness factor is the bound of branchiness in a meta block.
-    branchiness_factor = 10
+    branchiness_factor = 30
 
     # Block factor is the bound of the number of branchy blocks in a
     # meta block.
-    branchy_block_factor = 5
+    branchy_block_factor = 30
 
     cur_meta, cur_br, cur_count = [], 0, 0
 
@@ -227,11 +230,11 @@ class Mamba2020Pass( BasePass ):
     top._sched.update_schedule = schedule = []
 
     # Branchiness factor is the bound of branchiness in a meta block.
-    branchiness_factor = 8
+    branchiness_factor = 20
 
     # Block factor is the bound of the number of branchy blocks in a
     # meta block.
-    branchy_block_factor = 5
+    branchy_block_factor = 10
     cur_meta = []
     cur_br = cur_count = 0
 
@@ -311,7 +314,7 @@ class Mamba2020Pass( BasePass ):
           # Trivial -- continue
           if len(scc) == 1:
             schedule.append( list(scc)[0] )
-            print(list(scc)[0])
+            if _DEBUG: print(list(scc)[0])
             continue
 
           # For each non-trivial SCC, we need to figure out a intra-SCC
@@ -399,11 +402,39 @@ class Mamba2020Pass( BasePass ):
           scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), " and ".join( check_srcs ),
                                            ", ".join( [ x.__name__ for x in scc] ) )
 
-          # TODO mamba?
-          scc_tick_func = UnrollTickPass.gen_tick_function( tmp_schedule )
+          # Divide all blks into meta blocks
+          # Branchiness factor is the bound of branchiness in a meta block.
+          branchiness_factor = 10
+          branchy_block_factor = 8
+
+          cur_meta, cur_br, cur_count = [], 0, 0
+
+          metas = []
+          for i, blk in enumerate( tmp_schedule ):
+            br = self.branchiness[blk]
+            if cur_br == 0:
+              cur_meta.append( blk )
+              cur_br += br
+              cur_count += 1
+              if cur_br >= branchiness_factor or cur_count >= branchy_block_factor:
+                metas.append( self.compile_meta_block( cur_meta ) )
+                cur_br = cur_count = 0
+                cur_meta = []
+            elif cur_br > 0 and br == 0:
+              # If no branchy block available, directly start a new metablock
+              schedule.append( self.compile_meta_block( cur_meta ) )
+              cur_br = cur_count = 0
+              cur_meta.clear()
+              cur_meta.append( blk )
+
+          if cur_meta:
+            metas.append( self.compile_meta_block( cur_meta ) )
+
+          scc_tick_func = UnrollTickPass.gen_tick_function( metas )
+
           _globals = { 's': top, 'scc_tick_func': scc_tick_func }
           _locals  = {}
-          print(scc_block_src)
+          if _DEBUG: print(scc_block_src)
 
           custom_exec(py.code.Source( scc_block_src ).compile(), _globals, _locals)
 

@@ -423,11 +423,11 @@ class Component( ComponentLevel7 ):
 
     super().elaborate()
 
-    try:
-      import pypyjit
-      pypyjit.set_param("default")
-    except:
-      pass
+    # try:
+      # import pypyjit
+      # pypyjit.set_param("default")
+    # except:
+      # pass
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
@@ -446,12 +446,6 @@ class Component( ComponentLevel7 ):
                                             f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
     assert callable( pass_instance ), f"Should override __call__ of {pass_instance.__name__} for a valid pass"
     pass_instance( s )
-
-    try:
-      pypyjit.set_param("default")
-      pypyjit.set_param("trace_limit=100000000")
-    except:
-      pass
 
   def check( s ):
     s._check_valid_dsl_code()
