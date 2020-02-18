@@ -17,13 +17,13 @@ from .bitstructs import is_bitstruct_class, is_bitstruct_inst
 
 
 def concat( *args ):
-  nbits = sum( [ x.nbits for x in args ] )
-  concat_bits = Bits( nbits, 0 )
+  end = sum( x.nbits for x in args )
+  concat_bits = Bits( end, 0 )
 
-  begin = 0
-  for bits in reversed( args ):
-    concat_bits[ begin : begin+bits.nbits ] = bits
-    begin += bits.nbits
+  for x in args:
+    x_nbits = x.nbits
+    concat_bits[ end - x_nbits : end ] = x
+    end -= x_nbits
 
   return concat_bits
 

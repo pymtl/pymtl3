@@ -38,7 +38,7 @@ class UnrollTickPass( BasePass ):
 
     l = {}
     exec(py.code.Source( gen_tick_src ).compile(), l)
-    print(gen_tick_src)
+    # print(gen_tick_src)
     return l['compile_unroll']( schedule )
 
   def __call__( self, top ):

@@ -413,6 +413,22 @@ class Component( ComponentLevel7 ):
     # import gc
     # gc.collect() # this takes 0.1 seconds
 
+  # Override, add pypy hooks
+  def elaborate( s ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
+
+    super().elaborate()
+
+    # try:
+      # import pypyjit
+      # pypyjit.set_param("default")
+    # except:
+      # pass
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
@@ -430,12 +446,6 @@ class Component( ComponentLevel7 ):
                                             f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
     assert callable( pass_instance ), f"Should override __call__ of {pass_instance.__name__} for a valid pass"
     pass_instance( s )
-
-    try:
-      pypyjit.set_param("default")
-      pypyjit.set_param("trace_limit=100000")
-    except:
-      pass
 
   def check( s ):
     s._check_valid_dsl_code()

@@ -45,7 +45,14 @@ class CountBranchesLoops( ast.NodeVisitor ):
   def visit_If( self, node ):
     self.only_loop_at_top &= (self.loop_stack > 0)
 
-    self.num_br += 1
+    # Special case "if s.reset:" -- it's only high for a cycle
+    if isinstance( node.test, ast.Attribute ) and \
+       node.test.attr == 'reset' and \
+       isinstance( node.test.value, ast.Name ) and \
+       node.test.value.id == 's':
+      pass
+    else:
+      self.num_br += 1
     self.visit( node.test )
 
     for stmt in node.body:
@@ -57,7 +64,15 @@ class CountBranchesLoops( ast.NodeVisitor ):
   def visit_IfExp( self, node ):
     self.only_loop_at_top &= (self.loop_stack > 0)
 
-    self.num_br += 1
+    # Special case "if s.reset:" -- it's only high for a cycle
+    if isinstance( node.test, ast.Attribute ) and \
+       node.test.attr == 'reset' and \
+       isinstance( node.test.value, ast.Name ) and \
+       node.test.value.id == 's':
+      pass
+    else:
+      self.num_br += 1
+
     self.visit( node.test )
     self.visit( node.body )
     self.visit( node.orelse )
