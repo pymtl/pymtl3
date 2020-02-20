@@ -9,7 +9,7 @@ import os
 import subprocess
 from textwrap import fill, indent
 
-from pymtl3.dsl import Placeholder
+from pymtl3.dsl import Placeholder, InPort, OutPort
 from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -231,7 +231,7 @@ class ImportConfigs( BasePassConfigs ):
   # Override
   def check( s ):
     super().check()
-    
+
     if not s.vl_flist and not os.path.isfile(expand(s.vl_src)):
       raise InvalidPassOptionValue( 'vl_src', s.vl_src, s.PassName,
                 'vl_src should be a path to a file when vl_flist is empty!' )
@@ -288,7 +288,7 @@ class ImportConfigs( BasePassConfigs ):
     # Note that the keys can be expressions such as `ifc[0].foo` and
     # therefore we do not check if a port name of `m` is in the keys.
     if s.port_map:
-      s.check_p_map( rtype )
+      s.check_p_map( m )
 
     # Fill in the top module if unspecified
     # If the top-level module is not a wrapper
@@ -342,9 +342,8 @@ class ImportConfigs( BasePassConfigs ):
   def is_port_mapped( s ):
     return bool(len(s.port_map) > 0)
 
-  def get_port_map( s ):
-    pmap = s.port_map
-    return lambda name: pmap[name] if name in pmap else name
+  def get_port_map_dict( s ):
+    return s.port_map
 
   def get_module_to_parametrize( s ):
     return s.wrapped_module
@@ -382,19 +381,18 @@ class ImportConfigs( BasePassConfigs ):
   # Internal helper methods
   #-----------------------------------------------------------------------
 
-  def check_p_map( s, rtype ):
+  def check_p_map( s, host ):
     """Check if each port name in the port map exists in component `rtype`."""
     pm = s.port_map
-    all_ports = rtype.get_ports_packed()
-    all_port_names = list(map(lambda x: x[0], rtype.get_ports_packed()))
-    assert all(isinstance(p, rt.Port) and \
-               isinstance(p.get_dtype(), rdt.Vector) for n, p in all_ports), \
-        f"Port map option currently requires all ports of {rtype.get_name()}"\
-        f" to be a single vector port."
-    for name in pm.keys():
-      if name not in all_port_names:
+    for i, obj in enumerate( pm.keys() ):
+      if not isinstance( obj, (InPort, OutPort) ):
         raise InvalidPassOptionValue("port_map", pm, s.PassName,
-          f"Port {name} does not exist in component {rtype.get_name()}!")
+          f"{i+1}-th argument ({obj}) is {type(obj)}, not a port of component {host} of class {host.__class__}!")
+
+      # this is very rare
+      if obj.get_host_component() is not host:
+        raise InvalidPassOptionValue("port_map", pm, s.PassName,
+          f"{i}-th argument, port '{obj.get_field_name()}', does not exist in component {host} of class {host.__class__}!")
 
   def get_all_includes( s ):
     includes = s.c_include_path

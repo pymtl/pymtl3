@@ -125,16 +125,21 @@ class ImportPass( BasePass ):
     config = s.get_config( m )
     rtype = get_component_ifc_rtlir( m )
     full_name = get_component_unique_name( rtype )
-    p_map = config.get_port_map() if config.is_port_mapped() else lambda x: x
     no_clk, no_reset = not config.has_clk, not config.has_reset
+
+    # Create name-based port map
+    p_map = { x.get_field_name(): y for (x,y) in config.get_port_map_dict().items() }
     _packed_ports = s.gen_packed_ports( rtype )
-    clk = next(filter(lambda x: x[0]=='clk', _packed_ports))[1]
-    reset = next(filter(lambda x: x[0]=='reset', _packed_ports))[1]
-    packed_ports = \
-        ([('clk', '' if no_clk else p_map('clk'), clk)] if no_clk else []) + \
-        ([('reset', '' if no_reset else p_map('reset'), reset)] if no_reset else []) + \
-        [ (n, p_map(n), p) for n, p in _packed_ports \
-          if not (n == 'clk' and no_clk or n == 'reset' and no_reset)]
+
+    packed_ports = []
+    for pname, vname, port in _packed_ports:
+      if no_clk and orig_pname == 'clk':      pass
+      if no_reset and orig_pname == 'reset':  pass
+      if pname in p_map:
+        packed_ports.append( (pname, p_map[pname], port) )
+      else:
+        packed_ports.append( (pname, vname, port) )
+    print(packed_ports)
 
     cached = s.is_cached( m, full_name )
 
@@ -217,18 +222,18 @@ class ImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for name, v_name, port in packed_ports:
-      if v_name:
-        port_defs.append( s.gen_signal_decl_c( v_name, port ) )
+    for pname, vname, port in packed_ports:
+      if vname:
+        port_defs.append( s.gen_signal_decl_c( vname, port ) )
     port_cdefs = copy.copy( port_defs )
     make_indent( port_defs, 2 )
     port_defs = '\n'.join( port_defs )
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for name, v_name, port in packed_ports:
-      if v_name:
-        port_inits.extend( s.gen_signal_init_c( v_name, port ) )
+    for pname, vname, port in packed_ports:
+      if vname:
+        port_inits.extend( s.gen_signal_init_c( vname, port ) )
     make_indent( port_inits, 1 )
     port_inits = '\n'.join( port_inits )
 
@@ -448,28 +453,28 @@ class ImportPass( BasePass ):
   # gen_packed_ports
   #-------------------------------------------------------------------------
 
-  def mangle_port( s, id_, port, n_dim ):
+  def mangle_port( s, pname, vname, port, n_dim ):
     if not n_dim:
-      return [ ( id_, port ) ]
+      return [ ( pname, vname, port ) ]
     else:
-      return [ ( id_, rt.Array( n_dim, port ) ) ]
+      return [ ( pname, vname, rt.Array( n_dim, port ) ) ]
 
-  def mangle_interface( s, id_, ifc, n_dim ):
+  def mangle_ifc( s, pname, vname, ifc, n_dim ):
     if not n_dim:
       ret = []
       all_properties = ifc.get_all_properties_packed()
       for name, rtype in all_properties:
         _n_dim, _rtype = s._get_rtype( rtype )
         if isinstance( _rtype, rt.Port ):
-          ret += s.mangle_port( id_+"__"+name, _rtype, _n_dim )
+          ret += s.mangle_port( f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
         elif isinstance( _rtype, rt.InterfaceView ):
-          ret += s.mangle_interface( id_+"__"+name, _rtype, _n_dim )
+          ret += s.mangle_ifc(  f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
         else:
           assert False, f"{name} is not interface(s) or port(s)!"
     else:
       ret = []
       for i in range( n_dim[0] ):
-        ret += s.mangle_interface( id_+"__"+str(i), ifc, n_dim[1:] )
+        ret += s.mangle_ifc( f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:] )
     return ret
 
   def gen_packed_ports( s, rtype ):
@@ -483,12 +488,12 @@ class ImportPass( BasePass ):
     packed_ports = []
     ports = rtype.get_ports_packed()
     ifcs = rtype.get_ifc_views_packed()
-    for id_, port in ports:
+    for name, port in ports:
       p_n_dim, p_rtype = s._get_rtype( port )
-      packed_ports += s.mangle_port( id_, p_rtype, p_n_dim )
-    for id_, ifc in ifcs:
+      packed_ports += s.mangle_port( name, name, p_rtype, p_n_dim )
+    for name, ifc in ifcs:
       i_n_dim, i_rtype = s._get_rtype( ifc )
-      packed_ports += s.mangle_interface( id_, i_rtype, i_n_dim )
+      packed_ports += s.mangle_ifc( name, name, i_rtype, i_n_dim )
     return packed_ports
 
   #-------------------------------------------------------------------------
@@ -735,44 +740,6 @@ m->{name}{sub} = {deference}model->{name}{sub};
       return s._gen_packed_array_write( d, lhs, rhs, sub_dtype, n_dim, pos )
     assert False, f"unrecognized data type {dtype}!"
 
-  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols ):
-    if not n_dim:
-      d = port.get_direction()
-      dtype = port.get_dtype()
-      nbits = dtype.get_length()
-      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0, symbols )
-      assert pos == nbits, \
-        f"internal error: {id_py} wire length mismatch!"
-      return ret
-    else:
-      ret = []
-      for idx in range(n_dim[0]):
-        _id_py = id_py + f"[{idx}]"
-        _id_v = id_v + f"[{idx}]"
-        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols )
-      return ret
-
-  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols ):
-    if not n_dim:
-      ret = []
-      all_properties = ifc.get_all_properties_packed()
-      for name, rtype in all_properties:
-        _n_dim, _rtype = s._get_rtype( rtype )
-        _id_py = id_py + f".{name}"
-        _id_v = id_v + f"__{name}"
-        if isinstance( _rtype, rt.Port ):
-          ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
-        else:
-          ret += s.gen_ifc_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
-      return ret
-    else:
-      ret = []
-      for idx in range( n_dim[0] ):
-        _id_py = id_py + f"[{idx}]"
-        _id_v = id_v + f"__{idx}"
-        ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:], symbols )
-      return ret
-
   #-------------------------------------------------------------------------
   # gen_comb_input
   #-----------------------------------------------------------------------
@@ -827,12 +794,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
     # import pdb;pdb.set_trace()
-    for py_name, v_name, rtype in packed_ports:
+    for pname, vname, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
-      if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk' and v_name:
+      if s._get_direction( p_rtype ) == 'InPort' and pname != 'clk' and vname:
         dtype = p_rtype.get_dtype()
-        lhs = "_ffi_m."+s._verilator_name(v_name)
-        rhs = f"s.{py_name}"
+        lhs = "_ffi_m."+s._verilator_name(vname)
+        rhs = f"s.{pname}"
         ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim, symbols )
     print('\n ','\n  '.join(ret))
     print()
@@ -886,12 +853,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_comb_output( s, packed_ports, symbols ):
     ret = []
-    for py_name, v_name, rtype in packed_ports:
+    for pname, vname, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
-        lhs = f"s.{py_name}"
-        rhs = "_ffi_m." + s._verilator_name(v_name)
+        lhs = f"s.{pname}"
+        rhs = "_ffi_m." + s._verilator_name(vname)
         ret += s.gen_port_array_output( lhs, rhs, dtype, p_n_dim )
 
     print(' ', '\n  '.join(ret))
@@ -903,15 +870,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_line_trace_py( s, packed_ports ):
     """Return the line trace method body that shows all interface ports."""
-    ret = [ 'lt = ""' ]
-    template = 'lt += "{my_name} = {{}}, ".format({full_name})'
-    for name, v_name, port in packed_ports:
-      my_name = name
-      full_name = f"s.{name}"
-      ret.append( template.format( **locals() ) )
-    ret.append( 'return lt' )
-    make_indent( ret, 3 )
-    return '\n'.join( ret )
+    template = '{0}={{s.{0}}}'
+    return "      return f'" + " ".join( [ template.format( pname ) for pname, _, _ in packed_ports ] ) + "'"
 
   #-------------------------------------------------------------------------
   # gen_internal_line_trace_py
@@ -921,11 +881,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
     """Return the line trace method body that shows all CFFI ports."""
     ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
     template = \
-      "lt += '{v_name} = {{}}, '.format(full_vector(s.{my_name}, _ffi_m.{v_name}))"
-    for my_name, v_name, port in packed_ports:
-      if v_name:
-        my_name = s._verilator_name(my_name)
-        v_name = s._verilator_name(v_name)
+      "lt += '{vname} = {{}}, '.format(full_vector(s.{pname}, _ffi_m.{vname}))"
+    for pname, vname, port in packed_ports:
+      if vname:
+        pname = s._verilator_name(pname)
+        vname = s._verilator_name(vname)
         ret.append( template.format(**locals()) )
     ret.append( 'return lt' )
     make_indent( ret, 2 )
