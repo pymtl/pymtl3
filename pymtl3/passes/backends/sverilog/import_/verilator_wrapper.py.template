@@ -130,12 +130,6 @@ class {component_name}( Component ):
     # declare the port interface
 {port_defs}
 
-    # declare the wires
-{wire_defs}
-
-    # connections between ports and wires
-{connections}
-
     @s.update
     def comb_upblk():
       # Set inputs
