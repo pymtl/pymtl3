@@ -18,10 +18,9 @@ def local_do_test( m ):
   m.elaborate()
   rtype = rt.get_component_ifc_rtlir( m )
   ipass = ImportPass()
-  symbols, decls, conns = ipass.gen_signal_decl_py( rtype )
+  symbols, decls = ipass.gen_signal_decl_py( rtype )
   assert symbols == m._ref_symbols
   assert decls == m._ref_decls
-  assert conns == m._ref_conns
 
 def test_port_single( do_test ):
   class A( Component ):

@@ -309,8 +309,8 @@ class ImportPass( BasePass ):
     make_indent( port_defs, 2 )
 
     # Set upblk inputs and outputs
-    set_comb_input = s.gen_comb_input( packed_ports )
-    set_comb_output = s.gen_comb_output( packed_ports )
+    set_comb_input = s.gen_comb_input( packed_ports, symbols )
+    set_comb_output = s.gen_comb_output( packed_ports, symbols )
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
@@ -690,40 +690,152 @@ m->{name}{sub} = {deference}model->{name}{sub};
     p_symbols, p_decls = gen_port_decl_py( ports )
     i_symbols, i_decls = gen_ifc_decl_py( ifcs )
 
-    decls = p_decls + i_decls
+    return {**p_symbols, **i_symbols}, p_decls + i_decls
 
-    return p_symbols, decls
+  #-----------------------------------------------------------------------
+  # Methods that generate python signal writes
+  #-----------------------------------------------------------------------
+
+  def _gen_vector_write( s, d, lhs, rhs, dtype, pos ):
+    nbits = dtype.get_length()
+    l, r = pos, pos+nbits
+    _lhs, _rhs = s._verilator_name( lhs ), s._verilator_name( rhs )
+    if d == 'i':
+      ret = [ f"{_rhs}[{l}:{r}] = {lhs}" ]
+    else:
+      ret = [ f"{_lhs} = {_rhs}[{l}:{r}]" ]
+    return ret, r
+
+  def _gen_struct_write( s, d, lhs, rhs, dtype, pos ):
+    ret = []
+    all_properties = reversed(list(dtype.get_all_properties().items()))
+    for name, field in all_properties:
+      _ret, pos = s._gen_write_dispatch( d, f"{lhs}.{name}", rhs, field, pos )
+      ret.extend( _ret)
+    return ret, pos
+
+  def _gen_packed_array_write( s, d, lhs, rhs, dtype, n_dim, pos ):
+    if not n_dim:
+      return s._gen_write_dispatch( d, lhs, rhs, dtype, pos )
+    # Recursively generate array
+    ret = []
+    for idx in range(n_dim[0]):
+      _ret, pos = s._gen_packed_array_write( d, f"{lhs}[{idx}]", rhs, dtype, n_dim[1:], pos )
+      ret.extend( _ret )
+    return ret, pos
+
+  def _gen_write_dispatch( s, d, lhs, rhs, dtype, pos ):
+    if isinstance( dtype, rdt.Vector ):
+      return s._gen_vector_write( d, lhs, rhs, dtype, pos )
+    elif isinstance( dtype, rdt.Struct ):
+      return s._gen_struct_write( d, lhs, rhs, dtype, pos )
+    elif isinstance( dtype, rdt.PackedArray ):
+      n_dim = dtype.get_dim_sizes()
+      sub_dtype = dtype.get_sub_dtype()
+      return s._gen_packed_array_write( d, lhs, rhs, sub_dtype, n_dim, pos )
+    assert False, f"unrecognized data type {dtype}!"
+
+  def gen_port_conns( s, id_py, id_v, port, n_dim, symbols ):
+    if not n_dim:
+      d = port.get_direction()
+      dtype = port.get_dtype()
+      nbits = dtype.get_length()
+      ret, pos = s.gen_dtype_conns( d, id_py, id_v, dtype, 0, symbols )
+      assert pos == nbits, \
+        f"internal error: {id_py} wire length mismatch!"
+      return ret
+    else:
+      ret = []
+      for idx in range(n_dim[0]):
+        _id_py = id_py + f"[{idx}]"
+        _id_v = id_v + f"[{idx}]"
+        ret += s.gen_port_conns( _id_py, _id_v, port, n_dim[1:], symbols )
+      return ret
+
+  def gen_ifc_conns( s, id_py, id_v, ifc, n_dim, symbols ):
+    if not n_dim:
+      ret = []
+      all_properties = ifc.get_all_properties_packed()
+      for name, rtype in all_properties:
+        _n_dim, _rtype = s._get_rtype( rtype )
+        _id_py = id_py + f".{name}"
+        _id_v = id_v + f"__{name}"
+        if isinstance( _rtype, rt.Port ):
+          ret += s.gen_port_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
+        else:
+          ret += s.gen_ifc_conns( _id_py, _id_v, _rtype, _n_dim, symbols )
+      return ret
+    else:
+      ret = []
+      for idx in range( n_dim[0] ):
+        _id_py = id_py + f"[{idx}]"
+        _id_v = id_v + f"__{idx}"
+        ret += s.gen_ifc_conns( _id_py, _id_v, ifc, n_dim[1:], symbols )
+      return ret
 
   #-------------------------------------------------------------------------
   # gen_comb_input
-  #-------------------------------------------------------------------------
+  #-----------------------------------------------------------------------
 
-  def gen_port_array_input( s, lhs, rhs, dtype, n_dim ):
-    nbits = dtype.get_length()
+  def gen_port_array_input( s, lhs, rhs, dtype, n_dim, symbols ):
+
     if not n_dim:
+      dtype_nbits = dtype.get_length()
 
-      return s._gen_ref_write( lhs, rhs, nbits )
+      # If the top-level signal is a Bits, we
+
+      if isinstance( dtype, rdt.Vector ):
+        return s._gen_ref_write( lhs, rhs, dtype_nbits )
+
+      # If the top-level signal is a struct, we add the datatype to symbol?
+
+      if isinstance( dtype, rdt.Struct ):
+        # We don't create a new struct if we are copying values from pymtl
+        # land to verilator, i.e. this port is the input to the imported
+        # component.
+        dtype_name = dtype.get_class().__name__
+        assert dtype_name in symbols
+        # symbols[dtype_name] = dtype.get_class()
+
+        # We create a long Bits object tmp first
+        ret = [ f'tmp = Bits{dtype_nbits}(0)']
+
+        # Then we write each struct field to tmp
+        body, pos = s._gen_struct_write( 'i', rhs, 'tmp', dtype, 0 )
+        ret.extend(body)
+
+        # At the end, we write tmp to the corresponding CFFI variable
+        ret.extend( s._gen_ref_write( lhs, 'tmp', dtype_nbits ) )
+
+        assert pos == dtype_nbits
+        return ret
+
+      assert False, f"unrecognized data type {dtype}!"
+
     else:
       ret = []
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
         _rhs = f"{rhs}[{idx}]"
-        ret += s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:] )
+        ret.extend( s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:], symbols ) )
       return ret
 
-  def gen_comb_input( s, packed_ports ):
+  def gen_comb_input( s, packed_ports, symbols ):
     ret = []
     # Read all input ports ( except for 'clk' ) from component ports into
     # the verilated model. We do NOT want `clk` signal to be read into
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
+    # import pdb;pdb.set_trace()
     for py_name, v_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and py_name != 'clk' and v_name:
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(v_name)
         rhs = f"s.{py_name}"
-        ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim )
+        ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim, symbols )
+    print('\n ','\n  '.join(ret))
+    print()
     return ret
 
   #-------------------------------------------------------------------------
@@ -731,9 +843,39 @@ m->{name}{sub} = {deference}model->{name}{sub};
   #-------------------------------------------------------------------------
 
   def gen_port_array_output( s, lhs, rhs, dtype, n_dim ):
-    nbits = dtype.get_length()
     if not n_dim:
-      return s._gen_ref_read( lhs, rhs, nbits )
+      dtype_nbits = dtype.get_length()
+
+      # If the top-level signal is a Bits, we directly
+
+      if isinstance( dtype, rdt.Vector ):
+        return s._gen_ref_read( lhs, rhs, dtype_nbits )
+
+      # If the top-level signal is a struct, we add the datatype to symbol?
+
+      if isinstance( dtype, rdt.Struct ):
+        dtype_name = dtype.get_class().__name__
+        assert dtype_name in symbols
+        # symbols[dtype_name] = dtype.get_class()
+
+        # We create a new struct if we are copying values from verilator
+        # world to pymtl land and send it out through the output of this
+        # component
+        ret = [ f"{lhs} = {dtype_name}()" ]
+        # We also create a long Bits object tmp
+        ret.extend( f"tmp = Bits{dtype_nbits}(0)" )
+
+        # Then we write each struct field to tmp
+        ret.extend( s._gen_ref_write( 'o', rhs, 'tmp', dtype_nbits ) )
+
+        body, pos = s._gen_struct_write( 'o', 'tmp', rhs, nbits )
+        assert pos == dtype.get_length()
+        ret.extend( body )
+
+        return ret
+
+      assert False, f"unrecognized data type {dtype}!"
+
     else:
       ret = []
       for idx in range( n_dim[0] ):
@@ -742,7 +884,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
       return ret
 
-  def gen_comb_output( s, packed_ports ):
+  def gen_comb_output( s, packed_ports, symbols ):
     ret = []
     for py_name, v_name, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
@@ -751,6 +893,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
         lhs = f"s.{py_name}"
         rhs = "_ffi_m." + s._verilator_name(v_name)
         ret += s.gen_port_array_output( lhs, rhs, dtype, p_n_dim )
+
+    print(' ', '\n  '.join(ret))
     return ret
 
   #-------------------------------------------------------------------------
@@ -803,12 +947,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
       d = port.get_sub_type().get_direction()
     else:
       assert False, f"{port} is not a port or array of ports!"
-    if d == 'input':
+
+    dd = d[0]
+    if dd == 'i':
       return 'InPort'
-    elif d == 'output':
-      return 'OutPort'
-    else:
-      assert False, f"unrecognized direction {d}!"
+
+    assert dd == 'o', f"unrecognized direction {d}!"
+
+    return 'OutPort'
 
   def _get_c_n_dim( s, port ):
     if isinstance( port, rt.Array ):
