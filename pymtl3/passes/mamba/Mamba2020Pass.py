@@ -7,21 +7,21 @@
 
 import os
 import random
-from collections import deque
+from collections import defaultdict, deque
 
 import py
 
-from pymtl3.dsl import MethodPort
 from pymtl3.datatypes import Bits, is_bitstruct_class
+from pymtl3.dsl import MethodPort
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
 from pymtl3.utils import custom_exec
 
-from .HeuristicTopoPass import CountBranchesLoops
-from .UnrollTickPass import UnrollTickPass
 from ..sim.DynamicSchedulePass import kosaraju_scc
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from ..sim.SimpleTickPass import SimpleTickPass
+from .HeuristicTopoPass import CountBranchesLoops
+from .UnrollTickPass import UnrollTickPass
 
 _DEBUG = True
 # _DEBUG = False
@@ -122,11 +122,11 @@ class Mamba2020Pass( BasePass ):
     # Divide all blks into meta blocks
 
     # Branchiness factor is the bound of branchiness in a meta block.
-    branchiness_factor = 30
+    branchiness_factor = 20
 
     # Block factor is the bound of the number of branchy blocks in a
     # meta block.
-    branchy_block_factor = 30
+    branchy_block_factor = 6
 
     cur_meta, cur_br, cur_count = [], 0, 0
 
@@ -234,7 +234,7 @@ class Mamba2020Pass( BasePass ):
 
     # Block factor is the bound of the number of branchy blocks in a
     # meta block.
-    branchy_block_factor = 10
+    branchy_block_factor = 6
     cur_meta = []
     cur_br = cur_count = 0
 
@@ -263,8 +263,7 @@ class Mamba2020Pass( BasePass ):
 
           cur_meta.append( scc )
           cur_br += br
-          if br > 0:
-            cur_count += 1
+          cur_count += (br > 0)
 
           if cur_br >= branchiness_factor:
             schedule.append( self.compile_meta_block( cur_meta ) )
@@ -287,7 +286,7 @@ class Mamba2020Pass( BasePass ):
           else:
             cur_meta.append( scc )
             cur_br += br
-            cur_count += 1
+            cur_count += (br > 0)
 
             if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
               schedule.append( self.compile_meta_block( cur_meta ) )
@@ -374,67 +373,124 @@ class Mamba2020Pass( BasePass ):
           # TODO performance optimizations using Mamba techniques within a SCC block
 
           template = """
-            from copy import deepcopy
-            def wrapped_SCC_{0}():
-              N = 0
-              while True:
-                N += 1
-                if N > 100:
-                  raise Exception("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
-                {1}
-                scc_tick_func()
-                if {2}:
-                  break
-              # print "SCC block{0} is executed", num_iters, "times"
-            generated_block = wrapped_SCC_{0}
+from copy import deepcopy
+def wrapped_SCC_{0}():
+  N = 0
+  while True:
+    N += 1
+    if N > 100:
+      raise Exception("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
+    {1}
+    scc_tick_func()
+    {2}
+    # print( "SCC block{0} is executed", num_iters, "times" )
+    break
+generated_block = wrapped_SCC_{0}
           """
 
           copy_srcs  = []
           check_srcs = []
           # print_srcs = []
 
-          for j, var in enumerate(variables):
-            if issubclass( var._dsl.Type, Bits ):     copy_srcs.append( f"t{j}={var}.clone()" )
-            elif is_bitstruct_class( var._dsl.Type ): copy_srcs.append( f"t{j}={var}.clone()" )
-            else:                                     copy_srcs.append( f"t{j}=deepcopy({var})" )
-            check_srcs.append( f"{var} == t{j}" )
+          # clean up non-top variables if top is there
+          # also group them by host component
 
-          scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), " and ".join( check_srcs ),
+          final_variables = set()
+
+          for x in sorted( variables, key=repr ):
+            w = x.get_top_level_signal()
+            if w is x:
+              final_variables.add( x )
+              continue
+
+            # w is not x
+            if issubclass( w._dsl.Type, Bits ):
+              if w not in final_variables:
+                final_variables.add( w )
+            elif is_bitstruct_class( w._dsl.Type ):
+              if w not in final_variables:
+                final_variables.add( x )
+            else:
+              final_variables.add( x )
+
+          final_var_host = defaultdict(list)
+          for x in variables:
+            final_var_host[ x.get_host_component() ].append( x )
+
+          var_id = 0
+          for host, var_list in final_var_host.items():
+            hostlen = len(repr(host))
+
+            copy_srcs.append( f"host = {host!r}" )
+            check_srcs.append( f"host = {host!r}" )
+
+            sub_check_srcs = []
+
+            for var in var_list:
+              var_id += 1
+              subname = repr(var)[hostlen+1:]
+              if issubclass( var._dsl.Type, Bits ):     copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+              elif is_bitstruct_class( var._dsl.Type ): copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+              else:                                     copy_srcs.append( f"t{var_id}=deepcopy(host.{subname})" )
+
+              sub_check_srcs.append( f"host.{subname} != t{var_id}" )
+
+            check_srcs.append( f"if { ' or '.join(sub_check_srcs)}: continue" )
+
+          scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
                                            ", ".join( [ x.__name__ for x in scc] ) )
 
           # Divide all blks into meta blocks
           # Branchiness factor is the bound of branchiness in a meta block.
-          branchiness_factor = 10
-          branchy_block_factor = 8
+          branchiness_factor = 20
+          branchy_block_factor = 6
 
           cur_meta, cur_br, cur_count = [], 0, 0
 
-          metas = []
+          scc_schedule = []
+
+          num_blks = 0  # sanity check
+
+          if _DEBUG: print( f"{'='*100}\n SCC{scc_id}\n{'='*100}" )
+
           for i, blk in enumerate( tmp_schedule ):
             br = self.branchiness[blk]
             if cur_br == 0:
               cur_meta.append( blk )
               cur_br += br
-              cur_count += 1
+              cur_count += (br > 0)
               if cur_br >= branchiness_factor or cur_count >= branchy_block_factor:
-                metas.append( self.compile_meta_block( cur_meta ) )
-                cur_br = cur_count = 0
-                cur_meta = []
-            elif cur_br > 0 and br == 0:
-              # If no branchy block available, directly start a new metablock
-              schedule.append( self.compile_meta_block( cur_meta ) )
-              cur_br = cur_count = 0
-              cur_meta.clear()
-              cur_meta.append( blk )
+                num_blks += len(cur_meta)
+                scc_schedule.append( self.compile_meta_block( cur_meta ) )
+                cur_meta, cur_br, cur_count = [], 0, 0 # clear
+            else:
+              if br == 0:
+                # If no branchy block available, directly start a new metablock
+                num_blks += len(cur_meta)
+                scc_schedule.append( self.compile_meta_block( cur_meta ) )
+                cur_meta, cur_br, cur_count = [ blk ], br, (br > 0)
+              else:
+                cur_meta.append( blk )
+                cur_br += br
+                cur_count += (br > 0)
+
+                if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
+                  num_blks += len(cur_meta)
+                  scc_schedule.append( self.compile_meta_block( cur_meta ) )
+                  cur_meta, cur_br, cur_count = [], 0, 0 # clear
 
           if cur_meta:
-            metas.append( self.compile_meta_block( cur_meta ) )
+            num_blks += len(cur_meta)
+            scc_schedule.append( self.compile_meta_block( cur_meta ) )
 
-          scc_tick_func = UnrollTickPass.gen_tick_function( metas )
+          assert num_blks == len(tmp_schedule), f"Some blocks are missing during trace breaking of SCC "\
+                                                f"({num_blks} compiled, {len(tmp_schedule)} total)"
+          scc_tick_func = UnrollTickPass.gen_tick_function( scc_schedule )
 
           _globals = { 's': top, 'scc_tick_func': scc_tick_func }
           _locals  = {}
           if _DEBUG: print(scc_block_src)
+          if _DEBUG: print("="*100 )
 
           custom_exec(py.code.Source( scc_block_src ).compile(), _globals, _locals)
 
