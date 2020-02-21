@@ -792,7 +792,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # the verilated model. We do NOT want `clk` signal to be read into
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
-    # import pdb;pdb.set_trace()
+
     for pname, vname, rtype in packed_ports:
       p_n_dim, p_rtype = s._get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and pname != 'clk' and vname:
