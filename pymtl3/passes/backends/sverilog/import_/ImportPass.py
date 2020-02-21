@@ -139,7 +139,6 @@ class ImportPass( BasePass ):
         packed_ports.append( (pname, p_map[pname], port) )
       else:
         packed_ports.append( (pname, vname, port) )
-    print(packed_ports)
 
     cached = s.is_cached( m, full_name )
 
@@ -716,7 +715,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     all_properties = reversed(list(dtype.get_all_properties().items()))
     for name, field in all_properties:
       _ret, pos = s._gen_write_dispatch( d, f"{lhs}.{name}", rhs, field, pos )
-      ret.extend( _ret)
+      ret.extend( _ret )
     return ret, pos
 
   def _gen_packed_array_write( s, d, lhs, rhs, dtype, n_dim, pos ):
@@ -761,11 +760,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
         # land to verilator, i.e. this port is the input to the imported
         # component.
         dtype_name = dtype.get_class().__name__
-        assert dtype_name in symbols
-        # symbols[dtype_name] = dtype.get_class()
+        if dtype_name not in symbols:
+          symbols[dtype_name] = dtype.get_class()
 
         # We create a long Bits object tmp first
-        ret = [ f'tmp = Bits{dtype_nbits}(0)']
+        ret = [ f'tmp = Bits{dtype_nbits}(0)' ]
 
         # Then we write each struct field to tmp
         body, pos = s._gen_struct_write( 'i', rhs, 'tmp', dtype, 0 )
@@ -801,15 +800,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
         lhs = "_ffi_m."+s._verilator_name(vname)
         rhs = f"s.{pname}"
         ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim, symbols )
-    print('\n ','\n  '.join(ret))
-    print()
     return ret
 
   #-------------------------------------------------------------------------
   # gen_comb_output
   #-------------------------------------------------------------------------
 
-  def gen_port_array_output( s, lhs, rhs, dtype, n_dim ):
+  def gen_port_array_output( s, lhs, rhs, dtype, n_dim, symbols ):
     if not n_dim:
       dtype_nbits = dtype.get_length()
 
@@ -822,20 +819,20 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
       if isinstance( dtype, rdt.Struct ):
         dtype_name = dtype.get_class().__name__
-        assert dtype_name in symbols
-        # symbols[dtype_name] = dtype.get_class()
+        if dtype_name not in symbols:
+          symbols[dtype_name] = dtype.get_class()
+
+        # We create a long Bits object tmp to accept CFFI value for struct
+        ret = [ f"tmp = Bits{dtype_nbits}(0)" ]
+
+        # Then we load the full Bits to tmp
+        ret.extend( s._gen_ref_read( 'tmp', rhs, dtype_nbits ) )
 
         # We create a new struct if we are copying values from verilator
         # world to pymtl land and send it out through the output of this
         # component
-        ret = [ f"{lhs} = {dtype_name}()" ]
-        # We also create a long Bits object tmp
-        ret.extend( f"tmp = Bits{dtype_nbits}(0)" )
-
-        # Then we write each struct field to tmp
-        ret.extend( s._gen_ref_write( 'o', rhs, 'tmp', dtype_nbits ) )
-
-        body, pos = s._gen_struct_write( 'o', 'tmp', rhs, nbits )
+        ret.append( f"{lhs} = {dtype_name}()" )
+        body, pos = s._gen_struct_write( 'o', lhs, 'tmp', dtype, 0 )
         assert pos == dtype.get_length()
         ret.extend( body )
 
@@ -848,7 +845,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
         _rhs = f"{rhs}[{idx}]"
-        ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:] )
+        ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:], symbols )
       return ret
 
   def gen_comb_output( s, packed_ports, symbols ):
@@ -859,9 +856,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
         dtype = p_rtype.get_dtype()
         lhs = f"s.{pname}"
         rhs = "_ffi_m." + s._verilator_name(vname)
-        ret += s.gen_port_array_output( lhs, rhs, dtype, p_n_dim )
-
-    print(' ', '\n  '.join(ret))
+        ret.extend( s.gen_port_array_output( lhs, rhs, dtype, p_n_dim, symbols ) )
     return ret
 
   #-------------------------------------------------------------------------
