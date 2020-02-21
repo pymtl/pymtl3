@@ -133,8 +133,8 @@ class ImportPass( BasePass ):
 
     packed_ports = []
     for pname, vname, port in _packed_ports:
-      if no_clk and orig_pname == 'clk':      pass
-      if no_reset and orig_pname == 'reset':  pass
+      if no_clk and pname == 'clk':      pass
+      if no_reset and pname == 'reset':  pass
       if pname in p_map:
         packed_ports.append( (pname, p_map[pname], port) )
       else:
