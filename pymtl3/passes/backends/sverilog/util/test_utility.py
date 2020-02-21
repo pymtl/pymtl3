@@ -219,7 +219,7 @@ def DataStrategy( draw, dut ):
       reset2.update( { id_ : Bits1(1) } )
     else:
       n_dim, port_rtype = flatten( port )
-      if port_rtype.get_direction[0]() == "i":
+      if port_rtype.get_direction()[0] == "i":
         if n_dim:
           reset1.update( ArrayInitData( id_, n_dim, port_rtype ) )
           reset2.update( ArrayInitData( id_, n_dim, port_rtype ) )
