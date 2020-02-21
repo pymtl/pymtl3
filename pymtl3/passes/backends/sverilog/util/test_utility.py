@@ -173,11 +173,11 @@ def InterfaceDataStrategy( draw, id_, ifc ):
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()
-      if isinstance(sub_type, rt.Port) and sub_type.get_direction[0]() != "i":
+      if isinstance(sub_type, rt.Port) and sub_type.get_direction()[0] != "i":
         continue
       data.update(draw(ArrayDataStrategy(id_+"."+prop_name, n_dim, sub_type)))
     elif isinstance( prop_rtype, rt.Port ):
-      if prop_rtype.get_direction[0]() == "i":
+      if prop_rtype.get_direction()[0] == "i":
         data.update(draw(InPortDataStrategy(id_+"."+prop_name, prop_rtype)))
     elif isinstance( prop_rtype, rt.InterfaceView ):
       data.update(draw(InterfaceDataStrategy(id_+"."+prop_name, prop_rtype)))
@@ -246,9 +246,9 @@ def DataStrategy( draw, dut ):
       else:
         n_dim, port_rtype = flatten( port )
         if n_dim:
-          if port_rtype.get_direction[0]() == "i":
+          if port_rtype.get_direction()[0] == "i":
             data.update(draw( ArrayDataStrategy( id_, n_dim, port_rtype ) ))
-        elif port_rtype.get_direction[0]() == "i":
+        elif port_rtype.get_direction()[0] == "i":
           data.update(draw( InPortDataStrategy( id_, port_rtype ) ))
     for id_, ifc in ifcs:
       n_dim, ifc_rtype = flatten( ifc )
