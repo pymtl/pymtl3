@@ -168,7 +168,6 @@ def gen_mapped_packed_ports( m, p_map, has_clk = True, has_reset = True ):
   for pname, vname, port in _packed_ports:
     if not has_clk and pname == 'clk':      continue
     if not has_reset and pname == 'reset':  continue
-    print('x'*100, pname)
     if pname in p_map:
       packed_ports.append( (pname, p_map[pname], port) )
     else:
