@@ -9,7 +9,7 @@ import os
 import subprocess
 from textwrap import fill, indent
 
-from pymtl3.dsl import Placeholder, InPort, OutPort
+from pymtl3.dsl import InPort, OutPort, Placeholder
 from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -430,7 +430,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     srcs.append(s.get_c_wrapper_path())
 
     # Add files listed in class makefile
-    with open(vl_class_mk, "r") as class_mk:
+    with open(vl_class_mk) as class_mk:
       srcs += s.get_srcs_from_vl_class_mk(
           class_mk, vl_mk_dir, "VM_CLASSES_FAST")
       srcs += s.get_srcs_from_vl_class_mk(

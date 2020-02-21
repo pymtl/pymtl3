@@ -243,8 +243,8 @@ class ImportPass( BasePass ):
     # cached or not.
     # TODO: we can avoid dumping C wrapper if we attach some metadata to
     # tell if the wrapper was generated with or without `dump_vcd` enabled.
-    with open( template_name, 'r' ) as template:
-      with open( wrapper_name, 'w' ) as output:
+    with open(template_name) as template:
+      with open(wrapper_name, 'w') as output:
         c_wrapper = template.read()
         c_wrapper = c_wrapper.format( **locals() )
         output.write( c_wrapper )
@@ -332,8 +332,8 @@ class ImportPass( BasePass ):
 
     # Fill in the python wrapper template
     if not cached:
-      with open( template_name, 'r' ) as template:
-        with open( wrapper_name, 'w' ) as output:
+      with open(template_name) as template:
+        with open(wrapper_name, 'w') as output:
           py_wrapper = template.read()
           py_wrapper = py_wrapper.format(
             component_name  = config.top_module,

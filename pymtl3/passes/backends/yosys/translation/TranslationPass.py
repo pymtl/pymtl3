@@ -36,7 +36,7 @@ class TranslationPass( BasePass ):
 
       # First write the file to a temporary file
       m._pass_yosys_translation.is_same = False
-      with open( temporary_file, 'w' ) as output:
+      with open(temporary_file, 'w') as output:
         output.write( s.translator.hierarchy.src )
         output.flush()
         os.fsync( output )
