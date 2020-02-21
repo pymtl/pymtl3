@@ -37,7 +37,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     s.setup_default_configs( m, irepr )
 
-    # after the previous setup step, placeholder `m` is guaranteed to have 
+    # after the previous setup step, placeholder `m` is guaranteed to have
     # config_placeholder attribute.
     if m.config_placeholder.is_valid:
       s.check_valid( m, m.config_placeholder, irepr )
@@ -227,21 +227,21 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   # The right way to do this is to use a recursive function like I have
   # done below. This ensures that files are inserted into the output stream
   # in the correct order. -cbatten
-  
+
   # Regex to extract verilog filenames from `include statements
-  
+
   _include_re = re.compile( r'"(?P<filename>[\w/\.-]*)"' )
-  
+
   def _output_verilog_file( s, include_path, verilog_file ):
     code = ""
     with open( verilog_file, 'r' ) as fp:
-  
+
       short_verilog_file = verilog_file
       if verilog_file.startswith( include_path+"/" ):
         short_verilog_file = verilog_file[len(include_path+"/"):]
-  
+
       code += '`line 1 "{}" 0\n'.format( short_verilog_file )
-  
+
       line_num = 0
       for line in fp:
         line_num += 1
@@ -254,25 +254,25 @@ class VerilogPlaceholderPass( PlaceholderPass ):
         else:
           code += line
     return code
-  
+
   def _import_sources( s, cfg, source_list ):
     """Import Verilog source from all Verilog files source_list, as well
     as any source files specified by `include within those files.
     """
 
     code = ""
-  
+
     if not source_list:
       return
-  
+
     # We will use the first verilog file to find the root of PyMTL project
-  
+
     first_verilog_file = source_list[0]
-  
+
     # All verilog includes are relative to the root of the PyMTL project.
     # We identify the root of the PyMTL project by looking for the special
     # .pymtl_sim_root file.
-  
+
     _path = os.path.dirname( first_verilog_file )
     special_file_found = False
     include_path = os.path.dirname( os.path.abspath( first_verilog_file ) )
@@ -291,21 +291,21 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       assert len(cfg.v_include) == 1, \
           "the current pickler only supports one user-defined v_include path..."
       include_path = cfg.v_include[0]
-  
+
     # If we could not find the special .pymtl-python-path file, then assume
     # the include directory is the same as the directory that contains the
     # first verilog file.
-  
+
     if not special_file_found and not v_include:
       include_path = os.path.dirname( os.path.abspath( first_verilog_file ) )
-  
+
     # Regex to extract verilog filenames from `include statements
-  
+
     s._include_re = re.compile( r'"(?P<filename>[\w/\.-]*)"' )
-  
+
     # Iterate through all source files and add any `include files to the
     # list of source files to import.
-  
+
     for source in source_list:
       code += s._output_verilog_file( include_path, source )
 
