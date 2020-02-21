@@ -99,11 +99,11 @@ def InterfaceInitData( id_, ifc ):
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()
-      if isinstance(sub_type, rt.Port) and sub_type.get_direction() != "input":
+      if isinstance(sub_type, rt.Port) and sub_type.get_direction()[0] != "i":
         continue
       init.update( ArrayInitData( id_+"."+prop_name, n_dim, sub_type ) )
     elif isinstance( prop_rtype, rt.Port ):
-      if prop_rtype.get_direction() == "input":
+      if prop_rtype.get_direction()[0] == "i":
         init.update( InPortInitData( id_+"."+prop_name, prop_rtype ) )
     elif isinstance( prop_rtype, rt.InterfaceView ):
       init.update( InterfaceInitData( id_+"."+prop_name, prop_rtype ) )
@@ -173,11 +173,11 @@ def InterfaceDataStrategy( draw, id_, ifc ):
     if isinstance( prop_rtype, rt.Array ):
       n_dim = prop_rtype.get_dim_sizes()
       sub_type = prop_rtype.get_sub_type()
-      if isinstance(sub_type, rt.Port) and sub_type.get_direction() != "input":
+      if isinstance(sub_type, rt.Port) and sub_type.get_direction()[0] != "i":
         continue
       data.update(draw(ArrayDataStrategy(id_+"."+prop_name, n_dim, sub_type)))
     elif isinstance( prop_rtype, rt.Port ):
-      if prop_rtype.get_direction() == "input":
+      if prop_rtype.get_direction()[0] == "i":
         data.update(draw(InPortDataStrategy(id_+"."+prop_name, prop_rtype)))
     elif isinstance( prop_rtype, rt.InterfaceView ):
       data.update(draw(InterfaceDataStrategy(id_+"."+prop_name, prop_rtype)))
@@ -219,7 +219,7 @@ def DataStrategy( draw, dut ):
       reset2.update( { id_ : Bits1(1) } )
     else:
       n_dim, port_rtype = flatten( port )
-      if port_rtype.get_direction() == "input":
+      if port_rtype.get_direction()[0] == "i":
         if n_dim:
           reset1.update( ArrayInitData( id_, n_dim, port_rtype ) )
           reset2.update( ArrayInitData( id_, n_dim, port_rtype ) )
@@ -246,9 +246,9 @@ def DataStrategy( draw, dut ):
       else:
         n_dim, port_rtype = flatten( port )
         if n_dim:
-          if port_rtype.get_direction() == "input":
+          if port_rtype.get_direction()[0] == "i":
             data.update(draw( ArrayDataStrategy( id_, n_dim, port_rtype ) ))
-        elif port_rtype.get_direction() == "input":
+        elif port_rtype.get_direction()[0] == "i":
           data.update(draw( InPortDataStrategy( id_, port_rtype ) ))
     for id_, ifc in ifcs:
       n_dim, ifc_rtype = flatten( ifc )

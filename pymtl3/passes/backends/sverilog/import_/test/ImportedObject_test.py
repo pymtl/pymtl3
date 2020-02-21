@@ -37,10 +37,8 @@ def test_reg( do_test ):
       s.config_sverilog_import = ImportConfigs(
           vl_src = get_dir(__file__)+'VReg.sv',
           port_map = {
-            "clk" : "clk",
-            "reset" : "reset",
-            "in_" : "d",
-            "out" : "q",
+            s.in_ : "d",
+            s.out : "q",
           }
       )
   a = VReg()
@@ -70,8 +68,8 @@ def test_vl_uninit( do_test ):
       s.config_sverilog_import = ImportConfigs(
           vl_src = get_dir(__file__)+'VUninit.sv',
           port_map = {
-            "in_" : "d",
-            "out" : "q",
+            s.in_ : "d",
+            s.out : "q",
           },
           vl_xinit = 'ones',
       )
@@ -94,8 +92,8 @@ def test_reg_external_trace( do_test ):
           vl_src = get_dir(__file__)+'VRegTrace.sv',
           vl_include = [ get_dir(__file__) ],
           port_map = {
-            "in_" : "d",
-            "out" : "q",
+            s.in_ : "d",
+            s.out : "q",
           },
           external_trace = True,
       )
@@ -132,8 +130,8 @@ def test_reg_incomplete_portmap( do_test ):
       s.config_sverilog_import = ImportConfigs(
           vl_src = get_dir(__file__)+'VReg.sv',
           port_map = {
-            "in_" : "d",
-            "out" : "q",
+            s.in_ : "d",
+            s.out : "q",
           }
       )
   a = VReg()

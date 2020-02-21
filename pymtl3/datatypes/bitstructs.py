@@ -273,47 +273,24 @@ def _mk_hash_fn( fields ):
 # Creates __ilshift__ and _flip functions that looks like the following:
 #
 # def __ilshift__( self, other ):
-#   self.x <<= other.x
-#   for i in range(5):
-#     for j in range(6):
-#       self.y[i][j] <<= other.y[i][j]
+#   self._next = other.clone()
 #
-# def _flip( self, other ):
-#   self.x._flip()
+# def _flip( self ):
+#   self.x = self._next.x
 #   for i in range(5):
 #     for j in range(6):
 #       self.y[i][j]._flip()
 
 def _mk_ff_fn( fields ):
   ilshift_strs = []
-  flip_strs    = []
+  flip_strs    = [ '_next = self._next' ]
   for name, type_ in fields.items():
-    if isinstance( type_, list ):
-      i = 0
-      loop = f"{' '*i}for i{i} in range({len(type_)}):"
-      ilshift_strs.append(loop)
-      flip_strs   .append(loop)
-      type_ = type_[0]
-      i = 1
-      while isinstance( type_, list ):
-        loop = f"{' '*(i*2)}for i{i} in range({len(type_)}):"
-        ilshift_strs.append(loop)
-        flip_strs   .append(loop)
-        type_ = type_[0]
-        i += 1
-
-      indices = ''.join( [ f'[i{k}]' for k in range(i)] )
-      ilshift_strs.append( f"{' '*(i*2)}self.{name}{indices} <<= o.{name}{indices}" )
-      flip_strs   .append( f"{' '*(i*2)}self.{name}{indices}._flip()" )
-
-    else:
-      ilshift_strs.append( f'self.{name} <<= o.{name}' )
-      flip_strs.append( f'self.{name}._flip()' )
+    flip_strs.append( f'self.{name} = _next.{name}' )
 
   return _create_fn(
     '__ilshift__',
     [ 'self', 'o' ],
-    ilshift_strs + [ 'return self' ],
+    [ 'self._next = o.clone()', 'return self' ],
   ), _create_fn(
     '_flip',
     [ 'self' ],
