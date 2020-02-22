@@ -28,7 +28,7 @@ from ..errors import VerilogImportError
 from ..util.utility import (
     expand,
     get_rtype,
-    gen_mapped_packed_ports,
+    gen_mapped_ports,
     get_component_unique_name,
     make_indent,
     wrap,
@@ -147,36 +147,19 @@ class VerilatorImportPass( BasePass ):
 
     rtype = get_component_ifc_rtlir( m )
 
-    packed_ports = gen_mapped_packed_ports(
-        m,
-        ph_cfg.port_map,
-        ph_cfg.has_clk,
-        ph_cfg.has_reset,
-    )
+    # Now we selectively unpack array of ports if they are referred to in
+    # port_map
+    ports = gen_mapped_ports( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
 
     cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 
     s.create_verilator_model( m, ph_cfg, ip_cfg, cached )
 
-    port_cdefs = s.create_verilator_c_wrapper(
-        m,
-        ph_cfg,
-        ip_cfg,
-        packed_ports,
-        cached
-    )
+    port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports, cached )
 
     s.create_shared_lib( m, ph_cfg, ip_cfg, cached )
 
-    symbols = s.create_py_wrapper(
-        m,
-        ph_cfg,
-        ip_cfg,
-        rtype,
-        packed_ports,
-        port_cdefs,
-        cached
-    )
+    symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached )
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
@@ -234,7 +217,7 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_verilator_c_wrapper(
-      s, m, ph_cfg, ip_cfg, packed_ports, cached ):
+      s, m, ph_cfg, ip_cfg, ports, cached ):
     """Return the file name of generated C component wrapper.
 
     Create a C wrapper that calls verilator C API and provides interfaces
@@ -256,7 +239,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for name, v_name, port in packed_ports:
+    for name, v_name, port in ports:
       if v_name:
         port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
@@ -265,7 +248,8 @@ class VerilatorImportPass( BasePass ):
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for name, v_name, port in packed_ports:
+    for name, v_name, port in ports:
+      print(name, v_name)
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
@@ -329,7 +313,7 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_py_wrapper(
-      s, m, ph_cfg, ip_cfg, rtype, packed_ports, port_cdefs, cached ):
+      s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
@@ -347,16 +331,16 @@ class VerilatorImportPass( BasePass ):
     make_indent( port_defs, 2 )
 
     # Set upblk inputs and outputs
-    set_comb_input = s.gen_comb_input( packed_ports, symbols )
-    set_comb_output = s.gen_comb_output( packed_ports, symbols )
+    set_comb_input = s.gen_comb_input( ports, symbols )
+    set_comb_output = s.gen_comb_output( ports, symbols )
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
     # Line trace
-    line_trace = s.gen_line_trace_py( packed_ports )
+    line_trace = s.gen_line_trace_py( ports )
 
     # Internal line trace
-    in_line_trace = s.gen_internal_line_trace_py( packed_ports )
+    in_line_trace = s.gen_internal_line_trace_py( ports )
 
     # External trace function definition
     if ip_cfg.vl_line_trace:
@@ -373,7 +357,7 @@ class VerilatorImportPass( BasePass ):
             component_name        = ip_cfg.translated_top_module,
             has_clk               = int(ph_cfg.has_clk),
             clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                    next(filter(lambda x: x[0]=='clk', packed_ports))[1],
+                                    next(filter(lambda x: x[0]=='clk', ports))[1],
             lib_file              = ip_cfg.get_shared_lib_path(),
             port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
             port_defs             = '\n'.join( port_defs ),
