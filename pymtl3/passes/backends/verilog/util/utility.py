@@ -155,7 +155,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
           Q.append( (f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:]) )
 
     assert found == len(all_ports) or found == 0, \
-        f"{pname} is an {len(n_dim)}-D array of ports with {len(all_ports)} ports in total, "
+        f"{pname} is an {len(n_dim)}-D array of ports with {len(all_ports)} ports in total, " \
         f" but only {found} of them is mapped. Please either map all of them or none of them."
 
     if not found:

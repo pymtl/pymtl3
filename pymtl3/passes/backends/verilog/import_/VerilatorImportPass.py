@@ -249,7 +249,6 @@ class VerilatorImportPass( BasePass ):
     # Generate initialization statements for in/out ports
     port_inits = []
     for name, v_name, port in ports:
-      print(name, v_name)
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
