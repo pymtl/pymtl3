@@ -14,7 +14,7 @@ import sys
 from textwrap import dedent
 
 from pymtl3.passes.backends.verilog.util.utility import (
-    gen_mapped_packed_ports,
+    gen_mapped_ports,
     get_component_unique_name,
 )
 from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import (
@@ -150,11 +150,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     return s._import_sources( cfg, [cfg.src_file] )
 
   def _gen_verilog_wrapper( s, m, cfg, irepr, pickled_top_module ):
-    packed_ports = \
-        gen_mapped_packed_ports( m, cfg.port_map, cfg.has_clk, cfg.has_reset )
-    print(cfg.__dict__)
+    rtlir_ports = gen_mapped_ports( m, cfg.port_map, cfg.has_clk, cfg.has_reset )
 
-    all_port_names = list(map(lambda x: x[1], packed_ports))
+    all_port_names = list(map(lambda x: x[1], rtlir_ports))
 
     if not cfg.params:
       parameters = irepr.get_params()
@@ -164,8 +162,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # Port definitions of wrapper
     ports = [
       f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
-      f" {name}{'' if idx == len(packed_ports)-1 else ','}" \
-      for idx, (_, name, p) in enumerate(packed_ports) if name
+      f" {name}{'' if idx == len(rtlir_ports)-1 else ','}" \
+      for idx, (_, name, p) in enumerate(rtlir_ports) if name
     ]
 
     # The wrapper has to have an unused clk port to make verilator
@@ -184,8 +182,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     # Connections between top module and inner module
     connect_ports = [
-      f"    .{name}( {name} ){'' if idx == len(packed_ports)-1 else ','}"\
-      for idx, (_, name, p) in enumerate(packed_ports) if name
+      f"    .{name}( {name} ){'' if idx == len(rtlir_ports)-1 else ','}"\
+      for idx, (_, name, p) in enumerate(rtlir_ports) if name
     ]
 
     lines = [

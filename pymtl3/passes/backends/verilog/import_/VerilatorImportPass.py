@@ -28,7 +28,7 @@ from ..errors import VerilogImportError
 from ..util.utility import (
     expand,
     get_rtype,
-    gen_mapped_packed_ports,
+    gen_mapped_ports,
     get_component_unique_name,
     make_indent,
     wrap,
@@ -147,36 +147,19 @@ class VerilatorImportPass( BasePass ):
 
     rtype = get_component_ifc_rtlir( m )
 
-    packed_ports = gen_mapped_packed_ports(
-        m,
-        ph_cfg.port_map,
-        ph_cfg.has_clk,
-        ph_cfg.has_reset,
-    )
+    # Now we selectively unpack array of ports if they are referred to in
+    # port_map
+    ports = gen_mapped_ports( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
 
     cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 
     s.create_verilator_model( m, ph_cfg, ip_cfg, cached )
 
-    port_cdefs = s.create_verilator_c_wrapper(
-        m,
-        ph_cfg,
-        ip_cfg,
-        packed_ports,
-        cached
-    )
+    port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports, cached )
 
     s.create_shared_lib( m, ph_cfg, ip_cfg, cached )
 
-    symbols = s.create_py_wrapper(
-        m,
-        ph_cfg,
-        ip_cfg,
-        rtype,
-        packed_ports,
-        port_cdefs,
-        cached
-    )
+    symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached )
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
@@ -234,7 +217,7 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_verilator_c_wrapper(
-      s, m, ph_cfg, ip_cfg, packed_ports, cached ):
+      s, m, ph_cfg, ip_cfg, ports, cached ):
     """Return the file name of generated C component wrapper.
 
     Create a C wrapper that calls verilator C API and provides interfaces
@@ -256,7 +239,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for name, v_name, port in packed_ports:
+    for name, v_name, port in ports:
       if v_name:
         port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
@@ -265,7 +248,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for name, v_name, port in packed_ports:
+    for name, v_name, port in ports:
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
@@ -329,7 +312,7 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def create_py_wrapper(
-      s, m, ph_cfg, ip_cfg, rtype, packed_ports, port_cdefs, cached ):
+      s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
     """Return the file name of the generated PyMTL component wrapper."""
     ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
 
@@ -347,16 +330,18 @@ class VerilatorImportPass( BasePass ):
     make_indent( port_defs, 2 )
 
     # Set upblk inputs and outputs
-    set_comb_input = s.gen_comb_input( packed_ports, symbols )
-    set_comb_output = s.gen_comb_output( packed_ports, symbols )
+    set_comb_input, structs_input   = s.gen_comb_input( ports, symbols )
+    set_comb_output, structs_output = s.gen_comb_output( ports, symbols )
+    make_indent( structs_input, 2 )
+    make_indent( structs_output, 2 )
     make_indent( set_comb_input, 3 )
     make_indent( set_comb_output, 3 )
 
     # Line trace
-    line_trace = s.gen_line_trace_py( packed_ports )
+    line_trace = s.gen_line_trace_py( ports )
 
     # Internal line trace
-    in_line_trace = s.gen_internal_line_trace_py( packed_ports )
+    in_line_trace = s.gen_internal_line_trace_py( ports )
 
     # External trace function definition
     if ip_cfg.vl_line_trace:
@@ -373,10 +358,12 @@ class VerilatorImportPass( BasePass ):
             component_name        = ip_cfg.translated_top_module,
             has_clk               = int(ph_cfg.has_clk),
             clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                    next(filter(lambda x: x[0]=='clk', packed_ports))[1],
+                                    next(filter(lambda x: x[0]=='clk', ports))[1],
             lib_file              = ip_cfg.get_shared_lib_path(),
             port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
             port_defs             = '\n'.join( port_defs ),
+            structs_input         = '\n'.join( structs_input ),
+            structs_output        = '\n'.join( structs_output ),
             set_comb_input        = '\n'.join( set_comb_input ),
             set_comb_output       = '\n'.join( set_comb_output ),
             line_trace            = line_trace,
@@ -678,11 +665,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
   def _gen_vector_write( s, d, lhs, rhs, dtype, pos ):
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
-    _lhs, _rhs = s._verilator_name( lhs ), s._verilator_name( rhs )
     if d == 'i':
-      ret = [ f"{_rhs}[{l}:{r}] = {lhs}" ]
+      ret = [ f"{rhs}[{l}:{r}] = {lhs}" ]
     else:
-      ret = [ f"{_lhs} = {_rhs}[{l}:{r}]" ]
+      ret = [ f"{lhs} = {rhs}[{l}:{r}]" ]
     return ret, r
 
   def _gen_struct_write( s, d, lhs, rhs, dtype, pos ):
@@ -723,46 +709,60 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if not n_dim:
       dtype_nbits = dtype.get_length()
 
-      # If the top-level signal is a Bits, we
+      # We always name mangle now
+      mangled_rhs = rhs.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
+
+      set_comb = []
 
       if isinstance( dtype, rdt.Vector ):
-        return s._gen_ref_write( lhs, rhs, dtype_nbits )
+        blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+                     f'@s.update',
+                     f'def isignal_{mangled_rhs}():',
+                     f'  s.{mangled_rhs} = {rhs}' ]
+        # blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+                     # f's.{mangled_rhs}[0:{dtype_nbits}] //= {rhs}' ]
 
-      # If the top-level signal is a struct, we add the datatype to symbol?
+        set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
 
-      if isinstance( dtype, rdt.Struct ):
-        # We don't create a new struct if we are copying values from pymtl
-        # land to verilator, i.e. this port is the input to the imported
-        # component.
+      elif isinstance( dtype, rdt.Struct ):
+        # If the top-level signal is a struct, we add the datatype to symbol?
         dtype_name = dtype.get_class().__name__
         if dtype_name not in symbols:
           symbols[dtype_name] = dtype.get_class()
 
-        # We create a long Bits object tmp first
-        ret = [ f'tmp = Bits{dtype_nbits}(0)' ]
+        blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+                     f'@s.update',
+                     f'def istruct_{mangled_rhs}():' ]
 
-        # Then we write each struct field to tmp
-        body, pos = s._gen_struct_write( 'i', rhs, 'tmp', dtype, 0 )
-        ret.extend(body)
-
-        # At the end, we write tmp to the corresponding CFFI variable
-        ret.extend( s._gen_ref_write( lhs, 'tmp', dtype_nbits ) )
-
+        # We write each struct field to tmp
+        upblk_content, pos = s._gen_struct_write( 'i', rhs, 's.'+mangled_rhs, dtype, 0 )
         assert pos == dtype_nbits
-        return ret
+        make_indent( upblk_content, 1 )
+        blocks += upblk_content
 
-      assert False, f"unrecognized data type {dtype}!"
+        # We don't create a new struct if we are copying values from pymtl
+        # land to verilator, i.e. this port is the input to the imported
+        # component.
+        # At the end, we write tmp to the corresponding CFFI variable
+        set_comb = s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits )
+
+      else:
+        assert False, f"unrecognized data type {dtype}!"
+
+      return set_comb, blocks
 
     else:
-      ret = []
+      set_comb, structs = [], []
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
         _rhs = f"{rhs}[{idx}]"
-        ret.extend( s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:], symbols ) )
-      return ret
+        _set_comb, _structs = s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:], symbols )
+        set_comb += _set_comb
+        structs  += _structs
+      return set_comb, structs
 
   def gen_comb_input( s, packed_ports, symbols ):
-    ret = []
+    set_comb, structs = [], []
     # Read all input ports ( except for 'clk' ) from component ports into
     # the verilated model. We do NOT want `clk` signal to be read into
     # the verilated model because only the sequential update block of
@@ -774,8 +774,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(vname)
         rhs = f"s.{pname}"
-        ret += s.gen_port_array_input( lhs, rhs, dtype, p_n_dim, symbols )
-    return ret
+        _set_comb, _structs = s.gen_port_array_input( lhs, rhs, dtype, p_n_dim, symbols )
+        set_comb += _set_comb
+        structs  += _structs
+
+    return set_comb, structs
 
   #-------------------------------------------------------------------------
   # gen_comb_output
@@ -785,54 +788,73 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if not n_dim:
       dtype_nbits = dtype.get_length()
 
-      # If the top-level signal is a Bits, we directly
+      mangled_lhs = lhs.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
 
       if isinstance( dtype, rdt.Vector ):
-        return s._gen_ref_read( lhs, rhs, dtype_nbits )
+        blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+                     f'@s.update',
+                     f'def osignal_{mangled_lhs}():',
+                     f'  {lhs} = s.{mangled_lhs}' ]
+        # blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+                     # f's.{mangled_lhs}[0:{dtype_nbits}] //= {lhs}' ]
 
-      # If the top-level signal is a struct, we add the datatype to symbol?
+        set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
 
-      if isinstance( dtype, rdt.Struct ):
+      elif isinstance( dtype, rdt.Struct ):
+        # If the top-level signal is a struct, we add the datatype to symbol?
         dtype_name = dtype.get_class().__name__
         if dtype_name not in symbols:
           symbols[dtype_name] = dtype.get_class()
 
-        # We create a long Bits object tmp to accept CFFI value for struct
-        ret = [ f"tmp = Bits{dtype_nbits}(0)" ]
+        blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+                     f'@s.update',
+                     f'def ostruct_{mangled_lhs}():' ]
 
-        # Then we load the full Bits to tmp
-        ret.extend( s._gen_ref_read( 'tmp', rhs, dtype_nbits ) )
+        # We create a long Bits object to accept CFFI value for struct
+        # the temporary wire name
 
         # We create a new struct if we are copying values from verilator
         # world to pymtl land and send it out through the output of this
         # component
-        ret.append( f"{lhs} = {dtype_name}()" )
-        body, pos = s._gen_struct_write( 'o', lhs, 'tmp', dtype, 0 )
+        upblk_content = [ f"{lhs} = {dtype_name}()" ]
+        body, pos = s._gen_struct_write( 'o', lhs, 's.'+mangled_lhs, dtype, 0 )
         assert pos == dtype.get_length()
-        ret.extend( body )
 
-        return ret
+        upblk_content += body
+        make_indent( upblk_content, 1 )
 
-      assert False, f"unrecognized data type {dtype}!"
+        blocks += upblk_content
+
+        # We create a long Bits object tmp first
+        # Then we load the full Bits to tmp
+        set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+      else:
+        assert False, f"unrecognized data type {dtype}!"
+
+      return set_comb, blocks
 
     else:
-      ret = []
+      set_comb, structs = [], []
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
         _rhs = f"{rhs}[{idx}]"
-        ret += s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:], symbols )
-      return ret
+        _set_comb, _structs = s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:], symbols )
+        set_comb += _set_comb
+        structs  += _structs
+      return set_comb, structs
 
   def gen_comb_output( s, packed_ports, symbols ):
-    ret = []
+    set_comb, structs = [], []
     for pname, vname, rtype in packed_ports:
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
         lhs = f"s.{pname}"
         rhs = "_ffi_m." + s._verilator_name(vname)
-        ret.extend( s.gen_port_array_output( lhs, rhs, dtype, p_n_dim, symbols ) )
-    return ret
+        _set_comb, _structs = s.gen_port_array_output( lhs, rhs, dtype, p_n_dim, symbols )
+        set_comb += _set_comb
+        structs  += _structs
+    return set_comb, structs
 
   #-------------------------------------------------------------------------
   # gen_line_trace_py

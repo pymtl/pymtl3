@@ -133,6 +133,10 @@ class {component_name}( Component ):
     # declare the port interface
 {port_defs}
 
+    # update blocks that converts ffi interface to/from pymtl ports
+{structs_input}
+{structs_output}
+
     @s.update
     def comb_upblk():
       # Set inputs

@@ -9,6 +9,7 @@ import copy
 import os
 import shutil
 import textwrap
+from collections import deque
 from hashlib import blake2b
 
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -114,62 +115,83 @@ def get_rtype( _rtype ):
     rtype = _rtype
   return n_dim, rtype
 
-def _mangle_port( pname, vname, port, n_dim ):
-  if not n_dim:
-    return [ ( pname, vname, port ) ]
-  else:
-    return [ ( pname, vname, rt.Array( n_dim, port ) ) ]
+#-----------------------------------------------------------------------
+# gen_mapped_ports
+#-----------------------------------------------------------------------
 
-def _mangle_ifc( pname, vname, ifc, n_dim ):
-  if not n_dim:
-    ret = []
-    all_properties = ifc.get_all_properties_packed()
-    for name, rtype in all_properties:
-      _n_dim, _rtype = get_rtype( rtype )
-      if isinstance( _rtype, rt.Port ):
-        ret += _mangle_port( f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
-      elif isinstance( _rtype, rt.InterfaceView ):
-        ret += _mangle_ifc(  f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
-      else:
-        assert False, f"{name} is not interface(s) or port(s)!"
-  else:
-    ret = []
-    for i in range( n_dim[0] ):
-      ret += _mangle_ifc( f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:] )
-  return ret
-
-def gen_packed_ports( rtype ):
-  """Return a list of (name, rt.Port ) that has all ports of `rtype`.
-  This method performs SystemVerilog backend-specific name mangling and
-  returns all ports that appear in the interface of component `rtype`.
-  Each tuple contains a port or an array of port that has any data type
+def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
+  """Return a list of (pname, vname, rt.Port/rt.Array ) that has all ports
+  of `rtype`. This method performs SystemVerilog backend-specific name
+  mangling and returns all ports that appear in the interface of component
+  `rtype`. Each tuple contains a port or an array of port that has any data type
   allowed in RTLIRDataType.
+  Shunning: Now we also take port_map into account. Two points to note:
+  1. If a port's pname appears as a key in port_map, we need to use the
+     corresponding value as vname
+  2. For an n-D array of ports, we enforce the rule that assumes either no
+     element is mapped in port_map, or _all_ of the elements are mapped.
   """
-  packed_ports = []
-  ports = rtype.get_ports_packed()
-  ifcs = rtype.get_ifc_views_packed()
-  for name, port in ports:
-    p_n_dim, p_rtype = get_rtype( port )
-    packed_ports += _mangle_port( name, name, p_rtype, p_n_dim )
-  for name, ifc in ifcs:
-    i_n_dim, i_rtype = get_rtype( ifc )
-    packed_ports += _mangle_ifc( name, name, i_rtype, i_n_dim )
-  return packed_ports
 
-#-----------------------------------------------------------------------
-# gen_mapped_packed_ports
-#-----------------------------------------------------------------------
+  def _mangle_port( pname, vname, port, n_dim ):
 
-def gen_mapped_packed_ports( m, p_map, has_clk = True, has_reset = True ):
-  # Create name-based port map
-  _packed_ports = gen_packed_ports( get_component_ifc_rtlir(m) )
+    # Normal port
+    if not n_dim:
+      return [ ( pname, port_map[pname] if pname in port_map else vname, port ) ]
 
-  packed_ports = []
-  for pname, vname, port in _packed_ports:
-    if not has_clk and pname == 'clk':      continue
-    if not has_reset and pname == 'reset':  continue
-    if pname in p_map:
-      packed_ports.append( (pname, p_map[pname], port) )
+    # Handle port array. We just assume if one element of the port array
+    # is mapped, we need the user to map every element in the array.
+    found = tot = 0
+    all_ports = []
+    Q = deque( [ (pname, vname, port, n_dim ) ] )
+    while Q:
+      _pname, _vname, _port, _n_dim = Q.popleft()
+      if not _n_dim:
+        if _pname in port_map:
+          found += 1
+          _vname = port_map[_pname]
+        all_ports.append( ( _pname, _vname, port ) )
+      else:
+        for i in range( n_dim[0] ):
+          Q.append( (f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:]) )
+
+    assert found == len(all_ports) or found == 0, \
+        f"{pname} is an {len(n_dim)}-D array of ports with {len(all_ports)} ports in total, " \
+        f" but only {found} of them is mapped. Please either map all of them or none of them."
+
+    if not found:
+      return [ ( pname, vname, rt.Array( n_dim, port ) ) ]
     else:
-      packed_ports.append( (pname, vname, port) )
-  return packed_ports
+      return all_ports
+
+  def _mangle_ifc( pname, vname, ifc, n_dim ):
+    if not n_dim:
+      ret = []
+      for name, rtype in ifc.get_all_properties_packed():
+        _n_dim, _rtype = get_rtype( rtype )
+        if isinstance( _rtype, rt.Port ):
+          ret += _mangle_port( f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
+        elif isinstance( _rtype, rt.InterfaceView ):
+          ret += _mangle_ifc(  f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
+        else:
+          assert False, f"{name} is not interface(s) or port(s)!"
+    else:
+      ret = []
+      for i in range( n_dim[0] ):
+        ret += _mangle_ifc( f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:] )
+    return ret
+
+  # We start from all packed ports/interfaces, and unpack arrays if
+  # it is found in a port.
+  rtype = get_component_ifc_rtlir(m)
+  ret = []
+
+  for name, port in rtype.get_ports_packed():
+    if not has_clk and name == 'clk':      continue
+    if not has_reset and name == 'reset':  continue
+    p_n_dim, p_rtype = get_rtype( port )
+    ret += _mangle_port( name, name, p_rtype, p_n_dim )
+
+  for name, ifc in rtype.get_ifc_views_packed():
+    i_n_dim, i_rtype = get_rtype( ifc )
+    ret += _mangle_ifc( name, name, i_rtype, i_n_dim )
+  return ret
