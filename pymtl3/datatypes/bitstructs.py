@@ -54,8 +54,9 @@ import warnings
 
 import py
 
-from .bits_import import *
 from pymtl3.utils import custom_exec
+
+from .bits_import import *
 
 #-------------------------------------------------------------------------
 # Constants

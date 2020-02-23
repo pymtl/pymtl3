@@ -6,7 +6,6 @@
 # Date   : Feb 14, 2020
 
 import os
-import random
 from collections import defaultdict, deque
 
 import py

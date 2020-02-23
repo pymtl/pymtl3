@@ -18,6 +18,7 @@ from pymtl3.dsl.errors import LeftoverPlaceholderError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.utils import custom_exec
 
+
 class GenDAGPass( BasePass ):
 
   def __call__( self, top ):
