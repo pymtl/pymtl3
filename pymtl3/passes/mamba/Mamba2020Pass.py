@@ -353,13 +353,13 @@ generated_block = wrapped_SCC_{0}
             cur_count += (br > 0)
             if cur_br >= branchiness_factor or cur_count >= branchy_block_factor:
               num_blks += len(cur_meta)
-              scc_schedule.append( self.compile_meta_block( cur_meta ) )
+              scc_schedule.append( cur_meta )
               cur_meta, cur_br, cur_count = [], 0, 0 # clear
           else:
             if br == 0:
               # If no branchy block available, directly start a new metablock
               num_blks += len(cur_meta)
-              scc_schedule.append( self.compile_meta_block( cur_meta ) )
+              scc_schedule.append( cur_meta )
               cur_meta, cur_br, cur_count = [ blk ], br, (br > 0)
             else:
               cur_meta.append( blk )
@@ -368,30 +368,33 @@ generated_block = wrapped_SCC_{0}
 
               if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
                 num_blks += len(cur_meta)
-                scc_schedule.append( self.compile_meta_block( cur_meta ) )
+                scc_schedule.append( cur_meta )
                 cur_meta, cur_br, cur_count = [], 0, 0 # clear
 
         if cur_meta:
           num_blks += len(cur_meta)
-          scc_schedule.append( self.compile_meta_block( cur_meta ) )
+          scc_schedule.append( cur_meta )
 
-        # TODO if the last meta block is too short, we might want to merge
-        # it back to the previous one to reduce one block?
         assert num_blks == len(tmp_schedule), f"Some blocks are missing during trace breaking of SCC "\
                                               f"({num_blks} compiled, {len(tmp_schedule)} total)"
 
-        # If there is only one meta block, we directly use tmp_schedule
-        if len(scc_schedule) == 1:
-          for i, b in enumerate(tmp_schedule):
-            blk_srcs.append( f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
-            _globals[f"blk{i}"] = b
+        blk_srcs = []
+        # TODO we might turn all meta blocks before the last one into meta
+        # blocks, and directly fold the last block into the main loop
+        # for i, meta in enumerate( scc_schedule[:-1] ):
+          # b = self.compile_meta_block( meta )
+          # blk_srcs.append( f"{b.__name__}()" )
+          # _globals[ b.__name__ ] = b
 
-        # Otherwise we generate an unrolled loop for scc_schedule
-        else:
-          blk_srcs = []
-          for i, b in enumerate(scc_schedule):
-            blk_srcs.append( f"{b.__name__}()" )
-            _globals[ b.__name__ ] = b
+        # for i, b in enumerate( scc_schedule[-1] ):
+          # blk_srcs.append( f"blk_of_last_meta{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+          # _globals[ f"blk_of_last_meta{i}" ] = b
+
+        for i, meta in enumerate( scc_schedule ):
+          b = self.compile_meta_block( meta )
+          blk_srcs.append( f"{b.__name__}()" )
+          _globals[ b.__name__ ] = b
+
 
       scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
                                        '\n    '.join(blk_srcs),
@@ -456,8 +459,7 @@ generated_block = wrapped_SCC_{0}
         else:
           insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], cnt), v )
 
-    # Put the graph schedule to _sched
-    top._sched.update_schedule = schedule = []
+    schedule = []
 
     # Branchiness factor is the bound of branchiness in a meta block.
     branchiness_factor = 20
@@ -497,18 +499,16 @@ generated_block = wrapped_SCC_{0}
         cur_count += (br > 0)
 
         if cur_br >= branchiness_factor:
-          schedule.append( self.compile_meta_block( cur_meta ) )
-          cur_br = cur_count = 0
-          cur_meta.clear()
+          schedule.append( cur_meta )
+          cur_meta, cur_br, cur_count = [], 0, 0
 
       else:
         (br, _), u = Q.pop()
 
         # If no branchy block available, directly start a new metablock
         if br == 0:
-          schedule.append( self.compile_meta_block( cur_meta ) )
-          cur_br = cur_count = 0
-          cur_meta.clear()
+          schedule.append( cur_meta )
+          cur_meta, cur_br, cur_count = [], 0, 0
 
           cur_meta.append( compile_scc(u) )
 
@@ -519,14 +519,36 @@ generated_block = wrapped_SCC_{0}
           cur_count += (br > 0)
 
           if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
-            schedule.append( self.compile_meta_block( cur_meta ) )
-            cur_br = cur_count = 0
-            cur_meta.clear()
+            schedule.append( cur_meta )
+            cur_meta, cur_br, cur_count = [], 0, 0
 
       expand_node( u )
 
     if cur_meta:
-      schedule.append( self.compile_meta_block( cur_meta ) )
+      schedule.append( cur_meta )
+
+    # Put the graph schedule to _sched
+    top._sched.update_schedule = []
+
+    # TODO Same as what we want to do for the last block in SCC, we might
+    # be able to remove the overhead of the last block's call_assembler_r
+    # since the tracing will end anyway. We compile all meta block except
+    # for the last one, and directly fold the last meta block into the
+    # main loop.
+    # We might want to add some heuristics to switch between two modes
+    # for i, meta in enumerate( schedule[:-1] ):
+      # top._sched.update_schedule.append( self.compile_meta_block( meta ) )
+    # for i, b in enumerate( schedule[-1] ):
+      # top._sched.update_schedule.append( b )
+      # if _DEBUG: print( f"blk_of_last_meta{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+    if len(schedule) == 1:
+      for i, b in enumerate( schedule[0] ):
+        top._sched.update_schedule.append( b )
+        if _DEBUG: print( f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+    else:
+      for i, meta in enumerate( schedule ):
+        top._sched.update_schedule.append( self.compile_meta_block( meta ) )
+
 
   def assemble_tick( self, top ):
 
