@@ -209,7 +209,7 @@ generated_block = wrapped_SCC_{0}
         # group them by host component so that we create less bytecode
 
         final_var_host = defaultdict(list)
-        for x in variables:
+        for x in final_variables:
           final_var_host[ x.get_host_component() ].append( x )
 
         # create a block of copy/check code for each host component. Need

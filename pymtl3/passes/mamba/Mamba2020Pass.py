@@ -47,16 +47,17 @@ class Mamba2020Pass( BasePass ):
     self.only_loop_at_top = { x: False for x in top._dag.genblks }
     v = CountBranchesLoops()
 
+    # Shunning: since each loop turns into call_assembler_r, a pure-loop
+    # update block is basically 0 branchiness and can be inserted anywhere.
+    # At the beginning I tried not to put those blocks into any metablock
+    # to avoid double call_assembler_r but it just turned out that there
+    # is no difference of where you put the call_assembler_r.. Plus,
+    # treating loop blocks as normal update block can activate subsequent
+    # schedulable 0-branchiness block.
+
     for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
       self.branchiness[ blk ], self.only_loop_at_top[ blk ] = v.enter( hostobj.get_update_block_info( blk )[-1] )
-
-    # count=0
-    # for i, x in enumerate( sorted(list(self.branchiness.items()), key=lambda x:x[1]) ):
-      # print(i, x)
-      # if x[1]>0:
-        # count+=1
-    # print(len(self.branchiness), count)
 
     self.schedule_ff( top )
 
@@ -65,7 +66,6 @@ class Mamba2020Pass( BasePass ):
     simple.schedule_posedge_flip( top )
 
     self.schedule_intra_cycle( top )
-
 
     self.assemble_tick( top )
 
@@ -82,11 +82,19 @@ class Mamba2020Pass( BasePass ):
     # Create custom global dict for all blocks inside the meta block
     _globals = { f"blk{i}": b for i, b in enumerate( blocks ) }
 
-    gen_src = f"def meta_block{meta_id}():\n  "
-    gen_src += "\n  ".join( [ f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" \
-                              for i, b in enumerate(blocks) ] )
-    # use custom_exec to compile the meta block
+    blk_srcs = []
+    for i, b in enumerate(blocks):
+      # This is a normal update block
+      if b in self.branchiness:
+        blk_srcs.append( f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+      # This is an SCC block which has zero BR and is a loop
+      else:
+        blk_srcs.append( f"blk{i}() # {b.__name__}" )
 
+    gen_src = f"def meta_block{meta_id}():\n  "
+    gen_src += "\n  ".join( blk_srcs )
+
+    # use custom_exec to compile the meta block
     _locals = {}
     custom_exec( py.code.Source( gen_src ).compile(), _globals, _locals )
     ret = _locals[ f'meta_block{meta_id}' ]
@@ -114,10 +122,13 @@ class Mamba2020Pass( BasePass ):
     if not top.get_all_update_ff():
       return
 
-    # tuples in ffs: ( awesomeloop, branchiness, blk )
+    # tuples in ffs: ( branchiness, blk )
 
-    ffs = [ (self.only_loop_at_top[x], self.branchiness[x], x) for x in top.get_all_update_ff() ]
-    ffs = sorted( ffs, key=lambda x:x[:2] )
+    ffs = []
+    for x in top.get_all_update_ff():
+      # Here we treat loop-only upblk as 0 branchiness
+      ffs.append( (0 if self.only_loop_at_top[x] else self.branchiness[x], x) )
+    ffs = sorted( ffs, key=lambda x:x[0] )
 
     # Divide all blks into meta blocks
 
@@ -130,14 +141,7 @@ class Mamba2020Pass( BasePass ):
 
     cur_meta, cur_br, cur_count = [], 0, 0
 
-    for i, (loop, br, blk) in enumerate( ffs ):
-      if loop: # this means the remaining blocks are all loops
-        if cur_meta:
-          schedule.append( self.compile_meta_block( cur_meta ) )
-        for j in range(i, len(ffs)):
-          schedule.append( ffs[j][2] )
-        break
-
+    for i, (br, blk) in enumerate( ffs ):
       if br == 0:
         cur_meta.append( blk )
 
@@ -182,7 +186,225 @@ class Mamba2020Pass( BasePass ):
 
     SCCs, G_new = kosaraju_scc( G, G_T )
 
-    # Now we generate super blocks for each SCC and produce final schedule
+    # This function compiles a SCC block
+    scc_id = 0 # global id across all sccs
+    def compile_scc( i ):
+      nonlocal scc_id
+
+      scc = SCCs[i]
+
+      if len(scc) == 1:
+        return list(scc)[0]
+
+      scc_id += 1
+      if _DEBUG: print( f"{'='*100}\n SCC{scc_id}\n{'='*100}" )
+
+      # For each non-trivial SCC, we need to figure out a intra-SCC
+      # linear schedule that minimizes the time to re-execute this SCC
+      # due to value changes. A bad schedule may inefficiently execute
+      # the SCC for many times, each of which changes a few signals.
+      # The current algorithm iteratively finds the "entry block" of
+      # the SCC and expand its adjancent blocks. The implementation is
+      # to first find the actual entry point, and then BFS to expand the
+      # footprint until all nodes are visited.
+
+      tmp_schedule = []
+      Q = deque()
+
+      if scc_pred[i] is None:
+        # We start bfs from the block that has the least number of input
+        # edges in the SCC
+        InD = { v: 0 for v in scc }
+        for (u, v) in E: # u -> v
+          if u in scc and v in scc:
+            InD[ v ] += 1
+        Q.append( max(InD, key=InD.get) )
+
+      else:
+        # We start bfs with the blocks that are successors of the
+        # predecessor scc in the previous SCC-level topological sort.
+        pred = set( SCCs[ scc_pred[i] ] )
+        # Sort by names for a fixed outcome
+        for x in sorted( scc, key = lambda x: x.__name__ ):
+          for v in G_T[x]: # find reversed edges point back to pred SCC
+            if v in pred:
+              Q.append( x )
+
+      # Perform bfs to find a heuristic schedule
+      visited = set(Q)
+      while Q:
+        u = Q.popleft()
+        tmp_schedule.append( u )
+        for v in G[u]:
+          if v in scc and v not in visited:
+            Q.append( v )
+            visited.add( v )
+
+      variables = set()
+      for (u, v) in E:
+        # Collect all variables that triggers other blocks in the SCC
+        if u in scc and v in scc:
+          variables.update( constraint_objs[ (u, v) ] )
+
+      if len(variables) == 0:
+        raise Exception("There is a cyclic dependency without involving variables."
+                        "Probably a loop that involves update_once:\n{}".format(", ".join( [ x.__name__ for x in scc] )))
+
+      # generate a loop for scc
+      # Shunning: we just simply loop over the whole SCC block
+      # TODO performance optimizations using Mamba techniques within a SCC block
+
+      template = """
+from copy import deepcopy
+def wrapped_SCC_{0}():
+  N = 0
+  while True:
+    N += 1
+    if N > 100:
+      raise Exception("Combinational loop detected at runtime in {{{4}}} after 100 iters!")
+    {1}
+    {3}
+    {2}
+    # print( "SCC block{0} is executed", num_iters, "times" )
+    break
+generated_block = wrapped_SCC_{0}
+"""
+
+      # clean up non-top variables if top is there. For slices of Bits
+      # we directly use the top level wide Bits since Bits clone is
+      # rpython code
+
+      final_variables = set()
+
+      for x in sorted( variables, key=repr ):
+        w = x.get_top_level_signal()
+        if w is x:
+          final_variables.add( x )
+          continue
+
+        # w is not x
+        if issubclass( w._dsl.Type, Bits ):
+          if w not in final_variables:
+            final_variables.add( w )
+        elif is_bitstruct_class( w._dsl.Type ):
+          if w not in final_variables:
+            final_variables.add( x )
+        else:
+          final_variables.add( x )
+
+      # also group them by common ancestor to reduce byte code
+      # TODO use longest-common-prefix (LCP) algorithms ...
+
+      final_var_host = defaultdict(list)
+      for x in final_variables:
+        final_var_host[ x.get_host_component() ].append( x )
+
+      # Then, we generate the Python code that saves variables at the
+      # beginning of each SCC iteration and the code that checks if the
+      # values of those variables have changed
+      copy_srcs  = []
+      check_srcs = []
+
+      var_id = 0
+      for host, var_list in final_var_host.items():
+        hostlen = len(repr(host))
+
+        copy_srcs.append( f"host = {host!r}" )
+        check_srcs.append( f"host = {host!r}" )
+
+        sub_check_srcs = []
+
+        for var in var_list:
+          var_id += 1
+          subname = repr(var)[hostlen+1:]
+          if issubclass( var._dsl.Type, Bits ):     copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+          elif is_bitstruct_class( var._dsl.Type ): copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+          else:                                     copy_srcs.append( f"t{var_id}=deepcopy(host.{subname})" )
+
+          sub_check_srcs.append( f"host.{subname} != t{var_id}" )
+
+        check_srcs.append( f"if { ' or '.join(sub_check_srcs)}: continue" )
+
+      # Divide all blks into meta blocks
+      # Branchiness factor is the bound of branchiness in a meta block.
+      branchiness_factor = 20
+      branchy_block_factor = 6
+
+      num_blks = 0  # sanity check
+      cur_meta, cur_br, cur_count = [], 0, 0
+      scc_schedule = []
+
+      _globals = { 's': top }
+      blk_srcs = []
+
+      # If there is only 10 blocks, we directly unroll it
+      if len(tmp_schedule) < 10:
+        blk_srcs = []
+        for i, b in enumerate(tmp_schedule):
+          blk_srcs.append( f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+          _globals[f"blk{i}"] = b # put it into the block's closure
+
+      else:
+        for i, blk in enumerate( tmp_schedule ):
+          # Same here. If an update block only has top-level loop, br = 0
+          br = 0 if self.only_loop_at_top[blk] else self.branchiness[blk]
+          if cur_br == 0:
+            cur_meta.append( blk )
+            cur_br += br
+            cur_count += (br > 0)
+            if cur_br >= branchiness_factor or cur_count >= branchy_block_factor:
+              num_blks += len(cur_meta)
+              scc_schedule.append( self.compile_meta_block( cur_meta ) )
+              cur_meta, cur_br, cur_count = [], 0, 0 # clear
+          else:
+            if br == 0:
+              # If no branchy block available, directly start a new metablock
+              num_blks += len(cur_meta)
+              scc_schedule.append( self.compile_meta_block( cur_meta ) )
+              cur_meta, cur_br, cur_count = [ blk ], br, (br > 0)
+            else:
+              cur_meta.append( blk )
+              cur_br += br
+              cur_count += (br > 0)
+
+              if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
+                num_blks += len(cur_meta)
+                scc_schedule.append( self.compile_meta_block( cur_meta ) )
+                cur_meta, cur_br, cur_count = [], 0, 0 # clear
+
+        if cur_meta:
+          num_blks += len(cur_meta)
+          scc_schedule.append( self.compile_meta_block( cur_meta ) )
+
+        # TODO if the last meta block is too short, we might want to merge
+        # it back to the previous one to reduce one block?
+        assert num_blks == len(tmp_schedule), f"Some blocks are missing during trace breaking of SCC "\
+                                              f"({num_blks} compiled, {len(tmp_schedule)} total)"
+
+        # If there is only one meta block, we directly use tmp_schedule
+        if len(scc_schedule) == 1:
+          for i, b in enumerate(tmp_schedule):
+            blk_srcs.append( f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+            _globals[f"blk{i}"] = b
+
+        # Otherwise we generate an unrolled loop for scc_schedule
+        else:
+          blk_srcs = []
+          for i, b in enumerate(scc_schedule):
+            blk_srcs.append( f"{b.__name__}()" )
+            _globals[ b.__name__ ] = b
+
+      scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
+                                       '\n    '.join(blk_srcs),
+                                       ", ".join( [ x.__name__ for x in scc] ) )
+
+      if _DEBUG: print(scc_block_src, "\n", "="*100 )
+
+      _locals  = {}
+      custom_exec(py.code.Source( scc_block_src ).compile(), _globals, _locals)
+      return _locals[ 'generated_block' ]
+
+    # Now we generate meta blocks for each SCC and produce final schedule
 
     constraint_objs = top._dag.constraint_objs
 
@@ -193,6 +415,8 @@ class Mamba2020Pass( BasePass ):
     trivial_loop_sccs = set()
 
     for u, vs in G_new.items():
+      # Preprocess some sets to mark non-trivial sccs and loop-only sccs
+      # for later lookup
       if len(SCCs[u]) > 1:
         nontrivial_sccs.add( u )
       elif self.only_loop_at_top[ list(SCCs[u])[0] ]:
@@ -201,30 +425,37 @@ class Mamba2020Pass( BasePass ):
       for v in vs:
         InD[ v ] += 1
 
-    # Shunning: reuse this from TraceBreakingPass. Not the most
-    # efficient one
+    # Shunning: reuse this binary search from TraceBreakingPass. Not the
+    # most efficient one. Ideally we want to use two heaps or a balanced
+    # binary search tree ... TODO
 
-    def insert_sortedlist( arr, priority, item ):
+    def insert_sortedlist( arr, key, item ):
       left, right = 0, len(arr)
       while left < right-1:
         mid = (left + right) >> 1
-        if priority <= arr[mid][0]:
+        if key <= arr[mid][0]:
           right = mid
         else:
           left = mid
-      arr.insert( left, (priority, item) )
+      arr.insert( left, ( key, item) )
 
+    # scc_pred is for heuristic hamiltonian path ... It records for each
+    # scc, in the schedule who is the predecessor that reduce its input
+    # degree to zero.
     scc_pred = {}
 
-    Q_trivial = []
-    Q_nontrivial = deque()
+    Q = []
+    cnt = 0
+
+    # Put the graph input nodes into the queue
     for v in range(len(SCCs)):
       if not InD[v]:
+        cnt += 1
         scc_pred[v] = None
         if v in nontrivial_sccs or v in trivial_loop_sccs:
-          Q_nontrivial.append( v )
+          insert_sortedlist( Q, (0, cnt), v )
         else:
-          insert_sortedlist( Q_trivial, self.branchiness[list(SCCs[v])[0]], v )
+          insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], cnt), v )
 
     # Put the graph schedule to _sched
     top._sched.update_schedule = schedule = []
@@ -235,266 +466,65 @@ class Mamba2020Pass( BasePass ):
     # Block factor is the bound of the number of branchy blocks in a
     # meta block.
     branchy_block_factor = 6
-    cur_meta = []
-    cur_br = cur_count = 0
 
-    scc_id = 0
-
+    # refactored code ...
     def expand_node( u ):
+      nonlocal cnt
       for v in G_new[u]:
         InD[v] -= 1
         if not InD[v]:
+          cnt += 1
           scc_pred[ v ] = u
+          # Now we use (br, timestamp) as the key because we want to kind
+          # of preserve DFS behavior on top of the branch priority
+          # Basically we want to pop in a DFS order such that the variable
+          # most recently written can directly feed into the next block
           if v in nontrivial_sccs or v in trivial_loop_sccs:
-            Q_nontrivial.append( v )
+            insert_sortedlist( Q, (0, cnt), v )
           else:
-            insert_sortedlist( Q_trivial, self.branchiness[list(SCCs[v])[0]], v )
+            insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], cnt), v )
 
     # Run topological sort
 
-    while Q_trivial or Q_nontrivial:
-      # Is it possible that Q_nontrivial extend itself?
-      # Is it possbile that cur_meta got cut in the middle???
+    cur_meta = []
+    cur_br = cur_count = 0
 
-      if Q_trivial:
-        if cur_br == 0:
-          (br, u) = Q_trivial.pop(0)
-          scc = list(SCCs[u])[0]
+    while Q:
+      if cur_br == 0:
+        (br, _), u = Q.pop(0)
 
-          cur_meta.append( scc )
-          cur_br += br
-          cur_count += (br > 0)
+        cur_meta.append( compile_scc(u) )
+        cur_br += br
+        cur_count += (br > 0)
 
-          if cur_br >= branchiness_factor:
-            schedule.append( self.compile_meta_block( cur_meta ) )
-            cur_br = cur_count = 0
-            cur_meta.clear()
-
-        else:
-          (br, u) = Q_trivial.pop()
-
-          scc = list(SCCs[u]) [0]
-          # If no branchy block available, directly start a new metablock
-          if br == 0:
-            schedule.append( self.compile_meta_block( cur_meta ) )
-            cur_br = cur_count = 0
-            cur_meta.clear()
-
-            cur_meta.append( scc )
-
-          # Limit the number of branchiness and number of branchy blocks
-          else:
-            cur_meta.append( scc )
-            cur_br += br
-            cur_count += (br > 0)
-
-            if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
-              schedule.append( self.compile_meta_block( cur_meta ) )
-              cur_br = cur_count = 0
-              cur_meta.clear()
-
-        expand_node( u )
-
-      else:
-        if cur_meta:
+        if cur_br >= branchiness_factor:
           schedule.append( self.compile_meta_block( cur_meta ) )
           cur_br = cur_count = 0
           cur_meta.clear()
 
-        while Q_nontrivial:
-          i = Q_nontrivial.popleft()
-          scc = SCCs[i]
+      else:
+        (br, _), u = Q.pop()
 
-          # expand first
-          expand_node( i )
+        # If no branchy block available, directly start a new metablock
+        if br == 0:
+          schedule.append( self.compile_meta_block( cur_meta ) )
+          cur_br = cur_count = 0
+          cur_meta.clear()
 
-          # Generate a func for SCC
+          cur_meta.append( compile_scc(u) )
 
-          # Trivial -- continue
-          if len(scc) == 1:
-            schedule.append( list(scc)[0] )
-            if _DEBUG: print(list(scc)[0])
-            continue
+        # Limit the number of branchiness and number of branchy blocks
+        else:
+          cur_meta.append( compile_scc(u) )
+          cur_br += br
+          cur_count += (br > 0)
 
-          # For each non-trivial SCC, we need to figure out a intra-SCC
-          # linear schedule that minimizes the time to re-execute this SCC
-          # due to value changes. A bad schedule may inefficiently execute
-          # the SCC for many times, each of which changes a few signals.
-          # The current algorithm iteratively finds the "entry block" of
-          # the SCC and expand its adjancent blocks. The implementation is
-          # to first find the actual entry point, and then BFS to expand the
-          # footprint until all nodes are visited.
+          if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
+            schedule.append( self.compile_meta_block( cur_meta ) )
+            cur_br = cur_count = 0
+            cur_meta.clear()
 
-          tmp_schedule = []
-          Q = deque()
-
-          if scc_pred[i] is None:
-            # We start bfs from the block that has the least number of input
-            # edges in the SCC
-            InD = { v: 0 for v in scc }
-            for (u, v) in E: # u -> v
-              if u in scc and v in scc:
-                InD[ v ] += 1
-            Q.append( max(InD, key=InD.get) )
-
-          else:
-            # We start bfs with the blocks that are successors of the
-            # predecessor scc in the previous SCC-level topological sort.
-            pred = set( SCCs[ scc_pred[i] ] )
-            # Sort by names for a fixed outcome
-            for x in sorted( scc, key = lambda x: x.__name__ ):
-              for v in G_T[x]: # find reversed edges point back to pred SCC
-                if v in pred:
-                  Q.append( x )
-
-          # Perform bfs to find a heuristic schedule
-          visited = set(Q)
-          while Q:
-            u = Q.popleft()
-            tmp_schedule.append( u )
-            for v in G[u]:
-              if v in scc and v not in visited:
-                Q.append( v )
-                visited.add( v )
-
-          scc_id += 1
-          variables = set()
-          for (u, v) in E:
-            # Collect all variables that triggers other blocks in the SCC
-            if u in scc and v in scc:
-              variables.update( constraint_objs[ (u, v) ] )
-
-          if len(variables) == 0:
-            raise Exception("There is a cyclic dependency without involving variables."
-                            "Probably a loop that involves update_once:\n{}".format(", ".join( [ x.__name__ for x in scc] )))
-
-          # generate a loop for scc
-          # Shunning: we just simply loop over the whole SCC block
-          # TODO performance optimizations using Mamba techniques within a SCC block
-
-          template = """
-from copy import deepcopy
-def wrapped_SCC_{0}():
-  N = 0
-  while True:
-    N += 1
-    if N > 100:
-      raise Exception("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
-    {1}
-    scc_tick_func()
-    {2}
-    # print( "SCC block{0} is executed", num_iters, "times" )
-    break
-generated_block = wrapped_SCC_{0}
-          """
-
-          copy_srcs  = []
-          check_srcs = []
-          # print_srcs = []
-
-          # clean up non-top variables if top is there
-          # also group them by host component
-
-          final_variables = set()
-
-          for x in sorted( variables, key=repr ):
-            w = x.get_top_level_signal()
-            if w is x:
-              final_variables.add( x )
-              continue
-
-            # w is not x
-            if issubclass( w._dsl.Type, Bits ):
-              if w not in final_variables:
-                final_variables.add( w )
-            elif is_bitstruct_class( w._dsl.Type ):
-              if w not in final_variables:
-                final_variables.add( x )
-            else:
-              final_variables.add( x )
-
-          final_var_host = defaultdict(list)
-          for x in variables:
-            final_var_host[ x.get_host_component() ].append( x )
-
-          var_id = 0
-          for host, var_list in final_var_host.items():
-            hostlen = len(repr(host))
-
-            copy_srcs.append( f"host = {host!r}" )
-            check_srcs.append( f"host = {host!r}" )
-
-            sub_check_srcs = []
-
-            for var in var_list:
-              var_id += 1
-              subname = repr(var)[hostlen+1:]
-              if issubclass( var._dsl.Type, Bits ):     copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
-              elif is_bitstruct_class( var._dsl.Type ): copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
-              else:                                     copy_srcs.append( f"t{var_id}=deepcopy(host.{subname})" )
-
-              sub_check_srcs.append( f"host.{subname} != t{var_id}" )
-
-            check_srcs.append( f"if { ' or '.join(sub_check_srcs)}: continue" )
-
-          scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
-                                           ", ".join( [ x.__name__ for x in scc] ) )
-
-          # Divide all blks into meta blocks
-          # Branchiness factor is the bound of branchiness in a meta block.
-          branchiness_factor = 20
-          branchy_block_factor = 6
-
-          cur_meta, cur_br, cur_count = [], 0, 0
-
-          scc_schedule = []
-
-          num_blks = 0  # sanity check
-
-          if _DEBUG: print( f"{'='*100}\n SCC{scc_id}\n{'='*100}" )
-
-          for i, blk in enumerate( tmp_schedule ):
-            br = self.branchiness[blk]
-            if cur_br == 0:
-              cur_meta.append( blk )
-              cur_br += br
-              cur_count += (br > 0)
-              if cur_br >= branchiness_factor or cur_count >= branchy_block_factor:
-                num_blks += len(cur_meta)
-                scc_schedule.append( self.compile_meta_block( cur_meta ) )
-                cur_meta, cur_br, cur_count = [], 0, 0 # clear
-            else:
-              if br == 0:
-                # If no branchy block available, directly start a new metablock
-                num_blks += len(cur_meta)
-                scc_schedule.append( self.compile_meta_block( cur_meta ) )
-                cur_meta, cur_br, cur_count = [ blk ], br, (br > 0)
-              else:
-                cur_meta.append( blk )
-                cur_br += br
-                cur_count += (br > 0)
-
-                if cur_br + br >= branchiness_factor or cur_count + 1 >= branchy_block_factor:
-                  num_blks += len(cur_meta)
-                  scc_schedule.append( self.compile_meta_block( cur_meta ) )
-                  cur_meta, cur_br, cur_count = [], 0, 0 # clear
-
-          if cur_meta:
-            num_blks += len(cur_meta)
-            scc_schedule.append( self.compile_meta_block( cur_meta ) )
-
-          assert num_blks == len(tmp_schedule), f"Some blocks are missing during trace breaking of SCC "\
-                                                f"({num_blks} compiled, {len(tmp_schedule)} total)"
-          scc_tick_func = UnrollTickPass.gen_tick_function( scc_schedule )
-
-          _globals = { 's': top, 'scc_tick_func': scc_tick_func }
-          _locals  = {}
-          if _DEBUG: print(scc_block_src)
-          if _DEBUG: print("="*100 )
-
-          custom_exec(py.code.Source( scc_block_src ).compile(), _globals, _locals)
-
-          schedule.append( _locals[ 'generated_block' ] )
+      expand_node( u )
 
     if cur_meta:
       schedule.append( self.compile_meta_block( cur_meta ) )
@@ -549,7 +579,3 @@ generated_block = wrapped_SCC_{0}
       def eval_combinational():
         raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(tmp)[1:]} is a method port.")
       top.eval_combinational = eval_combinational
-
-    # print("="*50)
-    # for x in final_schedule:
-      # print(x)
