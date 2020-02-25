@@ -239,8 +239,8 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     _connections = m._pass_structural_rtlir_gen.connections
     for writer, reader in _connections:
       connections.append( s.rtlir_tr_connection(
-        s.rtlir_signal_expr_translation( writer, m ),
-        s.rtlir_signal_expr_translation( reader, m )
+        s.rtlir_signal_expr_translation( writer, m, 'writer' ),
+        s.rtlir_signal_expr_translation( reader, m, 'reader' )
       ) )
     s.structural.connections[m] = s.rtlir_tr_connections( connections )
 
@@ -263,7 +263,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   # rtlir_signal_expr_translation
   #-----------------------------------------------------------------------
 
-  def rtlir_signal_expr_translation( s, expr, m ):
+  def rtlir_signal_expr_translation( s, expr, m, status = 'intermediate' ):
     """Translate a signal expression in RTLIR into its backend representation.
 
     Only the following operations are supported at L1:
@@ -272,34 +272,34 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     """
     if isinstance( expr, sexp.CurComp ):
       comp_id, comp_rtype = expr.get_component_id(), expr.get_rtype()
-      return s.rtlir_tr_current_comp( comp_id, comp_rtype )
+      return s.rtlir_tr_current_comp( comp_id, comp_rtype, status )
 
     elif isinstance( expr, sexp.CurCompAttr ):
       return s.rtlir_tr_current_comp_attr(
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_attr() )
+        expr.get_attr(), status )
 
     elif isinstance( expr, sexp.PortIndex ):
       return s.rtlir_tr_port_array_index(
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        expr.get_index(), status )
 
     elif isinstance( expr, sexp.WireIndex ):
       return s.rtlir_tr_wire_array_index(
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        expr.get_index(), status )
 
     elif isinstance( expr, sexp.ConstIndex ):
       return s.rtlir_tr_const_array_index(
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        expr.get_index(), status )
 
     elif isinstance( expr, sexp.BitSelection ):
       base = expr.get_base()
       assert not isinstance(base, (sexp.PartSelection, sexp.BitSelection)), \
         f'bit selection {expr} over bit/part selection {base} is not allowed!'
       return s.rtlir_tr_bit_selection(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ), expr.get_index() )
+        s.rtlir_signal_expr_translation( expr.get_base(), m ), expr.get_index(), status )
 
     elif isinstance( expr, sexp.PartSelection ):
       base = expr.get_base()
@@ -307,13 +307,13 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
         f'part selection {expr} over bit/part selection {base} is not allowed!'
       start, stop = expr.get_slice()[0], expr.get_slice()[1]
       return s.rtlir_tr_part_selection(
-        s.rtlir_signal_expr_translation( expr.get_base(), m ), start, stop )
+        s.rtlir_signal_expr_translation( expr.get_base(), m ), start, stop, status )
 
     elif isinstance( expr, sexp.ConstInstance ):
       dtype = expr.get_rtype().get_dtype()
       assert isinstance( dtype, rdt.Vector ), \
           f'{dtype} is not supported at L1!'
-      return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value() )
+      return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value(), status )
 
     # Other operations are not supported at L1
     else:
@@ -361,32 +361,32 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     raise NotImplementedError()
 
   # Signal operations
-  def rtlir_tr_bit_selection( s, base_signal, index ):
+  def rtlir_tr_bit_selection( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_part_selection( s, base_signal, start, stop ):
+  def rtlir_tr_part_selection( s, base_signal, start, stop, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_port_array_index( s, base_signal, index ):
+  def rtlir_tr_port_array_index( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_wire_array_index( s, base_signal, index ):
+  def rtlir_tr_wire_array_index( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_const_array_index( s, base_signal, index ):
+  def rtlir_tr_const_array_index( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_current_comp_attr( s, base_signal, attr ):
+  def rtlir_tr_current_comp_attr( s, base_signal, attr, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_current_comp( s, comp_id, comp_rtype ):
+  def rtlir_tr_current_comp( s, comp_id, comp_rtype, status ):
     raise NotImplementedError()
 
   # Miscs
   def rtlir_tr_var_id( s, var_id ):
     raise NotImplementedError()
 
-  def rtlir_tr_literal_number( s, nbits, value ):
+  def rtlir_tr_literal_number( s, nbits, value, status ):
     raise NotImplementedError()
 
   def rtlir_tr_component_unique_name( s, c_rtype ):

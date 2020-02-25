@@ -25,6 +25,9 @@ class YosysTranslator( VTranslator ):
 
 """
 
+  def rtlir_tr_initialize( s ):
+    pass
+
   def rtlir_tr_src_layout( s, hierarchy ):
     s.set_header()
     name = s._top_module_full_name

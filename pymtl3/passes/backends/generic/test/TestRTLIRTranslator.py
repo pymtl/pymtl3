@@ -25,6 +25,9 @@ def get_pretty( namespace, attr, newline=True ):
 class TestRTLIRTranslator( RTLIRTranslator,
     TestStructuralTranslator, TestBehavioralTranslator ):
 
+  def rtlir_tr_initialize( s ):
+    pass
+
   def rtlir_tr_src_layout( s, hierarchy ):
     # struct definitions
     struct_defs = \

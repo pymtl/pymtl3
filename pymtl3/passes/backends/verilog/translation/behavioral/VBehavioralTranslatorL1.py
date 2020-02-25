@@ -5,6 +5,7 @@
 # Date   : March 18, 2019
 """Provide the level 1 SystemVerilog translator implementation."""
 
+from collections import deque
 
 from pymtl3.datatypes import Bits, Bits32
 from pymtl3.passes.backends.generic.behavioral.BehavioralTranslatorL1 import (
@@ -110,9 +111,18 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s.SEQUENTIAL    = 2
     s.upblk_type    = s.NONE
     s._is_verilog_reserved = is_reserved
+    s._unpacked_q   = deque()
 
   def is_verilog_reserved( s, name ):
     return s._is_verilog_reserved( name )
+
+  def process_unpacked_q( s, node, signal, signal_tplt ):
+    if isinstance( node.Type, rt.Port ):
+      ret = signal_tplt.format(''.join( [f'[{i}]' for i in list(s._unpacked_q)]))
+      s._unpacked_q.clear()
+      return ret
+    else:
+      return signal
 
   def enter( s, blk, rtlir ):
     """Entry point for RTLIR generation."""
@@ -144,7 +154,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_CombUpblk( s, node ):
-    """Return the V representation of statements inside it."""
+    """Return the Verilog representation of statements inside it."""
     blk_name = node.name
     src      = []
     body     = []
@@ -169,7 +179,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_SeqUpblk( s, node ):
-    """Return the V representation of statements inside it."""
+    """Return the Verilog representation of statements inside it."""
     blk_name = node.name
     src      = []
     body     = []
@@ -425,6 +435,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
         return f'{value}[{idx}]'
       else:
+        # is this branch ever taken?
         return f'{value}__{idx}'
 
     # Index on a signal
@@ -460,7 +471,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
       return f'{value}[{base} +: {size}]'
 
-    # Reguarl [ lower : upper ] syntax
+    # Regular [ lower : upper ] syntax
     else:
       if hasattr( node.upper, '_value' ):
         upper = str( int( node.upper._value - Bits32(1) ) )

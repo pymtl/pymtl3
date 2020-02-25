@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 from importlib import reload
+from itertools import cycle
 from textwrap import indent
 
 from pymtl3 import Placeholder
@@ -239,7 +240,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for name, v_name, port in ports:
+    for _, v_name, port in ports:
       if v_name:
         port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
@@ -248,7 +249,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for name, v_name, port in ports:
+    for _, v_name, port in ports:
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
@@ -358,7 +359,7 @@ class VerilatorImportPass( BasePass ):
             component_name        = ip_cfg.translated_top_module,
             has_clk               = int(ph_cfg.has_clk),
             clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                    next(filter(lambda x: x[0]=='clk', ports))[1],
+                                    next(filter(lambda x: x[0][0]=='clk', ports))[1],
             lib_file              = ip_cfg.get_shared_lib_path(),
             port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
             port_defs             = '\n'.join( port_defs ),
@@ -704,9 +705,10 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_comb_input
   #-------------------------------------------------------------------------
 
-  def gen_port_array_input( s, lhs, rhs, dtype, n_dim, symbols ):
+  def gen_port_array_input( s, lhs, rhs, pnames, dtype, n_dim, symbols ):
 
     if not n_dim:
+      rhs = rhs.format(next(pnames))
       dtype_nbits = dtype.get_length()
 
       # We always name mangle now
@@ -719,8 +721,6 @@ m->{name}{sub} = {deference}model->{name}{sub};
                      f'@s.update',
                      f'def isignal_{mangled_rhs}():',
                      f'  s.{mangled_rhs} = {rhs}' ]
-        # blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
-                     # f's.{mangled_rhs}[0:{dtype_nbits}] //= {rhs}' ]
 
         set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
 
@@ -756,7 +756,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
         _rhs = f"{rhs}[{idx}]"
-        _set_comb, _structs = s.gen_port_array_input( _lhs, _rhs, dtype, n_dim[1:], symbols )
+        _set_comb, _structs = s.gen_port_array_input( _lhs, _rhs, pnames, dtype, n_dim[1:], symbols )
         set_comb += _set_comb
         structs  += _structs
       return set_comb, structs
@@ -768,13 +768,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
 
-    for pname, vname, rtype in packed_ports:
+    for pnames, vname, rtype in packed_ports:
+      pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
-      if s._get_direction( p_rtype ) == 'InPort' and pname != 'clk' and vname:
+      if s._get_direction( p_rtype ) == 'InPort' and pnames[0] != 'clk' and vname:
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(vname)
-        rhs = f"s.{pname}"
-        _set_comb, _structs = s.gen_port_array_input( lhs, rhs, dtype, p_n_dim, symbols )
+        rhs = "s.{}"
+        _set_comb, _structs = s.gen_port_array_input( lhs, rhs, pnames_iter, dtype, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
 
@@ -784,8 +785,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_comb_output
   #-------------------------------------------------------------------------
 
-  def gen_port_array_output( s, lhs, rhs, dtype, n_dim, symbols ):
+  def gen_port_array_output( s, lhs, pnames, rhs, dtype, n_dim, symbols ):
     if not n_dim:
+      lhs = lhs.format(next(pnames))
       dtype_nbits = dtype.get_length()
 
       mangled_lhs = lhs.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
@@ -795,8 +797,6 @@ m->{name}{sub} = {deference}model->{name}{sub};
                      f'@s.update',
                      f'def osignal_{mangled_lhs}():',
                      f'  {lhs} = s.{mangled_lhs}' ]
-        # blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
-                     # f's.{mangled_lhs}[0:{dtype_nbits}] //= {lhs}' ]
 
         set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
 
@@ -838,20 +838,21 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
         _rhs = f"{rhs}[{idx}]"
-        _set_comb, _structs = s.gen_port_array_output( _lhs, _rhs, dtype, n_dim[1:], symbols )
+        _set_comb, _structs = s.gen_port_array_output( _lhs, pnames, _rhs, dtype, n_dim[1:], symbols )
         set_comb += _set_comb
         structs  += _structs
       return set_comb, structs
 
   def gen_comb_output( s, packed_ports, symbols ):
     set_comb, structs = [], []
-    for pname, vname, rtype in packed_ports:
+    for pnames, vname, rtype in packed_ports:
+      pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
-        lhs = f"s.{pname}"
+        lhs = "s.{}"
         rhs = "_ffi_m." + s._verilator_name(vname)
-        _set_comb, _structs = s.gen_port_array_output( lhs, rhs, dtype, p_n_dim, symbols )
+        _set_comb, _structs = s.gen_port_array_output( lhs, pnames_iter, rhs, dtype, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
     return set_comb, structs
@@ -862,9 +863,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_line_trace_py( s, packed_ports ):
     """Return the line trace method body that shows all interface ports."""
-    template = '{0}={{s.{0}}}'
-    return "      return f'" + " ".join( [ template.format( pname ) for pname, _, _ in packed_ports ] ) + "'"
-
+    template = '{0}={{s.{0}}},'
+    trace_string = ''
+    for pnames, _, _ in packed_ports:
+      for pname in pnames:
+        trace_string += ' ' + template.format( pname )
+    return f"      return f'{trace_string}'"
 
   #-------------------------------------------------------------------------
   # gen_internal_line_trace_py
@@ -872,17 +876,21 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_internal_line_trace_py( s, packed_ports ):
     """Return the line trace method body that shows all CFFI ports."""
-    ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
-    template = \
-      "lt += '{vname} = {{}}, '.format(full_vector(s.{pname}, _ffi_m.{vname}))"
-    for pname, vname, port in packed_ports:
-      if vname:
-        pname = s._verilator_name(pname)
-        vname = s._verilator_name(vname)
-        ret.append( template.format(**locals()) )
-    ret.append( 'return lt' )
-    make_indent( ret, 2 )
-    return '\n'.join( ret )
+    # Now that there could be multiple pnames that correspond to one vname,
+    # I'm not sure how to generate internal line trace... maybe we should
+    # deprecate internal_line_trace since it's not used by many anyways?
+    # ret = [ '_ffi_m = s._ffi_m', 'lt = ""' ]
+    # template = \
+    #   "lt += '{vname} = {{}}, '.format(full_vector(s.{pname}, _ffi_m.{vname}))"
+    # for pname, vname, port in packed_ports:
+    #   if vname:
+    #     pname = s._verilator_name(pname)
+    #     vname = s._verilator_name(vname)
+    #     ret.append( template.format(**locals()) )
+    # ret.append( 'return lt' )
+    # make_indent( ret, 2 )
+    # return '\n'.join( ret )
+    return "    return ''"
 
   #=========================================================================
   # Helper functions

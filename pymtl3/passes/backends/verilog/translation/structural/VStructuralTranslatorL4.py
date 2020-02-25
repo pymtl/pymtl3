@@ -3,6 +3,8 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
+from textwrap import dedent
+
 from pymtl3 import Placeholder
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
     StructuralTranslatorL4,
@@ -10,7 +12,7 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
-from ...util.utility import make_indent
+from ...util.utility import make_indent, pretty_concat
 from .VStructuralTranslatorL3 import VStructuralTranslatorL3
 
 
@@ -22,91 +24,51 @@ class VStructuralTranslatorL4(
   #-----------------------------------------------------------------------
 
   def rtlir_tr_subcomp_port_decls( s, _port_decls ):
-    port_defs = [x['def'] for x in _port_decls]
-    port_decls = [x['decl'] for x in _port_decls]
-    make_indent( port_defs, 1 )
-    make_indent( port_decls, 2 )
-    return {
-      'def' : '\n'.join( port_defs ),
-      'decl' : ',\n'.join( port_decls )
-    }
+    return _port_decls
 
   def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
-    port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
-
     return {
-      'def' : s.rtlir_tr_wire_decl('{c_id}__'+port_id, port_def_rtype,
-                port_array_type, port_dtype),
-      'decl' : f'.{port_id}( {{c_id}}__{port_id} )'
+        'direction' : port_rtype.get_direction(),
+        'data_type' : port_dtype['data_type'],
+        'packed_type' : port_dtype['packed_type'],
+        'id' : port_id,
+        'unpacked_type' : port_array_type['unpacked_type'],
     }
 
   def rtlir_tr_subcomp_ifc_port_decls( s, _ifc_port_decls ):
-    port_defs, port_decls = [], []
-
-    for ifc_port_decls in _ifc_port_decls:
-      port_defs  += [x['def'] for x in ifc_port_decls]
-      port_decls += [x['decl'] for x in ifc_port_decls]
-
-    make_indent( port_defs, 1 )
-    make_indent( port_decls, 2 )
-    return {
-      'def' : '\n'.join( port_defs ),
-      'decl' : ',\n'.join( port_decls )
-    }
+    return sum(_ifc_port_decls, [])
 
   def rtlir_tr_subcomp_ifc_port_decl( s, m, c_id, c_rtype, c_array_type,
-      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype,
-      port_array_type ):
-
-    def _flatten_ifc_array( cur_ifc_id, n_dim ):
-      nonlocal s, m, c_id, c_rtype, c_array_type
-      nonlocal port_id, port_rtype, port_array_type
-      ret = []
-
-      if not n_dim:
-        all_ifc_properties = port_rtype.get_all_properties_packed()
-        for _port_id, _port_rtype in all_ifc_properties:
-          if isinstance( _port_rtype, rt.Array ):
-            _port_array_rtype = _port_rtype
-            _port_rtype = _port_rtype.get_sub_type()
-          else:
-            _port_array_rtype = None
-            _port_rtype = _port_rtype
-
-          ret += s.rtlir_tr_subcomp_ifc_port_decl( m, c_id, c_rtype, c_array_type,
-                   f"{cur_ifc_id}__{port_id}", port_rtype, port_array_type,
-                   _port_id, _port_rtype, s.rtlir_tr_unpacked_array_type( _port_array_rtype ) )
-
-      else:
-        for i in range( n_dim[0] ):
-          ret += _flatten_ifc_array( f"{cur_ifc_id}__{i}", n_dim[1:] )
-
-      return ret
-
+      ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
     if isinstance( port_rtype, rt.Port ):
       port_dtype = s.rtlir_data_type_translation( m, port_rtype.get_dtype() )
-      port_def_rtype = rt.Wire(port_dtype["raw_dtype"])
-
-      return [ {
-        'def' : s.rtlir_tr_wire_decl(f'{{c_id}}__{ifc_id}__{port_id}', port_def_rtype,
-                  port_array_type, port_dtype),
-        'decl' : f'.{ifc_id}__{port_id}( {{c_id}}__{ifc_id}__{port_id} )'
-      } ]
-
+      return [{
+          'direction' : port_rtype.get_direction(),
+          'data_type' : port_dtype['data_type'],
+          'packed_type' : port_dtype['packed_type'],
+          'id' : f'{ifc_id}__{port_id}',
+          'unpacked_type' : ifc_array_type['unpacked_type']+port_array_type['unpacked_type'],
+      }]
     else:
-      # Support nested interface
-      assert isinstance( port_rtype, rt.InterfaceView )
-      return _flatten_ifc_array( ifc_id, port_array_type['n_dim'] )
+      # Nested interface
+      ret = []
+      all_properties = port_rtype.get_all_properties_packed()
+      for _port_id, _port_rtype in all_properties:
+        if isinstance(_port_rtype, rt.Array):
+          _port_array_rtype = _port_rtype
+          _port_rtype = _port_rtype.get_sub_type()
+        else:
+          _port_array_rtype = None
+          _port_rtype = _port_rtype
+
+        ret += s.rtlir_tr_subcomp_ifc_port_decl( m, c_id, c_rtype, c_array_type,
+                  f'{ifc_id}__{port_id}', port_rtype, port_array_type,
+                  _port_id, _port_rtype, s.rtlir_tr_unpacked_array_type(_port_array_rtype))
+      return ret
 
   def rtlir_tr_subcomp_ifc_decls( s, _ifc_decls ):
-    # _ifc_decls = sum( _ifc_decls, [] )
-    ifc_defs = [x['def'] for x in _ifc_decls]
-    ifc_decls = [x['decl'] for x in _ifc_decls]
-    return {
-      'def' : '\n'.join( ifc_defs ),
-      'decl' : ',\n'.join( ifc_decls )
-    }
+    return sum(_ifc_decls, [])
 
   def rtlir_tr_subcomp_ifc_decl( s, m, c_id, c_rtype, c_array_type,
       ifc_id, ifc_rtype, ifc_array_type, ports ):
@@ -120,21 +82,24 @@ class VStructuralTranslatorL4(
 
     _c_name = s.rtlir_tr_component_unique_name( c_rtype )
 
+    def pretty_comment( string ):
+      comments = [
+          '  //-------------------------------------------------------------',
+         f'  // {string}',
+          '  //-------------------------------------------------------------',
+      ]
+      return '\n'.join(comments)
+
     def gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, c_n_dim ):
       nonlocal _c_name
       nonlocal m
-      tplt = \
-"""\
-{port_wire_defs}{ifc_inst_defs}
-
-  {c_name} {c_id}
-  (
-{port_conn_decls}{ifc_conn_decls}
-  );\
-"""
+      tplt = dedent(
+          """\
+            {c_name} {c_id}
+            (
+          {port_conn_decls}
+            );""")
       if not n_dim:
-        # Add the component dimension to the defs/decls
-
         # Get the object from the hierarchy
         _n_dim = list(int(num_str) for num_str in c_n_dim.split('__') if num_str)
         attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
@@ -145,15 +110,21 @@ class VStructuralTranslatorL4(
         else:
           c_name = _c_name
 
+        orig_c_id = c_id
         c_id = c_id + c_n_dim
-        port_wire_defs = port_conns['def'].format( **locals() )
-        ifc_inst_defs = ifc_conns['def'].format( **locals() )
-        if port_wire_defs and ifc_inst_defs:
-          port_wire_defs += '\n'
-        port_conn_decls = port_conns['decl'].format( **locals() )
-        ifc_conn_decls = ifc_conns['decl'].format( **locals() )
-        if port_conn_decls and ifc_conn_decls:
-          port_conn_decls += '\n'
+
+        # Generate correct connections
+        port_conn_decls = []
+        unpacked_str = ''.join([f'[{i}]' for i in _n_dim])
+
+        for i, dscp in enumerate(port_conns + ifc_conns):
+          comma = ',\n' if i != len(port_conns+ifc_conns)-1 else ''
+          port_name = dscp['id']
+          port_wire = f"{orig_c_id}__{dscp['id']}{unpacked_str}"
+          port_conn_decls.append(f".{port_name}( {port_wire} ){comma}")
+
+        make_indent( port_conn_decls, 2 )
+        port_conn_decls = ''.join(port_conn_decls)
         return [ tplt.format( **locals() ) ]
 
       else:
@@ -163,20 +134,32 @@ class VStructuralTranslatorL4(
 
     # If `c_array_type` is not None we need to impelement an array of
     # components, each with their own connections for the ports.
-    # This means we will only support component indexing where the index
-    # is a constant integer.
+
+    # Generate wire declarations for all ports
+    defs = []
+    for dscp in port_conns + ifc_conns:
+      defs.append(pretty_concat(dscp['data_type'], dscp['packed_type'],
+        f"{c_id}__{dscp['id']}", f"{c_array_type['unpacked_type']}{dscp['unpacked_type']}", ';'))
+    make_indent( defs, 1 )
+    defs = ['\n'.join(defs)]
+
     n_dim = c_array_type['n_dim']
-    if port_conns['decl'] and ifc_conns['decl']:
-      port_conns['decl'] += ','
-    return\
-      gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, '' )
+    subcomps = gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, '' )
+
+    return [pretty_comment(f"Component {c_id}{c_array_type['unpacked_type']}")] + \
+           defs + subcomps + \
+           [pretty_comment(f"End of component {c_id}{c_array_type['unpacked_type']}")]
 
   #-----------------------------------------------------------------------
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_component_array_index( s, base_signal, index ):
-    return f'{base_signal}__{index}'
+  def rtlir_tr_component_array_index( s, base_signal, index, status ):
+    s._rtlir_tr_unpacked_q.append( index )
+    return base_signal
 
-  def rtlir_tr_subcomp_attr( s, base_signal, attr ):
-    return f'{base_signal}__{attr}'
+  def rtlir_tr_subcomp_attr( s, base_signal, attr, status ):
+    return s._rtlir_tr_process_unpacked(
+              f'{base_signal}__{attr}',
+              f'{base_signal}__{attr}{{}}',
+              status, ('status') )

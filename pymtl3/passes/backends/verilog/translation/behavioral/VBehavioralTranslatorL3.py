@@ -49,8 +49,7 @@ class BehavioralRTLIRToVVisitorL3( BehavioralRTLIRToVVisitorL2 ):
     if len( values ) == 1:
       return values[0]
     else:
-      cat_value = ", ".join( values )
-      return f"{{ {cat_value} }}"
+      return f"{{ {', '.join(values)} }}"
 
   #-----------------------------------------------------------------------
   # visit_Attribute
