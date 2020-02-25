@@ -18,7 +18,7 @@ class Bits:
 
   def __ilshift__( self, x ):
     try:
-      assert x.nbits == self.nbits, "Bitwidth mismatch during <<="
+      assert x.nbits == self.nbits, f"Bitwidth mismatch during <<=, assigning Bits{self.nbits} <<= Bits{x.nbits}"
     except AttributeError:
       raise TypeError(f"Assign {type(x)} to Bits")
     self._next = x.value
