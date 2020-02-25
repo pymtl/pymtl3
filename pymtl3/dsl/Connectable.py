@@ -36,6 +36,12 @@ class Connectable:
       except AttributeError:
         raise NotElaboratedError()
 
+  def get_type( s ):
+    try:
+      return s._dsl.Type
+    except AttriibuteError:
+      raise NotElaboratedError()
+
   def __ifloordiv__( s, other ):
     # Currently this basically implements connect( s, other ), but to
     # avoid circular import, we replicate the implementation of connect.
