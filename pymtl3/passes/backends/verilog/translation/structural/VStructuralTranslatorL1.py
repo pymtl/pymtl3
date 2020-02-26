@@ -31,8 +31,8 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       if m is s.tr_top:
         # If this placeholder is a top level module, use the wrapper
         # template to support explicit module name.
-        if s.tr_cfg.explicit_module_name:
-          module_name = s.tr_cfg.explicit_module_name
+        if s.tr_cfgs[m].explicit_module_name:
+          module_name = s.tr_cfgs[m].explicit_module_name
         else:
           m_rtype = m._pass_structural_rtlir_gen.rtlir_type
           module_name = s.rtlir_tr_component_unique_name(m_rtype)

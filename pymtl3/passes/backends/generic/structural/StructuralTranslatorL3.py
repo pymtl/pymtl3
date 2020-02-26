@@ -17,12 +17,12 @@ from .StructuralTranslatorL2 import StructuralTranslatorL2
 class StructuralTranslatorL3( StructuralTranslatorL2 ):
 
   #-----------------------------------------------------------------------
-  # gen_structural_trans_metadata
+  # _get_structural_rtlir_gen_pass
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL3Pass( s.inst_conns ) )
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL3Pass
 
   #-----------------------------------------------------------------------
   # translate_structural

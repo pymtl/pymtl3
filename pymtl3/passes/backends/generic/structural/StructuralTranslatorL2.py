@@ -25,12 +25,12 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     s.structural.decl_type_struct = []
 
   #-----------------------------------------------------------------------
-  # gen_structural_trans_metadata
+  # _get_structural_rtlir_gen_pass
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL2Pass( s.inst_conns ) )
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL2Pass
 
   #-----------------------------------------------------------------------
   # translate_structural

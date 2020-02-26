@@ -296,6 +296,7 @@ class Component( BaseRTLIRType ):
     s.params = s._gen_parameters( obj )
     s.properties = properties
     s.unpacked = unpacked
+    s.obj = obj
     cls = obj.__class__
     try:
       file_name = inspect.getsourcefile( cls )
@@ -367,6 +368,9 @@ class Component( BaseRTLIRType ):
 
   def get_name( s ):
     return s.name
+
+  def get_obj( s ):
+    return s.obj
 
   def get_file_info( s ):
     return s.file_info

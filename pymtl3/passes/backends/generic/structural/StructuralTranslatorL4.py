@@ -15,13 +15,14 @@ from .StructuralTranslatorL3 import StructuralTranslatorL3
 
 
 class StructuralTranslatorL4( StructuralTranslatorL3 ):
+
   #-----------------------------------------------------------------------
-  # gen_structural_trans_metadata
+  # _get_structural_rtlir_gen_pass
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL4Pass( s.inst_conns ) )
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL4Pass
 
   #-----------------------------------------------------------------------
   # translate_structural
