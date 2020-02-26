@@ -40,8 +40,8 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     index_types = ( rt.Port, rt.Wire, rt.Array )
     slice_types = ( rt.Port, rt.Wire )
     s.type_expect[ 'Assign' ] = {
-      'target' : ( lhs_types, 'lhs of assignment must be a signal!' ),
-      'value' : ( rt.Signal, 'rhs of assignment should be signal or const!' )
+      'targets' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
+      'value'   : ( rt.Signal, 'rhs of assignment should be signal or const!' )
     }
     s.type_expect[ 'ZeroExt' ] = {
       'value':( rt.Signal, 'extension only applies to signals!' )
@@ -109,8 +109,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         value = vars(node)[field]
         target_type = type_rule[ 0 ]
         exception_msg = type_rule[ 1 ]
-        if eval( 'not isinstance( value.Type, target_type )' ):
-          raise PyMTLTypeError( s.blk, node.ast, exception_msg )
+        if isinstance( value, list ):
+          for v in value:
+            if eval( 'not isinstance( v.Type, target_type )' ):
+              raise PyMTLTypeError( s.blk, node.ast, exception_msg )
+        else:
+          if eval( 'not isinstance( value.Type, target_type )' ):
+            raise PyMTLTypeError( s.blk, node.ast, exception_msg )
     except PyMTLTypeError:
       raise
     except Exception:
@@ -130,20 +135,24 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       return False
     return u == v
 
-  def visit_Assign( s, node ):
-    # RHS should have the same type as LHS
+  def _visit_Assign_single_target( s, node, target, i ):
     rhs_type = node.value.Type.get_dtype()
-    lhs_type = node.target.Type.get_dtype()
+    lhs_type = target.Type.get_dtype()
 
     # Weak type checking (agreeable types)
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError( s.blk, node.ast,
-        f'Unagreeable types {lhs_type} and {rhs_type}!' )
+        f'Unagreeable types between LHS and RHS (LHS target#{i} of {lhs_type} vs {rhs_type})!' )
 
     # Strong type checking (same type)
     if rhs_type != lhs_type:
       raise PyMTLTypeError( s.blk, node.ast,
-        f'LHS and RHS of assignment should have the same type ({lhs_type} vs {rhs_type})!' )
+        f'LHS and RHS of assignment should have the same type (LHS target#{i} of {lhs_type} vs {rhs_type})!' )
+
+  def visit_Assign( s, node ):
+    # RHS should have the same type as any of LHS
+    for i, target in enumerate( node.targets ):
+      s._visit_Assign_single_target( node, target, i )
 
     node.Type = None
 

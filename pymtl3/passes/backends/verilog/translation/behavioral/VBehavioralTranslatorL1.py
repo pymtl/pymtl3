@@ -209,11 +209,13 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Assign( s, node ):
-    target        = s.visit( node.target )
+    targets       = [ s.visit( target ) for target in node.targets ]
     value         = s.visit( node.value )
     assignment_op = '<=' if not node.blocking else '='
-    ret = f'{target} {assignment_op} {value};'
-    return [ ret ]
+    tplt = '{target} {assignment_op} {value};'
+    return [ tplt.format(
+      target = target, assignment_op = assignment_op, value = value
+    ) for target in reversed(targets) ]
 
   #-----------------------------------------------------------------------
   # visit_If

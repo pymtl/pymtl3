@@ -83,7 +83,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_Assign( s, node ):
-    node.target._top_expr = 1
+    for target in node.targets:
+      target._top_expr = 1
     node.value._top_expr = 1
     return super().visit_Assign( node )
 

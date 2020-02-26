@@ -41,13 +41,18 @@ class SeqUpblk( BaseBehavioralRTLIR ):
     return True
 
 class Assign( BaseBehavioralRTLIR ):
-  def __init__( s, target, value, blocking ):
-    s.target = target
+  def __init__( s, targets, value, blocking ):
+    s.targets = targets
     s.value = value
     s.blocking = blocking
 
   def __eq__( s, other ):
-    return isinstance(other, Assign) and s.target == other.target and s.value == other.value and s.blocking == other.blocking
+    if not isinstance(other, Assign) or s.value != other.value or s.blocking != other.blocking:
+      return False
+    for x, y in zip( s.targets, other.targets ):
+      if x != y:
+        return False
+    return True
 
 class If( BaseBehavioralRTLIR ):
   def __init__( s, cond, body, orelse ):
