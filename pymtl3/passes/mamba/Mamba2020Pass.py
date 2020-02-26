@@ -380,21 +380,28 @@ generated_block = wrapped_SCC_{0}
                                               f"({num_blks} compiled, {len(tmp_schedule)} total)"
 
         blk_srcs = []
-        # TODO we might turn all meta blocks before the last one into meta
-        # blocks, and directly fold the last block into the main loop
-        # for i, meta in enumerate( scc_schedule[:-1] ):
-          # b = self.compile_meta_block( meta )
-          # blk_srcs.append( f"{b.__name__}()" )
-          # _globals[ b.__name__ ] = b
 
-        # for i, b in enumerate( scc_schedule[-1] ):
-          # blk_srcs.append( f"blk_of_last_meta{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
-          # _globals[ f"blk_of_last_meta{i}" ] = b
+        if len(scc_schedule) == 1:
+          for i, b in enumerate( scc_schedule[-1] ):
+            blk_srcs.append( f"blk{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+            _globals[ f"blk{i}" ] = b
 
-        for i, meta in enumerate( scc_schedule ):
-          b = self.compile_meta_block( meta )
-          blk_srcs.append( f"{b.__name__}()" )
-          _globals[ b.__name__ ] = b
+        else:
+          # TODO we might turn all meta blocks before the last one into meta
+          # blocks, and directly fold the last block into the main loop
+          # for i, meta in enumerate( scc_schedule[:-1] ):
+            # b = self.compile_meta_block( meta )
+            # blk_srcs.append( f"{b.__name__}()" )
+            # _globals[ b.__name__ ] = b
+
+          # for i, b in enumerate( scc_schedule[-1] ):
+            # blk_srcs.append( f"blk_of_last_meta{i}() # [br {self.branchiness[b]}, loop {int(self.only_loop_at_top[b])}] {b.__name__}" )
+            # _globals[ f"blk_of_last_meta{i}" ] = b
+
+          for i, meta in enumerate( scc_schedule ):
+            b = self.compile_meta_block( meta )
+            blk_srcs.append( f"{b.__name__}()" )
+            _globals[ b.__name__ ] = b
 
 
       scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
@@ -433,14 +440,14 @@ generated_block = wrapped_SCC_{0}
     # binary search tree ... TODO
 
     def insert_sortedlist( arr, key, item ):
-      left, right = 0, len(arr)
-      while left < right-1:
+      left, right = -1, len(arr)
+      while left + 1 < right:
         mid = (left + right) >> 1
-        if key <= arr[mid][0]:
-          right = mid
-        else:
+        if arr[mid][0] <= key:
           left = mid
-      arr.insert( left, ( key, item) )
+        else:
+          right = mid
+      arr.insert( right, ( key, item ) )
 
     # scc_pred is for heuristic hamiltonian path ... It records for each
     # scc, in the schedule who is the predecessor that reduce its input
@@ -456,9 +463,9 @@ generated_block = wrapped_SCC_{0}
         cnt += 1
         scc_pred[v] = None
         if v in nontrivial_sccs or v in trivial_loop_sccs:
-          insert_sortedlist( Q, (0, cnt), v )
+          insert_sortedlist( Q, (0, -cnt), v )
         else:
-          insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], cnt), v )
+          insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], -cnt), v )
 
     schedule = []
 
@@ -482,9 +489,9 @@ generated_block = wrapped_SCC_{0}
           # Basically we want to pop in a DFS order such that the variable
           # most recently written can directly feed into the next block
           if v in nontrivial_sccs or v in trivial_loop_sccs:
-            insert_sortedlist( Q, (0, cnt), v )
+            insert_sortedlist( Q, (0, -cnt), v )
           else:
-            insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], cnt), v )
+            insert_sortedlist( Q, (self.branchiness[list(SCCs[v])[0]], -cnt), v )
 
     # Run topological sort
 
