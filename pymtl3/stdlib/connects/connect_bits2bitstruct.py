@@ -72,4 +72,6 @@ def connect_bits2bitstruct( signal1, signal2 ):
     f'but {type2.__qualname__} is {bw2}-bit.'
 
   # Connect field to corresponding slice
-  _connect_bits2bitstruct_h( bitstruct_signal, bits_signal, 0 )
+  stop = _connect_bits2bitstruct_h( bitstruct_signal, bits_signal, 0 )
+  assert stop == bw1, 'Sanity check failed! Might be a bug. ' \
+    'Please create a Github issue.'
