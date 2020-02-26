@@ -17,13 +17,14 @@ from pymtl3.datatypes.bitstructs import is_bitstruct_class, _FIELDS
 # Helper function for connect_bitstruct.
 
 def _connect_bits2bitstruct_h( field, bits_signal, slices ):
-  field_type = field.get_type()
 
   # NOTE: We do not support list of fields at the moment because: 1) there
   # are very few use cases; 2) the pack order of a list of fields is
   # somewhat ambiguous.
   if isinstance( field, list ):
     assert False, "A list of fields is not supported at the moment."
+
+  field_type = field.get_type()
 
   if issubclass( field_type, Bits ):
     start     = 0 if not slices else slices[-1].stop
