@@ -1,2 +1,2 @@
-from .connect_pairs import connect_pairs
 from .connect_bits2bitstruct import connect_bits2bitstruct
+from .connect_pairs import connect_pairs
