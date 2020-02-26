@@ -9,7 +9,7 @@ Author : Yanghui Ou
   Date : Feb 24, 2020
 '''
 from pymtl3 import Bits, connect
-from pymtl3.datatypes.bitstructs import is_bitstruct_class, _FIELDS
+from pymtl3.datatypes.bitstructs import _FIELDS, is_bitstruct_class
 
 #-------------------------------------------------------------------------
 # _connect_bits2bitstruct_h

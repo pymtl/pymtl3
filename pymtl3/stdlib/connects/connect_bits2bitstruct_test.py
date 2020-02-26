@@ -8,6 +8,7 @@ Author : Yanghui Ou
   Date : Feb 24, 2020
 '''
 from pymtl3 import *
+
 from .connect_bits2bitstruct import connect_bits2bitstruct
 
 #-------------------------------------------------------------------------
