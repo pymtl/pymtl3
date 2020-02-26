@@ -36,9 +36,7 @@ def _connect_bits2bitstruct_h( field, bits_signal, slices ):
   else:
     assert is_bitstruct_class( field_type )
     fields_dict = getattr( field_type, _FIELDS )
-    fields_lst  = list( fields_dict.items() )
-    fields_lst.reverse() # reverse is faster than [::-1]
-    for fname, _ in fields_lst:
+    for fname, _ in reversed( list( fields_dict.items() ) ):
       subfield = getattr( field, fname )
       _connect_bits2bitstruct_h( subfield, bits_signal, slices )
 
