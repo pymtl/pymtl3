@@ -52,14 +52,16 @@ def connect_bits2bitstruct( signal1, signal2 ):
 
   if is_bitstruct_class( type1 ):
     assert issubclass( type2, Bits ), \
+      f'Connecting {type1.__qualname__} to {type2.__qualname__}: ' \
       f'{type1.__qualname__} is a bitstruct ' \
-      f'but {type2.__qualname__ is not a Bits type!}'
+      f'but {type2.__qualname__} is not a Bits type!'
     bits_signal, bitstruct_signal = signal2, signal1
 
   elif is_bitstruct_class( type2 ):
     assert issubclass( type1, Bits ), \
+      f'Connecting {type1.__qualname__} to {type2.__qualname__}: ' \
       f'{type2.__qualname__} is a bitstruct ' \
-      f'but {type1.__qualname__ is not a Bits type!}'
+      f'but {type1.__qualname__} is not a Bits type!'
     bits_signal, bitstruct_signal = signal1, signal2
 
   else:
