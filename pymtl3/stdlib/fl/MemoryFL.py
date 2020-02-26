@@ -1,6 +1,7 @@
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMinionIfcFL
+from pymtl3.utils.fast_bytearray_funcs import read_bytearray_bits
 
 AMO_FUNS = { MemMsgType.AMO_ADD  : lambda m,a : m+a,
              MemMsgType.AMO_AND  : lambda m,a : m&a,
@@ -26,17 +27,8 @@ class MemoryFL( Component ):
       s.trace = "     "
 
   def read( s, addr, nbytes ):
-
-    ret, shamt = Bits( nbytes << 3, 0 ), 0
-
-    begin = int(addr)
-    addr  = begin + nbytes - 1
-
-    while addr >= begin:
-      ret = (ret << 8) + s.mem[addr]
-      addr -= 1
     s.trace = "[rd ]"
-    return ret
+    return read_bytearray_bits( s.mem, addr, nbytes )
 
   def write( s, addr, nbytes, data ):
 
