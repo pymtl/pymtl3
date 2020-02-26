@@ -77,6 +77,13 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       else:
         module_name = structural.component_unique_name
 
+      if structural.component_no_synthesis:
+        no_synth_begin = '`ifndef SYNTHESIS\n'
+        no_synth_end   = '`endif'
+      else:
+        no_synth_begin = ''
+        no_synth_end   = ''
+
       s._top_module_name = structural.component_name
       s._top_module_full_name = module_name
 
@@ -93,8 +100,8 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 // PyMTL Placeholder {component_name} Definition
 // {optional_full_name}At {file_info}
 
-{placeholder_src}
-"""
+{no_synth_begin}{placeholder_src}
+{no_synth_end}"""
         return template.format( **locals() )
 
       else:
@@ -102,12 +109,13 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
 """\
 // PyMTL Component {component_name} Definition
 // {optional_full_name}At {file_info}
-module {module_name}
+
+{no_synth_begin}module {module_name}
 (
 {ports});
 {body}
 endmodule
-"""
+{no_synth_end}"""
         ports_template = "{port_decls}{ifc_decls}"
 
         port_decls = s.get_pretty(structural, 'decl_ports', False)

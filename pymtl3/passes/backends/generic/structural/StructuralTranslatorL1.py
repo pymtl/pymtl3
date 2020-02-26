@@ -88,8 +88,20 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   # gen_structural_trans_metadata
   #-----------------------------------------------------------------------
 
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL1Pass
+
   def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL1Pass( s.inst_conns ) )
+    tr_top.apply( s._get_structural_rtlir_gen_pass()( s.inst_conns ) )
+    s.structural.component_no_synthesis_no_clk = {}
+    s.structural.component_no_synthesis_no_reset = {}
+    s._gen_structural_no_clk_reset( tr_top )
+
+  def _gen_structural_no_clk_reset( s, m ):
+    s.structural.component_no_synthesis_no_clk[m] = s.tr_cfgs[m].no_synthesis_no_clk
+    s.structural.component_no_synthesis_no_reset[m] = s.tr_cfgs[m].no_synthesis_no_reset
+    for _m in m.get_child_components():
+      s._gen_structural_no_clk_reset( _m )
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -108,6 +120,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.component_full_name = {}
     s.structural.component_unique_name = {}
     s.structural.component_explicit_module_name = {}
+    s.structural.component_no_synthesis = {}
 
     # Declarations
     s.structural.decl_ports  = {}
@@ -139,9 +152,10 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
     if m is s.tr_top:
-      s.structural.component_explicit_module_name[m] = s.tr_cfg.explicit_module_name
+      s.structural.component_explicit_module_name[m] = s.tr_cfgs[m].explicit_module_name
     else:
       s.structural.component_explicit_module_name[m] = ''
+    s.structural.component_no_synthesis[m] = s.tr_cfgs[m].no_synthesis
 
     # Translate declarations of signals
     s.translate_decls( m )
@@ -167,7 +181,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   #-----------------------------------------------------------------------
 
   def translate_decls( s, m ):
-    m_rtype = m._pass_structural_rtlir_gen.rtlir_type
+    m_rtype  = m._pass_structural_rtlir_gen.rtlir_type
 
     # Ports
     port_decls = []

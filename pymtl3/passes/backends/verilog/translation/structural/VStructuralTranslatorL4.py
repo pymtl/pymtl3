@@ -91,8 +91,7 @@ class VStructuralTranslatorL4(
       return '\n'.join(comments)
 
     def gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, c_n_dim ):
-      nonlocal _c_name
-      nonlocal m
+      nonlocal _c_name, m, s
       tplt = dedent(
           """\
             {c_name} {c_id}
@@ -117,11 +116,21 @@ class VStructuralTranslatorL4(
         port_conn_decls = []
         unpacked_str = ''.join([f'[{i}]' for i in _n_dim])
 
+        no_clk   = s.structural.component_no_synthesis_no_clk[obj]
+        no_reset = s.structural.component_no_synthesis_no_reset[obj]
+
         for i, dscp in enumerate(port_conns + ifc_conns):
           comma = ',\n' if i != len(port_conns+ifc_conns)-1 else ''
           port_name = dscp['id']
           port_wire = f"{orig_c_id}__{dscp['id']}{unpacked_str}"
-          port_conn_decls.append(f".{port_name}( {port_wire} ){comma}")
+          if (port_name == 'clk' and no_clk) or (port_name == 'reset' and no_reset):
+            comma = ',\n' if i != len(port_conns+ifc_conns)-1 else '\n'
+            newline = '\n' if i != len(port_conns+ifc_conns)-1 else ''
+            port_conn_decls.append("`ifndef SYNTHESIS\n")
+            port_conn_decls.append(f".{port_name}( {port_wire} ){comma}")
+            port_conn_decls.append(f"`endif{newline}")
+          else:
+            port_conn_decls.append(f".{port_name}( {port_wire} ){comma}")
 
         make_indent( port_conn_decls, 2 )
         port_conn_decls = ''.join(port_conn_decls)

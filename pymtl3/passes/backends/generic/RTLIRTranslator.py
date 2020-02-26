@@ -26,10 +26,10 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
       super().__init__( top )
 
     # Override
-    def clear( s, tr_top, tr_cfg ):
-      super().clear( tr_top )
+    def clear( s, tr_top, tr_cfgs ):
+      s.tr_cfgs = tr_cfgs
       s.hierarchy = TranslatorMetadata()
-      s.tr_cfg = tr_cfg
+      super().clear( tr_top )
 
     def _gen_hierarchy_metadata( s, structural_ns, hierarchy_ns ):
       metadata = getattr( s.structural, structural_ns, [] )
@@ -39,7 +39,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
           List.append( ( Type, data ) )
 
     # Override
-    def translate( s, tr_top, tr_cfg ):
+    def translate( s, tr_top, tr_cfgs ):
 
       def get_component_nspace( namespace, m ):
         ns = TranslatorMetadata()
@@ -64,7 +64,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
         s._gen_hierarchy_metadata( 'decl_type_struct', 'decl_type_struct' )
 
       # Clear all translator metadata
-      s.clear( tr_top, tr_cfg )
+      s.clear( tr_top, tr_cfgs )
 
       s.component = {}
       # Generate backend representation for each component

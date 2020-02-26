@@ -9,6 +9,7 @@ import filecmp
 import os
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.backends.verilog import TranslationConfigs
 
 from .VTranslator import VTranslator
 
@@ -23,6 +24,24 @@ def mk_TranslationPass( _VTranslator ):
       s.translator = _VTranslator( s.top )
       s.traverse_hierarchy( top )
 
+    def gen_tr_cfgs( s, m ):
+      tr_cfgs = {}
+
+      def traverse( m ):
+        nonlocal tr_cfgs
+
+        if not hasattr( m, 'config_verilog_translate' ) or \
+           isinstance( m.config_verilog_translate, bool ):
+          tr_cfgs[m] = TranslationConfigs()
+        else:
+          tr_cfgs[m] = m.config_verilog_translate
+
+        for _m in m.get_child_components():
+          traverse( _m )
+
+      traverse( m )
+      return tr_cfgs
+
     def traverse_hierarchy( s, m ):
 
       if hasattr(m, "config_verilog_translate") and m.config_verilog_translate and \
@@ -31,12 +50,7 @@ def mk_TranslationPass( _VTranslator ):
         if not hasattr( m, '_pass_verilog_translation' ):
           m._pass_verilog_translation = PassMetadata()
 
-        if isinstance(m.config_verilog_translate, bool):
-          tr_cfg = TranslationConfigs()
-        else:
-          tr_cfg = m.config_verilog_translate
-
-        s.translator.translate( m, tr_cfg )
+        s.translator.translate( m, s.gen_tr_cfgs(m) )
 
         module_name = s.translator._top_module_full_name
 
@@ -44,8 +58,8 @@ def mk_TranslationPass( _VTranslator ):
           fname = m.config_verilog_translate.explicit_file_name
           if '.v' in fname:
             filename = fname.split('.v')[0]
-          elif '.v' in fname:
-            filename = fname.split('.v')[0]
+          elif '.sv' in fname:
+            filename = fname.split('.sv')[0]
           else:
             filename = fname
         else:
