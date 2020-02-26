@@ -14,7 +14,7 @@ from pymtl3.datatypes.bitstructs import _FIELDS, is_bitstruct_class
 #-------------------------------------------------------------------------
 # _connect_bits2bitstruct_h
 #-------------------------------------------------------------------------
-# Helper function for connect_bitstruct.
+# Helper function for connect_bits2bitstruct.
 
 def _connect_bits2bitstruct_h( field, bits_signal, slices ):
 
@@ -43,7 +43,7 @@ def _connect_bits2bitstruct_h( field, bits_signal, slices ):
       _connect_bits2bitstruct_h( subfield, bits_signal, slices )
 
 #-------------------------------------------------------------------------
-# connect_bitstruct
+# connect_bits2bitstruct
 #-------------------------------------------------------------------------
 
 def connect_bits2bitstruct( signal1, signal2 ):
