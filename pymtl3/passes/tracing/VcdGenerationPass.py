@@ -198,7 +198,7 @@ class VcdGenerationPass( BasePass ):
     for i, net in enumerate(trimmed_value_nets):
       # Convert everything to Bits to get around lack of bit struct support.
       # The first cycle VCD contains the default value
-      bin_str = to_bits( net[0]._dsl.Type() ).bin()
+      bin_str = bin(int(to_bits( net[0]._dsl.Type() )))
 
       print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcd_file )
 
@@ -238,7 +238,7 @@ class VcdGenerationPass( BasePass ):
         except Exception as e:
           raise TypeError(f'{e}\n - {signal} becomes another type. Please check your code.')
 
-        net_bits_bin_str = net_bits_bin.bin()
+        net_bits_bin_str = bin(int(net_bits_bin))
         # `last_value` is the string form of a Bits object in binary
         # e.g. '0b000' == Bits3(0).bin()
         # We store strings instead of values ...

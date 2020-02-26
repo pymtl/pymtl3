@@ -215,7 +215,7 @@ class MemIfcFL2CLAdapter( Component ):
     while s.entry is None:
       greenlet.getcurrent().parent.switch(0)
 
-    ret = s.entry.data
+    ret = s.entry.data[0:nbytes<<3]
     s.entry = None
     return ret
 
