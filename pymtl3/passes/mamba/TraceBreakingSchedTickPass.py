@@ -71,13 +71,13 @@ class TraceBreakingSchedTickPass( BasePass ):
     # reduce it to O(nlogn). I didn't find any efficient python impl.
 
     def insert_sortedlist( arr, priority, item ):
-      left, right = 0, len(arr)
+      left, right = -1, len(arr)
       while left < right-1:
         mid = (left + right) >> 1
-        if priority <= arr[mid][0]:
-          right = mid
-        else:
+        if  arr[mid][0] <= priority:
           left = mid
+        else:
+          right = mid
       arr.insert( right, (priority, item) )
 
     Q = []
