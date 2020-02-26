@@ -22,7 +22,7 @@ def _connect_bits2bitstruct_h( field, bits_signal, slices ):
   # are very few use cases; 2) the pack order of a list of fields is
   # somewhat ambiguous.
   if isinstance( field, list ):
-    assert False, "A list of fields is not supported at the moment."
+    assert False, 'A list of fields is not supported at the moment.'
 
   field_type = field.get_type()
 
@@ -51,13 +51,19 @@ def connect_bits2bitstruct( signal1, signal2 ):
   type2 = signal2.get_type()
 
   if is_bitstruct_class( type1 ):
-    assert issubclass( type2, Bits )
+    assert issubclass( type2, Bits ), \
+      f'{type1.__qualname__} is a bitstruct ' \
+      f'but {type2.__qualname__ is not a Bits type!}'
     bits_signal, bitstruct_signal = signal2, signal1
+
   elif is_bitstruct_class( type2 ):
-    assert issubclass( type1, Bits )
+    assert issubclass( type1, Bits ), \
+      f'{type2.__qualname__} is a bitstruct ' \
+      f'but {type1.__qualname__ is not a Bits type!}'
     bits_signal, bitstruct_signal = signal1, signal2
+
   else:
-    assert False, "Can only connect a bitstruct wire to bits wire"
+    assert False, 'Can only connect a bitstruct wire to bits wire'
 
   # Connect field to corresponding slice
   _connect_bits2bitstruct_h( bitstruct_signal, bits_signal, [] )
