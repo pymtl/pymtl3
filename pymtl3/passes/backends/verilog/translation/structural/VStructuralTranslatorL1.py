@@ -13,7 +13,7 @@ from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
 from ...errors import VerilogReservedKeywordError
-from ...util.utility import get_component_unique_name, make_indent
+from ...util.utility import get_component_unique_name, make_indent, pretty_concat
 
 
 class VStructuralTranslatorL1( StructuralTranslatorL1 ):
@@ -75,19 +75,21 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
     return {
       'def'  : '',
       'nbits' : dtype.get_length(),
-      'const_decl' : f'[{msb}:0] {{id_}}',
-      'decl' : f'logic [{msb}:0] {{id_}}',
+      'data_type' : 'logic',
+      'packed_type' : f'[{msb}:0]',
+      'unpacked_type' : '',
       'raw_dtype' : dtype
     }
 
   def rtlir_tr_unpacked_array_type( s, Type ):
     if Type is None:
-      return { 'def' : '', 'decl' : '', 'n_dim':[] }
+      return { 'def' : '', 'unpacked_type' : '', 'n_dim':[] }
     else:
       array_dim = "".join( f"[0:{size-1}]" for size in Type.get_dim_sizes() )
       return {
         'def'  : '',
-        'decl' : ' ' + array_dim,
+        # 'decl' : ' ' + array_dim,
+        'unpacked_type' : array_dim,
         'n_dim' : Type.get_dim_sizes()
       }
 
@@ -108,8 +110,8 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of ports {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-    return direction + (' ' if direction == 'output' else '  ') + \
-           dtype['decl'].format( **locals() ) + array_type['decl']
+    return pretty_concat( direction, dtype['data_type'], dtype['packed_type'],
+              id_, array_type['unpacked_type'] )
 
   def rtlir_tr_wire_decls( s, wire_decls ):
     make_indent( wire_decls, 1 )
@@ -123,7 +125,8 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of wires {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-    return dtype['decl'].format( **locals() ) + array_type['decl'] + ';'
+    return pretty_concat( dtype['data_type'], dtype['packed_type'],
+              id_, array_type['unpacked_type'], ';' )
 
   def rtlir_tr_const_decls( s, const_decls ):
     make_indent( const_decls, 1 )
@@ -139,8 +142,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       ret = []
       for _idx, idx in enumerate( range( n_dim[0] ) ):
         ret.append( s.gen_array_param( n_dim[1:], dtype, array[idx] ) )
-      cat_str = ", ".join( ret )
-      return f"'{{ {cat_str} }}"
+      return f"'{{ {', '.join(ret)} }}"
 
   def rtlir_tr_const_decl( s, id_, Type, array_type, dtype, value ):
     _dtype = Type.get_dtype()
@@ -150,7 +152,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of constants {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-    _dtype = dtype['const_decl'].format( **locals() ) + array_type['decl']
+    _dtype = pretty_concat(dtype['packed_type'], id_, array_type['unpacked_type'])
     _value = s.gen_array_param( array_type['n_dim'], dtype['raw_dtype'], value )
 
     return f'localparam {_dtype} = {_value};'
@@ -170,29 +172,47 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_bit_selection( s, base_signal, index ):
+  def rtlir_tr_bit_selection( s, base_signal, index, status ):
     # Bit selection
-    return f'{base_signal}[{index}]'
+    return s._rtlir_tr_process_unpacked(
+              f'{base_signal}[{index}]',
+              f'{base_signal}{{}}[{index}]',
+              status, ('status', 'unpacked') )
 
-  def rtlir_tr_part_selection( s, base_signal, start, stop ):
+  def rtlir_tr_part_selection( s, base_signal, start, stop, status ):
     # Part selection
-    _stop = stop-1
-    return f'{base_signal}[{_stop}:{start}]'
+    return s._rtlir_tr_process_unpacked(
+              f'{base_signal}[{stop-1}:{start}]',
+              f'{base_signal}{{}}[{stop-1}:{start}]',
+              status, ('status', 'unpacked') )
 
-  def rtlir_tr_port_array_index( s, base_signal, index ):
+  def rtlir_tr_port_array_index( s, base_signal, index, status ):
+    return s._rtlir_tr_process_unpacked(
+              f'{base_signal}[{index}]',
+              f'{base_signal}{{}}[{index}]',
+              status, ('status', 'unpacked') )
+
+  def rtlir_tr_wire_array_index( s, base_signal, index, status ):
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_wire_array_index( s, base_signal, index ):
+  def rtlir_tr_const_array_index( s, base_signal, index, status ):
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_const_array_index( s, base_signal, index ):
-    return f'{base_signal}[{index}]'
-
-  def rtlir_tr_current_comp_attr( s, base_signal, attr ):
+  def rtlir_tr_current_comp_attr( s, base_signal, attr, status ):
     return f'{attr}'
 
-  def rtlir_tr_current_comp( s, comp_id, comp_rtype ):
+  def rtlir_tr_current_comp( s, comp_id, comp_rtype, status ):
     return ''
+
+  def _rtlir_tr_process_unpacked( s, signal, signal_tplt, status, enable ):
+    if (status in ('reader', 'writer') and 'status' in enable) or \
+       (s._rtlir_tr_unpacked_q and 'unpacked' in enable):
+      ret = signal_tplt.format(''.join(
+                [f'[{i}]' for i in list(s._rtlir_tr_unpacked_q)]))
+      s._rtlir_tr_unpacked_q.clear()
+      return ret
+    else:
+      return signal
 
   #-----------------------------------------------------------------------
   # Miscs
@@ -202,10 +222,9 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
     return var_id.replace( '[', '__' ).replace( ']', '' )
 
   def _literal_number( s, nbits, value ):
-    value = int( value )
-    return f"{nbits}'d{value}"
+    return f"{nbits}'d{int(value)}"
 
-  def rtlir_tr_literal_number( s, nbits, value ):
+  def rtlir_tr_literal_number( s, nbits, value, status ):
     return s._literal_number( nbits, value )
 
   def rtlir_tr_component_unique_name( s, c_rtype ):

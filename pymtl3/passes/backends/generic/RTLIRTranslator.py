@@ -74,6 +74,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
       s.hierarchy.decl_type_struct = []
 
       try:
+        s.rtlir_tr_initialize()
         s.translate_behavioral( s.tr_top )
         s.translate_structural( s.tr_top )
         translate_component( s.tr_top, s.hierarchy.components, [] )
@@ -90,6 +91,9 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
     #---------------------------------------------------------------------
     # Methods to be implemented by the backend translator
     #---------------------------------------------------------------------
+
+    def rtlir_tr_initialize( s ):
+      raise NotImplementedError()
 
     def rtlir_tr_src_layout( s, hierarchy ):
       raise NotImplementedError()

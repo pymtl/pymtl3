@@ -48,6 +48,9 @@ def wrap( s ):
 def expand( v ):
   return os.path.expanduser(os.path.expandvars(v))
 
+def pretty_concat( *strings ):
+  return ' '.join([s for s in strings if s])
+
 def get_dir( cur_file ):
   return os.path.dirname(os.path.abspath(cur_file))+os.path.sep
 
@@ -132,11 +135,13 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
 
+  unpacked_q = deque()
+
   def _mangle_port( pname, vname, port, n_dim ):
 
     # Normal port
     if not n_dim:
-      return [ ( pname, port_map[pname] if pname in port_map else vname, port ) ]
+      return [ ( [pname], port_map[pname] if pname in port_map else vname, port ) ]
 
     # Handle port array. We just assume if one element of the port array
     # is mapped, we need the user to map every element in the array.
@@ -149,36 +154,98 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
         if _pname in port_map:
           found += 1
           _vname = port_map[_pname]
-        all_ports.append( ( _pname, _vname, port ) )
+        all_ports.append( ( [_pname], _vname, _port ) )
       else:
-        for i in range( n_dim[0] ):
-          Q.append( (f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:]) )
+        for i in range( _n_dim[0] ):
+          Q.append( (f"{_pname}[{i}]", f"{_vname}__{i}", _port, _n_dim[1:]) )
 
     assert found == len(all_ports) or found == 0, \
         f"{pname} is an {len(n_dim)}-D array of ports with {len(all_ports)} ports in total, " \
         f" but only {found} of them is mapped. Please either map all of them or none of them."
 
     if not found:
-      return [ ( pname, vname, rt.Array( n_dim, port ) ) ]
+      return [ ( [pname], vname, rt.Array( n_dim, port ) ) ]
     else:
       return all_ports
 
-  def _mangle_ifc( pname, vname, ifc, n_dim ):
-    if not n_dim:
-      ret = []
-      for name, rtype in ifc.get_all_properties_packed():
-        _n_dim, _rtype = get_rtype( rtype )
+  def _is_ifc_mapped( pname, vname, rtype, n_dim ):
+    found, tot, flatten_ports = 0, 0, []
+    # pname, vname, rtype, n_dim
+    Q = deque( [ (pname, vname, rtype, n_dim) ] )
+
+    while Q:
+      _pname, _vname, _rtype, _n_dim = Q.popleft()
+      if _n_dim:
+        for i in range(_n_dim[0]):
+          Q.append((f"{_pname}[{i}]", f"{_vname}__{i}", _rtype, _n_dim[1:]))
+      else:
         if isinstance( _rtype, rt.Port ):
-          ret += _mangle_port( f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
+          # Port inside the interface
+          tot += 1
+          if _pname in port_map:
+            found += 1
+            flatten_ports.append(([_pname], port_map[_pname], _rtype))
+          else:
+            flatten_ports.append(([_pname], _vname, _rtype))
         elif isinstance( _rtype, rt.InterfaceView ):
-          ret += _mangle_ifc(  f"{pname}.{name}", f"{vname}__{name}", _rtype, _n_dim )
+          # Interface (nested)
+          for sub_name, sub_rtype in _rtype.get_all_properties_packed():
+            sub_n_dim, sub_rtype = get_rtype( sub_rtype )
+            Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}", sub_rtype, sub_n_dim))
         else:
-          assert False, f"{name} is not interface(s) or port(s)!"
-    else:
-      ret = []
-      for i in range( n_dim[0] ):
-        ret += _mangle_ifc( f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:] )
+          assert False, f"{_pname} is not interface(s) or port(s)!"
+
+    assert (found == 0) or (found == tot), \
+        f"{name} is an interface that has {tot} ports in total, " \
+        f" but only {found} of them is mapped. Please either map all of them or none of them."
+    return (found == tot), flatten_ports
+
+  def _gen_packed_ifc( pname, vname, ifc, n_dim ):
+    packed_ifc, ret = [], []
+    Q = deque( [ (pname, vname, ifc, n_dim, []) ] )
+    while Q:
+      _pname, _vname, _rtype, _n_dim, _prev_n_dim = Q.popleft()
+
+      if isinstance( _rtype, rt.Port ):
+        if not (_prev_n_dim + _n_dim):
+          new_rtype = _rtype
+        else:
+          new_rtype = rt.Array(_prev_n_dim+_n_dim, _rtype)
+        packed_ifc.append((_pname, _vname, new_rtype))
+
+      elif isinstance( _rtype, rt.InterfaceView ):
+        if _n_dim:
+          new_prev_n_dim = _prev_n_dim + [_n_dim[0]]
+          for i in range(_n_dim[0]):
+            Q.append((f"{_pname}[{i}]", _vname, _rtype, _n_dim[1:], new_prev_n_dim))
+        else:
+          new_prev_n_dim = _prev_n_dim
+          for sub_name, sub_rtype in _rtype.get_all_properties_packed():
+            sub_n_dim, sub_rtype = get_rtype( sub_rtype )
+            Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}",
+                      sub_rtype, sub_n_dim, new_prev_n_dim))
+      else:
+        assert False, f"{_pname} is not interface(s) or port(s)!"
+
+    # Merge entries whose vnames are the same. The result will have a list for
+    # the pnames.
+    names = set()
+    for _, vname, rtype in packed_ifc:
+      if vname not in names:
+        names.add( vname )
+        ret.append(([], vname, rtype))
+        for _pname, _vname, _ in packed_ifc:
+          if vname == _vname:
+            ret[-1][0].append(_pname)
+
     return ret
+
+  def _mangle_ifc( pname, vname, ifc, n_dim ):
+    is_mapped, flatten_ifc = _is_ifc_mapped( pname, vname, ifc, n_dim )
+    if is_mapped:
+      return flatten_ifc
+    else:
+      return _gen_packed_ifc( pname, vname, ifc, n_dim )
 
   # We start from all packed ports/interfaces, and unpack arrays if
   # it is found in a port.
@@ -194,4 +261,5 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
   for name, ifc in rtype.get_ifc_views_packed():
     i_n_dim, i_rtype = get_rtype( ifc )
     ret += _mangle_ifc( name, name, i_rtype, i_n_dim )
+
   return ret

@@ -3,12 +3,14 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
+from textwrap import dedent
+
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL2 import (
     StructuralTranslatorL2,
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
-from ...util.utility import make_indent
+from ...util.utility import make_indent, pretty_concat
 from .VStructuralTranslatorL1 import VStructuralTranslatorL1
 
 
@@ -22,21 +24,17 @@ class VStructuralTranslatorL2(
   def rtlir_tr_packed_array_dtype( s, dtype ):
     sub_dtype = dtype.get_sub_dtype()
     if isinstance( sub_dtype, rdt.Vector ):
-      sub_dtype_template = s.rtlir_tr_vector_dtype( sub_dtype )
+      sub_dtype_tr = s.rtlir_tr_vector_dtype( sub_dtype )
     elif isinstance( sub_dtype, rdt.Struct ):
-      sub_dtype_template = s.rtlir_tr_struct_dtype( sub_dtype )
+      sub_dtype_tr = s.rtlir_tr_struct_dtype( sub_dtype )
     else:
-      raise Exception(f"unsupported data type {sub_dtype} in packed array!")
+      assert False, f"unsupported data type {sub_dtype} in packed array!"
     dim_str = "".join( f"[{size-1}:0]" for size in dtype.get_dim_sizes() )
-    str_list = sub_dtype_template['decl'].split()
-    if '[' in str_list[-2]:
-      str_list[-2] = dim_str + str_list[-2]
-    else:
-      str_list = str_list[:-1] + [ dim_str ] + [ str_list[-1] ]
     return {
       'def' : '',
-      'const_decl' : ' '.join( str_list ),
-      'decl' : ' '.join( str_list ),
+      'data_type' : f"{sub_dtype_tr['data_type']}",
+      'packed_type' : f"{dim_str}{sub_dtype_tr['packed_type']}",
+      'unpacked_type' : sub_dtype_tr['unpacked_type'],
       'ndim' : dtype.get_dim_sizes(),
       'raw_dtype' : dtype
     }
@@ -48,30 +46,28 @@ class VStructuralTranslatorL2(
     for id_, _dtype in dtype.get_all_properties().items():
 
       if isinstance( _dtype, rdt.Vector ):
-        decl = s.rtlir_tr_vector_dtype( _dtype )['decl'].format(**locals())
+        tr = s.rtlir_tr_vector_dtype(_dtype)
       elif isinstance( _dtype, rdt.PackedArray ):
-        decl = s.rtlir_tr_packed_array_dtype( _dtype )['decl'].format(**locals())
+        tr = s.rtlir_tr_packed_array_dtype(_dtype)
       elif isinstance( _dtype, rdt.Struct ):
-        decl = s.rtlir_tr_struct_dtype( _dtype )['decl'].format(**locals())
+        tr = s.rtlir_tr_struct_dtype(_dtype)
       else:
         assert False, \
           f'unrecoganized field type {_dtype} of struct {dtype_name}!'
-      field_decls.append( decl + ';' )
+      field_decls.append(pretty_concat(tr['data_type'], tr['packed_type'], id_, ';'))
 
     make_indent( field_decls, 1 )
     field_decl = '\n'.join( field_decls )
 
-    file_info = dtype.get_file_info()
-
     return {
-      'def' : \
-f"""\
-typedef struct packed {{
-{field_decl}
-}} {dtype_name};
-""",
-      'const_decl' : f'{dtype_name} {{id_}}',
-      'decl' : f'{dtype_name} {{id_}}',
+      'def' : dedent("""\
+        typedef struct packed {{
+        {field_decl}
+        }} {dtype_name};
+        """).format(**locals()),
+      'data_type' : dtype_name,
+      'packed_type' : '',
+      'unpacked_type' : '',
       'raw_dtype' : dtype
     }
 
@@ -80,11 +76,8 @@ typedef struct packed {{
   #-----------------------------------------------------------------------
 
   def gen_array_param( s, n_dim, dtype, array ):
-    if not n_dim:
-      if isinstance( dtype, rdt.Struct ):
-        return s.rtlir_tr_struct_instance( dtype, array )
-      else:
-        return super().gen_array_param( n_dim, dtype, array )
+    if not n_dim and isinstance( dtype, rdt.Struct ):
+      return s.rtlir_tr_struct_instance( dtype, array )
     else:
       return super().gen_array_param( n_dim, dtype, array )
 
@@ -92,13 +85,19 @@ typedef struct packed {{
   # Signal oeprations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_packed_index( s, base_signal, index ):
-    return f'{base_signal}[{index}]'
+  def rtlir_tr_packed_index( s, base_signal, index, status ):
+    return s._rtlir_tr_process_unpacked(
+              f'{base_signal}[{index}]',
+              f'{base_signal}{{}}[{index}]',
+              status, ('status', 'unpacked') )
 
-  def rtlir_tr_struct_attr( s, base_signal, attr ):
-    return f'{base_signal}.{attr}'
+  def rtlir_tr_struct_attr( s, base_signal, attr, status ):
+    return s._rtlir_tr_process_unpacked(
+              f'{base_signal}.{attr}',
+              f'{base_signal}{{}}.{attr}',
+              status, ('status', 'unpacked') )
 
-  def rtlir_tr_struct_instance( s, dtype, struct ):
+  def rtlir_tr_struct_instance( s, dtype, struct, status ):
     def _gen_packed_array( dtype, n_dim, array ):
       if not n_dim:
         if isinstance( dtype, rdt.Vector ):
@@ -106,7 +105,7 @@ typedef struct packed {{
         elif isinstance( dtype, rdt.Struct ):
           return s.rtlir_tr_struct_instance( dtype, array )
         else:
-          raise Exception(f"unrecognized data type {dtype}!")
+          assert False, f"unrecognized data type {dtype}!"
       else:
         ret = []
         for i in reversed( range( n_dim[0]) ):
@@ -130,5 +129,4 @@ typedef struct packed {{
       else:
         assert False, f"unrecognized data type {Type}!"
       ret.append( _ret )
-    cat_str = ", ".join( ret )
-    return f"{{ {cat_str} }}"
+    return f"{{ {', '.join(ret)} }}"
