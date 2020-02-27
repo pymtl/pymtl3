@@ -23,8 +23,8 @@ from ..sim.SimpleTickPass import SimpleTickPass
 from .HeuristicTopoPass import CountBranchesLoops
 from .UnrollTickPass import UnrollTickPass
 
-_DEBUG = True
-# _DEBUG = False
+# _DEBUG = True
+_DEBUG = False
 
 class Mamba2020Pass( BasePass ):
 
@@ -57,7 +57,11 @@ class Mamba2020Pass( BasePass ):
 
     for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
-      self.branchiness[ blk ], self.only_loop_at_top[ blk ] = v.enter( hostobj.get_update_block_info( blk )[-1] )
+      if blk in top._dag.blk_greenlet_mapping:
+        gblk = top._dag.blk_greenlet_mapping[ blk ]
+        self.branchiness[ gblk ], self.only_loop_at_top[ gblk ] = 0, 0
+      else:
+        self.branchiness[ blk ], self.only_loop_at_top[ blk ] = v.enter( hostobj.get_update_block_info( blk )[-1] )
 
     self.schedule_ff( top )
 
