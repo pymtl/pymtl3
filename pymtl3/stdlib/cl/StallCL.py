@@ -17,7 +17,7 @@ from random import Random
 class StallCL( Component ):
 
   # ready <==> stall_rand > stall_prob
-  @non_blocking( lambda s: s.stall_prob == 0 or(s.stall_rgen.random() > s.stall_prob and s.send.rdy()) )
+  @non_blocking( lambda s: (s.stall_prob == 0 or (s.stall_rgen.random() > s.stall_prob) ) and s.send.rdy() )
   def recv( s, msg ):
     s.send( msg )
 
