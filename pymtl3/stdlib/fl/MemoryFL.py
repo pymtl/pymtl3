@@ -19,7 +19,7 @@ class MemoryFL( Component ):
   def construct( s, mem_nbytes=1<<20 ):
     s.mem = bytearray( mem_nbytes )
 
-    s.ifc = MemMinionIfcFL( s.read, s.write, s.amo )
+    s.ifc = MemMinionIfcFL( read=s.read, write=s.write, amo=s.amo )
 
     s.trace = "     "
     @s.update

@@ -23,7 +23,7 @@ from .XcelMsg import XcelMsgType, mk_xcel_msg
 
 class XcelMasterIfcFL( Interface ):
 
-  def construct( s ):
+  def construct( s, ReqType=None, RespType=None ):
     s.read  = CallerIfcFL()
     s.write = CallerIfcFL()
 
@@ -69,7 +69,7 @@ class XcelMasterIfcFL( Interface ):
 
 class XcelMinionIfcFL( Interface ):
 
-  def construct( s, *, read=None, write=None ):
+  def construct( s, ReqType=None, RespType=None, *, read=None, write=None ):
     s.read  = CalleeIfcFL( method=read )
     s.write = CalleeIfcFL( method=write )
 

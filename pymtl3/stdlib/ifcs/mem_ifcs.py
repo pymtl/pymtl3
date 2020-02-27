@@ -16,7 +16,7 @@ from .SendRecvIfc import RecvCL2SendRTL, RecvIfcRTL, RecvRTL2SendCL, SendIfcRTL
 
 
 class MemMasterIfcFL( Interface ):
-  def construct( s ):
+  def construct( s, ReqType=None, RespType=None ):
     s.read  = CallerIfcFL()
     s.write = CallerIfcFL()
     s.amo   = CallerIfcFL()
@@ -62,7 +62,7 @@ class MemMasterIfcFL( Interface ):
     return False
 
 class MemMinionIfcFL( Interface ):
-  def construct( s, read=None, write=None, amo=None ):
+  def construct( s, ReqType=None, RespType=None, *, read=None, write=None, amo=None ):
     s.read  = CalleeIfcFL( method=read )
     s.write = CalleeIfcFL( method=write )
     s.amo   = CalleeIfcFL( method=amo )
