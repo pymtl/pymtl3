@@ -28,6 +28,8 @@ class WrapGreenletPass( BasePass ):
     all_constraints = top._dag.all_constraints
     greenlet_upblks = top._dag.greenlet_upblks
 
+    top._dag.blk_greenlet_mapping = blk_greenlet_mapping = {}
+
     if not greenlet_upblks:
       return
 
@@ -49,12 +51,11 @@ class WrapGreenletPass( BasePass ):
       return greenlet_ticker
 
     new_upblks  = set()
-    wrapped_blk_mapping = {}
 
     for blk in all_upblks:
       if blk in greenlet_upblks:
         wrapped = wrap_greenlet( blk )
-        wrapped_blk_mapping[ blk ] = wrapped
+        blk_greenlet_mapping[ blk ] = wrapped
         new_upblks.add( wrapped )
       else:
         new_upblks.add( blk )
@@ -63,11 +64,12 @@ class WrapGreenletPass( BasePass ):
 
     for (x, y) in all_constraints:
       if x in greenlet_upblks:
-        x = wrapped_blk_mapping[ x ]
+        x = blk_greenlet_mapping[ x ]
       if y in greenlet_upblks:
-        y = wrapped_blk_mapping[ y ]
+        y = blk_greenlet_mapping[ y ]
 
       new_constraints.add( (x, y) )
 
     top._dag.final_upblks    = new_upblks
     top._dag.all_constraints = new_constraints
+    top._dag.blk_greenlet_mapping = blk_greenlet_mapping
