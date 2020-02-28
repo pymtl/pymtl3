@@ -65,12 +65,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     # Check params
     for param_name, value in cfg.params.items():
-      assert isinstance( value, int ), \
-          f'non-integer parameter {param_name} is not supported yet!'
-
-    for param_name, value in cfg.params.items():
-      assert isinstance( value, int ), \
-          f'non-integer parameter {param_name} is not supported yet!'
+      if not isinstance( value, int ):
+        raise InvalidPassOptionValue("params", cfg.params, cfg.PassName,
+            f"non-integer parameter {param_name} is not supported yet!")
 
     # Check port map
 
@@ -90,18 +87,25 @@ class VerilogPlaceholderPass( PlaceholderPass ):
           f"Port {name} does not exist in component {irepr.get_name()}!")
 
     # Check src_file
-    if cfg.src_file:
-      assert os.path.isfile(expand(cfg.src_file)), 'src_file should be a file path!'
+    if cfg.src_file and not os.path.isfile(expand(cfg.src_file)):
+      raise InvalidPassOptionValue("src_file", cfg.src_file, cfg.PassName,
+          'src_file should be a file path!')
 
-    assert not cfg.v_flist, 'Placeholders backed by Verilog flist are not supported yet!'
-    # Check v_flist
     if cfg.v_flist:
-      assert os.path.isfile(expand(cfg.v_flist)), 'v_flist should be a file path!'
+      raise InvalidPassOptionValue("v_flist", cfg.v_flist, cfg.PassName,
+          'Placeholders backed by Verilog flist are not supported yet!')
+
+    # Check v_flist
+    if cfg.v_flist and not os.path.isfile(expand(cfg.v_flist)):
+      raise InvalidPassOptionValue("v_flist", cfg.v_flist, cfg.PassName,
+          'v_flist should be a file path!')
 
     # Check v_include
     if cfg.v_include:
       for include in cfg.v_include:
-        assert os.path.isdir(expand(include)), 'v_include should be an array of dir paths!'
+        if not os.path.isdir(expand(include)):
+          raise InvalidPassOptionValue("v_include", cfg.v_include, cfg.PassName,
+              'v_include should be an array of dir paths!')
 
   def pickle( s, m, cfg, irepr ):
     # In the namespace cfg:
@@ -285,8 +289,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # config is present, use it instead.
 
     if cfg.v_include:
-      assert len(cfg.v_include) == 1, \
-          "the current pickler only supports one user-defined v_include path..."
+      if len(cfg.v_include) != 1:
+        raise InvalidPassOptionValue("v_include", cfg.v_include, cfg.PassName,
+            'the current pickler only supports one user-defined v_include path...')
       include_path = cfg.v_include[0]
 
     # If we could not find the special .pymtl-python-path file, then assume
