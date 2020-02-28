@@ -293,7 +293,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # the include directory is the same as the directory that contains the
     # first verilog file.
 
-    if not special_file_found and not v_include:
+    if not special_file_found and not cfg.v_include:
       include_path = os.path.dirname( os.path.abspath( first_verilog_file ) )
 
     # Regex to extract verilog filenames from `include statements
