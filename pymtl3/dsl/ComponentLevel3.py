@@ -129,7 +129,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # error message, we set the line number of update block
     # Shunning: bugfix:
 
-    blk_name = "_lambda__{}".format( repr(o).replace(".","_").replace("[", "_").replace("]", "_") )
+    blk_name = "_lambda__{}".format( repr(o).replace(".","_").replace("[", "_").replace("]", "_").replace(":", "_") )
     lambda_upblk = ast.FunctionDef(
       name=blk_name,
       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
