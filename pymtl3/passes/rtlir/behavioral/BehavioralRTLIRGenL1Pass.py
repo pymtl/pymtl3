@@ -315,11 +315,16 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
             f'Component {obj} is not a sub-component of {s.component}!' )
         ret = bir.Base( obj )
       else:
-        ret =  bir.FreeVar( node.id, obj )
+        # A closure variable could be a loop index. We need to
+        # generate per-function closure variable instead of assuming
+        # they will have the same value.
+        ret =  bir.FreeVar( f"{node.id}_at_{s.blk.__name__}", obj )
       ret.ast = node
       return ret
     elif node.id in s.globals:
       # free var from the global name space
+      # For now we can still safely assume all upblks will see the same
+      # value for a free var from the global space?
       ret = bir.FreeVar( node.id, s.globals[ node.id ] )
       ret.ast = node
       return ret
