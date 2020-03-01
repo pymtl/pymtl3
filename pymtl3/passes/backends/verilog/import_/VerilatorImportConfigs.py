@@ -76,7 +76,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
 
     # Un-warn all warnings in the given list; [] to disable this option
     # The given list should only include strings that appear in `Warnings`
-    "vl_Wno_list" : [ 'UNOPTFLAT', 'WIDTH' ],
+    "vl_Wno_list" : [ 'UNOPTFLAT', 'UNSIGNED', 'WIDTH' ],
 
     # Verilator misc options
 

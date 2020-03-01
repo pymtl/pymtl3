@@ -89,4 +89,4 @@ class TranslationImportPass( BasePass ):
     return TranslationConfigs()
 
   def get_import_configs( s ):
-    return VerilatorImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED'])
+    return VerilatorImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED', 'WIDTH'])

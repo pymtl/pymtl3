@@ -573,8 +573,11 @@ m->{name}{sub} = {deference}model->{name}{sub};
       def gen_ifc_str( symbols, ifc ):
 
         def _get_arg_str( name, obj ):
-          if isinstance( obj, int ):
+          # Support common python types and Bits/BitStruct
+          if isinstance( obj, (int, bool, str) ):
             return str(obj)
+          elif obj == None:
+            return 'None'
           elif isinstance( obj, Bits ):
             nbits = obj.nbits
             value = int(obj)
@@ -705,7 +708,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_comb_input
   #-------------------------------------------------------------------------
 
-  def gen_port_array_input( s, lhs, rhs, pnames, dtype, n_dim, symbols ):
+  def gen_port_array_input( s, lhs, rhs, pnames, dtype, index, n_dim, symbols ):
 
     if not n_dim:
       rhs = rhs.format(next(pnames))
@@ -755,8 +758,13 @@ m->{name}{sub} = {deference}model->{name}{sub};
       set_comb, structs = [], []
       for idx in range( n_dim[0] ):
         _lhs = f"{lhs}[{idx}]"
-        _rhs = f"{rhs}[{idx}]"
-        _set_comb, _structs = s.gen_port_array_input( _lhs, _rhs, pnames, dtype, n_dim[1:], symbols )
+        if index == 0:
+          _rhs = f"{rhs}[{idx}]"
+          _index = index-1
+        else:
+          _rhs = f"{rhs}"
+          _index = index
+        _set_comb, _structs = s.gen_port_array_input( _lhs, _rhs, pnames, dtype, _index, n_dim[1:], symbols )
         set_comb += _set_comb
         structs  += _structs
       return set_comb, structs
@@ -775,7 +783,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(vname)
         rhs = "s.{}"
-        _set_comb, _structs = s.gen_port_array_input( lhs, rhs, pnames_iter, dtype, p_n_dim, symbols )
+        idx = s._get_port_array_index( pnames, p_n_dim )
+        _set_comb, _structs = s.gen_port_array_input( lhs, rhs, pnames_iter, dtype, idx, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
 
@@ -785,7 +794,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_comb_output
   #-------------------------------------------------------------------------
 
-  def gen_port_array_output( s, lhs, pnames, rhs, dtype, n_dim, symbols ):
+  def gen_port_array_output( s, lhs, pnames, rhs, dtype, index, n_dim, symbols ):
     if not n_dim:
       lhs = lhs.format(next(pnames))
       dtype_nbits = dtype.get_length()
@@ -836,9 +845,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       set_comb, structs = [], []
       for idx in range( n_dim[0] ):
-        _lhs = f"{lhs}[{idx}]"
+        if index == 0:
+          _lhs = f"{lhs}[{idx}]"
+          _index = index-1
+        else:
+          _lhs = f"{lhs}"
+          _index = index
         _rhs = f"{rhs}[{idx}]"
-        _set_comb, _structs = s.gen_port_array_output( _lhs, pnames, _rhs, dtype, n_dim[1:], symbols )
+        _set_comb, _structs = s.gen_port_array_output( _lhs, pnames, _rhs, dtype, _index, n_dim[1:], symbols )
         set_comb += _set_comb
         structs  += _structs
       return set_comb, structs
@@ -852,7 +866,8 @@ m->{name}{sub} = {deference}model->{name}{sub};
         dtype = p_rtype.get_dtype()
         lhs = "s.{}"
         rhs = "_ffi_m." + s._verilator_name(vname)
-        _set_comb, _structs = s.gen_port_array_output( lhs, pnames_iter, rhs, dtype, p_n_dim, symbols )
+        idx = s._get_port_array_index( pnames, p_n_dim )
+        _set_comb, _structs = s.gen_port_array_output( lhs, pnames_iter, rhs, dtype, idx, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
     return set_comb, structs
@@ -930,6 +945,15 @@ m->{name}{sub} = {deference}model->{name}{sub};
     else:
       dtype = port.get_dtype()
     return dtype.get_length()
+
+  def _get_port_array_index( s, pnames, n_dim ):
+    i, prod, len_pnames = 0, 1, len(pnames)
+    while True:
+      if prod == len_pnames:
+        return i
+      prod *= n_dim[i]
+      i += 1
+      assert i <= len(n_dim), "failed to find port array index!"
 
   def _gen_ref_write( s, lhs, rhs, nbits ):
     if nbits <= 64:
