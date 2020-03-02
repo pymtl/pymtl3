@@ -13,6 +13,10 @@ currently quite sparse.
 
 In June 2019, [Keeping Computer Hardware Fast and Furious: "PyMTL is a fantastic example of what we need to jump-start the open-source hardware ecosystem…It’s a key missing link."](https://research.cornell.edu/news-features/keeping-computer-hardware-fast-and-furious "Link to the article") was featured on Cornell Research.
 
+User Forum
+----------
+We recommend the user to post on https://groups.google.com/forum/#!forum/pymtl-users to ask questions about using PyMTL 3. The github issues are reserved for development purposes, e.g., bug reports and feature requests.
+
 Tutorials
 ---------
 We recently hold a very high quality PyMTL 3 tutorial at FCRC 2019 with 40+
