@@ -21,3 +21,17 @@ except:
       addr -= 1
 
     return ret
+
+try:
+  from mamba import write_bytearray_bits
+except:
+  from pymtl3.datatypes import Bits
+
+  def write_bytearray_bits( arr, addr, nbytes, data ):
+    addr = int(addr)
+    end  = addr + nbytes
+
+    while addr < end:
+      arr[addr] = data & 255
+      data >>= 8
+      addr += 1
