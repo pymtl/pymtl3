@@ -126,10 +126,11 @@ class HeuristicTopoPass( BasePass ):
     # Initialize all generated net block to 0 branchiness
     branchiness = { x: 0 for x in top._dag.genblks }
 
-    visitor = CountBranches()
+    visitor = CountBranchesLoops()
+    # FIXME use the pure-loop info
     for blk in top.get_all_update_blocks():
       hostobj = top.get_update_block_host_component( blk )
-      branchiness[ blk ] = visitor.enter( hostobj.get_update_block_info( blk )[-1] )
+      branchiness[ blk ], _ = visitor.enter( hostobj.get_update_block_info( blk )[-1] )
 
     # Perform topological sort for a serial schedule.
     # Note that here we use a priority queue to get the blocks with small

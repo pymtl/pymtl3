@@ -7,6 +7,7 @@
 
 import os
 from collections import defaultdict, deque
+from copy import deepcopy
 
 import py
 
@@ -161,14 +162,13 @@ class DynamicSchedulePass( BasePass ):
 
           # TODO mamba?
           scc_tick_func = SimpleTickPass.gen_tick_function( scc )
-          _globals = { 's': s, 'scc_tick_func': scc_tick_func }
+          _globals = { 's': s, 'scc_tick_func': scc_tick_func, 'deepcopy': deepcopy }
           _locals  = {}
 
           custom_exec(py.code.Source( src ).compile(), _globals, _locals)
           return _locals[ 'generated_block' ]
 
         template = """
-from copy import deepcopy
 def wrapped_SCC_{0}():
   N = 0
   while True:
