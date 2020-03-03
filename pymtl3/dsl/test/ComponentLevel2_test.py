@@ -377,14 +377,16 @@ def test_write_two_disjoint_slices():
   class Top(ComponentLevel2):
     def construct( s ):
       s.A  = Wire( Bits32 )
+      s.B  = Wire( Bits16 )
 
       @update
       def up_wr_0_16():
-        s.A[0:16] = Bits16( 0xff )
+        s.A[0:16] @= Bits16( 0xff )
 
       @update
       def up_wr_16_30():
-        s.A[16:30] = Bits16( 0xff )
+        s.A[16:30] @= Bits16( 0xff )
+        s.B @= s.A
 
       @update
       def up_rd_12_30():
@@ -409,7 +411,7 @@ def test_wr_A_b_rd_A_impl():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32(123)
+        s.A.b @= 123
 
       @update
       def up_rd_A():

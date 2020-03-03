@@ -201,9 +201,20 @@ class ComponentLevel2( ComponentLevel1 ):
 
       all_objs = set()
 
-      for obj_name, nodelist in names:
-        if obj_name[0][0] == "s":
+      for obj_name, nodelist, op in names:
+    # if self.is_update_ff:
+      # self.visit( node.target )
+      # if isinstance( node.target, (ast.Attribute, ast.Subscript) ):
+        # if not isinstance( node.op, ast.LShift ):
+          # raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
+                # "has a wrong assign operator. Change it to <<=." )
+    # else:
+      # if isinstance( node.target, (ast.Attribute, ast.Subscript) ):
+        # if not isinstance( node.op, ast.MatMult ):
+          # raise InvalidAssignError( self.obj, self.upblk, node.lineno,
+                # "has a wrong assign operator. Change it to <<=." )
 
+        if obj_name[0][0] == "s":
           objs = set()
           lookup_variable( s, 1, 1 )
           for obj in objs:
@@ -257,6 +268,7 @@ class ComponentLevel2( ComponentLevel1 ):
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ],
                                     update_ff = blk in s._dsl.update_ff, is_write=True )
+      print(blk, s._dsl.upblk_writes [ blk ])
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override

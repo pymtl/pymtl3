@@ -55,6 +55,33 @@ Suggestion: check the declaration of the variables, or fix this assignment.""".f
       repr(hostobj), hostobj.__class__.__name__ )
     )
 
+class InvalidCombAssignError( Exception ):
+  """ In update_ff, raise when signal is not @= -ed, or temp is not '=' -ed """
+  def __init__( self, hostobj, blk, lineno, suggestion ):
+
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ In update_ff, we only allow <<= to valid fields for constructing nonblocking assignments.
+(when constructing instance {} of class \"{}\" in the hierarchy)
+
+Suggestion: Line {} {}""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(hostobj), hostobj.__class__.__name__,
+      error_lineno, suggestion )
+    )
+
 class InvalidFFAssignError( Exception ):
   """ In update_ff, raise when signal is not <<= -ed, or temp is not = -ed """
   def __init__( self, hostobj, blk, lineno, suggestion ):
