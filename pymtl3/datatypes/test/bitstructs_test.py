@@ -11,7 +11,7 @@ from copy import deepcopy
 
 import pytest
 
-from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.dsl import Component, InPort, OutPort, update
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
 from ..bits_import import *
@@ -265,7 +265,7 @@ def test_component():
       s.out    = OutPort( NestedSimple )
       s.out_pt = OutPort( StaticPoint  )
 
-      @s.update
+      @update
       def up_bitstruct():
         # TODO:We have to use deepcopy here as a temporary workaround
         # to prevent s.in_ being mutated by the following operations.

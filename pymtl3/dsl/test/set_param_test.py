@@ -8,6 +8,7 @@ Date   : May 28, 2019
 """
 from pymtl3.datatypes.bits_import import Bits4, Bits8
 from pymtl3.dsl.Component import Component
+from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.Connectable import InPort, OutPort
 from pymtl3.dsl.NamedObject import NamedObject
@@ -141,7 +142,7 @@ def test_component():
 
       s.incr_value = DataType( incr_value )
 
-      @s.update
+      @update
       def up_incr():
         s.out = s.in_ + s.incr_value
 

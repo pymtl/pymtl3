@@ -3,6 +3,8 @@ These objects are only for developers to use. Other objects are exposed
 to users in pymtl/__init__.py
 """
 from .Component import Component
+from .ComponentLevel1 import update
+from .ComponentLevel2 import update_ff
 from .ComponentLevel3 import connect
 from .ComponentLevel5 import method_port
 from .ComponentLevel6 import non_blocking

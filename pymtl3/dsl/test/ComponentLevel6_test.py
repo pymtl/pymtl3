@@ -10,6 +10,7 @@ Author : Yanghui Ou
 from collections import deque
 
 from pymtl3.datatypes import Bits16
+from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6, non_blocking
 from pymtl3.dsl.Connectable import CalleeIfcCL, CallerIfcCL
@@ -31,7 +32,7 @@ class TestSrc( ComponentLevel6 ):
     s.head = None
     s.trace_len = len( str( s.msgs[0] ) )
 
-    @s.update
+    @update
     def send_msg():
       s.head = None
       if s.send.rdy() and s.msgs:
@@ -94,7 +95,7 @@ class TestHarness( ComponentLevel6 ):
 
     s.src     = TestSrc ( src_msgs  )
     s.sink    = TestSink( sink_msgs )
-    s.dut     = DUT()
+    s.dut     = DUT
 
     # Connections
     connect( s.src.send, s.dut.recv  )
@@ -204,7 +205,7 @@ class QueueIncr( ComponentLevel6 ):
     connect( s.recv, s.queue.enq )
 
     s.v = None
-    @s.update
+    @update
     def deq_incr():
       s.v = None
       if s.queue.deq.rdy() and s.send.rdy():
