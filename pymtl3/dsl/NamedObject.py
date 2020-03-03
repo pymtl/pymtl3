@@ -356,9 +356,9 @@ class NamedObject:
     s._dsl.full_name     = "s"
     s._dsl.elaborate_top = s
 
-
-    # Secret source for letting the child know the field name of itself
+    # Secret sauce for letting the child know the field name of itself
     # -- override setattr for elaboration, and remove it afterwards
+    # -- and the global elaborate to enable free function as decorator
 
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
     NamedObject._elaborate_stack = [ s ]
@@ -372,7 +372,6 @@ class NamedObject:
       raise
 
     del NamedObject.__setattr__
-
     del NamedObject._elaborate_stack
 
   def _elaborate_collect_all_named_objects( s ):

@@ -36,47 +36,47 @@ def test_false_cyclic_dependency():
   class Top(Component):
 
     def construct( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
-      s.c = Wire(int)
-      s.d = Wire(int)
-      s.e = Wire(int)
-      s.f = Wire(int)
-      s.g = Wire(int)
-      s.h = Wire(int)
-      s.i = Wire(int)
-      s.j = Wire(int)
+      s.a = Wire(32)
+      s.b = Wire(32)
+      s.c = Wire(32)
+      s.d = Wire(32)
+      s.e = Wire(32)
+      s.f = Wire(32)
+      s.g = Wire(32)
+      s.h = Wire(32)
+      s.i = Wire(32)
+      s.j = Wire(32)
 
-      @s.update
+      @update
       def up1():
         s.a = 10 + s.i
         s.b = s.d + 1
 
-      @s.update
+      @update
       def up2():
         s.c = s.a + 1
         s.e = s.d + 1
 
-      @s.update
+      @update
       def up3():
         s.d = s.c + 1
         print("up3 prints out d =", s.d)
 
-      @s.update
+      @update
       def up4():
         s.f = s.d + 1
 
-      @s.update
+      @update
       def up5():
         s.g = s.c + 1
         s.h = s.j + 1
         print("up5 prints out h =", s.h)
 
-      @s.update
+      @update
       def up6():
         s.i = s.i + 1
 
-      @s.update
+      @update
       def up7():
         s.j = s.g + 1
 
@@ -94,20 +94,20 @@ def test_combinational_loop():
   class Top(Component):
 
     def construct( s ):
-      s.a = Wire(int)
-      s.b = Wire(int)
-      s.c = Wire(int)
-      s.d = Wire(int)
+      s.a = Wire(32)
+      s.b = Wire(32)
+      s.c = Wire(32)
+      s.d = Wire(32)
 
-      @s.update
+      @update
       def up1():
         s.b = s.d + 1
 
-      @s.update
+      @update
       def up2():
         s.c = s.b + 1
 
-      @s.update
+      @update
       def up3():
         s.d = s.c + 1
         print("up3 prints out d =", s.d)
@@ -130,10 +130,10 @@ def test_very_deep_dag():
 
   class Inner(Component):
     def construct( s ):
-      s.in_ = InPort(int)
-      s.out = OutPort(int)
+      s.in_ = InPort(32)
+      s.out = OutPort(32)
 
-      @s.update
+      @update
       def up():
         s.out = s.in_ + 1
 
@@ -164,11 +164,11 @@ def test_sequential_break_loop():
       s.b = Wire( Bits32 )
       s.c = Wire( Bits32 )
 
-      @s.update
+      @update
       def up1():
         s.b = s.c + 1
 
-      @s.update_ff
+      @update_ff
       def up2():
         if s.reset:
           s.c <<= 0
@@ -189,12 +189,11 @@ def test_connect_slice_int():
 
   class Top( Component ):
     def construct( s ):
-      from pymtl3.datatypes import Bits8, Bits32
       s.y = OutPort( Bits8 )
       s.x = Wire( Bits32 )
 
       s.y //= s.x[0:8]
-      @s.update
+      @update
       def sx():
         s.x = 10 # Except
 

@@ -41,7 +41,7 @@ def test_vector_signals():
       s.in1 = InPort( Bits32 )
       s.out = OutPort( Bits32 )
 
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in0 + s.in1
   def tv_in( m, tv ):
@@ -73,7 +73,7 @@ def test_bitstruct_signals():
       s.in1 = InPort( Bits32 )
       s.out = OutPort( Bits32 )
 
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in0.bar + s.in1
   def tv_in( m, tv ):

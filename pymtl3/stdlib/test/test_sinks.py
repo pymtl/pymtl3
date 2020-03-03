@@ -41,7 +41,7 @@ class TestSinkCL( Component ):
 
     s.recv_called = False
 
-    @s.update
+    @update
     def up_sink_count():
       # Raise exception at the start of next cycle so that the errored
       # line trace gets printed out

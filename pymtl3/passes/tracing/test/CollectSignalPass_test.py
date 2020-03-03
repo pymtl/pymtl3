@@ -22,7 +22,7 @@ class Toy( Component ):
     s.in1 = InPort( Bits32 )
     s.out = OutPort( Bits32 )
 
-    @s.update
+    @update
     def add_upblk():
       # This update block models the behavior of a 32-bit adder
       s.out = s.in0 + s.in1

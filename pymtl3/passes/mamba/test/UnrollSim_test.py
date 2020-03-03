@@ -11,7 +11,7 @@ def test_very_deep_dag():
       s.in_ = InPort(Bits32)
       s.out = OutPort(Bits32)
 
-      @s.update
+      @update
       def up():
         s.out = s.in_ + 1
 
@@ -28,7 +28,7 @@ def test_very_deep_dag():
         s.inners[i].out //= s.inners[i+1].in_
 
       s.out = OutPort(Bits32)
-      @s.update_ff
+      @update_ff
       def ff():
         if s.reset:
           s.out <<= 0

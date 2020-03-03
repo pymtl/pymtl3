@@ -1,6 +1,8 @@
 from .datatypes import *
 from .datatypes import _bitwidths
 from .dsl.Component import Component
+from .dsl.ComponentLevel1 import update
+from .dsl.ComponentLevel2 import update_ff
 from .dsl.ComponentLevel3 import connect
 from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
@@ -30,7 +32,7 @@ __version__ = "0.5.5"
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
-  'connect', 'method_port',
+  'update', 'update_ff', 'connect', 'method_port',
   'CalleeIfcRTL', 'CallerIfcRTL',
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
