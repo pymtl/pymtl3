@@ -9,9 +9,7 @@ import pytest
 
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
-from pymtl3.stdlib.test import mk_test_case_table
-from pymtl3.stdlib.test.test_sinks import TestSinkCL
-from pymtl3.stdlib.test.test_srcs import TestSrcCL
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, mk_test_case_table, run_sim
 
 from .MemoryCL import MemoryCL
 
@@ -27,7 +25,7 @@ class TestHarness( Component ):
     assert len(PortTypes) == nports
     s.srcs = [ TestSrcCL( PortTypes[i][0], src_msgs[i], src_initial, src_interval )
                 for i in range(nports) ]
-    s.mem  = cls( nports, PortTypes, mem_latency )
+    s.mem  = cls( nports, PortTypes, stall_prob, mem_latency )
     s.sinks = [ TestSinkCL( PortTypes[i][1], sink_msgs[i], sink_initial, sink_interval,
                             arrival_time ) for i in range(nports) ]
 
@@ -70,7 +68,6 @@ resp_type_dict = {
 }
 
 req_cls, resp_cls = mk_mem_msg( 8, 32, 32 )
-b32 = Bits32
 
 def req( type_, opaque, addr, len, data ):
   return req_cls( req_type_dict[type_], opaque, addr, len, b32(data) )
@@ -246,13 +243,15 @@ test_case_table = mk_test_case_table([
 # Test cases for 1 port
 #-------------------------------------------------------------------------
 
-#  @pytest.mark.parametrize( **test_case_table )
-#  def test_1port( test_params, dump_vcd ):
-  #  msgs = test_params.msg_func(0x1000)
-  #  run_sim( TestHarness( 1, [ msgs[::2] ], [ msgs[1::2] ],
-                        #  test_params.stall, test_params.lat,
-                        #  test_params.src, test_params.sink ),
-           #  dump_vcd )
+@pytest.mark.parametrize( **test_case_table )
+def test_1port( test_params, dump_vcd ):
+  msgs = test_params.msg_func(0x1000)
+  run_sim( TestHarness( MemoryCL, 1, [(req_cls, resp_cls)],
+                        [ msgs[::2] ],
+                        [ msgs[1::2] ],
+                        test_params.stall, test_params.lat,
+                        test_params.src_init, test_params.src_intv,
+                        test_params.sink_init, test_params.sink_intv ) )
 
 #-------------------------------------------------------------------------
 # Test cases for 2 port
@@ -278,6 +277,7 @@ def test_20port( test_params, dump_vcd ):
                         test_params.stall, test_params.lat,
                         test_params.src_init, test_params.src_intv,
                         test_params.sink_init, test_params.sink_intv ) )
+
 #-------------------------------------------------------------------------
 # Test Read/Write Mem
 #-------------------------------------------------------------------------
@@ -328,28 +328,3 @@ def test_read_write_mem( dump_vcd ):
   # Compare result to original data
 
   assert result == data
-
-def run_sim( th, max_cycles=1000 ):
-
-  # Create a simulator
-
-  th.apply( SimulationPass() )
-  th.sim_reset()
-
-  # Run simulation
-
-  print("")
-  ncycles = 0
-  print("{:3}:{}".format( ncycles, th.line_trace() ))
-  while not th.done() and ncycles < max_cycles:
-    th.tick()
-    ncycles += 1
-    print("{:3}:{}".format( ncycles, th.line_trace() ))
-
-  # Check timeout
-
-  assert ncycles < max_cycles
-
-  th.tick()
-  th.tick()
-  th.tick()
