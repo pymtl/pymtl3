@@ -74,11 +74,17 @@ class MemoryCL( Component ):
     req_latency = min(1, latency)
     resp_latency = latency - req_latency
 
-    s.req_stalls = [ StallCL( stall_prob, i )( recv = s.ifc[i].req ) for i in range(nports) ]
-    s.req_qs  = [ DelayPipeDeqCL( req_latency )( enq = s.req_stalls[i].send ) for i in range(nports) ]
-    s.resp_qs = [ DelayPipeSendCL( resp_latency )( send = s.ifc[i].resp ) for i in range(nports) ]
+    s.req_stalls = [ StallCL( stall_prob, i )     for i in range(nports) ]
+    s.req_qs  = [ DelayPipeDeqCL( req_latency )   for i in range(nports) ]
+    s.resp_qs = [ DelayPipeSendCL( resp_latency ) for i in range(nports) ]
 
-    @s.update
+    for i in range(nports):
+      s.req_stalls[i].recv //= s.ifc[i].req
+      s.resp_qs[i].send    //= s.ifc[i].resp
+
+      s.req_qs[i].enq      //= s.req_stalls[i].send
+
+    @update
     def up_mem():
 
       for i in range(s.nports):

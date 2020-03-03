@@ -9,8 +9,7 @@ Author: Yanghui Ou
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test.test_sinks import TestSinkCL
-from pymtl3.stdlib.test.test_srcs import TestSrcCL
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, run_sim
 
 from .queues import BypassQueueCL, NormalQueueCL, PipeQueueCL
 
@@ -28,7 +27,7 @@ class TestHarness( Component ):
 
     connect( s.src.send, s.dut.enq )
 
-    @s.update
+    @update
     def up_deq_send():
       if s.dut.deq.rdy() and s.sink.recv.rdy():
         s.sink.recv( s.dut.deq() )
@@ -39,34 +38,6 @@ class TestHarness( Component ):
   def line_trace( s ):
     return "{} ({}) {}".format(
       s.src.line_trace(), s.dut.line_trace(), s.sink.line_trace() )
-
-#-------------------------------------------------------------------------
-# run_sim
-#-------------------------------------------------------------------------
-
-def run_sim( th, max_cycles=100 ):
-
-  # Create a simulator
-
-  th.apply( SimulationPass() )
-
-  # Run simulation
-
-  print("")
-  ncycles = 0
-  print("{:2}:{}".format( ncycles, th.line_trace() ))
-  while not th.done() and ncycles < max_cycles:
-    th.tick()
-    ncycles += 1
-    print("{:2}:{}".format( ncycles, th.line_trace() ))
-
-  # Check timeout
-
-  assert ncycles < max_cycles
-
-  th.tick()
-  th.tick()
-  th.tick()
 
 #-------------------------------------------------------------------------
 # Test cases

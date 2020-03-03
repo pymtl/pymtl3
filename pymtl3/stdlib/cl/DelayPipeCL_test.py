@@ -8,7 +8,7 @@
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, mk_test_case_table
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, mk_test_case_table, run_sim
 
 from .DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
 
@@ -47,34 +47,6 @@ class TestHarness( Component ):
   def line_trace(s ):
     return s.src.line_trace() + " >>> " + s.dut.line_trace() + " >>> " + s.sink.line_trace()
 
-
-def run_cl_sim( th, max_cycles=5000 ):
-
-  # Create a simulator
-
-  th.apply( SimulationPass() )
-
-  # Reset model
-
-  th.reset()
-
-  # Run simulation
-
-  ncycles = 0
-  print("{:3}:{}".format( ncycles, th.line_trace() ))
-  while not th.done() and ncycles < max_cycles:
-    th.tick()
-    ncycles += 1
-    print("{:3}:{}".format( ncycles, th.line_trace() ))
-
-  # Force a test failure if we timed out
-
-  assert ncycles < max_cycles
-
-  th.tick()
-  th.tick()
-  th.tick()
-
 #-------------------------------------------------------------------------
 # Test Case Table
 #-------------------------------------------------------------------------
@@ -112,7 +84,7 @@ def basic_msgs():
 ]) )
 def test_delay_pipe_deq( test_params, dump_vcd ):
   msgs = test_params.msg_func()
-  run_cl_sim( TestHarness( DelayPipeDeqCL, msgs[::2], msgs[1::2],
+  run_sim( TestHarness( DelayPipeDeqCL, msgs[::2], msgs[1::2],
                            test_params.lat,
                            test_params.src_lat, test_params.sink_lat ) )
 
@@ -131,6 +103,6 @@ def test_delay_pipe_deq( test_params, dump_vcd ):
 ]) )
 def test_delay_pipe_send( test_params, dump_vcd ):
   msgs = test_params.msg_func()
-  run_cl_sim( TestHarness( DelayPipeSendCL, msgs[::2], msgs[1::2],
+  run_sim( TestHarness( DelayPipeSendCL, msgs[::2], msgs[1::2],
                            test_params.lat,
                            test_params.src_lat, test_params.sink_lat ) )
