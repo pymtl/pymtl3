@@ -57,7 +57,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
-    inst._dsl.call_kwargs   = None
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
@@ -95,9 +94,6 @@ class ComponentLevel3( ComponentLevel2 ):
           kwargs.update( more_args )
 
       s.construct( *s._dsl.args, **kwargs )
-
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
 
       s._dsl.constructed = True
 
@@ -278,7 +274,9 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def _connect_signal_signal( s, o1, o2 ):
     if not (o1._dsl.Type is o2._dsl.Type):
-      raise InvalidConnectionError( f"Type mismatch {o1._dsl.Type} != {o2._dsl.Type} during {o1}<->{o2}." )
+      raise InvalidConnectionError( f"Bitwidth mismatch {o1._dsl.Type.__name__} != {o2._dsl.Type.__name__}\n"
+                                    f"- In class {type(s)}\n- When connecting {o1} <-> {o2}\n"
+                                    f"Suggestion: make sure both sides of connection have matching bitwidth")
 
     if o1 not in s._dsl.adjacency[o2]:
       assert o2 not in s._dsl.adjacency[o1]
@@ -364,58 +362,6 @@ class ComponentLevel3( ComponentLevel2 ):
       assert isinstance( o1, Signal ), f"Cannot connect {o1!r} to {o2!r}."
 
       s._connect_signal_const( o1, o2 )
-
-  def _continue_call_connect( s ):
-    """ Here we continue to establish the connections from signals of the
-    parent object, to signals in the current object. Since it is the
-    parent that connects a constant integer to a signal, we should point
-    the Const object back to the parent object by setting _parent_obj to
-    s._parent_obj."""
-
-    parent = s._dsl.parent_obj
-
-    top = s._dsl.elaborate_top
-
-    # _continue_call_connect is actually connecting stuff at parent level,
-    # but it currently happens before before we pop the child component.
-    # To make minimal modification, I temporarily pop it from
-    # elaborate_stack and append it back at the end of this method
-
-    tmp = top._dsl.elaborate_stack.pop()
-
-    try: # Catch AssertionError from _connect
-
-      # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.items():
-        try:
-          obj = getattr( s, kw )
-        except AttributeError:
-          raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
-        # Obj is a list of signals
-        # We assume the a dict of { index: obj } is provided.
-        if   isinstance( obj, list ):
-          # Make sure the connection target is a dictionary {idx: obj}
-          if not isinstance( target, dict ):
-            raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.items():
-            parent._connect( obj[idx], item, internal=False )
-
-        # Obj is a single signal
-        # If the target is a list, it's fanout connection
-        elif isinstance( target, (tuple, list) ):
-          for item in target:
-            parent._connect( obj, item, internal=False )
-
-        # Target is a single object
-        else:
-          parent._connect( obj, target, internal=False )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
-    # Append tmp back to elaborate_stack
-    top._dsl.elaborate_stack.append(tmp)
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
@@ -828,13 +774,9 @@ class ComponentLevel3( ComponentLevel2 ):
       >>> s.x = SomeReg(Bits1)( in_ = s.in_ )
     It connects s.in_ to s.x.in_ in the same line as model construction.
     """
-    assert args == ()
-    if s._dsl.constructed:
-      raise InvalidConnectionError("Connection using __call__, "
-                                   "i.e. s.x( a = s.a ), is illegal "
-                                   "after constructing s.x")
-    s._dsl.call_kwargs = kwargs
-    return s
+    raise PyMTLDeprecationError("\n__call__ connection has been deprecated! "
+                                "\n- Please use free function connect(s.x,s.y) or "
+                                "syntactic sugar s.x//=s.y instead.")
 
   def connect( s, *args, **kwargs ):
     raise PyMTLDeprecationError("\ns.connect method has been deprecated! "

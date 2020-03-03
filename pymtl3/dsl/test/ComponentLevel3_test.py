@@ -8,7 +8,8 @@ Date   : Dec 25, 2017
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits8, Bits10, Bits32, bitstruct
+from pymtl3.datatypes import Bits1, Bits8, Bits10, Bits32, bitstruct, mk_bits, clog2
+from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import WR, U
@@ -26,6 +27,7 @@ def _test_model( cls ):
   A = cls()
   A.elaborate()
   simple_sim_pass( A, 0x123 )
+  A.tick()
 
   T, time = 0, 20
   while not A.done() and T < time:
@@ -44,7 +46,7 @@ class TestSource( ComponentLevel3 ):
 
     s.out = OutPort(Type)
 
-    @s.update
+    @update
     def up_src():
       if not s.input_:
         s.out = Type()
@@ -65,7 +67,7 @@ class TestSink( ComponentLevel3 ):
     s.answer = deque( [ x if x == "*" else Type(x) for x in answer ] )
     s.in_ = InPort(Type)
 
-    @s.update
+    @update
     def up_sink():
       if not s.answer:
         assert False, "Simulation has ended"
@@ -85,10 +87,10 @@ class Mux( ComponentLevel3 ):
 
   def construct( s, Type, ninputs ):
     s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
-    s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
+    s.sel = InPort( mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_mux():
       s.out = s.in_[ s.sel ]
 
@@ -100,12 +102,12 @@ def test_connect_list_const_idx():
 
     def construct( s ):
 
-      s.src_in0 = TestSource( int, [4,3,2,1] )
-      s.src_in1 = TestSource( int, [8,7,6,5] )
-      s.src_sel = TestSource( int, [1,0,1,0] )
-      s.sink    = TestSink  ( int, [8,3,6,1] )
+      s.src_in0 = TestSource( Bits32, [4,3,2,1] )
+      s.src_in1 = TestSource( Bits32, [8,7,6,5] )
+      s.src_sel = TestSource( Bits1,  [1,0,1,0] )
+      s.sink    = TestSink  ( Bits32, [8,3,6,1] )
 
-      s.mux = Mux(int, 2)
+      s.mux = Mux(Bits32, 2)
 
       connect( s.mux.in_[MUX_SEL_0], s.src_in0.out )
       connect( s.mux.in_[MUX_SEL_1], s.src_in1.out )
@@ -126,12 +128,12 @@ def test_connect_list_const_idx_ifloordiv_sugar():
 
     def construct( s ):
 
-      s.src_in0 = TestSource( int, [4,3,2,1] )
-      s.src_in1 = TestSource( int, [8,7,6,5] )
-      s.src_sel = TestSource( int, [1,0,1,0] )
-      s.sink    = TestSink  ( int, [8,3,6,1] )
+      s.src_in0 = TestSource( Bits32, [4,3,2,1] )
+      s.src_in1 = TestSource( Bits32, [8,7,6,5] )
+      s.src_sel = TestSource( Bits1,  [1,0,1,0] )
+      s.sink    = TestSink  ( Bits32, [8,3,6,1] )
 
-      s.mux = Mux(int, 2)
+      s.mux = Mux(Bits32, 2)
 
       s.mux.in_[MUX_SEL_0] //= s.src_in0.out
       s.mux.in_[MUX_SEL_1] //= s.src_in1.out
@@ -145,18 +147,19 @@ def test_connect_list_const_idx_ifloordiv_sugar():
       return " >>> " + s.sink.line_trace()
 
   _test_model( Top )
+
 def test_connect_list_idx_call():
 
   class Top(ComponentLevel3):
 
     def construct( s ):
 
-      s.src_in0 = TestSource( int, [4,3,2,1] )
-      s.src_in1 = TestSource( int, [8,7,6,5] )
-      s.src_sel = TestSource( int, [1,0,1,0] )
-      s.sink    = TestSink  ( int, [8,3,6,1] )
+      s.src_in0 = TestSource( Bits32, [4,3,2,1] )
+      s.src_in1 = TestSource( Bits32, [8,7,6,5] )
+      s.src_sel = TestSource( Bits1,  [1,0,1,0] )
+      s.sink    = TestSink  ( Bits32, [8,3,6,1] )
 
-      s.mux = Mux(int, 2)(
+      s.mux = Mux(Bits32, 2)(
         out = s.sink.in_,
         in_ = { MUX_SEL_0: s.src_in0.out, MUX_SEL_1: s.src_in1.out },
         sel = s.src_sel.out,
@@ -194,11 +197,11 @@ def test_connect_deep():
       s.src_sel = TestSource( int, [1,0,1,0] )
       s.sink    = TestSink  ( int, [8,3,6,1] )
 
-      s.mux_wrap = MuxWrap()(
-        out = s.sink.in_,
-        in_ = { 0: s.src_in0.out, 1: s.src_in1.out },
-        sel = s.src_sel.out,
-      )
+      s.mux_wrap = m = MuxWrap()
+      m.out    //= s.sink.in_
+      m.in_[0] //= s.src_in0.out
+      m.in_[1] //= s.src_in1.out
+      m.sel    //= s.src_sel.out
 
     def done( s ):
       return s.src_in0.done() and s.sink.done()
@@ -267,22 +270,22 @@ def test_2d_array_vars_connect_impl():
       s.wire = [ [ Wire(Bits32) for _ in range(2)] for _ in range(2) ]
       connect( s.wire[0][0], s.src.out )
 
-      @s.update
+      @update
       def up_from_src():
         s.wire[0][1] = s.src.out + 1
 
       s.reg = Wire(Bits32)
       connect( s.wire[1][0], s.reg )
 
-      @s.update_ff
+      @update_ff
       def up_reg():
         s.reg <<= s.wire[0][0] + s.wire[0][1]
 
-      @s.update
+      @update
       def upA():
         s.wire[1][1] = s.reg + 1
 
-      @s.update
+      @update
       def up_to_sink():
         s.sink.in_ = s.wire[1][0] + s.wire[1][1]
 
@@ -308,13 +311,13 @@ def test_lots_of_fan_connect():
 
       s.wire0 = Wire(Bits32)
 
-      @s.update
+      @update
       def up_from_src():
         s.wire0 = s.src.out + 1
 
       s.reg = Wire(Bits32)
 
-      @s.update_ff
+      @update_ff
       def up_reg():
         s.reg <<= s.wire0
 
@@ -323,7 +326,7 @@ def test_lots_of_fan_connect():
 
       connect( s.wire1, s.reg )
 
-      @s.update
+      @update
       def upA():
         s.wire2 = s.reg + 1
 
@@ -342,12 +345,12 @@ def test_lots_of_fan_connect():
       s.wire7 = Wire(Bits32)
       s.wire8 = Wire(Bits32)
 
-      @s.update
+      @update
       def upD():
         s.wire7 = s.wire3 + s.wire6
         s.wire8 = s.wire4 + s.wire5
 
-      @s.update
+      @update
       def up_to_sink():
         s.sink.in_ = s.wire7 + s.wire8
 
@@ -372,7 +375,7 @@ def test_connect_plain():
 
       s.wire0 = Wire(int)
 
-      @s.update
+      @update
       def up_from_src():
         s.wire0 = s.src.out + 1
 
@@ -401,14 +404,14 @@ def test_2d_array_vars_connect():
       s.wire = [ [ Wire(int) for _ in range(2)] for _ in range(2) ]
       connect( s.wire[0][0], s.src.out )
 
-      @s.update
+      @update
       def up_from_src():
         s.wire[0][1] = s.src.out + 1
 
       s.reg = Wire(int)
       connect( s.wire[1][0], s.reg )
 
-      @s.update
+      @update
       def up_reg():
         s.reg = s.wire[0][0] + s.wire[0][1]
 
@@ -417,11 +420,11 @@ def test_2d_array_vars_connect():
           U(up_reg) < WR(s.wire[0][i]), # up_reg reads  s.wire[0][i]
         )
 
-      @s.update
+      @update
       def upA():
         s.wire[1][1] = s.reg + 1
 
-      @s.update
+      @update
       def up_to_sink():
         s.sink.in_ = s.wire[1][0] + s.wire[1][1]
 
@@ -444,7 +447,7 @@ def test_connect_const_same_level():
       s.a = Wire(int)
       connect( s.a, 0 )
 
-      @s.update
+      @update
       def up_printa():
         print(s.a)
 
@@ -465,11 +468,11 @@ def test_connect_const_two_writer():
       s.a = Wire(int)
       connect( s.a, 0 )
 
-      @s.update
+      @update
       def up_printa():
         print(s.a)
 
-      @s.update
+      @update
       def up_writea():
         s.a = 123
 
@@ -485,31 +488,6 @@ def test_connect_const_two_writer():
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
   raise Exception("Should've thrown MultiWriterError.")
-
-def test_connect_list_idx_call():
-
-  class Top(ComponentLevel3):
-
-    def construct( s ):
-
-      s.src_in0 = TestSource( int, [4,3,2,1] )
-      s.src_sel = TestSource( int, [1,0,1,0] )
-      s.sink    = TestSink  ( int, [12,3,12,1] )
-
-      s.mux = Mux(int, 2)(
-        out = s.sink.in_,
-        in_ = { MUX_SEL_0: s.src_in0.out },
-        sel = s.src_sel.out,
-      )
-      connect( s.mux.in_[MUX_SEL_1], 12 )
-
-    def done( s ):
-      return s.src_in0.done() and s.sink.done()
-
-    def line_trace( s ):
-      return " >>> " + s.sink.line_trace()
-
-  _test_model( Top )
 
 def test_connect_list_idx_const_in_call():
 
@@ -545,7 +523,7 @@ def test_top_level_inport():
       s.b = Wire(Bits32)
       connect( s.a, s.b[0:10] )
 
-      @s.update
+      @update
       def up():
         print(s.b[10:32])
 
@@ -567,7 +545,7 @@ def test_top_level_outport():
       s.b = Wire(Bits32)
       connect( s.a, s.b[9:19] )
 
-      @s.update
+      @update
       def up():
         s.b[0:10] = 1023
 
@@ -656,7 +634,7 @@ def test_multiple_fields_are_assigned():
 
       # connect( s.in_.a, s.out1.c )
       # connect( s.in_.b[0:8], s.out2.c )
-      @s.update
+      @update
       def up_pass():
         s.out1.c = s.in_.a
         s.out2.c = s.in_.b[0:8]
@@ -954,7 +932,7 @@ def test_lambda_name_conflict():
       # the implicit name of a lambda function conflicts
       # with the explicit name of an update block
 
-      @s.update
+      @update
       def _lambda__s_out():
         s.out2 = Bits32(2)
 
@@ -1017,7 +995,7 @@ def test_connect_slice_int():
       s.x = Wire( Bits32 )
 
       s.y //= s.x[0:8]
-      @s.update
+      @update
       def sx():
         s.x = 10 # Except
 

@@ -43,6 +43,10 @@ from .Placeholder import Placeholder
 
 compiled_re = re.compile('( *(@|def))')
 
+def update_ff( blk ):
+  NamedObject._elaborate_stack[-1]._update_ff( blk )
+  return blk
+
 class ComponentLevel2( ComponentLevel1 ):
 
   #-----------------------------------------------------------------------
@@ -474,22 +478,20 @@ class ComponentLevel2( ComponentLevel1 ):
     return func
 
   # Override
-  def update( s, blk ):
-    super().update( blk )
+  def _update( s, blk ):
+    super()._update( blk )
 
     s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
-    return blk
 
   def update_on_edge( s, blk ):
     raise PyMTLDeprecationError("\ns.update_on_edge decorator has been deprecated! "
-                                "\n- Please use @s.update_ff instead.")
+                                "\n- Please use @update_ff instead.")
 
-  def update_ff( s, blk ):
-    super().update( blk )
+  def _update_ff( s, blk ):
+    super()._update( blk )
 
     s._dsl.update_ff.add( blk )
     s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
-    return blk
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints
