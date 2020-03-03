@@ -9,21 +9,23 @@ class PipeQueue1RTL( Component ):
     s.enq = InValRdyIfc ( Type )
     s.deq = OutValRdyIfc( Type )
 
-    s.buffer  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
+    s.buffer = m = RegEn( Type )
+    m.out //= s.deq.msg
+    m.in_ //= s.enq.msg
 
     s.next_full = Wire( Bits1 )
     s.full      = Wire( Bits1 )
     connect( s.full, s.deq.val )
 
-    @s.update_ff
+    @update_ff
     def up_full():
       s.full <<= s.next_full
 
-    @s.update
+    @update
     def up_pipeq_set_enq_rdy():
       s.enq.rdy = ~s.full | s.deq.rdy
 
-    @s.update
+    @update
     def up_pipeq_full():
       s.buffer.en = s.enq.val & s.enq.rdy
       s.next_full = s.enq.val | (s.full & ~s.deq.rdy)
@@ -39,33 +41,33 @@ class BypassQueue1RTL( Component ):
     s.enq = InValRdyIfc ( Type )
     s.deq = OutValRdyIfc( Type )
 
-    s.buffer = RegEn( Type )( in_ = s.enq.msg )
+    s.buffer = RegEn( Type )
+    s.buffer.in_ //= s.enq.msg
 
     s.next_full = Wire( Bits1 )
     s.full      = Wire( Bits1 )
 
-    s.byp_mux = Mux( Type, 2 )(
-      out = s.deq.msg,
-      in_ = { 0: s.enq.msg,
-              1: s.buffer.out, },
-      sel = s.full, # full -- buffer.out, empty -- bypass
-    )
+    s.byp_mux = m = Mux( Type, 2 )
+    m.out    //= s.deq.msg
+    m.in_[0] //= s.enq.msg
+    m.in_[1] //= s.buffer.out
+    m.sel    //= s.full # full -- buffer.out, empty -- bypass
 
-    @s.update_ff
+    @update_ff
     def up_full():
       s.full <<= s.next_full
 
-    @s.update
+    @update
     def up_bypq_set_enq_rdy():
       s.enq.rdy = ~s.full
 
-    @s.update
+    @update
     def up_bypq_internal():
       s.buffer.en = (~s.deq.rdy) & (s.enq.val & s.enq.rdy)
       s.next_full = (~s.deq.rdy) & s.deq.val
 
     # this enables the sender to make enq.val depend on enq.rdy
-    @s.update
+    @update
     def up_bypq_set_deq_val():
       s.deq.val = s.full | s.enq.val
 
@@ -80,21 +82,23 @@ class NormalQueue1RTL( Component ):
     s.enq = InValRdyIfc( Type )
     s.deq = OutValRdyIfc( Type )
 
-    s.buffer  = RegEn( Type )( out = s.deq.msg, in_ = s.enq.msg )
+    s.buffer = m = RegEn( Type )
+    m.in_ //= s.enq.msg
+    m.out //= s.deq.msg
 
     s.next_full = Wire( Bits1 )
     s.full      = Wire( Bits1 )
     connect( s.full, s.deq.val )
 
-    @s.update_ff
+    @update_ff
     def up_full():
       s.full <<= s.next_full
 
-    @s.update
+    @update
     def up_normq_set_enq_rdy():
       s.enq.rdy = ~s.full
 
-    @s.update
+    @update
     def up_normq_internal():
       s.buffer.en = s.enq.val & s.enq.rdy
       s.next_full = (s.full & ~s.deq.rdy) | s.buffer.en
@@ -212,7 +216,7 @@ class NormalQueueRTLCtrl( Component ):
 
     s.last_idx         = AddrType( num_entries - 1 )
 
-    @s.update
+    @update
     def comb():
 
       # only enqueue/dequeue if valid and ready
@@ -258,7 +262,7 @@ class NormalQueueRTLCtrl( Component ):
       s.full_next_cycle = (s.do_enq and not s.do_deq and
                                 (s.enq_ptr_next == s.deq_ptr))
 
-    @s.update
+    @update
     def up_ctrl_signals():
 
       # set output signals
@@ -273,7 +277,7 @@ class NormalQueueRTLCtrl( Component ):
       s.waddr   = s.enq_ptr
       s.raddr   = s.deq_ptr
 
-    @s.update_ff
+    @update_ff
     def seq():
 
       if s.reset:

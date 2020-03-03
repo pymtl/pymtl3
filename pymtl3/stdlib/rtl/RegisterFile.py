@@ -17,19 +17,19 @@ class RegisterFile( Component ):
 
     s.regs = [ Wire( Type ) for i in range(nregs) ]
 
-    @s.update
+    @update
     def up_rf_read():
       for i in range( rd_ports ):
         s.rdata[i] = s.regs[ s.raddr[i] ]
 
     if const_zero:
-      @s.update_ff
+      @update_ff
       def up_rf_write_constzero():
         for i in range( wr_ports ):
           if s.wen[i] & (s.waddr[i] != addr_type(0)):
             s.regs[ s.waddr[i] ] <<= s.wdata[i]
     else:
-      @s.update_ff
+      @update_ff
       def up_rf_write():
         for i in range( wr_ports ):
           if s.wen[i]:

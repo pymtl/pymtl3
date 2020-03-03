@@ -9,7 +9,7 @@ Date   : Mar 9, 2018
 import pytest
 
 from pymtl3 import *
-from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
+from pymtl3.stdlib.test import TestSinkCL, TestSrcCL, run_sim
 
 from .enrdy_queues import *
 
@@ -37,23 +37,6 @@ class TestHarness( Component ):
 
   def line_trace(s ):
     return s.src.line_trace() + " " + s.q.line_trace() + " " + s.sink.line_trace()
-
-def run_sim( model ):
-  model.apply( SimulationPass() )
-
-  print()
-  cycle = 0
-  while not model.done() and cycle < 1000:
-    model.tick()
-    print( "{:3}: {}".format( cycle, model.line_trace() ) )
-    cycle += 1
-
-  assert cycle < 1000
-
-  model.tick()
-  model.tick()
-  model.tick()
-
 
 F = lambda x: Bits32(x)
 

@@ -167,12 +167,12 @@ class RecvCL2SendRTL( Component ):
 
     s.entry = None
 
-    @s.update
+    @update
     def up_clear():
       if s.send.en: # constraints reverse this
         s.entry = None
 
-    @s.update
+    @update
     def up_send_rtl():
       if s.entry is None:
         s.send.en  = b1( 0 )
@@ -212,12 +212,12 @@ class RecvRTL2SendCL( Component ):
     s.sent_msg = None
     s.send_rdy = False
 
-    @s.update
+    @update
     def up_recv_rtl_rdy():
       s.send_rdy = s.send.rdy() and not s.reset
       s.recv.rdy = b1( 1 ) if s.send.rdy() and not s.reset else b1( 0 )
 
-    @s.update
+    @update
     def up_send_cl():
       s.sent_msg = None
       if s.recv.en:

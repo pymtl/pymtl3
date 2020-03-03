@@ -44,7 +44,7 @@ class RoundRobinArbiter( Component ):
     # comb_reqs_int
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_reqs_int():
 
       s.reqs_int [    0:nreqs  ] = s.reqs
@@ -54,7 +54,7 @@ class RoundRobinArbiter( Component ):
     # comb_grants
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_grants():
 
       # Assign the output ports
@@ -65,7 +65,7 @@ class RoundRobinArbiter( Component ):
     # comb_priority_en
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_priority_en():
 
       # Set the priority enable
@@ -75,7 +75,7 @@ class RoundRobinArbiter( Component ):
     # comb_priority_int
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_priority_int():
 
       s.priority_int[    0:nreqs  ] = s.priority_reg.out
@@ -85,7 +85,7 @@ class RoundRobinArbiter( Component ):
     # comb_kills
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_kills():
 
       # Set kill signals
@@ -104,7 +104,7 @@ class RoundRobinArbiter( Component ):
     # comb_grants_int
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_grants_int():
 
       for i in range( nreqsX2 ):
@@ -160,7 +160,7 @@ class RoundRobinArbiterEn( Component ):
     # comb_reqs_int
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_reqs_int():
 
       s.reqs_int [    0:nreqs  ] = s.reqs
@@ -170,7 +170,7 @@ class RoundRobinArbiterEn( Component ):
     # comb_grants
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_grants():
 
       # Assign the output ports
@@ -181,7 +181,7 @@ class RoundRobinArbiterEn( Component ):
     # comb_priority_en
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_priority_en():
 
       # Set the priority enable
@@ -191,7 +191,7 @@ class RoundRobinArbiterEn( Component ):
     # comb_priority_int
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_priority_int():
 
       s.priority_int[    0:nreqs  ] = s.priority_reg.out
@@ -201,7 +201,7 @@ class RoundRobinArbiterEn( Component ):
     # comb_kills
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_kills():
 
       # Set kill signals
@@ -220,7 +220,7 @@ class RoundRobinArbiterEn( Component ):
     # comb_grants_int
     #-------------------------------------------------------------------
 
-    @s.update
+    @update
     def comb_grants_int():
 
       for i in range( nreqsX2 ):

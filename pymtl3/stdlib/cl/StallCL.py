@@ -8,8 +8,9 @@
  Date   : Feb 6, 2020
 """
 
-from pymtl3 import *
 from random import Random
+
+from pymtl3 import *
 
 # This stall is for testing purpose
 # Recv side has a random stall
