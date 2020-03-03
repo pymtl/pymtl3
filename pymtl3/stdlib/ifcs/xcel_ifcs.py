@@ -194,7 +194,7 @@ class XcelIfcCL2FLAdapter( Component ):
     s.right = XcelMasterIfcFL()
     s.entry = None
 
-    @s.update
+    @update
     def up_xcelifc_cl_fl_blk():
 
       if s.entry is not None and s.left.resp.rdy():
@@ -282,7 +282,7 @@ class XcelIfcRTL2FLAdapter( Component ):
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     connect( s.left.req, s.req_q.enq )
 
-    @s.update
+    @update
     def up_xcelifc_rtl_fl_blk():
 
       if s.req_q.deq.rdy and s.left.resp.rdy:

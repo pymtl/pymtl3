@@ -34,7 +34,7 @@ class And( Component ):
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_and():
       s.out = s.in0 & s.in1
 
@@ -69,7 +69,7 @@ class GiveIfcRTL( CalleeIfcRTL ):
     elif isinstance( other, CalleeIfcCL ):
       if s._dsl.level <= other._dsl.level:
         raise InvalidConnectionError(
-            "CL2RTL connection is not supported between RecvIfcRTL"
+            "CL2RTL connection is not supported between GiveIfcRTL"
             " and CalleeIfcCL.\n"
             "          - level {}: {} (class {})\n"
             "          - level {}: {} (class {})".format(
@@ -134,14 +134,14 @@ class GetRTL2GiveCL( Component ):
 
     s.entry = None
 
-    @s.update
+    @update
     def up_get_rtl():
       if s.entry is None and s.get.rdy:
         s.get.en = b1(1)
       else:
         s.get.en = b1(0)
 
-    @s.update
+    @update
     def up_entry():
       if s.get.en:
         s.entry = deepcopy( s.get.msg )

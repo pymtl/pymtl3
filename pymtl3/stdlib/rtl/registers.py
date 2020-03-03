@@ -7,7 +7,7 @@ class Reg( Component ):
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
 
-    @s.update_ff
+    @update_ff
     def up_reg():
       s.out <<= s.in_
 
@@ -22,7 +22,7 @@ class RegEn( Component ):
 
     s.en  = InPort( int if Type is int else Bits1 )
 
-    @s.update_ff
+    @update_ff
     def up_regen():
       if s.en:
         s.out <<= s.in_
@@ -38,7 +38,7 @@ class RegRst( Component ):
 
     s.reset = InPort( int if Type is int else Bits1 )
 
-    @s.update_ff
+    @update_ff
     def up_regrst():
       if s.reset: s.out <<= Type( reset_value )
       else:       s.out <<= s.in_
@@ -55,7 +55,7 @@ class RegEnRst( Component ):
     s.reset = InPort( int if Type is int else Bits1 )
     s.en    = InPort( int if Type is int else Bits1 )
 
-    @s.update_ff
+    @update_ff
     def up_regenrst():
       if s.reset: s.out <<= Type( reset_value )
       elif s.en:  s.out <<= s.in_

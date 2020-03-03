@@ -9,7 +9,7 @@ class Mux( Component ):
     s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_mux():
       s.out = s.in_[ s.sel ]
 
@@ -22,7 +22,7 @@ class RightLogicalShifter( Component ):
     s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
     s.out   = OutPort( Type )
 
-    @s.update
+    @update
     def up_rshifter():
       s.out = s.in_ >> s.shamt
 
@@ -35,7 +35,7 @@ class LeftLogicalShifter( Component ):
     s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
     s.out   = OutPort( Type )
 
-    @s.update
+    @update
     def up_lshifter():
       s.out = s.in_ << s.shamt
 
@@ -47,7 +47,7 @@ class Incrementer( Component ):
     s.in_ = InPort( Type )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_incrementer():
       s.out = s.in_ + Type(amount)
 
@@ -60,7 +60,7 @@ class Adder( Component ):
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_adder():
       s.out = s.in0 + s.in1
 
@@ -73,7 +73,7 @@ class And( Component ):
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_and():
       s.out = s.in0 & s.in1
 
@@ -86,7 +86,7 @@ class Subtractor( Component ):
     s.in1 = InPort( Type )
     s.out = OutPort( Type )
 
-    @s.update
+    @update
     def up_subtractor():
       s.out = s.in0 - s.in1
 
@@ -98,7 +98,7 @@ class ZeroComparator( Component ):
     s.in_ = InPort( Type )
     s.out = OutPort( bool if Type is int else Bits1 )
 
-    @s.update
+    @update
     def up_zerocomp():
       # s.out = Bits1( s.in_ == Type(0) )
       s.out = s.in_ == Type(0)
@@ -112,7 +112,7 @@ class LTComparator( Component ):
     s.in1 = InPort( Type )
     s.out = OutPort( bool if Type is int else Bits1 )
 
-    @s.update
+    @update
     def up_ltcomp():
       s.out = Bits1(s.in0 < s.in1)
 
@@ -125,6 +125,6 @@ class LEComparator( Component ):
     s.in1 = InPort( Type )
     s.out = OutPort( bool if Type is int else Bits1 )
 
-    @s.update
+    @update
     def up_lecomp():
       s.out = Bits1(s.in0 <= s.in1)

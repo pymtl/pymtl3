@@ -33,13 +33,12 @@ class NormalQueueDpathRTL( Component ):
 
     # Component
 
-    s.queue = RegisterFile( EntryType, num_entries )(
-      raddr = { 0: s.raddr   },
-      rdata = { 0: s.deq_ret },
-      wen   = { 0: s.wen     },
-      waddr = { 0: s.waddr   },
-      wdata = { 0: s.enq_msg },
-    )
+    s.queue = m = RegisterFile( EntryType, num_entries )
+    m.raddr[0] //= s.raddr
+    m.rdata[0] //= s.deq_ret
+    m.wen[0]   //= s.wen
+    m.waddr[0] //= s.waddr
+    m.wdata[0] //= s.enq_msg
 
 class NormalQueueCtrlRTL( Component ):
 
@@ -88,7 +87,7 @@ class NormalQueueCtrlRTL( Component ):
     s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
     s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
 
-    @s.update_ff
+    @update_ff
     def up_reg():
 
       if s.reset:
@@ -207,7 +206,7 @@ class PipeQueueCtrlRTL( Component ):
     s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
     s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
 
-    @s.update_ff
+    @update_ff
     def up_reg():
 
       if s.reset:
@@ -295,18 +294,17 @@ class BypassQueueDpathRTL( Component ):
 
     # Component
 
-    s.queue = RegisterFile( EntryType, num_entries )(
-      raddr = { 0: s.raddr   },
-      wen   = { 0: s.wen     },
-      waddr = { 0: s.waddr   },
-      wdata = { 0: s.enq_msg },
-    )
+    s.queue = m = RegisterFile( EntryType, num_entries )
+    m.raddr[0] //= s.raddr
+    m.wen[0]   //= s.wen
+    m.waddr[0] //= s.waddr
+    m.wdata[0] //= s.enq_msg
 
-    s.mux = Mux( EntryType, 2 )(
-      sel = s.mux_sel,
-      in_ = { 0: s.queue.rdata[0], 1: s.enq_msg },
-      out = s.deq_ret,
-    )
+    s.mux = m = Mux( EntryType, 2 )
+    m.sel    //= s.mux_sel
+    m.in_[0] //= s.queue.rdata[0]
+    m.in_[1] //= s.enq_msg
+    m.out    //= s.deq_ret
 
 class BypassQueueCtrlRTL( Component ):
 
@@ -358,7 +356,7 @@ class BypassQueueCtrlRTL( Component ):
     s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
     s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
 
-    @s.update_ff
+    @update_ff
     def up_reg():
 
       if s.reset:
@@ -455,7 +453,7 @@ class NormalQueue1EntryRTL( Component ):
     s.enq.rdy //= lambda: ~s.reset & ~s.full
     s.deq.rdy //= lambda: ~s.reset & s.full
 
-    @s.update_ff
+    @update_ff
     def ff_normal1():
       s.full <<= ~s.reset & ( ~s.deq.en & (s.enq.en | s.full) )
       if s.enq.en:
@@ -492,7 +490,7 @@ class PipeQueue1EntryRTL( Component ):
     s.enq.rdy //= lambda: ~s.reset & ( ~s.full | s.deq.en )
     s.deq.rdy //= lambda: s.full & ~s.reset
 
-    @s.update_ff
+    @update_ff
     def ff_pipe1():
       s.full <<= ~s.reset & ( s.enq.en | s.full & ~s.deq.en )
 
@@ -521,11 +519,11 @@ class BypassQueue1EntryRTL( Component ):
     s.entry = Wire( EntryType )
     s.full  = Wire( Bits1 )
 
-    s.bypass_mux = Mux( EntryType, 2 )(
-      in_ = { 0: s.enq.msg, 1: s.entry },
-      out = s.deq.ret,
-      sel = s.full,
-    )
+    s.bypass_mux = m = Mux( EntryType, 2 )
+    m.in_[0] //= s.enq.msg
+    m.in_[1] //= s.entry
+    m.out    //= s.deq.ret
+    m.sel    //= s.full
 
     # Logic
 
@@ -534,7 +532,7 @@ class BypassQueue1EntryRTL( Component ):
     s.enq.rdy //= lambda: ~s.reset & ~s.full
     s.deq.rdy //= lambda: ~s.reset & ( s.full | s.enq.en )
 
-    @s.update_ff
+    @update_ff
     def ff_bypass1():
       s.full <<= ~s.reset & ( ~s.deq.en & (s.enq.en | s.full) )
 
