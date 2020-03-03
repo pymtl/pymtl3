@@ -5,23 +5,23 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L2 behavioral translator."""
 
-from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL2 import (
-    BehavioralRTLIRToSVVisitorL2,
-    SVBehavioralTranslatorL2,
+from pymtl3.passes.backends.verilog.translation.behavioral.VBehavioralTranslatorL2 import (
+    BehavioralRTLIRToVVisitorL2,
+    VBehavioralTranslatorL2,
 )
-from pymtl3.passes.backends.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.verilog.util.utility import make_indent
 
 from .YosysBehavioralTranslatorL1 import (
-    YosysBehavioralRTLIRToSVVisitorL1,
+    YosysBehavioralRTLIRToVVisitorL1,
     YosysBehavioralTranslatorL1,
 )
 
 
 class YosysBehavioralTranslatorL2(
-    YosysBehavioralTranslatorL1, SVBehavioralTranslatorL2 ):
+    YosysBehavioralTranslatorL1, VBehavioralTranslatorL2 ):
 
-  def _get_rtlir2sv_visitor( s ):
-    return YosysBehavioralRTLIRToSVVisitorL2
+  def _get_rtlir2v_visitor( s ):
+    return YosysBehavioralRTLIRToVVisitorL2
 
   def rtlir_tr_behavioral_tmpvars( s, tmpvars ):
     _tmpvars = []
@@ -30,8 +30,8 @@ class YosysBehavioralTranslatorL2(
     make_indent( _tmpvars, 1 )
     return '\n'.join( _tmpvars )
 
-class YosysBehavioralRTLIRToSVVisitorL2(
-    YosysBehavioralRTLIRToSVVisitorL1, BehavioralRTLIRToSVVisitorL2 ):
+class YosysBehavioralRTLIRToVVisitorL2(
+    YosysBehavioralRTLIRToVVisitorL1, BehavioralRTLIRToVVisitorL2 ):
 
   #-----------------------------------------------------------------------
   # visit_If

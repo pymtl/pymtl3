@@ -12,7 +12,7 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from pymtl3.passes.backends.sverilog.test.TranslationImport_stdlib_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_stdlib_test import (
     test_2entry_normal_Bits,
     test_3entry_normal_Bits,
     test_arbiter_rr_arb_4,

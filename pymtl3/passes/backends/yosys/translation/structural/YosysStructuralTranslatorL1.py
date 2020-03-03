@@ -7,15 +7,15 @@
 
 from collections import deque
 
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL1 import (
-    SVStructuralTranslatorL1,
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.translation.structural.VStructuralTranslatorL1 import (
+    VStructuralTranslatorL1,
 )
-from pymtl3.passes.backends.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.verilog.util.utility import make_indent
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
 
-class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
+class YosysStructuralTranslatorL1( VStructuralTranslatorL1 ):
 
   def __init__( s, top ):
     super().__init__( top )
@@ -218,13 +218,13 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_bit_selection( s, base_signal, index ):
+  def rtlir_tr_bit_selection( s, base_signal, index, status ):
     # Bit selection
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_part_selection( s, base_signal, start, stop ):
+  def rtlir_tr_part_selection( s, base_signal, start, stop, status ):
     # Part selection
     _stop = stop-1
     s.deq[-1]['s_index'] += "[{}:{}]"
@@ -232,28 +232,28 @@ class YosysStructuralTranslatorL1( SVStructuralTranslatorL1 ):
     s.deq[-1]['index'].append( int(start) )
     return f'{base_signal}[{_stop}:{start}]'
 
-  def rtlir_tr_port_array_index( s, base_signal, index ):
+  def rtlir_tr_port_array_index( s, base_signal, index, status ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_wire_array_index( s, base_signal, index ):
+  def rtlir_tr_wire_array_index( s, base_signal, index, status ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_const_array_index( s, base_signal, index ):
+  def rtlir_tr_const_array_index( s, base_signal, index, status ):
     assert False, f"constant array {base_signal} is not allowed!"
 
-  def rtlir_tr_current_comp_attr( s, base_signal, attr ):
+  def rtlir_tr_current_comp_attr( s, base_signal, attr, status ):
     s.deq[-1]['s_attr'] = attr
     return f'{attr}'
 
-  def rtlir_tr_current_comp( s, comp_id, comp_rtype ):
+  def rtlir_tr_current_comp( s, comp_id, comp_rtype, status ):
     s.deq.append( {'attr':[], 'index':[], 's_attr':"", 's_index':""} )
     return ''
 
-  def rtlir_tr_literal_number( s, nbits, value, first_called = True ):
+  def rtlir_tr_literal_number( s, nbits, value, status, first_called = True ):
     num_str = s._literal_number( nbits, value )
     if first_called:
       s.deq.append( {'attr':[], 'index':[], 's_attr':num_str, 's_index':""} )

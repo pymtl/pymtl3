@@ -42,14 +42,15 @@ def get_long_description():
 
 setup(
 
-  name             = 'pymtl3',
-  version          = get_version(),
-  description      = 'PyMTL 3 (Mamba): Python-based hardware generation, simulation, and verification framework',
-  long_description = get_long_description(),
-  long_description_content_type="text/markdown",
-  url              = 'https://github.com/cornell-brg/pymtl3',
-  author           = 'Batten Research Group',
-  author_email     = 'brg-pymtl@csl.cornell.edu',
+  name                          = 'pymtl3',
+  version                       = get_version(),
+  description                   = \
+      'PyMTL 3 (Mamba): Python-based hardware generation, simulation, and verification framework',
+  long_description              = get_long_description(),
+  long_description_content_type = "text/markdown",
+  url                           = 'https://github.com/cornell-brg/pymtl3',
+  author                        = 'Batten Research Group',
+  author_email                  = 'brg-pymtl@csl.cornell.edu',
 
   # BSD 3-Clause License:
   # - http://choosealicense.com/licenses/bsd-3-clause
@@ -76,8 +77,8 @@ setup(
 
   package_data={
     'pymtl3': [
-      'passes/backends/sverilog/import_/verilator_wrapper.c.template',
-      'passes/backends/sverilog/import_/verilator_wrapper.py.template',
+      'passes/backends/verilog/import_/verilator_wrapper.c.template',
+      'passes/backends/verilog/import_/verilator_wrapper.py.template',
     ],
   },
 

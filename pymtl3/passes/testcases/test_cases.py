@@ -9,6 +9,7 @@ Date   : Dec 12, 2019
 """
 
 from copy import copy, deepcopy
+from os.path import dirname
 
 from pymtl3 import *
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -226,6 +227,19 @@ class Bits32ArrayStructIfcComp( Component ):
     s.out = OutPort( Bits32 )
     s.ifc = [ Bits32ArrayStructInIfc() for _ in range(1) ]
     connect( s.out, s.ifc[0].foo[0].foo )
+
+class Bits32VRegComp( Placeholder, Component ):
+  def construct( s ):
+    s.q = InPort( Bits32 )
+    s.d = OutPort( Bits32 )
+
+    s.config_placeholder = PlaceholderConfigs(
+        vl_src = dirname(__file__) + '/VReg.v',
+        top_module = 'VReg',
+    )
+
+# class Bits32VQueuePortmapComp( Placeholder, Component ):
+#   def construct( s ):
 
 #-------------------------------------------------------------------------
 # Test Components
@@ -1928,6 +1942,41 @@ class CaseBits32ArraySubCompAttrUpblkComp:
       [ 42 ],
   ]
 
+class CasePlaceholderTranslationVReg:
+  DUT = Bits32VRegComp
+  TV_IN = \
+  _set( 'q', Bits32, 0 )
+  TV_OUT = \
+  _check( 'd', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [  1,  0 ],
+      [  2,  1 ],
+      [ 42,  2 ],
+      [ -1, 42 ],
+      [  0, -1 ],
+  ]
+
+class CasePlaceholderTranslationRegIncr:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.reg = Bits32VRegComp()
+      s.out //= lambda: s.reg.d + Bits32(1)
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [  1,  1 ],
+      [  2,  2 ],
+      [ 42,  3 ],
+      [ -1, 43 ],
+      [  0,  0 ],
+  ]
+
 class CaseComponentArgsComp:
   class DUT( Component ):
     def construct( s, foo, bar ):
@@ -1979,7 +2028,7 @@ class CasePartSelOverPartSelComp:
 # Test cases that contain SystemVerilog translator errors
 #-------------------------------------------------------------------------
 
-class CaseSVerilogReservedComp:
+class CaseVerilogReservedComp:
   class DUT( Component ):
     def construct( s ):
       s.buf = InPort( Bits32 )

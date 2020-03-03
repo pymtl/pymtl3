@@ -3,12 +3,13 @@
 #=========================================================================
 # Author : Peitian Pan
 # Date   : June 8, 2019
-"""Translate a PyMTL component hierarhcy into yosys-sverilog source code."""
+"""Translate a PyMTL component hierarhcy into yosys-verilog source code."""
 
 import filecmp
 import os
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.backends.verilog import TranslationConfigs
 
 from .YosysTranslator import YosysTranslator
 
@@ -21,6 +22,24 @@ class TranslationPass( BasePass ):
     s.translator = YosysTranslator( s.top )
     s.traverse_hierarchy( top )
 
+  def gen_tr_cfgs( s, m ):
+    tr_cfgs = {}
+
+    def traverse( m ):
+      nonlocal tr_cfgs
+
+      if not hasattr( m, 'config_yosys_translate' ) or \
+         isinstance( m.config_yosys_translate, bool ):
+        tr_cfgs[m] = TranslationConfigs()
+      else:
+        tr_cfgs[m] = m.config_yosys_translate
+
+      for _m in m.get_child_components():
+        traverse( _m )
+
+    traverse( m )
+    return tr_cfgs
+
   def traverse_hierarchy( s, m ):
 
     if hasattr( m, "yosys_translate" ) and m.yosys_translate:
@@ -28,15 +47,15 @@ class TranslationPass( BasePass ):
       if not hasattr( m, '_pass_yosys_translation' ):
         m._pass_yosys_translation = PassMetadata()
 
-      s.translator.translate( m )
+      s.translator.translate( m, s.gen_tr_cfgs(m) )
 
       module_name = s.translator._top_module_full_name
-      output_file = module_name + '.sv'
-      temporary_file = module_name + '.sv.tmp'
+      output_file = module_name + '.v'
+      temporary_file = module_name + '.v.tmp'
 
       # First write the file to a temporary file
       m._pass_yosys_translation.is_same = False
-      with open(temporary_file, 'w') as output:
+      with open( temporary_file, 'w' ) as output:
         output.write( s.translator.hierarchy.src )
         output.flush()
         os.fsync( output )

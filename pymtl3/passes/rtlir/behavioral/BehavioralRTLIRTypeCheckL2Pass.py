@@ -46,8 +46,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     lhs_types = ( rt.Port, rt.Wire, rt.NetWire, rt.NoneType )
 
     s.type_expect[ 'Assign' ] = {
-      'target' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
-      'value' : ( rt.Signal, 'rhs of assignment should be signal/const!' )
+      'targets' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
+      'value'   : ( rt.Signal, 'rhs of assignment should be signal/const!' )
     }
     s.type_expect[ 'BinOp' ] = {
       'left' : ( rt.Signal, 'lhs of binop should be signal/const!' ),
@@ -84,27 +84,35 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     _op = op_dict[ type( op ) ]
     return eval( f'l{_op}r' )
 
-  def visit_Assign( s, node ):
-    # RHS should have the same type as LHS
+  def _visit_Assign_single_target( s, node, target, i ):
     rhs_type = node.value.Type
-    lhs_type = node.target.Type
+    lhs_type = target.Type
 
-    if isinstance( node.target, bir.TmpVar ):
-      tmpvar_id = (node.target.name, node.target.upblk_name)
+    if isinstance( target, bir.TmpVar ):
+      tmpvar_id = (target.name, target.upblk_name)
       if lhs_type != rt.NoneType() and lhs_type.get_dtype() != rhs_type.get_dtype():
         raise PyMTLTypeError( s.blk, node.ast,
-          f'conflicting type {rhs_type} for temporary variable {node.target.name}({lhs_type})!' )
+          f'conflicting type {rhs_type} for temporary variable {node.target.name}(LHS target#{i} of {lhs_type})!' )
 
       # Creating a temporaray variable
       # Reminder that a temporary variable is essentially a wire. So we use
       # rt.Wire here instead of rt.NetWire
-      node.target.Type = rt.Wire( rhs_type.get_dtype() )
+      target.Type = rt.Wire( rhs_type.get_dtype() )
       s.tmpvars[ tmpvar_id ] = rt.Wire( rhs_type.get_dtype() )
-      node.Type = None
 
     else:
       # non-temporary assignment is an L1 thing
-      super().visit_Assign( node )
+      super()._visit_Assign_single_target( node, target, i )
+
+
+  def visit_Assign( s, node ):
+    # lhs_types = [ target.Type.get_dtype() for target in node.targets ]
+
+    # RHS should have the same type as LHS
+    for i, target in enumerate( node.targets ):
+      s._visit_Assign_single_target( node, target, i )
+
+    node.Type = None
 
   def visit_If( s, node ):
     # Can the type of condition be cast into bool?

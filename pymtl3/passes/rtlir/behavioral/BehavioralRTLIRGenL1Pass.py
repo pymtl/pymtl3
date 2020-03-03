@@ -135,13 +135,22 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return ret
 
   def visit_Assign( s, node ):
-    if len( node.targets ) != 1:
+    blocking = {
+      'CombUpblk' : True,
+      'SeqUpblk'  : False,
+    }
+
+    if len( node.targets ) < 1:
       raise PyMTLSyntaxError( s.blk, node,
-        'Assigning to multiple targets is not allowed!' )
+        'At least one assignment target should be provided!' )
+
+    if s._upblk_type not in blocking:
+      raise PyMTLSyntaxError( s.blk, node,
+        'Assignment should be in either a combinational or a sequential update block!' )
 
     value = s.visit( node.value )
-    target = s.visit( node.targets[0] )
-    ret = bir.Assign( target, value, blocking = True )
+    targets = [ s.visit( target ) for target in node.targets ]
+    ret = bir.Assign( targets, value, blocking = blocking[s._upblk_type] )
     ret.ast = node
     return ret
 
@@ -152,8 +161,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     """
     if isinstance( node.op, ast.LShift ):
       value = s.visit( node.value )
-      target = s.visit( node.target )
-      ret = bir.Assign( target, value, blocking = False )
+      targets = [ s.visit( node.target ) ]
+      ret = bir.Assign( targets, value, blocking = False )
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
@@ -306,11 +315,16 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
             f'Component {obj} is not a sub-component of {s.component}!' )
         ret = bir.Base( obj )
       else:
-        ret =  bir.FreeVar( node.id, obj )
+        # A closure variable could be a loop index. We need to
+        # generate per-function closure variable instead of assuming
+        # they will have the same value.
+        ret =  bir.FreeVar( f"{node.id}_at_{s.blk.__name__}", obj )
       ret.ast = node
       return ret
     elif node.id in s.globals:
       # free var from the global name space
+      # For now we can still safely assume all upblks will see the same
+      # value for a free var from the global space?
       ret = bir.FreeVar( node.id, s.globals[ node.id ] )
       ret.ast = node
       return ret

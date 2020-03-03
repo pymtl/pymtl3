@@ -15,13 +15,14 @@ from .StructuralTranslatorL3 import StructuralTranslatorL3
 
 
 class StructuralTranslatorL4( StructuralTranslatorL3 ):
+
   #-----------------------------------------------------------------------
-  # gen_structural_trans_metadata
+  # _get_structural_rtlir_gen_pass
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL4Pass( s.inst_conns ) )
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL4Pass
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -126,7 +127,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
   # rtlir_signal_expr_translation
   #-----------------------------------------------------------------------
 
-  def rtlir_signal_expr_translation( s, expr, m ):
+  def rtlir_signal_expr_translation( s, expr, m, status = 'intermediate' ):
     """Translate a signal expression in RTLIR into its backend representation.
 
     Add support for the following operations at L4: sexp.SubCompAttr
@@ -134,16 +135,16 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
     if isinstance( expr, sexp.SubCompAttr ):
       return s.rtlir_tr_subcomp_attr(
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_attr() )
+        expr.get_attr(), status )
 
     elif isinstance( expr, sexp.ComponentIndex ):
       return s.rtlir_tr_component_array_index(
         s.rtlir_signal_expr_translation( expr.get_base(), m ),
-        expr.get_index() )
+        expr.get_index(), status )
 
     else:
       return super(). \
-              rtlir_signal_expr_translation( expr, m )
+              rtlir_signal_expr_translation( expr, m, status )
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend
@@ -179,8 +180,8 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
     raise NotImplementedError()
 
   # Signal operations
-  def rtlir_tr_component_array_index( s, base_signal, index ):
+  def rtlir_tr_component_array_index( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_subcomp_attr( s, base_signal, attr ):
+  def rtlir_tr_subcomp_attr( s, base_signal, attr, status ):
     raise NotImplementedError()

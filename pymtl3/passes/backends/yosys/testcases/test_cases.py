@@ -8,7 +8,7 @@ Author : Peitian Pan
 Date   : Dec 20, 2019
 """
 
-from pymtl3.passes.backends.sverilog.testcases import (
+from pymtl3.passes.backends.verilog.testcases import (
     Bits32Foo,
     Bits32x5Foo,
     CaseArrayBits32IfcInUpblkComp,
@@ -62,7 +62,7 @@ from pymtl3.passes.backends.sverilog.testcases import (
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
-    CaseSVerilogReservedComp,
+    CaseVerilogReservedComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
