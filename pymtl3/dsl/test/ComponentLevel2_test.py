@@ -84,11 +84,11 @@ class TestSink( ComponentLevel2 ):
   def line_trace( s ):
     return "%s" % s.in_
 
-def test_signal_require_type():
+def test_signal_require_type_or_int():
 
   class Top(ComponentLevel2):
     def construct( s ):
-      s.a = Wire(1)
+      s.a = Wire('a')
 
   a = Top()
   try:
@@ -101,8 +101,7 @@ def test_ast_caching_closure():
 
   class Parametrized(ComponentLevel2):
     def construct( s, nbits ):
-      nbitsX2 = nbits*2
-      s.x = Wire( mk_bits(nbits*2) )
+      s.x = Wire( nbits*2 )
       @update
       def upA():
         print(s.x[nbits])

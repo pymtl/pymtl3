@@ -10,7 +10,7 @@ Date   : Apr 16, 2018
 import types
 from collections import deque
 
-from pymtl3.datatypes import Bits, Bits1, mk_bits, is_bitstruct_class
+from pymtl3.datatypes import Bits, Bits1, is_bitstruct_class, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
@@ -142,8 +142,13 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type=Bits1 ):
-    assert isinstance( Type, type ) and ( issubclass( Type, Bits ) or is_bitstruct_class(Type) ), \
-            f"RTL signal can only be of Bits type or bitstruct type, not {Type}"
+    if isinstance( Type, int ):
+      Type = mk_bits(Type)
+    else:
+      assert isinstance( Type, type ) and ( issubclass( Type, Bits ) or is_bitstruct_class(Type) ), \
+              f"RTL signal can only be of Bits type or bitstruct type, not {Type}.\n" \
+              f"Note: an integer is also accepted: Wire(32) is equivalent to Wire(Bits32))"
+
     s._dsl.Type = Type
     s._dsl.type_instance = None
 

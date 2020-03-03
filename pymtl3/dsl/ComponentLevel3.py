@@ -212,7 +212,7 @@ class ComponentLevel3( ComponentLevel2 ):
     new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
-    ComponentLevel1.update( s, blk )
+    ComponentLevel1._update( s, blk )
 
     # This caching here does no caching because the block name contains
     # the signal name intentionally to avoid conflicts. With //= it is

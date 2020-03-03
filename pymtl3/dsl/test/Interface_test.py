@@ -9,6 +9,8 @@ Date   : Jan 1, 2018
 from collections import deque
 
 from pymtl3.datatypes import Bits1, Bits8, Bits128
+from pymtl3.dsl.ComponentLevel1 import update
+from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 
@@ -46,8 +48,8 @@ class InValRdyIfc( Interface ):
   def construct( s, Type ):
 
     s.msg = InPort( Type )
-    s.val = InPort( int if Type is int else Bits1 )
-    s.rdy = OutPort( int if Type is int else Bits1 )
+    s.val = InPort()
+    s.rdy = OutPort()
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
@@ -57,8 +59,8 @@ class OutValRdyIfc( Interface ):
   def construct( s, Type ):
 
     s.msg = OutPort( Type )
-    s.val = OutPort( int if Type is int else Bits1 )
-    s.rdy = InPort( int if Type is int else Bits1 )
+    s.val = OutPort()
+    s.rdy = InPort()
 
   def line_trace( s ):
     return valrdy_to_str( s.msg, s.val, s.rdy )
@@ -73,7 +75,7 @@ class TestSourceValRdy( ComponentLevel3 ):
     s.default = Type()
     s.out     = OutValRdyIfc( Type )
 
-    @s.update_ff
+    @update_ff
     def up_src():
       if (s.out.rdy & s.out.val) and s.src_msgs:
         s.src_msgs.popleft()
@@ -96,7 +98,7 @@ class TestSinkValRdy( ComponentLevel3 ):
 
     s.in_ = InValRdyIfc( Type )
 
-    @s.update_ff
+    @update_ff
     def up_sink():
       s.in_.rdy <<= Bits1( len(s.sink_msgs) > 0 )
 
@@ -119,7 +121,8 @@ def test_simple():
     def construct( s ):
 
       s.src  = TestSourceValRdy( Bits8, [ 0, 1, 2 ] )
-      s.sink = TestSinkValRdy  ( Bits8, [ 0, 1, 2 ] )( in_ = s.src.out )
+      s.sink = TestSinkValRdy  ( Bits8, [ 0, 1, 2 ] )
+      s.sink.in_ //= s.src.out
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -134,7 +137,7 @@ def test_nested_port_bundle():
 
   class ValRdyBundle( Interface ):
 
-    def construct( s, Type=int ):
+    def construct( s, Type ):
       s.msg = Wire( Type )
       s.val = Wire( Bits1 )
       s.rdy = Wire( Bits1 )
@@ -164,7 +167,7 @@ def test_nested_port_bundle():
           connect( s.sb.req[i][j].msg, s.src[i].out.msg )
           connect( s.wire[i][j],       s.sb.req[i][j].msg )
 
-      @s.update
+      @update
       def up_from_req():
         s.sink.in_.val = 1
         s.sink.in_.msg = 0
@@ -213,7 +216,7 @@ def test_customized_connect():
     def construct( s ):
       s.send = MockSendIfc()
 
-      @s.update
+      @update
       def up_send():
         s.send.send_msg = Bits1( 1 )
         s.send.send_val = Bits1( 1 )
@@ -222,7 +225,7 @@ def test_customized_connect():
     def construct( s ):
       s.recv = MockRecvIfc()
 
-      @s.update
+      @update
       def up_recv():
         print("recv_msg", s.recv.recv_msg, "recv_val", s.recv.recv_val)
 
@@ -256,7 +259,7 @@ def test_customized_connect_adapter():
       s.in_ = InPort ( InType  )
       s.out = OutPort( OutType )
 
-      @s.update
+      @update
       def adapter_incr():
         s.out = s.in_ + OutType( 1 )
 
@@ -301,7 +304,7 @@ def test_customized_connect_adapter():
     def construct( s ):
       s.send = [ MockSendIfc( Bits8 ) for _ in range( 10 ) ]
 
-      @s.update
+      @update
       def up_send():
         for i in range( 10 ):
           s.send[i].send_msg = Bits1( 1 )
@@ -311,7 +314,7 @@ def test_customized_connect_adapter():
     def construct( s ):
       s.recv = [ MockRecvIfc( Bits128 ) for _ in range( 10 ) ]
 
-      @s.update
+      @update
       def up_recv():
         for i in range( 10 ):
           print("recv_msg", i, s.recv[i].recv_msg, "recv_val", s.recv[i].recv_val)
