@@ -23,11 +23,13 @@ class NullXcelRTL(Component):
 
     s.xcel = XcelMinionIfcRTL( xreq_class, xresp_class )
 
-    s.xcelreq_q = NormalQueueRTL( xreq_class, 2 )( enq = s.xcel.req )
+    s.xcelreq_q = NormalQueueRTL( xreq_class, 2 )
+    s.xcelreq_q.enq //= s.xcel.req
 
-    s.xr0 = RegEn( dtype )( in_ = s.xcelreq_q.deq.ret.data )
+    s.xr0 = RegEn( dtype )
+    s.xr0.in_ //= s.xcelreq_q.deq.ret.data
 
-    @s.update
+    @update
     def up_null_xcel():
 
       if s.xcelreq_q.deq.rdy & s.xcel.resp.rdy:

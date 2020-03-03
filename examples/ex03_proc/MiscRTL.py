@@ -42,7 +42,7 @@ class DropUnitRTL( Component ):
     # state_transitions
     #------------------------------------------------------------------
 
-    @s.update_ff
+    @update_ff
     def state_transitions():
 
       if s.reset:
@@ -60,7 +60,7 @@ class DropUnitRTL( Component ):
     # set_outputs
     #------------------------------------------------------------------
 
-    @s.update
+    @update
     def set_outputs():
       s.out.rdy = b1(0)
       s.in_.en  = b1(0)
@@ -88,7 +88,7 @@ class ImmGenRTL( Component ):
     s.inst     = InPort( dtype )
     s.imm      = OutPort( dtype )
 
-    @s.update
+    @update
     def up_immgen():
       s.imm = dtype(0)
 
@@ -123,7 +123,7 @@ class AluRTL( Component ):
     s.out      = OutPort( dtype )
     s.ops_ne   = OutPort( Bits1 )
 
-    @s.update
+    @update
     def comb_logic():
       if   s.fn == b4(0): s.out = s.in0               # COPY OP0
       elif s.fn == b4(1): s.out = s.in1               # COPY OP1

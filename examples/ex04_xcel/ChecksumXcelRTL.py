@@ -50,23 +50,20 @@ class ChecksumXcelRTL( Component ):
 
     # Connections
 
-    connect( s.xcel.req, s.in_q.enq )
-    connect( s.checksum_unit.recv.msg[0 :32 ], s.reg_file[0].out )
-    connect( s.checksum_unit.recv.msg[32:64 ], s.reg_file[1].out )
-    connect( s.checksum_unit.recv.msg[64:96 ], s.reg_file[2].out )
-    connect( s.checksum_unit.recv.msg[96:128], s.reg_file[3].out )
+    s.xcel.req //= s.in_q.enq
+    s.checksum_unit.recv.msg[0 :32 ] //= s.reg_file[0].out
+    s.checksum_unit.recv.msg[32:64 ] //= s.reg_file[1].out
+    s.checksum_unit.recv.msg[64:96 ] //= s.reg_file[2].out
+    s.checksum_unit.recv.msg[96:128] //= s.reg_file[3].out
 
     # Logic
 
-    @s.update
+    @update
     def up_start_pulse():
-      s.start_pulse = (
-        s.xcel.resp.en and
-        s.in_q.deq.ret.type_ == s.WR and
-        s.in_q.deq.ret.addr == b5(4)
-      )
+      s.start_pulse = s.xcel.resp.en and s.in_q.deq.ret.type_ == s.WR and \
+                                         s.in_q.deq.ret.addr == b5(4)
 
-    @s.update
+    @update
     def up_state_next():
       if s.state == s.XCFG:
         s.state_next = (
@@ -81,14 +78,14 @@ class ChecksumXcelRTL( Component ):
       else: # s.state == s.BUSY
         s.state_next = s.XCFG if s.checksum_unit.send.en else s.BUSY
 
-    @s.update_ff
+    @update_ff
     def up_state():
       if s.reset:
         s.state <<= s.XCFG
       else:
         s.state <<= s.state_next
 
-    @s.update
+    @update
     def up_fsm_output():
       if s.state == s.XCFG:
         s.in_q.deq.en  = s.in_q.deq.rdy
@@ -108,14 +105,14 @@ class ChecksumXcelRTL( Component ):
         s.checksum_unit.recv.en  = b1(0)
         s.checksum_unit.send.rdy = b1(1)
 
-    @s.update
+    @update
     def up_resp_msg():
       s.xcel.resp.msg.type_ = s.in_q.deq.ret.type_
       s.xcel.resp.msg.data  = b32(0)
       if s.in_q.deq.ret.type_ == s.RD:
         s.xcel.resp.msg.data = s.reg_file[ s.in_q.deq.ret.addr[0:3] ].out
 
-    @s.update
+    @update
     def up_wr_regfile():
       for i in range(6):
         s.reg_file[i].in_ = s.reg_file[i].out

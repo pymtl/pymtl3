@@ -64,7 +64,7 @@ class IncrMethodModular( Component ):
     connect( s.read,  s.buf2.read  )
 
     # upB reads from buf1, increments the value by 1, and writes to buf2
-    @s.update
+    @update
     def upB():
       s.buf2.write( s.buf1.read() + b8(1) )
 
@@ -91,13 +91,13 @@ class IncrTestBench( Component ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpA writes data to input
-    @s.update
+    @update
     def upA():
       s.incr.write( s.incr_in )
       s.incr_in += 10
 
     # UpC reads data from output
-    @s.update
+    @update
     def upC():
       s.incr_out = s.incr.read()
 

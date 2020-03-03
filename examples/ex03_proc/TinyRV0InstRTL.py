@@ -112,7 +112,7 @@ class DecodeInstType( Component ):
     s.in_ = InPort ( Bits32 )
     s.out = OutPort( Bits8 )
 
-    @s.update
+    @update
     def comb_logic():
 
       s.out = b8( ZERO )
