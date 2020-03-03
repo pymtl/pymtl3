@@ -60,9 +60,6 @@ class ComponentLevel5( ComponentLevel4 ):
       # Same as parent class _construct
       s.construct( *s._dsl.args, **kwargs )
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
       s._dsl.constructed = True
 
   def _connect_method_ports( s, o1, o2 ):

@@ -54,9 +54,6 @@ class Component( ComponentLevel7 ):
         parent._connect_signal_signal( s.clk, parent.clk )
         parent._connect_signal_signal( s.reset, parent.reset )
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
       s._dsl.constructed = True
 
   # This function deduplicates those checks in each API
@@ -105,7 +102,7 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-    top._dsl.elaborate_stack = [ parent ]
+    NamedObject._elaborate_stack = [ parent ]
 
     # Check if we are adding obj to a list of to a component
     if not indices:
@@ -163,13 +160,13 @@ class Component( ComponentLevel7 ):
       obj._dsl._my_indices  = indices
 
       obj._dsl.elaborate_top = top
-      top._dsl.elaborate_stack.append( obj )
+      NamedObject._elaborate_stack.append( obj )
 
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       obj._construct()
       del NamedObject.__setattr__
 
-      top._dsl.elaborate_stack.pop()
+      NamedObject._elaborate_stack.pop()
 
     added_components = obj._collect_all_single( lambda x: isinstance( x, Component ) )
 
@@ -229,7 +226,7 @@ class Component( ComponentLevel7 ):
     for func, obj_name in provided_func_calls:
       parent._dsl.func_calls[func].add( eval(obj_name) )
 
-    del top._dsl.elaborate_stack
+    del NamedObject._elaborate_stack
 
   def _delete_component( top, obj ):
 
