@@ -12,7 +12,7 @@ import os
 from cffi  import FFI
 
 from pymtl3.datatypes import *
-from pymtl3.dsl import Component, connect, InPort, OutPort, Wire, M, U, RD, WR
+from pymtl3.dsl import Component, connect, InPort, OutPort, Wire, update, update_ff
 
 def full_vector( wire, signal ):
 
@@ -130,7 +130,7 @@ class {component_name}( Component ):
     # declare the port interface
 {port_defs}
 
-    @s.update
+    @update
     def comb_upblk():
       # Set inputs
 {set_comb_input}
@@ -141,7 +141,7 @@ class {component_name}( Component ):
 {set_comb_output}
 
     if {has_clk}:
-      @s.update_ff
+      @update_ff
       def seq_upblk():
         # Advance the clock
         _ffi_m.{clk}[0] = 0

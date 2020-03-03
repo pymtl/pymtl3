@@ -33,7 +33,7 @@ class TestHarness( Component ):
     connect( s.src.send,  s.dut.enq )
 
     if   dut_class is DelayPipeDeqCL:
-      @s.update
+      @update
       def up_adapt():
         if s.dut.deq.rdy() and s.sink.recv.rdy():
           s.sink.recv( s.dut.deq() )

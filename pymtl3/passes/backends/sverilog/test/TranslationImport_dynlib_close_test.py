@@ -36,7 +36,7 @@ def test_dynlib_close():
       def construct( s ):
         s.in_ = InPort( Bits32 )
         s.out = OutPort( Bits32 )
-        @s.update
+        @update
         def upblk():
           s.out = s.in_
   class Seq:
@@ -44,7 +44,7 @@ def test_dynlib_close():
       def construct( s ):
         s.in_ = InPort( Bits32 )
         s.out = OutPort( Bits32 )
-        @s.update_ff
+        @update_ff
         def upblk():
           s.out <<= s.in_
 

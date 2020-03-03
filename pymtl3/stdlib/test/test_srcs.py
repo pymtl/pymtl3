@@ -26,7 +26,7 @@ class TestSrcCL( Component ):
     s.count  = initial_delay
     s.delay  = interval_delay
 
-    @s.update
+    @update
     def up_src_send():
       if s.count > 0:
         s.count -= 1

@@ -81,7 +81,7 @@ class NormalQueueCL( Component ):
     s.enq_rdy = False
     s.deq_rdy = False
 
-    @s.update
+    @update
     def up_pulse():
       s.enq_rdy    = len( s.queue ) < s.queue.maxlen
       s.deq_rdy    = len( s.queue ) > 0

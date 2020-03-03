@@ -10,7 +10,7 @@ import pytest
 from hypothesis import HealthCheck, given, reproduce_failure, settings
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, bitstruct, clog2, mk_bits
-from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire, connect
+from pymtl3.dsl import Component, InPort, Interface, OutPort, Wire, connect, update, update_ff
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..util.test_utility import closed_loop_component_test
@@ -34,7 +34,7 @@ def test_adder( do_test, Type, data ):
       s.in_1 = InPort( Type )
       s.in_2 = InPort( Type )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
@@ -53,7 +53,7 @@ def test_mux( do_test, Type, n_ports, data ):
       s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
       s.sel = InPort( mk_bits( clog2(n_ports) ) )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
@@ -95,7 +95,7 @@ def test_nested_struct( do_test, data ):
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
       s.sum = [ Wire( Bits16 ) for _ in range(3) ]
-      @s.update
+      @update
       def upblk():
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
@@ -130,7 +130,7 @@ def test_subcomp( do_test, data ):
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
       s.sum = [ Wire( Bits16 ) for _ in range(3) ]
-      @s.update
+      @update
       def upblk():
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
@@ -151,7 +151,7 @@ def test_index_static( do_test, Type, data ):
     def construct( s, Type ):
       s.in_ = [InPort ( Type ) for _ in range(2)]
       s.out = [OutPort( Type ) for _ in range(2)]
-      @s.update
+      @update
       def index_upblk():
         if s.in_[0] > s.in_[1]:
           s.out[0] = Type(1)

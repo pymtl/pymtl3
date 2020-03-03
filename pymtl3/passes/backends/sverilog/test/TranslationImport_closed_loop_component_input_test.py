@@ -10,7 +10,7 @@ from random import randint, seed
 import pytest
 
 from pymtl3.datatypes import Bits1, Bits16, Bits32, clog2, mk_bits
-from pymtl3.dsl import Component, InPort, Interface, OutPort
+from pymtl3.dsl import Component, InPort, Interface, OutPort, update, update_ff
 from pymtl3.passes.rtlir.util.test_utility import do_test
 
 from ..util.test_utility import closed_loop_component_input_test
@@ -32,7 +32,7 @@ def test_adder( do_test, Type ):
       s.in_1 = InPort( Type )
       s.in_2 = InPort( Type )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
@@ -55,7 +55,7 @@ def test_mux( do_test, Type, n_ports ):
       s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
       s.sel = InPort( mk_bits( clog2(n_ports) ) )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
