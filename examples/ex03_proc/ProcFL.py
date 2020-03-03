@@ -40,7 +40,7 @@ class ProcFL( Component ):
     s.R = RegisterFile(32)
     s.raw_inst = None
 
-    @s.update
+    @update
     def up_ProcFL():
       if s.reset:
         s.PC = b32( 0x200 )

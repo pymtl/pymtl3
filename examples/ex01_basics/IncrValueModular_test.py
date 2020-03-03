@@ -41,7 +41,7 @@ class IncrValueModular( Component ):
     connect( s.in_, s.buf1 )
     s.out //= s.buf2
 
-    @s.update
+    @update
     def upB():
       s.buf2 = s.buf1 + b8(1)
 
@@ -68,13 +68,13 @@ class IncrTestBench( Component ):
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpA writes data to input
-    @s.update
+    @update
     def upA():
       s.incr.in_ = s.incr_in
       s.incr_in += b8(10)
 
     # UpC read data from output
-    @s.update
+    @update
     def upC():
       s.incr_out = s.incr.out
 

@@ -114,7 +114,7 @@ class ChecksumCL_Tests( BaseTests ):
   #; example, change the update block in the CL implementation to be
   #; something like this:
   #;
-  #;   @s.update
+  #;   @update
   #;   def up_checksum_cl():
   #;     if s.pipe.enq.rdy() and s.in_q.deq.rdy():
   #;       bits = s.in_q.deq()

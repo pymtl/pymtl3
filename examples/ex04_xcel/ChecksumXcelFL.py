@@ -22,14 +22,14 @@ class ChecksumXcelFL( Component ):
 
     ReqType, RespType = mk_xcel_msg( 5, 32 )
 
-    s.xcel = XcelMinionIfcFL( read=s.read, write=s.write)
+    s.xcel = XcelMinionIfcFL( read=s.read, write=s.write )
 
     # Components
 
     s.reg_file = [ b32(0) for _ in range(6) ]
 
     s.trace = "            "
-    @s.update
+    @update
     def up_clear_trace():
       s.trace = "            "
 
