@@ -169,11 +169,11 @@ def test_nested_port_bundle():
 
       @update
       def up_from_req():
-        s.sink.in_.val = 1
-        s.sink.in_.msg = 0
+        s.sink.in_.val @= 1
+        s.sink.in_.msg @= 0
         for i in range(4):
           for j in range(4):
-            s.sink.in_.msg += s.wire[i][j]
+            s.sink.in_.msg @= s.sink.in_.msg + s.wire[i][j]
 
     def done( s ):
       return s.sink.done() and any( src.done() for src in s.src )
@@ -218,8 +218,8 @@ def test_customized_connect():
 
       @update
       def up_send():
-        s.send.send_msg = Bits1( 1 )
-        s.send.send_val = Bits1( 1 )
+        s.send.send_msg @= 1
+        s.send.send_val @= 1
 
   class B( ComponentLevel3 ):
     def construct( s ):
@@ -261,7 +261,7 @@ def test_customized_connect_adapter():
 
       @update
       def adapter_incr():
-        s.out = s.in_ + OutType( 1 )
+        s.out @= OutType( s.in_ + 1 )
 
   class MockRecvIfc( Interface ):
 
@@ -307,8 +307,8 @@ def test_customized_connect_adapter():
       @update
       def up_send():
         for i in range( 10 ):
-          s.send[i].send_msg = Bits1( 1 )
-          s.send[i].send_val = Bits1( 1 )
+          s.send[i].send_msg @= 1
+          s.send[i].send_val @= 1
 
   class B( ComponentLevel3 ):
     def construct( s ):

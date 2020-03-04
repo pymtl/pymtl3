@@ -39,7 +39,7 @@ from pymtl3.dsl.Placeholder import Placeholder
 
 
 def simple_sim_pass( s, seed=0xdeadbeef ):
-  #  random.seed( seed )
+  random.seed( 1 )
   assert isinstance( s, ComponentLevel1 )
 
   if not hasattr( s._dsl, "all_U_U_constraints" ):
@@ -75,7 +75,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
                         .replace( "(", "_" ).replace( ")", "" ) \
                         .replace( ",", "_" )
 
-        rstrs    = [ f"{x!r} = _w" for x in readers ]
+        rstrs    = [ f"{x!r} @= _w" for x in readers ] # THIS IS SLOW, NOW WE CAN HAVE BETTER MECHANISM
         _globals = { 's': s }
 
         if isinstance( writer, Const ) and type(writer._dsl.const) is not int:
@@ -446,9 +446,9 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
 
 
   if isinstance( s, ComponentLevel2 ):
-    final_serial_schedule = [ make_double_buffer_func( s ) ]
+    final_serial_schedule = list(all_update_ff)
+    final_serial_schedule.append( make_double_buffer_func( s ) )
     final_serial_schedule.extend( serial_schedule )
-    final_serial_schedule.extend( all_update_ff )
   else:
     final_serial_schedule = serial_schedule
 

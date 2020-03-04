@@ -204,17 +204,18 @@ class ComponentLevel2( ComponentLevel1 ):
 
       # Now we turn names into actual objects
       for obj_name, nodelist, op in names:
-        print(obj_name, nodelist, op)
         if obj_name[0][0] == "s":
           objs = set()
           lookup_variable( s, 1, 1 )
 
-          if not objs:
+          if not is_write or not objs:
+            all_objs |= objs
             continue
 
-          # The objects in objs are all NamedObject
-          for obj in objs:
-            if not isinstance( obj, Signal ) and is_write:
+          # Now we perform write checks
+
+          for obj in objs: # The objects in objs are all NamedObject
+            if not isinstance( obj, Signal ):
               raise WriteNonSignalError( s, func, nodelist[0].lineno, obj )
             all_objs.add( obj )
 
@@ -231,9 +232,14 @@ class ComponentLevel2( ComponentLevel1 ):
             if op is None:
               raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
                 "Fix the '=' assignment with '<<='")
-            elif isinstance( op, ast.MatMult ):
+            elif not isinstance( op, ast.LShift ):
+              if isinstance( op, ast.MatMult ):
+                raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
+                  "Fix the '@=' assignment with '<<='")
+
               raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
-                "Fix the '@=' assignment with '<<='")
+                "Fix the signal assignment with '<<='")
+
 
             for x in objs:
               if not x.is_top_level_signal():
@@ -249,9 +255,12 @@ class ComponentLevel2( ComponentLevel1 ):
               raise UpdateBlockWriteError( s, func, nodelist[0].lineno,
                 "Fix the '=' assignment with '@='")
 
-            elif isinstance( op, ast.LShift ):
+            elif not isinstance( op, ast.MatMult ):
+              if isinstance( op, ast.LShift ):
+                raise UpdateBlockWriteError( s, func, nodelist[0].lineno,
+                  "Fix the '<<=' assignment with '@='")
               raise UpdateBlockWriteError( s, func, nodelist[0].lineno,
-                "Fix the '<<=' assignment with '@='")
+                "Fix the signal assignment with '@='")
 
         # This is a function call without "s." prefix, check func list
         elif obj_name[0][0] in s._dsl.name_func:

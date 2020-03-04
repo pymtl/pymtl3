@@ -50,9 +50,9 @@ class TestSource( ComponentLevel3 ):
     @update
     def up_src():
       if not s.input_:
-        s.out = Type()
+        s.out @= Type()
       else:
-        s.out = s.input_.popleft()
+        s.out @= s.input_.popleft()
 
   def done( s ):
     return not s.input_
@@ -93,7 +93,7 @@ class Mux( ComponentLevel3 ):
 
     @update
     def up_mux():
-      s.out = s.in_[ s.sel ]
+      s.out @= s.in_[ s.sel ]
 
   def line_trace( s ):  pass
 
@@ -251,7 +251,7 @@ def test_2d_array_vars_connect_impl():
 
       @update
       def up_from_src():
-        s.wire[0][1] = s.src.out + 1
+        s.wire[0][1] @= s.src.out + 1
 
       s.reg = Wire(Bits32)
       connect( s.wire[1][0], s.reg )
@@ -262,11 +262,11 @@ def test_2d_array_vars_connect_impl():
 
       @update
       def upA():
-        s.wire[1][1] = s.reg + 1
+        s.wire[1][1] @= s.reg + 1
 
       @update
       def up_to_sink():
-        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+        s.sink.in_ @= s.wire[1][0] + s.wire[1][1]
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -292,7 +292,7 @@ def test_lots_of_fan_connect():
 
       @update
       def up_from_src():
-        s.wire0 = s.src.out + 1
+        s.wire0 @= s.src.out + 1
 
       s.reg = Wire(Bits32)
 
@@ -307,7 +307,7 @@ def test_lots_of_fan_connect():
 
       @update
       def upA():
-        s.wire2 = s.reg + 1
+        s.wire2 @= s.reg + 1
 
       s.wire3 = Wire(Bits32)
       s.wire4 = Wire(Bits32)
@@ -326,12 +326,12 @@ def test_lots_of_fan_connect():
 
       @update
       def upD():
-        s.wire7 = s.wire3 + s.wire6
-        s.wire8 = s.wire4 + s.wire5
+        s.wire7 @= s.wire3 + s.wire6
+        s.wire8 @= s.wire4 + s.wire5
 
       @update
       def up_to_sink():
-        s.sink.in_ = s.wire7 + s.wire8
+        s.sink.in_ @= s.wire7 + s.wire8
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -356,7 +356,7 @@ def test_connect_plain():
 
       @update
       def up_from_src():
-        s.wire0 = s.src.out + 1
+        s.wire0 @= s.src.out + 1
 
       connect( s.sink.in_, s.wire0 )
 
@@ -370,7 +370,7 @@ def test_connect_plain():
 
   _test_model( Top )
 
-def test_2d_array_vars_connect():
+def test_2d_array_vars_connect2():
 
   class Top(ComponentLevel3):
 
@@ -385,14 +385,14 @@ def test_2d_array_vars_connect():
 
       @update
       def up_from_src():
-        s.wire[0][1] = s.src.out + 1
+        s.wire[0][1] @= s.src.out + 1
 
       s.reg = Wire(32)
       connect( s.wire[1][0], s.reg )
 
       @update
       def up_reg():
-        s.reg = s.wire[0][0] + s.wire[0][1]
+        s.reg @= s.wire[0][0] + s.wire[0][1]
 
       for i in range(2):
         s.add_constraints(
@@ -401,11 +401,11 @@ def test_2d_array_vars_connect():
 
       @update
       def upA():
-        s.wire[1][1] = s.reg + 1
+        s.wire[1][1] @= s.reg + 1
 
       @update
       def up_to_sink():
-        s.sink.in_ = s.wire[1][0] + s.wire[1][1]
+        s.sink.in_ @= s.wire[1][0] + s.wire[1][1]
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -415,6 +415,8 @@ def test_2d_array_vars_connect():
              str(s.wire)+" r0=%s" % s.reg + \
              " >>> " + s.sink.line_trace()
 
+  a = Top()
+  a.elaborate()
   _test_model( Top )
 
 def test_connect_const_same_level():
@@ -453,7 +455,7 @@ def test_connect_const_two_writer():
 
       @update
       def up_writea():
-        s.a = 123
+        s.a @= 123
 
     def done( s ):
       return False
@@ -526,7 +528,7 @@ def test_top_level_outport():
 
       @update
       def up():
-        s.b[0:10] = 1023
+        s.b[0:10] @= 1023
 
     def done( s ):
       return False
@@ -615,8 +617,8 @@ def test_multiple_fields_are_assigned():
       # connect( s.in_.b[0:8], s.out2.c )
       @update
       def up_pass():
-        s.out1.c = s.in_.a
-        s.out2.c = s.in_.b[0:8]
+        s.out1.c @= s.in_.a
+        s.out2.c @= s.in_.b[0:8]
 
   a = A()
   a.elaborate()
@@ -959,28 +961,6 @@ def test_in_out_loopback_at_parent():
 
   a = Top()
   a.elaborate()
-
-def test_connect_slice_int():
-
-  class Top( ComponentLevel3 ):
-    def construct( s ):
-      s.y = OutPort( Bits8 )
-      s.x = Wire( Bits32 )
-
-      s.y //= s.x[0:8]
-      @update
-      def sx():
-        s.x = 10 # Except
-
-  a = Top()
-  a.elaborate()
-  simple_sim_pass( a )
-  try:
-    a.tick() # expect to get int error
-  except TypeError as e:
-    assert str(e).startswith( "'int' object is not subscriptable" )
-    return
-  raise Exception("Should've thrown TypeError: 'int' object is not subscriptable")
 
 def test_misconnect_component_to_signal():
 
