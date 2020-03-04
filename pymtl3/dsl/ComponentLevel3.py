@@ -107,11 +107,10 @@ class ComponentLevel3( ComponentLevel2 ):
     assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
 
     srcs, line = inspect.getsourcelines( lamb )
-    assert len(srcs) == 1, "We can only handle single-line lambda connect right now."
 
-    src  = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
+    src  = compiled_re.sub( r'\2', ''.join(srcs) ).lstrip(' ')
     root = ast.parse(src)
-    assert isinstance( root, ast.Module ) and len(root.body) == 1, "Invalid lambda (contact pymtl3 developer)"
+    assert isinstance( root, ast.Module ) and len(root.body) == 1, "We only support single-statement lambda."
 
     root = root.body[0]
     assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
