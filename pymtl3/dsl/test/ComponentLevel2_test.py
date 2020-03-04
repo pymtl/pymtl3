@@ -15,9 +15,10 @@ from pymtl3.dsl.Connectable import InPort, Interface, OutPort, Wire
 from pymtl3.dsl.ConstraintTypes import RD, WR, U
 from pymtl3.dsl.errors import (
     InvalidConstraintError,
-    InvalidFFAssignError,
     InvalidFuncCallError,
-    InvalidUpblkWriteError,
+    WriteNonSignalError,
+    UpdateBlockWriteError,
+    UpdateFFBlockWriteError,
     MultiWriterError,
     PyMTLDeprecationError,
     UpblkCyclicError,
@@ -371,6 +372,8 @@ def test_wire_up_constraint():
 
   _test_model( Top )
 
+class A:
+  pass
 # write two disjoint slices
 def test_write_two_disjoint_slices():
 
@@ -379,9 +382,14 @@ def test_write_two_disjoint_slices():
       s.A  = Wire( Bits32 )
       s.B  = Wire( Bits16 )
 
+      s.x = 16
+      x = A()
+      x.y = 4
       @update
       def up_wr_0_16():
-        s.A[0:16] @= Bits16( 0xff )
+        s.x <<= 123
+        x.y = 123
+        s.A[0:x.y] @= Bits16( 0xff )
 
       @update
       def up_wr_16_30():

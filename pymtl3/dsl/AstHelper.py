@@ -10,15 +10,12 @@ Date   : Jan 17, 2018
 
 import ast
 
-from .errors import InvalidFFAssignError
-
 
 class DetectVarNames( ast.NodeVisitor ):
 
-  def __init__( self, upblk, obj, is_update_ff ):
+  def __init__( self, upblk, obj ):
     self.upblk = upblk
     self.obj = obj
-    self.is_update_ff = is_update_ff
     self.globals = upblk.__globals__
     self.closure = { *upblk.__code__.co_freevars }
 
@@ -124,24 +121,10 @@ class DetectReadsWritesCalls( DetectVarNames ):
     self.read = read
     self.write = write
     self.calls = calls
-    self.assign_op = None
+    self.current_op = None
     self.visit( node )
 
   def visit_Assign( self, node ):
-
-    if self.is_update_ff:
-      assert len( node.targets ) == 1
-      target = node.targets[0]
-
-      if isinstance( target, (ast.Attribute, ast.Subscript) ):
-        while isinstance( target, (ast.Attribute, ast.Subscript) ):
-          target = target.value
-        assert isinstance( target, ast.Name ), "Please call pymtl3 developers"
-
-        if target.id == "s":
-          raise InvalidFFAssignError( self.obj, self.upblk, node.lineno,
-                "has a wrong assign operator. Change it to <<=." )
-
     for x in node.targets:
       self.visit( x )
     self.visit( node.value )
@@ -156,7 +139,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     obj_name, nodelist = self._get_full_name( node )
     if not obj_name:  return
 
-    pair = (obj_name, nodelist, self.assign_op)
+    pair = (obj_name, nodelist, self.current_op)
 
     if   isinstance( node.ctx, ast.Load ):
       self.read.append( pair )
@@ -169,7 +152,7 @@ class DetectReadsWritesCalls( DetectVarNames ):
     obj_name, nodelist = self._get_full_name( node )
     if not obj_name:  return
 
-    pair = (obj_name, nodelist, self.assign_op)
+    pair = (obj_name, nodelist, self.current_op)
 
     if   isinstance( node.ctx, ast.Load ):
       self.read.append( pair )
@@ -206,7 +189,7 @@ class DetectMethodCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
-def extract_reads_writes_calls( hostobj, f, tree, is_update_ff, read, write, calls ):
+def extract_reads_writes_calls( hostobj, f, tree, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
   # First check and remove @s.update and empty arguments
@@ -214,9 +197,9 @@ def extract_reads_writes_calls( hostobj, f, tree, is_update_ff, read, write, cal
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)
 
-  visitor = DetectReadsWritesCalls( f, hostobj, is_update_ff )
+  visitor = DetectReadsWritesCalls( f, hostobj )
   for stmt in tree.body:
     visitor.enter( stmt, read, write, calls )
 
 def get_method_calls( tree, upblk, methods ):
-  DetectMethodCalls( upblk, hostobj, is_update_ff ).enter( tree, methods )
+  DetectMethodCalls( upblk, hostobj ).enter( tree, methods )

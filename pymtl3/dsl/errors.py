@@ -27,7 +27,7 @@ class NoWriterError( Exception ):
       "\nNet:\n - ".join( [ "\n - ".join( [ repr(x) for x in y ] )
                             for y in nets ]) ) )
 
-class InvalidUpblkWriteError( Exception ):
+class WriteNonSignalError( Exception ):
   """ In update/update_ff, raise when a component is assigned """
   def __init__( self, hostobj, blk, lineno, obj ):
 
@@ -55,8 +55,8 @@ Suggestion: check the declaration of the variables, or fix this assignment.""".f
       repr(hostobj), hostobj.__class__.__name__ )
     )
 
-class InvalidCombAssignError( Exception ):
-  """ In update_ff, raise when signal is not @= -ed, or temp is not '=' -ed """
+class UpdateBlockWriteError( Exception ):
+  """ In update, raise when signal is not @= -ed """
   def __init__( self, hostobj, blk, lineno, suggestion ):
 
     filepath = inspect.getfile( hostobj.__class__ )
@@ -72,7 +72,7 @@ class InvalidCombAssignError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update_ff, we only allow <<= to valid fields for constructing nonblocking assignments.
+^^^ In update, only '@=' statements can have signals on left hand side, not '<<=' or '='.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: Line {} {}""".format( \
@@ -82,8 +82,8 @@ Suggestion: Line {} {}""".format( \
       error_lineno, suggestion )
     )
 
-class InvalidFFAssignError( Exception ):
-  """ In update_ff, raise when signal is not <<= -ed, or temp is not = -ed """
+class UpdateFFBlockWriteError( Exception ):
+  """ In update_ff, raise when signal is not <<= -ed"""
   def __init__( self, hostobj, blk, lineno, suggestion ):
 
     filepath = inspect.getfile( hostobj.__class__ )
@@ -99,7 +99,7 @@ class InvalidFFAssignError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update_ff, we only allow <<= to valid fields for constructing nonblocking assignments.
+^^^ In update_ff, we only allow '<<=' to valid fields for nonblocking assignments, not '@='.
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: Line {} {}""".format( \

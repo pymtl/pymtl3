@@ -104,6 +104,7 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src += f'def {fn_name}({args}):\n{body}'
   if _globals is None: _globals = {}
   _locals = {}
+  print(src)
   custom_exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 
@@ -270,6 +271,8 @@ def _mk_hash_fn( fields ):
     [ f'return hash({self_tuple})' ]
   )
 
+#--------------------------PyMTL3 specific--------------------------------
+
 #-------------------------------------------------------------------------
 # _mk_ff_fn
 #-------------------------------------------------------------------------
@@ -340,6 +343,18 @@ def _mk_deepcopy_fn( fields ):
     [ 'self', 'memo' ],
     clone_strs + [ ')' ],
   )
+
+#-------------------------------------------------------------------------
+# _mk_imatmul_fn
+#-------------------------------------------------------------------------
+# Creates @= function that copies the value over ...
+#
+# def __imatmul__( self, other ):
+#   assert self.x
+#   self.x @= other.x
+#   self.y[0] @= other.y[0]
+#   self.y[1] @= other.y[1]
+
 #-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------

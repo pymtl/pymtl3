@@ -36,11 +36,8 @@ class Bits:
   def __call__( self ):
     return Bits( self.nbits )
 
-  # def __matmul__( self, other ):
-    # raise NotImplementedError
-    # print("matmul", self,other)
-    # return other
-
+  def __matmul__( self, other ):
+    raise NotImplementedError
 
   def __imatmul__( self, other ):
     try:
@@ -55,7 +52,6 @@ class Bits:
 
   # Arithmetics
   def __getitem__( self, idx ):
-    print("getitem", self,idx)
     sv = int(self.value)
 
     if isinstance( idx, slice ):
@@ -69,7 +65,6 @@ class Bits:
     return Bits( 1, (sv >> i) & 1 )
 
   def __setitem__( self, idx, v ):
-    print("setitem", self,idx,v)
     sv = int(self.value)
 
     if isinstance( idx, slice ):
