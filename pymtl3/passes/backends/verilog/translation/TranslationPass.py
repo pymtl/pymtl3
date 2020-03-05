@@ -8,8 +8,8 @@
 import filecmp
 import os
 
-from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.backends.verilog import TranslationConfigs
+from pymtl3.passes.BasePass import BasePass, PassMetadata
 
 from .VTranslator import VTranslator
 

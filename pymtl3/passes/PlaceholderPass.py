@@ -5,8 +5,8 @@
 # Date   : Jan 27, 2020
 
 from pymtl3 import Placeholder
-from pymtl3.passes.errors import PlaceholderConfigError
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.errors import PlaceholderConfigError
 
 
 class PlaceholderPass( BasePass ):

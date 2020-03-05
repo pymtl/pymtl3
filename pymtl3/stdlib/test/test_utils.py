@@ -15,9 +15,9 @@ from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
 from pymtl3.passes.backends.verilog import (
+    TranslationImportPass,
     VerilatorImportConfigs,
     VerilatorImportPass,
-    TranslationImportPass,
 )
 
 #-------------------------------------------------------------------------

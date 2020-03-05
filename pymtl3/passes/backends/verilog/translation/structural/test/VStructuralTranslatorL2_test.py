@@ -6,6 +6,7 @@
 """Test the level 2 SystemVerilog structural translator."""
 
 from collections import deque
+
 import pytest
 
 from pymtl3.passes.backends.verilog.util.test_utility import check_eq

@@ -28,9 +28,9 @@ from pymtl3.passes.rtlir import get_component_ifc_rtlir
 from ..errors import VerilogImportError
 from ..util.utility import (
     expand,
-    get_rtype,
     gen_mapped_ports,
     get_component_unique_name,
+    get_rtype,
     make_indent,
     wrap,
 )

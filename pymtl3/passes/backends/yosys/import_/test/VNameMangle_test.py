@@ -18,8 +18,8 @@ from pymtl3.passes.backends.verilog.import_.test.VNameMangle_test import (
     test_struct_port_array,
     test_struct_port_single,
 )
-from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.passes.backends.yosys.util.utility import gen_mapped_ports
+from pymtl3.passes.rtlir.util.test_utility import do_test
 
 
 def local_do_test( m ):

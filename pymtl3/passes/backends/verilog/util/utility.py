@@ -5,7 +5,6 @@
 # Date   : May 27, 2019
 """Provide helper methods that might be useful to verilog passes."""
 
-import copy
 import os
 import shutil
 import textwrap

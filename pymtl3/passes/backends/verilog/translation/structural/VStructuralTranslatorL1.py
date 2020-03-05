@@ -12,7 +12,7 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
-from ...errors import VerilogReservedKeywordError, VerilogPlaceholderError
+from ...errors import VerilogPlaceholderError, VerilogReservedKeywordError
 from ...util.utility import get_component_unique_name, make_indent, pretty_concat
 
 

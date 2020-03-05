@@ -12,8 +12,8 @@ from os.path import dirname
 from textwrap import dedent
 
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
-from pymtl3.passes.testcases.test_cases import _set, _check
 from pymtl3 import *
+from pymtl3.passes.backends.verilog import VerilogPlaceholderConfigs
 from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,
@@ -73,7 +73,7 @@ from pymtl3.passes.testcases import (
     ThisIsABitStructWithSuperLongName,
     set_attributes,
 )
-from pymtl3.passes.backends.verilog import VerilogPlaceholderConfigs
+from pymtl3.passes.testcases.test_cases import _check, _set
 
 # Verilog test cases
 
