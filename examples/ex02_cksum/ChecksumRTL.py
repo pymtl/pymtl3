@@ -39,9 +39,10 @@ class StepUnit( Component ):
     @update
     def up_step():
       temp1 = b32(s.word_in) + s.sum1_in
-      s.sum1_out = temp1 & b32(0xffff)
+      s.sum1_out @= temp1 & b32(0xffff)
+
       temp2 = s.sum1_out + s.sum2_in
-      s.sum2_out = temp2 & b32(0xffff)
+      s.sum2_out @= temp2 & b32(0xffff)
 
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
@@ -92,12 +93,13 @@ class ChecksumRTL( Component ):
 
     @update
     def up_rtl_send():
-      s.send.en  = s.in_q.deq.rdy & s.send.rdy
-      s.in_q.deq.en = s.in_q.deq.rdy & s.send.rdy
+      go = s.in_q.deq.rdy & s.send.rdy
+      s.send.en     @= go
+      s.in_q.deq.en @= go
 
     @update
     def up_rtl_sum():
-      s.send.msg = ( s.sum2 << 16 ) | s.sum1
+      s.send.msg @= ( s.sum2 << 16 ) | s.sum1
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
