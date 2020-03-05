@@ -15,7 +15,13 @@ from pymtl3.dsl import Component, InPort, OutPort, update
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
 from ..bits_import import *
-from ..bitstructs import bitstruct, is_bitstruct_class, is_bitstruct_inst, mk_bitstruct
+from ..bitstructs import (
+    bitstruct,
+    get_bitstruct_inst_all_classes,
+    is_bitstruct_class,
+    is_bitstruct_inst,
+    mk_bitstruct,
+)
 
 #-------------------------------------------------------------------------
 # Basic test to test error messages and exceptions
@@ -63,14 +69,14 @@ class Pixel:
   r : Bits8
   g : Bits8
   b : Bits8
-  nbits = 24
+  # nbits = 24
 
 MadePixel = mk_bitstruct( 'MadePixel',{
     'r' : Bits8,
     'g' : Bits8,
     'b' : Bits8,
   },
-  namespace = { 'nbits' : 24 }
+  # namespace = { 'nbits' : 24 }
 )
 
 #-------------------------------------------------------------------------
@@ -269,19 +275,19 @@ def test_component():
       def up_bitstruct():
         # TODO:We have to use deepcopy here as a temporary workaround
         # to prevent s.in_ being mutated by the following operations.
-        s.out = deepcopy( s.in_ )
-        s.out.pt0.x += 1
-        s.out.pt0.y -= 1
-        s.out.pt1.x += 1
-        s.out.pt1.y -= 1
-        s.out_pt = s.in_.pt1
+        s.out @= s.in_
+        s.out.pt0.x @= 10
+        s.out.pt0.y @= 11
+        s.out.pt1.x @= 12
+        s.out.pt1.y @= 13
+        s.out_pt @= s.in_.pt1
 
   dut = A()
   dut.elaborate()
   dut.apply( simple_sim_pass )
   dut.in_ = NestedSimple( StaticPoint(b4(1),b4(2)), StaticPoint(b4(3),b4(4)) )
   dut.tick()
-  assert dut.out == NestedSimple( StaticPoint(Bits4(2),Bits4(1)), StaticPoint(Bits4(4),Bits4(3)) )
+  assert dut.out == NestedSimple( StaticPoint(Bits4(10),Bits4(11)), StaticPoint(Bits4(12),Bits4(13)) )
   print( dut.out_pt )
   assert dut.out_pt == StaticPoint(Bits4(3),Bits4(4))
 
@@ -506,6 +512,44 @@ def test_mk_high_d_list_struct_inside():
   c.y[9][2][0][2].x = Bits4(3)
   print(c.y[9][2][0][2])
   assert b != c
+
+def test_get_nbits():
+
+  @bitstruct
+  class SomeMsg:
+    c: [ Bits3, Bits3 ]
+    d: [ Bits5, Bits5 ]
+
+  assert SomeMsg.nbits == 16
+  a = SomeMsg()
+  assert a.nbits == 16
+
+def test_to_bits():
+
+  @bitstruct
+  class SomeMsg:
+    c: [ Bits4, Bits4 ]
+    d: [ Bits8, Bits8 ]
+
+  assert SomeMsg([b4(0x2),b4(0x3)],[b8(0x45), b8(0x67)]).to_bits() == b24(0x234567)
+
+def test_get_bitstruct_inst_all_classes():
+
+  @bitstruct
+  class SomeMsg1:
+    a: [ Bits4, Bits4 ]
+    b: Bits8
+
+  @bitstruct
+  class SomeMsg2:
+    c: [ SomeMsg1, SomeMsg1 ]
+    d: [ Bits6, Bits6 ]
+
+  a = SomeMsg2()
+  print()
+  print(get_bitstruct_inst_all_classes( a ))
+  print({Bits4, Bits8, SomeMsg1, Bits6, SomeMsg2})
+  assert get_bitstruct_inst_all_classes( a ) == {Bits4, Bits8, SomeMsg1, Bits6, SomeMsg2}
 
 def test_nbits_to_bits():
   @bitstruct

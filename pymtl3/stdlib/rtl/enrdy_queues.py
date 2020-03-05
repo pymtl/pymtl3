@@ -28,12 +28,12 @@ class PipeQueue1RTL( Component ):
 
     @update
     def up_pipeq_use_deq_rdy():
-      s.deq.en  =  s.full.out & s.deq.rdy
-      s.enq.rdy = ~s.full.out | s.deq.rdy
+      s.deq.en  @=  s.full.out & s.deq.rdy
+      s.enq.rdy @= ~s.full.out | s.deq.rdy
 
     @update
     def up_pipeq_full():
-      s.full.in_ = s.enq.en | (s.full.out & ~s.deq.rdy )
+      s.full.in_ @= s.enq.en | (s.full.out & ~s.deq.rdy )
 
   def line_trace( s ):
     return s.buffer.line_trace()
@@ -57,13 +57,13 @@ class BypassQueue1RTL( Component ):
 
     @update
     def up_bypq_set_enq_rdy():
-      s.enq.rdy = ~s.full.out
+      s.enq.rdy @= ~s.full.out
 
     @update
     def up_bypq_use_enq_en():
-      s.deq.en   = (s.enq.en | s.full.out) & s.deq.rdy
-      s.buffer.en   =  s.enq.en & ~s.deq.en
-      s.full.in_ = (s.enq.en | s.full.out) & ~s.deq.en
+      s.deq.en    @= (s.enq.en | s.full.out) & s.deq.rdy
+      s.buffer.en @=  s.enq.en & ~s.deq.en
+      s.full.in_  @= (s.enq.en | s.full.out) & ~s.deq.en
 
   def line_trace( s ):
     return s.buffer.line_trace()
@@ -100,17 +100,17 @@ class NormalQueue1RTL( Component ):
 
     @update
     def up_normq_set_enq_rdy():
-      s.enq.rdy = ~s.full.out
+      s.enq.rdy @= ~s.full.out
 
     @update
     def up_normq_full():
       # When the bufferf is full and deq side is ready, we enable deq
-      s.deq.en = s.full.out & s.deq.rdy
+      s.deq.en @= s.full.out & s.deq.rdy
 
       # not full and valid enq, or no deque and enq, or no deque and already full
-      s.full.in_ = (~s.full.out & s.enq.en) | \
-                   (~s.deq.rdy & s.enq.en)  | \
-                   (~s.deq.rdy & s.full.out)
+      s.full.in_ @= (~s.full.out & s.enq.en) | \
+                    (~s.deq.rdy & s.enq.en)  | \
+                    (~s.deq.rdy & s.full.out)
 
 
   def line_trace( s ):

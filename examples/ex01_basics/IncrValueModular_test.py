@@ -43,7 +43,7 @@ class IncrValueModular( Component ):
 
     @update
     def upB():
-      s.buf2 = s.buf1 + b8(1)
+      s.buf2 @= s.buf1 + b8(1)
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
@@ -63,15 +63,15 @@ class IncrTestBench( Component ):
     # Instantiate IncrValueModular child component here
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
 
-    s.incr     = IncrValueModular()
+    s.incr = IncrValueModular()
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpA writes data to input
     @update
     def upA():
-      s.incr.in_ = s.incr_in
-      s.incr_in += b8(10)
+      s.incr.in_ @= s.incr_in
+      s.incr_in  += b8(10)
 
     # UpC read data from output
     @update

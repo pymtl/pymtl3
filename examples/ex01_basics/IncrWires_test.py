@@ -33,7 +33,7 @@ class IncrWires( Component ):
     # UpA writes data to buf1
     @update
     def upA():
-      s.buf1 = s.incr_in
+      s.buf1 @= s.incr_in
       s.incr_in += b8(10)
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -46,7 +46,7 @@ class IncrWires( Component ):
 
     @update
     def upB():
-      s.buf2 = s.buf1 + b8(1)
+      s.buf2 @= s.buf1 + b8(1)
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 

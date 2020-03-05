@@ -25,7 +25,7 @@ class Toy( Component ):
     @update
     def add_upblk():
       # This update block models the behavior of a 32-bit adder
-      s.out = s.in0 + s.in1
+      s.out @= s.in0 + s.in1
 
 def process_binary(sig):
   """

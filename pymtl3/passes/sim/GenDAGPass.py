@@ -126,7 +126,8 @@ class GenDAGPass( BasePass ):
 
       gen_src = """
 def {}():
-  {} = {}""".format( upblk_name, " = ".join( rstrs ), wstr )
+  x = {}
+  {}""".format( upblk_name, wstr, '\n  '.join([ f"{rstr} @= x" for rstr in rstrs ]) )
 
       blk = compile_net_blk( _globals, gen_src )
 

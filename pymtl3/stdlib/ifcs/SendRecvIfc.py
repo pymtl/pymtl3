@@ -175,11 +175,11 @@ class RecvCL2SendRTL( Component ):
     @update
     def up_send_rtl():
       if s.entry is None:
-        s.send.en  = b1( 0 )
-        s.send.msg = MsgType()
+        s.send.en  @= b1( 0 )
+        s.send.msg @= MsgType()
       else:
-        s.send.en  = b1( s.send.rdy )
-        s.send.msg = s.entry
+        s.send.en  @= b1( s.send.rdy )
+        s.send.msg @= s.entry
 
     s.add_constraints(
       U( up_clear )   < WR( s.send.en ),
@@ -215,7 +215,7 @@ class RecvRTL2SendCL( Component ):
     @update
     def up_recv_rtl_rdy():
       s.send_rdy = s.send.rdy() and not s.reset
-      s.recv.rdy = b1( 1 ) if s.send.rdy() and not s.reset else b1( 0 )
+      s.recv.rdy @= s.send_rdy
 
     @update
     def up_send_cl():

@@ -80,10 +80,10 @@ class TestHarness( Component ):
 
     @update
     def dut2sink():
-      s.dut.deq.en = b1(0)
+      s.dut.deq.en @= 0
 
       if s.dut.deq.rdy and s.sink.recv.rdy():
-        s.dut.deq.en = b1(1)
+        s.dut.deq.en @= 1
         s.sink.recv( s.dut.deq.ret )
 
   def done( s ):

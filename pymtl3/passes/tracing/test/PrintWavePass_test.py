@@ -40,11 +40,11 @@ def test_toy():
       @update
       def add_upblk():
         # This update block models the behavior of a 32-bit adder
-        s.out = s.i + s.inlong
-        if s.out[3] == "1":
-          s.state = s.state +b1(1)
+        s.out @= s.i + s.inlong
+        if s.out[3]:
+          s.state @= s.state +b1(1)
         else:
-          s.state = b1(0)
+          s.state @= b1(0)
 
   # Create a toy component and elaborate it
   dut = Toy()
@@ -100,11 +100,11 @@ def test_widetoy():
       @update
       def add_upblk():
         # This update block models the behavior of a 32-bit adder
-        s.out = s.i + s.inlong
-        if s.out[3] == "1":
-          s.state = s.state +b1(1)
+        s.out @= s.i + s.inlong
+        if s.out[3]:
+          s.state @= s.state + b1(1)
         else:
-          s.state = b1(0)
+          s.state @= b1(0)
 
   # Create a toy component and elaborate it
   dut = Toy()
@@ -168,12 +168,12 @@ def test_bitstruct():
       @update
       def add_upblk():
         # This update block models the behavior of a 32-bit adder
-        s.out.x = s.i.x + s.inlong
-        s.out.y = s.i.y + s.inlong
-        if s.out.x[3] == "1":
-          s.state = s.state +b1(1)
+        s.out.x @= s.i.x + s.inlong
+        s.out.y @= s.i.y + s.inlong
+        if s.out.x[3]:
+          s.state @= s.state +b1(1)
         else:
-          s.state = b1(0)
+          s.state @= b1(0)
 
   # Create a toy component and elaborate it
   dut = Toy()

@@ -563,8 +563,14 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
     return x
 
   reserved_fields = ['to_bits', 'from_bits', 'nbits']
+  for x in reserved_fields:
+    assert x not in cls.__dict__, f"Currently a bitstruct cannot have {reserved_fields}, but "\
+                                  f"{x} is provided as {cls.__dict__[x]}"
+
+
   for a_name, a_type in cls_annotations.items():
-    assert a_name not in reserved_fields, f"Currently a bitstruct cannot have {reserved_fields}"
+    assert a_name not in reserved_fields, f"Currently a bitstruct cannot have {reserved_fields}, but "\
+                                          f"{a_name} is annotated as {a_type}"
     _check_field_annotation( cls, a_name, a_type )
     fields[ a_name ] = a_type
     hashable_fields[ a_name ] = _convert_list_to_tuple( a_type )

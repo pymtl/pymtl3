@@ -6,12 +6,12 @@ class Mux( Component ):
 
   def construct( s, Type, ninputs ):
     s.in_ = [ InPort( Type ) for _ in range(ninputs) ]
-    s.sel = InPort( int if Type is int else mk_bits( clog2(ninputs) ) )
     s.out = OutPort( Type )
+    s.sel = InPort( clog2(ninputs) )
 
     @update
     def up_mux():
-      s.out = s.in_[ s.sel ]
+      s.out @= s.in_[ s.sel ]
 
 # Rshifter
 
@@ -19,12 +19,12 @@ class RightLogicalShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
-    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
 
     @update
     def up_rshifter():
-      s.out = s.in_ >> s.shamt
+      s.out @= s.in_ >> s.shamt
 
 # Lshifter
 
@@ -32,12 +32,12 @@ class LeftLogicalShifter( Component ):
 
   def construct( s, Type, shamt_nbits = 1 ):
     s.in_   = InPort( Type )
-    s.shamt = InPort( int if Type is int else mk_bits( shamt_nbits ) )
+    s.shamt = InPort( shamt_nbits )
     s.out   = OutPort( Type )
 
     @update
     def up_lshifter():
-      s.out = s.in_ << s.shamt
+      s.out @= s.in_ << s.shamt
 
 # Incrementer
 

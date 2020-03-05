@@ -295,13 +295,13 @@ class XcelIfcRTL2FLAdapter( Component ):
           s.right.write( s.req_q.deq.ret.addr, s.req_q.deq.ret.data )
           resp = RespType( s.req_q.deq.ret.type_, 0 )
 
-        s.req_q.deq.en = b1(1)
-        s.left.resp.en  = b1(1)
-        s.left.resp.msg = resp
+        s.req_q.deq.en  @= 1
+        s.left.resp.en  @= 1
+        s.left.resp.msg @= resp
 
       else:
-        s.req_q.deq.en = b1(0)
-        s.left.resp.en  = b1(0)
+        s.req_q.deq.en  @= 0
+        s.left.resp.en  @= 0
 
 # Yanghui: directly adapting FL to RTL is tricky. I first convert FL to CL
 # then CL to RTL using the adapters we already have.

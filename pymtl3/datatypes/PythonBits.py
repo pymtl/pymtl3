@@ -16,6 +16,8 @@ class Bits:
     self.nbits = nbits
     self.value = int(value) & ((1 << nbits) - 1)
 
+  # PyMTL simulation specific
+
   def __ilshift__( self, x ):
     try:
       assert x.nbits == self.nbits, f"Bitwidth mismatch during <<=, assigning Bits{self.nbits} <<= Bits{x.nbits}"
@@ -49,6 +51,9 @@ class Bits:
       self.value = int(other)
 
     return self
+
+  def to_bits( self ):
+    return self.clone()
 
   # Arithmetics
   def __getitem__( self, idx ):
