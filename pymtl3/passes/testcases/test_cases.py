@@ -91,6 +91,12 @@ class NestedStructPackedPlusScalar:
 class ThisIsABitStructWithSuperLongName:
   foo: Bits32
 
+@bitstruct
+class MultiDimPackedArrayStruct:
+  foo: Bits32
+  inner: Bits32Bar
+  packed_array: [ [ Bits16 ]*2 ] *3
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -1942,6 +1948,89 @@ class CaseMixedDefaultArgsComp:
   class DUT( Component ):
     def construct( s, foo, bar, woo = Bits32(0) ):
       pass
+
+class CaseGenericAdderComp:
+  class DUT( Component ):
+    def construct( s, Type ):
+      s.in_1 = InPort( Type )
+      s.in_2 = InPort( Type )
+      s.out = OutPort( Type )
+      @s.update
+      def add_upblk():
+        s.out = s.in_1 + s.in_2
+    def line_trace( s ): return 'sum = ' + str(s.out)
+
+class CaseGenericMuxComp:
+  class DUT( Component ):
+    def construct( s, Type, n_ports ):
+      s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
+      s.sel = InPort( mk_bits( clog2(n_ports) ) )
+      s.out = OutPort( Type )
+      @s.update
+      def add_upblk():
+        s.out = s.in_[ s.sel ]
+    def line_trace( s ): return "out = " + str( s.out )
+
+class CaseStructConnectWireComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32Foo )
+      s.out = OutPort( Bits32 )
+      connect( s.out, s.in_.foo )
+    def line_trace( s ): return "out = " + str( s.out )
+
+class CaseNestedStructConnectWireComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( MultiDimPackedArrayStruct )
+      s.out_foo = OutPort( Bits32 )
+      s.out_bar = OutPort( Bits32 )
+      s.out_sum = OutPort( Bits16 )
+      s.sum = [ Wire( Bits16 ) for _ in range(3) ]
+      @s.update
+      def upblk():
+        for i in range(3):
+          s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
+        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+      connect( s.out_foo, s.in_.foo )
+      connect( s.out_bar, s.in_.inner.bar )
+    def line_trace( s ): return "out_sum = " + str( s.out_sum )
+
+class CaseNestedStructConnectWireSubComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.b = Bits32OutDrivenComp()
+      s.in_ = InPort( MultiDimPackedArrayStruct )
+      s.out_foo = OutPort( Bits32 )
+      s.out_bar = OutPort( Bits32 )
+      s.out_sum = OutPort( Bits16 )
+      s.sum = [ Wire( Bits16 ) for _ in range(3) ]
+      @s.update
+      def upblk():
+        for i in range(3):
+          s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
+        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+      connect( s.out_foo, s.b.out )
+      connect( s.out_bar, s.in_.inner.bar )
+    def line_trace( s ): return "out_sum = " + str( s.out_sum )
+
+class CaseGenericConditionalDriveComp:
+  class DUT( Component ):
+    def construct( s, Type ):
+      s.in_ = [InPort ( Type ) for _ in range(2)]
+      s.out = [OutPort( Type ) for _ in range(2)]
+      @s.update
+      def index_upblk():
+        if s.in_[0] > s.in_[1]:
+          s.out[0] = Type(1)
+          s.out[1] = Type(0)
+        else:
+          s.out[0] = Type(0)
+          s.out[1] = Type(1)
+    def line_trace( s ): return "s.in0  = " + str( s.in_[0] ) +\
+                                "s.in1  = " + str( s.in_[1] ) +\
+                                "s.out0 = " + str( s.out[0] ) +\
+                                "s.out1 = " + str( s.out[1] )
 
 #-------------------------------------------------------------------------
 # Test cases that contain generic translator errors
