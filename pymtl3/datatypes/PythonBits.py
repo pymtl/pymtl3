@@ -26,6 +26,7 @@ class Bits:
   __slots__ = ( "nbits", "_uint" )
 
   def __init__( self, nbits=32, v=0, trunc=False ):
+    nbits = int(nbits)
     assert 0 < nbits < 1024, "Only support 0 < nbits < 1024!"
     self.nbits = nbits
 
@@ -171,8 +172,7 @@ class Bits:
 
     if isinstance( v, Bits ):
       if v.nbits > 1:
-        raise ValueError( f"Without truncation, a Bits{v.nbits} object "\
-                          f"is too wide to be used to construct Bits{nbits}!" )
+        raise ValueError( f"Cannot fit {v} into a Bits{v.nbits} slice" )
       self._uint = (sv & ~(1 << i)) | ((v.nbits & 1) << i)
     else:
       v = int(v)
@@ -188,7 +188,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint + other) & up )
 
   def __radd__( self, other ):
@@ -201,7 +201,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint - other) & up )
 
   def __rsub__( self, other ):
@@ -214,7 +214,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint * other) & up)
 
   def __rmul__( self, other ):
@@ -227,7 +227,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint & other) & up)
 
   def __rand__( self, other ):
@@ -240,7 +240,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint | other) & up)
 
   def __ror__( self, other ):
@@ -253,7 +253,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint ^ other) & up)
 
   def __rxor__( self, other ):
@@ -266,7 +266,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint // other) & up)
 
   def __mod__( self, other ):
@@ -276,7 +276,7 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up
+      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
       return _new_valid_bits( self.nbits, (self._uint % other) & up)
 
   def __invert__( self ):
@@ -297,7 +297,8 @@ class Bits:
       other = int(other)
     except Exception:
       return _new_valid_bits( 1, 0 )
-    assert other >= 0
+    up = _upper[ self.nbits ]
+    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
     return _new_valid_bits( 1, self._uint == other )
 
@@ -310,25 +311,29 @@ class Bits:
 
   def __lt__( self, other ):
     other = int(other)
-    assert other >= 0
+    up = _upper[ self.nbits ]
+    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
     return _new_valid_bits( 1, self._uint < other )
 
   def __le__( self, other ):
     other = int(other)
-    assert other >= 0
+    up = _upper[ self.nbits ]
+    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
     return _new_valid_bits( 1, self._uint <= other )
 
   def __gt__( self, other ):
     other = int(other)
-    assert other >= 0
+    up = _upper[ self.nbits ]
+    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
     return _new_valid_bits( 1, self._uint > other )
 
   def __ge__( self, other ):
     other = int(other)
-    assert other >= 0
+    up = _upper[ self.nbits ]
+    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
     return _new_valid_bits( 1, self._uint >= other )
 
