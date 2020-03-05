@@ -33,22 +33,22 @@ class NullXcelRTL(Component):
     def up_null_xcel():
 
       if s.xcelreq_q.deq.rdy & s.xcel.resp.rdy:
-        s.xcelreq_q.deq.en = b1(1)
-        s.xcel.resp.en     = b1(1)
-        s.xcel.resp.msg.type_ = s.xcelreq_q.deq.ret.type_
+        s.xcelreq_q.deq.en @= 1
+        s.xcel.resp.en     @= 1
+        s.xcel.resp.msg.type_ @= s.xcelreq_q.deq.ret.type_
 
         if s.xcelreq_q.deq.ret.type_ == XcelMsgType_WRITE:
-          s.xr0.en             = b1(1)
-          s.xcel.resp.msg.data = dtype(0)
+          s.xr0.en             @= 1
+          s.xcel.resp.msg.data @= 0
         else:
-          s.xr0.en            = b1(0)
-          s.xcel.resp.msg.data = s.xr0.out
+          s.xr0.en             @= 0
+          s.xcel.resp.msg.data @= s.xr0.out
       else:
-        s.xcelreq_q.deq.en   = b1(0)
-        s.xcel.resp.en       = b1(0)
-        s.xr0.en             = b1(0)
-        s.xcel.resp.msg.data = dtype(0)
-        s.xcel.resp.msg.type_ = b1(0)
+        s.xcelreq_q.deq.en    @= 0
+        s.xcel.resp.en        @= 0
+        s.xr0.en              @= 0
+        s.xcel.resp.msg.data  @= 0
+        s.xcel.resp.msg.type_ @= 0
 
   def line_trace( s ):
     return str(s.xcel)

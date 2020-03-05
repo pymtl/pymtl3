@@ -197,7 +197,7 @@ class ProcCL( Component ):
 
     @update
     def W():
-      s.commit_inst = Bits1(0)
+      s.commit_inst @= 0
       s.W_status = PipelineStatus.idle
 
       if s.DXM_W_queue.deq.rdy():
@@ -246,7 +246,7 @@ class ProcCL( Component ):
 
       if s.W_status == PipelineStatus.work:
         s.DXM_W_queue.deq()
-        s.commit_inst = Bits1(1)
+        s.commit_inst @= 1
 
   #-----------------------------------------------------------------------
   # line_trace
