@@ -506,3 +506,19 @@ def test_mk_high_d_list_struct_inside():
   c.y[9][2][0][2].x = Bits4(3)
   print(c.y[9][2][0][2])
   assert b != c
+
+def test_nbits_to_bits():
+  @bitstruct
+  class A:
+    x: Bits16
+
+  B = mk_bitstruct( "B", {
+    'x': Bits100,
+    'y': [ A ] * 3,
+    'z': A,
+  })
+  b = B(0x1234567890abcd0f,[A(2),A(3),A(4)], A(5) )
+  print(b)
+
+  assert b.nbits == 164
+  assert b.to_bits() == Bits164(0x1234567890abcd0f0002000300040005)

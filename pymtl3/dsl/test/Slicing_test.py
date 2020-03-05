@@ -14,7 +14,6 @@ from pymtl3.dsl.errors import MultiWriterError, NoWriterError
 
 from .sim_utils import simple_sim_pass
 
-
 # Shunning: Note that we now have @= as a hook for LHS, we can safely
 # assigning constants
 # >>> s.A[0:16] @= 0xff

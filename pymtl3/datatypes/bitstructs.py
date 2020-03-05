@@ -48,7 +48,9 @@ class Pixel:
 Author : Yanghui Ou, Shunning Jiang
   Date : Oct 19, 2019
 """
+import functools
 import keyword
+import operator
 import types
 import warnings
 
@@ -57,6 +59,7 @@ import py
 from pymtl3.utils import custom_exec
 
 from .bits_import import *
+from .helpers import concat
 
 #-------------------------------------------------------------------------
 # Constants
@@ -79,6 +82,19 @@ def is_bitstruct_inst( obj ):
 def is_bitstruct_class(cls):
   """Returns True if obj is a dataclass ."""
   return isinstance(cls, type) and hasattr(cls, _FIELDS)
+
+def get_bitstruct_inst_all_classes( obj ):
+  # list: put all types together
+  if isinstance( obj, list ):
+    return functools.reduce( operator.or_, [ get_bitstruct_inst_all_classes(x) for x in obj ] )
+  ret = { obj.__class__ }
+  # BitsN or int
+  if isinstance( obj, (Bits, int) ):
+    return ret
+  # BitStruct
+  assert is_bitstruct_inst( obj ), f"{obj} is not a valid PyMTL Bitstruct!"
+  return ret | functools.reduce( operator.or_, [ get_bitstruct_inst_all_classes(getattr(obj, v))
+                                                for v in obj.__bitstruct_fields__.keys() ] )
 
 _DEFAULT_SELF_NAME = 's'
 _ANTI_CONFLICT_SELF_NAME = '__bitstruct_self__'
@@ -350,11 +366,112 @@ def _mk_deepcopy_fn( fields ):
 # Creates @= function that copies the value over ...
 #
 # def __imatmul__( self, other ):
-#   assert self.x
+#   assert self.__class__ is other.__class__
 #   self.x @= other.x
 #   self.y[0] @= other.y[0]
 #   self.y[1] @= other.y[1]
 
+
+def _mk_imatmul_fn( fields ):
+
+  def _gen_list_imatmul_strs( type_, prefix='' ):
+    if isinstance( type_, list ):
+      ret = []
+      for i in range(len(type_)):
+        ret.extend( _gen_list_imatmul_strs( type_[0], f"{prefix}[{i}]" ) )
+      return ret
+    else:
+      return [ f"self.{prefix} @= other.{prefix}" ]
+
+  imatmul_strs = []
+  for name, type_ in fields.items():
+    imatmul_strs.extend( _gen_list_imatmul_strs( type_, name ) )
+
+  return _create_fn(
+    '__imatmul__',
+    [ 'self', 'other' ],
+    imatmul_strs + [ "return self" ],
+  )
+
+def _mk_nbits_to_bits_fn( fields ):
+
+  def _gen_to_bits_strs( type_, prefix, start_bit ):
+
+    if isinstance( type_, list ):
+      to_strs = []
+      end_bit = start_bit
+      for i in range(len(type_)):
+        end_bit, tos = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
+        to_strs.extend( tos )
+        start_bit = end_bit
+      return end_bit, to_strs
+
+    elif is_bitstruct_class( type_ ):
+      to_strs = []
+      end_bit = start_bit
+      for name, typ in getattr(type_, _FIELDS).items():
+        end_bit, tos = _gen_to_bits_strs( typ, f"{prefix}.{name}", end_bit )
+        to_strs.extend( tos )
+        start_bit = end_bit
+      return end_bit, to_strs
+
+    else:
+      end_bit = start_bit + type_.nbits
+      return end_bit, [ f"self.{prefix}" ]
+
+  to_bits_strs = []
+  total_nbits  = 0
+  for name, type_ in fields.items():
+    total_nbits, tos = _gen_to_bits_strs( type_, name, total_nbits )
+    to_bits_strs.extend( tos )
+
+  return total_nbits, _create_fn( 'to_bits', [ 'self' ],
+                                  [ f"return concat({', '.join(to_bits_strs)})" ],
+                                  _globals={'concat':concat} )
+
+# TODO add assertion in from_bits, endianness
+def _mk_nbits_from_bits_fn( fields ):
+
+  def _gen_to_bits_strs( type_, prefix, start_bit ):
+
+    if isinstance( type_, list ):
+      to_strs, from_strs = [], []
+      end_bit = start_bit
+      for i in range(len(type_)):
+        tos, froms, end_bit = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
+        to_strs.extend( tos )
+        from_strs.extend( froms )
+        start_bit = end_bit
+      return to_strs, from_strs, end_bit
+
+    elif is_bitstruct_class( type_ ):
+      to_strs, from_strs = [], []
+      end_bit = start_bit
+      for name, typ in getattr(type_, _FIELDS).items():
+        tos, froms, end_bit = _gen_to_bits_strs( typ, f"{prefix}.{name}", end_bit )
+        to_strs.extend( tos )
+        from_strs.extend( froms )
+        start_bit = end_bit
+      return to_strs, from_strs, end_bit
+
+    else:
+      end_bit = start_bit + type_.nbits
+      return [ f"self.{prefix}" ], [ f"self.{prefix} @= other[{start_bit}:{end_bit}]" ], end_bit
+
+  to_bits_strs   = []
+  from_bits_strs = []
+  total_nbits  = 0
+  for name, type_ in fields.items():
+    tos, froms, total_nbits = _gen_to_bits_strs( type_, name, total_nbits )
+    to_bits_strs.extend( tos )
+    from_bits_strs.extend( froms )
+
+  # TODO add assertion in bits
+  return _create_fn( 'to_bits', [ 'self' ],
+                     [ f"return concat({', '.join(to_bits_strs)})" ],
+                     _globals={'concat':concat} ), \
+         _create_fn( 'from_bits', [ 'self', 'other' ],
+                     from_bits_strs + [ "return self" ] ), total_nbits
 #-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------
@@ -445,7 +562,9 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
       return tuple( [ _convert_list_to_tuple( y ) for y in x ] )
     return x
 
+  reserved_fields = ['to_bits', 'from_bits', 'nbits']
   for a_name, a_type in cls_annotations.items():
+    assert a_name not in reserved_fields, f"Currently a bitstruct cannot have {reserved_fields}"
     _check_field_annotation( cls, a_name, a_type )
     fields[ a_name ] = a_type
     hashable_fields[ a_name ] = _convert_list_to_tuple( a_type )
@@ -511,6 +630,13 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
   cls.clone = _mk_clone_fn( fields )
 
   cls.__deepcopy__ = _mk_deepcopy_fn( fields )
+
+  # Shunning: add imatmul for assignment. TODO to_bits/from_bits
+  assert not '__imatmul__' in cls.__dict__ and not 'to_bits' in cls.__dict__ \
+     and not 'from_bits' in cls.__dict__ and 'get_nbits' not in cls.__dict__
+
+  cls.__imatmul__ = _mk_imatmul_fn( fields )
+  cls.nbits, cls.to_bits = _mk_nbits_to_bits_fn( fields )
 
   assert not 'get_field_type' in cls.__dict__
 

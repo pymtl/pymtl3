@@ -11,7 +11,7 @@ from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import UpdateFFBlockWriteError, MultiWriterError, NoWriterError
+from pymtl3.dsl.errors import MultiWriterError, NoWriterError, UpdateFFBlockWriteError
 
 from .sim_utils import simple_sim_pass
 
@@ -86,7 +86,7 @@ def test_rd_A_b_wr_A_impl():
 
       @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
       @update
       def up_rd_A_b():
@@ -103,11 +103,11 @@ def test_wr_A_b_wr_A_conflict():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
       @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -125,7 +125,7 @@ def test_wr_A_b_rd_A_impl():
 
       @update
       def up_wr_A_b():
-        s.A.b = 123
+        s.A.b @= 123
 
       @update
       def up_rd_A():
@@ -142,7 +142,7 @@ def test_wr_A_b_rd_A_rd_A_b_can_schedule():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
       @update
       def up_rd_A():
@@ -163,7 +163,7 @@ def test_wr_A_rd_fields_can_schedule():
 
       @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
       @update
       def up_rd_A_a():
@@ -184,7 +184,7 @@ def test_wr_A_b_rd_A_rd_A_a_cannot_schedule():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
       @update
       def up_rd_A():
@@ -217,7 +217,7 @@ def test_connect_rd_A_b_wr_x_conn_A_impl():
 
       @update
       def up_wr_x():
-        s.x = SomeMsg( 12, 123 )
+        s.x @= SomeMsg( 12, 123 )
 
       @update
       def up_rd_A_b():
@@ -238,7 +238,7 @@ def test_connect_wr_A_b_rd_x_conn_A_mark_writer():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
   _test_model( Top )
 
@@ -277,11 +277,11 @@ def test_connect_wr_A_b_wr_x_conn_A_conflict():
 
       @update
       def up_wr_A_b():
-        s.A.b = Bits32( 123 )
+        s.A.b @= Bits32( 123 )
 
       @update
       def up_wr_x():
-        s.x = SomeMsg( 12, 123 )
+        s.x @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -303,7 +303,7 @@ def test_connect_wr_x_conn_A_b_rd_A_impl():
 
       @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
       @update
       def up_rd_A():
@@ -324,11 +324,11 @@ def test_connect_wr_x_conn_A_b_wr_A_conflict():
 
       @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
       @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -350,7 +350,7 @@ def test_connect_rd_x_conn_A_b_wr_A_mark_writer():
 
       @update
       def up_wr_A():
-        s.A = SomeMsg( 12, 123 )
+        s.A @= SomeMsg( 12, 123 )
 
       @update
       def up_rd_x():
@@ -373,11 +373,11 @@ def test_connect_wr_x_conn_A_b_wr_y_conn_A_conflict():
 
       @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
       @update
       def up_wr_y():
-        s.y = SomeMsg( 12, 123 )
+        s.y @= SomeMsg( 12, 123 )
 
   try:
     _test_model( Top )
@@ -401,11 +401,11 @@ def test_connect_wr_x_conn_A_b_rd_y_conn_A_mark_writer():
 
       @update
       def up_wr_x():
-        s.x = Bits32( 123 )
+        s.x @= Bits32( 123 )
 
       @update
       def up_rd_y():
-        z = s.y
+        assert s.y == SomeMsg( 0, 123 )
 
   _test_model( Top )
 
@@ -428,7 +428,7 @@ def test_connect_rd_x_conn_A_b_wr_y_conn_A_mark_writer():
 
       @update
       def up_wr_y():
-        s.y = SomeMsg( 12, 123 )
+        s.y @= SomeMsg( 12, 123 )
 
   _test_model( Top )
 
@@ -448,7 +448,7 @@ def test_iterative_find_nets():
 
       @update
       def up_wr_s_w():
-        s.w = SomeMsg( 12, 123 )
+        s.w @= SomeMsg( 12, 123 )
 
   _test_model( Top )
 
@@ -494,7 +494,7 @@ def test_deep_connections():
 
       @update
       def up_wr_y():
-        s.w = Msg2( 12, 123 )
+        s.w @= Msg2( 12, 123 )
 
   try:
     _test_model( Top )
@@ -504,7 +504,6 @@ def test_deep_connections():
   raise Exception("Should've thrown NoWriterError.")
 
 def test_struct_with_list_of_bits():
-
 
   @bitstruct
   class B:

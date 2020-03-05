@@ -11,7 +11,7 @@ import os
 import time
 from collections import defaultdict
 
-from pymtl3.datatypes import Bits, concat, get_nbits, to_bits
+from pymtl3.datatypes import Bits, concat
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
@@ -174,7 +174,7 @@ class VcdGenerationPass( BasePass ):
         # to get the actual name like enq.rdy
         # TODO struct
         signal_name = vcd_mangle_name( repr(signal)[ len(m_name)+1: ] )
-        print( f"{spaces}  $var reg {get_nbits(signal._dsl.Type)} {symbol} {signal_name} $end",
+        print( f"{spaces}  $var reg {signal._dsl.Type.nbits} {symbol} {signal_name} $end",
                file=vcd_file )
 
       # Recursively visit all submodels.
@@ -198,7 +198,7 @@ class VcdGenerationPass( BasePass ):
     for i, net in enumerate(trimmed_value_nets):
       # Convert everything to Bits to get around lack of bit struct support.
       # The first cycle VCD contains the default value
-      bin_str = bin(int(to_bits( net[0]._dsl.Type() )))
+      bin_str = bin(int(net[0]._dsl.Type().to_bits()))
 
       print( f"b{bin_str} {net_symbol_mapping[i]}", file=vcd_file )
 
@@ -234,7 +234,7 @@ class VcdGenerationPass( BasePass ):
         # TODO: treat each field in a BitStruct as a separate signal?
 
         try:
-          net_bits_bin = to_bits( eval(repr(signal)) )
+          net_bits_bin = eval(repr(signal)).to_bits()
         except Exception as e:
           raise TypeError(f'{e}\n - {signal} becomes another type. Please check your code.')
 

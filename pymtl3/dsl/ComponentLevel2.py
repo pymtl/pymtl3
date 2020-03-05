@@ -26,18 +26,18 @@ from .Connectable import Connectable, Const, InPort, Interface, OutPort, Signal,
 from .ConstraintTypes import RD, WR, U, ValueConstraint
 from .errors import (
     InvalidConstraintError,
-    UpdateBlockWriteError,
-    UpdateFFBlockWriteError,
     InvalidFuncCallError,
     InvalidIndexError,
     InvalidPlaceholderError,
-    WriteNonSignalError,
     MultiWriterError,
     NotElaboratedError,
     PyMTLDeprecationError,
     SignalTypeError,
     UpblkFuncSameNameError,
+    UpdateBlockWriteError,
+    UpdateFFBlockWriteError,
     VarNotDeclaredError,
+    WriteNonSignalError,
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder

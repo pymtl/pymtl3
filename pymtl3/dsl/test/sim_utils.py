@@ -13,7 +13,7 @@ from collections import defaultdict
 import py.code
 
 from pymtl3.datatypes import Bits1
-from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
+from pymtl3.datatypes.bitstructs import get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3

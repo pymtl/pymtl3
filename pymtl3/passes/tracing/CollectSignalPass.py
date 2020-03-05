@@ -12,7 +12,7 @@ from collections import defaultdict
 
 import py
 
-from pymtl3.datatypes import Bits, is_bitstruct_class, to_bits
+from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.dsl import Const
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import ModelTypeError, PassOrderError
@@ -39,7 +39,7 @@ class CollectSignalPass( BasePass ):
     for x in top._dsl.all_signals:
       if x.is_top_level_signal() and ( not repr(x).endswith('.clk') or x is top.clk ):
         if is_bitstruct_class( x._dsl.Type ):
-          wav_srcs.append( "wavmeta.text_sigs['{0}'].append( to_bits({0}).bin() )".format(x) )
+          wav_srcs.append( "wavmeta.text_sigs['{0}'].append( {0}.to_bits().bin() )".format(x) )
         elif issubclass( x._dsl.Type, Bits ):
           wav_srcs.append( "wavmeta.text_sigs['{0}'].append( {0}.bin() )".format(x) )
 

@@ -16,13 +16,13 @@ from pymtl3.dsl.ConstraintTypes import RD, WR, U
 from pymtl3.dsl.errors import (
     InvalidConstraintError,
     InvalidFuncCallError,
-    WriteNonSignalError,
-    UpdateBlockWriteError,
-    UpdateFFBlockWriteError,
     MultiWriterError,
     PyMTLDeprecationError,
     UpblkCyclicError,
+    UpdateBlockWriteError,
+    UpdateFFBlockWriteError,
     VarNotDeclaredError,
+    WriteNonSignalError,
 )
 
 from .sim_utils import simple_sim_pass
