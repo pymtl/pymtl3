@@ -278,7 +278,7 @@ class ChecksumCLSrcSink_Tests:
     sink_init  = st.integers( 0, 10 ),
     sink_intv  = st.integers( 0, 3  ),
   )
-  @hypothesis.settings( deadline=None, max_examples=16 )
+  @hypothesis.settings( deadline=None, max_examples=50 )
   def test_srcsink_hypothesis( s, input_msgs, src_init, src_intv, sink_init, sink_intv ):
     src_msgs  = [ words_to_b128( words ) for words in input_msgs ]
     sink_msgs = [ checksum( words ) for words in input_msgs ]

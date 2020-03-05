@@ -120,7 +120,6 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False )
   src += f'def {fn_name}({args}):\n{body}'
   if _globals is None: _globals = {}
   _locals = {}
-  print(src)
   custom_exec( py.code.Source(src).compile(), _globals, _locals )
   return _locals[fn_name]
 

@@ -102,7 +102,6 @@ def checksum_xcel_cl( words ):
       dut.tick()
 
     resp_msg = dut.give()
-    dut.tick()
 
   return resp_msg.data
 

@@ -16,7 +16,6 @@ try:
   from mamba import concat
 except:
   def concat( *args ):
-    print(args)
     end = sum( x.nbits for x in args )
     concat_bits = Bits( end, 0 )
     for x in args:
