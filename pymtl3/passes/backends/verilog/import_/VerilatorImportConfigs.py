@@ -320,7 +320,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     srcs.append(s.get_c_wrapper_path())
 
     # Add files listed in class makefile
-    with open(vl_class_mk, "r") as class_mk:
+    with open(vl_class_mk) as class_mk:
       srcs += s._get_srcs_from_vl_class_mk(
           class_mk, vl_mk_dir, "VM_CLASSES_FAST")
       srcs += s._get_srcs_from_vl_class_mk(

@@ -465,7 +465,7 @@ def extract_module( asdl_str ):
 # This file should be run first to generate the correct implementation
 # of BehavioralRTLIR.
 if __name__ == '__main__':
-  with open( 'BehavioralRTLIR.asdl', 'r') as asdl_file:
+  with open('BehavioralRTLIR.asdl') as asdl_file:
     asdl_str = ''
     for line in asdl_file:
       if line.strip().startswith( '--' ) or ( not line.strip() ):

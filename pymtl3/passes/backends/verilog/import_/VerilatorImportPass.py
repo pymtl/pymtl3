@@ -134,7 +134,7 @@ class VerilatorImportPass( BasePass ):
     config_file = f'pymtl_import_config_{ip_cfg.translated_top_module}.json'
     new_cfg = s.serialize_cfg( ip_cfg )
     if os.path.exists(config_file):
-      with open( config_file, 'r' ) as fd:
+      with open(config_file) as fd:
         if s.is_same_cfg( json.load( fd ), new_cfg ):
           is_config_cached = True
 
@@ -259,7 +259,7 @@ class VerilatorImportPass( BasePass ):
     port_inits = '\n'.join( port_inits )
 
     # Fill in the C wrapper template
-    with open( template_name, 'r' ) as template:
+    with open(template_name) as template:
       with open( wrapper_name, 'w' ) as output:
         c_wrapper = template.read()
         c_wrapper = c_wrapper.format( **locals() )
@@ -355,7 +355,7 @@ class VerilatorImportPass( BasePass ):
 
     # Fill in the python wrapper template
     if not cached:
-      with open( template_name, 'r' ) as template:
+      with open(template_name) as template:
         with open( wrapper_name, 'w' ) as output:
           py_wrapper = template.read()
           py_wrapper = py_wrapper.format(
