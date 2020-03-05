@@ -565,7 +565,7 @@ def test_simple_func_impl():
 
       @s.func
       def assignb( b ):
-        s.b @= b + (s.counter_assign == -1) # never -1
+        s.b @= b + (s.counter_assign < 0) # never -1
 
       @update
       def up_write():
@@ -587,7 +587,7 @@ def test_simple_func_impl():
       # after construction time
       @s.func
       def assign( a, b ):
-        s.a = a + (s.counter_assign == -1)
+        s.a = a + (s.counter_assign < 0)
         assignb( b )
 
     def done( s ):

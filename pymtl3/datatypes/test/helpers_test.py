@@ -13,7 +13,7 @@ from pymtl3.datatypes import *
 
 def test_concat():
   x = concat( Bits128(0x1234567890abcdef1234567890abcdef),
-              Bits252(0xffffffffff22222222222222222444441234567890abcdef1234567890abcdef) )
+              Bits252(0xfffffffff22222222222222222444441234567890abcdef1234567890abcdef) )
   assert x.nbits == 380
   assert x == mk_bits(380)(0x1234567890abcdef1234567890abcdeffffffffff22222222222222222444441234567890abcdef1234567890abcdef)
 
