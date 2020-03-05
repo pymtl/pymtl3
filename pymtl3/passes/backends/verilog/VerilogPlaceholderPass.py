@@ -13,6 +13,7 @@ import re
 import sys
 from textwrap import dedent
 
+from pymtl3 import Placeholder
 from pymtl3.passes.backends.verilog.util.utility import (
     gen_mapped_ports,
     get_component_unique_name,

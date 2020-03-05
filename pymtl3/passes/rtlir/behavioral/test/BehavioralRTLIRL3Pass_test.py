@@ -57,14 +57,14 @@ def local_do_test( m ):
 def test_L3_struct_attr( do_test ):
   a = CaseBits32FooInBits32OutComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute(
+      [Attribute( Base( a ), 'out' )], Attribute(
         Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
   do_test( a )
 
 def test_L3_struct_inst_kwargs( do_test ):
   a = CaseBits32FooKwargComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), StructInst(
+      [Attribute( Base( a ), 'out' )], StructInst(
         Bits32Foo, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
   with expected_failure( PyMTLSyntaxError, 'keyword argument is not supported' ):
     do_test( a )
@@ -72,14 +72,14 @@ def test_L3_struct_inst_kwargs( do_test ):
 def test_L3_struct_inst( do_test ):
   a = CaseBits32FooInstantiationComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), StructInst(
+      [Attribute( Base( a ), 'out' )], StructInst(
         Bits32Foo, [ SizeCast( 32, Number( 42 ) ) ] ), True ) ] ) }
   do_test( a )
 
 def test_L3_const_struct( do_test ):
   a = CaseConstStructInstComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute(
+      [Attribute( Base( a ), 'out' )], Attribute(
         Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
   do_test( a )
 

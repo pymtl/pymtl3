@@ -106,7 +106,7 @@ verilog_keyword = [
 verilog_reserved = set( verilog_keyword )
 
 #-----------------------------------------------------------------------
-# gen_packed_ports
+# get_rtype
 #-----------------------------------------------------------------------
 
 def get_rtype( _rtype ):
@@ -134,8 +134,6 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
   2. For an n-D array of ports, we enforce the rule that assumes either no
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
-
-  unpacked_q = deque()
 
   def _mangle_port( pname, vname, port, n_dim ):
 

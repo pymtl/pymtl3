@@ -136,7 +136,7 @@ class Bits:
   def __eq__( self, other ):
     try:
       other = int(other)
-    except ValueError:
+    except:
       return False
     return Bits( 1, int(self.value) == other )
 
@@ -146,7 +146,7 @@ class Bits:
   def __ne__( self, other ):
     try:
       other = int(other)
-    except ValueError:
+    except:
       return True
     return Bits( 1, int(self.value) != other )
 

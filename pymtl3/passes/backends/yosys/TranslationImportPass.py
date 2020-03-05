@@ -31,3 +31,6 @@ class TranslationImportPass( VerilogTranslationImportPass ):
 
   def get_import_flag_name( s ):
     return "config_yosys_import"
+
+  def get_translation_pass_namespace( s ):
+    return "_pass_yosys_translation"

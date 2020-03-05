@@ -103,7 +103,7 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
       value = expr.get_value()
       dtype = rtype.get_dtype()
       if isinstance( dtype, rdt.Struct ):
-        return s.rtlir_tr_struct_instance(dtype, value, status)
+        return s.rtlir_tr_struct_instance(dtype, value)
       else:
         return super(). \
             rtlir_signal_expr_translation( expr, m, status )
@@ -126,5 +126,5 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   def rtlir_tr_struct_attr( s, base_signal, attr, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_struct_instance( s, dtype, struct, status ):
+  def rtlir_tr_struct_instance( s, dtype, struct ):
     raise NotImplementedError()

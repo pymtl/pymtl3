@@ -9,6 +9,7 @@ import pytest
 
 from pymtl3.passes.rtlir.util.test_utility import get_parameter
 from pymtl3.stdlib.test import TestVectorSimulator
+from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 
 from .. import TranslationImportPass
 from ..translation.behavioral.test.VBehavioralTranslatorL1_test import (
@@ -38,6 +39,7 @@ from ..translation.structural.test.VStructuralTranslatorL3_test import (
 from ..translation.structural.test.VStructuralTranslatorL4_test import (
     test_verilog_structural_L4,
 )
+from ..testcases import CasePlaceholderTranslationRegIncr, CasePlaceholderTranslationVReg
 
 
 def run_test( case ):
@@ -45,6 +47,7 @@ def run_test( case ):
     _m = case.DUT()
     _m.elaborate()
     _m.verilog_translate_import = True
+    _m.apply( VerilogPlaceholderPass() )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
     sim.run_test()
@@ -64,7 +67,10 @@ def run_test( case ):
           get_parameter('case', test_verilog_structural_L1) + \
           get_parameter('case', test_verilog_structural_L2) + \
           get_parameter('case', test_verilog_structural_L3) + \
-          get_parameter('case', test_verilog_structural_L4)
+          get_parameter('case', test_verilog_structural_L4) + [
+            CasePlaceholderTranslationVReg,
+            CasePlaceholderTranslationRegIncr,
+          ]
 )
 def test_verilog_translation_import_adhoc( case ):
   run_test( case )

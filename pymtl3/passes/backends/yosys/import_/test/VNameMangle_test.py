@@ -18,15 +18,11 @@ from pymtl3.passes.backends.verilog.import_.test.VNameMangle_test import (
     test_struct_port_array,
     test_struct_port_single,
 )
-from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir.util.test_utility import do_test
-
-from ..VerilatorImportPass import VerilatorImportPass
+from pymtl3.passes.backends.yosys.util.utility import gen_mapped_ports
 
 
 def local_do_test( m ):
   m.elaborate()
-  rtype = rt.get_component_ifc_rtlir( m )
-  ipass = VerilatorImportPass()
-  result = ipass.gen_packed_ports( rtype )
+  result = gen_mapped_ports( m, {} )
   assert result == m._ref_ports_yosys

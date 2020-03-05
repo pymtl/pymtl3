@@ -105,6 +105,9 @@ class VerilatorImportPass( BasePass ):
   def get_translation_namespace( s, m ):
     return m._pass_verilog_translation
 
+  def get_gen_mapped_port( s ):
+    return gen_mapped_ports
+
   #-----------------------------------------------------------------------
   # is_cached
   #-----------------------------------------------------------------------
@@ -144,13 +147,13 @@ class VerilatorImportPass( BasePass ):
   def get_imported_object( s, m ):
     ph_cfg = s.get_placeholder_config( m )
     ip_cfg = s.get_config( m )
-    ip_cfg.setup_configs( m )
+    ip_cfg.setup_configs( m, s.get_translation_namespace(m) )
 
     rtype = get_component_ifc_rtlir( m )
 
     # Now we selectively unpack array of ports if they are referred to in
     # port_map
-    ports = gen_mapped_ports( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
+    ports = s.get_gen_mapped_port()( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
 
     cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 
@@ -708,52 +711,57 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_comb_input
   #-------------------------------------------------------------------------
 
+  def gen_port_vector_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
+    dtype_nbits = dtype.get_length()
+    blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+                 f'@s.update',
+                 f'def isignal_{mangled_rhs}():',
+                 f'  s.{mangled_rhs} = {rhs}' ]
+    set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
+    return set_comb, blocks
+
+  def gen_port_struct_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
+    dtype_nbits = dtype.get_length()
+    # If the top-level signal is a struct, we add the datatype to symbol?
+    dtype_name = dtype.get_class().__name__
+    if dtype_name not in symbols:
+      symbols[dtype_name] = dtype.get_class()
+
+    blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+                 f'@s.update',
+                 f'def istruct_{mangled_rhs}():' ]
+
+    # We write each struct field to tmp
+    upblk_content, pos = s._gen_struct_write( 'i', rhs, 's.'+mangled_rhs, dtype, 0 )
+    assert pos == dtype_nbits
+    make_indent( upblk_content, 1 )
+    blocks += upblk_content
+
+    # We don't create a new struct if we are copying values from pymtl
+    # land to verilator, i.e. this port is the input to the imported
+    # component.
+    # At the end, we write tmp to the corresponding CFFI variable
+    set_comb = s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits )
+    return set_comb, blocks
+
+  def gen_port_input( s, lhs, rhs, pnames, dtype, symbols ):
+    rhs = rhs.format(next(pnames))
+
+    # We always name mangle now
+    mangled_rhs = s._pymtl_name_mangle( rhs )
+
+    if isinstance( dtype, rdt.Vector ):
+      return s.gen_port_vector_input( lhs, rhs, mangled_rhs, dtype, symbols )
+
+    elif isinstance( dtype, rdt.Struct ):
+      return s.gen_port_struct_input( lhs, rhs, mangled_rhs, dtype, symbols )
+
+    else:
+      assert False, f"unrecognized data type {dtype}!"
+
   def gen_port_array_input( s, lhs, rhs, pnames, dtype, index, n_dim, symbols ):
-
     if not n_dim:
-      rhs = rhs.format(next(pnames))
-      dtype_nbits = dtype.get_length()
-
-      # We always name mangle now
-      mangled_rhs = rhs.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
-
-      set_comb = []
-
-      if isinstance( dtype, rdt.Vector ):
-        blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
-                     f'@s.update',
-                     f'def isignal_{mangled_rhs}():',
-                     f'  s.{mangled_rhs} = {rhs}' ]
-
-        set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
-
-      elif isinstance( dtype, rdt.Struct ):
-        # If the top-level signal is a struct, we add the datatype to symbol?
-        dtype_name = dtype.get_class().__name__
-        if dtype_name not in symbols:
-          symbols[dtype_name] = dtype.get_class()
-
-        blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
-                     f'@s.update',
-                     f'def istruct_{mangled_rhs}():' ]
-
-        # We write each struct field to tmp
-        upblk_content, pos = s._gen_struct_write( 'i', rhs, 's.'+mangled_rhs, dtype, 0 )
-        assert pos == dtype_nbits
-        make_indent( upblk_content, 1 )
-        blocks += upblk_content
-
-        # We don't create a new struct if we are copying values from pymtl
-        # land to verilator, i.e. this port is the input to the imported
-        # component.
-        # At the end, we write tmp to the corresponding CFFI variable
-        set_comb = s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits )
-
-      else:
-        assert False, f"unrecognized data type {dtype}!"
-
-      return set_comb, blocks
-
+      return s.gen_port_input( lhs, rhs, pnames, dtype, symbols )
     else:
       set_comb, structs = [], []
       for idx in range( n_dim[0] ):
@@ -794,54 +802,62 @@ m->{name}{sub} = {deference}model->{name}{sub};
   # gen_comb_output
   #-------------------------------------------------------------------------
 
+  def gen_port_vector_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
+    dtype_nbits = dtype.get_length()
+    blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+                 f'@s.update',
+                 f'def osignal_{mangled_lhs}():',
+                 f'  {lhs} = s.{mangled_lhs}' ]
+
+    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+    return set_comb, blocks
+
+  def gen_port_struct_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
+    dtype_nbits = dtype.get_length()
+    # If the top-level signal is a struct, we add the datatype to symbol?
+    dtype_name = dtype.get_class().__name__
+    if dtype_name not in symbols:
+      symbols[dtype_name] = dtype.get_class()
+
+    blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+                 f'@s.update',
+                 f'def ostruct_{mangled_lhs}():' ]
+
+    # We create a long Bits object to accept CFFI value for struct
+    # the temporary wire name
+
+    # We create a new struct if we are copying values from verilator
+    # world to pymtl land and send it out through the output of this
+    # component
+    upblk_content = [ f"{lhs} = {dtype_name}()" ]
+    body, pos = s._gen_struct_write( 'o', lhs, 's.'+mangled_lhs, dtype, 0 )
+    assert pos == dtype.get_length()
+
+    upblk_content += body
+    make_indent( upblk_content, 1 )
+
+    blocks += upblk_content
+
+    # We create a long Bits object tmp first
+    # Then we load the full Bits to tmp
+    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+    return set_comb, blocks
+
+  def gen_port_output( s, lhs, pnames, rhs, dtype, symbols ):
+    lhs = lhs.format(next(pnames))
+
+    mangled_lhs = s._pymtl_name_mangle( lhs )
+
+    if isinstance( dtype, rdt.Vector ):
+      return s.gen_port_vector_output( lhs, mangled_lhs, rhs, dtype, symbols )
+    elif isinstance( dtype, rdt.Struct ):
+      return s.gen_port_struct_output( lhs, mangled_lhs, rhs, dtype, symbols )
+    else:
+      assert False, f"unrecognized data type {dtype}!"
+
   def gen_port_array_output( s, lhs, pnames, rhs, dtype, index, n_dim, symbols ):
     if not n_dim:
-      lhs = lhs.format(next(pnames))
-      dtype_nbits = dtype.get_length()
-
-      mangled_lhs = lhs.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
-
-      if isinstance( dtype, rdt.Vector ):
-        blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
-                     f'@s.update',
-                     f'def osignal_{mangled_lhs}():',
-                     f'  {lhs} = s.{mangled_lhs}' ]
-
-        set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
-
-      elif isinstance( dtype, rdt.Struct ):
-        # If the top-level signal is a struct, we add the datatype to symbol?
-        dtype_name = dtype.get_class().__name__
-        if dtype_name not in symbols:
-          symbols[dtype_name] = dtype.get_class()
-
-        blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
-                     f'@s.update',
-                     f'def ostruct_{mangled_lhs}():' ]
-
-        # We create a long Bits object to accept CFFI value for struct
-        # the temporary wire name
-
-        # We create a new struct if we are copying values from verilator
-        # world to pymtl land and send it out through the output of this
-        # component
-        upblk_content = [ f"{lhs} = {dtype_name}()" ]
-        body, pos = s._gen_struct_write( 'o', lhs, 's.'+mangled_lhs, dtype, 0 )
-        assert pos == dtype.get_length()
-
-        upblk_content += body
-        make_indent( upblk_content, 1 )
-
-        blocks += upblk_content
-
-        # We create a long Bits object tmp first
-        # Then we load the full Bits to tmp
-        set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
-      else:
-        assert False, f"unrecognized data type {dtype}!"
-
-      return set_comb, blocks
-
+      return s.gen_port_output( lhs, pnames, rhs, dtype, symbols )
     else:
       set_comb, structs = [], []
       for idx in range( n_dim[0] ):
@@ -915,6 +931,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # TODO: PyMTL translation should generate dollar-sign-free Verilog source
     # code. Verify that this replacement rule here is not necessary.
     return name.replace('__', '___05F').replace('$', '__024')
+
+  def _pymtl_name_mangle( s, name ):
+    return name.replace('.', '_DOT_').replace('[', '_LB_').replace(']', '_RB_')
 
   def _get_direction( s, port ):
     if isinstance( port, rt.Port ):

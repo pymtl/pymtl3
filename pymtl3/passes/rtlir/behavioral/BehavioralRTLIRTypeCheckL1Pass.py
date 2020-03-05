@@ -40,7 +40,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     index_types = ( rt.Port, rt.Wire, rt.Array )
     slice_types = ( rt.Port, rt.Wire )
     s.type_expect[ 'Assign' ] = {
-      'targets' : ( lhs_types, 'lhs of assignment must be signal/tmpvar!' ),
+      'targets' : ( lhs_types, 'lhs of assignment must be a signal!' ),
       'value'   : ( rt.Signal, 'rhs of assignment should be signal or const!' )
     }
     s.type_expect[ 'ZeroExt' ] = {

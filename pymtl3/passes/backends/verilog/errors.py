@@ -60,3 +60,9 @@ class VerilogCloseLoopPurePythonSimError( Exception ):
   def __init__( self, obj, msg ):
     return super().__init__(
       f"\nCalling closed-loop test method with component {obj}:\n- {msg}" )
+
+class VerilogPlaceholderError( Exception ):
+  """SystemVerilog placeholder error."""
+  def __init__( self, obj, msg ):
+    return super().__init__(
+      f"\nError while pickling placeholder {obj}:\n- {msg}" )

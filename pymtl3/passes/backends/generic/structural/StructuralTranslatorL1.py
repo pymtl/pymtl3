@@ -72,6 +72,11 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
   def clear( s, tr_top ):
     super().clear( tr_top )
+
+    # Set dummy tr_cfgs for testing
+    if not hasattr( s, 'tr_cfgs' ):
+      s.tr_cfgs = None
+
     # Metadata namespace for RTLIR structural translator and the backend
     # structural translator
     s.structural = TranslatorMetadata()
@@ -98,8 +103,12 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s._gen_structural_no_clk_reset( tr_top )
 
   def _gen_structural_no_clk_reset( s, m ):
-    s.structural.component_no_synthesis_no_clk[m] = s.tr_cfgs[m].no_synthesis_no_clk
-    s.structural.component_no_synthesis_no_reset[m] = s.tr_cfgs[m].no_synthesis_no_reset
+    if s.tr_cfgs:
+      s.structural.component_no_synthesis_no_clk[m] = s.tr_cfgs[m].no_synthesis_no_clk
+      s.structural.component_no_synthesis_no_reset[m] = s.tr_cfgs[m].no_synthesis_no_reset
+    else:
+      s.structural.component_no_synthesis_no_clk[m] = False
+      s.structural.component_no_synthesis_no_reset[m] = False
     for _m in m.get_child_components():
       s._gen_structural_no_clk_reset( _m )
 
@@ -151,11 +160,14 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     s.structural.component_full_name[m] = get_component_full_name(m_rtype)
     s.structural.component_unique_name[m] = \
         s.rtlir_tr_component_unique_name(m_rtype)
-    if m is s.tr_top:
+    if m is s.tr_top and s.tr_cfgs:
       s.structural.component_explicit_module_name[m] = s.tr_cfgs[m].explicit_module_name
     else:
       s.structural.component_explicit_module_name[m] = ''
-    s.structural.component_no_synthesis[m] = s.tr_cfgs[m].no_synthesis
+    if s.tr_cfgs:
+      s.structural.component_no_synthesis[m] = s.tr_cfgs[m].no_synthesis
+    else:
+      s.structural.component_no_synthesis[m] = False
 
     # Translate declarations of signals
     s.translate_decls( m )
@@ -327,7 +339,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
       dtype = expr.get_rtype().get_dtype()
       assert isinstance( dtype, rdt.Vector ), \
           f'{dtype} is not supported at L1!'
-      return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value(), status )
+      return s.rtlir_tr_literal_number( dtype.get_length(), expr.get_value() )
 
     # Other operations are not supported at L1
     else:
@@ -400,7 +412,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
   def rtlir_tr_var_id( s, var_id ):
     raise NotImplementedError()
 
-  def rtlir_tr_literal_number( s, nbits, value, status ):
+  def rtlir_tr_literal_number( s, nbits, value ):
     raise NotImplementedError()
 
   def rtlir_tr_component_unique_name( s, c_rtype ):

@@ -184,14 +184,14 @@ class VerilatorImportConfigs( BasePassConfigs ):
   # Public APIs
   #---------------------------------------------------
 
-  def setup_configs( s, m ):
+  def setup_configs( s, m, m_tr_namespace ):
     # VerilatorImportConfigs alone does not have the complete information about
     # the module to be imported. For example, we need to read from the placeholder
     # configuration to figure out the pickled file name and the top module name.
     # This method is meant to be called before calling other public APIs.
 
-    s.translated_top_module = m._pass_verilog_translation.translated_top_module
-    s.translated_source_file = m._pass_verilog_translation.translated_filename
+    s.translated_top_module = m_tr_namespace.translated_top_module
+    s.translated_source_file = m_tr_namespace.translated_filename
     s.v_include = m.config_placeholder.v_include
     # s.src_file = m.config_placeholder.src_file
     s.port_map = m.config_placeholder.port_map

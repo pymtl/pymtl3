@@ -75,6 +75,9 @@ class TranslationPass( BasePass ):
       m._translator = s.translator
       m._pass_yosys_translation.translated = True
 
+      m._pass_yosys_translation.translated_filename = output_file
+      m._pass_yosys_translation.translated_top_module = module_name
+
     else:
       for child in m.get_child_components():
         s.traverse_hierarchy( child )

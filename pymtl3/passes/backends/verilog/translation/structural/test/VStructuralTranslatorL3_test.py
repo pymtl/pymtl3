@@ -5,6 +5,7 @@
 # Date   : May 29, 2019
 """Test the level 3 SystemVerilog structural translator."""
 
+from collections import deque
 import pytest
 
 from pymtl3.passes.backends.verilog.util.test_utility import check_eq
@@ -23,6 +24,7 @@ def run_test( case, m ):
   VStructuralTranslatorL3.is_verilog_reserved = lambda s, x: x in verilog_reserved
   tr = VStructuralTranslatorL3( m )
   tr.clear( m )
+  tr._rtlir_tr_unpacked_q = deque()
   tr.translate_structural( m )
 
   ifcs = tr.structural.decl_ifcs[m]

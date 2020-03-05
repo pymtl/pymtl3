@@ -188,12 +188,12 @@ class YosysStructuralTranslatorL2(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_packed_index( s, base_signal, index ):
+  def rtlir_tr_packed_index( s, base_signal, index, status ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_struct_attr( s, base_signal, attr ):
+  def rtlir_tr_struct_attr( s, base_signal, attr, status ):
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
     return f'{base_signal}.{attr}'

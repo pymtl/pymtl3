@@ -167,13 +167,13 @@ class YosysStructuralTranslatorL3(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_interface_array_index( s, base_signal, index ):
+  def rtlir_tr_interface_array_index( s, base_signal, index, status ):
     # Interface array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f"{base_signal}[{index}]"
 
-  def rtlir_tr_interface_attr( s, base_signal, attr ):
+  def rtlir_tr_interface_attr( s, base_signal, attr, status ):
     # Interface attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )

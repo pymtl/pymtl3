@@ -92,7 +92,7 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       tmpvar_id = (target.name, target.upblk_name)
       if lhs_type != rt.NoneType() and lhs_type.get_dtype() != rhs_type.get_dtype():
         raise PyMTLTypeError( s.blk, node.ast,
-          f'conflicting type {rhs_type} for temporary variable {node.target.name}(LHS target#{i} of {lhs_type})!' )
+          f'conflicting type {rhs_type} for temporary variable {node.targets[i].name}(LHS target#{i} of {lhs_type})!' )
 
       # Creating a temporaray variable
       # Reminder that a temporary variable is essentially a wire. So we use

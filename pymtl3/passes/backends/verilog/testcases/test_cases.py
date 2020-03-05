@@ -8,9 +8,11 @@ Author : Peitian Pan
 Date   : Dec 16, 2019
 """
 
+from os.path import dirname
 from textwrap import dedent
 
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
+from pymtl3.passes.testcases.test_cases import _set, _check
 from pymtl3 import *
 from pymtl3.passes.testcases import (
     Bits32Foo,
@@ -62,8 +64,6 @@ from pymtl3.passes.testcases import (
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
-    CasePlaceholderTranslationRegIncr,
-    CasePlaceholderTranslationVReg,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
@@ -73,6 +73,55 @@ from pymtl3.passes.testcases import (
     ThisIsABitStructWithSuperLongName,
     set_attributes,
 )
+from pymtl3.passes.backends.verilog import VerilogPlaceholderConfigs
+
+# Verilog test cases
+
+class Bits32VRegComp( Placeholder, Component ):
+  def construct( s ):
+    s.d = InPort( Bits32 )
+    s.q = OutPort( Bits32 )
+
+    s.config_placeholder = VerilogPlaceholderConfigs(
+        src_file = dirname(__file__) + '/VReg.v',
+        top_module = 'VReg',
+    )
+
+class CasePlaceholderTranslationVReg:
+  DUT = Bits32VRegComp
+  TV_IN = \
+  _set( 'd', Bits32, 0 )
+  TV_OUT = \
+  _check( 'q', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [  1,  0 ],
+      [  2,  1 ],
+      [ 42,  2 ],
+      [ -1, 42 ],
+      [  0, -1 ],
+  ]
+
+class CasePlaceholderTranslationRegIncr:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.reg_ = Bits32VRegComp()
+      s.reg_.d //= s.in_
+      s.out //= lambda: s.reg_.q + Bits32(1)
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [  1,  1 ],
+      [  2,  2 ],
+      [ 42,  3 ],
+      [ -1, 43 ],
+      [  0,  0 ],
+  ]
 
 CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
     'REF_UPBLK',
@@ -382,7 +431,7 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
           output logic [63:0] out,
           input logic [0:0] reset
         );
-          localparam [31:0] __const__STATE_IDLE = 32'd0;
+          localparam logic [31:0] __const__STATE_IDLE = 32'd0;
 
           always_comb begin : upblk
             out = { in_, __const__STATE_IDLE };
@@ -867,6 +916,31 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
     '''
 )
 
+CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStaticIndexComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = in___foo[in___foo[0]];
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out,
+          input logic [0:0] reset,
+          input logic [31:0] in___foo [0:1]
+        );
+
+          always_comb begin : upblk
+            out = in___foo[in___foo[0]];
+          end
+
+        endmodule
+    '''
+)
+
 CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
     'REF_UPBLK',
     '''\
@@ -1053,7 +1127,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___1__foo;
+          out = in___foo[1];
         end
     ''',
     'REF_SRC',
@@ -1063,15 +1137,11 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
           input logic [0:0] clk,
           output logic [31:0] out,
           input logic [0:0] reset,
-          input logic [31:0] in___0__foo,
-          input logic [31:0] in___1__foo,
-          input logic [31:0] in___2__foo,
-          input logic [31:0] in___3__foo,
-          input logic [31:0] in___4__foo
+          input logic [31:0] in___foo [0:4]
         );
 
           always_comb begin : upblk
-            out = in___1__foo;
+            out = in___foo[1];
           end
 
         endmodule
@@ -1130,7 +1200,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = b__1__out;
+          out = b__out[1];
         end
     ''',
     'REF_SRC',
@@ -1152,75 +1222,60 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
           output logic [31:0] out,
           input logic [0:0] reset
         );
-          logic [0:0] b__0__clk;
-          logic [31:0] b__0__out;
-          logic [0:0] b__0__reset;
+
+          logic [0:0] b__clk [0:4] ;
+          logic [31:0] b__out [0:4] ;
+          logic [0:0] b__reset [0:4] ;
 
           Bits32OutDrivenComp b__0
           (
-            .clk( b__0__clk ),
-            .out( b__0__out ),
-            .reset( b__0__reset )
+            .clk( b__clk[0] ),
+            .out( b__out[0] ),
+            .reset( b__reset[0] )
           );
-
-          logic [0:0] b__1__clk;
-          logic [31:0] b__1__out;
-          logic [0:0] b__1__reset;
 
           Bits32OutDrivenComp b__1
           (
-            .clk( b__1__clk ),
-            .out( b__1__out ),
-            .reset( b__1__reset )
+            .clk( b__clk[1] ),
+            .out( b__out[1] ),
+            .reset( b__reset[1] )
           );
-
-          logic [0:0] b__2__clk;
-          logic [31:0] b__2__out;
-          logic [0:0] b__2__reset;
 
           Bits32OutDrivenComp b__2
           (
-            .clk( b__2__clk ),
-            .out( b__2__out ),
-            .reset( b__2__reset )
+            .clk( b__clk[2] ),
+            .out( b__out[2] ),
+            .reset( b__reset[2] )
           );
-
-          logic [0:0] b__3__clk;
-          logic [31:0] b__3__out;
-          logic [0:0] b__3__reset;
 
           Bits32OutDrivenComp b__3
           (
-            .clk( b__3__clk ),
-            .out( b__3__out ),
-            .reset( b__3__reset )
+            .clk( b__clk[3] ),
+            .out( b__out[3] ),
+            .reset( b__reset[3] )
           );
-
-          logic [0:0] b__4__clk;
-          logic [31:0] b__4__out;
-          logic [0:0] b__4__reset;
 
           Bits32OutDrivenComp b__4
           (
-            .clk( b__4__clk ),
-            .out( b__4__out ),
-            .reset( b__4__reset )
+            .clk( b__clk[4] ),
+            .out( b__out[4] ),
+            .reset( b__reset[4] )
           );
 
           always_comb begin : upblk
-            out = b__1__out;
+            out = b__out[1];
           end
 
-          assign b__0__clk = clk;
-          assign b__0__reset = reset;
-          assign b__1__clk = clk;
-          assign b__1__reset = reset;
-          assign b__2__clk = clk;
-          assign b__2__reset = reset;
-          assign b__3__clk = clk;
-          assign b__3__reset = reset;
-          assign b__4__clk = clk;
-          assign b__4__reset = reset;
+          assign b__clk[0] = clk;
+          assign b__reset[0] = reset;
+          assign b__clk[1] = clk;
+          assign b__reset[1] = reset;
+          assign b__clk[2] = clk;
+          assign b__reset[2] = reset;
+          assign b__clk[3] = clk;
+          assign b__reset[3] = reset;
+          assign b__clk[4] = clk;
+          assign b__reset[4] = reset;
 
         endmodule
     '''
@@ -1312,7 +1367,7 @@ CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     '',
     'REF_CONST',
     '''\
-        localparam [31:0] const_ [0:4] = '{ 32'd42, 32'd42, 32'd42, 32'd42, 32'd42 };
+        localparam logic [31:0] const_ [0:4] = '{ 32'd42, 32'd42, 32'd42, 32'd42, 32'd42 };
     ''',
     'REF_CONN',
     '''\
@@ -1633,15 +1688,13 @@ CaseConnectValRdyIfcComp = set_attributes( CaseConnectValRdyIfcComp,
 CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcComp,
     'REF_IFC',
     '''\
-        input Bits32Foo  in___0__foo,
-        input Bits32Foo  in___1__foo,
-        output Bits32Foo  out__0__foo,
-        output Bits32Foo  out__1__foo
+        input Bits32Foo  in___foo [0:1],
+        output Bits32Foo  out__foo [0:1]
     ''',
     'REF_CONN',
     '''\
-        assign out__0__foo = in___0__foo;
-        assign out__1__foo = in___1__foo;
+        assign out__foo[0] = in___foo[0];
+        assign out__foo[1] = in___foo[1];
     ''',
     'REF_SRC',
     '''\
@@ -1653,14 +1706,12 @@ CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcC
         (
           input logic [0:0] clk,
           input logic [0:0] reset,
-          input Bits32Foo in___0__foo,
-          input Bits32Foo in___1__foo,
-          output Bits32Foo out__0__foo,
-          output Bits32Foo out__1__foo
+          input Bits32Foo in___foo [0:1],
+          output Bits32Foo out__foo [0:1]
         );
 
-          assign out__0__foo = in___0__foo;
-          assign out__1__foo = in___1__foo;
+          assign out__foo[0] = in___foo[0];
+          assign out__foo[1] = in___foo[1];
 
         endmodule
     '''
@@ -1669,34 +1720,26 @@ CaseConnectArrayBits32FooIfcComp = set_attributes( CaseConnectArrayBits32FooIfcC
 CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
     'REF_IFC',
     '''\
-        input  logic [0:0]  in___0__ctrl_foo,
-        input  logic [31:0] in___0__memifc__msg,
-        output logic [0:0]  in___0__memifc__rdy,
-        input  logic [0:0]  in___0__memifc__val,
-        input  logic [0:0]  in___1__ctrl_foo,
-        input  logic [31:0] in___1__memifc__msg,
-        output logic [0:0]  in___1__memifc__rdy,
-        input  logic [0:0]  in___1__memifc__val,
+        input  logic [0:0]  in___ctrl_foo [0:1],
+        input  logic [31:0] in___memifc__msg [0:1],
+        output logic [0:0]  in___memifc__rdy [0:1],
+        input  logic [0:0]  in___memifc__val [0:1],
 
-        output  logic [0:0]  out__0__ctrl_foo,
-        output  logic [31:0] out__0__memifc__msg,
-        input   logic [0:0]  out__0__memifc__rdy,
-        output  logic [0:0]  out__0__memifc__val,
-        output  logic [0:0]  out__1__ctrl_foo,
-        output  logic [31:0] out__1__memifc__msg,
-        input   logic [0:0]  out__1__memifc__rdy,
-        output  logic [0:0]  out__1__memifc__val
+        output  logic [0:0]  out__ctrl_foo [0:1],
+        output  logic [31:0] out__memifc__msg [0:1],
+        input   logic [0:0]  out__memifc__rdy [0:1],
+        output  logic [0:0]  out__memifc__val [0:1]
     ''',
     'REF_CONN',
     '''\
-        assign out__0__ctrl_foo = in___0__ctrl_foo;
-        assign out__0__memifc__msg = in___0__memifc__msg;
-        assign in___0__memifc__rdy = out__0__memifc__rdy;
-        assign out__0__memifc__val = in___0__memifc__val;
-        assign out__1__ctrl_foo = in___1__ctrl_foo;
-        assign out__1__memifc__msg = in___1__memifc__msg;
-        assign in___1__memifc__rdy = out__1__memifc__rdy;
-        assign out__1__memifc__val = in___1__memifc__val;
+        assign out__ctrl_foo[0] = in___ctrl_foo[0];
+        assign out__memifc__msg[0] = in___memifc__msg[0];
+        assign in___memifc__rdy[0] = out__memifc__rdy[0];
+        assign out__memifc__val[0] = in___memifc__val[0];
+        assign out__ctrl_foo[1] = in___ctrl_foo[1];
+        assign out__memifc__msg[1] = in___memifc__msg[1];
+        assign in___memifc__rdy[1] = out__memifc__rdy[1];
+        assign out__memifc__val[1] = in___memifc__val[1];
     ''',
     'REF_SRC',
     '''\
@@ -1704,32 +1747,24 @@ CaseConnectArrayNestedIfcComp = set_attributes( CaseConnectArrayNestedIfcComp,
         (
           input logic [0:0] clk,
           input logic [0:0] reset,
-          input logic [0:0] in___0__ctrl_foo,
-          input logic [31:0] in___0__memifc__msg,
-          output logic [0:0] in___0__memifc__rdy,
-          input logic [0:0] in___0__memifc__val,
-          input logic [0:0] in___1__ctrl_foo,
-          input logic [31:0] in___1__memifc__msg,
-          output logic [0:0] in___1__memifc__rdy,
-          input logic [0:0] in___1__memifc__val,
-          output logic [0:0] out__0__ctrl_foo,
-          output logic [31:0] out__0__memifc__msg,
-          input logic [0:0] out__0__memifc__rdy,
-          output logic [0:0] out__0__memifc__val,
-          output logic [0:0] out__1__ctrl_foo,
-          output logic [31:0] out__1__memifc__msg,
-          input logic [0:0] out__1__memifc__rdy,
-          output logic [0:0] out__1__memifc__val
+          input logic [0:0] in___ctrl_foo [0:1],
+          input logic [31:0] in___memifc__msg [0:1],
+          output logic [0:0] in___memifc__rdy [0:1],
+          input logic [0:0] in___memifc__val [0:1],
+          output logic [0:0] out__ctrl_foo [0:1],
+          output logic [31:0] out__memifc__msg [0:1],
+          input logic [0:0] out__memifc__rdy [0:1],
+          output logic [0:0] out__memifc__val [0:1]
         );
 
-          assign out__0__ctrl_foo = in___0__ctrl_foo;
-          assign out__0__memifc__msg = in___0__memifc__msg;
-          assign in___0__memifc__rdy = out__0__memifc__rdy;
-          assign out__0__memifc__val = in___0__memifc__val;
-          assign out__1__ctrl_foo = in___1__ctrl_foo;
-          assign out__1__memifc__msg = in___1__memifc__msg;
-          assign in___1__memifc__rdy = out__1__memifc__rdy;
-          assign out__1__memifc__val = in___1__memifc__val;
+          assign out__ctrl_foo[0] = in___ctrl_foo[0];
+          assign out__memifc__msg[0] = in___memifc__msg[0];
+          assign in___memifc__rdy[0] = out__memifc__rdy[0];
+          assign out__memifc__val[0] = in___memifc__val[0];
+          assign out__ctrl_foo[1] = in___ctrl_foo[1];
+          assign out__memifc__msg[1] = in___memifc__msg[1];
+          assign in___memifc__rdy[1] = out__memifc__rdy[1];
+          assign out__memifc__val[1] = in___memifc__val[1];
 
         endmodule
     '''
@@ -1790,123 +1825,108 @@ CaseBits32ConnectSubCompAttrComp = set_attributes( CaseBits32ConnectSubCompAttrC
 CaseConnectArraySubCompArrayStructIfcComp = set_attributes( CaseConnectArraySubCompArrayStructIfcComp,
     'REF_COMP',
     '''\
-        logic [0:0] b__0__clk;
-        logic [31:0] b__0__out;
-        logic [0:0] b__0__reset;
-        Bits32Foo b__0__ifc__0__foo [0:0];
+      logic [0:0] b__clk [0:0] ;
+      logic [31:0] b__out [0:0] ;
+      logic [0:0] b__reset [0:0] ;
+      Bits32Foo b__ifc__foo [0:0][0:0][0:0] ;
 
-        Bits32ArrayStructIfcComp b__0
-        (
-          .clk( b__0__clk ),
-          .out( b__0__out ),
-          .reset( b__0__reset ),
-          .ifc__0__foo( b__0__ifc__0__foo )
-        );
+      Bits32ArrayStructIfcComp b__0
+      (
+        .clk( b__clk[0] ),
+        .out( b__out[0] ),
+        .reset( b__reset[0] ),
+        .ifc__foo( b__ifc__foo[0] )
+      );
     ''',
     'REF_SRC',
     '''\
-      typedef struct packed {
-        logic [31:0] foo;
-      } Bits32Foo;
+        typedef struct packed {
+          logic [31:0] foo ;
+        } Bits32Foo;
 
-      module Bits32ArrayStructIfcComp
-      (
-        input logic [0:0] clk,
-        output logic [31:0] out,
-        input logic [0:0] reset,
-        input Bits32Foo ifc__0__foo [0:0]
-      );
-
-        assign out = ifc__0__foo[0].foo;
-
-      endmodule
-
-      module DUT
-      (
-        input logic [0:0] clk,
-        input logic [31:0] in_,
-        output logic [31:0] out,
-        input logic [0:0] reset
-      );
-        logic [0:0] b__0__clk;
-        logic [31:0] b__0__out;
-        logic [0:0] b__0__reset;
-        Bits32Foo b__0__ifc__0__foo [0:0];
-
-        Bits32ArrayStructIfcComp b__0
+        module Bits32ArrayStructIfcComp
         (
-          .clk( b__0__clk ),
-          .out( b__0__out ),
-          .reset( b__0__reset ),
-          .ifc__0__foo( b__0__ifc__0__foo )
+          input logic [0:0] clk,
+          output logic [31:0] out,
+          input logic [0:0] reset,
+          input Bits32Foo ifc__foo [0:0][0:0]
         );
 
-        assign b__0__clk = clk;
-        assign b__0__reset = reset;
-        assign b__0__ifc__0__foo[0].foo = in_;
-        assign out = b__0__out;
+          assign out = ifc__foo[0][0].foo;
 
-      endmodule
+        endmodule
+
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+
+          logic [0:0] b__clk [0:0] ;
+          logic [31:0] b__out [0:0] ;
+          logic [0:0] b__reset [0:0] ;
+          Bits32Foo b__ifc__foo [0:0][0:0][0:0] ;
+
+          Bits32ArrayStructIfcComp b__0
+          (
+            .clk( b__clk[0] ),
+            .out( b__out[0] ),
+            .reset( b__reset[0] ),
+            .ifc__foo( b__ifc__foo[0] )
+          );
+
+          assign b__clk[0] = clk;
+          assign b__reset[0] = reset;
+          assign b__ifc__foo[0][0][0].foo = in_;
+          assign out = b__out[0];
+
+        endmodule
     '''
 )
 
 CaseBits32ArrayConnectSubCompAttrComp = set_attributes( CaseBits32ArrayConnectSubCompAttrComp,
     'REF_COMP',
     '''\
-        logic [0:0] b__0__clk;
-        logic [31:0] b__0__out;
-        logic [0:0] b__0__reset;
+      logic [0:0] b__clk [0:4] ;
+      logic [31:0] b__out [0:4] ;
+      logic [0:0] b__reset [0:4] ;
 
-        Bits32OutDrivenComp b__0
-        (
-          .clk( b__0__clk ),
-          .out( b__0__out ),
-          .reset( b__0__reset )
-        );
+      Bits32OutDrivenComp b__0
+      (
+        .clk( b__clk[0] ),
+        .out( b__out[0] ),
+        .reset( b__reset[0] )
+      );
 
-        logic [0:0] b__1__clk;
-        logic [31:0] b__1__out;
-        logic [0:0] b__1__reset;
+      Bits32OutDrivenComp b__1
+      (
+        .clk( b__clk[1] ),
+        .out( b__out[1] ),
+        .reset( b__reset[1] )
+      );
 
-        Bits32OutDrivenComp b__1
-        (
-          .clk( b__1__clk ),
-          .out( b__1__out ),
-          .reset( b__1__reset )
-        );
+      Bits32OutDrivenComp b__2
+      (
+        .clk( b__clk[2] ),
+        .out( b__out[2] ),
+        .reset( b__reset[2] )
+      );
 
-        logic [0:0] b__2__clk;
-        logic [31:0] b__2__out;
-        logic [0:0] b__2__reset;
+      Bits32OutDrivenComp b__3
+      (
+        .clk( b__clk[3] ),
+        .out( b__out[3] ),
+        .reset( b__reset[3] )
+      );
 
-        Bits32OutDrivenComp b__2
-        (
-          .clk( b__2__clk ),
-          .out( b__2__out ),
-          .reset( b__2__reset )
-        );
-
-        logic [0:0] b__3__clk;
-        logic [31:0] b__3__out;
-        logic [0:0] b__3__reset;
-
-        Bits32OutDrivenComp b__3
-        (
-          .clk( b__3__clk ),
-          .out( b__3__out ),
-          .reset( b__3__reset )
-        );
-
-        logic [0:0] b__4__clk;
-        logic [31:0] b__4__out;
-        logic [0:0] b__4__reset;
-
-        Bits32OutDrivenComp b__4
-        (
-          .clk( b__4__clk ),
-          .out( b__4__out ),
-          .reset( b__4__reset )
-        );
+      Bits32OutDrivenComp b__4
+      (
+        .clk( b__clk[4] ),
+        .out( b__out[4] ),
+        .reset( b__reset[4] )
+      );
     ''',
     'REF_SRC',
     '''\
@@ -1927,72 +1947,57 @@ CaseBits32ArrayConnectSubCompAttrComp = set_attributes( CaseBits32ArrayConnectSu
           output logic [31:0] out,
           input logic [0:0] reset
         );
-          logic [0:0] b__0__clk;
-          logic [31:0] b__0__out;
-          logic [0:0] b__0__reset;
+
+          logic [0:0] b__clk [0:4] ;
+          logic [31:0] b__out [0:4] ;
+          logic [0:0] b__reset [0:4] ;
 
           Bits32OutDrivenComp b__0
           (
-            .clk( b__0__clk ),
-            .out( b__0__out ),
-            .reset( b__0__reset )
+            .clk( b__clk[0] ),
+            .out( b__out[0] ),
+            .reset( b__reset[0] )
           );
-
-          logic [0:0] b__1__clk;
-          logic [31:0] b__1__out;
-          logic [0:0] b__1__reset;
 
           Bits32OutDrivenComp b__1
           (
-            .clk( b__1__clk ),
-            .out( b__1__out ),
-            .reset( b__1__reset )
+            .clk( b__clk[1] ),
+            .out( b__out[1] ),
+            .reset( b__reset[1] )
           );
-
-          logic [0:0] b__2__clk;
-          logic [31:0] b__2__out;
-          logic [0:0] b__2__reset;
 
           Bits32OutDrivenComp b__2
           (
-            .clk( b__2__clk ),
-            .out( b__2__out ),
-            .reset( b__2__reset )
+            .clk( b__clk[2] ),
+            .out( b__out[2] ),
+            .reset( b__reset[2] )
           );
-
-          logic [0:0] b__3__clk;
-          logic [31:0] b__3__out;
-          logic [0:0] b__3__reset;
 
           Bits32OutDrivenComp b__3
           (
-            .clk( b__3__clk ),
-            .out( b__3__out ),
-            .reset( b__3__reset )
+            .clk( b__clk[3] ),
+            .out( b__out[3] ),
+            .reset( b__reset[3] )
           );
-
-          logic [0:0] b__4__clk;
-          logic [31:0] b__4__out;
-          logic [0:0] b__4__reset;
 
           Bits32OutDrivenComp b__4
           (
-            .clk( b__4__clk ),
-            .out( b__4__out ),
-            .reset( b__4__reset )
+            .clk( b__clk[4] ),
+            .out( b__out[4] ),
+            .reset( b__reset[4] )
           );
 
-          assign b__0__clk = clk;
-          assign b__0__reset = reset;
-          assign b__1__clk = clk;
-          assign b__1__reset = reset;
-          assign b__2__clk = clk;
-          assign b__2__reset = reset;
-          assign b__3__clk = clk;
-          assign b__3__reset = reset;
-          assign b__4__clk = clk;
-          assign b__4__reset = reset;
-          assign out = b__1__out;
+          assign b__clk[0] = clk;
+          assign b__reset[0] = reset;
+          assign b__clk[1] = clk;
+          assign b__reset[1] = reset;
+          assign b__clk[2] = clk;
+          assign b__reset[2] = reset;
+          assign b__clk[3] = clk;
+          assign b__reset[3] = reset;
+          assign b__clk[4] = clk;
+          assign b__reset[4] = reset;
+          assign out = b__out[1];
 
         endmodule
     '''

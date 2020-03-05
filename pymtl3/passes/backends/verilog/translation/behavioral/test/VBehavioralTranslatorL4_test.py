@@ -39,11 +39,8 @@ def run_test( case, m ):
     'case', [
       CaseConnectValRdyIfcUpblkComp,
       CaseArrayBits32IfcInUpblkComp,
+      CaseInterfaceArrayNonStaticIndexComp,
     ]
 )
 def test_verilog_behavioral_L4( case ):
   run_test( case, case.DUT() )
-
-def test_interface_array_non_static_index():
-  with expected_failure( VerilogTranslationError, "static constant expression" ):
-    run_test( CaseInterfaceArrayNonStaticIndexComp, CaseInterfaceArrayNonStaticIndexComp.DUT() )

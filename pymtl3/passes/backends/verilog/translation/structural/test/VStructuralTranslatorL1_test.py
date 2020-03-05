@@ -5,6 +5,7 @@
 # Date   : May 29, 2019
 """Test the level 1 SystemVerilog structural translator."""
 
+from collections import deque
 import pytest
 
 from pymtl3.passes.backends.verilog.util.test_utility import check_eq
@@ -16,7 +17,6 @@ from ....testcases import (
     CaseConnectConstToOutComp,
     CaseConnectInToWireComp,
     CaseConnectSliceToOutComp,
-    CasePlaceholderTranslationVReg,
 )
 from ..VStructuralTranslatorL1 import VStructuralTranslatorL1
 
@@ -26,6 +26,7 @@ def run_test( case, m ):
   VStructuralTranslatorL1.is_verilog_reserved = lambda s, x: x in verilog_reserved
   tr = VStructuralTranslatorL1( m )
   tr.clear( m )
+  tr._rtlir_tr_unpacked_q = deque()
   tr.translate_structural( m )
 
   ports = tr.structural.decl_ports[m]
@@ -54,7 +55,6 @@ def run_test( case, m ):
     CaseConnectConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectSliceToOutComp,
-    CasePlaceholderTranslationVReg,
   ]
 )
 def test_verilog_structural_L1( case ):

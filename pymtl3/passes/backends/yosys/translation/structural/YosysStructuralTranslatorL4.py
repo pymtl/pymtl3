@@ -231,13 +231,13 @@ class YosysStructuralTranslatorL4(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_component_array_index( s, base_signal, index ):
+  def rtlir_tr_component_array_index( s, base_signal, index, status ):
     # Component array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_subcomp_attr( s, base_signal, attr ):
+  def rtlir_tr_subcomp_attr( s, base_signal, attr, status ):
     # Sub-component attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )

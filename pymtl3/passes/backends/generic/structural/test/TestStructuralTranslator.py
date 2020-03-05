@@ -218,7 +218,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
     def rtlir_tr_var_id( s, var_id ):
       return var_id
 
-    def rtlir_tr_literal_number( s, nbits, value, status ):
+    def rtlir_tr_literal_number( s, nbits, value ):
       return f'Bits{nbits}({int(value)})'
 
     def rtlir_tr_component_unique_name( s, c_rtype ):

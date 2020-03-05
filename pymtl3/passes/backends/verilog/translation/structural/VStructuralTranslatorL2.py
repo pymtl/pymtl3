@@ -97,11 +97,11 @@ class VStructuralTranslatorL2(
               f'{base_signal}{{}}.{attr}',
               status, ('status', 'unpacked') )
 
-  def rtlir_tr_struct_instance( s, dtype, struct, status ):
+  def rtlir_tr_struct_instance( s, dtype, struct ):
     def _gen_packed_array( dtype, n_dim, array ):
       if not n_dim:
         if isinstance( dtype, rdt.Vector ):
-          return s.rtlir_tr_literal_number( dtype.nbits, array, status )
+          return s.rtlir_tr_literal_number( dtype.nbits, array )
         elif isinstance( dtype, rdt.Struct ):
           return s.rtlir_tr_struct_instance( dtype, array )
         else:
@@ -119,7 +119,7 @@ class VStructuralTranslatorL2(
     for name, Type in dtype.get_all_properties().items():
       field = getattr( struct, name )
       if isinstance( Type, rdt.Vector ):
-        _ret = s.rtlir_tr_literal_number( Type.nbits, field, status )
+        _ret = s.rtlir_tr_literal_number( Type.nbits, field )
       elif isinstance( Type, rdt.Struct ):
         _ret = s.rtlir_tr_struct_instance( Type, field )
       elif isinstance( Type, rdt.PackedArray ):

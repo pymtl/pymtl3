@@ -39,7 +39,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
           List.append( ( Type, data ) )
 
     # Override
-    def translate( s, tr_top, tr_cfgs ):
+    def translate( s, tr_top, tr_cfgs = None ):
 
       def get_component_nspace( namespace, m ):
         ns = TranslatorMetadata()

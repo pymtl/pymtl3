@@ -12,7 +12,7 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
-from ...errors import VerilogReservedKeywordError
+from ...errors import VerilogReservedKeywordError, VerilogPlaceholderError
 from ...util.utility import get_component_unique_name, make_indent, pretty_concat
 
 
@@ -31,11 +31,18 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       if m is s.tr_top:
         # If this placeholder is a top level module, use the wrapper
         # template to support explicit module name.
-        if s.tr_cfgs[m].explicit_module_name:
+        if s.tr_cfgs and s.tr_cfgs[m].explicit_module_name:
           module_name = s.tr_cfgs[m].explicit_module_name
         else:
           m_rtype = m._pass_structural_rtlir_gen.rtlir_type
           module_name = s.rtlir_tr_component_unique_name(m_rtype)
+
+        if module_name == m.config_placeholder.top_module:
+          raise VerilogPlaceholderError(m,
+              f"failed to create wrapper for the given object because the same "
+              f"name {module_name} is used for both the Verilog top module and "
+              f"the wrapper. Please specify a different name through the "
+              f"`explicit_module_name` option of TranslationConfigs.")
 
         pickle_template = dedent(
             '''\
@@ -152,7 +159,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
       n_dim = array_type['n_dim']
       template = "Note: {n_dim} array of constants {id_} has data type {_dtype}"
     s.check_decl( id_, template.format( **locals() ) )
-    _dtype = pretty_concat(dtype['packed_type'], id_, array_type['unpacked_type'])
+    _dtype = pretty_concat(dtype['data_type'], dtype['packed_type'], id_, array_type['unpacked_type'])
     _value = s.gen_array_param( array_type['n_dim'], dtype['raw_dtype'], value )
 
     return f'localparam {_dtype} = {_value};'
@@ -224,7 +231,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
   def _literal_number( s, nbits, value ):
     return f"{nbits}'d{int(value)}"
 
-  def rtlir_tr_literal_number( s, nbits, value, status ):
+  def rtlir_tr_literal_number( s, nbits, value ):
     return s._literal_number( nbits, value )
 
   def rtlir_tr_component_unique_name( s, c_rtype ):
