@@ -35,10 +35,10 @@ class RoundRobinArbiter( Component ):
     connect( m.in_[1:nreqs], s.grants[0:nreqs-1] )
     connect( m.in_[0],       s.grants[nreqs-1] )
 
-    s.kills        = Wire( mk_bits( 2*nreqs + 1 ) )
-    s.priority_int = Wire( mk_bits( 2*nreqs ) )
-    s.reqs_int     = Wire( mk_bits( 2*nreqs ) )
-    s.grants_int   = Wire( mk_bits( 2*nreqs ) )
+    s.kills        = Wire( 2*nreqs + 1 )
+    s.priority_int = Wire( 2*nreqs )
+    s.reqs_int     = Wire( 2*nreqs )
+    s.grants_int   = Wire( 2*nreqs )
 
     #-------------------------------------------------------------------
     # comb_reqs_int
@@ -69,7 +69,7 @@ class RoundRobinArbiter( Component ):
     def comb_priority_en():
 
       # Set the priority enable
-      s.priority_en @= ( s.grants != Type(0) )
+      s.priority_en @= s.grants != 0
 
     #-------------------------------------------------------------------
     # comb_priority_int
@@ -150,10 +150,10 @@ class RoundRobinArbiterEn( Component ):
     m.in_[1:nreqs] //= s.grants[0:nreqs-1]
     m.in_[0]       //= s.grants[nreqs-1]
 
-    s.kills        = Wire( mk_bits( 2*nreqs + 1 ) )
-    s.priority_int = Wire( mk_bits( 2*nreqs ) )
-    s.reqs_int     = Wire( mk_bits( 2*nreqs ) )
-    s.grants_int   = Wire( mk_bits( 2*nreqs ) )
+    s.kills        = Wire( 2*nreqs + 1 )
+    s.priority_int = Wire( 2*nreqs )
+    s.reqs_int     = Wire( 2*nreqs )
+    s.grants_int   = Wire( 2*nreqs )
 
     #-------------------------------------------------------------------
     # comb_reqs_int

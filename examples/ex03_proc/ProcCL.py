@@ -139,11 +139,11 @@ class ProcCL( Component ):
           # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
           elif inst_name == "addi":
-            s.DXM_W_queue.enq( (inst.rd, s.R[ inst.rs1 ] + inst.i_imm.int(), DXM_W.arith) )
+            s.DXM_W_queue.enq( (inst.rd, s.R[ inst.rs1 ] + sext(inst.i_imm, 32), DXM_W.arith) )
           elif inst_name == "sw":
             if s.dmem.req.rdy():
               s.dmem.req( memreq_cls( MemMsgType.WRITE, 0,
-                                      s.R[ inst.rs1 ] + inst.s_imm.int(),
+                                      s.R[ inst.rs1 ] + sext(inst.s_imm, 32),
                                       0,
                                       s.R[ inst.rs2 ] ) )
               s.DXM_W_queue.enq( (0, 0, DXM_W.mem) )
@@ -153,7 +153,7 @@ class ProcCL( Component ):
           elif inst_name == "lw":
             if s.dmem.req.rdy():
               s.dmem.req( memreq_cls( MemMsgType.READ, 0,
-                                      s.R[ inst.rs1 ] + inst.i_imm.int(),
+                                      s.R[ inst.rs1 ] + sext(inst.i_imm, 32),
                                       0 ) )
               s.DXM_W_queue.enq( (inst.rd, 0, DXM_W.mem) )
             else:
@@ -161,7 +161,7 @@ class ProcCL( Component ):
 
           elif inst_name == "bne":
             if s.R[ inst.rs1 ] != s.R[ inst.rs2 ]:
-              s.redirected_pc_DXM = pc + inst.b_imm.int()
+              s.redirected_pc_DXM = pc + sext(inst.b_imm, 32)
             s.DXM_W_queue.enq( None )
 
           elif inst_name == "csrw":

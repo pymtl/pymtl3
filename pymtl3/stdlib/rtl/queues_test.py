@@ -31,9 +31,9 @@ def run_tv_test( dut, test_vectors ):
   # Define input/output functions
 
   def tv_in( dut, tv ):
-    dut.enq.en  = tv[0]
-    dut.enq.msg = tv[2]
-    dut.deq.en  = tv[3]
+    dut.enq.en  @= tv[0]
+    dut.enq.msg @= tv[2]
+    dut.deq.en  @= tv[3]
 
   def tv_out( dut, tv ):
     if tv[1] != '?': assert dut.enq.rdy == tv[1]

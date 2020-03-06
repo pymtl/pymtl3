@@ -117,7 +117,7 @@ class NormalQueueRTL( Component ):
 
     s.enq              = InValRdyIfc( Type )
     s.deq              = OutValRdyIfc( Type )
-    s.num_free_entries = OutPort( mk_bits( clog2(num_entries) ) )
+    s.num_free_entries = OutPort( mk_bits( clog2(num_entries+1) ) )
 
     # Ctrl and Dpath unit instantiation
 
@@ -153,7 +153,8 @@ class NormalQueueRTLDpath( Component ):
 
   def construct( s, num_entries, Type ):
 
-    AddrType    = mk_bits( clog2( num_entries ) )
+    SizeType      = mk_bits( clog2( num_entries+1 ) )
+    AddrType      = mk_bits( clog2( num_entries ) )
 
     s.enq_bits  = InPort  ( Type )
     s.deq_bits  = OutPort ( Type )
@@ -182,9 +183,10 @@ class NormalQueueRTLCtrl( Component ):
 
   def construct( s, num_entries ):
 
-    AddrType      = mk_bits( clog2( num_entries ) )
+    s.num_entries = num_entries
 
-    s.num_entries = AddrType( num_entries )
+    SizeType      = mk_bits( clog2( num_entries+1 ) )
+    AddrType      = mk_bits( clog2( num_entries ) )
 
     # Interface Ports
 
@@ -192,7 +194,7 @@ class NormalQueueRTLCtrl( Component ):
     s.enq_rdy          = OutPort ( Bits1 )
     s.deq_val          = OutPort ( Bits1 )
     s.deq_rdy          = InPort  ( Bits1 )
-    s.num_free_entries = OutPort ( AddrType )
+    s.num_free_entries = OutPort ( SizeType )
 
     # Control signal (ctrl -> dpath)
     s.wen              = OutPort ( Bits1 )
@@ -255,7 +257,7 @@ class NormalQueueRTLCtrl( Component ):
       elif s.empty:
         s.num_free_entries @= s.num_entries
       elif s.enq_ptr > s.deq_ptr:
-        s.num_free_entries @= s.num_entries - ( s.enq_ptr - s.deq_ptr )
+        s.num_free_entries @= s.num_entries - SizeType( s.enq_ptr - s.deq_ptr )
       elif s.deq_ptr > s.enq_ptr:
         s.num_free_entries @= s.deq_ptr - s.enq_ptr
 

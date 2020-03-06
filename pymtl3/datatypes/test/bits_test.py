@@ -80,6 +80,10 @@ def test_set_bit():
   x[1] = 1
   assert x.uint() == 0b0110
 
+  x = Bits( 4, 0b100 )
+  x[2] = Bits(1,0)
+  assert x.uint() == 0
+
 def test_bit_bounds_checking():
 
   x = Bits( 4, 0b1100 )

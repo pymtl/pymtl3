@@ -25,8 +25,8 @@ def run_test_crossbar( cls, args, test_vectors ):
     n = len( model.in_ )
 
     for i in range(n):
-      model.in_[i] = T(test_vector[i])
-      model.sel[i] = Tsel(test_vector[n+i])
+      model.in_[i] @= test_vector[i]
+      model.sel[i] @= test_vector[n+i]
 
   def tv_out( model, test_vector ):
     n = len( model.in_ )

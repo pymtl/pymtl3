@@ -28,8 +28,8 @@ if os.getenv("PYMTL_BITS") == "1":
   bits_template = """
 class Bits{0}(Bits):
   nbits = {0}
-  def __init__( s, value=0 ):
-    return super().__init__( {0}, value )
+  def __init__( s, value=0, trunc=False ):
+    return super().__init__( {0}, value, trunc )
 _bits_types[{0}] = b{0} = Bits{0}
 """
 else:
@@ -39,8 +39,8 @@ else:
     bits_template = """
 class Bits{0}(Bits):
   nbits = {0}
-  def __new__( cls, value=0 ):
-    return Bits.__new__( cls, {0}, value )
+  def __new__( cls, value=0, trunc=False ):
+    return Bits.__new__( cls, {0}, value, trunc )
 _bits_types[{0}] = b{0} = Bits{0}
 """
   except ImportError:
@@ -49,8 +49,8 @@ _bits_types[{0}] = b{0} = Bits{0}
     bits_template = """
 class Bits{0}(Bits):
   nbits = {0}
-  def __init__( s, value=0 ):
-    return super().__init__( {0}, value )
+  def __init__( s, value=0, trunc=False ):
+    return super().__init__( {0}, value, trunc )
 _bits_types[{0}] = b{0} = Bits{0}
 """
 

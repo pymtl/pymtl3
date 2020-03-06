@@ -17,7 +17,6 @@ class Crossbar( Component ):
 
     @update
     def comb_logic():
-
       for i in range( nports ):
         s.out[i] @= s.in_[ s.sel[ i ] ]
 

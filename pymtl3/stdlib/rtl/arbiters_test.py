@@ -19,7 +19,7 @@ def run_test( cls, args, test_vectors ):
   # Define functions mapping the test vector to ports in model
 
   def tv_in( model, test_vector ):
-    model.reqs = BitsN(test_vector[0])
+    model.reqs @= test_vector[0]
 
   def tv_out( model, test_vector ):
     assert model.grants == BitsN(test_vector[1])

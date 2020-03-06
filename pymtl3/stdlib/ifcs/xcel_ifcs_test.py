@@ -131,11 +131,11 @@ class SomeMasterCL( Component ):
     def up_master_req():
       if s.xcel.req.rdy():
         if s.flag:
-          s.xcel.req( ReqType( XcelMsgType.WRITE, AddrType(s.addr),
+          s.xcel.req( ReqType( XcelMsgType.WRITE, AddrType(s.addr, trunc=True),
                                DataType(0xface0000 | s.addr) ) )
           s.flag = not s.flag
         else:
-          s.xcel.req( ReqType( XcelMsgType.READ, AddrType(s.addr),
+          s.xcel.req( ReqType( XcelMsgType.READ, AddrType(s.addr, trunc=True),
                                DataType(0) ) )
           s.addr += 1
           s.flag = not s.flag
