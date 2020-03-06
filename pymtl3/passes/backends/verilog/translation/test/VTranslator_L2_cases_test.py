@@ -5,9 +5,9 @@
 
 import pytest
 
-from pymtl3.passes.backends.verilog.util.test_utility import check_eq
 from pymtl3.passes.backends.verilog.errors import VerilogStructuralTranslationError
-from pymtl3.passes.rtlir.util.test_utility import get_parameter, expected_failure
+from pymtl3.passes.backends.verilog.util.test_utility import check_eq
+from pymtl3.passes.rtlir.util.test_utility import expected_failure, get_parameter
 from pymtl3.passes.testcases import CaseTypeNameAsFieldNameComp
 
 from ...testcases import (

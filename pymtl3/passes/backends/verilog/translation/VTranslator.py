@@ -8,8 +8,8 @@
 from collections import deque
 
 from pymtl3.passes.backends.generic import RTLIRTranslator
-from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from pymtl3.passes.backends.verilog.errors import VerilogStructuralTranslationError
+from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 
 from .behavioral import VBehavioralTranslator as V_BTranslator
 from .structural import VStructuralTranslator as V_STranslator

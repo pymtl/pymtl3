@@ -10,7 +10,6 @@ these type objects. Each instance of the type class defined in this module
 is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
-import inspect
 from functools import reduce
 
 import pymtl3.dsl as dsl

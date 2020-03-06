@@ -27,12 +27,12 @@ from pymtl3.passes.testcases import (
     CaseConstSizeSlicingComp,
     CaseFlipFlopAdder,
     CaseForBasicComp,
+    CaseForFreeVarStepComp,
     CaseIfBasicComp,
     CaseReducesInx3OutComp,
     CaseSlicingOverIndexComp,
     CaseSubCompAddComp,
     CaseTwoUpblksSliceComp,
-    CaseForFreeVarStepComp
 )
 
 
