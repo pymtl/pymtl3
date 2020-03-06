@@ -173,7 +173,7 @@ class Bits:
     if isinstance( v, Bits ):
       if v.nbits > 1:
         raise ValueError( f"Cannot fit {v} into a Bits{v.nbits} slice" )
-      self._uint = (sv & ~(1 << i)) | ((v.nbits & 1) << i)
+      self._uint = (sv & ~(1 << i)) | ((v._uint & 1) << i)
     else:
       v = int(v)
       if abs(v) > 1:
@@ -300,7 +300,7 @@ class Bits:
     up = _upper[ self.nbits ]
     assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
-    return _new_valid_bits( 1, self._uint == other )
+    return _new_valid_bits( 1, int(self._uint == other) )
 
   # def __ne__( self, other ):
     # try:
@@ -314,28 +314,28 @@ class Bits:
     up = _upper[ self.nbits ]
     assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
-    return _new_valid_bits( 1, self._uint < other )
+    return _new_valid_bits( 1, int(self._uint < other) )
 
   def __le__( self, other ):
     other = int(other)
     up = _upper[ self.nbits ]
     assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
-    return _new_valid_bits( 1, self._uint <= other )
+    return _new_valid_bits( 1, int(self._uint <= other) )
 
   def __gt__( self, other ):
     other = int(other)
     up = _upper[ self.nbits ]
     assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
-    return _new_valid_bits( 1, self._uint > other )
+    return _new_valid_bits( 1, int(self._uint > other) )
 
   def __ge__( self, other ):
     other = int(other)
     up = _upper[ self.nbits ]
     assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
 
-    return _new_valid_bits( 1, self._uint >= other )
+    return _new_valid_bits( 1, int(self._uint >= other) )
 
   def __bool__( self ):
     return self._uint != 0
