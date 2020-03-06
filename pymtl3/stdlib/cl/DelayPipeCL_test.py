@@ -56,7 +56,7 @@ def run_cl_sim( th, max_cycles=5000 ):
 
   # Reset model
 
-  th.reset()
+  th.sim_reset()
 
   # Run simulation
 

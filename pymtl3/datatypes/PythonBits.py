@@ -33,9 +33,6 @@ class Bits:
   def __deepcopy__( self, memo ):
     return Bits( self.nbits, self.value )
 
-  def __call__( self ):
-    return Bits( self.nbits )
-
   # Arithmetics
   def __getitem__( self, idx ):
     sv = int(self.value)
@@ -182,7 +179,7 @@ class Bits:
   # Print
 
   def __repr__(self):
-    return "Bits{}({})".format( self.nbits, int(self.value) )
+    return "Bits{}(0x{})".format( self.nbits, "{:x}".format(int(self.value)).zfill(((self.nbits-1)>>2)+1) )
 
   def __str__(self):
     str = "{:x}".format(int(self.value)).zfill(((self.nbits-1)>>2)+1)
