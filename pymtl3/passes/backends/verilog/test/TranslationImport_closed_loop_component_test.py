@@ -36,7 +36,7 @@ def local_do_test( m, data ):
 @given(st.data())
 @settings(deadline = None, max_examples = 5, suppress_health_check = too_slow)
 @pytest.mark.parametrize("Type", [Bits16, Bits32])
-def test_generci_adder( Type, data ):
+def test_generic_adder( Type, data ):
   local_do_test( CaseGenericAdderComp.DUT(Type), data )
 
 @given(st.data())
