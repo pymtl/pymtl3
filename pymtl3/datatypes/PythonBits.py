@@ -25,30 +25,33 @@ def _new_valid_bits( nbits, _uint ):
 class Bits:
   __slots__ = ( "nbits", "_uint" )
 
-  def __init__( self, nbits=32, v=0, trunc=False ):
+  def __init__( self, nbits=32, v=0, trunc_int=False ):
     nbits = int(nbits)
     assert 0 < nbits < 1024, "Only support 0 < nbits < 1024!"
     self.nbits = nbits
 
-    # Trunc -- always use the int value
-    if trunc:
-      self._uint = int(v) & _upper[nbits]
+    if isinstance( v, Bits ):
 
-    else: # Not trunc
-      if isinstance( v, Bits ):
+      if nbits != v.nbits:
         if nbits < v.nbits:
-          raise ValueError( f"Without truncation, a Bits{v.nbits} object "\
-                            f"is too wide to be used to construct Bits{nbits}!" )
-        self._uint = v._uint # no need to AND anymore
-      else:
-        v = int(v)
-        lo = _lower[nbits]
-        up = _upper[nbits]
+          raise ValueError( f"A Bits{v.nbits} object "\
+                            f"is too wide to be used to construct Bits{nbits}!\n"
+                            f"- Suggestion: directly use trunc( value, {nbits}/Bits{nbits} )" )
+        else:
+          raise ValueError( f"A Bits{v.nbits} object "\
+                            f"is too narrow to be used to construct Bits{nbits}!\n"
+                            f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits}" )
+      self._uint = v._uint
+    else:
+      v = int(v)
+      up = _upper[nbits]
 
+      if not trunc_int:
+        lo = _lower[nbits]
         if v < lo or v > up:
           raise ValueError( f"Value {hex(v)} is too big for Bits{nbits}!\n" \
                             f"({v.bit_length() + (v < 0)} bits are needed in two's complement.)" )
-        self._uint = v & up
+      self._uint = v & up
 
   # PyMTL simulation specific
 
@@ -56,9 +59,15 @@ class Bits:
     nbits = self.nbits
     try:
       # Bits/Bitstruct
-      if nbits < v.nbits:
-         raise ValueError( f"Bitwidth of LHS must be larger than or equal to (>=) RHS during <<= non-blocking assignment, " \
-                           f"but here LHS Bits{nbits} < RHS Bits{v.nbits}" )
+      if v.nbits != nbits:
+        if v.nbits < nbits:
+          raise ValueError( f"Bitwidth of LHS must be equal to RHS during <<= non-blocking assignment, " \
+                            f"but here LHS Bits{nbits} > RHS Bits{v.nbits}.\n"
+                            f"- Suggestion: LHS @= zext/sext(RHS, nbits/Type)" )
+        else:
+          raise ValueError( f"Bitwidth of LHS must be equal to RHS during <<= non-blocking assignment, " \
+                            f"but here LHS Bits{nbits} < RHS Bits{v.nbits}.\n"
+                            f"- Suggestion: LHS @= trunc(RHS, nbits/Type)" )
       self._next = v.to_bits()._uint
     except AttributeError:
       # Cast to int
@@ -89,9 +98,15 @@ class Bits:
     nbits = self.nbits
     try:
       # Bits/Bitstruct
-      if v.nbits > nbits:
-        raise ValueError( f"Bitwidth of LHS must be larger than or equal to RHS during @= blocking assignment, " \
-                          f"but here LHS Bits{nbits} < RHS Bits{v.nbits}" )
+      if v.nbits != nbits:
+        if v.nbits < nbits:
+          raise ValueError( f"Bitwidth of LHS must be equal to RHS during @= blocking assignment, " \
+                            f"but here LHS Bits{nbits} > RHS Bits{v.nbits}.\n"
+                            f"- Suggestion: LHS @= zext/sext(RHS, nbits/Type)" )
+        else:
+          raise ValueError( f"Bitwidth of LHS must be equal to RHS during @= blocking assignment, " \
+                            f"but here LHS Bits{nbits} < RHS Bits{v.nbits}.\n"
+                            f"- Suggestion: LHS @= trunc(RHS, nbits/Type)" )
       self._uint = v.to_bits()._uint
     except AttributeError:
       # Cast to int
@@ -287,7 +302,7 @@ class Bits:
     other = int(other)
     if other >= self.nbits:
       return _new_valid_bits( self.nbits, 0 )
-    return Bits( self.nbits, self._uint << other, trunc=True )
+    return _new_valid_bits( self.nbits, (self._uint << other) & _upper[self.nbits] )
 
   def __rshift__( self, other ):
     return _new_valid_bits( self.nbits, self._uint >> int(other) )

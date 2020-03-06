@@ -25,17 +25,33 @@ except:
 
     return concat_bits
 
+def trunc( value, new_width ):
+  if isinstance( new_width, int ):
+    assert new_width <= value.nbits
+    return Bits( new_width, value.uint(), trunc_int=True )
+  else:
+    assert issubclass( new_width, Bits )
+    return new_width( value.uint(), trunc_int=True )
+
 def zext( value, new_width ):
-  assert new_width > value.nbits
-  return Bits( new_width, value )
+  if isinstance( new_width, int ):
+    assert new_width >= value.nbits
+    return Bits( new_width, value.uint() )
+  else:
+    assert issubclass( new_width, Bits )
+    return new_width( value.uint() )
 
 def clog2( N ):
   assert N > 0
   return int( math.ceil( math.log( N, 2 ) ) )
 
 def sext( value, new_width ):
-  assert new_width > value.nbits
-  return Bits( new_width, value.int() )
+  if isinstance( new_width, int ):
+    assert new_width >= value.nbits
+    return Bits( new_width, value.int() )
+  else:
+    assert issubclass( new_width, Bits )
+    return new_width( value.int() )
 
 def reduce_and( value ):
   try:

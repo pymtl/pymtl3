@@ -120,7 +120,6 @@ def _create_fn( fn_name, args_lst, body_lst, _globals=None ):
   if _globals is None: _globals = {}
   _locals = {}
   custom_exec( py.code.Source(src).compile(), _globals, _locals )
-  print(src)
   return _locals[fn_name]
 
 #-------------------------------------------------------------------------
@@ -325,7 +324,7 @@ def _mk_ff_fn( fields ):
     flip_strs.extend( fls )
 
   return _create_fn(
-    '__ilshft__',
+    '__ilshift__',
     [ 'self', 'other' ],
     ilshift_strs + [ "return self" ],
   ), _create_fn(

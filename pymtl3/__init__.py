@@ -41,7 +41,7 @@ __all__ = [
   'VerilatorImportConfigs', 'TranslationConfigs',
   'Component', 'Placeholder',
 
-  'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
+  'trunc', 'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',
   'mk_bits', 'Bits',
   'mk_bitstruct', 'bitstruct',
 ] + [ "Bits{}".format(x) for x in _bitwidths ] \

@@ -454,16 +454,16 @@ def test_mult():
   assert x * 0b1000 == 0b0000000000000000
   x = Bits( 8, 0b11111111 )
   y = Bits( 8, 0b11111111 )
-  assert Bits( 16, x ) * y == 0b0000000000000001111111000000001
-  assert Bits( 16, x )* 0b11111111 == 0b0000000000000001111111000000001
-  assert 0b11111111 * Bits(16, x) == 0b0000000000000001111111000000001
+  assert Bits( 16, x.uint() ) * y == 0b0000000000000001111111000000001
+  assert Bits( 16, x.uint() ) * 0b11111111 == 0b0000000000000001111111000000001
+  assert 0b11111111 * Bits(16, x.uint() ) == 0b0000000000000001111111000000001
 
   # TODO: Currently fails as the second operand is larger than the Bits
   # object x. Should update the test when we define the behaviour
   #assert x * 0b1111111111 == 0b0000000000000001111111000000001
 
   y = Bits( 8, 0b10000000 )
-  assert Bits( 16, x ) * y == 0b0000000000000000111111110000000
+  assert Bits( 16, x.uint() ) * y == 0b0000000000000000111111110000000
   with pytest.raises( AssertionError ):
     x * -1
   with pytest.raises( AssertionError ):
@@ -474,6 +474,7 @@ def test_constructor():
   assert Bits( 4,  2 ).uint() == 2
   assert Bits( 4,  4 ).uint() == 4
   assert Bits( 4, 15 ).uint() == 15
+  assert Bits( 4, 17, trunc_int=True ).uint() == 1
 
   assert Bits( 4, -2 ).uint() == 0b1110
   assert Bits( 4, -4 ).uint() == 0b1100
@@ -488,8 +489,8 @@ def test_construct_from_bits():
 
   a = Bits( 8, 5 )
   assert a                         == 0x05
-  assert Bits( 16, a ).uint()      == 0x0005
-  assert Bits( 16, ~a + 1 ).uint() == 0x00FB
+  assert Bits( 16, a.uint() ).uint()      == 0x0005
+  assert Bits( 16, (~a + 1).uint() ).uint() == 0x00FB
   b = Bits( 32, 5 )
   assert b                         == 0x00000005
   assert Bits( 32, ~b + 1 ).uint() == 0xFFFFFFFB
@@ -498,7 +499,7 @@ def test_construct_from_bits():
   assert Bits( 32, ~c )            == 0xFFFFFFFF
   assert Bits( 32, ~c + 1 )        == 0x00000000
   d = Bits( 4, -1 )
-  assert Bits( 8, d )              == 0x0F
+  assert Bits( 8, d.uint() )              == 0x0F
 
   assert Bits( Bits(4,4), 1 ).uint() == 1
 
@@ -507,17 +508,8 @@ def test_str():
   assert Bits(  4,        0x2 ).__str__() == "2"
   assert Bits(  8,       0x1f ).__str__() == "1f"
   assert Bits( 32, 0x0000beef ).__str__() == "0000beef"
-  # FIXED
-  # Bits objects constructed with another Bits object provided as a value
-  # parameter end up having problems when printed. This is because the
-  # internal ._uint field is expected to be an int/long, but is instead
-  # a Bits object, which cannot be formatted as expected. Current
-  # workaround is to force the value param for the Bits constructor to be
-  # an int or a long.
-  #with pytest.raises( ValueError ):
-  #with pytest.raises( AssertionError ):
-  #  assert Bits(  4, Bits(32,2) ).__str__() == "2"
-  assert Bits(  4, Bits(32,2), trunc=True ).__str__() == "2"
+  with pytest.raises( ValueError ):
+    assert Bits(  4, Bits(32,2) ).__str__() == "2"
 
 def test_index_array():
 

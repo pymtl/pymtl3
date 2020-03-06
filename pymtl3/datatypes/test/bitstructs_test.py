@@ -195,7 +195,7 @@ def test_simple():
   assert isinstance( px1.r, Bits8 )
   assert isinstance( px1.g, Bits8 )
   assert isinstance( px1.b, Bits8 )
-  px2 = Pixel( b4(0), b4(0), b4(0) )
+  px2 = Pixel( 0, 0, 0 )
   assert px != px1
   assert px == px2
 
