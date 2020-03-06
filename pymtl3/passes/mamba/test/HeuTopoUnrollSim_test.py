@@ -13,7 +13,7 @@ def test_very_deep_dag():
 
       @update
       def up():
-        s.out = s.in_ + 1
+        s.out @= s.in_ + 1
 
     def done( s ):
       return True

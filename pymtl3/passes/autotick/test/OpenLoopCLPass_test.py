@@ -33,15 +33,15 @@ def test_top_level_method_tracing():
 
       @update
       def up_amp():
-        s.amp = s.count * 100
+        s.amp @= s.count * 100
 
       @update
       def up_compose_in():
         if s.element:
-          s.value = s.amp + s.element
+          s.value @= s.amp + s.element
           s.element = None
         else:
-          s.value = Bits32( -1 )
+          s.value @= Bits32( -1 )
 
       s.add_constraints(
         M( s.push ) < U( up_compose_in ),
@@ -107,15 +107,15 @@ class TestModuleNonBlockingIfc(Component):
 
     @update
     def up_amp():
-      s.amp = s.count * 100
+      s.amp @= s.count * 100
 
     @update
     def up_compose_in():
       if s.element:
-        s.value = s.amp + s.element
+        s.value @= s.amp + s.element
         s.element = None
       else:
-        s.value = -1
+        s.value @= -1
 
     s.add_constraints(
       M( s.push ) < U( up_compose_in ),
@@ -127,7 +127,7 @@ class TestModuleNonBlockingIfc(Component):
     assert s.element is None and s.count % 5 == 4
     s.element = ele
 
-  @non_blocking( lambda s: s.value >= 0 )
+  @non_blocking( lambda s: s.value != Bits32(-1) )
   def pull( s ):
     return s.value
 
