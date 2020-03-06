@@ -1955,7 +1955,7 @@ class CaseGenericAdderComp:
       s.in_1 = InPort( Type )
       s.in_2 = InPort( Type )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return 'sum = ' + str(s.out)
@@ -1966,7 +1966,7 @@ class CaseGenericMuxComp:
       s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
       s.sel = InPort( mk_bits( clog2(n_ports) ) )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
@@ -1987,7 +1987,7 @@ class CaseNestedStructConnectWireComp:
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
       s.sum = [ Wire( Bits16 ) for _ in range(3) ]
-      @s.update
+      @update
       def upblk():
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
@@ -2005,7 +2005,7 @@ class CaseNestedStructConnectWireSubComp:
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
       s.sum = [ Wire( Bits16 ) for _ in range(3) ]
-      @s.update
+      @update
       def upblk():
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
@@ -2019,7 +2019,7 @@ class CaseGenericConditionalDriveComp:
     def construct( s, Type ):
       s.in_ = [InPort ( Type ) for _ in range(2)]
       s.out = [OutPort( Type ) for _ in range(2)]
-      @s.update
+      @update
       def index_upblk():
         if s.in_[0] > s.in_[1]:
           s.out[0] = Type(1)

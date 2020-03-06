@@ -714,7 +714,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   def gen_port_vector_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
     blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
-                 f'@s.update',
+                 f'@update',
                  f'def isignal_{mangled_rhs}():',
                  f'  s.{mangled_rhs} = {rhs}' ]
     set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
@@ -728,7 +728,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       symbols[dtype_name] = dtype.get_class()
 
     blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
-                 f'@s.update',
+                 f'@update',
                  f'def istruct_{mangled_rhs}():' ]
 
     # We write each struct field to tmp
@@ -805,7 +805,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
   def gen_port_vector_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
     blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
-                 f'@s.update',
+                 f'@update',
                  f'def osignal_{mangled_lhs}():',
                  f'  {lhs} = s.{mangled_lhs}' ]
 
@@ -820,7 +820,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
       symbols[dtype_name] = dtype.get_class()
 
     blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
-                 f'@s.update',
+                 f'@update',
                  f'def ostruct_{mangled_lhs}():' ]
 
     # We create a long Bits object to accept CFFI value for struct
