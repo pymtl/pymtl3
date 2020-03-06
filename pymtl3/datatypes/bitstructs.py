@@ -417,6 +417,9 @@ def _mk_imatmul_fn( fields ):
 #
 # def to_bits( self ):
 #   return concat( self.x, self.y[0], self.y[1] )
+#
+# TODO packing order of array? x[0] is LSB or MSB of a list
+# current we do LSB
 
 def _mk_nbits_to_bits_fn( fields ):
 
@@ -424,7 +427,8 @@ def _mk_nbits_to_bits_fn( fields ):
 
     if isinstance( type_, list ):
       to_strs = []
-      for i in range(len(type_)):
+      # The packing order is LSB, so we need to reverse the list to make x[-1] higher bits
+      for i in reversed(range(len(type_))):
         start_bit, tos = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", start_bit )
         to_strs.extend( tos )
       return start_bit, to_strs
@@ -462,27 +466,35 @@ def _mk_nbits_to_bits_fn( fields ):
 
 def _mk_from_bits_fns( fields, total_nbits ):
 
-  def _gen_from_bits_strs( type_, prefix, end_bit ):
+  def _gen_from_bits_strs( type_, end_bit ):
 
     if isinstance( type_, list ):
       from_strs = []
+      # Since we are doing LSB for x[0], we need to unpack from the last
+      # element of the list, and then reverse it again to construct a list ...
       for i in range(len(type_)):
-        end_bit, fs = _gen_from_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
+        end_bit, fs = _gen_from_bits_strs( type_[0], end_bit )
         from_strs.extend( fs )
-      return end_bit, [ f"[{','.join(from_strs)}]" ]
+      return end_bit, [ f"[{','.join(reversed(from_strs))}]" ]
 
     elif is_bitstruct_class( type_ ):
-      type_count = len(all_types)
-      all_types[ f"_type{type_count}" ] = type_
+      if type_ in type_name_mapping:
+        type_name = type_name_mapping[ type_ ]
+      else:
+        type_name = f"_type{len(type_name_mapping)}"
+        type_name_mapping[ type_ ] = type_name
 
       from_strs = []
       for name, typ in getattr(type_, _FIELDS).items():
-        end_bit, fs = _gen_from_bits_strs( typ, f"{prefix}.{name}", end_bit )
+        end_bit, fs = _gen_from_bits_strs( typ, end_bit )
         from_strs.extend( fs )
-      return end_bit, [ f"_type{type_count}({','.join(from_strs)})" ]
+      return end_bit, [ f"{type_name}({','.join(from_strs)})" ]
 
     else:
-      all_types[ type_.__name__ ] = type_
+      if type_ not in type_name_mapping:
+        type_name_mapping[ type_ ] = type_.__name__
+      else:
+        assert type_name_mapping[ type_ ] == type_.__name__
       start_bit = end_bit - type_.nbits
       return start_bit, [ f"other[{start_bit}:{end_bit}]" ]
 
@@ -491,19 +503,21 @@ def _mk_from_bits_fns( fields, total_nbits ):
 
   # This is to make sure we capture two types with the same name but different
   # attributes
-  all_types  = {}
+  type_name_mapping = {}
   type_count = 0
 
-  for name, type_ in fields.items():
-    end_bit, fs = _gen_from_bits_strs( type_, name, end_bit )
+  for _, type_ in fields.items():
+    end_bit, fs = _gen_from_bits_strs( type_, end_bit )
     from_bits_strs.extend( fs )
 
   assert end_bit == 0
+  _globals = { y: x for x,y in type_name_mapping.items() }
+  assert len(_globals) == len(type_name_mapping)
 
   # TODO add assertion in bits
   return _create_fn( 'from_bits', [ 'cls', 'other' ],
                      [ f"assert cls.nbits == other.nbits, f'LHS bitstruct {{cls.nbits}}-bit <> RHS other {{other.nbits}}-bit'",
-                       f"return cls({','.join(from_bits_strs)})" ], all_types )
+                       f"return cls({','.join(from_bits_strs)})" ], _globals )
 #-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------
