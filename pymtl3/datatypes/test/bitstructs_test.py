@@ -531,7 +531,8 @@ def test_to_bits():
     c: [ Bits4, Bits4 ]
     d: [ Bits8, Bits8 ]
 
-  assert SomeMsg([b4(0x2),b4(0x3)],[b8(0x45), b8(0x67)]).to_bits() == b24(0x234567)
+  # list is LSB-based now
+  assert SomeMsg([b4(0x2),b4(0x3)],[b8(0x45), b8(0x67)]).to_bits() == b24(0x326745)
 
 def test_get_bitstruct_inst_all_classes():
 
@@ -565,7 +566,7 @@ def test_nbits_to_bits():
   print(b)
 
   assert b.nbits == 164
-  assert b.to_bits() == Bits164(0x1234567890abcd0f0002000300040005)
+  assert b.to_bits() == Bits164(0x1234567890abcd0f0004000300020005)
 
 def test_from_bits():
   @bitstruct
@@ -579,7 +580,7 @@ def test_from_bits():
   })
   b = B(0x1234567890abcd0f,[A(2),A(3),A(4)], A(5) )
 
-  assert b.to_bits() == Bits164(0x1234567890abcd0f0002000300040005)
+  assert b.to_bits() == Bits164(0x1234567890abcd0f0004000300020005)
   assert b.from_bits( b.to_bits() ) == b
 
 def test_imatmul_ilshift():
