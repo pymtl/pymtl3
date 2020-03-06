@@ -5,18 +5,18 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL3 import (
-    SVStructuralTranslatorL3,
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.translation.structural.VStructuralTranslatorL3 import (
+    VStructuralTranslatorL3,
 )
-from pymtl3.passes.backends.sverilog.util.utility import make_indent
+from pymtl3.passes.backends.verilog.util.utility import make_indent
 from pymtl3.passes.rtlir import RTLIRType as rt
 
 from .YosysStructuralTranslatorL2 import YosysStructuralTranslatorL2
 
 
 class YosysStructuralTranslatorL3(
-    YosysStructuralTranslatorL2, SVStructuralTranslatorL3 ):
+    YosysStructuralTranslatorL2, VStructuralTranslatorL3 ):
 
   #-----------------------------------------------------------------------
   # Helper methods that generate port declarations and connections
@@ -167,13 +167,13 @@ class YosysStructuralTranslatorL3(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_interface_array_index( s, base_signal, index ):
+  def rtlir_tr_interface_array_index( s, base_signal, index, status ):
     # Interface array index
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f"{base_signal}[{index}]"
 
-  def rtlir_tr_interface_attr( s, base_signal, attr ):
+  def rtlir_tr_interface_attr( s, base_signal, attr, status ):
     # Interface attribute
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )

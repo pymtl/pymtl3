@@ -7,8 +7,8 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 from pymtl3.passes.rtlir.util.test_utility import expected_failure
 
@@ -17,7 +17,7 @@ from ....testcases import (
     CaseConnectValRdyIfcUpblkComp,
     CaseInterfaceArrayNonStaticIndexComp,
 )
-from ..YosysBehavioralTranslatorL4 import YosysBehavioralRTLIRToSVVisitorL4
+from ..YosysBehavioralTranslatorL4 import YosysBehavioralRTLIRToVVisitorL4
 
 
 def run_test( case, m ):
@@ -25,7 +25,7 @@ def run_test( case, m ):
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = YosysBehavioralRTLIRToSVVisitorL4(lambda x: x in sverilog_reserved)
+  visitor = YosysBehavioralRTLIRToVVisitorL4(lambda x: x in verilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
   assert len(m_all_upblks) == 1

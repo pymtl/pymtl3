@@ -176,43 +176,43 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
       if "clk" not in wr and "reset" not in wr:
         return [f'connection: {wr} -> {rd}']
 
-    def rtlir_tr_bit_selection( s, base_signal, index ):
+    def rtlir_tr_bit_selection( s, base_signal, index, status ):
       return f'BitSel {base_signal} {index}'
 
-    def rtlir_tr_part_selection( s, base_signal, start, stop ):
+    def rtlir_tr_part_selection( s, base_signal, start, stop, status ):
       return f'PartSel {base_signal} {start} {stop}'
 
-    def rtlir_tr_port_array_index( s, base_signal, index ):
+    def rtlir_tr_port_array_index( s, base_signal, index, status ):
       return f'PortArrayIdx {base_signal} {index}'
 
-    def rtlir_tr_wire_array_index( s, base_signal, index ):
+    def rtlir_tr_wire_array_index( s, base_signal, index, status ):
       return f'WireArrayIdx {base_signal} {index}'
 
-    def rtlir_tr_const_array_index( s, base_signal, index ):
+    def rtlir_tr_const_array_index( s, base_signal, index, status ):
       return f'ConstArrayIdx {base_signal} {index}'
 
-    def rtlir_tr_packed_index( s, base_signal, index ):
+    def rtlir_tr_packed_index( s, base_signal, index, status ):
       return f'PackedIndex {base_signal} {index}'
 
-    def rtlir_tr_interface_array_index( s, base_signal, index ):
+    def rtlir_tr_interface_array_index( s, base_signal, index, status ):
       return f'IfcArrayIdx {base_signal} {index}'
 
-    def rtlir_tr_component_array_index( s, base_signal, index ):
+    def rtlir_tr_component_array_index( s, base_signal, index, status ):
       return f'CompArrayIdx {base_signal} {index}'
 
-    def rtlir_tr_struct_attr( s, base_signal, attr ):
+    def rtlir_tr_struct_attr( s, base_signal, attr, status ):
       return f'StructAttr {base_signal} {attr}'
 
-    def rtlir_tr_interface_attr( s, base_signal, attr ):
+    def rtlir_tr_interface_attr( s, base_signal, attr, status ):
       return f'IfcAttr {base_signal} {attr}'
 
-    def rtlir_tr_subcomp_attr( s, base_signal, attr ):
+    def rtlir_tr_subcomp_attr( s, base_signal, attr, status ):
       return f'SubCompAttr {base_signal} {attr}'
 
-    def rtlir_tr_current_comp_attr( s, base_signal, attr ):
+    def rtlir_tr_current_comp_attr( s, base_signal, attr, status ):
       return f'CurCompAttr {attr}'
 
-    def rtlir_tr_current_comp( s, comp_id, comp_rtype ):
+    def rtlir_tr_current_comp( s, comp_id, comp_rtype, status ):
       return ''
 
     def rtlir_tr_var_id( s, var_id ):

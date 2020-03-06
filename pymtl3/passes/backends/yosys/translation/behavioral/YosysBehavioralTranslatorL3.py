@@ -6,28 +6,28 @@
 """Provide the yosys-compatible SystemVerilog L3 behavioral translator."""
 
 from pymtl3.datatypes import Bits, is_bitstruct_inst
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL3 import (
-    BehavioralRTLIRToSVVisitorL3,
-    SVBehavioralTranslatorL3,
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.translation.behavioral.VBehavioralTranslatorL3 import (
+    BehavioralRTLIRToVVisitorL3,
+    VBehavioralTranslatorL3,
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
 from .YosysBehavioralTranslatorL2 import (
-    YosysBehavioralRTLIRToSVVisitorL2,
+    YosysBehavioralRTLIRToVVisitorL2,
     YosysBehavioralTranslatorL2,
 )
 
 
 class YosysBehavioralTranslatorL3(
-    YosysBehavioralTranslatorL2, SVBehavioralTranslatorL3 ):
+    YosysBehavioralTranslatorL2, VBehavioralTranslatorL3 ):
 
-  def _get_rtlir2sv_visitor( s ):
-    return YosysBehavioralRTLIRToSVVisitorL3
+  def _get_rtlir2v_visitor( s ):
+    return YosysBehavioralRTLIRToVVisitorL3
 
-class YosysBehavioralRTLIRToSVVisitorL3(
-    YosysBehavioralRTLIRToSVVisitorL2, BehavioralRTLIRToSVVisitorL3 ):
+class YosysBehavioralRTLIRToVVisitorL3(
+    YosysBehavioralRTLIRToVVisitorL2, BehavioralRTLIRToVVisitorL3 ):
   """IR visitor that generates yosys-compatible SystemVerilog code.
 
   This visitor differs from the canonical SystemVerilog visitor in that
@@ -94,7 +94,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
         except AttributeError:
           obj = None
         if obj is None:
-          raise SVerilogTranslationError( s.blk, node,
+          raise VerilogTranslationError( s.blk, node,
             f"attribute ({node.attr}) of constant struct instance ({node.value}) is not supported!" )
         else:
           if isinstance( obj, Bits ):
@@ -112,7 +112,7 @@ class YosysBehavioralRTLIRToSVVisitorL3(
             attr = node.attr
             return s.signal_expr_epilogue(node, f"{attr}")
           else:
-            raise SVerilogTranslationError( s.blk, node,
+            raise VerilogTranslationError( s.blk, node,
               f"attribute ({node.attr}) of constant struct instance ({node.value}) is not supported!" )
 
       elif isinstance( node.value.Type.get_dtype(), rdt.Struct ):

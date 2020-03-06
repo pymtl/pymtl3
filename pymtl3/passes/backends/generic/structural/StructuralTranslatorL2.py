@@ -25,12 +25,12 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     s.structural.decl_type_struct = []
 
   #-----------------------------------------------------------------------
-  # gen_structural_trans_metadata
+  # _get_structural_rtlir_gen_pass
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL2Pass( s.inst_conns ) )
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL2Pass
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -87,17 +87,17 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   # Override
-  def rtlir_signal_expr_translation( s, expr, m ):
+  def rtlir_signal_expr_translation( s, expr, m, status = 'intermediate' ):
     """Translate a signal expression in RTLIR into its backend representation.
 
     Add support for the following operations at L2: sexp.PackedIndex, sexp.StructAttr
     """
     if isinstance( expr, sexp.PackedIndex ):
       return s.rtlir_tr_packed_index(
-        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index())
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index(), status)
     elif isinstance( expr, sexp.StructAttr ):
       return s.rtlir_tr_struct_attr(
-        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr())
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr(), status)
     elif isinstance( expr, sexp.ConstInstance ):
       rtype = expr.get_rtype()
       value = expr.get_value()
@@ -106,10 +106,10 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
         return s.rtlir_tr_struct_instance(dtype, value)
       else:
         return super(). \
-            rtlir_signal_expr_translation( expr, m )
+            rtlir_signal_expr_translation( expr, m, status )
     else:
       return super(). \
-          rtlir_signal_expr_translation( expr, m )
+          rtlir_signal_expr_translation( expr, m, status )
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator
@@ -120,10 +120,10 @@ class StructuralTranslatorL2( StructuralTranslatorL1 ):
     raise NotImplementedError()
 
   # Signal operations
-  def rtlir_tr_packed_index( s, base_signal, index ):
+  def rtlir_tr_packed_index( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_struct_attr( s, base_signal, attr ):
+  def rtlir_tr_struct_attr( s, base_signal, attr, status ):
     raise NotImplementedError()
 
   def rtlir_tr_struct_instance( s, dtype, struct ):

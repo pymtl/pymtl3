@@ -14,7 +14,6 @@ class RTLIRTranslationError( Exception ):
   def __init__( self, obj, msg ):
     obj = str(obj)
     _, _, tb = sys.exc_info()
-    traceback.print_tb(tb)
     tb_info = traceback.extract_tb(tb)
     fname, line, func, text = tb_info[-1]
     return super().__init__(

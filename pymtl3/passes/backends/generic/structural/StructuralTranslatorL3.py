@@ -17,12 +17,12 @@ from .StructuralTranslatorL2 import StructuralTranslatorL2
 class StructuralTranslatorL3( StructuralTranslatorL2 ):
 
   #-----------------------------------------------------------------------
-  # gen_structural_trans_metadata
+  # _get_structural_rtlir_gen_pass
   #-----------------------------------------------------------------------
 
   # Override
-  def gen_structural_trans_metadata( s, tr_top ):
-    tr_top.apply( StructuralRTLIRGenL3Pass( s.inst_conns ) )
+  def _get_structural_rtlir_gen_pass( s ):
+    return StructuralRTLIRGenL3Pass
 
   #-----------------------------------------------------------------------
   # translate_structural
@@ -84,21 +84,21 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
   #-----------------------------------------------------------------------
 
   # Override
-  def rtlir_signal_expr_translation( s, expr, m ):
+  def rtlir_signal_expr_translation( s, expr, m, status = 'intermediate' ):
     """Translate a signal expression in RTLIR into its backend representation.
 
     Add support for the following operations at L3: sexp.InterfaceAttr
     """
     if isinstance( expr, sexp.InterfaceAttr ):
       return s.rtlir_tr_interface_attr(
-        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr())
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_attr(), status)
 
     elif isinstance( expr, sexp.InterfaceViewIndex ):
       return s.rtlir_tr_interface_array_index(
-        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index())
+        s.rtlir_signal_expr_translation(expr.get_base(), m), expr.get_index(), status)
 
     else:
-      return super().rtlir_signal_expr_translation(expr, m)
+      return super().rtlir_signal_expr_translation(expr, m, status)
 
   #-----------------------------------------------------------------------
   # Methods to be implemented by the backend translator
@@ -118,8 +118,8 @@ class StructuralTranslatorL3( StructuralTranslatorL2 ):
     raise NotImplementedError()
 
   # Signal operations
-  def rtlir_tr_interface_array_index( s, base_signal, index ):
+  def rtlir_tr_interface_array_index( s, base_signal, index, status ):
     raise NotImplementedError()
 
-  def rtlir_tr_interface_attr( s, base_signal, attr ):
+  def rtlir_tr_interface_attr( s, base_signal, attr, status ):
     raise NotImplementedError()

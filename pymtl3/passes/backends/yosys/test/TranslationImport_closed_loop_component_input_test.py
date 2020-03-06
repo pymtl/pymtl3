@@ -7,11 +7,11 @@
 
 from random import seed
 
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_component_input_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_component_input_test import (
     test_adder,
     test_mux,
 )
-from pymtl3.passes.backends.sverilog.util.test_utility import (
+from pymtl3.passes.backends.verilog.util.test_utility import (
     closed_loop_component_input_test,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test

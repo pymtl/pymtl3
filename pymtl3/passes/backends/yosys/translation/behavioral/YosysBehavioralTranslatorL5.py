@@ -5,27 +5,27 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog L5 behavioral translator."""
 
-from pymtl3.passes.backends.sverilog.translation.behavioral.SVBehavioralTranslatorL5 import (
-    BehavioralRTLIRToSVVisitorL5,
-    SVBehavioralTranslatorL5,
+from pymtl3.passes.backends.verilog.translation.behavioral.VBehavioralTranslatorL5 import (
+    BehavioralRTLIRToVVisitorL5,
+    VBehavioralTranslatorL5,
 )
 from pymtl3.passes.rtlir import BehavioralRTLIR as bir
 from pymtl3.passes.rtlir import RTLIRType as rt
 
 from .YosysBehavioralTranslatorL4 import (
-    YosysBehavioralRTLIRToSVVisitorL4,
+    YosysBehavioralRTLIRToVVisitorL4,
     YosysBehavioralTranslatorL4,
 )
 
 
 class YosysBehavioralTranslatorL5(
-    YosysBehavioralTranslatorL4, SVBehavioralTranslatorL5 ):
+    YosysBehavioralTranslatorL4, VBehavioralTranslatorL5 ):
 
-  def _get_rtlir2sv_visitor( s ):
-    return YosysBehavioralRTLIRToSVVisitorL5
+  def _get_rtlir2v_visitor( s ):
+    return YosysBehavioralRTLIRToVVisitorL5
 
-class YosysBehavioralRTLIRToSVVisitorL5(
-    YosysBehavioralRTLIRToSVVisitorL4, BehavioralRTLIRToSVVisitorL5 ):
+class YosysBehavioralRTLIRToVVisitorL5(
+    YosysBehavioralRTLIRToVVisitorL4, BehavioralRTLIRToVVisitorL5 ):
 
   def visit_Attribute( s, node ):
     """Return the SystemVerilog representation of an attribute.

@@ -53,14 +53,14 @@ def local_do_test( m ):
 def test_L4_interface_attr( do_test ):
   a = CaseInterfaceAttributeComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute(
+      [Attribute( Base( a ), 'out' )], Attribute(
         Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
   do_test( a )
 
 def test_L4_interface_array_index( do_test ):
   a = CaseArrayInterfacesComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute( Index(
+      [Attribute( Base( a ), 'out' )], Attribute( Index(
         Attribute( Base( a ), 'in_' ), Number(2) ), 'foo' ), True ) ] ) }
   do_test( a )
 

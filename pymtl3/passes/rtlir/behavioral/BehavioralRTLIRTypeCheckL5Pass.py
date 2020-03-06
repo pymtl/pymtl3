@@ -38,13 +38,10 @@ class BehavioralRTLIRTypeCheckVisitorL5( BehavioralRTLIRTypeCheckVisitorL4 ):
         __init__( component, freevars, accessed, tmpvars )
 
   def visit_Index( s, node ):
-    """Type check the index node.
-
-    Only static constant expressions can be the index of component arrays
-    """
+    """Type check the index node."""
     if isinstance( node.value.Type, rt.Array ) and \
        isinstance( node.value.Type.get_sub_type(), rt.Component ):
-      node.Type = node.value.Type.get_sub_type()
+      node.Type = node.value.Type.get_next_dim_type()
 
     else:
       super().visit_Index( node )

@@ -296,6 +296,7 @@ class Component( BaseRTLIRType ):
     s.params = s._gen_parameters( obj )
     s.properties = properties
     s.unpacked = unpacked
+    s.obj = obj
     cls = obj.__class__
     try:
       file_name = inspect.getsourcefile( cls )
@@ -352,9 +353,14 @@ class Component( BaseRTLIRType ):
   def _is_unpacked( s ):
     return s.unpacked
 
+  def _has_same_interface( s, other ):
+    u, v = s.get_ports_packed(), other.get_ports_packed()
+    return (len(u)==len(v)) and all(_u == _v for _u, _v in zip(u, v))
+
   def __eq__( s, other ):
+    # Two Components are considered equal iff they expose the same interface
     return isinstance(other, Component) and s.name == other.name and \
-           s.params == other.params
+           s._has_same_interface( other )
 
   def __hash__( s ):
     return hash((type(s), s.name, tuple(s.params)))
@@ -367,6 +373,9 @@ class Component( BaseRTLIRType ):
 
   def get_name( s ):
     return s.name
+
+  def get_obj( s ):
+    return s.obj
 
   def get_file_info( s ):
     return s.file_info
@@ -577,7 +586,8 @@ def get_component_ifc_rtlir( obj ):
     if not isinstance( obj, list ):
       return False
     while isinstance( obj, list ):
-      assert len( obj ) > 0, f"{id_} is an empty list!"
+      if len( obj ) == 0:
+        return False
       obj = obj[0]
     return isinstance( obj, primitive_types )
 

@@ -100,8 +100,8 @@ CaseTwoUpblksFreevarsComp = set_attributes( CaseTwoUpblksFreevarsComp,
     'REF_FREEVAR',
     '''\
         freevars:
-          freevar: STATE_IDLE
-          freevar: STATE_WORK
+          freevar: STATE_IDLE_at_multi_upblks_1
+          freevar: STATE_WORK_at_multi_upblks_2
     ''',
     'REF_SRC',
     '''\
@@ -113,8 +113,8 @@ CaseTwoUpblksFreevarsComp = set_attributes( CaseTwoUpblksFreevarsComp,
         );
         const_decls:
         freevars:
-          freevar: STATE_IDLE
-          freevar: STATE_WORK
+          freevar: STATE_IDLE_at_multi_upblks_1
+          freevar: STATE_WORK_at_multi_upblks_2
         wire_decls:
         component_decls:
         tmpvars:
@@ -845,7 +845,7 @@ CaseBits32ClosureConstruct = set_attributes( CaseBits32ClosureConstruct,
         );
         const_decls:
         freevars:
-          freevar: foo
+          freevar: foo_at_upblk
         wire_decls:
         component_decls:
         tmpvars:
@@ -863,7 +863,7 @@ CaseBits32ClosureConstruct = set_attributes( CaseBits32ClosureConstruct,
     'REF_FREEVAR',
     '''\
         freevars:
-          freevar: foo
+          freevar: foo_at_upblk
     '''
 )
 
@@ -889,7 +889,7 @@ CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruc
         );
         const_decls:
         freevars:
-          freevar: foo
+          freevar: foo_at_upblk
         wire_decls:
         component_decls:
         tmpvars:
@@ -907,7 +907,7 @@ CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruc
     'REF_FREEVAR',
     '''\
         freevars:
-          freevar: foo
+          freevar: foo_at_upblk
     '''
 )
 

@@ -52,8 +52,12 @@ def test_pymtl_list_components():
   a.elaborate()
   assert rt.is_rtlir_convertible( a.b )
   assert rt.get_rtlir( a.b ) == \
-      rt.Array([5], rt.Component( a.b[0],
-        {'in_':rt.Port('input', rdt.Vector(32)), 'out':rt.Port('output', rdt.Vector(32))}))
+  rt.Array([5], rt.Component( a.b[0], {
+          'clk':rt.Port('input', rdt.Vector(1)),
+          'reset':rt.Port('input', rdt.Vector(1)),
+          'in_':rt.Port('input', rdt.Vector(32)),
+          'out':rt.Port('output', rdt.Vector(32)),
+        }))
 
 def test_pymtl_list_multi_dimension():
   a = CaseBits32Outx3x2x1PortOnly.DUT()

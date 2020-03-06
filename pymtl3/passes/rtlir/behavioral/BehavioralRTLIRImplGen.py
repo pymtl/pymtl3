@@ -444,10 +444,10 @@ def implement_module( module_str ):
 
   impl_str += constructor.rast_visitor_str
 
-  with open('BehavioralRTLIR.py', 'w') as output:
+  with open( 'BehavioralRTLIR.py', 'w' ) as output:
     output.write( impl_str )
 
-  with open('BehavioralRTLIRVisualizationPass.py', 'w') as output:
+  with open( 'BehavioralRTLIRVisualizationPass.py', 'w' ) as output:
     output.write( viz_impl_str )
 
 def extract_module( asdl_str ):

@@ -34,7 +34,7 @@ def local_do_test( m ):
 def test_pymtl_Bits_closure_construct( do_test ):
   a = CaseBits32ClosureConstruct.DUT()
   a.elaborate()
-  a._rtlir_freevar_ref = { 'foo' : a.fvar_ref }
+  a._rtlir_freevar_ref = { 'foo_at_upblk' : a.fvar_ref }
   do_test( a )
 
 def test_pymtl_Bits_global( do_test ):
@@ -47,5 +47,5 @@ def test_pymtl_Bits_global( do_test ):
 def test_pymtl_struct_closure( do_test ):
   a = CaseStructClosureGlobal.DUT()
   a.elaborate()
-  a._rtlir_freevar_ref = { 'foo' : a._foo }
+  a._rtlir_freevar_ref = { 'foo_at_upblk' : a._foo }
   do_test( a )

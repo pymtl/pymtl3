@@ -32,3 +32,8 @@ class InvalidPassOptionValue( Exception ):
   def __init__( self, opt, val, pas, msg ):
     return super().__init__(f"{val} is not a valid value for option {opt}"
                             f" of pass {pas} because {msg}.")
+
+class PlaceholderConfigError( Exception ):
+  """ Raised when a placeholder is incorrectly configured. """
+  def __init__( self, obj, msg ):
+    return super().__init__(f"Error while configuring {obj}:\n - {msg}")

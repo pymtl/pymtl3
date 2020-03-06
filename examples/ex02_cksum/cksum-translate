@@ -95,7 +95,7 @@ def main():
   finally:
     if success:
       path = os.getcwd() + \
-             "/{}.sv".format(cksum.translated_top_module_name)
+             "/{}.v".format(cksum.translated_top_module_name)
       print("\nTranslation finished successfully!")
       print(f"You can find the generated SystemVerilog file at {path}.")
     else:

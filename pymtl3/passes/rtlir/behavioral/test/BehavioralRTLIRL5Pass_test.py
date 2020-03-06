@@ -52,14 +52,14 @@ def local_do_test( m ):
 def test_L5_component_attr( do_test ):
   a = CaseBits32SubCompPassThroughComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute(
+      [Attribute( Base( a ), 'out' )], Attribute(
         Attribute( Base( a ), 'comp' ), 'out' ), True ) ] ) }
   do_test( a )
 
 def test_L5_component_array_index( do_test ):
   a = CaseArrayBits32SubCompPassThroughComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      Attribute( Base( a ), 'out' ), Attribute( Index(
+      [Attribute( Base( a ), 'out' )], Attribute( Index(
         Attribute( Base( a ), 'comp' ), Number(2) ), 'out' ), True ) ] ) }
   do_test( a )
 

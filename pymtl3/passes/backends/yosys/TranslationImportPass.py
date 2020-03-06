@@ -7,21 +7,21 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
-from pymtl3.passes.backends.sverilog.TranslationImportPass import (
-    TranslationImportPass as SVerilogTranslationImportPass,
+from pymtl3.passes.backends.verilog.TranslationImportPass import (
+    TranslationImportPass as VerilogTranslationImportPass,
 )
 
-from .import_.ImportPass import ImportPass
+from .import_.VerilatorImportPass import VerilatorImportPass
 from .translation.TranslationPass import TranslationPass
 
 
-class TranslationImportPass( SVerilogTranslationImportPass ):
+class TranslationImportPass( VerilogTranslationImportPass ):
 
   def get_translation_pass( s ):
     return TranslationPass()
 
   def get_import_pass( s ):
-    return ImportPass()
+    return VerilatorImportPass()
 
   def get_flag_name( s ):
     return "yosys_translate_import"
@@ -31,3 +31,6 @@ class TranslationImportPass( SVerilogTranslationImportPass ):
 
   def get_import_flag_name( s ):
     return "config_yosys_import"
+
+  def get_translation_pass_namespace( s ):
+    return "_pass_yosys_translation"

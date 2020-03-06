@@ -53,7 +53,7 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
   def visit_Index( s, node ):
     if isinstance( node.value.Type, rt.Array ) and \
        isinstance( node.value.Type.get_sub_type(), rt.InterfaceView ):
-      node.Type = node.value.Type.get_sub_type()
+      node.Type = node.value.Type.get_next_dim_type()
 
     else:
       super().visit_Index( node )
