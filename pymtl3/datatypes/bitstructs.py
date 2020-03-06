@@ -307,7 +307,7 @@ def _mk_ff_fn( fields ):
 
   def _gen_list_ilshift_strs( type_, prefix='' ):
     if isinstance( type_, list ):
-      ilshift_strs, flip_strs = []
+      ilshift_strs, flip_strs = [], []
       for i in range(len(type_)):
         ils, fls = _gen_list_ilshift_strs( type_[0], f"{prefix}[{i}]" )
         ilshift_strs.extend( ils )
@@ -469,7 +469,7 @@ def _mk_from_bits_fns( fields, total_nbits ):
       for i in range(len(type_)):
         end_bit, fs = _gen_from_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
         from_strs.extend( fs )
-      return end_bit, [ f"[{','.join(fs)}]" ]
+      return end_bit, [ f"[{','.join(from_strs)}]" ]
 
     elif is_bitstruct_class( type_ ):
       type_count = len(all_types)

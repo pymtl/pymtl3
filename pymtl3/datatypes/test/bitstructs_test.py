@@ -566,3 +566,41 @@ def test_nbits_to_bits():
 
   assert b.nbits == 164
   assert b.to_bits() == Bits164(0x1234567890abcd0f0002000300040005)
+
+def test_from_bits():
+  @bitstruct
+  class A:
+    x: Bits16
+
+  B = mk_bitstruct( "B", {
+    'x': Bits100,
+    'y': [ A ] * 3,
+    'z': A,
+  })
+  b = B(0x1234567890abcd0f,[A(2),A(3),A(4)], A(5) )
+
+  assert b.to_bits() == Bits164(0x1234567890abcd0f0002000300040005)
+  assert b.from_bits( b.to_bits() ) == b
+
+def test_imatmul_ilshift():
+
+  @bitstruct
+  class A:
+    x: Bits16
+
+  B = mk_bitstruct( "B", {
+    'x': Bits100,
+    'y': [ A ] * 3,
+    'z': A,
+  })
+
+  b = B(0x1234567890abcd0f,[A(2),A(3),A(4)], A(5) )
+
+  b @= Bits164(0xf0dcba09876543210005000400030002)
+  assert b.to_bits() == Bits164(0xf0dcba09876543210005000400030002)
+
+  c = B(0x1234567890abcd0f,[A(2),A(3),A(4)], A(5) )
+  c <<= Bits164(0xf0dcba09876543210005000400030002)
+  assert c == B(0x1234567890abcd0f,[A(2),A(3),A(4)], A(5) )
+  c._flip()
+  assert c.to_bits() == Bits164(0xf0dcba09876543210005000400030002)
