@@ -110,17 +110,17 @@ _ANTI_CONFLICT_SELF_NAME = '__bitstruct_self__'
 # Also note that this whole _create_fn thing is similar to the original
 # dataclass implementation!
 
-def _create_fn( fn_name, args_lst, body_lst, _globals=None, class_method=False ):
+def _create_fn( fn_name, args_lst, body_lst, _globals=None ):
   # Assemble argument string and body string
   args = ', '.join(args_lst)
   body = '\n'.join(f'  {statement}' for statement in body_lst)
 
   # Assemble the source code and execute it
-  src = '@classmethod\n' if class_method else ''
-  src += f'def {fn_name}({args}):\n{body}'
+  src = f'def {fn_name}({args}):\n{body}'
   if _globals is None: _globals = {}
   _locals = {}
   custom_exec( py.code.Source(src).compile(), _globals, _locals )
+  print(src)
   return _locals[fn_name]
 
 #-------------------------------------------------------------------------
@@ -294,24 +294,40 @@ def _mk_hash_fn( fields ):
 # Creates __ilshift__ and _flip functions that looks like the following:
 #
 # def __ilshift__( self, other ):
-#   self._next = other.clone()
+#   if self.__class__ is not other.__class__:
+#     other = self.__class__.from_bits( other.to_bits() )
+#   self.x <<= other.x
+#   self.y[0][0] <<= other.y[0][0]
 #
 # def _flip( self ):
-#   self.x = self._next.x
-#   for i in range(5):
-#     for j in range(6):
-#       self.y[i][j]._flip()
+#   self.x._flip()
+#   self.y[i][j]._flip()
 
 def _mk_ff_fn( fields ):
-  ilshift_strs = []
-  flip_strs    = [ '_next = self._next' ]
+
+  def _gen_list_ilshift_strs( type_, prefix='' ):
+    if isinstance( type_, list ):
+      ilshift_strs, flip_strs = []
+      for i in range(len(type_)):
+        ils, fls = _gen_list_ilshift_strs( type_[0], f"{prefix}[{i}]" )
+        ilshift_strs.extend( ils )
+        flip_strs.extend( fls )
+      return ilshift_strs, flip_strs
+    else:
+      return [ f"self.{prefix} <<= other.{prefix}" ], [f"self.{prefix}._flip()"]
+
+  ilshift_strs = [ 'if self.__class__ is not other.__class__:',
+                   '  other = self.__class__.from_bits( other.to_bits() )']
+  flip_strs = []
   for name, type_ in fields.items():
-    flip_strs.append( f'self.{name} = _next.{name}' )
+    ils, fls = _gen_list_ilshift_strs( type_, name )
+    ilshift_strs.extend( ils )
+    flip_strs.extend( fls )
 
   return _create_fn(
-    '__ilshift__',
-    [ 'self', 'o' ],
-    [ 'self._next = o.clone()', 'return self' ],
+    '__ilshft__',
+    [ 'self', 'other' ],
+    ilshift_strs + [ "return self" ],
   ), _create_fn(
     '_flip',
     [ 'self' ],
@@ -363,13 +379,14 @@ def _mk_deepcopy_fn( fields ):
 # _mk_imatmul_fn
 #-------------------------------------------------------------------------
 # Creates @= function that copies the value over ...
-#
+# TODO create individual from_bits for imatmul and ilshift
+
 # def __imatmul__( self, other ):
-#   assert self.__class__ is other.__class__
+#   if self.__class__ is not other.__class__:
+#     other = self.__class__.from_bits( other.to_bits() )
 #   self.x @= other.x
 #   self.y[0] @= other.y[0]
 #   self.y[1] @= other.y[1]
-
 
 def _mk_imatmul_fn( fields ):
 
@@ -382,7 +399,8 @@ def _mk_imatmul_fn( fields ):
     else:
       return [ f"self.{prefix} @= other.{prefix}" ]
 
-  imatmul_strs = []
+  imatmul_strs = [ 'if self.__class__ is not other.__class__:',
+                   '  other = self.__class__.from_bits( other.to_bits() )']
   for name, type_ in fields.items():
     imatmul_strs.extend( _gen_list_imatmul_strs( type_, name ) )
 
@@ -392,27 +410,31 @@ def _mk_imatmul_fn( fields ):
     imatmul_strs + [ "return self" ],
   )
 
+#-------------------------------------------------------------------------
+# _mk_nbits_to_bits_fn
+#-------------------------------------------------------------------------
+# Creates nbits, to_bits function that copies the value over ...
+#
+# def to_bits( self ):
+#   return concat( self.x, self.y[0], self.y[1] )
+
 def _mk_nbits_to_bits_fn( fields ):
 
   def _gen_to_bits_strs( type_, prefix, start_bit ):
 
     if isinstance( type_, list ):
       to_strs = []
-      end_bit = start_bit
       for i in range(len(type_)):
-        end_bit, tos = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
+        start_bit, tos = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", start_bit )
         to_strs.extend( tos )
-        start_bit = end_bit
-      return end_bit, to_strs
+      return start_bit, to_strs
 
     elif is_bitstruct_class( type_ ):
       to_strs = []
-      end_bit = start_bit
       for name, typ in getattr(type_, _FIELDS).items():
-        end_bit, tos = _gen_to_bits_strs( typ, f"{prefix}.{name}", end_bit )
+        start_bit, tos = _gen_to_bits_strs( typ, f"{prefix}.{name}", start_bit )
         to_strs.extend( tos )
-        start_bit = end_bit
-      return end_bit, to_strs
+      return start_bit, to_strs
 
     else:
       end_bit = start_bit + type_.nbits
@@ -428,49 +450,60 @@ def _mk_nbits_to_bits_fn( fields ):
                                   [ f"return concat({', '.join(to_bits_strs)})" ],
                                   _globals={'concat':concat} )
 
-# TODO add assertion in from_bits, endianness
-def _mk_nbits_from_bits_fn( fields ):
+#-------------------------------------------------------------------------
+# _mk_from_bits_fn
+#-------------------------------------------------------------------------
+# Creates static method from_bits that creates a new bitstruct based on Bits
+# and instance method _from_bits that copies the value over
+#
+# @staticmethod
+# def from_bits( other ):
+#   return self.__class__( other[16:32], other[0:16] )
 
-  def _gen_to_bits_strs( type_, prefix, start_bit ):
+def _mk_from_bits_fns( fields, total_nbits ):
+
+  def _gen_from_bits_strs( type_, prefix, end_bit ):
 
     if isinstance( type_, list ):
-      to_strs, from_strs = [], []
-      end_bit = start_bit
+      from_strs = []
       for i in range(len(type_)):
-        tos, froms, end_bit = _gen_to_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
-        to_strs.extend( tos )
-        from_strs.extend( froms )
-        start_bit = end_bit
-      return to_strs, from_strs, end_bit
+        end_bit, fs = _gen_from_bits_strs( type_[0], f"{prefix}[{i}]", end_bit )
+        from_strs.extend( fs )
+      return end_bit, [ f"[{','.join(fs)}]" ]
 
     elif is_bitstruct_class( type_ ):
-      to_strs, from_strs = [], []
-      end_bit = start_bit
+      type_count = len(all_types)
+      all_types[ f"_type{type_count}" ] = type_
+
+      from_strs = []
       for name, typ in getattr(type_, _FIELDS).items():
-        tos, froms, end_bit = _gen_to_bits_strs( typ, f"{prefix}.{name}", end_bit )
-        to_strs.extend( tos )
-        from_strs.extend( froms )
-        start_bit = end_bit
-      return to_strs, from_strs, end_bit
+        end_bit, fs = _gen_from_bits_strs( typ, f"{prefix}.{name}", end_bit )
+        from_strs.extend( fs )
+      return end_bit, [ f"_type{type_count}({','.join(from_strs)})" ]
 
     else:
-      end_bit = start_bit + type_.nbits
-      return [ f"self.{prefix}" ], [ f"self.{prefix} @= other[{start_bit}:{end_bit}]" ], end_bit
+      all_types[ type_.__name__ ] = type_
+      start_bit = end_bit - type_.nbits
+      return start_bit, [ f"other[{start_bit}:{end_bit}]" ]
 
-  to_bits_strs   = []
   from_bits_strs = []
-  total_nbits  = 0
+  end_bit = total_nbits
+
+  # This is to make sure we capture two types with the same name but different
+  # attributes
+  all_types  = {}
+  type_count = 0
+
   for name, type_ in fields.items():
-    tos, froms, total_nbits = _gen_to_bits_strs( type_, name, total_nbits )
-    to_bits_strs.extend( tos )
-    from_bits_strs.extend( froms )
+    end_bit, fs = _gen_from_bits_strs( type_, name, end_bit )
+    from_bits_strs.extend( fs )
+
+  assert end_bit == 0
 
   # TODO add assertion in bits
-  return _create_fn( 'to_bits', [ 'self' ],
-                     [ f"return concat({', '.join(to_bits_strs)})" ],
-                     _globals={'concat':concat} ), \
-         _create_fn( 'from_bits', [ 'self', 'other' ],
-                     from_bits_strs + [ "return self" ] ), total_nbits
+  return _create_fn( 'from_bits', [ 'cls', 'other' ],
+                     [ f"assert cls.nbits == other.nbits, f'LHS bitstruct {{cls.nbits}}-bit <> RHS other {{other.nbits}}-bit'",
+                       f"return cls({','.join(from_bits_strs)})" ], all_types )
 #-------------------------------------------------------------------------
 # _check_valid_array
 #-------------------------------------------------------------------------
@@ -636,12 +669,15 @@ def _process_class( cls, add_init=True, add_str=True, add_repr=True,
 
   cls.__deepcopy__ = _mk_deepcopy_fn( fields )
 
-  # Shunning: add imatmul for assignment. TODO to_bits/from_bits
-  assert not '__imatmul__' in cls.__dict__ and not 'to_bits' in cls.__dict__ \
-     and not 'from_bits' in cls.__dict__ and 'get_nbits' not in cls.__dict__
+  # Shunning: add imatmul for assignment, as well as nbits/to_bits/from_bits
+  assert '__imatmul__' not in cls.__dict__ and 'to_bits' not in cls.__dict__ and \
+         'nbits' not in cls.__dict__ and 'from_bits' not in cls.__dict__
 
   cls.__imatmul__ = _mk_imatmul_fn( fields )
   cls.nbits, cls.to_bits = _mk_nbits_to_bits_fn( fields )
+
+  from_bits = _mk_from_bits_fns( fields, cls.nbits )
+  cls.from_bits = classmethod(from_bits)
 
   assert not 'get_field_type' in cls.__dict__
 
