@@ -46,8 +46,6 @@ def local_do_test( m ):
   m.apply( BehavioralRTLIRVisualizationPass() )
 
   for blk in m.get_update_blocks():
-    tmp = m._pass_behavioral_rtlir_gen.rtlir_upblks[blk]
-    re = ref[blk.__name__]
     assert\
       m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] == ref[ blk.__name__ ]
 

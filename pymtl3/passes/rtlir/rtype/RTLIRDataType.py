@@ -67,7 +67,7 @@ class Struct( BaseRTLIRDataType ):
       # except OSError:
       # With the current way of generating BitStructs it is no
       # longer possible to report the file in which it was generated.
-      s.file_info = f"Dynamically generated class {cls.__name__}"
+      s.file_info = f"BitStruct {cls.__name__}"
     else:
       s.file_info = "Not available"
 
