@@ -6,7 +6,9 @@
 import pytest
 
 from pymtl3.passes.backends.verilog.util.test_utility import check_eq
-from pymtl3.passes.rtlir.util.test_utility import get_parameter
+from pymtl3.passes.backends.verilog.errors import VerilogStructuralTranslationError
+from pymtl3.passes.rtlir.util.test_utility import get_parameter, expected_failure
+from pymtl3.passes.testcases import CaseTypeNameAsFieldNameComp
 
 from ...testcases import (
     CaseConnectPassThroughLongNameComp,
@@ -35,6 +37,10 @@ def test_verilog_L2( case ):
 def test_long_component_name():
   args = [ThisIsABitStructWithSuperLongName]*7
   run_test( CaseConnectPassThroughLongNameComp, CaseConnectPassThroughLongNameComp.DUT(*args) )
+
+def test_type_name_as_field_name():
+  with expected_failure( VerilogStructuralTranslationError, 'same name as BitStruct type' ):
+    run_test( CaseTypeNameAsFieldNameComp, CaseTypeNameAsFieldNameComp.DUT() )
 
 @pytest.mark.xfail(run=False, reason="TODO: resolving BitStructs according to name AND fields")
 def test_struct_uniqueness():

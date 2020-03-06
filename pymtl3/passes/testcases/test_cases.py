@@ -97,6 +97,10 @@ class MultiDimPackedArrayStruct:
   inner: Bits32Bar
   packed_array: [ [ Bits16 ]*2 ] *3
 
+@bitstruct
+class StructTypeNameAsFieldName:
+  StructTypeNameAsFieldName: Bits32
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -585,6 +589,24 @@ class CaseForBasicComp:
       def for_basic():
         for i in range( 8 ):
           s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
+
+class CaseForFreeVarStepComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits16 )
+      s.out = OutPort( Bits8 )
+      freevar = 1
+      @s.update
+      def upblk():
+        for i in range( 0, 2, freevar ):
+          s.out = s.in_[0:8]
+
+class CaseTypeNameAsFieldNameComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( StructTypeNameAsFieldName )
+      s.out = OutPort( StructTypeNameAsFieldName )
+      s.in_ //= s.out
 
 class CaseForRangeLowerUpperStepPassThroughComp:
   class DUT( Component ):
