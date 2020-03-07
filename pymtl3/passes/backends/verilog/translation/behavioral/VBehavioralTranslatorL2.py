@@ -130,11 +130,12 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
 
     begin    = ' begin' if len( node.body ) > 1 else ''
 
-    cmp_op   = '<' if node.step.value > 0 else '<'
-    inc_op   = '+' if node.step.value > 0 else '-'
+    cmp_op   = '>' if node.step._value[31] else '<'
+    inc_op   = '-' if node.step._value[31] else '+'
 
     step_abs = s.visit( node.step )
-    step_abs = step_abs if node.step.value > 0 else step_abs[ 1 : ]
+    if node.step._value[31] and step_abs[0] == '-':
+      step_abs = step_abs[1:]
 
     for stmt in node.body:
       body.extend( s.visit( stmt ) )

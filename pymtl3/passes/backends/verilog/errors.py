@@ -49,6 +49,12 @@ class VerilogTranslationError( Exception ):
     return super().__init__(
       f"\nIn file {fname}, Line {line}, Col {col}:{code}\n- {msg}" )
 
+class VerilogStructuralTranslationError( Exception ):
+  """SystemVerilog translation error."""
+  def __init__( self, obj, msg ):
+    return super().__init__(
+      f"\nError while performing structural translation on {obj}\n- {msg}" )
+
 class VerilogReservedKeywordError( Exception ):
   """SystemVerilog reserved keyword error."""
   def __init__( self, name, msg ):

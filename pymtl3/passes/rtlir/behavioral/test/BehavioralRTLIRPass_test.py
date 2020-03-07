@@ -27,6 +27,7 @@ from pymtl3.passes.testcases import (
     CaseConstSizeSlicingComp,
     CaseFlipFlopAdder,
     CaseForBasicComp,
+    CaseForFreeVarStepComp,
     CaseIfBasicComp,
     CaseReducesInx3OutComp,
     CaseSlicingOverIndexComp,
@@ -196,6 +197,23 @@ def test_for_basic( do_test ):
               BinOp( BinOp( twice_i, Add(), Number( 1 ) ), Add(), Number( 1 ) )
             )
           ),
+          True
+        )
+      ]
+    ) ] )
+  }
+
+  do_test( a )
+
+def test_for_freevar_step( do_test ):
+  a = CaseForFreeVarStepComp.DUT()
+
+  a._rtlir_test_ref = {
+    'upblk' : CombUpblk( 'upblk', [ For(
+      LoopVarDecl( 'i' ), Number( 0 ), Number( 2 ), FreeVar( 'freevar_at_upblk', 1 ),
+      [ Assign(
+          [Attribute( Base( a ), 'out' )],
+          Slice( Attribute( Base( a ), 'in_' ), Number(0), Number(8) ),
           True
         )
       ]
