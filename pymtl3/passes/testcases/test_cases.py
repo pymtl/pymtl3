@@ -237,6 +237,20 @@ class Bits32ArrayStructIfcComp( Component ):
     s.ifc = [ Bits32ArrayStructInIfc() for _ in range(1) ]
     connect( s.out, s.ifc[0].foo[0].foo )
 
+class Bits32DummyFooComp( Component ):
+  def construct( s ):
+    s.in_ = InPort( Bits32 )
+    s.out = OutPort( Bits32 )
+    connect( s.out, s.in_ )
+
+class Bits32DummyBarComp( Component ):
+  def construct( s ):
+    s.in_ = InPort( Bits32 )
+    s.out = OutPort( Bits32 )
+    @s.update
+    def upblk():
+      s.out = s.in_ + Bits32(42)
+
 #-------------------------------------------------------------------------
 # Test Components
 #-------------------------------------------------------------------------
@@ -974,6 +988,36 @@ class CaseScopeTmpWireOverwriteConflictComp:
         else:
           u = s.in_2 + Bits16(1)
           s.out = u
+
+class CaseHeteroCompArrayComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_1 = InPort( Bits32 )
+      s.in_2 = InPort( Bits32 )
+      s.out_1 = OutPort( Bits32 )
+      s.out_2 = OutPort( Bits32 )
+      comp_types = [ Bits32DummyFooComp, Bits32DummyBarComp ]
+      s.comps = [ comp_types[i]() for i in range(2) ]
+      s.comps[0].in_ //= s.in_1
+      s.comps[1].in_ //= s.in_2
+      s.comps[0].out //= s.out_1
+      s.comps[1].out //= s.out_2
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+  )
+  TV_OUT = \
+  _check(
+      'out_1', Bits32, 2,
+      'out_2', Bits32, 3,
+  )
+  TEST_VECTOR = \
+  [
+      [    0,     -1,     0,    41],
+      [   42,      0,    42,    42],
+      [   -1,     42,    -1,    84],
+  ]
 
 #-------------------------------------------------------------------------
 # Test cases without errors

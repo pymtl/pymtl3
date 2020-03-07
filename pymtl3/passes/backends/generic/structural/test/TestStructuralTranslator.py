@@ -154,7 +154,7 @@ def mk_TestStructuralTranslator( _StructuralTranslator ):
       return f'component_decls:{decls}\n'
 
     def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
-      c_rtype = repr(c_rtype) if not c_array_type else c_array_type
+      c_rtype = str(c_rtype) if not c_array_type else c_array_type
       ret = [f'component_decl: {c_id} {c_rtype}']
       for port in port_conns:
         make_indent( port, 1 )
