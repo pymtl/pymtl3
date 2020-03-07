@@ -1002,6 +1002,22 @@ class CaseHeteroCompArrayComp:
       s.comps[1].in_ //= s.in_2
       s.comps[0].out //= s.out_1
       s.comps[1].out //= s.out_2
+  TV_IN = \
+  _set(
+      'in_1', Bits32, 0,
+      'in_2', Bits32, 1,
+  )
+  TV_OUT = \
+  _check(
+      'out_1', Bits32, 2,
+      'out_2', Bits32, 3,
+  )
+  TEST_VECTOR = \
+  [
+      [    0,     -1,     0,    41],
+      [   42,      0,    42,    42],
+      [   -1,     42,    -1,    84],
+  ]
 
 #-------------------------------------------------------------------------
 # Test cases without errors
