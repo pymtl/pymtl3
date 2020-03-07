@@ -11,7 +11,7 @@ from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..GenDAGPass import GenDAGPass
 from ..SimpleSchedulePass import SimpleSchedulePass
-from ..SimpleTickPass import SimpleTickPass
+from ..PrepareSimPass import PrepareSimPass
 
 
 def _test_model( cls ):
@@ -19,14 +19,14 @@ def _test_model( cls ):
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( SimpleSchedulePass() )
-  A.apply( SimpleTickPass() )
-  A.lock_in_simulation()
-  A.eval_combinational()
+  A.apply( PrepareSimPass() )
+
+  A.sim_reset()
+  A.sim_eval_combinational()
 
   T = 0
   while T < 5:
-    A.tick()
-    print(A.line_trace())
+    A.sim_tick()
     T += 1
   return A
 
@@ -234,7 +234,9 @@ def test_const_connect_nested_struct_signal_to_struct():
   x.elaborate()
   x.apply( GenDAGPass() )
   x.apply( SimpleSchedulePass() )
-  x.apply( SimpleTickPass() )
-  x.lock_in_simulation()
-  x.tick()
+  x.apply( PrepareSimPass() )
+
+  x.sim_reset()
+  x.sim_eval_combinational()
+  x.sim_tick()
   assert x.out == SomeMsg2(SomeMsg1(1,2),3)

@@ -12,7 +12,7 @@ from pymtl3.dsl.errors import UpblkCyclicError
 from ..DynamicSchedulePass import DynamicSchedulePass
 from ..GenDAGPass import GenDAGPass
 from ..SimpleSchedulePass import SimpleSchedulePass
-from ..SimpleTickPass import SimpleTickPass
+from ..PrepareSimPass import PrepareSimPass
 
 
 def _test_model( cls ):
@@ -20,14 +20,14 @@ def _test_model( cls ):
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( DynamicSchedulePass() )
-  A.apply( SimpleTickPass() )
-  A.lock_in_simulation()
-  A.eval_combinational()
+  A.apply( PrepareSimPass() )
+
+  A.sim_reset()
+  A.sim_eval_combinational()
 
   T = 0
   while T < 5:
-    A.tick()
-    print(A.line_trace())
+    A.sim_tick()
     T += 1
   return A
 
@@ -216,9 +216,9 @@ def test_const_connect_nested_struct_signal_to_struct():
   x.elaborate()
   x.apply( GenDAGPass() )
   x.apply( DynamicSchedulePass() )
-  x.apply( SimpleTickPass() )
-  x.lock_in_simulation()
-  x.tick()
+  x.apply( PrepareSimPass(print_line_trace=False) )
+  x.sim_reset()
+  x.sim_tick()
   assert x.out == SomeMsg2(SomeMsg1(1,2),3)
 
 def test_const_connect_cannot_handle_same_name_nested_struct():
@@ -240,10 +240,14 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     a: A.SomeMsg1
     b: B.SomeMsg1
 
+  @bitstruct
+  class SomeMsg3:
+    a: SomeMsg2
+
   class Top( Component ):
     def construct( s ):
-      s.out = OutPort(SomeMsg2)
-      connect( s.out, SomeMsg2(A.SomeMsg1(1,2),B.SomeMsg1(3,4)) )
+      s.out = OutPort(SomeMsg3)
+      connect( s.out.a, SomeMsg2(A.SomeMsg1(1,2),B.SomeMsg1(3,4)) )
 
   x = Top()
   x.elaborate()

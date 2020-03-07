@@ -36,16 +36,13 @@ class TestHarnessSimple( Component ):
 
   def run_sim( s, max_cycles=100 ):
     s.apply( SimulationPass() )
-    ncycles = 0
-    print("")
-    print("{:2}:{}".format( ncycles, s.line_trace() ))
-    while not s.done() and ncycles < max_cycles:
-      s.tick()
-      ncycles += 1
-      print("{:2}:{}".format( ncycles, s.line_trace() ))
+    s.sim_reset()
+
+    while not s.done() and s.sim_cycle_count() < max_cycles:
+      s.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert s.sim_cycle_count() < max_cycles
 
 #-------------------------------------------------------------------------
 # Test cases
@@ -166,16 +163,13 @@ class TestHarness( Component ):
 
   def run_sim( s, max_cycles=100 ):
     s.apply( SimulationPass() )
-    ncycles = 0
-    print("")
-    print("{:2}:{}".format( ncycles, s.line_trace() ))
-    while not s.done() and ncycles < max_cycles:
-      s.tick()
-      ncycles += 1
-      print("{:2}:{}".format( ncycles, s.line_trace() ))
+    s.sim_reset()
+
+    while not s.done() and s.sim_cycle_count() < max_cycles:
+      s.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert s.sim_cycle_count() < max_cycles
 
 test_case_table = []
 for src in ['cl', 'rtl']:

@@ -144,7 +144,7 @@ class NormalQueueRTL( Component ):
     connect( s.dpath.raddr,    s.ctrl.raddr )
 
   def line_trace( s ):
-    return "{} () {}".format( s.enq, s.deq )
+    return "{} () {}".format( s.enq.line_trace(), s.deq.line_trace() )
 
 #-----------------------------------------------------------------------
 # NormalQueueRTLDpath
@@ -257,9 +257,9 @@ class NormalQueueRTLCtrl( Component ):
       elif s.empty:
         s.num_free_entries @= s.num_entries
       elif s.enq_ptr > s.deq_ptr:
-        s.num_free_entries @= s.num_entries - SizeType( s.enq_ptr - s.deq_ptr )
+        s.num_free_entries @= s.num_entries - zext( s.enq_ptr - s.deq_ptr, SizeType)
       elif s.deq_ptr > s.enq_ptr:
-        s.num_free_entries @= s.deq_ptr - s.enq_ptr
+        s.num_free_entries @= zext( s.deq_ptr - s.enq_ptr, SizeType )
 
       s.full_next_cycle @= s.do_enq & ~s.do_deq & (s.enq_ptr_next == s.deq_ptr)
 

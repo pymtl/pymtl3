@@ -44,7 +44,7 @@ def test_imatmul_bits2bitstruct_simple():
   a.elaborate()
   a.apply( SimulationPass() )
   a.pt_bits @= 0xeda
-  a.eval_combinational()
+  a.sim_eval_combinational()
   assert a.pt_bitstruct.x == 0xed
   assert a.pt_bitstruct.y == 0xa
 
@@ -63,7 +63,7 @@ def test_imatmul_bitstruct2bits_simple():
   b.apply( SimulationPass() )
   b.pt_bitstruct.x @= 0xed
   b.pt_bitstruct.y @= 0xa
-  b.eval_combinational()
+  b.sim_eval_combinational()
   assert b.pt_bits == 0xeda
 
 def test_imatmul_bits2bitstruct_nested():
@@ -80,7 +80,7 @@ def test_imatmul_bits2bitstruct_nested():
   a.elaborate()
   a.apply( SimulationPass() )
   a.pt_bits @= concat( b6(0x3f), b12(0xeda), b1(1) )
-  a.eval_combinational()
+  a.sim_eval_combinational()
   assert a.pt_bitstruct.z    == 0x3f
   assert a.pt_bitstruct.pt.x == 0xed
   assert a.pt_bitstruct.pt.y == 0xa
@@ -103,7 +103,7 @@ def test_imatmul_bitstruct2bits_nested():
   b.pt_bitstruct.pt.x @= 0xed
   b.pt_bitstruct.pt.y @= 0xa
   b.pt_bitstruct.flag @= 0x1
-  b.eval_combinational()
+  b.sim_eval_combinational()
   assert b.pt_bits == concat( b6(0x3f), b12(0xeda), b1(1) )
 
 #-------------------------------------------------------------------------
@@ -156,7 +156,7 @@ def test_connect_bits2bitstruct_simple():
   a.elaborate()
   a.apply( SimulationPass() )
   a.pt_bits @= 0xeda
-  a.eval_combinational()
+  a.sim_eval_combinational()
   assert a.pt_bitstruct.x == 0xed
   assert a.pt_bitstruct.y == 0xa
 
@@ -173,7 +173,7 @@ def test_connect_bitstruct2bits_simple():
   b.apply( SimulationPass() )
   b.pt_bitstruct.x @= 0xed
   b.pt_bitstruct.y @= 0xa
-  b.eval_combinational()
+  b.sim_eval_combinational()
   assert b.pt_bits == 0xeda
 
 def test_connect_bits2bitstruct_nested():
@@ -188,7 +188,7 @@ def test_connect_bits2bitstruct_nested():
   a.elaborate()
   a.apply( SimulationPass() )
   a.pt_bits @= concat( b6(0x3f), b12(0xeda), b1(1) )
-  a.eval_combinational()
+  a.sim_eval_combinational()
   assert a.pt_bitstruct.z    == 0x3f
   assert a.pt_bitstruct.pt.x == 0xed
   assert a.pt_bitstruct.pt.y == 0xa
@@ -209,5 +209,5 @@ def test_connect_bitstruct2bits_nested():
   b.pt_bitstruct.pt.x @= b8( 0xed )
   b.pt_bitstruct.pt.y @= b4( 0xa  )
   b.pt_bitstruct.flag @= b1( 0x1  )
-  b.eval_combinational()
+  b.sim_eval_combinational()
   assert b.pt_bits == concat( b6(0x3f), b12(0xeda), b1(1) )

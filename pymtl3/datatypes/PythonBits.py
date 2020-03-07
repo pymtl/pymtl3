@@ -34,11 +34,11 @@ class Bits:
 
       if nbits != v.nbits:
         if nbits < v.nbits:
-          raise ValueError( f"A Bits{v.nbits} object "\
+          raise ValueError( f"The Bits{v.nbits} object on RHS"\
                             f"is too wide to be used to construct Bits{nbits}!\n"
                             f"- Suggestion: directly use trunc( value, {nbits}/Bits{nbits} )" )
         else:
-          raise ValueError( f"A Bits{v.nbits} object "\
+          raise ValueError( f"The Bits{v.nbits} object on RHS "\
                             f"is too narrow to be used to construct Bits{nbits}!\n"
                             f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits}" )
       self._uint = v._uint
@@ -225,7 +225,11 @@ class Bits:
       return _new_valid_bits( self.nbits, (self._uint - other) & up )
 
   def __rsub__( self, other ):
-    return Bits( self.nbits, other ) - self
+    # Shouldn't be Bits
+    other = int(other)
+    up = _upper[ self.nbits ]
+    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+    return _new_valid_bits( self.nbits, (self._uint - other) & up )
 
   def __mul__( self, other ):
     try:

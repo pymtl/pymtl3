@@ -18,7 +18,7 @@ from .tracing.VcdGenerationPass import VcdGenerationPass
 # SimpleSim can be used when the UDG is a DAG
 class SimpleSimPass( BasePass ):
   def __call__( s, top ):
-    top.elaborate()
+    LineTraceParamPass()( top )
     GenDAGPass()( top )
     WrapGreenletPass()( top )
     SimpleSchedulePass()( top )
@@ -26,9 +26,8 @@ class SimpleSimPass( BasePass ):
     VcdGenerationPass()( top )
     CollectSignalPass()( top )
     PrintWavePass()( top )
-    SimpleTickPass()( top )
-    AddSimUtilFuncsPass()( top )
-    LineTraceParamPass()( top )
+
+    PrepareSimPass(print_line_trace=True)( top )
 
 # This pass is created to be used for 2019 isca tutorial.
 # Now we can always use this

@@ -19,7 +19,7 @@ from .SimpleTickPass import SimpleTickPass
 
 
 class PrepareSimPass( BasePass ):
-  def __init__( self, print_line_trace, reset_active_high ):
+  def __init__( self, print_line_trace=True, reset_active_high=True ):
     assert reset_active_high in [ True, False ]
 
     self.print_line_trace  = print_line_trace
@@ -33,8 +33,11 @@ class PrepareSimPass( BasePass ):
 
     top._sim = PassMetadata()
 
+    print_line_trace = self.print_line_trace and hasattr( top, 'line_trace' )
+
     # create utils functions
-    top.print_line_trace = self.create_print_line_trace( top )
+    if print_line_trace:
+      top.print_line_trace = self.create_print_line_trace( top )
     top.sim_cycle_count  = self.create_sim_cycle_count( top )
 
     # ff_funcs summarizes the execution at the clock edge
@@ -57,12 +60,11 @@ class PrepareSimPass( BasePass ):
     # append tracing related work
     up_funcs = top._sched.update_schedule
 
-
-    top.sim_reset = self.create_sim_reset( top, self.print_line_trace, self.reset_active_high,
+    top.sim_reset = self.create_sim_reset( top, print_line_trace, self.reset_active_high,
                                            ff_funcs, up_funcs, advance_func )
 
     final_schedule = []
-    if self.print_line_trace:
+    if print_line_trace:
       final_schedule.append( top.print_line_trace )
     final_schedule += ff_funcs + up_funcs
     top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
