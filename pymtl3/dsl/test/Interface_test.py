@@ -8,7 +8,7 @@ Date   : Jan 1, 2018
 """
 from collections import deque
 
-from pymtl3.datatypes import Bits1, Bits8, Bits128
+from pymtl3.datatypes import Bits1, Bits8, Bits128, trunc
 from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
@@ -259,9 +259,15 @@ def test_customized_connect_adapter():
       s.in_ = InPort ( InType  )
       s.out = OutPort( OutType )
 
-      @update
-      def adapter_incr():
-        s.out @= OutType( s.in_ + 1 )
+      if InType.nbits > OutType.nbits:
+        @update
+        def adapter_incr_zext():
+          s.out @= zext( s.in_ + 1, InType )
+      else:
+        @update
+        def adapter_incr_trunc():
+          s.out @= trunc( s.in_ + 1, OutType )
+
 
   class MockRecvIfc( Interface ):
 

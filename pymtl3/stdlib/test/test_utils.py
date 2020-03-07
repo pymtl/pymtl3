@@ -66,25 +66,25 @@ class TestVectorSimulator:
 
   def run_test( self ):
 
-    self.model.apply( SimulationPass() )
+    self.model.apply( SimulationPass(print_line_trace=True) )
 
     self.model.sim_reset()
 
-    print()
     for test_vector in self.test_vectors:
 
       # Set inputs
       self.set_inputs_func( self.model, test_vector )
 
-      self.model.eval_combinational()
+      self.model.sim_eval_combinational()
 
-      # Print the line trace
-      print(self.model.line_trace())
+      try:
+        # Verify outputs
+        self.verify_outputs_func( self.model, test_vector )
+      except Exception as e:
+        self.print_line_trace()
+        raise e
 
-      # Verify outputs
-      self.verify_outputs_func( self.model, test_vector )
-
-      self.model.tick()
+      self.model.sim_tick()
 
 def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycles=5000 ):
 
@@ -105,28 +105,26 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
 
   # Create a simulator
 
-  model.apply( SimulationPass() )
+  model.apply( SimulationPass(print_line_trace=line_trace) )
 
   # Reset model
 
-  model.sim_reset( print_line_trace=line_trace )
+  model.sim_reset()
 
   # Run simulation
 
-  while not model.done() and model.simulated_cycles < max_cycles:
-    if line_trace:
-      model.print_line_trace()
-    model.tick()
+  while not model.done() and model.sim_cycle_count() < max_cycles:
+    model.sim_tick()
 
   # Force a test failure if we timed out
 
-  assert model.simulated_cycles < max_cycles
+  assert model.sim_cycle_count() < max_cycles
 
   # Extra ticks to make VCD easier to read
 
-  model.tick()
-  model.tick()
-  model.tick()
+  model.sim_tick()
+  model.sim_tick()
+  model.sim_tick()
 
 class RunTestVectorSimError( Exception ):
   pass
@@ -161,7 +159,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
 
   # Create a simulator
 
-  model.apply( SimulationPass() )
+  model.apply( SimulationPass(print_line_trace=True) )
 
   # Reset model
 
@@ -223,19 +221,15 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
         in_value = t( in_value )
 
       g = groups[i]
+      x = getattr( model, g[1] )
       if g[0]:
-        getattr( model, g[1] )[g[2]] = in_value
+        x[g[2]] @= in_value
       else:
-        setattr( model, g[1], in_value )
+        x @= in_value
 
     # Evaluate combinational concurrent blocks
 
-    model.eval_combinational()
-
-    # Display line trace output
-
-    if line_trace:
-      model.print_line_trace()
+    model.sim_eval_combinational()
 
     # Check test outputs
 
@@ -251,6 +245,8 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
         out_value = getattr( model, g[1] )
 
       if out_value != ref_value:
+        if line_trace:
+          model.print_line_trace()
 
         error_msg = """
 run_test_vector_sim received an incorrect value!
@@ -268,10 +264,10 @@ run_test_vector_sim received an incorrect value!
 
     # Tick the simulation
 
-    model.tick()
+    model.sim_tick()
 
   # Extra ticks to make VCD easier to read
 
-  model.tick()
-  model.tick()
-  model.tick()
+  model.sim_tick()
+  model.sim_tick()
+  model.sim_tick()

@@ -176,7 +176,6 @@ class RecvCL2SendRTL( Component ):
     def up_send_rtl():
       if s.entry is None:
         s.send.en  @= b1( 0 )
-        s.send.msg @= MsgType()
       else:
         s.send.en  @= b1( s.send.rdy )
         s.send.msg @= s.entry

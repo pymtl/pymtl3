@@ -2,7 +2,7 @@ from pymtl3.dsl import Component
 
 from .autotick.OpenLoopCLPass import OpenLoopCLPass
 from .BasePass import BasePass
-from .sim.AddSimUtilFuncsPass import AddSimUtilFuncsPass
+from .sim.PrepareSimPass import PrepareSimPass
 from .sim.DynamicSchedulePass import DynamicSchedulePass
 from .sim.GenDAGPass import GenDAGPass
 from .sim.SimpleSchedulePass import SimpleSchedulePass
@@ -29,24 +29,31 @@ class SimpleSimPass( BasePass ):
     SimpleTickPass()( top )
     AddSimUtilFuncsPass()( top )
     LineTraceParamPass()( top )
-    top.lock_in_simulation()
 
 # This pass is created to be used for 2019 isca tutorial.
 # Now we can always use this
 class SimulationPass( BasePass ):
+  def __init__( s, *, waveform=None, print_line_trace=True, reset_active_high=True ):
+    s.waveform = waveform
+    s.print_line_trace = print_line_trace
+    s.reset_active_high = reset_active_high
+
   def __call__( s, top ):
-    top.elaborate()
+    LineTraceParamPass()( top )
     GenDAGPass()( top )
     WrapGreenletPass()( top )
     CLLineTracePass()( top )
     DynamicSchedulePass()( top )
+
+    if s.waveform is not None:
+      s.config_tracing = TracingConfig( mode='vcd' )
+
     VcdGenerationPass()( top )
     CollectSignalPass()( top )
     PrintWavePass()( top )
-    SimpleTickPass()( top )
-    AddSimUtilFuncsPass()( top )
-    LineTraceParamPass()( top )
-    top.lock_in_simulation()
+
+    PrepareSimPass(print_line_trace=s.print_line_trace,
+                   reset_active_high=s.reset_active_high)( top )
 
 class AutoTickSimPass( BasePass ):
   def __init__( s, print_line_trace=True ):

@@ -162,8 +162,13 @@ class Bits:
 
       slice_nbits = stop - start
       if isinstance( v, Bits ):
-        if v.nbits > slice_nbits:
-          raise ValueError( f"Cannot fit {v} into a Bits{slice_nbits} slice" )
+        if v.nbits != slice_nbits:
+          if v.nbits < slice_nbits:
+            raise ValueError( f"Cannot fit a Bits{v.nbits} object into a {slice_nbits}-bit slice [{start}:{stop}]\n"
+                              f"- Suggestion: sext/zext the RHS")
+          else:
+            raise ValueError( f"Cannot fit a Bits{v.nbits} object into a {slice_nbits}-bit slice [{start}:{stop}]\n"
+                              f"- Suggestion: trunc the RHS")
 
         self._uint = (sv & (~((1 << stop) - (1 << start)))) | \
                      ((v._uint & _upper[slice_nbits]) << start)
