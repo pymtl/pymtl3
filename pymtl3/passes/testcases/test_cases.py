@@ -596,7 +596,7 @@ class CaseForFreeVarStepComp:
       s.in_ = InPort( Bits16 )
       s.out = OutPort( Bits8 )
       freevar = 1
-      @s.update
+      @update
       def upblk():
         for i in range( 0, 2, freevar ):
           s.out = s.in_[0:8]
