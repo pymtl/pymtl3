@@ -8,6 +8,7 @@
 from collections import deque
 
 from pymtl3.passes.backends.generic import RTLIRTranslator
+from pymtl3.passes.backends.verilog.errors import VerilogStructuralTranslationError
 from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 
 from .behavioral import VBehavioralTranslator as V_BTranslator
@@ -42,6 +43,15 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       s._rtlir_tr_unpacked_q = deque()
 
     def rtlir_tr_src_layout( s, hierarchy ):
+      # Sanity check on BitStructs
+      all_structs = list(map(lambda x: x[0], hierarchy.decl_type_struct))
+      all_struct_names = list(map(lambda x: x.cls.__name__, all_structs))
+      for struct in all_structs:
+        for field_name in struct.get_all_properties().keys():
+          if field_name in all_struct_names:
+            raise VerilogStructuralTranslationError(struct,
+              f'field {field_name} has the same name as BitStruct type {field_name}!')
+
       s.set_header()
       name = s._top_module_full_name
       ret = s.header.format( **locals() )
