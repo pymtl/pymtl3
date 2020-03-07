@@ -359,17 +359,18 @@ class Component( BaseRTLIRType ):
 
   def __eq__( s, other ):
     # Two Components are considered equal iff they expose the same interface
-    return isinstance(other, Component) and s.name == other.name and \
-           s._has_same_interface( other )
+    return isinstance(other, Component) and s._has_same_interface( other )
 
   def __hash__( s ):
     return hash((type(s), s.name, tuple(s.params)))
 
   def __str__( s ):
-    return 'Component'
+    port_strs = ["{}:{}".format(name, repr(rtype)) for name, rtype in s.get_ports_packed()]
+    return f'Component with interface: {", ".join(port_strs)}'
 
   def __repr__( s ):
-    return f'Component {s.name}'
+    port_strs = ["{}:{}".format(name, repr(rtype)) for name, rtype in s.get_ports_packed()]
+    return f'Component with interface: {", ".join(port_strs)}'
 
   def get_name( s ):
     return s.name

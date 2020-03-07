@@ -51,6 +51,7 @@ from pymtl3.passes.testcases import (
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
     CaseForRangeLowerUpperStepPassThroughComp,
+    CaseHeteroCompArrayComp,
     CaseIfBasicComp,
     CaseIfBoolOpInForStmtComp,
     CaseIfDanglingElseInnerComp,
@@ -2116,4 +2117,95 @@ CasePlaceholderTranslationRegIncr = set_attributes( CasePlaceholderTranslationRe
     'REF_PLACEHOLDER_DEPENDENCY',
     '''\
     ''',
+)
+
+CaseHeteroCompArrayComp = set_attributes( CaseHeteroCompArrayComp,
+    'REF_COMP',
+    '''\
+        logic [0:0] comps__clk [0:1] ;
+        logic [31:0] comps__in_ [0:1] ;
+        logic [31:0] comps__out [0:1] ;
+        logic [0:0] comps__reset [0:1] ;
+
+        Bits32DummyFooComp comps__0
+        (
+          .clk( comps__clk[0] ),
+          .in_( comps__in_[0] ),
+          .out( comps__out[0] ),
+          .reset( comps__reset[0] )
+        );
+
+        Bits32DummyBarComp comps__1
+        (
+          .clk( comps__clk[1] ),
+          .in_( comps__in_[1] ),
+          .out( comps__out[1] ),
+          .reset( comps__reset[1] )
+        );
+    ''',
+    'REF_SRC',
+    '''\
+        module Bits32DummyFooComp
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          assign out = in_;
+        endmodule
+
+        module Bits32DummyBarComp
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          always_comb begin : upblk
+            out = in_ + 32'd42;
+          end
+        endmodule
+
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_1,
+          input logic [31:0] in_2,
+          output logic [31:0] out_1,
+          output logic [31:0] out_2,
+          input logic [0:0] reset
+        );
+          logic [0:0] comps__clk [0:1] ;
+          logic [31:0] comps__in_ [0:1] ;
+          logic [31:0] comps__out [0:1] ;
+          logic [0:0] comps__reset [0:1] ;
+
+          Bits32DummyFooComp comps__0
+          (
+            .clk( comps__clk[0] ),
+            .in_( comps__in_[0] ),
+            .out( comps__out[0] ),
+            .reset( comps__reset[0] )
+          );
+
+          Bits32DummyBarComp comps__1
+          (
+            .clk( comps__clk[1] ),
+            .in_( comps__in_[1] ),
+            .out( comps__out[1] ),
+            .reset( comps__reset[1] )
+          );
+
+          assign comps__clk[0] = clk;
+          assign comps__reset[0] = reset;
+          assign comps__clk[1] = clk;
+          assign comps__reset[1] = reset;
+          assign comps__in_[0] = in_1;
+          assign comps__in_[1] = in_2;
+          assign out_1 = comps__out[0];
+          assign out_2 = comps__out[1];
+
+        endmodule
+    '''
 )

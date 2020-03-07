@@ -11,6 +11,7 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 from ...util.utility import make_indent, pretty_concat
 from .VStructuralTranslatorL3 import VStructuralTranslatorL3
@@ -80,8 +81,6 @@ class VStructuralTranslatorL4(
 
   def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
 
-    _c_name = s.rtlir_tr_component_unique_name( c_rtype )
-
     def pretty_comment( string ):
       comments = [
           '  //-------------------------------------------------------------',
@@ -91,7 +90,7 @@ class VStructuralTranslatorL4(
       return '\n'.join(comments)
 
     def gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, c_n_dim ):
-      nonlocal _c_name, m, s
+      nonlocal m, s
       tplt = dedent(
           """\
             {c_name} {c_id}
@@ -103,6 +102,9 @@ class VStructuralTranslatorL4(
         _n_dim = list(int(num_str) for num_str in c_n_dim.split('__') if num_str)
         attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
         obj = eval(f'm.{attr}')
+        # Get the translated component name
+        obj_c_rtype = get_component_ifc_rtlir(obj)
+        _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
         if isinstance(obj, Placeholder):
           c_name = obj.config_placeholder.pickled_top_module
