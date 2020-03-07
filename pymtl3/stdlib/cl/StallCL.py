@@ -30,7 +30,8 @@ class StallCL( Component ):
     s.stall_rgen = Random( stall_seed ) # Separate randgen for each injector
 
     s.add_constraints(
-      M(s.recv) == M(s.send),  # pass_through
+      M(s.recv)     == M(s.send),  # pass_through
+      M(s.recv.rdy) == M(s.send.rdy),  # pass_through
     )
 
 

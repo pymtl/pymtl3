@@ -403,7 +403,7 @@ CaseBits64ZextInComp = set_attributes( CaseBits64ZextInComp,
           input logic [0:0] reset
         );
 
-          // @s.update
+          // @update
           // def upblk():
           //   s.out = zext( s.in_, 64 )
 

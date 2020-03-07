@@ -97,6 +97,10 @@ class MultiDimPackedArrayStruct:
   inner: Bits32Bar
   packed_array: [ [ Bits16 ]*2 ] *3
 
+@bitstruct
+class StructTypeNameAsFieldName:
+  StructTypeNameAsFieldName: Bits32
+
 #-------------------------------------------------------------------------
 # Commonly used Interfaces
 #-------------------------------------------------------------------------
@@ -585,6 +589,24 @@ class CaseForBasicComp:
       def for_basic():
         for i in range( 8 ):
           s.out[ 2*i:2*i+1 ] = s.in_[ 2*i:2*i+1 ] + s.in_[ 2*i+1:(2*i+1)+1 ]
+
+class CaseForFreeVarStepComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits16 )
+      s.out = OutPort( Bits8 )
+      freevar = 1
+      @s.update
+      def upblk():
+        for i in range( 0, 2, freevar ):
+          s.out = s.in_[0:8]
+
+class CaseTypeNameAsFieldNameComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( StructTypeNameAsFieldName )
+      s.out = OutPort( StructTypeNameAsFieldName )
+      s.in_ //= s.out
 
 class CaseForRangeLowerUpperStepPassThroughComp:
   class DUT( Component ):
@@ -1955,7 +1977,7 @@ class CaseGenericAdderComp:
       s.in_1 = InPort( Type )
       s.in_2 = InPort( Type )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_1 + s.in_2
     def line_trace( s ): return 'sum = ' + str(s.out)
@@ -1966,7 +1988,7 @@ class CaseGenericMuxComp:
       s.in_ = [ InPort( Type ) for _ in range(n_ports) ]
       s.sel = InPort( mk_bits( clog2(n_ports) ) )
       s.out = OutPort( Type )
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
@@ -1987,7 +2009,7 @@ class CaseNestedStructConnectWireComp:
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
       s.sum = [ Wire( Bits16 ) for _ in range(3) ]
-      @s.update
+      @update
       def upblk():
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
@@ -2005,7 +2027,7 @@ class CaseNestedStructConnectWireSubComp:
       s.out_bar = OutPort( Bits32 )
       s.out_sum = OutPort( Bits16 )
       s.sum = [ Wire( Bits16 ) for _ in range(3) ]
-      @s.update
+      @update
       def upblk():
         for i in range(3):
           s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
@@ -2019,7 +2041,7 @@ class CaseGenericConditionalDriveComp:
     def construct( s, Type ):
       s.in_ = [InPort ( Type ) for _ in range(2)]
       s.out = [OutPort( Type ) for _ in range(2)]
-      @s.update
+      @update
       def index_upblk():
         if s.in_[0] > s.in_[1]:
           s.out[0] = Type(1)

@@ -167,7 +167,7 @@ class MemIfcCL2FLAdapter( Component ):
     s.right = MemMasterIfcFL()
     s.entry = None
 
-    @s.update
+    @update
     def up_memifc_cl_fl_blk():
 
       if s.entry is not None and s.left.resp.rdy():
@@ -280,7 +280,7 @@ class MemIfcRTL2FLAdapter( Component ):
     s.left  = MemMinionIfcRTL( ReqType, RespType )
     s.right = MemMasterIfcFL()
 
-    @s.update
+    @update
     def up_memifc_rtl_fl_blk():
 
       if s.left.req.en and s.left.resp.rdy:
@@ -299,7 +299,7 @@ class MemIfcRTL2FLAdapter( Component ):
         s.left.resp.en  = Bits1(1)
         s.left.resp.msg = resp
 
-    @s.update
+    @update
     def up_memifc_rtl_fl_rdy():
       s.left.req.rdy = s.left.resp.rdy
 
