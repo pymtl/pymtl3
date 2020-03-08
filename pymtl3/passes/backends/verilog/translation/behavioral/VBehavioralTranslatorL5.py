@@ -41,7 +41,7 @@ class BehavioralRTLIRToVVisitorL5( BehavioralRTLIRToVVisitorL4 ):
     Add support for subcomponent attributes in L5.
     """
     # Generate subcomponent attribute
-    if isinstance( node.value.Type, rt.Component ) and\
+    if isinstance( node.value.Type, rt.Component ) and \
        not isinstance( node.value, bir.Base ):
 
       value = s.visit( node.value )
@@ -61,7 +61,7 @@ class BehavioralRTLIRToVVisitorL5( BehavioralRTLIRToVVisitorL4 ):
     if isinstance( node.value.Type, rt.Array ) and \
        isinstance( node.value.Type.get_sub_type(), rt.Component ):
       idx = s.visit( node.idx )
-      s._unpacked_q.append(idx)
+      s._unpacked_q.appendleft(idx)
       value = s.visit( node.value )
       return value
 
