@@ -28,7 +28,7 @@ def test_step_unit():
   step_unit.word_in = b16(1)
   step_unit.sum1_in = b32(1)
   step_unit.sum2_in = b32(1)
-  step_unit.tick()
+  step_unit.sim_tick()
 
   assert step_unit.sum1_out == b32(2)
   assert step_unit.sum2_out == b32(3)
@@ -50,23 +50,23 @@ def checksum_rtl( words ):
   dut.sim_reset()
 
   # Wait until the checksum unit is ready to receive input
-  dut.send.rdy = b1(1)
+  dut.send.rdy @= 1
   while not dut.recv.rdy:
-    dut.recv.en = b1(0)
-    dut.eval_combinational()
-    dut.tick()
+    dut.recv.en @= 0
+    dut.sim_eval_combinational()
+    dut.sim_tick()
 
   # Feed in the input
-  dut.recv.en = b1(1)
-  dut.recv.msg = bits_in
-  dut.eval_combinational()
-  dut.tick()
+  dut.recv.en @= 1
+  dut.recv.msg @= bits_in
+  dut.sim_eval_combinational()
+  dut.sim_tick()
 
   # Wait until the checksum unit is about to send the message
   while not dut.send.en:
-    dut.recv.en = b1(0)
-    dut.eval_combinational()
-    dut.tick()
+    dut.recv.en @= 0
+    dut.sim_eval_combinational()
+    dut.sim_tick()
 
   # Return the result
   return dut.send.msg
@@ -128,19 +128,13 @@ class ChecksumRTLSrcSink_Tests( BaseSrcSinkTests ):
 
     # Create a simulator
     th.apply( SimulationPass() )
-    ncycles = 0
     th.sim_reset()
-    print( "" )
 
-    # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     if s.vcd_file_name:
       th.print_textwave()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles

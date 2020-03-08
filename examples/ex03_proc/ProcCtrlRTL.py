@@ -168,9 +168,9 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_F():
       if s.reset:
-        s.val_F <<= b1( 0 )
+        s.val_F <<= 0
       elif s.reg_en_F:
-        s.val_F <<= b1( 1 )
+        s.val_F <<= 1
 
     # forward declaration of branch (no jump) logic
 

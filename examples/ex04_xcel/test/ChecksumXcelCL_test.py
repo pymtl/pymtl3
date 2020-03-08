@@ -84,6 +84,7 @@ def checksum_xcel_cl( words ):
   dut = WrappedChecksumXcelCL()
   dut.elaborate()
   dut.apply( SimulationPass() )
+  dut.sim_reset()
 
   reqs, _ = mk_xcel_transaction( words )
 
@@ -91,15 +92,15 @@ def checksum_xcel_cl( words ):
 
     # Wait until xcel is ready to accept a request
     while not dut.recv.rdy():
-      dut.tick()
+      dut.sim_tick()
 
     # Send the request message to xcel
     dut.recv( req )
-    dut.tick()
+    dut.sim_tick()
 
     # Wait until xcel is ready to give a response
     while not dut.give.rdy():
-      dut.tick()
+      dut.sim_tick()
 
     resp_msg = dut.give()
 
@@ -179,19 +180,14 @@ class ChecksumXcelCLSrcSink_Tests:
     # Create a simulator
     th.elaborate()
     th.apply( SimulationPass() )
-    ncycles = 0
     th.sim_reset()
-    print( "" )
 
     # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
 
   #-----------------------------------------------------------------------
   # test_xcel_srcsink_simple

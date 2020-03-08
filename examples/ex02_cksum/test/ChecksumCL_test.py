@@ -61,15 +61,15 @@ def checksum_cl( words ):
 
   # Wait until recv ready
   while not dut.recv.rdy():
-    dut.tick()
+    dut.sim_tick()
 
   # Call recv on dut
   dut.recv( words_to_b128( words ) )
-  dut.tick()
+  dut.sim_tick()
 
   # Wait until dut is ready to give result
   while not dut.give.rdy():
-    dut.tick()
+    dut.sim_tick()
 
   return dut.give()
 
@@ -191,19 +191,14 @@ class ChecksumCLSrcSink_Tests:
 
     # Create a simulator
     th.apply( SimulationPass() )
-    ncycles = 0
     th.sim_reset()
-    print( "" )
 
     # Tick the simulator
-    print("{:3}: {}".format( ncycles, th.line_trace() ))
-    while not th.done() and ncycles < max_cycles:
-      th.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, th.line_trace() ))
+    while not th.done() and th.sim_cycle_count() < max_cycles:
+      th.sim_tick()
 
     # Check timeout
-    assert ncycles < max_cycles
+    assert th.sim_cycle_count() < max_cycles
 
   #-----------------------------------------------------------------------
   # test_srcsink_simple

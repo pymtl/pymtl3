@@ -38,7 +38,7 @@ class StepUnit( Component ):
 
     @update
     def up_step():
-      temp1 = b32(s.word_in) + s.sum1_in
+      temp1 = zext(s.word_in, 32) + s.sum1_in
       s.sum1_out @= temp1 & b32(0xffff)
 
       temp2 = s.sum1_out + s.sum2_in

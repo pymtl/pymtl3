@@ -98,6 +98,6 @@ def test_value_modular():
   # Print out the simulation line trace.
   print( "\n==== Line trace ====" )
   print( "   in_     out")
+  tb.sim_reset()
   for i in range( 6 ):
-    tb.tick()
-    print( "{:2}: {}".format( i, tb.line_trace() ) )
+    tb.sim_tick()
