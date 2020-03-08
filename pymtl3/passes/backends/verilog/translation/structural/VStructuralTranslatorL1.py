@@ -12,7 +12,7 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 
-from ...errors import VerilogReservedKeywordError
+from ...errors import VerilogReservedKeywordError, VerilogPlaceholderError
 from ...util.utility import get_component_unique_name, make_indent, pretty_concat
 
 
@@ -36,6 +36,14 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
         else:
           m_rtype = m._pass_structural_rtlir_gen.rtlir_type
           module_name = s.rtlir_tr_component_unique_name(m_rtype)
+
+        if module_name == m.config_placeholder.top_module:
+          raise VerilogPlaceholderError(m,
+              f"failed to create wrapper for the given object because the same "
+              f"name {module_name} is used for both the Verilog top module and "
+              f"the placeholder wrapper. Please specify a different name for "
+              f"placeholder {m} through the `explicit_module_name` option of "
+              f"TranslationConfigs.")
 
         pickle_template = dedent(
             '''\

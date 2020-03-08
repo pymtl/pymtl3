@@ -55,6 +55,12 @@ class VerilogReservedKeywordError( Exception ):
     return super().__init__(
       f"- {name} is a SystemVerilog reserved keyword!\n- {msg}" )
 
+class VerilogPlaceholderError( Exception ):
+  """SystemVerilog placeholder error."""
+  def __init__( self, obj, msg ):
+    return super().__init__(
+      f"- Error while translating placeholder {obj}\n- {msg}" )
+
 class VerilogCloseLoopPurePythonSimError( Exception ):
   """SystemVerilog closed loop test error during pure python simulation."""
   def __init__( self, obj, msg ):
