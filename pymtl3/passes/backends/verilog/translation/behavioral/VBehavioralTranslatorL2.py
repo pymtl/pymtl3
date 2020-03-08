@@ -76,6 +76,8 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_If( s, node ):
+    node.cond._top_expr = True
+
     src    = []
     body   = []
     orelse = []
@@ -122,6 +124,10 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_For( s, node ):
+    node.start._top_expr = True
+    node.end._top_expr = True
+    node.step._top_expr = True
+
     src      = []
     body     = []
     loop_var = s.visit( node.var )
@@ -166,6 +172,10 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_IfExp( s, node ):
+    node.cond._top_expr = True
+    node.body._top_expr = True
+    node.orelse._top_expr = True
+
     cond  = s.visit_expr_wrap( node.cond )
     true  = s.visit( node.body )
     false = s.visit( node.orelse )
@@ -177,6 +187,8 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_UnaryOp( s, node ):
+    node.operand._top_expr = True
+
     op      = s.ops[ type( node.op ) ]
     operand = s.visit_expr_wrap( node.operand )
 
@@ -187,6 +199,9 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_BoolOp( s, node ):
+    for value in node.values:
+      value._top_expr = True
+
     op     = s.ops[ type( node.op ) ]
     values = []
 
@@ -201,6 +216,9 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_BinOp( s, node ):
+    node.left._top_expr = True
+    node.right._top_expr = True
+
     op  = s.ops[ type( node.op ) ]
     lhs = s.visit_expr_wrap( node.left )
     rhs = s.visit_expr_wrap( node.right )
@@ -212,6 +230,9 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   #-----------------------------------------------------------------------
 
   def visit_Compare( s, node ):
+    node.left._top_expr = True
+    node.right._top_expr = True
+
     op  = s.ops[ type( node.op ) ]
     lhs = s.visit_expr_wrap( node.left )
     rhs = s.visit_expr_wrap( node.right )

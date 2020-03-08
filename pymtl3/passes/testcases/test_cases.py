@@ -1969,6 +1969,30 @@ class CaseConnectArraySubCompArrayStructIfcComp:
       [ -2, -2 ],
   ]
 
+class CaseBehavioralArraySubCompArrayStructIfcComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.b = [ Bits32ArrayStructIfcComp() for _ in range(2) ]
+      @s.update
+      def upblk():
+        for i in range(2):
+          for j in range(1):
+            s.b[i].ifc[j].foo[0].foo = s.in_
+        s.out = s.b[1].out
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits32, 1 )
+  TEST_VECTOR = \
+  [
+      [ 42, 42 ],
+      [  1,  1 ],
+      [ -1, -1 ],
+      [ -2, -2 ],
+  ]
+
 class CaseBits32ArrayConnectSubCompAttrComp:
   class DUT( Component ):
     def construct( s ):
