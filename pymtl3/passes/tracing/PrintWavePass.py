@@ -102,7 +102,7 @@ def _help_print( top ):
 
   for i in range(0,len(all_signal_values["s.reset"])):
     # insert a space every 5 cycles
-    print(f"{tick}{str(i if i%5==0 else '').ljust(char_length-1)}",end="")
+    print(f"{tick}{str(i).ljust(char_length-1)}",end="")
   print("")
 
   # Adding one blank line
@@ -164,10 +164,7 @@ def _help_print( top ):
         #first is reserved for X or " ". Rest is 5 char length.
         length = (char_length-1) + char_length*(j-i)
         next = j-i
-        # print(sig,end = " ")
-        # print(j, end = " ")
-        # print(i)
-        # import pdb;pdb.set_trace()
+
         if length >= bit_length // (char_length-1):
           length = bit_length // (char_length-1)
           if bit_length % char_length != 0:
@@ -192,7 +189,5 @@ def _help_print( top ):
           else:
             print(light_gray + '\033[30m'+x +current,end = "")
           print(" "*(char_length-1+char_length*(j-i)-length),end = "")
-
       print(back + "")
-
     print("")
