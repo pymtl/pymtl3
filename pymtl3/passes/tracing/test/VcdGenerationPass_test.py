@@ -24,7 +24,7 @@ def run_test( dut, tv, tv_in, tv_out ):
   dut.apply( SimulationPass() )
   for v in tv:
     tv_in( dut, v )
-    dut.tick()
+    dut.sim_tick()
     tv_out( dut, v )
   with open(vcd_file_name+".vcd") as fd:
     file_str = ''.join( fd.readlines() )

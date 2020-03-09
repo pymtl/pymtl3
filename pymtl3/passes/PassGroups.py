@@ -1,5 +1,5 @@
-from pymtl3.dsl import Component
 
+from .tracing.TracingConfigs import TracingConfigs
 from .autotick.OpenLoopCLPass import OpenLoopCLPass
 from .BasePass import BasePass
 from .sim.PrepareSimPass import PrepareSimPass
@@ -45,7 +45,7 @@ class SimulationPass( BasePass ):
     DynamicSchedulePass()( top )
 
     if s.waveform is not None:
-      s.config_tracing = TracingConfig( mode='vcd' )
+      top.config_tracing = TracingConfigs( tracing=s.waveform )
 
     VcdGenerationPass()( top )
     CollectSignalPass()( top )

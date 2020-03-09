@@ -27,20 +27,20 @@ class Bits:
 
   def __init__( self, nbits=32, v=0, trunc_int=False ):
     nbits = int(nbits)
-    assert 0 < nbits < 1024, "Only support 0 < nbits < 1024!"
+    assert 0 < nbits < 1024, f"Only support 1 <= nbits < 1024, not {nbits}"
     self.nbits = nbits
 
     if isinstance( v, Bits ):
 
       if nbits != v.nbits:
         if nbits < v.nbits:
-          raise ValueError( f"The Bits{v.nbits} object on RHS"\
+          raise ValueError( f"The Bits{v.nbits} object on RHS "\
                             f"is too wide to be used to construct Bits{nbits}!\n"
                             f"- Suggestion: directly use trunc( value, {nbits}/Bits{nbits} )" )
         else:
           raise ValueError( f"The Bits{v.nbits} object on RHS "\
                             f"is too narrow to be used to construct Bits{nbits}!\n"
-                            f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits}" )
+                            f"- Suggestion: directly use zext/sext(value, {nbits}/Bits{nbits} )" )
       self._uint = v._uint
     else:
       v = int(v)
@@ -49,8 +49,8 @@ class Bits:
       if not trunc_int:
         lo = _lower[nbits]
         if v < lo or v > up:
-          raise ValueError( f"Value {hex(v)} is too big for Bits{nbits}!\n" \
-                            f"({v.bit_length() + (v < 0)} bits are needed in two's complement.)" )
+          raise ValueError( f"Value {hex(v)} is too wide for Bits{nbits}!\n" \
+                            f"(Bits{nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
       self._uint = v & up
 
   # PyMTL simulation specific
@@ -76,8 +76,8 @@ class Bits:
       up = _upper[nbits]
 
       if v < lo or v > up:
-        raise ValueError( f"Value {hex(v)} is too big for Bits{nbits}!\n" \
-                          f"({v.bit_length() + (v < 0)} bits are needed in two's complement.)" )
+        raise ValueError( f"RHS value {hex(v)} of <<= is too wide for LHS Bits{nbits}!\n" \
+                          f"(Bits{nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
       self._next = v & up
 
     return self
@@ -116,8 +116,8 @@ class Bits:
       up = _upper[nbits]
 
       if v < lo or v > up:
-        raise ValueError( f"Value {hex(v)} is too big for Bits{nbits}!\n" \
-                          f"({v.bit_length() + (v < 0)} bits are needed in two's complement.)" )
+        raise ValueError( f"RHS value {hex(v)} of @= is too wide for LHS Bits{nbits}!\n" \
+                          f"(Bits{nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
       self._uint = v & up
 
     return self
@@ -180,7 +180,7 @@ class Bits:
 
         if v < lo or v > up:
           raise ValueError( f"Cannot fit {v} into a Bits{slice_nbits} slice\n" \
-                            f"({v.bit_length() + (v < 0)} bits are needed in two's complement.)" )
+                            f"(Bits{slice_nbits} only accepts {hex(lo)} <= value <= {hex(up)})" )
 
         self._uint = (sv & (~((1 << stop) - (1 << start)))) | \
                      ((v & _upper[slice_nbits]) << start)
@@ -192,13 +192,12 @@ class Bits:
 
     if isinstance( v, Bits ):
       if v.nbits > 1:
-        raise ValueError( f"Cannot fit {v} into a Bits{v.nbits} slice" )
+        raise ValueError( f"Cannot fit a Bits{v.nbits} object into the 1-bit slice" )
       self._uint = (sv & ~(1 << i)) | ((v._uint & 1) << i)
     else:
       v = int(v)
       if abs(v) > 1:
-        raise ValueError( f"Value {hex(v)} is too big for 1-bit slice!\n" \
-                          f"({v.bit_length() + (v < 0)} bits are needed in two's complement.)" )
+        raise ValueError( f"Value {hex(v)} is too big for the 1-bit slice!\n" )
       self._uint = (sv & ~(1 << i)) | ((int(v) & 1) << i)
 
   def __add__( self, other ):
