@@ -716,7 +716,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
                  f'@update',
                  f'def isignal_{mangled_rhs}():',
-                 f'  s.{mangled_rhs} = {rhs}' ]
+                 f'  s.{mangled_rhs} @= {rhs}' ]
     set_comb = ( s._gen_ref_write( lhs, 's.'+mangled_rhs, dtype_nbits ) )
     return set_comb, blocks
 
@@ -807,9 +807,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
                  f'@update',
                  f'def osignal_{mangled_lhs}():',
-                 f'  {lhs} = s.{mangled_lhs}' ]
+                 f'  {lhs} @= s.{mangled_lhs}' ]
 
-    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits, '@=' )
     return set_comb, blocks
 
   def gen_port_struct_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
@@ -829,7 +829,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # We create a new struct if we are copying values from verilator
     # world to pymtl land and send it out through the output of this
     # component
-    upblk_content = [ f"{lhs} = {dtype_name}()" ]
+    upblk_content = [ f"{lhs} @= {dtype_name}()" ]
     body, pos = s._gen_struct_write( 'o', lhs, 's.'+mangled_lhs, dtype, 0 )
     assert pos == dtype.get_length()
 
@@ -840,7 +840,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
     # We create a long Bits object tmp first
     # Then we load the full Bits to tmp
-    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits )
+    set_comb = s._gen_ref_read( 's.'+mangled_lhs, rhs, dtype_nbits, '@=' )
     return set_comb, blocks
 
   def gen_port_output( s, lhs, pnames, rhs, dtype, symbols ):
@@ -974,9 +974,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
       i += 1
       assert i <= len(n_dim), "failed to find port array index!"
 
-  def _gen_ref_write( s, lhs, rhs, nbits ):
+  def _gen_ref_write( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs}[0] = int({rhs})" ]
+      return [ f"{lhs}[0] {equal} int({rhs})" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -984,12 +984,12 @@ m->{name}{sub} = {deference}model->{name}{sub};
       for idx in range(num_assigns):
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
-        ret.append( f"{lhs}[{idx}] = int({rhs}[{l}:{r}])" )
+        ret.append( f"{lhs}[{idx}] {equal} int({rhs}[{l}:{r}])" )
       return ret
 
-  def _gen_ref_read( s, lhs, rhs, nbits ):
+  def _gen_ref_read( s, lhs, rhs, nbits, equal='=' ):
     if nbits <= 64:
-      return [ f"{lhs} = Bits{nbits}({rhs}[0])" ]
+      return [ f"{lhs} {equal} Bits{nbits}({rhs}[0])" ]
     else:
       ret = []
       ITEM_BITWIDTH = 32
@@ -998,5 +998,5 @@ m->{name}{sub} = {deference}model->{name}{sub};
         l = ITEM_BITWIDTH*idx
         r = l+ITEM_BITWIDTH if l+ITEM_BITWIDTH <= nbits else nbits
         _nbits = r - l
-        ret.append( f"{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])" )
+        ret.append( f"{lhs}[{l}:{r}] {equal} Bits{_nbits}({rhs}[{idx}])" )
       return ret

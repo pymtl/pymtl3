@@ -34,7 +34,7 @@ class Vector( BaseRTLIRDataType ):
     s.nbits = nbits
 
   def get_length( s ):
-    return s.nbits
+    return int(s.nbits)
 
   def __eq__( s, other ):
     return (isinstance(other, Vector) and s.nbits == other.nbits) or \
@@ -87,7 +87,7 @@ class Struct( BaseRTLIRDataType ):
     return s.cls
 
   def get_length( s ):
-    return sum( d.get_length() for d in s.properties.values() )
+    return int(sum( d.get_length() for d in s.properties.values() ))
 
   def has_property( s, p ):
     return p in s.properties
@@ -152,7 +152,7 @@ class PackedArray( BaseRTLIRDataType ):
     return hash((type(s), tuple(s.dim_sizes), s.sub_dtype))
 
   def get_length( s ):
-    return s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 )
+    return int(s.sub_dtype.get_length()*reduce( lambda p,x: p*x, s.dim_sizes, 1 ))
 
   def get_next_dim_type( s ):
     if len( s.dim_sizes ) == 1:

@@ -159,10 +159,11 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     If the given AugAssign is not non-blocking assignment, throw PyMTLSyntaxError
     """
-    if isinstance( node.op, ast.LShift ):
+    if isinstance( node.op, (ast.LShift, ast.MatMult) ):
       value = s.visit( node.value )
       targets = [ s.visit( node.target ) ]
-      ret = bir.Assign( targets, value, blocking = False )
+      blocking = False if isinstance(node.op, ast.LShift) else True
+      ret = bir.Assign( targets, value, blocking )
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
