@@ -14,6 +14,7 @@ class TracingConfigs( BasePassConfigs ):
   Options = {
     "tracing" : 'none',
     "vcd_file_name" : "",
+    "chars_per_cycle" : 6,
     "method_trace" : True,
   }
 
@@ -25,6 +26,11 @@ class TracingConfigs( BasePassConfigs ):
 
     'vcd_file_name': Checker(
       condition = lambda v: isinstance(v, str),
+      error_msg = "expects a string"
+    ),
+
+    'chars_per_cycle': Checker(
+      condition = lambda v: isinstance(v, int),
       error_msg = "expects a string"
     ),
 
