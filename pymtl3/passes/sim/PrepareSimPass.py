@@ -63,12 +63,6 @@ class PrepareSimPass( BasePass ):
     top.sim_reset = self.create_sim_reset( top, print_line_trace, self.reset_active_high,
                                            ff_funcs, up_funcs, advance_func )
 
-    final_schedule = []
-    if print_line_trace:
-      final_schedule.append( top.print_line_trace )
-    final_schedule += ff_funcs + up_funcs
-    top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
-
     # FIXME update_once?
     # check if the design has method_port
     method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
@@ -76,12 +70,19 @@ class PrepareSimPass( BasePass ):
     if len(method_ports) == 0:
       # Pure RTL design, add eval_combinational
       top.sim_eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
+      # Tick schedule first
+      final_schedule = top._sched.update_schedule[::]
     else:
       tmp = list(method_ports)[0]
       def sim_eval_combinational():
         raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(tmp)[1:]} is a method port.")
       top.sim_eval_combinational = sim_eval_combinational
+      final_schedule = []
 
+    if print_line_trace:
+      final_schedule.append( top.print_line_trace )
+    final_schedule += ff_funcs + up_funcs
+    top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
 
     self.lock_in_simulation( top )
 
