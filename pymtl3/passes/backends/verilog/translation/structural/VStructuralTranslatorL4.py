@@ -63,8 +63,19 @@ class VStructuralTranslatorL4(
           _port_array_rtype = None
           _port_rtype = _port_rtype
 
-        ret += s.rtlir_tr_subcomp_ifc_port_decl( m, c_id, c_rtype, c_array_type,
-                  f'{ifc_id}__{port_id}', port_rtype, port_array_type,
+        # Combine the array_type of two interfaces into one
+        combined_ifc_array_type = {
+            'def' : port_array_type['def'],
+            'unpacked_type' : ifc_array_type['unpacked_type'] + port_array_type['unpacked_type'],
+            'n_dim' : ifc_array_type['n_dim'] + port_array_type['n_dim'],
+        }
+
+        ret += s.rtlir_tr_subcomp_ifc_port_decl( m,
+                  # Component: nested interface does not change the component
+                  c_id, c_rtype, c_array_type,
+                  # Interface: nested interface appends its id and array_type
+                  f'{ifc_id}__{port_id}', port_rtype, combined_ifc_array_type,
+                  # Port: use the id, rtype, and array_type of the port
                   _port_id, _port_rtype, s.rtlir_tr_unpacked_array_type(_port_array_rtype))
       return ret
 
@@ -148,9 +159,11 @@ class VStructuralTranslatorL4(
 
     # Generate wire declarations for all ports
     defs = []
+
     for dscp in port_conns + ifc_conns:
       defs.append(pretty_concat(dscp['data_type'], dscp['packed_type'],
         f"{c_id}__{dscp['id']}", f"{c_array_type['unpacked_type']}{dscp['unpacked_type']}", ';'))
+
     make_indent( defs, 1 )
     defs = ['\n'.join(defs)]
 
