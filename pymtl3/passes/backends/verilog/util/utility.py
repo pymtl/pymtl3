@@ -48,7 +48,11 @@ def expand( v ):
   return os.path.expanduser(os.path.expandvars(v))
 
 def pretty_concat( *strings ):
-  return ' '.join([s for s in strings if s])
+  ret = ' '.join([s for s in strings[:-1] if s])
+  if strings[-1] == ';':
+    ret += ';'
+  else:
+    ret += f' {strings[-1]}'
 
 def get_dir( cur_file ):
   return os.path.dirname(os.path.abspath(cur_file))+os.path.sep
