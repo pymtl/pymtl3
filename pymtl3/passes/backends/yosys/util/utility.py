@@ -80,7 +80,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += _mangle_port(f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:], port_idx+1)
+        ret += _mangle_port(f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:], port_idx)
       return ret
 
   def _mangle_ifc( pname, vname, ifc, n_dim, port_idx ):

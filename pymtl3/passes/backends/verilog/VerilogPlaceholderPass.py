@@ -168,7 +168,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     ports = [
       f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
       f" {name}{'' if idx == len(rtlir_ports)-1 else ','}" \
-      for idx, (_, name, p) in enumerate(rtlir_ports) if name
+      for idx, (_, name, p, _) in enumerate(rtlir_ports) if name
     ]
 
     # The wrapper has to have an unused clk port to make verilator
@@ -188,7 +188,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # Connections between top module and inner module
     connect_ports = [
       f"    .{name}( {name} ){'' if idx == len(rtlir_ports)-1 else ','}"\
-      for idx, (_, name, p) in enumerate(rtlir_ports) if name
+      for idx, (_, name, p, _) in enumerate(rtlir_ports) if name
     ]
 
     lines = [
