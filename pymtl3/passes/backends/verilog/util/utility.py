@@ -53,6 +53,7 @@ def pretty_concat( *strings ):
     ret += ';'
   else:
     ret += f' {strings[-1]}'
+  return ret
 
 def get_dir( cur_file ):
   return os.path.dirname(os.path.abspath(cur_file))+os.path.sep
