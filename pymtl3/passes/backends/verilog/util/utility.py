@@ -134,11 +134,13 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
 
+  # [pnames], vname, rtype, port_idx
+
   def _mangle_port( pname, vname, port, n_dim ):
 
     # Normal port
     if not n_dim:
-      return [ ( [pname], port_map[pname] if pname in port_map else vname, port ) ]
+      return [ ( [pname], port_map[pname] if pname in port_map else vname, port, 0 ) ]
 
     # Handle port array. We just assume if one element of the port array
     # is mapped, we need the user to map every element in the array.
@@ -151,7 +153,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
         if _pname in port_map:
           found += 1
           _vname = port_map[_pname]
-        all_ports.append( ( [_pname], _vname, _port ) )
+        all_ports.append( ( [_pname], _vname, _port, 0 ) )
       else:
         for i in range( _n_dim[0] ):
           Q.append( (f"{_pname}[{i}]", f"{_vname}__{i}", _port, _n_dim[1:]) )
@@ -161,34 +163,34 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
         f" but only {found} of them is mapped. Please either map all of them or none of them."
 
     if not found:
-      return [ ( [pname], vname, rt.Array( n_dim, port ) ) ]
+      return [ ( [pname], vname, rt.Array( n_dim, port ), 0 ) ]
     else:
       return all_ports
 
   def _is_ifc_mapped( pname, vname, rtype, n_dim ):
     found, tot, flatten_ports = 0, 0, []
     # pname, vname, rtype, n_dim
-    Q = deque( [ (pname, vname, rtype, n_dim) ] )
+    Q = deque( [ (pname, vname, rtype, n_dim, 0) ] )
 
     while Q:
-      _pname, _vname, _rtype, _n_dim = Q.popleft()
+      _pname, _vname, _rtype, _n_dim, _prev_dims = Q.popleft()
       if _n_dim:
         for i in range(_n_dim[0]):
-          Q.append((f"{_pname}[{i}]", f"{_vname}__{i}", _rtype, _n_dim[1:]))
+          Q.append((f"{_pname}[{i}]", f"{_vname}__{i}", _rtype, _n_dim[1:], _prev_dims+1))
       else:
         if isinstance( _rtype, rt.Port ):
           # Port inside the interface
           tot += 1
           if _pname in port_map:
             found += 1
-            flatten_ports.append(([_pname], port_map[_pname], _rtype))
+            flatten_ports.append(([_pname], port_map[_pname], _rtype, _prev_dims))
           else:
-            flatten_ports.append(([_pname], _vname, _rtype))
+            flatten_ports.append(([_pname], _vname, _rtype, _prev_dims))
         elif isinstance( _rtype, rt.InterfaceView ):
           # Interface (nested)
           for sub_name, sub_rtype in _rtype.get_all_properties_packed():
             sub_n_dim, sub_rtype = get_rtype( sub_rtype )
-            Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}", sub_rtype, sub_n_dim))
+            Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}", sub_rtype, sub_n_dim, _prev_dims))
         else:
           assert False, f"{_pname} is not interface(s) or port(s)!"
 
@@ -199,40 +201,41 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
 
   def _gen_packed_ifc( pname, vname, ifc, n_dim ):
     packed_ifc, ret = [], []
-    Q = deque( [ (pname, vname, ifc, n_dim, []) ] )
+    Q = deque( [ (pname, vname, ifc, n_dim, [], 0) ] )
     while Q:
-      _pname, _vname, _rtype, _n_dim, _prev_n_dim = Q.popleft()
+      _pname, _vname, _rtype, _n_dim, _prev_n_dim, _port_idx = Q.popleft()
 
       if isinstance( _rtype, rt.Port ):
         if not (_prev_n_dim + _n_dim):
           new_rtype = _rtype
         else:
           new_rtype = rt.Array(_prev_n_dim+_n_dim, _rtype)
-        packed_ifc.append((_pname, _vname, new_rtype))
+        packed_ifc.append((_pname, _vname, new_rtype, _port_idx))
 
       elif isinstance( _rtype, rt.InterfaceView ):
         if _n_dim:
           new_prev_n_dim = _prev_n_dim + [_n_dim[0]]
           for i in range(_n_dim[0]):
-            Q.append((f"{_pname}[{i}]", _vname, _rtype, _n_dim[1:], new_prev_n_dim))
+            Q.append((f"{_pname}[{i}]", _vname, _rtype, _n_dim[1:], new_prev_n_dim, _port_idx+1))
         else:
           new_prev_n_dim = _prev_n_dim
           for sub_name, sub_rtype in _rtype.get_all_properties_packed():
             sub_n_dim, sub_rtype = get_rtype( sub_rtype )
             Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}",
-                      sub_rtype, sub_n_dim, new_prev_n_dim))
+                      sub_rtype, sub_n_dim, new_prev_n_dim, _port_idx))
       else:
         assert False, f"{_pname} is not interface(s) or port(s)!"
 
     # Merge entries whose vnames are the same. The result will have a list for
     # the pnames.
     names = set()
-    for _, vname, rtype in packed_ifc:
+    for _, vname, rtype, port_idx in packed_ifc:
       if vname not in names:
         names.add( vname )
-        ret.append(([], vname, rtype))
-        for _pname, _vname, _ in packed_ifc:
+        ret.append(([], vname, rtype, port_idx))
+        for _pname, _vname, _, _port_idx in packed_ifc:
           if vname == _vname:
+            assert _port_idx == port_idx
             ret[-1][0].append(_pname)
 
     return ret

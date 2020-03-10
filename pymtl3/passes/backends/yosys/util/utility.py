@@ -39,66 +39,66 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
      element is mapped in port_map, or _all_ of the elements are mapped.
   """
 
-  def _mangle_vector( pname, vname, port, dtype ):
+  def _mangle_vector( pname, vname, port, dtype, port_idx ):
     return [([pname], port_map[pname] if pname in port_map else vname, 
-             rt.Port(port.direction, dtype))]
+             rt.Port(port.direction, dtype), port_idx)]
 
-  def _mangle_struct( pname, vname, port, dtype ):
+  def _mangle_struct( pname, vname, port, dtype, port_idx ):
     ret = []
     for field_name, field_dtype in dtype.get_all_properties().items():
       ret += _mangle_dtype(f"{pname}.{field_name}", f"{vname}__{field_name}",
-                           port, field_dtype)
+                           port, field_dtype, port_idx)
     return ret
 
-  def _mangle_packed( pname, vname, port, dtype, n_dim ):
+  def _mangle_packed( pname, vname, port, dtype, n_dim, port_idx ):
     if not n_dim:
-      return _mangle_dtype( pname, vname, port, dtype )
+      return _mangle_dtype( pname, vname, port, dtype, port_idx )
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += _mangle_packed( f"{pname}[{i}]", f"{vname}__{i}", port, dtype, n_dim[1:] )
+        ret += _mangle_packed( f"{pname}[{i}]", f"{vname}__{i}", port, dtype, n_dim[1:], port_idx )
       return ret
 
-  def _mangle_dtype( pname, vname, port, dtype ):
+  def _mangle_dtype( pname, vname, port, dtype, port_idx ):
     if isinstance(dtype, rdt.Vector):
-      return _mangle_vector(pname, vname, port, dtype)
+      return _mangle_vector(pname, vname, port, dtype, port_idx)
     elif isinstance(dtype, rdt.Struct):
-      return _mangle_struct(pname, vname, port, dtype)
+      return _mangle_struct(pname, vname, port, dtype, port_idx)
     elif isinstance(dtype, rdt.PackedArray):
       return _mangle_packed(pname, vname, port,
-                            dtype.get_sub_dtype(), dtype.get_dim_sizes())
+                            dtype.get_sub_dtype(), dtype.get_dim_sizes(), port_idx)
     else:
       assert False, f'unrecognized data type {dtype}!'
 
-  def _mangle_port( pname, vname, port, n_dim ):
+  def _mangle_port( pname, vname, port, n_dim, port_idx ):
     # Normal port
     if not n_dim:
-      return _mangle_dtype( pname, vname, port, port.get_dtype() )
+      return _mangle_dtype( pname, vname, port, port.get_dtype(), port_idx )
 
     # Handle port array. We just assume if one element of the port array
     # is mapped, we need the user to map every element in the array.
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += _mangle_port(f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:])
+        ret += _mangle_port(f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:], port_idx+1)
       return ret
 
-  def _mangle_ifc( pname, vname, ifc, n_dim ):
+  def _mangle_ifc( pname, vname, ifc, n_dim, port_idx ):
     ret = []
     if not n_dim:
       for port_name, port_rtype in ifc.get_all_properties_packed():
         port_n_dim, port_rtype = get_rtype( port_rtype )
         if isinstance(port_rtype, rt.InterfaceView):
           ret += _mangle_ifc(f"{pname}.{port_name}", f"{vname}__{port_name}",
-                              port_rtype, port_n_dim)
+                              port_rtype, port_n_dim, port_idx)
         elif isinstance(port_rtype, rt.Port):
           ret += _mangle_port(f"{pname}.{port_name}", f"{vname}__{port_name}",
-                              port_rtype, port_n_dim)
+                              port_rtype, port_n_dim, port_idx)
         else:
           assert False, "unrecognized interface/port {port_rtype}!"
     else:
       for i in range(n_dim[0]):
-        ret += _mangle_ifc(f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:])
+        ret += _mangle_ifc(f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:], port_idx+1)
     return ret
 
   # We start from all packed ports/interfaces, and unpack arrays if
@@ -110,10 +110,10 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
     if not has_clk and name == 'clk':      continue
     if not has_reset and name == 'reset':  continue
     p_n_dim, p_rtype = get_rtype( port )
-    ret += _mangle_port( name, name, p_rtype, p_n_dim )
+    ret += _mangle_port( name, name, p_rtype, p_n_dim, 0 )
 
   for name, ifc in rtype.get_ifc_views_packed():
     i_n_dim, i_rtype = get_rtype( ifc )
-    ret += _mangle_ifc( name, name, i_rtype, i_n_dim )
+    ret += _mangle_ifc( name, name, i_rtype, i_n_dim, 0 )
 
   return ret
