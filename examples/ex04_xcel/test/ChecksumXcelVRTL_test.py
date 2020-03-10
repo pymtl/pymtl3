@@ -45,21 +45,21 @@ def checksum_xcel_vrtl( words ):
     dut.xcel.resp.rdy = b1(1)
     while not dut.xcel.req.rdy:
       dut.xcel.req.en   = b1(0)
-      dut.tick()
+      dut.sim_tick()
 
     # Send a request
     dut.xcel.req.en  = b1(1)
     dut.xcel.req.msg = req
-    dut.tick()
+    dut.sim_tick()
 
     # Wait for response
     while not dut.xcel.resp.en:
       dut.xcel.req.en = b1(0)
-      dut.tick()
+      dut.sim_tick()
 
     # Get the response message
     resp_data = dut.xcel.resp.msg.data
-    dut.tick()
+    dut.sim_tick()
 
   return resp_data
 
@@ -100,7 +100,7 @@ class ChecksumXcelVRTLSrcSink_Tests( BaseTests ):
     # Tick the simulator
     print("{:3}: {}".format( ncycles, th.line_trace() ))
     while not th.done() and ncycles < max_cycles:
-      th.tick()
+      th.sim_tick()
       ncycles += 1
       print("{:3}: {}".format( ncycles, th.line_trace() ))
 

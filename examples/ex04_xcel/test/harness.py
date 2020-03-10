@@ -159,7 +159,7 @@ def run_test( ProcModel, XcelModel, gen_test, dump_vcd=None,
 
   T = 0
   while not th.done() and T < max_cycles:
-    th.tick()
+    th.sim_tick()
     print "{:3}: {}".format( T, th.line_trace() )
     T += 1
 
@@ -169,6 +169,6 @@ def run_test( ProcModel, XcelModel, gen_test, dump_vcd=None,
 
   # Add a couple extra ticks so that the VCD dump is nicer
 
-  th.tick()
-  th.tick()
-  th.tick()
+  th.sim_tick()
+  th.sim_tick()
+  th.sim_tick()

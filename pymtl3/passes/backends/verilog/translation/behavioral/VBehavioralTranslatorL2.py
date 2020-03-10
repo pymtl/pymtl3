@@ -45,9 +45,10 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
     # The dictionary of operator-character pairs
     s.ops = {
       # Unary operators
-      bir.Invert : '~', bir.Not : '!', bir.UAdd : '+', bir.USub : '-',
+      # bir.Invert : '~', bir.Not : '!', bir.UAdd : '+', bir.USub : '-',
+      bir.Invert : '~', bir.UAdd : '+', bir.USub : '-',
       # Boolean operators
-      bir.And : '&&', bir.Or : '||',
+      # bir.And : '&&', bir.Or : '||',
       # Binary operators
       bir.Add : '+', bir.Sub : '-', bir.Mult : '*', bir.Div : '/',
       bir.Mod : '%', bir.Pow : '**',
@@ -61,7 +62,8 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   def visit_expr_wrap( s, node ):
     """Return expressions selectively wrapped with brackets."""
     if isinstance( node,
-        ( bir.IfExp, bir.UnaryOp, bir.BoolOp, bir.BinOp, bir.Compare ) ):
+        # ( bir.IfExp, bir.UnaryOp, bir.BoolOp, bir.BinOp, bir.Compare ) ):
+        ( bir.IfExp, bir.UnaryOp, bir.BinOp, bir.Compare ) ):
       return f"( {s.visit(node)} )"
     else:
       return s.visit( node )
@@ -186,15 +188,15 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
   # visit_BoolOp
   #-----------------------------------------------------------------------
 
-  def visit_BoolOp( s, node ):
-    op     = s.ops[ type( node.op ) ]
-    values = []
+  # def visit_BoolOp( s, node ):
+  #   op     = s.ops[ type( node.op ) ]
+  #   values = []
 
-    for value in node.values:
-      values.append( s.visit_expr_wrap( value ) )
-    src = f' {op} '.join( values )
+  #   for value in node.values:
+  #     values.append( s.visit_expr_wrap( value ) )
+  #   src = f' {op} '.join( values )
 
-    return src
+  #   return src
 
   #-----------------------------------------------------------------------
   # visit_BinOp

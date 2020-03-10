@@ -41,15 +41,15 @@ def run_sim( _th ):
     print()
     cycle = 0
     while not th.done() and cycle < 1000:
-      th.tick()
+      th.sim_tick()
       print(th.line_trace())
       cycle += 1
 
     assert cycle < 1000
 
-    th.tick()
-    th.tick()
-    th.tick()
+    th.sim_tick()
+    th.sim_tick()
+    th.sim_tick()
   finally:
     try:
       th.q.finalize()

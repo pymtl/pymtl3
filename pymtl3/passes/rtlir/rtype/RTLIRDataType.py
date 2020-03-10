@@ -11,6 +11,7 @@ is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
 from functools import reduce
+from math import log2, ceil
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst
@@ -29,12 +30,16 @@ class BaseRTLIRDataType:
 
 class Vector( BaseRTLIRDataType ):
   """RTLIR data type class for vector type."""
-  def __init__( s, nbits ):
+  def __init__( s, nbits, is_explicit = True ):
     assert nbits > 0, 'vector bitwidth should be a positive integer!'
     s.nbits = nbits
+    s._is_explicit = is_explicit
 
   def get_length( s ):
     return int(s.nbits)
+
+  def is_explicit( s ):
+    return s._is_explicit
 
   def __eq__( s, other ):
     return (isinstance(other, Vector) and s.nbits == other.nbits) or \
@@ -220,7 +225,7 @@ def get_rtlir_dtype( obj ):
 
       # python int object
       elif Type is int:
-        return Vector( 32 )
+        return Vector( _get_nbits_from_value( obj ), False )
 
       # Struct data type
       elif is_bitstruct_class( Type ):
@@ -236,9 +241,7 @@ def get_rtlir_dtype( obj ):
 
     # Python integer objects
     elif isinstance( obj, int ):
-      # Following the Verilog bitwidth rule: number literals have 32 bit width
-      # by default.
-      return Vector( 32 )
+      return Vector( _get_nbits_from_value( obj ), False )
 
     # PyMTL Bits objects
     elif isinstance( obj, Bits ):
@@ -253,3 +256,11 @@ def get_rtlir_dtype( obj ):
   except AssertionError as e:
     msg = '' if e.args[0] is None else e.args[0]
     raise RTLIRConversionError( obj, msg )
+
+def _get_nbits_from_value( value ):
+  if -1 <= value <= 1:
+    return 1
+  if value < 0:
+    return ceil(log2(abs(value)))
+  else:
+    return ceil(log2(value+1))

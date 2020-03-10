@@ -6,7 +6,8 @@
 """Provide L1 behavioral RTLIR type check pass."""
 
 import copy
-from collections import OrderedDict
+from collections import OrderedDict, deque
+from contextlib import contextmanager
 
 from pymtl3.datatypes import Bits32, mk_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
@@ -24,11 +25,17 @@ class BehavioralRTLIRTypeCheckL1Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check = PassMetadata()
     m._pass_behavioral_rtlir_type_check.rtlir_freevars = OrderedDict()
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
-    visitor = BehavioralRTLIRTypeCheckVisitorL1(
+    type_checker = BehavioralRTLIRTypeCheckVisitorL1(
       m, m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_accessed )
+    type_enforcer = BehavioralRTLIRTypeEnforcerL1()
     for blk in m.get_update_block_order():
-      visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      type_checker.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      type_enforcer.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+
+#-------------------------------------------------------------------------
+# Type checker
+#-------------------------------------------------------------------------
 
 class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def __init__( s, component, freevars, accessed ):
@@ -89,12 +96,17 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
   # Override the default visit()
   def visit( s, node ):
+    # not node._is_explicit: is the parent node allowed to re-interpret this
+    # node's bitwidth without truncation?
     node_name = node.__class__.__name__
     method = 'visit_' + node_name
     func = getattr( s, method, s.generic_visit )
 
     # First visit (type check) all child nodes
     for field, value in vars(node).items():
+      # Special case For because we use context depedent types
+      # for the loop index
+      if node_name == 'For' and field == 'body': continue
       if isinstance( value, list ):
         for item in value:
           if isinstance( item, bir.BaseBehavioralRTLIR ):
@@ -128,6 +140,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   # Override the default generic_visit()
   def generic_visit( s, node ):
     node.Type = None
+    node._is_explicit = True
 
   def is_same( s, u, v ):
     """Return if the sub-AST at u and v are the same."""
@@ -136,18 +149,23 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     return u == v
 
   def _visit_Assign_single_target( s, node, target, i ):
-    rhs_type = node.value.Type.get_dtype()
+    # At L1 it's always signal assignment
+    is_rhs_reinterpretable = not node.value._is_explicit
+    if is_rhs_reinterpretable:
+      node.value.Type = copy.copy(target.Type)
+
     lhs_type = target.Type.get_dtype()
+    rhs_type = node.value.Type.get_dtype()
 
     # Weak type checking (agreeable types)
     if not lhs_type( rhs_type ):
       raise PyMTLTypeError( s.blk, node.ast,
-        f'Unagreeable types between LHS and RHS (LHS target#{i} of {lhs_type} vs {rhs_type})!' )
+        f'Unagreeable types between LHS and RHS (LHS target#{i+1} of {lhs_type} vs {rhs_type})!' )
 
     # Strong type checking (same type)
     if rhs_type != lhs_type:
       raise PyMTLTypeError( s.blk, node.ast,
-        f'LHS and RHS of assignment should have the same type (LHS target#{i} of {lhs_type} vs {rhs_type})!' )
+        f'LHS and RHS of assignment should have the same type (LHS target#{i+1} of {lhs_type} vs {rhs_type})!' )
 
   def visit_Assign( s, node ):
     # RHS should have the same type as any of LHS
@@ -155,6 +173,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       s._visit_Assign_single_target( node, target, i )
 
     node.Type = None
+    node._is_explicit = True
 
   def visit_FreeVar( s, node ):
     if node.name not in s.freevars:
@@ -169,19 +188,23 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     if isinstance( t, rt.Const ) and isinstance( t.get_dtype(), rdt.Vector ):
       node._value = mk_bits( t.get_dtype().get_length() )( node.obj )
     node.Type = t
+    node._is_explicit = False if isinstance(node.obj, int) else True
 
   def visit_Base( s, node ):
     # Mark this node as having type rt.Component
     # In L1 the `s` top component is the only possible base
     node.Type = rt.get_rtlir( node.base )
+    node._is_explicit = True
     if not isinstance( node.Type, rt.Component ):
       raise PyMTLTypeError( s.blk, node.ast,
         f'{node} is not a rt.Component!' )
 
   def visit_Number( s, node ):
-    # By default, number literals have bitwidth of 32
+    # By default, number literals have the minimal bitwidth that can
+    # hold its value without truncation.
     node.Type = rt.get_rtlir( node.value )
-    node._value = Bits32( node.value )
+    node._value = mk_bits( node.Type.get_dtype().get_length() )( node.value )
+    node._is_explicit = False
 
   def visit_Concat( s, node ):
     nbits = 0
@@ -191,6 +214,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
           f'{child} is not a signal!' )
       nbits += child.Type.get_dtype().get_length()
     node.Type = rt.NetWire( rdt.Vector( nbits ) )
+    node._is_explicit = True
 
   def visit_ZeroExt( s, node ):
     try:
@@ -205,6 +229,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         f'{new_nbits} is not greater than {old_nbits}!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
+    node._is_explicit = True
 
   def visit_SignExt( s, node ):
     try:
@@ -219,11 +244,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         f'{new_nbits} is not greater than {old_nbits}!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
+    node._is_explicit = True
 
   def visit_Reduce( s, node ):
     child_type = node.value.Type
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( 1 )
+    node._is_explicit = True
 
   def visit_SizeCast( s, node ):
     nbits = node.nbits
@@ -233,6 +260,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # be able to explicitly convert signals/constatns to different bitwidth.
     node.Type = copy.copy( Type )
     node.Type.dtype = rdt.Vector( nbits )
+    node._is_explicit = True
 
     try:
       node._value = node.value._value
@@ -252,6 +280,14 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         f'non-component attribute {node.attr} of type {node.value.Type} is not supported at L1!' )
     # value.attr has the type that is specified by the base
     node.Type = node.value.Type.get_property( node.attr )
+    if isinstance( node.Type, rt.Const ):
+      dtype = node.Type.get_dtype()
+      if isinstance( dtype, rdt.Vector ):
+        node._is_explicit = dtype.is_explicit()
+      else:
+        node._is_explicit = True
+    else:
+      node._is_explicit = True
 
   def visit_Index( s, node ):
     idx = None if not hasattr(node.idx, "_value") else node.idx._value
@@ -263,8 +299,12 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       if idx is not None and obj is not None:
         if isinstance( node.Type, rt.Array ):
           node.Type.obj = obj[ int( idx ) ]
+          node._is_explicit = True
         else:
           node._value = obj[ int( idx ) ]
+          node._is_explicit = False if isinstance(node._value, int) else True
+      else:
+        node._is_explicit = True
 
     elif isinstance( node.value.Type, rt.Signal ):
       dtype = node.value.Type.get_dtype()
@@ -273,11 +313,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
           raise PyMTLTypeError( s.blk, node.ast,
             'bit selection index out of range!' )
         node.Type = node.value.Type.get_next_dim_type()
+        node._is_explicit = True
       elif isinstance( dtype, rdt.Vector ):
         if idx is not None and not(0 <= idx < dtype.get_length()):
           raise PyMTLTypeError( s.blk, node.ast,
             'bit selection index out of range!' )
         node.Type = rt.NetWire( rdt.Vector( 1 ) )
+        node._is_explicit = True
       else:
         raise PyMTLTypeError( s.blk, node.ast,
           f'cannot perform index on {dtype}!')
@@ -288,9 +330,13 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         f'cannot perform index on {node.value.Type}!')
 
   def visit_Slice( s, node ):
-    lower_val = None if not hasattr(node.lower, "_value") else node.lower._value
-    upper_val = None if not hasattr(node.upper, "_value") else node.upper._value
+    lower_val = None if not hasattr(node.lower, "_value") else int(node.lower._value)
+    upper_val = None if not hasattr(node.upper, "_value") else int(node.upper._value)
     dtype = node.value.Type.get_dtype()
+
+    if hasattr(node.value, "_value"):
+      raise PyMTLTypeError( s.blk, node.ast,
+          f'cannot perform slicing on constant {node.value._value}!')
 
     if not isinstance( dtype, rdt.Vector ):
       raise PyMTLTypeError( s.blk, node.ast, f'cannot perform slicing on type {dtype}!')
@@ -306,6 +352,7 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         raise PyMTLTypeError( s.blk, node.ast,
           'upper/lower bound of slice out of width of signal!' )
       node.Type = rt.NetWire( rdt.Vector( int( upper_val - lower_val ) ) )
+      node._is_explicit = True
 
     else:
       # Try to special case the constant-stride part selection
@@ -316,8 +363,57 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         slice_size = nbits._value
         assert s.is_same( node.lower, node.upper.left )
         node.Type = rt.NetWire( rdt.Vector( slice_size ) )
+        node._is_explicit = True
         # Add new fields that might help translation
         node.size = slice_size
         node.base = node.lower
       except Exception:
         raise PyMTLTypeError( s.blk, node.ast, 'slice bounds must be constant!' )
+
+#-------------------------------------------------------------------------
+# Enforce types for all terms whose types are inferred (implicit)
+#-------------------------------------------------------------------------
+# Terms that are able to introduce a context at L1:
+#   - Assign (LHS to RHS)
+
+class BehavioralRTLIRTypeEnforcerL1( bir.BehavioralRTLIRNodeVisitor ):
+  def enter( s, blk, rtlir ):
+    s.blk = blk
+    s.stack = deque([])
+
+  @contextmanager
+  def register_context( s, context_type ):
+    s.stack.append( context_type )
+    yield
+    s.stack.pop()
+
+  def get_context( s, node, obj ):
+    if not s.stack:
+      raise PyMTLTypeError( s.blk, node.ast,
+          f'no context was provided to validate the inferred bitwidth of {obj}!' )
+    return s.stack[-1]
+
+  def visit_Assign( s, node ):
+    with s.register_context( node.targets[0].Type ):
+      s.visit( node.value )
+
+  def visit_FreeVar( s, node ):
+    target_nbits = s.get_context(node, node.obj).get_dtype().nbits
+    node.Type.dtype.nbits = target_nbits
+
+  def visit_Number( s, node ):
+    target_nbits = s.get_context(node, node.obj).get_dtype().nbits
+    node.Type.dtype.nbits = target_nbits
+
+  def visit_Attribute( s, node ):
+    # Handle cases like s.literal_number
+    if not node._is_explicit:
+      assert isinstance(node.Type, rt.Const), f'internal error: {node} is not constant!'
+      target_nbits = s.get_context(node, node.attr).get_dtype().nbits
+      node.Type.dtype.nbits = target_nbits
+
+  def visit_Index( s, node ):
+    # Handle cases like s.constant_array[0]
+    if not node._is_explicit:
+      target_nbits = s.get_context(node, 'indexing').get_dtype().nbits
+      node.Type.dtype.nbits = target_nbits

@@ -241,7 +241,7 @@ def main():
     print("{:3}: {}".format( count, model.line_trace() ))
 
   while not model.done() and count < limit:
-    model.tick()
+    model.sim_tick()
     commit_inst += int(model.commit_inst)
     count = count + 1
     if opts.trace:

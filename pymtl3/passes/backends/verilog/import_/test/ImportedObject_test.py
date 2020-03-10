@@ -123,15 +123,15 @@ def test_reg_external_trace( do_test ):
   a.apply( SimulationPass() )
 
   a.in_ = Bits32(1)
-  a.tick()
+  a.sim_tick()
   assert a.line_trace() == 'q =          0'
   a.in_ = Bits32(2)
-  a.tick()
+  a.sim_tick()
   assert a.line_trace() == 'q =          1'
   a.in_ = Bits32(-1)
-  a.tick()
+  a.sim_tick()
   assert a.line_trace() == 'q =          2'
-  a.tick()
+  a.sim_tick()
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
 

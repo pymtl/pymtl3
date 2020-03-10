@@ -368,11 +368,11 @@ class ProcCtrl( Component ):
       s.mngr2proc_D    @= s.csrr_D & ( s.inst_D[CSRNUM] == CSR_MNGR2PROC )
 
       # accelerator
-      if s.csrr_D and (s.inst_D[CSRNUM] != CSR_MNGR2PROC):
+      if s.csrr_D & (s.inst_D[CSRNUM] != CSR_MNGR2PROC):
         s.xcelreq_type_D @= XcelMsgType_READ
         s.xcelreq_D @= 1
 
-      elif s.csrw_D and (s.inst_D[CSRNUM] != CSR_PROC2MNGR):
+      elif s.csrw_D & (s.inst_D[CSRNUM] != CSR_PROC2MNGR):
         s.xcelreq_type_D @= XcelMsgType_WRITE
         s.xcelreq_D @= 1
       else:

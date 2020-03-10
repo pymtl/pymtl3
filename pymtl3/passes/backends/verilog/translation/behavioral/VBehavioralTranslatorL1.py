@@ -241,8 +241,9 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Number( s, node ):
-    """Return a number in string without width specifier."""
-    return str( node.value )
+    """Return a number in string."""
+    nbits = node.Type.get_dtype().get_length()
+    return f"{nbits}'d{node.value}"
 
   #-----------------------------------------------------------------------
   # visit_Concat
@@ -408,7 +409,11 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       # The base of this attribute node is the component 's'.
       # Example: s.out, s.STATE_IDLE
       # assert node.value.base is s.component
-      ret = attr
+      if isinstance( node.Type, rt.Const ):
+        nbits = node.Type.get_dtype().get_length()
+        ret = f"{nbits}'( {attr} )"
+      else:
+        ret = attr
     else:
       raise VerilogTranslationError( s.blk, node,
           "sub-components are not supported at L1" )
@@ -435,9 +440,14 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
             # format(node.value) )
 
       if isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
+        # Special case for situations like s.literal_int_array[0]
+        if isinstance( node.Type, rt.Const ):
+          nbits = node.Type.get_dtype().get_length()
+          return f"{nbits}'( {value}[{idx}]  )"
         return f'{value}[{idx}]'
       else:
         # is this branch ever taken?
+        assert False
         return f'{value}__{idx}'
 
     # Index on a signal
@@ -501,7 +511,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_FreeVar( s, node ):
-    return f'__const__{node.name}'
+    nbits = node.Type.get_dtype().get_length()
+    return f"{nbits}'( __const__{node.name} )"
 
   #-----------------------------------------------------------------------
   # visit_TmpVar

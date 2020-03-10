@@ -168,19 +168,6 @@ class UnaryOp( BaseBehavioralRTLIR ):
   def __eq__( s, other ):
     return isinstance(other, UnaryOp) and s.op == other.op and s.operand == other.operand
 
-class BoolOp( BaseBehavioralRTLIR ):
-  def __init__( s, op, values ):
-    s.op = op
-    s.values = values
-
-  def __eq__( s, other ):
-    if not isinstance(other, BoolOp) or s.op != other.op:
-      return False
-    for x, y in zip( s.values, other.values ):
-      if x != y:
-        return False
-    return True
-
 class BinOp( BaseBehavioralRTLIR ):
   def __init__( s, left, op, right ):
     s.left = left
@@ -266,19 +253,10 @@ class LoopVarDecl( BaseBehavioralRTLIR ):
 class Invert( BaseBehavioralRTLIR ):
   pass
 
-class Not( BaseBehavioralRTLIR ):
-  pass
-
 class UAdd( BaseBehavioralRTLIR ):
   pass
 
 class USub( BaseBehavioralRTLIR ):
-  pass
-
-class And( BaseBehavioralRTLIR ):
-  pass
-
-class Or( BaseBehavioralRTLIR ):
   pass
 
 class Add( BaseBehavioralRTLIR ):

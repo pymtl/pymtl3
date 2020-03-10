@@ -153,11 +153,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret = bir.Assign( targets, value, blocking = blocking[s._upblk_type] )
     ret.ast = node
     return ret
+    # raise PyMTLSyntaxError( s.blk, node,
+    #     'plain assignment = is not a translatable construct. Please use @= or <<= instead!')
 
   def visit_AugAssign( s, node ):
     """Return the behavioral RTLIR of a non-blocking assignment
 
-    If the given AugAssign is not non-blocking assignment, throw PyMTLSyntaxError
+    If the given AugAssign is not @= or <<=, throw PyMTLSyntaxError
     """
     if isinstance( node.op, (ast.LShift, ast.MatMult) ):
       value = s.visit( node.value )
@@ -167,7 +169,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       ret.ast = node
       return ret
     raise PyMTLSyntaxError( s.blk, node,
-        'invalid operation: augmented assignment is not non-blocking assignment!' )
+        'invalid operation: augmented assignment is not @= or <<= assignment!' )
 
   def visit_Call( s, node ):
     """Return the behavioral RTLIR of method calls.

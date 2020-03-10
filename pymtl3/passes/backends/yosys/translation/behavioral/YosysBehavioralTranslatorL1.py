@@ -89,6 +89,13 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
     return super().visit_Assign( node )
 
   #-----------------------------------------------------------------------
+  # visit_Number
+  #-----------------------------------------------------------------------
+
+  # def visit_Number( s, node ):
+  #   nbits = node.Type.get_dtype().get_length()
+
+  #-----------------------------------------------------------------------
   # visit_Concat
   #-----------------------------------------------------------------------
 
@@ -160,7 +167,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
     if isinstance(Type, rt.Const):
       obj = Type.get_object()
       if isinstance( obj, int ):
-        node.sexpr['s_attr'] = f"32'd{obj}"
+        nbits = node.Type.get_dtype().get_length()
+        node.sexpr['s_attr'] = f"{nbits}'d{obj}"
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
         nbits = obj.nbits
@@ -212,6 +220,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
         except AttributeError:
           raise VerilogTranslationError( s.blk, node,
             f"{value} is not an array of constants!" )
+        if isinstance(node.Type, rt.Const):
+          nbits = node.Type.get_dtype().get_length()
         node.sexpr['s_index'] = f"{nbits}'d{const_value}"
         node.sexpr['index'] = []
         node.sexpr['s_attr'] = ""
@@ -253,7 +263,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
 
   def visit_FreeVar( s, node ):
     if isinstance( node.obj, int ):
-      return f"32'd{node.obj}"
+      nbits = node.Type.get_dtype().get_length()
+      return f"{nbits}'d{node.obj}"
     elif isinstance( node.obj, Bits ):
       nbits = node.obj.nbits
       value = int( node.obj )

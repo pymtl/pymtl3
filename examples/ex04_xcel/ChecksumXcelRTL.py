@@ -60,8 +60,8 @@ class ChecksumXcelRTL( Component ):
 
     @update
     def up_start_pulse():
-      s.start_pulse @= s.xcel.resp.en and s.in_q.deq.ret.type_ == s.WR and \
-                                          s.in_q.deq.ret.addr == b5(4)
+      s.start_pulse @= s.xcel.resp.en & (s.in_q.deq.ret.type_ == s.WR) & \
+                                        (s.in_q.deq.ret.addr == b5(4))
 
     @update
     def up_state_next():
@@ -117,7 +117,7 @@ class ChecksumXcelRTL( Component ):
       for i in range(6):
         s.reg_file[i].in_ @= s.reg_file[i].out
 
-      if s.in_q.deq.en and s.in_q.deq.ret.type_ == s.WR:
+      if s.in_q.deq.en & (s.in_q.deq.ret.type_ == s.WR):
         for i in range(6):
           s.reg_file[i].in_ @= (
             s.in_q.deq.ret.data if b5(i) == s.in_q.deq.ret.addr else

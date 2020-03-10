@@ -22,7 +22,11 @@ module BehavioralRTLIR
        | StructInst( object struct, expr* values )
        | IfExp( expr cond, expr body, expr orelse )
        | UnaryOp( unaryop op, expr operand )
-       | BoolOp( boolop op, expr* values )
+
+       -- Boolean operations are not allowed because they can lead to
+       -- inconsistent semantics for Bits and ints.
+       -- | BoolOp( boolop op, expr* values )
+
        | BinOp( expr left, operator op, expr right )
        | Compare( expr left, cmpop op, expr right )
 
@@ -41,9 +45,11 @@ module BehavioralRTLIR
 
   loopvar_decl = LoopVarDecl( string name )
 
-  unaryop = Invert | Not | UAdd | USub
+  -- Not is also a boolean operator!
+  -- unaryop = Invert | Not | UAdd | USub
+  -- boolop = And | Or
 
-  boolop = And | Or
+  unaryop = Invert | UAdd | USub
 
   operator = Add | Sub | Mult | Div | Mod | Pow | ShiftLeft | ShiftRightLogic | BitAnd | BitOr | BitXor
 

@@ -52,7 +52,7 @@ class ProcVRTL_Tests( BaseTests ):
     print()
     ncycles = 0
     while not th.done() and ncycles < max_cycles:
-      th.tick()
+      th.sim_tick()
       print("{:3}: {}".format( ncycles, th.line_trace() ))
       ncycles += 1
 

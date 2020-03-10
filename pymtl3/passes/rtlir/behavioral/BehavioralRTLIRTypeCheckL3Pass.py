@@ -12,7 +12,8 @@ from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2
+from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2, \
+    BehavioralRTLIRTypeEnforcerL2
 
 
 class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
@@ -24,15 +25,21 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
     m._pass_behavioral_rtlir_type_check.rtlir_tmpvars = OrderedDict()
     m._pass_behavioral_rtlir_type_check.rtlir_accessed = set()
 
-    visitor = BehavioralRTLIRTypeCheckVisitorL3(
+    type_checker = BehavioralRTLIRTypeCheckVisitorL3(
       m,
       m._pass_behavioral_rtlir_type_check.rtlir_freevars,
       m._pass_behavioral_rtlir_type_check.rtlir_accessed,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
+    type_enforcer = BehavioralRTLIRTypeEnforcerL3()
 
     for blk in m.get_update_block_order():
-      visitor.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      type_checker.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+      type_enforcer.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
+
+#-------------------------------------------------------------------------
+# Type checker
+#-------------------------------------------------------------------------
 
 class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
   def __init__( s, component, freevars, accessed, tmpvars ):
@@ -70,6 +77,10 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
         raise PyMTLTypeError( s.blk, node.ast,
           f'unrecognized signal type {node.value.Type}!' )
       node.Type = rtype
+      if isinstance( dtype, rdt.Vector ):
+        node._is_explicit = dtype.is_explicit()
+      else:
+        node._is_explicit = True
 
     else:
       super().visit_Attribute( node )
@@ -99,3 +110,21 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
           f"Expected argument#{idx} ( field {name} ) to have type {field}, but got {v_dtype}." )
 
     node.Type = rt.Const( dtype )
+    node._is_explicit = True
+
+#-------------------------------------------------------------------------
+# Enforce types for all terms whose types are inferred (implicit)
+#-------------------------------------------------------------------------
+
+class BehavioralRTLIRTypeEnforcerL3( BehavioralRTLIRTypeEnforcerL2 ):
+
+  def visit_Attribute( s, node ):
+    if isinstance( node.value.Type, rt.Signal ):
+      s.generic_visit( node )
+    else:
+      super().visit_Attribute( node )
+
+  def visit_StructInst( s, node ):
+    # node.values should be explicitly typed according to the bitwidth of
+    # each field in node.struct
+    s.generic_visit( node )
