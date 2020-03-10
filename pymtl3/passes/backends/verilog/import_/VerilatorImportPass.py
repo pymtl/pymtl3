@@ -713,7 +713,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_port_vector_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
-    blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@s.update',
                  f'def isignal_{mangled_rhs}():',
                  f'  s.{mangled_rhs} = {rhs}' ]
@@ -727,7 +727,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 
-    blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@s.update',
                  f'def istruct_{mangled_rhs}():' ]
 
@@ -804,7 +804,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_port_vector_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
-    blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@s.update',
                  f'def osignal_{mangled_lhs}():',
                  f'  {lhs} = s.{mangled_lhs}' ]
@@ -819,7 +819,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 
-    blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@s.update',
                  f'def ostruct_{mangled_lhs}():' ]
 
@@ -991,3 +991,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
         _nbits = r - l
         ret.append( f"{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])" )
       return ret
+
+  def _gen_bits_decl( s, nbits ):
+    if nbits <= 256:
+      return f'Bits{nbits}'
+    else:
+      return f'mk_bits({nbits})'
