@@ -169,12 +169,20 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     else:
       parameters = cfg.params.items()
 
+    ports = []
     # Port definitions of wrapper
-    ports = [
-      f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
-      f" {name}{'' if idx == len(rtlir_ports)-1 else ','}" \
-      for idx, (_, name, p) in enumerate(rtlir_ports) if name
-    ]
+    for idx, (_, name, p) in enumerate(rtlir_ports):
+      if name:
+        if isinstance(p, rt.Array):
+          n_dim = p.get_dim_sizes()
+          s_dim = ''.join([f'[0:{idx-1}]' for idx in n_dim])
+          p = p.get_next_dim_type()
+        else:
+          s_dim = ''
+        ports.append(
+            f"  {p.get_direction()} logic [{p.get_dtype().get_length()}-1:0]"\
+            f" {name} {s_dim}{'' if idx == len(rtlir_ports)-1 else ','}"
+        )
 
     # The wrapper has to have an unused clk port to make verilator
     # VCD tracing work.
