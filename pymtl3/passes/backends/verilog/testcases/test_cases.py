@@ -265,7 +265,7 @@ CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
     'REF_UPBLK',
     '''\
         always_comb begin : _lambda__s_out_1_
-          out[1] = in_ + 32'd42;
+          out[1'd1] = in_ + 32'd42;
         end
     ''',
     'REF_SRC',
@@ -279,7 +279,7 @@ CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
         );
 
           always_comb begin : _lambda__s_out_1_
-            out[1] = in_ + 32'd42;
+            out[1'd1] = in_ + 32'd42;
           end
 
         endmodule
@@ -419,7 +419,7 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in_, __const__STATE_IDLE };
+          out = { in_, 1'( __const__STATE_IDLE ) };
         end
     ''',
     'REF_SRC',
@@ -428,13 +428,13 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
-          output logic [63:0] out,
+          output logic [32:0] out,
           input logic [0:0] reset
         );
-          localparam logic [31:0] __const__STATE_IDLE = 32'd0;
+          localparam logic [0:0] __const__STATE_IDLE = 1'd0;
 
           always_comb begin : upblk
-            out = { in_, __const__STATE_IDLE };
+            out = { in_, 1'( __const__STATE_IDLE ) };
           end
 
         endmodule
@@ -445,7 +445,7 @@ CaseBits32x2ConcatUnpackedSignalComp = set_attributes( CaseBits32x2ConcatUnpacke
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in_[0], in_[1] };
+          out = { in_[1'd0], in_[1'd1] };
         end
     ''',
     'REF_SRC',
@@ -459,7 +459,7 @@ CaseBits32x2ConcatUnpackedSignalComp = set_attributes( CaseBits32x2ConcatUnpacke
         );
 
           always_comb begin : upblk
-            out = { in_[0], in_[1] };
+            out = { in_[1'd0], in_[1'd1] };
           end
 
         endmodule
@@ -470,7 +470,7 @@ CaseBits32BitSelUpblkComp = set_attributes( CaseBits32BitSelUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in_[1];
+          out = in_[5'd1];
         end
     ''',
     'REF_SRC',
@@ -484,7 +484,7 @@ CaseBits32BitSelUpblkComp = set_attributes( CaseBits32BitSelUpblkComp,
         );
 
           always_comb begin : upblk
-            out = in_[1];
+            out = in_[5'd1];
           end
 
         endmodule
@@ -495,7 +495,7 @@ CaseBits64PartSelUpblkComp = set_attributes( CaseBits64PartSelUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in_[35:4];
+          out = in_[6'd35:6'd4];
         end
     ''',
     'REF_SRC',
@@ -509,7 +509,7 @@ CaseBits64PartSelUpblkComp = set_attributes( CaseBits64PartSelUpblkComp,
         );
 
           always_comb begin : upblk
-            out = in_[35:4];
+            out = in_[6'd35:6'd4];
           end
 
         endmodule
@@ -547,8 +547,8 @@ CaseIfBasicComp = set_attributes( CaseIfBasicComp,
     'REF_UPBLK',
     '''\
         always_comb begin : if_basic
-          if ( in_[7:0] == 8'd255 ) begin
-            out = in_[15:8];
+          if ( in_[4'd7:4'd0] == 8'd255 ) begin
+            out = in_[4'd15:4'd8];
           end
           else
             out = 8'd0;
@@ -565,8 +565,8 @@ CaseIfBasicComp = set_attributes( CaseIfBasicComp,
         );
 
           always_comb begin : if_basic
-            if ( in_[7:0] == 8'd255 ) begin
-              out = in_[15:8];
+            if ( in_[4'd7:4'd0] == 8'd255 ) begin
+              out = in_[4'd15:4'd8];
             end
             else
               out = 8'd0;
@@ -760,10 +760,10 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 5; i += 2 )
-            out[i] = in_[i];
-          for ( int i = 1; i < 5; i += 2 )
-            out[i] = in_[i];
+          for ( int i = 1'd0; i < 3'd5; i += 2'd2 )
+            out[3'(i)] = in_[3'(i)];
+          for ( int i = 1'd1; i < 3'd5; i += 2'd2 )
+            out[3'(i)] = in_[3'(i)];
         end
     ''',
     'REF_SRC',
@@ -777,10 +777,10 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
         );
 
           always_comb begin : upblk
-            for ( int i = 0; i < 5; i += 2 )
-              out[i] = in_[i];
-            for ( int i = 1; i < 5; i += 2 )
-              out[i] = in_[i];
+            for ( int i = 1'd0; i < 3'd5; i += 2'd2 )
+              out[3'(i)] = in_[3'(i)];
+            for ( int i = 1'd1; i < 3'd5; i += 2'd2 )
+              out[3'(i)] = in_[3'(i)];
           end
 
         endmodule
@@ -791,8 +791,8 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 5; i += 1 )
-            out[i] = ( i == 1 ) ? in_[i] : in_[0];
+          for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+            out[3'(i)] = ( 3'(i) == 3'd1 ) ? in_[3'(i)] : in_[3'd0];
         end
     ''',
     'REF_SRC',
@@ -806,8 +806,8 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 0; i < 5; i += 1 )
-              out[i] = ( i == 1 ) ? in_[i] : in_[0];
+            for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+              out[3'(i)] = ( 3'(i) == 3'd1 ) ? in_[3'(i)] : in_[3'd0];
           end
 
         endmodule
@@ -845,12 +845,12 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 5; i += 1 )
-            if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-              out[i] = in_[i];
+          for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+            if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+              out[3'(i)] = in_[3'(i)];
             end
             else
-              out[i] = 32'd0;
+              out[3'(i)] = 32'd0;
         end
     ''',
     'REF_SRC',
@@ -864,12 +864,12 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 0; i < 5; i += 1 )
-              if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-                out[i] = in_[i];
+            for ( int i = 1'd0; i < 3'd5; i += 1'd1 )
+              if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+                out[3'(i)] = in_[3'(i)];
               end
               else
-                out[i] = 32'd0;
+                out[3'(i)] = 32'd0;
           end
 
         endmodule
@@ -880,13 +880,13 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 5; i += 1 ) begin
-            if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-              __tmpvar__upblk_tmpvar = in_[i];
+          for ( int i = 1'd0; i < 3'd5; i += 1'd1 ) begin
+            if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+              __tmpvar__upblk_tmpvar = in_[3'(i)];
             end
             else
               __tmpvar__upblk_tmpvar = 32'd0;
-            out[i] = __tmpvar__upblk_tmpvar;
+            out[3'(i)] = __tmpvar__upblk_tmpvar;
           end
         end
     ''',
@@ -902,13 +902,13 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
           logic [31:0] __tmpvar__upblk_tmpvar;
 
           always_comb begin : upblk
-            for ( int i = 0; i < 5; i += 1 ) begin
-              if ( ( in_[i] != 32'd0 ) && ( ( i < 4 ) ? in_[i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-                __tmpvar__upblk_tmpvar = in_[i];
+            for ( int i = 1'd0; i < 3'd5; i += 1'd1 ) begin
+              if ( ( in_[3'(i)] != 32'd0 ) & ( ( 3'(i) < 3'd4 ) ? in_[3'(i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+                __tmpvar__upblk_tmpvar = in_[3'(i)];
               end
               else
                 __tmpvar__upblk_tmpvar = 32'd0;
-              out[i] = __tmpvar__upblk_tmpvar;
+              out[3'(i)] = __tmpvar__upblk_tmpvar;
             end
           end
 
@@ -920,7 +920,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___foo[in___foo[0]];
+          out = in___foo[in___foo[1'd0]];
         end
     ''',
     'REF_SRC',
@@ -934,7 +934,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
         );
 
           always_comb begin : upblk
-            out = in___foo[in___foo[0]];
+            out = in___foo[in___foo[1'd0]];
           end
 
         endmodule
@@ -945,8 +945,8 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 2; i += 1 )
-            out[i] = in_[i * 8 +: 8];
+          for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
+            out[1'(i)] = in_[4'(i) * 4'd8 +: 8];
         end
     ''',
     'REF_SRC',
@@ -960,8 +960,8 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
         );
 
           always_comb begin : upblk
-            for ( int i = 0; i < 2; i += 1 )
-              out[i] = in_[i * 8 +: 8];
+            for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
+              out[1'(i)] = in_[4'(i) * 4'd8 +: 8];
           end
 
         endmodule
@@ -1001,7 +1001,7 @@ CaseConstStructInstComp = set_attributes( CaseConstStructInstComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in_.foo;
+          out = 32'( in_.foo );
         end
     ''',
     'REF_SRC',
@@ -1019,7 +1019,7 @@ CaseConstStructInstComp = set_attributes( CaseConstStructInstComp,
           localparam Bits32Foo in_ = { 32'd0 };
 
           always_comb begin : upblk
-            out = in_.foo;
+            out = 32'( in_.foo );
           end
 
         endmodule
@@ -1030,7 +1030,7 @@ CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in_.foo[0], in_.foo[1], in_.foo[2] };
+          out = { in_.foo[3'd0], in_.foo[3'd1], in_.foo[3'd2] };
         end
     ''',
     'REF_SRC',
@@ -1048,7 +1048,7 @@ CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
         );
 
           always_comb begin : upblk
-            out = { in_.foo[0], in_.foo[1], in_.foo[2] };
+            out = { in_.foo[3'd0], in_.foo[3'd1], in_.foo[3'd2] };
           end
 
         endmodule
@@ -1059,7 +1059,7 @@ CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in_.bar[0], in_.woo.foo, in_.foo };
+          out = { in_.bar[1'd0], in_.woo.foo, in_.foo };
         end
     ''',
     'REF_SRC',
@@ -1083,7 +1083,7 @@ CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArr
         );
 
           always_comb begin : upblk
-            out = { in_.bar[0], in_.woo.foo, in_.foo };
+            out = { in_.bar[1'd0], in_.woo.foo, in_.foo };
           end
 
         endmodule
@@ -1127,7 +1127,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___foo[1];
+          out = in___foo[1'd1];
         end
     ''',
     'REF_SRC',
@@ -1141,7 +1141,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
         );
 
           always_comb begin : upblk
-            out = in___foo[1];
+            out = in___foo[1'd1];
           end
 
         endmodule
@@ -1200,7 +1200,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = b__out[1];
+          out = b__out[1'd1];
         end
     ''',
     'REF_SRC',
@@ -1263,7 +1263,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
           );
 
           always_comb begin : upblk
-            out = b__out[1];
+            out = b__out[1'd1];
           end
 
           assign b__clk[0] = clk;
@@ -1367,7 +1367,7 @@ CaseConnectConstToOutComp = set_attributes( CaseConnectConstToOutComp,
     '',
     'REF_CONST',
     '''\
-        localparam logic [31:0] const_ [0:4] = '{ 32'd42, 32'd42, 32'd42, 32'd42, 32'd42 };
+        localparam logic [5:0] const_ [0:4] = '{ 6'd42, 6'd42, 6'd42, 6'd42, 6'd42 };
     ''',
     'REF_CONN',
     '''\

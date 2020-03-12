@@ -31,11 +31,9 @@ class BehavioralRTLIRTypeCheckL3Pass( BasePass ):
       m._pass_behavioral_rtlir_type_check.rtlir_accessed,
       m._pass_behavioral_rtlir_type_check.rtlir_tmpvars
     )
-    type_enforcer = BehavioralRTLIRTypeEnforcerL3()
 
     for blk in m.get_update_block_order():
       type_checker.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
-      type_enforcer.enter( blk, m._pass_behavioral_rtlir_gen.rtlir_upblks[ blk ] )
 
 #-------------------------------------------------------------------------
 # Type checker
@@ -48,6 +46,9 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       'value':( (rt.Component, rt.Signal),
         'the base of an attribute must be one of: component, signal!' )
     }
+
+  def get_enforce_visitor( s ):
+    return BehavioralRTLIRTypeEnforcerL3
 
   def visit_Attribute( s, node ):
     if isinstance( node.value.Type, rt.Signal ):
@@ -77,7 +78,9 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
         raise PyMTLTypeError( s.blk, node.ast,
           f'unrecognized signal type {node.value.Type}!' )
       node.Type = rtype
-      if isinstance( dtype, rdt.Vector ):
+      dtype = node.Type.get_dtype()
+      # Only allow to be re-interpreted if this is a constant vector attribute
+      if isinstance( node.Type, rt.Const ) and isinstance( dtype, rdt.Vector ):
         node._is_explicit = dtype.is_explicit()
       else:
         node._is_explicit = True
@@ -102,12 +105,17 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       # Expect each argument to be a signal
       if not isinstance( value.Type, rt.Signal ):
         raise PyMTLTypeError( s.blk, node.ast,
-          f"argument #{idx} has type {value.Type} but not a signal!" )
+          f"argument #{idx+1} has type {value.Type} but not a signal!" )
       v_dtype = value.Type.get_dtype()
+      is_field_reinterpretable = not value._is_explicit
       # Expect each argument to have data type which corresponds to the field
       if v_dtype != field:
-        raise PyMTLTypeError( s.blk, node.ast,
-          f"Expected argument#{idx} ( field {name} ) to have type {field}, but got {v_dtype}." )
+        if is_field_reinterpretable:
+          target_nbits = field.get_dtype().get_length()
+          s.enforcer.enter( s.blk, rt.NetWire(rdt.Vector(target_nbits)), value )
+        else:
+          raise PyMTLTypeError( s.blk, node.ast,
+            f"Expected argument#{idx+1} ( field {name} ) to have type {field}, but got {v_dtype}." )
 
     node.Type = rt.Const( dtype )
     node._is_explicit = True
@@ -117,14 +125,4 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
 #-------------------------------------------------------------------------
 
 class BehavioralRTLIRTypeEnforcerL3( BehavioralRTLIRTypeEnforcerL2 ):
-
-  def visit_Attribute( s, node ):
-    if isinstance( node.value.Type, rt.Signal ):
-      s.generic_visit( node )
-    else:
-      super().visit_Attribute( node )
-
-  def visit_StructInst( s, node ):
-    # node.values should be explicitly typed according to the bitwidth of
-    # each field in node.struct
-    s.generic_visit( node )
+  pass

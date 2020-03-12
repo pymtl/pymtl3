@@ -150,8 +150,6 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
         n_zero = nbits - cur_nbits
         return f"{{ {{ {n_zero} {{ 1'b0 }} }}, {value_str} }}"
 
-    if isinstance( value, Bits ):
-      value = int(value)
     return f"{nbits}'d{value}"
 
   #-----------------------------------------------------------------------

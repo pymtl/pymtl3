@@ -261,7 +261,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_ZeroExt( s, node ):
     value = s.visit( node.value )
     try:
-      target_nbits = int(node.nbits._value)
+      target_nbits = node.nbits._value
     except AttributeError:
       raise VerilogTranslationError( s.blk, node,
         "new bitwidth of zero extension must be known at elaboration time!" )
@@ -279,7 +279,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   def visit_SignExt( s, node ):
     value = s.visit( node.value )
     try:
-      target_nbits = int(node.nbits._value)
+      target_nbits = node.nbits._value
     except AttributeError:
       raise VerilogTranslationError( s.blk, node,
         "new bitwidth of sign extension must be known at elaboration time!" )
@@ -344,11 +344,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     nbits = node.nbits
     value = s.visit( node.value )
     if hasattr( node, "_value" ):
-      if isinstance( node._value, Bits ):
-        value = int(node._value)
-      else:
-        value = node._value
-      return f"{nbits}'d{value}"
+      return f"{nbits}'d{node._value}"
 
     return f"{nbits}'( {value} )"
 
@@ -409,7 +405,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       # The base of this attribute node is the component 's'.
       # Example: s.out, s.STATE_IDLE
       # assert node.value.base is s.component
-      if isinstance( node.Type, rt.Const ):
+      if isinstance( node.Type, rt.Const ) and isinstance( node.Type.get_dtype(), rdt.Vector ):
         nbits = node.Type.get_dtype().get_length()
         ret = f"{nbits}'( {attr} )"
       else:
@@ -486,7 +482,9 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     # Regular [ lower : upper ] syntax
     else:
       if hasattr( node.upper, '_value' ):
-        upper = str( int( node.upper._value - Bits32(1) ) )
+        upper = str( int( node.upper._value - 1 ) )
+        nbits = node.upper.Type.get_dtype().get_length()
+        upper = f"{nbits}'d{upper}"
       else:
         upper = s.visit( node.upper ) + '-1'
 

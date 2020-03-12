@@ -128,7 +128,7 @@ def test_index_bits_slicing( do_test ):
           Slice( Index( Attribute( Base( a ), 'in_' ), Number( 2 ) ), Number( 0 ), Number( 8 ) ),
         ),
         Add(),
-        SizeCast( 8, Number( 10 ) )
+        Number( 10 )
       ),
       True
     ),
@@ -141,7 +141,7 @@ def test_index_bits_slicing( do_test ):
           Index( Attribute( Base( a ), 'in_' ), Number( 4 ) )
         ),
         Add(),
-        SizeCast( 16, Number( 1 ) )
+        Number( 1 )
       ),
       True
     ),
@@ -170,9 +170,9 @@ def test_if_basic( do_test ):
 
   a._rtlir_test_ref = {
     'if_basic' : CombUpblk( 'if_basic', [ If(
-      Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), SizeCast( 8, Number( 255 ) ) ),
+      Compare( Slice( Attribute( Base( a ), 'in_' ), Number( 0 ), Number( 8 ) ), Eq(), Number( 255 ) ),
       [ Assign( [Attribute( Base( a ), 'out' )], Slice( Attribute( Base( a ), 'in_' ), Number( 8 ), Number( 16 ) ), True ) ],
-      [ Assign( [Attribute( Base( a ), 'out' )], SizeCast( 8, Number( 0 ) ), True ) ]
+      [ Assign( [Attribute( Base( a ), 'out' )], Number( 0 ), True ) ]
     )
   ] ) }
 

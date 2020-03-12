@@ -70,6 +70,10 @@ class BehavioralRTLIRToVVisitorL3( BehavioralRTLIRToVVisitorL2 ):
         value = s.visit( node.value )
         attr = node.attr
         s.check_res( node, attr )
-        return f'{value}.{attr}'
+        dtype = node.Type.get_dtype()
+        if isinstance(node.Type, rt.Const) and isinstance(dtype, rdt.Vector):
+          return f"{dtype.get_length()}'( {value}.{attr} )"
+        else:
+          return f'{value}.{attr}'
 
     return super().visit_Attribute( node )

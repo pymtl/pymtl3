@@ -81,7 +81,7 @@ class TestVectorSimulator:
         # Verify outputs
         self.verify_outputs_func( self.model, test_vector )
       except Exception as e:
-        self.print_line_trace()
+        self.model.print_line_trace()
         raise e
 
       self.model.sim_tick()

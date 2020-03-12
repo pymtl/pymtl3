@@ -673,9 +673,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
     nbits = dtype.get_length()
     l, r = pos, pos+nbits
     if d == 'i':
-      ret = [ f"{rhs}[{l}:{r}] = {lhs}" ]
+      ret = [ f"{rhs}[{l}:{r}] @= {lhs}" ]
     else:
-      ret = [ f"{lhs} = {rhs}[{l}:{r}]" ]
+      ret = [ f"{lhs} @= {rhs}[{l}:{r}]" ]
     return ret, r
 
   def _gen_struct_write( s, d, lhs, rhs, dtype, pos ):

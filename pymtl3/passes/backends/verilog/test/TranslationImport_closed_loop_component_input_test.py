@@ -34,7 +34,7 @@ def test_adder( do_test, Type ):
       s.out = OutPort( Type )
       @update
       def add_upblk():
-        s.out = s.in_1 + s.in_2
+        s.out @= s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
   a = A( Type )
   a._test_vector = [ (randint(-255, 255), randint(-255, 255)) for _ in range(10) ]
@@ -57,7 +57,7 @@ def test_mux( do_test, Type, n_ports ):
       s.out = OutPort( Type )
       @update
       def add_upblk():
-        s.out = s.in_[ s.sel ]
+        s.out @= s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
   test_vector = []
   for _ in range(10):

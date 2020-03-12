@@ -132,11 +132,11 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
 
     begin    = ' begin' if len( node.body ) > 1 else ''
 
-    cmp_op   = '>' if node.step._value[31] else '<'
-    inc_op   = '-' if node.step._value[31] else '+'
+    cmp_op   = '>' if node.step._value < 0 else '<'
+    inc_op   = '-' if node.step._value < 0 else '+'
 
     step_abs = s.visit( node.step )
-    if node.step._value[31] and step_abs[0] == '-':
+    if node.step._value < 0 and step_abs[0] == '-':
       step_abs = step_abs[1:]
 
     for stmt in node.body:
@@ -226,14 +226,20 @@ class BehavioralRTLIRToVVisitorL2( BehavioralRTLIRToVVisitorL1 ):
 
   def visit_LoopVar( s, node ):
     s.check_res( node, node.name )
-    return node.name
+    nbits = node.Type.get_dtype().get_length()
+    return f"{nbits}'({node.name})"
 
   #-----------------------------------------------------------------------
   # visit_TmpVar
   #-----------------------------------------------------------------------
 
   def visit_TmpVar( s, node ):
-    return f"__tmpvar__{node.upblk_name}_{node.name}"
+    tmpvar = f"__tmpvar__{node.upblk_name}_{node.name}"
+    if not node._is_explicit:
+      nbits = node.Type.get_dtype().get_length()
+      return f"{nbits}'({tmpvar})"
+    else:
+      return tmpvar
 
   #-----------------------------------------------------------------------
   # visit_LoopVarDecl

@@ -282,6 +282,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
 
   assert backend in [ "verilog", "yosys" ], f"invalid backend {backend}!"
 
+  _dut = copy.deepcopy(dut)
   dut.elaborate()
   reference_output = deque()
   all_output_ports = dut.get_local_object_filter( outport_filter )
@@ -290,7 +291,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
   def ref_tv_out( model, test_vector ):
     dct = {}
     for out_port in all_output_ports:
-      dct[ out_port ] = eval( "model." + out_port._dsl.my_name )
+      dct[ out_port ] = copy.copy(eval( "model." + out_port._dsl.my_name ))
     reference_output.append( dct )
 
   # Method to compare the outputs of the imported model and the pure python one
@@ -306,17 +307,17 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
   # First simulate the pure python component to see if it has sane behavior
   reference_sim = TestVectorSimulator( dut, test_vector, tv_in, ref_tv_out )
   reference_sim.run_test()
-  dut.unlock_simulation()
+  # dut.unlock_simulation()
 
   try:
     # If it simulates correctly, translate it and import it back
-    dut.elaborate()
+    _dut.elaborate()
     if backend == "verilog":
-      dut.verilog_translate_import = True
-      imported_obj = VTransImportPass()( dut )
+      _dut.verilog_translate_import = True
+      imported_obj = VTransImportPass()( _dut )
     elif backend == "yosys":
-      dut.yosys_translate_import = True
-      imported_obj = YosysTransImportPass()( dut )
+      _dut.yosys_translate_import = True
+      imported_obj = YosysTransImportPass()( _dut )
     # Run another vector simulator spin
     imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )
     imported_sim.run_test()

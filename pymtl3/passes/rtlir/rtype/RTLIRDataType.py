@@ -38,6 +38,12 @@ class Vector( BaseRTLIRDataType ):
   def get_length( s ):
     return int(s.nbits)
 
+  def get_index_width( s ):
+    if s.nbits <= 1:
+      return 1
+    else:
+      return ceil(log2(s.nbits))
+
   def is_explicit( s ):
     return s._is_explicit
 
@@ -94,6 +100,9 @@ class Struct( BaseRTLIRDataType ):
   def get_length( s ):
     return int(sum( d.get_length() for d in s.properties.values() ))
 
+  def get_index_width( s ):
+    assert False, 'rdt.Struct cannot be indexed!'
+
   def has_property( s, p ):
     return p in s.properties
 
@@ -125,6 +134,9 @@ class Bool( BaseRTLIRDataType ):
 
   def get_length( s ):
     return 1
+
+  def get_index_width( s ):
+    assert False, 'rdt.Bool cannot be indexed!'
 
   def __call__( s, obj ):
     """Return if obj be cast into type `s`."""
@@ -166,6 +178,14 @@ class PackedArray( BaseRTLIRDataType ):
 
   def get_dim_sizes( s ):
     return s.dim_sizes
+
+  def get_index_width( s ):
+    assert s.dim_sizes, 'rdt.PackedArray is created without dimension!'
+    n_elements = s.dim_sizes[0]
+    if n_elements <= 1:
+      return 1
+    else:
+      return ceil(log2(n_elements))
 
   def get_sub_dtype( s ):
     return s.sub_dtype

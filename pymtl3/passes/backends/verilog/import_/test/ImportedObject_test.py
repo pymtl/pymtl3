@@ -31,7 +31,7 @@ def local_do_test( _m ):
 def test_reg( do_test ):
   # General trans-import test
   def tv_in( m, test_vector ):
-    m.in_ = Bits32( test_vector[0] )
+    m.in_ @= Bits32( test_vector[0] )
   def tv_out( m, test_vector ):
     if test_vector[1] != '*':
       assert m.out == Bits32( test_vector[1] )
@@ -69,7 +69,7 @@ def test_vl_uninit( do_test ):
   # Use a latch to test if verilator has correctly set up
   # the inital signal values
   def tv_in( m, test_vector ):
-    m.in_ = Bits32( test_vector[0] )
+    m.in_ @= Bits32( test_vector[0] )
   def tv_out( m, test_vector ):
     assert m.out == Bits32( test_vector[1] )
   class Uninit( Component, Placeholder ):
@@ -122,23 +122,23 @@ def test_reg_external_trace( do_test ):
   a = TranslationImportPass()( a )
   a.apply( SimulationPass() )
 
-  a.in_ = Bits32(1)
-  a.sim_tick()
   assert a.line_trace() == 'q =          0'
-  a.in_ = Bits32(2)
+  a.in_ @= Bits32(1)
   a.sim_tick()
   assert a.line_trace() == 'q =          1'
-  a.in_ = Bits32(-1)
+  a.in_ @= Bits32(2)
   a.sim_tick()
   assert a.line_trace() == 'q =          2'
+  a.in_ @= Bits32(-1)
+  a.sim_tick()
+  assert a.line_trace() == 'q = 4294967295'
   a.sim_tick()
   # 0xFFFFFFFF unsigned
-  assert a.line_trace() == 'q = 4294967295'
 
 def test_reg_incomplete_portmap( do_test ):
   # Test support for incomplete port map
   def tv_in( m, test_vector ):
-    m.in_ = Bits32( test_vector[0] )
+    m.in_ @= Bits32( test_vector[0] )
   def tv_out( m, test_vector ):
     if test_vector[1] != '*':
       assert m.out == Bits32( test_vector[1] )
@@ -171,9 +171,9 @@ def test_reg_incomplete_portmap( do_test ):
 def test_adder( do_test ):
   # Test an adder
   def tv_in( m, test_vector ):
-    m.in0 = Bits32( test_vector[0] )
-    m.in1 = Bits32( test_vector[1] )
-    m.cin = Bits1( test_vector[2] )
+    m.in0 @= Bits32( test_vector[0] )
+    m.in1 @= Bits32( test_vector[1] )
+    m.cin @= Bits1( test_vector[2] )
   def tv_out( m, test_vector ):
     if test_vector[3] != '*':
       assert m.out == Bits32( test_vector[3] )
@@ -205,9 +205,9 @@ def test_adder( do_test ):
 def test_normal_queue( do_test ):
   # Test a Placeholder with params in `construct`
   def tv_in( m, tv ):
-    m.enq_en = Bits1( tv[0] )
-    m.enq_msg = Bits32( tv[1] )
-    m.deq_en = Bits1( tv[3] )
+    m.enq_en @= Bits1( tv[0] )
+    m.enq_msg @= Bits32( tv[1] )
+    m.deq_en @= Bits1( tv[3] )
   def tv_out( m, tv ):
     if tv[2] != '*':
       assert m.enq_rdy == Bits1( tv[2] )
@@ -254,9 +254,9 @@ def test_normal_queue( do_test ):
 def test_normal_queue_params( do_test ):
   # Test the `params` option of placeholder configs
   def tv_in( m, tv ):
-    m.enq_en = Bits1( tv[0] )
-    m.enq_msg = Bits32( tv[1] )
-    m.deq_en = Bits1( tv[3] )
+    m.enq_en @= Bits1( tv[0] )
+    m.enq_msg @= Bits32( tv[1] )
+    m.deq_en @= Bits1( tv[3] )
   def tv_out( m, tv ):
     if tv[2] != '*':
       assert m.enq_rdy == Bits1( tv[2] )
