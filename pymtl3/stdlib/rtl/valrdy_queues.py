@@ -288,7 +288,7 @@ class NormalQueueRTLCtrl( Component ):
         s.deq_ptr <<= s.deq_ptr_next
         s.enq_ptr <<= s.enq_ptr_next
 
-      if   s.reset:               s.full <<= Bits1(0)
-      elif s.full_next_cycle:     s.full <<= Bits1(1)
-      elif (s.do_deq and s.full): s.full <<= Bits1(0)
-      else:                       s.full <<= s.full
+      if   s.reset:             s.full <<= Bits1(0)
+      elif s.full_next_cycle:   s.full <<= Bits1(1)
+      elif (s.do_deq & s.full): s.full <<= Bits1(0)
+      else:                     s.full <<= s.full

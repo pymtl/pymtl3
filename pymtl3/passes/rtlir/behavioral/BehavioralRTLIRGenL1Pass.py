@@ -223,7 +223,23 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
-      nbits = s.visit( node.args[1] )
+      if isinstance( node.args[1], ast.Name ):
+        name = node.args[1].id
+        if name in s.globals:
+          obj = s.globals[name]
+        elif name in s.closure:
+          obj = s.closure[name]
+        else:
+          raise PyMTLSyntaxError( s.blk, node, f'object {name} is not found!' )
+
+        if isinstance( obj, int ):
+          nbits = bir.Number( obj )
+        elif issubclass( obj, Bits ):
+          nbits = bir.Number( obj.nbits )
+        else:
+          raise PyMTLSyntaxError( s.blk, node, f'object {obj} should be an int or a Bits!' )
+      else:
+        nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = bir.ZeroExt( nbits, value )
       ret.ast = node
@@ -234,7 +250,23 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
-      nbits = s.visit( node.args[1] )
+      if isinstance( node.args[1], ast.Name ):
+        name = node.args[1].id
+        if name in s.globals:
+          obj = s.globals[name]
+        elif name in s.closure:
+          obj = s.closure[name]
+        else:
+          raise PyMTLSyntaxError( s.blk, node, f'object {name} is not found!' )
+
+        if isinstance( obj, int ):
+          nbits = bir.Number( obj )
+        elif issubclass( obj, Bits ):
+          nbits = bir.Number( obj.nbits )
+        else:
+          raise PyMTLSyntaxError( s.blk, node, f'object {obj} should be an int or a Bits!' )
+      else:
+        nbits = s.visit( node.args[1] )
       value = s.visit( node.args[0] )
       ret = bir.SignExt( nbits, value )
       ret.ast = node
