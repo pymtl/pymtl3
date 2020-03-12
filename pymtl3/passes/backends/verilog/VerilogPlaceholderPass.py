@@ -52,7 +52,13 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       # parameters. Note we need to make sure the infered top_module matches
       # the default translation result.
       if not cfg.top_module:
-        cfg.top_module = get_component_unique_name( irepr )
+        if m.get_parent_object() is None:
+          # This is a top level module -- use the module name without the
+          # parameters because we will generate a different wrapper for top!
+          cfg.top_module = irepr.get_name()
+        else:
+          # Otherwise use the full name
+          cfg.top_module = get_component_unique_name( irepr )
 
       # Only try to infer the name of Verilog source file if both
       # flist and the source file are not specified.
