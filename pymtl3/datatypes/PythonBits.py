@@ -42,7 +42,6 @@ class Bits:
 
     if isinstance( idx, slice ):
       start, stop = int(idx.start or 0), int(idx.stop or self.nbits)
-      print(start,stop)
       assert not idx.step and start < stop and start >= 0 and stop <= self.nbits, \
             "Invalid access: [{}:{}] in a Bits{} instance".format( start, stop, self.nbits )
       return Bits( stop-start, (sv & ((1 << stop) - 1)) >> start )
