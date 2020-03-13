@@ -290,7 +290,7 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
   def ref_tv_out( model, test_vector ):
     dct = {}
     for out_port in all_output_ports:
-      dct[ out_port ] = eval( "model." + out_port._dsl.my_name )
+      dct[ out_port ] = eval( "model." + out_port._dsl.my_name ).clone() # WE NEED TO CLONE NOW
     reference_output.append( dct )
 
   # Method to compare the outputs of the imported model and the pure python one
@@ -346,7 +346,7 @@ def closed_loop_component_test( dut, data, backend = "verilog" ):
       # `setattr` fails to set the correct value of an array if indexed by
       # a subscript. We use `exec` here to make sure the value of elements
       # are assigned correctly.
-      exec( "model." + name + " = data" )
+      exec( "model." + name + " @= data" )
   test_vector = data.draw( DataStrategy( dut ) )
   closed_loop_component_input_test( dut, test_vector, tv_in, backend )
 

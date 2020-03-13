@@ -84,7 +84,9 @@ class PrepareSimPass( BasePass ):
     final_schedule += ff_funcs + up_funcs
     top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
 
-    self.lock_in_simulation( top )
+    self.create_lock_unlock_simulation( top )
+
+    top.lock_in_simulation()
 
   @staticmethod
   # Simulation related APIs
@@ -132,118 +134,117 @@ class PrepareSimPass( BasePass ):
     return sim_cycle_count
 
   @staticmethod
-  def lock_in_simulation( top ):
-    top._check_called_at_elaborate_top( "lock_in_simulation" )
+  def create_lock_unlock_simulation( top ):
 
-    # Basically we want to avoid @= between elements in the same net since
-    # we now use @=.
-    # - First pass creates whole bunch of signals
-    signal_object_mapping = {}
+    def lock_in_simulation():
+      top._check_called_at_elaborate_top( "lock_in_simulation" )
 
-    Q = [ (top, top) ]
-    while Q:
-      current_obj, host = Q.pop()
-      if isinstance( current_obj, list ):
-        for i, obj in enumerate( current_obj ):
-          if isinstance( obj, Signal ):
-            try:
-              value = obj.default_value()
-              if obj._dsl.needs_double_buffer:
-                value <<= value
-            except Exception as e:
-              raise type(e)(str(e) + f' happens at {obj!r}')
+      # Basically we want to avoid @= between elements in the same net since
+      # we now use @=.
+      # - First pass creates whole bunch of signals
+      signal_object_mapping = {}
 
-            current_obj[i] = value
+      Q = [ (top, top) ]
+      while Q:
+        current_obj, host = Q.pop()
+        if isinstance( current_obj, list ):
+          for i, obj in enumerate( current_obj ):
+            if isinstance( obj, Signal ):
+              try:
+                value = obj.default_value()
+                if obj._dsl.needs_double_buffer:
+                  value <<= value
+              except Exception as e:
+                raise type(e)(str(e) + f' happens at {obj!r}')
 
-            signal_object_mapping[ obj ] = (current_obj, i, True, value)
+              current_obj[i] = value
 
-          elif isinstance( obj, Component ):
-            Q.append( (obj, obj) )
-          elif isinstance( obj, (Interface, list) ):
-            Q.append( (obj, host) )
+              signal_object_mapping[ obj ] = (current_obj, i, True, value)
 
-      elif isinstance( current_obj, NamedObject ):
-        for i, obj in current_obj.__dict__.items():
-          if i[0] == '_': continue
+            elif isinstance( obj, Component ):
+              Q.append( (obj, obj) )
+            elif isinstance( obj, (Interface, list) ):
+              Q.append( (obj, host) )
 
-          if isinstance( obj, Signal ):
-            try:
-              value = obj.default_value()
-              if obj._dsl.needs_double_buffer:
-                value <<= value
-            except Exception as e:
-              raise type(e)(str(e) + f' happens at {obj!r}')
+        elif isinstance( current_obj, NamedObject ):
+          for i, obj in current_obj.__dict__.items():
+            if i[0] == '_': continue
 
-            setattr( current_obj, i, value )
-            signal_object_mapping[obj] = (current_obj, i, False, value)
+            if isinstance( obj, Signal ):
+              try:
+                value = obj.default_value()
+                if obj._dsl.needs_double_buffer:
+                  value <<= value
+              except Exception as e:
+                raise type(e)(str(e) + f' happens at {obj!r}')
 
-          elif isinstance( obj, Component ):
-            Q.append( (obj, obj) )
-          elif isinstance( obj, (Interface, list) ):
-            Q.append( (obj, host) )
+              setattr( current_obj, i, value )
+              signal_object_mapping[obj] = (current_obj, i, False, value)
 
+            elif isinstance( obj, Component ):
+              Q.append( (obj, obj) )
+            elif isinstance( obj, (Interface, list) ):
+              Q.append( (obj, host) )
 
-    # Swap all Signal objects with actual data
-    nets = top.get_all_value_nets()
+      # Swap all Signal objects with actual data
+      nets = top.get_all_value_nets()
 
-    # First step is to consolidate all non-slice signals in the same net
-    # by pointing them to the same object
-    # TODO optimize for bitstruct fields. Essentially only sliced signals
-    # should be excluded.
+      # First step is to consolidate all non-slice signals in the same net
+      # by pointing them to the same object
+      # TODO optimize for bitstruct fields. Essentially only sliced signals
+      # should be excluded.
 
-    for writer, signals in nets:
-      residence = None
+      for writer, signals in nets:
+        residence = None
 
-      # Find the residence value
-      if isinstance( writer, Const ) or writer.is_top_level_signal():
-        residence = writer
-      else:
+        # Find the residence value
+        if isinstance( writer, Const ) or writer.is_top_level_signal():
+          residence = writer
+        else:
+          for x in signals:
+            if x.is_top_level_signal():
+              residence = x
+              break
+
+        if residence is None:
+          continue # whole net is slice
+
+        if isinstance( residence, Const ):
+          residence_value = residence._dsl.const
+        else:
+          residence_value = signal_object_mapping[ residence ][-1]
+
+        # Replace top-level signals in the net with residence value
+
         for x in signals:
-          if x.is_top_level_signal():
-            residence = x
-            break
+          if x is not residence and x.is_top_level_signal():
+            # swap old value with new residence value
 
-      if residence is None:
-        continue # whole net is slice
+            current_obj, i, is_list, value = signal_object_mapping[ x ]
+            signal_object_mapping[ x ] = (current_obj, i, is_list, residence_value)
 
-      if isinstance( residence, Const ):
-        residence_value = residence._dsl.const
-      else:
-        residence_value = signal_object_mapping[ residence ][-1]
+            if is_list:
+              current_obj[i] = residence_value
+            else:
+              setattr( current_obj, i, residence_value )
 
-      # Replace top-level signals in the net with residence value
+      top._sim.signal_object_mapping = signal_object_mapping
+      top._sim.locked_simulation = True
 
-      for x in signals:
-        if x is not residence and x.is_top_level_signal():
-          # swap old value with new residence value
+    def unlock_simulation():
+      top._check_called_at_elaborate_top( "unlock_simulation" )
+      try:
+        assert top._sim.locked_simulation
+      except:
+        raise AttributeError("Cannot unlock an unlocked/never locked model.")
 
-          current_obj, i, is_list, value = signal_object_mapping[ x ]
-          signal_object_mapping[ x ] = (current_obj, i, is_list, residence_value)
+      top._sim.unlocked_simulation = True
+      top._sim.locked_simulation = False
 
-          if is_list:
-            current_obj[i] = residence_value
-          else:
-            setattr( current_obj, i, residence_value )
+      # We will reuse the same Bits object since they won't change anymore
+      for obj, (current_obj, i, is_list, _) in top._sim.signal_object_mapping.items():
+        if is_list: current_obj[i] = obj
+        else:       setattr( current_obj, i, obj )
 
-    top._sim.signal_object_mapping = signal_object_mapping
-    top._sim.locked_simulation = True
-
-  # def unlock_simulation( s ):
-    # s._check_called_at_elaborate_top( "unlock_simulation" )
-    # try:
-      # assert s._dsl.locked_simulation
-    # except:
-      # raise AttributeError("Cannot unlock an unlocked/never locked model.")
-
-    # swapped_values  = defaultdict(list)
-    # for component, records in s._dsl.swapped_signals.items():
-      # for current_obj, i, obj, is_list in records:
-        # if is_list:
-          # swapped_values[ component ].append( (current_obj, i, current_obj[i], is_list) )
-          # current_obj[i] = obj
-        # else:
-          # swapped_values[ component ].append( (current_obj, i, getattr(current_obj, i), is_list) )
-          # setattr( current_obj, i, obj )
-
-    # s._dsl.swapped_values = swapped_values
-    # s._dsl.locked_simulation = False
+    top.lock_in_simulation = lock_in_simulation
+    top.unlock_simulation  = unlock_simulation
