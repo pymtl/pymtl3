@@ -352,3 +352,39 @@ def test_normal_queue_params( do_test ):
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
+
+def test_unpacked_port_array( do_test ):
+  # Test the `params` option of placeholder configs
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[2])
+    assert m.out[1] == Bits32(tv[3])
+  class VPassThrough( Component, Placeholder ):
+    def construct( s, nports, nbits ):
+      s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+
+      s.config_placeholder = VerilogPlaceholderConfigs(
+          src_file = dirname(__file__) + '/VPassThrough.v',
+          params = {
+            'num_ports' : nports,
+            'bitwidth'  : nbits,
+          },
+          has_clk = False,
+          has_reset = False,
+      )
+      s.verilog_translate_import = True
+
+  q = VPassThrough( 2, 32 )
+  test_vector = [
+    [ 1, 42, 1, 42 ],
+    [ 1, -1, 1, -1 ],
+    [ 0,  1, 0,  1 ],
+    [ -1, 1, -1, 1 ],
+  ]
+  q._test_vectors = test_vector
+  q._tv_in = tv_in
+  q._tv_out = tv_out
+  do_test( q )
