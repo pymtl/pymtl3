@@ -294,15 +294,21 @@ class RecvFL2SendRTL( Component ):
     s.entry = None
 
     @s.update
+    def up_clear():
+      if s.send.en and s.entry is not None:
+        s.entry = None
+
+    @s.update
     def up_fl_send_rtl():
       if s.send.rdy and s.entry is not None:
-        s.send.en = b1(1)
+        s.send.en  = b1(1)
         s.send.msg = s.entry
       else:
         s.send.en  = b1(0)
         s.send.msg = MsgType()
 
-    s.add_constraints( M( s.send ) < U(up_fl_send_rtl) )
+    s.add_constraints( M( s.recv )   < U(up_fl_send_rtl),
+                       U( up_clear ) < WR( s.send.en ) )
 
   def line_trace( s ):
     return "{}(){}".format( s.recv, s.send )
