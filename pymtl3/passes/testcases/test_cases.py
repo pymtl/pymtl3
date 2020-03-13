@@ -2013,7 +2013,7 @@ class CaseNestedStructConnectWireComp:
       def upblk():
         for i in range(3):
           s.sum[i] @= s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
-        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+        s.out_sum @= s.sum[0] + s.sum[1] + s.sum[2]
       connect( s.out_foo, s.in_.foo )
       connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
@@ -2030,8 +2030,8 @@ class CaseNestedStructConnectWireSubComp:
       @update
       def upblk():
         for i in range(3):
-          s.sum[i] = s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
-        s.out_sum = s.sum[0] + s.sum[1] + s.sum[2]
+          s.sum[i] @= s.in_.packed_array[i][0] + s.in_.packed_array[i][1]
+        s.out_sum @= s.sum[0] + s.sum[1] + s.sum[2]
       connect( s.out_foo, s.b.out )
       connect( s.out_bar, s.in_.inner.bar )
     def line_trace( s ): return "out_sum = " + str( s.out_sum )
@@ -2106,7 +2106,7 @@ class CaseInterfaceArrayNonStaticIndexComp:
       s.out = OutPort( Bits32 )
       @update
       def upblk():
-        s.out @= s.in_[s.in_[0].foo].foo
+        s.out @= s.in_[s.in_[0].foo[0]].foo
   TV_IN = \
   _set(
       'in_[0].foo', Bits32, 0,

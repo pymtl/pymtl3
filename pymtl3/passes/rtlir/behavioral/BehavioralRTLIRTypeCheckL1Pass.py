@@ -241,9 +241,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         f'{node.nbits} is not a constant number!' )
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
-    if new_nbits <= old_nbits:
+    if new_nbits < old_nbits:
       raise PyMTLTypeError( s.blk, node.ast,
-        f'{new_nbits} is not greater than {old_nbits}!' )
+        f'{new_nbits} is less than {old_nbits}!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
     node._is_explicit = True
@@ -256,9 +256,9 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         f'{node.nbits} is not a constant number!' )
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
-    if new_nbits <= old_nbits:
+    if new_nbits < old_nbits:
       raise PyMTLTypeError( s.blk, node.ast,
-        f'{new_nbits} is not greater than {old_nbits}!' )
+        f'{new_nbits} is less than {old_nbits}!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
     node._is_explicit = True

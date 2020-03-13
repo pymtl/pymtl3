@@ -267,7 +267,10 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
         "new bitwidth of zero extension must be known at elaboration time!" )
     current_nbits = int(node.value.Type.get_dtype().get_length())
     padded_nbits = target_nbits - current_nbits
-    return f"{{ {{ {padded_nbits} {{ 1'b0 }} }}, {value} }}"
+    if padded_nbits == 0:
+      return value
+    else:
+      return f"{{ {{ {padded_nbits} {{ 1'b0 }} }}, {value} }}"
 
   #-----------------------------------------------------------------------
   # visit_SignExt
@@ -287,6 +290,9 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     current_nbits = int(node.value.Type.get_dtype().get_length())
     last_bit = current_nbits - 1
     padded_nbits = target_nbits - current_nbits
+
+    if padded_nbits == 0:
+      return value
 
     template = "{{ {{ {padded_nbits} {{ {value}[{last_bit}] }} }}, {value} }}"
     one_bit_template = "{{ {{ {padded_nbits} {{ {_value} }} }}, {value} }}"

@@ -169,7 +169,8 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
         node.sexpr['s_attr'] = f"{nbits}'d{obj}"
         node.sexpr['s_index'] = ""
       elif isinstance( obj, Bits ):
-        nbits = obj.nbits
+        # nbits = obj.nbits
+        nbits = node.Type.get_dtype().get_length()
         value = int( obj )
         node.sexpr['s_attr'] = f"{nbits}'d{value}"
         node.sexpr['s_index'] = ""

@@ -67,6 +67,7 @@ class BehavioralRTLIRTypeCheckVisitorL4( BehavioralRTLIRTypeCheckVisitorL3 ):
        isinstance( node.value.Type.get_sub_type(), rt.InterfaceView ):
       node.Type = node.value.Type.get_next_dim_type()
       node._is_explicit = True
+      s._handle_index_extension( node, node.value, node.idx, 'index' )
 
     else:
       super().visit_Index( node )

@@ -100,7 +100,7 @@ CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
     'REF_UPBLK',
     '''\
         always_comb begin : _lambda__s_out_1_
-          out[1] = in_ + 32'd42;
+          out[1'd1] = in_ + 32'd42;
         end
     ''',
     'REF_SRC',
@@ -116,7 +116,7 @@ CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
           logic [31:0] out [0:1];
 
           always_comb begin : _lambda__s_out_1_
-            out[1] = in_ + 32'd42;
+            out[1'd1] = in_ + 32'd42;
           end
 
           assign out__0 = out[0];
@@ -130,7 +130,7 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in_, 32'd0 };
+          out = { in_, 1'd0 };
         end
     ''',
     'REF_SRC',
@@ -139,12 +139,12 @@ CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,
         (
           input logic [0:0] clk,
           input logic [31:0] in_,
-          output logic [63:0] out,
+          output logic [32:0] out,
           input logic [0:0] reset
         );
 
           always_comb begin : upblk
-            out = { in_, 32'd0 };
+            out = { in_, 1'd0 };
           end
 
         endmodule
@@ -165,7 +165,7 @@ CaseBits32x2ConcatUnpackedSignalComp = set_attributes( CaseBits32x2ConcatUnpacke
           logic [31:0] in_ [0:1];
 
           always_comb begin : upblk
-            out = { in_[0], in_[1] };
+            out = { in_[1'd0], in_[1'd1] };
           end
 
           assign in_[0] = in___0;
@@ -197,10 +197,10 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
         integer __loopvar__upblk_i;
 
         always_comb begin : upblk
-          for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
-            out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
-          for ( __loopvar__upblk_i = 1; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
-            out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
+          for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 2'd2 )
+            out[3'(__loopvar__upblk_i)] = in_[3'(__loopvar__upblk_i)];
+          for ( __loopvar__upblk_i = 1'd1; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 2'd2 )
+            out[3'(__loopvar__upblk_i)] = in_[3'(__loopvar__upblk_i)];
         end
     ''',
     'REF_SRC',
@@ -226,10 +226,10 @@ CaseForRangeLowerUpperStepPassThroughComp = set_attributes( CaseForRangeLowerUpp
           integer __loopvar__upblk_i;
 
           always_comb begin : upblk
-            for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
-              out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
-            for ( __loopvar__upblk_i = 1; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 2 )
-              out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
+            for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 2'd2 )
+              out[3'(__loopvar__upblk_i)] = in_[3'(__loopvar__upblk_i)];
+            for ( __loopvar__upblk_i = 1'd1; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 2'd2 )
+              out[3'(__loopvar__upblk_i)] = in_[3'(__loopvar__upblk_i)];
           end
 
           assign in_[0] = in___0;
@@ -253,8 +253,8 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
         integer __loopvar__upblk_i;
 
         always_comb begin : upblk
-          for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-            out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? in_[__loopvar__upblk_i] : in_[0];
+          for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+            out[3'(__loopvar__upblk_i)] = ( 3'(__loopvar__upblk_i) == 3'd1 ) ? in_[3'(__loopvar__upblk_i)] : in_[3'd0];
         end
     ''',
     'REF_SRC',
@@ -280,8 +280,8 @@ CaseIfExpInForStmtComp = set_attributes( CaseIfExpInForStmtComp,
           integer __loopvar__upblk_i;
 
           always_comb begin : upblk
-            for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-              out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? in_[__loopvar__upblk_i] : in_[0];
+            for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+              out[3'(__loopvar__upblk_i)] = ( 3'(__loopvar__upblk_i) == 3'd1 ) ? in_[3'(__loopvar__upblk_i)] : in_[3'd0];
           end
 
           assign in_[0] = in___0;
@@ -323,8 +323,8 @@ CaseIfExpUnaryOpInForStmtComp = set_attributes( CaseIfExpUnaryOpInForStmtComp,
           integer __loopvar__upblk_i;
 
           always_comb begin : upblk
-            for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-              out[__loopvar__upblk_i] = ( __loopvar__upblk_i == 1 ) ? ~in_[__loopvar__upblk_i] : in_[0];
+            for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+              out[3'(__loopvar__upblk_i)] = ( 3'(__loopvar__upblk_i) == 3'd1 ) ? ~in_[3'(__loopvar__upblk_i)] : in_[3'd0];
           end
 
           assign in_[0] = in___0;
@@ -348,12 +348,12 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
         integer __loopvar__upblk_i;
 
         always_comb begin : upblk
-          for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-            if ( ( in_[__loopvar__upblk_i] != 32'd0 ) && ( ( __loopvar__upblk_i < 4 ) ? in_[__loopvar__upblk_i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-              out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
+          for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+            if ( ( in_[3'(__loopvar__upblk_i)] != 32'd0 ) & ( ( 3'(__loopvar__upblk_i) < 3'd4 ) ? in_[3'(__loopvar__upblk_i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+              out[3'(__loopvar__upblk_i)] = in_[3'(__loopvar__upblk_i)];
             end
             else
-              out[__loopvar__upblk_i] = 32'd0;
+              out[3'(__loopvar__upblk_i)] = 32'd0;
         end
     ''',
     'REF_SRC',
@@ -380,12 +380,12 @@ CaseIfBoolOpInForStmtComp = set_attributes( CaseIfBoolOpInForStmtComp,
           integer __loopvar__upblk_i;
 
           always_comb begin : upblk
-            for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-              if ( ( in_[__loopvar__upblk_i] != 32'd0 ) && ( ( __loopvar__upblk_i < 4 ) ? in_[__loopvar__upblk_i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-                out[__loopvar__upblk_i] = in_[__loopvar__upblk_i];
+            for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+              if ( ( in_[3'(__loopvar__upblk_i)] != 32'd0 ) & ( ( 3'(__loopvar__upblk_i) < 3'd4 ) ? in_[3'(__loopvar__upblk_i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+                out[3'(__loopvar__upblk_i)] = in_[3'(__loopvar__upblk_i)];
               end
               else
-                out[__loopvar__upblk_i] = 32'd0;
+                out[3'(__loopvar__upblk_i)] = 32'd0;
           end
 
           // Connections
@@ -410,13 +410,13 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
         integer __loopvar__upblk_i;
 
         always_comb begin : upblk
-          for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 ) begin
-            if ( ( in_[__loopvar__upblk_i] != 32'd0 ) && ( ( __loopvar__upblk_i < 4 ) ? in_[__loopvar__upblk_i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-              __tmpvar__upblk_tmpvar = in_[__loopvar__upblk_i];
+          for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 ) begin
+            if ( ( in_[3'(__loopvar__upblk_i)] != 32'd0 ) & ( ( 3'(__loopvar__upblk_i) < 3'd4 ) ? in_[3'(__loopvar__upblk_i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+              __tmpvar__upblk_tmpvar = in_[3'(__loopvar__upblk_i)];
             end
             else
               __tmpvar__upblk_tmpvar = 32'd0;
-            out[__loopvar__upblk_i] = __tmpvar__upblk_tmpvar;
+            out[3'(__loopvar__upblk_i)] = __tmpvar__upblk_tmpvar;
           end
         end
     ''',
@@ -447,13 +447,13 @@ CaseIfTmpVarInForStmtComp = set_attributes( CaseIfTmpVarInForStmtComp,
           integer __loopvar__upblk_i;
 
           always_comb begin : upblk
-            for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 5; __loopvar__upblk_i = __loopvar__upblk_i + 1 ) begin
-              if ( ( in_[__loopvar__upblk_i] != 32'd0 ) && ( ( __loopvar__upblk_i < 4 ) ? in_[__loopvar__upblk_i + 1] != 32'd0 : in_[4] != 32'd0 ) ) begin
-                __tmpvar__upblk_tmpvar = in_[__loopvar__upblk_i];
+            for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 3'd5; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 ) begin
+              if ( ( in_[3'(__loopvar__upblk_i)] != 32'd0 ) & ( ( 3'(__loopvar__upblk_i) < 3'd4 ) ? in_[3'(__loopvar__upblk_i) + 3'd1] != 32'd0 : in_[3'd4] != 32'd0 ) ) begin
+                __tmpvar__upblk_tmpvar = in_[3'(__loopvar__upblk_i)];
               end
               else
                 __tmpvar__upblk_tmpvar = 32'd0;
-              out[__loopvar__upblk_i] = __tmpvar__upblk_tmpvar;
+              out[3'(__loopvar__upblk_i)] = __tmpvar__upblk_tmpvar;
             end
           end
 
@@ -479,8 +479,8 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
         integer __loopvar__upblk_i;
 
         always_comb begin : upblk
-          for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-            out[__loopvar__upblk_i] = in_[__loopvar__upblk_i * 8 +: 8];
+          for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 2'd2; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+            out[1'(__loopvar__upblk_i)] = in_[4'(__loopvar__upblk_i) * 4'd8 +: 8];
         end
     ''',
     'REF_SRC',
@@ -499,8 +499,8 @@ CaseFixedSizeSliceComp = set_attributes( CaseFixedSizeSliceComp,
           integer __loopvar__upblk_i;
 
           always_comb begin : upblk
-            for ( __loopvar__upblk_i = 0; __loopvar__upblk_i < 2; __loopvar__upblk_i = __loopvar__upblk_i + 1 )
-              out[__loopvar__upblk_i] = in_[__loopvar__upblk_i * 8 +: 8];
+            for ( __loopvar__upblk_i = 1'd0; __loopvar__upblk_i < 2'd2; __loopvar__upblk_i = __loopvar__upblk_i + 1'd1 )
+              out[1'(__loopvar__upblk_i)] = in_[4'(__loopvar__upblk_i) * 4'd8 +: 8];
           end
 
           // Connections
@@ -567,7 +567,7 @@ CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in___foo[0], in___foo[1], in___foo[2] };
+          out = { in___foo[3'd0], in___foo[3'd1], in___foo[3'd2] };
         end
     ''',
     'REF_SRC',
@@ -588,7 +588,7 @@ CaseStructPackedArrayUpblkComp = set_attributes( CaseStructPackedArrayUpblkComp,
           logic [159:0]  in_;
 
           always_comb begin : upblk
-            out = { in___foo[0], in___foo[1], in___foo[2] };
+            out = { in___foo[3'd0], in___foo[3'd1], in___foo[3'd2] };
           end
 
           // Connections
@@ -611,7 +611,7 @@ CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = { in___bar[0], in___woo__foo, in___foo };
+          out = { in___bar[1'd0], in___woo__foo, in___foo };
         end
     ''',
     'REF_SRC',
@@ -632,7 +632,7 @@ CaseNestedStructPackedArrayUpblkComp = set_attributes( CaseNestedStructPackedArr
           logic [127:0]  in_;
 
           always_comb begin : upblk
-            out = { in___bar[0], in___woo__foo, in___foo };
+            out = { in___bar[1'd0], in___woo__foo, in___foo };
           end
 
           // Connections
@@ -652,7 +652,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___foo[1];
+          out = in___foo[3'd1];
         end
     ''',
     'REF_SRC',
@@ -672,7 +672,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
           logic [31:0]   in___foo [0:4];
 
           always_comb begin : upblk
-            out = in___foo[1];
+            out = in___foo[3'd1];
           end
 
           // Connections
@@ -690,7 +690,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___foo[in___foo[0]];
+          out = in___foo[in___foo[1'd0][5'd0]];
         end
     ''',
     'REF_SRC',
@@ -707,7 +707,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
           logic [31:0]   in___foo [0:1];
 
           always_comb begin : upblk
-            out = in___foo[in___foo[0]];
+            out = in___foo[in___foo[1'd0][5'd0]];
           end
 
           // Connections
@@ -722,7 +722,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = b__out[1];
+          out = b__out[3'd1];
         end
     ''',
     'REF_SRC',
@@ -824,7 +824,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
           assign b__4__reset = b__reset[4];
 
           always_comb begin : upblk
-            out = b__out[1];
+            out = b__out[3'd1];
           end
 
           // Connections

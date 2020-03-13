@@ -920,7 +920,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___foo[in___foo[1'd0]];
+          out = in___foo[in___foo[1'd0][5'd0]];
         end
     ''',
     'REF_SRC',
@@ -934,7 +934,7 @@ CaseInterfaceArrayNonStaticIndexComp = set_attributes( CaseInterfaceArrayNonStat
         );
 
           always_comb begin : upblk
-            out = in___foo[in___foo[1'd0]];
+            out = in___foo[in___foo[1'd0][5'd0]];
           end
 
         endmodule
@@ -1127,7 +1127,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in___foo[1'd1];
+          out = in___foo[3'd1];
         end
     ''',
     'REF_SRC',
@@ -1141,7 +1141,7 @@ CaseArrayBits32IfcInUpblkComp = set_attributes( CaseArrayBits32IfcInUpblkComp,
         );
 
           always_comb begin : upblk
-            out = in___foo[1'd1];
+            out = in___foo[3'd1];
           end
 
         endmodule
@@ -1200,7 +1200,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = b__out[1'd1];
+          out = b__out[3'd1];
         end
     ''',
     'REF_SRC',
@@ -1263,7 +1263,7 @@ CaseBits32ArraySubCompAttrUpblkComp = set_attributes( CaseBits32ArraySubCompAttr
           );
 
           always_comb begin : upblk
-            out = b__out[1'd1];
+            out = b__out[3'd1];
           end
 
           assign b__clk[0] = clk;
