@@ -15,8 +15,8 @@ from .TinyRV0InstRTL import *
 
 # State Constants
 
-SNOOP = b1(0)
-WAIT  = b1(1)
+SNOOP = 0
+WAIT  = 1
 
 #-------------------------------------------------------------------------
 # DropUnit
@@ -102,7 +102,7 @@ class ImmGenRTL( Component ):
                                s.inst[ B_IMM0 ],
                                b1( 0 ) )
 
-      elif s.imm_type == b3(1): # S-type
+      elif s.imm_type == 1: # S-type
         s.imm @= concat( sext( s.inst[ S_IMM1 ], 27 ),
                                s.inst[ S_IMM0 ] )
 

@@ -115,30 +115,30 @@ class DecodeInstType( Component ):
     @update
     def comb_logic():
 
-      s.out @= b8( ZERO )
+      s.out @= ZERO
 
       if   s.in_ == 0b10011:                 s.out @= NOP
-      elif s.in_[OPCODE] == b7(0b0110011):
-        if   s.in_[FUNCT3] == b3(0b000):     s.out @= ADD
-        elif s.in_[FUNCT3] == b3(0b001):     s.out @= SLL
-        elif s.in_[FUNCT3] == b3(0b111):     s.out @= AND
-        elif s.in_[FUNCT3] == b3(0b101):     s.out @= SRL
+      elif s.in_[OPCODE] == 0b0110011:
+        if   s.in_[FUNCT3] == 0b000:     s.out @= ADD
+        elif s.in_[FUNCT3] == 0b001:     s.out @= SLL
+        elif s.in_[FUNCT3] == 0b111:     s.out @= AND
+        elif s.in_[FUNCT3] == 0b101:     s.out @= SRL
 
-      elif s.in_[OPCODE] == b7(0b0010011):
-        if   s.in_[FUNCT3] == b3(0b000):       s.out @= ADDI
+      elif s.in_[OPCODE] == 0b0010011:
+        if   s.in_[FUNCT3] == 0b000:       s.out @= ADDI
 
-      elif s.in_[OPCODE] == b7(0b0100011):
-        if s.in_[FUNCT3] == b3(0b010):       s.out @= SW
+      elif s.in_[OPCODE] == 0b0100011:
+        if s.in_[FUNCT3] == 0b010:       s.out @= SW
 
-      elif s.in_[OPCODE] == b7(0b0000011):
-        if s.in_[FUNCT3] == b3(0b010):       s.out @= LW
+      elif s.in_[OPCODE] == 0b0000011:
+        if s.in_[FUNCT3] == 0b010:       s.out @= LW
 
-      elif s.in_[OPCODE] == b7(0b1100011):
-        if s.in_[FUNCT3] == b3(0b001):       s.out @= BNE
+      elif s.in_[OPCODE] == 0b1100011:
+        if s.in_[FUNCT3] == 0b001:       s.out @= BNE
 
-      elif s.in_[OPCODE] == b7(0b1110011):
-        if   s.in_[FUNCT3] == b3(0b001):       s.out @= CSRW
+      elif s.in_[OPCODE] == 0b1110011:
+        if   s.in_[FUNCT3] == 0b001:       s.out @= CSRW
 
-        elif s.in_[FUNCT3] == b3(0b010):
-          if s.in_[FUNCT7] == b7(0b0111111):   s.out @= CSRRX
+        elif s.in_[FUNCT3] == 0b010:
+          if s.in_[FUNCT7] == 0b0111111:   s.out @= CSRRX
           else:                                s.out @= CSRR

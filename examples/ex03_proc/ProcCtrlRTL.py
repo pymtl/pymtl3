@@ -227,7 +227,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_D():
       if s.reset:
-        s.val_D <<= Bits1(0)
+        s.val_D <<= 0
       elif s.reg_en_D:
         s.val_D <<= s.next_val_F
 
@@ -400,10 +400,10 @@ class ProcCtrl( Component ):
 
     # bypassing logic
 
-    byp_d = b2( 0 )
-    byp_x = b2( 1 )
-    byp_m = b2( 2 )
-    byp_w = b2( 3 )
+    byp_d = 0
+    byp_x = 1
+    byp_m = 2
+    byp_w = 3
 
     @update
     def comb_bypass_D():
@@ -412,22 +412,22 @@ class ProcCtrl( Component ):
 
       if s.rs1_en_D:
 
-        if   s.val_X & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+        if   s.val_X & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
                      & s.rf_wen_pending_X:    s.op1_byp_sel_D @= byp_x
-        elif s.val_M & ( s.inst_D[ RS1 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != b5(0) ) \
+        elif s.val_M & ( s.inst_D[ RS1 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != 0 ) \
                      & s.rf_wen_pending_M:    s.op1_byp_sel_D @= byp_m
-        elif s.val_W & ( s.inst_D[ RS1 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != b5(0) ) \
+        elif s.val_W & ( s.inst_D[ RS1 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != 0 ) \
                      & s.rf_wen_pending_W:    s.op1_byp_sel_D @= byp_w
 
       s.op2_byp_sel_D @= byp_d
 
       if s.rs2_en_D:
 
-        if   s.val_X & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+        if   s.val_X & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
                      & s.rf_wen_pending_X:    s.op2_byp_sel_D @= byp_x
-        elif s.val_M & ( s.inst_D[ RS2 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != b5(0) ) \
+        elif s.val_M & ( s.inst_D[ RS2 ] == s.rf_waddr_M ) & ( s.rf_waddr_M != 0 ) \
                      & s.rf_wen_pending_M:    s.op2_byp_sel_D @= byp_m
-        elif s.val_W & ( s.inst_D[ RS2 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != b5(0) ) \
+        elif s.val_W & ( s.inst_D[ RS2 ] == s.rf_waddr_W ) & ( s.rf_waddr_W != 0 ) \
                      & s.rf_wen_pending_W:    s.op2_byp_sel_D @= byp_w
 
     # hazards checking logic
@@ -437,19 +437,19 @@ class ProcCtrl( Component ):
     @update
     def comb_hazard_D():
       s.ostall_ld_X_rs1_D @= s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
-                             & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+                             & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
                              & ( s.dmemreq_type_X == ld )
 
       s.ostall_ld_X_rs2_D @= s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
-                             & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+                             & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
                              & ( s.dmemreq_type_X == ld )
 
       s.ostall_xcel_X_rs1_D @= s.rs1_en_D & s.val_X & s.rf_wen_pending_X \
-                             & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+                             & ( s.inst_D[ RS1 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
                              & s.xcelreq_X
 
       s.ostall_xcel_X_rs2_D @= s.rs2_en_D & s.val_X & s.rf_wen_pending_X \
-                             & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != b5(0) ) \
+                             & ( s.inst_D[ RS2 ] == s.rf_waddr_X ) & ( s.rf_waddr_X != 0 ) \
                              & s.xcelreq_X
 
       s.ostall_hazard_D  @= s.ostall_ld_X_rs1_D   | s.ostall_ld_X_rs2_D | \
@@ -499,7 +499,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_X():
       if s.reset:
-        s.val_X <<= b1( 0 )
+        s.val_X <<= 0
       elif s.reg_en_X:
         s.val_X            <<= s.next_val_D
         s.rf_wen_pending_X <<= s.rf_wen_pending_D
@@ -579,7 +579,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_M():
       if s.reset:
-        s.val_M            <<= b1( 0 )
+        s.val_M            <<= 0
       elif s.reg_en_M:
         s.val_M            <<= s.next_val_X
         s.rf_wen_pending_M <<= s.rf_wen_pending_X
@@ -632,7 +632,7 @@ class ProcCtrl( Component ):
     @update_ff
     def reg_W():
       if s.reset:
-        s.val_W <<= b1( 0 )
+        s.val_W <<= 0
       elif s.reg_en_W:
         s.val_W            <<= s.next_val_M
         s.rf_wen_pending_W <<= s.rf_wen_pending_M

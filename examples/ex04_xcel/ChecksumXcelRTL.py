@@ -61,7 +61,7 @@ class ChecksumXcelRTL( Component ):
     @update
     def up_start_pulse():
       s.start_pulse @= s.xcel.resp.en & (s.in_q.deq.ret.type_ == s.WR) & \
-                                        (s.in_q.deq.ret.addr == b5(4))
+                                        (s.in_q.deq.ret.addr == 4)
 
     @update
     def up_state_next():
@@ -91,24 +91,24 @@ class ChecksumXcelRTL( Component ):
         s.in_q.deq.en  @= s.in_q.deq.rdy
         s.xcel.resp.en @= s.in_q.deq.rdy
         s.checksum_unit.recv.en  @= s.start_pulse & s.checksum_unit.recv.rdy
-        s.checksum_unit.send.rdy @= b1(1)
+        s.checksum_unit.send.rdy @= 1
 
       elif s.state == s.WAIT:
-        s.in_q.deq.en  @= b1(0)
-        s.xcel.resp.en @= b1(0)
+        s.in_q.deq.en  @= 0
+        s.xcel.resp.en @= 0
         s.checksum_unit.recv.en  @= s.checksum_unit.recv.rdy
-        s.checksum_unit.send.rdy @= b1(1)
+        s.checksum_unit.send.rdy @= 1
 
       else: # s.state == s.BUSY:
-        s.in_q.deq.en  @= b1(0)
-        s.xcel.resp.en @= b1(0)
-        s.checksum_unit.recv.en  @= b1(0)
-        s.checksum_unit.send.rdy @= b1(1)
+        s.in_q.deq.en  @= 0
+        s.xcel.resp.en @= 0
+        s.checksum_unit.recv.en  @= 0
+        s.checksum_unit.send.rdy @= 1
 
     @update
     def up_resp_msg():
       s.xcel.resp.msg.type_ @= s.in_q.deq.ret.type_
-      s.xcel.resp.msg.data  @= b32(0)
+      s.xcel.resp.msg.data  @= 0
       if s.in_q.deq.ret.type_ == s.RD:
         s.xcel.resp.msg.data @= s.reg_file[ s.in_q.deq.ret.addr[0:3] ].out
 

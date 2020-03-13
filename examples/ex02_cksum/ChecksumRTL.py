@@ -39,10 +39,10 @@ class StepUnit( Component ):
     @update
     def up_step():
       temp1 = zext(s.word_in, 32) + s.sum1_in
-      s.sum1_out @= temp1 & b32(0xffff)
+      s.sum1_out @= temp1 & 0xffff
 
       temp2 = s.sum1_out + s.sum2_in
-      s.sum2_out @= temp2 & b32(0xffff)
+      s.sum2_out @= temp2 & 0xffff
 
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
@@ -82,8 +82,8 @@ class ChecksumRTL( Component ):
     for i in range( 8 ):
       s.steps[i].word_in //= s.words[i]
       if i == 0:
-        s.steps[i].sum1_in //= b32(0)
-        s.steps[i].sum2_in //= b32(0)
+        s.steps[i].sum1_in //= 0
+        s.steps[i].sum2_in //= 0
       else:
         s.steps[i].sum1_in //= s.steps[i-1].sum1_out
         s.steps[i].sum2_in //= s.steps[i-1].sum2_out
