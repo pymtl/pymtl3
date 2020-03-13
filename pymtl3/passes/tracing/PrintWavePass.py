@@ -100,7 +100,7 @@ def _help_print( top ):
   #-----------------------------------------------------------------------
   # handles clock tick symbol
 
-  for i in range(0,len(all_signal_values["s.reset"])):
+  for i in range(1,len(all_signal_values["s.reset"])+1):
     # insert a space every 5 cycles
     print(f"{tick}{str(i).ljust(char_length-1)}",end="")
   print("")
