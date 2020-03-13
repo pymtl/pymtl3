@@ -41,7 +41,8 @@ class Bits:
     sv = int(self.value)
 
     if isinstance( idx, slice ):
-      start, stop = int(idx.start), int(idx.stop)
+      start, stop = int(idx.start or 0), int(idx.stop or self.nbits)
+      print(start,stop)
       assert not idx.step and start < stop and start >= 0 and stop <= self.nbits, \
             "Invalid access: [{}:{}] in a Bits{} instance".format( start, stop, self.nbits )
       return Bits( stop-start, (sv & ((1 << stop) - 1)) >> start )
@@ -54,7 +55,7 @@ class Bits:
     sv = int(self.value)
 
     if isinstance( idx, slice ):
-      start, stop = int(idx.start), int(idx.stop)
+      start, stop = int(idx.start or 0), int(idx.stop or self.nbits)
       assert not idx.step and start < stop and start >= 0 and stop <= self.nbits, \
             "Invalid access: [{}:{}] in a Bits{} instance".format( start, stop, self.nbits )
 
@@ -182,7 +183,7 @@ class Bits:
   # Print
 
   def __repr__(self):
-    return "Bits{}({})".format( self.nbits, int(self.value) )
+    return "Bits{}(0x{})".format( self.nbits, self.hex() )
 
   def __str__(self):
     str = "{:x}".format(int(self.value)).zfill(((self.nbits-1)>>2)+1)
