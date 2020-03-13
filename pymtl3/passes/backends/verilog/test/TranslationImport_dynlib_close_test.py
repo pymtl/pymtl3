@@ -38,7 +38,7 @@ def test_dynlib_close():
         s.out = OutPort( Bits32 )
         @update
         def upblk():
-          s.out = s.in_
+          s.out @= s.in_
   class Seq:
     class A( Component ):
       def construct( s ):
@@ -51,7 +51,7 @@ def test_dynlib_close():
   comb_a = Comb.A()
   # TestVectorSimulator properties
   def tv_in( m, tv ):
-    m.in_ = Bits32(tv[0])
+    m.in_ @= Bits32(tv[0])
   def tv_out( m, tv ):
     assert m.out == Bits32(tv[1])
   comb_a._test_vectors = [
@@ -67,7 +67,7 @@ def test_dynlib_close():
 
   seq_a = Seq.A()
   def tv_in( m, tv ):
-    m.in_ = Bits32(tv[0])
+    m.in_ @= Bits32(tv[0])
   def tv_out( m, tv ):
     if tv[1] != '*':
       assert m.out == Bits32(tv[1])
