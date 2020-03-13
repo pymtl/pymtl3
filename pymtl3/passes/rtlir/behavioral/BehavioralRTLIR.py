@@ -106,6 +106,14 @@ class Concat( BaseBehavioralRTLIR ):
         return False
     return True
 
+class Truncate( BaseBehavioralRTLIR ):
+  def __init__( s, nbits, value ):
+    s.nbits = nbits
+    s.value = value
+
+  def __eq__( s, other ):
+    return isinstance(other, Truncate) and s.nbits == other.nbits and s.value == other.value
+
 class ZeroExt( BaseBehavioralRTLIR ):
   def __init__( s, nbits, value ):
     s.nbits = nbits

@@ -9,7 +9,7 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext
+from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext, trunc
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
@@ -70,6 +70,35 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     ret.component = s.component
     return ret
 
+  def get_obj_from_name( s, node, name ):
+    try:
+      if name in s.globals:
+        obj = s.globals[ name ]
+      elif name in s.closure:
+        obj = s.closure[ name ]
+      else:
+        raise NameError
+    except NameError:
+      raise PyMTLSyntaxError( s.blk, node, f"cannot find object of name {name}" )
+    return obj
+
+  def get_bir_from_obj( s, obj ):
+    if isinstance( obj, int ):
+      return bir.Number( obj )
+    elif issubclass( obj, Bits ):
+      return bir.Number( obj.nbits )
+    else:
+      raise PyMTLSyntaxError( s.blk, node,
+          f'cannot convert object {obj} to a bir node!' )
+
+  def get_const_obj( s, node ):
+    if isinstance( node, ast.Name ):
+      return s.get_obj_from_name( node, node.id )
+    elif isinstance( node, ast.Num ):
+      return node.n
+    else:
+      return None
+
   def get_call_obj( s, node ):
     if hasattr(node, "starargs") and node.starargs:
       raise PyMTLSyntaxError( s.blk, node, 'star argument is not supported!')
@@ -81,27 +110,8 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if not isinstance( node.func, ast.Name ):
       raise PyMTLSyntaxError( s.blk, node,
         f'{node.func} is called but is not a name!')
-    func = node.func
 
-    # Find the corresponding object of node.func field
-    # TODO: Support Verilog task?
-    # if func in s.mapping:
-      # The node.func field corresponds to a member of this class
-      # obj = s.mapping[ func ][ 0 ]
-    # else:
-    try:
-      # An object in global namespace is used
-      if func.id in s.globals:
-        obj = s.globals[ func.id ]
-      # An object in closure is used
-      elif func.id in s.closure:
-        obj = s.closure[ func.id ]
-      else:
-        raise NameError
-    except NameError:
-      raise PyMTLSyntaxError( s.blk, node,
-        node.func.id + ' function is not found!' )
-    return obj
+    return s.get_obj_from_name( node, node.func.id )
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \
@@ -203,10 +213,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly one argument should be given to Bits!' )
-      value = s.visit( node.args[0] )
-      ret = bir.SizeCast( nbits, value )
-      ret.ast = node
-      return ret
+      ret = bir.SizeCast( nbits, s.visit( node.args[0] ) )
 
     # concat method
     elif obj is concat:
@@ -215,62 +222,51 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
           'at least one argument should be given to concat!' )
       values = [s.visit(c) for c in node.args]
       ret = bir.Concat( values )
-      ret.ast = node
-      return ret
 
     # zext method
     elif obj is zext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
-      if isinstance( node.args[1], ast.Name ):
-        name = node.args[1].id
-        if name in s.globals:
-          obj = s.globals[name]
-        elif name in s.closure:
-          obj = s.closure[name]
-        else:
-          raise PyMTLSyntaxError( s.blk, node, f'object {name} is not found!' )
 
-        if isinstance( obj, int ):
-          nbits = bir.Number( obj )
-        elif issubclass( obj, Bits ):
-          nbits = bir.Number( obj.nbits )
-        else:
-          raise PyMTLSyntaxError( s.blk, node, f'object {obj} should be an int or a Bits!' )
-      else:
-        nbits = s.visit( node.args[1] )
-      value = s.visit( node.args[0] )
-      ret = bir.ZeroExt( nbits, value )
-      ret.ast = node
-      return ret
+      nbits = s.get_const_obj( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of zext {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.ZeroExt( nbits, s.visit( node.args[0] ) )
 
     # sext method
     elif obj is sext:
       if len( node.args ) != 2:
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
-      if isinstance( node.args[1], ast.Name ):
-        name = node.args[1].id
-        if name in s.globals:
-          obj = s.globals[name]
-        elif name in s.closure:
-          obj = s.closure[name]
-        else:
-          raise PyMTLSyntaxError( s.blk, node, f'object {name} is not found!' )
 
-        if isinstance( obj, int ):
-          nbits = bir.Number( obj )
-        elif issubclass( obj, Bits ):
-          nbits = bir.Number( obj.nbits )
-        else:
-          raise PyMTLSyntaxError( s.blk, node, f'object {obj} should be an int or a Bits!' )
-      else:
-        nbits = s.visit( node.args[1] )
-      value = s.visit( node.args[0] )
-      ret = bir.SignExt( nbits, value )
-      ret.ast = node
-      return ret
+      nbits = s.get_const_obj( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of sext {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.SignExt( nbits, s.visit( node.args[0] ) )
+
+    # trunc method
+    elif obj is trunc:
+      if len( node.args ) != 2:
+        raise PyMTLSyntaxError( s.blk, node,
+          'exactly two arguments should be given to trunc!' )
+
+      nbits = s.get_const_obj( node.args[1] )
+      if isinstance(nbits, type) and issubclass( nbits, Bits ):
+        nbits = nbits.nbits
+      if not isinstance( nbits, int ):
+        raise PyMTLSyntaxError( s.blk, node,
+          'the 2nd argument of trunc {nbits} is not a constant int or BitsN type!' )
+
+      ret = bir.Truncate( nbits, s.visit( node.args[0] ) )
 
     # reduce methods
     elif obj is reduce_and or obj is reduce_or or obj is reduce_xor:
@@ -283,15 +279,15 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       if len( node.args ) != 1:
         raise PyMTLSyntaxError( s.blk, node,
           f'exactly two arguments should be given to reduce {op} methods!' )
-      value = s.visit( node.args[0] )
-      ret = bir.Reduce( op, value )
-      ret.ast = node
-      return ret
+
+      ret = bir.Reduce( op, s.visit( node.args[0] ) )
 
     else:
       # Only Bits class instantiation is supported at L1
-      raise PyMTLSyntaxError( s.blk, node,
-        f'Unrecognized method call {obj.__name__}!' )
+      raise PyMTLSyntaxError( s.blk, node, f'Unrecognized method call {obj.__name__}!' )
+
+    ret.ast = node
+    return ret
 
   def visit_Attribute( s, node ):
     ret = bir.Attribute( s.visit( node.value ), node.attr )
@@ -401,8 +397,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     a non-returning function.
     """
     raise PyMTLSyntaxError(
-      s.blk, node, 'Stand-alone expression is not supported yet!'
-    )
+      s.blk, node, 'Stand-alone expression is not supported yet!' )
 
   def visit_Lambda( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )

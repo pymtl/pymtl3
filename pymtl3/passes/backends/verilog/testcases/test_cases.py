@@ -39,6 +39,7 @@ from pymtl3.passes.testcases import (
     CaseConnectBitsConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectConstStructAttrToOutComp,
+    CaseBits64TruncInComp,
     CaseConnectConstToOutComp,
     CaseConnectInToWireComp,
     CaseConnectLiteralStructComp,
@@ -409,6 +410,31 @@ CaseBits64ZextInComp = set_attributes( CaseBits64ZextInComp,
 
           always_comb begin : upblk
             out = { { 32 { 1'b0 } }, in_ };
+          end
+
+        endmodule
+    '''
+)
+
+CaseBits64TruncInComp = set_attributes( CaseBits64TruncInComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = 8'(in_);
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [7:0] out,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out = 8'(in_);
           end
 
         endmodule

@@ -25,6 +25,7 @@ from ....testcases import (
     CasePassThroughComp,
     CaseSequentialPassThroughComp,
     CaseVerilogReservedComp,
+    CaseBits64TruncInComp,
 )
 from ..VBehavioralTranslatorL1 import BehavioralRTLIRToVVisitorL1
 
@@ -53,6 +54,7 @@ def run_test( case, m ):
       CaseBits32x2ConcatMixedComp,
       CaseBits64SextInComp,
       CaseBits64ZextInComp,
+      CaseBits64TruncInComp,
       CaseBits32x2ConcatFreeVarComp,
       CaseBits32x2ConcatUnpackedSignalComp,
       CaseBits32BitSelUpblkComp,

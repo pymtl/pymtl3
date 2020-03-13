@@ -111,7 +111,7 @@ class BehavioralRTLIRTypeCheckVisitorL3( BehavioralRTLIRTypeCheckVisitorL2 ):
       # Expect each argument to have data type which corresponds to the field
       if v_dtype != field:
         if is_field_reinterpretable:
-          target_nbits = field.get_dtype().get_length()
+          target_nbits = field.get_length()
           s.enforcer.enter( s.blk, rt.NetWire(rdt.Vector(target_nbits)), value )
         else:
           raise PyMTLTypeError( s.blk, node.ast,

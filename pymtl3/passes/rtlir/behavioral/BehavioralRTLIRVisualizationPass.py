@@ -148,6 +148,16 @@ class BehavioralRTLIRVisualizationVisitor( BehavioralRTLIRNodeVisitor ):
       s.g.edge( str(local_cur), str(s.cur+1), label = 'values[{idx}]'.format(idx = i) )
       s.visit( f )
 
+  def visit_Truncate( s, node ):
+    s.cur += 1
+    local_cur = s.cur
+    table_body = '<TR><TD COLSPAN="2">Truncate</TD></TR> <TR><TD>nbits</TD><TD>{nbits}</TD></TR>'
+    table_opt = s.gen_table_opt( node )
+    label = (s.table_header + table_body + table_opt + s.table_trail).format(nbits=s.get_str(node.nbits))
+    s.g.node( str( s.cur ), label = label )
+    s.g.edge( str(local_cur), str(s.cur+1), label = 'value' )
+    s.visit( node.value )
+
   def visit_ZeroExt( s, node ):
     s.cur += 1
     local_cur = s.cur

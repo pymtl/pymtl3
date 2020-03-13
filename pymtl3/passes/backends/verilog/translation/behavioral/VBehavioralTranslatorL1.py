@@ -260,11 +260,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
   def visit_ZeroExt( s, node ):
     value = s.visit( node.value )
-    try:
-      target_nbits = node.nbits._value
-    except AttributeError:
-      raise VerilogTranslationError( s.blk, node,
-        "new bitwidth of zero extension must be known at elaboration time!" )
+    target_nbits = node.nbits
     current_nbits = int(node.value.Type.get_dtype().get_length())
     padded_nbits = target_nbits - current_nbits
     if padded_nbits == 0:
@@ -281,12 +277,7 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
   def visit_SignExt( s, node ):
     value = s.visit( node.value )
-    try:
-      target_nbits = node.nbits._value
-    except AttributeError:
-      raise VerilogTranslationError( s.blk, node,
-        "new bitwidth of sign extension must be known at elaboration time!" )
-
+    target_nbits = node.nbits
     current_nbits = int(node.value.Type.get_dtype().get_length())
     last_bit = current_nbits - 1
     padded_nbits = target_nbits - current_nbits
@@ -327,6 +318,29 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
       return one_bit_template.format( **locals() )
     else:
       return template.format( **locals() )
+
+  #-----------------------------------------------------------------------
+  # visit_Truncate
+  #-----------------------------------------------------------------------
+  # To quote the LRM about the size casting operator:
+  # When changing the size, the cast shall return the value that a packed
+  # array type with a single [n-1:0] dimension would hold after being
+  # assigned the expression, where n is the cast size. The signedness shall
+  # pass through unchanged.
+  #
+  # This means if we translate the truncation into a size casting expression,
+  # the same semantics is preserved. This seems a better approach to me
+  # than slicing because iirc slicing over integer literals is an error
+  # in Verilator.
+
+  def visit_Truncate( s, node ):
+    nbits = node.nbits
+    value = s.visit( node.value )
+    dtype = node.value.Type.get_dtype()
+    if isinstance(dtype, rdt.Vector) and dtype.get_length() > nbits:
+      return f"{nbits}'({value})"
+    else:
+      return value
 
   #-----------------------------------------------------------------------
   # visit_Reduce

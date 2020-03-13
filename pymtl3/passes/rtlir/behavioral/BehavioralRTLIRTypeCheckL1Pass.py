@@ -234,31 +234,34 @@ class BehavioralRTLIRTypeCheckVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     node._is_explicit = True
 
   def visit_ZeroExt( s, node ):
-    try:
-      new_nbits = node.nbits._value
-    except AttributeError:
-      raise PyMTLTypeError( s.blk, node.ast,
-        f'{node.nbits} is not a constant number!' )
+    new_nbits = node.nbits
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits < old_nbits:
       raise PyMTLTypeError( s.blk, node.ast,
-        f'{new_nbits} is less than {old_nbits}!' )
+        f'the target bitwidth {new_nbits} is less than the bitwidth of the operand ({old_nbits})!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
     node._is_explicit = True
 
   def visit_SignExt( s, node ):
-    try:
-      new_nbits = node.nbits._value
-    except AttributeError:
-      raise PyMTLTypeError( s.blk, node.ast,
-        f'{node.nbits} is not a constant number!' )
+    new_nbits = node.nbits
     child_type = node.value.Type
     old_nbits = child_type.get_dtype().get_length()
     if new_nbits < old_nbits:
       raise PyMTLTypeError( s.blk, node.ast,
-        f'{new_nbits} is less than {old_nbits}!' )
+        f'the target bitwidth {new_nbits} is less than the bitwidth of the operand ({old_nbits})!' )
+    node.Type = copy.copy( child_type )
+    node.Type.dtype = rdt.Vector( new_nbits )
+    node._is_explicit = True
+
+  def visit_Truncate( s, node ):
+    new_nbits = node.nbits
+    child_type = node.value.Type
+    old_nbits = child_type.get_dtype().get_length()
+    if new_nbits > old_nbits:
+      raise PyMTLTypeError( s.blk, node.ast,
+        f'the target bitwidth {new_nbits} is larger than the bitwidth of the operand ({old_nbits})!' )
     node.Type = copy.copy( child_type )
     node.Type.dtype = rdt.Vector( new_nbits )
     node._is_explicit = True

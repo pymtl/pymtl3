@@ -93,6 +93,9 @@ from pymtl3.passes.testcases import (
     CaseZextSmallNbitsComp,
     CaseZextTwoArgsComp,
     CaseZextVaribleNbitsComp,
+    CaseTruncLargeNbitsComp,
+    CaseTruncVaribleNbitsComp,
+    CaseBits64TruncInComp,
 )
 
 # TODO: fix all tests with this mark, including in other files (grep!).
@@ -133,20 +136,28 @@ def test_L1_concat_component( do_test ):
     do_test( CaseConcatComponentComp )
 
 def test_L1_zext_variable_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not a constant number" ):
+  with expected_failure( PyMTLSyntaxError, "not a constant int or BitsN type" ):
     do_test( CaseZextVaribleNbitsComp )
 
 def test_L1_zext_small_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not greater" ):
+  with expected_failure( PyMTLTypeError, "less than the bitwidth of the operand" ):
     do_test( CaseZextSmallNbitsComp )
 
 def test_L1_sext_variable_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not a constant number" ):
+  with expected_failure( PyMTLSyntaxError, "not a constant int or BitsN type" ):
     do_test( CaseSextVaribleNbitsComp )
 
 def test_L1_sext_small_nbits( do_test ):
-  with expected_failure( PyMTLTypeError, "not greater" ):
+  with expected_failure( PyMTLTypeError, "less than the bitwidth of the operand" ):
     do_test( CaseSextSmallNbitsComp )
+
+def test_L1_trunc_variable_nbits( do_test ):
+  with expected_failure( PyMTLSyntaxError, "not a constant int or BitsN type" ):
+    do_test( CaseTruncVaribleNbitsComp )
+
+def test_L1_trunc_large_nbits( do_test ):
+  with expected_failure( PyMTLTypeError, "larger than the bitwidth of the operand" ):
+    do_test( CaseTruncLargeNbitsComp )
 
 def test_L1_wrong_attribute( do_test ):
   with expected_failure( PyMTLTypeError, "does not have attribute in_" ):
@@ -304,7 +315,7 @@ def test_L1_call_name( do_test ):
     do_test( CaseNonNameCalledComp )
 
 def test_L1_call_not_found( do_test ):
-  with expected_failure( PyMTLSyntaxError, "function is not found" ):
+  with expected_failure( PyMTLSyntaxError, "cannot find object" ):
     do_test( CaseFuncNotFoundComp )
 
 def test_L1_call_Bits_args( do_test ):

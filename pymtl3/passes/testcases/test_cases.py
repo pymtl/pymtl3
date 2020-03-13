@@ -1143,6 +1143,26 @@ class CaseBits64ZextInComp:
       [   2,   zext(     Bits32(2),    64 ) ],
   ]
 
+class CaseBits64TruncInComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits8 )
+      @update
+      def upblk():
+        s.out @= trunc( s.in_, 8 )
+  TV_IN = \
+  _set( 'in_', Bits32, 0 )
+  TV_OUT = \
+  _check( 'out', Bits8, 1 )
+  TEST_VECTOR = \
+  [
+      [  42,   trunc(    Bits32(42),    8 ) ],
+      [  -2,   trunc(    Bits32(-2),    8 ) ],
+      [  -1,   trunc(    Bits32(-1),    8 ) ],
+      [   2,   trunc(     Bits32(2),    8 ) ],
+  ]
+
 class CaseBits32BitSelUpblkComp:
   class DUT( Component ):
     def construct( s ):
@@ -2180,6 +2200,24 @@ class CaseSextSmallNbitsComp:
       @update
       def upblk():
         s.out @= sext( s.in_, 4 )
+
+class CaseTruncVaribleNbitsComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits8 )
+      s.out = OutPort( Bits16 )
+      @update
+      def upblk():
+        s.out @= trunc( s.in_, s.in_ )
+
+class CaseTruncLargeNbitsComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits8 )
+      s.out = OutPort( Bits16 )
+      @update
+      def upblk():
+        s.out @= trunc( s.in_, 16 )
 
 class CaseDroppedAttributeComp:
   class DUT( Component ):

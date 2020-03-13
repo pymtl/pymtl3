@@ -15,6 +15,7 @@ module BehavioralRTLIR
 
   expr = Number( int value )
        | Concat( expr* values )
+       | Truncate( int nbits, expr value )
        | ZeroExt( int nbits, expr value )
        | SignExt( int nbits, expr value )
        | Reduce( operator op, expr value )
