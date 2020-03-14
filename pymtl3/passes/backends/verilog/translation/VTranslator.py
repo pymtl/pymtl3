@@ -41,6 +41,7 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
     def rtlir_tr_initialize( s ):
       # Unpacked array indice that will be pushed to the end of signal expr
       s._rtlir_tr_unpacked_q = deque()
+      s._included_pickled_files = set()
 
     def rtlir_tr_src_layout( s, hierarchy ):
       # Sanity check on BitStructs

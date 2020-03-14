@@ -66,9 +66,19 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
 
         return pickle_template.format( **locals() )
       else:
-        # Otherwise always use the pickled source file
-        with open(m.config_placeholder.pickled_source_file) as fd:
-          return fd.read()
+        # Avoid adding the same file into the Verilog result
+        dep_file = m.config_placeholder.pickled_dependency_file
+        wrapper_file = m.config_placeholder.pickled_wrapper_file
+        ret = ""
+        if dep_file and m.config_placeholder.pickled_orig_file not in s._included_pickled_files:
+          s._included_pickled_files.add(m.config_placeholder.pickled_orig_file)
+          with open(dep_file) as fd:
+            ret += fd.read()
+        if ret:
+          ret += '\n'
+        with open(wrapper_file) as fd:
+          ret += fd.read()
+        return ret
     except AttributeError as e:
       # Forgot to apply VerilogPlaceholderPass?
       raise
