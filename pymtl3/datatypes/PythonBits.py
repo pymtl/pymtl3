@@ -25,9 +25,10 @@ def _new_valid_bits( nbits, _uint ):
 class Bits:
   __slots__ = ( "nbits", "_uint" )
 
-  def __init__( self, nbits=32, v=0, trunc_int=False ):
+  def __init__( self, nbits, v=0, trunc_int=False ):
     nbits = int(nbits)
-    assert 0 < nbits < 1024, f"Only support 1 <= nbits < 1024, not {nbits}"
+    if nbits < 1 or nbits >= 1024: raise ValueError(f"Only support 1 <= nbits < 1024, not {nbits}")
+
     self.nbits = nbits
 
     if isinstance( v, Bits ):
@@ -207,7 +208,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint + other) & up )
 
   def __radd__( self, other ):
@@ -220,14 +223,18 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint - other) & up )
 
   def __rsub__( self, other ):
     # Shouldn't be Bits
     other = int(other)
     up = _upper[ self.nbits ]
-    assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+    if other < 0 or other > up:
+      raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                        f"Suggestion: 0 <= x <= {hex(up)}" )
     return _new_valid_bits( self.nbits, (other - self._uint) & up )
 
   def __mul__( self, other ):
@@ -237,7 +244,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint * other) & up)
 
   def __rmul__( self, other ):
@@ -250,7 +259,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint & other) & up)
 
   def __rand__( self, other ):
@@ -263,7 +274,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint | other) & up)
 
   def __ror__( self, other ):
@@ -276,7 +289,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint ^ other) & up)
 
   def __rxor__( self, other ):
@@ -289,7 +304,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint // other) & up)
 
   def __mod__( self, other ):
@@ -299,7 +316,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( self.nbits, (self._uint % other) & up)
 
   def __invert__( self ):
@@ -326,7 +345,9 @@ class Bits:
         return _new_valid_bits( 1, 0 )
 
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( 1, self._uint == other )
 
   # No need for __ne__
@@ -338,7 +359,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( 1, self._uint < other )
 
   def __le__( self, other ):
@@ -348,7 +371,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( 1, self._uint <= other )
 
   def __gt__( self, other ):
@@ -358,7 +383,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( 1, self._uint > other )
 
   def __ge__( self, other ):
@@ -368,7 +395,9 @@ class Bits:
     except:
       other = int(other)
       up = _upper[ self.nbits ]
-      assert 0 <= other <= up, f"{other} does not fit into the type of the other Bits{self.nbits} operand"
+      if other < 0 or other > up:
+        raise ValueError( f"Integer {hex(other)} is not a valid binop operand with Bits{self.nbits}!\n"
+                          f"Suggestion: 0 <= x <= {hex(up)}" )
       return _new_valid_bits( 1, self._uint >= other )
 
   def __bool__( self ):

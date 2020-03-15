@@ -224,17 +224,17 @@ def test_compare_neg_assert():
   x = Bits( 4, -2 )
   # We don't allow comparison with negative numbers,
   # although you can construct a new Bits object with one...
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     assert x != -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     assert x == -2
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     assert x >  -3
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     assert x >= -3
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     assert x <  -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     assert x >= -1
   assert x != Bits( 4, -1 )
   assert x == Bits( 4, -2 )
@@ -267,7 +267,7 @@ def test_lt():
   assert y < 10
   assert y < x
   assert 1 < y
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x < -1
 
 
@@ -281,7 +281,7 @@ def test_gt():
   assert x > 2
   assert x > y
   assert 9 > y
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x > -1
 
 def test_lte():
@@ -303,7 +303,7 @@ def test_lte():
   assert z <= z
   assert 1 <= y
   assert 3 <= y
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x <= -1
 
 def test_gte():
@@ -326,7 +326,7 @@ def test_gte():
   assert x >= x
   assert 5 >= y
   assert 3 <= y
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x >= -1
 
 def test_invert():
@@ -356,9 +356,9 @@ def test_add():
   assert a + b + 1 == 3
   assert a + b + c == 3
   assert c + b + a == 3
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x + -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x + 100000000000000000000000000
 
 def test_sub():
@@ -375,9 +375,9 @@ def test_sub():
   assert x - y == 0b1110
   assert x - 7 == 0b1110
   assert 9 - x == 0b0100
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x - -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x - 100000000000000000000000000
 
 def test_lshift():
@@ -412,9 +412,9 @@ def test_and():
   assert x & y      == 0b11000000
   assert x & 0b1010 == 0b00001000
   assert 0b1010 & x == 0b00001000
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x & -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x & 100000000000000000000000000
 
 def test_or():
@@ -424,9 +424,9 @@ def test_or():
   assert x | y      == 0b11111100
   assert x | 0b1010 == 0b11001110
   assert 0b1010 | x == 0b11001110
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x | -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x | 100000000000000000000000000
 
 def test_xor():
@@ -440,9 +440,9 @@ def test_xor():
   b = Bits( 1, 0 )
   c = Bits( 1, 1 )
   assert ( a ^ b ) ^ c == 0
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x ^ -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x ^ 100000000000000000000000000
 
 # Now we always require the user to perform sext/zext of the multiply operand
@@ -464,9 +464,9 @@ def test_mult():
 
   y = Bits( 8, 0b10000000 )
   assert Bits( 16, x.uint() ) * y == 0b0000000000000000111111110000000
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x * -1
-  with pytest.raises( AssertionError ):
+  with pytest.raises( ValueError ):
     x * 100000000000000000000000000
 
 def test_constructor():
