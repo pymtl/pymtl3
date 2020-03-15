@@ -172,6 +172,17 @@ class DetectReadsWritesCalls( DetectVarNames ):
     for x in node.args:
       self.visit( x )
 
+  def visit_For( self, node ):
+    self.current_op = 'for'
+    self.visit( node.target )
+    self.current_op = None
+
+    self.visit( node.iter )
+    for stmt in node.body:
+      self.visit( stmt )
+    for stmt in node.orelse:
+      self.visit( stmt )
+
 class DetectMethodCalls( DetectVarNames ):
 
   def enter( self, node, methods ):

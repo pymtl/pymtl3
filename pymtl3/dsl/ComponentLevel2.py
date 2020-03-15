@@ -36,6 +36,7 @@ from .errors import (
     UpblkFuncSameNameError,
     UpdateBlockWriteError,
     UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
     WriteNonSignalError,
 )
@@ -230,21 +231,23 @@ class ComponentLevel2( ComponentLevel1 ):
             # - signals cannot be at LHS of @= or =
 
             if op is None:
-              raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
+              raise UpdateFFBlockWriteError( s, func, '=', nodelist[0].lineno,
                 "Fix the '=' assignment with '<<='")
+            elif op == 'for':
+              raise UpdateFFBlockWriteError( s, func, op, nodelist[0].lineno,
+                "Fix the loop variable in for-loop assignment")
             elif not isinstance( op, ast.LShift ):
               if isinstance( op, ast.MatMult ):
-                raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
+                raise UpdateFFBlockWriteError( s, func, '@=', nodelist[0].lineno,
                   "Fix the '@=' assignment with '<<='")
 
-              raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
+              raise UpdateFFBlockWriteError( s, func, op+'=', nodelist[0].lineno,
                 "Fix the signal assignment with '<<='")
 
 
             for x in objs:
               if not x.is_top_level_signal():
-                raise UpdateFFBlockWriteError( s, func, nodelist[0].lineno,
-                  "Only top level signals (not a slice or a subfield) can appear on the left-hand side of '<<='")
+                raise UpdateFFNonTopLevelSignalError( s, func, nodelist[0].lineno )
 
               x._dsl.needs_double_buffer = True
 
@@ -252,14 +255,16 @@ class ComponentLevel2( ComponentLevel1 ):
             # - signals can only be at LHS of @=
             # - signals cannot be at LHS of <<= or =
             if op is None:
-              raise UpdateBlockWriteError( s, func, nodelist[0].lineno,
+              raise UpdateBlockWriteError( s, func, '=', nodelist[0].lineno,
                 "Fix the '=' assignment with '@='")
-
+            elif op == 'for':
+              raise UpdateBlockWriteError( s, func, op, nodelist[0].lineno,
+                "Fix the loop variable in for-loop assignment")
             elif not isinstance( op, ast.MatMult ):
               if isinstance( op, ast.LShift ):
-                raise UpdateBlockWriteError( s, func, nodelist[0].lineno,
+                raise UpdateBlockWriteError( s, func, '<<=', nodelist[0].lineno,
                   "Fix the '<<=' assignment with '@='")
-              raise UpdateBlockWriteError( s, func, nodelist[0].lineno,
+              raise UpdateBlockWriteError( s, func, op+'=', nodelist[0].lineno,
                 "Fix the signal assignment with '@='")
 
         # This is a function call without "s." prefix, check func list

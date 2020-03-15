@@ -57,7 +57,7 @@ Suggestion: check the declaration of the variables, or fix this assignment.""".f
 
 class UpdateBlockWriteError( Exception ):
   """ In update, raise when signal is not @= -ed """
-  def __init__( self, hostobj, blk, lineno, suggestion ):
+  def __init__( self, hostobj, blk, op, lineno, suggestion ):
 
     filepath = inspect.getfile( hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -72,19 +72,19 @@ class UpdateBlockWriteError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update, only '@=' statements can have signals on left hand side, not '<<=' or '='.
+^^^ In update, only '@=' statements can assign value to signals, not {}
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: Line {} {}""".format( \
       filepath, error_lineno, blk.__name__,
-      error_lineno, blk_src[ lineno ].lstrip(''),
+      error_lineno, blk_src[ lineno ].lstrip(''), op,
       repr(hostobj), hostobj.__class__.__name__,
       error_lineno, suggestion )
     )
 
 class UpdateFFBlockWriteError( Exception ):
   """ In update_ff, raise when signal is not <<= -ed"""
-  def __init__( self, hostobj, blk, lineno, suggestion ):
+  def __init__( self, hostobj, blk, op, lineno, suggestion ):
 
     filepath = inspect.getfile( hostobj.__class__ )
     blk_src, base_lineno  = inspect.getsourcelines( blk )
@@ -99,14 +99,39 @@ class UpdateFFBlockWriteError( Exception ):
 In file {}:{} in {}
 
 {} {}
-^^^ In update_ff, we only allow '<<=' to valid fields for nonblocking assignments, not '@='.
+^^^ In update_ff, only '<<=' statements can assign value to signals, not {}
 (when constructing instance {} of class \"{}\" in the hierarchy)
 
 Suggestion: Line {} {}""".format( \
       filepath, error_lineno, blk.__name__,
-      error_lineno, blk_src[ lineno ].lstrip(''),
+      error_lineno, blk_src[ lineno ].lstrip(''), op,
       repr(hostobj), hostobj.__class__.__name__,
       error_lineno, suggestion )
+    )
+
+class UpdateFFNonTopLevelSignalError( Exception ):
+  """ In update_ff, raise when non-top signal is <<= -ed"""
+  def __init__( self, hostobj, blk, lineno ):
+    filepath = inspect.getfile( hostobj.__class__ )
+    blk_src, base_lineno  = inspect.getsourcelines( blk )
+
+    # Shunning: we need to subtract 1 from inspect's lineno when we add it
+    # to base_lineno because it starts from 1!
+    lineno -= 1
+    error_lineno = base_lineno + lineno
+
+    return super().__init__( \
+"""
+In file {}:{} in {}
+
+{} {}
+^^^ In update_ff, currently only top level signals (not a slice or a subfield) can appear on the left-hand side of '<<='
+(when constructing instance {} of class \"{}\" in the hierarchy)
+""".format( \
+      filepath, error_lineno, blk.__name__,
+      error_lineno, blk_src[ lineno ].lstrip(''),
+      repr(hostobj), hostobj.__class__.__name__,
+      error_lineno )
     )
 
 class VarNotDeclaredError( Exception ):

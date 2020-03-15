@@ -11,7 +11,7 @@ from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import MultiWriterError, NoWriterError, UpdateFFBlockWriteError
+from pymtl3.dsl.errors import MultiWriterError, NoWriterError, UpdateFFBlockWriteError, UpdateFFNonTopLevelSignalError
 
 from .sim_utils import simple_sim_pass
 
@@ -546,10 +546,10 @@ def test_nested_struct_2d_array_index():
   a = A()
   try:
     a.elaborate()
-  except UpdateFFBlockWriteError as e:
+  except UpdateFFNonTopLevelSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown UpdateFFBlockWriteError.")
+  raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")
 
 # TODO better error message?
 def test_ff_cannot_write_to_struct_field():
@@ -572,7 +572,7 @@ def test_ff_cannot_write_to_struct_field():
 
   try:
     _test_model( A )
-  except UpdateFFBlockWriteError as e:
+  except UpdateFFNonTopLevelSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown UpdateFFBlockWriteError.")
+  raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")

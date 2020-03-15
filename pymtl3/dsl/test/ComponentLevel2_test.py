@@ -21,6 +21,7 @@ from pymtl3.dsl.errors import (
     UpblkCyclicError,
     UpdateBlockWriteError,
     UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
     VarNotDeclaredError,
     WriteNonSignalError,
 )
@@ -283,10 +284,10 @@ def test_invalid_ff_assignment_slice():
 
   try:
     _test_model( Top )
-  except UpdateFFBlockWriteError as e:
+  except UpdateFFNonTopLevelSignalError as e:
     print("{} is thrown\n{}".format( e.__class__.__name__, e ))
     return
-  raise Exception("Should've thrown UpdateFFBlockWriteError.")
+  raise Exception("Should've thrown UpdateFFNonTopLevelSignalError.")
 
 def test_2d_array_vars():
 
