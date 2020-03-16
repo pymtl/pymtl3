@@ -9,8 +9,17 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext, \
-    is_bitstruct_inst, is_bitstruct_class
+from pymtl3.datatypes import (
+    Bits,
+    concat,
+    is_bitstruct_class,
+    is_bitstruct_inst,
+    reduce_and,
+    reduce_or,
+    reduce_xor,
+    sext,
+    zext,
+)
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
@@ -462,35 +471,48 @@ class ConstantExtractor( ast.NodeVisitor ):
   def __init__( s, blk, global_ns, closure_ns ):
     s.blk = blk
     s.globals = global_ns
+    s.cache = {}
     s.closure = closure_ns
+    s.pymtl_functions = {concat, sext, zext,
+                             reduce_or, reduce_and, reduce_xor,
+                             copy.copy, copy.deepcopy}
 
   def generic_visit( s, node ):
     return None
 
   def enter( s, node ):
     ret = s.visit( node )
-    if ret is not None and \
-       (isinstance(ret, (int, Bits)) or \
-       (isinstance(ret, type) and issubclass(ret, Bits)) or \
-       is_bitstruct_inst or is_bitstruct_class):
+    # Constant objects that are recognized
+    # 1. int, BitsN( X )
+    # 2. BitsN
+    # 3. BitStruct, BitStruct()
+    # 4. Functions, including concat, zext, sext, etc.
+    is_value = isinstance(ret, (int, Bits)) or is_bitstruct_inst(ret)
+    is_type = isinstance(ret, type) and (issubclass(ret, Bits) or is_bitstruct_class(ret))
+    try:
+      is_function = ret in s.pymtl_functions
+    except TypeError:
+      is_function = False
+
+    if is_value or is_type or is_function:
       return ret
     else:
       return None
 
   def visit_Attribute( s, node ):
-    if hasattr( node, '_constant_extractor_value' ):
-      return node._constant_extractor_value
+    if node in s.cache:
+      return s.cache[node]
     value = s.visit( node.value )
     try:
       ret = getattr( value, node.attr )
     except AttributeError:
       ret = None
-    node._constant_extractor_value = ret
+    s.cache[node] = ret
     return ret
 
   def visit_Subscript( s, node ):
-    if hasattr( node, '_constant_extractor_value' ):
-      return node._constant_extractor_value
+    if node in s.cache:
+      return s.cache[node]
     ret = None
     if isinstance( node.slice, ast.Index ):
       value = s.visit( node.value )
@@ -498,16 +520,16 @@ class ConstantExtractor( ast.NodeVisitor ):
       if value is not None and idx is not None:
         try:
           ret = value[idx]
-        except TypeError:
+        except (TypeError, IndexError):
           ret = None
-    node._constant_extractor_value = ret
+    s.cache[node] = ret
     return ret
 
   def visit_Index( s, node ):
-    if hasattr( node, '_constant_extractor_value' ):
-      return node._constant_extractor_value
+    if node in s.cache:
+      return s.cache[node]
     ret = s.visit( node.value )
-    node._constant_extractor_value = ret
+    s.cache[node] = ret
     return ret
 
   def visit_Name( s, node ):
