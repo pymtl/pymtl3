@@ -9,7 +9,8 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext
+from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext, \
+    is_bitstruct_inst, is_bitstruct_class
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
@@ -66,9 +67,21 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       except ValueError:
         pass
 
+    s.const_extractor = ConstantExtractor( s.blk, s.globals, s.closure )
     ret = s.visit( ast )
     ret.component = s.component
     return ret
+
+  def handle_constant( s, node, obj ):
+    if isinstance( obj, int ):
+      return bir.Number( obj )
+    elif isinstance( obj, Bits ):
+      return bir.SizeCast( obj.nbits, bir.Number( obj.value ) )
+    else:
+      return None
+    # else:
+    #   raise PyMTLSyntaxError( s.blk, node,
+    #       f"object {obj} cannot be converted to behavioral RTLIR!" )
 
   def get_call_obj( s, node ):
     if hasattr(node, "starargs") and node.starargs:
@@ -81,27 +94,13 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if not isinstance( node.func, ast.Name ):
       raise PyMTLSyntaxError( s.blk, node,
         f'{node.func} is called but is not a name!')
-    func = node.func
 
-    # Find the corresponding object of node.func field
-    # TODO: Support Verilog task?
-    # if func in s.mapping:
-      # The node.func field corresponds to a member of this class
-      # obj = s.mapping[ func ][ 0 ]
-    # else:
-    try:
-      # An object in global namespace is used
-      if func.id in s.globals:
-        obj = s.globals[ func.id ]
-      # An object in closure is used
-      elif func.id in s.closure:
-        obj = s.closure[ func.id ]
-      else:
-        raise NameError
-    except NameError:
+    obj = s.const_extractor.enter( node.func )
+    if obj is not None:
+      return obj
+    else:
       raise PyMTLSyntaxError( s.blk, node,
         node.func.id + ' function is not found!' )
-    return obj
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \
@@ -259,11 +258,21 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         f'Unrecognized method call {obj.__name__}!' )
 
   def visit_Attribute( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
     ret = bir.Attribute( s.visit( node.value ), node.attr )
     ret.ast = node
     return ret
 
   def visit_Subscript( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
     value = s.visit( node.value )
     if isinstance( node.slice, ast.Slice ):
       if node.slice.step is not None:
@@ -366,8 +375,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     a non-returning function.
     """
     raise PyMTLSyntaxError(
-      s.blk, node, 'Stand-alone expression is not supported yet!'
-    )
+      s.blk, node, 'Stand-alone expression is not supported yet!' )
 
   def visit_Lambda( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: lambda function' )
@@ -449,3 +457,70 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_ExtSlice( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: extslice' )
+
+class ConstantExtractor( ast.NodeVisitor ):
+  def __init__( s, blk, global_ns, closure_ns ):
+    s.blk = blk
+    s.globals = global_ns
+    s.closure = closure_ns
+
+  def generic_visit( s, node ):
+    return None
+
+  def enter( s, node ):
+    ret = s.visit( node )
+    if ret is not None and \
+       (isinstance(ret, (int, Bits)) or \
+       (isinstance(ret, type) and issubclass(ret, Bits)) or \
+       is_bitstruct_inst or is_bitstruct_class):
+      return ret
+    else:
+      return None
+
+  def visit_Attribute( s, node ):
+    if hasattr( node, '_constant_extractor_value' ):
+      return node._constant_extractor_value
+    value = s.visit( node.value )
+    try:
+      ret = getattr( value, node.attr )
+    except AttributeError:
+      ret = None
+    node._constant_extractor_value = ret
+    return ret
+
+  def visit_Subscript( s, node ):
+    if hasattr( node, '_constant_extractor_value' ):
+      return node._constant_extractor_value
+    ret = None
+    if isinstance( node.slice, ast.Index ):
+      value = s.visit( node.value )
+      idx = s.visit( node.slice )
+      if value is not None and idx is not None:
+        try:
+          ret = value[idx]
+        except TypeError:
+          ret = None
+    node._constant_extractor_value = ret
+    return ret
+
+  def visit_Index( s, node ):
+    if hasattr( node, '_constant_extractor_value' ):
+      return node._constant_extractor_value
+    ret = s.visit( node.value )
+    node._constant_extractor_value = ret
+    return ret
+
+  def visit_Name( s, node ):
+    name = node.id
+    if name in s.closure:
+      # free var from closure
+      obj = s.closure[ name ]
+    elif name in s.globals:
+      # free var from the global name space
+      obj = s.globals[ name ]
+    else:
+      obj = None
+    return obj
+
+  def visit_Num( s, node ):
+    return node.n
