@@ -352,6 +352,30 @@ class CaseStructClosureGlobal:
       def upblk():
         s.out = foo.foo
 
+class CasePythonClassAttr:
+  class DUT( Component ):
+    def construct( s ):
+      class Enum:
+        int_attr = 42
+        bit_attr = Bits32(1)
+      s.out1 = OutPort( Bits32 )
+      s.out2 = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        s.out1 = Enum.int_attr
+        s.out2 = Enum.bit_attr
+  TV_IN = _set()
+  TV_OUT = \
+  _check(
+      'out1', Bits32, 0,
+      'out2', Bits32, 1,
+  )
+  TEST_VECTOR = \
+  [
+      [  42,   1,  ],
+      [  42,   1,  ],
+  ]
+
 class CaseReducesInx3OutComp:
   class DUT( Component ):
     def construct( s ):

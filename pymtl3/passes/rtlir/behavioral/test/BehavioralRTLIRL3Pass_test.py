@@ -79,8 +79,7 @@ def test_L3_struct_inst( do_test ):
 def test_L3_const_struct( do_test ):
   a = CaseConstStructInstComp.DUT()
   a._rtlir_test_ref = { 'upblk' : CombUpblk( 'upblk', [ Assign(
-      [Attribute( Base( a ), 'out' )], Attribute(
-        Attribute( Base( a ), 'in_' ), 'foo' ), True ) ] ) }
+      [Attribute( Base( a ), 'out' )], SizeCast(32, Number(0)), True ) ] ) }
   do_test( a )
 
 #-------------------------------------------------------------------------

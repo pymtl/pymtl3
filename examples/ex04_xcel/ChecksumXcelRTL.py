@@ -32,11 +32,6 @@ class ChecksumXcelRTL( Component ):
     s.WAIT = b2(1)
     s.BUSY = b2(2)
 
-    # Local parameters
-
-    s.RD = XcelMsgType.READ
-    s.WR = XcelMsgType.WRITE
-
     # Components
 
     s.in_q = NormalQueueRTL( ReqType, num_entries=2 )
@@ -62,7 +57,7 @@ class ChecksumXcelRTL( Component ):
     def up_start_pulse():
       s.start_pulse = (
         s.xcel.resp.en and
-        s.in_q.deq.ret.type_ == s.WR and
+        s.in_q.deq.ret.type_ == XcelMsgType.WRITE and
         s.in_q.deq.ret.addr == b5(4)
       )
 
@@ -112,7 +107,7 @@ class ChecksumXcelRTL( Component ):
     def up_resp_msg():
       s.xcel.resp.msg.type_ = s.in_q.deq.ret.type_
       s.xcel.resp.msg.data  = b32(0)
-      if s.in_q.deq.ret.type_ == s.RD:
+      if s.in_q.deq.ret.type_ == XcelMsgType.READ:
         s.xcel.resp.msg.data = s.reg_file[ s.in_q.deq.ret.addr[0:3] ].out
 
     @s.update
@@ -120,7 +115,7 @@ class ChecksumXcelRTL( Component ):
       for i in range(6):
         s.reg_file[i].in_ = s.reg_file[i].out
 
-      if s.in_q.deq.en and s.in_q.deq.ret.type_ == s.WR:
+      if s.in_q.deq.en and s.in_q.deq.ret.type_ == XcelMsgType.WRITE:
         for i in range(6):
           s.reg_file[i].in_ = (
             s.in_q.deq.ret.data if b5(i) == s.in_q.deq.ret.addr else

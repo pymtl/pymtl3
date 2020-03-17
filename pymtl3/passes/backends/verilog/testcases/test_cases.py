@@ -66,6 +66,7 @@ from pymtl3.passes.testcases import (
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
+    CasePythonClassAttr,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
@@ -512,6 +513,33 @@ CaseBits64PartSelUpblkComp = set_attributes( CaseBits64PartSelUpblkComp,
 
           always_comb begin : upblk
             out = in_[35:4];
+          end
+
+        endmodule
+    '''
+)
+
+CasePythonClassAttr = set_attributes( CasePythonClassAttr,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out1 = 42;
+          out2 = 32'd1;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out1,
+          output logic [31:0] out2,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out1 = 42;
+            out2 = 32'd1;
           end
 
         endmodule
@@ -1003,25 +1031,20 @@ CaseConstStructInstComp = set_attributes( CaseConstStructInstComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in_.foo;
+          out = 32'd0;
         end
     ''',
     'REF_SRC',
     '''\
-        typedef struct packed {
-          logic [31:0] foo;
-        } Bits32Foo;
-
         module DUT
         (
           input logic [0:0] clk,
           output logic [31:0] out,
           input logic [0:0] reset
         );
-          localparam Bits32Foo in_ = { 32'd0 };
 
           always_comb begin : upblk
-            out = in_.foo;
+            out = 32'd0;
           end
 
         endmodule
