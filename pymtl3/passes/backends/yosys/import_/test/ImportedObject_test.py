@@ -8,12 +8,14 @@
 from pymtl3.passes.backends.verilog import TranslationImportPass, VerilogPlaceholderPass
 from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     test_adder,
-    test_normal_queue,
+    test_normal_queue_implicit_top_module,
     test_normal_queue_params,
     test_reg,
     test_reg_external_trace,
     test_reg_incomplete_portmap,
     test_vl_uninit,
+    test_unpacked_port_array,
+    test_param_pass_through,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
