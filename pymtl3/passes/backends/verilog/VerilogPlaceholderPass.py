@@ -13,13 +13,12 @@ import os
 import re
 import sys
 
-from pymtl3 import Placeholder
+from pymtl3 import Placeholder, MetadataKey
 from pymtl3.passes.backends.verilog.util.utility import (
     gen_mapped_ports,
     get_component_unique_name,
 )
 from pymtl3.passes.errors import InvalidPassOptionValue
-from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.PlaceholderConfigs import expand
 from pymtl3.passes.PlaceholderPass import PlaceholderPass
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
@@ -31,12 +30,12 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
   # Placeholder pass public pass data
 
-  params     = PassDataName()
-  port_map   = PassDataName()
-  top_module = PassDataName()
-  src_file   = PassDataName()
-  v_flist    = PassDataName()
-  v_include  = PassDataName()
+  params     = MetadataKey()
+  port_map   = MetadataKey()
+  top_module = MetadataKey()
+  src_file   = MetadataKey()
+  v_flist    = MetadataKey()
+  v_include  = MetadataKey()
 
   @staticmethod
   def get_placeholder_config():
@@ -48,7 +47,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     super().visit_placeholder( m )
     irepr = get_component_ifc_rtlir( m )
     s.setup_default_configs( m, irepr )
-    cfg = m.get_pass_data( c.placeholder_config )
+    cfg = m.get_metadata( c.placeholder_config )
 
     if cfg.enable:
       s.check_valid( m, cfg, irepr )
@@ -56,7 +55,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
   def setup_default_configs( s, m, irepr ):
     c = s.__class__
-    cfg = m.get_pass_data( c.placeholder_config )
+    cfg = m.get_metadata( c.placeholder_config )
 
     if cfg.enable:
       # If top_module is unspecified, infer it from the component and its

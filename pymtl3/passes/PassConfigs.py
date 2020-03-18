@@ -71,10 +71,10 @@ class BasePassConfigs:
     c = s.__class__
     for opt, default in c.Options.items():
       assert not hasattr( s, opt ), f"There is already a field in config called '{opt}'. What happened?"
-      if not m.has_pass_data( getattr( c.Pass, opt ) ):
+      if not m.has_metadata( getattr( c.Pass, opt ) ):
         setattr( s, opt, deepcopy(default) )
       else:
-        setattr( s, opt, deepcopy(m.get_pass_data( getattr( c.Pass, opt ) )) )
+        setattr( s, opt, deepcopy(m.get_metadata( getattr( c.Pass, opt ) )) )
 
   def check( s ):
     """Check whether the given options are valid by calling checkers."""

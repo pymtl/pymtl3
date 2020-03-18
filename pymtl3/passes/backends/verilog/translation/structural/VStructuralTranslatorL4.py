@@ -118,7 +118,7 @@ class VStructuralTranslatorL4(
         _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
         if isinstance(obj, Placeholder):
-          c_name = obj.get_pass_data( s._placeholder_pass.placeholder_config ).pickled_top_module
+          c_name = obj.get_metadata( s._placeholder_pass.placeholder_config ).pickled_top_module
         else:
           c_name = _c_name
 

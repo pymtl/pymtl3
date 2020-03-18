@@ -312,10 +312,10 @@ def closed_loop_component_input_test( dut, test_vector, tv_in, backend = "verilo
     # If it simulates correctly, translate it and import it back
     dut.elaborate()
     if backend == "verilog":
-      dut.set_pass_data( VTransImportPass.enable, True )
+      dut.set_metadata( VTransImportPass.enable, True )
       imported_obj = VTransImportPass()( dut )
     elif backend == "yosys":
-      dut.set_pass_data( YosysTransImportPass.enable, True )
+      dut.set_metadata( YosysTransImportPass.enable, True )
       imported_obj = YosysTransImportPass()( dut )
     # Run another vector simulator spin
     imported_sim = TestVectorSimulator( imported_obj, test_vector, tv_in, tv_out )

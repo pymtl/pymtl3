@@ -195,10 +195,10 @@ class VerilatorImportConfigs( BasePassConfigs ):
     # configuration to figure out the pickled file name and the top module name.
     # This method is meant to be called before calling other public APIs.
 
-    s.translated_top_module = m.get_pass_data( tr_pass.translated_top_module )
-    s.translated_source_file = m.get_pass_data( tr_pass.translated_filename )
+    s.translated_top_module = m.get_metadata( tr_pass.translated_top_module )
+    s.translated_source_file = m.get_metadata( tr_pass.translated_filename )
 
-    ph_cfg = m.get_pass_data( ph_pass.placeholder_config )
+    ph_cfg = m.get_metadata( ph_pass.placeholder_config )
     s.v_include = ph_cfg.v_include
     # s.src_file = ph_cfg.src_file
     s.port_map = ph_cfg.port_map

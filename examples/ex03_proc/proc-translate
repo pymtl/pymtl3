@@ -84,7 +84,7 @@ def main():
 
   # Tag the processor as to be translated
 
-  proc.set_pass_data( TranslationPass.enable, True )
+  proc.set_metadata( TranslationPass.enable, True )
 
   # Perform translation
 

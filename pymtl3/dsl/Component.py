@@ -18,10 +18,11 @@ from .errors import (
     InvalidAPICallError,
     InvalidConnectionError,
     NotElaboratedError,
-    UnsetPassDataError,
+    UnsetMetadataError,
 )
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
+from .MetadataKey import MetadataKey
 
 
 class Component( ComponentLevel7 ):
@@ -435,18 +436,20 @@ class Component( ComponentLevel7 ):
   # Public APIs (can be called either before or after elaboration)
   #-----------------------------------------------------------------------
 
-  """ Pass data APIs """
+  """ Metadata APIs """
 
-  def set_pass_data( s, name, value ):
-    s._pass_data[ name ] = value
+  def set_metadata( s, key, value ):
+    s._metadata[ key ] = value
 
-  def has_pass_data( s, name ):
-    return name in s._pass_data
+  def has_metadata( s, key ):
+    assert isinstance( key, MetadataKey ), \
+        f'the given object {key} is not a MetadataKey!'
+    return key in s._metadata
 
-  def get_pass_data( s, name ):
-    if not s.has_pass_data( name ):
-      raise UnsetPassDataError( name, s )
-    return s._pass_data[ name ]
+  def get_metadata( s, key ):
+    if not s.has_metadata( key ):
+      raise UnsetMetadataError( key, s )
+    return s._metadata[ key ]
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)

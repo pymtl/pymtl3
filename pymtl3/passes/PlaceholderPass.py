@@ -4,23 +4,22 @@
 # Author : Peitian Pan
 # Date   : Jan 27, 2020
 
-from pymtl3 import Placeholder
+from pymtl3 import Placeholder, MetadataKey
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PlaceholderConfigError
-from pymtl3.passes.PassDataName import PassDataName
 
 
 class PlaceholderPass( BasePass ):
 
   # Placeholder pass input pass data
 
-  enable             = PassDataName()
-  has_clk            = PassDataName()
-  has_reset          = PassDataName()
+  enable             = MetadataKey()
+  has_clk            = MetadataKey()
+  has_reset          = MetadataKey()
 
   # Placeholder pass output pass data
 
-  placeholder_config = PassDataName()
+  placeholder_config = MetadataKey()
 
   def __call__( s, m ):
     if isinstance( m, Placeholder ):
@@ -34,7 +33,7 @@ class PlaceholderPass( BasePass ):
   def setup_configs( s, m ):
     c = s.__class__
     ph_config = c.get_placeholder_config()( m )
-    m.set_pass_data( c.placeholder_config, ph_config )
+    m.set_metadata( c.placeholder_config, ph_config )
 
   @staticmethod
   def get_placeholder_config():

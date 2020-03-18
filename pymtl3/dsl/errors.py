@@ -190,11 +190,11 @@ class InvalidAPICallError( Exception ):
     "was called on (an instance of {}), but this API call is on {}." \
     .format( api_name, top.__class__, "top."+repr(obj)[2:] ) )
 
-class UnsetPassDataError( Exception ):
-  """ Raised when the value of a given pass data name is not set. """
-  def __init__( self, name, obj ):
+class UnsetMetadataError( Exception ):
+  """ Raised when the value of a given metadata key is not set. """
+  def __init__( self, key, obj ):
     return super().__init__(
-        f"\nAttempting to retrieve unset pass data {name} from component {obj}!" )
+        f"\nAttempting to retrieve unset metadata {key} from component {obj}!" )
 
 class LeftoverPlaceholderError( Exception ):
   """ Raise upon declaring an update block in a placeholder component. """

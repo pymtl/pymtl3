@@ -84,8 +84,8 @@ class Bits32VRegComp( Placeholder, Component ):
   def construct( s ):
     s.d = InPort( Bits32 )
     s.q = OutPort( Bits32 )
-    s.set_pass_data( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
-    s.set_pass_data( VerilogPlaceholderPass.top_module, 'VReg' )
+    s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
+    s.set_metadata( VerilogPlaceholderPass.top_module, 'VReg' )
 
 class CasePlaceholderTranslationVReg:
   DUT = Bits32VRegComp

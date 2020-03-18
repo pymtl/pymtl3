@@ -27,7 +27,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   def rtlir_tr_placeholder_src( s, m ):
-    ph_cfg = m.get_pass_data( s._placeholder_pass.placeholder_config )
+    ph_cfg = m.get_metadata( s._placeholder_pass.placeholder_config )
     try:
       if m is s.tr_top:
         # If this placeholder is a top level module, use the wrapper

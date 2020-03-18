@@ -17,8 +17,8 @@ from ..util.utility import get_file_hash
 def run_test( _m ):
   try:
     _m.elaborate()
-    _m.set_pass_data( TranslationImportPass.enable, True )
-    _m.set_pass_data( VerilatorImportPass.vl_trace, True )
+    _m.set_metadata( TranslationImportPass.enable, True )
+    _m.set_metadata( VerilatorImportPass.vl_trace, True )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()

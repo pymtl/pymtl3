@@ -34,7 +34,7 @@ from ..TranslationImportPass import TranslationImportPass
 def run_sim( _th ):
   try:
     _th.elaborate()
-    _th.q.set_pass_data( TranslationImportPass.enable, True )
+    _th.q.set_metadata( TranslationImportPass.enable, True )
     th = TranslationImportPass()( _th )
     th.apply( SimulationPass() )
 

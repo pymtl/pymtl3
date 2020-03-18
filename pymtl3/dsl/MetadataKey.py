@@ -1,11 +1,10 @@
 #=========================================================================
-# PassDataName.py
+# MetadataKey.py
 #=========================================================================
-# Provides PassDataName class.
+# Provides MetadataKey class.
 #
 # Author : Peitian Pan
 # Date   : Mar 16, 2020
 
-
-class PassDataName:
+class MetadataKey:
   pass

@@ -6,8 +6,8 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
+from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
-from pymtl3.passes.PassDataName import PassDataName
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
 from .import_.VerilatorImportPass import VerilatorImportPass
@@ -19,7 +19,7 @@ from .VerilogPlaceholderPass import VerilogPlaceholderPass
 
 class TranslationImportPass( BasePass ):
 
-  enable = PassDataName()
+  enable = MetadataKey()
 
   def __call__( s, top ):
     c = s.__class__
@@ -33,13 +33,13 @@ class TranslationImportPass( BasePass ):
     c = s.__class__
 
     # Found a subtree that is marked as to be translated and imported
-    if m.has_pass_data( c.enable ) and m.get_pass_data( c.enable ):
+    if m.has_metadata( c.enable ) and m.get_metadata( c.enable ):
 
       # Make sure the translation pass is enabled
-      m.set_pass_data( c.get_translation_pass().enable, True )
+      m.set_metadata( c.get_translation_pass().enable, True )
 
       # Make sure the import pass is enabled
-      m.set_pass_data( c.get_import_pass().enable, True )
+      m.set_metadata( c.get_import_pass().enable, True )
 
     else:
       for child in m.get_child_components():
@@ -50,26 +50,26 @@ class TranslationImportPass( BasePass ):
 
     # TODO: what we really want is to generate placeholders for components
     # to be translated and imported.
-    if m.has_pass_data( c.enable ) and m.get_pass_data( c.enable ):
+    if m.has_metadata( c.enable ) and m.get_metadata( c.enable ):
 
       # Component m will look as if it has applied the Placeholder pass.
       # It will have the output pass data placeholder_config
 
       placeholder_pass = c.get_placeholder_pass()
       translation_pass = c.get_translation_pass()
-      m.set_pass_data( placeholder_pass.enable, True )
+      m.set_metadata( placeholder_pass.enable, True )
 
-      if m.has_pass_data( placeholder_pass.placeholder_config ):
-        placeholder_config = m.get_pass_data( placeholder_pass.placeholder_config )
+      if m.has_metadata( placeholder_pass.placeholder_config ):
+        placeholder_config = m.get_metadata( placeholder_pass.placeholder_config )
       else:
         placeholder_config = c.get_placeholder_config()( m )
 
       placeholder_config.pickled_dependency_file = None
       placeholder_config.pickled_wrapper_file = \
-          m.get_pass_data( translation_pass.translated_filename )
+          m.get_metadata( translation_pass.translated_filename )
       placeholder_config.pickled_top_module = \
-          m.get_pass_data( translation_pass.translated_top_module )
-      m.set_pass_data( placeholder_pass.placeholder_config, placeholder_config )
+          m.get_metadata( translation_pass.translated_top_module )
+      m.set_metadata( placeholder_pass.placeholder_config, placeholder_config )
 
     else:
       for child in m.get_child_components():

@@ -8,8 +8,8 @@
 import filecmp
 import os
 
+from pymtl3 import MetadataKey
 from pymtl3.passes.BasePass import BasePass
-from pymtl3.passes.PassDataName import PassDataName
 
 from .VTranslator import VTranslator
 
@@ -20,22 +20,22 @@ def mk_TranslationPass( _VTranslator ):
 
     # Translation pass input pass data
 
-    enable                = PassDataName()
-    explicit_file_name    = PassDataName()
-    explicit_module_name  = PassDataName()
-    no_synthesis          = PassDataName()
-    no_synthesis_no_clk   = PassDataName()
-    no_synthesis_no_reset = PassDataName()
+    enable                = MetadataKey()
+    explicit_file_name    = MetadataKey()
+    explicit_module_name  = MetadataKey()
+    no_synthesis          = MetadataKey()
+    no_synthesis_no_clk   = MetadataKey()
+    no_synthesis_no_reset = MetadataKey()
 
     # Translation pass output pass data
 
-    translate_config      = PassDataName()
+    translate_config      = MetadataKey()
 
-    is_same               = PassDataName()
-    translator            = PassDataName()
-    translated            = PassDataName()
-    translated_filename   = PassDataName()
-    translated_top_module = PassDataName()
+    is_same               = MetadataKey()
+    translator            = MetadataKey()
+    translated            = MetadataKey()
+    translated_filename   = MetadataKey()
+    translated_top_module = MetadataKey()
 
     def __call__( s, top ):
       s.top = top
@@ -62,15 +62,15 @@ def mk_TranslationPass( _VTranslator ):
     def traverse_hierarchy( s, m ):
       c = s.__class__
 
-      if m.has_pass_data( c.enable ) and m.get_pass_data( c.enable ):
-        m.set_pass_data( c.translate_config, s.gen_tr_cfgs(m) )
-        s.translator.translate( m, m.get_pass_data( c.translate_config ) )
+      if m.has_metadata( c.enable ) and m.get_metadata( c.enable ):
+        m.set_metadata( c.translate_config, s.gen_tr_cfgs(m) )
+        s.translator.translate( m, m.get_metadata( c.translate_config ) )
 
         module_name = s.translator._top_module_full_name
 
-        if m.has_pass_data( c.explicit_file_name ) and \
-           m.get_pass_data( c.explicit_file_name ):
-          fname = m.get_pass_data( c.explicit_file_name )
+        if m.has_metadata( c.explicit_file_name ) and \
+           m.get_metadata( c.explicit_file_name ):
+          fname = m.get_metadata( c.explicit_file_name )
           if '.v' in fname:
             filename = fname.split('.v')[0]
           elif '.sv' in fname:
@@ -100,11 +100,11 @@ def mk_TranslationPass( _VTranslator ):
         os.rename( temporary_file, output_file )
 
         # Expose some attributes about the translation process
-        m.set_pass_data( c.is_same,               is_same      )
-        m.set_pass_data( c.translator,            s.translator )
-        m.set_pass_data( c.translated,            True         )
-        m.set_pass_data( c.translated_filename,   output_file  )
-        m.set_pass_data( c.translated_top_module, module_name  )
+        m.set_metadata( c.is_same,               is_same      )
+        m.set_metadata( c.translator,            s.translator )
+        m.set_metadata( c.translated,            True         )
+        m.set_metadata( c.translated_filename,   output_file  )
+        m.set_metadata( c.translated_top_module, module_name  )
 
       else:
         for child in m.get_child_components():

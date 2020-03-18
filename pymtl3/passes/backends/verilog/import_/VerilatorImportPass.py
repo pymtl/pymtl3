@@ -17,12 +17,11 @@ from importlib import reload
 from itertools import cycle
 from textwrap import indent
 
-from pymtl3 import Placeholder
+from pymtl3 import Placeholder, MetadataKey
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst, mk_bits
 from pymtl3.dsl import Component
-from pymtl3.dsl.errors import UnsetPassDataError
+from pymtl3.dsl.errors import UnsetMetadataError
 from pymtl3.passes.BasePass import BasePass
-from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
@@ -44,35 +43,35 @@ class VerilatorImportPass( BasePass ):
 
   # Import pass input pass data
 
-  enable              = PassDataName()
-  verbose             = PassDataName()
-  vl_line_trace       = PassDataName()
-  vl_coverage         = PassDataName()
-  vl_line_coverage    = PassDataName()
-  vl_toggle_coverage  = PassDataName()
-  vl_mk_dir           = PassDataName()
-  vl_enable_assert    = PassDataName()
-  vl_opt_level        = PassDataName()
-  vl_unroll_count     = PassDataName()
-  vl_unroll_stmts     = PassDataName()
-  vl_W_lint           = PassDataName()
-  vl_W_style          = PassDataName()
-  vl_W_fatal          = PassDataName()
-  vl_Wno_list         = PassDataName()
-  vl_xinit            = PassDataName()
-  vl_trace            = PassDataName()
-  vl_trace_filename   = PassDataName()
-  vl_trace_timescale  = PassDataName()
-  vl_trace_cycle_time = PassDataName()
-  c_flags             = PassDataName()
-  c_include_path      = PassDataName()
-  c_srcs              = PassDataName()
-  ld_flags            = PassDataName()
-  ld_libs             = PassDataName()
+  enable              = MetadataKey()
+  verbose             = MetadataKey()
+  vl_line_trace       = MetadataKey()
+  vl_coverage         = MetadataKey()
+  vl_line_coverage    = MetadataKey()
+  vl_toggle_coverage  = MetadataKey()
+  vl_mk_dir           = MetadataKey()
+  vl_enable_assert    = MetadataKey()
+  vl_opt_level        = MetadataKey()
+  vl_unroll_count     = MetadataKey()
+  vl_unroll_stmts     = MetadataKey()
+  vl_W_lint           = MetadataKey()
+  vl_W_style          = MetadataKey()
+  vl_W_fatal          = MetadataKey()
+  vl_Wno_list         = MetadataKey()
+  vl_xinit            = MetadataKey()
+  vl_trace            = MetadataKey()
+  vl_trace_filename   = MetadataKey()
+  vl_trace_timescale  = MetadataKey()
+  vl_trace_cycle_time = MetadataKey()
+  c_flags             = MetadataKey()
+  c_include_path      = MetadataKey()
+  c_srcs              = MetadataKey()
+  ld_flags            = MetadataKey()
+  ld_libs             = MetadataKey()
 
   # Import pass output pass data
 
-  import_config       = PassDataName()
+  import_config       = MetadataKey()
 
   def __call__( s, top ):
     s.top = top
@@ -90,8 +89,8 @@ class VerilatorImportPass( BasePass ):
     c = s.__class__
     ph_pass = c.get_placeholder_pass()
     # Import can only be performed on Placeholders
-    if m.has_pass_data( ph_pass.enable ) and m.get_pass_data( ph_pass.enable ):
-      m.set_pass_data( c.import_config, c.get_import_config()( m ) )
+    if m.has_metadata( ph_pass.enable ) and m.get_metadata( ph_pass.enable ):
+      m.set_metadata( c.import_config, c.get_import_config()( m ) )
       return s.do_import( m )
 
     else:
@@ -145,8 +144,8 @@ class VerilatorImportPass( BasePass ):
     c = s.__class__
     # Only components translated by pymtl translation passes will be cached
     try:
-      is_same = m.get_pass_data( c.get_translation_pass().is_same )
-    except UnsetPassDataError:
+      is_same = m.get_metadata( c.get_translation_pass().is_same )
+    except UnsetMetadataError:
       is_same = False
 
     # Check if the verilated model is cached
@@ -176,8 +175,8 @@ class VerilatorImportPass( BasePass ):
 
   def get_imported_object( s, m ):
     c = s.__class__
-    ph_cfg = m.get_pass_data( c.get_placeholder_pass().placeholder_config )
-    ip_cfg = m.get_pass_data( c.import_config )
+    ph_cfg = m.get_metadata( c.get_placeholder_pass().placeholder_config )
+    ip_cfg = m.get_metadata( c.import_config )
     ip_cfg.setup_configs( m, c.get_translation_pass(), c.get_placeholder_pass() )
 
     rtype = get_component_ifc_rtlir( m )

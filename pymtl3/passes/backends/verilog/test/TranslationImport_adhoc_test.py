@@ -49,7 +49,7 @@ def run_test( case ):
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.set_pass_data( TranslationImportPass.enable, True )
+    _m.set_metadata( TranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
