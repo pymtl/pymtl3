@@ -40,6 +40,7 @@ class PrepareSimPass( BasePass ):
       top.print_line_trace = self.create_print_line_trace( top )
     top.sim_cycle_count  = self.create_sim_cycle_count( top )
 
+    # self.prepare_schedules()
     # ff_funcs summarizes the execution at the clock edge
     ff_funcs = []
     # append tracing related work
@@ -60,8 +61,6 @@ class PrepareSimPass( BasePass ):
     # append tracing related work
     up_funcs = top._sched.update_schedule
 
-    top.sim_reset = self.create_sim_reset( top, print_line_trace, self.reset_active_high,
-                                           ff_funcs, up_funcs, advance_func )
 
     # FIXME update_once?
     # check if the design has method_port
@@ -84,9 +83,15 @@ class PrepareSimPass( BasePass ):
     final_schedule += ff_funcs + up_funcs
     top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
 
+    top.sim_reset = self.create_sim_reset( top, print_line_trace, self.reset_active_high,
+                                           ff_funcs, up_funcs, advance_func )
+
     self.create_lock_unlock_simulation( top )
 
     top.lock_in_simulation()
+
+  # def prepare_schedules( self, top ):
+
 
   @staticmethod
   # Simulation related APIs

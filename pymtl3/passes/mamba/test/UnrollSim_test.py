@@ -38,7 +38,7 @@ def test_very_deep_dag():
     def line_trace( s ):
       return str(s.inners[-1].out) + " " + str(s.out)
 
-  N = 2000
+  N = 200
   A = Top( N )
 
   A.apply( UnrollSim() )

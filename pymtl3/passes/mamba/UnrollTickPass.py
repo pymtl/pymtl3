@@ -12,34 +12,30 @@ import py
 
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
-from pymtl3.passes.sim.SimpleTickPass import SimpleTickPass
 
 
 class UnrollTickPass( BasePass ):
 
   @staticmethod
-  def gen_tick_function( schedule ):
+  def gen_tick_function( funclist ):
 
     # Berkin IlBeyi's recipe ( updated using f-strings and enumerate )
-    strs = [f"  update_blk{idx}() # {sched}" for idx, sched in \
-        enumerate([ x.__name__ for x in schedule ])]
+    strs = [ f"_{idx}_{x.__name__}()" for idx, x in enumerate( funclist ) ]
 
     gen_tick_src = """
-        def compile_unroll( schedule ):
-          {}
-          def tick_unroll():
-            # The code below does the actual calling of update blocks.
-          {}
-          return tick_unroll
-        """.format( ";".join( map(
-                        "update_blk{0}=schedule[{0}]".format,
-                        range( len( schedule ) ) ) ),
-                        "\n          ".join( strs ) )
+def compile_unroll( schedule ):
+  {}
+  def unrolled():
+    # The code below does the actual calling of update blocks.
+    {}
+  return unrolled
+        """.format( ";".join( [ f"_{idx}_{x.__name__}=schedule[{idx}]"
+                                for idx, x in enumerate( funclist ) ] ),
+                       "\n    ".join( strs ) )
 
     l = {}
     exec(py.code.Source( gen_tick_src ).compile(), l)
-    # print(gen_tick_src)
-    return l['compile_unroll']( schedule )
+    return l['compile_unroll']( funclist )
 
   def __call__( self, top ):
     if not hasattr( top, "_sched" ):

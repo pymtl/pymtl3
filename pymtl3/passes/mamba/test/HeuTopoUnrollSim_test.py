@@ -42,6 +42,7 @@ def test_very_deep_dag():
   A = Top( N )
 
   A.apply( HeuTopoUnrollSim() )
+  A.sim_reset()
 
   T = 0
   while T < 5:
