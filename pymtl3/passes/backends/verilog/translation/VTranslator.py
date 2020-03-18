@@ -44,6 +44,7 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       s._rtlir_tr_unpacked_q = deque()
       s._placeholder_pass = VerilogPlaceholderPass
       s._mangled_placeholder_top_module_name = ''
+      s._included_pickled_files = set()
 
     def rtlir_tr_src_layout( s, hierarchy ):
       # Sanity check on BitStructs

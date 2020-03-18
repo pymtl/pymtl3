@@ -64,7 +64,8 @@ class TranslationImportPass( BasePass ):
       else:
         placeholder_config = c.get_placeholder_config()( m )
 
-      placeholder_config.pickled_source_file = \
+      placeholder_config.pickled_dependency_file = None
+      placeholder_config.pickled_wrapper_file = \
           m.get_pass_data( translation_pass.translated_filename )
       placeholder_config.pickled_top_module = \
           m.get_pass_data( translation_pass.translated_top_module )

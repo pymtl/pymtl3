@@ -274,7 +274,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate port declarations for the verilated model in C
     port_defs = []
-    for _, v_name, port in ports:
+    for _, v_name, port, _ in ports:
       if v_name:
         port_defs.append( s.gen_signal_decl_c( v_name, port ) )
     port_cdefs = copy.copy( port_defs )
@@ -283,7 +283,7 @@ class VerilatorImportPass( BasePass ):
 
     # Generate initialization statements for in/out ports
     port_inits = []
-    for _, v_name, port in ports:
+    for _, v_name, port, _ in ports:
       if v_name:
         port_inits.extend( s.gen_signal_init_c( v_name, port ) )
     make_indent( port_inits, 1 )
@@ -385,31 +385,30 @@ class VerilatorImportPass( BasePass ):
       external_trace_c_def = ''
 
     # Fill in the python wrapper template
-    if not cached:
-      with open(template_name) as template:
-        with open( wrapper_name, 'w' ) as output:
-          py_wrapper = template.read()
-          py_wrapper = py_wrapper.format(
-            component_name        = ip_cfg.translated_top_module,
-            has_clk               = int(ph_cfg.has_clk),
-            clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                    next(filter(lambda x: x[0][0]=='clk', ports))[1],
-            lib_file              = ip_cfg.get_shared_lib_path(),
-            port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
-            port_defs             = '\n'.join( port_defs ),
-            structs_input         = '\n'.join( structs_input ),
-            structs_output        = '\n'.join( structs_output ),
-            set_comb_input        = '\n'.join( set_comb_input ),
-            set_comb_output       = '\n'.join( set_comb_output ),
-            line_trace            = line_trace,
-            in_line_trace         = in_line_trace,
-            dump_vcd              = int(ip_cfg.vl_trace),
-            has_vl_trace_filename = bool(ip_cfg.vl_trace_filename),
-            vl_trace_filename     = ip_cfg.vl_trace_filename,
-            external_trace        = int(ip_cfg.vl_line_trace),
-            trace_c_def           = external_trace_c_def,
-          )
-          output.write( py_wrapper )
+    with open(template_name) as template:
+      with open( wrapper_name, 'w' ) as output:
+        py_wrapper = template.read()
+        py_wrapper = py_wrapper.format(
+          component_name        = ip_cfg.translated_top_module,
+          has_clk               = int(ph_cfg.has_clk),
+          clk                   = 'inv_clk' if not ph_cfg.has_clk else \
+                                  next(filter(lambda x: x[0][0]=='clk', ports))[1],
+          lib_file              = ip_cfg.get_shared_lib_path(),
+          port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
+          port_defs             = '\n'.join( port_defs ),
+          structs_input         = '\n'.join( structs_input ),
+          structs_output        = '\n'.join( structs_output ),
+          set_comb_input        = '\n'.join( set_comb_input ),
+          set_comb_output       = '\n'.join( set_comb_output ),
+          line_trace            = line_trace,
+          in_line_trace         = in_line_trace,
+          dump_vcd              = int(ip_cfg.vl_trace),
+          has_vl_trace_filename = bool(ip_cfg.vl_trace_filename),
+          vl_trace_filename     = ip_cfg.vl_trace_filename,
+          external_trace        = int(ip_cfg.vl_line_trace),
+          trace_c_def           = external_trace_c_def,
+        )
+        output.write( py_wrapper )
 
     ip_cfg.vprint(f"Successfully generated PyMTL wrapper {wrapper_name}!", 2)
     return symbols
@@ -472,8 +471,7 @@ class VerilatorImportPass( BasePass ):
       'vl_mk_dir', 'vl_enable_assert', 'vl_opt_level',
       'vl_unroll_count', 'vl_unroll_stmts',
       'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
-      'vl_xinit',
-      'vl_trace', 'vl_trace_filename',
+      'vl_xinit', 'vl_trace',
       'vl_trace_timescale', 'vl_trace_cycle_time',
       'c_flags', 'c_include_path', 'c_srcs',
       'ld_flags', 'ld_libs',
@@ -744,7 +742,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_port_vector_input( s, lhs, rhs, mangled_rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
-    blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@update',
                  f'def isignal_{mangled_rhs}():',
                  f'  s.{mangled_rhs} = {rhs}' ]
@@ -758,7 +756,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 
-    blocks   = [ f's.{mangled_rhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_rhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@update',
                  f'def istruct_{mangled_rhs}():' ]
 
@@ -815,14 +813,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
     # the verilated model because only the sequential update block of
     # the imported component should manipulate it.
 
-    for pnames, vname, rtype in packed_ports:
+    for pnames, vname, rtype, port_idx in packed_ports:
       pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( p_rtype ) == 'InPort' and pnames[0] != 'clk' and vname:
         dtype = p_rtype.get_dtype()
         lhs = "_ffi_m."+s._verilator_name(vname)
         rhs = "s.{}"
-        idx = s._get_port_array_index( pnames, p_n_dim )
+        idx = port_idx
         _set_comb, _structs = s.gen_port_array_input( lhs, rhs, pnames_iter, dtype, idx, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
@@ -835,7 +833,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_port_vector_output( s, lhs, mangled_lhs, rhs, dtype, symbols ):
     dtype_nbits = dtype.get_length()
-    blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@update',
                  f'def osignal_{mangled_lhs}():',
                  f'  {lhs} = s.{mangled_lhs}' ]
@@ -850,7 +848,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     if dtype_name not in symbols:
       symbols[dtype_name] = dtype.get_class()
 
-    blocks   = [ f's.{mangled_lhs} = Wire( Bits{dtype_nbits} )',
+    blocks   = [ f's.{mangled_lhs} = Wire( {s._gen_bits_decl(dtype_nbits)} )',
                  f'@update',
                  f'def ostruct_{mangled_lhs}():' ]
 
@@ -906,14 +904,14 @@ m->{name}{sub} = {deference}model->{name}{sub};
 
   def gen_comb_output( s, packed_ports, symbols ):
     set_comb, structs = [], []
-    for pnames, vname, rtype in packed_ports:
+    for pnames, vname, rtype, port_idx in packed_ports:
       pnames_iter = cycle(pnames)
       p_n_dim, p_rtype = get_rtype( rtype )
       if s._get_direction( rtype ) == 'OutPort':
         dtype = p_rtype.get_dtype()
         lhs = "s.{}"
         rhs = "_ffi_m." + s._verilator_name(vname)
-        idx = s._get_port_array_index( pnames, p_n_dim )
+        idx = port_idx
         _set_comb, _structs = s.gen_port_array_output( lhs, pnames_iter, rhs, dtype, idx, p_n_dim, symbols )
         set_comb += _set_comb
         structs  += _structs
@@ -927,7 +925,7 @@ m->{name}{sub} = {deference}model->{name}{sub};
     """Return the line trace method body that shows all interface ports."""
     template = '{0}={{s.{0}}},'
     trace_string = ''
-    for pnames, _, _ in packed_ports:
+    for pnames, _, _, _ in packed_ports:
       for pname in pnames:
         trace_string += ' ' + template.format( pname )
     return f"      return f'{trace_string}'"
@@ -996,15 +994,6 @@ m->{name}{sub} = {deference}model->{name}{sub};
       dtype = port.get_dtype()
     return dtype.get_length()
 
-  def _get_port_array_index( s, pnames, n_dim ):
-    i, prod, len_pnames = 0, 1, len(pnames)
-    while True:
-      if prod == len_pnames:
-        return i
-      prod *= n_dim[i]
-      i += 1
-      assert i <= len(n_dim), "failed to find port array index!"
-
   def _gen_ref_write( s, lhs, rhs, nbits ):
     if nbits <= 64:
       return [ f"{lhs}[0] = int({rhs})" ]
@@ -1031,3 +1020,9 @@ m->{name}{sub} = {deference}model->{name}{sub};
         _nbits = r - l
         ret.append( f"{lhs}[{l}:{r}] = Bits{_nbits}({rhs}[{idx}])" )
       return ret
+
+  def _gen_bits_decl( s, nbits ):
+    if nbits <= 256:
+      return f'Bits{nbits}'
+    else:
+      return f'mk_bits({nbits})'
