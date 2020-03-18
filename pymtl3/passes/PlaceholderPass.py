@@ -6,8 +6,8 @@
 
 from pymtl3 import Placeholder
 from pymtl3.passes.BasePass import BasePass, PassMetadata
-from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.errors import PlaceholderConfigError
+from pymtl3.passes.PassDataName import PassDataName
 
 
 class PlaceholderPass( BasePass ):

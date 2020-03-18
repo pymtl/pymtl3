@@ -14,8 +14,8 @@ from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import (
     TranslationImportPass,
-    VerilogPlaceholderPass,
     VerilatorImportPass,
+    VerilogPlaceholderPass,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator

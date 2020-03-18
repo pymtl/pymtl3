@@ -4,8 +4,8 @@
 # Author : Peitian Pan
 # Date   : Jan 28, 2020
 
-from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.backends.verilog import TranslationPass
+from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 
 
 class TranslationConfigs( BasePassConfigs ):

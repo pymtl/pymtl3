@@ -14,8 +14,12 @@ from pymtl3.datatypes import Bits1
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
-from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError, \
-    UnsetPassDataError
+from .errors import (
+    InvalidAPICallError,
+    InvalidConnectionError,
+    NotElaboratedError,
+    UnsetPassDataError,
+)
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 

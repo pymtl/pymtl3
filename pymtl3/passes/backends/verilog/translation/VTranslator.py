@@ -11,9 +11,9 @@ from pymtl3.passes.backends.generic import RTLIRTranslator
 from pymtl3.passes.backends.verilog.errors import VerilogStructuralTranslationError
 from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 
+from ..VerilogPlaceholderPass import VerilogPlaceholderPass
 from .behavioral import VBehavioralTranslator as V_BTranslator
 from .structural import VStructuralTranslator as V_STranslator
-from ..VerilogPlaceholderPass import VerilogPlaceholderPass
 
 
 def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):

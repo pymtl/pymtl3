@@ -8,10 +8,10 @@
 # Author : Peitian Pan
 # Date   : Jan 27, 2020
 
+import inspect
 import os
 import re
 import sys
-import inspect
 
 from pymtl3 import Placeholder
 from pymtl3.passes.backends.verilog.util.utility import (
@@ -19,9 +19,9 @@ from pymtl3.passes.backends.verilog.util.utility import (
     get_component_unique_name,
 )
 from pymtl3.passes.errors import InvalidPassOptionValue
+from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.PlaceholderConfigs import expand
 from pymtl3.passes.PlaceholderPass import PlaceholderPass
-from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir

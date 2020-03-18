@@ -14,10 +14,7 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
-from pymtl3.passes.backends.verilog import (
-    TranslationImportPass,
-    VerilatorImportPass,
-)
+from pymtl3.passes.backends.verilog import TranslationImportPass, VerilatorImportPass
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
