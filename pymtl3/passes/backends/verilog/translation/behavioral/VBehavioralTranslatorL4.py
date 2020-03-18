@@ -59,7 +59,7 @@ class BehavioralRTLIRToVVisitorL4( BehavioralRTLIRToVVisitorL3 ):
     if isinstance( node.value.Type, rt.Array ) and \
         isinstance( node.value.Type.get_sub_type(), rt.InterfaceView ):
       idx = s.visit( node.idx )
-      s._unpacked_q.append(idx)
+      s._unpacked_q.appendleft(idx)
       value = s.visit( node.value )
       return value
 

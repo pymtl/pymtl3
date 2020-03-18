@@ -889,7 +889,6 @@ CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruc
         );
         const_decls:
         freevars:
-          freevar: foo_at_upblk
         wire_decls:
         component_decls:
         tmpvars:
@@ -905,10 +904,7 @@ CaseBits32ArrayClosureConstruct = set_attributes( CaseBits32ArrayClosureConstruc
           upblk_src: upblk
     ''',
     'REF_FREEVAR',
-    '''\
-        freevars:
-          freevar: foo_at_upblk
-    '''
+    'freevars:\n'
 )
 
 CaseConnectBitSelToOutComp = set_attributes( CaseConnectBitSelToOutComp,

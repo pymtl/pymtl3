@@ -113,13 +113,34 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
     s._is_verilog_reserved = is_reserved
     s._unpacked_q   = deque()
 
+  def visit( s, node, *args ):
+    # Customized epilogue processing
+    method = 'visit_' + node.__class__.__name__
+    visitor = getattr( s, method, s.generic_visit )
+    ret = visitor( node, *args )
+    return s.process_epilogue( node, ret )
+
+  def process_epilogue( s, node, ret ):
+    if hasattr( node, '_top_expr' ) and node._top_expr:
+      # This node is a top level node -- we append all
+      # pending indice.
+      return s.process_unpacked_q( node, ret, f'{ret}{{}}')
+    else:
+      # This is a regular node. Just return its result.
+      return ret
+
   def is_verilog_reserved( s, name ):
     return s._is_verilog_reserved( name )
 
   def process_unpacked_q( s, node, signal, signal_tplt ):
     if isinstance( node.Type, rt.Port ):
-      ret = signal_tplt.format(''.join( [f'[{i}]' for i in list(s._unpacked_q)]))
+      filler = ''.join([f'[{i}]' for i in list(s._unpacked_q)])
       s._unpacked_q.clear()
+      if '{}' in signal_tplt:
+        p = signal_tplt.find('{}')
+        ret = signal_tplt[:p] + filler + signal_tplt[p+2:]
+      else:
+        ret = signal_tplt
       return ret
     else:
       return signal
@@ -209,6 +230,10 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Assign( s, node ):
+    for target in node.targets:
+      target._top_expr = True
+    node.value._top_expr = True
+
     targets       = [ s.visit( target ) for target in node.targets ]
     value         = s.visit( node.value )
     assignment_op = '<=' if not node.blocking else '='
@@ -250,6 +275,9 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Concat( s, node ):
+    for value in node.values:
+      value._top_expr = True
+
     values = [ s.visit(v) for v in node.values ]
     signals = ', '.join( values )
     return f'{{ {signals} }}'
@@ -259,6 +287,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_ZeroExt( s, node ):
+    node.value._top_expr = True
+
     value = s.visit( node.value )
     target_nbits = node.nbits
     current_nbits = int(node.value.Type.get_dtype().get_length())
@@ -276,6 +306,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   # at this ) e.g. in_[31:31][0] should be translated into in_[31:31].
 
   def visit_SignExt( s, node ):
+    node.value._top_expr = True
+
     value = s.visit( node.value )
     target_nbits = node.nbits
     current_nbits = int(node.value.Type.get_dtype().get_length())
@@ -347,6 +379,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Reduce( s, node ):
+    node.value._top_expr = True
+
     op_t = type(node.op)
     reduce_ops = { bir.BitAnd : '&', bir.BitOr : '|', bir.BitXor : '^' }
     if op_t not in reduce_ops:
@@ -361,6 +395,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_SizeCast( s, node ):
+    node.value._top_expr = True
+
     nbits = node.nbits
     value = s.visit( node.value )
     if hasattr( node, "_value" ):
@@ -441,6 +477,8 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Index( s, node ):
+    node.idx._top_expr = True
+
     idx   = s.visit( node.idx )
     value = s.visit( node.value )
     Type = node.value.Type
@@ -457,10 +495,15 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
 
       if isinstance( subtype, ( rt.Port, rt.Wire, rt.Const ) ):
         # Special case for situations like s.literal_int_array[0]
-        if isinstance( node.Type, rt.Const ):
-          nbits = node.Type.get_dtype().get_length()
-          return f"{nbits}'( {value}[{idx}]  )"
-        return f'{value}[{idx}]'
+        # TODO: verify that these cases have been captured by the
+        # constant extraction.
+        assert not isinstance( node.Type, rt.Const )
+        # if isinstance( node.Type, rt.Const ):
+        #   nbits = node.Type.get_dtype().get_length()
+        #   return f"{nbits}'({value}[{idx}])"
+
+        return s.process_unpacked_q( node,
+            f'{value}[{idx}]', f'{value}{{}}[{idx}]' )
       else:
         # is this branch ever taken?
         assert False
@@ -488,6 +531,9 @@ class BehavioralRTLIRToVVisitorL1( bir.BehavioralRTLIRNodeVisitor ):
   #-----------------------------------------------------------------------
 
   def visit_Slice( s, node ):
+    node.value._top_expr = True
+    node.lower._top_expr = True
+    node.upper._top_expr = True
 
     lower = s.visit( node.lower )
     value = s.visit( node.value )

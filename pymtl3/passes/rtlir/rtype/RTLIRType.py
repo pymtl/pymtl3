@@ -371,17 +371,17 @@ class Component( BaseRTLIRType ):
 
   def __eq__( s, other ):
     # Two Components are considered equal iff they expose the same interface
-    return isinstance(other, Component) and s.name == other.name and \
-           s._has_same_interface( other )
+    return isinstance(other, Component) and s._has_same_interface( other )
 
   def __hash__( s ):
     return hash((type(s), s.name, tuple(s.params)))
 
   def __str__( s ):
-    return 'Component'
+    return f'Component {s.name}'
 
   def __repr__( s ):
-    return f'Component {s.name}'
+    port_strs = ["{}:{}".format(name, repr(rtype)) for name, rtype in s.get_ports_packed()]
+    return f'Component with interface: {", ".join(port_strs)}'
 
   def get_name( s ):
     return s.name
@@ -490,7 +490,7 @@ def _handle_Array( _id, _obj ):
     return None
   ref_type = get_rtlir( obj[0] )
   assert all( get_rtlir(i) == ref_type for i in obj ), \
-    f'all elements of array {obj} must have the same type {ref_type}!'
+    f'all elements of array {obj} must have the same type {repr(ref_type)}!'
   dim_sizes = []
   while isinstance( obj, list ):
     if len( obj ) == 0:

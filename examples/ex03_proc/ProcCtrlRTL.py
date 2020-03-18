@@ -17,9 +17,6 @@ class ProcCtrl( Component ):
 
   def construct( s ):
 
-    XcelMsgType_READ  = XcelMsgType.READ
-    XcelMsgType_WRITE = XcelMsgType.WRITE
-
     #---------------------------------------------------------------------
     # Interface
     #---------------------------------------------------------------------
@@ -369,11 +366,10 @@ class ProcCtrl( Component ):
 
       # accelerator
       if s.csrr_D & (s.inst_D[CSRNUM] != CSR_MNGR2PROC):
-        s.xcelreq_type_D @= XcelMsgType_READ
+        s.xcelreq_type_D @= XcelMsgType.READ
         s.xcelreq_D @= 1
-
       elif s.csrw_D & (s.inst_D[CSRNUM] != CSR_PROC2MNGR):
-        s.xcelreq_type_D @= XcelMsgType_WRITE
+        s.xcelreq_type_D @= XcelMsgType.WRITE
         s.xcelreq_D @= 1
       else:
         s.xcelreq_type_D @= 0

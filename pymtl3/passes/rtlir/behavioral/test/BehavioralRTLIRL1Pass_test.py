@@ -335,7 +335,7 @@ def test_L1_call_sext_num_args( do_test ):
     do_test( CaseSextTwoArgsComp )
 
 def test_L1_call_unrecognized( do_test ):
-  with expected_failure( PyMTLSyntaxError, "Unrecognized method" ):
+  with expected_failure( PyMTLSyntaxError, "foo function is not found!" ):
     do_test( CaseUnrecognizedFuncComp )
 
 #-------------------------------------------------------------------------

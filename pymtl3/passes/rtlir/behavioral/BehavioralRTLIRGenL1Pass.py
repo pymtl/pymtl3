@@ -9,7 +9,18 @@ import ast
 import copy
 
 import pymtl3.dsl as dsl
-from pymtl3.datatypes import Bits, concat, reduce_and, reduce_or, reduce_xor, sext, zext, trunc
+from pymtl3.datatypes import (
+    Bits,
+    concat,
+    is_bitstruct_class,
+    is_bitstruct_inst,
+    reduce_and,
+    reduce_or,
+    reduce_xor,
+    sext,
+    zext,
+    trunc,
+)
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
 from pymtl3.passes.rtlir.util.utility import get_ordered_upblks, get_ordered_update_ff
@@ -66,38 +77,21 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       except ValueError:
         pass
 
+    s.const_extractor = ConstantExtractor( s.blk, s.globals, s.closure )
     ret = s.visit( ast )
     ret.component = s.component
     return ret
 
-  def get_obj_from_name( s, node, name ):
-    try:
-      if name in s.globals:
-        obj = s.globals[ name ]
-      elif name in s.closure:
-        obj = s.closure[ name ]
-      else:
-        raise NameError
-    except NameError:
-      raise PyMTLSyntaxError( s.blk, node, f"cannot find object of name {name}" )
-    return obj
-
-  def get_bir_from_obj( s, obj ):
+  def handle_constant( s, node, obj ):
     if isinstance( obj, int ):
       return bir.Number( obj )
-    elif issubclass( obj, Bits ):
-      return bir.Number( obj.nbits )
-    else:
-      raise PyMTLSyntaxError( s.blk, node,
-          f'cannot convert object {obj} to a bir node!' )
-
-  def get_const_obj( s, node ):
-    if isinstance( node, ast.Name ):
-      return s.get_obj_from_name( node, node.id )
-    elif isinstance( node, ast.Num ):
-      return node.n
+    elif isinstance( obj, Bits ):
+      return bir.SizeCast( obj.nbits, bir.Number( obj.value ) )
     else:
       return None
+    # else:
+    #   raise PyMTLSyntaxError( s.blk, node,
+    #       f"object {obj} cannot be converted to behavioral RTLIR!" )
 
   def get_call_obj( s, node ):
     if hasattr(node, "starargs") and node.starargs:
@@ -111,7 +105,12 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       raise PyMTLSyntaxError( s.blk, node,
         f'{node.func} is called but is not a name!')
 
-    return s.get_obj_from_name( node, node.func.id )
+    obj = s.const_extractor.enter( node.func )
+    if obj is not None:
+      return obj
+    else:
+      raise PyMTLSyntaxError( s.blk, node,
+        node.func.id + ' function is not found!' )
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \
@@ -229,7 +228,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to zext!' )
 
-      nbits = s.get_const_obj( node.args[1] )
+      nbits = s.const_extractor.enter( node.args[1] )
       if isinstance(nbits, type) and issubclass( nbits, Bits ):
         nbits = nbits.nbits
       if not isinstance( nbits, int ):
@@ -244,7 +243,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to sext!' )
 
-      nbits = s.get_const_obj( node.args[1] )
+      nbits = s.const_extractor.enter( node.args[1] )
       if isinstance(nbits, type) and issubclass( nbits, Bits ):
         nbits = nbits.nbits
       if not isinstance( nbits, int ):
@@ -259,7 +258,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         raise PyMTLSyntaxError( s.blk, node,
           'exactly two arguments should be given to trunc!' )
 
-      nbits = s.get_const_obj( node.args[1] )
+      nbits = s.const_extractor.enter( node.args[1] )
       if isinstance(nbits, type) and issubclass( nbits, Bits ):
         nbits = nbits.nbits
       if not isinstance( nbits, int ):
@@ -290,11 +289,21 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     return ret
 
   def visit_Attribute( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
     ret = bir.Attribute( s.visit( node.value ), node.attr )
     ret.ast = node
     return ret
 
   def visit_Subscript( s, node ):
+    obj = s.const_extractor.enter( node )
+    ret = s.handle_constant( node, obj )
+    if ret:
+      return ret
+
     value = s.visit( node.value )
     if isinstance( node.slice, ast.Slice ):
       if node.slice.step is not None:
@@ -479,3 +488,83 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
   def visit_ExtSlice( s, node ):
     raise PyMTLSyntaxError( s.blk, node, 'invalid operation: extslice' )
+
+class ConstantExtractor( ast.NodeVisitor ):
+  def __init__( s, blk, global_ns, closure_ns ):
+    s.blk = blk
+    s.globals = global_ns
+    s.cache = {}
+    s.closure = closure_ns
+    s.pymtl_functions = { concat, sext, zext, trunc,
+                          reduce_or, reduce_and, reduce_xor,
+                          copy.copy, copy.deepcopy }
+
+  def generic_visit( s, node ):
+    return None
+
+  def enter( s, node ):
+    ret = s.visit( node )
+    # Constant objects that are recognized
+    # 1. int, BitsN( X )
+    # 2. BitsN
+    # 3. BitStruct, BitStruct()
+    # 4. Functions, including concat, zext, sext, etc.
+    is_value = isinstance(ret, (int, Bits)) or is_bitstruct_inst(ret)
+    is_type = isinstance(ret, type) and (issubclass(ret, Bits) or is_bitstruct_class(ret))
+    try:
+      is_function = ret in s.pymtl_functions
+    except TypeError:
+      is_function = False
+
+    if is_value or is_type or is_function:
+      return ret
+    else:
+      return None
+
+  def visit_Attribute( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    value = s.visit( node.value )
+    try:
+      ret = getattr( value, node.attr )
+    except AttributeError:
+      ret = None
+    s.cache[node] = ret
+    return ret
+
+  def visit_Subscript( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    ret = None
+    if isinstance( node.slice, ast.Index ):
+      value = s.visit( node.value )
+      idx = s.visit( node.slice )
+      if value is not None and idx is not None:
+        try:
+          ret = value[idx]
+        except (TypeError, IndexError):
+          ret = None
+    s.cache[node] = ret
+    return ret
+
+  def visit_Index( s, node ):
+    if node in s.cache:
+      return s.cache[node]
+    ret = s.visit( node.value )
+    s.cache[node] = ret
+    return ret
+
+  def visit_Name( s, node ):
+    name = node.id
+    if name in s.closure:
+      # free var from closure
+      obj = s.closure[ name ]
+    elif name in s.globals:
+      # free var from the global name space
+      obj = s.globals[ name ]
+    else:
+      obj = None
+    return obj
+
+  def visit_Num( s, node ):
+    return node.n

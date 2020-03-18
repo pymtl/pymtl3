@@ -173,7 +173,7 @@ def test_L2_binop_non_vector( do_test ):
 #-------------------------------------------------------------------------
 
 def test_L2_call_bool( do_test ):
-  with expected_failure( PyMTLSyntaxError, "bool values cannot be instantiated explicitly" ):
+  with expected_failure( PyMTLSyntaxError, "Bool function is not found!" ):
     do_test( CaseExplicitBoolComp )
 
 def test_L2_tmp_var_used_before_assignement( do_test ):

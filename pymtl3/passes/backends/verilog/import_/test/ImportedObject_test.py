@@ -7,8 +7,10 @@
 
 from os.path import dirname
 
+import pytest
+
 from pymtl3 import SimulationPass
-from pymtl3.datatypes import Bits1, Bits32, Bits64, clog2, mk_bits
+from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import (
     TranslationConfigs,
@@ -251,6 +253,54 @@ def test_normal_queue( do_test ):
   q._tv_out = tv_out
   do_test( q )
 
+def test_normal_queue_implicit_top_module( do_test ):
+  # Test a Placeholder with params in `construct`
+  def tv_in( m, tv ):
+    m.enq_en = Bits1( tv[0] )
+    m.enq_msg = Bits32( tv[1] )
+    m.deq_en = Bits1( tv[3] )
+  def tv_out( m, tv ):
+    if tv[2] != '*':
+      assert m.enq_rdy == Bits1( tv[2] )
+    if tv[4] != '*':
+      assert m.deq_rdy == Bits1( tv[5] )
+    if tv[5] != '*':
+      assert m.deq_msg == Bits32( tv[4] )
+  class VQueue( Component, Placeholder ):
+    def construct( s, data_width, num_entries, count_width ):
+      s.count   =  OutPort( mk_bits( count_width )  )
+      s.deq_en  =  InPort( Bits1  )
+      s.deq_rdy = OutPort( Bits1  )
+      s.deq_msg = OutPort( mk_bits( data_width ) )
+      s.enq_en  =  InPort( Bits1  )
+      s.enq_rdy = OutPort( Bits1  )
+      s.enq_msg =  InPort( mk_bits( data_width ) )
+      s.config_placeholder = VerilogPlaceholderConfigs(
+          src_file = dirname(__file__)+'/VQueue.v',
+      )
+      s.verilog_translate_import = True
+  num_entries = 1
+  q = VQueue(
+      data_width = 32,
+      num_entries = num_entries,
+      count_width = clog2(num_entries+1))
+  # q.dump_vcd = True
+  test_vector = [
+    #   enq                deq
+    #   en    msg   rdy    en    msg   rdy
+    [    1,    42,    1,    0,     0,    0  ],
+    [    0,    43,    0,    1,    42,    1  ],
+    [    1,    43,    1,    0,    42,    0  ],
+    [    0,    44,    0,    1,    43,    1  ],
+    [    1,    44,    1,    0,    43,    0  ],
+    [    0,    45,    0,    1,    44,    1  ],
+    [    1,    45,    1,    0,    44,    0  ],
+  ]
+  q._test_vectors = test_vector
+  q._tv_in = tv_in
+  q._tv_out = tv_out
+  do_test( q )
+
 def test_normal_queue_params( do_test ):
   # Test the `params` option of placeholder configs
   def tv_in( m, tv ):
@@ -304,3 +354,88 @@ def test_normal_queue_params( do_test ):
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
+
+def test_unpacked_port_array( do_test ):
+  # Test the `params` option of placeholder configs
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[2])
+    assert m.out[1] == Bits32(tv[3])
+  class VPassThrough( Component, Placeholder ):
+    def construct( s, nports, nbits ):
+      s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+
+      s.config_placeholder = VerilogPlaceholderConfigs(
+          src_file = dirname(__file__) + '/VPassThrough.v',
+          params = {
+            'num_ports' : nports,
+            'bitwidth'  : nbits,
+          },
+          has_clk = False,
+          has_reset = False,
+      )
+      s.verilog_translate_import = True
+
+  q = VPassThrough( 2, 32 )
+  test_vector = [
+    [ 1, 42, 1, 42 ],
+    [ 1, -1, 1, -1 ],
+    [ 0,  1, 0,  1 ],
+    [ -1, 1, -1, 1 ],
+  ]
+  q._test_vectors = test_vector
+  q._tv_in = tv_in
+  q._tv_out = tv_out
+  do_test( q )
+
+@pytest.mark.parametrize(
+  "translate", [ True, False ]
+)
+def test_param_pass_through( do_test, translate ):
+  class VPassThrough( Component, Placeholder ):
+    def construct( s, nports, nbits ):
+      s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.config_placeholder = VerilogPlaceholderConfigs(
+          src_file = dirname(__file__) + '/VPassThrough.v',
+          params = {
+            'num_ports' : nports,
+            'bitwidth'  : nbits,
+          },
+          has_clk = False,
+          has_reset = False,
+      )
+      s.verilog_translate_import = True
+  class PassThrough( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits48 )
+      s.out = OutPort( Bits48 )
+      s.pt16 = VPassThrough(1, 16)
+      s.pt32 = VPassThrough(1, 32)
+      s.pt16.in_[0] //= s.in_[0:16]
+      s.pt16.out[0] //= s.out[0:16]
+      s.pt32.in_[0] //= s.in_[16:48]
+      s.pt32.out[0] //= s.out[16:48]
+      if translate:
+        s.verilog_translate_import = True
+    def line_trace( s ):
+      return f"{s.in_} > {s.out}"
+  def tv_in( m, tv ):
+    m.in_ = Bits48( tv[0] )
+  def tv_out( m, tv ):
+    assert m.out == Bits48( tv[1] )
+
+  p = PassThrough()
+  test_vector = [
+    [  1,  1, ],
+    [ -1, -1, ],
+    [ 42, 42, ],
+    [ -2, -2, ],
+  ]
+  p._test_vectors = test_vector
+  p._tv_in = tv_in
+  p._tv_out = tv_out
+  do_test( p )
