@@ -105,7 +105,7 @@ class VStructuralTranslatorL4(
         obj = eval(f'm.{attr}')
 
         if isinstance(obj, Placeholder):
-          c_name = obj.config_placeholder.pickled_top_module
+          c_name = obj.get_pass_data( s._placeholder_pass.placeholder_config ).pickled_top_module
         else:
           c_name = _c_name
 

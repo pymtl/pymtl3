@@ -13,10 +13,15 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
+from .VerilatorImportPass import VerilatorImportPass
+
 
 class VerilatorImportConfigs( BasePassConfigs ):
 
   Options = {
+    # Import this component?
+    "enable" : False,
+
     # Enable verbose mode?
     "verbose" : False,
 
@@ -129,7 +134,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
   }
 
   Checkers = {
-    ("verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
+    ("enable", "verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
      "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
@@ -178,24 +183,26 @@ class VerilatorImportConfigs( BasePassConfigs ):
     'WIDTHCONCAT',
   ]
 
-  PassName = 'VerilatorImportConfigs'
+  Pass = VerilatorImportPass
 
   #---------------------------------------------------
   # Public APIs
   #---------------------------------------------------
 
-  def setup_configs( s, m, m_tr_namespace ):
+  def setup_configs( s, m, tr_pass, ph_pass ):
     # VerilatorImportConfigs alone does not have the complete information about
     # the module to be imported. For example, we need to read from the placeholder
     # configuration to figure out the pickled file name and the top module name.
     # This method is meant to be called before calling other public APIs.
 
-    s.translated_top_module = m_tr_namespace.translated_top_module
-    s.translated_source_file = m_tr_namespace.translated_filename
-    s.v_include = m.config_placeholder.v_include
-    # s.src_file = m.config_placeholder.src_file
-    s.port_map = m.config_placeholder.port_map
-    s.params = m.config_placeholder.params
+    s.translated_top_module = m.get_pass_data( tr_pass.translated_top_module )
+    s.translated_source_file = m.get_pass_data( tr_pass.translated_filename )
+
+    ph_cfg = m.get_pass_data( ph_pass.placeholder_config )
+    s.v_include = ph_cfg.v_include
+    # s.src_file = ph_cfg.src_file
+    s.port_map = ph_cfg.port_map
+    s.params = ph_cfg.params
 
     if not s.vl_mk_dir:
       s.vl_mk_dir = f'obj_dir_{s.translated_top_module}'

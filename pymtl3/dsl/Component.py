@@ -14,7 +14,8 @@ from pymtl3.datatypes import Bits1
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
-from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
+from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError, \
+    UnsetPassDataError
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
@@ -425,6 +426,23 @@ class Component( ComponentLevel7 ):
       # pypyjit.set_param("default")
     # except:
       # pass
+
+  #-----------------------------------------------------------------------
+  # Public APIs (can be called either before or after elaboration)
+  #-----------------------------------------------------------------------
+
+  """ Pass data APIs """
+
+  def set_pass_data( s, name, value ):
+    s._pass_data[ name ] = value
+
+  def has_pass_data( s, name ):
+    return name in s._pass_data
+
+  def get_pass_data( s, name ):
+    if not s.has_pass_data( name ):
+      raise UnsetPassDataError( name, s )
+    return s._pass_data[ name ]
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)

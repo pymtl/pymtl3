@@ -5,18 +5,8 @@
 # Date   : June 14, 2019
 """Provide a pass that imports arbitrary SystemVerilog modules."""
 
-
 from pymtl3.passes.backends.verilog import VerilatorImportPass as VerilogImportPass
-from pymtl3.passes.backends.verilog.errors import VerilogImportError
-from pymtl3.passes.backends.verilog.util.utility import (
-    get_component_unique_name,
-    make_indent,
-)
 from pymtl3.passes.backends.yosys.util.utility import gen_mapped_ports
-from pymtl3.passes.BasePass import BasePass
-from pymtl3.passes.rtlir import RTLIRDataType as rdt
-from pymtl3.passes.rtlir import RTLIRType as rt
-from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 
 class VerilatorImportPass( VerilogImportPass ):
@@ -25,19 +15,18 @@ class VerilatorImportPass( VerilogImportPass ):
   # Backend-specific methods
   #-----------------------------------------------------------------------
 
-  def get_backend_name( s ):
+  @staticmethod
+  def get_backend_name():
     return "yosys"
 
-  def get_config( s, m ):
-    return m.config_yosys_import
+  @staticmethod
+  def get_translation_pass():
+    from pymtl3.passes.backends.yosys.translation.TranslationPass \
+        import TranslationPass
+    return TranslationPass
 
-  def get_config_name( s ):
-    return "config_yosys_import"
-
-  def get_translation_namespace( s, m ):
-    return m._pass_yosys_translation
-
-  def get_gen_mapped_port( s ):
+  @staticmethod
+  def get_gen_mapped_port():
     return gen_mapped_ports
 
   #-----------------------------------------------------------------------

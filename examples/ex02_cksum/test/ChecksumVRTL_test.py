@@ -33,7 +33,7 @@ def checksum_vrtl( words ):
 
   # Translate the checksum unit and import it back in using the yosys
   # backend
-  dut.yosys_translate_import = True
+  dut.set_pass_data( TranslationImportPass.enable, True )
   dut = TranslationImportPass()( dut )
 
   # Create a simulator
@@ -97,7 +97,7 @@ class ChecksumVRTSrcSink_Tests( BaseSrcSinkTests ):
 
     # Translate the DUT and import it back in using the yosys backend.
     th.elaborate()
-    th.dut.yosys_translate_import = True
+    th.dut.set_pass_data( TranslationImportPass.enable, True )
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
     # Apply the translation-import and simulation passes

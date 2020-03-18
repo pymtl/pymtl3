@@ -11,11 +11,9 @@ from pymtl3 import SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import (
-    TranslationConfigs,
     TranslationImportPass,
-    VerilatorImportConfigs,
-    VerilogPlaceholderConfigs,
     VerilogPlaceholderPass,
+    VerilatorImportPass,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
@@ -39,19 +37,11 @@ def test_reg( do_test ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VReg.v',
-          port_map = {
-            "clk" : "clk",
-            "reset" : "reset",
-            "in_" : "d",
-            "out" : "q",
-          }
-      )
-      s.config_verilog_translate = TranslationConfigs(
-          explicit_module_name = 'VReg_imported',
-      )
-      s.verilog_translate_import = True
+      s.set_pass_data( VerilogPlaceholderPass.port_map, {
+          "clk" : "clk", "reset" : "reset",
+          "in_" : "d",   "out" : "q",
+      } )
+      s.set_pass_data( TranslationImportPass.enable, True )
   a = VReg()
   a._test_vectors = [
     [    1,    '*' ],
@@ -72,23 +62,16 @@ def test_vl_uninit( do_test ):
     m.in_ = Bits32( test_vector[0] )
   def tv_out( m, test_vector ):
     assert m.out == Bits32( test_vector[1] )
-  class Uninit( Component, Placeholder ):
+  class VUninit( Component, Placeholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VUninit.v',
-          top_module = 'VUninit',
-          port_map = {
-            "in_" : "d",
-            "out" : "q",
-          }
-      )
-      s.config_verilog_import = VerilatorImportConfigs(
-          vl_xinit = 'ones',
-      )
-      s.verilog_translate_import = True
-  a = Uninit()
+      s.set_pass_data( VerilogPlaceholderPass.port_map, {
+          "in_" : "d", "out" : "q",
+      } )
+      s.set_pass_data( VerilatorImportPass.vl_xinit, 'ones' )
+      s.set_pass_data( TranslationImportPass.enable, True )
+  a = VUninit()
   a._test_vectors = [
     [    0, 4294967295 ],
     [    2, 4294967295 ],
@@ -100,23 +83,16 @@ def test_vl_uninit( do_test ):
 
 def test_reg_external_trace( do_test ):
   # Test Verilog line trace
-  class RegTrace( Component, Placeholder ):
+  class VRegTrace( Component, Placeholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VRegTrace.v',
-          top_module = 'VRegTrace',
-          port_map = {
-            "in_" : "d",
-            "out" : "q",
-          }
-      )
-      s.config_verilog_import = VerilatorImportConfigs(
-          vl_line_trace = True,
-      )
-      s.verilog_translate_import = True
-  a = RegTrace()
+      s.set_pass_data( VerilogPlaceholderPass.port_map, {
+          "in_" : "d", "out" : "q",
+      } )
+      s.set_pass_data( VerilatorImportPass.vl_line_trace, True )
+      s.set_pass_data( TranslationImportPass.enable, True )
+  a = VRegTrace()
   a.elaborate()
   a.apply( VerilogPlaceholderPass() )
   a = TranslationImportPass()( a )
@@ -142,20 +118,15 @@ def test_reg_incomplete_portmap( do_test ):
   def tv_out( m, test_vector ):
     if test_vector[1] != '*':
       assert m.out == Bits32( test_vector[1] )
-  class Reg( Component, Placeholder ):
+  class VReg( Component, Placeholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VReg.v',
-          top_module = 'VReg',
-          port_map = {
-            "in_" : "d",
-            "out" : "q",
-          }
-      )
-      s.verilog_translate_import = True
-  a = Reg()
+      s.set_pass_data( VerilogPlaceholderPass.port_map, {
+          "in_" : "d",   "out" : "q",
+      } )
+      s.set_pass_data( TranslationImportPass.enable, True )
+  a = VReg()
   a._test_vectors = [
     [    1,    '*' ],
     [    2,      1 ],
@@ -179,19 +150,15 @@ def test_adder( do_test ):
       assert m.out == Bits32( test_vector[3] )
     if test_vector[4] != '*':
       assert m.cout == Bits32( test_vector[4] )
-  class Adder( Component, Placeholder ):
+  class VAdder( Component, Placeholder ):
     def construct( s ):
       s.in0 = InPort( Bits32 )
       s.in1 = InPort( Bits32 )
       s.cin = InPort( Bits1 )
       s.out = OutPort( Bits32 )
       s.cout = OutPort( Bits1 )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VAdder.v',
-          top_module = 'VAdder',
-      )
-      s.verilog_translate_import = True
-  a = Adder()
+      s.set_pass_data( TranslationImportPass.enable, True )
+  a = VAdder()
   a._test_vectors = [
     [    1,      1,     1,     3, 0 ],
     [    1,     -1,     0,     0, 1 ],
@@ -215,7 +182,7 @@ def test_normal_queue( do_test ):
       assert m.deq_rdy == Bits1( tv[5] )
     if tv[5] != '*':
       assert m.deq_msg == Bits32( tv[4] )
-  class Queue( Component, Placeholder ):
+  class VQueue( Component, Placeholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count   =  OutPort( mk_bits( count_width )  )
       s.deq_en  =  InPort( Bits1  )
@@ -224,13 +191,11 @@ def test_normal_queue( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VQueue.v',
-          top_module = 'VQueue',
-      )
-      s.verilog_translate_import = True
+      s.set_pass_data( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
+      s.set_pass_data( VerilogPlaceholderPass.top_module, 'VQueue' )
+      s.set_pass_data( TranslationImportPass.enable, True )
   num_entries = 1
-  q = Queue(
+  q = VQueue(
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))
@@ -273,16 +238,14 @@ def test_normal_queue_params( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( nbits ) )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VQueue.v',
-          top_module = 'VQueue',
-          params = {
-            'data_width'  : nbits,
-            'num_entries' : nelems,
-            'count_width' : nbits_cnt,
-          },
-      )
-      s.verilog_translate_import = True
+      s.set_pass_data( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VQueue.v' )
+      s.set_pass_data( VerilogPlaceholderPass.top_module, 'VQueue' )
+      s.set_pass_data( VerilogPlaceholderPass.params, {
+          'data_width'  : nbits,
+          'num_entries' : nelems,
+          'count_width' : nbits_cnt,
+      } )
+      s.set_pass_data( TranslationImportPass.enable, True )
   num_entries = 1
   q = Queue(
       nbits = 32,

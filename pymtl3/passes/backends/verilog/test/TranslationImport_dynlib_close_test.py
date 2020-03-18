@@ -10,16 +10,15 @@ from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
 
 from .. import TranslationImportPass
-from ..import_.VerilatorImportConfigs import VerilatorImportConfigs
+from ..import_.VerilatorImportPass import VerilatorImportPass
 from ..util.utility import get_file_hash
 
 
 def run_test( _m ):
   try:
     _m.elaborate()
-    _m.verilog_translate_import = True
-    _m.config_verilog_import = \
-        VerilatorImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED'], vl_trace=True)
+    _m.set_pass_data( TranslationImportPass.enable, True )
+    _m.set_pass_data( VerilatorImportPass.vl_trace, True )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()

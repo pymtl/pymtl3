@@ -217,7 +217,7 @@ def main():
   if opts.translate:
     from pymtl3.passes.backends.yosys import TranslationImportPass
     model.elaborate()
-    model.dut.yosys_translate_import = True
+    model.dut.set_pass_data( TranslationImportPass.enable, True )
     model = TranslationImportPass()( model )
 
   model.apply( SimulationPass() )

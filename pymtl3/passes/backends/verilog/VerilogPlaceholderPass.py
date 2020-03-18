@@ -11,6 +11,7 @@
 import os
 import re
 import sys
+import inspect
 from textwrap import dedent
 
 from pymtl3 import Placeholder
@@ -18,12 +19,10 @@ from pymtl3.passes.backends.verilog.util.utility import (
     gen_mapped_ports,
     get_component_unique_name,
 )
-from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import (
-    VerilogPlaceholderConfigs,
-)
 from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PlaceholderConfigs import expand
 from pymtl3.passes.PlaceholderPass import PlaceholderPass
+from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
@@ -31,24 +30,36 @@ from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 class VerilogPlaceholderPass( PlaceholderPass ):
 
+  # Placeholder pass public pass data
+
+  params     = PassDataName()
+  port_map   = PassDataName()
+  top_module = PassDataName()
+  src_file   = PassDataName()
+  v_flist    = PassDataName()
+  v_include  = PassDataName()
+
+  @staticmethod
+  def get_placeholder_config():
+    from pymtl3.passes.backends.verilog.VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
+    return VerilogPlaceholderConfigs
+
   def visit_placeholder( s, m ):
+    c = s.__class__
+    super().visit_placeholder( m )
     irepr = get_component_ifc_rtlir( m )
-
     s.setup_default_configs( m, irepr )
+    cfg = m.get_pass_data( c.placeholder_config )
 
-    # after the previous setup step, placeholder `m` is guaranteed to have
-    # config_placeholder attribute.
-    if m.config_placeholder.is_valid:
-      s.check_valid( m, m.config_placeholder, irepr )
-      s.pickle( m, m.config_placeholder, irepr )
+    if cfg.enable:
+      s.check_valid( m, cfg, irepr )
+      s.pickle( m, cfg, irepr )
 
   def setup_default_configs( s, m, irepr ):
-    if not hasattr( m, 'config_placeholder' ):
-      m.config_placeholder = VerilogPlaceholderConfigs()
+    c = s.__class__
+    cfg = m.get_pass_data( c.placeholder_config )
 
-    cfg = m.config_placeholder
-
-    if cfg.is_valid:
+    if cfg.enable:
       # If top_module is unspecified, infer it from the component and its
       # parameters. Note we need to make sure the infered top_module matches
       # the default translation result.
@@ -58,7 +69,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       # Only try to infer the name of Verilog source file if both
       # flist and the source file are not specified.
       if not cfg.src_file and not cfg.v_flist:
-        cfg.src_file = f"{cfg.top_module}.v"
+        parent_dir = os.path.dirname(inspect.getfile(m.__class__))
+        cfg.src_file = f"{parent_dir}{os.sep}{cfg.top_module}.v"
 
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
@@ -67,46 +79,52 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     # Check params
     for param_name, value in cfg.params.items():
       if not isinstance( value, int ):
-        raise InvalidPassOptionValue("params", cfg.params, cfg.PassName,
+        raise InvalidPassOptionValue("params", cfg.params, cfg.Pass.__name__,
             f"non-integer parameter {param_name} is not supported yet!")
 
     # Check port map
-
     # TODO: this should be based on RTLIR
-    # unmapped_unpacked_ports = gen_unpacked_ports( irepr )
-    # unmapped_port_names = list(map(lambda x: x[0], list(unmapped_unpacked_ports)))
-    # for name in pmap.keys():
-    #   if name not in unmapped_port_names:
-    #     raise InvalidPassOptionValue("port_map", pmap, cfg.PassName,
-    #       f"Port {name} does not exist in component {irepr.get_name()}!")
-
     for name in pmap.keys():
       try:
         eval(f'm.{name}')
       except:
-        raise InvalidPassOptionValue("port_map", pmap, cfg.PassName,
+        raise InvalidPassOptionValue("port_map", pmap, cfg.Pass.__name__,
           f"Port {name} does not exist in component {irepr.get_name()}!")
 
     # Check src_file
     if cfg.src_file and not os.path.isfile(expand(cfg.src_file)):
-      raise InvalidPassOptionValue("src_file", cfg.src_file, cfg.PassName,
+      raise InvalidPassOptionValue("src_file", cfg.src_file, cfg.Pass.__name__,
           'src_file should be a file path!')
 
     if cfg.v_flist:
-      raise InvalidPassOptionValue("v_flist", cfg.v_flist, cfg.PassName,
+      raise InvalidPassOptionValue("v_flist", cfg.v_flist, cfg.Pass.__name__,
           'Placeholders backed by Verilog flist are not supported yet!')
 
     # Check v_flist
     if cfg.v_flist and not os.path.isfile(expand(cfg.v_flist)):
-      raise InvalidPassOptionValue("v_flist", cfg.v_flist, cfg.PassName,
+      raise InvalidPassOptionValue("v_flist", cfg.v_flist, cfg.Pass.__name__,
           'v_flist should be a file path!')
 
     # Check v_include
     if cfg.v_include:
       for include in cfg.v_include:
         if not os.path.isdir(expand(include)):
-          raise InvalidPassOptionValue("v_include", cfg.v_include, cfg.PassName,
+          raise InvalidPassOptionValue("v_include", cfg.v_include, cfg.Pass.__name__,
               'v_include should be an array of dir paths!')
+
+    # Check if the top module name appears in the file
+    if cfg.src_file:
+      found = False
+      with open(cfg.src_file) as src_file:
+        for line in src_file.readlines():
+          if cfg.top_module in line:
+            found = True
+            break
+      if not found:
+        raise InvalidPassOptionValue("top_module", cfg.top_module, cfg.Pass.__name__,
+            f'cannot find top module {cfg.top_module} in source file {cfg.src_file}.\n'
+            f'Please make sure you have specified the correct top module name through '
+            f'the VerilogPlaceholderPass.top_module pass data name!')
 
   def pickle( s, m, cfg, irepr ):
     # In the namespace cfg:
@@ -144,9 +162,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     cfg.pickled_source_file      = pickled_source_file
     cfg.pickled_top_module       = pickled_top_module
     cfg.pickled_wrapper_template = tplt
-    cfg.def_symbol = def_symbol
-    cfg.orig_comp_name = orig_comp_name
-    cfg.pickle_dependency = pickle_dependency
+    cfg.def_symbol               = def_symbol
+    cfg.orig_comp_name           = orig_comp_name
+    cfg.pickle_dependency        = pickle_dependency
 
     with open( pickled_source_file, 'w' ) as fd:
       fd.write( pickle_template.format( **locals() ) )
@@ -291,7 +309,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     if cfg.v_include:
       if len(cfg.v_include) != 1:
-        raise InvalidPassOptionValue("v_include", cfg.v_include, cfg.PassName,
+        raise InvalidPassOptionValue("v_include", cfg.v_include, cfg.Pass.__name__,
             'the current pickler only supports one user-defined v_include path...')
       include_path = cfg.v_include[0]
 

@@ -21,7 +21,7 @@ from pymtl3.stdlib.test import TestVectorSimulator
 
 def local_do_test( _m ):
   _m.elaborate()
-  _m.yosys_translate_import = True
+  _m.set_pass_data( TranslationImportPass.enable, True )
   _m.apply( VerilogPlaceholderPass() )
   m = TranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )

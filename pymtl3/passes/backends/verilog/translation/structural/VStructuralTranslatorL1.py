@@ -27,6 +27,7 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
   #-----------------------------------------------------------------------
 
   def rtlir_tr_placeholder_src( s, m ):
+    ph_cfg = m.get_pass_data( s._placeholder_pass.placeholder_config )
     try:
       if m is s.tr_top:
         # If this placeholder is a top level module, use the wrapper
@@ -35,9 +36,10 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
           module_name = s.tr_cfgs[m].explicit_module_name
         else:
           m_rtype = m._pass_structural_rtlir_gen.rtlir_type
-          module_name = s.rtlir_tr_component_unique_name(m_rtype)
+          module_name = s.rtlir_tr_component_unique_name(m_rtype) + '_wrapper'
+          s._mangled_placeholder_top_module_name = module_name
 
-        if module_name == m.config_placeholder.top_module:
+        if module_name == ph_cfg.top_module:
           raise VerilogPlaceholderError(m,
               f"failed to create wrapper for the given object because the same "
               f"name {module_name} is used for both the Verilog top module and "
@@ -58,16 +60,16 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
             '''
         )
 
-        orig_comp_name = m.config_placeholder.orig_comp_name
-        pickle_dependency = m.config_placeholder.pickle_dependency
+        orig_comp_name = ph_cfg.orig_comp_name
+        pickle_dependency = ph_cfg.pickle_dependency
         pickle_wrapper = \
-            m.config_placeholder.pickled_wrapper_template.format(top_module_name = module_name)
-        def_symbol = m.config_placeholder.def_symbol
+            ph_cfg.pickled_wrapper_template.format(top_module_name = module_name)
+        def_symbol = ph_cfg.def_symbol
 
         return pickle_template.format( **locals() )
       else:
         # Otherwise always use the pickled source file
-        with open(m.config_placeholder.pickled_source_file) as fd:
+        with open(ph_cfg.pickled_source_file) as fd:
           return fd.read()
     except AttributeError as e:
       # Forgot to apply VerilogPlaceholderPass?

@@ -44,6 +44,9 @@ class ComponentLevel1( NamedObject ):
     inst._dsl.upblk_order = []
     inst._dsl.U_U_constraints = set() # contains ( id(func), id(func) )s
 
+    # Maps an PassDataName instance to its value
+    inst._pass_data = {}
+
     return inst
 
   def _collect_vars( s, m ):

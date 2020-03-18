@@ -31,7 +31,7 @@ from ..util.test_utility import closed_loop_component_input_test
 def run_sim( _th ):
   try:
     _th.elaborate()
-    _th.q.verilog_translate_import = True
+    _th.q.set_pass_data( TranslationImportPass.enable, True )
     th = TranslationImportPass()( _th )
     th.apply( SimulationPass() )
 

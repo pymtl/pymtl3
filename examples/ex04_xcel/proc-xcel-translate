@@ -105,7 +105,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
 
   # Tag the processor-accelerator unit as to be translated
 
-  proc_xcel.yosys_translate = True
+  proc_xcel.set_pass_data( TranslationPass.enable, True )
 
   # Perform translation
 

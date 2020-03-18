@@ -32,7 +32,7 @@ def local_do_test( _m ):
   try:
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
-    _m.verilog_translate_import = True
+    _m.set_pass_data( TranslationImportPass.enable, True )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()

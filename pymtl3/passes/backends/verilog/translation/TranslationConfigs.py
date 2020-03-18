@@ -5,13 +5,14 @@
 # Date   : Jan 28, 2020
 
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
+from pymtl3.passes.backends.verilog import TranslationPass
 
 
 class TranslationConfigs( BasePassConfigs ):
 
   Options = {
     # Translate the current instance?
-    "translate" : True,
+    "enable" : False,
 
     # Give an explicit file name to the translated source
     "explicit_file_name" : "",
@@ -35,11 +36,11 @@ class TranslationConfigs( BasePassConfigs ):
   }
 
   Checkers = {
-    ("translate", "no_synthesis", "no_synthesis_no_clk", "no_synthesis_no_reset") :
+    ("enable", "no_synthesis", "no_synthesis_no_clk", "no_synthesis_no_reset") :
     Checker( lambda v: isinstance( v, bool ), "expects a boolean" ),
 
     ("explicit_file_name", "explicit_module_name") :
     Checker( lambda v: isinstance(v, str), "expects a string" )
   }
 
-  PassName = "verilog.TranslationPass"
+  Pass = TranslationPass 

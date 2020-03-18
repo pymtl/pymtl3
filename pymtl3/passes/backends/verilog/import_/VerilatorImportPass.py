@@ -20,7 +20,9 @@ from textwrap import indent
 from pymtl3 import Placeholder
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst, mk_bits
 from pymtl3.dsl import Component
+from pymtl3.dsl.errors import UnsetPassDataError
 from pymtl3.passes.BasePass import BasePass
+from pymtl3.passes.PassDataName import PassDataName
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
 from pymtl3.passes.rtlir import get_component_ifc_rtlir
@@ -34,24 +36,44 @@ from ..util.utility import (
     make_indent,
     wrap,
 )
-from .VerilatorImportConfigs import VerilatorImportConfigs
+from ..VerilogPlaceholderPass import VerilogPlaceholderPass
 
 
 class VerilatorImportPass( BasePass ):
-  """Import an arbitrary SystemVerilog module as a PyMTL component.
+  """ Import an arbitrary SystemVerilog module as a PyMTL component. """
 
-  The import pass takes as input a PyMTL component hierarchy where
-  the components to be imported have an `import` entry in their parameter
-  dictionary( set by calling the `set_parameter` PyMTL API ).
-  This pass assumes the modules to be imported are located in the current
-  directory and have name {full_name}.v where `full_name` is the name of
-  component's class concatanated with the list of arguments of its construct
-  method. It has the following format:
-      > {module_name}[__{parameter_name}_{parameter_value}]*
-  As an example, component mux created through `mux = Mux(Bits32, 2)` has a
-  full name `Mux__Type_Bits32__ninputs_2`.
-  The top module inside the target .v file should also have a full name.
-  """
+  # Import pass input pass data
+
+  enable              = PassDataName()
+  verbose             = PassDataName()
+  vl_line_trace       = PassDataName()
+  vl_coverage         = PassDataName()
+  vl_line_coverage    = PassDataName()
+  vl_toggle_coverage  = PassDataName()
+  vl_mk_dir           = PassDataName()
+  vl_enable_assert    = PassDataName()
+  vl_opt_level        = PassDataName()
+  vl_unroll_count     = PassDataName()
+  vl_unroll_stmts     = PassDataName()
+  vl_W_lint           = PassDataName()
+  vl_W_style          = PassDataName()
+  vl_W_fatal          = PassDataName()
+  vl_Wno_list         = PassDataName()
+  vl_xinit            = PassDataName()
+  vl_trace            = PassDataName()
+  vl_trace_filename   = PassDataName()
+  vl_trace_timescale  = PassDataName()
+  vl_trace_cycle_time = PassDataName()
+  c_flags             = PassDataName()
+  c_include_path      = PassDataName()
+  c_srcs              = PassDataName()
+  ld_flags            = PassDataName()
+  ld_libs             = PassDataName()
+
+  # Import pass output pass data
+
+  import_config       = PassDataName()
+
   def __call__( s, top ):
     s.top = top
     if not top._dsl.constructed:
@@ -65,10 +87,11 @@ class VerilatorImportPass( BasePass ):
     return ret
 
   def traverse_hierarchy( s, m ):
+    c = s.__class__
+    ph_pass = c.get_placeholder_pass()
     # Import can only be performed on Placeholders
-    if hasattr(m, 'config_placeholder') and m.config_placeholder.is_valid:
-      if not hasattr(m, s.get_config_name()):
-        setattr(m, s.get_config_name(), VerilatorImportConfigs())
+    if m.has_pass_data( ph_pass.enable ) and m.get_pass_data( ph_pass.enable ):
+      m.set_pass_data( c.import_config, c.get_import_config()( m ) )
       return s.do_import( m )
 
     else:
@@ -90,22 +113,28 @@ class VerilatorImportPass( BasePass ):
   # Backend-specific methods
   #-----------------------------------------------------------------------
 
-  def get_backend_name( s ):
+  @staticmethod
+  def get_backend_name():
     return "verilog"
 
-  def get_config_name( s ):
-    return "config_verilog_import"
+  @staticmethod
+  def get_placeholder_pass():
+    return VerilogPlaceholderPass
 
-  def get_placeholder_config( s, m ):
-    return m.config_placeholder
+  @staticmethod
+  def get_translation_pass():
+    from pymtl3.passes.backends.verilog.translation.TranslationPass \
+        import TranslationPass
+    return TranslationPass
 
-  def get_config( s, m ):
-    return m.config_verilog_import
+  @staticmethod
+  def get_import_config():
+    from pymtl3.passes.backends.verilog.import_.VerilatorImportConfigs \
+        import VerilatorImportConfigs
+    return VerilatorImportConfigs
 
-  def get_translation_namespace( s, m ):
-    return m._pass_verilog_translation
-
-  def get_gen_mapped_port( s ):
+  @staticmethod
+  def get_gen_mapped_port():
     return gen_mapped_ports
 
   #-----------------------------------------------------------------------
@@ -113,10 +142,11 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def is_cached( s, m, ip_cfg ):
+    c = s.__class__
     # Only components translated by pymtl translation passes will be cached
     try:
-      is_same = s.get_translation_namespace(m).is_same
-    except AttributeError:
+      is_same = m.get_pass_data( c.get_translation_pass().is_same )
+    except UnsetPassDataError:
       is_same = False
 
     # Check if the verilated model is cached
@@ -145,15 +175,16 @@ class VerilatorImportPass( BasePass ):
   #-----------------------------------------------------------------------
 
   def get_imported_object( s, m ):
-    ph_cfg = s.get_placeholder_config( m )
-    ip_cfg = s.get_config( m )
-    ip_cfg.setup_configs( m, s.get_translation_namespace(m) )
+    c = s.__class__
+    ph_cfg = m.get_pass_data( c.get_placeholder_pass().placeholder_config )
+    ip_cfg = m.get_pass_data( c.import_config )
+    ip_cfg.setup_configs( m, c.get_translation_pass(), c.get_placeholder_pass() )
 
     rtype = get_component_ifc_rtlir( m )
 
     # Now we selectively unpack array of ports if they are referred to in
     # port_map
-    ports = s.get_gen_mapped_port()( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
+    ports = c.get_gen_mapped_port()( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
 
     cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 

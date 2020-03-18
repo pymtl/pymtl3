@@ -16,7 +16,6 @@ from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
 from pymtl3.passes.backends.verilog import (
     TranslationImportPass,
-    VerilatorImportConfigs,
     VerilatorImportPass,
 )
 
@@ -96,10 +95,8 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
   if test_verilog:
-    model.config_verilog_import = VerilatorImportConfigs(
-      vl_xinit = test_verilog,
-    )
-    model.sverilog_translate_import = True
+    model.set_pass_data( VerilatorImportPass.vl_xinit, test_verilog )
+    model.set_pass_data( TranslationImportPass.enable, True )
 
   model = TranslationImportPass()( model )
 
@@ -152,10 +149,8 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
   if test_verilog:
-    model.config_verilog_import = VerilatorImportConfigs(
-      vl_xinit = test_verilog,
-    )
-    model.sverilog_translate_import = True
+    model.set_pass_data( VerilatorImportPass.vl_xinit, test_verilog )
+    model.set_pass_data( TranslationImportPass.enable, True )
 
   model = TranslationImportPass()( model )
 

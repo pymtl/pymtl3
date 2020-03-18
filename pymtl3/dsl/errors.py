@@ -190,6 +190,12 @@ class InvalidAPICallError( Exception ):
     "was called on (an instance of {}), but this API call is on {}." \
     .format( api_name, top.__class__, "top."+repr(obj)[2:] ) )
 
+class UnsetPassDataError( Exception ):
+  """ Raised when the value of a given pass data name is not set. """
+  def __init__( self, name, obj ):
+    return super().__init__(
+        f"\nAttempting to retrieve unset pass data {name} from component {obj}!" )
+
 class LeftoverPlaceholderError( Exception ):
   """ Raise upon declaring an update block in a placeholder component. """
   def __init__( self, placeholders ):
