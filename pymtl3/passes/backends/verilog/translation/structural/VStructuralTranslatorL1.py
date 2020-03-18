@@ -69,11 +69,11 @@ class VStructuralTranslatorL1( StructuralTranslatorL1 ):
         return pickle_template.format( **locals() )
       else:
         # Avoid adding the same file into the Verilog result
-        dep_file = m.config_placeholder.pickled_dependency_file
-        wrapper_file = m.config_placeholder.pickled_wrapper_file
+        dep_file = ph_cfg.pickled_dependency_file
+        wrapper_file = ph_cfg.pickled_wrapper_file
         ret = ""
-        if dep_file and m.config_placeholder.pickled_orig_file not in s._included_pickled_files:
-          s._included_pickled_files.add(m.config_placeholder.pickled_orig_file)
+        if dep_file and ph_cfg.pickled_orig_file not in s._included_pickled_files:
+          s._included_pickled_files.add(ph_cfg.pickled_orig_file)
           with open(dep_file) as fd:
             ret += fd.read()
         if ret:
