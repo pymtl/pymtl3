@@ -16,6 +16,7 @@ from ....testcases import (
     CaseBits32ArrayConnectSubCompAttrComp,
     CaseBits32ConnectSubCompAttrComp,
     CaseConnectArraySubCompArrayStructIfcComp,
+    CaseHeteroCompArrayComp,
 )
 from ..VStructuralTranslatorL4 import VStructuralTranslatorL4
 
@@ -36,6 +37,7 @@ def run_test( case, m ):
     CaseBits32ConnectSubCompAttrComp,
     CaseConnectArraySubCompArrayStructIfcComp,
     CaseBits32ArrayConnectSubCompAttrComp,
+    CaseHeteroCompArrayComp,
   ]
 )
 def test_verilog_structural_L4( case ):

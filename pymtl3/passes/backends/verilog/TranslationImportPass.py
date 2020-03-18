@@ -58,7 +58,8 @@ class TranslationImportPass( BasePass ):
       if not hasattr( m, s.get_import_flag_name() ):
         m.config_verilog_import = VerilatorImportConfigs()
 
-      m.config_placeholder.pickled_source_file = \
+      m.config_placeholder.pickled_dependency_file = None
+      m.config_placeholder.pickled_wrapper_file = \
           getattr(m, s.get_translation_pass_namespace()).translated_filename
       m.config_placeholder.pickled_top_module = \
           getattr(m, s.get_translation_pass_namespace()).translated_top_module

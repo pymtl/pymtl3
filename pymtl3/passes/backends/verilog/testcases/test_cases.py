@@ -18,6 +18,7 @@ from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,
     CaseArrayBits32IfcInUpblkComp,
+    CaseBehavioralArraySubCompArrayStructIfcComp,
     CaseBits32ArrayConnectSubCompAttrComp,
     CaseBits32ArraySubCompAttrUpblkComp,
     CaseBits32BitSelUpblkComp,
@@ -51,6 +52,7 @@ from pymtl3.passes.testcases import (
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
     CaseForRangeLowerUpperStepPassThroughComp,
+    CaseHeteroCompArrayComp,
     CaseIfBasicComp,
     CaseIfBoolOpInForStmtComp,
     CaseIfDanglingElseInnerComp,
@@ -64,6 +66,7 @@ from pymtl3.passes.testcases import (
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
+    CasePythonClassAttr,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
@@ -510,6 +513,33 @@ CaseBits64PartSelUpblkComp = set_attributes( CaseBits64PartSelUpblkComp,
 
           always_comb begin : upblk
             out = in_[35:4];
+          end
+
+        endmodule
+    '''
+)
+
+CasePythonClassAttr = set_attributes( CasePythonClassAttr,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out1 = 42;
+          out2 = 32'd1;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out1,
+          output logic [31:0] out2,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out1 = 42;
+            out2 = 32'd1;
           end
 
         endmodule
@@ -1001,25 +1031,20 @@ CaseConstStructInstComp = set_attributes( CaseConstStructInstComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out = in_.foo;
+          out = 32'd0;
         end
     ''',
     'REF_SRC',
     '''\
-        typedef struct packed {
-          logic [31:0] foo;
-        } Bits32Foo;
-
         module DUT
         (
           input logic [0:0] clk,
           output logic [31:0] out,
           input logic [0:0] reset
         );
-          localparam Bits32Foo in_ = { 32'd0 };
 
           always_comb begin : upblk
-            out = in_.foo;
+            out = 32'd0;
           end
 
         endmodule
@@ -2116,4 +2141,167 @@ CasePlaceholderTranslationRegIncr = set_attributes( CasePlaceholderTranslationRe
     'REF_PLACEHOLDER_DEPENDENCY',
     '''\
     ''',
+)
+
+CaseHeteroCompArrayComp = set_attributes( CaseHeteroCompArrayComp,
+    'REF_COMP',
+    '''\
+        logic [0:0] comps__clk [0:1] ;
+        logic [31:0] comps__in_ [0:1] ;
+        logic [31:0] comps__out [0:1] ;
+        logic [0:0] comps__reset [0:1] ;
+
+        Bits32DummyFooComp comps__0
+        (
+          .clk( comps__clk[0] ),
+          .in_( comps__in_[0] ),
+          .out( comps__out[0] ),
+          .reset( comps__reset[0] )
+        );
+
+        Bits32DummyBarComp comps__1
+        (
+          .clk( comps__clk[1] ),
+          .in_( comps__in_[1] ),
+          .out( comps__out[1] ),
+          .reset( comps__reset[1] )
+        );
+    ''',
+    'REF_SRC',
+    '''\
+        module Bits32DummyFooComp
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          assign out = in_;
+        endmodule
+
+        module Bits32DummyBarComp
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          always_comb begin : upblk
+            out = in_ + 32'd42;
+          end
+        endmodule
+
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_1,
+          input logic [31:0] in_2,
+          output logic [31:0] out_1,
+          output logic [31:0] out_2,
+          input logic [0:0] reset
+        );
+          logic [0:0] comps__clk [0:1] ;
+          logic [31:0] comps__in_ [0:1] ;
+          logic [31:0] comps__out [0:1] ;
+          logic [0:0] comps__reset [0:1] ;
+
+          Bits32DummyFooComp comps__0
+          (
+            .clk( comps__clk[0] ),
+            .in_( comps__in_[0] ),
+            .out( comps__out[0] ),
+            .reset( comps__reset[0] )
+          );
+
+          Bits32DummyBarComp comps__1
+          (
+            .clk( comps__clk[1] ),
+            .in_( comps__in_[1] ),
+            .out( comps__out[1] ),
+            .reset( comps__reset[1] )
+          );
+
+          assign comps__clk[0] = clk;
+          assign comps__reset[0] = reset;
+          assign comps__clk[1] = clk;
+          assign comps__reset[1] = reset;
+          assign comps__in_[0] = in_1;
+          assign comps__in_[1] = in_2;
+          assign out_1 = comps__out[0];
+          assign out_2 = comps__out[1];
+
+        endmodule
+    '''
+)
+
+CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArraySubCompArrayStructIfcComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          for ( int i = 0; i < 2; i += 1 )
+            for ( int j = 0; j < 1; j += 1 )
+              b__ifc__foo[i][j][0].foo = in_;
+          out = b__out[1];
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [31:0] foo ;
+        } Bits32Foo;
+
+        module Bits32ArrayStructIfcComp
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out,
+          input logic [0:0] reset,
+          input Bits32Foo ifc__foo [0:0][0:0]
+        );
+
+          assign out = ifc__foo[0][0].foo;
+
+        endmodule
+
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          logic [0:0] b__clk [0:1] ;
+          logic [31:0] b__out [0:1] ;
+          logic [0:0] b__reset [0:1] ;
+          Bits32Foo b__ifc__foo [0:1][0:0][0:0] ;
+
+          Bits32ArrayStructIfcComp b__0
+          (
+            .clk( b__clk[0] ),
+            .out( b__out[0] ),
+            .reset( b__reset[0] ),
+            .ifc__foo( b__ifc__foo[0] )
+          );
+
+          Bits32ArrayStructIfcComp b__1
+          (
+            .clk( b__clk[1] ),
+            .out( b__out[1] ),
+            .reset( b__reset[1] ),
+            .ifc__foo( b__ifc__foo[1] )
+          );
+
+          always_comb begin : upblk
+            for ( int i = 0; i < 2; i += 1 )
+              for ( int j = 0; j < 1; j += 1 )
+                b__ifc__foo[i][j][0].foo = in_;
+            out = b__out[1];
+          end
+
+          assign b__clk[0] = clk;
+          assign b__reset[0] = reset;
+          assign b__clk[1] = clk;
+          assign b__reset[1] = reset;
+
+        endmodule
+    '''
 )

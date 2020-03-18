@@ -11,6 +11,7 @@ from pymtl3.passes.backends.generic.structural.StructuralTranslatorL4 import (
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
+from pymtl3.passes.rtlir import get_component_ifc_rtlir
 
 from ...util.utility import make_indent, pretty_concat
 from .VStructuralTranslatorL3 import VStructuralTranslatorL3
@@ -62,8 +63,19 @@ class VStructuralTranslatorL4(
           _port_array_rtype = None
           _port_rtype = _port_rtype
 
-        ret += s.rtlir_tr_subcomp_ifc_port_decl( m, c_id, c_rtype, c_array_type,
-                  f'{ifc_id}__{port_id}', port_rtype, port_array_type,
+        # Combine the array_type of two interfaces into one
+        combined_ifc_array_type = {
+            'def' : port_array_type['def'],
+            'unpacked_type' : ifc_array_type['unpacked_type'] + port_array_type['unpacked_type'],
+            'n_dim' : ifc_array_type['n_dim'] + port_array_type['n_dim'],
+        }
+
+        ret += s.rtlir_tr_subcomp_ifc_port_decl( m,
+                  # Component: nested interface does not change the component
+                  c_id, c_rtype, c_array_type,
+                  # Interface: nested interface appends its id and array_type
+                  f'{ifc_id}__{port_id}', port_rtype, combined_ifc_array_type,
+                  # Port: use the id, rtype, and array_type of the port
                   _port_id, _port_rtype, s.rtlir_tr_unpacked_array_type(_port_array_rtype))
       return ret
 
@@ -80,8 +92,6 @@ class VStructuralTranslatorL4(
 
   def rtlir_tr_subcomp_decl( s, m, c_id, c_rtype, c_array_type, port_conns, ifc_conns ):
 
-    _c_name = s.rtlir_tr_component_unique_name( c_rtype )
-
     def pretty_comment( string ):
       comments = [
           '  //-------------------------------------------------------------',
@@ -91,7 +101,7 @@ class VStructuralTranslatorL4(
       return '\n'.join(comments)
 
     def gen_subcomp_array_decl( c_id, port_conns, ifc_conns, n_dim, c_n_dim ):
-      nonlocal _c_name, m, s
+      nonlocal m, s
       tplt = dedent(
           """\
             {c_name} {c_id}
@@ -103,6 +113,9 @@ class VStructuralTranslatorL4(
         _n_dim = list(int(num_str) for num_str in c_n_dim.split('__') if num_str)
         attr = c_id + ''.join(f'[{dim}]' for dim in _n_dim)
         obj = eval(f'm.{attr}')
+        # Get the translated component name
+        obj_c_rtype = get_component_ifc_rtlir(obj)
+        _c_name = s.rtlir_tr_component_unique_name(obj_c_rtype)
 
         if isinstance(obj, Placeholder):
           c_name = obj.config_placeholder.pickled_top_module
@@ -146,9 +159,11 @@ class VStructuralTranslatorL4(
 
     # Generate wire declarations for all ports
     defs = []
+
     for dscp in port_conns + ifc_conns:
       defs.append(pretty_concat(dscp['data_type'], dscp['packed_type'],
         f"{c_id}__{dscp['id']}", f"{c_array_type['unpacked_type']}{dscp['unpacked_type']}", ';'))
+
     make_indent( defs, 1 )
     defs = ['\n'.join(defs)]
 
