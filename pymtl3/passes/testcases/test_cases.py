@@ -247,7 +247,7 @@ class Bits32DummyBarComp( Component ):
   def construct( s ):
     s.in_ = InPort( Bits32 )
     s.out = OutPort( Bits32 )
-    @s.update
+    @update
     def upblk():
       s.out = s.in_ + Bits32(42)
 
@@ -360,7 +360,7 @@ class CasePythonClassAttr:
         bit_attr = Bits32(1)
       s.out1 = OutPort( Bits32 )
       s.out2 = OutPort( Bits32 )
-      @s.update
+      @update
       def upblk():
         s.out1 = Enum.int_attr
         s.out2 = Enum.bit_attr
@@ -1999,7 +1999,7 @@ class CaseBehavioralArraySubCompArrayStructIfcComp:
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.b = [ Bits32ArrayStructIfcComp() for _ in range(2) ]
-      @s.update
+      @update
       def upblk():
         for i in range(2):
           for j in range(1):
