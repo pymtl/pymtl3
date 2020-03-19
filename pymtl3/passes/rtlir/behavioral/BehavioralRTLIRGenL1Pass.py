@@ -491,7 +491,7 @@ class ConstantExtractor( ast.NodeVisitor ):
     is_type = isinstance(ret, type) and (issubclass(ret, Bits) or is_bitstruct_class(ret))
     try:
       is_function = ret in s.pymtl_functions
-    except TypeError:
+    except:
       is_function = False
 
     if is_value or is_type or is_function:
@@ -520,7 +520,7 @@ class ConstantExtractor( ast.NodeVisitor ):
       if value is not None and idx is not None:
         try:
           ret = value[idx]
-        except (TypeError, IndexError):
+        except:
           ret = None
     s.cache[node] = ret
     return ret
