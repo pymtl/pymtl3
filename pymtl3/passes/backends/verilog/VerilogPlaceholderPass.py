@@ -8,6 +8,7 @@
 # Author : Peitian Pan
 # Date   : Jan 27, 2020
 
+import configparser
 import inspect
 import os
 import re
@@ -109,6 +110,13 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
       # By default, the separator of placeholders is single underscore
       cfg.separator = '_'
+
+      # Look for pymtl.ini starting from the directory that includes the def
+      # of class m.__class__
+      auto_prefix = s._get_auto_prefix( m )
+
+      # Apply auto_prefix to top_module
+      cfg.top_module = auto_prefix + cfg.top_module
 
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
@@ -312,6 +320,29 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       return False
 
   #-----------------------------------------------------------------------
+  # _get_auto_prefix
+  #-----------------------------------------------------------------------
+
+  def _get_auto_prefix( s, m ):
+    parent_dir = cwd = os.path.dirname(inspect.getfile(m.__class__))
+    while cwd != '/':
+      if os.path.exists(f"{cwd}{os.path.sep}pymtl.ini"):
+        break
+      cwd = os.path.dirname(cwd)
+
+    if cwd == '/': return ''
+
+    pymtl_config = configparser.ConfigParser()
+    pymtl_config.read(f"{cwd}{os.path.sep}pymtl.ini")
+
+    if 'PLACEHOLDER' in pymtl_config and \
+       'AutoPrefix' in pymtl_config['PLACEHOLDER'] and \
+       pymtl_config.getboolean( 'PLACEHOLDER', 'AutoPrefix' ):
+      return f"{os.path.basename(parent_dir)}_"
+    else:
+      return ''
+
+  #-----------------------------------------------------------------------
   # import_sources
   #-----------------------------------------------------------------------
   # The right way to do this is to use a recursive function like I have
@@ -361,13 +392,13 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
     # All verilog includes are relative to the root of the PyMTL project.
     # We identify the root of the PyMTL project by looking for the special
-    # .pymtl_sim_root file.
+    # pymtl.ini file.
 
     _path = os.path.dirname( first_verilog_file )
     special_file_found = False
     include_path = os.path.dirname( os.path.abspath( first_verilog_file ) )
     while include_path != "/":
-      if os.path.exists( include_path + os.path.sep + ".pymtl_sim_root" ):
+      if os.path.exists( include_path + os.path.sep + "pymtl.ini" ):
         special_file_found = True
         sys.path.insert(0,include_path)
         break
