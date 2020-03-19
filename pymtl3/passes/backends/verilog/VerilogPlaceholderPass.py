@@ -99,6 +99,13 @@ class VerilogPlaceholderPass( PlaceholderPass ):
       # wrapper name
       cfg.wrapper_guard_symbol = cfg.pickled_top_module.upper()
 
+      # Scan through src_file to check for clk and reset
+      if cfg.is_default('has_clk'):
+        cfg.has_clk = s._has_pin(cfg.src_file, 'input', 1, 'clk')
+
+      if cfg.is_default('has_reset'):
+        cfg.has_reset = s._has_pin(cfg.src_file, 'input', 1, 'reset')
+
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
         cfg.port_map, cfg.src_file, cfg.v_flist, cfg.v_include
@@ -276,6 +283,28 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     ]
 
     return '\n'.join( line for line in lines ), '\n'.join( line for line in template_lines )
+
+  #-----------------------------------------------------------------------
+  # _has_pin
+  #-----------------------------------------------------------------------
+
+  def _has_pin( s, src_file, direction, nbits, pin ):
+    trim = lambda s: ''.join(s.split())
+    targets = [
+        f'{direction}logic[{nbits-1}:0]{pin}',
+        f'{direction}[{nbits-1}:0]{pin}'
+    ]
+    if nbits == 1:
+      targets.append( f'{direction}logic{pin}' )
+      targets.append( f'{direction}{pin}' )
+    try:
+      with open(src_file) as fd:
+        for line in fd.readlines():
+          if any(map(lambda x: x in trim(line), targets)):
+            return True
+      return False
+    except OSError:
+      return False
 
   #-----------------------------------------------------------------------
   # import_sources

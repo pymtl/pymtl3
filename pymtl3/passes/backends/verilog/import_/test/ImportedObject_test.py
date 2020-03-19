@@ -264,6 +264,35 @@ def test_unpacked_port_array( do_test ):
   q._tv_out = tv_out
   do_test( q )
 
+def test_unpacked_port_array_infer_clk_reset( do_test ):
+  # Test the `params` option of placeholder configs
+  def tv_in( m, tv ):
+    m.in_[0] = Bits32(tv[0])
+    m.in_[1] = Bits32(tv[1])
+  def tv_out( m, tv ):
+    assert m.out[0] == Bits32(tv[2])
+    assert m.out[1] == Bits32(tv[3])
+  class VPassThrough( Component, Placeholder ):
+    def construct( s, nports, nbits ):
+      s.in_ = [ InPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.out = [ OutPort( mk_bits(nbits) ) for _ in range(nports) ]
+      s.set_metadata( VerilogPlaceholderPass.params, {
+          'num_ports' : nports,
+          'bitwidth'  : nbits,
+      } )
+
+  q = VPassThrough( 2, 32 )
+  test_vector = [
+    [ 1, 42, 1, 42 ],
+    [ 1, -1, 1, -1 ],
+    [ 0,  1, 0,  1 ],
+    [ -1, 1, -1, 1 ],
+  ]
+  q._test_vectors = test_vector
+  q._tv_in = tv_in
+  q._tv_out = tv_out
+  do_test( q )
+
 @pytest.mark.parametrize(
   "translate", [ True, False ]
 )
@@ -323,6 +352,35 @@ def test_reg_external_trace( do_test ):
           "in_" : "d", "out" : "q",
       } )
       s.set_metadata( VerilatorImportPass.vl_line_trace, True )
+      s.set_metadata( TranslationImportPass.enable, True )
+  a = VRegTrace()
+  a.elaborate()
+  a.apply( VerilogPlaceholderPass() )
+  a = TranslationImportPass()( a )
+  a.apply( SimulationPass() )
+
+  a.in_ = Bits32(1)
+  a.tick()
+  assert a.line_trace() == 'q =          0'
+  a.in_ = Bits32(2)
+  a.tick()
+  assert a.line_trace() == 'q =          1'
+  a.in_ = Bits32(-1)
+  a.tick()
+  assert a.line_trace() == 'q =          2'
+  a.tick()
+  # 0xFFFFFFFF unsigned
+  assert a.line_trace() == 'q = 4294967295'
+
+def test_reg_infer_external_trace( do_test ):
+  # Test Verilog line trace
+  class VRegTrace( Component, Placeholder ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.port_map, {
+          "in_" : "d", "out" : "q",
+      } )
       s.set_metadata( TranslationImportPass.enable, True )
   a = VRegTrace()
   a.elaborate()

@@ -200,9 +200,21 @@ class VerilatorImportConfigs( BasePassConfigs ):
 
     ph_cfg = m.get_metadata( ph_pass.placeholder_config )
     s.v_include = ph_cfg.v_include
-    # s.src_file = ph_cfg.src_file
+    s.src_file = ph_cfg.src_file
     s.port_map = ph_cfg.port_map
     s.params = ph_cfg.params
+
+    # Infer vl_line_trace by scanning through the source file
+    try:
+      trim = lambda s: ''.join(s.split())
+      if not s.vl_line_trace:
+        with open(s.src_file) as fd:
+          for line in fd.readlines():
+            if "`VC_TRACE_BEGIN" in trim(line):
+              s.vl_line_trace = True
+              break
+    except OSError:
+      pass
 
     if not s.vl_mk_dir:
       s.vl_mk_dir = f'obj_dir_{s.translated_top_module}'
