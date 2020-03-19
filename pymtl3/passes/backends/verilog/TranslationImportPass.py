@@ -6,7 +6,7 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
-from pymtl3 import MetadataKey
+from pymtl3 import Placeholder, MetadataKey
 from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
@@ -33,7 +33,8 @@ class TranslationImportPass( BasePass ):
     c = s.__class__
 
     # Found a subtree that is marked as to be translated and imported
-    if m.has_metadata( c.enable ) and m.get_metadata( c.enable ):
+    if ( m.has_metadata( c.enable ) and m.get_metadata( c.enable ) ) or \
+      isinstance( m, Placeholder ):
 
       # Make sure the translation pass is enabled
       m.set_metadata( c.get_translation_pass().enable, True )
@@ -50,7 +51,8 @@ class TranslationImportPass( BasePass ):
 
     # TODO: what we really want is to generate placeholders for components
     # to be translated and imported.
-    if m.has_metadata( c.enable ) and m.get_metadata( c.enable ):
+    if ( m.has_metadata( c.enable ) and m.get_metadata( c.enable ) ) or \
+      isinstance( m, Placeholder ):
 
       # Component m will look as if it has applied the Placeholder pass.
       # It will have the output pass data placeholder_config
@@ -64,8 +66,7 @@ class TranslationImportPass( BasePass ):
       else:
         placeholder_config = c.get_placeholder_config()( m )
 
-      placeholder_config.pickled_dependency_file = None
-      placeholder_config.pickled_wrapper_file = \
+      placeholder_config.pickled_source_file = \
           m.get_metadata( translation_pass.translated_filename )
       placeholder_config.pickled_top_module = \
           m.get_metadata( translation_pass.translated_top_module )
