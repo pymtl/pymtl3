@@ -249,7 +249,7 @@ class Bits32DummyBarComp( Component ):
     s.out = OutPort( Bits32 )
     @update
     def upblk():
-      s.out = s.in_ + Bits32(42)
+      s.out @= s.in_ + Bits32(42)
 
 #-------------------------------------------------------------------------
 # Test Components
@@ -362,8 +362,8 @@ class CasePythonClassAttr:
       s.out2 = OutPort( Bits32 )
       @update
       def upblk():
-        s.out1 = Enum.int_attr
-        s.out2 = Enum.bit_attr
+        s.out1 @= Enum.int_attr
+        s.out2 @= Enum.bit_attr
   TV_IN = _set()
   TV_OUT = \
   _check(
@@ -374,6 +374,33 @@ class CasePythonClassAttr:
   [
       [  42,   1,  ],
       [  42,   1,  ],
+  ]
+
+class CaseTypeBundle:
+  class DUT( Component ):
+    def construct( s ):
+      class TypeBundle:
+        BitsType = Bits32
+        BitStructType = Bits32Foo
+      s.out1 = OutPort( TypeBundle.BitsType )
+      s.out2 = OutPort( TypeBundle.BitStructType )
+      s.out3 = OutPort( TypeBundle.BitStructType )
+      @update
+      def upblk():
+        s.out1 @= TypeBundle.BitsType(42)
+        s.out2 @= TypeBundle.BitStructType(1)
+        s.out3 @= 1
+  TV_IN = _set()
+  TV_OUT = \
+  _check(
+      'out1', Bits32, 0,
+      'out2', Bits32Foo, 1,
+      'out3', Bits32Foo, 2,
+  )
+  TEST_VECTOR = \
+  [
+      [  42,   1,  1, ],
+      [  42,   1,  1, ],
   ]
 
 class CaseReducesInx3OutComp:
@@ -2023,8 +2050,8 @@ class CaseBehavioralArraySubCompArrayStructIfcComp:
       def upblk():
         for i in range(2):
           for j in range(1):
-            s.b[i].ifc[j].foo[0].foo = s.in_
-        s.out = s.b[1].out
+            s.b[i].ifc[j].foo[0].foo @= s.in_
+        s.out @= s.b[1].out
   TV_IN = \
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
@@ -2582,9 +2609,11 @@ class CaseKwArgsComp:
 class CaseNonNameCalledComp:
   class DUT( Component ):
     def construct( s ):
+      import copy
+      s.out = OutPort( Bits32 )
       @update
       def upblk():
-        x = copy.copy( x )
+        s.out @= copy.copy( 42 )
 
 class CaseFuncNotFoundComp:
   class DUT( Component ):

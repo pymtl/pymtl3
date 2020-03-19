@@ -11,8 +11,8 @@ from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..DynamicSchedulePass import DynamicSchedulePass
 from ..GenDAGPass import GenDAGPass
-from ..SimpleSchedulePass import SimpleSchedulePass
 from ..PrepareSimPass import PrepareSimPass
+from ..SimpleSchedulePass import SimpleSchedulePass
 
 
 def _test_model( cls ):

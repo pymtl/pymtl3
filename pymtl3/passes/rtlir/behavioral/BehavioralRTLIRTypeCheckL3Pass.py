@@ -12,8 +12,10 @@ from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
 from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIRTypeCheckL2Pass import BehavioralRTLIRTypeCheckVisitorL2, \
-    BehavioralRTLIRTypeEnforcerL2
+from .BehavioralRTLIRTypeCheckL2Pass import (
+    BehavioralRTLIRTypeCheckVisitorL2,
+    BehavioralRTLIRTypeEnforcerL2,
+)
 
 
 class BehavioralRTLIRTypeCheckL3Pass( BasePass ):

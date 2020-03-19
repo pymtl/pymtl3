@@ -24,6 +24,7 @@ from pymtl3.passes.rtlir.util.test_utility import do_test, expected_failure
 from pymtl3.passes.testcases import (
     CaseAssignMultiTargetComp,
     CaseAttributeSignalComp,
+    CaseBits64TruncInComp,
     CaseBitsArgsComp,
     CaseBitSelOutOfRangeComp,
     CaseClassdefComp,
@@ -80,6 +81,8 @@ from pymtl3.passes.testcases import (
     CaseStrComp,
     CaseStructBitsUnagreeableComp,
     CaseTmpComponentComp,
+    CaseTruncLargeNbitsComp,
+    CaseTruncVaribleNbitsComp,
     CaseTryExceptComp,
     CaseTryFinallyComp,
     CaseTupleComp,
@@ -93,9 +96,6 @@ from pymtl3.passes.testcases import (
     CaseZextSmallNbitsComp,
     CaseZextTwoArgsComp,
     CaseZextVaribleNbitsComp,
-    CaseTruncLargeNbitsComp,
-    CaseTruncVaribleNbitsComp,
-    CaseBits64TruncInComp,
 )
 
 # TODO: fix all tests with this mark, including in other files (grep!).
@@ -122,6 +122,9 @@ def local_do_test( m ):
       assert upblk == ref[ blk.__name__ ]
   except AttributeError:
     pass
+
+def test_L1_call_name( do_test ):
+  do_test( CaseNonNameCalledComp )
 
 #-------------------------------------------------------------------------
 # PyMTL type errors
@@ -310,12 +313,8 @@ def test_L1_call_keyword_arg( do_test ):
   with expected_failure( PyMTLSyntaxError, "keyword argument" ):
     do_test( CaseKwArgsComp )
 
-def test_L1_call_name( do_test ):
-  with expected_failure( PyMTLSyntaxError, "called but is not a name" ):
-    do_test( CaseNonNameCalledComp )
-
 def test_L1_call_not_found( do_test ):
-  with expected_failure( PyMTLSyntaxError, "cannot find object" ):
+  with expected_failure( PyMTLSyntaxError, "function is not found" ):
     do_test( CaseFuncNotFoundComp )
 
 def test_L1_call_Bits_args( do_test ):
@@ -335,7 +334,7 @@ def test_L1_call_sext_num_args( do_test ):
     do_test( CaseSextTwoArgsComp )
 
 def test_L1_call_unrecognized( do_test ):
-  with expected_failure( PyMTLSyntaxError, "foo function is not found!" ):
+  with expected_failure( PyMTLSyntaxError, "function is not found" ):
     do_test( CaseUnrecognizedFuncComp )
 
 #-------------------------------------------------------------------------

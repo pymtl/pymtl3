@@ -10,8 +10,8 @@ from pymtl3.dsl import *
 from pymtl3.dsl.errors import UpblkCyclicError
 
 from ..GenDAGPass import GenDAGPass
-from ..SimpleSchedulePass import SimpleSchedulePass
 from ..PrepareSimPass import PrepareSimPass
+from ..SimpleSchedulePass import SimpleSchedulePass
 
 
 def _test_model( cls ):

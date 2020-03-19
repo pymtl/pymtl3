@@ -11,7 +11,12 @@ from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel2 import update_ff
 from pymtl3.dsl.ComponentLevel3 import ComponentLevel3, connect
 from pymtl3.dsl.Connectable import InPort, OutPort, Wire
-from pymtl3.dsl.errors import MultiWriterError, NoWriterError, UpdateFFBlockWriteError, UpdateFFNonTopLevelSignalError
+from pymtl3.dsl.errors import (
+    MultiWriterError,
+    NoWriterError,
+    UpdateFFBlockWriteError,
+    UpdateFFNonTopLevelSignalError,
+)
 
 from .sim_utils import simple_sim_pass
 

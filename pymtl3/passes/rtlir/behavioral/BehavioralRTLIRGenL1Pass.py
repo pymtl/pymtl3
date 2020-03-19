@@ -18,8 +18,8 @@ from pymtl3.datatypes import (
     reduce_or,
     reduce_xor,
     sext,
-    zext,
     trunc,
+    zext,
 )
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLSyntaxError
@@ -86,7 +86,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if isinstance( obj, int ):
       return bir.Number( obj )
     elif isinstance( obj, Bits ):
-      return bir.SizeCast( obj.nbits, bir.Number( obj.value ) )
+      return bir.SizeCast( obj.nbits, bir.Number( obj.uint() ) )
     else:
       return None
     # else:
@@ -101,16 +101,12 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         'double-star argument is not supported!')
     if node.keywords:
       raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
-    if not isinstance( node.func, ast.Name ):
-      raise PyMTLSyntaxError( s.blk, node,
-        f'{node.func} is called but is not a name!')
 
     obj = s.const_extractor.enter( node.func )
     if obj is not None:
       return obj
     else:
-      raise PyMTLSyntaxError( s.blk, node,
-        node.func.id + ' function is not found!' )
+      raise PyMTLSyntaxError( s.blk, node, f'{node.func} function is not found!' )
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \

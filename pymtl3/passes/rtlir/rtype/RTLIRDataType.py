@@ -11,7 +11,7 @@ is a data type object or simply a data type. RTLIR instance type Signal
 can be parameterized by the generated type objects.
 """
 from functools import reduce
-from math import log2, ceil
+from math import ceil, log2
 
 import pymtl3.dsl as dsl
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst

@@ -7,14 +7,14 @@ Author : Shunning Jiang
 Date   : Jan 26, 2020
 """
 
-from collections import defaultdict
 
-from pymtl3.dsl.Connectable import Signal, Interface, Const, MethodPort
-from pymtl3.dsl.NamedObject import NamedObject
+from pymtl3.datatypes import Bits, b1
 from pymtl3.dsl.Component import Component
-from pymtl3.datatypes import b1, Bits
+from pymtl3.dsl.Connectable import Const, Interface, MethodPort, Signal
+from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
+
 from .SimpleTickPass import SimpleTickPass
 
 

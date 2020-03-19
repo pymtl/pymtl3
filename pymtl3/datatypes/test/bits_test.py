@@ -8,6 +8,7 @@ import pytest
 
 from ..bits_import import Bits
 
+
 def test_return_type():
 
   x = Bits( 8, 0b1100 )

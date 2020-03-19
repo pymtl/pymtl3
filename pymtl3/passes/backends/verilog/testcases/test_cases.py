@@ -32,6 +32,7 @@ from pymtl3.passes.testcases import (
     CaseBits32x2ConcatUnpackedSignalComp,
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
+    CaseBits64TruncInComp,
     CaseBits64ZextInComp,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
@@ -40,7 +41,6 @@ from pymtl3.passes.testcases import (
     CaseConnectBitsConstToOutComp,
     CaseConnectBitSelToOutComp,
     CaseConnectConstStructAttrToOutComp,
-    CaseBits64TruncInComp,
     CaseConnectConstToOutComp,
     CaseConnectInToWireComp,
     CaseConnectLiteralStructComp,
@@ -72,6 +72,7 @@ from pymtl3.passes.testcases import (
     CaseSequentialPassThroughComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
+    CaseTypeBundle,
     CaseVerilogReservedComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
@@ -549,7 +550,7 @@ CasePythonClassAttr = set_attributes( CasePythonClassAttr,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          out1 = 42;
+          out1 = 32'd42;
           out2 = 32'd1;
         end
     ''',
@@ -564,8 +565,42 @@ CasePythonClassAttr = set_attributes( CasePythonClassAttr,
         );
 
           always_comb begin : upblk
-            out1 = 42;
+            out1 = 32'd42;
             out2 = 32'd1;
+          end
+
+        endmodule
+    '''
+)
+
+CaseTypeBundle = set_attributes( CaseTypeBundle,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out1 = 32'd42;
+          out2 = 32'd1;
+          out3 = 32'd1;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        typedef struct packed {
+          logic [31:0] foo;
+        } Bits32Foo;
+
+        module DUT
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out1,
+          output Bits32Foo out2,
+          output Bits32Foo out3,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out1 = 32'd42;
+            out2 = 32'd1;
+            out3 = 32'd1;
           end
 
         endmodule
@@ -2264,10 +2299,10 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          for ( int i = 0; i < 2; i += 1 )
-            for ( int j = 0; j < 1; j += 1 )
-              b__ifc__foo[i][j][0].foo = in_;
-          out = b__out[1];
+          for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
+            for ( int j = 1'd0; j < 1'd1; j += 1'd1 )
+              b__ifc__foo[1'(i)][1'(j)][1'd0].foo = in_;
+          out = b__out[1'd1];
         end
     ''',
     'REF_SRC',
@@ -2317,10 +2352,10 @@ CaseBehavioralArraySubCompArrayStructIfcComp = set_attributes( CaseBehavioralArr
           );
 
           always_comb begin : upblk
-            for ( int i = 0; i < 2; i += 1 )
-              for ( int j = 0; j < 1; j += 1 )
-                b__ifc__foo[i][j][0].foo = in_;
-            out = b__out[1];
+            for ( int i = 1'd0; i < 2'd2; i += 1'd1 )
+              for ( int j = 1'd0; j < 1'd1; j += 1'd1 )
+                b__ifc__foo[1'(i)][1'(j)][1'd0].foo = in_;
+            out = b__out[1'd1];
           end
 
           assign b__clk[0] = clk;

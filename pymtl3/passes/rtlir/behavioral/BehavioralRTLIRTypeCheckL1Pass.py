@@ -461,11 +461,11 @@ class BehavioralRTLIRTypeEnforcerL1( bir.BehavioralRTLIRNodeVisitor ):
   def mutate_datatype( s, node, descp ):
     if not node._is_explicit:
       # assert isinstance(node.Type, rt.Const), f'internal error: {node} is not constant!'
-      target_nbits = s.get_context(node, descp).get_dtype().nbits
+      target_Type = s.get_context(node, descp).get_dtype()
       # All RTLIR datatypes are cached -- we don't want to invalidate the cache
       # and therefore a deepcopy is needed here
       node.Type = copy.deepcopy(node.Type)
-      node.Type.dtype.nbits = target_nbits
+      node.Type.dtype = target_Type
       # node._is_explicit = True
 
   def visit_FreeVar( s, node ):

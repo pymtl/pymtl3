@@ -7,7 +7,6 @@ Test cases for bitstructs.
 Author : Yanghui Ou
   Date : July 27, 2019
 """
-from copy import deepcopy
 
 import pytest
 

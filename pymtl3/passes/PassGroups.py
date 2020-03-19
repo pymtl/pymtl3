@@ -1,10 +1,8 @@
-
-from .tracing.TracingConfigs import TracingConfigs
 from .autotick.OpenLoopCLPass import OpenLoopCLPass
 from .BasePass import BasePass
-from .sim.PrepareSimPass import PrepareSimPass
 from .sim.DynamicSchedulePass import DynamicSchedulePass
 from .sim.GenDAGPass import GenDAGPass
+from .sim.PrepareSimPass import PrepareSimPass
 from .sim.SimpleSchedulePass import SimpleSchedulePass
 from .sim.SimpleTickPass import SimpleTickPass
 from .sim.WrapGreenletPass import WrapGreenletPass
@@ -12,6 +10,7 @@ from .tracing.CLLineTracePass import CLLineTracePass
 from .tracing.CollectSignalPass import CollectSignalPass
 from .tracing.LineTraceParamPass import LineTraceParamPass
 from .tracing.PrintWavePass import PrintWavePass
+from .tracing.TracingConfigs import TracingConfigs
 from .tracing.VcdGenerationPass import VcdGenerationPass
 
 

@@ -9,11 +9,13 @@ from collections import OrderedDict
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
-from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
+from pymtl3.passes.rtlir.rtype import RTLIRType as rt
 
-from .BehavioralRTLIRTypeCheckL3Pass import BehavioralRTLIRTypeCheckVisitorL3, \
-    BehavioralRTLIRTypeEnforcerL3
+from .BehavioralRTLIRTypeCheckL3Pass import (
+    BehavioralRTLIRTypeCheckVisitorL3,
+    BehavioralRTLIRTypeEnforcerL3,
+)
 
 
 class BehavioralRTLIRTypeCheckL4Pass( BasePass ):

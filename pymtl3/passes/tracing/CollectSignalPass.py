@@ -8,7 +8,6 @@ Author : Kaishuo Cheng, Shunning Jiang
 Date   : Nov 9, 2019
 """
 
-from collections import defaultdict
 
 import py
 

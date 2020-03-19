@@ -16,6 +16,7 @@ from ....testcases import (
     CaseNestedStructPackedArrayUpblkComp,
     CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
+    CaseTypeBundle,
 )
 from ..VBehavioralTranslatorL3 import BehavioralRTLIRToVVisitorL3
 
@@ -42,6 +43,7 @@ def run_test( case, m ):
       CaseStructPackedArrayUpblkComp,
       CaseNestedStructPackedArrayUpblkComp,
       CaseSizeCastPaddingStructPort,
+      CaseTypeBundle,
     ]
 )
 def test_verilog_behavioral_L3( case ):

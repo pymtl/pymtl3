@@ -11,6 +11,7 @@ from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
 from ....testcases import (
+    CaseBehavioralArraySubCompArrayStructIfcComp,
     CaseBits32ArraySubCompAttrUpblkComp,
     CaseBits32SubCompAttrUpblkComp,
 )
@@ -36,6 +37,7 @@ def run_test( case, m ):
     'case', [
       CaseBits32SubCompAttrUpblkComp,
       CaseBits32ArraySubCompAttrUpblkComp,
+      CaseBehavioralArraySubCompArrayStructIfcComp,
     ]
 )
 def test_yosys_behavioral_L5( case ):

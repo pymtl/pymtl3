@@ -7,7 +7,6 @@ Author : Shunning Jiang, Yanghui Ou, Peitian Pan
 Date   : Sep 8, 2019
 """
 
-import os
 import time
 from collections import defaultdict
 

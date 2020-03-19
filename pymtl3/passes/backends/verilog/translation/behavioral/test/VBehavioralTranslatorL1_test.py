@@ -21,12 +21,12 @@ from ....testcases import (
     CaseBits32x2ConcatUnpackedSignalComp,
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
+    CaseBits64TruncInComp,
     CaseBits64ZextInComp,
     CasePassThroughComp,
     CasePythonClassAttr,
     CaseSequentialPassThroughComp,
     CaseVerilogReservedComp,
-    CaseBits64TruncInComp,
 )
 from ..VBehavioralTranslatorL1 import BehavioralRTLIRToVVisitorL1
 
