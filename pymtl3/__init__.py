@@ -22,8 +22,8 @@ from .dsl.Connectable import (
     Wire,
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
-from .dsl.Placeholder import Placeholder
 from .dsl.MetadataKey import MetadataKey
+from .dsl.Placeholder import Placeholder
 from .passes import TracingConfigs
 from .passes.backends.verilog import TranslationImportPass, VerilatorImportPass
 from .passes.PassGroups import SimulationPass

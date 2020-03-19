@@ -9,7 +9,7 @@ from os.path import dirname
 
 import pytest
 
-from pymtl3 import SimulationPass
+from pymtl3 import Interface, SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import (
@@ -29,6 +29,8 @@ def local_do_test( _m ):
   m = TranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
   sim.run_test()
+  if hasattr( m, 'finalize' ):
+    m.finalize()
 
 def test_reg( do_test ):
   # General trans-import test
@@ -217,6 +219,55 @@ def test_normal_queue_params( do_test ):
       nbits = 32,
       nelems = num_entries,
       nbits_cnt = clog2(num_entries+1))
+  test_vector = [
+    #   enq                deq
+    #   en    msg   rdy    en    msg   rdy
+    [    1,    42,    1,    0,     0,    0  ],
+    [    0,    43,    0,    1,    42,    1  ],
+    [    1,    43,    1,    0,    42,    0  ],
+    [    0,    44,    0,    1,    43,    1  ],
+    [    1,    44,    1,    0,    43,    0  ],
+    [    0,    45,    0,    1,    44,    1  ],
+    [    1,    45,    1,    0,    44,    0  ],
+  ]
+  q._test_vectors = test_vector
+  q._tv_in = tv_in
+  q._tv_out = tv_out
+  do_test( q )
+
+def test_normal_queue_interface( do_test ):
+  # Test a Placeholder with params in `construct`
+  def tv_in( m, tv ):
+    m.enq.en = Bits1( tv[0] )
+    m.enq.msg = Bits32( tv[1] )
+    m.deq.en = Bits1( tv[3] )
+  def tv_out( m, tv ):
+    if tv[2] != '*':
+      assert m.enq.rdy == Bits1( tv[2] )
+    if tv[4] != '*':
+      assert m.deq.rdy == Bits1( tv[5] )
+    if tv[5] != '*':
+      assert m.deq.msg == Bits32( tv[4] )
+  class DequeueIfc( Interface ):
+    def construct( s, Type ):
+      s.en  = InPort( Bits1 )
+      s.rdy = OutPort( Bits1 )
+      s.msg = OutPort( Type )
+  class EnqueueIfc( Interface ):
+    def construct( s, Type ):
+      s.en  = InPort( Bits1 )
+      s.rdy = OutPort( Bits1 )
+      s.msg = InPort( Type )
+  class VQueue( Component, Placeholder ):
+    def construct( s, data_width, num_entries, count_width ):
+      s.count = OutPort( mk_bits( count_width )  )
+      s.deq   = DequeueIfc( mk_bits( data_width ) )
+      s.enq   = EnqueueIfc( mk_bits( data_width ) )
+  num_entries = 1
+  q = VQueue(
+      data_width = 32,
+      num_entries = num_entries,
+      count_width = clog2(num_entries+1))
   test_vector = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy

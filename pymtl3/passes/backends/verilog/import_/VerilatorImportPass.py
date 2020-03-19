@@ -17,7 +17,7 @@ from importlib import reload
 from itertools import cycle
 from textwrap import indent
 
-from pymtl3 import Placeholder, MetadataKey
+from pymtl3 import MetadataKey, Placeholder
 from pymtl3.datatypes import Bits, is_bitstruct_class, is_bitstruct_inst, mk_bits
 from pymtl3.dsl import Component
 from pymtl3.dsl.errors import UnsetMetadataError
@@ -183,7 +183,9 @@ class VerilatorImportPass( BasePass ):
 
     # Now we selectively unpack array of ports if they are referred to in
     # port_map
-    ports = c.get_gen_mapped_port()( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
+    ports = c.get_gen_mapped_port()( m, ph_cfg.port_map,
+                                     ph_cfg.has_clk, ph_cfg.has_reset,
+                                     ph_cfg.separator )
 
     cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
 

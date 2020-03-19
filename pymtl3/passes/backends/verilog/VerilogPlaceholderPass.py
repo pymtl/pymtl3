@@ -13,7 +13,7 @@ import os
 import re
 import sys
 
-from pymtl3 import Placeholder, MetadataKey
+from pymtl3 import MetadataKey, Placeholder
 from pymtl3.passes.backends.verilog.util.utility import (
     gen_mapped_ports,
     get_component_unique_name,
@@ -36,6 +36,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   src_file   = MetadataKey()
   v_flist    = MetadataKey()
   v_include  = MetadataKey()
+  separator  = MetadataKey()
 
   @staticmethod
   def get_placeholder_config():
@@ -105,6 +106,9 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
       if cfg.is_default('has_reset'):
         cfg.has_reset = s._has_pin(cfg.src_file, 'input', 1, 'reset')
+
+      # By default, the separator of placeholders is single underscore
+      cfg.separator = '_'
 
   def check_valid( s, m, cfg, irepr ):
     pmap, src, flist, include = \
@@ -208,7 +212,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     return s._import_sources( cfg, [cfg.src_file] )
 
   def _gen_verilog_wrapper( s, m, cfg, irepr ):
-    rtlir_ports = gen_mapped_ports( m, cfg.port_map, cfg.has_clk, cfg.has_reset )
+    # By default use single underscore as separator
+    rtlir_ports = gen_mapped_ports( m, cfg.port_map, cfg.has_clk, cfg.has_reset, '_' )
 
     all_port_names = list(map(lambda x: x[1], rtlir_ports))
 

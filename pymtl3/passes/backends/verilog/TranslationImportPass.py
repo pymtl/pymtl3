@@ -6,7 +6,7 @@
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
-from pymtl3 import Placeholder, MetadataKey
+from pymtl3 import MetadataKey, Placeholder
 from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs

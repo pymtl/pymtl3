@@ -20,9 +20,9 @@ from .errors import (
     NotElaboratedError,
     UnsetMetadataError,
 )
+from .MetadataKey import MetadataKey
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
-from .MetadataKey import MetadataKey
 
 
 class Component( ComponentLevel7 ):

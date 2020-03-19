@@ -40,6 +40,9 @@ class VerilogPlaceholderConfigs( PlaceholderConfigs ):
     # -I ( alias of -y and +incdir+ )
     # Expects a list of include paths; [] to disable this option
     "v_include" : [],
+
+    # The separator used for name mangling
+    "separator" : '__',
   }
 
   VerilogCheckers = {

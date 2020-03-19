@@ -3,7 +3,6 @@
 #=========================================================================
 """Provide SystemVerilog structural translator implementation."""
 
-from textwrap import dedent
 
 from pymtl3.datatypes import Bits
 from pymtl3.passes.backends.generic.structural.StructuralTranslatorL1 import (
