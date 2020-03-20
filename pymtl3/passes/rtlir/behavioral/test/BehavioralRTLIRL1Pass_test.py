@@ -252,7 +252,8 @@ def test_L1_upblk_arg( do_test ):
     do_test( CaseUpblkArgComp )
 
 def test_L1_multi_assign( do_test ):
-  with expected_failure( PyMTLSyntaxError, "multiple targets" ):
+  # Multiple assignment is now valid
+  with expected_failure( PyMTLSyntaxError, "not supported at L1!" ):
     do_test( CaseAssignMultiTargetComp )
 
 def test_L1_copy_arg( do_test ):
@@ -323,7 +324,7 @@ def test_L1_call_sext_num_args( do_test ):
     do_test( CaseSextTwoArgsComp )
 
 def test_L1_call_unrecognized( do_test ):
-  with expected_failure( PyMTLSyntaxError, "Unrecognized method" ):
+  with expected_failure( PyMTLSyntaxError, "foo function is not found!" ):
     do_test( CaseUnrecognizedFuncComp )
 
 #-------------------------------------------------------------------------

@@ -12,7 +12,7 @@ to make sure the orignal reference is not lost and is restored after
 finishing each test (no matter it fails or passes).
 """
 
-from pymtl3.passes.backends.sverilog.test.TranslationImport_stdlib_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_stdlib_test import (
     test_2entry_normal_Bits,
     test_3entry_normal_Bits,
     test_arbiter_rr_arb_4,
@@ -33,7 +33,7 @@ def local_do_test( _m ):
   try:
     _m.elaborate()
     # Mark component `_m` as to be translated and imported
-    _m.yosys_translate_import = True
+    _m.set_metadata( TranslationImportPass.enable, True )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
     sim.run_test()

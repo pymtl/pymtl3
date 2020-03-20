@@ -17,7 +17,7 @@ class Crossbar( Component ):
     s.out = [ OutPort ( dtype )     for _ in range( nports ) ]
     s.sel = [ InPort  ( mk_bits( sel_nbits ) ) for _ in range( nports ) ]
 
-    @s.update
+    @update
     def comb_logic():
 
       for i in range( nports ):

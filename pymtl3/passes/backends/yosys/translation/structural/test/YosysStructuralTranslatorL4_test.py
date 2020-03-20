@@ -7,8 +7,8 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.util.test_utility import check_eq
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
+from pymtl3.passes.backends.verilog.util.test_utility import check_eq
+from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 
 from ....testcases import (
     CaseBits32ArrayConnectSubCompAttrComp,
@@ -20,7 +20,7 @@ from ..YosysStructuralTranslatorL4 import YosysStructuralTranslatorL4
 
 def run_test( case, m ):
   m.elaborate()
-  YosysStructuralTranslatorL4.is_sverilog_reserved = lambda s, x: x in sverilog_reserved
+  YosysStructuralTranslatorL4.is_verilog_reserved = lambda s, x: x in verilog_reserved
   tr = YosysStructuralTranslatorL4( m )
   tr.clear( m )
   tr.translate_structural( m )

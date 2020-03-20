@@ -32,8 +32,8 @@ class ChecksumCL( Component ):
 
   def construct( s ):
 
-    s.recv = NonBlockingCalleeIfc( Bits128 )
-    s.send = NonBlockingCallerIfc( Bits32  )
+    s.recv = CalleeIfcCL( Type=Bits128 )
+    s.send = CallerIfcCL( Type=Bits32  )
 
     # ''' TUTORIAL TASK ''''''''''''''''''''''''''''''''''''''''''''''''''
     # Implement the checksum CL component
@@ -45,9 +45,10 @@ class ChecksumCL( Component ):
     #; the checksum using the checksum function from ChecksumFL, and
     #; send the result through the send interface.
 
-    s.in_q = PipeQueueCL( num_entries=2 )( enq = s.recv )
+    s.in_q = PipeQueueCL( num_entries=2 )
+    s.in_q.enq //= s.recv
 
-    @s.update
+    @update
     def up_checksum_cl():
       if s.in_q.deq.rdy() and s.send.rdy():
         bits = s.in_q.deq()

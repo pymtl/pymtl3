@@ -15,17 +15,18 @@ import operator
 from .bits_import import *
 from .bitstructs import is_bitstruct_class, is_bitstruct_inst
 
+try:
+  from mamba import concat
+except:
+  def concat( *args ):
+    end = sum( x.nbits for x in args )
+    concat_bits = Bits( end, 0 )
+    for x in args:
+      x_nbits = x.nbits
+      concat_bits[ end - x_nbits : end ] = x
+      end -= x_nbits
 
-def concat( *args ):
-  nbits = sum( [ x.nbits for x in args ] )
-  concat_bits = Bits( nbits, 0 )
-
-  begin = 0
-  for bits in reversed( args ):
-    concat_bits[ begin : begin+bits.nbits ] = bits
-    begin += bits.nbits
-
-  return concat_bits
+    return concat_bits
 
 def zext( value, new_width ):
   assert new_width > value.nbits

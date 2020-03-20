@@ -181,9 +181,9 @@ class NamedObject:
         top = sd.elaborate_top
         ud.elaborate_top = top
 
-        top._dsl.elaborate_stack.append( obj )
+        NamedObject._elaborate_stack.append( obj )
         obj._construct()
-        top._dsl.elaborate_stack.pop()
+        NamedObject._elaborate_stack.pop()
 
       # ONLY LIST IS SUPPORTED, SORRY.
       # I don't want to support any iterable object because later "Wire"
@@ -231,9 +231,9 @@ class NamedObject:
             top = sd.elaborate_top
             ud.elaborate_top = top
 
-            top._dsl.elaborate_stack.append( u )
+            NamedObject._elaborate_stack.append( u )
             u._construct()
-            top._dsl.elaborate_stack.pop()
+            NamedObject._elaborate_stack.pop()
 
           elif isinstance( u, list ):
             Q.extend( (v, indices+(i,)) for i, v in enumerate(u) )
@@ -356,23 +356,23 @@ class NamedObject:
     s._dsl.full_name     = "s"
     s._dsl.elaborate_top = s
 
-    s._dsl.elaborate_stack = [ s ]
-
-    # Secret source for letting the child know the field name of itself
+    # Secret sauce for letting the child know the field name of itself
     # -- override setattr for elaboration, and remove it afterwards
+    # -- and the global elaborate to enable free function as decorator
 
     NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
+    NamedObject._elaborate_stack = [ s ]
 
     try:
       s._construct()
     except Exception:
       # re-raise here after deleting __setattr__
       del NamedObject.__setattr__ # not harming the rest of execution
+      del NamedObject._elaborate_stack
       raise
 
     del NamedObject.__setattr__
-
-    del s._dsl.elaborate_stack
+    del NamedObject._elaborate_stack
 
   def _elaborate_collect_all_named_objects( s ):
     s._dsl.all_named_objects = s._collect_all_single()

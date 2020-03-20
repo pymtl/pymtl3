@@ -20,13 +20,13 @@ class TestSrcCL( Component ):
 
   def construct( s, Type, msgs, initial_delay=0, interval_delay=0 ):
 
-    s.send = NonBlockingCallerIfc( Type )
+    s.send = CallerIfcCL( Type=Type )
     s.msgs = deque( msgs )
 
     s.count  = initial_delay
     s.delay  = interval_delay
 
-    @s.update
+    @update
     def up_src_send():
       if s.count > 0:
         s.count -= 1

@@ -5,9 +5,9 @@
 # Date   : June 9, 2019
 """Provide the yosys-compatible SystemVerilog structural translator."""
 
-from pymtl3.passes.backends.sverilog.errors import SVerilogTranslationError
-from pymtl3.passes.backends.sverilog.translation.structural.SVStructuralTranslatorL2 import (
-    SVStructuralTranslatorL2,
+from pymtl3.passes.backends.verilog.errors import VerilogTranslationError
+from pymtl3.passes.backends.verilog.translation.structural.VStructuralTranslatorL2 import (
+    VStructuralTranslatorL2,
 )
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 
@@ -15,7 +15,7 @@ from .YosysStructuralTranslatorL1 import YosysStructuralTranslatorL1
 
 
 class YosysStructuralTranslatorL2(
-    YosysStructuralTranslatorL1, SVStructuralTranslatorL2 ):
+    YosysStructuralTranslatorL1, VStructuralTranslatorL2 ):
 
   #-----------------------------------------------------------------------
   # Connection helper method
@@ -188,12 +188,12 @@ class YosysStructuralTranslatorL2(
   # Signal operations
   #-----------------------------------------------------------------------
 
-  def rtlir_tr_packed_index( s, base_signal, index ):
+  def rtlir_tr_packed_index( s, base_signal, index, status ):
     s.deq[-1]['s_index'] += "[{}]"
     s.deq[-1]['index'].append( int(index) )
     return f'{base_signal}[{index}]'
 
-  def rtlir_tr_struct_attr( s, base_signal, attr ):
+  def rtlir_tr_struct_attr( s, base_signal, attr, status ):
     s.deq[-1]['s_attr'] += "__{}"
     s.deq[-1]['attr'].append( attr )
     return f'{base_signal}.{attr}'

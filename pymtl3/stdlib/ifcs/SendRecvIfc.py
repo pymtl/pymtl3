@@ -12,41 +12,51 @@ from copy import deepcopy
 import greenlet
 
 from pymtl3 import *
+from pymtl3.dsl.errors import InvalidConnectionError
 from pymtl3.stdlib.connects import connect_pairs
-
-from .ifcs_utils import enrdy_to_str
 
 #-------------------------------------------------------------------------
 # RecvIfcRTL
 #-------------------------------------------------------------------------
 
-class RecvIfcRTL( Interface ):
+class RecvIfcRTL( CalleeIfcRTL ):
 
   def construct( s, Type ):
-
-    s.msg =  InPort( Type )
-    s.en  =  InPort( int if Type is int else Bits1 )
-    s.rdy = OutPort( int if Type is int else Bits1 )
-
-    s.MsgType = Type
-
-  def line_trace( s ):
-    try:
-      trace_len = s.trace_len
-    except AttributeError:
-      s.trace_len = len( "{}".format( s.MsgType() ) )
-      trace_len = s.trace_len
-
-    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
-
-  def __str__( s ):
-    return s.line_trace()
+    super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
 
   def connect( s, other, parent ):
 
     # We are doing SendCL (other) -> [ RecvCL -> SendRTL ] -> RecvRTL (s)
     # SendCL is a caller interface
-    if isinstance( other, NonBlockingCallerIfc ):
+    if isinstance( other, CallerIfcCL ):
+      m = RecvCL2SendRTL( s.MsgType )
+
+      if hasattr( parent, "RecvCL2SendRTL_count" ):
+        count = parent.RecvCL2SendRTL_count
+        setattr( parent, "RecvCL2SendRTL_" + str( count ), m )
+      else:
+        parent.RecvCL2SendRTL_count = 0
+        parent.RecvCL2SendRTL_0 = m
+
+      connect_pairs(
+        other,  m.recv,
+        m.send.msg, s.msg,
+        m.send.en,  s.en,
+        m.send.rdy, s.rdy
+      )
+      parent.RecvCL2SendRTL_count += 1
+      return True
+
+    elif isinstance( other, CalleeIfcCL ):
+      if s._dsl.level <= other._dsl.level:
+        raise InvalidConnectionError(
+            "CL2RTL connection is not supported between RecvIfcRTL"
+            " and CalleeIfcCL.\n"
+            "          - level {}: {} (class {})\n"
+            "          - level {}: {} (class {})".format(
+                s._dsl.level, repr( s ), type( s ), other._dsl.level,
+                repr( other ), type( other ) ) )
+
       m = RecvCL2SendRTL( s.MsgType )
 
       if hasattr( parent, "RecvCL2SendRTL_count" ):
@@ -71,33 +81,16 @@ class RecvIfcRTL( Interface ):
 # SendIfcRTL
 #-------------------------------------------------------------------------
 
-class SendIfcRTL( Interface ):
+class SendIfcRTL( CallerIfcRTL ):
 
   def construct( s, Type ):
-
-    s.msg = OutPort( Type )
-    s.en  = OutPort( int if Type is int else Bits1 )
-    s.rdy =  InPort( int if Type is int else Bits1 )
-
-    s.MsgType = Type
-
-  def line_trace( s ):
-    try:
-      trace_len = s.trace_len
-    except AttributeError:
-      s.trace_len = len( "{}".format( s.MsgType() ) )
-      trace_len = s.trace_len
-
-    return enrdy_to_str( s.msg, s.en, s.rdy, trace_len )
-
-  def __str__( s ):
-    return s.line_trace()
+    super().construct( en=True, rdy=True, MsgType=Type, RetType=None )
 
   def connect( s, other, parent ):
 
     # We are doing SendRTL (s) -> [ RecvRTL -> SendCL ] -> RecvCL (other)
     # RecvCL is a callee interface
-    if isinstance( other, NonBlockingCalleeIfc ):
+    if isinstance( other, CalleeIfcCL ):
       m = RecvRTL2SendCL( s.MsgType )
 
       if hasattr( parent, "RecvRTL2SendCL_count" ):
@@ -119,27 +112,16 @@ class SendIfcRTL( Interface ):
     return False
 
 
-class SendIfcFL( Interface ):
-
-  def construct( s ):
-    s.method = CallerPort()
-
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-  def line_trace( s ):
-    return ''
-
-  def __str__( s ):
-    return s.line_trace()
+class SendIfcFL( CallerIfcFL ):
+  pass
 
   def connect( s, other, parent ):
 
     # We are doing SendFL (s) -> [ RecvFL -> SendCL ] -> RecvCL (s)
     # SendCL is a caller interface
     # FIXME direction
-    if isinstance( other, NonBlockingCallerIfc ) or \
-       isinstance( other, NonBlockingCalleeIfc ):
+    if isinstance( other, CallerIfcCL ) or \
+       isinstance( other, CalleeIfcCL ):
       m = RecvFL2SendCL()
 
       if hasattr( parent, "RecvFL2SendCL_count" ):
@@ -158,20 +140,8 @@ class SendIfcFL( Interface ):
 
     return False
 
-class RecvIfcFL( Interface ):
-
-  def construct( s, method ):
-    s.method = CalleePort( method=method )
-
-  def line_trace( s ):
-    return ''
-
-  def __call__( s, *args, **kwargs ):
-    return s.method( *args, **kwargs )
-
-  def __str__( s ):
-    return s.line_trace()
-
+class RecvIfcFL( CalleeIfcFL ):
+  pass
 
 """
 ========================================================================
@@ -197,18 +167,18 @@ class RecvCL2SendRTL( Component ):
 
     s.entry = None
 
-    @s.update
+    @update
     def up_clear():
       if s.send.en: # constraints reverse this
         s.entry = None
 
-    @s.update
+    @update
     def up_send_rtl():
       if s.entry is None:
-        s.send.en  = Bits1( 0 )
+        s.send.en  = b1( 0 )
         s.send.msg = MsgType()
       else:
-        s.send.en  = s.send.rdy
+        s.send.en  = b1( s.send.rdy )
         s.send.msg = s.entry
 
     s.add_constraints(
@@ -237,17 +207,17 @@ class RecvRTL2SendCL( Component ):
     # Interface
 
     s.recv = RecvIfcRTL( MsgType )
-    s.send = NonBlockingCallerIfc()
+    s.send = CallerIfcCL()
 
     s.sent_msg = None
     s.send_rdy = False
 
-    @s.update
+    @update
     def up_recv_rtl_rdy():
       s.send_rdy = s.send.rdy() and not s.reset
-      s.recv.rdy = Bits1( 1 ) if s.send.rdy() and not s.reset else Bits1( 0 )
+      s.recv.rdy = b1( 1 ) if s.send.rdy() and not s.reset else b1( 0 )
 
-    @s.update
+    @update
     def up_send_cl():
       s.sent_msg = None
       if s.recv.en:
@@ -279,8 +249,8 @@ class RecvFL2SendCL( Component ):
 
     # Interface
 
-    s.recv = RecvIfcFL( s.recv )
-    s.send = NonBlockingCallerIfc()
+    s.recv = RecvIfcFL( method=s.recv )
+    s.send = CallerIfcCL()
 
     s.add_constraints( M( s.recv ) == M( s.send ) )
 

@@ -6,6 +6,7 @@
 """Provide L1 structural RTLIR generation pass."""
 
 from pymtl3.passes.BasePass import BasePass, PassMetadata
+from pymtl3.passes.PlaceholderConfigs import PlaceholderConfigs
 from pymtl3.passes.rtlir.errors import RTLIRConversionError
 from pymtl3.passes.rtlir.rtype.RTLIRType import get_rtlir
 

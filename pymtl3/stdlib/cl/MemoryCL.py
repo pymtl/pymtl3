@@ -8,7 +8,7 @@ the one in pclib because we actually use the memory messages correctly
 in the interface.
 
 Author : Shunning Jiang
-Date   : Mar 12, 2018
+Date   : Feb 6, 2020
 """
 
 from pymtl3 import *
@@ -17,6 +17,7 @@ from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
 from pymtl3.stdlib.ifcs.mem_ifcs import MemMinionIfcCL
 
 from .DelayPipeCL import DelayPipeDeqCL, DelayPipeSendCL
+from .StallCL import StallCL
 
 # BRGTC2 custom MemMsg modified for RISC-V 32
 
@@ -55,7 +56,7 @@ class MemoryCL( Component ):
     return s.mem.write_mem( addr, data )
 
   # Actual stuff
-  def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], latency=1, mem_nbytes=2**20 ):
+  def construct( s, nports, mem_ifc_dtypes=[mk_mem_msg(8,32,32), mk_mem_msg(8,32,32)], stall_prob=0, latency=1, mem_nbytes=2**20 ):
 
     # Local constants
 
@@ -73,10 +74,17 @@ class MemoryCL( Component ):
     req_latency = min(1, latency)
     resp_latency = latency - req_latency
 
-    s.req_qs  = [ DelayPipeDeqCL( req_latency )( enq = s.ifc[i].req ) for i in range(nports) ]
-    s.resp_qs = [ DelayPipeSendCL( resp_latency )( send = s.ifc[i].resp ) for i in range(nports) ]
+    s.req_stalls = [ StallCL( stall_prob, i )     for i in range(nports) ]
+    s.req_qs  = [ DelayPipeDeqCL( req_latency )   for i in range(nports) ]
+    s.resp_qs = [ DelayPipeSendCL( resp_latency ) for i in range(nports) ]
 
-    @s.update
+    for i in range(nports):
+      s.req_stalls[i].recv //= s.ifc[i].req
+      s.resp_qs[i].send    //= s.ifc[i].resp
+
+      s.req_qs[i].enq      //= s.req_stalls[i].send
+
+    @update
     def up_mem():
 
       for i in range(s.nports):
@@ -87,11 +95,11 @@ class MemoryCL( Component ):
 
           req = s.req_qs[i].deq()
           len_ = int(req.len)
-          if not len_: len_ = req_classes[i].data_nbits >> 3
+          if len_ == 0: len_ = req_classes[i].data_nbits >> 3
 
           if   req.type_ == MemMsgType.READ:
             resp = resp_classes[i]( req.type_, req.opaque, 0, req.len,
-                                           s.mem.read( req.addr, len_ ) )
+                                    s.mem.read( req.addr, len_ ) )
 
           elif req.type_ == MemMsgType.WRITE:
             s.mem.write( req.addr, len_, req.data )
@@ -111,4 +119,4 @@ class MemoryCL( Component ):
   # TODO: better line trace.
 
   def line_trace( s ):
-    return "|".join( [ x[0].line_trace() + x[1].line_trace() for x in zip(s.req_qs, s.resp_qs) ] )
+    return "|".join( [ x[0].line_trace() + x[1].line_trace() + x[2].line_trace() for x in zip(s.req_stalls, s.req_qs, s.resp_qs) ] )

@@ -11,6 +11,7 @@ from pymtl3 import *
 from pymtl3.stdlib.ifcs import XcelMsgType, mk_xcel_msg
 from pymtl3.stdlib.rtl import RegisterFile
 from pymtl3.stdlib.rtl.queues import NormalQueueRTL
+from pymtl3.stdlib.test import run_sim
 
 from .xcel_ifcs import (
     XcelMasterIfcCL,
@@ -27,14 +28,17 @@ from .xcel_ifcs import (
 
 class SomeMasterNonBlockingFL( Component ):
 
+  # Actually we don't need ReqType and RespType for FL models. It's just
+  # for polymorphic instantiation in the test harness, since CL/RTL models
+  # have these two parameters.
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcFL( ReqType, RespType )
+    s.xcel = XcelMasterIfcFL()
 
     s.addr = 0
     s.nregs = nregs
     s.trace = ""
 
-    @s.update
+    @update
     def up_master_while():
       while s.addr < s.nregs:
         s.trace = "#            "
@@ -57,13 +61,13 @@ class SomeMasterNonBlockingFL( Component ):
 class SomeMasterBlockingFL( Component ):
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcFL( ReqType, RespType )
+    s.xcel = XcelMasterIfcFL()
 
     s.addr = 0
     s.nregs = nregs
     s.trace = ""
 
-    @s.update
+    @update
     def up_master_noloop():
       if s.addr < s.nregs:
         s.trace = "#            "
@@ -92,11 +96,11 @@ class SomeMinionFL( Component ):
     s.reg_file[ int(addr) ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMinionIfcFL( ReqType, RespType, s.read_method, s.write_method )
+    s.xcel = XcelMinionIfcFL( read=s.read_method, write=s.write_method )
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
   def line_trace( s ):
-    return ""
+    return s.xcel.line_trace()
 
 #-------------------------------------------------------------------------
 # CL master/minion
@@ -113,7 +117,7 @@ class SomeMasterCL( Component ):
     return True
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMasterIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.xcel = XcelMasterIfcCL( ReqType, RespType, resp=s.recv, resp_rdy=s.recv_rdy )
     s.addr = 0
     s.count = 0
     s.nregs = nregs
@@ -123,7 +127,7 @@ class SomeMasterCL( Component ):
     assert DataType is RespType.get_field_type( 'data' )
     AddrType = ReqType.get_field_type( 'addr' )
 
-    @s.update
+    @update
     def up_master_req():
       if s.xcel.req.rdy():
         if s.flag:
@@ -160,11 +164,11 @@ class SomeMinionCL( Component ):
     s.reg_file[ addr ] = data
 
   def construct( s, ReqType, RespType, nregs=16 ):
-    s.xcel = XcelMinionIfcCL( ReqType, RespType, s.recv, s.recv_rdy )
+    s.xcel = XcelMinionIfcCL( ReqType, RespType, req=s.recv, req_rdy=s.recv_rdy )
     s.entry = None
     s.reg_file = [ 0 for _ in range( nregs ) ]
 
-    @s.update
+    @update
     def up_process():
 
       if s.entry is not None and s.xcel.resp.rdy():
@@ -212,35 +216,35 @@ class SomeMasterRTL( Component ):
     s.count = Wire( Bits16   )
     s.flag  = Wire( Bits1    )
 
-    @s.update_ff
+    @update_ff
     def up_rtl_addr():
       if s.reset:
         s.addr <<= AddrType(0)
       elif s.xcel.req.en and not s.flag:
         s.addr <<= s.addr + AddrType(1)
 
-    @s.update_ff
+    @update_ff
     def up_rtl_flag():
       if s.reset:
         s.flag <<= Bits1(1)
       elif s.xcel.req.en:
         s.flag <<= ~s.flag
 
-    @s.update_ff
+    @update_ff
     def up_rtl_count():
       if s.reset:
         s.count <<= Bits16(0)
       elif s.xcel.resp.en and s.xcel.resp.msg.type_ == XcelMsgType.READ:
         s.count <<= s.count + Bits16(1)
 
-    @s.update
+    @update
     def up_req():
       s.xcel.req.en = s.xcel.req.rdy if ~s.reset else Bits1(0)
       s.xcel.req.msg.type_ = XcelMsgType.WRITE if s.flag else XcelMsgType.READ
       s.xcel.req.msg.addr = s.addr
       s.xcel.req.msg.data = DataType( 0xface0000 | int(s.addr) )
 
-    @s.update
+    @update
     def up_resp():
       s.xcel.resp.rdy = Bits1(1)
 
@@ -263,27 +267,28 @@ class SomeMinionRTL( Component ):
     DataType = ReqType.get_field_type( 'data' )
     assert DataType is RespType.get_field_type( 'data' )
 
-    s.nregs      = nregs
+    s.nregs = nregs
 
     # Components
 
     s.req_q = NormalQueueRTL( ReqType, num_entries=1 )
     s.wen   = Wire( Bits1 )
-    s.reg_file = RegisterFile( DataType, nregs )(
-      raddr = { 0: s.req_q.deq.msg.addr },
-      rdata = { 0: s.xcel.resp.msg.data },
-      wen   = { 0: s.wen                },
-      waddr = { 0: s.req_q.deq.msg.addr },
-      wdata = { 0: s.req_q.deq.msg.data },
-    )
+
+    s.reg_file = m = RegisterFile( DataType, nregs )
+    m.raddr[0] //= s.req_q.deq.ret.addr
+    m.rdata[0] //= s.xcel.resp.msg.data
+    m.wen[0]   //= s.wen
+    m.waddr[0] //= s.req_q.deq.ret.addr
+    m.wdata[0] //= s.req_q.deq.ret.data
+
     connect( s.xcel.req,            s.req_q.enq           )
-    connect( s.xcel.resp.msg.type_, s.req_q.deq.msg.type_ )
+    connect( s.xcel.resp.msg.type_, s.req_q.deq.ret.type_ )
 
-    @s.update
+    @update
     def up_wen():
-      s.wen = s.req_q.deq.rdy and s.req_q.deq.msg.type_ == XcelMsgType.WRITE
+      s.wen = s.req_q.deq.rdy and s.req_q.deq.ret.type_ == XcelMsgType.WRITE
 
-    @s.update
+    @update
     def up_resp():
       s.xcel.resp.en = s.req_q.deq.rdy and s.xcel.resp.rdy
       s.req_q.deq.en = s.req_q.deq.rdy and s.xcel.resp.rdy
@@ -313,21 +318,6 @@ class TestHarness( Component ):
   def done( s ):
     return s.master.done()
 
-  def run_sim( s, max_cycles=1000 ):
-    s.apply( SimulationPass() )
-    # Run simulation
-    print("")
-    ncycles = 0
-    s.sim_reset()
-    print("{:3}: {}".format( ncycles, s.line_trace() ))
-    while not s.done() and ncycles < max_cycles:
-      s.tick()
-      ncycles += 1
-      print("{:3}: {}".format( ncycles, s.line_trace() ))
-
-    # Check timeout
-    assert ncycles < max_cycles
-
 #-------------------------------------------------------------------------
 # FL-FL composition
 #-------------------------------------------------------------------------
@@ -339,7 +329,7 @@ def test_xcel_fl_fl_blocking():
     MinionType = SomeMinionFL,
     nregs      = 16,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 def test_xcel_fl_fl_nonblocking():
   th = TestHarness()
@@ -348,7 +338,7 @@ def test_xcel_fl_fl_nonblocking():
     MinionType = SomeMinionFL,
     nregs      = 16,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # FL-CL composition
@@ -361,7 +351,7 @@ def test_xcel_fl_cl_blocking():
     MinionType = SomeMinionCL,
     nregs      = 16,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 def test_xcel_fl_cl_nonblocking():
   th = TestHarness()
@@ -370,7 +360,7 @@ def test_xcel_fl_cl_nonblocking():
     MinionType = SomeMinionCL,
     nregs      = 16,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # FL-RTL composition
@@ -383,7 +373,7 @@ def test_xcel_fl_rtl_blocking():
     MinionType = SomeMinionRTL,
     nregs      = 16,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 def test_xcel_fl_rtl_nonblocking():
   th = TestHarness()
@@ -392,7 +382,7 @@ def test_xcel_fl_rtl_nonblocking():
     MinionType = SomeMinionRTL,
     nregs      = 16,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # CL-CL composition
@@ -405,7 +395,7 @@ def test_xcel_cl_cl():
     MinionType = SomeMinionCL,
     nregs      = 8,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # CL-RTL composition
@@ -418,7 +408,7 @@ def test_xcel_cl_rtl():
     MinionType = SomeMinionRTL,
     nregs      = 8,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # CL-FL composition
@@ -431,7 +421,7 @@ def test_xcel_cl_fl():
     MinionType = SomeMinionFL,
     nregs      = 8,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # RTL-RTL composition
@@ -444,7 +434,7 @@ def test_xcel_rtl_rtl():
     MinionType = SomeMinionRTL,
     nregs      = 8,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # RTL-CL composition
@@ -457,7 +447,7 @@ def test_xcel_rtl_cl():
     MinionType = SomeMinionCL,
     nregs      = 8,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )
 
 #-------------------------------------------------------------------------
 # RTL-FL composition
@@ -470,4 +460,4 @@ def test_xcel_rtl_fl():
     MinionType = SomeMinionFL,
     nregs      = 8,
   )
-  th.run_sim()
+  run_sim( th, max_cycles=1000 )

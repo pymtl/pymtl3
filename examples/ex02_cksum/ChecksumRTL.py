@@ -36,7 +36,7 @@ class StepUnit( Component ):
 
     # Logic
 
-    @s.update
+    @update
     def up_step():
       temp1 = b32(s.word_in) + s.sum1_in
       s.sum1_out = temp1 & b32(0xffff)
@@ -74,7 +74,7 @@ class ChecksumRTL( Component ):
     # Decompose input message into 8 words
 
     for i in range( 8 ):
-      s.words[i] //= s.in_q.deq.msg[i*16:(i+1)*16]
+      s.words[i] //= s.in_q.deq.ret[i*16:(i+1)*16]
 
     # Connect step units
 
@@ -90,12 +90,12 @@ class ChecksumRTL( Component ):
     s.sum1 //= s.steps[-1].sum1_out
     s.sum2 //= s.steps[-1].sum2_out
 
-    @s.update
+    @update
     def up_rtl_send():
       s.send.en  = s.in_q.deq.rdy & s.send.rdy
       s.in_q.deq.en = s.in_q.deq.rdy & s.send.rdy
 
-    @s.update
+    @update
     def up_rtl_sum():
       s.send.msg = ( s.sum2 << 16 ) | s.sum1
 

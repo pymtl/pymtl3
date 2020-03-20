@@ -27,15 +27,15 @@ def test_top_level_method_tracing():
 
       s.value = Wire(Bits32)
 
-      @s.update_ff
+      @update_ff
       def up_incr():
         s.count <<= s.count + 1
 
-      @s.update
+      @update
       def up_amp():
         s.amp = s.count * 100
 
-      @s.update
+      @update
       def up_compose_in():
         if s.element:
           s.value = s.amp + s.element
@@ -101,15 +101,15 @@ class TestModuleNonBlockingIfc(Component):
 
     s.value = Wire(Bits32)
 
-    @s.update_ff
+    @update_ff
     def up_incr():
       s.count <<= s.count + 1
 
-    @s.update
+    @update
     def up_amp():
       s.amp = s.count * 100
 
-    @s.update
+    @update
     def up_compose_in():
       if s.element:
         s.value = s.amp + s.element
@@ -209,9 +209,12 @@ def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
-      s.inner = Top_less_less_inner()( push = s.push, pull = s.pull )
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
+      s.inner = Top_less_less_inner()
+      s.inner.push //= s.push
+      s.inner.pull //= s.pull
+
     def line_trace( s ):
       return s.inner.line_trace()
 
@@ -220,9 +223,11 @@ def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top_less_less_inner(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
-      s.inner = Top_less_inner()( push = s.push, pull = s.pull )
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
+      s.inner = Top_less_inner()
+      s.inner.push //= s.push
+      s.inner.pull //= s.pull
     def line_trace( s ):
       return s.inner.line_trace()
 
@@ -231,9 +236,11 @@ def test_top_level_non_blocking_ifc_in_deep_net():
 
   class Top_less_inner(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
-      s.inner = TestModuleNonBlockingIfc()( push = s.push, pull = s.pull )
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
+      s.inner = TestModuleNonBlockingIfc()
+      s.inner.push //= s.push
+      s.inner.pull //= s.pull
 
     def line_trace( s ):
       return s.inner.line_trace()
@@ -252,7 +259,7 @@ class PassThroughPlus100( Component ):
     s.real_push( msg )
 
   def construct( s ):
-    s.real_push = NonBlockingCallerIfc()
+    s.real_push = CallerIfcCL()
 
     s.add_constraints(
       M(s.push) == M(s.real_push),
@@ -262,10 +269,13 @@ def test_pass_through_equal_m_constraint():
 
   class Top(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
-      s.pass1 = PassThroughPlus100()( push = s.push )
-      s.inner = TestModuleNonBlockingIfc()( push = s.pass1.real_push, pull = s.pull )
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
+      s.pass1 = PassThroughPlus100()
+      s.pass1.push //= s.push
+      s.inner = TestModuleNonBlockingIfc()
+      s.inner.push //= s.pass1.real_push
+      s.inner.pull //= s.pull
 
     def line_trace( s ):
       return s.inner.line_trace()
@@ -281,18 +291,16 @@ def test_deep_pass_through_equal_m_constraint():
 
   class Top(Component):
     def construct( s ):
-      s.push = NonBlockingCalleeIfc()
-      s.pull = NonBlockingCalleeIfc()
+      s.push = CalleeIfcCL()
+      s.pull = CalleeIfcCL()
       s.through = [ PassThroughPlus100() for _ in range(10) ]
       for i in range(10):
         connect( s.through[i].push, s.push if i == 0 else \
-                                      s.through[i-1].real_push,
-        )
+                                      s.through[i-1].real_push )
 
-      s.inner = TestModuleNonBlockingIfc()(
-        push = s.through[-1].real_push,
-        pull = s.pull,
-      )
+      s.inner = TestModuleNonBlockingIfc()
+      s.inner.push //= s.through[-1].real_push
+      s.inner.pull //= s.pull
 
     def line_trace( s ):
       return "push's line trace:" + str(s.push)

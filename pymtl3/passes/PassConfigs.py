@@ -33,47 +33,48 @@ class BasePassConfigs:
   will call that method to determine whether the value of option `<option_name>`
   is valid.
   """
-  def __new__( cls, *args, **kwargs ):
-    assert len(args) == 0, "We only accept keyword arguments here."
-    assert hasattr( cls, "Options"  )
-    assert hasattr( cls, "PassName" )
-    assert hasattr( cls, "Checkers" )
 
-    inst = super().__new__( cls )
+  def __init__( s, m ):
+    c = s.__class__
+    assert hasattr( c, "Options"  )
+    assert hasattr( c, "Pass"     )
+    assert hasattr( c, "Checkers" )
+    s.setup_checkers()
+    s.collect_all_pass_configs( m )
 
-    opts = deepcopy( cls.Options )
-    for opt, value in kwargs.items():
-      if opt not in cls.Options:
-        raise InvalidPassOption( opt, inst.PassName )
-      opts[opt] = value
-
-    cls.opts = opts.keys()
-
+  def setup_checkers( s ):
+    c = s.__class__
     # Preprocess checkers
-    cls._Checkers = {}
-    for opt, chk in cls.Checkers.items():
+    opts = c.Options.keys()
+    c._Checkers = {}
+    for opt, chk in c.Checkers.items():
       assert isinstance( chk, Checker ), f'Checker for "{opt}" can only be an instance of Checker, not {chk}.'
 
       if isinstance( opt, tuple ):
         for op in opt:
           assert op in opts, f"'{op}' is not a valid operation so we cannot set Checker for it."
-          cls._Checkers[ op ] = chk
+          c._Checkers[ op ] = chk
 
       elif isinstance( opt, str ):
         assert opt in opts, f"'{op}' is not a valid operation so we cannot set Checker for it."
-        cls._Checkers[ opt ] = chk
+        c._Checkers[ opt ] = chk
 
       else:
         raise InvalidPassOption(f"Option name can only be a tuple of strings (a,b,c) or string a, not '{op}'")
 
     trivial_checker = Checker( lambda x: True, "" )
-    for opt, value in opts.items():
-      if opt not in cls._Checkers:
-        cls._Checkers[opt] = trivial_checker
-      assert not hasattr( inst, opt ), f"There is already a field in config called '{opt}'. What happened?"
-      setattr( inst, opt, value )
+    for opt, value in c.Options.items():
+      if opt not in c._Checkers:
+        c._Checkers[opt] = trivial_checker
 
-    return inst
+  def collect_all_pass_configs( s, m ):
+    c = s.__class__
+    for opt, default in c.Options.items():
+      assert not hasattr( s, opt ), f"There is already a field in config called '{opt}'. What happened?"
+      if not m.has_metadata( getattr( c.Pass, opt ) ):
+        setattr( s, opt, deepcopy(default) )
+      else:
+        setattr( s, opt, deepcopy(m.get_metadata( getattr( c.Pass, opt ) )) )
 
   def check( s ):
     """Check whether the given options are valid by calling checkers."""
@@ -81,4 +82,8 @@ class BasePassConfigs:
       chk   = s._Checkers[opt]
       value = getattr( s, opt )
       if not chk.condition( value ):
-        raise InvalidPassOptionValue( opt, value, s.PassName, chk.error_msg )
+        raise InvalidPassOptionValue( opt, value, s.Pass.__name__, chk.error_msg )
+
+  def is_default( s, opt ):
+    """Return True if `opt` has the default value."""
+    return getattr( s, opt ) == s.Options[opt]

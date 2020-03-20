@@ -18,7 +18,7 @@ class Bits:
 
   def __ilshift__( self, x ):
     try:
-      assert x.nbits == self.nbits, "Bitwidth mismatch during <<="
+      assert x.nbits == self.nbits, f"Bitwidth mismatch during <<=, assigning Bits{self.nbits} <<= Bits{x.nbits}"
     except AttributeError:
       raise TypeError(f"Assign {type(x)} to Bits")
     self._next = x.value
@@ -27,8 +27,11 @@ class Bits:
   def _flip( self ):
     self.value = self._next
 
-  def __call__( self ):
-    return Bits( self.nbits )
+  def clone( self ):
+    return Bits( self.nbits, self.value )
+
+  def __deepcopy__( self, memo ):
+    return Bits( self.nbits, self.value )
 
   # Arithmetics
   def __getitem__( self, idx ):
@@ -130,7 +133,7 @@ class Bits:
   def __eq__( self, other ):
     try:
       other = int(other)
-    except ValueError:
+    except:
       return False
     return Bits( 1, int(self.value) == other )
 
@@ -140,7 +143,7 @@ class Bits:
   def __ne__( self, other ):
     try:
       other = int(other)
-    except ValueError:
+    except:
       return True
     return Bits( 1, int(self.value) != other )
 
@@ -176,7 +179,7 @@ class Bits:
   # Print
 
   def __repr__(self):
-    return "Bits{}({})".format( self.nbits, int(self.value) )
+    return "Bits{}(0x{})".format( self.nbits, "{:x}".format(int(self.value)).zfill(((self.nbits-1)>>2)+1) )
 
   def __str__(self):
     str = "{:x}".format(int(self.value)).zfill(((self.nbits-1)>>2)+1)

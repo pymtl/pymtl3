@@ -11,7 +11,7 @@ from copy import deepcopy
 
 import pytest
 
-from pymtl3.dsl import Component, InPort, OutPort
+from pymtl3.dsl import Component, InPort, OutPort, update
 from pymtl3.dsl.test.sim_utils import simple_sim_pass
 
 from ..bits_import import *
@@ -265,7 +265,7 @@ def test_component():
       s.out    = OutPort( NestedSimple )
       s.out_pt = OutPort( StaticPoint  )
 
-      @s.update
+      @update
       def up_bitstruct():
         # TODO:We have to use deepcopy here as a temporary workaround
         # to prevent s.in_ being mutated by the following operations.
@@ -410,6 +410,30 @@ def test_list_same_class():
   assert a.x == Bits4(0)
   assert a.y == [ Bits4(0), Bits4(0) ]
 
+  b = a.clone()
+  assert a == b
+
+  b.x = Bits4(3)
+
+  assert a.x != b.x
+  assert a.y[0] == b.y[0]
+  assert a.y[1] == b.y[1]
+  assert a != b
+
+  b.y[0] = Bits4(4)
+
+  assert a.x != b.x
+  assert a.y[0] != b.y[0]
+  assert a.y[1] == b.y[1]
+  assert a != b
+
+  b.y[1] = Bits4(4)
+
+  assert a.x != b.x
+  assert a.y[0] != b.y[0]
+  assert a.y[1] != b.y[1]
+  assert a != b
+
 def test_crazy_list_not_same_class():
   @bitstruct
   class A:
@@ -478,3 +502,7 @@ def test_mk_high_d_list_struct_inside():
   assert b.y == [ [ [ [ A(), A(), A()] ] for _ in range(6) ] for _ in range(10) ]
 
   print(b)
+  c = b.clone()
+  c.y[9][2][0][2].x = Bits4(3)
+  print(c.y[9][2][0][2])
+  assert b != c

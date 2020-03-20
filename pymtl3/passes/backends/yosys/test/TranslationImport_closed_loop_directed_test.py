@@ -5,22 +5,22 @@
 # Date   : Jun 5, 2019
 """Closed-loop test with SystemVerilog translation and import."""
 
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_directed_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     test_bypass_queue as _bypass_queue,
 )
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_directed_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     test_bypass_queue_stall as _bypass_queue_stall,
 )
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_directed_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     test_normal_queue as _normal_queue,
 )
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_directed_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     test_normal_queue_stall as _normal_queue_stall,
 )
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_directed_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     test_pipe_queue as _pipe_queue,
 )
-from pymtl3.passes.backends.sverilog.test.TranslationImport_closed_loop_directed_test import (
+from pymtl3.passes.backends.verilog.test.TranslationImport_closed_loop_directed_test import (
     test_pipe_queue_stall as _pipe_queue_stall,
 )
 from pymtl3.passes.PassGroups import SimulationPass
@@ -34,7 +34,7 @@ from ..TranslationImportPass import TranslationImportPass
 def run_sim( _th ):
   try:
     _th.elaborate()
-    _th.q.yosys_translate_import = True
+    _th.q.set_metadata( TranslationImportPass.enable, True )
     th = TranslationImportPass()( _th )
     th.apply( SimulationPass() )
 

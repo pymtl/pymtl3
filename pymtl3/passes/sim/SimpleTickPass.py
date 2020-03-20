@@ -53,6 +53,13 @@ class SimpleTickPass( BasePass ):
     # posedge flip
     final_schedule.extend( top._sched.schedule_posedge_flip )
 
+    # advance cycle after posedge
+    def generate_advance_sim_cycle( top ):
+      def advance_sim_cycle():
+        top.simulated_cycles += 1
+      return advance_sim_cycle
+    final_schedule.append( generate_advance_sim_cycle(top) )
+
     # clear cl method flag
     if hasattr( top, "_tracing" ):
       if hasattr( top._tracing, "clear_cl_trace" ):
@@ -63,6 +70,9 @@ class SimpleTickPass( BasePass ):
 
     # Generate tick
     top.tick = SimpleTickPass.gen_tick_function( final_schedule )
+    # reset sim_cycles
+    top.simulated_cycles = 0
+
     # FIXME update_once?
     # check if the design has method_port
     method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )

@@ -115,15 +115,13 @@ class TestHarness(Component):
     s.sink = TestSinkCL( Bits32, [], sink_delay, sink_delay )
     s.mem  = MemoryCL  ( 2, latency = mem_latency )
 
-    s.dut  = ProcXcel  ( ProcClass, XcelClass )(
-      mngr2proc = s.src.send,
-      proc2mngr = s.sink.recv,
-      imem      = s.mem.ifc[0],
-      dmem      = s.mem.ifc[1],
+    s.dut = m = ProcXcel( ProcClass, XcelClass )
+    m.mngr2proc //= s.src.send
+    m.proc2mngr //= s.sink.recv
+    m.imem      //= s.mem.ifc[0]
+    m.dmem      //= s.mem.ifc[1]
 
-      commit_inst = s.commit_inst,
-    )
-
+    m.commit_inst //= s.commit_inst
 
   #-----------------------------------------------------------------------
   # load
@@ -219,7 +217,7 @@ def main():
   if opts.translate:
     from pymtl3.passes.backends.yosys import TranslationImportPass
     model.elaborate()
-    model.dut.yosys_translate_import = True
+    model.dut.set_metadata( TranslationImportPass.enable, True )
     model = TranslationImportPass()( model )
 
   model.apply( SimulationPass() )

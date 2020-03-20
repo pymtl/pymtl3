@@ -14,7 +14,13 @@ from pymtl3.datatypes import Bits1
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
-from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
+from .errors import (
+    InvalidAPICallError,
+    InvalidConnectionError,
+    NotElaboratedError,
+    UnsetMetadataError,
+)
+from .MetadataKey import MetadataKey
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
@@ -53,9 +59,6 @@ class Component( ComponentLevel7 ):
       if parent is not None:
         parent._connect_signal_signal( s.clk, parent.clk )
         parent._connect_signal_signal( s.reset, parent.reset )
-
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
 
       s._dsl.constructed = True
 
@@ -105,19 +108,19 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-    top._dsl.elaborate_stack = [ parent ]
+    NamedObject._elaborate_stack = [ parent ]
 
     # Check if we are adding obj to a list of to a component
     if not indices:
-      # If we are adding field s.x, we simply reuse the setattr hook
-      assert not hasattr( s, name )
+      # If we are adding field parent.x, we simply reuse the setattr hook
+      assert not hasattr( parent, name ), f"Invalid add_component call: {parent} already has field {name}!"
 
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       setattr( parent, name, obj )
       del NamedObject.__setattr__
 
     else:
-      assert hasattr( s, name )
+      assert hasattr( parent, name ), f"Invalid add_component call: Field '{name}' of {parent} should exist and be a list, but doesn't exist!"
 
       # We use the indices to get the list parent and set the element
 
@@ -126,6 +129,8 @@ class Component( ComponentLevel7 ):
       while i < len(indices) - 1:
         list_parent = list_parent[ indices[i] ]
         i += 1
+
+      assert list_parent[ indices[i] ] is None, f"Invalid add_component call: {parent} already has field '{name}!'"
       list_parent[ indices[i] ] = obj
 
       # NOTE THAT we cannot use setattr hook for the top level metadata
@@ -161,13 +166,13 @@ class Component( ComponentLevel7 ):
       obj._dsl._my_indices  = indices
 
       obj._dsl.elaborate_top = top
-      top._dsl.elaborate_stack.append( obj )
+      NamedObject._elaborate_stack.append( obj )
 
       NamedObject.__setattr__ = NamedObject.__setattr_for_elaborate__
       obj._construct()
       del NamedObject.__setattr__
 
-      top._dsl.elaborate_stack.pop()
+      NamedObject._elaborate_stack.pop()
 
     added_components = obj._collect_all_single( lambda x: isinstance( x, Component ) )
 
@@ -227,7 +232,7 @@ class Component( ComponentLevel7 ):
     for func, obj_name in provided_func_calls:
       parent._dsl.func_calls[func].add( eval(obj_name) )
 
-    del top._dsl.elaborate_stack
+    del NamedObject._elaborate_stack
 
   def _delete_component( top, obj ):
 
@@ -411,6 +416,41 @@ class Component( ComponentLevel7 ):
     # import gc
     # gc.collect() # this takes 0.1 seconds
 
+  # Override, add pypy hooks
+  def elaborate( s ):
+    try:
+      import pypyjit
+      pypyjit.set_param("off")
+    except:
+      pass
+
+    super().elaborate()
+
+    # try:
+      # import pypyjit
+      # pypyjit.set_param("default")
+    # except:
+      # pass
+
+  #-----------------------------------------------------------------------
+  # Public APIs (can be called either before or after elaboration)
+  #-----------------------------------------------------------------------
+
+  """ Metadata APIs """
+
+  def set_metadata( s, key, value ):
+    s._metadata[ key ] = value
+
+  def has_metadata( s, key ):
+    assert isinstance( key, MetadataKey ), \
+        f'the given object {key} is not a MetadataKey!'
+    return key in s._metadata
+
+  def get_metadata( s, key ):
+    if not s.has_metadata( key ):
+      raise UnsetMetadataError( key, s )
+    return s._metadata[ key ]
+
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
@@ -428,21 +468,6 @@ class Component( ComponentLevel7 ):
                                             f"'{pass_instance.__name__}()' instead of '{pass_instance.__name__}'"
     assert callable( pass_instance ), f"Should override __call__ of {pass_instance.__name__} for a valid pass"
     pass_instance( s )
-
-    try:
-      pypyjit.set_param("default")
-      pypyjit.set_param("trace_limit=100000")
-    except:
-      pass
-
-  # Simulation related APIs
-  def sim_reset( s ):
-    s._check_called_at_elaborate_top( "sim_reset" )
-
-    s.reset = Bits1( 1 )
-    s.tick() # Tick twice to propagate the reset signal
-    s.tick()
-    s.reset = Bits1( 0 )
 
   def check( s ):
     s._check_valid_dsl_code()

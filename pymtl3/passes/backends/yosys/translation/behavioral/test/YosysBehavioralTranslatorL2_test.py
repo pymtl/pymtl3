@@ -7,7 +7,7 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
+from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
 from ....testcases import (
@@ -22,10 +22,11 @@ from ....testcases import (
     CaseIfExpUnaryOpInForStmtComp,
     CaseIfTmpVarInForStmtComp,
     CaseLambdaConnectComp,
+    CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseReducesInx3OutComp,
 )
-from ..YosysBehavioralTranslatorL2 import YosysBehavioralRTLIRToSVVisitorL2
+from ..YosysBehavioralTranslatorL2 import YosysBehavioralRTLIRToVVisitorL2
 
 
 def run_test( case, m ):
@@ -33,7 +34,7 @@ def run_test( case, m ):
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
 
-  visitor = YosysBehavioralRTLIRToSVVisitorL2(lambda x: x in sverilog_reserved)
+  visitor = YosysBehavioralRTLIRToVVisitorL2(lambda x: x in verilog_reserved)
   upblks = m._pass_behavioral_rtlir_gen.rtlir_upblks
   m_all_upblks = m.get_update_blocks()
   assert len(m_all_upblks) == 1
@@ -57,6 +58,7 @@ def run_test( case, m ):
       CaseIfTmpVarInForStmtComp,
       CaseFixedSizeSliceComp,
       CaseLambdaConnectComp,
+      CaseLambdaConnectWithListComp,
     ]
 )
 def test_yosys_behavioral_L2( case ):

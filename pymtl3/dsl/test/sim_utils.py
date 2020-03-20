@@ -12,6 +12,7 @@ from collections import defaultdict
 
 import py.code
 
+from pymtl3.datatypes import Bits1
 from pymtl3.datatypes.helpers import get_bitstruct_inst_all_classes
 from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
 from pymtl3.dsl.ComponentLevel2 import ComponentLevel2
@@ -21,10 +22,11 @@ from pymtl3.dsl.ComponentLevel5 import ComponentLevel5
 from pymtl3.dsl.ComponentLevel6 import ComponentLevel6
 from pymtl3.dsl.ComponentLevel7 import ComponentLevel7
 from pymtl3.dsl.Connectable import (
+    BlockingIfc,
     Const,
     Interface,
     MethodPort,
-    NonBlockingInterface,
+    NonBlockingIfc,
     Signal,
 )
 from pymtl3.dsl.errors import (
@@ -254,7 +256,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       for call in calls:
         if isinstance( call, MethodPort ):
           method_blks[ call.method ].add( blk )
-        elif isinstance( call, NonBlockingInterface ):
+        elif isinstance( call, (NonBlockingIfc, BlockingIfc) ):
           method_blks[ call.method.method ].add( blk )
         else:
           method_blks[ call ].add( blk )
@@ -276,7 +278,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       # We allow the user to call the interface directly in a non-blocking
       # interface, so if they do call it, we use the actual method within
       # the method field
-      elif isinstance( x, NonBlockingInterface ):
+      elif isinstance( x, (NonBlockingIfc, BlockingIfc) ):
         xx = x.method.method
 
       else:
@@ -285,7 +287,7 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
       if   isinstance( y, MethodPort ):
         yy = y.method
 
-      elif isinstance( y, NonBlockingInterface ):
+      elif isinstance( y, (NonBlockingIfc, BlockingIfc) ):
         yy = y.method.method
 
       else:
@@ -496,3 +498,13 @@ def simple_sim_pass( s, seed=0xdeadbeef ):
             cleanup_signals( obj )
 
   cleanup_signals( s )
+
+  def create_reset( top ):
+    def reset():
+      top.reset = Bits1(1)
+      top.tick()
+      top.tick()
+      top.reset = Bits1(0)
+    return reset
+
+  s.sim_reset = create_reset( s )

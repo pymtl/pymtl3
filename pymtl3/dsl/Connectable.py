@@ -10,7 +10,7 @@ Date   : Apr 16, 2018
 import types
 from collections import deque
 
-from pymtl3.datatypes import Bits, Bits1, mk_bits
+from pymtl3.datatypes import Bits, Bits1, is_bitstruct_class, mk_bits
 
 from .errors import InvalidConnectionError
 from .NamedObject import DSLMetadata, NamedObject
@@ -36,6 +36,12 @@ class Connectable:
       except AttributeError:
         raise NotElaboratedError()
 
+  def get_type( s ):
+    try:
+      return s._dsl.Type
+    except AttriibuteError:
+      raise NotElaboratedError()
+
   def __ifloordiv__( s, other ):
     # Currently this basically implements connect( s, other ), but to
     # avoid circular import, we replicate the implementation of connect.
@@ -57,7 +63,6 @@ def _connect_check( o1, o2, internal ):
 
   o1_connectable = False
   o2_connectable = False
-  top = None
 
   # Get access to the top level component by identifying a connectable
 
@@ -75,14 +80,12 @@ def _connect_check( o1, o2, internal ):
   if not o1_connectable and not o2_connectable:
     if internal:  return None, False, False
 
-    raise InvalidConnectionError("class {} and class {} are both not connectable.\n"
-                                  "  (when connecting {} to {})" \
-        .format( type(o1), type(o2), repr(o1), repr(o2)) )
+    raise InvalidConnectionError(f"class {type(o1)} and class {type(o2)} are both not connectable.\n"
+                                 f"  (when connecting {o1!r} to {o2!r})")
 
   # Get the component from elaborate_stack
-
   try:
-    host = top._dsl.elaborate_stack[-1]
+    host = NamedObject._elaborate_stack[-1]
   except AttributeError:
     raise InvalidConnectionError("Cannot call connect after elaboration.\n"
                                  "- Please use top.add_connection(...) API.")
@@ -139,7 +142,13 @@ class Const( Connectable ):
 class Signal( NamedObject, Connectable ):
 
   def __init__( s, Type=Bits1 ):
-    assert isinstance( Type, type ), "Use actual type instead of instance!"
+    if isinstance( Type, int ):
+      Type = mk_bits(Type)
+    else:
+      assert isinstance( Type, type ) and ( issubclass( Type, Bits ) or is_bitstruct_class(Type) ), \
+              f"RTL signal can only be of Bits type or bitstruct type, not {Type}.\n" \
+              f"Note: an integer is also accepted: Wire(32) is equivalent to Wire(Bits32))"
+
     s._dsl.Type = Type
     s._dsl.type_instance = None
 
@@ -413,7 +422,7 @@ class MethodPort( NamedObject, Connectable ):
     return s._dsl.in_non_blocking_ifc
 
 class CallerPort( MethodPort ):
-  def construct( self, Type=None ):
+  def construct( self, *, Type=None ): # keyword only!
     self.Type = Type
     self.method = None
     self._dsl.in_non_blocking_ifc = False
@@ -425,7 +434,7 @@ class CallerPort( MethodPort ):
     return True
 
 class CalleePort( MethodPort ):
-  def construct( self, Type=None, method=None ):
+  def construct( self, *, Type=None, method=None ): # keyword only!
     self.Type = Type
     self.method = method
     self._dsl.in_non_blocking_ifc = False
@@ -436,9 +445,42 @@ class CalleePort( MethodPort ):
   def is_caller_port( s ):
     return False
 
-class NonBlockingInterface( Interface ):
+class CallIfcRTL( Interface ):
+
   def construct( s, *args, **kwargs ):
-    raise NotImplementedError("You can only instantiate NonBlockingCaller/NonBlockingCalleeIfc.")
+    raise NotImplementedError("You can only instantiate CallerIfcRTL/CalleeIfcRTL.")
+
+  def __str__( s ):
+    try:
+      trace_len = s.trace_len
+      trace_fmt = s.trace_fmt
+    except AttributeError:
+      trace_len = 0
+      trace_fmt = ''
+
+      if s.MsgType is not None:
+        trace_len += len( f'{s.MsgType()}' ) + 2
+        trace_fmt += f"({{s.msg}})"
+
+      if s.RetType is not None:
+        trace_len += 1 + len( f'{s.RetType()}' )
+        trace_fmt += f"={{s.ret}}"
+
+      if trace_len == 0:
+        trace_len = 1
+        trace_fmt = ' '
+
+      s.trace_len = trace_len
+      s.trace_fmt = trace_fmt
+
+    if       s.en and not s.rdy:  return "X".ljust( trace_len ) # Not allowed
+    elif not s.en and     s.rdy:  return " ".ljust( trace_len ) # Idle
+    elif not s.en and not s.rdy:  return "#".ljust( trace_len ) # Stall
+    return trace_fmt.format( **vars() ).ljust( trace_len )
+
+class NonBlockingIfc( Interface ):
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate CallerIfcCL/CalleeIfcCL.")
 
   def __call__( s, *args, **kwargs ):
     return s.method( *args, **kwargs )
@@ -449,11 +491,66 @@ class NonBlockingInterface( Interface ):
   def _str_hook( s ):
     return f"{s._dsl.my_name}"
 
-class NonBlockingCalleeIfc( NonBlockingInterface ):
-  def construct( s, Type=None, method=None, rdy=None ):
+class BlockingIfc( Interface ):
+  def construct( s, *args, **kwargs ):
+    raise NotImplementedError("You can only instantiate CallerIfcFL/CalleeIfcFL.")
+
+  def __call__( s, *args, **kwargs ):
+    return s.method( *args, **kwargs )
+
+  def __str__( s ):
+    return s._str_hook()
+
+  def _str_hook( s ):
+    return f"{s._dsl.my_name}"
+
+#-------------------------------------------------------------------------
+# First-class method-based interfaces
+#-------------------------------------------------------------------------
+
+class CalleeIfcRTL( CallIfcRTL ):
+
+  def construct( s, *, en=None, rdy=None, MsgType=None, RetType=None ): # keyword only!
+    s.MsgType = s.RetType = None
+
+    if en is not None:
+      s.en  = InPort ( Bits1 )
+
+    if rdy is not None:
+      s.rdy = OutPort( Bits1 )
+
+    if MsgType is not None:
+      s.msg = InPort ( MsgType )
+      s.MsgType = MsgType
+
+    if RetType is not None:
+      s.ret = OutPort( RetType )
+      s.RetType = RetType
+
+class CallerIfcRTL( CallIfcRTL ):
+
+  def construct( s, *, en=None, rdy=None, MsgType=None, RetType=None ): # keyword only!
+    s.MsgType = s.RetType = None
+
+    if en is not None:
+      s.en  = OutPort( Bits1 )
+
+    if rdy is not None:
+      s.rdy = InPort( Bits1 )
+
+    if MsgType is not None:
+      s.msg = OutPort( MsgType )
+      s.MsgType = MsgType
+
+    if RetType is not None:
+      s.ret = InPort( RetType )
+      s.RetType = RetType
+
+class CalleeIfcCL( NonBlockingIfc ):
+  def construct( s, *, Type=None, method=None, rdy=None ): # keyword only!
     s.Type = Type
-    s.method = CalleePort( Type, method )
-    s.rdy    = CalleePort( None, rdy )
+    s.method = CalleePort( Type=Type, method=method )
+    s.rdy    = CalleePort( method=rdy )
 
     s.method._dsl.in_non_blocking_ifc = True
     s.rdy._dsl.in_non_blocking_ifc    = True
@@ -461,12 +558,12 @@ class NonBlockingCalleeIfc( NonBlockingInterface ):
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
 
-class NonBlockingCallerIfc( NonBlockingInterface ):
+class CallerIfcCL( NonBlockingIfc ):
 
-  def construct( s, Type=None ):
+  def construct( s, *, Type=None ): # keyword only!
     s.Type = Type
 
-    s.method = CallerPort( Type )
+    s.method = CallerPort( Type=Type )
     s.rdy    = CallerPort()
 
     s.method._dsl.in_non_blocking_ifc = True
@@ -474,3 +571,15 @@ class NonBlockingCallerIfc( NonBlockingInterface ):
 
     s.method._dsl.is_rdy = False
     s.rdy._dsl.is_rdy    = True
+
+class CalleeIfcFL( BlockingIfc ):
+
+  def construct( s, *, Type=None, method=None ):
+    s.Type   = Type
+    s.method = CalleePort( method=method, Type=Type )
+
+class CallerIfcFL( BlockingIfc ):
+
+  def construct( s, *, Type=None ):
+    s.Type   = Type
+    s.method = CallerPort( Type=Type )

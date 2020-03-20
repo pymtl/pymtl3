@@ -10,7 +10,7 @@ readers. Interface connections are handled separately, and they should
 be revamped when adding method-based interfaces.
 
 Author : Shunning Jiang
-Date   : Apr 16, 2018
+Date   : Jan 29, 2020
 """
 import ast
 import inspect
@@ -18,6 +18,7 @@ import linecache
 from collections import defaultdict
 
 from pymtl3.datatypes import Bits, is_bitstruct_inst
+from pymtl3.utils import custom_exec
 
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel2 import ComponentLevel2, compiled_re
@@ -56,7 +57,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
-    inst._dsl.call_kwargs   = None
     inst._dsl.adjacency     = defaultdict(set)
     inst._dsl.connect_order = []
     inst._dsl.consts        = set()
@@ -95,9 +95,6 @@ class ComponentLevel3( ComponentLevel2 ):
 
       s.construct( *s._dsl.args, **kwargs )
 
-      if s._dsl.call_kwargs is not None: # s.a = A()( b = s.b )
-        s._continue_call_connect()
-
       s._dsl.constructed = True
 
   # The following three methods should only be called when types are
@@ -106,11 +103,10 @@ class ComponentLevel3( ComponentLevel2 ):
     assert isinstance( o, Signal ), "You can only assign(//=) a lambda function to a Wire/InPort/OutPort."
 
     srcs, line = inspect.getsourcelines( lamb )
-    assert len(srcs) == 1, "We can only handle single-line lambda connect right now."
 
-    src  = compiled_re.sub( r'\2', srcs[0] ).lstrip(' ')
+    src  = compiled_re.sub( r'\2', ''.join(srcs) ).lstrip(' ')
     root = ast.parse(src)
-    assert isinstance( root, ast.Module ) and len(root.body) == 1, "Invalid lambda (contact pymtl3 developer)"
+    assert isinstance( root, ast.Module ) and len(root.body) == 1, "We only support single-statement lambda."
 
     root = root.body[0]
     assert isinstance( root, ast.AugAssign ) and isinstance( root.op, ast.FloorDiv )
@@ -127,8 +123,9 @@ class ComponentLevel3( ComponentLevel2 ):
     # Note that we don't need to add those source code of closure var
     # assignment to linecache. To get the matching line number in the
     # error message, we set the line number of update block
+    # Shunning: bugfix:
 
-    blk_name = "_lambda__{}".format( repr(o).replace(".","_") )
+    blk_name = "_lambda__{}".format( repr(o).replace(".","_").replace("[", "_").replace("]", "_").replace(":", "_") )
     lambda_upblk = ast.FunctionDef(
       name=blk_name,
       args=ast.arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]),
@@ -206,7 +203,7 @@ class ComponentLevel3( ComponentLevel2 ):
     # the correct free variables in its closure.
 
     dict_local = {}
-    exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
+    custom_exec( compile(new_root, blk_name, "exec"), lamb.__globals__, dict_local )
     blk = dict_local[ 'closure' ]( lamb.__closure__ )
 
     # Add the source code to linecache for the compiled function
@@ -214,7 +211,7 @@ class ComponentLevel3( ComponentLevel2 ):
     new_src = "def {}():\n {}\n".format( blk_name, src.replace("//=", "=") )
     linecache.cache[ blk_name ] = (len(new_src), None, new_src.splitlines(), blk_name)
 
-    ComponentLevel1.update( s, blk )
+    ComponentLevel1._update( s, blk )
 
     # This caching here does no caching because the block name contains
     # the signal name intentionally to avoid conflicts. With //= it is
@@ -277,7 +274,9 @@ class ComponentLevel3( ComponentLevel2 ):
 
   def _connect_signal_signal( s, o1, o2 ):
     if not (o1._dsl.Type is o2._dsl.Type):
-      raise InvalidConnectionError( f"Type mismatch {o1._dsl.Type} != {o2._dsl.Type} during {o1}<->{o2}." )
+      raise InvalidConnectionError( f"Bitwidth mismatch {o1._dsl.Type.__name__} != {o2._dsl.Type.__name__}\n"
+                                    f"- In class {type(s)}\n- When connecting {o1} <-> {o2}\n"
+                                    f"Suggestion: make sure both sides of connection have matching bitwidth")
 
     if o1 not in s._dsl.adjacency[o2]:
       assert o2 not in s._dsl.adjacency[o1]
@@ -360,61 +359,9 @@ class ComponentLevel3( ComponentLevel2 ):
       # One is connectable, we make sure it's o1
       if o2_connectable:
         o1, o2 = o2, o1
-      assert isinstance( o1, Signal ), "Can only connect constant to a SIGNAL."
+      assert isinstance( o1, Signal ), f"Cannot connect {o1!r} to {o2!r}."
 
       s._connect_signal_const( o1, o2 )
-
-  def _continue_call_connect( s ):
-    """ Here we continue to establish the connections from signals of the
-    parent object, to signals in the current object. Since it is the
-    parent that connects a constant integer to a signal, we should point
-    the Const object back to the parent object by setting _parent_obj to
-    s._parent_obj."""
-
-    parent = s._dsl.parent_obj
-
-    top = s._dsl.elaborate_top
-
-    # _continue_call_connect is actually connecting stuff at parent level,
-    # but it currently happens before before we pop the child component.
-    # To make minimal modification, I temporarily pop it from
-    # elaborate_stack and append it back at the end of this method
-
-    tmp = top._dsl.elaborate_stack.pop()
-
-    try: # Catch AssertionError from _connect
-
-      # Process saved __call__ kwargs
-      for (kw, target) in s._dsl.call_kwargs.items():
-        try:
-          obj = getattr( s, kw )
-        except AttributeError:
-          raise InvalidConnectionError( "{} is not a member of class {}".format(kw, s.__class__) )
-
-        # Obj is a list of signals
-        # We assume the a dict of { index: obj } is provided.
-        if   isinstance( obj, list ):
-          # Make sure the connection target is a dictionary {idx: obj}
-          if not isinstance( target, dict ):
-            raise InvalidConnectionError( "We only support a dictionary when '{}' is an array.".format( kw ) )
-          for idx, item in target.items():
-            parent._connect( obj[idx], item, internal=False )
-
-        # Obj is a single signal
-        # If the target is a list, it's fanout connection
-        elif isinstance( target, (tuple, list) ):
-          for item in target:
-            parent._connect( obj, item, internal=False )
-
-        # Target is a single object
-        else:
-          parent._connect( obj, target, internal=False )
-
-    except AssertionError as e:
-      raise InvalidConnectionError( "Invalid connection for {}:\n{}".format( kw, e ) )
-
-    # Append tmp back to elaborate_stack
-    top._dsl.elaborate_stack.append(tmp)
 
   @staticmethod
   def _floodfill_nets( signal_list, adjacency ):
@@ -488,16 +435,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
     for net in nets:
       for member in net:
-        host = member
-        while not isinstance( host, ComponentLevel3 ):
-          host = host.get_parent_object() # go to the component
-        member._dsl.host = host
+        host = member.get_host_component()
 
         # Specialize two cases:
         # 1. A top-level input port is writer.
         # 2. An output port of a placeholder module is a writer
-        if ( isinstance( member, InPort ) and member._dsl.host == s ) or \
-           ( isinstance( member, OutPort ) and isinstance( member._dsl.host, Placeholder ) ):
+        if ( isinstance( member, InPort ) and host == s ) or \
+           ( isinstance( member, OutPort ) and isinstance( host, Placeholder ) ):
           writer_prop[ member ] = True
 
     headless = nets
@@ -618,13 +562,13 @@ class ComponentLevel3( ComponentLevel2 ):
 
       while S:
         u = S.pop() # u is the writer
-        whost = u._dsl.host
+        whost = u.get_host_component()
 
         for v in s._dsl.all_adjacency[u]: # v is the reader
           if v not in visited:
             visited.add( v )
             S.append( v )
-            rhost = v._dsl.host
+            rhost = v.get_host_component()
 
             # 1. have the same host: writer_host(x)/reader_host(x):
             # Hence, writer is anything, reader is wire or outport
@@ -830,13 +774,9 @@ class ComponentLevel3( ComponentLevel2 ):
       >>> s.x = SomeReg(Bits1)( in_ = s.in_ )
     It connects s.in_ to s.x.in_ in the same line as model construction.
     """
-    assert args == ()
-    if s._dsl.constructed:
-      raise InvalidConnectionError("Connection using __call__, "
-                                   "i.e. s.x( a = s.a ), is illegal "
-                                   "after constructing s.x")
-    s._dsl.call_kwargs = kwargs
-    return s
+    raise PyMTLDeprecationError("\n__call__ connection has been deprecated! "
+                                "\n- Please use free function connect(s.x,s.y) or "
+                                "syntactic sugar s.x//=s.y instead.")
 
   def connect( s, *args, **kwargs ):
     raise PyMTLDeprecationError("\ns.connect method has been deprecated! "

@@ -26,7 +26,7 @@ def run_test( dut, tv, tv_in, tv_out ):
     tv_in( dut, v )
     dut.tick()
     tv_out( dut, v )
-  with open( vcd_file_name+".vcd", "r" ) as fd:
+  with open(vcd_file_name+".vcd") as fd:
     file_str = ''.join( fd.readlines() )
     all_signals = dut.get_input_value_ports() | \
                   dut.get_output_value_ports() | \
@@ -41,7 +41,7 @@ def test_vector_signals():
       s.in1 = InPort( Bits32 )
       s.out = OutPort( Bits32 )
 
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in0 + s.in1
   def tv_in( m, tv ):
@@ -73,7 +73,7 @@ def test_bitstruct_signals():
       s.in1 = InPort( Bits32 )
       s.out = OutPort( Bits32 )
 
-      @s.update
+      @update
       def add_upblk():
         s.out = s.in0.bar + s.in1
   def tv_in( m, tv ):

@@ -9,7 +9,6 @@ Author : Yanghui Ou
 """
 from pymtl3 import *
 from pymtl3.passes import TracingConfigs
-from pymtl3.passes.backends.yosys import ImportPass, TranslationPass
 from pymtl3.stdlib.test import TestSinkCL, TestSrcCL
 
 from ..ChecksumFL import checksum

@@ -28,7 +28,7 @@ class ProcFL( Component ):
 
     s.imem = MemMasterIfcFL()
     s.dmem = MemMasterIfcFL()
-    s.xcel = XcelMasterIfcFL( *mk_xcel_msg( 5, 32 ) )
+    s.xcel = XcelMasterIfcFL()
 
     s.proc2mngr = SendIfcFL()
     s.mngr2proc = GetIfcFL()
@@ -40,7 +40,7 @@ class ProcFL( Component ):
     s.R = RegisterFile(32)
     s.raw_inst = None
 
-    @s.update
+    @update
     def up_ProcFL():
       if s.reset:
         s.PC = b32( 0x200 )

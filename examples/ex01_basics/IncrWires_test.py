@@ -31,7 +31,7 @@ class IncrWires( Component ):
     s.buf2 = Wire( Bits8 )
 
     # UpA writes data to buf1
-    @s.update
+    @update
     def upA():
       s.buf1 = s.incr_in
       s.incr_in += b8(10)
@@ -44,14 +44,14 @@ class IncrWires( Component ):
     #; experiment with change all three update blocks to update_on_edge
     #; and observe the change in the line trace.
 
-    @s.update
+    @update
     def upB():
       s.buf2 = s.buf1 + b8(1)
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # UpC read data from buf2
-    @s.update
+    @update
     def upC():
       s.incr_out = s.buf2
 

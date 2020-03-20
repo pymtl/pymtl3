@@ -33,10 +33,6 @@ class PrintWavePass( BasePass ):
         if not hasattr( top._tracing, "text_sigs" ):
           raise PassOrderError( "text_sigs" )
 
-        # TODO remove this check when we are able to handle text_ascii
-        if top.config_tracing.tracing == 'text_ascii':
-          raise Exception("Current we don't support text_ascii. Only 'text_fancy' is supported now.")
-
         def gen_print_wave( top ):
           def print_wave():
             _help_print( top )
@@ -72,9 +68,7 @@ def _process_binary( sig, base, max ):
     return temp_hex
 
 def _help_print( self ):
-  # TODO print different textwave based on this flag
-  assert self.config_tracing.tracing == 'text_fancy'
-
+  #default is text_fancy
   char_length = 5
   tick = '\u258f'
   up, down = '\u2571', '\u2572'
@@ -82,6 +76,9 @@ def _help_print( self ):
   revstart, revstop = '\x1B[7m', '\x1B[0m'
   light_gray = '\033[47m'
   back='\033[0m'  #back to normal printing
+  if self.config_tracing.tracing == 'text_ascii':
+    up,down,x,low = '/','\\','X','_'
+    tick ='|'
   all_signals = self._tracing.text_sigs
   #spaces before cycle number
   max_length = 0

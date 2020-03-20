@@ -37,7 +37,7 @@ def test_toy():
       s.inlong = InPort( Bits32 )
       s.out = OutPort( Bits32 )
       s.state = Wire(Bits1)
-      @s.update
+      @update
       def add_upblk():
         # This update block models the behavior of a 32-bit adder
         s.out = s.i + s.inlong
@@ -48,7 +48,7 @@ def test_toy():
 
   # Create a toy component and elaborate it
   dut = Toy()
-  dut.config_tracing = TracingConfigs( tracing='text_fancy' )
+  dut.config_tracing = TracingConfigs( tracing='text_ascii' )
 
   # Setup the simulation
   dut.apply( SimulationPass() )
@@ -97,7 +97,7 @@ def test_widetoy():
       s.inlong = InPort( Bits128 )
       s.out = OutPort( Bits128 )
       s.state = Wire(Bits1)
-      @s.update
+      @update
       def add_upblk():
         # This update block models the behavior of a 32-bit adder
         s.out = s.i + s.inlong
@@ -165,7 +165,7 @@ def test_bitstruct():
       s.inlong = InPort( Bits16 )
       s.out = OutPort( XX )
       s.state = Wire(Bits1)
-      @s.update
+      @update
       def add_upblk():
         # This update block models the behavior of a 32-bit adder
         s.out.x = s.i.x + s.inlong

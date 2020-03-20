@@ -105,7 +105,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
 
   # Tag the processor-accelerator unit as to be translated
 
-  proc_xcel.yosys_translate = True
+  proc_xcel.set_metadata( TranslationPass.enable, True )
 
   # Perform translation
 
@@ -118,7 +118,7 @@ A valid output directory should be alloy-asic/designs/<design_name>/rtl
   finally:
     if success:
       path = os.getcwd() + \
-             "/{}.sv".format(proc_xcel.translated_top_module_name)
+             "/{}.v".format(proc_xcel.translated_top_module_name)
 
       if opts.output_dir:
         # Upon success, symlink the file to outputs/design.v which is the

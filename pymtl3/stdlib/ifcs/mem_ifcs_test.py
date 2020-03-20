@@ -8,6 +8,7 @@
 """
 from pymtl3 import *
 from pymtl3.stdlib.ifcs import MemMsgType, mk_mem_msg
+from pymtl3.stdlib.test import run_sim
 
 from .mem_ifcs import MemMasterIfcFL, MemMinionIfcCL
 
@@ -24,7 +25,7 @@ def test_mem_fl_cl_adapter():
       s.trace = "                   "
 
       if has_loop == 1:
-        @s.update
+        @update
         def up_master_while():
           s.trace = "                  "
           while s.addr < s.end:
@@ -34,7 +35,7 @@ def test_mem_fl_cl_adapter():
             s.trace = "rd 0x{:x} {}".format( s.addr, x )
             s.addr += 4
       else:
-        @s.update
+        @update
         def up_master_noloop():
           s.trace = "#                 "
           s.mem.write( s.addr, 4, 0xdead0000 | s.addr )
@@ -83,7 +84,7 @@ def test_mem_fl_cl_adapter():
 
       s.memory = bytearray( 2**20 )
 
-      @s.update
+      @update
       def up_process():
 
         if s.entry is not None and s.mem.resp.rdy():
@@ -114,8 +115,9 @@ def test_mem_fl_cl_adapter():
   class TestHarness( Component ):
     def construct( s ):
       s.master = [ SomeMasterFL( i*0x222, i ) for i in range(2) ]
-      s.minion = [ SomeMinionCL( *mk_mem_msg(8,32,32) )( mem = s.master[i].mem )
-                    for i in range(2) ]
+      s.minion = [ SomeMinionCL( *mk_mem_msg(8,32,32) ) for _ in range(2) ]
+      for i in range(2):
+        s.minion[i].mem //= s.master[i].mem
 
     def line_trace( s ):
       return "|".join( [ x.line_trace() for x in s.master ] ) + " >>> " + \
@@ -124,26 +126,6 @@ def test_mem_fl_cl_adapter():
     def done( s ):
       return all( [ x.done() for x in s.master ] )
 
-  th = TestHarness()
-
-  # Create a simulator
-
-  th.apply( SimulationPass() )
-
   # Run simulation
 
-  print("")
-  ncycles = 0
-  while not th.done() and ncycles < 1000:
-    th.tick()
-    ncycles += 1
-    trace = th.line_trace()
-    print("{:3}: {}".format( ncycles, trace ))
-
-  # Check timeout
-
-  assert ncycles < 1000
-
-  th.tick()
-  th.tick()
-  th.tick()
+  run_sim( TestHarness(), max_cycles=1000 )

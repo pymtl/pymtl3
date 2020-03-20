@@ -24,10 +24,6 @@ class CollectSignalPass( BasePass ):
       top.config_tracing.check()
 
       if top.config_tracing.tracing in [ 'text_ascii', 'text_fancy' ]:
-        # TODO remove this check when we are able to handle text_ascii
-        if top.config_tracing.tracing == 'text_ascii':
-          raise Exception("Current we don't support text_ascii. Only 'text_fancy' is supported now.")
-
         if not hasattr( top, "_tracing" ):
           top._tracing = PassMetadata()
         top._tracing.collect_text_sigs = self.collect_sig_func( top, top._tracing )

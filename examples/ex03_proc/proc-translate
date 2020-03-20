@@ -84,7 +84,7 @@ def main():
 
   # Tag the processor as to be translated
 
-  proc.yosys_translate = True
+  proc.set_metadata( TranslationPass.enable, True )
 
   # Perform translation
 
@@ -97,7 +97,7 @@ def main():
   finally:
     if success:
       path = os.getcwd() + \
-             "/{}.sv".format(proc.translated_top_module_name)
+             "/{}.v".format(proc.translated_top_module_name)
       print("\nTranslation finished successfully!")
       print(f"You can find the generated SystemVerilog file at {path}.")
     else:

@@ -41,7 +41,7 @@ class TestSinkCL( Component ):
 
     s.recv_called = False
 
-    @s.update
+    @update
     def up_sink_count():
       # Raise exception at the start of next cycle so that the errored
       # line trace gets printed out
@@ -78,7 +78,7 @@ class TestSinkCL( Component ):
 
   @non_blocking( lambda s: s.count==0 )
   def recv( s, msg ):
-    assert s.count == 0
+    assert s.count == 0, "Invalid en/rdy transaction! Sink is stalled (not ready), but receives a message."
 
     # Sanity check
     if s.idx >= len( s.msgs ):

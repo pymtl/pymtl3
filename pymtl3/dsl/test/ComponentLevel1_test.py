@@ -8,7 +8,7 @@ Date   : Dec 23, 2017
 """
 from collections import deque
 
-from pymtl3.dsl.ComponentLevel1 import ComponentLevel1
+from pymtl3.dsl.ComponentLevel1 import ComponentLevel1, update
 from pymtl3.dsl.ConstraintTypes import U
 from pymtl3.dsl.errors import UpblkCyclicError, UpblkFuncSameNameError
 
@@ -32,7 +32,7 @@ class TestSource( ComponentLevel1 ):
     s.input_ = deque( input_ ) # deque.popleft() is faster
     s.out = 0
 
-    @s.update
+    @update
     def up_src():
       if not s.input_:
         s.out = 0
@@ -53,7 +53,7 @@ class TestSink( ComponentLevel1 ):
     s.answer = deque( answer )
     s.in_ = 0
 
-    @s.update
+    @update
     def up_sink():
       if not s.answer:
         assert False, "Simulation has ended"
@@ -75,11 +75,11 @@ def test_cyclic_dependency():
 
     def construct( s ):
 
-      @s.update
+      @update
       def upA():
         pass
 
-      @s.update
+      @update
       def upB():
         pass
 
@@ -101,11 +101,11 @@ def test_upblock_same_name():
 
     def construct( s ):
 
-      @s.update
+      @update
       def upA():
         pass
 
-      @s.update
+      @update
       def upA():
         pass
 
@@ -128,7 +128,7 @@ def test_register_behavior():
       s.wire0 = 0
       s.wire1 = 0
 
-      @s.update
+      @update
       def up_from_src():
         s.wire0 = s.src.out
 
@@ -138,11 +138,11 @@ def test_register_behavior():
         U(up_src) < U(up_from_src),
       )
 
-      @s.update
+      @update
       def up_reg():
         s.wire1 = s.wire0
 
-      @s.update
+      @update
       def up_to_sink():
         s.sink.in_ = s.wire1
 
@@ -179,7 +179,7 @@ def test_add_loopback():
       s.wire0 = 0
       s.wire1 = 0
 
-      @s.update
+      @update
       def up_from_src():
         s.wire0 = s.src.out + 1
 
@@ -191,11 +191,11 @@ def test_add_loopback():
 
       s.reg0 = 0
 
-      @s.update
+      @update
       def upA():
         s.reg0 = s.wire0 + s.wire1
 
-      @s.update
+      @update
       def up_to_sink_and_loop_back():
         s.sink.in_ = s.reg0
         s.wire1 = s.reg0
@@ -233,7 +233,7 @@ def test_lots_of_fan():
 
       s.wire0 = 0
 
-      @s.update
+      @update
       def up_from_src():
         s.wire0 = s.src.out + 1
 
@@ -245,13 +245,13 @@ def test_lots_of_fan():
 
       s.reg = 0
 
-      @s.update
+      @update
       def up_reg():
         s.reg = s.wire0
 
       s.wire1 = s.wire2 = 0
 
-      @s.update
+      @update
       def upA():
         s.wire1 = s.reg
         s.wire2 = s.reg + 1
@@ -263,14 +263,14 @@ def test_lots_of_fan():
 
       s.wire3 = s.wire4 = 0
 
-      @s.update
+      @update
       def upB():
         s.wire3 = s.wire1
         s.wire4 = s.wire1 + 1
 
       s.wire5 = s.wire6 = 0
 
-      @s.update
+      @update
       def upC():
         s.wire5 = s.wire2
         s.wire6 = s.wire2 + 1
@@ -281,7 +281,7 @@ def test_lots_of_fan():
       )
       s.wire7 = s.wire8 = 0
 
-      @s.update
+      @update
       def upD():
         s.wire7 = s.wire3 + s.wire6
         s.wire8 = s.wire4 + s.wire5
@@ -291,7 +291,7 @@ def test_lots_of_fan():
         U(upC) < U(upD),
       )
 
-      @s.update
+      @update
       def up_to_sink():
         s.sink.in_ = s.wire7 + s.wire8
 
@@ -324,7 +324,7 @@ def test_2d_array_vars():
 
       s.wire = [ [0 for _ in range(2)] for _ in range(2) ]
 
-      @s.update
+      @update
       def up_from_src():
         s.wire[0][0] = s.src.out
         s.wire[0][1] = s.src.out + 1
@@ -337,11 +337,11 @@ def test_2d_array_vars():
 
       s.reg = 0
 
-      @s.update
+      @update
       def up_reg():
         s.reg = s.wire[0][0] + s.wire[0][1]
 
-      @s.update
+      @update
       def upA():
         s.wire[1][0] = s.reg
         s.wire[1][1] = s.reg + 1
@@ -350,7 +350,7 @@ def test_2d_array_vars():
         U(up_reg) < U(upA),
         U(up_reg) < U(up_from_src),
       )
-      @s.update
+      @update
       def up_to_sink():
         s.sink.in_ = s.wire[1][0] + s.wire[1][1]
 

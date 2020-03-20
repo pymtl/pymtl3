@@ -13,6 +13,8 @@ Date   : Aug 23, 2018
 """
 import os
 
+from pymtl3.utils import custom_exec
+
 # This __new__ approach has better performance
 # bits_template = """
 # class Bits{nbits}:
@@ -28,7 +30,7 @@ class Bits{0}(Bits):
   nbits = {0}
   def __init__( s, value=0 ):
     return super().__init__( {0}, value )
-_bits_types[{nbits}] = b{nbits} = Bits{nbits}
+_bits_types[{0}] = b{0} = Bits{0}
 """
 else:
   try:
@@ -55,11 +57,12 @@ _bits_types[{0}] = b{0} = Bits{0}
 _bitwidths  = list(range(1, 256)) + [ 384, 512 ]
 _bits_types = dict()
 
-exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
-              filename="bits_import.py", mode="exec") )
+custom_exec(compile( "".join([ bits_template.format(nbits) for nbits in _bitwidths ]),
+                     filename="bits_import.py", mode="exec"), globals(), locals() )
 
 def mk_bits( nbits ):
   # assert nbits < 512, "We don't allow bitwidth to exceed 512."
   if nbits not in _bits_types:
-    exec(compile( bits_template.format(nbits), filename=f"Bits{nbits}", mode="exec" ))
+    custom_exec(compile( bits_template.format(nbits), filename=f"Bits{nbits}", mode="exec" ),
+                globals(), locals() )
   return _bits_types[nbits]

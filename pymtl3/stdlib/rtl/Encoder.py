@@ -28,7 +28,7 @@ class Encoder( Component ):
 
     # Logic
 
-    @s.update
+    @update
     def encode():
       s.out = OutType( 0 )
       for i in range( s.in_nbits ):

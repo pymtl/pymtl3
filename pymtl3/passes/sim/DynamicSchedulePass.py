@@ -6,13 +6,15 @@
 # Date   : Apr 19, 2019
 
 import os
-import random
-from collections import deque
+from collections import defaultdict, deque
+from copy import deepcopy
 
 import py
 
+from pymtl3.datatypes import Bits, is_bitstruct_class
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
+from pymtl3.utils import custom_exec
 
 from .SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from .SimpleTickPass import SimpleTickPass
@@ -54,100 +56,16 @@ class DynamicSchedulePass( BasePass ):
     if 'MAMBA_DAG' in os.environ:
       dump_dag( top, V, E )
 
-    #---------------------------------------------------------------------
-    # Run Kosaraju's algorithm to shrink all strongly connected components
-    # (SCCs) into super nodes
-    #---------------------------------------------------------------------
+    # Compute SCC using Kosaraju's algorithm
 
-    # First dfs on G to generate reverse post-order (RPO)
-    # Shunning: we emulate the system stack to implement non-recursive
-    # post-order DFS algorithm. At the beginning, I implemented a more
-    # succinct recursive DFS but it turned out that a 1500-depth chain in
-    # the graph will reach the CPython max recursion depth.
-    # https://docs.python.org/3/library/sys.html#sys.getrecursionlimit
-
-    PO = []
-
-    vertices = list(G.keys())
-    random.shuffle(vertices)
-    visited = set()
-
-    # The commented algorithm loyally emulates the system stack by storing
-    # the loop index in each stack element and push only one new element
-    # to stack in every iteration. This is basically what recursive dfs
-    # does.
-    #
-    # for u in vertices:
-    #   if u not in visited:
-    #     stack = [ (u, False) ]
-    #     while stack:
-    #       u, idx = stack.pop()
-    #       visited.add( u )
-    #       if idx == len(G[u]):
-    #         PO.append( u )
-    #       else:
-    #         while idx < len(G[u]) and G[u][-idx] in visited:
-    #           idx += 1
-    #         if idx < len(G[u]):
-    #           stack.append( (u, idx) )
-    #           stack.append( (G[u][-idx], 0) )
-    #         else:
-    #           PO.append( u )
-
-    # The following algorithm push all adjacent elements to the stack at
-    # once and later check visited set to avoid redundant visit (instead
-    # of checking visited set when pushing element to the stack). I added
-    # a second_visit flag to add the node to post-order.
-
-    for u in vertices:
-      stack = [ (u, False) ]
-      while stack:
-        u, second_visit = stack.pop()
-
-        if second_visit:
-          PO.append( u )
-        elif u not in visited:
-          visited.add( u )
-          stack.append( (u, True) )
-          for v in reversed(G[u]):
-            stack.append( (v, False) )
-
-    RPO = PO[::-1]
-
-    # Second bfs on G_T to generate SCCs
-
-    SCCs  = []
-    v_SCC = {}
-    visited = set()
-
-    for u in RPO:
-      if u not in visited:
-        visited.add( u )
-        scc = set()
-        SCCs.append( scc )
-        Q = deque( [u] )
-        scc.add( u )
-        while Q:
-          u = Q.popleft()
-          v_SCC[u] = len(SCCs) - 1
-          for v in G_T[u]:
-            if v not in visited:
-              visited.add( v )
-              Q.append( v )
-              scc.add( v )
-
-    # Construct a new graph of SCCs
-
-    G_new = { i: set() for i in range(len(SCCs)) }
-    InD   = { i: 0     for i in range(len(SCCs)) }
-
-    for (u, v) in E: # u -> v
-      scc_u, scc_v = v_SCC[u], v_SCC[v]
-      if scc_u != scc_v and scc_v not in G_new[ scc_u ]:
-        InD[ scc_v ] += 1
-        G_new[ scc_u ].add( scc_v )
+    SCCs, G_new = kosaraju_scc( G, G_T )
 
     # Perform topological sort on SCCs
+
+    InD = { i: 0 for i in range(len(SCCs)) }
+    for u, vs in G_new.items():
+      for v in vs:
+        InD[ v ] += 1
 
     scc_pred = {}
     scc_schedule = []
@@ -244,39 +162,178 @@ class DynamicSchedulePass( BasePass ):
 
           # TODO mamba?
           scc_tick_func = SimpleTickPass.gen_tick_function( scc )
-          namespace = {}
-          namespace.update( locals() )
+          _globals = { 's': s, 'scc_tick_func': scc_tick_func, 'deepcopy': deepcopy }
+          _locals  = {}
 
-          exec(py.code.Source( src ).compile(), namespace)
-          return namespace['generated_block']
+          custom_exec(py.code.Source( src ).compile(), _globals, _locals)
+          return _locals[ 'generated_block' ]
 
         template = """
-          from copy import deepcopy
-          def wrapped_SCC_{0}():
-            N = 0
-            while True:
-              N += 1
-              if N > 100: raise UpblkCyclicError("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
-              {1}
-              scc_tick_func()
-              if {2}:
-                break
-            # print "SCC block{0} is executed", num_iters, "times"
-          generated_block = wrapped_SCC_{0}
-        """
+def wrapped_SCC_{0}():
+  N = 0
+  while True:
+    N += 1
+    if N > 100:
+      raise Exception("Combinational loop detected at runtime in {{{3}}} after 100 iters!")
+    {1}
+    scc_tick_func()
+    {2}
+    # print( "SCC block{0} is executed", num_iters, "times" )
+    break
+generated_block = wrapped_SCC_{0}
+          """
 
         copy_srcs  = []
         check_srcs = []
         # print_srcs = []
 
-        for j, var in enumerate(variables):
-          copy_srcs .append( "t{} = deepcopy({})".format( j, var ) )
-          check_srcs.append( "{} == t{}".format( var, j ) )
-          # print_srcs.append( "print '{}', {}, _____tmp_{}".format( var, var, j ) )
+        # clean up non-top variables if top is there. remove slices
 
-        scc_block_src = template.format( scc_id,
-                                         "; ".join( copy_srcs ),
-                                         " and ".join( check_srcs ),
+        final_variables = set()
+
+        for x in sorted( variables, key=repr ):
+          w = x.get_top_level_signal()
+          if w is x:
+            final_variables.add( x )
+            continue
+
+          # w is not x
+          if issubclass( w._dsl.Type, Bits ):
+            if w not in final_variables:
+              final_variables.add( w )
+          elif is_bitstruct_class( w._dsl.Type ):
+            if w not in final_variables:
+              final_variables.add( x )
+          else:
+            final_variables.add( x )
+
+        # group them by host component so that we create less bytecode
+
+        final_var_host = defaultdict(list)
+        for x in final_variables:
+          final_var_host[ x.get_host_component() ].append( x )
+
+        # create a block of copy/check code for each host component. Need
+        # to allocate global var_id across different host components.
+
+        var_id = 0
+        for host, var_list in final_var_host.items():
+
+          copy_srcs .append( f"host={host!r}" )
+          check_srcs.append( f"host={host!r}" )
+
+          sub_check_srcs = []
+
+          hostlen = len(repr(host))
+          for var in var_list:
+            var_id += 1
+            subname = repr(var)[hostlen+1:]
+            if issubclass( var._dsl.Type, Bits ):     copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+            elif is_bitstruct_class( var._dsl.Type ): copy_srcs.append( f"t{var_id}=host.{subname}.clone()" )
+            else:                                     copy_srcs.append( f"t{var_id}=deepcopy(host.{subname})" )
+
+            sub_check_srcs.append( f"host.{subname} != t{var_id}" )
+
+          check_srcs.append( f"if { ' or '.join(sub_check_srcs)}: continue" )
+
+        scc_block_src = template.format( scc_id, "; ".join( copy_srcs ), "\n    ".join( check_srcs ),
                                          ", ".join( [ x.__name__ for x in scc] ) )
-                                         # "; ".join( print_srcs ) )
+
+        # print(scc_block_src)
         schedule.append( gen_wrapped_SCCblk( top, tmp_schedule, scc_block_src ) )
+
+def kosaraju_scc( G, G_T ):
+
+    #---------------------------------------------------------------------
+    # Run Kosaraju's algorithm to shrink all strongly connected components
+    # (SCCs) into super nodes
+    #---------------------------------------------------------------------
+
+    # First dfs on G to generate reverse post-order (RPO)
+    # Shunning: we emulate the system stack to implement non-recursive
+    # post-order DFS algorithm. At the beginning, I implemented a more
+    # succinct recursive DFS but it turned out that a 1500-depth chain in
+    # the graph will reach the CPython max recursion depth.
+    # https://docs.python.org/3/library/sys.html#sys.getrecursionlimit
+
+    PO = []
+
+    vertices = list(G.keys())
+    # random.shuffle(vertices)
+    visited = set()
+
+    # The commented algorithm loyally emulates the system stack by storing
+    # the loop index in each stack element and push only one new element
+    # to stack in every iteration. This is basically what recursive dfs
+    # does.
+    #
+    # for u in vertices:
+    #   if u not in visited:
+    #     stack = [ (u, False) ]
+    #     while stack:
+    #       u, idx = stack.pop()
+    #       visited.add( u )
+    #       if idx == len(G[u]):
+    #         PO.append( u )
+    #       else:
+    #         while idx < len(G[u]) and G[u][-idx] in visited:
+    #           idx += 1
+    #         if idx < len(G[u]):
+    #           stack.append( (u, idx) )
+    #           stack.append( (G[u][-idx], 0) )
+    #         else:
+    #           PO.append( u )
+
+    # The following algorithm push all adjacent elements to the stack at
+    # once and later check visited set to avoid redundant visit (instead
+    # of checking visited set when pushing element to the stack). I added
+    # a second_visit flag to add the node to post-order.
+
+    for u in vertices:
+      stack = [ (u, False) ]
+      while stack:
+        u, second_visit = stack.pop()
+
+        if second_visit:
+          PO.append( u )
+        elif u not in visited:
+          visited.add( u )
+          stack.append( (u, True) )
+          for v in reversed(G[u]):
+            stack.append( (v, False) )
+
+    RPO = PO[::-1]
+
+    # Second bfs on G_T to generate SCCs
+
+    SCCs  = []
+    v_SCC = {}
+    visited = set()
+
+    for u in RPO:
+      if u not in visited:
+        visited.add( u )
+        scc = set()
+        SCCs.append( scc )
+        Q = deque( [u] )
+        scc.add( u )
+        while Q:
+          u = Q.popleft()
+          v_SCC[u] = len(SCCs) - 1
+          for v in G_T[u]:
+            if v not in visited:
+              visited.add( v )
+              Q.append( v )
+              scc.add( v )
+
+    # Construct a new graph of SCCs
+
+    G_new = { i: set() for i in range(len(SCCs)) }
+
+    for u, vs in G.items():
+      for v in vs: # u -> v
+        scc_u, scc_v = v_SCC[u], v_SCC[v]
+        if scc_u != scc_v and scc_v not in G_new[ scc_u ]:
+          G_new[ scc_u ].add( scc_v )
+
+    return SCCs, G_new

@@ -32,8 +32,8 @@ from ..utils import b128_to_words, words_to_b128
 class WrappedChecksumCL( Component ):
 
   def construct( s, DutType=ChecksumCL ):
-    s.recv = NonBlockingCalleeIfc( Bits128 )
-    s.give = NonBlockingCalleeIfc( Bits32  )
+    s.recv = CalleeIfcCL( Type=Bits128 )
+    s.give = CalleeIfcCL( Type=Bits32  )
 
     s.checksum_unit = DutType()
     s.out_q = BypassQueueCL( num_entries=1 )
@@ -114,7 +114,7 @@ class ChecksumCL_Tests( BaseTests ):
   #; example, change the update block in the CL implementation to be
   #; something like this:
   #;
-  #;   @s.update
+  #;   @update
   #;   def up_checksum_cl():
   #;     if s.pipe.enq.rdy() and s.in_q.deq.rdy():
   #;       bits = s.in_q.deq()

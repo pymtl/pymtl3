@@ -11,12 +11,12 @@ from collections import deque
 from pymtl3.datatypes import *
 from pymtl3.dsl import (
     WR,
+    CalleeIfcCL,
     CalleePort,
     CallerPort,
     Component,
     InPort,
     M,
-    NonBlockingCalleeIfc,
     OutPort,
     Placeholder,
     U,
@@ -24,6 +24,7 @@ from pymtl3.dsl import (
     connect,
     method_port,
     non_blocking,
+    update,
 )
 from pymtl3.dsl.errors import InvalidPlaceholderError, LeftoverPlaceholderError
 
@@ -34,9 +35,9 @@ def test_placeholder_no_upblk():
 
   class Wrong( Placeholder, Component ):
     def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
-      @s.update
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
+      @update
       def up_x():
         s.out = s.in_ + 1
   try:
@@ -51,8 +52,8 @@ def test_placeholder_no_constraints():
 
   class Wrong( Placeholder, Component ):
     def construct( s, nbits=0 ):
-      s.in_ = InPort ( mk_bits(nbits) )
-      s.out = OutPort( mk_bits(nbits) )
+      s.in_ = InPort ( nbits )
+      s.out = OutPort( nbits )
       s.add_constraints( U(s.out) < WR(s.out) ) # this is obvious wrong
 
   try:
@@ -65,22 +66,22 @@ def test_placeholder_no_constraints():
 
 class Foo( Placeholder, Component ):
   def construct( s, nbits=0 ):
-    s.in_ = InPort ( mk_bits(nbits) )
-    s.out = OutPort( mk_bits(nbits) )
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
 
     # Nothing here
 
   def line_trace( s ):
     return "{}>{}".format( s.in_, s.out )
 
+@bitstruct
 class SomeMsg:
-  def __init__( s, a=0, b=0 ):
-    s.a = Bits16(a)
-    s.b = Bits32(b)
+  a: Bits16
+  b: Bits32
 
 class FooStruct( Placeholder, Component ):
   def construct( s, nbits=0 ):
-    s.in_ = InPort ( mk_bits(nbits) )
+    s.in_ = InPort ( nbits )
     s.out = OutPort( SomeMsg )
 
     # Nothing here
@@ -90,9 +91,9 @@ class FooStruct( Placeholder, Component ):
 
 class Real( Component ):
   def construct( s, nbits=0 ):
-    s.in_ = InPort ( mk_bits(nbits) )
-    s.out = OutPort( mk_bits(nbits) )
-    @s.update
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
+    @update
     def up_x2():
       s.out = s.in_ << 1
 
@@ -101,12 +102,14 @@ class Real( Component ):
 
 class Foo_wrap( Component ):
   def construct( s, nbits=0 ):
-    s.in_ = InPort ( mk_bits(nbits) )
-    s.out = OutPort( mk_bits(nbits) )
-    s.w   = Wire( mk_bits(nbits) )
+    s.in_ = InPort ( nbits )
+    s.out = OutPort( nbits )
+    s.w   = Wire( nbits )
     connect( s.w, s.out )
 
-    s.inner = Foo( 32 )( in_ = s.in_, out = s.w )
+    s.inner = Foo( 32 )
+    s.inner.in_ //= s.in_
+    s.inner.out //= s.w
 
   def line_trace( s ):
     return s.inner.line_trace()
@@ -145,7 +148,8 @@ def test_foo_field_as_writer():
       s.in_ = InPort ( Bits16 )
       s.out = OutPort( Bits32 )
 
-      s.inner = FooStruct( 16 )( in_ = s.in_ )
+      s.inner = FooStruct( 16 )
+      s.inner.in_ //= s.in_
       connect( s.inner.out.b, s.out )
 
     def line_trace( s ):
@@ -191,19 +195,21 @@ def test_cl_methodport_placeholder():
     def construct( s ):
       s.enq = CalleePort()
       s.deq = CalleePort()
-      s.foo = FooCL()( enq = s.enq, deq = s.deq )
+      s.foo = FooCL()
+      s.foo.enq //= s.enq
+      s.foo.deq //= s.deq
 
   class FooCL_top( Component ):
     def construct( s ):
       s.x = FooCL_wrap()
 
       s.counter = 0
-      @s.update
+      @update
       def up_enq():
         s.x.enq(s.counter + 1)
         s.counter += 1
 
-      @s.update
+      @update
       def up_recv():
         print(s.x.deq())
 
@@ -233,14 +239,16 @@ def test_cl_interface_placeholder():
 
   class FooCL( Placeholder, Component ):
     def construct( s, queue_type="none" ):
-      s.enq = NonBlockingCalleeIfc()
-      s.deq = NonBlockingCalleeIfc()
+      s.enq = CalleeIfcCL()
+      s.deq = CalleeIfcCL()
 
   class FooCL_wrap( Component ):
     def construct( s ):
-      s.enq = NonBlockingCalleeIfc()
-      s.deq = NonBlockingCalleeIfc()
-      s.foo = FooCL()( enq = s.enq, deq = s.deq )
+      s.enq = CalleeIfcCL()
+      s.deq = CalleeIfcCL()
+      s.foo = FooCL()
+      s.foo.enq //= s.enq
+      s.foo.deq //= s.deq
 
   class FooCL_top( Component ):
     def construct( s ):
@@ -248,7 +256,7 @@ def test_cl_interface_placeholder():
 
       s.received = None
       s.counter = 0
-      @s.update
+      @update
       def up_enq():
         if s.x.enq.rdy():
           s.x.enq(s.counter + 1)
@@ -256,7 +264,7 @@ def test_cl_interface_placeholder():
         else:
           print("enq not rdy")
 
-      @s.update
+      @update
       def up_recv():
         if s.x.deq.rdy():
           s.received = s.x.deq()

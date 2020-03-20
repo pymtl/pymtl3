@@ -7,12 +7,12 @@ class Reg( Component ):
     s.out = OutPort( Type )
     s.in_ = InPort( Type )
 
-    @s.update_ff
+    @update_ff
     def up_reg():
       s.out <<= s.in_
 
   def line_trace( s ):
-    return "[{} > {}]".format(s.in_, s.out)
+    return f"[{s.in_} > {s.out}]"
 
 class RegEn( Component ):
 
@@ -22,13 +22,13 @@ class RegEn( Component ):
 
     s.en  = InPort( int if Type is int else Bits1 )
 
-    @s.update_ff
+    @update_ff
     def up_regen():
       if s.en:
         s.out <<= s.in_
 
   def line_trace( s ):
-    return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
+    return f"[{'en' if s.en else '  '}|{s.in_} > {s.out}]"
 
 class RegRst( Component ):
 
@@ -38,13 +38,13 @@ class RegRst( Component ):
 
     s.reset = InPort( int if Type is int else Bits1 )
 
-    @s.update_ff
+    @update_ff
     def up_regrst():
       if s.reset: s.out <<= Type( reset_value )
       else:       s.out <<= s.in_
 
   def line_trace( s ):
-    return "[rst:{}|{} > {}]".format(s.rst, s.in_, s.out)
+    return f"[{'rst' if s.reset else '   '}|{s.in_} > {s.out}]"
 
 class RegEnRst( Component ):
 
@@ -55,10 +55,10 @@ class RegEnRst( Component ):
     s.reset = InPort( int if Type is int else Bits1 )
     s.en    = InPort( int if Type is int else Bits1 )
 
-    @s.update_ff
+    @update_ff
     def up_regenrst():
       if s.reset: s.out <<= Type( reset_value )
       elif s.en:  s.out <<= s.in_
 
   def line_trace( s ):
-    return "[en:{}|{} > {}]".format(s.en, s.in_, s.out)
+    return f"[{'en' if s.en else '  '}|{s.in_} > {s.out}]"

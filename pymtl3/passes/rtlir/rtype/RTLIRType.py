@@ -296,11 +296,13 @@ class Component( BaseRTLIRType ):
     s.params = s._gen_parameters( obj )
     s.properties = properties
     s.unpacked = unpacked
+    s.obj = obj
     cls = obj.__class__
     try:
       file_name = inspect.getsourcefile( cls )
-      line_no = inspect.getsourcelines( cls )[1]
-      s.file_info = f"{file_name}:{line_no}"
+      s.file_info = f"{file_name}"
+      # line_no = inspect.getsourcelines( cls )[1]
+      # s.file_info = f"{file_name}:{line_no}"
     except OSError:
       s.file_info = f"Dynamically generated component {cls.__name__}"
 
@@ -351,21 +353,29 @@ class Component( BaseRTLIRType ):
   def _is_unpacked( s ):
     return s.unpacked
 
+  def _has_same_interface( s, other ):
+    u, v = s.get_ports_packed(), other.get_ports_packed()
+    return (len(u)==len(v)) and all(_u == _v for _u, _v in zip(u, v))
+
   def __eq__( s, other ):
-    return isinstance(other, Component) and s.name == other.name and \
-           s.params == other.params
+    # Two Components are considered equal iff they expose the same interface
+    return isinstance(other, Component) and s._has_same_interface( other )
 
   def __hash__( s ):
     return hash((type(s), s.name, tuple(s.params)))
 
   def __str__( s ):
-    return 'Component'
+    return f'Component {s.name}'
 
   def __repr__( s ):
-    return f'Component {s.name}'
+    port_strs = ["{}:{}".format(name, repr(rtype)) for name, rtype in s.get_ports_packed()]
+    return f'Component with interface: {", ".join(port_strs)}'
 
   def get_name( s ):
     return s.name
+
+  def get_obj( s ):
+    return s.obj
 
   def get_file_info( s ):
     return s.file_info
@@ -468,7 +478,7 @@ def _handle_Array( _id, _obj ):
     return None
   ref_type = get_rtlir( obj[0] )
   assert all( get_rtlir(i) == ref_type for i in obj ), \
-    f'all elements of array {obj} must have the same type {ref_type}!'
+    f'all elements of array {obj} must have the same type {repr(ref_type)}!'
   dim_sizes = []
   while isinstance( obj, list ):
     if len( obj ) == 0:
@@ -576,7 +586,8 @@ def get_component_ifc_rtlir( obj ):
     if not isinstance( obj, list ):
       return False
     while isinstance( obj, list ):
-      assert len( obj ) > 0, f"{id_} is an empty list!"
+      if len( obj ) == 0:
+        return False
       obj = obj[0]
     return isinstance( obj, primitive_types )
 

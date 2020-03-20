@@ -8,7 +8,7 @@ Author : Peitian Pan
 Date   : Dec 20, 2019
 """
 
-from pymtl3.passes.backends.sverilog.testcases import (
+from pymtl3.passes.backends.verilog.testcases import (
     Bits32Foo,
     Bits32x5Foo,
     CaseArrayBits32IfcInUpblkComp,
@@ -54,16 +54,76 @@ from pymtl3.passes.backends.sverilog.testcases import (
     CaseIfTmpVarInForStmtComp,
     CaseInterfaceArrayNonStaticIndexComp,
     CaseLambdaConnectComp,
+    CaseLambdaConnectWithListComp,
     CaseNestedIfComp,
     CaseNestedStructPackedArrayUpblkComp,
     CasePassThroughComp,
     CaseReducesInx3OutComp,
     CaseSequentialPassThroughComp,
+    CaseSizeCastPaddingStructPort,
     CaseStructPackedArrayUpblkComp,
-    CaseSVerilogReservedComp,
+    CaseVerilogReservedComp,
     NestedStructPackedPlusScalar,
     ThisIsABitStructWithSuperLongName,
     set_attributes,
+)
+
+CaseSizeCastPaddingStructPort = set_attributes( CaseSizeCastPaddingStructPort,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          out = { { 32 { 1'b0 } }, in_ };
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in___foo,
+          output logic [63:0] out,
+          input logic [0:0] reset
+        );
+          logic [31:0] in_;
+
+          always_comb begin : upblk
+            out = { { 32 { 1'b0 } }, in_ };
+          end
+
+          assign in_[31:0] = in___foo;
+
+        endmodule
+    '''
+)
+
+CaseLambdaConnectWithListComp = set_attributes( CaseLambdaConnectWithListComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : _lambda__s_out_1_
+          out[1] = in_ + 32'd42;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out__0,
+          output logic [31:0] out__1,
+          input logic [0:0] reset
+        );
+          logic [31:0] out [0:1];
+
+          always_comb begin : _lambda__s_out_1_
+            out[1] = in_ + 32'd42;
+          end
+
+          assign out__0 = out[0];
+          assign out__1 = out[1];
+
+        endmodule
+    '''
 )
 
 CaseBits32x2ConcatFreeVarComp = set_attributes( CaseBits32x2ConcatFreeVarComp,

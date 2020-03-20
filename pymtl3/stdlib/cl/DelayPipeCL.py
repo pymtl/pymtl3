@@ -47,7 +47,7 @@ class DelayPipeDeqCL( Component ):
     else: # delay >= 1, pipe behavior
       s.pipeline = deque( [None]*(delay+1), maxlen=(delay+1) )
 
-      @s.update
+      @update
       def up_delay():
         if s.pipeline[-1] is None:
           s.pipeline.rotate()
@@ -81,19 +81,19 @@ class DelayPipeSendCL( Component ):
 
   def construct( s, delay=5 ):
 
-    s.send = NonBlockingCallerIfc()
+    s.send = CallerIfcCL()
 
     s.delay = delay
 
     if delay == 0: # combinational behavior
-      s.enq = NonBlockingCalleeIfc()
+      s.enq = CalleeIfcCL()
       connect( s.enq, s.send )
 
     else: # delay >= 1, pipe behavior
-      s.enq = NonBlockingCalleeIfc( None, s.enq_pipe, s.enq_rdy_pipe )
+      s.enq = CalleeIfcCL( Type=None, method=s.enq_pipe, rdy=s.enq_rdy_pipe )
       s.pipeline = deque( [None]*delay, maxlen=delay )
 
-      @s.update
+      @update
       def up_delay():
         if s.pipeline[-1] is not None:
           if s.send.rdy():

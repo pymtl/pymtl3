@@ -8,6 +8,7 @@ Date   : Jan 4, 2019
 """
 from collections import deque
 
+from pymtl3.dsl.ComponentLevel1 import update
 from pymtl3.dsl.ComponentLevel3 import connect
 from pymtl3.dsl.ComponentLevel5 import ComponentLevel5, method_port
 from pymtl3.dsl.Connectable import CalleePort, CallerPort, Interface
@@ -38,7 +39,7 @@ class SimpleTestSource( ComponentLevel5 ):
     s.req_rdy = CallerPort()
 
     s.v = 0
-    @s.update
+    @update
     def up_src():
       s.v = None
       if s.req_rdy() and s.msgs:
@@ -124,7 +125,7 @@ class TestSinkUp( ComponentLevel5 ):
 
     s.v = None
 
-    @s.update
+    @update
     def up_sink():
       s.v = None
 
@@ -211,9 +212,13 @@ def test_constraint_equal_pass_through():
 
     def construct( s ):
       s.src  = SimpleTestSource( [1,2,3,4] )
-      s.mid  = PassThrough()( req = s.src.req, req_rdy = s.src.req_rdy )
-      s.sink = TestSinkUp( [1,2,3,4] )( resp = s.mid.resp,
-                                        resp_rdy = s.mid.resp_rdy )
+      s.mid  = PassThrough()
+      s.sink = TestSinkUp( [1,2,3,4] )
+
+      s.mid.req       //= s.src.req
+      s.mid.req_rdy   //= s.src.req_rdy
+      s.sink.resp     //= s.mid.resp
+      s.sink.resp_rdy //= s.mid.resp_rdy
 
     def done( s ):
       return s.src.done() and s.sink.done()
@@ -288,7 +293,7 @@ def test_method_interface():
       s.req = SendIfcCL()
 
       s.v = 0
-      @s.update
+      @update
       def up_src():
         s.v = None
         if s.req.rdy() and s.msgs:

@@ -47,15 +47,22 @@ class ProcCL( Component ):
 
     s.xcel = XcelMasterIfcCL( xreq_class, xresp_class )
 
-    s.proc2mngr = NonBlockingCallerIfc()
-    s.mngr2proc = NonBlockingCalleeIfc()
+    s.proc2mngr = CallerIfcCL()
+    s.mngr2proc = CalleeIfcCL()
 
     # Buffers to hold input messages
 
-    s.imemresp_q  = DelayPipeDeqCL(0)( enq = s.imem.resp )
-    s.dmemresp_q  = DelayPipeDeqCL(1)( enq = s.dmem.resp )
-    s.mngr2proc_q = DelayPipeDeqCL(1)( enq = s.mngr2proc )
-    s.xcelresp_q  = DelayPipeDeqCL(0)( enq = s.xcel.resp )
+    s.imemresp_q  = DelayPipeDeqCL(0)
+    s.imemresp_q.enq //= s.imem.resp
+
+    s.dmemresp_q  = DelayPipeDeqCL(1)
+    s.dmemresp_q.enq //= s.dmem.resp
+
+    s.mngr2proc_q = DelayPipeDeqCL(1)
+    s.mngr2proc_q.enq //= s.mngr2proc
+
+    s.xcelresp_q  = DelayPipeDeqCL(0)
+    s.xcelresp_q.enq //= s.xcel.resp
 
     s.pc = b32( 0x200 )
     s.R  = RegisterFile( 32 )
@@ -67,7 +74,7 @@ class ProcCL( Component ):
     s.DXM_status = PipelineStatus.idle
     s.W_status   = PipelineStatus.idle
 
-    @s.update
+    @update
     def F():
       s.F_status = PipelineStatus.idle
 
@@ -92,7 +99,7 @@ class ProcCL( Component ):
 
     s.raw_inst = b32(0)
 
-    @s.update
+    @update
     def DXM():
       s.redirected_pc_DXM = -1
       s.DXM_status = PipelineStatus.idle
@@ -188,7 +195,7 @@ class ProcCL( Component ):
 
     s.rd = b5(0)
 
-    @s.update
+    @update
     def W():
       s.commit_inst = Bits1(0)
       s.W_status = PipelineStatus.idle

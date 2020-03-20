@@ -30,6 +30,7 @@ from .errors import (
     InvalidFuncCallError,
     InvalidIndexError,
     InvalidPlaceholderError,
+    InvalidUpblkWriteError,
     MultiWriterError,
     NotElaboratedError,
     PyMTLDeprecationError,
@@ -41,6 +42,10 @@ from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
 compiled_re = re.compile('( *(@|def))')
+
+def update_ff( blk ):
+  NamedObject._elaborate_stack[-1]._update_ff( blk )
+  return blk
 
 class ComponentLevel2( ComponentLevel1 ):
 
@@ -105,7 +110,7 @@ class ComponentLevel2( ComponentLevel1 ):
     # I refactor the process of materializing objects in this function
     # Pass in the func as well for error message
 
-    def extract_obj_from_names( func, names, update_ff=False ):
+    def extract_obj_from_names( func, names, update_ff=False, is_write=False ):
 
       def expand_array_index( obj, name_depth, node_depth, idx_depth, idx ):
         """ Find s.x[0][*][2], if index is exhausted, jump back to lookup_variable """
@@ -166,7 +171,7 @@ class ComponentLevel2( ComponentLevel1 ):
             Q = [ *obj ] # PEP 448 -- see https://stackoverflow.com/a/43220129/6470797
             while Q:
               m = Q.pop()
-              if isinstance( Q, NamedObject ):
+              if isinstance( m, NamedObject ):
                 objs.add( m )
               elif isinstance( m, list ):
                 Q.extend( m )
@@ -201,7 +206,10 @@ class ComponentLevel2( ComponentLevel1 ):
 
           objs = set()
           lookup_variable( s, 1, 1 )
-          all_objs |= objs
+          for obj in objs:
+            if not isinstance( obj, Signal ) and is_write:
+              raise InvalidUpblkWriteError( s, func, nodelist[0].lineno, obj )
+            all_objs.add( obj )
 
           # Check <<= in update_ff
           if update_ff:
@@ -248,7 +256,7 @@ class ComponentLevel2( ComponentLevel1 ):
     for name, blk in s._dsl.name_upblk.items():
       s._dsl.upblk_reads [ blk ] = extract_obj_from_names( blk, name_rd[ name ] )
       s._dsl.upblk_writes[ blk ] = extract_obj_from_names( blk, name_wr[ name ],
-                                    update_ff = blk in s._dsl.update_ff )
+                                    update_ff = blk in s._dsl.update_ff, is_write=True )
       s._dsl.upblk_calls [ blk ] = extract_obj_from_names( blk, name_fc[ name ] )
 
   # Override
@@ -470,22 +478,20 @@ class ComponentLevel2( ComponentLevel1 ):
     return func
 
   # Override
-  def update( s, blk ):
-    super().update( blk )
+  def _update( s, blk ):
+    super()._update( blk )
 
     s._cache_func_meta( blk, is_update_ff=False ) # add caching of src/ast
-    return blk
 
   def update_on_edge( s, blk ):
     raise PyMTLDeprecationError("\ns.update_on_edge decorator has been deprecated! "
-                                "\n- Please use @s.update_ff instead.")
+                                "\n- Please use @update_ff instead.")
 
-  def update_ff( s, blk ):
-    super().update( blk )
+  def _update_ff( s, blk ):
+    super()._update( blk )
 
     s._dsl.update_ff.add( blk )
     s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
-    return blk
 
   # Override
   def add_constraints( s, *args ): # add RD-U/WR-U constraints

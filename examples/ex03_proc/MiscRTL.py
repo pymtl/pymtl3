@@ -8,15 +8,15 @@ Author : Shunning Jiang
   Date : June 13, 2019
 """
 from pymtl3 import *
-from pymtl3.stdlib.ifcs import RecvIfcRTL, SendIfcRTL
+from pymtl3.stdlib.ifcs import GetIfcRTL, GiveIfcRTL
 from pymtl3.stdlib.rtl import RegRst
 
 from .TinyRV0InstRTL import *
 
 # State Constants
 
-SNOOP = Bits1(0)
-WAIT  = Bits1(1)
+SNOOP = b1(0)
+WAIT  = b1(1)
 
 #-------------------------------------------------------------------------
 # DropUnit
@@ -28,53 +28,50 @@ WAIT  = Bits1(1)
 
 class DropUnitRTL( Component ):
 
-  def construct( s, Type ):
+  def construct( s, dtype ):
 
-    s.drop = InPort( Bits1 )
-    s.in_  = RecvIfcRTL( Type )
-    s.out  = SendIfcRTL( Type )
+    s.drop = InPort()
+    s.in_  = GetIfcRTL( dtype )
+    s.out  = GiveIfcRTL( dtype )
 
-    s.in_.msg //= s.out.msg
+    s.out.ret //= s.in_.ret
 
-    s.snoop_state = RegRst( Bits1, reset_value=0 )
+    s.snoop_state = Wire()
 
-    @s.update
+    #------------------------------------------------------------------
+    # state_transitions
+    #------------------------------------------------------------------
+
+    @update_ff
     def state_transitions():
-      curr_state = s.snoop_state.out
 
-      s.snoop_state.in_ = curr_state
+      if s.reset:
+        s.snoop_state <<= SNOOP
 
-      if s.snoop_state.out == SNOOP:
-        # we wait if we haven't received the response yet
-        if s.drop & (~s.out.rdy | ~s.in_.en):
-          s.snoop_state.in_ = WAIT
+      elif s.snoop_state == SNOOP:
+        if s.drop & ~s.in_.rdy:
+          s.snoop_state <<= WAIT
 
-      elif s.snoop_state.out == WAIT:
-        # we are done waiting if the response arrives
-        if s.in_.en:
-          s.snoop_state.in_ = SNOOP
+      elif s.snoop_state == WAIT:
+        if s.in_.rdy:
+          s.snoop_state <<= SNOOP
 
-    @s.update
-    def state_output_val():
-      if   s.snoop_state.out == SNOOP:
-        s.out.en = s.in_.en & ~s.drop # if in is enabled, s.in_.rdy and s.out.rdy must be True
+    #------------------------------------------------------------------
+    # set_outputs
+    #------------------------------------------------------------------
 
-      elif s.snoop_state.out == WAIT:
-        s.out.en = b1(0)
+    @update
+    def set_outputs():
+      s.out.rdy = b1(0)
+      s.in_.en  = b1(0)
 
-      else:
-        s.out.en = b1(0)
+      if   s.snoop_state == SNOOP:
+        s.out.rdy = s.in_.rdy & ~s.drop
+        s.in_.en  = s.out.en
 
-    @s.update
-    def state_output_rdy():
-      if   s.snoop_state.out == SNOOP:
-        s.in_.rdy = s.out.rdy
-
-      elif s.snoop_state.out == WAIT:
-        s.in_.rdy = b1(1)
-
-      else:
-        s.in_.rdy = b1(1)
+      elif s.snoop_state == WAIT:
+        s.out.rdy = b1(0)
+        s.in_.en  = s.in_.rdy
 
 #-------------------------------------------------------------------------
 # Generate intermediate (imm) based on type
@@ -91,7 +88,7 @@ class ImmGenRTL( Component ):
     s.inst     = InPort( dtype )
     s.imm      = OutPort( dtype )
 
-    @s.update
+    @update
     def up_immgen():
       s.imm = dtype(0)
 
@@ -126,7 +123,7 @@ class AluRTL( Component ):
     s.out      = OutPort( dtype )
     s.ops_ne   = OutPort( Bits1 )
 
-    @s.update
+    @update
     def comb_logic():
       if   s.fn == b4(0): s.out = s.in0               # COPY OP0
       elif s.fn == b4(1): s.out = s.in1               # COPY OP1

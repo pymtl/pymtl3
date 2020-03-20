@@ -7,19 +7,19 @@
 
 import pytest
 
-from pymtl3.passes.backends.sverilog.util.utility import sverilog_reserved
+from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
 from ....testcases import (
     CaseBits32ArraySubCompAttrUpblkComp,
     CaseBits32SubCompAttrUpblkComp,
 )
-from ..YosysBehavioralTranslatorL5 import YosysBehavioralRTLIRToSVVisitorL5
+from ..YosysBehavioralTranslatorL5 import YosysBehavioralRTLIRToVVisitorL5
 
 
 def run_test( case, m ):
   m.elaborate()
-  visitor = YosysBehavioralRTLIRToSVVisitorL5(lambda x: x in sverilog_reserved)
+  visitor = YosysBehavioralRTLIRToVVisitorL5(lambda x: x in verilog_reserved)
 
   m.apply( BehavioralRTLIRGenPass() )
   m.apply( BehavioralRTLIRTypeCheckPass() )
