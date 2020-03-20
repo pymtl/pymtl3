@@ -142,8 +142,8 @@ class VerilatorImportConfigs( BasePassConfigs ):
     "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in VerilogPlaceholderConfigs.Warnings for w in v),
                             "expects a list of warnings" ),
 
-    "vl_xinit": Checker( lambda v: v in ['zeros', 'ones', 'rand'],
-                  "vl_xinit should be one of ['zeros', 'ones', 'rand']" ),
+    "vl_xinit": Checker( lambda v: (v in ['zeros', 'ones', 'rand']) or isinstance(v, int),
+                  "vl_xinit should be an integer or one of ['zeros', 'ones', 'rand']" ),
 
     "vl_trace_timescale": Checker( lambda v: isinstance(v, str) and len(v) > 2 and v[-1] == 's' and \
                                     v[-2] in ['p', 'n', 'u', 'm'] and \
@@ -205,10 +205,16 @@ class VerilatorImportConfigs( BasePassConfigs ):
       return 0
     elif s.vl_xinit == 'ones':
       return 1
-    elif s.vl_xinit == 'rand':
+    elif ( s.vl_xinit == 'rand' ) or isinstance( s.vl_xinit, int ):
       return 2
     else:
-      raise InvalidPassOptionValue("vl_xinit should be one of 'zeros', 'ones', or 'rand'!")
+      raise InvalidPassOptionValue("vl_xinit should be an int or one of 'zeros', 'ones', or 'rand'!")
+
+  def get_vl_xinit_seed( s ):
+    if isinstance( s.vl_xinit, int ):
+      return s.vl_xinit
+    else:
+      return 0
 
   def get_c_wrapper_path( s ):
     return f'{s.translated_top_module}_v.cpp'

@@ -234,6 +234,7 @@ class VerilatorImportPass( BasePass ):
     external_trace = int(ip_cfg.vl_line_trace)
     wrapper_name = ip_cfg.get_c_wrapper_path()
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
+    verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 
     # The wrapper template should be in the same directory as this file
