@@ -1,4 +1,4 @@
-module VUninit(
+module test_VUninit(
   input  logic          clk,
   input  logic          reset,
   output logic [32-1:0] q,

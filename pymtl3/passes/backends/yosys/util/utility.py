@@ -26,7 +26,7 @@ def get_rtype( _rtype ):
 # gen_mapped_ports
 #-----------------------------------------------------------------------
 
-def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
+def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
   """Return a list of (pname, vname, rt.Port/rt.Array ) that has all ports
   of `rtype`. This method performs SystemVerilog backend-specific name
   mangling and returns all ports that appear in the interface of component
@@ -46,7 +46,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
   def _mangle_struct( pname, vname, port, dtype, port_idx ):
     ret = []
     for field_name, field_dtype in dtype.get_all_properties().items():
-      ret += _mangle_dtype(f"{pname}.{field_name}", f"{vname}__{field_name}",
+      ret += _mangle_dtype(f"{pname}.{field_name}", f"{vname}{sep}{field_name}",
                            port, field_dtype, port_idx)
     return ret
 
@@ -56,7 +56,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += _mangle_packed( f"{pname}[{i}]", f"{vname}__{i}", port, dtype, n_dim[1:], port_idx )
+        ret += _mangle_packed( f"{pname}[{i}]", f"{vname}{sep}{i}", port, dtype, n_dim[1:], port_idx )
       return ret
 
   def _mangle_dtype( pname, vname, port, dtype, port_idx ):
@@ -80,7 +80,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
     else:
       ret = []
       for i in range(n_dim[0]):
-        ret += _mangle_port(f"{pname}[{i}]", f"{vname}__{i}", port, n_dim[1:], port_idx)
+        ret += _mangle_port(f"{pname}[{i}]", f"{vname}{sep}{i}", port, n_dim[1:], port_idx)
       return ret
 
   def _mangle_ifc( pname, vname, ifc, n_dim, port_idx ):
@@ -89,16 +89,16 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
       for port_name, port_rtype in ifc.get_all_properties_packed():
         port_n_dim, port_rtype = get_rtype( port_rtype )
         if isinstance(port_rtype, rt.InterfaceView):
-          ret += _mangle_ifc(f"{pname}.{port_name}", f"{vname}__{port_name}",
+          ret += _mangle_ifc(f"{pname}.{port_name}", f"{vname}{sep}{port_name}",
                               port_rtype, port_n_dim, port_idx)
         elif isinstance(port_rtype, rt.Port):
-          ret += _mangle_port(f"{pname}.{port_name}", f"{vname}__{port_name}",
+          ret += _mangle_port(f"{pname}.{port_name}", f"{vname}{sep}{port_name}",
                               port_rtype, port_n_dim, port_idx)
         else:
           assert False, "unrecognized interface/port {port_rtype}!"
     else:
       for i in range(n_dim[0]):
-        ret += _mangle_ifc(f"{pname}[{i}]", f"{vname}__{i}", ifc, n_dim[1:], port_idx+1)
+        ret += _mangle_ifc(f"{pname}[{i}]", f"{vname}{sep}{i}", ifc, n_dim[1:], port_idx+1)
     return ret
 
   # We start from all packed ports/interfaces, and unpack arrays if

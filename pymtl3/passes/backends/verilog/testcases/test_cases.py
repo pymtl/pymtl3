@@ -13,7 +13,7 @@ from textwrap import dedent
 
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
 from pymtl3 import *
-from pymtl3.passes.backends.verilog import VerilogPlaceholderConfigs
+from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,
@@ -84,11 +84,8 @@ class Bits32VRegComp( Placeholder, Component ):
   def construct( s ):
     s.d = InPort( Bits32 )
     s.q = OutPort( Bits32 )
-
-    s.config_placeholder = VerilogPlaceholderConfigs(
-        src_file = dirname(__file__) + '/VReg.v',
-        top_module = 'VReg',
-    )
+    s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
+    s.set_metadata( VerilogPlaceholderPass.top_module, 'VReg' )
 
 class CasePlaceholderTranslationVReg:
   DUT = Bits32VRegComp

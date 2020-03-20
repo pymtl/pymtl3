@@ -14,7 +14,13 @@ from pymtl3.datatypes import Bits1
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
-from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
+from .errors import (
+    InvalidAPICallError,
+    InvalidConnectionError,
+    NotElaboratedError,
+    UnsetMetadataError,
+)
+from .MetadataKey import MetadataKey
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
@@ -425,6 +431,25 @@ class Component( ComponentLevel7 ):
       # pypyjit.set_param("default")
     # except:
       # pass
+
+  #-----------------------------------------------------------------------
+  # Public APIs (can be called either before or after elaboration)
+  #-----------------------------------------------------------------------
+
+  """ Metadata APIs """
+
+  def set_metadata( s, key, value ):
+    s._metadata[ key ] = value
+
+  def has_metadata( s, key ):
+    assert isinstance( key, MetadataKey ), \
+        f'the given object {key} is not a MetadataKey!'
+    return key in s._metadata
+
+  def get_metadata( s, key ):
+    if not s.has_metadata( key ):
+      raise UnsetMetadataError( key, s )
+    return s._metadata[ key ]
 
   #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)

@@ -1,4 +1,4 @@
-module VPassThrough
+module test_VPassThrough
 #(
   parameter num_ports = 2,
   parameter bitwidth  = 32

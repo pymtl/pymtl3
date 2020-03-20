@@ -1,8 +1,7 @@
 #=========================================================================
 # TranslationImportPass.py
 #=========================================================================
-# Translate and import components having the `yosys_translate_import`
-# attribute.
+# Translate and import components in the given hierarchy.
 #
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
@@ -17,20 +16,10 @@ from .translation.TranslationPass import TranslationPass
 
 class TranslationImportPass( VerilogTranslationImportPass ):
 
-  def get_translation_pass( s ):
-    return TranslationPass()
+  @staticmethod
+  def get_translation_pass():
+    return TranslationPass
 
-  def get_import_pass( s ):
-    return VerilatorImportPass()
-
-  def get_flag_name( s ):
-    return "yosys_translate_import"
-
-  def get_translation_flag_name( s ):
-    return "yosys_translate"
-
-  def get_import_flag_name( s ):
-    return "config_yosys_import"
-
-  def get_translation_pass_namespace( s ):
-    return "_pass_yosys_translation"
+  @staticmethod
+  def get_import_pass():
+    return VerilatorImportPass

@@ -22,8 +22,9 @@ from .dsl.Connectable import (
     Wire,
 )
 from .dsl.ConstraintTypes import RD, WR, M, U
+from .dsl.MetadataKey import MetadataKey
 from .dsl.Placeholder import Placeholder
-from .passes import TracingConfigs, TranslationConfigs, VerilatorImportConfigs
+from .passes import TracingConfigs
 from .passes.backends.verilog import TranslationImportPass, VerilatorImportPass
 from .passes.PassGroups import SimulationPass
 
@@ -38,7 +39,6 @@ __all__ = [
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
 
   'SimulationPass', 'TracingConfigs', 'TranslationImportPass', 'VerilatorImportPass',
-  'VerilatorImportConfigs', 'TranslationConfigs',
   'Component', 'Placeholder',
 
   'sext', 'zext', 'clog2', 'concat', 'reduce_and', 'reduce_or', 'reduce_xor',

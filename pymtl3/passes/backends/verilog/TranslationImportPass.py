@@ -1,12 +1,12 @@
 #=========================================================================
 # TranslationImportPass.py
 #=========================================================================
-# Translate and import components having the `verilog_translate_import`
-# attribute.
+# Translate and import components in the given hierarhcy.
 #
 # Author : Peitian Pan
 # Date   : Aug 6, 2019
 
+from pymtl3 import MetadataKey, Placeholder
 from pymtl3.passes.BasePass import BasePass
 
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
@@ -14,80 +14,80 @@ from .import_.VerilatorImportPass import VerilatorImportPass
 from .translation.TranslationConfigs import TranslationConfigs
 from .translation.TranslationPass import TranslationPass
 from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
+from .VerilogPlaceholderPass import VerilogPlaceholderPass
 
 
 class TranslationImportPass( BasePass ):
 
+  enable = MetadataKey()
+
   def __call__( s, top ):
+    c = s.__class__
     s.top = top
     s.traverse_hierarchy( top )
-    top.apply( s.get_translation_pass() )
+    top.apply( c.get_translation_pass()() )
     s.add_placeholder_marks( top )
-    return s.get_import_pass()( top )
+    return c.get_import_pass()()( top )
 
   def traverse_hierarchy( s, m ):
-    search_subtree = True
+    c = s.__class__
 
     # Found a subtree that is marked as to be translated and imported
-    if hasattr(m, s.get_flag_name()) and getattr(m, s.get_flag_name()):
+    if ( m.has_metadata( c.enable ) and m.get_metadata( c.enable ) ) or \
+      isinstance( m, Placeholder ):
 
-      # Use default translation config if it is missing
-      if not hasattr(m, s.get_translation_flag_name()):
-        setattr(m, s.get_translation_flag_name(), s.get_translation_configs())
+      # Make sure the translation pass is enabled
+      m.set_metadata( c.get_translation_pass().enable, True )
 
-      # Assert that this instance should be translated
-      getattr(m, s.get_translation_flag_name()).translate = True
+      # Make sure the import pass is enabled
+      m.set_metadata( c.get_import_pass().enable, True )
 
-      if not hasattr(m, s.get_import_flag_name()):
-        setattr(m, s.get_import_flag_name(), s.get_import_configs())
-
-      search_subtree = False
-
-    if search_subtree:
+    else:
       for child in m.get_child_components():
         s.traverse_hierarchy( child )
 
   def add_placeholder_marks( s, m ):
+    c = s.__class__
+
     # TODO: what we really want is to generate placeholders for components
-    # to be translated and imported. Right now we simply attach the placeholder
-    # and import configs to the components.
-    if hasattr( m, s.get_flag_name() ) and getattr( m, s.get_flag_name() ):
+    # to be translated and imported.
+    if ( m.has_metadata( c.enable ) and m.get_metadata( c.enable ) ) or \
+      isinstance( m, Placeholder ):
 
-      if not hasattr( m, 'config_placeholder' ):
-        m.config_placeholder = VerilogPlaceholderConfigs()
-      if not hasattr( m, s.get_import_flag_name() ):
-        m.config_verilog_import = VerilatorImportConfigs()
+      # Component m will look as if it has applied the Placeholder pass.
+      # It will have the output pass data placeholder_config
 
-      m.config_placeholder.pickled_dependency_file = None
-      m.config_placeholder.pickled_wrapper_file = \
-          getattr(m, s.get_translation_pass_namespace()).translated_filename
-      m.config_placeholder.pickled_top_module = \
-          getattr(m, s.get_translation_pass_namespace()).translated_top_module
+      placeholder_pass = c.get_placeholder_pass()
+      translation_pass = c.get_translation_pass()
+      m.set_metadata( placeholder_pass.enable, True )
+
+      if m.has_metadata( placeholder_pass.placeholder_config ):
+        placeholder_config = m.get_metadata( placeholder_pass.placeholder_config )
+      else:
+        placeholder_config = c.get_placeholder_config()( m )
+
+      placeholder_config.pickled_source_file = \
+          m.get_metadata( translation_pass.translated_filename )
+      placeholder_config.pickled_top_module = \
+          m.get_metadata( translation_pass.translated_top_module )
+      m.set_metadata( placeholder_pass.placeholder_config, placeholder_config )
 
     else:
       for child in m.get_child_components():
         s.add_placeholder_marks( child )
 
-  def get_translation_pass( s ):
-    return TranslationPass()
+  @staticmethod
+  def get_translation_pass():
+    return TranslationPass
 
-  def get_import_pass( s ):
-    return VerilatorImportPass()
+  @staticmethod
+  def get_import_pass():
+    return VerilatorImportPass
 
-  def get_flag_name( s ):
-    return "verilog_translate_import"
+  @staticmethod
+  def get_placeholder_pass():
+    return VerilogPlaceholderPass
 
-  def get_translation_flag_name( s ):
-    return "config_verilog_translate"
-
-  def get_translation_pass_namespace( s ):
-    return "_pass_verilog_translation"
-
-  def get_import_flag_name( s ):
-    return "config_verilog_import"
-
-  def get_translation_configs( s ):
-    return TranslationConfigs()
-
-  def get_import_configs( s ):
-    return VerilatorImportConfigs(vl_Wno_list=['UNOPTFLAT', 'UNSIGNED', 'WIDTH'])
+  @staticmethod
+  def get_placeholder_config():
+    return VerilogPlaceholderConfigs
