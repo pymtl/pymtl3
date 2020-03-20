@@ -1,5 +1,6 @@
 from .import_.VerilatorImportConfigs import VerilatorImportConfigs
 from .import_.VerilatorImportPass import VerilatorImportPass
+from .tbgen.VerilogTBGenPass import VerilogTBGenPass
 from .translation.TranslationConfigs import TranslationConfigs
 from .translation.TranslationPass import TranslationPass
 from .TranslationImportPass import TranslationImportPass

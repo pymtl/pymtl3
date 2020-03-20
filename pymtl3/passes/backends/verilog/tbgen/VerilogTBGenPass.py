@@ -1,9 +1,8 @@
 #=========================================================================
-# ImportPass.py
+# VerilogTBGenPass.py
 #=========================================================================
-# Author : Peitian Pan
-# Date   : May 25, 2019
-"""Provide a pass that imports arbitrary SystemVerilog modules."""
+# Author : Shunning Jiang
+# Date   : Mar 18, 2020
 
 import copy
 import importlib
@@ -34,196 +33,59 @@ from ..util.utility import (
     make_indent,
     wrap,
 )
-from .VerilatorImportConfigs import VerilatorImportConfigs
 
+class VerilogTBGenPass( BasePass ):
+  """ We only generate TB if it is imported or translation-imported """
 
-class VerilatorImportPass( BasePass ):
-  """Import an arbitrary SystemVerilog module as a PyMTL component.
-
-  The import pass takes as input a PyMTL component hierarchy where
-  the components to be imported have an `import` entry in their parameter
-  dictionary( set by calling the `set_parameter` PyMTL API ).
-  This pass assumes the modules to be imported are located in the current
-  directory and have name {full_name}.v where `full_name` is the name of
-  component's class concatanated with the list of arguments of its construct
-  method. It has the following format:
-      > {module_name}[__{parameter_name}_{parameter_value}]*
-  As an example, component mux created through `mux = Mux(Bits32, 2)` has a
-  full name `Mux__Type_Bits32__ninputs_2`.
-  The top module inside the target .v file should also have a full name.
-  """
-  def __call__( s, top ):
-    s.top = top
+  def __call__( self, top ):
     if not top._dsl.constructed:
       raise VerilogImportError( top,
         f"please elaborate design {top} before applying the import pass!" )
-    ret = s.traverse_hierarchy( top )
-    if ret is None:
-      ret = top
-    else:
-      ret.elaborate()
-    return ret
 
-  def traverse_hierarchy( s, m ):
-    # Import can only be performed on Placeholders
-    if hasattr(m, 'config_placeholder') and m.config_placeholder.is_valid:
-      if not hasattr(m, s.get_config_name()):
-        setattr(m, s.get_config_name(), VerilatorImportConfigs())
-      return s.do_import( m )
+    tbgen_components = []
+    self.traverse_hierarchy( top, tbgen_components )
 
+    for x in tbgen_components:
+      if hasattr( x, 'config_placeholder') and x.config_placeholder.is_valid:
+        ph_cfg = x.config_placeholder
+        port_map, has_clk, has_reset = ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset
+      else:
+        port_map, has_clk, has_reset = lambda x:x, True, True
+
+      rtype = get_component_ifc_rtlir( x )
+      print(gen_mapped_ports(x, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset ))
+
+  def traverse_hierarchy( self, m, ret ):
+    if hasattr(m, 'verilog_tbgen'):
+      ret.append(m)
     else:
       for child in m.get_child_components():
-        s.traverse_hierarchy( child )
+        self.traverse_hierarchy( child, ret )
 
-  def do_import( s, m ):
-    try:
-      imp = s.get_imported_object( m )
-      if m is s.top:
-        return imp
-      else:
-        s.top.replace_component_with_obj( m, imp )
-    except AssertionError as e:
-      msg = '' if e.args[0] is None else e.args[0]
-      raise VerilogImportError( m, msg )
 
-  #-----------------------------------------------------------------------
-  # Backend-specific methods
-  #-----------------------------------------------------------------------
+  def gen_dump_tb( self, top, component ):
 
-  def get_backend_name( s ):
-    return "verilog"
+    strs = {
+      'args_strs': '',
+      'harness_name':'',
+      'clk_decl': '',
+      'reset_decl': '',
+      'signal_decls': '',
+      'task_signal_decls': '',
+      'dut_clk_decl': '',
+      'dut_reset_decl': '',
+      'dut_signal_decls': '',
+      'clk_signal_name': '',
+      'reset_signal_name': '',
+    }
 
-  def get_config_name( s ):
-    return "config_verilog_import"
 
-  def get_placeholder_config( s, m ):
-    return m.config_placeholder
-
-  def get_config( s, m ):
-    return m.config_verilog_import
-
-  def get_translation_namespace( s, m ):
-    return m._pass_verilog_translation
-
-  def get_gen_mapped_port( s ):
-    return gen_mapped_ports
-
-  #-----------------------------------------------------------------------
-  # is_cached
-  #-----------------------------------------------------------------------
-
-  def is_cached( s, m, ip_cfg ):
-    # Only components translated by pymtl translation passes will be cached
-    try:
-      is_same = s.get_translation_namespace(m).is_same
-    except AttributeError:
-      is_same = False
-
-    # Check if the verilated model is cached
-    is_source_cached = False
-    obj_dir = ip_cfg.vl_mk_dir
-    c_wrapper = ip_cfg.get_c_wrapper_path()
-    py_wrapper = ip_cfg.get_py_wrapper_path()
-    shared_lib = ip_cfg.get_shared_lib_path()
-    if is_same and os.path.exists(obj_dir) and os.path.exists(c_wrapper) and \
-       os.path.exists(py_wrapper) and os.path.exists(shared_lib):
-      is_source_cached = True
-
-    # Check if the configurations from the last run are the same
-    is_config_cached = False
-    config_file = f'pymtl_import_config_{ip_cfg.translated_top_module}.json'
-    new_cfg = s.serialize_cfg( ip_cfg )
-    if os.path.exists(config_file):
-      with open(config_file) as fd:
-        if s.is_same_cfg( json.load( fd ), new_cfg ):
-          is_config_cached = True
-
-    return is_source_cached and is_config_cached, config_file, new_cfg
-
-  #-----------------------------------------------------------------------
-  # get_imported_object
-  #-----------------------------------------------------------------------
-
-  def get_imported_object( s, m ):
-    ph_cfg = s.get_placeholder_config( m )
-    ip_cfg = s.get_config( m )
-    ip_cfg.setup_configs( m, s.get_translation_namespace(m) )
-
-    rtype = get_component_ifc_rtlir( m )
-
-    # Now we selectively unpack array of ports if they are referred to in
-    # port_map
-    ports = s.get_gen_mapped_port()( m, ph_cfg.port_map, ph_cfg.has_clk, ph_cfg.has_reset )
-
-    cached, config_file, cfg_d = s.is_cached( m, ip_cfg )
-
-    s.create_verilator_model( m, ph_cfg, ip_cfg, cached )
-
-    port_cdefs = s.create_verilator_c_wrapper( m, ph_cfg, ip_cfg, ports, cached )
-
-    s.create_shared_lib( m, ph_cfg, ip_cfg, cached )
-
-    symbols = s.create_py_wrapper( m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached )
-
-    imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
-
-    imp.config_placeholder = s.get_placeholder_config(m) # copy the port maps over
-
-    # Dump configuration dict to config_file
-    with open( config_file, 'w' ) as fd:
-      json.dump( cfg_d, fd, indent = 4 )
-
-    return imp
-
-  #-----------------------------------------------------------------------
-  # create_verilator_model
-  #-----------------------------------------------------------------------
-
-  def create_verilator_model( s, m, ph_cfg, ip_cfg, cached ):
-    """Verilate module `m`."""
-    ip_cfg.vprint("\n=====Verilate model=====")
-
-    if not cached:
-      # Generate verilator command
-      cmd = ip_cfg.create_vl_cmd()
-
-      # Remove obj_dir directory if it already exists.
-      # obj_dir is where the verilator output ( C headers and sources ) is stored
-      obj_dir = ip_cfg.vl_mk_dir
-      if os.path.exists( obj_dir ):
-        shutil.rmtree( obj_dir )
-
-      succeeds = True
-
-      # Try to call verilator
-      try:
-        ip_cfg.vprint(f"Verilating {ip_cfg.translated_top_module} with command:", 2)
-        ip_cfg.vprint(f"{cmd}", 4)
-        subprocess.check_output(
-            cmd, stderr = subprocess.STDOUT, shell = True )
-      except subprocess.CalledProcessError as e:
-        succeeds = False
-        err_msg = e.output if not isinstance(e.output, bytes) else \
-                  e.output.decode('utf-8')
-        import_err_msg = \
-            f"Fail to verilate model {ip_cfg.translated_top_module}\n"\
-            f"  Verilator command:\n{indent(cmd, '  ')}\n\n"\
-            f"  Verilator output:\n{indent(wrap(err_msg), '  ')}\n"
-
-      if not succeeds:
-        raise VerilogImportError(m, import_err_msg)
-
-      ip_cfg.vprint(f"Successfully verilated the given model!", 2)
-
-    else:
-      ip_cfg.vprint(f"{ip_cfg.translated_top_module} not verilated because it's cached!", 2)
 
   #-----------------------------------------------------------------------
   # create_verilator_c_wrapper
   #-----------------------------------------------------------------------
 
-  def create_verilator_c_wrapper(
-      s, m, ph_cfg, ip_cfg, ports, cached ):
+  def create_verilator_c_wrapper( s, m, ph_cfg, ip_cfg, ports, cached ):
     """Return the file name of generated C component wrapper.
 
     Create a C wrapper that calls verilator C API and provides interfaces
@@ -236,13 +98,11 @@ class VerilatorImportPass( BasePass ):
     external_trace = int(ip_cfg.vl_line_trace)
     wrapper_name = ip_cfg.get_c_wrapper_path()
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
-    verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 
     # The wrapper template should be in the same directory as this file
-    template_name = \
-      os.path.dirname( os.path.abspath( __file__ ) ) + \
-      os.path.sep + 'verilator_wrapper.c.template'
+    tb_name = os.path.dirname( os.path.abspath( __file__ ) ) + os.path.sep + \
+              f'{component_name}_tb.v'
 
     # Generate port declarations for the verilated model in C
     port_defs = []
@@ -270,120 +130,6 @@ class VerilatorImportPass( BasePass ):
 
     ip_cfg.vprint(f"Successfully generated C wrapper {wrapper_name}!", 2)
     return port_cdefs
-
-  #-----------------------------------------------------------------------
-  # create_shared_lib
-  #-----------------------------------------------------------------------
-
-  def create_shared_lib( s, m, ph_cfg, ip_cfg, cached ):
-    """Return the name of compiled shared lib."""
-    full_name = ip_cfg.translated_top_module
-    dump_vcd = ip_cfg.vl_trace
-    ip_cfg.vprint("\n=====Compile shared library=====")
-
-    if not cached:
-      cmd = ip_cfg.create_cc_cmd()
-
-      succeeds = True
-
-      # Try to call the C compiler
-      try:
-        ip_cfg.vprint("Compiling shared library with command:", 2)
-        ip_cfg.vprint(f"{cmd}", 4)
-        subprocess.check_output(
-            cmd,
-            stderr = subprocess.STDOUT,
-            shell = True,
-            universal_newlines = True
-        )
-      except subprocess.CalledProcessError as e:
-        succeeds = False
-        err_msg = e.output if not isinstance(e.output, bytes) else \
-                  e.output.decode('utf-8')
-        import_err_msg = \
-            f"Failed to compile Verilated model into a shared library:\n"\
-            f"  C compiler command:\n{indent(cmd, '  ')}\n\n"\
-            f"  C compiler output:\n{indent(wrap(err_msg), '  ')}\n"
-
-      if not succeeds:
-        raise VerilogImportError(m, import_err_msg)
-
-      ip_cfg.vprint(f"Successfully compiled shared library "\
-                    f"{ip_cfg.get_shared_lib_path()}!", 2)
-
-    else:
-      ip_cfg.vprint(f"Didn't compile shared library because it's cached!", 2)
-
-  #-----------------------------------------------------------------------
-  # create_py_wrapper
-  #-----------------------------------------------------------------------
-
-  def create_py_wrapper(
-      s, m, ph_cfg, ip_cfg, rtype, ports, port_cdefs, cached ):
-    """Return the file name of the generated PyMTL component wrapper."""
-    ip_cfg.vprint("\n=====Generate PyMTL wrapper=====")
-
-    # Load the wrapper template
-    template_name = \
-      os.path.dirname( os.path.abspath( __file__ ) ) + \
-      os.path.sep + 'verilator_wrapper.py.template'
-    wrapper_name = ip_cfg.get_py_wrapper_path()
-
-    # Port definitions of verilated model
-    make_indent( port_cdefs, 4 )
-
-    # Port definition in PyMTL style
-    symbols, port_defs = s.gen_signal_decl_py( rtype )
-    make_indent( port_defs, 2 )
-
-    # Set upblk inputs and outputs
-    set_comb_input, structs_input   = s.gen_comb_input( ports, symbols )
-    set_comb_output, structs_output = s.gen_comb_output( ports, symbols )
-    make_indent( structs_input, 2 )
-    make_indent( structs_output, 2 )
-    make_indent( set_comb_input, 3 )
-    make_indent( set_comb_output, 3 )
-
-    # Line trace
-    line_trace = s.gen_line_trace_py( ports )
-
-    # Internal line trace
-    in_line_trace = s.gen_internal_line_trace_py( ports )
-
-    # External trace function definition
-    if ip_cfg.vl_line_trace:
-      external_trace_c_def = f'void trace( V{ip_cfg.translated_top_module}_t *, char * );'
-    else:
-      external_trace_c_def = ''
-
-    # Fill in the python wrapper template
-    with open(template_name) as template:
-      with open( wrapper_name, 'w' ) as output:
-        py_wrapper = template.read()
-        py_wrapper = py_wrapper.format(
-          component_name        = ip_cfg.translated_top_module,
-          has_clk               = int(ph_cfg.has_clk),
-          clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                  next(filter(lambda x: x[0][0]=='clk', ports))[1],
-          lib_file              = ip_cfg.get_shared_lib_path(),
-          port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
-          port_defs             = '\n'.join( port_defs ),
-          structs_input         = '\n'.join( structs_input ),
-          structs_output        = '\n'.join( structs_output ),
-          set_comb_input        = '\n'.join( set_comb_input ),
-          set_comb_output       = '\n'.join( set_comb_output ),
-          line_trace            = line_trace,
-          in_line_trace         = in_line_trace,
-          dump_vcd              = int(ip_cfg.vl_trace),
-          has_vl_trace_filename = bool(ip_cfg.vl_trace_filename),
-          vl_trace_filename     = ip_cfg.vl_trace_filename,
-          external_trace        = int(ip_cfg.vl_line_trace),
-          trace_c_def           = external_trace_c_def,
-        )
-        output.write( py_wrapper )
-
-    ip_cfg.vprint(f"Successfully generated PyMTL wrapper {wrapper_name}!", 2)
-    return symbols
 
   #-----------------------------------------------------------------------
   # import_component
@@ -431,33 +177,6 @@ class VerilatorImportPass( BasePass ):
 
     ip_cfg.vprint("Import succeeds!")
     return imp
-
-  #-------------------------------------------------------------------------
-  # Serialize and compare configurations
-  #-------------------------------------------------------------------------
-
-  def serialize_cfg( s, ip_cfg ):
-    d = {}
-    s._volatile_configs = [
-      'vl_line_trace', 'vl_coverage', 'vl_line_coverage', 'vl_toggle_coverage',
-      'vl_mk_dir', 'vl_enable_assert', 'vl_opt_level',
-      'vl_unroll_count', 'vl_unroll_stmts',
-      'vl_W_lint', 'vl_W_style', 'vl_W_fatal', 'vl_Wno_list',
-      'vl_xinit', 'vl_trace',
-      'vl_trace_timescale', 'vl_trace_cycle_time',
-      'c_flags', 'c_include_path', 'c_srcs',
-      'ld_flags', 'ld_libs',
-    ]
-    d['ImportPassName'] = 'VerilatorImportPass'
-    for cfg in s._volatile_configs:
-      d[cfg] = copy.deepcopy(getattr( ip_cfg, cfg ))
-
-    return d
-
-  def is_same_cfg( s, prev, new ):
-    _volatile_configs = copy.copy(s._volatile_configs)
-    _volatile_configs.append('ImportPassName')
-    return all(prev[cfg] == new[cfg] for cfg in _volatile_configs)
 
   #-------------------------------------------------------------------------
   # gen_signal_decl_c

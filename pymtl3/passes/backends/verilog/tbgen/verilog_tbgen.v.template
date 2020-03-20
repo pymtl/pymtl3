@@ -1,0 +1,52 @@
+`define HOLD_TIME 1
+`define INTRA_CYCLE_TIME 2
+`define SETUP_TIME 1
+`define CYCLE_TIME (`HOLD_TIME+`INTRA_CYCLE_TIME+`SETUP_TIME)
+
+`timescale 1ns/1ns
+
+`define Test({args_strs}) t({args_strs},`__LINE__)
+
+module {harness_name};
+  {clk_decl}
+  {reset_decl}
+
+  {signal_decls}
+
+  task t(
+    {task_signal_decls}
+    integer lineno
+  );
+  begin
+    {task_assign_strs}
+    #`INTRA_CYCLE_TIME;
+    {task_check_strs}
+    #(`SETUP_TIME+`HOLD_TIME);
+  end
+  endtask
+
+  // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
+  always #(`CYCLE_TIME/2) {clk_signal_name} = ~{clk_signal_name};
+
+  {dut_name} DUT
+  (
+    {dut_clk_decl},
+    {dut_reset_decl},
+    {dut_signal_decls}
+  );
+
+  initial begin
+    {reset_signal_name} = 1'b0; // TODO reset active low/high
+    #`HOLD_TIME;
+    {reset_signal_name} = 1'b1;
+    #`CYCLE_TIME;
+    #`CYCLE_TIME;
+    // 2 cycles plus hold
+
+    {reset_signal_name} = 1'b0;
+
+    {test_cases_strs}
+
+    $finish;
+  end
+endmodule
