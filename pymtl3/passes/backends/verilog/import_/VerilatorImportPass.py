@@ -167,7 +167,10 @@ class VerilatorImportPass( BasePass ):
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
-    imp.config_placeholder = s.get_placeholder_config(m) # copy the port maps over
+    imp._ip_cfg = ip_cfg
+    imp._ph_cfg = ph_cfg
+    imp._ports = ports
+    imp._rtype = rtype
 
     # Dump configuration dict to config_file
     with open( config_file, 'w' ) as fd:

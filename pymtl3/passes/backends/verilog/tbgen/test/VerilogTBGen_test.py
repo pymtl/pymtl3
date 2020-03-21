@@ -23,6 +23,7 @@ from pymtl3.passes.backends.verilog import (
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
 
+from ...testcases import CaseConnectArrayBits32FooIfcComp
 
 def local_do_test( _m ):
   _m.elaborate()
@@ -82,3 +83,21 @@ def test_normal_queue( do_test ):
   q._tv_out = tv_out
   do_test( q )
 
+def test_CaseConnectArrayBits32FooIfcComp():
+  case = CaseConnectArrayBits32FooIfcComp
+  try:
+    _m = case.DUT()
+    _m.elaborate()
+    _m.verilog_translate_import = True
+    _m.apply( VerilogPlaceholderPass() )
+    m = TranslationImportPass()( _m )
+    m.verilog_tbgen = True
+    m.apply( VerilogTBGenPass() )
+    sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
+    sim.run_test()
+  finally:
+    try:
+      m.finalize()
+    except UnboundLocalError:
+      # This test fails due to translation errors
+      pass

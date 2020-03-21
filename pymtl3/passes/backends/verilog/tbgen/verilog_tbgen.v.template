@@ -5,47 +5,53 @@
 
 `timescale 1ns/1ns
 
-`define Test({args_strs}) t({args_strs},`__LINE__)
+`define T({args_strs}) t({args_strs},`__LINE__)
+
+`define ERR(lineno, out, ref, name) \
+  if (out != ref) begin
+    $display("In cycle %0d, signal %s has value 0x%x, expects 0x%x", lineno, out, ref, name);
+    $finish;
+  end
 
 module {harness_name};
-  {clk_decl}
-  {reset_decl}
+  // convention
+  logic clk;
+  logic reset;
 
-  {signal_decls}
+  {signal_decls};
 
   task t(
-    {task_signal_decls}
+    {task_signal_decls},
     integer lineno
   );
   begin
-    {task_assign_strs}
+    {task_assign_strs};
     #`INTRA_CYCLE_TIME;
-    {task_check_strs}
+    {task_check_strs};
     #(`SETUP_TIME+`HOLD_TIME);
   end
   endtask
 
   // use 25% clock cycle, so #1 for setup #2 for sim #1 for hold
-  always #(`CYCLE_TIME/2) {clk_signal_name} = ~{clk_signal_name};
+  always #(`CYCLE_TIME/2) clk = ~clk;
 
   {dut_name} DUT
   (
     {dut_clk_decl},
     {dut_reset_decl},
-    {dut_signal_decls}
+    {dut_signal_decls},
   );
 
   initial begin
-    {reset_signal_name} = 1'b0; // TODO reset active low/high
+    reset = 1'b0; // TODO reset active low/high
     #`HOLD_TIME;
-    {reset_signal_name} = 1'b1;
+    reset = 1'b1;
     #`CYCLE_TIME;
     #`CYCLE_TIME;
     // 2 cycles plus hold
+    reset = 1'b0;
 
-    {reset_signal_name} = 1'b0;
-
-    {test_cases_strs}
+    `include "{test_cases_file_name}.v.cases"
 
     $finish;
   end
