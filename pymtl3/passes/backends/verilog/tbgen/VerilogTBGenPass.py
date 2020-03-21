@@ -43,7 +43,7 @@ class VerilogTBGenPass( BasePass ):
         tbgen_components.append(m)
       else:
         for child in m.get_child_components():
-          self.traverse_hierarchy( child )
+          traverse_hierarchy( child )
 
     traverse_hierarchy( top )
 
@@ -121,17 +121,18 @@ class VerilogTBGenPass( BasePass ):
           output.write( template.format( **strs ) )
 
       case_file = open( dut_name + "_tb.v.cases", "w" )
-      top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, py_signal_order, case_file ) )
+      top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )
 
   @staticmethod
-  def gen_hook_func( top, ports, case_file ):
-    port_srcs = [ f"{{hex(int(to_bits(top.{p})))}}" for p in ports ]
+  def gen_hook_func( top, x, ports, case_file ):
+    port_srcs = [ f"'h{{str(to_bits(x.{p}))}}" for p in ports ]
 
     src =  """
 def dump_case():
-  print(f"`T({});", file=case_file)
+  if top.simulated_cycles >= 2: # skip reset
+    print(f"`T({});", file=case_file)
 """.format( ",".join(port_srcs) )
     _locals = {}
-    custom_exec( py.code.Source(src).compile(), {'top': top, 'to_bits': to_bits, 'case_file':case_file}, _locals)
+    custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'to_bits': to_bits, 'case_file': case_file}, _locals)
     return _locals['dump_case']
 

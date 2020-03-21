@@ -12,7 +12,9 @@
   if (out != ref) begin \
     $display("In cycle %0d, signal %s has value 0x%x, expects 0x%x", lineno, name, out, ref); \
     $finish; \
-  end
+  end else \
+    $display("Signal %s in cycle %0d passed",name, lineno);
+
 
 module {harness_name};
   // convention
