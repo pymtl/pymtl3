@@ -153,7 +153,7 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     cfg.orig_comp_name = orig_comp_name
     cfg.pickle_dependency = pickle_dependency
 
-    with open( pickled_source_file, 'w' ) as fd:
+    with open( pickled_source_file, 'w', encoding='utf-8' ) as fd:
       fd.write( pickle_template.format( **locals() ) )
 
   def _get_dependent_verilog_modules( s, m, cfg, irepr ):
@@ -249,7 +249,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
 
   def _output_verilog_file( s, include_path, verilog_file ):
     code = ""
-    with open( verilog_file, 'r' ) as fp:
+    with open( verilog_file, 'r', encoding='utf-8' ) as fp:
+      print(fp)
 
       short_verilog_file = verilog_file
       if verilog_file.startswith( include_path+"/" ):

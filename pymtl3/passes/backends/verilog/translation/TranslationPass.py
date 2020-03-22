@@ -70,7 +70,7 @@ def mk_TranslationPass( _VTranslator ):
 
         # First write the file to a temporary file
         m._pass_verilog_translation.is_same = False
-        with open( temporary_file, 'w' ) as output:
+        with open( temporary_file, 'w', encoding='utf-8' ) as output:
           output.write( s.translator.hierarchy.src )
           output.flush()
           os.fsync( output )
