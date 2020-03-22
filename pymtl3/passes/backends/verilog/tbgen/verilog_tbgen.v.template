@@ -11,9 +11,10 @@
 `define CHECK(lineno, out, ref, name) \
   if (out != ref) begin \
     $display("In cycle %0d, signal %s has value 0x%x, expects 0x%x", lineno, name, out, ref); \
-    $finish; \
-  end else \
-    $display("Signal %s in cycle %0d passed",name, lineno);
+  end
+  //   $finish; \
+  // end else \
+  //   $display("Signal %s in cycle %0d passed",name, lineno);
 
 
 module {harness_name};
@@ -54,7 +55,7 @@ module {harness_name};
     // 2 cycles plus hold
     reset = 1'b0;
 
-    `include "{test_cases_file_name}"
+    `include "{cases_file_name}"
 
     $finish;
   end

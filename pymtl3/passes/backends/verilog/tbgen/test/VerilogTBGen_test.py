@@ -25,6 +25,7 @@ from pymtl3.stdlib.test import TestVectorSimulator
 
 from ...testcases import CaseConnectArrayBits32FooIfcComp
 
+
 def local_do_test( _m ):
   _m.elaborate()
   _m.apply( VerilogPlaceholderPass() )
