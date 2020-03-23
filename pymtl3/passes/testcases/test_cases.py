@@ -902,6 +902,19 @@ class CaseFlipFlopAdder:
       def update_ff_upblk():
         s.out0 <<= s.in0 + s.in1
 
+class CaseSubCompFlipFlopAdder:
+  class DUT( Component ):
+    def construct( s ):
+      s.in0 = InPort( Bits32 )
+      s.in1 = InPort( Bits32 )
+      s.out0 = OutPort( Bits32 )
+      s.adder = CaseFlipFlopAdder.DUT()
+      @s.update
+      def upblk():
+        s.adder.in0 = s.in0
+        s.adder.in1 = s.in1
+        s.out0 = s.adder.out0
+
 class CaseConstSizeSlicingComp:
   class DUT( Component ):
     def construct( s ):

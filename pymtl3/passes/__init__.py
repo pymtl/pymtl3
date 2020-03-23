@@ -2,3 +2,4 @@ from .backends.verilog.import_.VerilatorImportConfigs import VerilatorImportConf
 from .backends.verilog.translation.TranslationConfigs import TranslationConfigs
 from .PassGroups import *
 from .tracing.TracingConfigs import TracingConfigs
+from .transformation.RedundantClkResetRemovalPass import RedundantClkResetRemovalPass

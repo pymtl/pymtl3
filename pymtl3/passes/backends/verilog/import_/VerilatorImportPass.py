@@ -334,6 +334,10 @@ class VerilatorImportPass( BasePass ):
     symbols, port_defs = s.gen_signal_decl_py( rtype )
     make_indent( port_defs, 2 )
 
+    # Should this wrapper have clk pin?
+    has_clk = int(ph_cfg.has_clk)
+    clk = next(filter(lambda x: x[0][0]=='clk', ports))[1] if has_clk else 'inv_clk'
+
     # Set upblk inputs and outputs
     set_comb_input, structs_input   = s.gen_comb_input( ports, symbols )
     set_comb_output, structs_output = s.gen_comb_output( ports, symbols )
@@ -360,9 +364,8 @@ class VerilatorImportPass( BasePass ):
         py_wrapper = template.read()
         py_wrapper = py_wrapper.format(
           component_name        = ip_cfg.translated_top_module,
-          has_clk               = int(ph_cfg.has_clk),
-          clk                   = 'inv_clk' if not ph_cfg.has_clk else \
-                                  next(filter(lambda x: x[0][0]=='clk', ports))[1],
+          has_clk               = has_clk,
+          clk                   = clk,
           lib_file              = ip_cfg.get_shared_lib_path(),
           port_cdefs            = ('  '*4+'\n').join( port_cdefs ),
           port_defs             = '\n'.join( port_defs ),

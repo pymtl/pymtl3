@@ -19,7 +19,9 @@ from .VerilogPlaceholderConfigs import VerilogPlaceholderConfigs
 class TranslationImportPass( BasePass ):
 
   def __call__( s, top ):
+    from pymtl3.passes import RedundantClkResetRemovalPass
     s.top = top
+    top.apply( RedundantClkResetRemovalPass() )
     s.traverse_hierarchy( top )
     top.apply( s.get_translation_pass() )
     s.add_placeholder_marks( top )
@@ -55,6 +57,7 @@ class TranslationImportPass( BasePass ):
 
       if not hasattr( m, 'config_placeholder' ):
         m.config_placeholder = VerilogPlaceholderConfigs()
+        m.config_placeholder.has_clk = hasattr(m, 'clk')
       if not hasattr( m, s.get_import_flag_name() ):
         m.config_verilog_import = VerilatorImportConfigs()
 
