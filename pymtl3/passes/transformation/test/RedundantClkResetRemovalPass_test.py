@@ -1,8 +1,13 @@
 from pymtl3 import Bits1
 from pymtl3.passes import RedundantClkResetRemovalPass
-from pymtl3.passes.testcases import CaseFlipFlopAdder, Bits16InOutPassThroughComp, \
-    CaseSubCompAddComp, CaseSubCompFlipFlopAdder
+from pymtl3.passes.testcases import (
+    Bits16InOutPassThroughComp,
+    CaseFlipFlopAdder,
+    CaseSubCompAddComp,
+    CaseSubCompFlipFlopAdder,
+)
 from pymtl3.stdlib.rtl import RegRst
+
 
 def test_singleton_hierarhcy():
   m = RegRst( Bits1 )

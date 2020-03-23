@@ -9,6 +9,7 @@
 from pymtl3 import Placeholder
 from pymtl3.passes.BasePass import BasePass
 
+
 class RedundantClkResetRemovalPass( BasePass ):
 
   def __call__( s, top ):
