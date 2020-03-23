@@ -8,7 +8,7 @@
 `define T({args_strs}) \
         t({args_strs},`__LINE__)
 
-`define CHECK(lineno, out, ref, name) \
+`define CHECK(lineno, out, ref, port_name) \
   if (out != ref) begin \
     $display("The test bench received an incorrect value!"); \
     $display("- row number     : %0d", lineno); \
