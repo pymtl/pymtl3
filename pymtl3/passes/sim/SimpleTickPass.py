@@ -50,6 +50,10 @@ class SimpleTickPass( BasePass ):
       if hasattr( top._tracing, "collect_text_sigs" ):
         final_schedule.append( top._tracing.collect_text_sigs )
 
+    if hasattr( top, "_tbgen" ):
+      if hasattr( top._tbgen, "tbgen_hooks" ):
+        final_schedule.extend( top._tbgen.tbgen_hooks )
+
     # posedge flip
     final_schedule.extend( top._sched.schedule_posedge_flip )
 
