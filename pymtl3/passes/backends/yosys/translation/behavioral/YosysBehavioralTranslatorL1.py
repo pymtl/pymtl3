@@ -55,7 +55,7 @@ class YosysBehavioralRTLIRToVVisitorL1( BehavioralRTLIRToVVisitorL1 ):
       return ret
 
   def get_loopvars( s ):
-    loopvars = list( s.loopvars )
+    loopvars = sorted(list( s.loopvars ))
     for i, loopvar in enumerate( loopvars ):
       loopvars[i] = "integer " + loopvar + ";"
     if loopvars:
