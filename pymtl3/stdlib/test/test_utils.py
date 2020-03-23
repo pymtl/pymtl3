@@ -18,6 +18,7 @@ from pymtl3.passes.backends.verilog import (
     TranslationImportPass,
     VerilatorImportConfigs,
     VerilatorImportPass,
+    VerilogPlaceholderPass,
 )
 
 #-------------------------------------------------------------------------
@@ -99,7 +100,7 @@ def run_sim( model, dump_vcd=None, test_verilog=False, line_trace=True, max_cycl
     model.config_verilog_import = VerilatorImportConfigs(
       vl_xinit = test_verilog,
     )
-    model.sverilog_translate_import = True
+    model.verilog_translate_import = True
 
   model = TranslationImportPass()( model )
 
@@ -152,11 +153,15 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
     model.config_tracing = TracingConfigs( tracing='vcd', vcd_file_name=dump_vcd )
 
   if test_verilog:
-    model.config_verilog_import = VerilatorImportConfigs(
-      vl_xinit = test_verilog,
-    )
-    model.sverilog_translate_import = True
+    if not hasattr( model, 'config_verilog_import' ):
+      model.config_verilog_import = VerilatorImportConfigs(
+        vl_xinit = test_verilog,
+      )
+    else:
+      model.config_verilog_import.vl_xinit = test_verilog
+    model.verilog_translate_import = True
 
+  model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
   # Create a simulator
