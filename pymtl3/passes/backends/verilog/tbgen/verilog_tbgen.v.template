@@ -10,12 +10,15 @@
 
 `define CHECK(lineno, out, ref, name) \
   if (out != ref) begin \
-    $display("In cycle %0d, signal %s has value 0x%x, expects 0x%x", lineno, name, out, ref); \
+    $display("The test bench received an incorrect value!"); \
+    $display("- row number     : %0d", lineno); \
+    $display("- port name      : %s", port_name); \
+    $display("- expected value : 0x%x", ref); \
+    $display("- actual value   : 0x%x", out); \
   end
   //   $finish; \
   // end else \
   //   $display("Signal %s in cycle %0d passed",name, lineno);
-
 
 module {harness_name};
   // convention
