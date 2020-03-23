@@ -3,14 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PyMTL3's documentation!
-==================================
-PyMTL 3 is the latest version of PyMTL, an open-source Python-based hardware
+Welcome to PyMTL3 documentation!
+================================
+PyMTL3 is the latest version of PyMTL, an open-source Python-based hardware
 generation, simulation, and verification framework with multi-level hardware
 modeling support.
 
 First Steps
 -----------
+
+Installation and quick start in a Python REPL.
+
+* **Installing PyMTL3 and Verilator**:
+  :doc:`Installation guide <intro/installation>`
+
+* **Using PyMTL3 in a Python REPL**:
+  :doc:`Quick start <intro/quickstart>`
 
 .. toctree::
    :maxdepth: 2
@@ -24,13 +32,58 @@ First Steps
 Tutorial
 --------
 
-To be added.
+Tutorials for register-transfer-level and gate-level modeling.
+
+* **Hardware modeling**:
+  :doc:`Gate-level modeling <tut/tut1-gl>` |
+  :doc:`Register-transfer-level modeling <tut/tut2-rtl>`
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Tutorial
+
+   tut/tut1-gl
+   tut/tut2-rtl
+
+
+Reference
+---------
+
+PyMTL3 user reference manual.
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Reference
+
+   ref/overview
+   ref/datatypes
+   ref/primitives
+   ref/passes
+   ref/stdlib
+
+
+Developer Manual
+----------------
+
+To be added...
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Developer Manual
 
 
 About PyMTL3
 ------------
 
-To be added.
+Visit the PyMTL webpage at ...
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: About PyMTL3
 
 
 Indices and tables
