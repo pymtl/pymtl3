@@ -250,7 +250,6 @@ class VerilogPlaceholderPass( PlaceholderPass ):
   def _output_verilog_file( s, include_path, verilog_file ):
     code = ""
     with open( verilog_file, 'r', encoding='utf-8' ) as fp:
-      print(fp)
 
       short_verilog_file = verilog_file
       if verilog_file.startswith( include_path+"/" ):
