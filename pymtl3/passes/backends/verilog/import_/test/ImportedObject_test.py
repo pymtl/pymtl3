@@ -438,4 +438,47 @@ def test_param_pass_through( do_test, translate ):
   p._test_vectors = test_vector
   p._tv_in = tv_in
   p._tv_out = tv_out
-  do_test( p )
+
+def test_non_top_portmap( do_test ):
+  def tv_in( m, tv ):
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    if tv[1] != '*':
+      assert m.out == Bits32(tv[1])
+  class VReg( Component, Placeholder ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.config_placeholder = VerilogPlaceholderConfigs(
+          src_file = dirname(__file__)+'/VReg.v',
+          port_map = {
+            "clk" : "clk",
+            "reset" : "reset",
+            "in_" : "d",
+            "out" : "q",
+          }
+      )
+      s.config_verilog_translate = TranslationConfigs(
+          explicit_module_name = 'VReg_imported',
+      )
+      s.verilog_translate_import = True
+  class Top( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.v = VReg()
+      s.v.in_ //= s.in_
+      s.v.out //= s.out
+      s.verilog_translate_import = True
+  a = Top()
+  a._test_vectors = [
+    [    1,    '*' ],
+    [    2,      1 ],
+    [   -1,      2 ],
+    [   -2,     -1 ],
+    [   42,     -2 ],
+    [  -42,     42 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
