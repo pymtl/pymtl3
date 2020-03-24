@@ -7,16 +7,30 @@ Semantics
 This section defines the expected behavior of different operations
 on Bits objects and Python ``int`` objects.
 
-- General principles
-  + The bitwidth of ``int`` objects is inferred to be the minimal number of bits required to hold its value.
-  + Implicit truncation is not allowed.
-  + Implicit zero extension is allowed and will be attempted in cases of bitwidth mismatch.
-  + Currently all operations of bits and integers preserve the unsigned semantics.
+Here are the general principles of Bits/``int`` operation semantics:
 
-Following the above principles, 
+- Implicit truncation is not allowed.
+- Implicit zero extension is allowed and will be attempted in cases of bitwidth mismatch.
+- Currently all operations of bits and integers preserve the unsigned semantics.
 
-Bitwidth rules
-^^^^^^^^^^^^^^
+Following the above principles, here is how to determine the bitwidth of an expression:
+
+- A ``BitsN`` object has an explicit bitwidth of ``N``.
+- An ``int`` object has an inferred bitwidth of the minimal number of bits required to hold its value.
+- For binary operations that are not ``<<`` and ``>>``
+  - If both sides have explicit bitwidth
+    - the shorter side will be zero-extended to have the same bitwidth as the longer side
+    - the result has an explicit bitwidth indicated in the operation bitwidth rule table
+  - If both sides have inferred bitwidth
+    - the shorter side will be zero-extended to have the same bitwidth as the longer side
+    - the result has an inferred bitwidth indicated in the operation bitwidth rule table
+  - If one side has explicit bitwidth and the other has inferred bitwidth
+    - it is an error if the inferred bitwidth is smaller than the explicit bitwidth
+    - otherwise, a zero extension on the inferred side to the explicit bitwidth is attempted
+    - the result has an explicit bitwidth indicated in the operation bitwidth rule table
+
+Opeartion bitwidth rules
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Assuming the bitwidth of Bits or integer objects ``i``, ``j``, and ``k`` are ``n``,
 ``m``, and ``p``, respectively. The following table defines the result of different
