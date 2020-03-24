@@ -8,7 +8,7 @@ from ..tracing.LineTraceParamPass import LineTraceParamPass
 from .HeuristicTopoPass import HeuristicTopoPass
 from .Mamba2020Pass import Mamba2020Pass
 from .TraceBreakingSchedTickPass import TraceBreakingSchedTickPass
-from .UnrollTickPass import UnrollTickPass
+from .UnrollSimPass import UnrollSimPass
 
 
 class UnrollSim( BasePass ):
@@ -22,8 +22,7 @@ class UnrollSim( BasePass ):
     GenDAGPass()( top )
     WrapGreenletPass()( top )
     SimpleSchedulePass()( top )
-    UnrollTickPass()( top )
-    PrepareSimPass()( top )
+    UnrollSimPass()( top )
 
 class HeuTopoUnrollSim( BasePass ):
   def __call__( s, top ):

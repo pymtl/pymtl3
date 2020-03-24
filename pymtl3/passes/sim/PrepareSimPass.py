@@ -30,81 +30,80 @@ class PrepareSimPass( BasePass ):
       raise AttributeError( "Please rename the attribute top.sim_reset")
     if hasattr(top, "print_line_trace"):
       raise AttributeError( "Please modify the attribute top.print_line_trace")
+    if not hasattr( top, "_sched" ):
+      raise PassOrderError( "_sched" )
+    if not hasattr( top._sched, "update_schedule" ):
+      raise PassOrderError( "update_schedule" )
+    if not hasattr( top._sched, "schedule_ff" ):
+      raise PassOrderError( "schedule_ff" )
+    if not hasattr( top._sched, "schedule_posedge_flip" ):
+      raise PassOrderError( "schedule_posedge_flip" )
 
     top._sim = PassMetadata()
 
-    print_line_trace = self.print_line_trace and hasattr( top, 'line_trace' )
-
-    # create utils functions
-    if print_line_trace:
-      top.print_line_trace = self.create_print_line_trace( top )
-    top.sim_cycle_count  = self.create_sim_cycle_count( top )
-
-    # self.prepare_schedules()
-    # ff_funcs summarizes the execution at the clock edge
-    ff_funcs = []
-    # append tracing related work
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "vcd_func" ):
-        ff_funcs.append( top._tracing.vcd_func )
-      if hasattr( top._tracing, "collect_text_sigs" ):
-        ff_funcs.append( top._tracing.collect_text_sigs )
-    ff_funcs.extend( top._sched.schedule_ff )
-    ff_funcs.extend( top._sched.schedule_posedge_flip )
-    advance_func = self.create_advance_sim_cycle( top )
-    ff_funcs.append( advance_func )
-    # clear cl method flag
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "clear_cl_trace" ):
-        ff_funcs.append( top._tracing.clear_cl_trace )
-
-    # append tracing related work
-    up_funcs = top._sched.update_schedule
-
-
-    # FIXME update_once?
-    # check if the design has method_port
-    method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
-
-    if len(method_ports) == 0:
-      # Pure RTL design, add eval_combinational
-      top.sim_eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
-      # Tick schedule first
-      final_schedule = top._sched.update_schedule[::]
-    else:
-      tmp = list(method_ports)[0]
-      def sim_eval_combinational():
-        raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(tmp)[1:]} is a method port.")
-      top.sim_eval_combinational = sim_eval_combinational
-      final_schedule = []
-
-    if print_line_trace:
-      final_schedule.append( top.print_line_trace )
-    final_schedule += ff_funcs + up_funcs
-    top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
-
-    top.sim_reset = self.create_sim_reset( top, print_line_trace, self.reset_active_high,
-                                           ff_funcs, up_funcs, advance_func )
-
+    self.create_print_line_trace( top )
+    self.create_sim_cycle_count( top )
     self.create_lock_unlock_simulation( top )
+
+    self.create_sim_eval_comb( top )
+    self.create_sim_tick( top )
+    self.create_sim_reset( top )
 
     top.lock_in_simulation()
 
-  # def prepare_schedules( self, top ):
+  def create_sim_eval_comb( self, top ):
+    # FIXME update_once? currently check if the design has method_port
+    method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
 
+    if len(method_ports) == 0: # Pure RTL design, add eval_combinational
+      sim_eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
+    else:
+      def sim_eval_combinational():
+        raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(list(method_ports)[0])[1:]} is a method port.")
 
-  @staticmethod
+    top.sim_eval_combinational = sim_eval_combinational
+
+  def create_sim_tick( self, top ):
+    final_schedule = []
+    if not top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) ):
+      # Pure RTL -- tick update blocks first
+      final_schedule = top._sched.update_schedule[::]
+
+    if self.print_line_trace and hasattr( top, 'line_trace' ):
+      final_schedule.append( top.print_line_trace )
+    final_schedule += self.collect_ff_funcs( top )
+    final_schedule += top._sched.update_schedule
+    top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
+
+  def collect_ff_funcs( self, top ):
+    # ff_funcs summarizes the execution at the clock edge
+    ret = []
+    # append tracing related work
+    if hasattr( top, "_tracing" ):
+      if hasattr( top._tracing, "vcd_func" ):
+        ret.append( top._tracing.vcd_func )
+      if hasattr( top._tracing, "collect_text_sigs" ):
+        ret.append( top._tracing.collect_text_sigs )
+    ret.extend( top._sched.schedule_ff )
+    ret.extend( top._sched.schedule_posedge_flip )
+    ret.append( self.create_advance_sim_cycle( top ) )
+    # clear cl method flag after flip
+    if hasattr( top, "_tracing" ):
+      if hasattr( top._tracing, "clear_cl_trace" ):
+        ret.append( top._tracing.clear_cl_trace )
+    return ret
+
   # Simulation related APIs
-  def create_sim_reset( top, print_line_trace, active_high,
-                        ff_funcs, up_funcs, advance ):
-    # Avoid creating a loop
-    ff = SimpleTickPass.gen_tick_function( ff_funcs )
-    up = SimpleTickPass.gen_tick_function( up_funcs )
+  def create_sim_reset( self, top ):
+    ff = SimpleTickPass.gen_tick_function( self.collect_ff_funcs( top ) )
+    up = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
+
+    print_line_trace = self.print_line_trace and hasattr( top, 'line_trace' )
+    active_high      = self.reset_active_high
 
     def sim_reset():
       if print_line_trace:
         print()
-      advance()
       top.reset @= b1( active_high )
       up()
       if print_line_trace:
@@ -116,18 +115,17 @@ class PrepareSimPass( BasePass ):
       ff()
       top.reset @= b1( not active_high )
       up()
-    return sim_reset
+    top.sim_reset = sim_reset
 
-  # Simulation related APIs
-  @staticmethod
-  def create_print_line_trace( top ):
-    def print_line_trace():
-      print( f"{top._sim.simulated_cycles:3}: {top.line_trace()}" )
-    return print_line_trace
+  def create_print_line_trace( self, top ):
+    if self.print_line_trace and hasattr( top, 'line_trace' ):
+      def print_line_trace():
+        print( f"{top._sim.simulated_cycles:3}: {top.line_trace()}" )
+      top.print_line_trace = print_line_trace
 
   @staticmethod
   def create_advance_sim_cycle( top ):
-    top._sim.simulated_cycles = 0
+    top._sim.simulated_cycles = 1
     def advance_sim_cycle():
       top._sim.simulated_cycles += 1
     return advance_sim_cycle
@@ -136,7 +134,7 @@ class PrepareSimPass( BasePass ):
   def create_sim_cycle_count( top ):
     def sim_cycle_count():
       return top._sim.simulated_cycles
-    return sim_cycle_count
+    top.sim_cycle_count = sim_cycle_count
 
   @staticmethod
   def create_lock_unlock_simulation( top ):

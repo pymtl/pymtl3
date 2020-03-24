@@ -20,7 +20,7 @@ from ..sim.DynamicSchedulePass import kosaraju_scc
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
 from ..sim.SimpleTickPass import SimpleTickPass
 from .HeuristicTopoPass import CountBranchesLoops
-from .UnrollTickPass import UnrollTickPass
+from .UnrollSimPass import UnrollSimPass
 
 # _DEBUG = True
 _DEBUG = False

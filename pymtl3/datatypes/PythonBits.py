@@ -415,7 +415,7 @@ class Bits:
     return self._uint
 
   def __index__( self ):
-    return self._uint
+    return int(self._uint)
 
   def __hash__( self ):
     return hash((self.nbits, self._uint))
