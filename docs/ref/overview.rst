@@ -1,4 +1,4 @@
-Ovewview of PyMTL3 Features
+Overview of PyMTL3 Features
 ===========================
 
 This page serves as an index to the documentation of different
