@@ -181,7 +181,6 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
           bir.USub   : '-',
       }
       try:
-        import pdb;pdb.set_trace()
         op = opmap[node.op.__class__]
         operand = node.operand._value.uint()
         node._value = eval(f"Bits32({op}{operand})")
