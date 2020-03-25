@@ -7,6 +7,7 @@
 
 from collections import OrderedDict
 
+from pymtl3 import Bits32
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
@@ -172,6 +173,19 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
       node.Type = rt.NetWire( rdt.Bool() )
     else:
       node.Type = node.operand.Type
+    if hasattr( node.operand, '_value' ):
+      opmap = {
+          bir.Invert : '~',
+          bir.Not    : 'not',
+          bir.UAdd   : '+',
+          bir.USub   : '-',
+      }
+      try:
+        op = opmap[node.op.__class__]
+        operand = node.operand._value.uint()
+        node._value = eval(f"Bits32({op}{operand})")
+      except:
+        pass
 
   def visit_BoolOp( s, node ):
     for value in node.values:
