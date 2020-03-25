@@ -13,6 +13,7 @@ import py
 from pymtl3.dsl.Connectable import MethodPort
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
+
 from ..sim.PrepareSimPass import PrepareSimPass
 
 

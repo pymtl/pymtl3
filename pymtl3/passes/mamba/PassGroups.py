@@ -1,6 +1,6 @@
 from ..BasePass import BasePass
-from ..sim.PrepareSimPass import PrepareSimPass
 from ..sim.GenDAGPass import GenDAGPass
+from ..sim.PrepareSimPass import PrepareSimPass
 from ..sim.SimpleSchedulePass import SimpleSchedulePass
 from ..sim.WrapGreenletPass import WrapGreenletPass
 from ..tracing.CLLineTracePass import CLLineTracePass
