@@ -564,14 +564,19 @@ CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
         module DUT
         (
           input logic [0:0] clk,
-          output logic [31:0] out1,
-          output logic [31:0] out2,
+          input logic [31:0] in_,
+          output logic [31:0] out,
           input logic [0:0] reset
         );
+          logic [0:0] __tmpvar__upblk_matched;
 
           always_comb begin : upblk
-            out1 = 42;
-            out2 = 32'd1;
+            __tmpvar__upblk_matched = in_ == 0;
+            if ( __tmpvar__upblk_matched ) begin
+              out = 1;
+            end
+            else
+              out = 0;
           end
 
         endmodule
