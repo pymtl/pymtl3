@@ -104,6 +104,7 @@ class PrepareSimPass( BasePass ):
     def sim_reset():
       if print_line_trace:
         print()
+      top._sim.simulated_cycles += 1
       top.reset @= b1( active_high )
       up()
       if print_line_trace:
@@ -125,7 +126,7 @@ class PrepareSimPass( BasePass ):
 
   @staticmethod
   def create_advance_sim_cycle( top ):
-    top._sim.simulated_cycles = 1
+    top._sim.simulated_cycles = 0
     def advance_sim_cycle():
       top._sim.simulated_cycles += 1
     return advance_sim_cycle

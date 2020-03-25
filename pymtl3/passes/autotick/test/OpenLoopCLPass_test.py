@@ -71,7 +71,6 @@ def test_top_level_method_tracing():
 
   A.apply( GenDAGPass() )
   A.apply( OpenLoopCLPass() )
-  A.lock_in_simulation()
 
   print("- push!")
   A.push(7)
@@ -88,7 +87,7 @@ def test_top_level_method_tracing():
   print("- pull!")
   print(A.pull())
 
-  print("num_cycles_executed: ", A.num_cycles_executed)
+  print("num_cycles_executed: ", A.sim_cycle_count())
   A.print_textwave()
 
 class TestModuleNonBlockingIfc(Component):
@@ -103,7 +102,10 @@ class TestModuleNonBlockingIfc(Component):
 
     @update_ff
     def up_incr():
-      s.count <<= s.count + 1
+      if s.reset:
+        s.count <<= 0
+      else:
+        s.count <<= s.count + 1
 
     @update
     def up_amp():
@@ -143,7 +145,7 @@ def _test_TestModuleNonBlockingIfc( cls ):
   A.elaborate()
   A.apply( GenDAGPass() )
   A.apply( OpenLoopCLPass() )
-  A.lock_in_simulation()
+  A.sim_reset()
 
   rdy = A.push.rdy()
   print("- push_rdy?", rdy )
@@ -199,11 +201,11 @@ def _test_TestModuleNonBlockingIfc( cls ):
 
   assert not A.pull.rdy()
 
-  return A.num_cycles_executed
+  return A.sim_cycle_count()
 
 def test_top_level_non_blocking_ifc():
   num_cycles = _test_TestModuleNonBlockingIfc( TestModuleNonBlockingIfc )
-  assert num_cycles == 10 # regression
+  assert num_cycles == 3 + 10 # regression
 
 def test_top_level_non_blocking_ifc_in_deep_net():
 
@@ -249,7 +251,7 @@ def test_top_level_non_blocking_ifc_in_deep_net():
       return True
 
   num_cycles = _test_TestModuleNonBlockingIfc( Top )
-  assert num_cycles == 10 # regression
+  assert num_cycles == 3 + 10 # regression
 
 class PassThroughPlus100( Component ):
 
@@ -284,7 +286,7 @@ def test_pass_through_equal_m_constraint():
       return True
 
   num_cycles = _test_TestModuleNonBlockingIfc( Top )
-  assert num_cycles == 10 # regression
+  assert num_cycles == 3+10 # regression
 
 
 def test_deep_pass_through_equal_m_constraint():
@@ -309,4 +311,4 @@ def test_deep_pass_through_equal_m_constraint():
       return True
 
   num_cycles = _test_TestModuleNonBlockingIfc( Top )
-  assert num_cycles == 10 # regression
+  assert num_cycles == 3 + 10 # regression

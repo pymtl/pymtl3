@@ -436,7 +436,7 @@ class Component( ComponentLevel7 ):
     except:
       pass
     try:
-      if s.dsl.elaborate_top is not s:
+      if s._dsl.elaborate_top is not s:
         raise NotElaboratedError()
     except AttributeError:
       s.elaborate()
