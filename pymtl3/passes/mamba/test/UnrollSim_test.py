@@ -42,11 +42,11 @@ def test_very_deep_dag():
   A = Top( N )
 
   A.apply( UnrollSim() )
+  A.sim_reset()
 
   T = 0
   while T < 5:
-    A.tick()
-    print(A.line_trace())
     assert A.out == T * N
+    A.sim_tick()
     T += 1
   return A

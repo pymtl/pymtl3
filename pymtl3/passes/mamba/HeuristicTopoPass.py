@@ -13,6 +13,7 @@ from queue import PriorityQueue
 from ..BasePass import BasePass, PassMetadata
 from ..errors import PassOrderError
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, check_schedule
+from .UnrollSimPass import UnrollSimPass
 
 # FIXME also apply branchiness to all update_ff blocks
 
@@ -92,10 +93,13 @@ class CountBranchesLoops( ast.NodeVisitor ):
       self.visit( stmt )
     self.loop_stack -= 1
 
-class HeuristicTopoPass( BasePass ):
+class HeuristicTopoPass( UnrollSimPass ):
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
       raise PassOrderError( "all_constraints" )
+
+    if hasattr( top, "_sched" ):
+      raise Exception("Some schedule pass has already been applied!")
 
     top._sched = PassMetadata()
 
@@ -105,6 +109,16 @@ class HeuristicTopoPass( BasePass ):
     simple = SimpleSchedulePass()
     simple.schedule_ff( top )
     simple.schedule_posedge_flip( top )
+
+    top._sim = PassMetadata()
+
+    self.create_print_line_trace( top )
+    self.create_sim_cycle_count( top )
+    self.create_lock_unlock_simulation( top )
+    self.create_sim_eval_comb( top )
+    self.create_sim_tick( top )
+    self.create_sim_reset( top )
+    top.lock_in_simulation()
 
   def schedule_intra_cycle( self, top ):
 

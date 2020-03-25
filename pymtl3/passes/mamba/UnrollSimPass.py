@@ -10,6 +10,7 @@ Date   : Dec 26, 2018
 
 import py
 
+from pymtl3.dsl.Connectable import MethodPort
 from pymtl3.passes.BasePass import BasePass
 from pymtl3.passes.errors import PassOrderError
 from ..sim.PrepareSimPass import PrepareSimPass
@@ -44,7 +45,7 @@ def compile_unroll( schedule ):
     method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
 
     if len(method_ports) == 0: # Pure RTL design, add eval_combinational
-      sim_eval_combinational = UnrollSimPass.gen_tick_function( top._sched.update_schedule )
+      sim_eval_combinational = self.gen_tick_function( top._sched.update_schedule )
     else:
       def sim_eval_combinational():
         raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(list(method_ports)[0])[1:]} is a method port.")
@@ -62,4 +63,4 @@ def compile_unroll( schedule ):
       final_schedule.append( top.print_line_trace )
     final_schedule += self.collect_ff_funcs( top )
     final_schedule += top._sched.update_schedule
-    top.sim_tick = UnrollSimPass.gen_tick_function( final_schedule )
+    top.sim_tick = self.gen_tick_function( final_schedule )

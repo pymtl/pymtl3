@@ -196,7 +196,6 @@ class PrepareSimPass( BasePass ):
       # by pointing them to the same object
       # TODO optimize for bitstruct fields. Essentially only sliced signals
       # should be excluded.
-
       for writer, signals in nets:
         residence = None
 

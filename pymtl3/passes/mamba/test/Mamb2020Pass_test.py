@@ -1,7 +1,7 @@
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl import *
 
-from ..PassGroups import TraceBreakingSim
+from ..PassGroups import Mamba2020
 
 
 def test_very_deep_dag():
@@ -41,12 +41,12 @@ def test_very_deep_dag():
   N = 2000
   A = Top( N )
 
-  A.apply( TraceBreakingSim() )
+  A.apply( Mamba2020() )
+  A.sim_reset()
 
   T = 0
   while T < 5:
-    A.tick()
-    print(A.line_trace())
     assert A.out == T * N
+    A.sim_tick()
     T += 1
   return A

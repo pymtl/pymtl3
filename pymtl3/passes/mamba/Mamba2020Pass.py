@@ -1,6 +1,9 @@
 #=========================================================================
 # Mamba2020Pass.py
 #=========================================================================
+# This pass implements trace breaking techniques and supports non-DAG, so
+# we don't need the old TraceBreaking pass which only supports DAG
+# anymore.
 #
 # Author : Shunning Jiang
 # Date   : Feb 14, 2020
@@ -18,17 +21,13 @@ from pymtl3.utils import custom_exec
 
 from ..sim.DynamicSchedulePass import kosaraju_scc
 from ..sim.SimpleSchedulePass import SimpleSchedulePass, dump_dag
-from ..sim.SimpleTickPass import SimpleTickPass
 from .HeuristicTopoPass import CountBranchesLoops
 from .UnrollSimPass import UnrollSimPass
 
 # _DEBUG = True
 _DEBUG = False
 
-class Mamba2020Pass( BasePass ):
-
-  def __init__( self ):
-    self.meta_block_id = 0
+class Mamba2020Pass( UnrollSimPass ):
 
   def __call__( self, top ):
     if not hasattr( top._dag, "all_constraints" ):
@@ -42,6 +41,7 @@ class Mamba2020Pass( BasePass ):
     # Extract branchiness first
     # Initialize all generated net block to 0 branchiness
 
+    self.meta_block_id = 0
     self.branchiness = { x: 0 for x in top._dag.genblks }
     self.only_loop_at_top = { x: False for x in top._dag.genblks }
     v = CountBranchesLoops()
@@ -70,7 +70,14 @@ class Mamba2020Pass( BasePass ):
 
     self.schedule_intra_cycle( top )
 
-    self.assemble_tick( top )
+    top._sim = PassMetadata()
+    self.create_print_line_trace( top )
+    self.create_sim_cycle_count( top )
+    self.create_lock_unlock_simulation( top )
+    self.create_sim_eval_comb( top )
+    self.create_sim_tick( top )
+    self.create_sim_reset( top )
+    top.lock_in_simulation()
 
   #-----------------------------------------------------------------------
   # compile_meta_block
@@ -559,55 +566,3 @@ generated_block = wrapped_SCC_{0}
     else:
       for i, meta in enumerate( schedule ):
         top._sched.update_schedule.append( self.compile_meta_block( meta ) )
-
-
-  def assemble_tick( self, top ):
-
-    final_schedule = []
-
-    # call ff blocks first
-    final_schedule.extend( top._sched.schedule_ff )
-
-    # append tracing related work
-
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "vcd_func" ):
-        final_schedule.append( top._tracing.vcd_func )
-      if hasattr( top._tracing, "collect_text_sigs" ):
-        final_schedule.append( top._tracing.collect_text_sigs )
-
-    # posedge flip
-    final_schedule.extend( top._sched.schedule_posedge_flip )
-
-    # advance cycle after posedge
-    def generate_advance_sim_cycle( top ):
-      def advance_sim_cycle():
-        top.simulated_cycles += 1
-      return advance_sim_cycle
-    final_schedule.append( generate_advance_sim_cycle(top) )
-
-    # clear cl method flag
-    if hasattr( top, "_tracing" ):
-      if hasattr( top._tracing, "clear_cl_trace" ):
-        final_schedule.append( top._tracing.clear_cl_trace )
-
-    # execute all update blocks
-    final_schedule.extend( top._sched.update_schedule )
-
-    # Generate tick
-    top.tick = UnrollTickPass.gen_tick_function( final_schedule )
-    # reset sim_cycles
-    top.simulated_cycles = 0
-
-    # FIXME update_once?
-    # check if the design has method_port
-    method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
-
-    if len(method_ports) == 0:
-      # Pure RTL design, add eval_combinational
-      top.eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
-    else:
-      tmp = list(method_ports)[0]
-      def eval_combinational():
-        raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(tmp)[1:]} is a method port.")
-      top.eval_combinational = eval_combinational
