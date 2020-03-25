@@ -18,16 +18,22 @@ Following the above principles, here is how to determine the bitwidth of an expr
 - A ``BitsN`` object has an explicit bitwidth of ``N``.
 - An ``int`` object has an inferred bitwidth of the minimal number of bits required to hold its value.
 - For binary operations that are not ``<<`` and ``>>``
+
   - If both sides have explicit bitwidth
-     - the shorter side will be zero-extended to have the same bitwidth as the longer side
-     - the result has an explicit bitwidth indicated in the operation bitwidth rule table
+
+    - the shorter side will be zero-extended to have the same bitwidth as the longer side.
+    - the result has an explicit bitwidth indicated in the operation bitwidth rule table.
+
   - If both sides have inferred bitwidth
-     - the shorter side will be zero-extended to have the same bitwidth as the longer side
-     - the result has an inferred bitwidth indicated in the operation bitwidth rule table
+
+    - the shorter side will be zero-extended to have the same bitwidth as the longer side.
+    - the result has an inferred bitwidth indicated in the operation bitwidth rule table.
+
   - If one side has explicit bitwidth and the other has inferred bitwidth
-     - it is an error if the inferred bitwidth is smaller than the explicit bitwidth
-     - otherwise, a zero extension on the inferred side to the explicit bitwidth is attempted
-     - the result has an explicit bitwidth indicated in the operation bitwidth rule table
+
+    - it is an error if the inferred bitwidth is smaller than the explicit bitwidth.
+    - otherwise, a zero extension on the inferred side to the explicit bitwidth is attempted.
+    - the result has an explicit bitwidth indicated in the operation bitwidth rule table.
 
 Opeartion bitwidth rules
 ^^^^^^^^^^^^^^^^^^^^^^^^
