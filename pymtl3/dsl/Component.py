@@ -540,16 +540,16 @@ class Component( ComponentLevel7 ):
       raise NotElaboratedError()
 
   def get_child_components( s, sort_key = None ):
-    return s._collect_objects_local( lambda x: isinstance( x, Component ) )
+    return s._collect_objects_local( lambda x: isinstance( x, Component ), sort_key )
 
   def get_input_value_ports( s, sort_key = None ):
-    return s._collect_objects_local( lambda x: isinstance( x, InPort ) )
+    return s._collect_objects_local( lambda x: isinstance( x, InPort ), sort_key )
 
   def get_output_value_ports( s , sort_key = None ):
-    return s._collect_objects_local( lambda x: isinstance( x, OutPort ) )
+    return s._collect_objects_local( lambda x: isinstance( x, OutPort ), sort_key )
 
   def get_wires( s , sort_key = None ):
-    return s._collect_objects_local( lambda x: isinstance( x, Wire ) )
+    return s._collect_objects_local( lambda x: isinstance( x, Wire ), sort_key )
 
   def get_update_blocks( s ):
     assert s._dsl.constructed
