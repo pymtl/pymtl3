@@ -88,9 +88,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return bir.SizeCast( obj.nbits, bir.Number( obj.value ) )
     else:
       return None
-    # else:
-    #   raise PyMTLSyntaxError( s.blk, node,
-    #       f"object {obj} cannot be converted to behavioral RTLIR!" )
 
   def get_call_obj( s, node ):
     if hasattr(node, "starargs") and node.starargs:
@@ -100,9 +97,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         'double-star argument is not supported!')
     if node.keywords:
       raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
-    if not isinstance( node.func, ast.Name ):
-      raise PyMTLSyntaxError( s.blk, node,
-        f'{node.func} is called but is not a name!')
 
     obj = s.const_extractor.enter( node.func )
     if obj is not None:
