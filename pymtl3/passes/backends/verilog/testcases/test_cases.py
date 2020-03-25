@@ -33,6 +33,7 @@ from pymtl3.passes.testcases import (
     CaseBits64PartSelUpblkComp,
     CaseBits64SextInComp,
     CaseBits64ZextInComp,
+    CaseBoolTmpVarComp,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
@@ -525,6 +526,37 @@ CasePythonClassAttr = set_attributes( CasePythonClassAttr,
         always_comb begin : upblk
           out1 = 42;
           out2 = 32'd1;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          output logic [31:0] out1,
+          output logic [31:0] out2,
+          input logic [0:0] reset
+        );
+
+          always_comb begin : upblk
+            out1 = 42;
+            out2 = 32'd1;
+          end
+
+        endmodule
+    '''
+)
+
+CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          __tmpvar__upblk_matched = in_ == 0;
+          if ( __tmpvar__upblk_matched ) begin
+            out = 1;
+          end
+          else
+            out = 0;
         end
     ''',
     'REF_SRC',

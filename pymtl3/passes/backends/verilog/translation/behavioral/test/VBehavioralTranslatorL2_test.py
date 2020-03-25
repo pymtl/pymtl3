@@ -11,6 +11,7 @@ from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 from pymtl3.passes.rtlir import BehavioralRTLIRGenPass, BehavioralRTLIRTypeCheckPass
 
 from ....testcases import (
+    CaseBoolTmpVarComp,
     CaseElifBranchComp,
     CaseFixedSizeSliceComp,
     CaseForRangeLowerUpperStepPassThroughComp,
@@ -59,6 +60,7 @@ def run_test( case, m ):
       CaseFixedSizeSliceComp,
       CaseLambdaConnectComp,
       CaseLambdaConnectWithListComp,
+      CaseBoolTmpVarComp,
     ]
 )
 def test_verilog_behavioral_L2( case ):

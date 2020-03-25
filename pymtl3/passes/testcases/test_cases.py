@@ -376,6 +376,33 @@ class CasePythonClassAttr:
       [  42,   1,  ],
   ]
 
+class CaseBoolTmpVarComp:
+  class DUT( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      @s.update
+      def upblk():
+        matched = s.in_ == 0
+        if matched:
+          s.out = 1
+        else:
+          s.out = 0
+  TV_IN = _set(
+      'in_', Bits32, 0
+  )
+  TV_OUT = \
+  _check(
+      'out', Bits32, 1,
+  )
+  TEST_VECTOR = \
+  [
+      [  0,   1,  ],
+      [  1,   0,  ],
+      [  1,   0,  ],
+      [  0,   1,  ],
+  ]
+
 class CaseReducesInx3OutComp:
   class DUT( Component ):
     def construct( s ):
