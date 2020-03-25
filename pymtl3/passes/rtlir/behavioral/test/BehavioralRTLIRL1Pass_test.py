@@ -300,7 +300,7 @@ def test_L1_call_keyword_arg( do_test ):
     do_test( CaseKwArgsComp )
 
 def test_L1_call_name( do_test ):
-  with expected_failure( PyMTLSyntaxError, "called but is not a name" ):
+  with expected_failure( PyMTLSyntaxError, "function is not found" ):
     do_test( CaseNonNameCalledComp )
 
 def test_L1_call_not_found( do_test ):
@@ -324,7 +324,7 @@ def test_L1_call_sext_num_args( do_test ):
     do_test( CaseSextTwoArgsComp )
 
 def test_L1_call_unrecognized( do_test ):
-  with expected_failure( PyMTLSyntaxError, "foo function is not found!" ):
+  with expected_failure( PyMTLSyntaxError, "function is not found" ):
     do_test( CaseUnrecognizedFuncComp )
 
 #-------------------------------------------------------------------------

@@ -102,8 +102,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
     if obj is not None:
       return obj
     else:
-      raise PyMTLSyntaxError( s.blk, node,
-        node.func.id + ' function is not found!' )
+      raise PyMTLSyntaxError( s.blk, node, f'{node.func} function is not found!' )
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \
