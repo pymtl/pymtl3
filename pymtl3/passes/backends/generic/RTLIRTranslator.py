@@ -50,7 +50,7 @@ def mk_RTLIRTranslator( _StructuralTranslator, _BehavioralTranslator ):
         return ns
 
       def translate_component( m, components, translated ):
-        for child in sorted(m.get_child_components(), key = lambda x: x._dsl.my_name):
+        for child in m.get_child_components(lambda x: x._dsl._my_name):
           translate_component( child, components, translated )
         if not s.structural.component_unique_name[m] in translated:
           components.append(
