@@ -7,6 +7,7 @@
 
 from collections import OrderedDict
 
+from pymtl3 import Bits32
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir.errors import PyMTLTypeError
 from pymtl3.passes.rtlir.rtype import RTLIRDataType as rdt
@@ -215,14 +216,26 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     #   if not rdt.Bool()( dtype ):
     #     raise PyMTLTypeError( s.blk, node.ast,
     #       'the operand of "Logic-not" cannot be cast to bool!' )
-    #   # if dtype.get_length() != 1:
-    #   #   raise PyMTLTypeError( s.blk, node.ast,
-    #   #     'the operand of "Logic-not" is not a single bit!' )
-    #   node.Type = rt.NetWire( rdt.Vector( node.operand.Type.get_dtype().get_lenght() ) )
-    #   node._is_explicit = True
+    #   if dtype.get_length() != 1:
+    #     raise PyMTLTypeError( s.blk, node.ast,
+    #       'the operand of "Logic-not" is not a single bit!' )
+    #   node.Type = rt.NetWire( rdt.Bool() )
     # else:
     node.Type = node.operand.Type
-    node._is_explicit = True
+    node._is_explicit = node.operand._is_explicit
+    if hasattr( node.operand, '_value' ):
+      opmap = {
+          bir.Invert : '~',
+          bir.Not    : 'not',
+          bir.UAdd   : '+',
+          bir.USub   : '-',
+      }
+      try:
+        op = opmap[node.op.__class__]
+        operand = node.operand._value
+        node._value = eval(f"{op}{operand}")
+      except:
+        pass
 
   # def visit_BoolOp( s, node ):
   #   max_nbits = -1

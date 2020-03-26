@@ -13,10 +13,15 @@ from pymtl3.passes.errors import InvalidPassOptionValue
 from pymtl3.passes.PassConfigs import BasePassConfigs, Checker
 from pymtl3.passes.PlaceholderConfigs import expand
 
+from .VerilatorImportPass import VerilatorImportPass
+
 
 class VerilatorImportConfigs( BasePassConfigs ):
 
   Options = {
+    # Import this component?
+    "enable" : False,
+
     # Enable verbose mode?
     "verbose" : False,
 
@@ -129,7 +134,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
   }
 
   Checkers = {
-    ("verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
+    ("enable", "verbose", "vl_enable_assert", "vl_line_trace", "vl_W_lint", "vl_W_style",
      "vl_W_fatal", "vl_trace", "vl_coverage", "vl_line_coverage", "vl_toggle_coverage"):
       Checker( lambda v: isinstance(v, bool), "expects a boolean" ),
 
@@ -142,8 +147,8 @@ class VerilatorImportConfigs( BasePassConfigs ):
     "vl_Wno_list": Checker( lambda v: isinstance(v, list) and all(w in VerilogPlaceholderConfigs.Warnings for w in v),
                             "expects a list of warnings" ),
 
-    "vl_xinit": Checker( lambda v: v in ['zeros', 'ones', 'rand'],
-                  "vl_xinit should be one of ['zeros', 'ones', 'rand']" ),
+    "vl_xinit": Checker( lambda v: (v in ['zeros', 'ones', 'rand']) or isinstance(v, int),
+                  "vl_xinit should be an integer or one of ['zeros', 'ones', 'rand']" ),
 
     "vl_trace_timescale": Checker( lambda v: isinstance(v, str) and len(v) > 2 and v[-1] == 's' and \
                                     v[-2] in ['p', 'n', 'u', 'm'] and \
@@ -178,24 +183,38 @@ class VerilatorImportConfigs( BasePassConfigs ):
     'WIDTHCONCAT',
   ]
 
-  PassName = 'VerilatorImportConfigs'
+  Pass = VerilatorImportPass
 
   #---------------------------------------------------
   # Public APIs
   #---------------------------------------------------
 
-  def setup_configs( s, m, m_tr_namespace ):
+  def setup_configs( s, m, tr_pass, ph_pass ):
     # VerilatorImportConfigs alone does not have the complete information about
     # the module to be imported. For example, we need to read from the placeholder
     # configuration to figure out the pickled file name and the top module name.
     # This method is meant to be called before calling other public APIs.
 
-    s.translated_top_module = m_tr_namespace.translated_top_module
-    s.translated_source_file = m_tr_namespace.translated_filename
-    s.v_include = m.config_placeholder.v_include
-    # s.src_file = m.config_placeholder.src_file
-    s.port_map = m.config_placeholder.port_map
-    s.params = m.config_placeholder.params
+    s.translated_top_module = m.get_metadata( tr_pass.translated_top_module )
+    s.translated_source_file = m.get_metadata( tr_pass.translated_filename )
+
+    ph_cfg = m.get_metadata( ph_pass.placeholder_config )
+    s.v_include = ph_cfg.v_include
+    s.src_file = ph_cfg.src_file
+    s.port_map = ph_cfg.port_map
+    s.params = ph_cfg.params
+
+    # Infer vl_line_trace by scanning through the source file
+    try:
+      trim = lambda s: ''.join(s.split())
+      if not s.vl_line_trace:
+        with open(s.src_file) as fd:
+          for line in fd.readlines():
+            if "`VC_TRACE_BEGIN" in trim(line):
+              s.vl_line_trace = True
+              break
+    except OSError:
+      pass
 
     if not s.vl_mk_dir:
       s.vl_mk_dir = f'obj_dir_{s.translated_top_module}'
@@ -205,10 +224,16 @@ class VerilatorImportConfigs( BasePassConfigs ):
       return 0
     elif s.vl_xinit == 'ones':
       return 1
-    elif s.vl_xinit == 'rand':
+    elif ( s.vl_xinit == 'rand' ) or isinstance( s.vl_xinit, int ):
       return 2
     else:
-      raise InvalidPassOptionValue("vl_xinit should be one of 'zeros', 'ones', or 'rand'!")
+      raise InvalidPassOptionValue("vl_xinit should be an int or one of 'zeros', 'ones', or 'rand'!")
+
+  def get_vl_xinit_seed( s ):
+    if isinstance( s.vl_xinit, int ):
+      return s.vl_xinit
+    else:
+      return 0
 
   def get_c_wrapper_path( s ):
     return f'{s.translated_top_module}_v.cpp'

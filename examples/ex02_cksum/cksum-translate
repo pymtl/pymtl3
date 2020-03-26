@@ -82,7 +82,7 @@ def main():
 
   # Tag the checksum unit as to be translated
 
-  cksum.yosys_translate = True
+  cksum.set_metadata( TranslationPass.enable, True )
 
   # Perform translation
 

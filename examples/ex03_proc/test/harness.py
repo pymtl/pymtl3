@@ -151,13 +151,6 @@ def run_test( ProcModel, gen_test, dump_vcd=None,
 
   # Run the simulation
 
-  # from pymtl3.passes.backends.yosys import TranslationPass, ImportPass
-
-  # th.elaborate()
-  # th.proc.yosys_translate = True
-  # th.proc.yosys_import = True
-  # th.apply( TranslationPass() )
-  # th = ImportPass()( th )
   th.apply( SimulationPass() )
   th.sim_reset()
 

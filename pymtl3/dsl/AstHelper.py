@@ -203,7 +203,7 @@ class DetectMethodCalls( DetectVarNames ):
 def extract_reads_writes_calls( hostobj, f, tree, read, write, calls ):
 
   # Traverse the ast to extract variable writes and reads
-  # First check and remove @s.update and empty arguments
+  # First check and remove @update and empty arguments
   assert isinstance(tree, ast.Module)
   tree = tree.body[0]
   assert isinstance(tree, ast.FunctionDef)

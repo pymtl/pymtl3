@@ -11,7 +11,13 @@ Author : Yanghui Ou
 from .ComponentLevel1 import ComponentLevel1
 from .ComponentLevel7 import ComponentLevel7
 from .Connectable import Const, InPort, Interface, MethodPort, OutPort, Signal, Wire
-from .errors import InvalidAPICallError, InvalidConnectionError, NotElaboratedError
+from .errors import (
+    InvalidAPICallError,
+    InvalidConnectionError,
+    NotElaboratedError,
+    UnsetMetadataError,
+)
+from .MetadataKey import MetadataKey
 from .NamedObject import NamedObject
 from .Placeholder import Placeholder
 
@@ -61,7 +67,7 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def _collect_objects_local( s, filt ):
+  def _collect_objects_local( s, filt, sort_key = None ):
     assert s._dsl.constructed
     ret = set()
     stack = []
@@ -76,7 +82,10 @@ class Component( ComponentLevel7 ):
       # ONLY LIST IS SUPPORTED
       elif isinstance( u, list ):
         stack.extend( u )
-    return ret
+    if sort_key:
+      return sorted( ret, key = sort_key )
+    else:
+      return list(ret)
 
   def _flush_pending_value_connections( s ):
     if s._dsl._has_pending_value_connections:
@@ -424,6 +433,25 @@ class Component( ComponentLevel7 ):
       # pass
 
   #-----------------------------------------------------------------------
+  # Public APIs (can be called either before or after elaboration)
+  #-----------------------------------------------------------------------
+
+  """ Metadata APIs """
+
+  def set_metadata( s, key, value ):
+    s._metadata[ key ] = value
+
+  def has_metadata( s, key ):
+    assert isinstance( key, MetadataKey ), \
+        f'the given object {key} is not a MetadataKey!'
+    return key in s._metadata
+
+  def get_metadata( s, key ):
+    if not s.has_metadata( key ):
+      raise UnsetMetadataError( key, s )
+    return s._metadata[ key ]
+
+  #-----------------------------------------------------------------------
   # Post-elaborate public APIs (can only be called after elaboration)
   #-----------------------------------------------------------------------
 
@@ -454,17 +482,17 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       raise NotElaboratedError()
 
-  def get_child_components( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, Component ) )
+  def get_child_components( s, sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, Component ), sort_key )
 
-  def get_input_value_ports( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, InPort ) )
+  def get_input_value_ports( s, sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, InPort ), sort_key )
 
-  def get_output_value_ports( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, OutPort ) )
+  def get_output_value_ports( s , sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, OutPort ), sort_key )
 
-  def get_wires( s ):
-    return s._collect_objects_local( lambda x: isinstance( x, Wire ) )
+  def get_wires( s , sort_key = None ):
+    return s._collect_objects_local( lambda x: isinstance( x, Wire ), sort_key )
 
   def get_update_blocks( s ):
     assert s._dsl.constructed
@@ -502,9 +530,9 @@ class Component( ComponentLevel7 ):
     except AttributeError:
       return s._collect_all_single( filt )
 
-  def get_local_object_filter( s, filt ):
+  def get_local_object_filter( s, filt, sort_key = None ):
     assert callable( filt )
-    return s._collect_objects_local( filt )
+    return s._collect_objects_local( filt, sort_key )
 
   def get_all_components( s ):
     try:

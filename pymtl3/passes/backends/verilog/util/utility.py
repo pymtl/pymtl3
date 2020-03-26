@@ -126,7 +126,7 @@ def get_rtype( _rtype ):
 # gen_mapped_ports
 #-----------------------------------------------------------------------
 
-def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
+def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True, sep='__' ):
   """Return a list of (pname, vname, rt.Port/rt.Array ) that has all ports
   of `rtype`. This method performs SystemVerilog backend-specific name
   mangling and returns all ports that appear in the interface of component
@@ -161,7 +161,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
         all_ports.append( ( [_pname], _vname, _port, 0 ) )
       else:
         for i in range( _n_dim[0] ):
-          Q.append( (f"{_pname}[{i}]", f"{_vname}__{i}", _port, _n_dim[1:]) )
+          Q.append( (f"{_pname}[{i}]", f"{_vname}{sep}{i}", _port, _n_dim[1:]) )
 
     assert found == len(all_ports) or found == 0, \
         f"{pname} is an {len(n_dim)}-D array of ports with {len(all_ports)} ports in total, " \
@@ -181,7 +181,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
       _pname, _vname, _rtype, _n_dim, _prev_dims = Q.popleft()
       if _n_dim:
         for i in range(_n_dim[0]):
-          Q.append((f"{_pname}[{i}]", f"{_vname}__{i}", _rtype, _n_dim[1:], _prev_dims+1))
+          Q.append((f"{_pname}[{i}]", f"{_vname}{sep}{i}", _rtype, _n_dim[1:], _prev_dims+1))
       else:
         if isinstance( _rtype, rt.Port ):
           # Port inside the interface
@@ -195,7 +195,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
           # Interface (nested)
           for sub_name, sub_rtype in _rtype.get_all_properties_packed():
             sub_n_dim, sub_rtype = get_rtype( sub_rtype )
-            Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}", sub_rtype, sub_n_dim, _prev_dims))
+            Q.append((f"{_pname}.{sub_name}", f"{_vname}{sep}{sub_name}", sub_rtype, sub_n_dim, _prev_dims))
         else:
           assert False, f"{_pname} is not interface(s) or port(s)!"
 
@@ -226,7 +226,7 @@ def gen_mapped_ports( m, port_map, has_clk=True, has_reset=True ):
           new_prev_n_dim = _prev_n_dim
           for sub_name, sub_rtype in _rtype.get_all_properties_packed():
             sub_n_dim, sub_rtype = get_rtype( sub_rtype )
-            Q.append((f"{_pname}.{sub_name}", f"{_vname}__{sub_name}",
+            Q.append((f"{_pname}.{sub_name}", f"{_vname}{sep}{sub_name}",
                       sub_rtype, sub_n_dim, new_prev_n_dim, _port_idx))
       else:
         assert False, f"{_pname} is not interface(s) or port(s)!"

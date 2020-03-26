@@ -13,7 +13,7 @@ from textwrap import dedent
 
 import pymtl3.passes.rtlir.rtype.RTLIRDataType as rdt
 from pymtl3 import *
-from pymtl3.passes.backends.verilog import VerilogPlaceholderConfigs
+from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
 from pymtl3.passes.testcases import (
     Bits32Foo,
     Bits32x5Foo,
@@ -34,6 +34,7 @@ from pymtl3.passes.testcases import (
     CaseBits64SextInComp,
     CaseBits64TruncInComp,
     CaseBits64ZextInComp,
+    CaseBoolTmpVarComp,
     CaseConnectArrayBits32FooIfcComp,
     CaseConnectArrayNestedIfcComp,
     CaseConnectArrayStructAttrToOutComp,
@@ -86,11 +87,8 @@ class Bits32VRegComp( Placeholder, Component ):
   def construct( s ):
     s.d = InPort( Bits32 )
     s.q = OutPort( Bits32 )
-
-    s.config_placeholder = VerilogPlaceholderConfigs(
-        src_file = dirname(__file__) + '/VReg.v',
-        top_module = 'VReg',
-    )
+    s.set_metadata( VerilogPlaceholderPass.src_file, dirname(__file__)+'/VReg.v' )
+    s.set_metadata( VerilogPlaceholderPass.top_module, 'VReg' )
 
 class CasePlaceholderTranslationVReg:
   DUT = Bits32VRegComp
@@ -601,6 +599,42 @@ CaseTypeBundle = set_attributes( CaseTypeBundle,
             out1 = 32'd42;
             out2 = 32'd1;
             out3 = 32'd1;
+          end
+
+        endmodule
+    '''
+)
+
+CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
+    'REF_UPBLK',
+    '''\
+        always_comb begin : upblk
+          __tmpvar__upblk_matched = in_ == 0;
+          if ( __tmpvar__upblk_matched ) begin
+            out = 1;
+          end
+          else
+            out = 0;
+        end
+    ''',
+    'REF_SRC',
+    '''\
+        module DUT
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          logic [0:0] __tmpvar__upblk_matched;
+
+          always_comb begin : upblk
+            __tmpvar__upblk_matched = in_ == 0;
+            if ( __tmpvar__upblk_matched ) begin
+              out = 1;
+            end
+            else
+              out = 0;
           end
 
         endmodule

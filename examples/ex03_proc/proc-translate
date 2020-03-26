@@ -84,7 +84,7 @@ def main():
 
   # Tag the processor as to be translated
 
-  proc.yosys_translate = True
+  proc.set_metadata( TranslationPass.enable, True )
 
   # Perform translation
 

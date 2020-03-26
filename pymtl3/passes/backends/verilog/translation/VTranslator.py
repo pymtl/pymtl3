@@ -11,6 +11,7 @@ from pymtl3.passes.backends.generic import RTLIRTranslator
 from pymtl3.passes.backends.verilog.errors import VerilogStructuralTranslationError
 from pymtl3.passes.backends.verilog.util.utility import verilog_reserved
 
+from ..VerilogPlaceholderPass import VerilogPlaceholderPass
 from .behavioral import VBehavioralTranslator as V_BTranslator
 from .structural import VStructuralTranslator as V_STranslator
 
@@ -41,6 +42,8 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
     def rtlir_tr_initialize( s ):
       # Unpacked array indice that will be pushed to the end of signal expr
       s._rtlir_tr_unpacked_q = deque()
+      s._placeholder_pass = VerilogPlaceholderPass
+      s._mangled_placeholder_top_module_name = ''
       s._included_pickled_files = set()
 
     def rtlir_tr_src_layout( s, hierarchy ):
@@ -85,6 +88,8 @@ def mk_VTranslator( _RTLIRTranslator, _STranslator, _BTranslator ):
       if structural.component_explicit_module_name:
         module_name = \
             structural.component_explicit_module_name
+      elif structural.component_is_top and s._mangled_placeholder_top_module_name:
+        module_name = s._mangled_placeholder_top_module_name
       else:
         module_name = structural.component_unique_name
 

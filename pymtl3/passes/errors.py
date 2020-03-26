@@ -25,12 +25,12 @@ class TranslationError( Exception ):
 class InvalidPassOption( Exception ):
   """ Raised when the given pass option is not valid. """
   def __init__( self, opt, pas ):
-    return super().__init__(f"{opt} is not a valid option of pass {pas}!")
+    return super().__init__(f"\n{opt} is not a valid option of pass {pas}!")
 
 class InvalidPassOptionValue( Exception ):
   """ Raised when the given pass option value is not valid. """
   def __init__( self, opt, val, pas, msg ):
-    return super().__init__(f"{val} is not a valid value for option {opt}"
+    return super().__init__(f"\n{val} is not a valid value for option {opt}"
                             f" of pass {pas} because {msg}.")
 
 class PlaceholderConfigError( Exception ):

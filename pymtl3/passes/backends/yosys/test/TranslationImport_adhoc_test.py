@@ -50,7 +50,7 @@ def run_test( case ):
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.yosys_translate_import = True
+    _m.set_metadata( TranslationImportPass.enable, True )
     m = TranslationImportPass()( _m )
     sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
     sim.run_test()
