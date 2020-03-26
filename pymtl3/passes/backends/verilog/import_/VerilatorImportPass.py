@@ -94,7 +94,7 @@ class VerilatorImportPass( BasePass ):
       return s.do_import( m )
 
     else:
-      for child in m.get_child_components():
+      for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )
 
   def do_import( s, m ):
@@ -199,6 +199,10 @@ class VerilatorImportPass( BasePass ):
 
     imp = s.import_component( m, ph_cfg, ip_cfg, symbols )
 
+    imp._ip_cfg = ip_cfg
+    imp._ph_cfg = ph_cfg
+    imp._ports = ports
+
     # Dump configuration dict to config_file
     with open( config_file, 'w' ) as fd:
       json.dump( cfg_d, fd, indent = 4 )
@@ -266,6 +270,7 @@ class VerilatorImportPass( BasePass ):
     external_trace = int(ip_cfg.vl_line_trace)
     wrapper_name = ip_cfg.get_c_wrapper_path()
     verilator_xinit_value = ip_cfg.get_vl_xinit_value()
+    verilator_xinit_seed = ip_cfg.get_vl_xinit_seed()
     ip_cfg.vprint("\n=====Generate C wrapper=====")
 
     # The wrapper template should be in the same directory as this file

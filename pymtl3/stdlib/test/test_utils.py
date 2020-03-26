@@ -14,7 +14,11 @@ import re
 from pymtl3 import *
 from pymtl3.datatypes import is_bitstruct_class
 from pymtl3.passes import TracingConfigs
-from pymtl3.passes.backends.verilog import TranslationImportPass, VerilatorImportPass
+from pymtl3.passes.backends.verilog import (
+    TranslationImportPass,
+    VerilatorImportPass,
+    VerilogPlaceholderPass,
+)
 
 #-------------------------------------------------------------------------
 # mk_test_case_table
@@ -149,6 +153,7 @@ def run_test_vector_sim( model, test_vectors, dump_vcd=None, test_verilog=False,
     model.set_metadata( VerilatorImportPass.vl_xinit, test_verilog )
     model.set_metadata( TranslationImportPass.enable, True )
 
+  model.apply( VerilogPlaceholderPass() )
   model = TranslationImportPass()( model )
 
   # Create a simulator

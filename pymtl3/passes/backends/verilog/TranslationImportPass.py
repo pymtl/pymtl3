@@ -43,7 +43,7 @@ class TranslationImportPass( BasePass ):
       m.set_metadata( c.get_import_pass().enable, True )
 
     else:
-      for child in m.get_child_components():
+      for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )
 
   def add_placeholder_marks( s, m ):
@@ -73,7 +73,7 @@ class TranslationImportPass( BasePass ):
       m.set_metadata( placeholder_pass.placeholder_config, placeholder_config )
 
     else:
-      for child in m.get_child_components():
+      for child in m.get_child_components(repr):
         s.add_placeholder_marks( child )
 
   @staticmethod

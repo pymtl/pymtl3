@@ -88,9 +88,6 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
       return bir.SizeCast( obj.nbits, bir.Number( obj.value ) )
     else:
       return None
-    # else:
-    #   raise PyMTLSyntaxError( s.blk, node,
-    #       f"object {obj} cannot be converted to behavioral RTLIR!" )
 
   def get_call_obj( s, node ):
     if hasattr(node, "starargs") and node.starargs:
@@ -100,16 +97,12 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
         'double-star argument is not supported!')
     if node.keywords:
       raise PyMTLSyntaxError( s.blk, node, 'keyword argument is not supported!')
-    if not isinstance( node.func, ast.Name ):
-      raise PyMTLSyntaxError( s.blk, node,
-        f'{node.func} is called but is not a name!')
 
     obj = s.const_extractor.enter( node.func )
     if obj is not None:
       return obj
     else:
-      raise PyMTLSyntaxError( s.blk, node,
-        node.func.id + ' function is not found!' )
+      raise PyMTLSyntaxError( s.blk, node, f'{node.func} function is not found!' )
 
   def visit_Module( s, node ):
     if len( node.body ) != 1 or \
@@ -491,7 +484,7 @@ class ConstantExtractor( ast.NodeVisitor ):
     is_type = isinstance(ret, type) and (issubclass(ret, Bits) or is_bitstruct_class(ret))
     try:
       is_function = ret in s.pymtl_functions
-    except TypeError:
+    except:
       is_function = False
 
     if is_value or is_type or is_function:
@@ -520,7 +513,7 @@ class ConstantExtractor( ast.NodeVisitor ):
       if value is not None and idx is not None:
         try:
           ret = value[idx]
-        except (TypeError, IndexError):
+        except:
           ret = None
     s.cache[node] = ret
     return ret

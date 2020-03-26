@@ -389,6 +389,40 @@ def test_param_pass_through( do_test, translate ):
     p._no_trans_import = True
   do_test( p )
 
+def test_non_top_portmap( do_test ):
+  def tv_in( m, tv ):
+
+    m.in_ = Bits32(tv[0])
+  def tv_out( m, tv ):
+    if tv[1] != '*':
+      assert m.out == Bits32(tv[1])
+  class VReg( Component, Placeholder ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.set_metadata( VerilogPlaceholderPass.port_map, {
+          "in_" : "d", "out" : "q",
+      } )
+  class Top( Component ):
+    def construct( s ):
+      s.in_ = InPort( Bits32 )
+      s.out = OutPort( Bits32 )
+      s.v = VReg()
+      s.v.in_ //= s.in_
+      s.v.out //= s.out
+  a = Top()
+  a._test_vectors = [
+    [    1,    '*' ],
+    [    2,      1 ],
+    [   -1,      2 ],
+    [   -2,     -1 ],
+    [   42,     -2 ],
+    [  -42,     42 ],
+  ]
+  a._tv_in = tv_in
+  a._tv_out = tv_out
+  do_test( a )
+
 #-------------------------------------------------------------------------
 # test cases that do not use do_test
 #-------------------------------------------------------------------------

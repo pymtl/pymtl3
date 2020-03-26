@@ -24,7 +24,7 @@ class PlaceholderPass( BasePass ):
   def __call__( s, m ):
     if isinstance( m, Placeholder ):
       s.visit_placeholder( m )
-    for child in m.get_child_components():
+    for child in m.get_child_components(repr):
       s.__call__( child )
 
   def visit_placeholder( s, m ):

@@ -79,6 +79,7 @@ setup(
     'pymtl3': [
       'passes/backends/verilog/import_/verilator_wrapper.c.template',
       'passes/backends/verilog/import_/verilator_wrapper.py.template',
+      'passes/backends/verilog/tbgen/verilog_tbgen.v.template',
     ],
   },
 

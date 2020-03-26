@@ -109,7 +109,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     else:
       s.structural.component_no_synthesis_no_clk[m] = False
       s.structural.component_no_synthesis_no_reset[m] = False
-    for _m in m.get_child_components():
+    for _m in m.get_child_components(repr):
       s._gen_structural_no_clk_reset( _m )
 
   #-----------------------------------------------------------------------
@@ -276,7 +276,9 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
 
   def rtlir_data_type_translation( s, m, dtype ):
     """Translate an RTLIR data type into its backend representation."""
-    if isinstance( dtype, rdt.Vector ):
+    if isinstance( dtype, ( rdt.Vector, rdt.Bool ) ):
+      if isinstance( dtype, rdt.Bool ):
+        dtype = rdt.Vector( 1 )
       ret = s.rtlir_tr_vector_dtype( dtype )
       if all( dtype != x[0] for x in s.structural.decl_type_vector ):
         s.structural.decl_type_vector.append( ( dtype, ret ) )
