@@ -23,9 +23,6 @@ class BaseSignalExpr:
   def __eq__( s, other ):
     return type(s) is type(other) and s.rtype == other.rtype
 
-  def __ne__( s, other ):
-    return not s.__eq__( other )
-
   def __hash__( s ):
     return hash((type(s), s.rtype))
 
@@ -47,8 +44,7 @@ class _Index( BaseSignalExpr ):
 
   def __eq__( s, other ):
     return type(s) is type(other) and s.rtype == other.rtype and\
-           s.index == other.index and \
-           s.base == other.base
+           s.index == other.index and s.base == other.base
 
   def __hash__( s ):
     return hash((type(s), s.rtype, s.index, s.base))
@@ -450,17 +446,16 @@ def gen_signal_expr( cur_component, signal ):
     return classes[0]( cur_node, *ops )
 
   try:
-
-    try:
+    if isinstance( signal, dsl.Signal ):
       expr = repr(signal)
       base_comp = signal
-    except AttributeError:
-      # Special case for a ConstInstance because it has no name
-      assert hasattr( signal._dsl, 'const' ), f'{signal} is not supported!'
+    elif isinstance( signal, dsl.Const ):
       c = signal._dsl.const
       assert isinstance( c, ( int, Bits )) or is_bitstruct_inst( c ), \
-          f'{signal._dsl.const} is not an integer/Bits/BitStruct const!'
+                        f'{c} is not an integer/Bits/BitStruct const!'
       return ConstInstance( signal, c )
+    else:
+      raise AssertionError( f'{signal} is not supported!' )
 
     # Get the base component
     base_comp = cur_component
