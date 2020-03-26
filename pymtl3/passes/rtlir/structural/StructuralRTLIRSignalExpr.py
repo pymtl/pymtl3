@@ -452,7 +452,7 @@ def gen_signal_expr( cur_component, signal ):
   try:
 
     try:
-      expr = signal._dsl.full_name
+      expr = repr(signal)
       base_comp = signal
     except AttributeError:
       # Special case for a ConstInstance because it has no name
@@ -464,7 +464,7 @@ def gen_signal_expr( cur_component, signal ):
 
     # Get the base component
     base_comp = cur_component
-    full_name = base_comp._dsl.full_name
+    full_name = repr(base_comp)
     my_name = base_comp._dsl.my_name
     assert expr.find( full_name ) >= 0, \
       f"cannot find the base of attribute {full_name} in {expr}"

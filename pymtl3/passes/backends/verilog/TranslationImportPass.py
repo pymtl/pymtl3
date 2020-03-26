@@ -44,7 +44,7 @@ class TranslationImportPass( BasePass ):
       search_subtree = False
 
     if search_subtree:
-      for child in m.get_child_components(lambda x: x._dsl.full_name):
+      for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )
 
   def add_placeholder_marks( s, m ):
@@ -65,7 +65,7 @@ class TranslationImportPass( BasePass ):
           getattr(m, s.get_translation_pass_namespace()).translated_top_module
 
     else:
-      for child in m.get_child_components(lambda x: x._dsl.full_name):
+      for child in m.get_child_components(repr):
         s.add_placeholder_marks( child )
 
   def get_translation_pass( s ):

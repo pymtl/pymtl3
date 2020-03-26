@@ -109,7 +109,7 @@ class StructuralTranslatorL1( BaseRTLIRTranslator ):
     else:
       s.structural.component_no_synthesis_no_clk[m] = False
       s.structural.component_no_synthesis_no_reset[m] = False
-    for _m in m.get_child_components(lambda x: x._dsl.full_name):
+    for _m in m.get_child_components(repr):
       s._gen_structural_no_clk_reset( _m )
 
   #-----------------------------------------------------------------------

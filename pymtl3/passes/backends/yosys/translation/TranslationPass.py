@@ -34,7 +34,7 @@ class TranslationPass( BasePass ):
       else:
         tr_cfgs[m] = m.config_yosys_translate
 
-      for _m in m.get_child_components(lambda x: x._dsl.full_name):
+      for _m in m.get_child_components(repr):
         traverse( _m )
 
     traverse( m )
@@ -79,5 +79,5 @@ class TranslationPass( BasePass ):
       m._pass_yosys_translation.translated_top_module = module_name
 
     else:
-      for child in m.get_child_components(lambda x: x._dsl.full_name):
+      for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )

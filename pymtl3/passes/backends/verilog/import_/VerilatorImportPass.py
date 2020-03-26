@@ -72,7 +72,7 @@ class VerilatorImportPass( BasePass ):
       return s.do_import( m )
 
     else:
-      for child in m.get_child_components(lambda x: x._dsl.full_name):
+      for child in m.get_child_components(repr):
         s.traverse_hierarchy( child )
 
   def do_import( s, m ):
