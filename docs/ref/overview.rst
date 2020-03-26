@@ -22,6 +22,12 @@ Passes
 :doc:`PyMTL passes <passes>`
 
 
+PyMTL DSL APIs
+--------------
+
+:doc:`PyMTL DSL APIs <dsl>`
+
+
 Standard library
 ----------------
 

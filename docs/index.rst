@@ -61,6 +61,7 @@ PyMTL3 user reference manual.
    ref/datatypes
    ref/primitives
    ref/passes
+   ref/dsl
    ref/stdlib
 
 
