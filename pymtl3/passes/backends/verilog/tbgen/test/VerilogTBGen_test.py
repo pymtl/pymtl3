@@ -5,7 +5,6 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
-from os.path import dirname
 
 import pytest
 

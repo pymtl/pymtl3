@@ -8,6 +8,7 @@
 from pymtl3.passes.backends.verilog import TranslationImportPass, VerilogPlaceholderPass
 from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     test_adder,
+    test_non_top_portmap,
     test_normal_queue_implicit_top_module,
     test_normal_queue_interface,
     test_normal_queue_params,
@@ -19,7 +20,6 @@ from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     test_unpacked_port_array,
     test_unpacked_port_array_infer_clk_reset,
     test_vl_uninit,
-    test_non_top_portmap,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
