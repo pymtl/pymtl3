@@ -50,7 +50,9 @@ module {harness_name};
   );
 
   initial begin
+    clk   = 1'b1; // NEED TO DO THIS TO HAVE RISING EDGE AT TIME 0
     reset = 1'b0; // TODO reset active low/high
+
     #`HOLD_TIME;
     reset = 1'b1;
     #`CYCLE_TIME;
