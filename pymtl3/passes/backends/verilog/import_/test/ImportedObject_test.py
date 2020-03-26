@@ -391,7 +391,6 @@ def test_param_pass_through( do_test, translate ):
 
 def test_non_top_portmap( do_test ):
   def tv_in( m, tv ):
-
     m.in_ = Bits32(tv[0])
   def tv_out( m, tv ):
     if tv[1] != '*':

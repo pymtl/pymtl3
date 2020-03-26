@@ -381,7 +381,7 @@ class CaseBoolTmpVarComp:
     def construct( s ):
       s.in_ = InPort( Bits32 )
       s.out = OutPort( Bits32 )
-      @s.update
+      @update
       def upblk():
         matched = s.in_ == 0
         if matched:

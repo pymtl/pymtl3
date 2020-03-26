@@ -118,7 +118,7 @@ class BehavioralRTLIRGeneratorL1( ast.NodeVisitor ):
 
     We do not need to check the decorator list -- the fact that we are
     visiting this node ensures this node was added to the upblk
-    dictionary through s.update() (or other PyMTL decorators) earlier!
+    dictionary through update() (or other PyMTL decorators) earlier!
     """
     # Check the arguments of the function
     if node.args.args or node.args.vararg or node.args.kwarg:

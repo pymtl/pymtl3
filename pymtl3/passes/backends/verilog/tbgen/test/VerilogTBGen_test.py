@@ -13,10 +13,7 @@ from pymtl3 import SimulationPass
 from pymtl3.datatypes import Bits1, Bits32, Bits48, Bits64, clog2, mk_bits
 from pymtl3.dsl import Component, InPort, Interface, OutPort, Placeholder, connect
 from pymtl3.passes.backends.verilog import (
-    TranslationConfigs,
     TranslationImportPass,
-    VerilatorImportConfigs,
-    VerilogPlaceholderConfigs,
     VerilogPlaceholderPass,
     VerilogTBGenPass,
 )
@@ -48,7 +45,7 @@ def test_normal_queue( do_test ):
       assert m.deq_rdy == Bits1( tv[5] )
     if tv[5] != '*':
       assert m.deq_msg == Bits32( tv[4] )
-  class Queue( Component, Placeholder ):
+  class VQueue( Component, Placeholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count   =  OutPort( mk_bits( count_width )  )
       s.deq_en  =  InPort( Bits1  )
@@ -57,17 +54,12 @@ def test_normal_queue( do_test ):
       s.enq_en  =  InPort( Bits1  )
       s.enq_rdy = OutPort( Bits1  )
       s.enq_msg =  InPort( mk_bits( data_width ) )
-      s.config_placeholder = VerilogPlaceholderConfigs(
-          src_file = dirname(__file__)+'/VQueue.v',
-          top_module = 'VQueue',
-      )
-      s.verilog_translate_import = True
+      s.set_metadata( TranslationImportPass.enable, True )
   num_entries = 1
-  q = Queue(
+  q = VQueue(
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))
-  # q.dump_vcd = True
   test_vector = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy
@@ -89,7 +81,7 @@ def test_CaseConnectArrayBits32FooIfcComp():
   try:
     _m = case.DUT()
     _m.elaborate()
-    _m.verilog_translate_import = True
+    _m.set_metadata( TranslationImportPass.enable, True )
     _m.apply( VerilogPlaceholderPass() )
     m = TranslationImportPass()( _m )
     m.verilog_tbgen = True

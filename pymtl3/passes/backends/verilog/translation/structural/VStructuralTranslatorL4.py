@@ -30,8 +30,8 @@ class VStructuralTranslatorL4(
   def rtlir_tr_subcomp_port_decl( s, m, c_id, c_rtype, c_array_type, port_id,
       port_rtype, port_dtype, port_array_type ):
     obj = c_rtype.obj
-    if hasattr( obj, 'config_placeholder' ):
-      pmap = obj.config_placeholder.get_port_map()
+    if obj.has_metadata(s._placeholder_pass.placeholder_config):
+      pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
     else:
       pmap= lambda x: x
     return {
@@ -50,8 +50,8 @@ class VStructuralTranslatorL4(
       ifc_id, ifc_rtype, ifc_array_type, port_id, port_rtype, port_array_type ):
     if isinstance( port_rtype, rt.Port ):
       obj = c_rtype.obj
-      if hasattr( obj, 'config_placeholder' ):
-        pmap = obj.config_placeholder.get_port_map()
+      if obj.has_metadata(s._placeholder_pass.placeholder_config):
+        pmap = obj.get_metadata(s._placeholder_pass.placeholder_config).get_port_map()
       else:
         pmap = lambda x: x
       vname = f'{ifc_id}__{port_id}'
