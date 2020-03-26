@@ -2206,6 +2206,16 @@ CaseHeteroCompArrayComp = set_attributes( CaseHeteroCompArrayComp,
     ''',
     'REF_SRC',
     '''\
+        module Bits32DummyFooComp
+        (
+          input logic [0:0] clk,
+          input logic [31:0] in_,
+          output logic [31:0] out,
+          input logic [0:0] reset
+        );
+          assign out = in_;
+        endmodule
+
         module Bits32DummyBarComp
         (
           input logic [0:0] clk,
@@ -2216,16 +2226,6 @@ CaseHeteroCompArrayComp = set_attributes( CaseHeteroCompArrayComp,
           always_comb begin : upblk
             out = in_ + 32'd42;
           end
-        endmodule
-
-        module Bits32DummyFooComp
-        (
-          input logic [0:0] clk,
-          input logic [31:0] in_,
-          output logic [31:0] out,
-          input logic [0:0] reset
-        );
-          assign out = in_;
         endmodule
 
         module DUT

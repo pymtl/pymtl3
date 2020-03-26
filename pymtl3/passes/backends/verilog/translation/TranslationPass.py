@@ -36,7 +36,7 @@ def mk_TranslationPass( _VTranslator ):
         else:
           tr_cfgs[m] = m.config_verilog_translate
 
-        for _m in m.get_child_components(lambda x: x._dsl._my_name):
+        for _m in m.get_child_components(lambda x: x._dsl.full_name):
           traverse( _m )
 
       traverse( m )
@@ -94,7 +94,7 @@ def mk_TranslationPass( _VTranslator ):
         m._pass_verilog_translation.translated_top_module = module_name
 
       else:
-        for child in m.get_child_components(lambda x: x._dsl._my_name):
+        for child in m.get_child_components(lambda x: x._dsl.full_name):
           s.traverse_hierarchy( child )
 
   return _TranslationPass

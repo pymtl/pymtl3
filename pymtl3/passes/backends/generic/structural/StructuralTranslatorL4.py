@@ -40,7 +40,7 @@ class StructuralTranslatorL4( StructuralTranslatorL3 ):
   # Override
   def _translate_structural( s, m ):
     super()._translate_structural( m )
-    for child in m.get_child_components(lambda x: x._dsl._my_name):
+    for child in m.get_child_components(lambda x: x._dsl.full_name):
       s._translate_structural( child )
 
   # Override
