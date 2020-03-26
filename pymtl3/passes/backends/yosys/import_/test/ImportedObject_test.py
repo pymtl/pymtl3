@@ -7,6 +7,7 @@
 
 from pymtl3.passes.backends.verilog import TranslationImportPass, VerilogPlaceholderPass
 from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
+    finalize,
     test_adder,
     test_non_top_portmap,
     test_normal_queue_implicit_top_module,
@@ -33,5 +34,4 @@ def local_do_test( _m ):
   m = TranslationImportPass()( _m )
   sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
   sim.run_test()
-  if hasattr( m, 'finalize' ):
-    m.finalize()
+  finalize(m)
