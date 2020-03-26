@@ -34,6 +34,16 @@ Following the above principles, here is how to determine the bitwidth of an expr
     - it is an error if the inferred bitwidth is smaller than the explicit bitwidth.
     - otherwise, a zero extension on the inferred side to the explicit bitwidth is attempted.
     - the result has an explicit bitwidth indicated in the operation bitwidth rule table.
+- For binary operations ``<<`` and ``>>``
+
+  - The bitwidth of the right hand side is ignored.
+  - If the left hand side has explicit bitwidth, then the result has the same explicit bitwidth.
+  - If the left hand side has inferred bitwidth, then the result has the same inferred bitwidth.
+
+- For unary operations
+
+  - If the operand has explicit bitwidth, then the result has the same explicit bitwidth.
+  - If the operand has inferred bitwidth, then the result has the same inferred bitwidth.
 
 Opeartion bitwidth rules
 ^^^^^^^^^^^^^^^^^^^^^^^^
