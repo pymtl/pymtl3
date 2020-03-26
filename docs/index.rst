@@ -78,7 +78,7 @@ To be added...
 About PyMTL3
 ------------
 
-Visit the PyMTL webpage at ...
+Visit the PyMTL `website <https://cornell-brg.github.io/pymtl3/>`_.
 
 .. toctree::
    :maxdepth: 2
