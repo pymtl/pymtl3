@@ -435,10 +435,7 @@ class Component( ComponentLevel7 ):
       pypyjit.set_param("off")
     except:
       pass
-    try:
-      if s._dsl.elaborate_top is not s:
-        raise NotElaboratedError()
-    except AttributeError:
+    if not hasattr( s._dsl, "elaborate_top" ):
       s.elaborate()
 
     assert type(pass_instance) is not type, f"Should pass in a pass instance like " \
