@@ -147,8 +147,6 @@ void destroy_model( V{component_name}_t * m ) {{
   }}
   #endif
 
-  // TODO: this is probably a memory leak!
-  //       But pypy segfaults if uncommented...
   delete model;
 
 }}
