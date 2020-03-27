@@ -9,7 +9,6 @@ from collections import deque
 
 import py
 
-from pymtl3.datatypes import get_nbits, to_bits
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.rtlir import RTLIRDataType as rdt
 from pymtl3.passes.rtlir import RTLIRType as rt
@@ -63,7 +62,7 @@ class VerilogTBGenPass( BasePass ):
         p_n_dim, p_rtype = get_rtype( port )
         dtype = p_rtype.get_dtype()
         if   isinstance( dtype, rdt.Vector ): nbits = dtype.get_length()
-        elif isinstance( dtype, rdt.Struct ): nbits = get_nbits(dtype.get_class())
+        elif isinstance( dtype, rdt.Struct ): nbits = dtype.get_class().nbits
         else:                                 raise Exception( f"unrecognized data type {d}!" )
 
         # signal_decls
@@ -117,7 +116,7 @@ class VerilogTBGenPass( BasePass ):
 
   @staticmethod
   def gen_hook_func( top, x, ports, case_file ):
-    port_srcs = [ f"'h{{str(to_bits(x.{p}))}}" for p in ports ]
+    port_srcs = [ f"'h{{str(x.{p}.to_bits())}}" for p in ports ]
 
     src =  """
 def dump_case():
@@ -125,5 +124,5 @@ def dump_case():
     print(f"`T({});", file=case_file)
 """.format( ",".join(port_srcs) )
     _locals = {}
-    custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'to_bits': to_bits, 'case_file': case_file}, _locals)
+    custom_exec( py.code.Source(src).compile(), {'top': top, 'x': x, 'case_file': case_file}, _locals)
     return _locals['dump_case']
