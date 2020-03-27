@@ -5,9 +5,9 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
+import gc
 from os.path import dirname
 
-import gc
 import pytest
 
 from pymtl3 import Interface, SimulationPass
