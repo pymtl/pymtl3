@@ -16,7 +16,7 @@ import sphinx_rtd_theme
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(f'{__file__}{os.sep}..{os.sep}pymtl3'))
+sys.path.insert(0, os.path.abspath(f'{os.path.dirname(__file__)}{os.sep}..{os.sep}pymtl3'))
 
 
 # -- Project information -----------------------------------------------------
