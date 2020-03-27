@@ -279,3 +279,33 @@ def test_equal_top_level():
     print(e)
     assert str(e).startswith("Please use @= to assign top level InPort")
     return
+
+def test_update_once():
+
+  class A(Component):
+    @method_port
+    def recv( s, v ):
+      s.v = v
+
+    def construct( s ):
+      s.send = CallerPort()
+
+      s.v = None
+      @update_once
+      def up():
+        if s.v is not None:
+          s.send( s.v )
+
+      s.add_constraints( M(s.recv) < U(up) )
+
+  class Top(Component):
+    def construct( s ):
+      s.a = A()
+      s.b = A()
+      s.a.send //= s.b.recv
+      s.b.send //= s.a.recv
+
+  t = Top()
+  t.elaborate()
+  t.apply( GenDAGPass() )
+  t.apply( DynamicSchedulePass() )

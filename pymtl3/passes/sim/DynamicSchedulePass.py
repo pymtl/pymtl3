@@ -110,6 +110,16 @@ class DynamicSchedulePass( BasePass ):
         # to first find the actual entry point, and then BFS to expand the
         # footprint until all nodes are visited.
 
+        # check update_once first
+        onces = top.get_all_update_once()
+        for x in scc:
+          if x in onces:
+            raise Exception("update_once blocks are not allowed to appear in a cycle. \n - " + \
+                            "\n - ".join( [
+                              f"{y.__name__} ({'@update_once' if y in onces else '@update'} " \
+                              f"in 'top.{repr(top.get_update_block_host_component(y))[2:]}')"
+                              for y in scc] ))
+
         tmp_schedule = []
         Q = deque()
 

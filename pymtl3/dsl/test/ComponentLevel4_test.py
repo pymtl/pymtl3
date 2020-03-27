@@ -10,7 +10,7 @@ from collections import deque
 
 from pymtl3.datatypes import Bits32
 from pymtl3.dsl.ComponentLevel1 import update
-from pymtl3.dsl.ComponentLevel4 import ComponentLevel4
+from pymtl3.dsl.ComponentLevel4 import ComponentLevel4, update_once
 from pymtl3.dsl.Connectable import CalleePort, Wire
 from pymtl3.dsl.ConstraintTypes import M
 
@@ -22,6 +22,7 @@ def _test_model( cls ):
   A.elaborate()
   simple_sim_pass( A, 0x123 )
   print(A._dsl.schedule)
+  print(A._dsl.all_update_once)
 
   T, time = 0, 20
   while not A.done() and T < time:
@@ -162,7 +163,7 @@ def test_bypass_queue():
 
       s.q = BypassQueue( 1 )
 
-      @update
+      @update_once
       def up_plus_one_to_q():
         if s.q.enq_rdy():
           s.q.enq( s.in_ + 1 )

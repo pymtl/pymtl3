@@ -11,7 +11,11 @@ Date   : Dec 29, 2018
 from .ComponentLevel3 import ComponentLevel3
 from .Connectable import CalleePort, Signal
 from .ConstraintTypes import M, U
+from .NamedObject import NamedObject
 
+def update_once( blk ):
+  NamedObject._elaborate_stack[-1]._update_once( blk )
+  return blk
 
 class ComponentLevel4( ComponentLevel3 ):
 
@@ -22,6 +26,7 @@ class ComponentLevel4( ComponentLevel3 ):
   def __new__( cls, *args, **kwargs ):
     inst = super().__new__( cls, *args, **kwargs )
 
+    inst._dsl.update_once = set()
     inst._dsl.M_constraints = set()
 
     # We don't want to get different objects everytime when we get a
@@ -51,11 +56,18 @@ class ComponentLevel4( ComponentLevel3 ):
   def _collect_vars( s, m ):
     super()._collect_vars( m )
     if isinstance( m, ComponentLevel4 ):
+      s._dsl.all_update_once   |= m._dsl.update_once
       s._dsl.all_M_constraints |= m._dsl.M_constraints
 
   #-----------------------------------------------------------------------
   # Construction-time APIs
   #-----------------------------------------------------------------------
+
+  def _update_once( s, blk ):
+    super()._update( blk )
+
+    s._dsl.update_once.add( blk )
+    s._cache_func_meta( blk, is_update_ff=True ) # add caching of src/ast
 
   # Override
   def add_constraints( s, *args ):
@@ -79,4 +91,6 @@ class ComponentLevel4( ComponentLevel3 ):
   # Override
   def _elaborate_declare_vars( s ):
     super()._elaborate_declare_vars()
+
     s._dsl.all_M_constraints = set()
+    s._dsl.all_update_once = set()

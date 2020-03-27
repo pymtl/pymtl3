@@ -4,6 +4,7 @@ from .dsl.Component import Component
 from .dsl.ComponentLevel1 import update
 from .dsl.ComponentLevel2 import update_ff
 from .dsl.ComponentLevel3 import connect
+from .dsl.ComponentLevel4 import update_once
 from .dsl.ComponentLevel5 import method_port
 from .dsl.ComponentLevel6 import non_blocking
 from .dsl.ComponentLevel7 import blocking
@@ -35,7 +36,7 @@ from .passes.PassGroups import SimulationPass
 __all__ = [
   'U','M','RD','WR',
   'Wire', 'InPort', 'OutPort', 'Interface', 'CallerPort', 'CalleePort',
-  'update', 'update_ff', 'connect', 'method_port',
+  'update', 'update_ff', 'update_once', 'connect', 'method_port',
   'CalleeIfcRTL', 'CallerIfcRTL',
   'non_blocking', 'CalleeIfcCL', 'CallerIfcCL',
   'blocking', 'CalleeIfcFL', 'CallerIfcFL',
