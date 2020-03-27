@@ -1,7 +1,7 @@
 Domain-Specific Language APIs
 =============================
 
-.. autoclass:: dsl.Component.Component
+.. autoclass:: pymtl3.dsl.Component.Component
    :members:
    :special-members:
    :undoc-members:
