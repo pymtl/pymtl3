@@ -225,8 +225,8 @@ class BehavioralRTLIRTypeCheckVisitorL2( BehavioralRTLIRTypeCheckVisitorL1 ):
     node._is_explicit = node.operand._is_explicit
     if hasattr( node.operand, '_value' ):
       opmap = {
+          # bir.Not    : 'not',
           bir.Invert : '~',
-          bir.Not    : 'not',
           bir.UAdd   : '+',
           bir.USub   : '-',
       }

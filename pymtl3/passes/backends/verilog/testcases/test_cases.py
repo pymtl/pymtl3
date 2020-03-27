@@ -609,12 +609,12 @@ CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
     'REF_UPBLK',
     '''\
         always_comb begin : upblk
-          __tmpvar__upblk_matched = in_ == 0;
+          __tmpvar__upblk_matched = in_ == 32'd0;
           if ( __tmpvar__upblk_matched ) begin
-            out = 1;
+            out = 32'd1;
           end
           else
-            out = 0;
+            out = 32'd0;
         end
     ''',
     'REF_SRC',
@@ -629,12 +629,12 @@ CaseBoolTmpVarComp = set_attributes( CaseBoolTmpVarComp,
           logic [0:0] __tmpvar__upblk_matched;
 
           always_comb begin : upblk
-            __tmpvar__upblk_matched = in_ == 0;
+            __tmpvar__upblk_matched = in_ == 32'd0;
             if ( __tmpvar__upblk_matched ) begin
-              out = 1;
+              out = 32'd1;
             end
             else
-              out = 0;
+              out = 32'd0;
           end
 
         endmodule

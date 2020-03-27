@@ -243,9 +243,9 @@ def test_normal_queue_params( do_test ):
 def test_normal_queue_interface( do_test ):
   # Test a Placeholder with params in `construct`
   def tv_in( m, tv ):
-    m.enq_en @= Bits1( tv[0] )
-    m.enq_msg @= Bits32( tv[1] )
-    m.deq_en @= Bits1( tv[3] )
+    m.enq.en @= Bits1( tv[0] )
+    m.enq.msg @= Bits32( tv[1] )
+    m.deq.en @= Bits1( tv[3] )
   def tv_out( m, tv ):
     if tv[2] != '*':
       assert m.enq.rdy == Bits1( tv[2] )
@@ -448,18 +448,18 @@ def test_reg_external_trace( do_test ):
   a = TranslationImportPass()( a )
   a.apply( SimulationPass() )
 
-  a.in_ @= Bits32(1)
-  a.tick()
   assert a.line_trace() == 'q =          0'
-  a.in_ @= Bits32(2)
-  a.tick()
+  a.in_ @= Bits32(1)
+  a.sim_tick()
   assert a.line_trace() == 'q =          1'
-  a.in_ @= Bits32(-1)
-  a.tick()
+  a.in_ @= Bits32(2)
+  a.sim_tick()
   assert a.line_trace() == 'q =          2'
-  a.tick()
+  a.in_ @= Bits32(-1)
+  a.sim_tick()
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
+  a.sim_tick()
   finalize(a)
 
 def test_reg_infer_external_trace( do_test ):
@@ -478,16 +478,16 @@ def test_reg_infer_external_trace( do_test ):
   a = TranslationImportPass()( a )
   a.apply( SimulationPass() )
 
-  a.in_ @= Bits32(1)
-  a.tick()
   assert a.line_trace() == 'q =          0'
-  a.in_ @= Bits32(2)
-  a.tick()
+  a.in_ @= Bits32(1)
+  a.sim_tick()
   assert a.line_trace() == 'q =          1'
-  a.in_ @= Bits32(-1)
-  a.tick()
+  a.in_ @= Bits32(2)
+  a.sim_tick()
   assert a.line_trace() == 'q =          2'
-  a.tick()
+  a.in_ @= Bits32(-1)
+  a.sim_tick()
   # 0xFFFFFFFF unsigned
   assert a.line_trace() == 'q = 4294967295'
+  a.sim_tick()
   finalize(a)
