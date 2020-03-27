@@ -82,8 +82,8 @@ class NormalQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
-    s.deq_rdy //= lambda: ~s.reset & ( s.count > CountType(0) )
+    s.enq_rdy //= lambda: s.count < s.num_entries
+    s.deq_rdy //= lambda: s.count > CountType(0)
 
     s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
     s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
@@ -201,8 +201,8 @@ class PipeQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    s.deq_rdy //= lambda: ~s.reset & ( s.count > CountType(0) )
-    s.enq_rdy //= lambda: ~s.reset & ( ( s.count < s.num_entries ) | s.deq_en )
+    s.deq_rdy //= lambda: s.count > CountType(0)
+    s.enq_rdy //= lambda: ( s.count < s.num_entries ) | s.deq_en
 
     s.enq_xfer //= lambda: s.enq_en & s.enq_rdy
     s.deq_xfer //= lambda: s.deq_en & s.deq_rdy
@@ -350,8 +350,8 @@ class BypassQueueCtrlRTL( Component ):
     connect( s.waddr, s.tail     )
     connect( s.raddr, s.head     )
 
-    s.enq_rdy //= lambda: ~s.reset & ( s.count < s.num_entries )
-    s.deq_rdy //= lambda: ~s.reset & ( (s.count > CountType(0) ) | s.enq_en )
+    s.enq_rdy //= lambda: s.count < s.num_entries
+    s.deq_rdy //= lambda: ( s.count > CountType(0) ) | s.enq_en
 
     s.mux_sel //= lambda: s.count == CountType(0)
 
@@ -452,8 +452,8 @@ class NormalQueue1EntryRTL( Component ):
 
     s.deq.ret //= s.entry
 
-    s.enq.rdy //= lambda: ~s.reset & ~s.full
-    s.deq.rdy //= lambda: ~s.reset & s.full
+    s.enq.rdy //= lambda: ~s.full
+    s.deq.rdy //= lambda: s.full
 
     @s.update_ff
     def ff_normal1():
@@ -489,8 +489,8 @@ class PipeQueue1EntryRTL( Component ):
 
     s.deq.ret //= s.entry
 
-    s.enq.rdy //= lambda: ~s.reset & ( ~s.full | s.deq.en )
-    s.deq.rdy //= lambda: s.full & ~s.reset
+    s.enq.rdy //= lambda: ~s.full | s.deq.en
+    s.deq.rdy //= lambda: s.full
 
     @s.update_ff
     def ff_pipe1():
@@ -531,8 +531,8 @@ class BypassQueue1EntryRTL( Component ):
 
     s.count //= s.full
 
-    s.enq.rdy //= lambda: ~s.reset & ~s.full
-    s.deq.rdy //= lambda: ~s.reset & ( s.full | s.enq.en )
+    s.enq.rdy //= lambda: ~s.full
+    s.deq.rdy //= lambda: ( s.full | s.enq.en )
 
     @s.update_ff
     def ff_bypass1():
