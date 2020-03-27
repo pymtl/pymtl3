@@ -55,6 +55,7 @@ extensions = [
     'recommonmark',
     'sphinx_rtd_theme',
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
     'sphinx.ext.napoleon',
     'sphinx-prompt',
