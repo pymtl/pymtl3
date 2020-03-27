@@ -13,15 +13,36 @@ class PlaceholderPass( BasePass ):
 
   # Placeholder pass input pass data
 
+  #: Enable pickling on the placeholder component.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   enable             = MetadataKey()
+
+  #: Does the module of external source have clk pin?
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   has_clk            = MetadataKey()
+
+  #: Does the module of external source have reset pin?
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   has_reset          = MetadataKey()
 
   # Placeholder pass output pass data
 
+  #: An instance of :class:`PlaceholderConfigs` that contains the parsed options.
+  #:
+  #: Type: ``PlaceholderConfigs``; output
   placeholder_config = MetadataKey()
 
   def __call__( s, m ):
+    """Pickle every ``Placeholder`` in the component hierarchy rooted at ``m``."""
     if isinstance( m, Placeholder ):
       s.visit_placeholder( m )
     for child in m.get_child_components():

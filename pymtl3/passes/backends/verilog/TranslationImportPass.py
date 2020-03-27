@@ -19,9 +19,15 @@ from .VerilogPlaceholderPass import VerilogPlaceholderPass
 
 class TranslationImportPass( BasePass ):
 
+  #: Enable translation-import on the component.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   enable = MetadataKey()
 
   def __call__( s, top ):
+    """Translate-import the PyMTL component hierarhcy rooted at ``top``."""
     c = s.__class__
     s.top = top
     s.traverse_hierarchy( top )

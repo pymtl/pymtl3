@@ -39,41 +39,194 @@ from ..VerilogPlaceholderPass import VerilogPlaceholderPass
 
 
 class VerilatorImportPass( BasePass ):
-  """ Import an arbitrary SystemVerilog module as a PyMTL component. """
+  """Import an arbitrary SystemVerilog module as a PyMTL component."""
 
   # Import pass input pass data
 
+  #: Enable import on a component.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   enable              = MetadataKey()
+
+  #: Print out extra debug information during import.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   verbose             = MetadataKey()
+
+  #: Use Verilog ``line_trace`` output as the Python line_trace return value.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_line_trace       = MetadataKey()
+
+  #: Enable Verilator coverage.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_coverage         = MetadataKey()
+
+  #: Enable Verilator line coverage.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_line_coverage    = MetadataKey()
+
+  #: Enable Verilator toggle coverage.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_toggle_coverage  = MetadataKey()
+
+  #: Specify the Verilator make directory.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: obj_<top-component-name>
   vl_mk_dir           = MetadataKey()
+
+  #: Enable Verilog assert.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_enable_assert    = MetadataKey()
+
+  #: Verilator optimization level.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``3``
   vl_opt_level        = MetadataKey()
+
+  #: Verilator unroll count.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``1000000``
   vl_unroll_count     = MetadataKey()
+
+  #: Verilator unroll statement count.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``1000000``
   vl_unroll_stmts     = MetadataKey()
+
+  #: Enable Verilator lint warnings.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``True``
   vl_W_lint           = MetadataKey()
+
+  #: Enable Verilator style warnings.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``True``
   vl_W_style          = MetadataKey()
+
+  #: Enable Verilator fatal warnings.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``True``
   vl_W_fatal          = MetadataKey()
+
+  #: A list of suppressed Verilator warnings.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: ``['UNSIGNED', 'UNOPTFLAT', 'WIDTH']``
   vl_Wno_list         = MetadataKey()
+
+  #: Verilator initialization options.
+  #:
+  #: Possible values: ``'ones'``, ``'zeros'``, ``'rand'``, and non-zero integers; input
+  #:
+  #: Default value: ``'zeros'``
   vl_xinit            = MetadataKey()
+
+  #: Enable Verilator VCD tracing.
+  #:
+  #: Type: ``bool``; input
+  #:
+  #: Default value: ``False``
   vl_trace            = MetadataKey()
+
+  #: Filename of Verilator VCD tracing.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: translated-component-name.verilator1
   vl_trace_filename   = MetadataKey()
+
+  #: Time scale of generated Verilator VCD.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``'10ps'``
   vl_trace_timescale  = MetadataKey()
+
+  #: Cycle time of PyMTL clk pin in the generated Verilator VCD in unit of ``vl_trace_timescale``.
+  #:
+  #: Type: ``int``; input
+  #:
+  #: Default value: ``100``
   vl_trace_cycle_time = MetadataKey()
+
+  #: Optional flags to be passed to the C compiler.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``''``
   c_flags             = MetadataKey()
+
+  #: Optional include paths to be passed to the C compiler.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: ``[]``
   c_include_path      = MetadataKey()
+
+  #: Optional source file paths to be passed to the C compiler.
+  #:
+  #: Type: ``[str]``; input
+  #:
+  #: Default value: ``[]``
   c_srcs              = MetadataKey()
+
+  #: Optional flags to be passed to LD.
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``''``
   ld_flags            = MetadataKey()
+
+  #: Optional libraries to be passed to LD (e.g., ``'-lfoo'``).
+  #:
+  #: Type: ``str``; input
+  #:
+  #: Default value: ``''``
   ld_libs             = MetadataKey()
 
   # Import pass output pass data
 
+  #: An instnace of :class:`VerilatorImportConfigs` containing the parsed options.
+  #:
+  #: Type: :class:`VerilatorImportConfigs`; output
   import_config       = MetadataKey()
 
   def __call__( s, top ):
+    """Import the PyMTL component hierarhcy rooted at ``top``."""
     s.top = top
     if not top._dsl.constructed:
       raise VerilogImportError( top,
