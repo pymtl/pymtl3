@@ -172,7 +172,7 @@ We recommend not using Python ``and`` and ``or`` operators on Bits/``int``
 objects because they carry special Python semantics which is not compliant
 with the PyMTL semantics. Use ``&`` and ``|`` instead.
 
-.. autoclass:: pymtl3.datatypes.PythonBits.Bits
+.. autoclass:: datatypes.PythonBits.Bits
    :members:
    :special-members:
    :private-members:

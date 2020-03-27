@@ -4,19 +4,19 @@ Passes
 Simulation passes
 -----------------
 
-.. autoclass:: pymtl3.passes.PassGroups.SimulationPass
+.. autoclass:: passes.PassGroups.SimulationPass
    :members:
    :special-members:
    :private-members:
    :undoc-members:
 
-.. autoclass:: pymtl3.passes.PassGroups.SimpleSimPass
+.. autoclass:: passes.PassGroups.SimpleSimPass
    :members:
    :special-members:
    :private-members:
    :undoc-members:
 
-.. autoclass:: pymtl3.passes.PassGroups.AutoTickSimPass
+.. autoclass:: passes.PassGroups.AutoTickSimPass
    :members:
    :special-members:
    :private-members:
@@ -28,20 +28,20 @@ Translation passes
 Verilog translation pass
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.verilog.translation.TranslationPass.TranslationPass
+.. autoclass:: passes.backends.verilog.translation.TranslationPass.TranslationPass
 
    .. automethod:: __init__
    .. automethod:: __call__
 
 Here are the available input and output metadata of the Verilog translation pass:
 
-.. autoclass:: pymtl3.passes.backends.verilog.translation.TranslationPass.TranslationPass
+.. autoclass:: passes.backends.verilog.translation.TranslationPass.TranslationPass
    :members:
 
 Yosys translation pass
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.yosys.translation.TranslationPass.TranslationPass
+.. autoclass:: passes.backends.yosys.translation.TranslationPass.TranslationPass
 
    .. automethod:: __init__
    .. automethod:: __call__
@@ -55,20 +55,20 @@ Import passes
 Verilog import pass
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
+.. autoclass:: passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
 
    .. automethod:: __init__
    .. automethod:: __call__
 
 Here are the available input and output metadata of the Verilog import pass:
 
-.. autoclass:: pymtl3.passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
+.. autoclass:: passes.backends.verilog.import_.VerilatorImportPass.VerilatorImportPass
    :members:
 
 Yosys import pass
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.yosys.import_.VerilatorImportPass.VerilatorImportPass
+.. autoclass:: passes.backends.yosys.import_.VerilatorImportPass.VerilatorImportPass
 
    .. automethod:: __init__
    .. automethod:: __call__
@@ -82,20 +82,20 @@ Translation-import passes
 Verilog translation-import pass
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.verilog.TranslationImportPass.TranslationImportPass
+.. autoclass:: passes.backends.verilog.TranslationImportPass.TranslationImportPass
 
    .. automethod:: __init__
    .. automethod:: __call__
 
 Here are the available input metadata of the Verilog translation-import pass:
 
-.. autoclass:: pymtl3.passes.backends.verilog.TranslationImportPass.TranslationImportPass
+.. autoclass:: passes.backends.verilog.TranslationImportPass.TranslationImportPass
    :members:
 
 Yosys translation-import pass
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.yosys.TranslationImportPass.TranslationImportPass
+.. autoclass:: passes.backends.yosys.TranslationImportPass.TranslationImportPass
 
    .. automethod:: __init__
    .. automethod:: __call__
@@ -109,12 +109,12 @@ Placeholder passes
 Verilog placeholder pass
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pymtl3.passes.backends.verilog.VerilogPlaceholderPass.VerilogPlaceholderPass
+.. autoclass:: passes.backends.verilog.VerilogPlaceholderPass.VerilogPlaceholderPass
 
    .. automethod:: __init__
    .. automethod:: __call__
 
 Here are the available input metadata of the Verilog translation-import pass:
 
-.. autoclass:: pymtl3.passes.backends.verilog.VerilogPlaceholderPass.VerilogPlaceholderPass
+.. autoclass:: passes.backends.verilog.VerilogPlaceholderPass.VerilogPlaceholderPass
    :members:
