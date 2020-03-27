@@ -419,10 +419,8 @@ class VerilogPlaceholderPass( PlaceholderPass ):
     return code
 
   def _import_sources( s, cfg, source_list ):
-    """Import Verilog source from all Verilog files source_list.
-
-    This includes any source files specified by \`include within those files.
-    """
+    # Import Verilog source from all Verilog files source_list. This includes
+    # any source files specified by `include within those files.
 
     code = ""
 
