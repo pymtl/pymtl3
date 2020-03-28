@@ -4,7 +4,6 @@
 # Author : Shunning Jiang
 # Date   : Mar 18, 2020
 
-import os
 from collections import deque
 
 import py
