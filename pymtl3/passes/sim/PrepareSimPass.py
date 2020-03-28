@@ -7,6 +7,7 @@ Author : Shunning Jiang
 Date   : Jan 26, 2020
 """
 
+import py
 
 from pymtl3.datatypes import Bits, b1
 from pymtl3.dsl.Component import Component
@@ -14,6 +15,7 @@ from pymtl3.dsl.Connectable import Const, Interface, MethodPort, Signal
 from pymtl3.dsl.NamedObject import NamedObject
 from pymtl3.passes.BasePass import BasePass, PassMetadata
 from pymtl3.passes.errors import PassOrderError
+from pymtl3.utils import custom_exec
 
 from .SimpleTickPass import SimpleTickPass
 
@@ -45,18 +47,19 @@ class PrepareSimPass( BasePass ):
     self.create_sim_cycle_count( top )
     self.create_lock_unlock_simulation( top )
 
+    top.lock_in_simulation()
+
     self.create_sim_eval_comb( top )
     self.create_sim_tick( top )
     self.create_sim_reset( top )
 
-    top.lock_in_simulation()
 
   def create_sim_eval_comb( self, top ):
     # FIXME update_once? currently check if the design has method_port
     method_ports = top.get_all_object_filter( lambda x: isinstance( x, MethodPort ) )
 
     if len(method_ports) == 0: # Pure RTL design, add eval_combinational
-      sim_eval_combinational = SimpleTickPass.gen_tick_function( top._sched.update_schedule )
+      sim_eval_combinational = SimpleTickPass.gen_tick_function( [top._sim.check_top_level_inports] + top._sched.update_schedule )
     else:
       def sim_eval_combinational():
         raise NotImplementedError(f"top is not a pure RTL design. {'top'+repr(list(method_ports)[0])[1:]} is a method port.")
@@ -73,6 +76,7 @@ class PrepareSimPass( BasePass ):
       final_schedule.append( top.print_line_trace )
     final_schedule += self.collect_ff_funcs( top )
     final_schedule += top._sched.update_schedule
+    final_schedule.append( top._sim.check_top_level_inports )
     top.sim_tick = SimpleTickPass.gen_tick_function( final_schedule )
 
   def collect_ff_funcs( self, top ):
@@ -233,6 +237,24 @@ class PrepareSimPass( BasePass ):
 
       top._sim.signal_object_mapping = signal_object_mapping
       top._sim.locked_simulation = True
+
+      inports = []
+      objs    = []
+      for x in top._dsl.all_signals:
+        if x.is_input_value_port() and x.is_top_level_signal() and x.get_host_component() is top:
+          inports.append( x )
+          objs.append( signal_object_mapping[x][-1] )
+
+      src = """
+def check_top_level_inports():
+  {}
+""".format( "\n  ".join([ f"assert {x} is obj{i}, 'Please use @= to assign top level InPort top.{repr(x)[2:]}'"
+                            for i, x in enumerate(inports) ]) )
+      _locals = {}
+      _globals = { f"obj{i}" : x for i, x in enumerate(objs) }
+      _globals['s'] = top
+      custom_exec( py.code.Source(src).compile(), _globals, _locals)
+      top._sim.check_top_level_inports = _locals['check_top_level_inports']
 
     def unlock_simulation():
       top._check_called_at_elaborate_top( "unlock_simulation" )

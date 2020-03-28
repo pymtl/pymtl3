@@ -5,7 +5,6 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
-import gc
 from os.path import dirname
 
 import pytest
@@ -27,8 +26,6 @@ def finalize( m ):
     finalize(child)
   if hasattr( m, 'finalize' ):
     m.finalize()
-    # NOTE: see if a full collection solves the cached shared lib issue
-    gc.collect()
 
 def local_do_test( _m ):
   _m.elaborate()
@@ -36,17 +33,17 @@ def local_do_test( _m ):
     _m.set_metadata( TranslationImportPass.enable, True )
   _m.apply( VerilogPlaceholderPass() )
   m = TranslationImportPass()( _m )
-  sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+  sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
   sim.run_test()
   finalize(m)
 
 def test_reg( do_test ):
   # General trans-import test
-  def tv_in( m, test_vector ):
-    m.in_ @= Bits32( test_vector[0] )
-  def tv_out( m, test_vector ):
-    if test_vector[1] != '*':
-      assert m.out == Bits32( test_vector[1] )
+  def tv_in( m, tv ):
+    m.in_ @= Bits32( tv[0] )
+  def tv_out( m, tv ):
+    if tv[1] != '*':
+      assert m.out == Bits32( tv[1] )
   class VReg( Component, Placeholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
@@ -56,7 +53,7 @@ def test_reg( do_test ):
           "in_" : "d",   "out" : "q",
       } )
   a = VReg()
-  a._test_vectors = [
+  a._tvs = [
     [    1,    '*' ],
     [    2,      1 ],
     [   -1,      2 ],
@@ -71,10 +68,10 @@ def test_reg( do_test ):
 def test_vl_uninit( do_test ):
   # Use a latch to test if verilator has correctly set up
   # the inital signal values
-  def tv_in( m, test_vector ):
-    m.in_ @= Bits32( test_vector[0] )
-  def tv_out( m, test_vector ):
-    assert m.out == Bits32( test_vector[1] )
+  def tv_in( m, tv ):
+    m.in_ @= Bits32( tv[0] )
+  def tv_out( m, tv ):
+    assert m.out == Bits32( tv[1] )
   class VUninit( Component, Placeholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
@@ -84,7 +81,7 @@ def test_vl_uninit( do_test ):
       } )
       s.set_metadata( VerilatorImportPass.vl_xinit, 'ones' )
   a = VUninit()
-  a._test_vectors = [
+  a._tvs = [
     [    0, 4294967295 ],
     [    2, 4294967295 ],
     [   42,         42 ],
@@ -95,11 +92,11 @@ def test_vl_uninit( do_test ):
 
 def test_reg_incomplete_portmap( do_test ):
   # Test support for incomplete port map
-  def tv_in( m, test_vector ):
-    m.in_ @= Bits32( test_vector[0] )
-  def tv_out( m, test_vector ):
-    if test_vector[1] != '*':
-      assert m.out == Bits32( test_vector[1] )
+  def tv_in( m, tv ):
+    m.in_ @= Bits32( tv[0] )
+  def tv_out( m, tv ):
+    if tv[1] != '*':
+      assert m.out == Bits32( tv[1] )
   class VReg( Component, Placeholder ):
     def construct( s ):
       s.in_ = InPort( Bits32 )
@@ -109,7 +106,7 @@ def test_reg_incomplete_portmap( do_test ):
           "in_" : "d",   "out" : "q",
       } )
   a = VReg()
-  a._test_vectors = [
+  a._tvs = [
     [    1,    '*' ],
     [    2,      1 ],
     [   -1,      2 ],
@@ -123,15 +120,15 @@ def test_reg_incomplete_portmap( do_test ):
 
 def test_adder( do_test ):
   # Test an adder
-  def tv_in( m, test_vector ):
-    m.in0 @= Bits32( test_vector[0] )
-    m.in1 @= Bits32( test_vector[1] )
-    m.cin @= Bits1( test_vector[2] )
-  def tv_out( m, test_vector ):
-    if test_vector[3] != '*':
-      assert m.out == Bits32( test_vector[3] )
-    if test_vector[4] != '*':
-      assert m.cout == Bits32( test_vector[4] )
+  def tv_in( m, tv ):
+    m.in0 @= Bits32( tv[0] )
+    m.in1 @= Bits32( tv[1] )
+    m.cin @= Bits1( tv[2] )
+  def tv_out( m, tv ):
+    if tv[3] != '*':
+      assert m.out == Bits32( tv[3] )
+    if tv[4] != '*':
+      assert m.cout == Bits32( tv[4] )
   class VAdder( Component, Placeholder ):
     def construct( s ):
       s.in0 = InPort( Bits32 )
@@ -140,7 +137,7 @@ def test_adder( do_test ):
       s.out = OutPort( Bits32 )
       s.cout = OutPort( Bits1 )
   a = VAdder()
-  a._test_vectors = [
+  a._tvs = [
     [    1,      1,     1,     3, 0 ],
     [    1,     -1,     0,     0, 1 ],
     [   42,     42,     1,    85, 0 ],
@@ -177,7 +174,7 @@ def test_normal_queue_implicit_top_module( do_test ):
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))
-  test_vector = [
+  tv = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy
     [    1,    42,    1,    0,     0,    0  ],
@@ -188,7 +185,7 @@ def test_normal_queue_implicit_top_module( do_test ):
     [    0,    45,    0,    1,    44,    1  ],
     [    1,    45,    1,    0,    44,    0  ],
   ]
-  q._test_vectors = test_vector
+  q._tvs = tv
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
@@ -227,7 +224,7 @@ def test_normal_queue_params( do_test ):
       nbits = 32,
       nelems = num_entries,
       nbits_cnt = clog2(num_entries+1))
-  test_vector = [
+  tv = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy
     [    1,    42,    1,    0,     0,    0  ],
@@ -238,7 +235,7 @@ def test_normal_queue_params( do_test ):
     [    0,    45,    0,    1,    44,    1  ],
     [    1,    45,    1,    0,    44,    0  ],
   ]
-  q._test_vectors = test_vector
+  q._tvs = tv
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
@@ -276,7 +273,7 @@ def test_normal_queue_interface( do_test ):
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))
-  test_vector = [
+  tv = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy
     [    1,    42,    1,    0,     0,    0  ],
@@ -287,7 +284,7 @@ def test_normal_queue_interface( do_test ):
     [    0,    45,    0,    1,    44,    1  ],
     [    1,    45,    1,    0,    44,    0  ],
   ]
-  q._test_vectors = test_vector
+  q._tvs = tv
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
@@ -312,13 +309,13 @@ def test_unpacked_port_array( do_test ):
       s.set_metadata( VerilogPlaceholderPass.has_reset, False )
 
   q = VPassThrough( 2, 32 )
-  test_vector = [
+  tv = [
     [ 1, 42, 1, 42 ],
     [ 1, -1, 1, -1 ],
     [ 0,  1, 0,  1 ],
     [ -1, 1, -1, 1 ],
   ]
-  q._test_vectors = test_vector
+  q._tvs = tv
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
@@ -341,13 +338,13 @@ def test_unpacked_port_array_infer_clk_reset( do_test ):
       } )
 
   q = VPassThrough( 2, 32 )
-  test_vector = [
+  tv = [
     [ 1, 42, 1, 42 ],
     [ 1, -1, 1, -1 ],
     [ 0,  1, 0,  1 ],
     [ -1, 1, -1, 1 ],
   ]
-  q._test_vectors = test_vector
+  q._tvs = tv
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
@@ -384,13 +381,13 @@ def test_param_pass_through( do_test, translate ):
     assert m.out == Bits48( tv[1] )
 
   p = PassThrough()
-  test_vector = [
+  tv = [
     [  1,  1, ],
     [ -1, -1, ],
     [ 42, 42, ],
     [ -2, -2, ],
   ]
-  p._test_vectors = test_vector
+  p._tvs = tv
   p._tv_in = tv_in
   p._tv_out = tv_out
   if not translate:
@@ -418,7 +415,7 @@ def test_non_top_portmap( do_test ):
       s.v.in_ //= s.in_
       s.v.out //= s.out
   a = Top()
-  a._test_vectors = [
+  a._tvs = [
     [    1,    '*' ],
     [    2,      1 ],
     [   -1,      2 ],

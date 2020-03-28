@@ -28,22 +28,19 @@ def local_do_test( _m ):
   m = TranslationImportPass()( _m )
   m.verilog_tbgen = True
   m.apply( VerilogTBGenPass() )
-  sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+  sim = TestVectorSimulator( m, _m._tv, _m._tv_in, _m._tv_out )
   sim.run_test()
 
 def test_normal_queue( do_test ):
   # Test a Placeholder with params in `construct`
   def tv_in( m, tv ):
-    m.enq_en = Bits1( tv[0] )
-    m.enq_msg = Bits32( tv[1] )
-    m.deq_en = Bits1( tv[3] )
+    m.enq_en  @= tv[0]
+    m.enq_msg @= tv[1]
+    m.deq_en  @= tv[3]
   def tv_out( m, tv ):
-    if tv[2] != '*':
-      assert m.enq_rdy == Bits1( tv[2] )
-    if tv[4] != '*':
-      assert m.deq_rdy == Bits1( tv[5] )
-    if tv[5] != '*':
-      assert m.deq_msg == Bits32( tv[4] )
+    if tv[2] != '*': assert m.enq_rdy == tv[2]
+    if tv[4] != '*': assert m.deq_rdy == tv[5]
+    if tv[5] != '*': assert m.deq_msg == tv[4]
   class VQueue( Component, Placeholder ):
     def construct( s, data_width, num_entries, count_width ):
       s.count   =  OutPort( mk_bits( count_width )  )
@@ -59,7 +56,7 @@ def test_normal_queue( do_test ):
       data_width = 32,
       num_entries = num_entries,
       count_width = clog2(num_entries+1))
-  test_vector = [
+  tv = [
     #   enq                deq
     #   en    msg   rdy    en    msg   rdy
     [    1,    42,    1,    0,     0,    0  ],
@@ -70,7 +67,7 @@ def test_normal_queue( do_test ):
     [    0,    45,    0,    1,    44,    1  ],
     [    1,    45,    1,    0,    44,    0  ],
   ]
-  q._test_vectors = test_vector
+  q._tv = tv
   q._tv_in = tv_in
   q._tv_out = tv_out
   do_test( q )
@@ -85,7 +82,7 @@ def test_CaseConnectArrayBits32FooIfcComp():
     m = TranslationImportPass()( _m )
     m.verilog_tbgen = True
     m.apply( VerilogTBGenPass() )
-    sim = TestVectorSimulator( m, case.TEST_VECTOR, case.TV_IN, case.TV_OUT )
+    sim = TestVectorSimulator( m, case.TV, case.TV_IN, case.TV_OUT )
     sim.run_test()
   finally:
     try:

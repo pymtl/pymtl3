@@ -32,6 +32,6 @@ def local_do_test( _m ):
     _m.set_metadata( TranslationImportPass.enable, True )
   _m.apply( VerilogPlaceholderPass() )
   m = TranslationImportPass()( _m )
-  sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+  sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
   sim.run_test()
   finalize(m)

@@ -96,7 +96,7 @@ class CasePlaceholderTranslationVReg:
   _set( 'd', Bits32, 0 )
   TV_OUT = \
   _check( 'q', Bits32, 1 )
-  TEST_VECTOR = \
+  TV = \
   [
       [  1,  0 ],
       [  2,  1 ],
@@ -117,7 +117,7 @@ class CasePlaceholderTranslationRegIncr:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV = \
   [
       [  1,  1 ],
       [  2,  2 ],

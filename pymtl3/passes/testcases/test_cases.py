@@ -370,7 +370,7 @@ class CasePythonClassAttr:
       'out1', Bits32, 0,
       'out2', Bits32, 1,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   1,  ],
       [  42,   1,  ],
@@ -397,7 +397,7 @@ class CaseTypeBundle:
       'out2', Bits32Foo, 1,
       'out3', Bits32Foo, 2,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   1,  1, ],
       [  42,   1,  1, ],
@@ -422,7 +422,7 @@ class CaseBoolTmpVarComp:
   _check(
       'out', Bits32, 1,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [  0,   1,  ],
       [  1,   0,  ],
@@ -448,7 +448,7 @@ class CaseReducesInx3OutComp:
   )
   TV_OUT = \
   _check( 'out', Bits1, 3 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  0,   1,    2,  1   ],
       [ -1,   1,   -1,  1   ],
@@ -531,7 +531,7 @@ class CaseIfBasicComp:
   _set( 'in_', Bits16, 0 )
   TV_OUT = \
   _check( 'out', Bits8, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 255,   0, ],
       [  -1, 255, ],
@@ -561,7 +561,7 @@ class CaseIfDanglingElseInnerComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,  -1 ],
       [   42,     0,   0 ],
@@ -590,7 +590,7 @@ class CaseIfDanglingElseOutterComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0 ],
       [   42,     0,   0 ],
@@ -622,7 +622,7 @@ class CaseElifBranchComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 3 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  0 ],
       [   42,     0,  42, 42 ],
@@ -663,7 +663,7 @@ class CaseNestedIfComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 3 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1 ],
       [   42,     0,  42,   0 ],
@@ -727,7 +727,7 @@ class CaseForRangeLowerUpperStepPassThroughComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,    0,    -1,   0,  -1,   0, ],
       [   42,     0,  42,   0,  42,   42,     0,  42,   0,  42, ],
@@ -761,7 +761,7 @@ class CaseIfExpInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,    0,    -1,   0,   0,   0, ],
       [   42,     0,  42,   0,  42,   42,     0,  42,  42,  42, ],
@@ -795,7 +795,7 @@ class CaseIfExpUnaryOpInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,    0,    ~-1,   0,   0,   0, ],
       [   42,     0,  42,   0,  42,   42,     ~0,  42,  42,  42, ],
@@ -832,7 +832,7 @@ class CaseIfBoolOpInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
       [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
@@ -870,7 +870,7 @@ class CaseIfTmpVarInForStmtComp:
       'out[3]', Bits32, 8,
       'out[4]', Bits32, 9,
   )
-  TEST_VECTOR = \
+  TV =\
   [
     [    0,    -1,   0,  -1,   0,     0,     0,    0,    0,    0, ],
     [   42,     0,  42,   0,  42,     0,     0,    0,    0,   42, ],
@@ -895,7 +895,7 @@ class CaseFixedSizeSliceComp:
       'out[0]', Bits8, 1,
       'out[1]', Bits8, 2,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [     -1, 0xff, 0xff ],
       [      1, 0x01, 0x00 ],
@@ -1090,7 +1090,7 @@ class CaseHeteroCompArrayComp:
       'out_1', Bits32, 2,
       'out_2', Bits32, 3,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,     -1,     0,    41],
       [   42,      0,    42,    42],
@@ -1115,7 +1115,7 @@ class CaseSizeCastPaddingStructPort:
   )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,     concat(   Bits32(0),     Bits32(0)  ) ],
       [   42,     concat(   Bits32(0),     Bits32(42) ) ],
@@ -1138,7 +1138,7 @@ class CaseBits32x2ConcatComp:
   )
   TV_OUT = \
   _check( 'out', Bits64, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0,     concat(    Bits32(0),     Bits32(0) ) ],
       [   42,    0,     concat(   Bits32(42),     Bits32(0) ) ],
@@ -1157,7 +1157,7 @@ class CaseBits32x2ConcatConstComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits64, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    concat(    Bits32(42),    Bits32(0) ) ],
   ]
@@ -1174,7 +1174,7 @@ class CaseBits32x2ConcatMixedComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,  concat(    Bits32(42),    Bits32(0) ) ],
       [  -1,  concat(    Bits32(-1),    Bits32(0) ) ],
@@ -1194,7 +1194,7 @@ class CaseBits32x2ConcatFreeVarComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits33, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,  concat(    Bits32(42),    Bits1(0) ) ],
       [  -1,  concat(    Bits32(-1),    Bits1(0) ) ],
@@ -1217,7 +1217,7 @@ class CaseBits32x2ConcatUnpackedSignalComp:
   )
   TV_OUT = \
   _check( 'out', Bits64, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   2,  concat(    Bits32(42),     Bits32(2) ) ],
       [  -1,  42,  concat(    Bits32(-1),    Bits32(42) ) ],
@@ -1237,7 +1237,7 @@ class CaseBits64SextInComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   sext(    Bits32(42),    64 ) ],
       [  -2,   sext(    Bits32(-2),    64 ) ],
@@ -1257,7 +1257,7 @@ class CaseBits64ZextInComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits64, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   zext(    Bits32(42),    64 ) ],
       [  -2,   zext(    Bits32(-2),    64 ) ],
@@ -1277,7 +1277,7 @@ class CaseBits64TruncInComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits8, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  42,   trunc(    Bits32(42),    8 ) ],
       [  -2,   trunc(    Bits32(-2),    8 ) ],
@@ -1297,7 +1297,7 @@ class CaseBits32BitSelUpblkComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   0,   0 ],
       [  -1,   1 ],
@@ -1317,7 +1317,7 @@ class CaseBits64PartSelUpblkComp:
   _set( 'in_', Bits64, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   -1,   -1 ],
       [   -2,   -1 ],
@@ -1340,7 +1340,7 @@ class CasePassThroughComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0 ],
       [   42,   42 ],
@@ -1361,7 +1361,7 @@ class CaseSequentialPassThroughComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,     0 ],
       [   42,     0 ],
@@ -1380,7 +1380,7 @@ class CaseConnectPassThroughLongNameComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0 ],
       [   42,   42 ],
@@ -1399,7 +1399,7 @@ class CaseLambdaConnectComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   42 ],
       [   -1,   41 ],
@@ -1421,7 +1421,7 @@ class CaseLambdaConnectWithListComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out[1]', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   42 ],
       [   -1,   41 ],
@@ -1444,7 +1444,7 @@ class CaseBits32FooInBits32OutComp:
   _set( 'in_', Bits32Foo, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   0 ],
       [   -1,  -1 ],
@@ -1482,7 +1482,7 @@ class CaseConstStructInstComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 0 ],
   ]
@@ -1499,7 +1499,7 @@ class CaseStructPackedArrayUpblkComp:
   _set( 'in_', Bits32x5Foo, 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], concat( b32(0),   b32(0),   b32(0)  ) ],
       [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], concat( b32(-1),  b32(-1),  b32(-1) ) ],
@@ -1517,7 +1517,7 @@ class CaseConnectLiteralStructComp:
   _set()
   TV_OUT = \
   _check( 'out', "(lambda x: x)", 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   NestedStructPackedPlusScalar(42, [ Bits32(1) , Bits32(2)  ], Bits32Foo(3) ) ],
   ]
@@ -1534,7 +1534,7 @@ class CaseNestedStructPackedArrayUpblkComp:
   _set( 'in_', '(lambda x: x)', 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   NestedStructPackedPlusScalar(0, [ Bits32(0) , Bits32(0)  ], Bits32Foo(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
       [  NestedStructPackedPlusScalar(-1, [ Bits32(-1), Bits32(-2) ], Bits32Foo(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
@@ -1555,7 +1555,7 @@ class CaseConnectNestedStructPackedArrayComp:
   _set( 'in_', '(lambda x: x)', 0 )
   TV_OUT = \
   _check( 'out', Bits96, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [   NestedStructPackedPlusScalar(0, [ Bits32(0) , Bits32(0)  ], Bits32Foo(5) ), concat(   Bits32(0), Bits32(5),   Bits32(0) ) ],
       [  NestedStructPackedPlusScalar(-1, [ Bits32(-1), Bits32(-2) ], Bits32Foo(6) ), concat(  Bits32(-1), Bits32(6),  Bits32(-1) ) ],
@@ -1663,7 +1663,7 @@ class CaseConnectInToWireComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 5 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 0,   0,    0,  0,  0,   0 ],
       [ 0,   0,   42,  0,  0,  42 ],
@@ -1721,7 +1721,7 @@ class CaseConnectConstToOutComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42 ],
   ]
@@ -1736,7 +1736,7 @@ class CaseConnectBitSelToOutComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits1, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   0, ],
       [    1,   1, ],
@@ -1756,7 +1756,7 @@ class CaseConnectSliceToOutComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits4, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,   0, ],
       [    1,   0, ],
@@ -1775,7 +1775,7 @@ class CaseConnectBitsConstToOutComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 0 ],
   ]
@@ -1797,7 +1797,7 @@ class CaseConnectArrayStructAttrToOutComp:
   _set( 'in_', Bits32x5Foo, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  [ b32(0), b32(0), b32(0), b32(0),b32(0) ], 0,  ],
       [  [ b32(-1),b32(-1),b32(-1),b32(0),b32(0) ], -1, ],
@@ -1816,7 +1816,7 @@ class CaseConnectConstStructAttrToOutComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = [ [ 42 ] ]
+  TV =[ [ 42 ] ]
 
 class CaseBits32IfcInComp:
   class DUT( Component ):
@@ -1847,7 +1847,7 @@ class CaseArrayBits32IfcInUpblkComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    0,      0 ],
       [    0,   42,     42 ],
@@ -1876,7 +1876,7 @@ class CaseConnectValRdyIfcComp:
       'out.msg', Bits32, 4,
       'in_.rdy', Bits1, 5,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    42,   1,    0,    42,    1 ],
       [    1,    -1,   1,    1,    -1,    1 ],
@@ -1907,7 +1907,7 @@ class CaseConnectValRdyIfcUpblkComp:
       'out.msg', Bits32, 4,
       'in_.rdy', Bits1, 5,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [    0,    42,   1,    0,    42,    1 ],
       [    1,    -1,   1,    1,    -1,    1 ],
@@ -1933,7 +1933,7 @@ class CaseConnectArrayBits32FooIfcComp:
       'out[0].foo.foo',   Bits32,  2,
       'out[1].foo.foo',   Bits32,  3,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 1,      0,    1,      0, ],
       [ 0,     42,    0,     42, ],
@@ -1971,7 +1971,7 @@ class CaseConnectArrayNestedIfcComp:
       'out[1].memifc.msg', Bits32, 14,
       'in_[1].memifc.rdy', Bits1,  15,
   )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 1,  1,      0,    0,    1,  1,      0,    0,  1,  1,      0,    0,    1,  1,      0,    0, ],
       [ 1,  0,     42,    1,    1,  0,     42,    1,  1,  0,     42,    1,    1,  0,     42,    1, ],
@@ -2010,7 +2010,7 @@ class CaseBits32ConnectSubCompAttrComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = [ [ 42 ] ]
+  TV =[ [ 42 ] ]
 
 class CaseBits32SubCompAttrUpblkComp:
   class DUT( Component ):
@@ -2024,7 +2024,7 @@ class CaseBits32SubCompAttrUpblkComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42 ],
   ]
@@ -2045,7 +2045,7 @@ class CaseConnectSubCompIfcHierarchyComp:
       'ifc.msg', Bits32, 1,
       'ifc.val', Bits1,  2,
   )
-  TEST_VECTOR = [ [ 42, 42, 1 ] ]
+  TV =[ [ 42, 42, 1 ] ]
 
 class CaseConnectArraySubCompArrayStructIfcComp:
   class DUT( Component ):
@@ -2059,7 +2059,7 @@ class CaseConnectArraySubCompArrayStructIfcComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42, 42 ],
       [  1,  1 ],
@@ -2083,7 +2083,7 @@ class CaseBehavioralArraySubCompArrayStructIfcComp:
   _set( 'in_', Bits32, 0 )
   TV_OUT = \
   _check( 'out', Bits32, 1 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42, 42 ],
       [  1,  1 ],
@@ -2103,7 +2103,7 @@ class CaseBits32ArrayConnectSubCompAttrComp:
   _check(
       'out',     Bits32, 0,
   )
-  TEST_VECTOR = [ [ 42 ] ]
+  TV =[ [ 42 ] ]
 
 class CaseBits32ArraySubCompAttrUpblkComp:
   class DUT( Component ):
@@ -2117,7 +2117,7 @@ class CaseBits32ArraySubCompAttrUpblkComp:
   _set()
   TV_OUT = \
   _check( 'out', Bits32, 0 )
-  TEST_VECTOR = \
+  TV =\
   [
       [ 42 ],
   ]
@@ -2280,7 +2280,7 @@ class CaseInterfaceArrayNonStaticIndexComp:
   )
   TV_OUT = \
   _check( 'out', Bits32, 2 )
-  TEST_VECTOR = \
+  TV =\
   [
       [  0,   0,    0 ],
       [  1,   0,    0 ],

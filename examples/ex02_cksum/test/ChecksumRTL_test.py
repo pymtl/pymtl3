@@ -25,13 +25,14 @@ def test_step_unit():
   step_unit.elaborate()
   step_unit.apply( SimulationPass() )
 
-  step_unit.word_in = b16(1)
-  step_unit.sum1_in = b32(1)
-  step_unit.sum2_in = b32(1)
-  step_unit.sim_tick()
+  step_unit.word_in @= 1
+  step_unit.sum1_in @= 1
+  step_unit.sum2_in @= 1
+  step_unit.sim_eval_combinational()
+  assert step_unit.sum1_out == 2
+  assert step_unit.sum2_out == 3
 
-  assert step_unit.sum1_out == b32(2)
-  assert step_unit.sum2_out == b32(3)
+  step_unit.sim_tick()
 
 #-------------------------------------------------------------------------
 # Wrap RTL checksum unit into a function
@@ -53,19 +54,16 @@ def checksum_rtl( words ):
   dut.send.rdy @= 1
   while not dut.recv.rdy:
     dut.recv.en @= 0
-    dut.sim_eval_combinational()
     dut.sim_tick()
 
   # Feed in the input
-  dut.recv.en @= 1
+  dut.recv.en  @= 1
   dut.recv.msg @= bits_in
-  dut.sim_eval_combinational()
   dut.sim_tick()
 
   # Wait until the checksum unit is about to send the message
   while not dut.send.en:
     dut.recv.en @= 0
-    dut.sim_eval_combinational()
     dut.sim_tick()
 
   # Return the result
