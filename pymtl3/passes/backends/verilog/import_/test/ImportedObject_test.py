@@ -26,6 +26,8 @@ def finalize( m ):
     finalize(child)
   if hasattr( m, 'finalize' ):
     m.finalize()
+    # NOTE: see if a full collection solves the cached shared lib issue
+    gc.collect()
 
 def local_do_test( _m ):
   _m.elaborate()
