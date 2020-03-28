@@ -6,7 +6,6 @@
 """Test if the imported object works correctly."""
 
 from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
-from pymtl3.passes.backends.yosys import TranslationImportPass
 from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     finalize,
     test_adder,
@@ -19,6 +18,7 @@ from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     test_reg_infer_external_trace,
     test_vl_uninit,
 )
+from pymtl3.passes.backends.yosys import TranslationImportPass
 from pymtl3.passes.rtlir.util.test_utility import do_test
 from pymtl3.stdlib.test import TestVectorSimulator
 

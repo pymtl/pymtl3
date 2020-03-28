@@ -16,6 +16,7 @@ from pymtl3.utils import custom_exec
 
 from ..errors import VerilogImportError
 from ..util.utility import get_rtype
+from .verilog_tbgen_v_template import template as tb_template
 
 
 class VerilogTBGenPass( BasePass ):
@@ -92,24 +93,20 @@ class VerilogTBGenPass( BasePass ):
 
       dut_name = x._ip_cfg.translated_top_module
 
-      template_name = os.path.dirname( os.path.abspath(__file__) ) + os.path.sep + 'verilog_tbgen.v.template'
-
-      with open(template_name) as template:
-        with open( dut_name + "_tb.v", 'w' ) as output:
-          template = template.read()
-          output.write( template.format(
-            args_strs         = ",".join([f"a{i}" for i in range(len(task_signal_decls))]),
-            harness_name      = dut_name + "_tb",
-            signal_decls      = ";\n  ".join(signal_decls), # logic [31:0] xxx, -- packed array
-            task_signal_decls = ",\n    ".join(task_signal_decls), # input logic [31:0] in__x;input logic [31:0] ref_y; -- unpacked ports
-            task_assign_strs  = ";\n    ".join(task_assign_strs), # x = in__x; -- unpacked
-            task_check_strs   = ";\n    ".join(task_check_strs), # ERR( lineno, 'x', x, ref_x ) -- unpacked
-            dut_name          = dut_name,
-            dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
-            dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
-            dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
-            cases_file_name   = dut_name+"_tb.v.cases",
-          ))
+      with open( dut_name + "_tb.v", 'w' ) as output:
+        output.write( tb_template.format(
+          args_strs         = ",".join([f"a{i}" for i in range(len(task_signal_decls))]),
+          harness_name      = dut_name + "_tb",
+          signal_decls      = ";\n  ".join(signal_decls), # logic [31:0] xxx, -- packed array
+          task_signal_decls = ",\n    ".join(task_signal_decls), # input logic [31:0] in__x;input logic [31:0] ref_y; -- unpacked ports
+          task_assign_strs  = ";\n    ".join(task_assign_strs), # x = in__x; -- unpacked
+          task_check_strs   = ";\n    ".join(task_check_strs), # ERR( lineno, 'x', x, ref_x ) -- unpacked
+          dut_name          = dut_name,
+          dut_clk_decl      = '.clk(clk)' if x._ph_cfg.has_clk else '',
+          dut_reset_decl    = '.reset(reset)' if x._ph_cfg.has_reset else '',
+          dut_signal_decls  = ",\n    ".join(dut_signal_decls), # logic [31:0] xxx, -- packed array, # .x(x), -- packed array
+          cases_file_name   = dut_name+"_tb.v.cases",
+        ))
 
       case_file = open( dut_name + "_tb.v.cases", "w" )
       top._tbgen.tbgen_hooks.append( self.gen_hook_func( top, x, py_signal_order, case_file ) )

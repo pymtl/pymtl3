@@ -1,4 +1,5 @@
-//========================================================================
+template = \
+'''//========================================================================
 // V{component_name}_v.cpp
 //========================================================================
 // This file provides a template for the C wrapper used in the import
@@ -141,7 +142,7 @@ void destroy_model( V{component_name}_t * m ) {{
 
   #if DUMP_VCD
   if ( m->_vcd_en ) {{
-    // printf("DESTROYING %d\n", m->trace_time);
+    // printf("DESTROYING %d\\n", m->trace_time);
     VerilatedVcdC * tfp = (VerilatedVcdC *) m->tfp;
     tfp->close();
   }}
@@ -266,7 +267,8 @@ void trace( V{component_name}_t * m, char* str ) {{
     str[j] = c;
     j++;
   }}
-  str[j] = '\0';
+  str[j] = '\\0';
 
 }}
 #endif
+'''
