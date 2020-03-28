@@ -279,4 +279,3 @@ def test_equal_top_level():
     print(e)
     assert str(e).startswith("Please use @= to assign top level InPort")
     return
-
