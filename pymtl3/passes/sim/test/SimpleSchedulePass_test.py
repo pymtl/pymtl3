@@ -240,3 +240,24 @@ def test_const_connect_nested_struct_signal_to_struct():
   x.sim_eval_combinational()
   x.sim_tick()
   assert x.out == SomeMsg2(SomeMsg1(1,2),3)
+
+def test_equal_top_level():
+  class A(Component):
+    def construct( s ):
+      @update
+      def up():
+        print(1)
+
+  a = A()
+  a.apply( GenDAGPass() )
+  a.apply( SimpleSchedulePass() )
+  a.apply( PrepareSimPass() )
+  a.sim_reset()
+
+  try:
+    a.reset = 0
+    a.sim_tick()
+  except AssertionError as e:
+    print(e)
+    assert str(e).startswith("Please use @= to assign top level InPort")
+    return

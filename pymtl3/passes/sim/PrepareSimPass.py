@@ -238,6 +238,10 @@ class PrepareSimPass( BasePass ):
       top._sim.signal_object_mapping = signal_object_mapping
       top._sim.locked_simulation = True
 
+      # Add the function that checks if the Bits objects of
+      # top-level input ports are modified. If so, it's mostly because
+      # the top-level ports are assigned with = instead of @=.
+
       inports = []
       objs    = []
       for x in top._dsl.all_signals:

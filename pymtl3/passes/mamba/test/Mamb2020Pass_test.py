@@ -50,3 +50,22 @@ def test_very_deep_dag():
     A.sim_tick()
     T += 1
   return A
+
+def test_equal_top_level():
+  class A(Component):
+    def construct( s ):
+      @update
+      def up():
+        print(1)
+
+  a = A()
+  a.apply( Mamba2020() )
+  a.sim_reset()
+
+  try:
+    a.reset = 0
+    a.sim_tick()
+  except AssertionError as e:
+    print(e)
+    assert str(e).startswith("Please use @= to assign top level InPort")
+    return

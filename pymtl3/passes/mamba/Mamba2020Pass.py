@@ -74,10 +74,11 @@ class Mamba2020Pass( UnrollSimPass ):
     self.create_print_line_trace( top )
     self.create_sim_cycle_count( top )
     self.create_lock_unlock_simulation( top )
+    top.lock_in_simulation()
+
     self.create_sim_eval_comb( top )
     self.create_sim_tick( top )
     self.create_sim_reset( top )
-    top.lock_in_simulation()
 
   #-----------------------------------------------------------------------
   # compile_meta_block

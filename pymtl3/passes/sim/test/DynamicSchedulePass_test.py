@@ -258,3 +258,25 @@ def test_const_connect_cannot_handle_same_name_nested_struct():
     assert str(e) == "Cannot handle two subfields with the same struct name but different structs"
     return
   raise Exception("Should've thrown AssertionError")
+
+def test_equal_top_level():
+  class A(Component):
+    def construct( s ):
+      @update
+      def up():
+        print(1)
+
+  a = A()
+  a.apply( GenDAGPass() )
+  a.apply( DynamicSchedulePass() )
+  a.apply( PrepareSimPass() )
+  a.sim_reset()
+
+  try:
+    a.reset = 0
+    a.sim_tick()
+  except AssertionError as e:
+    print(e)
+    assert str(e).startswith("Please use @= to assign top level InPort")
+    return
+

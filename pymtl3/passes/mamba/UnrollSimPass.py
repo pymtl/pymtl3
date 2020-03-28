@@ -64,4 +64,5 @@ def compile_unroll( schedule ):
       final_schedule.append( top.print_line_trace )
     final_schedule += self.collect_ff_funcs( top )
     final_schedule += top._sched.update_schedule
+    final_schedule.append( top._sim.check_top_level_inports )
     top.sim_tick = self.gen_tick_function( final_schedule )
