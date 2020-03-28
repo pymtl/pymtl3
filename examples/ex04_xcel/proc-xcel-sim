@@ -220,7 +220,7 @@ def main():
     model.dut.set_metadata( TranslationImportPass.enable, True )
     model = TranslationImportPass()( model )
 
-  model.apply( SimulationPass() )
+  model.apply( SimulationPass(print_line_trace=opts.trace) )
 
   # Load the program into the model
 
@@ -230,24 +230,17 @@ def main():
   # Run the simulation
   #-----------------------------------------------------------------------
 
-  count       = 0
   commit_inst = 0
 
   model.sim_reset()
 
   limit = opts.limit
 
-  if opts.trace:
-    print("{:3}: {}".format( count, model.line_trace() ))
-
-  while not model.done() and count < limit:
+  while not model.done() and model.sim_cycle_count() < limit:
     model.sim_tick()
     commit_inst += int(model.commit_inst)
-    count = count + 1
-    if opts.trace:
-      print("{:3}: {}".format( count, model.line_trace() ))
 
-  assert count < limit
+  assert model.sim_cycle_count() < limit
 
   # Verify the results of simulation
 
@@ -260,9 +253,9 @@ def main():
 
   # Display stats
 
-  print( "  total_num_cycles      = {}".format( count ) )
+  print( "  total_num_cycles      = {}".format( model.sim_cycle_count() ) )
   print( "  total_committed_insts = {}".format( commit_inst ) )
-  print( "  CPI                   = {:1.2f}".format( count/float(commit_inst) ) )
+  print( "  CPI                   = {:1.2f}".format( model.sim_cycle_count()/float(commit_inst) ) )
   print()
 
   exit(0)

@@ -29,19 +29,19 @@ def mk_xcel_transaction( words ):
   words = [ b16(x) for x in words ]
   bits = words_to_b128( words )
   reqs = []
-  reqs.append( Req( wr, b5(0), bits[0 :32 ] ) )
-  reqs.append( Req( wr, b5(1), bits[32:64 ] ) )
-  reqs.append( Req( wr, b5(2), bits[64:96 ] ) )
-  reqs.append( Req( wr, b5(3), bits[96:128] ) )
-  reqs.append( Req( wr, b5(4), b32(1)       ) )
-  reqs.append( Req( rd, b5(5), b32(0)       ) )
+  reqs.append( Req( wr, 0, bits[0 :32 ] ) )
+  reqs.append( Req( wr, 1, bits[32:64 ] ) )
+  reqs.append( Req( wr, 2, bits[64:96 ] ) )
+  reqs.append( Req( wr, 3, bits[96:128] ) )
+  reqs.append( Req( wr, 4, 1            ) )
+  reqs.append( Req( rd, 5, 0            ) )
 
   resps = []
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
-  resps.append( Resp( wr, b32(0)          ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
+  resps.append( Resp( wr, 0               ) )
   resps.append( Resp( rd, checksum(words) ) )
 
   return reqs, resps
