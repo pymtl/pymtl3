@@ -5,21 +5,18 @@
 # Date   : Jun 2, 2019
 """Test if the imported object works correctly."""
 
-from pymtl3.passes.backends.verilog import TranslationImportPass, VerilogPlaceholderPass
+from pymtl3.passes.backends.verilog import VerilogPlaceholderPass
+from pymtl3.passes.backends.yosys import TranslationImportPass
 from pymtl3.passes.backends.verilog.import_.test.ImportedObject_test import (
     finalize,
     test_adder,
-    test_non_top_portmap,
     test_normal_queue_implicit_top_module,
     test_normal_queue_interface,
     test_normal_queue_params,
-    test_param_pass_through,
     test_reg,
     test_reg_external_trace,
     test_reg_incomplete_portmap,
     test_reg_infer_external_trace,
-    test_unpacked_port_array,
-    test_unpacked_port_array_infer_clk_reset,
     test_vl_uninit,
 )
 from pymtl3.passes.rtlir.util.test_utility import do_test
