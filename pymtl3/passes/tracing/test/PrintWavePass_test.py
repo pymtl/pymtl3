@@ -70,9 +70,8 @@ def test_toy():
 
   # Begin simulation
   for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
-    dut.i = i
-    dut.inlong = inlong
-    dut.sim_eval_combinational()
+    dut.i @= i
+    dut.inlong @= inlong
     dut.sim_tick()
     assert dut.out == out
 
@@ -133,9 +132,8 @@ def test_widetoy():
 
   # Begin simulation
   for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
-    dut.i = i
-    dut.inlong = inlong
-    dut.sim_eval_combinational()
+    dut.i @= i
+    dut.inlong @= inlong
     dut.sim_tick()
     assert dut.out == out
 
@@ -203,9 +201,8 @@ def test_bitstruct():
 
   # Begin simulation
   for i, inlong, out in zip(vector[0::3], vector[1::3], vector[2::3]):
-    dut.i = i
-    dut.inlong = inlong
-    dut.sim_eval_combinational()
+    dut.i @= i
+    dut.inlong @= inlong
     dut.sim_tick()
     assert dut.out == out
 

@@ -45,8 +45,8 @@ def test_vector_signals():
       def add_upblk():
         s.out @= s.in0 + s.in1
   def tv_in( m, tv ):
-    m.in0 = tv[0]
-    m.in1 = tv[1]
+    m.in0 @= tv[0]
+    m.in1 @= tv[1]
   def tv_out( m, tv ):
     assert m.out == tv[2]
 
@@ -77,15 +77,15 @@ def test_bitstruct_signals():
       def add_upblk():
         s.out @= s.in0.bar + s.in1
   def tv_in( m, tv ):
-    m.in0 = tv[0]
-    m.in1 = tv[1]
+    m.in0 @= tv[0]
+    m.in1 @= tv[1]
   def tv_out( m, tv ):
     assert m.out == tv[2]
 
   run_test( A2(), [
     #     in0                 in1      out
-    [  bs(b1(0), b32(0)),  b32(-1), b32(-1), ],
-    [  bs(b1(0), b32(1)),  b32(1),  b32(2), ],
-    [  bs(b1(0), b32(-1)), b32(0), b32(-1), ],
-    [  bs(b1(0), b32(42)), b32(42), b32(84), ],
+    [  bs(0, 0),  b32(-1), b32(-1), ],
+    [  bs(0, 1),  b32(1),  b32(2), ],
+    [  bs(0, -1), b32(0), b32(-1), ],
+    [  bs(0, 42), b32(42), b32(84), ],
   ], tv_in, tv_out )

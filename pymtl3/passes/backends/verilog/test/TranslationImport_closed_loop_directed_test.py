@@ -34,15 +34,12 @@ def run_sim( _th ):
     _th.q.set_metadata( TranslationImportPass.enable, True )
     th = TranslationImportPass()( _th )
     th.apply( SimulationPass() )
+    th.sim_reset()
 
-    print()
-    cycle = 0
-    while not th.done() and cycle < 1000:
+    while not th.done() and th.sim_cycle_count() < 1000:
       th.sim_tick()
-      print(th.line_trace())
-      cycle += 1
 
-    assert cycle < 1000
+    assert th.sim_cycle_count() < 1000
 
     th.sim_tick()
     th.sim_tick()
@@ -54,56 +51,28 @@ def run_sim( _th ):
       # This test fails due to translation errors
       pass
 
-def test_normal_queue():
-  test_func = _normal_queue
-  _run_test = test_func.__globals__['run_sim']
+def _run_queue_test_replace_run_sim( run_sim, test_func ):
+  original_run_sim = test_func.__globals__['run_sim']
   test_func.__globals__['run_sim'] = run_sim
   try:
     test_func()
   finally:
-    test_func.__globals__['run_sim'] = _run_test
+    test_func.__globals__['run_sim'] = original_run_sim
+
+def test_normal_queue():
+  _run_queue_test_replace_run_sim( run_sim, _normal_queue )
 
 def test_normal_queue_stall():
-  test_func = _normal_queue_stall
-  _run_test = test_func.__globals__['run_sim']
-  test_func.__globals__['run_sim'] = run_sim
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_sim'] = _run_test
+  _run_queue_test_replace_run_sim( run_sim, _normal_queue_stall )
 
 def test_pipe_queue():
-  test_func = _pipe_queue
-  _run_test = test_func.__globals__['run_sim']
-  test_func.__globals__['run_sim'] = run_sim
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_sim'] = _run_test
+  _run_queue_test_replace_run_sim( run_sim, _pipe_queue )
 
 def test_pipe_queue_stall():
-  test_func = _pipe_queue_stall
-  _run_test = test_func.__globals__['run_sim']
-  test_func.__globals__['run_sim'] = run_sim
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_sim'] = _run_test
+  _run_queue_test_replace_run_sim( run_sim, _pipe_queue_stall )
 
 def test_bypass_queue():
-  test_func = _bypass_queue
-  _run_test = test_func.__globals__['run_sim']
-  test_func.__globals__['run_sim'] = run_sim
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_sim'] = _run_test
+  _run_queue_test_replace_run_sim( run_sim, _bypass_queue )
 
 def test_bypass_queue_stall():
-  test_func = _bypass_queue_stall
-  _run_test = test_func.__globals__['run_sim']
-  test_func.__globals__['run_sim'] = run_sim
-  try:
-    test_func()
-  finally:
-    test_func.__globals__['run_sim'] = _run_test
+  _run_queue_test_replace_run_sim( run_sim, _bypass_queue_stall )

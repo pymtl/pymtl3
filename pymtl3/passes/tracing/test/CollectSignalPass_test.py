@@ -77,9 +77,8 @@ def test_toy():
   ]
   # Begin simulation
   for in0, in1, out in zip(vector[0::3], vector[1::3], vector[2::3]):
-    dut.in0 = in0
-    dut.in1 = in1
-    dut.sim_eval_combinational()
+    dut.in0 @= in0
+    dut.in1 @= in1
     dut.sim_tick()
     assert dut.out == out
 

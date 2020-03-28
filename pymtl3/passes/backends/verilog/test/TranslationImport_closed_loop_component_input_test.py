@@ -18,9 +18,7 @@ from ..util.test_utility import closed_loop_component_input_test
 seed( 0xdeadebeef )
 
 def local_do_test( m ):
-  tv = m._tv
-  tv_in = m._tv_in
-  closed_loop_component_input_test( m, tv, tv_in )
+  closed_loop_component_input_test( m, m._tvs, m._tv_in )
 
 @pytest.mark.parametrize( "Type", [ Bits16, Bits32 ] )
 def test_adder( do_test, Type ):
@@ -37,7 +35,7 @@ def test_adder( do_test, Type ):
         s.out @= s.in_1 + s.in_2
     def line_trace( s ): return "sum = " + str( s.out )
   a = A( Type )
-  a._tv = [ (randint(-255, 255), randint(-255, 255)) for _ in range(10) ]
+  a._tvs = [ (randint(-255, 255), randint(-255, 255)) for _ in range(10) ]
   a._tv_in = tv_in
   do_test( a )
 
@@ -59,14 +57,14 @@ def test_mux( do_test, Type, n_ports ):
       def add_upblk():
         s.out @= s.in_[ s.sel ]
     def line_trace( s ): return "out = " + str( s.out )
-  tv = []
+  tvs = []
   for _ in range(10):
     _tmp = []
     for i in range(n_ports):
       _tmp.append( randint(-255, 255) )
     _tmp.append( randint(0, n_ports-1) )
-    tv.append( _tmp )
+    tvs.append( _tmp )
   a = A( Type, n_ports )
-  a._tv = tv
+  a._tvs = tvs
   a._tv_in = tv_in
   do_test( a )

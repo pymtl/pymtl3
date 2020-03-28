@@ -35,7 +35,7 @@ def local_do_test( _m ):
     # Mark component `_m` as to be translated and imported
     _m.set_metadata( TranslationImportPass.enable, True )
     m = TranslationImportPass()( _m )
-    sim = TestVectorSimulator( m, _m._test_vectors, _m._tv_in, _m._tv_out )
+    sim = TestVectorSimulator( m, _m._tvs, _m._tv_in, _m._tv_out )
     sim.run_test()
   finally:
     try:
