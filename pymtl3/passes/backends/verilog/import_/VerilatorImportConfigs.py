@@ -5,6 +5,7 @@
 # Date   : Jul 28, 2019
 """Configuration of Verilator import pass."""
 
+import copy
 import os
 import subprocess
 from textwrap import fill, indent
@@ -310,7 +311,7 @@ class VerilatorImportConfigs( BasePassConfigs ):
     return " ".join(w for w in [lint, style, fatal, wno] if w)
 
   def _get_all_includes( s ):
-    includes = s.c_include_path
+    includes = copy.copy(s.c_include_path)
 
     # Try to obtain verilator include path either from environment variable
     # or from `pkg-config`
@@ -336,7 +337,7 @@ $PYMTL_VERILATOR_INCLUDE_DIR is set or `pkg-config` has been configured properly
     return includes
 
   def _get_c_src_files( s ):
-    srcs = s.c_srcs
+    srcs = copy.copy(s.c_srcs)
     top_module = s.translated_top_module
     vl_mk_dir = s.vl_mk_dir
     vl_class_mk = f"{vl_mk_dir}/V{top_module}_classes.mk"
